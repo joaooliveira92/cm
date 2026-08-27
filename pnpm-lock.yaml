@@ -102,6 +102,12 @@ importers:
 
   packages/game-engine:
     dependencies:
+      '@cm-clone/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@cm-clone/shared':
+        specifier: workspace:*
+        version: link:../shared
       effect:
         specifier: 'catalog:'
         version: 4.0.0-rc.112

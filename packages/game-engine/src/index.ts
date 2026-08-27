@@ -1,4 +1,7 @@
-import { Effect } from "effect";
-
-/** Placeholder pure function proving out the `@effect/vitest` harness; real deciders land in later tickets. */
-export const ping = Effect.succeed("pong");
+export * from "./rng.js";
+export * from "./match/commands.js";
+export * from "./match/events.js";
+export * from "./match/fatigue.js";
+export * from "./match/simulate.js";
+export * from "./match/tactical-modifiers.js";
+export * from "./match/types.js";
