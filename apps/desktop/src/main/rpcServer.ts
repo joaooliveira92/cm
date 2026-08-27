@@ -1,7 +1,7 @@
 import { AppRpcs, type AppRpcMethod, type RpcResult } from "@cm-clone/contracts";
 import { Effect, Schema } from "effect";
 import { listOpponentClubs, resumeSimulation, startMatch } from "./match.js";
-import { advanceCalendar, getFixtures, getLeagueTable } from "./season.js";
+import { advanceCalendar, getFixtures, getLeagueTable, getSeasonSummary } from "./season.js";
 import { createSave, listSaves, loadSave } from "./saves.js";
 import { getSquad } from "./squad.js";
 import { changeTactics, getTactics } from "./tactics.js";
@@ -56,6 +56,11 @@ const handlers: Record<AppRpcMethod, Handler> = {
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.advanceCalendar.payload)(payload);
       return yield* advanceCalendar(ctx.savesDir, saveId);
+    }),
+  getSeasonSummary: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getSeasonSummary.payload)(payload);
+      return yield* getSeasonSummary(ctx.savesDir, saveId);
     }),
   listOpponentClubs: (payload, ctx) =>
     Effect.gen(function* () {

@@ -113,4 +113,28 @@ export const createSchema = Effect.gen(function* () {
     away_goals INTEGER,
     played INTEGER NOT NULL DEFAULT 0 CHECK (played IN (0,1))
   )`;
+
+  /** Board Objective (ticket 18 / ADR-0006) — one row per Season for the player's club only (AI
+   * clubs are never judged). The band is set at Season start from the fixed Stature Tier -> band
+   * table in `@cm-clone/shared`; `final_position`/`verdict` stay NULL until `SeasonConcluded`
+   * triggers `BoardObjectiveJudged`. */
+  yield* sql`CREATE TABLE board_objective (
+    season_number INTEGER PRIMARY KEY REFERENCES season(season_number),
+    club_id TEXT NOT NULL REFERENCES clubs(id),
+    min_position INTEGER NOT NULL,
+    max_position INTEGER NOT NULL,
+    final_position INTEGER,
+    verdict TEXT CHECK (verdict IS NULL OR verdict IN ('exceeded','met','missed'))
+  )`;
+
+  /** Manager Status (ticket 18 / ADR-0006) — a single row scoped to the save (mirrors `season`),
+   * projected from the "season" stream's `ManagerWarned`/`ManagerSacked` events. The Consecutive-Miss
+   * Counter persists across the whole save (not per-Season) so it survives a Season rollover once one
+   * exists; `sacked` is checked by every mutating command to enforce the read-only archive. */
+  yield* sql`CREATE TABLE manager_status (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    consecutive_misses INTEGER NOT NULL DEFAULT 0,
+    sacked INTEGER NOT NULL DEFAULT 0 CHECK (sacked IN (0,1)),
+    last_outcome TEXT NOT NULL DEFAULT 'none' CHECK (last_outcome IN ('none','warned','sacked'))
+  )`;
 });

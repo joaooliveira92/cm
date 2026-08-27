@@ -3,6 +3,7 @@ import {
   FAMILIARITY_TIERS,
   FORMATIONS,
   GOALKEEPING_ATTRIBUTES,
+  MANAGER_OUTCOMES,
   MENTALITY_OPTIONS,
   OUTFIELD_ATTRIBUTES,
   POSITIONS,
@@ -10,6 +11,7 @@ import {
   ROLES,
   STATURE_TIERS,
   TEMPO_OPTIONS,
+  VERDICTS,
 } from "@cm-clone/shared";
 
 export class SaveSummary extends Schema.Class<SaveSummary>("SaveSummary")({
@@ -146,12 +148,28 @@ export class LeagueTableView extends Schema.Class<LeagueTableView>("LeagueTableV
   standings: Schema.Array(LeagueTableRow),
 }) {}
 
+/** Board Objective Verdict (ADR-0006 / ticket 18): compares the player's club's final League
+ * position to its Season-start band. */
+export const VerdictSchema = Schema.Literals(VERDICTS);
+
+/** Consecutive-Miss Counter outcome (ADR-0006 / ticket 18): `"none"` when the counter didn't cross
+ * a threshold this Season, `"warned"`/`"sacked"` on the 0->1/1->2 transitions. */
+export const ManagerOutcomeSchema = Schema.Literals(MANAGER_OUTCOMES);
+
 export class AdvanceCalendarResult extends Schema.Class<AdvanceCalendarResult>("AdvanceCalendarResult")({
   season: SeasonView,
   resolvedMatchday: Schema.NullOr(Schema.Number),
   transferWindowClosed: Schema.NullOr(Schema.String),
   transferWindowOpened: Schema.NullOr(Schema.String),
   seasonConcluded: Schema.Boolean,
+  /** Set only when `seasonConcluded` — the `BoardObjectiveJudged` Verdict for the player's club,
+   * computed in the same request right after `SeasonConcluded` (ticket 18 / ADR-0006). Callers that
+   * only need the headline outcome don't need a follow-up `getSeasonSummary` call; the full
+   * band/standings breakdown still lives there. */
+  boardObjectiveVerdict: Schema.NullOr(VerdictSchema),
+  /** Set only when `seasonConcluded` — whether the Consecutive-Miss Counter crossed the
+   * warn/sack threshold this Season (ticket 18 / ADR-0006). */
+  managerOutcome: ManagerOutcomeSchema,
 }) {}
 
 /** Raised when `AdvanceCalendar` is invoked after the Season's final Matchday has already resolved —
@@ -162,6 +180,37 @@ export class SeasonCompleteError extends Schema.TaggedError<SeasonCompleteError>
     saveId: Schema.String,
   },
 ) {}
+
+/** Raised by any mutating command once `ManagerSacked` has archived the save (ADR-0006 / ticket 18):
+ * read-only from that point on, no re-hire flow. */
+export class SaveSackedError extends Schema.TaggedError<SaveSackedError>()("SaveSackedError", {
+  saveId: Schema.String,
+}) {}
+
+/** The player's club's Board Objective for one Season (ticket 18 / ADR-0006) — `finalPosition`/
+ * `verdict` are `null` until `SeasonConcluded` triggers `BoardObjectiveJudged`. */
+export class BoardObjectiveView extends Schema.Class<BoardObjectiveView>("BoardObjectiveView")({
+  seasonNumber: Schema.Number,
+  clubId: Schema.String,
+  minPosition: Schema.Number,
+  maxPosition: Schema.Number,
+  finalPosition: Schema.NullOr(Schema.Number),
+  verdict: Schema.NullOr(VerdictSchema),
+}) {}
+
+/** Season summary screen (ticket 18): final League Table position, the Board Objective Verdict, and
+ * (if applicable) the warning/sacking outcome and the running Consecutive-Miss Counter. */
+export class SeasonSummaryView extends Schema.Class<SeasonSummaryView>("SeasonSummaryView")({
+  season: SeasonView,
+  standings: Schema.Array(LeagueTableRow),
+  clubId: Schema.String,
+  clubName: Schema.String,
+  finalPosition: Schema.NullOr(Schema.Number),
+  boardObjective: Schema.NullOr(BoardObjectiveView),
+  managerOutcome: ManagerOutcomeSchema,
+  consecutiveMisses: Schema.Number,
+  sacked: Schema.Boolean,
+}) {}
 
 export class ClubNotFoundError extends Schema.TaggedError<ClubNotFoundError>()("ClubNotFoundError", {
   id: Schema.String,

@@ -4,23 +4,32 @@ import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   AdvanceCalendarResult,
+  BoardObjectiveView,
   FixtureView,
   FixturesView,
   LeagueTableRow,
   LeagueTableView,
   SaveNotFoundError,
+  SaveSackedError,
   SEASON_PHASES,
   SeasonCompleteError,
+  SeasonSummaryView,
   SeasonView,
   Tactic,
 } from "@cm-clone/contracts";
 import { createSeededRng, simulateMatch, type MatchTeamSetup } from "@cm-clone/game-engine";
-import type { PlayerAttributes, RandomSource } from "@cm-clone/shared";
-import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
+import type { ManagerOutcome, PlayerAttributes, RandomSource, Verdict } from "@cm-clone/shared";
+import {
+  BOARD_OBJECTIVE_BANDS,
+  FORMATION_SLOTS,
+  judgeBoardObjective,
+  nextManagerOutcome,
+  POSITION_ROLES,
+} from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { appendStreamEvents, nextStreamSeq } from "./decider.js";
-import { loadSquadPlayers } from "./squad.js";
+import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
 
 const STREAM_TYPE = "season";
@@ -110,6 +119,17 @@ export const startSeason = (saveId: string) =>
       yield* sql`INSERT INTO fixtures (id, season_number, matchday, home_club_id, away_club_id, home_goals, away_goals, played)
         VALUES (${randomUUID()}, 1, ${fixture.matchday}, ${fixture.homeClubId}, ${fixture.awayClubId}, NULL, NULL, 0)`;
     }
+
+    // Board Objective (ticket 18 / ADR-0006): a band derived from the player's club's Stature
+    // Tier, set once at Season start. Only the player's club ever gets one — AI clubs are never
+    // judged. `manager_status` is a single row scoped to the whole save (not per-Season), created
+    // here since `startSeason` currently only ever runs once (Season 1 at save creation, ticket 15
+    // — multi-season rollover is out of this ticket's scope).
+    const userClub = yield* loadUserClub;
+    const band = BOARD_OBJECTIVE_BANDS[userClub.statureTier];
+    yield* sql`INSERT INTO board_objective (season_number, club_id, min_position, max_position, final_position, verdict)
+      VALUES (1, ${userClub.id}, ${band.minPosition}, ${band.maxPosition}, NULL, NULL)`;
+    yield* sql`INSERT INTO manager_status (id, consecutive_misses, sacked, last_outcome) VALUES (1, 0, 0, 'none')`;
 
     const startSeq = yield* nextStreamSeq(STREAM_TYPE, saveId);
     yield* appendStreamEvents(STREAM_TYPE, saveId, startSeq, [
@@ -294,6 +314,75 @@ export const nextCalendarBoundary = (row: {
  * Matchday resolves all 10 of that Matchday's Fixtures (the player's and the 9 AI Fixtures alike)
  * synchronously in this same request. Emits Season-stream events and projects the fixtures/season
  * read model in the same SQL transaction. */
+interface ManagerStatusRow {
+  readonly consecutiveMisses: number;
+  readonly sacked: boolean;
+  readonly lastOutcome: ManagerOutcome;
+}
+
+const loadManagerStatus = Effect.gen(function* () {
+  const sql = yield* SqlClient;
+  const rows = yield* sql<{
+    consecutiveMisses: number;
+    sacked: number;
+    lastOutcome: ManagerOutcome;
+  }>`SELECT consecutive_misses as "consecutiveMisses", sacked, last_outcome as "lastOutcome" FROM manager_status WHERE id = 1`;
+  const row = rows[0]!;
+  return {
+    consecutiveMisses: row.consecutiveMisses,
+    sacked: row.sacked === 1,
+    lastOutcome: row.lastOutcome,
+  } satisfies ManagerStatusRow;
+});
+
+/**
+ * Board Objective judgment + Consecutive-Miss Counter (ticket 18 / ADR-0006): runs as an
+ * in-process synchronous reactor to `SeasonConcluded`, in the same request/transaction — no
+ * outbox, per ADR-0007. Only the player's club is judged; AI clubs have no Board Objective row.
+ * Appends `BoardObjectiveJudged` and, if the counter crosses a threshold, `ManagerWarned`/
+ * `ManagerSacked` onto `streamEvents` (caller appends them alongside `SeasonConcluded` in one
+ * batch) and persists the updated `board_objective`/`manager_status` rows.
+ */
+const judgeSeasonEnd = (
+  seasonNumber: number,
+  streamEvents: Array<{ readonly tag: string; readonly payload: unknown }>,
+) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const standings = yield* computeStandings(seasonNumber);
+
+    const objectiveRows = yield* sql<{
+      clubId: string;
+      minPosition: number;
+      maxPosition: number;
+    }>`SELECT club_id as "clubId", min_position as "minPosition", max_position as "maxPosition"
+       FROM board_objective WHERE season_number = ${seasonNumber}`;
+    const objective = objectiveRows[0]!;
+
+    const finalPosition = standings.findIndex((row) => row.clubId === objective.clubId) + 1;
+    const band = { minPosition: objective.minPosition, maxPosition: objective.maxPosition };
+    const verdict: Verdict = judgeBoardObjective(finalPosition, band);
+
+    yield* sql`UPDATE board_objective SET final_position = ${finalPosition}, verdict = ${verdict} WHERE season_number = ${seasonNumber}`;
+    streamEvents.push({
+      tag: "BoardObjectiveJudged",
+      payload: { seasonNumber, clubId: objective.clubId, finalPosition, band, verdict },
+    });
+
+    const managerStatus = yield* loadManagerStatus;
+    const { consecutiveMisses, outcome } = nextManagerOutcome(verdict, managerStatus.consecutiveMisses);
+
+    if (outcome === "warned") {
+      streamEvents.push({ tag: "ManagerWarned", payload: { seasonNumber, consecutiveMisses } });
+    } else if (outcome === "sacked") {
+      streamEvents.push({ tag: "ManagerSacked", payload: { seasonNumber, consecutiveMisses } });
+    }
+
+    yield* sql`UPDATE manager_status SET consecutive_misses = ${consecutiveMisses}, sacked = ${outcome === "sacked" ? 1 : 0}, last_outcome = ${outcome} WHERE id = 1`;
+
+    return { verdict, managerOutcome: outcome as ManagerOutcome };
+  });
+
 export const advanceCalendar = (savesDir: string, saveId: string) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
@@ -304,12 +393,19 @@ export const advanceCalendar = (savesDir: string, saveId: string) =>
         return yield* new SeasonCompleteError({ saveId });
       }
 
+      const managerStatus = yield* loadManagerStatus;
+      if (managerStatus.sacked) {
+        return yield* new SaveSackedError({ saveId });
+      }
+
       const boundary = nextCalendarBoundary(row);
       const streamEvents: Array<{ readonly tag: string; readonly payload: unknown }> = [];
       let resolvedMatchday: number | null = null;
       let transferWindowClosed: "pre_season" | "mid_season" | null = null;
       let transferWindowOpened: "mid_season" | null = null;
       let seasonConcluded = false;
+      let boardObjectiveVerdict: Verdict | null = null;
+      let managerOutcome: ManagerOutcome = "none";
 
       if (boundary.type === "windowOpen") {
         yield* sql`UPDATE season SET phase = 'mid_window_open' WHERE season_number = ${row.seasonNumber}`;
@@ -328,6 +424,10 @@ export const advanceCalendar = (savesDir: string, saveId: string) =>
         streamEvents.push({ tag: "SeasonConcluded", payload: { seasonNumber: row.seasonNumber } });
         yield* sql`UPDATE season SET phase = 'season_complete' WHERE season_number = ${row.seasonNumber}`;
         seasonConcluded = true;
+
+        const judged = yield* judgeSeasonEnd(row.seasonNumber, streamEvents);
+        boardObjectiveVerdict = judged.verdict;
+        managerOutcome = judged.managerOutcome;
       }
 
       const startSeq = yield* nextStreamSeq(STREAM_TYPE, saveId);
@@ -340,6 +440,8 @@ export const advanceCalendar = (savesDir: string, saveId: string) =>
         transferWindowClosed,
         transferWindowOpened,
         seasonConcluded,
+        boardObjectiveVerdict,
+        managerOutcome,
       });
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );
@@ -402,68 +504,122 @@ interface ClubTally {
 
 const emptyTally = (): ClubTally => ({ played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0 });
 
-/** League Table — points, then goal difference, then goals scored, no head-to-head (ADR-0004). */
+/** League Table standings for one Season — points, then goal difference, then goals scored, no
+ * head-to-head (ADR-0004). Assumes a `SqlClient` in context. Shared by `getLeagueTable` and, since
+ * ticket 18, the Board Objective judgment at `SeasonConcluded` and `getSeasonSummary`. */
+const computeStandings = (seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const clubRows = yield* sql<{ id: string; name: string }>`SELECT id, name FROM clubs`;
+    const fixtureRows = yield* sql<{
+      homeClubId: string;
+      awayClubId: string;
+      homeGoals: number;
+      awayGoals: number;
+    }>`SELECT home_club_id as "homeClubId", away_club_id as "awayClubId",
+              home_goals as "homeGoals", away_goals as "awayGoals"
+       FROM fixtures WHERE season_number = ${seasonNumber} AND played = 1`;
+
+    const tallies = new Map<string, ClubTally>(clubRows.map((club) => [club.id, emptyTally()]));
+
+    for (const fixture of fixtureRows) {
+      const home = tallies.get(fixture.homeClubId);
+      const away = tallies.get(fixture.awayClubId);
+      if (!home || !away) continue;
+
+      home.played += 1;
+      away.played += 1;
+      home.goalsFor += fixture.homeGoals;
+      home.goalsAgainst += fixture.awayGoals;
+      away.goalsFor += fixture.awayGoals;
+      away.goalsAgainst += fixture.homeGoals;
+
+      if (fixture.homeGoals > fixture.awayGoals) {
+        home.won += 1;
+        away.lost += 1;
+      } else if (fixture.homeGoals < fixture.awayGoals) {
+        away.won += 1;
+        home.lost += 1;
+      } else {
+        home.drawn += 1;
+        away.drawn += 1;
+      }
+    }
+
+    return clubRows
+      .map((club) => {
+        const tally = tallies.get(club.id)!;
+        return new LeagueTableRow({
+          clubId: club.id,
+          clubName: club.name,
+          played: tally.played,
+          won: tally.won,
+          drawn: tally.drawn,
+          lost: tally.lost,
+          goalsFor: tally.goalsFor,
+          goalsAgainst: tally.goalsAgainst,
+          goalDifference: tally.goalsFor - tally.goalsAgainst,
+          points: tally.won * 3 + tally.drawn,
+        });
+      })
+      .sort(
+        (a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor,
+      );
+  });
+
 export const getLeagueTable = (savesDir: string, saveId: string) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      const seasonRow = yield* loadSeasonRow;
+      const standings = yield* computeStandings(seasonRow.seasonNumber);
+      return new LeagueTableView({ season: toSeasonView(seasonRow), standings });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
+  );
+
+/** Season summary screen's query (ticket 18 / ADR-0006): the player's club's final League Table
+ * position, its Board Objective Verdict, and the warning/sacking outcome. Available from Season
+ * start onward — `boardObjective.finalPosition`/`verdict` and `managerOutcome` just stay `null`/
+ * `"none"` until `SeasonConcluded` triggers `BoardObjectiveJudged`. */
+export const getSeasonSummary = (savesDir: string, saveId: string) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;
       const seasonRow = yield* loadSeasonRow;
-      const clubRows = yield* sql<{ id: string; name: string }>`SELECT id, name FROM clubs`;
-      const fixtureRows = yield* sql<{
-        homeClubId: string;
-        awayClubId: string;
-        homeGoals: number;
-        awayGoals: number;
-      }>`SELECT home_club_id as "homeClubId", away_club_id as "awayClubId",
-                home_goals as "homeGoals", away_goals as "awayGoals"
-         FROM fixtures WHERE season_number = ${seasonRow.seasonNumber} AND played = 1`;
+      const standings = yield* computeStandings(seasonRow.seasonNumber);
+      const club = yield* loadUserClub;
+      const managerStatus = yield* loadManagerStatus;
 
-      const tallies = new Map<string, ClubTally>(clubRows.map((club) => [club.id, emptyTally()]));
+      const objectiveRows = yield* sql<{
+        minPosition: number;
+        maxPosition: number;
+        finalPosition: number | null;
+        verdict: Verdict | null;
+      }>`SELECT min_position as "minPosition", max_position as "maxPosition",
+                final_position as "finalPosition", verdict
+         FROM board_objective WHERE season_number = ${seasonRow.seasonNumber} AND club_id = ${club.id}`;
+      const objectiveRow = objectiveRows[0];
 
-      for (const fixture of fixtureRows) {
-        const home = tallies.get(fixture.homeClubId);
-        const away = tallies.get(fixture.awayClubId);
-        if (!home || !away) continue;
-
-        home.played += 1;
-        away.played += 1;
-        home.goalsFor += fixture.homeGoals;
-        home.goalsAgainst += fixture.awayGoals;
-        away.goalsFor += fixture.awayGoals;
-        away.goalsAgainst += fixture.homeGoals;
-
-        if (fixture.homeGoals > fixture.awayGoals) {
-          home.won += 1;
-          away.lost += 1;
-        } else if (fixture.homeGoals < fixture.awayGoals) {
-          away.won += 1;
-          home.lost += 1;
-        } else {
-          home.drawn += 1;
-          away.drawn += 1;
-        }
-      }
-
-      const standings = clubRows
-        .map((club) => {
-          const tally = tallies.get(club.id)!;
-          return new LeagueTableRow({
+      const boardObjective = objectiveRow
+        ? new BoardObjectiveView({
+            seasonNumber: seasonRow.seasonNumber,
             clubId: club.id,
-            clubName: club.name,
-            played: tally.played,
-            won: tally.won,
-            drawn: tally.drawn,
-            lost: tally.lost,
-            goalsFor: tally.goalsFor,
-            goalsAgainst: tally.goalsAgainst,
-            goalDifference: tally.goalsFor - tally.goalsAgainst,
-            points: tally.won * 3 + tally.drawn,
-          });
-        })
-        .sort(
-          (a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor,
-        );
+            minPosition: objectiveRow.minPosition,
+            maxPosition: objectiveRow.maxPosition,
+            finalPosition: objectiveRow.finalPosition,
+            verdict: objectiveRow.verdict,
+          })
+        : null;
 
-      return new LeagueTableView({ season: toSeasonView(seasonRow), standings });
+      return new SeasonSummaryView({
+        season: toSeasonView(seasonRow),
+        standings,
+        clubId: club.id,
+        clubName: club.name,
+        finalPosition: boardObjective?.finalPosition ?? null,
+        boardObjective,
+        managerOutcome: managerStatus.lastOutcome,
+        consecutiveMisses: managerStatus.consecutiveMisses,
+        sacked: managerStatus.sacked,
+      });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
