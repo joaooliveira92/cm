@@ -75,7 +75,7 @@ export const AppRpcs = {
   changeTactics: {
     payload: Schema.Struct({ saveId: Schema.String, tactic: Tactic }),
     success: TacticsScreenView,
-    error: Schema.Union([SaveNotFoundError, InvalidTacticError]),
+    error: Schema.Union([SaveNotFoundError, InvalidTacticError, SaveSackedError]),
   },
   getLeagueTable: {
     payload: Schema.Struct({ saveId: Schema.String }),
@@ -105,7 +105,7 @@ export const AppRpcs = {
   startMatch: {
     payload: Schema.Struct({ saveId: Schema.String, opponentClubId: Schema.String }),
     success: MatchSummary,
-    error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError, SaveSackedError]),
   },
   resumeSimulation: {
     payload: Schema.Struct({ saveId: Schema.String, matchId: Schema.String, cursor: Schema.Number }),
@@ -128,7 +128,7 @@ export const AppRpcs = {
       command: MatchCommandPayload,
     }),
     success: ResumeSimulationView,
-    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError, SaveSackedError]),
   },
   getTransfersScreen: {
     payload: Schema.Struct({ saveId: Schema.String }),
@@ -145,6 +145,7 @@ export const AppRpcs = {
       InsufficientTransferBudgetError,
       WageBudgetExceededError,
       InvalidBidActionError,
+      SaveSackedError,
     ]),
   },
   respondToBid: {
@@ -162,6 +163,7 @@ export const AppRpcs = {
       InvalidBidActionError,
       InsufficientTransferBudgetError,
       WageBudgetExceededError,
+      SaveSackedError,
     ]),
   },
   respondAsBidder: {
@@ -178,6 +180,7 @@ export const AppRpcs = {
       InvalidBidActionError,
       InsufficientTransferBudgetError,
       WageBudgetExceededError,
+      SaveSackedError,
     ]),
   },
   signFreeAgent: {
@@ -189,6 +192,7 @@ export const AppRpcs = {
       PlayerNotFreeAgentError,
       TransferWindowClosedError,
       WageBudgetExceededError,
+      SaveSackedError,
     ]),
   },
   renewContract: {
@@ -200,6 +204,7 @@ export const AppRpcs = {
       InvalidBidActionError,
       TransferWindowClosedError,
       WageBudgetExceededError,
+      SaveSackedError,
     ]),
   },
 } as const;

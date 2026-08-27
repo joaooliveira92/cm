@@ -1,5 +1,27 @@
+import { readdir } from "node:fs/promises";
+import path from "node:path";
+import { SaveNotFoundError } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+
+/** Resolves a save's `.sqlite` filename and calls `onFound`, or `SaveNotFoundError` if the save
+ * doesn't exist under `savesDir`. Shared by every command/query handler module (`tactics.ts`,
+ * `match.ts`, `season.ts`, `transfers.ts`) rather than each defining its own copy. */
+export const withExistingSave = <A, E>(
+  savesDir: string,
+  saveId: string,
+  onFound: (filename: string) => Effect.Effect<A, E>,
+) =>
+  Effect.gen(function* () {
+    const filename = path.join(savesDir, `${saveId}.sqlite`);
+    const exists = yield* Effect.promise(() =>
+      readdir(savesDir).then((entries) => entries.includes(`${saveId}.sqlite`)),
+    );
+    if (!exists) {
+      return yield* new SaveNotFoundError({ id: saveId });
+    }
+    return yield* onFound(filename);
+  });
 
 /** One row of a domain-bounded event stream (ADR-0007) before/after JSON (de)serialization. */
 export interface StreamEvent {

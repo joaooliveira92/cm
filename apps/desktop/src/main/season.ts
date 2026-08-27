@@ -1,6 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { readdir } from "node:fs/promises";
-import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   AdvanceCalendarResult,
@@ -9,8 +7,6 @@ import {
   FixturesView,
   LeagueTableRow,
   LeagueTableView,
-  SaveNotFoundError,
-  SaveSackedError,
   SEASON_PHASES,
   SeasonCompleteError,
   SeasonSummaryView,
@@ -22,7 +18,8 @@ import { BOARD_OBJECTIVE_BANDS, judgeBoardObjective, nextManagerOutcome } from "
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { assignAiTactics, pickBestFormationTactic, runAiTransferWindow } from "./aiClubs.js";
-import { appendStreamEvents, nextStreamSeq } from "./decider.js";
+import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
+import { assertSaveNotSacked, loadManagerStatus } from "./managerStatus.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
 import { expireContractsForSeason, initializeSeasonEconomy } from "./transfers.js";
@@ -139,26 +136,6 @@ export const startSeason = (saveId: string) =>
     yield* appendStreamEvents(STREAM_TYPE, saveId, startSeq, [
       { tag: "SeasonStarted", payload: { seasonNumber: 1, seed, fixtureCount: fixtures.length } },
     ]);
-  });
-
-// ---------------------------------------------------------------------------
-// Shared save-file plumbing (mirrors tactics.ts's private helper)
-// ---------------------------------------------------------------------------
-
-const withExistingSave = <A, E>(
-  savesDir: string,
-  saveId: string,
-  onFound: (filename: string) => Effect.Effect<A, E>,
-) =>
-  Effect.gen(function* () {
-    const filename = path.join(savesDir, `${saveId}.sqlite`);
-    const exists = yield* Effect.promise(() =>
-      readdir(savesDir).then((entries) => entries.includes(`${saveId}.sqlite`)),
-    );
-    if (!exists) {
-      return yield* new SaveNotFoundError({ id: saveId });
-    }
-    return yield* onFound(filename);
   });
 
 type SeasonPhase = (typeof SEASON_PHASES)[number];
@@ -299,26 +276,6 @@ export const nextCalendarBoundary = (row: {
  * Matchday resolves all 10 of that Matchday's Fixtures (the player's and the 9 AI Fixtures alike)
  * synchronously in this same request. Emits Season-stream events and projects the fixtures/season
  * read model in the same SQL transaction. */
-interface ManagerStatusRow {
-  readonly consecutiveMisses: number;
-  readonly sacked: boolean;
-  readonly lastOutcome: ManagerOutcome;
-}
-
-const loadManagerStatus = Effect.gen(function* () {
-  const sql = yield* SqlClient;
-  const rows = yield* sql<{
-    consecutiveMisses: number;
-    sacked: number;
-    lastOutcome: ManagerOutcome;
-  }>`SELECT consecutive_misses as "consecutiveMisses", sacked, last_outcome as "lastOutcome" FROM manager_status WHERE id = 1`;
-  const row = rows[0]!;
-  return {
-    consecutiveMisses: row.consecutiveMisses,
-    sacked: row.sacked === 1,
-    lastOutcome: row.lastOutcome,
-  } satisfies ManagerStatusRow;
-});
 
 /**
  * Board Objective judgment + Consecutive-Miss Counter (ticket 18 / ADR-0006): runs as an
@@ -378,10 +335,7 @@ export const advanceCalendar = (savesDir: string, saveId: string) =>
         return yield* new SeasonCompleteError({ saveId });
       }
 
-      const managerStatus = yield* loadManagerStatus;
-      if (managerStatus.sacked) {
-        return yield* new SaveSackedError({ saveId });
-      }
+      yield* assertSaveNotSacked(saveId);
 
       const boundary = nextCalendarBoundary(row);
       const streamEvents: Array<{ readonly tag: string; readonly payload: unknown }> = [];

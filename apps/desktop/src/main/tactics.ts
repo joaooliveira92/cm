@@ -1,15 +1,10 @@
-import { readdir } from "node:fs/promises";
-import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import {
-  InvalidTacticError,
-  SaveNotFoundError,
-  Tactic,
-  TacticsScreenView,
-} from "@cm-clone/contracts";
+import { InvalidTacticError, Tactic, TacticsScreenView } from "@cm-clone/contracts";
 import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { withExistingSave } from "./decider.js";
+import { assertSaveNotSacked } from "./managerStatus.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 
 /** The club's persisted Tactic, if `ChangeTactics` has ever been issued — assumes a `SqlClient` in
@@ -39,21 +34,6 @@ export const loadPersistedTactic = (clubId: string) =>
     });
   });
 
-const withExistingSave = <A, E>(
-  savesDir: string,
-  saveId: string,
-  onFound: (filename: string) => Effect.Effect<A, E>,
-) =>
-  Effect.gen(function* () {
-    const filename = path.join(savesDir, `${saveId}.sqlite`);
-    const exists = yield* Effect.promise(() =>
-      readdir(savesDir).then((entries) => entries.includes(`${saveId}.sqlite`)),
-    );
-    if (!exists) {
-      return yield* new SaveNotFoundError({ id: saveId });
-    }
-    return yield* onFound(filename);
-  });
 
 export const getTactics = (savesDir: string, saveId: string) =>
   withExistingSave(savesDir, saveId, (filename) =>
@@ -120,6 +100,7 @@ export const validateTactic = (tactic: Tactic, squadPlayerIds: ReadonlySet<strin
 export const changeTactics = (savesDir: string, saveId: string, tactic: Tactic) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
+      yield* assertSaveNotSacked(saveId);
       const club = yield* loadUserClub;
       const squad = yield* loadSquadPlayers(club.id);
       yield* validateTactic(tactic, new Set(squad.map((player) => player.id)));

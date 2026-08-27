@@ -1,6 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { readdir } from "node:fs/promises";
-import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   ClubNotFoundError,
@@ -9,7 +7,6 @@ import {
   MatchNotFoundError,
   MatchSummary,
   ResumeSimulationView,
-  SaveNotFoundError,
   SubstitutionStatusView,
   Tactic,
   type ChangeTacticsCommandPayload,
@@ -32,7 +29,14 @@ import {
 } from "@cm-clone/shared";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { appendStreamEvents, loadStreamEvents, nextStreamSeq, type StreamEvent } from "./decider.js";
+import {
+  appendStreamEvents,
+  loadStreamEvents,
+  nextStreamSeq,
+  withExistingSave,
+  type StreamEvent,
+} from "./decider.js";
+import { assertSaveNotSacked } from "./managerStatus.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
 
@@ -53,22 +57,6 @@ const MAX_CHUNK_SIZE = 40;
 const HALFTIME_MINUTE = 45;
 
 const BOUNDARY_TAGS: ReadonlySet<MatchEvent["_tag"]> = new Set(["HalfTimeReached", "FullTimeWhistle"]);
-
-const withExistingSave = <A, E>(
-  savesDir: string,
-  saveId: string,
-  onFound: (filename: string) => Effect.Effect<A, E>,
-) =>
-  Effect.gen(function* () {
-    const filename = path.join(savesDir, `${saveId}.sqlite`);
-    const exists = yield* Effect.promise(() =>
-      readdir(savesDir).then((entries) => entries.includes(`${saveId}.sqlite`)),
-    );
-    if (!exists) {
-      return yield* new SaveNotFoundError({ id: saveId });
-    }
-    return yield* onFound(filename);
-  });
 
 /**
  * A basic 4-4-2 with one player per required Position/Role, drawn from the club's generated squad
@@ -186,6 +174,7 @@ interface PersistedSubstitutionMade {
 export const startMatch = (savesDir: string, saveId: string, opponentClubId: string) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
+      yield* assertSaveNotSacked(saveId);
       const userClub = yield* loadUserClub;
       const opponentClub = yield* loadClubSummary(opponentClubId);
       if (!opponentClub) return yield* new ClubNotFoundError({ id: opponentClubId });
@@ -430,6 +419,7 @@ export const submitMatchCommand = (
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
+      yield* assertSaveNotSacked(saveId);
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 

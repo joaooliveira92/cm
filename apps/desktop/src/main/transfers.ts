@@ -1,6 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { readdir } from "node:fs/promises";
-import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   BidNotFoundError,
@@ -11,7 +9,6 @@ import {
   MarketPlayerView,
   PlayerNotFoundError,
   PlayerNotFreeAgentError,
-  SaveNotFoundError,
   SeasonView,
   TransferWindowClosedError,
   TransfersScreenView,
@@ -38,30 +35,11 @@ import {
 } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { appendStreamEvents, nextStreamSeq } from "./decider.js";
+import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
+import { assertSaveNotSacked } from "./managerStatus.js";
 import { loadUserClub } from "./squad.js";
 
 type BidStatus = "pending" | "countered" | "accepted" | "rejected" | "withdrawn";
-
-// ---------------------------------------------------------------------------
-// Shared save-file plumbing (mirrors season.ts/tactics.ts's private helper)
-// ---------------------------------------------------------------------------
-
-const withExistingSave = <A, E>(
-  savesDir: string,
-  saveId: string,
-  onFound: (filename: string) => Effect.Effect<A, E>,
-) =>
-  Effect.gen(function* () {
-    const filename = path.join(savesDir, `${saveId}.sqlite`);
-    const exists = yield* Effect.promise(() =>
-      readdir(savesDir).then((entries) => entries.includes(`${saveId}.sqlite`)),
-    );
-    if (!exists) {
-      return yield* new SaveNotFoundError({ id: saveId });
-    }
-    return yield* onFound(filename);
-  });
 
 interface SeasonRow {
   readonly seasonNumber: number;
@@ -360,59 +338,66 @@ const completeTransfer = (params: {
 }) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const player = yield* loadPlayerEcon(params.playerId);
-    if (!player) {
-      return yield* new PlayerNotFoundError({ playerId: params.playerId });
-    }
+    // `sql.withTransaction` (BEGIN/COMMIT/ROLLBACK) is what actually makes this atomic — without
+    // it, a failure partway through (e.g. the Wage Budget check failing after the player's club_id
+    // had already been reassigned) would leave the two clubs' streams/read-model out of sync.
+    return yield* sql.withTransaction(
+      Effect.gen(function* () {
+        const player = yield* loadPlayerEcon(params.playerId);
+        if (!player) {
+          return yield* new PlayerNotFoundError({ playerId: params.playerId });
+        }
 
-    const buyerBudget = yield* loadClubBudgetRow(params.biddingClubId);
-    if (params.amount > buyerBudget.transferBudgetRemaining) {
-      return yield* new InsufficientTransferBudgetError({
-        clubId: params.biddingClubId,
-        amount: params.amount,
-        remaining: buyerBudget.transferBudgetRemaining,
-      });
-    }
+        const buyerBudget = yield* loadClubBudgetRow(params.biddingClubId);
+        if (params.amount > buyerBudget.transferBudgetRemaining) {
+          return yield* new InsufficientTransferBudgetError({
+            clubId: params.biddingClubId,
+            amount: params.amount,
+            remaining: buyerBudget.transferBudgetRemaining,
+          });
+        }
 
-    const wage = weeklyWage(player.overallRating, player.age, player.potentialAbility);
-    const wageUsed = yield* loadWageBudgetUsed(params.biddingClubId);
-    if (wageUsed + wage > buyerBudget.wageBudget) {
-      return yield* new WageBudgetExceededError({
-        clubId: params.biddingClubId,
-        wage,
-        wageBudgetUsed: wageUsed,
-        wageBudget: buyerBudget.wageBudget,
-      });
-    }
+        const wage = weeklyWage(player.overallRating, player.age, player.potentialAbility);
+        const wageUsed = yield* loadWageBudgetUsed(params.biddingClubId);
+        if (wageUsed + wage > buyerBudget.wageBudget) {
+          return yield* new WageBudgetExceededError({
+            clubId: params.biddingClubId,
+            wage,
+            wageBudgetUsed: wageUsed,
+            wageBudget: buyerBudget.wageBudget,
+          });
+        }
 
-    yield* sql`UPDATE players SET club_id = ${params.biddingClubId} WHERE id = ${params.playerId}`;
-    yield* sql`DELETE FROM contracts WHERE player_id = ${params.playerId}`;
-    yield* sql`INSERT INTO contracts (player_id, wage, years_remaining, signed_season)
-      VALUES (${params.playerId}, ${wage}, ${DEFAULT_CONTRACT_YEARS}, ${params.seasonNumber})`;
+        yield* sql`UPDATE players SET club_id = ${params.biddingClubId} WHERE id = ${params.playerId}`;
+        yield* sql`DELETE FROM contracts WHERE player_id = ${params.playerId}`;
+        yield* sql`INSERT INTO contracts (player_id, wage, years_remaining, signed_season)
+          VALUES (${params.playerId}, ${wage}, ${DEFAULT_CONTRACT_YEARS}, ${params.seasonNumber})`;
 
-    yield* sql`UPDATE club_budgets SET transfer_budget_remaining = transfer_budget_remaining - ${params.amount} WHERE club_id = ${params.biddingClubId}`;
-    yield* sql`UPDATE club_budgets SET transfer_budget_remaining = transfer_budget_remaining + ${params.amount} WHERE club_id = ${params.sellingClubId}`;
+        yield* sql`UPDATE club_budgets SET transfer_budget_remaining = transfer_budget_remaining - ${params.amount} WHERE club_id = ${params.biddingClubId}`;
+        yield* sql`UPDATE club_budgets SET transfer_budget_remaining = transfer_budget_remaining + ${params.amount} WHERE club_id = ${params.sellingClubId}`;
 
-    const sellerSeq = yield* nextStreamSeq("club", params.sellingClubId);
-    yield* appendStreamEvents("club", params.sellingClubId, sellerSeq, [
-      {
-        tag: "PlayerTransferredOut",
-        payload: { playerId: params.playerId, toClubId: params.biddingClubId, amount: params.amount },
-      },
-    ]);
-    const buyerSeq = yield* nextStreamSeq("club", params.biddingClubId);
-    yield* appendStreamEvents("club", params.biddingClubId, buyerSeq, [
-      {
-        tag: "PlayerTransferredIn",
-        payload: {
-          playerId: params.playerId,
-          fromClubId: params.sellingClubId,
-          amount: params.amount,
-          wage,
-          contractYears: DEFAULT_CONTRACT_YEARS,
-        },
-      },
-    ]);
+        const sellerSeq = yield* nextStreamSeq("club", params.sellingClubId);
+        yield* appendStreamEvents("club", params.sellingClubId, sellerSeq, [
+          {
+            tag: "PlayerTransferredOut",
+            payload: { playerId: params.playerId, toClubId: params.biddingClubId, amount: params.amount },
+          },
+        ]);
+        const buyerSeq = yield* nextStreamSeq("club", params.biddingClubId);
+        yield* appendStreamEvents("club", params.biddingClubId, buyerSeq, [
+          {
+            tag: "PlayerTransferredIn",
+            payload: {
+              playerId: params.playerId,
+              fromClubId: params.sellingClubId,
+              amount: params.amount,
+              wage,
+              contractYears: DEFAULT_CONTRACT_YEARS,
+            },
+          },
+        ]);
+      }),
+    );
   });
 
 // ---------------------------------------------------------------------------
@@ -610,6 +595,7 @@ export const decideAiSellerResponse = (
 export const placeBid = (savesDir: string, saveId: string, playerId: string, amount: number) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
+      yield* assertSaveNotSacked(saveId);
       const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const seasonRow = yield* loadSeasonRow;
@@ -684,6 +670,7 @@ export const respondToBid = (
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
+      yield* assertSaveNotSacked(saveId);
       const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const seasonRow = yield* loadSeasonRow;
@@ -740,6 +727,7 @@ export const respondAsBidder = (
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
+      yield* assertSaveNotSacked(saveId);
       const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const seasonRow = yield* loadSeasonRow;
@@ -784,6 +772,7 @@ export const respondAsBidder = (
 export const signFreeAgent = (savesDir: string, saveId: string, playerId: string, years: number | undefined) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
+      yield* assertSaveNotSacked(saveId);
       const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const seasonRow = yield* loadSeasonRow;
@@ -830,6 +819,7 @@ export const signFreeAgent = (savesDir: string, saveId: string, playerId: string
 export const renewContract = (savesDir: string, saveId: string, playerId: string, years: number | undefined) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
+      yield* assertSaveNotSacked(saveId);
       const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const seasonRow = yield* loadSeasonRow;
