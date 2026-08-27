@@ -61,4 +61,21 @@ export const createSchema = Effect.gen(function* () {
     familiarity TEXT NOT NULL CHECK (familiarity IN ('natural','competent','unfamiliar')),
     PRIMARY KEY (player_id, position)
   )`;
+
+  yield* sql`CREATE TABLE tactics (
+    club_id TEXT PRIMARY KEY REFERENCES clubs(id),
+    formation TEXT NOT NULL CHECK (formation IN ('4-4-2','4-3-3','4-5-1','3-5-2','5-3-2')),
+    mentality TEXT NOT NULL CHECK (mentality IN ('defensive','balanced','attacking')),
+    tempo TEXT NOT NULL CHECK (tempo IN ('slow','normal','fast')),
+    pressing TEXT NOT NULL CHECK (pressing IN ('low','medium','high'))
+  )`;
+
+  yield* sql`CREATE TABLE tactic_slots (
+    club_id TEXT NOT NULL REFERENCES tactics(club_id),
+    slot_index INTEGER NOT NULL,
+    position TEXT NOT NULL CHECK (position IN ('GK','DC','DL','DR','DM','MC','ML','MR','AMC','ST')),
+    role TEXT NOT NULL,
+    player_id TEXT NOT NULL REFERENCES players(id),
+    PRIMARY KEY (club_id, slot_index)
+  )`;
 });

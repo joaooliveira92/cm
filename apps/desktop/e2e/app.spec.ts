@@ -38,6 +38,37 @@ test("creating a career loads the squad screen", async () => {
   await expect(window.getByText(/players$/)).toBeVisible();
 });
 
+test("assigning a tactic on the Tactics screen persists across a reload", async () => {
+  await window.getByPlaceholder("Save name").fill("Tactics Career");
+  await window.getByRole("button", { name: "Create" }).click();
+  await window.getByRole("button", { name: "Tactics Career" }).click();
+  await expect(window.getByText(/players$/)).toBeVisible();
+
+  await window.getByRole("button", { name: "tactics", exact: true }).click();
+  await expect(window.getByRole("heading", { name: /Tactics/ })).toBeVisible();
+
+  const rows = window.locator("tbody tr");
+  await expect(rows).toHaveCount(11);
+
+  for (let i = 0; i < 11; i++) {
+    const select = rows.nth(i).locator("select");
+    const options = await select.locator("option").all();
+    // options[0] is "Unassigned"; pick a distinct real player per slot to avoid duplicate-player rejection.
+    const optionValue = await options[i + 1].getAttribute("value");
+    await select.selectOption(optionValue!);
+  }
+
+  await window.getByRole("button", { name: "Save Tactic" }).click();
+  await expect(window.getByText("Saved.")).toBeVisible();
+
+  await window.getByRole("button", { name: "squad", exact: true }).click();
+  await window.getByRole("button", { name: "tactics", exact: true }).click();
+
+  const reloadedRows = window.locator("tbody tr");
+  await expect(reloadedRows).toHaveCount(11);
+  await expect(reloadedRows.first().locator("select")).not.toHaveValue("");
+});
+
 test("a save persists across app restarts", async () => {
   await window.getByPlaceholder("Save name").fill("Persisted Career");
   await window.getByRole("button", { name: "Create" }).click();

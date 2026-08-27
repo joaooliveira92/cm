@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import type { SaveSummary } from "@cm-clone/contracts";
 import { SquadScreen } from "./SquadScreen.js";
+import { TacticsScreen } from "./TacticsScreen.js";
+
+type CareerScreen = "squad" | "tactics";
 
 export const App = () => {
   const [saves, setSaves] = useState<ReadonlyArray<SaveSummary>>([]);
   const [newSaveName, setNewSaveName] = useState("");
   const [loadedSave, setLoadedSave] = useState<SaveSummary | null>(null);
+  const [screen, setScreen] = useState<CareerScreen>("squad");
   const [status, setStatus] = useState("connecting...");
 
   const refresh = async () => {
@@ -34,7 +38,29 @@ export const App = () => {
   };
 
   if (loadedSave) {
-    return <SquadScreen saveId={loadedSave.id} />;
+    return (
+      <>
+        <nav className="flex gap-2 border-b border-slate-800 bg-slate-950 p-2 text-sm text-slate-100">
+          {(["squad", "tactics"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              className={`rounded px-3 py-1 capitalize ${
+                tab === screen ? "bg-slate-100 text-slate-900" : "bg-slate-800 hover:bg-slate-700"
+              }`}
+              onClick={() => setScreen(tab)}
+            >
+              {tab}
+            </button>
+          ))}
+        </nav>
+        {screen === "squad" ? (
+          <SquadScreen saveId={loadedSave.id} />
+        ) : (
+          <TacticsScreen saveId={loadedSave.id} />
+        )}
+      </>
+    );
   }
 
   return (

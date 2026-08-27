@@ -1,10 +1,15 @@
 import { Schema } from "effect";
 import {
   FAMILIARITY_TIERS,
+  FORMATIONS,
   GOALKEEPING_ATTRIBUTES,
+  MENTALITY_OPTIONS,
   OUTFIELD_ATTRIBUTES,
   POSITIONS,
+  PRESSING_OPTIONS,
+  ROLES,
   STATURE_TIERS,
+  TEMPO_OPTIONS,
 } from "@cm-clone/shared";
 
 export class SaveSummary extends Schema.Class<SaveSummary>("SaveSummary")({
@@ -56,4 +61,39 @@ export class ClubSummary extends Schema.Class<ClubSummary>("ClubSummary")({
 export class SquadView extends Schema.Class<SquadView>("SquadView")({
   club: ClubSummary,
   players: Schema.Array(SquadPlayerView),
+}) {}
+
+export const FormationSchema = Schema.Literals(FORMATIONS);
+export const RoleSchema = Schema.Literals(ROLES);
+export const MentalitySchema = Schema.Literals(MENTALITY_OPTIONS);
+export const TempoSchema = Schema.Literals(TEMPO_OPTIONS);
+export const PressingSchema = Schema.Literals(PRESSING_OPTIONS);
+
+export class TacticSlot extends Schema.Class<TacticSlot>("TacticSlot")({
+  position: PositionSchema,
+  role: RoleSchema,
+  playerId: Schema.String,
+}) {}
+
+/** The `ChangeTactics` command payload shape (ADR-0003 / ticket 03): a Formation, a Role and
+ * player per slot, and the 3 Team Instructions. */
+export class Tactic extends Schema.Class<Tactic>("Tactic")({
+  formation: FormationSchema,
+  slots: Schema.Array(TacticSlot),
+  mentality: MentalitySchema,
+  tempo: TempoSchema,
+  pressing: PressingSchema,
+}) {}
+
+export class InvalidTacticError extends Schema.TaggedError<InvalidTacticError>()(
+  "InvalidTacticError",
+  {
+    reason: Schema.String,
+  },
+) {}
+
+export class TacticsScreenView extends Schema.Class<TacticsScreenView>("TacticsScreenView")({
+  club: ClubSummary,
+  squad: Schema.Array(SquadPlayerView),
+  tactic: Schema.NullOr(Tactic),
 }) {}

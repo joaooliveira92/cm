@@ -1,5 +1,12 @@
 import { Schema } from "effect";
-import { SaveNotFoundError, SaveSummary, SquadView } from "./schemas.js";
+import {
+  InvalidTacticError,
+  SaveNotFoundError,
+  SaveSummary,
+  SquadView,
+  Tactic,
+  TacticsScreenView,
+} from "./schemas.js";
 
 /**
  * Hand-rolled stand-in for `@effect/rpc`'s RpcGroup: as of this writing
@@ -36,6 +43,16 @@ export const AppRpcs = {
     payload: Schema.Struct({ saveId: Schema.String }),
     success: SquadView,
     error: SaveNotFoundError,
+  },
+  getTactics: {
+    payload: Schema.Struct({ saveId: Schema.String }),
+    success: TacticsScreenView,
+    error: SaveNotFoundError,
+  },
+  changeTactics: {
+    payload: Schema.Struct({ saveId: Schema.String, tactic: Tactic }),
+    success: TacticsScreenView,
+    error: Schema.Union([SaveNotFoundError, InvalidTacticError]),
   },
 } as const;
 
