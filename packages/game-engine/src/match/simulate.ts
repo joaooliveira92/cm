@@ -3,8 +3,13 @@ import { createSeededRng, pickRandom } from "../rng.js";
 import { MAX_SUBSTITUTIONS_PER_TEAM, MAX_SUBSTITUTION_WINDOWS_PER_TEAM, type MatchCommand } from "./commands.js";
 import { STOPPAGE_CAUSING_TAGS, type MatchEvent, type MatchHalf } from "./events.js";
 import { averageStamina, fatigueMultiplier } from "./fatigue.js";
-import { computePhaseStrengths, resolveTacticalModifiers } from "./tactical-modifiers.js";
-import type { MatchPlayerInput, MatchTactic, MatchTeamSetup, PhaseStrengths, TacticalModifiers } from "./types.js";
+import {
+  aggregatePhaseSlots,
+  applyRoleBumps,
+  resolveTeamTactics,
+  type ResolvedTeamTactics,
+} from "./tactical-modifiers.js";
+import type { MatchPlayerInput, MatchTeamSetup, PhaseStrengths, TacticalModifiers } from "./types.js";
 
 const HALF_LENGTH_MINUTES = 45;
 const HOME_ADVANTAGE_MULTIPLIER = 1.075;
@@ -23,11 +28,16 @@ const INJURY_PROBABILITY = 0.004;
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
+/**
+ * Engine-owned per-team runtime state. Tactic-blind (ADR-0002/0003): the Tactic is resolved once at
+ * the boundary into `resolved` (phase-slots + flat instruction multipliers), which is all the engine
+ * touches — slot membership in `resolved.slots` is on-pitch (subs swap, red cards remove), mirrors
+ * the old `tactic` + `onPitchPlayerIds` pair without naming a formation, position, or role.
+ */
 interface TeamRuntimeState {
   readonly clubId: string;
   readonly playersById: Map<string, MatchPlayerInput>;
-  tactic: MatchTactic;
-  onPitchPlayerIds: Set<string>;
+  resolved: ResolvedTeamTactics;
   substitutionsUsed: number;
   windowsUsed: number;
   lastWindowMinute: number | null;
@@ -46,16 +56,15 @@ export interface SimulateMatchInput {
 const initTeamState = (setup: MatchTeamSetup): TeamRuntimeState => ({
   clubId: setup.clubId,
   playersById: new Map(setup.squad.map((player) => [player.id, player])),
-  tactic: setup.tactic,
-  onPitchPlayerIds: new Set(setup.tactic.slots.map((slot) => slot.playerId)),
+  resolved: resolveTeamTactics(setup.tactic),
   substitutionsUsed: 0,
   windowsUsed: 0,
   lastWindowMinute: null,
 });
 
 const onPitchPlayers = (team: TeamRuntimeState): Array<MatchPlayerInput> =>
-  [...team.onPitchPlayerIds].flatMap((id) => {
-    const player = team.playersById.get(id);
+  team.resolved.slots.flatMap((slot) => {
+    const player = team.playersById.get(slot.playerId);
     return player ? [player] : [];
   });
 
@@ -67,15 +76,14 @@ const applyCommand = (
   isHalftime: boolean,
 ): { readonly accepted: boolean; readonly reason?: string } => {
   if (command._tag === "ChangeTactics") {
-    team.tactic = command.tactic;
-    team.onPitchPlayerIds = new Set(command.tactic.slots.map((slot) => slot.playerId));
+    team.resolved = resolveTeamTactics(command.tactic);
     return { accepted: true };
   }
 
-  if (!team.onPitchPlayerIds.has(command.outPlayerId)) {
+  if (!team.resolved.slots.some((slot) => slot.playerId === command.outPlayerId)) {
     return { accepted: false, reason: `${command.outPlayerId} is not on the pitch` };
   }
-  if (team.onPitchPlayerIds.has(command.inPlayerId) || !team.playersById.has(command.inPlayerId)) {
+  if (team.resolved.slots.some((slot) => slot.playerId === command.inPlayerId) || !team.playersById.has(command.inPlayerId)) {
     return { accepted: false, reason: `${command.inPlayerId} is not an available substitute` };
   }
   if (team.substitutionsUsed >= MAX_SUBSTITUTIONS_PER_TEAM) {
@@ -89,14 +97,9 @@ const applyCommand = (
     team.lastWindowMinute = minute;
   }
 
-  team.onPitchPlayerIds.delete(command.outPlayerId);
-  team.onPitchPlayerIds.add(command.inPlayerId);
-  team.tactic = {
-    ...team.tactic,
-    slots: team.tactic.slots.map((slot) =>
-      slot.playerId === command.outPlayerId ? { ...slot, playerId: command.inPlayerId } : slot,
-    ),
-  };
+  const index = team.resolved.slots.findIndex((slot) => slot.playerId === command.outPlayerId);
+  const slot = team.resolved.slots[index]!;
+  team.resolved.slots[index] = { ...slot, playerId: command.inPlayerId };
   team.substitutionsUsed += 1;
   return { accepted: true };
 };
@@ -106,10 +109,10 @@ interface TeamStrengths {
   readonly modifiers: TacticalModifiers;
 }
 
-const computeTeamStrengths = (team: TeamRuntimeState): TeamStrengths => ({
-  base: computePhaseStrengths(team.tactic, team.playersById, team.onPitchPlayerIds),
-  modifiers: resolveTacticalModifiers(team.tactic, team.playersById, team.onPitchPlayerIds),
-});
+const computeTeamStrengths = (team: TeamRuntimeState): TeamStrengths => {
+  const { base, bumps } = aggregatePhaseSlots(team.resolved.slots, team.playersById);
+  return { base, modifiers: applyRoleBumps(team.resolved.instructions, bumps) };
+};
 
 const effectiveStrengths = (
   strengths: TeamStrengths,
@@ -126,13 +129,9 @@ const effectiveStrengths = (
   };
 };
 
-const ATTACKING_POSITIONS = new Set(["AMC", "ST"]);
-
 const pickPlayerId = (team: TeamRuntimeState, random: RandomSource, preferAttacking: boolean): string | undefined => {
-  const onPitchSlots = team.tactic.slots.filter((slot) => team.onPitchPlayerIds.has(slot.playerId));
-  const pool = preferAttacking
-    ? onPitchSlots.filter((slot) => ATTACKING_POSITIONS.has(slot.position))
-    : onPitchSlots;
+  const onPitchSlots = team.resolved.slots;
+  const pool = preferAttacking ? onPitchSlots.filter((slot) => slot.phase === "attack") : onPitchSlots;
   const chosenFrom = pool.length > 0 ? pool : onPitchSlots;
   return chosenFrom.length > 0 ? pickRandom(chosenFrom, random).playerId : undefined;
 };
@@ -145,7 +144,7 @@ const attemptForcedSubstitution = (
   events: Array<MatchEvent>,
 ): void => {
   const benchPlayerId = [...team.playersById.keys()].find(
-    (id) => !team.onPitchPlayerIds.has(id) && id !== outPlayerId,
+    (id) => !team.resolved.slots.some((slot) => slot.playerId === id) && id !== outPlayerId,
   );
   if (!benchPlayerId) return;
   const result = applyCommand(
@@ -206,8 +205,7 @@ const resolveDisciplineAndInjury = (
   random: RandomSource,
   events: Array<MatchEvent>,
 ): void => {
-  const defenderModifiers = resolveTacticalModifiers(defender.tactic, defender.playersById, defender.onPitchPlayerIds);
-  const cardChance = BASE_CARD_PROBABILITY * defenderModifiers.pressingAggression;
+  const cardChance = BASE_CARD_PROBABILITY * defender.resolved.instructions.pressingAggression;
   if (random.next() < cardChance) {
     const playerId = pickPlayerId(defender, random, false);
     if (playerId) {
@@ -215,7 +213,7 @@ const resolveDisciplineAndInjury = (
       const base = { minute, half, teamClubId: defender.clubId, playerId } as const;
       if (isRed) {
         events.push({ _tag: "RedCard", ...base });
-        defender.onPitchPlayerIds.delete(playerId);
+        defender.resolved.slots = defender.resolved.slots.filter((slot) => slot.playerId !== playerId);
       } else {
         events.push({ _tag: "YellowCard", ...base });
       }

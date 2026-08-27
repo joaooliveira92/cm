@@ -3,7 +3,9 @@
 Role Rating (a player's fit for their assigned Role, weighted against Role Weights — see CONTEXT.md
 "Tactics") could have replaced Position Rating as the input to Phase Strength, letting a well-cast
 Role directly strengthen a team. We rejected that: ADR-0002 already commits the match engine to zero
-knowledge of tactics vocabulary, consuming only the flat `TacticalModifiers` struct. Feeding Role
+knowledge of tactics vocabulary, consuming only the flat `TacticalModifiers` numbers (plus a
+tactic-blind phase-slot map that gives the engine the player identity and phase it needs to pick an
+event participant without reading a role name). Feeding Role
 Rating into Phase Strength would mean the engine reading a tactics-shaped number, breaking that
 boundary.
 
