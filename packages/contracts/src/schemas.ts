@@ -97,3 +97,68 @@ export class TacticsScreenView extends Schema.Class<TacticsScreenView>("TacticsS
   squad: Schema.Array(SquadPlayerView),
   tactic: Schema.NullOr(Tactic),
 }) {}
+
+/** Season/Calendar Decider vocabulary (ticket 15 / ADR-0004): the Calendar advances only by jumping to
+ * the next Matchday or Transfer Window boundary, never a day-by-day clock. */
+export const SEASON_PHASES = ["pre_season", "in_season", "mid_window_open", "season_complete"] as const;
+export const SeasonPhaseSchema = Schema.Literals(SEASON_PHASES);
+
+export class SeasonView extends Schema.Class<SeasonView>("SeasonView")({
+  seasonNumber: Schema.Number,
+  currentMatchday: Schema.Number,
+  phase: SeasonPhaseSchema,
+}) {}
+
+export class FixtureView extends Schema.Class<FixtureView>("FixtureView")({
+  id: Schema.String,
+  matchday: Schema.Number,
+  homeClubId: Schema.String,
+  homeClubName: Schema.String,
+  awayClubId: Schema.String,
+  awayClubName: Schema.String,
+  homeGoals: Schema.NullOr(Schema.Number),
+  awayGoals: Schema.NullOr(Schema.Number),
+  played: Schema.Boolean,
+}) {}
+
+export class FixturesView extends Schema.Class<FixturesView>("FixturesView")({
+  season: SeasonView,
+  fixtures: Schema.Array(FixtureView),
+}) {}
+
+/** One League Table row — points → goal difference → goals scored tie-break order (ADR-0004),
+ * no head-to-head. */
+export class LeagueTableRow extends Schema.Class<LeagueTableRow>("LeagueTableRow")({
+  clubId: Schema.String,
+  clubName: Schema.String,
+  played: Schema.Number,
+  won: Schema.Number,
+  drawn: Schema.Number,
+  lost: Schema.Number,
+  goalsFor: Schema.Number,
+  goalsAgainst: Schema.Number,
+  goalDifference: Schema.Number,
+  points: Schema.Number,
+}) {}
+
+export class LeagueTableView extends Schema.Class<LeagueTableView>("LeagueTableView")({
+  season: SeasonView,
+  standings: Schema.Array(LeagueTableRow),
+}) {}
+
+export class AdvanceCalendarResult extends Schema.Class<AdvanceCalendarResult>("AdvanceCalendarResult")({
+  season: SeasonView,
+  resolvedMatchday: Schema.NullOr(Schema.Number),
+  transferWindowClosed: Schema.NullOr(Schema.String),
+  transferWindowOpened: Schema.NullOr(Schema.String),
+  seasonConcluded: Schema.Boolean,
+}) {}
+
+/** Raised when `AdvanceCalendar` is invoked after the Season's final Matchday has already resolved —
+ * Season rollover into a new Season is out of this ticket's scope. */
+export class SeasonCompleteError extends Schema.TaggedError<SeasonCompleteError>()(
+  "SeasonCompleteError",
+  {
+    saveId: Schema.String,
+  },
+) {}

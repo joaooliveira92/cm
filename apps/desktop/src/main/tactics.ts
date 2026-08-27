@@ -12,8 +12,9 @@ import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 
-/** The club's persisted Tactic, if `ChangeTactics` has ever been issued — assumes a `SqlClient` in context. */
-const loadPersistedTactic = (clubId: string) =>
+/** The club's persisted Tactic, if `ChangeTactics` has ever been issued — assumes a `SqlClient` in context.
+ * Exported for season.ts (ticket 15): AI clubs without a persisted Tactic get a synthesized default there. */
+export const loadPersistedTactic = (clubId: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
 
