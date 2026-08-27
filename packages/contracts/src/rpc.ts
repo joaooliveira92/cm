@@ -1,9 +1,14 @@
 import { Schema } from "effect";
 import {
   AdvanceCalendarResult,
+  ClubNotFoundError,
+  ClubSummary,
   FixturesView,
   InvalidTacticError,
   LeagueTableView,
+  MatchNotFoundError,
+  MatchSummary,
+  ResumeSimulationView,
   SaveNotFoundError,
   SaveSummary,
   SeasonCompleteError,
@@ -72,6 +77,21 @@ export const AppRpcs = {
     payload: Schema.Struct({ saveId: Schema.String }),
     success: AdvanceCalendarResult,
     error: Schema.Union([SaveNotFoundError, SeasonCompleteError]),
+  },
+  listOpponentClubs: {
+    payload: Schema.Struct({ saveId: Schema.String }),
+    success: Schema.Array(ClubSummary),
+    error: SaveNotFoundError,
+  },
+  startMatch: {
+    payload: Schema.Struct({ saveId: Schema.String, opponentClubId: Schema.String }),
+    success: MatchSummary,
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+  },
+  resumeSimulation: {
+    payload: Schema.Struct({ saveId: Schema.String, matchId: Schema.String, cursor: Schema.Number }),
+    success: ResumeSimulationView,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },
 } as const;
 

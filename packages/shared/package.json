@@ -9,6 +9,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@cm-clone/game-engine": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "catalog:",
     "vitest": "^4.1.0"

@@ -162,3 +162,41 @@ export class SeasonCompleteError extends Schema.TaggedError<SeasonCompleteError>
     saveId: Schema.String,
   },
 ) {}
+
+export class ClubNotFoundError extends Schema.TaggedError<ClubNotFoundError>()("ClubNotFoundError", {
+  id: Schema.String,
+}) {}
+
+export class MatchNotFoundError extends Schema.TaggedError<MatchNotFoundError>()("MatchNotFoundError", {
+  matchId: Schema.String,
+}) {}
+
+/** A Match Decider stream is keyed by a fresh matchId (ADR-0007); ticket 15's fixture list exists
+ * separately, so `startMatch` (ticket 13) lets the player pick any other club as a stand-in
+ * opponent for a manual friendly — see `listOpponentClubs`. */
+export class MatchSummary extends Schema.Class<MatchSummary>("MatchSummary")({
+  matchId: Schema.String,
+  homeClubId: Schema.String,
+  homeClubName: Schema.String,
+  awayClubId: Schema.String,
+  awayClubName: Schema.String,
+}) {}
+
+/** One rendered Commentary Line (ADR-0008) — minute is a separate field, never baked into `text`. */
+export class CommentaryLineView extends Schema.Class<CommentaryLineView>("CommentaryLineView")({
+  minute: Schema.Number,
+  tag: Schema.String,
+  text: Schema.String,
+}) {}
+
+/** `ResumeSimulation`'s response (ADR-0007 chunked resimulation, no RPC streaming): the next chunk
+ * of already-rendered Commentary Lines after `cursor`, the new cursor, and whether the match has
+ * reached `FullTimeWhistle`. */
+export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("ResumeSimulationView")({
+  matchId: Schema.String,
+  cursor: Schema.Number,
+  isComplete: Schema.Boolean,
+  homeScore: Schema.Number,
+  awayScore: Schema.Number,
+  lines: Schema.Array(CommentaryLineView),
+}) {}
