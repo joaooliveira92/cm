@@ -10,8 +10,10 @@ import {
   MatchSummary,
   ResumeSimulationView,
   SaveNotFoundError,
+  SaveSackedError,
   SaveSummary,
   SeasonCompleteError,
+  SeasonSummaryView,
   SquadView,
   Tactic,
   TacticsScreenView,
@@ -76,7 +78,12 @@ export const AppRpcs = {
   advanceCalendar: {
     payload: Schema.Struct({ saveId: Schema.String }),
     success: AdvanceCalendarResult,
-    error: Schema.Union([SaveNotFoundError, SeasonCompleteError]),
+    error: Schema.Union([SaveNotFoundError, SeasonCompleteError, SaveSackedError]),
+  },
+  getSeasonSummary: {
+    payload: Schema.Struct({ saveId: Schema.String }),
+    success: SeasonSummaryView,
+    error: SaveNotFoundError,
   },
   listOpponentClubs: {
     payload: Schema.Struct({ saveId: Schema.String }),
