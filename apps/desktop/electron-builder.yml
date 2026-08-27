@@ -1,0 +1,11 @@
+appId: dev.cm-clone.desktop
+productName: Championship Manager Clone
+directories:
+  output: release
+files:
+  - dist/**
+mac:
+  category: public.app-category.sports
+linux:
+  category: Game
+win: {}

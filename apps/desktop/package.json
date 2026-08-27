@@ -1,0 +1,36 @@
+{
+  "name": "@cm-clone/desktop",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "concurrently -k -n main,preload,renderer \"pnpm build:main --watch\" \"pnpm build:preload --watch\" \"vite\"",
+    "build:main": "vite build -c vite.main.config.ts",
+    "build:preload": "vite build -c vite.preload.config.ts",
+    "build:renderer": "vite build -c vite.renderer.config.ts",
+    "build": "pnpm build:main && pnpm build:preload && pnpm build:renderer",
+    "typecheck": "tsc --noEmit",
+    "electron": "electron .",
+    "package": "pnpm build && electron-builder --config electron-builder.yml"
+  },
+  "dependencies": {
+    "@cm-clone/contracts": "workspace:*",
+    "@effect/sql-sqlite-node": "catalog:",
+    "effect": "catalog:",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "catalog:",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.1.0",
+    "electron": "^44.0.0",
+    "electron-builder": "^26.15.3",
+    "tailwindcss": "^4.3.3",
+    "vite": "^7.0.0"
+  }
+}

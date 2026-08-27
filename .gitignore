@@ -5,3 +5,17 @@
 
 # OS
 Thumbs.db
+docs/.DS_Store
+
+# Node / pnpm
+node_modules/
+dist/
+dist-electron/
+release/
+*.log
+
+# Electron save files (dev)
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm

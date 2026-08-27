@@ -1,0 +1,16 @@
+packages:
+  - apps/*
+  - packages/*
+
+allowBuilds:
+  electron-winstaller: false
+  esbuild: true
+  msgpackr-extract: true
+
+catalog:
+  effect: 4.0.0-rc.112
+  "@effect/platform-node": 4.0.0-rc.112
+  "@effect/sql-sqlite-node": 4.0.0-rc.112
+  "@effect/vitest": 4.0.0-rc.112
+  typescript: ^7.0.0
+  "@types/node": ^24
