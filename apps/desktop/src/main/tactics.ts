@@ -65,7 +65,24 @@ export const getTactics = (savesDir: string, saveId: string) =>
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
 
-const validateTactic = (tactic: Tactic, squadPlayerIds: ReadonlySet<string>) =>
+/** Writes a Tactic's `tactics`/`tactic_slots` rows for one club — shared by `changeTactics` (the
+ * user's own club, after `validateTactic` below) and `aiClubs.ts`'s Season-start AI Tactic
+ * assignment (ticket 17), which calls this directly in-process rather than through the RpcGroup.
+ * Assumes a `SqlClient` in context. */
+export const persistTactic = (clubId: string, tactic: Tactic) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    yield* sql`DELETE FROM tactic_slots WHERE club_id = ${clubId}`;
+    yield* sql`DELETE FROM tactics WHERE club_id = ${clubId}`;
+    yield* sql`INSERT INTO tactics (club_id, formation, mentality, tempo, pressing) VALUES (${clubId}, ${tactic.formation}, ${tactic.mentality}, ${tactic.tempo}, ${tactic.pressing})`;
+    for (const [index, slot] of tactic.slots.entries()) {
+      yield* sql`INSERT INTO tactic_slots (club_id, slot_index, position, role, player_id) VALUES (${clubId}, ${index}, ${slot.position}, ${slot.role}, ${slot.playerId})`;
+    }
+  });
+
+/** Exported for `aiClubs.ts`'s Season-start AI Tactic assignment (ticket 17), which validates the
+ * synthesized Tactic against the same rules the human Tactics screen enforces before persisting. */
+export const validateTactic = (tactic: Tactic, squadPlayerIds: ReadonlySet<string>) =>
   Effect.gen(function* () {
     const expectedPositions = FORMATION_SLOTS[tactic.formation];
     if (tactic.slots.length !== expectedPositions.length) {
@@ -103,17 +120,10 @@ const validateTactic = (tactic: Tactic, squadPlayerIds: ReadonlySet<string>) =>
 export const changeTactics = (savesDir: string, saveId: string, tactic: Tactic) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const squad = yield* loadSquadPlayers(club.id);
       yield* validateTactic(tactic, new Set(squad.map((player) => player.id)));
-
-      yield* sql`DELETE FROM tactic_slots WHERE club_id = ${club.id}`;
-      yield* sql`DELETE FROM tactics WHERE club_id = ${club.id}`;
-      yield* sql`INSERT INTO tactics (club_id, formation, mentality, tempo, pressing) VALUES (${club.id}, ${tactic.formation}, ${tactic.mentality}, ${tactic.tempo}, ${tactic.pressing})`;
-      for (const [index, slot] of tactic.slots.entries()) {
-        yield* sql`INSERT INTO tactic_slots (club_id, slot_index, position, role, player_id) VALUES (${club.id}, ${index}, ${slot.position}, ${slot.role}, ${slot.playerId})`;
-      }
+      yield* persistTactic(club.id, tactic);
 
       return new TacticsScreenView({ club, squad, tactic });
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),

@@ -15,19 +15,13 @@ import {
   SeasonCompleteError,
   SeasonSummaryView,
   SeasonView,
-  Tactic,
 } from "@cm-clone/contracts";
 import { createSeededRng, simulateMatch, type MatchTeamSetup } from "@cm-clone/game-engine";
 import type { ManagerOutcome, PlayerAttributes, RandomSource, Verdict } from "@cm-clone/shared";
-import {
-  BOARD_OBJECTIVE_BANDS,
-  FORMATION_SLOTS,
-  judgeBoardObjective,
-  nextManagerOutcome,
-  POSITION_ROLES,
-} from "@cm-clone/shared";
+import { BOARD_OBJECTIVE_BANDS, judgeBoardObjective, nextManagerOutcome } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { assignAiTactics, pickBestFormationTactic, runAiTransferWindow } from "./aiClubs.js";
 import { appendStreamEvents, nextStreamSeq } from "./decider.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
@@ -132,6 +126,11 @@ export const startSeason = (saveId: string) =>
       VALUES (1, ${userClub.id}, ${band.minPosition}, ${band.maxPosition}, NULL, NULL)`;
     yield* sql`INSERT INTO manager_status (id, consecutive_misses, sacked, last_outcome) VALUES (1, 0, 0, 'none')`;
 
+    // AI Tactic assignment (ticket 17 / ADR-0005): every AI club (all clubs but the user's) gets
+    // one fixed Tactic for the whole Season, chosen by best-fit against its own squad — set once
+    // here and never touched again (no reactive/mid-season tactical AI in v1).
+    yield* assignAiTactics;
+
     // Transfer/Wage Budgets and each generated player's initial Contract (ticket 16 / ADR-0005) —
     // derived from Stature Tier at Season start, in the same transaction as fixture generation.
     yield* initializeSeasonEconomy(1);
@@ -184,41 +183,22 @@ const toSeasonView = (row: SeasonRow) =>
   new SeasonView({ seasonNumber: row.seasonNumber, currentMatchday: row.currentMatchday, phase: row.phase });
 
 // ---------------------------------------------------------------------------
-// AI tactic stopgap (ahead of ticket 17's AI tactics automation)
+// Tactic resolution for match simulation
 // ---------------------------------------------------------------------------
 
 /**
- * Not every club has a persisted Tactic — only the user's own club, via the ticket-11 Tactics
- * screen. This synthesizes a basic 4-4-2 for any club without one: one player per required
- * Position/Role slot, greedily assigning each slot's best-rated available squad player. A stopgap
- * ahead of ticket 17 (AI tactics automation), which is not yet built.
+ * Every AI club gets a persisted Tactic at Season start now (ticket 17's `assignAiTactics`), so
+ * `loadPersistedTactic` should always hit for them. `pickBestFormationTactic` (`aiClubs.ts`) stays
+ * wired in as a fallback purely for robustness — e.g. a save created before ticket 17 shipped, or
+ * any other unforeseen gap — not because it's expected to fire in normal play.
  */
-const synthesizeDefaultTactic = (
-  squad: ReadonlyArray<{ readonly id: string; readonly positionRatings: Record<string, number> }>,
-): Tactic => {
-  const formation = "4-4-2" as const;
-  const used = new Set<string>();
-  const slots = FORMATION_SLOTS[formation].map((position) => {
-    const candidates = squad
-      .filter((player) => !used.has(player.id))
-      .sort((a, b) => (b.positionRatings[position] ?? 0) - (a.positionRatings[position] ?? 0));
-    const chosen = candidates[0];
-    if (!chosen) {
-      throw new Error(`squad has fewer players than the ${formation} formation needs (11)`);
-    }
-    used.add(chosen.id);
-    return { position, role: POSITION_ROLES[position], playerId: chosen.id };
-  });
-  return new Tactic({ formation, slots, mentality: "balanced", tempo: "normal", pressing: "medium" });
-};
-
 const getTacticForClub = (
   clubId: string,
   squad: ReadonlyArray<{ readonly id: string; readonly positionRatings: Record<string, number> }>,
 ) =>
   Effect.gen(function* () {
     const persisted = yield* loadPersistedTactic(clubId);
-    return persisted ?? synthesizeDefaultTactic(squad);
+    return persisted ?? pickBestFormationTactic(squad);
   });
 
 // ---------------------------------------------------------------------------
@@ -416,10 +396,22 @@ export const advanceCalendar = (savesDir: string, saveId: string) =>
         yield* sql`UPDATE season SET phase = 'mid_window_open' WHERE season_number = ${row.seasonNumber}`;
         streamEvents.push({ tag: "TransferWindowOpened", payload: { window: "mid_season", afterMatchday: row.currentMatchday } });
         transferWindowOpened = "mid_season";
+        // AI-club transfer activity (ticket 17 / ADR-0005) fires at the mid-season window's open —
+        // this `windowOpen` boundary *is* that open. Self-issued in-process, never through the
+        // RpcGroup.
+        yield* runAiTransferWindow(row.seasonNumber);
       } else if (boundary.type === "matchday") {
         if (boundary.closesWindow) {
           streamEvents.push({ tag: "TransferWindowClosed", payload: { window: boundary.closesWindow, matchday: boundary.matchday } });
           transferWindowClosed = boundary.closesWindow;
+          if (boundary.closesWindow === "pre_season") {
+            // The pre-season window has been open since Season start (`startSeason` sets
+            // `phase: 'pre_season'` directly — `nextCalendarBoundary` never emits a `windowOpen`
+            // boundary for it, only for the mid-season one), so there's no earlier "open" moment
+            // to hook AI activity into. This is the closest analogous point: right as the window
+            // closes, before Matchday 1 resolves (ticket 17).
+            yield* runAiTransferWindow(row.seasonNumber);
+          }
         }
         const results = yield* resolveMatchday(boundary.matchday);
         streamEvents.push({ tag: "MatchdayResolved", payload: { matchday: boundary.matchday, results } });
