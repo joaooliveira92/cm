@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import type { SaveSummary } from "@cm-clone/contracts";
+import { MatchDayScreen } from "./MatchDayScreen.js";
 import { SquadScreen } from "./SquadScreen.js";
 import { TacticsScreen } from "./TacticsScreen.js";
 
-type CareerScreen = "squad" | "tactics";
+type CareerScreen = "squad" | "tactics" | "match day";
 
 export const App = () => {
   const [saves, setSaves] = useState<ReadonlyArray<SaveSummary>>([]);
@@ -41,7 +42,7 @@ export const App = () => {
     return (
       <>
         <nav className="flex gap-2 border-b border-slate-800 bg-slate-950 p-2 text-sm text-slate-100">
-          {(["squad", "tactics"] as const).map((tab) => (
+          {(["squad", "tactics", "match day"] as const).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -56,8 +57,10 @@ export const App = () => {
         </nav>
         {screen === "squad" ? (
           <SquadScreen saveId={loadedSave.id} />
-        ) : (
+        ) : screen === "tactics" ? (
           <TacticsScreen saveId={loadedSave.id} />
+        ) : (
+          <MatchDayScreen saveId={loadedSave.id} />
         )}
       </>
     );

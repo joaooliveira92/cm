@@ -78,4 +78,16 @@ export const createSchema = Effect.gen(function* () {
     player_id TEXT NOT NULL REFERENCES players(id),
     PRIMARY KEY (club_id, slot_index)
   )`;
+
+  /** Generic append-only event log (ADR-0007 domain-bounded streams: `stream_type` e.g. "match"/"season",
+   * `stream_id` the Fixture/save id) — Deciders append here and read models are projected from it. */
+  yield* sql`CREATE TABLE events (
+    stream_type TEXT NOT NULL,
+    stream_id TEXT NOT NULL,
+    seq INTEGER NOT NULL,
+    tag TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (stream_type, stream_id, seq)
+  )`;
 });

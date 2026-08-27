@@ -10,6 +10,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@cm-clone/contracts": "workspace:*",
+    "@cm-clone/shared": "workspace:*",
     "effect": "catalog:"
   },
   "devDependencies": {

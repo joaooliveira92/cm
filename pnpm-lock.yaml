@@ -35,6 +35,9 @@ importers:
       '@cm-clone/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@cm-clone/game-engine':
+        specifier: workspace:*
+        version: link:../../packages/game-engine
       '@cm-clone/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -102,6 +105,12 @@ importers:
 
   packages/game-engine:
     dependencies:
+      '@cm-clone/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@cm-clone/shared':
+        specifier: workspace:*
+        version: link:../shared
       effect:
         specifier: 'catalog:'
         version: 4.0.0-rc.112
@@ -117,6 +126,10 @@ importers:
         version: 4.1.11(@types/node@24.13.3)(vite@7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0))
 
   packages/shared:
+    dependencies:
+      '@cm-clone/game-engine':
+        specifier: workspace:*
+        version: link:../game-engine
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

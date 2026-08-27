@@ -1,6 +1,11 @@
 import { Schema } from "effect";
 import {
+  ClubNotFoundError,
+  ClubSummary,
   InvalidTacticError,
+  MatchNotFoundError,
+  MatchSummary,
+  ResumeSimulationView,
   SaveNotFoundError,
   SaveSummary,
   SquadView,
@@ -53,6 +58,21 @@ export const AppRpcs = {
     payload: Schema.Struct({ saveId: Schema.String, tactic: Tactic }),
     success: TacticsScreenView,
     error: Schema.Union([SaveNotFoundError, InvalidTacticError]),
+  },
+  listOpponentClubs: {
+    payload: Schema.Struct({ saveId: Schema.String }),
+    success: Schema.Array(ClubSummary),
+    error: SaveNotFoundError,
+  },
+  startMatch: {
+    payload: Schema.Struct({ saveId: Schema.String, opponentClubId: Schema.String }),
+    success: MatchSummary,
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+  },
+  resumeSimulation: {
+    payload: Schema.Struct({ saveId: Schema.String, matchId: Schema.String, cursor: Schema.Number }),
+    success: ResumeSimulationView,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },
 } as const;
 
