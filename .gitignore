@@ -1,0 +1,7 @@
+.DS_Store
+
+# Temporary / scratch
+.scratch/
+
+# OS
+Thumbs.db
