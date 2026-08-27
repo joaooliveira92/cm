@@ -1,6 +1,6 @@
 import { AppRpcs, type AppRpcMethod, type RpcResult } from "@cm-clone/contracts";
 import { Effect, Schema } from "effect";
-import { listOpponentClubs, resumeSimulation, startMatch } from "./match.js";
+import { listOpponentClubs, resumeSimulation, startMatch, submitMatchCommand } from "./match.js";
 import { advanceCalendar, getFixtures, getLeagueTable } from "./season.js";
 import { createSave, listSaves, loadSave } from "./saves.js";
 import { getSquad } from "./squad.js";
@@ -75,6 +75,13 @@ const handlers: Record<AppRpcMethod, Handler> = {
         AppRpcs.resumeSimulation.payload,
       )(payload);
       return yield* resumeSimulation(ctx.savesDir, saveId, matchId, cursor);
+    }),
+  submitMatchCommand: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, matchId, cursor, minute, isHalftime, command } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.submitMatchCommand.payload,
+      )(payload);
+      return yield* submitMatchCommand(ctx.savesDir, saveId, matchId, cursor, minute, isHalftime, command);
     }),
 };
 
