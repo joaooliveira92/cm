@@ -6,7 +6,7 @@ model and glossary, and [docs/adr/](docs/adr/) for design decisions.
 
 ## Stack
 
-- Electron desktop shell (`apps/desktop`), React renderer
+- Electron desktop shell ([apps/desktop](apps/desktop)), React renderer
 - [Effect](https://effect.website/) for the domain layer, `@effect/rpc` as the only channel
   between renderer and main process
 - SQLite (`@effect/sql-sqlite-node`) for persistence
@@ -14,14 +14,23 @@ model and glossary, and [docs/adr/](docs/adr/) for design decisions.
 
 ## Project layout
 
-- `apps/desktop` — Electron app (main, preload, renderer) and Playwright e2e tests
-- `packages/contracts` — the `@effect/rpc` contract shared between renderer and main
-- `packages/game-engine` — match simulation
-- `packages/shared` — domain logic and game-design data (position/role weights, commentary
-  templates, etc.) shared across packages
-- `docs/adr/` — architecture decision records
-- `docs/agents/`, `AGENTS.md` — conventions for agents working in this repo
-- `.scratch/` — issue tracker (see [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md))
+Here is the structured table summarizing the codebase directories and their functions:
+
+| Directory / File | Type | Description |
+|---|---|---|
+| [apps/desktop](apps/desktop)  | Application | Electron app containing main, preload, and renderer processes, along with Playwright end-to-end tests. |
+| [packages/contracts](packages/contracts)  | Package | Contains the @effect/rpc contract shared between the renderer and main processes. |
+| packages/gasme-engine | Package | Handles match simulation. |
+| packages/shared | Package | Contains domain logic and game-design data (e.g., position/role weights, commentary templates) shared across all packages. |
+| docs/adr/ | Documentation | Architectural Decision Records (ADRs) tracking structural design choices. |
+| docs/agents/, AGENTS.md | Documentation | Operational guidelines and conventions for AI or automated agents working in the repository. |
+| .scratch/ | Tooling / Logs | Internal repository issue tracker (referenced via docs/agents/issue-tracker.md). |
+
+
+
+
+
+
 
 ## Requirements
 
@@ -43,5 +52,5 @@ pnpm test         # run tests in all packages
 pnpm typecheck    # typecheck all packages
 ```
 
-From `apps/desktop`, `pnpm test:e2e` runs the Playwright end-to-end suite, and `pnpm package`
+From [apps/desktop](apps/desktop)ßß, `pnpm test:e2e` runs the Playwright end-to-end suite, and `pnpm package`
 builds a distributable via electron-builder.
