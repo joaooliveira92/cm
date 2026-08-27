@@ -52,11 +52,29 @@ const drain = (savesDir: string, saveId: string, matchId: string) =>
     return chunks;
   });
 
+/**
+ * `startMatch` seeds each match from `Date.now()` (no test hook to pin it), so an Injury event can
+ * rarely force its own substitution and throw off a test's exact sub-count expectations. Tests that
+ * need a known, uninterrupted substitution budget start via this helper instead of `startMatch`
+ * directly: it drains a full no-op simulation of each candidate match first (cheap — `simulateMatch`
+ * is pure and sub-millisecond, ADR-0007) and retries with a fresh seed if any Injury fired.
+ */
+const startMatchWithNoInjuries = (savesDir: string, saveId: string, opponentClubId: string) =>
+  Effect.gen(function* () {
+    for (let attempt = 0; attempt < 25; attempt++) {
+      const summary = yield* startMatch(savesDir, saveId, opponentClubId);
+      const chunks = yield* drain(savesDir, saveId, summary.matchId);
+      const hadInjury = chunks.some((chunk) => chunk.lines.some((line) => line.tag === "Injury"));
+      if (!hadInjury) return summary;
+    }
+    throw new Error("could not find an Injury-free match seed after 25 attempts");
+  });
+
 it.effect("submitMatchCommand applies a mid-match substitution and reflects it in homeSubs", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatch(savesDir, save.id, opponents[0]!.id);
+    const summary = yield* startMatchWithNoInjuries(savesDir, save.id, opponents[0]!.id);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
@@ -98,7 +116,7 @@ it.effect("substitutions are capped at 5 per team across 3 windows, enforced sil
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatch(savesDir, save.id, opponents[0]!.id);
+    const summary = yield* startMatchWithNoInjuries(savesDir, save.id, opponents[0]!.id);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
