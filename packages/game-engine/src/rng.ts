@@ -19,22 +19,3 @@ export const createSeededRng = (seed: number): RandomSource => {
 
 export const pickRandom = <T>(items: ReadonlyArray<T>, random: RandomSource): T =>
   items[Math.floor(random.next() * items.length)] as T;
-
-export type Rng = RandomSource;
-
-const hashSeed = (seed: number, key: string): number => {
-  let hash = seed >>> 0;
-  for (let i = 0; i < key.length; i++) {
-    hash = Math.imul(hash ^ key.charCodeAt(i), 2654435761);
-    hash = (hash << 13) | (hash >>> 19);
-  }
-  return hash >>> 0;
-};
-
-/**
- * Derives an independent, deterministic sub-stream from a base seed and a string path (ADR-0002's
- * "splittable PRNG") — lets independent draws within one minute's resolution (possession, event
- * type, player pick, ...) each read their own stream while staying fully reproducible from the
- * `MatchStarted` seed alone.
- */
-export const splitRng = (seed: number, key: string): Rng => createSeededRng(hashSeed(seed, key));
