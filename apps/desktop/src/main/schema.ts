@@ -41,12 +41,16 @@ export const createSchema = Effect.gen(function* () {
     determination INTEGER NOT NULL CHECK (determination BETWEEN 1 AND 20),
     teamwork INTEGER NOT NULL CHECK (teamwork BETWEEN 1 AND 20),
     flair INTEGER NOT NULL CHECK (flair BETWEEN 1 AND 20),
+    bravery INTEGER NOT NULL CHECK (bravery BETWEEN 1 AND 20),
+    aggression INTEGER NOT NULL CHECK (aggression BETWEEN 1 AND 20),
 
     pace INTEGER NOT NULL CHECK (pace BETWEEN 1 AND 20),
     acceleration INTEGER NOT NULL CHECK (acceleration BETWEEN 1 AND 20),
     stamina INTEGER NOT NULL CHECK (stamina BETWEEN 1 AND 20),
     strength INTEGER NOT NULL CHECK (strength BETWEEN 1 AND 20),
     agility INTEGER NOT NULL CHECK (agility BETWEEN 1 AND 20),
+    natural_fitness INTEGER NOT NULL CHECK (natural_fitness BETWEEN 1 AND 20),
+    injury_proneness INTEGER NOT NULL CHECK (injury_proneness BETWEEN 1 AND 20),
 
     gk_handling INTEGER CHECK (gk_handling IS NULL OR gk_handling BETWEEN 1 AND 20),
     gk_reflexes INTEGER CHECK (gk_reflexes IS NULL OR gk_reflexes BETWEEN 1 AND 20),

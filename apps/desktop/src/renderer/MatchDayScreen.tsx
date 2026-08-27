@@ -3,6 +3,7 @@ import {
   Tactic,
   type ClubSummary,
   type CommentaryLineView,
+  type InjuryView,
   type MatchSummary,
   type SquadPlayerView,
   type SubstitutionStatusView,
@@ -81,7 +82,7 @@ const MatchControlPanel = ({
   homeClubId,
   cursor,
   subsStatus,
-  injuryPrompt,
+  injuries,
   currentMinute,
   onApplied,
 }: {
@@ -90,7 +91,7 @@ const MatchControlPanel = ({
   readonly homeClubId: string;
   readonly cursor: number;
   readonly subsStatus: SubstitutionStatusView;
-  readonly injuryPrompt: boolean;
+  readonly injuries: ReadonlyArray<InjuryView>;
   readonly currentMinute: number;
   readonly onApplied: (response: {
     readonly cursor: number;
@@ -109,6 +110,9 @@ const MatchControlPanel = ({
   const [inPlayerId, setInPlayerId] = useState("");
   const [isHalftime, setIsHalftime] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+
+  const injuryPrompt = injuries.some((injury) => injury.teamClubId === homeClubId);
+  const hasRedInjury = injuries.some((injury) => injury.teamClubId === homeClubId && injury.tier === "red");
 
   useEffect(() => {
     if (injuryPrompt) setOpen(true);
@@ -188,7 +192,15 @@ const MatchControlPanel = ({
       >
         <span>
           Tactics &amp; substitutions
-          {injuryPrompt && <span className="ml-2 rounded bg-red-700 px-2 py-0.5 text-xs">Injury — sub now?</span>}
+          {injuryPrompt && (
+            <span
+              className={`ml-2 rounded px-2 py-0.5 text-xs ${
+                hasRedInjury ? "bg-red-700" : "bg-amber-700"
+              }`}
+            >
+              {hasRedInjury ? "Severe injury — must re-sub" : "Knock — sub or play on"}
+            </span>
+          )}
         </span>
         <span className="text-slate-400">{open ? "Hide" : "Show"}</span>
       </button>
@@ -313,7 +325,7 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
   const [awayScore, setAwayScore] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [homeSubs, setHomeSubs] = useState<SubstitutionStatusView>(NO_SUBS);
-  const [injuryPrompt, setInjuryPrompt] = useState(false);
+  const [chunkInjuries, setChunkInjuries] = useState<ReadonlyArray<InjuryView>>([]);
   const [currentMinute, setCurrentMinute] = useState(0);
 
   // Mutable pacing/polling state that doesn't need to trigger re-renders on its own.
@@ -341,7 +353,7 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
     setAwayScore(0);
     setIsComplete(false);
     setHomeSubs(NO_SUBS);
-    setInjuryPrompt(false);
+    setChunkInjuries([]);
     setCurrentMinute(0);
     cursorRef.current = 0;
     pendingRef.current = [];
@@ -376,9 +388,9 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
         setHomeScore(chunk.homeScore);
         setAwayScore(chunk.awayScore);
         setHomeSubs(chunk.homeSubs);
-        // Injury Match Event handling (ticket 14): an Injury landing in this chunk for the
-        // player's own club prompts an immediate substitution offer, still subject to the cap.
-        if (chunk.injuredClubIds.includes(match.homeClubId)) setInjuryPrompt(true);
+        // Typed `Injury` Match Events landing in this chunk (ticket 08/07) drive the severity-scaled
+        // indicator and, for the player's own club, the re-sub/play-on prompt.
+        setChunkInjuries(chunk.injuries);
         if (chunk.isComplete) streamCompleteRef.current = true;
       } catch {
         setError("Failed to resume match simulation");
@@ -428,7 +440,9 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
     setHomeScore(response.homeScore);
     setAwayScore(response.awayScore);
     setHomeSubs(response.homeSubs);
-    if (!response.lines.some((line) => line.tag === "Injury")) setInjuryPrompt(false);
+    // The manager has seen the injury prompt and reacted (or not); clear it so a fresh injury in a
+    // later chunk re-prompts.
+    setChunkInjuries([]);
   };
 
   return (
@@ -489,7 +503,7 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
               homeClubId={match.homeClubId}
               cursor={cursorRef.current}
               subsStatus={homeSubs}
-              injuryPrompt={injuryPrompt}
+              injuries={chunkInjuries}
               currentMinute={currentMinute}
               onApplied={onCommandApplied}
             />

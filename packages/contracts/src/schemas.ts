@@ -3,6 +3,7 @@ import {
   FAMILIARITY_TIERS,
   FORMATIONS,
   GOALKEEPING_ATTRIBUTES,
+  HIDDEN_ATTRIBUTES,
   MANAGER_OUTCOMES,
   MENTALITY_OPTIONS,
   OUTFIELD_ATTRIBUTES,
@@ -36,10 +37,15 @@ export class PlayerPositionView extends Schema.Class<PlayerPositionView>("Player
   familiarity: FamiliarityTierSchema,
 }) {}
 
-/** Every outfield Attribute is required, 1-20; goalkeeping Attributes are undefined for outfield players. */
+/**
+ * Every outfield Attribute is required, 1-20; goalkeeping Attributes are undefined for outfield
+ * players. Hidden attributes ride along optionally so the match engine receives them when it builds
+ * a team setup — no UI group renders them, so they stay hidden at the display layer.
+ */
 export const AttributesSchema = Schema.Struct({
   ...Object.fromEntries(OUTFIELD_ATTRIBUTES.map((attribute) => [attribute, Schema.Number])),
   ...Object.fromEntries(GOALKEEPING_ATTRIBUTES.map((attribute) => [attribute, Schema.optional(Schema.Number)])),
+  ...Object.fromEntries(HIDDEN_ATTRIBUTES.map((attribute) => [attribute, Schema.optional(Schema.Number)])),
 });
 
 export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerView")({
@@ -250,11 +256,24 @@ export class SubstitutionStatusView extends Schema.Class<SubstitutionStatusView>
   capReached: Schema.Boolean,
 }) {}
 
+/** A typed `Injury` Match Event, so the renderer's commentary/indicators and the no-subs prompts
+ * consume the same typed data the engine emits (ticket 08/07) — no separate representation. */
+export class InjuryView extends Schema.Class<InjuryView>("InjuryView")({
+  minute: Schema.Number,
+  teamClubId: Schema.String,
+  playerId: Schema.String,
+  trigger: Schema.Literals(["contact", "non-contact"]),
+  severity: Schema.Literals(["light", "medium", "severe"]),
+  tier: Schema.Literals(["orange", "red"]),
+  type: Schema.Literals(["brokenToe", "twistedAnkle", "deadLeg", "hamstring", "calf", "strain"]),
+}) {}
+
 /** `ResumeSimulation`'s response (ADR-0007 chunked resimulation, no RPC streaming): the next chunk
  * of already-rendered Commentary Lines after `cursor`, the new cursor, and whether the match has
  * reached `FullTimeWhistle`. `homeSubs`/`awaySubs` and `injuredClubIds` are ticket 14 additions —
  * `injuredClubIds` lists the clubs (deduplicated) that had an `Injury` Match Event land in *this*
- * chunk, so the renderer can prompt an immediate substitution. */
+ * chunk, so the renderer can prompt an immediate substitution. `injuries` (ticket 08) carries the
+ * full typed detail of each `Injury` in this chunk for severity-scaled indicators/prompts. */
 export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("ResumeSimulationView")({
   matchId: Schema.String,
   cursor: Schema.Number,
@@ -265,6 +284,9 @@ export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("Re
   homeSubs: SubstitutionStatusView,
   awaySubs: SubstitutionStatusView,
   injuredClubIds: Schema.Array(Schema.String),
+  injuries: Schema.Array(InjuryView),
+  /** Per-player Condition (%) at full time, keyed by playerId across both teams (ticket 02). */
+  conditions: Schema.Record(Schema.String, Schema.Number),
 }) {}
 
 /** `SubmitMatchCommand` (ticket 14) payload shapes — structurally identical to game-engine's

@@ -1,4 +1,4 @@
-import type { MatchEvent } from "@cm-clone/game-engine";
+import type { InjurySeverity, MatchEvent } from "@cm-clone/game-engine";
 
 /**
  * Match Commentary Templates (ADR-0008 / ticket 08): fixed game-design data, parallel to
@@ -9,12 +9,19 @@ import type { MatchEvent } from "@cm-clone/game-engine";
  */
 export type CommentaryEventTag = MatchEvent["_tag"];
 
+/** Every key `COMMENTARY_TEMPLATES` must carry: each Match Event tag, plus a `Injury:<severity>`
+ * pool per severity (ticket 08). Kept a closed union so the record stays exhaustive at compile time. */
+export type CommentaryTemplateKey = CommentaryEventTag | `Injury:${InjurySeverity}`;
+
 /**
- * One template per pool entry. `{token}` placeholders are filled from the event payload by
- * `renderCommentary` — player/team names always available, `{score}` only for Goal/HalfTimeReached/
- * FullTimeWhistle per the ticket. Minute is never baked in here; the UI renders it separately.
+ * Template pools keyed by the event's template key (`templateKeyFor` below): every Match Event tag,
+ * plus a `Injury:<severity>` pool so Light / Medium / Severe injuries narrate differently (ticket
+ * 08) while still being non-repeating under the same per-pool rules as every other tag.
+ * `{token}` placeholders are filled from the event payload by `renderCommentary` — player/team names
+ * always available, `{score}` only for Goal/HalfTimeReached/FullTimeWhistle, `{bodyPart}`/`{severity}`
+ * only for Injury. Minute is never baked in here; the UI renders it separately.
  */
-export const COMMENTARY_TEMPLATES: Record<CommentaryEventTag, ReadonlyArray<string>> = {
+export const COMMENTARY_TEMPLATES: Record<CommentaryTemplateKey, ReadonlyArray<string>> = {
   MatchStarted: [
     "Kick off! {home} get us underway against {away}.",
     "And we're off — {home} host {away} in front of a expectant crowd.",
@@ -56,10 +63,24 @@ export const COMMENTARY_TEMPLATES: Record<CommentaryEventTag, ReadonlyArray<stri
     "{player} sees red — {team} down to ten men!",
     "It's an early bath for {player} of {team} — a straight red card.",
   ],
+  "Injury:light": [
+    "{player} of {team} takes a knock and stays on, but he's favouring the {bodyPart}.",
+    "{player} is up and moving for {team} — a few heavy touches but he'll carry on.",
+    "A minor {severity} knock for {player}, who carries on for {team}.",
+  ],
+  "Injury:medium": [
+    "{player} of {team} is down clutching his {bodyPart} and looks in some discomfort.",
+    "Worrying signs for {team} as {player} receives treatment — the physio is up on his {bodyPart}.",
+    "{player} is receiving attention on the pitch for {team} — that's a {severity} one.",
+  ],
+  "Injury:severe": [
+    "{player} of {team} is down and this doesn't look good — the stretcher is on for the {bodyPart}.",
+    "It's a bad one for {player} — the {bodyPart} is gone and {team} are going to lose him here.",
+    "{player} can't continue for {team} — the physio waves the stretcher on.",
+  ],
   Injury: [
-    "{player} of {team} is down and looks to be in some discomfort.",
-    "Worrying signs for {team} as {player} receives treatment.",
-    "{player} can't continue like this — {team}'s physio is on the pitch.",
+    "{player} of {team} is down and the physio is on.",
+    "{player} is receiving treatment for {team}.",
   ],
   Substitution: [
     "Substitution for {team}: {inPlayer} replaces {outPlayer}.",
@@ -77,6 +98,20 @@ export const COMMENTARY_TEMPLATES: Record<CommentaryEventTag, ReadonlyArray<stri
     "It's all over — the match ends {score}.",
   ],
 };
+
+/** The human body-part word for each injury type, for the `{bodyPart}` commentary token. */
+const BODY_PARTS: Record<string, string> = {
+  brokenToe: "toe",
+  twistedAnkle: "ankle",
+  deadLeg: "dead leg",
+  hamstring: "hamstring",
+  calf: "calf",
+  strain: "strain",
+};
+
+/** Which template pool an event draws from. Injury pools are severity-keyed (ticket 08). */
+const templateKeyFor = (event: MatchEvent): CommentaryTemplateKey =>
+  event._tag === "Injury" ? `Injury:${event.severity}` : event._tag;
 
 export interface CommentaryNameResolver {
   readonly clubName: (clubId: string) => string;
@@ -107,8 +142,14 @@ const tokensFor = (event: MatchEvent, names: CommentaryNameResolver): Record<str
     case "BigChance":
     case "YellowCard":
     case "RedCard":
-    case "Injury":
       return { player: names.playerName(event.playerId), team: names.clubName(event.teamClubId) };
+    case "Injury":
+      return {
+        player: names.playerName(event.playerId),
+        team: names.clubName(event.teamClubId),
+        bodyPart: BODY_PARTS[event.type] ?? "injury",
+        severity: event.severity,
+      };
     case "Substitution":
       return {
         team: names.clubName(event.teamClubId),
@@ -162,17 +203,18 @@ export const renderCommentary = (
   matchSeed: number,
   names: CommentaryNameResolver,
 ): ReadonlyArray<CommentaryLine> => {
-  const lastIndexByTag = new Map<CommentaryEventTag, number>();
-  const occurrenceByTag = new Map<CommentaryEventTag, number>();
+  const lastIndexByKey = new Map<CommentaryTemplateKey, number>();
+  const occurrenceByKey = new Map<CommentaryTemplateKey, number>();
 
   return events.map((event): CommentaryLine => {
-    const pool = COMMENTARY_TEMPLATES[event._tag];
-    const occurrence = occurrenceByTag.get(event._tag) ?? 0;
-    occurrenceByTag.set(event._tag, occurrence + 1);
+    const key = templateKeyFor(event);
+    const pool = COMMENTARY_TEMPLATES[key];
+    const occurrence = occurrenceByKey.get(key) ?? 0;
+    occurrenceByKey.set(key, occurrence + 1);
 
-    const excludeIndex = lastIndexByTag.get(event._tag) ?? null;
-    const index = pickTemplateIndex(matchSeed, event._tag, occurrence, pool.length, excludeIndex);
-    lastIndexByTag.set(event._tag, index);
+    const excludeIndex = lastIndexByKey.get(key) ?? null;
+    const index = pickTemplateIndex(matchSeed, key, occurrence, pool.length, excludeIndex);
+    lastIndexByKey.set(key, index);
 
     return {
       minute: "minute" in event ? event.minute : 0,

@@ -35,6 +35,8 @@ export const MENTAL_ATTRIBUTES = [
   "determination",
   "teamwork",
   "flair",
+  "bravery",
+  "aggression",
 ] as const;
 
 export const PHYSICAL_ATTRIBUTES = [
@@ -43,6 +45,7 @@ export const PHYSICAL_ATTRIBUTES = [
   "stamina",
   "strength",
   "agility",
+  "naturalFitness",
 ] as const;
 
 export const GOALKEEPING_ATTRIBUTES = [
@@ -59,20 +62,29 @@ export const OUTFIELD_ATTRIBUTES = [
   ...PHYSICAL_ATTRIBUTES,
 ] as const;
 
+/**
+ * Hidden (never surfaced to any UI) attributes that key the injury system. Scored 1-20 like every
+ * other Attribute, but deliberately absent from every `POSITION_WEIGHTS` table so they never feed
+ * Position/Overall Rating or Transfer Value. `injuryProneness` is the primary risk multiplier;
+ * recovery is keyed off the visible `naturalFitness` (a Physical attribute, so it's displayed).
+ */
+export const HIDDEN_ATTRIBUTES = ["injuryProneness"] as const;
+
 export const ALL_ATTRIBUTES = [...OUTFIELD_ATTRIBUTES, ...GOALKEEPING_ATTRIBUTES] as const;
 
 export type OutfieldAttribute = (typeof OUTFIELD_ATTRIBUTES)[number];
 export type GoalkeepingAttribute = (typeof GOALKEEPING_ATTRIBUTES)[number];
+export type HiddenAttribute = (typeof HIDDEN_ATTRIBUTES)[number];
 export type Attribute = (typeof ALL_ATTRIBUTES)[number];
 
 /** Every outfield player has these; goalkeeping attributes are only present for GK-capable players. */
 export type PlayerAttributes = Record<OutfieldAttribute, number> &
-  Partial<Record<GoalkeepingAttribute, number>>;
+  Partial<Record<GoalkeepingAttribute, number>> &
+  Record<HiddenAttribute, number>;
 
-/**
- * (Position, Attribute) importance weights for Position Rating. Game-design data, fixed here
- * per ADR-0001 rather than a SQL table.
- */
+/** (Position, Attribute) importance weights for Position Rating. Game-design data, fixed here
+ * per ADR-0001 rather than a SQL table. Bravery/Aggression and the fitness/injury attributes are
+ * deliberately absent from every table so they never affect Position/Overall Rating or Transfer Value. */
 export const POSITION_WEIGHTS: Record<Position, Partial<Record<Attribute, number>>> = {
   GK: {
     gkHandling: 3,

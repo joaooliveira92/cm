@@ -245,6 +245,12 @@ it.effect("an Injury event's chunk lists the injured club in injuredClubIds", ()
         if (chunk.lines.some((line) => line.tag === "Injury")) {
           found = true;
           ok(chunk.injuredClubIds.length > 0, "a chunk with an Injury line must list the injured club");
+          ok(
+            chunk.injuries.some(
+              (i) => i.trigger === "contact" || i.trigger === "non-contact",
+            ) && chunk.injuries.every((i) => ["orange", "red"].includes(i.tier)),
+            "a chunk with an Injury line must carry its typed trigger and tier",
+          );
         }
       }
     }

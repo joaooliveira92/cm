@@ -1,11 +1,13 @@
 import {
   ADJACENT_POSITIONS,
   GOALKEEPING_ATTRIBUTES,
+  HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
   PHYSICAL_ATTRIBUTES,
   POSITION_WEIGHTS,
   type Attribute,
   type FamiliarityTier,
+  type HiddenAttribute,
   type PlayerAttributes,
   type Position,
 } from "./positions.js";
@@ -98,7 +100,7 @@ const POTENTIAL_ABILITY_RANGE: Record<StatureTier, readonly [number, number]> = 
  * 1-2 points/season (on the 1-20 scale) from 30+; Technical/Mental hold at Potential Ability.
  */
 const attributeCeilingOn20Scale = (
-  attribute: Attribute,
+  attribute: Attribute | HiddenAttribute,
   age: number,
   potentialAbility: number,
 ): number => {
@@ -114,13 +116,13 @@ const attributeCeilingOn20Scale = (
 };
 
 const generateAttribute = (
-  attribute: Attribute,
+  attribute: Attribute | HiddenAttribute,
   primaryPosition: Position,
   age: number,
   potentialAbility: number,
   random: RandomSource,
 ): number => {
-  const weight = POSITION_WEIGHTS[primaryPosition][attribute] ?? 1;
+  const weight = POSITION_WEIGHTS[primaryPosition][attribute as Attribute] ?? 1;
   const skew = clamp(weight / 3, 0, 1);
   const ceilingOn20Scale = attributeCeilingOn20Scale(attribute, age, potentialAbility);
   const base = ceilingOn20Scale * (0.6 + 0.4 * skew);
@@ -158,6 +160,9 @@ export const generatePlayer = (
 
   const attributes = {} as Record<string, number>;
   for (const attribute of OUTFIELD_ATTRIBUTES) {
+    attributes[attribute] = generateAttribute(attribute, primaryPosition, age, potentialAbility, random);
+  }
+  for (const attribute of HIDDEN_ATTRIBUTES) {
     attributes[attribute] = generateAttribute(attribute, primaryPosition, age, potentialAbility, random);
   }
   if (primaryPosition === "GK") {

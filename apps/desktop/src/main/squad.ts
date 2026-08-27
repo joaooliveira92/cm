@@ -4,6 +4,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { ClubSummary, SaveNotFoundError, SquadPlayerView, SquadView } from "@cm-clone/contracts";
 import {
   ALL_ATTRIBUTES,
+  HIDDEN_ATTRIBUTES,
   POSITIONS,
   overallRating,
   positionRating,
@@ -32,7 +33,10 @@ interface PlayerRow {
   readonly [attribute: string]: unknown;
 }
 
-const attributeSelectList = ALL_ATTRIBUTES.map(
+/** Every attribute column to SELECT. Hidden attributes (injury proneness) are included even though
+ * the UI never renders them — the match engine reads them from `player.attributes` when it builds a
+ * team setup, so they must be present in the read model. */
+const attributeSelectList = [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map(
   (attribute) => `${attribute.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)} as "${attribute}"`,
 ).join(", ");
 
@@ -69,7 +73,7 @@ export const loadSquadPlayers = (clubId: string) =>
         .map((p) => ({ position: p.position, familiarity: p.familiarity }));
 
       const attributes = Object.fromEntries(
-        ALL_ATTRIBUTES.map((attribute) => [attribute, row[attribute] ?? undefined]),
+        [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map((attribute) => [attribute, row[attribute] ?? undefined]),
       ) as PlayerAttributes;
 
       const overall = overallRating(attributes, positions);

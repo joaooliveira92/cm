@@ -4,6 +4,7 @@ import {
   ClubNotFoundError,
   ClubSummary,
   CommentaryLineView,
+  InjuryView,
   MatchNotFoundError,
   MatchSummary,
   ResumeSimulationView,
@@ -15,7 +16,7 @@ import {
 import {
   MAX_SUBSTITUTIONS_PER_TEAM,
   MAX_SUBSTITUTION_WINDOWS_PER_TEAM,
-  simulateMatch,
+  simulateMatchWithCondition,
   type MatchCommand,
   type MatchEvent,
   type MatchTeamSetup,
@@ -249,9 +250,12 @@ const scoreAsOf = (events: ReadonlyArray<MatchEvent>): { readonly homeScore: num
  * `PersistedMatchStarted` snapshot, every later row is a ticket 14 `TacticsChanged`/
  * `SubstitutionMade` command journal entry. Pure function of the stream's contents — same stream
  * in, same timeline out, which is what makes `resumeSimulation`'s cursor-based chunking and the
- * determinism test both work.
+ * determinism test both work. Also returns each player's full-time Condition (ticket 02).
  */
-const deriveMatchEvents = (stream: ReadonlyArray<StreamEvent>): ReadonlyArray<MatchEvent> => {
+const deriveMatchEvents = (stream: ReadonlyArray<StreamEvent>): {
+  readonly events: ReadonlyArray<MatchEvent>;
+  readonly conditions: ReadonlyMap<string, number>;
+} => {
   const started = stream[0]!.payload as PersistedMatchStarted;
 
   const commandsByMinute = new Map<number, Array<MatchCommand>>();
@@ -281,7 +285,7 @@ const deriveMatchEvents = (stream: ReadonlyArray<StreamEvent>): ReadonlyArray<Ma
     }
   }
 
-  return simulateMatch({
+  return simulateMatchWithCondition({
     seed: started.seed,
     home: started.homeSetup,
     away: started.awaySetup,
@@ -314,7 +318,12 @@ const computeSubstitutionStatus = (clubId: string, events: ReadonlyArray<MatchEv
 /** Shared tail of `resumeSimulation`/`submitMatchCommand`: given the full (re)derived `MatchEvent`
  * timeline, resolves names, renders Commentary Lines, slices off the chunk after `cursor`, and
  * attaches the ticket 14 substitution-cap/injury-prompt fields. Assumes a `SqlClient` in context. */
-const buildResumeSimulationView = (matchId: string, events: ReadonlyArray<MatchEvent>, cursor: number) =>
+const buildResumeSimulationView = (
+  matchId: string,
+  events: ReadonlyArray<MatchEvent>,
+  conditions: ReadonlyMap<string, number>,
+  cursor: number,
+) =>
   Effect.gen(function* () {
     const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
 
@@ -366,6 +375,17 @@ const buildResumeSimulationView = (matchId: string, events: ReadonlyArray<MatchE
           .map((event) => event.teamClubId),
       ),
     ];
+    const injuries = chunkEvents
+      .filter((event): event is Extract<MatchEvent, { readonly _tag: "Injury" }> => event._tag === "Injury")
+      .map((event) => new InjuryView({
+        minute: event.minute,
+        teamClubId: event.teamClubId,
+        playerId: event.playerId,
+        trigger: event.trigger,
+        severity: event.severity,
+        tier: event.tier,
+        type: event.type,
+      }));
 
     return new ResumeSimulationView({
       matchId,
@@ -377,6 +397,8 @@ const buildResumeSimulationView = (matchId: string, events: ReadonlyArray<MatchE
       homeSubs: computeSubstitutionStatus(started.homeClubId, events),
       awaySubs: computeSubstitutionStatus(started.awayClubId, events),
       injuredClubIds,
+      injuries,
+      conditions: Object.fromEntries(conditions),
     });
   });
 
@@ -392,8 +414,8 @@ export const resumeSimulation = (savesDir: string, saveId: string, matchId: stri
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
-      const events = deriveMatchEvents(stream);
-      return yield* buildResumeSimulationView(matchId, events, cursor);
+      const derived = deriveMatchEvents(stream);
+      return yield* buildResumeSimulationView(matchId, derived.events, derived.conditions, cursor);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
 
@@ -438,7 +460,7 @@ export const submitMatchCommand = (
             };
       yield* appendStreamEvents(MATCH_STREAM_TYPE, matchId, seq, [{ tag, payload }]);
 
-      const events = deriveMatchEvents([...stream, { seq, tag, payload }]);
-      return yield* buildResumeSimulationView(matchId, events, cursor);
+      const derived = deriveMatchEvents([...stream, { seq, tag, payload }]);
+      return yield* buildResumeSimulationView(matchId, derived.events, derived.conditions, cursor);
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );

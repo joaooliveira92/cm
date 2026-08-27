@@ -23,14 +23,14 @@ export const generateWorld = Effect.gen(function* () {
       yield* sql`INSERT INTO players (
         id, club_id, first_name, last_name, date_of_birth, potential_ability,
         passing, shooting, tackling, dribbling, heading, crossing, finishing, first_touch,
-        positioning, decisions, composure, determination, teamwork, flair,
-        pace, acceleration, stamina, strength, agility,
+        positioning, decisions, composure, determination, teamwork, flair, bravery, aggression,
+        pace, acceleration, stamina, strength, agility, natural_fitness, injury_proneness,
         gk_handling, gk_reflexes, gk_aerial_reach, gk_command_of_area, gk_kicking
       ) VALUES (
         ${playerId}, ${clubId}, ${generated.firstName}, ${generated.lastName}, ${generated.dateOfBirth}, ${generated.potentialAbility},
         ${attr(a, "passing")}, ${attr(a, "shooting")}, ${attr(a, "tackling")}, ${attr(a, "dribbling")}, ${attr(a, "heading")}, ${attr(a, "crossing")}, ${attr(a, "finishing")}, ${attr(a, "firstTouch")},
-        ${attr(a, "positioning")}, ${attr(a, "decisions")}, ${attr(a, "composure")}, ${attr(a, "determination")}, ${attr(a, "teamwork")}, ${attr(a, "flair")},
-        ${attr(a, "pace")}, ${attr(a, "acceleration")}, ${attr(a, "stamina")}, ${attr(a, "strength")}, ${attr(a, "agility")},
+        ${attr(a, "positioning")}, ${attr(a, "decisions")}, ${attr(a, "composure")}, ${attr(a, "determination")}, ${attr(a, "teamwork")}, ${attr(a, "flair")}, ${attr(a, "bravery")}, ${attr(a, "aggression")},
+        ${attr(a, "pace")}, ${attr(a, "acceleration")}, ${attr(a, "stamina")}, ${attr(a, "strength")}, ${attr(a, "agility")}, ${attr(a, "naturalFitness")}, ${attr(a, "injuryProneness")},
         ${attr(a, "gkHandling")}, ${attr(a, "gkReflexes")}, ${attr(a, "gkAerialReach")}, ${attr(a, "gkCommandOfArea")}, ${attr(a, "gkKicking")}
       )`;
 

@@ -8,6 +8,9 @@ export type MatchTactic = Tactic;
 export interface MatchPlayerInput {
   readonly id: string;
   readonly attributes: PlayerAttributes;
+  /** The player's Condition (%) at kickoff — defaults to full (100) when absent. Lets a not-fully-
+   * recovered player from the previous fixture (ticket 09) start the match below full Condition. */
+  readonly startingCondition?: number;
 }
 
 export interface MatchTeamSetup {

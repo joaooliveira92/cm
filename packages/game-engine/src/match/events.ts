@@ -1,5 +1,23 @@
 export type MatchHalf = 1 | 2;
 
+/** How an injury was caused: a physical contact/duel (Path A) or a condition/fatigue breakdown (Path B). */
+export type InjuryTrigger = "contact" | "non-contact";
+
+/** The severity band rolled through the Injury Matrix (ticket 03), mapped to a no-subs tier below. */
+export type InjurySeverity = "light" | "medium" | "severe";
+
+/** The manager-facing tier: Orange (Light/Medium — can play on or be dragged off) or Red (Severe — must come off). */
+export type InjuryTier = "orange" | "red";
+
+/** The body part the injury narrative hangs off (structural for contact, muscular/fatigue for non-contact). */
+export type InjuryType =
+  | "brokenToe"
+  | "twistedAnkle"
+  | "deadLeg"
+  | "hamstring"
+  | "calf"
+  | "strain";
+
 interface BaseMatchEvent {
   readonly minute: number;
 }
@@ -45,6 +63,10 @@ export interface RedCardEvent extends TeamPlayerEvent {
 
 export interface InjuryEvent extends TeamPlayerEvent {
   readonly _tag: "Injury";
+  readonly trigger: InjuryTrigger;
+  readonly severity: InjurySeverity;
+  readonly tier: InjuryTier;
+  readonly type: InjuryType;
 }
 
 export interface SubstitutionEvent extends BaseMatchEvent {

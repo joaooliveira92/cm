@@ -92,9 +92,38 @@ One entry in a match's emitted timeline: `MatchStarted`, `Goal`, `ShotOnTarget`,
 from — not a separate commentary-only representation.
 
 **Injury** (match event):
-A low-probability Match Event that forces an immediate Substitution, with no effect beyond the match
-it occurs in. Distinct from the season-long fitness/injury system (not yet specified), which tracks
-injury-proneness and recovery across matches.
+A Match Event carrying a trigger (`contact` | `non-contact`), a Severity (`light` | `medium` |
+`severe`), a No-Subs Tier (`orange` | `red`), and a body-part Type. Light/Medium are Orange
+(manager may leave the player on, crippled and at risk of escalation, or drag them off); Severe is
+Red (forced off — substituted, or the team plays with 10 if no subs remain). Distinct from the
+season-long fitness layer below.
+
+**Condition**:
+A per-player, in-match percentage (0-100, starting near 100) that decays each minute with a player's
+Stamina and the team's Tempo. It replaces squad-average fatigue as the driver of late-match strength
+decay and is the substrate both injury triggers read from. Below the ~75% threshold the non-contact
+injury risk climbs as Condition falls.
+_Avoid_: Fitness (see Natural Fitness), stamina (Stamina is the attribute; Condition is the live state)
+
+**Natural Fitness**:
+A visible Physical attribute (1-20) that governs how quickly a player's Condition recovers between
+matches. Recovery is keyed to Natural Fitness and the most recent injury's Severity — a knock recovers
+faster than a severe.
+
+**Injury Proneness**:
+A hidden attribute (1-20, never surfaced to any UI) that is the primary multiplier on both injury
+trigger paths and nudges the Severity matrix toward worse outcomes.
+
+**Contact Injury** (Path A):
+An injury caused by a physical duel/collision (see
+[ADR-0009](docs/adr/0009-contact-duel-modeling.md)), risk =
+`BaseCollision × (defender Aggression / attacker Bravery) × attacker Injury Proneness`; leans
+structural (broken toe, twisted ankle, dead leg).
+
+**Non-Contact Injury** (Path B):
+A fatigue/condition-driven injury, rolled each minute a player is below the Condition threshold with
+risk = `(100 − Condition) × Injury Proneness × Match Intensity`; leans muscular/fatigue (hamstring,
+calf, strain). A player playing on with an orange knock escalates to red via this path.
 
 ### Match commentary
 

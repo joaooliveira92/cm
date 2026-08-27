@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { FORMATION_SLOTS, POSITION_ROLES, type PlayerAttributes } from "@cm-clone/shared";
 import type { MatchCommand } from "../../src/match/commands.js";
-import { simulateMatch, type SimulateMatchInput } from "../../src/match/simulate.js";
+import type { InjuryEvent } from "../../src/match/events.js";
+import {
+  simulateMatch,
+  simulateMatchWithCondition,
+  type SimulateMatchInput,
+} from "../../src/match/simulate.js";
+import type { MatchPlayerInput, MatchTeamSetup } from "../../src/match/types.js";
 import { buildTeam } from "./fixtures.js";
 
 const baseInput = (seed: number): SimulateMatchInput => ({
@@ -8,6 +15,39 @@ const baseInput = (seed: number): SimulateMatchInput => ({
   home: buildTeam("home-club", seed).setup,
   away: buildTeam("away-club", seed + 1000).setup,
 });
+
+/** A fully-maxed outfield attribute set, overridden per test — so crafted fixtures differ only in
+ * the attribute under test rather than in incidental skill noise. */
+const craftAttributes = (overrides: Partial<Record<keyof PlayerAttributes, number>> = {}): PlayerAttributes => {
+  const base: Record<string, number> = {};
+  const keys = [
+    "passing", "shooting", "tackling", "dribbling", "heading", "crossing", "finishing", "firstTouch",
+    "positioning", "decisions", "composure", "determination", "teamwork", "flair",
+    "pace", "acceleration", "stamina", "strength", "agility", "naturalFitness",
+    "bravery", "aggression", "injuryProneness",
+  ];
+  for (const key of keys) base[key] = 10;
+  return { ...(base as PlayerAttributes), ...overrides };
+};
+
+const craftTeam = (clubId: string, attributes: PlayerAttributes, formation: keyof typeof FORMATION_SLOTS = "4-4-2"): MatchTeamSetup => {
+  const squad: Array<MatchPlayerInput> = FORMATION_SLOTS[formation].map((position, index) => ({
+    id: `${clubId}-${index}`,
+    attributes: { ...attributes },
+  }));
+  const tactic = {
+    formation,
+    slots: FORMATION_SLOTS[formation].map((position, index) => ({
+      position,
+      role: POSITION_ROLES[position],
+      playerId: `${clubId}-${index}`,
+    })),
+    mentality: "balanced" as const,
+    tempo: "normal" as const,
+    pressing: "high" as const,
+  };
+  return { clubId, squad, tactic };
+};
 
 describe("simulateMatch", () => {
   it("starts with MatchStarted (carrying the seed) and ends with FullTimeWhistle", () => {
@@ -65,6 +105,92 @@ describe("simulateMatch", () => {
     ]) {
       expect(seenTags.has(tag)).toBe(true);
     }
+  });
+
+  describe("injury & fitness system", () => {
+    const injuriesAcross = (from: number, to: number): Array<InjuryEvent> => {
+      const injuries: Array<InjuryEvent> = [];
+      for (let seed = from; seed < to; seed++) {
+        for (const event of simulateMatch(baseInput(seed))) {
+          if (event._tag === "Injury") injuries.push(event);
+        }
+      }
+      return injuries;
+    };
+
+    it("fires both contact and non-contact injuries across a seed sweep", () => {
+      const injuries = injuriesAcross(1, 1200);
+      expect(injuries.some((i) => i.trigger === "contact")).toBe(true);
+      expect(injuries.some((i) => i.trigger === "non-contact")).toBe(true);
+    }, 20000);
+
+    it("exposes every player's full-time Condition deterministically (ticket 02)", () => {
+      const input = baseInput(7);
+      const { events, conditions } = simulateMatchWithCondition(input);
+      const squadIds = [...input.home.squad.map((p) => p.id), ...input.away.squad.map((p) => p.id)];
+      for (const id of squadIds) {
+        expect(conditions.get(id)).toBeGreaterThanOrEqual(0);
+        expect(conditions.get(id)).toBeLessThanOrEqual(100);
+      }
+      // Fatigue happened on the pitch: at least one on-pitch player finished below full Condition.
+      const onPitch = input.home.tactic.slots.map((slot) => slot.playerId);
+      expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
+      // Deterministic from the seed.
+      expect(simulateMatchWithCondition(input).conditions).toEqual(conditions);
+      void events;
+    });
+
+    it("a high-Aggression challenge against a low-Bravery, injury-prone attacker causes contact injuries (ticket 06)", () => {
+      const homeAttack = craftTeam("home", craftAttributes({ aggression: 20, bravery: 1, injuryProneness: 20, stamina: 18 }));
+      const awayDefense = craftTeam("away", craftAttributes({ aggression: 20, bravery: 1, injuryProneness: 20, stamina: 18 }));
+      // Run a few seeds; the crafted extreme makes a collision near-certain whenever a duel is drawn.
+      let contact = 0;
+      for (let seed = 1; seed <= 6; seed++) {
+        const events = simulateMatch({ seed, home: seed % 2 === 0 ? homeAttack : awayDefense, away: seed % 2 === 0 ? awayDefense : homeAttack });
+        contact += events.filter((e): e is InjuryEvent => e._tag === "Injury" && e.trigger === "contact").length;
+      }
+      expect(contact).toBeGreaterThan(0);
+    });
+
+    it("emits every injury with a typed trigger, severity, type, and orange/red tier", () => {
+      const injuries = injuriesAcross(1, 1200);
+      expect(injuries.length).toBeGreaterThan(0);
+      for (const injury of injuries) {
+        expect(["contact", "non-contact"]).toContain(injury.trigger);
+        expect(["light", "medium", "severe"]).toContain(injury.severity);
+        expect(["orange", "red"]).toContain(injury.tier);
+        expect(typeof injury.type).toBe("string");
+      }
+    }, 20000);
+
+    it("routes a red (severe) injury to a forced substitution", () => {
+      let redCount = 0;
+      let forcedSubs = 0;
+      for (let seed = 1; seed < 800; seed++) {
+        const events = simulateMatch(baseInput(seed));
+        for (const event of events) {
+          if (event._tag === "Injury" && event.tier === "red") redCount++;
+          if (event._tag === "Substitution" && event.forcedByInjury) forcedSubs++;
+        }
+      }
+      // Red injuries always force the player off; a bench player fills the slot when one exists.
+      expect(redCount).toBeGreaterThan(0);
+      expect(forcedSubs).toBeGreaterThanOrEqual(redCount * 0.9);
+    }, 20000);
+
+    it("is deterministic: an injury-bearing match reproduces identically", () => {
+      let seed = 1;
+      while (seed < 3000) {
+        const input = baseInput(seed);
+        const events = simulateMatch(input);
+        if (events.some((e) => e._tag === "Injury")) {
+          expect(simulateMatch(input)).toEqual(events);
+          return;
+        }
+        seed++;
+      }
+      throw new Error("no injury found in sweep — investigate risk constants");
+    });
   });
 
   describe("mid-match commands", () => {

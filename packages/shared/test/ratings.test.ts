@@ -23,6 +23,10 @@ const maxedOutfieldAttributes: PlayerAttributes = {
   stamina: 20,
   strength: 20,
   agility: 20,
+  naturalFitness: 20,
+  bravery: 20,
+  aggression: 20,
+  injuryProneness: 10,
 };
 
 describe("positionRating", () => {

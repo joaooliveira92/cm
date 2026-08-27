@@ -38,6 +38,9 @@ export interface SlotFit {
 export interface ResolvedSlot {
   readonly playerId: string;
   readonly phase: Phase;
+  /** Whether this slot is the Goalkeeper slot — the engine otherwise never names a Position, but
+   * the no-subs GK fallback (ticket 07) needs to identify which on-pitch slot guards the goal. */
+  readonly isGoalkeeper: boolean;
   readonly fit: (player: MatchPlayerInput) => SlotFit;
 }
 
@@ -75,6 +78,7 @@ export const resolveTeamTactics = (tactic: MatchTactic): ResolvedTeamTactics => 
     return {
       playerId: slot.playerId,
       phase: phaseForPosition(position),
+      isGoalkeeper: position === "GK",
       fit: (player: MatchPlayerInput): SlotFit => {
         const positionScore = positionRating(player.attributes, position);
         return {
