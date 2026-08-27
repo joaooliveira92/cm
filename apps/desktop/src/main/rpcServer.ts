@@ -5,6 +5,14 @@ import { advanceCalendar, getFixtures, getLeagueTable } from "./season.js";
 import { createSave, listSaves, loadSave } from "./saves.js";
 import { getSquad } from "./squad.js";
 import { changeTactics, getTactics } from "./tactics.js";
+import {
+  getTransfersScreen,
+  placeBid,
+  renewContract,
+  respondAsBidder,
+  respondToBid,
+  signFreeAgent,
+} from "./transfers.js";
 
 export interface RpcContext {
   readonly savesDir: string;
@@ -75,6 +83,46 @@ const handlers: Record<AppRpcMethod, Handler> = {
         AppRpcs.resumeSimulation.payload,
       )(payload);
       return yield* resumeSimulation(ctx.savesDir, saveId, matchId, cursor);
+    }),
+  getTransfersScreen: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getTransfersScreen.payload)(payload);
+      return yield* getTransfersScreen(ctx.savesDir, saveId);
+    }),
+  placeBid: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, playerId, amount } = yield* Schema.decodeUnknownEffect(AppRpcs.placeBid.payload)(
+        payload,
+      );
+      return yield* placeBid(ctx.savesDir, saveId, playerId, amount);
+    }),
+  respondToBid: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, bidId, action, counterAmount } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.respondToBid.payload,
+      )(payload);
+      return yield* respondToBid(ctx.savesDir, saveId, bidId, action, counterAmount);
+    }),
+  respondAsBidder: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, bidId, action } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.respondAsBidder.payload,
+      )(payload);
+      return yield* respondAsBidder(ctx.savesDir, saveId, bidId, action);
+    }),
+  signFreeAgent: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, playerId, years } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.signFreeAgent.payload,
+      )(payload);
+      return yield* signFreeAgent(ctx.savesDir, saveId, playerId, years);
+    }),
+  renewContract: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, playerId, years } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.renewContract.payload,
+      )(payload);
+      return yield* renewContract(ctx.savesDir, saveId, playerId, years);
     }),
 };
 

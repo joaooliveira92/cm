@@ -20,7 +20,7 @@ export const createSchema = Effect.gen(function* () {
 
   yield* sql`CREATE TABLE players (
     id TEXT PRIMARY KEY,
-    club_id TEXT NOT NULL REFERENCES clubs(id),
+    club_id TEXT REFERENCES clubs(id),
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     date_of_birth TEXT NOT NULL,
@@ -112,5 +112,43 @@ export const createSchema = Effect.gen(function* () {
     home_goals INTEGER,
     away_goals INTEGER,
     played INTEGER NOT NULL DEFAULT 0 CHECK (played IN (0,1))
+  )`;
+
+  /** Transfer/Wage economy read model (ticket 16 / ADR-0005) — one row per club, seeded at Season
+   * start from the club's fixed Stature Tier. `transfer_budget_remaining` spends down within a
+   * Season with no replenishment between the two Transfer Windows; `wage_budget` is a running cap
+   * checked against the sum of `contracts.wage` for that club, not itself spent down. */
+  yield* sql`CREATE TABLE club_budgets (
+    club_id TEXT PRIMARY KEY REFERENCES clubs(id),
+    season_number INTEGER NOT NULL,
+    transfer_budget_remaining INTEGER NOT NULL,
+    wage_budget INTEGER NOT NULL
+  )`;
+
+  /** A player's active Contract (ticket 16 / ADR-0005) — 1-5 years, formula-derived wage, no
+   * negotiation UI. A player with no row here (and `players.club_id IS NULL`) is a Free Agent,
+   * signable for Credits 0 via the normal signing flow. `years_remaining` is allowed to reach 0
+   * transiently mid-expiry-sweep (`transfers.ts`'s `expireContractsForSeason` decrements every row
+   * before deleting the ones that hit 0) — every row a Sign/Renew command writes is still 1-5. */
+  yield* sql`CREATE TABLE contracts (
+    player_id TEXT PRIMARY KEY REFERENCES players(id),
+    wage INTEGER NOT NULL CHECK (wage >= 0),
+    years_remaining INTEGER NOT NULL CHECK (years_remaining BETWEEN 0 AND 5),
+    signed_season INTEGER NOT NULL
+  )`;
+
+  /** In-flight Bid state (ticket 16 / ADR-0005) — any player is biddable regardless of a Listed
+   * flag (not modeled, per ticket 05). Single-round: the selling club accepts/rejects/counters
+   * exactly once (`countered`), then the bidding club accepts/withdraws. */
+  yield* sql`CREATE TABLE bids (
+    id TEXT PRIMARY KEY,
+    player_id TEXT NOT NULL REFERENCES players(id),
+    selling_club_id TEXT NOT NULL REFERENCES clubs(id),
+    bidding_club_id TEXT NOT NULL REFERENCES clubs(id),
+    amount INTEGER NOT NULL CHECK (amount >= 0),
+    counter_amount INTEGER,
+    status TEXT NOT NULL CHECK (status IN ('pending','countered','accepted','rejected','withdrawn')),
+    season_number INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`;
 });

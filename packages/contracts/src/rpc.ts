@@ -1,20 +1,31 @@
 import { Schema } from "effect";
 import {
   AdvanceCalendarResult,
+  BidderBidActionSchema,
+  BidNotFoundError,
+  BidView,
   ClubNotFoundError,
   ClubSummary,
   FixturesView,
+  InsufficientTransferBudgetError,
+  InvalidBidActionError,
   InvalidTacticError,
   LeagueTableView,
   MatchNotFoundError,
   MatchSummary,
+  PlayerNotFoundError,
+  PlayerNotFreeAgentError,
   ResumeSimulationView,
   SaveNotFoundError,
   SaveSummary,
   SeasonCompleteError,
+  SellerBidActionSchema,
   SquadView,
   Tactic,
   TacticsScreenView,
+  TransferWindowClosedError,
+  TransfersScreenView,
+  WageBudgetExceededError,
 } from "./schemas.js";
 
 /**
@@ -92,6 +103,78 @@ export const AppRpcs = {
     payload: Schema.Struct({ saveId: Schema.String, matchId: Schema.String, cursor: Schema.Number }),
     success: ResumeSimulationView,
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  getTransfersScreen: {
+    payload: Schema.Struct({ saveId: Schema.String }),
+    success: TransfersScreenView,
+    error: SaveNotFoundError,
+  },
+  placeBid: {
+    payload: Schema.Struct({ saveId: Schema.String, playerId: Schema.String, amount: Schema.Number }),
+    success: BidView,
+    error: Schema.Union([
+      SaveNotFoundError,
+      PlayerNotFoundError,
+      TransferWindowClosedError,
+      InsufficientTransferBudgetError,
+      WageBudgetExceededError,
+      InvalidBidActionError,
+    ]),
+  },
+  respondToBid: {
+    payload: Schema.Struct({
+      saveId: Schema.String,
+      bidId: Schema.String,
+      action: SellerBidActionSchema,
+      counterAmount: Schema.optional(Schema.Number),
+    }),
+    success: TransfersScreenView,
+    error: Schema.Union([
+      SaveNotFoundError,
+      BidNotFoundError,
+      TransferWindowClosedError,
+      InvalidBidActionError,
+      InsufficientTransferBudgetError,
+      WageBudgetExceededError,
+    ]),
+  },
+  respondAsBidder: {
+    payload: Schema.Struct({
+      saveId: Schema.String,
+      bidId: Schema.String,
+      action: BidderBidActionSchema,
+    }),
+    success: TransfersScreenView,
+    error: Schema.Union([
+      SaveNotFoundError,
+      BidNotFoundError,
+      TransferWindowClosedError,
+      InvalidBidActionError,
+      InsufficientTransferBudgetError,
+      WageBudgetExceededError,
+    ]),
+  },
+  signFreeAgent: {
+    payload: Schema.Struct({ saveId: Schema.String, playerId: Schema.String, years: Schema.optional(Schema.Number) }),
+    success: TransfersScreenView,
+    error: Schema.Union([
+      SaveNotFoundError,
+      PlayerNotFoundError,
+      PlayerNotFreeAgentError,
+      TransferWindowClosedError,
+      WageBudgetExceededError,
+    ]),
+  },
+  renewContract: {
+    payload: Schema.Struct({ saveId: Schema.String, playerId: Schema.String, years: Schema.optional(Schema.Number) }),
+    success: TransfersScreenView,
+    error: Schema.Union([
+      SaveNotFoundError,
+      PlayerNotFoundError,
+      InvalidBidActionError,
+      TransferWindowClosedError,
+      WageBudgetExceededError,
+    ]),
   },
 } as const;
 
