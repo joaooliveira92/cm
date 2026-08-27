@@ -19,3 +19,7 @@ release/
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
+
+# Playwright
+test-results/
+playwright-report/

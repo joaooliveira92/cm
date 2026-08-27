@@ -12,6 +12,8 @@
     "build": "pnpm build:main && pnpm build:preload && pnpm build:renderer",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "pretest:e2e": "pnpm build",
+    "test:e2e": "playwright test",
     "electron": "electron .",
     "package": "pnpm build && electron-builder --config electron-builder.yml"
   },
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "@effect/vitest": "catalog:",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "catalog:",
     "@types/react": "^19.2.0",
