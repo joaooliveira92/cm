@@ -19,6 +19,7 @@ import {
 } from "@cm-clone/contracts";
 import {
   AI_ACCEPT_BID_MULTIPLIER,
+  AI_ACCEPT_COUNTER_MULTIPLIER,
   AI_COUNTER_TARGET_MULTIPLIER,
   AI_REJECT_BID_MULTIPLIER,
   ALL_ATTRIBUTES,
@@ -130,8 +131,9 @@ interface PlayerEcon {
 
 /** Every player in the save, ratings included, club-agnostic (Free Agents have `clubId: null`) —
  * assumes a `SqlClient` for the save's SQLite file in context. Backs both the market screen and
- * the wage/Transfer Value formulas used by Bid/Sign/Renew commands. */
-const loadAllPlayersEcon = Effect.gen(function* () {
+ * the wage/Transfer Value formulas used by Bid/Sign/Renew commands. Exported for `aiClubs.ts`
+ * (ticket 17), which needs the same league-wide player pool to scout weak-slot targets. */
+export const loadAllPlayersEcon = Effect.gen(function* () {
   const sql = yield* SqlClient;
   const playerRows = yield* sql.unsafe<PlayerEconRow>(
     `SELECT p.id, p.club_id as "clubId", c.name as "clubName", p.first_name as "firstName", p.last_name as "lastName",
@@ -194,7 +196,9 @@ interface ClubBudgetRow {
   readonly wageBudget: number;
 }
 
-const loadClubBudgetRow = (clubId: string) =>
+/** Exported for `aiClubs.ts` (ticket 17): AI-club buying re-reads a fresh budget row before every
+ * bid in a window, since an earlier bid in the same run may already have spent it down. */
+export const loadClubBudgetRow = (clubId: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql<ClubBudgetRow>`SELECT transfer_budget_remaining as "transferBudgetRemaining",
@@ -202,7 +206,8 @@ const loadClubBudgetRow = (clubId: string) =>
     return rows[0]!;
   });
 
-const loadWageBudgetUsed = (clubId: string) =>
+/** Exported for `aiClubs.ts` (ticket 17), same reasoning as `loadClubBudgetRow`. */
+export const loadWageBudgetUsed = (clubId: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql<{
@@ -411,6 +416,125 @@ const completeTransfer = (params: {
   });
 
 // ---------------------------------------------------------------------------
+// AI-club buying/selling (ticket 17): the same Bid/Sign machinery above, self-issued in-process
+// on behalf of any club (not just the user's), never through the RpcGroup. `aiClubs.ts` owns
+// target selection (which weak Position, which player); everything here is the generic
+// buy/accept-counter/sign primitive that target selection calls into.
+// ---------------------------------------------------------------------------
+
+/**
+ * The AI-bidder side of a countered Bid (ticket 17 / ADR-0005): accepts up to
+ * `AI_ACCEPT_COUNTER_MULTIPLIER` (1.15x) Transfer Value if still affordable — a fresh Transfer/
+ * Wage Budget check, since an earlier Bid in the same window may already have spent it down —
+ * otherwise withdraws. Two callers: `aiPlaceBid`'s own counter branch (AI-vs-AI; in practice
+ * unreachable, see the note there) and `respondToBid`'s counter branch, the realistic path where
+ * the human-controlled club counters an incoming Bid from an AI club.
+ */
+export const resolveAiCounterOffer = (bidId: string, biddingClubId: string, seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const bid = yield* loadBidRow(bidId);
+    if (!bid || bid.counterAmount === null) return;
+
+    const player = yield* loadPlayerEcon(bid.playerId);
+    if (!player || player.clubId === null) {
+      yield* sql`UPDATE bids SET status = 'withdrawn' WHERE id = ${bidId}`;
+      return;
+    }
+
+    const value = transferValue(player.overallRating, player.age, player.potentialAbility);
+    const withinMultiplier = bid.counterAmount <= value * AI_ACCEPT_COUNTER_MULTIPLIER;
+
+    const budget = yield* loadClubBudgetRow(biddingClubId);
+    const wageUsed = yield* loadWageBudgetUsed(biddingClubId);
+    const wage = weeklyWage(player.overallRating, player.age, player.potentialAbility);
+    const affordable = bid.counterAmount <= budget.transferBudgetRemaining && wageUsed + wage <= budget.wageBudget;
+
+    if (withinMultiplier && affordable) {
+      yield* completeTransfer({
+        playerId: bid.playerId,
+        sellingClubId: bid.sellingClubId,
+        biddingClubId,
+        amount: bid.counterAmount,
+        seasonNumber,
+      });
+      yield* sql`UPDATE bids SET status = 'accepted' WHERE id = ${bidId}`;
+    } else {
+      yield* sql`UPDATE bids SET status = 'withdrawn' WHERE id = ${bidId}`;
+    }
+  });
+
+/**
+ * AI-club buyer's `PlaceBid` (ticket 17): the same seller-resolution path as the user-facing
+ * `placeBid` below (the selling club always resolved instantly via `decideAiSellerResponse`),
+ * just parameterized so any club — not only the user's — can be the bidder. Self-issued
+ * in-process by `aiClubs.ts`'s transfer-window orchestration, never through the RpcGroup. Doesn't
+ * gate on window-open or re-validate the target — callers only invoke this with a target already
+ * screened for affordability, during an open window.
+ *
+ * `decideAiSellerResponse`'s counter/reject branches only trigger when `amount` is below Transfer
+ * Value; `aiClubs.ts` always bids exactly Transfer Value, so in practice this always takes the
+ * outright-accept branch. The counter handling is kept for spec-completeness (ticket 17's
+ * checklist explicitly describes a "countered" reaction) and for any future caller that bids a
+ * different amount.
+ */
+export const aiPlaceBid = (buyingClubId: string, playerId: string, amount: number, seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const player = yield* loadPlayerEcon(playerId);
+    if (!player || player.clubId === null || player.clubId === buyingClubId) {
+      return null;
+    }
+
+    const id = randomUUID();
+    const value = transferValue(player.overallRating, player.age, player.potentialAbility);
+    const decision = decideAiSellerResponse(amount, value);
+    const status: BidStatus =
+      decision.action === "accept" ? "accepted" : decision.action === "counter" ? "countered" : "rejected";
+
+    if (decision.action === "accept") {
+      yield* completeTransfer({
+        playerId,
+        sellingClubId: player.clubId,
+        biddingClubId: buyingClubId,
+        amount,
+        seasonNumber,
+      });
+    }
+
+    yield* sql`INSERT INTO bids (id, player_id, selling_club_id, bidding_club_id, amount, counter_amount, status, season_number)
+      VALUES (${id}, ${playerId}, ${player.clubId}, ${buyingClubId}, ${amount}, ${decision.counterAmount}, ${status}, ${seasonNumber})`;
+
+    if (decision.action === "counter") {
+      yield* resolveAiCounterOffer(id, buyingClubId, seasonNumber);
+    }
+
+    return { id, status };
+  });
+
+/**
+ * AI-club version of `signFreeAgent` (ticket 17): any club, not just the user's, signs a Free
+ * Agent for Credits 0 — no Bid/negotiation step for Free Agents (ADR-0005), so unlike `aiPlaceBid`
+ * this is the whole flow by itself. Self-issued in-process by `aiClubs.ts`.
+ */
+export const aiSignFreeAgent = (clubId: string, playerId: string, seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const player = yield* loadPlayerEcon(playerId);
+    if (!player || player.clubId !== null) return;
+
+    const wage = weeklyWage(player.overallRating, player.age, player.potentialAbility);
+    yield* sql`UPDATE players SET club_id = ${clubId} WHERE id = ${playerId}`;
+    yield* sql`INSERT INTO contracts (player_id, wage, years_remaining, signed_season)
+      VALUES (${playerId}, ${wage}, ${DEFAULT_CONTRACT_YEARS}, ${seasonNumber})`;
+
+    const seq = yield* nextStreamSeq("club", clubId);
+    yield* appendStreamEvents("club", clubId, seq, [
+      { tag: "PlayerSigned", payload: { playerId, wage, years: DEFAULT_CONTRACT_YEARS } },
+    ]);
+  });
+
+// ---------------------------------------------------------------------------
 // Read side: the Transfer market/inbox screen
 // ---------------------------------------------------------------------------
 
@@ -584,6 +708,12 @@ export const respondToBid = (
           return yield* new InvalidBidActionError({ reason: "a counter-offer needs a positive counterAmount" });
         }
         yield* sql`UPDATE bids SET status = 'countered', counter_amount = ${counterAmount} WHERE id = ${bidId}`;
+        // The bidder here is always an AI club (only the user's own club can call `respondToBid`,
+        // and there's exactly one human-controlled club in this build — `bid.sellingClubId ===
+        // club.id` above already proves it) — resolve its reaction to the counter immediately via
+        // the same 1.15x-or-withdraw threshold `aiClubs.ts`'s own bidding uses (ticket 17), rather
+        // than leaving the Bid `countered` forever with no AI turn to act on it.
+        yield* resolveAiCounterOffer(bidId, bid.biddingClubId, seasonRow.seasonNumber);
       } else {
         yield* completeTransfer({
           playerId: bid.playerId,
