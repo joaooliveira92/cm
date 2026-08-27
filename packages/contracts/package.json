@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@cm-clone/shared": "workspace:*",
     "effect": "catalog:"
   }
 }

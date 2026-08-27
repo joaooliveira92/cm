@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { SaveSummary } from "@cm-clone/contracts";
+import { SquadScreen } from "./SquadScreen.js";
 
 export const App = () => {
   const [saves, setSaves] = useState<ReadonlyArray<SaveSummary>>([]);
@@ -33,13 +34,7 @@ export const App = () => {
   };
 
   if (loadedSave) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
-        <p>
-          Loaded career <strong>{loadedSave.name}</strong> ({loadedSave.id})
-        </p>
-      </main>
-    );
+    return <SquadScreen saveId={loadedSave.id} />;
   }
 
   return (

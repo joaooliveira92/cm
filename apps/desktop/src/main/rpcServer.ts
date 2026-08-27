@@ -1,6 +1,7 @@
 import { AppRpcs, type AppRpcMethod, type RpcResult } from "@cm-clone/contracts";
 import { Effect, Schema } from "effect";
 import { createSave, listSaves, loadSave } from "./saves.js";
+import { getSquad } from "./squad.js";
 
 export interface RpcContext {
   readonly savesDir: string;
@@ -20,6 +21,11 @@ const handlers: Record<AppRpcMethod, Handler> = {
     Effect.gen(function* () {
       const { id } = yield* Schema.decodeUnknownEffect(AppRpcs.loadSave.payload)(payload);
       return yield* loadSave(ctx.savesDir, id);
+    }),
+  getSquad: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getSquad.payload)(payload);
+      return yield* getSquad(ctx.savesDir, saveId);
     }),
 };
 
