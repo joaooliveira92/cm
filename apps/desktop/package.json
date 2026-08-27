@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@cm-clone/contracts": "workspace:*",
+    "@cm-clone/game-engine": "workspace:*",
     "@cm-clone/shared": "workspace:*",
     "@effect/sql-sqlite-node": "catalog:",
     "effect": "catalog:",

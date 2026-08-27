@@ -90,4 +90,27 @@ export const createSchema = Effect.gen(function* () {
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (stream_type, stream_id, seq)
   )`;
+
+  /** Season/Calendar Decider's read model (ticket 15) — a single row per Season, projected from the
+   * "season" event stream (streamId = save id, ADR-0007). `current_matchday` is the last Matchday
+   * whose Fixtures have been resolved (0 before Matchday 1). */
+  yield* sql`CREATE TABLE season (
+    season_number INTEGER PRIMARY KEY,
+    current_matchday INTEGER NOT NULL DEFAULT 0 CHECK (current_matchday BETWEEN 0 AND 38),
+    phase TEXT NOT NULL CHECK (phase IN ('pre_season','in_season','mid_window_open','season_complete'))
+  )`;
+
+  /** The Season's full fixture list, generated once at Season start (double round-robin, ticket 15) and
+   * filled in as `AdvanceCalendar` resolves each Matchday. Not a Decider — projected from Match/Season
+   * stream events, per ADR-0007 ("League Table is a projection"). */
+  yield* sql`CREATE TABLE fixtures (
+    id TEXT PRIMARY KEY,
+    season_number INTEGER NOT NULL REFERENCES season(season_number),
+    matchday INTEGER NOT NULL CHECK (matchday BETWEEN 1 AND 38),
+    home_club_id TEXT NOT NULL REFERENCES clubs(id),
+    away_club_id TEXT NOT NULL REFERENCES clubs(id),
+    home_goals INTEGER,
+    away_goals INTEGER,
+    played INTEGER NOT NULL DEFAULT 0 CHECK (played IN (0,1))
+  )`;
 });

@@ -6,6 +6,7 @@ import { SaveNotFoundError, SaveSummary } from "@cm-clone/contracts";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { createSchema } from "./schema.js";
+import { startSeason } from "./season.js";
 import { generateWorld } from "./worldGeneration.js";
 
 const dbPath = (savesDir: string, id: string) => path.join(savesDir, `${id}.sqlite`);
@@ -46,6 +47,7 @@ export const createSave = (savesDir: string, name: string) =>
       yield* createSchema;
       yield* sql`INSERT INTO save_meta (id, name, created_at) VALUES (${id}, ${name}, ${createdAt})`;
       yield* generateWorld;
+      yield* startSeason(id);
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped);
 
     return new SaveSummary({ id, name, createdAt });

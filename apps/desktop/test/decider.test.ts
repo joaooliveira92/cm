@@ -63,14 +63,16 @@ it.effect("streams are isolated by stream_type and stream_id", () =>
       save.id,
       Effect.gen(function* () {
         yield* appendStreamEvents("match", "fixture-1", 1, [{ tag: "MatchStarted", payload: {} }]);
-        yield* appendStreamEvents("season", save.id, 1, [{ tag: "SeasonStarted", payload: {} }]);
+        // "season"/save.id is real state here — `createSave` seeds it via `startSeason` (ticket 15) —
+        // so isolation is exercised against an unrelated stream type instead.
+        yield* appendStreamEvents("club", save.id, 1, [{ tag: "ClubCreated", payload: {} }]);
 
         const matchEvents = yield* loadStreamEvents("match", "fixture-1");
-        const seasonEvents = yield* loadStreamEvents("season", save.id);
+        const clubEvents = yield* loadStreamEvents("club", save.id);
         strictEqual(matchEvents.length, 1);
-        strictEqual(seasonEvents.length, 1);
+        strictEqual(clubEvents.length, 1);
         strictEqual(matchEvents[0].tag, "MatchStarted");
-        strictEqual(seasonEvents[0].tag, "SeasonStarted");
+        strictEqual(clubEvents[0].tag, "ClubCreated");
       }),
     );
   }),
