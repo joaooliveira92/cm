@@ -31,6 +31,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { appendStreamEvents, nextStreamSeq } from "./decider.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
+import { expireContractsForSeason, initializeSeasonEconomy } from "./transfers.js";
 
 const STREAM_TYPE = "season";
 const TOTAL_MATCHDAYS = 38;
@@ -130,6 +131,10 @@ export const startSeason = (saveId: string) =>
     yield* sql`INSERT INTO board_objective (season_number, club_id, min_position, max_position, final_position, verdict)
       VALUES (1, ${userClub.id}, ${band.minPosition}, ${band.maxPosition}, NULL, NULL)`;
     yield* sql`INSERT INTO manager_status (id, consecutive_misses, sacked, last_outcome) VALUES (1, 0, 0, 'none')`;
+
+    // Transfer/Wage Budgets and each generated player's initial Contract (ticket 16 / ADR-0005) —
+    // derived from Stature Tier at Season start, in the same transaction as fixture generation.
+    yield* initializeSeasonEconomy(1);
 
     const startSeq = yield* nextStreamSeq(STREAM_TYPE, saveId);
     yield* appendStreamEvents(STREAM_TYPE, saveId, startSeq, [
@@ -423,6 +428,11 @@ export const advanceCalendar = (savesDir: string, saveId: string) =>
       } else {
         streamEvents.push({ tag: "SeasonConcluded", payload: { seasonNumber: row.seasonNumber } });
         yield* sql`UPDATE season SET phase = 'season_complete' WHERE season_number = ${row.seasonNumber}`;
+        // Contract expiry -> Free Agent (ticket 16 / ADR-0005) is specified as happening "at Season
+        // start." This repo has no multi-season rollover yet (ticket 15 only builds Season 1's
+        // calendar), so there's no "next Season's pre-season" seam to hook into — `SeasonConcluded`
+        // is the closest one-per-Season boundary that currently exists.
+        yield* expireContractsForSeason;
         seasonConcluded = true;
 
         const judged = yield* judgeSeasonEnd(row.seasonNumber, streamEvents);

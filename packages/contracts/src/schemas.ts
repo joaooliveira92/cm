@@ -292,3 +292,119 @@ export const MatchCommandPayload = Schema.Union([
   ChangeTacticsCommandPayload,
   MakeSubstitutionCommandPayload,
 ]);
+
+// ---------------------------------------------------------------------------
+// Transfers & contracts (ticket 16 / ADR-0005)
+// ---------------------------------------------------------------------------
+
+export const BID_STATUSES = ["pending", "countered", "accepted", "rejected", "withdrawn"] as const;
+export const BidStatusSchema = Schema.Literals(BID_STATUSES);
+
+export const SELLER_BID_ACTIONS = ["accept", "reject", "counter"] as const;
+export const SellerBidActionSchema = Schema.Literals(SELLER_BID_ACTIONS);
+
+export const BIDDER_BID_ACTIONS = ["accept", "withdraw"] as const;
+export const BidderBidActionSchema = Schema.Literals(BIDDER_BID_ACTIONS);
+
+/** Raised when a transfer Command (`PlaceBid`, `SignFreeAgent`, `RenewContract`, ...) is issued
+ * outside an open Transfer Window (`pre_season` or `mid_window_open`, ticket 15/16). */
+export class TransferWindowClosedError extends Schema.TaggedError<TransferWindowClosedError>()(
+  "TransferWindowClosedError",
+  {
+    saveId: Schema.String,
+  },
+) {}
+
+export class PlayerNotFoundError extends Schema.TaggedError<PlayerNotFoundError>()(
+  "PlayerNotFoundError",
+  {
+    playerId: Schema.String,
+  },
+) {}
+
+/** Raised when a Bid/Sign/Renew would spend more of a club's Transfer Budget than remains this
+ * Season (spend-down, no replenishment between windows — ADR-0005). */
+export class InsufficientTransferBudgetError extends Schema.TaggedError<InsufficientTransferBudgetError>()(
+  "InsufficientTransferBudgetError",
+  {
+    clubId: Schema.String,
+    amount: Schema.Number,
+    remaining: Schema.Number,
+  },
+) {}
+
+/** Raised when signing/renewing at the formula wage would push a club's sum of active Contracts'
+ * wages over its Wage Budget (a running cap, not spend-down — ADR-0005). */
+export class WageBudgetExceededError extends Schema.TaggedError<WageBudgetExceededError>()(
+  "WageBudgetExceededError",
+  {
+    clubId: Schema.String,
+    wage: Schema.Number,
+    wageBudgetUsed: Schema.Number,
+    wageBudget: Schema.Number,
+  },
+) {}
+
+export class BidNotFoundError extends Schema.TaggedError<BidNotFoundError>()("BidNotFoundError", {
+  bidId: Schema.String,
+}) {}
+
+/** Raised for a Bid-flow action that doesn't fit the single-counter-offer state machine — e.g. a
+ * second counter, responding to a Bid that's already resolved, or bidding on your own player. */
+export class InvalidBidActionError extends Schema.TaggedError<InvalidBidActionError>()(
+  "InvalidBidActionError",
+  {
+    reason: Schema.String,
+  },
+) {}
+
+export class PlayerNotFreeAgentError extends Schema.TaggedError<PlayerNotFreeAgentError>()(
+  "PlayerNotFreeAgentError",
+  {
+    playerId: Schema.String,
+  },
+) {}
+
+/** One in-flight or resolved Bid, from the user club's point of view — `sellingClubId`/
+ * `biddingClubId` disambiguate incoming vs. outgoing without a separate "direction" field. */
+export class BidView extends Schema.Class<BidView>("BidView")({
+  id: Schema.String,
+  playerId: Schema.String,
+  playerName: Schema.String,
+  sellingClubId: Schema.String,
+  sellingClubName: Schema.String,
+  biddingClubId: Schema.String,
+  biddingClubName: Schema.String,
+  amount: Schema.Number,
+  counterAmount: Schema.NullOr(Schema.Number),
+  status: BidStatusSchema,
+}) {}
+
+/** A player as seen on the transfer market — another club's player (biddable) or a Free Agent
+ * (`clubId`/`clubName` null, signable for Credits 0 via the normal signing flow, no Bid step). */
+export class MarketPlayerView extends Schema.Class<MarketPlayerView>("MarketPlayerView")({
+  id: Schema.String,
+  firstName: Schema.String,
+  lastName: Schema.String,
+  age: Schema.Number,
+  clubId: Schema.NullOr(Schema.String),
+  clubName: Schema.NullOr(Schema.String),
+  overallRating: Schema.Number,
+  transferValue: Schema.Number,
+  positions: Schema.Array(PlayerPositionView),
+}) {}
+
+/** The Transfer market/inbox screen (ticket 16): budgets, incoming/outgoing Bids, Free Agents,
+ * and other clubs' biddable players. */
+export class TransfersScreenView extends Schema.Class<TransfersScreenView>("TransfersScreenView")({
+  club: ClubSummary,
+  season: SeasonView,
+  windowOpen: Schema.Boolean,
+  transferBudgetRemaining: Schema.Number,
+  wageBudget: Schema.Number,
+  wageBudgetUsed: Schema.Number,
+  incomingBids: Schema.Array(BidView),
+  outgoingBids: Schema.Array(BidView),
+  freeAgents: Schema.Array(MarketPlayerView),
+  marketPlayers: Schema.Array(MarketPlayerView),
+}) {}
