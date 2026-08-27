@@ -6,6 +6,7 @@ import {
   FixturesView,
   InvalidTacticError,
   LeagueTableView,
+  MatchCommandPayload,
   MatchNotFoundError,
   MatchSummary,
   ResumeSimulationView,
@@ -97,6 +98,24 @@ export const AppRpcs = {
   },
   resumeSimulation: {
     payload: Schema.Struct({ saveId: Schema.String, matchId: Schema.String, cursor: Schema.Number }),
+    success: ResumeSimulationView,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  /** Ticket 14: appends a mid-match `ChangeTactics`/`MakeSubstitution` command to the Match
+   * Decider's stream and returns the chunk of Commentary Lines from `cursor` on, resimulated with
+   * the command applied (ADR-0007 chunked resimulation — full resimulation on every command is the
+   * intended approach, not premature optimization to avoid, since `simulateMatch` is pure and
+   * sub-millisecond). `minute`/`isHalftime` place the command in `simulateMatch`'s
+   * `commandsByMinute`/`halftimeCommands` inputs. */
+  submitMatchCommand: {
+    payload: Schema.Struct({
+      saveId: Schema.String,
+      matchId: Schema.String,
+      cursor: Schema.Number,
+      minute: Schema.Number,
+      isHalftime: Schema.Boolean,
+      command: MatchCommandPayload,
+    }),
     success: ResumeSimulationView,
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },

@@ -1,5 +1,22 @@
 import { useEffect, useRef, useState } from "react";
-import type { ClubSummary, CommentaryLineView, MatchSummary } from "@cm-clone/contracts";
+import {
+  Tactic,
+  type ClubSummary,
+  type CommentaryLineView,
+  type MatchSummary,
+  type SquadPlayerView,
+  type SubstitutionStatusView,
+  type TacticSlot,
+} from "@cm-clone/contracts";
+import {
+  MENTALITY_OPTIONS,
+  PRESSING_OPTIONS,
+  TEMPO_OPTIONS,
+  type Formation,
+  type Mentality,
+  type Pressing,
+  type Tempo,
+} from "@cm-clone/shared";
 
 /** How often a new Commentary Line is revealed from the paced local queue (client-side pacing per
  * ADR-0007 — there is no RPC streaming transport, the renderer paces reveal of whatever chunk
@@ -13,6 +30,277 @@ const POLL_INTERVAL_MS = 800;
 /** Keep fetching ahead of the reveal pace once the buffer drops below this many lines. */
 const REFETCH_THRESHOLD = 5;
 
+const NO_SUBS: SubstitutionStatusView = {
+  used: 0,
+  remaining: 5,
+  windowsUsed: 0,
+  windowsRemaining: 3,
+  capReached: false,
+};
+
+const InstructionSlider = <T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  readonly label: string;
+  readonly options: ReadonlyArray<T>;
+  readonly value: T;
+  readonly onChange: (value: T) => void;
+}) => (
+  <div>
+    <p className="text-xs text-slate-400">{label}</p>
+    <div className="mt-1 flex gap-1">
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          className={`rounded px-2 py-0.5 text-xs capitalize ${
+            option === value ? "bg-slate-100 text-slate-900" : "bg-slate-800 hover:bg-slate-700"
+          }`}
+          onClick={() => onChange(option)}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+/** Live tactics/substitution control (ticket 14) — a collapsible panel reachable without leaving
+ * the Match day screen. Reuses `TacticsScreen.tsx`'s formation/instruction-slider patterns but
+ * only supports Team Instruction tweaks live (not a full re-draft of every slot's Position/Role),
+ * which is enough to construct a valid `Tactic` for `ChangeTactics`. Substitutions are constrained
+ * to the club's current on-pitch XI (tracked locally from the loaded Tactic + accepted subs) and
+ * the 5-sub/3-window cap reported by the server on every poll.
+ */
+const MatchControlPanel = ({
+  saveId,
+  matchId,
+  homeClubId,
+  cursor,
+  subsStatus,
+  injuryPrompt,
+  currentMinute,
+  onApplied,
+}: {
+  readonly saveId: string;
+  readonly matchId: string;
+  readonly homeClubId: string;
+  readonly cursor: number;
+  readonly subsStatus: SubstitutionStatusView;
+  readonly injuryPrompt: boolean;
+  readonly currentMinute: number;
+  readonly onApplied: (response: {
+    readonly cursor: number;
+    readonly lines: ReadonlyArray<CommentaryLineView>;
+    readonly isComplete: boolean;
+    readonly homeScore: number;
+    readonly awayScore: number;
+    readonly homeSubs: SubstitutionStatusView;
+    readonly awaySubs: SubstitutionStatusView;
+  }) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [squad, setSquad] = useState<ReadonlyArray<SquadPlayerView>>([]);
+  const [tactic, setTactic] = useState<Tactic | null>(null);
+  const [outPlayerId, setOutPlayerId] = useState("");
+  const [inPlayerId, setInPlayerId] = useState("");
+  const [isHalftime, setIsHalftime] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (injuryPrompt) setOpen(true);
+  }, [injuryPrompt]);
+
+  useEffect(() => {
+    window.cmClone
+      .call("getTactics", { saveId })
+      .then((view) => {
+        setSquad(view.squad);
+        if (view.tactic) setTactic(view.tactic);
+      })
+      .catch(() => setStatus("Failed to load squad/tactic for live control"));
+  }, [saveId]);
+
+  if (!tactic) return null;
+
+  const onPitchIds = new Set(tactic.slots.map((slot: TacticSlot) => slot.playerId));
+  const bench = squad.filter((player) => !onPitchIds.has(player.id));
+  const fullNameOf = (id: string) => {
+    const player = squad.find((p) => p.id === id);
+    return player ? `${player.firstName} ${player.lastName}` : id;
+  };
+
+  const submit = async (
+    command:
+      | { readonly _tag: "ChangeTactics"; readonly clubId: string; readonly tactic: Tactic }
+      | {
+          readonly _tag: "MakeSubstitution";
+          readonly clubId: string;
+          readonly outPlayerId: string;
+          readonly inPlayerId: string;
+        },
+  ) => {
+    setStatus("Submitting...");
+    try {
+      const response = await window.cmClone.call("submitMatchCommand", {
+        saveId,
+        matchId,
+        cursor,
+        minute: isHalftime ? 45 : Math.max(1, currentMinute),
+        isHalftime,
+        command,
+      });
+      onApplied(response);
+      setStatus("Applied — the engine may still reject an invalid/over-cap command silently.");
+    } catch {
+      setStatus("Failed to submit command");
+    }
+  };
+
+  const onApplyTactics = () => submit({ _tag: "ChangeTactics", clubId: homeClubId, tactic });
+
+  const onMakeSubstitution = async () => {
+    if (!outPlayerId || !inPlayerId || outPlayerId === inPlayerId) return;
+    await submit({ _tag: "MakeSubstitution", clubId: homeClubId, outPlayerId, inPlayerId });
+    // Optimistic local update so the on-pitch/bench split is right for the *next* substitution even
+    // before the next poll's homeSubs confirms the server accepted it.
+    setTactic(
+      new Tactic({
+        ...tactic,
+        slots: tactic.slots.map((slot: TacticSlot) =>
+          slot.playerId === outPlayerId ? { ...slot, playerId: inPlayerId } : slot,
+        ),
+      }),
+    );
+    setOutPlayerId("");
+    setInPlayerId("");
+  };
+
+  return (
+    <section className="mt-4 rounded border border-slate-800 bg-slate-900">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between px-4 py-2 text-left text-sm font-semibold"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span>
+          Tactics &amp; substitutions
+          {injuryPrompt && <span className="ml-2 rounded bg-red-700 px-2 py-0.5 text-xs">Injury — sub now?</span>}
+        </span>
+        <span className="text-slate-400">{open ? "Hide" : "Show"}</span>
+      </button>
+
+      {open && (
+        <div className="space-y-4 border-t border-slate-800 p-4 text-sm">
+          <div>
+            <p className="text-xs text-slate-400">
+              Substitutions used: {subsStatus.used}/5 · Windows used: {subsStatus.windowsUsed}/3
+              {subsStatus.capReached && <span className="ml-2 text-red-400">Cap reached</span>}
+            </p>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-xs text-slate-400">
+              <input
+                type="checkbox"
+                checked={isHalftime}
+                onChange={(event) => setIsHalftime(event.target.checked)}
+              />
+              Apply as a halftime instruction (doesn't consume a substitution window)
+            </label>
+          </div>
+
+          <div>
+            <p className="mb-1 text-xs font-semibold text-slate-300">Team instructions</p>
+            <div className="flex gap-6">
+              <InstructionSlider<Mentality>
+                label="Mentality"
+                options={MENTALITY_OPTIONS}
+                value={tactic.mentality}
+                onChange={(mentality) => setTactic(new Tactic({ ...tactic, mentality }))}
+              />
+              <InstructionSlider<Tempo>
+                label="Tempo"
+                options={TEMPO_OPTIONS}
+                value={tactic.tempo}
+                onChange={(tempo) => setTactic(new Tactic({ ...tactic, tempo }))}
+              />
+              <InstructionSlider<Pressing>
+                label="Pressing"
+                options={PRESSING_OPTIONS}
+                value={tactic.pressing}
+                onChange={(pressing) => setTactic(new Tactic({ ...tactic, pressing }))}
+              />
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Formation stays {tactic.formation as Formation} live — use the pre-match Tactics screen to
+              redraft slots.
+            </p>
+            <button
+              type="button"
+              className="mt-2 rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600"
+              onClick={onApplyTactics}
+            >
+              Apply tactics change
+            </button>
+          </div>
+
+          <div>
+            <p className="mb-1 text-xs font-semibold text-slate-300">Make a substitution</p>
+            <div className="flex items-end gap-2">
+              <div>
+                <p className="text-xs text-slate-400">Off</p>
+                <select
+                  className="rounded bg-slate-800 px-2 py-1"
+                  value={outPlayerId}
+                  onChange={(event) => setOutPlayerId(event.target.value)}
+                  disabled={subsStatus.capReached}
+                >
+                  <option value="">Select player</option>
+                  {tactic.slots.map((slot: TacticSlot) => (
+                    <option key={slot.playerId} value={slot.playerId}>
+                      {fullNameOf(slot.playerId)} ({slot.position})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">On</p>
+                <select
+                  className="rounded bg-slate-800 px-2 py-1"
+                  value={inPlayerId}
+                  onChange={(event) => setInPlayerId(event.target.value)}
+                  disabled={subsStatus.capReached}
+                >
+                  <option value="">Select player</option>
+                  {bench.map((player) => (
+                    <option key={player.id} value={player.id}>
+                      {player.firstName} {player.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="button"
+                disabled={subsStatus.capReached || !outPlayerId || !inPlayerId}
+                className="rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 disabled:opacity-50"
+                onClick={onMakeSubstitution}
+              >
+                Make substitution
+              </button>
+            </div>
+          </div>
+
+          {status && <p className="text-xs text-slate-500">{status}</p>}
+        </div>
+      )}
+    </section>
+  );
+};
+
 export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
   const [opponents, setOpponents] = useState<ReadonlyArray<ClubSummary>>([]);
   const [opponentId, setOpponentId] = useState("");
@@ -24,6 +312,9 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [homeSubs, setHomeSubs] = useState<SubstitutionStatusView>(NO_SUBS);
+  const [injuryPrompt, setInjuryPrompt] = useState(false);
+  const [currentMinute, setCurrentMinute] = useState(0);
 
   // Mutable pacing/polling state that doesn't need to trigger re-renders on its own.
   const cursorRef = useRef(0);
@@ -49,6 +340,9 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
     setHomeScore(0);
     setAwayScore(0);
     setIsComplete(false);
+    setHomeSubs(NO_SUBS);
+    setInjuryPrompt(false);
+    setCurrentMinute(0);
     cursorRef.current = 0;
     pendingRef.current = [];
     streamCompleteRef.current = false;
@@ -81,6 +375,10 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
         pendingRef.current.push(...chunk.lines);
         setHomeScore(chunk.homeScore);
         setAwayScore(chunk.awayScore);
+        setHomeSubs(chunk.homeSubs);
+        // Injury Match Event handling (ticket 14): an Injury landing in this chunk for the
+        // player's own club prompts an immediate substitution offer, still subject to the cap.
+        if (chunk.injuredClubIds.includes(match.homeClubId)) setInjuryPrompt(true);
         if (chunk.isComplete) streamCompleteRef.current = true;
       } catch {
         setError("Failed to resume match simulation");
@@ -103,12 +401,35 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
       const next = pendingRef.current.shift();
       if (next) {
         setRevealed((lines) => [...lines, next]);
+        setCurrentMinute(next.minute);
       } else if (streamCompleteRef.current) {
         setIsComplete(true);
       }
     }, REVEAL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [match]);
+
+  // A command submitted through the panel resimulates the whole match server-side; resync local
+  // pacing state to whatever it returns rather than let the stale pre-command queue keep draining
+  // (the prefix before the command's minute is unchanged by determinism, but anything from that
+  // minute on may now differ).
+  const onCommandApplied = (response: {
+    readonly cursor: number;
+    readonly lines: ReadonlyArray<CommentaryLineView>;
+    readonly isComplete: boolean;
+    readonly homeScore: number;
+    readonly awayScore: number;
+    readonly homeSubs: SubstitutionStatusView;
+    readonly awaySubs: SubstitutionStatusView;
+  }) => {
+    cursorRef.current = response.cursor;
+    pendingRef.current = [...response.lines];
+    streamCompleteRef.current = response.isComplete;
+    setHomeScore(response.homeScore);
+    setAwayScore(response.awayScore);
+    setHomeSubs(response.homeSubs);
+    if (!response.lines.some((line) => line.tag === "Injury")) setInjuryPrompt(false);
+  };
 
   return (
     <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
@@ -160,6 +481,19 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
             ))}
             {revealed.length === 0 && <li className="text-slate-500">Kick-off is coming up...</li>}
           </ul>
+
+          {!isComplete && (
+            <MatchControlPanel
+              saveId={saveId}
+              matchId={match.matchId}
+              homeClubId={match.homeClubId}
+              cursor={cursorRef.current}
+              subsStatus={homeSubs}
+              injuryPrompt={injuryPrompt}
+              currentMinute={currentMinute}
+              onApplied={onCommandApplied}
+            />
+          )}
 
           {isComplete && (
             <div className="mt-4 flex items-center gap-3">

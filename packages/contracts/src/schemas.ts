@@ -238,9 +238,23 @@ export class CommentaryLineView extends Schema.Class<CommentaryLineView>("Commen
   text: Schema.String,
 }) {}
 
+/** Per-club substitution cap status (ticket 14: 5 subs / 3 windows, halftime doesn't count as a
+ * window — see `computeSubstitutionStatus` in `apps/desktop/src/main/match.ts`) — lets the UI
+ * disable the substitution control and show subs used/remaining without guessing at the engine's
+ * cap enforcement (which otherwise just silently no-ops an over-cap `MakeSubstitution`). */
+export class SubstitutionStatusView extends Schema.Class<SubstitutionStatusView>("SubstitutionStatusView")({
+  used: Schema.Number,
+  remaining: Schema.Number,
+  windowsUsed: Schema.Number,
+  windowsRemaining: Schema.Number,
+  capReached: Schema.Boolean,
+}) {}
+
 /** `ResumeSimulation`'s response (ADR-0007 chunked resimulation, no RPC streaming): the next chunk
  * of already-rendered Commentary Lines after `cursor`, the new cursor, and whether the match has
- * reached `FullTimeWhistle`. */
+ * reached `FullTimeWhistle`. `homeSubs`/`awaySubs` and `injuredClubIds` are ticket 14 additions —
+ * `injuredClubIds` lists the clubs (deduplicated) that had an `Injury` Match Event land in *this*
+ * chunk, so the renderer can prompt an immediate substitution. */
 export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("ResumeSimulationView")({
   matchId: Schema.String,
   cursor: Schema.Number,
@@ -248,4 +262,33 @@ export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("Re
   homeScore: Schema.Number,
   awayScore: Schema.Number,
   lines: Schema.Array(CommentaryLineView),
+  homeSubs: SubstitutionStatusView,
+  awaySubs: SubstitutionStatusView,
+  injuredClubIds: Schema.Array(Schema.String),
 }) {}
+
+/** `SubmitMatchCommand` (ticket 14) payload shapes — structurally identical to game-engine's
+ * `ChangeTacticsCommand`/`MakeSubstitutionCommand` (`packages/game-engine/src/match/commands.ts`),
+ * duplicated here rather than imported so `@cm-clone/contracts` stays decoupled from
+ * `@cm-clone/game-engine` (same rationale as `MatchTactic` aliasing `Tactic` the other way). */
+export class ChangeTacticsCommandPayload extends Schema.Class<ChangeTacticsCommandPayload>(
+  "ChangeTacticsCommandPayload",
+)({
+  _tag: Schema.Literal("ChangeTactics"),
+  clubId: Schema.String,
+  tactic: Tactic,
+}) {}
+
+export class MakeSubstitutionCommandPayload extends Schema.Class<MakeSubstitutionCommandPayload>(
+  "MakeSubstitutionCommandPayload",
+)({
+  _tag: Schema.Literal("MakeSubstitution"),
+  clubId: Schema.String,
+  outPlayerId: Schema.String,
+  inPlayerId: Schema.String,
+}) {}
+
+export const MatchCommandPayload = Schema.Union([
+  ChangeTacticsCommandPayload,
+  MakeSubstitutionCommandPayload,
+]);
