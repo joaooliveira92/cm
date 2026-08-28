@@ -86,6 +86,7 @@ const MatchControlPanel = ({
   injuries,
   currentMinute,
   onApplied,
+  onDecisionResolved,
 }: {
   readonly saveId: string;
   readonly matchId: string;
@@ -106,6 +107,9 @@ const MatchControlPanel = ({
     readonly homeOnPitchCount: number;
     readonly awayOnPitchCount: number;
   }) => void;
+  /** Acknowledge a pending no-subs decision without issuing a command (orange "play on" keeps the
+   * crippled player on) so the paused match resumes. */
+  readonly onDecisionResolved: () => void;
 }) => {
   const [open, setOpen] = useState(false);
   const [squad, setSquad] = useState<ReadonlyArray<SquadPlayerView>>([]);
@@ -249,7 +253,10 @@ const MatchControlPanel = ({
                 <button
                   type="button"
                   className="rounded bg-amber-700 px-3 py-1 text-xs hover:bg-amber-600"
-                  onClick={() => setStatus("Play on — they stay, crippled, with escalation risk.")}
+                  onClick={() => {
+                    setStatus("Play on — they stay, crippled, with escalation risk.");
+                    onDecisionResolved();
+                  }}
                 >
                   Play on
                 </button>
@@ -387,12 +394,14 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
   const [homeOnPitchCount, setHomeOnPitchCount] = useState(11);
   const [chunkInjuries, setChunkInjuries] = useState<ReadonlyArray<InjuryView>>([]);
   const [currentMinute, setCurrentMinute] = useState(0);
+  const [paused, setPaused] = useState(false);
 
-  // Mutable pacing/polling state that doesn't need to trigger re-renders on its own.
+  // Mutable cursor/pacing/polling state that doesn't need to trigger re-renders on its own.
   const cursorRef = useRef(0);
   const pendingRef = useRef<Array<CommentaryLineView>>([]);
   const fetchingRef = useRef(false);
   const streamCompleteRef = useRef(false);
+  const pausedRef = useRef(false);
 
   useEffect(() => {
     window.cmClone
@@ -416,9 +425,11 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
     setHomeOnPitchCount(11);
     setChunkInjuries([]);
     setCurrentMinute(0);
+    setPaused(false);
     cursorRef.current = 0;
     pendingRef.current = [];
     streamCompleteRef.current = false;
+    pausedRef.current = false;
     try {
       const summary = await window.cmClone.call("startMatch", { saveId, opponentClubId: opponentId });
       setMatch(summary);
@@ -436,6 +447,10 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
 
     const poll = async () => {
       if (fetchingRef.current || streamCompleteRef.current) return;
+      // Ticket 11 hard-pause: with a no-subs injury decision pending for the player's club, hold the
+      // feed here until the manager resolves it (play-on / bring-off / rearrange), instead of
+      // buffering past the moment the match would have stopped for the decision.
+      if (pausedRef.current) return;
       if (pendingRef.current.length > REFETCH_THRESHOLD) return;
       fetchingRef.current = true;
       try {
@@ -467,11 +482,22 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
     return () => clearInterval(interval);
   }, [match, saveId]);
 
+  // Drive the pause (ticket 11): a no-subs injury decision for the player's own club halts reveal
+  // and polling until the manager acts. Cleared when the injury is acknowledged or resolved.
+  useEffect(() => {
+    if (!match) return;
+    const needsDecision =
+      chunkInjuries.some((injury) => injury.teamClubId === match.homeClubId) && homeSubs.capReached;
+    pausedRef.current = needsDecision;
+    setPaused(needsDecision);
+  }, [match, chunkInjuries, homeSubs.capReached]);
+
   // Paces the feed: reveals one already-fetched Commentary Line at a time.
   useEffect(() => {
     if (!match) return;
 
     const interval = setInterval(() => {
+      if (pausedRef.current) return;
       const next = pendingRef.current.shift();
       if (next) {
         setRevealed((lines) => [...lines, next]);
@@ -548,7 +574,9 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
             <h2 className="text-xl font-semibold">
               {match.homeClubName} {homeScore} - {awayScore} {match.awayClubName}
             </h2>
-            <span className="text-sm text-slate-400">{isComplete ? "Full time" : "Live"}</span>
+            <span className="text-sm text-slate-400">
+              {isComplete ? "Full time" : paused ? "Paused — awaiting decision" : "Live"}
+            </span>
           </div>
 
           <ul className="mt-4 max-h-[60vh] space-y-1 overflow-y-auto rounded border border-slate-800 bg-slate-900 p-4 text-sm">
@@ -572,6 +600,7 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
               injuries={chunkInjuries}
               currentMinute={currentMinute}
               onApplied={onCommandApplied}
+              onDecisionResolved={() => setChunkInjuries([])}
             />
           )}
 
