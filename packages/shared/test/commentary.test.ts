@@ -24,10 +24,13 @@ const injury = (
 });
 
 describe("injury commentary", () => {
-  it("keys the injury pool by severity", () => {
-    expect(COMMENTARY_TEMPLATES["Injury:light"]).toBeDefined();
-    expect(COMMENTARY_TEMPLATES["Injury:medium"]).toBeDefined();
-    expect(COMMENTARY_TEMPLATES["Injury:severe"]).toBeDefined();
+  it("keys the injury pools by trigger and severity", () => {
+    expect(COMMENTARY_TEMPLATES["Injury:contact:light"]).toBeDefined();
+    expect(COMMENTARY_TEMPLATES["Injury:contact:medium"]).toBeDefined();
+    expect(COMMENTARY_TEMPLATES["Injury:contact:severe"]).toBeDefined();
+    expect(COMMENTARY_TEMPLATES["Injury:non-contact:light"]).toBeDefined();
+    expect(COMMENTARY_TEMPLATES["Injury:non-contact:medium"]).toBeDefined();
+    expect(COMMENTARY_TEMPLATES["Injury:non-contact:severe"]).toBeDefined();
   });
 
   it("fills the player and team tokens for a light knock", () => {
@@ -41,6 +44,24 @@ describe("injury commentary", () => {
     expect(lines[0]!.text.toLowerCase()).toContain("toe");
   });
 
+  it("fills the body-part token for a non-contact injury", () => {
+    const lines = renderCommentary([injury("medium", "non-contact", "hamstring")], 1, names);
+    expect(lines[0]!.text.toLowerCase()).toContain("hamstring");
+  });
+
+  it("renders contact and non-contact injuries of the same severity differently", () => {
+    const contact = renderCommentary([injury("severe", "contact", "twistedAnkle")], 1, names)[0]!.text;
+    const nonContact = renderCommentary([injury("severe", "non-contact", "hamstring")], 1, names)[0]!.text;
+    expect(contact).not.toBe(nonContact);
+  });
+
+  it("uses structural phrasing for contact and muscular/fatigue phrasing for non-contact", () => {
+    const contact = renderCommentary([injury("medium", "contact", "twistedAnkle")], 1, names)[0]!.text.toLowerCase();
+    const nonContact = renderCommentary([injury("medium", "non-contact", "hamstring")], 1, names)[0]!.text.toLowerCase();
+    expect(contact).toMatch(/challenge|tackle|collision/);
+    expect(nonContact).toMatch(/pulls up|tired muscle|no one near/);
+  });
+
   it("narrates severe injuries distinctly from light ones (stretcher imagery)", () => {
     const light = renderCommentary([injury("light", "non-contact", "strain")], 1, names)[0]!.text;
     const severe = renderCommentary([injury("severe", "non-contact", "hamstring")], 2, names)[0]!.text;
@@ -52,6 +73,7 @@ describe("injury commentary", () => {
       injury("light", "non-contact", "strain"),
       injury("medium", "contact", "twistedAnkle"),
       injury("severe", "contact", "deadLeg"),
+      injury("severe", "non-contact", "calf"),
     ];
     for (const line of renderCommentary(events, 5, names)) {
       expect(line.text).not.toMatch(/\{\w+\}/);

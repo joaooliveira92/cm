@@ -1,4 +1,4 @@
-import type { InjurySeverity, MatchEvent } from "@cm-clone/game-engine";
+import type { InjurySeverity, InjuryTrigger, MatchEvent } from "@cm-clone/game-engine";
 
 /**
  * Match Commentary Templates (ADR-0008 / ticket 08): fixed game-design data, parallel to
@@ -9,14 +9,16 @@ import type { InjurySeverity, MatchEvent } from "@cm-clone/game-engine";
  */
 export type CommentaryEventTag = MatchEvent["_tag"];
 
-/** Every key `COMMENTARY_TEMPLATES` must carry: each Match Event tag, plus a `Injury:<severity>`
- * pool per severity (ticket 08). Kept a closed union so the record stays exhaustive at compile time. */
-export type CommentaryTemplateKey = CommentaryEventTag | `Injury:${InjurySeverity}`;
+/** Every key `COMMENTARY_TEMPLATES` must carry: each Match Event tag, plus a
+ * `Injury:<trigger>:<severity>` pool per trigger × severity (ticket 08/12). Kept a closed union so the
+ * record stays exhaustive at compile time. */
+export type CommentaryTemplateKey = CommentaryEventTag | `Injury:${InjuryTrigger}:${InjurySeverity}`;
 
 /**
  * Template pools keyed by the event's template key (`templateKeyFor` below): every Match Event tag,
- * plus a `Injury:<severity>` pool so Light / Medium / Severe injuries narrate differently (ticket
- * 08) while still being non-repeating under the same per-pool rules as every other tag.
+ * plus a `Injury:<trigger>:<severity>` pool so each trigger (contact vs non-contact) narrates
+ * distinctly per severity (ticket 12) while still being non-repeating under the same per-pool rules
+ * as every other tag.
  * `{token}` placeholders are filled from the event payload by `renderCommentary` — player/team names
  * always available, `{score}` only for Goal/HalfTimeReached/FullTimeWhistle, `{bodyPart}`/`{severity}`
  * only for Injury. Minute is never baked in here; the UI renders it separately.
@@ -63,20 +65,35 @@ export const COMMENTARY_TEMPLATES: Record<CommentaryTemplateKey, ReadonlyArray<s
     "{player} sees red — {team} down to ten men!",
     "It's an early bath for {player} of {team} — a straight red card.",
   ],
-  "Injury:light": [
-    "{player} of {team} takes a knock and stays on, but he's favouring the {bodyPart}.",
-    "{player} is up and moving for {team} — a few heavy touches but he'll carry on.",
-    "A minor {severity} knock for {player}, who carries on for {team}.",
+  "Injury:contact:light": [
+    "{player} of {team} takes a heavy knock in the challenge and stays on, but he's favouring the {bodyPart}.",
+    "{player} is up and moving for {team} after that rough tackle — a few heavy touches but he'll carry on.",
+    "A {severity} knock in the challenge for {player}, who carries on for {team}.",
   ],
-  "Injury:medium": [
-    "{player} of {team} is down clutching his {bodyPart} and looks in some discomfort.",
-    "Worrying signs for {team} as {player} receives treatment — the physio is up on his {bodyPart}.",
-    "{player} is receiving attention on the pitch for {team} — that's a {severity} one.",
+  "Injury:contact:medium": [
+    "{player} of {team} is down clutching his {bodyPart} after that challenge and looks in some discomfort.",
+    "Worrying signs for {team} as {player} receives treatment after the collision — the physio is up on his {bodyPart}.",
+    "{player} is receiving attention on the pitch for {team} after that tackle — that's a {severity} one.",
   ],
-  "Injury:severe": [
-    "{player} of {team} is down and this doesn't look good — the stretcher is on for the {bodyPart}.",
-    "It's a bad one for {player} — the {bodyPart} is gone and {team} are going to lose him here.",
-    "{player} can't continue for {team} — the physio waves the stretcher on.",
+  "Injury:contact:severe": [
+    "{player} of {team} is down and this doesn't look good after that challenge — the stretcher is on for the {bodyPart}.",
+    "It's a bad one for {player} — the {bodyPart} is gone from that tackle and {team} are going to lose him here.",
+    "{player} can't continue for {team} after that brutal challenge — the physio waves the stretcher on.",
+  ],
+  "Injury:non-contact:light": [
+    "{player} of {team} pulls up and stays on, but he's nursing the {bodyPart} after running himself ragged.",
+    "{player} is up and moving for {team} — a tight {bodyPart} but he'll carry on through the fatigue.",
+    "A {severity} strain for {player}, who carries on for {team}.",
+  ],
+  "Injury:non-contact:medium": [
+    "{player} of {team} pulls up clutching his {bodyPart} and looks in some discomfort, no one near him.",
+    "Worrying signs for {team} as {player} feels his {bodyPart} go — the physio is on to a tired muscle.",
+    "{player} is receiving attention on the pitch for {team} after pulling up — that's a {severity} one.",
+  ],
+  "Injury:non-contact:severe": [
+    "{player} of {team} pulls up sharply and this doesn't look good — the stretcher is on for the {bodyPart}.",
+    "It's a bad one for {player} — the {bodyPart} has gone on an exhausted body and {team} are going to lose him here.",
+    "{player} can't continue for {team} after pulling up — the physio waves the stretcher on.",
   ],
   Injury: [
     "{player} of {team} is down and the physio is on.",
@@ -109,9 +126,9 @@ const BODY_PARTS: Record<string, string> = {
   strain: "strain",
 };
 
-/** Which template pool an event draws from. Injury pools are severity-keyed (ticket 08). */
+/** Which template pool an event draws from. Injury pools are trigger × severity-keyed (ticket 12). */
 const templateKeyFor = (event: MatchEvent): CommentaryTemplateKey =>
-  event._tag === "Injury" ? `Injury:${event.severity}` : event._tag;
+  event._tag === "Injury" ? `Injury:${event.trigger}:${event.severity}` : event._tag;
 
 export interface CommentaryNameResolver {
   readonly clubName: (clubId: string) => string;
