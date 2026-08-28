@@ -30,6 +30,7 @@ interface PlayerRow {
   readonly firstName: string;
   readonly lastName: string;
   readonly dateOfBirth: string;
+  readonly condition: number;
   readonly [attribute: string]: unknown;
 }
 
@@ -57,7 +58,12 @@ export const loadSquadPlayers = (clubId: string) =>
     const sql = yield* SqlClient;
 
     const playerRows = yield* sql.unsafe<PlayerRow>(
-      `SELECT id, first_name as "firstName", last_name as "lastName", date_of_birth as "dateOfBirth", ${attributeSelectList} FROM players WHERE club_id = ?`,
+      `SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", p.date_of_birth as "dateOfBirth", ${attributeSelectList},
+              COALESCE(pf.condition, 100) as "condition"
+       FROM players p
+       LEFT JOIN player_fitness pf ON pf.player_id = p.id
+         AND pf.season_number = (SELECT MAX(season_number) FROM season)
+       WHERE p.club_id = ?`,
       [clubId],
     );
 
@@ -92,6 +98,7 @@ export const loadSquadPlayers = (clubId: string) =>
         positions: positions.map((p) => ({ position: p.position, familiarity: p.familiarity })),
         overallRating: overall,
         positionRatings,
+        condition: row.condition,
       });
     });
   });

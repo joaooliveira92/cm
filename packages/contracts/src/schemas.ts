@@ -58,6 +58,9 @@ export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerV
   positions: Schema.Array(PlayerPositionView),
   overallRating: Schema.Number,
   positionRatings: Schema.Record(Schema.String, Schema.Number),
+  /** The player's current Condition (%) from the Season's fitness ledger (ticket 10) — below 100
+   * means they carry a shortfall from a recent heavy fixture/injury that hasn't fully recovered. */
+  condition: Schema.Number,
 }) {}
 
 export class ClubSummary extends Schema.Class<ClubSummary>("ClubSummary")({
@@ -285,6 +288,10 @@ export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("Re
   awaySubs: SubstitutionStatusView,
   injuredClubIds: Schema.Array(Schema.String),
   injuries: Schema.Array(InjuryView),
+  /** On-pitch head-counts for both clubs as of this chunk (ticket 11) — a value below 11 means
+   * the team is playing with 10 (an empty slot / forced-off), surfacing the no-subs fallback. */
+  homeOnPitchCount: Schema.Number,
+  awayOnPitchCount: Schema.Number,
   /** Per-player Condition (%) at full time, keyed by playerId across both teams (ticket 02). */
   conditions: Schema.Record(Schema.String, Schema.Number),
 }) {}
@@ -310,9 +317,19 @@ export class MakeSubstitutionCommandPayload extends Schema.Class<MakeSubstitutio
   inPlayerId: Schema.String,
 }) {}
 
+/** `ForceOff` (ticket 11): manager drags an on-pitch player off to 10 men (no-subs bring-off) —
+ * structurally identical to game-engine's `ForceOffCommand` (`packages/game-engine/src/match/
+ * commands.ts`), duplicated here to keep `@cm-clone/contracts` decoupled from `@cm-clone/game-engine`. */
+export class ForceOffCommandPayload extends Schema.Class<ForceOffCommandPayload>("ForceOffCommandPayload")({
+  _tag: Schema.Literal("ForceOff"),
+  clubId: Schema.String,
+  playerId: Schema.String,
+}) {}
+
 export const MatchCommandPayload = Schema.Union([
   ChangeTacticsCommandPayload,
   MakeSubstitutionCommandPayload,
+  ForceOffCommandPayload,
 ]);
 
 // ---------------------------------------------------------------------------

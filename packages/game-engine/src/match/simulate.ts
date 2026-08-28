@@ -102,7 +102,7 @@ const onPitchPlayers = (team: TeamRuntimeState): Array<MatchPlayerInput> =>
 /** Applies one `MatchCommand` to team state. Rejects (no-op on runtime state) on roster/cap/window violations. */
 const applyCommand = (
   team: TeamRuntimeState,
-  command: MatchCommand,
+  command: Extract<MatchCommand, { readonly _tag: "ChangeTactics" | "MakeSubstitution" }>,
   minute: number,
   isHalftime: boolean,
 ): { readonly accepted: boolean; readonly reason?: string } => {
@@ -502,6 +502,22 @@ const resolveSlice = (
   resolveNonContactInjuries(away, minute, half, random, events);
 };
 
+/** A manager `ForceOff` (ticket 11's bring-off) drains an on-pitch player's slot so the team plays
+ *  with 10 — reuses the red path's `emptySlot` (including the last-GK outfield stand-in fallback)
+ *  and consumes no substitution/window. Returns false if the player isn't on the pitch. */
+const applyForcedOff = (
+  team: TeamRuntimeState,
+  playerId: string,
+  minute: number,
+  half: MatchHalf,
+  events: Array<MatchEvent>,
+): boolean => {
+  const index = team.resolved.slots.findIndex((slot) => slot.playerId === playerId);
+  if (index === -1) return false;
+  emptySlot(team, team.resolved.slots[index]!, minute, half, events);
+  return true;
+};
+
 const applyScheduledCommands = (
   home: TeamRuntimeState,
   away: TeamRuntimeState,
@@ -515,6 +531,12 @@ const applyScheduledCommands = (
   for (const command of commands) {
     const team = command.clubId === home.clubId ? home : command.clubId === away.clubId ? away : undefined;
     if (!team) continue;
+    if (command._tag === "ForceOff") {
+      // No `Substitution` event here: the player leaves to 10 men (a GK stand-in drag still emits
+      // one from `emptySlot`), and the on-pitch count the read-model surfaces reflects the loss.
+      applyForcedOff(team, command.playerId, minute, half, events);
+      continue;
+    }
     const result = applyCommand(team, command, minute, isHalftime);
     if (result.accepted && command._tag === "MakeSubstitution") {
       events.push({
@@ -539,14 +561,31 @@ interface SimulatedMatch {
   readonly away: TeamRuntimeState;
 }
 
+/** One per-minute on-pitch head-count snapshot for both clubs — the read-model's live 10-men /
+ * empty-slot surface (ticket 11). `homeCount`/`awayCount` are `resolved.slots.length`, so an empty
+ * slot (forced off / red card) is a dropped count and a last-GK stand-in still nets one fewer. */
+export interface MatchPlayerCountEntry {
+  readonly half: MatchHalf;
+  readonly minute: number;
+  readonly homeCount: number;
+  readonly awayCount: number;
+}
+
 /** The shared body of `simulateMatch`/`simulateMatchWithCondition` — runs the full Minute-Slice /
  * Stoppage-Slice loop and returns the state so callers can read what `simulateMatch` folds away. */
-const runSimulation = (input: SimulateMatchInput): SimulatedMatch => {
+const runSimulation = (
+  input: SimulateMatchInput,
+): { readonly events: ReadonlyArray<MatchEvent>; readonly home: TeamRuntimeState; readonly away: TeamRuntimeState; readonly counts: ReadonlyArray<MatchPlayerCountEntry> } => {
   const random = createSeededRng(input.seed);
   const events: Array<MatchEvent> = [];
   const home = initTeamState(input.home);
   const away = initTeamState(input.away);
   const score = { home: 0, away: 0 };
+  const counts: Array<MatchPlayerCountEntry> = [];
+
+  const snapshotCounts = (minute: number, half: MatchHalf): void => {
+    counts.push({ half, minute, homeCount: home.resolved.slots.length, awayCount: away.resolved.slots.length });
+  };
 
   events.push({
     _tag: "MatchStarted",
@@ -561,6 +600,7 @@ const runSimulation = (input: SimulateMatchInput): SimulatedMatch => {
       const minute = half === 1 ? minuteInHalf : HALF_LENGTH_MINUTES + minuteInHalf;
       applyScheduledCommands(home, away, minute, half, input.commandsByMinute?.get(minute), false, events);
       resolveSlice(home, away, minute, half, score, random, events);
+      snapshotCounts(minute, half);
     }
 
     const causingEventCount = events
@@ -569,10 +609,12 @@ const runSimulation = (input: SimulateMatchInput): SimulatedMatch => {
     const addedMinutes = stoppageLength(causingEventCount, random);
     const stoppageMinute = half === 1 ? HALF_LENGTH_MINUTES + addedMinutes : HALF_LENGTH_MINUTES * 2 + addedMinutes;
     resolveSlice(home, away, stoppageMinute, half, score, random, events);
+    snapshotCounts(stoppageMinute, half);
 
     if (half === 1) {
       applyScheduledCommands(home, away, HALF_LENGTH_MINUTES, 1, input.halftimeCommands, true, events);
       events.push({ _tag: "HalfTimeReached", minute: HALF_LENGTH_MINUTES, homeScore: score.home, awayScore: score.away });
+      snapshotCounts(HALF_LENGTH_MINUTES, 1);
     } else {
       events.push({
         _tag: "FullTimeWhistle",
@@ -580,10 +622,11 @@ const runSimulation = (input: SimulateMatchInput): SimulatedMatch => {
         homeScore: score.home,
         awayScore: score.away,
       });
+      snapshotCounts(HALF_LENGTH_MINUTES * 2, 2);
     }
   }
 
-  return { events, home, away };
+  return { events, home, away, counts };
 };
 
 /**
@@ -603,4 +646,18 @@ export const simulateMatchWithCondition = (
 ): { readonly events: ReadonlyArray<MatchEvent>; readonly conditions: ReadonlyMap<string, number> } => {
   const { events, home, away } = runSimulation(input);
   return { events, conditions: new Map<string, number>([...home.conds, ...away.conds]) };
+};
+
+/** Deterministic twin of `simulateMatch` that also returns each player's full-time Condition and the
+ * per-minute on-pitch head-count timeline for both clubs (ticket 11's 10-men / empty-slot / GK-stand-in
+ * surface). Same inputs, same `events`/`conditions` as `simulateMatchWithCondition`. */
+export const simulateMatchWithCounts = (
+  input: SimulateMatchInput,
+): {
+  readonly events: ReadonlyArray<MatchEvent>;
+  readonly conditions: ReadonlyMap<string, number>;
+  readonly counts: ReadonlyArray<MatchPlayerCountEntry>;
+} => {
+  const { events, home, away, counts } = runSimulation(input);
+  return { events, conditions: new Map<string, number>([...home.conds, ...away.conds]), counts };
 };

@@ -12,7 +12,12 @@ import {
   SeasonSummaryView,
   SeasonView,
 } from "@cm-clone/contracts";
-import { createSeededRng, simulateMatch, type MatchTeamSetup } from "@cm-clone/game-engine";
+import {
+  conditionAfterDays,
+  createSeededRng,
+  simulateMatchWithCondition,
+  type MatchTeamSetup,
+} from "@cm-clone/game-engine";
 import type { ManagerOutcome, PlayerAttributes, RandomSource, Verdict } from "@cm-clone/shared";
 import { BOARD_OBJECTIVE_BANDS, judgeBoardObjective, nextManagerOutcome } from "@cm-clone/shared";
 import { Effect } from "effect";
@@ -112,6 +117,12 @@ export const startSeason = (saveId: string) =>
         VALUES (${randomUUID()}, 1, ${fixture.matchday}, ${fixture.homeClubId}, ${fixture.awayClubId}, NULL, NULL, 0)`;
     }
 
+    // Fitness ledger (ticket 10): every generated player enters Season 1 at full Condition (100%),
+    // with no injury history. `resolveMatchday` writes back full-time Conditions and injury severity
+    // as fixtures resolve; between Fixtures the Condition recovers toward 100%.
+    yield* sql`INSERT INTO player_fitness (player_id, season_number, condition, last_injury_severity)
+      SELECT id, 1, 100, 'none' FROM players`;
+
     // Board Objective (ticket 18 / ADR-0006): a band derived from the player's club's Stature
     // Tier, set once at Season start. Only the player's club ever gets one — AI clubs are never
     // judged. `manager_status` is a single row scoped to the whole save (not per-Season), created
@@ -191,8 +202,90 @@ interface FixtureResult {
   readonly awayGoals: number;
 }
 
-const resolveFixtureScore = (homeClubId: string, awayClubId: string) =>
+const RECOVERY_DAYS_PER_MATCHDAY = 7;
+
+/**
+ * Recover every entered player of a club toward 100% Condition between Fixtures (ticket 10): each
+ * player regains a fraction of the gap back to full per day, keyed to their Natural Fitness and the
+ * most recent injury's Severity (a knock recovers faster than a severe). Deterministic — the
+ * Calendar has no dates (ADR-0004), so a fixed per-Matchday recovery step stands in for elapsed days.
+ */
+export const recoverClubFitness = (clubId: string, seasonNumber: number) =>
   Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{
+      playerId: string;
+      condition: number;
+      naturalFitness: number;
+      lastInjurySeverity: "none" | "light" | "medium" | "severe";
+    }>`SELECT pf.player_id as "playerId", pf.condition, p.natural_fitness as "naturalFitness",
+              pf.last_injury_severity as "lastInjurySeverity"
+       FROM player_fitness pf
+       JOIN players p ON p.id = pf.player_id
+       WHERE p.club_id = ${clubId} AND pf.season_number = ${seasonNumber}`;
+    if (rows.length === 0) return;
+
+    const recovered = rows.map((row) => ({
+      player_id: row.playerId,
+      season_number: seasonNumber,
+      condition: conditionAfterDays(
+        row.condition,
+        RECOVERY_DAYS_PER_MATCHDAY,
+        row.naturalFitness,
+        row.lastInjurySeverity,
+      ),
+      last_injury_severity: row.lastInjurySeverity,
+    }));
+    yield* sql`
+      INSERT INTO player_fitness ${sql.insert(recovered)}
+      ON CONFLICT(player_id) DO UPDATE SET condition = excluded.condition, last_injury_severity = excluded.last_injury_severity
+    `;
+  });
+
+/** Writes each on-pitch player's full-time Condition back to the Season's fitness ledger, recording
+ * the most recent injury's Severity for any player who picked one up this fixture (ticket 10). */
+const recordFixtureConditions = (
+  seasonNumber: number,
+  conditions: ReadonlyMap<string, number>,
+  injuries: ReadonlyMap<string, "none" | "light" | "medium" | "severe">,
+) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const playerIds = [...conditions.keys()];
+    if (playerIds.length === 0) return;
+
+    // Load each player's current Severity so a player who wasn't injured this fixture keeps theirs
+    // (e.g. still recovering from a knock picked up last match) across the write-back.
+    const existingRows = yield* sql.unsafe<{
+      playerId: string;
+      lastInjurySeverity: "none" | "light" | "medium" | "severe";
+    }>(
+      `SELECT player_id as "playerId", last_injury_severity as "lastInjurySeverity"
+       FROM player_fitness
+       WHERE season_number = ? AND player_id IN (${playerIds.map(() => "?").join(",")})`,
+      [seasonNumber, ...playerIds],
+    );
+    const existingSeverity = new Map(existingRows.map((row) => [row.playerId, row.lastInjurySeverity]));
+
+    const rows = playerIds.map((playerId) => ({
+      player_id: playerId,
+      season_number: seasonNumber,
+      condition: conditions.get(playerId)!,
+      last_injury_severity: injuries.get(playerId) ?? existingSeverity.get(playerId) ?? "none",
+    }));
+    yield* sql`
+      INSERT INTO player_fitness ${sql.insert(rows)}
+      ON CONFLICT(player_id) DO UPDATE SET condition = excluded.condition, last_injury_severity = excluded.last_injury_severity
+    `;
+  });
+
+const resolveFixtureScore = (homeClubId: string, awayClubId: string, seasonNumber: number) =>
+  Effect.gen(function* () {
+    // Recover both clubs' squads toward full before the Fixture — a player carries a shortfall
+    // into this match only for what they haven't yet recovered (ticket 10).
+    yield* recoverClubFitness(homeClubId, seasonNumber);
+    yield* recoverClubFitness(awayClubId, seasonNumber);
+
     const homeSquad = yield* loadSquadPlayers(homeClubId);
     const awaySquad = yield* loadSquadPlayers(awayClubId);
     const homeTactic = yield* getTacticForClub(homeClubId, homeSquad);
@@ -203,6 +296,7 @@ const resolveFixtureScore = (homeClubId: string, awayClubId: string) =>
       squad: homeSquad.map((player) => ({
         id: player.id,
         attributes: player.attributes as PlayerAttributes,
+        startingCondition: player.condition,
       })),
       tactic: homeTactic,
     };
@@ -211,16 +305,25 @@ const resolveFixtureScore = (homeClubId: string, awayClubId: string) =>
       squad: awaySquad.map((player) => ({
         id: player.id,
         attributes: player.attributes as PlayerAttributes,
+        startingCondition: player.condition,
       })),
       tactic: awayTactic,
     };
 
     const seed = Math.floor(Math.random() * 0xffffffff);
-    const events = simulateMatch({ seed, home, away });
+    const { events, conditions } = simulateMatchWithCondition({ seed, home, away });
     const fullTime = events.find((event) => event._tag === "FullTimeWhistle");
     if (!fullTime || fullTime._tag !== "FullTimeWhistle") {
       throw new Error("simulateMatch did not produce a FullTimeWhistle event");
     }
+
+    // Record the most recent injury Severity per player (last Injury event wins).
+    const injuries = new Map<string, "none" | "light" | "medium" | "severe">();
+    for (const event of events) {
+      if (event._tag === "Injury") injuries.set(event.playerId, event.severity);
+    }
+    yield* recordFixtureConditions(seasonNumber, conditions, injuries);
+
     return { homeGoals: fullTime.homeScore, awayGoals: fullTime.awayScore };
   });
 
@@ -234,11 +337,16 @@ const resolveMatchday = (matchday: number) =>
       id: string;
       homeClubId: string;
       awayClubId: string;
-    }>`SELECT id, home_club_id as "homeClubId", away_club_id as "awayClubId" FROM fixtures WHERE matchday = ${matchday}`;
+      seasonNumber: number;
+    }>`SELECT id, home_club_id as "homeClubId", away_club_id as "awayClubId", season_number as "seasonNumber" FROM fixtures WHERE matchday = ${matchday}`;
 
     const results: Array<FixtureResult> = [];
     for (const fixture of fixtureRows) {
-      const { homeGoals, awayGoals } = yield* resolveFixtureScore(fixture.homeClubId, fixture.awayClubId);
+      const { homeGoals, awayGoals } = yield* resolveFixtureScore(
+        fixture.homeClubId,
+        fixture.awayClubId,
+        fixture.seasonNumber,
+      );
       yield* sql`UPDATE fixtures SET home_goals = ${homeGoals}, away_goals = ${awayGoals}, played = 1 WHERE id = ${fixture.id}`;
       results.push({ fixtureId: fixture.id, homeClubId: fixture.homeClubId, awayClubId: fixture.awayClubId, homeGoals, awayGoals });
     }

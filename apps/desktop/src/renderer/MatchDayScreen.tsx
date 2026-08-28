@@ -82,6 +82,7 @@ const MatchControlPanel = ({
   homeClubId,
   cursor,
   subsStatus,
+  onPitchCount,
   injuries,
   currentMinute,
   onApplied,
@@ -91,6 +92,7 @@ const MatchControlPanel = ({
   readonly homeClubId: string;
   readonly cursor: number;
   readonly subsStatus: SubstitutionStatusView;
+  readonly onPitchCount: number;
   readonly injuries: ReadonlyArray<InjuryView>;
   readonly currentMinute: number;
   readonly onApplied: (response: {
@@ -101,6 +103,8 @@ const MatchControlPanel = ({
     readonly awayScore: number;
     readonly homeSubs: SubstitutionStatusView;
     readonly awaySubs: SubstitutionStatusView;
+    readonly homeOnPitchCount: number;
+    readonly awayOnPitchCount: number;
   }) => void;
 }) => {
   const [open, setOpen] = useState(false);
@@ -113,6 +117,8 @@ const MatchControlPanel = ({
 
   const injuryPrompt = injuries.some((injury) => injury.teamClubId === homeClubId);
   const hasRedInjury = injuries.some((injury) => injury.teamClubId === homeClubId && injury.tier === "red");
+  const orangeInjury = injuries.find((injury) => injury.teamClubId === homeClubId && injury.tier === "orange");
+  const isShorthanded = onPitchCount < 11;
 
   useEffect(() => {
     if (injuryPrompt) setOpen(true);
@@ -145,7 +151,8 @@ const MatchControlPanel = ({
           readonly clubId: string;
           readonly outPlayerId: string;
           readonly inPlayerId: string;
-        },
+        }
+      | { readonly _tag: "ForceOff"; readonly clubId: string; readonly playerId: string },
   ) => {
     setStatus("Submitting...");
     try {
@@ -165,6 +172,12 @@ const MatchControlPanel = ({
   };
 
   const onApplyTactics = () => submit({ _tag: "ChangeTactics", clubId: homeClubId, tactic });
+
+  // Ticket 11 orange no-subs bring-off: the manager drags the injured player off to 10 men.
+  const onBringOff = () => {
+    if (!orangeInjury) return;
+    void submit({ _tag: "ForceOff", clubId: homeClubId, playerId: orangeInjury.playerId });
+  };
 
   const onMakeSubstitution = async () => {
     if (!outPlayerId || !inPlayerId || outPlayerId === inPlayerId) return;
@@ -213,6 +226,52 @@ const MatchControlPanel = ({
               {subsStatus.capReached && <span className="ml-2 text-red-400">Cap reached</span>}
             </p>
           </div>
+
+          {isShorthanded && (
+            <div className="rounded border border-red-800 bg-red-950/40 p-3 text-xs">
+              <p className="font-semibold text-red-300">Playing with {onPitchCount} men</p>
+              <p className="mt-1 text-red-200">
+                A player is off with no substitute left. Rearrange the remaining players in the
+                tactics panel below to fill the formation before resuming.
+              </p>
+            </div>
+          )}
+
+          {orangeInjury && subsStatus.capReached && !isShorthanded && (
+            <div className="rounded border border-amber-700 bg-amber-950/40 p-3 text-xs">
+              <p className="font-semibold text-amber-300">
+                {orangeInjury.playerId} has a knock and you&apos;ve no subs left.
+              </p>
+              <p className="mt-1 text-amber-200">
+                Play on (crippled, at risk of escalation to red) or bring them off and play with 10.
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  className="rounded bg-amber-700 px-3 py-1 text-xs hover:bg-amber-600"
+                  onClick={() => setStatus("Play on — they stay, crippled, with escalation risk.")}
+                >
+                  Play on
+                </button>
+                <button
+                  type="button"
+                  className="rounded bg-red-700 px-3 py-1 text-xs hover:bg-red-600"
+                  onClick={onBringOff}
+                >
+                  Bring off (10 men)
+                </button>
+              </div>
+            </div>
+          )}
+
+          {hasRedInjury && !isShorthanded && (
+            <div className="rounded border border-red-700 bg-red-950/40 p-3 text-xs">
+              <p className="font-semibold text-red-300">A severe injury has forced a player off.</p>
+              <p className="mt-1 text-red-200">
+                No subs left — rearrange the remaining players in the tactics panel below.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="flex items-center gap-2 text-xs text-slate-400">
@@ -325,6 +384,7 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
   const [awayScore, setAwayScore] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [homeSubs, setHomeSubs] = useState<SubstitutionStatusView>(NO_SUBS);
+  const [homeOnPitchCount, setHomeOnPitchCount] = useState(11);
   const [chunkInjuries, setChunkInjuries] = useState<ReadonlyArray<InjuryView>>([]);
   const [currentMinute, setCurrentMinute] = useState(0);
 
@@ -353,6 +413,7 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
     setAwayScore(0);
     setIsComplete(false);
     setHomeSubs(NO_SUBS);
+    setHomeOnPitchCount(11);
     setChunkInjuries([]);
     setCurrentMinute(0);
     cursorRef.current = 0;
@@ -388,6 +449,7 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
         setHomeScore(chunk.homeScore);
         setAwayScore(chunk.awayScore);
         setHomeSubs(chunk.homeSubs);
+        setHomeOnPitchCount(chunk.homeOnPitchCount);
         // Typed `Injury` Match Events landing in this chunk (ticket 08/07) drive the severity-scaled
         // indicator and, for the player's own club, the re-sub/play-on prompt.
         setChunkInjuries(chunk.injuries);
@@ -433,6 +495,8 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
     readonly awayScore: number;
     readonly homeSubs: SubstitutionStatusView;
     readonly awaySubs: SubstitutionStatusView;
+    readonly homeOnPitchCount: number;
+    readonly awayOnPitchCount: number;
   }) => {
     cursorRef.current = response.cursor;
     pendingRef.current = [...response.lines];
@@ -440,6 +504,7 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
     setHomeScore(response.homeScore);
     setAwayScore(response.awayScore);
     setHomeSubs(response.homeSubs);
+    setHomeOnPitchCount(response.homeOnPitchCount);
     // The manager has seen the injury prompt and reacted (or not); clear it so a fresh injury in a
     // later chunk re-prompts.
     setChunkInjuries([]);
@@ -503,6 +568,7 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
               homeClubId={match.homeClubId}
               cursor={cursorRef.current}
               subsStatus={homeSubs}
+              onPitchCount={homeOnPitchCount}
               injuries={chunkInjuries}
               currentMinute={currentMinute}
               onApplied={onCommandApplied}

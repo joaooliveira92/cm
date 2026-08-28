@@ -5,6 +5,7 @@ import type { InjuryEvent } from "../../src/match/events.js";
 import {
   simulateMatch,
   simulateMatchWithCondition,
+  simulateMatchWithCounts,
   type SimulateMatchInput,
 } from "../../src/match/simulate.js";
 import type { MatchPlayerInput, MatchTeamSetup } from "../../src/match/types.js";
@@ -262,6 +263,133 @@ describe("simulateMatch", () => {
       // 3 mid-match windows + 1 free halftime window accepted; the 4th mid-match window is rejected.
       expect(homeSubs).toHaveLength(4);
       expect(homeSubs.some((s) => s.outPlayerId === starters[3])).toBe(false);
+    });
+  });
+
+  describe("ticket 11 no-subs manager flow", () => {
+    /** `craftTeam` builds exactly the 11 on-pitch players (no bench) — so any forced-off has no
+     * substitute and must play with 10. */
+    const noBenchHome = () => craftTeam("home", craftAttributes({ injuryProneness: 1, aggression: 1 }));
+    const noBenchAway = () => craftTeam("away", craftAttributes({ injuryProneness: 1, aggression: 1 }));
+
+    /** A seed whose natural match has no red card and no red injury for either no-bench team — the
+     * only count-changing events come from whatever `ForceOff`/orange commands a test injects. */
+    const findCleanSeed = (): number => {
+      for (let seed = 1; seed < 4000; seed++) {
+        const events = simulateMatch({ seed, home: noBenchHome(), away: noBenchAway() });
+        const disruptive = events.some(
+          (e) => e._tag === "RedCard" || (e._tag === "Injury" && e.tier === "red"),
+        );
+        if (!disruptive) return seed;
+      }
+      throw new Error("no clean seed found for ticket 11 tests");
+    };
+
+    it("a ForceOff drags an on-pitch player off to 10 men without consuming a substitution", () => {
+      const home = noBenchHome();
+      const away = noBenchAway();
+      const outPlayerId = home.tactic.slots[3]!.playerId;
+      const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
+        [60, [{ _tag: "ForceOff", clubId: "home", playerId: outPlayerId }]],
+      ]);
+      const { events, counts } = simulateMatchWithCounts({
+        seed: findCleanSeed(),
+        home,
+        away,
+        commandsByMinute,
+      });
+
+      const countAt = (minute: number) => counts.find((c) => c.minute === minute)!;
+      expect(countAt(59).homeCount).toBe(11);
+      expect(countAt(60).homeCount).toBe(10);
+      expect(countAt(60).awayCount).toBe(11);
+      // No regular substitution event — the ForceOff is a removal to 10, not a like-for-like swap.
+      expect(events.filter((e) => e._tag === "Substitution" && e.teamClubId === "home")).toHaveLength(0);
+    });
+
+    it("forcing the last goalkeeper off drags an outfield stand-in into the goal at gk=1, still 10", () => {
+      const home = noBenchHome();
+      const away = noBenchAway();
+      const gkId = home.tactic.slots[0]!.playerId;
+      const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
+        [60, [{ _tag: "ForceOff", clubId: "home", playerId: gkId }]],
+      ]);
+      const { events, counts } = simulateMatchWithCounts({
+        seed: findCleanSeed(),
+        home,
+        away,
+        commandsByMinute,
+      });
+      expect(counts.find((c) => c.minute === 60)!.homeCount).toBe(10);
+      // The last-GK fallback emits a forced Substitution dragging an outfield player into goal.
+      expect(
+        events.some((e) => e._tag === "Substitution" && e.teamClubId === "home" && e.forcedByInjury),
+      ).toBe(true);
+    });
+
+    it("an orange (knock) injury leaves the player on (11) by default, and a ForceOff then brings them off (10)", () => {
+      // High proneness + low stamina makes non-contact injuries frequent; find a seed where the
+      // home no-bench team takes an orange (knock) injury before stoppage time.
+      const home = craftTeam("home", craftAttributes({ injuryProneness: 20, stamina: 1, aggression: 1 }));
+      const away = craftTeam("away", craftAttributes({ injuryProneness: 20, stamina: 1, aggression: 1 }));
+      let seed: number | undefined;
+      let orangePlayerId: string | undefined;
+      let orangeMinute = 0;
+      for (let s = 1; s < 4000; s++) {
+        const events = simulateMatch({ seed: s, home, away });
+        const orange = events.find(
+          (e): e is InjuryEvent => e._tag === "Injury" && e.tier === "orange" && e.teamClubId === "home" && e.minute < 89,
+        );
+        if (orange) {
+          seed = s;
+          orangeMinute = orange.minute;
+          orangePlayerId = orange.playerId;
+          break;
+        }
+      }
+      expect(seed).toBeDefined();
+
+      // Play-on path: no command — the player stays on, so home stays at 11 through the injury.
+      const playOn = simulateMatchWithCounts({ seed: seed!, home, away });
+      const playOnAfter = playOn.counts.find((c) => c.minute >= orangeMinute);
+      expect(playOnAfter!.homeCount).toBe(11);
+
+      // Bring-off path: a ForceOff for that exact player at a later minute empties their slot.
+      const bringOff = simulateMatchWithCounts({
+        seed: seed!,
+        home,
+        away,
+        commandsByMinute: new Map<number, ReadonlyArray<MatchCommand>>([
+          [orangeMinute + 1, [{ _tag: "ForceOff", clubId: "home", playerId: orangePlayerId! }]],
+        ]),
+      });
+      const bringOffAfter = bringOff.counts.find((c) => c.minute === orangeMinute + 1);
+      expect(bringOffAfter!.homeCount).toBe(10);
+    });
+
+    it("a red forced-off with no subs left keeps the team at 10 men (never 9)", () => {
+      const home = craftTeam("home", craftAttributes({ injuryProneness: 20, stamina: 1, aggression: 1 }));
+      const away = craftTeam("away", craftAttributes({ injuryProneness: 20, stamina: 1, aggression: 1 }));
+      let seed: number | undefined;
+      for (let s = 1; s < 4000; s++) {
+        const events = simulateMatch({ seed: s, home, away });
+        if (events.some((e) => e._tag === "Injury" && e.tier === "red" && e.teamClubId === "home")) {
+          seed = s;
+          break;
+        }
+      }
+      expect(seed).toBeDefined();
+
+      const { events, counts } = simulateMatchWithCounts({ seed: seed!, home, away });
+      const redEvent = events.find(
+        (e): e is InjuryEvent => e._tag === "Injury" && e.tier === "red" && e.teamClubId === "home",
+      )!;
+      // From the red minute on, home plays with 10 — never 11, and the last-GK stand-in never lets
+      // it drop below 10.
+      const afterRed = counts.filter((c) => c.half >= redEvent.half && c.minute >= redEvent.minute);
+      for (const entry of afterRed) {
+        expect(entry.homeCount).toBe(10);
+      }
     });
   });
 });

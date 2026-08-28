@@ -153,6 +153,18 @@ export const createSchema = Effect.gen(function* () {
     wage_budget INTEGER NOT NULL
   )`;
 
+  /** Per-player, per-Season fitness ledger (ticket 10) — one row per player, seeded at 100 at Season
+   * start. `resolveMatchday` writes each on-pitch player's full-time Condition back here and records
+   * the most recent injury's Severity; the Condition then recovers toward 100% between Fixtures keyed
+   * to Natural Fitness and `last_injury_severity` (a knock recovers faster than a severe). Feeds a
+   * not-fully-recovered player's `startingCondition` at kickoff and the squad view's Condition. */
+  yield* sql`CREATE TABLE player_fitness (
+    player_id TEXT PRIMARY KEY REFERENCES players(id),
+    season_number INTEGER NOT NULL REFERENCES season(season_number),
+    condition INTEGER NOT NULL DEFAULT 100 CHECK (condition BETWEEN 0 AND 100),
+    last_injury_severity TEXT NOT NULL DEFAULT 'none' CHECK (last_injury_severity IN ('none','light','medium','severe'))
+  )`;
+
   /** A player's active Contract (ticket 16 / ADR-0005) — 1-5 years, formula-derived wage, no
    * negotiation UI. A player with no row here (and `players.club_id IS NULL`) is a Free Agent,
    * signable for Credits 0 via the normal signing flow. `years_remaining` is allowed to reach 0

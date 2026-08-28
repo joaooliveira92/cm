@@ -70,6 +70,21 @@ const startMatchWithNoInjuries = (savesDir: string, saveId: string, opponentClub
     throw new Error("could not find an Injury-free match seed after 25 attempts");
   });
 
+/** Twin of `startMatchWithNoInjuries` that also excludes red cards, so a deterministic 11-on-11
+ * on-pitch count holds — what ticket 11's no-subs tests need to assert a clean ForceOff to 10. */
+const startMatchWithCleanLineup = (savesDir: string, saveId: string, opponentClubId: string) =>
+  Effect.gen(function* () {
+    for (let attempt = 0; attempt < 25; attempt++) {
+      const summary = yield* startMatch(savesDir, saveId, opponentClubId);
+      const chunks = yield* drain(savesDir, saveId, summary.matchId);
+      const disruptive = chunks.some((chunk) =>
+        chunk.lines.some((line) => line.tag === "Injury" || line.tag === "RedCard"),
+      );
+      if (!disruptive) return summary;
+    }
+    throw new Error("could not find a clean match seed (no Injury/RedCard) after 25 attempts");
+  });
+
 it.effect("submitMatchCommand applies a mid-match substitution and reflects it in homeSubs", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
@@ -222,6 +237,63 @@ it.effect(
         second.map((c) => ({ homeSubs: c.homeSubs, awaySubs: c.awaySubs })),
       );
     }),
+);
+
+it.effect("ForceOff brings a player off to 10 men without consuming a substitution (ticket 11)", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const opponents = yield* listOpponentClubs(savesDir, save.id);
+    const summary = yield* startMatchWithCleanLineup(savesDir, save.id, opponents[0]!.id);
+
+    const tacticsView = yield* getTactics(savesDir, save.id);
+    const tactic = buildKnownTactic(tacticsView.squad);
+    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 1, false, {
+      _tag: "ChangeTactics",
+      clubId: summary.homeClubId,
+      tactic,
+    });
+
+    const onPitchPlayerId = tactic.slots[3]!.playerId;
+    const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 60, false, {
+      _tag: "ForceOff",
+      clubId: summary.homeClubId,
+      playerId: onPitchPlayerId,
+    });
+
+    // The bring-off consumes no substitution budget (the response's chunk predates minute 60, so
+    // its on-pitch count is still 11-on-11 — the drained final state below proves the 10-men drop).
+    strictEqual(response.homeSubs.used, 0);
+    strictEqual(response.awayOnPitchCount, 11);
+
+    // Deterministic: replaying the whole match reproduces the same 10-man surface.
+    const replay = yield* drain(savesDir, save.id, summary.matchId);
+    strictEqual(replay[replay.length - 1]!.homeOnPitchCount, 10);
+  }),
+);
+
+it.effect("a ForceOff for a player not on the pitch is a silent no-op (count unchanged)", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const opponents = yield* listOpponentClubs(savesDir, save.id);
+    const summary = yield* startMatchWithCleanLineup(savesDir, save.id, opponents[0]!.id);
+
+    const tacticsView = yield* getTactics(savesDir, save.id);
+    const tactic = buildKnownTactic(tacticsView.squad);
+    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 1, false, {
+      _tag: "ChangeTactics",
+      clubId: summary.homeClubId,
+      tactic,
+    });
+
+    // A bench player isn't on the pitch — forcing them off changes nothing.
+    const benchPlayerId = tacticsView.squad[12]!.id;
+    const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 60, false, {
+      _tag: "ForceOff",
+      clubId: summary.homeClubId,
+      playerId: benchPlayerId,
+    });
+    strictEqual(response.homeOnPitchCount, 11);
+  }),
 );
 
 it.effect("an Injury event's chunk lists the injured club in injuredClubIds", () =>

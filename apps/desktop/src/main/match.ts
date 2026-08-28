@@ -11,14 +11,16 @@ import {
   SubstitutionStatusView,
   Tactic,
   type ChangeTacticsCommandPayload,
+  type ForceOffCommandPayload,
   type MakeSubstitutionCommandPayload,
 } from "@cm-clone/contracts";
 import {
   MAX_SUBSTITUTIONS_PER_TEAM,
   MAX_SUBSTITUTION_WINDOWS_PER_TEAM,
-  simulateMatchWithCondition,
+  simulateMatchWithCounts,
   type MatchCommand,
   type MatchEvent,
+  type MatchPlayerCountEntry,
   type MatchTeamSetup,
 } from "@cm-clone/game-engine";
 import {
@@ -97,7 +99,13 @@ const loadTeamSetup = (clubId: string) =>
     const tactic = persisted ?? synthesizeDefaultTactic(squad);
     const setup: MatchTeamSetup = {
       clubId,
-      squad: squad.map((player) => ({ id: player.id, attributes: player.attributes as PlayerAttributes })),
+      squad: squad.map((player) => ({
+        id: player.id,
+        attributes: player.attributes as PlayerAttributes,
+        // A player carrying a Condition shortfall from the Season's fitness ledger (ticket 10)
+        // kicks off the live match below full.
+        startingCondition: player.condition,
+      })),
       tactic,
     };
     return setup;
@@ -163,6 +171,16 @@ interface PersistedSubstitutionMade {
   readonly clubId: string;
   readonly outPlayerId: string;
   readonly inPlayerId: string;
+}
+
+/** Ticket 11 `ForceOff` journal entry — the manager's orange "bring off" (no-subs), a forced-off
+ * to 10 men that consumes no substitution/window, stored so resimulation reproduces it. */
+interface PersistedForcedOff {
+  readonly _tag: "ForceOffMade";
+  readonly minute: number;
+  readonly isHalftime: boolean;
+  readonly clubId: string;
+  readonly playerId: string;
 }
 
 /**
@@ -255,6 +273,7 @@ const scoreAsOf = (events: ReadonlyArray<MatchEvent>): { readonly homeScore: num
 const deriveMatchEvents = (stream: ReadonlyArray<StreamEvent>): {
   readonly events: ReadonlyArray<MatchEvent>;
   readonly conditions: ReadonlyMap<string, number>;
+  readonly counts: ReadonlyArray<MatchPlayerCountEntry>;
 } => {
   const started = stream[0]!.payload as PersistedMatchStarted;
 
@@ -282,16 +301,36 @@ const deriveMatchEvents = (stream: ReadonlyArray<StreamEvent>): {
         p.minute,
         p.isHalftime,
       );
+    } else if (row.tag === "ForceOffMade") {
+      const p = row.payload as PersistedForcedOff;
+      schedule({ _tag: "ForceOff", clubId: p.clubId, playerId: p.playerId }, p.minute, p.isHalftime);
     }
   }
 
-  return simulateMatchWithCondition({
+  return simulateMatchWithCounts({
     seed: started.seed,
     home: started.homeSetup,
     away: started.awaySetup,
     commandsByMinute,
     halftimeCommands,
   });
+};
+
+/** Reads the on-pitch head-counts for both clubs as of the given event (ticket 11): the latest
+ * `MatchPlayerCountEntry` at or before the event's `(half, minute)` in simulation order. Falls back
+ * to 11-on-11 if no snapshot precedes it (e.g. the `MatchStarted` first event). */
+const onPitchCountsFor = (
+  counts: ReadonlyArray<MatchPlayerCountEntry>,
+  event: MatchEvent,
+): { readonly homeCount: number; readonly awayCount: number } => {
+  if (event._tag === "MatchStarted") return { homeCount: 11, awayCount: 11 };
+  const minute = event.minute;
+  const half = (event as { readonly half?: 1 | 2 }).half ?? (minute <= HALFTIME_MINUTE ? 1 : 2);
+  let match: MatchPlayerCountEntry | undefined;
+  for (const entry of counts) {
+    if (entry.half === half && entry.minute <= minute) match = entry;
+  }
+  return match ? { homeCount: match.homeCount, awayCount: match.awayCount } : { homeCount: 11, awayCount: 11 };
 };
 
 /** Per-club substitution cap status (ticket 14) computed straight from the derived `MatchEvent`
@@ -322,6 +361,7 @@ const buildResumeSimulationView = (
   matchId: string,
   events: ReadonlyArray<MatchEvent>,
   conditions: ReadonlyMap<string, number>,
+  counts: ReadonlyArray<MatchPlayerCountEntry>,
   cursor: number,
 ) =>
   Effect.gen(function* () {
@@ -387,6 +427,9 @@ const buildResumeSimulationView = (
         type: event.type,
       }));
 
+    const lastEvent = chunkEvents[chunkEvents.length - 1] ?? events[events.length - 1]!;
+    const { homeCount, awayCount } = onPitchCountsFor(counts, lastEvent);
+
     return new ResumeSimulationView({
       matchId,
       cursor: newCursor,
@@ -398,6 +441,8 @@ const buildResumeSimulationView = (
       awaySubs: computeSubstitutionStatus(started.awayClubId, events),
       injuredClubIds,
       injuries,
+      homeOnPitchCount: homeCount,
+      awayOnPitchCount: awayCount,
       conditions: Object.fromEntries(conditions),
     });
   });
@@ -415,11 +460,11 @@ export const resumeSimulation = (savesDir: string, saveId: string, matchId: stri
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
       const derived = deriveMatchEvents(stream);
-      return yield* buildResumeSimulationView(matchId, derived.events, derived.conditions, cursor);
+      return yield* buildResumeSimulationView(matchId, derived.events, derived.conditions, derived.counts, cursor);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
 
-type MatchCommandPayloadInput = ChangeTacticsCommandPayload | MakeSubstitutionCommandPayload;
+type MatchCommandPayloadInput = ChangeTacticsCommandPayload | MakeSubstitutionCommandPayload | ForceOffCommandPayload;
 
 /**
  * `SubmitMatchCommand` (ticket 14): appends the command to the match's stream as a minute-stamped
@@ -446,21 +491,23 @@ export const submitMatchCommand = (
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
       const seq = yield* nextStreamSeq(MATCH_STREAM_TYPE, matchId);
-      const tag = command._tag === "ChangeTactics" ? "TacticsChanged" : "SubstitutionMade";
-      const payload: PersistedTacticsChanged | PersistedSubstitutionMade =
+      const tag = command._tag === "ChangeTactics" ? "TacticsChanged" : command._tag === "MakeSubstitution" ? "SubstitutionMade" : "ForceOffMade";
+      const payload: PersistedTacticsChanged | PersistedSubstitutionMade | PersistedForcedOff =
         command._tag === "ChangeTactics"
           ? { _tag: "TacticsChanged", minute, isHalftime, clubId: command.clubId, tactic: command.tactic }
-          : {
-              _tag: "SubstitutionMade",
-              minute,
-              isHalftime,
-              clubId: command.clubId,
-              outPlayerId: command.outPlayerId,
-              inPlayerId: command.inPlayerId,
-            };
+          : command._tag === "MakeSubstitution"
+            ? {
+                _tag: "SubstitutionMade",
+                minute,
+                isHalftime,
+                clubId: command.clubId,
+                outPlayerId: command.outPlayerId,
+                inPlayerId: command.inPlayerId,
+              }
+            : { _tag: "ForceOffMade", minute, isHalftime, clubId: command.clubId, playerId: command.playerId };
       yield* appendStreamEvents(MATCH_STREAM_TYPE, matchId, seq, [{ tag, payload }]);
 
       const derived = deriveMatchEvents([...stream, { seq, tag, payload }]);
-      return yield* buildResumeSimulationView(matchId, derived.events, derived.conditions, cursor);
+      return yield* buildResumeSimulationView(matchId, derived.events, derived.conditions, derived.counts, cursor);
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );
