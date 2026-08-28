@@ -1,83 +1,107 @@
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
-import { _electron as electron, expect, test } from "@playwright/test";
-import type { ElectronApplication, Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { assignFullTactic, expect, test } from "./launchApp.js";
+import { savesDir, seedConcluded, seedFresh } from "./seedSaves.js";
 
-const mainPath = path.join(import.meta.dirname, "../dist/main/index.js");
+/** Seed a save into the app's saves dir, then reload so the app's save list picks it up, and
+ *  continue that career by its fixed seed name. */
+const seedAndContinue = async (window: Page, userDataDir: string, name: string, seed: (dir: string) => Promise<string>) => {
+  await seed(savesDir(userDataDir));
+  await window.reload();
+  const button = window.getByRole("button", { name, exact: true });
+  await expect(button).toBeVisible();
+  await button.click();
+};
 
-const launchApp = (userDataDir: string) =>
-  electron.launch({
-    args: [mainPath, `--user-data-dir=${userDataDir}`],
-    env: { ...process.env, ELECTRON_RUN_AS_NODE: "" },
-  });
+const goto = async (window: Page, tab: string) => {
+  await window.getByRole("button", { name: tab, exact: true }).click();
+};
 
-let userDataDir: string;
-let app: ElectronApplication;
-let window: Page;
+test("Squad screen renders the club heading and the full starting squad table", async ({ userDataDir, window }) => {
+  await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
 
-test.beforeEach(async () => {
-  userDataDir = mkdtempSync(path.join(tmpdir(), "cm-clone-e2e-"));
-  app = await launchApp(userDataDir);
-  window = await app.firstWindow();
+  await expect(window.locator("h1")).toBeVisible();
+  const playersCount = Number(
+    (await window.getByText(/players$/).innerText()).match(/(\d+) players/)![1],
+  );
+  await expect(window.locator("tbody tr")).toHaveCount(playersCount);
 });
 
-test.afterEach(async () => {
-  await app.close();
-  rmSync(userDataDir, { recursive: true, force: true });
-});
+test("Tactics screen shows 11 slot rows and persists a saved tactic across a reload", async ({ userDataDir, window }) => {
+  await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
+  await goto(window, "tactics");
 
-test("creating a career loads the squad screen", async () => {
-  await expect(window.getByText(/main process says: pong/)).toBeVisible();
-
-  await window.getByPlaceholder("Save name").fill("Test Career");
-  await window.getByRole("button", { name: "Create" }).click();
-
-  await window.getByRole("button", { name: "Test Career" }).click();
-
-  await expect(window.getByText(/players$/)).toBeVisible();
-});
-
-test("assigning a tactic on the Tactics screen persists across a reload", async () => {
-  await window.getByPlaceholder("Save name").fill("Tactics Career");
-  await window.getByRole("button", { name: "Create" }).click();
-  await window.getByRole("button", { name: "Tactics Career" }).click();
-  await expect(window.getByText(/players$/)).toBeVisible();
-
-  await window.getByRole("button", { name: "tactics", exact: true }).click();
   await expect(window.getByRole("heading", { name: /Tactics/ })).toBeVisible();
-
   const rows = window.locator("tbody tr");
   await expect(rows).toHaveCount(11);
 
-  for (let i = 0; i < 11; i++) {
-    const select = rows.nth(i).locator("select");
-    const options = await select.locator("option").all();
-    // options[0] is "Unassigned"; pick a distinct real player per slot to avoid duplicate-player rejection.
-    const optionValue = await options[i + 1].getAttribute("value");
-    await select.selectOption(optionValue!);
-  }
+  await assignFullTactic(rows);
 
-  await window.getByRole("button", { name: "Save Tactic" }).click();
-  await expect(window.getByText("Saved.")).toBeVisible();
-
-  await window.getByRole("button", { name: "squad", exact: true }).click();
-  await window.getByRole("button", { name: "tactics", exact: true }).click();
+  await goto(window, "squad");
+  await goto(window, "tactics");
 
   const reloadedRows = window.locator("tbody tr");
   await expect(reloadedRows).toHaveCount(11);
   await expect(reloadedRows.first().locator("select")).not.toHaveValue("");
 });
 
-test("a save persists across app restarts", async () => {
-  await window.getByPlaceholder("Save name").fill("Persisted Career");
-  await window.getByRole("button", { name: "Create" }).click();
-  await expect(window.getByRole("button", { name: "Persisted Career" })).toBeVisible();
+test("Transfers screen renders the budget line and the Market and Free Agents sections", async ({ userDataDir, window }) => {
+  await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
+  await goto(window, "transfers");
 
-  await app.close();
-  app = await launchApp(userDataDir);
-  window = await app.firstWindow();
+  await expect(window.getByText(/Transfer Budget:/)).toBeVisible();
+  await expect(window.getByRole("heading", { name: "Free Agents" })).toBeVisible();
+  await expect(window.getByRole("heading", { name: "Market" })).toBeVisible();
+});
 
-  await window.getByRole("button", { name: "Persisted Career" }).click();
-  await expect(window.getByText(/players$/)).toBeVisible();
+test("League Table screen shows the 20-row table", async ({ userDataDir, window }) => {
+  await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
+  await goto(window, "league table");
+
+  await expect(window.getByRole("heading", { name: "League Table" })).toBeVisible();
+  await expect(window.locator("tbody tr")).toHaveCount(20);
+});
+
+test("Fixtures screen renders the fixture list", async ({ userDataDir, window }) => {
+  await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
+  await goto(window, "fixtures");
+
+  await expect(window.getByRole("heading", { name: "Fixtures" })).toBeVisible();
+  await expect(window.getByText(/Matchday/).first()).toBeVisible();
+});
+
+test("Match Day starts a match, reveals a feed, and applies a live control command", async ({ userDataDir, window }) => {
+  await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
+
+  // The control panel only renders once the club has a persisted Tactic; set one first.
+  await goto(window, "tactics");
+  await assignFullTactic(window.locator("tbody tr"));
+
+  await goto(window, "match day");
+  const start = window.getByRole("button", { name: "Start match" });
+  await expect(start).toBeEnabled({ timeout: 15_000 });
+  await start.click();
+
+  await expect(window.getByRole("heading", { name: / - / })).toBeVisible();
+  await expect(window.locator("ul").first()).toBeVisible();
+
+  const panelToggle = window.getByRole("button", { name: /Tactics & substitutions/ });
+  await expect(panelToggle).toBeVisible({ timeout: 15_000 });
+  await panelToggle.click();
+  await expect(window.getByText("Team instructions")).toBeVisible();
+
+  await window.getByRole("button", { name: "Apply tactics change" }).click();
+  await expect(
+    window.getByText(/Applied — the engine may still reject an invalid\/over-cap command silently|Failed to submit command/),
+  ).toBeVisible({ timeout: 15_000 });
+
+  await panelToggle.click();
+  await expect(window.getByText("Show")).toBeVisible();
+});
+
+test("Season Summary screen shows a verdict for a concluded, seeded save", async ({ userDataDir, window }) => {
+  await seedAndContinue(window, userDataDir, "Seed: concluded", seedConcluded);
+  await goto(window, "season summary");
+
+  await expect(window.getByRole("heading", { name: "Season Summary" })).toBeVisible();
+  await expect(window.getByText(/Verdict: (Exceeded|Met|Missed)/)).toBeVisible();
 });

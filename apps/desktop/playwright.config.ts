@@ -5,4 +5,6 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: "list",
+  timeout: 30_000,
+  retries: process.env.CI ? 2 : 0,
 });

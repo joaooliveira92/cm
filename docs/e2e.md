@@ -11,7 +11,7 @@ Season Summary asserts its verdict, but only against a seeded save.
 
 | Screen | Load RPC | Structural assert |
 |---|---|---|
-| Squad | `getSquad` | club-name heading + 11-player table |
+| Squad | `getSquad` | club-name heading + full squad table (row count matches the rendered "N players") |
 | Tactics | `getTactics` | "Tactics" heading + 11 slot rows |
 | League Table | `getLeagueTable` | "League Table" heading + 20-row table |
 | Fixtures | `getFixtures` | "Fixtures" heading + fixture list |
