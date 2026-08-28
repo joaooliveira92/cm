@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/main/index.js",
   "scripts": {
-    "dev": "concurrently -k -n main,preload,renderer \"pnpm build:main --watch\" \"pnpm build:preload --watch\" \"vite\"",
+    "dev": "concurrently -k -n main,preload,renderer,electron \"pnpm build:main --watch\" \"pnpm build:preload --watch\" \"vite -c vite.renderer.config.ts\" \"node scripts/dev-electron.mjs\"",
     "build:main": "vite build -c vite.main.config.ts",
     "build:preload": "vite build -c vite.preload.config.ts",
     "build:renderer": "vite build -c vite.renderer.config.ts",

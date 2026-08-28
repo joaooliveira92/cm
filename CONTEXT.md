@@ -17,10 +17,26 @@ Attributes are only meaningful for players who play Goalkeeper; they're absent (
 players.
 
 **Potential Ability**:
-A hidden ceiling, on a 1–100 scale, that a player's Position Ratings develop toward as they age. Never
-shown to the player. Distinct from Overall Rating, which is the *current*, visible expression of a
-player's Attributes.
+A hidden ceiling, on a 1–100 scale, that a player's Position Ratings develop toward via Player
+Development. Never shown to the player. Distinct from Overall Rating, which is the *current*, visible
+expression of a player's Attributes.
 _Avoid_: PA (fine as shorthand in code/comments, not in player-facing text), Current Ability, CA
+
+**Player Development** (per-season):
+The per-season step where a player's Attributes move toward their Potential Ability, shaped by age —
+climbing fastest in a player's early 20s, plateauing through their prime, falling off past decline age.
+Runs once per `SeasonConcluded`, independently per player. Distinct from Training Focus, which biases
+how much of a season's Player Development one Category receives for one player.
+_Avoid_: Growth, aging (fine informally in prose; Player Development is the mechanism's name)
+
+**Training Focus**:
+A per-player, per-Category assignment a manager sets, biasing how much of that season's Player
+Development a player's Attributes in that Category receive relative to an unfocused player. Always set
+(defaults to none/balanced) for every player on a human-managed club; AI clubs' players always use
+unmodified Player Development. Distinct from Condition and Natural Fitness, which govern in-match/
+between-match physical state, not long-run Attribute growth.
+_Avoid_: Training (ambiguous with the feature/milestone name as a whole; Training Focus is the
+specific per-player setting)
 
 **Position**:
 One of the ten fixed slots a player can occupy on the pitch: GK, DC, DL, DR, DM, MC, ML, MR, AMC, ST.
