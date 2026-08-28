@@ -20,7 +20,7 @@ Here is the structured table summarizing the codebase directories and their func
 |---|---|---|
 | [apps/desktop](apps/desktop)  | Application | Electron app containing main, preload, and renderer processes, along with Playwright end-to-end tests. |
 | [packages/contracts](packages/contracts)  | Package | Contains the @effect/rpc contract shared between the renderer and main processes. |
-| packages/gasme-engine | Package | Handles match simulation. |
+| packages/game-engine | Package | Handles match simulation. |
 | packages/shared | Package | Contains domain logic and game-design data (e.g., position/role weights, commentary templates) shared across all packages. |
 | docs/adr/ | Documentation | Architectural Decision Records (ADRs) tracking structural design choices. |
 | docs/agents/, AGENTS.md | Documentation | Operational guidelines and conventions for AI or automated agents working in the repository. |
@@ -52,5 +52,5 @@ pnpm test         # run tests in all packages
 pnpm typecheck    # typecheck all packages
 ```
 
-From [apps/desktop](apps/desktop)ßß, `pnpm test:e2e` runs the Playwright end-to-end suite, and `pnpm package`
+From [apps/desktop](apps/desktop), `pnpm test:e2e` runs the Playwright end-to-end suite, and `pnpm package`
 builds a distributable via electron-builder.

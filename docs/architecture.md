@@ -15,18 +15,53 @@ the decisions below.
 
 ## Data flow
 
-1. **Renderer → main**: the renderer calls `window.cmClone.call(method, payload)` (exposed by
-   `apps/desktop/src/preload/index.ts` via `contextBridge`), which does `ipcRenderer.invoke` over a
-   single `RPC_CHANNEL`.
-2. **Main**: `apps/desktop/src/main/rpcServer.ts` dispatches by `AppRpcMethod` to a handler module
-   (`saves.ts`, `squad.ts`, `tactics.ts`, ...), decoding the payload against the `AppRpcs` schema
-   first.
-3. **Persistence**: one SQLite file per save under Electron's `userData` dir, opened per-call via
-   `@effect/sql-sqlite-node`'s `SqliteClient.layer`, no ORM. `apps/desktop/src/main/schema.ts` holds
-   the DDL, run once at save creation.
-4. **Read views**: handler modules query SQLite directly and shape the result into a `Schema.Class`
-   view (e.g. `SquadView`, `TacticsScreenView`) — derived values like Overall Rating, Position
-   Rating, and Role Rating are computed on read from `packages/shared`, never stored.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant R as Renderer
+    participant P as Preload (contextBridge)
+    participant M as Main (rpcServer)
+    participant H as Handler Module (e.g., squad.ts)
+    participant DB as SQLite DB (@effect/sql-sqlite-node)
+    participant S as packages/shared
+
+    rect rgb(240, 248, 255)
+        note right of R: IPC Invocation
+        R->>P: window.cmClone.call(method, payload)
+        activate P
+        P->>M: ipcRenderer.invoke(RPC_CHANNEL, method, payload)
+        activate M
+    end
+
+    rect rgb(255, 240, 245)
+        note right of M: Dispatch & Validation
+        M->>M: Decode payload against AppRpcs schema
+        M->>H: Dispatch by AppRpcMethod
+        activate H
+    end
+
+    rect rgb(245, 255, 250)
+        note right of H: Persistence & Query
+        H->>DB: Execute query via SqliteClient layer
+        DB-->>H: Return raw SQLite data
+    end
+
+    rect rgb(255, 250, 240)
+        note right of H: Compute Derived Values & View
+        H->>S: Pass raw data for derived calculations
+        S-->>H: Return computed ratings (Overall, Position, Role)
+        H->>H: Shape final result into Schema.Class view (e.g., SquadView)
+        H-->>M: Return view data
+        deactivate H
+    end
+
+    M-->>P: Return IPC result
+    deactivate M
+    P-->>R: Return final view to window
+    deactivate P
+
+```
 
 There is no event-sourced command/decider pipeline wired up yet for gameplay actions — `saves.ts`,
 `squad.ts`, and `tactics.ts` currently read/write SQLite directly per RPC call, matching each
@@ -36,18 +71,17 @@ tickets (match engine, transfers, season/calendar) are expected to introduce it.
 
 ## What's implemented so far
 
-- **Save management** (`saves.ts`): create/list/load a save, each backed by its own SQLite file.
-  Creating a save generates the fixed 20-club League and every club's squad
-  (`worldGeneration.ts`, `packages/shared`'s `generateSquad`/`generatePlayer`).
-- **Squad screen** (`squad.ts`, `SquadScreen.tsx`): lists the user's club's players with computed
-  Overall Rating, per-Position Rating, and full attribute breakdown.
-- **Tactics screen** (`tactics.ts`, `TacticsScreen.tsx`): pick one of the 5 v1 Formations, assign a
-  squad player to each of its 11 slots (Role is auto-derived from Position — v1 has exactly one
-  Role per Position, see [ADR-0003](adr/0003-role-rating-outside-match-engine.md)), set the 3 Team
-  Instructions, and persist via `ChangeTactics`. Slot validation (formation shape, Role/Position
-  pairing, no duplicate players) happens server-side before the write.
 
-Everything else in the v1 scope (match engine, transfers, season/calendar, board objectives) is
+| Area                | Files                                                   | Functionality                                                                                                                                                                                | Validation / Persistence                                                                                                                       |
+| ------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Save management** | `saves.ts`<br>`worldGeneration.ts`<br>`packages/shared` | Create, list, and load saves. Each save is backed by its own SQLite file. Creating a save generates the fixed 20-club League and each club's squad using `generateSquad` / `generatePlayer`. | Save data is persisted in its dedicated SQLite file.                                                                                           |
+| **Squad screen**    | `squad.ts`<br>`SquadScreen.tsx`                         | Lists the user's club's players. Displays computed **Overall Rating**, **per-Position Rating**, and the complete attribute breakdown.                                                        | Ratings are computed from the player's attributes.                                                                                             |
+| **Tactics screen**  | `tactics.ts`<br>`TacticsScreen.tsx`                     | Select one of the **5 v1 Formations**; assign squad players to the **11 formation slots**; automatically derive Role from Position; configure the **3 Team Instructions**.                   | Persisted through `ChangeTactics`. Server-side validation checks formation shape, Role/Position pairing, and duplicate players before writing. |
+
+
+
+
+ Everything else in the v1 scope (match engine, transfers, season/calendar, board objectives) is
 still only a spec under `.scratch/cm-clone/issues/` — see [CONTEXT.md](../CONTEXT.md) and the ADRs
 for the intended shape before implementing it.
 
