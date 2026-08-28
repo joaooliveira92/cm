@@ -42,21 +42,21 @@ const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E>) =>
 // ---------------------------------------------------------------------------
 
 it.effect("decideAiSellerResponse accepts outright at/above Transfer Value", () =>
-  Effect.gen(function* () {
+  Effect.sync(() => {
     deepStrictEqual(decideAiSellerResponse(1_000, 1_000), { action: "accept", counterAmount: null });
     deepStrictEqual(decideAiSellerResponse(1_500, 1_000), { action: "accept", counterAmount: null });
   }),
 );
 
 it.effect("decideAiSellerResponse counters at exactly Transfer Value between 0.85x-1.0x", () =>
-  Effect.gen(function* () {
+  Effect.sync(() => {
     const decision = decideAiSellerResponse(900, 1_000);
     deepStrictEqual(decision, { action: "counter", counterAmount: 1_000 });
   }),
 );
 
 it.effect("decideAiSellerResponse rejects outright below 0.85x", () =>
-  Effect.gen(function* () {
+  Effect.sync(() => {
     deepStrictEqual(decideAiSellerResponse(800, 1_000), { action: "reject", counterAmount: null });
   }),
 );

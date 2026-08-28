@@ -12,6 +12,10 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 Single-context: one [CONTEXT.md](CONTEXT.md)  + `docs/adr/` at the repo root. See [domain.md](docs/agents/domain.md).
 
+### Agent Notes
+
+Default six classes: `feature`, `bug-fix`, `simplification`, `architecture`, `process`, `testing`. See [notes.md](docs/agents/notes.md).
+
 ### Comunication
 
 Use [unslop.md](docs/agents/unslop.md)

@@ -93,12 +93,6 @@ const initTeamState = (setup: MatchTeamSetup): TeamRuntimeState => ({
   gkStandIns: new Set(),
 });
 
-const onPitchPlayers = (team: TeamRuntimeState): Array<MatchPlayerInput> =>
-  team.resolved.slots.flatMap((slot) => {
-    const player = team.playersById.get(slot.playerId);
-    return player ? [player] : [];
-  });
-
 /** Applies one `MatchCommand` to team state. Rejects (no-op on runtime state) on roster/cap/window violations. */
 const applyCommand = (
   team: TeamRuntimeState,
@@ -554,12 +548,6 @@ const applyScheduledCommands = (
 
 const stoppageLength = (causingEventCount: number, random: RandomSource): number =>
   Math.round(clamp(STOPPAGE_MIN_MINUTES + causingEventCount * 0.5 + random.next() * 2, STOPPAGE_MIN_MINUTES, STOPPAGE_MAX_MINUTES));
-
-interface SimulatedMatch {
-  readonly events: ReadonlyArray<MatchEvent>;
-  readonly home: TeamRuntimeState;
-  readonly away: TeamRuntimeState;
-}
 
 /** One per-minute on-pitch head-count snapshot for both clubs — the read-model's live 10-men /
  * empty-slot surface (ticket 11). `homeCount`/`awayCount` are `resolved.slots.length`, so an empty

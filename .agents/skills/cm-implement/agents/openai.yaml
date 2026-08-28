@@ -1,0 +1,5 @@
+interface:
+  display_name: "CM Implement"
+  short_description: "Build work from a spec or tickets, promoting linked Agent Notes to implemented"
+policy:
+  allow_implicit_invocation: false

@@ -23,10 +23,11 @@ expression of a player's Attributes.
 _Avoid_: PA (fine as shorthand in code/comments, not in player-facing text), Current Ability, CA
 
 **Player Development** (per-season):
-The per-season step where a player's Attributes move toward their Potential Ability, shaped by age —
-climbing fastest in a player's early 20s, plateauing through their prime, falling off past decline age.
-Runs once per `SeasonConcluded`, independently per player. Distinct from Training Focus, which biases
-how much of a season's Player Development one Category receives for one player.
+The per-season step where a player's Attributes move toward their age-appropriate Potential Ability
+ceiling, shaped by age — rising during youth, plateauing through the prime, and (for Physical
+Attributes only) declining past decline age. Runs once per `SeasonConcluded`, independently per player,
+deterministically (no seed). Distinct from Training Focus, which biases how much of a season's Player
+Development one Category receives for one player.
 _Avoid_: Growth, aging (fine informally in prose; Player Development is the mechanism's name)
 
 **Training Focus**:

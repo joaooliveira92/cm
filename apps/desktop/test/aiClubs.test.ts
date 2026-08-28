@@ -99,7 +99,7 @@ it.effect("an AI club's Season-start Tactic never changes across a later advance
 // ---------------------------------------------------------------------------
 
 it.effect("identifyWeakPositions flags a Position whose club-best rating falls below 90% of the league average", () =>
-  Effect.gen(function* () {
+  Effect.sync(() => {
     const leagueAverages = computeLeagueAveragePositionRatings([
       [{ positionRatings: { ST: 80, GK: 50 } }],
       [{ positionRatings: { ST: 80, GK: 50 } }],
@@ -115,7 +115,7 @@ it.effect("identifyWeakPositions flags a Position whose club-best rating falls b
 );
 
 it.effect("identifyWeakPositions doesn't flag a Position right at the league average", () =>
-  Effect.gen(function* () {
+  Effect.sync(() => {
     const leagueAverages = computeLeagueAveragePositionRatings([
       [{ positionRatings: { MC: 60 } }],
       [{ positionRatings: { MC: 60 } }],

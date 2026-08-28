@@ -14,3 +14,13 @@ catalog:
   "@effect/vitest": 4.0.0-rc.112
   typescript: ^7.0.0
   "@types/node": ^24
+
+minimumReleaseAgeExclude:
+  - '@effect/tsgo-darwin-arm64@0.38.0'
+  - '@effect/tsgo-darwin-x64@0.38.0'
+  - '@effect/tsgo-linux-arm64@0.38.0'
+  - '@effect/tsgo-linux-arm@0.38.0'
+  - '@effect/tsgo-linux-x64@0.38.0'
+  - '@effect/tsgo-win32-arm64@0.38.0'
+  - '@effect/tsgo-win32-x64@0.38.0'
+  - '@effect/tsgo@0.38.0'

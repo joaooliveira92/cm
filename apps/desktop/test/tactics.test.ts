@@ -91,7 +91,7 @@ it.effect("changeTactics rejects a slot whose Role doesn't match its Position", 
 );
 
 it.effect("every Formation's slots are a genuinely distinct shape", () =>
-  Effect.gen(function* () {
+  Effect.sync(() => {
     const shapes = new Set(
       Object.values(FORMATION_SLOTS).map((slots) => JSON.stringify(slots)),
     );

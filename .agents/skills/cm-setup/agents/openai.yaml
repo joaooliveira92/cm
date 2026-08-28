@@ -1,0 +1,5 @@
+interface:
+  display_name: "CM Setup"
+  short_description: "Configure a repo for the cm-* skills, including Agent Notes scaffolding"
+policy:
+  allow_implicit_invocation: false

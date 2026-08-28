@@ -1,0 +1,5 @@
+interface:
+  display_name: "CM To Tickets"
+  short_description: "Split a plan into tracer-bullet tickets, linking each to its Agent Notes"
+policy:
+  allow_implicit_invocation: false

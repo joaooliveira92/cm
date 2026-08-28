@@ -10,13 +10,10 @@ import {
   AdvanceCalendarResult,
   AttributesSchema,
   BidView,
-  ChangeTacticsCommandPayload,
   ClubSummary,
-  ForceOffCommandPayload,
   InjuryView,
   InvalidTacticError,
   InsufficientTransferBudgetError,
-  MakeSubstitutionCommandPayload,
   MarketPlayerView,
   MatchCommandPayload,
   NotYourPlayerError,
@@ -73,9 +70,7 @@ describe("simple view classes", () => {
 
 describe("attributes", () => {
   it("requires every outfield attribute but allows omitting goalkeeping and hidden", () => {
-    const outfieldOnly = {
-      ...Object.fromEntries(OUTFIELD_ATTRIBUTES.map((a) => [a, 12])),
-    };
+    const outfieldOnly = Object.fromEntries(OUTFIELD_ATTRIBUTES.map((a) => [a, 12]));
     const decoded = Schema.decodeUnknownSync(AttributesSchema)(outfieldOnly);
     expect(decoded.passing).toBe(12);
     expect(decoded.gkHandling).toBeUndefined();
@@ -83,11 +78,9 @@ describe("attributes", () => {
   });
 
   it("rejects a missing required outfield attribute", () => {
-    const missingShooting = {
-      ...Object.fromEntries(
+    const missingShooting = Object.fromEntries(
         OUTFIELD_ATTRIBUTES.filter((a) => a !== "shooting").map((a) => [a, 12]),
-      ),
-    };
+      );
     expect(() =>
       Schema.decodeUnknownSync(AttributesSchema)(missingShooting),
     ).toThrow();

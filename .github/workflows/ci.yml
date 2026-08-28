@@ -22,9 +22,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm -r typecheck
-
-      - run: pnpm -r test
+      - run: pnpm run check:ci
 
       - name: Install Electron system dependencies
         run: |

@@ -37,7 +37,7 @@ const loadSeasonStreamEvents = (saveId: string) =>
 // ---------------------------------------------------------------------------
 
 it.effect("generateRoundRobinFixtures produces a double round-robin: 38 fixtures/club across 38 Matchdays of 10", () =>
-  Effect.gen(function* () {
+  Effect.sync(() => {
     const clubIds = Array.from({ length: 20 }, (_, i) => `club-${i}`);
     const fixtures = generateRoundRobinFixtures(clubIds, 1234);
 
@@ -69,7 +69,7 @@ it.effect("generateRoundRobinFixtures produces a double round-robin: 38 fixtures
 );
 
 it.effect("generateRoundRobinFixtures is deterministic from its seed but reshuffles across seeds", () =>
-  Effect.gen(function* () {
+  Effect.sync(() => {
     const clubIds = Array.from({ length: 20 }, (_, i) => `club-${i}`);
     const a = generateRoundRobinFixtures(clubIds, 42);
     const b = generateRoundRobinFixtures(clubIds, 42);
@@ -85,28 +85,28 @@ it.effect("generateRoundRobinFixtures is deterministic from its seed but reshuff
 // ---------------------------------------------------------------------------
 
 it.effect("nextCalendarBoundary walks Matchday 1, closing the pre-season window", () =>
-  Effect.gen(function* () {
+  Effect.sync(() => {
     const boundary = nextCalendarBoundary({ currentMatchday: 0, phase: "pre_season" });
     deepStrictEqual(boundary, { type: "matchday", matchday: 1, closesWindow: "pre_season" });
   }),
 );
 
 it.effect("nextCalendarBoundary opens the mid-season window right after Matchday 19", () =>
-  Effect.gen(function* () {
+  Effect.sync(() => {
     const boundary = nextCalendarBoundary({ currentMatchday: 19, phase: "in_season" });
     deepStrictEqual(boundary, { type: "windowOpen" });
   }),
 );
 
 it.effect("nextCalendarBoundary resolves Matchday 20 and closes the mid-season window once it's open", () =>
-  Effect.gen(function* () {
+  Effect.sync(() => {
     const boundary = nextCalendarBoundary({ currentMatchday: 19, phase: "mid_window_open" });
     deepStrictEqual(boundary, { type: "matchday", matchday: 20, closesWindow: "mid_season" });
   }),
 );
 
 it.effect("nextCalendarBoundary concludes the season after Matchday 38", () =>
-  Effect.gen(function* () {
+  Effect.sync(() => {
     const boundary = nextCalendarBoundary({ currentMatchday: 38, phase: "in_season" });
     deepStrictEqual(boundary, { type: "seasonComplete" });
   }),

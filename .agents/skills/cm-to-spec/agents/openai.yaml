@@ -1,0 +1,5 @@
+interface:
+  display_name: "CM To Spec"
+  short_description: "Turn a conversation into a spec, carrying forward Agent Note links"
+policy:
+  allow_implicit_invocation: false

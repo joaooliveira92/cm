@@ -1,0 +1,5 @@
+interface:
+  display_name: "CM Archive Notes"
+  short_description: "Audit and archive Agent Notes by future value"
+policy:
+  allow_implicit_invocation: false

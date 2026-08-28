@@ -3,7 +3,7 @@ import { rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
-import { ok, strictEqual } from "node:assert";
+import { ok } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Tactic } from "@cm-clone/contracts";
