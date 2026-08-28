@@ -16,6 +16,10 @@ Single-context: one [CONTEXT.md](CONTEXT.md)  + `docs/adr/` at the repo root. Se
 
 Default six classes: `feature`, `bug-fix`, `simplification`, `architecture`, `process`, `testing`. See [notes.md](docs/agents/notes.md).
 
+### CM skill suite
+
+Forked, Agent-Notes-aware copies of the decision-record chain (`cm-wayfinder`, `cm-implement`, `cm-to-spec`, `cm-to-tickets`, `cm-triage`, `cm-setup`, `cm-archive-notes`) under `.agents/skills/`. See [cm-skills.md](docs/agents/cm-skills.md).
+
 ### Comunication
 
 Use [unslop.md](docs/agents/unslop.md)
