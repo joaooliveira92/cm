@@ -8,6 +8,7 @@ import {
   POSITIONS,
   overallRating,
   positionRating,
+  type Category,
   type PlayerAttributes,
   type PlayerPosition,
 } from "@cm-clone/shared";
@@ -31,6 +32,7 @@ interface PlayerRow {
   readonly lastName: string;
   readonly dateOfBirth: string;
   readonly condition: number;
+  readonly trainingFocus: string | null;
   readonly [attribute: string]: unknown;
 }
 
@@ -59,10 +61,11 @@ export const loadSquadPlayers = (clubId: string) =>
 
     const playerRows = yield* sql.unsafe<PlayerRow>(
       `SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", p.date_of_birth as "dateOfBirth", ${attributeSelectList},
-              COALESCE(pf.condition, 100) as "condition"
+              COALESCE(pf.condition, 100) as "condition", tf.focus as "trainingFocus"
        FROM players p
        LEFT JOIN player_fitness pf ON pf.player_id = p.id
          AND pf.season_number = (SELECT MAX(season_number) FROM season)
+       LEFT JOIN training_focus tf ON tf.player_id = p.id
        WHERE p.club_id = ?`,
       [clubId],
     );
@@ -99,6 +102,7 @@ export const loadSquadPlayers = (clubId: string) =>
         overallRating: overall,
         positionRatings,
         condition: row.condition,
+        trainingFocus: (row.trainingFocus as Category | null) ?? null,
       });
     });
   });

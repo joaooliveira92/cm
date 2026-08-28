@@ -14,6 +14,8 @@ import {
   MatchCommandPayload,
   MatchNotFoundError,
   MatchSummary,
+  NotYourPlayerError,
+  NullableTrainingFocusSchema,
   PlayerNotFoundError,
   PlayerNotFreeAgentError,
   ResumeSimulationView,
@@ -26,6 +28,7 @@ import {
   SquadView,
   Tactic,
   TacticsScreenView,
+  TrainingFocusView,
   TransferWindowClosedError,
   TransfersScreenView,
   WageBudgetExceededError,
@@ -206,6 +209,18 @@ export const AppRpcs = {
       WageBudgetExceededError,
       SaveSackedError,
     ]),
+  },
+  /** Training Focus (spec: `.scratch/training/spec.md`): set (or clear, with `focus: null`) a
+   * player's focused Category on the user's own club. Changeable at any point — no window or
+   * season-boundary restriction. */
+  setTrainingFocus: {
+    payload: Schema.Struct({
+      saveId: Schema.String,
+      playerId: Schema.String,
+      focus: NullableTrainingFocusSchema,
+    }),
+    success: TrainingFocusView,
+    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError, SaveSackedError]),
   },
 } as const;
 

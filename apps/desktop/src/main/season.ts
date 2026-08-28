@@ -24,6 +24,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { assignAiTactics, pickBestFormationTactic, runAiTransferWindow } from "./aiClubs.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
+import { developPlayersForSeason } from "./development.js";
 import { assertSaveNotSacked, loadManagerStatus } from "./managerStatus.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
@@ -487,6 +488,11 @@ export const advanceCalendar = (savesDir: string, saveId: string) =>
         // calendar), so there's no "next Season's pre-season" seam to hook into — `SeasonConcluded`
         // is the closest one-per-Season boundary that currently exists.
         yield* expireContractsForSeason;
+        // Player Development (spec: `.scratch/training/spec.md`): every player on every club
+        // develops toward their age-appropriate ceiling once per `SeasonConcluded`, appending one
+        // `PlayerDeveloped` event per club to its own Club stream — same in-process synchronous
+        // reactor pattern as the reactions above (ADR-0007).
+        yield* developPlayersForSeason(row.seasonNumber);
         seasonConcluded = true;
 
         const judged = yield* judgeSeasonEnd(row.seasonNumber, streamEvents);

@@ -72,6 +72,21 @@ export const HIDDEN_ATTRIBUTES = ["injuryProneness"] as const;
 
 export const ALL_ATTRIBUTES = [...OUTFIELD_ATTRIBUTES, ...GOALKEEPING_ATTRIBUTES] as const;
 
+/**
+ * The four Categories an Attribute belongs to (Training Focus picks one per player). Hidden
+ * attributes have no Category — they're never focused, they just develop by the default rule.
+ */
+export const CATEGORIES = ["technical", "mental", "physical", "goalkeeping"] as const;
+export type Category = (typeof CATEGORIES)[number];
+
+/** Which Attributes belong to each Category, for Training Focus's per-Category bias. */
+export const CATEGORY_ATTRIBUTES: Record<Category, ReadonlyArray<Attribute>> = {
+  technical: TECHNICAL_ATTRIBUTES,
+  mental: MENTAL_ATTRIBUTES,
+  physical: PHYSICAL_ATTRIBUTES,
+  goalkeeping: GOALKEEPING_ATTRIBUTES,
+};
+
 export type OutfieldAttribute = (typeof OUTFIELD_ATTRIBUTES)[number];
 export type GoalkeepingAttribute = (typeof GOALKEEPING_ATTRIBUTES)[number];
 export type HiddenAttribute = (typeof HIDDEN_ATTRIBUTES)[number];

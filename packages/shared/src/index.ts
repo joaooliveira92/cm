@@ -8,4 +8,5 @@ export * from "./generation.js";
 export * from "./commentary.js";
 export * from "./board.js";
 export * from "./transfers.js";
+export * from "./training.js";
 

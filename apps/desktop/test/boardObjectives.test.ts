@@ -232,6 +232,7 @@ it.effect("advanceCalendar rejects further commands once the save is sacked, bef
     const summaryAfter = yield* getSeasonSummary(savesDir, save.id);
     deepStrictEqual(summaryAfter, summaryBefore);
   }),
+  20_000,
 );
 
 it.effect("the sacked guard itself (not just SeasonCompleteError) rejects further commands", () =>

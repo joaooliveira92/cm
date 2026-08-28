@@ -5,6 +5,7 @@ import {
   OUTFIELD_ATTRIBUTES,
 } from "@cm-clone/shared";
 import { describe, expect, it } from "vitest";
+import { AppRpcs } from "../src/rpc.js";
 import {
   AdvanceCalendarResult,
   AttributesSchema,
@@ -18,12 +19,17 @@ import {
   MakeSubstitutionCommandPayload,
   MarketPlayerView,
   MatchCommandPayload,
+  NotYourPlayerError,
+  NullableTrainingFocusSchema,
+  PlayerDevelopedEvent,
   SaveNotFoundError,
   SaveSummary,
   SquadPlayerView,
   SquadView,
   Tactic,
   TacticsScreenView,
+  TrainingFocusSetEvent,
+  TrainingFocusView,
   TransfersScreenView,
 } from "../src/schemas.js";
 
@@ -52,6 +58,7 @@ const player = {
   overallRating: 78,
   positionRatings: { ST: 80 },
   condition: 95,
+  trainingFocus: null,
 };
 
 describe("simple view classes", () => {
@@ -251,5 +258,52 @@ describe("RPC screen views", () => {
       counterAmount: 1200,
       status: "countered",
     });
+  });
+});
+
+describe("Player Development & Training Focus schemas", () => {
+  it("PlayerDevelopedEvent round-trips a club's player Attribute set", () => {
+    roundTrip(PlayerDevelopedEvent, {
+      seasonNumber: 1,
+      clubId: "c1",
+      players: [{ playerId: "p1", attributes }],
+    });
+  });
+
+  it("TrainingFocusSetEvent round-trips a Category focus and a null (clear) focus", () => {
+    roundTrip(TrainingFocusSetEvent, { seasonNumber: 1, playerId: "p1", focus: "physical" });
+    roundTrip(TrainingFocusSetEvent, { seasonNumber: 1, playerId: "p1", focus: null });
+  });
+
+  it("TrainingFocusView round-trips its focus", () => {
+    roundTrip(TrainingFocusView, { playerId: "p1", focus: "technical" });
+  });
+
+  it("SquadPlayerView round-trips a non-null trainingFocus", () => {
+    roundTrip(SquadPlayerView, { ...player, trainingFocus: "mental" });
+  });
+
+  it("rejects an unknown Category for a focus", () => {
+    expect(() =>
+      Schema.decodeUnknownSync(NullableTrainingFocusSchema)("conditioning"),
+    ).toThrow();
+  });
+
+  it("NotYourPlayerError round-trips", () => {
+    roundTrip(NotYourPlayerError, { _tag: "NotYourPlayerError", playerId: "p1" });
+  });
+
+  it("SetTrainingFocus command payload round-trips a Category focus and a null (clear) focus", () => {
+    const payload = AppRpcs.setTrainingFocus.payload;
+    expect(
+      Schema.decodeUnknownSync(payload)({
+        saveId: "s1",
+        playerId: "p1",
+        focus: "goalkeeping",
+      }),
+    ).toEqual({ saveId: "s1", playerId: "p1", focus: "goalkeeping" });
+    expect(
+      Schema.decodeUnknownSync(payload)({ saveId: "s1", playerId: "p1", focus: null }),
+    ).toEqual({ saveId: "s1", playerId: "p1", focus: null });
   });
 });

@@ -177,6 +177,15 @@ export const createSchema = Effect.gen(function* () {
     signed_season INTEGER NOT NULL
   )`;
 
+  /** Per-player Training Focus (spec: `.scratch/training/spec.md`) — the one Category a manager is
+   * concentrating on, or `NULL` for the no-focus default. A missing row also reads as no-focus
+   * (no migration/backfill for existing or freshly generated players); a row is written only when
+   * a manager sets a focus. AI clubs' players never have a focus row. */
+  yield* sql`CREATE TABLE training_focus (
+    player_id TEXT PRIMARY KEY REFERENCES players(id),
+    focus TEXT CHECK (focus IS NULL OR focus IN ('technical','mental','physical','goalkeeping'))
+  )`;
+
   /** In-flight Bid state (ticket 16 / ADR-0005) — any player is biddable regardless of a Listed
    * flag (not modeled, per ticket 05). Single-round: the selling club accepts/rejects/counters
    * exactly once (`countered`), then the bidding club accepts/withdraws. */

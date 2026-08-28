@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 import {
+  CATEGORIES,
   FAMILIARITY_TIERS,
   FORMATIONS,
   GOALKEEPING_ATTRIBUTES,
@@ -32,6 +33,12 @@ export const PositionSchema = Schema.Literals(POSITIONS);
 export const FamiliarityTierSchema = Schema.Literals(FAMILIARITY_TIERS);
 export const StatureTierSchema = Schema.Literals(STATURE_TIERS);
 
+/** The four Attribute Categories a Training Focus may name (Player Development / Training Focus). */
+export const TrainingFocusSchema = Schema.Literals(CATEGORIES);
+
+/** A player's Training Focus: a Category, or `null` meaning the no-focus default. */
+export const NullableTrainingFocusSchema = Schema.NullOr(TrainingFocusSchema);
+
 export class PlayerPositionView extends Schema.Class<PlayerPositionView>("PlayerPositionView")({
   position: PositionSchema,
   familiarity: FamiliarityTierSchema,
@@ -61,6 +68,9 @@ export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerV
   /** The player's current Condition (%) from the Season's fitness ledger (ticket 10) — below 100
    * means they carry a shortfall from a recent heavy fixture/injury that hasn't fully recovered. */
   condition: Schema.Number,
+  /** The player's Training Focus Category, or `null` for the no-focus default (Training Focus).
+   * A missing persisted value reads as `null` — no migration/backfill. */
+  trainingFocus: NullableTrainingFocusSchema,
 }) {}
 
 export class ClubSummary extends Schema.Class<ClubSummary>("ClubSummary")({
@@ -446,4 +456,42 @@ export class TransfersScreenView extends Schema.Class<TransfersScreenView>("Tran
   outgoingBids: Schema.Array(BidView),
   freeAgents: Schema.Array(MarketPlayerView),
   marketPlayers: Schema.Array(MarketPlayerView),
+}) {}
+
+// ---------------------------------------------------------------------------
+// Player Development & Training Focus (spec: `.scratch/training/spec.md`)
+// ---------------------------------------------------------------------------
+
+/** The `PlayerDeveloped` event the Club Decider emits once per `SeasonConcluded` (per club),
+ * carrying every player's resulting Attribute set — a development *outcome*, distinct from the
+ * between-season state change `TrainingFocusSet`. */
+export class PlayerDevelopedEvent extends Schema.Class<PlayerDevelopedEvent>("PlayerDevelopedEvent")({
+  seasonNumber: Schema.Number,
+  clubId: Schema.String,
+  players: Schema.Array(
+    Schema.Struct({
+      playerId: Schema.String,
+      attributes: AttributesSchema,
+    }),
+  ),
+}) {}
+
+/** The `TrainingFocusSet` event a manager's `SetTrainingFocus` command appends to the player's club
+ * stream — a between-season state change, distinct from `PlayerDeveloped`. */
+export class TrainingFocusSetEvent extends Schema.Class<TrainingFocusSetEvent>("TrainingFocusSetEvent")({
+  seasonNumber: Schema.Number,
+  playerId: Schema.String,
+  focus: NullableTrainingFocusSchema,
+}) {}
+
+/** The `SetTrainingFocus` command's result — the player's (possibly cleared) focus after the write. */
+export class TrainingFocusView extends Schema.Class<TrainingFocusView>("TrainingFocusView")({
+  playerId: Schema.String,
+  focus: NullableTrainingFocusSchema,
+}) {}
+
+/** Raised when `SetTrainingFocus` targets a player who isn't on the user's own club — Training
+ * Focus is a manager's own-squad lever, never a cross-club command. */
+export class NotYourPlayerError extends Schema.TaggedError<NotYourPlayerError>()("NotYourPlayerError", {
+  playerId: Schema.String,
 }) {}

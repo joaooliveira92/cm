@@ -13,6 +13,7 @@ import {
   respondToBid,
   signFreeAgent,
 } from "./transfers.js";
+import { setTrainingFocus } from "./training.js";
 
 export interface RpcContext {
   readonly savesDir: string;
@@ -135,6 +136,13 @@ const handlers: Record<AppRpcMethod, Handler> = {
         AppRpcs.renewContract.payload,
       )(payload);
       return yield* renewContract(ctx.savesDir, saveId, playerId, years);
+    }),
+  setTrainingFocus: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, playerId, focus } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.setTrainingFocus.payload,
+      )(payload);
+      return yield* setTrainingFocus(ctx.savesDir, saveId, playerId, focus);
     }),
 };
 

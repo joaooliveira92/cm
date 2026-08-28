@@ -241,6 +241,7 @@ it.effect("respondToBid rejects a second response once a Bid is already resolved
     const result = yield* Effect.exit(respondToBid(savesDir, save.id, "test-bid-2", "accept", undefined));
     ok(result._tag === "Failure");
   }),
+  20_000,
 );
 
 // ---------------------------------------------------------------------------

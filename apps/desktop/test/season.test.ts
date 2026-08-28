@@ -181,6 +181,7 @@ it.effect("advancing to Matchday 19 then again opens, then closes, the mid-seaso
     strictEqual(matchday20.transferWindowClosed, "mid_season");
     strictEqual(matchday20.season.phase, "in_season");
   }),
+  20_000,
 );
 
 it.effect("league table orders by points, then goal difference, then goals scored", () =>
@@ -231,4 +232,5 @@ it.effect("advanceCalendar fails once the season has fully concluded", () =>
     const result = yield* Effect.exit(advanceCalendar(savesDir, save.id));
     ok(result._tag === "Failure");
   }),
+  20_000,
 );

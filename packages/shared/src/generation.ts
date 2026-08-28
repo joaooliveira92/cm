@@ -98,8 +98,11 @@ const POTENTIAL_ABILITY_RANGE: Record<StatureTier, readonly [number, number]> = 
 /**
  * Ages 16-23 grow toward Potential Ability, 24-29 plateau at it. Only Physical attributes decline
  * 1-2 points/season (on the 1-20 scale) from 30+; Technical/Mental hold at Potential Ability.
+ * Shared by Player generation (to generate a player toward the ceiling they'll grow toward) and
+ * Player Development (the per-`SeasonConcluded` step toward that same ceiling) — one curve, not
+ * two that can drift apart (see ADR-0011).
  */
-const attributeCeilingOn20Scale = (
+export const attributeCeilingOn20Scale = (
   attribute: Attribute | HiddenAttribute,
   age: number,
   potentialAbility: number,
