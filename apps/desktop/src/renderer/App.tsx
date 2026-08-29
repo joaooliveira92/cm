@@ -26,27 +26,35 @@ export const App = () => {
 
   const refresh = async () => {
     const result = await window.cmClone.call("listSaves", undefined);
-    setSaves(result);
+    if (result._tag === "Failure") return;
+    setSaves(result.value);
   };
 
   useEffect(() => {
     window.cmClone
       .call("ping", undefined)
-      .then((pong) => setStatus(`main process says: ${pong}`))
-      .catch(() => setStatus("failed to reach main process"));
+      .then((result) => {
+        setStatus(
+          result._tag === "Success"
+            ? `main process says: ${result.value}`
+            : "failed to reach main process",
+        );
+      });
     refresh();
   }, []);
 
   const onCreateSave = async () => {
     if (!newSaveName.trim()) return;
-    await window.cmClone.call("createSave", { name: newSaveName.trim() });
+    const result = await window.cmClone.call("createSave", { name: newSaveName.trim() });
+    if (result._tag === "Failure") return;
     setNewSaveName("");
     await refresh();
   };
 
   const onContinue = async (id: string) => {
-    const save = await window.cmClone.call("loadSave", { id });
-    setLoadedSave(save);
+    const result = await window.cmClone.call("loadSave", { id });
+    if (result._tag === "Failure") return;
+    setLoadedSave(result.value);
   };
 
   if (loadedSave) {

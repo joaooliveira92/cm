@@ -20,6 +20,7 @@ const GATES: Record<Mode, ReadonlyArray<Gate>> = {
   "check-all": [
     { id: "typecheck", command: "pnpm", args: ["-r", "typecheck"] },
     { id: "lint", command: "pnpm", args: ["run", "lint"] },
+    { id: "effect-lint", command: "pnpm", args: ["run", "effect-lint"] },
     { id: "verify-md-links", command: "pnpm", args: ["run", "verify-md-links"] },
     { id: "test", command: "pnpm", args: ["-r", "test"] },
   ],
@@ -28,6 +29,7 @@ const GATES: Record<Mode, ReadonlyArray<Gate>> = {
   ci: [
     { id: "typecheck", command: "pnpm", args: ["-r", "typecheck"] },
     { id: "lint", command: "pnpm", args: ["run", "lint"] },
+    { id: "effect-lint", command: "pnpm", args: ["run", "effect-lint"] },
     { id: "verify-md-links", command: "pnpm", args: ["run", "verify-md-links"] },
     { id: "test", command: "pnpm", args: ["-r", "test"] },
   ],

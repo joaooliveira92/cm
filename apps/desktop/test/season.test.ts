@@ -37,9 +37,9 @@ const loadSeasonStreamEvents = (saveId: string) =>
 // ---------------------------------------------------------------------------
 
 it.effect("generateRoundRobinFixtures produces a double round-robin: 38 fixtures/club across 38 Matchdays of 10", () =>
-  Effect.sync(() => {
+  Effect.gen(function* () {
     const clubIds = Array.from({ length: 20 }, (_, i) => `club-${i}`);
-    const fixtures = generateRoundRobinFixtures(clubIds, 1234);
+    const fixtures = yield* generateRoundRobinFixtures(clubIds, 1234);
 
     // 20 clubs, double round-robin: C(20,2) = 190 pairings x 2 legs = 380 Fixtures, 10/Matchday x 38.
     strictEqual(fixtures.length, 380);
@@ -69,13 +69,13 @@ it.effect("generateRoundRobinFixtures produces a double round-robin: 38 fixtures
 );
 
 it.effect("generateRoundRobinFixtures is deterministic from its seed but reshuffles across seeds", () =>
-  Effect.sync(() => {
+  Effect.gen(function* () {
     const clubIds = Array.from({ length: 20 }, (_, i) => `club-${i}`);
-    const a = generateRoundRobinFixtures(clubIds, 42);
-    const b = generateRoundRobinFixtures(clubIds, 42);
+    const a = yield* generateRoundRobinFixtures(clubIds, 42);
+    const b = yield* generateRoundRobinFixtures(clubIds, 42);
     deepStrictEqual(a, b);
 
-    const c = generateRoundRobinFixtures(clubIds, 999);
+    const c = yield* generateRoundRobinFixtures(clubIds, 999);
     ok(JSON.stringify(a) !== JSON.stringify(c));
   }),
 );

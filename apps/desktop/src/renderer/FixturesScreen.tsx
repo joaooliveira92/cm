@@ -8,8 +8,13 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: string }) => {
   useEffect(() => {
     window.cmClone
       .call("getFixtures", { saveId })
-      .then(setFixtures)
-      .catch(() => setError("Failed to load fixtures"));
+      .then((result) => {
+        if (result._tag === "Failure") {
+          setError("Failed to load fixtures");
+          return;
+        }
+        setFixtures(result.value);
+      });
   }, [saveId]);
 
   if (error) return <p className="p-8 text-red-400">{error}</p>;

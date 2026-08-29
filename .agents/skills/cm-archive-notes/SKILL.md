@@ -1,6 +1,6 @@
 ---
 name: cm-archive-notes
-description: Use when auditing, archiving, or pruning Agent Notes — periodically or when a supersession flag left by cm-wayfinder needs resolving. Not invoked automatically; run it explicitly ("audit/archive Agent Notes").
+description: Use when auditing, archiving, or pruning Agent Notes — periodically or when a supersession flag left by cm-wayfinder needs resolving — or when auditing the note corpus for leaked reasoning transcripts. Not invoked automatically; run it explicitly ("audit/archive Agent Notes").
 disable-model-invocation: true
 ---
 
@@ -13,6 +13,15 @@ Read [docs/agents/notes.md](../../../docs/agents/notes.md) first: the lifecycle 
 ## Supersession: what's already handled, and what isn't
 
 `cm-wayfinder`'s resolution step carries a one-line supersession flag: when it writes a new note, it checks whether that note supersedes an existing active note on the same decision, and flags it inline if so. That flag is not a judgment — it's a pointer. Resolving it (archive the superseded note? retain it as still-useful? reject it?) is this skill's job, along with everything else in scope below: a periodic or explicit-invocation audit pass over the whole corpus, not a per-write check.
+
+## Resolve a supersession
+
+A supersession flag is a pointer, not a verdict. For each flagged pair — and each suspected pair you find — classify it **fully or partially** before acting:
+
+- **Full supersession:** the newer note absorbs every unique proposition of the older one. Transfer any surviving rationale, alternative, consequence, verification, and named coverage gap into the current owner *first*, then archive an implemented triplet or reject-and-delete per the lifecycle outcomes below. Never delete with git history as the only copy of rationale.
+- **Partial supersession:** any surviving behavior, current contract, durable format, independently current rejected alternative, or obligation the newer note does not absorb keeps the older note active. Cross-link both and update every fact that remains current.
+
+An added-then-removed feature is a common full case — but only when the feature is absent from code, configuration, schemas, durable or wire formats, migration, and compatibility behavior; no doc presents it as available; and no test exercises it as supported. Removing one transport, default, implementation, or presentation is partial, as is any surviving data or compatibility handling.
 
 ## Classify by future value
 
@@ -45,6 +54,12 @@ For rejected notes:
 
 - keep "rejected real-time multiplayer sync" — 400 words: the temptation to revisit this remains real and expensive if re-litigated blind;
 - delete "rejected storing player attributes as floats" — 300 words: a later, broader precision decision resolved this question and superseded it.
+
+## Trim leaked reasoning transcripts
+
+Notes are prose a maintainer reads at HEAD, with no access to the session that produced them. Purge any passage whose vantage is the authoring session rather than the repository. **The one test:** could a reader at HEAD, given no session transcript, PR thread, or uncommitted draft, resolve every reference and verify every claim? If not, restate the surviving facts from the repository's vantage and delete the rest. If yes, it is not leakage — but on a current-state surface a resolvable change-story is still change narration, phrased as present fact instead.
+
+The classic leaks: dead design-session citations ((decision N), audit codes, draft §N); stack or PR vantage ("a later PR in this stack", "this PR adds"); change narration ("used to", "no longer", "this cut"); review choreography ("rejected in review", draft ordinals); reviewer-addressed justifications ("it's safe — it simply…"); control-flow narration and test walkthroughs; hedges with no marker; working-language slips. Issue references, merged-PR citations inside notes, suppression justifications, and measured bounds stay. The full taxonomy, keep-list, overcorrection traps, and recall batteries live in [references/leakage.md](references/leakage.md); write or keep every note under the same rule.
 
 ## Archive one implemented note
 

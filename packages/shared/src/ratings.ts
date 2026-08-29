@@ -1,5 +1,4 @@
-import type { Attribute } from "./positions.js";
-import { POSITION_WEIGHTS, type FamiliarityTier, type PlayerAttributes, type Position } from "./positions.js";
+import { POSITION_WEIGHTS, type Attribute, type FamiliarityTier, type PlayerAttributes, type Position } from "./positions.js";
 import { ROLE_WEIGHTS, type Role } from "./tactics.js";
 
 /** Weighted average of Attributes against a weights table, scaled from the 1-20 attribute range to 1-100. */

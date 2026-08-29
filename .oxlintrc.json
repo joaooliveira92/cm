@@ -3,16 +3,39 @@
   "plugins": [
     "typescript",
     "unicorn",
-    "oxc"
+    "oxc",
+    "import"
   ],
   "categories": {
-    "correctness": "error"
+    "correctness": "error",
+    "perf": "warn"
   },
-  "rules": {},
+  "rules": {
+    "no-eval": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-throw-literal": "error",
+    "no-new-wrappers": "error",
+    "no-param-reassign": "error",
+    "no-console": "warn",
+    "typescript/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "typescript/no-explicit-any": "error",
+    "typescript/consistent-type-imports": "error",
+    "typescript/prefer-as-const": "error",
+    "typescript/prefer-nullish-coalescing": "error",
+    "typescript/prefer-optional-chain": "error",
+    "typescript/no-unnecessary-type-assertion": "error",
+    "unicorn/no-instanceof-array": "error",
+    "unicorn/no-array-for-each": "warn",
+    "unicorn/prefer-array-flat": "warn",
+    "import/no-duplicates": "error"
+  },
   "env": {
     "builtin": true
   },
   "ignorePatterns": [
-    "reference-project/**"
+    "reference-project/**",
+    "**/dist/**",
+    "**/node_modules/**"
   ]
 }

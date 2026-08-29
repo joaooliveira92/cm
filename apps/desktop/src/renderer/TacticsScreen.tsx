@@ -76,11 +76,15 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: string }) => {
   useEffect(() => {
     window.cmClone
       .call("getTactics", { saveId })
-      .then((loaded) => {
+      .then((result) => {
+        if (result._tag === "Failure") {
+          setError("Failed to load tactics");
+          return;
+        }
+        const loaded = result.value;
         setView(loaded);
         setTactic(loaded.tactic ?? defaultTacticFor("4-4-2"));
-      })
-      .catch(() => setError("Failed to load tactics"));
+      });
   }, [saveId]);
 
   if (error) return <p className="p-8 text-red-400">{error}</p>;
@@ -93,7 +97,12 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: string }) => {
   const onSubmit = async () => {
     setStatus("Saving...");
     try {
-      const saved = await window.cmClone.call("changeTactics", { saveId, tactic });
+      const result = await window.cmClone.call("changeTactics", { saveId, tactic });
+      if (result._tag === "Failure") {
+        setStatus("Failed to save tactic — check every slot has a unique player assigned.");
+        return;
+      }
+      const saved = result.value;
       setView(saved);
       setTactic(saved.tactic ?? tactic);
       setStatus("Saved.");

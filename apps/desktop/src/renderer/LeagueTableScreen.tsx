@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AdvanceCalendarResult, LeagueTableView } from "@cm-clone/contracts";
+import type { LeagueTableView } from "@cm-clone/contracts";
 
 export const LeagueTableScreen = ({ saveId }: { readonly saveId: string }) => {
   const [table, setTable] = useState<LeagueTableView | null>(null);
@@ -9,8 +9,13 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: string }) => {
   const refresh = () =>
     window.cmClone
       .call("getLeagueTable", { saveId })
-      .then(setTable)
-      .catch(() => setError("Failed to load league table"));
+      .then((result) => {
+        if (result._tag === "Failure") {
+          setError("Failed to load league table");
+          return;
+        }
+        setTable(result.value);
+      });
 
   useEffect(() => {
     refresh();
@@ -19,8 +24,12 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: string }) => {
   const onAdvanceCalendar = async () => {
     setAdvancing(true);
     try {
-      const result: AdvanceCalendarResult = await window.cmClone.call("advanceCalendar", { saveId });
-      if (result.seasonConcluded) setError(null);
+      const result = await window.cmClone.call("advanceCalendar", { saveId });
+      if (result._tag === "Failure") {
+        setError("Failed to advance the calendar");
+        return;
+      }
+      if (result.value.seasonConcluded) setError(null);
       await refresh();
     } catch {
       setError("Failed to advance the calendar");

@@ -10,6 +10,10 @@ Break a plan, spec, or conversation into a set of **tickets**: tracer-bullet ver
 
 The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/cm-setup`.
 
+## Writing discipline
+
+Tickets are prose an AFK agent executes and a maintainer later audits, both with no access to this conversation: apply the [complete-proposition rules](../cm-wayfinder/references/prose.md). When slicing a spec, never drop a requirement the source still carries — each cut of scope is a deliberate move, not a lost clause. Write the "What to build" from the user's perspective, keep acceptance criteria checkable (the agent can tell done from not-done), and preserve the source's decision and link verbatim in the Decisions section rather than re-summarizing it.
+
 ## Process
 
 ### 1. Gather context

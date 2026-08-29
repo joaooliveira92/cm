@@ -7,7 +7,7 @@ import {
   FixturesView,
   LeagueTableRow,
   LeagueTableView,
-  SEASON_PHASES,
+  type SEASON_PHASES,
   SeasonCompleteError,
   SeasonSummaryView,
   SeasonView,
@@ -20,7 +20,7 @@ import {
 } from "@cm-clone/game-engine";
 import type { ManagerOutcome, PlayerAttributes, RandomSource, Verdict } from "@cm-clone/shared";
 import { BOARD_OBJECTIVE_BANDS, judgeBoardObjective, nextManagerOutcome } from "@cm-clone/shared";
-import { Effect } from "effect";
+import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { assignAiTactics, pickBestFormationTactic, runAiTransferWindow } from "./aiClubs.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
@@ -34,6 +34,20 @@ const STREAM_TYPE = "season";
 const TOTAL_MATCHDAYS = 38;
 /** Mid-season Transfer Window opens immediately after this Matchday resolves (ADR-0004). */
 const MID_WINDOW_MATCHDAY = 19;
+
+// ---------------------------------------------------------------------------
+// Domain errors
+// ---------------------------------------------------------------------------
+
+/** Raised when fixture generation gets an odd/insufficient club count — a caller precondition that
+ * `startSeason` normally guarantees (the fixed 20-club League is even). */
+export class FixtureGenerationError extends Data.TaggedError("FixtureGenerationError")<{
+  readonly clubCount: number;
+}> {}
+
+/** Raised when `simulateMatch` returns without a `FullTimeWhistle` event — an invariant of the
+ * engine's match simulation. */
+class FullTimeWhistleMissingError extends Data.TaggedError("FullTimeWhistleMissingError")<{}> {}
 
 // ---------------------------------------------------------------------------
 // Pure fixture generation
@@ -63,38 +77,39 @@ export interface GeneratedFixture {
 export const generateRoundRobinFixtures = (
   clubIds: ReadonlyArray<string>,
   seed: number,
-): ReadonlyArray<GeneratedFixture> => {
-  const n = clubIds.length;
-  if (n < 2 || n % 2 !== 0) {
-    throw new Error(`round-robin fixture generation requires an even number of clubs, got ${n}`);
-  }
-
-  const random = createSeededRng(seed);
-  const shuffled = shuffle(clubIds, random);
-
-  const fixed = shuffled[0];
-  let rotating = shuffled.slice(1);
-  const firstLeg: Array<GeneratedFixture> = [];
-
-  for (let round = 0; round < n - 1; round++) {
-    const roundClubs = [fixed, ...rotating];
-    for (let i = 0; i < n / 2; i++) {
-      const a = roundClubs[i]!;
-      const b = roundClubs[n - 1 - i]!;
-      const [homeClubId, awayClubId] = round % 2 === 0 ? [a, b] : [b, a];
-      firstLeg.push({ matchday: round + 1, homeClubId, awayClubId });
+): Effect.Effect<ReadonlyArray<GeneratedFixture>, FixtureGenerationError> =>
+  Effect.gen(function* () {
+    const n = clubIds.length;
+    if (n < 2 || n % 2 !== 0) {
+      return yield* new FixtureGenerationError({ clubCount: n });
     }
-    rotating = [rotating[rotating.length - 1]!, ...rotating.slice(0, -1)];
-  }
 
-  const secondLeg: Array<GeneratedFixture> = firstLeg.map((fixture) => ({
-    matchday: fixture.matchday + (n - 1),
-    homeClubId: fixture.awayClubId,
-    awayClubId: fixture.homeClubId,
-  }));
+    const random = createSeededRng(seed);
+    const shuffled = shuffle(clubIds, random);
 
-  return [...firstLeg, ...secondLeg];
-};
+    const fixed = shuffled[0];
+    let rotating = shuffled.slice(1);
+    const firstLeg: Array<GeneratedFixture> = [];
+
+    for (let round = 0; round < n - 1; round++) {
+      const roundClubs = [fixed, ...rotating];
+      for (let i = 0; i < n / 2; i++) {
+        const a = roundClubs[i]!;
+        const b = roundClubs[n - 1 - i]!;
+        const [homeClubId, awayClubId] = round % 2 === 0 ? [a, b] : [b, a];
+        firstLeg.push({ matchday: round + 1, homeClubId, awayClubId });
+      }
+      rotating = [rotating[rotating.length - 1]!, ...rotating.slice(0, -1)];
+    }
+
+    const secondLeg: Array<GeneratedFixture> = firstLeg.map((fixture) => ({
+      matchday: fixture.matchday + (n - 1),
+      homeClubId: fixture.awayClubId,
+      awayClubId: fixture.homeClubId,
+    }));
+
+    return [...firstLeg, ...secondLeg];
+  });
 
 // ---------------------------------------------------------------------------
 // Season start
@@ -110,7 +125,7 @@ export const startSeason = (saveId: string) =>
     const clubRows = yield* sql<{ id: string }>`SELECT id FROM clubs`;
     const clubIds = clubRows.map((row) => row.id);
     const seed = Math.floor(Math.random() * 0xffffffff);
-    const fixtures = generateRoundRobinFixtures(clubIds, seed);
+    const fixtures = yield* generateRoundRobinFixtures(clubIds, seed);
 
     yield* sql`INSERT INTO season (season_number, current_matchday, phase) VALUES (1, 0, 'pre_season')`;
     for (const fixture of fixtures) {
@@ -187,7 +202,8 @@ const getTacticForClub = (
 ) =>
   Effect.gen(function* () {
     const persisted = yield* loadPersistedTactic(clubId);
-    return persisted ?? pickBestFormationTactic(squad);
+    if (persisted) return persisted;
+    return yield* pickBestFormationTactic(squad);
   });
 
 // ---------------------------------------------------------------------------
@@ -312,10 +328,10 @@ const resolveFixtureScore = (homeClubId: string, awayClubId: string, seasonNumbe
     };
 
     const seed = Math.floor(Math.random() * 0xffffffff);
-    const { events, conditions } = simulateMatchWithCondition({ seed, home, away });
+    const { events, conditions } = yield* Effect.sync(() => simulateMatchWithCondition({ seed, home, away }));
     const fullTime = events.find((event) => event._tag === "FullTimeWhistle");
     if (!fullTime || fullTime._tag !== "FullTimeWhistle") {
-      throw new Error("simulateMatch did not produce a FullTimeWhistle event");
+      return yield* new FullTimeWhistleMissingError();
     }
 
     // Record the most recent injury Severity per player (last Injury event wins).

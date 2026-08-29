@@ -12,8 +12,13 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: string }) => {
   const reload = () =>
     window.cmClone
       .call("getTransfersScreen", { saveId })
-      .then(setView)
-      .catch(() => setError("Failed to load Transfers screen"));
+      .then((result) => {
+        if (result._tag === "Failure") {
+          setError("Failed to load Transfers screen");
+          return;
+        }
+        setView(result.value);
+      });
 
   useEffect(() => {
     reload();
@@ -23,10 +28,14 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: string }) => {
   if (error) return <p className="p-8 text-red-400">{error}</p>;
   if (!view) return <p className="p-8 text-slate-400">Loading transfers...</p>;
 
-  const run = async (label: string, action: () => Promise<unknown>) => {
+  const run = async (label: string, action: () => Promise<{ readonly _tag: string }>) => {
     setStatus(`${label}...`);
     try {
-      await action();
+      const result = await action();
+      if (result._tag === "Failure") {
+        setStatus(`${label}: failed.`);
+        return;
+      }
       await reload();
       setStatus(`${label}: done.`);
     } catch {

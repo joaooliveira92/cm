@@ -278,6 +278,38 @@ club accepts, rejects, or makes exactly one counter-offer, which the bidding clu
 withdraws from.
 _Avoid_: Offer (fine as an informal synonym in prose, not as the event/command noun — Bid is)
 
+### Scouting
+
+**Scout**:
+A per-club resource the manager assigns to observe a specific Player or Club, the mechanism by which
+Scouting Progress advances. Distinct from the human manager themself — a Scout is the assignable
+unit, not the player-facing role.
+
+**Scouting Assignment**:
+The act of assigning a Scout to a Player or Club, started and ended by explicit manager action.
+Determines which Player(s) accrue Scouting Progress while active.
+_Avoid_: Scouting Report (implies a one-shot document; this is an ongoing state, not a delivered
+artifact)
+
+**Scouting Progress**:
+A per-(Player, human club) percentage, starting at 0 (Unscouted) for every player outside the
+manager's own club, that narrows Attribute uncertainty as it rises toward Fully Scouted. Own-squad
+players are always full-info and never carry Scouting Progress; AI clubs never scout and always read
+full information (see Training Focus's "AI clubs stay dumb" precedent).
+_Avoid_: Scouting Level, Familiarity (Familiarity Tier is already taken by Position suitability)
+
+**Attribute Range**:
+The display form of a hidden Attribute, Potential Ability, Injury Proneness, or Transfer Value for a
+player below Fully Scouted — a bounded estimate (not an exact number) that narrows monotonically as
+Scouting Progress rises. Never widens or resets.
+_Avoid_: Attribute Band (Familiarity Tier and Stature Tier already use "tier"/discrete-band language;
+Range signals continuous narrowing, not a fixed bucket)
+
+**Fully Scouted**:
+The terminal state (Scouting Progress at 100) where a player's Attributes, Potential Ability, Injury
+Proneness, and Transfer Value display as exact figures, identical to the manager's own-squad view.
+Never regresses once reached.
+
 ### Board & objectives
 
 **Board Objective**:

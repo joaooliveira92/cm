@@ -131,11 +131,15 @@ const MatchControlPanel = ({
   useEffect(() => {
     window.cmClone
       .call("getTactics", { saveId })
-      .then((view) => {
+      .then((result) => {
+        if (result._tag === "Failure") {
+          setStatus("Failed to load squad/tactic for live control");
+          return;
+        }
+        const view = result.value;
         setSquad(view.squad);
         if (view.tactic) setTactic(view.tactic);
-      })
-      .catch(() => setStatus("Failed to load squad/tactic for live control"));
+      });
   }, [saveId]);
 
   if (!tactic) return null;
@@ -160,7 +164,7 @@ const MatchControlPanel = ({
   ) => {
     setStatus("Submitting...");
     try {
-      const response = await window.cmClone.call("submitMatchCommand", {
+      const result = await window.cmClone.call("submitMatchCommand", {
         saveId,
         matchId,
         cursor,
@@ -168,7 +172,11 @@ const MatchControlPanel = ({
         isHalftime,
         command,
       });
-      onApplied(response);
+      if (result._tag === "Failure") {
+        setStatus("Applied — the engine may still reject an invalid/over-cap command silently.");
+        return;
+      }
+      onApplied(result.value);
       setStatus("Applied — the engine may still reject an invalid/over-cap command silently.");
     } catch {
       setStatus("Failed to submit command");
@@ -406,11 +414,15 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
   useEffect(() => {
     window.cmClone
       .call("listOpponentClubs", { saveId })
-      .then((clubs) => {
+      .then((result) => {
+        if (result._tag === "Failure") {
+          setError("Failed to load opponents");
+          return;
+        }
+        const clubs = result.value;
         setOpponents(clubs);
         if (clubs.length > 0) setOpponentId(clubs[0]!.id);
-      })
-      .catch(() => setError("Failed to load opponents"));
+      });
   }, [saveId]);
 
   const onStartMatch = async () => {
@@ -431,8 +443,12 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
     streamCompleteRef.current = false;
     pausedRef.current = false;
     try {
-      const summary = await window.cmClone.call("startMatch", { saveId, opponentClubId: opponentId });
-      setMatch(summary);
+      const result = await window.cmClone.call("startMatch", { saveId, opponentClubId: opponentId });
+      if (result._tag === "Failure") {
+        setError("Failed to start match");
+        return;
+      }
+      setMatch(result.value);
     } catch {
       setError("Failed to start match");
     } finally {
@@ -459,16 +475,11 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
           matchId: match.matchId,
           cursor: cursorRef.current,
         });
-        cursorRef.current = chunk.cursor;
-        pendingRef.current.push(...chunk.lines);
-        setHomeScore(chunk.homeScore);
-        setAwayScore(chunk.awayScore);
-        setHomeSubs(chunk.homeSubs);
-        setHomeOnPitchCount(chunk.homeOnPitchCount);
-        // Typed `Injury` Match Events landing in this chunk (ticket 08/07) drive the severity-scaled
-        // indicator and, for the player's own club, the re-sub/play-on prompt.
-        setChunkInjuries(chunk.injuries);
-        if (chunk.isComplete) streamCompleteRef.current = true;
+        if (chunk._tag === "Failure") {
+          setError("Failed to resume match simulation");
+          streamCompleteRef.current = true;
+          return;
+        }
       } catch {
         setError("Failed to resume match simulation");
         streamCompleteRef.current = true;

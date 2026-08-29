@@ -8,6 +8,10 @@ This skill takes the current conversation context and codebase understanding and
 
 The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/cm-setup`.
 
+## Writing discipline
+
+The spec outlives this conversation: apply the [complete-proposition rules](../cm-wayfinder/references/prose.md) when synthesizing. Keep every factual clause that the discussion survived on; nothing a decision rested on gets dropped in the write-up. Write the problem and solution in the user's words, and keep one implementation decision per bullet — the one-bullet-one-link rule below is that discipline applied.
+
 ## Process
 
 1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the spec, and respect any ADRs in the area you're touching.

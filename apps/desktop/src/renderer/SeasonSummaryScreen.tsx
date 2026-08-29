@@ -14,8 +14,13 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: string }) => 
   useEffect(() => {
     window.cmClone
       .call("getSeasonSummary", { saveId })
-      .then(setSummary)
-      .catch(() => setError("Failed to load season summary"));
+      .then((result) => {
+        if (result._tag === "Failure") {
+          setError("Failed to load season summary");
+          return;
+        }
+        setSummary(result.value);
+      });
   }, [saveId]);
 
   if (error) return <p className="p-8 text-red-400">{error}</p>;

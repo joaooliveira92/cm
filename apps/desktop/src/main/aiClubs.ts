@@ -9,11 +9,23 @@ import {
   type Formation,
   type Position,
 } from "@cm-clone/shared";
-import { Effect } from "effect";
+import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadSquadPlayers } from "./squad.js";
 import { persistTactic, validateTactic } from "./tactics.js";
 import { aiPlaceBid, aiSignFreeAgent, loadAllPlayersEcon, loadClubBudgetRow, loadWageBudgetUsed } from "./transfers.js";
+
+// ---------------------------------------------------------------------------
+// Domain errors
+// ---------------------------------------------------------------------------
+
+/** Raised when a squad has fewer players than a Formation's fixed slot count — the greedy best-XI
+ * fill cannot field the Formation. */
+export class SquadTooSmallError extends Data.TaggedError("SquadTooSmallError")<{
+  readonly formation: Formation;
+  readonly slots: number;
+  readonly squadSize: number;
+}> {}
 
 // ---------------------------------------------------------------------------
 // AI Tactic assignment (ticket 17 / ADR-0005): one fixed Tactic per AI club, chosen once at
@@ -34,9 +46,18 @@ interface SquadPlayerLike {
  * "summed best-XI Position Rating across the 10 outfield slots") — the Formation-comparison
  * metric, not used to fill the GK slot itself.
  */
-const bestXiForFormation = (formation: Formation, squad: ReadonlyArray<SquadPlayerLike>) => {
-  const used = new Set<string>();
+const bestXiForFormation = (
+  formation: Formation,
+  squad: ReadonlyArray<SquadPlayerLike>,
+): Effect.Effect<
+  { readonly filled: Array<{ position: Position; playerId: string; rating: number }>; readonly outfieldSum: number },
+  SquadTooSmallError
+> => {
   const positions = FORMATION_SLOTS[formation];
+  if (squad.length < positions.length) {
+    return Effect.fail(new SquadTooSmallError({ formation, slots: positions.length, squadSize: squad.length }));
+  }
+  const used = new Set<string>();
   const filled = positions.map((position) => {
     const candidates = squad
       .filter((player) => !used.has(player.id))
@@ -44,10 +65,7 @@ const bestXiForFormation = (formation: Formation, squad: ReadonlyArray<SquadPlay
         (a, b) =>
           (b.positionRatings[position] ?? 0) - (a.positionRatings[position] ?? 0) || a.id.localeCompare(b.id),
       );
-    const chosen = candidates[0];
-    if (!chosen) {
-      throw new Error(`squad has fewer players than ${formation} needs (${positions.length})`);
-    }
+    const chosen = candidates[0]!;
     used.add(chosen.id);
     return { position, playerId: chosen.id, rating: chosen.positionRatings[position] ?? 0 };
   });
@@ -55,7 +73,7 @@ const bestXiForFormation = (formation: Formation, squad: ReadonlyArray<SquadPlay
     (sum, slot, index) => (positions[index] === "GK" ? sum : sum + slot.rating),
     0,
   );
-  return { filled, outfieldSum };
+  return Effect.succeed({ filled, outfieldSum });
 };
 
 /**
@@ -66,28 +84,34 @@ const bestXiForFormation = (formation: Formation, squad: ReadonlyArray<SquadPlay
  * strictly-greater sum wins, so an earlier Formation wins any tie) — deterministic, documented per
  * ticket 17. Pure; exported for direct unit testing.
  */
-export const pickBestFormationTactic = (squad: ReadonlyArray<SquadPlayerLike>): Tactic => {
-  let best: { formation: Formation; filled: ReturnType<typeof bestXiForFormation>["filled"]; outfieldSum: number } | null =
-    null;
-  for (const formation of FORMATIONS) {
-    const { filled, outfieldSum } = bestXiForFormation(formation, squad);
-    if (!best || outfieldSum > best.outfieldSum) {
-      best = { formation, filled, outfieldSum };
+export const pickBestFormationTactic = (
+  squad: ReadonlyArray<SquadPlayerLike>,
+): Effect.Effect<Tactic, SquadTooSmallError> =>
+  Effect.gen(function* () {
+    let best: {
+      formation: Formation;
+      filled: Array<{ position: Position; playerId: string; rating: number }>;
+      outfieldSum: number;
+    } | null = null;
+    for (const formation of FORMATIONS) {
+      const { filled, outfieldSum } = yield* bestXiForFormation(formation, squad);
+      if (!best || outfieldSum > best.outfieldSum) {
+        best = { formation, filled, outfieldSum };
+      }
     }
-  }
-  const chosen = best!;
-  return new Tactic({
-    formation: chosen.formation,
-    slots: chosen.filled.map((slot) => ({
-      position: slot.position,
-      role: POSITION_ROLES[slot.position],
-      playerId: slot.playerId,
-    })),
-    mentality: "balanced",
-    tempo: "normal",
-    pressing: "medium",
+    const chosen = best!;
+    return new Tactic({
+      formation: chosen.formation,
+      slots: chosen.filled.map((slot) => ({
+        position: slot.position,
+        role: POSITION_ROLES[slot.position],
+        playerId: slot.playerId,
+      })),
+      mentality: "balanced",
+      tempo: "normal",
+      pressing: "medium",
+    });
   });
-};
 
 /**
  * Season-start AI Tactic assignment (ticket 17): every non-user club gets one fixed Tactic for
@@ -109,7 +133,7 @@ export const assignAiTactics = Effect.gen(function* () {
   for (const club of clubs) {
     if (club.isUserClub === 1) continue;
     const squad = yield* loadSquadPlayers(club.id);
-    const tactic = pickBestFormationTactic(squad);
+    const tactic = yield* pickBestFormationTactic(squad);
     yield* validateTactic(tactic, new Set(squad.map((player) => player.id)));
     yield* persistTactic(club.id, tactic);
   }

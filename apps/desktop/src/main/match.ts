@@ -459,7 +459,7 @@ export const resumeSimulation = (savesDir: string, saveId: string, matchId: stri
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
-      const derived = deriveMatchEvents(stream);
+      const derived = yield* Effect.sync(() => deriveMatchEvents(stream));
       return yield* buildResumeSimulationView(matchId, derived.events, derived.conditions, derived.counts, cursor);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
@@ -507,7 +507,7 @@ export const submitMatchCommand = (
             : { _tag: "ForceOffMade", minute, isHalftime, clubId: command.clubId, playerId: command.playerId };
       yield* appendStreamEvents(MATCH_STREAM_TYPE, matchId, seq, [{ tag, payload }]);
 
-      const derived = deriveMatchEvents([...stream, { seq, tag, payload }]);
+      const derived = yield* Effect.sync(() => deriveMatchEvents([...stream, { seq, tag, payload }]));
       return yield* buildResumeSimulationView(matchId, derived.events, derived.conditions, derived.counts, cursor);
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );

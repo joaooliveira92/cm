@@ -3,7 +3,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   BidNotFoundError,
   BidView,
-  ClubSummary,
+  type ClubSummary,
   InsufficientTransferBudgetError,
   InvalidBidActionError,
   MarketPlayerView,
@@ -23,7 +23,7 @@ import {
   DEFAULT_CONTRACT_YEARS,
   MAX_CONTRACT_YEARS,
   MIN_CONTRACT_YEARS,
-  POSITIONS,
+  type POSITIONS,
   TRANSFER_BUDGET_BY_TIER,
   WAGE_BUDGET_BY_TIER,
   overallRating,

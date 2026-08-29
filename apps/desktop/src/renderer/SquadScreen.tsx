@@ -23,8 +23,13 @@ export const SquadScreen = ({ saveId }: { readonly saveId: string }) => {
   useEffect(() => {
     window.cmClone
       .call("getSquad", { saveId })
-      .then(setSquad)
-      .catch(() => setError("Failed to load squad"));
+      .then((result) => {
+        if (result._tag === "Failure") {
+          setError("Failed to load squad");
+          return;
+        }
+        setSquad(result.value);
+      });
   }, [saveId]);
 
   if (error) return <p className="p-8 text-red-400">{error}</p>;
