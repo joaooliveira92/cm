@@ -16,17 +16,17 @@ working lever over how a prospect develops, and AI clubs' players (with no focus
 
 **Status:** ready-for-agent
 
-- [ ] `SetTrainingFocus` is a typed RPC command (`packages/contracts`), scoped to a player of the user's
+- [x] `SetTrainingFocus` is a typed RPC command (`packages/contracts`), scoped to a player of the user's
       club, setting a focused Category (or no-focus).
-- [ ] Setting a focus persists it and appends a `TrainingFocusSet` event on the club stream, in the same
+- [x] Setting a focus persists it and appends a `TrainingFocusSet` event on the club stream, in the same
       transaction.
-- [ ] A read path surfaces a player's current focus; a missing value reads as the no-focus default with
+- [x] A read path surfaces a player's current focus; a missing value reads as the no-focus default with
       no schema migration.
-- [ ] At `SeasonConcluded`, the player's stored focus applies the focused-Category multiplier to that
+- [x] At `SeasonConcluded`, the player's stored focus applies the focused-Category multiplier to that
       season's development; a no-focus player (including all AI clubs) develops on unmodified Player
       Development.
-- [ ] New `SetTrainingFocus` / `TrainingFocusSet` schemas round-trip (`packages/contracts`).
-- [ ] Verified end-to-end following the `apps/desktop/test/aiClubs.test.ts` pattern: set a focus on a
+- [x] New `SetTrainingFocus` / `TrainingFocusSet` schemas round-trip (`packages/contracts`).
+- [x] Verified end-to-end following the `apps/desktop/test/aiClubs.test.ts` pattern: set a focus on a
       user-club player, drive `advanceCalendar`, assert that Category grew more than the others and the
       focus event fired.
 

@@ -94,6 +94,13 @@ test("Match Day starts a match, reveals a feed, and applies a live control comma
     window.getByText(/Applied — the engine may still reject an invalid\/over-cap command silently|Failed to submit command/),
   ).toBeVisible({ timeout: 15_000 });
 
+  // Structural substitution panel assertions
+  await expect(window.getByText("Make a substitution")).toBeVisible();
+  await expect(window.getByText("Off", { exact: true })).toBeVisible();
+  await expect(window.getByText("On", { exact: true })).toBeVisible();
+  await expect(window.getByRole("button", { name: "Make substitution" })).toBeVisible();
+  await expect(window.getByText(/Substitutions used:/)).toBeVisible();
+
   await panelToggle.click();
   await expect(window.getByText("Show")).toBeVisible();
 });

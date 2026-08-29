@@ -55,6 +55,37 @@ test("a saved tactic is carried into the Matchday live control panel", async ({
   await expect(page.getByText(/Applied — the engine may still reject/)).toBeVisible();
 });
 
+test("a substitution can be made through the match day live control panel", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedBeforeMatchday(savesDir(userDataDir));
+  await page.reload();
+  await page.getByRole("button", { name: "Seed: before-matchday" }).click();
+
+  await page.getByRole("button", { name: "tactics", exact: true }).click();
+  await expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible();
+  await assignFullTactic(page.locator("tbody tr"));
+
+  await page.getByRole("button", { name: "match day", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
+  await page.getByRole("button", { name: "Start match" }).click();
+
+  const panelToggle = page.getByRole("button", { name: /Tactics & substitutions/ });
+  await expect(panelToggle).toBeVisible();
+  const toggleText = await panelToggle.textContent();
+  if (toggleText?.includes("Show")) await panelToggle.click();
+
+  const offSelect = page.locator("select").nth(0);
+  const onSelect = page.locator("select").nth(1);
+  await offSelect.selectOption({ index: 1 });
+  await onSelect.selectOption({ index: 1 });
+  await page.getByRole("button", { name: "Make substitution" }).click();
+  await expect(
+    page.getByText(/Applied — the engine may still reject/),
+  ).toBeVisible();
+});
+
 test("advancing the calendar to season conclusion surfaces a Season Summary verdict", async ({
   window: page,
   userDataDir,

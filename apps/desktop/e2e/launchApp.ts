@@ -34,7 +34,7 @@ export const assignFullTactic = async (rows: Locator) => {
 };
 
 export const test = base.extend<LaunchFixtures>({
-  userDataDir: async (_fixtures, use) => {
+  userDataDir: async ({}, use) => {
     const dir = mkdtempSync(path.join(tmpdir(), "cm-clone-e2e-"));
     await use(dir);
     rmSync(dir, { recursive: true, force: true });

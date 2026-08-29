@@ -17,18 +17,18 @@ default ~1.5).
 
 **Status:** ready-for-agent
 
-- [ ] A player's Attributes grow toward the age-appropriate ceiling through youth (the linear 16→23
+- [x] A player's Attributes grow toward the age-appropriate ceiling through youth (the linear 16→23
       ramp), plateau through the prime (24–29), and Physical-only decline past 30 — matching the
       generation curve.
-- [ ] Growth is a deterministic, fraction-of-gap step: identical inputs (attributes, age, Potential
+- [x] Growth is a deterministic, fraction-of-gap step: identical inputs (attributes, age, Potential
       Ability, focus) produce identical output.
-- [ ] No Attribute ever overshoots its ceiling (self-clamping at the ceiling).
-- [ ] A focused Category's growth step is multiplied by the focus constant; the other three Categories
+- [x] No Attribute ever overshoots its ceiling (self-clamping at the ceiling).
+- [x] A focused Category's growth step is multiplied by the focus constant; the other three Categories
       are unchanged; a no-focus player develops with no multiplier applied.
-- [ ] Hidden attributes develop by the same rules as visible ones.
-- [ ] `PLAYER_DEVELOPMENT_FRACTION` and `TRAINING_FOCUS_MULTIPLIER` are named, exported tuning
+- [x] Hidden attributes develop by the same rules as visible ones.
+- [x] `PLAYER_DEVELOPMENT_FRACTION` and `TRAINING_FOCUS_MULTIPLIER` are named, exported tuning
       constants in `@cm-clone/shared`.
-- [ ] Direct unit tests cover all of the above, following the `packages/shared/test` pattern (no
+- [x] Direct unit tests cover all of the above, following the `packages/shared/test` pattern (no
       Electron, no SQLite).
 
 ## Comments

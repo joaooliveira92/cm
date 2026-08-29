@@ -15,14 +15,14 @@ non-static: a player's Attributes now change across a season.
 
 **Status:** ready-for-agent
 
-- [ ] Folding `SeasonConcluded` develops every player on every club once, writing the new Attribute
+- [x] Folding `SeasonConcluded` develops every player on every club once, writing the new Attribute
       values to storage.
-- [ ] One `PlayerDeveloped` event is appended per club, carrying that club's updated Attribute set, on
+- [x] One `PlayerDeveloped` event is appended per club, carrying that club's updated Attribute set, on
       the club stream — in the same transaction as the development write.
-- [ ] No-focus development at this stage is unmodified Player Development (Training Focus application
+- [x] No-focus development at this stage is unmodified Player Development (Training Focus application
       is a later ticket).
-- [ ] The `PlayerDeveloped` event schema round-trips (`packages/contracts`).
-- [ ] Verified end-to-end following the `apps/desktop/test/aiClubs.test.ts` pattern: drive
+- [x] The `PlayerDeveloped` event schema round-trips (`packages/contracts`).
+- [x] Verified end-to-end following the `apps/desktop/test/aiClubs.test.ts` pattern: drive
       `advanceCalendar`, assert every player's stored Attributes advanced and `PlayerDeveloped` fired
       per club.
 

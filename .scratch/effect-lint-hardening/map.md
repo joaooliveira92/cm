@@ -33,7 +33,27 @@ implementable.
 
 <!-- the index: one line per closed ticket, then zoom the link for the detail the ticket holds -->
 
+- [01: Dual-lint architecture for AST-needing Effect rules](issues/01-dual-lint-architecture.md):
+  dual-lint — oxlint stays for the general ruleset, a new ESLint `local` plugin (typescript-eslint
+  parser) hosts Effect-specific AST-shape rules; `effect-lint.ts`'s regex rules port over gradually.
+- [02: Rule and diagnostic adoption from the accountability report](issues/02-rule-and-diagnostic-adoption.md):
+  adopt `no-silent-error-swallow`/`prefer-option-from-nullable`/`no-sql-type-parameter` into the
+  ESLint plugin; reject `import-extensions`/`pipe-max-arguments`; enable 33/35 `diagnosticSeverity`
+  diagnostics as `"error"` (empirically zero-to-one violations), stage `strictEffectProvide` as
+  `"warning"` (20 violations), defer `strictBooleanExpressions` (145 violations).
+
 ## Not yet specified
+
+- **`strictEffectProvide` cleanup** — audit the 20 `Effect.provide`-with-`Layer` call sites in
+  `apps/desktop/src/main/match.ts` and `saves.ts` (found while resolving
+  [02: Rule and diagnostic adoption](issues/02-rule-and-diagnostic-adoption.md)) to decide, site by
+  site, which are legitimate entry points vs. should compose at the edge instead, before promoting
+  the diagnostic from `"warning"` to `"error"`. Not sharp enough to ticket yet — needs a look at
+  each call site first.
+- **`strictBooleanExpressions` migration** — a dedicated effort to work through the 145 implicit
+  truthiness/nullish-check violations (concentrated in `packages/game-engine/src/match/simulate.ts`
+  and `tactical-modifiers.ts`) before this diagnostic can be enabled at any severity. Large enough
+  that it's its own effort, not a ticket on this map.
 
 ## Out of scope
 

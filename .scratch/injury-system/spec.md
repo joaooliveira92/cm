@@ -38,12 +38,19 @@ in-game penalty (Condition drop + attribute slash) → commentary → UI / manag
 
 ## Ticket map
 
-- [01 — Injury & fitness attributes](issues/01-injury-fitness-attributes.md)
-- [02 — Per-player match Condition](issues/02-per-player-match-condition.md)
-- [03 — Injury severity & penalty pipeline](issues/03-injury-severity-penalty-pipeline.md)
-- [04 — Non-contact (condition-driven) trigger](issues/04-non-contact-condition-trigger.md)
-- [05 — Design: contact/duel modeling (grilling)](issues/05-design-contact-duel-modeling.md)
-- [06 — Contact (duel) trigger](issues/06-contact-duel-trigger.md)
-- [07 — Red / 10-men / GK fallback](issues/07-red-10-men-gk-fallback.md)
-- [08 — Injury commentary & UI](issues/08-injury-commentary-ui.md)
-- [09 — Cross-match fitness recovery](issues/09-cross-match-fitness-recovery.md)
+- [01 — Injury & fitness attributes](issues/01-injury-fitness-attributes.md) — *blocked by: none*
+- [02 — Per-player match Condition](issues/02-per-player-match-condition.md) — *blocked by: none*
+- [03 — Injury severity & penalty pipeline](issues/03-injury-severity-penalty-pipeline.md) — *blocked by: 01*
+- [04 — Non-contact (condition-driven) trigger](issues/04-non-contact-condition-trigger.md) — *blocked by: 02, 03*
+- [05 — Design: contact/duel modeling (grilling)](issues/05-design-contact-duel-modeling.md) — *blocked by: none*
+- [06 — Contact (duel) trigger](issues/06-contact-duel-trigger.md) — *blocked by: 03, 05*
+- [07 — No-subs fallback (engine + manager flow)](issues/07-no-subs-fallback.md) — *blocked by: 06*
+- [08 — Injury commentary & UI](issues/08-injury-commentary-ui.md) — *blocked by: 04, 06, 07*
+- [09 — Cross-match fitness recovery](issues/09-cross-match-fitness-recovery.md) — *blocked by: 01, 02*
+
+Two independent chains:
+
+| Chain | Sequence | What it delivers |
+|-------|----------|------------------|
+| A | 01 → 03 → 04 → 08<br>05 → 06 → 07 ┘ | In-match injury system: attributes → severity pipeline → both triggers → no-subs fallback → commentary/UI |
+| B | 01 → 02 → 09 | Cross-match layer: attributes + Condition → season fitness recovery |

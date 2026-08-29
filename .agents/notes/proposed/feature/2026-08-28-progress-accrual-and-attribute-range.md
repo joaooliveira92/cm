@@ -23,7 +23,7 @@ Note](2026-08-28-scout-resource-and-assignment-model.md)).
 Physical, Goalkeeping, and the hidden Potential Ability/Injury Proneness alike) — no per-category
 reveal-rate distinction:
 
-```
+```ts
 band = maxWidth * (100 - Progress) / 100
 range = [clamp(trueValue - band, 1, 100), clamp(trueValue + band, 1, 100)]
 ```

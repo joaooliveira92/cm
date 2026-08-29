@@ -22,11 +22,13 @@ A **coverage spec extension** for the Playwright e2e suite of `@cm-clone/desktop
 ## Decisions so far
 
 - [UI-reachable error paths catalog](issues/05-ui-reachable-error-paths-catalog.md): Full catalog of 30+ UI-reachable error paths across 10 RPCs; `renewContract` and `setTrainingFocus` are dead code; generic failure messages dominate.
+- [Match day structural extension coverage](issues/03-match-day-structural-extension.md): Force-off e2e skipped (unreachable, covered by unit tests); sub interaction gets click-through flow in `journeys.spec.ts`; structural sub panel assertions extend the existing smoke test in `app.spec.ts`.
+- [Save management edge cases](issues/04-save-management-edge-cases.md): All three edge cases get e2e coverage in new `save-management.spec.ts`; empty-name journey, duplicate-name smoke, nonexistent-save smoke; `fresh` seed suffices.
+- [Error path coverage spec](issues/06-error-path-coverage-spec.md): 4 tests in dedicated `error-paths.spec.ts` — generic transfer failure smoke, InvalidTacticError journey, sacking error smoke, loadSave no-op smoke.
 
 ## Not yet specified
 
-- **Match day force-off: structural-only vs try-to-trigger**: The map settled on structural-only for subs/force-off, but the exact assertion shape for the force-off prompt (orange injury dialogue, shorthanded banner) needs the match day structural ticket to resolve. For now, the fog includes "how to reliably reach the force-off UI state without a deterministic match seed."
-- **Integration with wave 1 test suite structure**: Whether new tests go in the existing `app.spec.ts`/`journeys.spec.ts` or new files depends on the scale once the per-feature specs resolve. Not ticketable yet.
+- **Integration with wave 1 test suite structure**: Match day subs, save management, and error paths all settled (extend existing or new file). Transfer tests file location still depends on ticket 02's resolution.
 
 ## Out of scope
 
