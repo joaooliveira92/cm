@@ -3,6 +3,8 @@ import { Effect } from "effect";
 import { advanceCalendar } from "../src/main/season.js";
 import { createSave } from "../src/main/saves.js";
 
+const run = <A>(effect: Effect.Effect<A>): Promise<A> => Effect.runPromise(effect);
+
 /** The app stores saves under `<userDataDir>/saves` (src/main/index.ts). */
 export const savesDir = (userDataDir: string) => path.join(userDataDir, "saves");
 
@@ -16,17 +18,16 @@ const createSeedSave = (savesDir: string, name: string) =>
   });
 
 /** A fresh save: just `createSave`, no calendar advances. The season sits at Matchday 0. */
-export const seedFresh = (savesDir: string) =>
-  Effect.runPromise(createSeedSave(savesDir, "Seed: fresh"));
+export const seedFresh = (savesDir: string) => run(createSeedSave(savesDir, "Seed: fresh"));
 
 /** A save right at Season start, before Matchday 1 has been played — the same state as `seedFresh`
  *  (both are Matchday 0), named for the journeys that lean on the pre-first-match state. */
 export const seedBeforeMatchday = (savesDir: string) =>
-  Effect.runPromise(createSeedSave(savesDir, "Seed: before-matchday"));
+  run(createSeedSave(savesDir, "Seed: before-matchday"));
 
 /** A save advanced to just before the final Matchday (Matchday 38). */
 export const seedBeforeSeasonEnd = (savesDir: string) =>
-  Effect.runPromise(
+  run(
     Effect.gen(function* () {
       const id = yield* createSeedSave(savesDir, "Seed: before-season-end");
       let guard = 0;
@@ -42,7 +43,7 @@ export const seedBeforeSeasonEnd = (savesDir: string) =>
 
 /** A save advanced all the way to `season_complete`, where a board verdict exists. */
 export const seedConcluded = (savesDir: string) =>
-  Effect.runPromise(
+  run(
     Effect.gen(function* () {
       const id = yield* createSeedSave(savesDir, "Seed: concluded");
       let guard = 0;

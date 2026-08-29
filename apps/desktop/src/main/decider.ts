@@ -14,9 +14,8 @@ export const withExistingSave = <A, E>(
 ) =>
   Effect.gen(function* () {
     const filename = path.join(savesDir, `${saveId}.sqlite`);
-    const exists = yield* Effect.promise(() =>
-      readdir(savesDir).then((entries) => entries.includes(`${saveId}.sqlite`)),
-    );
+    const entries = yield* Effect.promise(() => readdir(savesDir));
+    const exists = entries.includes(`${saveId}.sqlite`);
     if (!exists) {
       return yield* new SaveNotFoundError({ id: saveId });
     }

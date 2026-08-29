@@ -18,14 +18,16 @@ Every entry point runs its program at the edge via `NodeRuntime.runMain`, every 
 - [Entry point migration](issues/01-entry-point-migration.md): Moved `Effect.runPromise` boundary into `index.ts`; `handleRpc` returns `Effect.Effect`, not `Promise`
 - [RPC edge boundary](issues/04-rpc-edge-boundary.md): Per-invocation `Effect.runPromise` in IPC callback is correct — Electron's `ipcMain.handle` requires a `Promise` return
 - [Tagged error audit](issues/02-tagged-error-audit.md): `NoPhaseForPositionError` defined in game-engine; no other bare throws in scope
+- [E2E seed consolidation](issues/03-e2e-seed-consolidation.md): Consolidated 4 `Effect.runPromise` calls into a single private `run` helper
+- [World generation wiring](issues/06-world-generation-wiring.md): Already conforms — no changes needed
+- [`.then()` lift pattern](issues/05-dot-then-lift-pattern.md): Lifted `.then()` calls in decider.ts and saves.ts to `Effect.promise` + sync transform
+- [Remaining module review](issues/07-remaining-module-review.md): All three modules already conform — no changes needed
 
-- Game-engine wrapping seam: how to wrap pure functions (e.g. `resolveTacticalModifiers`, `createSeededRng`, `simulateMatch`) at the boundary — `Effect.sync` per call, or a single wrapped module?
-- The `.then()` call sites in `decider.ts` (`readdir(savesDir).then(...)`) and `saves.ts` — need a consistent `Effect.promise` or `Effect.tryPromise` pattern
-- World generation (`generateWorld`) — how it wires into the startup Effect
-- Training focus (`training.ts`), AI clubs (`aiClubs.ts`), manager status (`managerStatus.ts`) — may have unique concerns not surfaced yet
-- Testing/Effect interop: how vitest + `@effect/vitest` patterns work across the migrated modules
-- Expand-contract patterns: if a shared type needs retyping across packages, the migration plan per type
+## Not yet specified
+
+<!-- no remaining fog -->
 
 ## Out of scope
 
-<!-- work ruled out of this effort; never graduates -->
+- Expand-contract patterns: game-engine and shared stay pure; no shared types need retyping across packages
+- Testing/Effect interop: already established (`it` from `@effect/vitest`, `it.effect(...)`) — no ticket needed

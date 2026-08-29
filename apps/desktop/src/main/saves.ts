@@ -56,9 +56,8 @@ export const createSave = (savesDir: string, name: string) =>
 export const loadSave = (savesDir: string, id: string) =>
   Effect.gen(function* () {
     const filename = dbPath(savesDir, id);
-    const exists = yield* Effect.promise(() =>
-      readdir(savesDir).then((entries) => entries.includes(`${id}.sqlite`)),
-    );
+    const entries = yield* Effect.promise(() => readdir(savesDir));
+    const exists = entries.includes(`${id}.sqlite`);
     if (!exists) {
       return yield* new SaveNotFoundError({ id });
     }
