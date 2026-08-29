@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Command Palette & Discoverability — prototype</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+    background: #0f172a; color: #e2e8f0; line-height: 1.5;
+    padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem;
+    max-width: 1100px; margin: 0 auto;
+  }
+  h1 { font-size: 1.25rem; font-weight: 600; color: #f1f5f9; }
+  .subtitle { color: #94a3b8; font-size: 0.875rem; border-left: 3px solid #3b82f6; padding-left: 0.75rem; }
+  .subtitle strong { color: #e2e8f0; }
+
+  .prototype-area {
+    background: #1e293b; border: 1px solid #334155; border-radius: 0.5rem; padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+
+  /* Simulated screen */
+  .sim-screen {
+    background: #0f172a; border: 1px solid #334155; border-radius: 0.375rem; padding: 1rem;
+    display: flex; flex-direction: column; gap: 0.75rem; min-height: 12rem;
+  }
+  .sim-screen .s-title { font-size: 0.9375rem; font-weight: 600; color: #f1f5f9; }
+  .sim-screen .s-context { font-size: 0.75rem; color: #64748b; }
+
+  /* Status bar */
+  .sim-status {
+    display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+    padding: 0.5rem 0.75rem; background: #1e293b; border-radius: 0.25rem;
+    font-size: 0.75rem; color: #64748b;
+  }
+  .sim-status .key { color: #64748b; }
+  .sim-status .val { color: #e2e8f0; }
+
+  /* Action buttons (simulated) */
+  .sim-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .sim-btn {
+    padding: 0.375rem 0.75rem; border-radius: 0.25rem; font-size: 0.8125rem; font-weight: 500;
+    background: #334155; color: #94a3b8; border: 1px solid #475569; cursor: pointer;
+    transition: 0.1s; position: relative;
+  }
+  .sim-btn:hover { background: #475569; color: #e2e8f0; }
+  .sim-btn.available { background: #1e3a5f; color: #93c5fd; border-color: #3b82f6; }
+  .sim-btn.available:hover { background: #1e40af; }
+  .sim-btn.unavailable { opacity: 0.45; cursor: not-allowed; }
+  .sim-btn .key-hint {
+    position: absolute; top: -0.5rem; right: -0.5rem;
+    background: #3b82f6; color: #fff; font-size: 0.625rem; font-weight: 600;
+    padding: 0.0625rem 0.3125rem; border-radius: 0.1875rem; line-height: 1.3;
+  }
+  .sim-btn .key-hint.hidden { display: none; }
+  .sim-btn.disabled-reason {
+    font-size: 0.625rem; color: #f87171;
+    display: block; margin-top: 0.125rem;
+  }
+
+  /* Palette modal */
+  .palette-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; justify-content: center; padding-top: 4rem;
+    z-index: 100;
+  }
+  .palette-overlay.hidden { display: none; }
+  .palette {
+    background: #1e293b; border: 1px solid #475569; border-radius: 0.5rem;
+    width: 32rem; max-width: 90vw; max-height: 60vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .palette-input {
+    padding: 0.75rem 1rem; border: none; border-bottom: 1px solid #334155;
+    background: transparent; color: #e2e8f0; font-size: 1rem;
+    outline: none; width: 100%;
+  }
+  .palette-input::placeholder { color: #64748b; }
+  .palette-results { overflow-y: auto; flex: 1; }
+  .palette-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.5rem 1rem; cursor: pointer; transition: background 0.05s;
+    border-bottom: 1px solid #1a1a2e;
+  }
+  .palette-item:hover, .palette-item.selected { background: #334155; }
+  .palette-item .pi-left { display: flex; align-items: center; gap: 0.5rem; }
+  .palette-item .pi-icon { font-size: 0.75rem; width: 1.25rem; color: #64748b; }
+  .palette-item .pi-label { font-size: 0.8125rem; color: #e2e8f0; }
+  .palette-item .pi-scope {
+    font-size: 0.625rem; color: #64748b; background: #0f172a;
+    padding: 0.0625rem 0.3125rem; border-radius: 0.1875rem;
+  }
+  .palette-item .pi-binding {
+    font-size: 0.6875rem; color: #93c5fd; background: #1e3a5f;
+    padding: 0.0625rem 0.3125rem; border-radius: 0.1875rem;
+    font-family: "SF Mono", Monaco, Consolas, monospace;
+  }
+  .palette-item .pi-unavail-reason {
+    font-size: 0.625rem; color: #f87171; margin-left: 0.5rem;
+  }
+  .palette-empty {
+    padding: 2rem 1rem; text-align: center; color: #64748b; font-size: 0.8125rem;
+  }
+
+  /* Help overlay */
+  .help-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 101;
+  }
+  .help-overlay.hidden { display: none; }
+  .help-panel {
+    background: #1e293b; border: 1px solid #475569; border-radius: 0.5rem;
+    width: 36rem; max-width: 90vw; max-height: 70vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .help-header {
+    padding: 0.75rem 1rem; border-bottom: 1px solid #334155;
+    font-size: 0.875rem; font-weight: 600; color: #f1f5f9;
+  }
+  .help-tabs { display: flex; gap: 0; border-bottom: 1px solid #334155; }
+  .help-tab {
+    padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 500;
+    color: #64748b; cursor: pointer; border: none; background: transparent;
+    border-bottom: 2px solid transparent; transition: 0.1s;
+  }
+  .help-tab.active { color: #60a5fa; border-bottom-color: #3b82f6; }
+  .help-tab:hover { color: #94a3b8; }
+  .help-body { overflow-y: auto; flex: 1; padding: 0.75rem 1rem; }
+  .help-group { margin-bottom: 1rem; }
+  .help-group-title { font-size: 0.6875rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.375rem; }
+  .help-row { display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.75rem; }
+  .help-row .hr-binding { color: #93c5fd; font-family: "SF Mono", Monaco, Consolas, monospace; }
+  .help-row .hr-desc { color: #cbd5e1; }
+  .help-row .hr-avail { color: #22c55e; font-size: 0.625rem; }
+
+  /* First-run teaching splash */
+  .teaching-splash {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 102;
+  }
+  .teaching-splash.hidden { display: none; }
+  .teaching-card {
+    background: #1e293b; border: 1px solid #3b82f6; border-radius: 0.5rem;
+    width: 28rem; max-width: 90vw; padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .teaching-card h2 { font-size: 1rem; font-weight: 600; color: #f1f5f9; margin-bottom: 0.75rem; }
+  .teaching-card p { font-size: 0.8125rem; color: #94a3b8; margin-bottom: 0.5rem; line-height: 1.6; }
+  .teaching-card .shortcut { color: #facc15; font-family: "SF Mono", Monaco, Consolas, monospace; font-size: 0.75rem; }
+  .teaching-card .dismiss {
+    margin-top: 1rem; padding: 0.375rem 1rem; border-radius: 0.25rem;
+    background: #3b82f6; color: #fff; border: none; font-size: 0.8125rem; font-weight: 500;
+    cursor: pointer;
+  }
+  .teaching-card .dismiss:hover { background: #2563eb; }
+
+  /* Configuration panel */
+  .config-panel {
+    background: #0f172a; border: 1px solid #334155; border-radius: 0.375rem; padding: 1rem;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .config-panel .cp-title { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+  .config-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .config-row label { font-size: 0.75rem; color: #94a3b8; }
+  .config-row select, .config-row input[type="checkbox"] {
+    background: #334155; color: #e2e8f0; border: 1px solid #475569;
+    border-radius: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.75rem;
+  }
+  .config-row select:focus { border-color: #3b82f6; outline: none; }
+
+  /* State panel */
+  .state-panel {
+    background: #0f172a; border: 1px solid #334155; border-radius: 0.375rem; padding: 1rem;
+    font-family: "SF Mono", Monaco, Consolas, monospace; font-size: 0.75rem; line-height: 1.7;
+  }
+  .state-panel .field { display: flex; gap: 2rem; padding: 0.125rem 0; }
+  .state-panel .field .key { color: #64748b; min-width: 10rem; }
+  .state-panel .field .val { color: #e2e8f0; }
+  .state-panel .field .val.highlight { color: #fbbf24; }
+  .state-panel .field .val.dim { color: #64748b; }
+  .state-panel .field .val.err { color: #f87171; }
+
+  /* Walkthrough tabs */
+  .walkthroughs { margin-top: 0.5rem; }
+  .wtabs { display: flex; gap: 0.25rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+  .wtab {
+    padding: 0.375rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;
+    background: #334155; color: #94a3b8; cursor: pointer; border: none; transition: 0.1s;
+  }
+  .wtab.active { background: #3b82f6; color: #fff; }
+  .wtab:hover:not(.active) { background: #475569; color: #e2e8f0; }
+  .wbody { min-height: 5rem; font-size: 0.8125rem; color: #94a3b8; }
+  .wbody p { margin-bottom: 0.5rem; }
+  .wbody .step { display: inline-block; margin: 0.25rem 0.25rem 0 0; }
+  .wbody .step-btn {
+    padding: 0.25rem 0.625rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;
+    background: #3b82f6; color: #fff; border: none; cursor: pointer;
+  }
+  .wbody .step-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .wbody .step-btn.done { background: #16a34a; }
+  .wbody .step-label { display: inline-block; margin-right: 0.375rem; color: #e2e8f0; }
+  .wbody .hint { color: #facc15; font-size: 0.75rem; margin-top: 0.5rem; }
+
+  /* Free-play button bar */
+  .freeplay { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .fp-btn {
+    padding: 0.375rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;
+    background: #334155; color: #e2e8f0; border: 1px solid #475569; cursor: pointer;
+  }
+  .fp-btn:hover { background: #475569; }
+  .fp-btn.primary { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+  .fp-btn.primary:hover { background: #2563eb; }
+
+  .inline-affordance-demo { margin-top: 0.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+</style>
+</head>
+<body>
+
+<h1>Command Palette & Discoverability</h1>
+<div class="subtitle">
+  Exploring <strong>what the palette shows</strong>, <strong>how filtering works</strong>,
+  <strong>unavailable-action display</strong>, <strong>help overlay design</strong>,
+  <strong>inline affordances</strong>, and <strong>first-run teaching</strong>.
+  Based on decisions from tickets 03 (Action model) and 05 (Global key map).
+  Built as a decision tool for <code>07-command-palette-and-discoverability</code>.
+</div>
+
+<div class="prototype-area" id="app">
+
+  <!-- Configuration -->
+  <div class="config-panel">
+    <div class="cp-title">Prototype configuration — tweak to explore</div>
+
+    <div class="config-row">
+      <label>Palette scope:</label>
+      <select id="cfgPaletteScope">
+        <option value="global">Global actions only</option>
+        <option value="screen" selected>Global + current-screen actions</option>
+        <option value="all">All actions (global + all screens)</option>
+      </select>
+
+      <label>Unavailable actions:</label>
+      <select id="cfgUnavailMode">
+        <option value="hidden">Hidden</option>
+        <option value="disabled" selected>Shown disabled with reason</option>
+      </select>
+
+      <label>Inline key hints:</label>
+      <input type="checkbox" id="cfgInlineHints" checked>
+      <label for="cfgInlineHints">Show on buttons</label>
+    </div>
+
+    <div class="config-row">
+      <label>Current screen:</label>
+      <select id="cfgScreen">
+        <option value="squad">Squad</option>
+        <option value="transfers">Transfers</option>
+        <option value="tactics">Tactics</option>
+        <option value="league">League Table</option>
+        <option value="fixtures">Fixtures</option>
+        <option value="matchday">Match Day</option>
+        <option value="season">Season Summary</option>
+      </select>
+
+      <label>Selected player?</label>
+      <input type="checkbox" id="cfgHasSelection" checked>
+      <label for="cfgHasSelection" style="color:#e2e8f0;">Yes (enables Bid / Scout)</label>
+
+      <label>First career?</label>
+      <input type="checkbox" id="cfgFirstRun">
+      <label for="cfgFirstRun" style="color:#e2e8f0;">Show first-run teaching</label>
+    </div>
+  </div>
+
+  <!-- Simulated screen -->
+  <div class="sim-screen">
+    <div class="s-title" id="simScreenTitle">Squad Screen</div>
+    <div class="s-context" id="simScreenContext">Season 2026/27 — First Division — Your squad of 27 players</div>
+
+    <div class="sim-actions" id="simActionBar">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- Simulated status bar -->
+  <div class="sim-status">
+    <span><span class="key">Scope:</span> <span class="val" id="sScope">screen (Squad)</span></span>
+    <span><span class="key">Palette open:</span> <span class="val" id="sPaletteOpen">no</span></span>
+    <span><span class="key">Help overlay:</span> <span class="val" id="sHelpOpen">no</span></span>
+    <span><span class="key">Unavail mode:</span> <span class="val" id="sUnavailMode">disabled</span></span>
+    <span><span class="key">Inline hints:</span> <span class="val" id="sInlineHints">on</span></span>
+  </div>
+
+  <!-- Command palette (modal) -->
+  <div class="palette-overlay hidden" id="paletteOverlay">
+    <div class="palette">
+      <input class="palette-input" id="paletteInput" placeholder="Type a command or navigate…" autofocus>
+      <div class="palette-results" id="paletteResults"></div>
+    </div>
+  </div>
+
+  <!-- Help overlay -->
+  <div class="help-overlay hidden" id="helpOverlay">
+    <div class="help-panel">
+      <div class="help-header">Keyboard shortcuts</div>
+      <div class="help-tabs" id="helpTabs">
+        <button class="help-tab active" data-mode="all">All</button>
+        <button class="help-tab" data-mode="global">Global</button>
+        <button class="help-tab" data-mode="screen">This screen</button>
+      </div>
+      <div class="help-body" id="helpBody"></div>
+    </div>
+  </div>
+
+  <!-- Teaching splash -->
+  <div class="teaching-splash hidden" id="teachingSplash">
+    <div class="teaching-card">
+      <h2>Welcome to your new career</h2>
+      <p>Everything in this game works <strong>without a mouse</strong>. Here are the essentials:</p>
+      <p><span class="shortcut">Cmd+K</span> — Open command palette (find any action)</p>
+      <p><span class="shortcut">Cmd+/</span> — Keyboard shortcuts reference</p>
+      <p><span class="shortcut">g s</span> → Squad, <span class="shortcut">g t</span> → Transfers, <span class="shortcut">g a</span> → Tactics</p>
+      <p><span class="shortcut">Tab</span> moves between regions, <span class="shortcut">Enter</span> activates.</p>
+      <button class="dismiss" onclick="dismissTeaching()">Got it</button>
+    </div>
+  </div>
+
+  <div class="state-panel" id="statePanel">
+    <div class="field"><span class="key">Current screen</span><span class="val" id="st-screen">squad</span></div>
+    <div class="field"><span class="key">Visible actions (this screen)</span><span class="val" id="st-actions">5</span></div>
+    <div class="field"><span class="key">Palette query</span><span class="val dim" id="st-query">—</span></div>
+    <div class="field"><span class="key">Palette results</span><span class="val" id="st-results">0</span></div>
+    <div class="field"><span class="key">Selected index</span><span class="val" id="st-selected">—</span></div>
+    <div class="field"><span class="key">Unavailable shown?</span><span class="val" id="st-unavail">yes, with reason</span></div>
+    <div class="field"><span class="key">First-run teaching</span><span class="val" id="st-teaching">no</span></div>
+  </div>
+
+  <!-- Free-play buttons -->
+  <div class="freeplay">
+    <button class="fp-btn primary" onclick="openPalette()">Open palette (Cmd+K)</button>
+    <button class="fp-btn primary" onclick="openHelp()">Open help (Cmd+/)</button>
+    <button class="fp-btn" onclick="typeInPalette('')">Clear palette query</button>
+    <button class="fp-btn" onclick="toggleFirstRun()">Toggle first-run teaching</button>
+  </div>
+
+  <!-- Walkthroughs -->
+  <div class="walkthroughs">
+    <div class="wtabs" id="wtabs">
+      <button class="wtab active" data-wt="0">1. First glance</button>
+      <button class="wtab" data-wt="1">2. Search & rank</button>
+      <button class="wtab" data-wt="2">3. Navigation in palette</button>
+      <button class="wtab" data-wt="3">4. Unavailable actions</button>
+      <button class="wtab" data-wt="4">5. Help overlay</button>
+      <button class="wtab" data-wt="5">6. Inline affordances</button>
+    </div>
+    <div class="wbody" id="wbody">
+      <p><strong>Goal:</strong> See what the palette shows when first opened — before typing anything.</p>
+      <p>Does the default list teach the scope of what's possible?</p>
+      <div id="wsteps"></div>
+      <div class="hint" id="whint"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Action registry (based on ticket 03 settled design) ──────────
+
+const ALL_ACTIONS = {
+  // Global actions (always available when app is running)
+  'nav_palette':    { id: 'nav_palette',    label: 'Open command palette',  scope: 'global',    binding: 'Cmd+K',  screen: null, always: true },
+  'nav_help':       { id: 'nav_help',       label: 'Open keyboard help',    scope: 'global',    binding: 'Cmd+/',  screen: null, always: true },
+  'nav_squad':      { id: 'nav_squad',      label: 'Go to Squad',           scope: 'global',    binding: 'g s',    screen: null, always: true },
+  'nav_tactics':    { id: 'nav_tactics',    label: 'Go to Tactics',         scope: 'global',    binding: 'g a',    screen: null, always: true },
+  'nav_transfers':  { id: 'nav_transfers',  label: 'Go to Transfers',       scope: 'global',    binding: 'g t',    screen: null, always: true },
+  'nav_league':     { id: 'nav_league',     label: 'Go to League Table',    scope: 'global',    binding: 'g l',    screen: null, always: true },
+  'nav_fixtures':   { id: 'nav_fixtures',   label: 'Go to Fixtures',        scope: 'global',    binding: 'g f',    screen: null, always: true },
+  'nav_matchday':   { id: 'nav_matchday',   label: 'Go to Match Day',       scope: 'global',    binding: 'g m',    screen: null, always: true },
+  'nav_season':     { id: 'nav_season',     label: 'Go to Season Summary',  scope: 'global',    binding: 'g y',    screen: null, always: true },
+  'nav_back':       { id: 'nav_back',       label: 'Go to previous screen', scope: 'global',    binding: 'g b',    screen: null, always: true },
+  'continue':       { id: 'continue',       label: 'Continue',              scope: 'global',    binding: 'Space',  screen: null, always: false },
+
+  // Screen-scoped actions (only available on their screen)
+  'squad_select':   { id: 'squad_select',   label: 'Select player',           scope: 'screen', binding: '↑↓',     screen: 'squad',    predicate: true },
+  'squad_filter':   { id: 'squad_filter',   label: 'Filter by position',      scope: 'screen', binding: 'f',      screen: 'squad',    predicate: true },
+  'squad_sort':     { id: 'squad_sort',     label: 'Sort column',             scope: 'screen', binding: 's',      screen: 'squad',    predicate: true },
+  'squad_detail':   { id: 'squad_detail',   label: 'Open player detail',      scope: 'screen', binding: 'Enter',  screen: 'squad',    predicate: true },
+  'squad_train':    { id: 'squad_train',    label: 'Set training focus',      scope: 'screen', binding: 't',      screen: 'squad',    predicate: true },
+
+  'transfers_bid':      { id: 'transfers_bid',      label: 'Bid workflow',           scope: 'screen', binding: 'b',  screen: 'transfers', predicate: 'hasSelection' },
+  'transfers_shortlist': { id: 'transfers_shortlist', label: 'Add to shortlist',      scope: 'screen', binding: 'l',  screen: 'transfers', predicate: 'hasSelection' },
+  'transfers_scout':     { id: 'transfers_scout',     label: 'Scout report',          scope: 'screen', binding: 'r',  screen: 'transfers', predicate: 'hasSelection' },
+  'transfers_filter':    { id: 'transfers_filter',    label: 'Filter market list',    scope: 'screen', binding: 'f',  screen: 'transfers', predicate: true },
+  'transfers_sort':      { id: 'transfers_sort',      label: 'Sort market list',      scope: 'screen', binding: 's',  screen: 'transfers', predicate: true },
+
+  'tactics_formation': { id: 'tactics_formation', label: 'Change formation',        scope: 'screen', binding: 'f',  screen: 'tactics', predicate: true },
+  'tactics_role':      { id: 'tactics_role',      label: 'Edit player role',        scope: 'screen', binding: 'r',  screen: 'tactics', predicate: true },
+  'tactics_sub':       { id: 'tactics_sub',       label: 'Make substitution',       scope: 'screen', binding: 's',  screen: 'tactics', predicate: true },
+  'tactics_confirm':   { id: 'tactics_confirm',   label: 'Confirm tactics',         scope: 'screen', binding: 'Enter', screen: 'tactics', predicate: true },
+
+  'league_scroll':   { id: 'league_scroll',   label: 'Scroll table',              scope: 'screen', binding: '↑↓',    screen: 'league',   predicate: true },
+  'league_filter':   { id: 'league_filter',   label: 'Filter by division',        scope: 'screen', binding: 'f',     screen: 'league',   predicate: true },
+
+  'fixtures_scroll': { id: 'fixtures_scroll', label: 'Scroll fixtures',           scope: 'screen', binding: '↑↓',    screen: 'fixtures', predicate: true },
+  'fixtures_filter': { id: 'fixtures_filter', label: 'Filter by competition',     scope: 'screen', binding: 'f',     screen: 'fixtures', predicate: true },
+
+  'matchday_sub':    { id: 'matchday_sub',    label: 'Make substitution',         scope: 'screen', binding: 's',     screen: 'matchday', predicate: true },
+  'matchday_tactic': { id: 'matchday_tactic',  label: 'Change tactic',            scope: 'screen', binding: 't',     screen: 'matchday', predicate: true },
+  'matchday_speed':  { id: 'matchday_speed',   label: 'Change highlight speed',    scope: 'screen', binding: 'h',     screen: 'matchday', predicate: true },
+
+  'season_scroll':   { id: 'season_scroll',   label: 'Scroll season stats',       scope: 'screen', binding: '↑↓',    screen: 'season',   predicate: true },
+  'season_filter':   { id: 'season_filter',   label: 'Filter by competition',     scope: 'screen', binding: 'f',     screen: 'season',   predicate: true },
+};
+
+// ─── State ────────────────────────────────────────────────────────
+
+let state = {
+  screen: 'squad',
+  paletteOpen: false,
+  paletteQuery: '',
+  paletteSelectedIdx: 0,
+  helpOpen: false,
+  helpMode: 'all',
+  showUnavailable: true,     // disabled-with-reason mode vs hidden
+  inlineHints: true,
+  hasSelection: true,
+  firstRun: false,
+  paletteScope: 'screen',   // 'global' | 'screen' | 'all'
+};
+
+function getActionsForScreen(screenId) {
+  return Object.values(ALL_ACTIONS).filter(a => a.screen === screenId);
+}
+
+function getVisibleActions(state_) {
+  const screenActions = getActionsForScreen(state_.screen);
+  const globalActions = Object.values(ALL_ACTIONS).filter(a => a.scope === 'global' && a.always);
+  const allGlobal = Object.values(ALL_ACTIONS).filter(a => a.scope === 'global');
+
+  let result = [];
+  switch (state_.paletteScope) {
+    case 'global':
+      result = [...allGlobal];
+      break;
+    case 'screen':
+      result = [...allGlobal, ...screenActions];
+      break;
+    case 'all':
+      result = [...allGlobal, ...Object.values(ALL_ACTIONS).filter(a => a.scope === 'screen')];
+      break;
+  }
+
+  return result;
+}
+
+function isActionAvailable(action, state_) {
+  if (action.always) return true;
+  if (action.predicate === true) return true;
+  if (action.predicate === 'hasSelection') return state_.hasSelection;
+  return true;
+}
+
+function getUnavailableReason(action) {
+  if (action.predicate === 'hasSelection') return 'Select a player first';
+  return 'Not available right now';
+}
+
+// ─── Palette filtering ────────────────────────────────────────────
+
+function filterActions(actions, query, state_) {
+  if (!query.trim()) return actions;
+
+  const q = query.toLowerCase();
+  const scored = actions.map(a => {
+    const labelLower = a.label.toLowerCase();
+    const bindingLower = a.binding.toLowerCase();
+    const scopeLower = a.scope.toLowerCase();
+    const screenLower = (a.screen || '').toLowerCase();
+
+    let score = 0;
+    // Exact match on label
+    if (a.label.toLowerCase() === q) score = 100;
+    else if (a.label.toLowerCase().startsWith(q)) score = 80;
+    else if (a.label.toLowerCase().includes(q)) score = 60;
+    else if (a.binding.toLowerCase().includes(q)) score = 40;
+    else if ((a.screen || '').toLowerCase().includes(q)) score = 20;
+    // Fuzzy: first letters of words
+    else {
+      const words = a.label.toLowerCase().split(' ');
+      const initials = words.map(w => w[0]).join('');
+      if (initials.includes(q)) score = 25;
+    }
+
+    // Boost available actions above unavailable
+    if (isActionAvailable(a, state_)) score += 10;
+
+    return { action: a, score };
+  });
+
+  return scored
+    .filter(s => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(s => s.action);
+}
+
+// ─── Rendering ────────────────────────────────────────────────────
+
+function render() {
+  renderActionBar();
+  renderStatePanel();
+  renderStatusBar();
+
+  if (state.paletteOpen) {
+    renderPalette();
+    document.getElementById('paletteOverlay').classList.remove('hidden');
+    document.getElementById('paletteInput').focus();
+  } else {
+    document.getElementById('paletteOverlay').classList.add('hidden');
+  }
+
+  if (state.helpOpen) {
+    renderHelp();
+    document.getElementById('helpOverlay').classList.remove('hidden');
+  } else {
+    document.getElementById('helpOverlay').classList.add('hidden');
+  }
+
+  if (state.firstRun) {
+    document.getElementById('teachingSplash').classList.remove('hidden');
+  } else {
+    document.getElementById('teachingSplash').classList.add('hidden');
+  }
+
+  // Re-render walkthrough steps if active
+  if (currentWalkthrough !== null) {
+    renderSteps();
+  }
+}
+
+function renderActionBar() {
+  const bar = document.getElementById('simActionBar');
+  bar.innerHTML = '';
+  const actions = getVisibleActions(state).filter(a => a.scope === 'screen');
+  if (actions.length === 0) {
+    bar.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">No screen-scoped actions available here</span>';
+    return;
+  }
+  actions.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'sim-btn';
+    const avail = isActionAvailable(a, state);
+    btn.classList.add(avail ? 'available' : 'unavailable');
+    btn.textContent = a.label;
+
+    // Inline key hint
+    if (state.inlineHints && a.binding) {
+      const hint = document.createElement('span');
+      hint.className = 'key-hint';
+      hint.textContent = a.binding;
+      btn.appendChild(hint);
+    }
+
+    // Unavailable reason
+    if (!avail && state.showUnavailable) {
+      const reason = document.createElement('span');
+      reason.className = 'disabled-reason';
+      reason.textContent = getUnavailableReason(a);
+      btn.appendChild(reason);
+    }
+
+    bar.appendChild(btn);
+  });
+}
+
+function renderPalette() {
+  const input = document.getElementById('paletteInput');
+  input.value = state.paletteQuery;
+
+  const allActions = getVisibleActions(state);
+  let displayActions = allActions;
+
+  if (!state.showUnavailable) {
+    displayActions = allActions.filter(a => isActionAvailable(a, state));
+  }
+
+  const filtered = filterActions(displayActions, state.paletteQuery, state);
+
+  // Clamp selection index
+  if (state.paletteSelectedIdx >= filtered.length) {
+    state.paletteSelectedIdx = Math.max(0, filtered.length - 1);
+  }
+
+  const container = document.getElementById('paletteResults');
+  container.innerHTML = '';
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="palette-empty">No matching commands</div>';
+    return;
+  }
+
+  filtered.forEach((a, i) => {
+    const item = document.createElement('div');
+    item.className = 'palette-item' + (i === state.paletteSelectedIdx ? ' selected' : '');
+
+    const left = document.createElement('div');
+    left.className = 'pi-left';
+
+    const icon = document.createElement('span');
+    icon.className = 'pi-icon';
+    icon.textContent = a.scope === 'global' ? '⌘' : '→';
+    left.appendChild(icon);
+
+    const label = document.createElement('span');
+    label.className = 'pi-label';
+    label.textContent = a.label;
+    left.appendChild(label);
+
+    if (a.scope !== 'global') {
+      const scope = document.createElement('span');
+      scope.className = 'pi-scope';
+      scope.textContent = a.screen || '';
+      left.appendChild(scope);
+    }
+
+    item.appendChild(left);
+
+    const right = document.createElement('span');
+
+    if (!isActionAvailable(a, state) && state.showUnavailable) {
+      const reason = document.createElement('span');
+      reason.className = 'pi-unavail-reason';
+      reason.textContent = getUnavailableReason(a);
+      right.appendChild(reason);
+    }
+
+    if (a.binding) {
+      const binding = document.createElement('span');
+      binding.className = 'pi-binding';
+      binding.textContent = a.binding;
+      right.appendChild(binding);
+    }
+
+    item.appendChild(right);
+    container.appendChild(item);
+  });
+}
+
+function renderHelp() {
+  const body = document.getElementById('helpBody');
+  body.innerHTML = '';
+
+  let actions = getVisibleActions(state);
+  if (state.helpMode === 'global') {
+    actions = actions.filter(a => a.scope === 'global');
+  } else if (state.helpMode === 'screen') {
+    actions = actions.filter(a => a.scope === 'screen' && a.screen === state.screen);
+  }
+
+  // Group by scope
+  const groups = {};
+  actions.forEach(a => {
+    const key = a.scope === 'global' ? 'Global' : (a.screen || 'Other');
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(a);
+  });
+
+  Object.entries(groups).forEach(([groupName, groupActions]) => {
+    const div = document.createElement('div');
+    div.className = 'help-group';
+
+    const title = document.createElement('div');
+    title.className = 'help-group-title';
+    title.textContent = groupName;
+    div.appendChild(title);
+
+    groupActions.forEach(a => {
+      const row = document.createElement('div');
+      row.className = 'help-row';
+
+      const desc = document.createElement('span');
+      desc.className = 'hr-desc';
+      desc.textContent = a.label;
+      row.appendChild(desc);
+
+      const meta = document.createElement('span');
+      if (a.binding) {
+        const binding = document.createElement('span');
+        binding.className = 'hr-binding';
+        binding.textContent = a.binding;
+        meta.appendChild(binding);
+      }
+      if (isActionAvailable(a, state)) {
+        const avail = document.createElement('span');
+        avail.className = 'hr-avail';
+        avail.textContent = ' ✓';
+        meta.appendChild(avail);
+      }
+      row.appendChild(meta);
+
+      div.appendChild(row);
+    });
+
+    body.appendChild(div);
+  });
+}
+
+function renderStatePanel() {
+  const allActions = getVisibleActions(state);
+  const screenActions = getActionsForScreen(state.screen);
+  const filtered = state.paletteQuery
+    ? filterActions(allActions, state.paletteQuery, state)
+    : allActions;
+
+  setText('st-screen', state.screen);
+  setText('st-actions', screenActions.length);
+  setText('st-query', state.paletteQuery || '—');
+  setText('st-results', filtered.length);
+  setText('st-selected', state.paletteOpen ? state.paletteSelectedIdx : '—');
+  setText('st-unavail', state.showUnavailable ? 'yes, with reason' : 'no, hidden');
+  setText('st-teaching', state.firstRun ? 'shown' : 'no');
+
+  // Update screen title
+  const titles = {
+    squad: 'Squad Screen', transfers: 'Transfers Screen', tactics: 'Tactics Screen',
+    league: 'League Table', fixtures: 'Fixtures Screen', matchday: 'Match Day',
+    season: 'Season Summary',
+  };
+  document.getElementById('simScreenTitle').textContent = titles[state.screen] || state.screen;
+  document.getElementById('simScreenContext').textContent =
+    state.screen === 'transfers' && state.hasSelection
+      ? 'Player selected — bid, shortlist, and scout actions available'
+      : state.screen === 'transfers' && !state.hasSelection
+        ? 'Browse the market — select a player to enable actions'
+        : 'Season 2026/27 — First Division';
+}
+
+function renderStatusBar() {
+  setText('sScope', state.paletteScope === 'global' ? 'global only' : state.paletteScope === 'screen' ? 'screen (current)' : 'all screens');
+  setText('sPaletteOpen', state.paletteOpen ? 'yes' : 'no');
+  setText('sHelpOpen', state.helpOpen ? 'yes' : 'no');
+  setText('sUnavailMode', state.showUnavailable ? 'disabled w/ reason' : 'hidden');
+  setText('sInlineHints', state.inlineHints ? 'on' : 'off');
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// ─── Actions ──────────────────────────────────────────────────────
+
+function openPalette() {
+  state.paletteOpen = true;
+  state.paletteQuery = '';
+  state.paletteSelectedIdx = 0;
+  state.helpOpen = false;
+  render();
+}
+
+function closePalette() {
+  state.paletteOpen = false;
+  state.paletteQuery = '';
+  render();
+}
+
+function openHelp() {
+  state.helpOpen = !state.helpOpen;
+  state.paletteOpen = false;
+  render();
+}
+
+function closeHelp() {
+  state.helpOpen = false;
+  render();
+}
+
+function typeInPalette(text) {
+  if (!state.paletteOpen) openPalette();
+  state.paletteQuery = text;
+  state.paletteSelectedIdx = 0;
+  render();
+}
+
+function selectNextPaletteItem(dir) {
+  const allActions = getVisibleActions(state);
+  let displayActions = state.showUnavailable ? allActions : allActions.filter(a => isActionAvailable(a, state));
+  const filtered = filterActions(displayActions, state.paletteQuery, state);
+  const maxIdx = Math.max(0, filtered.length - 1);
+  state.paletteSelectedIdx = Math.max(0, Math.min(maxIdx, state.paletteSelectedIdx + dir));
+  render();
+}
+
+function dismissTeaching() {
+  state.firstRun = false;
+  render();
+}
+
+function toggleFirstRun() {
+  state.firstRun = !state.firstRun;
+  render();
+}
+
+// ─── Config wiring ────────────────────────────────────────────────
+
+document.getElementById('cfgPaletteScope').addEventListener('change', (e) => {
+  state.paletteScope = e.target.value;
+  render();
+});
+document.getElementById('cfgUnavailMode').addEventListener('change', (e) => {
+  state.showUnavailable = e.target.value === 'disabled';
+  render();
+});
+document.getElementById('cfgInlineHints').addEventListener('change', (e) => {
+  state.inlineHints = e.target.checked;
+  render();
+});
+document.getElementById('cfgScreen').addEventListener('change', (e) => {
+  state.screen = e.target.value;
+  render();
+});
+document.getElementById('cfgHasSelection').addEventListener('change', (e) => {
+  state.hasSelection = e.target.checked;
+  render();
+});
+document.getElementById('cfgFirstRun').addEventListener('change', (e) => {
+  state.firstRun = e.target.checked;
+  render();
+});
+
+// ─── Keyboard handlers for palette ────────────────────────────────
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' && e.target.id === 'paletteInput') {
+    // Handle palette-specific keys
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closePalette();
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // In a real app this would dispatch the action; for prototype just close
+      closePalette();
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectNextPaletteItem(1);
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectNextPaletteItem(-1);
+      return;
+    }
+    // Update query on input
+    setTimeout(() => {
+      const input = document.getElementById('paletteInput');
+      if (input && document.activeElement === input) {
+        state.paletteQuery = input.value;
+        state.paletteSelectedIdx = 0;
+        render();
+      }
+    }, 10);
+    return;
+  }
+
+  // Global keys (simulated)
+  if (e.key === 'Escape' && state.paletteOpen) {
+    closePalette();
+    return;
+  }
+  if (e.key === 'Escape' && state.helpOpen) {
+    closeHelp();
+    return;
+  }
+
+  // These are just for the prototype; the real app handles them via react-hotkeys-hook
+});
+
+// Also listen for input changes on the palette input
+document.getElementById('paletteInput').addEventListener('input', (e) => {
+  state.paletteQuery = e.target.value;
+  state.paletteSelectedIdx = 0;
+  render();
+});
+
+// Close overlays on backdrop click
+document.getElementById('paletteOverlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('paletteOverlay')) closePalette();
+});
+document.getElementById('helpOverlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('helpOverlay')) closeHelp();
+});
+
+// ─── Walkthroughs ─────────────────────────────────────────────────
+
+const walkthroughs = [
+  // 1. First glance
+  {
+    title: 'First glance',
+    desc: 'Open the palette for the first time on the Squad screen. What does it show by default? What does the player learn about what\'s possible?',
+    setup: () => {
+      state.paletteOpen = false;
+      state.paletteQuery = '';
+      state.screen = 'squad';
+      state.paletteScope = 'screen';
+      state.showUnavailable = true;
+      state.inlineHints = true;
+      state.hasSelection = true;
+      syncConfigFromState();
+      render();
+    },
+    steps: [
+      { label: 'Open the palette (Cmd+K)', action: () => { openPalette(); } },
+      { label: 'Notice the default list — global nav + screen actions', action: () => { /* observation step */ } },
+      { label: 'Note whether the list teaches the scope', action: () => { /* observation step */ } },
+      { label: 'Close palette (Escape)', action: () => { closePalette(); } },
+    ]
+  },
+  // 2. Search & rank
+  {
+    title: 'Search & rank',
+    desc: 'Type to filter. How does the palette rank results? Does it find things by name, binding, or screen?',
+    setup: () => {
+      state.paletteOpen = false;
+      state.paletteQuery = '';
+      state.screen = 'squad';
+      state.paletteScope = 'all';
+      state.showUnavailable = true;
+      state.inlineHints = true;
+      state.hasSelection = true;
+      syncConfigFromState();
+      render();
+    },
+    steps: [
+      { label: 'Open palette and type "s"', action: () => { openPalette(); setTimeout(() => { state.paletteQuery = 's'; render(); }, 50); } },
+      { label: 'Observe ranking — "Sort column" and "Set training focus" appear first?', action: () => { /* observation */ } },
+      { label: 'Clear query, type "transfer"', action: () => { state.paletteQuery = 'transfer'; render(); } },
+      { label: 'Observe — "Go to Transfers" navigation action appears alongside Transfer screen actions', action: () => { /* observation */ } },
+      { label: 'Type "g s" (a binding)', action: () => { state.paletteQuery = 'g s'; render(); } },
+      { label: 'Observe — binding-aware search finds "Go to Squad"', action: () => { closePalette(); } },
+    ]
+  },
+  // 3. Navigation in palette
+  {
+    title: 'Navigation via palette',
+    desc: 'Should the palette let you navigate as well as act? Try searching for a screen.',
+    setup: () => {
+      state.paletteOpen = false;
+      state.paletteQuery = '';
+      state.screen = 'tactics';
+      state.paletteScope = 'screen';
+      state.showUnavailable = true;
+      state.inlineHints = true;
+      state.hasSelection = true;
+      syncConfigFromState();
+      render();
+    },
+    steps: [
+      { label: 'Open palette on Tactics screen', action: () => { openPalette(); } },
+      { label: 'Type "squad"', action: () => { state.paletteQuery = 'squad'; render(); } },
+      { label: 'Observe: "Go to Squad" appears — palette navigates AND acts', action: () => { /* observation */ } },
+      { label: 'Now switch config to "Global only" scope', action: () => {
+        state.paletteScope = 'global';
+        document.getElementById('cfgPaletteScope').value = 'global';
+        render();
+      }},
+      { label: 'Observe: no screen-scoped actions in palette — pure navigation hub', action: () => { closePalette(); } },
+    ]
+  },
+  // 4. Unavailable actions
+  {
+    title: 'Unavailable actions',
+    desc: 'Should unavailable actions be hidden entirely, or shown disabled with an explanation? Toggle the config to compare.',
+    setup: () => {
+      state.paletteOpen = false;
+      state.paletteQuery = '';
+      state.screen = 'transfers';
+      state.paletteScope = 'screen';
+      state.showUnavailable = true;
+      state.inlineHints = true;
+      state.hasSelection = false;
+      syncConfigFromState();
+      render();
+    },
+    steps: [
+      { label: 'Open palette on Transfers (no player selected)', action: () => { openPalette(); } },
+      { label: 'Observe: "Bid workflow" shown disabled with "Select a player first"', action: () => { /* observation */ } },
+      { label: 'Now toggle config to "Hidden"', action: () => {
+        state.showUnavailable = false;
+        document.getElementById('cfgUnavailMode').value = 'hidden';
+        render();
+      }},
+      { label: 'Observe: only available actions remain — teaches less, list is shorter', action: () => { /* observation */ } },
+      { label: 'Toggle back to "Disabled" — compare', action: () => {
+        state.showUnavailable = true;
+        state.hasSelection = true;
+        document.getElementById('cfgUnavailMode').value = 'disabled';
+        document.getElementById('cfgHasSelection').checked = true;
+        render();
+      }},
+      { label: 'With player selected, actions become available — note the switch', action: () => { closePalette(); } },
+    ]
+  },
+  // 5. Help overlay
+  {
+    title: 'Help overlay',
+    desc: 'The keyboard shortcuts reference. Filter by scope (All / Global / This screen) and see contextual bindings.',
+    setup: () => {
+      state.paletteOpen = false;
+      state.helpOpen = false;
+      state.paletteQuery = '';
+      state.screen = 'transfers';
+      state.paletteScope = 'screen';
+      state.showUnavailable = true;
+      state.inlineHints = true;
+      state.hasSelection = true;
+      state.helpMode = 'all';
+      syncConfigFromState();
+      render();
+    },
+    steps: [
+      { label: 'Open help overlay (Cmd+/) on Transfers', action: () => { openHelp(); } },
+      { label: 'View "All" tab — global nav + Transfers actions', action: () => { /* observation */ } },
+      { label: 'Switch to "Global" tab', action: () => { state.helpMode = 'global'; renderHelp(); render(); } },
+      { label: 'Observe: only global bindings shown — focused view', action: () => { state.helpMode = 'all'; renderHelp(); render(); } },
+      { label: 'Switch to "This screen" tab', action: () => { state.helpMode = 'screen'; renderHelp(); render(); } },
+      { label: 'Observe: only Transfers-scoped actions shown', action: () => { closeHelp(); } },
+    ]
+  },
+  // 6. Inline affordances
+  {
+    title: 'Inline affordances',
+    desc: 'Should buttons display their key binding in the UI? Toggle and compare.',
+    setup: () => {
+      state.paletteOpen = false;
+      state.helpOpen = false;
+      state.paletteQuery = '';
+      state.screen = 'transfers';
+      state.paletteScope = 'screen';
+      state.showUnavailable = true;
+      state.inlineHints = true;
+      state.hasSelection = true;
+      syncConfigFromState();
+      render();
+    },
+    steps: [
+      { label: 'View the action bar on Transfers — see key hints on buttons', action: () => {
+        state.screen = 'transfers';
+        document.getElementById('cfgScreen').value = 'transfers';
+        render();
+      }},
+      { label: 'Toggle inline hints OFF in config', action: () => {
+        state.inlineHints = false;
+        document.getElementById('cfgInlineHints').checked = false;
+        render();
+      }},
+      { label: 'Observe: buttons look clean but player must use palette or help to learn keys', action: () => { /* observation */ } },
+      { label: 'Toggle inline hints back ON', action: () => {
+        state.inlineHints = true;
+        document.getElementById('cfgInlineHints').checked = true;
+        render();
+      }},
+      { label: 'Compare: which teaches the keyboard model better at a glance?', action: () => { /* observation */ } },
+    ]
+  },
+];
+
+function syncConfigFromState() {
+  document.getElementById('cfgPaletteScope').value = state.paletteScope;
+  document.getElementById('cfgUnavailMode').value = state.showUnavailable ? 'disabled' : 'hidden';
+  document.getElementById('cfgInlineHints').checked = state.inlineHints;
+  document.getElementById('cfgScreen').value = state.screen;
+  document.getElementById('cfgHasSelection').checked = state.hasSelection;
+  document.getElementById('cfgFirstRun').checked = state.firstRun;
+}
+
+let currentWalkthrough = 0;
+let walkthroughStep = 0;
+
+function renderWalkthrough(idx) {
+  currentWalkthrough = idx;
+  walkthroughStep = 0;
+  const wt = walkthroughs[idx];
+  const wbody = document.getElementById('wbody');
+  wbody.innerHTML = `<p><strong>${wt.title}:</strong> ${wt.desc}</p><div id="wsteps"></div><div class="hint" id="whint"></div>`;
+  wt.setup();
+  renderSteps();
+}
+
+function renderSteps() {
+  const wt = walkthroughs[currentWalkthrough];
+  const container = document.getElementById('wsteps');
+  const hint = document.getElementById('whint');
+  container.innerHTML = '';
+  wt.steps.forEach((step, i) => {
+    const div = document.createElement('div');
+    div.className = 'step';
+    const btn = document.createElement('button');
+    btn.className = 'step-btn';
+    btn.textContent = i < walkthroughStep ? '✓' : `Step ${i + 1}`;
+    btn.disabled = i > walkthroughStep;
+    if (i < walkthroughStep) btn.classList.add('done');
+    btn.addEventListener('click', () => {
+      if (i === walkthroughStep) {
+        step.action();
+        walkthroughStep = i + 1;
+        renderSteps();
+      }
+    });
+    const label = document.createElement('span');
+    label.className = 'step-label';
+    label.textContent = ` ${step.label}`;
+    div.appendChild(btn);
+    div.appendChild(label);
+    container.appendChild(div);
+  });
+  hint.textContent = walkthroughStep >= wt.steps.length
+    ? '✓ Walkthrough complete. Free-play below or pick another scenario.'
+    : `Press Step ${walkthroughStep + 1} or click it.`;
+}
+
+document.querySelectorAll('.wtab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.wtab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderWalkthrough(parseInt(tab.dataset.wt));
+  });
+});
+
+// Help tab switching
+document.getElementById('helpTabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.help-tab');
+  if (!tab) return;
+  document.querySelectorAll('.help-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  state.helpMode = tab.dataset.mode;
+  renderHelp();
+});
+
+// ─── Init ─────────────────────────────────────────────────────────
+
+renderWalkthrough(0);
+render();
+</script>
+</body>
+</html>
