@@ -835,6 +835,27 @@ document.getElementById('cfgFirstRun').addEventListener('change', (e) => {
 // ─── Keyboard handlers for palette ────────────────────────────────
 
 document.addEventListener('keydown', (e) => {
+  // Cmd+K / Ctrl+K — open palette (browser may still intercept; Shift+Cmd+K as fallback)
+  if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (state.paletteOpen) { closePalette(); } else { openPalette(); }
+    return;
+  }
+  if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'k' || e.key === 'K')) {
+    e.preventDefault();
+    openPalette();
+    return;
+  }
+
+  // Cmd+/ / Ctrl+/ — open help; also F1
+  if ((e.metaKey || e.ctrlKey) && (e.key === '/' || e.code === 'Slash')) {
+    e.preventDefault();
+    e.stopPropagation();
+    openHelp();
+    return;
+  }
+
   if (e.target.tagName === 'INPUT' && e.target.id === 'paletteInput') {
     // Handle palette-specific keys
     if (e.key === 'Escape') {
