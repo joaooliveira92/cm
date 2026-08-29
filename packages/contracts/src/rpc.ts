@@ -10,10 +10,11 @@ import {
   FixturesView,
   InsufficientTransferBudgetError,
   InvalidBidActionError,
+  InvalidPillarDistributionError,
   InvalidTacticError,
   LeagueTableView,
-  ManagerProfileNotFoundError,
   ManagerProfileView,
+  ManagerArchetypeSchema,
   MatchCommandPayload,
   MatchNotFoundError,
   MatchSummary,
@@ -75,14 +76,11 @@ export const AppRpcs = {
       name: Schema.String,
       selectedClubId: Schema.String,
       managerName: Schema.String,
-      archetypeOrigin: Schema.String,
-      tacticalAcumen: Schema.Number,
-      influence: Schema.Number,
-      regimen: Schema.Number,
-      technicalCoaching: Schema.Number,
+      archetypeOrigin: ManagerArchetypeSchema,
+      pillars: PillarDistribution,
     }),
     success: SaveSummary,
-    error: Schema.Never,
+    error: Schema.Union([InvalidPillarDistributionError]),
   },
   getManagerProfile: {
     payload: Schema.Struct({ saveId: Schema.String }),
@@ -150,7 +148,7 @@ export const AppRpcs = {
     error: Schema.Union([SaveNotFoundError, ClubNotFoundError, SaveSackedError]),
   },
   resumeSimulation: {
-    payload: Schema.Struct({ saveId: Schema.String, matchId: Schema.String, cursor: Schema.Number }),
+    payload: Schema.Struct({ saveId: Schema.String, matchId: Schema.String, cursor: Schema.Finite }),
     success: ResumeSimulationView,
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },
@@ -164,8 +162,8 @@ export const AppRpcs = {
     payload: Schema.Struct({
       saveId: Schema.String,
       matchId: Schema.String,
-      cursor: Schema.Number,
-      minute: Schema.Number,
+      cursor: Schema.Finite,
+      minute: Schema.Finite,
       isHalftime: Schema.Boolean,
       command: MatchCommandPayload,
     }),
@@ -178,7 +176,7 @@ export const AppRpcs = {
     error: SaveNotFoundError,
   },
   placeBid: {
-    payload: Schema.Struct({ saveId: Schema.String, playerId: Schema.String, amount: Schema.Number }),
+    payload: Schema.Struct({ saveId: Schema.String, playerId: Schema.String, amount: Schema.Finite }),
     success: BidView,
     error: Schema.Union([
       SaveNotFoundError,
@@ -195,7 +193,7 @@ export const AppRpcs = {
       saveId: Schema.String,
       bidId: Schema.String,
       action: SellerBidActionSchema,
-      counterAmount: Schema.optional(Schema.Number),
+      counterAmount: Schema.optional(Schema.Finite),
     }),
     success: TransfersScreenView,
     error: Schema.Union([
@@ -226,7 +224,7 @@ export const AppRpcs = {
     ]),
   },
   signFreeAgent: {
-    payload: Schema.Struct({ saveId: Schema.String, playerId: Schema.String, years: Schema.optional(Schema.Number) }),
+    payload: Schema.Struct({ saveId: Schema.String, playerId: Schema.String, years: Schema.optional(Schema.Finite) }),
     success: TransfersScreenView,
     error: Schema.Union([
       SaveNotFoundError,
@@ -238,7 +236,7 @@ export const AppRpcs = {
     ]),
   },
   renewContract: {
-    payload: Schema.Struct({ saveId: Schema.String, playerId: Schema.String, years: Schema.optional(Schema.Number) }),
+    payload: Schema.Struct({ saveId: Schema.String, playerId: Schema.String, years: Schema.optional(Schema.Finite) }),
     success: TransfersScreenView,
     error: Schema.Union([
       SaveNotFoundError,

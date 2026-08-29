@@ -47,25 +47,29 @@ export const NullableTrainingFocusSchema = Schema.NullOr(TrainingFocusSchema);
 export const ManagerArchetypeSchema = Schema.Literals(MANAGER_ARCHETYPES);
 
 export class PillarDistribution extends Schema.Class<PillarDistribution>("PillarDistribution")({
-  tacticalAcumen: Schema.Number,
-  influence: Schema.Number,
-  regimen: Schema.Number,
-  technicalCoaching: Schema.Number,
+  tacticalAcumen: Schema.Finite,
+  influence: Schema.Finite,
+  regimen: Schema.Finite,
+  technicalCoaching: Schema.Finite,
 }) {}
 
 /** Immutable creation-time manager identity, never modified after commitCareer. */
 export class ManagerProfileView extends Schema.Class<ManagerProfileView>("ManagerProfileView")({
   managerName: Schema.String,
   archetypeOrigin: ManagerArchetypeSchema,
-  tacticalAcumen: Schema.Number,
-  influence: Schema.Number,
-  regimen: Schema.Number,
-  technicalCoaching: Schema.Number,
+  pillars: PillarDistribution,
 }) {}
 
 export class ManagerProfileNotFoundError extends Schema.TaggedError<ManagerProfileNotFoundError>()(
   "ManagerProfileNotFoundError",
   {},
+) {}
+
+export class InvalidPillarDistributionError extends Schema.TaggedError<InvalidPillarDistributionError>()(
+  "InvalidPillarDistributionError",
+  {
+    errors: Schema.Array(Schema.String),
+  },
 ) {}
 
 // ---------------------------------------------------------------------------
@@ -76,11 +80,11 @@ export class ClubSelectionRow extends Schema.Class<ClubSelectionRow>("ClubSelect
   clubId: Schema.String,
   clubName: Schema.String,
   statureTier: StatureTierSchema,
-  boardObjectiveMin: Schema.Number,
-  boardObjectiveMax: Schema.Number,
+  boardObjectiveMin: Schema.Finite,
+  boardObjectiveMax: Schema.Finite,
   squadQualityBand: Schema.String,
-  transferBudget: Schema.Number,
-  wageBudget: Schema.Number,
+  transferBudget: Schema.Finite,
+  wageBudget: Schema.Finite,
 }) {}
 
 export class ClubSelectionView extends Schema.Class<ClubSelectionView>("ClubSelectionView")({
@@ -98,9 +102,9 @@ export class PlayerPositionView extends Schema.Class<PlayerPositionView>("Player
  * a team setup — no UI group renders them, so they stay hidden at the display layer.
  */
 export const AttributesSchema = Schema.Struct({
-  ...Object.fromEntries(OUTFIELD_ATTRIBUTES.map((attribute) => [attribute, Schema.Number])),
-  ...Object.fromEntries(GOALKEEPING_ATTRIBUTES.map((attribute) => [attribute, Schema.optional(Schema.Number)])),
-  ...Object.fromEntries(HIDDEN_ATTRIBUTES.map((attribute) => [attribute, Schema.optional(Schema.Number)])),
+  ...Object.fromEntries(OUTFIELD_ATTRIBUTES.map((attribute) => [attribute, Schema.Finite])),
+  ...Object.fromEntries(GOALKEEPING_ATTRIBUTES.map((attribute) => [attribute, Schema.optional(Schema.Finite)])),
+  ...Object.fromEntries(HIDDEN_ATTRIBUTES.map((attribute) => [attribute, Schema.optional(Schema.Finite)])),
 });
 
 export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerView")({
@@ -108,14 +112,14 @@ export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerV
   firstName: Schema.String,
   lastName: Schema.String,
   dateOfBirth: Schema.String,
-  age: Schema.Number,
+  age: Schema.Finite,
   attributes: AttributesSchema,
   positions: Schema.Array(PlayerPositionView),
-  overallRating: Schema.Number,
-  positionRatings: Schema.Record(Schema.String, Schema.Number),
+  overallRating: Schema.Finite,
+  positionRatings: Schema.Record(Schema.String, Schema.Finite),
   /** The player's current Condition (%) from the Season's fitness ledger (ticket 10) — below 100
    * means they carry a shortfall from a recent heavy fixture/injury that hasn't fully recovered. */
-  condition: Schema.Number,
+  condition: Schema.Finite,
   /** The player's Training Focus Category, or `null` for the no-focus default (Training Focus).
    * A missing persisted value reads as `null` — no migration/backfill. */
   trainingFocus: NullableTrainingFocusSchema,
@@ -173,20 +177,20 @@ export const SEASON_PHASES = ["pre_season", "in_season", "mid_window_open", "sea
 export const SeasonPhaseSchema = Schema.Literals(SEASON_PHASES);
 
 export class SeasonView extends Schema.Class<SeasonView>("SeasonView")({
-  seasonNumber: Schema.Number,
-  currentMatchday: Schema.Number,
+  seasonNumber: Schema.Finite,
+  currentMatchday: Schema.Finite,
   phase: SeasonPhaseSchema,
 }) {}
 
 export class FixtureView extends Schema.Class<FixtureView>("FixtureView")({
   id: Schema.String,
-  matchday: Schema.Number,
+  matchday: Schema.Finite,
   homeClubId: Schema.String,
   homeClubName: Schema.String,
   awayClubId: Schema.String,
   awayClubName: Schema.String,
-  homeGoals: Schema.NullOr(Schema.Number),
-  awayGoals: Schema.NullOr(Schema.Number),
+  homeGoals: Schema.NullOr(Schema.Finite),
+  awayGoals: Schema.NullOr(Schema.Finite),
   played: Schema.Boolean,
 }) {}
 
@@ -200,14 +204,14 @@ export class FixturesView extends Schema.Class<FixturesView>("FixturesView")({
 export class LeagueTableRow extends Schema.Class<LeagueTableRow>("LeagueTableRow")({
   clubId: Schema.String,
   clubName: Schema.String,
-  played: Schema.Number,
-  won: Schema.Number,
-  drawn: Schema.Number,
-  lost: Schema.Number,
-  goalsFor: Schema.Number,
-  goalsAgainst: Schema.Number,
-  goalDifference: Schema.Number,
-  points: Schema.Number,
+  played: Schema.Finite,
+  won: Schema.Finite,
+  drawn: Schema.Finite,
+  lost: Schema.Finite,
+  goalsFor: Schema.Finite,
+  goalsAgainst: Schema.Finite,
+  goalDifference: Schema.Finite,
+  points: Schema.Finite,
 }) {}
 
 export class LeagueTableView extends Schema.Class<LeagueTableView>("LeagueTableView")({
@@ -225,7 +229,7 @@ export const ManagerOutcomeSchema = Schema.Literals(MANAGER_OUTCOMES);
 
 export class AdvanceCalendarResult extends Schema.Class<AdvanceCalendarResult>("AdvanceCalendarResult")({
   season: SeasonView,
-  resolvedMatchday: Schema.NullOr(Schema.Number),
+  resolvedMatchday: Schema.NullOr(Schema.Finite),
   transferWindowClosed: Schema.NullOr(Schema.String),
   transferWindowOpened: Schema.NullOr(Schema.String),
   seasonConcluded: Schema.Boolean,
@@ -257,11 +261,11 @@ export class SaveSackedError extends Schema.TaggedError<SaveSackedError>()("Save
 /** The player's club's Board Objective for one Season (ticket 18 / ADR-0006) — `finalPosition`/
  * `verdict` are `null` until `SeasonConcluded` triggers `BoardObjectiveJudged`. */
 export class BoardObjectiveView extends Schema.Class<BoardObjectiveView>("BoardObjectiveView")({
-  seasonNumber: Schema.Number,
+  seasonNumber: Schema.Finite,
   clubId: Schema.String,
-  minPosition: Schema.Number,
-  maxPosition: Schema.Number,
-  finalPosition: Schema.NullOr(Schema.Number),
+  minPosition: Schema.Finite,
+  maxPosition: Schema.Finite,
+  finalPosition: Schema.NullOr(Schema.Finite),
   verdict: Schema.NullOr(VerdictSchema),
 }) {}
 
@@ -272,10 +276,10 @@ export class SeasonSummaryView extends Schema.Class<SeasonSummaryView>("SeasonSu
   standings: Schema.Array(LeagueTableRow),
   clubId: Schema.String,
   clubName: Schema.String,
-  finalPosition: Schema.NullOr(Schema.Number),
+  finalPosition: Schema.NullOr(Schema.Finite),
   boardObjective: Schema.NullOr(BoardObjectiveView),
   managerOutcome: ManagerOutcomeSchema,
-  consecutiveMisses: Schema.Number,
+  consecutiveMisses: Schema.Finite,
   sacked: Schema.Boolean,
 }) {}
 
@@ -300,7 +304,7 @@ export class MatchSummary extends Schema.Class<MatchSummary>("MatchSummary")({
 
 /** One rendered Commentary Line (ADR-0008) — minute is a separate field, never baked into `text`. */
 export class CommentaryLineView extends Schema.Class<CommentaryLineView>("CommentaryLineView")({
-  minute: Schema.Number,
+  minute: Schema.Finite,
   tag: Schema.String,
   text: Schema.String,
 }) {}
@@ -310,17 +314,17 @@ export class CommentaryLineView extends Schema.Class<CommentaryLineView>("Commen
  * disable the substitution control and show subs used/remaining without guessing at the engine's
  * cap enforcement (which otherwise just silently no-ops an over-cap `MakeSubstitution`). */
 export class SubstitutionStatusView extends Schema.Class<SubstitutionStatusView>("SubstitutionStatusView")({
-  used: Schema.Number,
-  remaining: Schema.Number,
-  windowsUsed: Schema.Number,
-  windowsRemaining: Schema.Number,
+  used: Schema.Finite,
+  remaining: Schema.Finite,
+  windowsUsed: Schema.Finite,
+  windowsRemaining: Schema.Finite,
   capReached: Schema.Boolean,
 }) {}
 
 /** A typed `Injury` Match Event, so the renderer's commentary/indicators and the no-subs prompts
  * consume the same typed data the engine emits (ticket 08/07) — no separate representation. */
 export class InjuryView extends Schema.Class<InjuryView>("InjuryView")({
-  minute: Schema.Number,
+  minute: Schema.Finite,
   teamClubId: Schema.String,
   playerId: Schema.String,
   trigger: Schema.Literals(["contact", "non-contact"]),
@@ -337,10 +341,10 @@ export class InjuryView extends Schema.Class<InjuryView>("InjuryView")({
  * full typed detail of each `Injury` in this chunk for severity-scaled indicators/prompts. */
 export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("ResumeSimulationView")({
   matchId: Schema.String,
-  cursor: Schema.Number,
+  cursor: Schema.Finite,
   isComplete: Schema.Boolean,
-  homeScore: Schema.Number,
-  awayScore: Schema.Number,
+  homeScore: Schema.Finite,
+  awayScore: Schema.Finite,
   lines: Schema.Array(CommentaryLineView),
   homeSubs: SubstitutionStatusView,
   awaySubs: SubstitutionStatusView,
@@ -348,10 +352,10 @@ export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("Re
   injuries: Schema.Array(InjuryView),
   /** On-pitch head-counts for both clubs as of this chunk (ticket 11) — a value below 11 means
    * the team is playing with 10 (an empty slot / forced-off), surfacing the no-subs fallback. */
-  homeOnPitchCount: Schema.Number,
-  awayOnPitchCount: Schema.Number,
+  homeOnPitchCount: Schema.Finite,
+  awayOnPitchCount: Schema.Finite,
   /** Per-player Condition (%) at full time, keyed by playerId across both teams (ticket 02). */
-  conditions: Schema.Record(Schema.String, Schema.Number),
+  conditions: Schema.Record(Schema.String, Schema.Finite),
 }) {}
 
 /** `SubmitMatchCommand` (ticket 14) payload shapes — structurally identical to game-engine's
@@ -425,8 +429,8 @@ export class InsufficientTransferBudgetError extends Schema.TaggedError<Insuffic
   "InsufficientTransferBudgetError",
   {
     clubId: Schema.String,
-    amount: Schema.Number,
-    remaining: Schema.Number,
+    amount: Schema.Finite,
+    remaining: Schema.Finite,
   },
 ) {}
 
@@ -436,9 +440,9 @@ export class WageBudgetExceededError extends Schema.TaggedError<WageBudgetExceed
   "WageBudgetExceededError",
   {
     clubId: Schema.String,
-    wage: Schema.Number,
-    wageBudgetUsed: Schema.Number,
-    wageBudget: Schema.Number,
+    wage: Schema.Finite,
+    wageBudgetUsed: Schema.Finite,
+    wageBudget: Schema.Finite,
   },
 ) {}
 
@@ -472,8 +476,8 @@ export class BidView extends Schema.Class<BidView>("BidView")({
   sellingClubName: Schema.String,
   biddingClubId: Schema.String,
   biddingClubName: Schema.String,
-  amount: Schema.Number,
-  counterAmount: Schema.NullOr(Schema.Number),
+  amount: Schema.Finite,
+  counterAmount: Schema.NullOr(Schema.Finite),
   status: BidStatusSchema,
 }) {}
 
@@ -483,11 +487,11 @@ export class MarketPlayerView extends Schema.Class<MarketPlayerView>("MarketPlay
   id: Schema.String,
   firstName: Schema.String,
   lastName: Schema.String,
-  age: Schema.Number,
+  age: Schema.Finite,
   clubId: Schema.NullOr(Schema.String),
   clubName: Schema.NullOr(Schema.String),
-  overallRating: Schema.Number,
-  transferValue: Schema.Number,
+  overallRating: Schema.Finite,
+  transferValue: Schema.Finite,
   positions: Schema.Array(PlayerPositionView),
 }) {}
 
@@ -497,9 +501,9 @@ export class TransfersScreenView extends Schema.Class<TransfersScreenView>("Tran
   club: ClubSummary,
   season: SeasonView,
   windowOpen: Schema.Boolean,
-  transferBudgetRemaining: Schema.Number,
-  wageBudget: Schema.Number,
-  wageBudgetUsed: Schema.Number,
+  transferBudgetRemaining: Schema.Finite,
+  wageBudget: Schema.Finite,
+  wageBudgetUsed: Schema.Finite,
   incomingBids: Schema.Array(BidView),
   outgoingBids: Schema.Array(BidView),
   freeAgents: Schema.Array(MarketPlayerView),
@@ -514,7 +518,7 @@ export class TransfersScreenView extends Schema.Class<TransfersScreenView>("Tran
  * carrying every player's resulting Attribute set — a development *outcome*, distinct from the
  * between-season state change `TrainingFocusSet`. */
 export class PlayerDevelopedEvent extends Schema.Class<PlayerDevelopedEvent>("PlayerDevelopedEvent")({
-  seasonNumber: Schema.Number,
+  seasonNumber: Schema.Finite,
   clubId: Schema.String,
   players: Schema.Array(
     Schema.Struct({
@@ -527,7 +531,7 @@ export class PlayerDevelopedEvent extends Schema.Class<PlayerDevelopedEvent>("Pl
 /** The `TrainingFocusSet` event a manager's `SetTrainingFocus` command appends to the player's club
  * stream — a between-season state change, distinct from `PlayerDeveloped`. */
 export class TrainingFocusSetEvent extends Schema.Class<TrainingFocusSetEvent>("TrainingFocusSetEvent")({
-  seasonNumber: Schema.Number,
+  seasonNumber: Schema.Finite,
   playerId: Schema.String,
   focus: NullableTrainingFocusSchema,
 }) {}

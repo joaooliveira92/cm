@@ -2,13 +2,15 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { SaveNotFoundError, SaveSummary } from "@cm-clone/contracts";
+import { InvalidPillarDistributionError, SaveNotFoundError, SaveSummary } from "@cm-clone/contracts";
+import type { PillarDistribution } from "@cm-clone/shared";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { createSchema } from "./schema.js";
 import { startSeason } from "./season.js";
 import { generateWorld } from "./worldGeneration.js";
 import { initializeSeasonEconomy } from "./transfers.js";
+import { validatePillarDistribution } from "@cm-clone/shared";
 
 const dbPath = (savesDir: string, id: string) => path.join(savesDir, `${id}.sqlite`);
 
@@ -36,8 +38,9 @@ export const listSaves = (savesDir: string) =>
     yield* ensureSavesDir(savesDir);
     const entries = yield* Effect.promise(() => readdir(savesDir));
     const files = entries.filter((entry) => entry.endsWith(".sqlite"));
-    const summaries = yield* Effect.all(
-      files.map((file) => readSaveSummary(path.join(savesDir, file)).pipe(Effect.option)),
+    const summaries = yield* Effect.forEach(
+      files,
+      (file) => readSaveSummary(path.join(savesDir, file)).pipe(Effect.option),
     );
     return summaries.flatMap((summary) => (summary._tag === "Some" ? [summary.value] : []));
   });
@@ -66,10 +69,7 @@ export const beginCareer = (savesDir: string) =>
 export interface ManagerProfileParams {
   readonly managerName: string;
   readonly archetypeOrigin: string;
-  readonly tacticalAcumen: number;
-  readonly influence: number;
-  readonly regimen: number;
-  readonly technicalCoaching: number;
+  readonly pillars: PillarDistribution;
 }
 
 /**
@@ -90,12 +90,17 @@ export const commitCareer = (
     const filename = dbPath(savesDir, id);
     const createdAt = new Date().toISOString();
 
+    const pillarErrors = validatePillarDistribution(managerProfile.pillars);
+    if (pillarErrors.length > 0) {
+      return yield* new InvalidPillarDistributionError({ errors: pillarErrors });
+    }
+
     yield* Effect.gen(function* () {
       const sql = yield* SqlClient;
       yield* sql`UPDATE clubs SET is_user_club = 1 WHERE id = ${selectedClubId}`;
       yield* sql`INSERT INTO manager_profile (id, manager_name, archetype_origin, tactical_acumen, influence, regimen, technical_coaching)
         VALUES (1, ${managerProfile.managerName}, ${managerProfile.archetypeOrigin},
-          ${managerProfile.tacticalAcumen}, ${managerProfile.influence}, ${managerProfile.regimen}, ${managerProfile.technicalCoaching})`;
+          ${managerProfile.pillars.tacticalAcumen}, ${managerProfile.pillars.influence}, ${managerProfile.pillars.regimen}, ${managerProfile.pillars.technicalCoaching})`;
       yield* startSeason(id);
       yield* sql`INSERT INTO save_meta (id, name, created_at) VALUES (${id}, ${name}, ${createdAt})`;
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped);
@@ -108,9 +113,7 @@ export const commitCareer = (
  * Safe to call more than once; a missing file is not an error.
  */
 export const discardCareer = (savesDir: string, id: string) =>
-  Effect.gen(function* () {
-    yield* Effect.promise(() => rm(dbPath(savesDir, id)).catch(() => void 0));
-  });
+  Effect.promise(() => rm(dbPath(savesDir, id)).catch(() => void 0));
 
 /**
  * Compat shim: old `createSave` behaviour as `beginCareer` + `commitCareer` in one call.
@@ -132,10 +135,7 @@ export const createSave = (savesDir: string, name: string) =>
     return yield* commitCareer(savesDir, id, name, selectedClubId, {
       managerName: name,
       archetypeOrigin: "custom",
-      tacticalAcumen: 3,
-      influence: 3,
-      regimen: 3,
-      technicalCoaching: 3,
+      pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
     });
   });
 
