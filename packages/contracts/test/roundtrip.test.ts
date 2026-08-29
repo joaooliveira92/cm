@@ -71,7 +71,7 @@ describe("simple view classes", () => {
 describe("attributes", () => {
   it("requires every outfield attribute but allows omitting goalkeeping and hidden", () => {
     const outfieldOnly = Object.fromEntries(OUTFIELD_ATTRIBUTES.map((a) => [a, 12]));
-    const decoded = Schema.decodeUnknownSync(AttributesSchema)(outfieldOnly);
+    const decoded = Schema.decodeSync(AttributesSchema)(outfieldOnly);
     expect(decoded.passing).toBe(12);
     expect(decoded.gkHandling).toBeUndefined();
     expect(decoded.injuryProneness).toBeUndefined();
@@ -82,7 +82,7 @@ describe("attributes", () => {
         OUTFIELD_ATTRIBUTES.filter((a) => a !== "shooting").map((a) => [a, 12]),
       );
     expect(() =>
-      Schema.decodeUnknownSync(AttributesSchema)(missingShooting),
+      Schema.decodeSync(AttributesSchema)(missingShooting),
     ).toThrow();
   });
 });
@@ -289,14 +289,14 @@ describe("Player Development & Training Focus schemas", () => {
   it("SetTrainingFocus command payload round-trips a Category focus and a null (clear) focus", () => {
     const payload = AppRpcs.setTrainingFocus.payload;
     expect(
-      Schema.decodeUnknownSync(payload)({
+      Schema.decodeSync(payload)({
         saveId: "s1",
         playerId: "p1",
         focus: "goalkeeping",
       }),
     ).toEqual({ saveId: "s1", playerId: "p1", focus: "goalkeeping" });
     expect(
-      Schema.decodeUnknownSync(payload)({ saveId: "s1", playerId: "p1", focus: null }),
+      Schema.decodeSync(payload)({ saveId: "s1", playerId: "p1", focus: null }),
     ).toEqual({ saveId: "s1", playerId: "p1", focus: null });
   });
 });

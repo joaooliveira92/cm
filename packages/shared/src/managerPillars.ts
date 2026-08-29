@@ -21,6 +21,13 @@ export const MANAGER_ARCHETYPES = [
 
 export type ManagerArchetype = (typeof MANAGER_ARCHETYPES)[number];
 
+export interface PillarDistribution {
+  readonly tacticalAcumen: number;
+  readonly influence: number;
+  readonly regimen: number;
+  readonly technicalCoaching: number;
+}
+
 /**
  * Predefined Archetype distributions. Each is a permutation of {5, 4, 2, 1}
  * so each has one defining mastery (5), one strong competency (4), one
@@ -28,20 +35,13 @@ export type ManagerArchetype = (typeof MANAGER_ARCHETYPES)[number];
  */
 export const MANAGER_ARCHETYPE_DISTRIBUTIONS: Record<
   Exclude<ManagerArchetype, "custom">,
-  { readonly tacticalAcumen: number; readonly influence: number; readonly regimen: number; readonly technicalCoaching: number }
+  PillarDistribution
 > = {
   professor: { tacticalAcumen: 5, influence: 1, regimen: 2, technicalCoaching: 4 },
   motivator: { tacticalAcumen: 2, influence: 5, regimen: 4, technicalCoaching: 1 },
   sergeant: { tacticalAcumen: 1, influence: 2, regimen: 5, technicalCoaching: 4 },
   academy_head: { tacticalAcumen: 2, influence: 4, regimen: 1, technicalCoaching: 5 },
 };
-
-export interface PillarDistribution {
-  readonly tacticalAcumen: number;
-  readonly influence: number;
-  readonly regimen: number;
-  readonly technicalCoaching: number;
-}
 
 /**
  * Validate a Pillar Distribution. Returns an array of error messages (empty if valid).

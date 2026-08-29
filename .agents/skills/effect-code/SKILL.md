@@ -65,7 +65,7 @@ Effect.tryPromise({
 - `Effect.andThen(next)` — run next; `next` is an `Effect` or `A => Effect`. If you're only producing a plain value, use `map`.
 - `Effect.tap(f)` — run a side effect (logging), **keep** the value.
 - `Effect.as(const)` — replace the value with a constant.
-- `Effect.all([a, b])` — combine into tuple/struct/record. Sequential by default, short-circuits on first error. `{ mode: "result" }` runs all and collects `Result`s.
+- `Effect.all([a, b])` — combine into tuple/struct/record. **Sequential by default** — pass `{ concurrency }` explicitly, see [Performance](#performance). Short-circuits on first error; `{ mode: "result" }` runs all and collects `Result`s.
 
 `myEffect.pipe(fn1, fn2)` is equivalent to `pipe(myEffect, fn1, fn2)` and needs no import.
 
@@ -133,6 +133,16 @@ Functions that need a service declare it in `R` instead of threading it through 
 - **Lighter-weight cleanup**: `Effect.ensuring(finalizer)` (always runs, no access to outcome), `Effect.onExit(f)` (full `Exit`, uninterruptible), `Effect.onError(f)` (failure `Cause` only, uninterruptible).
 - Prefer these over hand-rolled `try`/`finally` — they're the difference between cleanup that's guaranteed under interruption and cleanup that silently isn't.
 
+## Performance
+
+Effect's defaults favour predictability over speed. Each of these is a per-call-site judgement the type checker cannot make for you.
+
+- **Concurrency is opt-in, and the default is sequential.** `Effect.all` and `Effect.forEach` run one item at a time unless given `{ concurrency }`. Choose deliberately: pure CPU work (schema decoding, arithmetic over an in-memory array) gains nothing and should say `{ concurrency: 1 }`; work that does IO per item is where concurrency pays, and should be bounded to what the downstream resource tolerates. Reserve `"unbounded"` for collections whose size you control. `effect-lint`'s `require-explicit-concurrency` rule requires the option to be present — it cannot tell you which value is right.
+- **A sequential `yield*` chain is a concurrency decision too.** `const a = yield* fetchA; const b = yield* fetchB` runs serially even when `b` does not depend on `a`. Independent effects belong in one `Effect.all([fetchA, fetchB], { concurrency: 2 })`.
+- **`Effect.gen` allocates a generator per invocation.** Fine at the top of a workflow; wasteful as the per-item callback of a large `forEach` or inside a hot loop. Prefer a `map`/`flatMap` pipeline there, or hoist the `gen` out of the loop so it's constructed once.
+- **Don't rebuild what you can reuse.** Repeated identical effects want `Effect.cached` (or `Effect.cachedFunction` when keyed); N+1 fetches inside a `forEach` want a batched `RequestResolver` rather than a higher concurrency number. Raising concurrency to paper over an N+1 makes the load worse, not better.
+- **Layers memoize by reference** — see the services section. A layer-producing factory called twice builds its dependency graph twice; this shows up as duplicate connections and doubled startup cost, not as a type error.
+
 ## Gotchas
 
 - **Lazy vs eager**: `Effect.succeed(i++)` runs the side effect at construction. Use `Effect.suspend(() => effect)` to defer per-invocation, to break recursion (deep recursion → stack overflow), and to unify a union return type.
@@ -142,3 +152,5 @@ Functions that need a service declare it in `R` instead of threading it through 
 ## Verification
 
 Run `tsc --noEmit` (needs `"strict": true`). Common failure modes in Effect code are type-level: unhandled error channel (`E` not `never`), missing `Requirements` (`R` not `empty`), or using `runSync` on an effect that can fail or go async.
+
+Type checking is necessary but not sufficient — the performance defaults above are all type-correct. Where a repo carries the `effect-lint` script and the `@effect/language-service` plugin, run those too: the linter catches the mechanical cases (missing `concurrency`, `Effect.ignore`, nested `Layer.provide`), the language service catches the type-aware ones (floating effects, leaking requirements, errors missing from `E`). What neither can catch is the judgement in each Performance bullet — which concurrency value, whether a `gen` belongs in that loop.

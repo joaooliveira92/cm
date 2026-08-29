@@ -38,9 +38,13 @@ export const listSaves = (savesDir: string) =>
     yield* ensureSavesDir(savesDir);
     const entries = yield* Effect.promise(() => readdir(savesDir));
     const files = entries.filter((entry) => entry.endsWith(".sqlite"));
+    // Each item opens its own SQLite connection and reads one row — genuinely IO-bound per file,
+    // so overlapping them is a real win. Bounded rather than unbounded: a saves directory is
+    // user-controlled and unbounded fan-out would open one file descriptor per save at once.
     const summaries = yield* Effect.forEach(
       files,
       (file) => readSaveSummary(path.join(savesDir, file)).pipe(Effect.option),
+      { concurrency: 4 },
     );
     return summaries.flatMap((summary) => (summary._tag === "Some" ? [summary.value] : []));
   });

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { SaveSummary } from "@cm-clone/contracts";
 import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
 import { CreationStep1 } from "./CreationStep1.js";
+import { ClubSelectionScreen } from "./ClubSelectionScreen.js";
 import { FixturesScreen } from "./FixturesScreen.js";
 import { LeagueTableScreen } from "./LeagueTableScreen.js";
 import { MatchDayScreen } from "./MatchDayScreen.js";
@@ -284,13 +285,8 @@ export const App = () => {
               onPillarsChange={(pillars) => updateCreation({ pillars })}
             />
           )}
-          {creationState.step === "club" && (
-            <div className="text-slate-300">
-              <h2 className="text-lg font-semibold">Select Club</h2>
-              <p className="mt-2 text-sm text-slate-500">
-                Club selection will be available in the next step. Click Next to begin career generation.
-              </p>
-            </div>
+          {creationState.step === "club" && creationState.provisionalId !== null && (
+            <ClubSelectionScreen saveId={creationState.provisionalId} />
           )}
           {creationState.step === "review" && (
             <div className="text-slate-300">

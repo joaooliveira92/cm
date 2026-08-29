@@ -1,13 +1,10 @@
 import { Tactic } from "@cm-clone/contracts";
 import {
-  FORMATIONS,
   POSITIONS,
   POSITION_ROLES,
   selectBestFormationXI,
-  bestXiForFormation,
   transferValue,
   weeklyWage,
-  type SquadQualityBand,
   type Formation,
   type Position,
   type PositionRatingsLike,

@@ -37,7 +37,7 @@ const createWindow = () => {
   }
 };
 
-const program = Effect.gen(function* () {
+app.whenReady().then(() => {
   const savesDir = path.join(app.getPath("userData"), "saves");
 
   ipcMain.handle(RPC_CHANNEL, (_event, method: AppRpcMethod, payload: unknown) =>
@@ -49,10 +49,6 @@ const program = Effect.gen(function* () {
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
-});
-
-app.whenReady().then(() => {
-  Effect.runPromise(program);
 });
 
 app.on("window-all-closed", () => {

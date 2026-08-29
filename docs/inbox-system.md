@@ -156,7 +156,7 @@ This created a repeating instructional cycle:
 4. Receive outcomes and consequences.
 5. Modify the plan before the next fixture.
 
-The 2D top-down match view supplied visual feedback for tactical decisions, while the surrounding news flow returned the player from match execution to management. CM 03/04 retained this match representation from *Championship Manager 4*. citeturn1search9turn1search10
+The 2D top-down match view supplied visual feedback for tactical decisions, while the surrounding news flow returned the player from match execution to management. CM 03/04 retained this match representation from *Championship Manager 4*. 
 
 ## 5.3 Transfer messages
 
@@ -268,7 +268,7 @@ Before pressing it, the player implicitly asked:
 - Am I waiting for another party to answer?
 - Is there proactive work I should do first?
 
-After pressing it, the simulation processed events and eventually returned new consequences to the inbox. The documented ability to use the space bar both to advance and to move through unread news made this loop physically efficient. citeturn1search2
+After pressing it, the simulation processed events and eventually returned new consequences to the inbox. The documented ability to use the space bar both to advance and to move through unread news made this loop physically efficient. 
 
 The command therefore created a productive tension. Continuing was necessary to receive transfer replies, recover injured players, and reach matches, but time advancement could also expose neglected problems.
 

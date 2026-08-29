@@ -10,9 +10,76 @@
     "isolatedModules": true,
     "resolveJsonModule": true,
     "noUncheckedIndexedAccess": true,
+    // The Effect language service is built into the `@effect/tsgo` binary, which the
+    // `prepare` script patches over `typescript` (`tsc --version` reports
+    // `7.0.2+effect-tsgo.0.38.0`). These options are therefore read by `tsc --noEmit`
+    // in every package, not just by the editor -- the standalone
+    // `@effect/language-service` npm package is deliberately NOT a dependency.
     "plugins": [
       {
-        "name": "@effect/language-service"
+        "name": "@effect/language-service",
+        "diagnostics": true,
+        // Suggestion-level diagnostics stay advisory; warnings and errors fail the build.
+        "ignoreEffectSuggestionsInTscExitCode": true,
+        "ignoreEffectWarningsInTscExitCode": false,
+        "ignoreEffectErrorsInTscExitCode": false,
+        // Every rule below currently has zero violations across all four packages,
+        // so promoting them to "error" costs nothing today and prevents regressions.
+        "diagnosticSeverity": {
+          // -- Correctness: wrong, unsafe, or structurally invalid code.
+          "classSelfMismatch": "error",
+          "duplicatePackage": "error",
+          "effectFnImplicitAny": "error",
+          "floatingEffect": "error",
+          "floatingEffectInVitest": "error",
+          "genericEffectServices": "error",
+          "missingEffectContext": "error",
+          "missingEffectError": "error",
+          "missingEffectServiceDependency": "error",
+          "missingLayerContext": "error",
+          "missingReturnYieldStar": "error",
+          "missingStarInYieldEffectGen": "error",
+          "nonObjectEffectServiceType": "error",
+          "outdatedApi": "error",
+          "overriddenSchemaConstructor": "error",
+          "promiseInEffectSuccess": "error",
+          "schemaLiteralNonFinite": "error",
+          "schemaOpaqueInstanceMember": "error",
+          "unsafeEffectTypeAssertion": "error",
+          // -- Anti-patterns: legal code that reliably causes bugs.
+          "catchUnfailableEffect": "error",
+          "effectFnIife": "error",
+          "effectGenUsesAdapter": "error",
+          "effectInFailure": "error",
+          "effectInVoidSuccess": "error",
+          "globalErrorInEffectCatch": "error",
+          "globalErrorInEffectFailure": "error",
+          "layerMergeAllWithDependencies": "error",
+          "lazyPromiseInEffectSync": "error",
+          "leakingRequirements": "error",
+          "multipleEffectProvide": "error",
+          "nestedEffectGenYield": "error",
+          "returnEffectInGen": "error",
+          "runEffectInsideEffect": "error",
+          "scopeInLayerEffect": "error",
+          "tryCatchInEffectGen": "error",
+          "unknownInEffectCatch": "error",
+          // -- Redundancy: dead wrappers that hide intent.
+          "deterministicKeys": "error",
+          "schemaUnionOfLiterals": "error",
+          "unnecessaryEffectGen": "error",
+          "unnecessaryFailYieldableError": "error",
+          "unnecessaryPipe": "error",
+          "unnecessaryPipeChain": "error"
+
+          // Deliberately left at package defaults -- each has a real pre-existing
+          // violation count that needs its own scoped cleanup before being promoted:
+          //   strictBooleanExpressions   163   missingPipeableSignature  63
+          //   newSchemaClass              83   strictEffectProvide       24
+          //   asyncFunction               14   nodeBuiltinImport         11
+          //   globalDate                   8   unnecessaryArrowBlock      5
+          //   anyUnknownInErrorContext     1 (apps/desktop/src/main/rpcServer.ts)
+        }
       }
     ]
   }

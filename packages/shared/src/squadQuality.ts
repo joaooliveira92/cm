@@ -1,4 +1,3 @@
-import type { Position } from "./positions.js";
 import { selectBestFormationXI, type PositionRatingsLike } from "./bestXi.js";
 
 // ---------------------------------------------------------------------------

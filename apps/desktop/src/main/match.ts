@@ -28,6 +28,7 @@ import {
   POSITION_ROLES,
   renderCommentary,
   type CommentaryNameResolver,
+  type PillarDistribution,
   type PlayerAttributes,
 } from "@cm-clone/shared";
 import { Effect, Schema } from "effect";
@@ -136,7 +137,10 @@ export const listOpponentClubs = (savesDir: string, saveId: string) =>
         name: string;
         statureTier: "big" | "mid" | "small";
       }>`SELECT id, name, stature_tier as "statureTier" FROM clubs WHERE id != ${club.id} ORDER BY name`;
-      return yield* Effect.forEach(rows, (row) => Schema.decodeUnknownEffect(ClubSummary)(row));
+      // Pure, synchronous schema decoding over an already-materialized result set — no IO per
+      // item, so concurrency buys nothing and only adds fiber overhead. Explicit `concurrency: 1`
+      // states the sequential intent rather than relying on `Effect.forEach`'s default.
+      return yield* Effect.forEach(rows, (row) => Schema.decodeEffect(ClubSummary)(row), { concurrency: 1 });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
 
@@ -152,7 +156,7 @@ interface PersistedMatchStarted {
   readonly awayClubId: string;
   readonly homeSetup: MatchTeamSetup;
   readonly awaySetup: MatchTeamSetup;
-  readonly pillars: { readonly tacticalAcumen: number; readonly influence: number; readonly regimen: number; readonly technicalCoaching: number };
+  readonly pillars: PillarDistribution;
 }
 
 /** Ticket 14 mid-match command journal entries — one per accepted `SubmitMatchCommand` call,
@@ -207,14 +211,7 @@ export const startMatch = (savesDir: string, saveId: string, opponentClubId: str
       // Snapshot the Manager Pillars at match start for deterministic replay (ticket 03). Only
       // the human club has a manager profile — AI clubs have none, so fall back to neutral (3).
       const profile = yield* loadManagerProfile;
-      const pillars = profile
-        ? {
-            tacticalAcumen: profile.tacticalAcumen,
-            influence: profile.influence,
-            regimen: profile.regimen,
-            technicalCoaching: profile.technicalCoaching,
-          }
-        : { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 };
+      const pillars = profile ? profile.pillars : { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 };
 
       const matchId = randomUUID();
       // Deterministic per match (ADR-0002) — Date.now() picks a fresh seed per `StartMatch` call,

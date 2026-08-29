@@ -1,6 +1,6 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { ManagerProfileNotFoundError, ManagerProfileView } from "@cm-clone/contracts";
-import { Effect } from "effect";
+import { ManagerArchetypeSchema, ManagerProfileNotFoundError, ManagerProfileView } from "@cm-clone/contracts";
+import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "./decider.js";
 
@@ -18,7 +18,18 @@ export const loadManagerProfile = Effect.gen(function* () {
             tactical_acumen as "tacticalAcumen", influence,
             regimen, technical_coaching as "technicalCoaching"
      FROM manager_profile WHERE id = 1`;
-  return rows[0] ?? null;
+  return rows[0]
+    ? {
+        managerName: rows[0].managerName,
+        archetypeOrigin: rows[0].archetypeOrigin,
+        pillars: {
+          tacticalAcumen: rows[0].tacticalAcumen,
+          influence: rows[0].influence,
+          regimen: rows[0].regimen,
+          technicalCoaching: rows[0].technicalCoaching,
+        },
+      }
+    : null;
 });
 
 /** Query the manager profile from a committed save. */
@@ -31,11 +42,8 @@ export const getManagerProfile = (savesDir: string, saveId: string) =>
       }
       return new ManagerProfileView({
         managerName: profile.managerName,
-        archetypeOrigin: profile.archetypeOrigin as ManagerProfileView["archetypeOrigin"],
-        tacticalAcumen: profile.tacticalAcumen,
-        influence: profile.influence,
-        regimen: profile.regimen,
-        technicalCoaching: profile.technicalCoaching,
+        archetypeOrigin: yield* Schema.decodeUnknownEffect(ManagerArchetypeSchema)(profile.archetypeOrigin),
+        pillars: profile.pillars,
       });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
