@@ -2,7 +2,7 @@
 
 ## Destination
 
-Every entry point runs its program at the edge via `NodeRuntime.runMain`, every domain function that touches IO declares `Effect<A, E, R>`, no bare throws in program logic, expected errors are `Data.TaggedError` across the codebase, and dependencies come from Context/SqlClient. The `game-engine` and `shared` packages wrap at the boundary rather than converting their pure internals.
+Every entry point runs its program at the edge via a single `Effect.runPromise` (Electron apps) or `NodeRuntime.runMain` (non-Electron), every domain function that touches IO declares `Effect<A, E, R>`, expected errors are `Data.TaggedError` across the codebase, and dependencies come from Context/SqlClient. The `game-engine` and `shared` packages stay pure — bare throws in pure-domain code are replaced with `Data.TaggedError` instances thrown as typed defects, catchable by tag at the Effect boundary.
 
 ## Notes
 
