@@ -1,8 +1,39 @@
 # Where the contextual-help line sits
 
 Type: grilling
-Status: open
-Blocked by: 05, 07
+Status: resolved
+Blocked by: 05, 07, 10 (all resolved — unblocked)
+
+## Ticket 10 has resolved: what it supplies
+
+**This ticket is now unblocked.** Ticket 10 chose an explicit pre-match boundary, so the surface this
+ticket places help against now exists and is named:
+
+- **The pre-match boundary is the help surface.** Continue stops at the human's scheduled Fixture
+  before resolving any of the Matchday, with readiness derived and recomputed on every read. This is
+  where "you have no Tactic" is stated, and it is a normal career state rather than an error.
+- **Two player-facing actions exist at that boundary**, Play and Quick result, both unavailable until
+  blocking readiness passes. Their unavailability is one of the things this ticket must explain.
+- **The causal-explanation surface for Tactical Acumen is Match day or its full-time beat**, reachable
+  under both modes because both produce the same `PersistedMatchStarted` stream.
+- **A new explanation burden ticket 10 created and deliberately handed here:** the match seed derives
+  from `SeasonStarted.seed` + `fixtureId`, so a lost match cannot be retried into a different result.
+  Nothing currently tells the player this, and discovering it by failed experiment is exactly the
+  section-13 failure mode this ticket exists to prevent.
+- **The first Continue was deliberately not decomposed**, so press one carries the Transfer Window
+  close, AI transfer activity, arrival at the Matchday 1 boundary, and the no-Tactic blocker together.
+  Ticket 10 requires all of it reach one structured durable surface separating what happened, what is
+  next, what is unresolved, and what the player can do. That surface is this ticket's.
+
+See [Agent Note: The human Fixture's pre-match boundary](../../../.agents/notes/proposed/architecture/2026-08-29-human-fixture-pre-match-boundary.md).
+
+## Original blocking rationale (ticket 10)
+
+Added after ticket 07's audit. This ticket needs four things before it can draw the help line, and
+ticket 10 supplies two of them: the actual pre-match boundary and the chosen player-facing surface for
+the human's Fixture. The other two — the blocker inventory and the causal result shape — come from
+ticket 07 (resolved) and ticket 06 (resolved). Contextual help cannot be placed against a surface whose
+existence is still undecided.
 
 ## Question
 
@@ -72,3 +103,11 @@ and 07.
   outlives any single dismissal. This ticket owns its copy, ticket 06 owns where it sits.
 
 See [Agent Note: No onboarding inbox](../../../.agents/notes/proposed/architecture/2026-08-29-no-onboarding-inbox.md).
+
+## Answer
+
+**Contextual help is a typed projection of the simulation model: help may make a mechanical claim
+only where that claim traces to authoritative game data, derived state, or structured resolver
+output, with one bounded Irreversibility Disclosure exception; it teaches the game's model rather
+than real football, never tapers, and is delivered through one keyboard-reachable Term Disclosure
+with decision-critical values kept inline.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-contextual-help-mechanical-provenance.md).

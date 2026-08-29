@@ -1,6 +1,6 @@
 ## Answer
 
-**`NoPhaseForPositionError` defined in `tactical-modifiers.ts`; no other bare `throw new Error(...)` in scope. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-tagged-domain-errors.md).
+**`NoPhaseForPositionError` defined in `tactical-modifiers.ts`; no other bare `throw new Error(...)` in scope. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-tagged-domain-errors.md).
 
 ## Question
 

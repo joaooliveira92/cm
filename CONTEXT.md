@@ -225,6 +225,24 @@ display.
 _Avoid_: Schedule (Schedule is the generated list of Fixtures; Calendar is the mechanism for moving
 through it)
 
+**Continue**:
+The single player-facing control that advances the Calendar, and the name of the career's core rhythm:
+inspect state, decide, Continue, read the consequence, inspect again. It belongs to the career rather
+than to any one screen and stops at every boundary the advance can report. "Continue" is the affordance
+the player sees; the command behind it is the Calendar advance.
+_Avoid_: Advance Calendar, Simulate, Next Day, Proceed as player-facing names (Next Day additionally
+implies a day-by-day clock the Calendar does not have); "continue" for resuming a saved career, which
+is Load
+
+**Match Readiness**:
+Whether the manager's club has the setup a Fixture legally requires — at minimum a Tactic, which a
+newly created career does not have. A derived state, true or false by inspection of the club at any
+moment, never a notice that is delivered, acknowledged, or marked read: it is visible for exactly as
+long as it is unmet. Distinct from a squad being *well* prepared, which is a judgment the game does not
+make.
+_Avoid_: Reminder, warning message, checklist (all imply something dismissible or completable
+independently of the underlying state)
+
 **Transfer Window**:
 One of two spans per Season during which transfer commands are legal: the pre-season window (open
 until Matchday 1) and the mid-season window (opens immediately after Matchday 19, closes when Matchday
@@ -430,6 +448,50 @@ Fires when Board Objective Judged is `Missed` and the Consecutive-Miss Counter m
 career: the save becomes archived and read-only (viewable, no further commands accepted). There is no
 explicit win state symmetric to this — a career that is never sacked simply continues indefinitely.
 _Avoid_: Game over (fine as player-facing copy, not as the event name)
+
+### Contextual help
+
+**Contextual Help**:
+Any explanation the game offers about its own model, shown at the surface where the affected decision
+is made or reviewed. Permitted only under Mechanical Provenance or as an Irreversibility Disclosure,
+and permanently available — it carries no seen, dismissed, experience, or tutorial-completion state,
+so it is identical in a first career and a fiftieth. Explains the simulation, never real-world
+football, and never recommends or ranks a choice unless a shipped model produces that ranking.
+_Avoid_: Tutorial (a scripted first-run sequence, out of scope), Tooltip (one possible presentation of
+a Term Disclosure, not the concept), Onboarding hint
+
+**Mechanical Provenance**:
+The property that every mechanical claim a Contextual Help artifact makes traces to authoritative game
+data, a derived-state predicate, or structured resolver output that the simulation itself reads.
+Presentation may translate identifiers and values into readable language; it may not introduce
+mechanics, strategy, or causality the model does not contain. A claim with no such source is not
+permitted copy.
+
+**Player-Facing Attribute**:
+The subset of Attributes shown to the player: exactly those read by at least one shipped authoritative
+mechanic, whether a rating table (Position Weight, Role Weight) or another resolver (collision risk,
+injury resolution, Condition recovery). Membership follows mechanical consumption, not the schema, so
+an Attribute that is persisted and generated but read by nothing is not player-facing until something
+reads it.
+_Avoid_: Visible Attribute (ambiguous with Hidden Attribute, which is about the injury model)
+
+**Term Disclosure**:
+The single affordance carrying Contextual Help for a domain term: a visible, focusable,
+keyboard-operable control attached to the term that expands its grounded explanation in place. Used
+uniformly across every screen. Never a modal, never hover-only. Carries *meaning*; the values that
+drive the decision at hand (such as Role Rating in a tactic slot) stay inline rather than behind it.
+
+**Irreversibility Disclosure**:
+The one class of Contextual Help whose provenance is architectural rather than numerical: a statement,
+made before commitment, that an action creates or freezes authoritative state which normal navigation
+cannot reverse. Applies only where a player might reasonably expect reversibility and would otherwise
+discover the rule by loss. Available at every applicable boundary, never suppressed once seen.
+
+**Readiness Blocker**:
+One typed reason the human's Fixture cannot start — the unresolved state, the actions it blocks, and
+the screen that owns resolving it. Supplied as structured data by the backend and rendered into
+player-facing language by the renderer, which never infers which action is blocked or who owns the
+fix. Normal unresolved setup, not an error.
 
 ### Technical contract
 

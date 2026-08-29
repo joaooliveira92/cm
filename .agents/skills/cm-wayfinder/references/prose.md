@@ -19,3 +19,11 @@ Every proposition has one home. Keep the contract locally at the point of use; l
 ## Keeps, not transcript
 
 Issue references (`#42`, `TODO(name):`), suppression justifications, and measured bounds are durable fact, not expression. They stay wherever they resolve at HEAD.
+
+## Borderline decisions
+
+A case is borderline only when at least two versions satisfy the complete-proposition and one-home rules above but trade accepted principles, and those rules do not already resolve the tradeoff. A rewrite with one proposition-preserving answer is not borderline.
+
+Never weaken a proposition to make progress. Group analogous cases under the governing principle, present two or three viable versions, recommend one, and state the factual or structural difference — no inferior distractors.
+
+After the choice, distill the governing principle and apply the learned rule to every analogous passage in scope, folding any durable distillation back into these rules rather than scattering it across artifacts.

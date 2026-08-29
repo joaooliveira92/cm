@@ -1,6 +1,6 @@
 ## Answer
 
-**Moved `Effect.runPromise` boundary into `index.ts`; `handleRpc` returns `Effect.Effect`, not `Promise`. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-entry-point-edge-boundary.md).
+**Moved `Effect.runPromise` boundary into `index.ts`; `handleRpc` returns `Effect.Effect`, not `Promise`. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-entry-point-edge-boundary.md).
 
 ## Question
 

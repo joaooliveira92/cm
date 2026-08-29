@@ -120,7 +120,18 @@ relationship is still explained.
 ### Persistence
 
 Manager Pillars are an immutable, validated value object on a new single-row `manager_profile` table,
-written inside `createSave`'s existing transaction. **No `ManagerCreated` event is emitted**, and no
+written inside `createSave`'s existing transaction.
+
+> **Superseded in part by [New-game flow sequence and screens](2026-08-29-new-game-flow-sequence.md).**
+> `createSave` has since been split into `beginCareer` (schema, world generation, season economy, no
+> `save_meta` row) and `commitCareer` (manager profile, selected club, human season state,
+> `save_meta`), because club selection must inspect generated squads and persisted economy before the
+> career is committed. `manager_profile` is now written by `commitCareer`, which does not contain
+> world generation, so profile writing and generation are no longer the same transaction. Everything
+> below — the Pillar model, validation, `archetype_origin`, and the absence of a Manager Decider or
+> `ManagerCreated` event — remains authoritative, as does the guarantee that a failed profile write
+> aborts creation.
+ **No `ManagerCreated` event is emitted**, and no
 allocation-level events (`ManagerPillarRaised`, `ArchetypeSelected`, and the like) exist — the plus
 and minus clicks on the creation screen are provisional UI state, not domain history. Only the
 submitted, validated profile is persisted.
@@ -278,8 +289,10 @@ Leaving these names free preserves room for later concrete concepts named `train
 ## Acceptance criteria
 
 - `manager_profile` exists as a single-row table with the constraints above, and is written inside
-  `createSave`'s transaction; a failure to write it aborts save creation, so no save can exist
-  without exactly one `manager_profile` row.
+  the atomic commitment transaction — `commitCareer` per
+  [New-game flow sequence and screens](2026-08-29-new-game-flow-sequence.md), superseding this note's
+  original `createSave` framing; a failure to write it aborts commitment, so no visible save can
+  exist without exactly one `manager_profile` row.
 - A domain value object validates integer type, 1–5 bounds, and sum-12 before persistence, and
   surfaces validation errors to the UI rather than relying on SQL `CHECK` failures.
 - The creation screen shows points remaining, enables submission only at exactly 12 allocated, and

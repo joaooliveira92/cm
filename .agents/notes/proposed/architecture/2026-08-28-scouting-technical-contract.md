@@ -4,7 +4,7 @@ Status: proposed
 
 ## Problem
 
-With the Scout resource/assignment model ([Scout resource & assignment model](2026-08-28-scout-resource-and-assignment-model.md), `../feature/`) and the Progress/Attribute-Range formulas ([Progress accrual & Attribute Range computation](../feature/2026-08-28-progress-accrual-and-attribute-range.md)) settled, the Scouting milestone needs a concrete wiring: what events the Club Decider (the shared club-scoped stream already carrying Contracts/Budgets) emits, how Scouting Progress actually advances over time given Matchdays reset every Season with no multi-season rollover implemented, what read models serve the new Scouting screen and the Attribute-Range-aware Transfers screen, what RPC methods the renderer calls, and what invariants the Club Decider enforces for Scout assignment.
+With the Scout resource/assignment model ([Scout resource & assignment model](../feature/2026-08-28-scout-resource-and-assignment-model.md), `../feature/`) and the Progress/Attribute-Range formulas ([Progress accrual & Attribute Range computation](../feature/2026-08-28-progress-accrual-and-attribute-range.md)) settled, the Scouting milestone needs a concrete wiring: what events the Club Decider (the shared club-scoped stream already carrying Contracts/Budgets) emits, how Scouting Progress actually advances over time given Matchdays reset every Season with no multi-season rollover implemented, what read models serve the new Scouting screen and the Attribute-Range-aware Transfers screen, what RPC methods the renderer calls, and what invariants the Club Decider enforces for Scout assignment.
 
 ## Proposal
 

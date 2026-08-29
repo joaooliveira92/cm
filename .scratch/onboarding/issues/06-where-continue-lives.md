@@ -1,7 +1,7 @@
 # Where the Continue command lives
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 05
 
 ## Question
@@ -53,3 +53,34 @@ dismissible notice can be dismissed while the condition it describes is still tr
 full inventory of unset-at-creation state; ticket 08 owns the copy.
 
 See [Agent Note: No onboarding inbox](../../../.agents/notes/proposed/architecture/2026-08-29-no-onboarding-inbox.md).
+
+## Answer
+
+**Continue becomes a persistent application-shell control, keeps its label, stops at every boundary
+`AdvanceCalendarResult` can report, renders one structured durable result per press, and refuses to
+cross into the human's match with invalid or absent required setup while never blocking advancement
+before that boundary.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-continue-as-global-career-loop.md).
+
+## Amendment from ticket 08 (contextual help)
+
+This ticket fixed the stop set as exactly the fields on `AdvanceCalendarResult` and ruled that
+anything absent from that contract passes silently. Those seven fields cannot express **arrival at
+the human Fixture's pre-match boundary** or the **readiness blockers** waiting there, so under the
+contract as written the first Continue is structurally unable to say "you have arrived at Matchday 1
+and you have no Tactic" — which is precisely what that press must say.
+
+`AdvanceCalendarResult` therefore gains an explicit, nullable pre-match boundary carrying the pending
+fixture, matchday, opponent, home/away, and typed readiness blockers in the same vocabulary
+`startMatch` validation consumes. This **applies** this ticket's own rule (anything that should become
+a stop must be exposed authoritatively first) rather than overriding it, and it does not reopen the
+always-true "human played" flag rejected here: the boundary field is genuinely null whenever an
+advance does not reach the human's Fixture. Readiness on the result is advisory — the boundary
+recomputes it on every read and `startMatch` stays authoritative.
+
+The structured durable surface renders in fixed order: **what happened**, **what is next**, **what is
+unresolved**, **what you can do** — unresolved before actions, so the blocker is read before the
+actions it disables. A section with no authoritative typed data renders nothing at all; no
+placeholders. The renderer must not reconstruct boundary arrival or readiness from the current route,
+a fixture lookup, a null-Tactic check, or a before-and-after comparison.
+
+See [Agent Note: Contextual help as a typed projection of the simulation model](../../../.agents/notes/proposed/architecture/2026-08-29-contextual-help-mechanical-provenance.md).

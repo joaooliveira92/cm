@@ -24,6 +24,10 @@ Forked, Agent-Notes-aware copies of the decision-record chain (`cm-wayfinder`, `
 
 Effect v4 pair: `effect-code` for writing v4 code, `effect-v4-migration` for reviewing and incrementally migrating a codebase to v4. See [domain-skills.md](docs/agents/domain-skills.md).
 
+### Documentation
+
+`doc-standards` for writing, moving, reviewing, or auditing any Markdown doc in this repo: placement, hierarchy and detail, tutorial-vs-reference classification, and corpus audits. Its sibling-prose source is [unslop.md](docs/agents/unslop.md). See the skill's own [`SKILL.md`](.agents/skills/doc-standards/SKILL.md).
+
 ### Comunication
 
 Use [unslop.md](docs/agents/unslop.md)

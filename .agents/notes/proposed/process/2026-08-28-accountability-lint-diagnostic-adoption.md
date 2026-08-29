@@ -7,7 +7,7 @@ Status: proposed
 `mikearnaldi/accountability`'s lint setup (companion `eslint.config.mjs` `local` plugin plus
 ~35 explicit `@effect/language-service` `diagnosticSeverity` overrides in `tsconfig.base.json`)
 is a candidate source of additional Effect-specific checks for this repo, given the
-[Dual-lint architecture](2026-08-28-dual-lint-architecture.md) decision to host AST-shape rules
+[Dual-lint architecture](../architecture/2026-08-28-dual-lint-architecture.md) decision to host AST-shape rules
 in a new ESLint `local` plugin alongside oxlint. Two open questions: which of accountability's
 five not-yet-present ESLint rule candidates (`no-silent-error-swallow`,
 `prefer-option-from-nullable`, `import-extensions`, `no-sql-type-parameter`,
@@ -19,7 +19,7 @@ violation counts were unknown.
 ## Proposal
 
 **ESLint rule candidates** — land in the new ESLint `local` plugin per
-[Dual-lint architecture](2026-08-28-dual-lint-architecture.md):
+[Dual-lint architecture](../architecture/2026-08-28-dual-lint-architecture.md):
 
 - **Adopt: `no-silent-error-swallow`.** Catches `catchTag`/`catchAll`/`catchTags(() =>
   Effect.void)` handler bodies specifically — needs to inspect a handler's return-expression
@@ -116,7 +116,7 @@ recommendation:
 - `scripts/effect-lint.ts`'s no-void-expression stays; the new ESLint `local` plugin gains
   `no-silent-error-swallow`, `prefer-option-from-nullable`, `no-sql-type-parameter` (implementation
   tracked by whatever ticket/PR actually stands up the plugin per
-  [Dual-lint architecture](2026-08-28-dual-lint-architecture.md)).
+  [Dual-lint architecture](../architecture/2026-08-28-dual-lint-architecture.md)).
 - `tsconfig.json`'s `@effect/language-service` plugin config sets `diagnostics: true` and
   `diagnosticSeverity: "error"` for the 33 diagnostics with 0 or 1 current violations
   (`anyUnknownInErrorContext` plus the 32 zero-violation names listed above).

@@ -1,7 +1,7 @@
 # New-game flow: sequence and screens
 
 Type: prototype
-Status: open
+Status: resolved
 Blocked by: 01, 03, 05
 
 ## Question
@@ -77,3 +77,20 @@ See [Agent Note: Club selection at new game](../../../.agents/notes/proposed/fea
   last time they are presented as a summary.
 
 See [Agent Note: No onboarding inbox](../../../.agents/notes/proposed/architecture/2026-08-29-no-onboarding-inbox.md).
+
+## Prototype
+
+Three variants of the full path (launch → creation → arrival), built as a throwaway Vite route and
+driven end to end against the real 20 clubs, Stature Tiers, per-tier budgets, and Archetype
+distributions. **Variant A** (stepper, manager first, generation masked behind the manager step) won;
+B (club first, generation as ceremony) and C (one screen, live review bar) lost. B's persistent
+objective strip was carried over into the shell identity.
+
+Captured on branch `prototype/newgame-flow` (commit `24162d2`), out of the main branch. Run with
+`pnpm proto:newgame`, then flip variants with the arrow keys.
+
+## Answer
+
+**Manager → Club → Review, with generation masked behind the manager step; `createSave` splits into
+`beginCareer` and `commitCareer`; arrival is Squad with the Board Objective in the persistent shell.**
+See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-new-game-flow-sequence.md).
