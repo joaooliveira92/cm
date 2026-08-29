@@ -1,13 +1,12 @@
-import { Tactic } from "@cm-clone/contracts";
+import { Tactic, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import {
   FORMATIONS,
+  FORMATION_SLOTS,
   POSITIONS,
   POSITION_ROLES,
   selectBestFormationXI,
-  bestXiForFormation,
   transferValue,
   weeklyWage,
-  type SquadQualityBand,
   type Formation,
   type Position,
   type PositionRatingsLike,
@@ -46,12 +45,13 @@ export class SquadTooSmallError extends Data.TaggedError("SquadTooSmallError")<{
  * `selectBestFormationXI` with the Effect-level `SquadTooSmallError`.
  */
 export const pickBestFormationTactic = (
-  squad: ReadonlyArray<PositionRatingsLike>,
+  squad: ReadonlyArray<PositionRatingsLike<PlayerId>>,
 ): Effect.Effect<Tactic, SquadTooSmallError> =>
   Effect.gen(function* () {
     const result = selectBestFormationXI(squad);
     if (result._tag === "failure") {
-      return yield* new SquadTooSmallError({ formation: "4-4-2", slots: 11, squadSize: squad.length });
+      // All formations failed — report the first formation's slot count for context
+      return yield* new SquadTooSmallError({ formation: FORMATIONS[0], slots: FORMATION_SLOTS[FORMATIONS[0]].length, squadSize: squad.length });
     }
     return new Tactic({
       formation: result.formation,
@@ -79,7 +79,7 @@ export const pickBestFormationTactic = (
 export const assignAiTactics = Effect.gen(function* () {
   const sql = yield* SqlClient;
   const clubs = yield* sql<{
-    id: string;
+    id: ClubId;
     isUserClub: number;
   }>`SELECT id, is_user_club as "isUserClub" FROM clubs ORDER BY id`;
 
@@ -151,11 +151,11 @@ export const runAiTransferWindow = (seasonNumber: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const clubRows = yield* sql<{
-      id: string;
+      id: ClubId;
       isUserClub: number;
     }>`SELECT id, is_user_club as "isUserClub" FROM clubs ORDER BY id`;
 
-    const squadsByClub = new Map<string, ReadonlyArray<{ readonly id: string; readonly positionRatings: Record<string, number> }>>();
+    const squadsByClub = new Map<ClubId, ReadonlyArray<{ readonly id: PlayerId; readonly positionRatings: Record<string, number> }>>();
     for (const club of clubRows) {
       squadsByClub.set(club.id, yield* loadSquadPlayers(club.id));
     }

@@ -12,13 +12,39 @@ import {
   POSITIONS,
   PRESSING_OPTIONS,
   ROLES,
+  SQUAD_QUALITY_BANDS,
   STATURE_TIERS,
   TEMPO_OPTIONS,
   VERDICTS,
 } from "@cm-clone/shared";
 
+/**
+ * Branded ID types. Every entity identifier in this contract is a `string` at runtime, so without
+ * a brand `startMatch({ saveId, opponentClubId })` accepts the two transposed and the whole
+ * codebase agrees. `Schema.brand` is nominal — it narrows the decoded type and adds no runtime
+ * check — so decoding a payload hands the main process values that only fit the parameter they
+ * belong to. Construct one from a raw string (a SQL row, a `randomUUID()`) with `SaveId.make(s)`.
+ */
+export const SaveId = Schema.String.pipe(Schema.brand("SaveId"));
+export type SaveId = Schema.Schema.Type<typeof SaveId>;
+
+export const ClubId = Schema.String.pipe(Schema.brand("ClubId"));
+export type ClubId = Schema.Schema.Type<typeof ClubId>;
+
+export const PlayerId = Schema.String.pipe(Schema.brand("PlayerId"));
+export type PlayerId = Schema.Schema.Type<typeof PlayerId>;
+
+export const MatchId = Schema.String.pipe(Schema.brand("MatchId"));
+export type MatchId = Schema.Schema.Type<typeof MatchId>;
+
+export const FixtureId = Schema.String.pipe(Schema.brand("FixtureId"));
+export type FixtureId = Schema.Schema.Type<typeof FixtureId>;
+
+export const BidId = Schema.String.pipe(Schema.brand("BidId"));
+export type BidId = Schema.Schema.Type<typeof BidId>;
+
 export class SaveSummary extends Schema.Class<SaveSummary>("SaveSummary")({
-  id: Schema.String,
+  id: SaveId,
   name: Schema.String,
   createdAt: Schema.String,
 }) {}
@@ -26,7 +52,7 @@ export class SaveSummary extends Schema.Class<SaveSummary>("SaveSummary")({
 export class SaveNotFoundError extends Schema.TaggedError<SaveNotFoundError>()(
   "SaveNotFoundError",
   {
-    id: Schema.String,
+    id: SaveId,
   },
 ) {}
 
@@ -76,13 +102,15 @@ export class InvalidPillarDistributionError extends Schema.TaggedError<InvalidPi
 // Club selection (ticket 04)
 // ---------------------------------------------------------------------------
 
+export const SquadQualityBandSchema = Schema.Literals(SQUAD_QUALITY_BANDS);
+
 export class ClubSelectionRow extends Schema.Class<ClubSelectionRow>("ClubSelectionRow")({
-  clubId: Schema.String,
+  clubId: ClubId,
   clubName: Schema.String,
   statureTier: StatureTierSchema,
   boardObjectiveMin: Schema.Finite,
   boardObjectiveMax: Schema.Finite,
-  squadQualityBand: Schema.String,
+  squadQualityBand: SquadQualityBandSchema,
   transferBudget: Schema.Finite,
   wageBudget: Schema.Finite,
 }) {}
@@ -108,7 +136,7 @@ export const AttributesSchema = Schema.Struct({
 });
 
 export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerView")({
-  id: Schema.String,
+  id: PlayerId,
   firstName: Schema.String,
   lastName: Schema.String,
   dateOfBirth: Schema.String,
@@ -126,7 +154,7 @@ export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerV
 }) {}
 
 export class ClubSummary extends Schema.Class<ClubSummary>("ClubSummary")({
-  id: Schema.String,
+  id: ClubId,
   name: Schema.String,
   statureTier: StatureTierSchema,
 }) {}
@@ -145,7 +173,7 @@ export const PressingSchema = Schema.Literals(PRESSING_OPTIONS);
 export class TacticSlot extends Schema.Class<TacticSlot>("TacticSlot")({
   position: PositionSchema,
   role: RoleSchema,
-  playerId: Schema.String,
+  playerId: PlayerId,
 }) {}
 
 /** The `ChangeTactics` command payload shape (ADR-0003 / ticket 03): a Formation, a Role and
@@ -183,11 +211,11 @@ export class SeasonView extends Schema.Class<SeasonView>("SeasonView")({
 }) {}
 
 export class FixtureView extends Schema.Class<FixtureView>("FixtureView")({
-  id: Schema.String,
+  id: FixtureId,
   matchday: Schema.Finite,
-  homeClubId: Schema.String,
+  homeClubId: ClubId,
   homeClubName: Schema.String,
-  awayClubId: Schema.String,
+  awayClubId: ClubId,
   awayClubName: Schema.String,
   homeGoals: Schema.NullOr(Schema.Finite),
   awayGoals: Schema.NullOr(Schema.Finite),
@@ -202,7 +230,7 @@ export class FixturesView extends Schema.Class<FixturesView>("FixturesView")({
 /** One League Table row — points → goal difference → goals scored tie-break order (ADR-0004),
  * no head-to-head. */
 export class LeagueTableRow extends Schema.Class<LeagueTableRow>("LeagueTableRow")({
-  clubId: Schema.String,
+  clubId: ClubId,
   clubName: Schema.String,
   played: Schema.Finite,
   won: Schema.Finite,
@@ -248,21 +276,21 @@ export class AdvanceCalendarResult extends Schema.Class<AdvanceCalendarResult>("
 export class SeasonCompleteError extends Schema.TaggedError<SeasonCompleteError>()(
   "SeasonCompleteError",
   {
-    saveId: Schema.String,
+    saveId: SaveId,
   },
 ) {}
 
 /** Raised by any mutating command once `ManagerSacked` has archived the save (ADR-0006 / ticket 18):
  * read-only from that point on, no re-hire flow. */
 export class SaveSackedError extends Schema.TaggedError<SaveSackedError>()("SaveSackedError", {
-  saveId: Schema.String,
+  saveId: SaveId,
 }) {}
 
 /** The player's club's Board Objective for one Season (ticket 18 / ADR-0006) — `finalPosition`/
  * `verdict` are `null` until `SeasonConcluded` triggers `BoardObjectiveJudged`. */
 export class BoardObjectiveView extends Schema.Class<BoardObjectiveView>("BoardObjectiveView")({
   seasonNumber: Schema.Finite,
-  clubId: Schema.String,
+  clubId: ClubId,
   minPosition: Schema.Finite,
   maxPosition: Schema.Finite,
   finalPosition: Schema.NullOr(Schema.Finite),
@@ -274,7 +302,7 @@ export class BoardObjectiveView extends Schema.Class<BoardObjectiveView>("BoardO
 export class SeasonSummaryView extends Schema.Class<SeasonSummaryView>("SeasonSummaryView")({
   season: SeasonView,
   standings: Schema.Array(LeagueTableRow),
-  clubId: Schema.String,
+  clubId: ClubId,
   clubName: Schema.String,
   finalPosition: Schema.NullOr(Schema.Finite),
   boardObjective: Schema.NullOr(BoardObjectiveView),
@@ -284,21 +312,21 @@ export class SeasonSummaryView extends Schema.Class<SeasonSummaryView>("SeasonSu
 }) {}
 
 export class ClubNotFoundError extends Schema.TaggedError<ClubNotFoundError>()("ClubNotFoundError", {
-  id: Schema.String,
+  id: ClubId,
 }) {}
 
 export class MatchNotFoundError extends Schema.TaggedError<MatchNotFoundError>()("MatchNotFoundError", {
-  matchId: Schema.String,
+  matchId: MatchId,
 }) {}
 
 /** A Match Decider stream is keyed by a fresh matchId (ADR-0007); ticket 15's fixture list exists
  * separately, so `startMatch` (ticket 13) lets the player pick any other club as a stand-in
  * opponent for a manual friendly — see `listOpponentClubs`. */
 export class MatchSummary extends Schema.Class<MatchSummary>("MatchSummary")({
-  matchId: Schema.String,
-  homeClubId: Schema.String,
+  matchId: MatchId,
+  homeClubId: ClubId,
   homeClubName: Schema.String,
-  awayClubId: Schema.String,
+  awayClubId: ClubId,
   awayClubName: Schema.String,
 }) {}
 
@@ -325,8 +353,8 @@ export class SubstitutionStatusView extends Schema.Class<SubstitutionStatusView>
  * consume the same typed data the engine emits (ticket 08/07) — no separate representation. */
 export class InjuryView extends Schema.Class<InjuryView>("InjuryView")({
   minute: Schema.Finite,
-  teamClubId: Schema.String,
-  playerId: Schema.String,
+  teamClubId: ClubId,
+  playerId: PlayerId,
   trigger: Schema.Literals(["contact", "non-contact"]),
   severity: Schema.Literals(["light", "medium", "severe"]),
   tier: Schema.Literals(["orange", "red"]),
@@ -340,7 +368,7 @@ export class InjuryView extends Schema.Class<InjuryView>("InjuryView")({
  * chunk, so the renderer can prompt an immediate substitution. `injuries` (ticket 08) carries the
  * full typed detail of each `Injury` in this chunk for severity-scaled indicators/prompts. */
 export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("ResumeSimulationView")({
-  matchId: Schema.String,
+  matchId: MatchId,
   cursor: Schema.Finite,
   isComplete: Schema.Boolean,
   homeScore: Schema.Finite,
@@ -366,7 +394,7 @@ export class ChangeTacticsCommandPayload extends Schema.Class<ChangeTacticsComma
   "ChangeTacticsCommandPayload",
 )({
   _tag: Schema.Literal("ChangeTactics"),
-  clubId: Schema.String,
+  clubId: ClubId,
   tactic: Tactic,
 }) {}
 
@@ -374,9 +402,9 @@ export class MakeSubstitutionCommandPayload extends Schema.Class<MakeSubstitutio
   "MakeSubstitutionCommandPayload",
 )({
   _tag: Schema.Literal("MakeSubstitution"),
-  clubId: Schema.String,
-  outPlayerId: Schema.String,
-  inPlayerId: Schema.String,
+  clubId: ClubId,
+  outPlayerId: PlayerId,
+  inPlayerId: PlayerId,
 }) {}
 
 /** `ForceOff` (ticket 11): manager drags an on-pitch player off to 10 men (no-subs bring-off) —
@@ -384,8 +412,8 @@ export class MakeSubstitutionCommandPayload extends Schema.Class<MakeSubstitutio
  * commands.ts`), duplicated here to keep `@cm-clone/contracts` decoupled from `@cm-clone/game-engine`. */
 export class ForceOffCommandPayload extends Schema.Class<ForceOffCommandPayload>("ForceOffCommandPayload")({
   _tag: Schema.Literal("ForceOff"),
-  clubId: Schema.String,
-  playerId: Schema.String,
+  clubId: ClubId,
+  playerId: PlayerId,
 }) {}
 
 export const MatchCommandPayload = Schema.Union([
@@ -412,14 +440,14 @@ export const BidderBidActionSchema = Schema.Literals(BIDDER_BID_ACTIONS);
 export class TransferWindowClosedError extends Schema.TaggedError<TransferWindowClosedError>()(
   "TransferWindowClosedError",
   {
-    saveId: Schema.String,
+    saveId: SaveId,
   },
 ) {}
 
 export class PlayerNotFoundError extends Schema.TaggedError<PlayerNotFoundError>()(
   "PlayerNotFoundError",
   {
-    playerId: Schema.String,
+    playerId: PlayerId,
   },
 ) {}
 
@@ -428,7 +456,7 @@ export class PlayerNotFoundError extends Schema.TaggedError<PlayerNotFoundError>
 export class InsufficientTransferBudgetError extends Schema.TaggedError<InsufficientTransferBudgetError>()(
   "InsufficientTransferBudgetError",
   {
-    clubId: Schema.String,
+    clubId: ClubId,
     amount: Schema.Finite,
     remaining: Schema.Finite,
   },
@@ -439,7 +467,7 @@ export class InsufficientTransferBudgetError extends Schema.TaggedError<Insuffic
 export class WageBudgetExceededError extends Schema.TaggedError<WageBudgetExceededError>()(
   "WageBudgetExceededError",
   {
-    clubId: Schema.String,
+    clubId: ClubId,
     wage: Schema.Finite,
     wageBudgetUsed: Schema.Finite,
     wageBudget: Schema.Finite,
@@ -447,7 +475,7 @@ export class WageBudgetExceededError extends Schema.TaggedError<WageBudgetExceed
 ) {}
 
 export class BidNotFoundError extends Schema.TaggedError<BidNotFoundError>()("BidNotFoundError", {
-  bidId: Schema.String,
+  bidId: BidId,
 }) {}
 
 /** Raised for a Bid-flow action that doesn't fit the single-counter-offer state machine — e.g. a
@@ -462,19 +490,19 @@ export class InvalidBidActionError extends Schema.TaggedError<InvalidBidActionEr
 export class PlayerNotFreeAgentError extends Schema.TaggedError<PlayerNotFreeAgentError>()(
   "PlayerNotFreeAgentError",
   {
-    playerId: Schema.String,
+    playerId: PlayerId,
   },
 ) {}
 
 /** One in-flight or resolved Bid, from the user club's point of view — `sellingClubId`/
  * `biddingClubId` disambiguate incoming vs. outgoing without a separate "direction" field. */
 export class BidView extends Schema.Class<BidView>("BidView")({
-  id: Schema.String,
-  playerId: Schema.String,
+  id: BidId,
+  playerId: PlayerId,
   playerName: Schema.String,
-  sellingClubId: Schema.String,
+  sellingClubId: ClubId,
   sellingClubName: Schema.String,
-  biddingClubId: Schema.String,
+  biddingClubId: ClubId,
   biddingClubName: Schema.String,
   amount: Schema.Finite,
   counterAmount: Schema.NullOr(Schema.Finite),
@@ -484,11 +512,11 @@ export class BidView extends Schema.Class<BidView>("BidView")({
 /** A player as seen on the transfer market — another club's player (biddable) or a Free Agent
  * (`clubId`/`clubName` null, signable for Credits 0 via the normal signing flow, no Bid step). */
 export class MarketPlayerView extends Schema.Class<MarketPlayerView>("MarketPlayerView")({
-  id: Schema.String,
+  id: PlayerId,
   firstName: Schema.String,
   lastName: Schema.String,
   age: Schema.Finite,
-  clubId: Schema.NullOr(Schema.String),
+  clubId: Schema.NullOr(ClubId),
   clubName: Schema.NullOr(Schema.String),
   overallRating: Schema.Finite,
   transferValue: Schema.Finite,
@@ -519,10 +547,10 @@ export class TransfersScreenView extends Schema.Class<TransfersScreenView>("Tran
  * between-season state change `TrainingFocusSet`. */
 export class PlayerDevelopedEvent extends Schema.Class<PlayerDevelopedEvent>("PlayerDevelopedEvent")({
   seasonNumber: Schema.Finite,
-  clubId: Schema.String,
+  clubId: ClubId,
   players: Schema.Array(
     Schema.Struct({
-      playerId: Schema.String,
+      playerId: PlayerId,
       attributes: AttributesSchema,
     }),
   ),
@@ -532,18 +560,18 @@ export class PlayerDevelopedEvent extends Schema.Class<PlayerDevelopedEvent>("Pl
  * stream — a between-season state change, distinct from `PlayerDeveloped`. */
 export class TrainingFocusSetEvent extends Schema.Class<TrainingFocusSetEvent>("TrainingFocusSetEvent")({
   seasonNumber: Schema.Finite,
-  playerId: Schema.String,
+  playerId: PlayerId,
   focus: NullableTrainingFocusSchema,
 }) {}
 
 /** The `SetTrainingFocus` command's result — the player's (possibly cleared) focus after the write. */
 export class TrainingFocusView extends Schema.Class<TrainingFocusView>("TrainingFocusView")({
-  playerId: Schema.String,
+  playerId: PlayerId,
   focus: NullableTrainingFocusSchema,
 }) {}
 
 /** Raised when `SetTrainingFocus` targets a player who isn't on the user's own club — Training
  * Focus is a manager's own-squad lever, never a cross-club command. */
 export class NotYourPlayerError extends Schema.TaggedError<NotYourPlayerError>()("NotYourPlayerError", {
-  playerId: Schema.String,
+  playerId: PlayerId,
 }) {}
