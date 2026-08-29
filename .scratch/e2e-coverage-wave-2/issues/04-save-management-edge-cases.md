@@ -15,4 +15,4 @@ What e2e coverage do we add for the landing screen's save management edge cases?
 
 ## Answer
 
-**All three edge cases get e2e coverage in a new `save-management.spec.ts` file: empty-name as journey, duplicate-name as smoke, nonexistent-save as smoke. `fresh` seed suffices.** See [Agent Note](../../../.agents/notes/proposed/testing/2026-08-28-save-management-edge-cases.md).
+**All three edge cases get e2e coverage in a new `save-management.spec.ts` file: empty-name as journey, duplicate-name as smoke, nonexistent-save as smoke. `fresh` seed suffices.** See [Agent Note](../../../.agents/notes/implemented/testing/2026-08-28-save-management-edge-cases.md).

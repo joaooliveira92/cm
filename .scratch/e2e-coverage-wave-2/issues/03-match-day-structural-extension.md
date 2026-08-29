@@ -14,4 +14,4 @@ What e2e coverage do we add for the match day subs and force-off UI? These are s
 
 ## Answer
 
-**Force-off e2e skipped (unreachable, covered by unit tests); sub interaction gets a full click-through flow in `journeys.spec.ts`; structural sub panel assertions extend the existing smoke test in `app.spec.ts`.** See [Agent Note](../../../.agents/notes/proposed/testing/2026-08-28-match-day-structural-extension.md).
+**Force-off e2e skipped (unreachable, covered by unit tests); sub interaction gets a full click-through flow in `journeys.spec.ts`; structural sub panel assertions extend the existing smoke test in `app.spec.ts`.** See [Agent Note](../../../.agents/notes/implemented/testing/2026-08-28-match-day-structural-extension.md).

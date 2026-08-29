@@ -112,3 +112,10 @@ test("Season Summary screen shows a verdict for a concluded, seeded save", async
   await expect(window.getByRole("heading", { name: "Season Summary" })).toBeVisible();
   await expect(window.getByText(/Verdict: (Exceeded|Met|Missed)/)).toBeVisible();
 });
+
+// Force-off (orange injury / shorthanded) is skipped at the e2e level: the orange injury prompt
+// and "Bring off" button depend on non-deterministic match events from the sim engine, which are
+// unreachable from a seeded save without a deterministic match seed. Unit tests in
+// matchCommands.test.ts cover ForceOff command-level correctness. See Agent Note:
+// .agents/notes/implemented/testing/2026-08-28-match-day-structural-extension.md
+test.skip("match day force-off and shorthanded UI states", () => {});

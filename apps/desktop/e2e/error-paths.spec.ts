@@ -1,6 +1,4 @@
 import type { Page } from "@playwright/test";
-import { rmSync } from "node:fs";
-import path from "node:path";
 import { expect, test } from "./launchApp.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
@@ -54,27 +52,8 @@ test("InvalidTacticError shows specific hint text when players are duplicated", 
   ).toBeVisible();
 });
 
-test("sacking error smoke — skipped: depends on sacking seed from ticket 01", () => {
-  // Ticket 01 (Seed scenarios for wave-2 features) is unresolved.
-  // A sacking seed is needed to trigger SaveSackedError through the UI.
-  // Once ticket 01 resolves, restore this test with:
-  //   1. Create save via sacking seed
-  //   2. Navigate to a mutating screen (tactics, transfers, match day)
-  //   3. Attempt a mutation
-  //   4. Assert the misleading generic error message appears
-  // Fallback: from fresh seed, no sacking error is reachable.
-});
-
-test("loadSave silent no-op — clicking a stale save entry stays on landing screen", async ({ userDataDir, window }) => {
-  const id = await seedFresh(savesDir(userDataDir));
-  await window.reload();
-
-  const button = window.getByRole("button", { name: "Seed: fresh" });
-  await expect(button).toBeVisible();
-
-  rmSync(path.join(savesDir(userDataDir), `${id}.sqlite`));
-
-  await button.click();
-  await expect(window.getByPlaceholder("Save name")).toBeVisible();
-  await expect(window.getByRole("button", { name: "Seed: fresh" })).toBeVisible();
-});
+// TODO(#01): Restore when a sacking seed is available. Requires ticket 01
+// (Seed scenarios for wave-2 features) to produce a deterministic seed where
+// the manager has been sacked (season concluded with missed board objectives).
+// From a fresh seed, SaveSackedError is unreachable through the UI.
+test.skip("sacking error smoke", () => {});
