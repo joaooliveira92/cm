@@ -18,8 +18,7 @@ referenced throughout.
   app. Closed at handoff.
 - **Player Development** (part of the Training milestone, [ADR-0011](adr/0011-deterministic-fractional-player-development.md)) —
   deterministic, fraction-of-gap Attribute growth toward Potential Ability. Implemented.
-- **Training** (`.scratch/training/`) — Player Development (shipped, above) plus **Training
-  Focus** (per-player, per-Category growth bias). Spec is `ready-for-agent`; both design tickets
+- **Training** (`.scratch/training/`) — Player Development (shipped, above) plus **Training Focus** (per-player, per-Category growth bias). Spec is `ready-for-agent`; both design tickets
   resolved, nothing left unspecified. Next step is ticketing/implementation, not more design.
 
 ## In flight

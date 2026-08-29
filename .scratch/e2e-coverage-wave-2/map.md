@@ -21,14 +21,16 @@ A **coverage spec extension** for the Playwright e2e suite of `@cm-clone/desktop
 
 ## Decisions so far
 
-- [UI-reachable error paths catalog](issues/05-ui-reachable-error-paths-catalog.md): Full catalog of 30+ UI-reachable error paths across 10 RPCs; `renewContract` and `setTrainingFocus` are dead code; generic failure messages dominate.
+- [Seed scenarios for wave-2 features](issues/01-seed-scenarios-for-wave-2.md): Three seeds based on `fresh` — `seedWithFreeAgent` (free 2 AI players), `seedWithIncomingBid` (direct INSERT), `seedWithCounteredBid` (placeBid at 0.9x → countered). All pre-season, window open.
+- [Transfer features coverage spec](issues/02-transfer-features-coverage-spec.md): Dedicated `transfer-features.spec.ts` with one smoke + one journey per feature (free agent signing, incoming bid response, counter-offer flow). Three separate journeys, one per seed. Existing Transfers smoke unchanged on `fresh`.
 - [Match day structural extension coverage](issues/03-match-day-structural-extension.md): Force-off e2e skipped (unreachable, covered by unit tests); sub interaction gets click-through flow in `journeys.spec.ts`; structural sub panel assertions extend the existing smoke test in `app.spec.ts`.
 - [Save management edge cases](issues/04-save-management-edge-cases.md): All three edge cases get e2e coverage in new `save-management.spec.ts`; empty-name journey, duplicate-name smoke, nonexistent-save smoke; `fresh` seed suffices.
+- [UI-reachable error paths catalog](issues/05-ui-reachable-error-paths-catalog.md): Full error catalog produced — 30+ UI-reachable error paths across 10 RPCs; `renewContract` and `setTrainingFocus` have no UI binding; sacking yields misleading generic errors. Fed into ticket 06.
 - [Error path coverage spec](issues/06-error-path-coverage-spec.md): 4 tests in dedicated `error-paths.spec.ts` — generic transfer failure smoke, InvalidTacticError journey, sacking error smoke, loadSave no-op smoke.
 
 ## Not yet specified
 
-- **Integration with wave 1 test suite structure**: Match day subs, save management, and error paths all settled (extend existing or new file). Transfer tests file location still depends on ticket 02's resolution.
+<!-- No fog remaining — all known questions are captured as tickets. -->
 
 ## Out of scope
 
