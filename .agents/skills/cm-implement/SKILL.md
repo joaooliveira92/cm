@@ -8,6 +8,17 @@ Implement the work described by the user in the spec or tickets.
 
 Use /tdd where possible, at pre-agreed seams.
 
+Read `.agents/skills/effect-code/SKILL.md` **before writing code**, not after. No exceptions and no
+judgement call about whether the work "touches Effect" — that judgement needs the document it gates.
+
+It front-loads the decisions that are expensive to undo: what lives in the error channel versus what's
+a defect, how services and layers compose, `Effect.gen` versus pipeline. Those are settled in the first
+few lines and everything downstream inherits them, so a reviewer who finds them wrong is asking for a
+rewrite, not a fix. The read costs ~3k tokens; getting them wrong costs the whole implementation twice.
+
+Leave `references/effect-report/*.md` unread until a specific question needs one, then pull that single
+topic file. Never preload the set — it's ~60k tokens and belongs in the reviewer's context, not here.
+
 Run typechecking regularly, single test files regularly, and the full test suite once at the end.
 
 Promote each linked Agent Note. Follow the explicit forward-links carried in the spec's

@@ -11,6 +11,22 @@ export const createSchema = Effect.gen(function* () {
     created_at TEXT NOT NULL
   )`;
 
+  /** Manager Profile (ticket 03): immutable creation-time identity, single-row table. Written by
+   * `commitCareer` and never modified. Four Manager Pillars on a 1-5 scale summing to exactly 12;
+   * `archetype_origin` records which preset or Custom was chosen. */
+  yield* sql`CREATE TABLE manager_profile (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    manager_name TEXT NOT NULL CHECK (length(trim(manager_name)) BETWEEN 1 AND 80),
+    archetype_origin TEXT NOT NULL CHECK (
+      archetype_origin IN ('professor','motivator','sergeant','academy_head','custom')
+    ),
+    tactical_acumen INTEGER NOT NULL CHECK (tactical_acumen BETWEEN 1 AND 5),
+    influence INTEGER NOT NULL CHECK (influence BETWEEN 1 AND 5),
+    regimen INTEGER NOT NULL CHECK (regimen BETWEEN 1 AND 5),
+    technical_coaching INTEGER NOT NULL CHECK (technical_coaching BETWEEN 1 AND 5),
+    CHECK (tactical_acumen + influence + regimen + technical_coaching = 12)
+  )`;
+
   yield* sql`CREATE TABLE clubs (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,

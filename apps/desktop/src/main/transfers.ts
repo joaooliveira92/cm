@@ -23,6 +23,7 @@ import {
   DEFAULT_CONTRACT_YEARS,
   MAX_CONTRACT_YEARS,
   MIN_CONTRACT_YEARS,
+  influenceThresholdModifier,
   type POSITIONS,
   TRANSFER_BUDGET_BY_TIER,
   WAGE_BUDGET_BY_TIER,
@@ -568,20 +569,33 @@ const clampYears = (years: number | undefined): number =>
 
 /**
  * The selling club's side of a fresh Bid, decided instantly against Transfer Value with
- * ADR-0005's fixed multipliers. Every selling club in this build is AI-controlled — the user only
- * ever plays the buying side of `placeBid` (there's no second human to wait on) — so this stands
- * in for the "AI-club selling" behavior ADR-0005 specifies: accept >=1.0x outright, counter at
- * exactly Transfer Value for 0.85x-1.0x, reject outright below 0.85x. Pure and exported for direct
- * unit testing, independent of the DB.
+ * ADR-0005's fixed multipliers, shifted by the selling manager's Influence Pillar.
+ * Every selling club in this build is AI-controlled — the user only ever plays the buying side
+ * of `placeBid` (there's no second human to wait on) — so this stands in for the "AI-club selling"
+ * behavior ADR-0005 specifies: accept >=1.0x outright, counter at exactly Transfer Value for
+ * 0.85x-1.0x, reject outright below 0.85x, with boundaries modulated by Influence.
+ * Pure and exported for direct unit testing, independent of the DB.
+ *
+ * @param amount - The bid amount
+ * @param value - The player's Transfer Value
+ * @param influenceModifier - The Influence Pillar's modifier (1.0 at neutral/3, <1.0 at lower, >1.0 at higher).
+ *   Higher Influence shifts thresholds in the buyer's favor (wider accept range);
+ *   lower Influence shifts them against the buyer (narrower accept range).
  */
 export const decideAiSellerResponse = (
   amount: number,
   value: number,
+  influenceModifier: number = 1.0,
 ): { readonly action: "accept" | "counter" | "reject"; readonly counterAmount: number | null } => {
-  if (amount >= value * AI_ACCEPT_BID_MULTIPLIER) {
+  // Accept threshold is pushed down (easier to accept) by higher Influence, up by lower.
+  const acceptThreshold = AI_ACCEPT_BID_MULTIPLIER / influenceModifier;
+  // Reject threshold moves proportionally.
+  const rejectThreshold = AI_REJECT_BID_MULTIPLIER / influenceModifier;
+
+  if (amount >= value * acceptThreshold) {
     return { action: "accept", counterAmount: null };
   }
-  if (amount >= value * AI_REJECT_BID_MULTIPLIER) {
+  if (amount >= value * rejectThreshold) {
     return { action: "counter", counterAmount: Math.round(value * AI_COUNTER_TARGET_MULTIPLIER) };
   }
   return { action: "reject", counterAmount: null };

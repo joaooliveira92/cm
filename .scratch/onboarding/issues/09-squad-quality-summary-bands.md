@@ -49,4 +49,4 @@ See [Agent Note: Club selection at new game](../../../.agents/notes/proposed/fea
 
 **Squad Quality is the mean Position Rating of the strongest formation-valid XI, cut into six
 absolute bands, derived on read and never persisted; Squad Depth and the Challenge label are both
-removed.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-squad-quality-summary-bands.md).
+removed.** See [Agent Note](../../../.agents/notes/implemented/feature/2026-08-29-squad-quality-summary-bands.md).

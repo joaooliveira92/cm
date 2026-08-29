@@ -1,8 +1,12 @@
+import path from "node:path";
+import { SqliteClient } from "@effect/sql-sqlite-node";
 import { AppRpcs, type AppRpcMethod, type RpcResult } from "@cm-clone/contracts";
 import { Effect, Schema } from "effect";
+import { getClubSelection } from "./clubSelection.js";
 import { listOpponentClubs, resumeSimulation, startMatch, submitMatchCommand } from "./match.js";
+import { getManagerProfile } from "./managerProfile.js";
 import { advanceCalendar, getFixtures, getLeagueTable, getSeasonSummary } from "./season.js";
-import { createSave, listSaves, loadSave } from "./saves.js";
+import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave } from "./saves.js";
 import { getSquad } from "./squad.js";
 import { changeTactics, getTactics } from "./tactics.js";
 import {
@@ -28,6 +32,33 @@ const handlers: Record<AppRpcMethod, Handler> = {
     Effect.gen(function* () {
       const { name } = yield* Schema.decodeUnknownEffect(AppRpcs.createSave.payload)(payload);
       return yield* createSave(ctx.savesDir, name);
+    }),
+  beginCareer: (_payload, ctx) =>
+    Effect.gen(function* () {
+      return yield* beginCareer(ctx.savesDir);
+    }),
+  commitCareer: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { id, name, selectedClubId, managerName, archetypeOrigin, tacticalAcumen, influence, regimen, technicalCoaching } = yield* Schema.decodeUnknownEffect(AppRpcs.commitCareer.payload)(payload);
+      return yield* commitCareer(ctx.savesDir, id, name, selectedClubId, { managerName, archetypeOrigin, tacticalAcumen, influence, regimen, technicalCoaching });
+    }),
+  discardCareer: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { id } = yield* Schema.decodeUnknownEffect(AppRpcs.discardCareer.payload)(payload);
+      return yield* discardCareer(ctx.savesDir, id);
+    }),
+  getManagerProfile: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getManagerProfile.payload)(payload);
+      return yield* getManagerProfile(ctx.savesDir, saveId);
+    }),
+  getClubSelection: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getClubSelection.payload)(payload);
+      return yield* getClubSelection.pipe(
+        Effect.provide(SqliteClient.layer({ filename: path.join(ctx.savesDir, `${saveId}.sqlite`) })),
+        Effect.scoped,
+      );
     }),
   loadSave: (payload, ctx) =>
     Effect.gen(function* () {

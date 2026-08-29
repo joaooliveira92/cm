@@ -1,13 +1,16 @@
 import { Tactic } from "@cm-clone/contracts";
 import {
   FORMATIONS,
-  FORMATION_SLOTS,
   POSITIONS,
   POSITION_ROLES,
+  selectBestFormationXI,
+  bestXiForFormation,
   transferValue,
   weeklyWage,
+  type SquadQualityBand,
   type Formation,
   type Position,
+  type PositionRatingsLike,
 } from "@cm-clone/shared";
 import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -30,79 +33,29 @@ export class SquadTooSmallError extends Data.TaggedError("SquadTooSmallError")<{
 // ---------------------------------------------------------------------------
 // AI Tactic assignment (ticket 17 / ADR-0005): one fixed Tactic per AI club, chosen once at
 // Season start by best-fit against the squad's own Position Ratings, never touched again.
+//
+// The core best-XI algorithm lives in `packages/shared/src/bestXi.ts` (`selectBestFormationXI`).
+// This module owns the Effect-level squad-size wrapper, `SquadTooSmallError`, and Tactic
+// construction — the thinnest possible seam (ADR-0005, ticket 01a).
 // ---------------------------------------------------------------------------
 
-interface SquadPlayerLike {
-  readonly id: string;
-  readonly positionRatings: Record<string, number>;
-}
-
 /**
- * Greedy best-XI assignment for one Formation: fills each slot (GK + 10 outfield, in the
- * Formation's fixed slot order) with the best-rated available squad player at that slot's
- * Position, without reuse. Ties on rating broken by player id (ascending) — deterministic, no
- * unseeded randomness (ticket 17's reproducibility requirement). Returns the filled slots and the
- * summed Position Rating across the 10 *outfield* slots only (GK excluded, per ticket 17's
- * "summed best-XI Position Rating across the 10 outfield slots") — the Formation-comparison
- * metric, not used to fill the GK slot itself.
- */
-const bestXiForFormation = (
-  formation: Formation,
-  squad: ReadonlyArray<SquadPlayerLike>,
-): Effect.Effect<
-  { readonly filled: Array<{ position: Position; playerId: string; rating: number }>; readonly outfieldSum: number },
-  SquadTooSmallError
-> => {
-  const positions = FORMATION_SLOTS[formation];
-  if (squad.length < positions.length) {
-    return Effect.fail(new SquadTooSmallError({ formation, slots: positions.length, squadSize: squad.length }));
-  }
-  const used = new Set<string>();
-  const filled = positions.map((position) => {
-    const candidates = squad
-      .filter((player) => !used.has(player.id))
-      .sort(
-        (a, b) =>
-          (b.positionRatings[position] ?? 0) - (a.positionRatings[position] ?? 0) || a.id.localeCompare(b.id),
-      );
-    const chosen = candidates[0]!;
-    used.add(chosen.id);
-    return { position, playerId: chosen.id, rating: chosen.positionRatings[position] ?? 0 };
-  });
-  const outfieldSum = filled.reduce(
-    (sum, slot, index) => (positions[index] === "GK" ? sum : sum + slot.rating),
-    0,
-  );
-  return Effect.succeed({ filled, outfieldSum });
-};
-
-/**
- * Best-fit Tactic for one club's squad (ticket 17 / ADR-0005's AI-club tactics): the Formation
- * (among the 5 v1 Formations) maximizing summed best-XI Position Rating across its 10 outfield
- * slots, filled greedily; roles defaulted to each slot's v1 Role (`POSITION_ROLES`); instructions
- * fixed at balanced/normal/medium. Formation ties broken by `FORMATIONS`' declared order (first
- * strictly-greater sum wins, so an earlier Formation wins any tie) — deterministic, documented per
- * ticket 17. Pure; exported for direct unit testing.
+ * Best-fit Tactic for one club's squad: the Formation (among the 5 v1 Formations) maximizing
+ * mean Position Rating across its 11 slots, filled greedily; roles defaulted to each slot's v1
+ * Role (`POSITION_ROLES`); instructions fixed at balanced/normal/medium. Wraps the shared
+ * `selectBestFormationXI` with the Effect-level `SquadTooSmallError`.
  */
 export const pickBestFormationTactic = (
-  squad: ReadonlyArray<SquadPlayerLike>,
+  squad: ReadonlyArray<PositionRatingsLike>,
 ): Effect.Effect<Tactic, SquadTooSmallError> =>
   Effect.gen(function* () {
-    let best: {
-      formation: Formation;
-      filled: Array<{ position: Position; playerId: string; rating: number }>;
-      outfieldSum: number;
-    } | null = null;
-    for (const formation of FORMATIONS) {
-      const { filled, outfieldSum } = yield* bestXiForFormation(formation, squad);
-      if (!best || outfieldSum > best.outfieldSum) {
-        best = { formation, filled, outfieldSum };
-      }
+    const result = selectBestFormationXI(squad);
+    if (result._tag === "failure") {
+      return yield* new SquadTooSmallError({ formation: "4-4-2", slots: 11, squadSize: squad.length });
     }
-    const chosen = best!;
     return new Tactic({
-      formation: chosen.formation,
-      slots: chosen.filled.map((slot) => ({
+      formation: result.formation,
+      slots: result.slots.map((slot) => ({
         position: slot.position,
         role: POSITION_ROLES[slot.position],
         playerId: slot.playerId,

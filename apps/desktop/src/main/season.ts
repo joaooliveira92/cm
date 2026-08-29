@@ -28,7 +28,7 @@ import { developPlayersForSeason } from "./development.js";
 import { assertSaveNotSacked, loadManagerStatus } from "./managerStatus.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
-import { expireContractsForSeason, initializeSeasonEconomy } from "./transfers.js";
+import { expireContractsForSeason } from "./transfers.js";
 
 const STREAM_TYPE = "season";
 const TOTAL_MATCHDAYS = 38;
@@ -154,10 +154,6 @@ export const startSeason = (saveId: string) =>
     // one fixed Tactic for the whole Season, chosen by best-fit against its own squad — set once
     // here and never touched again (no reactive/mid-season tactical AI in v1).
     yield* assignAiTactics;
-
-    // Transfer/Wage Budgets and each generated player's initial Contract (ticket 16 / ADR-0005) —
-    // derived from Stature Tier at Season start, in the same transaction as fixture generation.
-    yield* initializeSeasonEconomy(1);
 
     const startSeq = yield* nextStreamSeq(STREAM_TYPE, saveId);
     yield* appendStreamEvents(STREAM_TYPE, saveId, startSeq, [

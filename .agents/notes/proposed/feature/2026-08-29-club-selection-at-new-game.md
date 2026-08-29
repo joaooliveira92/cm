@@ -43,7 +43,7 @@ Squad size is deliberately *not* a primary comparison metric. A raw total mislea
 lack positional depth while a smaller squad is balanced. It may appear as subordinate information;
 squad *depth* is the player-facing summary that matters.
 
-> **Partially superseded by [Squad Quality summary bands](2026-08-29-squad-quality-summary-bands.md).**
+> **Partially superseded by [Squad Quality summary bands](../../implemented/feature/2026-08-29-squad-quality-summary-bands.md).**
 > Three requirements above are withdrawn: the **squad depth** summary, the derived **challenge
 > label** on the row, and the short prose **challenge description**. Measurement of the shipped
 > generator showed `SQUAD_COMPOSITION` gives every club the same 25-player positional composition, so
@@ -295,12 +295,12 @@ the map has deliberately left open.
   contender" / "Lower-table" phrasing ahead of the banding rule risks labels that do not match what
   generation actually produces, particularly at tier boundaries where a lucky `mid` squad may outrank
   an unlucky `big` one. **Resolved** by
-  [Squad Quality summary bands](2026-08-29-squad-quality-summary-bands.md), which measured the
+  [Squad Quality summary bands](../../implemented/feature/2026-08-29-squad-quality-summary-bands.md), which measured the
   generator, fixed six absolute thresholds, and retired the outcome-predicting vocabulary.
 - **Three Board Objective bands across 20 clubs limits how much the row can differentiate.** Within a
   tier, the objective and both budgets are identical, so the challenge label and squad summary carry
   the entire burden of distinguishing eight `mid` clubs from one another. **Narrowed** by
-  [Squad Quality summary bands](2026-08-29-squad-quality-summary-bands.md): with the challenge label
+  [Squad Quality summary bands](../../implemented/feature/2026-08-29-squad-quality-summary-bands.md): with the challenge label
   removed, the Squad Quality band carries that burden alone, and four or five of the eight `mid`
   clubs will often share a band.
 - **The final review's contextual Archetype copy sits close to the line it must not cross.** Prose

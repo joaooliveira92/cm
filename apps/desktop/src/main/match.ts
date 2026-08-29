@@ -40,6 +40,7 @@ import {
   type StreamEvent,
 } from "./decider.js";
 import { assertSaveNotSacked } from "./managerStatus.js";
+import { loadManagerProfile } from "./managerProfile.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
 
@@ -140,17 +141,18 @@ export const listOpponentClubs = (savesDir: string, saveId: string) =>
   );
 
 /** The decider-level `MatchStarted` stream event payload (seq 1 of every "match" stream) — the
- * seed plus a frozen kickoff snapshot of both teams' squad + starting Tactic. Snapshotting the
- * setups here (rather than re-reading `tactics`/`players` tables on every resimulation) is what
- * keeps resimulation pure and prefix-stable: an unrelated `ChangeTactics` saved from the Tactics
- * screen mid-match must not retroactively rewrite the kickoff tactic this match already resolved
- * minutes of play against. */
+ * seed plus a frozen kickoff snapshot of both teams' squad + starting Tactic plus the full Manager
+ * Pillar Distribution (ticket 03). Snapshotting the setups here (rather than re-reading
+ * `tactics`/`players` tables on every resimulation) is what keeps resimulation pure and
+ * prefix-stable: an unrelated `ChangeTactics` saved from the Tactics screen mid-match must not
+ * retroactively rewrite the kickoff tactic this match already resolved minutes of play against. */
 interface PersistedMatchStarted {
   readonly seed: number;
   readonly homeClubId: string;
   readonly awayClubId: string;
   readonly homeSetup: MatchTeamSetup;
   readonly awaySetup: MatchTeamSetup;
+  readonly pillars: { readonly tacticalAcumen: number; readonly influence: number; readonly regimen: number; readonly technicalCoaching: number };
 }
 
 /** Ticket 14 mid-match command journal entries — one per accepted `SubmitMatchCommand` call,
@@ -202,6 +204,18 @@ export const startMatch = (savesDir: string, saveId: string, opponentClubId: str
       const homeSetup = yield* loadTeamSetup(userClub.id);
       const awaySetup = yield* loadTeamSetup(opponentClub.id);
 
+      // Snapshot the Manager Pillars at match start for deterministic replay (ticket 03). Only
+      // the human club has a manager profile — AI clubs have none, so fall back to neutral (3).
+      const profile = yield* loadManagerProfile;
+      const pillars = profile
+        ? {
+            tacticalAcumen: profile.tacticalAcumen,
+            influence: profile.influence,
+            regimen: profile.regimen,
+            technicalCoaching: profile.technicalCoaching,
+          }
+        : { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 };
+
       const matchId = randomUUID();
       // Deterministic per match (ADR-0002) — Date.now() picks a fresh seed per `StartMatch` call,
       // matchId keeps every call's seed distinct even within the same millisecond.
@@ -213,6 +227,7 @@ export const startMatch = (savesDir: string, saveId: string, opponentClubId: str
         awayClubId: opponentClub.id,
         homeSetup,
         awaySetup,
+        pillars,
       };
 
       const startSeq = yield* nextStreamSeq(MATCH_STREAM_TYPE, matchId);

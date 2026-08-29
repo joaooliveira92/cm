@@ -5,6 +5,7 @@ import {
   FORMATIONS,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
+  MANAGER_ARCHETYPES,
   MANAGER_OUTCOMES,
   MENTALITY_OPTIONS,
   OUTFIELD_ATTRIBUTES,
@@ -38,6 +39,53 @@ export const TrainingFocusSchema = Schema.Literals(CATEGORIES);
 
 /** A player's Training Focus: a Category, or `null` meaning the no-focus default. */
 export const NullableTrainingFocusSchema = Schema.NullOr(TrainingFocusSchema);
+
+// ---------------------------------------------------------------------------
+// Manager Profile (ticket 03)
+// ---------------------------------------------------------------------------
+
+export const ManagerArchetypeSchema = Schema.Literals(MANAGER_ARCHETYPES);
+
+export class PillarDistribution extends Schema.Class<PillarDistribution>("PillarDistribution")({
+  tacticalAcumen: Schema.Number,
+  influence: Schema.Number,
+  regimen: Schema.Number,
+  technicalCoaching: Schema.Number,
+}) {}
+
+/** Immutable creation-time manager identity, never modified after commitCareer. */
+export class ManagerProfileView extends Schema.Class<ManagerProfileView>("ManagerProfileView")({
+  managerName: Schema.String,
+  archetypeOrigin: ManagerArchetypeSchema,
+  tacticalAcumen: Schema.Number,
+  influence: Schema.Number,
+  regimen: Schema.Number,
+  technicalCoaching: Schema.Number,
+}) {}
+
+export class ManagerProfileNotFoundError extends Schema.TaggedError<ManagerProfileNotFoundError>()(
+  "ManagerProfileNotFoundError",
+  {},
+) {}
+
+// ---------------------------------------------------------------------------
+// Club selection (ticket 04)
+// ---------------------------------------------------------------------------
+
+export class ClubSelectionRow extends Schema.Class<ClubSelectionRow>("ClubSelectionRow")({
+  clubId: Schema.String,
+  clubName: Schema.String,
+  statureTier: StatureTierSchema,
+  boardObjectiveMin: Schema.Number,
+  boardObjectiveMax: Schema.Number,
+  squadQualityBand: Schema.String,
+  transferBudget: Schema.Number,
+  wageBudget: Schema.Number,
+}) {}
+
+export class ClubSelectionView extends Schema.Class<ClubSelectionView>("ClubSelectionView")({
+  clubs: Schema.Array(ClubSelectionRow),
+}) {}
 
 export class PlayerPositionView extends Schema.Class<PlayerPositionView>("PlayerPositionView")({
   position: PositionSchema,

@@ -6,14 +6,14 @@ import { LEAGUE_CLUBS, generateSquad, type GeneratedPlayer } from "@cm-clone/sha
 const attr = (attributes: GeneratedPlayer["attributes"], key: keyof GeneratedPlayer["attributes"]) =>
   attributes[key] ?? null;
 
-/** Generates the fixed 20-club League and each club's squad, writing clubs/players/player_positions. */
+/** Generates the fixed 20-club League and each club's squad, writing clubs/players/player_positions.
+ * No club is marked as the user's club — that happens in `commitCareer`. */
 export const generateWorld = Effect.gen(function* () {
   const sql = yield* SqlClient;
 
-  for (const [index, clubDef] of LEAGUE_CLUBS.entries()) {
+  for (const [, clubDef] of LEAGUE_CLUBS.entries()) {
     const clubId = randomUUID();
-    const isUserClub = index === 0 ? 1 : 0;
-    yield* sql`INSERT INTO clubs (id, name, stature_tier, is_user_club) VALUES (${clubId}, ${clubDef.name}, ${clubDef.statureTier}, ${isUserClub})`;
+    yield* sql`INSERT INTO clubs (id, name, stature_tier, is_user_club) VALUES (${clubId}, ${clubDef.name}, ${clubDef.statureTier}, 0)`;
 
     const squad = generateSquad(clubDef.statureTier);
     for (const generated of squad) {

@@ -351,7 +351,7 @@ the Pillar the player bought at creation has an input they can actually supply.
   in the `aiClubs.ts` wrapper), with thresholds beside it.
   **Squad Quality is the mean Position Rating of the strongest formation-valid XI, cut into six
   absolute bands, derived on read and never persisted; Squad Depth and the Challenge label are both
-  removed.** See [Agent Note](../../.agents/notes/proposed/feature/2026-08-29-squad-quality-summary-bands.md).
+  removed.** See [Agent Note](../../.agents/notes/implemented/feature/2026-08-29-squad-quality-summary-bands.md).
 
 **New-game flow**
 

@@ -9,4 +9,7 @@ export * from "./commentary.js";
 export * from "./board.js";
 export * from "./transfers.js";
 export * from "./training.js";
+export * from "./bestXi.js";
+export * from "./squadQuality.js";
+export * from "./managerPillars.js";
 

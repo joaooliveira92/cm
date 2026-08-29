@@ -45,3 +45,12 @@ Run `pnpm check:all` (or `check:ci`) after every task. This runs:
 | test | `pnpm -r test` | All unit tests (dot reporter; set `VERBOSE=1` for full names) |
 
 Add new Effect-specific lint rules to `scripts/effect-lint.ts`. They fire before tests in the gate pipeline. See the [accountability repo](https://github.com/mikearnaldi/accountability) for inspiration on Effect lint conventions.
+
+### Routing repeat review findings
+
+When `/code-review` raises the same Effect finding a third time, that's a signal about the tooling, not about that branch. Route it by kind rather than fixing it again in place:
+
+- **Mechanical and grep-detectable** → a new rule in `scripts/effect-lint.ts`. It then costs zero review attention forever.
+- **Needs judgement** → a line in `.agents/skills/effect-code/SKILL.md`, so the *implementer* gets it up front instead of the reviewer catching it after.
+
+Without this, the reviewer slowly degrades into a hand-run linter and the skill file stops reflecting what actually goes wrong in this codebase.
