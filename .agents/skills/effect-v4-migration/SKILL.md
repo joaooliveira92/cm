@@ -15,14 +15,14 @@ An incremental migration of a TypeScript codebase to Effect v4: a quick review t
 
 ## The review lens: what we look for
 
-The quick review is a scan for the patterns below. Each row is a divergence from the v4 conventions, what the v4 shape is, and what the divergence signals about migration.
+The quick review is a scan for the patterns below. Each row is a divergence from the v4 conventions, what the v4 shape is, and what the divergence signals about migration. The "v4 convention" column is a quick-scan summary, not the source of truth — `effect-code`'s `SKILL.md` is canonical and evolves under its own self-maintenance loop, so if the two ever disagree, defer to `effect-code` and update this table to match.
 
 | Current code | v4 convention | Migration signal |
 |---|---|---|
-| `throw` and `try/catch`, failures invisible in the types | errors in the `E` channel via `Effect.fail`, tagged errors for expected failures | every module with a `throw` is conversion surface; the more bare throws, the lower the ceiling on the current error handling |
+| `throw` and `try/catch`, failures invisible in the types | `Data.TaggedError`/`Data.Error` classes, directly yieldable in `Effect.gen` (no `Effect.fail` wrapper needed), tracked in the `E` channel | every module with a `throw` is conversion surface; the more bare throws, the lower the ceiling on the current error handling |
 | `Promise<T>` returned, rejections handled ad hoc | `Effect<A, E, R>`, lifted with `Effect.tryPromise`, chained with `pipe` or `Effect.gen` | async modules are the bridge: each one lifts into Effect on its own |
 | `Effect.succeed(sideEffect())` or eager side effects inside a model | `Effect.sync`, `Effect.suspend`, lazy models | an eager side effect is a correctness bug before it is a migration concern; worth its own early ticket |
-| dependencies threaded as arguments or reached through global singletons | a `Context` service, declared in `R`, injected at the edge | modules with many injected arguments or singletons are the natural service seam |
+| dependencies threaded as arguments or reached through global singletons | a `Context.Service`, built by a `Layer` (`Layer.succeed`/`Layer.effect`, not ad hoc `Effect.provideService`) once construction has any dependency, declared in `R`, provided at the edge | modules with many injected arguments or singletons are the natural service seam; a constructor that itself needs other services is the signal to reach for a `Layer` instead of inlining the implementation |
 | `Effect.run*` scattered through the app | runners at the edge of the program only, one entry point | count the `runSync|runPromise|runFork` calls; each one beyond the entry point is a leak standing in the way of a single runtime |
 | `new Error("literal")` string soup | `Data.TaggedError` so errors are catchable by tag | a module is done migrating when its expected errors are catchable, not when it compiles |
 | manual `try/finally` or ad hoc `.close()`/`.release()` cleanup | `Effect.acquireRelease` + `Effect.scoped`, or `Effect.acquireUseRelease` for single-call resources | cleanup that isn't guaranteed under interruption is a correctness gap, not just a style mismatch; flag it same as an eager side effect |
