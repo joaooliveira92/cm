@@ -18,8 +18,7 @@ Never search `.agents/notes/proposed/` by keyword or date-range — only follow 
 For every linked note whose decision fully shipped, promotion is the default, not a judgment call:
 
 - Rewrite `## Proposal` into present-tense `## Decision`.
-- Fold `## Acceptance criteria`/`## Risks` into `## Consequences` (or a present-tense
-  `## Testing`/`## Verification` section).
+- Fold `## Acceptance criteria`/`## Risks` into `## Consequences`.
 - Flip `Status: proposed` to `Status: implemented`.
 - Move the file from `.agents/notes/proposed/{class}/` to `.agents/notes/implemented/{class}/`.
 
@@ -49,5 +48,13 @@ Report the defect, location, impact, and evidence; a short review with one subst
 ## Verify before done
 
 The full suite once at the end is the rehearsal, not a per-commit habit. For the outgoing diff, select the narrowest checks that would fail for its regression and add broader checks only for surfaces the diff reaches; never repeat a passing check merely because commit or push follows, and never push hoping CI differs. History rewrites are lease-protected only (`--force-with-lease`, never raw `--force`). If the work lands as part of a PR stack, land it through GitHub's native stack feature and verify merged state before deleting anything — see the [landing checklist](references/landing.md).
+
+## Resolve the ticket
+
+Once the diff is verified, mark the ticket resolved mechanically rather than hand-editing its
+checkboxes and `Status:` line: `pnpm resolve-ticket <path-to-ticket.md>`. It checks every
+acceptance-criterion box and flips `Status:` to `resolved`, idempotently. Skip it only for the
+**partial implementation** case above — a ticket with unbuilt scope stays open, boxes unchecked for
+the parts that didn't ship.
 
 Commit your work to the current branch.
