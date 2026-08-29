@@ -9,7 +9,7 @@ An incremental migration of a TypeScript codebase to Effect v4: a quick review t
 
 ## Knowledge base
 
-- The source of truth on the v4 conventions is the research note `.agents/notes/effect-v4-getting-started.md`. Read it before charting.
+- The source of truth on the v4 conventions is the research note set bundled with the `effect-code` skill, at `../effect-code/references/effect-report/`, starting with `effect-v4-getting-started.md`. Read the getting-started note before charting; pull in the sibling topic notes (error-management, resource-management, requirements-management, concurrency, etc.) as a ticket's blast radius touches that area. This skill and `effect-code` travel together — copy both directories when using either in another project.
 - For writing and checking actual Effect code, load the `effect-code` skill; it carries the same conventions in a tighter form.
 - The note describes the v4 release-candidate API. Pin the installed version during charting, and flag API drift when a ticket hits code that disagrees with the note.
 
@@ -25,6 +25,7 @@ The quick review is a scan for the patterns below. Each row is a divergence from
 | dependencies threaded as arguments or reached through global singletons | a `Context` service, declared in `R`, injected at the edge | modules with many injected arguments or singletons are the natural service seam |
 | `Effect.run*` scattered through the app | runners at the edge of the program only, one entry point | count the `runSync|runPromise|runFork` calls; each one beyond the entry point is a leak standing in the way of a single runtime |
 | `new Error("literal")` string soup | `Data.TaggedError` so errors are catchable by tag | a module is done migrating when its expected errors are catchable, not when it compiles |
+| manual `try/finally` or ad hoc `.close()`/`.release()` cleanup | `Effect.acquireRelease` + `Effect.scoped`, or `Effect.acquireUseRelease` for single-call resources | cleanup that isn't guaranteed under interruption is a correctness gap, not just a style mismatch; flag it same as an eager side effect |
 
 ## Charting run
 
