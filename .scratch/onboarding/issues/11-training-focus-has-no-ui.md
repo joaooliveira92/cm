@@ -1,7 +1,7 @@
 # Onboarding's integration contract for the shipped Training system
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 07
 
 ## Question
@@ -15,6 +15,13 @@ carrying both.
 
 **This ticket does not build the Training UI.** It decides how onboarding exposes and routes to the
 shipped Training system, and declares the dependency on the effort that does build it.
+
+> **Corrected after effort audit (during resolution).** The completed Training effort owns the
+> Training Focus domain model, command, persistence, development behaviour and tests. It explicitly
+> excluded Training UI layout and, being closed, cannot receive a new implementation dependency.
+> cm-clone also excludes Training from its locked v1 scope. Because the required v1 surface is a
+> per-player control on Squad, onboarding owns the renderer integration as part of its existing Squad
+> delivery scope. This does not reopen a top-level Training screen.
 
 ## Ownership split
 
@@ -80,3 +87,9 @@ the current claim unchanged would produce false agency.
   (`developPlayersForSeason` runs once per `SeasonConcluded`.)
 - What happens if the player never opens Training?
 - Which ticket owns the final copy and first-use guidance?
+
+## Answer
+
+**Training Focus becomes an editable per-player column on Squad, owned by onboarding, and a Manager
+Pillar Binding must be player-reachable to satisfy the creation contract.** See
+[Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-training-focus-squad-column.md).

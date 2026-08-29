@@ -43,6 +43,17 @@ Squad size is deliberately *not* a primary comparison metric. A raw total mislea
 lack positional depth while a smaller squad is balanced. It may appear as subordinate information;
 squad *depth* is the player-facing summary that matters.
 
+> **Partially superseded by [Squad Quality summary bands](2026-08-29-squad-quality-summary-bands.md).**
+> Three requirements above are withdrawn: the **squad depth** summary, the derived **challenge
+> label** on the row, and the short prose **challenge description**. Measurement of the shipped
+> generator showed `SQUAD_COMPOSITION` gives every club the same 25-player positional composition, so
+> depth is constant by construction and differentiates nothing; and with Squad Quality now an
+> absolute formation-aware band, a challenge label would only recombine Stature Tier and Squad
+> Quality while its vocabulary ("Rebuild", "Title Contender") names mechanics and outcomes the
+> simulation does not model. The row becomes club identity, Stature Tier, Board Objective and the
+> Squad Quality band; the panel keeps the budgets and expectation context. Everything else this note
+> decides stands.
+
 **Difficulty is stated explicitly, but never as a number.** The project keeps CM 03/04's
 simulation-first structure, not its requirement that the player infer essential information
 unaided. So the screen says what the club's situation is. What it does not do is collapse that into
@@ -247,11 +258,13 @@ the map has deliberately left open.
 - `is_user_club = index === 0` is gone, and no code path derives club ownership from any
   collection-order or display-order assumption.
 - The selection screen operates on generated club data, and the player selects a stable `clubId`.
-- Every club row shows club identity, Stature Tier, Board Objective, and a derived challenge label.
-- The detail panel shows Transfer Budget, wage-budget position, squad quality, squad depth, and
-  explicit expectation context.
+- Every club row shows club identity, Stature Tier, Board Objective, and the Squad Quality band
+  (**amended** — the derived challenge label is removed, see below).
+- The detail panel shows Transfer Budget, wage-budget position, and explicit expectation context
+  (**amended** — squad depth is removed and squad quality moves to the row, see below).
 - Challenge communication is explicit and descriptive, with no universal numeric difficulty score,
-  and asserts no consequence the board model does not implement.
+  and asserts no consequence the board model does not implement (**amended** — carried by the
+  authoritative fields directly, with no synthesised label or prose).
 - Last-season position is absent.
 - Club choice and Archetype are mechanically independent; the UI names no optimal Archetype for a
   club and warns against no legal pairing; any Archetype-club copy refers only to the five shipped
@@ -281,10 +294,15 @@ the map has deliberately left open.
 - **Squad-quality labels are asserted before their thresholds exist.** Committing to "Title
   contender" / "Lower-table" phrasing ahead of the banding rule risks labels that do not match what
   generation actually produces, particularly at tier boundaries where a lucky `mid` squad may outrank
-  an unlucky `big` one.
+  an unlucky `big` one. **Resolved** by
+  [Squad Quality summary bands](2026-08-29-squad-quality-summary-bands.md), which measured the
+  generator, fixed six absolute thresholds, and retired the outcome-predicting vocabulary.
 - **Three Board Objective bands across 20 clubs limits how much the row can differentiate.** Within a
   tier, the objective and both budgets are identical, so the challenge label and squad summary carry
-  the entire burden of distinguishing eight `mid` clubs from one another.
+  the entire burden of distinguishing eight `mid` clubs from one another. **Narrowed** by
+  [Squad Quality summary bands](2026-08-29-squad-quality-summary-bands.md): with the challenge label
+  removed, the Squad Quality band carries that burden alone, and four or five of the eight `mid`
+  clubs will often share a band.
 - **The final review's contextual Archetype copy sits close to the line it must not cross.** Prose
   describing how a Pillar interacts with a club's circumstances can be read as a recommendation even
   when it ranks nothing; the constraint holds only as long as the copy is written against shipped

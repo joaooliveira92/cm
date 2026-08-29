@@ -52,14 +52,18 @@ implementation effort.
   ticket 10. Binding invariant on every answer ticket 10 may give: *a human Fixture must not resolve
   while required match preparation is invalid or absent*, and ticket 10 must name the pre-resolution
   boundary or preflight operation that enforces it. **Resolved by ticket 10**, which supplied the boundary: Continue stops at a persisted pre-match boundary before resolving any of the human's Matchday.
-- **Training UI is owned by the Training effort, not onboarding.** Onboarding owns identifying the
-  missing surface, deciding whether it is required for an onboarding-complete v1, and the discovery /
-  reachability / initial-state contract it must satisfy — ticket 11. It does not own delivery. The
-  refined principle this produced: **a player-facing creation choice must bind to a player-reachable
-  shipped mechanic**, reachable rather than merely present in the domain layer. Technical Coaching's
-  Training Focus binding is shipped in the domain but *not player-reachable*; if the Training UI will
-  not ship in v1, **ticket 02 must be amended** rather than continue presenting Technical Coaching as a
-  complete v1 Binding.
+- **Onboarding owns the Training Focus surface, corrected by ticket 11.** The charting assumption that
+  "the Training effort owns the Training UI" was false: that effort is **closed** (all five tickets
+  resolved, fog empty) and ruled *Training screen UI layout* out of scope, deferring it to an unnamed
+  hand-off effort; cm-clone rules **Training** out of scope entirely and locks six screens with no
+  Training screen. No effort owned it. Since the required surface is a per-player column on **Squad**,
+  onboarding owns the renderer integration — not the Training domain, which stays authoritative for
+  Focus semantics, `setTrainingFocus`, persistence and Player Development. **Ticket 02 stands
+  unamended**: the surface is required for v1, so Technical Coaching keeps its binding, though that
+  binding is not *satisfied* until the Pillar actually parameterises the resolver. The principle this
+  produced is now in [CONTEXT.md](../../CONTEXT.md) under **Manager Pillar Binding**: a Binding is
+  **player-reachable** only when every player-controlled input it reads can be inspected and changed
+  through the shipped renderer.
 
 ## Decisions so far
 
@@ -174,6 +178,38 @@ implementation effort.
   go to their efforts.
 
 
+- [Squad-quality and depth summary bands](issues/09-squad-quality-summary-bands.md): **Squad Quality**
+  is the mean Position Rating of the strongest formation-valid XI — all five Formations evaluated,
+  greedy slot fill, no player twice — cut into **six absolute bands** (Very Weak / Weak / Competitive /
+  Strong / Very Strong / Elite at 35 / 42 / 49 / 56 / 63), derived on read and never persisted.
+  Measurement of the shipped generator drove three reversals: `SQUAD_COMPOSITION` gives every club the
+  same 25-player composition, so **Squad Depth is cut**; a formation-aware measure reorders the eight
+  `mid` clubs differently from a position-blind one in 93% of leagues; and cross-tier inversion is rare
+  per pair (0.5%) but present somewhere in 36% of leagues, so inversions are **shown honestly** rather
+  than banded within tier, clamped, or smoothed. **Amends ticket 03**: the derived Challenge label and
+  its prose description are removed as a recombination of two adjacent fields whose vocabulary
+  ("Rebuild", "Title Contender") names unmodelled mechanics and outcomes; the row becomes club identity,
+  Stature Tier, Board Objective and the Squad Quality band, with the band only and no raw score.
+  `pickBestFormationTactic`'s algorithm lifts to a pure `selectBestFormationXI` in
+  `packages/shared/src/bestXi.ts` (pure and **partial**, not total; `SquadTooSmallError` and `Tactic`
+  construction stay in the `aiClubs.ts` wrapper), with thresholds in `squadQuality.ts`.
+
+
+- [Onboarding's integration contract for the shipped Training system](issues/11-training-focus-has-no-ui.md):
+  a player-reachable Training Focus surface is **required** for onboarding-complete v1 — Technical
+  Coaching is the only Pillar whose input the player must supply — delivered as an **editable per-player
+  column on Squad**, owned by onboarding because the Training effort is closed with UI out of scope and
+  cm-clone excludes Training; **no seventh screen** and cm-clone is not reopened. **None** is a
+  first-class named value, never a readiness blocker; the option set offers only Categories that can
+  affect that player, so **Goalkeeping is a silent no-op** for outfielders and is withheld, enforced at
+  the command boundary too. Development reads the standing Focus **live at `SeasonConcluded`** — no
+  duration, history or partial credit — and the disclosure says so. Updates are **confirmed**, rendering
+  `TrainingFocusView.focus`; `SaveSackedError` delegates globally. `technicalCoaching` exists nowhere in
+  the code, so the **Technical Coaching clause is gated** on the Pillar entering the resolver, and
+  because the focused fraction (0.975) **accelerates decline** past the age-ceiling, no copy promises
+  improvement. **Partially supersedes ticket 08** on who owns Training help for the Squad surface.
+
+
 ## Not yet specified
 
 - **Per-binding magnitude and tuning** — ticket 02 fixed the five binding sites and each one's
@@ -237,15 +273,28 @@ implementation effort.
   initialized economy, and whatever club selection needs to derive squad quality — and otherwise
   mandates an indeterminate wait. Whether `generateWorld` and `initializeSeasonEconomy` can expose
   such a measure, and at what cost, is unexamined. This is a generator question, not a UI one, and
-  the flow is fully specified either way.
-- **Training's orphaned-Attribute development defect, delivered durably into `.scratch/training/`.**
-  Ticket 08 found that `developPlayer` develops every entry in `ALL_ATTRIBUTES` while a Training Focus
+  the flow is fully specified either way. Ticket 09 narrows what "selection-ready" requires: Squad
+  Quality reads only the generated squad's Position Ratings, so it needs no economy data — but the
+  panel still shows both budgets, so the economy remains part of the unit.
+- **Training model corrections, delivered into
+  [`.scratch/training/spec.md`](../training/spec.md).** Two, both recorded there by ticket 11 against a
+  closed effort with no active owner, and neither onboarding's to implement. (i) Ticket 08's
+  **orphaned-Attribute** defect: `developPlayer` develops every entry in `ALL_ATTRIBUTES` while a Focus
   biases a whole Category, so Technical or Mental focus spends part of its multiplier on `firstTouch`
   and `determination`, which no shipped table or resolver reads and which ticket 08 removed from
-  player-facing screens. The Training effort must either give them a real shipped consumer or exclude
-  mechanically orphaned Attributes from focus allocation. Onboarding may not change development
-  behaviour to fix it, and until it is resolved no onboarding copy may overstate the visible payoff of
-  Training Focus or Technical Coaching. Same delivery obligation shape as the Scouting contract above.
+  player-facing screens — give them a shipped consumer or exclude them from focus allocation. (ii)
+  Ticket 11's **focus-accelerated decline**: the focused fraction is 0.975 against 0.65, so where the
+  age-ceiling sits below the current value (Physical past 30) Focus accelerates the loss, contradicting
+  the spec's "purely additive, no downside" — accept it and amend the spec, or stop applying the
+  multiplier to a negative gap. Onboarding may not change development behaviour to fix either, and
+  until they resolve no onboarding copy may overstate the visible payoff of Training Focus or Technical
+  Coaching. Same delivery obligation shape as the Scouting contract above.
+- **Training Focus applicability at the command boundary.** Ticket 11 requires `SetTrainingFocus` to
+  reject a Category containing no Attribute present on the target player, with a typed error. Whether
+  the eligibility fact is derivable from `SquadPlayerView` or needs a read-model change, how existing
+  pre-release saves holding a `goalkeeping` focus on an outfielder are normalized, and what the error is
+  named are implementation questions for whoever delivers the column — but the rule itself is a
+  behaviour change to a shipped, tested Training command, not a renderer concern.
 - **How much of the Bid/valuation model Transfers exposes numerically.** Ticket 08 put Transfers help
   under onboarding delivery and permitted exact seller thresholds on provenance grounds (the resolver
   reads them), but did not decide whether those numbers sit inline, behind a Term Disclosure, or stay
@@ -256,6 +305,29 @@ implementation effort.
   immutability of creation-time Pillars each look like candidates, but each needs its own ticket to
   confirm the actual irreversibility before any disclosure is written — the exception is not a licence
   to warn about ordinary mutations.
+- **Variable squad composition, and any future Squad Depth measure.** `SQUAD_COMPOSITION` gives every
+  generated club the same 25 players in the same positional shape, so positional cover is constant by
+  construction and Squad Depth was cut from club selection by ticket 09. Whether world generation
+  should vary squad size, positional cover, or reserve quality per club is genuinely undecided and
+  owned by whoever owns the generator — it would alter every generated squad's shape. That variation
+  is the prerequisite for any future Depth field; a better depth *formula* is not, and ticket 09
+  measured the strongest candidate (recomputing the best XI with each starter absent) at 2.0–2.3
+  rating points across all three tiers. No onboarding ticket may change `SQUAD_COMPOSITION`.
+- **Availability-aware XI quality.** Ticket 09's Squad Quality is **structural**: the strongest
+  formation-valid XI from the current registered squad, with no availability filtering, because ticket
+  07 found no availability concept exists anywhere (injury severity only modulates recovery). Whether
+  the game should also expose a currently-available measure — for match preparation, opponent
+  comparison, or readiness — is downstream of a formal availability model that does not exist, so it
+  cannot be ticketed yet. Binding constraint on whoever builds it: it takes a **distinct name**
+  (*Available XI Quality*, *Current Selection Strength*) and never silently changes what Squad Quality
+  means.
+- **In-career league-wide Squad Quality comparison.** Ticket 09 keeps the band selection-only for v1:
+  its meaning is comparative, and the Squad screen shows one club beside the per-player Overall and
+  Position Ratings the band aggregates. Whether a future view should compare current Squad Quality
+  across all 20 clubs is unresolved, needs an owning effort, and must preserve the structural-versus-
+  available distinction above. It does not belong on the League Table by default merely because that
+  screen already compares clubs — that is a separate information-architecture decision.
+
 
 ## Out of scope
 

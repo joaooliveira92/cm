@@ -9,15 +9,15 @@ Overall Rating — both computed on read, never stored.
 
 **Blocked by:** 09
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] New-save creation generates 20 clubs with a fixed, permanent Stature Tier each
-- [ ] Each club's squad is generated with realistic depth (enough players to fill every Position plus
+- [x] New-save creation generates 20 clubs with a fixed, permanent Stature Tier each
+- [x] Each club's squad is generated with realistic depth (enough players to fill every Position plus
       backups)
-- [ ] Player generation follows the Potential Ability → age-appropriate ceiling → Attribute
+- [x] Player generation follows the Potential Ability → age-appropriate ceiling → Attribute
       generation pipeline, with `position_weights`-driven skew and noise
-- [ ] `players` and `player_positions` tables match the locked schema (ADR-0001); Goalkeeping
+- [x] `players` and `player_positions` tables match the locked schema (ADR-0001); Goalkeeping
       attributes are NULL for outfield players
-- [ ] Squad screen displays every Attribute, Position Rating, and Overall Rating for each player in
+- [x] Squad screen displays every Attribute, Position Rating, and Overall Rating for each player in
       the player's club, all computed on read
-- [ ] Potential Ability is never exposed in any UI
+- [x] Potential Ability is never exposed in any UI

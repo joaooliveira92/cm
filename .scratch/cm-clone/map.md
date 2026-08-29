@@ -126,7 +126,13 @@ full-information player attributes, season/calendar loop.
 
 - Per-screen UI layout/interaction for the six locked v1 screens — all six underlying domain tickets
   (attributes, match engine, tactics, transfers, calendar, board objectives) are now resolved, so each
-  screen is ready to graduate into a prototype ticket.
+  screen is ready to graduate into a prototype ticket. **One inherited constraint on the Squad screen**:
+  the onboarding effort's
+  [ticket 11](../onboarding/issues/11-training-focus-has-no-ui.md) requires Squad to carry an editable
+  per-player Training Focus column and its Term Disclosure, so that the shipped `SetTrainingFocus`
+  command is player-reachable. This does **not** reopen Training as a cm-clone feature area or add a
+  seventh screen; it fixes one column on an already-wide table, whose density, optional Attribute
+  columns and responsive behaviour remain this fog's to settle.
 - Match engine event-odds mechanics (which events `TacticalModifiers`' `event-odds biases` field
   actually biases, and by how much) — ticket 02 named the field but didn't specify it; once it is,
   ticket 03's Roles may want to feed it (currently defaulted to 0).

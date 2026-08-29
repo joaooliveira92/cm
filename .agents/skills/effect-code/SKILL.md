@@ -20,7 +20,7 @@ This file is a lossy compression of `references/effect-report/`. It goes stale i
 
 An `Effect` is a **lazy**, immutable description of a workflow. It does not run until you execute it. Its type tracks three things:
 
-```
+```ts
 Effect<Success, Error, Requirements>
 ```
 

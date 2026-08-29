@@ -1,11 +1,12 @@
-# CM Skill Suite
+# Skill Suite
 
-Seven `cm-*` skills under `.agents/skills/` plan and build work while wiring durable decisions into
-the [Agent Notes](notes.md) convention. Six are forked, prefixed copies of this repo's existing
-decision-record chain (`wayfinder`, `implement`, `to-spec`, `to-tickets`, `triage`,
-`setup-matt-pocock-skills`); `cm-archive-notes` is new, with no unprefixed original. The unprefixed
-originals stay untouched as an upstream mirror — `cm-*` is a separate, diverging set, not a
-replacement.
+Eight skills under `.agents/skills/` work this repo's conventions: the seven `cm-*` skills that plan
+and build work while wiring durable decisions into the [Agent Notes](notes.md) convention, plus
+`doc-standards`, the documentation-quality skill. Six `cm-*` skills are forked, prefixed copies of
+this repo's existing decision-record chain (`wayfinder`, `implement`, `to-spec`, `to-tickets`,
+`triage`, `setup-matt-pocock-skills`); `cm-archive-notes` and `doc-standards` are new, with no
+unprefixed original. The unprefixed originals stay untouched as an upstream mirror — `cm-*` is a
+separate, diverging set, not a replacement.
 
 This doc is a catalog with one line per skill and a link to the source of truth, its own `SKILL.md` —
 same gist-then-link shape used throughout this convention, so the instructions live in exactly one
@@ -34,6 +35,12 @@ Run roughly in this order; each step downstream of `cm-wayfinder` depends on the
 |---|---|
 | [cm-triage](../../.agents/skills/cm-triage/SKILL.md) | Move issues and PRs through triage roles. Unchanged from the unprefixed original — it doesn't read or write Agent Notes. |
 | [cm-archive-notes](../../.agents/skills/cm-archive-notes/SKILL.md) | Audit, archive, or prune Agent Notes: a five-way classify-by-future-value taxonomy, invoked explicitly, not automatically. |
+
+## Documentation
+
+| Skill | Purpose |
+|---|---|
+| [doc-standards](../../.agents/skills/doc-standards/SKILL.md) | Write, move, review, or audit any Markdown doc in this repo: placement, hierarchy and detail, tutorial-vs-reference classification, and corpus audits. Sits outside the `cm-*` diverging set; its prose source is [unslop.md](unslop.md). |
 
 ## Enforcement
 

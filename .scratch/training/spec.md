@@ -153,3 +153,50 @@ on one Category — without ever seeing the hidden Potential Ability number.
   beyond those two tickets (Player Development curve and Training Focus mechanics).
 - This spec does not attempt to model Training Focus for AI clubs (out of scope) and does not
   reconcile cross-Decider concerns beyond the single `SeasonConcluded` reaction — see the map's Notes.
+## Training model corrections required
+
+Two corrections the onboarding effort found while specifying the Training Focus renderer surface
+(`.scratch/onboarding/issues/11-training-focus-has-no-ui.md`). Neither is onboarding's to implement —
+onboarding may not change development behaviour — and both are recorded here for whoever next owns or
+maintains Training. Until each is resolved, onboarding's contextual help stays neutral and does not
+overstate the visible payoff of Training Focus or Technical Coaching.
+
+### Training Focus spends development on mechanically orphaned Attributes
+
+`developPlayer` develops every entry in `ALL_ATTRIBUTES` while a Training Focus biases a whole
+Category, so a Technical or Mental focus spends part of its multiplier on `firstTouch` and
+`determination` — Attributes no shipped table or resolver reads, and which the onboarding
+contextual-help decision removed from player-facing screens. The Training owner must either give those
+Attributes a shipped, tested, player-relevant consumer, or exclude mechanically orphaned Attributes
+from focus allocation.
+
+### Training Focus accelerates decline, contradicting "no downside"
+
+This spec's Out of Scope and user stories 10–11 present Training Focus as purely additive, with no
+downside. The shipped step is:
+
+```
+current + (ceiling - current) * fraction
+```
+
+with `fraction` = `PLAYER_DEVELOPMENT_FRACTION` (0.65) unfocused and
+`PLAYER_DEVELOPMENT_FRACTION * TRAINING_FOCUS_MULTIPLIER` (0.975) focused. Where the age-adjusted
+ceiling sits *below* the current value — Physical Attributes past 30, per the Player Development curve
+— Training Focus closes 97.5% of the downward gap instead of 65%, accelerating decline rather than
+only accelerating growth. "Purely additive" is true of the *other three* Categories, not of the focused
+one on a declining player.
+
+The Training owner must choose and record one of two models:
+
+1. **Accelerated decline is intentional.** Amend this spec and the player-facing contract so "purely
+   additive" and "no downside" no longer overstate the mechanic.
+2. **Focus affects growth only.** Stop applying the Focus multiplier to a negative development gap.
+
+### Related: Training Focus applicability
+
+Separately, onboarding's decision requires the command boundary to reject a Training Focus whose
+Category contains no Attribute present on the target player — today `SetTrainingFocus` accepts and
+persists a `goalkeeping` focus for an outfield player, where the multiplier then applies to zero
+Attributes. That is a change to this effort's shipped command; the rationale and the typed-error shape
+are in the onboarding
+[Agent Note](../../.agents/notes/proposed/feature/2026-08-29-training-focus-squad-column.md).

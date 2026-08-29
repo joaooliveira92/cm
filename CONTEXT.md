@@ -32,10 +32,14 @@ _Avoid_: Growth, aging (fine informally in prose; Player Development is the mech
 
 **Training Focus**:
 A per-player, per-Category assignment a manager sets, biasing how much of that season's Player
-Development a player's Attributes in that Category receive relative to an unfocused player. Always set
-(defaults to none/balanced) for every player on a human-managed club; AI clubs' players always use
-unmodified Player Development. Distinct from Condition and Natural Fitness, which govern in-match/
-between-match physical state, not long-run Attribute growth.
+Development a player's Attributes in that Category receive relative to an unfocused player. Every
+player on a human-managed club carries one, and **None** is a first-class value among them - the
+generated default, a legal standing choice, and never an unfilled slot; AI clubs' players always use
+unmodified Player Development. A Category is only offerable for a player whose Attributes it actually
+contains, so Goalkeeping is not a Training Focus for a player with no goalkeeping Attributes. Player
+Development reads the standing Focus once, at Season conclusion: no duration, history or partial
+credit accrues. Distinct from Condition and Natural Fitness, which govern in-match/between-match
+physical state, not long-run Attribute growth.
 _Avoid_: Training (ambiguous with the feature/milestone name as a whole; Training Focus is the
 specific per-player setting)
 
@@ -371,7 +375,10 @@ recorded on the match itself, so replaying a historical match never reads the ma
 A named place where a shipped system reads a Manager Pillar value and can produce a materially
 different result because of it. A Pillar is only considered to exist mechanically if it has at least
 one Binding: storing it, displaying it, describing it in flavour text, or reserving an integration
-point in an unbuilt system are all explicitly not Bindings. Distinct arithmetic insertion points that
+point in an unbuilt system are all explicitly not Bindings. A Binding is **player-reachable** only
+when every player-controlled input it reads can be inspected and changed through the shipped
+renderer; a Binding on a system whose input has no player-facing surface exists mechanically but
+does not satisfy the creation contract, because the creation choice it prices cannot be exercised. Distinct arithmetic insertion points that
 serve one coherent managerial contribution are one Binding, not several.
 _Avoid_: Effect, Modifier, Hook
 

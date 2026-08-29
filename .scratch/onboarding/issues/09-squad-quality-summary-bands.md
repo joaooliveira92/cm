@@ -1,7 +1,7 @@
 # Squad-quality and depth summary bands
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 03
 
 ## Question
@@ -44,3 +44,9 @@ generation, stable enough to communicate, meaningful to the player, and bounded 
 undermine club identity.
 
 See [Agent Note: Club selection at new game](../../../.agents/notes/proposed/feature/2026-08-29-club-selection-at-new-game.md).
+
+## Answer
+
+**Squad Quality is the mean Position Rating of the strongest formation-valid XI, cut into six
+absolute bands, derived on read and never persisted; Squad Depth and the Challenge label are both
+removed.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-squad-quality-summary-bands.md).

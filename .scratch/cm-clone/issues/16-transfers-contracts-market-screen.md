@@ -10,19 +10,19 @@ drives all of this.
 
 **Blocked by:** 10, 15
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Transfer Budget and Wage Budget are derived from Stature Tier at season start and visible in
+- [x] Transfer Budget and Wage Budget are derived from Stature Tier at season start and visible in
       the UI at all times
-- [ ] Transfer Budget spends down within a season with no replenishment between the two windows;
+- [x] Transfer Budget spends down within a season with no replenishment between the two windows;
       Wage Budget is enforced as a running cap on active Contracts' wages
-- [ ] Transfer commands raised outside an open window are rejected
-- [ ] Player can bid for any player (Listed or not) during an open window
-- [ ] Bid flow: selling club/side can accept, reject, or make exactly one counter-offer; bidder can
+- [x] Transfer commands raised outside an open window are rejected
+- [x] Player can bid for any player (Listed or not) during an open window
+- [x] Bid flow: selling club/side can accept, reject, or make exactly one counter-offer; bidder can
       then accept or withdraw
-- [ ] Signing sets a 1–5 year Contract with a formula-derived wage (no wage negotiation UI)
-- [ ] Contract expiry at season start produces a Free Agent, signable for Credits 0 via the normal
+- [x] Signing sets a 1–5 year Contract with a formula-derived wage (no wage negotiation UI)
+- [x] Contract expiry at season start produces a Free Agent, signable for Credits 0 via the normal
       flow with no Bid step
-- [ ] Renewal reuses the signing flow against the player's current club during an open window
-- [ ] Transfer market/inbox screen surfaces incoming bids, outgoing bids, and Free Agents
-- [ ] `CompleteTransfer` writes to both clubs' streams atomically in one SQL transaction
+- [x] Renewal reuses the signing flow against the player's current club during an open window
+- [x] Transfer market/inbox screen surfaces incoming bids, outgoing bids, and Free Agents
+- [x] `CompleteTransfer` writes to both clubs' streams atomically in one SQL transaction

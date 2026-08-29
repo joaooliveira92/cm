@@ -7,12 +7,12 @@ persisting the Tactic between matches until changed again.
 
 **Blocked by:** 10
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Player can select any of the 5 v1 Formations (4-4-2, 4-3-3, 4-5-1, 3-5-2, 5-3-2)
-- [ ] Player can assign one of the 8 v1 Roles plus a squad player to each of the 11 slots
-- [ ] Role Rating (weighted average of Attributes against Role Weights) is shown per assigned player
-- [ ] Player can set Mentality, Tempo, and Pressing, each a 3-state slider
-- [ ] `ChangeTactics` persists the full Tactic shape (`{ formation, slots, mentality, tempo,
+- [x] Player can select any of the 5 v1 Formations (4-4-2, 4-3-3, 4-5-1, 3-5-2, 5-3-2)
+- [x] Player can assign one of the 8 v1 Roles plus a squad player to each of the 11 slots
+- [x] Role Rating (weighted average of Attributes against Role Weights) is shown per assigned player
+- [x] Player can set Mentality, Tempo, and Pressing, each a 3-state slider
+- [x] `ChangeTactics` persists the full Tactic shape (`{ formation, slots, mentality, tempo,
       pressing }`) and it is loaded back correctly on next visit to the screen
-- [ ] Role Weights and Team Instruction multiplier tables live as `packages/shared` constants
+- [x] Role Weights and Team Instruction multiplier tables live as `packages/shared` constants

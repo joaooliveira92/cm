@@ -9,16 +9,16 @@ screens display the results.
 
 **Blocked by:** 12
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Season start generates a double round-robin (38 fixtures/club), freshly shuffled each season,
+- [x] Season start generates a double round-robin (38 fixtures/club), freshly shuffled each season,
       no seeding
-- [ ] `AdvanceCalendar` jumps to the next scheduled event (a Matchday's fixtures or a Transfer Window
+- [x] `AdvanceCalendar` jumps to the next scheduled event (a Matchday's fixtures or a Transfer Window
       open/close) — no day-by-day clock
-- [ ] Crossing a Matchday resolves all 10 fixtures for that Matchday in the same request: the
+- [x] Crossing a Matchday resolves all 10 fixtures for that Matchday in the same request: the
       player's fixture playable in full, the other 9 resolved instantly via `SimulateAiFixture`
       (reusing the ticket-12 match engine)
-- [ ] League Table screen reflects points → goal difference → goals scored tie-break ordering, with
+- [x] League Table screen reflects points → goal difference → goals scored tie-break ordering, with
       no head-to-head tie-break
-- [ ] Fixtures screen shows the full season's fixture list and results as they resolve
-- [ ] Season/Calendar Decider is its own stream per save, distinct from Club and Match Deciders
+- [x] Fixtures screen shows the full season's fixture list and results as they resolve
+- [x] Season/Calendar Decider is its own stream per save, distinct from Club and Match Deciders

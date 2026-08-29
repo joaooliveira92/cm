@@ -9,15 +9,15 @@ scoreline baked in from the event payload; minute is rendered separately by the 
 
 **Blocked by:** 12
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Starting a match from the UI drives the match to completion via successive `ResumeSimulation`
+- [x] Starting a match from the UI drives the match to completion via successive `ResumeSimulation`
       calls, with no RPC streaming transport involved
-- [ ] Match day screen shows a live-paced scrolling commentary feed
-- [ ] A Commentary Line is emitted only alongside an actual Match Event (including the three
+- [x] Match day screen shows a live-paced scrolling commentary feed
+- [x] A Commentary Line is emitted only alongside an actual Match Event (including the three
       boundary events); quiet Minute-Slices produce nothing
-- [ ] Commentary Templates live in `packages/shared`; one is picked at random per event firing, with
+- [x] Commentary Templates live in `packages/shared`; one is picked at random per event firing, with
       the last-used template per event type per match excluded from the next pick for that type
-- [ ] Player/team names and running scoreline (Goal/HalfTimeReached/FullTimeWhistle only) are baked
+- [x] Player/team names and running scoreline (Goal/HalfTimeReached/FullTimeWhistle only) are baked
       into the rendered line from the event payload; minute is rendered as a separate UI element
-- [ ] Match day screen shows the final score and the completed commentary feed at full-time
+- [x] Match day screen shows the final score and the completed commentary feed at full-time
