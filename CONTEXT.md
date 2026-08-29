@@ -310,6 +310,83 @@ The terminal state (Scouting Progress at 100) where a player's Attributes, Poten
 Proneness, and Transfer Value display as exact figures, identical to the manager's own-squad view.
 Never regresses once reached.
 
+### Manager
+
+**Manager Pillar**:
+One of four permanent 1-5 dimensions describing the human manager's own capability: Tactical Acumen,
+Influence, Regimen, Technical Coaching. Chosen once at manager creation and immutable for the
+life of the career in v1. Pillars modify the probability, magnitude, risk, cost, information quality,
+and duration of managerial outcomes; they do not gate permission to use a system, so a Pillar of 1 is
+a severe, campaign-defining weakness rather than a soft lock. A Pillar of 3 is normal professional
+competence.
+_Avoid_: Attribute (reserved for a player's 1-20 skill dimension), Stat, Skill
+
+**Manager Archetype**:
+One of four curated Pillar Distributions offered at manager creation - The Professor (5/1/2/4), The
+Motivator (2/5/4/1), The Sergeant (1/2/5/4), The Academy Head (2/4/1/5), in Pillar order. Each is a
+permutation of {5,4,2,1}, each owns a different Pillar at 5, and each has a different Pillar at 1. An
+Archetype supplies a name, portrait, and flavour only: it is mechanically identical to a Custom
+Manager with the same Pillar Distribution and never carries hidden bonuses, penalties, or distinct
+board/AI reactions.
+_Avoid_: Class, Preset (fine informally; Archetype is the term), Background
+
+**Custom Manager**:
+A manager created by distributing the 12 creation points across the four Manager Pillars by hand
+rather than taking an Archetype. Any Pillar Distribution within the rules is legal, including a flat
+3/3/3/3 and an extreme 5/5/1/1.
+
+**Pillar Distribution**:
+The ordered set of four Manager Pillar values held by a manager. Legal exactly when every Pillar is an
+integer between 1 and 5 and the four sum to 12. The Pillar Distribution in force at kickoff is
+recorded on the match itself, so replaying a historical match never reads the manager's current one.
+
+**Manager Pillar Binding**:
+A named place where a shipped system reads a Manager Pillar value and can produce a materially
+different result because of it. A Pillar is only considered to exist mechanically if it has at least
+one Binding: storing it, displaying it, describing it in flavour text, or reserving an integration
+point in an unbuilt system are all explicitly not Bindings. Distinct arithmetic insertion points that
+serve one coherent managerial contribution are one Binding, not several.
+_Avoid_: Effect, Modifier, Hook
+
+**Tactical Acumen**:
+The Manager Pillar governing the manager's tactical preparation and the effectiveness with which a
+chosen Tactic is executed. In v1 it modifies the magnitude of resolved tactical instruction effects,
+deterministically. Its application to the interpretation of scouting reports is deferred to the
+Scouting effort; when it lands there it must affect only information quality and must not replace a
+Scout's own evaluation capability. Opponent analysis is cut from v1: no opponent-scouting or
+pre-match report system exists.
+_Avoid_: Tactical IQ (reads as a literal intelligence score)
+
+**Influence**:
+The Manager Pillar governing the manager's effectiveness at affecting decisions made by other
+football actors. In v1 it modifies the selling club's response to a Bid during an open Transfer
+Window, shifting the negotiation around that club's valuation without replacing it. It does not
+govern player contracts, wage negotiation, promised playing time, dressing-room relationships, media
+handling, or board relations - none of those systems ship in v1.
+_Avoid_: Man-Management (the name this Pillar carried until its only shipped binding was found to be
+club-to-club dealing, which man-management does not describe), Negotiation (too narrow for the
+people-facing effects the Pillar is expected to gain), Charisma
+
+**Regimen**:
+The Manager Pillar governing the manager's ability to establish and sustain physical preparation and
+workload standards. In v1 it modifies the Condition lifecycle - in-match Condition decay and
+between-match Condition recovery - and separately modifies resolved injury severity. It has no
+direct effect on whether an injury occurs; it reaches injury frequency only through Condition and the
+existing non-contact risk threshold. Disciplinary authority is cut from v1: no discipline or fines
+system exists. Distinct from Condition (a player's live physical state), from Training Focus (what a
+player is working on), and from Match Intensity (the physical demand a match creates); Regimen is the
+manager's capability to impose and sustain the associated workload.
+_Avoid_: Training Intensity (collides with Training Focus and Match Intensity), Conditioning
+(collides with Condition), Fitness (see Natural Fitness)
+
+**Technical Coaching**:
+The Manager Pillar governing the manager's contribution to player development. In v1 it modifies the
+effectiveness of the manager's own Training Focus decision - it scales the focused Category's
+development, never the passive baseline every player receives - so a manager who sets no Training
+Focus draws no benefit from it. Youth integration and youth promotion are cut from v1: no youth or
+reserve squad exists. Always qualified as a Manager Pillar to keep it distinct from Technical, the
+Attribute Category.
+
 ### Board & objectives
 
 **Board Objective**:

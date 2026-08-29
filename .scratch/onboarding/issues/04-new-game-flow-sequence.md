@@ -27,3 +27,19 @@ settle:
   have to read anything.
 
 Link the prototype from this ticket as an asset; it is throwaway, not the spec.
+
+## Constraints from ticket 01
+
+- The manager creation step must capture a **manager name** as well as the Pillar Distribution.
+  Nothing in the codebase holds one today (`save_meta.name` is the *save's* name); ticket 01 puts
+  `manager_name` on `manager_profile`, so this flow is where it is collected. Whether it shares a
+  screen with the Archetype choice is this ticket's call.
+- The manager creation step submits **once**, atomically: the plus/minus allocation clicks are
+  provisional UI state that is never persisted, so any "go back and change an earlier step" answer
+  must keep the whole profile uncommitted until submit.
+- Creation cannot complete with points unspent — the screen shows points remaining and enables
+  submit only at exactly 12 allocated, with a contextual warning on any Pillar set to 1.
+- `manager_profile` is written inside `createSave`'s transaction alongside world generation, so
+  "where world generation happens" and "where the manager is committed" are the same moment.
+
+See [Agent Note: Manager Pillars & archetype set](../../../.agents/notes/proposed/feature/2026-08-29-manager-pillars-and-archetypes.md).

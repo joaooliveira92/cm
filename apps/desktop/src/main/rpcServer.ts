@@ -150,12 +150,10 @@ export const handleRpc = (
   method: AppRpcMethod,
   payload: unknown,
   ctx: RpcContext,
-): Promise<RpcResult<AppRpcMethod>> =>
-  Effect.runPromise(
-    handlers[method](payload, ctx).pipe(
-      Effect.map((value) => ({ _tag: "Success", value }) as RpcResult<AppRpcMethod>),
-      Effect.catch((error) =>
-        Effect.succeed<RpcResult<AppRpcMethod>>({ _tag: "Failure", error }),
-      ),
+): Effect.Effect<RpcResult<AppRpcMethod>> =>
+  handlers[method](payload, ctx).pipe(
+    Effect.map((value) => ({ _tag: "Success", value }) as RpcResult<AppRpcMethod>),
+    Effect.catch((error) =>
+      Effect.succeed<RpcResult<AppRpcMethod>>({ _tag: "Failure", error }),
     ),
   );

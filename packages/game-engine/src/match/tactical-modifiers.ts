@@ -7,7 +7,12 @@ import {
   roleRating,
   type Position,
 } from "@cm-clone/shared";
+import { Data } from "effect";
 import type { MatchPlayerInput, MatchTactic, PhaseStrengths, TacticalModifiers } from "./types.js";
+
+export class NoPhaseForPositionError extends Data.TaggedError("NoPhaseForPositionError")<{
+  readonly position: Position;
+}> {}
 
 /** Phase groupings the engine derives Phase Strength from (ADR-0002) — the engine's own vocabulary. */
 export type Phase = keyof typeof PHASE_POSITIONS;
@@ -16,7 +21,7 @@ const phaseForPosition = (position: Position): Phase => {
   for (const phase of Object.keys(PHASE_POSITIONS) as Array<Phase>) {
     if ((PHASE_POSITIONS[phase] as ReadonlyArray<Position>).includes(position)) return phase;
   }
-  throw new Error(`no phase defined for position ${position}`);
+  throw new NoPhaseForPositionError({ position });
 };
 
 const average = (values: ReadonlyArray<number>): number =>

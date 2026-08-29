@@ -1,7 +1,7 @@
 # Manager pillars & archetype set
 
 Type: grilling
-Status: claimed
+Status: resolved
 
 ## Question
 
@@ -44,3 +44,27 @@ Open questions:
 
 Not this ticket: which effects actually bind to the simulation (ticket 02), or how strong each
 binding is (fog).
+
+## Answer
+
+**Four Manager Pillars (Tactical Acumen, Man-Management, Regimen, Technical Coaching), 1-5, summing
+to exactly 12; four curated Archetypes as examples not constraints; visible forever; a plain
+immutable `manager_profile` row, not a Decider.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-manager-pillars-and-archetypes.md).
+
+## Superseded in part by ticket 02
+
+The second Manager Pillar was resolved here as **Man-Management**. Resolving
+[ticket 02](02-which-pillar-effects-bind-in-v1.md) established that its only honest v1 binding is
+club-to-club seller negotiation (`decideAiSellerResponse`): the shipped transfer system contains no
+player negotiation, agent, wage, dressing-room, media, or board persuasion. The authoritative Pillar
+name is therefore **Influence**.
+
+This ticket keeps the original term as a record of the route taken. All living vocabulary -
+[CONTEXT.md](../../../CONTEXT.md), this ticket's Agent Note, and every implementation artifact - uses
+Influence.
+
+Ticket 02 also amends this ticket's "no snapshot needed" reasoning: Pillars stay immutable and
+`manager_profile` stays authoritative, but the full Pillar Distribution is snapshotted into
+`PersistedMatchStarted` so replay never depends on that immutability assumption holding in future.
+No Manager Decider and no `ManagerCreated` event is introduced. See
+[Agent Note: Manager Pillar bindings in v1](../../../.agents/notes/proposed/feature/2026-08-29-manager-pillar-bindings-v1.md).

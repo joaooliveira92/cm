@@ -34,3 +34,25 @@ Open questions:
   scope.
 - Ticket 07's findings bound this: whatever a fresh save leaves unconfigured is precisely where a
   new player gets stuck, and is the strongest candidate for explanation.
+
+## Inherited constraint: Manager Pillar legibility
+
+From [ticket 02](02-which-pillar-effects-bind-in-v1.md). Ticket 02 owns the causal contract - passing
+the Pillar into resolution, applying the modifier, and emitting structured causal information tied to
+the actual calculation. **This ticket owns the surface**: where the explanation appears, when, in what
+copy, and whether it is automatic or inspectable (post-match summary, match report, tooltip, inbox
+message, tactical analysis - ticket 02 deliberately does not choose).
+
+The constraint it inherits:
+
+- Tactical Acumen's causal contribution must be legible no later than completion of the player's
+  first match.
+- The surface must consume causal information produced by the actual tactical resolver. It must not
+  infer a contribution from the manager's Tactical Acumen value alone, and must not show generic
+  Pillar flavour when Tactical Acumen did not materially affect the resolved modifier.
+- Creation-time disclosure must distinguish the Pillars that pay out immediately (Tactical Acumen,
+  Influence) from those that accumulate over a season (Regimen, Technical Coaching), so a slow Pillar
+  is never read as an inert one.
+
+This adds no dependency: ticket 02 is complete without it, and this ticket was already blocked on 05
+and 07.
