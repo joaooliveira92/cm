@@ -43,3 +43,37 @@ Link the prototype from this ticket as an asset; it is throwaway, not the spec.
   "where world generation happens" and "where the manager is committed" are the same moment.
 
 See [Agent Note: Manager Pillars & archetype set](../../../.agents/notes/proposed/feature/2026-08-29-manager-pillars-and-archetypes.md).
+
+## Constraints from ticket 03
+
+- **Order is partly settled.** World generation runs *before* club selection, and the economy step
+  (`initializeSeasonEconomy`, lifted out of `startSeason`) runs with it, so the selection screen reads
+  persisted budgets and contracts. `startSeason` — the `board_objective` row, `manager_status`, AI
+  Tactic assignment — runs *after* the club is committed. Manager-then-club vs club-then-manager is
+  still this ticket's call, but both sit after generation.
+- **What the player sees while generation runs** is now load-bearing rather than cosmetic: the wait
+  happens before the first real choice, not after it.
+- Club selection is a **two-level screen** (compact list plus detail panel for the highlighted club),
+  with a **final review** step before creation showing manager, Archetype, club, objective, challenge,
+  and the optional save label. The review is informational and raises no Archetype-club warning.
+- **No default selection.** Creation cannot complete with no club chosen, and keyboard focus is not
+  selection.
+- The save-name field becomes **"Save label (optional)"**, never defaulted, empty valid.
+- **Cancellation must leave no playable save**, which constrains "go back and change an earlier step":
+  a provisional generated world exists on disk from generation onward.
+
+See [Agent Note: Club selection at new game](../../../.agents/notes/proposed/feature/2026-08-29-club-selection-at-new-game.md).
+
+## Constraints from ticket 05
+
+- **The screen count is fixed at six.** No inbox, news screen, or message feed, so the arrival
+  question is "which of the existing six is the player standing on when the career starts," with no
+  seventh candidate. The seed doc's section-5 abrupt drop is unaffected.
+- **Arrival cannot be announced by a welcome message**, because there is no message entity to put one
+  in. Whatever the player is meant to understand at the moment the career begins has to be visible in
+  the screen they land on or in the Continue affordance beside it.
+- The club, Board Objective, and manager identity chosen during creation are standing state on the
+  screens that own them, not one-time notifications. The final review step ticket 03 specifies is the
+  last time they are presented as a summary.
+
+See [Agent Note: No onboarding inbox](../../../.agents/notes/proposed/architecture/2026-08-29-no-onboarding-inbox.md).

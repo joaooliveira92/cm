@@ -278,6 +278,15 @@ club accepts, rejects, or makes exactly one counter-offer, which the bidding clu
 withdraws from.
 _Avoid_: Offer (fine as an informal synonym in prose, not as the event/command noun — Bid is)
 
+**Transfer Inbox**:
+The Bid queue on the Transfer market screen: incoming Bids for this club's players and the status of
+Bids this club has made. This is the only thing "inbox" means in the project. There is no news feed,
+message screen, or notification centre, and onboarding ticket 05 decided there will not be one in v1.
+What changed on each Calendar advance comes back on `AdvanceCalendarResult` and is surfaced by the
+screen that owns the state.
+_Avoid_: Inbox unqualified, News, Messages (the seed doc `docs/game-onboarding.md` uses "inbox" for a
+news feed; that meaning is not this project's)
+
 ### Scouting
 
 **Scout**:

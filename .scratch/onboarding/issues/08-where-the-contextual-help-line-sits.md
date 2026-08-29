@@ -40,8 +40,9 @@ Open questions:
 From [ticket 02](02-which-pillar-effects-bind-in-v1.md). Ticket 02 owns the causal contract - passing
 the Pillar into resolution, applying the modifier, and emitting structured causal information tied to
 the actual calculation. **This ticket owns the surface**: where the explanation appears, when, in what
-copy, and whether it is automatic or inspectable (post-match summary, match report, tooltip, inbox
-message, tactical analysis - ticket 02 deliberately does not choose).
+copy, and whether it is automatic or inspectable (post-match summary, match report, tooltip,
+tactical analysis - ticket 02 deliberately does not choose; ticket 05 removed "inbox message" from
+that list).
 
 The constraint it inherits:
 
@@ -56,3 +57,18 @@ The constraint it inherits:
 
 This adds no dependency: ticket 02 is complete without it, and this ticket was already blocked on 05
 and 07.
+
+## Constraints from ticket 05
+
+- **No inbox means no message-shaped help.** Every candidate surface this ticket weighs has to live on
+  one of the six existing screens or on the Continue affordance. A message the player marks read is
+  not available, which also removes the easiest way to make help taper.
+- **The taper question is narrower than it looks.** Ticket 05 rejected the tapering-guidance branch of
+  the inbox as the scripted tutorial in a diegetic costume. The same reasoning applies to any help that
+  stops appearing once the player is judged experienced, whatever surface it sits on.
+- **The strongest concrete case is already known.** The human's club starts with no Tactic
+  (`aiClubs.test.ts`: "the user's club gets none"), and the game never says so. Ticket 05 argues this
+  needs a persistent readiness affordance rather than a dismissible notice, because the condition
+  outlives any single dismissal. This ticket owns its copy, ticket 06 owns where it sits.
+
+See [Agent Note: No onboarding inbox](../../../.agents/notes/proposed/architecture/2026-08-29-no-onboarding-inbox.md).

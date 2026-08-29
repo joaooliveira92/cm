@@ -1,7 +1,7 @@
 # Club selection at new game
 
 Type: grilling
-Status: open
+Status: resolved
 
 ## Question
 
@@ -32,3 +32,11 @@ Open questions:
   redundant. Does the free-text name survive? What does the save list row become?
 - Mechanical change: `is_user_club` moves from a generation-time constant to a creation-time choice.
   Does world generation still run before the choice (generate all 20, then flag one) or after?
+
+## Answer
+
+**All 20 clubs freely selectable after world generation, chosen by stable `clubId` and committed
+atomically; the screen states resources, squad, and expectations explicitly but never as a numeric
+difficulty score; Archetype and club stay orthogonal; the free-text save name survives as an optional
+label behind a Manager · Club · Season identity.** See
+[Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-club-selection-at-new-game.md).
