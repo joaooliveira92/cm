@@ -1,5 +1,5 @@
 Type: task
-Status: ready-for-agent
+Status: claimed
 Blocked by: None (can start immediately)
 
 # 15: Renderer data layer — the RPC seam and Effect Atom
