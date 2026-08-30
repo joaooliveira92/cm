@@ -1,7 +1,3 @@
-Type: task
-Status: ready-for-agent
-Blocked by: 18
-
 # 21: User key binding overrides
 
 **What to build:** the rebinding surface: a `keybindings.json` inherited from Electron `userData`

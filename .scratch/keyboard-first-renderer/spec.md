@@ -128,7 +128,7 @@ relevant. Snippets inlined from the prototypes encode their decisions more preci
 - [Data layer — ticket 02] **Yes — `@effect/atom-react@4.0.0-rc.112` matches the catalog pin
   exactly and the engine ships in core as `effect/unstable/reactivity`; the renderer data layer is
   Effect Atom, not TanStack Query.** See
-  [Agent Note](../../.agents/notes/proposed/architecture/2026-08-29-renderer-data-layer-effect-atom.md)
+  [Agent Note](../../.agents/notes/implemented/architecture/2026-08-29-renderer-data-layer-effect-atom.md)
   and [research findings](research/02-effect-v4-renderer-interop.md). This is the *why*: the
   preload union maps onto Effect's error channel directly, and the reactive engine is inside the
   pinned `effect` itself. The *how* is ticket 08's note.
@@ -236,7 +236,7 @@ relevant. Snippets inlined from the prototypes encode their decisions more preci
   keys; save-level `["save", saveId]` key for calendar-wide invalidation; SWR for management reads,
   no SWR for match state; polling hand-rolled; no AtomRpc; pin `@effect/atom-react` at
   4.0.0-rc.112; boundary enforcement over new Effect-lint rules.** See
-  [Agent Note](../../.agents/notes/proposed/architecture/2026-08-29-atom-adoption-shape.md). Inline
+  [Agent Note](../../.agents/notes/implemented/architecture/2026-08-29-atom-adoption-shape.md). Inline
   decision snippet (trimmed) — the invalidation map:
 
   | Query | Reactivity keys |

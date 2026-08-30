@@ -1,7 +1,3 @@
-Type: task
-Status: ready-for-agent
-Blocked by: 21, 20, 19
-
 # 22: Keyboard e2e conversion
 
 **What to build:** the Playwright suite re-targeted per ticket 12, as the final stage asserting the

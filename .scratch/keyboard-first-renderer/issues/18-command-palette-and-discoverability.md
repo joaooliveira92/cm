@@ -1,7 +1,3 @@
-Type: task
-Status: ready-for-agent
-Blocked by: 17
-
 # 18: Command palette and discoverability
 
 **What to build:** the discoverability layer as the map's one deliberate big-bang, shipping only

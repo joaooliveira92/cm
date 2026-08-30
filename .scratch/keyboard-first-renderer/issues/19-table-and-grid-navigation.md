@@ -1,7 +1,3 @@
-Type: task
-Status: ready-for-agent
-Blocked by: 18
-
 # 19: Table and grid navigation (Squad, Market, Free Agents)
 
 **What to build:** the level-3 grid layer over TanStack Table for the Squad, Market, and Free Agent

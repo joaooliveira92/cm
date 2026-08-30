@@ -5,7 +5,7 @@ Status: resolved
 
 ## Answer
 
-**Yes — `@effect/atom-react@4.0.0-rc.112` matches the catalog pin exactly and the engine ships in core as `effect/unstable/reactivity`; the renderer data layer is Effect Atom, not TanStack Query.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-renderer-data-layer-effect-atom.md) and [research findings](../research/02-effect-v4-renderer-interop.md).
+**Yes — `@effect/atom-react@4.0.0-rc.112` matches the catalog pin exactly and the engine ships in core as `effect/unstable/reactivity`; the renderer data layer is Effect Atom, not TanStack Query.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-renderer-data-layer-effect-atom.md) and [research findings](../research/02-effect-v4-renderer-interop.md).
 
 ## Question
 

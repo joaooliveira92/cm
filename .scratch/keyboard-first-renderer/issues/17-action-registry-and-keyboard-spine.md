@@ -1,7 +1,3 @@
-Type: task
-Status: ready-for-agent
-Blocked by: 16
-
 # 17: Action registry and keyboard spine
 
 **What to build:** the screen-operation backbone of the renderer: a first-class Action registry

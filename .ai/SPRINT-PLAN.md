@@ -37,8 +37,8 @@ Decision work. One ticket per session; resolving one writes its Agent Note.
 | A5 | `effort-archival/` | **01** (completion predicate) | 02, 03 — both unblocked | 04/05 wait on 01–03; 06 waits on 04/05 |
 | A6 | `visual-design-language/` | **03** (dense table and abbreviations) — unblocked now that 02 resolved; then **04** (navigation frame) — also unblocked | Spec handoff | Human-chartered effort from `docs/ui-elements.md` reference. Tickets 01 (audit) and 02 (visual frame tokens) resolved. Agent Note at `.agents/notes/proposed/architecture/2026-08-29-visual-design-tokens.md`.
 
-12 of A's 19 tickets are unblocked right now (one of them, `scouting/04`, only nominally claimed),
-so nothing in this lane is waiting on anything but attention.
+10 of A's remaining 16 tickets are unblocked right now (one of them, `scouting/04`, only nominally
+claimed), so nothing in this lane is waiting on anything but attention.
 
 `injury-system/` has **no `map.md`** — it went straight to a spec. That is not the same as a closed
 map. Before treating its 9 build tickets as settled design, confirm its decisions actually were made
@@ -50,6 +50,7 @@ Build tickets. Every decision behind these is resolved.
 
 | # | Effort | State | Next move |
 |---|---|---|---|
+| B0 | `keyboard-first-renderer/` | Spec `ready-for-agent`; 8 build tickets (15–22); ticket 15 (data layer) shipped this run | **Frontier: ticket 16 (router adoption)**, then 17 (Action/keyboard spine), 18 (discoverability), 19–20 (level-3), 21 (rebinding), 22 (e2e). Validated to Stage 1: gate + e2e evidence in `.ai/reports/keyboard-first-renderer.md`. |
 | B1 | `training/` | Spec `ready-for-agent`; all 5 decisions resolved; build tickets 03/04/05 unimplemented | The most implementation-ready work in the repo — no design debt in front of it. Player Development math is shipped ([ADR-0011](../docs/adr/0011-deterministic-fractional-player-development.md)); **Training Focus** is not. |
 | B2 | `onboarding/` | Spec `ready-for-agent`; all 11 decisions resolved; 11 build tickets still marked `ready-for-agent` | **Statuses are stale** — recent commits landed wave 1 (01a, 01b, 02) and part of 03/04/05. Re-derive what is actually done from the code before picking up a ticket, and fix the statuses as you go. Likely frontier: 06 (Continue as global career loop). |
 | B3 | `injury-system/` | Spec `ready-for-agent`; 9 build tickets; [ADR-0009](../docs/adr/0009-contact-duel-modeling.md) settles duel modeling | Frontier 01 (injury/fitness attributes) — but see the no-map caveat above first. |
@@ -57,17 +58,15 @@ Build tickets. Every decision behind these is resolved.
 
 ## Immediate next action
 
-**Lane B1 — `training/`: run the frontier build ticket.** The most implementation-ready work in the
-repo; every decision behind it is resolved and its spec is `ready-for-agent`. Player Development
-math is shipped ([ADR-0011](../docs/adr/0011-deterministic-fractional-player-development.md));
-Training Focus is not.
+**Lane B0 — `keyboard-first-renderer/`: implement ticket 16 (router adoption).** Stage 1 (data
+layer, ticket 15) shipped this run — gate green, e2e 13 passed with 4 pre-existing stale failures.
+The pipe continues: 16 → 17 → 18 → 19/20 → 21 → 22.
 
-**Lane A1 — `keyboard-first-renderer/`: hand the completed map to the spec-creator**
-(`/cm-to-spec`) to write `spec.md`. All 14 decisions are resolved; the map has retired. Then A2
-(`scouting/04`) and A3 (`retro-match-screen/01`) are the next open decision frontiers.
+**Lane B1 — `training/`:** fallback if the renderer pipe stalls; the most implementation-ready work
+with no design debt.
 
-If a session is better spent deciding than building, take the open decision frontiers; only closing
-maps opens the chartering gate.
+**Lane A (decisions):** A2 (`scouting/04`) and A3 (`retro-match-screen/01`) are the next open
+decision frontiers. Only closing maps opens the chartering gate.
 
 ## Closed — not in the queue
 

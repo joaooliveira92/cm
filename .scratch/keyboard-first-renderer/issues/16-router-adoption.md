@@ -1,7 +1,3 @@
-Type: task
-Status: ready-for-agent
-Blocked by: 15
-
 # 16: Router adoption and the death of the root state machine
 
 **What to build:** the renderer's navigation replaced with TanStack Router using `createHashHistory`

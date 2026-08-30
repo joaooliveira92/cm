@@ -11,7 +11,7 @@ What exactly does the Effect Atom data layer look like in the renderer?
 Re-scoped from a TanStack Query adoption shape after ticket 02 established that
 `@effect/atom-react@4.0.0-rc.112` matches the workspace `catalog:` pin exactly and that the reactive
 engine ships in core as `effect/unstable/reactivity`. See
-[Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-renderer-data-layer-effect-atom.md)
+[Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-renderer-data-layer-effect-atom.md)
 for the decision and its rationale — this ticket designs it, it does not re-litigate it.
 
 Every screen currently hand-rolls the same pattern: `useState(null)` for data, `useState(null)` for
@@ -55,4 +55,4 @@ Decide:
 
 ## Answer
 
-**Seam: one public `renderer/rpc` import boundary; runtime at career boundary only; decode both success and failure; separate family identity from invalidation keys; save-level `["save", saveId]` key for calendar-wide invalidation; SWR for management reads, no SWR for match state; polling hand-rolled; no AtomRpc; pin `@effect/atom-react` at 4.0.0-rc.112; boundary enforcement over new Effect-lint rules.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-atom-adoption-shape.md).
+**Seam: one public `renderer/rpc` import boundary; runtime at career boundary only; decode both success and failure; separate family identity from invalidation keys; save-level `["save", saveId]` key for calendar-wide invalidation; SWR for management reads, no SWR for match state; polling hand-rolled; no AtomRpc; pin `@effect/atom-react` at 4.0.0-rc.112; boundary enforcement over new Effect-lint rules.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-atom-adoption-shape.md).

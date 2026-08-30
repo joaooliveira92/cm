@@ -1,7 +1,3 @@
-Type: task
-Status: ready-for-agent
-Blocked by: 18
-
 # 20: Match Day live keyboard control and remaining tier-3 interaction
 
 **What to build:** the live-match keyboard path: control-panel keyboard bindings active only while
