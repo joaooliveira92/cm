@@ -30,7 +30,7 @@ Decision work. One ticket per session; resolving one writes its Agent Note.
 
 | # | Effort | Frontier | Then | Blocked until |
 |---|---|---|---|---|
-| A1 | `keyboard-first-renderer/` | **12** (e2e strategy) — unblocked, 05/06/10 all resolved | 14 (user rebinding, unblocked) | 13 (adoption sequencing) waits on 12 |
+| A1 | `keyboard-first-renderer/` | **done — all 14 decisions resolved; map retired** | spec-creator (`/cm-to-spec`) | — |
 | A2 | `scouting/` | **04** (screen prototype) — `claimed` but unanswered; reclaim it | — | nothing; 04 is the last ticket |
 | A3 | `retro-match-screen/` | **01** (scaffold disposition) — unblocked now that 02 resolved | 04 (fidelity references, unblocked) | 03 (matchday mount) waits on 01 |
 | A4 | `e2e-coverage-wave-2/` | **07** (seed scenarios spec section) | 08, 09, 10 — all unblocked | 11 waits on 07; 12 waits on 07–11 |
@@ -57,15 +57,17 @@ Build tickets. Every decision behind these is resolved.
 
 ## Immediate next action
 
-**Lane A1 — `keyboard-first-renderer`, resolve ticket 12 (e2e strategy).**
+**Lane B1 — `training/`: run the frontier build ticket.** The most implementation-ready work in the
+repo; every decision behind it is resolved and its spec is `ready-for-agent`. Player Development
+math is shipped ([ADR-0011](../docs/adr/0011-deterministic-fractional-player-development.md));
+Training Focus is not.
 
-Its three blockers (05 global key map, 06 intra-screen focus, 10 table and grid navigation) are all
-resolved, the effort is furthest along of any open map at 11 of 14, and the current branch
-(`prototype/command-palette-discoverability`) is already in this effort's context. Closing 12, then
-14, then 13 retires an entire map.
+**Lane A1 — `keyboard-first-renderer/`: hand the completed map to the spec-creator**
+(`/cm-to-spec`) to write `spec.md`. All 14 decisions are resolved; the map has retired. Then A2
+(`scouting/04`) and A3 (`retro-match-screen/01`) are the next open decision frontiers.
 
-If a session is better spent building than deciding, take **B1 `training/`** instead. Both are legal;
-only A1 moves the gate.
+If a session is better spent deciding than building, take the open decision frontiers; only closing
+maps opens the chartering gate.
 
 ## Closed — not in the queue
 
