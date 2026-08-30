@@ -7,7 +7,7 @@ import { decodeSaveId } from "./navigation/params.js";
 import { ACTION_REGISTRY, ALL_ACTIONS, G_PREFIX_COMPLETIONS } from "./actions/allActions.js";
 import { isCareerScreen } from "./actions/registry.js";
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
-import { getScopeState, subscribeScopeState } from "./actions/scopeState.js";
+import { clearScopeState, getScopeState, setScopeState, subscribeScopeState } from "./actions/scopeState.js";
 import { type Action, type ScopeState } from "./actions/types.js";
 import { useSeamEveryKeyPress } from "./hotkeys.js";
 import {
@@ -129,11 +129,24 @@ export const KeyboardSpine = () => {
 
   // The transient overlay stack (AC-20). `splashActive` is the one-shot
   // teaching overlay's own visibility (first load of a career screen, never
-  // re-shown); it is the topmost layer while visible.
+  // re-shown); it is the topmost layer while visible. `matchPanelOpen` is
+  // published by MatchControlPanel (match-day keyboard note, AC-33): while the
+  // live control panel is open it is a soft overlay layer beneath any palette/
+  // help/splash — bare keys are suppressed, Primary shortcuts stay live.
   const [layer, setLayer] = useState<OverlayLayer>("none");
   const splash = useTeachingSplashVisibility();
   const splashActive = isCareer && splash.visible;
-  const topLayer: OverlayLayer = splashActive ? "splash" : layer;
+  const panelOpen = scopeState.matchPanelOpen === true;
+  const topLayer: OverlayLayer = splashActive ? "splash" : layer !== "none" ? layer : panelOpen ? "panel" : "none";
+
+  // Publish the spine's own (non-panel) top layer so the match control panel
+  // can tell when IT is the topmost transient: while a palette/help/splash is
+  // open over an open panel, the panel's Escape must not fire (Escape closes
+  // only the topmost layer — AC-20). Cleaned on spine unmount.
+  useEffect(() => {
+    setScopeState({ spineOverlayLayer: splashActive ? "splash" : layer });
+    return () => clearScopeState("spineOverlayLayer");
+  }, [layer, splashActive]);
 
   const closeOverlay = useCallback(() => {
     restoreFocusAfterOverlay();

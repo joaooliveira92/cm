@@ -145,6 +145,76 @@ describe("F-2 — the counter-offer InlineModal owns the keyboard (take, trap, E
   });
 });
 
+describe("F8 family — the counter-offer submit guard is never a silent no-op", () => {
+  it("a non-numeric counter-offer disables the submit, shows an inline error, and Enter does nothing", async () => {
+    await mountTransfers(transfersView());
+    const counter = await screen.findByRole("button", { name: "Counter" });
+    act(() => counter.focus());
+    fireEvent.click(counter);
+
+    const dialog = screen.getByRole("dialog", { name: "Counter Incoming" });
+    const input = within(dialog).getByLabelText("Counter-offer amount (Credits)");
+    fireEvent.change(input, { target: { value: "abc" } });
+
+    const submit = within(dialog).getByRole("button", { name: "Counter", exact: true });
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+    expect(within(dialog).getByRole("alert").textContent).toContain("valid counter-offer");
+
+    // Enter over the invalid draft must not submit — the dialog stays open.
+    fireEvent.keyDown(dialog, { key: "Enter" });
+    expect(screen.getByRole("dialog", { name: "Counter Incoming" })).toBeTruthy();
+
+    // A valid amount re-enables the submit and clears the inline error.
+    fireEvent.change(input, { target: { value: "250" } });
+    expect((submit as HTMLButtonElement).disabled).toBe(false);
+    expect(within(dialog).queryByRole("alert")).toBeNull();
+  });
+
+  it("zero, negative, and overflowing counter-offers are equally invalid and disabled", async () => {
+    await mountTransfers(transfersView());
+    fireEvent.click(await screen.findByRole("button", { name: "Counter" }));
+    const dialog = screen.getByRole("dialog", { name: "Counter Incoming" });
+    const input = within(dialog).getByLabelText("Counter-offer amount (Credits)");
+    for (const bad of ["0", "-5", "1e309"]) {
+      fireEvent.change(input, { target: { value: bad } });
+      const submit = within(dialog).getByRole("button", { name: "Counter", exact: true });
+      expect((submit as HTMLButtonElement).disabled).toBe(true);
+    }
+  });
+
+  it("clicking Counter with an EMPTY amount surfaces the inline error instead of a silent no-op", async () => {
+    await mountTransfers(transfersView());
+    fireEvent.click(await screen.findByRole("button", { name: "Counter" }));
+    const dialog = screen.getByRole("dialog", { name: "Counter Incoming" });
+    const submit = within(dialog).getByRole("button", { name: "Counter", exact: true });
+    fireEvent.click(submit);
+    expect(within(dialog).getByRole("alert").textContent).toContain("valid counter-offer");
+    // The dialog stays open until a valid amount is entered.
+    expect(screen.getByRole("dialog", { name: "Counter Incoming" })).toBeTruthy();
+  });
+
+  it("cancelling a counter-offer error does not leak into the next open (fresh state per open)", async () => {
+    await mountTransfers(transfersView());
+    fireEvent.click(await screen.findByRole("button", { name: "Counter" }));
+    const dialog = screen.getByRole("dialog", { name: "Counter Incoming" });
+    const submit = within(dialog).getByRole("button", { name: "Counter", exact: true });
+    // Empty draft + Counter click → the inline error surfaces (F8), then
+    // Cancel closes the modal with that error still in state.
+    fireEvent.click(submit);
+    expect(within(dialog).getByRole("alert").textContent).toContain("valid counter-offer");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog", { name: "Counter Incoming" })).toBeNull();
+
+    // Reopen: the modal opens fresh — no stale alert, empty amount.
+    fireEvent.click(await screen.findByRole("button", { name: "Counter" }));
+    const reopened = screen.getByRole("dialog", { name: "Counter Incoming" });
+    expect(within(reopened).queryByRole("alert")).toBeNull();
+    expect(
+      (within(reopened).getByLabelText("Counter-offer amount (Credits)") as HTMLInputElement).value,
+    ).toBe("");
+  });
+});
+
 describe("F-2 — the dirty-discard Keep/Discard dialog owns the keyboard (focus, Tab, Escape=keep, return)", () => {
   const openConfirm = async () => {
     await mountTransfers(transfersView());

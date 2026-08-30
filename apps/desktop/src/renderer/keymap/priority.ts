@@ -17,10 +17,18 @@ import { isBareLetterOrDigit } from "./keystroke.js";
  *   7. otherwise no action
  */
 
-/** The transient layers the keyboard spine can own, and their z-order for
+/**
+ * The transient layers the keyboard spine can own, and their z-order for
  *  Escape (AC-20): the topmost one closes first. `splash` is the one-shot
- *  teaching overlay; while it is up it owns every keystroke. */
-export type OverlayLayer = "none" | "palette" | "help" | "splash";
+ *  teaching overlay; while it is up it owns every keystroke.
+ *
+ * `panel` is the match-day live control panel (match-day keyboard note, AC-33):
+ * a *soft* layer — the commentary feed continues behind it, so it suppresses
+ * bare keys beneath it (panel controls are keyboard-reachable only while the
+ * panel is open) but Primary modifier shortcuts (Primary+K palette, Primary+/
+ * help) stay live, matching the decision table. Escape while it is topmost is
+ * owned by the panel itself through the binding seam. */
+export type OverlayLayer = "none" | "palette" | "help" | "splash" | "panel";
 
 export type DispatchDecision =
   | { readonly kind: "native" }
@@ -99,7 +107,23 @@ export const resolveDispatch = (ctx: ResolveContext): DispatchDecision => {
   // own text field. Nothing else beneath an overlay fires. `overlay` is checked
   // before priority 1's typing carve-out so a Primary-shortcut cannot reopen a
   // lower layer while an overlay owns the keyboard.
-  if ((overlay ?? "none") !== "none") {
+  const top = overlay ?? "none";
+  if (top === "panel") {
+    // Match-day control panel — a soft overlay (AC-33): the feed runs on, so
+    // `Primary+K`/`Primary+/` stay live (the match-day decision table shows the
+    // palette opening in all three panel states) but every bare key beneath —
+    // the `g` prefix, career-global `Space`, and screen-scoped keys — is the
+    // panel's to interpret, never a registered binding below it. The panel's
+    // own modal keys (Escape/Enter/B) are registered through the seam by
+    // `MatchControlPanel`.
+    if (typing) return { kind: "native" };
+    if (keystroke.primary) {
+      const hit = findActionWithBinding(actions, keystroke, "app-global");
+      return hit ? { kind: "action", action: hit } : { kind: "none" };
+    }
+    return { kind: "none" };
+  }
+  if (top !== "none") {
     return { kind: typing ? "native" : "none" };
   }
 

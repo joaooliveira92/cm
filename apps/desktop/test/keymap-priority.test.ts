@@ -108,6 +108,40 @@ describe("AC-20 — an open overlay (priority 2) suppresses everything beneath i
   });
 });
 
+describe("AC-33 — the match control panel is a soft overlay layer", () => {
+  it("panel open suppresses a bare screen key (panel controls are keyboard-reachable only while open)", () => {
+    const d = resolveDispatch(ctx({ overlay: "panel", keystroke: ks({ key: "b" }) }));
+    expect(d.kind).toBe("none");
+  });
+
+  it("panel open suppresses the g prefix (no navigation beneath the panel)", () => {
+    const d = resolveDispatch(ctx({ overlay: "panel", keystroke: ks({ key: "g" }) }));
+    expect(d.kind).toBe("none");
+  });
+
+  it("panel open still opens the palette via Primary+K (the match-day decision table)", () => {
+    const d = resolveDispatch(ctx({ overlay: "panel", keystroke: ks({ key: "k", primary: true }) }));
+    expect(d.kind).toBe("action");
+    if (d.kind === "action") expect(d.action.id).toBe("open-palette");
+  });
+
+  it("panel open + typing hands the keystroke to the field unchanged", () => {
+    const d = resolveDispatch(ctx({ overlay: "panel", typing: true, keystroke: ks({ key: "a" }) }));
+    expect(d.kind).toBe("native");
+  });
+
+  it("Escape with the panel closed (no overlay) resolves to no action — the feed continues", () => {
+    const d = resolveDispatch(ctx({ keystroke: ks({ key: "Escape" }) }));
+    expect(d.kind).toBe("none");
+  });
+
+  it("Escape is not a registered binding anywhere (its handling belongs to the topmost layer only)", () => {
+    for (const action of ACTION_REGISTRY.all) {
+      expect(action.binding, `${action.id} must not bind Escape`).not.toBe("Escape");
+    }
+  });
+});
+
 describe("AC-19 — text-input suppression", () => {
   it("suppresses a bare letter and Space while typing in a text input", () => {
     const input = document.createElement("input");

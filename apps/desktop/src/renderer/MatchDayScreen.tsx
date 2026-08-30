@@ -23,7 +23,14 @@ import {
   type Tempo,
 } from "@cm-clone/shared";
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
+import { clearScopeState, getScopeState, setScopeState } from "./actions/scopeState.js";
 import { FOCUS_RING } from "./focus.js";
+import { useSeamHotkeys } from "./hotkeys.js";
+import { isTextEntryTarget } from "./keymap/keystroke.js";
+import {
+  substitutionErrorLabel,
+  validateLiveSubstitution,
+} from "./match/substitution.js";
 import { Effect, Result } from "effect";
 import {
   REVEAL_INTERVAL_MS,
@@ -52,6 +59,10 @@ const NO_SUBS: SubstitutionStatusView = {
   capReached: false,
 };
 
+/** Live team-instruction slider (AC-33): one roving tab stop per slider, so Tab
+ *  cycles between the three controls (Mentality → Tempo → Pressing) and
+ *  ArrowLeft/ArrowRight toggle between the three options of the focused one —
+ *  native Enter/Space on the active option still set it directly. */
 const InstructionSlider = <T extends string>({
   label,
   options,
@@ -64,26 +75,47 @@ const InstructionSlider = <T extends string>({
   readonly value: T;
   readonly onChange: (value: T) => void;
   readonly actionId: string;
-}) => (
-  <div>
-    <p className="text-xs text-slate-400">{label}</p>
-    <div className="mt-1 flex gap-1">
-      {options.map((option) => (
-        <button
-          key={option}
-          type="button"
-          data-action-id={actionId}
-          className={`rounded px-2 py-0.5 text-xs capitalize ${FOCUS_RING.join(" ")} ${
-            option === value ? "bg-slate-100 text-slate-900" : "bg-slate-800 hover:bg-slate-700"
-          }`}
-          onClick={() => onChange(option)}
-        >
-          {option}
-        </button>
-      ))}
+}) => {
+  const groupRef = useRef<HTMLDivElement | null>(null);
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const index = options.indexOf(value);
+    if (index < 0) return;
+    const delta = event.key === "ArrowRight" ? 1 : -1;
+    const nextIndex = (index + delta + options.length) % options.length;
+    onChange(options[nextIndex]!);
+    // Focus follows the value so the roving tab stop lands where it just moved.
+    const buttons = groupRef.current?.querySelectorAll<HTMLButtonElement>(
+      "button[data-action-id]",
+    );
+    buttons?.[nextIndex]?.focus();
+  };
+
+  return (
+    <div ref={groupRef} role="group" aria-label={label} onKeyDown={onKeyDown}>
+      <p className="text-xs text-slate-400">{label}</p>
+      <div className="mt-1 flex gap-1">
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            data-action-id={actionId}
+            tabIndex={option === value ? 0 : -1}
+            aria-pressed={option === value}
+            className={`rounded px-2 py-0.5 text-xs capitalize ${FOCUS_RING.join(" ")} ${
+              option === value ? "bg-slate-100 text-slate-900" : "bg-slate-800 hover:bg-slate-700"
+            }`}
+            onClick={() => onChange(option)}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 /** Live tactics/substitution control (ticket 14) — a collapsible panel reachable without leaving
  * the Match day screen. Reuses `TacticsScreen.tsx`'s formation/instruction-slider patterns but
@@ -134,6 +166,9 @@ const MatchControlPanel = ({
   const [inPlayerId, setInPlayerId] = useState(PlayerId.make(""));
   const [isHalftime, setIsHalftime] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  /** Inline substitution-draft rejection (the validator's reason), never a silent no-op. */
+  const [subAlert, setSubAlert] = useState<string | null>(null);
+  const toggleRef = useRef<HTMLButtonElement | null>(null);
 
   const tacticsResult = useAtomValue(tacticsAtom(saveId));
   const runCommand = useAtomSet(submitMatchCommandMutation, { mode: "promise" });
@@ -142,6 +177,26 @@ const MatchControlPanel = ({
   const hasRedInjury = injuries.some((injury) => injury.teamClubId === homeClubId && injury.tier === "red");
   const orangeInjury = injuries.find((injury) => injury.teamClubId === homeClubId && injury.tier === "orange");
   const isShorthanded = onPitchCount < 11;
+  /** The no-subs knock decision modal: orange injury + cap reached + 11 on pitch. */
+  const injuryDecisionPrompt = orangeInjury !== undefined && subsStatus.capReached && !isShorthanded;
+  /** The two-step substitution draft is complete enough to confirm (Enter). */
+  const subDraftComplete =
+    !subsStatus.capReached && outPlayerId !== "" && inPlayerId !== "";
+
+  // The panel-scoped key handlers read a fresh snapshot each keystroke (the
+  // seam keeps the functions themselves stable — no re-subscription churn).
+  const panelRef = useRef({
+    open,
+    injuryDecisionPrompt,
+    subDraftComplete,
+    subDraftStarted: outPlayerId !== "" || inPlayerId !== "",
+  });
+  panelRef.current = {
+    open,
+    injuryDecisionPrompt,
+    subDraftComplete,
+    subDraftStarted: outPlayerId !== "" || inPlayerId !== "",
+  };
 
   useEffect(() => {
     if (injuryPrompt) setOpen(true);
@@ -202,7 +257,17 @@ const MatchControlPanel = ({
   };
 
   const onMakeSubstitution = async () => {
-    if (!tactic || !outPlayerId || !inPlayerId || outPlayerId === inPlayerId) return;
+    if (!tactic) return;
+    // Validate the draft against the server-reported caps and the no-subs /
+    // same-player rules before submitting — the disabled guard on the button is
+    // the primary gate; this rejects with a visible reason instead of a silent
+    // no-op (the backend still enforces caps authoritatively).
+    const validation = validateLiveSubstitution(subsStatus, String(outPlayerId), String(inPlayerId));
+    if (!validation.ok) {
+      setSubAlert(substitutionErrorLabel(validation.error!));
+      return;
+    }
+    setSubAlert(null);
     await submit({ _tag: "MakeSubstitution", clubId: homeClubId, outPlayerId, inPlayerId });
     // Optimistic local update so the on-pitch/bench split is right for the *next* substitution even
     // before the next poll's homeSubs confirms the server accepted it.
@@ -261,6 +326,90 @@ const MatchControlPanel = ({
     };
   }, [onApplyTactics, onBringOff, onMakeSubstitution, onDecisionResolved, tactic]);
 
+  // Publish the panel's open/closed state to the spine (match-day keyboard
+  // note): while open it is a soft overlay layer — bare keys beneath it are
+  // suppressed so panel controls are keyboard-reachable only while the panel
+  // is open. The panel's own modal keys below are registered through the seam,
+  // exactly like the palette/help overlays own their Escape.
+  useEffect(() => {
+    setScopeState({ matchPanelOpen: open });
+    return () => clearScopeState("matchPanelOpen");
+  }, [open]);
+
+  // The panel is topmost only when no palette/help/splash is open above it —
+  // Escape always closes exactly the topmost transient layer (AC-20).
+  const isPanelTopmost = (): boolean => {
+    const upper = getScopeState().spineOverlayLayer;
+    return upper === undefined || upper === "none";
+  };
+
+  const abortSubDraft = (): void => {
+    const hadDraft = panelRef.current.subDraftStarted;
+    setOutPlayerId(PlayerId.make(""));
+    setInPlayerId(PlayerId.make(""));
+    if (hadDraft) setSubAlert(null);
+  };
+
+  // Panel-scoped Escape (AC-33): open → close the panel (and the injury modal
+  // inside it); paused → the match STAYS paused (the pause is owned by the
+  // screen's chunkInjuries, untouched here); closed → no-op. A palette/help/
+  // splash above the panel owns Escape instead.
+  useSeamHotkeys(
+    "Escape",
+    (event) => {
+      if (!panelRef.current.open) return;
+      if (!isPanelTopmost()) return;
+      event.preventDefault();
+      abortSubDraft();
+      setOpen(false);
+      // Never leave focus on document.body: hand it back to the toggle button.
+      toggleRef.current?.focus();
+    },
+    { enableOnFormTags: true },
+  );
+
+  // Panel-scoped Enter (AC-33): the injury decision modal's Play On, otherwise
+  // the completed two-step substitution's confirm. Enter activates the focused
+  // control and nothing else (AC-19): when the focus target natively consumes
+  // Enter (a button, link, checkbox), the native activation wins.
+  useSeamHotkeys(
+    "Enter",
+    (event) => {
+      if (!panelRef.current.open || !isPanelTopmost()) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        target.closest('button, a, input[type="checkbox"], [role="button"]') !== null
+      ) {
+        return;
+      }
+      event.preventDefault();
+      if (panelRef.current.injuryDecisionPrompt) {
+        void dispatchAction("play-on");
+        return;
+      }
+      if (panelRef.current.subDraftComplete) {
+        void dispatchAction("make-substitution");
+      }
+    },
+    { enableOnFormTags: true },
+  );
+
+  // Panel-scoped B → Bring Off (AC-33), live only while the no-subs decision
+  // modal is showing. Bare letters are never stolen from a text-entry control
+  // (type-ahead in the substitution selects stays native).
+  useSeamHotkeys(
+    "b",
+    (event) => {
+      if (!panelRef.current.open || !isPanelTopmost()) return;
+      if (isTextEntryTarget(event.target)) return;
+      if (!panelRef.current.injuryDecisionPrompt) return;
+      event.preventDefault();
+      void dispatchAction("bring-off");
+    },
+    { enableOnFormTags: true },
+  );
+
   if (!tactic) return null;
 
   const onPitchIds = new Set(tactic.slots.map((slot: TacticSlot) => slot.playerId));
@@ -274,6 +423,7 @@ const MatchControlPanel = ({
     <section className="mt-4 rounded border border-slate-800 bg-slate-900">
       <button
         type="button"
+        ref={toggleRef}
         data-action-id="toggle-control-panel"
         className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm font-semibold ${FOCUS_RING.join(" ")}`}
         onClick={() => void dispatchAction("toggle-control-panel")}
@@ -455,6 +605,11 @@ const MatchControlPanel = ({
                 Make substitution
               </button>
             </div>
+            {subAlert && (
+              <p role="alert" className="mt-1 text-xs text-amber-300">
+                {subAlert}
+              </p>
+            )}
           </div>
 
           {status && <p className="text-xs text-slate-500">{status}</p>}

@@ -20,6 +20,12 @@ export interface InlineModalProps {
   readonly onAmountChange: (value: string) => void;
   readonly onSubmit: () => void;
   readonly onCancel: () => void;
+  /** Disable the submit action (F8: never a silent no-op — the invalid input is
+   *  surfaced by `error` below while the submit can't fire). */
+  readonly submitDisabled?: boolean;
+  /** Inline validation message shown inside the modal (e.g. a non-numeric
+   *  counter-offer). */
+  readonly error?: string | null;
 }
 
 export const InlineModal = ({
@@ -31,6 +37,8 @@ export const InlineModal = ({
   onAmountChange,
   onSubmit,
   onCancel,
+  submitDisabled = false,
+  error = null,
 }: InlineModalProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -48,6 +56,9 @@ export const InlineModal = ({
     if (event.defaultPrevented) return;
     if (event.key === "Enter") {
       event.preventDefault();
+      // Do not submit an invalid draft — the disabled submit is the visible
+      // gate and the inline error explains why (never a silent no-op).
+      if (submitDisabled) return;
       onSubmit();
     }
   };
@@ -82,7 +93,7 @@ export const InlineModal = ({
             className={`mt-1 w-full rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
           />
         </label>
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="mt-4 flex items-center justify-end gap-2">
           <button
             type="button"
             className={`rounded bg-slate-700 px-3 py-1 text-sm ${FOCUS_RING.join(" ")}`}
@@ -92,12 +103,18 @@ export const InlineModal = ({
           </button>
           <button
             type="button"
-            className={`rounded bg-amber-600 px-3 py-1 text-sm text-slate-950 ${FOCUS_RING.join(" ")}`}
+            disabled={submitDisabled}
+            className={`rounded bg-amber-600 px-3 py-1 text-sm text-slate-950 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
             onClick={onSubmit}
           >
             {submitLabel}
           </button>
         </div>
+        {error !== null && (
+          <p role="alert" className="mt-2 text-sm text-red-300">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );

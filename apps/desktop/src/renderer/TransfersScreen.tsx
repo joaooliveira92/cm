@@ -205,6 +205,10 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     readonly amount: number;
   } | null>(null);
   const [counterAmount, setCounterAmount] = useState("");
+  /** Inline error state: set when the submit is clicked with an invalid (incl.
+   *  empty) counter-offer — the disabled-submit gate covers non-empty invalid
+   *  input, this covers the click/Enter on an empty draft so it is never silent. */
+  const [counterError, setCounterError] = useState<string | null>(null);
 
   // --- announcements (one polite status per table, deduplicated).
   const [marketAnnouncement, setMarketAnnouncement] = useState<TableAnnouncement | null>(null);
@@ -326,6 +330,9 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         amount: bid.amount,
       });
       setCounterAmount("");
+      // Fresh modal per open: a stale error from a cancelled draft must not
+      // leak into the next open (F8).
+      setCounterError(null);
       return;
     }
     void run(action === "accept" ? "Accept" : "Reject", () =>
@@ -720,6 +727,10 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     draftedPlayer !== null ? `${draftedPlayer.firstName} ${draftedPlayer.lastName}` : "";
   const draftAmount = draft !== null ? Number(draft.amountInput) : 0;
   const draftAmountValid = draft !== null && isValidBidAmount(draft.amountInput);
+  // The counter-offer input shares the same NaN-safe validity rule as the bid
+  // draft (F8 family): a non-numeric amount disables the modal submit and shows
+  // an inline error instead of silently doing nothing on submit.
+  const counterAmountValid = isValidBidAmount(counterAmount);
   const windowOpen = view?.windowOpen ?? true;
 
   // Blocking load failure = error with NO retained rows (a failed revalidation
@@ -1103,14 +1114,33 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           submitLabel="Counter"
           inputLabel="Counter-offer amount (Credits)"
           amountValue={counterAmount}
-          onAmountChange={setCounterAmount}
+          onAmountChange={(value) => {
+            setCounterAmount(value);
+            setCounterError(null);
+          }}
           onCancel={() => setCounter(null)}
+          // The disabled submit is the primary gate for a non-empty invalid
+          // amount; an EMPTY submit click falls through to the guard below,
+          // which surfaces the same inline error — never a silent no-op (F8).
+          submitDisabled={counterAmount !== "" && !counterAmountValid}
+          error={
+            counterError ??
+            (counterAmount !== "" && !counterAmountValid
+              ? "Enter a valid counter-offer amount."
+              : null)
+          }
           onSubmit={() => {
+            if (!counterAmountValid) {
+              setCounterError("Enter a valid counter-offer amount.");
+              return;
+            }
             const amount = Number(counterAmount);
-            if (!amount || amount <= 0) return;
             const bidId = counters.bidId;
             setCounter(null);
-            void run("Counter", () => runRespond({ saveId, bidId, action: "counter", counterAmount: amount }));
+            setCounterError(null);
+            void run("Counter", () =>
+              runRespond({ saveId, bidId, action: "counter", counterAmount: amount }),
+            );
           }}
         />
       )}
