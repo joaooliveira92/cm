@@ -108,24 +108,29 @@ The reason is drift. A backlog of half-charted efforts is worse than a short one
 every open map is a decision someone still has to make, and an agent that answers "what next?" by
 inventing a fresh effort will always prefer the clean new thing to the fog it already owns.
 
-## Stop conditions
+## Resilience: log and continue, do not halt
 
-Stop and write [templates/decision-request.md](templates/decision-request.md) into the effort's
-`.scratch/<effort>/` directory when:
+Most conditions that would stop a single ticket should not stop the whole run. The orchestrator's
+job is to keep advancing the queue. Follow this cascade:
 
-- two readings of the domain produce different game behavior, and CONTEXT.md does not settle it;
-- CONTEXT.md, an ADR, and the code disagree about the same concept;
-- a fix would require inventing a rule, a constant, or a piece of game design nobody has decided;
-- implementation reveals a genuinely new destination that would need its own map (see **Sprint
-  creation is gated on open maps** — recommend it, never start it);
-- a change would break save compatibility without an agreed migration;
-- a repair would materially expand scope into another effort's territory;
-- destructive data operations or Git history rewriting would be required;
-- credentials, secrets, signing, publishing, or release infrastructure are implicated;
-- a dependency raises a license or security concern;
-- determinism cannot be demonstrated, or a seeded result changes without an understood cause.
+1. **Write a decision request** into the effort's `.scratch/<effort>/` directory when a genuine
+   decision is blocked — domain ambiguity, missing game rule, conflicting sources.
+2. **Update the ticket's `Status:`** to reflect the block so future runs can find it.
+3. **Advance the frontier** — move to the next open, unblocked, unclaimed ticket in the same
+   effort, or the next effort in the queue.
 
-Do not stop for routine local design choices. Stopping on those is its own failure mode.
+Only stop the entire run for:
+- the queue is empty — all efforts complete, no remaining work;
+- repo-level corruption, missing credentials, or broken tooling that makes all further work
+  impossible;
+- a human explicitly asks you to stop.
+
+Do **not** stop for:
+- context length, token limits, or any perceived "session budget" — the model will continue
+  as long as the tooling allows;
+- a single ticket failing review — log it, skip it, advance to the next frontier;
+- ordinary local design choices that you are authorised to make;
+- a decision request — write it and continue.
 
 ## Failure policy
 

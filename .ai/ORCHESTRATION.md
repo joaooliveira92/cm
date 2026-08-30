@@ -102,3 +102,6 @@ A green build is not acceptance (ENGINEERING-CONTRACT § Tests and acceptance).
   `Status:` lines, the map's Decisions-so-far, and the report under `.ai/reports/`.
 - Resolve routine decisions yourself and record the constraining ones. Stop only on a genuine stop
   condition from [AUTONOMOUS-AGENT.md](AUTONOMOUS-AGENT.md).
+- **Resilience**: when a ticket blocks (NEEDS_REWORK on second review, stop condition, genuine
+  blocker), write the decision request, update the ticket status, and advance to the next frontier
+  ticket. Do not halt the run for a single failed ticket — log it and continue.

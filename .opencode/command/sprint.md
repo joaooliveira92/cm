@@ -63,18 +63,21 @@ gate is still shut, stop and say so; do not charter something new to stay busy.
   `.ai/reports/<effort>.md` written.
 - Small Conventional Commits on a feature branch off `latest_branch`. Never commit to
   `latest_branch`, never self-merge, never force-push.
-- Then **auto-advance** to the next sprint in order, for as long as the session can proceed.
+- Then **auto-advance** to the next sprint in order. Do not stop for context length, token limits,
+  or perceived session budget — continue until the queue is empty or a hard stop fires.
 
-## Stop
+## Resilience: fail a ticket, advance
 
-Stop and do not advance when any of these holds — record it in your final message and in the plan:
+When a ticket cannot proceed — `NEEDS_REWORK` on a second review, a stop condition fires, or the
+implementator reports a genuine blocker — do not halt. Write a decision request or log the blocker
+in the effort's directory, update the ticket's `Status:` to reflect the block, and advance to the
+**next frontier ticket** in the same effort or the next effort in the queue.
 
-- an `.ai/AUTONOMOUS-AGENT.md` stop condition fires;
-- you need to write a decision request (`.ai/templates/decision-request.md`) and must not guess;
-- the queue is empty — do not refill it yourself;
-- the session budget is exhausted — say exactly what remains, and leave **Immediate next action**
-  pointing at the next step so the following run resumes cleanly;
-- tooling or credentials cannot continue (e.g. you cannot commit).
+Only stop the entire run for:
+- the queue is empty — report the state and stop;
+- repo-level corruption, credential failure, or missing tooling that makes any further work
+  impossible;
+- a human explicitly tells you to stop.
 
 Never weaken a test, silently resolve an open decision, invent game design, or stop over a routine
 local design choice.
