@@ -1,7 +1,7 @@
 # 12-e2e-strategy
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 05, 06, 10
 
 ## Question
@@ -32,3 +32,7 @@ Decide:
 - **Regression risk on existing tests**: adding `tabIndex` and focus management to nine screens can
   change what `click()` resolves to. Name whether the existing suite is expected to survive
   unchanged.
+
+## Answer
+
+**Convert the level-3 journeys to keyboard driving, keep creation/save-management/error-paths as clicks; cover navigation, palette, the Squad grid, the Match Day substitution flow, and Escape layering; uphold the no-testability-seam line — assert focus with `toHaveFocus()` on role/text locators plus ARIA states; the reliability contract holds unchanged with `toBeFocused` (auto-retrying) as the authoring rule; the existing click suite is expected to survive unchanged, and any break is app regression, not a test to edit.** See [Agent Note](../../../.agents/notes/proposed/testing/2026-08-30-e2e-keyboard-strategy.md).
