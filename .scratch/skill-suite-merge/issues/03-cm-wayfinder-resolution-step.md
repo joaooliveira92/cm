@@ -82,8 +82,9 @@ map's Decisions-so-far"):
   02's answer (see [ticket 02](02-ticket-note-relationship.md)) so the two tickets don't drift into
   disagreeing conventions.
 - Header/body skeleton is copied from `reference-project`'s `proposed/` format
-  (`.agents/notes/README.md` — see [Agent Notes README](../../../reference-project/.agents/notes/README.md#the-file-format))
-  verbatim, since the map's Notes call for adapting that format, not reinventing it. `Status:
+  (its `.agents/notes/README.md`; now adopted locally — see
+  [The file format](../../../docs/agents/notes.md#the-file-format)) verbatim,
+  since the map's Notes call for adapting that format, not reinventing it. `Status:
   proposed` is hardcoded (never `implemented`) because `cm-wayfinder` only ever produces
   not-yet-built decisions — the `proposed → implemented` rewrite is out of this ticket's scope and
   belongs to `cm-implement` (ticket 04).

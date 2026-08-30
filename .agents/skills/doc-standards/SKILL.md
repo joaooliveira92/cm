@@ -32,7 +32,7 @@ Then check the constraints that make placement expensive or wrong:
 - Gist-then-link catalogs (`docs/agents/domain-skills.md`, `docs/agents/cm-skills.md`) are never the source of truth: they are pointers, one line per skill. If a fact belongs there, change the skill's own `SKILL.md` first, then the catalog line to match.
 - Before renaming or moving any doc, grep for inbound references. `pnpm run verify-md-links` checks Markdown link targets and repo-root-absolute links onto real files; it does NOT check `#fragment` anchors — this repo has none today (see `.scratch/skill-suite-merge/map.md` for that decision). Manual grep any fragment or string citation whose target never reaches a gate-scanned Markdown link.
 - A move is atomic: remove from the old home, add to the new home, and fix every inbound link in the same change.
-- [reference-project/](../../../reference-project/) is an external mirror, excluded from the gates and from corpus audits. Never edit or restate its decisions into this repo's docs.
+- `reference-project/` was an external mirror, excluded from the gates and from corpus audits; it has been removed from this checkout. Never edit or restate its decisions into this repo's docs.
 
 ## Audit the corpus
 
