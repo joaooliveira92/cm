@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Tactic, type TacticSlot, type TacticsScreenView } from "@cm-clone/contracts";
+import { PlayerId, Tactic, type SaveId, type TacticSlot, type TacticsScreenView } from "@cm-clone/contracts";
 import {
   FORMATIONS,
   FORMATION_SLOTS,
@@ -21,7 +21,7 @@ const defaultTacticFor = (formation: Formation): Tactic =>
     slots: FORMATION_SLOTS[formation].map((position) => ({
       position,
       role: POSITION_ROLES[position],
-      playerId: "",
+      playerId: PlayerId.make(""),
     })),
     mentality: "balanced",
     tempo: "normal",
@@ -31,7 +31,7 @@ const defaultTacticFor = (formation: Formation): Tactic =>
 const changeFormation = (tactic: Tactic, formation: Formation): Tactic =>
   new Tactic({ ...defaultTacticFor(formation), mentality: tactic.mentality, tempo: tactic.tempo, pressing: tactic.pressing });
 
-const changeSlotPlayer = (tactic: Tactic, slotIndex: number, playerId: string): Tactic =>
+const changeSlotPlayer = (tactic: Tactic, slotIndex: number, playerId: PlayerId): Tactic =>
   new Tactic({
     ...tactic,
     slots: tactic.slots.map((slot, index) => (index === slotIndex ? { ...slot, playerId } : slot)),
@@ -67,7 +67,7 @@ const InstructionSlider = <T extends string>({
   </div>
 );
 
-export const TacticsScreen = ({ saveId }: { readonly saveId: string }) => {
+export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [view, setView] = useState<TacticsScreenView | null>(null);
   const [tactic, setTactic] = useState<Tactic | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -180,7 +180,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: string }) => {
                     <select
                       className="rounded bg-slate-800 px-2 py-1"
                       value={slot.playerId}
-                      onChange={(event) => setTactic(changeSlotPlayer(tactic, index, event.target.value))}
+                      onChange={(event) => setTactic(changeSlotPlayer(tactic, index, PlayerId.make(event.target.value)))}
                     >
                       <option value="">Unassigned</option>
                       {view.squad

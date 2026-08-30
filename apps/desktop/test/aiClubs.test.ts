@@ -5,13 +5,14 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { FORMATIONS, transferValue } from "@cm-clone/shared";
+import { FORMATIONS, selectBestFormationXI, transferValue } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import {
   computeLeagueAveragePositionRatings,
   identifyWeakPositions,
+  pickBestFormationTactic,
 } from "../src/main/aiClubs.js";
 import { advanceCalendar } from "../src/main/season.js";
 import { createSave } from "../src/main/saves.js";
@@ -309,11 +310,64 @@ it.effect(
       const clubs = yield* allClubs(save.id);
       const aiClub = clubs.find((club) => club.isUserClub === 0)!;
       const tacticRightAfterCreate = yield* withSave(save.id, loadPersistedTactic(aiClub.id));
-      ok(tacticRightAfterCreate, "AI Tactic assignment already landed synchronously inside createSave/startSeason");
+ok(tacticRightAfterCreate, "AI Tactic assignment already landed synchronously inside createSave/startSeason");
 
-      yield* advanceCalendar(savesDir, save.id);
-      ok(true, "advanceCalendar's window-boundary AI transfer activity ran synchronously in-process (see other tests for its effects)");
-    }),
+  yield* advanceCalendar(savesDir, save.id);
+  ok(true, "advanceCalendar's window-boundary AI transfer activity ran synchronously in-process (see other tests for its effects)");
+}),
+);
+
+// ---------------------------------------------------------------------------
+// pickBestFormationTactic matches selectBestFormationXI (ticket 01a: ordered preservation)
+// ---------------------------------------------------------------------------
+
+it.effect("pickBestFormationTactic returns the same formation and slots as selectBestFormationXI", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const clubs = yield* allClubs(save.id);
+
+    for (const club of clubs) {
+      if (club.isUserClub === 1) continue;
+
+      const squad = yield* withSave(save.id, loadSquadPlayers(club.id));
+      const tacticYielded = yield* withSave(save.id, pickBestFormationTactic(squad));
+
+      // selectBestFormationXI is pure; call it directly
+      const algorithmResult = selectBestFormationXI(squad);
+
+      ok(algorithmResult._tag === "success", `selectBestFormationXI should succeed for club ${club.id}`);
+      if (algorithmResult._tag === "success") {
+        ok(FORMATIONS.includes(tacticYielded.formation), `formation ${tacticYielded.formation} should be one of the 5 v1 Formations`);
+        strictEqual(
+          tacticYielded.formation,
+          algorithmResult.formation,
+          `pickBestFormationTactic's formation must match selectBestFormationXI's for club ${club.id}`,
+        );
+
+        // The slots from pickBestFormationTactic (with roles/mentality/etc filled in) must
+        // correspond position-by-position to selectBestFormationXI's slots.
+        strictEqual(
+          tacticYielded.slots.length,
+          algorithmResult.slots.length,
+          `slot count must match for club ${club.id}`,
+        );
+        for (let i = 0; i < algorithmResult.slots.length; i++) {
+          const algorithmSlot = algorithmResult.slots[i]!;
+          const tacticSlot = tacticYielded.slots[i]!;
+          strictEqual(
+            tacticSlot.position,
+            algorithmSlot.position,
+            `slot ${i} position mismatch for club ${club.id}`,
+          );
+          strictEqual(
+            tacticSlot.playerId,
+            algorithmSlot.playerId,
+            `slot ${i} player mismatch for club ${club.id}: pickBestFormationTactic chose ${tacticSlot.playerId} but selectBestFormationXI chose ${algorithmSlot.playerId}`,
+          );
+        }
+      }
+    }
+  }),
 );
 
 it("aiClubs.ts never imports the rpcServer/renderer IPC surface", () => {

@@ -3,7 +3,6 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   BidNotFoundError,
   BidView,
-  type ClubSummary,
   InsufficientTransferBudgetError,
   InvalidBidActionError,
   MarketPlayerView,
@@ -13,6 +12,11 @@ import {
   TransferWindowClosedError,
   TransfersScreenView,
   WageBudgetExceededError,
+  BidId,
+  type ClubId,
+  type ClubSummary,
+  type PlayerId,
+  type SaveId,
 } from "@cm-clone/contracts";
 import {
   AI_ACCEPT_BID_MULTIPLIER,
@@ -23,7 +27,6 @@ import {
   DEFAULT_CONTRACT_YEARS,
   MAX_CONTRACT_YEARS,
   MIN_CONTRACT_YEARS,
-  influenceThresholdModifier,
   type POSITIONS,
   TRANSFER_BUDGET_BY_TIER,
   WAGE_BUDGET_BY_TIER,
@@ -86,8 +89,8 @@ const attributeSelectList = (prefix: string) =>
   ).join(", ");
 
 interface PlayerEconRow {
-  readonly id: string;
-  readonly clubId: string | null;
+  readonly id: PlayerId;
+  readonly clubId: ClubId | null;
   readonly clubName: string | null;
   readonly firstName: string;
   readonly lastName: string;
@@ -97,8 +100,8 @@ interface PlayerEconRow {
 }
 
 interface PlayerEcon {
-  readonly id: string;
-  readonly clubId: string | null;
+  readonly id: PlayerId;
+  readonly clubId: ClubId | null;
   readonly clubName: string | null;
   readonly firstName: string;
   readonly lastName: string;
@@ -121,7 +124,7 @@ export const loadAllPlayersEcon = Effect.gen(function* () {
     [],
   );
   const positionRows = yield* sql<{
-    playerId: string;
+    playerId: PlayerId;
     position: (typeof POSITIONS)[number];
     familiarity: PlayerPosition["familiarity"];
   }>`SELECT player_id as "playerId", position, familiarity FROM player_positions`;
@@ -147,7 +150,7 @@ export const loadAllPlayersEcon = Effect.gen(function* () {
   });
 });
 
-const loadPlayerEcon = (playerId: string) =>
+const loadPlayerEcon = (playerId: PlayerId) =>
   Effect.gen(function* () {
     const players = yield* loadAllPlayersEcon;
     return players.find((player) => player.id === playerId) ?? null;
@@ -177,7 +180,7 @@ interface ClubBudgetRow {
 
 /** Exported for `aiClubs.ts` (ticket 17): AI-club buying re-reads a fresh budget row before every
  * bid in a window, since an earlier bid in the same run may already have spent it down. */
-export const loadClubBudgetRow = (clubId: string) =>
+export const loadClubBudgetRow = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql<ClubBudgetRow>`SELECT transfer_budget_remaining as "transferBudgetRemaining",
@@ -186,7 +189,7 @@ export const loadClubBudgetRow = (clubId: string) =>
   });
 
 /** Exported for `aiClubs.ts` (ticket 17), same reasoning as `loadClubBudgetRow`. */
-export const loadWageBudgetUsed = (clubId: string) =>
+export const loadWageBudgetUsed = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql<{
@@ -205,7 +208,7 @@ export const initializeSeasonEconomy = (seasonNumber: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const clubRows = yield* sql<{
-      id: string;
+      id: ClubId;
       statureTier: StatureTier;
     }>`SELECT id, stature_tier as "statureTier" FROM clubs`;
     for (const club of clubRows) {
@@ -238,7 +241,7 @@ export const initializeSeasonEconomy = (seasonNumber: number) =>
 export const expireContractsForSeason = Effect.gen(function* () {
   const sql = yield* SqlClient;
   yield* sql`UPDATE contracts SET years_remaining = years_remaining - 1`;
-  const expiredRows = yield* sql<{ playerId: string }>`SELECT player_id as "playerId" FROM contracts WHERE years_remaining <= 0`;
+  const expiredRows = yield* sql<{ playerId: PlayerId }>`SELECT player_id as "playerId" FROM contracts WHERE years_remaining <= 0`;
   for (const row of expiredRows) {
     yield* sql`UPDATE players SET club_id = NULL WHERE id = ${row.playerId}`;
   }
@@ -250,17 +253,17 @@ export const expireContractsForSeason = Effect.gen(function* () {
 // ---------------------------------------------------------------------------
 
 interface BidRow {
-  readonly id: string;
-  readonly playerId: string;
-  readonly sellingClubId: string;
-  readonly biddingClubId: string;
+  readonly id: BidId;
+  readonly playerId: PlayerId;
+  readonly sellingClubId: ClubId;
+  readonly biddingClubId: ClubId;
   readonly amount: number;
   readonly counterAmount: number | null;
   readonly status: BidStatus;
   readonly seasonNumber: number;
 }
 
-const loadBidRow = (bidId: string) =>
+const loadBidRow = (bidId: BidId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql<BidRow>`SELECT id, player_id as "playerId", selling_club_id as "sellingClubId",
@@ -269,17 +272,17 @@ const loadBidRow = (bidId: string) =>
     return rows[0] ?? null;
   });
 
-const loadBidsForClub = (clubId: string) =>
+const loadBidsForClub = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql<{
-      id: string;
-      playerId: string;
+      id: BidId;
+      playerId: PlayerId;
       playerFirstName: string;
       playerLastName: string;
-      sellingClubId: string;
+      sellingClubId: ClubId;
       sellingClubName: string;
-      biddingClubId: string;
+      biddingClubId: ClubId;
       biddingClubName: string;
       amount: number;
       counterAmount: number | null;
@@ -331,9 +334,9 @@ const loadBidsForClub = (clubId: string) =>
  * not dictated by the design ticket.
  */
 const completeTransfer = (params: {
-  readonly playerId: string;
-  readonly sellingClubId: string;
-  readonly biddingClubId: string;
+  readonly playerId: PlayerId;
+  readonly sellingClubId: ClubId;
+  readonly biddingClubId: ClubId;
   readonly amount: number;
   readonly seasonNumber: number;
 }) =>
@@ -416,7 +419,7 @@ const completeTransfer = (params: {
  * unreachable, see the note there) and `respondToBid`'s counter branch, the realistic path where
  * the human-controlled club counters an incoming Bid from an AI club.
  */
-export const resolveAiCounterOffer = (bidId: string, biddingClubId: string, seasonNumber: number) =>
+export const resolveAiCounterOffer = (bidId: BidId, biddingClubId: ClubId, seasonNumber: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const bid = yield* loadBidRow(bidId);
@@ -464,7 +467,7 @@ export const resolveAiCounterOffer = (bidId: string, biddingClubId: string, seas
  * checklist explicitly describes a "countered" reaction) and for any future caller that bids a
  * different amount.
  */
-export const aiPlaceBid = (buyingClubId: string, playerId: string, amount: number, seasonNumber: number) =>
+export const aiPlaceBid = (buyingClubId: ClubId, playerId: PlayerId, amount: number, seasonNumber: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const player = yield* loadPlayerEcon(playerId);
@@ -472,7 +475,7 @@ export const aiPlaceBid = (buyingClubId: string, playerId: string, amount: numbe
       return null;
     }
 
-    const id = randomUUID();
+    const id = BidId.make(randomUUID());
     const value = transferValue(player.overallRating, player.age, player.potentialAbility);
     const decision = decideAiSellerResponse(amount, value);
     const status: BidStatus =
@@ -503,7 +506,7 @@ export const aiPlaceBid = (buyingClubId: string, playerId: string, amount: numbe
  * Agent for Credits 0 — no Bid/negotiation step for Free Agents (ADR-0005), so unlike `aiPlaceBid`
  * this is the whole flow by itself. Self-issued in-process by `aiClubs.ts`.
  */
-export const aiSignFreeAgent = (clubId: string, playerId: string, seasonNumber: number) =>
+export const aiSignFreeAgent = (clubId: ClubId, playerId: PlayerId, seasonNumber: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const player = yield* loadPlayerEcon(playerId);
@@ -551,7 +554,7 @@ const buildTransfersScreenView = (club: ClubSummary) =>
     });
   });
 
-export const getTransfersScreen = (savesDir: string, saveId: string) =>
+export const getTransfersScreen = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const club = yield* loadUserClub;
@@ -606,7 +609,7 @@ export const decideAiSellerResponse = (
  * AI-controlled club in this build) responds instantly via `decideAiSellerResponse`, since there's
  * no human on the other side to await — the resulting Bid can come back `accepted` (the transfer
  * completes immediately), `countered` (the user then calls `respondAsBidder`), or `rejected`. */
-export const placeBid = (savesDir: string, saveId: string, playerId: string, amount: number) =>
+export const placeBid = (savesDir: string, saveId: SaveId, playerId: PlayerId, amount: number) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       yield* assertSaveNotSacked(saveId);
@@ -639,7 +642,7 @@ export const placeBid = (savesDir: string, saveId: string, playerId: string, amo
         });
       }
 
-      const id = randomUUID();
+      const id = BidId.make(randomUUID());
       const value = transferValue(player.overallRating, player.age, player.potentialAbility);
       const decision = decideAiSellerResponse(amount, value);
 
@@ -677,8 +680,8 @@ export const placeBid = (savesDir: string, saveId: string, playerId: string, amo
  * at `bid.amount`), reject, or make exactly one counter-offer (ticket 05/16). */
 export const respondToBid = (
   savesDir: string,
-  saveId: string,
-  bidId: string,
+  saveId: SaveId,
+  bidId: BidId,
   action: "accept" | "reject" | "counter",
   counterAmount: number | undefined,
 ) =>
@@ -735,8 +738,8 @@ export const respondToBid = (
  * (`status: "pending"`). */
 export const respondAsBidder = (
   savesDir: string,
-  saveId: string,
-  bidId: string,
+  saveId: SaveId,
+  bidId: BidId,
   action: "accept" | "withdraw",
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
@@ -783,7 +786,7 @@ export const respondAsBidder = (
 
 /** Signing a Free Agent: same Sign flow as any Contract, at Credits 0 and with no Bid step
  * (ticket 05/16 — expiry produces a Free Agent, signable by any club). */
-export const signFreeAgent = (savesDir: string, saveId: string, playerId: string, years: number | undefined) =>
+export const signFreeAgent = (savesDir: string, saveId: SaveId, playerId: PlayerId, years: number | undefined) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       yield* assertSaveNotSacked(saveId);
@@ -830,7 +833,7 @@ export const signFreeAgent = (savesDir: string, saveId: string, playerId: string
 
 /** Renewal reuses the signing flow against the player's current club during an open Transfer
  * Window (ticket 05/16) — same formula wage, a fresh 1-5 year length. */
-export const renewContract = (savesDir: string, saveId: string, playerId: string, years: number | undefined) =>
+export const renewContract = (savesDir: string, saveId: SaveId, playerId: PlayerId, years: number | undefined) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       yield* assertSaveNotSacked(saveId);
@@ -874,7 +877,7 @@ export const renewContract = (savesDir: string, saveId: string, playerId: string
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );
 
-const currentWage = (playerId: string) =>
+const currentWage = (playerId: PlayerId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql<{ wage: number }>`SELECT wage FROM contracts WHERE player_id = ${playerId}`;

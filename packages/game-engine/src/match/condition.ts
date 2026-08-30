@@ -1,3 +1,4 @@
+import type { PlayerId } from "@cm-clone/contracts";
 /**
  * Per-player in-match Condition (%) model (ticket 02/04). Each on-pitch player's Condition starts
  * near 100 and decays each minute at a rate that rises with match work-rate — a low-Stamina player
@@ -22,11 +23,11 @@ export const conditionDecayPerMinute = (stamina: number, tempo: number): number 
 
 /** A live per-team Condition ledger: playerId -> current Condition % (0-100). Players with a
  * carried-over `startingCondition` (ticket 09) start there, everyone else at `START_CONDITION`. */
-export const newConditionLedger = <T extends string>(
-  playerIds: ReadonlyArray<T>,
-  players?: ReadonlyArray<{ readonly id: string; readonly startingCondition?: number }>,
-): Map<T, number> => {
-  const ledger = new Map<T, number>();
+export const newConditionLedger = (
+  playerIds: ReadonlyArray<PlayerId>,
+  players?: ReadonlyArray<{ readonly id: PlayerId; readonly startingCondition?: number }>,
+): Map<PlayerId, number> => {
+  const ledger = new Map<PlayerId, number>();
   const startingById = new Map((players ?? []).map((p) => [p.id, p.startingCondition]));
   for (const id of playerIds) ledger.set(id, clamp(startingById.get(id) ?? START_CONDITION, 0, START_CONDITION));
   return ledger;

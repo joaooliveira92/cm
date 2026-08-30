@@ -4,8 +4,8 @@ import {
   MANAGER_ARCHETYPES,
   MANAGER_ARCHETYPE_DISTRIBUTIONS,
   MANAGER_PILLARS,
+  validatePillarDistribution,
 } from "@cm-clone/shared";
-import { validatePillarDistribution } from "@cm-clone/shared";
 
 export interface CreationStep1Props {
   saveName: string;
@@ -71,7 +71,6 @@ export const CreationStep1 = ({
 
   const sum = Object.values(pillars).reduce((a, b) => a + b, 0);
   const pointsRemaining = 12 - sum;
-  const isValid = sum === 12;
 
   const pillarErrors = validatePillarDistribution(pillars);
 

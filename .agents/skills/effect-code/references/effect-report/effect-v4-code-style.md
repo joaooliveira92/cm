@@ -2,6 +2,8 @@
 
 Source: https://www.effect.website/docs/v4/code-style/guidelines (v4 rc) and the following pages in the Code Style section: `dual`, `branded-types`, `pattern-matching`, `do`, `control-flow`.
 
+Fetch route: append `.md` to any docs URL (`https://www.effect.website/docs/v4/code-style/dual.md`) for the raw Markdown. The bare HTML route serves an Astro shell with no prose in it.
+
 Status: research notes, distilled from the official docs.
 
 See also `.agents/skills/effect-code/SKILL.md` for the core `Effect<A, E, R>` conventions (construction, running, gen vs pipelines) — this file complements it with style-specific guidance and does not re-explain the basics.
@@ -100,22 +102,37 @@ Pure type-level distinction; use when the value doesn't need validation, just a 
 ```ts
 type UserId = number & Brand.Brand<"UserId">
 const UserId = Brand.nominal<UserId>()
+
+UserId(1) // => 1 — performs no validation, just brands the value
 ```
 
 ### `Brand.make` — with runtime validation
-Constructor validates and throws `BrandError` on invalid input.
+The validation function returns `true` for a valid value, or a string describing why the value is invalid. The constructor **throws** `BrandError` on invalid input.
 ```ts
 type Int = number & Brand.Brand<"Int">
 const Int = Brand.make<Int>(
   (n) => Number.isInteger(n) || `Expected ${n} to be an integer`
 )
+
+Int(3)    // => 3
+Int(3.14) // throws BrandError(Expected 3.14 to be an integer)
 ```
+Throwing is the default, so don't call a `Brand.make` constructor on unvalidated input without deciding what should happen. Non-throwing alternatives hang off the constructor: `Int.option(x)` → `Option`, `Int.result(x)` → `Result`, `Int.is(x)` → type guard.
+
+Assignment is checked too — `const bad: Int = 3` is a compile error, not just a runtime one.
 
 ### `Brand.all` — combine multiple brands
 ```ts
 const PositiveInt = Brand.all(Int, Positive)
+
+// recover the branded type from the combined constructor
+type PositiveInt = Brand.Brand.FromConstructor<typeof PositiveInt>
+
+PositiveInt(10)   // => 10
+PositiveInt(-5)   // throws BrandError(Expected -5 to be positive)
+PositiveInt(3.14) // throws BrandError(Expected 3.14 to be an integer)
 ```
-Produces a single constructor that enforces every combined constraint.
+Produces a single constructor that enforces every combined constraint. `Brand.Brand.FromConstructor<typeof C>` is how you name the resulting type — there's no separate type declaration to write.
 
 Use branded types for domain identifiers and validated primitives (IDs, positive counts, non-empty strings, emails) to prevent accidental mixups that the structural type system alone won't catch.
 
@@ -152,10 +169,12 @@ Enforce a return type across all branches with `Match.withReturnType<T>()`:
 ```ts
 const match = Match.type<{ a: number } | { b: string }>().pipe(
   Match.withReturnType<string>(),
-  Match.when({ b: Match.string }, (_) => _.b),
+  Match.when({ a: Match.number }, (_) => _.a), // ❌ returns a number
+  Match.when({ b: Match.string }, (_) => _.b), // ✅ returns a string
   Match.exhaustive,
 )
 ```
+**`Match.withReturnType<T>()` must be the first instruction in the pipeline.** Placed later it still compiles and still type-checks — it just stops enforcing anything. This fails silently, so it's worth checking whenever a matcher's branches drift apart in return type.
 
 ### Combinators
 - **`Match.when`** — pattern can be a literal value, a shape (partial object with predicates/values per field), or a predicate function.
@@ -188,10 +207,12 @@ const match = Match.type<{ a: number } | { b: string }>().pipe(
     Match.exhaustive,
   )
   ```
+  `Match.tag` is hard-wired to the ecosystem convention of naming the discriminant `"_tag"` — a union discriminated on any other field needs `Match.when` with a shape pattern instead.
+
   This pairs naturally with `Data.TaggedError`/tagged data types from the effect-code skill's error conventions — same `_tag` discriminant, used here for exhaustive branching instead of catching.
 
 ### Built-in predicates
-`Match.string`, `Match.number`, `Match.boolean`, `Match.bigint`, `Match.symbol`, `Match.date`, `Match.null`, `Match.undefined`, `Match.defined`, `Match.any`, `Match.instanceOf(Class)`, `Match.is(...values)`.
+`Match.string`, `Match.nonEmptyString`, `Match.number`, `Match.boolean`, `Match.bigint`, `Match.symbol`, `Match.date`, `Match.record` (keys `string | symbol`, values `unknown`), `Match.null`, `Match.undefined`, `Match.defined` (non-null and non-undefined), `Match.any`, `Match.instanceOf(Class)`, `Match.is(...values)` (a set of literals, e.g. `Match.is("a", 42, true)`).
 
 ### Finalizers
 | Finalizer | Behavior |
@@ -199,7 +220,7 @@ const match = Match.type<{ a: number } | { b: string }>().pipe(
 | `Match.exhaustive` | Requires every case handled; TS compile error if a case is missing. |
 | `Match.orElse` | Fallback function for anything unmatched. |
 | `Match.option` | Wraps the result in `Option` (`Some`/`None`). |
-| `Match.result` | Wraps the result in `Result` (`Success`/`Failure`). |
+| `Match.result` | Wraps the result in `Result`. A match gives `Result.succeed(value)`; **no match gives `Result.fail(input)` — the failure carries the unmatched input**, not a "no match" marker, despite what the page's prose says. |
 
 ---
 
@@ -313,6 +334,16 @@ Beyond plain JS `if`/`for`/`while` (usable directly inside `Effect.gen`), Effect
   ```
 
 Note: `Effect.if`, `Effect.cond`, `Effect.filterOrFail`, and `Effect.unless` are **not** documented on this page as of this fetch — the control-flow doc's actual scope is `when`, `zip`/`zipWith`, `whileLoop`, `forEach`, and `all`. If those other operators are needed, verify current existence/signature against the API reference or source directly rather than assuming from v3 knowledge.
+
+---
+
+## Upstream doc inconsistencies (as of this fetch)
+
+Recorded so a future re-read doesn't spend time reconciling them:
+
+- **branded-types** heads its validation section `### refined` but documents `Brand.make` throughout. `refined` is the v3 name; `Brand.make` is what v4 exports. This file uses `Brand.make`.
+- **control-flow** documents `Effect.whileLoop` with a syntax block, then gives two "examples" that are plain `while` loops inside `Effect.gen` and never call `Effect.whileLoop`. The syntax block is the only real description of the API on that page — treat the examples as showing the `Effect.gen` alternative, not the operator.
+- **pattern-matching** says `Match.result`'s failure case is `Failure(no match)`, but its own example returns `Result.fail({ role: "viewer" })` — the unmatched input. The example is the accurate one.
 
 ---
 

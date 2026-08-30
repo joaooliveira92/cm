@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import type { BidView, MarketPlayerView, TransfersScreenView } from "@cm-clone/contracts";
+import type { BidId, BidView, MarketPlayerView, PlayerId, SaveId, TransfersScreenView } from "@cm-clone/contracts";
 
 const formatCredits = (amount: number) => `${amount.toLocaleString()} Cr`;
 
-export const TransfersScreen = ({ saveId }: { readonly saveId: string }) => {
+export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [view, setView] = useState<TransfersScreenView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -43,16 +43,16 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: string }) => {
     }
   };
 
-  const onBid = (playerId: string) => {
+  const onBid = (playerId: PlayerId) => {
     const amount = Number(bidAmounts[playerId] ?? 0);
     if (!amount || amount <= 0) return;
     void run("Bid", () => window.cmClone.call("placeBid", { saveId, playerId, amount }));
   };
 
-  const onSignFreeAgent = (playerId: string) =>
+  const onSignFreeAgent = (playerId: PlayerId) =>
     run("Sign", () => window.cmClone.call("signFreeAgent", { saveId, playerId }));
 
-  const onRespondToBid = (bidId: string, action: "accept" | "reject" | "counter") => {
+  const onRespondToBid = (bidId: BidId, action: "accept" | "reject" | "counter") => {
     if (action === "counter") {
       const counterAmount = Number(prompt("Counter-offer amount (Credits)") ?? "");
       if (!counterAmount || counterAmount <= 0) return;
@@ -66,7 +66,7 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: string }) => {
     );
   };
 
-  const onRespondAsBidder = (bidId: string, action: "accept" | "withdraw") =>
+  const onRespondAsBidder = (bidId: BidId, action: "accept" | "withdraw") =>
     run(action === "accept" ? "Accept counter" : "Withdraw", () =>
       window.cmClone.call("respondAsBidder", { saveId, bidId, action }),
     );

@@ -25,6 +25,7 @@ import {
   type ResolvedSlot,
 } from "./tactical-modifiers.js";
 import type { MatchPlayerInput, MatchTeamSetup, PhaseStrengths, TacticalModifiers } from "./types.js";
+import type { ClubId, PlayerId } from "@cm-clone/contracts";
 
 const HALF_LENGTH_MINUTES = 45;
 const HOME_ADVANTAGE_MULTIPLIER = 1.075;
@@ -57,18 +58,18 @@ const clamp = (value: number, min: number, max: number): number => Math.min(max,
  * or role beyond the `isGoalkeeper` flag the GK fallback needs.
  */
 interface TeamRuntimeState {
-  readonly clubId: string;
-  readonly playersById: Map<string, MatchPlayerInput>;
+  readonly clubId: ClubId;
+  readonly playersById: Map<PlayerId, MatchPlayerInput>;
   resolved: ResolvedTeamTactics;
   substitutionsUsed: number;
   windowsUsed: number;
   lastWindowMinute: number | null;
   /** Per-player live Condition % (ticket 02) — keyed by playerId, decayed each minute. */
-  readonly conds: Map<string, number>;
+  readonly conds: Map<PlayerId, number>;
   /** Players carrying an in-match Pace/Acceleration/Agility slash from an orange knock (ticket 03). */
-  readonly penalties: Set<string>;
+  readonly penalties: Set<PlayerId>;
   /** Players currently standing in as goalkeeper (shot-stopping treated as 1) after a red GK is off (ticket 07). */
-  readonly gkStandIns: Set<string>;
+  readonly gkStandIns: Set<PlayerId>;
 }
 
 export interface SimulateMatchInput {
@@ -156,7 +157,7 @@ const penalizedPlayer = (team: TeamRuntimeState, player: MatchPlayerInput): Matc
 };
 
 const computeTeamStrengths = (team: TeamRuntimeState): TeamStrengths => {
-  const effectiveById = new Map<string, MatchPlayerInput>();
+  const effectiveById = new Map<PlayerId, MatchPlayerInput>();
   for (const [id, player] of team.playersById) effectiveById.set(id, penalizedPlayer(team, player));
   const { base, bumps } = aggregatePhaseSlots(team.resolved.slots, effectiveById);
   return { base, modifiers: applyRoleBumps(team.resolved.instructions, bumps) };
@@ -198,7 +199,7 @@ const effectiveStrengths = (
   };
 };
 
-const pickPlayerId = (team: TeamRuntimeState, random: RandomSource, preferAttacking: boolean): string | undefined => {
+const pickPlayerId = (team: TeamRuntimeState, random: RandomSource, preferAttacking: boolean): PlayerId | undefined => {
   const onPitchSlots = team.resolved.slots;
   const pool = preferAttacking ? onPitchSlots.filter((slot) => slot.phase === "attack") : onPitchSlots;
   const chosenFrom = pool.length > 0 ? pool : onPitchSlots;
@@ -264,7 +265,7 @@ const resolveCards = (
  * slot (10 men) and, if it's the last GK, forces an outfield stand-in. */
 const applyInjury = (
   team: TeamRuntimeState,
-  playerId: string,
+  playerId: PlayerId,
   trigger: InjuryTrigger,
   minute: number,
   half: MatchHalf,
@@ -305,7 +306,7 @@ const applyInjury = (
  *  the slot (team plays with 10); a red GK with no sub forces an outfield into the goal at gk=1. */
 const forcePlayerOff = (
   team: TeamRuntimeState,
-  playerId: string,
+  playerId: PlayerId,
   minute: number,
   half: MatchHalf,
   events: Array<MatchEvent>,
@@ -379,7 +380,7 @@ const emptySlot = (
 };
 
 /** Marks a player standing in for a GK as gk=1 unless they're genuinely GK-capable. */
-const normalizeGoalkeeper = (team: TeamRuntimeState, playerId: string): void => {
+const normalizeGoalkeeper = (team: TeamRuntimeState, playerId: PlayerId): void => {
   const player = team.playersById.get(playerId);
   if (!player) return;
   const hasGoalkeeping = player.attributes.gkHandling != null;
@@ -501,7 +502,7 @@ const resolveSlice = (
  *  and consumes no substitution/window. Returns false if the player isn't on the pitch. */
 const applyForcedOff = (
   team: TeamRuntimeState,
-  playerId: string,
+  playerId: PlayerId,
   minute: number,
   half: MatchHalf,
   events: Array<MatchEvent>,
@@ -631,9 +632,9 @@ export const simulateMatch = (input: SimulateMatchInput): ReadonlyArray<MatchEve
  * array as `simulateMatch`. */
 export const simulateMatchWithCondition = (
   input: SimulateMatchInput,
-): { readonly events: ReadonlyArray<MatchEvent>; readonly conditions: ReadonlyMap<string, number> } => {
+): { readonly events: ReadonlyArray<MatchEvent>; readonly conditions: ReadonlyMap<PlayerId, number> } => {
   const { events, home, away } = runSimulation(input);
-  return { events, conditions: new Map<string, number>([...home.conds, ...away.conds]) };
+  return { events, conditions: new Map<PlayerId, number>([...home.conds, ...away.conds]) };
 };
 
 /** Deterministic twin of `simulateMatch` that also returns each player's full-time Condition and the
@@ -643,9 +644,9 @@ export const simulateMatchWithCounts = (
   input: SimulateMatchInput,
 ): {
   readonly events: ReadonlyArray<MatchEvent>;
-  readonly conditions: ReadonlyMap<string, number>;
+  readonly conditions: ReadonlyMap<PlayerId, number>;
   readonly counts: ReadonlyArray<MatchPlayerCountEntry>;
 } => {
   const { events, home, away, counts } = runSimulation(input);
-  return { events, conditions: new Map<string, number>([...home.conds, ...away.conds]), counts };
+  return { events, conditions: new Map<PlayerId, number>([...home.conds, ...away.conds]), counts };
 };

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import type { FixturesView } from "@cm-clone/contracts";
+import type { FixturesView, SaveId } from "@cm-clone/contracts";
 
-export const FixturesScreen = ({ saveId }: { readonly saveId: string }) => {
+export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [fixtures, setFixtures] = useState<FixturesView | null>(null);
   const [error, setError] = useState<string | null>(null);
 

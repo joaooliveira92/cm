@@ -1,0 +1,712 @@
+<!--
+PROTOTYPE — throwaway artifact for discussion.
+Part of ticket 05-global-key-map.
+Validates the key map decisions: prefix navigation, dispatch priority,
+text-input suppression, overlay layering.
+Double-click this file to run.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Key Map Prototype — Transfers Screen</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #020617; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; min-height: 100vh; }
+
+  /* Nav */
+  .nav { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; background: #020617; padding: 8px 16px; }
+  .nav-tabs { display: flex; gap: 6px; }
+  .nav-tab { border-radius: 4px; border: none; padding: 4px 12px; cursor: pointer; font-size: 13px; background: #1e293b; color: #94a3b8; }
+  .nav-tab.active { background: #f1f5f9; color: #0f172a; }
+  .nav-tab:hover:not(.active) { background: #334155; }
+
+  /* Prefix indicator */
+  .prefix-bar { display: none; padding: 4px 16px; font-size: 13px; background: #1e293b; color: #94a3b8; border-bottom: 1px solid #334155; }
+  .prefix-bar.visible { display: block; }
+  .prefix-bar kbd { background: #0f172a; border: 1px solid #475569; border-radius: 3px; padding: 1px 5px; font-family: monospace; font-size: 12px; color: #e2e8f0; }
+
+  /* Main content */
+  .main { padding: 16px; max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 700; }
+  .subtitle { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+  .status { font-size: 13px; color: #94a3b8; margin-top: 4px; min-height: 20px; }
+
+  /* Sections */
+  section { margin-top: 24px; }
+  section h2 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 4px 12px 4px 0; color: #94a3b8; border-bottom: 1px solid #334155; font-weight: 500; }
+  td { padding: 6px 12px 6px 0; border-bottom: 1px solid #1e293b; }
+
+  .btn { border-radius: 4px; border: none; padding: 4px 10px; font-size: 12px; cursor: pointer; background: #334155; color: #e2e8f0; }
+  .btn:hover { background: #475569; }
+  .btn:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
+  .btn-group { display: flex; gap: 4px; }
+
+  input[type="text"], input[type="number"] { background: #0f172a; border: 1px solid #334155; border-radius: 4px; padding: 4px 8px; font-size: 12px; color: #e2e8f0; width: 100px; }
+  input:focus { outline: none; border-color: #60a5fa; }
+
+  .empty-row td { color: #64748b; padding: 8px 0; }
+
+  /* Action log */
+  .action-log { margin-top: 32px; border-top: 1px solid #1e293b; padding-top: 12px; }
+  .action-log h3 { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .action-log p { font-size: 12px; color: #64748b; font-family: monospace; margin: 2px 0; }
+  .action-log .dispatch { color: #4ade80; }
+  .action-log .suppressed { color: #f87171; }
+  .action-log .system { color: #94a3b8; }
+
+  /* Overlays */
+  .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; }
+  .overlay.visible { display: block; }
+  .overlay-backdrop { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); }
+  .overlay-content { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 20px; min-width: 480px; max-width: 600px; max-height: 70vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
+  .overlay-content h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+  .overlay-content p { font-size: 13px; color: #94a3b8; margin-bottom: 8px; }
+
+  /* Palette */
+  .palette-search { width: 100%; background: #0f172a; border: 1px solid #475569; border-radius: 4px; padding: 8px 12px; font-size: 14px; color: #e2e8f0; margin-bottom: 12px; }
+  .palette-search:focus { border-color: #60a5fa; outline: none; }
+  .palette-item { display: flex; justify-content: space-between; padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .palette-item:hover, .palette-item.selected { background: #334155; }
+  .palette-item kbd { font-family: monospace; font-size: 11px; color: #64748b; }
+
+  /* Help overlay */
+  .help-section { margin-bottom: 16px; }
+  .help-section h3 { font-size: 13px; font-weight: 600; color: #94a3b8; margin-bottom: 4px; }
+  .help-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; }
+  .help-row kbd { font-family: monospace; font-size: 12px; color: #64748b; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px 16px; font-size: 13px; color: #e2e8f0; z-index: 200; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  .toast.visible { opacity: 1; }
+
+  /* No-op state */
+  .no-op { color: #64748b; }
+</style>
+</head>
+<body>
+
+<!-- Nav bar -->
+<nav class="nav">
+  <div class="nav-tabs" role="tablist" id="navTabs">
+    <button class="nav-tab active" data-screen="squad" role="tab">Squad</button>
+    <button class="nav-tab" data-screen="tactics" role="tab">Tactics</button>
+    <button class="nav-tab" data-screen="transfers" role="tab">Transfers</button>
+    <button class="nav-tab" data-screen="league-table" role="tab">League Table</button>
+    <button class="nav-tab" data-screen="fixtures" role="tab">Fixtures</button>
+    <button class="nav-tab" data-screen="match-day" role="tab">Match Day</button>
+    <button class="nav-tab" data-screen="season-summary" role="tab">Season Summary</button>
+  </div>
+  <button class="btn" id="backBtn">← Back to saves</button>
+</nav>
+
+<!-- Prefix indicator -->
+<div class="prefix-bar" id="prefixBar">
+  Go to: <kbd>S</kbd>quad · T<kbd>a</kbd>ctics · <kbd>T</kbd>ransfers · <kbd>L</kbd>eague Table · <kbd>F</kbd>ixtures · <kbd>M</kbd>atch Day · Season Summar<kbd>y</kbd> · <kbd>B</kbd>ack &nbsp;&nbsp; <span style="color:#64748b">[Esc to cancel]</span>
+</div>
+
+<!-- Main -->
+<div class="main" id="mainContent">
+  <div id="screenContent">
+    <h1>Transfers — Prototype FC</h1>
+    <p class="subtitle">Transfer Window: Open · Budget: 12,500,000 Cr · Wage: 98,000 / 140,000</p>
+    <p class="status" id="statusBar">Press <kbd style="background:#1e293b;padding:1px 4px;border-radius:3px;font-size:12px">b</kbd> to focus the Bid workflow.</p>
+
+    <section>
+      <h2>Incoming Bids</h2>
+      <table>
+        <thead><tr><th>Player</th><th>From</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td>J. Santos</td><td>Real Madrid</td><td>8,500,000 Cr</td><td>Pending</td><td><div class="btn-group"><button class="btn">Accept</button><button class="btn">Counter</button><button class="btn">Reject</button></div></td></tr>
+          <tr><td>P. Müller</td><td>Bayern</td><td>3,200,000 Cr</td><td>Countered</td><td><div class="btn-group"><button class="btn">Accept</button><button class="btn">Reject</button></div></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Outgoing Bids</h2>
+      <table>
+        <thead><tr><th>Player</th><th>To</th><th>Amount</th><th>Counter</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td>A. Silva</td><td>Benfica</td><td>6,000,000 Cr</td><td>—</td><td>Pending</td><td><button class="btn">Withdraw</button></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Market</h2>
+      <div style="max-height:300px;overflow-y:auto">
+        <table>
+          <thead><tr><th>Name</th><th>Age</th><th>Club</th><th>OVR</th><th>Value</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr data-player="m1"><td>K. Mbappé</td><td>25</td><td>PSG</td><td>91</td><td>180,000,000 Cr</td><td><div class="bid-cell"><input type="number" class="bid-input" placeholder="Amount" data-player="m1" /><button class="btn bid-btn" data-player="m1">Bid</button></div></td></tr>
+            <tr data-player="m2"><td>E. Haaland</td><td>24</td><td>Man City</td><td>91</td><td>175,000,000 Cr</td><td><div class="bid-cell"><input type="number" class="bid-input" placeholder="Amount" data-player="m2" /><button class="btn bid-btn" data-player="m2">Bid</button></div></td></tr>
+            <tr data-player="m3"><td>J. Bellingham</td><td>22</td><td>Real Madrid</td><td>89</td><td>150,000,000 Cr</td><td><div class="bid-cell"><input type="number" class="bid-input" placeholder="Amount" data-player="m3" /><button class="btn bid-btn" data-player="m3">Bid</button></div></td></tr>
+            <tr data-player="m4"><td>L. Yamal</td><td>18</td><td>Barcelona</td><td>86</td><td>120,000,000 Cr</td><td><div class="bid-cell"><input type="number" class="bid-input" placeholder="Amount" data-player="m4" /><button class="btn bid-btn" data-player="m4">Bid</button></div></td></tr>
+            <tr data-player="m5"><td>V. Osimhen</td><td>25</td><td>Napoli</td><td>88</td><td>100,000,000 Cr</td><td><div class="bid-cell"><input type="number" class="bid-input" placeholder="Amount" data-player="m5" /><button class="btn bid-btn" data-player="m5">Bid</button></div></td></tr>
+            <tr data-player="m6"><td>F. Wirtz</td><td>21</td><td>Leverkusen</td><td>85</td><td>85,000,000 Cr</td><td><div class="bid-cell"><input type="number" class="bid-input" placeholder="Amount" data-player="m6" /><button class="btn bid-btn" data-player="m6">Bid</button></div></td></tr>
+            <tr data-player="m7"><td>A. Davies</td><td>24</td><td>Bayern</td><td>84</td><td>70,000,000 Cr</td><td><div class="bid-cell"><input type="number" class="bid-input" placeholder="Amount" data-player="m7" /><button class="btn bid-btn" data-player="m7">Bid</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Free Agents</h2>
+      <table>
+        <thead><tr><th>Name</th><th>Age</th><th>OVR</th><th>Value</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td>S. Ramos</td><td>38</td><td>82</td><td>0 Cr</td><td><button class="btn">Sign (0 Cr)</button></td></tr>
+          <tr><td>D. De Gea</td><td>34</td><td>83</td><td>0 Cr</td><td><button class="btn">Sign (0 Cr)</button></td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <!-- Action log -->
+  <div class="action-log">
+    <h3>Keyboard dispatch log</h3>
+    <div id="logEntries">
+      <p class="system">▶ Prototype loaded. Try: <kbd style="background:#1e293b;padding:1px 4px;border-radius:3px">g</kbd> + key for navigation, <kbd style="background:#1e293b;padding:1px 4px;border-radius:3px">Cmd+K</kbd> for palette, <kbd style="background:#1e293b;padding:1px 4px;border-radius:3px">Cmd+/</kbd> for help.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Command palette overlay -->
+<div class="overlay" id="paletteOverlay">
+  <div class="overlay-backdrop" id="paletteBackdrop"></div>
+  <div class="overlay-content">
+    <h2>Command Palette</h2>
+    <input type="text" class="palette-search" id="paletteSearch" placeholder="Type to filter…" autocomplete="off" />
+    <div id="paletteResults"></div>
+    <p style="margin-top:12px;font-size:11px;color:#475569">Type to filter · Enter to execute · Esc to close</p>
+  </div>
+</div>
+
+<!-- Help overlay -->
+<div class="overlay" id="helpOverlay">
+  <div class="overlay-backdrop" id="helpBackdrop"></div>
+  <div class="overlay-content" id="helpContent">
+    <h2>Keyboard Help</h2>
+    <div id="helpBody">
+      <div class="help-section">
+        <h3>Global</h3>
+        <div class="help-row"><span>Open command palette</span> <kbd>Cmd+K</kbd></div>
+        <div class="help-row"><span>Open keyboard help</span> <kbd>Cmd+/</kbd></div>
+        <div class="help-row"><span>Continue</span> <kbd>Space</kbd></div>
+      </div>
+      <div class="help-section">
+        <h3>Navigation</h3>
+        <div class="help-row"><span>Go to Squad</span> <kbd>g s</kbd></div>
+        <div class="help-row"><span>Go to Tactics</span> <kbd>g a</kbd></div>
+        <div class="help-row"><span>Go to Transfers</span> <kbd>g t</kbd></div>
+        <div class="help-row"><span>Go to League Table</span> <kbd>g l</kbd></div>
+        <div class="help-row"><span>Go to Fixtures</span> <kbd>g f</kbd></div>
+        <div class="help-row"><span>Go to Match Day</span> <kbd>g m</kbd></div>
+        <div class="help-row"><span>Go to Season Summary</span> <kbd>g y</kbd></div>
+        <div class="help-row"><span>Go to previous screen</span> <kbd>g b</kbd></div>
+      </div>
+      <div class="help-section">
+        <h3>Transfers</h3>
+        <div class="help-row"><span>Focus Bid workflow</span> <kbd>b</kbd></div>
+      </div>
+      <div class="help-section">
+        <h3>Interaction</h3>
+        <div class="help-row"><span>Activate focused element</span> <kbd>Enter</kbd></div>
+        <div class="help-row"><span>Close / cancel topmost layer</span> <kbd>Esc</kbd></div>
+        <div class="help-row"><span>Navigate tabs / grid</span> <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd></div>
+      </div>
+    </div>
+    <p style="margin-top:12px;font-size:11px;color:#475569">Press Esc to close</p>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ---- State ----
+  const SCREENS = {
+    'squad': 'Squad',
+    'tactics': 'Tactics',
+    'transfers': 'Transfers',
+    'league-table': 'League Table',
+    'fixtures': 'Fixtures',
+    'match-day': 'Match Day',
+    'season-summary': 'Season Summary',
+  };
+
+  const SCREEN_KEYS = { s:'squad', a:'tactics', t:'transfers', l:'league-table', f:'fixtures', m:'match-day', y:'season-summary' };
+
+  let currentScreen = 'transfers';
+  let prefixActive = false;
+  let prefixTimer = null;
+  let history = [];
+  let overlayStack = []; // ['palette' | 'help' | 'prefix']
+  let textInputFocused = false;
+
+  // ---- DOME refs ----
+  const navTabs = document.getElementById('navTabs');
+  const prefixBar = document.getElementById('prefixBar');
+  const screenContent = document.getElementById('screenContent');
+  const statusBar = document.getElementById('statusBar');
+  const logEntries = document.getElementById('logEntries');
+  const toast = document.getElementById('toast');
+
+  const paletteOverlay = document.getElementById('paletteOverlay');
+  const paletteSearch = document.getElementById('paletteSearch');
+  const paletteResults = document.getElementById('paletteResults');
+  const paletteBackdrop = document.getElementById('paletteBackdrop');
+
+  const helpOverlay = document.getElementById('helpOverlay');
+  const helpBackdrop = document.getElementById('helpBackdrop');
+
+  let toastTimer = null;
+
+  // ---- Logging ----
+  function log(text, cls = 'system') {
+    const p = document.createElement('p');
+    p.className = cls;
+    p.textContent = '▸ ' + text;
+    logEntries.appendChild(p);
+    logEntries.scrollTop = logEntries.scrollHeight;
+  }
+
+  function showToast(text) {
+    toast.textContent = text;
+    toast.classList.add('visible');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('visible'), 2000);
+  }
+
+  // ---- Overlay management ----
+  function topOverlay() {
+    return overlayStack.length > 0 ? overlayStack[overlayStack.length - 1] : null;
+  }
+
+  function closeTopOverlay() {
+    const top = topOverlay();
+    if (!top) return false;
+    if (top === 'palette') { paletteOverlay.classList.remove('visible'); }
+    else if (top === 'help') { helpOverlay.classList.remove('visible'); }
+    else if (top === 'prefix') { clearPrefix(); }
+    overlayStack = overlayStack.filter(o => o !== top);
+    log(`Esc → closed ${top} overlay`, 'system');
+    showToast(`Closed ${top}`);
+    return true;
+  }
+
+  function openPalette() {
+    if (topOverlay() === 'palette') { closeTopOverlay(); return; }
+    if (topOverlay() === 'help') return; // don't open palette under help
+    paletteOverlay.classList.add('visible');
+    overlayStack.push('palette');
+    renderPalette('');
+    paletteSearch.value = '';
+    setTimeout(() => paletteSearch.focus(), 50);
+    log('Cmd+K → opened command palette', 'dispatch');
+  }
+
+  function openHelp() {
+    if (topOverlay() === 'help') { closeTopOverlay(); return; }
+    helpOverlay.classList.add('visible');
+    overlayStack.push('help');
+    log('Cmd+/ → opened keyboard help', 'dispatch');
+  }
+
+  // ---- Prefix ----
+  function activatePrefix() {
+    if (textInputFocused) return;
+    if (topOverlay()) return; // don't start prefix under an overlay
+    prefixActive = true;
+    prefixBar.classList.add('visible');
+    overlayStack.push('prefix');
+    if (prefixTimer) clearTimeout(prefixTimer);
+    prefixTimer = setTimeout(() => {
+      if (prefixActive) {
+        log('Prefix timeout → cancelled', 'suppressed');
+        clearPrefix();
+      }
+    }, 2000);
+    log('g → prefix active, waiting for destination key…', 'dispatch');
+    showToast('Go to…');
+  }
+
+  function clearPrefix() {
+    prefixActive = false;
+    prefixBar.classList.remove('visible');
+    if (prefixTimer) { clearTimeout(prefixTimer); prefixTimer = null; }
+    overlayStack = overlayStack.filter(o => o !== 'prefix');
+  }
+
+  function completePrefix(key) {
+    clearPrefix();
+    // Look up the destination
+    const dest = SCREEN_KEYS[key];
+    if (!dest) {
+      log(`g ${key} → no such destination (cancelled silently)`, 'suppressed');
+      showToast(`No destination for "${key}"`);
+      return;
+    }
+    navigateTo(dest);
+    log(`g ${key} → navigating to ${SCREENS[dest]}`, 'dispatch');
+    showToast(`→ ${SCREENS[dest]}`);
+  }
+
+  // ---- Navigation ----
+  function navigateTo(screen) {
+    if (screen === currentScreen) {
+      log(`${SCREENS[screen]} is current screen → no-op`, 'system');
+      showToast('Already on ' + SCREENS[screen]);
+      return;
+    }
+    history.push(currentScreen);
+    setScreen(screen);
+  }
+
+  function goBack() {
+    if (history.length === 0) {
+      log('g b → no previous screen in history', 'system');
+      showToast('No previous screen');
+      return;
+    }
+    const prev = history.pop();
+    log(`g b → back to ${SCREENS[prev]}`, 'dispatch');
+    showToast(`← ${SCREENS[prev]}`);
+    setScreen(prev);
+  }
+
+  function setScreen(screen) {
+    currentScreen = screen;
+    // Update nav tabs
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.screen === screen);
+    });
+    // Update page title area
+    const name = SCREENS[screen];
+    const title = screenContent.querySelector('h1');
+    title.textContent = name + (screen !== 'transfers' ? ' — (mock content)' : ' — Prototype FC');
+
+    // Update subtitle for non-transfers screens
+    const subtitle = screenContent.querySelector('.subtitle');
+    if (screen === 'transfers') {
+      subtitle.style.display = 'block';
+      subtitle.textContent = 'Transfer Window: Open · Budget: 12,500,000 Cr · Wage: 98,000 / 140,000';
+      statusBar.innerHTML = 'Press <kbd style="background:#1e293b;padding:1px 4px;border-radius:3px;font-size:12px">b</kbd> to focus the Bid workflow.';
+
+      // Show the full transfers content
+      document.querySelectorAll('section').forEach(s => s.style.display = '');
+    } else {
+      subtitle.style.display = 'block';
+      subtitle.textContent = 'Mock content — keyboard bindings active';
+      statusBar.textContent = `On ${name}. Try g <key> to navigate elsewhere.`;
+
+      // Hide all sections except the first
+      const sections = document.querySelectorAll('section');
+      sections.forEach((s, i) => {
+        s.style.display = i === 0 ? 'none' : 'none';
+      });
+    }
+
+    log(`Switched to ${name}`, 'system');
+  }
+
+  // ---- Palette ----
+  function renderPalette(filter) {
+    const actions = [
+      { label: 'Go to Squad', binding: 'g s', action: () => { closeAllOverlays(); navigateTo('squad'); } },
+      { label: 'Go to Tactics', binding: 'g a', action: () => { closeAllOverlays(); navigateTo('tactics'); } },
+      { label: 'Go to Transfers', binding: 'g t', action: () => { closeAllOverlays(); navigateTo('transfers'); } },
+      { label: 'Go to League Table', binding: 'g l', action: () => { closeAllOverlays(); navigateTo('league-table'); } },
+      { label: 'Go to Fixtures', binding: 'g f', action: () => { closeAllOverlays(); navigateTo('fixtures'); } },
+      { label: 'Go to Match Day', binding: 'g m', action: () => { closeAllOverlays(); navigateTo('match-day'); } },
+      { label: 'Go to Season Summary', binding: 'g y', action: () => { closeAllOverlays(); navigateTo('season-summary'); } },
+      { label: 'Go to previous screen', binding: 'g b', action: () => { closeAllOverlays(); goBack(); } },
+      { label: 'Continue', binding: 'Space', action: () => { closeAllOverlays(); showToast('Continue: advancing calendar…'); log('Space → Continue (career action)', 'dispatch'); } },
+      { label: 'Focus Bid workflow', binding: 'b', action: () => { closeAllOverlays(); focusBidInput(); } },
+    ];
+
+    const f = filter.toLowerCase();
+    const filtered = actions.filter(a => a.label.toLowerCase().includes(f));
+
+    paletteResults.innerHTML = '';
+    if (filtered.length === 0) {
+      paletteResults.innerHTML = '<p style="color:#64748b;font-size:13px;padding:8px;">No matching commands</p>';
+      return;
+    }
+    filtered.forEach(a => {
+      const div = document.createElement('div');
+      div.className = 'palette-item';
+      div.innerHTML = `<span>${a.label}</span><kbd>${a.binding}</kbd>`;
+      div.addEventListener('click', a.action);
+      div.addEventListener('mousedown', e => e.preventDefault()); // avoid blur
+      paletteResults.appendChild(div);
+    });
+  }
+
+  function closeAllOverlays() {
+    while (overlayStack.length > 0) { closeTopOverlay(); }
+    paletteOverlay.classList.remove('visible');
+    helpOverlay.classList.remove('visible');
+    clearPrefix();
+  }
+
+  // ---- Screen-scoped actions ----
+  let bidFocusIndex = 0;
+
+  function focusBidInput() {
+    if (currentScreen !== 'transfers') {
+      log('b → not on Transfers screen, no action', 'suppressed');
+      return;
+    }
+    if (textInputFocused) {
+      log('b → text input focused, suppressed', 'suppressed');
+      return;
+    }
+    if (topOverlay()) return;
+
+    const inputs = document.querySelectorAll('.bid-input');
+    if (inputs.length === 0) return;
+
+    // Focus the first available bid input; cycle through them on repeated presses
+    bidFocusIndex = (bidFocusIndex + 1) % inputs.length;
+    inputs[bidFocusIndex].focus();
+    inputs[bidFocusIndex].select();
+    log('b → focused Bid input #' + (bidFocusIndex + 1), 'dispatch');
+    showToast('✏️ Bid input focused');
+  }
+
+  // ---- Continue (Space) ----
+  function doContinue() {
+    if (textInputFocused) {
+      log('Space → text input focused, suppressed', 'suppressed');
+      return;
+    }
+    if (topOverlay()) return;
+    showToast('Continue: advancing calendar…');
+    log('Space → Continue (career-global action)', 'dispatch');
+  }
+
+  // ---- Keyboard dispatch ----
+  function isTextInput(el) {
+    if (!el) return false;
+    const tag = el.tagName.toLowerCase();
+    return (tag === 'input' && el.type !== 'checkbox' && el.type !== 'radio' && el.type !== 'button' && el.type !== 'submit' && el.type !== 'reset')
+      || tag === 'textarea'
+      || el.isContentEditable;
+  }
+
+  function isModifier(e) {
+    return e.key === 'Meta' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift';
+  }
+
+  document.addEventListener('keydown', function(e) {
+    // Track text input focus
+    textInputFocused = isTextInput(document.activeElement);
+
+    // Log all keydowns for debugging
+    const mods = [];
+    if (e.metaKey) mods.push('Cmd');
+    if (e.ctrlKey) mods.push('Ctrl');
+    if (e.altKey) mods.push('Alt');
+    if (e.shiftKey) mods.push('Shift');
+    const modStr = mods.length ? mods.join('+') + '+' : '';
+    if (!isModifier(e)) {
+      log(`keydown: ${modStr}${e.key} ${textInputFocused ? '(text input focused)' : ''}`, 'system');
+    }
+
+    // Step 0: Always let native text editing and focused-control behaviour through
+    if (textInputFocused) {
+      if (e.key === 'Enter' || e.key === 'Escape' || e.key === 'Tab') {
+        // These are OK — they're the standard focus/interaction keys
+        // Don't preventDefault for these in text inputs
+        return;
+      }
+      // Let everything through to the text input except Cmd+K and Cmd+/
+      if (!(e.metaKey || e.ctrlKey)) return;
+    }
+
+    // Step 0b: Handle modifier keys themselves
+    if (isModifier(e)) return;
+
+    // Special: Cmd+K, Ctrl+K — palette (available even in text input, except when editing shortcuts take priority)
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      openPalette();
+      return;
+    }
+
+    // Special: Cmd+/, Ctrl+/ — help
+    if ((e.metaKey || e.ctrlKey) && (e.key === '/' || e.key === '?')) {
+      e.preventDefault();
+      openHelp();
+      return;
+    }
+
+    // If modifier is pressed and we got here, it's not a shortcut we handle
+    if (e.metaKey || e.ctrlKey) return;
+
+    // Text input suppression for bare keys
+    if (textInputFocused) {
+      // Only let Enter, Escape, Tab, arrows through
+      if (!['Enter', 'Escape', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+        return;
+      }
+    }
+
+    // Step 1: Topmost overlay commands
+    const top = topOverlay();
+    if (top === 'palette') {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeTopOverlay();
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const selected = paletteResults.querySelector('.palette-item');
+        if (selected) selected.click();
+        return;
+      }
+      // Let typing flow to the search input
+      return;
+    }
+    if (top === 'help') {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeTopOverlay();
+        return;
+      }
+      return; // help captures no other keys
+    }
+
+    // Step 2: Active prefix completion or cancellation
+    if (prefixActive) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        log('Esc → prefix cancelled', 'system');
+        showToast('Navigation cancelled');
+        clearPrefix();
+        return;
+      }
+      if (e.key.length === 1 && e.key >= 'a' && e.key <= 'z') {
+        e.preventDefault();
+        completePrefix(e.key);
+        return;
+      }
+      // Invalid prefix key — cancel
+      if (!isModifier(e)) {
+        log(`"${e.key}" → invalid prefix destination, cancelled`, 'suppressed');
+        showToast('No such destination');
+        clearPrefix();
+        return;
+      }
+      return;
+    }
+
+    // Step 3: Escape — close topmost layer (non-prefix)
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (overlayStack.length > 0) {
+        closeTopOverlay();
+      } else {
+        log('Esc → no overlay to close', 'system');
+        showToast('Nothing to close');
+      }
+      return;
+    }
+
+    // Step 4: g prefix start
+    if (e.key === 'g' && !prefixActive && !textInputFocused && !topOverlay()) {
+      e.preventDefault();
+      activatePrefix();
+      return;
+    }
+
+    // Step 5: Space — Continue
+    if (e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      doContinue();
+      return;
+    }
+
+    // Step 6: b — Bid workflow (screen-scoped action)
+    if (e.key === 'b') {
+      e.preventDefault();
+      focusBidInput();
+      return;
+    }
+
+    // Step 7: Arrows — nav tab navigation (if no focused control needs them)
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      const tabs = Array.from(document.querySelectorAll('.nav-tab'));
+      const idx = tabs.findIndex(t => t.classList.contains('active'));
+      if (e.key === 'ArrowRight' && idx < tabs.length - 1) {
+        navigateTo(tabs[idx + 1].dataset.screen);
+      } else if (e.key === 'ArrowLeft' && idx > 0) {
+        navigateTo(tabs[idx - 1].dataset.screen);
+      }
+      return;
+    }
+
+    // Step 8: g b — back navigation (handled as g prefix + b key above)
+    // (Already falls through to completePrefix)
+
+    // Step 9: If we get here, the key is unhandled — silently pass
+    log(`${e.key} → no matching action (current layer: ${top || 'none'})`, 'system');
+  });
+
+  // ---- Palette search ----
+  paletteSearch.addEventListener('input', function() {
+    renderPalette(this.value);
+  });
+
+  // ---- Backdrop clicks close overlays ----
+  paletteBackdrop.addEventListener('click', closeTopOverlay);
+  helpBackdrop.addEventListener('click', closeTopOverlay);
+
+  // ---- Nav tab clicks ----
+  navTabs.addEventListener('click', function(e) {
+    const tab = e.target.closest('.nav-tab');
+    if (!tab) return;
+    navigateTo(tab.dataset.screen);
+  });
+
+  // ---- Back button ----
+  document.getElementById('backBtn').addEventListener('click', function() {
+    showToast('← Returning to save list');
+    log('Back to saves (shell action)', 'system');
+  });
+
+  // ---- Init ----
+  setScreen('transfers');
+
+  // Show a welcome note when bid inputs receive focus
+  document.addEventListener('focusin', function(e) {
+    if (e.target.classList.contains('bid-input')) {
+      textInputFocused = true;
+      log('Bid input focused — bare shortcuts suppressed', 'system');
+    }
+  });
+
+  document.addEventListener('focusout', function(e) {
+    if (e.target.classList.contains('bid-input')) {
+      textInputFocused = false;
+      log('Bid input blurred — bare shortcuts reactivated', 'system');
+    }
+  });
+
+  log('Prototype ready. All key bindings active.', 'system');
+
+})();
+</script>
+</body>
+</html>

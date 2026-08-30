@@ -1,6 +1,6 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
-import { SaveNotFoundError } from "@cm-clone/contracts";
+import { SaveNotFoundError, type SaveId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 
@@ -9,7 +9,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
  * `match.ts`, `season.ts`, `transfers.ts`) rather than each defining its own copy. */
 export const withExistingSave = <A, E>(
   savesDir: string,
-  saveId: string,
+  saveId: SaveId,
   onFound: (filename: string) => Effect.Effect<A, E>,
 ) =>
   Effect.gen(function* () {

@@ -2,6 +2,33 @@
 
 Tracks how well each `effect-report` topic is distilled into `SKILL.md`. A self-maintenance run reads this file to pick its one topic deterministically, edits `SKILL.md`, then rewrites this file — never the reverse order. Don't hand-edit `Coverage` without applying the rubric below; the score is the only thing priority is computed from.
 
+## Repo findings (not distilled — preserve)
+
+`SKILL.md` has a second inflow besides distillation. `AGENTS.md` routes a review finding that needs judgement into `SKILL.md`, so the implementer gets it up front instead of the reviewer catching it a fourth time. Those lines have no source note behind them, so nothing in the topic table protects them: a later pass over the same topic rewrites that section and drops them silently, and the review loop starts re-earning the same finding.
+
+Fenced regions are how the two inflows share one file:
+
+```
+<!-- repo-finding: <id> -->
+...guidance...
+<!-- /repo-finding -->
+```
+
+Rules for a self-maintenance pass:
+
+- **Preserve verbatim.** Rewriting a topic's section never edits, reflows, or drops a fenced region inside it. Write around it.
+- **Never score it.** A fenced region contributes 0 to its topic's coverage. It answers a different question (what goes wrong in *this* repo) than the rubric asks (is the source note distilled). Scoring it would fake a closed gap and stop the topic from ever being distilled properly.
+- **Supersede explicitly, never silently.** Once a distilled section covers a finding's ground from the source, the fence may retire — but only by flipping its row below to `superseded by <topic>` in the same edit. Removing a fence without touching its row is precisely the failure this section exists to prevent.
+
+To add one: fence it in `SKILL.md`, then add a row here. Fence and row move together.
+
+| Id | Lives in | Overlaps topic | Origin | Added | Status |
+|---|---|---|---|---|---|
+| performance-judgement | `## Performance` | concurrency, caching-batching | Predates this registry; provenance unrecorded. Registered on sight because it is repo-shaped (it names `effect-lint`'s `require-explicit-concurrency` and the judgement that rule can't make) while `concurrency` scores 0 in the table — content the topic table did not account for. | 2026-08-29 | live |
+| tooling-verification | `## Verification`, second paragraph | code-style, testing | Names this repo's `effect-lint` and `@effect/language-service` gates, the split of what each catches, and what neither does. | 2026-08-29 | live |
+| electron-runmain-exception | `## Running at the edge`, after the `runMain` table | code-style | The distilled `runMain` guidance contradicts a shipped decision here: `.agents/notes/implemented/architecture/2026-08-29-entry-point-edge-boundary.md` weighed `NodeRuntime.runMain` and rejected it because Electron owns its own lifecycle. Without the fence, a future pass over code-style would push `apps/desktop/src/main/index.ts` toward a pattern already rejected on the record. | 2026-08-29 | live |
+| schema-brand-over-brand-module | `## Branding domain types`, after the bullet list | code-style, data-types | The source note covers the `Brand` module only. This repo brands through `Schema.brand` instead, because its ids already cross a `Schema` decode — recorded with the ergonomic reason (`~type.make.in` stays unbranded, so enforcement lands on the read side) in `.agents/notes/implemented/architecture/2026-08-29-branded-domain-ids.md`. Not derivable from `effect-v4-code-style.md`. | 2026-08-29 | live |
+
 ## Priority tiers (fixed — do not reprioritize per run)
 
 | Tier | Weight | Topics | Why this tier |
@@ -43,25 +70,25 @@ One topic per self-maintenance run, distilled to the rubric's full 100 if possib
 | error-management | 1 | effect-v4-error-management.md | ab8377bce8 | 80 | 2026-08-28 | raise/catch/defects/retry/timeout/validate/tap covered; missing match/matchEffect/matchCause family, sandboxing, cause combination, filterOrFail/mapBoth, flip |
 | resource-management | 1 | effect-v4-resource-management.md | 1d58b65d3a | 75 | 2026-08-28 | acquireUseRelease, acquireRelease+Scope, LIFO finalizers, ensuring/onExit/onError covered; missing manual Scope.make/close, Scope.provide split-scope pattern, rollback-on-partial-failure worked example |
 | requirements-management | 1 | effect-v4-requirements-management.md | b1ac3fea34 | 80 | 2026-08-28 | service definition, layers, composition, memoization gotcha, default services covered; missing Effect.serviceOption, manual memo-map control |
-| concurrency | 2 | effect-v4-concurrency.md | 7e17d6554e | 0 | never | not yet distilled |
+| concurrency | 2 | effect-v4-concurrency.md | 7e17d6554e | 0 | never | not yet distilled; the `performance-judgement` fence in `## Performance` already carries the explicit-concurrency judgement — write around it |
 | data-types | 2 | effect-v4-data-types.md | eca7940ed6 | 0 | never | not yet distilled |
-| code-style | 2 | effect-v4-code-style.md | 87d438351c | 0 | never | not yet distilled |
+| code-style | 2 | effect-v4-code-style.md | 4124be9360 | 90 | 2026-08-29 | runMain + platform table, tacit-usage rule, data-first/data-last duality, the pipe→Do→gen nesting ladder, `zip`/`zipWith`/`when`/`forEach`/`whileLoop`, full `Brand` trio, full `Match` surface (build/pattern/finalize, predicates, `withReturnType` ordering pitfall, `_tag` hard-wiring, `Match` vs `switch`). Missing: no snippet for `Match.value`, `Brand`'s `.option`/`.result`/`.is`, `Effect.whileLoop`'s option shape, or `Effect.all` over struct/record; the source note's caveat that `Effect.if`/`cond`/`filterOrFail`/`unless` are undocumented upstream is not carried over. Two fenced regions in this topic's sections score 0 by rule. |
 | testing | 2 | effect-v4-testing.md | e678776dc5 | 0 | never | not yet distilled |
 | scheduling | 3 | effect-v4-scheduling.md | 51ad41c43f | 0 | never | not yet distilled |
-| caching-batching | 3 | effect-v4-caching-batching.md | 99f2503ed6 | 0 | never | not yet distilled |
+| caching-batching | 3 | effect-v4-caching-batching.md | 99f2503ed6 | 0 | never | not yet distilled; the `performance-judgement` fence touches cached/cachedFunction and N+1 batching — write around it |
 | observability | 3 | effect-v4-observability.md | 1092e0135d | 0 | never | not yet distilled |
 | state-management | 3 | effect-v4-state-management.md | de722d11e1 | 0 | never | not yet distilled |
 | configuration-runtime | 3 | effect-v4-configuration-runtime.md | 15ea470d3e | 0 | never | not yet distilled |
 | stream | 3 | effect-v4-stream.md | 5eaff549c5 | 0 | never | not yet distilled |
 
-Current pick (recompute each run, don't trust this line if the table above has since changed): tier-2 topics all sit at `gap = 2*100 = 200`, above every tier-1 topic's remaining gap (max 75, resource-management). Tie-break among the four tier-2 zeros → alphabetical → **code-style** is next.
+Current pick (recompute each run, don't trust this line if the table above has since changed): with code-style distilled to 90 (`gap = 2*10 = 20`), the remaining tier-2 zeros — concurrency, data-types, testing — all sit at `gap = 2*100 = 200`, still above every tier-1 topic's remaining gap (max 75, resource-management). Tie-break among the three → alphabetical → **concurrency** is next. Note its row: the `performance-judgement` fence already carries the explicit-concurrency judgement, so that pass must write around it rather than restate it.
 
 ## Running a self-maintenance pass
 
 1. For every row, `git hash-object` the source file; if it differs from `Source hash seen`, apply the staleness halving for this run's computation only.
 2. Compute `gap` for every row, pick the max (tie-break: tier, then name).
 3. Read the full source file for that topic and the current `SKILL.md`.
-4. Write or rewrite that topic's section in `SKILL.md`, matching the density and style of the existing sections (tables + short snippets + a closing conventions/pitfalls list) — same bar as the tier-1 sections already there.
-5. Re-score against the rubric honestly (it's fine to land below 100; that's what leaves a truthful gap for the next run instead of a false "done").
+4. Write or rewrite that topic's section in `SKILL.md`, matching the density and style of the existing sections (tables + short snippets + a closing conventions/pitfalls list) — same bar as the tier-1 sections already there. Leave every `<!-- repo-finding: ... -->` region untouched, and check the Repo findings registry for fences that overlap this topic so the new prose complements them instead of repeating them.
+5. Re-score against the rubric honestly, counting only what the pass itself distilled — fenced regions score 0 (it's fine to land below 100; that's what leaves a truthful gap for the next run instead of a false "done").
 6. Update that row: `Source hash seen`, `Coverage`, `Last distilled` (today's date), `Notes` (what's covered, what's still missing — this is what makes the next pass's rubric scoring possible without re-reading history).
 7. Recompute and rewrite the "Current pick" line so the next invocation doesn't need to redo the arithmetic to sanity-check itself.

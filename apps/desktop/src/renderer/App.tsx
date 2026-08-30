@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import type { SaveSummary } from "@cm-clone/contracts";
+import { ClubId, type SaveId, type SaveSummary } from "@cm-clone/contracts";
 import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
 import { CreationStep1 } from "./CreationStep1.js";
+import { ClubSelectionScreen } from "./ClubSelectionScreen.js";
 import { FixturesScreen } from "./FixturesScreen.js";
 import { LeagueTableScreen } from "./LeagueTableScreen.js";
 import { MatchDayScreen } from "./MatchDayScreen.js";
@@ -27,7 +28,7 @@ interface CreationState {
   managerName: string;
   archetype: ManagerArchetype;
   pillars: PillarDistribution;
-  provisionalId: string | null;
+  provisionalId: SaveId | null;
 }
 
 const DEFAULT_PILLARS: PillarDistribution = {
@@ -127,7 +128,7 @@ export const App = () => {
     const result = await window.cmClone.call("commitCareer", {
       id: provisionalId,
       name: saveName.trim(),
-      selectedClubId: "temp-club-id",
+      selectedClubId: ClubId.make("temp-club-id"),
       managerName: managerName.trim() || saveName.trim(),
       archetypeOrigin: archetype,
       pillars,
@@ -157,7 +158,7 @@ export const App = () => {
     setLoadedSave(result.value);
   };
 
-  const handleContinue = async (id: string) => {
+  const handleContinue = async (id: SaveId) => {
     const result = await window.cmClone.call("loadSave", { id });
     if (result._tag === "Failure") return;
     setLoadedSave(result.value);
@@ -284,13 +285,8 @@ export const App = () => {
               onPillarsChange={(pillars) => updateCreation({ pillars })}
             />
           )}
-          {creationState.step === "club" && (
-            <div className="text-slate-300">
-              <h2 className="text-lg font-semibold">Select Club</h2>
-              <p className="mt-2 text-sm text-slate-500">
-                Club selection will be available in the next step. Click Next to begin career generation.
-              </p>
-            </div>
+          {creationState.step === "club" && creationState.provisionalId !== null && (
+            <ClubSelectionScreen saveId={creationState.provisionalId} />
           )}
           {creationState.step === "review" && (
             <div className="text-slate-300">

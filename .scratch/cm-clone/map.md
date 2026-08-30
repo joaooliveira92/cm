@@ -5,8 +5,11 @@ Label: wayfinder:map
 > **Status: closed at handoff.** The destination (a written spec, [spec.md](spec.md)) is reached and
 > handed off; implementation is in progress (tickets 09–18 built, 19–20 follow-on decisions). This map
 > no longer charts new work. Per [ADR-0010](../../docs/adr/0010-post-handoff-decisions-live-in-adrs-map-closes.md),
-> post-handoff decisions live in the ADR layer, not here; this file is retained as the index of the
-> decisions the way was built on.
+> post-handoff discoveries are classified by type and impact: architectural decisions go to the ADR
+> layer, specification corrections amend the spec, gameplay/UX decisions go to feature records, and a
+> genuinely new destination may start a fresh map. This file is retained as the index of the decisions
+> the way was built on; its `Not yet specified` fog is carried into the spec's Out of Scope, where it
+> stays resolvable at the product level rather than settled by this closure.
 
 ## Destination
 

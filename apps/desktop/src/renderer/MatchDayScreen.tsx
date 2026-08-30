@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  ClubId,
+  PlayerId,
   Tactic,
   type ClubSummary,
   type CommentaryLineView,
   type InjuryView,
+  type MatchId,
   type MatchSummary,
+  type SaveId,
   type SquadPlayerView,
   type SubstitutionStatusView,
   type TacticSlot,
@@ -88,9 +92,9 @@ const MatchControlPanel = ({
   onApplied,
   onDecisionResolved,
 }: {
-  readonly saveId: string;
-  readonly matchId: string;
-  readonly homeClubId: string;
+  readonly saveId: SaveId;
+  readonly matchId: MatchId;
+  readonly homeClubId: ClubId;
   readonly cursor: number;
   readonly subsStatus: SubstitutionStatusView;
   readonly onPitchCount: number;
@@ -114,8 +118,8 @@ const MatchControlPanel = ({
   const [open, setOpen] = useState(false);
   const [squad, setSquad] = useState<ReadonlyArray<SquadPlayerView>>([]);
   const [tactic, setTactic] = useState<Tactic | null>(null);
-  const [outPlayerId, setOutPlayerId] = useState("");
-  const [inPlayerId, setInPlayerId] = useState("");
+  const [outPlayerId, setOutPlayerId] = useState(PlayerId.make(""));
+  const [inPlayerId, setInPlayerId] = useState(PlayerId.make(""));
   const [isHalftime, setIsHalftime] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -153,14 +157,14 @@ const MatchControlPanel = ({
 
   const submit = async (
     command:
-      | { readonly _tag: "ChangeTactics"; readonly clubId: string; readonly tactic: Tactic }
+      | { readonly _tag: "ChangeTactics"; readonly clubId: ClubId; readonly tactic: Tactic }
       | {
           readonly _tag: "MakeSubstitution";
-          readonly clubId: string;
-          readonly outPlayerId: string;
-          readonly inPlayerId: string;
+          readonly clubId: ClubId;
+          readonly outPlayerId: PlayerId;
+          readonly inPlayerId: PlayerId;
         }
-      | { readonly _tag: "ForceOff"; readonly clubId: string; readonly playerId: string },
+      | { readonly _tag: "ForceOff"; readonly clubId: ClubId; readonly playerId: PlayerId },
   ) => {
     setStatus("Submitting...");
     try {
@@ -204,8 +208,8 @@ const MatchControlPanel = ({
         ),
       }),
     );
-    setOutPlayerId("");
-    setInPlayerId("");
+    setOutPlayerId(PlayerId.make(""));
+    setInPlayerId(PlayerId.make(""));
   };
 
   return (
@@ -342,7 +346,7 @@ const MatchControlPanel = ({
                 <select
                   className="rounded bg-slate-800 px-2 py-1"
                   value={outPlayerId}
-                  onChange={(event) => setOutPlayerId(event.target.value)}
+                  onChange={(event) => setOutPlayerId(PlayerId.make(event.target.value))}
                   disabled={subsStatus.capReached}
                 >
                   <option value="">Select player</option>
@@ -358,7 +362,7 @@ const MatchControlPanel = ({
                 <select
                   className="rounded bg-slate-800 px-2 py-1"
                   value={inPlayerId}
-                  onChange={(event) => setInPlayerId(event.target.value)}
+                  onChange={(event) => setInPlayerId(PlayerId.make(event.target.value))}
                   disabled={subsStatus.capReached}
                 >
                   <option value="">Select player</option>
@@ -387,9 +391,9 @@ const MatchControlPanel = ({
   );
 };
 
-export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
+export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [opponents, setOpponents] = useState<ReadonlyArray<ClubSummary>>([]);
-  const [opponentId, setOpponentId] = useState("");
+  const [opponentId, setOpponentId] = useState(ClubId.make(""));
   const [match, setMatch] = useState<MatchSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
@@ -559,7 +563,7 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: string }) => {
             <select
               className="mt-1 rounded bg-slate-800 px-2 py-1"
               value={opponentId}
-              onChange={(event) => setOpponentId(event.target.value)}
+              onChange={(event) => setOpponentId(ClubId.make(event.target.value))}
             >
               {opponents.map((club) => (
                 <option key={club.id} value={club.id}>

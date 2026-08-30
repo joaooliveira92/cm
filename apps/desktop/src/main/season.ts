@@ -7,10 +7,14 @@ import {
   FixturesView,
   LeagueTableRow,
   LeagueTableView,
-  type SEASON_PHASES,
   SeasonCompleteError,
   SeasonSummaryView,
   SeasonView,
+  type ClubId,
+  type FixtureId,
+  type PlayerId,
+  type SEASON_PHASES,
+  type SaveId,
 } from "@cm-clone/contracts";
 import {
   conditionAfterDays,
@@ -64,8 +68,8 @@ const shuffle = <T,>(items: ReadonlyArray<T>, random: RandomSource): Array<T> =>
 
 export interface GeneratedFixture {
   readonly matchday: number;
-  readonly homeClubId: string;
-  readonly awayClubId: string;
+  readonly homeClubId: ClubId;
+  readonly awayClubId: ClubId;
 }
 
 /**
@@ -75,7 +79,7 @@ export interface GeneratedFixture {
  * home/away swapped — 38 Matchdays, 38 Fixtures/club, 380 total. Pure and deterministic from `seed`.
  */
 export const generateRoundRobinFixtures = (
-  clubIds: ReadonlyArray<string>,
+  clubIds: ReadonlyArray<ClubId>,
   seed: number,
 ): Effect.Effect<ReadonlyArray<GeneratedFixture>, FixtureGenerationError> =>
   Effect.gen(function* () {
@@ -119,10 +123,10 @@ export const generateRoundRobinFixtures = (
  * `SeasonStarted` on the Season stream (streamId = the save's id, per ADR-0007). Assumes a
  * `SqlClient` for the save's SQLite file in context — called from `saves.ts`'s `createSave` right
  * after `generateWorld`. */
-export const startSeason = (saveId: string) =>
+export const startSeason = (saveId: SaveId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const clubRows = yield* sql<{ id: string }>`SELECT id FROM clubs`;
+    const clubRows = yield* sql<{ id: ClubId }>`SELECT id FROM clubs`;
     const clubIds = clubRows.map((row) => row.id);
     const seed = Math.floor(Math.random() * 0xffffffff);
     const fixtures = yield* generateRoundRobinFixtures(clubIds, seed);
@@ -193,8 +197,8 @@ const toSeasonView = (row: SeasonRow) =>
  * any other unforeseen gap — not because it's expected to fire in normal play.
  */
 const getTacticForClub = (
-  clubId: string,
-  squad: ReadonlyArray<{ readonly id: string; readonly positionRatings: Record<string, number> }>,
+  clubId: ClubId,
+  squad: ReadonlyArray<{ readonly id: PlayerId; readonly positionRatings: Record<string, number> }>,
 ) =>
   Effect.gen(function* () {
     const persisted = yield* loadPersistedTactic(clubId);
@@ -208,9 +212,9 @@ const getTacticForClub = (
 // ---------------------------------------------------------------------------
 
 interface FixtureResult {
-  readonly fixtureId: string;
-  readonly homeClubId: string;
-  readonly awayClubId: string;
+  readonly fixtureId: FixtureId;
+  readonly homeClubId: ClubId;
+  readonly awayClubId: ClubId;
   readonly homeGoals: number;
   readonly awayGoals: number;
 }
@@ -223,11 +227,11 @@ const RECOVERY_DAYS_PER_MATCHDAY = 7;
  * most recent injury's Severity (a knock recovers faster than a severe). Deterministic — the
  * Calendar has no dates (ADR-0004), so a fixed per-Matchday recovery step stands in for elapsed days.
  */
-export const recoverClubFitness = (clubId: string, seasonNumber: number) =>
+export const recoverClubFitness = (clubId: ClubId, seasonNumber: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql<{
-      playerId: string;
+      playerId: PlayerId;
       condition: number;
       naturalFitness: number;
       lastInjurySeverity: "none" | "light" | "medium" | "severe";
@@ -259,8 +263,8 @@ export const recoverClubFitness = (clubId: string, seasonNumber: number) =>
  * the most recent injury's Severity for any player who picked one up this fixture (ticket 10). */
 const recordFixtureConditions = (
   seasonNumber: number,
-  conditions: ReadonlyMap<string, number>,
-  injuries: ReadonlyMap<string, "none" | "light" | "medium" | "severe">,
+  conditions: ReadonlyMap<PlayerId, number>,
+  injuries: ReadonlyMap<PlayerId, "none" | "light" | "medium" | "severe">,
 ) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
@@ -270,7 +274,7 @@ const recordFixtureConditions = (
     // Load each player's current Severity so a player who wasn't injured this fixture keeps theirs
     // (e.g. still recovering from a knock picked up last match) across the write-back.
     const existingRows = yield* sql.unsafe<{
-      playerId: string;
+      playerId: PlayerId;
       lastInjurySeverity: "none" | "light" | "medium" | "severe";
     }>(
       `SELECT player_id as "playerId", last_injury_severity as "lastInjurySeverity"
@@ -292,7 +296,7 @@ const recordFixtureConditions = (
     `;
   });
 
-const resolveFixtureScore = (homeClubId: string, awayClubId: string, seasonNumber: number) =>
+const resolveFixtureScore = (homeClubId: ClubId, awayClubId: ClubId, seasonNumber: number) =>
   Effect.gen(function* () {
     // Recover both clubs' squads toward full before the Fixture — a player carries a shortfall
     // into this match only for what they haven't yet recovered (ticket 10).
@@ -331,7 +335,7 @@ const resolveFixtureScore = (homeClubId: string, awayClubId: string, seasonNumbe
     }
 
     // Record the most recent injury Severity per player (last Injury event wins).
-    const injuries = new Map<string, "none" | "light" | "medium" | "severe">();
+    const injuries = new Map<PlayerId, "none" | "light" | "medium" | "severe">();
     for (const event of events) {
       if (event._tag === "Injury") injuries.set(event.playerId, event.severity);
     }
@@ -347,9 +351,9 @@ const resolveMatchday = (matchday: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const fixtureRows = yield* sql<{
-      id: string;
-      homeClubId: string;
-      awayClubId: string;
+      id: FixtureId;
+      homeClubId: ClubId;
+      awayClubId: ClubId;
       seasonNumber: number;
     }>`SELECT id, home_club_id as "homeClubId", away_club_id as "awayClubId", season_number as "seasonNumber" FROM fixtures WHERE matchday = ${matchday}`;
 
@@ -415,7 +419,7 @@ const judgeSeasonEnd = (
     const standings = yield* computeStandings(seasonNumber);
 
     const objectiveRows = yield* sql<{
-      clubId: string;
+      clubId: ClubId;
       minPosition: number;
       maxPosition: number;
     }>`SELECT club_id as "clubId", min_position as "minPosition", max_position as "maxPosition"
@@ -446,7 +450,7 @@ const judgeSeasonEnd = (
     return { verdict, managerOutcome: outcome as ManagerOutcome };
   });
 
-export const advanceCalendar = (savesDir: string, saveId: string) =>
+export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;
@@ -532,17 +536,17 @@ export const advanceCalendar = (savesDir: string, saveId: string) =>
 // Read-side queries
 // ---------------------------------------------------------------------------
 
-export const getFixtures = (savesDir: string, saveId: string) =>
+export const getFixtures = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;
       const seasonRow = yield* loadSeasonRow;
       const rows = yield* sql<{
-        id: string;
+        id: FixtureId;
         matchday: number;
-        homeClubId: string;
+        homeClubId: ClubId;
         homeClubName: string;
-        awayClubId: string;
+        awayClubId: ClubId;
         awayClubName: string;
         homeGoals: number | null;
         awayGoals: number | null;
@@ -592,10 +596,10 @@ const emptyTally = (): ClubTally => ({ played: 0, won: 0, drawn: 0, lost: 0, goa
 const computeStandings = (seasonNumber: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const clubRows = yield* sql<{ id: string; name: string }>`SELECT id, name FROM clubs`;
+    const clubRows = yield* sql<{ id: ClubId; name: string }>`SELECT id, name FROM clubs`;
     const fixtureRows = yield* sql<{
-      homeClubId: string;
-      awayClubId: string;
+      homeClubId: ClubId;
+      awayClubId: ClubId;
       homeGoals: number;
       awayGoals: number;
     }>`SELECT home_club_id as "homeClubId", away_club_id as "awayClubId",
@@ -649,7 +653,7 @@ const computeStandings = (seasonNumber: number) =>
       );
   });
 
-export const getLeagueTable = (savesDir: string, saveId: string) =>
+export const getLeagueTable = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const seasonRow = yield* loadSeasonRow;
@@ -662,7 +666,7 @@ export const getLeagueTable = (savesDir: string, saveId: string) =>
  * position, its Board Objective Verdict, and the warning/sacking outcome. Available from Season
  * start onward — `boardObjective.finalPosition`/`verdict` and `managerOutcome` just stay `null`/
  * `"none"` until `SeasonConcluded` triggers `BoardObjectiveJudged`. */
-export const getSeasonSummary = (savesDir: string, saveId: string) =>
+export const getSeasonSummary = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;

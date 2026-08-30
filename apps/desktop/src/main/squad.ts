@@ -1,7 +1,7 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { ClubSummary, SaveNotFoundError, SquadPlayerView, SquadView } from "@cm-clone/contracts";
+import { ClubSummary, SaveNotFoundError, SquadPlayerView, SquadView, type SaveId, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import {
   ALL_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
@@ -27,7 +27,7 @@ const ageFromDateOfBirth = (dateOfBirth: string): number => {
 };
 
 interface PlayerRow {
-  readonly id: string;
+  readonly id: PlayerId;
   readonly firstName: string;
   readonly lastName: string;
   readonly dateOfBirth: string;
@@ -47,7 +47,7 @@ const attributeSelectList = [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map(
 export const loadUserClub = Effect.gen(function* () {
   const sql = yield* SqlClient;
   const clubRows = yield* sql<{
-    id: string;
+    id: ClubId;
     name: string;
     statureTier: "big" | "mid" | "small";
   }>`SELECT id, name, stature_tier as "statureTier" FROM clubs WHERE is_user_club = 1 LIMIT 1`;
@@ -55,7 +55,7 @@ export const loadUserClub = Effect.gen(function* () {
 });
 
 /** A club's squad, ratings included — assumes the caller already has a `SqlClient` for the save's SQLite file in context. */
-export const loadSquadPlayers = (clubId: string) =>
+export const loadSquadPlayers = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
 
@@ -71,7 +71,7 @@ export const loadSquadPlayers = (clubId: string) =>
     );
 
     const positionRows = yield* sql<{
-      playerId: string;
+      playerId: PlayerId;
       position: (typeof POSITIONS)[number];
       familiarity: PlayerPosition["familiarity"];
     }>`SELECT player_id as "playerId", position, familiarity FROM player_positions WHERE player_id IN (SELECT id FROM players WHERE club_id = ${clubId})`;
@@ -107,7 +107,7 @@ export const loadSquadPlayers = (clubId: string) =>
     });
   });
 
-export const getSquad = (savesDir: string, saveId: string) =>
+export const getSquad = (savesDir: string, saveId: SaveId) =>
   Effect.gen(function* () {
     const filename = path.join(savesDir, `${saveId}.sqlite`);
     const exists = yield* Effect.promise(() =>

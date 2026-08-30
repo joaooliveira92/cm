@@ -5,19 +5,21 @@ import type { Position } from "./positions.js";
 // Shared best-XI algorithm
 // ---------------------------------------------------------------------------
 
-export interface PositionRatingsLike {
-  readonly id: string;
+/** Generic over the player-id type so a caller holding branded ids (`PlayerId` from
+ * `@cm-clone/contracts`) gets them back branded, without this package depending on contracts. */
+export interface PositionRatingsLike<Id extends string = string> {
+  readonly id: Id;
   readonly positionRatings: Record<string, number>;
 }
 
-export interface BestXiSlot {
+export interface BestXiSlot<Id extends string = string> {
   readonly position: Position;
-  readonly playerId: string;
+  readonly playerId: Id;
   readonly rating: number;
 }
 
-export type BestXiResult =
-  | { readonly _tag: "success"; readonly formation: Formation; readonly slots: ReadonlyArray<BestXiSlot>; readonly meanPositionRating: number }
+export type BestXiResult<Id extends string = string> =
+  | { readonly _tag: "success"; readonly formation: Formation; readonly slots: ReadonlyArray<BestXiSlot<Id>>; readonly meanPositionRating: number }
   | { readonly _tag: "failure"; readonly reason: "squad_too_small" };
 
 /**
@@ -29,12 +31,12 @@ export type BestXiResult =
  * Pure and **partial** — a squad with fewer than eleven players cannot field any Formation. Callers
  * must validate squad size before invoking; the failure case is typed rather than thrown.
  */
-export const selectBestFormationXI = (
-  squad: ReadonlyArray<PositionRatingsLike>,
-): BestXiResult => {
+export const selectBestFormationXI = <Id extends string>(
+  squad: ReadonlyArray<PositionRatingsLike<Id>>,
+): BestXiResult<Id> => {
   let best: {
     formation: Formation;
-    slots: ReadonlyArray<BestXiSlot>;
+    slots: ReadonlyArray<BestXiSlot<Id>>;
     meanPositionRating: number;
   } | null = null;
 
@@ -44,7 +46,7 @@ export const selectBestFormationXI = (
       continue;
     }
 
-    const used = new Set<string>();
+    const used = new Set<Id>();
     const filled = positions.map((position) => {
       const candidates = squad
         .filter((player) => !used.has(player.id))
@@ -77,14 +79,14 @@ export const selectBestFormationXI = (
  * club Tactic assignment's per-formation evaluation). Fills each slot with the best-rated available
  * player, no reuse.
  */
-export const bestXiForFormation = (
+export const bestXiForFormation = <Id extends string>(
   formation: Formation,
-  squad: ReadonlyArray<PositionRatingsLike>,
-): { readonly filled: ReadonlyArray<BestXiSlot>; readonly outfieldSum: number } | null => {
+  squad: ReadonlyArray<PositionRatingsLike<Id>>,
+): { readonly filled: ReadonlyArray<BestXiSlot<Id>>; readonly outfieldSum: number } | null => {
   const positions = FORMATION_SLOTS[formation];
   if (squad.length < positions.length) return null;
 
-  const used = new Set<string>();
+  const used = new Set<Id>();
   const filled = positions.map((position) => {
     const candidates = squad
       .filter((player) => !used.has(player.id))

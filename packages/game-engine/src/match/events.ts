@@ -1,3 +1,4 @@
+import type { ClubId, PlayerId } from "@cm-clone/contracts";
 export type MatchHalf = 1 | 2;
 
 /** How an injury was caused: a physical contact/duel (Path A) or a condition/fatigue breakdown (Path B). */
@@ -25,14 +26,14 @@ interface BaseMatchEvent {
 export interface MatchStartedEvent {
   readonly _tag: "MatchStarted";
   readonly seed: number;
-  readonly homeClubId: string;
-  readonly awayClubId: string;
+  readonly homeClubId: ClubId;
+  readonly awayClubId: ClubId;
 }
 
 interface TeamPlayerEvent extends BaseMatchEvent {
   readonly half: MatchHalf;
-  readonly teamClubId: string;
-  readonly playerId: string;
+  readonly teamClubId: ClubId;
+  readonly playerId: PlayerId;
 }
 
 export interface GoalEvent extends TeamPlayerEvent {
@@ -72,9 +73,9 @@ export interface InjuryEvent extends TeamPlayerEvent {
 export interface SubstitutionEvent extends BaseMatchEvent {
   readonly _tag: "Substitution";
   readonly half: MatchHalf;
-  readonly teamClubId: string;
-  readonly outPlayerId: string;
-  readonly inPlayerId: string;
+  readonly teamClubId: ClubId;
+  readonly outPlayerId: PlayerId;
+  readonly inPlayerId: PlayerId;
   readonly forcedByInjury: boolean;
 }
 

@@ -3,6 +3,8 @@ import {
   NotYourPlayerError,
   PlayerNotFoundError,
   TrainingFocusView,
+  type PlayerId,
+  type SaveId,
 } from "@cm-clone/contracts";
 import type { Category } from "@cm-clone/shared";
 import { Effect } from "effect";
@@ -18,18 +20,18 @@ const CLUB_STREAM = "club";
  * at any point — no Transfer Window or season-boundary restriction. Persists the focus (upsert —
  * a missing row and a `NULL` row both mean no-focus) and appends a `TrainingFocusSet` event to the
  * club's stream in the same SQL transaction. */
-export const setTrainingFocus = (savesDir: string, saveId: string, playerId: string, focus: Category | null) =>
+export const setTrainingFocus = (savesDir: string, saveId: SaveId, playerId: PlayerId, focus: Category | null) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;
       yield* assertSaveNotSacked(saveId);
 
       const club = yield* loadUserClub;
-      const playerRows = yield* sql<{ id: string }>`SELECT id FROM players WHERE id = ${playerId}`;
+      const playerRows = yield* sql<{ id: PlayerId }>`SELECT id FROM players WHERE id = ${playerId}`;
       if (playerRows.length === 0) {
         return yield* new PlayerNotFoundError({ playerId });
       }
-      const ownPlayerRows = yield* sql<{ id: string }>`SELECT id FROM players WHERE id = ${playerId} AND club_id = ${club.id}`;
+      const ownPlayerRows = yield* sql<{ id: PlayerId }>`SELECT id FROM players WHERE id = ${playerId} AND club_id = ${club.id}`;
       if (ownPlayerRows.length === 0) {
         return yield* new NotYourPlayerError({ playerId });
       }

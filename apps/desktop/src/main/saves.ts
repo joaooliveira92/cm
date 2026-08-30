@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { InvalidPillarDistributionError, SaveNotFoundError, SaveSummary } from "@cm-clone/contracts";
+import { InvalidPillarDistributionError, SaveId, SaveNotFoundError, SaveSummary, type ClubId } from "@cm-clone/contracts";
 import type { PillarDistribution } from "@cm-clone/shared";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -12,7 +12,7 @@ import { generateWorld } from "./worldGeneration.js";
 import { initializeSeasonEconomy } from "./transfers.js";
 import { validatePillarDistribution } from "@cm-clone/shared";
 
-const dbPath = (savesDir: string, id: string) => path.join(savesDir, `${id}.sqlite`);
+const dbPath = (savesDir: string, id: SaveId) => path.join(savesDir, `${id}.sqlite`);
 
 const ensureSavesDir = (savesDir: string) =>
   Effect.promise(() => mkdir(savesDir, { recursive: true }));
@@ -20,7 +20,7 @@ const ensureSavesDir = (savesDir: string) =>
 /** All clubs in a save, ordered by insertion order (used by `createSave` compat shim). */
 const loadAllClubs = Effect.gen(function* () {
   const sql = yield* SqlClient;
-  return yield* sql<{ id: string; name: string }>`SELECT id, name FROM clubs ORDER BY rowid`;
+  return yield* sql<{ id: ClubId; name: string }>`SELECT id, name FROM clubs ORDER BY rowid`;
 });
 
 const readSaveSummary = (filename: string) =>
@@ -38,9 +38,13 @@ export const listSaves = (savesDir: string) =>
     yield* ensureSavesDir(savesDir);
     const entries = yield* Effect.promise(() => readdir(savesDir));
     const files = entries.filter((entry) => entry.endsWith(".sqlite"));
+    // Each item opens its own SQLite connection and reads one row — genuinely IO-bound per file,
+    // so overlapping them is a real win. Bounded rather than unbounded: a saves directory is
+    // user-controlled and unbounded fan-out would open one file descriptor per save at once.
     const summaries = yield* Effect.forEach(
       files,
       (file) => readSaveSummary(path.join(savesDir, file)).pipe(Effect.option),
+      { concurrency: 4 },
     );
     return summaries.flatMap((summary) => (summary._tag === "Some" ? [summary.value] : []));
   });
@@ -54,7 +58,7 @@ export const listSaves = (savesDir: string) =>
 export const beginCareer = (savesDir: string) =>
   Effect.gen(function* () {
     yield* ensureSavesDir(savesDir);
-    const id = randomUUID();
+    const id = SaveId.make(randomUUID());
     const filename = dbPath(savesDir, id);
 
     yield* Effect.gen(function* () {
@@ -81,9 +85,9 @@ export interface ManagerProfileParams {
  */
 export const commitCareer = (
   savesDir: string,
-  id: string,
+  id: SaveId,
   name: string,
-  selectedClubId: string,
+  selectedClubId: ClubId,
   managerProfile: ManagerProfileParams,
 ) =>
   Effect.gen(function* () {
@@ -112,7 +116,7 @@ export const commitCareer = (
  * `discardCareer` — idempotently deletes a provisional or committed career file.
  * Safe to call more than once; a missing file is not an error.
  */
-export const discardCareer = (savesDir: string, id: string) =>
+export const discardCareer = (savesDir: string, id: SaveId) =>
   Effect.promise(() => rm(dbPath(savesDir, id)).catch(() => void 0));
 
 /**
@@ -139,7 +143,7 @@ export const createSave = (savesDir: string, name: string) =>
     });
   });
 
-export const loadSave = (savesDir: string, id: string) =>
+export const loadSave = (savesDir: string, id: SaveId) =>
   Effect.gen(function* () {
     const filename = dbPath(savesDir, id);
     const entries = yield* Effect.promise(() => readdir(savesDir));

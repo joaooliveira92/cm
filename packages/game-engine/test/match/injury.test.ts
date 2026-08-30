@@ -8,9 +8,10 @@ import {
 } from "../../src/match/condition.js";
 import { resolveSeverity, resolveType, rollInjury, tierForSeverity } from "../../src/match/injury.js";
 
+import { playerId } from "./fixtures.js";
 describe("condition ledger", () => {
   it("starts every tracked player at START_CONDITION", () => {
-    const ledger = newConditionLedger(["a", "b", "c"]);
+    const ledger = newConditionLedger([playerId("a"), playerId("b"), playerId("c")]);
     expect([...ledger.values()]).toEqual([START_CONDITION, START_CONDITION, START_CONDITION]);
   });
 
@@ -27,14 +28,14 @@ describe("condition ledger", () => {
   });
 it("seeds players at their carried-over startingCondition", () => {
     const ledger = newConditionLedger(
-      ["a", "b"],
+      [playerId("a"), playerId("b")],
       [
-        { id: "a", startingCondition: 60 },
-        { id: "b" },
+        { id: playerId("a"), startingCondition: 60 },
+        { id: playerId("b") },
       ],
     );
-    expect(ledger.get("a")).toBe(60);
-    expect(ledger.get("b")).toBe(START_CONDITION);
+    expect(ledger.get(playerId("a"))).toBe(60);
+    expect(ledger.get(playerId("b"))).toBe(START_CONDITION);
   });
 
   it("recovers toward 100% faster with high Natural Fitness", () => {
