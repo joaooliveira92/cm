@@ -190,48 +190,53 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
           )}
         </div>
       )}
-      {viewState._tag === "InitialLoading" && (
-        <div aria-busy="true" className="py-6 text-slate-400">
-          {copy.initialLoading}
-        </div>
-      )}
-      {viewState._tag === "EmptyDataset" && (
-        <div className="py-6 text-slate-400">{copy.emptyDataset}</div>
-      )}
-      {viewState._tag === "NoFilterResults" && (
-        <div className="py-6 text-slate-400">
-          <p>{copy.noFilterResults}</p>
-          <button
-            type="button"
-            className={`mt-2 rounded bg-slate-700 px-2 py-1 text-sm ${FOCUS_RING.join(" ")}`}
-            onClick={clearVisibleFilters}
-          >
-            {copy.clearFiltersLabel}
-          </button>
-        </div>
-      )}
-      {viewState._tag === "Populated" && (
-        <DataTable
-          tableId={tableId}
-          screen={screen}
-          region={region}
-          table={table}
-          orderedIds={orderedIds}
-          identityColumnId="name"
-          activeId={activeId}
-          onActiveChange={onActiveChange}
-          onBookmarkChange={onBookmarkChange}
-          selectedId={selectedId}
-          onToggleSelection={onToggleSelection}
-          onSortChange={onSortChange}
-          busy={busy}
-          onRowPrimary={onRowPrimary}
-          ariaLabel={label}
-          announcement={announcement}
-          alertMessage={alertMessage}
-          initialScrollLeft={initialScrollLeft}
-          onScrollCommit={onScrollCommit}
-        />
+      {viewState._tag !== "LoadError" && (
+        <>
+          {viewState._tag === "InitialLoading" && (
+            <div aria-busy="true" className="py-6 text-slate-400">
+              {copy.initialLoading}
+            </div>
+          )}
+          {viewState._tag === "EmptyDataset" && (
+            <div className="py-6 text-slate-400">{copy.emptyDataset}</div>
+          )}
+          {viewState._tag === "NoFilterResults" && (
+            <div className="py-6 text-slate-400">
+              <p>{copy.noFilterResults}</p>
+              <button
+                type="button"
+                className={`mt-2 rounded bg-slate-700 px-2 py-1 text-sm ${FOCUS_RING.join(" ")}`}
+                onClick={clearVisibleFilters}
+              >
+                {copy.clearFiltersLabel}
+              </button>
+            </div>
+          )}
+          {/* The table + its one polite status announcer render in every
+              non-blocking state, so the announced line survives a transition to
+              zero rows (F3); the <table> itself only mounts when rows exist. */}
+          <DataTable
+            tableId={tableId}
+            screen={screen}
+            region={region}
+            table={table}
+            orderedIds={orderedIds}
+            identityColumnId="name"
+            activeId={activeId}
+            onActiveChange={onActiveChange}
+            onBookmarkChange={onBookmarkChange}
+            selectedId={selectedId}
+            onToggleSelection={onToggleSelection}
+            onSortChange={onSortChange}
+            busy={busy}
+            onRowPrimary={onRowPrimary}
+            ariaLabel={label}
+            announcement={announcement}
+            alertMessage={alertMessage}
+            initialScrollLeft={initialScrollLeft}
+            onScrollCommit={onScrollCommit}
+          />
+        </>
       )}
     </>
   );

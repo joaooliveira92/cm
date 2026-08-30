@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BID_DRAFT_EMPTY,
   bidDraftOf,
+  isValidBidAmount,
   reduceBidDraft,
   type BidDraftState,
 } from "../src/renderer/table/bidDraft.js";
@@ -119,5 +120,23 @@ describe("AC-29 — the single Bid draft dirty-draft lifecycle", () => {
   it("bidDraftOf reads the current draft out of any state shape", () => {
     expect(bidDraftOf(BID_DRAFT_EMPTY)).toBeNull();
     expect(bidDraftOf(focusedClean("p1"))?.playerId).toBe("p1");
+  });
+});
+
+describe("F8 — bid amount validity: finite and positive, never NaN-enabled", () => {
+  it("rejects empty, zero, negative, non-numeric and non-finite input", () => {
+    expect(isValidBidAmount("")).toBe(false);
+    expect(isValidBidAmount("   ")).toBe(false);
+    expect(isValidBidAmount("0")).toBe(false);
+    expect(isValidBidAmount("-5")).toBe(false);
+    expect(isValidBidAmount("abc")).toBe(false);
+    expect(isValidBidAmount("12.5x")).toBe(false);
+    expect(isValidBidAmount("1e999")).toBe(false); // Infinity
+  });
+
+  it("accepts a finite positive amount (the Bid button may enable)", () => {
+    expect(isValidBidAmount("1")).toBe(true);
+    expect(isValidBidAmount("500000")).toBe(true);
+    expect(isValidBidAmount("12.5")).toBe(true);
   });
 });

@@ -35,6 +35,16 @@ export type BidDraftEvent =
 
 export const BID_DRAFT_EMPTY: BidDraftState = { _tag: "empty", draft: null };
 
+/** A draft amount is submittable only when it parses to a finite positive
+ *  number. `NaN`, `Infinity`, zero, negatives and the empty string are all
+ *  invalid — a non-numeric keystroke must never enable the Bid button (NaN ≤ 0
+ *  is false, so a bare `<= 0` test would let "abc" through). Single home for
+ *  the rule: the disabled predicate AND the submit guard read it together. */
+export const isValidBidAmount = (amountInput: string): boolean => {
+  const amount = Number(amountInput);
+  return Number.isFinite(amount) && amount > 0;
+};
+
 const toDraft = (playerId: string): BidDraft => ({
   playerId,
   amountInput: "",

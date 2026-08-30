@@ -8,11 +8,13 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { BidId, PlayerId, SaveId } from "@cm-clone/contracts";
+import { Option } from "effect";
 import { ACTION_REGISTRY } from "./actions/allActions.js";
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
 import { focusIdOf, FOCUS_RING, focusSemanticTarget, restoreFocusAfterOverlay } from "./focus.js";
 import { ActionKeyBadge, actionBadgeBinding } from "./discoverability/ActionKeyBadge.js";
 import {
+  AsyncResult,
   describeRpcError,
   placeBidMutation,
   respondAsBidderMutation,
@@ -40,6 +42,7 @@ import { sortDirectionOf } from "./table/features/sorting.js";
 import { applyFilters, upsertFilter } from "./table/features/filtering.js";
 import {
   BID_DRAFT_EMPTY,
+  isValidBidAmount,
   reduceBidDraft,
   type BidDraftState,
 } from "./table/bidDraft.js";
@@ -54,7 +57,7 @@ import {
   type TableFocusBookmark,
 } from "./table/focusBookmark.js";
 import { announce } from "./table/announcement.js";
-import { STATE_COPY } from "./table/viewState.js";
+import { deriveRefreshState, STATE_COPY } from "./table/viewState.js";
 import type { FilterClause, SortState, TableAnnouncement, TableId } from "./table/types.js";
 
 const formatCredits = (amount: number): string => `${amount.toLocaleString()} Cr`;
@@ -228,11 +231,13 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   const findPlayer = useCallback(
     (playerId: string): MarketPlayerRow | null => {
-      const view = viewResult._tag === "Success" ? viewResult.value : null;
-      if (view === null) return null;
+      // Read the current-or-previous success so a failed revalidation (rows
+      // retained, non-blocking) keeps the Actions region usable (F1).
+      const available = Option.getOrUndefined(AsyncResult.value(viewResult));
+      if (available === undefined) return null;
       const all = [
-        ...view.marketPlayers.map(marketPlayerRowOf),
-        ...view.freeAgents.map(marketPlayerRowOf),
+        ...available.marketPlayers.map(marketPlayerRowOf),
+        ...available.freeAgents.map(marketPlayerRowOf),
       ];
       return all.find((p) => p.id === playerId) ?? null;
     },
@@ -248,7 +253,12 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   const submitBid = useCallback(
     async (playerId: PlayerId, amount: number) => {
-      if (!amount || amount <= 0) return;
+      if (!Number.isFinite(amount) || amount <= 0) {
+        // Defense-in-depth for non-UI callers (the disabled predicate is the
+        // primary gate): never a silent no-op — surface it (F8).
+        setBidAlert("Enter a valid bid amount.");
+        return;
+      }
       const player = findPlayer(String(playerId));
       const name = player !== null ? `${player.firstName} ${player.lastName}` : String(playerId);
       const targetTable = selectedRef.current?.tableId ?? MARKET;
@@ -330,9 +340,22 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   // --- selection cleared when the subject is filtered out or disappears;
   // unavailable → draft cleared + disabled + announced (note lifecycle table).
-  const view = viewResult._tag === "Success" ? viewResult.value : null;
-  const marketRows = view !== null ? view.marketPlayers.map(marketPlayerRowOf) : [];
-  const freeAgentRows = view !== null ? view.freeAgents.map(marketPlayerRowOf) : [];
+  const viewError = typedError(viewResult);
+  // The current-or-previous success (seam F1): a failed revalidation flips the
+  // atom to `Failure` but keeps the last `Success` in `previousSuccess`
+  // (Atom.make's effect re-runs through `fromExitWithPrevious`). Rows remain
+  // usable exactly when this Option is Some — the seam separating a blocking
+  // load failure from a non-blocking refresh failure.
+  const view = Option.getOrUndefined(AsyncResult.value(viewResult));
+  const refreshState = deriveRefreshState({
+    waiting: viewResult.waiting === true && view !== undefined,
+    refreshFailed:
+      viewError !== null && view !== undefined
+        ? { message: describeRpcError(viewError) }
+        : null,
+  });
+  const marketRows = view !== undefined ? view.marketPlayers.map(marketPlayerRowOf) : [];
+  const freeAgentRows = view !== undefined ? view.freeAgents.map(marketPlayerRowOf) : [];
   const datasetIds = [...marketRows, ...freeAgentRows].map((p) => p.id);
   marketRowsRef.current = marketRows;
   freeAgentRowsRef.current = freeAgentRows;
@@ -696,20 +719,30 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const draftedPlayerName =
     draftedPlayer !== null ? `${draftedPlayer.firstName} ${draftedPlayer.lastName}` : "";
   const draftAmount = draft !== null ? Number(draft.amountInput) : 0;
+  const draftAmountValid = draft !== null && isValidBidAmount(draft.amountInput);
   const windowOpen = view?.windowOpen ?? true;
 
-  const viewError = typedError(viewResult);
-  if (viewError) {
+  // Blocking load failure = error with NO retained rows (a failed revalidation
+  // keeps `view` — that path renders the tables with a non-blocking line, F1).
+  if (viewError !== null && view === undefined) {
     return (
       <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
         <h1 className="text-2xl font-bold">Transfers</h1>
         <div role="alert" className="mt-6 rounded border border-red-800 bg-red-950/40 p-4">
           <p className="text-red-300">{describeRpcError(viewError)}</p>
+          <button
+            type="button"
+            data-action-id="retry-market-table"
+            className={`mt-2 rounded bg-slate-700 px-3 py-1 text-sm ${FOCUS_RING.join(" ")}`}
+            onClick={() => void dispatchAction("retry-market-table")}
+          >
+            {STATE_COPY["transfer-market"].retryLabel}
+          </button>
         </div>
       </main>
     );
   }
-  if (view === null) {
+  if (view === undefined) {
     return (
       <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
         <h1 className="text-2xl font-bold">Transfers</h1>
@@ -830,7 +863,22 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         {formatCredits(view.wageBudgetUsed)} / {formatCredits(view.wageBudget)}
       </p>
       {status && <p className="mt-1 text-sm text-slate-400">{status}</p>}
-      {viewResult.waiting && <p className="mt-1 text-sm text-slate-500">Refreshing…</p>}
+      {refreshState._tag === "Refreshing" && (
+        <p className="mt-1 text-sm text-slate-500">Refreshing…</p>
+      )}
+      {refreshState._tag === "RefreshFailed" && (
+        <p className="mt-1 text-sm text-red-400">
+          {STATE_COPY["transfer-market"].refreshFailed}{" "}
+          <button
+            type="button"
+            data-action-id="retry-market-table"
+            className={`rounded bg-slate-700 px-2 py-0.5 text-xs text-slate-100 ${FOCUS_RING.join(" ")}`}
+            onClick={() => void dispatchAction("retry-market-table")}
+          >
+            {STATE_COPY["transfer-market"].retryLabel}
+          </button>
+        </p>
+      )}
 
       <section className="mt-6">
         <h2 className="text-lg font-semibold">Incoming Bids</h2>
@@ -908,7 +956,7 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           selectedId={selected !== null && selected.tableId === FREE ? selected.player.id : null}
           onToggleSelection={onToggleSelectionFor(FREE)}
           onRowPrimary={onRowPrimaryFor(FREE)}
-          busy={viewResult.waiting === true && viewResult._tag === "Success"}
+          busy={refreshState._tag === "Refreshing"}
           announcement={freeAnnouncement?.message ?? ""}
           copy={STATE_COPY["free-agents"]}
           loadError={null}
@@ -940,7 +988,7 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           selectedId={selected !== null && selected.tableId === MARKET ? selected.player.id : null}
           onToggleSelection={onToggleSelectionFor(MARKET)}
           onRowPrimary={onRowPrimaryFor(MARKET)}
-          busy={viewResult.waiting === true && viewResult._tag === "Success"}
+          busy={refreshState._tag === "Refreshing"}
           announcement={marketAnnouncement?.message ?? ""}
           copy={STATE_COPY["transfer-market"]}
           loadError={null}
@@ -997,7 +1045,7 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                 type="button"
                 data-action-id="place-bid"
                 className={`rounded bg-amber-500 px-3 py-1 text-sm text-slate-950 ${FOCUS_RING.join(" ")}`}
-                disabled={!windowOpen || draftAmount <= 0}
+                disabled={!windowOpen || !draftAmountValid}
                 onClick={() =>
                   void dispatchAction("place-bid", {
                     playerId: draftedPlayer.id as PlayerId,

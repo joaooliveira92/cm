@@ -15,6 +15,8 @@ export interface TableStateCopy {
   readonly emptyDataset: string;
   readonly noFilterResults: string;
   readonly clearFiltersLabel: string;
+  /** Nonblocking refresh-failure line: rows remain usable, shown with `retryLabel`. */
+  readonly refreshFailed: string;
 }
 
 /** The tables that use the TanStack layer have copy here; bid + league tables
@@ -29,6 +31,7 @@ export const STATE_COPY: Readonly<Record<(typeof TABLE_STATE_COPY_TABLES)[number
     emptyDataset: "No players are currently in your squad.",
     noFilterResults: "No players match the current filters.",
     clearFiltersLabel: "Clear all filters",
+    refreshFailed: "Refresh failed.",
   },
   "transfer-market": {
     initialLoading: "Loading the transfer market…",
@@ -37,6 +40,7 @@ export const STATE_COPY: Readonly<Record<(typeof TABLE_STATE_COPY_TABLES)[number
     emptyDataset: "No players are currently listed on the transfer market.",
     noFilterResults: "No players match the current filters.",
     clearFiltersLabel: "Clear all filters",
+    refreshFailed: "Refresh failed.",
   },
   "free-agents": {
     initialLoading: "Loading free agents…",
@@ -45,6 +49,7 @@ export const STATE_COPY: Readonly<Record<(typeof TABLE_STATE_COPY_TABLES)[number
     emptyDataset: "No free agents are currently available.",
     noFilterResults: "No players match the current filters.",
     clearFiltersLabel: "Clear all filters",
+    refreshFailed: "Refresh failed.",
   },
 };
 

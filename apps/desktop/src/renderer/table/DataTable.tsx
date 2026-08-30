@@ -13,6 +13,7 @@ import { useLayoutEffect, useRef } from "react";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
 import type { SortState, TableRowShape } from "./types.js";
 import type { TableFocusBookmark } from "./focusBookmark.js";
+import { cycleSort } from "./features/sorting.js";
 
 const HORIZONTAL_SCROLL_STEP = 120;
 
@@ -91,16 +92,14 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
   const effectiveActive = effectiveActiveId(activeId, orderedIds);
 
   const cycleSortHeader = (columnId: string): void => {
+    // Re-derive the current controlled SortState from TanStack's mutable sort
+    // table and delegate the asc → desc → none law to the one implementation.
     const current = table.getState().sorting[0];
-    let next: SortState | null;
-    if (current === undefined || current.id !== columnId) {
-      next = { columnId, direction: "asc" };
-    } else if (current.desc) {
-      next = null;
-    } else {
-      next = { columnId, direction: "desc" };
-    }
-    onSortChange(next);
+    const currentSort: SortState | null =
+      current === undefined
+        ? null
+        : { columnId: current.id, direction: current.desc ? "desc" : "asc" };
+    onSortChange(cycleSort(currentSort, columnId));
   };
 
   const focusRow = (id: string): void => {
@@ -197,91 +196,96 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
       role="group"
       aria-label={ariaLabel}
     >
-      <table className="min-w-full text-left text-sm">
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border-b border-slate-700 text-slate-400">
-              {headerGroup.headers.map((header) => {
-                const sortable = header.column.getCanSort();
-                const sortState = header.column.getIsSorted();
-                const pinned = header.column.getIsPinned();
-                const headerStyle: React.CSSProperties | undefined =
-                  pinned !== false ? { position: "sticky", left: 0, zIndex: 1 } : undefined;
-                const label = flexRender(header.column.columnDef.header, header.getContext());
-                return (
-                  <th
-                    key={header.id}
-                    aria-sort={sortable && sortState === "asc" ? "ascending" : sortable && sortState === "desc" ? "descending" : undefined}
-                    className="py-1 pr-4 text-xs font-semibold uppercase tracking-wide whitespace-nowrap"
-                    style={headerStyle}
-                  >
-                    {sortable ? (
-                      <button
-                        type="button"
-                        className={`flex items-center gap-1 ${FOCUS_RING.join(" ")}`}
-                        onClick={() => cycleSortHeader(header.column.id)}
-                      >
-                        <span>{label}</span>
-                        <span aria-hidden="true" className="text-[0.65rem]">
-                          {sortState === "asc" ? "▲" : sortState === "desc" ? "▼" : "↕"}
-                        </span>
-                      </button>
-                    ) : (
-                      label
-                    )}
-                  </th>
-                );
-              })}
-            </tr>
-          ))}
-        </thead>
-        <tbody onKeyDown={onBodyKeyDown}>
-          {rows.map((row) => {
-            const id = row.original.id;
-            const isIdentity = (columnId: string): boolean => columnId === identityColumnId;
-            return (
-              <tr
-                key={id}
-                aria-selected={selectedId === id || undefined}
-                className="border-b border-slate-800"
-              >
-                {row.getVisibleCells().map((cell) => {
-                  const pinned = cell.column.getIsPinned();
-                  const style: React.CSSProperties | undefined =
-                    pinned !== false
-                      ? { position: "sticky", left: 0, background: "rgb(2 6 23)" }
-                      : undefined;
-                  if (isIdentity(cell.column.id)) {
-                    return (
-                      <td key={cell.id} className="py-1 pr-4 whitespace-nowrap" style={style}>
+      {/* The <table> only mounts when rows exist; the group + status region
+          wrapper is rendered in every non-blocking state so the polite
+          announcer survives a transition to zero rows (F3). */}
+      {rows.length > 0 && (
+        <table className="min-w-full text-left text-sm">
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id} className="border-b border-slate-700 text-slate-400">
+                {headerGroup.headers.map((header) => {
+                  const sortable = header.column.getCanSort();
+                  const sortState = header.column.getIsSorted();
+                  const pinned = header.column.getIsPinned();
+                  const headerStyle: React.CSSProperties | undefined =
+                    pinned !== false ? { position: "sticky", left: 0, zIndex: 1 } : undefined;
+                  const label = flexRender(header.column.columnDef.header, header.getContext());
+                  return (
+                    <th
+                      key={header.id}
+                      aria-sort={sortable && sortState === "asc" ? "ascending" : sortable && sortState === "desc" ? "descending" : undefined}
+                      className="py-1 pr-4 text-xs font-semibold uppercase tracking-wide whitespace-nowrap"
+                      style={headerStyle}
+                    >
+                      {sortable ? (
                         <button
                           type="button"
-                          data-focus-id={focusIdOf(props.screen, props.region, id)}
-                          tabIndex={rovingTabIndex(effectiveActive, id)}
-                          onFocus={() => {
-                            if (activeId !== id) onActiveChange(id);
-                          }}
-                          onClick={() => {
-                            onToggleSelection(id);
-                          }}
-                          className={`whitespace-nowrap font-semibold text-slate-100 ${FOCUS_RING.join(" ")}`}
+                          className={`flex items-center gap-1 ${FOCUS_RING.join(" ")}`}
+                          onClick={() => cycleSortHeader(header.column.id)}
                         >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          <span>{label}</span>
+                          <span aria-hidden="true" className="text-[0.65rem]">
+                            {sortState === "asc" ? "▲" : sortState === "desc" ? "▼" : "↕"}
+                          </span>
                         </button>
-                      </td>
-                    );
-                  }
-                  return (
-                    <td key={cell.id} className="py-1 pr-4 whitespace-nowrap" style={style}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
+                      ) : (
+                        label
+                      )}
+                    </th>
                   );
                 })}
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            ))}
+          </thead>
+          <tbody onKeyDown={onBodyKeyDown}>
+            {rows.map((row) => {
+              const id = row.original.id;
+              const isIdentity = (columnId: string): boolean => columnId === identityColumnId;
+              return (
+                <tr
+                  key={id}
+                  aria-selected={selectedId === id || undefined}
+                  className="border-b border-slate-800"
+                >
+                  {row.getVisibleCells().map((cell) => {
+                    const pinned = cell.column.getIsPinned();
+                    const style: React.CSSProperties | undefined =
+                      pinned !== false
+                        ? { position: "sticky", left: 0, background: "rgb(2 6 23)" }
+                        : undefined;
+                    if (isIdentity(cell.column.id)) {
+                      return (
+                        <td key={cell.id} className="py-1 pr-4 whitespace-nowrap" style={style}>
+                          <button
+                            type="button"
+                            data-focus-id={focusIdOf(props.screen, props.region, id)}
+                            tabIndex={rovingTabIndex(effectiveActive, id)}
+                            onFocus={() => {
+                              if (activeId !== id) onActiveChange(id);
+                            }}
+                            onClick={() => {
+                              onToggleSelection(id);
+                            }}
+                            className={`whitespace-nowrap font-semibold text-slate-100 ${FOCUS_RING.join(" ")}`}
+                          >
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </button>
+                        </td>
+                      );
+                    }
+                    return (
+                      <td key={cell.id} className="py-1 pr-4 whitespace-nowrap" style={style}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
       {/* One polite status announcer per table (AC-32): always in the DOM, its
           text is the deduplicated line `announce` already admitted. */}
       <div role="status" aria-live="polite">

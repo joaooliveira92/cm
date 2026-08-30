@@ -10,8 +10,10 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type SaveId } from "@cm-clone/contracts";
+import { Option } from "effect";
 import { POSITIONS } from "@cm-clone/shared";
 import {
+  AsyncResult,
   describeRpcError,
   squadAtom,
   typedError,
@@ -157,20 +159,28 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   }, []);
 
   const error = typedError(squadResult);
-  const allPlayers = squadResult._tag === "Success" ? squadResult.value.players.map(squadRowOf) : [];
+  // The current-or-previous success: a failed background revalidation flips the
+  // atom to `Failure` but keeps the last `Success` in `previousSuccess`
+  // (Atom.make's effect re-runs through `fromExitWithPrevious`). Rows remain
+  // usable exactly when this Option is Some — the seam separating a blocking
+  // load failure from a non-blocking refresh failure (F1).
+  const view = Option.getOrUndefined(AsyncResult.value(squadResult));
+  const allPlayers = (view !== undefined ? view.players : []).map(squadRowOf);
   latest.current.players = allPlayers;
 
+  const blockingFailure = error !== null && view === undefined;
   const filtered = applyFilters(allPlayers, filters);
   const viewState = deriveViewState({
-    status: error !== null || squadResult._tag === "Failure" ? "failure" : squadResult._tag === "Success" ? "success" : "loading",
+    status: blockingFailure ? "failure" : view !== undefined ? "success" : "loading",
     errorMessage: error !== null ? describeRpcError(error) : "Failed to load the squad.",
     totalRows: allPlayers.length,
     visibleRows: filtered.length,
     filters,
   });
   const refreshState = deriveRefreshState({
-    waiting: squadResult.waiting === true && squadResult._tag === "Success",
-    refreshFailed: null,
+    waiting: squadResult.waiting === true && view !== undefined,
+    refreshFailed:
+      error !== null && view !== undefined ? { message: describeRpcError(error) } : null,
   });
 
   const copy: TableStateCopy = STATE_COPY.squad;
@@ -409,7 +419,7 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     );
   }
 
-  const clubName = squadResult._tag === "Success" ? squadResult.value.club.name : "Squad";
+  const clubName = view !== undefined ? view.club.name : "Squad";
 
   const activePosition = filters.find(
     (f): f is Extract<FilterClause, { readonly _tag: "position" }> => f._tag === "position",
@@ -424,7 +434,17 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           <span className="ml-2 text-slate-500">Refreshing…</span>
         )}
         {refreshState._tag === "RefreshFailed" && (
-          <span className="ml-2 text-red-400">Refresh failed.</span>
+          <span className="ml-2 text-red-400">
+            {copy.refreshFailed}{" "}
+            <button
+              type="button"
+              data-action-id="retry-squad-table"
+              className={`rounded bg-slate-700 px-2 py-0.5 text-xs text-slate-100 ${FOCUS_RING.join(" ")}`}
+              onClick={() => void dispatchAction("retry-squad-table")}
+            >
+              {copy.retryLabel}
+            </button>
+          </span>
         )}
       </p>
 
@@ -554,29 +574,30 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           </p>
         </div>
       )}
-      {viewState._tag === "Populated" && (
-        <DataTable
-          tableId={TABLE_ID}
-          screen="squad"
-          region={REGION}
-          table={table}
-          orderedIds={orderedIds}
-          identityColumnId="name"
-          activeId={activeId}
-          onActiveChange={onActiveChange}
-          onBookmarkChange={setBookmark}
-          selectedId={selectedId}
-          onToggleSelection={onToggleSelection}
-          onSortChange={onSortCycle}
-          busy={refreshState._tag === "Refreshing"}
-          enableShiftScroll
-          onRowPrimary={onRowPrimary}
-          ariaLabel="Squad"
-          announcement={announcement?.message ?? ""}
-          initialScrollLeft={scrollLeft}
-          onScrollCommit={commitScroll}
-        />
-      )}
+      {/* The table + its one polite status announcer render in every
+          non-blocking state, so the announced line survives a transition to
+          zero rows (F3); the <table> itself only mounts when rows exist. */}
+      <DataTable
+        tableId={TABLE_ID}
+        screen="squad"
+        region={REGION}
+        table={table}
+        orderedIds={orderedIds}
+        identityColumnId="name"
+        activeId={activeId}
+        onActiveChange={onActiveChange}
+        onBookmarkChange={setBookmark}
+        selectedId={selectedId}
+        onToggleSelection={onToggleSelection}
+        onSortChange={onSortCycle}
+        busy={refreshState._tag === "Refreshing"}
+        enableShiftScroll
+        onRowPrimary={onRowPrimary}
+        ariaLabel="Squad"
+        announcement={announcement?.message ?? ""}
+        initialScrollLeft={scrollLeft}
+        onScrollCommit={commitScroll}
+      />
     </main>
   );
 };

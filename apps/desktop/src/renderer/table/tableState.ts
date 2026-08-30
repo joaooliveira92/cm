@@ -9,7 +9,6 @@
  * a screen remount reads the live session and resets nothing silently.
  */
 import type { FilterClause, SortState, TableId } from "./types.js";
-import type { SquadPresetId } from "./features/visibility.js";
 import type { TableFocusBookmark } from "./focusBookmark.js";
 
 export interface TableSessionState {
@@ -19,15 +18,6 @@ export interface TableSessionState {
   readonly selectedId: string | null;
   /** Horizontal scroll offset in the Shift+Arrow scroll region (px). */
   readonly scrollLeft: number;
-  readonly scrollTop: number;
-  /** Squad only: the session's column-visibility copy (restart persistence is
-   *  the reconciled `SquadColumnPreferences`, seeded here on mount). */
-  readonly squadVisibility: SquadVisibilitySession | null;
-}
-
-export interface SquadVisibilitySession {
-  readonly visibleColumnIds: readonly string[];
-  readonly activePresetId: SquadPresetId | null;
 }
 
 export const DEFAULT_TABLE_SESSION: TableSessionState = {
@@ -36,8 +26,6 @@ export const DEFAULT_TABLE_SESSION: TableSessionState = {
   focusBookmark: null,
   selectedId: null,
   scrollLeft: 0,
-  scrollTop: 0,
-  squadVisibility: null,
 };
 
 const sessions = new Map<TableId, TableSessionState>();

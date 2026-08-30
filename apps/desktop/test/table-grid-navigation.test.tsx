@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
@@ -471,5 +471,134 @@ describe("AC-32 — explicit result/refresh states, polite status announcer, rol
     expect(screen.getAllByRole("status")).toHaveLength(2);
     // No assertive live region for routine loading.
     expect(document.querySelector("[aria-live='assertive']")).toBeNull();
+  });
+});
+
+describe("review repairs (stage-5 review) — F1 refresh keeps rows, F2 retry, F3 announcer, F8 NaN bid", () => {
+  it("F1: a failed Squad refresh keeps the rows and shows a non-blocking refresh error with Retry", async () => {
+    let squadCalls = 0;
+    mockPreload(async (method) => {
+      if (method === "getSquad") {
+        squadCalls += 1;
+        if (squadCalls === 1) {
+          return { _tag: "Success", value: squadView([squadPlayer("p1", "Alan", POSITIONS[2])]) } as never;
+        }
+        // The revalidation fails while the previous Success stayed put.
+        return { _tag: "Failure", error: NOT_FOUND } as never;
+      }
+      return { _tag: "Failure", error: NOT_FOUND } as never;
+    });
+    render(
+      <RegistryProvider>
+        <SquadScreen saveId={rid("s1")} />
+      </RegistryProvider>,
+    );
+    await screen.findByRole("button", { name: /Alan Player/ });
+
+    // A manual retry (the exact Action the Retry button dispatches) revalidates.
+    act(() => {
+      dispatchAction("retry-squad-table");
+    });
+
+    await screen.findByText(/Refresh failed/);
+    // Rows persist and the error is non-blocking — a line, not an alert that
+    // replaces the table.
+    expect(screen.getByRole("button", { name: /Alan Player/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
+    expect(document.querySelector('[role="alert"]')).toBeNull();
+    expect(squadCalls).toBe(2);
+  });
+
+  it("F1: a failed Transfers refresh keeps both tables and shows the non-blocking refresh error", async () => {
+    let transfersCalls = 0;
+    mockPreload(async (method) => {
+      if (method === "getTransfersScreen") {
+        transfersCalls += 1;
+        if (transfersCalls === 1) {
+          return { _tag: "Success", value: transfersView() } as never;
+        }
+        return { _tag: "Failure", error: NOT_FOUND } as never;
+      }
+      return { _tag: "Failure", error: NOT_FOUND } as never;
+    });
+    render(
+      <RegistryProvider>
+        <TransfersScreen saveId={rid("s1")} />
+      </RegistryProvider>,
+    );
+    await screen.findByRole("button", { name: /Alan Player/ });
+
+    act(() => {
+      dispatchAction("retry-market-table");
+    });
+
+    await screen.findByText(/Refresh failed/);
+    expect(screen.getByRole("button", { name: /Alan Player/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
+    expect(document.querySelector('[role="alert"]')).toBeNull();
+    expect(transfersCalls).toBe(2);
+  });
+
+  it("F2: a blocking load error on Transfers offers a Retry that re-runs the load", async () => {
+    let calls = 0;
+    mockPreload(async () => {
+      calls += 1;
+      return { _tag: "Failure", error: NOT_FOUND } as never;
+    });
+    render(
+      <RegistryProvider>
+        <TransfersScreen saveId={rid("s1")} />
+      </RegistryProvider>,
+    );
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("That save could not be found.");
+    const retry = within(alert).getByRole("button", { name: "Retry" });
+    expect(retry).toBeTruthy();
+    expect(calls).toBe(1);
+    fireEvent.click(retry);
+    await waitFor(() => {
+      expect(calls).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it("F3: the polite status announcer survives the zero-rows transition (Squad)", async () => {
+    await mountSquad(
+      squadView([squadPlayer("gk", "Garek", "GK"), squadPlayer("dc", "Dorso", "DC")]),
+    );
+    await screen.findByText(/Garek Player/);
+    fireEvent.click(document.querySelector('[data-focus-id="squad.squadTable.gk"]')!);
+    expect(screen.getByRole("status").textContent).toContain("Selected Garek Player.");
+
+    // A filter with no matching rows flips the screen to NoFilterResults in the
+    // same render the old announcer would unmount; the one status region must
+    // persist and keep the latest line.
+    fireEvent.change(screen.getByLabelText("Filter squad by position"), {
+      target: { value: "ST" },
+    });
+    expect(screen.getByText("No players match the current filters.")).toBeTruthy();
+    const status = screen.getByRole("status");
+    expect(status.textContent).toContain("hidden by the current filters");
+  });
+
+  it("F8: a non-numeric bid amount never enables Bid (NaN must not read as > 0)", async () => {
+    await mountTransfers(transfersView());
+    await screen.findByRole("button", { name: /Alan Player/ });
+    fireEvent.click(screen.getByRole("button", { name: /Alan Player/ }));
+    const region = screen.getByRole("region", { name: "Place bid" });
+    const amount = screen.getByLabelText("Your bid:") as HTMLInputElement;
+    const bidButton = () =>
+      within(region).getByRole("button", { name: "Bid" }) as HTMLButtonElement;
+
+    fireEvent.change(amount, { target: { value: "abc" } });
+    expect(bidButton().disabled).toBe(true);
+
+    fireEvent.change(amount, { target: { value: "0" } });
+    expect(bidButton().disabled).toBe(true);
+
+    fireEvent.change(amount, { target: { value: "-5" } });
+    expect(bidButton().disabled).toBe(true);
+
+    fireEvent.change(amount, { target: { value: "500000" } });
+    expect(bidButton().disabled).toBe(false);
   });
 });

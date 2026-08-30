@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import { FAMILIARITY_TIERS, STATURE_TIERS } from "@cm-clone/shared";
 import { TransfersScreen } from "../src/renderer/TransfersScreen.js";
