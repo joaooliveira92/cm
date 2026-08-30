@@ -180,7 +180,7 @@ relevant. Snippets inlined from the prototypes encode their decisions more preci
   `Enter` as focused-control activation (not screen-global primary); `Primary+K` palette, `Primary+/`
   help; mixed modifier policy with bare keys for screen-scoped actions and text-input suppression;
   creation is a separate scope with `g <key>` inactive.** See
-  [Agent Note](../../.agents/notes/proposed/feature/2026-08-29-global-key-map.md). Prototype:
+  [Agent Note](../../.agents/notes/implemented/feature/2026-08-29-global-key-map.md). Prototype:
   [printed key map](prototype/key-map.md) + [wired Transfers screen](prototype/wired-transfers.html).
   Inline from the printed key-map prototype — the binding table (trimmed):
 
@@ -223,7 +223,7 @@ relevant. Snippets inlined from the prototypes encode their decisions more preci
 - [Command palette and discoverability — ticket 07] **Yes to all four mechanisms — palette (global +
   current-screen, disabled-with-reason, commands-only), contextual help with tabs, inline key badges
   on buttons, and a one-shot teaching splash. Game-data search is out of scope.** See
-  [Agent Note](../../.agents/notes/proposed/feature/2026-08-29-command-palette-and-discoverability.md).
+  [Agent Note](../../.agents/notes/implemented/feature/2026-08-29-command-palette-and-discoverability.md).
   Prototype: [command palette](prototype/command-palette.html). Palette ranking puts available
   actions above unavailable, then label match score (exact → prefix → substring → binding → scope →
   fuzzy); it navigates only through Actions ("Go to Squad"), never by instant navigation. The help

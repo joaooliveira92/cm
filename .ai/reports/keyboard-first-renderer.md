@@ -216,3 +216,68 @@ gate green.
   one repair-folder item, a missing Transfers `level1-a11y` row, folded in this session; dead
   `LOCKED_INFRA_BINDINGS` re-export in `keymap/priority.ts` and a partial Transfers bid-button ring
   also folded). Gate green after folding.
+
+---
+
+## Stage 4 (ticket 18: command palette and discoverability)
+
+## Gate evidence
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | PASS — typecheck ✓, lint ✓ (34 pre-existing warnings, 0 errors), effect-lint ✓ (no violations, 150 files), verify-md-links ✓, tests ✓ (249 desktop / 45 game-engine / 28 contracts / shared) |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | NOT RUN this session — OS-level setup; jsdom levels cover the Stage-4 ACs |
+| determinism | n/a | Renderer-only; zero diff under `packages/` |
+| save compatibility | n/a | No persistence/schema change; no migration |
+
+## Acceptance criteria → evidence (ticket 18)
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| AC-20 | `Primary+K` palette, `Primary+/` help, Escape topmost-only, no history entries | `discoverability-escape-layering.test.tsx` (open/close, topmost-only, no nav/back, precedence over `b`/`g`, focus restore) + `keymap-priority.test.ts` overlay branch | PASS |
+| AC-23 | Palette lists global + current-screen, available-above-unavailable, disabled-with-reason, never hidden, commands-only | `discoverability-command-palette.test.tsx`, `discoverability-rank.test.ts` | PASS |
+| AC-24 | Help overlay All/Global/This-screen tabs; live registrations | `discoverability-help-overlay.test.tsx` (overlay == registry snapshot) | PASS |
+| AC-25 | Inline key badges on screen-scoped buttons, per-screen toggle via registry metadata | `discoverability-key-badges.test.ts` + League `c` / Transfers `b` renders | PASS |
+| AC-26 | One-shot splash on first career-screen load, exactly three shortcuts, never re-shown | `discoverability-teaching-splash.test.tsx`, `discoverability-escape-layering.test.tsx` | PASS |
+
+Stage-4 done criteria met: palette, help overlay, inline badges, and splash ship together, and the
+palette is consistent with every screen's registry.
+
+## Behavior changes
+
+- **Discoverability big-bang.** Command palette (`Cmd+K`), help overlay (`Cmd+/`), inline key badges,
+  and the one-shot teaching splash land together — the map's prescribed big-bang gated on every
+  career screen dispatching registered Actions. Renderer-only.
+- **Escape layering.** `Escape` closes only the topmost transient layer (splash > palette|help >
+  `g` prefix); overlays open via React state, never the router, so they create no history entries.
+- **`app_global` palette/help un-gated.** The two infra actions are now always active (per the
+  global-key-map note "Active when: Always") rather than career-scoped.
+- **Splash persistence** is a renderer-local `localStorage` flag — cosmetic UI preference, not
+  authoritative game state; the contract's no-localStorage rule targets authoritative state, and the
+  Stage-6 rebinding store is the separate home for applied settings.
+
+## Decision records
+
+- ADRs: none (no structural/package/boundary change).
+- Agent Notes **promoted** (`implemented/feature/`): `2026-08-29-command-palette-and-discoverability`
+  (fully shipped), `2026-08-29-global-key-map` (Stage-3-open AC-13/14/16/19/26 now close). Links
+  updated across spec/issues.
+- Agent Note still **proposed**: `2026-08-29-intra-screen-focus-model` (selection-vs-focus separation
+  and tier-3 widget interaction are Stage 5).
+
+## Review
+
+- **First review: APPROVE** (no blocker/high) with repairs: (1) medium — `open-palette`/`open-help`
+  were career-scoped, violating the key-map note's "Active when: Always"; (2) low — no direct
+  priority-2 overlay unit test; (3) low — splash Escape not exercised from the autofocused button.
+- **Repairs folded this session:** un-gated both infra actions to `available: true`; added
+  `keymap-priority` overlay-branch unit tests + a focused-button splash-Escape test. Gate green after
+  folding (71 focused tests pass).
+
+## Pre-existing / tracked
+
+- `matchCommands.test.ts` flake family (seed-dependent sub-count) — pre-existing, absent from this
+  diff, deterministic in the gate; tracked since Stage 3.
+- The two routed-out decision requests remain open (typed-error wire loss, club-selection commit).
+- Note for Stage 7: the one-shot splash appears on first career-screen load, so the click-driven e2e
+  creation journey must dismiss it once — that is exactly AC-26's Playwright class.

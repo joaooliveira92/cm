@@ -34,4 +34,4 @@ tickets read.
 
 ## Answer
 
-**Prefix-style `g <key>` navigation with explicit registry bindings; `Enter` as focused-control activation (not screen-global primary); `Primary+K` palette, `Primary+/` help; mixed modifier policy with bare keys for screen-scoped actions and text-input suppression; creation is a separate scope with `g <key>` inactive.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-global-key-map.md). Prototype: [printed key map](../prototype/key-map.md) + [wired Transfers screen](../prototype/wired-transfers.html).
+**Prefix-style `g <key>` navigation with explicit registry bindings; `Enter` as focused-control activation (not screen-global primary); `Primary+K` palette, `Primary+/` help; mixed modifier policy with bare keys for screen-scoped actions and text-input suppression; creation is a separate scope with `g <key>` inactive.** See [Agent Note](../../../.agents/notes/implemented/feature/2026-08-29-global-key-map.md). Prototype: [printed key map](../prototype/key-map.md) + [wired Transfers screen](../prototype/wired-transfers.html).

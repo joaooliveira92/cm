@@ -31,7 +31,7 @@ Decide:
 
 ## Answer
 
-**Yes to all four mechanisms — palette (global + current-screen, disabled-with-reason, commands-only), contextual help with tabs, inline key badges on buttons, and a one-shot teaching splash. Game-data search is out of scope.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-command-palette-and-discoverability.md).
+**Yes to all four mechanisms — palette (global + current-screen, disabled-with-reason, commands-only), contextual help with tabs, inline key badges on buttons, and a one-shot teaching splash. Game-data search is out of scope.** See [Agent Note](../../../.agents/notes/implemented/feature/2026-08-29-command-palette-and-discoverability.md).
 
 ## Prototype
 
