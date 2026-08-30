@@ -36,6 +36,11 @@ import {
   useAtomValue,
   type RpcClientError,
 } from "./rpc.js";
+import {
+  clearActiveMatch,
+  getActiveMatch,
+  setActiveMatch,
+} from "./match/session.js";
 
 const NO_SUBS: SubstitutionStatusView = {
   used: 0,
@@ -418,6 +423,25 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const pausedRef = useRef(false);
 
   useEffect(() => {
+    // Arrive at an in-flight match, don't start one on mount (router note
+    // AC-16): when a session was recorded for this save, restore the UI from
+    // it instead of showing the opponent picker.
+    const resumed = getActiveMatch(saveId);
+    if (resumed !== null) {
+      setMatch(resumed.match);
+      setRevealed(resumed.revealed);
+      setHomeScore(resumed.homeScore);
+      setAwayScore(resumed.awayScore);
+      setIsComplete(resumed.isComplete);
+      setHomeSubs(resumed.homeSubs);
+      setHomeOnPitchCount(resumed.homeOnPitchCount);
+      setChunkInjuries(resumed.chunkInjuries);
+      setCurrentMinute(resumed.currentMinute);
+      cursorRef.current = resumed.cursor;
+      pendingRef.current = [];
+      streamCompleteRef.current = resumed.streamComplete;
+      return;
+    }
     const load = async () => {
       const outcome = await Effect.runPromise(listOpponentClubs(saveId).pipe(Effect.result));
       if (Result.isFailure(outcome)) {
@@ -430,6 +454,41 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     };
     void load();
   }, [saveId]);
+
+  // Record the in-flight match so a later route arrival resumes, not restarts.
+  useEffect(() => {
+    if (match === null) return;
+    setActiveMatch({
+      saveId,
+      match,
+      cursor: cursorRef.current,
+      revealed,
+      homeScore,
+      awayScore,
+      isComplete,
+      homeSubs,
+      homeOnPitchCount,
+      chunkInjuries,
+      currentMinute,
+      streamComplete: streamCompleteRef.current,
+    });
+  }, [
+    saveId,
+    match,
+    revealed,
+    homeScore,
+    awayScore,
+    isComplete,
+    homeSubs,
+    homeOnPitchCount,
+    chunkInjuries,
+    currentMinute,
+  ]);
+
+  // A finished match is no longer "pending": forget the resume session.
+  useEffect(() => {
+    if (isComplete) clearActiveMatch(saveId);
+  }, [isComplete, saveId]);
 
   const onStartMatch = async () => {
     if (!opponentId) return;
