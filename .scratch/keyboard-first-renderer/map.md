@@ -109,7 +109,7 @@ Plan-only — the map is done when nothing is left to decide and the spec can be
   Actions region for bid entry; sortable header buttons + palette Actions; identity-based focus
   restoration.** See Agent Note. **Shipped** — Stage 5, ticket 19, all six ACs PASS.
 
-- [Match-day live keyboard control](issues/11-match-day-live-keyboard-control.md): **Keyboard control during a running match** – panel Escape semantics, injury decision flow, two-step substitution flow, and live tactics toggles. Keyboard-bound within the control panel; escape closes panel only; injury pause with `Play On` / `Bring Off` choices; substitution requires two-key sequence; tactics toggles with arrow keys. See Agent Note and prototype.
+- [Match-day live keyboard control](issues/11-match-day-live-keyboard-control.md): **Keyboard control during a running match** – panel Escape semantics, injury decision flow, two-step substitution flow, and live tactics toggles. Keyboard-bound within the control panel; escape closes panel only; injury pause with `Play On` / `Bring Off` choices; substitution requires two-key sequence; tactics toggles with arrow keys. See Agent Note and prototype. **Shipped** — Stage 5, ticket 20, AC-33 + tier-3 done-criteria PASS.
 
 - [e2e strategy](issues/12-e2e-strategy.md): **convert the level-3 journeys to keyboard driving, keep creation/save-management/error-paths as clicks; cover navigation, palette, Squad grid, Match Day substitution, and Escape layering; uphold the no-testability-seam line with `toHaveFocus()` + ARIA assertions; reliability contract unchanged (retries CI-only, 30s timeout) with `toBeFocused` as the authoring rule; existing click suite expected to survive unchanged.** Writing the tests is deferred to implement.
 

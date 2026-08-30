@@ -360,3 +360,78 @@ Actions region ships; gate green.
 - `matchCommands.test.ts` flake family — pre-existing, absent from this diff, deterministic in gate.
 - Note for Stage 7: the stage-2-era click e2e (`error-paths.spec.ts`) bids via an in-row input that
   AC-29 intentionally moved to the contextual region; the keyboard e2e conversion is ticket 22.
+
+---
+
+## Stage 5b (ticket 20: match-day live keyboard control)
+
+## Gate evidence
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | PASS — typecheck ✓, lint ✓ (0 errors), effect-lint ✓, verify-md-links ✓, tests ✓ (400 desktop / 45 game-engine / 28 contracts / 75 shared) |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | NOT RUN/STALE — the stage-2-era click suite is pre-existing-broken against the shipped Stage-5 UI (failures reproduced at baseline; the keyboard conversion is ticket 22) |
+| determinism | n/a | Renderer-only; zero diff under `packages/` |
+| save compatibility | n/a | No persistence/schema change; no migration |
+
+## Acceptance criteria → evidence (ticket 20)
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| AC-33 | Match Day keyboard flow: panel Escape semantics, injury Play On/Bring Off with pause, two-step substitution against server-reported caps, tactics arrow toggles | `matchday-live-keyboard.test.tsx` (31 tests: open-only bindings, Escape open/closed/paused, Enter→Play On submits no command as a mock call-count negative, B→Bring Off submits `ForceOff`, Escape keeps the pause, Primary+K stacking, two-step Enter/Escape, same-player rejection, roving arrow-toggled sliders + Tab cycling); `match-substitution-validation.test.ts` (six error variants + boundary caps); `keymap-priority.test.ts` AC-33 soft-layer locks | PASS |
+| tier-3 done | Match Day, Transfers, Tactics, Squad driveable with no mouse | Match Day: this ticket's suite. Transfers: `transfers-dialog-keyboard.test.tsx` incl. the folded counter-offer NaN guard. Tactics: `tactics-keyboard-reachability.test.tsx`. Squad: ticket 19's `table-grid-navigation.test.tsx` | PASS |
+
+## Review
+
+- **First review: APPROVE** (no blocker/high). Two lows: (1) vacuous Play On assertion — a
+  `submit-command` selector that exists nowhere made the "no RPC for Play On" claim unpackable;
+  (2) stale `counterError` leaked into the next counter-modal open after a cancel.
+- **Repair pass:** the Play On test now asserts the mock's RPC call count is 0; `onRespondToBid`
+  resets `counterError` beside `setCounterAmount("")`; a cancel→reopen test proves fresh per-open
+  state. Gate green after folding (400 desktop tests).
+- Judged divergences (correct): panel-closed Escape implements the decision's own table "No-op (feed
+  continues)" rather than the decision-ticket prose's "match-level action" (none exists; table/spec/
+  AC-33 all say no-op); no `S`→substitution-tab binding (the panel is single-section, not tabbed);
+  same-player swap unreachable via the disjoint on-pitch/bench selects, enforced defensively by the
+  pure validator.
+
+## Behavior changes
+
+- **Match-panel soft overlay layer.** The panel publishes open state to the keyboard spine; while
+  topmost it suppresses bare keys + the `g` prefix but keeps `Primary+K`/`Primary+/` live. Escape
+  closes the topmost layer, so palette/help close before the panel, and a second Escape closes the
+  panel.
+- **Escape semantics shipped per the table:** open → close panel (feed continues); closed → no-op;
+  paused → close panel + injury modal, match stays paused (Escape never resumes).
+- **Injury flow:** Enter → Play On (local acknowledgement, no command; the mock proves no RPC), B →
+  Bring Off (`ForceOff`, 10 men); Escape keeps the pause for deliberation.
+- **Two-step substitution** against server-reported caps with a pure `validateLiveSubstitution` and a
+  visible `role="alert"` reason — never a silent no-op; Enter confirms, Escape aborts; cap-reached
+  disables the controls.
+- **Roving arrow-key tactics:** Mentality/Tempo/Pressing are one-tab-stop composites (Tab cycles,
+  arrows toggle + move focus, `aria-pressed`); no inline formation editing.
+- **Tier-3 remainder folded:** Transfers counter-offer NaN guard completes the F8 family
+  (`isValidBidAmount` reuse, disabled submit + inline error, empty submit surfaces the error, fresh
+  per modal open); Tactics proven all-native-driveable.
+- **Renderer-only.** No packages/contract/persistence/seeded change.
+
+## Decision records
+
+- ADRs: none.
+- Agent Note **promoted** (`implemented/feature/`): `2026-08-29-matchday-keyboard-flow`
+  (rewritten to the implemented format; the soft-overlay nuance and the panel-closed no-op recorded).
+  Links updated across spec/issues/map.
+- Agent Note still **proposed**: `2026-08-29-intra-screen-focus-model` (ticket 21's help-overlay
+  rebinding surface ships the remaining tier-3 widget review), and `2026-08-30-user-key-binding-overrides`.
+- The counter-offer NaN guard's per-modal-open error state is a renderer-local presentation detail,
+  not decision-worthy.
+
+## Pre-existing / tracked
+
+- e2e suite stale vs Stage-5 UI (accepted; conversion is ticket 22). The legacy `error-paths.spec.ts`
+  bid via an in-row input AC-29 moved; a Stage-5 dirty-discard dialog now intercepts some old-suite
+  clicks.
+- `MatchDayScreen` poll drops the `resumeSimulation` payload — pre-existing; means live cap refresh
+  is not exercised end-to-end; Stage-7 match-day e2e owns it.
+- `matchCommands.test.ts` flake family — pre-existing, deterministic in the gate.
+- The two routed-out decision requests remain open.

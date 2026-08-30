@@ -305,7 +305,7 @@ relevant. Snippets inlined from the prototypes encode their decisions more preci
   Escape semantics, injury decision flow, two-step substitution flow, and live tactics toggles.
   Keyboard-bound within the control panel; escape closes panel only; injury pause with `Play On` /
   `Bring Off` choices; substitution requires two-key sequence; tactics toggles with arrow keys. See
-  [Agent Note](../../.agents/notes/proposed/2026-08-29-matchday-keyboard-flow.md). Prototype:
+  [Agent Note](../../.agents/notes/implemented/feature/2026-08-29-matchday-keyboard-flow.md). Prototype:
   [11-match-day-live-keyboard-control-prototype.html](prototype/11-match-day-live-keyboard-control-prototype.html).
   The key invariant: panel controls are keyboard-reachable only while the panel is open. Escape
   semantics in context:
