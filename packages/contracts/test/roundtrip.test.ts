@@ -173,6 +173,10 @@ describe("tagged errors", () => {
     expect(Schema.encodeSync(SaveNotFoundError)(decoded)).toEqual(err);
   });
 
+  it("loadSave's missing-save typed failure round-trips through the method error schema (AC-12)", () => {
+    roundTrip(AppRpcs.loadSave.error, { _tag: "SaveNotFoundError", id: "s1" });
+  });
+
   it("InvalidTacticError round-trips its reason", () => {
     roundTrip(InvalidTacticError, { _tag: "InvalidTacticError", reason: "bad slot" });
   });

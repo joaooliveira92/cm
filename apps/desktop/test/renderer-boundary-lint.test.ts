@@ -27,17 +27,43 @@ describe("renderer dependency-boundary lint (AC-09)", () => {
     expect(messages.some((m) => m.includes("effect/unstable/reactivity"))).toBe(true);
   });
 
-  it("real career screens import only the seam and trigger no boundary violation", async () => {
+  it("Stage-2 route/creation/navigation surfaces import only the seam and trip no boundary violation", async () => {
     const screenFiles = [
       join(rendererDir, "SquadScreen.tsx"),
       join(rendererDir, "LeagueTableScreen.tsx"),
       join(rendererDir, "TransfersScreen.tsx"),
       join(rendererDir, "MatchDayScreen.tsx"),
       join(rendererDir, "TacticsScreen.tsx"),
-      join(rendererDir, "App.tsx"),
+      join(rendererDir, "router", "index.tsx"),
+      join(rendererDir, "router", "career.tsx"),
+      join(rendererDir, "router", "createFlow.tsx"),
+      join(rendererDir, "router", "RouteView.tsx"),
+      join(rendererDir, "router", "saveList.tsx"),
+      join(rendererDir, "navigation", "adapter.ts"),
+      join(rendererDir, "navigation", "destinations.ts"),
+      join(rendererDir, "navigation", "params.ts"),
+      join(rendererDir, "focus.ts"),
+      join(rendererDir, "match", "session.ts"),
     ];
     const { treeViolations } = lintFileSet(repoRoot, screenFiles);
     expect(treeViolations.filter((v) => v.rule === "renderer-boundary")).toHaveLength(0);
+  });
+
+  it("Stage 2 removed the root screen-state machine, not merely unused it", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const { access } = await import("node:fs/promises");
+    await expect(access(join(rendererDir, "App.tsx"))).rejects.toThrow();
+    const files = (await readdir(rendererDir, { recursive: true })).filter(
+      (f) => f.endsWith(".ts") || f.endsWith(".tsx"),
+    );
+    const sources = await Promise.all(
+      files.map((f) => readFile(join(rendererDir, f), "utf8")),
+    );
+    for (const name of ["setLoadedSave", "setCreating", "setCreationState", "setScreen"]) {
+      for (const source of sources) {
+        expect(source).not.toContain(name);
+      }
+    }
   });
 
   it("the seam itself is exempt from the boundary", () => {
