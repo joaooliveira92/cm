@@ -1,7 +1,7 @@
 # 13-adoption-sequencing
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 08, 09, 10, 11, 12
 
 ## Question
@@ -28,3 +28,7 @@ Decide:
 - **Anything the map deferred** that the sequence must leave room for: TanStack Form, Virtual and
   Pacer are deferred rather than rejected, and the fog lists renderer-side lint rules and user
   rebinding as open.
+
+## Answer
+
+**Seven stages — data layer → router → keyboard spine → discoverability → level-3 upgrades → rebinding → e2e — screen-by-screen within stages, one big-bang (palette/help) gated on full screen conversion; the router precedes the Action spine so navigation Actions resolve through it; all four `App.tsx` state variables die at the router stage; `pnpm check:all` green at every stage with renderer boundary lint shipped in Stage 1.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-30-adoption-sequencing.md).

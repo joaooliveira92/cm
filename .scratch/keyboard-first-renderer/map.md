@@ -2,9 +2,10 @@
 
 Label: wayfinder:map
 
-> Status: charted. Both research tickets resolved, action model, screen tiers, key map, focus model,
-> command palette, Atom adoption shape, router adoption shape, **table/grid navigation, match-day live keyboard control, the e2e strategy, and user rebinding** settled.
-> Frontier open — ticket 13 is the last one (unblocked now that 12 resolved).
+> Status: charted — **complete**. Both research tickets resolved; action model, screen tiers, key map,
+> focus model, command palette, Atom adoption shape, router adoption shape, table/grid navigation,
+> match-day live keyboard control, e2e strategy, user rebinding, and adoption sequencing all settled.
+> **All 14 tickets resolved — the map is ready for handoff to `/cm-to-spec`.**
 
 ## Destination
 
@@ -113,6 +114,8 @@ Plan-only — the map is done when nothing is left to decide and the spec can be
 - [e2e strategy](issues/12-e2e-strategy.md): **convert the level-3 journeys to keyboard driving, keep creation/save-management/error-paths as clicks; cover navigation, palette, Squad grid, Match Day substitution, and Escape layering; uphold the no-testability-seam line with `toHaveFocus()` + ARIA assertions; reliability contract unchanged (retries CI-only, 30s timeout) with `toBeFocused` as the authoring rule; existing click suite expected to survive unchanged.** Writing the tests is deferred to implement.
 
 - [User rebinding](issues/14-user-rebinding.md): **configurable yes — overrides as a `record<ActionId, binding>` layered over defaults; persisted in a `keybindings.json` under `userData` (sibling of `saves/`), I/O in main via the RPC seam, never localStorage/the event stream; locked infra keys (`Escape`, `Primary+K`, `Primary+/`, `Enter`) non-rebindable; collision validation names the conflicting Action; help overlay is the rebinding surface with per-Action and reset-all.**
+
+- [Adoption sequencing](issues/13-adoption-sequencing.md): **seven stages — data layer → router → keyboard spine → discoverability → level-3 upgrades → rebinding → e2e — screen-by-screen within stages, one big-bang (palette/help) gated on full screen conversion; router precedes the Action spine so navigation resolves through it; all four `App.tsx` state variables die at the router stage; gate green every stage with boundary lint in Stage 1.**
 
 ## Not yet specified
 
