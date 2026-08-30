@@ -75,12 +75,8 @@ commit in small Conventional Commits. Do not self-merge.
 
 ## Prohibited shortcuts
 
-- No god object or global mutable game context.
-- No persisted Current Ability scalar, and no persisted rating cache.
-- No `Math.random()`, `Date.now()`, locale, env, or filesystem ordering inside `packages/shared` or
-  `packages/game-engine`.
-- No renderer ownership of authoritative state, and no path from renderer to engine that bypasses
-  `packages/contracts`.
-- No throwing across a typed seam, and no `Effect.run*` in domain code.
-- No skipped tests, loosened validators, or fixtures regenerated without a stated cause.
-- No new package added speculatively.
+Every shortcut an implementation might reach for is already banned by the binding contract: god
+objects and persisted scalars by § Authority and state, nondeterminism by § Determinism, route and
+seam bypasses by § Boundaries, thrown errors and misplaced `Effect.run*` by § Effect discipline,
+test loosening by § Tests and acceptance, and speculative packages by § Package graph.
+[ENGINEERING-CONTRACT.md](ENGINEERING-CONTRACT.md) is the single list — keep it satisfied.

@@ -47,15 +47,13 @@ inspect the code, do not trust the summary.
     `proposed/`; a note whose `## Alternatives considered` is invented after the fact.
 15. **Documentation** — Markdown follows `doc-standards`, links resolve, no doc left describing the
     old behavior.
-16. **Delivery policy** — Conventional Commits, feature branch, clean tree, no self-merge, no
-    weakened gate.
+16. **Delivery policy** — Conventional Commits directly on `dev`, no feature branches, clean tree,
+    no self-merge, no weakened gate.
 
 ## Repeat findings
 
-If you are raising an Effect finding that this repo has now seen three times, say so explicitly and
-recommend routing it per AGENTS.md — a rule in [scripts/effect-lint.ts](../scripts/effect-lint.ts)
-if it is mechanical, a fenced line in the `effect-code` skill if it needs judgement. Do not let the
-review keep absorbing it.
+For an Effect finding the repo has now seen three times, say so explicitly and recommend routing it
+per [AGENTS.md](../AGENTS.md) instead of letting the review keep absorbing it.
 
 ## Required output
 

@@ -39,7 +39,7 @@ implement → review → gate → commit. At the repository level, each sprint m
 6. The full gate (`pnpm check:all`) before delivery.
 7. A second pass over the artifacts you claim to have produced — files, notes, ticket statuses, tree
    state — rather than trusting the first success.
-8. Small Conventional Commits on a feature branch.
+8. Small Conventional Commits directly on `dev`.
 9. A pull request only if credentials and tooling are actually available.
 10. No self-merge, ever.
 
@@ -139,13 +139,12 @@ validation pass. If you find a pre-existing unrelated failure, record it separat
 its repair into your sprint silently. If a test encodes an ambiguous game rule, stop rather than
 changing the test or the behavior by guesswork.
 
-When a review raises the same Effect finding for the third time, do not fix it a fourth time in
-place — route it per AGENTS.md into [scripts/effect-lint.ts](../scripts/effect-lint.ts) or the
-`effect-code` skill.
+When a review raises the same Effect finding for the third time, do not fix it a fourth time —
+route it per [AGENTS.md](../AGENTS.md).
 
 ## Git policy
 
-- Work on a feature branch. `latest_branch` is this repo's main branch; do not commit to it directly.
+- Work directly on the `dev` branch. Do not create feature branches; commit straight to `dev`.
 - Do not force-push or rewrite history.
 - Never commit secrets, `.env` files, SQLite saves, caches, build output, or machine-specific
   settings.

@@ -84,9 +84,7 @@ and machines.
 - `Effect.run*` belongs at edges only — the RPC handler, the Electron main entry, a test. Never in
   the middle of domain logic.
 - The banned-combinator list lives in [scripts/effect-lint.ts](../scripts/effect-lint.ts) and is
-  enforced, not advisory. When a review raises the same Effect finding a third time, route it per
-  AGENTS.md — mechanical findings become lint rules, judgement findings become fenced lines in the
-  `effect-code` skill. Do not fix it in place a fourth time.
+  enforced, not advisory. Repeat Effect review findings route per [AGENTS.md](../AGENTS.md).
 - Every `Effect.all` / `Effect.forEach` declares concurrency explicitly.
 
 ## Boundaries: RPC and Electron
@@ -159,6 +157,6 @@ Every completed increment includes:
 - determinism or save-compatibility evidence where the change touches either;
 - known limitations and anything deliberately deferred;
 - a changed-file summary;
-- small Conventional Commits on a feature branch, clean tree at the end.
+- small Conventional Commits directly on `dev`, no feature branches, clean tree at the end.
 
 Do not self-merge. Do not force-push. Do not weaken a gate to make CI green.
