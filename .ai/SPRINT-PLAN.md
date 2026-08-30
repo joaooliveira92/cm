@@ -19,7 +19,7 @@ complete map, and the command that checks it — is in
 charted before charting more. A new effort is a human's call or a decision request, never something
 the orchestrator starts for itself.
 
-**19 decision tickets across 5 efforts are unresolved.** The gate is shut.
+**21 decision tickets across 6 efforts are unresolved.** The gate is shut.
 
 It does not block **implementation** of efforts that are already charted — working an existing
 ticket is not inventing work. Both lanes below are legal; only Lane A can open the gate.
@@ -35,6 +35,7 @@ Decision work. One ticket per session; resolving one writes its Agent Note.
 | A3 | `retro-match-screen/` | **01** (scaffold disposition) — unblocked now that 02 resolved | 04 (fidelity references, unblocked) | 03 (matchday mount) waits on 01 |
 | A4 | `e2e-coverage-wave-2/` | **07** (seed scenarios spec section) | 08, 09, 10 — all unblocked | 11 waits on 07; 12 waits on 07–11 |
 | A5 | `effort-archival/` | **01** (completion predicate) | 02, 03 — both unblocked | 04/05 wait on 01–03; 06 waits on 04/05 |
+| A6 | `visual-design-language/` | **03** (dense table and abbreviations) — unblocked now that 02 resolved; then **04** (navigation frame) — also unblocked | Spec handoff | Human-chartered effort from `docs/ui-elements.md` reference. Tickets 01 (audit) and 02 (visual frame tokens) resolved. Agent Note at `.agents/notes/proposed/architecture/2026-08-29-visual-design-tokens.md`.
 
 12 of A's 19 tickets are unblocked right now (one of them, `scouting/04`, only nominally claimed),
 so nothing in this lane is waiting on anything but attention.
