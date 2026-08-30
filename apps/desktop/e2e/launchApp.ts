@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { _electron as electron, expect, test as base } from "@playwright/test";
 import type { ElectronApplication, Locator, Page } from "@playwright/test";
+import { savesDir, seedFresh } from "./seedSaves.js";
 
 const mainPath = path.join(import.meta.dirname, "../dist/main/index.js");
 
@@ -17,6 +18,50 @@ export interface LaunchFixtures {
   app: ElectronApplication;
   window: Page;
 }
+
+/**
+ * "Primary" is Cmd on macOS and Ctrl elsewhere — the same decision the app's
+ * keystroke normalizer makes (`src/renderer/keymap/keystroke.ts`). The e2e
+ * suite must press the modifier the running platform actually treats as
+ * Primary, or `Primary+K`/`Primary+/` never fire.
+ */
+export const PRIMARY_KEY = process.platform === "darwin" ? "Meta" : "Control";
+
+/** Press a Primary-modifier chord, e.g. pressPrimary(page, "K") = Cmd+K / Ctrl+K. */
+export const pressPrimary = async (page: Page, key: string): Promise<void> => {
+  await page.keyboard.press(`${PRIMARY_KEY}+${key}`);
+};
+
+/** Press the `g <key>` navigation prefix sequence as two keystrokes. */
+export const pressPrefix = async (page: Page, key: string): Promise<void> => {
+  await page.keyboard.press("g");
+  await page.keyboard.press(key);
+};
+
+/**
+ * Dismiss the one-shot teaching splash (AC-26). The splash is shipped, intended
+ * first-run UI shown on the first load of a career screen (per-userDataDir
+ * localStorage); a career driver dismisses it exactly as a player does — the
+ * autofocused "Got it" button. Without this, the modal backdrop intercepts the
+ * pointer on everything beneath it.
+ */
+export const dismissTeachingSplash = async (page: Page): Promise<void> => {
+  const gotIt = page.getByRole("button", { name: "Got it" });
+  await expect(gotIt).toBeVisible({ timeout: 15_000 });
+  await gotIt.click();
+  await expect(gotIt).not.toBeVisible();
+};
+
+/** Seed a fresh career, reload, continue it (landing on the Squad route), and
+ *  dismiss the first-run teaching splash — the shared career entry the
+ *  keyboard coverage specs and the click suite's career drivers use. */
+export const enterCareer = async (page: Page, userDataDir: string): Promise<void> => {
+  await seedFresh(savesDir(userDataDir));
+  await page.reload();
+  await page.getByRole("button", { name: "Seed: fresh" }).click();
+  await expect(page.getByText(/players$/)).toBeVisible();
+  await dismissTeachingSplash(page);
+};
 
 /** Assign a distinct real player to each of the 11 tactic slots and save — the minimum valid Tactic
  *  (11 unique players), required before the Match Day control panel will render. */

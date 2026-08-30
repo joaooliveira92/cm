@@ -1,16 +1,24 @@
+import type { SaveId } from "@cm-clone/contracts";
 import { Outlet, useLocation, useParams } from "@tanstack/react-router";
-import { type SaveId } from "@cm-clone/contracts";
-import { useEffect, type ComponentType, type MouseEvent } from "react";
-import { RegistryProvider } from "../rpc.js";
-import { type NavigationIntent } from "../focus.js";
-import { navigate, navigateCareer, navigateWithFocus } from "../navigation/adapter.js";
-import { type CareerDestination } from "../navigation/destinations.js";
+import { type ComponentType, type MouseEvent, useEffect, useRef } from "react";
+import type { NavigationIntent } from "../focus.js";
+import {
+  navigate,
+  navigateCareer,
+  navigateWithFocus,
+} from "../navigation/adapter.js";
+import type { CareerDestination } from "../navigation/destinations.js";
 import { decodeSaveId } from "../navigation/params.js";
+import { RegistryProvider } from "../rpc.js";
 import { resetTableSessions } from "../table/tableState.js";
 import { RouteView } from "./RouteView.js";
 
 /** Distinct route-structure error, rendered apart from typed RPC failures (AC-12). */
-export const RouteParamErrorScreen = ({ reason }: { readonly reason: string }) => (
+export const RouteParamErrorScreen = ({
+  reason,
+}: {
+  readonly reason: string;
+}) => (
   <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
     <h1 className="text-2xl font-bold">Invalid career address</h1>
     <p className="mt-4 text-slate-400">{reason}</p>
@@ -19,6 +27,10 @@ export const RouteParamErrorScreen = ({ reason }: { readonly reason: string }) =
 
 /** The career chrome: the persistent shell every career route shares (AC-11). */
 export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
+  const renderCount = useRef(0);
+  renderCount.current += 1;
+  if (renderCount.current > 5 && renderCount.current % 25 === 0)
+    console.log("[debug-chrome] render #", renderCount.current);
   const { pathname } = useLocation();
   const activeChild = pathname.split("/").at(-1) ?? "";
   const tabs: ReadonlyArray<{
@@ -32,7 +44,11 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
     { label: "league table", childPath: "league", destination: "league" },
     { label: "fixtures", childPath: "fixtures", destination: "fixtures" },
     { label: "match day", childPath: "match", destination: "match" },
-    { label: "season summary", childPath: "season-summary", destination: "seasonSummary" },
+    {
+      label: "season summary",
+      childPath: "season-summary",
+      destination: "seasonSummary",
+    },
   ];
 
   const onTabClick = (

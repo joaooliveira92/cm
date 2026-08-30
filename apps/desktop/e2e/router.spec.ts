@@ -1,13 +1,15 @@
 import type { Page } from "@playwright/test";
-import { expect, test } from "./launchApp.js";
+import { dismissTeachingSplash, expect, test } from "./launchApp.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
-/** Seed a fresh save, reload, then continue it — landing on the Squad route. */
+/** Seed a fresh save, reload, then continue it — landing on the Squad route,
+ *  dismissing the first-run teaching splash so tab clicks are not intercepted. */
 const enterCareer = async (page: Page, userDataDir: string) => {
   await seedFresh(savesDir(userDataDir));
   await page.reload();
   await page.getByRole("button", { name: "Seed: fresh" }).click();
   await expect(page.getByText(/players$/)).toBeVisible();
+  await dismissTeachingSplash(page);
 };
 
 test("hash history survives a reload on the active route (AC-10)", async ({ window: page, userDataDir }) => {
@@ -65,10 +67,11 @@ test("a well-formed-but-missing save stays on the career route with an error —
   }, missingSaveId);
 
   // The shell chrome stays mounted and the child renders an error paragraph —
-  // the route did not loader-redirect us off the career branch.
+  // the route did not loader-redirect us off the career branch. The shipped
+  // blocking-error paragraph uses `text-red-300` (the Squad LoadError surface).
   await expect(page.locator("nav")).toBeVisible();
   await expect(page.getByRole("button", { name: "Back to saves" })).toBeVisible();
-  await expect(page.locator("p.text-red-400").first()).toBeVisible();
+  await expect(page.locator("p.text-red-300").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).not.toBeVisible();
 });
 

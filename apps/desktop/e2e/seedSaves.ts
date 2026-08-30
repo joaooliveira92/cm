@@ -20,6 +20,10 @@ const createSeedSave = (savesDir: string, name: string) =>
 /** A fresh save: just `createSave`, no calendar advances. The season sits at Matchday 0. */
 export const seedFresh = (savesDir: string) => run(createSeedSave(savesDir, "Seed: fresh"));
 
+/** A save with an arbitrary name — used where a test needs a specific continue-list label
+ *  (duplicate names, the rebind journey's relaunch target). */
+export const seedNamed = (savesDir: string, name: string) => run(createSeedSave(savesDir, name));
+
 /** A save right at Season start, before Matchday 1 has been played — the same state as `seedFresh`
  *  (both are Matchday 0), named for the journeys that lean on the pre-first-match state. */
 export const seedBeforeMatchday = (savesDir: string) =>

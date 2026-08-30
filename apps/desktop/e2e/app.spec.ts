@@ -1,15 +1,16 @@
 import type { Page } from "@playwright/test";
-import { assignFullTactic, expect, test } from "./launchApp.js";
+import { assignFullTactic, dismissTeachingSplash, expect, test } from "./launchApp.js";
 import { savesDir, seedConcluded, seedFresh } from "./seedSaves.js";
 
 /** Seed a save into the app's saves dir, then reload so the app's save list picks it up, and
- *  continue that career by its fixed seed name. */
+ *  continue that career by its fixed seed name (dismissing the first-run teaching splash). */
 const seedAndContinue = async (window: Page, userDataDir: string, name: string, seed: (dir: string) => Promise<string>) => {
   await seed(savesDir(userDataDir));
   await window.reload();
   const button = window.getByRole("button", { name, exact: true });
   await expect(button).toBeVisible();
   await button.click();
+  await dismissTeachingSplash(window);
 };
 
 const goto = async (window: Page, tab: string) => {
