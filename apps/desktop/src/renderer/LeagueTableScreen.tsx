@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import type { LeagueTableView } from "@cm-clone/contracts";
+import type { LeagueTableView, SaveId } from "@cm-clone/contracts";
 
-export const LeagueTableScreen = ({ saveId }: { readonly saveId: string }) => {
+export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [table, setTable] = useState<LeagueTableView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [advancing, setAdvancing] = useState(false);

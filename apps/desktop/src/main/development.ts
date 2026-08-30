@@ -8,6 +8,7 @@ import {
   type PlayerAttributes,
 } from "@cm-clone/shared";
 import { appendStreamEvents, nextStreamSeq } from "./decider.js";
+import type { ClubId, PlayerId } from "@cm-clone/contracts";
 
 const CLUB_STREAM = "club";
 
@@ -29,7 +30,7 @@ const ageFromDateOfBirth = (dateOfBirth: string): number => {
 };
 
 interface PlayerDevRow {
-  readonly id: string;
+  readonly id: PlayerId;
   readonly dateOfBirth: string;
   readonly potentialAbility: number;
   readonly focus: Category | null;
@@ -45,7 +46,7 @@ const selectList = [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES]
  * `SeasonConcluded` (ADR-0007), like the other season-boundary reactions. Applies each player's
  * persisted Training Focus (a missing/`null` focus = the unmodified no-focus development); AI
  * clubs' players have no focus and so always develop unmodified. */
-const developClubPlayers = (clubId: string, seasonNumber: number) =>
+const developClubPlayers = (clubId: ClubId, seasonNumber: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql.unsafe<PlayerDevRow>(
@@ -100,7 +101,7 @@ const developClubPlayers = (clubId: string, seasonNumber: number) =>
 export const developPlayersForSeason = (seasonNumber: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const clubs = yield* sql<{ id: string }>`SELECT id FROM clubs`;
+    const clubs = yield* sql<{ id: ClubId }>`SELECT id FROM clubs`;
     for (const club of clubs) {
       yield* developClubPlayers(club.id, seasonNumber);
     }

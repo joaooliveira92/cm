@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { MatchEvent } from "@cm-clone/game-engine";
 import { COMMENTARY_TEMPLATES, renderCommentary } from "../src/commentary.js";
 
+/** `MatchEvent`'s ids are branded in `@cm-clone/contracts`, which depends on this package — so this
+ * package can't import the brands back without a cycle. Fixtures mint them off the event type. */
+type InjuryEvent = Extract<MatchEvent, { readonly _tag: "Injury" }>;
+const clubId = (value: string) => value as InjuryEvent["teamClubId"];
+const playerId = (value: string) => value as InjuryEvent["playerId"];
+
 const names = {
   clubName: (id: string) => (id === "home" ? "Home" : "Away"),
   playerName: (id: string) => (id === "p1" ? "P One" : "P Two"),
@@ -15,8 +21,8 @@ const injury = (
   _tag: "Injury",
   minute: 70,
   half: 1,
-  teamClubId: "home",
-  playerId: "p1",
+  teamClubId: clubId("home"),
+  playerId: playerId("p1"),
   trigger,
   severity,
   tier: severity === "severe" ? "red" : "orange",

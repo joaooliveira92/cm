@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { SquadView } from "@cm-clone/contracts";
+import type { SaveId, SquadView } from "@cm-clone/contracts";
 import {
   GOALKEEPING_ATTRIBUTES,
   MENTAL_ATTRIBUTES,
@@ -16,7 +16,7 @@ const ATTRIBUTE_GROUPS = [
 
 const ALL_DISPLAYED_ATTRIBUTES = ATTRIBUTE_GROUPS.flatMap((group) => group.keys);
 
-export const SquadScreen = ({ saveId }: { readonly saveId: string }) => {
+export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [squad, setSquad] = useState<SquadView | null>(null);
   const [error, setError] = useState<string | null>(null);
 

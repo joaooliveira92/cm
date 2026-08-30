@@ -51,6 +51,6 @@ Add new Effect-specific lint rules to `scripts/effect-lint.ts`. They fire before
 When `/code-review` raises the same Effect finding a third time, that's a signal about the tooling, not about that branch. Route it by kind rather than fixing it again in place:
 
 - **Mechanical and grep-detectable** → a new rule in `scripts/effect-lint.ts`. It then costs zero review attention forever.
-- **Needs judgement** → a line in `.agents/skills/effect-code/SKILL.md`, so the *implementer* gets it up front instead of the reviewer catching it after.
+- **Needs judgement** → a line in `.agents/skills/effect-code/SKILL.md`, so the *implementer* gets it up front instead of the reviewer catching it after. Wrap it in a `<!-- repo-finding: <id> -->` fence and add the matching row to that skill's `references/distillation-state.md` registry. `SKILL.md` is also the output of an automated distillation pass; an unfenced line has no source note behind it and gets silently overwritten the next time that pass rewrites the section, which puts the finding straight back into the review loop.
 
 Without this, the reviewer slowly degrades into a hand-run linter and the skill file stops reflecting what actually goes wrong in this codebase.

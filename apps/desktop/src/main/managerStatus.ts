@@ -1,4 +1,4 @@
-import { SaveSackedError } from "@cm-clone/contracts";
+import { SaveSackedError, type SaveId } from "@cm-clone/contracts";
 import type { ManagerOutcome } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -31,7 +31,7 @@ export const loadManagerStatus = Effect.gen(function* () {
 /** Rejects with `SaveSackedError` once `ManagerSacked` has archived the save (ticket 18 / ADR-0006:
  * "read-only, no further commands accepted"). Every mutating command handler must call this before
  * writing. Assumes a `SqlClient` in context. */
-export const assertSaveNotSacked = (saveId: string) =>
+export const assertSaveNotSacked = (saveId: SaveId) =>
   Effect.gen(function* () {
     const managerStatus = yield* loadManagerStatus;
     if (managerStatus.sacked) {

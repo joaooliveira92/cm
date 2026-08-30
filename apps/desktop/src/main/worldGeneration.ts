@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { ClubId, PlayerId } from "@cm-clone/contracts";
 import { LEAGUE_CLUBS, generateSquad, type GeneratedPlayer } from "@cm-clone/shared";
-
 const attr = (attributes: GeneratedPlayer["attributes"], key: keyof GeneratedPlayer["attributes"]) =>
   attributes[key] ?? null;
 
@@ -12,12 +12,12 @@ export const generateWorld = Effect.gen(function* () {
   const sql = yield* SqlClient;
 
   for (const [, clubDef] of LEAGUE_CLUBS.entries()) {
-    const clubId = randomUUID();
+    const clubId = ClubId.make(randomUUID());
     yield* sql`INSERT INTO clubs (id, name, stature_tier, is_user_club) VALUES (${clubId}, ${clubDef.name}, ${clubDef.statureTier}, 0)`;
 
     const squad = generateSquad(clubDef.statureTier);
     for (const generated of squad) {
-      const playerId = randomUUID();
+      const playerId = PlayerId.make(randomUUID());
       const a = generated.attributes;
 
       yield* sql`INSERT INTO players (

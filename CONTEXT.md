@@ -17,10 +17,20 @@ Attributes are only meaningful for players who play Goalkeeper; they're absent (
 players.
 
 **Potential Ability**:
-A hidden ceiling, on a 1–100 scale, that a player's Position Ratings develop toward via Player
-Development. Never shown to the player. Distinct from Overall Rating, which is the *current*, visible
-expression of a player's Attributes.
+A hidden, persisted player-specific ceiling, on a 1–100 scale, that a player's Attributes develop
+toward via Player Development. Never shown to the player. Unlike Position Rating, Overall Rating,
+and Transfer Value — which are read-time projections — Potential Ability is authoritative database
+state written once per player and consumed by Player Development and Transfer Value formulas.
+Distinct from Overall Rating, which is the *current*, visible expression of a player's Attributes.
 _Avoid_: PA (fine as shorthand in code/comments, not in player-facing text), Current Ability, CA
+
+**Current Ability**:
+Not modeled as a persisted player scalar. Current player quality is represented by individual
+Attributes (1-20 each) and derived rating projections (Position Rating, Overall Rating). This
+project explicitly rejects the classic Championship Manager pattern of a hidden Current Ability
+aggregate that must be synchronized with Attributes. Potential Ability is the only hidden persisted
+input, and it is an input to Player Development, not a rating cache.
+_Avoid_: CA (use "Overall Rating" if you mean the visible derived summary)
 
 **Player Development** (per-season):
 The per-season step where a player's Attributes move toward their age-appropriate Potential Ability
@@ -67,7 +77,9 @@ on read, never stored.
 **Overall Rating**:
 A player's Position Rating at their strongest Natural-tier Position. Not a separately stored or
 computed concept — it's a specific reading of Position Rating, sharpened here because "overall" was
-otherwise ambiguous between "a generic context-free score" and "best Position Rating."
+otherwise ambiguous between "a generic context-free score" and "best Position Rating." This project
+deliberately has no persisted Current Ability scalar: Overall Rating is a read-time projection from
+individual Attributes, not a stored aggregate.
 _Avoid_: Current Ability, CA, general rating
 
 **Transfer Value**:

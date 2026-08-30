@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intra-screen focus model prototype</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+    background: #0f172a; color: #e2e8f0; line-height: 1.5;
+    padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem;
+    max-width: 1100px; margin: 0 auto;
+  }
+  h1 { font-size: 1.25rem; font-weight: 600; color: #f1f5f9; }
+  .subtitle { color: #94a3b8; font-size: 0.875rem; border-left: 3px solid #3b82f6; padding-left: 0.75rem; }
+  .subtitle strong { color: #e2e8f0; }
+
+  /* Layout */
+  .prototype-area {
+    background: #1e293b; border: 1px solid #334155; border-radius: 0.5rem; padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+  .region { border: 2px solid transparent; border-radius: 0.375rem; padding: 0.75rem; position: relative; }
+  .region-label {
+    position: absolute; top: -0.625rem; left: 0.75rem; background: #1e293b;
+    padding: 0 0.375rem; font-size: 0.6875rem; font-weight: 600; color: #64748b;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .region:focus { outline: none; }
+  .region-focus { border-color: #3b82f6; }
+  .region-focus .region-label { color: #60a5fa; }
+
+  /* Nav region */
+  .nav-list { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+  .nav-item {
+    padding: 0.375rem 0.75rem; border-radius: 0.25rem; font-size: 0.8125rem;
+    background: #334155; color: #94a3b8; cursor: pointer; border: none;
+    transition: background 0.1s;
+  }
+  .nav-item:hover { background: #475569; color: #e2e8f0; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+  th { text-align: left; padding: 0.5rem 0.75rem; background: #1e293b; color: #64748b; font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #334155; }
+  td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #1e293b; }
+  .row { cursor: pointer; transition: background 0.1s; }
+  .row:hover { background: #334155; }
+
+  /* Actions panel */
+  .actions { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; }
+  .action-group { display: flex; flex-direction: column; gap: 0.25rem; }
+  .action-group label { font-size: 0.6875rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+  input[type="text"] {
+    padding: 0.375rem 0.625rem; border: 1px solid #475569; border-radius: 0.25rem;
+    background: #0f172a; color: #e2e8f0; font-size: 0.8125rem; width: 8rem;
+    outline: none; transition: border-color 0.15s;
+  }
+  input[type="text"]:focus { border-color: #3b82f6; }
+  .btn {
+    padding: 0.375rem 0.875rem; border-radius: 0.25rem; font-size: 0.8125rem; font-weight: 500;
+    background: #3b82f6; color: #fff; border: none; cursor: pointer;
+    transition: background 0.1s, opacity 0.1s;
+  }
+  .btn:hover { background: #2563eb; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary { background: #475569; color: #e2e8f0; }
+  .btn-secondary:hover { background: #64748b; }
+
+  /* Focus ring styles */
+  .kb-focus {
+    outline: 2px solid #fbbf24 !important;
+    outline-offset: 2px !important;
+    border-radius: 2px;
+  }
+  .mouse-focus {
+    outline: 2px solid #3b82f6 !important;
+    outline-offset: 2px !important;
+    border-radius: 2px;
+  }
+  .kb-focus.region { outline-offset: -2px !important; }
+  .row.selected { background: #1e3a5f !important; }
+  .row.selected td:first-child { border-left: 3px solid #3b82f6; }
+
+  /* State panel */
+  .state-panel {
+    background: #0f172a; border: 1px solid #334155; border-radius: 0.375rem; padding: 1rem;
+    font-family: "SF Mono", Monaco, Consolas, monospace; font-size: 0.75rem; line-height: 1.7;
+  }
+  .state-panel .field { display: flex; gap: 2rem; padding: 0.125rem 0; }
+  .state-panel .field .key { color: #64748b; min-width: 10rem; }
+  .state-panel .field .val { color: #e2e8f0; }
+  .state-panel .field .val.highlight { color: #fbbf24; }
+  .state-panel .field .val.dim { color: #64748b; }
+
+  /* Walkthrough tabs */
+  .walkthroughs { margin-top: 0.5rem; }
+  .wtabs { display: flex; gap: 0.25rem; margin-bottom: 0.75rem; }
+  .wtab {
+    padding: 0.375rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;
+    background: #334155; color: #94a3b8; cursor: pointer; border: none; transition: 0.1s;
+  }
+  .wtab.active { background: #3b82f6; color: #fff; }
+  .wtab:hover:not(.active) { background: #475569; color: #e2e8f0; }
+  .wbody { min-height: 5rem; font-size: 0.8125rem; color: #94a3b8; }
+  .wbody p { margin-bottom: 0.5rem; }
+  .wbody .step { display: inline-block; margin: 0.25rem 0.25rem 0 0; }
+  .wbody .step-btn {
+    padding: 0.25rem 0.625rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;
+    background: #3b82f6; color: #fff; border: none; cursor: pointer;
+  }
+  .wbody .step-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .wbody .step-btn.done { background: #16a34a; }
+  .wbody .step-label { display: inline-block; margin-right: 0.375rem; color: #e2e8f0; }
+  .wbody .hint { color: #facc15; font-size: 0.75rem; margin-top: 0.5rem; }
+
+  /* Keyboard help */
+  .kb-help { display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.75rem; color: #64748b; padding: 0.5rem 0; border-top: 1px solid #334155; margin-top: 0.25rem; }
+  .kb-help kbd { background: #334155; padding: 0.125rem 0.375rem; border-radius: 0.1875rem; font-size: 0.6875rem; color: #e2e8f0; font-family: inherit; }
+</style>
+</head>
+<body>
+
+<h1>Intra-screen focus model</h1>
+<div class="subtitle">
+  Exploring <strong>roving tabindex</strong>, <strong>regions</strong>, <strong>selection vs focus</strong>, and <strong>async focus behaviour</strong> on a simulated transfers screen.
+  Tab between regions, arrow through items, and toggle selection. Built as a decision tool for <code>06-intra-screen-focus-model</code>.
+</div>
+
+<div class="prototype-area" id="app">
+  <div class="state-panel" id="focusState">
+    <div class="field"><span class="key">Current region</span><span class="val" id="s-region">nav</span></div>
+    <div class="field"><span class="key">Index within region</span><span class="val" id="s-index">0</span></div>
+    <div class="field"><span class="key">Focus source</span><span class="val" id="s-source">keyboard</span></div>
+    <div class="field"><span class="key">Selected row</span><span class="val dim" id="s-selected">none</span></div>
+    <div class="field"><span class="key">Focus ring style</span><span class="val" id="s-ring">kb-focus (gold)</span></div>
+    <div class="field"><span class="key">Async in flight</span><span class="val" id="s-async">no</span></div>
+    <div class="field"><span class="key">Pending restore target</span><span class="val dim" id="s-restore">—</span></div>
+  </div>
+
+  <!-- Region: Navigation -->
+  <div class="region" id="region-nav" tabindex="-1" data-region="nav">
+    <span class="region-label">Navigation</span>
+    <div class="nav-list" role="tablist">
+      <button class="nav-item" data-nav="squad" tabindex="0">Squad</button>
+      <button class="nav-item" data-nav="tactics" tabindex="-1">Tactics</button>
+      <button class="nav-item" data-nav="transfers" tabindex="-1">Transfers</button>
+      <button class="nav-item" data-nav="league" tabindex="-1">League Table</button>
+      <button class="nav-item" data-nav="fixtures" tabindex="-1">Fixtures</button>
+      <button class="nav-item" data-nav="matchday" tabindex="-1">Match Day</button>
+      <button class="nav-item" data-nav="season" tabindex="-1">Season Summary</button>
+    </div>
+  </div>
+
+  <!-- Region: Market table -->
+  <div class="region" id="region-table" tabindex="-1" data-region="table">
+    <span class="region-label">Market table</span>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Player</th><th>Age</th><th>Pos</th><th>OVR</th><th>Club</th><th>Asking</th></tr></thead>
+        <tbody id="tableBody">
+          <tr class="row" tabindex="-1" data-row="0"><td>L. Rinaldi</td><td>24</td><td>GK</td><td>78</td><td>Port Vale</td><td>£1.2M</td></tr>
+          <tr class="row" tabindex="-1" data-row="1"><td>D. O'Rourke</td><td>21</td><td>CB</td><td>72</td><td>Wrexham</td><td>£800K</td></tr>
+          <tr class="row" tabindex="-1" data-row="2"><td>M. Petrov</td><td>28</td><td>CM</td><td>84</td><td>Levski</td><td>£3.5M</td></tr>
+          <tr class="row" tabindex="-1" data-row="3"><td>S. Chen</td><td>19</td><td>LW</td><td>70</td><td>Shanghai</td><td>£2.0M</td></tr>
+          <tr class="row" tabindex="-1" data-row="4"><td>J. Williams</td><td>31</td><td>ST</td><td>88</td><td>Newport</td><td>£6.0M</td></tr>
+          <tr class="row" tabindex="-1" data-row="5"><td>A. Fischer</td><td>26</td><td>RB</td><td>80</td><td>St. Pauli</td><td>£1.8M</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Region: Actions -->
+  <div class="region" id="region-actions" tabindex="-1" data-region="actions">
+    <span class="region-label">Actions</span>
+    <div class="actions">
+      <div class="action-group">
+        <label for="bidAmount">Bid amount</label>
+        <input type="text" id="bidAmount" placeholder="e.g. £2.5M" tabindex="0">
+      </div>
+      <button class="btn" id="btnBid" tabindex="-1">Place bid</button>
+      <button class="btn btn-secondary" id="btnShortlist" tabindex="-1">Add to shortlist</button>
+      <button class="btn btn-secondary" id="btnScout" tabindex="-1">Scout report</button>
+    </div>
+  </div>
+
+  <div class="kb-help">
+    <span><kbd>Tab</kbd> / <kbd>Shift+Tab</kbd> cycle regions</span>
+    <span><kbd>↑</kbd> <kbd>↓</kbd> move within region</span>
+    <span><kbd>Space</kbd> toggle selection on focused row</span>
+    <span><kbd>Enter</kbd> activate focused button or submit</span>
+  </div>
+</div>
+
+<!-- Walkthroughs -->
+<div class="walkthroughs">
+  <div class="wtabs" id="wtabs">
+    <button class="wtab active" data-wt="0">1. Place a bid</button>
+    <button class="wtab" data-wt="1">2. Selection vs Focus</button>
+    <button class="wtab" data-wt="2">3. Region cycling</button>
+    <button class="wtab" data-wt="3">4. Focus during async</button>
+  </div>
+  <div class="wbody" id="wbody">
+    <p><strong>Goal:</strong> Navigate from the nav bar down to the market table, select a player, fill the bid input, and submit.</p>
+    <p>Follow the steps — each click (or keyboard action) moves you forward.</p>
+    <div id="wsteps"></div>
+    <div class="hint" id="whint"></div>
+  </div>
+</div>
+
+<script>
+// ─── Pure focus model (liftable module) ────────────────────────────
+
+const Regions = { NAV: 'nav', TABLE: 'table', ACTIONS: 'actions' };
+
+// Region definitions: items per region
+const REGION_ITEMS = {
+  nav: 7,
+  table: 6,
+  actions: 3  // input, bid button, shortlist button, scout button — actually 4
+};
+
+REGION_ITEMS.actions = 4; // bid input, bid btn, shortlist, scout
+
+const REGION_ORDER = ['nav', 'table', 'actions'];
+
+function createInitialState() {
+  return {
+    region: 'nav',
+    index: 0,
+    source: 'keyboard',
+    selectedRow: null,      // explicit selection, separate from focus
+    async: false,
+    restoreTarget: null,    // { region, index } to restore after async
+  };
+}
+
+function nextRegion(region, dir) {
+  const idx = REGION_ORDER.indexOf(region);
+  const next = dir === 1
+    ? (idx + 1) % REGION_ORDER.length
+    : (idx - 1 + REGION_ORDER.length) % REGION_ORDER.length;
+  return REGION_ORDER[next];
+}
+
+function focusReducer(state, action) {
+  switch (action.type) {
+    case 'MOVE_WITHIN': {
+      const { dir } = action;
+      const count = REGION_ITEMS[state.region];
+      const newIndex = Math.max(0, Math.min(count - 1, state.index + dir));
+      return { ...state, index: newIndex, source: 'keyboard' };
+    }
+    case 'CYCLE_REGION': {
+      const { dir } = action;
+      const newRegion = nextRegion(state.region, dir);
+      const clampedIndex = Math.min(state.index, REGION_ITEMS[newRegion] - 1);
+      return { ...state, region: newRegion, index: clampedIndex, source: 'keyboard' };
+    }
+    case 'TOGGLE_SELECTION': {
+      if (state.region !== 'table') return state;
+      const newRow = state.selectedRow === state.index ? null : state.index;
+      return { ...state, selectedRow: newRow, source: 'keyboard' };
+    }
+    case 'SET_SOURCE': {
+      return { ...state, source: action.source };
+    }
+    case 'START_ASYNC': {
+      return {
+        ...state,
+        async: true,
+        restoreTarget: { region: state.region, index: state.index },
+      };
+    }
+    case 'COMPLETE_ASYNC': {
+      // Restore to the target if possible; fall back to (nav, 0)
+      const t = state.restoreTarget;
+      return {
+        ...state,
+        async: false,
+        restoreTarget: null,
+        region: t ? t.region : 'nav',
+        index: t ? Math.min(t.index, REGION_ITEMS[t.region] - 1) : 0,
+        source: 'keyboard',
+      };
+    }
+    case 'SELECT_ROW': {
+      if (action.row === undefined) return state;
+      return { ...state, selectedRow: action.row === state.selectedRow ? null : action.row, source: 'keyboard' };
+    }
+    case 'CLICK': {
+      return { ...state, source: 'mouse' };
+    }
+    default:
+      return state;
+  }
+}
+
+// ─── DOM wiring ────────────────────────────────────────────────────
+
+let state = createInitialState();
+let currentWalkthrough = 0;
+let walkthroughStep = 0;
+
+const walkthroughs = [
+  {
+    title: 'Place a bid',
+    desc: 'Navigate from the nav bar down to the market table, select a player, fill the bid input, and submit.',
+    setup: () => { state = createInitialState(); applyState(); },
+    steps: [
+      { label: 'Tab to table region', action: () => dispatch({ type: 'CYCLE_REGION', dir: 1 }) },
+      { label: 'Arrow down to row 3 (S. Chen)', action: () => { for (let i = 0; i < 3; i++) dispatch({ type: 'MOVE_WITHIN', dir: 1 }); } },
+      { label: 'Space to select the row', action: () => dispatch({ type: 'TOGGLE_SELECTION' }) },
+      { label: 'Tab to actions region', action: () => dispatch({ type: 'CYCLE_REGION', dir: 1 }) },
+      { label: 'Focus the bid input, type amount, Tab to Place bid', action: () => {
+        dispatch({ type: 'MOVE_WITHIN', dir: 0 }); // already at index 0 (bid input) in actions
+      }},
+      { label: 'Enter to submit bid (simulated)', action: () => {
+        dispatch({ type: 'START_ASYNC' });
+        setTimeout(() => dispatch({ type: 'COMPLETE_ASYNC' }), 1500);
+      }},
+    ]
+  },
+  {
+    title: 'Selection vs Focus',
+    desc: 'Focus highlights a row; selection is a separate commit. Watch the state panel distinguish them.',
+    setup: () => {
+      state = createInitialState();
+      state.region = 'table';
+      state.index = 2;
+      applyState();
+    },
+    steps: [
+      { label: 'Arrow up to row 1 (D. O\'Rourke) — focused but NOT selected', action: () => dispatch({ type: 'MOVE_WITHIN', dir: -1 }) },
+      { label: 'Space to select row 1 — now both focused AND selected', action: () => dispatch({ type: 'TOGGLE_SELECTION' }) },
+      { label: 'Arrow down to row 2 — focus moves, selection stays on row 1', action: () => dispatch({ type: 'MOVE_WITHIN', dir: 1 }) },
+      { label: 'Space on row 2 — selection switches to row 2', action: () => dispatch({ type: 'TOGGLE_SELECTION' }) },
+      { label: 'Arrow up to row 1 — now selection and focus differ', action: () => dispatch({ type: 'MOVE_WITHIN', dir: -1 }) },
+    ]
+  },
+  {
+    title: 'Region cycling',
+    desc: 'Tab moves between regions, arrows move within a region. Watch the region border highlight.',
+    setup: () => { state = createInitialState(); applyState(); },
+    steps: [
+      { label: 'Tab to table region', action: () => dispatch({ type: 'CYCLE_REGION', dir: 1 }) },
+      { label: 'Arrow down 3 rows', action: () => { for (let i = 0; i < 3; i++) dispatch({ type: 'MOVE_WITHIN', dir: 1 }); } },
+      { label: 'Tab to actions region', action: () => dispatch({ type: 'CYCLE_REGION', dir: 1 }) },
+      { label: 'Arrow right to "Add to shortlist" button', action: () => dispatch({ type: 'MOVE_WITHIN', dir: 1 }) },
+      { label: 'Tab wraps back to nav', action: () => dispatch({ type: 'CYCLE_REGION', dir: 1 }) },
+    ]
+  },
+  {
+    title: 'Focus during async',
+    desc: 'Start a bid, watch focus get saved, then restored after the simulated async reload.',
+    setup: () => {
+      state = createInitialState();
+      state.region = 'table';
+      state.index = 2;
+      state.selectedRow = 2;
+      applyState();
+    },
+    steps: [
+      { label: 'Tab to actions region', action: () => dispatch({ type: 'CYCLE_REGION', dir: 1 }) },
+      { label: 'Place a bid (triggers async, focus saved)', action: () => {
+        dispatch({ type: 'START_ASYNC' });
+      }},
+      { label: 'Wait for async complete (1.5s simulated)', action: () => {
+        // Already pending; complete after a moment
+        setTimeout(() => dispatch({ type: 'COMPLETE_ASYNC' }), 1500);
+      }},
+      { label: 'Focus restored to actions region where you were', action: () => {
+        // State already updated by the timeout
+        applyState();
+      }},
+    ]
+  }
+];
+
+function dispatch(action) {
+  state = focusReducer(state, action);
+  applyState();
+}
+
+function applyState() {
+  // Update state panel
+  document.getElementById('s-region').textContent = state.region;
+  document.getElementById('s-index').textContent = state.index;
+  document.getElementById('s-source').textContent = state.source;
+  document.getElementById('s-selected').textContent = state.selectedRow !== null ? `row ${state.selectedRow}` : 'none';
+  document.getElementById('s-selected').className = state.selectedRow !== null ? 'val highlight' : 'val dim';
+  document.getElementById('s-ring').textContent = state.source === 'keyboard' ? 'kb-focus (gold)' : 'mouse-focus (blue)';
+  document.getElementById('s-async').textContent = state.async ? 'yes' : 'no';
+  document.getElementById('s-async').className = state.async ? 'val highlight' : 'val';
+  document.getElementById('s-restore').textContent = state.restoreTarget
+    ? `${state.restoreTarget.region}[${state.restoreTarget.index}]`
+    : '—';
+  document.getElementById('s-restore').className = state.restoreTarget ? 'val' : 'val dim';
+
+  // Update region borders
+  document.querySelectorAll('.region').forEach(el => {
+    el.classList.toggle('region-focus', el.dataset.region === state.region);
+  });
+
+  // Update nav items
+  document.querySelectorAll('[data-nav]').forEach((el, i) => {
+    updateFocusable(el, state.region === 'nav' && state.index === i);
+    updateFocusRing(el);
+  });
+
+  // Update table rows
+  document.querySelectorAll('[data-row]').forEach((el, i) => {
+    updateFocusable(el, state.region === 'table' && state.index === i);
+    el.classList.toggle('selected', state.selectedRow === i);
+    updateFocusRing(el);
+  });
+
+  // Update action items
+  const actionEls = [
+    document.getElementById('bidAmount'),
+    document.getElementById('btnBid'),
+    document.getElementById('btnShortlist'),
+    document.getElementById('btnScout'),
+  ];
+  actionEls.forEach((el, i) => {
+    if (state.region === 'actions' && state.index === i) {
+      el.removeAttribute('tabindex');
+      el.tabIndex = 0;
+      el.focus();
+    } else {
+      el.tabIndex = -1;
+    }
+    updateFocusRing(el);
+  });
+
+  // Focus the correct element within the current region
+  focusCurrentRegionElement();
+}
+
+function updateFocusable(el, isCurrent) {
+  if (isCurrent) {
+    el.tabIndex = 0;
+    el.focus({ preventScroll: true });
+  } else {
+    el.tabIndex = -1;
+  }
+}
+
+function updateFocusRing(el) {
+  el.classList.remove('kb-focus', 'mouse-focus');
+  if (el === document.activeElement) {
+    el.classList.add(state.source === 'keyboard' ? 'kb-focus' : 'mouse-focus');
+  }
+}
+
+function focusCurrentRegionElement() {
+  const region = state.region;
+  const idx = state.index;
+  let el = null;
+  if (region === 'nav') {
+    el = document.querySelector(`[data-nav]`); // will be set by updateFocusable
+    const items = document.querySelectorAll('[data-nav]');
+    if (items[idx]) items[idx].focus({ preventScroll: true });
+  } else if (region === 'table') {
+    const rows = document.querySelectorAll('[data-row]');
+    if (rows[idx]) rows[idx].focus({ preventScroll: true });
+  } else if (region === 'actions') {
+    const actionEls = [
+      document.getElementById('bidAmount'),
+      document.getElementById('btnBid'),
+      document.getElementById('btnShortlist'),
+      document.getElementById('btnScout'),
+    ];
+    if (actionEls[idx]) actionEls[idx].focus({ preventScroll: true });
+  }
+}
+
+// ─── Keyboard handlers ─────────────────────────────────────────────
+
+document.addEventListener('keydown', (e) => {
+  // Let walkthrough buttons and text input handle their own keys
+  if (e.target.tagName === 'INPUT') {
+    if (e.key === 'Tab') {
+      // Still handle Tab for region cycling even from input
+    } else {
+      return;
+    }
+  }
+
+  switch (e.key) {
+    case 'Tab': {
+      e.preventDefault();
+      dispatch({ type: 'CYCLE_REGION', dir: e.shiftKey ? -1 : 1 });
+      break;
+    }
+    case 'ArrowDown': {
+      e.preventDefault();
+      dispatch({ type: 'MOVE_WITHIN', dir: 1 });
+      break;
+    }
+    case 'ArrowUp': {
+      e.preventDefault();
+      dispatch({ type: 'MOVE_WITHIN', dir: -1 });
+      break;
+    }
+    case 'ArrowRight': {
+      // For actions region (horizontal layout) or nav (horizontal)
+      if (state.region === 'actions' || state.region === 'nav') {
+        e.preventDefault();
+        dispatch({ type: 'MOVE_WITHIN', dir: 1 });
+      }
+      break;
+    }
+    case 'ArrowLeft': {
+      if (state.region === 'actions' || state.region === 'nav') {
+        e.preventDefault();
+        dispatch({ type: 'MOVE_WITHIN', dir: -1 });
+      }
+      break;
+    }
+    case ' ': {
+      if (state.region === 'table') {
+        e.preventDefault();
+        dispatch({ type: 'TOGGLE_SELECTION' });
+      }
+      break;
+    }
+    case 'Enter': {
+      // Enter activates the focused button or submits
+      if (state.region === 'actions') {
+        const idx = state.index;
+        if (idx === 1) { // Place bid button
+          e.preventDefault();
+          dispatch({ type: 'START_ASYNC' });
+          document.getElementById('btnBid').classList.add('done');
+          setTimeout(() => {
+            dispatch({ type: 'COMPLETE_ASYNC' });
+            document.getElementById('btnBid').classList.remove('done');
+          }, 1500);
+        }
+      }
+      break;
+    }
+  }
+});
+
+// Click detection to distinguish keyboard vs mouse focus
+document.addEventListener('mousedown', () => {
+  // Will set source to mouse on next focus change
+  // We track this per-focus-event instead
+});
+
+document.addEventListener('focusin', (e) => {
+  const target = e.target;
+  // Determine which region and index the target belongs to
+  if (target.dataset && target.dataset.nav !== undefined) {
+    const idx = Array.from(document.querySelectorAll('[data-nav]')).indexOf(target);
+    if (idx >= 0) { state.region = 'nav'; state.index = idx; }
+  } else if (target.dataset && target.dataset.row !== undefined) {
+    const idx = Array.from(document.querySelectorAll('[data-row]')).indexOf(target);
+    if (idx >= 0) { state.region = 'table'; state.index = idx; }
+  } else if (target.id === 'bidAmount') {
+    state.region = 'actions'; state.index = 0;
+  } else if (target.id === 'btnBid') {
+    state.region = 'actions'; state.index = 1;
+  } else if (target.id === 'btnShortlist') {
+    state.region = 'actions'; state.index = 2;
+  } else if (target.id === 'btnScout') {
+    state.region = 'actions'; state.index = 3;
+  } else {
+    return;
+  }
+  // If the focus came from a click, mark as mouse
+  // Simple heuristic: if the active element changed and our last key event wasn't keyboard
+  state.source = 'mouse';
+  applyState();
+});
+
+// ─── Walkthrough wiring ────────────────────────────────────────────
+
+function renderWalkthrough(idx) {
+  currentWalkthrough = idx;
+  walkthroughStep = 0;
+  const wt = walkthroughs[idx];
+  const wbody = document.getElementById('wbody');
+  wbody.innerHTML = `<p><strong>${wt.title}:</strong> ${wt.desc}</p><div id="wsteps"></div><div class="hint" id="whint"></div>`;
+  wt.setup();
+  renderSteps();
+}
+
+function renderSteps() {
+  const wt = walkthroughs[currentWalkthrough];
+  const container = document.getElementById('wsteps');
+  const hint = document.getElementById('whint');
+  container.innerHTML = '';
+  wt.steps.forEach((step, i) => {
+    const div = document.createElement('div');
+    div.className = 'step';
+    const btn = document.createElement('button');
+    btn.className = 'step-btn';
+    btn.textContent = i < walkthroughStep ? '✓' : `Step ${i + 1}`;
+    btn.disabled = i > walkthroughStep;
+    if (i < walkthroughStep) btn.classList.add('done');
+    btn.addEventListener('click', () => {
+      if (i === walkthroughStep) {
+        step.action();
+        walkthroughStep = i + 1;
+        // Update async steps: if the step triggered an async, wait for it
+        renderSteps();
+      }
+    });
+    const label = document.createElement('span');
+    label.className = 'step-label';
+    label.textContent = ` ${step.label}`;
+    div.appendChild(btn);
+    div.appendChild(label);
+    container.appendChild(div);
+  });
+  hint.textContent = walkthroughStep >= wt.steps.length
+    ? '✓ Walkthrough complete. Free-play below or pick another scenario.'
+    : `Press Step ${walkthroughStep + 1} or use keyboard to perform the action.`;
+}
+
+document.querySelectorAll('.wtab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.wtab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderWalkthrough(parseInt(tab.dataset.wt));
+  });
+});
+
+// Init
+renderWalkthrough(0);
+applyState();
+</script>
+</body>
+</html>

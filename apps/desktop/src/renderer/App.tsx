@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { SaveSummary } from "@cm-clone/contracts";
+import { ClubId, type SaveId, type SaveSummary } from "@cm-clone/contracts";
 import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
 import { CreationStep1 } from "./CreationStep1.js";
 import { ClubSelectionScreen } from "./ClubSelectionScreen.js";
@@ -28,7 +28,7 @@ interface CreationState {
   managerName: string;
   archetype: ManagerArchetype;
   pillars: PillarDistribution;
-  provisionalId: string | null;
+  provisionalId: SaveId | null;
 }
 
 const DEFAULT_PILLARS: PillarDistribution = {
@@ -128,7 +128,7 @@ export const App = () => {
     const result = await window.cmClone.call("commitCareer", {
       id: provisionalId,
       name: saveName.trim(),
-      selectedClubId: "temp-club-id",
+      selectedClubId: ClubId.make("temp-club-id"),
       managerName: managerName.trim() || saveName.trim(),
       archetypeOrigin: archetype,
       pillars,
@@ -158,7 +158,7 @@ export const App = () => {
     setLoadedSave(result.value);
   };
 
-  const handleContinue = async (id: string) => {
+  const handleContinue = async (id: SaveId) => {
     const result = await window.cmClone.call("loadSave", { id });
     if (result._tag === "Failure") return;
     setLoadedSave(result.value);

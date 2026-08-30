@@ -1,5 +1,5 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { ManagerArchetypeSchema, ManagerProfileNotFoundError, ManagerProfileView } from "@cm-clone/contracts";
+import { ManagerArchetypeSchema, ManagerProfileNotFoundError, ManagerProfileView, type SaveId } from "@cm-clone/contracts";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "./decider.js";
@@ -33,7 +33,7 @@ export const loadManagerProfile = Effect.gen(function* () {
 });
 
 /** Query the manager profile from a committed save. */
-export const getManagerProfile = (savesDir: string, saveId: string) =>
+export const getManagerProfile = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const profile = yield* loadManagerProfile;

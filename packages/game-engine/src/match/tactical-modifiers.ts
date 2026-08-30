@@ -9,6 +9,7 @@ import {
 } from "@cm-clone/shared";
 import { Data } from "effect";
 import type { MatchPlayerInput, MatchTactic, PhaseStrengths, TacticalModifiers } from "./types.js";
+import type { PlayerId } from "@cm-clone/contracts";
 
 export class NoPhaseForPositionError extends Data.TaggedError("NoPhaseForPositionError")<{
   readonly position: Position;
@@ -41,7 +42,7 @@ export interface SlotFit {
  * rates whichever player currently occupies the slot, so substitutions need no tactics knowledge.
  */
 export interface ResolvedSlot {
-  readonly playerId: string;
+  readonly playerId: PlayerId;
   readonly phase: Phase;
   /** Whether this slot is the Goalkeeper slot — the engine otherwise never names a Position, but
    * the no-subs GK fallback (ticket 07) needs to identify which on-pitch slot guards the goal. */
@@ -120,7 +121,7 @@ const resolveOnPitchSlots = (
 /** Phase averages over the given ResolvedSlots (membership = on-pitch): Position base + Role bumps. */
 export const aggregatePhaseSlots = (
   slots: ReadonlyArray<ResolvedSlot>,
-  playersById: ReadonlyMap<string, MatchPlayerInput>,
+  playersById: ReadonlyMap<PlayerId, MatchPlayerInput>,
 ): { readonly base: PhaseStrengths; readonly bumps: Record<Phase, number> } => {
   const baseRating: Record<Phase, Array<number>> = { attack: [], midfield: [], defense: [] };
   const roleBump: Record<Phase, Array<number>> = { attack: [], midfield: [], defense: [] };
@@ -162,7 +163,7 @@ export const applyRoleBumps = (
 /** Phase Strength (ADR-0002): Position-Rating-only average per phase over on-pitch slots. */
 export const computePhaseStrengths = (
   tactic: MatchTactic,
-  playersById: ReadonlyMap<string, MatchPlayerInput>,
+  playersById: ReadonlyMap<PlayerId, MatchPlayerInput>,
   onPitchPlayerIds?: ReadonlySet<string>,
 ): PhaseStrengths => {
   const onPitch = resolveOnPitchSlots(tactic, onPitchPlayerIds);
@@ -172,7 +173,7 @@ export const computePhaseStrengths = (
 /** Resolves a Tactic into the flat `TacticalModifiers` (ADR-0002/0003) — standalone form of the boundary. */
 export const resolveTacticalModifiers = (
   tactic: MatchTactic,
-  playersById: ReadonlyMap<string, MatchPlayerInput>,
+  playersById: ReadonlyMap<PlayerId, MatchPlayerInput>,
   onPitchPlayerIds?: ReadonlySet<string>,
 ): TacticalModifiers => {
   const onPitch = resolveOnPitchSlots(tactic, onPitchPlayerIds);

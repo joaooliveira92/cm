@@ -9,12 +9,13 @@ import {
   type SimulateMatchInput,
 } from "../../src/match/simulate.js";
 import type { MatchPlayerInput, MatchTeamSetup } from "../../src/match/types.js";
-import { buildTeam } from "./fixtures.js";
+import { buildTeam, clubId as makeClubId, playerId as makePlayerId } from "./fixtures.js";
 
+import type { ClubId, PlayerId } from "@cm-clone/contracts";
 const baseInput = (seed: number): SimulateMatchInput => ({
   seed,
-  home: buildTeam("home-club", seed).setup,
-  away: buildTeam("away-club", seed + 1000).setup,
+  home: buildTeam(makeClubId("home-club"), seed).setup,
+  away: buildTeam(makeClubId("away-club"), seed + 1000).setup,
 });
 
 /** A fully-maxed outfield attribute set, overridden per test — so crafted fixtures differ only in
@@ -31,9 +32,9 @@ const craftAttributes = (overrides: Partial<Record<keyof PlayerAttributes, numbe
   return { ...(base as PlayerAttributes), ...overrides };
 };
 
-const craftTeam = (clubId: string, attributes: PlayerAttributes, formation: keyof typeof FORMATION_SLOTS = "4-4-2"): MatchTeamSetup => {
+const craftTeam = (clubId: ClubId, attributes: PlayerAttributes, formation: keyof typeof FORMATION_SLOTS = "4-4-2"): MatchTeamSetup => {
   const squad: Array<MatchPlayerInput> = FORMATION_SLOTS[formation].map((position, index) => ({
-    id: `${clubId}-${index}`,
+    id: makePlayerId(`${clubId}-${index}`),
     attributes: { ...attributes },
   }));
   const tactic = {
@@ -41,7 +42,7 @@ const craftTeam = (clubId: string, attributes: PlayerAttributes, formation: keyo
     slots: FORMATION_SLOTS[formation].map((position, index) => ({
       position,
       role: POSITION_ROLES[position],
-      playerId: `${clubId}-${index}`,
+      playerId: makePlayerId(`${clubId}-${index}`),
     })),
     mentality: "balanced" as const,
     tempo: "normal" as const,
@@ -140,8 +141,8 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
     });
 
     it("a high-Aggression challenge against a low-Bravery, injury-prone attacker causes contact injuries (ticket 06)", () => {
-      const homeAttack = craftTeam("home", craftAttributes({ aggression: 20, bravery: 1, injuryProneness: 20, stamina: 18 }));
-      const awayDefense = craftTeam("away", craftAttributes({ aggression: 20, bravery: 1, injuryProneness: 20, stamina: 18 }));
+      const homeAttack = craftTeam(makeClubId("home"), craftAttributes({ aggression: 20, bravery: 1, injuryProneness: 20, stamina: 18 }));
+      const awayDefense = craftTeam(makeClubId("away"), craftAttributes({ aggression: 20, bravery: 1, injuryProneness: 20, stamina: 18 }));
       // Run a few seeds; the crafted extreme makes a collision near-certain whenever a duel is drawn.
       let contact = 0;
       for (let seed = 1; seed <= 6; seed++) {
@@ -194,22 +195,22 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
 
   describe("mid-match commands", () => {
     it("accepts a mid-match ChangeTactics and it affects subsequent Phase Strength", () => {
-      const home = buildTeam("home-club", 20);
-      const away = buildTeam("away-club", 21);
+      const home = buildTeam(makeClubId("home-club"), 20);
+      const away = buildTeam(makeClubId("away-club"), 21);
       const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
-        [50, [{ _tag: "ChangeTactics", clubId: "home-club", tactic: { ...home.setup.tactic, mentality: "attacking" } }]],
+        [50, [{ _tag: "ChangeTactics", clubId: makeClubId("home-club"), tactic: { ...home.setup.tactic, mentality: "attacking" } }]],
       ]);
       const events = simulateMatch({ seed: 20, home: home.setup, away: away.setup, commandsByMinute });
       expect(events.some((e) => e._tag === "FullTimeWhistle")).toBe(true);
     });
 
     it("accepts a valid mid-match MakeSubstitution and emits a Substitution event", () => {
-      const home = buildTeam("home-club", 30);
-      const away = buildTeam("away-club", 31);
+      const home = buildTeam(makeClubId("home-club"), 30);
+      const away = buildTeam(makeClubId("away-club"), 31);
       const outPlayerId = home.setup.tactic.slots[0]!.playerId;
       const inPlayerId = home.squad.find((p) => !home.setup.tactic.slots.some((s) => s.playerId === p.id))!.id;
       const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
-        [10, [{ _tag: "MakeSubstitution", clubId: "home-club", outPlayerId, inPlayerId }]],
+        [10, [{ _tag: "MakeSubstitution", clubId: makeClubId("home-club"), outPlayerId, inPlayerId }]],
       ]);
       const events = simulateMatch({ seed: 30, home: home.setup, away: away.setup, commandsByMinute });
       expect(
@@ -220,15 +221,15 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
     });
 
     it("rejects (silently drops) a substitution once the 5-sub cap is reached", () => {
-      const home = buildTeam("home-club", 40);
-      const away = buildTeam("away-club", 41);
+      const home = buildTeam(makeClubId("home-club"), 40);
+      const away = buildTeam(makeClubId("away-club"), 41);
       const bench = home.squad.filter((p) => !home.setup.tactic.slots.some((s) => s.playerId === p.id));
       const starters = home.setup.tactic.slots.map((s) => s.playerId);
 
       const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>();
       for (let i = 0; i < 6; i++) {
         commandsByMinute.set(10 + i, [
-          { _tag: "MakeSubstitution", clubId: "home-club", outPlayerId: starters[i]!, inPlayerId: bench[i]!.id },
+          { _tag: "MakeSubstitution", clubId: makeClubId("home-club"), outPlayerId: starters[i]!, inPlayerId: bench[i]!.id },
         ]);
       }
 
@@ -238,20 +239,20 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
     });
 
     it("rejects a 4th substitution window (halftime doesn't count as a window)", () => {
-      const home = buildTeam("home-club", 50);
-      const away = buildTeam("away-club", 51);
+      const home = buildTeam(makeClubId("home-club"), 50);
+      const away = buildTeam(makeClubId("away-club"), 51);
       const bench = home.squad.filter((p) => !home.setup.tactic.slots.some((s) => s.playerId === p.id));
       const starters = home.setup.tactic.slots.map((s) => s.playerId);
 
       // 3 distinct-minute windows mid-match, plus a halftime window (free), plus a 4th mid-match window.
       const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
-        [10, [{ _tag: "MakeSubstitution", clubId: "home-club", outPlayerId: starters[0]!, inPlayerId: bench[0]!.id }]],
-        [20, [{ _tag: "MakeSubstitution", clubId: "home-club", outPlayerId: starters[1]!, inPlayerId: bench[1]!.id }]],
-        [30, [{ _tag: "MakeSubstitution", clubId: "home-club", outPlayerId: starters[2]!, inPlayerId: bench[2]!.id }]],
-        [70, [{ _tag: "MakeSubstitution", clubId: "home-club", outPlayerId: starters[3]!, inPlayerId: bench[3]!.id }]],
+        [10, [{ _tag: "MakeSubstitution", clubId: makeClubId("home-club"), outPlayerId: starters[0]!, inPlayerId: bench[0]!.id }]],
+        [20, [{ _tag: "MakeSubstitution", clubId: makeClubId("home-club"), outPlayerId: starters[1]!, inPlayerId: bench[1]!.id }]],
+        [30, [{ _tag: "MakeSubstitution", clubId: makeClubId("home-club"), outPlayerId: starters[2]!, inPlayerId: bench[2]!.id }]],
+        [70, [{ _tag: "MakeSubstitution", clubId: makeClubId("home-club"), outPlayerId: starters[3]!, inPlayerId: bench[3]!.id }]],
       ]);
       const halftimeCommands: ReadonlyArray<MatchCommand> = [
-        { _tag: "MakeSubstitution", clubId: "home-club", outPlayerId: starters[4]!, inPlayerId: bench[4]!.id },
+        { _tag: "MakeSubstitution", clubId: makeClubId("home-club"), outPlayerId: starters[4]!, inPlayerId: bench[4]!.id },
       ];
 
       const events = simulateMatch({ seed: 50, home: home.setup, away: away.setup, commandsByMinute, halftimeCommands });
@@ -267,8 +268,8 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
   describe("ticket 11 no-subs manager flow", () => {
     /** `craftTeam` builds exactly the 11 on-pitch players (no bench) — so any forced-off has no
      * substitute and must play with 10. */
-    const noBenchHome = () => craftTeam("home", craftAttributes({ injuryProneness: 1, aggression: 1 }));
-    const noBenchAway = () => craftTeam("away", craftAttributes({ injuryProneness: 1, aggression: 1 }));
+    const noBenchHome = () => craftTeam(makeClubId("home"), craftAttributes({ injuryProneness: 1, aggression: 1 }));
+    const noBenchAway = () => craftTeam(makeClubId("away"), craftAttributes({ injuryProneness: 1, aggression: 1 }));
 
     /** A seed whose natural match has no red card and no red injury for either no-bench team — the
      * only count-changing events come from whatever `ForceOff`/orange commands a test injects. */
@@ -288,7 +289,7 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
       const away = noBenchAway();
       const outPlayerId = home.tactic.slots[3]!.playerId;
       const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
-        [60, [{ _tag: "ForceOff", clubId: "home", playerId: outPlayerId }]],
+        [60, [{ _tag: "ForceOff", clubId: makeClubId("home"), playerId: outPlayerId }]],
       ]);
       const { events, counts } = simulateMatchWithCounts({
         seed: findCleanSeed(),
@@ -310,7 +311,7 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
       const away = noBenchAway();
       const gkId = home.tactic.slots[0]!.playerId;
       const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
-        [60, [{ _tag: "ForceOff", clubId: "home", playerId: gkId }]],
+        [60, [{ _tag: "ForceOff", clubId: makeClubId("home"), playerId: gkId }]],
       ]);
       const { events, counts } = simulateMatchWithCounts({
         seed: findCleanSeed(),
@@ -328,10 +329,10 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
     it("an orange (knock) injury leaves the player on (11) by default, and a ForceOff then brings them off (10)", () => {
       // High proneness + low stamina makes non-contact injuries frequent; find a seed where the
       // home no-bench team takes an orange (knock) injury before stoppage time.
-      const home = craftTeam("home", craftAttributes({ injuryProneness: 20, stamina: 1, aggression: 1 }));
-      const away = craftTeam("away", craftAttributes({ injuryProneness: 20, stamina: 1, aggression: 1 }));
+      const home = craftTeam(makeClubId("home"), craftAttributes({ injuryProneness: 20, stamina: 1, aggression: 1 }));
+      const away = craftTeam(makeClubId("away"), craftAttributes({ injuryProneness: 20, stamina: 1, aggression: 1 }));
       let seed: number | undefined;
-      let orangePlayerId: string | undefined;
+      let orangePlayerId: PlayerId | undefined;
       let orangeMinute = 0;
       for (let s = 1; s < 4000; s++) {
         const events = simulateMatch({ seed: s, home, away });
@@ -358,7 +359,7 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
         home,
         away,
         commandsByMinute: new Map<number, ReadonlyArray<MatchCommand>>([
-          [orangeMinute + 1, [{ _tag: "ForceOff", clubId: "home", playerId: orangePlayerId! }]],
+          [orangeMinute + 1, [{ _tag: "ForceOff", clubId: makeClubId("home"), playerId: orangePlayerId! }]],
         ]),
       });
       const bringOffAfter = bringOff.counts.find((c) => c.minute === orangeMinute + 1);
@@ -366,8 +367,8 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
     });
 
     it("a red forced-off with no subs left keeps the team at 10 men (never 9)", () => {
-      const home = craftTeam("home", craftAttributes({ injuryProneness: 20, stamina: 1, aggression: 1 }));
-      const away = craftTeam("away", craftAttributes({ injuryProneness: 20, stamina: 1, aggression: 1 }));
+      const home = craftTeam(makeClubId("home"), craftAttributes({ injuryProneness: 20, stamina: 1, aggression: 1 }));
+      const away = craftTeam(makeClubId("away"), craftAttributes({ injuryProneness: 20, stamina: 1, aggression: 1 }));
       let seed: number | undefined;
       for (let s = 1; s < 4000; s++) {
         const events = simulateMatch({ seed: s, home, away });

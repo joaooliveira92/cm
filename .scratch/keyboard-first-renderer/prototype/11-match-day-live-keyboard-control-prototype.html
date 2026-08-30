@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keyboard Control Prototype - Match Day</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f1117;
+      color: #e1e4e8;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 0.2rem;
+      color: #fff;
+    }
+    .subtitle {
+      font-size: 0.9rem;
+      color: #888;
+      margin-bottom: 2rem;
+    }
+    .panel {
+      background: #1a1d23;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .panel-title {
+      font-size: 1.1rem;
+      color: #ccd0e8;
+    }
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    .status-healthy {
+      background: #2d3148;
+    }
+    .status-urgent {
+      background: #e0556a;
+    }
+    .control-group {
+      margin-bottom: 20px;
+    }
+    .group-label {
+      font-size: 0.8rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .btn {
+      background: #2d3148;
+      color: #e1e4e8;
+      border: 1px solid #3a3f4b;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      background: #3a3f4b;
+      border-color: #4a5058;
+    }
+    .btn.active {
+      background: #4a5a6e;
+      border-color: #6b8cbb;
+    }
+    .btn.danger {
+      background: #6b1a2e;
+      color: #fff;
+    }
+    .btn.danger:hover {
+      background: #5a2a1e;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: #666;
+      border: 1px solid #3a3f4b;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-ghost:hover {
+      background: #2d3148;
+      color: #e1e4e8;
+    }
+    .injury-section {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: 6px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .injury-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #2d3148;
+    }
+    .injury-item:last-child {
+      border-bottom: none;
+    }
+    .injury-icon {
+      font-size: 1.2rem;
+      width: 24px;
+      text-align: center;
+    }
+    .action-area {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #2d3148;
+    }
+    .info-text {
+      font-size: 0.85rem;
+      color: #999;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Match Day – Keyboard Control Prototype</h1>
+    <p class="subtitle">Interactive demo of keyboard-controlled match control during a live game</p>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Match Control Panel</div>
+        <div class="status-indicator status-healthy"></div>
+      </div>
+
+      <div class="control-group">
+        <div class="group-label">Match Info</div>
+        <div class="info-text">
+          <strong>Home:</strong> Manchester City<br>
+          <strong>Score:</strong> 2–1<br>
+          <strong>Time:</strong> 23′ 14″<br>
+          <strong>Status:</strong> Live
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="group-label">Injuries</div>
+        <div class="injury-section">
+          <div class="injury-item">
+            <div class="injury-icon">🟥</div>
+            <span>⚽ Red Injury</span>
+            <span>Player: Goalkeeper</span>
+            <span>Status: On pitch</span>
+          </div>
+          <div class="injury-item">
+            <div class="injury-icon">🟧</div>
+            <span>🟨 Orange Injury</span>
+            <span>Player: Midfielder</span>
+            <span>Status: On pitch</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="group-label">Actions</div>
+        <button class="btn active" onclick="handlePlayOn()">▶ Play On</button>
+        <button class="btn danger" onclick="handleBringOff()">🚪 Bring Off</button>
+        <button class="btn" onclick="handleToggleTactics()">✏️ Tactics</button>
+        <div class="info-text">
+          <strong>Keyboard Flow:</strong><br>
+          • Click <strong>Play On</strong> to acknowledge injury<br>
+          • Click <strong>Bring Off</strong> to remove injured player<br>
+          • Select players in the <strong>Substitution Panel</strong> to make changes<br>
+          • Adjust <strong>Mentality / Tempo / Pressing</strong> live
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="group-label">Substitution Panel</div>
+        <div class="panel">
+          <h3>Substitutions</h3>
+          <div class="control-group">
+            <div class="group-label">Out Player</div>
+            <select id="outPlayer" onchange="updateSubPanel()">
+              <option value="">— Select out player —</option>
+              <option value="GK1">Goalkeeper (GK1)</option>
+              <option value="MF1">Midfielder (MF1)</option>
+              <option value="FW2">Forward (FW2)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <div class="group-label">In Player</div>
+            <select id="inPlayer" onchange="updateSubPanel()">
+              <option value="">— Select in player —</option>
+              <option value="GK2">Goalkeeper (GK2)</option>
+              <option value="MF2">Midfielder (MF2)</option>
+              <option value="FW1">Forward (FW1)</option>
+            </select>
+          </div>
+          <button class="btn" onclick="handleSubmitSubstitution()">🔄 Submit</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-area">
+      <h3>Keyboard Interaction Demo</h3>
+      <p>Click the buttons above to experience the keyboard control flow during a live match. The panel updates in real-time to reflect the simulated state.</p>
+    </div>
+  </div>
+
+  <script>
+    // Simulated match state
+    const matchState = {
+      homeClubId: "MCI",
+      awayClubId: "ACF",
+      homeScore: 2,
+      awayScore: 1,
+      time: 23,
+      injuries: [
+        { teamId: "MCI", tier: "red", playerId: "GK1", status: "on_pitch" },
+        { teamId: "MCI", tier: "orange", playerId: "MF1", status: "on_pitch" }
+      ],
+      subs: {
+        used: 2,
+        remaining: 3,
+        capReached: false
+      },
+      paused: false
+    };
+
+    // Helper functions
+    function getInjuryByTeam(homeClubId) {
+      return matchState.injuries.filter(i => i.teamId === homeClubId);
+    }
+
+    function isInjuryCritical(injury) {
+      return injury.tier === "red" || (injury.tier === "orange" && injury.status === "on_pitch");
+    }
+
+    function handlePlayOn() {
+      // Simulate acknowledging an injury decision
+      console.log("→ Play On selected – injury acknowledged");
+      matchState.paused = false;
+      matchState.injuries = [];
+      updatePanel();
+      alert("✅ Injury acknowledged – match resumed.");
+    }
+
+    function handleBringOff() {
+      // Simulate bringing off an injured player
+      console.log("→ Bring Off selected – injured player removed");
+      matchState.subs.used++;
+      updatePanel();
+      alert("✅ Player brought off – substitution count increased.");
+    }
+
+    function handleToggleTactics() {
+      // Simulate changing tactics
+      console.log("→ Tactics changed – new formation applied");
+      matchState.tactics = "Dynamic Formation – High Press";
+      updatePanel();
+      alert("✅ Tactics updated – formation adjusted.");
+    }
+
+    function updateSubPanel() {
+      const out = document.getElementById('outPlayer').value;
+      const in = document.getElementById('inPlayer').value;
+      const subs = matchState.subs;
+      const panel = document.querySelector('.substitution-panel');
+      if (!panel) return;
+
+      // Clear existing buttons
+      const btnOut = panel.querySelector('[data-out-player]');
+      const btnIn = panel.querySelector('[data-in-player]');
+      const btnSubmit = panel.querySelector('[data-submit]');
+
+      if (out) {
+        btnOut.style.display = out ? 'flex' : 'none';
+        btnOut.textContent = out === matchState.subs.outgoing ? 'Out' : 'In';
+      }
+      if (in) {
+        btnIn.style.display = in ? 'flex' : 'none';
+        btnIn.textContent = in === matchState.subs.incoming ? 'In' : 'Out';
+      }
+      btnSubmit.style.display = !!(out && in);
+    }
+
+    function handleSubmitSubstitution() {
+      // Simulate submitting a substitution
+      console.log("→ Substitution submitted – player swapped");
+      matchState.subs.used++;
+      updatePanel();
+      alert("✅ Substitution submitted – player swapped on the field.");
+    }
+
+    function updatePanel() {
+      const panel = document.querySelector('.substitution-panel');
+      if (!panel) return;
+
+      const injuryItems = panel.querySelectorAll('.injury-item');
+      injuryItems.forEach(item => {
+        const injury = item.closest('div').querySelector('span:last-child');
+        const status = item.querySelector('span').textContent;
+        const icon = item.querySelector('.injury-icon').textContent;
+        const div = item.parentElement;
+        if (icon) div.classList.add('status-urgent');
+        if (status.includes('Red') || status.includes('Orange')) {
+          div.classList.add('status-urgent');
+        }
+      });
+
+      const subsDiv = panel.querySelector('.substitution-status');
+      if (subsDiv) {
+        subsDiv.textContent = `Substitutions used: ${matchState.subs.used}/${matchState.subs.capReached || 3}`;
+      }
+    }
+
+    // Initial render
+    updatePanel();
+  </script>
+</body>
+</html>

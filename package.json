@@ -24,6 +24,7 @@
     "@effect/tsgo-darwin-arm64": "0.38.0",
     "@typescript/typescript-darwin-arm64": "7.0.2",
     "oxlint": "^1.80.0",
+    "oxlint-tsgolint": "^7.0.2001",
     "tsx": "^4.23.12",
     "typescript": "7.0.2"
   }

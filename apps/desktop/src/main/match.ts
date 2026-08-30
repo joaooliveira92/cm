@@ -5,14 +5,18 @@ import {
   ClubSummary,
   CommentaryLineView,
   InjuryView,
+  MatchId,
   MatchNotFoundError,
   MatchSummary,
   ResumeSimulationView,
   SubstitutionStatusView,
   Tactic,
   type ChangeTacticsCommandPayload,
+  type ClubId,
   type ForceOffCommandPayload,
   type MakeSubstitutionCommandPayload,
+  type PlayerId,
+  type SaveId,
 } from "@cm-clone/contracts";
 import {
   MAX_SUBSTITUTIONS_PER_TEAM,
@@ -72,7 +76,7 @@ const BOUNDARY_TAGS: ReadonlySet<MatchEvent["_tag"]> = new Set(["HalfTimeReached
  */
 const synthesizeDefaultTactic = (
   squad: ReadonlyArray<{
-    readonly id: string;
+    readonly id: PlayerId;
     readonly positions: ReadonlyArray<{ readonly position: string; readonly familiarity: string }>;
   }>,
 ): Tactic => {
@@ -94,7 +98,7 @@ const synthesizeDefaultTactic = (
 
 /** Builds a `MatchTeamSetup` for any club: its persisted Tactic if `ChangeTactics` was ever issued
  * for it, else the synthesized default above. Assumes a `SqlClient` in context. */
-const loadTeamSetup = (clubId: string) =>
+const loadTeamSetup = (clubId: ClubId) =>
   Effect.gen(function* () {
     const squad = yield* loadSquadPlayers(clubId);
     const persisted = yield* loadPersistedTactic(clubId);
@@ -113,11 +117,11 @@ const loadTeamSetup = (clubId: string) =>
     return setup;
   });
 
-const loadClubSummary = (clubId: string) =>
+const loadClubSummary = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql<{
-      id: string;
+      id: ClubId;
       name: string;
       statureTier: "big" | "mid" | "small";
     }>`SELECT id, name, stature_tier as "statureTier" FROM clubs WHERE id = ${clubId}`;
@@ -127,13 +131,13 @@ const loadClubSummary = (clubId: string) =>
 
 /** Every club but the user's own — the "pick-an-opponent" stopgap this ticket uses in place of a
  * fixture list (ticket 15, in parallel, will supersede this with real fixtures). */
-export const listOpponentClubs = (savesDir: string, saveId: string) =>
+export const listOpponentClubs = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const rows = yield* sql<{
-        id: string;
+        id: ClubId;
         name: string;
         statureTier: "big" | "mid" | "small";
       }>`SELECT id, name, stature_tier as "statureTier" FROM clubs WHERE id != ${club.id} ORDER BY name`;
@@ -152,8 +156,8 @@ export const listOpponentClubs = (savesDir: string, saveId: string) =>
  * retroactively rewrite the kickoff tactic this match already resolved minutes of play against. */
 interface PersistedMatchStarted {
   readonly seed: number;
-  readonly homeClubId: string;
-  readonly awayClubId: string;
+  readonly homeClubId: ClubId;
+  readonly awayClubId: ClubId;
   readonly homeSetup: MatchTeamSetup;
   readonly awaySetup: MatchTeamSetup;
   readonly pillars: PillarDistribution;
@@ -166,7 +170,7 @@ interface PersistedTacticsChanged {
   readonly _tag: "TacticsChanged";
   readonly minute: number;
   readonly isHalftime: boolean;
-  readonly clubId: string;
+  readonly clubId: ClubId;
   readonly tactic: Tactic;
 }
 
@@ -174,9 +178,9 @@ interface PersistedSubstitutionMade {
   readonly _tag: "SubstitutionMade";
   readonly minute: number;
   readonly isHalftime: boolean;
-  readonly clubId: string;
-  readonly outPlayerId: string;
-  readonly inPlayerId: string;
+  readonly clubId: ClubId;
+  readonly outPlayerId: PlayerId;
+  readonly inPlayerId: PlayerId;
 }
 
 /** Ticket 11 `ForceOff` journal entry — the manager's orange "bring off" (no-subs), a forced-off
@@ -185,8 +189,8 @@ interface PersistedForcedOff {
   readonly _tag: "ForceOffMade";
   readonly minute: number;
   readonly isHalftime: boolean;
-  readonly clubId: string;
-  readonly playerId: string;
+  readonly clubId: ClubId;
+  readonly playerId: PlayerId;
 }
 
 /**
@@ -196,7 +200,7 @@ interface PersistedForcedOff {
  * `simulateMatch` is pure and sub-millisecond (ADR-0007), so recomputing beats persisting a
  * timeline that a later `SubmitMatchCommand` would have to invalidate and recompute anyway.
  */
-export const startMatch = (savesDir: string, saveId: string, opponentClubId: string) =>
+export const startMatch = (savesDir: string, saveId: SaveId, opponentClubId: ClubId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       yield* assertSaveNotSacked(saveId);
@@ -213,7 +217,7 @@ export const startMatch = (savesDir: string, saveId: string, opponentClubId: str
       const profile = yield* loadManagerProfile;
       const pillars = profile ? profile.pillars : { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 };
 
-      const matchId = randomUUID();
+      const matchId = MatchId.make(randomUUID());
       // Deterministic per match (ADR-0002) — Date.now() picks a fresh seed per `StartMatch` call,
       // matchId keeps every call's seed distinct even within the same millisecond.
       const seed = (Date.now() ^ hashString(matchId)) >>> 0;
@@ -249,17 +253,26 @@ const hashString = (value: string): number => {
   return hash >>> 0;
 };
 
+/** Every case is listed explicitly and there is no `default:` — a new `MatchEvent` variant then
+ * makes the end of the function reachable, which `tsc` rejects against the declared return type.
+ * A `default: return [event.playerId]` compiled fine and broke at runtime on any new variant
+ * without a `playerId`. */
 const collectPlayerIds = (event: MatchEvent): ReadonlyArray<string> => {
   switch (event._tag) {
-    case "MatchStarted":
-      return [];
+    case "Goal":
+    case "ShotOnTarget":
+    case "ShotMissed":
+    case "BigChance":
+    case "YellowCard":
+    case "RedCard":
+    case "Injury":
+      return [event.playerId];
     case "Substitution":
       return [event.outPlayerId, event.inPlayerId];
+    case "MatchStarted":
     case "HalfTimeReached":
     case "FullTimeWhistle":
       return [];
-    default:
-      return [event.playerId];
   }
 };
 
@@ -284,7 +297,7 @@ const scoreAsOf = (events: ReadonlyArray<MatchEvent>): { readonly homeScore: num
  */
 const deriveMatchEvents = (stream: ReadonlyArray<StreamEvent>): {
   readonly events: ReadonlyArray<MatchEvent>;
-  readonly conditions: ReadonlyMap<string, number>;
+  readonly conditions: ReadonlyMap<PlayerId, number>;
   readonly counts: ReadonlyArray<MatchPlayerCountEntry>;
 } => {
   const started = stream[0]!.payload as PersistedMatchStarted;
@@ -349,7 +362,7 @@ const onPitchCountsFor = (
  * timeline's accepted `Substitution` events — authoritative for "used" (the engine only ever emits
  * a `Substitution` event when it actually accepted the command), an approximation for "windows
  * used" (see `HALFTIME_MINUTE`'s doc comment above). */
-const computeSubstitutionStatus = (clubId: string, events: ReadonlyArray<MatchEvent>): SubstitutionStatusView => {
+const computeSubstitutionStatus = (clubId: ClubId, events: ReadonlyArray<MatchEvent>): SubstitutionStatusView => {
   const subs = events.filter(
     (event): event is Extract<MatchEvent, { readonly _tag: "Substitution" }> =>
       event._tag === "Substitution" && event.teamClubId === clubId,
@@ -370,9 +383,9 @@ const computeSubstitutionStatus = (clubId: string, events: ReadonlyArray<MatchEv
  * timeline, resolves names, renders Commentary Lines, slices off the chunk after `cursor`, and
  * attaches the ticket 14 substitution-cap/injury-prompt fields. Assumes a `SqlClient` in context. */
 const buildResumeSimulationView = (
-  matchId: string,
+  matchId: MatchId,
   events: ReadonlyArray<MatchEvent>,
-  conditions: ReadonlyMap<string, number>,
+  conditions: ReadonlyMap<PlayerId, number>,
   counts: ReadonlyArray<MatchPlayerCountEntry>,
   cursor: number,
 ) =>
@@ -381,20 +394,20 @@ const buildResumeSimulationView = (
 
     const sql = yield* SqlClient;
     const clubRows = yield* sql<{
-      id: string;
+      id: ClubId;
       name: string;
     }>`SELECT id, name FROM clubs WHERE id IN (${started.homeClubId}, ${started.awayClubId})`;
-    const clubNameById = new Map(clubRows.map((row) => [row.id, row.name]));
+    const clubNameById = new Map<string, string>(clubRows.map((row) => [row.id, row.name]));
 
     const playerIds = [...new Set(events.flatMap(collectPlayerIds))];
     const playerRows =
       playerIds.length === 0
         ? []
-        : yield* sql.unsafe<{ id: string; firstName: string; lastName: string }>(
+        : yield* sql.unsafe<{ id: PlayerId; firstName: string; lastName: string }>(
             `SELECT id, first_name as "firstName", last_name as "lastName" FROM players WHERE id IN (${playerIds.map(() => "?").join(",")})`,
             playerIds,
           );
-    const playerNameById = new Map(playerRows.map((row) => [row.id, `${row.firstName} ${row.lastName}`]));
+    const playerNameById = new Map<string, string>(playerRows.map((row) => [row.id, `${row.firstName} ${row.lastName}`]));
 
     const names: CommentaryNameResolver = {
       clubName: (clubId) => clubNameById.get(clubId) ?? "Unknown side",
@@ -465,7 +478,7 @@ const buildResumeSimulationView = (
  * chunk after `cursor`. Since `simulateMatch` is pure, this reproduces the exact same events for
  * any minute range no `SubmitMatchCommand` has touched yet — determinism holds by construction.
  */
-export const resumeSimulation = (savesDir: string, saveId: string, matchId: string, cursor: number) =>
+export const resumeSimulation = (savesDir: string, saveId: SaveId, matchId: MatchId, cursor: number) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
@@ -489,8 +502,8 @@ type MatchCommandPayloadInput = ChangeTacticsCommandPayload | MakeSubstitutionCo
  */
 export const submitMatchCommand = (
   savesDir: string,
-  saveId: string,
-  matchId: string,
+  saveId: SaveId,
+  matchId: MatchId,
   cursor: number,
   minute: number,
   isHalftime: boolean,

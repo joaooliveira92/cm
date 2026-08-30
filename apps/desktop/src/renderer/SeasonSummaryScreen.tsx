@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { SeasonSummaryView } from "@cm-clone/contracts";
+import type { SaveId, SeasonSummaryView } from "@cm-clone/contracts";
 
 const verdictLabel: Record<string, string> = {
   exceeded: "Exceeded",
@@ -7,7 +7,7 @@ const verdictLabel: Record<string, string> = {
   missed: "Missed",
 };
 
-export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: string }) => {
+export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [summary, setSummary] = useState<SeasonSummaryView | null>(null);
   const [error, setError] = useState<string | null>(null);
 

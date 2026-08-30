@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { computePhaseStrengths, resolveTacticalModifiers } from "../../src/match/tactical-modifiers.js";
-import { buildTeam } from "./fixtures.js";
+import { buildTeam, clubId as makeClubId } from "./fixtures.js";
 
 describe("computePhaseStrengths", () => {
   it("computes a positive rating for all three phases from a full XI", () => {
-    const team = buildTeam("home", 1);
+    const team = buildTeam(makeClubId("home"), 1);
     const playersById = new Map(team.squad.map((p) => [p.id, p]));
     const strengths = computePhaseStrengths(team.setup.tactic, playersById);
     expect(strengths.attack).toBeGreaterThan(0);
@@ -13,7 +13,7 @@ describe("computePhaseStrengths", () => {
   });
 
   it("excludes a player who is no longer on the pitch (e.g. sent off)", () => {
-    const team = buildTeam("home", 2);
+    const team = buildTeam(makeClubId("home"), 2);
     const playersById = new Map(team.squad.map((p) => [p.id, p]));
     const fullOnPitch = new Set(team.setup.tactic.slots.map((s) => s.playerId));
     const withoutOne = new Set(fullOnPitch);
@@ -28,7 +28,7 @@ describe("computePhaseStrengths", () => {
 
 describe("resolveTacticalModifiers", () => {
   it("applies the attacking mentality's boosted attack / reduced defense multipliers", () => {
-    const team = buildTeam("home", 3);
+    const team = buildTeam(makeClubId("home"), 3);
     const playersById = new Map(team.squad.map((p) => [p.id, p]));
     const attacking = resolveTacticalModifiers(
       { ...team.setup.tactic, mentality: "attacking" },
@@ -43,14 +43,14 @@ describe("resolveTacticalModifiers", () => {
   });
 
   it("keeps event-odds bias fixed at 0 for v1", () => {
-    const team = buildTeam("home", 4);
+    const team = buildTeam(makeClubId("home"), 4);
     const playersById = new Map(team.squad.map((p) => [p.id, p]));
     const modifiers = resolveTacticalModifiers(team.setup.tactic, playersById);
     expect(modifiers.eventOddsBias).toBe(0);
   });
 
   it("caps the Role Rating bump at ±0.05 on the relevant phase multiplier", () => {
-    const team = buildTeam("home", 5);
+    const team = buildTeam(makeClubId("home"), 5);
     const playersById = new Map(team.squad.map((p) => [p.id, p]));
     const modifiers = resolveTacticalModifiers(
       { ...team.setup.tactic, mentality: "balanced" },
@@ -61,7 +61,7 @@ describe("resolveTacticalModifiers", () => {
   });
 
   it("doubles the fatigue decay multiplier under High pressing", () => {
-    const team = buildTeam("home", 6);
+    const team = buildTeam(makeClubId("home"), 6);
     const playersById = new Map(team.squad.map((p) => [p.id, p]));
     const high = resolveTacticalModifiers({ ...team.setup.tactic, pressing: "high" }, playersById);
     const medium = resolveTacticalModifiers({ ...team.setup.tactic, pressing: "medium" }, playersById);

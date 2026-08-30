@@ -15,6 +15,7 @@ import {
   InvalidTacticError,
   InsufficientTransferBudgetError,
   MarketPlayerView,
+  PlayerId,
   MatchCommandPayload,
   NotYourPlayerError,
   NullableTrainingFocusSchema,
@@ -128,7 +129,7 @@ describe("literals and enums", () => {
 describe("discriminated union command payload", () => {
   const tactic = {
     formation: "4-4-2",
-    slots: [{ position: "ST", role: "Poacher", playerId: "p1" }],
+    slots: [{ position: "ST", role: "Poacher", playerId: PlayerId.make("p1") }],
     mentality: "balanced",
     tempo: "normal",
     pressing: "medium",

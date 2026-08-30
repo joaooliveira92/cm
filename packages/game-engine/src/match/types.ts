@@ -1,4 +1,4 @@
-import type { Tactic } from "@cm-clone/contracts";
+import type { ClubId, PlayerId, Tactic } from "@cm-clone/contracts";
 import type { PlayerAttributes } from "@cm-clone/shared";
 
 /** The match engine's own name for a `Tactic` (ticket 03/11) — kept as a type alias so this
@@ -6,7 +6,7 @@ import type { PlayerAttributes } from "@cm-clone/shared";
 export type MatchTactic = Tactic;
 
 export interface MatchPlayerInput {
-  readonly id: string;
+  readonly id: PlayerId;
   readonly attributes: PlayerAttributes;
   /** The player's Condition (%) at kickoff — defaults to full (100) when absent. Lets a not-fully-
    * recovered player from the previous fixture (ticket 09) start the match below full Condition. */
@@ -14,7 +14,7 @@ export interface MatchPlayerInput {
 }
 
 export interface MatchTeamSetup {
-  readonly clubId: string;
+  readonly clubId: ClubId;
   readonly squad: ReadonlyArray<MatchPlayerInput>;
   readonly tactic: MatchTactic;
 }

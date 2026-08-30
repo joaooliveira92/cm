@@ -1,5 +1,5 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { InvalidTacticError, Tactic, TacticsScreenView } from "@cm-clone/contracts";
+import { InvalidTacticError, Tactic, TacticsScreenView, type SaveId, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -10,7 +10,7 @@ import { loadSquadPlayers, loadUserClub } from "./squad.js";
 /** The club's persisted Tactic, if `ChangeTactics` has ever been issued — assumes a `SqlClient` in
  * context. Exported for season.ts (ticket 15, synthesizes a default for AI clubs without one) and
  * match.ts (ticket 13, needs the opponent club's Tactic too). */
-export const loadPersistedTactic = (clubId: string) =>
+export const loadPersistedTactic = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
 
@@ -25,7 +25,7 @@ export const loadPersistedTactic = (clubId: string) =>
     const slotRows = yield* sql<{
       position: string;
       role: string;
-      playerId: string;
+      playerId: PlayerId;
     }>`SELECT position, role, player_id as "playerId" FROM tactic_slots WHERE club_id = ${clubId} ORDER BY slot_index`;
 
     return yield* Schema.decodeUnknownEffect(Tactic)({
@@ -35,7 +35,7 @@ export const loadPersistedTactic = (clubId: string) =>
   });
 
 
-export const getTactics = (savesDir: string, saveId: string) =>
+export const getTactics = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const club = yield* loadUserClub;
@@ -49,7 +49,7 @@ export const getTactics = (savesDir: string, saveId: string) =>
  * user's own club, after `validateTactic` below) and `aiClubs.ts`'s Season-start AI Tactic
  * assignment (ticket 17), which calls this directly in-process rather than through the RpcGroup.
  * Assumes a `SqlClient` in context. */
-export const persistTactic = (clubId: string, tactic: Tactic) =>
+export const persistTactic = (clubId: ClubId, tactic: Tactic) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     yield* sql`DELETE FROM tactic_slots WHERE club_id = ${clubId}`;
@@ -97,7 +97,7 @@ export const validateTactic = (tactic: Tactic, squadPlayerIds: ReadonlySet<strin
     }
   });
 
-export const changeTactics = (savesDir: string, saveId: string, tactic: Tactic) =>
+export const changeTactics = (savesDir: string, saveId: SaveId, tactic: Tactic) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       yield* assertSaveNotSacked(saveId);

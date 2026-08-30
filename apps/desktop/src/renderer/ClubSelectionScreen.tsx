@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import type { ClubSelectionRow } from "@cm-clone/contracts";
+import type { ClubSelectionRow, SaveId } from "@cm-clone/contracts";
 
-export const ClubSelectionScreen = ({ saveId }: { readonly saveId: string }) => {
+export const ClubSelectionScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [clubs, setClubs] = useState<ReadonlyArray<ClubSelectionRow>>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,7 +13,14 @@ export const ClubSelectionScreen = ({ saveId }: { readonly saveId: string }) => 
           setError("Failed to load clubs");
           return;
         }
+        if (!result.value || !result.value.clubs) {
+          setError("Failed to load clubs: invalid response");
+          return;
+        }
         setClubs(result.value.clubs);
+      })
+      .catch(() => {
+        setError("Failed to load clubs");
       });
   }, [saveId]);
 

@@ -1,16 +1,17 @@
 import type { MatchTactic } from "./types.js";
+import type { ClubId, PlayerId } from "@cm-clone/contracts";
 
 export interface ChangeTacticsCommand {
   readonly _tag: "ChangeTactics";
-  readonly clubId: string;
+  readonly clubId: ClubId;
   readonly tactic: MatchTactic;
 }
 
 export interface MakeSubstitutionCommand {
   readonly _tag: "MakeSubstitution";
-  readonly clubId: string;
-  readonly outPlayerId: string;
-  readonly inPlayerId: string;
+  readonly clubId: ClubId;
+  readonly outPlayerId: PlayerId;
+  readonly inPlayerId: PlayerId;
 }
 
 /**
@@ -21,8 +22,8 @@ export interface MakeSubstitutionCommand {
  */
 export interface ForceOffCommand {
   readonly _tag: "ForceOff";
-  readonly clubId: string;
-  readonly playerId: string;
+  readonly clubId: ClubId;
+  readonly playerId: PlayerId;
 }
 
 /** Mid-match commands the Match Decider accepts (ticket 12) — driven from the UI starting ticket 14. */

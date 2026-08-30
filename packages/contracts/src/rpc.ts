@@ -2,8 +2,10 @@ import { Schema } from "effect";
 import {
   AdvanceCalendarResult,
   BidderBidActionSchema,
+  BidId,
   BidNotFoundError,
   BidView,
+  ClubId,
   ClubNotFoundError,
   ClubSelectionView,
   ClubSummary,
@@ -16,14 +18,17 @@ import {
   ManagerProfileView,
   ManagerArchetypeSchema,
   MatchCommandPayload,
+  MatchId,
   MatchNotFoundError,
   MatchSummary,
   NotYourPlayerError,
   NullableTrainingFocusSchema,
   PillarDistribution,
+  PlayerId,
   PlayerNotFoundError,
   PlayerNotFreeAgentError,
   ResumeSimulationView,
+  SaveId,
   SaveNotFoundError,
   SaveSackedError,
   SaveSummary,
@@ -67,14 +72,14 @@ export const AppRpcs = {
   },
   beginCareer: {
     payload: Schema.Void,
-    success: Schema.Struct({ id: Schema.String }),
+    success: Schema.Struct({ id: SaveId }),
     error: Schema.Never,
   },
   commitCareer: {
     payload: Schema.Struct({
-      id: Schema.String,
+      id: SaveId,
       name: Schema.String,
-      selectedClubId: Schema.String,
+      selectedClubId: ClubId,
       managerName: Schema.String,
       archetypeOrigin: ManagerArchetypeSchema,
       pillars: PillarDistribution,
@@ -83,72 +88,72 @@ export const AppRpcs = {
     error: Schema.Union([InvalidPillarDistributionError]),
   },
   getManagerProfile: {
-    payload: Schema.Struct({ saveId: Schema.String }),
+    payload: Schema.Struct({ saveId: SaveId }),
     success: ManagerProfileView,
     error: SaveNotFoundError,
   },
   getClubSelection: {
-    payload: Schema.Struct({ saveId: Schema.String }),
+    payload: Schema.Struct({ saveId: SaveId }),
     success: ClubSelectionView,
     error: Schema.Never,
   },
   discardCareer: {
-    payload: Schema.Struct({ id: Schema.String }),
+    payload: Schema.Struct({ id: SaveId }),
     success: Schema.Void,
     error: Schema.Never,
   },
   loadSave: {
-    payload: Schema.Struct({ id: Schema.String }),
+    payload: Schema.Struct({ id: SaveId }),
     success: SaveSummary,
     error: SaveNotFoundError,
   },
   getSquad: {
-    payload: Schema.Struct({ saveId: Schema.String }),
+    payload: Schema.Struct({ saveId: SaveId }),
     success: SquadView,
     error: SaveNotFoundError,
   },
   getTactics: {
-    payload: Schema.Struct({ saveId: Schema.String }),
+    payload: Schema.Struct({ saveId: SaveId }),
     success: TacticsScreenView,
     error: SaveNotFoundError,
   },
   changeTactics: {
-    payload: Schema.Struct({ saveId: Schema.String, tactic: Tactic }),
+    payload: Schema.Struct({ saveId: SaveId, tactic: Tactic }),
     success: TacticsScreenView,
     error: Schema.Union([SaveNotFoundError, InvalidTacticError, SaveSackedError]),
   },
   getLeagueTable: {
-    payload: Schema.Struct({ saveId: Schema.String }),
+    payload: Schema.Struct({ saveId: SaveId }),
     success: LeagueTableView,
     error: SaveNotFoundError,
   },
   getFixtures: {
-    payload: Schema.Struct({ saveId: Schema.String }),
+    payload: Schema.Struct({ saveId: SaveId }),
     success: FixturesView,
     error: SaveNotFoundError,
   },
   advanceCalendar: {
-    payload: Schema.Struct({ saveId: Schema.String }),
+    payload: Schema.Struct({ saveId: SaveId }),
     success: AdvanceCalendarResult,
     error: Schema.Union([SaveNotFoundError, SeasonCompleteError, SaveSackedError]),
   },
   getSeasonSummary: {
-    payload: Schema.Struct({ saveId: Schema.String }),
+    payload: Schema.Struct({ saveId: SaveId }),
     success: SeasonSummaryView,
     error: SaveNotFoundError,
   },
   listOpponentClubs: {
-    payload: Schema.Struct({ saveId: Schema.String }),
+    payload: Schema.Struct({ saveId: SaveId }),
     success: Schema.Array(ClubSummary),
     error: SaveNotFoundError,
   },
   startMatch: {
-    payload: Schema.Struct({ saveId: Schema.String, opponentClubId: Schema.String }),
+    payload: Schema.Struct({ saveId: SaveId, opponentClubId: ClubId }),
     success: MatchSummary,
     error: Schema.Union([SaveNotFoundError, ClubNotFoundError, SaveSackedError]),
   },
   resumeSimulation: {
-    payload: Schema.Struct({ saveId: Schema.String, matchId: Schema.String, cursor: Schema.Finite }),
+    payload: Schema.Struct({ saveId: SaveId, matchId: MatchId, cursor: Schema.Finite }),
     success: ResumeSimulationView,
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },
@@ -160,8 +165,8 @@ export const AppRpcs = {
    * `commandsByMinute`/`halftimeCommands` inputs. */
   submitMatchCommand: {
     payload: Schema.Struct({
-      saveId: Schema.String,
-      matchId: Schema.String,
+      saveId: SaveId,
+      matchId: MatchId,
       cursor: Schema.Finite,
       minute: Schema.Finite,
       isHalftime: Schema.Boolean,
@@ -171,12 +176,12 @@ export const AppRpcs = {
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError, SaveSackedError]),
   },
   getTransfersScreen: {
-    payload: Schema.Struct({ saveId: Schema.String }),
+    payload: Schema.Struct({ saveId: SaveId }),
     success: TransfersScreenView,
     error: SaveNotFoundError,
   },
   placeBid: {
-    payload: Schema.Struct({ saveId: Schema.String, playerId: Schema.String, amount: Schema.Finite }),
+    payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId, amount: Schema.Finite }),
     success: BidView,
     error: Schema.Union([
       SaveNotFoundError,
@@ -190,8 +195,8 @@ export const AppRpcs = {
   },
   respondToBid: {
     payload: Schema.Struct({
-      saveId: Schema.String,
-      bidId: Schema.String,
+      saveId: SaveId,
+      bidId: BidId,
       action: SellerBidActionSchema,
       counterAmount: Schema.optional(Schema.Finite),
     }),
@@ -208,8 +213,8 @@ export const AppRpcs = {
   },
   respondAsBidder: {
     payload: Schema.Struct({
-      saveId: Schema.String,
-      bidId: Schema.String,
+      saveId: SaveId,
+      bidId: BidId,
       action: BidderBidActionSchema,
     }),
     success: TransfersScreenView,
@@ -224,7 +229,7 @@ export const AppRpcs = {
     ]),
   },
   signFreeAgent: {
-    payload: Schema.Struct({ saveId: Schema.String, playerId: Schema.String, years: Schema.optional(Schema.Finite) }),
+    payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId, years: Schema.optional(Schema.Finite) }),
     success: TransfersScreenView,
     error: Schema.Union([
       SaveNotFoundError,
@@ -236,7 +241,7 @@ export const AppRpcs = {
     ]),
   },
   renewContract: {
-    payload: Schema.Struct({ saveId: Schema.String, playerId: Schema.String, years: Schema.optional(Schema.Finite) }),
+    payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId, years: Schema.optional(Schema.Finite) }),
     success: TransfersScreenView,
     error: Schema.Union([
       SaveNotFoundError,
@@ -252,8 +257,8 @@ export const AppRpcs = {
    * season-boundary restriction. */
   setTrainingFocus: {
     payload: Schema.Struct({
-      saveId: Schema.String,
-      playerId: Schema.String,
+      saveId: SaveId,
+      playerId: PlayerId,
       focus: NullableTrainingFocusSchema,
     }),
     success: TrainingFocusView,
