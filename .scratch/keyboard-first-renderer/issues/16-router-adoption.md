@@ -17,7 +17,7 @@ starting one on mount.
 
 **Blocked by:** 15.
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] AC-10: Production routing uses hash history; a reload preserves the active route.
 - [ ] AC-11: The active career is a route parameter; the career parent owns the persistent shell and the save-scoped registry.
