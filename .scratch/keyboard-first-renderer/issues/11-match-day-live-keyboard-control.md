@@ -34,7 +34,7 @@ Decide:
 
 Link the prototype as an asset.
 
-**Prototype:** [HTML prototype](prototype/11-match-day-live-keyboard-control-prototype.html)
+**Prototype:** [HTML prototype](../prototype/11-match-day-live-keyboard-control-prototype.html)
 
 ## Answer
 

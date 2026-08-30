@@ -8,7 +8,7 @@ Every entity identifier in the app was a bare `string`. `packages/contracts` dec
 
 The concrete failure this allows: `startMatch`'s payload is `{ saveId, opponentClubId }`, two structurally identical strings in adjacent positions. Transposing them was not a type error anywhere in the codebase — not at the call site, not in the RPC decode, not in the handler. The same hazard ran through `placeBid({ saveId, playerId })`, `respondToBid({ saveId, bidId })`, and every SQL row read that fed a view.
 
-Found while reading the Effect v4 code-style docs; see [2026-08-29-effect-code-style-section-sweep.md](../../proposed/process/2026-08-29-effect-code-style-section-sweep.md), finding 1.
+Found while reading the Effect v4 code-style docs; see [2026-08-29-effect-code-style-section-sweep.md](../process/2026-08-29-effect-code-style-section-sweep.md), finding 1.
 
 ## Decision
 
