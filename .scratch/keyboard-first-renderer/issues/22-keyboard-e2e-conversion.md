@@ -16,7 +16,7 @@ recorded before and after — a click break is an app regression, not a test edi
 
 **Blocked by:** 21, 20, 19.
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] AC-37: Level-3 journeys drive by keyboard; creation/save-management/error-paths stay clicks; the five mandated coverages each have a keyboard test. (Scope now also includes ticket 21's deferred Stage-6 journey: a rebind applied in the help overlay survives an app restart — recorded as a deferral on ticket 21, since AC-34's mapped Playwright class was not deliverable in Stage 6.)
 - [ ] AC-38: Focus asserted via `toBeFocused` on role/text locators and ARIA only; no `data-testid`/test-only attributes; existing click suite result recorded before and after, behavior unchanged; reliability contract values unchanged.
