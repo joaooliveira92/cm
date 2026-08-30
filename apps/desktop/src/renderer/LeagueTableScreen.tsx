@@ -1,4 +1,8 @@
+import { useEffect } from "react";
 import { type SaveId } from "@cm-clone/contracts";
+import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
+import { clearScopeState, setScopeState } from "./actions/scopeState.js";
+import { FOCUS_RING } from "./focus.js";
 import {
   advanceCalendarMutation,
   describeRpcError,
@@ -16,10 +20,46 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const advancing = advance.waiting;
   const advanceError = typedError(advance);
 
+  // The Continue safety contract (AC-19 / tickets 05, 15): Continue advances the
+  // Calendar only while a career is shown, no advance is running, and the season
+  // has not concluded. The registry's `continueAvailable` predicate carries the
+  // same rule; this live guard is the handler half of the contract, matching the
+  // button's disabled condition at render time.
+  const seasonComplete =
+    tableResult._tag === "Success" && tableResult.value.season.phase === "season_complete";
+
   const onAdvanceCalendar = () => {
-    if (advancing) return;
+    if (advancing || seasonComplete) return;
     runAdvance({ saveId });
   };
+
+  // Publish the availability read-model so the registry predicates (and the
+  // spine's active set) see the same truth as the rendered button.
+  useEffect(() => {
+    if (tableResult._tag === "Success") {
+      setScopeState({ phase: tableResult.value.season.phase, advancing });
+      return () => clearScopeState("phase", "advancing");
+    }
+    return undefined;
+  }, [tableResult, advancing]);
+
+  // Register the League screen's live handlers: `advance-calendar` (its button)
+  // and `continue` (the career-global Space binding — Continue is League-owned,
+  // advancing the Calendar under the same guard as the button).
+  useEffect(() => {
+    const unregister = registerActionHandler("advance-calendar", () => {
+      onAdvanceCalendar();
+    });
+    const unregisterContinue = registerActionHandler("continue", () => {
+      onAdvanceCalendar();
+    });
+    return () => {
+      unregister();
+      unregisterContinue();
+    };
+    // onAdvanceCalendar closes over `advancing`/`seasonComplete`; re-register
+    // when either or saveId change.
+  }, [advancing, saveId, seasonComplete]);
 
   if (tableError) return <p className="p-8 text-red-400">{describeRpcError(tableError)}</p>;
   if (tableResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading league table...</p>;
@@ -38,9 +78,10 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           </span>
           <button
             type="button"
+            data-action-id="advance-calendar"
             disabled={advancing || table.season.phase === "season_complete"}
-            className="rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 disabled:opacity-50"
-            onClick={onAdvanceCalendar}
+            className={`rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
+            onClick={() => void dispatchAction("advance-calendar")}
           >
             {advancing ? "Advancing..." : "Advance Calendar"}
           </button>

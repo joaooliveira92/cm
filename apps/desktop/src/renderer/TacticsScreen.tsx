@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { PlayerId, Tactic, type SaveId, type TacticSlot } from "@cm-clone/contracts";
+import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
+import { FOCUS_RING } from "./focus.js";
 import {
   FORMATIONS,
   FORMATION_SLOTS,
@@ -50,11 +52,13 @@ const InstructionSlider = <T extends string>({
   options,
   value,
   onChange,
+  actionId,
 }: {
   readonly label: string;
   readonly options: ReadonlyArray<T>;
   readonly value: T;
   readonly onChange: (value: T) => void;
+  readonly actionId: string;
 }) => (
   <div>
     <p className="text-sm text-slate-400">{label}</p>
@@ -63,7 +67,8 @@ const InstructionSlider = <T extends string>({
         <button
           key={option}
           type="button"
-          className={`rounded px-3 py-1 text-sm capitalize ${
+          data-action-id={actionId}
+          className={`rounded px-3 py-1 text-sm capitalize ${FOCUS_RING.join(" ")} ${
             option === value ? "bg-slate-100 text-slate-900" : "bg-slate-800 hover:bg-slate-700"
           }`}
           onClick={() => onChange(option)}
@@ -89,18 +94,13 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   }, [draft, viewResult]);
 
   const viewError = typedError(viewResult);
-  if (viewError) return <p className="p-8 text-red-400">{describeRpcError(viewError)}</p>;
-  if (viewResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading tactics...</p>;
-  if (viewResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load tactics</p>;
 
-  const view = viewResult.value;
-  const tactic = draft ?? view.tactic ?? defaultTacticFor("4-4-2");
+  // A screen-safe tactic that also holds pre-load / error states, so the live
+  // handler registration below never sits behind a conditional early return.
+  const pendingView = viewResult._tag === "Success" ? viewResult.value : null;
+  const tactic = draft ?? pendingView?.tactic ?? defaultTacticFor("4-4-2");
 
-  const squadById = new Map(view.squad.map((player) => [player.id, player]));
-  const assignedElsewhere = (slotIndex: number) =>
-    new Set(tactic.slots.filter((_, index) => index !== slotIndex).map((slot) => slot.playerId));
-
-const onSubmit = async () => {
+  const onSubmit = async () => {
     setStatus("Saving...");
     try {
       const saved = await saveTactic({ saveId, tactic });
@@ -110,6 +110,44 @@ const onSubmit = async () => {
       setStatus("Failed to save tactic — check every slot has a unique player assigned.");
     }
   };
+
+  // Register the Tactics screen's operation handlers (save + the draft edits).
+  // Decided before the error/loading returns so hook order is unconditional.
+  useEffect(() => {
+    const unregisters = [
+      registerActionHandler("save-tactic", () => {
+        void onSubmit();
+      }),
+      registerActionHandler("set-formation", (params) =>
+        setDraft(changeFormation(tactic, (params as { formation: Formation }).formation)),
+      ),
+      registerActionHandler("set-mentality", (params) =>
+        setDraft(new Tactic({ ...tactic, mentality: (params as { value: Mentality }).value })),
+      ),
+      registerActionHandler("set-tempo", (params) =>
+        setDraft(new Tactic({ ...tactic, tempo: (params as { value: Tempo }).value })),
+      ),
+      registerActionHandler("set-pressing", (params) =>
+        setDraft(new Tactic({ ...tactic, pressing: (params as { value: Pressing }).value })),
+      ),
+      registerActionHandler("assign-slot-player", (params) => {
+        const p = params as { index: number; playerId: PlayerId };
+        setDraft(changeSlotPlayer(tactic, p.index, p.playerId));
+      }),
+    ];
+    return () => {
+      for (const unregister of unregisters) unregister();
+    };
+  }, [saveId, tactic]);
+
+  if (viewError) return <p className="p-8 text-red-400">{describeRpcError(viewError)}</p>;
+  if (viewResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading tactics...</p>;
+  if (viewResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load tactics</p>;
+
+  const view = viewResult.value;
+  const squadById = new Map(view.squad.map((player) => [player.id, player]));
+  const assignedElsewhere = (slotIndex: number) =>
+    new Set(tactic.slots.filter((_, index) => index !== slotIndex).map((slot) => slot.playerId));
 
   return (
     <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
@@ -122,12 +160,13 @@ const onSubmit = async () => {
             <button
               key={formation}
               type="button"
-              className={`rounded px-3 py-1 text-sm ${
+              data-action-id="set-formation"
+              className={`rounded px-3 py-1 text-sm ${FOCUS_RING.join(" ")} ${
                 formation === tactic.formation
                   ? "bg-slate-100 text-slate-900"
                   : "bg-slate-800 hover:bg-slate-700"
               }`}
-              onClick={() => setDraft(changeFormation(tactic, formation))}
+              onClick={() => void dispatchAction("set-formation", { formation })}
             >
               {formation}
             </button>
@@ -140,19 +179,22 @@ const onSubmit = async () => {
           label="Mentality"
           options={MENTALITY_OPTIONS}
           value={tactic.mentality}
-          onChange={(mentality) => setDraft(new Tactic({ ...tactic, mentality }))}
+          actionId="set-mentality"
+          onChange={(mentality) => void dispatchAction("set-mentality", { value: mentality })}
         />
         <InstructionSlider<Tempo>
           label="Tempo"
           options={TEMPO_OPTIONS}
           value={tactic.tempo}
-          onChange={(tempo) => setDraft(new Tactic({ ...tactic, tempo }))}
+          actionId="set-tempo"
+          onChange={(tempo) => void dispatchAction("set-tempo", { value: tempo })}
         />
         <InstructionSlider<Pressing>
           label="Pressing"
           options={PRESSING_OPTIONS}
           value={tactic.pressing}
-          onChange={(pressing) => setDraft(new Tactic({ ...tactic, pressing }))}
+          actionId="set-pressing"
+          onChange={(pressing) => void dispatchAction("set-pressing", { value: pressing })}
         />
       </section>
 
@@ -178,9 +220,15 @@ const onSubmit = async () => {
                   <td className="py-1 pr-4">{slot.role}</td>
                   <td className="py-1 pr-4">
                     <select
-                      className="rounded bg-slate-800 px-2 py-1"
+                      data-action-id="assign-slot-player"
+                      className={`rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
                       value={slot.playerId}
-                      onChange={(event) => setDraft(changeSlotPlayer(tactic, index, PlayerId.make(event.target.value)))}
+                      onChange={(event) =>
+                        void dispatchAction("assign-slot-player", {
+                          index,
+                          playerId: PlayerId.make(event.target.value),
+                        })
+                      }
                     >
                       <option value="">Unassigned</option>
                       {view.squad
@@ -207,8 +255,9 @@ const onSubmit = async () => {
       <section className="mt-6">
         <button
           type="button"
-          className="rounded bg-slate-700 px-3 py-1 hover:bg-slate-600"
-          onClick={onSubmit}
+          data-action-id="save-tactic"
+          className={`rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 ${FOCUS_RING.join(" ")}`}
+          onClick={() => void dispatchAction("save-tactic")}
         >
           Save Tactic
         </button>

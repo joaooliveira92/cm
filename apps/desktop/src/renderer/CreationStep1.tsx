@@ -6,6 +6,7 @@ import {
   MANAGER_PILLARS,
   validatePillarDistribution,
 } from "@cm-clone/shared";
+import { FOCUS_RING } from "./focus.js";
 
 export interface CreationStep1Props {
   saveName: string;
@@ -82,7 +83,7 @@ export const CreationStep1 = ({
         </label>
         <input
           type="text"
-          className="mt-1 block w-full rounded bg-slate-800 px-3 py-2 text-slate-100"
+          className={`mt-1 block w-full rounded bg-slate-800 px-3 py-2 text-slate-100 ${FOCUS_RING.join(" ")}`}
           value={saveName}
           onChange={(e) => onSaveNameChange(e.target.value)}
           placeholder="My Career"
@@ -95,7 +96,7 @@ export const CreationStep1 = ({
         </label>
         <input
           type="text"
-          className="mt-1 block w-full rounded bg-slate-800 px-3 py-2 text-slate-100"
+          className={`mt-1 block w-full rounded bg-slate-800 px-3 py-2 text-slate-100 ${FOCUS_RING.join(" ")}`}
           value={managerName}
           onChange={(e) => onManagerNameChange(e.target.value)}
           placeholder="Your name"
@@ -125,7 +126,7 @@ export const CreationStep1 = ({
               <button
                 key={arch}
                 type="button"
-                className={`rounded p-2 text-left text-sm ${
+                className={`rounded p-2 text-left text-sm ${FOCUS_RING.join(" ")} ${
                   isSelected
                     ? "bg-slate-600 ring-2 ring-slate-400"
                     : "bg-slate-800 hover:bg-slate-700"
@@ -165,7 +166,7 @@ export const CreationStep1 = ({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    className="flex h-8 w-8 items-center justify-center rounded bg-slate-700 text-slate-100 hover:bg-slate-600 disabled:opacity-50"
+                    className={`flex h-8 w-8 items-center justify-center rounded bg-slate-700 text-slate-100 hover:bg-slate-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
                     onClick={() => handleCustomPillarChange(pillar, -1)}
                     disabled={value <= 1 || !customMode}
                   >
@@ -180,7 +181,7 @@ export const CreationStep1 = ({
                   </span>
                   <button
                     type="button"
-                    className="flex h-8 w-8 items-center justify-center rounded bg-slate-700 text-slate-100 hover:bg-slate-600 disabled:opacity-50"
+                    className={`flex h-8 w-8 items-center justify-center rounded bg-slate-700 text-slate-100 hover:bg-slate-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
                     onClick={() => handleCustomPillarChange(pillar, 1)}
                     disabled={value >= 5 || !customMode}
                   >

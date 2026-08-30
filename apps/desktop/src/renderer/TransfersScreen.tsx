@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { BidId, PlayerId, SaveId, TransfersScreenView } from "@cm-clone/contracts";
+import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
+import { FOCUS_RING } from "./focus.js";
 import {
   describeRpcError,
   placeBidMutation,
@@ -24,12 +26,9 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const runRespond = useAtomSet(respondToBidMutation, { mode: "promise" });
   const runRespondAsBidder = useAtomSet(respondAsBidderMutation, { mode: "promise" });
 
-  const viewError = typedError(viewResult);
-  if (viewError) return <p className="p-8 text-red-400">{describeRpcError(viewError)}</p>;
-  if (viewResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading transfers...</p>;
-  if (viewResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load Transfers screen</p>;
-
-  const view: TransfersScreenView = viewResult.value;
+  // The bid draft's first amount input — the `b` Action's live target (key-map
+  // note: opens/focuses the Bid workflow, does not submit).
+  const bidDraftInputRef = useRef<HTMLInputElement | null>(null);
 
   const run = async (label: string, write: () => Promise<unknown>) => {
     setStatus(`${label}...`);
@@ -41,8 +40,7 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     }
   };
 
-  const onBid = (playerId: PlayerId) => {
-    const amount = Number(bidAmounts[playerId] ?? 0);
+  const onBid = (playerId: PlayerId, amount: number) => {
     if (!amount || amount <= 0) return;
     void run("Bid", () => runBid({ saveId, playerId, amount }));
   };
@@ -69,6 +67,55 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       runRespondAsBidder({ saveId, bidId, action }),
     );
 
+  // Register the Transfers screen's live handlers. `focus-bid` is a keyboard
+  // affordance that opens/focuses the bid workflow rather than submitting one.
+  useEffect(() => {
+    const unregisters = [
+      registerActionHandler("sign-free-agent", (params) =>
+        onSignFreeAgent((params as { playerId: PlayerId }).playerId),
+      ),
+      registerActionHandler("place-bid", (params) => {
+        const p = params as { playerId: PlayerId; amount: number };
+        onBid(p.playerId, p.amount);
+      }),
+      registerActionHandler("respond-accept", (params) =>
+        onRespondToBid((params as { bidId: BidId }).bidId, "accept"),
+      ),
+      registerActionHandler("respond-reject", (params) =>
+        onRespondToBid((params as { bidId: BidId }).bidId, "reject"),
+      ),
+      registerActionHandler("respond-counter", (params) =>
+        onRespondToBid((params as { bidId: BidId }).bidId, "counter"),
+      ),
+      registerActionHandler("accept-counter", (params) =>
+        onRespondAsBidder((params as { bidId: BidId }).bidId, "accept"),
+      ),
+      registerActionHandler("withdraw-bid", (params) =>
+        onRespondAsBidder((params as { bidId: BidId }).bidId, "withdraw"),
+      ),
+      registerActionHandler("focus-bid", () => {
+        // Opens/focuses the Bid workflow without submitting: land focus on the
+        // first bid-draft amount input so a typed amount + Enter reaches the
+        // contextual Bid button.
+        bidDraftInputRef.current?.focus();
+      }),
+    ];
+    return () => {
+      for (const unregister of unregisters) unregister();
+    };
+    // Handlers close over `run` (stable) and `saveId`; re-register on those.
+  }, [run, saveId]);
+
+  const viewError = typedError(viewResult);
+  if (viewError) return <p className="p-8 text-red-400">{describeRpcError(viewError)}</p>;
+  if (viewResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading transfers...</p>;
+  if (viewResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load Transfers screen</p>;
+
+  const view: TransfersScreenView = viewResult.value;
+
+  const btn = "rounded bg-slate-700 px-2 py-1 text-xs hover:bg-slate-600";
+  const btnCls = `${btn} ${FOCUS_RING.join(" ")}`;
+
   const renderMarketPlayer = (player: {
     readonly id: PlayerId;
     readonly firstName: string;
@@ -91,15 +138,19 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         {player.clubId === null ? (
           <button
             type="button"
-            className="rounded bg-slate-700 px-2 py-1 text-xs hover:bg-slate-600"
-            onClick={() => onSignFreeAgent(player.id)}
+            data-action-id="sign-free-agent"
+            className={btnCls}
+            onClick={() => void dispatchAction("sign-free-agent", { playerId: player.id })}
           >
             Sign (0 Cr)
           </button>
         ) : (
           <div className="flex items-center gap-1">
             <input
-              className="w-28 rounded bg-slate-800 px-2 py-1 text-xs"
+              ref={(el) => {
+                if (el !== null && bidDraftInputRef.current === null) bidDraftInputRef.current = el;
+              }}
+              className={`w-28 rounded bg-slate-800 px-2 py-1 text-xs ${FOCUS_RING.join(" ")}`}
               placeholder="Amount"
               value={bidAmounts[player.id] ?? ""}
               onChange={(event) =>
@@ -108,8 +159,14 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             />
             <button
               type="button"
-              className="rounded bg-slate-700 px-2 py-1 text-xs hover:bg-slate-600"
-              onClick={() => onBid(player.id)}
+              data-action-id="place-bid"
+              className={btnCls}
+              onClick={() =>
+                void dispatchAction("place-bid", {
+                  playerId: player.id,
+                  amount: Number(bidAmounts[player.id] ?? 0),
+                })
+              }
             >
               Bid
             </button>
@@ -136,22 +193,25 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           <div className="flex gap-1">
             <button
               type="button"
-              className="rounded bg-slate-700 px-2 py-1 text-xs hover:bg-slate-600"
-              onClick={() => onRespondToBid(bid.id, "accept")}
+              data-action-id="respond-accept"
+              className={btnCls}
+              onClick={() => void dispatchAction("respond-accept", { bidId: bid.id })}
             >
               Accept
             </button>
             <button
               type="button"
-              className="rounded bg-slate-700 px-2 py-1 text-xs hover:bg-slate-600"
-              onClick={() => onRespondToBid(bid.id, "counter")}
+              data-action-id="respond-counter"
+              className={btnCls}
+              onClick={() => void dispatchAction("respond-counter", { bidId: bid.id })}
             >
               Counter
             </button>
             <button
               type="button"
-              className="rounded bg-slate-700 px-2 py-1 text-xs hover:bg-slate-600"
-              onClick={() => onRespondToBid(bid.id, "reject")}
+              data-action-id="respond-reject"
+              className={btnCls}
+              onClick={() => void dispatchAction("respond-reject", { bidId: bid.id })}
             >
               Reject
             </button>
@@ -180,15 +240,17 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           <div className="flex gap-1">
             <button
               type="button"
-              className="rounded bg-slate-700 px-2 py-1 text-xs hover:bg-slate-600"
-              onClick={() => onRespondAsBidder(bid.id, "accept")}
+              data-action-id="accept-counter"
+              className={btnCls}
+              onClick={() => void dispatchAction("accept-counter", { bidId: bid.id })}
             >
               Accept counter
             </button>
             <button
               type="button"
-              className="rounded bg-slate-700 px-2 py-1 text-xs hover:bg-slate-600"
-              onClick={() => onRespondAsBidder(bid.id, "withdraw")}
+              data-action-id="withdraw-bid"
+              className={btnCls}
+              onClick={() => void dispatchAction("withdraw-bid", { bidId: bid.id })}
             >
               Withdraw
             </button>
@@ -197,8 +259,9 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         {bid.status === "pending" && (
           <button
             type="button"
-            className="rounded bg-slate-700 px-2 py-1 text-xs hover:bg-slate-600"
-            onClick={() => onRespondAsBidder(bid.id, "withdraw")}
+            data-action-id="withdraw-bid"
+            className={btnCls}
+            onClick={() => void dispatchAction("withdraw-bid", { bidId: bid.id })}
           >
             Withdraw
           </button>

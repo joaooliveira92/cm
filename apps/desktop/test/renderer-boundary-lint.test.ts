@@ -19,21 +19,36 @@ describe("renderer dependency-boundary lint (AC-09)", () => {
     }
   });
 
-  it("flags a direct window.cmClone.call and direct atom package imports", async () => {
+  it("flags a direct window.cmClone.call, direct atom imports, and direct react-hotkeys-hook imports", async () => {
     const { fixtureBoundaries } = lintFileSet(repoRoot, [join(fixtureRoot, "renderer-boundary.tsx")]);
     const messages = fixtureBoundaries[0]!.violations.map((v) => v.message);
     expect(messages.some((m) => m.includes("window.cmClone.call"))).toBe(true);
     expect(messages.some((m) => m.includes("@effect/atom-react"))).toBe(true);
     expect(messages.some((m) => m.includes("effect/unstable/reactivity"))).toBe(true);
+    expect(messages.some((m) => m.includes("react-hotkeys-hook"))).toBe(true);
   });
 
-  it("Stage-2 route/creation/navigation surfaces import only the seam and trip no boundary violation", async () => {
+  it("the keyboard-binding seam hotkeys.ts is exempt from the hotkeys boundary", () => {
+    expect(isBoundaryEnforced(join(rendererDir, "hotkeys.ts"))).toBe(false);
+    expect(isBoundaryEnforced(join(rendererDir, "KeyboardSpine.tsx"))).toBe(true);
+  });
+
+  it("Stage-2 route/creation/navigation + Stage-3 keyboard-spine surfaces import only the seams and trip no boundary violation", async () => {
     const screenFiles = [
       join(rendererDir, "SquadScreen.tsx"),
       join(rendererDir, "LeagueTableScreen.tsx"),
       join(rendererDir, "TransfersScreen.tsx"),
       join(rendererDir, "MatchDayScreen.tsx"),
       join(rendererDir, "TacticsScreen.tsx"),
+      join(rendererDir, "KeyboardSpine.tsx"),
+      join(rendererDir, "actions", "allActions.ts"),
+      join(rendererDir, "actions", "registry.ts"),
+      join(rendererDir, "actions", "dispatch.ts"),
+      join(rendererDir, "actions", "types.ts"),
+      join(rendererDir, "keymap", "prefix.ts"),
+      join(rendererDir, "keymap", "priority.ts"),
+      join(rendererDir, "keymap", "keystroke.ts"),
+      join(rendererDir, "keymap", "timeout.ts"),
       join(rendererDir, "router", "index.tsx"),
       join(rendererDir, "router", "career.tsx"),
       join(rendererDir, "router", "createFlow.tsx"),

@@ -1,4 +1,5 @@
 import { type SaveId } from "@cm-clone/contracts";
+import { FOCUS_RING } from "./focus.js";
 import { describeRpcError, fixturesAtom, typedError, useAtomValue } from "./rpc.js";
 
 export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
@@ -17,7 +18,7 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
+    <main tabIndex={-1} className={`min-h-screen bg-slate-950 p-8 text-slate-100 ${FOCUS_RING.join(" ")}`}>
       <h1 className="text-2xl font-bold">Fixtures</h1>
       <p className="mt-1 text-sm text-slate-400">
         Season {fixtures.season.seasonNumber} &middot; {fixtures.fixtures.length} fixtures

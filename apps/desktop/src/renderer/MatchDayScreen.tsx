@@ -22,6 +22,8 @@ import {
   type Pressing,
   type Tempo,
 } from "@cm-clone/shared";
+import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
+import { FOCUS_RING } from "./focus.js";
 import { Effect, Result } from "effect";
 import {
   REVEAL_INTERVAL_MS,
@@ -55,11 +57,13 @@ const InstructionSlider = <T extends string>({
   options,
   value,
   onChange,
+  actionId,
 }: {
   readonly label: string;
   readonly options: ReadonlyArray<T>;
   readonly value: T;
   readonly onChange: (value: T) => void;
+  readonly actionId: string;
 }) => (
   <div>
     <p className="text-xs text-slate-400">{label}</p>
@@ -68,7 +72,8 @@ const InstructionSlider = <T extends string>({
         <button
           key={option}
           type="button"
-          className={`rounded px-2 py-0.5 text-xs capitalize ${
+          data-action-id={actionId}
+          className={`rounded px-2 py-0.5 text-xs capitalize ${FOCUS_RING.join(" ")} ${
             option === value ? "bg-slate-100 text-slate-900" : "bg-slate-800 hover:bg-slate-700"
           }`}
           onClick={() => onChange(option)}
@@ -152,15 +157,6 @@ const MatchControlPanel = ({
     }
   }, [tacticsResult]);
 
-  if (!tactic) return null;
-
-  const onPitchIds = new Set(tactic.slots.map((slot: TacticSlot) => slot.playerId));
-  const bench = squad.filter((player) => !onPitchIds.has(player.id));
-  const fullNameOf = (id: string) => {
-    const player = squad.find((p) => p.id === id);
-    return player ? `${player.firstName} ${player.lastName}` : id;
-  };
-
   const submit = async (
     command:
       | { readonly _tag: "ChangeTactics"; readonly clubId: ClubId; readonly tactic: Tactic }
@@ -194,7 +190,10 @@ const MatchControlPanel = ({
     }
   };
 
-  const onApplyTactics = () => submit({ _tag: "ChangeTactics", clubId: homeClubId, tactic });
+  const onApplyTactics = () => {
+    if (!tactic) return;
+    void submit({ _tag: "ChangeTactics", clubId: homeClubId, tactic });
+  };
 
   // Ticket 11 orange no-subs bring-off: the manager drags the injured player off to 10 men.
   const onBringOff = () => {
@@ -203,7 +202,7 @@ const MatchControlPanel = ({
   };
 
   const onMakeSubstitution = async () => {
-    if (!outPlayerId || !inPlayerId || outPlayerId === inPlayerId) return;
+    if (!tactic || !outPlayerId || !inPlayerId || outPlayerId === inPlayerId) return;
     await submit({ _tag: "MakeSubstitution", clubId: homeClubId, outPlayerId, inPlayerId });
     // Optimistic local update so the on-pitch/bench split is right for the *next* substitution even
     // before the next poll's homeSubs confirms the server accepted it.
@@ -219,12 +218,65 @@ const MatchControlPanel = ({
     setInPlayerId(PlayerId.make(""));
   };
 
+  // Register the live Match Day control-panel operations so buttons and the key
+  // map both dispatch the same registered Actions (ADR-0012). Decided before the
+  // early return so hook order never depends on whether the tactic has loaded.
+  useEffect(() => {
+    const unregisters = [
+      registerActionHandler("toggle-control-panel", () => setOpen((v) => !v)),
+      registerActionHandler("apply-live-tactics", () => {
+        void onApplyTactics();
+      }),
+      registerActionHandler("make-substitution", () => {
+        void onMakeSubstitution();
+      }),
+      registerActionHandler("play-on", () => {
+        setStatus("Play on — they stay, crippled, with escalation risk.");
+        onDecisionResolved();
+      }),
+      registerActionHandler("bring-off", () => {
+        onBringOff();
+      }),
+      registerActionHandler("set-live-mentality", (params) => {
+        if (!tactic) return;
+        setTactic(new Tactic({ ...tactic, mentality: (params as { value: Mentality }).value }));
+      }),
+      registerActionHandler("set-live-tempo", (params) => {
+        if (!tactic) return;
+        setTactic(new Tactic({ ...tactic, tempo: (params as { value: Tempo }).value }));
+      }),
+      registerActionHandler("set-live-pressing", (params) => {
+        if (!tactic) return;
+        setTactic(new Tactic({ ...tactic, pressing: (params as { value: Pressing }).value }));
+      }),
+      registerActionHandler("set-live-substitute-off", (params) =>
+        setOutPlayerId((params as { playerId: PlayerId }).playerId),
+      ),
+      registerActionHandler("set-live-substitute-in", (params) =>
+        setInPlayerId((params as { playerId: PlayerId }).playerId),
+      ),
+    ];
+    return () => {
+      for (const unregister of unregisters) unregister();
+    };
+  }, [onApplyTactics, onBringOff, onMakeSubstitution, onDecisionResolved, tactic]);
+
+  if (!tactic) return null;
+
+  const onPitchIds = new Set(tactic.slots.map((slot: TacticSlot) => slot.playerId));
+  const bench = squad.filter((player) => !onPitchIds.has(player.id));
+  const fullNameOf = (id: string) => {
+    const player = squad.find((p) => p.id === id);
+    return player ? `${player.firstName} ${player.lastName}` : id;
+  };
+
   return (
     <section className="mt-4 rounded border border-slate-800 bg-slate-900">
       <button
         type="button"
-        className="flex w-full items-center justify-between px-4 py-2 text-left text-sm font-semibold"
-        onClick={() => setOpen((v) => !v)}
+        data-action-id="toggle-control-panel"
+        className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm font-semibold ${FOCUS_RING.join(" ")}`}
+        onClick={() => void dispatchAction("toggle-control-panel")}
       >
         <span>
           Tactics &amp; substitutions
@@ -271,18 +323,17 @@ const MatchControlPanel = ({
               <div className="mt-2 flex gap-2">
                 <button
                   type="button"
-                  className="rounded bg-amber-700 px-3 py-1 text-xs hover:bg-amber-600"
-                  onClick={() => {
-                    setStatus("Play on — they stay, crippled, with escalation risk.");
-                    onDecisionResolved();
-                  }}
+                  data-action-id="play-on"
+                  className={`rounded bg-amber-700 px-3 py-1 text-xs hover:bg-amber-600 ${FOCUS_RING.join(" ")}`}
+                  onClick={() => void dispatchAction("play-on")}
                 >
                   Play on
                 </button>
                 <button
                   type="button"
-                  className="rounded bg-red-700 px-3 py-1 text-xs hover:bg-red-600"
-                  onClick={onBringOff}
+                  data-action-id="bring-off"
+                  className={`rounded bg-red-700 px-3 py-1 text-xs hover:bg-red-600 ${FOCUS_RING.join(" ")}`}
+                  onClick={() => void dispatchAction("bring-off")}
                 >
                   Bring off (10 men)
                 </button>
@@ -317,19 +368,22 @@ const MatchControlPanel = ({
                 label="Mentality"
                 options={MENTALITY_OPTIONS}
                 value={tactic.mentality}
-                onChange={(mentality) => setTactic(new Tactic({ ...tactic, mentality }))}
+                actionId="set-live-mentality"
+                onChange={(mentality) => void dispatchAction("set-live-mentality", { value: mentality })}
               />
               <InstructionSlider<Tempo>
                 label="Tempo"
                 options={TEMPO_OPTIONS}
                 value={tactic.tempo}
-                onChange={(tempo) => setTactic(new Tactic({ ...tactic, tempo }))}
+                actionId="set-live-tempo"
+                onChange={(tempo) => void dispatchAction("set-live-tempo", { value: tempo })}
               />
               <InstructionSlider<Pressing>
                 label="Pressing"
                 options={PRESSING_OPTIONS}
                 value={tactic.pressing}
-                onChange={(pressing) => setTactic(new Tactic({ ...tactic, pressing }))}
+                actionId="set-live-pressing"
+                onChange={(pressing) => void dispatchAction("set-live-pressing", { value: pressing })}
               />
             </div>
             <p className="mt-1 text-xs text-slate-500">
@@ -338,8 +392,9 @@ const MatchControlPanel = ({
             </p>
             <button
               type="button"
-              className="mt-2 rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600"
-              onClick={onApplyTactics}
+              data-action-id="apply-live-tactics"
+              className={`mt-2 rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600 ${FOCUS_RING.join(" ")}`}
+              onClick={() => void dispatchAction("apply-live-tactics")}
             >
               Apply tactics change
             </button>
@@ -351,9 +406,14 @@ const MatchControlPanel = ({
               <div>
                 <p className="text-xs text-slate-400">Off</p>
                 <select
-                  className="rounded bg-slate-800 px-2 py-1"
+                  data-action-id="set-live-substitute-off"
+                  className={`rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
                   value={outPlayerId}
-                  onChange={(event) => setOutPlayerId(PlayerId.make(event.target.value))}
+                  onChange={(event) =>
+                    void dispatchAction("set-live-substitute-off", {
+                      playerId: PlayerId.make(event.target.value),
+                    })
+                  }
                   disabled={subsStatus.capReached}
                 >
                   <option value="">Select player</option>
@@ -367,9 +427,14 @@ const MatchControlPanel = ({
               <div>
                 <p className="text-xs text-slate-400">On</p>
                 <select
-                  className="rounded bg-slate-800 px-2 py-1"
+                  data-action-id="set-live-substitute-in"
+                  className={`rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
                   value={inPlayerId}
-                  onChange={(event) => setInPlayerId(PlayerId.make(event.target.value))}
+                  onChange={(event) =>
+                    void dispatchAction("set-live-substitute-in", {
+                      playerId: PlayerId.make(event.target.value),
+                    })
+                  }
                   disabled={subsStatus.capReached}
                 >
                   <option value="">Select player</option>
@@ -382,9 +447,10 @@ const MatchControlPanel = ({
               </div>
               <button
                 type="button"
+                data-action-id="make-substitution"
                 disabled={subsStatus.capReached || !outPlayerId || !inPlayerId}
-                className="rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 disabled:opacity-50"
-                onClick={onMakeSubstitution}
+                className={`rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
+                onClick={() => void dispatchAction("make-substitution")}
               >
                 Make substitution
               </button>
@@ -517,6 +583,19 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     setStarting(false);
   };
 
+  // Register the Match Day screen's operation handlers (start + reset) so buttons
+  // and the key map dispatch the same registered Actions (ADR-0012).
+  useEffect(() => {
+    const unregister = registerActionHandler("start-match", () => {
+      void onStartMatch();
+    });
+    const unregisterReset = registerActionHandler("reset-match", () => setMatch(null));
+    return () => {
+      unregister();
+      unregisterReset();
+    };
+  }, [saveId, onStartMatch]);
+
   // Drives successive ResumeSimulation calls (ticket 13) — no RPC streaming, just polling ahead of
   // the local reveal pace and buffering whatever comes back.
   useEffect(() => {
@@ -634,9 +713,10 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           </div>
           <button
             type="button"
+            data-action-id="start-match"
             disabled={!opponentId || starting}
-            className="rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 disabled:opacity-50"
-            onClick={onStartMatch}
+            className={`rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
+            onClick={() => void dispatchAction("start-match")}
           >
             {starting ? "Starting..." : "Start match"}
           </button>
@@ -686,8 +766,9 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
               </p>
               <button
                 type="button"
-                className="rounded bg-slate-700 px-3 py-1 hover:bg-slate-600"
-                onClick={() => setMatch(null)}
+                data-action-id="reset-match"
+                className={`rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 ${FOCUS_RING.join(" ")}`}
+                onClick={() => void dispatchAction("reset-match")}
               >
                 Back to opponent picker
               </button>

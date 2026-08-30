@@ -1,4 +1,5 @@
 import { type SaveId } from "@cm-clone/contracts";
+import { FOCUS_RING } from "./focus.js";
 import { describeRpcError, seasonSummaryAtom, typedError, useAtomValue } from "./rpc.js";
 
 const verdictLabel: Record<string, string> = {
@@ -21,7 +22,7 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
   const rank = summary.finalPosition ? summary.standings.findIndex((row) => row.clubId === summary.clubId) + 1 : null;
 
   return (
-    <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
+    <main tabIndex={-1} className={`min-h-screen bg-slate-950 p-8 text-slate-100 ${FOCUS_RING.join(" ")}`}>
       <h1 className="text-2xl font-bold">Season Summary</h1>
       <p className="mt-1 text-sm text-slate-400">
         Season {summary.season.seasonNumber} &middot; {summary.season.phase.replace("_", " ")}

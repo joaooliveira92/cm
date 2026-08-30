@@ -3,6 +3,7 @@ import {
   BACK_RESTORE_MARKER,
   consumePendingFocus,
   focusSemanticTarget,
+  FOCUS_RING,
 } from "../focus.js";
 
 /**
@@ -10,6 +11,10 @@ import {
  * On arrival it consumes the focus-coordinator's pending target (set by
  * keyboard/palette navigation or back) and focuses by identity, so a pointer
  * navigation — which sets no pending target — never forces focus.
+ *
+ * The wrapper is itself the level-1 primary focus target (AC-22): it carries the
+ * ring, so a screen with no other interactive control (read-only career screens)
+ * still shows where focus landed on keyboard arrival.
  */
 export const RouteView = ({ screenId, children }: { screenId: string; children: ReactNode }) => {
   useEffect(() => {
@@ -23,7 +28,7 @@ export const RouteView = ({ screenId, children }: { screenId: string; children: 
   }, [screenId]);
 
   return (
-    <div data-focus-id={screenId} tabIndex={-1} className="outline-none">
+    <div data-focus-id={screenId} tabIndex={-1} className={FOCUS_RING.join(" ")}>
       {children}
     </div>
   );

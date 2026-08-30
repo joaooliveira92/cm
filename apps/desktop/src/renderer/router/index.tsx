@@ -6,6 +6,7 @@ import {
   Outlet,
 } from "@tanstack/react-router";
 import { bindRouter } from "../navigation/adapter.js";
+import { KeyboardSpine } from "../KeyboardSpine.js";
 import { FixturesScreen } from "../FixturesScreen.js";
 import { LeagueTableScreen } from "../LeagueTableScreen.js";
 import { MatchDayScreen } from "../MatchDayScreen.js";
@@ -38,7 +39,12 @@ import {
  * redirect (AC-12).
  */
 const rootRoute = createRootRoute({
-  component: () => <Outlet />,
+  component: () => (
+    <>
+      <Outlet />
+      <KeyboardSpine />
+    </>
+  ),
 });
 
 const saveListRoute = createRoute({

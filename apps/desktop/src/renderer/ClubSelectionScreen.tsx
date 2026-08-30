@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { type ClubSelectionRow, type SaveId } from "@cm-clone/contracts";
 import { Effect, Result } from "effect";
+import { FOCUS_RING } from "./focus.js";
 import { describeRpcError, getClubSelection } from "./rpc.js";
 
 export const ClubSelectionScreen = ({ saveId }: { readonly saveId: SaveId }) => {
@@ -30,7 +31,7 @@ export const ClubSelectionScreen = ({ saveId }: { readonly saveId: SaveId }) => 
   }
 
   return (
-    <div className="space-y-6">
+    <div tabIndex={-1} className={`space-y-6 ${FOCUS_RING.join(" ")}`}>
       {clubs.map((club) => (
         <div key={club.clubId} className="border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between py-2">

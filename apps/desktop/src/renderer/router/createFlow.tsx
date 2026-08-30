@@ -11,6 +11,7 @@ import {
   describeRpcError,
   discardCareer,
 } from "../rpc.js";
+import { FOCUS_RING } from "../focus.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
 import { RouteView } from "./RouteView.js";
 
@@ -230,7 +231,7 @@ export const CreateFlowLayout = () => {
           <div className="mt-8 flex gap-4">
             <button
               type="button"
-              className="rounded bg-slate-700 px-4 py-2 hover:bg-slate-600"
+              className={`rounded bg-slate-700 px-4 py-2 hover:bg-slate-600 ${FOCUS_RING.join(" ")}`}
               onClick={() => navigate({ type: "saveList" })}
             >
               Cancel
@@ -238,7 +239,7 @@ export const CreateFlowLayout = () => {
             {step === "1" && (
               <button
                 type="button"
-                className="rounded bg-slate-600 px-4 py-2 hover:bg-slate-500 disabled:opacity-50"
+                className={`rounded bg-slate-600 px-4 py-2 hover:bg-slate-500 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
                 onClick={() => void handleNextToClub()}
                 disabled={!canProceedFromManager || session.status === "generating"}
               >
@@ -248,7 +249,7 @@ export const CreateFlowLayout = () => {
             {step === "2" && (
               <button
                 type="button"
-                className="rounded bg-slate-600 px-4 py-2 hover:bg-slate-500"
+                className={`rounded bg-slate-600 px-4 py-2 hover:bg-slate-500 ${FOCUS_RING.join(" ")}`}
                 onClick={() => navigate({ type: "createStep3" })}
                 disabled={session.provisionalId === null || session.status !== "ready"}
               >
@@ -258,7 +259,7 @@ export const CreateFlowLayout = () => {
             {step === "3" && (
               <button
                 type="button"
-                className="rounded bg-green-700 px-4 py-2 hover:bg-green-600 disabled:opacity-50"
+                className={`rounded bg-green-700 px-4 py-2 hover:bg-green-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
                 onClick={() => void handleCommitCareer()}
                 disabled={session.status === "committing"}
               >

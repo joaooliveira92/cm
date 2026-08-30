@@ -221,6 +221,15 @@ export function lintBoundary(sourceFile: SourceFile, filePath: string): LintViol
           message: `Career screens must not import ${specifier.text} directly — import it through renderer/rpc.`,
         })
       }
+      if (isStringLiteral(specifier) && specifier.text === "react-hotkeys-hook") {
+        const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
+        out.push({
+          file: filePath,
+          line: line + 1,
+          rule: "renderer-boundary",
+          message: "Career screens must not import react-hotkeys-hook directly — import it through renderer/hotkeys.",
+        })
+      }
     }
     node.forEachChild(visit)
   }
@@ -229,12 +238,13 @@ export function lintBoundary(sourceFile: SourceFile, filePath: string): LintViol
   return out
 }
 
-/** True when the file must go through the RPC seam: renderer files outside `rpc.ts`/`rpc/`, and fixtures. */
+/** True when the file must go through the RPC seam: renderer files outside `rpc.ts`/`rpc/`,
+ *  and the keyboard-binding seam `hotkeys.ts`. All other renderer files are enforced. */
 export function isBoundaryEnforced(filePath: string): boolean {
   if (filePath.includes(FIXTURE_ROOT)) return true
   if (!filePath.includes(RENDERER_DIR)) return false
   const rel = filePath.slice(filePath.indexOf(RENDERER_DIR) + RENDERER_DIR.length).replace(/\\/g, "/")
-  return !rel.startsWith("/rpc.") && !rel.startsWith("/rpc/")
+  return !rel.startsWith("/rpc.") && !rel.startsWith("/rpc/") && !rel.startsWith("/hotkeys.")
 }
 
 const sourceDirs = ["packages", "apps"]

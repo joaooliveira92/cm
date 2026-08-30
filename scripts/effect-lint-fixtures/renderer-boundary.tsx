@@ -10,9 +10,11 @@
  */
 import { useAtomValue } from "@effect/atom-react";
 import { Atom } from "effect/unstable/reactivity";
+import { useHotkeys } from "react-hotkeys-hook";
 
 export const BoundaryViolationFixture = ({ saveId }: { readonly saveId: string }) => {
   const directCall = window.cmClone.call("getSquad", { saveId });
+  useHotkeys("mod+k", () => undefined);
   void Atom;
   return <div>{useAtomValue(Atom.succeed(directCall))}</div>;
 };
