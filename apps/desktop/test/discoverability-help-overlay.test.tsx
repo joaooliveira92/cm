@@ -11,10 +11,21 @@ const keyDown = (code: string): void => {
   act(() => fireEvent.keyDown(document, { key: code, code }));
 };
 
-const mount = (screenName: string, state: Record<string, unknown>, onClose: () => void) =>
+const mount = (
+  screenName: string,
+  state: Record<string, unknown>,
+  onClose: () => void,
+  overrides: Record<string, string> = {},
+) =>
   render(
     <HotkeysBoundaryProvider>
-      <HelpOverlay screen={screenName as never} state={state} onClose={onClose} />
+      <HelpOverlay
+        screen={screenName as never}
+        state={state}
+        overrides={overrides}
+        onOverridesChange={() => undefined}
+        onClose={onClose}
+      />
     </HotkeysBoundaryProvider>,
   );
 

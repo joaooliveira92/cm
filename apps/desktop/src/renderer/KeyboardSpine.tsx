@@ -1,15 +1,26 @@
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useLocation, useParams } from "@tanstack/react-router";
 import { type SaveId } from "@cm-clone/contracts";
+import { Effect } from "effect";
 import { navigateBack, navigateCareer } from "./navigation/adapter.js";
 import { type CareerDestination } from "./navigation/destinations.js";
 import { decodeSaveId } from "./navigation/params.js";
-import { ACTION_REGISTRY, ALL_ACTIONS, G_PREFIX_COMPLETIONS } from "./actions/allActions.js";
+import { ACTION_REGISTRY, ALL_ACTIONS } from "./actions/allActions.js";
 import { isCareerScreen } from "./actions/registry.js";
+import {
+  gByKeyOf,
+  gPrefixCompletionsOf,
+  prefixIndicatorEntriesOf,
+  withEffectiveBindings,
+  type KeyBindingOverrides,
+  type PrefixIndicatorEntry,
+} from "./actions/overrides.js";
+export type { PrefixIndicatorEntry } from "./actions/overrides.js";
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
 import { clearScopeState, getScopeState, setScopeState, subscribeScopeState } from "./actions/scopeState.js";
-import { type Action, type ScopeState } from "./actions/types.js";
+import { type ScopeState } from "./actions/types.js";
 import { useSeamEveryKeyPress } from "./hotkeys.js";
+import { getKeyBindingOverrides, EMPTY_KEY_BINDING_OVERRIDES } from "./rpc.js";
 import {
   resolveDispatch,
   IDLE_PREFIX,
@@ -65,27 +76,11 @@ const screenIdOfPath = (pathname: string): string => {
   return "saveList";
 };
 
-/** The `g <key>` destination actions by completion key, from the registry. */
-const G_BY_KEY: ReadonlyMap<string, Action> = new Map(
-  ALL_ACTIONS.filter((a) => a.scope === "career-global" && a.binding?.startsWith("g ")).map(
-    (a) => [a.binding!.slice(2).trim(), a],
-  ),
-);
-
-/** One entry in the nonmodal prefix indicator. */
-export interface PrefixIndicatorEntry {
-  readonly label: string;
-  readonly key: string;
-}
-
-/** "Go to: Squad [S] · Tactics [A] · …" — derived from the registry's g-actions. */
+/** "Go to: Squad [S] · Tactics [A] · …" — the *defaults* prefix indicator, derived through the
+ *  shared helper; the live indicator under rebinding is computed in the spine from the effective
+ *  actions (`prefixIndicatorEntriesOf(effectiveActions)`). */
 export const PREFIX_INDICATOR_ENTRIES: ReadonlyArray<PrefixIndicatorEntry> =
-  ALL_ACTIONS.filter((a) => a.scope === "career-global" && a.binding?.startsWith("g "))
-    .map((a) => ({
-      label: a.label.replace(/^Go to /, ""),
-      key: a.binding!.slice(2).trim().toUpperCase(),
-    }))
-    .sort((x, y) => x.key.localeCompare(y.key));
+  prefixIndicatorEntriesOf(ALL_ACTIONS);
 
 /** The visible nonmodal prefix feedback (AC-18): fixed below the nav bar,
  *  pointer-transparent so it never blocks interaction. */
@@ -122,9 +117,56 @@ export const KeyboardSpine = () => {
     () => ({ ...liveScopeState, ready: isCareer }),
     [isCareer, liveScopeState],
   );
+
+  // Machine-local key binding overrides (ticket 14 / Stage 6). Fetched through the seam once at
+  // mount; any failure (transport, decode, or a missing/never-error branch) is tolerated as the
+  // fresh-player empty map. The help overlay's mutations return the *updated* map and adopt it
+  // here, so every effective-binding derivation below re-runs from one state: the registry stays
+  // the single membership decision point and the overrides are layered over it — never mirrored.
+  const [bindingOverrides, setBindingOverrides] = useState<KeyBindingOverrides>(
+    EMPTY_KEY_BINDING_OVERRIDES,
+  );
+  // The one-shot mount fetch below can resolve AFTER the player has already rebind-changed the
+  // map through the overlay's mutation-adoption path — a stale mount response must never clobber
+  // a just-adopted override. The adoption path flags itself; the fetch's `.then` yields to it.
+  const mutatedRef = useRef(false);
+  const adoptOverrides = useCallback((next: KeyBindingOverrides) => {
+    mutatedRef.current = true;
+    setBindingOverrides(next);
+  }, []);
+  useEffect(() => {
+    let alive = true;
+    Effect.runPromise(Effect.option(getKeyBindingOverrides())).then((option) => {
+      if (alive && !mutatedRef.current && option._tag === "Some") setBindingOverrides(option.value);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Effective views: the overrides layered over the registry's coded defaults. `effectiveActions`
+  // is the whole registry projection; the active set, `g` completions, and the prefix indicator
+  // are all derived from it (or the registry's active set) through the same pure helpers.
+  const effectiveActions = useMemo(
+    () => withEffectiveBindings(ALL_ACTIONS, bindingOverrides),
+    [bindingOverrides],
+  );
   const activeActions = useMemo(
-    () => ACTION_REGISTRY.active(currentScreen as never, scopeState),
-    [currentScreen, scopeState],
+    () =>
+      withEffectiveBindings(
+        ACTION_REGISTRY.active(currentScreen as never, scopeState),
+        bindingOverrides,
+      ),
+    [currentScreen, scopeState, bindingOverrides],
+  );
+  const effectiveCompletions = useMemo(
+    () => gPrefixCompletionsOf(effectiveActions),
+    [effectiveActions],
+  );
+  const effectiveGByKey = useMemo(() => gByKeyOf(effectiveActions), [effectiveActions]);
+  const effectivePrefixEntries = useMemo(
+    () => prefixIndicatorEntriesOf(effectiveActions),
+    [effectiveActions],
   );
 
   // The transient overlay stack (AC-20). `splashActive` is the one-shot
@@ -174,6 +216,14 @@ export const KeyboardSpine = () => {
     );
     unregisters.push(
       registerActionHandler("open-help", () => {
+        rememberFocusForOverlay();
+        setLayer("help");
+      }),
+    );
+    // "Rebind…" is the palette's discovery path to the rebinding surface: it opens the same
+    // help overlay (which is where rebinding lives), never a separate screen.
+    unregisters.push(
+      registerActionHandler("open-rebind", () => {
         rememberFocusForOverlay();
         setLayer("help");
       }),
@@ -231,7 +281,7 @@ export const KeyboardSpine = () => {
         prefix,
         now,
         actions: activeActions,
-        prefixCompletions: G_PREFIX_COMPLETIONS,
+        prefixCompletions: effectiveCompletions,
         overlay: topLayer,
       });
       switch (decision.kind) {
@@ -247,7 +297,7 @@ export const KeyboardSpine = () => {
           event.preventDefault();
           return;
         case "complete-prefix": {
-          const g = G_BY_KEY.get(decision.completion);
+          const g = effectiveGByKey.get(decision.completion);
           if (g !== undefined) dispatchAction(g.id);
           setPrefix(IDLE_PREFIX);
           event.preventDefault();
@@ -263,7 +313,7 @@ export const KeyboardSpine = () => {
         }
       }
     },
-    [prefix, activeActions, scopeState, topLayer],
+    [prefix, activeActions, scopeState, topLayer, effectiveCompletions, effectiveGByKey],
   );
 
   useSeamEveryKeyPress(onKeyDown, [onKeyDown]);
@@ -271,17 +321,24 @@ export const KeyboardSpine = () => {
   return (
     <>
       {prefix.active && !splashActive && layer === "none" && (
-        <PrefixIndicator entries={PREFIX_INDICATOR_ENTRIES} />
+        <PrefixIndicator entries={effectivePrefixEntries} />
       )}
       {layer === "palette" && (
         <CommandPalette
           screen={currentScreen as never}
           state={scopeState}
+          overrides={bindingOverrides}
           onClose={closeOverlay}
         />
       )}
       {layer === "help" && (
-        <HelpOverlay screen={currentScreen as never} state={scopeState} onClose={closeOverlay} />
+        <HelpOverlay
+          screen={currentScreen as never}
+          state={scopeState}
+          overrides={bindingOverrides}
+          onOverridesChange={adoptOverrides}
+          onClose={closeOverlay}
+        />
       )}
       {splashActive && layer === "none" && <TeachingSplash onDismiss={dismissSplash} />}
     </>

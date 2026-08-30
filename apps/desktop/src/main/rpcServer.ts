@@ -3,6 +3,12 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { AppRpcs, type AppRpcMethod, type RpcResult } from "@cm-clone/contracts";
 import { Effect, Schema } from "effect";
 import { getClubSelection } from "./clubSelection.js";
+import {
+  getKeyBindingOverrides,
+  resetAllKeyBindings,
+  resetKeyBinding,
+  setKeyBindingOverride,
+} from "./keybindings.js";
 import { listOpponentClubs, resumeSimulation, startMatch, submitMatchCommand } from "./match.js";
 import { getManagerProfile } from "./managerProfile.js";
 import { advanceCalendar, getFixtures, getLeagueTable, getSeasonSummary } from "./season.js";
@@ -21,6 +27,8 @@ import { setTrainingFocus } from "./training.js";
 
 export interface RpcContext {
   readonly savesDir: string;
+  /** Electron `userData` — the parent of `saves/`; the machine-local override file lives here. */
+  readonly userDataDir: string;
 }
 
 type Handler = (payload: unknown, ctx: RpcContext) => Effect.Effect<unknown, unknown>;
@@ -172,6 +180,22 @@ const handlers: Record<AppRpcMethod, Handler> = {
       )(payload);
       return yield* setTrainingFocus(ctx.savesDir, saveId, playerId, focus);
     }),
+  getKeyBindingOverrides: (_payload, ctx) => getKeyBindingOverrides(ctx.userDataDir),
+  setKeyBindingOverride: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { actionId, binding } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.setKeyBindingOverride.payload,
+      )(payload);
+      return yield* setKeyBindingOverride(ctx.userDataDir, actionId, binding);
+    }),
+  resetKeyBinding: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { actionId } = yield* Schema.decodeUnknownEffect(AppRpcs.resetKeyBinding.payload)(
+        payload,
+      );
+      return yield* resetKeyBinding(ctx.userDataDir, actionId);
+    }),
+  resetAllKeyBindings: (_payload, ctx) => resetAllKeyBindings(ctx.userDataDir),
 };
 
 export const handleRpc = (

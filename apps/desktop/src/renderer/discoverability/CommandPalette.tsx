@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ScreenName, ScopeState } from "../actions/types.js";
 import { ALL_ACTIONS } from "../actions/allActions.js";
 import { actionsInTiers } from "../actions/registry.js";
+import { withEffectiveBindings, type KeyBindingOverrides } from "../actions/overrides.js";
 import { dispatchActionWithParams } from "../actions/dispatch.js";
 import { FOCUS_RING } from "../focus.js";
 import { useSeamHotkeys } from "../hotkeys.js";
@@ -26,10 +27,13 @@ import { rankPaletteActions, type PaletteCandidate } from "./rank.js";
 export const CommandPalette = ({
   screen,
   state,
+  overrides,
   onClose,
 }: {
   readonly screen: ScreenName;
   readonly state: ScopeState;
+  /** The current override map — the row badges show *effective* bindings (Stage 6). */
+  readonly overrides: KeyBindingOverrides;
   readonly onClose: () => void;
 }) => {
   const [query, setQuery] = useState("");
@@ -40,8 +44,13 @@ export const CommandPalette = ({
   // career-globals + current-screen), ranked. Availability is a per-row read of
   // the live ScopeState — the same truth the spine's dispatcher honours. The
   // tier slice and the ranking are memoised so typing never re-walks the whole
-  // registry (note's palette-latency mitigation; n < 50 anyway).
-  const rankInput = useMemo(() => actionsInTiers(ALL_ACTIONS, screen), [screen]);
+  // registry (note's palette-latency mitigation; n < 50 anyway). Overrides are
+  // layered over the slice, so the binding badges always show the *effective*
+  // binding — never a value the key map no longer serves.
+  const rankInput = useMemo(
+    () => withEffectiveBindings(actionsInTiers(ALL_ACTIONS, screen), overrides),
+    [screen, overrides],
+  );
   const ranked: ReadonlyArray<PaletteCandidate> = useMemo(
     () => rankPaletteActions(rankInput, query, state),
     [rankInput, query, state],

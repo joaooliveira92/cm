@@ -55,6 +55,15 @@ export {
 } from "./rpc/pacing.js";
 
 export {
+  getKeyBindingOverrides,
+  setKeyBindingOverride,
+  resetKeyBinding,
+  resetAllKeyBindings,
+  EMPTY_KEY_BINDING_OVERRIDES,
+  type KeyBindingOverrides,
+} from "./rpc/keybindings.js";
+
+export {
   RegistryProvider,
   useAtomValue,
   useAtom,

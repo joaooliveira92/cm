@@ -1,5 +1,6 @@
 import { createRegistry } from "./registry.js";
 import type { Action, ScopeState, ScreenName } from "./types.js";
+import { gPrefixCompletionsOf } from "./overrides.js";
 import {
   FREE_AGENT_PALETTE_OPTIONS,
   MARKET_PALETTE_OPTIONS,
@@ -46,6 +47,9 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   // save list and creation flow too; only the g-prefix/Space are career-scoped).
   { id: "open-palette", label: "Open command palette", scope: "app-global", available: () => true, handler: () => undefined, binding: "Primary+K" },
   { id: "open-help", label: "Open keyboard help", scope: "app-global", available: () => true, handler: () => undefined, binding: "Primary+/" },
+  // The help overlay is the rebinding surface (ticket 14): this unbounded palette command
+  // opens it the same way Primary+/ does, giving rebinding a second, discoverable entry point.
+  { id: "open-rebind", label: "Rebind…", scope: "app-global", available: () => true, handler: () => undefined },
   // career-global — active only while a career screen is shown.
   { id: "continue", label: "Continue", scope: "career-global", available: continueAvailable, unavailableReason: "The Calendar cannot advance right now.", handler: () => undefined, binding: "Space" },
   navAction("go-to-squad", "Go to Squad", "g s", { destination: "squad" }),
@@ -127,13 +131,10 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
 /** The compiled registry. Build-time collision/locked-key checks run here (AC-17). */
 export const ACTION_REGISTRY = createRegistry(ALL_ACTIONS);
 
-/** The valid `g <key>` completion set derived from the registry's career-global nav actions. */
-export const G_PREFIX_COMPLETIONS: ReadonlySet<string> = new Set(
-  ALL_ACTIONS.filter((a) => a.scope === "career-global")
-    .map((a) => a.binding)
-    .filter((b): b is string => b !== undefined && b.startsWith("g "))
-    .map((b) => b.slice(2).trim()),
-);
+/** The valid `g <key>` completion set derived from the registry's career-global nav actions.
+ *  (Defaults-only — the spine derives the *effective* set from overrides via
+ *  `gPrefixCompletionsOf` in `overrides.ts`; this constant is what a fresh player sees.) */
+export const G_PREFIX_COMPLETIONS: ReadonlySet<string> = gPrefixCompletionsOf(ALL_ACTIONS);
 
 /**
  * Per-screen registry metadata (command-palette note: inline key badges are

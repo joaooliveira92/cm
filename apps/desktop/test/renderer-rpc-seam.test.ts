@@ -343,6 +343,32 @@ describe("renderer RPC seam — typed error surface (AC-03)", () => {
     ).toBe("That save could not be found.");
   });
 
+  it("describeRpcError renders the rebinding rejection tags (Stage 6)", () => {
+    const locked = describeRpcError({
+      _tag: "RemoteFailure",
+      method: "setKeyBindingOverride",
+      error: { _tag: "LockedKeyOverrideError", actionId: "open-palette", binding: "Primary+K" },
+    });
+    expect(locked).toMatch(/locked/i);
+    const colliding = describeRpcError({
+      _tag: "RemoteFailure",
+      method: "setKeyBindingOverride",
+      error: {
+        _tag: "CollidingOverrideError",
+        actionId: "place-bid",
+        binding: "b",
+        conflictingActionId: "focus-bid",
+      },
+    });
+    expect(colliding).toMatch(/already bound/i);
+    const shape = describeRpcError({
+      _tag: "RemoteFailure",
+      method: "setKeyBindingOverride",
+      error: { _tag: "InvalidBindingShapeError", actionId: "focus-bid", binding: "F5" },
+    });
+    expect(shape).toMatch(/cannot be bound/i);
+  });
+
   it("typedError surfaces the first typed error from a failed AsyncResult", () => {
     const failure = AsyncResult.fail({ _tag: "SaveNotFoundError", id: relaxedSaveId("s1") });
     const error = typedError(failure);

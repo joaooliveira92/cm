@@ -9,12 +9,15 @@ import {
   ClubNotFoundError,
   ClubSelectionView,
   ClubSummary,
+  CollidingOverrideError,
   FixturesView,
   InsufficientTransferBudgetError,
   InvalidBidActionError,
+  InvalidBindingShapeError,
   InvalidPillarDistributionError,
   InvalidTacticError,
   LeagueTableView,
+  LockedKeyOverrideError,
   ManagerProfileView,
   ManagerArchetypeSchema,
   MatchCommandPayload,
@@ -263,6 +266,39 @@ export const AppRpcs = {
     }),
     success: TrainingFocusView,
     error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError, SaveSackedError]),
+  },
+  /** Key binding overrides (ticket 14 / Stage 6): a machine-local `record<ActionId, binding>`
+   * layered over — never replacing — the coded defaults. The file lives in Electron `userData`
+   * (`keybindings.json`, a sibling of `saves/`) and is owned by main; the renderer never touches
+   * the filesystem, and no binding ever enters a save, the event stream, or a migration. */
+  getKeyBindingOverrides: {
+    payload: Schema.Void,
+    success: Schema.Record(Schema.String, Schema.String),
+    error: Schema.Never,
+  },
+  /** Rebinds one Action to `binding` (replacing the whole binding string — a two-step `g <key>` is
+   * rebound as one entry; the prefix mechanism itself is unchanged). Returns the updated override
+   * map. Rejected for locked infra keys, collisions (the conflicting Action named), and shapes the
+   * keyboard framework cannot express. */
+  setKeyBindingOverride: {
+    payload: Schema.Struct({
+      actionId: Schema.String,
+      binding: Schema.String,
+    }),
+    success: Schema.Record(Schema.String, Schema.String),
+    error: Schema.Union([LockedKeyOverrideError, CollidingOverrideError, InvalidBindingShapeError]),
+  },
+  /** Removes one Action's override, returning it to its coded default. Returns the updated map. */
+  resetKeyBinding: {
+    payload: Schema.Struct({ actionId: Schema.String }),
+    success: Schema.Record(Schema.String, Schema.String),
+    error: Schema.Never,
+  },
+  /** Drops every override; the map returns to empty (all coded defaults). Returns the updated map. */
+  resetAllKeyBindings: {
+    payload: Schema.Void,
+    success: Schema.Record(Schema.String, Schema.String),
+    error: Schema.Never,
   },
 } as const;
 

@@ -86,6 +86,12 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
           return "That bid action is not valid right now.";
         case "NotYourPlayerError":
           return "That player does not belong to your club.";
+        case "LockedKeyOverrideError":
+          return "That key is locked and cannot be rebound.";
+        case "CollidingOverrideError":
+          return "That key is already bound to another command.";
+        case "InvalidBindingShapeError":
+          return "That key combination cannot be bound.";
       }
   }
 };

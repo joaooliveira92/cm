@@ -41,7 +41,7 @@ app.whenReady().then(() => {
   const savesDir = path.join(app.getPath("userData"), "saves");
 
   ipcMain.handle(RPC_CHANNEL, (_event, method: AppRpcMethod, payload: unknown) =>
-    Effect.runPromise(handleRpc(method, payload, { savesDir })),
+    Effect.runPromise(handleRpc(method, payload, { savesDir, userDataDir: app.getPath("userData") })),
   );
 
   createWindow();

@@ -305,3 +305,48 @@ describe("Player Development & Training Focus schemas", () => {
     ).toEqual({ saveId: "s1", playerId: "p1", focus: null });
   });
 });
+
+describe("key binding overrides — the four Stage 6 procedures (AC-34)", () => {
+  it("getKeyBindingOverrides round-trips an empty and a populated override map", () => {
+    roundTrip(AppRpcs.getKeyBindingOverrides.success, {});
+    roundTrip(AppRpcs.getKeyBindingOverrides.success, {
+      "focus-bid": "v",
+      "go-to-squad": "g q",
+    });
+  });
+
+  it("setKeyBindingOverride payload round-trips actionId + binding", () => {
+    roundTrip(AppRpcs.setKeyBindingOverride.payload, { actionId: "go-to-squad", binding: "g q" });
+  });
+
+  it("setKeyBindingOverride success round-trips the updated map", () => {
+    roundTrip(AppRpcs.setKeyBindingOverride.success, { "go-to-squad": "g q" });
+  });
+
+  it("each rejected-write failure round-trips through the method error union (AC-35)", () => {
+    roundTrip(AppRpcs.setKeyBindingOverride.error, {
+      _tag: "LockedKeyOverrideError",
+      actionId: "open-palette",
+      binding: "Primary+K",
+    });
+    roundTrip(AppRpcs.setKeyBindingOverride.error, {
+      _tag: "CollidingOverrideError",
+      actionId: "focus-bid",
+      binding: "b",
+      conflictingActionId: "place-bid",
+    });
+    roundTrip(AppRpcs.setKeyBindingOverride.error, {
+      _tag: "InvalidBindingShapeError",
+      actionId: "focus-bid",
+      binding: "ArrowDown",
+    });
+  });
+
+  it("resetKeyBinding payload round-trips an actionId", () => {
+    roundTrip(AppRpcs.resetKeyBinding.payload, { actionId: "focus-bid" });
+  });
+
+  it("resetAllKeyBindings success round-trips the empty map", () => {
+    roundTrip(AppRpcs.resetAllKeyBindings.success, {});
+  });
+});

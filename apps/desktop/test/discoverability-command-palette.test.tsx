@@ -34,7 +34,7 @@ afterEach(() => {
 
 describe("AC-23 — the palette lists global + current-screen Actions, available above unavailable", () => {
   it("opens with the live registry set: a global Action and the current screen's Actions", () => {
-    render(<CommandPalette screen="transfers" state={transfersState()} onClose={() => undefined} />);
+    render(<CommandPalette screen="transfers" state={transfersState()} overrides={{}} onClose={() => undefined} />);
     // app-global (Open keyboard help) and transfers-scoped (Focus the bid workflow).
     expect(optionFor(/Open keyboard help/)).toBeTruthy();
     expect(optionFor(/Focus the bid workflow/)).toBeTruthy();
@@ -42,8 +42,17 @@ describe("AC-23 — the palette lists global + current-screen Actions, available
     expect(screen.queryByRole("option", { name: /Advance.*Calendar/i })).toBeNull();
   });
 
+  it("AC-36 — offers the Rebind… command that opens the rebinding surface", () => {
+    render(<CommandPalette screen="transfers" state={transfersState()} overrides={{}} onClose={() => undefined} />);
+    const rebind = optionFor(/Rebind…/);
+    expect(rebind).toBeTruthy();
+    // The command is dispatchable by id like every other registry Action (the spine registers the
+    // handler that opens the help overlay).
+    expect(rebind.getAttribute("data-action-id")).toBe("open-rebind");
+  });
+
   it("ranks available above unavailable and shows unavailable entries disabled-with-reason, never hidden", () => {
-    render(<CommandPalette screen="league" state={seasonCompleteState()} onClose={() => undefined} />);
+    render(<CommandPalette screen="league" state={seasonCompleteState()} overrides={{}} onClose={() => undefined} />);
     const continueOption = optionFor(/Continue/);
     const advanceOption = optionFor(/Advance the Calendar/);
     // Present (never hidden), disabled, with the per-predicate plain-language reason.
@@ -61,14 +70,14 @@ describe("AC-23 — the palette lists global + current-screen Actions, available
   });
 
   it("typing filters to matching commands and drops everything else (strict command surface)", () => {
-    render(<CommandPalette screen="transfers" state={transfersState()} onClose={() => undefined} />);
+    render(<CommandPalette screen="transfers" state={transfersState()} overrides={{}} onClose={() => undefined} />);
     typeQuery("go to squad");
     expect(optionFor(/Go to Squad/)).toBeTruthy();
     expect(screen.getAllByRole("option").length).toBe(1);
   });
 
   it("a query matching no command renders an empty state, not a game-data search result", () => {
-    render(<CommandPalette screen="transfers" state={transfersState()} onClose={() => undefined} />);
+    render(<CommandPalette screen="transfers" state={transfersState()} overrides={{}} onClose={() => undefined} />);
     typeQuery("Roberto Carlos");
     expect(screen.getByText("No matching commands")).toBeTruthy();
     expect(document.querySelectorAll('[role="option"]').length).toBe(0);
@@ -77,7 +86,7 @@ describe("AC-23 — the palette lists global + current-screen Actions, available
 
 describe("AC-23 — palette keyboard operation", () => {
   it("ArrowDown/ArrowUp rove the selection (aria-activedescendant follows)", () => {
-    render(<CommandPalette screen="transfers" state={transfersState()} onClose={() => undefined} />);
+    render(<CommandPalette screen="transfers" state={transfersState()} overrides={{}} onClose={() => undefined} />);
     const input = screen.getByRole("combobox", { hidden: false }) as HTMLInputElement;
     input.focus();
     expect(input.getAttribute("aria-activedescendant")).toBe("palette-option-0");
@@ -91,7 +100,7 @@ describe("AC-23 — palette keyboard operation", () => {
     const dispatch = vi.fn();
     const close = vi.fn();
     registerActionHandler("go-to-squad", dispatch);
-    render(<CommandPalette screen="transfers" state={transfersState()} onClose={close} />);
+    render(<CommandPalette screen="transfers" state={transfersState()} overrides={{}} onClose={close} />);
     const input = screen.getByRole("combobox") as HTMLInputElement;
     input.focus();
     typeQuery("go to squad");
@@ -104,7 +113,7 @@ describe("AC-23 — palette keyboard operation", () => {
     const dispatch = vi.fn();
     const close = vi.fn();
     registerActionHandler("continue", dispatch);
-    render(<CommandPalette screen="league" state={seasonCompleteState()} onClose={close} />);
+    render(<CommandPalette screen="league" state={seasonCompleteState()} overrides={{}} onClose={close} />);
     const input = screen.getByRole("combobox") as HTMLInputElement;
     input.focus();
     // Bring the list down to the disabled Continue entry.
@@ -117,7 +126,7 @@ describe("AC-23 — palette keyboard operation", () => {
 
   it("Escape closes without dispatching anything", () => {
     const close = vi.fn();
-    render(<CommandPalette screen="transfers" state={transfersState()} onClose={close} />);
+    render(<CommandPalette screen="transfers" state={transfersState()} overrides={{}} onClose={close} />);
     (screen.getByRole("combobox") as HTMLInputElement).focus();
     keyDown("Escape");
     expect(close).toHaveBeenCalledTimes(1);
@@ -127,7 +136,7 @@ describe("AC-23 — palette keyboard operation", () => {
     const dispatch = vi.fn();
     const close = vi.fn();
     registerActionHandler("go-to-squad", dispatch);
-    render(<CommandPalette screen="transfers" state={transfersState()} onClose={close} />);
+    render(<CommandPalette screen="transfers" state={transfersState()} overrides={{}} onClose={close} />);
     act(() => fireEvent.mouseDown(optionFor(/Go to Squad/)));
     expect(dispatch).toHaveBeenCalledTimes(1);
     expect(close).toHaveBeenCalledTimes(1);
@@ -136,7 +145,7 @@ describe("AC-23 — palette keyboard operation", () => {
 
 describe("AC-16 — the palette only lists Actions the registry can dispatch", () => {
   it("every rendered option id resolves in the registry (no half-migrated lie)", () => {
-    render(<CommandPalette screen="transfers" state={transfersState()} onClose={() => undefined} />);
+    render(<CommandPalette screen="transfers" state={transfersState()} overrides={{}} onClose={() => undefined} />);
     for (const el of document.querySelectorAll('[role="option"]')) {
       const id = el.getAttribute("data-action-id");
       expect(id, "palette option carries an action id").toBeTruthy();
