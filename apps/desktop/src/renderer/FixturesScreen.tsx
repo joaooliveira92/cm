@@ -1,24 +1,15 @@
-import { useEffect, useState } from "react";
-import type { FixturesView, SaveId } from "@cm-clone/contracts";
+import { type SaveId } from "@cm-clone/contracts";
+import { describeRpcError, fixturesAtom, typedError, useAtomValue } from "./rpc.js";
 
 export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const [fixtures, setFixtures] = useState<FixturesView | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const fixturesResult = useAtomValue(fixturesAtom(saveId));
 
-  useEffect(() => {
-    window.cmClone
-      .call("getFixtures", { saveId })
-      .then((result) => {
-        if (result._tag === "Failure") {
-          setError("Failed to load fixtures");
-          return;
-        }
-        setFixtures(result.value);
-      });
-  }, [saveId]);
+  const error = typedError(fixturesResult);
+  if (error) return <p className="p-8 text-red-400">{describeRpcError(error)}</p>;
+  if (fixturesResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading fixtures...</p>;
+  if (fixturesResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load fixtures</p>;
 
-  if (error) return <p className="p-8 text-red-400">{error}</p>;
-  if (!fixtures) return <p className="p-8 text-slate-400">Loading fixtures...</p>;
+  const fixtures = fixturesResult.value;
 
   const byMatchday = new Map<number, typeof fixtures.fixtures>();
   for (const fixture of fixtures.fixtures) {
@@ -30,6 +21,7 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       <h1 className="text-2xl font-bold">Fixtures</h1>
       <p className="mt-1 text-sm text-slate-400">
         Season {fixtures.season.seasonNumber} &middot; {fixtures.fixtures.length} fixtures
+        {fixturesResult.waiting && <span className="ml-2 text-slate-500">Refreshing…</span>}
       </p>
 
       <div className="mt-6 space-y-6">

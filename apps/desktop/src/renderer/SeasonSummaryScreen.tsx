@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import type { SaveId, SeasonSummaryView } from "@cm-clone/contracts";
+import { type SaveId } from "@cm-clone/contracts";
+import { describeRpcError, seasonSummaryAtom, typedError, useAtomValue } from "./rpc.js";
 
 const verdictLabel: Record<string, string> = {
   exceeded: "Exceeded",
@@ -8,23 +8,14 @@ const verdictLabel: Record<string, string> = {
 };
 
 export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const [summary, setSummary] = useState<SeasonSummaryView | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const summaryResult = useAtomValue(seasonSummaryAtom(saveId));
 
-  useEffect(() => {
-    window.cmClone
-      .call("getSeasonSummary", { saveId })
-      .then((result) => {
-        if (result._tag === "Failure") {
-          setError("Failed to load season summary");
-          return;
-        }
-        setSummary(result.value);
-      });
-  }, [saveId]);
+  const error = typedError(summaryResult);
+  if (error) return <p className="p-8 text-red-400">{describeRpcError(error)}</p>;
+  if (summaryResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading season summary...</p>;
+  if (summaryResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load season summary</p>;
 
-  if (error) return <p className="p-8 text-red-400">{error}</p>;
-  if (!summary) return <p className="p-8 text-slate-400">Loading season summary...</p>;
+  const summary = summaryResult.value;
 
   const objective = summary.boardObjective;
   const rank = summary.finalPosition ? summary.standings.findIndex((row) => row.clubId === summary.clubId) + 1 : null;
@@ -34,6 +25,7 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
       <h1 className="text-2xl font-bold">Season Summary</h1>
       <p className="mt-1 text-sm text-slate-400">
         Season {summary.season.seasonNumber} &middot; {summary.season.phase.replace("_", " ")}
+        {summaryResult.waiting && <span className="ml-2 text-slate-500">Refreshing…</span>}
       </p>
 
       <section className="mt-6 rounded border border-slate-800 p-4">

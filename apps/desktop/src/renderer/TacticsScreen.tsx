@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { PlayerId, Tactic, type SaveId, type TacticSlot, type TacticsScreenView } from "@cm-clone/contracts";
+import { PlayerId, Tactic, type SaveId, type TacticSlot } from "@cm-clone/contracts";
 import {
   FORMATIONS,
   FORMATION_SLOTS,
@@ -14,6 +14,14 @@ import {
   type Pressing,
   type Tempo,
 } from "@cm-clone/shared";
+import {
+  changeTacticsMutation,
+  describeRpcError,
+  tacticsAtom,
+  typedError,
+  useAtomSet,
+  useAtomValue,
+} from "./rpc.js";
 
 const defaultTacticFor = (formation: Formation): Tactic =>
   new Tactic({
@@ -68,43 +76,35 @@ const InstructionSlider = <T extends string>({
 );
 
 export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const [view, setView] = useState<TacticsScreenView | null>(null);
-  const [tactic, setTactic] = useState<Tactic | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const viewResult = useAtomValue(tacticsAtom(saveId));
+  const [draft, setDraft] = useState<Tactic | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
-  useEffect(() => {
-    window.cmClone
-      .call("getTactics", { saveId })
-      .then((result) => {
-        if (result._tag === "Failure") {
-          setError("Failed to load tactics");
-          return;
-        }
-        const loaded = result.value;
-        setView(loaded);
-        setTactic(loaded.tactic ?? defaultTacticFor("4-4-2"));
-      });
-  }, [saveId]);
+  const saveTactic = useAtomSet(changeTacticsMutation, { mode: "promise" });
 
-  if (error) return <p className="p-8 text-red-400">{error}</p>;
-  if (!view || !tactic) return <p className="p-8 text-slate-400">Loading tactics...</p>;
+  useEffect(() => {
+    if (draft === null && viewResult._tag === "Success") {
+      setDraft(viewResult.value.tactic ?? defaultTacticFor("4-4-2"));
+    }
+  }, [draft, viewResult]);
+
+  const viewError = typedError(viewResult);
+  if (viewError) return <p className="p-8 text-red-400">{describeRpcError(viewError)}</p>;
+  if (viewResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading tactics...</p>;
+  if (viewResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load tactics</p>;
+
+  const view = viewResult.value;
+  const tactic = draft ?? view.tactic ?? defaultTacticFor("4-4-2");
 
   const squadById = new Map(view.squad.map((player) => [player.id, player]));
   const assignedElsewhere = (slotIndex: number) =>
     new Set(tactic.slots.filter((_, index) => index !== slotIndex).map((slot) => slot.playerId));
 
-  const onSubmit = async () => {
+const onSubmit = async () => {
     setStatus("Saving...");
     try {
-      const result = await window.cmClone.call("changeTactics", { saveId, tactic });
-      if (result._tag === "Failure") {
-        setStatus("Failed to save tactic — check every slot has a unique player assigned.");
-        return;
-      }
-      const saved = result.value;
-      setView(saved);
-      setTactic(saved.tactic ?? tactic);
+      const saved = await saveTactic({ saveId, tactic });
+      setDraft(saved.tactic ?? tactic);
       setStatus("Saved.");
     } catch {
       setStatus("Failed to save tactic — check every slot has a unique player assigned.");
@@ -127,7 +127,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   ? "bg-slate-100 text-slate-900"
                   : "bg-slate-800 hover:bg-slate-700"
               }`}
-              onClick={() => setTactic(changeFormation(tactic, formation))}
+              onClick={() => setDraft(changeFormation(tactic, formation))}
             >
               {formation}
             </button>
@@ -140,19 +140,19 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           label="Mentality"
           options={MENTALITY_OPTIONS}
           value={tactic.mentality}
-          onChange={(mentality) => setTactic(new Tactic({ ...tactic, mentality }))}
+          onChange={(mentality) => setDraft(new Tactic({ ...tactic, mentality }))}
         />
         <InstructionSlider<Tempo>
           label="Tempo"
           options={TEMPO_OPTIONS}
           value={tactic.tempo}
-          onChange={(tempo) => setTactic(new Tactic({ ...tactic, tempo }))}
+          onChange={(tempo) => setDraft(new Tactic({ ...tactic, tempo }))}
         />
         <InstructionSlider<Pressing>
           label="Pressing"
           options={PRESSING_OPTIONS}
           value={tactic.pressing}
-          onChange={(pressing) => setTactic(new Tactic({ ...tactic, pressing }))}
+          onChange={(pressing) => setDraft(new Tactic({ ...tactic, pressing }))}
         />
       </section>
 
@@ -180,7 +180,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                     <select
                       className="rounded bg-slate-800 px-2 py-1"
                       value={slot.playerId}
-                      onChange={(event) => setTactic(changeSlotPlayer(tactic, index, PlayerId.make(event.target.value)))}
+                      onChange={(event) => setDraft(changeSlotPlayer(tactic, index, PlayerId.make(event.target.value)))}
                     >
                       <option value="">Unassigned</option>
                       {view.squad

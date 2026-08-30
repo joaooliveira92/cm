@@ -1,77 +1,84 @@
-import { useEffect, useState } from "react";
-import type { BidId, BidView, MarketPlayerView, PlayerId, SaveId, TransfersScreenView } from "@cm-clone/contracts";
+import { useState } from "react";
+import type { BidId, PlayerId, SaveId, TransfersScreenView } from "@cm-clone/contracts";
+import {
+  describeRpcError,
+  placeBidMutation,
+  respondAsBidderMutation,
+  respondToBidMutation,
+  signFreeAgentMutation,
+  transfersAtom,
+  typedError,
+  useAtomSet,
+  useAtomValue,
+} from "./rpc.js";
 
 const formatCredits = (amount: number) => `${amount.toLocaleString()} Cr`;
 
 export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const [view, setView] = useState<TransfersScreenView | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const viewResult = useAtomValue(transfersAtom(saveId));
   const [status, setStatus] = useState<string | null>(null);
   const [bidAmounts, setBidAmounts] = useState<Record<string, string>>({});
 
-  const reload = () =>
-    window.cmClone
-      .call("getTransfersScreen", { saveId })
-      .then((result) => {
-        if (result._tag === "Failure") {
-          setError("Failed to load Transfers screen");
-          return;
-        }
-        setView(result.value);
-      });
+  const runBid = useAtomSet(placeBidMutation, { mode: "promise" });
+  const runSign = useAtomSet(signFreeAgentMutation, { mode: "promise" });
+  const runRespond = useAtomSet(respondToBidMutation, { mode: "promise" });
+  const runRespondAsBidder = useAtomSet(respondAsBidderMutation, { mode: "promise" });
 
-  useEffect(() => {
-    reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [saveId]);
+  const viewError = typedError(viewResult);
+  if (viewError) return <p className="p-8 text-red-400">{describeRpcError(viewError)}</p>;
+  if (viewResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading transfers...</p>;
+  if (viewResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load Transfers screen</p>;
 
-  if (error) return <p className="p-8 text-red-400">{error}</p>;
-  if (!view) return <p className="p-8 text-slate-400">Loading transfers...</p>;
+  const view: TransfersScreenView = viewResult.value;
 
-  const run = async (label: string, action: () => Promise<{ readonly _tag: string }>) => {
+  const run = async (label: string, write: () => Promise<unknown>) => {
     setStatus(`${label}...`);
     try {
-      const result = await action();
-      if (result._tag === "Failure") {
-        setStatus(`${label}: failed.`);
-        return;
-      }
-      await reload();
+      await write();
       setStatus(`${label}: done.`);
-    } catch {
-      setStatus(`${label}: failed.`);
+    } catch (error) {
+      setStatus(`${label}: failed. ${describeRpcError(error as Parameters<typeof describeRpcError>[0])}`);
     }
   };
 
   const onBid = (playerId: PlayerId) => {
     const amount = Number(bidAmounts[playerId] ?? 0);
     if (!amount || amount <= 0) return;
-    void run("Bid", () => window.cmClone.call("placeBid", { saveId, playerId, amount }));
+    void run("Bid", () => runBid({ saveId, playerId, amount }));
   };
 
   const onSignFreeAgent = (playerId: PlayerId) =>
-    run("Sign", () => window.cmClone.call("signFreeAgent", { saveId, playerId }));
+    run("Sign", () => runSign({ saveId, playerId }));
 
   const onRespondToBid = (bidId: BidId, action: "accept" | "reject" | "counter") => {
     if (action === "counter") {
       const counterAmount = Number(prompt("Counter-offer amount (Credits)") ?? "");
       if (!counterAmount || counterAmount <= 0) return;
       void run("Counter", () =>
-        window.cmClone.call("respondToBid", { saveId, bidId, action, counterAmount }),
+        runRespond({ saveId, bidId, action, counterAmount }),
       );
       return;
     }
     void run(action === "accept" ? "Accept" : "Reject", () =>
-      window.cmClone.call("respondToBid", { saveId, bidId, action }),
+      runRespond({ saveId, bidId, action }),
     );
   };
 
   const onRespondAsBidder = (bidId: BidId, action: "accept" | "withdraw") =>
     run(action === "accept" ? "Accept counter" : "Withdraw", () =>
-      window.cmClone.call("respondAsBidder", { saveId, bidId, action }),
+      runRespondAsBidder({ saveId, bidId, action }),
     );
 
-  const renderMarketPlayer = (player: MarketPlayerView) => (
+  const renderMarketPlayer = (player: {
+    readonly id: PlayerId;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly age: number;
+    readonly clubName: string | null;
+    readonly clubId: string | null;
+    readonly overallRating: number;
+    readonly transferValue: number;
+  }) => (
     <tr key={player.id} className="border-b border-slate-800">
       <td className="py-1 pr-4 whitespace-nowrap">
         {player.firstName} {player.lastName}
@@ -112,7 +119,13 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     </tr>
   );
 
-  const renderIncomingBid = (bid: BidView) => (
+  const renderIncomingBid = (bid: {
+    readonly id: BidId;
+    readonly playerName: string;
+    readonly biddingClubName: string;
+    readonly amount: number;
+    readonly status: string;
+  }) => (
     <tr key={bid.id} className="border-b border-slate-800">
       <td className="py-1 pr-4">{bid.playerName}</td>
       <td className="py-1 pr-4">{bid.biddingClubName}</td>
@@ -148,7 +161,14 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     </tr>
   );
 
-  const renderOutgoingBid = (bid: BidView) => (
+  const renderOutgoingBid = (bid: {
+    readonly id: BidId;
+    readonly playerName: string;
+    readonly sellingClubName: string;
+    readonly amount: number;
+    readonly counterAmount: number | null;
+    readonly status: string;
+  }) => (
     <tr key={bid.id} className="border-b border-slate-800">
       <td className="py-1 pr-4">{bid.playerName}</td>
       <td className="py-1 pr-4">{bid.sellingClubName}</td>
@@ -196,6 +216,7 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         {formatCredits(view.wageBudgetUsed)} / {formatCredits(view.wageBudget)}
       </p>
       {status && <p className="mt-1 text-sm text-slate-400">{status}</p>}
+      {viewResult.waiting && <p className="mt-1 text-sm text-slate-500">Refreshing…</p>}
 
       <section className="mt-6">
         <h2 className="text-lg font-semibold">Incoming Bids</h2>

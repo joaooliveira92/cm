@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import type { SaveId, SquadView } from "@cm-clone/contracts";
+import { type SaveId } from "@cm-clone/contracts";
 import {
   GOALKEEPING_ATTRIBUTES,
   MENTAL_ATTRIBUTES,
   PHYSICAL_ATTRIBUTES,
   TECHNICAL_ATTRIBUTES,
 } from "@cm-clone/shared";
+import { describeRpcError, squadAtom, typedError, useAtomValue } from "./rpc.js";
 
 const ATTRIBUTE_GROUPS = [
   { label: "Technical", keys: TECHNICAL_ATTRIBUTES },
@@ -17,29 +17,21 @@ const ATTRIBUTE_GROUPS = [
 const ALL_DISPLAYED_ATTRIBUTES = ATTRIBUTE_GROUPS.flatMap((group) => group.keys);
 
 export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const [squad, setSquad] = useState<SquadView | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const squadResult = useAtomValue(squadAtom(saveId));
 
-  useEffect(() => {
-    window.cmClone
-      .call("getSquad", { saveId })
-      .then((result) => {
-        if (result._tag === "Failure") {
-          setError("Failed to load squad");
-          return;
-        }
-        setSquad(result.value);
-      });
-  }, [saveId]);
+  const error = typedError(squadResult);
+  if (error) return <p className="p-8 text-red-400">{describeRpcError(error)}</p>;
+  if (squadResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading squad...</p>;
+  if (squadResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load squad</p>;
 
-  if (error) return <p className="p-8 text-red-400">{error}</p>;
-  if (!squad) return <p className="p-8 text-slate-400">Loading squad...</p>;
+  const squad = squadResult.value;
 
   return (
     <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
       <h1 className="text-2xl font-bold">{squad.club.name}</h1>
       <p className="mt-1 text-sm text-slate-400">
         Stature Tier: {squad.club.statureTier} &middot; {squad.players.length} players
+        {squadResult.waiting && <span className="ml-2 text-slate-500">Refreshing…</span>}
       </p>
 
       <div className="mt-6 overflow-x-auto">

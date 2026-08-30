@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ClubId, type SaveId, type SaveSummary } from "@cm-clone/contracts";
 import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
+import { Effect, Result } from "effect";
 import { CreationStep1 } from "./CreationStep1.js";
 import { ClubSelectionScreen } from "./ClubSelectionScreen.js";
 import { FixturesScreen } from "./FixturesScreen.js";
@@ -10,6 +11,7 @@ import { SeasonSummaryScreen } from "./SeasonSummaryScreen.js";
 import { SquadScreen } from "./SquadScreen.js";
 import { TacticsScreen } from "./TacticsScreen.js";
 import { TransfersScreen } from "./TransfersScreen.js";
+import { describeRpcError, RegistryProvider, beginCareer, commitCareer, discardCareer, listSaves, loadSave, ping } from "./rpc.js";
 
 type CareerScreen =
   | "squad"
@@ -38,6 +40,62 @@ const DEFAULT_PILLARS: PillarDistribution = {
   technicalCoaching: 3,
 };
 
+/** The registry lives only at the active-career boundary, fresh per save. */
+const CareerApplication = ({
+  saveId,
+  screen,
+  onNavigate,
+  onBackToList,
+}: {
+  readonly saveId: SaveId;
+  readonly screen: CareerScreen;
+  readonly onNavigate: (screen: CareerScreen) => void;
+  readonly onBackToList: () => void;
+}) => (
+  <>
+    <nav className="flex items-center justify-between border-b border-slate-800 bg-slate-950 p-2 text-sm text-slate-100">
+      <div className="flex gap-4">
+        {(
+          [
+            "squad",
+            "tactics",
+            "transfers",
+            "league table",
+            "fixtures",
+            "match day",
+            "season summary",
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            className={`rounded px-3 py-1 capitalize ${
+              tab === screen ? "bg-slate-100 text-slate-900" : "bg-slate-800 hover:bg-slate-700"
+            }`}
+            onClick={() => onNavigate(tab)}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+      <button
+        type="button"
+        className="rounded bg-slate-800 px-3 py-1 hover:bg-slate-700"
+        onClick={onBackToList}
+      >
+        Back to saves
+      </button>
+    </nav>
+    {screen === "squad" && <SquadScreen saveId={saveId} />}
+    {screen === "tactics" && <TacticsScreen saveId={saveId} />}
+    {screen === "transfers" && <TransfersScreen saveId={saveId} />}
+    {screen === "league table" && <LeagueTableScreen saveId={saveId} />}
+    {screen === "fixtures" && <FixturesScreen saveId={saveId} />}
+    {screen === "match day" && <MatchDayScreen saveId={saveId} />}
+    {screen === "season summary" && <SeasonSummaryScreen saveId={saveId} />}
+  </>
+);
+
 export const App = () => {
   const [saves, setSaves] = useState<ReadonlyArray<SaveSummary>>([]);
   const [loadedSave, setLoadedSave] = useState<SaveSummary | null>(null);
@@ -55,24 +113,24 @@ export const App = () => {
   });
   const [creationError, setCreationError] = useState<string | null>(null);
 
-  const refresh = async () => {
-    const result = await window.cmClone.call("listSaves", undefined);
-    if (result._tag === "Failure") return;
-    setSaves(result.value);
-  };
+  const refresh = useCallback(async () => {
+    const outcome = await Effect.runPromise(listSaves().pipe(Effect.result));
+    if (Result.isFailure(outcome)) return;
+    setSaves(outcome.success);
+  }, []);
 
   useEffect(() => {
-    window.cmClone
-      .call("ping", undefined)
-      .then((result) => {
-        setStatus(
-          result._tag === "Success"
-            ? `main process says: ${result.value}`
-            : "failed to reach main process",
-        );
-      });
-    refresh();
-  }, []);
+    const connect = async () => {
+      const pinged = await Effect.runPromise(ping().pipe(Effect.result));
+      setStatus(
+        Result.isSuccess(pinged)
+          ? `main process says: ${pinged.success}`
+          : "failed to reach main process",
+      );
+      await refresh();
+    };
+    void connect();
+  }, [refresh]);
 
   const handleStartCreation = () => {
     setCreating(true);
@@ -89,7 +147,7 @@ export const App = () => {
 
   const handleCancelCreation = async () => {
     if (creationState.provisionalId) {
-      await window.cmClone.call("discardCareer", { id: creationState.provisionalId });
+      await Effect.runPromise(discardCareer(creationState.provisionalId).pipe(Effect.result));
     }
     setCreating(false);
     setCreationState({
@@ -105,14 +163,14 @@ export const App = () => {
 
   const handleBeginCareer = async () => {
     setCreationError(null);
-    const result = await window.cmClone.call("beginCareer", undefined);
-    if (result._tag === "Failure") {
-      setCreationError("Failed to start career: " + JSON.stringify(result.error));
+    const outcome = await Effect.runPromise(beginCareer().pipe(Effect.result));
+    if (Result.isFailure(outcome)) {
+      setCreationError("Failed to start career: " + describeRpcError(outcome.failure));
       return;
     }
     setCreationState((prev) => ({
       ...prev,
-      provisionalId: result.value.id,
+      provisionalId: outcome.success.id,
       step: "club",
     }));
   };
@@ -125,23 +183,28 @@ export const App = () => {
       return;
     }
 
-    const result = await window.cmClone.call("commitCareer", {
-      id: provisionalId,
-      name: saveName.trim(),
-      selectedClubId: ClubId.make("temp-club-id"),
-      managerName: managerName.trim() || saveName.trim(),
-      archetypeOrigin: archetype,
-      pillars,
-    });
+    const outcome = await Effect.runPromise(
+      commitCareer({
+        id: provisionalId,
+        name: saveName.trim(),
+        selectedClubId: ClubId.make("temp-club-id"),
+        managerName: managerName.trim() || saveName.trim(),
+        archetypeOrigin: archetype,
+        pillars,
+      }).pipe(Effect.result),
+    );
 
-    if (result._tag === "Failure") {
-      const error = result.error as { _tag?: string; errors?: string[] };
-      if (error._tag === "InvalidPillarDistributionError") {
-        setCreationError("Invalid pillar distribution: " + (error.errors?.join(", ") || "unknown error"));
+    if (Result.isFailure(outcome)) {
+      const error = outcome.failure;
+      if (error._tag === "RemoteFailure" && error.error._tag === "InvalidPillarDistributionError") {
+        setCreationError(
+          "Invalid pillar distribution: " +
+            (error.error.errors?.join(", ") || "unknown error"),
+        );
       } else {
-        setCreationError("Failed to create career: " + JSON.stringify(result.error));
+        setCreationError("Failed to create career: " + describeRpcError(error));
       }
-      await window.cmClone.call("discardCareer", { id: provisionalId });
+      await Effect.runPromise(discardCareer(provisionalId).pipe(Effect.result));
       return;
     }
 
@@ -155,13 +218,15 @@ export const App = () => {
       provisionalId: null,
     });
     await refresh();
-    setLoadedSave(result.value);
+    setLoadedSave(outcome.success);
+    setScreen("squad");
   };
 
   const handleContinue = async (id: SaveId) => {
-    const result = await window.cmClone.call("loadSave", { id });
-    if (result._tag === "Failure") return;
-    setLoadedSave(result.value);
+    const outcome = await Effect.runPromise(loadSave(id).pipe(Effect.result));
+    if (Result.isFailure(outcome)) return;
+    setLoadedSave(outcome.success);
+    setScreen("squad");
   };
 
   const handleBackToList = () => {
@@ -174,48 +239,14 @@ export const App = () => {
 
   if (loadedSave) {
     return (
-      <>
-        <nav className="flex items-center justify-between border-b border-slate-800 bg-slate-950 p-2 text-sm text-slate-100">
-          <div className="flex gap-4">
-            {(
-              [
-                "squad",
-                "tactics",
-                "transfers",
-                "league table",
-                "fixtures",
-                "match day",
-                "season summary",
-              ] as const
-            ).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                className={`rounded px-3 py-1 capitalize ${
-                  tab === screen ? "bg-slate-100 text-slate-900" : "bg-slate-800 hover:bg-slate-700"
-                }`}
-                onClick={() => setScreen(tab)}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="rounded bg-slate-800 px-3 py-1 hover:bg-slate-700"
-            onClick={handleBackToList}
-          >
-            Back to saves
-          </button>
-        </nav>
-        {screen === "squad" && <SquadScreen saveId={loadedSave.id} />}
-        {screen === "tactics" && <TacticsScreen saveId={loadedSave.id} />}
-        {screen === "transfers" && <TransfersScreen saveId={loadedSave.id} />}
-        {screen === "league table" && <LeagueTableScreen saveId={loadedSave.id} />}
-        {screen === "fixtures" && <FixturesScreen saveId={loadedSave.id} />}
-        {screen === "match day" && <MatchDayScreen saveId={loadedSave.id} />}
-        {screen === "season summary" && <SeasonSummaryScreen saveId={loadedSave.id} />}
-      </>
+      <RegistryProvider key={loadedSave.id}>
+        <CareerApplication
+          saveId={loadedSave.id}
+          screen={screen}
+          onNavigate={setScreen}
+          onBackToList={handleBackToList}
+        />
+      </RegistryProvider>
     );
   }
 

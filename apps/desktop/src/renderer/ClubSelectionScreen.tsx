@@ -1,27 +1,22 @@
 import { useEffect, useState } from "react";
-import type { ClubSelectionRow, SaveId } from "@cm-clone/contracts";
+import { type ClubSelectionRow, type SaveId } from "@cm-clone/contracts";
+import { Effect, Result } from "effect";
+import { describeRpcError, getClubSelection } from "./rpc.js";
 
 export const ClubSelectionScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [clubs, setClubs] = useState<ReadonlyArray<ClubSelectionRow>>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    window.cmClone
-      .call("getClubSelection", { saveId })
-      .then((result) => {
-        if (result._tag === "Failure") {
-          setError("Failed to load clubs");
-          return;
-        }
-        if (!result.value || !result.value.clubs) {
-          setError("Failed to load clubs: invalid response");
-          return;
-        }
-        setClubs(result.value.clubs);
-      })
-      .catch(() => {
-        setError("Failed to load clubs");
-      });
+    const load = async () => {
+      const outcome = await Effect.runPromise(getClubSelection(saveId).pipe(Effect.result));
+      if (Result.isFailure(outcome)) {
+        setError("Failed to load clubs: " + describeRpcError(outcome.failure));
+        return;
+      }
+      setClubs(outcome.success.clubs);
+    };
+    void load();
   }, [saveId]);
 
   if (error) return <p className="p-8 text-red-400">{error}</p>;

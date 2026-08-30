@@ -1,45 +1,31 @@
-import { useEffect, useState } from "react";
-import type { LeagueTableView, SaveId } from "@cm-clone/contracts";
+import { type SaveId } from "@cm-clone/contracts";
+import {
+  advanceCalendarMutation,
+  describeRpcError,
+  leagueTableAtom,
+  typedError,
+  useAtom,
+  useAtomValue,
+} from "./rpc.js";
 
 export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const [table, setTable] = useState<LeagueTableView | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [advancing, setAdvancing] = useState(false);
+  const tableResult = useAtomValue(leagueTableAtom(saveId));
+  const [advance, runAdvance] = useAtom(advanceCalendarMutation);
 
-  const refresh = () =>
-    window.cmClone
-      .call("getLeagueTable", { saveId })
-      .then((result) => {
-        if (result._tag === "Failure") {
-          setError("Failed to load league table");
-          return;
-        }
-        setTable(result.value);
-      });
+  const tableError = typedError(tableResult);
+  const advancing = advance.waiting;
+  const advanceError = typedError(advance);
 
-  useEffect(() => {
-    refresh();
-  }, [saveId]);
-
-  const onAdvanceCalendar = async () => {
-    setAdvancing(true);
-    try {
-      const result = await window.cmClone.call("advanceCalendar", { saveId });
-      if (result._tag === "Failure") {
-        setError("Failed to advance the calendar");
-        return;
-      }
-      if (result.value.seasonConcluded) setError(null);
-      await refresh();
-    } catch {
-      setError("Failed to advance the calendar");
-    } finally {
-      setAdvancing(false);
-    }
+  const onAdvanceCalendar = () => {
+    if (advancing) return;
+    runAdvance({ saveId });
   };
 
-  if (error) return <p className="p-8 text-red-400">{error}</p>;
-  if (!table) return <p className="p-8 text-slate-400">Loading league table...</p>;
+  if (tableError) return <p className="p-8 text-red-400">{describeRpcError(tableError)}</p>;
+  if (tableResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading league table...</p>;
+  if (tableResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load league table</p>;
+
+  const table = tableResult.value;
 
   return (
     <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
@@ -60,6 +46,9 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           </button>
         </div>
       </div>
+
+      {advanceError && <p className="mt-2 text-sm text-red-400">{describeRpcError(advanceError)}</p>}
+      {tableResult.waiting && <p className="mt-2 text-sm text-slate-500">Refreshing…</p>}
 
       <div className="mt-6 overflow-x-auto">
         <table className="min-w-full text-left text-sm">

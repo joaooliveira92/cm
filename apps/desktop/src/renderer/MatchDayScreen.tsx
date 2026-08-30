@@ -22,18 +22,20 @@ import {
   type Pressing,
   type Tempo,
 } from "@cm-clone/shared";
-
-/** How often a new Commentary Line is revealed from the paced local queue (client-side pacing per
- * ADR-0007 — there is no RPC streaming transport, the renderer paces reveal of whatever chunk
- * `resumeSimulation` last returned). */
-const REVEAL_INTERVAL_MS = 350;
-
-/** How often we poll `resumeSimulation` for the next chunk, once the locally-buffered queue of
- * not-yet-revealed lines is running low. */
-const POLL_INTERVAL_MS = 800;
-
-/** Keep fetching ahead of the reveal pace once the buffer drops below this many lines. */
-const REFETCH_THRESHOLD = 5;
+import { Effect, Result } from "effect";
+import {
+  REVEAL_INTERVAL_MS,
+  POLL_INTERVAL_MS,
+  REFETCH_THRESHOLD,
+  listOpponentClubs,
+  resumeSimulation,
+  startMatch,
+  submitMatchCommandMutation,
+  tacticsAtom,
+  useAtomSet,
+  useAtomValue,
+  type RpcClientError,
+} from "./rpc.js";
 
 const NO_SUBS: SubstitutionStatusView = {
   used: 0,
@@ -123,6 +125,9 @@ const MatchControlPanel = ({
   const [isHalftime, setIsHalftime] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
+  const tacticsResult = useAtomValue(tacticsAtom(saveId));
+  const runCommand = useAtomSet(submitMatchCommandMutation, { mode: "promise" });
+
   const injuryPrompt = injuries.some((injury) => injury.teamClubId === homeClubId);
   const hasRedInjury = injuries.some((injury) => injury.teamClubId === homeClubId && injury.tier === "red");
   const orangeInjury = injuries.find((injury) => injury.teamClubId === homeClubId && injury.tier === "orange");
@@ -133,18 +138,14 @@ const MatchControlPanel = ({
   }, [injuryPrompt]);
 
   useEffect(() => {
-    window.cmClone
-      .call("getTactics", { saveId })
-      .then((result) => {
-        if (result._tag === "Failure") {
-          setStatus("Failed to load squad/tactic for live control");
-          return;
-        }
-        const view = result.value;
-        setSquad(view.squad);
-        if (view.tactic) setTactic(view.tactic);
-      });
-  }, [saveId]);
+    if (tacticsResult._tag === "Success") {
+      const view = tacticsResult.value;
+      setSquad(view.squad);
+      if (view.tactic) setTactic(view.tactic);
+    } else if (tacticsResult._tag === "Failure") {
+      setStatus("Failed to load squad/tactic for live control");
+    }
+  }, [tacticsResult]);
 
   if (!tactic) return null;
 
@@ -168,7 +169,7 @@ const MatchControlPanel = ({
   ) => {
     setStatus("Submitting...");
     try {
-      const result = await window.cmClone.call("submitMatchCommand", {
+      const result = await runCommand({
         saveId,
         matchId,
         cursor,
@@ -176,14 +177,15 @@ const MatchControlPanel = ({
         isHalftime,
         command,
       });
-      if (result._tag === "Failure") {
-        setStatus("Applied — the engine may still reject an invalid/over-cap command silently.");
-        return;
-      }
-      onApplied(result.value);
+      onApplied(result);
       setStatus("Applied — the engine may still reject an invalid/over-cap command silently.");
-    } catch {
-      setStatus("Failed to submit command");
+    } catch (error) {
+      const typed = error as RpcClientError<"submitMatchCommand"> | undefined;
+      if (typed?._tag === "RemoteFailure") {
+        setStatus("Applied — the engine may still reject an invalid/over-cap command silently.");
+      } else {
+        setStatus("Failed to submit command");
+      }
     }
   };
 
@@ -416,17 +418,17 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const pausedRef = useRef(false);
 
   useEffect(() => {
-    window.cmClone
-      .call("listOpponentClubs", { saveId })
-      .then((result) => {
-        if (result._tag === "Failure") {
-          setError("Failed to load opponents");
-          return;
-        }
-        const clubs = result.value;
-        setOpponents(clubs);
-        if (clubs.length > 0) setOpponentId(clubs[0]!.id);
-      });
+    const load = async () => {
+      const outcome = await Effect.runPromise(listOpponentClubs(saveId).pipe(Effect.result));
+      if (Result.isFailure(outcome)) {
+        setError("Failed to load opponents");
+        return;
+      }
+      const clubs = outcome.success;
+      setOpponents(clubs);
+      if (clubs.length > 0) setOpponentId(clubs[0]!.id);
+    };
+    void load();
   }, [saveId]);
 
   const onStartMatch = async () => {
@@ -446,18 +448,14 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     pendingRef.current = [];
     streamCompleteRef.current = false;
     pausedRef.current = false;
-    try {
-      const result = await window.cmClone.call("startMatch", { saveId, opponentClubId: opponentId });
-      if (result._tag === "Failure") {
-        setError("Failed to start match");
-        return;
-      }
-      setMatch(result.value);
-    } catch {
+    const outcome = await Effect.runPromise(startMatch({ saveId, opponentClubId: opponentId }).pipe(Effect.result));
+    if (Result.isFailure(outcome)) {
       setError("Failed to start match");
-    } finally {
       setStarting(false);
+      return;
     }
+    setMatch(outcome.success);
+    setStarting(false);
   };
 
   // Drives successive ResumeSimulation calls (ticket 13) — no RPC streaming, just polling ahead of
@@ -474,12 +472,14 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       if (pendingRef.current.length > REFETCH_THRESHOLD) return;
       fetchingRef.current = true;
       try {
-        const chunk = await window.cmClone.call("resumeSimulation", {
-          saveId,
-          matchId: match.matchId,
-          cursor: cursorRef.current,
-        });
-        if (chunk._tag === "Failure") {
+        const outcome = await Effect.runPromise(
+          resumeSimulation({
+            saveId,
+            matchId: match.matchId,
+            cursor: cursorRef.current,
+          }).pipe(Effect.result),
+        );
+        if (Result.isFailure(outcome)) {
           setError("Failed to resume match simulation");
           streamCompleteRef.current = true;
           return;
@@ -495,6 +495,7 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     poll();
     const interval = setInterval(poll, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
+    // `match` and `saveId` bound the polling loop; the refs are intentionally excluded.
   }, [match, saveId]);
 
   // Drive the pause (ticket 11): a no-subs injury decision for the player's own club halts reveal
