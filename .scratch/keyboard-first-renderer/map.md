@@ -107,7 +107,7 @@ Plan-only — the map is done when nothing is left to decide and the spec can be
 - [Table and grid navigation](issues/10-table-and-grid-navigation.md): **TanStack Table for Squad,
   Market, and Free Agents; semantic `<table>` with row-oriented roving, no ARIA grid; contextual
   Actions region for bid entry; sortable header buttons + palette Actions; identity-based focus
-  restoration.** See Agent Note.
+  restoration.** See Agent Note. **Shipped** — Stage 5, ticket 19, all six ACs PASS.
 
 - [Match-day live keyboard control](issues/11-match-day-live-keyboard-control.md): **Keyboard control during a running match** – panel Escape semantics, injury decision flow, two-step substitution flow, and live tactics toggles. Keyboard-bound within the control panel; escape closes panel only; injury pause with `Play On` / `Bring Off` choices; substitution requires two-key sequence; tactics toggles with arrow keys. See Agent Note and prototype.
 

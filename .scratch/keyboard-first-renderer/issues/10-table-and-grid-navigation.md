@@ -36,4 +36,4 @@ Decide:
 
 ## Answer
 
-**TanStack Table for Squad, Market, and Free Agents; semantic `<table>` with row-oriented roving, no ARIA grid; contextual Actions region for bid entry; sortable header buttons + palette Actions; identity-based focus restoration across sort/filter/refetch.** See [Agent Note](/.agents/notes/proposed/feature/2026-08-29-table-and-grid-navigation.md).
+**TanStack Table for Squad, Market, and Free Agents; semantic `<table>` with row-oriented roving, no ARIA grid; contextual Actions region for bid entry; sortable header buttons + palette Actions; identity-based focus restoration across sort/filter/refetch.** See [Agent Note](/.agents/notes/implemented/feature/2026-08-29-table-and-grid-navigation.md).

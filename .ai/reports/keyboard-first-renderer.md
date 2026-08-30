@@ -281,3 +281,82 @@ palette is consistent with every screen's registry.
 - The two routed-out decision requests remain open (typed-error wire loss, club-selection commit).
 - Note for Stage 7: the one-shot splash appears on first career-screen load, so the click-driven e2e
   creation journey must dismiss it once — that is exactly AC-26's Playwright class.
+
+---
+
+## Stage 5 (tickets 19: table and grid navigation)
+
+## Gate evidence
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | PASS — typecheck ✓, lint ✓ (0 errors), effect-lint ✓, verify-md-links ✓ (no broken links), tests ✓ (363 desktop / 45 game-engine / 28 contracts / 75 shared) |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | NOT RUN this session — OS-level setup; jsdom levels cover the Stage-5 ACs (see the note under Pre-existing / tracked: the stage-2-era click e2e bids via an in-row input that AC-29 intentionally moved; the keyboard e2e conversion is Stage 7, ticket 22) |
+| determinism | n/a | Renderer-only; zero diff under `packages/` |
+| save compatibility | n/a | No persistence/schema change; no migration |
+
+## Acceptance criteria → evidence (ticket 19)
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| AC-27 | TanStack Table for Squad/Market/Free Agents; bid + League Table hand-rendered; session-scoped state; only Squad column prefs survive restart, reconciled | `table-session.test.ts`, `table-column-preferences.test.ts`, `table-save-switch.test.tsx`, `table-grid-navigation.test.tsx:435-448` | PASS |
+| AC-28 | Row roving, semantic `<table>` no grid, one focus control/row, header buttons native-Tab + `aria-sort`, `aria-selected` | `table-grid-navigation.test.tsx:145-196` (roving), `:198-222` (headers) | PASS |
+| AC-29 | Bid entry in contextual Actions region, single BidDraft dirty-draft lifecycle, no silent discard | `table-bid-draft.test.ts`, `transfers-dialog-keyboard.test.tsx`, `table-grid-navigation.test.tsx:224-276` | PASS |
+| AC-30 | Sort/filter via header buttons AND palette Actions; visible controls show active state | `table-sorting.test.ts`, `table-sort-filter.test.ts`, `table-grid-navigation.test.tsx:278-347` | PASS |
+| AC-31 | Focus restored by stable ID after sort/filter/refetch, neighbor fallback; selection cleared on filter-out | `table-focus-bookmark.test.ts`, `table-focus-restore.test.tsx`, `table-grid-navigation.test.tsx:349-382` | PASS |
+| AC-32 | Explicit result/refresh states; polite status announcer/table; `role="alert"` blocking; dedup | `table-view-state.test.ts`; `table-grid-navigation.test.tsx` (InitialLoading + aria-busy, blocking alert, empty copy, one polite status, RefreshFailed keep-rows + Retry, zero-rows announcer persistence) | PASS — fully green after repair |
+
+Stage-5 done criteria met: Squad, Market, and Free Agents driveable with no mouse; the contextual
+Actions region ships; gate green.
+
+## Review
+
+- **First review: APPROVE** (no blocker/high) with AC-32 marked partial:
+  (F1) refresh-failure keep-rows path dead (`RefreshFailed` never reached), (F2) Transfers blocking
+  error had no Retry, (F3) polite announcer unmounted on zero-rows transition, (F4) localStorage vs
+  IPC preference-mechanism divergence recorded, (F5) note promotion pending, (F6) duplicated
+  sort-cycle law, (F7) dead session fields, (F8) NaN-unsafe Bid button.
+- **Repair pass:** F1 wired `deriveRefreshState.refreshFailed` (verified the SWR seam flips to
+  `Failure` with previous success, not swallow — read the atom source + empirical test asserting
+  `calls === 2`), nonblocking "Refresh failed."+Retry on Squad and Transfers; F2 Retry in the
+  Transfers `role="alert"` branch; F3 announcer/`DataTable` mounted in every non-blocking state;
+  F6 `cycleSortHeader` delegates to `cycleSort`; F7 removed `scrollTop`/`squadVisibility`;
+  F8 `isValidBidAmount` pure rule, NaN-safe disabled, loud submit guard. F4 recorded in the spec via
+  the promoted note's lifetime table (renderer-local preference blob for Squad columns);
+  F5 absorbed by this close (note promoted).
+- **Second (repair) review: APPROVE** — all six ACs PASS; the one follow-up (counter-offer NaN
+  guard, same F8 family) is recorded in the note's Risks and rides ticket 20's Transfers tier-3 scope.
+
+## Behavior changes
+
+- **TanStack Table adopted** for Squad, Market, and Free Agents behind `renderer/table/`; bid tables
+  and League Table stay hand-rendered. Row-oriented roving on semantic `<table>` (no ARIA grid), one
+  player-name focus control per row, sortable header buttons in native Tab order with `aria-sort`.
+- **Contextual Actions region** replaces the in-row bid input: single `BidDraft` with the dirty-draft
+  lifecycle (no silent discard), Keep/Discard dialog keyboard-reachable.
+- **Sort/filter dual-path** — header buttons and parameterized palette Actions back the same command;
+  visible filter controls show active state. `dispatchActionWithParams` carries typed params.
+- **Focus + session state** — stable-ID restoration with neighbor fallback; session-scoped per
+  `TableId`, cleared on save switch at the career boundary; only Squad column preferences survive
+  restart (renderer-local preference blob, reconciled).
+- **Explicit states** — five `TableViewState`s + orthogonal `RefreshState`; a failed refresh keeps
+  usable rows and shows a nonblocking error with Retry rather than replacing the table; blocking
+  errors get `role="alert"` + Retry; one polite `role="status"` announcer per table, persistent
+  through zero-rows transitions, deduplicated.
+- **Renderer-only.** No game behavior, contract surface, persistence, or seeded outcome changed.
+
+## Decision records
+
+- ADRs: none (ADR-0012 stands).
+- Agent Notes **promoted** (`implemented/feature/`): `2026-08-29-table-and-grid-navigation`
+  (fully shipped). Links updated across spec/issues/map.
+- Agent Note still **proposed**: `2026-08-29-intra-screen-focus-model` (match-day tier-3 widget
+  interaction is ticket 20).
+
+## Pre-existing / tracked
+
+- The two routed-out decision requests (`decision-request-wire-loss.md`,
+  `decision-request-club-selection.md`) remain open.
+- `matchCommands.test.ts` flake family — pre-existing, absent from this diff, deterministic in gate.
+- Note for Stage 7: the stage-2-era click e2e (`error-paths.spec.ts`) bids via an in-row input that
+  AC-29 intentionally moved to the contextual region; the keyboard e2e conversion is ticket 22.

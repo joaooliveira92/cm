@@ -50,7 +50,7 @@ Build tickets. Every decision behind these is resolved.
 
 | # | Effort | State | Next move |
 |---|---|---|---|
-| B0 | `keyboard-first-renderer/` | Spec `ready-for-agent`; 8 build tickets (15–22); tickets 15 (data layer), 16 (router), 17 (keyboard spine), 18 (discoverability) shipped | **Frontier: ticket 19 (table/grid navigation) or 20 (match-day live control), then 21 (rebinding), 22 (e2e).** Two routed-out decision requests block the typed-error and creation-happy-path ACs (see `.scratch/keyboard-first-renderer/decision-request-*.md`). Stage 4 shipped: command palette, help overlay, inline key badges, one-shot teaching splash, Escape layering. |
+| B0 | `keyboard-first-renderer/` | Spec `ready-for-agent`; 8 build tickets (15–22); tickets 15 (data layer), 16 (router), 17 (keyboard spine), 18 (discoverability), 19 (tables) shipped | **Frontier: ticket 20 (match-day live control), then 21 (rebinding), 22 (e2e).** Two routed-out decision requests block the typed-error and creation-happy-path ACs (see `.scratch/keyboard-first-renderer/decision-request-*.md`). Stage 5 shipped: TanStack Table for Squad/Market/Free Agents, contextual bid region, header-button + palette sort/filter, focus restoration, explicit result/refresh states with Retry, session-scoped table state (Squad preferences survive restart). |
 | B1 | `training/` | Spec `ready-for-agent`; all 5 decisions resolved; build tickets 03/04/05 unimplemented | The most implementation-ready work in the repo — no design debt in front of it. Player Development math is shipped ([ADR-0011](../docs/adr/0011-deterministic-fractional-player-development.md)); **Training Focus** is not. |
 | B2 | `onboarding/` | Spec `ready-for-agent`; all 11 decisions resolved; 11 build tickets still marked `ready-for-agent` | **Statuses are stale** — recent commits landed wave 1 (01a, 01b, 02) and part of 03/04/05. Re-derive what is actually done from the code before picking up a ticket, and fix the statuses as you go. Likely frontier: 06 (Continue as global career loop). |
 | B3 | `injury-system/` | Spec `ready-for-agent`; 9 build tickets; [ADR-0009](../docs/adr/0009-contact-duel-modeling.md) settles duel modeling | Frontier 01 (injury/fitness attributes) — but see the no-map caveat above first. |
@@ -58,13 +58,14 @@ Build tickets. Every decision behind these is resolved.
 
 ## Immediate next action
 
-**Lane B0 — `keyboard-first-renderer/`: implement ticket 19/20 (level-3 upgrades).**
-Stages 1 (ticket 15), 2 (16), 3 (17), and 4 (18) shipped this run — gate green throughout, all unit
-tests green. The pipe continues: 19/20 → 21 → 22. Stage 4's discoverability big-bang (command
-palette, help overlay, inline key badges, one-shot teaching splash, Escape layering) landed now that
-every career screen dispatches registered Actions. Note promotions this run: `global-key-map`,
-`command-palette-and-discoverability` proposed → implemented. Two decision requests (typed-error
-wire loss, club-selection commit blocker) are open and route outside this effort.
+**Lane B0 — `keyboard-first-renderer/`: implement ticket 20 (match-day live control).**
+Stages 1 (ticket 15), 2 (16), 3 (17), 4 (18), and 5 (19 — tables/grid, TanStack Table adoption)
+shipped; gate green throughout, all unit tests green. The pipe continues: 20 → 21 → 22. Stage 5's
+repair folded the AC-32 closures (refresh-failure keep-rows + nonblocking Retry, Transfers
+blocking-error Retry, announcer persistence, NaN-safe bid). Note promoted this run:
+`table-and-grid-navigation` proposed → implemented (`intra-screen-focus-model` stays proposed until
+match-day tier-3 widgets ship). Two decision requests (typed-error wire loss, club-selection commit
+blocker) are open and route outside this effort.
 
 **Lane B1 — `training/`:** fallback if the renderer pipe stalls; the most implementation-ready work
 with no design debt.

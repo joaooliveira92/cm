@@ -285,7 +285,7 @@ relevant. Snippets inlined from the prototypes encode their decisions more preci
   semantic `<table>` with row-oriented roving, no ARIA grid; contextual Actions region for bid
   entry; sortable header buttons + palette Actions; identity-based focus restoration across
   sort/filter/refetch.** See
-  [Agent Note](../../.agents/notes/proposed/feature/2026-08-29-table-and-grid-navigation.md). Bid
+  [Agent Note](../../.agents/notes/implemented/feature/2026-08-29-table-and-grid-navigation.md). Bid
   tables and the League Table stay hand-rendered. One meaningful focus control per row (the player
   name), never a bare row tabstop; `Tab`/`Shift+Tab` moves into and out of the row sequence. Squad
   gets sorting on any column, per-column visibility with presets, a pinned identity column, and

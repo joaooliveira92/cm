@@ -1,215 +1,69 @@
 # Agent Note: Table and grid navigation
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
 The renderer has four table surfaces (Squad, Transfers Market/Free Agents, bid tables, League Table) with zero keyboard navigation, sorting, filtering, or column management. The keyboard-first effort requires a consistent model for which tables adopt TanStack Table, how keyboard grid navigation works (row vs cell, ARIA grid vs native table), where row actions live (bid input currently inside each market row), how sorting/filtering is triggered by keyboard, and how focus behaves across sort, filter, and async refetch.
 
-## Proposal
+## Decision
 
-Adopt **TanStack Table** for Squad, Transfers Market, and Free Agents. Keep bid tables and League Table hand-rendered (small, status-driven, or pre-sorted). Use **semantic HTML `<table>` markup** with row-oriented roving focus — no `role="grid"`. Move the bid input out of market rows into a persistent contextual Actions region. Provide sortable header buttons (native Tab order) and equivalent command-palette Actions. Preserve focus across mutations using stable row identity and neighbor-based fallbacks.
+TanStack Table powers the Squad, Transfers Market, and Free Agent tables; the small, status-driven bid tables and the pre-sorted League Table stay hand-rendered. Each table is semantic HTML `<table>` markup with row-oriented roving focus — no `role="grid"`. Bid entry lives in a persistent contextual Actions region below the table, not in the rows. Sorting and filtering are reachable both through sortable header buttons (native Tab order) and parameterized command-palette Actions, with visible filter controls showing active state. Focus survives sort/filter/refetch against stable row identity with neighbor-based fallbacks. Grounded in one shared `table/` layer; screen column definitions live separately.
 
 ### TanStack adoption boundary
 
-| Table | TanStack? | Rationale |
-|-------|-----------|-----------|
-| Squad (~25 × 30+) | Yes | Sorting, column visibility/pinning, presets — needs the full state machinery |
+| Table | TanStack? | Rationale (implemented) |
+|-------|-----------|--------------------------|
+| Squad (~25 × 30+) | Yes | Sorting, column visibility/pinning, presets |
 | Transfers Market (~475 × 6) | Yes | Sorting, filtering, search — shared row model with Free Agents |
-| Free Agents (~20 × 6) | Yes | Same row renderer as Market; TanStack adoption is free once Market is built |
-| Incoming/Outgoing Bids | No | 5–15 rows, status-driven, per-row actions — hand-rendered is clearer |
-| League Table (20 × 10) | No | Pre-sorted, level 2, no sorting/filtering needed |
+| Free Agents (~20 × 6) | Yes | Same row renderer as Market |
+| Incoming/Outgoing Bids | No | Status-driven, per-row actions — hand-rendered |
+| League Table (20 × 10) | No | Pre-sorted, level 2 |
 
 ### Shared table layer
 
-```
-table/
-├── useDataTable.ts          # TanStack instantiation with Bluewave defaults
-├── tableState.ts            # Session-scoped state per TableId
-├── columnPreferences.ts     # Persisted user preferences (Squad visibility/pinning)
-├── focusBookmark.ts         # CollectionFocusBookmark with neighbor fallback
-└── features/
-    ├── sorting.ts           # Controlled sort state + action wiring
-    ├── filtering.ts         # Controlled filter state + palette + visible controls
-    └── visibility.ts        # Column toggle + preset definitions
-```
-
-Screen-specific column definitions live separately:
-
-```
-squad/squadColumns.ts
-transfers/marketColumns.ts
-transfers/freeAgentColumns.ts
-```
-
-**Ownership split**: TanStack owns row derivation, sorting/filtering/visibility/pinning state machinery. Bluewave owns selection, focus/keyboard navigation, Action availability, persistence, styling, announcements, and domain-specific filter semantics. Action registry logic does not go inside column definitions.
-
-### Feature set per table
-
-**Squad**: sorting (any column, header button or palette), column visibility (per-column toggle + presets: Overview, Physical, Technical, Mental, Goalkeeping, All attributes), pinned identity column (Name is non-hideable), position and nationality filtering, persistent preferences (`SquadTablePreferences` with `visibleColumnIds`, `pinnedColumnIds`, `activePresetId`), "Restore defaults" action.
-
-**Market/Free Agents**: sorting (Name, OVR, Age, Value), position filtering, player name search, optional nationality filtering. No configurable column visibility, no pinning, no presets.
+`table/` owns the TanStack instantiation (`useDataTable.ts`), session-scoped state per `TableId` (`tableState.ts`), persisted Squad column preferences (`columnPreferences.ts`), the focus bookmark with neighbor fallback (`focusBookmark.ts`), and the features (`features/sorting.ts`, `features/filtering.ts`, `features/visibility.ts`). Screen column definitions live in `squad/squadColumns.ts`, `transfers/marketColumns.ts`, `transfers/freeAgentColumns.ts`. TanStack owns row derivation and the sort/filter/visibility state machinery; the app owns selection, focus/keyboard navigation, Action availability, persistence, styling, announcements, and domain-specific filter semantics. Action registry logic stays out of column definitions.
 
 ### Navigation model: row-oriented, native table, no ARIA grid
 
-- **ArrowUp/ArrowDown**: change current row
-- **Shift+ArrowLeft/Shift+ArrowRight**: horizontal scroll by fixed increment (Squad only)
-- **Home/End**: first/last row
-- **Space**: toggle selection on current row
-- **Enter**: activate the row's primary action (open player details)
-- **Tab/Shift+Tab**: exit/enter the row-navigation sequence to reach native controls
-
-**One focusable element per row** — a meaningful control inside the row (e.g., player name button), never a bare `<tr tabindex="0">`. Sortable headers are native `<button>` elements inside `<th>` with `aria-sort`. A table may contain a small number of tabbable sort buttons in the header plus one current-row control in the body — this is intentional, not a violation of "one Tab stop per region."
+- ArrowUp/ArrowDown move the current row; Home/End jump to first/last; Space toggles selection; Tab/Shift+Tab exits the roving sequence to reach native controls.
+- One focusable element per row — the player-name button, never a bare `<tr tabindex="0">`.
+- Sortable headers are native `<button>` elements inside `<th>` with `aria-sort`; the header region is in native Tab order, which is intentional, not a "one Tab stop per region" violation.
 
 ### Bid input: contextual Actions region
 
-The bid input and related controls move from inside each Market/Free Agent row into a persistent **Actions region** below the table, shown when a player is selected:
-
-```
-Place bid
-Player: Maya Okafor
-Value: $8.4m
-Your bid: [________]
-[Place bid]
-```
-
-Flow: focus market table → arrow to a player → Space to select → Tab to Actions region → type amount → Enter to submit.
-
-**Bid draft lifecycle** — single explicit `BidDraft { playerId, amountInput, dirty }`:
-
-| Event | Behaviour |
-|-------|-----------|
-| Selection changes, draft empty | Retarget or clear automatically |
-| Selection changes, draft dirty | Keep existing selected player or request explicit discard |
-| Arrow-key focus movement | No effect (focus ≠ selection) |
-| Successful submission | Clear draft |
-| Save reload | Clear draft |
-| Player becomes unavailable | Clear draft, disable submission, announce |
+The bid input and related controls move out of the Market/Free Agent rows into a persistent Actions region shown when a player is selected. One explicit `BidDraft { playerId, amountInput, dirty }` with the lifecycle: selection change on an empty draft retargets or clears; on a dirty draft it keeps the selected player or requests explicit discard (no silent loss); arrow-key focus movement never touches the draft (focus ≠ selection); successful submission, save reload, or player-unavailability clears it, and unavailability also disables submission and announces.
 
 ### Sorting and filtering by keyboard
 
-**Two mechanisms**:
+Two mechanisms, backing the same application command: (1) sortable header buttons in native Tab order toggling ascending/descending/none with a visible indicator and `aria-sort`; (2) parameterized palette Actions (`SortTableActionInput`, `FilterTableActionInput`) dispatched with their params. Filtering always has visible compact controls (position/name/nationality) so active state, discoverability, and removal paths exist for pointer users too.
 
-1. **Sortable header buttons** — native `<button>` inside each `<th>`, in native Tab order, toggling ascending/descending/none. Visible `SortIndicator` and `aria-sort`.
+### Focus restoration and selection rule
 
-2. **Command palette** — parameterized Actions:
-   ```typescript
-   type SortTableActionInput = { tableId: TableId; columnId: ColumnId; direction: "ascending" | "descending" }
-   type FilterTableActionInput = { tableId: TableId; filter: FilterClause }
-   ```
-
-**Filtering is not palette-only**. Visible filter controls (compact filter region above each table with native controls) are required to communicate active state, support pointer users, make available dimensions discoverable, and give obvious removal paths. Palette and visible controls back the same application command.
-
-### Focus restoration
-
-**CollectionFocusBookmark** with stable ID:
-
-```typescript
-type CollectionFocusBookmark = {
-  tableId: TableId
-  itemId: string
-  previousItemId?: string
-  nextItemId?: string
-}
-```
-
-**After sort**: restore same player by stable ID; scroll into view.
-
-**After filter**: if player remains visible, restore them. If removed: prefer old next visible neighbor → old previous visible neighbor → first visible row → empty-result focus target.
-
-**Selection and filter rule**: a filtered-out player may remain selected only if the Actions region explicitly says the selected player is hidden by current filters. For simplicity in the first implementation, clear selection when the selected row is filtered out — whichever rule is chosen must be explicit, not emergent from TanStack's visible row model.
+`CollectionFocusBookmark` restores the same player by stable ID after sort/filter/refetch; a filtered-out player falls back to the old next visible neighbor → old previous visible neighbor → first visible row → empty-result target. Selection is cleared when the selected row is filtered out — explicit, not emergent from TanStack's visible-row model.
 
 ### Table state lifetime
 
-```
-type TableId = "squad" | "transfer-market" | "free-agents" | "incoming-bids" | "outgoing-bids" | "league-table"
-```
+State is session-scoped per `TableId` across component rerenders and screen navigation. A save reload clears sort, filters, focus, scroll, selection, and the bid draft but reconciles Squad column preferences (unknown IDs dropped, mandatory columns restored, Name always visible and pinned). Only Squad column preferences survive app restart, persisted as a renderer-local preference blob; focus, scroll, selection, sort, filters, and the bid draft never do. Session state lives in module scope keyed by save identity, cleared at the career boundary when the save switches so a reload can never serve a previous save's table session.
 
-| Scope | Survives |
-|-------|----------|
-| Component rerender | All interaction state (sort, filters, visibility, focus, scroll, selection, bid draft) |
-| Screen navigation | Session-scoped per `TableId`: sort, filters, focus bookmark, scroll, Squad column visibility/pinning/preset. Cleared: selection (unless navigating to related detail with return promise), dirty bid draft |
-| Save reload | Cleared: sort, filters, focus, scroll, selection, bid draft. Kept: Squad column preferences (reconciled — unknown IDs dropped, mandatory columns restored, Name always visible+pinned) |
-| App restart | Persisted via IPC preferences channel: Squad visible columns, column order (if configurable), pinned columns, preferred preset. NOT persisted: focus, scroll, selection, sort, filters, bid draft |
+### Result, refresh, and announcement states
 
-### Empty and result states
+`TableViewState` is one of `InitialLoading` (stable heading, `aria-busy="true"`, no repeated announcements), `LoadError` (blocking, contextual `role="alert"`, message + Retry), `EmptyDataset`, `NoFilterResults` (with the active filter count and a clear-filters path), or `Populated`, with a persisted polite region rendering the current line. `RefreshState` is orthogonal: `Idle` / `Refreshing` / `RefreshFailed`. A failed background refresh that still has usable rows preserves the rows and shows a nonblocking "Refresh failed." line with its own Retry — it never replaces the table with a blocking alert. One `role="status"` polite announcer per table, rendered outside the populated branch so it survives the zero-rows transition; announcements are deduplicated via a per-table announcement key. `aria-sort` reflects the active sort column; `aria-selected` marks selected rows.
 
-```typescript
-type TableViewState =
-  | { _tag: "InitialLoading" }
-  | { _tag: "LoadError"; error: TableLoadError }
-  | { _tag: "EmptyDataset" }
-  | { _tag: "NoFilterResults"; activeFilterCount: number }
-  | { _tag: "Populated"; visibleRowCount: number }
+## Verification
 
-type RefreshState =
-  | { _tag: "Idle" }
-  | { _tag: "Refreshing" }
-  | { _tag: "RefreshFailed"; error: TableLoadError }
-```
-
-**Initial loading**: stable heading, skeleton or loading status, `aria-busy="true"`, no spinner focus, no repeated announcements.
-
-**Empty Squad**: "No players are currently in your squad." + "Explore free agents" / "Go to Transfer Market" (visible controls + registered Actions).
-
-**Empty Market**: "No players are currently listed on the transfer market." No "Clear filters" unless filters are active.
-
-**Empty Free Agents**: "No free agents are currently available." Optional "Go to Transfer Market."
-
-**No filtered results**: "No players match the current filters." + "Clear all filters" / per-filter-chip removal.
-
-**Error**: "We could not load the players." + "Retry." If a refresh fails while existing rows remain usable, preserve rows and show nonblocking error.
-
-### Screen-reader announcements
-
-One `role="status"` polite announcer per active table. Announce: sort direction changes, filter result counts, selection confirmations, hidden-selection warnings, bid submissions. Do **not** announce every arrow-key movement (focused row's accessible name suffices). Do **not** use `aria-live="assertive"` for routine loading.
-
-**Errors** (blocking task failure): use contextual `<div role="alert">`. Examples: bid submission failed, selected player became unavailable, table could not load at all.
-
-**Sort state** on `<th aria-sort="...">`. **Selection state** via `aria-selected` on `<tr>` where semantics and AT testing support it.
-
-**Deduplicate identical announcements** via `TableAnnouncement { tableId, eventId, message, priority }`.
-
-## Alternatives considered
-
-- **Cell-level ARIA grid navigation**: Would provide two-dimensional focus movement (arrow keys between individual cells) but creates 30+ focus stops per row in Squad — the focus model (ticket 06) explicitly rules out making static table cells into focus stops. The only cell that warrants interaction is the player-name control. ARIA grid also imposes directional focus-management expectations that the row-oriented model does not meet, making a native `<table>` more honest semantically.
-
-- **Flat tab order through all columns**: No roving at all — every cell is a tab stop. Rejected as unusable on a 30-column table; contradicts the level-3 ambition.
-
-- **Roving header region plus body region**: The user rejected this as too complex — sortable headers use native Tab-order buttons within the table, not a separate roving region. "One Tab stop per region" is not a dogma that forces controls out of the table.
-
-- **Bid input per row with roving cells**: Keeping the input + button inside each market row would require cell-level focus within the row, breaking the row-oriented model. Moving the input into a persistent Actions region is the cleanest resolution.
-
-- **TanStack for all tables**: Rejected for bid tables (too small, status-driven) and League Table (pre-sorted, level 2, no feature set). The abstraction cost is not earned there.
-
-- **Three independent TanStack implementations**: Rejected in favor of a single shared `table/` layer with screen-specific column definitions.
-
-- **Persisting sort/filters across app restart**: Rejected — these are session preferences, not user preferences. Can be revisited if testing shows players expect them to survive restart.
-
-- **aria-live="assertive" for loading**: Rejected — asserts interrupt speech. Use `aria-busy` and polite status for loading; reserve assertive for blocking errors.
-
-## Acceptance criteria
-
-- Squad uses TanStack Table with sorting, column visibility (per-column + presets), pinned Name column, position/nationality filtering, and persistent preferences
-- Market and Free Agents use TanStack Table with sorting (Name/OVR/Age/Value), position filtering, and name search
-- Bid tables and League Table remain hand-rendered
-- Row-oriented roving focus with one meaningful control per row (player name button)
-- No `role="grid"` — semantic `<table>` with `aria-sort` on sortable headers
-- Bid input lives in a contextual Actions region below the table, with a single `BidDraft` and the dirty-draft lifecycle rules
-- Sorting via native header buttons (Tab-order) and command-palette Actions
-- Filtering via visible compact controls and equivalent palette Actions
-- Focus restored by stable ID after sort, filter, and refetch; neighbor-based fallback
-- Selection cleared when selected row is filtered out (first implementation)
-- Table state session-scoped per `TableId`; preferences-only across app restart
-- Five explicit `TableViewState` states; `RefreshState` orthogonal
-- Polite `role="status"` announcements for user-relevant changes; contextual `role="alert"` for blocking errors
-- `aria-sort` on active sort column, `aria-selected` on selected rows
-- Verified with keyboard-only testing and at least one screen reader
+- `test/table-grid-navigation.test.tsx` — AC-28 roving (one focusable player-name button per row, no `role="grid"`, ArrowDown roves, Space=selection ≠ focus, `aria-selected`), AC-30 header buttons + palette drive the same command, AC-31 filtered-out selection cleared and announced, AC-32 InitialLoading/`aria-busy`, blocking `role="alert"`, empty copy per table, one polite status per table collapsed/composed, refresh-failure keep-rows + Retry, filter-to-zero announcer persistence, F8 NaN-safe bid.
+- `test/table-session.test.ts`, `test/table-save-switch.test.tsx`, `test/table-column-preferences.test.ts` — AC-27 session-scoped per `TableId`, save-switch clear, Squad preferences reconciliation.
+- `test/table-bid-draft.test.ts`, `test/transfers-dialog-keyboard.test.tsx` — AC-29 single BidDraft dirty-draft lifecycle, no silent discard, keep/discard dialog keyboard.
+- `test/table-sorting.test.ts`, `test/table-sort-filter.test.ts` — AC-30 sort-cycle law with a single home (`cycleSort`), palette input spelling, filter semantics, malformed params → null.
+- `test/table-focus-bookmark.test.ts`, `test/table-focus-restore.test.tsx` — AC-31 stable-ID restoration with neighbor fallback, never `document.body`.
+- `test/table-view-state.test.ts` — AC-32 five result states, three refresh states, copy lines, dedup.
+- `pnpm check:all` green.
 
 ## Risks
 
-- **475 rows in Market without virtualization**: TanStack computes row models efficiently, but DOM rendering cost depends on row/column complexity. Profile after adoption; add virtualization only if measurements justify it, since it complicates focus restoration, screen-reader positioning, and scrolling.
-- **Dirty-bid-draft lifecycle**: The rule "keep existing selected player or request explicit discard" requires a confirmation dialog. If the implementation shortcuts to silent discard, bids-in-progress will be lost. Code review must enforce the rule.
-- **Screen-reader compatibility with roving row control**: A `<button>` inside `<th scope="row">` for the player name is nonstandard. Test with NVDA/VoiceOver and iterate if row-header+button is confusing.
-- **Persistent Squad preferences reconciliation**: New columns added in a future update must appear, removed column IDs must be silently dropped, and Name must always be visible and pinned. The reconciliation logic is small but critical — it runs on every restart.
-- **Horizontal scroll on Shift+Arrow**: Browser default behaviour may conflict. The shortcut must be explicit and clearly documented in the key map (ticket 05) and keyboard-help overlay.
+- **475 rows in Market without virtualization.** TanStack's row model is efficient but DOM cost depends on row/column complexity; add virtualization only if profiling justifies it, since it complicates focus restoration, screen-reader positioning, and scrolling.
+- **Dirty-bid-draft lifecycle.** "Keep selected player or request explicit discard" demands the confirmation dialog; the implementator must not shortcut to silent discard. Enforced by `table-bid-draft.test.ts` and `transfers-dialog-keyboard.test.tsx`.
+- **Screen-reader compatibility with the row control.** A `<button>`-in-row model is nonstandard; the note's open risk of AT verification (self-voice) persists and is deferred to the Stage 7 keyboard-e2e / AT pass.
+- **Reconciliation of persisted Squad preferences.** New columns must appear, removed IDs must drop silently, Name must stay visible and pinned; runs on every restart and is pinned by `table-column-preferences.test.ts`.
+- **Non-numeric counter-offer guard.** The bid-amount validity rule (`isValidBidAmount`) covers the Bid draft; the same family's counter-offer submit still guards on `amount > 0` rather than finite-validity — folded into ticket 20's Transfers tier-3 scope.
