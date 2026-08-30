@@ -18,6 +18,7 @@ via [/sprint](../.opencode/command/sprint.md) or [/boot](../.opencode/command/bo
 | [REVIEW-PROMPT.md](REVIEW-PROMPT.md) | The adversarial review checklist and required finding format. |
 | [RELEASE-PROMPT.md](RELEASE-PROMPT.md) | Release-candidate acceptance and the three possible verdicts. |
 | [SPRINT-PLAN.md](SPRINT-PLAN.md) | The queue and the **Immediate next action** pointer. |
+| [ROADMAP.md](ROADMAP.md) | Point-in-time snapshot of shipped / in-flight efforts, machine-oriented mirror of [docs/roadmap.md](../docs/roadmap.md). |
 | [TRACEABILITY.md](TRACEABILITY.md) | Shipped capability → domain term → decision record → proving test. |
 | [templates/](templates/) | Brief, validation report, decision request. |
 | [reports/](reports/) | One validation report per sprint. Audit trail. |
@@ -32,7 +33,8 @@ via [/sprint](../.opencode/command/sprint.md) or [/boot](../.opencode/command/bo
   one effort, per [notes.md](../docs/agents/notes.md).
 - **Research** → `docs/research/<effort>-<topic>.md`.
 - **Narrative status** → [docs/roadmap.md](../docs/roadmap.md). SPRINT-PLAN.md is the machine-facing
-  queue; roadmap.md is the human-facing snapshot.
+  queue; roadmap.md is the human-facing snapshot; [ROADMAP.md](ROADMAP.md) is the same picture
+  mirrored in `.ai/` so a cold agent matches it without leaving this folder.
 
 ## Reading order for a cold agent
 
