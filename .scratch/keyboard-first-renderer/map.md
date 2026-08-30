@@ -3,8 +3,8 @@
 Label: wayfinder:map
 
 > Status: charted. Both research tickets resolved, action model, screen tiers, key map, focus model,
-> command palette, Atom adoption shape, router adoption shape, **table/grid navigation, match-day live keyboard control, and the e2e strategy** settled.
-> Frontier open — tickets 14 and 13 are takeable (13 unblocked now that 12 resolved).
+> command palette, Atom adoption shape, router adoption shape, **table/grid navigation, match-day live keyboard control, the e2e strategy, and user rebinding** settled.
+> Frontier open — ticket 13 is the last one (unblocked now that 12 resolved).
 
 ## Destination
 
@@ -111,6 +111,8 @@ Plan-only — the map is done when nothing is left to decide and the spec can be
 - [Match-day live keyboard control](issues/11-match-day-live-keyboard-control.md): **Keyboard control during a running match** – panel Escape semantics, injury decision flow, two-step substitution flow, and live tactics toggles. Keyboard-bound within the control panel; escape closes panel only; injury pause with `Play On` / `Bring Off` choices; substitution requires two-key sequence; tactics toggles with arrow keys. See Agent Note and prototype.
 
 - [e2e strategy](issues/12-e2e-strategy.md): **convert the level-3 journeys to keyboard driving, keep creation/save-management/error-paths as clicks; cover navigation, palette, Squad grid, Match Day substitution, and Escape layering; uphold the no-testability-seam line with `toHaveFocus()` + ARIA assertions; reliability contract unchanged (retries CI-only, 30s timeout) with `toBeFocused` as the authoring rule; existing click suite expected to survive unchanged.** Writing the tests is deferred to implement.
+
+- [User rebinding](issues/14-user-rebinding.md): **configurable yes — overrides as a `record<ActionId, binding>` layered over defaults; persisted in a `keybindings.json` under `userData` (sibling of `saves/`), I/O in main via the RPC seam, never localStorage/the event stream; locked infra keys (`Escape`, `Primary+K`, `Primary+/`, `Enter`) non-rebindable; collision validation names the conflicting Action; help overlay is the rebinding surface with per-Action and reset-all.**
 
 ## Not yet specified
 

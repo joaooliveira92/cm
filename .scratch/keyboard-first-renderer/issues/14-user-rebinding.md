@@ -1,7 +1,7 @@
 # 14-user-rebinding
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 05
 
 ## Question
@@ -19,3 +19,7 @@ Decide:
 - **The renderer vs backend line**: whether rebinding is purely renderer-side (overrides in a local config file) or persisted in the save (so it survives a reinstall but is per-save).
 
 This ticket is gated on ticket 05 because the concrete binding map must exist before the rebinding surface can be designed.
+
+## Answer
+
+**Configurable yes, stored machine-locally in a `keybindings.json` under Electron `userData` (a sibling of `saves/`), read/written in main through the existing typed RPC seam — never `localStorage`, the Saves dir, or the event stream; locked infrastructure keys (`Escape`, `Primary+K`, `Primary+/`, `Enter`) are non-rebindable; collisions are validated with the conflicting Action named; the help overlay is the rebinding surface (palette offers "Rebind…"), with per-Action reset and reset-all.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-30-user-key-binding-overrides.md).
