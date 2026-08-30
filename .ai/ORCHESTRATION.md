@@ -96,7 +96,7 @@ A green build is not acceptance (ENGINEERING-CONTRACT § Tests and acceptance).
   may override it; auto-advance in the plan's dependency order.
 - Chart foggy efforts through `cm-wayfinder` before specifying them; go straight to spec when the
   way is clear.
-- Own all Git: small Conventional Commits on a feature branch off `latest_branch`, no self-merge,
+- Own all Git: small Conventional Commits directly on `dev`, no feature branches, no self-merge,
   clean tree.
 - Keep traceability current: the SPRINT-PLAN row, [TRACEABILITY.md](TRACEABILITY.md), the ticket
   `Status:` lines, the map's Decisions-so-far, and the report under `.ai/reports/`.
