@@ -34,6 +34,7 @@ shipped capability.
 | Deterministic fractional Player Development | **Player Development**, **Potential Ability**, **Category** | [ADR-0011](../docs/adr/0011-deterministic-fractional-player-development.md) | `training/` | `packages/shared/test/development.test.ts` |
 | Action registry for keyboard-first UI | — (renderer convention, not domain) | [ADR-0012](../docs/adr/0012-action-registry-for-keyboard-first.md) | `keyboard-first-renderer/` | `apps/desktop/e2e/` keyboard specs |
 | Effect Atom renderer data layer | — (renderer plumbing) | notes `2026-08-29-atom-adoption-shape`, `2026-08-29-renderer-data-layer-effect-atom` (`implemented/architecture/`) | `keyboard-first-renderer/` | `apps/desktop/test/renderer-rpc-seam.test.ts`, `renderer-screens.test.tsx`, `renderer-boundary-lint.test.ts` |
+| Hash-routed renderer navigation | — (renderer plumbing) | note `2026-08-29-router-adoption-shape` (`implemented/architecture/`) | `keyboard-first-renderer/` | `apps/desktop/test/router-stage2.test.ts`, `focus-coordinator.test.ts`, `e2e/router.spec.ts` |
 
 ## Contract invariants
 
