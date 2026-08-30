@@ -54,5 +54,11 @@ export {
   REFETCH_THRESHOLD,
 } from "./rpc/pacing.js";
 
-export { RegistryProvider, useAtomValue, useAtom, useAtomSet } from "@effect/atom-react";
+export {
+  RegistryProvider,
+  useAtomValue,
+  useAtom,
+  useAtomSet,
+  useAtomRefresh,
+} from "@effect/atom-react";
 export { AsyncResult } from "effect/unstable/reactivity";

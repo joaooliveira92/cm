@@ -29,6 +29,15 @@ export const dispatchAction = (id: string, params?: unknown): void | Promise<voi
   return handler(params);
 };
 
+/**
+ * Dispatch an Action carrying its own parameters (Stage 5 table palette rows):
+ * `metadata.params` holds the typed input (`SortTableActionInput`,
+ * `FilterTableActionInput`, …) and the palette passes it straight through. A
+ * row without params is dispatched bare, exactly as before.
+ */
+export const dispatchActionWithParams = (action: { readonly id: string; readonly metadata?: Readonly<Record<string, unknown>> }): void | Promise<void> =>
+  dispatchAction(action.id, action.metadata?.params);
+
 /** True when a handler is currently registered (palette availability check). */
 export const hasActionHandler = (id: string): boolean => handlers.has(id);
 

@@ -24,6 +24,7 @@
     "@effect/atom-react": "catalog:",
     "@effect/sql-sqlite-node": "catalog:",
     "@tanstack/react-router": "catalog:",
+    "@tanstack/react-table": "catalog:",
     "effect": "catalog:",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -185,19 +185,33 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
         <TransfersScreen saveId={rid("s1")} />
       </RegistryProvider>,
     );
-    await screen.findByRole("button", { name: /Sign/ });
-    const ids = renderedActionIds();
-    const expected = [
-      "sign-free-agent",
-      "place-bid",
+    // Stage 5 (AC-29): bid entry moved out of the rows into a contextual
+    // Actions region shown when a player is selected — so place-bid and
+    // sign-free-agent only render under a selection.
+    await screen.findByRole("button", { name: /Test MP/ });
+    const baseIds = renderedActionIds();
+    const expectedInitial = [
       "respond-accept",
       "respond-reject",
       "respond-counter",
       "accept-counter",
       "withdraw-bid",
     ];
-    expect(new Set(ids)).toEqual(new Set(expected));
-    for (const id of ids) {
+    expect(new Set(baseIds)).toEqual(new Set(expectedInitial));
+
+    // Select the Market player → the Actions region exposes the bid controls.
+    fireEvent.click(screen.getByRole("button", { name: /Test MP/ }));
+    const withMarketSelection = renderedActionIds();
+    expect(withMarketSelection).toContain("place-bid");
+    expect(withMarketSelection).not.toContain("sign-free-agent");
+
+    // Deselect, select the Free Agent → the Sign path replaces the bid input.
+    fireEvent.click(screen.getByRole("button", { name: /Test FA/ }));
+    const withFreeAgentSelection = renderedActionIds();
+    expect(withFreeAgentSelection).toContain("sign-free-agent");
+    expect(withFreeAgentSelection).not.toContain("place-bid");
+
+    for (const id of new Set([...withMarketSelection, ...withFreeAgentSelection])) {
       const registered = ACTION_REGISTRY.get(id);
       expect(registered, `registry missing ${id}`).toBeDefined();
       expect(registered!.scope).toBe("transfers");
@@ -218,7 +232,7 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
         <TransfersScreen saveId={rid("s1")} />
       </RegistryProvider>,
     );
-    await screen.findByRole("button", { name: /Sign/ });
+    await screen.findByRole("button", { name: /Test MP/ });
     for (const id of renderedActionIds()) {
       expect(allIds).toContain(id);
     }

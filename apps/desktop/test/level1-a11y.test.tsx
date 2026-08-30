@@ -212,9 +212,12 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
       </RegistryProvider>,
     );
     await screen.findByText(/Alan Player/);
-    const rows = [...document.querySelectorAll("tr[data-focus-id]")];
-    expect(rows.length).toBe(3);
-    const tabStops = rows.filter((r) => r.getAttribute("tabindex") === "0");
+    // Stage 5 (AC-28) moved the roving tab stop from the `<tr>` onto the
+    // per-row player-name button — one focusable control per row, never a bare
+    // `<tr tabindex=0>`. `data-focus-id` now lives on that button.
+    const nameButtons = [...document.querySelectorAll("button[data-focus-id]")];
+    expect(nameButtons.length).toBe(3);
+    const tabStops = nameButtons.filter((b) => b.getAttribute("tabindex") === "0");
     expect(tabStops.length).toBe(1);
   });
 
@@ -233,13 +236,13 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
     const tbody = document.querySelector("tbody")!;
     tbody.focus();
 
-    // Focus the first row, then press ArrowDown.
+    // Focus the first row's name button, then press ArrowDown.
     const firstRow = document.querySelector('[data-focus-id="squad.squadTable.p1"]') as HTMLElement;
     firstRow.focus();
     fireEvent.keyDown(tbody, { key: "ArrowDown" });
     expect(document.activeElement?.getAttribute("data-focus-id")).toBe("squad.squadTable.p2");
-    const tabStops = [...document.querySelectorAll("tr[data-focus-id]")].filter(
-      (r) => r.getAttribute("tabindex") === "0",
+    const tabStops = [...document.querySelectorAll("button[data-focus-id]")].filter(
+      (b) => b.getAttribute("tabindex") === "0",
     );
     expect(tabStops.length).toBe(1);
     expect(tabStops[0]!.getAttribute("data-focus-id")).toBe("squad.squadTable.p2");
@@ -358,7 +361,7 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
     }
   });
 
-  it("Transfers buttons and inputs carry the level-1 ring and are in tab order", async () => {
+  it("Transfers buttons and inputs carry the level-1 ring; roving name buttons keep their roving tabindex", async () => {
     mockPreload(async (method) => {
       if (method === "getTransfersScreen") return { _tag: "Success", value: transfersView() } as never;
       return { _tag: "Failure", error: NOT_FOUND } as never;
@@ -368,14 +371,25 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
         <TransfersScreen saveId={rid("s1")} />
       </RegistryProvider>,
     );
-    await screen.findByRole("button", { name: /Sign/ });
+    // Stage 5 (AC-29) moved bid entry out of the rows into an Actions region
+    // shown when a player is selected — so the Sign/Bid controls only render
+    // once the market player is selected.
+    const marketName = await screen.findByRole("button", { name: /Market Player/ });
+    fireEvent.click(marketName);
     const buttons = [...document.querySelectorAll("button")] as HTMLElement[];
     expect(buttons.length).toBeGreaterThan(0);
     for (const button of buttons) {
       expect(button.className).toContain("focus-visible:ring-2");
-      expect(button.getAttribute("tabindex")).toBeNull();
+      if (button.hasAttribute("data-focus-id")) {
+        // Row-roving controls (AC-28): the one focusable control per row keeps
+        // its roving tabindex — the composite-widget carve-out in the focus model.
+        expect(["0", "-1"]).toContain(button.getAttribute("tabindex"));
+      } else {
+        expect(button.getAttribute("tabindex")).toBeNull();
+      }
     }
     const inputs = [...document.querySelectorAll("input")] as HTMLElement[];
+    expect(inputs.length).toBeGreaterThan(0);
     for (const input of inputs) {
       expect(input.className).toContain("focus-visible:ring-2");
     }

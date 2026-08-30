@@ -15,7 +15,7 @@ is explicit. Bid tables and the League Table stay hand-rendered.
 
 **Blocked by:** 18.
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] AC-27: Squad, Market, Free Agents adopt TanStack Table; bid tables and League Table stay hand-rendered; session-scoped state per table id; only Squad column preferences survive restart, reconciled.
 - [ ] AC-28: Row-oriented roving, semantic `<table>` (no ARIA grid), one focus control per row, sortable header buttons in native Tab order with `aria-sort`, `aria-selected` on selection.

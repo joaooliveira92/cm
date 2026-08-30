@@ -95,7 +95,7 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
       history: { back: () => (backCalls += 1) },
     } as never);
     render(<RouterProvider router={router} />);
-    await screen.findByRole("button", { name: /Bid/ });
+    await screen.findByRole("button", { name: /Test MP/ });
   };
 
   beforeEach(async () => {
@@ -131,18 +131,18 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
   it("pressing g alone shows the indicator and completes no navigation", async () => {
     await mountTransfersWithSpine();
     act(() => fireEvent.keyDown(document, { key: "g" }));
-    expect(screen.getByRole("status").textContent).toContain("Go to:");
+    expect(screen.getByText("Go to:").textContent).toContain("Go to:");
     expect(navCalls).toEqual([]);
     expect(backCalls).toBe(0);
     act(() => fireEvent.keyDown(document, { key: "Escape" }));
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText("Go to:")).toBeNull();
   });
 
   it("a valid completion key navigates and hides the indicator", async () => {
     await mountTransfersWithSpine();
     act(() => fireEvent.keyDown(document, { key: "g" }));
     act(() => fireEvent.keyDown(document, { key: "s" }));
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText("Go to:")).toBeNull();
     expect(navCalls.map((c) => c.to)).toEqual(["/career/$saveId/squad"]);
   });
 
@@ -150,7 +150,7 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
     await mountTransfersWithSpine();
     act(() => fireEvent.keyDown(document, { key: "g" }));
     act(() => fireEvent.keyDown(document, { key: "q" }));
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText("Go to:")).toBeNull();
     expect(navCalls).toEqual([]);
     expect(backCalls).toBe(0);
     expect(document.activeElement?.tagName).not.toBe("INPUT");
@@ -161,7 +161,7 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
     expect(G_PREFIX_COMPLETIONS.has("b")).toBe(true);
     act(() => fireEvent.keyDown(document, { key: "g" }));
     act(() => fireEvent.keyDown(document, { key: "b" }));
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText("Go to:")).toBeNull();
     expect(backCalls).toBe(1);
     expect(navCalls).toEqual([]);
     // The prefix owned `b`; the transfers bare `b` (focus-bid) must NOT have fired.
@@ -171,7 +171,10 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
   it("a bare b focuses the bid workflow on Transfers (not submit)", async () => {
     await mountTransfersWithSpine();
     act(() => fireEvent.keyDown(document, { key: "b" }));
-    expect(document.activeElement?.getAttribute("placeholder")).toBe("Amount");
+    // Stage 5 (AC-29): the bid input lives in the Actions region behind a
+    // selection, so with nothing drafted `b` lands on the Market table's first
+    // row (the start of the bid flow) — still no submission.
+    expect(document.activeElement?.getAttribute("data-focus-id")).toBe("transfers.marketTable.mp");
   });
 
   it("the ~800ms timeout auto-cancels an incomplete prefix", async () => {
@@ -181,9 +184,9 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
       const prior = setPrefixTimeoutMs(30);
       try {
         act(() => fireEvent.keyDown(document, { key: "g" }));
-        expect(screen.getByRole("status")).toBeTruthy();
+        expect(screen.getByText("Go to:")).toBeTruthy();
         act(() => vi.advanceTimersByTime(40));
-        expect(screen.queryByRole("status")).toBeNull();
+        expect(screen.queryByText("Go to:")).toBeNull();
         expect(navCalls).toEqual([]);
       } finally {
         setPrefixTimeoutMs(prior);

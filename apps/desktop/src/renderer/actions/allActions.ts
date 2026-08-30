@@ -1,5 +1,11 @@
 import { createRegistry } from "./registry.js";
 import type { Action, ScopeState, ScreenName } from "./types.js";
+import {
+  FREE_AGENT_PALETTE_OPTIONS,
+  MARKET_PALETTE_OPTIONS,
+  SQUAD_PALETTE_OPTIONS,
+  tableSortAndFilterActions,
+} from "../table/paletteActions.js";
 
 /**
  * The canonical Action registry for the keyboard spine (ADR-0012). Every screen
@@ -61,6 +67,41 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   { id: "respond-counter", label: "Counter incoming bid", scope: "transfers", available: ready, handler: () => undefined },
   { id: "accept-counter", label: "Accept counter-offer", scope: "transfers", available: ready, handler: () => undefined },
   { id: "withdraw-bid", label: "Withdraw outgoing bid", scope: "transfers", available: ready, handler: () => undefined },
+  // transfers table palettes (Stage 5): sort/filter Market and Free Agents by
+  // keyword — enumerated parameterized Actions sharing the header-button command.
+  ...tableSortAndFilterActions(MARKET_PALETTE_OPTIONS),
+  ...tableSortAndFilterActions(FREE_AGENT_PALETTE_OPTIONS),
+  // squad table palette (Stage 5): sorting by the primary columns + position
+  // filters; every attribute column remains header-sortable.
+  ...tableSortAndFilterActions(SQUAD_PALETTE_OPTIONS),
+  {
+    id: "retry-squad-table",
+    label: "Retry loading the Squad",
+    scope: "squad",
+    available: () => true,
+    handler: () => undefined,
+  },
+  {
+    id: "retry-market-table",
+    label: "Retry loading the Market",
+    scope: "transfers",
+    available: () => true,
+    handler: () => undefined,
+  },
+  {
+    id: "retry-free-agents-table",
+    label: "Retry loading Free Agents",
+    scope: "transfers",
+    available: () => true,
+    handler: () => undefined,
+  },
+  {
+    id: "restore-squad-columns",
+    label: "Restore Squad column defaults",
+    scope: "squad",
+    available: ready,
+    handler: () => undefined,
+  },
   // tactics
   { id: "save-tactic", label: "Save the tactic", scope: "tactics", available: ready, handler: () => undefined, primary: true },
   { id: "set-formation", label: "Choose a formation", scope: "tactics", available: ready, handler: () => undefined },

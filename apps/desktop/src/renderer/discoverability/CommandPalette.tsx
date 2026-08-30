@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ScreenName, ScopeState } from "../actions/types.js";
 import { ALL_ACTIONS } from "../actions/allActions.js";
 import { actionsInTiers } from "../actions/registry.js";
-import { dispatchAction } from "../actions/dispatch.js";
+import { dispatchActionWithParams } from "../actions/dispatch.js";
 import { FOCUS_RING } from "../focus.js";
 import { useSeamHotkeys } from "../hotkeys.js";
 import { rankPaletteActions, type PaletteCandidate } from "./rank.js";
@@ -74,7 +74,7 @@ export const CommandPalette = ({
     // dispatched below is the layer that ends up open, not the none this close
     // would otherwise settle last in the same batch.
     onClose();
-    dispatchAction(entry.action.id);
+    dispatchActionWithParams(entry.action);
   }, [ranked, selectedIndex, onClose]);
 
   useSeamHotkeys(
@@ -163,7 +163,7 @@ export const CommandPalette = ({
                   onMouseDown={() => {
                     if (available) {
                       onClose();
-                      dispatchAction(action.id);
+                      dispatchActionWithParams(action);
                     }
                   }}
                   onMouseEnter={() => setSelectedIndex(index)}

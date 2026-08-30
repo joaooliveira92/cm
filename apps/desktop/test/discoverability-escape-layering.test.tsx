@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, afterEach, describe, expect, it } from "vitest";
 import {
   createMemoryHistory,
@@ -100,7 +100,7 @@ const mountTransfersWithSpine = async (options: MountOptions = {}): Promise<void
     history: { back: () => undefined },
   } as never);
   render(<RouterProvider router={router} />);
-  await screen.findByRole("button", { name: /Bid/ });
+  await screen.findByRole("button", { name: /Market Player/ });
 };
 
 let navCalls: Array<{ to: string }> = [];
@@ -129,7 +129,7 @@ describe("AC-20 — Primary+K opens the palette, Primary+/ opens help", () => {
     expect(screen.getByRole("dialog", { name: "Command palette" })).toBeTruthy();
     expect(document.activeElement?.getAttribute("role")).toBe("combobox");
     // No prefix indicator appears alongside the palette (palette is topmost).
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText("Go to:")).toBeNull();
   });
 
   it("Primary+/ opens the help overlay", async () => {
@@ -141,7 +141,10 @@ describe("AC-20 — Primary+K opens the palette, Primary+/ opens help", () => {
   it("selecting Open keyboard help from the palette hands off to the help layer", async () => {
     await mountTransfersWithSpine();
     primaryK();
-    const paletteInput = screen.getByRole("combobox") as HTMLInputElement;
+    // The table's position `<select>`s also map to role=combobox now (AC-30
+    // visible filter controls), so scope the palette query to its dialog.
+    const dialog = screen.getByRole("dialog", { name: "Command palette" });
+    const paletteInput = within(dialog).getByRole("combobox") as HTMLInputElement;
     paletteInput.focus();
     act(() =>
       fireEvent.change(paletteInput, { target: { value: "open keyboard help" } }),
@@ -177,7 +180,7 @@ describe("AC-20 — Escape closes only the topmost transient layer; overlays cre
     await mountTransfersWithSpine();
     keyDown("Escape");
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText("Go to:")).toBeNull();
     expect(backCalls).toBe(0);
   });
 
@@ -187,7 +190,7 @@ describe("AC-20 — Escape closes only the topmost transient layer; overlays cre
     keyDown("b", {}, "KeyB"); // transfers `b` (focus-bid) must NOT fire
     expect(document.activeElement?.getAttribute("role")).toBe("combobox");
     keyDown("g", {}, "KeyG"); // `g` must NOT start a prefix under the palette
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText("Go to:")).toBeNull();
     expect(document.activeElement?.getAttribute("role")).toBe("combobox");
   });
 
@@ -195,23 +198,26 @@ describe("AC-20 — Escape closes only the topmost transient layer; overlays cre
     await mountTransfersWithSpine();
     primarySlash();
     keyDown("g", {}, "KeyG");
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText("Go to:")).toBeNull();
     keyDown("b", {}, "KeyB");
-    // focus-bid did not run: the bid amount input is untouched.
+    // focus-bid did not run: no bid amount input is focused (nothing drafted,
+    // and even if drafted the input is untouched while help owns the keyboard).
     const amountInput = document.querySelector<HTMLInputElement>("input[placeholder='Amount']");
-    expect(amountInput && document.activeElement === amountInput).toBe(false);
+    expect(!!(amountInput && document.activeElement === amountInput)).toBe(false);
   });
 });
 
 describe("AC-20/focus-model — focus goes to the palette and returns to the invoking control", () => {
   it("opens over the focused control and restores focus to it on Escape", async () => {
     await mountTransfersWithSpine();
-    const bidButton = screen.getByRole("button", { name: /Bid/ });
-    bidButton.focus();
+    // Stage 5 moved bid entry into the Actions region; the invoking control is
+    // now a table row's player-name button.
+    const invoking = screen.getByRole("button", { name: /Market Player/ });
+    invoking.focus();
     primaryK();
     expect(document.activeElement?.getAttribute("role")).toBe("combobox");
     keyDown("Escape");
-    expect(document.activeElement).toBe(bidButton);
+    expect(document.activeElement).toBe(invoking);
   });
 });
 
@@ -223,7 +229,7 @@ describe("AC-26 — the one-shot teaching splash lives at the spine, topmost, on
     expect(document.activeElement).toBe(screen.getByRole("button", { name: /Got it/i }));
     // While it is up it owns the keyboard: no prefix, no palette.
     keyDown("g", {}, "KeyG");
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText("Go to:")).toBeNull();
   });
 
   it("Escape from the autofocused dismiss button still dismisses (focused-control posture)", async () => {

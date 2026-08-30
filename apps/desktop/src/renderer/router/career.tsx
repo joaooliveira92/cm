@@ -6,6 +6,7 @@ import { type NavigationIntent } from "../focus.js";
 import { navigate, navigateCareer, navigateWithFocus } from "../navigation/adapter.js";
 import { type CareerDestination } from "../navigation/destinations.js";
 import { decodeSaveId } from "../navigation/params.js";
+import { resetTableSessions } from "../table/tableState.js";
 import { RouteView } from "./RouteView.js";
 
 /** Distinct route-structure error, rendered apart from typed RPC failures (AC-12). */
@@ -88,7 +89,17 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
  * the save-scoped Atom registry, relocated whole from `App.tsx`'s career
  * branch — `key={saveId}` keeps a fresh registry per save, so switching saves
  * can never serve stale atoms from a previous career.
+ *
+ * Table session state (sort/filters/focus/scroll for the table screens) is
+ * module-level in `tableState.ts`, so a NEW save mounting here must clear it
+ * BEFORE the child screens' mount initializers seed from it. The guard runs in
+ * the render body (a mount effect would run after the children captured the
+ * previous save's session) keyed on the save — intra-save screen navigation
+ * keeps the session (the note's "Screen navigation survives" row), a save
+ * switch and a post-reload remount clear it (the note's "Save reload" row).
  */
+let activeCareerSaveKey: string | null = null;
+
 export const CareerShell = () => {
   const params = useParams({ strict: false });
   const decoded = decodeSaveId(params.saveId ?? "");
@@ -96,6 +107,11 @@ export const CareerShell = () => {
     return <RouteParamErrorScreen reason={decoded.reason} />;
   }
   const saveId = decoded.success;
+  const saveKey = String(saveId);
+  if (activeCareerSaveKey !== saveKey) {
+    activeCareerSaveKey = saveKey;
+    resetTableSessions();
+  }
   return (
     <RegistryProvider key={saveId}>
       <CareerChrome saveId={saveId} />
