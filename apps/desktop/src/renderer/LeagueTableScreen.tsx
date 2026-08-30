@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { type SaveId } from "@cm-clone/contracts";
+import { ACTION_REGISTRY } from "./actions/allActions.js";
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
 import { clearScopeState, setScopeState } from "./actions/scopeState.js";
 import { FOCUS_RING } from "./focus.js";
+import { ActionKeyBadge, actionBadgeBinding } from "./discoverability/ActionKeyBadge.js";
 import {
   advanceCalendarMutation,
   describeRpcError,
@@ -67,6 +69,11 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   const table = tableResult.value;
 
+  // Inline key badge (AC-25): the League screen opts in via registry metadata;
+  // the badge reads the registry's coded binding so it can never lie.
+  const advanceAction = ACTION_REGISTRY.get("advance-calendar");
+  const advanceBadge = advanceAction !== undefined ? actionBadgeBinding(advanceAction, "league") : null;
+
   return (
     <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
       <div className="flex items-center justify-between">
@@ -80,9 +87,10 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             type="button"
             data-action-id="advance-calendar"
             disabled={advancing || table.season.phase === "season_complete"}
-            className={`rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
+            className={`flex items-center gap-1.5 rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
             onClick={() => void dispatchAction("advance-calendar")}
           >
+            {advanceBadge !== null && <ActionKeyBadge binding={advanceBadge} />}
             {advancing ? "Advancing..." : "Advance Calendar"}
           </button>
         </div>

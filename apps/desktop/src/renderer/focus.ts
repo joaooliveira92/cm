@@ -131,6 +131,31 @@ export const restoreCollectionFocus = (
 export const rovingTabIndex = (activeId: string | null, itemId: string): 0 | -1 =>
   activeId === itemId ? 0 : -1;
 
+/**
+ * Overlay focus bookkeeping (discoverability, Stage 4): the transient overlays
+ * (palette, help, teaching splash) give focus to themselves on open and return
+ * it to the invoking control on close — a single remembered element, session-
+ * local, so it can never collide with the router's pending-navigation target.
+ */
+let overlayReturnFocus: HTMLElement | null = null;
+
+/** Remember the currently-focused element before an overlay takes focus. No-op
+ *  when nothing is focused (the browser default `document.body` is never the
+ *  restore target). */
+export const rememberFocusForOverlay = (): void => {
+  const active = document.activeElement;
+  if (active instanceof HTMLElement && active !== document.body) {
+    overlayReturnFocus = active;
+  }
+};
+
+/** Restore focus to the element active when the overlay opened; clears the
+ *  bookmark so nothing is ever focused twice. */
+export const restoreFocusAfterOverlay = (): void => {
+  if (overlayReturnFocus !== null) overlayReturnFocus.focus();
+  overlayReturnFocus = null;
+};
+
 /** Mark a region node `aria-busy` during a mutation so focus-on-initiator is stable. */
 export const setBusy = (node: HTMLElement | null, busy: boolean): void => {
   if (node) node.setAttribute("aria-busy", busy ? "true" : "false");

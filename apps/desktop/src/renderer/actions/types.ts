@@ -63,6 +63,9 @@ export interface Action<Params = void> {
   /** Primary-action designation: drives presentation and discovery, never
    *  automatic `Enter` dispatch (global-key-map note AC-11). */
   readonly primary?: boolean;
+  /** Plain-language reason shown when `available` is false (command-palette
+   *  note: unavailable actions are disabled-with-reason, never hidden). */
+  readonly unavailableReason?: string;
   /** Free-form registry metadata (badges, keyboard tier, ...) consumed by later stages. */
   readonly metadata?: Readonly<Record<string, unknown>>;
 }

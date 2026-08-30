@@ -1,5 +1,5 @@
 import { createRegistry } from "./registry.js";
-import type { Action, ScopeState } from "./types.js";
+import type { Action, ScopeState, ScreenName } from "./types.js";
 
 /**
  * The canonical Action registry for the keyboard spine (ADR-0012). Every screen
@@ -36,11 +36,12 @@ const navAction = (
 
 /** All coded default bindings (global-key-map note). No single-key `g` binding. */
 export const ALL_ACTIONS: ReadonlyArray<Action> = [
-  // app-global — active on every screen.
-  { id: "open-palette", label: "Open command palette", scope: "app-global", available: ready, handler: () => undefined, binding: "Primary+K" },
-  { id: "open-help", label: "Open keyboard help", scope: "app-global", available: ready, handler: () => undefined, binding: "Primary+/" },
+  // app-global — active on every screen (palette/help are discoverable from the
+  // save list and creation flow too; only the g-prefix/Space are career-scoped).
+  { id: "open-palette", label: "Open command palette", scope: "app-global", available: () => true, handler: () => undefined, binding: "Primary+K" },
+  { id: "open-help", label: "Open keyboard help", scope: "app-global", available: () => true, handler: () => undefined, binding: "Primary+/" },
   // career-global — active only while a career screen is shown.
-  { id: "continue", label: "Continue", scope: "career-global", available: continueAvailable, handler: () => undefined, binding: "Space" },
+  { id: "continue", label: "Continue", scope: "career-global", available: continueAvailable, unavailableReason: "The Calendar cannot advance right now.", handler: () => undefined, binding: "Space" },
   navAction("go-to-squad", "Go to Squad", "g s", { destination: "squad" }),
   navAction("go-to-tactics", "Go to Tactics", "g a", { destination: "tactics" }),
   navAction("go-to-transfers", "Go to Transfers", "g t", { destination: "transfers" }),
@@ -50,7 +51,7 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   navAction("go-to-season-summary", "Go to Season Summary", "g y", { destination: "seasonSummary" }),
   navAction("go-back", "Go to previous screen", "g b"),
   // league
-  { id: "advance-calendar", label: "Advance the Calendar", scope: "league", available: continueAvailable, handler: () => undefined, binding: "c", primary: true },
+  { id: "advance-calendar", label: "Advance the Calendar", scope: "league", available: continueAvailable, unavailableReason: "The Calendar cannot advance right now.", handler: () => undefined, binding: "c", primary: true },
   // transfers
   { id: "focus-bid", label: "Focus the bid workflow", scope: "transfers", available: ready, handler: () => undefined, binding: "b" },
   { id: "place-bid", label: "Place a bid", scope: "transfers", available: ready, handler: () => undefined },
@@ -92,3 +93,32 @@ export const G_PREFIX_COMPLETIONS: ReadonlySet<string> = new Set(
     .filter((b): b is string => b !== undefined && b.startsWith("g "))
     .map((b) => b.slice(2).trim()),
 );
+
+/**
+ * Per-screen registry metadata (command-palette note: inline key badges are
+ * toggleable *per screen*, not an all-or-nothing project switch — dense tables
+ * may prefer clean buttons, action-heavy screens benefit most). Read through
+ * `keyBadgesEnabledFor`; the badge helper in `discoverability/ActionKeyBadge`
+ * is the single consumer so rendered badges can never drift from the registry.
+ */
+export interface ScreenRegistryMetadata {
+  readonly showKeyBadges: boolean;
+}
+
+export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata>> = {
+  squad: { showKeyBadges: false },
+  tactics: { showKeyBadges: false },
+  transfers: { showKeyBadges: true },
+  league: { showKeyBadges: true },
+  fixtures: { showKeyBadges: false },
+  match: { showKeyBadges: false },
+  seasonSummary: { showKeyBadges: false },
+  createStep1: { showKeyBadges: false },
+  createStep2: { showKeyBadges: false },
+  createStep3: { showKeyBadges: false },
+  saveList: { showKeyBadges: false },
+};
+
+/** Honored by the badge renderer: a screen opts into inline key badges here. */
+export const keyBadgesEnabledFor = (screen: ScreenName): boolean =>
+  SCREEN_METADATA[screen].showKeyBadges;

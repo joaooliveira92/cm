@@ -24,15 +24,17 @@ const active: Action[] = [
 
 const completions = new Set(["s", "a", "t", "l", "f", "m", "y"]);
 
-const ctx = (partial: Partial<ResolveContext>): ResolveContext => ({
+    const ctx = (partial: Partial<ResolveContext>): ResolveContext => ({
   keystroke: { key: "a", ctrl: false, meta: false, shift: false, primary: false },
   typing: false,
   prefix: IDLE_PREFIX,
+  overlay: "none",
   now: 0,
   actions: active,
   prefixCompletions: completions,
   ...partial,
 });
+
 
 const ks = (p: Partial<Keystroke>): Keystroke => ({
   key: "a",
@@ -80,6 +82,29 @@ describe("AC-17 — one keystroke executes at most one action", () => {
     // `b` is not a valid completion, so the prefix cancels — but the screen `b`
     // (focus-bid) must NOT fire; the prefix owns the keystroke.
     expect(d.kind).toBe("cancel-prefix");
+  });
+});
+
+describe("AC-20 — an open overlay (priority 2) suppresses everything beneath it", () => {
+  it("with an overlay open, a bare screen key resolves to nothing (no action beneath)", () => {
+    const d = resolveDispatch(ctx({ overlay: "palette", keystroke: ks({ key: "b" }) }));
+    expect(d.kind).not.toBe("action");
+  });
+
+  it("with an overlay open, a Primary shortcut resolves to nothing (overlay owns the key)", () => {
+    const d = resolveDispatch(ctx({ overlay: "palette", keystroke: ks({ key: "k", primary: true }) }));
+    expect(d.kind).not.toBe("action");
+  });
+
+  it("typing while an overlay is open is handed to the field (native), not resolved", () => {
+    const d = resolveDispatch(ctx({ overlay: "palette", typing: true, keystroke: ks({ key: "a" }) }));
+    expect(d.kind).toBe("native");
+  });
+
+  it("with no overlay, the same keystrokes resolve normally (overlay defaults to none)", () => {
+    const d = resolveDispatch(ctx({ keystroke: ks({ key: "b" }) }));
+    expect(d.kind).toBe("action");
+    if (d.kind === "action") expect(d.action.id).toBe("focus-bid");
   });
 });
 

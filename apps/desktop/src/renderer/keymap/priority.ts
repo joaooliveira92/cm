@@ -4,17 +4,23 @@ import { isBareLetterOrDigit } from "./keystroke.js";
 
 /**
  * The dispatch-priority stack (global-key-map note: one keystroke, at most one
- * action). Pure and unit-tested (AC-17, AC-19): the spine resolves a keystroke
- * to exactly one decision before any handoff to the binding seam.
+ * action). Pure and unit-tested (AC-17, AC-19, AC-20): the spine resolves a
+ * keystroke to exactly one decision before any handoff to the binding seam.
  *
  *   1. native text/focused-control behaviour
- *   2. topmost overlay layer (Stage 4 palette/help; primitive reserved)
+ *   2. topmost overlay layer (Stage 4 palette/help/first-run splash; a
+ *      "none" in `overlay` skips the stack entirely)
  *   3. active prefix completion / cancellation (`g <key>`)
  *   4. global modifier shortcuts (Primary+K, Primary+/)
  *   5. career-global (Space → Continue)
  *   6. current-screen bare actions
  *   7. otherwise no action
  */
+
+/** The transient layers the keyboard spine can own, and their z-order for
+ *  Escape (AC-20): the topmost one closes first. `splash` is the one-shot
+ *  teaching overlay; while it is up it owns every keystroke. */
+export type OverlayLayer = "none" | "palette" | "help" | "splash";
 
 export type DispatchDecision =
   | { readonly kind: "native" }
@@ -34,6 +40,10 @@ export interface ResolveContext {
   readonly actions: ReadonlyArray<Action>;
   /** The valid `g <key>` completion set (destination keys), when a career is shown. */
   readonly prefixCompletions: ReadonlySet<string>;
+  /** The open transient overlay (dispatch priority 2). While one is open it
+   *  owns the keystroke; bindings beneath it never fire (AC-20). Defaults to
+   *  "none" so callers without an overlay layer keep the Stage 3 behaviour. */
+  readonly overlay?: OverlayLayer;
 }
 
 /** Whether a normalized keystroke matches a coded `binding` string. */
@@ -80,7 +90,18 @@ const isPrefixG = (keystroke: Keystroke, actions: ReadonlyArray<Action>): boolea
  * function: each branch returns before considering a lower priority.
  */
 export const resolveDispatch = (ctx: ResolveContext): DispatchDecision => {
-  const { keystroke, typing, prefix, now, actions, prefixCompletions } = ctx;
+  const { keystroke, typing, prefix, now, actions, prefixCompletions, overlay } = ctx;
+
+  // Priority 2 — topmost overlay layer. An open palette/help/splash takes
+  // precedence over every binding beneath it: the overlay's own components
+  // register their keys through the seam (useSeamHotkeys), and the spine's
+  // wildcard only ever lets type-to-filter keystrokes through to the overlay's
+  // own text field. Nothing else beneath an overlay fires. `overlay` is checked
+  // before priority 1's typing carve-out so a Primary-shortcut cannot reopen a
+  // lower layer while an overlay owns the keyboard.
+  if ((overlay ?? "none") !== "none") {
+    return { kind: typing ? "native" : "none" };
+  }
 
   // Priority 1 — native text/focused-control. While typing, bare keys and Space
   // belong to the text field; only Primary-shortcuts and navigational keys escape.

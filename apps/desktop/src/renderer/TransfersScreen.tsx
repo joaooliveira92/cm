@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { BidId, PlayerId, SaveId, TransfersScreenView } from "@cm-clone/contracts";
+import { ACTION_REGISTRY } from "./actions/allActions.js";
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
 import { FOCUS_RING } from "./focus.js";
+import { ActionKeyBadge, actionBadgeBinding } from "./discoverability/ActionKeyBadge.js";
 import {
   describeRpcError,
   placeBidMutation,
@@ -116,6 +118,13 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const btn = "rounded bg-slate-700 px-2 py-1 text-xs hover:bg-slate-600";
   const btnCls = `${btn} ${FOCUS_RING.join(" ")}`;
 
+  // Inline key badge (AC-25): the Transfers screen opts in via registry
+  // metadata. `b` opens/focuses the Bid workflow (it does not submit), so the
+  // badge hangs off the bid-draft cluster, not the Place-bid button itself.
+  const focusBidAction = ACTION_REGISTRY.get("focus-bid");
+  const bidBadge =
+    focusBidAction !== undefined ? actionBadgeBinding(focusBidAction, "transfers") : null;
+
   const renderMarketPlayer = (player: {
     readonly id: PlayerId;
     readonly firstName: string;
@@ -146,6 +155,7 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           </button>
         ) : (
           <div className="flex items-center gap-1">
+            {bidBadge !== null && <ActionKeyBadge binding={bidBadge} />}
             <input
               ref={(el) => {
                 if (el !== null && bidDraftInputRef.current === null) bidDraftInputRef.current = el;

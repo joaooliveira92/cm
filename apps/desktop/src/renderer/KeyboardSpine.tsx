@@ -10,28 +10,46 @@ import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
 import { getScopeState, subscribeScopeState } from "./actions/scopeState.js";
 import { type Action, type ScopeState } from "./actions/types.js";
 import { useSeamEveryKeyPress } from "./hotkeys.js";
-import { resolveDispatch, IDLE_PREFIX } from "./keymap/priority.js";
+import {
+  resolveDispatch,
+  IDLE_PREFIX,
+  type OverlayLayer,
+} from "./keymap/priority.js";
 import { keyOf, shouldSuppressForTextEntry } from "./keymap/keystroke.js";
 import { type PrefixState } from "./keymap/prefix.js";
 import { prefixTimeoutMs } from "./keymap/timeout.js";
+import {
+  focusSemanticTarget,
+  rememberFocusForOverlay,
+  restoreFocusAfterOverlay,
+} from "./focus.js";
+import { CommandPalette } from "./discoverability/CommandPalette.js";
+import { HelpOverlay } from "./discoverability/HelpOverlay.js";
+import {
+  TeachingSplash,
+  useTeachingSplashVisibility,
+} from "./discoverability/TeachingSplash.js";
 
 /**
- * The keyboard spine (ticket 17, Stage 3). Mounted once at the renderer root, it
- * (a) registers the app-global and career-global live handlers (navigation,
- * Continue/palette/help placeholders), and (b) installs ONE wildcard keydown
- * binding through the react-hotkeys-hook seam.
+ * The keyboard spine (ticket 17, Stage 3 + Stage 4 discoverability). Mounted at
+ * the renderer root, it (a) registers the app-global and career-global live
+ * handlers (navigation, Continue, and the open-palette/open-help layer opens),
+ * (b) installs ONE wildcard keydown binding through the react-hotkeys-hook
+ * seam, and (c) owns the transient overlay stack.
  *
  * Every keystroke runs through the pure, unit-tested dispatch model in
- * `keymap/` — `resolveDispatch` (priority stack, AC-17), `prefixReduce` (the
- * `g <key>` lifecycle, AC-18) and `shouldSuppressForTextEntry` (AC-19) are the
- * LIVE policy, not a parallel hand-written mirror. There are no individual
- * `useHotkeys` bindings; nothing outlaws a registered Action's binding here,
- * so the registry's bindings are exactly the keyboard's (the help overlay will
- * enumerate the same records in Stage 4).
+ * `keymap/` — `resolveDispatch` (priority stack, AC-17/AC-20), `prefixReduce`
+ * (the `g <key>` lifecycle, AC-18) and `shouldSuppressForTextEntry` (AC-19) are
+ * the LIVE policy, not a parallel hand-written mirror. While a transient layer
+ * (palette, help, or the first-run splash) is open it is the topmost layer
+ * (dispatch priority 2): the spine's wildcard returns early so no binding
+ * beneath it fires, and the layer's own modal keys (Escape/arrows/Enter/tabs)
+ * are registered through the binding seam by the layer component.
  *
- * While a `g <key>` prefix is active a nonmodal indicator renders below the
- * career nav bar (AC-18); Escape/invalid-key/timeout cancel it without firing
- * any unrelated bare-key Action.
+ * Opening a transient layer records no history entry: the layer is React state,
+ * never a `router.navigate` or `history.back` step. Escape closes only the
+ * topmost layer (AC-20) — an open palette/help/splash takes precedence over the
+ * `g` prefix and every binding beneath it.
  */
 
 const careerScreenOfId = (id: string): CareerDestination["type"] | null =>
@@ -109,14 +127,44 @@ export const KeyboardSpine = () => {
     [currentScreen, scopeState],
   );
 
+  // The transient overlay stack (AC-20). `splashActive` is the one-shot
+  // teaching overlay's own visibility (first load of a career screen, never
+  // re-shown); it is the topmost layer while visible.
+  const [layer, setLayer] = useState<OverlayLayer>("none");
+  const splash = useTeachingSplashVisibility();
+  const splashActive = isCareer && splash.visible;
+  const topLayer: OverlayLayer = splashActive ? "splash" : layer;
+
+  const closeOverlay = useCallback(() => {
+    restoreFocusAfterOverlay();
+    setLayer("none");
+  }, []);
+
+  const dismissSplash = useCallback(() => {
+    splash.dismiss();
+    // Never leave focus on `document.body`: hand back to the career screen's
+    // main region after the teaching card unmounts.
+    focusSemanticTarget({ screen: currentScreen });
+  }, [currentScreen, splash]);
+
   // Register app-global + career-global live handlers (navigation plus the
-  // palette/help placeholders). The Continue (Space) handler is owned by the
+  // palette/help layer opens). The Continue (Space) handler is owned by the
   // League screen, which mounts `advanceCalendar` under its safety guard.
   useEffect(() => {
     const unregisters: Array<() => void> = [];
 
-    unregisters.push(registerActionHandler("open-palette", () => undefined));
-    unregisters.push(registerActionHandler("open-help", () => undefined));
+    unregisters.push(
+      registerActionHandler("open-palette", () => {
+        rememberFocusForOverlay();
+        setLayer("palette");
+      }),
+    );
+    unregisters.push(
+      registerActionHandler("open-help", () => {
+        rememberFocusForOverlay();
+        setLayer("help");
+      }),
+    );
 
     if (nav && saveId !== undefined) {
       const target: Record<CareerDestination["type"], () => void> = {
@@ -171,6 +219,7 @@ export const KeyboardSpine = () => {
         now,
         actions: activeActions,
         prefixCompletions: G_PREFIX_COMPLETIONS,
+        overlay: topLayer,
       });
       switch (decision.kind) {
         case "native":
@@ -201,10 +250,27 @@ export const KeyboardSpine = () => {
         }
       }
     },
-    [prefix, activeActions, scopeState],
+    [prefix, activeActions, scopeState, topLayer],
   );
 
   useSeamEveryKeyPress(onKeyDown, [onKeyDown]);
 
-  return <>{prefix.active && <PrefixIndicator entries={PREFIX_INDICATOR_ENTRIES} />}</>;
+  return (
+    <>
+      {prefix.active && !splashActive && layer === "none" && (
+        <PrefixIndicator entries={PREFIX_INDICATOR_ENTRIES} />
+      )}
+      {layer === "palette" && (
+        <CommandPalette
+          screen={currentScreen as never}
+          state={scopeState}
+          onClose={closeOverlay}
+        />
+      )}
+      {layer === "help" && (
+        <HelpOverlay screen={currentScreen as never} state={scopeState} onClose={closeOverlay} />
+      )}
+      {splashActive && layer === "none" && <TeachingSplash onDismiss={dismissSplash} />}
+    </>
+  );
 };

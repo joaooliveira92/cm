@@ -17,6 +17,7 @@ import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../src/renderer/actions/scopeState.js";
 import { G_PREFIX_COMPLETIONS } from "../src/renderer/actions/allActions.js";
 import { setPrefixTimeoutMs } from "../src/renderer/keymap/timeout.js";
+import { teachingSplashStorageKey } from "../src/renderer/discoverability/TeachingSplash.js";
 import { TransfersScreen } from "../src/renderer/TransfersScreen.js";
 import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
@@ -103,6 +104,10 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
     backCalls = 0;
     resetActionHandlers();
     resetScopeState();
+    // These scenarios mount a career screen after the one-shot teaching splash
+    // has been dismissed (Stage 4), so the splash never steals focus or the
+    // keystrokes under test.
+    window.localStorage.setItem(teachingSplashStorageKey, "1");
     // TanStack Router's scroll restoration calls window.scrollTo on navigation,
     // which jsdom doesn't implement; stub it so the noise stays out of the runs.
     window.scrollTo = () => undefined;
@@ -110,6 +115,7 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
 
   afterEach(() => {
     cleanup();
+    window.localStorage.clear();
     resetScopeState();
   });
 
@@ -244,11 +250,13 @@ describe("AC-19 — Space→Continue honours the safety guard through the live s
     cleanup();
     resetActionHandlers();
     resetScopeState();
+    window.localStorage.setItem(teachingSplashStorageKey, "1");
     window.scrollTo = () => undefined;
   });
 
   afterEach(() => {
     cleanup();
+    window.localStorage.clear();
     resetScopeState();
   });
 
