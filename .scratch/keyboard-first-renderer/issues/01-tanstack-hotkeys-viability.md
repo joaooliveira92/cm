@@ -5,7 +5,7 @@ Status: resolved
 
 ## Answer
 
-**No — TanStack Hotkeys is alpha and has no scopes or priority layering; use `react-hotkeys-hook@5.x` behind an internal seam. Router and Table confirmed to provide no focus management.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-keyboard-binding-library.md) and [research findings](../research/01-tanstack-hotkeys-viability.md).
+**No — TanStack Hotkeys is alpha and has no scopes or priority layering; use `react-hotkeys-hook@5.x` behind an internal seam. Router and Table confirmed to provide no focus management.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-keyboard-binding-library.md) and [research findings](../research/01-tanstack-hotkeys-viability.md).
 
 ## Question
 

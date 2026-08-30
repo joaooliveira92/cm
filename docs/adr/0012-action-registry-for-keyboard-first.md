@@ -2,7 +2,7 @@
 
 **Status:** Accepted (2026-08-29). Decided during wayfinding for the keyboard-first-renderer effort, ticket [03-action-model](../../.scratch/keyboard-first-renderer/issues/03-action-model.md).
 
-**Context:** [Agent Note](../../.agents/notes/proposed/architecture/2026-08-29-action-model.md)
+**Context:** [Agent Note](../../.agents/notes/implemented/architecture/2026-08-29-action-model.md)
 
 ## Decision
 

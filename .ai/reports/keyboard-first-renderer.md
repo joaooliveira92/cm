@@ -140,3 +140,79 @@ Written by the orchestrator after the gate, before the commit. Records what was 
   16. Info: "Advance Calendar" is a CONTEXT.md _Avoid_ as player-facing copy — re-registered for the
   level-3 stage.
 - Review confirmed the 4 e2e failures are stale, not regressions.
+
+---
+
+## Stage 3 (ticket 17: Action registry and keyboard spine)
+
+## Gate evidence
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | PASS — typecheck ✓, lint ✓ (35 pre-existing warnings, 0 errors), effect-lint ✓ (no violations, 137 files), verify-md-links ✓, tests ✓ (200 desktop / 45 game-engine / 28 contracts / shared) |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | NOT RUN this session — requires OS-level setup; unit-level equivalents cover the Stage-3 ACs in jsdom |
+| determinism | n/a | Renderer-only; zero diff under `packages/`; existing determinism suites green in gate |
+| save compatibility | n/a | No persistence/schema change; no migration |
+
+## Acceptance criteria → evidence (ticket 17)
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| AC-16 | Every button dispatches a registered Action; no half-conversion; palette can't list an undispatchable Action | `actions-inventory.test.tsx` (League/Transfers/Tactics/MatchDay `data-action-id` → registry in-scope + `hasActionHandler`) | PASS |
+| AC-17 | One keystroke, at most one action; automated collision checks across scopes | `keymap-priority.test.ts` (`resolveDispatch` single decision point, four-views reconcile); `actions-registry.test.ts` (build-time collisions incl. locked-infra keys) | PASS |
+| AC-18 | `g <key>` prefix nav, explicit bindings, visible nonmodal feedback, Escape/timeout/invalid cancel | `PrefixIndicator` + `keyboard-spine-live.test.tsx` (full live lifecycle); `keymap-prefix.test.ts` | PASS |
+| AC-19 | Enter activates focused control only; Space Continues only per safety contract; bare keys suppressed while typing | `keyboard-spine-live.test.tsx` (continue-safety at season_complete = 0 calls, mid-season = 1; typing suppression); `keymap-priority.test.ts` | PASS |
+| AC-21 | Hybrid focus: native Tab + roving, selection ≠ focus, one `:focus-visible` ring, identity async restoration | `focus-restoration.test.ts`, `focus-coordinator.test.ts`, Squad roving in `level1-a11y.test.tsx` | PASS |
+| AC-22 | All nine screens level 1 (tab order, focus ring, Enter/Space on every control) | `level1-a11y.test.tsx` (all nine tier-table screens) | PASS |
+
+Stage-3 done criteria met: every career screen dispatches registered Actions (read-only screens have
+no operations), key map active across all seven career screens, `g <key>`/Enter/suppression work,
+gate green.
+
+## Behavior changes
+
+- **Action registry first-class.** Career screens dispatch named, scoped Actions from a single
+  registry (ADR-0012); buttons and the key map are views of the same record. Renderer-only.
+- **Keyboard spine live.** `g <key>` prefix navigation with visible `PrefixIndicator`, `Enter`
+  activates the focused control, `Space`→Continue guarded by the league safety contract,
+  text-input bare-key suppression, and a single `:focus-visible` ring across all nine screens.
+- **`react-hotkeys-hook@^5.0.1` added** via the workspace catalog behind the single-file
+  `renderer/hotkeys.ts` seam; the renderer-boundary lint now forbids direct imports. The spine
+  routes keystrokes through the tested `resolveDispatch`/`prefixReduce` policy (not a parallel
+  mirror).
+- **Premature State-4/5 avoided:** palette/help/splash/badge UI and the match-day live-control
+  flow are not built; only their registry foundations landed. `data-action-id` attributes (production
+  action identity, not a test seam) support Stage-4 badges/help.
+
+## Decision records
+
+- ADRs: none added (ADR-0012 stands).
+- Agent Notes **promoted** (`implemented/architecture/`): `2026-08-29-action-model`,
+  `2026-08-29-keyboard-binding-library` — both fully shipped, links updated across spec/issues/ADR.
+- Agent Notes left **proposed** (partially shipped): `2026-08-29-global-key-map` (palette/help UI and
+  the `b`→focus-bid workflow open are Stage 4/5), `2026-08-29-intra-screen-focus-model`
+  (selection-vs-focus separation and tier-3 widget interactions are Stage 5). Their code coverage so
+  far is noted on the tickets they belong to.
+
+## Pre-existing failures / tracked
+
+- `matchCommands.test.ts` flaked once in an early `check:all` run (`ForceOff homeSubs.used` 0 vs 1);
+  deterministic in isolation and every subsequent full-suite/gate run, absent from this diff —
+  pre-existing main-process domain logic, tracked separately, not a Stage-3 regression.
+- The two routed-out decision requests (`decision-request-wire-loss.md`,
+  `decision-request-club-selection.md`) remain open; they govern Stage 3-adjacent AC-12/AC-13 typed
+  render and creation happy path, not the work above.
+
+## Review
+
+- **First review: NEEDS_REWORK.** 4 HIGHs (tested dispatch model dead-mirror; AC-18 no prefix
+  feedback; AC-19 Space bypass at season_complete; `focus-bid` live no-op) + mediums (binding drift
+  "c"; AC-22 5/9; AC-16 2 converted screens) + lows.
+- **Repair pass:** all executed — spine routes through `resolveDispatch`/`prefixReduce`; `PrefixIndicator`
+  rendered; continue guard checked at season_complete (registry predicate + screen handler + spine
+  re-check); `focus-bid` focuses the draft input; `"c"` reconciled; all nine screens level-1; Tactics/
+  MatchDay added to inventory test; vestigial code removed (`primary`/`metadata` kept, justified).
+- **Second (repair) review: APPROVE** — no blocker/high; all 6 ACs PASS (AC-22 9/9 implemented; the
+  one repair-folder item, a missing Transfers `level1-a11y` row, folded in this session; dead
+  `LOCKED_INFRA_BINDINGS` re-export in `keymap/priority.ts` and a partial Transfers bid-button ring
+  also folded). Gate green after folding.

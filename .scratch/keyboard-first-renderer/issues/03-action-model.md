@@ -5,7 +5,7 @@ Status: resolved
 
 ## Answer
 
-**Yes — a first-class Action registry. Every operation becomes a named, scoped, dispatchable record; buttons, palette, key bindings and help overlay are four views of the same record. Migration is all-or-nothing per screen. Availability predicates are best-effort frontend optimisations; the backend still validates.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-action-model.md) and [ADR-0012](../../../docs/adr/0012-action-registry-for-keyboard-first.md).
+**Yes — a first-class Action registry. Every operation becomes a named, scoped, dispatchable record; buttons, palette, key bindings and help overlay are four views of the same record. Migration is all-or-nothing per screen. Availability predicates are best-effort frontend optimisations; the backend still validates.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-action-model.md) and [ADR-0012](../../../docs/adr/0012-action-registry-for-keyboard-first.md).
 
 ## Question
 

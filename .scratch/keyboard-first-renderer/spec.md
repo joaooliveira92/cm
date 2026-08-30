@@ -120,7 +120,7 @@ relevant. Snippets inlined from the prototypes encode their decisions more preci
 - [Binding library — ticket 01] **No — TanStack Hotkeys is alpha and has no scopes or priority
   layering; use `react-hotkeys-hook@5.x` behind an internal seam. Router and Table confirmed to
   provide no focus management.** See
-  [Agent Note](../../.agents/notes/proposed/architecture/2026-08-29-keyboard-binding-library.md) and
+  [Agent Note](../../.agents/notes/implemented/architecture/2026-08-29-keyboard-binding-library.md) and
   [research findings](research/01-tanstack-hotkeys-viability.md). Exactly one module imports the
   binding library; the help overlay and command palette derive their contents from live binding
   registrations, and `enableOnFormTags`/`enableOnContentEditable` carry the text-input suppression.
@@ -137,7 +137,7 @@ relevant. Snippets inlined from the prototypes encode their decisions more preci
   named, scoped, dispatchable record; buttons, palette, key bindings and help overlay are four views
   of the same record. Migration is all-or-nothing per screen. Availability predicates are
   best-effort frontend optimisations; the backend still validates.** See
-  [Agent Note](../../.agents/notes/proposed/architecture/2026-08-29-action-model.md) and
+  [Agent Note](../../.agents/notes/implemented/architecture/2026-08-29-action-model.md) and
   [ADR-0012](../../docs/adr/0012-action-registry-for-keyboard-first.md). Inline prototype snippet —
   the Action record shape (trimmed):
   ```ts
