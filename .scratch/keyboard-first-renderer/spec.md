@@ -268,7 +268,7 @@ relevant. Snippets inlined from the prototypes encode their decisions more preci
 - [Router adoption shape — ticket 09] **Typed hash routing for career, creation, and save-list
   views; no route loaders; early `beginCareer` preserved under a parent-owned creation session;
   navigation via typed destination Actions; semantic focus after keyboard navigation only.** See
-  [Agent Note](../../.agents/notes/proposed/architecture/2026-08-29-router-adoption-shape.md). Hash
+  [Agent Note](../../.agents/notes/implemented/architecture/2026-08-29-router-adoption-shape.md). Hash
   history keeps the active route across a reload. The active career is a path parameter whose parent
   route owns the persistent career shell and the save-scoped registry, rendering an Outlet for the
   active child; a career URL with no child redirects to Squad. Routes validate structure and

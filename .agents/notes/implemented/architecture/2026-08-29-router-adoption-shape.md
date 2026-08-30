@@ -1,12 +1,12 @@
 # Agent Note: Router Adoption Shape
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
 The renderer's navigation is a hand-rolled state machine in `App.tsx`: four pieces of state (`loadedSave`, `screen` union, `creating`, `creationState`) controlling three mutually exclusive render branches via `&&` chains. There is no URL, no back button, no declarative route tree, and no navigation lifecycle. The keyboard-first effort depends on router-backed navigation (Actions dispatch to it, focus restoration hooks into it, the command palette enumerates destinations through it), so the adoption shape must be settled before any implementation begins.
 
-## Proposal
+## Decision
 
 Adopt **TanStack Router** with `createHashHistory` to power all stable application views as routes. The renderer will use a nested route tree with three top-level branches — save list, creation flow, and career — and wire focus restoration through a navigation-intent-aware coordinator rather than the router's own lifecycle.
 
@@ -84,6 +84,20 @@ Routes encode which save is active, which screen is active, and which creation s
 - AC-14: Destination focus targets use stable identities rather than DOM position
 - AC-15: Pointer navigation does not cause unnecessary forced focus
 - AC-16: Match day routing resumes authoritative pending match state and never starts a match on mount
+
+## Open routed gaps (shipped but blocked outside this effort)
+
+- **Typed missing-save over the wire (AC-06).** The structure is distinct (malformed route param vs.
+  `RemoteFailure`) and never loader-redirected, but Electron's structured clone erases the custom
+  fields of Effect `Schema.TaggedError`, so the typed `SaveNotFoundError` renders as a generic
+  `ContractDecodeFailure` in production. Routed as a decision request
+  (`.scratch/keyboard-first-renderer/decision-request-wire-loss.md`). Re-scoped until it lands.
+- **Creation happy path (AC-07).** `commitCareer` uses a placeholder club id, so no career has been
+  creatable through the UI. Routed as a decision request
+  (`.scratch/keyboard-first-renderer/decision-request-club-selection.md`).
+- **Match Day resume (AC-16).** There is no awaiting-match RPC; an ephemeral renderer session
+  restores the in-flight match conversation across route switches. A reload mid-match falls back to
+  the picker until a durable await/start RPC exists. Acceptable for the router stage.
 
 ## Risks
 

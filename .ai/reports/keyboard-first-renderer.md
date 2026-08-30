@@ -5,9 +5,67 @@ Written by the orchestrator after the gate, before the commit. Records what was 
 ## Sprint
 
 - Effort: `.scratch/keyboard-first-renderer/`
-- Tickets closed: `15-renderer-data-layer` (Stage 1); decisions `12-, 13-, 14-` resolved earlier this run; spec and slice (15–22) published this run
-- Branch: `keyboard-first-renderer/e2e-strategy` (off `latest_branch`)
-- Commits (this sprint): pending — `chore: repair pre-existing broken markdown relative links`, gate note; Stage-1 code commit follows
+- Tickets closed: `15-renderer-data-layer` (Stage 1); `16-router-adoption` (Stage 2); decisions `12-, 13-, 14-` resolved earlier this run; spec and slice (15–22) published this run
+- Branch: `keyboard-first-renderer/stage-1-data-layer` — renamed from the boot-default branch; carries stages 1–2 (off `latest_branch`)
+- Commits (this sprint): Stage 1 — `6d6ba56` (seam+data layer), `4696d55` (atom-react pin), `9de16f7` (boundary lint), `68e8d1f` (note promotion), `88c9967` (close ticket 15 + plan/report); Stage 2 — pending until this run's commits land
+
+## Stage 2 gate evidence (ticket 16, router adoption)
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | PASS — typecheck ✓, lint ✓, effect-lint ✓, verify-md-links ✓ (452 files), tests ✓ (265 total) |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | RUN — 21 passed (8 new router specs), 2 skipped, 4 failed (same four stale specs) |
+| determinism | n/a | Not applicable — renderer-only; no seeding/simulation change |
+| save compatibility | n/a | Not applicable — no persistence/schema change |
+
+## Stage 2 acceptance → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| AC-10 | Hash history; reload preserves route | `e2e/router.spec.ts` | PASS |
+| AC-11 | Career parent owns shell + registry | `e2e/router.spec.ts` | PASS |
+| AC-12 | No loaders; malformed vs missing distinct | `roundtrip.test.ts`, `router-stage2.test.ts`, `e2e/router.spec.ts` | PASS (structure-distinct; typed render blocked on wire-loss decision request) |
+| AC-13 | Creation session lifecycle | `e2e/router.spec.ts` ×3 | PASS (happy-path commit blocked on club-selection decision request) |
+| AC-14 | Typed destinations; `g b` history | `router-stage2.test.ts` | PASS |
+| AC-15 | Semantic focus; back restore; Match Day resume | `focus-coordinator.test.ts`, `e2e/router.spec.ts` | PASS |
+
+## Behavior changes
+
+- **Router adopted.** Navigation is now real hash routes; `App.tsx` and its four state variables are
+  deleted. Renderer-only; no game behavior, contract, persistence, or seeded outcome changed.
+- **Two routed-out blockers surfaced by this stage, both pre-existing but previously invisible:**
+  (1) Effect `TaggedError` custom fields are erased crossing Electron IPC, so typed errors render as a
+  generic message in production; (2) creation commits a placeholder club id, so `commitCareer` always
+  fails and no career has ever been creatable through the UI. Both filed as decision requests in
+  `.scratch/keyboard-first-renderer/` and re-scoped out of the keyboard-first ACs until resolved.
+
+## Decision records
+
+- ADRs added: none.
+- Agent Notes promoted (`implemented/`): `2026-08-29-router-adoption-shape` (amended with the two
+  routed gaps + Match Day resume interpretation before promotion). Stage 1's two Atom notes promoted
+  earlier this run.
+- Decision requests filed: `decision-request-wire-loss.md`, `decision-request-club-selection.md`.
+
+## Pre-existing failures
+
+- The same four stale e2e specs (see Stage 1 section below): reproduced at HEAD by the reviewer.
+- Plus the two routed-out blockers above.
+
+## Deferred and known limitations
+
+- Stage 1: MatchDay `listOpponentClubs` fetch-on-mount; `awaiting_match_id` resume ships with the
+  router stage's match session; `submitMatchCommand` polling discards its success chunk (candidate
+  bug-fix ticket); three mutation atoms pruned (rules tested); Effect v4 rc renames applied.
+- Stage 2: `navigateBack` marker-leak path fixed (unit-tested); `CareerIndexRedirect` effect deps
+  fixed; Match Day resume is ephemeral-session (no await-match RPC yet).
+
+## Review
+
+- **Stage 1:** APPROVE (repair list executed at ship).
+- **Stage 2:** NEEDS_REWORK, both highs routed out-of-effort (not fixable in a renderer ticket),
+  in-branch repairs executed (M2 `navigateBack` tests, M3 `CareerIndexRedirect` dep, L2 newline) and
+  re-verified green.
 
 ## Acceptance criteria → evidence
 
