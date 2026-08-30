@@ -20,11 +20,11 @@ Here is the structured table summarizing the codebase directories and their func
 |---|---|---|
 | [apps/desktop](apps/desktop)  | Application | Electron app containing main, preload, and renderer processes, along with Playwright end-to-end tests. |
 | [packages/contracts](packages/contracts)  | Package | Contains the @effect/rpc contract shared between the renderer and main processes. |
-| packages/game-engine | Package | Handles match simulation. |
-| packages/shared | Package | Contains domain logic and game-design data (e.g., position/role weights, commentary templates) shared across all packages. |
-| docs/adr/ | Documentation | Architectural Decision Records (ADRs) tracking structural design choices. |
-| docs/agents/, AGENTS.md | Documentation | Operational guidelines and conventions for AI or automated agents working in the repository. |
-| .scratch/ | Tooling / Logs | Internal repository issue tracker (referenced via docs/agents/issue-tracker.md). |
+| [packages/game-engine](packages/game-engine) | Package | Handles match simulation. |
+| [packages/shared](packages/shared) | Package | Contains domain logic and game-design data (e.g., position/role weights, commentary templates) shared across all packages. |
+| [docs/adr/](docs/adr/) | Documentation | Architectural Decision Records (ADRs) tracking structural design choices. |
+| [docs/agents/](docs/agents/), [AGENTS.md](AGENTS.md) | Documentation | Operational guidelines and conventions for AI or automated agents working in the repository. |
+| [.scratch/](.scratch/) | Tooling / Logs | Internal repository issue tracker (referenced via docs/agents/issue-tracker.md). |
 
 
 
