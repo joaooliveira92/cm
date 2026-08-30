@@ -435,3 +435,87 @@ Actions region ships; gate green.
   is not exercised end-to-end; Stage-7 match-day e2e owns it.
 - `matchCommands.test.ts` flake family — pre-existing, deterministic in the gate.
 - The two routed-out decision requests remain open.
+
+---
+
+## Stage 6 (ticket 21: user key binding overrides)
+
+## Gate evidence
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | PASS — typecheck ✓, lint ✓ (0 errors), effect-lint ✓ (193 files, no violations), verify-md-links ✓, tests ✓ (454 desktop / 45 game-engine / 34 contracts / 75 shared) |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | NOT RUN/STALE — the stage-2-era click suite is pre-existing-broken against the Stage-5/6 UI; the keyboard conversion is ticket 22 |
+| determinism | n/a | Overrides live in `userData/keybindings.json`, never a save/stream/migration; no save-schema change; renderer consumes no simulation randomness |
+| save compatibility | n/a | No persistence/schema change; no migration |
+
+## Acceptance criteria → evidence (ticket 21)
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| AC-34 | Rebinding roundtrips the typed RPC seam and persists under `userData`; applies across saves/restarts; never in saves/event stream; no migration | `packages/contracts/test/roundtrip.test.ts` (four procedures' payload/success/error = 6 roundtrips); `apps/desktop/test/keybindings.test.ts` (set→get→fresh-file-read, two-step-as-one-entry, last-write-wins, resets, tolerant corrupt decode, fixed-on-next-write); renderer-fs grep empty; `RpcContext.userDataDir` + `main/index.ts` | PASS (mapped Playwright restart proof deferred to ticket 22's AC-37, recorded there) |
+| AC-35 | Locked infra keys reject with a reason; collisions name the conflicting Action; unsupported shapes rejected | `apps/desktop/test/override-validation.test.ts` (locked both directions, collisions vs effective bindings, full shape/scope-expressibility matrix); `keybindings.test.ts` main-side guard; `main-renderer-guard-match.test.ts` semantics agreement | PASS |
+| AC-36 | Help overlay is the surface ("Rebind…", effective bindings, per-Action reset + reset-all); corrupt file tolerated | `discoverability-rebinding.test.tsx` (11 tests: rendering, capture→persist, Escape-cancel, rejection reasons, reset); `discoverability-command-palette.test.tsx` "Rebind…" Action; `keybindings.test.ts` tolerant decode | PASS |
+
+Stage-6 done criteria met: rebindings persist across restart (unit-proven against a fresh file
+read), apply across saves, locked keys reject with a reason, collisions name the conflicting Action,
+no binding enters a save or the event stream, and no migration exists.
+
+## Review
+
+- **First review: APPROVE** (no blocker/high). Findings: F1 medium — cross-tier shadowing (a
+  career-global Action reclaiming a screen key, or a screen Action bound to `Space` under Continue)
+  passes same-scope validation and silently shadows/never fires; the rule itself (not the
+  implementation) is ambiguous → **decision request** `decision-request-binding-collision-tiers.md`.
+  F2 medium — AC-34's mapped Playwright restart proof was unassigned → deferred into ticket 22's
+  AC-37 in this close. F3 low — main↔renderer locked/shape mirror drifted (unescaped `Primary+\S`
+  made main reject every real chord; renderer's `Primary+\S+` accepted `Primary+HK`) → reconciled to
+  `Primary\+\S` on both sides + a semantics-agreement test. F4 low — mount-fetch could clobber a
+  just-adopted rebind → `mutatedRef` guard + race test. F5 low — inline `ActionKeyBadge`s lag
+  overrides → recorded as a shipped limitation in the note. F6 low — `CollidingOverrideError`
+  inert (no producer) → recorded in the note. F7 low — no `open-rebind` → overlay wiring test →
+  added.
+- **Repair pass:** all folded, gate green after folding (454 desktop tests).
+- Judged divergences: the ticket's own decision citation (`issues/14-user-key-binding-overrides.md`)
+  does not exist — the real ticket is `issues/14-user-rebinding.md`; "Rebind…" is a real registry
+  Action so the palette stays a strict command surface.
+
+## Behavior changes
+
+- **Four new typed RPC methods** (`getKeyBindingOverrides`, `setKeyBindingOverride`,
+  `resetKeyBinding`, `resetAllKeyBindings`) in the hand-rolled `AppRpcs` group with schema classes in
+  `contracts/schemas.ts`; each roundtrips. Overrides are a layered `record<ActionId, binding>` over
+  unchanged coded defaults.
+- **Main owns `userData/keybindings.json`** (a sibling of `saves/`) via `main/keybindings.ts`,
+  mirroring `saves.ts`; the renderer never touches the filesystem; a corrupt file falls back to
+  defaults and is fixed on the next write. Nothing enters a save, the event stream, or a migration.
+- **Overrides layer over defaults without a mirror**: the registry stays the single decision point;
+  one pure projector (`withEffectiveBindings`) feeds `resolveDispatch`, the palette, and the help
+  overlay, so all three can never disagree.
+- **Help overlay is the rebinding surface**: effective bindings always visible with the coded default
+  recoverable; in-place capture (press the new key), Escape cancels; per-Action reset and reset-all.
+  The palette lists "Rebind…" (`open-rebind`, app-global) opening the overlay.
+- **Validation** (pure, `renderer/actions/overrides.ts`): locked infra keys reject in both
+  directions; collisions name the conflicting Action against effective bindings (same-scope); shapes
+  and scope-expressibility reject unexpressible/never-firing bindings (lone `g`, arrows, F5,
+  `Primary+HK`, bare/Space on app-global, `Primary+` off app-global, `g x` off career-global).
+- **Renderer-only + main file I/O**; `packages/shared`/`game-engine` untouched; contract surface
+  extended only by the four new procedures.
+
+## Decision records
+
+- ADRs: none.
+- Agent Note **promoted** (`implemented/feature/`): `2026-08-30-user-key-binding-overrides`
+  (rewritten to the implemented format; records the badge-lag limitation and the inert
+  `CollidingOverrideError`). Links updated across spec/issues/map.
+- **Decision request filed:** `decision-request-binding-collision-tiers.md` — whether collision
+  validation should extend across dispatch-priority tiers, recommendation Option A.
+- Agent Note still **proposed**: `2026-08-29-intra-screen-focus-model` (Stage-7 tier-3 e2e review).
+
+## Pre-existing / tracked
+
+- e2e suite stale vs Stage-5/6 UI (conversion is ticket 22); the new `main-renderer-guard-match`
+  reconciliation means the two binding guards now agree (`Primary\+\S`).
+- `matchCommands.test.ts` flake family — pre-existing, deterministic in the gate.
+- Three decision requests open: typed-error wire loss, club-selection commit blocker (both routed
+  out of this effort), binding-collision-tiers (Stage-6 validation strictness).

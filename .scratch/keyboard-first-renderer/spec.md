@@ -346,7 +346,7 @@ relevant. Snippets inlined from the prototypes encode their decisions more preci
   (`Escape`, `Primary+K`, `Primary+/`, `Enter`) are non-rebindable; collisions are validated with
   the conflicting Action named; the help overlay is the rebinding surface (palette offers
   "Rebind…"), with per-Action reset and reset-all.** See
-  [Agent Note](../../.agents/notes/proposed/feature/2026-08-30-user-key-binding-overrides.md).
+  [Agent Note](../../.agents/notes/implemented/feature/2026-08-30-user-key-binding-overrides.md).
   Overrides are a layered `record<ActionId, binding>` over unchanged coded defaults; a two-step
   prefix binding is rebound as one entry. A corrupt or truncated file is tolerated at startup (falls
   back to defaults, fixed on next write); invalid shapes for the prefix layer are rejected.

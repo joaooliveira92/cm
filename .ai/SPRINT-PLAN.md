@@ -50,7 +50,7 @@ Build tickets. Every decision behind these is resolved.
 
 | # | Effort | State | Next move |
 |---|---|---|---|
-| B0 | `keyboard-first-renderer/` | Spec `ready-for-agent`; 8 build tickets (15–22); tickets 15 (data layer), 16 (router), 17 (keyboard spine), 18 (discoverability), 19 (tables), 20 (match-day) shipped | **Frontier: ticket 21 (rebinding), then 22 (e2e).** Two routed-out decision requests block the typed-error and creation-happy-path ACs (see `.scratch/keyboard-first-renderer/decision-request-*.md`). Stage 5 shipped: tables/grid + match-day live keyboard control; Match Day, Transfers, Tactics, and Squad are now driveable with no mouse. |
+| B0 | `keyboard-first-renderer/` | Spec `ready-for-agent`; 8 build tickets (15–22); tickets 15, 16, 17, 18, 19, 20, 21 shipped | **Frontier: ticket 22 (keyboard e2e conversion), the final stage.** Two routed-out decision requests block the typed-error and creation-happy-path ACs (see `.scratch/keyboard-first-renderer/decision-request-*.md`); a third (binding-collision tiers) tunes Stage-6 validation strictness. Stages 5–6 shipped: tables/grid, match-day live keyboard control, and user key binding overrides; all nine screens level-1, Match Day/Transfers/Tactics/Squad no-mouse driveable. |
 | B1 | `training/` | Spec `ready-for-agent`; all 5 decisions resolved; build tickets 03/04/05 unimplemented | The most implementation-ready work in the repo — no design debt in front of it. Player Development math is shipped ([ADR-0011](../docs/adr/0011-deterministic-fractional-player-development.md)); **Training Focus** is not. |
 | B2 | `onboarding/` | Spec `ready-for-agent`; all 11 decisions resolved; 11 build tickets still marked `ready-for-agent` | **Statuses are stale** — recent commits landed wave 1 (01a, 01b, 02) and part of 03/04/05. Re-derive what is actually done from the code before picking up a ticket, and fix the statuses as you go. Likely frontier: 06 (Continue as global career loop). |
 | B3 | `injury-system/` | Spec `ready-for-agent`; 9 build tickets; [ADR-0009](../docs/adr/0009-contact-duel-modeling.md) settles duel modeling | Frontier 01 (injury/fitness attributes) — but see the no-map caveat above first. |
@@ -58,17 +58,18 @@ Build tickets. Every decision behind these is resolved.
 
 ## Immediate next action
 
-**Lane B0 — `keyboard-first-renderer/`: implement ticket 21 (user key binding overrides).**
-Stages 1 (15), 2 (16), 3 (17), 4 (18), and 5 (19 — tables/grid; 20 — match-day live control) shipped;
-gate green throughout, all unit tests green. The pipe continues: 21 → 22. Stage 5 delivered:
-TanStack Table for Squad/Market/Free Agents with roving focus, sort/filter dual-path, contextual bid
-region, explicit result/refresh states with Retry; match-day panel Escape semantics, injury
-Play On/Bring Off, two-step substitution against server-reported caps, and arrow-key tactics
-toggles — Match Day, Transfers, Tactics, and Squad are driveable with no mouse. Notes promoted this
-run: `table-and-grid-navigation` and `matchday-keyboard-flow` proposed → implemented
-(`intra-screen-focus-model` proposed until ticket 21's help-overlay rebinding surface ships the
-remaining tier-3 widget review). Two decision requests (typed-error wire loss, club-selection commit
-blocker) are open and route outside this effort.
+**Lane B0 — `keyboard-first-renderer/`: implement ticket 22 (keyboard e2e conversion), the last stage.**
+Stages 1 (15), 2 (16), 3 (17), 4 (18), 5 (19 — tables/grid; 20 — match-day live control), and 6 (21 —
+user key binding overrides) shipped; gate green throughout, all unit tests green. The pipe's final
+ticket is 22: convert the level-3 journeys (Match Day, Transfers, Tactics, Squad) to keyboard-driven
+e2e with `toBeFocused` + ARIA assertions, keep creation/save-management/error-paths as clicks, cover
+the five mandated coverages, and record the existing click suite's result before and after. Stage 6
+delivered the four rebinding RPC methods (main owns `keybindings.json` under `userData`; renderer
+never touches the filesystem), the help-overlay rebinding surface, per-Action/reset-all, and
+lock/collision/shape validation. Notes promoted this run: `user-key-binding-overrides` proposed →
+implemented (`intra-screen-focus-model` stays proposed until Stage 7's tier-3 e2e widgets ship).
+Three decision requests open: typed-error wire loss and club-selection commit blocker (routed out of
+this effort), and binding-collision-tiers (tunes Stage-6 validation strictness).
 
 **Lane B1 — `training/`:** fallback if the renderer pipe stalls; the most implementation-ready work
 with no design debt.
