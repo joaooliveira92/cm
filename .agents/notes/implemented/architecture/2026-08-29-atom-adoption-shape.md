@@ -1,6 +1,6 @@
 # Agent Note: Atom adoption shape — RPC seam, runtime placement, typed errors, and invalidation
 
-Status: proposed
+Status: implemented
 
 > **Operationalizes [[2026-08-29-renderer-data-layer-effect-atom]]**. The earlier note decided *what* (Atom instead of Query); this note designs *how*. It refines the seam sketch in that note (decode both branches, separate family identity from invalidation keys) and adds the runtime placement rule, error union design, and invalidation map. Both stay active: the earlier note is the rationale, this one is the blueprint.
 
@@ -19,14 +19,14 @@ Ticket 02 established that `@effect/atom-react@4.0.0-rc.112` is v4-compatible an
 
 Each has a wrong answer that would accumulate technical debt or defeat the seam's purpose.
 
-## Proposal
+## Decision
 
 ### Seam shape (`renderer/rpc`)
 
 One public import boundary: `renderer/rpc`. Screens import only this module:
 
 ```ts
-import { squadAtom, useAtomValue, setTrainingFocusMutation } from "./rpc";
+import { leagueTableAtom, useAtomValue, advanceCalendarMutation } from "./rpc";
 ```
 
 They must not import `window.cmClone.call`, `@effect/atom-react`, or `effect/unstable/reactivity` directly. The seam starts as `renderer/rpc.ts`; private physical decomposition (`renderer/rpc/call.ts`, `renderer/rpc/queries.ts`, etc.) is permitted behind the same import boundary.
@@ -151,32 +151,32 @@ A rule like "no `Effect.runPromise` in renderer screens" is deferred until an ob
 
 - **`AtomRpc` adapter layer**. Rejected because the hand-rolled RPC group is not an `RpcGroup`; adapting it adds another abstraction that screens must not see and that would need to be replaced during a future `effect/unstable/rpc` migration anyway.
 
-## Acceptance criteria
+## Consequences
 
-- Career screens access RPC-backed state only through `renderer/rpc`.
-- The seam decodes both success and failure wire payloads.
-- Transport failures, contract-decoding failures, and typed remote failures are distinct error variants.
-- The Atom registry is scoped to one active save via `key={saveId}` and replaced on save switch.
-- Atom families use complete request identity (not just `saveId`).
-- Reactivity keys describe invalidation domains and are not conflated with cache identity.
-- Every save-scoped query subscribes to `["save", saveId]`.
-- `advanceCalendar` invalidates `["save", saveId]` only after success.
-- Specific mutations invalidate only state they can authoritatively change.
-- Management reads use SWR with visible refresh state.
-- Current match state never displays stale progress through SWR.
-- Match atom disposal never abandons the durable linked match.
-- Match polling and event reveal remain independently paced.
-- `startMatch` is a Fixture-bound mutation, not an `opponentId`-keyed query.
-- `AtomRpc` is not introduced for the hand-rolled RPC group.
-- `effect` and `@effect/atom-react` use the same exact RC version; `pnpm install --frozen-lockfile` passes.
-- Existing Effect lint applies to renderer seam files.
-- Automated boundary checks reject direct preload and Atom imports from career screens.
-- No renderer-specific semantic Effect rule is added without an observed recurring problem.
+- **The seam is as strong as its enforced boundary, and the boundary rule shipped with it** in
+  `scripts/effect-lint.ts` (the `renderer-boundary` rule, gate-asserted by a failing fixture in every
+  run). A career screen that imports `window.cmClone.call`, `@effect/atom-react`, or
+  `effect/unstable/reactivity` outside `renderer/rpc` is a lint error.
+- **`effect/unstable/reactivity`'s fluid API is one file away**: only `renderer/rpc` imports it; a
+  later rename lands in the seam.
+- **RC churn is accepted**: every `effect` bump also bumps `@effect/atom-react` in the same catalog
+  block.
+- **No devtools.** Atom has no React Query Devtools; debugging cache and invalidation behaviour is
+  harder, accepted.
+- **MatchDay polling was deliberately not converted.** The hand-rolled loop and its three tuned
+  constants stay; the watch is that it does not become the pattern new code copies.
+- Verified state at ship: career screens access RPC-backed state only through `renderer/rpc`; the
+  seam decodes both wire branches into three distinct failure variants; the registry is scoped to one
+  save via `key={saveId}`; atom families use complete request identity; queries subscribe to
+  `["save", saveId]`; `advanceCalendar` invalidates only after success; specific mutations invalidate
+  only what they change; management reads use SWR with visible refresh state; match state never goes
+  stale through SWR; match polling and reveal stay independently paced; no `AtomRpc`; the catalog pins
+  match at the exact rc and `pnpm install --frozen-lockfile` passes.
 
-## Risks
+## Testing
 
-- **The seam is as strong as its enforced boundary.** If a career screen imports `window.cmClone.call` directly (perhaps in a hurry, during a bug fix), the seam is silently bypassed. Dependency-boundary lint rules must ship with the seam, not as a follow-up.
-- **`effect/unstable/reactivity` is explicitly unstable.** API may move before v4 stabilises. Mitigated by the seam: only `renderer/rpc` imports from `effect/unstable/reactivity`; a later rename is one file.
-- **RC churn.** Every `effect` bump requires a coordinated `@effect/atom-react` bump. The repo already accepts this for other packages; it is one more line in the same catalog block.
-- **No devtools.** Atom has no equivalent of React Query Devtools. Debugging cache and invalidation behaviour is harder.
-- **MatchDay polling is the hard conversion that isn't converted.** The hand-rolled loop stays; the risk is that it diverges from the seam pattern over time, becoming the "one that got away" that new developers copy instead of using atoms.
+- Seam wire-decode unit tests over canned success/failure/malformed payloads (`renderer-rpc-seam.test.ts`).
+- Registry-level integration test proving a mutation invalidates the mounted query atoms with no manual
+  reload (`renderer-screens.test.tsx`).
+- Boundary-lint test asserting the gate-asserted fixture trips all three violation classes.
+- `pnpm check:all` green.

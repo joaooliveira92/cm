@@ -1,6 +1,6 @@
 # Agent Note: Renderer data layer is Effect Atom, not TanStack Query
 
-Status: proposed
+Status: implemented
 
 > **Partially supersedes [[2026-08-28-renderer-boundary-posture]]**, whose decision clause is "No
 > Effect runtime in the renderer." That clause no longer holds; the rest of that note — the IPC
@@ -26,9 +26,9 @@ committed to Effect v4.
 That belief was wrong, and the cost of acting on it would have been a permanent second async model
 in the renderer.
 
-## Proposal
+## Decision
 
-The renderer's data layer will be **Effect Atom**. TanStack Query will not be adopted.
+The renderer's data layer is **Effect Atom**. TanStack Query was not adopted.
 
 The reactive engine ships inside `effect` itself: `effect/unstable/reactivity` is present in the
 installed `effect@4.0.0-rc.112`, exporting `Atom`, `AtomRegistry`, `AtomRef`, `AtomRpc`,
@@ -96,29 +96,32 @@ a preload-level fix rather than a reason to change the renderer.
   package was renamed twice (`@effect-rx/rx` → `@effect-atom/atom` → upstreamed into core) and the
   dead intermediate is the most discoverable of the three.
 
-## Acceptance criteria
+## Consequences
 
-- No renderer file contains a `useState`/`useEffect` fetch triple or a hand-called `reload()`.
-- `@effect/atom-react` is pinned in `pnpm-workspace.yaml`'s `catalog:` at the exact rc version
-  matching the `effect` pin, and `pnpm install` reports no peer conflict.
-- Screens consume typed domain errors from the Effect error channel rather than string-matching on
-  `_tag`.
-- A mutation invalidates its dependent queries without any screen-local refetch call.
-- `pnpm check:all` passes.
+- **Betting the data layer on an rc-tagged package** is now a shipped reality: `effect@4.0.0-rc.112`
+  and `@effect/atom-react@4.0.0-rc.112` are pinned through the workspace `catalog:`, and the renderer
+  breaks on an rc bump alongside the main process. Mitigation held: `effect/unstable/*`'s fluid API is
+  reachable only from `renderer/rpc`, so a rename is one seam.
+- **No devtools.** Query's devtools were genuinely good and Atom has none; debugging cache and
+  invalidation is harder, accepted.
+- **The MatchDay polling loop stayed hand-rolled** with its three constants, exactly as decided — the
+  hardest conversion was deliberately not converted (see ticket 08's note).
+- **No renderer file uses a `useState`/`useEffect` fetch triple or a hand-called `reload()`**; a
+  mutation invalidates its dependent queries through `Reactivity.mutation` with no screen-local
+  refetch call; screens consume typed domain errors by pattern-matching the union, not
+  string-matching `_tag`; `pnpm install --frozen-lockfile` and `pnpm check:all` both pass.
+- **The boundary-posture reversal is live**: `AtomRegistry` runs in the renderer at the active-career
+  subtree only. The IPC seam keeps its shape and typed-error preservation is handled at the seam, not
+  the preload. The relationship with [[2026-08-28-renderer-boundary-posture]] stands flagged for a
+  later `cm-archive-notes` pass.
 
-## Risks
+## Testing
 
-- **Betting the data layer on an rc-tagged package.** `effect@4.0.0-rc.112` is already a whole-repo
-  commitment, so this widens rather than creates the exposure — but the renderer would now break on
-  an rc bump, not just the main process.
-- **`effect/unstable/*` is explicitly unstable.** The reactivity module's API may move before v4
-  stabilises. Mitigated by the same seam discipline used for the binding library: screens import a
-  local module, not the package.
-- **No devtools.** Query's devtools are genuinely good and Atom has no equivalent; debugging cache
-  and invalidation behaviour will be harder.
-- **The MatchDay polling loop is the hard conversion.** Its `REVEAL_INTERVAL_MS`,
-  `POLL_INTERVAL_MS` and `REFETCH_THRESHOLD` deliberately decouple reveal pace from fetch pace. A
-  naive port to any managed refetch will break it, independently of which library is chosen.
-- **The reversal could be re-litigated.** Anyone reading [[2026-08-28-renderer-boundary-posture]]
-  alone will conclude the renderer must stay runtime-free. That note is left active and this one
-  flags the relationship; if the split proves confusing, consolidate in a `cm-archive-notes` pass.
+- Seam decode tests over canned success/failure/malformed wire payloads (transport vs
+  contract-decode vs typed-remote variants).
+- Registry-level integration test: a mounted `LeagueTableScreen` under `RegistryProvider` re-fetches a
+  new wire payload after `advanceCalendar` succeeds, with no manual reload; failure cases assert no
+  invalidation.
+- Invalidation-rule unit tests (`INVALIDATION_RULES`) covering success-only invalidation and no
+  wildcards.
+- `pnpm check:all` green.
