@@ -13,6 +13,7 @@ catalog:
   "@effect/platform-node": 4.0.0-rc.112
   "@effect/sql-sqlite-node": 4.0.0-rc.112
   "@effect/vitest": 4.0.0-rc.112
+  "@tanstack/react-router": ^1.170.32
   typescript: ^7.0.0
   "@types/node": ^24
 

@@ -23,6 +23,7 @@
     "@cm-clone/shared": "workspace:*",
     "@effect/atom-react": "catalog:",
     "@effect/sql-sqlite-node": "catalog:",
+    "@tanstack/react-router": "catalog:",
     "effect": "catalog:",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
