@@ -149,7 +149,7 @@ trigger paths and nudges the Severity matrix toward worse outcomes.
 
 **Contact Injury** (Path A):
 An injury caused by a physical duel/collision (see
-[ADR-0009](docs/adr/0009-contact-duel-modeling.md)), risk =
+[contact duel modeling](.agents/notes/implemented/feature/2026-08-27-contact-duel-modeling.md)), risk =
 `BaseCollision × (defender Aggression / attacker Bravery) × attacker Injury Proneness`; leans
 structural (broken toe, twisted ankle, dead leg).
 
@@ -173,7 +173,7 @@ Weights. A Commentary Line is a Commentary Template with its slots (player name,
 filled from the source Match Event's payload; the match engine and game-engine package never assemble
 a Commentary Line themselves — this is display data, not simulation state.
 _Avoid_: Generator, script (there is no generation/composition step in v1 — see
-[ADR-0008](docs/adr/0008-templated-match-commentary.md))
+[templated match commentary](.agents/notes/implemented/architecture/2026-08-27-templated-match-commentary.md))
 
 ### Tactics
 
@@ -280,7 +280,7 @@ A club's fixed rank among the League's 20 clubs (e.g. big/mid/small), set once a
 life of a career in v1 — nothing in v1 moves a club between tiers. The single shared input both
 Transfer Budget/Wage Budget (below) and Board Objective (see "Board & objectives") derive from
 independently; deriving one from the other was considered and rejected (see
-[ADR-0006](docs/adr/0006-board-objectives-and-manager-sacking.md)).
+[board objectives and manager sacking](.agents/notes/implemented/feature/2026-08-27-board-objectives-and-manager-sacking.md)).
 
 **Transfer Budget**:
 A per-club, per-Season pool of Credits available to spend on transfer fees, derived at Season start
@@ -540,3 +540,18 @@ model is stored: derived values that ADR-0001 already fixed as computed-on-read 
 Overall Rating, Transfer Value) are still computed at query time from stored primitives, not persisted
 a second time.
 _Avoid_: Projection table (fine informally; "read model" is the term used across tickets)
+
+### Application shell
+
+**Save**:
+One career, stored as one SQLite file and addressed by a branded `SaveId`. It is the unit the player
+creates, loads, deletes, and quits. There is exactly one human manager per Save. A Save is durable at
+commit — every Command that succeeds has already been written — so a Save is never "unsaved" and there
+is no save action for the player to invoke.
+_Avoid_: Career (used loosely in routes and types like `CareerDestination`, but the noun is Save),
+game, slot
+
+**Save List**:
+The top-level screen, and the only navigation destination outside a Save: it lists existing Saves and
+starts the creation flow. This is where quitting a Save returns to.
+_Avoid_: Main Menu, title screen (the imported specs' term; see the Group A reconciliation ledger)

@@ -47,7 +47,10 @@ interface Action {
 - `id` is a kebab-case string key (`"advance-calendar"`, `"place-bid"`) — stable across screens, shared by the key map and help overlay.
 - `label` is a short human-readable string for palette/help display.
 - `binding` is the default keyboard shortcut, optional. Player rebinding is a separate question gated by ticket 05.
-- Anchor: ADR-0012 (`docs/adr/0012-action-registry-for-keyboard-first.md`).
+- This note is the sole record of the Action registry decision. It previously had a companion ADR
+  (ADR-0012), which restated this note's decision and pointed back at it; when the numbered ADR layer
+  was retired, that ADR was fully absorbed here rather than migrated, because it carried no
+  proposition this note does not already state.
 
 ## Verification
 

@@ -17,7 +17,7 @@ generated tickets, what format they take, or how a spec/ticket that collapses mu
   resolved `cm-wayfinder` ticket that produced a `proposed/{class}/` note, the decision's bullet ends
   with that ticket's own gist+link sentence, copied verbatim rather than re-derived prose — the same
   gist-then-link shape used throughout this convention (map Decisions-so-far, ticket `## Answer` per
-  [ticket 02](../../../../.scratch/skill-suite-merge/issues/02-ticket-note-relationship.md)). A
+  the `skill-suite-merge` effort's ticket 02, since archived out of the working tree). A
   decision whose source ticket carried no note (a scoping/fact-only/abandoned answer, per ticket 02's
   note-worthiness test) is stated in plain prose with no link — not every decision has one.
   One decision, one bullet, one link: never fold two notes' gists into a single paragraph or a shared

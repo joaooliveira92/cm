@@ -2,7 +2,7 @@
 
 The setup tutorial takes a new contributor from prerequisites to a working checkout. The
 contributor reference that follows covers repository layout, daily workflow, and CI organization.
-Design rationale belongs in [CONTEXT.md](../CONTEXT.md), [adr](adr/), and
+Design rationale belongs in [CONTEXT.md](../CONTEXT.md), [.agents/notes/](../.agents/notes/), and
 [notes](../.agents/notes/).
 
 ## Setup tutorial

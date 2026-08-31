@@ -8,6 +8,6 @@ These are an audit trail, not documentation: they record which commands were act
 they actually printed, so a later reader can tell a verified claim from an assumed one. They are not
 maintained after the fact — a stale report is a historical record, not a bug.
 
-Durable outcomes belong elsewhere: decisions in [docs/adr/](../../docs/adr/) or
+Durable outcomes belong elsewhere: decisions in [.agents/notes/](../../.agents/notes/) or
 `.agents/notes/`, capabilities in [../TRACEABILITY.md](../TRACEABILITY.md), status in
 [../SPRINT-PLAN.md](../SPRINT-PLAN.md).

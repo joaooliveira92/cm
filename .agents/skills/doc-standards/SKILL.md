@@ -12,7 +12,7 @@ The documentation rules live in [AGENTS.md](../../../AGENTS.md), not in this ski
 - [AGENTS.md](../../../AGENTS.md) — standing orders, budgets, and the quality gates this skill protects.
 - [docs/agents/domain.md](../../../docs/agents/domain.md) — how to consume the domain docs: read CONTEXT.md and the ADRs that touch the area before you change it.
 - [CONTEXT.md](../../../CONTEXT.md) — the domain glossary; name concepts with its vocabulary, not synonyms.
-- [docs/adr/](../../../docs/adr/) — durable structural decisions; flag a contradiction rather than overriding it silently.
+- [.agents/notes/](../../notes/) — durable design decisions; flag a contradiction rather than overriding it silently.
 - [docs/agents/notes.md](../../../docs/agents/notes.md) — when a decision earns an Agent Note, how to file it, and the section skeleton it must keep.
 - [docs/agents/unslop.md](../../../docs/agents/unslop.md) — prose style: patterns to cut, plain speech, active voice.
 - [README.md](../../../README.md) — the repo entry point and landing page.

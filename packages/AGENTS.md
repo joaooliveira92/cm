@@ -33,7 +33,7 @@ nested `Layer.provide`). Schema contracts live in `contracts`, not inline in han
 ## Domain vocabulary
 
 Name domain concepts with the vocabulary in [CONTEXT.md](../CONTEXT.md), never drifted synonyms;
-flag rather than override an [ADR](../docs/adr/) when they contradict. See
+flag rather than override an [Agent Note](../.agents/notes/) when they contradict. See
 [docs/agents/domain.md](../docs/agents/domain.md) for how to consume the domain docs before
 exploring.
 

@@ -16,7 +16,7 @@ referenced throughout.
   `apps/desktop`, `packages/game-engine`, `packages/shared`, `packages/contracts`.
 - **e2e-coverage** (`.scratch/e2e-coverage/`) — wave 1 Playwright coverage spec for the desktop
   app. Closed at handoff.
-- **Player Development** (part of the Training milestone, [ADR-0011](adr/0011-deterministic-fractional-player-development.md)) —
+- **Player Development** (part of the Training milestone, [deterministic fractional Player Development](../.agents/notes/implemented/feature/2026-08-28-deterministic-fractional-player-development.md)) —
   deterministic, fraction-of-gap Attribute growth toward Potential Ability. Implemented.
 - **Training** (`.scratch/training/`) — Player Development (shipped, above) plus **Training Focus** (per-player, per-Category growth bias). Spec is `ready-for-agent`; both design tickets
   resolved, nothing left unspecified. Next step is ticketing/implementation, not more design.

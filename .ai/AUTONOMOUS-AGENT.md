@@ -67,7 +67,7 @@ exist: resolve their decision tickets, spec them, slice them, implement their fr
 what is charted comes before charting more.
 
 A map is **complete** when it has closed at handoff, per
-[ADR-0010](../docs/adr/0010-post-handoff-decisions-live-in-adrs-map-closes.md): every decision
+[classifying post-handoff decisions](../.agents/notes/implemented/process/2026-08-27-classifying-post-handoff-decisions.md): every decision
 ticket in `.scratch/<effort>/issues/` carrying a `Type:` line reads `Status: resolved`, and the
 effort has handed off — a `spec.md` exists, or the effort is explicitly archived or abandoned. A
 ticket parked at `claimed`, `open`, or `ready-for-agent` is not resolved. Nor is one whose answer was

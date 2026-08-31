@@ -26,9 +26,15 @@ Every Agent Note's path encodes two axes: `.agents/notes/{lifecycle}/{class}/yyy
 
 The `yyyy-mm-dd` in the filename is the date the decision was first proposed.
 
-## Coexistence with `docs/adr/`
+## Agent Notes are the only decision record
 
-`docs/adr/` stays the sole home for repo-wide, durable, structural decisions that outlive any single effort. `.agents/notes/{lifecycle}/architecture/` is for structural calls scoped to one wayfinder map or implementation effort — too local or provisional for a permanent ADR, but still worth lifecycle tracking. An `implemented/architecture/` note can later be promoted to a full ADR by hand if it turns out to be repo-wide and durable after all; this is a judgment call, not a scripted step.
+This repo once ran two decision layers: twelve numbered ADRs under `docs/adr/` for repo-wide, durable, structural decisions, and `.agents/notes/{lifecycle}/architecture/` for structural calls scoped to one effort. The ADR layer was retired. Its twelve records were migrated into `.agents/notes/implemented/` (see the Decision-record column of [.ai/TRACEABILITY.md](../../.ai/TRACEABILITY.md) for the mapping) and `docs/adr/` was deleted.
+
+There is now no distinction to maintain between "durable enough for an ADR" and "scoped to one effort". A repo-wide structural decision and an effort-scoped one are both `architecture`-class notes; the lifecycle folder, not the directory, carries how settled it is. Do not create `docs/adr/`, and do not offer to write an ADR.
+
+**Historical citations.** `ADR-0001` … `ADR-0012` still appear in roughly 110 source and test comments, and in some older notes and reports. They were deliberately left in place rather than rewritten in bulk. Read such a citation as a stable historical identifier pointing at the note that absorbed it; `.ai/TRACEABILITY.md` maps every one. Two ADRs were absorbed into notes that already stated their content rather than migrated to new files: ADR-0001 into `proposed/architecture/2026-08-29-player-ratings-are-derived-projections`, and ADR-0012 into `implemented/architecture/2026-08-29-action-model`.
+
+**A re-run of `cm-setup` would undo part of this.** The setup skill's `domain.md` template still describes the generic `CONTEXT.md` + `docs/adr/` convention, and installing it would overwrite [domain.md](domain.md) with ADR guidance. The templates were left generic on purpose — abolishing ADRs is this repo's call, not a universal one — so if `cm-setup` is ever re-run here, re-apply the ADR removal to `docs/agents/domain.md` afterwards.
 
 ## The file format
 

@@ -6,37 +6,34 @@ How the engineering skills should consume this repo's domain documentation when 
 
 - **[CONTEXT.md](../../CONTEXT.md)** at the repo root, or
 - **`CONTEXT-MAP.md`** at the repo root if it exists: it points at one [CONTEXT.md](../../CONTEXT.md) per context. Read each one relevant to the topic.
-- **[docs/adr](../../docs/adr)**: read ADRs that touch the area you're about to work in. In multi-context repos, also check `src/<context>/docs/adr/` for context-scoped decisions.
+- **[.agents/notes/](../../.agents/notes/)**: read the Agent Notes that touch the area you're about to work in, starting with `implemented/` and `proposed/`. See [notes.md](notes.md) for the lifecycle and class layout.
 
-If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
+If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill creates `CONTEXT.md` lazily when terms actually get resolved, and `cm-wayfinder` / `cm-implement` write notes when decisions actually get made.
+
+## There is no `docs/adr/` in this repo
+
+This repo has no ADR layer. It once had twelve numbered records under `docs/adr/`; they were retired and migrated into Agent Notes under `.agents/notes/implemented/`, and the directory was removed. **Agent Notes are the sole decision record.**
+
+Do not create `docs/adr/`, and do not offer to write an ADR. A decision that would have been an ADR — repo-wide, durable, structural — is an `architecture`-class note; see the routing rule in [the post-handoff classification note](../../.agents/notes/implemented/process/2026-08-27-classifying-post-handoff-decisions.md).
+
+You will still find `ADR-0001` … `ADR-0012` cited in source comments and in older notes and reports. Those are historical identifiers for decisions that now live in notes; the mapping is the Decision-record column of [.ai/TRACEABILITY.md](../../.ai/TRACEABILITY.md). Treat such a citation as a pointer to the corresponding note, not as evidence that an ADR file exists.
 
 ## File structure
 
-Single-context repo (most repos):
+Single-context repo (this repo):
 
 ```
 /
 ├── CONTEXT.md
-├── docs/adr/
-│   ├── 0001-event-sourced-orders.md
-│   └── 0002-postgres-for-write-model.md
+├── .agents/notes/
+│   ├── proposed/{feature,bug-fix,simplification,architecture,process,testing}/
+│   ├── implemented/…
+│   ├── rejected/…
+│   └── archived/…
 └── src/
 ```
 
-Multi-context repo (presence of `CONTEXT-MAP.md` at the root):
-
-```
-/
-├── CONTEXT-MAP.md
-├── docs/adr/                          ← system-wide decisions
-└── src/
-    ├── ordering/
-    │   ├── CONTEXT.md
-    │   └── docs/adr/                  ← context-specific decisions
-    └── billing/
-        ├── CONTEXT.md
-        └── docs/adr/
-```
+Multi-context repo (presence of `CONTEXT-MAP.md` at the root): one `CONTEXT.md` per context, with notes still centralized under `.agents/notes/`.
 
 ## Use the glossary's vocabulary
 
@@ -44,8 +41,8 @@ When your output names a domain concept (in an issue title, a refactor proposal,
 
 If the concept you need isn't in the glossary yet, that's a signal: either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/domain-modeling`).
 
-## Flag ADR conflicts
+## Flag decision conflicts
 
-If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
+If your output contradicts an existing Agent Note, surface it explicitly rather than silently overriding:
 
-> _Contradicts ADR-0007 (event-sourced orders), but worth reopening because…_
+> _Contradicts the fixture-driven calendar note (no day clock), but worth reopening because…_

@@ -2,7 +2,7 @@
 
 A local, single-player Football-management sim (Championship Manager 2003/04-style), built as an
 Electron desktop app. Game state is event-sourced. See [CONTEXT.md](CONTEXT.md) for the domain
-model and glossary, and [docs/adr/](docs/adr/) for design decisions.
+model and glossary, and [.agents/notes/](.agents/notes/) for design decisions.
 
 ## Stack
 
@@ -22,7 +22,7 @@ Here is the structured table summarizing the codebase directories and their func
 | [packages/contracts](packages/contracts)  | Package | Contains the @effect/rpc contract shared between the renderer and main processes. |
 | [packages/game-engine](packages/game-engine) | Package | Handles match simulation. |
 | [packages/shared](packages/shared) | Package | Contains domain logic and game-design data (e.g., position/role weights, commentary templates) shared across all packages. |
-| [docs/adr/](docs/adr/) | Documentation | Architectural Decision Records (ADRs) tracking structural design choices. |
+| [.agents/notes/](.agents/notes/) | Documentation | Agent Notes: the decision record, tracking structural and feature design choices through a proposed → implemented lifecycle. |
 | [docs/agents/](docs/agents/), [AGENTS.md](AGENTS.md) | Documentation | Operational guidelines and conventions for AI or automated agents working in the repository. |
 | [.scratch/](.scratch/) | Tooling / Logs | Internal repository issue tracker (referenced via docs/agents/issue-tracker.md). |
 

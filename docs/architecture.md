@@ -1,7 +1,7 @@
 # cm-clone Architecture
 
 A pnpm monorepo for a local, single-player Championship Manager-style Electron game. See
-[CONTEXT.md](../CONTEXT.md) for the domain glossary and [docs/adr/](adr/) for the rationale behind
+[CONTEXT.md](../CONTEXT.md) for the domain glossary and [.agents/notes/](../.agents/notes/) for the rationale behind
 the decisions below.
 
 ## Packages
@@ -66,7 +66,7 @@ sequenceDiagram
 There is no event-sourced command/decider pipeline wired up yet for gameplay actions — `saves.ts`,
 `squad.ts`, and `tactics.ts` currently read/write SQLite directly per RPC call, matching each
 ticket's scope so far. The event-sourced Decider architecture described in
-[ADR-0007](adr/0007-domain-bounded-deciders-and-chunked-match-resimulation.md) is where later
+[domain-bounded deciders and chunked resimulation](../.agents/notes/implemented/architecture/2026-08-27-domain-bounded-deciders-and-chunked-resimulation.md) is where later
 tickets (match engine, transfers, season/calendar) are expected to introduce it.
 
 ## What's implemented so far

@@ -51,10 +51,10 @@ Build tickets. Every decision behind these is resolved.
 | # | Effort | State | Next move |
 |---|---|---|---|
 | B0 | `keyboard-first-renderer/` | Spec `ready-for-agent`; 8 build tickets (15–22); tickets 15, 16, 17, 18, 19, 20, 21 shipped | **Frontier: ticket 22 (keyboard e2e conversion), the final stage.** Two routed-out decision requests block the typed-error and creation-happy-path ACs (see `.scratch/keyboard-first-renderer/decision-request-*.md`); a third (binding-collision tiers) tunes Stage-6 validation strictness. Stages 5–6 shipped: tables/grid, match-day live keyboard control, and user key binding overrides; all nine screens level-1, Match Day/Transfers/Tactics/Squad no-mouse driveable. |
-| B1 | `training/` | Spec `ready-for-agent`; all 5 decisions resolved; build tickets 03/04/05 unimplemented | The most implementation-ready work in the repo — no design debt in front of it. Player Development math is shipped ([ADR-0011](../docs/adr/0011-deterministic-fractional-player-development.md)); **Training Focus** is not. |
+| B1 | `training/` | Spec `ready-for-agent`; all 5 decisions resolved; build tickets 03/04/05 unimplemented | The most implementation-ready work in the repo — no design debt in front of it. Player Development math is shipped ([deterministic fractional Player Development](../.agents/notes/implemented/feature/2026-08-28-deterministic-fractional-player-development.md)); **Training Focus** is not. |
 | B2 | `onboarding/` | Spec `ready-for-agent`; all 11 decisions resolved; 11 build tickets still marked `ready-for-agent` | **Statuses are stale** — recent commits landed wave 1 (01a, 01b, 02) and part of 03/04/05. Re-derive what is actually done from the code before picking up a ticket, and fix the statuses as you go. Likely frontier: 06 (Continue as global career loop). |
-| B3 | `injury-system/` | Spec `ready-for-agent`; 9 build tickets; [ADR-0009](../docs/adr/0009-contact-duel-modeling.md) settles duel modeling | Frontier 01 (injury/fitness attributes) — but see the no-map caveat above first. |
-| B4 | `player-ratings-derived/` | 4 build tickets against already-shipped behavior | Test and documentation hardening for [ADR-0001](../docs/adr/0001-derived-player-ratings-and-value.md). Good filler between feature sprints; low risk, real value. |
+| B3 | `injury-system/` | Spec `ready-for-agent`; 9 build tickets; [contact duel modeling](../.agents/notes/implemented/feature/2026-08-27-contact-duel-modeling.md) settles duel modeling | Frontier 01 (injury/fitness attributes) — but see the no-map caveat above first. |
+| B4 | `player-ratings-derived/` | 4 build tickets against already-shipped behavior | Test and documentation hardening for [player ratings are derived projections](../.agents/notes/proposed/architecture/2026-08-29-player-ratings-are-derived-projections.md). Good filler between feature sprints; low risk, real value. |
 
 ## Immediate next action
 
@@ -99,7 +99,7 @@ own decision.
   body — the decision is settled, the code is not. Read both before concluding anything.
 - **Mixed numbering.** `cm-clone/` and `onboarding/` interleave decision tickets, build tickets, and
   follow-on decisions in one number space (`onboarding/` also has duplicate numbers: two `02`s, two
-  `03`s). [ADR-0010](../docs/adr/0010-post-handoff-decisions-live-in-adrs-map-closes.md) accepts this
+  `03`s). [classifying post-handoff decisions](../.agents/notes/implemented/process/2026-08-27-classifying-post-handoff-decisions.md) accepts this
   as process debt.
 - **Absence of a `Type:` line is a fragile discriminator** for "this is a build ticket" — it may just
   be missing. ADR-0010 says so explicitly.

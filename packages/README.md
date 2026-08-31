@@ -1,7 +1,7 @@
 # Packages
 
 The `@cm-clone/*` libraries behind the app. See [README.md](../README.md) for the stack overview,
-[CONTEXT.md](../CONTEXT.md) for the domain glossary, [docs/adr/](../docs/adr/) for design rationale,
+[CONTEXT.md](../CONTEXT.md) for the domain glossary, [.agents/notes/](../.agents/notes/) for design rationale,
 and [docs/architecture.md](../docs/architecture.md) for the data-flow diagram and the role each
 package plays in it.
 

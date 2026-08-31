@@ -29,7 +29,9 @@
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/domain-modeling/SKILL.md",
-      "computedHash": "a11713c0ff7870efa3c331b2e273f09116158485246edc89ae5088eefd1b0b48"
+      "computedHash": "a11713c0ff7870efa3c331b2e273f09116158485246edc89ae5088eefd1b0b48",
+      "forked": true,
+      "forkReason": "ADR references retargeted at Agent Notes; this repo has no docs/adr/. Upstream hash is the pre-fork baseline; do not re-sync without re-applying the fork."
     },
     "grill-me": {
       "source": "mattpocock/skills",
@@ -65,7 +67,9 @@
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
-      "computedHash": "2449db6ab1ded9581f69fcc56c1f64818112d05e271fd4c5da23c6523f9d3d9d"
+      "computedHash": "2449db6ab1ded9581f69fcc56c1f64818112d05e271fd4c5da23c6523f9d3d9d",
+      "forked": true,
+      "forkReason": "ADR references retargeted at Agent Notes; this repo has no docs/adr/. Upstream hash is the pre-fork baseline; do not re-sync without re-applying the fork."
     },
     "prototype": {
       "source": "mattpocock/skills",

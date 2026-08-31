@@ -27,7 +27,7 @@ via [/sprint](../.opencode/command/sprint.md) or [/boot](../.opencode/command/bo
 
 - **Tickets and specs** → `.scratch/<effort>/`, per [issue-tracker.md](../docs/agents/issue-tracker.md).
   There is no `.ai/specs/` index; the tracker is the index.
-- **Decisions** → [docs/adr/](../docs/adr/) if repo-wide and durable, `.agents/notes/` if scoped to
+- **Decisions** → [.agents/notes/](../.agents/notes/), `architecture`-class if repo-wide and durable, otherwise scoped to
   one effort, per [notes.md](../docs/agents/notes.md).
 - **Research** → `docs/research/<effort>-<topic>.md`.
 - **Narrative status** → [docs/roadmap.md](../docs/roadmap.md). SPRINT-PLAN.md is the machine-facing

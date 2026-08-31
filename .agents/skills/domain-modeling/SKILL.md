@@ -1,6 +1,6 @@
 ---
 name: domain-modeling
-description: Build and sharpen a project's domain model. Use when discussing codebase terminology, writing or editing a CONTEXT.md, or recording or editing an ADR.
+description: Build and sharpen a project's domain model. Use when discussing codebase terminology, writing or editing a CONTEXT.md, or recording a durable design decision.
 ---
 
 # Domain Modeling
@@ -9,35 +9,38 @@ Actively build and sharpen the project's domain model as you design. This is the
 
 ## File structure
 
+<!-- repo-fork: this repo has no `docs/adr/`. Decisions are Agent Notes under `.agents/notes/`.
+     Diverges from upstream mattpocock/skills; see docs/agents/domain.md. -->
+
 Most repos have a single context:
 
 ```
 /
 ├── CONTEXT.md
-├── docs/
-│   └── adr/
-│       ├── 0001-event-sourced-orders.md
-│       └── 0002-postgres-for-write-model.md
+├── .agents/notes/
+│   ├── proposed/{feature,bug-fix,simplification,architecture,process,testing}/
+│   ├── implemented/…
+│   ├── rejected/…
+│   └── archived/…
 └── src/
 ```
 
-If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The map points to where each one lives:
+If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The map points to where each one lives, and each context gets its own glossary:
 
 ```
 /
 ├── CONTEXT-MAP.md
-├── docs/
-│   └── adr/                          ← system-wide decisions
-├── src/
-│   ├── ordering/
-│   │   ├── CONTEXT.md
-│   │   └── docs/adr/                 ← context-specific decisions
-│   └── billing/
-│       ├── CONTEXT.md
-│       └── docs/adr/
+├── .agents/notes/                     ← decisions, whatever context they belong to
+└── src/
+    ├── ordering/
+    │   └── CONTEXT.md
+    └── billing/
+        └── CONTEXT.md
 ```
 
-Create files lazily: only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
+Create files lazily: only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved.
+
+**This repo has no ADR layer.** It had one — twelve numbered records under `docs/adr/` — and retired it; the records were migrated into `.agents/notes/implemented/` and the directory removed. Do not create `docs/adr/`, and do not offer to write an ADR.
 
 ## During the session
 
@@ -63,12 +66,12 @@ When a term is resolved, update `CONTEXT.md` right there. Don't batch these up: 
 
 `CONTEXT.md` should be totally devoid of implementation details. Do not treat `CONTEXT.md` as a spec, a scratch pad, or a repository for implementation decisions. It is a glossary and nothing else.
 
-### Offer ADRs sparingly
+### Offer decision records sparingly
 
-Only offer to create an ADR when all three are true:
+Only offer to write an Agent Note when all three are true:
 
 1. **Hard to reverse**: the cost of changing your mind later is meaningful
 2. **Surprising without context**: a future reader will wonder "why did they do it this way?"
 3. **The result of a real trade-off**: there were genuine alternatives and you picked one for specific reasons
 
-If any of the three is missing, skip the ADR. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
+If any of the three is missing, skip the note. Use the format and the lifecycle/class layout in [notes.md](../../../docs/agents/notes.md). A decision that would once have been an ADR — repo-wide, durable, structural — is an `architecture`-class note.

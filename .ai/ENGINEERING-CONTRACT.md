@@ -15,7 +15,7 @@ AGENTS.md leaves implicit.
 - [CONTEXT.md](../CONTEXT.md) is binding for **domain language**. A term defined there means exactly
   what it says there, in code, tests, tickets, and UI copy. Never silently redefine one, never use a
   listed _Avoid_ synonym, and never introduce a competing name for a modeled concept.
-- [docs/adr/](../docs/adr/) is binding for **structural decisions**. An ADR is overturned by a new
+- [.agents/notes/](../.agents/notes/) is binding for **structural decisions**. A note is overturned by a new
   ADR, not by an implementation that quietly diverges.
 - [README.md](../README.md) orients a reader to the stack and layout. It is descriptive, not binding.
 
@@ -50,13 +50,13 @@ consumes all three.
 
 Game state is event-sourced. That is a load-bearing claim, not a description:
 
-- Commands never mutate state directly. A command goes to a **decider** ([ADR-0007](../docs/adr/0007-domain-bounded-deciders-and-chunked-match-resimulation.md)),
+- Commands never mutate state directly. A command goes to a **decider** ([domain-bounded deciders and chunked resimulation](../.agents/notes/implemented/architecture/2026-08-27-domain-bounded-deciders-and-chunked-resimulation.md)),
   which validates it and returns events; state is the fold of events.
 - React state and component state are **never** authoritative. A screen may hold selection, focus,
   and draft input; it may not hold the truth about a squad, a match, or a transfer.
 - Distinguish authoritative persisted state (e.g. **Potential Ability**), derived read-time
   projections (**Position Rating**, **Overall Rating**, **Transfer Value** — see
-  [ADR-0001](../docs/adr/0001-derived-player-ratings-and-value.md)), and ephemeral UI state. A
+  [player ratings are derived projections](../.agents/notes/proposed/architecture/2026-08-29-player-ratings-are-derived-projections.md)), and ephemeral UI state. A
   projection is recomputed, never persisted as a cache that can disagree with its inputs.
 - CONTEXT.md's rejection of a persisted Current Ability aggregate is a contract, not a preference.
   Do not reintroduce a hidden scalar that must be kept in sync with Attributes.
@@ -66,10 +66,10 @@ Game state is event-sourced. That is a load-bearing claim, not a description:
 Identical save state, inputs, and seed must produce identical game outcomes across runs, processes,
 and machines.
 
-- Match simulation is seeded ([ADR-0002](../docs/adr/0002-three-phase-match-strength-and-deterministic-seed.md)).
+- Match simulation is seeded ([match engine: three-phase strength and deterministic seed](../.agents/notes/implemented/architecture/2026-08-27-match-engine-three-phase-and-deterministic-seed.md)).
   Chunked resimulation must reproduce the same match from the same seed — resuming a match is
   replaying it, so anything that consumes randomness must be a pure function of (seed, position).
-- Player Development is deterministic *without* a seed ([ADR-0011](../docs/adr/0011-deterministic-fractional-player-development.md)).
+- Player Development is deterministic *without* a seed ([deterministic fractional Player Development](../.agents/notes/implemented/feature/2026-08-28-deterministic-fractional-player-development.md)).
   Do not introduce randomness into it to make numbers feel better.
 - `packages/shared` and `packages/game-engine` must not read `Math.random()`, `Date.now()`, random
   UUID APIs, `process.env`, system locale or timezone, filesystem enumeration order, or mutable
@@ -131,7 +131,7 @@ e2e's OS setup. Run the gate — do not hand-run a subset and call it passed.
 
 Two homes, per [docs/agents/notes.md](../docs/agents/notes.md):
 
-- **ADR** ([docs/adr/](../docs/adr/)) — repo-wide, durable, structural. Package boundaries, the
+- **`architecture`-class Agent Note** ([.agents/notes/](../.agents/notes/)) — repo-wide, durable, structural. Package boundaries, the
   event model, determinism and seeding, persistence and migrations, the RPC/Electron boundary, a
   major dependency, or an approved deviation from this contract.
 - **Agent Note** (`.agents/notes/{lifecycle}/{class}/`) — a decision scoped to one effort: why this

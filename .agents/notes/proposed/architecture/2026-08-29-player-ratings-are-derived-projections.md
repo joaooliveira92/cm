@@ -2,13 +2,18 @@
 
 Status: proposed
 
+> This note absorbed ADR-0001 when the numbered ADR layer was retired. ADR-0001 established that
+> ratings are derived rather than persisted, and that `position_weights` is code-defined game data
+> rather than a SQL table; both propositions are stated in full below, so the ADR was absorbed rather
+> than migrated to its own note. ADR-0001's cost argument is preserved under Alternatives considered.
+
 ## Problem
 
-ADR-0001 establishes that Position Rating, Overall Rating, and Transfer Value are computed on read
-from persisted Attributes, never stored. The codebase follows this rule, but the documentation and
-terminology around it could be sharper — specifically about what *is* authoritative persisted state,
-what the dependency direction is, and what constructs (Current Ability, position_weights table,
-rating-update events) are explicitly ruled out.
+Position Rating, Overall Rating, and Transfer Value are computed on read from persisted Attributes,
+never stored. The codebase follows this rule, but the documentation and terminology around it needed
+to be sharper — specifically about what *is* authoritative persisted state, what the dependency
+direction is, and what constructs (Current Ability, a `position_weights` table, rating-update events)
+are explicitly ruled out.
 
 ## Decision
 
@@ -95,11 +100,15 @@ Every production consumer uses the canonical shared functions:
 
 - **Persist Current Ability as a cache**: Rejected because it would create a second source of truth
   requiring synchronization whenever Attributes change, with no mechanic that consumes it that
-  cannot consume individual Attributes directly.
+  cannot consume individual Attributes directly. This is the classic Championship Manager design,
+  where a hidden Current Ability scalar is kept in sync with individual attributes. The accepted cost
+  of rejecting it is recomputing a weighted average on each read — cheap relative to SQLite's row scan
+  cost at this data volume, which is a handful of clubs' worth of players rather than thousands.
 - **Store derived ratings in the players table**: Rejected; violates the single-source-of-truth
   principle and would require invalidation machinery.
 - **SQL position_weights table**: Rejected; weights are versioned with application code, pure
-  game-design policy with no event that produces or mutates them.
+  game-design policy with no event that produces or mutates them, so they belong in the same place as
+  the rating formula that consumes them rather than behind a SQL join.
 - **RatingChanged event**: Rejected; the event would fire purely to maintain a cache that shouldn't
   exist.
 
