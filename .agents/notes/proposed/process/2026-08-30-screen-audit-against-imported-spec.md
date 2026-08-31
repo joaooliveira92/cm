@@ -47,9 +47,9 @@ backend to query and no update channel. Both are scope, not sharpness, so they n
 
 ### `unscheduled` is the honest answer, and it accumulates
 
-The shell audit produced eight `deferred` rows anchored to `unscheduled`: credits, a version footer,
-last-opened-save memory, repository-failure handling, localization, the acceptance-criteria rewrite,
-visual regression coverage, and focus wrapping. That is a lot, and it is correct — those sections
+The shell audit produced six `deferred` rows anchored to `unscheduled`: credits, a version footer,
+last-opened-save memory, repository-failure handling, localization, and the acceptance-criteria
+rewrite. That is a lot out of 28 rows, and it is correct — those sections
 describe things this project genuinely has not decided either way. The alternative was inventing
 owners, which would make the ledger read cleaner and assert things nobody has agreed to.
 
@@ -107,7 +107,7 @@ rather than of one import section:
 
 ## Risks
 
-- **The `unscheduled` pile is a real backlog with no owner.** Eight rows on one screen, and fifteen
+- **The `unscheduled` pile is a real backlog with no owner.** Six rows on one screen, and fifteen
   screens to go. Ticket 10 inherits all of them at once, and if the pattern holds it will be assembling
   a spec around a hundred-odd unowned requirements. The ledger makes this visible; nothing prevents it.
 - **"Register, don't fix" is unenforced.** Nothing stops a later audit from editing the screen it is
