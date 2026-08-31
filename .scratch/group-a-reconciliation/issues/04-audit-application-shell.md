@@ -33,4 +33,4 @@ format; flip the screen's coverage status line from `Not yet audited` to `Audite
 
 ## Answer
 
-**Screen 1 audited; 26 ledger rows, no code changed.** See [Agent Note](../../../.agents/notes/proposed/process/2026-08-30-screen-audit-against-imported-spec.md).
+**Screen 1 audited; 28 ledger rows, no code changed.** See [Agent Note](../../../.agents/notes/proposed/process/2026-08-30-screen-audit-against-imported-spec.md).

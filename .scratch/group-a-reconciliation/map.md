@@ -70,7 +70,7 @@ repair, because `pnpm check:all` is red until it lands and every later session i
   CareerChrome, Save List, and a new About dialog.
 
 - [04 — Audit: application shell (spec 01)](issues/04-audit-application-shell.md): Screen 1 audited
-  against the shell; 26 ledger rows, no code changed. The entry point is the Save List, not a Main
+  against the shell; 28 ledger rows, no code changed. The entry point is the Save List, not a Main
   Menu; the shell has no way to quit, open settings, or read credits; the Save List declares no
   Actions and has no keyboard tier; a failing save repository is swallowed silently. Two new
   out-of-scope rulings (mod indicator, online update check).

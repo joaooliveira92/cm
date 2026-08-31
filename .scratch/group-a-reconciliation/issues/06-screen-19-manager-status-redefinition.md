@@ -1,7 +1,7 @@
 # 06 — Screen 19: Manager Status redefined, and the name collision
 
 Type: grilling
-Status: open
+Status: claimed
 Blocked by: 03
 
 ## Question

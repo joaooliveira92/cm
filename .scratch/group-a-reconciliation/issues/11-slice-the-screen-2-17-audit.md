@@ -34,7 +34,7 @@ Open sub-questions:
 
 Ticket 04 is resolved, and it is the sizing input this ticket was waiting on.
 
-**Screen 1 cost.** 15 sections, 374 spec lines, 26 ledger rows, one session with budget left over —
+**Screen 1 cost.** 15 sections, 374 spec lines, 28 ledger rows, one session with budget left over —
 and that was the *expensive* kind of screen, because Screen 1's sections constrain the whole shell and
 the audit had to read `router/`, `navigation/`, `keymap/`, `actions/`, `KeyboardSpine.tsx` and the
 main-process entry. Later screens read one component.
