@@ -1,7 +1,7 @@
 # 11 — Slice the screen 2–17 audit into tickets
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 03
 
 ## Question
@@ -102,5 +102,8 @@ instead.
 
 ## Done when
 
-The screen 2–17 audit exists as a wired set of tickets on this map, each sized to one session, with
-ticket 10's Blocked-by list updated to include them.
+The screen 2–17 audit exists as a wired set of 8 tickets on this map (3 grouped-absence, 5 individual/flow/complement), each sized to one session, with ticket 10's Blocked-by list updated to include them.
+
+## Answer
+
+**Grouped-absence for nine screens without implementation, individual/flow tickets for the six with code, Screen 13 as a thin complement to the shell audit.** See [Agent Note](../../../.agents/notes/proposed/process/2026-08-30-screen-audit-slicing.md).

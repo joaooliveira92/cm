@@ -468,9 +468,23 @@ effect beyond recording the warning — the career continues.
 
 **Manager Sacked** (event):
 Fires when Board Objective Judged is `Missed` and the Consecutive-Miss Counter moves 1→2. Ends the
-career: the save becomes archived and read-only (viewable, no further commands accepted). There is no
-explicit win state symmetric to this — a career that is never sacked simply continues indefinitely.
+career by archiving the save (see Archived Save). There is no explicit win state symmetric to this — a
+career that is never sacked simply continues indefinitely.
 _Avoid_: Game over (fine as player-facing copy, not as the event name)
+
+**Manager Retired** (event):
+Fires when the player deliberately ends their own career from the Manager Profile screen. Archives the
+save exactly as Manager Sacked does, differing only in cause and in the messaging shown afterwards. It
+never touches the Consecutive-Miss Counter or the last Verdict, so an archived save still records how
+close to the sack the career was when it ended.
+_Avoid_: Resignation (leaving a club for the job market, which this game has no referent for)
+
+**Archived Save**:
+A save that accepts no further commands: viewable, read-only, permanent. Two causes archive a save —
+Manager Sacked and Manager Retired — and only player-facing copy distinguishes them; every guard and
+every badge keys off the archived state alone.
+_Avoid_: Sacked save (one of two causes, not the state), Deleted save (a save file removed from disk,
+which is a different and unrelated action)
 
 ### Contextual help
 

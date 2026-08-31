@@ -25,6 +25,7 @@ Per-screen assignment:
 | FixturesScreen | 1 | Zero interactive controls — read-only list |
 | SeasonSummaryScreen | 1 | Zero interactive controls — read-only cards and banners |
 | ClubSelectionScreen | 1 | Zero interactive controls — read-only card list |
+| SaveListScreen | 2 | Two interactive control types (per-save clickable buttons + Start New Career button); primary-action shortcut Enter on focused row, C on most-recent save |
 
 The native `prompt()` call at `TransfersScreen.tsx:57` is replaced with an inline modal dialog (text input + OK/Cancel, focus trapped, Enter to submit), reusable across screens.
 

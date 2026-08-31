@@ -8,7 +8,7 @@ Implement the work described by the user in the spec or tickets.
 
 Use /tdd where possible, at pre-agreed seams.
 
-Read `.agents/skills/effect-code/SKILL.md` **before writing code**, not after. No exceptions and no
+Read `.agents/skills/effect-code/SKILL.md` and `.agents/skills/effect-v4-migration/SKILL.md` **before writing code**, not after. No exceptions and no
 judgement call about whether the work "touches Effect" — that judgement needs the document it gates.
 
 It front-loads the decisions that are expensive to undo: what lives in the error channel versus what's

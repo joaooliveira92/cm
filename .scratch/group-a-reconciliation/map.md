@@ -85,18 +85,45 @@ repair, because `pnpm check:all` is red until it lands and every later session i
   `sacked` boolean, `assertSaveNotSacked` becomes `assertSaveNotArchived`, and the action is a dialog on
   Manager Profile confirmed by an Irreversibility Disclosure. Breaks the save format with no migration path.
 
+- [08 — Screen 21: Quit confirmation as an accident guard](issues/08-screen-21-quit-confirmation.md):
+  one intent (close_application), one provisional-career exception, before-quit guard with renderer IPC,
+  dialog-only (no keyboard shortcut). Durable-at-commit note written and re-anchors the reconciliation
+  ledger's contradicted rows.
+
+- [09 — Navigation surface for the new shell screens](issues/09-navigation-surface-for-new-screens.md):
+  Save List tiered at level 2; app-chrome bar (Preferences, Credits, Quit) on the Save List as
+  lightweight dialogs; no command-palette entries for boot-screen destinations.
+
+- [11 — Slice the screen 2–17 audit into tickets](issues/11-slice-the-screen-2-17-audit.md):
+  Nine absent screens grouped into three cheap "confirm absence" tickets; six with implementation
+  audited as individual, flow, or complement tickets; Screen 13 as a thin complement to the shell
+  audit. Eight tickets sized to one session each, all blocked against ticket 10.
+
+- [12 — Absence: Screens 3, 4, 5 (creation-form screens)](issues/12-absence-creation-screens.md):
+  Three creation-form screens (league/nation selection, competition detail, database size/performance)
+  have no routes, components, or screens. All surviving sections classified `contradicted` — the
+  fixed single 20-club league (CONTEXT.md) and three-step Manager→Club→Review creation flow leave
+  no room for any of them.
+
+- [13 — Absence: Screens 9, 10 (identity screens)](issues/13-absence-identity-screens.md):
+  Two identity screens (nationality/languages, background) have no routes or components — no
+  nationality/languages or background concept exists in the codebase. All 91 surviving sections
+  classified `contradicted` against the three-step creation flow and the Archetype/Pillar identity
+  model (CONTEXT.md).
+
+- [15 — Screen 2: New Game, Database Initialization](issues/15-screen-2-new-game.md):
+  Screen 2 audited and reconciled; all 28 content sections `contradicted` by the three-step creation
+  flow with invisible world generation. No cache, progress UI, or validation stages exist.
+
+- [14 — Absence: Screens 14, 15, 16, 17 (management screens)](issues/14-absence-management-screens.md):
+  Four management screens (Save/Save As, Delete Saved Game, Game Preferences, Display/Sound Options)
+  have no routes, components, or UI of any kind. All surviving sections of all four screens classified
+  `contradicted` — the codebase has no user-invoked save, no delete-save path, no preferences surface,
+  and no display/audio configuration UI.
+
 ## Not yet specified
 
-**Whether any Group A screen needs a new keyboard tier.** The tiering rule in the screen-keyboard-tiers
-note covers nine existing screens. Screens 19 and 21 will need assignments, but the rule's inputs
-(interactive control count) aren't known until those screens are designed. (Screen 18 removed, no
-assignment needed; Screen 20 is a dialog on Manager Profile, not a screen, so it needs none either.) Ticket 04 sharpened one half of this: the Save List is also missing from the
-tiering table despite being shipped, and its two controls put it at level 2 minimum under the rule as
-written. Ticket 09 now owns that assignment alongside the new screens.
-
-**What the 151 dangling `ADR-000x` citations in source comments should say instead.** Ticket 01 decides
-the mechanism; whether each citation is rewritten to a note, reworded, or dropped is a per-site judgment
-that may deserve its own pass once the count of genuinely load-bearing ones is known.
+<!-- none — every question resolved, fog cleared, map complete. -->
 
 ## Out of scope
 
@@ -142,3 +169,4 @@ that may deserve its own pass once the count of genuinely load-bearing ones is k
   app loads third-party content, so there is nothing to enable, list, or indicate.
 - **The main menu's online update check** (spec 1 §8 `updateStatus`). Ruled by ticket 04. A sharpening
   of the off-device-telemetry axis above: the app has no backend to query and no update channel.
+- **ADR-000x citation rewrites in source comments.** Ticket 01 provided the mechanism (rewrite to note path, reword, or drop); the 151 mentions are a source-comment hygiene pass that sits past this map's destination (a Group A spec and deviation register). No screen's reconciliation depends on the outcome.

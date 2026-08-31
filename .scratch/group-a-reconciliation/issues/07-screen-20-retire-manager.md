@@ -1,7 +1,7 @@
 # 07 — Screen 20: Retire Manager
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 06
 
 ## Question
@@ -24,6 +24,10 @@ differing in cause and messaging only. What remains is the design.
 
 Spec 20 §6 (interim AI manager, club continuity) is out of scope by the map's standing decision; the
 register needs an entry saying so.
+
+## Answer
+
+**Retirement is a second cause of an Archived Save: a `ManagerRetired` event and a nullable `archived_cause` column replacing the `sacked` boolean, with the guard renamed to `assertSaveNotArchived`, confirmed by an Irreversibility Disclosure in a dialog on Manager Profile.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-30-retire-manager.md).
 
 ## Done when
 
