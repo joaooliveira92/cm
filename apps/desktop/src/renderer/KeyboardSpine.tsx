@@ -100,9 +100,6 @@ export const PrefixIndicator = ({
 );
 
 export const KeyboardSpine = () => {
-  const renderCount = useRef(0);
-  renderCount.current += 1;
-  if (renderCount.current > 5 && renderCount.current % 25 === 0) console.log("[debug-spine] render #", renderCount.current);
   const { pathname } = useLocation();
   const params = useParams({ strict: false });
   const decoded = decodeSaveId(params.saveId ?? "");

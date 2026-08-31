@@ -30,8 +30,19 @@ The import files are never edited. Their value is that you can always see what a
 | `deferred` | Wanted, in scope, not built. | The owning spec group, or `unscheduled`. | Yes. |
 | `renamed` | The concept exists here under different vocabulary; behaviour agrees. | The `CONTEXT.md` term. | N/A — this row asserts agreement. |
 
-Sections that are followed as written get **no row**. Under a screen marked `Audited`, that silence is
-an assertion: everything not listed below is followed. Under `Not yet audited` it asserts nothing.
+Sections that are followed as written get **no row**. What that silence means depends on the screen's
+status line:
+
+| Status | What silence asserts |
+|---|---|
+| `Audited` | Everything not listed below is followed. A section-by-section pass was made. |
+| `Reviewed` | Nothing. The rows are the material conflicts a single-session pass found; unlisted sections were not individually checked. |
+| `Not yet audited` | Nothing. |
+
+`Reviewed` exists because a full `Audited` pass costs roughly one session per fifteen import sections,
+and the surviving screens carry 807 of them. Screen 1 is `Audited`; the rest are `Reviewed` unless a
+ticket says otherwise. The trade is deliberate: a `Reviewed` screen can hide a followed-or-not question
+that an `Audited` screen cannot.
 
 Every screen below already carries rows, because the **blanket scope trim** ran across the whole group
 before any screen was audited. Those rows are all `out-of-scope` and each screen's preamble says so.
@@ -100,7 +111,7 @@ Everything not listed below is followed. The implementation audited is `apps/des
 | §4.2 Footer, §8 (`enabledMods`) | `out-of-scope` | An active-modification indicator listing enabled mods. | No such indicator. | The game has no mod system: nothing loads third-party content, so there is nothing to enable, list, or indicate. Recorded by ticket 04. |
 | §8 (`updateStatus`) | `out-of-scope` | The menu tracks an online update check across `not_checked` / `checking` / `up_to_date` / `update_available` / `offline` / `error`. | No update check exists. | Same axis as off-device telemetry: the app has no backend to query and no update channel. |
 | §8 (`lastOpenedSaveId`) | `deferred` | The menu remembers the last opened save. | Not tracked. The Save List lists every Save in repository order with no emphasis or ordering. | `unscheduled`. |
-| §10.1 Save repository unavailable | `deferred` | A concise explanation, a retry action, a path to storage preferences, and a safe route to New Career. | `SaveListScreen` discards the failure: `listSaves()` returns early on `Result.isFailure`, so a broken repository is indistinguishable from having no Saves. Nothing is explained and nothing can be retried. | `unscheduled`. This is the largest behavioural gap the audit found; it is not covered by the stale-entry decision below. |
+| §10.1 Save repository unavailable | `deferred` | A concise explanation, a retry action, a path to storage preferences, and a safe route to New Career. | `SaveListScreen` discards the failure: `listSaves()` returns early on `Result.isFailure`, so a broken repository is indistinguishable from having no Saves. Nothing is explained and nothing can be retried. | Owned by the `save-list-error-handling` effort, ticket 01. Cut as a defect rather than left to the Group A spec assembly; it is not covered by the stale-entry decision below. |
 | §10.3 Corrupt last-save metadata | `contradicted` | A corrupt or missing save must not auto-load, must leave `Load Career` available, and must be **marked** in the saved-game browser. | Nothing auto-loads, and the list stays available — but a stale entry is a silent no-op: `handleContinue` returns early on failure and the entry is never marked. | [Save management edge case e2e coverage](../../../.agents/notes/implemented/testing/2026-08-28-save-management-edge-cases.md) — the nonexistent-save test asserts the user "stays on the landing screen with no crash **and no error banner**". |
 | §11 Accessibility (localization), §13 criterion 7 | `deferred` | Labels are localizable and expand without clipping. | No i18n layer exists; every string is a hard-coded English literal. | `unscheduled`. |
 | §11 Accessibility (optional UI sounds, reduced motion) | `deferred` | UI sounds must be optional and background animation must respect reduced motion. | Neither exists yet to make optional. | Group A [Screen 17 Display and Sound Options](17_display_and_sound_options.md). |

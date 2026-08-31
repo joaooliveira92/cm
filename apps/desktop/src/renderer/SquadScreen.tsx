@@ -77,17 +77,7 @@ const REGION = "squadTable";
 const TABLE_ID = "squad";
 
 export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const renderCount = useRef(0);
-  renderCount.current += 1;
-  if (renderCount.current > 15 && renderCount.current % 25 === 0) console.log("[debug-squad-render] #", renderCount.current);
   const squadResult = useAtomValue(squadAtom(saveId));
-  {
-    const prev = useRef<unknown>(squadResult);
-    if (prev.current !== squadResult) {
-      console.log("[debug-squad-value] CHANGED identity; tag:", (squadResult as { _tag?: string })?._tag ?? "?");
-    }
-    prev.current = squadResult;
-  }
   const refreshSquad = useAtomRefresh(squadAtom(saveId));
 
   // --- session-scoped interaction state (seeded from what survived navigation).
@@ -108,23 +98,19 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [scrollLeft, setScrollLeft] = useState(initialSession.current?.scrollLeft ?? 0);
 
   const setSort = useCallback((next: typeof sort) => {
-    console.log("[debug-set] setSort", next?.columnId ?? "none");
     setSortState(next);
     updateTableSession(TABLE_ID, { sort: next });
   }, []);
   const setFilters = useCallback((next: readonly FilterClause[]) => {
-    console.log("[debug-set] setFilters", next.length);
     setFiltersState(next);
     updateTableSession(TABLE_ID, { filters: next });
   }, []);
   const setSelection = useCallback((next: string | null) => {
-    console.log("[debug-set] setSelection", next);
     setSelectedId(next);
     updateTableSession(TABLE_ID, { selectedId: next });
   }, []);
   const setActiveAndBookmark = useCallback(
     (next: string | null, nextBookmark: TableFocusBookmark | null) => {
-      console.log("[debug-set] setActiveAndBookmark", next);
       setActiveId(next);
       setBookmarkState(nextBookmark);
       updateTableSession(TABLE_ID, { focusBookmark: nextBookmark });

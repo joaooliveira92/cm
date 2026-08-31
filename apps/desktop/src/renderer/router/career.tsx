@@ -1,6 +1,6 @@
 import type { SaveId } from "@cm-clone/contracts";
 import { Outlet, useLocation, useParams } from "@tanstack/react-router";
-import { type ComponentType, type MouseEvent, useEffect, useRef } from "react";
+import { type ComponentType, type MouseEvent, useEffect } from "react";
 import type { NavigationIntent } from "../focus.js";
 import {
   navigate,
@@ -27,10 +27,6 @@ export const RouteParamErrorScreen = ({
 
 /** The career chrome: the persistent shell every career route shares (AC-11). */
 export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
-  const renderCount = useRef(0);
-  renderCount.current += 1;
-  if (renderCount.current > 5 && renderCount.current % 25 === 0)
-    console.log("[debug-chrome] render #", renderCount.current);
   const { pathname } = useLocation();
   const activeChild = pathname.split("/").at(-1) ?? "";
   const tabs: ReadonlyArray<{

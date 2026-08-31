@@ -79,6 +79,27 @@ recorded in the [screen-audit note](../../../.agents/notes/proposed/process/2026
 and is what the remaining tickets should copy, with the caveat that Screen 1's reach across six
 directories was specific to the shell and would be scope creep on a single-component screen.
 
+## Decided (2026-08-30, by the user)
+
+The two questions this ticket would otherwise open with are already answered, so it does not need to
+re-litigate them:
+
+- **Fidelity.** Screen 1's section-by-section pass is not the template. The remaining screens get a
+  single-session, implementation-first pass and land as `Reviewed` in the ledger, whose silence
+  asserts nothing. One session per screen, hard cap.
+- **`unscheduled`.** No longer an available anchor. An audit places every `deferred` row with an
+  owning spec group, rules the section out of scope, or cuts it a ticket.
+
+Both are written up in the
+[screen-audit note](../../../.agents/notes/proposed/process/2026-08-30-screen-audit-against-imported-spec.md),
+and `RECONCILIATION.md` now carries `Reviewed` in its status table.
+
+What is left for this ticket is the mechanical part: cut the fifteen audit tickets (one per surviving
+screen, screen 7 excluded), wire them to the map, and update ticket 10's Blocked-by list. The open
+judgment is which screens deserve more than the single-session cap — 13, 14, 16 and 17 are four to five
+times Screen 1 — and whether any have too little implementation to audit at all, making them new design
+instead.
+
 ## Done when
 
 The screen 2–17 audit exists as a wired set of tickets on this map, each sized to one session, with

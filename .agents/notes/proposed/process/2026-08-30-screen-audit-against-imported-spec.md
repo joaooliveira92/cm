@@ -62,6 +62,43 @@ that happen to be written down under the first screen. The audit follows them in
 route component. The fifteen remaining screen audits are narrower by nature and should not inherit
 this reach.
 
+### Fidelity: Screen 1 is the exception, not the template
+
+Screen 1 was audited section by section and cost one session for 15 sections. The fifteen surviving
+screens carry 807 sections between them — an average of 53 each, and 82 for Screen 16. Held at Screen
+1's fidelity the remaining audit is on the order of 40 sessions.
+
+It is not worth that. Of Screen 1's 28 rows, roughly five changed anyone's mind: the entry point is a
+Save List rather than a Main Menu, the shell has no way to quit or reach settings, a failed
+`listSaves()` is swallowed, the Save List declares no Actions, and it has no keyboard tier. The other
+twenty-three restate scope already ruled elsewhere, or record that an obviously-unbuilt thing is
+unbuilt.
+
+**So the remaining screens are `Reviewed`, not `Audited`, and the audit runs implementation-first.**
+The auditor reads the screen, then asks what the import demands that materially conflicts with it —
+rather than walking every `## N.` heading looking for something to say. One session per screen, hard
+cap. The ledger carries `Reviewed` as a third status whose silence asserts nothing, so the weaker pass
+cannot masquerade as the stronger one.
+
+This knowingly gives up the guarantee that made `Audited` worth having. A `Reviewed` screen can hide a
+section that is neither followed nor recorded, and nobody will know without redoing the pass. That is
+the price of finishing.
+
+### No row may be left `unscheduled`
+
+An audit that cannot place a `deferred` row with an owning spec group must instead rule the section
+out of scope, or cut it a ticket. `unscheduled` is not an available answer.
+
+Screen 1 produced six `unscheduled` rows out of 28. At that rate the fifteen remaining screens deliver
+around ninety unowned requirements to ticket 10 in a single batch, which is ninety decisions made by
+whoever assembles the spec, at the point of least context. Forcing the choice into the audit that
+found the row spreads the same decisions across fifteen sessions, each made by someone who has just
+read the relevant screen.
+
+The rule has already claimed its first row: Screen 1 §10.1's swallowed `listSaves()` failure moved
+from `unscheduled` to its own `save-list-error-handling` ticket, because it is a defect and does not
+need a spec to authorise fixing it.
+
 ## What the shell audit found
 
 Three findings outlive the ledger row that records them, because each is a property of the shell
@@ -85,10 +122,11 @@ rather than of one import section:
   while the file is open is cheap and tempting. Rejected: it splits the record, because the ledger
   would then describe a screen that no longer exists, and it decides sequencing by whichever screen
   happened to be audited first rather than by ticket 10's assembled spec.
-- **Audit only the sections with an obvious implementation counterpart.** Faster, and it would have
-  cut the shell's row count roughly in half. Rejected because the ledger's silence rule makes an
-  `Audited` status line an assertion about *every* section; a partial audit under that line asserts
-  more than it checked.
+- **Audit only the sections with an obvious implementation counterpart, under the `Audited` line.**
+  Faster, and it would have cut the shell's row count roughly in half. Rejected because the ledger's
+  silence rule makes `Audited` an assertion about *every* section; a partial audit under that line
+  asserts more than it checked. The `Reviewed` status above is this option done honestly — the same
+  cheaper pass, with a status line that does not overclaim.
 - **One row per import section.** The ledger's granularity rule already allows grouping, and the
   shell's accessibility and keyboard sections divide by concern rather than by number. Grouping by
   the decision that carries them keeps related sections at one anchor.
@@ -107,9 +145,10 @@ rather than of one import section:
 
 ## Risks
 
-- **The `unscheduled` pile is a real backlog with no owner.** Six rows on one screen, and fifteen
-  screens to go. Ticket 10 inherits all of them at once, and if the pattern holds it will be assembling
-  a spec around a hundred-odd unowned requirements. The ledger makes this visible; nothing prevents it.
+- **The no-`unscheduled` rule can be satisfied dishonestly.** Forcing every row to name an owner
+  invites parking sections in whichever spec group is nearest, or ruling them out of scope to avoid the
+  work of placing them. That failure is harder to see than an honest `unscheduled` pile was, because
+  the row looks resolved.
 - **"Register, don't fix" is unenforced.** Nothing stops a later audit from editing the screen it is
   reading, and the divergence would be invisible until someone re-read the ledger against HEAD.
 - **The shell audit's reach is a bad precedent if copied literally.** Following Screen 1's sections
