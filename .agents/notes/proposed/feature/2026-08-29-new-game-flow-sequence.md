@@ -23,6 +23,19 @@ earlier step before committing? Where does the 20-squad generation wait fall, an
 while it runs? What is the player looking at the instant the career begins? And what does a returning
 player starting a second career walk through, given they should not have to read anything?
 
+> **Superseded in part, 2026-08-31.** Creation is now a **four-stage** sequence — League Selection,
+> Manager, Club, Review — and world generation no longer begins when the player enters the flow. It
+> begins when League Selection is submitted, because choosing the scope of the world has to precede
+> building it. Everything else below stands: the manager stage still masks the generation wait, the
+> `beginCareer`/`commitCareer` split is unchanged, the disabled-transition rule and the honest-progress
+> rule are unchanged, and arrival is still the Squad screen. See
+> [League and Nation Selection](../../implemented/feature/2026-08-31-league-and-nation-selection.md).
+>
+> The argument in "Order: manager before club" survives intact and now reads one step further back:
+> the manager stage is the only stage that does not depend on the generated world, so it is still
+> where the wait goes. League Selection does not depend on the world either — it *defines* it — which
+> is why it can sit ahead of generation without acquiring a wait of its own.
+
 ## Proposal
 
 Creation is a **three-step sequence with the manager first**: Manager, then Club, then Review, with
@@ -248,8 +261,10 @@ branch, out of the main branch; the ticket carries the context pointer.
 - The manager-pillars note's world-generation atomicity statement is marked superseded and
   cross-linked to this note.
 - Creation is three steps — Manager, Club, Review — with return to any already-reached step, and no
-  regeneration on return.
+  regeneration on return. *(Superseded: four stages, with League Selection first.)*
 - Generation begins when the player commits to a new career and runs during the manager step.
+  *(Superseded: generation begins when the League Selection Snapshot exists, and still runs during
+  the manager step.)*
 - Club selection cannot be entered until every club is ready for authoritative comparison, and the
   disabled transition always states that generation is still running.
 - Numerical generation progress appears only when its unit is a fully selection-ready club; otherwise

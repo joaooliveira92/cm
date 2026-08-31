@@ -6,8 +6,9 @@ import type { SaveId } from "@cm-clone/contracts";
  * these closed values with typed parameters — never a raw path template — and
  * resolve it through `resolveDestination`/the navigation adapter.
  *
- * The set is deliberately closed: `saveList`, the three creation steps, and
- * the eight persistent career screens. Career `g <key>` bindings draw from
+ * The set is deliberately closed: `saveList`, the four creation steps
+ * (league selection, then manager, club, and review), and the eight
+ * persistent career screens. Career `g <key>` bindings draw from
  * `CareerDestination` only, which excludes the creation steps and the save
  * list by construction (see `CAREER_G_BINDINGS`).
  */
@@ -22,6 +23,7 @@ export type CareerDestination =
   | { readonly type: "manager"; readonly saveId: SaveId };
 
 export type CreationStepDestination =
+  | { readonly type: "createLeagues" }
   | { readonly type: "createStep1" }
   | { readonly type: "createStep2" }
   | { readonly type: "createStep3" };
@@ -72,6 +74,7 @@ export const CAREER_G_BINDINGS: Readonly<
  */
 export type ResolvedDestination =
   | { readonly to: "/" }
+  | { readonly to: "/create/leagues" }
   | { readonly to: "/create/step-1" }
   | { readonly to: "/create/step-2" }
   | { readonly to: "/create/step-3" }
@@ -92,6 +95,8 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
   switch (destination.type) {
     case "saveList":
       return { to: "/" };
+    case "createLeagues":
+      return { to: "/create/leagues" };
     case "createStep1":
       return { to: "/create/step-1" };
     case "createStep2":

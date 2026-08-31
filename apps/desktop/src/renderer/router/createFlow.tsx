@@ -3,8 +3,10 @@ import { Outlet, useLocation } from "@tanstack/react-router";
 import { ClubId } from "@cm-clone/contracts";
 import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
 import { Effect, Result } from "effect";
+import type { LeagueSelectionSnapshot } from "@cm-clone/contracts";
 import { ClubSelectionScreen } from "../ClubSelectionScreen.js";
 import { CreationStep1 } from "../CreationStep1.js";
+import { LeagueSelectionScreen } from "../LeagueSelectionScreen.js";
 import {
   beginCareer,
   commitCareer,
@@ -22,6 +24,7 @@ import {
   generationFailed,
   generationSucceeded,
   initialGeneration,
+  reenter,
   isSelectionReady,
   provisionalIdOf,
   startGeneration,
@@ -40,6 +43,10 @@ const DEFAULT_PILLARS: PillarDistribution = {
 type CommitStatus = "idle" | "committing" | "committed";
 
 export interface CreationSession {
+  /** The scope this career is being created at (Screen 3). `null` until League and Nation
+   *  Selection is submitted, which is also the gate on world generation: nothing is generated
+   *  before the user has said how large the world should be. */
+  readonly leagueSelection: LeagueSelectionSnapshot | null;
   readonly saveName: string;
   readonly managerName: string;
   readonly archetype: ManagerArchetype;
@@ -51,6 +58,7 @@ export interface CreationSession {
 }
 
 const EMPTY_SESSION: CreationSession = {
+  leagueSelection: null,
   saveName: "",
   managerName: "",
   archetype: "professor",
@@ -77,11 +85,39 @@ const useCreateSession = (): CreateSessionApi => {
   return api;
 };
 
-const stepOf = (pathname: string): "1" | "2" | "3" =>
-  pathname.endsWith("/step-2") ? "2" : pathname.endsWith("/step-3") ? "3" : "1";
+/** Which creation stage the current path is. `leagues` is the first: Screen 3 defines the scope
+ *  of the world before there is a world, a manager, or a club. */
+const stepOf = (pathname: string): "leagues" | "1" | "2" | "3" =>
+  pathname.endsWith("/leagues")
+    ? "leagues"
+    : pathname.endsWith("/step-2")
+      ? "2"
+      : pathname.endsWith("/step-3")
+        ? "3"
+        : "1";
 
 const runAtEdge = <A, E>(effect: Effect.Effect<A, E>): Promise<Result.Result<A, E>> =>
   Effect.runPromise(Effect.result(effect));
+
+/**
+ * Stage 1: League and Nation Selection (Screen 3). It runs before anything is generated — the
+ * snapshot it produces is what unblocks world generation, so the scope is settled before the
+ * world it describes is built.
+ */
+export const LeagueSelectionRouteContent = () => {
+  const { update } = useCreateSession();
+  return (
+    <RouteView screenId="createLeagues">
+      <LeagueSelectionScreen
+        onContinue={(snapshot) => {
+          update({ leagueSelection: snapshot });
+          navigate({ type: "createStep1" });
+        }}
+        onBack={() => navigate({ type: "saveList" })}
+      />
+    </RouteView>
+  );
+};
 
 export const StepOneRouteContent = () => {
   const { session, update } = useCreateSession();
@@ -173,20 +209,38 @@ export const CreateFlowLayout = () => {
     applyGeneration((state) => generationSucceeded(state, outcome.success.id));
   };
 
-  // Generation begins the moment the player commits to a new career — entering
-  // the flow — and is masked by the manager step. The guard inside
-  // `runGeneration` is what makes a double mount or a rapid double activation
-  // one job rather than two worlds on disk.
+  // Re-arm before anything else this mount does. A development double-invocation runs the
+  // teardown below between two mounts of the same component, which leaves the lifecycle in
+  // `Abandoned` — a state generation can never start from. Declared first so the re-arm precedes
+  // the generation effect in the second pass.
   useEffect(() => {
-    void runGeneration();
+    applyGeneration(reenter);
   }, []);
 
-  // Reload mid-creation (step 2/3 with no recoverable session) redirects to
-  // step 1. The in-memory session is never durable, so a reload always arrives
-  // here with an empty session. The condition is stated as "no world to select
-  // from" rather than "generation not yet started" so it does not depend on
-  // whether the mount-time generation effect has already run.
+  // Generation begins when the scope is settled — the moment League and Nation
+  // Selection is submitted — and is masked by the manager step, so the wait is
+  // spent making the first real decision rather than watching it. It cannot
+  // begin earlier: before the snapshot exists nobody has said how large the
+  // world should be, and Screen 3 §1 is explicit that choosing scope must not
+  // create the world. The guard inside `runGeneration` is what makes a double
+  // mount or a rapid double activation one job rather than two worlds on disk.
   useEffect(() => {
+    if (session.leagueSelection === null) return;
+    void runGeneration();
+  }, [session.leagueSelection]);
+
+  // Reload mid-creation redirects to the front of the flow. The in-memory
+  // session is never durable, so a reload always arrives here with an empty
+  // session — which now means no league selection either, and the manager step
+  // is no longer a safe landing place. Anything past the leagues stage without
+  // a snapshot goes back to it; the world-readiness condition still guards the
+  // two steps that need a world.
+  useEffect(() => {
+    if (step === "leagues") return;
+    if (sessionRef.current.leagueSelection === null) {
+      navigate({ type: "createLeagues" });
+      return;
+    }
     const generation = sessionRef.current.generation;
     if (step !== "1" && !isSelectionReady(generation) && generation._tag !== "Committed") {
       navigate({ type: "createStep1" });
@@ -249,12 +303,13 @@ export const CreateFlowLayout = () => {
         <h1 className="text-2xl font-bold">New Career</h1>
 
         <div className="mt-6 flex gap-4">
-          <StepBadge label="Manager" active={step === "1"} number="1" />
-          <StepBadge label="Club" active={step === "2" || step === "3"} number="2" />
-          <StepBadge label="Review" active={step === "3"} number="3" />
+          <StepBadge label="Leagues" active={step === "leagues"} number="1" />
+          <StepBadge label="Manager" active={step === "1"} number="2" />
+          <StepBadge label="Club" active={step === "2" || step === "3"} number="3" />
+          <StepBadge label="Review" active={step === "3"} number="4" />
         </div>
 
-        <div className="mt-8 max-w-xl">
+        <div className={step === "leagues" ? "mt-8" : "mt-8 max-w-xl"}>
           <Outlet />
           {session.error && (
             <div className="mt-4 rounded bg-red-900/30 p-3 text-sm text-red-400">
@@ -273,7 +328,9 @@ export const CreateFlowLayout = () => {
             </div>
           )}
 
-          <div className="mt-8 flex gap-4">
+          {/* The leagues stage renders its own Back and Continue: continuing from it has to run
+              submission and snapshot creation, which the shared footer knows nothing about. */}
+          <div className={`mt-8 flex gap-4 ${step === "leagues" ? "hidden" : ""}`}>
             <button
               type="button"
               className={`rounded bg-slate-700 px-4 py-2 hover:bg-slate-600 ${FOCUS_RING.join(" ")}`}
@@ -281,6 +338,15 @@ export const CreateFlowLayout = () => {
             >
               Cancel
             </button>
+            {step === "1" && (
+              <button
+                type="button"
+                className={`rounded bg-slate-700 px-4 py-2 hover:bg-slate-600 ${FOCUS_RING.join(" ")}`}
+                onClick={() => navigate({ type: "createLeagues" })}
+              >
+                Back: Leagues
+              </button>
+            )}
             {step === "1" && (
               <div>
                 <button
@@ -361,6 +427,18 @@ const ReviewPane = ({ session }: { readonly session: CreationSession }) => (
       <div className="flex gap-4">
         <dt className="text-slate-500">Archetype:</dt>
         <dd className="capitalize">{session.archetype.replace("_", " ")}</dd>
+      </div>
+      <div className="flex gap-4">
+        <dt className="text-slate-500">League scope:</dt>
+        <dd>
+          {session.leagueSelection === null
+            ? "Not selected"
+            : `${session.leagueSelection.estimate.playableNationCount} playable nation${
+                session.leagueSelection.estimate.playableNationCount === 1 ? "" : "s"
+              }, ${session.leagueSelection.estimate.playableCompetitionCount} playable competition${
+                session.leagueSelection.estimate.playableCompetitionCount === 1 ? "" : "s"
+              }`}
+        </dd>
       </div>
       <div className="flex gap-4">
         <dt className="text-slate-500">Pillars:</dt>

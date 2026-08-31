@@ -2,6 +2,12 @@ import { Schema } from "effect";
 import {
   ARCHIVED_CAUSES,
   CATEGORIES,
+  INTENT_SOURCES,
+  ISSUE_CODES,
+  ISSUE_LEVELS,
+  NATION_SELECTION_STATES,
+  SIMULATION_MODES,
+  SIMULATION_SPEED_RATINGS,
   FAMILIARITY_TIERS,
   FORMATIONS,
   GOALKEEPING_ATTRIBUTES,
@@ -649,4 +655,211 @@ export class InvalidBindingShapeError extends Schema.TaggedError<InvalidBindingS
     actionId: Schema.String,
     binding: Schema.String,
   },
+) {}
+
+// ---------------------------------------------------------------------------
+// League and Nation Selection (Screen 3)
+// ---------------------------------------------------------------------------
+
+/**
+ * Setup-scope identifiers. Branded for the same reason `SaveId`/`ClubId` are: `resolveLeagueSelection`
+ * takes a Nation id and a League Scope Option id side by side, and without the brand the two
+ * transposed is a well-typed call that resolves to the wrong career.
+ */
+export const RegionId = Schema.String.pipe(Schema.brand("RegionId"));
+export type RegionId = Schema.Schema.Type<typeof RegionId>;
+
+export const NationId = Schema.String.pipe(Schema.brand("NationId"));
+export type NationId = Schema.Schema.Type<typeof NationId>;
+
+export const CompetitionId = Schema.String.pipe(Schema.brand("CompetitionId"));
+export type CompetitionId = Schema.Schema.Type<typeof CompetitionId>;
+
+export const ScopeOptionId = Schema.String.pipe(Schema.brand("ScopeOptionId"));
+export type ScopeOptionId = Schema.Schema.Type<typeof ScopeOptionId>;
+
+export const SnapshotId = Schema.String.pipe(Schema.brand("SnapshotId"));
+export type SnapshotId = Schema.Schema.Type<typeof SnapshotId>;
+
+export const SimulationModeSchema = Schema.Literals(SIMULATION_MODES);
+export const IntentSourceSchema = Schema.Literals(INTENT_SOURCES);
+export const IssueLevelSchema = Schema.Literals(ISSUE_LEVELS);
+export const IssueCodeSchema = Schema.Literals(ISSUE_CODES);
+export const SimulationSpeedRatingSchema = Schema.Literals(SIMULATION_SPEED_RATINGS);
+export const CompetitionKindSchema = Schema.Literals(["league", "cup", "reserve", "continental"]);
+export const NationSelectionStateSchema = Schema.Literals(NATION_SELECTION_STATES);
+
+/** One Competition as the renderer sees it. `name` has already passed `sanitizeLabel` in main —
+ *  the renderer receives display text it can render, never a raw database label (§23). */
+export class CompetitionRow extends Schema.Class<CompetitionRow>("CompetitionRow")({
+  id: CompetitionId,
+  nationId: NationId,
+  name: Schema.String,
+  kind: CompetitionKindSchema,
+  tier: Schema.NullOr(Schema.Finite),
+  requires: Schema.Array(CompetitionId),
+  clubCount: Schema.Finite,
+  playableSupported: Schema.Boolean,
+}) {}
+
+export class ScopeOptionRow extends Schema.Class<ScopeOptionRow>("ScopeOptionRow")({
+  id: ScopeOptionId,
+  nationId: NationId,
+  displayName: Schema.String,
+  playableCompetitionIds: Schema.Array(CompetitionId),
+  backgroundCompetitionIds: Schema.Array(CompetitionId),
+}) {}
+
+export class NationRow extends Schema.Class<NationRow>("NationRow")({
+  id: NationId,
+  regionId: RegionId,
+  name: Schema.String,
+  alternativeNames: Schema.Array(Schema.String),
+  available: Schema.Boolean,
+  playableSupported: Schema.Boolean,
+  recommendedScopeOptionId: Schema.NullOr(ScopeOptionId),
+  scopeOptions: Schema.Array(ScopeOptionRow),
+  competitions: Schema.Array(CompetitionRow),
+}) {}
+
+export class RegionRow extends Schema.Class<RegionRow>("RegionRow")({
+  id: RegionId,
+  name: Schema.String,
+}) {}
+
+/** The catalogue the browser renders. Read-only and identical for every career started against
+ *  the same database, so it is fetched once when the screen mounts. */
+export class LeagueSetupIndexView extends Schema.Class<LeagueSetupIndexView>("LeagueSetupIndexView")({
+  fingerprint: Schema.String,
+  databaseName: Schema.String,
+  databaseVersion: Schema.String,
+  regions: Schema.Array(RegionRow),
+  nations: Schema.Array(NationRow),
+}) {}
+
+/** One command from the renderer. Narrow by construction: a Nation, a mode, and optionally the
+ *  scope option — never a Competition graph the renderer assembled itself (§22, §34). */
+export class NationSelectionIntentPayload extends Schema.Class<NationSelectionIntentPayload>(
+  "NationSelectionIntentPayload",
+)({
+  nationId: NationId,
+  mode: SimulationModeSchema,
+  scopeOptionId: Schema.optional(ScopeOptionId),
+  source: IntentSourceSchema,
+}) {}
+
+export class SelectionIssueRow extends Schema.Class<SelectionIssueRow>("SelectionIssueRow")({
+  code: IssueCodeSchema,
+  level: IssueLevelSchema,
+  message: Schema.String,
+  nationId: Schema.NullOr(NationId),
+  competitionIds: Schema.Array(CompetitionId),
+}) {}
+
+export class EffectiveNationSelectionRow extends Schema.Class<EffectiveNationSelectionRow>(
+  "EffectiveNationSelectionRow",
+)({
+  nationId: NationId,
+  mode: SimulationModeSchema,
+  scopeOptionId: Schema.optional(ScopeOptionId),
+  playableCompetitionIds: Schema.Array(CompetitionId),
+  backgroundCompetitionIds: Schema.Array(CompetitionId),
+  viewOnlyCompetitionIds: Schema.Array(CompetitionId),
+  dependencyCompetitionIds: Schema.Array(CompetitionId),
+}) {}
+
+export class DependencyRow extends Schema.Class<DependencyRow>("DependencyRow")({
+  competitionId: CompetitionId,
+  mode: SimulationModeSchema,
+  requiredBy: Schema.Array(CompetitionId),
+  chosenDirectly: Schema.Boolean,
+}) {}
+
+export class CareerScopeEstimateView extends Schema.Class<CareerScopeEstimateView>(
+  "CareerScopeEstimateView",
+)({
+  selectedNationCount: Schema.Finite,
+  playableNationCount: Schema.Finite,
+  backgroundNationCount: Schema.Finite,
+  playableCompetitionCount: Schema.Finite,
+  backgroundCompetitionCount: Schema.Finite,
+  estimatedClubCount: Schema.Finite,
+  estimatedPlayerCount: Schema.Finite,
+  estimatedStaffCount: Schema.Finite,
+  estimatedMemoryBytes: Schema.Finite,
+  estimatedInitialSaveBytes: Schema.Finite,
+  simulationSpeedRating: SimulationSpeedRatingSchema,
+  confidence: Schema.Literals(["low", "medium", "high"]),
+}) {}
+
+/**
+ * The answer to one resolve request. `selectionRevision` is echoed back unchanged: §11.5 requires
+ * that only a result matching the current revision may update the UI, and echoing the request's
+ * own revision is what lets the renderer discard a slow answer without a second clock.
+ */
+export class ResolvedSelectionView extends Schema.Class<ResolvedSelectionView>("ResolvedSelectionView")({
+  selectionRevision: Schema.Finite,
+  selections: Schema.Array(EffectiveNationSelectionRow),
+  dependencies: Schema.Array(DependencyRow),
+  issues: Schema.Array(SelectionIssueRow),
+  estimate: CareerScopeEstimateView,
+}) {}
+
+/**
+ * §17. The one immutable record `Continue` produces. It carries both what the user asked for and
+ * what that resolved to, so a later setup stage never has to re-run resolution to know the scope,
+ * and a database change between screens is detectable through `databaseFingerprint`.
+ */
+export class LeagueSelectionSnapshot extends Schema.Class<LeagueSelectionSnapshot>(
+  "LeagueSelectionSnapshot",
+)({
+  id: SnapshotId,
+  databaseFingerprint: Schema.String,
+  createdAt: Schema.String,
+  intents: Schema.Array(NationSelectionIntentPayload),
+  selections: Schema.Array(EffectiveNationSelectionRow),
+  dependencies: Schema.Array(DependencyRow),
+  estimate: CareerScopeEstimateView,
+}) {}
+
+/** §18, §29. The resumable setup draft, saved on Back and on Continue. One per database
+ *  fingerprint; a fingerprint change makes the stored draft inapplicable rather than wrong. */
+export class SetupDraft extends Schema.Class<SetupDraft>("SetupDraft")({
+  databaseFingerprint: Schema.String,
+  savedAt: Schema.String,
+  intents: Schema.Array(NationSelectionIntentPayload),
+  searchQuery: Schema.String,
+  regionFilterId: Schema.NullOr(RegionId),
+  statusFilter: Schema.String,
+}) {}
+
+/** A user-saved preset (§13). Fingerprint-bound for the same reason the draft is. */
+export class LeaguePreset extends Schema.Class<LeaguePreset>("LeaguePreset")({
+  id: Schema.String,
+  name: Schema.String,
+  databaseFingerprint: Schema.String,
+  savedAt: Schema.String,
+  intents: Schema.Array(NationSelectionIntentPayload),
+}) {}
+
+/** §17. `Continue` refused: the selection did not survive revalidation in the trusted layer. The
+ *  blocking issues travel with the error so the screen shows the same error summary it would have
+ *  shown had the client noticed first. */
+export class InvalidLeagueSelectionError extends Schema.TaggedError<InvalidLeagueSelectionError>()(
+  "InvalidLeagueSelectionError",
+  { issues: Schema.Array(SelectionIssueRow) },
+) {}
+
+/** §13, §30.4. A stored preset or draft captured against a different database. Never migrated by
+ *  guessing at similar names — the user is told and chooses again. */
+export class PresetFingerprintMismatchError extends Schema.TaggedError<PresetFingerprintMismatchError>()(
+  "PresetFingerprintMismatchError",
+  { expected: Schema.String, found: Schema.String },
+) {}
+
+/** §30.6. The setup draft could not be written. Non-blocking at the call site — the screen warns
+ *  and lets the user continue rather than trapping them behind a disk problem. */
+export class SetupDraftWriteError extends Schema.TaggedError<SetupDraftWriteError>()(
+  "SetupDraftWriteError",
+  { reason: Schema.String },
 ) {}

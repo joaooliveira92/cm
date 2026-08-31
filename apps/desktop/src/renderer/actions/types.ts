@@ -18,6 +18,7 @@ export type ScreenName =
   | "match"
   | "seasonSummary"
   | "manager"
+  | "createLeagues"
   | "createStep1"
   | "createStep2"
   | "createStep3"

@@ -4,6 +4,17 @@ import {
   BidderBidActionSchema,
   BidId,
   BidNotFoundError,
+  CareerScopeEstimateView,
+  InvalidLeagueSelectionError,
+  LeaguePreset,
+  LeagueSelectionSnapshot,
+  LeagueSetupIndexView,
+  NationSelectionIntentPayload,
+  PresetFingerprintMismatchError,
+  ResolvedSelectionView,
+  SetupDraft,
+  SetupDraftWriteError,
+  SnapshotId,
   BidView,
   ClubId,
   ClubNotFoundError,
@@ -316,6 +327,105 @@ export const AppRpcs = {
     payload: Schema.Void,
     success: Schema.Record(Schema.String, Schema.String),
     error: Schema.Never,
+  },
+  // -------------------------------------------------------------------------
+  // League and Nation Selection (Screen 3)
+  // -------------------------------------------------------------------------
+
+  /** The validated setup catalogue: regions, Nations, League Scope Options, and the dependency
+   * edges between Competitions. Read once when the screen mounts — it does not change while the
+   * screen is open, so nothing re-fetches it on selection changes. Labels arrive sanitized. */
+  getLeagueSetupIndex: {
+    payload: Schema.Void,
+    success: LeagueSetupIndexView,
+    error: Schema.Never,
+  },
+  /** Resolve a set of intents into the effective selection, its dependencies, its issues, and its
+   * cost estimate. The renderer calls this on every (debounced) selection change and discards any
+   * answer whose echoed `selectionRevision` is not the current one (§11.5).
+   *
+   * This is the *trusted* resolver: it validates every id against the catalogue, so a forged or
+   * stale payload produces issues rather than a selection. It never fails — an invalid selection
+   * is a value with blocking issues, because the screen has to render exactly that. */
+  resolveLeagueSelection: {
+    payload: Schema.Struct({
+      selectionRevision: Schema.Finite,
+      intents: Schema.Array(NationSelectionIntentPayload),
+    }),
+    success: ResolvedSelectionView,
+    error: Schema.Never,
+  },
+  /** `Continue`. Revalidates from the intents rather than trusting anything the renderer resolved,
+   * then creates one immutable `LeagueSelectionSnapshot` and saves the setup draft alongside it.
+   * Idempotent per identical intent set: a double activation returns the snapshot the first one
+   * created rather than minting a second (§17.2). */
+  submitLeagueSelection: {
+    payload: Schema.Struct({
+      intents: Schema.Array(NationSelectionIntentPayload),
+    }),
+    success: LeagueSelectionSnapshot,
+    error: InvalidLeagueSelectionError,
+  },
+  /** The snapshot a previous `submitLeagueSelection` produced, or `null`. Read by the later setup
+   * stages so they never re-resolve the scope for themselves. */
+  getLeagueSelectionSnapshot: {
+    payload: Schema.Struct({ id: SnapshotId }),
+    success: Schema.NullOr(LeagueSelectionSnapshot),
+    error: Schema.Never,
+  },
+  /** §18, §29. Persist the resumable setup draft. Called on Back and before navigating forward. */
+  saveSetupDraft: {
+    payload: Schema.Struct({
+      intents: Schema.Array(NationSelectionIntentPayload),
+      searchQuery: Schema.String,
+      regionFilterId: Schema.NullOr(Schema.String),
+      statusFilter: Schema.String,
+    }),
+    success: Schema.Void,
+    error: SetupDraftWriteError,
+  },
+  /** The stored draft, or `null` when there is none or it was captured against a different
+   * database. A stale draft is discarded here rather than surfaced for the renderer to judge. */
+  loadSetupDraft: {
+    payload: Schema.Void,
+    success: Schema.NullOr(SetupDraft),
+    error: Schema.Never,
+  },
+  /** §6.1, §13. Intents for a built-in configuration, computed against the catalogue and this
+   * machine's capability — never a hardcoded id list. */
+  buildLeaguePreset: {
+    payload: Schema.Struct({ preset: Schema.Literals(["recommended", "minimal", "broad_world"]) }),
+    success: Schema.Struct({
+      intents: Schema.Array(NationSelectionIntentPayload),
+      estimate: CareerScopeEstimateView,
+    }),
+    error: Schema.Never,
+  },
+  /** The user's saved presets for the current database. Presets stored against another database
+   * fingerprint are omitted, not offered-then-rejected. */
+  listLeaguePresets: {
+    payload: Schema.Void,
+    success: Schema.Array(LeaguePreset),
+    error: Schema.Never,
+  },
+  saveLeaguePreset: {
+    payload: Schema.Struct({
+      name: Schema.String,
+      intents: Schema.Array(NationSelectionIntentPayload),
+    }),
+    success: LeaguePreset,
+    error: SetupDraftWriteError,
+  },
+  /** Apply a stored preset. Fails rather than partially applying when the fingerprint does not
+   * match; drops individual entries the catalogue no longer contains and reports them (§31.4). */
+  applyLeaguePreset: {
+    payload: Schema.Struct({ id: Schema.String }),
+    success: Schema.Struct({
+      intents: Schema.Array(NationSelectionIntentPayload),
+      droppedNationIds: Schema.Array(Schema.String),
+      droppedScopeOptionIds: Schema.Array(Schema.String),
+    }),
+    error: PresetFingerprintMismatchError,
   },
 } as const;
 

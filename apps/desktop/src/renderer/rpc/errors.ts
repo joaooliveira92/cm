@@ -96,6 +96,15 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
           return "That key is already bound to another command.";
         case "InvalidBindingShapeError":
           return "That key combination cannot be bound.";
+        // League and Nation Selection (Screen 3). The blocking issues on
+        // `InvalidLeagueSelectionError` are rendered as an error summary by the screen itself;
+        // this sentence is the fallback for a caller that only has room for one line.
+        case "InvalidLeagueSelectionError":
+          return "That league selection is not valid. Review the highlighted problems.";
+        case "PresetFingerprintMismatchError":
+          return "That preset was saved for a different database and cannot be applied.";
+        case "SetupDraftWriteError":
+          return "Your setup could not be saved to disk.";
       }
   }
 };

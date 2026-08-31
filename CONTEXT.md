@@ -215,9 +215,67 @@ mid-match.
 ### Season & calendar
 
 **League**:
-The single fixed set of 20 clubs a career is played within. Membership never changes — no promotion,
-relegation, or multi-league structure.
-_Avoid_: Division, competition (competition is reserved for a cup-style bracket, not in v1 scope)
+A single Competition within a Nation's pyramid: an ordered set of clubs that play each other on a
+Fixture list. A career is played within the Leagues its League Selection Snapshot made playable.
+_Avoid_: Division (a League's depth in its Nation's pyramid is its *tier*, not a separate concept)
+
+**Nation**:
+The unit a player selects a career's scope by: a named territory owning a pyramid of Leagues, its
+domestic cups, and any reserve Competitions. A Nation may be *unavailable* (present in the setup
+catalogue's metadata, absent from its content) or have no playable League at all, and in both cases
+it stays visible with the reason rather than being hidden.
+
+**Region**:
+A grouping of Nations used for browsing and filtering during career setup. Carries no simulation
+meaning — it exists so a catalogue of many Nations is navigable.
+
+**Competition**:
+Anything a club can take part in: a League, a domestic cup, a reserve competition, or a cross-border
+tournament. Competitions carry **dependency edges** — a second division requires the first division
+above it, a top division requires its national cup, a continental tournament requires the top
+divisions that qualify into it — and selecting one activates everything it requires.
+
+**Simulation Mode**:
+How much of a Competition the career carries: `playable` (clubs are manageable, full detail),
+`background` (simulated at reduced detail, promotions and qualification still occur, no club is
+manageable), `view_only` (standings, fixtures, and results with no persistent squads), or
+`not_loaded`. A Competition activated only because another selection requires it is capped at
+`background` — a parent division is *simulated*, never managed.
+
+**League Scope Option**:
+A supported scope for one Nation, named by the setup catalogue — "Top division only", "National
+pyramid", "National and regional pyramid". The player picks one of these rather than assembling a
+competition graph by hand, which is what lets pyramids that are not a single vertical chain
+(parallel regional divisions, split leagues, franchise competitions) be expressed without letting
+the interface construct an invalid one.
+
+**Selection Intent**:
+What the player asked for: one record per Nation carrying a Simulation Mode and, when playable, a
+League Scope Option. Deliberately distinct from the Effective Selection, so the interface can always
+say which parts of the scope were chosen and which were required.
+
+**Effective Selection**:
+What the Selection Intents resolve to once dependency closure runs — every active Competition, its
+mode, and which selections require it. Every figure in the setup summary counts this, not the
+intents, so an automatically included Competition is visible in the totals.
+
+**League Selection Snapshot**:
+The single immutable record `Continue` produces on the League and Nation Selection screen: the
+intents, the Effective Selection, the cost estimate, and the setup catalogue's fingerprint.
+Creating it does **not** create the world — it is the scope the later setup stages and world
+generation are handed.
+
+**Setup Catalogue**:
+The validated index a career's scope is chosen from: its Regions, Nations, Competitions, League
+Scope Options, and dependency edges, identified by a **fingerprint**. Every persisted setup draft
+and preset carries that fingerprint, and one captured against a different catalogue is refused
+rather than migrated by guessing at renamed Competitions.
+
+> **Generation boundary, as of 2026-08-31.** The League Selection Snapshot is recorded and carried
+> through creation, but `beginCareer` still generates only the fixed 20-club League. Choosing a
+> broader scope is captured and shown on the Review step; materializing it is world generation's
+> subject, not this screen's. See
+> [League and Nation Selection](.agents/notes/implemented/feature/2026-08-31-league-and-nation-selection.md).
 
 **Season**:
 One full cycle of the League: a freshly-generated Fixture list played to completion, followed by a

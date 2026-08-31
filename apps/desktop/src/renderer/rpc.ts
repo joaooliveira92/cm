@@ -46,6 +46,15 @@ export {
   createSave,
   getManagerProfile,
   commitCareer,
+  getLeagueSetupIndex,
+  resolveLeagueSelection,
+  submitLeagueSelection,
+  saveSetupDraft,
+  loadSetupDraft,
+  buildLeaguePreset,
+  listLeaguePresets,
+  saveLeaguePreset,
+  applyLeaguePreset,
 } from "./rpc/precareer.js";
 
 export { listOpponentClubs, startMatch, resumeSimulation } from "./rpc/match.js";

@@ -23,6 +23,7 @@ import {
 } from "./career.js";
 import {
   CreateFlowLayout,
+  LeagueSelectionRouteContent,
   StepOneRouteContent,
   StepThreeRouteContent,
   StepTwoRouteContent,
@@ -110,6 +111,13 @@ export const createFlowRoute = createRoute({
   component: CreateFlowLayout,
 });
 
+/** League and Nation Selection (Screen 3) — the first creation stage. */
+const createLeaguesRoute = createRoute({
+  getParentRoute: () => createFlowRoute,
+  path: "leagues",
+  component: LeagueSelectionRouteContent,
+});
+
 const createStep1Route = createRoute({
   getParentRoute: () => createFlowRoute,
   path: "step-1",
@@ -131,6 +139,7 @@ const createStep3Route = createRoute({
 const routeTree = rootRoute.addChildren([
   saveListRoute,
   createFlowRoute.addChildren([
+    createLeaguesRoute,
     createStep1Route,
     createStep2Route,
     createStep3Route,

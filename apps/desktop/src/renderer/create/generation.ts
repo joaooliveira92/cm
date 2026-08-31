@@ -96,6 +96,20 @@ export const abandon = (state: GenerationState): GenerationTransition =>
       ? stay(state)
       : stay(ABANDONED);
 
+/**
+ * The flow is (re-)entered while the state says it was abandoned.
+ *
+ * Abandonment is a teardown transition, and a teardown that is immediately followed by another
+ * mount of the same component is not a departure — React's development double-invocation of mount
+ * effects produces exactly that shape. Without this, the flow would come back permanently unable
+ * to generate, because `canStartGeneration` is false in `Abandoned`.
+ *
+ * Safe to call on every mount: it is the identity on every other state, and it carries no id, so
+ * it can never resurrect a provisional world the abandonment already discarded.
+ */
+export const reenter = (state: GenerationState): GenerationTransition =>
+  state._tag === "Abandoned" ? stay(PENDING) : stay(state);
+
 /** The provisional world became a playable career. It must never be discarded after this. */
 export const commit = (state: GenerationState): GenerationTransition =>
   state._tag === "Ready" ? stay(COMMITTED) : stay(state);

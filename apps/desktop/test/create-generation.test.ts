@@ -11,12 +11,14 @@ import {
   initialGeneration,
   isSelectionReady,
   provisionalIdOf,
+  reenter,
   startGeneration,
   type GenerationState,
 } from "../src/renderer/create/generation.js";
 
 const id = (value: string) => SaveId.make(value);
 
+const pending = initialGeneration;
 const running = startGeneration(initialGeneration).state;
 const ready = generationSucceeded(running, id("provisional-1")).state;
 
@@ -59,6 +61,34 @@ describe("generation lifecycle — the cancel race", () => {
     const abandoned = abandon(ready);
     expect(abandoned.discard).toBe(id("provisional-1"));
     expect(abandoned.state._tag).toBe("Abandoned");
+  });
+
+  it("re-arms a re-entered flow, so a remount can generate again", () => {
+    // A development double-invocation runs teardown between two mounts of the same component.
+    // Without re-arming, the flow comes back permanently unable to generate.
+    const abandoned = abandon(pending).state;
+    expect(canStartGeneration(abandoned)).toBe(false);
+
+    const rearmed = reenter(abandoned);
+    expect(rearmed.state._tag).toBe("Pending");
+    expect(rearmed.discard).toBeNull();
+    expect(canStartGeneration(rearmed.state)).toBe(true);
+  });
+
+  it("re-arming never resurrects a world the abandonment already discarded", () => {
+    const abandoned = abandon(ready);
+    expect(abandoned.discard).toBe(id("provisional-1"));
+    // The re-arm carries no id, so the discarded world cannot come back as selectable.
+    const rearmed = reenter(abandoned.state);
+    expect(rearmed.discard).toBeNull();
+    expect(provisionalIdOf(rearmed.state)).toBeNull();
+  });
+
+  it("re-arming is the identity on every state that is not abandoned", () => {
+    for (const state of [pending, running, ready, commit(ready).state]) {
+      expect(reenter(state).state).toBe(state);
+      expect(reenter(state).discard).toBeNull();
+    }
   });
 
   it("abandons idempotently — the second call has nothing left to discard", () => {

@@ -186,7 +186,7 @@ export const SaveListScreen = () => {
           <button
             type="button"
             className="mt-3 rounded bg-slate-700 px-4 py-2 hover:bg-slate-600"
-            onClick={() => navigate({ type: "createStep1" })}
+            onClick={() => navigate({ type: "createLeagues" })}
           >
             Start New Career
           </button>

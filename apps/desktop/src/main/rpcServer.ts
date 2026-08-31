@@ -4,6 +4,18 @@ import { AppRpcs, type AppRpcMethod, type RpcResult } from "@cm-clone/contracts"
 import { Effect, Schema } from "effect";
 import { getClubSelection } from "./clubSelection.js";
 import {
+  applyLeaguePreset,
+  buildLeaguePresetIntents,
+  getLeagueSelectionSnapshot,
+  getLeagueSetupIndex,
+  listLeaguePresets,
+  loadSetupDraft,
+  resolveLeagueSelection,
+  saveLeaguePreset,
+  saveSetupDraft,
+  submitLeagueSelection,
+} from "./leagueSelection.js";
+import {
   getKeyBindingOverrides,
   resetAllKeyBindings,
   resetKeyBinding,
@@ -35,6 +47,50 @@ type Handler = (payload: unknown, ctx: RpcContext) => Effect.Effect<unknown, unk
 
 const handlers: Record<AppRpcMethod, Handler> = {
   ping: () => Effect.succeed("pong"),
+
+  // League and Nation Selection (Screen 3). Every one of these re-validates against the catalogue
+  // in `leagueSelection.ts`; none of them trusts a resolved selection the renderer computed.
+  getLeagueSetupIndex: () => getLeagueSetupIndex,
+  resolveLeagueSelection: (payload) =>
+    Effect.gen(function* () {
+      const { selectionRevision, intents } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.resolveLeagueSelection.payload,
+      )(payload);
+      return yield* resolveLeagueSelection(selectionRevision, intents);
+    }),
+  submitLeagueSelection: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { intents } = yield* Schema.decodeUnknownEffect(AppRpcs.submitLeagueSelection.payload)(payload);
+      return yield* submitLeagueSelection(ctx.userDataDir, intents);
+    }),
+  getLeagueSelectionSnapshot: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { id } = yield* Schema.decodeUnknownEffect(AppRpcs.getLeagueSelectionSnapshot.payload)(payload);
+      return yield* getLeagueSelectionSnapshot(ctx.userDataDir, id);
+    }),
+  saveSetupDraft: (payload, ctx) =>
+    Effect.gen(function* () {
+      const draft = yield* Schema.decodeUnknownEffect(AppRpcs.saveSetupDraft.payload)(payload);
+      return yield* saveSetupDraft(ctx.userDataDir, draft);
+    }),
+  loadSetupDraft: (_payload, ctx) => loadSetupDraft(ctx.userDataDir),
+  buildLeaguePreset: (payload) =>
+    Effect.gen(function* () {
+      const { preset } = yield* Schema.decodeUnknownEffect(AppRpcs.buildLeaguePreset.payload)(payload);
+      return yield* buildLeaguePresetIntents(preset);
+    }),
+  listLeaguePresets: (_payload, ctx) => listLeaguePresets(ctx.userDataDir),
+  saveLeaguePreset: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { name, intents } = yield* Schema.decodeUnknownEffect(AppRpcs.saveLeaguePreset.payload)(payload);
+      return yield* saveLeaguePreset(ctx.userDataDir, name, intents);
+    }),
+  applyLeaguePreset: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { id } = yield* Schema.decodeUnknownEffect(AppRpcs.applyLeaguePreset.payload)(payload);
+      return yield* applyLeaguePreset(ctx.userDataDir, id);
+    }),
+
   listSaves: (_payload, ctx) => listSaves(ctx.savesDir),
   createSave: (payload, ctx) =>
     Effect.gen(function* () {
