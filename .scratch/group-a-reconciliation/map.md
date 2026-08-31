@@ -78,14 +78,19 @@ repair, because `pnpm check:all` is red until it lands and every later session i
 - [06 — Screen 19: Manager Status redefined, and the name collision](issues/06-screen-19-manager-status-redefinition.md):
   Screen is "Manager Profile", showing profile identity (name, archetype, pillars, club, tenure) with
   a passive Active/Archived badge; all sacking/outcome detail stays exclusive to Season Summary;
-  "Manager Status" retired as domain term; CONTEXT.md updated.
+  "Manager Status" retired as domain term; CONTEXT.md and reconciliation ledger updated.
+
+- [07 — Screen 20: Retire Manager](issues/07-screen-20-retire-manager.md): retirement is the second cause
+  of an **Archived Save**; a `ManagerRetired` event and a nullable `archived_cause` column replace the
+  `sacked` boolean, `assertSaveNotSacked` becomes `assertSaveNotArchived`, and the action is a dialog on
+  Manager Profile confirmed by an Irreversibility Disclosure. Breaks the save format with no migration path.
 
 ## Not yet specified
 
 **Whether any Group A screen needs a new keyboard tier.** The tiering rule in the screen-keyboard-tiers
-note covers nine existing screens. Screens 19–21 will need assignments, but the rule's inputs
+note covers nine existing screens. Screens 19 and 21 will need assignments, but the rule's inputs
 (interactive control count) aren't known until those screens are designed. (Screen 18 removed, no
-assignment needed.) Ticket 04 sharpened one half of this: the Save List is also missing from the
+assignment needed; Screen 20 is a dialog on Manager Profile, not a screen, so it needs none either.) Ticket 04 sharpened one half of this: the Save List is also missing from the
 tiering table despite being shipped, and its two controls put it at level 2 minimum under the rule as
 written. Ticket 09 now owns that assignment alongside the new screens.
 
@@ -126,6 +131,11 @@ that may deserve its own pass once the count of genuinely load-bearing ones is k
 - **Game Status screen (Screen 18).** Decided via ticket 05. The survivors (career/season orientation,
   sacked badge, app version) redistribute into existing real estate; no route, component, or
   `GameStatusSnapshot` type is built.
+- **Save-format migration machinery.** Ticket 07's `archived_cause` column is the second Group A decision
+  to break existing saves, and the repo has no migration layer to carry them across. Building one is a
+  project-wide architectural effort with its own versioning and upgrade-path questions; it sits past this
+  map's destination. Recorded here so the need is visible rather than lost — see the risk in
+  [Retire Manager](../../.agents/notes/proposed/feature/2026-08-30-retire-manager.md).
 - **The other eighteen spec groups.** Group A is the pilot. If a reusable trimming method falls out, it
   is captured as a `process` Agent Note — widening this map to 19 groups is a different effort.
 - **An enabled-mods indicator.** Ruled by ticket 04 while auditing spec 1 §4.2 and §8. Nothing in the
