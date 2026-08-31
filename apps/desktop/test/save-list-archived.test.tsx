@@ -20,6 +20,18 @@ const mount = (saves: ReadonlyArray<unknown>) => {
   render(<SaveListScreen />);
 };
 
+const mountWithListSavesFailure = () => {
+  (window as unknown as { cmClone: { call: unknown } }).cmClone = {
+    call: async (method: string) => {
+      if (method === "listSaves") {
+        return { _tag: "Failure", error: { _tag: "TransportFailure", method: "listSaves", cause: null } };
+      }
+      return { _tag: "Success", value: "pong" };
+    },
+  };
+  render(<SaveListScreen />);
+};
+
 beforeEach(cleanup);
 afterEach(cleanup);
 
@@ -44,5 +56,33 @@ describe("Save List — Archived Save marker", () => {
 
     const entry = await screen.findByRole("button", { name: "Retired Career" });
     expect(entry.hasAttribute("disabled")).toBe(false);
+  });
+});
+
+describe("Save List — failed listSaves", () => {
+  it("shows an error message and retry button when listSaves fails", async () => {
+    mountWithListSavesFailure();
+
+    expect(await screen.findByText("Failed to load saves.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
+    expect(screen.queryByText("No saves yet.")).toBeNull();
+  });
+
+  it("recovers from a failed listSaves on retry", async () => {
+    mountWithListSavesFailure();
+
+    await screen.findByText("Failed to load saves.");
+
+    (window as unknown as { cmClone: { call: unknown } }).cmClone = {
+      call: async (method: string) =>
+        method === "listSaves"
+          ? { _tag: "Success", value: [save("Recovered Career", null)] }
+          : { _tag: "Success", value: "pong" },
+    };
+
+    screen.getByRole("button", { name: "Retry" }).click();
+
+    await screen.findByRole("button", { name: "Recovered Career" });
+    expect(screen.queryByText("Failed to load saves.")).toBeNull();
   });
 });

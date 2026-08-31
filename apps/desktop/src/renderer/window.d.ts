@@ -5,5 +5,8 @@ declare global {
     cmClone: {
       call<M extends AppRpcMethod>(method: M, payload: RpcPayload<M>): Promise<RpcResult<M>>;
     };
+    electronAPI: {
+      showQuitGuard: () => Promise<void>;
+    };
   }
 }
