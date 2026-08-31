@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "@tanstack/react-router";
-import { ClubId, type SaveId } from "@cm-clone/contracts";
+import { ClubId } from "@cm-clone/contracts";
 import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
 import { Effect, Result } from "effect";
 import { ClubSelectionScreen } from "../ClubSelectionScreen.js";
@@ -13,6 +13,21 @@ import {
 } from "../rpc.js";
 import { FOCUS_RING } from "../focus.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
+import { GenerationStatus } from "../create/GenerationStatus.js";
+import {
+  abandon,
+  blockedReason,
+  canStartGeneration,
+  commit,
+  generationFailed,
+  generationSucceeded,
+  initialGeneration,
+  isSelectionReady,
+  provisionalIdOf,
+  startGeneration,
+  type GenerationState,
+  type GenerationTransition,
+} from "../create/generation.js";
 import { RouteView } from "./RouteView.js";
 
 const DEFAULT_PILLARS: PillarDistribution = {
@@ -22,15 +37,16 @@ const DEFAULT_PILLARS: PillarDistribution = {
   technicalCoaching: 3,
 };
 
-type CreationStatus = "idle" | "generating" | "ready" | "committing" | "committed";
+type CommitStatus = "idle" | "committing" | "committed";
 
 export interface CreationSession {
   readonly saveName: string;
   readonly managerName: string;
   readonly archetype: ManagerArchetype;
   readonly pillars: PillarDistribution;
-  readonly provisionalId: SaveId | null;
-  readonly status: CreationStatus;
+  /** The provisional-world lifecycle. `provisionalIdOf` is the only way to reach the save id. */
+  readonly generation: GenerationState;
+  readonly commit: CommitStatus;
   readonly error: string | null;
 }
 
@@ -39,14 +55,15 @@ const EMPTY_SESSION: CreationSession = {
   managerName: "",
   archetype: "professor",
   pillars: { ...DEFAULT_PILLARS },
-  provisionalId: null,
-  status: "idle",
+  generation: initialGeneration,
+  commit: "idle",
   error: null,
 };
 
 interface CreateSessionApi {
   readonly session: CreationSession;
   readonly update: (patch: Partial<CreationSession>) => void;
+  readonly retryGeneration: () => void;
 }
 
 /** The three creation steps read the parent-owned session through this context. */
@@ -85,14 +102,15 @@ export const StepOneRouteContent = () => {
 };
 
 export const StepTwoRouteContent = () => {
-  const { session } = useCreateSession();
+  const { session, retryGeneration } = useCreateSession();
+  const provisionalId = provisionalIdOf(session.generation);
   return (
     <RouteView screenId="createStep2">
-      {session.status === "generating" ? (
-        <p className="text-slate-400">Generating the world&hellip;</p>
-      ) : session.provisionalId !== null ? (
-        <ClubSelectionScreen saveId={session.provisionalId} />
-      ) : null}
+      {provisionalId === null ? (
+        <GenerationStatus state={session.generation} onRetry={retryGeneration} />
+      ) : (
+        <ClubSelectionScreen saveId={provisionalId} />
+      )}
     </RouteView>
   );
 };
@@ -108,10 +126,17 @@ export const StepThreeRouteContent = () => {
 
 /**
  * The `/create` parent route. Owns the ONE provisional creation session shared
- * by the three creation steps (provisional save id, generation status, manager
- * draft, commit status). `beginCareer` still runs before Club Selection; leaving
- * creation discards the provisional save idempotently; reloading a later step
- * without a recoverable in-memory session redirects to step 1.
+ * by the three creation steps (provisional-world lifecycle, manager draft,
+ * commit status).
+ *
+ * Generation runs *underneath* the manager step: `beginCareer` is issued when
+ * the flow mounts, not when the player asks for club selection, so the wait is
+ * spent making the first real decision rather than watching it. The transition
+ * into club selection stays disabled until the world is complete and says why
+ * while it is. Leaving creation discards the provisional save idempotently,
+ * including when the world is still in flight at the moment of leaving.
+ * Reloading a later step without a recoverable in-memory session redirects to
+ * step 1.
  */
 export const CreateFlowLayout = () => {
   const [session, setSession] = useState<CreationSession>(EMPTY_SESSION);
@@ -119,63 +144,76 @@ export const CreateFlowLayout = () => {
   const { pathname } = useLocation();
   const step = stepOf(pathname);
 
+  // The ref is written synchronously, before the render is scheduled, because
+  // the async generation continuations read it to decide whether the world they
+  // are holding is still wanted. A ref written inside the state updater would
+  // lag exactly the readers that matter.
   const update = (patch: Partial<CreationSession>): void => {
-    setSession((prev) => {
-      const next = { ...prev, ...patch };
-      sessionRef.current = next;
-      return next;
-    });
+    const next = { ...sessionRef.current, ...patch };
+    sessionRef.current = next;
+    setSession(next);
   };
+
+  /** Apply a lifecycle transition and honour the discard it hands back. */
+  const applyGeneration = (transition: (state: GenerationState) => GenerationTransition): void => {
+    const { state, discard } = transition(sessionRef.current.generation);
+    update({ generation: state });
+    if (discard !== null) void runAtEdge(discardCareer(discard));
+  };
+
+  const runGeneration = async (): Promise<void> => {
+    if (!canStartGeneration(sessionRef.current.generation)) return;
+    applyGeneration(startGeneration);
+    const outcome = await runAtEdge(beginCareer());
+    if (Result.isFailure(outcome)) {
+      const message = describeRpcError(outcome.failure);
+      applyGeneration((state) => generationFailed(state, message));
+      return;
+    }
+    applyGeneration((state) => generationSucceeded(state, outcome.success.id));
+  };
+
+  // Generation begins the moment the player commits to a new career — entering
+  // the flow — and is masked by the manager step. The guard inside
+  // `runGeneration` is what makes a double mount or a rapid double activation
+  // one job rather than two worlds on disk.
+  useEffect(() => {
+    void runGeneration();
+  }, []);
 
   // Reload mid-creation (step 2/3 with no recoverable session) redirects to
   // step 1. The in-memory session is never durable, so a reload always arrives
-  // here with an empty session.
+  // here with an empty session. The condition is stated as "no world to select
+  // from" rather than "generation not yet started" so it does not depend on
+  // whether the mount-time generation effect has already run.
   useEffect(() => {
-    if (step !== "1" && sessionRef.current.provisionalId === null) {
+    const generation = sessionRef.current.generation;
+    if (step !== "1" && !isSelectionReady(generation) && generation._tag !== "Committed") {
       navigate({ type: "createStep1" });
     }
   }, [step]);
 
-  // Leaving `/create/**` runs idempotent cleanup: discard the provisional save
-  // when one was generated and not committed. Fires on unmount; a commit clears
-  // `provisionalId` synchronously before navigating, so a committed career is
-  // never discarded.
+  // Leaving `/create/**` abandons the provisional world. `abandon` discards one
+  // that already exists; one still in flight is discarded by
+  // `generationSucceeded` when it lands in the abandoned state. A committed
+  // career is never discarded.
   useEffect(() => {
     return () => {
-      const s = sessionRef.current;
-      if (s.provisionalId !== null && s.status !== "committed") {
-        void runAtEdge(discardCareer(s.provisionalId));
-      }
+      applyGeneration(abandon);
     };
   }, []);
 
-  const handleBeginCareer = async (): Promise<boolean> => {
-    if (sessionRef.current.provisionalId !== null) return true;
-    update({ status: "generating", error: null });
-    const outcome = await runAtEdge(beginCareer());
-    if (Result.isFailure(outcome)) {
-      update({ status: "idle", error: "Failed to start career: " + describeRpcError(outcome.failure) });
-      return false;
-    }
-    update({ provisionalId: outcome.success.id, status: "ready" });
-    return true;
-  };
-
-  const handleNextToClub = async (): Promise<void> => {
-    const began = await handleBeginCareer();
-    if (began) navigate({ type: "createStep2" });
-  };
-
   const handleCommitCareer = async (): Promise<void> => {
     const s = sessionRef.current;
-    if (!s.provisionalId || !s.saveName.trim()) {
+    const provisionalId = provisionalIdOf(s.generation);
+    if (provisionalId === null || !s.saveName.trim()) {
       update({ error: "Please fill in all required fields" });
       return;
     }
-    update({ status: "committing", error: null });
+    update({ commit: "committing", error: null });
     const outcome = await runAtEdge(
       commitCareer({
-        id: s.provisionalId,
+        id: provisionalId,
         name: s.saveName.trim(),
         selectedClubId: ClubId.make("temp-club-id"),
         managerName: s.managerName.trim() || s.saveName.trim(),
@@ -185,32 +223,28 @@ export const CreateFlowLayout = () => {
     );
     if (Result.isFailure(outcome)) {
       const error = outcome.failure;
-      if (error._tag === "RemoteFailure" && error.error._tag === "InvalidPillarDistributionError") {
-        update({
-          status: "idle",
-          provisionalId: null,
-          error:
-            "Invalid pillar distribution: " + (error.error.errors?.join(", ") || "unknown error"),
-        });
-      } else {
-        update({
-          status: "idle",
-          provisionalId: null,
-          error: "Failed to create career: " + describeRpcError(error),
-        });
-      }
-      await runAtEdge(discardCareer(s.provisionalId));
+      const message =
+        error._tag === "RemoteFailure" && error.error._tag === "InvalidPillarDistributionError"
+          ? "Invalid pillar distribution: " + (error.error.errors?.join(", ") || "unknown error")
+          : "Failed to create career: " + describeRpcError(error);
+      update({ commit: "idle", error: message });
+      applyGeneration(abandon);
       navigate({ type: "createStep1" });
       return;
     }
-    update({ status: "committed", provisionalId: null });
+    update({ commit: "committed" });
+    applyGeneration(commit);
     navigateCareer({ type: "squad", saveId: outcome.success.id }, "pointer");
   };
 
-  const canProceedFromManager = session.saveName.trim().length > 0 && sum(session.pillars) === 12;
+  const managerStepComplete = session.saveName.trim().length > 0 && sum(session.pillars) === 12;
+  const selectionReady = isSelectionReady(session.generation);
+  const blocked = blockedReason(session.generation);
 
   return (
-    <CreateSessionContext.Provider value={{ session, update }}>
+    <CreateSessionContext.Provider
+      value={{ session, update, retryGeneration: () => void runGeneration() }}
+    >
       <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
         <h1 className="text-2xl font-bold">New Career</h1>
 
@@ -228,6 +262,17 @@ export const CreateFlowLayout = () => {
             </div>
           )}
 
+          {/* The manager step carries the generation status: the wait happens
+              here, so this is where a failure has to be recoverable. */}
+          {step === "1" && session.generation._tag !== "Ready" && (
+            <div className="mt-6">
+              <GenerationStatus
+                state={session.generation}
+                onRetry={() => void runGeneration()}
+              />
+            </div>
+          )}
+
           <div className="mt-8 flex gap-4">
             <button
               type="button"
@@ -237,21 +282,30 @@ export const CreateFlowLayout = () => {
               Cancel
             </button>
             {step === "1" && (
-              <button
-                type="button"
-                className={`rounded bg-slate-600 px-4 py-2 hover:bg-slate-500 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
-                onClick={() => void handleNextToClub()}
-                disabled={!canProceedFromManager || session.status === "generating"}
-              >
-                Next: Select Club
-              </button>
+              <div>
+                <button
+                  type="button"
+                  className={`rounded bg-slate-600 px-4 py-2 hover:bg-slate-500 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
+                  onClick={() => navigate({ type: "createStep2" })}
+                  disabled={!managerStepComplete || !selectionReady}
+                  aria-describedby={blocked === null ? undefined : "generation-blocked-reason"}
+                >
+                  Next: Select Club
+                </button>
+                {/* A greyed control that does not say why is not acceptable. */}
+                {blocked !== null && (
+                  <p id="generation-blocked-reason" className="mt-2 text-sm text-slate-400">
+                    {blocked}
+                  </p>
+                )}
+              </div>
             )}
             {step === "2" && (
               <button
                 type="button"
                 className={`rounded bg-slate-600 px-4 py-2 hover:bg-slate-500 ${FOCUS_RING.join(" ")}`}
                 onClick={() => navigate({ type: "createStep3" })}
-                disabled={session.provisionalId === null || session.status !== "ready"}
+                disabled={!selectionReady}
               >
                 Next: Review
               </button>
@@ -261,7 +315,7 @@ export const CreateFlowLayout = () => {
                 type="button"
                 className={`rounded bg-green-700 px-4 py-2 hover:bg-green-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
                 onClick={() => void handleCommitCareer()}
-                disabled={session.status === "committing"}
+                disabled={session.commit === "committing"}
               >
                 Create Career
               </button>
@@ -272,7 +326,6 @@ export const CreateFlowLayout = () => {
     </CreateSessionContext.Provider>
   );
 };
-
 const sum = (pillars: PillarDistribution): number =>
   Object.values(pillars).reduce((a, b) => a + b, 0);
 

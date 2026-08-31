@@ -130,6 +130,22 @@ file are likewise not audited here. See the duplicate-screen note above.
 
 Status: **Reviewed** (group-a-reconciliation ticket 15, 2026-08-31).
 
+**Amended 2026-08-31, after the generation-phase implementation.** The rows below record the audit as
+taken; this paragraph records what the shipped change moved, so the ledger does not assert as absent
+things that now exist. The screen count did not change — there is still no Database Initialization
+screen, and §5–§7, §11–§12, §15–§16, §18–§20, §22–§26 stand exactly as written. What changed is the
+part of Screen 2 that has a referent in the three-step creation flow: the wait for `beginCareer`.
+
+| Sections | What the row says | What now holds |
+|---|---|---|
+| §4.2 Primary status region, §4.3 Progress indicator | Nothing renders; Step 2 shows only "Generating the world…". | `create/GenerationStatus.tsx` renders a status region on the manager step with an indeterminate `role="progressbar"` carrying an accessible name and no `aria-valuenow`. §4.4's task checklist and §4.5's details panel remain absent: neither has a referent, because `beginCareer` is one call with no reportable stages. |
+| §8 Progress model | No progress model exists. | Still true, and deliberately: `beginCareer` exposes no measure whose unit is a selection-ready club, so the wait is indeterminate rather than weighted. See the honest-progress rule in the anchor note. |
+| §9.1 Cancel, §9.3 Retry | Cancel navigates away without cooperative cancellation; no retry mechanism exists. | Cancel abandons the provisional world and discards it, including one still in flight at the moment of cancelling. A failed generation offers Retry, which reissues `beginCareer`. There is still no signal into the running job — `beginCareer` runs to completion and its result is discarded, which is not the spec's cooperative cancellation. |
+| §13 Concurrency, §14 Cancellation model | No cooperative cancellation or cleanup of the provisional database on Cancel; `discardCareer` is called only on step-3 commit failure. | `discardCareer` now runs on every exit from creation, and a world arriving after the player left is discarded on arrival. `beginCareer` still blocks its own call and has no `AbortSignal` or safe-boundary model. |
+| §17 Accessibility requirements | No ARIA infrastructure exists. | For this screen only: a polite live region announces generation start, readiness, and failure — one sentence per state, not per tick — and the disabled transition into club selection carries `aria-describedby` pointing at the sentence explaining it. The rest of the section stands. |
+| §21 State machine | `CreationStatus` "idle"→"generating"→"ready"→"committing"→"committed". | The generation phase is its own machine in `create/generation.ts`: Pending → Running → Ready/Failed, with Abandoned and Committed as terminal states; commit status is a separate field. It is still not the spec's DISCOVERING→⋯→LEAGUE_SELECTION sequence. |
+| §27 Acceptance criteria | 6 of 15 partially implemented. | Criteria 1 (single job — guarded by state, covered by a double-mount test), 3 (current state communicated), and 4 (cancellation returns safely, with cleanup) now hold for the generation phase. The rest stand as recorded. |
+
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
 | §29 Condensed LLM implementation brief | `out-of-scope` | A prose restatement of the whole file. | Not audited. Auditing it would double-count every section it summarizes. | Non-normative import scaffolding. |
