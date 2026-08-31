@@ -30,8 +30,54 @@ Open sub-questions:
   the new-game-flow note leave nothing of it. Others may have no implementation to audit, making them
   new design rather than audit.
 
+## What ticket 04 measured
+
+Ticket 04 is resolved, and it is the sizing input this ticket was waiting on.
+
+**Screen 1 cost.** 15 sections, 374 spec lines, 26 ledger rows, one session with budget left over —
+and that was the *expensive* kind of screen, because Screen 1's sections constrain the whole shell and
+the audit had to read `router/`, `navigation/`, `keymap/`, `actions/`, `KeyboardSpine.tsx` and the
+main-process entry. Later screens read one component.
+
+**Screen 1 is not representative of the rest.** Section counts for the surviving screens:
+
+| Screen | Sections | Lines | | Screen | Sections | Lines |
+|---|---|---|---|---|---|---|
+| 2 New Game | 29 | 1141 | | 10 Background | 47 | 1688 |
+| 3 League/Nation | 35 | 1828 | | 11 Club Selection | 56 | 1795 |
+| 4 Competition Detail | 42 | 1672 | | 12 Confirmation | 61 | 1696 |
+| 5 Database Size | 49 | 1939 | | 13 Load Saved Game | 77 | 2174 |
+| 6 Loading/World Gen | 40 | 1725 | | 14 Save/Save As | 71 | 1903 |
+| 8 Personal Details | 43 | 1642 | | 15 Delete Saved Game | 59 | 1554 |
+| 9 Nationality/Langs | 48 | 1627 | | 16 Preferences | 82 | 1894 |
+| | | | | 17 Display and Sound | 68 | 1645 |
+
+807 sections across the fifteen surviving screens (screen 7 excluded — the trim plus the new-game-flow
+note leave nothing of it). The average screen is 53 sections, three and a half times Screen 1. Screens
+13, 14, 16 and 17 are four to five times it.
+
+**Estimate, from one data point, so treat it as soft:** if a comfortable session is somewhere near 15
+to 20 sections, the remaining audit is on the order of 40 sessions. Per-screen tickets would therefore
+be too big for at least the eight largest screens, and the answer is probably *sections per ticket*
+rather than screens per ticket — one screen splitting into two to five tickets by section range, with
+the small screens staying whole.
+
+## One cheap option is already dead
+
+The obvious saving was to audit the cross-cutting sections once for the whole group instead of sixteen
+times. Every screen carries roughly four of them (Accessibility, Keyboard interaction, Responsive,
+Localization), and in a template-generated import they looked like boilerplate.
+
+They are not. Ticket 04 checked: spec 3 §25 Accessibility describes an accessible *tree grid* with
+division depth and dependency reasons; spec 13 §66 describes an accessible *list* of saves with
+synchronization state and integrity. Same shape, entirely screen-specific content. There is nothing to
+factor out, so this ticket should not plan around it.
+
 Ticket 04 stays as it is: the application shell is audited first regardless, and its result is an input
-here.
+here. The output shape it settled — read the implementation, write ledger rows, change no code — is
+recorded in the [screen-audit note](../../../.agents/notes/proposed/process/2026-08-30-screen-audit-against-imported-spec.md)
+and is what the remaining tickets should copy, with the caveat that Screen 1's reach across six
+directories was specific to the shell and would be scope creep on a single-component screen.
 
 ## Done when
 

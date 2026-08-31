@@ -44,7 +44,7 @@ canonical; the copy inside `01_app_sheell.md` is redundant and is not audited se
 
 | Screen | Import file | Status |
 |---|---|---|
-| 1 Main Menu | [01_app_sheell.md](01_app_sheell.md) | Not yet audited |
+| 1 Main Menu | [01_app_sheell.md](01_app_sheell.md) | Audited |
 | 2 New Game, Database Initialization | [02_new_game.md](02_new_game.md) | Not yet audited |
 | 3 League and Nation Selection | [03_league_and_nation_selection.md](03_league_and_nation_selection.md) | Not yet audited |
 | 4 Competition Detail Selection | [04_competition_detail_selection.md](04_competition_detail_selection.md) | Not yet audited |
@@ -61,7 +61,7 @@ canonical; the copy inside `01_app_sheell.md` is redundant and is not audited se
 | 15 Delete Saved Game | [15_delete_saved_game.md](15_delete_saved_game.md) | Not yet audited |
 | 16 Game Preferences | [16_game_preferences.md](16_game_preferences.md) | Not yet audited |
 | 17 Display and Sound Options | [17_display_and_sound_options.md](17_display_and_sound_options.md) | Not yet audited |
-| 18 Game Status | [18_game_status.md](18_game_status.md) | New design — group-a-reconciliation ticket 05 |
+| 18 Game Status | [18_game_status.md](18_game_status.md) | Removed — group-a-reconciliation ticket 05 |
 | 19 Manager Status | [19_manager_status.md](19_manager_status.md) | New design — group-a-reconciliation ticket 06 |
 | 20 Retire Manager | [20_retire_manager.md](20_retire_manager.md) | New design — group-a-reconciliation ticket 07 |
 | 21 Quit Game Confirmation | [21_quit_game_confirmation.md](21_quit_game_confirmation.md) | New design — group-a-reconciliation ticket 08 |
@@ -71,14 +71,46 @@ effort is archived, and this ledger outlives the effort that produced it.
 
 ## Screen 1: Main Menu
 
-Status: **Not yet audited.** Rows below are the blanket scope trim only (group-a-reconciliation ticket
-03). The screen's audit ticket owns the rest; absence of a row is not yet a claim that a section is
-followed.
+Status: **Audited** against the shell implementation (group-a-reconciliation ticket 04, 2026-08-30).
+Everything not listed below is followed. The implementation audited is `apps/desktop/src/renderer/`
+(`router/`, `navigation/`, `keymap/`, `actions/`, `KeyboardSpine.tsx`, `router/saveList.tsx`) plus
+`apps/desktop/src/main/index.ts`.
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
 | §1 Purpose, §3 Screen structure, §5 Navigation behavior (§5.3 Multiplayer), §8 Persistent state, §9 Commands emitted by the screen, §14 Recommended tests | `out-of-scope` | A `Network / Multiplayer` menu entry with Host game, Join game, and Load multiplayer career; a `multiplayerAvailable` flag; an `OPEN_MULTIPLAYER` command; a network transport dependency; and tests for the disabled state. | None of it exists. The menu's third entry is not reserved. | The multiplayer, network, and cloud axis is removed wholesale from this project. |
 | §15 Clean-room constraints | `out-of-scope` | Guidance on avoiding protected expression: original naming, artwork, and data. | Not audited as screen behaviour. | Non-normative import scaffolding — authoring guidance, not a requirement on any screen. |
+| Throughout ("Main Menu") | `renamed` | The application's entry point is the **Main Menu**. | The entry point is the **Save List**, the route at `/`. | [Save List](../../../CONTEXT.md) — the term lists `Main Menu` and `title screen` as the words to avoid. |
+| §3.4 Primary menu group, §5.2 Load Career | `contradicted` | A centred vertical group of six large menu rows, from which `Load Career` *transitions* to a separate saved-game browser. | There is no menu group and no transition: the entry point already is the browser. `saveList.tsx` renders a list of Saves plus one `Start New Career` button. The empty state §5.2 asks for is present in place — "No saves yet." alongside that button. | [Save List](../../../CONTEXT.md) — "the only navigation destination outside a Save: it lists existing Saves and starts the creation flow". |
+| §1 Purpose, §5.4 Preferences, §10.2 Preferences cannot load | `deferred` | A menu entry opening application-level settings that apply with no career loaded, degrading to safe defaults with a nonblocking warning when they fail to load. | No preferences surface exists anywhere in the app. | Group A [Screen 16 Game Preferences](16_game_preferences.md). The entry point that would reach it is unowned; ticket 09 holds the navigation surface. |
+| §1 Purpose, §5.5 Credits | `deferred` | A Credits entry opening a scrollable informational page with a Back action. | Not built — no screen, no route, no destination. | `unscheduled`. |
+| §1 Purpose, §5.6 Exit | `deferred` | An Exit entry that opens a confirmation before terminating. | The Save List offers no way to quit. The application closes only through the window control, and `main/index.ts` calls `app.quit()` on `window-all-closed` with nothing in between. | Group A [Screen 21 Quit Game Confirmation](21_quit_game_confirmation.md). |
+| §7 Exit confirmation dialog | `contradicted` | The dialog warns that "Any unsaved setup changes will be lost." | It will not. | [Save](../../../CONTEXT.md) — a Save is durable at commit, so there is no unsaved progress to warn about. Screen 21 §4 carries the same divergence. |
+| §5.1 Start New Career | `contradicted` | Main Menu → Database Initialization → League Selection → Database Creation → Manager Creation → Club Selection. | Three creation steps at `/create/step-1..3`, with league and database selection absent as separate stages. | [New game flow sequence](../../../.agents/notes/proposed/feature/2026-08-29-new-game-flow-sequence.md) |
+| §5.1 Start New Career | `contradicted` | The journey terminates at a **Career Inbox**. | It terminates at the Squad screen; `saveList.tsx` navigates to `{ type: "squad" }` on load, and `CareerIndexRedirect` does the same. | [No onboarding inbox](../../../.agents/notes/proposed/architecture/2026-08-29-no-onboarding-inbox.md) — v1 ships no inbox, news screen, or message feed. |
+| §9 Commands emitted by the screen | `renamed` | The screen emits named application commands (`START_NEW_CAREER`, `OPEN_LOAD_GAME`, …) rather than containing career logic. | The same separation exists as registry Actions with stable kebab-case ids, dispatched by id. | [Screen operations become a first-class Action registry](../../../.agents/notes/implemented/architecture/2026-08-29-action-model.md) |
+| §9 Commands emitted by the screen | `deferred` | Every menu choice is a dispatchable named command. | `saveList` is a declared `ScreenName` and action scope, but no Action in `allActions.ts` uses it. Both Save List buttons are raw `onClick` closures, so neither operation reaches the command palette, the help overlay, or the key map. | [Action registry](../../../.agents/notes/implemented/architecture/2026-08-29-action-model.md) — its "all-or-nothing per screen" rule makes the Save List an unconverted screen. |
+| §4.1 Menu button, §11 Accessibility (focus visibility, no colour-only state) | `deferred` | Each control carries `idle`/`pointer_hover`/`keyboard_focused`/`pressed`/`disabled` states, with focus always visible and state never conveyed by colour alone. | The Save List's buttons have a hover colour change and nothing else: no focus ring, no pressed state, no disabled state, no `tabIndex`. | [Intra-screen focus model](../../../.agents/notes/proposed/architecture/2026-08-29-intra-screen-focus-model.md) — proposed, unimplemented on this screen. |
+| §6 Keyboard interaction (`Up`, `Down`, `Home`, `End`), §13 criterion 1 | `deferred` | Arrow keys move between menu items and `Home`/`End` jump to the ends. | The Save List declares no roving region, so its controls are reachable by native `Tab` only. It is also absent from the tiering table, which covers nine screens and not this one; its two controls put it at level 2 minimum under that note's own rule. | [Screen keyboard tiers](../../../.agents/notes/proposed/feature/2026-08-29-screen-keyboard-tiers.md) — ticket 09 absorbs the assignment. |
+| §6 Keyboard interaction (`Escape`) | `contradicted` | `Escape` closes a dialog **or returns from a secondary menu**. | `Escape` closes the topmost transient layer and never navigates. Returning to the previous screen is the `g b` Action. | [Global key map](../../../.agents/notes/implemented/feature/2026-08-29-global-key-map.md) — "Layer stack: splash → select → palette → help → prefix; never navigates". |
+| §6 Keyboard interaction (`Alt+Enter`), §10.4 Unsupported display configuration | `deferred` | `Alt+Enter` toggles fullscreen; an unsupported display falls back to windowed mode at an accessible minimum resolution, recording diagnostics. | Unbound. `main/index.ts` opens a fixed 1200×800 `BrowserWindow` and inspects no display capability. | Group A [Screen 17 Display and Sound Options](17_display_and_sound_options.md). |
+| §6 Keyboard interaction (focus wrap) | `deferred` | Focus wraps at the ends of the menu only when an accessibility preference says so. | Nothing decides wrapping either way, and there is no accessibility-preferences surface to configure it from. | [Intra-screen focus model](../../../.agents/notes/proposed/architecture/2026-08-29-intra-screen-focus-model.md) owns the arrow/`Home`/`End` contract; whether wrapping is user-configurable belongs to [Screen 16](16_game_preferences.md). |
+| §2 Intended emotional effect, §3.2 Background layer, §3.3 Product identity area, §12 Responsive behavior | `deferred` | A restrained early-2000s desktop-software look: a quiet background layer, a product identity area carrying title and database edition, a centred panel, wider margins on ultrawide displays, a preserved minimum viewport. | The Save List is flat `bg-slate-950` with default Tailwind type, left-aligned at `p-8`, inside a fixed-size window with no responsive handling. Only the title is present. | [Visual design tokens and chrome-blue retro frame](../../../.agents/notes/proposed/architecture/2026-08-29-visual-design-tokens.md) — proposed, unimplemented. |
+| §3.3 Product identity area, §4.2 Footer, §8 (`currentVersion`, `databaseVersion`) | `deferred` | A low-emphasis footer distinguishing the application version from the football-database version, plus a build identifier. | No footer, and neither version is read or surfaced anywhere in the renderer. | `unscheduled`. |
+| §4.2 Footer, §8 (`enabledMods`) | `out-of-scope` | An active-modification indicator listing enabled mods. | No such indicator. | The game has no mod system: nothing loads third-party content, so there is nothing to enable, list, or indicate. Recorded by ticket 04. |
+| §8 (`updateStatus`) | `out-of-scope` | The menu tracks an online update check across `not_checked` / `checking` / `up_to_date` / `update_available` / `offline` / `error`. | No update check exists. | Same axis as off-device telemetry: the app has no backend to query and no update channel. |
+| §8 (`lastOpenedSaveId`) | `deferred` | The menu remembers the last opened save. | Not tracked. The Save List lists every Save in repository order with no emphasis or ordering. | `unscheduled`. |
+| §10.1 Save repository unavailable | `deferred` | A concise explanation, a retry action, a path to storage preferences, and a safe route to New Career. | `SaveListScreen` discards the failure: `listSaves()` returns early on `Result.isFailure`, so a broken repository is indistinguishable from having no Saves. Nothing is explained and nothing can be retried. | `unscheduled`. This is the largest behavioural gap the audit found; it is not covered by the stale-entry decision below. |
+| §10.3 Corrupt last-save metadata | `contradicted` | A corrupt or missing save must not auto-load, must leave `Load Career` available, and must be **marked** in the saved-game browser. | Nothing auto-loads, and the list stays available — but a stale entry is a silent no-op: `handleContinue` returns early on failure and the entry is never marked. | [Save management edge case e2e coverage](../../../.agents/notes/implemented/testing/2026-08-28-save-management-edge-cases.md) — the nonexistent-save test asserts the user "stays on the landing screen with no crash **and no error banner**". |
+| §11 Accessibility (localization), §13 criterion 7 | `deferred` | Labels are localizable and expand without clipping. | No i18n layer exists; every string is a hard-coded English literal. | `unscheduled`. |
+| §11 Accessibility (optional UI sounds, reduced motion) | `deferred` | UI sounds must be optional and background animation must respect reduced motion. | Neither exists yet to make optional. | Group A [Screen 17 Display and Sound Options](17_display_and_sound_options.md). |
+| §13 Acceptance criteria | `deferred` | Criteria 4 (Exit requires confirmation), 6 (preferences survive restart), 7 (localization does not clip) and 8 (focus remains visible). | None hold; each restates a deferred row above rather than adding a requirement. | `unscheduled` — ticket 10 writes the replacement criteria from the rows above. |
+| §14 Recommended tests (visual regression) | `deferred` | Visual regression suites across default, minimum and ultrawide resolutions, 125/150/200% UI scaling, long translated labels, and a high-contrast theme. | No visual regression harness exists. Browser-level coverage is Playwright keyboard e2e. | [e2e keyboard strategy](../../../.agents/notes/proposed/testing/2026-08-30-e2e-keyboard-strategy.md) |
+
+Sections followed as written, called out because they are easy to misread as gaps: §8's
+`hasSavedGames` is computed from `listSaves()` rather than stored as a production Boolean, exactly as
+the section requires; and §9's separation of the entry screen from career logic holds — the Save List
+carries no simulation state.
 
 The screen-inventory preamble (`## A.` through `## J.`) and the second copy of Screen 2 that share this
 file are likewise not audited here. See the duplicate-screen note above.
@@ -286,8 +318,9 @@ and sensory-accessibility surface all survive intact.
 
 ## Screen 18: Game Status
 
-Status: **New design — group-a-reconciliation ticket 05.** Rows below carry the blanket scope trim only
-(ticket 03). Ticket 05 owns the remaining design and may add rows.
+Status: **Removed — group-a-reconciliation ticket 05.** Rows below carry the blanket scope trim (ticket 03)
+and the design decision (ticket 05). The entire screen is out of scope; no dedicated route, component, or
+data source remains.
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
@@ -295,6 +328,10 @@ Status: **New design — group-a-reconciliation ticket 05.** Rows below carry th
 | §1 Purpose, §4 Information sections (Session, Cloud), §11 Security, §13 Acceptance criteria, §14 Recommended tests | `out-of-scope` | Report multiplayer session state, connected participants, and cloud synchronization status. | None of it exists. | The multiplayer, network, and cloud axis. |
 | §8 Read-only boundary (participant and ownership clauses) | `out-of-scope` | Redact values other participants must not see. | No other participants. | Ownership and participant permissions have no referent. |
 | `Suggested Git commit` | `out-of-scope` | A commit message. | Not audited. | Non-normative import scaffolding. |
+| §2 Entry points, §4 Career state, §4 Loaded world, §5 Status model (`GameStatusSnapshot`), §6 Refresh behavior, §7 Safe diagnostic summary, §10 Accessibility, §12 Edge cases (remaining), §13 Acceptance criteria (remaining), §14 Recommended tests (remaining) | `out-of-scope` | A dedicated Game Status screen with entry points, an async `GameStatusSnapshot`, refresh with stale-response handling, safe-diagnostic-copy action, and accessibility for a technical dashboard. | No dedicated screen. Survivors (season/save-name orientation, sacked badge, app/schema version) redistribute into CareerChrome, Save List, and a new About dialog — none warrant a route or a `GameStatusSnapshot` type. No async refresh needed for synchronous local data. | [Game Status screen removed](../../../.agents/notes/proposed/architecture/2026-08-30-game-status-screen-removed.md) |
+
+Nothing of Screen 18 survives as a screen. The Game Status entry is removed from navigation, no
+`GameStatusSnapshot` schema is added, and no async refresh machinery is built.
 
 ## Screen 19: Manager Status
 

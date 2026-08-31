@@ -1,7 +1,7 @@
 # 04 — Audit: application shell (spec 01)
 
 Type: task
-Status: open
+Status: resolved
 Blocked by: 02, 03
 
 ## Question
@@ -30,3 +30,7 @@ screen-inventory preamble. `02_new_game.md` is canonical for Screen 2, so this t
 (Main Menu) only** out of file 01, and records the duplicate as a single ledger row. Findings go into
 `docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md` in the ticket-02
 format; flip the screen's coverage status line from `Not yet audited` to `Audited` as part of closing.
+
+## Answer
+
+**Screen 1 audited; 26 ledger rows, no code changed.** See [Agent Note](../../../.agents/notes/proposed/process/2026-08-30-screen-audit-against-imported-spec.md).

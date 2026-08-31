@@ -65,11 +65,24 @@ repair, because `pnpm check:all` is red until it lands and every later session i
   sixteen screens, so the audit does not merge. Two new axes found (off-device telemetry, non-normative
   import scaffolding); recorded as `out-of-scope` rows on every screen in the ledger.
 
+- [05 — Screen 18: what a local Game Status screen contains](issues/05-screen-18-game-status.md):
+  removed; survivors (season/save-name orientation, sacked badge, app version) redistribute into
+  CareerChrome, Save List, and a new About dialog.
+
+- [04 — Audit: application shell (spec 01)](issues/04-audit-application-shell.md): Screen 1 audited
+  against the shell; 26 ledger rows, no code changed. The entry point is the Save List, not a Main
+  Menu; the shell has no way to quit, open settings, or read credits; the Save List declares no
+  Actions and has no keyboard tier; a failing save repository is swallowed silently. Two new
+  out-of-scope rulings (mod indicator, online update check).
+
 ## Not yet specified
 
 **Whether any Group A screen needs a new keyboard tier.** The tiering rule in the screen-keyboard-tiers
-note covers nine existing screens. Screens 18–21 will need assignments, but the rule's inputs
-(interactive control count) aren't known until those screens are designed.
+note covers nine existing screens. Screens 19–21 will need assignments, but the rule's inputs
+(interactive control count) aren't known until those screens are designed. (Screen 18 removed, no
+assignment needed.) Ticket 04 sharpened one half of this: the Save List is also missing from the
+tiering table despite being shipped, and its two controls put it at level 2 minimum under the rule as
+written. Ticket 09 now owns that assignment alongside the new screens.
 
 **What the 151 dangling `ADR-000x` citations in source comments should say instead.** Ticket 01 decides
 the mechanism; whether each citation is rewritten to a note, reworded, or dropped is a per-site judgment
@@ -105,5 +118,12 @@ that may deserve its own pass once the count of genuinely load-bearing ones is k
   21 broken links they leave behind are in scope (ticket 01); reversing the deletion is not.
 - **Introducing genuine unsaved career state** so that spec 21's `UnsavedCareerState` model becomes
   true. That is an architectural regression against durable-at-commit persistence.
+- **Game Status screen (Screen 18).** Decided via ticket 05. The survivors (career/season orientation,
+  sacked badge, app version) redistribute into existing real estate; no route, component, or
+  `GameStatusSnapshot` type is built.
 - **The other eighteen spec groups.** Group A is the pilot. If a reusable trimming method falls out, it
   is captured as a `process` Agent Note — widening this map to 19 groups is a different effort.
+- **An enabled-mods indicator.** Ruled by ticket 04 while auditing spec 1 §4.2 and §8. Nothing in the
+  app loads third-party content, so there is nothing to enable, list, or indicate.
+- **The main menu's online update check** (spec 1 §8 `updateStatus`). Ruled by ticket 04. A sharpening
+  of the off-device-telemetry axis above: the app has no backend to query and no update channel.
