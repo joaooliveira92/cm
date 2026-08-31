@@ -344,11 +344,11 @@ data source remains.
 Nothing of Screen 18 survives as a screen. The Game Status entry is removed from navigation, no
 `GameStatusSnapshot` schema is added, and no async refresh machinery is built.
 
-## Screen 19: Manager Status
+## Screen 19: Manager Profile (was Manager Status)
 
-Status: **New design — group-a-reconciliation ticket 06.** Rows below carry the blanket scope trim only
-(ticket 03), and they consume most of the screen. The map has already redefined this screen as the
-single-manager profile-and-tenure view; ticket 06 owns that design.
+Status: **Audited — ticket 06 resolved.** The screen is redefined as the single-manager profile-and-tenure
+view, named "Manager Profile". "Manager Status" is retired as a domain term; the `manager_status` table
+keeps its technical name but is not a player-facing concept.
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
@@ -356,14 +356,19 @@ single-manager profile-and-tenure view; ticket 06 owns that design.
 | §7 Network reconnect, §1 Purpose (network and ownership framing), §17 Edge cases | `out-of-scope` | Disconnected and reconnecting manager states, and a reconnect action. | No connection to lose. | The multiplayer and network axis. |
 | §8 Manage Ownership, §12 Permissions, §14 State model (ownership fields), §16 Security and privacy, §18 Acceptance criteria, §19 Recommended tests | `out-of-scope` | Transfer ownership of a manager record between participants, and per-participant permission grants. | No ownership and no permissions. | Ownership transfer and participant permissions have no referent in a local single-player app. |
 | `Suggested Git commit` | `out-of-scope` | A commit message. | Not audited. | Non-normative import scaffolding. |
+| §5 Open Profile | `renamed` | Click a roster row to open that manager's profile. | The profile is a dedicated career tab (`/career/$saveId/manager`) reached from CareerChrome or a `g` binding, not by clicking a roster row. Content: manager name, archetype, four pillar values, club, season, tenure, and an Active/Archived badge. | [Manager Profile screen Agent Note](../../../.agents/notes/proposed/feature/2026-08-30-manager-profile-screen.md) |
+| §11 Manager summary panel (single-manager form) | `contradicted` | A per-row panel showing that manager's state, permissions, and connection status. | A full-screen dedicated view showing profile identity only — name, archetype, pillars, club, season, tenure. Sacking/outcome data stays on Season Summary. No state, permissions, or connection fields. | [Manager Profile screen Agent Note](../../../.agents/notes/proposed/feature/2026-08-30-manager-profile-screen.md) |
+| §15 Accessibility | `deferred` | Address keyboard navigation, screen-reader labels, focus management, colour contrast, and reduced-motion compliance for a manager roster table with per-row interactive controls. | The screen is a career tab inheriting existing CareerChrome keyboard navigation and the project's accessibility conventions. A dedicated accessibility ticket for the new screen is deferred to the implementation ticket. | The project's screen-keyboard-tiers rule and CareerChrome keyboard model. |
 
-What survives is §5 Open Profile, §10 Retire Manager, §11 as a single-manager summary, §15
-Accessibility, and the tenure and history material ticket 06 will add.
+The survivors above replace the roster and manager-states content with profile identity data (name,
+archetype, pillar values, club, season, tenure) and a passive Active/Archived status badge. §10 Retire
+Manager is owned by ticket 07.
 
 ## Screen 20: Retire Manager
 
-Status: **New design — group-a-reconciliation ticket 07.** Rows below carry the blanket scope trim only
-(ticket 03). Ticket 07 owns the remaining design.
+Status: **New design — group-a-reconciliation ticket 07, resolved 2026-08-30.** The design is
+[Retire Manager, and the Archived Save concept](../../../.agents/notes/proposed/feature/2026-08-30-retire-manager.md).
+Rows below carry the blanket scope trim (ticket 03) and the rulings that resolution made.
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
@@ -371,6 +376,12 @@ Status: **New design — group-a-reconciliation ticket 07.** Rows below carry th
 | §5 Consequences, §10 Retirement transaction, §16 Failure and rollback (ownership clauses), §13 Last active manager (handover to another human manager) | `out-of-scope` | Release ownership of the manager record and hand the career to a remaining human manager. | There is no other human manager and no ownership to release. Retiring the only manager ends the career. | Multiple human managers per career, and ownership transfer. |
 | §2 Retirement is not resignation (the "Resign instead" alternative) | `out-of-scope` | Offer resignation as an alternative to retirement. | Not offered. | Resignation only means something with an unemployed-manager job market to return to, which belongs to Group N, not the application shell. |
 | §6 Organization continuity | `out-of-scope` | Appoint an interim manager and preserve club continuity across the handover. | No interim-manager machinery. | Settled during charting: retirement reuses the existing sacked-archive path, differing in cause and messaging only. |
+| §9 Confirmation policy (`requireAcknowledgment`, `requireTypedManagerName`), §3 Conceptual layout (the acknowledgement checkbox) | `contradicted` | Retirement is confirmed by an acknowledgement checkbox, optionally reinforced by typing the manager's name. | Confirmed by an Irreversibility Disclosure plus a distinct destructive confirm button. No checkbox, no typed name. | [Retire Manager](../../../.agents/notes/proposed/feature/2026-08-30-retire-manager.md) — the checkbox duplicates a disclosure the repo already defines; typed confirmation is heavier than deleting the save. |
+| §9 Confirmation policy (`createRecoveryCheckpoint`), §10 Retirement transaction (checkpoint and lock steps), §16 Failure and rollback, §20 Security and integrity | `out-of-scope` | A recovery checkpoint written before mutation, manager and organization locks, expected-revision checks, idempotency keys, and a rollback path. | None exist. The command is one SQL transaction against a local file. | No concurrent writer and no remote caller; the event log is the audit trail. |
+| §11 Command model, §12 Retirement result | `contradicted` | `RetireManagerCommand` carries career/manager ids, expected revisions, an acknowledgement fingerprint, a controller context and a request id; the result returns a transaction id, history entry id, checkpoint id and next destination. | The command carries the `SaveId` alone and returns nothing but success. | [Retire Manager](../../../.agents/notes/proposed/feature/2026-08-30-retire-manager.md) — every other field addresses multi-manager, multi-participant, or checkpoint machinery that is out of scope. |
+| §4 Preconditions (the remainder) | `contradicted` | Seven preconditions, covering authority, revisions, transactions, save targets and host availability. | Two: the save is not already archived, and it is not mid-match. | [Retire Manager](../../../.agents/notes/proposed/feature/2026-08-30-retire-manager.md) |
+| §13 Last active manager, §18 Success state | `contradicted` | A success screen offering to switch to another manager, add a manager, or return to the Main Menu, plus a warning that simulation time will not advance. | Confirming returns to the Save List with the save shown as archived. No success screen. | [Retire Manager](../../../.agents/notes/proposed/feature/2026-08-30-retire-manager.md) — the offered actions have no referent with one manager per save. |
+| §2 Retirement is not resignation (the state model) | `renamed` | The retired manager "becomes historical and cannot submit career commands". | The save becomes an Archived Save: viewable, read-only, no further commands. Retirement is one of its two causes, sacking the other. | [Archived Save](../../../CONTEXT.md) |
 | `Suggested Git commit` | `out-of-scope` | A commit message. | Not audited. | Non-normative import scaffolding. |
 
 ## Screen 21: Quit Game Confirmation
