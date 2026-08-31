@@ -1,4 +1,4 @@
-# Screen 270: Command Palette and Quick Actions
+# Screen 275: Notification and Reminder Centre
 
 > **Clean-room notice:** Use original content, fictional identities, and properly licensed data only.
 
@@ -6,21 +6,21 @@
 
 ## 1. Purpose
 
-Command Palette and Quick Actions offers keyboard-first navigation and a constrained set of context-aware actions.
+Notification and Reminder Centre manages system notifications, manager-private reminders, due dates, snoozing, channels, priority, read state, and navigation to originating workflows.
 
 ## 2. Primary user goals
 
-- Open the palette from anywhere permitted
-- Search screens, entities, and supported commands
-- Review disabled reasons and required context
-- Execute one authorized action
+- Filter notifications and reminders
+- Mark read, archive, snooze, or dismiss eligible items
+- Create or edit a private reminder
+- Open the originating workflow
 
 ## 3. Navigation context
 
 ```text
 Global Application Shell
   -> Search, Utilities, Help, or Reference
-  -> Command Palette and Quick Actions
+  -> Notification and Reminder Centre
   -> Related entity, view, definition, or workflow
 ```
 
@@ -30,11 +30,11 @@ The screen preserves the active manager, viewer permissions, source context, uti
 
 ```text
 +------------------------------------------------------------------------------+
-| Command Palette and Quick Actions                                            |
+| Notification and Reminder Centre                                               |
 |------------------------------------------------------------------------------|
-| Query or reference context, content, validation, status, and actions          |
+| Query or reference context, content, validation, status, and actions           |
 |                                                                              |
-| [Search or Filter] [Open] [Save or Export] [Back]                             |
+| [Search or Filter] [Open] [Save or Export] [Back]                              |
 +------------------------------------------------------------------------------+
 ```
 
@@ -58,10 +58,10 @@ Renderer-facing models are immutable, serializable, permission-filtered, and sch
 
 ## 6. Principal interactions
 
-- Open the palette from anywhere permitted
-- Search screens, entities, and supported commands
-- Review disabled reasons and required context
-- Execute one authorized action
+- Filter notifications and reminders
+- Mark read, archive, snooze, or dismiss eligible items
+- Create or edit a private reminder
+- Open the originating workflow
 
 ## 7. View and operation states
 
@@ -162,10 +162,10 @@ Distinguish invalid query, unsupported field, stale saved view, missing target, 
 
 ## 18. Screen-specific rules
 
-- Only registered typed commands are available
-- The palette cannot bypass confirmation or authority workflows
-- Private commands do not appear to unauthorized viewers
-- Destructive actions retain dedicated confirmation
+- Authoritative deadlines remain distinct from reminders
+- Dismissal cannot remove mandatory decisions
+- Private reminders do not sync to unauthorized participants
+- Duplicate notifications are coalesced safely
 
 ## 19. Persistence rules
 
@@ -188,10 +188,10 @@ Record operation category, duration, result-size band, cancellation, validation 
 
 ## 22. Acceptance criteria
 
-1. Only registered typed commands are available
-2. The palette cannot bypass confirmation or authority workflows
-3. Private commands do not appear to unauthorized viewers
-4. Destructive actions retain dedicated confirmation
+1. Authoritative deadlines remain distinct from reminders
+2. Dismissal cannot remove mandatory decisions
+3. Private reminders do not sync to unauthorized participants
+4. Duplicate notifications are coalesced safely
 5. The view is bound to explicit viewer, permission, source-context, schema, and utility revisions.
 6. Unknown, empty, inaccessible, stale, cancelled, completed, and failed states remain distinct.
 7. Search, imports, exports, compatibility, and permissions are processed in trusted layers.
@@ -214,7 +214,7 @@ Record operation category, duration, result-size band, cancellation, validation 
 ## 24. Condensed LLM implementation brief
 
 ```text
-Implement Command Palette and Quick Actions for an original football-management simulation. Use stable
+Implement Notification and Reminder Centre for an original football-management simulation. Use stable
 viewer, manager, entity, query, criterion, saved-view, command, shortcut, term,
 reminder, operation, and manifest IDs; immutable permission-filtered read models;
 bounded cancellable search; typed registered commands; manager-private recents,
@@ -231,5 +231,5 @@ wording, source code, logos, likenesses, or databases.
 ## Suggested Git commit
 
 ```text
-docs(game-ui): specify command palette and quick actions screen
+docs(game-ui): specify notification and reminder centre screen
 ```

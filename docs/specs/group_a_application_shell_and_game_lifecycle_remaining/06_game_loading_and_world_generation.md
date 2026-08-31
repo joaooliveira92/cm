@@ -107,29 +107,29 @@ Before starting, the application must verify:
 
 ```text
 +--------------------------------------------------------------------------------+
-| CREATING NEW CAREER                                                            |
+| CREATING NEW CAREER                                                              |
 |--------------------------------------------------------------------------------|
-| Database: Fictional World 2003/04                                              |
-| Career identifier: CW-7K4M-2P9Q                                                |
+| Database: Fictional World 2003/04                                                |
+| Career identifier: CW-7K4M-2P9Q                                                  |
 |                                                                                |
-| [==============================----------------------] 58%                     |
+| [==============================----------------------] 58%                       |
 |                                                                                |
-| Creating competition schedules...                                              |
+| Creating competition schedules...                                                |
 |                                                                                |
-| [x] Verifying setup                                                            |
-| [x] Preparing world storage                                                    |
-| [x] Creating nations, clubs, and venues                                        |
-| [x] Loading players and staff                                                  |
-| [x] Generating required people                                                 |
-| [>] Building competition schedules                                             |
-| [ ] Initializing finances and transfer markets                                 |
-| [ ] Building indexes                                                           |
-| [ ] Validating world                                                           |
-| [ ] Creating initial checkpoint                                                |
+| [x] Verifying setup                                                              |
+| [x] Preparing world storage                                                      |
+| [x] Creating nations, clubs, and venues                                          |
+| [x] Loading players and staff                                                    |
+| [x] Generating required people                                                   |
+| [>] Building competition schedules                                               |
+| [ ] Initializing finances and transfer markets                                   |
+| [ ] Building indexes                                                             |
+| [ ] Validating world                                                             |
+| [ ] Creating initial checkpoint                                                  |
 |                                                                                |
-| Elapsed: 02:14                  Estimated remaining: 01:30 to 02:40            |
+| Elapsed: 02:14                  Estimated remaining: 01:30 to 02:40              |
 |                                                                                |
-| [Show Details]                                              [Cancel Generation]|
+| [Show Details]                                              [Cancel Generation]  |
 +--------------------------------------------------------------------------------+
 ```
 

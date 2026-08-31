@@ -1,4 +1,4 @@
-# Screen 275: Notification and Reminder Centre
+# Screen 266: Search Results and Entity Preview
 
 > **Clean-room notice:** Use original content, fictional identities, and properly licensed data only.
 
@@ -6,21 +6,21 @@
 
 ## 1. Purpose
 
-Notification and Reminder Centre manages system notifications, manager-private reminders, due dates, snoozing, channels, priority, read state, and navigation to originating workflows.
+Search Results and Entity Preview presents paged or virtualized results with stable sorting, compact summaries, comparison selection, and permission-safe previews.
 
 ## 2. Primary user goals
 
-- Filter notifications and reminders
-- Mark read, archive, snooze, or dismiss eligible items
-- Create or edit a private reminder
-- Open the originating workflow
+- Sort and filter visible results
+- Open or preview an entity
+- Select supported entities for comparison
+- Return to the search definition without losing state
 
 ## 3. Navigation context
 
 ```text
 Global Application Shell
   -> Search, Utilities, Help, or Reference
-  -> Notification and Reminder Centre
+  -> Search Results and Entity Preview
   -> Related entity, view, definition, or workflow
 ```
 
@@ -30,11 +30,11 @@ The screen preserves the active manager, viewer permissions, source context, uti
 
 ```text
 +------------------------------------------------------------------------------+
-| Notification and Reminder Centre                                             |
+| Search Results and Entity Preview                                              |
 |------------------------------------------------------------------------------|
-| Query or reference context, content, validation, status, and actions          |
+| Query or reference context, content, validation, status, and actions           |
 |                                                                              |
-| [Search or Filter] [Open] [Save or Export] [Back]                             |
+| [Search or Filter] [Open] [Save or Export] [Back]                              |
 +------------------------------------------------------------------------------+
 ```
 
@@ -58,10 +58,10 @@ Renderer-facing models are immutable, serializable, permission-filtered, and sch
 
 ## 6. Principal interactions
 
-- Filter notifications and reminders
-- Mark read, archive, snooze, or dismiss eligible items
-- Create or edit a private reminder
-- Open the originating workflow
+- Sort and filter visible results
+- Open or preview an entity
+- Select supported entities for comparison
+- Return to the search definition without losing state
 
 ## 7. View and operation states
 
@@ -162,10 +162,10 @@ Distinguish invalid query, unsupported field, stale saved view, missing target, 
 
 ## 18. Screen-specific rules
 
-- Authoritative deadlines remain distinct from reminders
-- Dismissal cannot remove mandatory decisions
-- Private reminders do not sync to unauthorized participants
-- Duplicate notifications are coalesced safely
+- Official ranks remain separate from user sorting
+- Preview data follows the same permissions as detail screens
+- Late pages from stale searches are discarded
+- Unavailable entities retain safe fallback labels
 
 ## 19. Persistence rules
 
@@ -188,10 +188,10 @@ Record operation category, duration, result-size band, cancellation, validation 
 
 ## 22. Acceptance criteria
 
-1. Authoritative deadlines remain distinct from reminders
-2. Dismissal cannot remove mandatory decisions
-3. Private reminders do not sync to unauthorized participants
-4. Duplicate notifications are coalesced safely
+1. Official ranks remain separate from user sorting
+2. Preview data follows the same permissions as detail screens
+3. Late pages from stale searches are discarded
+4. Unavailable entities retain safe fallback labels
 5. The view is bound to explicit viewer, permission, source-context, schema, and utility revisions.
 6. Unknown, empty, inaccessible, stale, cancelled, completed, and failed states remain distinct.
 7. Search, imports, exports, compatibility, and permissions are processed in trusted layers.
@@ -214,7 +214,7 @@ Record operation category, duration, result-size band, cancellation, validation 
 ## 24. Condensed LLM implementation brief
 
 ```text
-Implement Notification and Reminder Centre for an original football-management simulation. Use stable
+Implement Search Results and Entity Preview for an original football-management simulation. Use stable
 viewer, manager, entity, query, criterion, saved-view, command, shortcut, term,
 reminder, operation, and manifest IDs; immutable permission-filtered read models;
 bounded cancellable search; typed registered commands; manager-private recents,
@@ -231,5 +231,5 @@ wording, source code, logos, likenesses, or databases.
 ## Suggested Git commit
 
 ```text
-docs(game-ui): specify notification and reminder centre screen
+docs(game-ui): specify search results and entity preview screen
 ```

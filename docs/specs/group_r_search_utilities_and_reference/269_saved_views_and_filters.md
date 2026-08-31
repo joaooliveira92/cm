@@ -1,4 +1,4 @@
-# Screen 272: Contextual Help and Onboarding
+# Screen 269: Saved Views and Filters
 
 > **Clean-room notice:** Use original content, fictional identities, and properly licensed data only.
 
@@ -6,21 +6,21 @@
 
 ## 1. Purpose
 
-Contextual Help and Onboarding provides task-focused guidance, first-run tours, empty-state assistance, validation explanations, and links to relevant reference topics.
+Saved Views and Filters stores reusable table layouts, column choices, filters, sorts, scopes, and density preferences for supported screens.
 
 ## 2. Primary user goals
 
-- Open help for the current screen or control
-- Navigate step-by-step guidance
-- Pause, skip, restart, or dismiss eligible onboarding
-- Search related reference topics
+- Save the current view
+- Apply, rename, duplicate, reorder, or delete a saved view
+- Choose a default per screen and manager
+- Reset to the product default
 
 ## 3. Navigation context
 
 ```text
 Global Application Shell
   -> Search, Utilities, Help, or Reference
-  -> Contextual Help and Onboarding
+  -> Saved Views and Filters
   -> Related entity, view, definition, or workflow
 ```
 
@@ -30,11 +30,11 @@ The screen preserves the active manager, viewer permissions, source context, uti
 
 ```text
 +------------------------------------------------------------------------------+
-| Contextual Help and Onboarding                                               |
+| Saved Views and Filters                                                        |
 |------------------------------------------------------------------------------|
-| Query or reference context, content, validation, status, and actions          |
+| Query or reference context, content, validation, status, and actions           |
 |                                                                              |
-| [Search or Filter] [Open] [Save or Export] [Back]                             |
+| [Search or Filter] [Open] [Save or Export] [Back]                              |
 +------------------------------------------------------------------------------+
 ```
 
@@ -58,10 +58,10 @@ Renderer-facing models are immutable, serializable, permission-filtered, and sch
 
 ## 6. Principal interactions
 
-- Open help for the current screen or control
-- Navigate step-by-step guidance
-- Pause, skip, restart, or dismiss eligible onboarding
-- Search related reference topics
+- Save the current view
+- Apply, rename, duplicate, reorder, or delete a saved view
+- Choose a default per screen and manager
+- Reset to the product default
 
 ## 7. View and operation states
 
@@ -162,10 +162,10 @@ Distinguish invalid query, unsupported field, stale saved view, missing target, 
 
 ## 18. Screen-specific rules
 
-- Help never performs consequential actions silently
-- Tours remain usable with reduced motion and keyboard navigation
-- Dismissal is manager-scoped
-- Guidance reflects the active feature and rules version
+- Saved views cannot include unauthorized fields
+- Schema changes use versioned migration
+- A view changes presentation, not canonical data
+- Invalid legacy fields are reported and ignored safely
 
 ## 19. Persistence rules
 
@@ -188,10 +188,10 @@ Record operation category, duration, result-size band, cancellation, validation 
 
 ## 22. Acceptance criteria
 
-1. Help never performs consequential actions silently
-2. Tours remain usable with reduced motion and keyboard navigation
-3. Dismissal is manager-scoped
-4. Guidance reflects the active feature and rules version
+1. Saved views cannot include unauthorized fields
+2. Schema changes use versioned migration
+3. A view changes presentation, not canonical data
+4. Invalid legacy fields are reported and ignored safely
 5. The view is bound to explicit viewer, permission, source-context, schema, and utility revisions.
 6. Unknown, empty, inaccessible, stale, cancelled, completed, and failed states remain distinct.
 7. Search, imports, exports, compatibility, and permissions are processed in trusted layers.
@@ -214,7 +214,7 @@ Record operation category, duration, result-size band, cancellation, validation 
 ## 24. Condensed LLM implementation brief
 
 ```text
-Implement Contextual Help and Onboarding for an original football-management simulation. Use stable
+Implement Saved Views and Filters for an original football-management simulation. Use stable
 viewer, manager, entity, query, criterion, saved-view, command, shortcut, term,
 reminder, operation, and manifest IDs; immutable permission-filtered read models;
 bounded cancellable search; typed registered commands; manager-private recents,
@@ -231,5 +231,5 @@ wording, source code, logos, likenesses, or databases.
 ## Suggested Git commit
 
 ```text
-docs(game-ui): specify contextual help and onboarding screen
+docs(game-ui): specify saved views and filters screen
 ```

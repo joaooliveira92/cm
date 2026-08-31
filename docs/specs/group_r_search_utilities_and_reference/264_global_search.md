@@ -1,4 +1,4 @@
-# Screen 269: Saved Views and Filters
+# Screen 264: Global Search
 
 > **Clean-room notice:** Use original content, fictional identities, and properly licensed data only.
 
@@ -6,21 +6,21 @@
 
 ## 1. Purpose
 
-Saved Views and Filters stores reusable table layouts, column choices, filters, sorts, scopes, and density preferences for supported screens.
+Global Search provides a fast, permission-aware entry point for locating players, staff, managers, clubs, teams, nations, competitions, fixtures, news, reports, and supported commands.
 
 ## 2. Primary user goals
 
-- Save the current view
-- Apply, rename, duplicate, reorder, or delete a saved view
-- Choose a default per screen and manager
-- Reset to the product default
+- Search across permitted entity categories
+- Filter by category, scope, club, nation, competition, and status
+- Open a result or preview it without losing context
+- Review recent and saved searches
 
 ## 3. Navigation context
 
 ```text
 Global Application Shell
   -> Search, Utilities, Help, or Reference
-  -> Saved Views and Filters
+  -> Global Search
   -> Related entity, view, definition, or workflow
 ```
 
@@ -30,11 +30,11 @@ The screen preserves the active manager, viewer permissions, source context, uti
 
 ```text
 +------------------------------------------------------------------------------+
-| Saved Views and Filters                                                      |
+| Global Search                                                                  |
 |------------------------------------------------------------------------------|
-| Query or reference context, content, validation, status, and actions          |
+| Query or reference context, content, validation, status, and actions           |
 |                                                                              |
-| [Search or Filter] [Open] [Save or Export] [Back]                             |
+| [Search or Filter] [Open] [Save or Export] [Back]                              |
 +------------------------------------------------------------------------------+
 ```
 
@@ -58,10 +58,10 @@ Renderer-facing models are immutable, serializable, permission-filtered, and sch
 
 ## 6. Principal interactions
 
-- Save the current view
-- Apply, rename, duplicate, reorder, or delete a saved view
-- Choose a default per screen and manager
-- Reset to the product default
+- Search across permitted entity categories
+- Filter by category, scope, club, nation, competition, and status
+- Open a result or preview it without losing context
+- Review recent and saved searches
 
 ## 7. View and operation states
 
@@ -162,10 +162,10 @@ Distinguish invalid query, unsupported field, stale saved view, missing target, 
 
 ## 18. Screen-specific rules
 
-- Saved views cannot include unauthorized fields
-- Schema changes use versioned migration
-- A view changes presentation, not canonical data
-- Invalid legacy fields are reported and ignored safely
+- Search results obey knowledge and permission boundaries
+- Hidden entities cannot leak through counts or timing
+- Queries are bounded, debounced, and cancellable
+- Stable IDs, not display names, drive navigation
 
 ## 19. Persistence rules
 
@@ -188,10 +188,10 @@ Record operation category, duration, result-size band, cancellation, validation 
 
 ## 22. Acceptance criteria
 
-1. Saved views cannot include unauthorized fields
-2. Schema changes use versioned migration
-3. A view changes presentation, not canonical data
-4. Invalid legacy fields are reported and ignored safely
+1. Search results obey knowledge and permission boundaries
+2. Hidden entities cannot leak through counts or timing
+3. Queries are bounded, debounced, and cancellable
+4. Stable IDs, not display names, drive navigation
 5. The view is bound to explicit viewer, permission, source-context, schema, and utility revisions.
 6. Unknown, empty, inaccessible, stale, cancelled, completed, and failed states remain distinct.
 7. Search, imports, exports, compatibility, and permissions are processed in trusted layers.
@@ -214,7 +214,7 @@ Record operation category, duration, result-size band, cancellation, validation 
 ## 24. Condensed LLM implementation brief
 
 ```text
-Implement Saved Views and Filters for an original football-management simulation. Use stable
+Implement Global Search for an original football-management simulation. Use stable
 viewer, manager, entity, query, criterion, saved-view, command, shortcut, term,
 reminder, operation, and manifest IDs; immutable permission-filtered read models;
 bounded cancellable search; typed registered commands; manager-private recents,
@@ -231,5 +231,5 @@ wording, source code, logos, likenesses, or databases.
 ## Suggested Git commit
 
 ```text
-docs(game-ui): specify saved views and filters screen
+docs(game-ui): specify global search screen
 ```

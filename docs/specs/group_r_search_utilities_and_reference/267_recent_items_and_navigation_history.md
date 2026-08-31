@@ -1,4 +1,4 @@
-# Screen 271: Keyboard Shortcuts Reference
+# Screen 267: Recent Items and Navigation History
 
 > **Clean-room notice:** Use original content, fictional identities, and properly licensed data only.
 
@@ -6,21 +6,21 @@
 
 ## 1. Purpose
 
-Keyboard Shortcuts Reference lists global and contextual shortcuts, conflicts, customization status, accessibility alternatives, and platform-specific key labels.
+Recent Items and Navigation History provides manager-scoped access to recently visited entities, screens, searches, reports, and workflows.
 
 ## 2. Primary user goals
 
-- Search shortcuts by action or screen
-- Filter global and contextual commands
-- Inspect conflicts and reserved combinations
-- Restore supported defaults
+- Reopen a recent item
+- Filter history by type and period
+- Remove individual local entries or clear eligible history
+- Pin an item before it expires
 
 ## 3. Navigation context
 
 ```text
 Global Application Shell
   -> Search, Utilities, Help, or Reference
-  -> Keyboard Shortcuts Reference
+  -> Recent Items and Navigation History
   -> Related entity, view, definition, or workflow
 ```
 
@@ -30,11 +30,11 @@ The screen preserves the active manager, viewer permissions, source context, uti
 
 ```text
 +------------------------------------------------------------------------------+
-| Keyboard Shortcuts Reference                                                 |
+| Recent Items and Navigation History                                            |
 |------------------------------------------------------------------------------|
-| Query or reference context, content, validation, status, and actions          |
+| Query or reference context, content, validation, status, and actions           |
 |                                                                              |
-| [Search or Filter] [Open] [Save or Export] [Back]                             |
+| [Search or Filter] [Open] [Save or Export] [Back]                              |
 +------------------------------------------------------------------------------+
 ```
 
@@ -58,10 +58,10 @@ Renderer-facing models are immutable, serializable, permission-filtered, and sch
 
 ## 6. Principal interactions
 
-- Search shortcuts by action or screen
-- Filter global and contextual commands
-- Inspect conflicts and reserved combinations
-- Restore supported defaults
+- Reopen a recent item
+- Filter history by type and period
+- Remove individual local entries or clear eligible history
+- Pin an item before it expires
 
 ## 7. View and operation states
 
@@ -162,10 +162,10 @@ Distinguish invalid query, unsupported field, stale saved view, missing target, 
 
 ## 18. Screen-specific rules
 
-- Every shortcut has a non-shortcut alternative
-- Platform labels are localized
-- Reserved operating-system shortcuts are not captured blindly
-- Changes are validated for conflicts
+- Navigation history is not canonical career history
+- Private hot-seat histories remain separated
+- Clearing history does not delete game records
+- Stale links fail safely
 
 ## 19. Persistence rules
 
@@ -188,10 +188,10 @@ Record operation category, duration, result-size band, cancellation, validation 
 
 ## 22. Acceptance criteria
 
-1. Every shortcut has a non-shortcut alternative
-2. Platform labels are localized
-3. Reserved operating-system shortcuts are not captured blindly
-4. Changes are validated for conflicts
+1. Navigation history is not canonical career history
+2. Private hot-seat histories remain separated
+3. Clearing history does not delete game records
+4. Stale links fail safely
 5. The view is bound to explicit viewer, permission, source-context, schema, and utility revisions.
 6. Unknown, empty, inaccessible, stale, cancelled, completed, and failed states remain distinct.
 7. Search, imports, exports, compatibility, and permissions are processed in trusted layers.
@@ -214,7 +214,7 @@ Record operation category, duration, result-size band, cancellation, validation 
 ## 24. Condensed LLM implementation brief
 
 ```text
-Implement Keyboard Shortcuts Reference for an original football-management simulation. Use stable
+Implement Recent Items and Navigation History for an original football-management simulation. Use stable
 viewer, manager, entity, query, criterion, saved-view, command, shortcut, term,
 reminder, operation, and manifest IDs; immutable permission-filtered read models;
 bounded cancellable search; typed registered commands; manager-private recents,
@@ -231,5 +231,5 @@ wording, source code, logos, likenesses, or databases.
 ## Suggested Git commit
 
 ```text
-docs(game-ui): specify keyboard shortcuts reference screen
+docs(game-ui): specify recent items and navigation history screen
 ```

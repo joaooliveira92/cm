@@ -1,4 +1,4 @@
-# Screen 274: Rules and Data Definitions Reference
+# Screen 265: Advanced Search Builder
 
 > **Clean-room notice:** Use original content, fictional identities, and properly licensed data only.
 
@@ -6,21 +6,21 @@
 
 ## 1. Purpose
 
-Rules and Data Definitions Reference centralizes structured explanations of competition rules, metrics, attributes, roles, statuses, money, dates, eligibility, and calculation coverage.
+Advanced Search Builder composes structured searches from approved fields, operators, groups, ranges, scopes, and named criteria profiles.
 
 ## 2. Primary user goals
 
-- Browse reference categories
-- Search definitions by stable term ID
-- Open the owning competition, metric, or workflow
-- Compare compatible definition versions
+- Choose a supported data source
+- Add, group, edit, and remove criteria
+- Preview result count and validation
+- Save, duplicate, or run the search
 
 ## 3. Navigation context
 
 ```text
 Global Application Shell
   -> Search, Utilities, Help, or Reference
-  -> Rules and Data Definitions Reference
+  -> Advanced Search Builder
   -> Related entity, view, definition, or workflow
 ```
 
@@ -30,11 +30,11 @@ The screen preserves the active manager, viewer permissions, source context, uti
 
 ```text
 +------------------------------------------------------------------------------+
-| Rules and Data Definitions Reference                                         |
+| Advanced Search Builder                                                        |
 |------------------------------------------------------------------------------|
-| Query or reference context, content, validation, status, and actions          |
+| Query or reference context, content, validation, status, and actions           |
 |                                                                              |
-| [Search or Filter] [Open] [Save or Export] [Back]                             |
+| [Search or Filter] [Open] [Save or Export] [Back]                              |
 +------------------------------------------------------------------------------+
 ```
 
@@ -58,10 +58,10 @@ Renderer-facing models are immutable, serializable, permission-filtered, and sch
 
 ## 6. Principal interactions
 
-- Browse reference categories
-- Search definitions by stable term ID
-- Open the owning competition, metric, or workflow
-- Compare compatible definition versions
+- Choose a supported data source
+- Add, group, edit, and remove criteria
+- Preview result count and validation
+- Save, duplicate, or run the search
 
 ## 7. View and operation states
 
@@ -162,10 +162,10 @@ Distinguish invalid query, unsupported field, stale saved view, missing target, 
 
 ## 18. Screen-specific rules
 
-- Authoritative rules remain edition-bound
-- Hidden formulas and private values are not exposed
-- Every definition identifies version and effective scope
-- References do not override domain services
+- No arbitrary query language or executable expressions are accepted
+- Criteria values use typed schemas
+- Unknown values are distinct from empty values
+- Premises use named fields rather than hidden constants
 
 ## 19. Persistence rules
 
@@ -188,10 +188,10 @@ Record operation category, duration, result-size band, cancellation, validation 
 
 ## 22. Acceptance criteria
 
-1. Authoritative rules remain edition-bound
-2. Hidden formulas and private values are not exposed
-3. Every definition identifies version and effective scope
-4. References do not override domain services
+1. No arbitrary query language or executable expressions are accepted
+2. Criteria values use typed schemas
+3. Unknown values are distinct from empty values
+4. Premises use named fields rather than hidden constants
 5. The view is bound to explicit viewer, permission, source-context, schema, and utility revisions.
 6. Unknown, empty, inaccessible, stale, cancelled, completed, and failed states remain distinct.
 7. Search, imports, exports, compatibility, and permissions are processed in trusted layers.
@@ -214,7 +214,7 @@ Record operation category, duration, result-size band, cancellation, validation 
 ## 24. Condensed LLM implementation brief
 
 ```text
-Implement Rules and Data Definitions Reference for an original football-management simulation. Use stable
+Implement Advanced Search Builder for an original football-management simulation. Use stable
 viewer, manager, entity, query, criterion, saved-view, command, shortcut, term,
 reminder, operation, and manifest IDs; immutable permission-filtered read models;
 bounded cancellable search; typed registered commands; manager-private recents,
@@ -231,5 +231,5 @@ wording, source code, logos, likenesses, or databases.
 ## Suggested Git commit
 
 ```text
-docs(game-ui): specify rules and data definitions reference screen
+docs(game-ui): specify advanced search builder screen
 ```

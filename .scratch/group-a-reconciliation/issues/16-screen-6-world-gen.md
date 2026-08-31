@@ -1,8 +1,7 @@
 # 16 — Screen 6: Game Loading and World Generation
 
 Type: task
-Status: open
-Blocked by: 03
+Status: resolved
 
 ## Question
 
@@ -17,3 +16,9 @@ Note: §18 (worker and memory-budget performance requirements) and §19 (resourc
 ## Done when
 
 Screen 6 has a `Reviewed` status in `RECONCILIATION.md` with rows for every section the implementation does not follow, and no `unscheduled` rows remain.
+
+## Answer
+
+Screen 6 audited against the creation flow implementation (`apps/desktop/src/renderer/router/createFlow.tsx`, `apps/desktop/src/main/saves.ts`, `apps/desktop/src/main/worldGeneration.ts`, `apps/desktop/src/main/schema.ts`).
+
+Every surviving spec section is `contradicted`. The implementation only creates a provisional SQLite schema and populates it with 20 clubs and their squads (via `beginCareer` → `createSchema` + `generateWorld` + `initializeSeasonEconomy`), showing a single indeterminate label "Generating the world…" while it runs. No setup verification, no deterministic seed, no progress bar, no task checklist, no cancellation control, no retry mechanism, no validation, no checkpoint, no completion summary. Navigation goes to Club Selection (Step 2) rather than Add Manager. 19 new `contradicted` rows added covering §1–§28 and §35–§36; §33/§34 remain `out-of-scope` (confirmed); §39/§40/§41 remain `out-of-scope` (condensed brief, next item, commit metadata). Screen status updated to `Reviewed`.

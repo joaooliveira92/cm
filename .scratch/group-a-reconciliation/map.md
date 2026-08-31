@@ -110,18 +110,26 @@ repair, because `pnpm check:all` is red until it lands and every later session i
   nationality/languages or background concept exists in the codebase. All 91 surviving sections
   classified `contradicted` against the three-step creation flow and the Archetype/Pillar identity
   model (CONTEXT.md).
-
-- [15 — Screen 2: New Game, Database Initialization](issues/15-screen-2-new-game.md):
-  Screen 2 audited and reconciled; all 28 content sections `contradicted` by the three-step creation
-  flow with invisible world generation. No cache, progress UI, or validation stages exist.
-
 - [14 — Absence: Screens 14, 15, 16, 17 (management screens)](issues/14-absence-management-screens.md):
   Four management screens (Save/Save As, Delete Saved Game, Game Preferences, Display/Sound Options)
   have no routes, components, or UI of any kind. All surviving sections of all four screens classified
   `contradicted` — the codebase has no user-invoked save, no delete-save path, no preferences surface,
   and no display/audio configuration UI.
 
-## Not yet specified
+- [15 — Screen 2: New Game, Database Initialization](issues/15-screen-2-new-game.md):
+  Screen 2 audited and reconciled; all 28 content sections `contradicted` by the three-step creation
+  flow with invisible world generation. No cache, progress UI, or validation stages exist.
+
+- [16 — Screen 6: Game Loading and World Generation](issues/16-screen-6-world-gen.md):
+  Screen 6 audited against the creation flow implementation. All 40 surviving sections `contradicted`:
+  generation is a masked wait with no progress bar, no task checklist, no cancellation, no retry, no
+  validation, no checkpoint, no completion summary. Transitions to Club Selection, not Add Manager.
+
+- [17 — Screen 8: Manager Personal Details](issues/17-screen-8-personal-details.md):
+  Screen 8 `Reviewed` against the implementation (CreationStep1.tsx): only a single Manager name `<input>`
+  exists; date of birth, place of birth, portrait, hot-seat privacy, name normalization, structured name
+  components, and all form behaviors are absent. Reconciliation ledger updated with `contradicted` rows
+  covering 9 audit categories. Status changed from `Not yet audited` to `Reviewed` (ticket 17, 2026-08-31).## Not yet specified
 
 <!-- none — every question resolved, fog cleared, map complete. -->
 

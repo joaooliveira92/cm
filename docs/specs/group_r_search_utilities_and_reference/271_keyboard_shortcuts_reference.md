@@ -1,4 +1,4 @@
-# Screen 273: Glossary and Football Terms
+# Screen 271: Keyboard Shortcuts Reference
 
 > **Clean-room notice:** Use original content, fictional identities, and properly licensed data only.
 
@@ -6,21 +6,21 @@
 
 ## 1. Purpose
 
-Glossary and Football Terms explains simulation terminology, abbreviations, roles, statuses, metrics, and domain concepts with localized definitions and cross-references.
+Keyboard Shortcuts Reference lists global and contextual shortcuts, conflicts, customization status, accessibility alternatives, and platform-specific key labels.
 
 ## 2. Primary user goals
 
-- Search or browse terms
-- Open related screens and definitions
-- Compare similar concepts
-- Copy a safe definition
+- Search shortcuts by action or screen
+- Filter global and contextual commands
+- Inspect conflicts and reserved combinations
+- Restore supported defaults
 
 ## 3. Navigation context
 
 ```text
 Global Application Shell
   -> Search, Utilities, Help, or Reference
-  -> Glossary and Football Terms
+  -> Keyboard Shortcuts Reference
   -> Related entity, view, definition, or workflow
 ```
 
@@ -30,11 +30,11 @@ The screen preserves the active manager, viewer permissions, source context, uti
 
 ```text
 +------------------------------------------------------------------------------+
-| Glossary and Football Terms                                                  |
+| Keyboard Shortcuts Reference                                                   |
 |------------------------------------------------------------------------------|
-| Query or reference context, content, validation, status, and actions          |
+| Query or reference context, content, validation, status, and actions           |
 |                                                                              |
-| [Search or Filter] [Open] [Save or Export] [Back]                             |
+| [Search or Filter] [Open] [Save or Export] [Back]                              |
 +------------------------------------------------------------------------------+
 ```
 
@@ -58,10 +58,10 @@ Renderer-facing models are immutable, serializable, permission-filtered, and sch
 
 ## 6. Principal interactions
 
-- Search or browse terms
-- Open related screens and definitions
-- Compare similar concepts
-- Copy a safe definition
+- Search shortcuts by action or screen
+- Filter global and contextual commands
+- Inspect conflicts and reserved combinations
+- Restore supported defaults
 
 ## 7. View and operation states
 
@@ -162,10 +162,10 @@ Distinguish invalid query, unsupported field, stale saved view, missing target, 
 
 ## 18. Screen-specific rules
 
-- Definitions are original and versioned
-- Simulation terms are not presented as legal or medical advice
-- Abbreviations expose expanded forms
-- Unknown localized terms fall back safely
+- Every shortcut has a non-shortcut alternative
+- Platform labels are localized
+- Reserved operating-system shortcuts are not captured blindly
+- Changes are validated for conflicts
 
 ## 19. Persistence rules
 
@@ -188,10 +188,10 @@ Record operation category, duration, result-size band, cancellation, validation 
 
 ## 22. Acceptance criteria
 
-1. Definitions are original and versioned
-2. Simulation terms are not presented as legal or medical advice
-3. Abbreviations expose expanded forms
-4. Unknown localized terms fall back safely
+1. Every shortcut has a non-shortcut alternative
+2. Platform labels are localized
+3. Reserved operating-system shortcuts are not captured blindly
+4. Changes are validated for conflicts
 5. The view is bound to explicit viewer, permission, source-context, schema, and utility revisions.
 6. Unknown, empty, inaccessible, stale, cancelled, completed, and failed states remain distinct.
 7. Search, imports, exports, compatibility, and permissions are processed in trusted layers.
@@ -214,7 +214,7 @@ Record operation category, duration, result-size band, cancellation, validation 
 ## 24. Condensed LLM implementation brief
 
 ```text
-Implement Glossary and Football Terms for an original football-management simulation. Use stable
+Implement Keyboard Shortcuts Reference for an original football-management simulation. Use stable
 viewer, manager, entity, query, criterion, saved-view, command, shortcut, term,
 reminder, operation, and manifest IDs; immutable permission-filtered read models;
 bounded cancellable search; typed registered commands; manager-private recents,
@@ -231,5 +231,5 @@ wording, source code, logos, likenesses, or databases.
 ## Suggested Git commit
 
 ```text
-docs(game-ui): specify glossary and football terms screen
+docs(game-ui): specify keyboard shortcuts reference screen
 ```

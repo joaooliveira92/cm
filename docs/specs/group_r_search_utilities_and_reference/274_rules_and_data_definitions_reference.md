@@ -1,4 +1,4 @@
-# Screen 266: Search Results and Entity Preview
+# Screen 274: Rules and Data Definitions Reference
 
 > **Clean-room notice:** Use original content, fictional identities, and properly licensed data only.
 
@@ -6,21 +6,21 @@
 
 ## 1. Purpose
 
-Search Results and Entity Preview presents paged or virtualized results with stable sorting, compact summaries, comparison selection, and permission-safe previews.
+Rules and Data Definitions Reference centralizes structured explanations of competition rules, metrics, attributes, roles, statuses, money, dates, eligibility, and calculation coverage.
 
 ## 2. Primary user goals
 
-- Sort and filter visible results
-- Open or preview an entity
-- Select supported entities for comparison
-- Return to the search definition without losing state
+- Browse reference categories
+- Search definitions by stable term ID
+- Open the owning competition, metric, or workflow
+- Compare compatible definition versions
 
 ## 3. Navigation context
 
 ```text
 Global Application Shell
   -> Search, Utilities, Help, or Reference
-  -> Search Results and Entity Preview
+  -> Rules and Data Definitions Reference
   -> Related entity, view, definition, or workflow
 ```
 
@@ -30,11 +30,11 @@ The screen preserves the active manager, viewer permissions, source context, uti
 
 ```text
 +------------------------------------------------------------------------------+
-| Search Results and Entity Preview                                            |
+| Rules and Data Definitions Reference                                           |
 |------------------------------------------------------------------------------|
-| Query or reference context, content, validation, status, and actions          |
+| Query or reference context, content, validation, status, and actions           |
 |                                                                              |
-| [Search or Filter] [Open] [Save or Export] [Back]                             |
+| [Search or Filter] [Open] [Save or Export] [Back]                              |
 +------------------------------------------------------------------------------+
 ```
 
@@ -58,10 +58,10 @@ Renderer-facing models are immutable, serializable, permission-filtered, and sch
 
 ## 6. Principal interactions
 
-- Sort and filter visible results
-- Open or preview an entity
-- Select supported entities for comparison
-- Return to the search definition without losing state
+- Browse reference categories
+- Search definitions by stable term ID
+- Open the owning competition, metric, or workflow
+- Compare compatible definition versions
 
 ## 7. View and operation states
 
@@ -162,10 +162,10 @@ Distinguish invalid query, unsupported field, stale saved view, missing target, 
 
 ## 18. Screen-specific rules
 
-- Official ranks remain separate from user sorting
-- Preview data follows the same permissions as detail screens
-- Late pages from stale searches are discarded
-- Unavailable entities retain safe fallback labels
+- Authoritative rules remain edition-bound
+- Hidden formulas and private values are not exposed
+- Every definition identifies version and effective scope
+- References do not override domain services
 
 ## 19. Persistence rules
 
@@ -188,10 +188,10 @@ Record operation category, duration, result-size band, cancellation, validation 
 
 ## 22. Acceptance criteria
 
-1. Official ranks remain separate from user sorting
-2. Preview data follows the same permissions as detail screens
-3. Late pages from stale searches are discarded
-4. Unavailable entities retain safe fallback labels
+1. Authoritative rules remain edition-bound
+2. Hidden formulas and private values are not exposed
+3. Every definition identifies version and effective scope
+4. References do not override domain services
 5. The view is bound to explicit viewer, permission, source-context, schema, and utility revisions.
 6. Unknown, empty, inaccessible, stale, cancelled, completed, and failed states remain distinct.
 7. Search, imports, exports, compatibility, and permissions are processed in trusted layers.
@@ -214,7 +214,7 @@ Record operation category, duration, result-size band, cancellation, validation 
 ## 24. Condensed LLM implementation brief
 
 ```text
-Implement Search Results and Entity Preview for an original football-management simulation. Use stable
+Implement Rules and Data Definitions Reference for an original football-management simulation. Use stable
 viewer, manager, entity, query, criterion, saved-view, command, shortcut, term,
 reminder, operation, and manifest IDs; immutable permission-filtered read models;
 bounded cancellable search; typed registered commands; manager-private recents,
@@ -231,5 +231,5 @@ wording, source code, logos, likenesses, or databases.
 ## Suggested Git commit
 
 ```text
-docs(game-ui): specify search results and entity preview screen
+docs(game-ui): specify rules and data definitions reference screen
 ```

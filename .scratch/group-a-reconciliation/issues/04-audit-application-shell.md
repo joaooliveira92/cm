@@ -28,7 +28,8 @@ requirement rather than fixed in place.
 **Scope narrowed by ticket 02.** `01_app_sheell.md` also contains a full duplicate of Screen 2 and a
 screen-inventory preamble. `02_new_game.md` is canonical for Screen 2, so this ticket audits **Screen 1
 (Main Menu) only** out of file 01, and records the duplicate as a single ledger row. Findings go into
-`docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md` in the ticket-02
+[RECONCILIATION.md
+](../../../docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md) in the ticket-02
 format; flip the screen's coverage status line from `Not yet audited` to `Audited` as part of closing.
 
 ## Answer

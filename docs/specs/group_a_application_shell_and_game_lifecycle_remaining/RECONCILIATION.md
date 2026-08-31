@@ -56,7 +56,7 @@ canonical; the copy inside `01_app_sheell.md` is redundant and is not audited se
 | Screen | Import file | Status |
 |---|---|---|
 | 1 Main Menu | [01_app_sheell.md](01_app_sheell.md) | Audited |
-| 2 New Game, Database Initialization | [02_new_game.md](02_new_game.md) | Not yet audited |
+| 2 New Game, Database Initialization | [02_new_game.md](02_new_game.md) | Reviewed |
 | 3 League and Nation Selection | [03_league_and_nation_selection.md](03_league_and_nation_selection.md) | Reviewed |
 | 4 Competition Detail Selection | [04_competition_detail_selection.md](04_competition_detail_selection.md) | Reviewed |
 | 5 Database Size and Performance Options | [05_database_size_and_performance_options.md](05_database_size_and_performance_options.md) | Reviewed |

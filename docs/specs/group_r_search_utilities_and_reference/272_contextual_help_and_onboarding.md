@@ -1,4 +1,4 @@
-# Screen 276: Import Export and Sharing Utilities
+# Screen 272: Contextual Help and Onboarding
 
 > **Clean-room notice:** Use original content, fictional identities, and properly licensed data only.
 
@@ -6,21 +6,21 @@
 
 ## 1. Purpose
 
-Import Export and Sharing Utilities manages validated imports, permission-safe exports, shareable definitions, format selection, compatibility checks, progress, and audit references.
+Contextual Help and Onboarding provides task-focused guidance, first-run tours, empty-state assistance, validation explanations, and links to relevant reference topics.
 
 ## 2. Primary user goals
 
-- Choose a supported import or export type
-- Validate content before applying it
-- Review compatibility, warnings, and destination
-- Cancel, retry, or inspect completed operations
+- Open help for the current screen or control
+- Navigate step-by-step guidance
+- Pause, skip, restart, or dismiss eligible onboarding
+- Search related reference topics
 
 ## 3. Navigation context
 
 ```text
 Global Application Shell
   -> Search, Utilities, Help, or Reference
-  -> Import Export and Sharing Utilities
+  -> Contextual Help and Onboarding
   -> Related entity, view, definition, or workflow
 ```
 
@@ -30,11 +30,11 @@ The screen preserves the active manager, viewer permissions, source context, uti
 
 ```text
 +------------------------------------------------------------------------------+
-| Import Export and Sharing Utilities                                          |
+| Contextual Help and Onboarding                                                 |
 |------------------------------------------------------------------------------|
-| Query or reference context, content, validation, status, and actions          |
+| Query or reference context, content, validation, status, and actions           |
 |                                                                              |
-| [Search or Filter] [Open] [Save or Export] [Back]                             |
+| [Search or Filter] [Open] [Save or Export] [Back]                              |
 +------------------------------------------------------------------------------+
 ```
 
@@ -58,10 +58,10 @@ Renderer-facing models are immutable, serializable, permission-filtered, and sch
 
 ## 6. Principal interactions
 
-- Choose a supported import or export type
-- Validate content before applying it
-- Review compatibility, warnings, and destination
-- Cancel, retry, or inspect completed operations
+- Open help for the current screen or control
+- Navigate step-by-step guidance
+- Pause, skip, restart, or dismiss eligible onboarding
+- Search related reference topics
 
 ## 7. View and operation states
 
@@ -162,10 +162,10 @@ Distinguish invalid query, unsupported field, stale saved view, missing target, 
 
 ## 18. Screen-specific rules
 
-- No arbitrary executable content is imported
-- Imports are parsed in trusted isolated services
-- Spreadsheet exports prevent formula injection
-- Sharing never grants permissions implicitly
+- Help never performs consequential actions silently
+- Tours remain usable with reduced motion and keyboard navigation
+- Dismissal is manager-scoped
+- Guidance reflects the active feature and rules version
 
 ## 19. Persistence rules
 
@@ -188,10 +188,10 @@ Record operation category, duration, result-size band, cancellation, validation 
 
 ## 22. Acceptance criteria
 
-1. No arbitrary executable content is imported
-2. Imports are parsed in trusted isolated services
-3. Spreadsheet exports prevent formula injection
-4. Sharing never grants permissions implicitly
+1. Help never performs consequential actions silently
+2. Tours remain usable with reduced motion and keyboard navigation
+3. Dismissal is manager-scoped
+4. Guidance reflects the active feature and rules version
 5. The view is bound to explicit viewer, permission, source-context, schema, and utility revisions.
 6. Unknown, empty, inaccessible, stale, cancelled, completed, and failed states remain distinct.
 7. Search, imports, exports, compatibility, and permissions are processed in trusted layers.
@@ -214,7 +214,7 @@ Record operation category, duration, result-size band, cancellation, validation 
 ## 24. Condensed LLM implementation brief
 
 ```text
-Implement Import Export and Sharing Utilities for an original football-management simulation. Use stable
+Implement Contextual Help and Onboarding for an original football-management simulation. Use stable
 viewer, manager, entity, query, criterion, saved-view, command, shortcut, term,
 reminder, operation, and manifest IDs; immutable permission-filtered read models;
 bounded cancellable search; typed registered commands; manager-private recents,
@@ -231,5 +231,5 @@ wording, source code, logos, likenesses, or databases.
 ## Suggested Git commit
 
 ```text
-docs(game-ui): specify import export and sharing utilities screen
+docs(game-ui): specify contextual help and onboarding screen
 ```

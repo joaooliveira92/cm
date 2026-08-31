@@ -1,7 +1,7 @@
 # 17 — Screen 8: Manager Personal Details
 
 Type: task
-Status: open
+Status: resolved
 Blocked by: 03
 
 ## Question
@@ -12,6 +12,6 @@ The blanket-trim rows (ticket 03) removed the hot-seat privacy and multiplayer p
 
 **Distinguish**: the archetype picker and pillar sliders belong to Manager Archetype, a concept already decided in earlier tickets and recorded in `CONTEXT.md`. Do not re-audit them as Screen 8 content.
 
-## Done when
+## Answer
 
-Screen 8 has a `Reviewed` status in `RECONCILIATION.md` with rows for every section the implementation does not follow, and no `unscheduled` rows remain.
+Screen 8 is `contradicted` across its surviving content: the implementation (`CreationStep1.tsx`) provides only a single Manager name `<input>` with a 1-char placeholder and a "Save name" field. Date of birth, place of birth, portrait functionality (initials, built-in, generated, user image), local hot-seat privacy, name normalization/validation, structured name components, duplicate-name detection, dirty-state model, autosave, Save Draft/Continue/Back behavior, accessibility, keyboard interaction, localization, responsive behavior, security, and state-model transitions are all absent. The archetype picker and pillar sliders belong to Manager Archetype (`CONTEXT.md`) and are not Screen 8 content. Ledger updated at `docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md` — Screen 8 status changed from `Not yet audited` to `Reviewed`.
