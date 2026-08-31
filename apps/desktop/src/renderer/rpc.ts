@@ -14,6 +14,7 @@ export {
   leagueTableAtom,
   fixturesAtom,
   seasonSummaryAtom,
+  managerProfileAtom,
   transfersAtom,
   saveKey,
   squadKey,

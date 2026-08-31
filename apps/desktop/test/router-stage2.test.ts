@@ -3,6 +3,7 @@ import { SaveId as SaveIdSchema, type SaveId } from "@cm-clone/contracts";
 import { bindRouter, navigateBack } from "../src/renderer/navigation/adapter.js";
 import { CAREER_G_BINDINGS, CAREER_SCREEN_TYPES, resolveDestination } from "../src/renderer/navigation/destinations.js";
 import { decodeSaveId } from "../src/renderer/navigation/params.js";
+import { CAREER_TABS } from "../src/renderer/router/career.js";
 import { consumePendingFocus, BACK_RESTORE_MARKER } from "../src/renderer/focus.js";
 
 const save = (id: string): SaveId => SaveIdSchema.make(id);
@@ -45,6 +46,10 @@ describe("AC-14 — typed destination resolver", () => {
       to: "/career/$saveId/season-summary",
       params: { saveId: id },
     });
+    expect(resolveDestination({ type: "manager", saveId: id })).toEqual({
+      to: "/career/$saveId/manager",
+      params: { saveId: id },
+    });
   });
 });
 
@@ -61,9 +66,10 @@ describe("AC-14 — career g bindings never point at creation steps", () => {
     }
   });
 
-  it("the registry covers all seven career screens and nothing else", () => {
+  it("the registry covers all eight career screens and nothing else", () => {
     expect(Object.keys(CAREER_G_BINDINGS).sort()).toEqual([
       "a",
+      "d",
       "f",
       "l",
       "m",
@@ -73,6 +79,30 @@ describe("AC-14 — career g bindings never point at creation steps", () => {
     ]);
     const types = Object.values(CAREER_G_BINDINGS).map((build) => build(save("x")).type);
     expect(new Set(types)).toEqual(new Set(CAREER_SCREEN_TYPES));
+  });
+});
+
+describe("AC-11 — the career tab strip covers every career screen", () => {
+  it("has exactly one tab per career screen, no more and no fewer", () => {
+    expect(CAREER_TABS.map((tab) => tab.destination).sort()).toEqual(
+      [...CAREER_SCREEN_TYPES].sort(),
+    );
+  });
+
+  it("each tab's childPath is the last segment of that destination's real route", () => {
+    const id = save("save-1");
+    for (const tab of CAREER_TABS) {
+      const resolved = resolveDestination({ type: tab.destination, saveId: id });
+      expect((resolved.to as string).split("/").at(-1)).toBe(tab.childPath);
+    }
+  });
+});
+
+describe("Screen 19 — `g m` reaches Manager Profile, Match Day moved to `g d`", () => {
+  it("g m resolves to the manager route and g d to the match route", () => {
+    const id = save("save-1");
+    expect(CAREER_G_BINDINGS["m"]!(id)).toEqual({ type: "manager", saveId: id });
+    expect(CAREER_G_BINDINGS["d"]!(id)).toEqual({ type: "match", saveId: id });
   });
 });
 

@@ -25,27 +25,37 @@ export const RouteParamErrorScreen = ({
   </main>
 );
 
+export interface CareerTab {
+  readonly label: string;
+  readonly childPath: string;
+  readonly destination: CareerDestination["type"];
+}
+
+/**
+ * The career tab strip, in display order. Exported so the tab set can be checked against
+ * `CAREER_SCREEN_TYPES`: a career screen with a route and a `g` binding but no tab is reachable
+ * only by keyboard, which is the drift this list is easy to acquire.
+ */
+export const CAREER_TABS: ReadonlyArray<CareerTab> = [
+  { label: "squad", childPath: "squad", destination: "squad" },
+  { label: "tactics", childPath: "tactics", destination: "tactics" },
+  { label: "transfers", childPath: "transfers", destination: "transfers" },
+  { label: "league table", childPath: "league", destination: "league" },
+  { label: "fixtures", childPath: "fixtures", destination: "fixtures" },
+  { label: "match day", childPath: "match", destination: "match" },
+  {
+    label: "season summary",
+    childPath: "season-summary",
+    destination: "seasonSummary",
+  },
+  { label: "manager", childPath: "manager", destination: "manager" },
+];
+
 /** The career chrome: the persistent shell every career route shares (AC-11). */
 export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
   const { pathname } = useLocation();
   const activeChild = pathname.split("/").at(-1) ?? "";
-  const tabs: ReadonlyArray<{
-    readonly label: string;
-    readonly childPath: string;
-    readonly destination: CareerDestination["type"];
-  }> = [
-    { label: "squad", childPath: "squad", destination: "squad" },
-    { label: "tactics", childPath: "tactics", destination: "tactics" },
-    { label: "transfers", childPath: "transfers", destination: "transfers" },
-    { label: "league table", childPath: "league", destination: "league" },
-    { label: "fixtures", childPath: "fixtures", destination: "fixtures" },
-    { label: "match day", childPath: "match", destination: "match" },
-    {
-      label: "season summary",
-      childPath: "season-summary",
-      destination: "seasonSummary",
-    },
-  ];
+  const tabs = CAREER_TABS;
 
   const onTabClick = (
     event: MouseEvent,

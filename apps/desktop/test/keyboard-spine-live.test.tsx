@@ -282,6 +282,6 @@ describe("AC-17 — the registry's coded bindings are exactly what the live spin
   // The spine derives ALL key handling from the registry (via resolveDispatch);
   // a binding a screen advertises is reachable, and nothing else is hard-wired.
   it("the live prefix completion set is registry-derived and covers g b", () => {
-    expect(new Set(["s", "a", "t", "l", "f", "m", "y", "b"])).toEqual(G_PREFIX_COMPLETIONS);
+    expect(new Set(["s", "a", "t", "l", "f", "d", "y", "m", "b"])).toEqual(G_PREFIX_COMPLETIONS);
   });
 });

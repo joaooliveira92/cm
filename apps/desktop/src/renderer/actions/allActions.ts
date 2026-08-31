@@ -57,8 +57,9 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   navAction("go-to-transfers", "Go to Transfers", "g t", { destination: "transfers" }),
   navAction("go-to-league", "Go to League Table", "g l", { destination: "league" }),
   navAction("go-to-fixtures", "Go to Fixtures", "g f", { destination: "fixtures" }),
-  navAction("go-to-match", "Go to Match Day", "g m", { destination: "match" }),
+  navAction("go-to-match", "Go to Match Day", "g d", { destination: "match" }),
   navAction("go-to-season-summary", "Go to Season Summary", "g y", { destination: "seasonSummary" }),
+  navAction("go-to-manager", "Go to Manager Profile", "g m", { destination: "manager" }),
   navAction("go-back", "Go to previous screen", "g b"),
   // league
   { id: "advance-calendar", label: "Advance the Calendar", scope: "league", available: continueAvailable, unavailableReason: "The Calendar cannot advance right now.", handler: () => undefined, binding: "c", primary: true },
@@ -155,6 +156,7 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   fixtures: { showKeyBadges: false },
   match: { showKeyBadges: false },
   seasonSummary: { showKeyBadges: false },
+  manager: { showKeyBadges: false },
   createStep1: { showKeyBadges: false },
   createStep2: { showKeyBadges: false },
   createStep3: { showKeyBadges: false },

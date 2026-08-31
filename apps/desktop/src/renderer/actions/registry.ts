@@ -29,7 +29,7 @@ export interface CollisionViolation {
   readonly message: string;
 }
 
-/** True when `screen` is one of the seven persistent career screens. */
+/** True when `screen` is one of the eight persistent career screens. */
 export const isCareerScreen = (screen: ScreenName): boolean =>
   screen === "squad" ||
   screen === "tactics" ||
@@ -37,7 +37,8 @@ export const isCareerScreen = (screen: ScreenName): boolean =>
   screen === "league" ||
   screen === "fixtures" ||
   screen === "match" ||
-  screen === "seasonSummary";
+  screen === "seasonSummary" ||
+  screen === "manager";
 
 /** A scope-tier label helper for the key map (which scope a bound action lives in). */
 export const scopeLabel = (scope: ActionScope): string => scope;

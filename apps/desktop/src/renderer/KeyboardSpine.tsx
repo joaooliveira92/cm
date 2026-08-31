@@ -64,7 +64,9 @@ import {
  */
 
 const careerScreenOfId = (id: string): CareerDestination["type"] | null =>
-  ["squad", "tactics", "transfers", "league", "fixtures", "match", "seasonSummary"].includes(id)
+  ["squad", "tactics", "transfers", "league", "fixtures", "match", "seasonSummary", "manager"].includes(
+    id,
+  )
     ? (id as CareerDestination["type"])
     : null;
 
@@ -238,6 +240,7 @@ export const KeyboardSpine = () => {
         fixtures: () => navigateCareer({ type: "fixtures", saveId }, "keyboard"),
         match: () => navigateCareer({ type: "match", saveId }, "keyboard"),
         seasonSummary: () => navigateCareer({ type: "seasonSummary", saveId }, "keyboard"),
+        manager: () => navigateCareer({ type: "manager", saveId }, "keyboard"),
       };
       for (const [id, type] of Object.entries({
         "go-to-squad": "squad",
@@ -247,6 +250,7 @@ export const KeyboardSpine = () => {
         "go-to-fixtures": "fixtures",
         "go-to-match": "match",
         "go-to-season-summary": "seasonSummary",
+        "go-to-manager": "manager",
       }) as ReadonlyArray<[string, CareerDestination["type"]]>) {
         unregisters.push(registerActionHandler(id, target[type]));
       }

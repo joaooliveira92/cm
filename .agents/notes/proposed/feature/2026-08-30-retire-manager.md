@@ -103,7 +103,7 @@ Retirement is a dialog opened from the Manager Profile screen. It is not a route
 from the application shell.
 
 Manager Profile already owns manager identity and already renders the `Active`/`Archived` badge (see
-[Manager Profile screen](2026-08-30-manager-profile-screen.md), whose open risk about how retirement gets
+[Manager Profile screen](../../implemented/feature/2026-08-30-manager-profile-screen.md), whose open risk about how retirement gets
 recorded this note closes). A career-ending action in the shell would sit next to a list of saves, where
 firing it against the wrong one is possible. As a dialog it also inherits whatever confirmation-dialog
 pattern ticket 08 settles for Quit Confirmation, rather than establishing a second one, and it needs no

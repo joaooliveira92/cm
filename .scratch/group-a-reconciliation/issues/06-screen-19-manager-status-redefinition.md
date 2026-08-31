@@ -25,7 +25,7 @@ survives and what the other is called instead, if anything.
 
 ## Answer
 
-**Screen is "Manager Profile", showing profile identity (name, archetype, pillars, club, tenure) with a passive Active/Archived status badge; all sacking/outcome detail stays exclusive to Season Summary; "Manager Status" retired as domain term.** See [Agent Note](/.agents/notes/proposed/feature/2026-08-30-manager-profile-screen.md). Reconciliation ledger updated with `renamed`/`contradicted` rows for the survivors.
+**Screen is "Manager Profile", showing profile identity (name, archetype, pillars, club, tenure) with a passive Active/Archived status badge; all sacking/outcome detail stays exclusive to Season Summary; "Manager Status" retired as domain term.** See [Agent Note](/.agents/notes/implemented/feature/2026-08-30-manager-profile-screen.md). Reconciliation ledger updated with `renamed`/`contradicted` rows for the survivors.
 
 ## Done when
 

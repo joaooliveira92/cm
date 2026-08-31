@@ -18,6 +18,7 @@ import {
   InvalidTacticError,
   LeagueTableView,
   LockedKeyOverrideError,
+  ManagerProfileScreenView,
   ManagerProfileView,
   ManagerArchetypeSchema,
   MatchCommandPayload,
@@ -93,6 +94,12 @@ export const AppRpcs = {
   getManagerProfile: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: ManagerProfileView,
+    error: SaveNotFoundError,
+  },
+  /** Manager Profile screen (Screen 19) — identity plus club/season/tenure and the Archived flag. */
+  getManagerProfileScreen: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: ManagerProfileScreenView,
     error: SaveNotFoundError,
   },
   getClubSelection: {

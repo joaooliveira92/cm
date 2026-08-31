@@ -54,6 +54,15 @@ export const seasonSummaryAtom = Atom.family((saveId: SaveId) =>
   ),
 );
 
+/** getManagerProfileScreen — `["save", saveId]`. */
+export const managerProfileAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getManagerProfileScreen", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId)]),
+    ),
+  ),
+);
+
 /** getTransfersScreen — `["save", saveId]`, `["transfers", saveId]`, `["economy", saveId]`. */
 export const transfersAtom = Atom.family((saveId: SaveId) =>
   managementReadPolicy(

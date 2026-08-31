@@ -66,6 +66,9 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/season-summary":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
+    case "/career/$saveId/manager":
+      getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
+      break;
   }
 };
 

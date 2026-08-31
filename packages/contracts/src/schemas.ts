@@ -98,6 +98,23 @@ export class InvalidPillarDistributionError extends Schema.TaggedError<InvalidPi
   },
 ) {}
 
+/** Manager Profile screen (Screen 19). Profile identity plus the three save-scoped facts that frame
+ * it — club, Season number, tenure length — and the Archived Save flag the status badge keys off.
+ * Deliberately carries no Board Objective, Verdict, Consecutive-Miss Counter, or `ManagerOutcome`:
+ * those are season-boundary judgments owned exclusively by Season Summary. */
+export class ManagerProfileScreenView extends Schema.Class<ManagerProfileScreenView>(
+  "ManagerProfileScreenView",
+)({
+  profile: ManagerProfileView,
+  clubName: Schema.String,
+  seasonNumber: Schema.Finite,
+  /** Seasons served with this club, counting the current one. */
+  tenureSeasons: Schema.Finite,
+  /** True once the save is an Archived Save (sacked or retired) — the badge and every guard key off
+   * this single flag, never off the cause. */
+  archived: Schema.Boolean,
+}) {}
+
 // ---------------------------------------------------------------------------
 // Club selection (ticket 04)
 // ---------------------------------------------------------------------------

@@ -1,8 +1,16 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { ManagerArchetypeSchema, ManagerProfileNotFoundError, ManagerProfileView, type SaveId } from "@cm-clone/contracts";
+import {
+  ManagerArchetypeSchema,
+  ManagerProfileNotFoundError,
+  ManagerProfileScreenView,
+  ManagerProfileView,
+  type SaveId,
+} from "@cm-clone/contracts";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "./decider.js";
+import { loadManagerStatus } from "./managerStatus.js";
+import { loadUserClub } from "./squad.js";
 
 /** Read the manager_profile row for the current save. Returns null if no profile exists. */
 export const loadManagerProfile = Effect.gen(function* () {
@@ -32,18 +40,54 @@ export const loadManagerProfile = Effect.gen(function* () {
     : null;
 });
 
+/** Decode the stored `manager_profile` row into the contract view. */
+const decodeProfile = Effect.gen(function* () {
+  const profile = yield* loadManagerProfile;
+  if (!profile) {
+    return yield* new ManagerProfileNotFoundError();
+  }
+  return new ManagerProfileView({
+    managerName: profile.managerName,
+    archetypeOrigin: yield* Schema.decodeUnknownEffect(ManagerArchetypeSchema)(profile.archetypeOrigin),
+    pillars: profile.pillars,
+  });
+});
+
 /** Query the manager profile from a committed save. */
 export const getManagerProfile = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
+    decodeProfile.pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
+  );
+
+/**
+ * Manager Profile screen query (Screen 19): creation-time identity, plus the club, Season number and
+ * tenure that frame it, plus the Archived Save flag.
+ *
+ * Tenure is the count of `season` rows because a save is bound to one club for its whole life (there
+ * is no club-change flow), so "Seasons with this club" and "Seasons in this save" are the same
+ * number. It stays correct once Season rollover lands, since rollover inserts a row per Season.
+ *
+ * `archived` reads `manager_status.sacked` — the only cause of an Archived Save that the schema
+ * records today. Manager Retired (the second cause, ticket 02) folds into this same flag when it
+ * lands; the badge keys off the archived state, never off the cause.
+ */
+export const getManagerProfileScreen = (savesDir: string, saveId: SaveId) =>
+  withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const profile = yield* loadManagerProfile;
-      if (!profile) {
-        return yield* new ManagerProfileNotFoundError();
-      }
-      return new ManagerProfileView({
-        managerName: profile.managerName,
-        archetypeOrigin: yield* Schema.decodeUnknownEffect(ManagerArchetypeSchema)(profile.archetypeOrigin),
-        pillars: profile.pillars,
+      const sql = yield* SqlClient;
+      const profile = yield* decodeProfile;
+      const club = yield* loadUserClub;
+      const seasonRows = yield* sql<{
+        seasonNumber: number;
+      }>`SELECT season_number as "seasonNumber" FROM season ORDER BY season_number DESC`;
+      const managerStatus = yield* loadManagerStatus;
+
+      return new ManagerProfileScreenView({
+        profile,
+        clubName: club.name,
+        seasonNumber: seasonRows[0]?.seasonNumber ?? 1,
+        tenureSeasons: seasonRows.length,
+        archived: managerStatus.sacked,
       });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

@@ -10,7 +10,7 @@ import {
   setKeyBindingOverride,
 } from "./keybindings.js";
 import { listOpponentClubs, resumeSimulation, startMatch, submitMatchCommand } from "./match.js";
-import { getManagerProfile } from "./managerProfile.js";
+import { getManagerProfile, getManagerProfileScreen } from "./managerProfile.js";
 import { advanceCalendar, getFixtures, getLeagueTable, getSeasonSummary } from "./season.js";
 import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave } from "./saves.js";
 import { getSquad } from "./squad.js";
@@ -56,6 +56,11 @@ const handlers: Record<AppRpcMethod, Handler> = {
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getManagerProfile.payload)(payload);
       return yield* getManagerProfile(ctx.savesDir, saveId);
+    }),
+  getManagerProfileScreen: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getManagerProfileScreen.payload)(payload);
+      return yield* getManagerProfileScreen(ctx.savesDir, saveId);
     }),
   getClubSelection: (payload, ctx) =>
     Effect.gen(function* () {

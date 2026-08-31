@@ -17,6 +17,7 @@ export type ScreenName =
   | "fixtures"
   | "match"
   | "seasonSummary"
+  | "manager"
   | "createStep1"
   | "createStep2"
   | "createStep3"
@@ -30,7 +31,8 @@ export type CareerScreenName =
   | "league"
   | "fixtures"
   | "match"
-  | "seasonSummary";
+  | "seasonSummary"
+  | "manager";
 
 /**
  * The scope an Action lives in. `screen`/`career-global`/`app-global` spans the
