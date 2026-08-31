@@ -1,11 +1,12 @@
-import { SaveSackedError, type SaveId } from "@cm-clone/contracts";
-import type { ManagerOutcome } from "@cm-clone/shared";
+import { SaveArchivedError, type SaveId } from "@cm-clone/contracts";
+import type { ArchivedCause, ManagerOutcome } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 
 export interface ManagerStatusRow {
   readonly consecutiveMisses: number;
-  readonly sacked: boolean;
+  /** `null` while the career is live; the cause that archived the save once it has ended. */
+  readonly archivedCause: ArchivedCause | null;
   readonly lastOutcome: ManagerOutcome;
 }
 
@@ -17,24 +18,26 @@ export const loadManagerStatus = Effect.gen(function* () {
   const sql = yield* SqlClient;
   const rows = yield* sql<{
     consecutiveMisses: number;
-    sacked: number;
+    archivedCause: ArchivedCause | null;
     lastOutcome: ManagerOutcome;
-  }>`SELECT consecutive_misses as "consecutiveMisses", sacked, last_outcome as "lastOutcome" FROM manager_status WHERE id = 1`;
+  }>`SELECT consecutive_misses as "consecutiveMisses", archived_cause as "archivedCause", last_outcome as "lastOutcome" FROM manager_status WHERE id = 1`;
   const row = rows[0]!;
   return {
     consecutiveMisses: row.consecutiveMisses,
-    sacked: row.sacked === 1,
+    archivedCause: row.archivedCause,
     lastOutcome: row.lastOutcome,
   } satisfies ManagerStatusRow;
 });
 
-/** Rejects with `SaveSackedError` once `ManagerSacked` has archived the save (ticket 18 / ADR-0006:
- * "read-only, no further commands accepted"). Every mutating command handler must call this before
- * writing. Assumes a `SqlClient` in context. */
-export const assertSaveNotSacked = (saveId: SaveId) =>
+/** Rejects with `SaveArchivedError` once the save is an Archived Save (ticket 18 / ADR-0006:
+ * "read-only, no further commands accepted"). Both causes — `ManagerSacked` and `ManagerRetired` —
+ * archive through the same nullable column, so the guard reads the archived state and never the
+ * cause; the cause rides along on the error only so the renderer can word the refusal correctly.
+ * Every mutating command handler must call this before writing. Assumes a `SqlClient` in context. */
+export const assertSaveNotArchived = (saveId: SaveId) =>
   Effect.gen(function* () {
     const managerStatus = yield* loadManagerStatus;
-    if (managerStatus.sacked) {
-      return yield* new SaveSackedError({ saveId });
+    if (managerStatus.archivedCause !== null) {
+      return yield* new SaveArchivedError({ saveId, cause: managerStatus.archivedCause });
     }
   });

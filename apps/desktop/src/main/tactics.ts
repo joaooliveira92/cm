@@ -4,7 +4,7 @@ import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "./decider.js";
-import { assertSaveNotSacked } from "./managerStatus.js";
+import { assertSaveNotArchived } from "./managerStatus.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 
 /** The club's persisted Tactic, if `ChangeTactics` has ever been issued — assumes a `SqlClient` in
@@ -100,7 +100,7 @@ export const validateTactic = (tactic: Tactic, squadPlayerIds: ReadonlySet<strin
 export const changeTactics = (savesDir: string, saveId: SaveId, tactic: Tactic) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      yield* assertSaveNotSacked(saveId);
+      yield* assertSaveNotArchived(saveId);
       const club = yield* loadUserClub;
       const squad = yield* loadSquadPlayers(club.id);
       yield* validateTactic(tactic, new Set(squad.map((player) => player.id)));

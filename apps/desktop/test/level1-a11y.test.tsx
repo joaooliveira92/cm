@@ -89,7 +89,7 @@ const seasonSummaryView = () => ({
   boardObjective: null,
   managerOutcome: "none" as const,
   consecutiveMisses: 0,
-  sacked: false,
+  archivedCause: null,
 });
 
 const clubSelectionView = () => ({

@@ -44,7 +44,7 @@ import {
   withExistingSave,
   type StreamEvent,
 } from "./decider.js";
-import { assertSaveNotSacked } from "./managerStatus.js";
+import { assertSaveNotArchived } from "./managerStatus.js";
 import { loadManagerProfile } from "./managerProfile.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
@@ -203,7 +203,7 @@ interface PersistedForcedOff {
 export const startMatch = (savesDir: string, saveId: SaveId, opponentClubId: ClubId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      yield* assertSaveNotSacked(saveId);
+      yield* assertSaveNotArchived(saveId);
       const userClub = yield* loadUserClub;
       const opponentClub = yield* loadClubSummary(opponentClubId);
       if (!opponentClub) return yield* new ClubNotFoundError({ id: opponentClubId });
@@ -511,7 +511,7 @@ export const submitMatchCommand = (
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      yield* assertSaveNotSacked(saveId);
+      yield* assertSaveNotArchived(saveId);
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 

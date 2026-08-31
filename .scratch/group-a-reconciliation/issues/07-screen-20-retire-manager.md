@@ -27,7 +27,7 @@ register needs an entry saying so.
 
 ## Answer
 
-**Retirement is a second cause of an Archived Save: a `ManagerRetired` event and a nullable `archived_cause` column replacing the `sacked` boolean, with the guard renamed to `assertSaveNotArchived`, confirmed by an Irreversibility Disclosure in a dialog on Manager Profile.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-30-retire-manager.md).
+**Retirement is a second cause of an Archived Save: a `ManagerRetired` event and a nullable `archived_cause` column replacing the `sacked` boolean, with the guard renamed to `assertSaveNotArchived`, confirmed by an Irreversibility Disclosure in a dialog on Manager Profile.** See [Agent Note](../../../.agents/notes/implemented/feature/2026-08-30-retire-manager.md).
 
 ## Done when
 

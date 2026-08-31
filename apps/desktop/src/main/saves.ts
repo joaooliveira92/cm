@@ -23,10 +23,16 @@ const loadAllClubs = Effect.gen(function* () {
   return yield* sql<{ id: ClubId; name: string }>`SELECT id, name FROM clubs ORDER BY rowid`;
 });
 
+/** The Save List's row for one save file. `archivedCause` comes from `manager_status` rather than
+ * `save_meta` because archiving is career state, not file metadata; the cross join is safe because
+ * both tables hold exactly one row per save. It is read here so the Save List can mark an archived
+ * save without opening the career (ticket 02). */
 const readSaveSummary = (filename: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const rows = yield* sql`SELECT id, name, created_at as "createdAt" FROM save_meta LIMIT 1`;
+    const rows = yield* sql`SELECT save_meta.id, save_meta.name, save_meta.created_at as "createdAt",
+             manager_status.archived_cause as "archivedCause"
+      FROM save_meta LEFT JOIN manager_status ON manager_status.id = 1 LIMIT 1`;
     return yield* Schema.decodeUnknownEffect(SaveSummary)(rows[0]);
   }).pipe(
     Effect.provide(SqliteClient.layer({ filename, readonly: true })),
@@ -109,7 +115,8 @@ export const commitCareer = (
       yield* sql`INSERT INTO save_meta (id, name, created_at) VALUES (${id}, ${name}, ${createdAt})`;
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped);
 
-    return new SaveSummary({ id, name, createdAt });
+    // A freshly committed career is never archived — `startSeason` writes `archived_cause` NULL.
+    return new SaveSummary({ id, name, createdAt, archivedCause: null });
   });
 
 /**

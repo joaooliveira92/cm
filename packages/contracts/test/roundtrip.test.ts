@@ -20,6 +20,7 @@ import {
   NotYourPlayerError,
   NullableTrainingFocusSchema,
   PlayerDevelopedEvent,
+  SaveArchivedError,
   SaveNotFoundError,
   SaveSummary,
   SquadPlayerView,
@@ -61,7 +62,13 @@ const player = {
 
 describe("simple view classes", () => {
   it("SaveSummary round-trips", () => {
-    roundTrip(SaveSummary, { id: "s1", name: "Test", createdAt: "2026-01-01" });
+    roundTrip(SaveSummary, { id: "s1", name: "Test", createdAt: "2026-01-01", archivedCause: null });
+  });
+
+  it("SaveSummary round-trips each cause that archives a save", () => {
+    for (const archivedCause of ["sacked", "retired"] as const) {
+      roundTrip(SaveSummary, { id: "s1", name: "Test", createdAt: "2026-01-01", archivedCause });
+    }
   });
 
   it("ClubSummary round-trips", () => {
@@ -175,6 +182,12 @@ describe("tagged errors", () => {
 
   it("loadSave's missing-save typed failure round-trips through the method error schema (AC-12)", () => {
     roundTrip(AppRpcs.loadSave.error, { _tag: "SaveNotFoundError", id: "s1" });
+  });
+
+  it("SaveArchivedError round-trips the cause the renderer words its copy from", () => {
+    for (const cause of ["sacked", "retired"] as const) {
+      roundTrip(SaveArchivedError, { _tag: "SaveArchivedError", saveId: "s1", cause });
+    }
   });
 
   it("InvalidTacticError round-trips its reason", () => {

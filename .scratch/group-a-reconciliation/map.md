@@ -184,7 +184,7 @@ repair, because `pnpm check:all` is red until it lands and every later session i
   to break existing saves, and the repo has no migration layer to carry them across. Building one is a
   project-wide architectural effort with its own versioning and upgrade-path questions; it sits past this
   map's destination. Recorded here so the need is visible rather than lost — see the risk in
-  [Retire Manager](../../.agents/notes/proposed/feature/2026-08-30-retire-manager.md).
+  [Retire Manager](../../.agents/notes/implemented/feature/2026-08-30-retire-manager.md).
 - **The other eighteen spec groups.** Group A is the pilot. If a reusable trimming method falls out, it
   is captured as a `process` Agent Note — widening this map to 19 groups is a different effort.
 - **An enabled-mods indicator.** Ruled by ticket 04 while auditing spec 1 §4.2 and §8. Nothing in the

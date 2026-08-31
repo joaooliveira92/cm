@@ -33,7 +33,7 @@ const archiveSave = (saveId: string) =>
     saveId,
     Effect.gen(function* () {
       const sql = yield* SqlClient;
-      yield* sql`UPDATE manager_status SET sacked = 1, consecutive_misses = 2, last_outcome = 'sacked'`;
+      yield* sql`UPDATE manager_status SET archived_cause = 'sacked', consecutive_misses = 2, last_outcome = 'sacked'`;
     }),
   );
 
@@ -93,7 +93,7 @@ it.effect("carries no season-boundary judgment — those stay exclusive to Seaso
       "verdict",
       "consecutiveMisses",
       "managerOutcome",
-      "sacked",
+      "archivedCause",
     ]) {
       ok(!(forbidden in view), `Manager Profile must not carry ${forbidden}`);
     }

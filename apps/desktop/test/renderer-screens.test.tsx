@@ -76,7 +76,7 @@ const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown
 };
 
 const saveNotFound = { _tag: "SaveNotFoundError", id: relaxedSaveId("s1") };
-const sackedError = { _tag: "SaveSackedError", saveId: relaxedSaveId("s1") };
+const sackedError = { _tag: "SaveArchivedError", saveId: relaxedSaveId("s1"), cause: "sacked" };
 
 beforeEach(() => {
   cleanup();
@@ -126,7 +126,7 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
     expect(await screen.findByText(/Alan Shearer/)).toBeTruthy();
   });
 
-  it("LeagueTableScreen renders the typed save-sacked error from the advance mutation", async () => {
+  it("LeagueTableScreen renders the typed save-archived error from the advance mutation", async () => {
     mockPreload(async (method) => {
       if (method === "getLeagueTable") return { _tag: "Success", value: leagueTable("s1") };
       if (method === "advanceCalendar") return { _tag: "Failure", error: sackedError };

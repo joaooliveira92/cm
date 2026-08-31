@@ -40,7 +40,7 @@ import {
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
-import { assertSaveNotSacked } from "./managerStatus.js";
+import { assertSaveNotArchived } from "./managerStatus.js";
 import { loadUserClub } from "./squad.js";
 
 type BidStatus = "pending" | "countered" | "accepted" | "rejected" | "withdrawn";
@@ -612,7 +612,7 @@ export const decideAiSellerResponse = (
 export const placeBid = (savesDir: string, saveId: SaveId, playerId: PlayerId, amount: number) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      yield* assertSaveNotSacked(saveId);
+      yield* assertSaveNotArchived(saveId);
       const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const seasonRow = yield* loadSeasonRow;
@@ -687,7 +687,7 @@ export const respondToBid = (
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      yield* assertSaveNotSacked(saveId);
+      yield* assertSaveNotArchived(saveId);
       const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const seasonRow = yield* loadSeasonRow;
@@ -744,7 +744,7 @@ export const respondAsBidder = (
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      yield* assertSaveNotSacked(saveId);
+      yield* assertSaveNotArchived(saveId);
       const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const seasonRow = yield* loadSeasonRow;
@@ -789,7 +789,7 @@ export const respondAsBidder = (
 export const signFreeAgent = (savesDir: string, saveId: SaveId, playerId: PlayerId, years: number | undefined) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      yield* assertSaveNotSacked(saveId);
+      yield* assertSaveNotArchived(saveId);
       const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const seasonRow = yield* loadSeasonRow;
@@ -836,7 +836,7 @@ export const signFreeAgent = (savesDir: string, saveId: SaveId, playerId: Player
 export const renewContract = (savesDir: string, saveId: SaveId, playerId: PlayerId, years: number | undefined) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      yield* assertSaveNotSacked(saveId);
+      yield* assertSaveNotArchived(saveId);
       const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const seasonRow = yield* loadSeasonRow;

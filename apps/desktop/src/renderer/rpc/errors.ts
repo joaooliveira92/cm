@@ -58,8 +58,12 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
       switch (error.error._tag) {
         case "SaveNotFoundError":
           return "That save could not be found.";
-        case "SaveSackedError":
-          return "You have been sacked — this save is archived.";
+        // The cause picks the sentence: "you have been sacked" is wrong for a save the player
+        // chose to retire from, and this string is the only place the two differ to the player.
+        case "SaveArchivedError":
+          return error.error.cause === "retired"
+            ? "You have retired — this save is archived."
+            : "You have been sacked — this save is archived.";
         case "PlayerNotFoundError":
           return "That player could not be found.";
         case "BidNotFoundError":

@@ -83,7 +83,7 @@ describe("renderer RPC seam — wire decode (AC-02)", () => {
   it("decodes the Success branch against the method's success schema", async () => {
     const restore = installPreload(async () => ({
       _tag: "Success",
-      value: [{ id: relaxedSaveId("s1"), name: "Career", createdAt: "2026-08-29T00:00:00.000Z" }],
+      value: [{ id: relaxedSaveId("s1"), name: "Career", createdAt: "2026-08-29T00:00:00.000Z", archivedCause: null }],
     }));
     try {
       const result = await Effect.runPromise(Effect.result(call("listSaves", undefined)));
@@ -267,7 +267,7 @@ describe("renderer RPC seam — invalidation rules (AC-05)", () => {
 
     const failureOutcome = await run(async () => ({
       _tag: "Failure",
-      error: { _tag: "SaveSackedError", saveId: save },
+      error: { _tag: "SaveArchivedError", saveId: save, cause: "sacked" },
     }));
     expect(failureOutcome).toBe("Failure");
     expect(fired).toEqual([]);

@@ -67,10 +67,18 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
             The board has issued a warning after a missed objective.
           </p>
         )}
-        {summary.managerOutcome === "sacked" && (
+        {/* The closing line comes from the cause, never from `managerOutcome`: a manager who
+            retires while sitting on a warning keeps that outcome, so inferring the ending from the
+            board's last judgment would tell the wrong story about how the career finished. */}
+        {summary.archivedCause === "sacked" && (
           <p className="mt-2 rounded bg-red-900/40 p-2 text-sm text-red-300">
             You have been sacked. This save is now archived and read-only — return to "continue
             career" to start or load another save.
+          </p>
+        )}
+        {summary.archivedCause === "retired" && (
+          <p className="mt-2 rounded bg-slate-800 p-2 text-sm text-slate-300">
+            Career ended — you retired at the end of Season {summary.season.seasonNumber}.
           </p>
         )}
       </section>

@@ -10,7 +10,7 @@ import type { Category } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
-import { assertSaveNotSacked } from "./managerStatus.js";
+import { assertSaveNotArchived } from "./managerStatus.js";
 import { loadUserClub } from "./squad.js";
 
 const CLUB_STREAM = "club";
@@ -24,7 +24,7 @@ export const setTrainingFocus = (savesDir: string, saveId: SaveId, playerId: Pla
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;
-      yield* assertSaveNotSacked(saveId);
+      yield* assertSaveNotArchived(saveId);
 
       const club = yield* loadUserClub;
       const playerRows = yield* sql<{ id: PlayerId }>`SELECT id FROM players WHERE id = ${playerId}`;

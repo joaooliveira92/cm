@@ -32,6 +32,7 @@ export {
   signFreeAgentMutation,
   respondToBidMutation,
   respondAsBidderMutation,
+  retireManagerMutation,
   submitMatchCommandMutation,
 } from "./rpc/mutations.js";
 

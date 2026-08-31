@@ -29,7 +29,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { assignAiTactics, pickBestFormationTactic, runAiTransferWindow } from "./aiClubs.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
 import { developPlayersForSeason } from "./development.js";
-import { assertSaveNotSacked, loadManagerStatus } from "./managerStatus.js";
+import { assertSaveNotArchived, loadManagerStatus } from "./managerStatus.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
 import { expireContractsForSeason } from "./transfers.js";
@@ -152,7 +152,7 @@ export const startSeason = (saveId: SaveId) =>
     const band = BOARD_OBJECTIVE_BANDS[userClub.statureTier];
     yield* sql`INSERT INTO board_objective (season_number, club_id, min_position, max_position, final_position, verdict)
       VALUES (1, ${userClub.id}, ${band.minPosition}, ${band.maxPosition}, NULL, NULL)`;
-    yield* sql`INSERT INTO manager_status (id, consecutive_misses, sacked, last_outcome) VALUES (1, 0, 0, 'none')`;
+    yield* sql`INSERT INTO manager_status (id, consecutive_misses, archived_cause, last_outcome) VALUES (1, 0, NULL, 'none')`;
 
     // AI Tactic assignment (ticket 17 / ADR-0005): every AI club (all clubs but the user's) gets
     // one fixed Tactic for the whole Season, chosen by best-fit against its own squad — set once
@@ -445,7 +445,14 @@ const judgeSeasonEnd = (
       streamEvents.push({ tag: "ManagerSacked", payload: { seasonNumber, consecutiveMisses } });
     }
 
-    yield* sql`UPDATE manager_status SET consecutive_misses = ${consecutiveMisses}, sacked = ${outcome === "sacked" ? 1 : 0}, last_outcome = ${outcome} WHERE id = 1`;
+    // A `sacked` outcome archives the save; any other outcome leaves `archived_cause` untouched
+    // rather than clearing it, because an already-archived save never reaches this line (the guard
+    // in `advanceCalendar` rejects first) and un-archiving is not a transition the domain has.
+    if (outcome === "sacked") {
+      yield* sql`UPDATE manager_status SET consecutive_misses = ${consecutiveMisses}, archived_cause = 'sacked', last_outcome = ${outcome} WHERE id = 1`;
+    } else {
+      yield* sql`UPDATE manager_status SET consecutive_misses = ${consecutiveMisses}, last_outcome = ${outcome} WHERE id = 1`;
+    }
 
     return { verdict, managerOutcome: outcome as ManagerOutcome };
   });
@@ -460,7 +467,7 @@ export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
         return yield* new SeasonCompleteError({ saveId });
       }
 
-      yield* assertSaveNotSacked(saveId);
+      yield* assertSaveNotArchived(saveId);
 
       const boundary = nextCalendarBoundary(row);
       const streamEvents: Array<{ readonly tag: string; readonly payload: unknown }> = [];
@@ -529,6 +536,46 @@ export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
         boardObjectiveVerdict,
         managerOutcome,
       });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
+  );
+
+/**
+ * `RetireManager` (ticket 02 / Screen 20) — the player deliberately ends their own career from the
+ * Manager Profile screen. Appends `ManagerRetired` to the season stream and archives the save with
+ * cause `"retired"`, in one transaction.
+ *
+ * Unlike `ManagerSacked`, which `judgeSeasonEnd` raises as an in-process reactor to
+ * `SeasonConcluded`, this is the first player command to write the season stream directly. It can
+ * fire at any Season phase: retiring is a decision about the career, not about the calendar.
+ *
+ * `last_outcome` is deliberately left alone. It records what the board decided, and overwriting it
+ * would both mislabel a player action as a board judgment and destroy state — a manager sitting at
+ * `warned` who retires keeps that warning, which is the truer record of how the career ended. The
+ * Consecutive-Miss Counter is left alone for the same reason.
+ *
+ * Lives here rather than in `managerProfile.ts` (which owns the screen this is reached from) so
+ * every `manager_status` write stays in one module, alongside `startSeason`'s insert and
+ * `judgeSeasonEnd`'s update.
+ */
+export const retireManager = (savesDir: string, saveId: SaveId) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      yield* assertSaveNotArchived(saveId);
+
+      // The event and the projection must land together: an appended `ManagerRetired` with no
+      // `archived_cause` leaves a save that logs a retirement and still accepts commands, and the
+      // reverse leaves an archived save with nothing in the log explaining why.
+      return yield* sql.withTransaction(
+        Effect.gen(function* () {
+          const row = yield* loadSeasonRow;
+          const startSeq = yield* nextStreamSeq(STREAM_TYPE, saveId);
+          yield* appendStreamEvents(STREAM_TYPE, saveId, startSeq, [
+            { tag: "ManagerRetired", payload: { seasonNumber: row.seasonNumber } },
+          ]);
+          yield* sql`UPDATE manager_status SET archived_cause = 'retired' WHERE id = 1`;
+        }),
+      );
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );
 
@@ -663,7 +710,8 @@ export const getLeagueTable = (savesDir: string, saveId: SaveId) =>
   );
 
 /** Season summary screen's query (ticket 18 / ADR-0006): the player's club's final League Table
- * position, its Board Objective Verdict, and the warning/sacking outcome. Available from Season
+ * position, its Board Objective Verdict, the warning/sacking outcome, and the cause that archived
+ * the save (if any). Available from Season
  * start onward — `boardObjective.finalPosition`/`verdict` and `managerOutcome` just stay `null`/
  * `"none"` until `SeasonConcluded` triggers `BoardObjectiveJudged`. */
 export const getSeasonSummary = (savesDir: string, saveId: SaveId) =>
@@ -705,7 +753,7 @@ export const getSeasonSummary = (savesDir: string, saveId: SaveId) =>
         boardObjective,
         managerOutcome: managerStatus.lastOutcome,
         consecutiveMisses: managerStatus.consecutiveMisses,
-        sacked: managerStatus.sacked,
+        archivedCause: managerStatus.archivedCause,
       });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

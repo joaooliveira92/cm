@@ -148,9 +148,10 @@ export const createSchema = Effect.gen(function* () {
   )`;
 
   /** Manager Status (ticket 18 / ADR-0006) — a single row scoped to the save (mirrors `season`),
-   * projected from the "season" stream's `ManagerWarned`/`ManagerSacked` events. The Consecutive-Miss
-   * Counter persists across the whole save (not per-Season) so it survives a Season rollover once one
-   * exists; `sacked` is checked by every mutating command to enforce the read-only archive.
+   * projected from the "season" stream's `ManagerWarned`/`ManagerSacked`/`ManagerRetired` events. The
+   * Consecutive-Miss Counter persists across the whole save (not per-Season) so it survives a Season
+   * rollover once one exists; `archived_cause` is checked by every mutating command to enforce the
+   * read-only archive, and its two values are the two causes of an Archived Save.
    *
    * The table name is a technical artifact, not a domain term: it tracks manager *outcome* state
    * (`ManagerOutcome`), never manager identity, which lives in `manager_profile`. "Manager Status"
@@ -158,7 +159,7 @@ export const createSchema = Effect.gen(function* () {
   yield* sql`CREATE TABLE manager_status (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     consecutive_misses INTEGER NOT NULL DEFAULT 0,
-    sacked INTEGER NOT NULL DEFAULT 0 CHECK (sacked IN (0,1)),
+    archived_cause TEXT CHECK (archived_cause IS NULL OR archived_cause IN ('sacked','retired')),
     last_outcome TEXT NOT NULL DEFAULT 'none' CHECK (last_outcome IN ('none','warned','sacked'))
   )`;
 

@@ -11,7 +11,7 @@ import {
 } from "./keybindings.js";
 import { listOpponentClubs, resumeSimulation, startMatch, submitMatchCommand } from "./match.js";
 import { getManagerProfile, getManagerProfileScreen } from "./managerProfile.js";
-import { advanceCalendar, getFixtures, getLeagueTable, getSeasonSummary } from "./season.js";
+import { advanceCalendar, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "./season.js";
 import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave } from "./saves.js";
 import { getSquad } from "./squad.js";
 import { changeTactics, getTactics } from "./tactics.js";
@@ -106,6 +106,11 @@ const handlers: Record<AppRpcMethod, Handler> = {
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.advanceCalendar.payload)(payload);
       return yield* advanceCalendar(ctx.savesDir, saveId);
+    }),
+  retireManager: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.retireManager.payload)(payload);
+      return yield* retireManager(ctx.savesDir, saveId);
     }),
   getSeasonSummary: (payload, ctx) =>
     Effect.gen(function* () {

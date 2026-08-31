@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 import {
+  ARCHIVED_CAUSES,
   CATEGORIES,
   FAMILIARITY_TIERS,
   FORMATIONS,
@@ -43,10 +44,18 @@ export type FixtureId = Schema.Schema.Type<typeof FixtureId>;
 export const BidId = Schema.String.pipe(Schema.brand("BidId"));
 export type BidId = Schema.Schema.Type<typeof BidId>;
 
+/** The cause that archived a save (ticket 02): `"sacked"` when the board ended the career,
+ * `"retired"` when the player did. `null` is the whole of "active" — there is no separate boolean,
+ * so no pair of fields that must agree. */
+export const ArchivedCauseSchema = Schema.Literals(ARCHIVED_CAUSES);
+
 export class SaveSummary extends Schema.Class<SaveSummary>("SaveSummary")({
   id: SaveId,
   name: Schema.String,
   createdAt: Schema.String,
+  /** `null` while the career is live. Set once the save is an Archived Save, so the Save List can
+   * mark it without opening the career. */
+  archivedCause: Schema.NullOr(ArchivedCauseSchema),
 }) {}
 
 export class SaveNotFoundError extends Schema.TaggedError<SaveNotFoundError>()(
@@ -297,10 +306,13 @@ export class SeasonCompleteError extends Schema.TaggedError<SeasonCompleteError>
   },
 ) {}
 
-/** Raised by any mutating command once `ManagerSacked` has archived the save (ADR-0006 / ticket 18):
- * read-only from that point on, no re-hire flow. */
-export class SaveSackedError extends Schema.TaggedError<SaveSackedError>()("SaveSackedError", {
+/** Raised by any mutating command once the save is an Archived Save — `ManagerSacked` (ADR-0006 /
+ * ticket 18) or `ManagerRetired` (ticket 02). Read-only from that point on, no re-hire flow. Carries
+ * the cause because the renderer turns this error into player-facing copy, and "you have been
+ * sacked" is the wrong sentence for a save the player retired from. */
+export class SaveArchivedError extends Schema.TaggedError<SaveArchivedError>()("SaveArchivedError", {
   saveId: SaveId,
+  cause: ArchivedCauseSchema,
 }) {}
 
 /** The player's club's Board Objective for one Season (ticket 18 / ADR-0006) — `finalPosition`/
@@ -325,7 +337,10 @@ export class SeasonSummaryView extends Schema.Class<SeasonSummaryView>("SeasonSu
   boardObjective: Schema.NullOr(BoardObjectiveView),
   managerOutcome: ManagerOutcomeSchema,
   consecutiveMisses: Schema.Finite,
-  sacked: Schema.Boolean,
+  /** Which cause ended the career, or `null` while it is live — the renderer picks its closing
+   * message from the cause rather than inferring one from `managerOutcome`, which is a board
+   * judgment and says nothing about a retirement. */
+  archivedCause: Schema.NullOr(ArchivedCauseSchema),
 }) {}
 
 export class ClubNotFoundError extends Schema.TaggedError<ClubNotFoundError>()("ClubNotFoundError", {

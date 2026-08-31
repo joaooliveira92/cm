@@ -73,7 +73,7 @@ it.effect("startSeason assigns the player's club a Board Objective band from its
     strictEqual(summary.boardObjective!.verdict, null);
     strictEqual(summary.managerOutcome, "none");
     strictEqual(summary.consecutiveMisses, 0);
-    strictEqual(summary.sacked, false);
+    strictEqual(summary.archivedCause, null);
   }),
 );
 
@@ -126,7 +126,7 @@ it.effect("BoardObjectiveJudged fires Missed, and ManagerWarned on the first mis
     strictEqual(summary.boardObjective!.verdict, "missed");
     strictEqual(summary.consecutiveMisses, 1);
     strictEqual(summary.managerOutcome, "warned");
-    strictEqual(summary.sacked, false);
+    strictEqual(summary.archivedCause, null);
 
     const events = yield* loadSeasonStreamEvents(save.id);
     ok(events.some((event) => event.tag === "ManagerWarned"));
@@ -180,7 +180,7 @@ it.effect("a second consecutive Missed Season sacks the manager and archives the
 
     const summary = yield* getSeasonSummary(savesDir, save.id);
     strictEqual(summary.consecutiveMisses, 2);
-    strictEqual(summary.sacked, true);
+    strictEqual(summary.archivedCause, "sacked");
     strictEqual(summary.managerOutcome, "sacked");
 
     const events = yield* loadSeasonStreamEvents(save.id);
@@ -208,11 +208,11 @@ it.effect("an Exceeded/Met Season resets the Consecutive-Miss Counter to zero", 
 
     const summary = yield* getSeasonSummary(savesDir, save.id);
     strictEqual(summary.consecutiveMisses, 0);
-    strictEqual(summary.sacked, false);
+    strictEqual(summary.archivedCause, null);
   }),
 );
 
-it.effect("advanceCalendar rejects further commands once the save is sacked, before touching any state", () =>
+it.effect("advanceCalendar rejects further commands once the save is archived, before touching any state", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const squad = yield* getSquad(savesDir, save.id);
@@ -224,7 +224,7 @@ it.effect("advanceCalendar rejects further commands once the save is sacked, bef
     yield* advanceCalendar(savesDir, save.id);
 
     const summaryBefore = yield* getSeasonSummary(savesDir, save.id);
-    ok(summaryBefore.sacked);
+    strictEqual(summaryBefore.archivedCause, "sacked");
 
     const result = yield* Effect.exit(advanceCalendar(savesDir, save.id));
     ok(result._tag === "Failure");
@@ -235,7 +235,7 @@ it.effect("advanceCalendar rejects further commands once the save is sacked, bef
   20_000,
 );
 
-it.effect("the sacked guard itself (not just SeasonCompleteError) rejects further commands", () =>
+it.effect("the archived guard itself (not just SeasonCompleteError) rejects further commands", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const squad = yield* getSquad(savesDir, save.id);
@@ -247,7 +247,7 @@ it.effect("the sacked guard itself (not just SeasonCompleteError) rejects furthe
     yield* advanceCalendar(savesDir, save.id);
 
     // Simulate a hypothetical future where a Season rollover reopened the calendar (phase no
-    // longer `season_complete`) while the save remains sacked — the `sacked` flag alone, not the
+    // longer `season_complete`) while the save remains archived — `archived_cause` alone, not the
     // `season_complete` phase check, must still reject `AdvanceCalendar`.
     yield* withSave(save.id, Effect.gen(function* () {
       const sql = yield* SqlClient;
@@ -255,6 +255,6 @@ it.effect("the sacked guard itself (not just SeasonCompleteError) rejects furthe
     }));
 
     const failure = yield* Effect.flip(advanceCalendar(savesDir, save.id));
-    strictEqual((failure as { readonly _tag: string })._tag, "SaveSackedError");
+    strictEqual((failure as { readonly _tag: string })._tag, "SaveArchivedError");
   }),
 );

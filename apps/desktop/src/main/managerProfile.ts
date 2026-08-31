@@ -67,9 +67,9 @@ export const getManagerProfile = (savesDir: string, saveId: SaveId) =>
  * is no club-change flow), so "Seasons with this club" and "Seasons in this save" are the same
  * number. It stays correct once Season rollover lands, since rollover inserts a row per Season.
  *
- * `archived` reads `manager_status.sacked` — the only cause of an Archived Save that the schema
- * records today. Manager Retired (the second cause, ticket 02) folds into this same flag when it
- * lands; the badge keys off the archived state, never off the cause.
+ * `archived` is `manager_status.archived_cause IS NOT NULL` — both causes, Manager Sacked and
+ * Manager Retired, collapse into the one flag. The badge keys off the archived state, never off the
+ * cause; only player-facing copy elsewhere (Season Summary's closing line) distinguishes the two.
  */
 export const getManagerProfileScreen = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
@@ -87,7 +87,7 @@ export const getManagerProfileScreen = (savesDir: string, saveId: SaveId) =>
         clubName: club.name,
         seasonNumber: seasonRows[0]?.seasonNumber ?? 1,
         tenureSeasons: seasonRows.length,
-        archived: managerStatus.sacked,
+        archived: managerStatus.archivedCause !== null,
       });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

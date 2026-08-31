@@ -32,9 +32,9 @@ import {
   PlayerNotFoundError,
   PlayerNotFreeAgentError,
   ResumeSimulationView,
+  SaveArchivedError,
   SaveId,
   SaveNotFoundError,
-  SaveSackedError,
   SaveSummary,
   SeasonCompleteError,
   SeasonSummaryView,
@@ -102,6 +102,16 @@ export const AppRpcs = {
     success: ManagerProfileScreenView,
     error: SaveNotFoundError,
   },
+  /** `RetireManager` (ticket 02 / Screen 20): the player ends their own career from the Manager
+   * Profile screen. Appends `ManagerRetired` to the season stream and archives the save with cause
+   * `"retired"`. Irreversible, and rejected by the same `SaveArchivedError` guard every other
+   * mutating command carries, so retiring twice is not possible. Returns nothing — the renderer
+   * navigates back to the Save List, where the save now reads as archived. */
+  retireManager: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: Schema.Void,
+    error: Schema.Union([SaveNotFoundError, SaveArchivedError]),
+  },
   getClubSelection: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: ClubSelectionView,
@@ -130,7 +140,7 @@ export const AppRpcs = {
   changeTactics: {
     payload: Schema.Struct({ saveId: SaveId, tactic: Tactic }),
     success: TacticsScreenView,
-    error: Schema.Union([SaveNotFoundError, InvalidTacticError, SaveSackedError]),
+    error: Schema.Union([SaveNotFoundError, InvalidTacticError, SaveArchivedError]),
   },
   getLeagueTable: {
     payload: Schema.Struct({ saveId: SaveId }),
@@ -145,7 +155,7 @@ export const AppRpcs = {
   advanceCalendar: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: AdvanceCalendarResult,
-    error: Schema.Union([SaveNotFoundError, SeasonCompleteError, SaveSackedError]),
+    error: Schema.Union([SaveNotFoundError, SeasonCompleteError, SaveArchivedError]),
   },
   getSeasonSummary: {
     payload: Schema.Struct({ saveId: SaveId }),
@@ -160,7 +170,7 @@ export const AppRpcs = {
   startMatch: {
     payload: Schema.Struct({ saveId: SaveId, opponentClubId: ClubId }),
     success: MatchSummary,
-    error: Schema.Union([SaveNotFoundError, ClubNotFoundError, SaveSackedError]),
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError, SaveArchivedError]),
   },
   resumeSimulation: {
     payload: Schema.Struct({ saveId: SaveId, matchId: MatchId, cursor: Schema.Finite }),
@@ -183,7 +193,7 @@ export const AppRpcs = {
       command: MatchCommandPayload,
     }),
     success: ResumeSimulationView,
-    error: Schema.Union([SaveNotFoundError, MatchNotFoundError, SaveSackedError]),
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError, SaveArchivedError]),
   },
   getTransfersScreen: {
     payload: Schema.Struct({ saveId: SaveId }),
@@ -200,7 +210,7 @@ export const AppRpcs = {
       InsufficientTransferBudgetError,
       WageBudgetExceededError,
       InvalidBidActionError,
-      SaveSackedError,
+      SaveArchivedError,
     ]),
   },
   respondToBid: {
@@ -218,7 +228,7 @@ export const AppRpcs = {
       InvalidBidActionError,
       InsufficientTransferBudgetError,
       WageBudgetExceededError,
-      SaveSackedError,
+      SaveArchivedError,
     ]),
   },
   respondAsBidder: {
@@ -235,7 +245,7 @@ export const AppRpcs = {
       InvalidBidActionError,
       InsufficientTransferBudgetError,
       WageBudgetExceededError,
-      SaveSackedError,
+      SaveArchivedError,
     ]),
   },
   signFreeAgent: {
@@ -247,7 +257,7 @@ export const AppRpcs = {
       PlayerNotFreeAgentError,
       TransferWindowClosedError,
       WageBudgetExceededError,
-      SaveSackedError,
+      SaveArchivedError,
     ]),
   },
   renewContract: {
@@ -259,7 +269,7 @@ export const AppRpcs = {
       InvalidBidActionError,
       TransferWindowClosedError,
       WageBudgetExceededError,
-      SaveSackedError,
+      SaveArchivedError,
     ]),
   },
   /** Training Focus (spec: `.scratch/training/spec.md`): set (or clear, with `focus: null`) a
@@ -272,7 +282,7 @@ export const AppRpcs = {
       focus: NullableTrainingFocusSchema,
     }),
     success: TrainingFocusView,
-    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError, SaveSackedError]),
+    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError, SaveArchivedError]),
   },
   /** Key binding overrides (ticket 14 / Stage 6): a machine-local `record<ActionId, binding>`
    * layered over — never replacing — the coded defaults. The file lives in Electron `userData`

@@ -70,5 +70,6 @@ test("InvalidTacticError shows specific hint text when players are duplicated", 
 // TODO(#01): Restore when a sacking seed is available. Requires ticket 01
 // (Seed scenarios for wave-2 features) to produce a deterministic seed where
 // the manager has been sacked (season concluded with missed board objectives).
-// From a fresh seed, SaveSackedError is unreachable through the UI.
+// From a fresh seed, SaveArchivedError is unreachable through the UI by sacking. (Retirement
+// reaches the same error from Manager Profile, but that is a different, deliberate path.)
 test.skip("sacking error smoke", () => {});

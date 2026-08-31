@@ -47,7 +47,7 @@ export const SaveListScreen = () => {
           <h2 className="text-lg font-semibold">Continue career</h2>
           <ul className="mt-2 space-y-1">
             {saves.map((save) => (
-              <li key={save.id}>
+              <li key={save.id} className="flex items-baseline gap-2">
                 <button
                   type="button"
                   className="text-slate-100 underline hover:text-slate-300"
@@ -55,6 +55,14 @@ export const SaveListScreen = () => {
                 >
                   {save.name}
                 </button>
+                {/* An Archived Save still opens — it is read-only, not gone — so the marker sits
+                    beside the entry rather than replacing it. Both causes read the same here; only
+                    Season Summary distinguishes them. */}
+                {save.archivedCause !== null && (
+                  <span className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
+                    Archived
+                  </span>
+                )}
               </li>
             ))}
             {saves.length === 0 && <li className="text-slate-500">No saves yet.</li>}

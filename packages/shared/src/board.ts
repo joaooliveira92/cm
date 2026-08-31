@@ -36,6 +36,14 @@ export const MANAGER_OUTCOMES = ["none", "warned", "sacked"] as const;
 export type ManagerOutcome = (typeof MANAGER_OUTCOMES)[number];
 
 /**
+ * The two ways a career ends and the save becomes an Archived Save: the board sacked the manager,
+ * or the manager retired. `null` (never a member here) means the save is still active. Distinct from
+ * `ManagerOutcome`, which is the board's judgment and never records a player action.
+ */
+export const ARCHIVED_CAUSES = ["sacked", "retired"] as const;
+export type ArchivedCause = (typeof ARCHIVED_CAUSES)[number];
+
+/**
  * Consecutive-Miss Counter transition (ADR-0006): increments on Missed, resets on Exceeded/Met.
  * 0->1 warns (no mechanical effect), 1->2 sacks (save archived read-only). Pure so it's unit
  * testable independent of the DB, mirroring `nextCalendarBoundary` in season.ts.
