@@ -373,6 +373,10 @@ Manager with the same Pillar Distribution and never carries hidden bonuses, pena
 board/AI reactions.
 _Avoid_: Class, Preset (fine informally; Archetype is the term), Background
 
+**Manager Profile**:
+The set of identity data describing the human manager, chosen once at creation and immutable for the life of the save: manager name, Archetype origin (or Custom Manager), and the four Pillar values. Persisted in the `manager_profile` table. Distinct from `ManagerOutcome` and the `manager_status` projection, which track sacking tenure and are owned by Season Summary. The name of Screen 19 in the Group A reconciliation.
+_Avoid_: Manager Status (retired term; collides with the `manager_status` technical table and the imported spec's multiplayer screen)
+
 **Custom Manager**:
 A manager created by distributing the 12 creation points across the four Manager Pillars by hand
 rather than taking an Archetype. Any Pillar Distribution within the rules is legal, including a flat

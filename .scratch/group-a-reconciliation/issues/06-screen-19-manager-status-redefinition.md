@@ -1,7 +1,7 @@
 # 06 — Screen 19: Manager Status redefined, and the name collision
 
 Type: grilling
-Status: claimed
+Status: resolved
 Blocked by: 03
 
 ## Question
@@ -22,6 +22,10 @@ is the design.
 
 Both `Manager Status` readings are in play in the repo today, so the resolution must state plainly which
 survives and what the other is called instead, if anything.
+
+## Answer
+
+**Screen is "Manager Profile", showing profile identity (name, archetype, pillars, club, tenure) with a passive Active/Archived status badge; all sacking/outcome detail stays exclusive to Season Summary; "Manager Status" retired as domain term.** See [Agent Note](/.agents/notes/proposed/feature/2026-08-30-manager-profile-screen.md).
 
 ## Done when
 

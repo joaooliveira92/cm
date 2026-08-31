@@ -75,6 +75,11 @@ repair, because `pnpm check:all` is red until it lands and every later session i
   Actions and has no keyboard tier; a failing save repository is swallowed silently. Two new
   out-of-scope rulings (mod indicator, online update check).
 
+- [06 — Screen 19: Manager Status redefined, and the name collision](issues/06-screen-19-manager-status-redefinition.md):
+  Screen is "Manager Profile", showing profile identity (name, archetype, pillars, club, tenure) with
+  a passive Active/Archived badge; all sacking/outcome detail stays exclusive to Season Summary;
+  "Manager Status" retired as domain term; CONTEXT.md updated.
+
 ## Not yet specified
 
 **Whether any Group A screen needs a new keyboard tier.** The tiering rule in the screen-keyboard-tiers
