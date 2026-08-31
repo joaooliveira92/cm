@@ -153,9 +153,9 @@ For a new career, the initial world must remain recoverable even though it has n
 
 ```text
 +--------------------------------------------------------------------------------+
-| ADD MANAGER                                           Career: CW-7K4M-2P9Q     |
+| ADD MANAGER                                              Career: CW-7K4M-2P9Q  |
 |--------------------------------------------------------------------------------|
-| Human managers in this career                                               0/4|
+| Human managers in this career                                             0/4. |
 |                                                                                |
 | +----------------------------------------------------------------------------+ |
 | | No manager has been added yet.                                             | |
@@ -174,7 +174,7 @@ For a new career, the initial world must remain recoverable even though it has n
 | | Slot 4     Empty                                      [Create Manager]     | |
 | +----------------------------------------------------------------------------+ |
 |                                                                                |
-| [Career Setup Summary] [Multiplayer Settings]                       [Back]     |
+| [Career Setup Summary] [Multiplayer Settings]                           [Back] |
 +--------------------------------------------------------------------------------+
 ```
 

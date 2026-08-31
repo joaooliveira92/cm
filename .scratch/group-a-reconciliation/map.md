@@ -94,6 +94,11 @@ repair, because `pnpm check:all` is red until it lands and every later session i
   Save List tiered at level 2; app-chrome bar (Preferences, Credits, Quit) on the Save List as
   lightweight dialogs; no command-palette entries for boot-screen destinations.
 
+- [10 — Assemble the Group A spec and deviation register](issues/10-assemble-spec-and-register.md):
+  Spec assembled at `.scratch/group-a-reconciliation/spec.md`; deviation register remains at `docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md`; all out-of-scope axes recorded; ready for `/to-spec` → `/to-tickets`.
+
+- [10 — Assemble the Group A spec and deviation register](issues/10-assemble-spec-and-register.md):
+  Spec assembled at `.scratch/group-a-reconciliation/spec.md`; deviation register remains at `docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md`; all out-of-scope axes recorded; ready for `/to-spec` → `/to-tickets`.
 - [11 — Slice the screen 2–17 audit into tickets](issues/11-slice-the-screen-2-17-audit.md):
   Nine absent screens grouped into three cheap "confirm absence" tickets; six with implementation
   audited as individual, flow, or complement tickets; Screen 13 as a thin complement to the shell
@@ -129,7 +134,16 @@ repair, because `pnpm check:all` is red until it lands and every later session i
   Screen 8 `Reviewed` against the implementation (CreationStep1.tsx): only a single Manager name `<input>`
   exists; date of birth, place of birth, portrait, hot-seat privacy, name normalization, structured name
   components, and all form behaviors are absent. Reconciliation ledger updated with `contradicted` rows
-  covering 9 audit categories. Status changed from `Not yet audited` to `Reviewed` (ticket 17, 2026-08-31).## Not yet specified
+  covering 9 audit categories. Status changed from `Not yet audited` to `Reviewed` (ticket 17, 2026-08-31).
+- [19 — Screen 13: Load Saved Game (complement)](issues/19-screen-13-load-game-complement.md):
+  Screen 13 `Reviewed` against the implementation (`saveList.tsx` 79 lines + `loadSave` in `main/saves.ts`).
+  The shell audit (ticket 04) already covered entry point, Actions, keyboard tier, repository failure
+  swallowing, and stale-entry contract; the complement adds `contradicted` rows for the absent save-library
+  surface (search, filter, sort, details panel, save-type presentation, footer actions, load pipeline,
+  corrupt-save behavior, initial destination), and `deferred` rows for keyboard interaction, accessibility,
+  responsive, localization, save read lease, compatibility/integrity models, state machine, import/duplicate/
+  delete, loading progress, and cancellation. 40 ledger rows added; no code changed; status changed from
+  `Not yet audited` to `Reviewed` (ticket 19, 2026-08-31).## Not yet specified
 
 <!-- none — every question resolved, fog cleared, map complete. -->
 

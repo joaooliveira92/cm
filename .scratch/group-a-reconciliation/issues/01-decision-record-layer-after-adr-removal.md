@@ -19,16 +19,16 @@ Each of the twelve ADRs was migrated to an `implemented/` note in `.agents/notes
 
 | Original ADR | New Location |
 |--------------|--------------|
-| ADR-0002 – match engine | `implemented/architecture/2026-08-27-match-engine-three-phase-and-deterministic-seed` |
-| ADR-0003 – role rating | `implemented/architecture/2026-08-27-role-rating-outside-match-engine` |
-| ADR-0004 – calendar | `implemented/architecture/2026-08-27-fixture-driven-calendar` |
-| ADR-0005 – transfer economy | `implemented/architecture/2026-08-27-formula-driven-transfer-economy` |
-| ADR-0006 – board objectives | `implemented/feature/2026-08-27-board-objectives-and-manager-sacking` |
-| ADR-0007 – deciders | `implemented/architecture/2026-08-27-domain-bounded-deciders-and-chunked-resimulation` |
-| ADR-0008 – commentary | `implemented/architecture/2026-08-27-templated-match-commentary` |
-| ADR-0009 – contact duels | `implemented/feature/2026-08-27-contact-duel-modeling` |
-| ADR-0010 – post-handoff routing | `implemented/process/2026-08-27-classifying-post-handoff-decisions` |
-| ADR-0011 – player development | `implemented/feature/2026-08-28-deterministic-fractional-player-development` |
+| ADR-0002 – match engine | [match engine](../../../.agents/notes/implemented/architecture/2026-08-27-match-engine-three-phase-and-deterministic-seed.md) |
+| ADR-0003 – role rating | [role rating](../../../.agents/notes/implemented/architecture/2026-08-27-role-rating-outside-match-engine) |
+| ADR-0004 – calendar | [driven calendar](../../../.agents/notes/implemented/architecture/2026-08-27-fixture-driven-calendar) |
+| ADR-0005 – transfer economy | [transfer economy](../../../.agents/notes/implemented/architecture/2026-08-27-formula-driven-transfer-economy) |
+| ADR-0006 – board objectives | [board objectives](../../../.agents/notes/implemented/feature/2026-08-27-board-objectives-and-manager-sacking) |
+| ADR-0007 – deciders | [domain bounded deciders](implemented/architecture/2026-08-27-domain-bounded-deciders-and-chunked-resimulation) |
+| ADR-0008 – commentary | [templated match commentary](../../../.agents/notes/implemented/architecture/2026-08-27-templated-match-commentary) |
+| ADR-0009 – contact duels | [contact dual modeling](../../../.agents/notes/implemented/feature/2026-08-27-contact-duel-modeling) |
+| ADR-0010 – post-handoff routing | [classyfing post handoff desicions](../../../.agents/notes/implemented/process/2026-08-27-classifying-post-handoff-decisions) |
+| ADR-0011 – player development | [player. development](../../../.agents/notes/implemented/feature/2026-08-28-deterministic-fractional-player-development) |
 
 Two ADRs were absorbed rather than migrated (existing notes already covered their content):
 - **ADR-0001** → `proposed/architecture/2026-08-29-player-ratings-are-derived-projections` (merged into existing note)

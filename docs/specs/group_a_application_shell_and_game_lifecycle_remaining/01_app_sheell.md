@@ -207,7 +207,6 @@ The Main Menu is the application's entry point. It must let the user:
 - Open application-level settings.
 - Access credits or informational material.
 - Exit the application.
-- Enter multiplayer or network play if that mode is implemented.
 
 ## 2. Intended emotional effect
 
@@ -234,7 +233,7 @@ The Main Menu occupies the entire game window.
 |               +---------------------------+               |
 |               | Start New Career          |               |
 |               | Load Career               |               |
-|               | Network / Multiplayer     |               |
+|               |                           |               |
 |               | Preferences               |               |
 |               | Credits                   |               |
 |               | Exit                      |               |
@@ -279,12 +278,10 @@ Suggested ordering:
 
 1. Start New Career
 2. Load Career
-3. Multiplayer
-4. Preferences
-5. Credits
-6. Exit
+3. Preferences
+4. Credits
+5. Exit
 
-If multiplayer is unavailable, omit it or visibly disable it. A nonfunctional control must not fail silently.
 
 ## 4. Component specification
 
@@ -366,24 +363,16 @@ If no saves exist:
 - Present a clear empty state.
 - Offer a direct `Start New Career` action.
 
-### 5.3 Multiplayer
 
-Transitions to a mode-selection page:
-
-- Host game.
-- Join game.
-- Load multiplayer career.
-- Connection preferences.
-
-### 5.4 Preferences
+### 5.3 Preferences
 
 Opens application-level settings. Changes made here apply even when no career is loaded.
 
-### 5.5 Credits
+### 5.4 Credits
 
 Opens a scrollable informational page with a Back action.
 
-### 5.6 Exit
+### 5.5 Exit
 
 Opens a confirmation dialog to prevent accidental closure.
 
@@ -431,7 +420,6 @@ Behavior:
 ```typescript
 interface MainMenuState {
   hasSavedGames: boolean;
-  multiplayerAvailable: boolean;
   currentVersion: string;
   databaseVersion: string;
   enabledMods: readonly string[];
@@ -448,7 +436,6 @@ The existence of saved games should be calculated from the save repository rathe
 ```text
 START_NEW_CAREER
 OPEN_LOAD_GAME
-OPEN_MULTIPLAYER
 OPEN_PREFERENCES
 OPEN_CREDITS
 REQUEST_APPLICATION_EXIT
@@ -531,7 +518,6 @@ Display:
 ### Unit tests
 
 - Menu-item ordering.
-- Disabled multiplayer behavior.
 - Selection movement.
 - Home and End behavior.
 - Exit-dialog default selection.
@@ -780,7 +766,6 @@ After selection, the initialization screen validates and loads that database.
 
 The initialization screen first discovers installed databases and then pauses for selection. This is useful when the user can install:
 
-- Multiple historical seasons.
 - Community databases.
 - Licensed regional databases.
 - Development or testing datasets.
