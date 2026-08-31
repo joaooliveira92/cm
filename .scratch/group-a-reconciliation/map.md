@@ -1,0 +1,109 @@
+# Map: Group A reconciliation
+
+Label: `wayfinder:map`
+
+## Destination
+
+A Group A spec and deviation register: a `spec.md` covering all 21 Group A screens that states, per
+screen, what the implementation must do — plus an explicit record of every place the imported spec at
+[docs/specs/group_a_application_shell_and_game_lifecycle_remaining/](../../docs/specs/group_a_application_shell_and_game_lifecycle_remaining/)
+is knowingly not followed, and why. Ready to hand to `/to-spec` → `/to-tickets`.
+
+Screens 01–17 have an implementation to audit against their spec. Screens 18–21 have none and are new
+design. Both halves land in the same spec.
+
+## Notes
+
+**Domain**: local single-player football-management sim, Electron + Effect, event-sourced into one
+SQLite file per save. Vocabulary lives in [CONTEXT.md](../../CONTEXT.md).
+
+**Skills every session should consult**: `grilling` and `domain-modeling` by default; `doc-standards`
+for anything written under `docs/`; `effect-code` for any session that touches source.
+
+**The imported specs are not requirements.** They read as generated from a generic template rather
+than authored against this game, and they routinely describe subsystems this project has never decided
+to build. A session treats them as a checklist to reconcile against, not a contract to satisfy. Where
+the spec and this codebase disagree, the codebase's existing decisions win unless a ticket explicitly
+overturns them — and the disagreement gets written into the register rather than silently dropped.
+
+**Standing decisions from charting** (settled 2026-08-30, before any ticket opened):
+
+- The multiplayer / network / cloud / multi-manager axis is removed wholesale (see Out of scope).
+- Screen 19 "Manager Status" is redefined as the single-manager profile-and-tenure screen, absorbing
+  the meaning already carried by the `manager_status` table — one name, one concept.
+- Retirement is voluntary termination reusing the existing sacked-archive path, differing in cause and
+  messaging only. No interim-manager or club-continuity machinery.
+- Quit confirmation is an accidental-keypress guard on closing the application, never an unsaved-progress
+  warning: commands are durable at commit, so there is no unsaved progress to lose.
+- The twelve numbered ADRs were deliberately deleted and are not coming back. Agent Notes under
+  `.agents/notes/` are the repo's sole decision record from here.
+
+**The import duplicates Screen 2.** `01_app_sheell.md` contains Screen 1, a screen-inventory preamble,
+*and* a full copy of Screen 2 with the same 29 sections as `02_new_game.md`. `02_new_game.md` is
+canonical; file 01's copy is not audited separately, and `## N.` numbering is not unique inside file 01.
+
+**Execution posture**: this map plans. Ticket 01 is the one exception — it performs a documentation
+repair, because `pnpm check:all` is red until it lands and every later session inherits that red gate.
+
+## Decisions so far
+
+<!-- one line per closed ticket -->
+
+- [01 — Decision-record layer after ADR removal](issues/01-decision-record-layer-after-adr-removal.md):
+  Agent Notes are the sole decision record; ten ADRs migrated to `implemented/` notes, two absorbed by
+  existing notes, `docs/adr/` deleted, two vendored skills forked, `check:all` green.
+
+- [02 — Deviation register: format and home](issues/02-deviation-register-format.md): a
+  *reconciliation ledger* per spec group at `docs/specs/<group>/RECONCILIATION.md` — one row per
+  `## N.` section, four kinds (`out-of-scope`/`contradicted`/`deferred`/`renamed`) each with a
+  mandatory anchor, silence meaning "followed" only under an `Audited` status line, imports never
+  edited. Screen 21 written out as the worked example.
+
+- [03 — Blanket scope trim across the Group A specs](issues/03-blanket-scope-trim.md): the trim is
+  narrow — screens 2, 3, 4, 6, 8, 9, 10, 12 and 17 lose only scaffolding and a few clauses, screens 13
+  to 16 lose about a quarter each, and screen 7 disappears entirely. ~25,000 lines survive across
+  sixteen screens, so the audit does not merge. Two new axes found (off-device telemetry, non-normative
+  import scaffolding); recorded as `out-of-scope` rows on every screen in the ledger.
+
+## Not yet specified
+
+**Whether any Group A screen needs a new keyboard tier.** The tiering rule in the screen-keyboard-tiers
+note covers nine existing screens. Screens 18–21 will need assignments, but the rule's inputs
+(interactive control count) aren't known until those screens are designed.
+
+**What the 151 dangling `ADR-000x` citations in source comments should say instead.** Ticket 01 decides
+the mechanism; whether each citation is rewritten to a note, reworded, or dropped is a per-site judgment
+that may deserve its own pass once the count of genuinely load-bearing ones is known.
+
+## Out of scope
+
+- **Multiplayer, network sessions, participant reconnect, ownership transfer, cloud synchronization,
+  and multiple human managers per career.** Authorized for removal by the user during charting. This
+  is the single largest axis in the imported specs and it has no referent in a local single-player
+  app. Also rules out all of `docs/specs/group_r_multiplayer_administration/` as an inheritor.
+- **Worker pools, memory budgets, and resource-policy tuning.** The app has no worker profile or
+  configurable memory budget to expose, tune, or report on. Wider than charting assumed: it consumes
+  spec 5 §18 in full plus its warnings, spec 6 §33–§34, spec 16 §26–§27, and spec 18 §4 Runtime. It
+  does *not* cover internal threading, which stays a design question for the audit tickets.
+- **Human manager slots, capacity, reservations, and roster.** A sharpening of the multi-manager axis
+  above, recorded separately because of how much it consumes: essentially all of spec 7 (Add Manager),
+  most of spec 19, and the reservation and conflict machinery in spec 11 §29–§30 and §35. It also
+  removes the recurring "revalidate draft ownership" clause threaded through specs 8–12, which has no
+  referent with a single local user.
+- **Off-device telemetry, crash reporting, and product analytics** (spec 16 §40). Missed during
+  charting. The app has no backend to receive them, so there is no consent to collect and no privacy
+  policy to link. Local structured logging is unaffected and stays in scope.
+- **Non-normative import scaffolding.** The `Condensed LLM implementation brief`, `Next planned item`,
+  and `Suggested Git commit` sections, spec 1 §15 Clean-room constraints, and spec 1's screen-inventory
+  preamble are authoring artifacts of the import, not requirements. Fifty-three sections across the
+  group. The briefs in particular restate their own file, so auditing them would double-count every
+  section they summarize.
+- **Resignation and the unemployed-manager job market.** Spec 20 §2 wants "Resign instead" as an
+  alternative to retiring. Resignation only means something with somewhere to go afterwards, which is
+  Group N (jobs and manager career), not the application shell.
+- **Restoring the twelve deleted ADRs.** Decided against during charting. Their 151 citations and the
+  21 broken links they leave behind are in scope (ticket 01); reversing the deletion is not.
+- **Introducing genuine unsaved career state** so that spec 21's `UnsavedCareerState` model becomes
+  true. That is an architectural regression against durable-at-commit persistence.
+- **The other eighteen spec groups.** Group A is the pilot. If a reusable trimming method falls out, it
+  is captured as a `process` Agent Note — widening this map to 19 groups is a different effort.
