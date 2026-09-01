@@ -21,6 +21,7 @@ import { teachingSplashStorageKey } from "../src/renderer/discoverability/Teachi
 import { TransfersScreen } from "../src/renderer/TransfersScreen.js";
 import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
+import { CareerShell } from "../src/renderer/router/career.js";
 
 const rid = (id: string) => SaveId.make(id);
 
@@ -206,6 +207,29 @@ describe("AC-19 — Space→Continue honours the safety guard through the live s
       if (method === "getLeagueTable") {
         return { _tag: "Success", value: leagueView(phase) } as never;
       }
+      // The career chrome's own reads: club identity and the save name.
+      if (method === "getManagerProfileScreen") {
+        return {
+          _tag: "Success",
+          value: {
+            profile: {
+              managerName: "M",
+              archetypeOrigin: "custom",
+              pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
+            },
+            clubName: "Club s1",
+            seasonNumber: 1,
+            tenureSeasons: 1,
+            archived: false,
+          },
+        } as never;
+      }
+      if (method === "loadSave") {
+        return {
+          _tag: "Success",
+          value: { id: rid("s1"), name: "Save One", createdAt: "2026-01-01T00:00:00.000Z", archivedCause: null },
+        } as never;
+      }
       if (method === "advanceCalendar") {
         advanceCalls += 1;
         return {
@@ -223,6 +247,10 @@ describe("AC-19 — Space→Continue honours the safety guard through the live s
       }
       return { _tag: "Failure", error: NOT_FOUND } as never;
     });
+    // Mounted through the real career shell, not a hand-mounted screen: the
+    // `continue` handler and the `phase`/`advancing` read model live in the
+    // chrome now, so a bare LeagueTableScreen would test a composition that
+    // never ships.
     const rootRoute = createRootRoute({
       component: () => (
         <>
@@ -231,17 +259,21 @@ describe("AC-19 — Space→Continue honours the safety guard through the live s
         </>
       ),
     });
+    const careerRoute = createRoute({ getParentRoute: () => rootRoute, path: "career" });
+    const saveRoute = createRoute({
+      getParentRoute: () => careerRoute,
+      path: "$saveId",
+      component: CareerShell,
+    });
     const leagueRoute = createRoute({
-      getParentRoute: () => rootRoute,
-      path: "/career/$saveId/league",
-      component: () => (
-        <RegistryProvider>
-          <LeagueTableScreen saveId={rid("s1")} />
-        </RegistryProvider>
-      ),
+      getParentRoute: () => saveRoute,
+      path: "league",
+      component: () => <LeagueTableScreen saveId={rid("s1")} />,
     });
     const router = createRouter({
-      routeTree: rootRoute.addChildren([leagueRoute]),
+      routeTree: rootRoute.addChildren([
+        careerRoute.addChildren([saveRoute.addChildren([leagueRoute])]),
+      ]),
       history: createMemoryHistory({ initialEntries: ["/career/s1/league"] }),
     });
     bindRouter({ navigate: () => undefined, history: { back: () => undefined } } as never);

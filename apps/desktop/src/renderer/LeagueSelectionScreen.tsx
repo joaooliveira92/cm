@@ -16,6 +16,10 @@ import {
   saveSetupDraft,
   submitLeagueSelection,
 } from "./rpc.js";
+import { Alert } from "./components/ui/alert.js";
+import { Button } from "./components/ui/button.js";
+import { Card } from "./components/ui/card.js";
+import { Input } from "./components/ui/input.js";
 import { FOCUS_RING } from "./focus.js";
 import {
   blockingIssueRows,
@@ -203,62 +207,63 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
     );
   }
   if (index === null || view === null) {
-    return <p className="text-slate-400">Loading leagues…</p>;
+    return <p className="text-text-secondary">Loading leagues…</p>;
   }
 
   // §30.1. A database with nothing playable cannot start a career; say so instead of rendering an
   // empty tree with a permanently dead Continue.
   if (index.nations.every((nation) => !nation.playableSupported || !nation.available)) {
     return (
-      <div role="alert" className="text-slate-300">
+      <div role="alert" className="text-text-body">
         <h2 className="text-lg font-semibold">No playable leagues in this database</h2>
-        <p className="mt-2 text-sm text-slate-400">
+        <p className="mt-2 text-sm text-text-secondary">
           {index.databaseName} contains no league this game can make playable, so a career cannot
           be started from it. Choose a different database.
         </p>
-        <button type="button" onClick={onBack} className={backButtonClass}>
+        <Button type="button" onClick={onBack} variant="secondary">
           Back
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
-    <section aria-labelledby="league-selection-heading" className="text-slate-200">
+    <section aria-labelledby="league-selection-heading" className="text-text-strong">
       <header>
         <h2 id="league-selection-heading" className="text-lg font-semibold">
           Select Leagues
         </h2>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-text-secondary">
           Database: {index.databaseName}, version {index.databaseVersion}
         </p>
       </header>
 
       {state.notice !== null && (
-        <div className="mt-4 flex items-start gap-3 rounded bg-slate-800 p-3 text-sm">
+        <Card className="mt-4 flex items-start gap-3 p-3 text-sm">
           <p className="flex-1">{state.notice}</p>
-          <button
+          <Button
             type="button"
-            className={`text-slate-400 hover:text-slate-200 ${FOCUS_RING.join(" ")}`}
+            variant="ghost"
+            size="sm"
             onClick={() => dispatch({ type: "DISMISS_NOTICE" })}
           >
             Dismiss
-          </button>
-        </div>
+          </Button>
+        </Card>
       )}
 
       {/* §5.2 Toolbar. Filters are display-only — none of these controls changes the selection. */}
       <div className="mt-4 flex flex-wrap gap-3">
-        <label className="flex flex-col text-xs text-slate-400">
+        <label className="flex flex-col text-xs text-text-secondary">
           Search nations or competitions
-          <input
+          <Input
             type="search"
             value={state.searchQuery}
             onChange={(event) => dispatch({ type: "SET_SEARCH_QUERY", query: event.target.value })}
-            className={`mt-1 rounded bg-slate-800 px-2 py-1 text-sm text-slate-100 ${FOCUS_RING.join(" ")}`}
+            className="mt-1"
           />
         </label>
-        <label className="flex flex-col text-xs text-slate-400">
+        <label className="flex flex-col text-xs text-text-secondary">
           Region
           <select
             value={state.regionFilterId ?? ""}
@@ -268,7 +273,7 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
                 regionId: event.target.value === "" ? null : event.target.value,
               })
             }
-            className={`mt-1 rounded bg-slate-800 px-2 py-1 text-sm ${FOCUS_RING.join(" ")}`}
+            className={SELECT_CLASS}
           >
             <option value="">All regions</option>
             {index.regions.map((region) => (
@@ -278,14 +283,14 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
             ))}
           </select>
         </label>
-        <label className="flex flex-col text-xs text-slate-400">
+        <label className="flex flex-col text-xs text-text-secondary">
           Status
           <select
             value={state.statusFilter}
             onChange={(event) =>
               dispatch({ type: "SET_STATUS_FILTER", filter: event.target.value as StatusFilter })
             }
-            className={`mt-1 rounded bg-slate-800 px-2 py-1 text-sm ${FOCUS_RING.join(" ")}`}
+            className={SELECT_CLASS}
           >
             {STATUS_FILTERS.map((filter) => (
               <option key={filter} value={filter}>
@@ -295,26 +300,27 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
           </select>
         </label>
         <div className="flex items-end gap-2">
-          <button type="button" onClick={() => applyPreset("recommended")} className={toolbarButtonClass}>
+          <Button type="button" variant="secondary" onClick={() => applyPreset("recommended")}>
             Recommended
-          </button>
-          <button type="button" onClick={() => applyPreset("minimal")} className={toolbarButtonClass}>
+          </Button>
+          <Button type="button" variant="secondary" onClick={() => applyPreset("minimal")}>
             Minimal
-          </button>
-          <button type="button" onClick={() => applyPreset("broad_world")} className={toolbarButtonClass}>
+          </Button>
+          <Button type="button" variant="secondary" onClick={() => applyPreset("broad_world")}>
             Broad world
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* §10.5. Hidden selections are announced, so a filter never reads as a cleared selection. */}
       {view.hiddenSelectedCount > 0 && (
-        <p role="status" className="mt-3 rounded bg-amber-900/30 p-2 text-sm text-amber-200">
+        <p role="status" className="mt-3 rounded-panel bg-text-warning/10 p-2 text-sm text-text-warning">
           {view.hiddenSelectedCount} selected nation
           {view.hiddenSelectedCount === 1 ? " is" : "s are"} hidden by the current filters.{" "}
-          <button
+          <Button
             type="button"
-            className={`underline ${FOCUS_RING.join(" ")}`}
+            variant="link"
+            size="sm"
             onClick={() => {
               dispatch({ type: "SET_STATUS_FILTER", filter: "selected" });
               dispatch({ type: "SET_REGION_FILTER", regionId: null });
@@ -322,7 +328,7 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
             }}
           >
             Show selected
-          </button>
+          </Button>
         </p>
       )}
 
@@ -331,7 +337,7 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
             expansion and selection state exposed rather than implied by styling (§25.1). */}
         <div className="flex-1">
           {view.totalMatchCount === 0 ? (
-            <p role="status" className="text-sm text-slate-400">
+            <p role="status" className="text-sm text-text-secondary">
               No nations or competitions match your search. The selection is unchanged.
             </p>
           ) : (
@@ -343,7 +349,7 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
                     role="treeitem"
                     aria-expanded={region.expanded}
                     aria-label={`${region.regionName}, ${region.nations.length} nations`}
-                    className={`w-full rounded px-2 py-1 text-left text-sm font-semibold hover:bg-slate-800 ${FOCUS_RING.join(" ")}`}
+                    className={`w-full rounded-control px-2 py-1 text-left text-sm font-semibold hover:bg-surface ${FOCUS_RING.join(" ")}`}
                     onClick={() => dispatch({ type: "TOGGLE_REGION", regionId: region.regionId })}
                   >
                     {region.expanded ? "▾" : "▸"} {region.regionName}
@@ -392,18 +398,18 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
           aria-label="Selection summary"
           aria-live="polite"
           aria-busy={stale}
-          className="w-72 shrink-0 rounded bg-slate-900 p-4 text-sm"
+          className="w-72 shrink-0 rounded-panel border border-panel-border bg-panel-bg p-3 text-sm shadow-panel"
         >
           <h3 className="font-semibold">Selection summary</h3>
           {estimate === null ? (
-            <p className="mt-2 text-slate-400">Calculating…</p>
+            <p className="mt-2 text-text-secondary">Calculating…</p>
           ) : (
             <>
               {/* §11.5. The previous figures stay visible and are marked stale rather than
                   blanking while a newer estimate is resolved. */}
-              {stale && <p className="mt-1 text-xs text-slate-500">Updating estimate…</p>}
+              {stale && <p className="mt-1 text-xs text-text-muted">Updating estimate…</p>}
               {state.estimateStatus === "failed" && (
-                <p role="status" className="mt-1 text-xs text-amber-300">
+                <p role="status" className="mt-1 text-xs text-text-warning">
                   The estimate could not be calculated. Your selection is unaffected.
                 </p>
               )}
@@ -424,7 +430,7 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
                 <SummaryRow label="Estimate confidence" value={estimate.confidence} />
               </dl>
               {/* §11.4. The hedge is part of the claim, not decoration. */}
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-text-muted">
                 Estimates are approximate and vary with this computer's load.
               </p>
             </>
@@ -434,49 +440,48 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
 
       {/* §16.3 / §25.4. One error summary, above the actions, listing every blocker. */}
       {blocking.length > 0 && (
-        <div role="alert" className="mt-4 rounded bg-red-900/30 p-3 text-sm text-red-300">
+        <Alert variant="destructive" className="mt-4">
           <h3 className="font-semibold">This selection cannot be used yet</h3>
           <ul className="mt-1 list-disc pl-5">
             {blocking.map((entry) => (
               <li key={`${entry.code}-${entry.nationId ?? "global"}`}>{entry.message}</li>
             ))}
           </ul>
-        </div>
+        </Alert>
       )}
       {warnings.length > 0 && (
-        <div role="status" className="mt-4 rounded bg-amber-900/30 p-3 text-sm text-amber-200">
+        <Alert role="status" className="mt-4 border-text-warning/40 bg-text-warning/10 text-text-warning">
           <ul className="list-disc pl-5">
             {warnings.map((entry) => (
               <li key={`${entry.code}-${entry.nationId ?? "global"}`}>{entry.message}</li>
             ))}
           </ul>
-        </div>
+        </Alert>
       )}
 
       <div className="mt-6 flex gap-3">
-        <button type="button" onClick={handleBack} className={backButtonClass}>
+        <Button type="button" onClick={handleBack} variant="secondary">
           Back
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="secondary"
           onClick={() => dispatch({ type: "CLEAR_SELECTION" })}
-          className={backButtonClass}
         >
           Clear Selection
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={handleContinue}
           disabled={!canContinueNow(state)}
           aria-describedby={canContinueNow(state) ? undefined : "continue-blocked-reason"}
-          className={`rounded bg-green-700 px-4 py-2 hover:bg-green-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
         >
           {state.submitting ? "Continuing…" : "Continue"}
-        </button>
+        </Button>
       </div>
       {/* A greyed control that does not say why is not acceptable. */}
       {!canContinueNow(state) && (
-        <p id="continue-blocked-reason" className="mt-2 text-sm text-slate-400">
+        <p id="continue-blocked-reason" className="mt-2 text-sm text-text-secondary">
           {state.submitting
             ? "Creating your selection…"
             : stale
@@ -490,38 +495,43 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
       {/* §17.1. Warnings are confirmed, not silently accepted — and the confirmation is bound to
           the revision it was given for, so changing the selection re-asks. */}
       {warningPrompt && (
-        <div role="alertdialog" aria-labelledby="warning-prompt-heading" className="mt-4 rounded bg-slate-800 p-4">
+        <Card role="alertdialog" aria-labelledby="warning-prompt-heading" className="mt-4 p-3">
           <h3 id="warning-prompt-heading" className="font-semibold">
             Continue with warnings?
           </h3>
-          <ul className="mt-2 list-disc pl-5 text-sm text-amber-200">
+          <ul className="mt-2 list-disc pl-5 text-sm text-text-warning">
             {warnings.map((entry) => (
               <li key={entry.code}>{entry.message}</li>
             ))}
           </ul>
           <div className="mt-3 flex gap-3">
-            <button type="button" onClick={() => setWarningPrompt(false)} className={backButtonClass}>
+            <Button type="button" variant="secondary" onClick={() => setWarningPrompt(false)}>
               Go back
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={() => {
                 dispatch({ type: "ACKNOWLEDGE_WARNINGS" });
                 submit();
               }}
-              className={`rounded bg-green-700 px-4 py-2 ${FOCUS_RING.join(" ")}`}
             >
               Continue anyway
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       )}
     </section>
   );
 };
 
-const toolbarButtonClass = `rounded bg-slate-700 px-3 py-1 text-sm hover:bg-slate-600 ${FOCUS_RING.join(" ")}`;
-const backButtonClass = `rounded bg-slate-700 px-4 py-2 hover:bg-slate-600 ${FOCUS_RING.join(" ")}`;
+/*
+ * Native `<select>`, not `components/ui/select.tsx`. The vendored Select is a
+ * Base UI listbox with its own focus and typeahead handling; a native select is
+ * already keyboard-complete and is what the spine's level-1 contract assumes.
+ * Only the paint is borrowed.
+ */
+const SELECT_CLASS = `mt-1 rounded-control border border-border-subtle bg-field-bg px-2 py-1 text-sm ${FOCUS_RING.join(" ")}`;
+const SELECT_CLASS_COMPACT = `rounded-control border border-border-subtle bg-field-bg px-1 py-0.5 text-text-primary ${FOCUS_RING.join(" ")}`;
 
 const STATUS_FILTER_LABELS: Readonly<Record<StatusFilter, string>> = {
   all: "All",
@@ -543,7 +553,7 @@ const MODE_LABELS: Readonly<Record<SimulationMode, string>> = {
 
 const SummaryRow = ({ label, value }: { readonly label: string; readonly value: string }) => (
   <div className="flex justify-between gap-2">
-    <dt className="text-slate-400">{label}</dt>
+    <dt className="text-text-secondary">{label}</dt>
     <dd>{value}</dd>
   </div>
 );
@@ -602,29 +612,29 @@ const NationTreeRow = ({
           }
         }}
         className={`flex flex-wrap items-center gap-3 rounded px-2 py-1 ${FOCUS_RING.join(" ")} ${
-          row.matchesSearch ? "bg-slate-800" : ""
+          row.matchesSearch ? "bg-surface" : ""
         }`}
       >
-        <span aria-hidden="true" className="text-slate-500">
+        <span aria-hidden="true" className="text-text-muted">
           {expanded ? "▾" : "▸"}
         </span>
         <span className="min-w-40">{nation.name}</span>
 
         {!nation.available ? (
           // Non-colour indicator as well as the disabled state (§25.3).
-          <span className="text-xs text-slate-500">Unavailable — content not installed</span>
+          <span className="text-xs text-text-muted">Unavailable — content not installed</span>
         ) : !nation.playableSupported ? (
-          <span className="text-xs text-slate-400">Background data only</span>
+          <span className="text-xs text-text-secondary">Background data only</span>
         ) : null}
 
         {nation.available && (
-          <label className="flex items-center gap-1 text-xs text-slate-400">
+          <label className="flex items-center gap-1 text-xs text-text-secondary">
             Mode
             <select
               value={row.mode}
               onChange={(event) => onMode(event.target.value as SimulationMode)}
               aria-label={`Simulation mode for ${nation.name}`}
-              className={`rounded bg-slate-800 px-1 py-0.5 text-slate-100 ${FOCUS_RING.join(" ")}`}
+              className={SELECT_CLASS_COMPACT}
             >
               {SIMULATION_MODES.filter(
                 (mode) => mode !== "playable" || nation.playableSupported,
@@ -638,13 +648,13 @@ const NationTreeRow = ({
         )}
 
         {row.mode === "playable" && nation.scopeOptions.length > 0 && (
-          <label className="flex items-center gap-1 text-xs text-slate-400">
+          <label className="flex items-center gap-1 text-xs text-text-secondary">
             Scope
             <select
               value={row.scopeOptionId ?? ""}
               onChange={(event) => onScope(event.target.value)}
               aria-label={`League scope for ${nation.name}`}
-              className={`rounded bg-slate-800 px-1 py-0.5 text-slate-100 ${FOCUS_RING.join(" ")}`}
+              className={SELECT_CLASS_COMPACT}
             >
               {nation.scopeOptions.map((option) => (
                 <option key={option.id} value={option.id}>
@@ -659,20 +669,20 @@ const NationTreeRow = ({
           <span className="text-xs text-sky-300">Included because another selection needs it</span>
         )}
         {row.issues.some((entry) => entry.level !== "info") && (
-          <span className="text-xs text-amber-300">! {row.issues[0]?.message}</span>
+          <span className="text-xs text-text-warning">! {row.issues[0]?.message}</span>
         )}
       </div>
 
       {expanded && (
         <ul role="group" className="ml-6 mt-1 space-y-0.5 text-xs">
           {nation.competitions.length === 0 && (
-            <li className="text-slate-500">This nation has no competitions in this database.</li>
+            <li className="text-text-muted">This nation has no competitions in this database.</li>
           )}
           {nation.competitions.map((competition) => {
             const isDependency = row.dependencyCompetitionIds.includes(competition.id as string);
             return (
               <li key={competition.id} role="treeitem" aria-selected={activeIds.has(competition.id as string)}>
-                <span className={activeIds.has(competition.id as string) ? "text-slate-200" : "text-slate-500"}>
+                <span className={activeIds.has(competition.id as string) ? "text-text-strong" : "text-text-muted"}>
                   {activeIds.has(competition.id as string) ? "✓" : "·"} {competition.name}
                 </span>
                 {/* §12.1. An automatically included competition explains itself in place, rather

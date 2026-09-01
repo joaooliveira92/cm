@@ -2,6 +2,10 @@ import type { ManagerArchetype, ManagerPillar } from "@cm-clone/shared";
 import { MANAGER_PILLARS } from "@cm-clone/shared";
 import type { SaveId } from "@cm-clone/contracts";
 import { useEffect, useRef, useState } from "react";
+import { Alert } from "./components/ui/alert.js";
+import { Badge } from "./components/ui/badge.js";
+import { Button } from "./components/ui/button.js";
+import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card.js";
 import { FOCUS_RING } from "./focus.js";
 import { getActiveMatch } from "./match/session.js";
 import { navigate } from "./navigation/adapter.js";
@@ -80,30 +84,20 @@ const RetireManagerDialog = ({
         aria-modal="true"
         aria-label="Retire Manager"
         onKeyDown={onKeyDown}
-        className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-4 text-slate-100 shadow-2xl"
+        className="w-full max-w-md rounded-panel border border-panel-border bg-panel-bg-strong p-3 text-text-primary shadow-2xl"
       >
         <h2 className="text-lg font-semibold">Retire Manager</h2>
-        <p className="mt-2 text-sm text-slate-300">{RETIREMENT_DISCLOSURE}</p>
+        <p className="mt-2 text-sm text-text-body">{RETIREMENT_DISCLOSURE}</p>
         <div className="mt-4 flex items-center justify-end gap-2">
-          <button
-            ref={cancelRef}
-            type="button"
-            className={`rounded bg-slate-700 px-3 py-1 text-sm ${FOCUS_RING.join(" ")}`}
-            onClick={onCancel}
-          >
+          <Button ref={cancelRef} type="button" variant="secondary" onClick={onCancel}>
             Cancel
-          </button>
-          <button
-            type="button"
-            disabled={pending}
-            className={`rounded bg-red-700 px-3 py-1 text-sm font-semibold text-slate-50 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
-            onClick={onConfirm}
-          >
+          </Button>
+          <Button type="button" variant="destructive" disabled={pending} onClick={onConfirm}>
             Retire Manager
-          </button>
+          </Button>
         </div>
         {error !== null && (
-          <p role="alert" className="mt-2 text-sm text-red-300">
+          <p role="alert" className="mt-2 text-sm text-destructive">
             {error}
           </p>
         )}
@@ -134,11 +128,11 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
   }, [retired]);
 
   const error = typedError(profileResult);
-  if (error) return <p className="p-8 text-red-400">{describeRpcError(error)}</p>;
+  if (error) return <p className="p-8 text-destructive">{describeRpcError(error)}</p>;
   if (profileResult._tag === "Initial")
-    return <p className="p-8 text-slate-400">Loading manager profile...</p>;
+    return <p className="p-8 text-text-secondary">Loading manager profile...</p>;
   if (profileResult._tag === "Failure")
-    return <p className="p-8 text-red-400">Failed to load manager profile</p>;
+    return <p className="p-8 text-destructive">Failed to load manager profile</p>;
 
   const view = profileResult.value;
   const { profile } = view;
@@ -160,61 +154,63 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
   };
 
   return (
-    <main tabIndex={-1} className={`min-h-screen bg-slate-950 p-8 text-slate-100 ${FOCUS_RING.join(" ")}`}>
+    <main tabIndex={-1} className={`min-h-screen bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
       {view.archived && (
-        <p className="mb-4 rounded bg-slate-800 p-2 text-sm text-slate-300">
-          [Archived] This career has ended. The save is read-only.
-        </p>
+        <Alert className="mb-4">[Archived] This career has ended. The save is read-only.</Alert>
       )}
 
       <div className="flex items-baseline gap-3">
         <h1 className="text-2xl font-bold">{profile.managerName}</h1>
-        <span
-          className={`rounded px-2 py-0.5 text-xs font-semibold ${
-            view.archived ? "bg-slate-700 text-slate-300" : "bg-emerald-900/60 text-emerald-300"
-          }`}
-        >
+        <Badge variant={view.archived ? "secondary" : "success"}>
           {view.archived ? "Archived" : "Active"}
-        </span>
-        {profileResult.waiting && <span className="text-sm text-slate-500">Refreshing…</span>}
+        </Badge>
+        {profileResult.waiting && <span className="text-sm text-text-muted">Refreshing…</span>}
       </div>
-      <p className="mt-1 text-sm text-slate-400">{ARCHETYPE_LABELS[profile.archetypeOrigin]}</p>
+      <p className="mt-1 text-sm text-text-secondary">{ARCHETYPE_LABELS[profile.archetypeOrigin]}</p>
 
-      <section className="mt-6 rounded border border-slate-800 p-4">
-        <h2 className="text-lg font-semibold">Club</h2>
-        <p className="mt-2 text-sm text-slate-300">{view.clubName}</p>
-        <p className="mt-1 text-sm text-slate-400">Season {view.seasonNumber}</p>
-        <p className="mt-1 text-sm text-slate-400">
-          Tenure: {view.tenureSeasons} {view.tenureSeasons === 1 ? "season" : "seasons"}
-        </p>
-      </section>
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Club</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-text-body">{view.clubName}</p>
+          <p className="mt-1 text-sm text-text-secondary">Season {view.seasonNumber}</p>
+          <p className="mt-1 text-sm text-text-secondary">
+            Tenure: {view.tenureSeasons} {view.tenureSeasons === 1 ? "season" : "seasons"}
+          </p>
+        </CardContent>
+      </Card>
 
-      <section className="mt-4 rounded border border-slate-800 p-4">
-        <h2 className="text-lg font-semibold">Management Philosophy</h2>
-        <dl className="mt-2 grid grid-cols-2 gap-x-8 gap-y-1 text-sm">
-          {MANAGER_PILLARS.map((pillar) => (
-            <div key={pillar} className="flex justify-between">
-              <dt className="text-slate-400">{PILLAR_LABELS[pillar]}</dt>
-              <dd className="font-semibold text-slate-100">{profile.pillars[pillar]}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-lg">Management Philosophy</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm">
+            {MANAGER_PILLARS.map((pillar) => (
+              <div key={pillar} className="flex justify-between">
+                <dt className="text-text-secondary">{PILLAR_LABELS[pillar]}</dt>
+                <dd className="font-semibold tabular-nums text-text-primary">{profile.pillars[pillar]}</dd>
+              </div>
+            ))}
+          </dl>
+        </CardContent>
+      </Card>
 
       {/* An archived save offers no retire action at all: the career has already ended, and the
           command would be refused by the same guard every other mutation carries. */}
       {!view.archived && (
         <section className="mt-4">
-          <button
+          <Button
             type="button"
+            variant="destructive"
             disabled={retireBlockedReason !== null}
-            className={`rounded border border-red-800 px-3 py-1 text-sm text-red-300 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
             onClick={() => setDialogOpen(true)}
           >
             Retire Manager
-          </button>
+          </Button>
           {retireBlockedReason !== null && (
-            <p className="mt-2 text-sm text-slate-400">{retireBlockedReason}</p>
+            <p className="mt-2 text-sm text-text-secondary">{retireBlockedReason}</p>
           )}
         </section>
       )}

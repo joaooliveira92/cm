@@ -6,7 +6,10 @@ import {
   MANAGER_PILLARS,
   validatePillarDistribution,
 } from "@cm-clone/shared";
-import { FOCUS_RING } from "./focus.js";
+import { Alert } from "./components/ui/alert.js";
+import { Button } from "./components/ui/button.js";
+import { Input } from "./components/ui/input.js";
+import { Label } from "./components/ui/label.js";
 
 export interface CreationStep1Props {
   saveName: string;
@@ -78,12 +81,13 @@ export const CreationStep1 = ({
   return (
     <div className="space-y-6">
       <section>
-        <label className="block text-sm font-medium text-slate-300">
+        <Label className="block text-text-body" htmlFor="saveName">
           Save name
-        </label>
-        <input
+        </Label>
+        <Input
+          id="saveName"
           type="text"
-          className={`mt-1 block w-full rounded bg-slate-800 px-3 py-2 text-slate-100 ${FOCUS_RING.join(" ")}`}
+          className="mt-1"
           value={saveName}
           onChange={(e) => onSaveNameChange(e.target.value)}
           placeholder="My Career"
@@ -91,12 +95,13 @@ export const CreationStep1 = ({
       </section>
 
       <section>
-        <label className="block text-sm font-medium text-slate-300">
+        <Label className="block text-text-body" htmlFor="managerName">
           Manager name
-        </label>
-        <input
+        </Label>
+        <Input
+          id="managerName"
           type="text"
-          className={`mt-1 block w-full rounded bg-slate-800 px-3 py-2 text-slate-100 ${FOCUS_RING.join(" ")}`}
+          className="mt-1"
           value={managerName}
           onChange={(e) => onManagerNameChange(e.target.value)}
           placeholder="Your name"
@@ -104,7 +109,7 @@ export const CreationStep1 = ({
       </section>
 
       <section>
-        <h3 className="text-sm font-medium text-slate-300">Archetype</h3>
+        <h3 className="text-sm font-medium text-text-body">Archetype</h3>
         <div className="mt-2 grid grid-cols-2 gap-2">
           {MANAGER_ARCHETYPES.map((arch) => {
             const isSelected = customMode
@@ -123,34 +128,32 @@ export const CreationStep1 = ({
                       : "Custom";
 
             return (
-              <button
+              <Button
                 key={arch}
                 type="button"
-                className={`rounded p-2 text-left text-sm ${FOCUS_RING.join(" ")} ${
-                  isSelected
-                    ? "bg-slate-600 ring-2 ring-slate-400"
-                    : "bg-slate-800 hover:bg-slate-700"
-                }`}
+                variant={isSelected ? "default" : "secondary"}
+                aria-pressed={isSelected}
+                className="h-auto flex-col items-start p-2 text-left"
                 onClick={() => handleArchetypeSelect(arch)}
               >
                 <div className="font-medium">{label}</div>
                 {dist && (
-                  <div className="mt-1 text-xs text-slate-400">
+                  <div className="text-2xs text-text-secondary">
                     {dist.tacticalAcumen}/{dist.influence}/{dist.regimen}/
                     {dist.technicalCoaching}
                   </div>
                 )}
-              </button>
+              </Button>
             );
           })}
         </div>
       </section>
 
       <section>
-        <h3 className="text-sm font-medium text-slate-300">
+        <h3 className="text-sm font-medium text-text-body">
           Pillar Distribution
           {customMode && (
-            <span className="ml-2 text-slate-500">(Custom)</span>
+            <span className="ml-2 text-text-muted">(Custom)</span>
           )}
         </h3>
         <div className="mt-2 space-y-3">
@@ -160,36 +163,38 @@ export const CreationStep1 = ({
 
             return (
               <div key={pillar} className="flex items-center gap-3">
-                <span className="w-36 text-sm text-slate-300">
+                <span className="w-36 text-sm text-text-body">
                   {PILLAR_DISPLAY_NAMES[pillar]}
                 </span>
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button
                     type="button"
-                    className={`flex h-8 w-8 items-center justify-center rounded bg-slate-700 text-slate-100 hover:bg-slate-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
+                    variant="secondary"
+                    size="icon"
                     onClick={() => handleCustomPillarChange(pillar, -1)}
                     disabled={value <= 1 || !customMode}
                   >
                     -
-                  </button>
+                  </Button>
                   <span
                     className={`w-8 text-center ${
-                      isOne ? "text-amber-400" : "text-slate-100"
+                      isOne ? "text-text-warning" : "text-text-primary"
                     }`}
                   >
                     {value}
                   </span>
-                  <button
+                  <Button
                     type="button"
-                    className={`flex h-8 w-8 items-center justify-center rounded bg-slate-700 text-slate-100 hover:bg-slate-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
+                    variant="secondary"
+                    size="icon"
                     onClick={() => handleCustomPillarChange(pillar, 1)}
                     disabled={value >= 5 || !customMode}
                   >
                     +
-                  </button>
+                  </Button>
                 </div>
                 {isOne && (
-                  <span className="text-xs text-amber-400" title={PILLAR_WARNINGS[pillar]}>
+                  <span className="text-xs text-text-warning" title={PILLAR_WARNINGS[pillar]}>
                     ⚠️
                   </span>
                 )}
@@ -203,10 +208,10 @@ export const CreationStep1 = ({
             <span
               className={
                 pointsRemaining === 0
-                  ? "text-green-400"
+                  ? "text-text-success"
                   : pointsRemaining > 0
-                    ? "text-amber-400"
-                    : "text-red-400"
+                    ? "text-text-warning"
+                    : "text-destructive"
               }
             >
               {pointsRemaining > 0
@@ -219,7 +224,7 @@ export const CreationStep1 = ({
         )}
 
         {pillarErrors.length > 0 && customMode && (
-          <div className="mt-2 text-sm text-red-400">
+          <div className="mt-2 text-sm text-destructive">
             {pillarErrors.map((error, i) => (
               <div key={i}>{error}</div>
             ))}
@@ -228,9 +233,9 @@ export const CreationStep1 = ({
       </section>
 
       {customMode && sum === 1 && (
-        <section className="rounded bg-amber-900/20 p-3">
-          <h4 className="text-sm font-medium text-amber-400">Pillar Warnings</h4>
-          <ul className="mt-2 space-y-2 text-xs text-amber-300">
+        <Alert className="border-text-warning/40 bg-text-warning/10">
+          <h4 className="text-sm font-medium text-text-warning">Pillar Warnings</h4>
+          <ul className="mt-2 space-y-2 text-2xs text-text-warning">
             {MANAGER_PILLARS.map(
               (pillar) =>
                 pillars[pillar] === 1 && (
@@ -241,7 +246,7 @@ export const CreationStep1 = ({
                 ),
             )}
           </ul>
-        </section>
+        </Alert>
       )}
     </div>
   );

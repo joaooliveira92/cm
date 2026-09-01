@@ -8,8 +8,17 @@
  * in/out of the sequence, and Shift+Arrow scrolls horizontally (Squad only).
  */
 import { flexRender } from "@tanstack/react-table";
-import type { Table } from "@tanstack/react-table";
+import type { Table as TanStackTable } from "@tanstack/react-table";
 import { useLayoutEffect, useRef } from "react";
+import { Alert } from "../components/ui/alert.js";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table.js";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
 import type { SortState, TableRowShape } from "./types.js";
 import type { TableFocusBookmark } from "./focusBookmark.js";
@@ -27,7 +36,7 @@ export interface DataTableProps<Row extends TableRowShape> {
   readonly screen: string;
   /** `data-focus-id` region (e.g. "squadTable" | "marketTable"). */
   readonly region: string;
-  readonly table: Table<Row>;
+  readonly table: TanStackTable<Row>;
   /** The visible rows in TanStack's derived order (roving universe). */
   readonly orderedIds: readonly string[];
   /** The column rendered as the per-row focus button (the player name). */
@@ -200,10 +209,10 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
           wrapper is rendered in every non-blocking state so the polite
           announcer survives a transition to zero rows (F3). */}
       {rows.length > 0 && (
-        <table className="min-w-full text-left text-sm">
-          <thead>
+        <Table className="min-w-full text-left">
+          <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-slate-700 text-slate-400">
+              <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
                   const sortable = header.column.getCanSort();
                   const sortState = header.column.getIsSorted();
@@ -212,10 +221,10 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
                     pinned !== false ? { position: "sticky", left: 0, zIndex: 1 } : undefined;
                   const label = flexRender(header.column.columnDef.header, header.getContext());
                   return (
-                    <th
+                    <TableHead
                       key={header.id}
                       aria-sort={sortable && sortState === "asc" ? "ascending" : sortable && sortState === "desc" ? "descending" : undefined}
-                      className="py-1 pr-4 text-xs font-semibold uppercase tracking-wide whitespace-nowrap"
+                      className="pr-4 whitespace-nowrap"
                       style={headerStyle}
                     >
                       {sortable ? (
@@ -232,22 +241,18 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
                       ) : (
                         label
                       )}
-                    </th>
+                    </TableHead>
                   );
                 })}
-              </tr>
+              </TableRow>
             ))}
-          </thead>
-          <tbody onKeyDown={onBodyKeyDown}>
+          </TableHeader>
+          <TableBody onKeyDown={onBodyKeyDown}>
             {rows.map((row) => {
               const id = row.original.id;
               const isIdentity = (columnId: string): boolean => columnId === identityColumnId;
               return (
-                <tr
-                  key={id}
-                  aria-selected={selectedId === id || undefined}
-                  className="border-b border-slate-800"
-                >
+                <TableRow key={id} aria-selected={selectedId === id || undefined}>
                   {row.getVisibleCells().map((cell) => {
                     const pinned = cell.column.getIsPinned();
                     const style: React.CSSProperties | undefined =
@@ -256,7 +261,7 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
                         : undefined;
                     if (isIdentity(cell.column.id)) {
                       return (
-                        <td key={cell.id} className="py-1 pr-4 whitespace-nowrap" style={style}>
+                        <TableCell key={cell.id} className="pr-4 whitespace-nowrap" style={style}>
                           <button
                             type="button"
                             data-focus-id={focusIdOf(props.screen, props.region, id)}
@@ -267,24 +272,24 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
                             onClick={() => {
                               onToggleSelection(id);
                             }}
-                            className={`whitespace-nowrap font-semibold text-slate-100 ${FOCUS_RING.join(" ")}`}
+                            className={`whitespace-nowrap font-semibold text-text-primary ${FOCUS_RING.join(" ")}`}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </button>
-                        </td>
+                        </TableCell>
                       );
                     }
                     return (
-                      <td key={cell.id} className="py-1 pr-4 whitespace-nowrap" style={style}>
+                      <TableCell key={cell.id} className="pr-4 whitespace-nowrap" style={style}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
+                      </TableCell>
                     );
                   })}
-                </tr>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       )}
       {/* One polite status announcer per table (AC-32): always in the DOM, its
           text is the deduplicated line `announce` already admitted. */}
@@ -292,9 +297,9 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
         {announcement}
       </div>
       {alertMessage !== undefined && (
-        <div role="alert" className="mt-2 rounded border border-red-800 bg-red-950/40 p-2 text-sm text-red-300">
+        <Alert variant="destructive" className="mt-2">
           {alertMessage}
-        </div>
+        </Alert>
       )}
     </div>
   );

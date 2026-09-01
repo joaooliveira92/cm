@@ -87,7 +87,7 @@ describe("no-slate-class-name guard", () => {
 });
 
 describe("the token foundation the guard exists to protect", () => {
-  it("declares the tokens in one non-inline @theme block, aliases included", async () => {
+  it("declares the tokens in one non-inline @theme block, migration aliases retired", async () => {
     const css = await readFile(join(rendererDir, "index.css"), "utf8");
     // Only the directive counts — the file's own prose explains why `@theme
     // inline` was rejected, and that sentence must not read as a violation.
@@ -104,14 +104,20 @@ describe("the token foundation the guard exists to protect", () => {
     ]) {
       expect(css).toContain(token);
     }
-    // The alias layer: every shade the renderer still uses resolves to a token,
-    // never to a literal colour, so deleting an alias is a one-line change.
-    for (const shade of [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]) {
-      expect(css).toMatch(new RegExp(`--color-slate-${shade}: var\\(--color-[a-z-]+\\);`));
+    // The migration is over: the backlog is empty, so the `--color-slate-*`
+    // alias layer that carried it has been deleted rather than left to rot as
+    // a permanently-available escape hatch back to flat slate.
+    // A *declaration*, not a mention: the file's prose explains what the layer
+    // was and why it is gone, and that sentence must not read as a violation.
+    expect(css).not.toMatch(/--color-slate-\d+\s*:/);
+    // What replaced it: the shadcn role bridge, which is permanent — the
+    // vendored `components/ui/*` are written against these names.
+    for (const role of ["--color-background:", "--color-primary:", "--color-ring:"]) {
+      expect(css).toContain(role);
     }
   });
 
-  it("ships the consumption idiom as class-string constants, not a component library", async () => {
+  it("splits the consumption idiom: class strings for containers, components for behaviour", async () => {
     const theme = await import("../src/renderer/theme.js");
     for (const constant of [
       theme.PANEL,
@@ -123,8 +129,12 @@ describe("the token foundation the guard exists to protect", () => {
       expect(typeof constant).toBe("string");
       expect(constant).not.toContain("slate-");
     }
+    // Panels and buttons-as-styling stay class strings. The surfaces with
+    // insides — focus traps, positioning, ARIA — come from the vendored
+    // shadcn set instead of being hand-built a second time.
     const files = await readdir(rendererDir, { recursive: true });
     expect(files).not.toContain("Panel.tsx");
-    expect(files).not.toContain("Button.tsx");
+    expect(files).toContain(join("components", "ui", "button.tsx"));
+    expect(files).toContain(join("components", "ui", "dialog.tsx"));
   });
 });

@@ -10,6 +10,9 @@
  */
 import type { ColumnDef } from "@tanstack/react-table";
 import { POSITIONS } from "@cm-clone/shared";
+import { Alert } from "../components/ui/alert.js";
+import { Button } from "../components/ui/button.js";
+import { Input } from "../components/ui/input.js";
 import { FOCUS_RING } from "../focus.js";
 import type { FilterClause, SortState, TableId, TableRowShape } from "./types.js";
 import type { TableFocusBookmark } from "./focusBookmark.js";
@@ -136,25 +139,25 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
     <>
       <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
         {enableNameSearch && (
-          <label className="flex items-center gap-2 text-slate-300">
+          <label className="flex items-center gap-2 text-text-body">
             Name
-            <input
+            <Input
               type="text"
               aria-label={`Search ${label} by name`}
               value={nameQuery}
               onChange={(event) => setNameQuery(event.target.value)}
-              className={`w-32 rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
+              className="w-32"
             />
           </label>
         )}
         {enablePositionFilter && (
-          <label className="flex items-center gap-2 text-slate-300">
+          <label className="flex items-center gap-2 text-text-body">
             Position
             <select
               aria-label={`Filter ${label} by position`}
               value={activePosition ?? ""}
               onChange={(event) => setPosition(event.target.value)}
-              className={`rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
+              className={SELECT_CLASS}
             >
               <option value="">All positions</option>
               {POSITIONS.map((position) => (
@@ -166,50 +169,38 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
           </label>
         )}
         {filterActive && (
-          <button
-            type="button"
-            className={`rounded bg-slate-700 px-2 py-1 ${FOCUS_RING.join(" ")}`}
-            onClick={clearVisibleFilters}
-          >
+          <Button type="button" variant="secondary" onClick={clearVisibleFilters}>
             {copy.clearFiltersLabel}
-          </button>
+          </Button>
         )}
       </div>
 
       {viewState._tag === "LoadError" && (
-        <div role="alert" className="mt-4 rounded border border-red-800 bg-red-950/40 p-4">
-          <p className="text-red-300">{viewState.error.message}</p>
+        <Alert variant="destructive" className="mt-4">
+          <p>{viewState.error.message}</p>
           {onRetry !== undefined && (
-            <button
-              type="button"
-              className={`mt-2 rounded bg-slate-700 px-3 py-1 text-sm ${FOCUS_RING.join(" ")}`}
-              onClick={onRetry}
-            >
+            <Button type="button" variant="secondary" className="mt-2" onClick={onRetry}>
               {copy.retryLabel}
-            </button>
+            </Button>
           )}
-        </div>
+        </Alert>
       )}
       {viewState._tag !== "LoadError" && (
         <>
           {viewState._tag === "InitialLoading" && (
-            <div aria-busy="true" className="py-6 text-slate-400">
+            <div aria-busy="true" className="py-6 text-text-secondary">
               {copy.initialLoading}
             </div>
           )}
           {viewState._tag === "EmptyDataset" && (
-            <div className="py-6 text-slate-400">{copy.emptyDataset}</div>
+            <div className="py-6 text-text-secondary">{copy.emptyDataset}</div>
           )}
           {viewState._tag === "NoFilterResults" && (
-            <div className="py-6 text-slate-400">
+            <div className="py-6 text-text-secondary">
               <p>{copy.noFilterResults}</p>
-              <button
-                type="button"
-                className={`mt-2 rounded bg-slate-700 px-2 py-1 text-sm ${FOCUS_RING.join(" ")}`}
-                onClick={clearVisibleFilters}
-              >
+              <Button type="button" variant="secondary" className="mt-2" onClick={clearVisibleFilters}>
                 {copy.clearFiltersLabel}
-              </button>
+              </Button>
             </div>
           )}
           {/* The table + its one polite status announcer render in every
@@ -241,3 +232,8 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
     </>
   );
 };
+
+/** Native `<select>` paint, matching `components/ui/input.tsx`. The vendored
+ *  Select is a Base UI listbox with its own focus handling; a native select is
+ *  already keyboard-complete and is what the spine's contract assumes. */
+const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;

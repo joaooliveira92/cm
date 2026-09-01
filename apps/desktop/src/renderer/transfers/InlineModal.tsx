@@ -7,7 +7,8 @@
  * `document.body` while open.
  */
 import { useRef } from "react";
-import { FOCUS_RING } from "../focus.js";
+import { Button } from "../components/ui/button.js";
+import { Input } from "../components/ui/input.js";
 import { useDialogKeyboard } from "./dialogKeyboard.js";
 
 export interface InlineModalProps {
@@ -76,42 +77,33 @@ export const InlineModal = ({
         aria-modal="true"
         aria-label={title}
         onKeyDown={onContainerKeyDown}
-        className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-900 p-4 text-slate-100 shadow-2xl"
+        className="w-full max-w-sm rounded-panel border border-panel-border bg-panel-bg-strong p-3 text-text-primary shadow-2xl"
       >
         <h2 className="text-lg font-semibold">{title}</h2>
         {description !== undefined && (
-          <p className="mt-1 text-sm text-slate-400">{description}</p>
+          <p className="mt-1 text-sm text-text-secondary">{description}</p>
         )}
-        <label className="mt-3 block text-sm text-slate-300">
+        <label className="mt-3 block text-sm text-text-body">
           {inputLabel}
-          <input
+          <Input
             ref={inputRef}
             type="text"
             inputMode="decimal"
             value={amountValue}
             onChange={(event) => onAmountChange(event.target.value)}
-            className={`mt-1 w-full rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
+            className="mt-1"
           />
         </label>
         <div className="mt-4 flex items-center justify-end gap-2">
-          <button
-            type="button"
-            className={`rounded bg-slate-700 px-3 py-1 text-sm ${FOCUS_RING.join(" ")}`}
-            onClick={onCancel}
-          >
+          <Button type="button" variant="secondary" onClick={onCancel}>
             Cancel
-          </button>
-          <button
-            type="button"
-            disabled={submitDisabled}
-            className={`rounded bg-amber-600 px-3 py-1 text-sm text-slate-950 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
-            onClick={onSubmit}
-          >
+          </Button>
+          <Button type="button" disabled={submitDisabled} onClick={onSubmit}>
             {submitLabel}
-          </button>
+          </Button>
         </div>
         {error !== null && (
-          <p role="alert" className="mt-2 text-sm text-red-300">
+          <p role="alert" className="mt-2 text-sm text-destructive">
             {error}
           </p>
         )}

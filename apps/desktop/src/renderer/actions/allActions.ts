@@ -51,7 +51,9 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   // opens it the same way Primary+/ does, giving rebinding a second, discoverable entry point.
   { id: "open-rebind", label: "Rebind…", scope: "app-global", available: () => true, handler: () => undefined },
   // career-global — active only while a career screen is shown.
-  { id: "continue", label: "Continue", scope: "career-global", available: continueAvailable, unavailableReason: "The Calendar cannot advance right now.", handler: () => undefined, binding: "Space" },
+  // `primary: true` is consumed by the career chrome for the gradient treatment —
+  // presentation only, never automatic Enter dispatch (global-key-map note AC-11).
+  { id: "continue", label: "Continue", scope: "career-global", available: continueAvailable, unavailableReason: "The Calendar cannot advance right now.", handler: () => undefined, binding: "Space", primary: true },
   navAction("go-to-squad", "Go to Squad", "g s", { destination: "squad" }),
   navAction("go-to-tactics", "Go to Tactics", "g a", { destination: "tactics" }),
   navAction("go-to-transfers", "Go to Transfers", "g t", { destination: "transfers" }),

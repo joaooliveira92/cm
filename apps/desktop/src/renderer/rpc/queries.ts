@@ -71,3 +71,16 @@ export const transfersAtom = Atom.family((saveId: SaveId) =>
     ),
   ),
 );
+/**
+ * loadSave — `["save", saveId]`. The career chrome's save-name read.
+ *
+ * `loadSave` is a pure read on the main side (it checks the file exists and
+ * returns its summary), so using it as a query rather than a command is safe.
+ * There is no narrower `getSaveSummary` method, and adding one is engine work
+ * this chrome does not need.
+ */
+export const saveSummaryAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("loadSave", { id: saveId })).pipe(Atom.withReactivity([saveKey(saveId)])),
+  ),
+);

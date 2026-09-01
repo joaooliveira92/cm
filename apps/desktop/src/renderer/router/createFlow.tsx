@@ -13,7 +13,8 @@ import {
   describeRpcError,
   discardCareer,
 } from "../rpc.js";
-import { FOCUS_RING } from "../focus.js";
+import { Alert } from "../components/ui/alert.js";
+import { Button } from "../components/ui/button.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
 import { GenerationStatus } from "../create/GenerationStatus.js";
 import {
@@ -299,7 +300,7 @@ export const CreateFlowLayout = () => {
     <CreateSessionContext.Provider
       value={{ session, update, retryGeneration: () => void runGeneration() }}
     >
-      <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
+      <main className="min-h-screen bg-background p-8 text-foreground">
         <h1 className="text-2xl font-bold">New Career</h1>
 
         <div className="mt-6 flex gap-4">
@@ -312,9 +313,9 @@ export const CreateFlowLayout = () => {
         <div className={step === "leagues" ? "mt-8" : "mt-8 max-w-xl"}>
           <Outlet />
           {session.error && (
-            <div className="mt-4 rounded bg-red-900/30 p-3 text-sm text-red-400">
+            <Alert variant="destructive" className="mt-4">
               {session.error}
-            </div>
+            </Alert>
           )}
 
           {/* The manager step carries the generation status: the wait happens
@@ -331,60 +332,53 @@ export const CreateFlowLayout = () => {
           {/* The leagues stage renders its own Back and Continue: continuing from it has to run
               submission and snapshot creation, which the shared footer knows nothing about. */}
           <div className={`mt-8 flex gap-4 ${step === "leagues" ? "hidden" : ""}`}>
-            <button
-              type="button"
-              className={`rounded bg-slate-700 px-4 py-2 hover:bg-slate-600 ${FOCUS_RING.join(" ")}`}
-              onClick={() => navigate({ type: "saveList" })}
-            >
+            <Button type="button" variant="secondary" onClick={() => navigate({ type: "saveList" })}>
               Cancel
-            </button>
+            </Button>
             {step === "1" && (
-              <button
+              <Button
                 type="button"
-                className={`rounded bg-slate-700 px-4 py-2 hover:bg-slate-600 ${FOCUS_RING.join(" ")}`}
+                variant="secondary"
                 onClick={() => navigate({ type: "createLeagues" })}
               >
                 Back: Leagues
-              </button>
+              </Button>
             )}
             {step === "1" && (
               <div>
-                <button
+                <Button
                   type="button"
-                  className={`rounded bg-slate-600 px-4 py-2 hover:bg-slate-500 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
                   onClick={() => navigate({ type: "createStep2" })}
                   disabled={!managerStepComplete || !selectionReady}
                   aria-describedby={blocked === null ? undefined : "generation-blocked-reason"}
                 >
                   Next: Select Club
-                </button>
+                </Button>
                 {/* A greyed control that does not say why is not acceptable. */}
                 {blocked !== null && (
-                  <p id="generation-blocked-reason" className="mt-2 text-sm text-slate-400">
+                  <p id="generation-blocked-reason" className="mt-2 text-sm text-text-secondary">
                     {blocked}
                   </p>
                 )}
               </div>
             )}
             {step === "2" && (
-              <button
+              <Button
                 type="button"
-                className={`rounded bg-slate-600 px-4 py-2 hover:bg-slate-500 ${FOCUS_RING.join(" ")}`}
                 onClick={() => navigate({ type: "createStep3" })}
                 disabled={!selectionReady}
               >
                 Next: Review
-              </button>
+              </Button>
             )}
             {step === "3" && (
-              <button
+              <Button
                 type="button"
-                className={`rounded bg-green-700 px-4 py-2 hover:bg-green-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
                 onClick={() => void handleCommitCareer()}
                 disabled={session.commit === "committing"}
               >
                 Create Career
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -405,31 +399,31 @@ const StepBadge = ({
   readonly number: string;
 }) => (
   <div className="flex items-center gap-2">
-    <div className={`h-8 w-8 rounded-full text-center leading-8 ${active ? "bg-slate-600" : "bg-slate-800"}`}>
+    <div className={`h-8 w-8 rounded-full text-center leading-8 ${active ? "chrome-gradient" : "bg-surface"}`}>
       {number}
     </div>
-    <span className={active ? "text-slate-100" : "text-slate-500"}>{label}</span>
+    <span className={active ? "text-text-primary" : "text-text-muted"}>{label}</span>
   </div>
 );
 
 const ReviewPane = ({ session }: { readonly session: CreationSession }) => (
-  <div className="text-slate-300">
+  <div className="text-text-body">
     <h2 className="text-lg font-semibold">Review Career</h2>
     <dl className="mt-4 space-y-2 text-sm">
       <div className="flex gap-4">
-        <dt className="text-slate-500">Save name:</dt>
+        <dt className="text-text-muted">Save name:</dt>
         <dd>{session.saveName}</dd>
       </div>
       <div className="flex gap-4">
-        <dt className="text-slate-500">Manager name:</dt>
+        <dt className="text-text-muted">Manager name:</dt>
         <dd>{session.managerName || session.saveName}</dd>
       </div>
       <div className="flex gap-4">
-        <dt className="text-slate-500">Archetype:</dt>
+        <dt className="text-text-muted">Archetype:</dt>
         <dd className="capitalize">{session.archetype.replace("_", " ")}</dd>
       </div>
       <div className="flex gap-4">
-        <dt className="text-slate-500">League scope:</dt>
+        <dt className="text-text-muted">League scope:</dt>
         <dd>
           {session.leagueSelection === null
             ? "Not selected"
@@ -441,7 +435,7 @@ const ReviewPane = ({ session }: { readonly session: CreationSession }) => (
         </dd>
       </div>
       <div className="flex gap-4">
-        <dt className="text-slate-500">Pillars:</dt>
+        <dt className="text-text-muted">Pillars:</dt>
         <dd>
           {session.pillars.tacticalAcumen}/{session.pillars.influence}/
           {session.pillars.regimen}/{session.pillars.technicalCoaching}

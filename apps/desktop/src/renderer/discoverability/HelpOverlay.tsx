@@ -31,6 +31,8 @@ import {
   type KeyBindingOverrides,
   type OverrideRejection,
 } from "../actions/overrides.js";
+import { Button } from "../components/ui/button.js";
+import { Kbd } from "../components/ui/kbd.js";
 import { FOCUS_RING } from "../focus.js";
 import { useSeamHotkeys, useSeamHotkeysContext } from "../hotkeys.js";
 import { keyOf } from "../keymap/keystroke.js";
@@ -251,12 +253,12 @@ export const HelpOverlay = ({
         role="dialog"
         aria-modal="true"
         aria-label="Keyboard shortcuts"
-        className="flex max-h-[70vh] w-[38rem] flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-900 shadow-2xl"
+        className="flex max-h-[70vh] w-[38rem] flex-col overflow-hidden rounded-panel border border-panel-border bg-panel-bg-strong shadow-2xl"
       >
-        <div className="border-b border-slate-800 px-4 py-3 text-sm font-semibold text-slate-100">
+        <div className="chrome-gradient border-b border-panel-border-dark px-4 py-2 text-sm font-semibold text-text-primary">
           Keyboard shortcuts
         </div>
-        <div role="tablist" aria-label="Shortcut scope" className="flex border-b border-slate-800">
+        <div role="tablist" aria-label="Shortcut scope" className="flex border-b border-border-subtle">
           {TABS.map((t, index) => (
             <button
               key={t.mode}
@@ -268,8 +270,8 @@ export const HelpOverlay = ({
               aria-selected={t.mode === tab}
               className={`border-b-2 px-4 py-2 text-sm ${
                 t.mode === tab
-                  ? "border-amber-400 text-slate-100"
-                  : "border-transparent text-slate-400 hover:text-slate-200"
+                  ? "border-text-highlight text-text-primary"
+                  : "border-transparent text-text-secondary hover:text-text-strong"
               } ${FOCUS_RING.join(" ")}`}
               onClick={() => setTab(t.mode)}
             >
@@ -287,53 +289,55 @@ export const HelpOverlay = ({
               <div
                 key={action.id}
                 data-action-id={action.id}
-                className="flex items-center justify-between gap-3 border-b border-slate-800/60 py-1.5 text-sm"
+                className="flex items-center justify-between gap-3 border-b border-border-subtle/60 py-0.5 text-xs"
               >
-                <span className={available ? "text-slate-200" : "text-slate-500"}>{action.label}</span>
+                <span className={available ? "text-text-strong" : "text-text-muted"}>{action.label}</span>
                 {isCapturing ? (
                   <span
                     ref={captureHintRef}
                     tabIndex={-1}
                     role="status"
-                    className="rounded border border-amber-400/60 bg-slate-800 px-2 py-0.5 font-mono text-xs text-amber-300"
+                    className="rounded-control border border-text-highlight/60 bg-surface px-2 py-0.5 font-mono text-xs text-text-highlight"
                   >
                     Press a key… (Escape cancels)
                   </span>
                 ) : (
                   <span className="flex shrink-0 items-center gap-2">
                     {available && (
-                      <span aria-label="available" className="text-xs text-emerald-400">
+                      <span aria-label="available" className="text-xs text-text-success">
                         ✓
                       </span>
                     )}
                     {binding !== undefined && (
-                      <kbd
+                      <Kbd
                         aria-label={overridden ? `Binding ${binding}, rebound` : `Binding ${binding}`}
-                        className={`rounded px-1.5 py-0.5 font-mono text-xs ${
-                          overridden ? "bg-amber-400/20 text-amber-300" : "bg-slate-800 text-sky-300"
-                        }`}
+                        className={
+                          overridden ? "bg-text-highlight/20 text-text-highlight" : undefined
+                        }
                       >
                         {binding}
                         {overridden ? " *" : ""}
-                      </kbd>
+                      </Kbd>
                     )}
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       aria-label={`Rebind ${action.label}`}
-                      className={`rounded border border-slate-700 px-1.5 py-0.5 text-xs text-slate-300 hover:text-slate-100 ${FOCUS_RING.join(" ")}`}
                       onClick={() => beginRebind(action.id)}
                     >
                       Rebind
-                    </button>
+                    </Button>
                     {overridden && (
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         aria-label={`Reset ${action.label} binding`}
-                        className={`rounded border border-slate-700 px-1.5 py-0.5 text-xs text-slate-300 hover:text-slate-100 ${FOCUS_RING.join(" ")}`}
                         onClick={() => doReset(action.id)}
                       >
                         Reset
-                      </button>
+                      </Button>
                     )}
                   </span>
                 )}
@@ -341,31 +345,32 @@ export const HelpOverlay = ({
             );
           })}
           {visibleRows.length === 0 && (
-            <p className="py-4 text-center text-sm text-slate-600">Nothing in this scope.</p>
+            <p className="py-4 text-center text-sm text-text-muted">Nothing in this scope.</p>
           )}
         </div>
-        <div className="border-t border-slate-800 px-4 py-2 text-xs text-slate-500">
+        <div className="border-t border-border-subtle px-4 py-2 text-xs text-text-muted">
           {status._tag === "error" && (
-            <p role="alert" className="mb-2 text-red-400">
+            <p role="alert" className="mb-2 text-destructive">
               {status.message}
             </p>
           )}
           {status._tag === "saved" && (
-            <p className="mb-2 text-emerald-400">{status.message}</p>
+            <p className="mb-2 text-text-success">{status.message}</p>
           )}
           <div className="flex items-center justify-between gap-3">
             <span>
-              <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono">{escapeKey}</kbd> closes
+              <Kbd>{escapeKey}</Kbd> closes
               · Arrow keys switch tabs · Rebind captures the next key
             </span>
-            <button
+            <Button
               type="button"
+              variant="destructive"
+              size="sm"
               aria-label="Reset all bindings"
-              className={`rounded border border-red-900/60 px-2 py-0.5 text-xs text-red-400 hover:text-red-300 ${FOCUS_RING.join(" ")}`}
               onClick={doResetAll}
             >
               Reset all
-            </button>
+            </Button>
           </div>
         </div>
       </div>

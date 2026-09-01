@@ -1,4 +1,5 @@
-import { FOCUS_RING } from "../focus.js";
+import { Alert } from "../components/ui/alert.js";
+import { Button } from "../components/ui/button.js";
 import { announcement, type GenerationState } from "./generation.js";
 
 /**
@@ -26,29 +27,25 @@ export const GenerationStatus = ({
 
     {(state._tag === "Pending" || state._tag === "Running") && (
       <>
-        <p className="text-slate-400">Building the league&hellip;</p>
+        <p className="text-text-secondary">Building the league&hellip;</p>
         <div
           role="progressbar"
           aria-label="Building the league"
           aria-busy="true"
-          className="h-1 w-full overflow-hidden rounded bg-slate-800"
+          className="h-1 w-full overflow-hidden rounded-control bg-surface"
         >
-          <div className="h-full w-1/3 animate-pulse bg-slate-500 motion-reduce:animate-none" />
+          <div className="h-full w-1/3 animate-pulse bg-text-muted motion-reduce:animate-none" />
         </div>
       </>
     )}
 
     {state._tag === "Failed" && (
-      <div className="rounded bg-red-900/30 p-3 text-sm text-red-400">
+      <Alert variant="destructive" className="text-sm">
         <p>Building the league failed. {state.message}</p>
-        <button
-          type="button"
-          className={`mt-3 rounded bg-slate-700 px-4 py-2 text-slate-100 hover:bg-slate-600 ${FOCUS_RING.join(" ")}`}
-          onClick={onRetry}
-        >
+        <Button type="button" variant="secondary" className="mt-3" onClick={onRetry}>
           Retry
-        </button>
-      </div>
+        </Button>
+      </Alert>
     )}
   </div>
 );

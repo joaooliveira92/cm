@@ -5,6 +5,7 @@
  * all-or-nothing project switch. `actionBadgeBinding` is the single decision
  * point so a rendered badge can never claim a binding the registry does not own.
  */
+import { Kbd } from "../components/ui/kbd.js";
 import type { Action, ScreenName } from "../actions/types.js";
 import { keyBadgesEnabledFor } from "../actions/allActions.js";
 
@@ -24,10 +25,5 @@ export const actionBadgeBinding = (
  *  it never carries `data-action-id` or a click handler, so the screen's
  *  rendered-Action inventory (AC-16) stays exactly the controls that dispatch. */
 export const ActionKeyBadge = ({ binding }: { readonly binding: string }) => (
-  <kbd
-    aria-label={`Keyboard shortcut ${binding}`}
-    className="rounded bg-slate-700 px-1 py-0.5 font-mono text-[0.6rem] font-semibold leading-none text-slate-200"
-  >
-    {binding}
-  </kbd>
+  <Kbd aria-label={`Keyboard shortcut ${binding}`}>{binding}</Kbd>
 );

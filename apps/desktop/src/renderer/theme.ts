@@ -12,6 +12,13 @@
  * component form for the opposite reason: sorting, filtering, roving focus, and
  * selection behaviour genuinely live there.
  *
+ * That same line now separates this file from `components/ui/`. The vendored
+ * shadcn/Base UI set owns the surfaces with insides — dialogs, popovers,
+ * selects, tooltips, scroll areas — and is styled through the role bridge in
+ * `index.css`, not through these strings. The constants below remain the answer
+ * for a plain styled container. See
+ * `.agents/notes/proposed/architecture/2026-08-31-shadcn-component-adoption.md`.
+ *
  * Every class here resolves through the `@theme` tokens in `index.css`, so a
  * skin override repaints all of them without editing this file.
  */

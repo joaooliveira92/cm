@@ -21,6 +21,7 @@ import { clearScopeState, getScopeState, setScopeState, subscribeScopeState } fr
 import { type ScopeState } from "./actions/types.js";
 import { useSeamEveryKeyPress } from "./hotkeys.js";
 import { getKeyBindingOverrides, EMPTY_KEY_BINDING_OVERRIDES } from "./rpc.js";
+import { publishBindingOverrides } from "./actions/bindingState.js";
 import {
   resolveDispatch,
   IDLE_PREFIX,
@@ -94,7 +95,7 @@ export const PrefixIndicator = ({
   <div
     role="status"
     aria-live="polite"
-    className="pointer-events-none fixed top-14 left-2 z-50 rounded border border-amber-500/60 bg-slate-900/95 px-3 py-1.5 text-sm text-slate-200 shadow-lg"
+    className="pointer-events-none fixed top-14 left-2 z-50 rounded-control border border-text-highlight/60 bg-panel-bg-strong px-3 py-1.5 text-sm text-text-strong shadow-lg"
   >
     <span className="font-semibold text-amber-300">Go to:</span>{" "}
     {entries.map((entry) => `${entry.label} [${entry.key}]`).join(" \u00b7 ")}
@@ -145,6 +146,14 @@ export const KeyboardSpine = () => {
       alive = false;
     };
   }, []);
+
+  // Publish the map so chrome-level controls that *display* a binding (the
+  // career chrome's Continue badge) read the same effective value the spine
+  // dispatches on, including a rebind adopted mid-session. A second fetch there
+  // would be a second source of truth, and the badge would drift.
+  useEffect(() => {
+    publishBindingOverrides(bindingOverrides);
+  }, [bindingOverrides]);
 
   // Effective views: the overrides layered over the registry's coded defaults. `effectiveActions`
   // is the whole registry projection; the active set, `g` completions, and the prefix indicator

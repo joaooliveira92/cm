@@ -87,11 +87,13 @@ describe("tier-3 remainder — Tactics is driveable with no mouse (Level 1 guara
     fireEvent.keyDown(fourThreeThree(), { key: "Enter" });
     fireEvent.click(fourThreeThree());
     // The formation buttons are part of one selected-state toggle: 4-3-3 is
-    // now the selected formation (the draft re-fills its slots).
+    // now the selected formation (the draft re-fills its slots). Asserted on
+    // `aria-pressed` rather than a class name — the selected state is what the
+    // screen reader and the test both care about, and it survives a restyle.
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "4-3-3" }).className,
-      ).toContain("bg-slate-100"),
+        screen.getByRole("button", { name: "4-3-3" }).getAttribute("aria-pressed"),
+      ).toBe("true"),
     );
   });
 

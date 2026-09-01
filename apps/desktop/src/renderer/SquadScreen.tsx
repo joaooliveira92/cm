@@ -21,6 +21,8 @@ import {
   useAtomValue,
 } from "./rpc.js";
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
+import { Alert } from "./components/ui/alert.js";
+import { Button } from "./components/ui/button.js";
 import { focusIdOf, FOCUS_RING } from "./focus.js";
 import { SQUAD_PALETTE_OPTIONS, tableSortAndFilterActions } from "./table/paletteActions.js";
 import {
@@ -402,61 +404,63 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   if (viewState._tag === "LoadError") {
     return (
-      <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
+      <main className="min-h-screen bg-background p-8 text-foreground">
         <h1 className="text-2xl font-bold">Squad</h1>
-        <div role="alert" className="mt-6 rounded border border-red-800 bg-red-950/40 p-4">
-          <p className="text-red-300">{viewState.error.message}</p>
-          <button
+        <Alert variant="destructive" className="mt-6">
+          <p>{viewState.error.message}</p>
+          <Button
             type="button"
+            variant="secondary"
+            className="mt-2"
             data-action-id="retry-squad-table"
-            className={`mt-2 rounded bg-slate-700 px-3 py-1 text-sm ${FOCUS_RING.join(" ")}`}
             onClick={() => void dispatchAction("retry-squad-table")}
           >
             {copy.retryLabel}
-          </button>
-        </div>
+          </Button>
+        </Alert>
       </main>
     );
   }
 
-  const clubName = view !== undefined ? view.club.name : "Squad";
 
   const activePosition = filters.find(
     (f): f is Extract<FilterClause, { readonly _tag: "position" }> => f._tag === "position",
   );
 
   return (
-    <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
-      <h1 className="text-2xl font-bold">{clubName}</h1>
-      <p className="mt-1 text-sm text-slate-400">
+    <main className="min-h-screen bg-background p-8 text-foreground">
+      {/* Section name only — the club lives in the career chrome's title bar. */}
+      <h1 className="text-2xl font-bold">Squad</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         {allPlayers.length} players
         {refreshState._tag === "Refreshing" && (
-          <span className="ml-2 text-slate-500">Refreshing…</span>
+          <span className="ml-2 text-text-muted">Refreshing…</span>
         )}
         {refreshState._tag === "RefreshFailed" && (
-          <span className="ml-2 text-red-400">
+          <span className="ml-2 text-destructive">
             {copy.refreshFailed}{" "}
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               data-action-id="retry-squad-table"
-              className={`rounded bg-slate-700 px-2 py-0.5 text-xs text-slate-100 ${FOCUS_RING.join(" ")}`}
               onClick={() => void dispatchAction("retry-squad-table")}
             >
               {copy.retryLabel}
-            </button>
+            </Button>
           </span>
         )}
       </p>
 
       {/* Visible filter controls (AC-30): native controls showing active state. */}
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-2 text-slate-300">
+        <label className="flex items-center gap-2 text-text-body">
           Position
           <select
             aria-label="Filter squad by position"
             value={activePosition?.position ?? ""}
             onChange={(event) => setPositionFilter(event.target.value)}
-            className={`rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
+            className={SELECT_CLASS}
           >
             <option value="">All positions</option>
             {POSITIONS.map((position) => (
@@ -467,20 +471,20 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           </select>
         </label>
         {activeFilterCount(filters) > 0 && (
-          <button
+          <Button
             type="button"
+            variant="secondary"
             data-action-id="clear-squad-filters"
-            className={`rounded bg-slate-700 px-2 py-1 ${FOCUS_RING.join(" ")}`}
             onClick={clearFilterCommand}
           >
             {copy.clearFiltersLabel}
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Column visibility controls (Squad only): presets + per-column toggles. */}
       <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-2 text-slate-300">
+        <label className="flex items-center gap-2 text-text-body">
           Columns
           <select
             aria-label="Squad column preset"
@@ -489,7 +493,7 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
               const value = event.target.value;
               if (isSquadPresetId(value)) setPreset(value);
             }}
-            className={`rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
+            className={SELECT_CLASS}
           >
             {SQUAD_PRESETS.map((preset) => (
               <option key={preset.id} value={preset.id}>
@@ -498,19 +502,19 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             ))}
           </select>
         </label>
-        <button
+        <Button
           type="button"
+          variant="secondary"
           data-action-id="restore-squad-columns"
-          className={`rounded bg-slate-700 px-2 py-1 ${FOCUS_RING.join(" ")}`}
           onClick={() => void dispatchAction("restore-squad-columns")}
         >
           Restore defaults
-        </button>
-        <details className="text-slate-300">
+        </Button>
+        <details className="text-text-body">
           <summary className={`cursor-pointer ${FOCUS_RING.join(" ")}`}>
             Show / hide columns
           </summary>
-          <div className="mt-2 grid max-h-64 grid-cols-3 gap-x-4 gap-y-1 overflow-y-auto rounded border border-slate-700 bg-slate-900 p-3 text-xs">
+          <div className="mt-2 grid max-h-64 grid-cols-3 gap-x-4 gap-y-1 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-3 text-xs">
             {SQUAD_ALL_COLUMN_IDS.map((columnId) => (
               <label key={columnId} className="flex items-center gap-2">
                 <input
@@ -518,7 +522,7 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   checked={preferences.visibleColumnIds.includes(columnId)}
                   onChange={() => toggleOneColumn(columnId)}
                   disabled={columnId === "name"}
-                  className={`accent-amber-400 ${FOCUS_RING.join(" ")}`}
+                  className={`accent-text-highlight ${FOCUS_RING.join(" ")}`}
                 />
                 {SQUAD_COLUMN_LABELS[columnId] ?? columnId}
               </label>
@@ -528,49 +532,49 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       </div>
 
       {viewState._tag === "InitialLoading" && (
-        <div aria-busy="true" className="py-10 text-slate-400">
+        <div aria-busy="true" className="py-10 text-text-secondary">
           {copy.initialLoading}
         </div>
       )}
       {viewState._tag === "EmptyDataset" && (
-        <div className="py-10 text-slate-400">
+        <div className="py-10 text-text-secondary">
           <p>{copy.emptyDataset}</p>
           {/* Empty-squad affordances (note's Empty Squad line): real buttons
               dispatching the registered navigation Actions — never bare text.
               Free Agents live on the Transfers screen, so both navigate there
               through the same typed destination Action as the key map. */}
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <button
+            <Button
               type="button"
+              variant="secondary"
               data-action-id="go-to-transfers"
-              className={`rounded bg-slate-700 px-3 py-1 text-sm text-slate-100 ${FOCUS_RING.join(" ")}`}
               onClick={() => void dispatchAction("go-to-transfers")}
             >
               Explore Free Agents
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
               data-action-id="go-to-transfers"
-              className={`rounded bg-slate-700 px-3 py-1 text-sm text-slate-100 ${FOCUS_RING.join(" ")}`}
               onClick={() => void dispatchAction("go-to-transfers")}
             >
               Go to Transfer Market
-            </button>
+            </Button>
           </div>
         </div>
       )}
       {viewState._tag === "NoFilterResults" && (
-        <div className="py-10 text-slate-400">
+        <div className="py-10 text-text-secondary">
           <p>{copy.noFilterResults}</p>
           <p className="mt-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
               data-action-id="clear-squad-filters"
-              className={`rounded bg-slate-700 px-2 py-1 text-sm ${FOCUS_RING.join(" ")}`}
               onClick={clearFilterCommand}
             >
               {copy.clearFiltersLabel}
-            </button>
+            </Button>
           </p>
         </div>
       )}
@@ -601,3 +605,6 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     </main>
   );
 };
+
+/** Native `<select>` paint. See the note in `table/TablePanel.tsx`. */
+const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;

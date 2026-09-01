@@ -2,8 +2,15 @@ import { useEffect } from "react";
 import { type SaveId } from "@cm-clone/contracts";
 import { ACTION_REGISTRY } from "./actions/allActions.js";
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
-import { clearScopeState, setScopeState } from "./actions/scopeState.js";
-import { FOCUS_RING } from "./focus.js";
+import { Button } from "./components/ui/button.js";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./components/ui/table.js";
 import { ActionKeyBadge, actionBadgeBinding } from "./discoverability/ActionKeyBadge.js";
 import {
   advanceCalendarMutation,
@@ -35,36 +42,21 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     runAdvance({ saveId });
   };
 
-  // Publish the availability read-model so the registry predicates (and the
-  // spine's active set) see the same truth as the rendered button.
+  // Register this screen's own handler only. The career-global `continue`
+  // handler and the `phase`/`advancing` read model both moved to the career
+  // chrome: while this screen owned them, `Space` worked from the League table
+  // alone, and navigating away cleared the predicates' state out from under
+  // every other screen.
   useEffect(() => {
-    if (tableResult._tag === "Success") {
-      setScopeState({ phase: tableResult.value.season.phase, advancing });
-      return () => clearScopeState("phase", "advancing");
-    }
-    return undefined;
-  }, [tableResult, advancing]);
-
-  // Register the League screen's live handlers: `advance-calendar` (its button)
-  // and `continue` (the career-global Space binding — Continue is League-owned,
-  // advancing the Calendar under the same guard as the button).
-  useEffect(() => {
-    const unregister = registerActionHandler("advance-calendar", () => {
+    return registerActionHandler("advance-calendar", () => {
       onAdvanceCalendar();
     });
-    const unregisterContinue = registerActionHandler("continue", () => {
-      onAdvanceCalendar();
-    });
-    return () => {
-      unregister();
-      unregisterContinue();
-    };
     // onAdvanceCalendar closes over `advancing`/`seasonComplete`; re-register
     // when either or saveId change.
   }, [advancing, saveId, seasonComplete]);
 
-  if (tableError) return <p className="p-8 text-red-400">{describeRpcError(tableError)}</p>;
-  if (tableResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading league table...</p>;
+  if (tableError) return <p className="p-8 text-destructive">{describeRpcError(tableError)}</p>;
+  if (tableResult._tag === "Initial") return <p className="p-8 text-text-secondary">Loading league table...</p>;
   if (tableResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load league table</p>;
 
   const table = tableResult.value;
@@ -75,63 +67,63 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const advanceBadge = advanceAction !== undefined ? actionBadgeBinding(advanceAction, "league") : null;
 
   return (
-    <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
+    <main className="min-h-screen bg-background p-8 text-foreground">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">League Table</h1>
-        <div className="flex items-center gap-3 text-sm text-slate-400">
+        <div className="flex items-center gap-3 text-sm text-text-secondary">
           <span>
             Season {table.season.seasonNumber} &middot; Matchday {table.season.currentMatchday}/38 &middot;{" "}
             {table.season.phase.replace("_", " ")}
           </span>
-          <button
+          <Button
             type="button"
+            variant="secondary"
             data-action-id="advance-calendar"
             disabled={advancing || table.season.phase === "season_complete"}
-            className={`flex items-center gap-1.5 rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
             onClick={() => void dispatchAction("advance-calendar")}
           >
             {advanceBadge !== null && <ActionKeyBadge binding={advanceBadge} />}
             {advancing ? "Advancing..." : "Advance Calendar"}
-          </button>
+          </Button>
         </div>
       </div>
 
-      {advanceError && <p className="mt-2 text-sm text-red-400">{describeRpcError(advanceError)}</p>}
-      {tableResult.waiting && <p className="mt-2 text-sm text-slate-500">Refreshing…</p>}
+      {advanceError && <p className="mt-2 text-sm text-destructive">{describeRpcError(advanceError)}</p>}
+      {tableResult.waiting && <p className="mt-2 text-sm text-text-muted">Refreshing…</p>}
 
       <div className="mt-6 overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-700 text-slate-400">
-              <th className="py-1 pr-4">#</th>
-              <th className="py-1 pr-4">Club</th>
-              <th className="py-1 pr-2 text-center">P</th>
-              <th className="py-1 pr-2 text-center">W</th>
-              <th className="py-1 pr-2 text-center">D</th>
-              <th className="py-1 pr-2 text-center">L</th>
-              <th className="py-1 pr-2 text-center">GF</th>
-              <th className="py-1 pr-2 text-center">GA</th>
-              <th className="py-1 pr-2 text-center">GD</th>
-              <th className="py-1 pr-2 text-center">Pts</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="min-w-full text-left">
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pr-4">#</TableHead>
+              <TableHead className="pr-4">Club</TableHead>
+              <TableHead className="pr-2 text-center">P</TableHead>
+              <TableHead className="pr-2 text-center">W</TableHead>
+              <TableHead className="pr-2 text-center">D</TableHead>
+              <TableHead className="pr-2 text-center">L</TableHead>
+              <TableHead className="pr-2 text-center">GF</TableHead>
+              <TableHead className="pr-2 text-center">GA</TableHead>
+              <TableHead className="pr-2 text-center">GD</TableHead>
+              <TableHead className="pr-2 text-center">Pts</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {table.standings.map((row, index) => (
-              <tr key={row.clubId} className="border-b border-slate-800">
-                <td className="py-1 pr-4">{index + 1}</td>
-                <td className="py-1 pr-4 whitespace-nowrap">{row.clubName}</td>
-                <td className="py-1 pr-2 text-center">{row.played}</td>
-                <td className="py-1 pr-2 text-center">{row.won}</td>
-                <td className="py-1 pr-2 text-center">{row.drawn}</td>
-                <td className="py-1 pr-2 text-center">{row.lost}</td>
-                <td className="py-1 pr-2 text-center">{row.goalsFor}</td>
-                <td className="py-1 pr-2 text-center">{row.goalsAgainst}</td>
-                <td className="py-1 pr-2 text-center">{row.goalDifference}</td>
-                <td className="py-1 pr-2 text-center font-semibold">{row.points}</td>
-              </tr>
+              <TableRow key={row.clubId}>
+                <TableCell className="pr-4">{index + 1}</TableCell>
+                <TableCell className="pr-4 whitespace-nowrap">{row.clubName}</TableCell>
+                <TableCell className="pr-2 text-center tabular-nums">{row.played}</TableCell>
+                <TableCell className="pr-2 text-center tabular-nums">{row.won}</TableCell>
+                <TableCell className="pr-2 text-center tabular-nums">{row.drawn}</TableCell>
+                <TableCell className="pr-2 text-center tabular-nums">{row.lost}</TableCell>
+                <TableCell className="pr-2 text-center tabular-nums">{row.goalsFor}</TableCell>
+                <TableCell className="pr-2 text-center tabular-nums">{row.goalsAgainst}</TableCell>
+                <TableCell className="pr-2 text-center tabular-nums">{row.goalDifference}</TableCell>
+                <TableCell className="pr-2 text-center font-semibold tabular-nums">{row.points}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </main>
   );

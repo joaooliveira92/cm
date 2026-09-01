@@ -20,6 +20,8 @@ import { ALL_ACTIONS } from "../actions/allActions.js";
 import { actionsInTiers } from "../actions/registry.js";
 import { withEffectiveBindings, type KeyBindingOverrides } from "../actions/overrides.js";
 import { dispatchActionWithParams } from "../actions/dispatch.js";
+import { Badge } from "../components/ui/badge.js";
+import { Kbd } from "../components/ui/kbd.js";
 import { FOCUS_RING } from "../focus.js";
 import { useSeamHotkeys } from "../hotkeys.js";
 import { rankPaletteActions, type PaletteCandidate } from "./rank.js";
@@ -136,7 +138,7 @@ export const CommandPalette = ({
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        className="flex max-h-[60vh] w-[32rem] max-w-[90vw] flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-900 shadow-2xl"
+        className="flex max-h-[60vh] w-[32rem] max-w-[90vw] flex-col overflow-hidden rounded-panel border border-panel-border bg-panel-bg-strong shadow-2xl"
       >
         <input
           ref={inputRef}
@@ -149,11 +151,11 @@ export const CommandPalette = ({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Type a command…"
-          className={`border-b border-slate-800 bg-transparent px-4 py-3 text-base text-slate-100 placeholder:text-slate-600 focus:outline-none ${FOCUS_RING.join(" ")}`}
+          className={`border-b border-border-subtle bg-transparent px-4 py-3 text-base text-text-primary placeholder:text-text-muted focus:outline-none ${FOCUS_RING.join(" ")}`}
         />
         <div id="palette-options" role="listbox" className="flex-1 overflow-y-auto">
           {ranked.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-slate-600">No matching commands</p>
+            <p className="px-4 py-6 text-center text-sm text-text-muted">No matching commands</p>
           ) : (
             ranked.map((entry, index) => {
               const { action, available, reason } = entry;
@@ -167,8 +169,8 @@ export const CommandPalette = ({
                   aria-disabled={!available}
                   data-action-id={action.id}
                   className={`flex items-center justify-between gap-3 px-4 py-2 text-sm ${
-                    selected ? "bg-slate-800" : ""
-                  } ${available ? "text-slate-100" : "text-slate-500"}`}
+                    selected ? "bg-surface" : ""
+                  } ${available ? "text-text-primary" : "text-text-muted"}`}
                   onMouseDown={() => {
                     if (available) {
                       onClose();
@@ -179,20 +181,18 @@ export const CommandPalette = ({
                 >
                   <span className="truncate">
                     {action.scope !== "app-global" && action.scope !== "career-global" && (
-                      <span className="mr-2 inline-block rounded bg-slate-800 px-1.5 py-0.5 text-[0.6rem] uppercase tracking-wide text-slate-400">
+                      <Badge variant="secondary" className="mr-2">
                         {action.scope}
-                      </span>
+                      </Badge>
                     )}
                     {action.label}
                   </span>
                   <span className="flex shrink-0 items-center gap-2">
                     {!available && reason !== null && (
-                      <span className="max-w-[14rem] truncate text-xs text-red-400">{reason}</span>
+                      <span className="max-w-[14rem] truncate text-xs text-destructive">{reason}</span>
                     )}
                     {action.binding !== undefined && (
-                      <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-[0.65rem] text-slate-300">
-                        {action.binding}
-                      </kbd>
+                      <Kbd>{action.binding}</Kbd>
                     )}
                   </span>
                 </div>

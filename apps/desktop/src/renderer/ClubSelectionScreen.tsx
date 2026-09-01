@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { type ClubSelectionRow, type SaveId } from "@cm-clone/contracts";
 import { Effect, Result } from "effect";
+import { Badge } from "./components/ui/badge.js";
+import { Card, CardContent } from "./components/ui/card.js";
+import { Spinner } from "./components/ui/spinner.js";
 import { FOCUS_RING } from "./focus.js";
 import { describeRpcError, getClubSelection } from "./rpc.js";
 
@@ -20,12 +23,14 @@ export const ClubSelectionScreen = ({ saveId }: { readonly saveId: SaveId }) => 
     void load();
   }, [saveId]);
 
-  if (error) return <p className="p-8 text-red-400">{error}</p>;
+  if (error) return <p className="p-8 text-destructive">{error}</p>;
 
   if (clubs.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-slate-400">Loading clubs...</p>
+      <div className="py-12 text-center">
+        <p className="inline-flex items-center gap-2 text-text-secondary">
+          <Spinner /> Loading clubs...
+        </p>
       </div>
     );
   }
@@ -33,32 +38,34 @@ export const ClubSelectionScreen = ({ saveId }: { readonly saveId: SaveId }) => 
   return (
     <div tabIndex={-1} className={`space-y-6 ${FOCUS_RING.join(" ")}`}>
       {clubs.map((club) => (
-        <div key={club.clubId} className="border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
-          <div className="flex items-center justify-between py-2">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-slate-700">{club.clubName}</span>
-              <span className="text-xs text-slate-400">{club.statureTier}</span>
+        <Card key={club.clubId} className="transition-shadow hover:shadow-chrome">
+          <CardContent className="pt-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-text-primary">{club.clubName}</span>
+                <Badge variant="outline">{club.statureTier}</Badge>
+              </div>
+              <div className="text-right text-sm tabular-nums text-text-body">
+                <span>${club.transferBudget.toFixed(0)}</span>
+                <span>${club.wageBudget.toFixed(0)}</span>
+              </div>
             </div>
-            <div className="text-right">
-              <span className="text-sm text-slate-600">${club.transferBudget.toFixed(0)}</span>
-              <span className="text-sm text-slate-600">${club.wageBudget.toFixed(0)}</span>
-            </div>
-          </div>
-          <div className="mt-2 pt-2">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-slate-500">Stature Tier</span>
-              <span className="text-slate-600">{club.statureTier}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-slate-500">Board Objective</span>
-              <span className="text-slate-600">{club.boardObjectiveMin} – {club.boardObjectiveMax}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-slate-500">Squad Quality</span>
-              <span className="text-slate-600">{club.squadQualityBand}</span>
-            </div>
-          </div>
-        </div>
+            <dl className="mt-2 space-y-0.5 text-sm">
+              <div className="flex items-center gap-2">
+                <dt className="text-text-muted">Stature Tier</dt>
+                <dd className="text-text-body">{club.statureTier}</dd>
+              </div>
+              <div className="flex items-center gap-2">
+                <dt className="text-text-muted">Board Objective</dt>
+                <dd className="text-text-body">{club.boardObjectiveMin} – {club.boardObjectiveMax}</dd>
+              </div>
+              <div className="flex items-center gap-2">
+                <dt className="text-text-muted">Squad Quality</dt>
+                <dd className="text-text-body">{club.squadQualityBand}</dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );

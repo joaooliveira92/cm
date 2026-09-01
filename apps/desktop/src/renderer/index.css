@@ -14,10 +14,9 @@
  * Token names state the ROLE, never the hue. A name that asserts today's
  * colour is a lie after the first palette change.
  *
- * The `--color-slate-*` entries at the bottom are the migration alias layer:
- * they repaint every pre-existing `slate-*` class onto the adopted palette with
- * zero JSX churn. Each alias is deleted as its last user renames; the layer is
- * the migration backlog, mirrored by the `no-slate-class-name` lint baseline.
+ * The `--color-slate-*` migration alias layer that carried the repaint is gone:
+ * the backlog reached zero (`scripts/slate-baseline.json` is `{}`) and every
+ * call site now names a role. The guard stays on to keep it that way.
  */
 @theme {
   /* --- Typography ------------------------------------------------------- */
@@ -61,8 +60,8 @@
   --color-text-success: #8ae860;
 
   /* --- Controls --------------------------------------------------------- */
-  --color-accent: #15803d;
-  --color-accent-hover: #17904a;
+  /* `accent` is claimed by the shadcn role bridge below (a hover surface, not
+     a hue). The former green pair lived here and had no consumers. */
   /* Fields are opaque on purpose: typed characters must read against an
      unwashed surface, not through a semi-transparent panel. */
   --color-field-bg: #0f151d;
@@ -76,18 +75,46 @@
   --shadow-chrome:
     inset 0 1px 0 rgb(255 255 255 / 0.15), 0 1px 3px rgb(0 0 0 / 0.4);
 
-  /* --- Migration alias layer (delete each entry as its last user renames) - */
-  --color-slate-50: var(--color-text-bright);
-  --color-slate-100: var(--color-text-primary);
-  --color-slate-200: var(--color-text-strong);
-  --color-slate-300: var(--color-text-body);
-  --color-slate-400: var(--color-text-secondary);
-  --color-slate-500: var(--color-text-muted);
-  --color-slate-600: var(--color-border-subtle);
-  --color-slate-700: var(--color-surface-raised);
-  --color-slate-800: var(--color-surface);
-  --color-slate-900: var(--color-bg-raised);
-  --color-slate-950: var(--color-bg-base);
+  /* --- shadcn/Base UI role bridge ---------------------------------------
+     The vendored components in `components/ui/` are written against
+     shadcn's role names (`bg-background`, `text-muted-foreground`,
+     `ring-ring`, ...). Rather than rewrite ~35 upstream files — which would
+     forfeit every future `shadcn add` and re-diff — each role name is
+     declared here as an alias onto the chrome tokens above. The components
+     stay upstream-shaped and inherit the retro frame for free; a skin
+     override still repaints them, because these resolve through the same
+     variables. Same tactic as the `--color-slate-*` layer that carried the
+     original repaint, except this one is permanent rather than a backlog. */
+  --color-background: var(--color-bg-base);
+  --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-panel-bg);
+  --color-card-foreground: var(--color-text-primary);
+  /* Popovers and menus float over content: opaque, never washed. */
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-primary: var(--color-chrome-mid);
+  --color-primary-foreground: var(--color-text-bright);
+  --color-secondary: var(--color-surface-raised);
+  --color-secondary-foreground: var(--color-text-primary);
+  --color-muted: var(--color-surface);
+  --color-muted-foreground: var(--color-text-muted);
+  --color-accent: var(--color-surface-raised);
+  --color-accent-foreground: var(--color-text-bright);
+  --color-destructive: var(--color-text-danger);
+  --color-destructive-foreground: var(--color-text-bright);
+  --color-border: var(--color-border-subtle);
+  --color-input: var(--color-border-subtle);
+  --color-ring: var(--color-focus-ring);
+
+  /* Sidebar family. `sidebar.tsx` reads some of these as bare `var(--sidebar-*)`
+     in inline styles, so the un-prefixed names are declared on `:root` below. */
+  --color-sidebar: var(--color-bg-raised);
+  --color-sidebar-foreground: var(--color-text-primary);
+  --color-sidebar-accent: var(--color-surface-raised);
+  --color-sidebar-accent-foreground: var(--color-text-bright);
+  --color-sidebar-border: var(--color-border-subtle);
+  --color-sidebar-ring: var(--color-focus-ring);
+
 }
 
 /*
@@ -100,6 +127,10 @@
 @layer base {
   :root {
     --page-image: none;
+
+    /* Bare aliases for `sidebar.tsx`'s inline `var(--sidebar-*)` reads. */
+    --sidebar-accent: var(--color-surface-raised);
+    --sidebar-border: var(--color-border-subtle);
   }
 
   html,

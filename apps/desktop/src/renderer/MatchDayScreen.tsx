@@ -24,6 +24,9 @@ import {
 } from "@cm-clone/shared";
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
 import { clearScopeState, getScopeState, setScopeState } from "./actions/scopeState.js";
+import { Alert } from "./components/ui/alert.js";
+import { Badge } from "./components/ui/badge.js";
+import { Button } from "./components/ui/button.js";
 import { FOCUS_RING } from "./focus.js";
 import { useSeamHotkeys } from "./hotkeys.js";
 import { isTextEntryTarget } from "./keymap/keystroke.js";
@@ -95,22 +98,22 @@ const InstructionSlider = <T extends string>({
 
   return (
     <div ref={groupRef} role="group" aria-label={label} onKeyDown={onKeyDown}>
-      <p className="text-xs text-slate-400">{label}</p>
+      <p className="text-xs text-text-secondary">{label}</p>
       <div className="mt-1 flex gap-1">
         {options.map((option) => (
-          <button
+          <Button
             key={option}
             type="button"
+            variant={option === value ? "default" : "secondary"}
+            size="sm"
             data-action-id={actionId}
             tabIndex={option === value ? 0 : -1}
             aria-pressed={option === value}
-            className={`rounded px-2 py-0.5 text-xs capitalize ${FOCUS_RING.join(" ")} ${
-              option === value ? "bg-slate-100 text-slate-900" : "bg-slate-800 hover:bg-slate-700"
-            }`}
+            className="capitalize"
             onClick={() => onChange(option)}
           >
             {option}
-          </button>
+          </Button>
         ))}
       </div>
     </div>
@@ -420,7 +423,7 @@ const MatchControlPanel = ({
   };
 
   return (
-    <section className="mt-4 rounded border border-slate-800 bg-slate-900">
+    <section className="mt-4 rounded-panel border border-panel-border bg-panel-bg shadow-panel">
       <button
         type="button"
         ref={toggleRef}
@@ -431,77 +434,75 @@ const MatchControlPanel = ({
         <span>
           Tactics &amp; substitutions
           {injuryPrompt && (
-            <span
-              className={`ml-2 rounded px-2 py-0.5 text-xs ${
-                hasRedInjury ? "bg-red-700" : "bg-amber-700"
-              }`}
-            >
+            <Badge className="ml-2" variant={hasRedInjury ? "destructive" : "warning"}>
               {hasRedInjury ? "Severe injury — must re-sub" : "Knock — sub or play on"}
-            </span>
+            </Badge>
           )}
         </span>
-        <span className="text-slate-400">{open ? "Hide" : "Show"}</span>
+        <span className="text-text-secondary">{open ? "Hide" : "Show"}</span>
       </button>
 
       {open && (
-        <div className="space-y-4 border-t border-slate-800 p-4 text-sm">
+        <div className="space-y-4 border-t border-border-subtle p-4 text-sm">
           <div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-text-secondary">
               Substitutions used: {subsStatus.used}/5 · Windows used: {subsStatus.windowsUsed}/3
-              {subsStatus.capReached && <span className="ml-2 text-red-400">Cap reached</span>}
+              {subsStatus.capReached && <span className="ml-2 text-destructive">Cap reached</span>}
             </p>
           </div>
 
           {isShorthanded && (
-            <div className="rounded border border-red-800 bg-red-950/40 p-3 text-xs">
-              <p className="font-semibold text-red-300">Playing with {onPitchCount} men</p>
-              <p className="mt-1 text-red-200">
+            <Alert variant="destructive">
+              <p className="font-semibold">Playing with {onPitchCount} men</p>
+              <p className="mt-1">
                 A player is off with no substitute left. Rearrange the remaining players in the
                 tactics panel below to fill the formation before resuming.
               </p>
-            </div>
+            </Alert>
           )}
 
           {orangeInjury && subsStatus.capReached && !isShorthanded && (
-            <div className="rounded border border-amber-700 bg-amber-950/40 p-3 text-xs">
-              <p className="font-semibold text-amber-300">
+            <Alert className="border-text-warning/40 bg-text-warning/10 text-text-warning">
+              <p className="font-semibold">
                 {orangeInjury.playerId} has a knock and you&apos;ve no subs left.
               </p>
-              <p className="mt-1 text-amber-200">
+              <p className="mt-1">
                 Play on (crippled, at risk of escalation to red) or bring them off and play with 10.
               </p>
               <div className="mt-2 flex gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   data-action-id="play-on"
-                  className={`rounded bg-amber-700 px-3 py-1 text-xs hover:bg-amber-600 ${FOCUS_RING.join(" ")}`}
                   onClick={() => void dispatchAction("play-on")}
                 >
                   Play on
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="destructive"
+                  size="sm"
                   data-action-id="bring-off"
-                  className={`rounded bg-red-700 px-3 py-1 text-xs hover:bg-red-600 ${FOCUS_RING.join(" ")}`}
                   onClick={() => void dispatchAction("bring-off")}
                 >
                   Bring off (10 men)
-                </button>
+                </Button>
               </div>
-            </div>
+            </Alert>
           )}
 
           {hasRedInjury && !isShorthanded && (
-            <div className="rounded border border-red-700 bg-red-950/40 p-3 text-xs">
-              <p className="font-semibold text-red-300">A severe injury has forced a player off.</p>
-              <p className="mt-1 text-red-200">
+            <Alert variant="destructive">
+              <p className="font-semibold">A severe injury has forced a player off.</p>
+              <p className="mt-1">
                 No subs left — rearrange the remaining players in the tactics panel below.
               </p>
-            </div>
+            </Alert>
           )}
 
           <div>
-            <label className="flex items-center gap-2 text-xs text-slate-400">
+            <label className="flex items-center gap-2 text-xs text-text-secondary">
               <input
                 type="checkbox"
                 checked={isHalftime}
@@ -512,7 +513,7 @@ const MatchControlPanel = ({
           </div>
 
           <div>
-            <p className="mb-1 text-xs font-semibold text-slate-300">Team instructions</p>
+            <p className="mb-1 text-xs font-semibold text-text-body">Team instructions</p>
             <div className="flex gap-6">
               <InstructionSlider<Mentality>
                 label="Mentality"
@@ -536,28 +537,30 @@ const MatchControlPanel = ({
                 onChange={(pressing) => void dispatchAction("set-live-pressing", { value: pressing })}
               />
             </div>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-text-muted">
               Formation stays {tactic.formation as Formation} live — use the pre-match Tactics screen to
               redraft slots.
             </p>
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
+              className="mt-2"
               data-action-id="apply-live-tactics"
-              className={`mt-2 rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600 ${FOCUS_RING.join(" ")}`}
               onClick={() => void dispatchAction("apply-live-tactics")}
             >
               Apply tactics change
-            </button>
+            </Button>
           </div>
 
           <div>
-            <p className="mb-1 text-xs font-semibold text-slate-300">Make a substitution</p>
+            <p className="mb-1 text-xs font-semibold text-text-body">Make a substitution</p>
             <div className="flex items-end gap-2">
               <div>
-                <p className="text-xs text-slate-400">Off</p>
+                <p className="text-xs text-text-secondary">Off</p>
                 <select
                   data-action-id="set-live-substitute-off"
-                  className={`rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
+                  className={SELECT_CLASS}
                   value={outPlayerId}
                   onChange={(event) =>
                     void dispatchAction("set-live-substitute-off", {
@@ -575,10 +578,10 @@ const MatchControlPanel = ({
                 </select>
               </div>
               <div>
-                <p className="text-xs text-slate-400">On</p>
+                <p className="text-xs text-text-secondary">On</p>
                 <select
                   data-action-id="set-live-substitute-in"
-                  className={`rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
+                  className={SELECT_CLASS}
                   value={inPlayerId}
                   onChange={(event) =>
                     void dispatchAction("set-live-substitute-in", {
@@ -595,24 +598,24 @@ const MatchControlPanel = ({
                   ))}
                 </select>
               </div>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 data-action-id="make-substitution"
                 disabled={subsStatus.capReached || !outPlayerId || !inPlayerId}
-                className={`rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
                 onClick={() => void dispatchAction("make-substitution")}
               >
                 Make substitution
-              </button>
+              </Button>
             </div>
             {subAlert && (
-              <p role="alert" className="mt-1 text-xs text-amber-300">
+              <p role="alert" className="mt-1 text-xs text-text-warning">
                 {subAlert}
               </p>
             )}
           </div>
 
-          {status && <p className="text-xs text-slate-500">{status}</p>}
+          {status && <p className="text-xs text-text-muted">{status}</p>}
         </div>
       )}
     </section>
@@ -846,16 +849,16 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
+    <main className="min-h-screen bg-background p-8 text-foreground">
       <h1 className="text-2xl font-bold">Match day</h1>
-      {error && <p className="mt-2 text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-destructive">{error}</p>}
 
       {!match && (
         <section className="mt-6 flex items-end gap-2">
           <div>
-            <p className="text-sm text-slate-400">Opponent</p>
+            <p className="text-sm text-text-secondary">Opponent</p>
             <select
-              className="mt-1 rounded bg-slate-800 px-2 py-1"
+              className={`mt-1 ${SELECT_CLASS}`}
               value={opponentId}
               onChange={(event) => setOpponentId(ClubId.make(event.target.value))}
             >
@@ -866,15 +869,14 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
               ))}
             </select>
           </div>
-          <button
+          <Button
             type="button"
             data-action-id="start-match"
             disabled={!opponentId || starting}
-            className={`rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
             onClick={() => void dispatchAction("start-match")}
           >
             {starting ? "Starting..." : "Start match"}
-          </button>
+          </Button>
         </section>
       )}
 
@@ -884,19 +886,19 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             <h2 className="text-xl font-semibold">
               {match.homeClubName} {homeScore} - {awayScore} {match.awayClubName}
             </h2>
-            <span className="text-sm text-slate-400">
+            <span className="text-sm text-text-secondary">
               {isComplete ? "Full time" : paused ? "Paused — awaiting decision" : "Live"}
             </span>
           </div>
 
-          <ul className="mt-4 max-h-[60vh] space-y-1 overflow-y-auto rounded border border-slate-800 bg-slate-900 p-4 text-sm">
+          <ul className="mt-4 max-h-[60vh] space-y-1 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-4 text-sm shadow-panel">
             {revealed.map((line, index) => (
               <li key={index} className="flex gap-3">
-                <span className="w-10 shrink-0 text-slate-500">{line.minute}&apos;</span>
+                <span className="w-10 shrink-0 tabular-nums text-text-muted">{line.minute}&apos;</span>
                 <span>{line.text}</span>
               </li>
             ))}
-            {revealed.length === 0 && <li className="text-slate-500">Kick-off is coming up...</li>}
+            {revealed.length === 0 && <li className="text-text-muted">Kick-off is coming up...</li>}
           </ul>
 
           {!isComplete && (
@@ -919,14 +921,14 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
               <p className="font-semibold">
                 Final score: {match.homeClubName} {homeScore} - {awayScore} {match.awayClubName}
               </p>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 data-action-id="reset-match"
-                className={`rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 ${FOCUS_RING.join(" ")}`}
                 onClick={() => void dispatchAction("reset-match")}
               >
                 Back to opponent picker
-              </button>
+              </Button>
             </div>
           )}
         </section>
@@ -934,3 +936,6 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     </main>
   );
 };
+
+/** Native `<select>` paint. See the note in `table/TablePanel.tsx`. */
+const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;

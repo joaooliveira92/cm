@@ -11,7 +11,18 @@ import type { BidId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { Option } from "effect";
 import { ACTION_REGISTRY } from "./actions/allActions.js";
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
-import { focusIdOf, FOCUS_RING, focusSemanticTarget, restoreFocusAfterOverlay } from "./focus.js";
+import { Alert } from "./components/ui/alert.js";
+import { Button } from "./components/ui/button.js";
+import { Input } from "./components/ui/input.js";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./components/ui/table.js";
+import { focusIdOf, focusSemanticTarget, restoreFocusAfterOverlay } from "./focus.js";
 import { ActionKeyBadge, actionBadgeBinding } from "./discoverability/ActionKeyBadge.js";
 import {
   AsyncResult,
@@ -99,29 +110,20 @@ const KeepDiscardDialog = ({
         aria-modal="true"
         aria-label="Discard the bid in progress?"
         onKeyDown={onKeyDown}
-        className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-900 p-4 text-slate-100 shadow-2xl"
+        className="w-full max-w-sm rounded-panel border border-panel-border bg-panel-bg-strong p-3 text-text-primary shadow-2xl"
       >
         <h2 className="text-lg font-semibold">Discard the bid in progress?</h2>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-text-secondary">
           You typed an amount for {playerName}. Moving away would lose this bid
           unless you keep it.
         </p>
         <div className="mt-4 flex justify-end gap-2">
-          <button
-            ref={keepRef}
-            type="button"
-            className={`rounded bg-slate-700 px-3 py-1 text-sm ${FOCUS_RING.join(" ")}`}
-            onClick={onKeep}
-          >
+          <Button ref={keepRef} type="button" variant="secondary" onClick={onKeep}>
             Keep bid
-          </button>
-          <button
-            type="button"
-            className={`rounded bg-amber-600 px-3 py-1 text-sm text-slate-950 ${FOCUS_RING.join(" ")}`}
-            onClick={onDiscard}
-          >
+          </Button>
+          <Button type="button" onClick={onDiscard}>
             Discard draft
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -737,35 +739,34 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   // keeps `view` — that path renders the tables with a non-blocking line, F1).
   if (viewError !== null && view === undefined) {
     return (
-      <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
+      <main className="min-h-screen bg-background p-8 text-foreground">
         <h1 className="text-2xl font-bold">Transfers</h1>
-        <div role="alert" className="mt-6 rounded border border-red-800 bg-red-950/40 p-4">
-          <p className="text-red-300">{describeRpcError(viewError)}</p>
-          <button
+        <Alert variant="destructive" className="mt-6">
+          <p>{describeRpcError(viewError)}</p>
+          <Button
             type="button"
+            variant="secondary"
+            className="mt-2"
             data-action-id="retry-market-table"
-            className={`mt-2 rounded bg-slate-700 px-3 py-1 text-sm ${FOCUS_RING.join(" ")}`}
             onClick={() => void dispatchAction("retry-market-table")}
           >
             {STATE_COPY["transfer-market"].retryLabel}
-          </button>
-        </div>
+          </Button>
+        </Alert>
       </main>
     );
   }
   if (view === undefined) {
     return (
-      <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
+      <main className="min-h-screen bg-background p-8 text-foreground">
         <h1 className="text-2xl font-bold">Transfers</h1>
-        <div aria-busy="true" className="py-8 text-slate-400">
+        <div aria-busy="true" className="py-8 text-text-secondary">
           Loading transfers…
         </div>
       </main>
     );
   }
 
-  const btn = "rounded bg-slate-700 px-2 py-1 text-xs hover:bg-slate-600";
-  const btnCls = `${btn} ${FOCUS_RING.join(" ")}`;
 
   const focusBidAction = ACTION_REGISTRY.get("focus-bid");
   const bidBadge =
@@ -778,42 +779,45 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     readonly amount: number;
     readonly status: string;
   }) => (
-    <tr key={String(bid.id)} className="border-b border-slate-800">
-      <td className="py-1 pr-4">{bid.playerName}</td>
-      <td className="py-1 pr-4">{bid.biddingClubName}</td>
-      <td className="py-1 pr-4">{formatCredits(bid.amount)}</td>
-      <td className="py-1 pr-4">{bid.status}</td>
-      <td className="py-1 pr-4">
+    <TableRow key={String(bid.id)}>
+      <TableCell className="pr-4">{bid.playerName}</TableCell>
+      <TableCell className="pr-4">{bid.biddingClubName}</TableCell>
+      <TableCell className="pr-4">{formatCredits(bid.amount)}</TableCell>
+      <TableCell className="pr-4">{bid.status}</TableCell>
+      <TableCell className="pr-4">
         {bid.status === "pending" && (
           <div className="flex gap-1">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               data-action-id="respond-accept"
-              className={btnCls}
               onClick={() => void dispatchAction("respond-accept", { bidId: bid.id })}
             >
               Accept
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               data-action-id="respond-counter"
-              className={btnCls}
               onClick={() => void dispatchAction("respond-counter", { bidId: bid.id })}
             >
               Counter
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               data-action-id="respond-reject"
-              className={btnCls}
               onClick={() => void dispatchAction("respond-reject", { bidId: bid.id })}
             >
               Reject
-            </button>
+            </Button>
           </div>
         )}
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 
   const renderOutgoingBid = (bid: {
@@ -824,122 +828,126 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     readonly counterAmount: number | null;
     readonly status: string;
   }) => (
-    <tr key={String(bid.id)} className="border-b border-slate-800">
-      <td className="py-1 pr-4">{bid.playerName}</td>
-      <td className="py-1 pr-4">{bid.sellingClubName}</td>
-      <td className="py-1 pr-4">{formatCredits(bid.amount)}</td>
-      <td className="py-1 pr-4">{bid.counterAmount !== null ? formatCredits(bid.counterAmount) : "-"}</td>
-      <td className="py-1 pr-4">{bid.status}</td>
-      <td className="py-1 pr-4">
+    <TableRow key={String(bid.id)}>
+      <TableCell className="pr-4">{bid.playerName}</TableCell>
+      <TableCell className="pr-4">{bid.sellingClubName}</TableCell>
+      <TableCell className="pr-4">{formatCredits(bid.amount)}</TableCell>
+      <TableCell className="pr-4">{bid.counterAmount !== null ? formatCredits(bid.counterAmount) : "-"}</TableCell>
+      <TableCell className="pr-4">{bid.status}</TableCell>
+      <TableCell className="pr-4">
         {bid.status === "countered" && (
           <div className="flex gap-1">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               data-action-id="accept-counter"
-              className={btnCls}
               onClick={() => void dispatchAction("accept-counter", { bidId: bid.id })}
             >
               Accept counter
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               data-action-id="withdraw-bid"
-              className={btnCls}
               onClick={() => void dispatchAction("withdraw-bid", { bidId: bid.id })}
             >
               Withdraw
-            </button>
+            </Button>
           </div>
         )}
         {bid.status === "pending" && (
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             data-action-id="withdraw-bid"
-            className={btnCls}
             onClick={() => void dispatchAction("withdraw-bid", { bidId: bid.id })}
           >
             Withdraw
-          </button>
+          </Button>
         )}
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 
   return (
-    <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
-      <h1 className="text-2xl font-bold">Transfers &mdash; {view.club.name}</h1>
-      <p className="mt-1 text-sm text-slate-400">
+    <main className="min-h-screen bg-background p-8 text-foreground">
+      <h1 className="text-2xl font-bold">Transfers</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         Transfer Window: {view.windowOpen ? "Open" : "Closed"} &middot; Transfer Budget:{" "}
         {formatCredits(view.transferBudgetRemaining)} &middot; Wage Budget:{" "}
         {formatCredits(view.wageBudgetUsed)} / {formatCredits(view.wageBudget)}
       </p>
-      {status && <p className="mt-1 text-sm text-slate-400">{status}</p>}
+      {status && <p className="mt-1 text-sm text-text-secondary">{status}</p>}
       {refreshState._tag === "Refreshing" && (
-        <p className="mt-1 text-sm text-slate-500">Refreshing…</p>
+        <p className="mt-1 text-sm text-text-muted">Refreshing…</p>
       )}
       {refreshState._tag === "RefreshFailed" && (
-        <p className="mt-1 text-sm text-red-400">
+        <p className="mt-1 text-sm text-destructive">
           {STATE_COPY["transfer-market"].refreshFailed}{" "}
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             data-action-id="retry-market-table"
-            className={`rounded bg-slate-700 px-2 py-0.5 text-xs text-slate-100 ${FOCUS_RING.join(" ")}`}
             onClick={() => void dispatchAction("retry-market-table")}
           >
             {STATE_COPY["transfer-market"].retryLabel}
-          </button>
+          </Button>
         </p>
       )}
 
       <section className="mt-6">
         <h2 className="text-lg font-semibold">Incoming Bids</h2>
-        <table className="mt-2 min-w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-700 text-slate-400">
-              <th className="py-1 pr-4">Player</th>
-              <th className="py-1 pr-4">From</th>
-              <th className="py-1 pr-4">Amount</th>
-              <th className="py-1 pr-4">Status</th>
-              <th className="py-1 pr-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="mt-2 min-w-full text-left">
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pr-4">Player</TableHead>
+              <TableHead className="pr-4">From</TableHead>
+              <TableHead className="pr-4">Amount</TableHead>
+              <TableHead className="pr-4">Status</TableHead>
+              <TableHead className="pr-4">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {view.incomingBids.map(renderIncomingBid)}
             {view.incomingBids.length === 0 && (
-              <tr>
-                <td className="py-2 text-slate-500" colSpan={5}>
+              <TableRow>
+                <TableCell className="py-2 text-text-muted" colSpan={5}>
                   No incoming Bids.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </section>
 
       <section className="mt-6">
         <h2 className="text-lg font-semibold">Outgoing Bids</h2>
-        <table className="mt-2 min-w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-700 text-slate-400">
-              <th className="py-1 pr-4">Player</th>
-              <th className="py-1 pr-4">To</th>
-              <th className="py-1 pr-4">Amount</th>
-              <th className="py-1 pr-4">Counter</th>
-              <th className="py-1 pr-4">Status</th>
-              <th className="py-1 pr-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="mt-2 min-w-full text-left">
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pr-4">Player</TableHead>
+              <TableHead className="pr-4">To</TableHead>
+              <TableHead className="pr-4">Amount</TableHead>
+              <TableHead className="pr-4">Counter</TableHead>
+              <TableHead className="pr-4">Status</TableHead>
+              <TableHead className="pr-4">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {view.outgoingBids.map(renderOutgoingBid)}
             {view.outgoingBids.length === 0 && (
-              <tr>
-                <td className="py-2 text-slate-500" colSpan={6}>
+              <TableRow>
+                <TableCell className="py-2 text-text-muted" colSpan={6}>
                   No outgoing Bids.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </section>
 
       <section className="mt-6">
@@ -1009,53 +1017,52 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       {/* Contextual Actions region (AC-29): bid entry lives here, never in a row. */}
       {draft !== null && draftedPlayer !== null && (
         <section
-          className="mt-6 rounded border border-slate-700 bg-slate-900 p-4"
+          className="mt-6 rounded-panel border border-panel-border bg-panel-bg p-3 shadow-panel"
           data-action-region="place-bid"
           aria-label="Place bid"
         >
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-text-secondary">
             {draftedPlayer.clubName === null ? "Sign free agent" : "Place bid"}
             {bidBadge !== null && <ActionKeyBadge binding={bidBadge} />}
           </h2>
-          <p className="mt-1 text-slate-200">
+          <p className="mt-1 text-text-strong">
             Player: {draftedPlayer.firstName} {draftedPlayer.lastName}
           </p>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-text-secondary">
             Value: {formatCredits(draftedPlayer.transferValue)}
           </p>
           {draftedPlayer.clubName === null ? (
             <>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-text-secondary">
                 Free Agent &mdash; signable for Credits 0.
               </p>
-              <button
+              <Button
                 type="button"
+                className="mt-3"
                 data-action-id="sign-free-agent"
-                className={`mt-3 rounded bg-slate-100 px-3 py-1 text-sm text-slate-900 ${FOCUS_RING.join(" ")}`}
                 onClick={() => void dispatchAction("sign-free-agent", { playerId: draftedPlayer.id as PlayerId })}
               >
                 Sign (0 Cr)
-              </button>
+              </Button>
             </>
           ) : (
             <div className="mt-2 flex items-center gap-2">
-              <label className="text-sm text-slate-300" htmlFor="bid-amount">
+              <label className="text-sm text-text-body" htmlFor="bid-amount">
                 Your bid:
               </label>
-              <input
+              <Input
                 id="bid-amount"
                 ref={amountInputRef}
-                className={`w-32 rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
+                className="w-32"
                 placeholder="Amount"
                 value={draft.amountInput}
                 onChange={(event) =>
                   setDraft(reduceBidDraft(draftRef.current, { _tag: "amountChanged", value: event.target.value }))
                 }
               />
-              <button
+              <Button
                 type="button"
                 data-action-id="place-bid"
-                className={`rounded bg-amber-500 px-3 py-1 text-sm text-slate-950 ${FOCUS_RING.join(" ")}`}
                 disabled={!windowOpen || !draftAmountValid}
                 onClick={() =>
                   void dispatchAction("place-bid", {
@@ -1065,16 +1072,16 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                 }
               >
                 Bid
-              </button>
+              </Button>
             </div>
           )}
           {!windowOpen && (
-            <p className="mt-2 text-sm text-slate-500">The transfer window is closed.</p>
+            <p className="mt-2 text-sm text-text-muted">The transfer window is closed.</p>
           )}
           {bidAlert !== null && (
-            <div role="alert" className="mt-2 text-sm text-red-300">
+            <Alert variant="destructive" className="mt-2">
               {bidAlert}
-            </div>
+            </Alert>
           )}
         </section>
       )}

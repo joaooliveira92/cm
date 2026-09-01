@@ -122,7 +122,10 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
         <SquadScreen saveId={relaxedSaveId("s1")} />
       </RegistryProvider>,
     );
-    expect(await screen.findByText("Test FC")).toBeTruthy();
+    // The heading is the section name; club identity moved to the career
+    // chrome's title bar, so the screen no longer repeats it.
+    expect(await screen.findByRole("heading", { name: "Squad" })).toBeTruthy();
+    expect(screen.queryByText("Test FC")).toBeNull();
     expect(await screen.findByText(/Alan Shearer/)).toBeTruthy();
   });
 

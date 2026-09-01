@@ -1,17 +1,19 @@
 import type { SaveId } from "@cm-clone/contracts";
-import { Outlet, useLocation, useParams } from "@tanstack/react-router";
-import { type ComponentType, type MouseEvent, useEffect } from "react";
-import type { NavigationIntent } from "../focus.js";
+import { Outlet, useParams } from "@tanstack/react-router";
+import { type ComponentType, useEffect } from "react";
 import {
-  navigate,
   navigateCareer,
-  navigateWithFocus,
 } from "../navigation/adapter.js";
-import type { CareerDestination } from "../navigation/destinations.js";
 import { decodeSaveId } from "../navigation/params.js";
+import { CareerChrome } from "../chrome/CareerChrome.js";
 import { RegistryProvider } from "../rpc.js";
 import { resetTableSessions } from "../table/tableState.js";
 import { RouteView } from "./RouteView.js";
+
+// The chrome moved to `chrome/CareerChrome.tsx` when it grew a title bar, a
+// season readout, and the career-loop handler. Re-exported here because the tab
+// set is checked against `CAREER_SCREEN_TYPES` from this module's path.
+export { CAREER_TABS, CareerChrome, type CareerTab } from "../chrome/CareerChrome.js";
 
 /** Distinct route-structure error, rendered apart from typed RPC failures (AC-12). */
 export const RouteParamErrorScreen = ({
@@ -19,92 +21,11 @@ export const RouteParamErrorScreen = ({
 }: {
   readonly reason: string;
 }) => (
-  <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
+  <main className="min-h-screen bg-background p-8 text-foreground">
     <h1 className="text-2xl font-bold">Invalid career address</h1>
-    <p className="mt-4 text-slate-400">{reason}</p>
+    <p className="mt-4 text-text-secondary">{reason}</p>
   </main>
 );
-
-export interface CareerTab {
-  readonly label: string;
-  readonly childPath: string;
-  readonly destination: CareerDestination["type"];
-}
-
-/**
- * The career tab strip, in display order. Exported so the tab set can be checked against
- * `CAREER_SCREEN_TYPES`: a career screen with a route and a `g` binding but no tab is reachable
- * only by keyboard, which is the drift this list is easy to acquire.
- */
-export const CAREER_TABS: ReadonlyArray<CareerTab> = [
-  { label: "squad", childPath: "squad", destination: "squad" },
-  { label: "tactics", childPath: "tactics", destination: "tactics" },
-  { label: "transfers", childPath: "transfers", destination: "transfers" },
-  { label: "league table", childPath: "league", destination: "league" },
-  { label: "fixtures", childPath: "fixtures", destination: "fixtures" },
-  { label: "match day", childPath: "match", destination: "match" },
-  {
-    label: "season summary",
-    childPath: "season-summary",
-    destination: "seasonSummary",
-  },
-  { label: "manager", childPath: "manager", destination: "manager" },
-];
-
-/** The career chrome: the persistent shell every career route shares (AC-11). */
-export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
-  const { pathname } = useLocation();
-  const activeChild = pathname.split("/").at(-1) ?? "";
-  const tabs = CAREER_TABS;
-
-  const onTabClick = (
-    event: MouseEvent,
-    destination: CareerDestination["type"],
-  ): void => {
-    // event.detail === 0 marks keyboard (Enter/Space) activation of the native
-    // button; pointer clicks always report a non-zero detail. Navigation intent
-    // decides whether the destination requests semantic focus.
-    const intent: NavigationIntent = event.detail > 0 ? "pointer" : "keyboard";
-    navigateCareer({ type: destination, saveId }, intent);
-  };
-
-  const onBackToSaves = (event: MouseEvent): void => {
-    const intent: NavigationIntent = event.detail > 0 ? "pointer" : "keyboard";
-    if (intent === "keyboard") {
-      navigateWithFocus({ type: "saveList" }, { screen: "saveList" });
-    } else {
-      navigate({ type: "saveList" });
-    }
-  };
-
-  return (
-    <nav className="flex items-center justify-between border-b border-slate-800 bg-slate-950 p-2 text-sm text-slate-100">
-      <div className="flex gap-4">
-        {tabs.map((tab) => (
-          <button
-            key={tab.childPath}
-            type="button"
-            className={`rounded px-3 py-1 capitalize ${
-              tab.childPath === activeChild
-                ? "bg-slate-100 text-slate-900"
-                : "bg-slate-800 hover:bg-slate-700"
-            }`}
-            onClick={(event) => onTabClick(event, tab.destination)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      <button
-        type="button"
-        className="rounded bg-slate-800 px-3 py-1 hover:bg-slate-700"
-        onClick={onBackToSaves}
-      >
-        Back to saves
-      </button>
-    </nav>
-  );
-};
 
 /**
  * The career parent route (`/career/$saveId`). Owns the persistent shell and

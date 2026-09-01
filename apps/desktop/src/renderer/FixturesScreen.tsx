@@ -1,4 +1,7 @@
 import { type SaveId } from "@cm-clone/contracts";
+import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card.js";
+import { Spinner } from "./components/ui/spinner.js";
+import { Table, TableBody, TableCell, TableRow } from "./components/ui/table.js";
 import { FOCUS_RING } from "./focus.js";
 import { describeRpcError, fixturesAtom, typedError, useAtomValue } from "./rpc.js";
 
@@ -6,9 +9,15 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const fixturesResult = useAtomValue(fixturesAtom(saveId));
 
   const error = typedError(fixturesResult);
-  if (error) return <p className="p-8 text-red-400">{describeRpcError(error)}</p>;
-  if (fixturesResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading fixtures...</p>;
-  if (fixturesResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load fixtures</p>;
+  if (error) return <p className="p-8 text-destructive">{describeRpcError(error)}</p>;
+  if (fixturesResult._tag === "Initial")
+    return (
+      <p className="flex items-center gap-2 p-8 text-text-secondary">
+        <Spinner /> Loading fixtures...
+      </p>
+    );
+  if (fixturesResult._tag === "Failure")
+    return <p className="p-8 text-destructive">Failed to load fixtures</p>;
 
   const fixtures = fixturesResult.value;
 
@@ -18,30 +27,42 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   }
 
   return (
-    <main tabIndex={-1} className={`min-h-screen bg-slate-950 p-8 text-slate-100 ${FOCUS_RING.join(" ")}`}>
+    <main tabIndex={-1} className={`min-h-screen bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
       <h1 className="text-2xl font-bold">Fixtures</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-text-secondary">
         Season {fixtures.season.seasonNumber} &middot; {fixtures.fixtures.length} fixtures
-        {fixturesResult.waiting && <span className="ml-2 text-slate-500">Refreshing…</span>}
+        {fixturesResult.waiting && (
+          <span className="ml-2 inline-flex items-center gap-1 text-text-muted">
+            <Spinner className="h-3 w-3" /> Refreshing…
+          </span>
+        )}
       </p>
 
-      <div className="mt-6 space-y-6">
+      <div className="mt-6 space-y-3">
         {[...byMatchday.entries()].map(([matchday, matchdayFixtures]) => (
-          <section key={matchday}>
-            <h2 className="text-sm font-semibold text-slate-400">Matchday {matchday}</h2>
-            <ul className="mt-1 space-y-1 text-sm">
-              {matchdayFixtures.map((fixture) => (
-                <li key={fixture.id} className="flex justify-between border-b border-slate-800 py-1">
-                  <span>
-                    {fixture.homeClubName} vs {fixture.awayClubName}
-                  </span>
-                  <span className="text-slate-300">
-                    {fixture.played ? `${fixture.homeGoals} - ${fixture.awayGoals}` : "-"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <Card key={matchday}>
+            <CardHeader>
+              <CardTitle className="text-2xs uppercase tracking-wide text-text-secondary">
+                Matchday {matchday}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableBody>
+                  {matchdayFixtures.map((fixture) => (
+                    <TableRow key={fixture.id}>
+                      <TableCell>
+                        {fixture.homeClubName} vs {fixture.awayClubName}
+                      </TableCell>
+                      <TableCell className="w-16 text-right tabular-nums text-text-strong">
+                        {fixture.played ? `${fixture.homeGoals} - ${fixture.awayGoals}` : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </main>

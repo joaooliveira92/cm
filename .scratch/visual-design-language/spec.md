@@ -4,6 +4,15 @@ Status: ready-for-agent
 
 > Publish point for the *visual-design-language* map (`.scratch/visual-design-language/map.md`), all of whose tickets 01-07 are resolved. The frontier is empty; this spec is the handoff to `/cm-to-tickets` then `/cm-implement`.
 
+> **Amended 2026-08-31.** The primitive layer is no longer hand-built. The renderer adopted the
+> vendored shadcn component set (Base UI variant) under `apps/desktop/src/renderer/components/ui/`,
+> styled through a role-name bridge onto the chrome tokens rather than shadcn's default palette.
+> Everything below about the *look* — palette, typography, density, chrome, adoption path — stands
+> unchanged, and the incremental adoption path below ran to completion: the backlog is empty and
+> the `--color-slate-*` alias layer has been deleted. Only the answer to "where do dialogs,
+> buttons, fields and popovers come from" changed. See
+> `.agents/notes/proposed/architecture/2026-08-31-shadcn-component-adoption.md`.
+
 ## Problem Statement
 
 The `@cm-clone/desktop` renderer has no visual design language informed by the CM 03/04 reference at `docs/ui-elements.md`. All nine screens render a flat dark slate (`bg-slate-950`) with default Tailwind typography, no panel system, no status vocabulary, no persistent chrome, and no skin architecture - a generic, text-dense-but-flat surface that carries none of the retro identity the reference material specifies.

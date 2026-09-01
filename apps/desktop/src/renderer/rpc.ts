@@ -16,6 +16,7 @@ export {
   seasonSummaryAtom,
   managerProfileAtom,
   transfersAtom,
+  saveSummaryAtom,
   saveKey,
   squadKey,
   transfersKey,

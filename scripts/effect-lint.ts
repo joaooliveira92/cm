@@ -280,8 +280,15 @@ export function isSlateGuarded(filePath: string): boolean {
  * Template literals are covered by their head/middle/tail segments, which is
  * what makes `className={`… ${FOCUS_RING.join(" ")} …`}` visible to the rule.
  * In this renderer `slate-` appears only in class strings, so scanning literals
- * costs no false positives and closes the hoisting hole.
+ * closes the hoisting hole cheaply.
+ *
+ * The match is left-anchored on a non-letter. A bare substring search also hits
+ * `translate-x-1/2`, which is how the guard first read the vendored
+ * `components/ui/*` set: six phantom violations in files holding no slate at
+ * all. A dash may precede (`bg-slate-700`); a letter may not.
  */
+const SLATE_CLASS_PATTERN = /(?<![a-zA-Z])slate-/g
+
 export function lintSlateClassNames(sourceFile: SourceFile, filePath: string): LintViolation[] {
   const out: LintViolation[] = []
   const visit = (node: Node): void => {
@@ -290,7 +297,7 @@ export function lintSlateClassNames(sourceFile: SourceFile, filePath: string): L
       if (typeof text === "string") {
         // One violation per occurrence, not per literal: adding a second slate
         // class to a line that already had one must still move the count.
-        const hits = text.split("slate-").length - 1
+        const hits = text.match(SLATE_CLASS_PATTERN)?.length ?? 0
         if (hits > 0) {
           const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
           for (let i = 0; i < hits; i += 1) {

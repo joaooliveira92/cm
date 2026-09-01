@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { PlayerId, Tactic, type SaveId, type TacticSlot } from "@cm-clone/contracts";
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
+import { Button } from "./components/ui/button.js";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./components/ui/table.js";
 import { FOCUS_RING } from "./focus.js";
 import {
   FORMATIONS,
@@ -61,20 +70,20 @@ const InstructionSlider = <T extends string>({
   readonly actionId: string;
 }) => (
   <div>
-    <p className="text-sm text-slate-400">{label}</p>
+    <p className="text-sm text-text-secondary">{label}</p>
     <div className="mt-1 flex gap-1">
       {options.map((option) => (
-        <button
+        <Button
           key={option}
           type="button"
+          variant={option === value ? "default" : "secondary"}
+          aria-pressed={option === value}
           data-action-id={actionId}
-          className={`rounded px-3 py-1 text-sm capitalize ${FOCUS_RING.join(" ")} ${
-            option === value ? "bg-slate-100 text-slate-900" : "bg-slate-800 hover:bg-slate-700"
-          }`}
+          className="capitalize"
           onClick={() => onChange(option)}
         >
           {option}
-        </button>
+        </Button>
       ))}
     </div>
   </div>
@@ -141,7 +150,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   }, [saveId, tactic]);
 
   if (viewError) return <p className="p-8 text-red-400">{describeRpcError(viewError)}</p>;
-  if (viewResult._tag === "Initial") return <p className="p-8 text-slate-400">Loading tactics...</p>;
+  if (viewResult._tag === "Initial") return <p className="p-8 text-text-secondary">Loading tactics...</p>;
   if (viewResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load tactics</p>;
 
   const view = viewResult.value;
@@ -150,26 +159,23 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     new Set(tactic.slots.filter((_, index) => index !== slotIndex).map((slot) => slot.playerId));
 
   return (
-    <main className="min-h-screen bg-slate-950 p-8 text-slate-100">
-      <h1 className="text-2xl font-bold">Tactics &mdash; {view.club.name}</h1>
+    <main className="min-h-screen bg-background p-8 text-foreground">
+      <h1 className="text-2xl font-bold">Tactics</h1>
 
       <section className="mt-6">
-        <p className="text-sm text-slate-400">Formation</p>
+        <p className="text-sm text-text-secondary">Formation</p>
         <div className="mt-1 flex gap-1">
           {FORMATIONS.map((formation) => (
-            <button
+            <Button
               key={formation}
               type="button"
+              variant={formation === tactic.formation ? "default" : "secondary"}
+              aria-pressed={formation === tactic.formation}
               data-action-id="set-formation"
-              className={`rounded px-3 py-1 text-sm ${FOCUS_RING.join(" ")} ${
-                formation === tactic.formation
-                  ? "bg-slate-100 text-slate-900"
-                  : "bg-slate-800 hover:bg-slate-700"
-              }`}
               onClick={() => void dispatchAction("set-formation", { formation })}
             >
               {formation}
-            </button>
+            </Button>
           ))}
         </div>
       </section>
@@ -199,29 +205,29 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       </section>
 
       <section className="mt-6">
-        <table className="min-w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-700 text-slate-400">
-              <th className="py-1 pr-4">Slot</th>
-              <th className="py-1 pr-4">Position</th>
-              <th className="py-1 pr-4">Role</th>
-              <th className="py-1 pr-4">Player</th>
-              <th className="py-1 pr-4">Role Rating</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="min-w-full text-left">
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pr-4">Slot</TableHead>
+              <TableHead className="pr-4">Position</TableHead>
+              <TableHead className="pr-4">Role</TableHead>
+              <TableHead className="pr-4">Player</TableHead>
+              <TableHead className="pr-4">Role Rating</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {tactic.slots.map((slot: TacticSlot, index) => {
               const player = squadById.get(slot.playerId);
               const taken = assignedElsewhere(index);
               return (
-                <tr key={index} className="border-b border-slate-800">
-                  <td className="py-1 pr-4">{index + 1}</td>
-                  <td className="py-1 pr-4">{slot.position}</td>
-                  <td className="py-1 pr-4">{slot.role}</td>
-                  <td className="py-1 pr-4">
+                <TableRow key={index}>
+                  <TableCell className="pr-4 tabular-nums">{index + 1}</TableCell>
+                  <TableCell className="pr-4">{slot.position}</TableCell>
+                  <TableCell className="pr-4">{slot.role}</TableCell>
+                  <TableCell className="pr-4">
                     <select
                       data-action-id="assign-slot-player"
-                      className={`rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
+                      className={SELECT_CLASS}
                       value={slot.playerId}
                       onChange={(event) =>
                         void dispatchAction("assign-slot-player", {
@@ -239,30 +245,32 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                           </option>
                         ))}
                     </select>
-                  </td>
-                  <td className="py-1 pr-4 font-semibold">
+                  </TableCell>
+                  <TableCell className="pr-4 font-semibold tabular-nums">
                     {player
                       ? roleRating(player.attributes as PlayerAttributes, slot.role)
                       : "-"}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </section>
 
       <section className="mt-6">
-        <button
+        <Button
           type="button"
           data-action-id="save-tactic"
-          className={`rounded bg-slate-700 px-3 py-1 hover:bg-slate-600 ${FOCUS_RING.join(" ")}`}
           onClick={() => void dispatchAction("save-tactic")}
         >
           Save Tactic
-        </button>
-        {status && <span className="ml-3 text-sm text-slate-400">{status}</span>}
+        </Button>
+        {status && <span className="ml-3 text-sm text-text-secondary">{status}</span>}
       </section>
     </main>
   );
 };
+
+/** Native `<select>` paint. See the note in `table/TablePanel.tsx`. */
+const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;
