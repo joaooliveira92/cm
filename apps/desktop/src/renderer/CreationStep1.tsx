@@ -379,7 +379,7 @@ export const CreationStep1 = ({
                         type="button"
                         variant="secondary"
                         aria-pressed={isSelected}
-                        className={`relative h-full min-h-44 w-full flex-col items-start justify-between rounded-2xl border p-4 text-left ${
+                        className={`relative h-full min-h-36 w-full flex-col items-start justify-between rounded-2xl border p-4 text-left ${
                           isSelected
                             ? "border-transparent bg-surface-raised"
                             : "border-border-subtle bg-surface hover:border-primary/30"
