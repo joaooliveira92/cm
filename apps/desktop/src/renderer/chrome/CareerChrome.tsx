@@ -1,31 +1,26 @@
 /**
- * The career chrome — the persistent two-row shell every career route shares.
+ * The career chrome — the redesigned horizontal navbar every career route shares.
  *
- * Row 1 is the chrome-blue gradient title bar: the club's name on the left (the
- * career's root context, so it lives here rather than being repeated in every
- * screen heading) and the temporal cluster on the right — the season readout
- * and Continue.
+ * The three-zone model (spec §3) replaces the old flat eight-tab strip:
  *
- * Row 2 is the tab strip, restyled as chrome. The active tab inverts to the
- * primary gradient so the current section reads as the framed locus; "Back to
- * saves" is a subdued chrome control because leaving the career is not a career
- * section. Every tab stays in the DOM regardless of visibility — hiding one
- * behind a "More" menu would re-create exactly the keyboard-only screen the
- * `CAREER_TABS` invariant exists to prevent.
+ * - Left zone: the club's identity (the career's root context) and the temporal
+ *   readout — the season, or the live-match readout while a match is in flight.
+ * - Center zone: the seven primary sections, each of which reveals a context
+ *   submenu strip for its items (spec §2/§4).
+ * - Right zone: Back to saves plus Continue.
  *
- * The chrome owns the career loop. Continue renders from the `continue` Action
- * record — never a second hardcoded definition — so the button, the palette,
- * the help overlay, and the key badges are four views of one record and cannot
- * drift. The chrome also publishes the `phase`/`advancing` read model the
- * registry's availability predicate evaluates, which is why `Space` and the
- * button work from every career screen rather than only from the League table.
+ * Continue renders from the `continue` Action record — never a second
+ * hardcoded definition — so the button, the palette, the help overlay, and the
+ * key badges are four views of one record and cannot drift. The chrome also
+ * publishes the `phase`/`advancing` read model the registry's availability
+ * predicate evaluates, which is why `Space` and the button work from every
+ * career screen rather than only from the League table.
  *
  * What this file does NOT do: change any keyboard behaviour. Bindings, focus,
  * and dispatch are the shipped spine's; this is how they look.
  */
 import type { SaveId } from "@cm-clone/contracts";
-import { useLocation } from "@tanstack/react-router";
-import { type MouseEvent, useEffect, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { ACTION_REGISTRY } from "../actions/allActions.js";
 import {
   getBindingOverrides,
@@ -36,14 +31,12 @@ import { effectiveBinding } from "../actions/overrides.js";
 import type { MatchReadout } from "../actions/types.js";
 import { clearScopeState, getScopeState, setScopeState, subscribeScopeState } from "../actions/scopeState.js";
 import { ActionKeyBadge } from "../discoverability/ActionKeyBadge.js";
-import { FOCUS_RING } from "../focus.js";
-import type { NavigationIntent } from "../focus.js";
+import { FOCUS_RING, type NavigationIntent } from "../focus.js";
 import {
   navigate,
-  navigateCareer,
   navigateWithFocus,
 } from "../navigation/adapter.js";
-import type { CareerDestination } from "../navigation/destinations.js";
+import { Navbar } from "../navigation/components/Navbar.js";
 import {
   advanceCalendarMutation,
   leagueTableAtom,
@@ -52,33 +45,17 @@ import {
   useAtom,
   useAtomValue,
 } from "../rpc.js";
-import { BTN_PRIMARY, CHROME_BAND } from "../theme.js";
-
-export interface CareerTab {
-  readonly label: string;
-  readonly childPath: string;
-  readonly destination: CareerDestination["type"];
-}
+import { BTN_PRIMARY } from "../theme.js";
 
 /**
- * The career tab strip, in display order. Exported so the tab set can be checked against
- * `CAREER_SCREEN_TYPES`: a career screen with a route and a `g` binding but no tab is reachable
- * only by keyboard, which is the drift this list is easy to acquire.
+ * The set of section groups making up the primary row. Exported so the reachability
+ * invariant — that the union of every section's default plus item destinations covers
+ * every career screen (no screen is left keyboard-only) — can be asserted in tests.
+ *
+ * Re-exported from `router/career.tsx`, which is where the tab set used to be
+ * checked against `CAREER_SCREEN_TYPES`.
  */
-export const CAREER_TABS: ReadonlyArray<CareerTab> = [
-  { label: "squad", childPath: "squad", destination: "squad" },
-  { label: "tactics", childPath: "tactics", destination: "tactics" },
-  { label: "transfers", childPath: "transfers", destination: "transfers" },
-  { label: "league table", childPath: "league", destination: "league" },
-  { label: "fixtures", childPath: "fixtures", destination: "fixtures" },
-  { label: "match day", childPath: "match", destination: "match" },
-  {
-    label: "season summary",
-    childPath: "season-summary",
-    destination: "seasonSummary",
-  },
-  { label: "manager", childPath: "manager", destination: "manager" },
-];
+export { NAV_SECTIONS as CAREER_SECTIONS } from "../navigation/nav-config.js";
 
 /** The number of matchdays in a season — the readout's denominator. */
 const MATCHDAYS_PER_SEASON = 38;
@@ -169,11 +146,8 @@ const ContinueControl = ({
 export const continueUnavailableReason = (): string | undefined =>
   ACTION_REGISTRY.get("continue")?.unavailableReason;
 
-/** The career chrome: the persistent shell every career route shares (AC-11). */
+/** The career chrome: the redesigned navbar shell every career route shares. */
 export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
-  const { pathname } = useLocation();
-  const activeChild = pathname.split("/").at(-1) ?? "";
-
   const profileResult = useAtomValue(managerProfileAtom(saveId));
   const tableResult = useAtomValue(leagueTableAtom(saveId));
   const saveResult = useAtomValue(saveSummaryAtom(saveId));
@@ -211,23 +185,11 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
   useEffect(() => {
     return registerActionHandler("continue", () => {
       if (continueDisabled) return;
-      runAdvance({ saveId });
+      void runAdvance({ saveId });
     });
   }, [continueDisabled, runAdvance, saveId]);
 
-  const onTabClick = (
-    event: MouseEvent,
-    destination: CareerDestination["type"],
-  ): void => {
-    // event.detail === 0 marks keyboard (Enter/Space) activation of the native
-    // button; pointer clicks always report a non-zero detail. Navigation intent
-    // decides whether the destination requests semantic focus.
-    const intent: NavigationIntent = event.detail > 0 ? "pointer" : "keyboard";
-    navigateCareer({ type: destination, saveId }, intent);
-  };
-
-  const onBackToSaves = (event: MouseEvent): void => {
-    const intent: NavigationIntent = event.detail > 0 ? "pointer" : "keyboard";
+  const onBackToSaves = (intent: NavigationIntent): void => {
     if (intent === "keyboard") {
       navigateWithFocus({ type: "mainMenu" }, { screen: "mainMenu" });
     } else {
@@ -235,71 +197,46 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
     }
   };
 
-  return (
-    <header className="text-text-primary">
-      <div className={CHROME_BAND}>
-        <h2 className="truncate text-lg font-bold">{clubName ?? "\u00a0"}</h2>
-        <div className="flex items-center gap-3">
-          <span className="flex flex-col items-end leading-tight">
-            <span className="text-xs">
-              {liveMatch !== undefined
-                ? matchReadout(liveMatch)
-                : season === null
-                  ? ""
-                  : seasonReadout(season)}
-            </span>
-            {continueDisabled && season !== null ? (
-              <span className="text-2xs text-text-warning">
-                {liveMatch !== undefined
-                  ? "The season cannot advance during a match."
-                  : continueUnavailableReason()}
-              </span>
-            ) : (
-              saveName !== null && (
-                <span className="text-2xs text-text-secondary">{saveName}</span>
-              )
-            )}
-          </span>
-          <ContinueControl disabled={continueDisabled} busy={advancing} />
-        </div>
-      </div>
+  const readout = liveMatch !== undefined
+    ? matchReadout(liveMatch)
+    : season === null
+      ? ""
+      : seasonReadout(season);
 
-      {/*
-        The strip scrolls horizontally once the tabs outgrow it. Every tab stays
-        in the DOM and focus-reachable when scrolled out of view, so visibility
-        and reachability never diverge — `overflow-x-auto`, never a discloser.
-      */}
-      <nav className="flex items-center justify-between gap-2 border-b border-border-subtle bg-bg-raised px-2 py-1 text-sm">
-        {/* `min-w-0 flex-1`: the strip grows to occupy the full chrome width
-            (Back-to-saves keeps its own shrink-0 slot on the right), and each
-            tab grows to equal width. Scroll-overflow still holds — the tabs
-            never compress below their label (`shrink-0`), so once they outgrow
-            the strip it scrolls exactly as before. */}
-        <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
-          {CAREER_TABS.map((tab) => (
-            <button
-              key={tab.childPath}
-              type="button"
-              aria-current={tab.childPath === activeChild ? "page" : undefined}
-              className={`shrink-0 flex-1 rounded-control px-3 py-1 whitespace-nowrap capitalize ${FOCUS_RING.join(" ")} ${
-                tab.childPath === activeChild
-                  ? "chrome-gradient-inverted border border-panel-border-dark font-semibold"
-                  : "bg-surface hover:bg-surface-raised"
-              }`}
-              onClick={(event) => onTabClick(event, tab.destination)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className={`shrink-0 rounded-control border border-border-subtle px-3 py-1 text-text-secondary hover:text-text-primary ${FOCUS_RING.join(" ")}`}
-          onClick={onBackToSaves}
-        >
-          Back to saves
-        </button>
-      </nav>
-    </header>
+  return (
+    <Navbar
+      saveId={saveId}
+      clubName={clubName}
+      readout={readout === "" ? undefined : (
+        <span className="flex flex-col items-end leading-tight">
+          <span>{readout}</span>
+          {continueDisabled && season !== null ? (
+            <span className="text-2xs text-text-warning">
+              {liveMatch !== undefined
+                ? "The season cannot advance during a match."
+                : continueUnavailableReason()}
+            </span>
+          ) : (
+            saveName !== null && (
+              <span className="text-2xs text-text-secondary">{saveName}</span>
+            )
+          )}
+        </span>
+      )}
+      actions={
+        <>
+          <button
+            type="button"
+            className={`rounded-control border border-border-subtle px-3 py-1 text-text-secondary hover:text-text-primary ${FOCUS_RING.join(" ")}`}
+            onClick={(event) =>
+              onBackToSaves(event.detail > 0 ? "pointer" : "keyboard")
+            }
+          >
+            Back to saves
+          </button>
+          <ContinueControl disabled={continueDisabled} busy={advancing} />
+        </>
+      }
+    />
   );
 };

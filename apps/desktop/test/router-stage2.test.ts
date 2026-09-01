@@ -3,7 +3,7 @@ import { SaveId as SaveIdSchema, type SaveId } from "@cm-clone/contracts";
 import { bindRouter, navigateBack } from "../src/renderer/navigation/adapter.js";
 import { CAREER_G_BINDINGS, CAREER_SCREEN_TYPES, resolveDestination } from "../src/renderer/navigation/destinations.js";
 import { decodeSaveId } from "../src/renderer/navigation/params.js";
-import { CAREER_TABS } from "../src/renderer/router/career.js";
+import { CAREER_SECTIONS } from "../src/renderer/router/career.js";
 import { consumePendingFocus, BACK_RESTORE_MARKER } from "../src/renderer/focus.js";
 
 const save = (id: string): SaveId => SaveIdSchema.make(id);
@@ -82,18 +82,24 @@ describe("AC-14 — career g bindings never point at creation steps", () => {
   });
 });
 
-describe("AC-11 — the career tab strip covers every career screen", () => {
-  it("has exactly one tab per career screen, no more and no fewer", () => {
-    expect(CAREER_TABS.map((tab) => tab.destination).sort()).toEqual(
-      [...CAREER_SCREEN_TYPES].sort(),
-    );
+describe("AC-11 — the redesigned navbar reaches every career screen", () => {
+  it("the union of section defaults and item destinations covers exactly the career screens", () => {
+    const reached = new Set<string>();
+    for (const section of CAREER_SECTIONS) {
+      reached.add(section.defaultDestination);
+      for (const item of section.items) reached.add(item.destination);
+    }
+    expect([...reached].sort()).toEqual([...CAREER_SCREEN_TYPES].sort());
   });
 
-  it("each tab's childPath is the last segment of that destination's real route", () => {
-    const id = save("save-1");
-    for (const tab of CAREER_TABS) {
-      const resolved = resolveDestination({ type: tab.destination, saveId: id });
-      expect((resolved.to as string).split("/").at(-1)).toBe(tab.childPath);
+  it("every career destination is reachable from a one-action entry point (no screen is keyboard-only)", () => {
+    const reached = new Set<string>();
+    for (const section of CAREER_SECTIONS) {
+      reached.add(section.defaultDestination);
+      for (const item of section.items) reached.add(item.destination);
+    }
+    for (const screen of CAREER_SCREEN_TYPES) {
+      expect(reached.has(screen), `career screen '${screen}' has no navbar entry`).toBe(true);
     }
   });
 });

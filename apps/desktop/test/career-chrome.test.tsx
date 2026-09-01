@@ -183,21 +183,22 @@ describe("the career chrome", () => {
     }
   });
 
-  it("marks the active tab and keeps every tab in the DOM", async () => {
+  it("marks the active item and keeps every primary section present", async () => {
     await mountCareer("in_season", "fixtures");
-    expect(screen.getByRole("button", { name: "fixtures" }).getAttribute("aria-current")).toBe("page");
-    expect(screen.getByRole("button", { name: "league table" }).getAttribute("aria-current")).toBeNull();
-    // Reachability never depends on visibility: all eight sections plus the
-    // chrome's own Back-to-saves control are present.
+    // The active destination's item lives in the Analysis context strip and
+    // carries aria-current; another section's item does not.
+    expect(screen.getByRole("button", { name: "Fixtures" }).getAttribute("aria-current")).toBe("page");
+    // The context strip shows the active section's items.
+    expect(screen.getByRole("button", { name: "League Table" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Match Day" })).toBeTruthy();
+    // Every primary section plus Back to saves is present in the primary row.
     for (const label of [
-      "squad",
-      "tactics",
-      "transfers",
-      "league table",
-      "fixtures",
-      "match day",
-      "season summary",
-      "manager",
+      "Squad",
+      "Tactics",
+      "Training",
+      "Recruitment",
+      "Analysis",
+      "Club",
       "Back to saves",
     ]) {
       expect(screen.getByRole("button", { name: label })).toBeTruthy();

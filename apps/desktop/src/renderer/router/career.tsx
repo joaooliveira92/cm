@@ -13,9 +13,10 @@ import { PANEL } from "../theme.js";
 import { RouteView } from "./RouteView.js";
 
 // The chrome moved to `chrome/CareerChrome.tsx` when it grew a title bar, a
-// season readout, and the career-loop handler. Re-exported here because the tab
-// set is checked against `CAREER_SCREEN_TYPES` from this module's path.
-export { CAREER_TABS, CareerChrome, type CareerTab } from "../chrome/CareerChrome.js";
+// season readout, and the career-loop handler. Re-exported here because the
+// reachable-screen set is checked against `CAREER_SCREEN_TYPES` from this
+// module's path.
+export { CAREER_SECTIONS, CareerChrome } from "../chrome/CareerChrome.js";
 
 /** A malformed route is a structural failure: the danger alert panel grammar
  *  with no Retry, because there is nothing to retry on a bad address. The panel
