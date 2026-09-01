@@ -97,7 +97,7 @@ export const PrefixIndicator = ({
     aria-live="polite"
     className="pointer-events-none fixed top-14 left-2 z-50 rounded-control border border-text-highlight/60 bg-panel-bg-strong px-3 py-1.5 text-sm text-text-strong shadow-lg"
   >
-    <span className="font-semibold text-amber-300">Go to:</span>{" "}
+    <span className="font-semibold text-text-highlight">Go to:</span>{" "}
     {entries.map((entry) => `${entry.label} [${entry.key}]`).join(" \u00b7 ")}
   </div>
 );

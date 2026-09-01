@@ -97,6 +97,16 @@ const stepOf = (pathname: string): "leagues" | "1" | "2" | "3" =>
         ? "3"
         : "1";
 
+/** The in-band step indicator copy for each creation stage. "Step N of 4" with
+ *  the step name, so progress is read from the chrome band, never a detached
+ *  chip. `leagues` is the first: Screen 3 defines the world's scope. */
+const STEP_LABELS: Readonly<Record<ReturnType<typeof stepOf>, string>> = {
+  leagues: "Step 1 of 4 · League & Nation",
+  "1": "Step 2 of 4 · Manager",
+  "2": "Step 3 of 4 · Club",
+  "3": "Step 4 of 4 · Review",
+};
+
 const runAtEdge = <A, E>(effect: Effect.Effect<A, E>): Promise<Result.Result<A, E>> =>
   Effect.runPromise(Effect.result(effect));
 
@@ -300,17 +310,29 @@ export const CreateFlowLayout = () => {
     <CreateSessionContext.Provider
       value={{ session, update, retryGeneration: () => void runGeneration() }}
     >
-      <main className="min-h-screen bg-background p-8 text-foreground">
-        <h1 className="text-2xl font-bold">New Career</h1>
+      <div className="min-h-screen bg-background text-foreground">
+        {/* The pre-career chrome band. A visual sibling of the career chrome's
+            top row (same gradient, same surface tokens) but structurally its own
+            thing: it carries product identity, the in-band "Step N of 4" progress,
+            and Cancel/Back, and the creation screens become panels beneath it.
+            The floating step badge is gone — progress now reads from the band. */}
+        <header className="chrome-gradient border-b border-panel-border-dark px-3 py-2 shadow-chrome">
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="truncate text-lg font-bold">New Career</h1>
+            {/* The in-band step indicator. "Step 1 of 4 · Leagues" — progress is
+                read from the band, not from a detached chip on the page. */}
+            <span className="text-sm text-text-primary">{STEP_LABELS[step]}</span>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => navigate({ type: "saveList" })}
+            >
+              Cancel
+            </Button>
+          </div>
+        </header>
 
-        <div className="mt-6 flex gap-4">
-          <StepBadge label="Leagues" active={step === "leagues"} number="1" />
-          <StepBadge label="Manager" active={step === "1"} number="2" />
-          <StepBadge label="Club" active={step === "2" || step === "3"} number="3" />
-          <StepBadge label="Review" active={step === "3"} number="4" />
-        </div>
-
-        <div className={step === "leagues" ? "mt-8" : "mt-8 max-w-xl"}>
+        <main className="mx-auto max-w-3xl p-8">
           <Outlet />
           {session.error && (
             <Alert variant="destructive" className="mt-4">
@@ -332,9 +354,6 @@ export const CreateFlowLayout = () => {
           {/* The leagues stage renders its own Back and Continue: continuing from it has to run
               submission and snapshot creation, which the shared footer knows nothing about. */}
           <div className={`mt-8 flex gap-4 ${step === "leagues" ? "hidden" : ""}`}>
-            <Button type="button" variant="secondary" onClick={() => navigate({ type: "saveList" })}>
-              Cancel
-            </Button>
             {step === "1" && (
               <Button
                 type="button"
@@ -381,30 +400,13 @@ export const CreateFlowLayout = () => {
               </Button>
             )}
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </CreateSessionContext.Provider>
   );
 };
 const sum = (pillars: PillarDistribution): number =>
   Object.values(pillars).reduce((a, b) => a + b, 0);
-
-const StepBadge = ({
-  label,
-  active,
-  number,
-}: {
-  readonly label: string;
-  readonly active: boolean;
-  readonly number: string;
-}) => (
-  <div className="flex items-center gap-2">
-    <div className={`h-8 w-8 rounded-full text-center leading-8 ${active ? "chrome-gradient" : "bg-surface"}`}>
-      {number}
-    </div>
-    <span className={active ? "text-text-primary" : "text-text-muted"}>{label}</span>
-  </div>
-);
 
 const ReviewPane = ({ session }: { readonly session: CreationSession }) => (
   <div className="text-text-body">

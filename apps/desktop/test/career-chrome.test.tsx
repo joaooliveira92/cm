@@ -12,13 +12,13 @@ import {
 } from "@tanstack/react-router";
 import { SaveId } from "@cm-clone/contracts";
 import { CareerChildView, CareerShell } from "../src/renderer/router/career.js";
-import { seasonReadout } from "../src/renderer/chrome/CareerChrome.js";
+import { seasonReadout, matchReadout } from "../src/renderer/chrome/CareerChrome.js";
 import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
 import { FixturesScreen } from "../src/renderer/FixturesScreen.js";
 import { bindRouter } from "../src/renderer/navigation/adapter.js";
 import { ALL_ACTIONS } from "../src/renderer/actions/allActions.js";
 import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";
-import { resetScopeState } from "../src/renderer/actions/scopeState.js";
+import { clearScopeState, resetScopeState, setScopeState } from "../src/renderer/actions/scopeState.js";
 import { resetBindingOverrides, publishBindingOverrides } from "../src/renderer/actions/bindingState.js";
 import { resetTableSessions } from "../src/renderer/table/tableState.js";
 
@@ -261,5 +261,42 @@ describe("Continue in the chrome", () => {
       fs.readFile(leagueTableSourcePath, "utf8"),
     );
     expect(source).not.toContain('registerActionHandler("continue"');
+  });
+
+  it("swaps the temporal cluster to the match readout and disables during a live match", async () => {
+    await mountCareer("in_season", "fixtures");
+    // The chrome subscribes to scope-state; a live match publishes a `match`
+    // read model exactly as MatchDayScreen does on mount.
+    act(() => {
+      setScopeState({
+        ready: true,
+        match: {
+          homeClubName: "Northport Rovers",
+          awayClubName: "Eastvale",
+          homeScore: 2,
+          awayScore: 1,
+          currentMinute: 63,
+        },
+      });
+    });
+    expect(screen.getByText(/63' · Northport Rovers 2–1 Eastvale/)).toBeTruthy();
+    expect(screen.getByText("The season cannot advance during a match.")).toBeTruthy();
+    const disabled = screen.getByRole("button", { name: /Continue/ }) as HTMLButtonElement;
+    expect(disabled.disabled).toBe(true);
+
+    // Clearing the `match` key on full time restores the season readout.
+    act(() => {
+      clearScopeState("match");
+    });
+    expect(screen.getByText("Season 3 · Matchday 12/38")).toBeTruthy();
+    expect(screen.queryByText("The season cannot advance during a match.")).toBeNull();
+    const enabled = screen.getByRole("button", { name: /Continue/ }) as HTMLButtonElement;
+    expect(enabled.disabled).toBe(false);
+  });
+
+  it("formats the match readout consistently with the dashboard language", () => {
+    expect(
+      matchReadout({ homeClubName: "Northport", awayClubName: "Eastvale", homeScore: 2, awayScore: 1, currentMinute: 63 }),
+    ).toBe("63' · Northport 2–1 Eastvale");
   });
 });

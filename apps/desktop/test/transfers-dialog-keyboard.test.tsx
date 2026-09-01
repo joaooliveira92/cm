@@ -269,4 +269,18 @@ describe("F-2 — the dirty-discard Keep/Discard dialog owns the keyboard (focus
       "transfers.marketTable.mp2",
     );
   });
+
+  it("scrim-click keeps the draft (the closed F-2 scrim-click gap) — the scrim is no longer a dead surface", async () => {
+    await openConfirm();
+    // Click the scrim itself (the keyboard-less click-outside path that the
+    // Keep/Discard shell previously lacked). It must keep, never discard.
+    act(() => {
+      fireEvent.mouseDown(document.querySelector(".fixed.inset-0")!);
+    });
+    // Keeps behave like Escape: the draft survives and the dialog closes.
+    expect(screen.queryByRole("dialog", { name: "Discard the bid in progress?" })).toBeNull();
+    const region = screen.getByRole("region", { name: "Place bid" });
+    expect(region.textContent).toContain("Player: Alan Player");
+    expect((screen.getByLabelText("Your bid:") as HTMLInputElement).value).toBe("450000");
+  });
 });

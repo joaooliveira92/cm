@@ -6,8 +6,10 @@ import {
 } from "../navigation/adapter.js";
 import { decodeSaveId } from "../navigation/params.js";
 import { CareerChrome } from "../chrome/CareerChrome.js";
+import { Alert } from "../components/ui/alert.js";
 import { RegistryProvider } from "../rpc.js";
 import { resetTableSessions } from "../table/tableState.js";
+import { PANEL } from "../theme.js";
 import { RouteView } from "./RouteView.js";
 
 // The chrome moved to `chrome/CareerChrome.tsx` when it grew a title bar, a
@@ -15,15 +17,20 @@ import { RouteView } from "./RouteView.js";
 // set is checked against `CAREER_SCREEN_TYPES` from this module's path.
 export { CAREER_TABS, CareerChrome, type CareerTab } from "../chrome/CareerChrome.js";
 
-/** Distinct route-structure error, rendered apart from typed RPC failures (AC-12). */
+/** A malformed route is a structural failure: the danger alert panel grammar
+ *  with no Retry, because there is nothing to retry on a bad address. The panel
+ *  name is not restated — the alert panel plus the danger tone carry the
+ *  severity (text-led, per the empty/error grammar). */
 export const RouteParamErrorScreen = ({
   reason,
 }: {
   readonly reason: string;
 }) => (
-  <main className="min-h-screen bg-background p-8 text-foreground">
-    <h1 className="text-2xl font-bold">Invalid career address</h1>
-    <p className="mt-4 text-text-secondary">{reason}</p>
+  <main className={`min-h-screen bg-background p-8 text-foreground ${PANEL}`}>
+    <Alert variant="destructive">
+      <span className="font-semibold">Invalid career address</span>
+      <p className="mt-1">{reason}</p>
+    </Alert>
   </main>
 );
 

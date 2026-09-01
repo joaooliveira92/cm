@@ -57,7 +57,7 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   if (tableError) return <p className="p-8 text-destructive">{describeRpcError(tableError)}</p>;
   if (tableResult._tag === "Initial") return <p className="p-8 text-text-secondary">Loading league table...</p>;
-  if (tableResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load league table</p>;
+  if (tableResult._tag === "Failure") return <p className="p-8 text-text-danger">Failed to load league table</p>;
 
   const table = tableResult.value;
 

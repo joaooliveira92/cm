@@ -99,6 +99,14 @@
   --color-field-bg: #0f151d;
   --color-focus-ring: var(--color-text-highlight);
 
+  /* --- Scoreboard (match-day only) ---------------------------------------
+     The one match-only token family. The neutral chrome-band + white-score-box
+     pattern is the archetypal match-day picture and needs no club data; a
+     future club-colour upgrade is a token change, not a redesign. The band
+     reuses the shared chrome gradient, so only the score box is match-only. */
+  --color-scoreboard-box: #f4f7fa;
+  --color-scoreboard-box-text: #0a0e14;
+
   /* --- Shape and depth -------------------------------------------------- */
   --radius-panel: 6px;
   --radius-control: 4px;
@@ -203,5 +211,21 @@
     var(--color-chrome-top),
     var(--color-chrome-mid),
     var(--color-chrome-bottom)
+  );
+}
+
+/*
+ * The match-day stadium wash — a CSS-only grandstand glow, no image dependency.
+ * A radial "pitch light" rises from the centre while the panel-dark overlay
+ * keeps the surface readable (match-day note AC-3). It inherits the palette, so
+ * a skin override repaints it too; the real stadium photograph, when one lands,
+ * goes in the `--page-image` seam instead.
+ */
+@utility stadium-wash {
+  background-image: radial-gradient(
+    ellipse 120% 80% at 50% 0%,
+    var(--color-chrome-bottom) 0%,
+    color-mix(in oklab, var(--color-chrome-bottom) 45%, var(--color-panel-bg) 55%) 55%,
+    var(--color-panel-bg) 100%
   );
 }

@@ -81,7 +81,7 @@ export const CreationStep1 = ({
   return (
     <div className="space-y-6">
       <section>
-        <Label className="block text-text-body" htmlFor="saveName">
+        <Label className="block" htmlFor="saveName">
           Save name
         </Label>
         <Input
@@ -95,7 +95,7 @@ export const CreationStep1 = ({
       </section>
 
       <section>
-        <Label className="block text-text-body" htmlFor="managerName">
+        <Label className="block" htmlFor="managerName">
           Manager name
         </Label>
         <Input

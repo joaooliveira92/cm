@@ -33,7 +33,8 @@ import {
 } from "../actions/bindingState.js";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
 import { effectiveBinding } from "../actions/overrides.js";
-import { clearScopeState, setScopeState } from "../actions/scopeState.js";
+import type { MatchReadout } from "../actions/types.js";
+import { clearScopeState, getScopeState, setScopeState, subscribeScopeState } from "../actions/scopeState.js";
 import { ActionKeyBadge } from "../discoverability/ActionKeyBadge.js";
 import { FOCUS_RING } from "../focus.js";
 import type { NavigationIntent } from "../focus.js";
@@ -112,6 +113,12 @@ export const seasonReadout = (season: SeasonReadoutInput): string => {
   return `Season ${season.seasonNumber} · ${tail}`;
 };
 
+/** Match-only verb: the live-match readout. The unit is minutes (a clock would
+ *  claim a state the domain does not model). The chrome shows this in place of
+ *  the season readout while a match is in flight. */
+export const matchReadout = (match: MatchReadout): string =>
+  `${match.currentMinute}' · ${match.homeClubName} ${match.homeScore}–${match.awayScore} ${match.awayClubName}`;
+
 /**
  * Continue, rendered from the `continue` Action record.
  *
@@ -179,7 +186,13 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
 
   const advancing = advance.waiting;
   const seasonComplete = season?.phase === "season_complete";
-  const continueDisabled = season === null || advancing || seasonComplete;
+  const liveMatch = useSyncExternalStore(
+    subscribeScopeState,
+    () => getScopeState().match,
+    () => getScopeState().match,
+  );
+  const continueDisabled =
+    season === null || advancing || seasonComplete || liveMatch !== undefined;
 
   // Publish the availability read model the registry's `continueAvailable`
   // predicate evaluates. The chrome owns this because the phase and the
@@ -228,10 +241,18 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
         <h2 className="truncate text-lg font-bold">{clubName ?? " "}</h2>
         <div className="flex items-center gap-3">
           <span className="flex flex-col items-end leading-tight">
-            <span className="text-xs">{season === null ? "" : seasonReadout(season)}</span>
+            <span className="text-xs">
+              {liveMatch !== undefined
+                ? matchReadout(liveMatch)
+                : season === null
+                  ? ""
+                  : seasonReadout(season)}
+            </span>
             {continueDisabled && season !== null ? (
               <span className="text-2xs text-text-warning">
-                {continueUnavailableReason()}
+                {liveMatch !== undefined
+                  ? "The season cannot advance during a match."
+                  : continueUnavailableReason()}
               </span>
             ) : (
               saveName !== null && (

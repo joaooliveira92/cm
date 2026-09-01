@@ -10,6 +10,7 @@ import { FOCUS_RING } from "./focus.js";
 import { getActiveMatch } from "./match/session.js";
 import { navigate } from "./navigation/adapter.js";
 import { useDialogKeyboard } from "./transfers/dialogKeyboard.js";
+import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "./theme.js";
 import {
   describeRpcError,
   managerProfileAtom,
@@ -73,7 +74,7 @@ const RetireManagerDialog = ({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4"
+      className={MODAL_SCRIM}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onCancel();
       }}
@@ -84,23 +85,29 @@ const RetireManagerDialog = ({
         aria-modal="true"
         aria-label="Retire Manager"
         onKeyDown={onKeyDown}
-        className="w-full max-w-md rounded-panel border border-panel-border bg-panel-bg-strong p-3 text-text-primary shadow-2xl"
+        className={MODAL_COMPACT}
       >
-        <h2 className="text-lg font-semibold">Retire Manager</h2>
-        <p className="mt-2 text-sm text-text-body">{RETIREMENT_DISCLOSURE}</p>
-        <div className="mt-4 flex items-center justify-end gap-2">
-          <Button ref={cancelRef} type="button" variant="secondary" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="button" variant="destructive" disabled={pending} onClick={onConfirm}>
-            Retire Manager
-          </Button>
+        {/* Shared modal anatomy: chrome-gradient title band over the strong-panel
+            body (theme.ts `MODAL_*` constants). */}
+        <div className={MODAL_TITLE_BAND}>
+          <h2 className="font-semibold">Retire Manager</h2>
         </div>
-        {error !== null && (
-          <p role="alert" className="mt-2 text-sm text-destructive">
-            {error}
-          </p>
-        )}
+        <div className={MODAL_BODY}>
+          <p className="text-sm text-text-body">{RETIREMENT_DISCLOSURE}</p>
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <Button ref={cancelRef} type="button" variant="secondary" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" disabled={pending} onClick={onConfirm}>
+              Retire Manager
+            </Button>
+          </div>
+          {error !== null && (
+            <p role="alert" className="mt-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

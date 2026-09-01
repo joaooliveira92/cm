@@ -46,3 +46,37 @@ export const BTN_PRIMARY =
 /** Everything else: Cancel, Retry, inline actions. Flat, no shadow. */
 export const BTN_SECONDARY =
   "rounded-control bg-surface-raised px-3 py-1 text-text-primary hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50";
+
+/* ---------------------------------------------------------------------------
+ * The shared modal anatomy (dialog/common). Every overlay — preferences, help,
+ * the command palette, confirmations, the transfer counter-offer — renders the
+ * same chrome-gradient title band over a strong-panel body, in one of two
+ * sanctioned sizes, closing on a uniform scrim click. Constants, never a
+ * <Dialog> component: the focus trap, Escape, and overlay focus restore stay
+ * with `useDialogKeyboard` and the spine where they already live; this is the
+ * look. Header/body/footer compose from these strings, matching
+ * `PANEL_CHROME`/`PANEL_STRONG` and the `BTN_*` pair.
+ * ------------------------------------------------------------------------- */
+
+/** The centered scrim every overlay floats on. Click-outside closes (the
+ *  caller wires `onMouseDown` so the exact same surface cancels everywhere —
+ *  this is what fixed the Keep/Discard scrim-click gap). */
+export const MODAL_SCRIM =
+  "fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4";
+
+/** Compact centered shell for confirmations and short forms (counter-offer). */
+export const MODAL_COMPACT =
+  "w-full max-w-sm rounded-panel border border-panel-border bg-panel-bg-strong text-text-primary shadow-2xl";
+
+/** Wide, top-anchored shell for help and the command palette, which keeps its
+ *  combobox anatomy and its position inside the shared scrim. */
+export const MODAL_WIDE =
+  "w-full max-w-2xl rounded-panel border border-panel-border bg-panel-bg-strong text-text-primary shadow-2xl";
+
+/** The chrome-gradient title band: same grammar as the career-chrome title bar,
+ *  so an overlay announces the same voice as the shell. */
+export const MODAL_TITLE_BAND =
+  "chrome-gradient flex items-center justify-between rounded-t-panel border-b border-panel-border-dark px-3 py-2 shadow-chrome";
+
+/** The strong-panel body surface beneath the title band. */
+export const MODAL_BODY = "px-3 py-3";

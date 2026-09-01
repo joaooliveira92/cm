@@ -10,7 +10,10 @@ const Label = ({ className, ref, ...props }: LabelProps) => (
   <label
     ref={ref}
     className={cn(
-      "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+      // The 12px label/metadata tier per the density contract (`text-xs`),
+      // secondary-toned. Labels describe fields; they are not the loudest text
+      // on screen.
+      "text-xs leading-none text-text-secondary peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
       className,
     )}
     {...props}

@@ -49,6 +49,7 @@ import { freeAgentColumns } from "./table/transfers/freeAgentColumns.js";
 import { TablePanel } from "./table/TablePanel.js";
 import { useDataTable, visibleRowIds } from "./table/useDataTable.js";
 import { classifyTableParamAction } from "./table/paramActions.js";
+import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "./theme.js";
 import { sortDirectionOf } from "./table/features/sorting.js";
 import { applyFilters, upsertFilter } from "./table/features/filtering.js";
 import {
@@ -103,27 +104,40 @@ const KeepDiscardDialog = ({
   });
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
+    <div
+      className={MODAL_SCRIM}
+      onMouseDown={(event) => {
+        // Scrim-click closes: uniform with every other overlay. The previous
+        // Keep/Discard shell lacked this, so the scrim was the one dead surface.
+        if (event.target === event.currentTarget) onKeep();
+      }}
+    >
       <div
         ref={containerRef}
         role="dialog"
         aria-modal="true"
         aria-label="Discard the bid in progress?"
         onKeyDown={onKeyDown}
-        className="w-full max-w-sm rounded-panel border border-panel-border bg-panel-bg-strong p-3 text-text-primary shadow-2xl"
+        className={MODAL_COMPACT}
       >
-        <h2 className="text-lg font-semibold">Discard the bid in progress?</h2>
-        <p className="mt-1 text-sm text-text-secondary">
-          You typed an amount for {playerName}. Moving away would lose this bid
-          unless you keep it.
-        </p>
-        <div className="mt-4 flex justify-end gap-2">
-          <Button ref={keepRef} type="button" variant="secondary" onClick={onKeep}>
-            Keep bid
-          </Button>
-          <Button type="button" onClick={onDiscard}>
-            Discard draft
-          </Button>
+        {/* The shared modal anatomy: chrome-gradient title band over the
+            strong-panel body (theme.ts `MODAL_*` constants). */}
+        <div className={MODAL_TITLE_BAND}>
+          <h2 className="font-semibold">Discard the bid in progress?</h2>
+        </div>
+        <div className={MODAL_BODY}>
+          <p className="text-sm text-text-secondary">
+            You typed an amount for {playerName}. Moving away would lose this bid
+            unless you keep it.
+          </p>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button ref={keepRef} type="button" variant="secondary" onClick={onKeep}>
+              Keep bid
+            </Button>
+            <Button type="button" onClick={onDiscard}>
+              Discard draft
+            </Button>
+          </div>
         </div>
       </div>
     </div>

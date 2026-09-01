@@ -49,7 +49,27 @@ export type ActionScope = "app-global" | "career-global" | ScreenName;
  */
 export interface ScopeState {
   readonly ready: boolean;
+  /**
+   * A live match readout, published by the Match Day screen while a match is
+   * in flight (match-day note AC-4). When present, the career chrome's temporal
+   * cluster shows the match instead of the season readout and Continue is
+   * unavailable; absent at full time, the season readout and Continue return.
+   */
+  readonly match?: MatchReadout | undefined;
   readonly [key: string]: unknown;
+}
+
+/**
+ * The read-only slice of a live match the chrome shows. Deliberately the same
+ * surface the domain exposes — club names and the score — so the temporal
+ * cluster and the scoreboard agree. The unit is minutes, never a clock.
+ */
+export interface MatchReadout {
+  readonly homeClubName: string;
+  readonly awayClubName: string;
+  readonly homeScore: number;
+  readonly awayScore: number;
+  readonly currentMinute: number;
 }
 
 /** A dispatchable, scoped, named operation. `handler` takes the operation's

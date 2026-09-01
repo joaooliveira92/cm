@@ -201,7 +201,7 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
 
   if (loadError !== null) {
     return (
-      <div role="alert" className="text-red-400">
+      <div role="alert" className="text-text-danger">
         {loadError}
       </div>
     );

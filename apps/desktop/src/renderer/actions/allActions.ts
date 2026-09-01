@@ -22,9 +22,15 @@ import {
 
 const ready = (state: ScopeState): boolean => state.ready === true;
 
-/** Career-global availability: a career is shown and the season can advance. */
+/** Career-global availability: a career is shown and the season can advance.
+ *  A live match suspends the season (match-day note AC-4): `state.match` being
+ *  present marks "in flight", so Continue (button, Space, palette) is uniformly
+ *  unavailable until the match reaches full time. */
 const continueAvailable = (state: ScopeState): boolean =>
-  ready(state) && state.phase !== "season_complete" && state.advancing !== true;
+  ready(state) &&
+  state.phase !== "season_complete" &&
+  state.advancing !== true &&
+  state.match === undefined;
 
 const navAction = (
   id: string,

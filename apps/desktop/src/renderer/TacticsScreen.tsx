@@ -149,9 +149,9 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     };
   }, [saveId, tactic]);
 
-  if (viewError) return <p className="p-8 text-red-400">{describeRpcError(viewError)}</p>;
+  if (viewError) return <p className="p-8 text-text-danger">{describeRpcError(viewError)}</p>;
   if (viewResult._tag === "Initial") return <p className="p-8 text-text-secondary">Loading tactics...</p>;
-  if (viewResult._tag === "Failure") return <p className="p-8 text-red-400">Failed to load tactics</p>;
+  if (viewResult._tag === "Failure") return <p className="p-8 text-text-danger">Failed to load tactics</p>;
 
   const view = viewResult.value;
   const squadById = new Map(view.squad.map((player) => [player.id, player]));

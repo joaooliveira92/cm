@@ -53,6 +53,7 @@ import {
   getActiveMatch,
   setActiveMatch,
 } from "./match/session.js";
+import { Scoreboard } from "./match/Scoreboard.js";
 
 const NO_SUBS: SubstitutionStatusView = {
   used: 0,
@@ -507,6 +508,7 @@ const MatchControlPanel = ({
                 type="checkbox"
                 checked={isHalftime}
                 onChange={(event) => setIsHalftime(event.target.checked)}
+                className={`accent-text-highlight ${FOCUS_RING.join(" ")}`}
               />
               Apply as a halftime instruction (doesn't consume a substitution window)
             </label>
@@ -714,6 +716,28 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     if (isComplete) clearActiveMatch(saveId);
   }, [isComplete, saveId]);
 
+  // Publish the live-match readout so the career chrome's temporal cluster
+  // shows the match (and Continue is suspended) for the whole in-flight match,
+  // and returns to the season readout at full time or on leaving the surface
+  // (match-day note AC-4). `clearScopeState` on unmount keeps the key from
+  // leaking across route changes.
+  useEffect(() => {
+    if (match === null || isComplete) {
+      clearScopeState("match");
+      return;
+    }
+    setScopeState({
+      match: {
+        homeClubName: match.homeClubName,
+        awayClubName: match.awayClubName,
+        homeScore,
+        awayScore,
+        currentMinute,
+      },
+    });
+    return () => clearScopeState("match");
+  }, [match, isComplete, homeScore, awayScore, currentMinute, saveId]);
+
   const onStartMatch = async () => {
     if (!opponentId) return;
     setError(null);
@@ -881,21 +905,22 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       )}
 
       {match && (
-        <section className="mt-6">
-          <div className="flex items-baseline gap-3">
-            <h2 className="text-xl font-semibold">
-              {match.homeClubName} {homeScore} - {awayScore} {match.awayClubName}
-            </h2>
-            <span className="text-sm text-text-secondary">
-              {isComplete ? "Full time" : paused ? "Paused — awaiting decision" : "Live"}
-            </span>
-          </div>
+        <section className="stadium-wash mt-6 rounded-panel border border-panel-border-dark p-4 shadow-panel">
+          <Scoreboard
+            homeClubName={match.homeClubName}
+            homeScore={homeScore}
+            awayScore={awayScore}
+            awayClubName={match.awayClubName}
+          />
+          <p className="mt-3 text-sm text-text-secondary">
+            {isComplete ? "Full time" : paused ? "Paused — awaiting decision" : "Live"}
+          </p>
 
           <ul className="mt-4 max-h-[60vh] space-y-1 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-4 text-sm shadow-panel">
             {revealed.map((line, index) => (
               <li key={index} className="flex gap-3">
                 <span className="w-10 shrink-0 tabular-nums text-text-muted">{line.minute}&apos;</span>
-                <span>{line.text}</span>
+                <span className={commentaryTone(line.tag)}>{line.text}</span>
               </li>
             ))}
             {revealed.length === 0 && <li className="text-text-muted">Kick-off is coming up...</li>}
@@ -939,3 +964,19 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
 /** Native `<select>` paint. See the note in `table/TablePanel.tsx`. */
 const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;
+
+/** Incident tone for a commentary line, from the shared danger/warning/success
+ *  tokens (match-day note AC-5). Classification is by Match Event tag only —
+ *  the renderer does not chase the scored-club side, so a `Goal` reads as a
+ *  neutral highlight rather than risking a one-off `text-text-*` ad-hoc. */
+const COMMENTARY_TONE: Readonly<Record<string, string>> = {
+  Injury: "text-text-danger",
+  RedCard: "text-text-danger",
+  YellowCard: "text-text-warning",
+  BigChance: "text-text-warning",
+  ShotMissed: "text-text-warning",
+  Goal: "text-text-success",
+  ShotOnTarget: "text-text-success",
+};
+
+const commentaryTone = (tag: string): string => COMMENTARY_TONE[tag] ?? "";

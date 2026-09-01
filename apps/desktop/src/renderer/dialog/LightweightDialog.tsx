@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { Button } from "../components/ui/button.js";
+import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "../theme.js";
 
 export interface LightweightDialogProps {
   readonly title: string;
@@ -20,7 +21,7 @@ export const LightweightDialog = ({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4"
+      className={MODAL_SCRIM}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onCancel();
       }}
@@ -29,7 +30,7 @@ export const LightweightDialog = ({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="w-full max-w-sm rounded-panel border border-panel-border bg-panel-bg-strong p-3 text-text-primary shadow-2xl"
+        className={MODAL_COMPACT}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.preventDefault();
@@ -37,19 +38,25 @@ export const LightweightDialog = ({
           }
         }}
       >
-        <h2 className="text-lg font-semibold">{title}</h2>
-        {description !== undefined && (
-          <p className="mt-1 text-sm text-text-secondary">{description}</p>
-        )}
-        <div className="mt-4 flex items-center justify-end gap-2">
-          <Button ref={buttonRef} type="button" variant="secondary" onClick={onCancel}>
-            Cancel
-          </Button>
-          {onSubmit && (
-            <Button type="button" onClick={onSubmit}>
-              {onSubmitLabel}
-            </Button>
+        {/* The shared modal anatomy: chrome-gradient title band over a
+            strong-panel body, per the `MODAL_*` constants in theme.ts. */}
+        <div className={MODAL_TITLE_BAND}>
+          <h2 className="font-semibold">{title}</h2>
+        </div>
+        <div className={MODAL_BODY}>
+          {description !== undefined && (
+            <p className="mt-1 text-sm text-text-secondary">{description}</p>
           )}
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <Button ref={buttonRef} type="button" variant="secondary" onClick={onCancel}>
+              Cancel
+            </Button>
+            {onSubmit && (
+              <Button type="button" onClick={onSubmit}>
+                {onSubmitLabel}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

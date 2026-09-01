@@ -34,6 +34,7 @@ import {
 import { Button } from "../components/ui/button.js";
 import { Kbd } from "../components/ui/kbd.js";
 import { FOCUS_RING } from "../focus.js";
+import { MODAL_SCRIM, MODAL_TITLE_BAND, MODAL_WIDE } from "../theme.js";
 import { useSeamHotkeys, useSeamHotkeysContext } from "../hotkeys.js";
 import { keyOf } from "../keymap/keystroke.js";
 import {
@@ -244,7 +245,7 @@ export const HelpOverlay = ({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/60"
+      className={`${MODAL_SCRIM} items-start sm:items-center`}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -253,10 +254,10 @@ export const HelpOverlay = ({
         role="dialog"
         aria-modal="true"
         aria-label="Keyboard shortcuts"
-        className="flex max-h-[70vh] w-[38rem] flex-col overflow-hidden rounded-panel border border-panel-border bg-panel-bg-strong shadow-2xl"
+        className={`flex max-h-[70vh] flex-col overflow-hidden ${MODAL_WIDE}`}
       >
-        <div className="chrome-gradient border-b border-panel-border-dark px-4 py-2 text-sm font-semibold text-text-primary">
-          Keyboard shortcuts
+        <div className={MODAL_TITLE_BAND}>
+          <span className="font-semibold">Keyboard shortcuts</span>
         </div>
         <div role="tablist" aria-label="Shortcut scope" className="flex border-b border-border-subtle">
           {TABS.map((t, index) => (

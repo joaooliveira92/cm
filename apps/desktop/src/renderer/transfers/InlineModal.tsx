@@ -9,6 +9,7 @@
 import { useRef } from "react";
 import { Button } from "../components/ui/button.js";
 import { Input } from "../components/ui/input.js";
+import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "../theme.js";
 import { useDialogKeyboard } from "./dialogKeyboard.js";
 
 export interface InlineModalProps {
@@ -66,7 +67,7 @@ export const InlineModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4"
+      className={MODAL_SCRIM}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onCancel();
       }}
@@ -77,36 +78,42 @@ export const InlineModal = ({
         aria-modal="true"
         aria-label={title}
         onKeyDown={onContainerKeyDown}
-        className="w-full max-w-sm rounded-panel border border-panel-border bg-panel-bg-strong p-3 text-text-primary shadow-2xl"
+        className={MODAL_COMPACT}
       >
-        <h2 className="text-lg font-semibold">{title}</h2>
-        {description !== undefined && (
-          <p className="mt-1 text-sm text-text-secondary">{description}</p>
-        )}
-        <label className="mt-3 block text-sm text-text-body">
-          {inputLabel}
-          <Input
-            ref={inputRef}
-            type="text"
-            inputMode="decimal"
-            value={amountValue}
-            onChange={(event) => onAmountChange(event.target.value)}
-            className="mt-1"
-          />
-        </label>
-        <div className="mt-4 flex items-center justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="button" disabled={submitDisabled} onClick={onSubmit}>
-            {submitLabel}
-          </Button>
+        {/* The shared modal anatomy: chrome-gradient title band over the
+            strong-panel body (theme.ts `MODAL_*` constants). */}
+        <div className={MODAL_TITLE_BAND}>
+          <h2 className="font-semibold">{title}</h2>
         </div>
-        {error !== null && (
-          <p role="alert" className="mt-2 text-sm text-destructive">
-            {error}
-          </p>
-        )}
+        <div className={MODAL_BODY}>
+          {description !== undefined && (
+            <p className="mt-1 text-sm text-text-secondary">{description}</p>
+          )}
+          <label className="mt-3 block text-sm text-text-body">
+            {inputLabel}
+            <Input
+              ref={inputRef}
+              type="text"
+              inputMode="decimal"
+              value={amountValue}
+              onChange={(event) => onAmountChange(event.target.value)}
+              className="mt-1"
+            />
+          </label>
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="button" disabled={submitDisabled} onClick={onSubmit}>
+              {submitLabel}
+            </Button>
+          </div>
+          {error !== null && (
+            <p role="alert" className="mt-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
