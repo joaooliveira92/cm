@@ -480,7 +480,7 @@ For every shared visual element identified in Step 1, add matching named `<ViewT
 
 The `share="morph"` class uses the [Shared Element Morph](css-recipes.md#shared-element-morph) recipe (controlled duration + motion blur). For a simpler cross-fade, use `share="auto"` (browser default).
 
-When list items contain shared elements, compose both patterns with two nested `<ViewTransition>` layers — an outer keyed VT for list identity and an inner named VT for the cross-route pair. See [Composing Shared Elements with List Identity](../SKILL.md#composing-shared-elements-with-list-identity).
+When list items contain shared elements, compose both patterns with two nested `<ViewTransition>` layers — an outer keyed VT for list identity and an inner named VT for the cross-route pair. See [Composing Shared Elements with List Identity](SKILL.md#composing-shared-elements-with-list-identity).
 
 **Rules:**
 - Names must be globally unique — use prefixes like `photo-${id}`.
@@ -1171,7 +1171,7 @@ When following [implementation.md](implementation.md), apply these additions:
 
 ## Layout-Level ViewTransition
 
-**Do NOT add a layout-level VT wrapping `{children}` if pages have their own VTs.** A nested VT skips its own enter/exit only when it mounts or unmounts *as one unit* with a parent VT, which is exactly what a layout VT wrapping `{children}` causes — page-level enter/exit will silently not work. Remove the layout VT entirely. Nesting is otherwise fine and sometimes required: a child VT inside a *persistent* parent VT fires enter/exit normally, and two nested boundaries are the intended shape for [shared elements inside list items](../SKILL.md#composing-shared-elements-with-list-identity).
+**Do NOT add a layout-level VT wrapping `{children}` if pages have their own VTs.** A nested VT skips its own enter/exit only when it mounts or unmounts *as one unit* with a parent VT, which is exactly what a layout VT wrapping `{children}` causes — page-level enter/exit will silently not work. Remove the layout VT entirely. Nesting is otherwise fine and sometimes required: a child VT inside a *persistent* parent VT fires enter/exit normally, and two nested boundaries are the intended shape for [shared elements inside list items](SKILL.md#composing-shared-elements-with-list-identity).
 
 A bare `<ViewTransition>` in layout works only if pages have **no** VTs of their own.
 

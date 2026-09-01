@@ -46,6 +46,14 @@
   "overrides": [
     {
       "files": [
+        "scripts/**"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": [
         "apps/desktop/src/renderer/**",
         "packages/*/src/**"
       ],
@@ -53,5 +61,5 @@
         "no-console": "error"
       }
     }
-  ]
+  ],
 }

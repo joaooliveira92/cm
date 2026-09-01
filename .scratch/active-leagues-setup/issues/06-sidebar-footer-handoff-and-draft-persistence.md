@@ -1,0 +1,21 @@
+# 06: Sidebar, footer, handoff, and draft persistence
+
+**What to build:** the consequence panel, the commitment actions, and the handoff that makes the flow run the new screen — per the spec's "sidebar contract", "footer", "step 1 is replaced, not extended", and "draft persistence follows the standing rules" decisions:
+
+- A persistent consequence sidebar that reads only derived state: the entity-count readout and processing-cost meter with label and expensive warning from ticket 02, a flexible spacer, and a pinned bottom slot carrying the setup's validation status plus a one-line statement of what happens next (Continue records the snapshot; world generation follows behind the Manager step) — no start-date picker and no database-preset selector, because the Calendar has no dates and world generation does not yet read the scope.
+- A footer with Cancel and Continue, right-aligned and separated from the side panel, the primary action labelled as the next actual step (Continue) with pending state while creating; duplicate submission prevented, controls that would invalidate a running command disabled, an `AbortSignal` flowing into the operation where cancellation is supported, an actionable state restored on failure, and errors read understandably with no stack trace or database detail.
+- The flow handoff: Continue records the same `LeagueSelectionSnapshot` the current step records and lands the player on Step 2 · Manager; step 1's route now renders the Active Leagues screen, retiring the League & Nation tree as the primary surface while keeping the four-stage flow, its step gating, and the snapshot handoff unchanged. The step indicator keeps its current label; the screen's own heading reads "Active Leagues".
+- Draft persistence per the standing rules: machine-local, fingerprint-bound, debounced at the application boundary, stale saves cancelled, the latest successful state identifiable, and pending work flushed or cancelled on deterministic screen disposal; the draft carries the versioned shape the scope model (including the ticket-03 options) needs.
+
+The slice's edge promise: the boundary is crossed here for the first time — saving and creating flow through the established typed call seam, with every request and response validated at the boundary and the main process revalidating everything; the renderer imports no Electron or Node API. Failures surface as values (operation states Idle / Pending / Success / Failure, never scattered booleans) and render understandably. Callers observe the snapshot handoff, the navigation, and the operation lifecycle.
+
+**Blocked by:** 02 — Consequences — entity count, processing cost, and recommendations (the sidebar renders those figures); 04 — Setup state, derived atoms, and the league grid (the screen and intents it wires); 05 — Workspace layout, the advanced disclosure, and the introduction (the sidebar and footer complete the screen).
+
+**Status:** ready-for-agent
+
+- [ ] The sidebar shows the derived entity count, the processing-cost meter with label and expensive warning, and a pinned validation/next-step slot; no start-date or database-preset control exists.
+- [ ] Cancel and Continue sit right-aligned below the sidebar; Continue shows pending state, prevents duplicate submission, disables invalidating controls, restores an actionable state on failure, and passes an `AbortSignal` where cancellation is supported; errors read understandably.
+- [ ] Continue records the same `LeagueSelectionSnapshot` and lands the player on Step 2 · Manager; step 1's route renders the Active Leagues screen; the four-stage flow and its gating are unchanged; the heading reads "Active Leagues".
+- [ ] Draft persistence debounces at the application boundary, cancels stale saves, keeps the latest successful state identifiable, and flushes/cancels pending work on disposal; the draft is fingerprint-bound and carries the versioned shape including advanced options.
+- [ ] Component tests cover Continue disabled on validation failure and the failure state when creation fails; unit tests cover the operation lifecycle and draft round-trip.
+- [ ] `pnpm check:all` is green at this commit.
