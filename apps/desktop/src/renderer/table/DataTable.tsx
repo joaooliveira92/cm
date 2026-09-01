@@ -6,10 +6,16 @@
  * ArrowUp/Down rove, Home/End jump to the ends, Space toggles selection (focus
  * and selection are separate), Enter runs the row's primary action, Tab moves
  * in/out of the sequence, and Shift+Arrow scrolls horizontally (Squad only).
+ *
+ * It also owns the dense-table visuals (note: dense table visuals and the
+ * player-status vocabulary): the pinned columns' sticky offsets and opaque
+ * fills, and the scroll-position-driven edge fade that signals there are more
+ * columns beyond the visible width. Row density, header treatment and the
+ * hover/selection fills live one level down, in `components/ui/table.tsx`.
  */
 import { flexRender } from "@tanstack/react-table";
 import type { Table as TanStackTable } from "@tanstack/react-table";
-import { useLayoutEffect, useRef } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { Alert } from "../components/ui/alert.js";
 import {
   Table,
@@ -25,6 +31,31 @@ import type { TableFocusBookmark } from "./focusBookmark.js";
 import { cycleSort } from "./features/sorting.js";
 
 const HORIZONTAL_SCROLL_STEP = 120;
+
+/** Sub-pixel scroll offsets (trackpads, zoom) never land exactly on the ends. */
+const EDGE_EPSILON = 1;
+
+/** Which horizontal edges have content hidden beyond them. Pure so the fade's
+ *  rule is testable without a layout engine. */
+export interface ScrollEdges {
+  readonly left: boolean;
+  readonly right: boolean;
+}
+
+export const scrollEdges = (metrics: {
+  readonly scrollLeft: number;
+  readonly scrollWidth: number;
+  readonly clientWidth: number;
+}): ScrollEdges => {
+  const overflow = metrics.scrollWidth - metrics.clientWidth;
+  return {
+    left: metrics.scrollLeft > EDGE_EPSILON,
+    right: overflow > EDGE_EPSILON && metrics.scrollLeft < overflow - EDGE_EPSILON,
+  };
+};
+
+const EDGE_FADE_BASE =
+  "pointer-events-none absolute inset-y-0 w-8 transition-opacity duration-150";
 
 /** The identity column's aria label when no row is focused: first visible row. */
 export const effectiveActiveId = (activeId: string | null, ids: readonly string[]): string | null =>
@@ -88,6 +119,17 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
   } = props;
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [edges, setEdges] = useState<ScrollEdges>({ left: false, right: false });
+
+  // The edge fade is driven by scroll position, not by a persistent "more
+  // columns" affordance: it appears on the side that has content hidden and
+  // disappears at each end. Re-measured on scroll and after every render that
+  // can change the widths (column visibility, row count, resize).
+  const syncEdges = useCallback((): void => {
+    const container = scrollRef.current;
+    if (container === null) return;
+    setEdges(scrollEdges(container));
+  }, []);
 
   // Restore the session's scroll offset on mount (Squad horizontal scroll
   // survives screen navigation; save reload resets it to zero).
@@ -98,6 +140,12 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
   }, [initialScrollLeft]);
 
   const rows = table.getRowModel().rows;
+
+  useLayoutEffect(() => {
+    syncEdges();
+    window.addEventListener("resize", syncEdges);
+    return () => window.removeEventListener("resize", syncEdges);
+  }, [syncEdges, rows.length, table.getVisibleFlatColumns().length]);
   const effectiveActive = effectiveActiveId(activeId, orderedIds);
 
   const cycleSortHeader = (columnId: string): void => {
@@ -156,6 +204,7 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
         );
         container.scrollLeft = nextLeft;
         onScrollCommit?.(container.scrollLeft);
+        syncEdges();
       }
       return;
     }
@@ -197,6 +246,7 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
   };
 
   return (
+    <div className="relative">
     <div
       data-table-scroll
       ref={scrollRef}
@@ -204,6 +254,7 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
       aria-busy={busy || undefined}
       role="group"
       aria-label={ariaLabel}
+      onScroll={syncEdges}
     >
       {/* The <table> only mounts when rows exist; the group + status region
           wrapper is rendered in every non-blocking state so the polite
@@ -212,20 +263,20 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
         <Table className="min-w-full text-left">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent">
+              <TableRow
+                key={headerGroup.id}
+                className="border-panel-border hover:bg-transparent"
+              >
                 {headerGroup.headers.map((header) => {
                   const sortable = header.column.getCanSort();
                   const sortState = header.column.getIsSorted();
-                  const pinned = header.column.getIsPinned();
-                  const headerStyle: React.CSSProperties | undefined =
-                    pinned !== false ? { position: "sticky", left: 0, zIndex: 1 } : undefined;
                   const label = flexRender(header.column.columnDef.header, header.getContext());
                   return (
                     <TableHead
                       key={header.id}
                       aria-sort={sortable && sortState === "asc" ? "ascending" : sortable && sortState === "desc" ? "descending" : undefined}
-                      className="pr-4 whitespace-nowrap"
-                      style={headerStyle}
+                      className={`whitespace-nowrap ${header.column.getIsPinned() === false ? "" : "bg-bg-base"}`}
+                      style={pinnedStyle(header.column)}
                     >
                       {sortable ? (
                         <button
@@ -234,7 +285,7 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
                           onClick={() => cycleSortHeader(header.column.id)}
                         >
                           <span>{label}</span>
-                          <span aria-hidden="true" className="text-[0.65rem]">
+                          <span aria-hidden="true" className="text-[0.65rem] text-text-secondary">
                             {sortState === "asc" ? "▲" : sortState === "desc" ? "▼" : "↕"}
                           </span>
                         </button>
@@ -252,16 +303,18 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
               const id = row.original.id;
               const isIdentity = (columnId: string): boolean => columnId === identityColumnId;
               return (
-                <TableRow key={id} aria-selected={selectedId === id || undefined}>
+                // `group` lets the pinned cells below pick up the row's hover
+                // and selection states; they cannot inherit the row's fill
+                // because a sticky cell must paint its own opaque background.
+                <TableRow key={id} className="group" aria-selected={selectedId === id || undefined}>
                   {row.getVisibleCells().map((cell) => {
-                    const pinned = cell.column.getIsPinned();
-                    const style: React.CSSProperties | undefined =
-                      pinned !== false
-                        ? { position: "sticky", left: 0, background: "rgb(2 6 23)" }
-                        : undefined;
+                    const cellClass = `whitespace-nowrap ${
+                      cell.column.getIsPinned() === false ? "" : PINNED_CELL_CLASS
+                    }`;
+                    const style = pinnedStyle(cell.column);
                     if (isIdentity(cell.column.id)) {
                       return (
-                        <TableCell key={cell.id} className="pr-4 whitespace-nowrap" style={style}>
+                        <TableCell key={cell.id} className={`overflow-hidden text-ellipsis ${cellClass}`} style={style}>
                           <button
                             type="button"
                             data-focus-id={focusIdOf(props.screen, props.region, id)}
@@ -280,7 +333,7 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
                       );
                     }
                     return (
-                      <TableCell key={cell.id} className="pr-4 whitespace-nowrap" style={style}>
+                      <TableCell key={cell.id} className={cellClass} style={style}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     );
@@ -302,5 +355,46 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
         </Alert>
       )}
     </div>
+      {/* The overflow edges. Decorative: the columns themselves are already in
+          the accessibility tree and reachable by Tab, so nothing here is
+          announced. */}
+      <div
+        aria-hidden="true"
+        data-scroll-edge="left"
+        className={`${EDGE_FADE_BASE} left-0 bg-gradient-to-r from-bg-base to-transparent ${edges.left ? "opacity-100" : "opacity-0"}`}
+      />
+      <div
+        aria-hidden="true"
+        data-scroll-edge="right"
+        className={`${EDGE_FADE_BASE} right-0 bg-gradient-to-l from-bg-base to-transparent ${edges.right ? "opacity-100" : "opacity-0"}`}
+      />
+    </div>
   );
+};
+
+/** Pinned cells paint an opaque background (they overlap the columns scrolling
+ *  beneath) and take the row's hover/selection fill from the row's `group`. */
+const PINNED_CELL_CLASS =
+  "bg-bg-base group-hover:bg-row-hover group-aria-selected:bg-row-selected!";
+
+/**
+ * The sticky placement of a pinned column: its left offset is the summed width
+ * of the pinned columns before it, which is exact only because every pinned
+ * column declares a fixed `size`. Unpinned columns get no inline style.
+ */
+const pinnedStyle = (column: {
+  readonly getIsPinned: () => false | "left" | "right";
+  readonly getStart: (position?: "left" | "center" | "right") => number;
+  readonly getSize: () => number;
+}): React.CSSProperties | undefined => {
+  if (column.getIsPinned() !== "left") return undefined;
+  const width = column.getSize();
+  return {
+    position: "sticky",
+    left: column.getStart("left"),
+    zIndex: 1,
+    width,
+    minWidth: width,
+    maxWidth: width,
+  };
 };

@@ -45,11 +45,14 @@ const TableRow = ({ className, ref, ...props }: TableRowProps) => (
     ref={ref}
     className={cn(
       // Hover, selection and focus must stay separable (the dense-table
-      // contract): hover is a wash, selection is a fill, focus is the ring.
-      // `aria-selected` is the renderer's selection channel; `data-state` is
-      // upstream's, kept so a pasted component still reads as selected.
-      "border-b border-border-subtle transition-colors hover:bg-surface/60",
-      "aria-selected:bg-surface-raised data-[state=selected]:bg-surface-raised",
+      // contract): hover is a neutral lift, selection is the chrome-blue fill,
+      // focus is the ring on the row's own name button. `aria-selected` is the
+      // renderer's selection channel; `data-state` is upstream's, kept so a
+      // pasted component still reads as selected. Selection is marked important
+      // so it beats hover on a selected row the pointer happens to be over —
+      // the two variants otherwise tie on specificity.
+      "border-b border-border-subtle transition-colors hover:bg-row-hover",
+      "aria-selected:bg-row-selected! data-[state=selected]:bg-row-selected!",
       className,
     )}
     {...props}

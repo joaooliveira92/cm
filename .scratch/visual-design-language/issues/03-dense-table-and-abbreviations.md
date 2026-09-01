@@ -64,4 +64,4 @@ plus whichever statuses are reserved but unbuilt.
 **Shared-table density contract (12px/`py-0.5`, flat divider headers, four-way separable row
 states, scroll-driven edge fade) plus a reserved, always-on, pinned Status column rendering only
 engine-modeled state, with the full CM 03/04 abbreviation set earmarked as reserved slots.** See
-[Agent Note](../../../.agents/notes/proposed/architecture/2026-08-31-dense-table-and-status-vocabulary.md).
+[Agent Note](../../../.agents/notes/implemented/architecture/2026-08-31-dense-table-and-status-vocabulary.md).

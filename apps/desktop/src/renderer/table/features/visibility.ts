@@ -19,8 +19,27 @@ import {
 /** The mandatory, always-visible-and-pinned identity column. */
 export const SQUAD_IDENTITY_COLUMN_ID = "name";
 
+/** The reserved player-status column (`table/squad/playerStatus.tsx`). */
+export const SQUAD_STATUS_COLUMN_ID = "status";
+
+/**
+ * The columns no preset and no per-column toggle may hide, pinned in this
+ * order. Status is protected for the same reason Name is: the abbreviation
+ * vocabulary is the squad table's at-a-glance channel, so a view that can turn
+ * it off is a view that can hide an injured player.
+ */
+export const SQUAD_PROTECTED_COLUMN_IDS = [
+  SQUAD_IDENTITY_COLUMN_ID,
+  SQUAD_STATUS_COLUMN_ID,
+] as const;
+
 /** Columns present in every preset (the read-only base view). */
-export const SQUAD_BASE_COLUMN_IDS = ["name", "age", "positions", "overall"] as const;
+export const SQUAD_BASE_COLUMN_IDS = [
+  ...SQUAD_PROTECTED_COLUMN_IDS,
+  "age",
+  "positions",
+  "overall",
+] as const;
 
 /** Every column the Squad table can show: base + the visible attribute set.
  *  Hidden attributes (`injuryProneness`) are deliberately absent — they never
@@ -29,6 +48,17 @@ export const SQUAD_ALL_COLUMN_IDS: readonly string[] = [
   ...SQUAD_BASE_COLUMN_IDS,
   ...ALL_ATTRIBUTES,
 ];
+
+/** True when a column can be hidden — everything but the protected pair. */
+export const isProtectedSquadColumn = (columnId: string): boolean =>
+  (SQUAD_PROTECTED_COLUMN_IDS as readonly string[]).includes(columnId);
+
+/** The columns the show/hide control offers. The protected pair is absent
+ *  rather than present-and-disabled: an unreachable checkbox still reads as a
+ *  column you might one day be allowed to hide. */
+export const SQUAD_TOGGLEABLE_COLUMN_IDS: readonly string[] = SQUAD_ALL_COLUMN_IDS.filter(
+  (columnId) => !isProtectedSquadColumn(columnId),
+);
 
 export type SquadPresetId =
   | "overview"
@@ -91,5 +121,9 @@ export const isSquadPresetId = (value: unknown): value is SquadPresetId =>
 export const toggleColumn = (
   visible: readonly string[],
   columnId: string,
-): readonly string[] =>
-  visible.includes(columnId) ? visible.filter((id) => id !== columnId) : [...visible, columnId];
+): readonly string[] => {
+  // A protected column is never toggled off, whatever asks — the guarantee is
+  // the contract, not the absence of a checkbox for it.
+  if (isProtectedSquadColumn(columnId)) return visible.includes(columnId) ? visible : [...visible, columnId];
+  return visible.includes(columnId) ? visible.filter((id) => id !== columnId) : [...visible, columnId];
+};

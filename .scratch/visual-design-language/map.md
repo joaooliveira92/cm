@@ -72,7 +72,7 @@ Plan-only: the map is done when nothing is left to decide and the spec can be ha
   hover/selection/focus, scroll-driven edge fade) plus a reserved, always-on, pinned Status column
   that renders only engine-modeled state (today `condition`) and earmarks the full CM 03/04
   abbreviation set as future slots under provenance. Agent Note at
-  `.agents/notes/proposed/architecture/2026-08-31-dense-table-and-status-vocabulary.md`.
+  `.agents/notes/implemented/architecture/2026-08-31-dense-table-and-status-vocabulary.md`.
 
 - [Navigation frame and Continue/date bar](issues/04-navigation-frame-and-continue-bar.md):
   **Two-row career chrome** — chrome-blue gradient title bar (club identity left;

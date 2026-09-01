@@ -5,7 +5,7 @@ Status: proposed
 ## Problem
 
 The adopted visual frame ([Visual design tokens and chrome-blue retro frame](../../implemented/architecture/2026-08-29-visual-design-tokens.md)),
-the dense table contract ([Dense table visuals and status vocabulary](2026-08-31-dense-table-and-status-vocabulary.md)),
+the dense table contract ([Dense table visuals and status vocabulary](../../implemented/architecture/2026-08-31-dense-table-and-status-vocabulary.md)),
 and the career chrome ([Career chrome frame and date/Continue bar](2026-08-31-career-chrome-and-date-continue-bar.md))
 pattern the shell and the data tables, but the surfaces around them stay ad hoc. Every form field,
 every overlay, and every empty/error state is a hand-written `slate-*` recipe, and the recipes

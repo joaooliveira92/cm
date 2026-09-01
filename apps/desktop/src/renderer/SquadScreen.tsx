@@ -46,9 +46,11 @@ import {
   isSquadPresetId,
   SQUAD_ALL_COLUMN_IDS,
   SQUAD_PRESETS,
+  SQUAD_TOGGLEABLE_COLUMN_IDS,
   toggleColumn,
   type SquadPresetId,
 } from "./table/features/visibility.js";
+import { StatusLegend, statusTermsOf } from "./table/squad/playerStatus.js";
 import {
   loadSquadColumnPreferences,
   resetSquadColumnPreferences,
@@ -77,6 +79,8 @@ import type { FilterClause, TableAnnouncement } from "./table/types.js";
 
 const REGION = "squadTable";
 const TABLE_ID = "squad";
+/** Ties the Status header's disclosure button to the legend it expands. */
+const STATUS_LEGEND_ID = "squad-status-legend";
 
 export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const squadResult = useAtomValue(squadAtom(saveId));
@@ -127,6 +131,13 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     setScrollLeft(left);
     updateTableSession(TABLE_ID, { scrollLeft: left });
   }, []);
+
+  // --- the status abbreviation legend (Term Disclosure). Owned here rather
+  // than in the header cell: the header lives inside the table's horizontally
+  // scrolling, overflow-clipped container, which a 72px pinned cell cannot
+  // escape, so the legend renders above the table and the header button points
+  // at it through `aria-controls`.
+  const [legendExpanded, setLegendExpanded] = useState(false);
 
   // --- persistent Squad column preferences (reconciled on load, saved on change).
   const [preferences, setPreferences] = useState<SquadColumnPreferences>(() =>
@@ -187,7 +198,11 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   const copy: TableStateCopy = STATE_COPY.squad;
 
-  const columns = squadColumns();
+  const columns = squadColumns({
+    expanded: legendExpanded,
+    legendId: STATUS_LEGEND_ID,
+    onToggle: () => setLegendExpanded((open) => !open),
+  });
   const table = useDataTable<SquadRow>({
     columns,
     data: filtered,
@@ -332,8 +347,16 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const onActiveChange = useCallback(
     (id: string) => {
       setActiveAndBookmark(id, makeTableFocusBookmark(TABLE_ID, orderedIds, id));
+      // The focused row's statuses reach the polite announcer as full terms —
+      // the three-letter code is a visual shorthand and is never spoken. A row
+      // with nothing modeled announces nothing rather than "no statuses".
+      const player = latest.current.players.find((p) => p.id === id);
+      if (player === undefined) return;
+      const terms = statusTermsOf(player);
+      if (terms.length === 0) return;
+      speak("row-status", `${player.firstName} ${player.lastName}: ${terms.join(", ")}.`);
     },
-    [orderedIds, setActiveAndBookmark],
+    [orderedIds, setActiveAndBookmark, speak],
   );
 
   const onRowPrimary = useCallback(
@@ -515,13 +538,15 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             Show / hide columns
           </summary>
           <div className="mt-2 grid max-h-64 grid-cols-3 gap-x-4 gap-y-1 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-3 text-xs">
-            {SQUAD_ALL_COLUMN_IDS.map((columnId) => (
+            {/* Name and Status are absent, not disabled: they are protected
+                columns, and offering a checkbox that never moves implies the
+                guarantee is a setting. */}
+            {SQUAD_TOGGLEABLE_COLUMN_IDS.map((columnId) => (
               <label key={columnId} className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={preferences.visibleColumnIds.includes(columnId)}
                   onChange={() => toggleOneColumn(columnId)}
-                  disabled={columnId === "name"}
                   className={`accent-text-highlight ${FOCUS_RING.join(" ")}`}
                 />
                 {SQUAD_COLUMN_LABELS[columnId] ?? columnId}
@@ -578,6 +603,8 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           </p>
         </div>
       )}
+      {legendExpanded && <StatusLegend id={STATUS_LEGEND_ID} />}
+
       {/* The table + its one polite status announcer render in every
           non-blocking state, so the announced line survives a transition to
           zero rows (F3); the <table> itself only mounts when rows exist. */}

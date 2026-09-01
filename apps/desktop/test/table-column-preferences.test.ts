@@ -13,6 +13,8 @@ import {
   SQUAD_ALL_COLUMN_IDS,
   SQUAD_IDENTITY_COLUMN_ID,
   SQUAD_PRESETS,
+  SQUAD_PROTECTED_COLUMN_IDS,
+  SQUAD_STATUS_COLUMN_ID,
   toggleColumn,
 } from "../src/renderer/table/features/visibility.js";
 
@@ -50,14 +52,16 @@ describe("AC-27 — Squad column-preference reconciliation (runs on every load/r
     expect(reconciled.visibleColumnIds).toContain("passing");
   });
 
-  it("Name is always visible and pinned, even when a stored blob hides it", () => {
+  it("Name and Status are always visible and pinned, even when a stored blob hides them", () => {
     const reconciled = reconcileColumnPreferences(
       { visibleColumnIds: ["age", "overall"], pinnedColumnIds: [] },
       SQUAD_ALL_COLUMN_IDS,
     );
     expect(reconciled.visibleColumnIds[0]).toBe(SQUAD_IDENTITY_COLUMN_ID);
+    expect(reconciled.visibleColumnIds).toContain(SQUAD_STATUS_COLUMN_ID);
     expect(reconciled.visibleColumnIds).toContain("age");
-    expect(reconciled.pinnedColumnIds).toEqual([SQUAD_IDENTITY_COLUMN_ID]);
+    // Order is load-bearing: the pinned sticky offsets are summed left to right.
+    expect(reconciled.pinnedColumnIds).toEqual([...SQUAD_PROTECTED_COLUMN_IDS]);
   });
 
   it("a pinned column that is not visible is re-added to the visible set", () => {
@@ -66,7 +70,7 @@ describe("AC-27 — Squad column-preference reconciliation (runs on every load/r
       SQUAD_ALL_COLUMN_IDS,
     );
     expect(reconciled.visibleColumnIds).toContain("pace");
-    expect(reconciled.pinnedColumnIds).toEqual([SQUAD_IDENTITY_COLUMN_ID, "pace"]);
+    expect(reconciled.pinnedColumnIds).toEqual([...SQUAD_PROTECTED_COLUMN_IDS, "pace"]);
   });
 
   it("nothing surviving the drop falls back to the full column universe", () => {
@@ -112,7 +116,11 @@ describe("AC-27 — preferences persist to local storage, loaded through the rec
       { visibleColumnIds: ["name", "age"], pinnedColumnIds: ["name"], activePresetId: "overview" },
       storage,
     );
-    expect(loadSquadColumnPreferences(storage).visibleColumnIds).toEqual(["name", "age"]);
+    expect(loadSquadColumnPreferences(storage).visibleColumnIds).toEqual([
+      "name",
+      "status",
+      "age",
+    ]);
   });
 
   it("a corrupt blob falls back to defaults without throwing", () => {

@@ -73,6 +73,18 @@
   --color-text-secondary: #8892a0;
   --color-text-muted: #6b7686;
 
+  /* --- Dense-table row states -------------------------------------------
+     Four states must stay separable: neutral (no fill), hover, selection, and
+     the keyboard focus ring (which lives on the row's name button, not here).
+     Both fills are OPAQUE rather than translucent chrome-blue, because the
+     pinned identity columns sit on their own stacking context and have to
+     paint an opaque background to hide the columns scrolling beneath them;
+     a translucent fill would compose differently there than on the rest of the
+     row. `row-selected` is that low-opacity chrome-blue flattened over
+     `bg-base`, so it reads as the intended tint and composes deterministically. */
+  --color-row-hover: #141b25;
+  --color-row-selected: #102033;
+
   /* --- Semantic status -------------------------------------------------- */
   --color-text-highlight: #fff400;
   --color-text-warning: #ff7200;

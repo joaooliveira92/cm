@@ -8,19 +8,19 @@ The slice's edge promise: this lands entirely inside the shared table layer, so 
 
 **Decisions:**
 
-- **Shared-table density contract (12px/`py-0.5`, flat divider headers, four-way separable row states, scroll-driven edge fade) plus a reserved, always-on, pinned Status column rendering only engine-modeled state, with the full CM 03/04 abbreviation set earmarked as reserved slots.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-31-dense-table-and-status-vocabulary.md).
+- **Shared-table density contract (12px/`py-0.5`, flat divider headers, four-way separable row states, scroll-driven edge fade) plus a reserved, always-on, pinned Status column rendering only engine-modeled state, with the full CM 03/04 abbreviation set earmarked as reserved slots.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-31-dense-table-and-status-vocabulary.md).
 
 **Blocked by:** 08 — Token foundation, alias-first repaint, and the slate guard (the density and status tokens, and the four-way row-state colors, come from the emitted token system).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] All career tables render at the compact tier: 12px body, small row padding, flat divider headers, secondary-toned sort indicator legible at 12px.
-- [ ] Row hover, row selection, neutral state, and the name-button focus ring are visually distinct from one another and from the focus ring; no zebra striping.
-- [ ] Horizontal overflow is signalled by a scroll-position-driven edge fade.
-- [ ] A Status column is pinned beside the player name, always visible, and excluded from the column-visibility toggles and presets; it survives horizontal scroll.
-- [ ] The Status column renders only engine-modeled state (today `condition`); unmodeled statuses render as empty cells, and no unmodeled abbreviation is displayed anywhere.
-- [ ] Statuses render as three-letter abbreviations coloured by the shared danger/warning/success semantic tokens.
-- [ ] The full CM 03/04 abbreviation set is recorded as reserved-but-unbuilt slots with per-status likelihood notes (low for selection-rule and scouting statuses; plausible for injury, suspension, condition, transfer-listed/wanted) — the reservation reads as a contract, not a promise.
-- [ ] On row focus the polite announcer speaks the full term, never the raw abbreviation.
-- [ ] A full abbreviation legend is reachable from the Status column's header (Term Disclosure), usable without a mouse.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] All career tables render at the compact tier: 12px body, small row padding, flat divider headers, secondary-toned sort indicator legible at 12px.
+- [x] Row hover, row selection, neutral state, and the name-button focus ring are visually distinct from one another and from the focus ring; no zebra striping.
+- [x] Horizontal overflow is signalled by a scroll-position-driven edge fade.
+- [x] A Status column is pinned beside the player name, always visible, and excluded from the column-visibility toggles and presets; it survives horizontal scroll.
+- [x] The Status column renders only engine-modeled state (today `condition`); unmodeled statuses render as empty cells, and no unmodeled abbreviation is displayed anywhere.
+- [x] Statuses render as three-letter abbreviations coloured by the shared danger/warning/success semantic tokens.
+- [x] The full CM 03/04 abbreviation set is recorded as reserved-but-unbuilt slots with per-status likelihood notes (low for selection-rule and scouting statuses; plausible for injury, suspension, condition, transfer-listed/wanted) — the reservation reads as a contract, not a promise.
+- [x] On row focus the polite announcer speaks the full term, never the raw abbreviation.
+- [x] A full abbreviation legend is reachable from the Status column's header (Term Disclosure), usable without a mouse.
+- [x] `pnpm check:all` is green at this commit.

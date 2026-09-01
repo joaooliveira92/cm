@@ -33,7 +33,7 @@ through the existing chrome tokens rather than through shadcn's default palette.
   except permanent rather than a migration backlog.
 - **Density is a local customization.** shadcn ships marketing-page padding (`p-6` cards, `p-3`
   cells). `card.tsx` and `table.tsx` are retuned once to the density contract from
-  [Dense table visuals and the player-status vocabulary](2026-08-31-dense-table-and-status-vocabulary.md)
+  [Dense table visuals and the player-status vocabulary](../../implemented/architecture/2026-08-31-dense-table-and-status-vocabulary.md)
   (`px-2 py-0.5`, 12px body) rather than corrected at every call site.
 - **`theme.ts` survives for what it is good at.** Panel and button class strings remain valid
   for the plain styled containers they were written for. The component layer takes the surfaces
