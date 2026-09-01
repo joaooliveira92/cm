@@ -7,6 +7,7 @@ import { savesDir, seedConcluded, seedFresh } from "./seedSaves.js";
 const seedAndContinue = async (window: Page, userDataDir: string, name: string, seed: (dir: string) => Promise<string>) => {
   await seed(savesDir(userDataDir));
   await window.reload();
+  await window.getByRole("button", { name: "Load Career" }).click();
   const button = window.getByRole("button", { name, exact: true });
   await expect(button).toBeVisible();
   await button.click();

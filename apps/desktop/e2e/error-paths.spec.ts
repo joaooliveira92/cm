@@ -11,6 +11,7 @@ const goto = async (window: Page, tab: string) => {
 const enterCareer = async (window: Page, userDataDir: string) => {
   await seedFresh(savesDir(userDataDir));
   await window.reload();
+  await window.getByRole("button", { name: "Load Career" }).click();
   await window.getByRole("button", { name: "Seed: fresh" }).click();
   await dismissTeachingSplash(window);
 };

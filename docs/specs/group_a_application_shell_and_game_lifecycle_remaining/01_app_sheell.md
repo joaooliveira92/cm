@@ -636,7 +636,7 @@ The user should be able to return to the Main Menu until final world generation 
 |  > 42 nations discovered                                       |
 |  > 97 playable competition definitions                         |
 |                                                                |
-|                                      [Cancel]                  |
+|                                                       [Cancel] |
 +----------------------------------------------------------------+
 ```
 

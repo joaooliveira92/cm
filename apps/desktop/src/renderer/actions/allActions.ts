@@ -170,6 +170,7 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   createStep2: { showKeyBadges: false },
   createStep3: { showKeyBadges: false },
   saveList: { showKeyBadges: false },
+  loadCareer: { showKeyBadges: false },
 };
 
 /** Honored by the badge renderer: a screen opts into inline key badges here. */

@@ -27,6 +27,7 @@ test("a save persists across app restarts", async ({ userDataDir }) => {
 
   const firstApp = await launchApp(userDataDir);
   const firstWindow = await firstApp.firstWindow();
+  await firstWindow.getByRole("button", { name: "Load Career" }).click();
   await firstWindow.getByRole("button", { name: "Seed: fresh" }).click();
   await expect(firstWindow.getByText(/players$/)).toBeVisible();
 
@@ -34,6 +35,7 @@ test("a save persists across app restarts", async ({ userDataDir }) => {
 
   const relaunched = await launchApp(userDataDir);
   const relaunchedWindow = await relaunched.firstWindow();
+  await relaunchedWindow.getByRole("button", { name: "Load Career" }).click();
   await relaunchedWindow.getByRole("button", { name: "Seed: fresh" }).click();
   await expect(relaunchedWindow.getByText(/players$/)).toBeVisible();
 
@@ -46,6 +48,7 @@ test("a saved tactic is carried into the Matchday live control panel (keyboard)"
 }) => {
   await seedBeforeMatchday(savesDir(userDataDir));
   await page.reload();
+  await page.getByRole("button", { name: "Load Career" }).click();
   await page.getByRole("button", { name: "Seed: before-matchday" }).click();
   await dismissTeachingSplash(page);
 
@@ -89,6 +92,7 @@ test("a substitution is driven by keyboard through the match day live control pa
 }) => {
   await seedBeforeMatchday(savesDir(userDataDir));
   await page.reload();
+  await page.getByRole("button", { name: "Load Career" }).click();
   await page.getByRole("button", { name: "Seed: before-matchday" }).click();
   await dismissTeachingSplash(page);
 
@@ -143,6 +147,7 @@ test("advancing the calendar to season conclusion surfaces a Season Summary verd
 }) => {
   await seedBeforeSeasonEnd(savesDir(userDataDir));
   await page.reload();
+  await page.getByRole("button", { name: "Load Career" }).click();
   await page.getByRole("button", { name: "Seed: before-season-end" }).click();
   await dismissTeachingSplash(page);
 
@@ -167,6 +172,7 @@ test("a transfer bid settles and the budget reflects the spend (keyboard)", asyn
 }) => {
   await seedFresh(savesDir(userDataDir));
   await page.reload();
+  await page.getByRole("button", { name: "Load Career" }).click();
   await page.getByRole("button", { name: "Seed: fresh" }).click();
   await dismissTeachingSplash(page);
 

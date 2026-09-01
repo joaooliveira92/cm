@@ -16,6 +16,7 @@ import { SquadScreen } from "../SquadScreen.js";
 import { TacticsScreen } from "../TacticsScreen.js";
 import { TransfersScreen } from "../TransfersScreen.js";
 import { SaveListScreen } from "./saveList.js";
+import { LoadCareerScreen } from "./loadCareer.js";
 import {
   CareerChildView,
   CareerIndexRedirect,
@@ -53,6 +54,12 @@ const saveListRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
   component: SaveListScreen,
+});
+
+const loadCareerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "load",
+  component: LoadCareerScreen,
 });
 
 // ---------------------------------------------------------------------------
@@ -138,6 +145,7 @@ const createStep3Route = createRoute({
 
 const routeTree = rootRoute.addChildren([
   saveListRoute,
+  loadCareerRoute,
   createFlowRoute.addChildren([
     createLeaguesRoute,
     createStep1Route,

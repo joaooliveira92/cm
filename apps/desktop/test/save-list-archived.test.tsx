@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { SaveListScreen } from "../src/renderer/router/saveList.js";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { LoadCareerScreen } from "../src/renderer/router/loadCareer.js";
+import { navigate } from "../src/renderer/navigation/adapter.js";
+
+vi.mock("../src/renderer/navigation/adapter.js", () => ({
+  navigate: vi.fn(),
+}));
+
+const mountedNavigate = vi.mocked(navigate);
 
 const save = (name: string, archivedCause: string | null) => ({
   id: `id-${name}`,
@@ -17,7 +24,7 @@ const mount = (saves: ReadonlyArray<unknown>) => {
         ? { _tag: "Success", value: saves }
         : { _tag: "Success", value: "pong" },
   };
-  render(<SaveListScreen />);
+  render(<LoadCareerScreen />);
 };
 
 const mountWithListSavesFailure = () => {
@@ -29,13 +36,16 @@ const mountWithListSavesFailure = () => {
       return { _tag: "Success", value: "pong" };
     },
   };
-  render(<SaveListScreen />);
+  render(<LoadCareerScreen />);
 };
 
-beforeEach(cleanup);
+beforeEach(() => {
+  mountedNavigate.mockClear();
+  cleanup();
+});
 afterEach(cleanup);
 
-describe("Save List — Archived Save marker", () => {
+describe("Load Career — Archived Save marker", () => {
   it("marks an archived save and leaves a live one unmarked", async () => {
     mount([save("Live Career", null), save("Retired Career", "retired")]);
 
@@ -59,7 +69,7 @@ describe("Save List — Archived Save marker", () => {
   });
 });
 
-describe("Save List — failed listSaves", () => {
+describe("Load Career — failed listSaves", () => {
   it("shows an error message and retry button when listSaves fails", async () => {
     mountWithListSavesFailure();
 
@@ -84,5 +94,31 @@ describe("Save List — failed listSaves", () => {
 
     await screen.findByRole("button", { name: "Save Recovered Career" });
     expect(screen.queryByText("Failed to load saves.")).toBeNull();
+  });
+});
+
+describe("Load Career — empty state and navigation", () => {
+  it("shows an empty state with a direct Start New Career action when no saves exist", async () => {
+    mount([]);
+
+    await screen.findByText("No saves yet.");
+    const start = screen.getAllByRole("button", { name: "Start New Career" });
+    expect(start.length).toBeGreaterThan(0);
+  });
+
+  it("Start New Career in the empty state navigates to league selection", async () => {
+    mount([]);
+
+    await screen.findByText("No saves yet.");
+    fireEvent.click(screen.getAllByRole("button", { name: "Start New Career" })[0]);
+    expect(mountedNavigate).toHaveBeenCalledWith({ type: "createLeagues" });
+  });
+
+  it("Back returns to the main menu", async () => {
+    mount([]);
+
+    await screen.findByText("No saves yet.");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(mountedNavigate).toHaveBeenCalledWith({ type: "saveList" });
   });
 });

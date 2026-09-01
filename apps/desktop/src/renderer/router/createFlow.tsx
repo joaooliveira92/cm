@@ -17,6 +17,7 @@ import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
 import { GenerationStatus } from "../create/GenerationStatus.js";
+import { CHROME_BAND } from "../theme.js";
 import {
   abandon,
   blockedReason,
@@ -316,9 +317,9 @@ export const CreateFlowLayout = () => {
             thing: it carries product identity, the in-band "Step N of 4" progress,
             and Cancel/Back, and the creation screens become panels beneath it.
             The floating step badge is gone — progress now reads from the band. */}
-        <header className="chrome-gradient border-b border-panel-border-dark px-3 py-2 shadow-chrome">
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="truncate text-lg font-bold">New Career</h1>
+        <header className={CHROME_BAND}>
+          <h1 className="truncate text-lg font-bold">New Career</h1>
+          <div className="flex items-center gap-3">
             {/* The in-band step indicator. "Step 1 of 4 · Leagues" — progress is
                 read from the band, not from a detached chip on the page. */}
             <span className="text-sm text-text-primary">{STEP_LABELS[step]}</span>

@@ -36,6 +36,9 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/":
       getRouter().navigate({ to: "/" });
       break;
+    case "/load":
+      getRouter().navigate({ to: "/load" });
+      break;
     case "/create/leagues":
       getRouter().navigate({ to: "/create/leagues" });
       return;

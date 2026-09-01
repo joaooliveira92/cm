@@ -76,6 +76,7 @@ const screenIdOfPath = (pathname: string): string => {
   const segs = pathname.split("/").filter(Boolean);
   if (segs[0] === "create") return `createStep${segs[1]?.replace("step-", "") ?? "1"}`;
   if (segs[0] === "career") return segs[2] ?? "";
+  if (segs[0] === "load") return "loadCareer";
   return "saveList";
 };
 

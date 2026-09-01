@@ -157,6 +157,7 @@ test("Escape closes only the topmost transient layer (AC-20)", async ({
   // Escape closes the palette first, then the panel — never both at once.
   await seedBeforeMatchday(savesDir(userDataDir));
   await page.reload();
+  await page.getByRole("button", { name: "Load Career" }).click();
   await page.getByRole("button", { name: "Seed: before-matchday" }).click();
   await dismissTeachingSplash(page);
 

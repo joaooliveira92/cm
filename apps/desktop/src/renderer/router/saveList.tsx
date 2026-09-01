@@ -1,106 +1,175 @@
-import { useCallback, useEffect, useState } from "react";
-import { Info, LogOut, Settings } from "lucide-react";
-import { type SaveId, type SaveSummary } from "@cm-clone/contracts";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Effect, Result } from "effect";
-import { listSaves, loadSave, ping } from "../rpc.js";
+import { listSaves } from "../rpc.js";
 import { type RpcClientError } from "../rpc/errors.js";
-import { navigate, navigateCareer } from "../navigation/adapter.js";
+import { navigate } from "../navigation/adapter.js";
 import { RouteView } from "./RouteView.js";
 import { LightweightDialog } from "../dialog/LightweightDialog.js";
-import { Badge } from "../components/ui/badge.js";
-import { Button } from "../components/ui/button.js";
-import { Kbd } from "../components/ui/kbd.js";
+import { FOCUS_RING } from "../focus.js";
+import { PANEL_STRONG } from "../theme.js";
 
-/** The save list route (`/`): the app's boot screen. Continue opens the active
- *  career; Start New Career enters the creation flow. A stale save entry is a
- *  silent no-op (its load validates before navigating). */
+/** The product identity — the clone's own title, not any licensed artwork. */
+const PRODUCT_TITLE = "Championship Manager Clone";
+const PRODUCT_SUBTITLE = "Career Simulation";
+
+/** The vertical menu actions, in display order (spec §3.4). Each maps to a
+ *  command the screen emits. Renderer-drawn — no career logic. */
+const MENU_ITEMS: ReadonlyArray<{
+  readonly key: string;
+  readonly label: string;
+  readonly command:
+    | "start_new_career"
+    | "open_load_game"
+    | "open_preferences"
+    | "open_credits"
+    | "request_application_exit";
+}> = [
+  { key: "menu-start", label: "Start New Career", command: "start_new_career" },
+  { key: "menu-load", label: "Load Career", command: "open_load_game" },
+  { key: "menu-preferences", label: "Preferences", command: "open_preferences" },
+  { key: "menu-credits", label: "Credits", command: "open_credits" },
+  { key: "menu-exit", label: "Exit", command: "request_application_exit" },
+];
+
+/**
+ * The Main Menu (`/`): the application's entry point (app-shell spec, Screen 1).
+ * Full-screen, centered, with a quiet background so the vertical menu reads
+ * first. Emits application commands — it never contains career logic. Keyboard
+ * navigation (↑/↓/Home/End/Enter) moves the roving focus across the menu.
+ */
 export const SaveListScreen = () => {
-  const [saves, setSaves] = useState<ReadonlyArray<SaveSummary>>([]);
   const [listSavesError, setListSavesError] = useState<RpcClientError<"listSaves"> | null>(null);
-  const [status, setStatus] = useState("connecting...");
   const [openPreferences, setOpenPreferences] = useState(false);
   const [openCredits, setOpenCredits] = useState(false);
+  const [openExit, setOpenExit] = useState(false);
+  const menuRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const refresh = useCallback(async () => {
     setListSavesError(null);
     const outcome = await Effect.runPromise(listSaves().pipe(Effect.result));
     if (Result.isFailure(outcome)) {
       setListSavesError(outcome.failure);
-      return;
     }
-    setSaves(outcome.success);
   }, []);
 
   useEffect(() => {
-    const connect = async () => {
-      const pinged = await Effect.runPromise(ping().pipe(Effect.result));
-      setStatus(
-        Result.isSuccess(pinged)
-          ? `main process says: ${pinged.success}`
-          : "failed to reach main process",
-      );
-      await refresh();
-    };
-    void connect();
+    void refresh();
   }, [refresh]);
 
-  const handleContinue = async (id: SaveId): Promise<void> => {
-    const outcome = await Effect.runPromise(loadSave(id).pipe(Effect.result));
-    if (Result.isFailure(outcome)) return;
-    navigateCareer({ type: "squad", saveId: id }, "pointer");
+  // Roving tabindex: exactly one menu item is the tab stop (spec §4.1).
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const focusItem = (index: number) => {
+    menuRefs.current[index]?.focus();
   };
 
-  const handleQuit = () => {
-    // Trigger the before-quit guard from Ticket 03
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const next = (activeIndex + 1) % MENU_ITEMS.length;
+      setActiveIndex(next);
+      focusItem(next);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const prev = (activeIndex - 1 + MENU_ITEMS.length) % MENU_ITEMS.length;
+      setActiveIndex(prev);
+      focusItem(prev);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      setActiveIndex(0);
+      focusItem(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      const last = MENU_ITEMS.length - 1;
+      setActiveIndex(last);
+      focusItem(last);
+    }
+  };
+
+  const runCommand = (
+    command: (typeof MENU_ITEMS)[number]["command"],
+  ): void => {
+    switch (command) {
+      case "start_new_career":
+        navigate({ type: "createLeagues" });
+        break;
+      case "open_load_game":
+        navigate({ type: "loadCareer" });
+        break;
+      case "open_preferences":
+        setOpenPreferences(true);
+        break;
+      case "open_credits":
+        setOpenCredits(true);
+        break;
+      case "request_application_exit":
+        setOpenExit(true);
+        break;
+    }
+  };
+
+  const handleQuitConfirmed = () => {
+    setOpenExit(false);
     window.electronAPI?.showQuitGuard?.();
   };
 
-  const handlePreferences = () => setOpenPreferences(true);
-  const handleCredits = () => setOpenCredits(true);
-
   return (
     <RouteView screenId="saveList">
-      <main className="min-h-screen bg-background p-8 text-foreground">
-        <h1 className="text-2xl font-bold">Championship Manager Clone</h1>
-        <p className="mt-1 text-sm text-text-secondary">{status}</p>
+      <div className="min-h-screen bg-background text-foreground">
+        <div
+          className="flex min-h-screen flex-col"
+          onKeyDown={handleKeyDown}
+          data-focus-id="saveList.menu"
+        >
+          {/* Product identity area (spec §3.3) — decorative, not interactive. */}
+          <header className="flex flex-1 flex-col items-center justify-center px-4 text-center">
+            <h1 className="text-3xl font-bold tracking-tight text-text-primary">{PRODUCT_TITLE}</h1>
+            <p className="mt-2 text-sm uppercase tracking-widest text-text-muted">{PRODUCT_SUBTITLE}</p>
+            <p className="mt-1 text-xs text-text-muted">Fictional 2003/04 dataset</p>
+          </header>
 
-        {/* App-chrome bar — three icon-only buttons matching Retire and Quit patterns. The
-            glyphs come from `lucide-react`; the hand-drawn paths they replaced were malformed. */}
-        <nav className="mb-6 flex items-center justify-between border-b border-border-subtle p-2 text-sm">
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={handlePreferences}
-              aria-label="Preferences"
-            >
-              <Settings aria-hidden="true" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={handleCredits}
-              aria-label="Credits"
-            >
-              <Info aria-hidden="true" />
-            </Button>
-          </div>
-          <div className="flex gap-2">
-            <Button type="button" variant="ghost" size="icon" onClick={handleQuit} aria-label="Quit">
-              <LogOut aria-hidden="true" />
-            </Button>
-          </div>
-        </nav>
+          {/* Primary menu group (spec §3.4) — vertical, each row a large target. */}
+          <nav
+            aria-label="Main menu"
+            className={`mx-auto w-full max-w-xs ${PANEL_STRONG}`}
+          >
+            <ul className="flex flex-col gap-1">
+              {MENU_ITEMS.map((item, index) => (
+                <li key={item.key}>
+                  <button
+                    ref={(node) => {
+                      menuRefs.current[index] = node;
+                    }}
+                    type="button"
+                    tabIndex={index === activeIndex ? 0 : -1}
+                    data-focus-id={`saveList.${item.key}`}
+                    aria-current={index === activeIndex ? "true" : undefined}
+                    className={`w-full rounded-control px-3 py-2 text-left text-sm text-text-body transition-colors hover:bg-surface-raised hover:text-text-primary ${FOCUS_RING.join(" ")}`}
+                    onClick={() => {
+                      setActiveIndex(index);
+                      runCommand(item.command);
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-        {/* Keyboard navigation hint (Level 2 tier) */}
-        <div className="mb-2 text-xs text-text-secondary">
-          Level 2: Use ↑↓ to navigate, <Kbd>Enter</Kbd> to select, <Kbd>C</Kbd> to continue most
-          recent
+          {/* Footer (spec §4.2) — version separated from database version. */}
+          <footer className="mt-8 flex flex-col items-center gap-1 px-4 pb-4 text-center text-xs text-text-muted">
+            <span>Version 0.0.0</span>
+            <span>Database: fictional 2003-style dataset · Mods: none</span>
+          </footer>
         </div>
 
-        {/* Preferences dialog */}
+        {listSavesError && (
+          <p className="sr-only" role="status">
+            Failed to reach the save repository.
+          </p>
+        )}
+
         {openPreferences && (
           <LightweightDialog
             title="Preferences"
@@ -109,7 +178,6 @@ export const SaveListScreen = () => {
           />
         )}
 
-        {/* Credits dialog */}
         {openCredits && (
           <LightweightDialog
             title="Credits"
@@ -118,49 +186,58 @@ export const SaveListScreen = () => {
           />
         )}
 
-        <section className="mt-6">
-          <h2 className="text-lg font-semibold">Continue career</h2>
-          <ul className="mt-2 space-y-1">
-            {saves.map((save) => (
-              <li
-                key={save.id}
-                className="flex items-baseline gap-2"
-                tabIndex={save.id === saves[0]?.id ? 0 : -1}
-                role="button"
-                aria-label={`Save ${save.name}`}
-                onClick={() => void handleContinue(save.id)}
-              >
-                <span className="text-text-primary underline hover:text-text-body">{save.name}</span>
-                {/* An Archived Save still opens — it is read-only, not gone — so the marker sits
-                    beside the entry rather than replacing it. Both causes read the same here; only
-                    Season Summary distinguishes them. */}
-                {save.archivedCause !== null && <Badge variant="secondary">Archived</Badge>}
-              </li>
-            ))}
-            {saves.length === 0 && !listSavesError && (
-              <li className="text-text-muted">No saves yet.</li>
-            )}
-            {listSavesError && (
-              <div className="mt-2">
-                <p className="text-sm text-destructive">Failed to load saves.</p>
-                <Button type="button" variant="secondary" className="mt-1" onClick={() => refresh()}>
-                  Retry
-                </Button>
+        {/* Exit confirmation (spec §7): modal, default focus on Cancel, the
+            destructive action styled distinctly, Escape cancels. */}
+        {openExit && (
+          <div
+            className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setOpenExit(false);
+            }}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="exit-dialog-title"
+              className="w-full max-w-sm rounded-panel border border-panel-border bg-panel-bg-strong text-text-primary shadow-2xl"
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  setOpenExit(false);
+                }
+              }}
+            >
+              <div className="chrome-gradient flex items-center justify-between rounded-t-panel border-b border-panel-border-dark px-3 py-2 shadow-chrome">
+                <h2 id="exit-dialog-title" className="font-semibold">
+                  Exit application?
+                </h2>
               </div>
-            )}
-          </ul>
-        </section>
-
-        <section className="mt-6">
-          <h2 className="text-lg font-semibold">New career</h2>
-          <p className="mt-2 text-sm text-text-secondary">
-            Click below to start a new career with manager profile selection.
-          </p>
-          <Button type="button" className="mt-3" onClick={() => navigate({ type: "createLeagues" })}>
-            Start New Career
-          </Button>
-        </section>
-      </main>
+              <div className="px-3 py-3">
+                <p className="text-sm text-text-secondary">
+                  Any unsaved setup changes will be lost.
+                </p>
+                <div className="mt-4 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    autoFocus
+                    className="rounded-control bg-surface-raised px-3 py-1 text-text-primary hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => setOpenExit(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-control border border-destructive/40 bg-destructive/15 px-3 py-1 text-destructive hover:bg-destructive/25"
+                    onClick={handleQuitConfirmed}
+                  >
+                    Exit
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </RouteView>
   );
 };

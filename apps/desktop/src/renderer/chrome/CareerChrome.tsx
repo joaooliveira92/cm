@@ -52,7 +52,7 @@ import {
   useAtom,
   useAtomValue,
 } from "../rpc.js";
-import { BTN_PRIMARY } from "../theme.js";
+import { BTN_PRIMARY, CHROME_BAND } from "../theme.js";
 
 export interface CareerTab {
   readonly label: string;
@@ -237,8 +237,8 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
 
   return (
     <header className="text-text-primary">
-      <div className="chrome-gradient flex items-center justify-between border-b border-panel-border-dark px-3 py-2 shadow-chrome">
-        <h2 className="truncate text-lg font-bold">{clubName ?? " "}</h2>
+      <div className={CHROME_BAND}>
+        <h2 className="truncate text-lg font-bold">{clubName ?? "\u00a0"}</h2>
         <div className="flex items-center gap-3">
           <span className="flex flex-col items-end leading-tight">
             <span className="text-xs">
@@ -270,13 +270,18 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
         and reachability never diverge — `overflow-x-auto`, never a discloser.
       */}
       <nav className="flex items-center justify-between gap-2 border-b border-border-subtle bg-bg-raised px-2 py-1 text-sm">
-        <div className="flex gap-1 overflow-x-auto">
+        {/* `min-w-0 flex-1`: the strip grows to occupy the full chrome width
+            (Back-to-saves keeps its own shrink-0 slot on the right), and each
+            tab grows to equal width. Scroll-overflow still holds — the tabs
+            never compress below their label (`shrink-0`), so once they outgrow
+            the strip it scrolls exactly as before. */}
+        <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
           {CAREER_TABS.map((tab) => (
             <button
               key={tab.childPath}
               type="button"
               aria-current={tab.childPath === activeChild ? "page" : undefined}
-              className={`shrink-0 rounded-control px-3 py-1 whitespace-nowrap capitalize ${FOCUS_RING.join(" ")} ${
+              className={`shrink-0 flex-1 rounded-control px-3 py-1 whitespace-nowrap capitalize ${FOCUS_RING.join(" ")} ${
                 tab.childPath === activeChild
                   ? "chrome-gradient-inverted border border-panel-border-dark font-semibold"
                   : "bg-surface hover:bg-surface-raised"

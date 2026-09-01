@@ -47,6 +47,12 @@ export const BTN_PRIMARY =
 export const BTN_SECONDARY =
   "rounded-control bg-surface-raised px-3 py-1 text-text-primary hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50";
 
+/** The chrome band: the gradient row every shell caps with. One surface shared
+ *  by the career chrome's title bar, the pre-career creation band, and the boot
+ *  screen — identity on the left, the context/action cluster on the right. */
+export const CHROME_BAND =
+  "chrome-gradient flex items-center justify-between gap-3 border-b border-panel-border-dark px-3 py-2 shadow-chrome";
+
 /* ---------------------------------------------------------------------------
  * The shared modal anatomy (dialog/common). Every overlay — preferences, help,
  * the command palette, confirmations, the transfer counter-offer — renders the

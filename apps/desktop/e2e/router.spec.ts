@@ -7,6 +7,7 @@ import { savesDir, seedFresh } from "./seedSaves.js";
 const enterCareer = async (page: Page, userDataDir: string) => {
   await seedFresh(savesDir(userDataDir));
   await page.reload();
+  await page.getByRole("button", { name: "Load Career" }).click();
   await page.getByRole("button", { name: "Seed: fresh" }).click();
   await expect(page.getByText(/players$/)).toBeVisible();
   await dismissTeachingSplash(page);
@@ -56,6 +57,7 @@ test("the career parent owns the persistent shell across every child route (AC-1
 test("a well-formed-but-missing save stays on the career route with an error — never a loader redirect (AC-12)", async ({ window: page, userDataDir }) => {
   await seedFresh(savesDir(userDataDir));
   await page.reload();
+  await page.getByRole("button", { name: "Load Career" }).click();
   await expect(page.getByRole("button", { name: "Seed: fresh" })).toBeVisible();
 
   // Well-formed saveId (a UUID) that no save exists for — the career route must
@@ -88,7 +90,8 @@ test("creation keeps beginCareer before Club Selection and returning discards it
 
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).toBeVisible();
-  // Leaving creation never leaks a provisional save into the continue list.
+  // Leaving creation never leaks a provisional save into the load list.
+  await page.getByRole("button", { name: "Load Career" }).click();
   await expect(page.getByText("No saves yet.")).toBeVisible();
 });
 
@@ -129,6 +132,7 @@ test("a failed commit discards the provisional career and recovers to step 1 (AC
   // Nothing leaked into the save list.
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).toBeVisible();
+  await page.getByRole("button", { name: "Load Career" }).click();
   await expect(page.getByText("No saves yet.")).toBeVisible();
 });
 

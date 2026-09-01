@@ -30,6 +30,7 @@ export type CreationStepDestination =
 
 export type NavigationDestination =
   | { readonly type: "saveList" }
+  | { readonly type: "loadCareer" }
   | CreationStepDestination
   | CareerDestination;
 
@@ -74,6 +75,7 @@ export const CAREER_G_BINDINGS: Readonly<
  */
 export type ResolvedDestination =
   | { readonly to: "/" }
+  | { readonly to: "/load" }
   | { readonly to: "/create/leagues" }
   | { readonly to: "/create/step-1" }
   | { readonly to: "/create/step-2" }
@@ -95,6 +97,8 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
   switch (destination.type) {
     case "saveList":
       return { to: "/" };
+    case "loadCareer":
+      return { to: "/load" };
     case "createLeagues":
       return { to: "/create/leagues" };
     case "createStep1":

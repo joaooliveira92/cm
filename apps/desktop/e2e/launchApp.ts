@@ -52,12 +52,13 @@ export const dismissTeachingSplash = async (page: Page): Promise<void> => {
   await expect(gotIt).not.toBeVisible();
 };
 
-/** Seed a fresh career, reload, continue it (landing on the Squad route), and
+/** Seed a fresh career, reload, open Load Career, continue it (landing on the Squad route), and
  *  dismiss the first-run teaching splash — the shared career entry the
  *  keyboard coverage specs and the click suite's career drivers use. */
 export const enterCareer = async (page: Page, userDataDir: string): Promise<void> => {
   await seedFresh(savesDir(userDataDir));
   await page.reload();
+  await page.getByRole("button", { name: "Load Career" }).click();
   await page.getByRole("button", { name: "Seed: fresh" }).click();
   await expect(page.getByText(/players$/)).toBeVisible();
   await dismissTeachingSplash(page);
