@@ -4,7 +4,7 @@
  * disagree about layout. Selection resets on variant change, so each variant's
  * own answer to "is anything selected on arrival?" is what you actually see.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { ClubCardList, type ClubLoadState } from "../../ClubSelectionScreen.js";
 import { Spinner } from "../../components/ui/spinner.js";
 import { PrototypeSwitcher, type VariantEntry } from "./PrototypeSwitcher.js";
@@ -29,12 +29,21 @@ const Variant0 = ({ state }: VariantProps) => {
   return <ClubCardList clubs={state.clubs} />;
 };
 
-const VARIANTS: ReadonlyArray<VariantEntry & { readonly render: (props: VariantProps) => React.ReactNode }> = [
-  { key: "0", name: "Today — single scrolling column", render: Variant0 },
-  { key: "A", name: "Dense rail, dossier right", render: VariantA },
-  { key: "B", name: "Three-fact rows, empty until chosen", render: VariantB },
-  { key: "C", name: "Name-only rail, grouped by stature", render: VariantC },
-  { key: "D", name: "Quality meters, league-summary fallback", render: VariantD },
+/**
+ * `Component`, not a render function that the host calls. The variants disagree
+ * about hooks — A and C auto-select through a `useEffect`, B and D do not — so
+ * calling them inline would splice their hooks into this component's own list
+ * and blow up on every switch between the two groups. As an element type each
+ * variant gets its own fiber, and `key` below makes a switch a remount.
+ */
+const VARIANTS: ReadonlyArray<
+  VariantEntry & { readonly Component: (props: VariantProps) => ReactNode }
+> = [
+  { key: "0", name: "Today — single scrolling column", Component: Variant0 },
+  { key: "A", name: "Dense rail, dossier right", Component: VariantA },
+  { key: "B", name: "Three-fact rows, empty until chosen", Component: VariantB },
+  { key: "C", name: "Name-only rail, grouped by stature", Component: VariantC },
+  { key: "D", name: "Quality meters, league-summary fallback", Component: VariantD },
 ];
 
 export const ClubSelectionPrototype = ({ state }: { readonly state: ClubLoadState }) => {
@@ -57,17 +66,19 @@ export const ClubSelectionPrototype = ({ state }: { readonly state: ClubLoadStat
   }, [state]);
 
   const active = VARIANTS.find((entry) => entry.key === variant) ?? VARIANTS[0]!;
+  const Active = active.Component;
 
   return (
     <>
-      {active.render({
-        state,
-        selectedClubId,
-        onSelect,
-        onPickForMe,
-        leagueId,
-        onLeagueChange: setLeagueId,
-      })}
+      <Active
+        key={active.key}
+        state={state}
+        selectedClubId={selectedClubId}
+        onSelect={onSelect}
+        onPickForMe={onPickForMe}
+        leagueId={leagueId}
+        onLeagueChange={setLeagueId}
+      />
 
       <PrototypeSwitcher variants={VARIANTS} current={variant} onChange={setVariant} />
 
