@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import path from "node:path";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
@@ -22,6 +23,14 @@ import { resetBindingOverrides, publishBindingOverrides } from "../src/renderer/
 import { resetTableSessions } from "../src/renderer/table/tableState.js";
 
 const rid = (s: string) => SaveId.make(s);
+
+// The jsdom environment rewrites `import.meta.url` to a non-file scheme, so
+// resolve the source path from the vitest cwd (the desktop package root)
+// instead of the module URL.
+const leagueTableSourcePath = path.join(
+  process.cwd(),
+  "src/renderer/LeagueTableScreen.tsx",
+);
 
 const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown>) => {
   (window as unknown as { cmClone: { call: unknown } }).cmClone = { call: impl };
@@ -249,7 +258,7 @@ describe("Continue in the chrome", () => {
 
   it("is no longer owned by the league table", async () => {
     const source = await import("node:fs/promises").then((fs) =>
-      fs.readFile(new URL("../src/renderer/LeagueTableScreen.tsx", import.meta.url), "utf8"),
+      fs.readFile(leagueTableSourcePath, "utf8"),
     );
     expect(source).not.toContain('registerActionHandler("continue"');
   });

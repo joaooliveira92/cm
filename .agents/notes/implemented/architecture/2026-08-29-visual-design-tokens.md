@@ -67,7 +67,7 @@ The chrome/title-bar variant (`PANEL_CHROME`) replaces the tint with the three-s
 
 ### Navigation frame
 
-**Superseded as shipped** by [Career chrome frame and date/Continue bar](../../proposed/architecture/2026-08-31-career-chrome-and-date-continue-bar.md). The sidebar this note proposed was never built; `CareerChrome` keeps the shipped tab strip and restyles it in place — a gradient title bar owning club identity and a date/Continue cluster on the left-right axis, the active tab read as the framed locus via gradient inversion, Back-to-saves as a subdued chrome control, and horizontally scrollable tabs kept in the DOM.
+**Superseded as shipped** by [Career chrome frame and date/Continue bar](../../implemented/architecture/2026-08-31-career-chrome-and-date-continue-bar.md). The sidebar this note proposed was never built; `CareerChrome` keeps the shipped tab strip and restyles it in place — a gradient title bar owning club identity and a date/Continue cluster on the left-right axis, the active tab read as the framed locus via gradient inversion, Back-to-saves as a subdued chrome control, and horizontally scrollable tabs kept in the DOM.
 
 ### Button system
 
