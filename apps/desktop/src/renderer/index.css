@@ -20,6 +20,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Inter";
+  src: url("../assets/fonts/Inter/inter.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 /*
  * The renderer's design tokens — the retro chrome-blue visual frame.
  *
@@ -40,7 +48,7 @@
  */
 @theme {
   /* --- Typography ------------------------------------------------------- */
-  --font-sans: "Jakarta Sans", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+  --font-sans: "Inter", "Jakarta Sans", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
 
   /* The 11px status tier. 12px/14px/18px are Tailwind's own xs/sm/lg. */
   --text-2xs: 12px;

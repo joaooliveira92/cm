@@ -25,7 +25,7 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
   const rank = summary.finalPosition ? summary.standings.findIndex((row) => row.clubId === summary.clubId) + 1 : null;
 
   return (
-    <main tabIndex={-1} className={`min-h-screen bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+    <main tabIndex={-1} className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
       <h1 className="text-2xl font-bold">Season Summary</h1>
       <p className="mt-1 text-sm text-text-secondary">
         Season {summary.season.seasonNumber} &middot; {summary.season.phase.replace("_", " ")}

@@ -67,7 +67,7 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const advanceBadge = advanceAction !== undefined ? actionBadgeBinding(advanceAction, "league") : null;
 
   return (
-    <main className="min-h-screen bg-background p-8 text-foreground">
+    <main className="bg-background p-8 text-foreground">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">League Table</h1>
         <div className="flex items-center gap-3 text-sm text-text-secondary">

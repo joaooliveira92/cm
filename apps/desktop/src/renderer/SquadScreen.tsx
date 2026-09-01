@@ -427,7 +427,7 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   if (viewState._tag === "LoadError") {
     return (
-      <main className="min-h-screen bg-background p-8 text-foreground">
+      <main className="bg-background p-8 text-foreground">
         <h1 className="text-2xl font-bold">Squad</h1>
         <Alert variant="destructive" className="mt-6">
           <p>{viewState.error.message}</p>
@@ -451,7 +451,7 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   );
 
   return (
-    <main className="min-h-screen bg-background p-8 text-foreground">
+    <main className="bg-background p-8 text-foreground">
       {/* Section name only — the club lives in the career chrome's title bar. */}
       <h1 className="text-2xl font-bold">Squad</h1>
       <p className="mt-1 text-sm text-text-secondary">

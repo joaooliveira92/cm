@@ -159,7 +159,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     new Set(tactic.slots.filter((_, index) => index !== slotIndex).map((slot) => slot.playerId));
 
   return (
-    <main className="min-h-screen bg-background p-8 text-foreground">
+    <main className="bg-background p-8 text-foreground">
       <h1 className="text-2xl font-bold">Tactics</h1>
 
       <section className="mt-6">

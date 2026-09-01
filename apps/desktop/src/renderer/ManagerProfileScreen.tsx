@@ -161,7 +161,7 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
   };
 
   return (
-    <main tabIndex={-1} className={`min-h-screen bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+    <main tabIndex={-1} className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
       {view.archived && (
         <Alert className="mb-4">[Archived] This career has ended. The save is read-only.</Alert>
       )}

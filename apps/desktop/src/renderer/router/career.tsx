@@ -1,6 +1,6 @@
 import type { SaveId } from "@cm-clone/contracts";
-import { Outlet, useParams } from "@tanstack/react-router";
-import { type ComponentType, useEffect } from "react";
+import { Outlet, useLocation, useParams } from "@tanstack/react-router";
+import { type ComponentType, useEffect, useLayoutEffect, useRef } from "react";
 import {
   navigateCareer,
 } from "../navigation/adapter.js";
@@ -63,10 +63,26 @@ export const CareerShell = () => {
     activeCareerSaveKey = saveKey;
     resetTableSessions();
   }
+
+  // The career shell owns its scroll region: the shell is viewport-fixed and
+  // only the outlet scrolls, so the navbar is a stationary band that scrolling
+  // can never hide. A route change starts the new screen at the top of that
+  // region (the router's page-level scroll reset no longer applies — the page
+  // itself does not scroll).
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const pathname = useLocation().pathname;
+  useLayoutEffect(() => {
+    if (scrollRef.current !== null) scrollRef.current.scrollTop = 0;
+  }, [pathname]);
+
   return (
     <RegistryProvider key={saveId}>
-      <CareerChrome saveId={saveId} />
-      <Outlet />
+      <div className="flex h-screen flex-col overflow-hidden bg-background">
+        <CareerChrome saveId={saveId} />
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+          <Outlet />
+        </div>
+      </div>
     </RegistryProvider>
   );
 };

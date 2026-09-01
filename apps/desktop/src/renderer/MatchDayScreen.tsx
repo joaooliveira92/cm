@@ -873,7 +873,7 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   };
 
   return (
-    <main className="min-h-screen bg-background p-8 text-foreground">
+    <main className="bg-background p-8 text-foreground">
       <h1 className="text-2xl font-bold">Match day</h1>
       {error && <p className="mt-2 text-destructive">{error}</p>}
 

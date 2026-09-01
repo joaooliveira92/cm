@@ -27,7 +27,7 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   }
 
   return (
-    <main tabIndex={-1} className={`min-h-screen bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+    <main tabIndex={-1} className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
       <h1 className="text-2xl font-bold">Fixtures</h1>
       <p className="mt-1 text-sm text-text-secondary">
         Season {fixtures.season.seasonNumber} &middot; {fixtures.fixtures.length} fixtures
