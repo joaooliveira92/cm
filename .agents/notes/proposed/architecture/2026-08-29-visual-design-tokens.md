@@ -12,6 +12,8 @@ Without adopted design tokens, every screen is individually styled and the rende
 
 Adopt a retro chrome-blue visual frame across all career screens, inspired by the `components/match-screen/` prototype and grounded in the CM 03/04 analysis at `docs/ui-elements.md`. Encode every decision as CSS custom properties in a single `:root` block, consumed by all screens through Tailwind `theme.extend` and a shared global stylesheet.
 
+> **MECHANISM SUPERSEDED 2026-08-31** by [Token adoption mechanism and migration strategy](2026-08-31-token-adoption-and-migration.md). This clause proposed `:root` + Tailwind `theme.extend`, a Tailwind 3 answer that does not run on the repo's Tailwind 4. The mechanism is now a single `@theme` block (non-inline) in `index.css` — tokens emit custom properties on `:root` and generate utilities off them. The token *values* this note declares (palette, typography, panel system, buttons) stand unchanged; only the plumbing clause is superseded.
+
 ### Color palette
 
 | Token | CSS custom property | Value | Usage |
@@ -70,10 +72,9 @@ Panel padding: `8px 12px` (compact, not the current `p-8`).
 
 ### Navigation frame
 
-Replace the flat tab bar with:
-- A **persistent chrome-blue title bar** at the top containing: club name / section name, date/Continue bar (right-aligned), and optionally a club logo/crest area
-- A **sidebar or contextual navigation** on the left or as a narrow section showing the current screen's place in hierarchy (deferred: for v1, keep the tab bar but restyle it with chrome-blue treatment)
-- A **persistent date/Continue control** in the chrome title bar showing the current Matchday and a context-sensitive Continue button
+> **SUPERSEDED 2026-08-31** by [Career chrome frame and date/Continue bar](2026-08-31-career-chrome-and-date-continue-bar.md). This section proposed replacing a tab bar that has since shipped (`CareerChrome`) and been wired into keyboard navigation; the sidebar is rejected and the tab strip is restyled in place (two-row chrome, active-tab gradient inversion, scrollable strip). The rest of this note — palette, typography, panel system, buttons — stands.
+
+The statement that survives into that decision: the gradient title bar carries club identity, a date/Continue cluster, and the strip restyles rather than relocates. See the career-chrome note for the full shape.
 
 ### Button system
 
