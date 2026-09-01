@@ -1,9 +1,9 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Outlet, useLocation } from "@tanstack/react-router";
 import { ClubId } from "@cm-clone/contracts";
-import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
-import { Effect, Result } from "effect";
 import type { LeagueSelectionSnapshot } from "@cm-clone/contracts";
+import type { PillarDistribution } from "@cm-clone/shared";
+import { Effect, Result } from "effect";
 import { ClubSelectionScreen } from "../ClubSelectionScreen.js";
 import { CreationStep1 } from "../CreationStep1.js";
 import { LeagueSelectionScreen } from "../LeagueSelectionScreen.js";
@@ -34,6 +34,11 @@ import {
   type GenerationTransition,
 } from "../create/generation.js";
 import { RouteView } from "./RouteView.js";
+import {
+  CreateSessionContext,
+  type CreateSessionApi,
+  type CreationSession,
+} from "./createSessionContext.js";
 
 const DEFAULT_PILLARS: PillarDistribution = {
   tacticalAcumen: 3,
@@ -41,23 +46,6 @@ const DEFAULT_PILLARS: PillarDistribution = {
   regimen: 3,
   technicalCoaching: 3,
 };
-
-type CommitStatus = "idle" | "committing" | "committed";
-
-export interface CreationSession {
-  /** The scope this career is being created at (Screen 3). `null` until League and Nation
-   *  Selection is submitted, which is also the gate on world generation: nothing is generated
-   *  before the user has said how large the world should be. */
-  readonly leagueSelection: LeagueSelectionSnapshot | null;
-  readonly saveName: string;
-  readonly managerName: string;
-  readonly archetype: ManagerArchetype;
-  readonly pillars: PillarDistribution;
-  /** The provisional-world lifecycle. `provisionalIdOf` is the only way to reach the save id. */
-  readonly generation: GenerationState;
-  readonly commit: CommitStatus;
-  readonly error: string | null;
-}
 
 const EMPTY_SESSION: CreationSession = {
   leagueSelection: null,
@@ -69,15 +57,6 @@ const EMPTY_SESSION: CreationSession = {
   commit: "idle",
   error: null,
 };
-
-interface CreateSessionApi {
-  readonly session: CreationSession;
-  readonly update: (patch: Partial<CreationSession>) => void;
-  readonly retryGeneration: () => void;
-}
-
-/** The three creation steps read the parent-owned session through this context. */
-export const CreateSessionContext = createContext<CreateSessionApi | null>(null);
 
 const useCreateSession = (): CreateSessionApi => {
   const api = useContext(CreateSessionContext);
@@ -118,15 +97,22 @@ const runAtEdge = <A, E>(effect: Effect.Effect<A, E>): Promise<Result.Result<A, 
  */
 export const LeagueSelectionRouteContent = () => {
   const { update } = useCreateSession();
+  // Stable propagators: they feed the memoized bottom-bar action node, so a
+  // fresh closure per render would push the shell's bottom bar into a new
+  // registration cycle on every re-render.
+  const onContinue = useCallback(
+    (snapshot: LeagueSelectionSnapshot) => {
+      update({ leagueSelection: snapshot });
+      navigate({ type: "createStep1" });
+    },
+    [update],
+  );
+  const onBack = useCallback(() => {
+    navigate({ type: "mainMenu" });
+  }, []);
   return (
     <RouteView screenId="createLeagues">
-      <LeagueSelectionScreen
-        onContinue={(snapshot) => {
-          update({ leagueSelection: snapshot });
-          navigate({ type: "createStep1" });
-        }}
-        onBack={() => navigate({ type: "mainMenu" })}
-      />
+      <LeagueSelectionScreen onContinue={onContinue} onBack={onBack} />
     </RouteView>
   );
 };
@@ -188,6 +174,7 @@ export const StepThreeRouteContent = () => {
  */
 export const CreateFlowLayout = () => {
   const [session, setSession] = useState<CreationSession>(EMPTY_SESSION);
+  const [bottomBarContent, setBottomBarContent] = useState<ReactNode | null>(null);
   const sessionRef = useRef<CreationSession>(session);
   const { pathname } = useLocation();
   const step = stepOf(pathname);
@@ -195,12 +182,13 @@ export const CreateFlowLayout = () => {
   // The ref is written synchronously, before the render is scheduled, because
   // the async generation continuations read it to decide whether the world they
   // are holding is still wanted. A ref written inside the state updater would
-  // lag exactly the readers that matter.
-  const update = (patch: Partial<CreationSession>): void => {
+  // lag exactly the readers that matter. Stable so the bottom-bar registration
+  // closures that depend on it do not churn the shell into an update loop.
+  const update = useCallback((patch: Partial<CreationSession>): void => {
     const next = { ...sessionRef.current, ...patch };
     sessionRef.current = next;
     setSession(next);
-  };
+  }, []);
 
   /** Apply a lifecycle transition and honour the discard it hands back. */
   const applyGeneration = (transition: (state: GenerationState) => GenerationTransition): void => {
@@ -307,11 +295,15 @@ export const CreateFlowLayout = () => {
   const selectionReady = isSelectionReady(session.generation);
   const blocked = blockedReason(session.generation);
 
+  const registerBottomBar = useCallback((content: ReactNode | null): void => {
+    setBottomBarContent(content);
+  }, []);
+
   return (
     <CreateSessionContext.Provider
-      value={{ session, update, retryGeneration: () => void runGeneration() }}
+      value={{ session, update, retryGeneration: () => void runGeneration(), registerBottomBar }}
     >
-      <div className="min-h-screen bg-background text-foreground">
+      <div className="flex min-h-screen flex-col bg-background text-foreground">
         {/* The pre-career chrome band. A visual sibling of the career chrome's
             top row (same gradient, same surface tokens) but structurally its own
             thing: it carries product identity, the in-band "Step N of 4" progress,
@@ -333,7 +325,10 @@ export const CreateFlowLayout = () => {
           </div>
         </header>
 
-        <main className="mx-auto max-w-3xl p-8">
+        {/* Content scrolls between the chrome band and the bottom bar; the
+            navigation verbs live in the bar, not in the page, so the actions
+            stay reachable however tall the step's content grows. */}
+        <main className="mx-auto w-full max-w-5xl flex-1 overflow-y-auto p-8">
           <Outlet />
           {session.error && (
             <Alert variant="destructive" className="mt-4">
@@ -351,57 +346,65 @@ export const CreateFlowLayout = () => {
               />
             </div>
           )}
+        </main>
 
-          {/* The leagues stage renders its own Back and Continue: continuing from it has to run
-              submission and snapshot creation, which the shared footer knows nothing about. */}
-          <div className={`mt-8 flex gap-4 ${step === "leagues" ? "hidden" : ""}`}>
-            {step === "1" && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => navigate({ type: "createLeagues" })}
-              >
-                Back: Leagues
-              </Button>
-            )}
-            {step === "1" && (
-              <div>
-                <Button
-                  type="button"
-                  onClick={() => navigate({ type: "createStep2" })}
-                  disabled={!managerStepComplete || !selectionReady}
-                  aria-describedby={blocked === null ? undefined : "generation-blocked-reason"}
-                >
-                  Next: Select Club
-                </Button>
-                {/* A greyed control that does not say why is not acceptable. */}
-                {blocked !== null && (
-                  <p id="generation-blocked-reason" className="mt-2 text-sm text-text-secondary">
-                    {blocked}
-                  </p>
+        {/* The bottom bar: a persistent action rail, so Back / Clear Selection /
+            Continue sit beneath the content instead of scrolling away with it.
+            The leagues stage registers its own rail (submission and snapshot
+            creation live in its screen); the step footer covers the rest. */}
+        <footer className="border-t border-border-subtle bg-surface px-4 py-3">
+          <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4">
+            {bottomBarContent ?? (
+              <div className="flex gap-4">
+                {step === "1" && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => navigate({ type: "createLeagues" })}
+                  >
+                    Back: Leagues
+                  </Button>
+                )}
+                {step === "1" && (
+                  <div>
+                    <Button
+                      type="button"
+                      onClick={() => navigate({ type: "createStep2" })}
+                      disabled={!managerStepComplete || !selectionReady}
+                      aria-describedby={blocked === null ? undefined : "generation-blocked-reason"}
+                    >
+                      Next: Select Club
+                    </Button>
+                    {/* A greyed control that does not say why is not acceptable. */}
+                    {blocked !== null && (
+                      <p id="generation-blocked-reason" className="mt-2 text-sm text-text-secondary">
+                        {blocked}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {step === "2" && (
+                  <Button
+                    type="button"
+                    onClick={() => navigate({ type: "createStep3" })}
+                    disabled={!selectionReady}
+                  >
+                    Next: Review
+                  </Button>
+                )}
+                {step === "3" && (
+                  <Button
+                    type="button"
+                    onClick={() => void handleCommitCareer()}
+                    disabled={session.commit === "committing"}
+                  >
+                    Create Career
+                  </Button>
                 )}
               </div>
             )}
-            {step === "2" && (
-              <Button
-                type="button"
-                onClick={() => navigate({ type: "createStep3" })}
-                disabled={!selectionReady}
-              >
-                Next: Review
-              </Button>
-            )}
-            {step === "3" && (
-              <Button
-                type="button"
-                onClick={() => void handleCommitCareer()}
-                disabled={session.commit === "committing"}
-              >
-                Create Career
-              </Button>
-            )}
           </div>
-        </main>
+        </footer>
       </div>
     </CreateSessionContext.Provider>
   );

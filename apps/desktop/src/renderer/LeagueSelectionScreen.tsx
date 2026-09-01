@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from "react";
 import type {
   LeagueSelectionSnapshot,
   LeagueSetupIndexView,
@@ -21,6 +21,7 @@ import { Button } from "./components/ui/button.js";
 import { Card } from "./components/ui/card.js";
 import { Input } from "./components/ui/input.js";
 import { FOCUS_RING } from "./focus.js";
+import { CreateSessionContext } from "./router/createSessionContext.js";
 import {
   blockingIssueRows,
   browserView,
@@ -67,6 +68,12 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
   const [loadError, setLoadError] = useState<string | null>(null);
   const [state, dispatch] = useReducer(reduce, initialState(""));
   const [warningPrompt, setWarningPrompt] = useState(false);
+
+  // The creation shell's bottom bar. `null` outside the shell (a standalone
+  // render keeps the actions inline below the section); inside it, every render
+  // re-registers the action cluster so the registered callbacks can never go
+  // stale against this screen's reducer state.
+  const createApi = useContext(CreateSessionContext);
 
   // Mount: fetch the catalogue, then restore a setup draft if one applies to this database.
   // Sequential on purpose — a draft is only meaningful once the catalogue it names is present.
@@ -137,7 +144,7 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
   const estimate = state.resolved?.estimate ?? null;
   const stale = state.estimateStatus === "updating";
 
-  const persistDraft = async (): Promise<void> => {
+  const persistDraft = useCallback(async (): Promise<void> => {
     await runAtEdge(
       saveSetupDraft({
         intents: state.intents,
@@ -146,27 +153,18 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
         statusFilter: state.statusFilter,
       }),
     );
-  };
+  }, [state.intents, state.searchQuery, state.regionFilterId, state.statusFilter]);
 
   /** §18. Back saves the draft first, so returning finds the selection intact even though the
    *  screen's own state is gone. A failed save does not trap the user on the screen. */
-  const handleBack = (): void => {
+  const handleBack = useCallback((): void => {
     void (async () => {
       await persistDraft();
       onBack();
     })();
-  };
+  }, [onBack, persistDraft]);
 
-  const handleContinue = (): void => {
-    if (!canContinueNow(state)) return;
-    if (needsWarningAcknowledgement(state)) {
-      setWarningPrompt(true);
-      return;
-    }
-    submit();
-  };
-
-  const submit = (): void => {
+  const submit = useCallback((): void => {
     // AC-13. The reducer refuses a second start while one is in flight, so a double activation
     // cannot produce two submissions — and the guard is in the model, not on the button's
     // `disabled`, which a keyboard repeat can outrun.
@@ -189,7 +187,20 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
       dispatch({ type: "SUBMISSION_SETTLED", notice: null });
       onContinue(outcome.success);
     })();
-  };
+  }, [dispatch, onContinue, persistDraft, state.intents, state.submitting]);
+
+  const handleContinue = useCallback((): void => {
+    if (!canContinueNow(state)) return;
+    if (needsWarningAcknowledgement(state)) {
+      setWarningPrompt(true);
+      return;
+    }
+    submit();
+  }, [canContinueNow, needsWarningAcknowledgement, state, submit]);
+
+  const clearSelection = useCallback((): void => {
+    dispatch({ type: "CLEAR_SELECTION" });
+  }, [dispatch]);
 
   const applyPreset = (preset: "recommended" | "minimal" | "broad_world"): void => {
     void (async () => {
@@ -198,6 +209,50 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
       dispatch({ type: "APPLY_INTENTS", intents: outcome.success.intents, notice: null });
     })();
   };
+
+  // §30.1. A database with nothing playable cannot start a career. The shell's
+  // bottom bar still offers Back — leaving the flow is always possible.
+  const noPlayableNations =
+    index !== null &&
+    index.nations.every((nation) => !nation.playableSupported || !nation.available);
+
+  // Memoized so the registration effect below only re-fires when the actual
+  // action state changes — a fresh JSX identity per render would re-register on
+  // every render and churn the shell's bottom bar state into an update loop.
+  const actionsNode: ReactNode = useMemo(
+    () =>
+      index === null
+        ? null
+        : noPlayableNations
+          ? (
+              <div className="flex w-full items-center justify-between gap-4">
+                <Button type="button" onClick={onBack} variant="secondary">
+                  Back
+                </Button>
+              </div>
+            )
+          : (
+              <LeagueSelectionActions
+                canContinue={canContinueNow(state)}
+                submitting={state.submitting}
+                stale={stale}
+                blockingCount={blocking.length}
+                onBack={handleBack}
+                onContinue={handleContinue}
+                onClearSelection={clearSelection}
+              />
+            ),
+    [blocking.length, handleBack, handleContinue, clearSelection, index, noPlayableNations, onBack, stale, state],
+  );
+
+  // `registerBottomBar` is a stable `useCallback` in the shell, so this effect
+  // fires exactly when the memoized node actually changes — never per render.
+  const registerBottomBar = createApi?.registerBottomBar;
+  useEffect(() => {
+    if (registerBottomBar === undefined) return undefined;
+    registerBottomBar(actionsNode);
+    return () => registerBottomBar(null);
+  }, [actionsNode, registerBottomBar]);
 
   if (loadError !== null) {
     return (
@@ -220,9 +275,11 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
           {index.databaseName} contains no league this game can make playable, so a career cannot
           be started from it. Choose a different database.
         </p>
-        <Button type="button" onClick={onBack} variant="secondary">
-          Back
-        </Button>
+        {createApi === null && (
+          <Button type="button" onClick={onBack} variant="secondary">
+            Back
+          </Button>
+        )}
       </div>
     );
   }
@@ -459,37 +516,43 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
         </Alert>
       )}
 
-      <div className="mt-6 flex gap-3">
-        <Button type="button" onClick={handleBack} variant="secondary">
-          Back
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => dispatch({ type: "CLEAR_SELECTION" })}
-        >
-          Clear Selection
-        </Button>
-        <Button
-          type="button"
-          onClick={handleContinue}
-          disabled={!canContinueNow(state)}
-          aria-describedby={canContinueNow(state) ? undefined : "continue-blocked-reason"}
-        >
-          {state.submitting ? "Continuing…" : "Continue"}
-        </Button>
-      </div>
-      {/* A greyed control that does not say why is not acceptable. */}
-      {!canContinueNow(state) && (
-        <p id="continue-blocked-reason" className="mt-2 text-sm text-text-secondary">
-          {state.submitting
-            ? "Creating your selection…"
-            : stale
-              ? "Checking this selection…"
-              : blocking.length > 0
-                ? "Resolve the problems listed above to continue."
-                : "Select at least one playable league to continue."}
-        </p>
+      {/* Inside the creation shell the actions live in the bottom bar; a
+          standalone render keeps them here, beneath the section. */}
+      {createApi === null && (
+        <>
+          <div className="mt-6 flex gap-3">
+            <Button type="button" onClick={handleBack} variant="secondary">
+              Back
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => dispatch({ type: "CLEAR_SELECTION" })}
+            >
+              Clear Selection
+            </Button>
+            <Button
+              type="button"
+              onClick={handleContinue}
+              disabled={!canContinueNow(state)}
+              aria-describedby={canContinueNow(state) ? undefined : "continue-blocked-reason"}
+            >
+              {state.submitting ? "Continuing…" : "Continue"}
+            </Button>
+          </div>
+          {/* A greyed control that does not say why is not acceptable. */}
+          {!canContinueNow(state) && (
+            <p id="continue-blocked-reason" className="mt-2 text-sm text-text-secondary">
+              {state.submitting
+                ? "Creating your selection…"
+                : stale
+                  ? "Checking this selection…"
+                  : blocking.length > 0
+                    ? "Resolve the problems listed above to continue."
+                    : "Select at least one playable league to continue."}
+            </p>
+          )}
+        </>
       )}
 
       {/* §17.1. Warnings are confirmed, not silently accepted — and the confirmation is bound to
@@ -555,6 +618,63 @@ const SummaryRow = ({ label, value }: { readonly label: string; readonly value: 
   <div className="flex justify-between gap-2">
     <dt className="text-text-secondary">{label}</dt>
     <dd>{value}</dd>
+  </div>
+);
+
+/**
+ * The Back / Clear Selection / Continue cluster for the creation shell's
+ * bottom bar. Back sits at the bar's left edge and the forward verb at its
+ * right, mirroring the step footer's leading-back / trailing-continue grammar.
+ * The disabled-reason copy stays visually attached to the control it explains.
+ */
+const LeagueSelectionActions = ({
+  canContinue,
+  submitting,
+  stale,
+  blockingCount,
+  onBack,
+  onContinue,
+  onClearSelection,
+}: {
+  readonly canContinue: boolean;
+  readonly submitting: boolean;
+  readonly stale: boolean;
+  readonly blockingCount: number;
+  readonly onBack: () => void;
+  readonly onContinue: () => void;
+  readonly onClearSelection: () => void;
+}) => (
+  <div className="flex w-full flex-col gap-2">
+    <div className="flex items-center justify-between gap-4">
+      <Button type="button" onClick={onBack} variant="secondary">
+        Back
+      </Button>
+      <div className="flex items-center gap-3">
+        <Button type="button" variant="secondary" onClick={onClearSelection}>
+          Clear Selection
+        </Button>
+        <Button
+          type="button"
+          onClick={onContinue}
+          disabled={!canContinue}
+          aria-describedby={canContinue ? undefined : "continue-blocked-reason"}
+        >
+          {submitting ? "Continuing…" : "Continue"}
+        </Button>
+      </div>
+    </div>
+    {/* A greyed control that does not say why is not acceptable. */}
+    {!canContinue && (
+      <p id="continue-blocked-reason" className="text-right text-sm text-text-secondary">
+        {submitting
+          ? "Creating your selection…"
+          : stale
+            ? "Checking this selection…"
+            : blockingCount > 0
+              ? "Resolve the problems listed above to continue."
+              : "Select at least one playable league to continue."}
+      </p>
+    )}
   </div>
 );
 
