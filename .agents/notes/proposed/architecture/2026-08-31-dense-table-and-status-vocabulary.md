@@ -9,7 +9,7 @@ The two shipped shared-table components — `renderer/table/DataTable.tsx` and
 row primary actions, and Squad's column visibility, but their visuals are still the flat default
 Tailwind slate (`text-sm` body, `py-1` rows, an unicode sort arrow, `aria-selected` only with no
 visible selection fill). They predate the adopted chrome-blue visual frame
-([Visual design tokens and chrome-blue retro frame](../architecture/2026-08-29-visual-design-tokens.md)),
+([Visual design tokens and chrome-blue retro frame](../../implemented/architecture/2026-08-29-visual-design-tokens.md)),
 whose density class (`text-xs` 12px body, `py-0.5` rows) they do not yet meet, and they render no
 player-status vocabulary at all.
 

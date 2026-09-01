@@ -6,7 +6,7 @@ The slice's edge promise: this is the wide-refactor expand step — the old `sla
 
 **Decisions:**
 
-- **Retro chrome-blue visual frame adopted.** CSS custom properties for palette (dark base, chrome-blue gradients, panel-dark surfaces), typography (Trebuchet MS, 12px table body), panel system (semi-transparent bordered containers), two-tier buttons (gradient primary, flat secondary), and compact spacing (py-0.5 rows). Skin system deferred. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-visual-design-tokens.md).
+- **Retro chrome-blue visual frame adopted.** CSS custom properties for palette (dark base, chrome-blue gradients, panel-dark surfaces), typography (Trebuchet MS, 12px table body), panel system (semi-transparent bordered containers), two-tier buttons (gradient primary, flat secondary), and compact spacing (py-0.5 rows). Skin system deferred. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-visual-design-tokens.md).
 - **`@theme` (non-inline) in `index.css` emitting role-named `--color-*` utilities; constants not components; alias-first global repaint then shared-layer-first renames; `no-slate-class-name` lint rule as the guard.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-31-token-adoption-and-migration.md).
 
 **Blocked by:** None (can start immediately).

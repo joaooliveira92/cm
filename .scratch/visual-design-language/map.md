@@ -61,7 +61,7 @@ Plan-only: the map is done when nothing is left to decide and the spec can be ha
   frame adopted** — palette (dark base, chrome-blue gradients, panel-dark surfaces), typography
   (Trebuchet MS, 12px table body), panel system (semi-transparent borders), two-tier buttons
   (gradient primary, flat secondary), compact density (py-0.5 rows). Skin system deferred. Agent
-  Note at `.agents/notes/proposed/architecture/2026-08-29-visual-design-tokens.md`. **The
+  Note at `.agents/notes/implemented/architecture/2026-08-29-visual-design-tokens.md`. **The
   palette, typography, panel and button sections stand. That note's "Navigation frame" section
   does not** — it proposes replacing a tab bar that has since shipped and been wired into
   keyboard navigation, and is superseded by

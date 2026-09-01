@@ -28,4 +28,4 @@ Produce a set of CSS custom properties (Tailwind theme extensions or `:root` var
 
 ## Answer
 
-**Retro chrome-blue visual frame adopted.** CSS custom properties for palette (dark base, chrome-blue gradients, panel-dark surfaces), typography (Trebuchet MS, 12px table body), panel system (semi-transparent bordered containers), two-tier buttons (gradient primary, flat secondary), and compact spacing (py-0.5 rows). Skin system deferred. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-visual-design-tokens.md).
+**Retro chrome-blue visual frame adopted.** CSS custom properties for palette (dark base, chrome-blue gradients, panel-dark surfaces), typography (Trebuchet MS, 12px table body), panel system (semi-transparent bordered containers), two-tier buttons (gradient primary, flat secondary), and compact spacing (py-0.5 rows). Skin system deferred. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-visual-design-tokens.md).

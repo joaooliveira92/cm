@@ -47,7 +47,7 @@ affordance live?
 ### Supersession
 
 The "Navigation frame" section of
-`.agents/notes/proposed/architecture/2026-08-29-visual-design-tokens.md` proposes
+`.agents/notes/implemented/architecture/2026-08-29-visual-design-tokens.md` proposes
 replacing the tab bar and adding a sidebar. That predates `CareerChrome` and is
 wrong at HEAD. Resolving this ticket must supersede that section explicitly — the
 rest of that note (palette, typography, panels, buttons) stands.
