@@ -16,19 +16,19 @@ A `spec.md` at the effort root that maps each survivor of removed Screen 18 to i
 
 ## Decisions so far
 
-- [1 — SaveSummary schema: add sacked and schemaVersion](issues/01-savesummary-schema-extension.md): `SaveSummary` schema extends to `{ id, name, createdAt, sacked, schemaVersion }`; `save_meta` table gets `sacked INTEGER DEFAULT 0` and `schema_version INTEGER DEFAULT 1` columns; `readSaveSummary` joins `manager_status` for sacked, reads/returns the new columns; `listSaves` atom caches the extended view.
+- **1 — SaveSummary schema: add sacked and schemaVersion**: `SaveSummary` schema extends to `{ id, name, createdAt, sacked, schemaVersion }`; `save_meta` table gets `sacked INTEGER DEFAULT 0` and `schema_version INTEGER DEFAULT 1` columns; `readSaveSummary` joins `manager_status` for sacked, reads/returns the new columns; `listSaves` atom caches the extended view.
 
-- [2 — SeasonSummaryView schema: add saveName](issues/02-seasonsummary-save-name-extension.md): `SeasonSummaryView` schema includes `saveName: string`; `getSeasonSummary` RPC adds `save_meta.name` to its join; CareerChrome consumes `seasonSummaryAtom` on every career screen to render save name + season/phase in a single text line.
+- **2 — SeasonSummaryView schema: add saveName**: `SeasonSummaryView` schema includes `saveName: string`; `getSeasonSummary` RPC adds `save_meta.name` to its join; CareerChrome consumes `seasonSummaryAtom` on every career screen to render save name + season/phase in a single text line.
 
-- [3 — App version mechanism: Vite define](issues/03-app-version-vite-define.md): `import.meta.env.APP_VERSION` is defined in `vite.config.ts` from `package.json` `version` field; exported via a renderer-only `src/version.ts` module; About dialog imports it for display.
+- **3 — App version mechanism: Vite define**: `import.meta.env.APP_VERSION` is defined in `vite.config.ts` from `package.json` `version` field; exported via a renderer-only `src/version.ts` module; About dialog imports it for display.
 
-- [4 — About dialog: trigger and content](issues/04-about-dialog-spec.md): Modal dialog with app version (from Vite) and save schema version (from `SeasonSummaryView`). Triggered by `?` key binding and an optional "About" button in CareerChrome. No new route, uses existing overlay infrastructure (`Overlay.tsx` pattern from `HelpOverlay`/`CommandPalette`).
+- **4 — About dialog: trigger and content**: Modal dialog with app version (from Vite) and save schema version (from `SeasonSummaryView`). Triggered by `?` key binding and an optional "About" button in CareerChrome. No new route, uses existing overlay infrastructure (`Overlay.tsx` pattern from `HelpOverlay`/`CommandPalette`).
 
-- [5 — CareerChrome data source: reuse seasonSummaryAtom](issues/05-careerchrome-data-source.md): CareerChrome receives `saveId` prop, consumes `seasonSummaryAtom(saveId)` to render `{saveName} — Season {seasonNumber} {phase}`; sacked state not needed here (lives on Save List); one line, subdued styling.
+- **5 — CareerChrome data source: reuse seasonSummaryAtom**: CareerChrome receives `saveId` prop, consumes `seasonSummaryAtom(saveId)` to render `{saveName} — Season {seasonNumber} {phase}`; sacked state not needed here (lives on Save List); one line, subdued styling.
 
-- [6 — Archive badge on Save List](issues/06-save-list-archive-badge.md): When `SaveSummary.sacked` is true, render `(Archived)` badge on the save card; read-only indication matching Season Summary's "You have been sacked" messaging.
+- **6 — Archive badge on Save List**: When `SaveSummary.sacked` is true, render `(Archived)` badge on the save card; read-only indication matching Season Summary's "You have been sacked" messaging.
 
-- [7 — Screen 18 survivors map to surfaces](issues/07-screen-18-survivors-redistribution.md): Career date/season → CareerChrome; Archive badge → Save List; App + schema version → About dialog; World counts — dropped; Safe diagnostic copy — dropped; Runtime state — dropped.
+- **7 — Screen 18 survivors map to surfaces**: Career date/season → CareerChrome; Archive badge → Save List; App + schema version → About dialog; World counts — dropped; Safe diagnostic copy — dropped; Runtime state — dropped.
 
 ## Not yet specified
 
