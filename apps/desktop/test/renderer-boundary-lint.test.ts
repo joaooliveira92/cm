@@ -2,20 +2,24 @@ import { describe, expect, it } from "vitest";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { isBoundaryEnforced, lintFileSet } from "../../scripts/effect-lint.js";
+import { fixtureRuleName, isBoundaryEnforced, lintFileSet } from "../../scripts/effect-lint.js";
 
 const repoRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const fixtureRoot = join(repoRoot, "scripts", "effect-lint-fixtures");
 const rendererDir = join(repoRoot, "apps", "desktop", "src", "renderer");
 
 describe("renderer dependency-boundary lint (AC-09)", () => {
-  it("ships failing fixtures that trip the renderer-boundary rule", async () => {
+  it("ships a failing fixture per rule, each still tripping the rule its name claims", async () => {
     const files = (await readdir(fixtureRoot)).filter((f) => f.endsWith(".tsx")).map((f) => join(fixtureRoot, f));
     expect(files.length).toBeGreaterThan(0);
     const { fixtureBoundaries } = lintFileSet(repoRoot, files);
     expect(fixtureBoundaries.length).toBe(files.length);
+    // A fixture's file stem names the rule it proves, which is the same
+    // convention `assertFixtureCoverage` enforces on every gate run — adding a
+    // rule means adding a fixture, and nothing else has to be kept in sync.
     for (const entry of fixtureBoundaries) {
-      expect(entry.violations.filter((v) => v.rule === "renderer-boundary").length).toBeGreaterThan(0);
+      const rule = fixtureRuleName(entry.file);
+      expect(entry.violations.filter((v) => v.rule === rule).length).toBeGreaterThan(0);
     }
   });
 

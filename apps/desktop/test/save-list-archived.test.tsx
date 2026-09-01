@@ -39,7 +39,7 @@ describe("Save List — Archived Save marker", () => {
   it("marks an archived save and leaves a live one unmarked", async () => {
     mount([save("Live Career", null), save("Retired Career", "retired")]);
 
-    expect(await screen.findByRole("button", { name: "Retired Career" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Save Retired Career" })).toBeTruthy();
     // One marker for the one archived save — the live career carries none.
     expect(screen.getAllByText("Archived")).toHaveLength(1);
   });
@@ -47,14 +47,14 @@ describe("Save List — Archived Save marker", () => {
   it("marks a sacked save the same as a retired one — the list shows state, not cause", async () => {
     mount([save("Sacked Career", "sacked"), save("Retired Career", "retired")]);
 
-    await screen.findByRole("button", { name: "Sacked Career" });
+    await screen.findByRole("button", { name: "Save Sacked Career" });
     expect(screen.getAllByText("Archived")).toHaveLength(2);
   });
 
   it("still offers an archived save for opening — read-only is not gone", async () => {
     mount([save("Retired Career", "retired")]);
 
-    const entry = await screen.findByRole("button", { name: "Retired Career" });
+    const entry = await screen.findByRole("button", { name: "Save Retired Career" });
     expect(entry.hasAttribute("disabled")).toBe(false);
   });
 });
@@ -82,7 +82,7 @@ describe("Save List — failed listSaves", () => {
 
     screen.getByRole("button", { name: "Retry" }).click();
 
-    await screen.findByRole("button", { name: "Recovered Career" });
+    await screen.findByRole("button", { name: "Save Recovered Career" });
     expect(screen.queryByText("Failed to load saves.")).toBeNull();
   });
 });

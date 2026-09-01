@@ -161,11 +161,16 @@ export const setBusy = (node: HTMLElement | null, busy: boolean): void => {
   if (node) node.setAttribute("aria-busy", busy ? "true" : "false");
 };
 
-/** The single `:focus-visible` ring treatment (intra-screen focus model). */
+/**
+ * The single `:focus-visible` ring treatment (intra-screen focus model), tuned
+ * to the design tokens: the highlight yellow on the page base. It carries no
+ * `slate-*` class, so the `no-slate-class-name` guard does not fire on the ~90
+ * call sites that interpolate it.
+ */
 export const FOCUS_RING = [
   "outline-none",
   "focus-visible:ring-2",
-  "focus-visible:ring-amber-300",
+  "focus-visible:ring-focus-ring",
   "focus-visible:ring-offset-2",
-  "focus-visible:ring-offset-slate-950",
+  "focus-visible:ring-offset-bg-base",
 ];

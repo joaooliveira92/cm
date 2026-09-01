@@ -1,1 +1,144 @@
 @import "tailwindcss";
+
+/*
+ * The renderer's design tokens — the retro chrome-blue visual frame.
+ *
+ * One `@theme` block, deliberately NOT `@theme inline`: in the default mode
+ * Tailwind emits every token as a real custom property on `:root` *and*
+ * generates utilities that reference it through `var()`. That keeps both
+ * consumption idioms alive at once — screens keep composing utility classes,
+ * and a future skin re-declares these properties under a scope to repaint the
+ * whole renderer without touching a single class. `@theme inline` would bake
+ * the values into the utilities and cost us that.
+ *
+ * Token names state the ROLE, never the hue. A name that asserts today's
+ * colour is a lie after the first palette change.
+ *
+ * The `--color-slate-*` entries at the bottom are the migration alias layer:
+ * they repaint every pre-existing `slate-*` class onto the adopted palette with
+ * zero JSX churn. Each alias is deleted as its last user renames; the layer is
+ * the migration backlog, mirrored by the `no-slate-class-name` lint baseline.
+ */
+@theme {
+  /* --- Typography ------------------------------------------------------- */
+  --font-sans: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+
+  /* The 11px status tier. 12px/14px/18px are Tailwind's own xs/sm/lg. */
+  --text-2xs: 11px;
+  --text-2xs--line-height: 1.3;
+
+  /* --- Page and surface ramp -------------------------------------------- */
+  --color-bg-base: #0a0e14;
+  --color-bg-raised: #121820;
+  --color-surface: #18202b;
+  --color-surface-raised: #212b39;
+  --color-border-subtle: #2f3d4e;
+
+  /* --- Panels ----------------------------------------------------------- */
+  --color-panel-bg: rgb(5 12 13 / 0.72);
+  --color-panel-bg-strong: rgb(6 10 12 / 0.86);
+  --color-panel-border: rgb(255 255 255 / 0.3);
+  --color-panel-border-dark: rgb(0 0 0 / 0.4);
+
+  /* --- Chrome (the gradient treatment: title bars, panel headers, primary
+         buttons). "chrome" names the treatment, not the blue. ------------- */
+  --color-chrome-top: #416a9f;
+  --color-chrome-mid: #214d84;
+  --color-chrome-bottom: #153963;
+
+  /* --- Text ------------------------------------------------------------- */
+  --color-text-primary: #e8edf3;
+  --color-text-bright: #f4f7fa;
+  --color-text-strong: #cdd5df;
+  --color-text-body: #a9b3c1;
+  --color-text-secondary: #8892a0;
+  --color-text-muted: #6b7686;
+
+  /* --- Semantic status -------------------------------------------------- */
+  --color-text-highlight: #fff400;
+  --color-text-warning: #ff7200;
+  --color-text-danger: #ff4444;
+  --color-text-success: #8ae860;
+
+  /* --- Controls --------------------------------------------------------- */
+  --color-accent: #15803d;
+  --color-accent-hover: #17904a;
+  /* Fields are opaque on purpose: typed characters must read against an
+     unwashed surface, not through a semi-transparent panel. */
+  --color-field-bg: #0f151d;
+  --color-focus-ring: var(--color-text-highlight);
+
+  /* --- Shape and depth -------------------------------------------------- */
+  --radius-panel: 6px;
+  --radius-control: 4px;
+  --shadow-panel:
+    inset 0 1px 0 rgb(255 255 255 / 0.08), 0 2px 4px rgb(0 0 0 / 0.3);
+  --shadow-chrome:
+    inset 0 1px 0 rgb(255 255 255 / 0.15), 0 1px 3px rgb(0 0 0 / 0.4);
+
+  /* --- Migration alias layer (delete each entry as its last user renames) - */
+  --color-slate-50: var(--color-text-bright);
+  --color-slate-100: var(--color-text-primary);
+  --color-slate-200: var(--color-text-strong);
+  --color-slate-300: var(--color-text-body);
+  --color-slate-400: var(--color-text-secondary);
+  --color-slate-500: var(--color-text-muted);
+  --color-slate-600: var(--color-border-subtle);
+  --color-slate-700: var(--color-surface-raised);
+  --color-slate-800: var(--color-surface);
+  --color-slate-900: var(--color-bg-raised);
+  --color-slate-950: var(--color-bg-base);
+}
+
+/*
+ * The page background. A single dark gradient, never per-screen photography —
+ * content panels are semi-transparent and need a predictably dark backdrop.
+ * `--page-image` is the reserved seam for a context-sensitive background (and,
+ * on match day, a stadium photograph): it layers *under* the gradient wash, so
+ * an asset can be injected later without restyling anything.
+ */
+@layer base {
+  :root {
+    --page-image: none;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg-base);
+    background-image:
+      linear-gradient(180deg, var(--color-bg-base) 0%, var(--color-bg-raised) 100%),
+      var(--page-image);
+    background-size: cover;
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+  }
+}
+
+/*
+ * The chrome gradient. A utility rather than a token because it is a
+ * three-stop gradient, not a colour — but it reads the same tokens, so a skin
+ * override repaints it too. `chrome-gradient-inverted` is the active/pressed
+ * state of a primary button and the framed-locus treatment of the active tab.
+ */
+@utility chrome-gradient {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-chrome-top),
+    var(--color-chrome-mid),
+    var(--color-chrome-bottom)
+  );
+}
+
+@utility chrome-gradient-inverted {
+  background-image: linear-gradient(
+    0deg,
+    var(--color-chrome-top),
+    var(--color-chrome-mid),
+    var(--color-chrome-bottom)
+  );
+}

@@ -45,6 +45,30 @@ The three candidate strategies lose for structural reasons. **Screen-by-screen**
 
 This decision supersedes the mechanism clause of [Visual design tokens and chrome-blue retro frame](../architecture/2026-08-29-visual-design-tokens.md): its `theme.extend` + `:root` proposal is replaced by the `@theme` mechanism. The supersession is **partial** — that note's token *values* (palette, typography, panel system, buttons) stand unmodified; only the plumbing clause is absorbed here, and the frame note is left active rather than archived. Its "Skin system" section is also updated in effect: skins remain deferred and gated as recorded, but now with a decided foundation — the `@theme` override layer — instead of the vague "swap the `:root` block" it left open.
 
+## Implementation status (2026-08-31)
+
+**Partially implemented — the note stays `proposed`.** Steps 1 and 2 shipped in the token-foundation
+commit: the `@theme` block (non-inline) with the semantic tokens and the eleven `--color-slate-*`
+aliases, the `PANEL`/`PANEL_STRONG`/`PANEL_CHROME`/`BTN_PRIMARY`/`BTN_SECONDARY` constants in
+`apps/desktop/src/renderer/theme.ts`, the token-retuned `FOCUS_RING`, and the `no-slate-class-name`
+guard. Verified against the built stylesheet: `.bg-slate-800` emits
+`background-color: var(--color-slate-800)`, so the skin premise the non-inline mode exists for holds.
+
+Steps 3–5 — the shared-layer renames, the screen renames, and the alias deletions — are unbuilt. The
+alias layer is complete and the backlog stands at 390 sites across 24 files.
+
+**One divergence from the proposal, deliberate.** The guard scans every string and template literal in
+renderer source for `slate-`, not only the initializer of a `className` attribute. The narrower rule
+the proposal described has a hole this codebase already exercises: `TransfersScreen.tsx` hoists a class
+list into `const btn = "… bg-slate-700 …"` and interpolates it, which a className-scoped rule never
+sees. In this renderer `slate-` occurs only in class strings, so the wider scan costs no false
+positives and is what makes ticket 15's "no `slate-` in any class position" checkable at all.
+
+**One mechanism the proposal left open.** The backlog is a per-file count registry at
+`scripts/slate-baseline.json`, not a list of sites: line numbers churn on every edit, counts do not.
+The ratchet is exact in both directions — over baseline is fresh slate, under baseline is a migrated
+file whose entry was not tightened — so the registry can only move toward zero.
+
 ## Alternatives considered
 
 1. **Raw `:root` block as the foundation.** Wins runtime switchability but loses utility generation entirely, and nothing today needs switchability. Rejected as the foundation; the mechanism is reserved for the future skin override layer instead, where it is the right tool.
