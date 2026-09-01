@@ -273,6 +273,19 @@ as a dependency is capped at `standard` and is not depth-editable. The two readi
 glossary terms so the distinction outlives the screen they were coined for.
 _Avoid_: Simulation Mode (the per-Nation grain, a different concept), detail level
 
+**Advanced Options**:
+The setup-screen settings that tune shipped systems, from the Active Leagues Setup spec's
+"advanced options ship only where a real system exists" decision. Four categories land in v1 —
+match-simulation detail, transfer-market activity, roster-generation detail, and information
+visibility — each feeding the processing-cost/entity estimate or a real information policy, so a
+checkbox can never change nothing. Each category owns a small legal value set, and the four
+combine under checked incompatibility rules (a full roster conflicts with quick match
+simulation; an active transfer market conflicts with ranged information visibility). Staff
+generation and editor/developer capabilities carry no such system in v1 and stay recorded as
+future slots, not modeled options.
+_Avoid_: reference-game option labels (the brief's checklist is a vocabulary to translate, not
+to copy; see [the implementation brief](docs/active-leagues-setup-screen-implementation-brief.md))
+
 **League Scope Option**:
 A supported scope for one Nation, named by the setup catalogue — "Top division only", "National
 pyramid", "National and regional pyramid". The player picks one of these rather than assembling a

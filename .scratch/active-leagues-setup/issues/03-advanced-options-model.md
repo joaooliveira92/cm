@@ -13,10 +13,10 @@ The slice's edge promise: pure domain plus the payload route — the advanced-op
 
 **Blocked by:** 02 — Consequences — entity count, processing cost, and recommendations (options feed the estimate, so the estimate the options tune must exist first).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Four option categories ship as setup state: match-simulation detail, transfer-market activity, roster-generation detail, and information visibility; each feeds the estimate or a real information policy so no option is a no-op.
-- [ ] Advanced-option incompatibilities are detected and surfaced as validation results, not throws.
-- [ ] The option set produces the versioned shape the draft carries; staff generation and editor/developer capabilities are not modeled and remain future slots.
-- [ ] Pure unit tests cover option application, the incompatibility rules, and the empty/absent-options case, from deterministic fixtures.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] Four option categories ship as setup state: match-simulation detail, transfer-market activity, roster-generation detail, and information visibility; each feeds the estimate or a real information policy so no option is a no-op.
+- [x] Advanced-option incompatibilities are detected and surfaced as validation results, not throws.
+- [x] The option set produces the versioned shape the draft carries; staff generation and editor/developer capabilities are not modeled and remain future slots.
+- [x] Pure unit tests cover option application, the incompatibility rules, and the empty/absent-options case, from deterministic fixtures.
+- [x] `pnpm check:all` is green at this commit.

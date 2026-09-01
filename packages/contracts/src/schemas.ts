@@ -1,13 +1,18 @@
 import { Schema } from "effect";
 import {
+  ADVANCED_OPTIONS_VERSION,
   ARCHIVED_CAUSES,
   CATEGORIES,
+  INFORMATION_VISIBILITIES,
   INTENT_SOURCES,
   ISSUE_CODES,
   ISSUE_LEVELS,
+  MATCH_SIMULATION_DETAILS,
   NATION_SELECTION_STATES,
+  ROSTER_GENERATION_DETAILS,
   SIMULATION_MODES,
   SIMULATION_SPEED_RATINGS,
+  TRANSFER_MARKET_ACTIVITIES,
   FAMILIARITY_TIERS,
   FORMATIONS,
   GOALKEEPING_ATTRIBUTES,
@@ -751,6 +756,20 @@ export class NationSelectionIntentPayload extends Schema.Class<NationSelectionIn
   mode: SimulationModeSchema,
   scopeOptionId: Schema.optional(ScopeOptionId),
   source: IntentSourceSchema,
+}) {}
+
+/** The advanced options from the Active Leagues setup screen (§"Advanced options ship only where
+ *  a real system exists"). Four categories, each validated against its legal value set at the
+ *  boundary. `version` lets the persisted draft refuse a future shape rather than misread it;
+ *  staff generation and editor/developer capabilities are future slots and carry no value here. */
+export class AdvancedOptionsPayload extends Schema.Class<AdvancedOptionsPayload>(
+  "AdvancedOptionsPayload",
+)({
+  version: Schema.Literal(ADVANCED_OPTIONS_VERSION),
+  matchSimulationDetail: Schema.Literals(MATCH_SIMULATION_DETAILS),
+  transferMarketActivity: Schema.Literals(TRANSFER_MARKET_ACTIVITIES),
+  rosterGenerationDetail: Schema.Literals(ROSTER_GENERATION_DETAILS),
+  informationVisibility: Schema.Literals(INFORMATION_VISIBILITIES),
 }) {}
 
 export class SelectionIssueRow extends Schema.Class<SelectionIssueRow>("SelectionIssueRow")({

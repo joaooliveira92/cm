@@ -29,6 +29,11 @@
  */
 
 import {
+  DEFAULT_ADVANCED_OPTIONS,
+  estimateFactorsFor,
+  type AdvancedOptionsState,
+} from "./advancedOptions.js";
+import {
   competitionIndex,
   nationIndex,
   type LeagueSetupIndex,
@@ -64,12 +69,19 @@ export interface ActiveLeaguesEntityEstimate {
  * onto the established per-mode densities (§9.3: view-only rows keep standings, not squads), so
  * a competition the rows report at `results-only` contributes its clubs and nothing else. A row
  * whose competition is missing from the catalogue contributes nothing rather than throwing.
+ *
+ * The advanced options feed the player count: roster-generation detail scales how many players
+ * each loaded club carries, so a *changed* option moves the entity figure the sidebar shows.
+ * The default (shipped) configuration multiplies by exactly `1`, so an untouched setup produces
+ * the ticket-02 numbers unchanged.
  */
 export const estimateActiveLeaguesEntities = (
   index: LeagueSetupIndex,
   projection: ActiveLeaguesProjection,
+  options: AdvancedOptionsState = DEFAULT_ADVANCED_OPTIONS,
 ): ActiveLeaguesEntityEstimate => {
   const competitions = competitionIndex(index);
+  const rosterPlayer = estimateFactorsFor(options).rosterPlayer;
 
   let clubs = 0;
   let players = 0;
@@ -80,7 +92,7 @@ export const estimateActiveLeaguesEntities = (
     if (node === undefined) continue;
     const mode = modeFromDepth(row.depth);
     clubs += node.clubCount;
-    players += node.clubCount * SQUAD_SIZE[mode];
+    players += Math.round(node.clubCount * SQUAD_SIZE[mode] * rosterPlayer);
     staff += node.clubCount * STAFF_PER_CLUB[mode];
   }
 
@@ -141,14 +153,18 @@ const CATEGORY_BY_METER: Readonly<Record<number, { readonly category: Processing
  * Classify the configuration's processing cost from the projection rows. The meter is derived in
  * the same reference-machine match-cost units as the career-scope estimate, but it is deliberately
  * machine-independent: it rates the *configuration*, so it never claims hardware benchmarking no
- * code performs. Later tickets that ship the database preset and the advanced options feed this
- * same score; for now the rows and their depth are the only inputs.
+ * code performs. The advanced options feed the same score: match-simulation detail and
+ * transfer-market activity scale how much per-match and per-window work the engine does, so a
+ * *changed* option moves the sidebar meter. The default (shipped) configuration multiplies by
+ * exactly `1`, so an untouched setup produces the ticket-02 numbers unchanged.
  */
 export const estimateProcessingCost = (
   index: LeagueSetupIndex,
   projection: ActiveLeaguesProjection,
+  options: AdvancedOptionsState = DEFAULT_ADVANCED_OPTIONS,
 ): ProcessingCostReading => {
   const competitions = competitionIndex(index);
+  const { matchSimulation, transferMarket } = estimateFactorsFor(options);
 
   let score = 0;
   for (const row of projection.rows) {
@@ -156,6 +172,7 @@ export const estimateProcessingCost = (
     if (node === undefined) continue;
     score += node.annualMatches * MATCH_COST[modeFromDepth(row.depth)];
   }
+  score *= matchSimulation * transferMarket;
 
   const meterValue = METER_THRESHOLDS.find(([limit]) => score <= limit)?.[1] ?? 5;
   const { category, label } = CATEGORY_BY_METER[meterValue] ?? CATEGORY_BY_METER[1]!;
@@ -164,7 +181,7 @@ export const estimateProcessingCost = (
     meterValue,
     category,
     label,
-    explanation: "Estimated from the active leagues and their simulation depth.",
+    explanation: "Estimated from the active leagues, their simulation depth, and the advanced options.",
     expensiveWarning: meterValue >= EXPENSIVE_THRESHOLD ? EXPENSIVE_SETUP_WARNING : null,
   };
 };
@@ -336,14 +353,17 @@ export interface ActiveLeaguesConsequences {
 }
 
 /** One call for the whole consequence panel, so a caller cannot accidentally read a different
- *  projection than the rows it derived its figures from. */
+ *  projection than the rows it derived its figures from. The advanced options feed the same
+ *  estimate so the sidebar's consequence feedback reacts to a changed option the moment it
+ *  changes; the default configuration keeps the ticket-02 numbers identical. */
 export const estimateActiveLeaguesConsequences = (
   index: LeagueSetupIndex,
   projection: ActiveLeaguesProjection,
   resolved: ResolvedSelection,
   intents: readonly NationSelectionIntent[],
+  options: AdvancedOptionsState = DEFAULT_ADVANCED_OPTIONS,
 ): ActiveLeaguesConsequences => ({
-  entityEstimate: estimateActiveLeaguesEntities(index, projection),
-  processingCost: estimateProcessingCost(index, projection),
+  entityEstimate: estimateActiveLeaguesEntities(index, projection, options),
+  processingCost: estimateProcessingCost(index, projection, options),
   recommendations: resolveLeagueRecommendations(index, projection, resolved, intents),
 });

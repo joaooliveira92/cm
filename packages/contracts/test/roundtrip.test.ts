@@ -7,6 +7,7 @@ import {
 import { describe, expect, it } from "vitest";
 import { AppRpcs } from "../src/rpc.js";
 import {
+  AdvancedOptionsPayload,
   AdvanceCalendarResult,
   AttributesSchema,
   BidView,
@@ -361,5 +362,51 @@ describe("key binding overrides — the four Stage 6 procedures (AC-34)", () => 
 
   it("resetAllKeyBindings success round-trips the empty map", () => {
     roundTrip(AppRpcs.resetAllKeyBindings.success, {});
+  });
+});
+
+describe("advanced options payload route", () => {
+  it("AdvancedOptionsPayload round-trips the shipped default", () => {
+    roundTrip(AdvancedOptionsPayload, {
+      version: 1,
+      matchSimulationDetail: "standard",
+      transferMarketActivity: "standard",
+      rosterGenerationDetail: "standard",
+      informationVisibility: "exact",
+    });
+  });
+
+  it("AdvancedOptionsPayload round-trips every legal value set", () => {
+    roundTrip(AdvancedOptionsPayload, {
+      version: 1,
+      matchSimulationDetail: "full",
+      transferMarketActivity: "active",
+      rosterGenerationDetail: "first_team",
+      informationVisibility: "ranged",
+    });
+  });
+
+  it("AdvancedOptionsPayload rejects an unsupported option value", () => {
+    expect(() =>
+      Schema.decodeUnknownSync(AdvancedOptionsPayload)({
+        version: 1,
+        matchSimulationDetail: "turbo",
+        transferMarketActivity: "standard",
+        rosterGenerationDetail: "standard",
+        informationVisibility: "exact",
+      }),
+    ).toThrow();
+  });
+
+  it("AdvancedOptionsPayload rejects a future version", () => {
+    expect(() =>
+      Schema.decodeUnknownSync(AdvancedOptionsPayload)({
+        version: 2,
+        matchSimulationDetail: "standard",
+        transferMarketActivity: "standard",
+        rosterGenerationDetail: "standard",
+        informationVisibility: "exact",
+      }),
+    ).toThrow();
   });
 });
