@@ -343,25 +343,15 @@ CM 03/04 supported multiple skins (traditional, Ter) with configurable:
 
 ### Current clones
 
-**No dedicated icon set or icon font.** The renderer uses:
-
-- **Unicode arrows:** `◀` and `▶` for match-screen nav buttons (Sidebar.tsx:54,63)
-- **Emoji:** Only in the match-screen component — ⚽ (goal), 🟨 (yellow card), 🟥 (red card),
-  🔄 (substitution), 🤕 (injury), 🎯 (penalty missed), 📌 (other), 👤 (manager), 🏆 (competitions),
-  ⚽ (nations), 📊 (history), ⚙️ (options), ⚠️ (pillar warning in CreationStep1.tsx:192)
-- **Colored text** for status differentiation (green for points/ready, amber for warnings,
-  red for errors)
-- **No SVG icons, no icon component, no icon library**
+use https://lucide.dev/ icons
 
 ### Comparison to CM 03/04
 
 CM 03/04 used "limited use of iconography" — icons and color augmented text but did not
-replace it. The clone's use of emoji in match-screen is perhaps the closest approximation,
-but it's confined to that component. The main screens use no icons at all — all information
+replace it.  The main screens use no icons at all — all information
 is text-only.
 
-**Judgment:** (b) modern/modified — minimal icon use via emoji in one component,
-otherwise text-only like CM but without CM's color-coded comparison highlighting.
+**Judgment:** use icons not emojis
 
 ---
 
@@ -377,7 +367,7 @@ otherwise text-only like CM but without CM's color-coded comparison highlighting
 | 6. Navigation | (c) no equivalent | Flat tab bar of peer screens. No hierarchical context, no date/Continue bar, no contextual menus, no screen history. |
 | 7. Status & data display | (c) no equivalent | No status abbreviations, morale, fitness, form indicators. Raw numeric display only. |
 | 8. Skins & theming | (c) no equivalent | No theme system, no CSS variables in main app, no runtime switching. Single fixed palette. |
-| 9. Icons & visual markers | (b) modern/modified | Emoji-only in match-screen component. No icon library, no SVGs, no color-coded comparison. |
+| 9. Icons & visual markers | (b) modern/modified | Lucide icons in match-screen component. No emojis. |
 
 ---
 
