@@ -10,10 +10,10 @@ The slice's edge promise: pure, no I/O — the entity count, the processing-cost
 
 **Blocked by:** 01 — Simulation Depth and the active-leagues projection (the count, meter, and recommendation all classify per active league, so the projection row model and depth must exist first).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Entity count derives from active leagues and their depth, with no separately stored or hardcoded total.
-- [ ] Processing cost computes a meter value, a human-readable category, and a warning only when the setup is unusually expensive; the copy says processing intervals get longer and makes no hardware-capability claim.
-- [ ] A recommendation reason resolves per league from authoritative game data — Nation Profile recruitment links, dependencies, scope/tier structure, preset membership — and never a club-grounded reading; each reason has icon and visible text.
-- [ ] Pure unit tests cover entity-count estimation, processing-cost classification, the expensive warning, and recommendation resolution from deterministic fixtures.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] Entity count derives from active leagues and their depth, with no separately stored or hardcoded total.
+- [x] Processing cost computes a meter value, a human-readable category, and a warning only when the setup is unusually expensive; the copy says processing intervals get longer and makes no hardware-capability claim.
+- [x] A recommendation reason resolves per league from authoritative game data — Nation Profile recruitment links, dependencies, scope/tier structure, preset membership — and never a club-grounded reading; each reason has icon and visible text.
+- [x] Pure unit tests cover entity-count estimation, processing-cost classification, the expensive warning, and recommendation resolution from deterministic fixtures.
+- [x] `pnpm check:all` is green at this commit.

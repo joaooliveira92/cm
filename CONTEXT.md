@@ -264,6 +264,15 @@ manageable), `view_only` (standings, fixtures, and results with no persistent sq
 `not_loaded`. A Competition activated only because another selection requires it is capped at
 `background` — a parent division is *simulated*, never managed.
 
+**Simulation Depth**:
+The per-competition detail tier the Active Leagues screen is built around: `full` (as
+`playable`), `standard` (as `background`), or `results-only` (as `view_only`). Distinct from
+Simulation Mode, which is the per-Nation selection grain: a Nation is selected at a Mode, and
+each Competition it activates then reads at the Depth that Mode implies. A Competition pulled in
+as a dependency is capped at `standard` and is not depth-editable. The two readings are both
+glossary terms so the distinction outlives the screen they were coined for.
+_Avoid_: Simulation Mode (the per-Nation grain, a different concept), detail level
+
 **League Scope Option**:
 A supported scope for one Nation, named by the setup catalogue — "Top division only", "National
 pyramid", "National and regional pyramid". The player picks one of these rather than assembling a

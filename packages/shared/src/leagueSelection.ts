@@ -621,7 +621,7 @@ export interface CareerScopeEstimate {
  * Per-mode multipliers. Deliberately coarse: §11.4 forbids implying a precision the model does
  * not have, and every figure derived from these is rendered rounded and hedged.
  */
-const SQUAD_SIZE: Readonly<Record<SimulationMode, number>> = {
+export const SQUAD_SIZE: Readonly<Record<SimulationMode, number>> = {
   playable: 25,
   background: 22,
   // §9.3: view-only keeps standings and results, not squads.
@@ -629,7 +629,7 @@ const SQUAD_SIZE: Readonly<Record<SimulationMode, number>> = {
   not_loaded: 0,
 };
 
-const STAFF_PER_CLUB: Readonly<Record<SimulationMode, number>> = {
+export const STAFF_PER_CLUB: Readonly<Record<SimulationMode, number>> = {
   playable: 8,
   background: 3,
   view_only: 0,
@@ -637,7 +637,7 @@ const STAFF_PER_CLUB: Readonly<Record<SimulationMode, number>> = {
 };
 
 /** Relative per-match processing cost by mode. Playable is the unit. */
-const MATCH_COST: Readonly<Record<SimulationMode, number>> = {
+export const MATCH_COST: Readonly<Record<SimulationMode, number>> = {
   playable: 1,
   background: 0.25,
   view_only: 0.05,

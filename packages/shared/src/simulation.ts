@@ -1,3 +1,5 @@
+import type { SimulationMode } from "./leagueSetup.js";
+
 /**
  * Simulation depth: the per-competition grain the active-leagues screen is built around.
  *
@@ -48,5 +50,5 @@ export const depthFromMode = (mode: string): SimulationDepth => {
 };
 
 /** The reverse leg: which `SimulationMode` a depth implies when the caller needs it. */
-export const modeFromDepth = (depth: SimulationDepth): string =>
+export const modeFromDepth = (depth: SimulationDepth): SimulationMode =>
   depth === "full" ? "playable" : depth === "standard" ? "background" : "view_only";

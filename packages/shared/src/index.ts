@@ -17,4 +17,5 @@ export * from "./contentPack.js";
 export * from "./leagueSetup.js";
 export * from "./leagueSelection.js";
 export * from "./simulation.js";
+export * from "./activeLeaguesConsequences.js";
 

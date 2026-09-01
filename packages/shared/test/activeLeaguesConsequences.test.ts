@@ -11,7 +11,6 @@ import {
   estimateProcessingCost,
   type ActiveLeaguesProjection,
   type ActiveLeaguesRow,
-  type LeagueSetupIndex,
   type NationSelectionIntent,
 } from "../src/index.js";
 
@@ -69,10 +68,6 @@ describe("active-leagues entity count (§Active Leagues Setup spec)", () => {
   });
 
   it("reads squad and staff density from the depth grain (standard = less)", () => {
-    const full = estimateActiveLeaguesEntities(
-      index,
-      projectionFor([playable("nation-and", "scope-eng-top")]),
-    );
     // Andorra is background-only in the shipped catalogue; background -> standard depth.
     const standard = estimateActiveLeaguesEntities(index, projectionFor([background("nation-and")]));
     const andorraClubs = 10;

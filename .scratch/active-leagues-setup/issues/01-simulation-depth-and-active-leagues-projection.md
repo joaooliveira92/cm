@@ -8,10 +8,10 @@ The slice's edge promise: pure, with no I/O — it rides the existing resolved-s
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A `SimulationDepth` term exists with the three CM Clone-native values (full / standard / results-only), each mapping onto the established mode ladder (playable / background / view_only), while `SimulationMode` keeps its per-Nation meaning including its not-loaded value; the two readings stay distinct in the shared vocabulary.
-- [ ] A projection derives one row per active competition from the resolved selection, with a stable league id (never the array index), a scope description, and the effective depth — a dependency-capped competition reads `standard` and is not depth-editable, per the spec's no-free-form-assembly and capped-dependency rule.
-- [ ] Duplicate league selections are prevented by the domain, and an empty scope (zero active leagues) is a validation result rather than a thrown error.
-- [ ] Pure unit tests cover depth mapping, the projection row model, duplicate prevention, the at-least-one rule, and the empty-invalid setup, with deterministic fixtures; contracts round-trip stays green for the resolved-selection value the projection reads.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] A `SimulationDepth` term exists with the three CM Clone-native values (full / standard / results-only), each mapping onto the established mode ladder (playable / background / view_only), while `SimulationMode` keeps its per-Nation meaning including its not-loaded value; the two readings stay distinct in the shared vocabulary.
+- [x] A projection derives one row per active competition from the resolved selection, with a stable league id (never the array index), a scope description, and the effective depth — a dependency-capped competition reads `standard` and is not depth-editable, per the spec's no-free-form-assembly and capped-dependency rule.
+- [x] Duplicate league selections are prevented by the domain, and an empty scope (zero active leagues) is a validation result rather than a thrown error.
+- [x] Pure unit tests cover depth mapping, the projection row model, duplicate prevention, the at-least-one rule, and the empty-invalid setup, with deterministic fixtures; contracts round-trip stays green for the resolved-selection value the projection reads.
+- [x] `pnpm check:all` is green at this commit.
