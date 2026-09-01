@@ -169,7 +169,7 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   createStep1: { showKeyBadges: false },
   createStep2: { showKeyBadges: false },
   createStep3: { showKeyBadges: false },
-  saveList: { showKeyBadges: false },
+  mainMenu: { showKeyBadges: false },
   loadCareer: { showKeyBadges: false },
 };
 

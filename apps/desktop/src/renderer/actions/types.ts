@@ -22,7 +22,7 @@ export type ScreenName =
   | "createStep1"
   | "createStep2"
   | "createStep3"
-  | "saveList"
+  | "mainMenu"
   | "loadCareer";
 
 /** A career screen id — the subset with `g <key>` navigation (note: creation is excluded). */

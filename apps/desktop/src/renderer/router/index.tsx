@@ -15,7 +15,7 @@ import { SeasonSummaryScreen } from "../SeasonSummaryScreen.js";
 import { SquadScreen } from "../SquadScreen.js";
 import { TacticsScreen } from "../TacticsScreen.js";
 import { TransfersScreen } from "../TransfersScreen.js";
-import { SaveListScreen } from "./saveList.js";
+import { MainMenuScreen } from "./mainMenu.js";
 import { LoadCareerScreen } from "./loadCareer.js";
 import {
   CareerChildView,
@@ -50,10 +50,10 @@ const rootRoute = createRootRoute({
   ),
 });
 
-const saveListRoute = createRoute({
+const mainMenuRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: SaveListScreen,
+  component: MainMenuScreen,
 });
 
 const loadCareerRoute = createRoute({
@@ -144,7 +144,7 @@ const createStep3Route = createRoute({
 });
 
 const routeTree = rootRoute.addChildren([
-  saveListRoute,
+  mainMenuRoute,
   loadCareerRoute,
   createFlowRoute.addChildren([
     createLeaguesRoute,

@@ -57,7 +57,7 @@ const mountCreateFlow = ({
   at = "/create/leagues",
 }: { strict?: boolean; at?: string } = {}) => {
   const rootRoute = createRootRoute({ component: () => <Outlet /> });
-  const saveListRoute = createRoute({
+  const mainMenuRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/",
     component: () => <p>Save List</p>,
@@ -68,7 +68,7 @@ const mountCreateFlow = ({
     component: CreateFlowLayout,
   });
   const routeTree = rootRoute.addChildren([
-    saveListRoute,
+    mainMenuRoute,
     createFlowRoute.addChildren([
       createRoute({
         getParentRoute: () => createFlowRoute,

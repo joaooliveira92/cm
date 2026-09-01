@@ -627,7 +627,16 @@ is no save action for the player to invoke.
 _Avoid_: Career (used loosely in routes and types like `CareerDestination`, but the noun is Save),
 game, slot
 
-**Save List**:
-The top-level screen, and the only navigation destination outside a Save: it lists existing Saves and
-starts the creation flow. This is where quitting a Save returns to.
-_Avoid_: Main Menu, title screen (the imported specs' term; see the Group A reconciliation ledger)
+**Main Menu**:
+The application's entry point, at `/`: product identity over a vertical menu of five commands — Start
+New Career, Load Career, Preferences, Credits, Exit — above a footer carrying the application version
+and the database edition. It emits commands and holds no career state; it lists no Saves. This is
+where quitting a Save returns to.
+_Avoid_: Save List, boot screen, title screen (the Save List was the entry point until 2026-09-01,
+when the browser moved to Load Career; see the Group A reconciliation ledger)
+
+**Load Career**:
+The saved-game browser at `/load`, reached from the Main Menu's Load Career command. It lists
+existing Saves, marks archived ones, offers Start New Career when there are none, and returns to the
+Main Menu with Back. It is the only surface that enumerates Saves.
+_Avoid_: Save List, Load Game

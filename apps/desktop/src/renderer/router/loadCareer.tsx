@@ -45,7 +45,7 @@ export const LoadCareerScreen = () => {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => navigate({ type: "saveList" })}
+            onClick={() => navigate({ type: "mainMenu" })}
           >
             Back
           </Button>

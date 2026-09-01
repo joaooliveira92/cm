@@ -125,7 +125,7 @@ export const LeagueSelectionRouteContent = () => {
           update({ leagueSelection: snapshot });
           navigate({ type: "createStep1" });
         }}
-        onBack={() => navigate({ type: "saveList" })}
+        onBack={() => navigate({ type: "mainMenu" })}
       />
     </RouteView>
   );
@@ -326,7 +326,7 @@ export const CreateFlowLayout = () => {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => navigate({ type: "saveList" })}
+              onClick={() => navigate({ type: "mainMenu" })}
             >
               Cancel
             </Button>

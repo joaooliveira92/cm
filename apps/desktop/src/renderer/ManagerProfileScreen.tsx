@@ -131,7 +131,7 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
   // fire for a retirement the main process refused.
   const retired = retire._tag === "Success";
   useEffect(() => {
-    if (retired) navigate({ type: "saveList" });
+    if (retired) navigate({ type: "mainMenu" });
   }, [retired]);
 
   const error = typedError(profileResult);

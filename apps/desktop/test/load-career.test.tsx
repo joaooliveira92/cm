@@ -119,6 +119,6 @@ describe("Load Career — empty state and navigation", () => {
 
     await screen.findByText("No saves yet.");
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    expect(mountedNavigate).toHaveBeenCalledWith({ type: "saveList" });
+    expect(mountedNavigate).toHaveBeenCalledWith({ type: "mainMenu" });
   });
 });

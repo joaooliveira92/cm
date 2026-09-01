@@ -229,9 +229,9 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
   const onBackToSaves = (event: MouseEvent): void => {
     const intent: NavigationIntent = event.detail > 0 ? "pointer" : "keyboard";
     if (intent === "keyboard") {
-      navigateWithFocus({ type: "saveList" }, { screen: "saveList" });
+      navigateWithFocus({ type: "mainMenu" }, { screen: "mainMenu" });
     } else {
-      navigate({ type: "saveList" });
+      navigate({ type: "mainMenu" });
     }
   };
 

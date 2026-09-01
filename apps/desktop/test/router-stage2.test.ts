@@ -10,7 +10,7 @@ const save = (id: string): SaveId => SaveIdSchema.make(id);
 
 describe("AC-14 — typed destination resolver", () => {
   it("resolves every destination to its route, never a raw caller-built path", () => {
-    expect(resolveDestination({ type: "saveList" })).toEqual({ to: "/" });
+    expect(resolveDestination({ type: "mainMenu" })).toEqual({ to: "/" });
     expect(resolveDestination({ type: "createStep1" })).toEqual({ to: "/create/step-1" });
     expect(resolveDestination({ type: "createStep2" })).toEqual({ to: "/create/step-2" });
     expect(resolveDestination({ type: "createStep3" })).toEqual({ to: "/create/step-3" });
@@ -60,7 +60,7 @@ describe("AC-14 — career g bindings never point at creation steps", () => {
       const destination = build(id);
       expect(CAREER_SCREEN_TYPES as readonly string[]).toContain(destination.type);
       expect(destination.type).not.toMatch(/^createStep/);
-      expect(destination.type).not.toBe("saveList");
+      expect(destination.type).not.toBe("mainMenu");
       expect((resolveDestination(destination).to as string)).toMatch(/^\/career\/\$saveId\//);
       expect(key).toMatch(/^[a-z]$/);
     }

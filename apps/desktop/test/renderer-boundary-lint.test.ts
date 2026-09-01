@@ -57,7 +57,7 @@ describe("renderer dependency-boundary lint (AC-09)", () => {
       join(rendererDir, "router", "career.tsx"),
       join(rendererDir, "router", "createFlow.tsx"),
       join(rendererDir, "router", "RouteView.tsx"),
-      join(rendererDir, "router", "saveList.tsx"),
+      join(rendererDir, "router", "mainMenu.tsx"),
       join(rendererDir, "navigation", "adapter.ts"),
       join(rendererDir, "navigation", "destinations.ts"),
       join(rendererDir, "navigation", "params.ts"),

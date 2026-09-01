@@ -1,12 +1,19 @@
-# 01 — The Save List swallows save-repository failures
+# 01 — The saved-game browser swallows save-repository failures
 
 Type: bug-fix
 Status: ready-for-agent
 
 ## Problem
 
-`SaveListScreen` discards every failure it can observe. In
-[saveList.tsx](../../../apps/desktop/src/renderer/router/saveList.tsx):
+> **Amended 2026-09-01.** The screen this ticket was written against was split. The entry point is now
+> the Main Menu (`router/mainMenu.tsx`) and the saved-game browser moved to Load Career at `/load`
+> (`router/loadCareer.tsx`). The `listSaves()` half below is now **done** on both screens: each
+> distinguishes an unreachable repository from an empty one and offers `Retry`. What remains open is the
+> Action-registry requirement under *Done when*, and the `loadSave` half, which the scope boundary below
+> still rules out. The original problem statement is kept verbatim.
+
+`LoadCareerScreen` discards every failure it can observe. In
+[loadCareer.tsx](../../../apps/desktop/src/renderer/router/loadCareer.tsx):
 
 ```ts
 const outcome = await Effect.runPromise(listSaves().pipe(Effect.result));
@@ -43,7 +50,7 @@ test, which is a separate decision and not in scope here.
 
 - A failed `listSaves()` is distinguishable from an empty repository in the UI: a concise explanation
   and a retry affordance, rather than an empty list.
-- Retry is a registered Action, not a bare `onClick` — see the ticket below on the Save List being
+- Retry is a registered Action, not a bare `onClick` — see the ticket below on the browser being
   outside the Action registry, and prefer landing both together if they are worked in one session.
 - The existing empty-repository state ("No saves yet." plus Start New Career) is unchanged when
   `listSaves()` genuinely succeeds with zero rows.
@@ -53,7 +60,7 @@ test, which is a separate decision and not in scope here.
 
 ## Related
 
-- Group A reconciliation ticket 09 owns the Save List's missing keyboard tier and its absent
-  Exit/Preferences/Credits surface.
-- The Save List declares no Actions at all (`saveList` is a legal action scope with zero members), so
-  the retry affordance is the first one it would gain.
+- Group A reconciliation ticket 09 owns the browser's missing keyboard tier. Its absent
+  Exit/Preferences/Credits surface was settled by the 2026-09-01 Main Menu, which carries all three.
+- Neither screen declares any Actions (`mainMenu` and `loadCareer` are legal action scopes with zero
+  members), so the retry affordance is the first one either would gain.

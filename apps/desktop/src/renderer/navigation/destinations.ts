@@ -6,11 +6,11 @@ import type { SaveId } from "@cm-clone/contracts";
  * these closed values with typed parameters — never a raw path template — and
  * resolve it through `resolveDestination`/the navigation adapter.
  *
- * The set is deliberately closed: `saveList`, the four creation steps
+ * The set is deliberately closed: `mainMenu`, the four creation steps
  * (league selection, then manager, club, and review), and the eight
  * persistent career screens. Career `g <key>` bindings draw from
- * `CareerDestination` only, which excludes the creation steps and the save
- * list by construction (see `CAREER_G_BINDINGS`).
+ * `CareerDestination` only, which excludes the creation steps, the main menu,
+ * and the load screen by construction (see `CAREER_G_BINDINGS`).
  */
 export type CareerDestination =
   | { readonly type: "squad"; readonly saveId: SaveId }
@@ -29,7 +29,7 @@ export type CreationStepDestination =
   | { readonly type: "createStep3" };
 
 export type NavigationDestination =
-  | { readonly type: "saveList" }
+  | { readonly type: "mainMenu" }
   | { readonly type: "loadCareer" }
   | CreationStepDestination
   | CareerDestination;
@@ -52,7 +52,7 @@ export const careerDestination = (type: CareerDestination["type"], saveId: SaveI
 /**
  * The coded `g <key>` default bindings — the registry ticket 17's key map and
  * the palette resolve through. Deliberately contains only career screens: the
- * save list and creation steps have no `g` binding (creation is a
+ * main menu, load screen, and creation steps have no `g` binding (creation is a
  * focused-control flow by design).
  */
 export const CAREER_G_BINDINGS: Readonly<
@@ -95,7 +95,7 @@ export type ResolvedDestination =
 /** Pure mapping from a typed destination to its route; unit-tested (AC-14). */
 export const resolveDestination = (destination: NavigationDestination): ResolvedDestination => {
   switch (destination.type) {
-    case "saveList":
+    case "mainMenu":
       return { to: "/" };
     case "loadCareer":
       return { to: "/load" };
