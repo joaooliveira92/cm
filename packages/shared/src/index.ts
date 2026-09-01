@@ -12,6 +12,8 @@ export * from "./training.js";
 export * from "./bestXi.js";
 export * from "./squadQuality.js";
 export * from "./managerPillars.js";
+export * from "./nations.js";
+export * from "./contentPack.js";
 export * from "./leagueSetup.js";
 export * from "./leagueSelection.js";
 

@@ -712,6 +712,11 @@ export class ScopeOptionRow extends Schema.Class<ScopeOptionRow>("ScopeOptionRow
 
 export class NationRow extends Schema.Class<NationRow>("NationRow")({
   id: NationId,
+  /** ISO 3166-1 alpha-3. Carried through to the renderer because it is the stable key for
+   *  presentation the catalogue does not own — a flag, a localized country name — and deriving it
+   *  from the display name in the UI would put a lookup on a licensed, replaceable string. */
+  code: Schema.String,
+  confederationId: Schema.String,
   regionId: RegionId,
   name: Schema.String,
   alternativeNames: Schema.Array(Schema.String),

@@ -25,3 +25,9 @@ docs/.DS_Store
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# drizzle-kit's incremental-migration bookkeeping. This repo regenerates the whole schema from
+# db/schema.ts each time (saves are created fresh, never migrated in place), so the journal's
+# timestamp and snapshot uuid churn on every run with no reviewable content. The generated
+# 0000_schema.sql and migrations.generated.ts are the artifacts that matter, and both are committed.
+apps/desktop/drizzle/meta/

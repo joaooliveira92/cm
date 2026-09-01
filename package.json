@@ -11,6 +11,7 @@
     "lint": "oxlint .",
     "effect-lint": "tsx scripts/effect-lint.ts",
     "verify-md-links": "tsx scripts/verify-md-links.ts",
+    "verify-db-schema": "tsx scripts/verify-db-schema.ts",
     "resolve-ticket": "tsx scripts/resolve-ticket.ts",
     "check:all": "tsx scripts/run-gates.ts check-all",
     "check:ci": "tsx scripts/run-gates.ts ci",

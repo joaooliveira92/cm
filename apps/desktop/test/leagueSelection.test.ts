@@ -43,7 +43,7 @@ const intent = (
     source: "user",
   }) as NationSelectionIntentPayload;
 
-const VALID = [intent("nation-aravia", "scope-aravia-top")];
+const VALID = [intent("nation-eng", "scope-eng-top")];
 
 describe("setup index read model (§23)", () => {
   it("exposes the catalogue with sanitized labels and no raw database values", async () => {
@@ -64,9 +64,9 @@ describe("setup index read model (§23)", () => {
 
   it("carries the dependency edges the browser explains selections with", async () => {
     const index = await run(getLeagueSetupIndex);
-    const aravia = index.nations.find((nation) => nation.id === "nation-aravia");
-    const top = aravia?.competitions.find((competition) => competition.id === "comp-aravia-1");
-    expect(top?.requires).toContain("comp-aravia-cup");
+    const eng = index.nations.find((nation) => nation.id === "nation-eng");
+    const top = eng?.competitions.find((competition) => competition.id === "comp-eng-1");
+    expect(top?.requires).toContain("comp-eng-cup");
   });
 });
 
@@ -78,19 +78,19 @@ describe("resolution echoes the revision it was asked for (§11.5)", () => {
 
   it("resolves dependencies rather than trusting the caller", async () => {
     const view = await run(resolveLeagueSelection(1, VALID));
-    const cup = view.dependencies.find((d) => d.competitionId === "comp-aravia-cup");
+    const cup = view.dependencies.find((d) => d.competitionId === "comp-eng-cup");
     expect(cup?.chosenDirectly).toBe(false);
   });
 
   it("reports a forged Nation id as a blocking issue instead of failing or accepting it", async () => {
-    const view = await run(resolveLeagueSelection(1, [intent("nation-../../etc/passwd", "scope-aravia-top")]));
+    const view = await run(resolveLeagueSelection(1, [intent("nation-../../etc/passwd", "scope-eng-top")]));
     expect(view.issues.some((issue) => issue.code === "unknown_nation")).toBe(true);
     expect(view.selections).toHaveLength(0);
   });
 
   it("rejects a scope option belonging to another Nation", async () => {
     const view = await run(
-      resolveLeagueSelection(1, [intent("nation-caldonia", "scope-aravia-top")]),
+      resolveLeagueSelection(1, [intent("nation-esp", "scope-eng-top")]),
     );
     expect(view.issues.some((issue) => issue.code === "scope_option_nation_mismatch")).toBe(true);
   });
@@ -107,7 +107,7 @@ describe("submission (§17)", () => {
     const dir = await tempDir();
     const snapshot = await run(submitLeagueSelection(dir, VALID));
     expect(snapshot.id).toBeTruthy();
-    expect(snapshot.databaseFingerprint).toBe("fictional-world-2003-04@1.0.0");
+    expect(snapshot.databaseFingerprint).toBe("real-geography@1.0.0");
     expect(snapshot.selections.length).toBeGreaterThan(0);
     expect(snapshot.estimate.playableCompetitionCount).toBe(1);
   });
@@ -122,7 +122,7 @@ describe("submission (§17)", () => {
 
   it("treats a reordered but equivalent intent set as the same submission", async () => {
     const dir = await tempDir();
-    const forwards = [intent("nation-aravia", "scope-aravia-top"), intent("nation-halvern", "scope-halvern-top")];
+    const forwards = [intent("nation-eng", "scope-eng-top"), intent("nation-deu", "scope-deu-top")];
     const backwards = [...forwards].reverse();
     const first = await run(submitLeagueSelection(dir, forwards));
     const second = await run(submitLeagueSelection(dir, backwards));
@@ -133,15 +133,15 @@ describe("submission (§17)", () => {
     const dir = await tempDir();
     const first = await run(submitLeagueSelection(dir, VALID));
     const second = await run(
-      submitLeagueSelection(dir, [intent("nation-aravia", "scope-aravia-pyramid")]),
+      submitLeagueSelection(dir, [intent("nation-eng", "scope-eng-pyramid")]),
     );
     expect(second.id).not.toBe(first.id);
   });
 
   it("ignores `source` when deciding whether two submissions are the same", () => {
-    const viaClick = [intent("nation-aravia", "scope-aravia-top")];
+    const viaClick = [intent("nation-eng", "scope-eng-top")];
     const viaPreset = [
-      { ...intent("nation-aravia", "scope-aravia-top"), source: "preset" } as NationSelectionIntentPayload,
+      { ...intent("nation-eng", "scope-eng-top"), source: "preset" } as NationSelectionIntentPayload,
     ];
     expect(submissionKey(viaPreset)).toBe(submissionKey(viaClick));
   });
@@ -158,7 +158,7 @@ describe("submission (§17)", () => {
   it("refuses a selection whose ids do not survive revalidation, even if the client accepted it", async () => {
     const dir = await tempDir();
     const error = await run(
-      submitLeagueSelection(dir, [intent("nation-aravia", "scope-halvern-top")]).pipe(Effect.flip),
+      submitLeagueSelection(dir, [intent("nation-eng", "scope-deu-top")]).pipe(Effect.flip),
     );
     expect(error.issues.some((issue) => issue.code === "scope_option_nation_mismatch")).toBe(true);
   });
@@ -194,14 +194,14 @@ describe("setup draft (§18, §29)", () => {
       saveSetupDraft(dir, {
         intents: VALID,
         searchQuery: "ara",
-        regionFilterId: "region-north",
+        regionFilterId: "region-western-europe",
         statusFilter: "selected",
       }),
     );
     const draft = await run(loadSetupDraft(dir));
     expect(draft?.intents).toHaveLength(1);
     expect(draft?.searchQuery).toBe("ara");
-    expect(draft?.regionFilterId).toBe("region-north");
+    expect(draft?.regionFilterId).toBe("region-western-europe");
   });
 
   it("reads as absent when there is no draft", async () => {
@@ -236,7 +236,7 @@ describe("setup draft (§18, §29)", () => {
     await writeFile(
       path.join(dir, SETUP_DRAFT_FILE),
       JSON.stringify({
-        databaseFingerprint: "fictional-world-2003-04@1.0.0",
+        databaseFingerprint: "real-geography@1.0.0",
         savedAt: new Date().toISOString(),
         intents: [...VALID, intent("nation-vanished", "scope-vanished")],
         searchQuery: "",
@@ -247,7 +247,7 @@ describe("setup draft (§18, §29)", () => {
     );
     const draft = await run(loadSetupDraft(dir));
     expect(draft?.intents).toHaveLength(1);
-    expect(draft?.intents[0]?.nationId).toBe("nation-aravia");
+    expect(draft?.intents[0]?.nationId).toBe("nation-eng");
   });
 
   it("overwrites rather than appending on a second save", async () => {
@@ -342,7 +342,7 @@ describe("presets (§13)", () => {
         {
           id: "mine",
           name: "Mine",
-          databaseFingerprint: "fictional-world-2003-04@1.0.0",
+          databaseFingerprint: "real-geography@1.0.0",
           savedAt: new Date().toISOString(),
           intents: [...VALID, intent("nation-gone", "scope-gone")],
         },

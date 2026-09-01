@@ -19,10 +19,14 @@ Creation is now **four stages**: Leagues, Manager, Club, Review.
 
 ### What ships
 
-- `packages/shared/src/leagueSetup.ts` — the catalogue: twelve fictional Nations across six regions,
-  covering a four-tier pyramid with a reserve league, parallel regional divisions, a Nation with no
-  playable league, a Nation present in metadata but unavailable, and a cross-border tournament whose
-  dependencies span three Nations.
+- `packages/shared/src/leagueSetup.ts` — the catalogue, covering a four-tier pyramid with a reserve
+  league, parallel regional divisions, a Nation with no playable league, a Nation present in metadata
+  but unavailable, and cross-border tournaments whose dependencies span several Nations.
+
+  > **Superseded in part.** This shipped as twelve *fictional* Nations across six invented regions.
+  > The catalogue now carries real Nations, real ISO codes, and real confederations — see
+  > [real geography with replaceable identities](../architecture/2026-09-01-real-geography-with-replaceable-identities.md).
+  > Every structural shape above is preserved; only the names and the fingerprint changed.
 - `packages/shared/src/leagueSelection.ts` — the pure decision layer: dependency closure with
   reference counting and cycle detection, the cost estimator, validation, search normalization,
   preset construction, and label sanitization.

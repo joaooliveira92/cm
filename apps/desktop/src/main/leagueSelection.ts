@@ -121,6 +121,9 @@ export const getLeagueSetupIndex = Effect.sync(
         (nation) =>
           new NationRow({
             id: NationId.make(nation.id),
+            // Not sanitized: both are closed vocabularies from the catalogue, not display labels.
+            code: nation.code,
+            confederationId: nation.confederationId,
             regionId: RegionId.make(nation.regionId),
             name: sanitizeLabel(nation.name),
             alternativeNames: nation.alternativeNames.map((name) => sanitizeLabel(name)),

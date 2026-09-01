@@ -55,6 +55,8 @@ const INDEX = new LeagueSetupIndexView({
   nations: [
     new NationRow({
       id: NationId.make("nation-one"),
+      code: "ENG",
+      confederationId: "UEFA",
       regionId: RegionId.make("region-a"),
       name: "Nation One",
       alternativeNames: [],
@@ -74,6 +76,8 @@ const INDEX = new LeagueSetupIndexView({
     }),
     new NationRow({
       id: NationId.make("nation-two"),
+      code: "ENG",
+      confederationId: "UEFA",
       regionId: RegionId.make("region-b"),
       name: "Nation Two",
       alternativeNames: [],

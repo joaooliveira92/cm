@@ -220,10 +220,32 @@ Fixture list. A career is played within the Leagues its League Selection Snapsho
 _Avoid_: Division (a League's depth in its Nation's pyramid is its *tier*, not a separate concept)
 
 **Nation**:
-The unit a player selects a career's scope by: a named territory owning a pyramid of Leagues, its
-domestic cups, and any reserve Competitions. A Nation may be *unavailable* (present in the setup
-catalogue's metadata, absent from its content) or have no playable League at all, and in both cases
-it stays visible with the reason rather than being hidden.
+The unit a player selects a career's scope by: a real country owning a pyramid of Leagues, its
+domestic cups, and any reserve Competitions. Identified canonically by its ISO 3166-1 alpha-3 code,
+and carrying a **Nation Profile** of gameplay priors that shape generation. A Nation may be
+*unavailable* (present in the setup catalogue's metadata, absent from its content) or have no
+playable League at all, and in both cases it stays visible with the reason rather than being hidden.
+
+Nations are the *only* real-world data the simulation depends on. Clubs, players, and staff are
+generated; club and competition display names are replaceable Content Pack entries. See
+[real geography with replaceable identities](.agents/notes/implemented/architecture/2026-09-01-real-geography-with-replaceable-identities.md).
+_Avoid_: Country (fine informally; Nation is the term the catalogue and the screen use)
+
+**Nation Profile**:
+A Nation's data-driven football character — youth production, coaching quality, economic power,
+export tendency, tactical leaning, and its recruitment links to other Nations. Every value is a
+**gameplay prior on a 0-1 scale, never a factual claim** about a country or its people. A prior
+shifts the distribution a generated player is drawn from; it never sets a value, and individual
+variation between two players of the same Nation is always larger than the gap between their
+Nations' profiles.
+_Avoid_: National modifier (the values are inputs to a distribution, not a modifier applied to a result)
+
+**Content Pack**:
+The replaceable layer mapping a canonical id (`club_esp_01`) to a display name, per locale. Exists
+so club and competition identities — which are licensed commercial assets — never reach the
+simulation core, and so the same generated world can run with fictional, licensed, localized, or
+test names. A canonical id is never a display name, and nothing downstream of generation keys
+behaviour off one.
 
 **Region**:
 A grouping of Nations used for browsing and filtering during career setup. Carries no simulation
@@ -331,7 +353,8 @@ difference, then goals scored. Head-to-head is deliberately not a tie-break.
 
 **Credits**:
 The single in-game currency unit for transfer fees, wages, and budgets. Fictional, with no real-world
-currency tie — consistent with the fully fictional League/clubs/players (see map's Out of scope).
+currency tie. Nations carry a real `currencyCode`, but it is descriptive metadata: no exchange rate,
+conversion, or per-Nation wage unit is modelled, and clubs and players remain fully generated.
 
 **Stature Tier**:
 A club's fixed rank among the League's 20 clubs (e.g. big/mid/small), set once and permanent for the

@@ -39,65 +39,65 @@ const modeOf = (intents: readonly NationSelectionIntent[], competitionId: string
 
 describe("dependency resolution (§12)", () => {
   it("includes every required parent division for a lower playable scope (AC-4)", () => {
-    const ids = activeIds([playable("nation-aravia", "scope-aravia-pyramid")]);
-    for (const id of ["comp-aravia-1", "comp-aravia-2", "comp-aravia-3", "comp-aravia-4"]) {
+    const ids = activeIds([playable("nation-eng", "scope-eng-pyramid")]);
+    for (const id of ["comp-eng-1", "comp-eng-2", "comp-eng-3", "comp-eng-4"]) {
       expect(ids).toContain(id);
     }
   });
 
   it("pulls in a Competition the user never chose, and marks it as a dependency (AC-5)", () => {
-    const resolved = resolveSelection(index, [playable("nation-aravia", "scope-aravia-top")]);
-    const cup = resolved.dependencies.find((d) => d.competitionId === "comp-aravia-cup");
+    const resolved = resolveSelection(index, [playable("nation-eng", "scope-eng-top")]);
+    const cup = resolved.dependencies.find((d) => d.competitionId === "comp-eng-cup");
     expect(cup?.chosenDirectly).toBe(false);
-    expect(cup?.requiredBy).toEqual(["comp-aravia-1"]);
+    expect(cup?.requiredBy).toEqual(["comp-eng-1"]);
     // The Nation row lists it as a dependency, not as something the user picked.
-    const aravia = resolved.selections.find((s) => s.nationId === "nation-aravia");
-    expect(aravia?.dependencyCompetitionIds).toContain("comp-aravia-cup");
-    expect(aravia?.playableCompetitionIds).not.toContain("comp-aravia-cup");
+    const eng = resolved.selections.find((s) => s.nationId === "nation-eng");
+    expect(eng?.dependencyCompetitionIds).toContain("comp-eng-cup");
+    expect(eng?.playableCompetitionIds).not.toContain("comp-eng-cup");
   });
 
   it("caps a dependency at background — a parent is simulated, never manageable", () => {
-    expect(modeOf([playable("nation-aravia", "scope-aravia-top")], "comp-aravia-cup")).toBe("background");
+    expect(modeOf([playable("nation-eng", "scope-eng-top")], "comp-eng-cup")).toBe("background");
   });
 
   it("upgrades a Competition first seen as a dependency when it is later chosen playable", () => {
-    // Caldonia's top division is a dependency of the continental tournament and a playable
+    // Spain's top division is a dependency of the continental tournament and a playable
     // choice in its own right. The stronger mode has to win regardless of resolution order.
     const viaBoth = resolveSelection(index, [
-      { nationId: "nation-continental", mode: "background", source: "user" },
-      playable("nation-caldonia", "scope-caldonia-top"),
+      { nationId: "nation-uefa", mode: "background", source: "user" },
+      playable("nation-esp", "scope-esp-top"),
     ]);
-    const record = viaBoth.dependencies.find((d) => d.competitionId === "comp-caldonia-1");
+    const record = viaBoth.dependencies.find((d) => d.competitionId === "comp-esp-1");
     expect(record?.mode).toBe("playable");
     expect(record?.chosenDirectly).toBe(true);
   });
 
   it("counts every requirer, so a shared dependency records both (§12.3)", () => {
     const resolved = resolveSelection(index, [
-      { nationId: "nation-continental", mode: "background", source: "user" },
-      playable("nation-aravia", "scope-aravia-top"),
+      { nationId: "nation-uefa", mode: "background", source: "user" },
+      playable("nation-eng", "scope-eng-top"),
     ]);
-    const aravia1 = resolved.dependencies.find((d) => d.competitionId === "comp-aravia-1");
-    expect(aravia1?.requiredBy).toContain("comp-continental-champions");
-    expect(aravia1?.chosenDirectly).toBe(true);
+    const eng1 = resolved.dependencies.find((d) => d.competitionId === "comp-eng-1");
+    expect(eng1?.requiredBy).toContain("comp-uefa-champions");
+    expect(eng1?.chosenDirectly).toBe(true);
   });
 
   it("removing one holder leaves a shared dependency active for the other", () => {
     const withBoth = activeIds([
-      { nationId: "nation-continental", mode: "background", source: "user" },
-      playable("nation-aravia", "scope-aravia-top"),
+      { nationId: "nation-uefa", mode: "background", source: "user" },
+      playable("nation-eng", "scope-eng-top"),
     ]);
-    const withoutAravia = activeIds([
-      { nationId: "nation-continental", mode: "background", source: "user" },
+    const withoutEngland = activeIds([
+      { nationId: "nation-uefa", mode: "background", source: "user" },
     ]);
-    expect(withBoth).toContain("comp-aravia-1");
+    expect(withBoth).toContain("comp-eng-1");
     // Still active: the continental tournament alone still requires it.
-    expect(withoutAravia).toContain("comp-aravia-1");
+    expect(withoutEngland).toContain("comp-eng-1");
   });
 
   it("drops a dependency once nothing requires it", () => {
-    expect(activeIds([playable("nation-esperanza", "scope-esperanza-top")])).not.toContain(
-      "comp-aravia-1",
+    expect(activeIds([playable("nation-prt", "scope-prt-top")])).not.toContain(
+      "comp-eng-1",
     );
   });
 
@@ -107,7 +107,9 @@ describe("dependency resolution (§12)", () => {
       nations: [
         {
           id: "nation-loop",
-          regionId: "region-north",
+          code: "ENG",
+          confederationId: "UEFA",
+          regionId: "region-western-europe",
           name: "Loopland",
           alternativeNames: [],
           available: true,
@@ -159,7 +161,7 @@ describe("dependency resolution (§12)", () => {
     const broken: LeagueSetupIndex = {
       ...index,
       nations: index.nations.map((nation) =>
-        nation.id === "nation-esperanza"
+        nation.id === "nation-prt"
           ? {
               ...nation,
               competitions: nation.competitions.map((c) => ({ ...c, requires: ["comp-ghost"] })),
@@ -167,52 +169,52 @@ describe("dependency resolution (§12)", () => {
           : nation,
       ),
     };
-    const resolved = resolveSelection(broken, [playable("nation-esperanza", "scope-esperanza-top")]);
+    const resolved = resolveSelection(broken, [playable("nation-prt", "scope-prt-top")]);
     expect(resolved.issues.some((i) => i.code === "missing_dependency")).toBe(true);
   });
 });
 
 describe("scope options and noncontiguous pyramids (§8.3)", () => {
   it("activates both parallel regional divisions from one scope option", () => {
-    const ids = activeIds([playable("nation-caldonia", "scope-caldonia-regional")]);
-    expect(ids).toContain("comp-caldonia-2n");
-    expect(ids).toContain("comp-caldonia-2s");
+    const ids = activeIds([playable("nation-esp", "scope-esp-regional")]);
+    expect(ids).toContain("comp-esp-2n");
+    expect(ids).toContain("comp-esp-2s");
   });
 
   it("rejects a scope option belonging to another Nation (AC-6, §23)", () => {
-    const resolved = resolveSelection(index, [playable("nation-caldonia", "scope-aravia-top")]);
+    const resolved = resolveSelection(index, [playable("nation-esp", "scope-eng-top")]);
     expect(resolved.issues.some((i) => i.code === "scope_option_nation_mismatch")).toBe(true);
     expect(canContinue(resolved.issues)).toBe(false);
-    expect(resolved.selections.find((s) => s.nationId === "nation-caldonia")).toBeUndefined();
+    expect(resolved.selections.find((s) => s.nationId === "nation-esp")).toBeUndefined();
   });
 
   it("rejects an unknown scope option id", () => {
-    const resolved = resolveSelection(index, [playable("nation-aravia", "scope-nonexistent")]);
+    const resolved = resolveSelection(index, [playable("nation-eng", "scope-nonexistent")]);
     expect(resolved.issues.some((i) => i.code === "unknown_scope_option")).toBe(true);
   });
 
   it("rejects an unknown Nation id without throwing", () => {
-    const resolved = resolveSelection(index, [playable("nation-nowhere", "scope-aravia-top")]);
+    const resolved = resolveSelection(index, [playable("nation-nowhere", "scope-eng-top")]);
     expect(resolved.issues.some((i) => i.code === "unknown_nation")).toBe(true);
   });
 
   it("refuses a Nation whose content is not installed (§7.1 unavailable)", () => {
     const resolved = resolveSelection(index, [
-      { nationId: "nation-jorvalia", mode: "background", source: "user" },
+      { nationId: "nation-ita", mode: "background", source: "user" },
     ]);
     expect(resolved.issues.some((i) => i.code === "nation_unavailable")).toBe(true);
   });
 
   it("refuses Playable for a Nation with no playable league (§7.3)", () => {
     const resolved = resolveSelection(index, [
-      { nationId: "nation-ismere", mode: "playable", scopeOptionId: "scope-aravia-top", source: "user" },
+      { nationId: "nation-and", mode: "playable", scopeOptionId: "scope-eng-top", source: "user" },
     ]);
     expect(resolved.issues.some((i) => i.code === "playable_not_supported")).toBe(true);
   });
 
   it("requires a scope option when Playable is asked for without one", () => {
     const resolved = resolveSelection(index, [
-      { nationId: "nation-aravia", mode: "playable", source: "user" },
+      { nationId: "nation-eng", mode: "playable", source: "user" },
     ]);
     expect(resolved.issues.some((i) => i.code === "scope_option_required")).toBe(true);
   });
@@ -221,7 +223,7 @@ describe("scope options and noncontiguous pyramids (§8.3)", () => {
 describe("continue gating (§17, AC-7)", () => {
   it("blocks a selection with no playable league", () => {
     const resolved = resolveSelection(index, [
-      { nationId: "nation-ismere", mode: "background", source: "user" },
+      { nationId: "nation-and", mode: "background", source: "user" },
     ]);
     expect(resolved.issues.some((i) => i.code === "no_playable_competition")).toBe(true);
     expect(canContinue(resolved.issues)).toBe(false);
@@ -230,20 +232,20 @@ describe("continue gating (§17, AC-7)", () => {
   it("permits a background-only career when the product explicitly supports it", () => {
     const resolved = resolveSelection(
       index,
-      [{ nationId: "nation-ismere", mode: "background", source: "user" }],
+      [{ nationId: "nation-and", mode: "background", source: "user" }],
       { allowBackgroundOnlyCareer: true },
     );
     expect(canContinue(resolved.issues)).toBe(true);
   });
 
   it("allows a valid single-Nation selection through", () => {
-    const resolved = resolveSelection(index, [playable("nation-aravia", "scope-aravia-top")]);
+    const resolved = resolveSelection(index, [playable("nation-eng", "scope-eng-top")]);
     expect(blockingIssues(resolved.issues)).toEqual([]);
     expect(canContinue(resolved.issues)).toBe(true);
   });
 
   it("reports auto-inclusion as information, which does not block", () => {
-    const resolved = resolveSelection(index, [playable("nation-aravia", "scope-aravia-top")]);
+    const resolved = resolveSelection(index, [playable("nation-eng", "scope-eng-top")]);
     const info = resolved.issues.find((i) => i.code === "dependencies_added");
     expect(info?.level).toBe("info");
     expect(canContinue(resolved.issues)).toBe(true);
@@ -255,7 +257,7 @@ describe("estimates (§11)", () => {
     estimateCareerScope(index, resolveSelection(index, intents), profile);
 
   it("counts the effective selection, dependencies included (AC-9)", () => {
-    const estimate = estimateFor([playable("nation-aravia", "scope-aravia-top")]);
+    const estimate = estimateFor([playable("nation-eng", "scope-eng-top")]);
     // 20 clubs in the top division; the cup it requires owns no clubs of its own.
     expect(estimate.estimatedClubCount).toBe(20);
     expect(estimate.estimatedPlayerCount).toBe(20 * 25);
@@ -264,32 +266,32 @@ describe("estimates (§11)", () => {
   });
 
   it("grows monotonically as scope widens", () => {
-    const narrow = estimateFor([playable("nation-aravia", "scope-aravia-top")]);
-    const wide = estimateFor([playable("nation-aravia", "scope-aravia-pyramid")]);
+    const narrow = estimateFor([playable("nation-eng", "scope-eng-top")]);
+    const wide = estimateFor([playable("nation-eng", "scope-eng-pyramid")]);
     expect(wide.estimatedClubCount).toBeGreaterThan(narrow.estimatedClubCount);
     expect(wide.estimatedMemoryBytes).toBeGreaterThan(narrow.estimatedMemoryBytes);
   });
 
   it("gives view-only competitions no squads (§9.3)", () => {
     const estimate = estimateFor([
-      playable("nation-aravia", "scope-aravia-top"),
-      { nationId: "nation-esperanza", mode: "view_only", source: "user" },
+      playable("nation-eng", "scope-eng-top"),
+      { nationId: "nation-prt", mode: "view_only", source: "user" },
     ]);
-    const playableOnly = estimateFor([playable("nation-aravia", "scope-aravia-top")]);
+    const playableOnly = estimateFor([playable("nation-eng", "scope-eng-top")]);
     expect(estimate.estimatedPlayerCount).toBe(playableOnly.estimatedPlayerCount);
   });
 
   it("reports `unsupported` rather than a speed when memory cannot hold the selection", () => {
     const tiny: SystemCapabilityProfile = { totalMemoryBytes: 64 * 1024 * 1024, performanceIndex: 1 };
-    const estimate = estimateFor([playable("nation-aravia", "scope-aravia-pyramid")], tiny);
+    const estimate = estimateFor([playable("nation-eng", "scope-eng-pyramid")], tiny);
     expect(estimate.simulationSpeedRating).toBe("unsupported");
     expect(estimateIssues(estimate)[0]?.level).toBe("blocking");
   });
 
   it("rates the same selection faster on a faster machine", () => {
     const intents = [
-      playable("nation-aravia", "scope-aravia-pyramid"),
-      playable("nation-halvern", "scope-halvern-pyramid"),
+      playable("nation-eng", "scope-eng-pyramid"),
+      playable("nation-deu", "scope-deu-pyramid"),
     ];
     const slow = estimateFor(intents, { totalMemoryBytes: 32 * 1024 ** 3, performanceIndex: 0.5 });
     const fast = estimateFor(intents, { totalMemoryBytes: 32 * 1024 ** 3, performanceIndex: 4 });
@@ -300,8 +302,8 @@ describe("estimates (§11)", () => {
   });
 
   it("lowers confidence when a selected Competition's figures are unverified", () => {
-    expect(estimateFor([playable("nation-aravia", "scope-aravia-top")]).confidence).toBe("high");
-    expect(estimateFor([playable("nation-gostrava", "scope-gostrava-top")]).confidence).toBe("low");
+    expect(estimateFor([playable("nation-eng", "scope-eng-top")]).confidence).toBe("high");
+    expect(estimateFor([playable("nation-prt", "scope-prt-two")]).confidence).toBe("low");
   });
 
   it("is empty, not broken, for an empty selection", () => {
@@ -316,94 +318,94 @@ describe("nation row derivation (§7.1, §7.2)", () => {
 
   it("marks an unavailable Nation regardless of selection", () => {
     const resolved = resolveSelection(index, []);
-    expect(nationSelectionState(nation("nation-jorvalia"), resolved)).toBe("unavailable");
+    expect(nationSelectionState(nation("nation-ita"), resolved)).toBe("unavailable");
   });
 
   it("marks a Nation active only through a dependency", () => {
     const resolved = resolveSelection(index, [
-      { nationId: "nation-continental", mode: "background", source: "user" },
+      { nationId: "nation-uefa", mode: "background", source: "user" },
     ]);
-    expect(nationSelectionState(nation("nation-aravia"), resolved)).toBe("included_by_dependency");
+    expect(nationSelectionState(nation("nation-eng"), resolved)).toBe("included_by_dependency");
   });
 
   it("marks a partial pyramid as mixed, and a full one as checked", () => {
-    const partial = resolveSelection(index, [playable("nation-aravia", "scope-aravia-top")]);
-    expect(nationSelectionState(nation("nation-aravia"), partial)).toBe("partially_selected");
+    const partial = resolveSelection(index, [playable("nation-eng", "scope-eng-top")]);
+    expect(nationSelectionState(nation("nation-eng"), partial)).toBe("partially_selected");
     expect(nationTriState("partially_selected")).toBe("mixed");
 
-    const full = resolveSelection(index, [playable("nation-aravia", "scope-aravia-pyramid")]);
-    expect(nationSelectionState(nation("nation-aravia"), full)).toBe("selected_playable");
+    const full = resolveSelection(index, [playable("nation-eng", "scope-eng-pyramid")]);
+    expect(nationSelectionState(nation("nation-eng"), full)).toBe("selected_playable");
     expect(nationTriState("selected_playable")).toBe("checked");
   });
 
   it("marks an untouched Nation unchecked", () => {
-    const resolved = resolveSelection(index, [playable("nation-aravia", "scope-aravia-top")]);
-    expect(nationSelectionState(nation("nation-halvern"), resolved)).toBe("not_selected");
+    const resolved = resolveSelection(index, [playable("nation-eng", "scope-eng-top")]);
+    expect(nationSelectionState(nation("nation-deu"), resolved)).toBe("not_selected");
     expect(nationTriState("not_selected")).toBe("unchecked");
   });
 });
 
 describe("mode transitions (§9.5)", () => {
   it("preserves the playable depth across Playable → Background → Playable", () => {
-    const start = [playable("nation-aravia", "scope-aravia-pyramid")];
-    const toBackground = applyModeChange(index, start, {}, "nation-aravia", "background");
+    const start = [playable("nation-eng", "scope-eng-pyramid")];
+    const toBackground = applyModeChange(index, start, {}, "nation-eng", "background");
     expect(toBackground.intents[0]?.mode).toBe("background");
-    expect(toBackground.rememberedScopes["nation-aravia"]).toBe("scope-aravia-pyramid");
+    expect(toBackground.rememberedScopes["nation-eng"]).toBe("scope-eng-pyramid");
 
     const back = applyModeChange(
       index,
       toBackground.intents,
       toBackground.rememberedScopes,
-      "nation-aravia",
+      "nation-eng",
       "playable",
     );
-    expect(back.intents[0]).toMatchObject({ mode: "playable", scopeOptionId: "scope-aravia-pyramid" });
+    expect(back.intents[0]).toMatchObject({ mode: "playable", scopeOptionId: "scope-eng-pyramid" });
   });
 
   it("falls back to the database recommendation when there is no remembered depth", () => {
-    const result = applyModeChange(index, [], {}, "nation-aravia", "playable");
-    expect(result.intents[0]?.scopeOptionId).toBe("scope-aravia-two");
+    const result = applyModeChange(index, [], {}, "nation-eng", "playable");
+    expect(result.intents[0]?.scopeOptionId).toBe("scope-eng-two");
   });
 
   it("falls back to the narrowest scope when the database recommends nothing", () => {
-    const result = applyModeChange(index, [], {}, "nation-doravia", "playable");
-    expect(result.intents[0]?.scopeOptionId).toBe("scope-doravia-top");
+    const result = applyModeChange(index, [], {}, "nation-bra", "playable");
+    expect(result.intents[0]?.scopeOptionId).toBe("scope-bra-top");
   });
 
   it("removes the Nation entirely on Not loaded", () => {
-    const start = [playable("nation-aravia", "scope-aravia-top")];
-    expect(applyModeChange(index, start, {}, "nation-aravia", "not_loaded").intents).toEqual([]);
+    const start = [playable("nation-eng", "scope-eng-top")];
+    expect(applyModeChange(index, start, {}, "nation-eng", "not_loaded").intents).toEqual([]);
   });
 
   it("replaces rather than appends when the depth changes", () => {
-    const start = [playable("nation-aravia", "scope-aravia-top")];
-    const next = applyScopeChange(start, "nation-aravia", "scope-aravia-pyramid");
+    const start = [playable("nation-eng", "scope-eng-top")];
+    const next = applyScopeChange(start, "nation-eng", "scope-eng-pyramid");
     expect(next).toHaveLength(1);
-    expect(next[0]?.scopeOptionId).toBe("scope-aravia-pyramid");
+    expect(next[0]?.scopeOptionId).toBe("scope-eng-pyramid");
   });
 });
 
 describe("search and filtering (§10)", () => {
   it("normalizes case, diacritics, and whitespace", () => {
-    expect(normalizeSearchText("  República   Doravia ")).toBe("republica doravia");
+    expect(normalizeSearchText("  República   Federativa ")).toBe("republica federativa");
   });
 
   it("matches Nation, alternative, Competition, and region names", () => {
-    expect(searchIndex(index, "aravia").some((h) => h.nationId === "nation-aravia")).toBe(true);
-    expect(searchIndex(index, "gostravia").some((h) => h.nationId === "nation-gostrava")).toBe(true);
+    expect(searchIndex(index, "eng").some((h) => h.nationId === "nation-eng")).toBe(true);
+    expect(searchIndex(index, "deutschland").some((h) => h.nationId === "nation-deu")).toBe(true);
     expect(
-      searchIndex(index, "northern second").some((h) => h.competitionId === "comp-caldonia-2n"),
+      searchIndex(index, "northern group").some((h) => h.competitionId === "comp-esp-2n"),
     ).toBe(true);
-    expect(searchIndex(index, "western isles").some((h) => h.nationId === "nation-ismere")).toBe(true);
+    expect(searchIndex(index, "southern europe").some((h) => h.nationId === "nation-and")).toBe(true);
   });
 
   it("matches an accented alternative name typed without accents", () => {
-    expect(searchIndex(index, "republica").some((h) => h.nationId === "nation-doravia")).toBe(true);
+    expect(searchIndex(index, "republica").some((h) => h.nationId === "nation-bra")).toBe(true);
   });
 
   it("never surfaces a stable entity id as an ordinary result (§10.2)", () => {
-    expect(searchIndex(index, "comp-aravia-1")).toEqual([]);
-    expect(searchIndex(index, "nation-aravia")).toEqual([]);
+    expect(searchIndex(index, "comp-eng-1")).toEqual([]);
+    expect(searchIndex(index, "nation-eng")).toEqual([]);
   });
 
   it("returns nothing for an empty query rather than everything", () => {
@@ -411,9 +413,9 @@ describe("search and filtering (§10)", () => {
   });
 
   it("does not mutate the selection (AC-8)", () => {
-    const intents = [playable("nation-aravia", "scope-aravia-top")];
+    const intents = [playable("nation-eng", "scope-eng-top")];
     const before = resolveSelection(index, intents);
-    searchIndex(index, "halvern");
+    searchIndex(index, "deu");
     expect(resolveSelection(index, intents)).toEqual(before);
   });
 
@@ -456,8 +458,8 @@ describe("presets (§13, §6.1)", () => {
 
   it("gives broad world every available Nation, never an unavailable one", () => {
     const intents = buildPreset(index, "broad_world");
-    expect(intents.some((i) => i.nationId === "nation-jorvalia")).toBe(false);
-    expect(intents.find((i) => i.nationId === "nation-ismere")?.mode).toBe("background");
+    expect(intents.some((i) => i.nationId === "nation-ita")).toBe(false);
+    expect(intents.find((i) => i.nationId === "nation-and")?.mode).toBe("background");
     expect(canContinue(resolveSelection(index, intents).issues)).toBe(true);
   });
 });
@@ -465,7 +467,7 @@ describe("presets (§13, §6.1)", () => {
 describe("stored presets and drafts (§13, §29, §31)", () => {
   it("rejects a payload captured against a different database, changing nothing", () => {
     const applied = applyStoredIntents(index, "some-other-database@2.0.0", [
-      playable("nation-aravia", "scope-aravia-top"),
+      playable("nation-eng", "scope-eng-top"),
     ]);
     expect(applied.fingerprintMatches).toBe(false);
     expect(applied.intents).toEqual([]);
@@ -473,7 +475,7 @@ describe("stored presets and drafts (§13, §29, §31)", () => {
 
   it("drops a Nation the current database no longer contains, keeping the rest", () => {
     const applied = applyStoredIntents(index, index.fingerprint, [
-      playable("nation-aravia", "scope-aravia-top"),
+      playable("nation-eng", "scope-eng-top"),
       playable("nation-vanished", "scope-vanished-top"),
     ]);
     expect(applied.intents).toHaveLength(1);
@@ -482,24 +484,24 @@ describe("stored presets and drafts (§13, §29, §31)", () => {
 
   it("drops an intent whose scope option was removed rather than guessing a replacement", () => {
     const applied = applyStoredIntents(index, index.fingerprint, [
-      playable("nation-aravia", "scope-aravia-removed"),
+      playable("nation-eng", "scope-eng-removed"),
     ]);
     expect(applied.intents).toEqual([]);
-    expect(applied.droppedScopeOptionIds).toEqual(["scope-aravia-removed"]);
+    expect(applied.droppedScopeOptionIds).toEqual(["scope-eng-removed"]);
   });
 
   it("drops a Nation that became unavailable after a content-pack change (§31.3)", () => {
     const applied = applyStoredIntents(index, index.fingerprint, [
-      { nationId: "nation-jorvalia", mode: "background", source: "restored" },
+      { nationId: "nation-ita", mode: "background", source: "restored" },
     ]);
     expect(applied.intents).toEqual([]);
-    expect(applied.droppedNationIds).toEqual(["nation-jorvalia"]);
+    expect(applied.droppedNationIds).toEqual(["nation-ita"]);
   });
 });
 
 describe("untrusted labels (§23, AC-18)", () => {
   it("leaves an ordinary name alone", () => {
-    expect(sanitizeLabel("Aravian Premier Division")).toBe("Aravian Premier Division");
+    expect(sanitizeLabel("English First Division")).toBe("English First Division");
   });
 
   it("strips bidirectional-control characters", () => {

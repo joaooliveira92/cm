@@ -10,6 +10,8 @@ import {
   nationSelectionState,
   nationTriState,
   searchIndex,
+  type ConfederationId,
+  type NationCode,
   type NationSelectionState,
   type SimulationMode,
   type StatusFilter,
@@ -402,6 +404,8 @@ const toDomainIndex = (index: LeagueSetupIndexView) => ({
 
 const toDomainNation = (nation: NationRow) => ({
   id: nation.id as string,
+  code: nation.code as NationCode,
+  confederationId: nation.confederationId as ConfederationId,
   regionId: nation.regionId as string,
   name: nation.name,
   alternativeNames: nation.alternativeNames,

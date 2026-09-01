@@ -159,7 +159,7 @@ describe("initial state (§6.1)", () => {
 
   it("names the database it is selecting against", async () => {
     mountScreen();
-    await screen.findByText(/Database: Fictional World 2003\/04, version 1\.0\.0/);
+    await screen.findByText(/Database: World Football, version 1\.0\.0/);
   });
 
   it("restores a stored draft instead of recommending, when one applies", async () => {
@@ -167,9 +167,9 @@ describe("initial state (§6.1)", () => {
       saveSetupDraft(userDataDir, {
         intents: [
           {
-            nationId: "nation-halvern",
+            nationId: "nation-deu",
             mode: "playable",
-            scopeOptionId: "scope-halvern-top",
+            scopeOptionId: "scope-deu-top",
             source: "user",
           },
         ] as never,
@@ -189,21 +189,21 @@ describe("the browser (§5.3, §7)", () => {
     mountScreen();
     await settled();
 
-    const region = screen.getByRole("treeitem", { name: /Northern Reach/ });
+    const region = screen.getByRole("treeitem", { name: /Western Europe/ });
     expect(region.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(region);
 
-    await waitFor(() => expect(screen.getByText("Aravia")).toBeTruthy());
-    expect(screen.getByRole("treeitem", { name: /Northern Reach/ }).getAttribute("aria-expanded")).toBe("true");
+    await waitFor(() => expect(screen.getByText("England")).toBeTruthy());
+    expect(screen.getByRole("treeitem", { name: /Western Europe/ }).getAttribute("aria-expanded")).toBe("true");
   });
 
   it("offers no Playable mode for a nation the database cannot make playable (§7.3)", async () => {
     mountScreen();
     await settled();
-    fireEvent.click(screen.getByRole("treeitem", { name: /Western Isles/ }));
+    fireEvent.click(screen.getByRole("treeitem", { name: /Southern Europe/ }));
 
-    await screen.findByText("Ismere");
-    const modes = screen.getByLabelText("Simulation mode for Ismere") as HTMLSelectElement;
+    await screen.findByText("Andorra");
+    const modes = screen.getByLabelText("Simulation mode for Andorra") as HTMLSelectElement;
     const offered = [...modes.options].map((option) => option.value);
     expect(offered).not.toContain("playable");
     expect(screen.getByText("Background data only")).toBeTruthy();
@@ -212,24 +212,24 @@ describe("the browser (§5.3, §7)", () => {
   it("keeps an unavailable nation visible and explains why it cannot be chosen (§7.1)", async () => {
     mountScreen();
     await settled();
-    fireEvent.click(screen.getByRole("treeitem", { name: /Meridian Basin/ }));
+    fireEvent.click(screen.getByRole("treeitem", { name: /Southern Europe/ }));
 
-    await screen.findByText("Jorvalia");
+    await screen.findByText("Italy");
     expect(screen.getByText("Unavailable — content not installed")).toBeTruthy();
     // No mode control at all: the row explains itself rather than offering a dead choice.
-    expect(screen.queryByLabelText("Simulation mode for Jorvalia")).toBeNull();
+    expect(screen.queryByLabelText("Simulation mode for Italy")).toBeNull();
   });
 
   it("shows an automatically included competition and says it was required (AC-5, §12.1)", async () => {
     mountScreen();
     await settled();
-    fireEvent.click(screen.getByRole("treeitem", { name: /Northern Reach/ }));
-    await screen.findByText("Aravia");
+    fireEvent.click(screen.getByRole("treeitem", { name: /Western Europe/ }));
+    await screen.findByText("England");
 
-    // Expand Aravia's pyramid. Its national cup is nobody's explicit choice.
-    fireEvent.click(screen.getByRole("treeitem", { name: /Aravia/ }));
-    await waitFor(() => expect(screen.getByText(/Aravian National Cup/)).toBeTruthy());
-    const cupRow = screen.getByText(/Aravian National Cup/).closest("li");
+    // Expand England's pyramid. Its national cup is nobody's explicit choice.
+    fireEvent.click(screen.getByRole("treeitem", { name: /England/ }));
+    await waitFor(() => expect(screen.getByText(/English National Cup/)).toBeTruthy());
+    const cupRow = screen.getByText(/English National Cup/).closest("li");
     expect(within(cupRow as HTMLElement).getByText("required by your selection")).toBeTruthy();
   });
 });
@@ -240,7 +240,7 @@ describe("search and filters never mutate the selection (AC-8, §10.5)", () => {
     await settled();
 
     fireEvent.change(screen.getByLabelText("Search nations or competitions"), {
-      target: { value: "Kestria" },
+      target: { value: "Portugal" },
     });
 
     const notice = await screen.findByRole("status");
@@ -253,7 +253,7 @@ describe("search and filters never mutate the selection (AC-8, §10.5)", () => {
     const before = methodsCalled("resolveLeagueSelection").length;
 
     fireEvent.change(screen.getByLabelText("Search nations or competitions"), {
-      target: { value: "aravia" },
+      target: { value: "eng" },
     });
     await new Promise((resolve) => setTimeout(resolve, 400));
 
@@ -296,9 +296,9 @@ describe("debounced, revision-guarded estimation (§11.5, AC-11)", () => {
     await settled();
     const before = methodsCalled("resolveLeagueSelection").length;
 
-    fireEvent.click(screen.getByRole("treeitem", { name: /Northern Reach/ }));
-    await screen.findByText("Aravia");
-    const mode = screen.getByLabelText("Simulation mode for Aravia") as HTMLSelectElement;
+    fireEvent.click(screen.getByRole("treeitem", { name: /Western Europe/ }));
+    await screen.findByText("England");
+    const mode = screen.getByLabelText("Simulation mode for England") as HTMLSelectElement;
 
     // Four changes inside one debounce window.
     fireEvent.change(mode, { target: { value: "background" } });
@@ -319,9 +319,9 @@ describe("debounced, revision-guarded estimation (§11.5, AC-11)", () => {
       .parentElement?.textContent;
     expect(clubsBefore).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("treeitem", { name: /Northern Reach/ }));
-    await screen.findByText("Aravia");
-    fireEvent.change(screen.getByLabelText("Simulation mode for Aravia"), {
+    fireEvent.click(screen.getByRole("treeitem", { name: /Western Europe/ }));
+    await screen.findByText("England");
+    fireEvent.change(screen.getByLabelText("Simulation mode for England"), {
       target: { value: "background" },
     });
 
@@ -352,7 +352,7 @@ describe("continue (§17)", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Continue/ }));
 
     await waitFor(() => expect(continued).toHaveLength(1));
-    expect(continued[0]?.databaseFingerprint).toBe("fictional-world-2003-04@1.0.0");
+    expect(continued[0]?.databaseFingerprint).toBe("real-geography@1.0.0");
     expect(continued[0]?.selections.length).toBeGreaterThan(0);
   });
 
