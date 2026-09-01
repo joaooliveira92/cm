@@ -14,6 +14,7 @@ import { Alert } from "./components/ui/alert.js";
 import { Button } from "./components/ui/button.js";
 import { Input } from "./components/ui/input.js";
 import { Label } from "./components/ui/label.js";
+import { FOCUS_RING } from "./focus.js";
 
 export interface CreationStep1Props {
   saveName: string;
@@ -191,112 +192,14 @@ export const CreationStep1 = ({
 
       onPillarsChange({
         ...pillars,
-        nextValue,
+        [pillar]: nextValue,
       });
     },
     [customMode, onPillarsChange, pillars],
   );
 
   return (
-    <div className="space-y-8">
-      <nav aria-label="Manager creation progress">
-        <ol className="relative grid grid-cols-2">
-          <div
-            className="absolute left-[25%] right-[25%] top-5 h-px bg-border-subtle"
-            aria-hidden="true"
-          >
-            <motion.div
-              className="h-full origin-left bg-primary"
-              animate={{ scaleX: step === 2 ? 1 : 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 260,
-                damping: 30,
-              }}
-            />
-          </div>
-
-          {STEPS.map((item) => {
-            const isActive = step === item.number;
-            const isComplete = step > item.number;
-            const isAccessible =
-              item.number === 1 || personalDetailsComplete;
-
-            return (
-              <li
-                key={item.number}
-                className="relative flex justify-center"
-              >
-                <button
-                  type="button"
-                  className="group flex max-w-52 flex-col items-center text-center disabled:cursor-not-allowed"
-                  onClick={() => goToStep(item.number)}
-                  disabled={!isAccessible}
-                  aria-current={isActive ? "step" : undefined}
-                >
-                  <motion.span
-                    className={`relative z-10 flex size-10 items-center justify-center rounded-full border text-sm font-bold transition-colors ${
-                      isActive
-                        ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                        : isComplete
-                          ? "border-primary bg-primary/15 text-primary"
-                          : "border-border-subtle bg-surface text-text-muted"
-                    }`}
-                    animate={{
-                      scale: isActive ? 1.08 : 1,
-                    }}
-                    whileHover={isAccessible ? { scale: 1.1 } : undefined}
-                    whileTap={isAccessible ? { scale: 0.95 } : undefined}
-                    transition={{
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 24,
-                    }}
-                  >
-                    <AnimatePresence mode="wait">
-                      <motion.span
-                        key={isComplete ? "complete" : item.number}
-                        initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
-                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                        exit={{ opacity: 0, scale: 0.5, rotate: 20 }}
-                      >
-                        {isComplete ? "✓" : item.number}
-                      </motion.span>
-                    </AnimatePresence>
-
-                    {isActive && (
-                      <motion.span
-                        className="absolute inset-0 rounded-full border border-primary"
-                        initial={{ opacity: 0.6, scale: 1 }}
-                        animate={{ opacity: 0, scale: 1.55 }}
-                        transition={{
-                          duration: 1.8,
-                          repeat: Number.POSITIVE_INFINITY,
-                        }}
-                      />
-                    )}
-                  </motion.span>
-
-                  <span
-                    className={`mt-3 text-sm font-semibold ${
-                      isActive || isComplete
-                        ? "text-text-primary"
-                        : "text-text-muted"
-                    }`}
-                  >
-                    {item.title}
-                  </span>
-
-                  <span className="mt-1 hidden text-xs text-text-muted sm:block">
-                    {item.description}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </nav>
-
+    <div className="flex flex-col gap-8">
       <div className="overflow-hidden">
         <AnimatePresence
           mode="wait"
@@ -806,6 +709,110 @@ export const CreationStep1 = ({
           )}
         </AnimatePresence>
       </div>
+
+      {/* The progress stepper stays visually on top (flex `-order-1`) but sits
+          AFTER the form in document order, so tab order starts at the fields
+          (level-1 a11y: inputs first, no tabindex overrides). */}
+      <nav
+        aria-label="Manager creation progress"
+        className="-order-1"
+      >
+        <ol className="relative grid grid-cols-2">
+          <div
+            className="absolute left-[25%] right-[25%] top-5 h-px bg-border-subtle"
+            aria-hidden="true"
+          >
+            <motion.div
+              className="h-full origin-left bg-primary"
+              animate={{ scaleX: step === 2 ? 1 : 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 260,
+                damping: 30,
+              }}
+            />
+          </div>
+
+          {STEPS.map((item) => {
+            const isActive = step === item.number;
+            const isComplete = step > item.number;
+            const isAccessible =
+              item.number === 1 || personalDetailsComplete;
+
+            return (
+              <li
+                key={item.number}
+                className="relative flex justify-center"
+              >
+                <button
+                  type="button"
+                  className={`group flex max-w-52 flex-col items-center text-center disabled:cursor-not-allowed ${FOCUS_RING.join(" ")}`}
+                  onClick={() => goToStep(item.number)}
+                  disabled={!isAccessible}
+                  aria-current={isActive ? "step" : undefined}
+                >
+                  <motion.span
+                    className={`relative z-10 flex size-10 items-center justify-center rounded-full border text-sm font-bold transition-colors ${
+                      isActive
+                        ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                        : isComplete
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border-subtle bg-surface text-text-muted"
+                    }`}
+                    animate={{
+                      scale: isActive ? 1.08 : 1,
+                    }}
+                    whileHover={isAccessible ? { scale: 1.1 } : undefined}
+                    whileTap={isAccessible ? { scale: 0.95 } : undefined}
+                    transition={{
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 24,
+                    }}
+                  >
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={isComplete ? "complete" : item.number}
+                        initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
+                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                        exit={{ opacity: 0, scale: 0.5, rotate: 20 }}
+                      >
+                        {isComplete ? "✓" : item.number}
+                      </motion.span>
+                    </AnimatePresence>
+
+                    {isActive && (
+                      <motion.span
+                        className="absolute inset-0 rounded-full border border-primary"
+                        initial={{ opacity: 0.6, scale: 1 }}
+                        animate={{ opacity: 0, scale: 1.55 }}
+                        transition={{
+                          duration: 1.8,
+                          repeat: Number.POSITIVE_INFINITY,
+                        }}
+                      />
+                    )}
+                  </motion.span>
+
+                  <span
+                    className={`mt-3 text-sm font-semibold ${
+                      isActive || isComplete
+                        ? "text-text-primary"
+                        : "text-text-muted"
+                    }`}
+                  >
+                    {item.title}
+                  </span>
+
+                  <span className="mt-1 hidden text-xs text-text-muted sm:block">
+                    {item.description}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
     </div>
   );
 };
