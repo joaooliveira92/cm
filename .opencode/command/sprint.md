@@ -1,5 +1,5 @@
 ---
-description: Run the cm-clone autonomous engineering agent. Executes the current frontier sprint through the 4-role pipeline and validation gate, then auto-advances until a stop condition. Pass a sprint/effort name ($ARGUMENTS) to override the frontier.
+description: Run the cm-clone autonomous engineering agent. Executes the current frontier sprint through the 4-role pipeline and validation gate, then auto-advances until a stop condition. $ARGUMENTS may name an effort or a ticket/file path (resolved to its owning effort and frontier ticket) to start from.
 agent: build
 ---
 
@@ -33,12 +33,21 @@ which defines a complete map and gives the command that checks it. If you finish
 gate is still shut, stop and say so; do not charter something new to stay busy.
 
 - Read `.ai/SPRINT-PLAN.md` → **Immediate next action**. That is your starting sprint.
-- If that section is stale, walk the queue table top-down and take the first effort that is not
-  done. Verify against `.scratch/` rather than trusting the row.
-- `$ARGUMENTS` may name an effort or ticket to start from instead; then continue auto-advancing in
-  the plan's order.
+- `$ARGUMENTS` may name an **effort** (name or `.scratch/<effort>/`), a **ticket path**
+  (`.scratch/<effort>/issues/<NN>-*.md`), or any **file path** — a path resolves to the
+  `.scratch/<effort>/` that owns it, then that effort's frontier ticket; a bare path is advisory,
+  the ticket is the work. Nothing passed means the plan's Immediate next action; then continue
+  auto-advancing in the plan's order.
 - Compute the frontier by scanning `.scratch/<effort>/issues/` for the lowest-numbered file that is
-  open, unblocked, and unclaimed. Claim it before any work.
+  open, unblocked, and unclaimed. Verify against `.scratch/`, never a plan row. Claim it before any
+  work.
+- The plan's rows decay. If the Immediate next action — or every table row in order — names an
+  effort that no longer exists under `.scratch/`, do not reconcile the plan. Recompute the frontier
+  directly from `.scratch/`: take the lowest-numbered open, unblocked, unclaimed build ticket of the
+  first live effort with open tickets in plan order, else the oldest live effort with an open
+  decision ticket. Start there.
+- Do not audit the tracker before starting. Ticket-status/history reconciliation is not a sprint:
+  claim the frontier, route by phase, and let the ticket's own acceptance criteria drive the work.
 
 ## Route by phase
 
@@ -61,8 +70,7 @@ gate is still shut, stop and say so; do not charter something new to stay busy.
   Agent Notes promoted `proposed/` → `implemented/`, SPRINT-PLAN row and **Immediate next action**
   refreshed, `.ai/TRACEABILITY.md` updated if a durable capability shipped, and
   `.ai/reports/<effort>.md` written.
-- Small Conventional Commits on a feature branch off `latest_branch`. Never commit to
-  `latest_branch`, never self-merge, never force-push.
+- Small Conventional Commits directly on `dev` per [.ai/AUTONOMOUS-AGENT.md § Git policy](../../.ai/AUTONOMOUS-AGENT.md) — no feature branches, no self-merge, no force-push.
 - Then **auto-advance** to the next sprint in order. Do not stop for context length, token limits,
   or perceived session budget — continue until the queue is empty or a hard stop fires.
 
