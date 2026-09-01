@@ -11,11 +11,11 @@ The slice's edge promise: renderer-local, with no I/O beyond the resolved-select
 
 **Blocked by:** 01 — Simulation Depth and the active-leagues projection (the row model and depth first); 02 — Consequences — entity count, processing cost, recommendations (the derived figures).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] One authoritative setup state carries active leagues, scope intents, and advanced options; a league row's identity is a stable league id, never the array index.
-- [ ] Derived atoms compute count, entity count, processing cost, recommendations, validation status, and can-continue — none stored in authoritative state, no `useEffect` copying.
-- [ ] The league table renders one row per active league with identifier, depth selector, recommendation cell (icon + visible text), and an accessibly-named remove; body renders on CSS Grid.
-- [ ] Interactions fire as typed intents targeting the correct stable league id; no arbitrary path mutation exists.
-- [ ] Component tests cover: all configured leagues render; changing depth emits the correct intent against the correct id; remove targets the correct id; derived summary values update after a config change; Continue is disabled when validation fails. Prior art: the existing league-selection-screen test seam.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] One authoritative setup state carries active leagues, scope intents, and advanced options; a league row's identity is a stable league id, never the array index.
+- [x] Derived atoms compute count, entity count, processing cost, recommendations, validation status, and can-continue — none stored in authoritative state, no `useEffect` copying.
+- [x] The league table renders one row per active league with identifier, depth selector, recommendation cell (icon + visible text), and an accessibly-named remove; body renders on CSS Grid.
+- [x] Interactions fire as typed intents targeting the correct stable league id; no arbitrary path mutation exists.
+- [x] Component tests cover: all configured leagues render; changing depth emits the correct intent against the correct id; remove targets the correct id; derived summary values update after a config change; Continue is disabled when validation fails. Prior art: the existing league-selection-screen test seam.
+- [x] `pnpm check:all` is green at this commit.

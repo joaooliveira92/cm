@@ -10,13 +10,12 @@ import {
   nationSelectionState,
   nationTriState,
   searchIndex,
-  type ConfederationId,
-  type NationCode,
   type NationSelectionState,
   type SimulationMode,
   type StatusFilter,
   type TriState,
 } from "@cm-clone/shared";
+import { toDomainIndex, toDomainNation, toDomainSelection } from "./toDomain.js";
 
 /**
  * The League and Nation Selection screen's view model (Screen 3, §19–§21).
@@ -391,59 +390,9 @@ export const browserView = (
   };
 };
 
-// The read model and the domain model carry the same shapes with branded ids on one side. These
-// three adapters strip the brands for the pure helpers, which validate against the catalogue
-// rather than trusting the type.
-const toDomainIndex = (index: LeagueSetupIndexView) => ({
-  fingerprint: index.fingerprint,
-  databaseName: index.databaseName,
-  databaseVersion: index.databaseVersion,
-  regions: index.regions.map((region) => ({ id: region.id as string, name: region.name })),
-  nations: index.nations.map((nation) => toDomainNation(nation)),
-});
-
-const toDomainNation = (nation: NationRow) => ({
-  id: nation.id as string,
-  code: nation.code as NationCode,
-  confederationId: nation.confederationId as ConfederationId,
-  regionId: nation.regionId as string,
-  name: nation.name,
-  alternativeNames: nation.alternativeNames,
-  available: nation.available,
-  playableSupported: nation.playableSupported,
-  recommendedScopeOptionId: (nation.recommendedScopeOptionId as string | null) ?? null,
-  scopeOptions: nation.scopeOptions.map((option) => ({
-    id: option.id as string,
-    nationId: option.nationId as string,
-    displayName: option.displayName,
-    playableCompetitionIds: option.playableCompetitionIds as readonly string[],
-    backgroundCompetitionIds: option.backgroundCompetitionIds as readonly string[],
-  })),
-  competitions: nation.competitions.map((competition) => ({
-    id: competition.id as string,
-    nationId: competition.nationId as string,
-    name: competition.name,
-    kind: competition.kind,
-    tier: competition.tier,
-    requires: competition.requires as readonly string[],
-    clubCount: competition.clubCount,
-    annualMatches: 0,
-    playableSupported: competition.playableSupported,
-    estimatesVerified: true,
-  })),
-});
-
-const toDomainSelection = (selection: ResolvedSelectionView["selections"][number]) => ({
-  nationId: selection.nationId as string,
-  mode: selection.mode,
-  ...(selection.scopeOptionId === undefined
-    ? {}
-    : { scopeOptionId: selection.scopeOptionId as string }),
-  playableCompetitionIds: selection.playableCompetitionIds as readonly string[],
-  backgroundCompetitionIds: selection.backgroundCompetitionIds as readonly string[],
-  viewOnlyCompetitionIds: selection.viewOnlyCompetitionIds as readonly string[],
-  dependencyCompetitionIds: selection.dependencyCompetitionIds as readonly string[],
-});
+// The read model and the domain model carry the same shapes with branded ids on one side. The
+// adapters that strip the brands for the pure helpers live in `toDomain.ts`, shared with the
+// Active Leagues grid so the two selection surfaces can never drift on what a row means.
 
 // ---------------------------------------------------------------------------
 // Presentation helpers (§11.2, §11.4)

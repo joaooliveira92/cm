@@ -92,6 +92,7 @@ const toCompetitionRow = (competition: {
   readonly tier: number | null;
   readonly requires: readonly string[];
   readonly clubCount: number;
+  readonly annualMatches: number;
   readonly playableSupported: boolean;
 }): CompetitionRow =>
   new CompetitionRow({
@@ -102,6 +103,7 @@ const toCompetitionRow = (competition: {
     tier: competition.tier,
     requires: competition.requires.map((id) => CompetitionId.make(id)),
     clubCount: competition.clubCount,
+    annualMatches: competition.annualMatches,
     playableSupported: competition.playableSupported,
   });
 

@@ -41,6 +41,7 @@ const competition = (id: string, nationId: string, name: string, tier: number | 
     tier,
     requires: [],
     clubCount: 20,
+    annualMatches: 380,
     playableSupported: tier !== null,
   });
 

@@ -704,6 +704,11 @@ export class CompetitionRow extends Schema.Class<CompetitionRow>("CompetitionRow
   tier: Schema.NullOr(Schema.Finite),
   requires: Schema.Array(CompetitionId),
   clubCount: Schema.Finite,
+  /** Per-season match load, the input the processing-cost meter is derived from. Carried on the
+   *  wire so the Active Leagues renderer can compute the ticket-02 consequences (entity count,
+   *  processing cost) faithfully from the catalogue it already reads — without it, a renderer-side
+   *  derivation would have to stub a number the estimate depends on. */
+  annualMatches: Schema.Finite,
   playableSupported: Schema.Boolean,
 }) {}
 

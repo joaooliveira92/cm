@@ -83,3 +83,4 @@ export {
   useAtomRefresh,
 } from "@effect/atom-react";
 export { AsyncResult } from "effect/unstable/reactivity";
+export { Atom } from "effect/unstable/reactivity";
