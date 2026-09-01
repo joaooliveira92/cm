@@ -4,10 +4,11 @@ import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { InvalidPillarDistributionError, SaveId, SaveNotFoundError, SaveSummary, type ClubId } from "@cm-clone/contracts";
 import type { PillarDistribution } from "@cm-clone/shared";
-import { Effect, Schema } from "effect";
+import { Effect, Random, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { createSchema } from "./schema.js";
 import { startSeason } from "./season.js";
+import { deriveSeed } from "@cm-clone/game-engine";
 import { generateWorld } from "./worldGeneration.js";
 import { initializeSeasonEconomy } from "./transfers.js";
 import { validatePillarDistribution } from "@cm-clone/shared";
@@ -16,6 +17,20 @@ const dbPath = (savesDir: string, id: SaveId) => path.join(savesDir, `${id}.sqli
 
 const ensureSavesDir = (savesDir: string) =>
   Effect.promise(() => mkdir(savesDir, { recursive: true }));
+
+export interface WorldGenerationOptions {
+  /** Omit to draw a fresh world; supply one to regenerate a known world exactly. */
+  readonly worldSeed?: number;
+  /** Omit to use the current year. */
+  readonly referenceYear?: number;
+}
+
+/** The single point where a new world's entropy enters the system. */
+const drawWorldSeed = Effect.map(Random.nextIntBetween(0, 0xffffffff), (seed) => seed >>> 0);
+
+const currentYear = Effect.clockWith((clock) =>
+  Effect.map(clock.currentTimeMillis, (millis) => new Date(millis).getUTCFullYear()),
+);
 
 /** All clubs in a save, ordered by insertion order (used by `createSave` compat shim). */
 const loadAllClubs = Effect.gen(function* () {
@@ -60,17 +75,25 @@ export const listSaves = (savesDir: string) =>
  * Creates the schema, generates the complete neutral world (20 clubs, 500 players), and
  * initializes the season economy for all clubs. No `save_meta` row is written, so the
  * provisional save is invisible to `listSaves`. Returns the provisional save identifier.
+ *
+ * This is the one place a world's entropy is drawn. Everything downstream — squads, opening
+ * contracts, Season 1's fixtures — derives from the world seed recorded in `generation_manifest`,
+ * so a save is reproducible from that single number. Pass an explicit `worldSeed` to regenerate a
+ * known world (a bug report, a test fixture).
  */
-export const beginCareer = (savesDir: string) =>
+export const beginCareer = (savesDir: string, options: WorldGenerationOptions = {}) =>
   Effect.gen(function* () {
     yield* ensureSavesDir(savesDir);
     const id = SaveId.make(randomUUID());
     const filename = dbPath(savesDir, id);
 
+    const worldSeed = options.worldSeed ?? (yield* drawWorldSeed);
+    const referenceYear = options.referenceYear ?? (yield* currentYear);
+
     yield* Effect.gen(function* () {
       yield* createSchema;
-      yield* generateWorld;
-      yield* initializeSeasonEconomy(1);
+      yield* generateWorld({ worldSeed, referenceYear });
+      yield* initializeSeasonEconomy(1, deriveSeed(worldSeed, "economy", 1));
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped);
 
     return { id };

@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   AdvanceCalendarResult,
@@ -19,6 +18,8 @@ import {
 import {
   conditionAfterDays,
   createSeededRng,
+  deriveId,
+  deriveSeed,
   simulateMatchWithCondition,
   type MatchTeamSetup,
 } from "@cm-clone/game-engine";
@@ -29,6 +30,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { assignAiTactics, pickBestFormationTactic, runAiTransferWindow } from "./aiClubs.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
 import { developPlayersForSeason } from "./development.js";
+import { readGenerationManifest } from "./worldGeneration.js";
 import { assertSaveNotArchived, loadManagerStatus } from "./managerStatus.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
@@ -122,19 +124,25 @@ export const generateRoundRobinFixtures = (
 /** Generates and persists Season 1's fixture list for a freshly created save, and emits
  * `SeasonStarted` on the Season stream (streamId = the save's id, per ADR-0007). Assumes a
  * `SqlClient` for the save's SQLite file in context — called from `saves.ts`'s `createSave` right
- * after `generateWorld`. */
+ * after `generateWorld`.
+ *
+ * The fixture order and the fixture ids both derive from the save's world seed rather than fresh
+ * randomness, so the calendar is part of the reproducible world: regenerating from a seed yields
+ * the same fixtures under the same ids. */
 export const startSeason = (saveId: SaveId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const clubRows = yield* sql<{ id: ClubId }>`SELECT id FROM clubs`;
     const clubIds = clubRows.map((row) => row.id);
-    const seed = Math.floor(Math.random() * 0xffffffff);
-    const fixtures = yield* generateRoundRobinFixtures(clubIds, seed);
+    const manifest = yield* readGenerationManifest;
+    const seasonSeed = deriveSeed(manifest.worldSeed, "season", 1);
+    const fixtures = yield* generateRoundRobinFixtures(clubIds, seasonSeed);
 
     yield* sql`INSERT INTO season (season_number, current_matchday, phase) VALUES (1, 0, 'pre_season')`;
-    for (const fixture of fixtures) {
+    for (const [index, fixture] of fixtures.entries()) {
+      const fixtureId = deriveId(seasonSeed, "fixture", index);
       yield* sql`INSERT INTO fixtures (id, season_number, matchday, home_club_id, away_club_id, home_goals, away_goals, played)
-        VALUES (${randomUUID()}, 1, ${fixture.matchday}, ${fixture.homeClubId}, ${fixture.awayClubId}, NULL, NULL, 0)`;
+        VALUES (${fixtureId}, 1, ${fixture.matchday}, ${fixture.homeClubId}, ${fixture.awayClubId}, NULL, NULL, 0)`;
     }
 
     // Fitness ledger (ticket 10): every generated player enters Season 1 at full Condition (100%),
@@ -161,7 +169,7 @@ export const startSeason = (saveId: SaveId) =>
 
     const startSeq = yield* nextStreamSeq(STREAM_TYPE, saveId);
     yield* appendStreamEvents(STREAM_TYPE, saveId, startSeq, [
-      { tag: "SeasonStarted", payload: { seasonNumber: 1, seed, fixtureCount: fixtures.length } },
+      { tag: "SeasonStarted", payload: { seasonNumber: 1, seed: seasonSeed, fixtureCount: fixtures.length } },
     ]);
   });
 

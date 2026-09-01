@@ -1,0 +1,462 @@
+import { sql } from "drizzle-orm";
+import { check, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+/**
+ * The save file's schema, defined once in Drizzle and nowhere else.
+ *
+ * This module is the **source of truth** for a save's shape. The DDL that actually runs lives in
+ * `migrations.generated.ts`, produced from these definitions by `pnpm db:generate` — it is a build
+ * artifact, never edited by hand, and `db-migrations-drift.test.ts` fails if it drifts from what
+ * these tables describe.
+ *
+ * Queries elsewhere in the main process still go through the Effect `SqlClient` as raw SQL; Drizzle
+ * owns the schema, not the query layer. The `CHECK` constraints below are therefore load-bearing:
+ * they are the last enforcement of a domain invariant before a row lands on disk, and several
+ * encode rules (a pillar distribution summing to 12, ability on a 1-20 scale) that no query-side
+ * type can restate.
+ */
+
+/** SQLite has no native enum; a `CHECK ... IN` is how a column is constrained to a vocabulary. */
+const oneOf = (column: string, values: readonly string[]): ReturnType<typeof sql> =>
+  sql.raw(`${column} IN (${values.map((value) => `'${value}'`).join(",")})`);
+
+const POSITIONS = ["GK", "DC", "DL", "DR", "DM", "MC", "ML", "MR", "AMC", "ST"] as const;
+const FAMILIARITIES = ["natural", "competent", "unfamiliar"] as const;
+
+/** An unsigned 32-bit seed, the range `deriveSeed` produces. */
+const SEED_RANGE = "BETWEEN 0 AND 4294967295";
+
+/** A 1-20 player Attribute. */
+const attribute = (name: string) =>
+  integer(name).notNull();
+
+export const saveMeta = sqliteTable("save_meta", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
+/**
+ * Generation provenance: what produced this save's world, single-row table.
+ *
+ * Written by `beginCareer` before any entity exists, and never modified. It is what makes a save
+ * reproducible — `world_seed` plus the two versions determine every generated club, player, and
+ * fixture, so the same triple regenerates the same world. `reference_year` is pinned here rather
+ * than read from the clock at generation time, for the same reason.
+ *
+ * `generated_at` is recorded for operator diagnosis only. Nothing in generation or simulation may
+ * read it: a world that varies with its creation timestamp is not reproducible.
+ */
+export const generationManifest = sqliteTable(
+  "generation_manifest",
+  {
+    id: integer("id").primaryKey(),
+    worldSeed: integer("world_seed").notNull(),
+    generatorVersion: text("generator_version").notNull(),
+    rulesetVersion: text("ruleset_version").notNull(),
+    referenceYear: integer("reference_year").notNull(),
+    generatedAt: text("generated_at").notNull(),
+  },
+  () => [
+    check("generation_manifest_single_row", sql`id = 1`),
+    check("generation_manifest_world_seed_range", sql.raw(`world_seed ${SEED_RANGE}`)),
+  ],
+);
+
+/** Manager Profile (ticket 03): immutable creation-time identity, single-row table. Written by
+ * `commitCareer` and never modified. Four Manager Pillars on a 1-5 scale summing to exactly 12;
+ * `archetype_origin` records which preset or Custom was chosen. */
+export const managerProfile = sqliteTable(
+  "manager_profile",
+  {
+    id: integer("id").primaryKey(),
+    managerName: text("manager_name").notNull(),
+    archetypeOrigin: text("archetype_origin").notNull(),
+    tacticalAcumen: integer("tactical_acumen").notNull(),
+    influence: integer("influence").notNull(),
+    regimen: integer("regimen").notNull(),
+    technicalCoaching: integer("technical_coaching").notNull(),
+  },
+  () => [
+    check("manager_profile_single_row", sql`id = 1`),
+    check("manager_profile_name_length", sql`length(trim(manager_name)) BETWEEN 1 AND 80`),
+    check(
+      "manager_profile_archetype_origin",
+      oneOf("archetype_origin", ["professor", "motivator", "sergeant", "academy_head", "custom"]),
+    ),
+    check("manager_profile_tactical_acumen", sql`tactical_acumen BETWEEN 1 AND 5`),
+    check("manager_profile_influence", sql`influence BETWEEN 1 AND 5`),
+    check("manager_profile_regimen", sql`regimen BETWEEN 1 AND 5`),
+    check("manager_profile_technical_coaching", sql`technical_coaching BETWEEN 1 AND 5`),
+    check(
+      "manager_profile_pillars_sum",
+      sql`tactical_acumen + influence + regimen + technical_coaching = 12`,
+    ),
+  ],
+);
+
+export const clubs = sqliteTable(
+  "clubs",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    statureTier: text("stature_tier").notNull(),
+    isUserClub: integer("is_user_club").notNull().default(0),
+    /** The child seed this club was generated from. Kept per-row so a single club can be
+     *  regenerated in place without replaying the whole world (see `generationManifest`). */
+    generationSeed: integer("generation_seed").notNull(),
+  },
+  () => [
+    check("clubs_stature_tier", oneOf("stature_tier", ["big", "mid", "small"])),
+    check("clubs_is_user_club", sql`is_user_club IN (0,1)`),
+    check("clubs_generation_seed_range", sql.raw(`generation_seed ${SEED_RANGE}`)),
+  ],
+);
+
+export const players = sqliteTable(
+  "players",
+  {
+    id: text("id").primaryKey(),
+    clubId: text("club_id").references(() => clubs.id),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
+    dateOfBirth: text("date_of_birth").notNull(),
+    potentialAbility: integer("potential_ability").notNull(),
+
+    passing: attribute("passing"),
+    shooting: attribute("shooting"),
+    tackling: attribute("tackling"),
+    dribbling: attribute("dribbling"),
+    heading: attribute("heading"),
+    crossing: attribute("crossing"),
+    finishing: attribute("finishing"),
+    firstTouch: attribute("first_touch"),
+
+    positioning: attribute("positioning"),
+    decisions: attribute("decisions"),
+    composure: attribute("composure"),
+    determination: attribute("determination"),
+    teamwork: attribute("teamwork"),
+    flair: attribute("flair"),
+    bravery: attribute("bravery"),
+    aggression: attribute("aggression"),
+
+    pace: attribute("pace"),
+    acceleration: attribute("acceleration"),
+    stamina: attribute("stamina"),
+    strength: attribute("strength"),
+    agility: attribute("agility"),
+    naturalFitness: attribute("natural_fitness"),
+    injuryProneness: attribute("injury_proneness"),
+
+    /** Goalkeeping Attributes are absent (NULL), not zero, for an outfield player. */
+    gkHandling: integer("gk_handling"),
+    gkReflexes: integer("gk_reflexes"),
+    gkAerialReach: integer("gk_aerial_reach"),
+    gkCommandOfArea: integer("gk_command_of_area"),
+    gkKicking: integer("gk_kicking"),
+
+    /** Provenance: the squad slot this player fills and the child seed that produced them. */
+    squadSlot: integer("squad_slot").notNull(),
+    generationSeed: integer("generation_seed").notNull(),
+  },
+  () => [
+    check("players_potential_ability", sql`potential_ability BETWEEN 1 AND 100`),
+    ...[
+      "passing", "shooting", "tackling", "dribbling", "heading", "crossing", "finishing",
+      "first_touch", "positioning", "decisions", "composure", "determination", "teamwork",
+      "flair", "bravery", "aggression", "pace", "acceleration", "stamina", "strength",
+      "agility", "natural_fitness", "injury_proneness",
+    ].map((column) => check(`players_${column}`, sql.raw(`${column} BETWEEN 1 AND 20`))),
+    ...["gk_handling", "gk_reflexes", "gk_aerial_reach", "gk_command_of_area", "gk_kicking"].map(
+      (column) => check(`players_${column}`, sql.raw(`${column} IS NULL OR ${column} BETWEEN 1 AND 20`)),
+    ),
+    check("players_squad_slot", sql`squad_slot >= 0`),
+    check("players_generation_seed_range", sql.raw(`generation_seed ${SEED_RANGE}`)),
+  ],
+);
+
+export const playerPositions = sqliteTable(
+  "player_positions",
+  {
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id),
+    position: text("position").notNull(),
+    familiarity: text("familiarity").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.playerId, table.position] }),
+    check("player_positions_position", oneOf("position", POSITIONS)),
+    check("player_positions_familiarity", oneOf("familiarity", FAMILIARITIES)),
+  ],
+);
+
+export const tactics = sqliteTable(
+  "tactics",
+  {
+    clubId: text("club_id")
+      .primaryKey()
+      .references(() => clubs.id),
+    formation: text("formation").notNull(),
+    mentality: text("mentality").notNull(),
+    tempo: text("tempo").notNull(),
+    pressing: text("pressing").notNull(),
+  },
+  () => [
+    check("tactics_formation", oneOf("formation", ["4-4-2", "4-3-3", "4-5-1", "3-5-2", "5-3-2"])),
+    check("tactics_mentality", oneOf("mentality", ["defensive", "balanced", "attacking"])),
+    check("tactics_tempo", oneOf("tempo", ["slow", "normal", "fast"])),
+    check("tactics_pressing", oneOf("pressing", ["low", "medium", "high"])),
+  ],
+);
+
+export const tacticSlots = sqliteTable(
+  "tactic_slots",
+  {
+    clubId: text("club_id")
+      .notNull()
+      .references(() => tactics.clubId),
+    slotIndex: integer("slot_index").notNull(),
+    position: text("position").notNull(),
+    role: text("role").notNull(),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id),
+  },
+  (table) => [
+    primaryKey({ columns: [table.clubId, table.slotIndex] }),
+    check("tactic_slots_position", oneOf("position", POSITIONS)),
+  ],
+);
+
+/** Generic append-only event log (ADR-0007 domain-bounded streams: `stream_type` e.g.
+ * "match"/"season", `stream_id` the Fixture/save id) — Deciders append here and read models are
+ * projected from it. */
+export const events = sqliteTable(
+  "events",
+  {
+    streamType: text("stream_type").notNull(),
+    streamId: text("stream_id").notNull(),
+    seq: integer("seq").notNull(),
+    tag: text("tag").notNull(),
+    payload: text("payload").notNull(),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (table) => [primaryKey({ columns: [table.streamType, table.streamId, table.seq] })],
+);
+
+/** Season/Calendar Decider's read model (ticket 15) — a single row per Season, projected from the
+ * "season" event stream (streamId = save id, ADR-0007). `current_matchday` is the last Matchday
+ * whose Fixtures have been resolved (0 before Matchday 1). */
+export const season = sqliteTable(
+  "season",
+  {
+    seasonNumber: integer("season_number").primaryKey(),
+    currentMatchday: integer("current_matchday").notNull().default(0),
+    phase: text("phase").notNull(),
+  },
+  () => [
+    check("season_current_matchday", sql`current_matchday BETWEEN 0 AND 38`),
+    check(
+      "season_phase",
+      oneOf("phase", ["pre_season", "in_season", "mid_window_open", "season_complete"]),
+    ),
+  ],
+);
+
+/** The Season's full fixture list, generated once at Season start (double round-robin, ticket 15)
+ * and filled in as `AdvanceCalendar` resolves each Matchday. Not a Decider — projected from
+ * Match/Season stream events, per ADR-0007 ("League Table is a projection"). */
+export const fixtures = sqliteTable(
+  "fixtures",
+  {
+    id: text("id").primaryKey(),
+    seasonNumber: integer("season_number")
+      .notNull()
+      .references(() => season.seasonNumber),
+    matchday: integer("matchday").notNull(),
+    homeClubId: text("home_club_id")
+      .notNull()
+      .references(() => clubs.id),
+    awayClubId: text("away_club_id")
+      .notNull()
+      .references(() => clubs.id),
+    homeGoals: integer("home_goals"),
+    awayGoals: integer("away_goals"),
+    played: integer("played").notNull().default(0),
+  },
+  () => [
+    check("fixtures_matchday", sql`matchday BETWEEN 1 AND 38`),
+    check("fixtures_played", sql`played IN (0,1)`),
+  ],
+);
+
+/** Board Objective (ticket 18 / ADR-0006) — one row per Season for the player's club only (AI
+ * clubs are never judged). The band is set at Season start from the fixed Stature Tier -> band
+ * table in `@cm-clone/shared`; `final_position`/`verdict` stay NULL until `SeasonConcluded`
+ * triggers `BoardObjectiveJudged`. */
+export const boardObjective = sqliteTable(
+  "board_objective",
+  {
+    seasonNumber: integer("season_number")
+      .primaryKey()
+      .references(() => season.seasonNumber),
+    clubId: text("club_id")
+      .notNull()
+      .references(() => clubs.id),
+    minPosition: integer("min_position").notNull(),
+    maxPosition: integer("max_position").notNull(),
+    finalPosition: integer("final_position"),
+    verdict: text("verdict"),
+  },
+  () => [
+    check(
+      "board_objective_verdict",
+      sql`verdict IS NULL OR verdict IN ('exceeded','met','missed')`,
+    ),
+  ],
+);
+
+/** Manager Status (ticket 18 / ADR-0006) — a single row scoped to the save (mirrors `season`),
+ * projected from the "season" stream's `ManagerWarned`/`ManagerSacked`/`ManagerRetired` events.
+ * The Consecutive-Miss Counter persists across the whole save (not per-Season) so it survives a
+ * Season rollover once one exists; `archived_cause` is checked by every mutating command to
+ * enforce the read-only archive, and its two values are the two causes of an Archived Save.
+ *
+ * The table name is a technical artifact, not a domain term: it tracks manager *outcome* state
+ * (`ManagerOutcome`), never manager identity, which lives in `manager_profile`. "Manager Status"
+ * is retired as player-facing vocabulary — the screen is called Manager Profile. */
+export const managerStatus = sqliteTable(
+  "manager_status",
+  {
+    id: integer("id").primaryKey(),
+    consecutiveMisses: integer("consecutive_misses").notNull().default(0),
+    archivedCause: text("archived_cause"),
+    lastOutcome: text("last_outcome").notNull().default("none"),
+  },
+  () => [
+    check("manager_status_single_row", sql`id = 1`),
+    check(
+      "manager_status_archived_cause",
+      sql`archived_cause IS NULL OR archived_cause IN ('sacked','retired')`,
+    ),
+    check("manager_status_last_outcome", oneOf("last_outcome", ["none", "warned", "sacked"])),
+  ],
+);
+
+/** Transfer/Wage economy read model (ticket 16 / ADR-0005) — one row per club, seeded at Season
+ * start from the club's fixed Stature Tier. `transfer_budget_remaining` spends down within a
+ * Season with no replenishment between the two Transfer Windows; `wage_budget` is a running cap
+ * checked against the sum of `contracts.wage` for that club, not itself spent down. */
+export const clubBudgets = sqliteTable("club_budgets", {
+  clubId: text("club_id")
+    .primaryKey()
+    .references(() => clubs.id),
+  seasonNumber: integer("season_number").notNull(),
+  transferBudgetRemaining: integer("transfer_budget_remaining").notNull(),
+  wageBudget: integer("wage_budget").notNull(),
+});
+
+/** Per-player, per-Season fitness ledger (ticket 10) — one row per player, seeded at 100 at Season
+ * start. `resolveMatchday` writes each on-pitch player's full-time Condition back here and records
+ * the most recent injury's Severity; the Condition then recovers toward 100% between Fixtures
+ * keyed to Natural Fitness and `last_injury_severity` (a knock recovers faster than a severe).
+ * Feeds a not-fully-recovered player's `startingCondition` at kickoff and the squad view's
+ * Condition. */
+export const playerFitness = sqliteTable(
+  "player_fitness",
+  {
+    playerId: text("player_id")
+      .primaryKey()
+      .references(() => players.id),
+    seasonNumber: integer("season_number")
+      .notNull()
+      .references(() => season.seasonNumber),
+    condition: integer("condition").notNull().default(100),
+    lastInjurySeverity: text("last_injury_severity").notNull().default("none"),
+  },
+  () => [
+    check("player_fitness_condition", sql`condition BETWEEN 0 AND 100`),
+    check(
+      "player_fitness_last_injury_severity",
+      oneOf("last_injury_severity", ["none", "light", "medium", "severe"]),
+    ),
+  ],
+);
+
+/** A player's active Contract (ticket 16 / ADR-0005) — 1-5 years, formula-derived wage, no
+ * negotiation UI. A player with no row here (and `players.club_id IS NULL`) is a Free Agent,
+ * signable for Credits 0 via the normal signing flow. `years_remaining` is allowed to reach 0
+ * transiently mid-expiry-sweep (`transfers.ts`'s `expireContractsForSeason` decrements every row
+ * before deleting the ones that hit 0) — every row a Sign/Renew command writes is still 1-5. */
+export const contracts = sqliteTable(
+  "contracts",
+  {
+    playerId: text("player_id")
+      .primaryKey()
+      .references(() => players.id),
+    wage: integer("wage").notNull(),
+    yearsRemaining: integer("years_remaining").notNull(),
+    signedSeason: integer("signed_season").notNull(),
+  },
+  () => [
+    check("contracts_wage", sql`wage >= 0`),
+    check("contracts_years_remaining", sql`years_remaining BETWEEN 0 AND 5`),
+  ],
+);
+
+/** Per-player Training Focus (spec: `.scratch/training/spec.md`) — the one Category a manager is
+ * concentrating on, or `NULL` for the no-focus default. A missing row also reads as no-focus (no
+ * migration/backfill for existing or freshly generated players); a row is written only when a
+ * manager sets a focus. AI clubs' players never have a focus row. */
+export const trainingFocus = sqliteTable(
+  "training_focus",
+  {
+    playerId: text("player_id")
+      .primaryKey()
+      .references(() => players.id),
+    focus: text("focus"),
+  },
+  () => [
+    check(
+      "training_focus_focus",
+      sql`focus IS NULL OR focus IN ('technical','mental','physical','goalkeeping')`,
+    ),
+  ],
+);
+
+/** In-flight Bid state (ticket 16 / ADR-0005) — any player is biddable regardless of a Listed
+ * flag (not modeled, per ticket 05). Single-round: the selling club accepts/rejects/counters
+ * exactly once (`countered`), then the bidding club accepts/withdraws. */
+export const bids = sqliteTable(
+  "bids",
+  {
+    id: text("id").primaryKey(),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id),
+    sellingClubId: text("selling_club_id")
+      .notNull()
+      .references(() => clubs.id),
+    biddingClubId: text("bidding_club_id")
+      .notNull()
+      .references(() => clubs.id),
+    amount: integer("amount").notNull(),
+    counterAmount: integer("counter_amount"),
+    status: text("status").notNull(),
+    seasonNumber: integer("season_number").notNull(),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  () => [
+    check("bids_amount", sql`amount >= 0`),
+    check(
+      "bids_status",
+      oneOf("status", ["pending", "countered", "accepted", "rejected", "withdrawn"]),
+    ),
+  ],
+);

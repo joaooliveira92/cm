@@ -1,5 +1,6 @@
 import { FORMATION_SLOTS, POSITION_ROLES, generateSquad, type GeneratedPlayer, type Position } from "@cm-clone/shared";
 import { createSeededRng } from "../../src/rng.js";
+import { deriveSeed } from "../../src/seed.js";
 import { ClubId, PlayerId } from "@cm-clone/contracts";
 import type { MatchPlayerInput, MatchTactic, MatchTeamSetup } from "../../src/match/types.js";
 
@@ -25,8 +26,13 @@ const withIds = (
 
 /** Builds a full squad + a Tactic filling every Formation slot from a natural-fit player, for match-sim tests. */
 export const buildTeam = (clubId: ClubId, seed: number, formation: keyof typeof FORMATION_SLOTS = "4-4-2"): GeneratedTeam => {
-  const random = createSeededRng(seed);
-  const squad = withIds(clubId, generateSquad("mid", random));
+  const squad = withIds(
+    clubId,
+    generateSquad("mid", {
+      referenceYear: 2026,
+      randomForSlot: (slot) => createSeededRng(deriveSeed(seed, "player", slot.index)),
+    }),
+  );
 
   const usedIds = new Set<PlayerId>();
   const slots = FORMATION_SLOTS[formation].map((position) => {

@@ -77,7 +77,11 @@ export interface RandomSource {
   readonly next: () => number; // uniform [0, 1)
 }
 
-const defaultRandom: RandomSource = { next: Math.random };
+/**
+ * There is deliberately no default `RandomSource` here. A world must be reproducible from its
+ * seed, so every caller names the stream its randomness comes from; a `Math.random` fallback would
+ * let a call site silently opt out of that and produce a world nothing can regenerate.
+ */
 
 const pick = <T>(items: ReadonlyArray<T>, random: RandomSource): T =>
   items[Math.floor(random.next() * items.length)] as T;
@@ -144,18 +148,27 @@ export interface GeneratedPlayer {
 
 const randomAge = (random: RandomSource): number => 17 + Math.floor(random.next() * 18); // 17-34
 
-const birthDateForAge = (age: number, random: RandomSource): string => {
-  const now = new Date();
-  const year = now.getFullYear() - age;
+/** Ages are measured against the world's reference year, never `new Date()` — a generator that
+ *  reads the wall clock produces a different world every January from the same seed. */
+const birthDateForAge = (age: number, referenceYear: number, random: RandomSource): string => {
+  const year = referenceYear - age;
   const month = 1 + Math.floor(random.next() * 12);
   const day = 1 + Math.floor(random.next() * 28);
   return new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10);
 };
 
+/** Everything a single player's generation depends on. Bundled rather than passed as three
+ *  positional arguments so a new determinism input cannot be forgotten at a call site. */
+export interface PlayerGenerationContext {
+  readonly statureTier: StatureTier;
+  readonly random: RandomSource;
+  /** The season year ages are relative to. */
+  readonly referenceYear: number;
+}
+
 export const generatePlayer = (
   primaryPosition: Position,
-  statureTier: StatureTier,
-  random: RandomSource = defaultRandom,
+  { statureTier, random, referenceYear }: PlayerGenerationContext,
 ): GeneratedPlayer => {
   const [paMin, paMax] = POTENTIAL_ABILITY_RANGE[statureTier];
   const potentialAbility = rightSkewed(paMin, paMax, random);
@@ -185,22 +198,53 @@ export const generatePlayer = (
   return {
     firstName: pick(FIRST_NAMES, random),
     lastName: pick(LAST_NAMES, random),
-    dateOfBirth: birthDateForAge(age, random),
+    dateOfBirth: birthDateForAge(age, referenceYear, random),
     potentialAbility,
     attributes: attributes as PlayerAttributes,
     positions,
   };
 };
 
+/**
+ * One demanded place in a squad, resolved before any player exists to fill it.
+ *
+ * `index` is the slot's stable address within a squad: it is what a player's seed is derived from,
+ * so it must stay put across releases. Reordering `SQUAD_COMPOSITION` renumbers every slot and
+ * therefore regenerates every squad — a ruleset-version change, not a cosmetic one.
+ */
+export interface SquadSlot {
+  readonly index: number;
+  readonly position: Position;
+}
+
+/** The squad demand every club is generated against, in stable slot order. */
+export const SQUAD_SLOTS: ReadonlyArray<SquadSlot> = (
+  Object.entries(SQUAD_COMPOSITION) as Array<[Position, number]>
+).flatMap(([position, count]) => Array.from({ length: count }, () => position)).map(
+  (position, index) => ({ index, position }),
+);
+
+export interface SquadGenerationContext {
+  readonly referenceYear: number;
+  /** The stream one slot's player is drawn from. Per slot rather than one stream for the whole
+   *  squad: a player must be a function of their own slot seed alone, so that re-rolling or
+   *  inserting one player leaves their team-mates untouched. */
+  readonly randomForSlot: (slot: SquadSlot) => RandomSource;
+}
+
+export interface GeneratedSquadPlayer extends GeneratedPlayer {
+  readonly slot: SquadSlot;
+}
+
 export const generateSquad = (
   statureTier: StatureTier,
-  random: RandomSource = defaultRandom,
-): ReadonlyArray<GeneratedPlayer> => {
-  const squad: GeneratedPlayer[] = [];
-  for (const [position, count] of Object.entries(SQUAD_COMPOSITION) as Array<[Position, number]>) {
-    for (let i = 0; i < count; i++) {
-      squad.push(generatePlayer(position, statureTier, random));
-    }
-  }
-  return squad;
-};
+  { referenceYear, randomForSlot }: SquadGenerationContext,
+): ReadonlyArray<GeneratedSquadPlayer> =>
+  SQUAD_SLOTS.map((slot) => ({
+    ...generatePlayer(slot.position, {
+      statureTier,
+      referenceYear,
+      random: randomForSlot(slot),
+    }),
+    slot,
+  }));

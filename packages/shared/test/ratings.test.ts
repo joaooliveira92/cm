@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { positionRating, overallRating } from "../src/ratings.js";
+import { createSeededRng } from "@cm-clone/game-engine";
 import { generatePlayer, generateSquad } from "../src/generation.js";
 import type { PlayerAttributes } from "../src/positions.js";
 
@@ -51,19 +52,25 @@ describe("overallRating", () => {
   });
 });
 
+const playerAt = (position: Parameters<typeof generatePlayer>[0], seed: number) =>
+  generatePlayer(position, { statureTier: "mid", referenceYear: 2026, random: createSeededRng(seed) });
+
 describe("generation", () => {
   it("never generates goalkeeping attributes for an outfield player", () => {
-    const player = generatePlayer("ST", "mid");
+    const player = playerAt("ST", 4000);
     expect(player.attributes.gkHandling).toBeUndefined();
   });
 
   it("generates goalkeeping attributes for a GK", () => {
-    const player = generatePlayer("GK", "mid");
+    const player = playerAt("GK", 5000);
     expect(player.attributes.gkHandling).toBeGreaterThanOrEqual(1);
   });
 
   it("fills every Position with enough depth for a matchday squad", () => {
-    const squad = generateSquad("mid");
+    const squad = generateSquad("mid", {
+      referenceYear: 2026,
+      randomForSlot: (slot) => createSeededRng(6000 + slot.index),
+    });
     const positionsCovered = new Set(squad.flatMap((p) => p.positions.map((pp) => pp.position)));
     for (const position of ["GK", "DC", "DL", "DR", "DM", "MC", "ML", "MR", "AMC", "ST"] as const) {
       expect(positionsCovered.has(position)).toBe(true);

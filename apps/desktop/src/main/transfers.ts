@@ -37,6 +37,7 @@ import {
   type PlayerPosition,
   type StatureTier,
 } from "@cm-clone/shared";
+import { createSeededRng } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
@@ -204,8 +205,11 @@ export const loadWageBudgetUsed = (clubId: ClubId) =>
  * Called once from `startSeason` (ticket 15) for the save's first Season — assumes a `SqlClient`
  * for the save's SQLite file in context, in the same transaction as world/season generation.
  */
-export const initializeSeasonEconomy = (seasonNumber: number) =>
+export const initializeSeasonEconomy = (seasonNumber: number, seed: number) =>
   Effect.gen(function* () {
+    // Derived from the world seed, not drawn: contract lengths are part of the generated world and
+    // must come back identically when the same seed is regenerated.
+    const random = createSeededRng(seed);
     const sql = yield* SqlClient;
     const clubRows = yield* sql<{
       id: ClubId;
@@ -222,7 +226,7 @@ export const initializeSeasonEconomy = (seasonNumber: number) =>
       const wage = weeklyWage(player.overallRating, player.age, player.potentialAbility);
       // Spread initial squads across 1-3 remaining years so contract expiry doesn't hit everyone
       // simultaneously later.
-      const years = 1 + Math.floor(Math.random() * 3);
+      const years = 1 + Math.floor(random.next() * 3);
       yield* sql`INSERT INTO contracts (player_id, wage, years_remaining, signed_season)
         VALUES (${player.id}, ${wage}, ${years}, ${seasonNumber})`;
     }
