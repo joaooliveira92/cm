@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Alert } from "./components/ui/alert.js";
 import { Badge } from "./components/ui/badge.js";
 import { Button } from "./components/ui/button.js";
-import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card.js";
+import { Card } from "./components/ui/card.js";
 import { FOCUS_RING } from "./focus.js";
 import { getActiveMatch } from "./match/session.js";
 import { navigate } from "./navigation/adapter.js";
@@ -175,33 +175,25 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
       </div>
       <p className="mt-1 text-sm text-text-secondary">{ARCHETYPE_LABELS[profile.archetypeOrigin]}</p>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Club</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-text-body">{view.clubName}</p>
-          <p className="mt-1 text-sm text-text-secondary">Season {view.seasonNumber}</p>
-          <p className="mt-1 text-sm text-text-secondary">
-            Tenure: {view.tenureSeasons} {view.tenureSeasons === 1 ? "season" : "seasons"}
-          </p>
-        </CardContent>
+      <Card className="mt-6 px-3 py-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Club</p>
+        <p className="mt-1 text-base text-text-body">{view.clubName}</p>
+        <p className="mt-0.5 text-base text-text-secondary">Season {view.seasonNumber}</p>
+        <p className="mt-0.5 text-base text-text-secondary">
+          Tenure: {view.tenureSeasons} {view.tenureSeasons === 1 ? "season" : "seasons"}
+        </p>
       </Card>
 
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="text-lg">Management Philosophy</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <dl className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm">
-            {MANAGER_PILLARS.map((pillar) => (
-              <div key={pillar} className="flex justify-between">
-                <dt className="text-text-secondary">{PILLAR_LABELS[pillar]}</dt>
-                <dd className="font-semibold tabular-nums text-text-primary">{profile.pillars[pillar]}</dd>
-              </div>
-            ))}
-          </dl>
-        </CardContent>
+      <Card className="mt-3 px-3 py-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Management Philosophy</p>
+        <dl className="mt-1 grid grid-cols-2 gap-x-8 gap-y-0.5 text-base">
+          {MANAGER_PILLARS.map((pillar) => (
+            <div key={pillar} className="flex justify-between">
+              <dt className="text-text-secondary">{PILLAR_LABELS[pillar]}</dt>
+              <dd className="font-semibold tabular-nums text-text-primary">{profile.pillars[pillar]}</dd>
+            </div>
+          ))}
+        </dl>
       </Card>
 
       {/* An archived save offers no retire action at all: the career has already ended, and the

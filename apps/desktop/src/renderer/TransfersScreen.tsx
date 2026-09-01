@@ -38,6 +38,7 @@ import {
   useAtomValue,
 } from "./rpc.js";
 import { InlineModal } from "./transfers/InlineModal.js";
+import { useTransferTableState } from "./table/transfers/useTransferTableState.js";
 import { useDialogKeyboard } from "./transfers/dialogKeyboard.js";
 import {
   FREE_AGENT_PALETTE_OPTIONS,
@@ -61,16 +62,14 @@ import {
 import {
   discardSelectionForNavigation,
   readTableSession,
-  updateTableSession,
 } from "./table/tableState.js";
 import {
   makeTableFocusBookmark,
   resolveTableFocus,
   type TableFocusBookmark,
 } from "./table/focusBookmark.js";
-import { announce } from "./table/announcement.js";
 import { deriveRefreshState, STATE_COPY } from "./table/viewState.js";
-import type { FilterClause, SortState, TableAnnouncement, TableId } from "./table/types.js";
+import type { SortState, TableId } from "./table/types.js";
 
 const formatCredits = (amount: number): string => `${amount.toLocaleString()} Cr`;
 
@@ -169,32 +168,32 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   // survive navigation; selection + draft are cleared).
   const initialMarket = useRef(readTableSession(MARKET));
   const initialFree = useRef(readTableSession(FREE));
-  const mk = (key: TableId): { read: () => { sort: SortState | null; filters: readonly FilterClause[]; bookmark: TableFocusBookmark | null; activeId: string | null; scrollLeft: number } } => ({
-    read: () => {
-      const session =
-        key === MARKET ? initialMarket.current : key === FREE ? initialFree.current : null;
-      return {
-        sort: session?.sort ?? null,
-        filters: session?.filters ?? [],
-        bookmark: session?.focusBookmark ?? null,
-        activeId: session?.focusBookmark?.itemId ?? null,
-        scrollLeft: session?.scrollLeft ?? 0,
-      };
-    },
+  const marketSeed = useRef({
+    sort: initialMarket.current?.sort ?? null,
+    filters: initialMarket.current?.filters ?? [],
+    activeId: initialMarket.current?.focusBookmark?.itemId ?? null,
+    bookmark: initialMarket.current?.focusBookmark ?? null,
+  });
+  const freeSeed = useRef({
+    sort: initialFree.current?.sort ?? null,
+    filters: initialFree.current?.filters ?? [],
+    activeId: initialFree.current?.focusBookmark?.itemId ?? null,
+    bookmark: initialFree.current?.focusBookmark ?? null,
   });
 
-  const marketSeed = useRef(mk(MARKET).read());
-  const freeSeed = useRef(mk(FREE).read());
-
-  const [marketSort, setMarketSortState] = useState<SortState | null>(marketSeed.current.sort);
-  const [marketFilters, setMarketFiltersState] = useState<readonly FilterClause[]>(marketSeed.current.filters);
-  const [marketActive, setMarketActiveState] = useState<string | null>(marketSeed.current.activeId);
-  const [marketBookmark, setMarketBookmarkState] = useState<TableFocusBookmark | null>(marketSeed.current.bookmark);
-
-  const [freeSort, setFreeSortState] = useState<SortState | null>(freeSeed.current.sort);
-  const [freeFilters, setFreeFiltersState] = useState<readonly FilterClause[]>(freeSeed.current.filters);
-  const [freeActive, setFreeActiveState] = useState<string | null>(freeSeed.current.activeId);
-  const [freeBookmark, setFreeBookmarkState] = useState<TableFocusBookmark | null>(freeSeed.current.bookmark);
+  const {
+    market,
+    free,
+    setSortFor,
+    setFiltersFor,
+    filtersFor,
+    activeFor,
+    setActiveFor,
+    setBookmarkFor,
+    recordBookmark,
+    speak,
+    update,
+  } = useTransferTableState(marketSeed.current, freeSeed.current);
 
   // Live row-set refs for the stable palette handlers (announcement counts).
   const marketRowsRef = useRef<readonly MarketPlayerRow[]>([]);
@@ -225,16 +224,6 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
    *  empty) counter-offer — the disabled-submit gate covers non-empty invalid
    *  input, this covers the click/Enter on an empty draft so it is never silent. */
   const [counterError, setCounterError] = useState<string | null>(null);
-
-  // --- announcements (one polite status per table, deduplicated).
-  const [marketAnnouncement, setMarketAnnouncement] = useState<TableAnnouncement | null>(null);
-  const [freeAnnouncement, setFreeAnnouncement] = useState<TableAnnouncement | null>(null);
-  const speak = useCallback((tableId: TableId, eventId: string, message: string) => {
-    if (!announce({ tableId, eventId, message })) return;
-    const line = { tableId, eventId, message };
-    if (tableId === MARKET) setMarketAnnouncement(line);
-    else setFreeAnnouncement(line);
-  }, []);
 
   const amountInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -504,44 +493,6 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     // Handlers read through refs.
   }, [saveId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const recordBookmark = useCallback(
-    (key: TableId, ids: readonly string[], focusId: string | null): void => {
-      const before = makeTableFocusBookmark(key, ids, focusId);
-      if (before === null) return;
-      if (key === MARKET) setMarketBookmarkState(before);
-      else setFreeBookmarkState(before);
-      update(key, { focusBookmark: before });
-    },
-    [],
-  );
-
-  const setSortFor = useCallback(
-    (key: TableId, next: SortState | null) => {
-      if (key === MARKET) setMarketSortState(next);
-      else setFreeSortState(next);
-      update(key, { sort: next });
-    },
-    [],
-  );
-
-  const setFiltersFor = useCallback(
-    (key: TableId, next: readonly FilterClause[]) => {
-      if (key === MARKET) setMarketFiltersState(next);
-      else setFreeFiltersState(next);
-      update(key, { filters: next });
-    },
-    [],
-  );
-
-  const filtersFor = useCallback(
-    (key: TableId): readonly FilterClause[] => (key === MARKET ? marketFilters : freeFilters),
-    [marketFilters, freeFilters],
-  );
-
-  const activeFor = useCallback(
-    (key: TableId): string | null => (key === MARKET ? marketActive : freeActive),
-    [marketActive, freeActive],
-  );
   const onSortChangeFor = useCallback(
     (key: TableId) => (next: SortState | null) => {
       const ids = key === MARKET ? marketIdsRef.current : freeIdsRef.current;
@@ -563,21 +514,21 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   // --- the TanStack tables + the visible (post-filter) id sets. Filtering is
   // owned HERE (not inside TablePanel) so AC-31's selection/focus decisions use
   // exactly the visible rows; TablePanel renders the pre-filtered rows.
-  const marketFiltered = applyFilters(marketRows, marketFilters);
-  const freeFiltered = applyFilters(freeAgentRows, freeFilters);
+  const marketFiltered = applyFilters(marketRows, market.filters);
+  const freeFiltered = applyFilters(freeAgentRows, free.filters);
 
   const marketTable = useTableDataFor(
     MARKET,
     marketPlayerColumns(),
     marketFiltered,
-    marketSort,
+    market.sort,
     onSortChangeFor(MARKET),
   );
   const freeTable = useTableDataFor(
     FREE,
     freeAgentColumns(),
     freeFiltered,
-    freeSort,
+    free.sort,
     onSortChangeFor(FREE),
   );
 
@@ -585,8 +536,8 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const freeIds = freeTable.rowIds;
   marketIdsRef.current = marketIds;
   freeIdsRef.current = freeIds;
-  marketActiveRef.current = marketActive;
-  freeActiveRef.current = freeActive;
+  marketActiveRef.current = market.active;
+  freeActiveRef.current = free.active;
   const datasetKey = datasetIds.join(",");
   const marketIdsKey = marketIds.join(",");
   const freeIdsKey = freeIds.join(",");
@@ -612,11 +563,7 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     }
   }, [datasetKey, marketIdsKey, freeIdsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // --- session write-through + navigation cleanup.
-  const update = (key: TableId, patch: Parameters<typeof updateTableSession>[1]): void => {
-    updateTableSession(key, patch);
-  };
-
+  // --- navigation cleanup.
   useEffect(() => {
     return () => {
       discardSelectionForNavigation(MARKET);
@@ -654,24 +601,21 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     (key: TableId) => (id: string) => {
       const ids = key === MARKET ? marketIds : freeIds;
       const bookmark = makeTableFocusBookmark(key, ids, id);
-      if (key === MARKET) setMarketActiveState(id);
-      else setFreeActiveState(id);
+      setActiveFor(key, id);
       if (bookmark !== null) {
-        if (key === MARKET) setMarketBookmarkState(bookmark);
-        else setFreeBookmarkState(bookmark);
+        setBookmarkFor(key, bookmark);
         update(key, { focusBookmark: bookmark });
       }
     },
-    [marketIds, freeIds],
+    [marketIds, freeIds, setActiveFor, setBookmarkFor, update],
   );
 
   const onBookmarkChangeFor = useCallback(
     (key: TableId) => (bookmark: TableFocusBookmark) => {
-      if (key === MARKET) setMarketBookmarkState(bookmark);
-      else setFreeBookmarkState(bookmark);
+      setBookmarkFor(key, bookmark);
       update(key, { focusBookmark: bookmark });
     },
-    [],
+    [setBookmarkFor, update],
   );
 
   const onRowPrimaryFor = useCallback(
@@ -731,11 +675,11 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   // Market and Free Agents each own a restore slot keyed on their visible-id
   // set (post-filter), re-running after sort/filter/refetch.
   useEffect(() => {
-    restoreFocusFor(MARKET, marketActive, marketBookmark, marketIds);
-  }, [marketIdsKey, viewResult.waiting, marketActive, marketBookmark]); // eslint-disable-line react-hooks/exhaustive-deps
+    restoreFocusFor(MARKET, market.active, market.bookmark, marketIds);
+  }, [marketIdsKey, viewResult.waiting, market.active, market.bookmark]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    restoreFocusFor(FREE, freeActive, freeBookmark, freeIds);
-  }, [freeIdsKey, viewResult.waiting, freeActive, freeBookmark]); // eslint-disable-line react-hooks/exhaustive-deps
+    restoreFocusFor(FREE, free.active, free.bookmark, freeIds);
+  }, [freeIdsKey, viewResult.waiting, free.active, free.bookmark]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const draft = draftState.draft;
   const draftedPlayer = draft !== null ? findPlayer(draft.playerId) : null;
@@ -974,23 +918,23 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           columns={freeAgentColumns()}
           rows={freeFiltered}
           unfilteredRowCount={freeAgentRows.length}
-          sort={freeSort}
+          sort={free.sort}
           onSortChange={onSortChangeFor(FREE)}
-          filters={freeFilters}
+          filters={free.filters}
           onSetFilters={(next) => {
             setFiltersFor(FREE, next);
             speak(FREE, "filter-set", `${next.length === 0 ? "Cleared the Free Agents filters." : "Filters updated."}`);
           }}
           enableNameSearch
           enablePositionFilter
-          activeId={freeActive}
+          activeId={free.active}
           onActiveChange={onActiveChangeFor(FREE)}
           onBookmarkChange={onBookmarkChangeFor(FREE)}
           selectedId={selected !== null && selected.tableId === FREE ? selected.player.id : null}
           onToggleSelection={onToggleSelectionFor(FREE)}
           onRowPrimary={onRowPrimaryFor(FREE)}
           busy={refreshState._tag === "Refreshing"}
-          announcement={freeAnnouncement?.message ?? ""}
+          announcement={free.announcement?.message ?? ""}
           copy={STATE_COPY["free-agents"]}
           loadError={null}
         />
@@ -1006,23 +950,23 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           columns={marketPlayerColumns()}
           rows={marketFiltered}
           unfilteredRowCount={marketRows.length}
-          sort={marketSort}
+          sort={market.sort}
           onSortChange={onSortChangeFor(MARKET)}
-          filters={marketFilters}
+          filters={market.filters}
           onSetFilters={(next) => {
             setFiltersFor(MARKET, next);
             speak(MARKET, "filter-set", `${next.length === 0 ? "Cleared the Market filters." : "Filters updated."}`);
           }}
           enableNameSearch
           enablePositionFilter
-          activeId={marketActive}
+          activeId={market.active}
           onActiveChange={onActiveChangeFor(MARKET)}
           onBookmarkChange={onBookmarkChangeFor(MARKET)}
           selectedId={selected !== null && selected.tableId === MARKET ? selected.player.id : null}
           onToggleSelection={onToggleSelectionFor(MARKET)}
           onRowPrimary={onRowPrimaryFor(MARKET)}
           busy={refreshState._tag === "Refreshing"}
-          announcement={marketAnnouncement?.message ?? ""}
+          announcement={market.announcement?.message ?? ""}
           copy={STATE_COPY["transfer-market"]}
           loadError={null}
         />

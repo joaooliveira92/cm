@@ -433,7 +433,7 @@ export const CreateFlowLayout = () => {
 
   return (
     <CreateSessionContext.Provider value={contextValue}>
-      <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
         <header className={CHROME_BAND}>
           <h1 className="truncate text-lg font-bold">New Career</h1>
           <div className="flex items-center gap-3">
@@ -450,7 +450,7 @@ export const CreateFlowLayout = () => {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-5xl flex-1 overflow-y-auto p-8">
+        <main className="mx-auto min-h-0 w-full max-w-5xl flex-1 overflow-y-auto p-8">
           <Outlet />
 
           {session.error !== null && (
