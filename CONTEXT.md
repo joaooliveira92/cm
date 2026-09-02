@@ -215,9 +215,27 @@ mid-match.
 ### Season & calendar
 
 **League**:
-A single Competition within a Nation's pyramid: an ordered set of clubs that play each other on a
+A single Competition within a Nation's Pyramid: an ordered set of clubs that play each other on a
 Fixture list. A career is played within the Leagues its League Selection Snapshot made playable.
-_Avoid_: Division (a League's depth in its Nation's pyramid is its *tier*, not a separate concept)
+_Avoid_: Division (a League's depth in its Nation's Pyramid is its Tier, below)
+
+**Tier**:
+A League's depth in its Nation's Pyramid, 1 being the highest. Cups, reserve, and continental
+Competitions have no Tier. A Tier is a label, never a structure: several Leagues may share one Tier
+as parallel regional divisions, so nothing may derive which League sits above another by comparing
+Tier numbers. That is what Exchange Links are for.
+_Avoid_: Level, division number
+
+**Pyramid**:
+A Nation's Leagues, ordered by Tier and joined by Exchange Links. Not necessarily a single vertical
+chain — a Tier may hold several parallel regional Leagues feeding one above them.
+
+**Exchange Link**:
+One pairing of a higher and a lower Competition, and the number of clubs that swap between them at
+the end of each Season. Promotion and relegation are the same Exchange Link read in two directions,
+which is what guarantees a League never changes size. A Link exists only when both Competitions are
+loaded in the save, so the lowest loaded League never relegates and the highest never promotes.
+_Avoid_: Promotion slot (a count with no destination, which parallel regional Leagues make ambiguous)
 
 **Nation**:
 The unit a player selects a career's scope by: a real country owning a pyramid of Leagues, its
@@ -226,10 +244,18 @@ and carrying a **Nation Profile** of gameplay priors that shape generation. A Na
 *unavailable* (present in the setup catalogue's metadata, absent from its content) or have no
 playable League at all, and in both cases it stays visible with the reason rather than being hidden.
 
-Nations are the *only* real-world data the simulation depends on. Clubs, players, and staff are
-generated; club and competition display names are replaceable Content Pack entries. See
-[real geography with replaceable identities](.agents/notes/implemented/architecture/2026-09-01-real-geography-with-replaceable-identities.md).
+Nations and Cities are the real-world foundation the simulation depends on, and the only real-world
+data it carries. Clubs, players, staff, and stadiums are generated; club and competition display names
+are replaceable Content Pack entries. See
+[real geography with replaceable identities](.agents/notes/implemented/architecture/2026-09-01-real-geography-with-replaceable-identities.md)
+and [the world catalogue](.agents/notes/proposed/architecture/2026-09-01-world-catalogue-and-canonical-ids.md).
 _Avoid_: Country (fine informally; Nation is the term the catalogue and the screen use)
+
+**City**:
+A real settlement within a Nation, giving a Club its hometown and a Player their birthplace. Factual
+and licence-free like the Nation above it, so its name is carried directly rather than resolved
+through a Content Pack. Carries a coarse **population band** — a plausibility input to generation —
+never a population figure, and no coordinates: distance and travel are not modelled.
 
 **Nation Profile**:
 A Nation's data-driven football character — youth production, coaching quality, economic power,
@@ -245,7 +271,9 @@ The replaceable layer mapping a canonical id (`club_esp_01`) to a display name, 
 so club and competition identities — which are licensed commercial assets — never reach the
 simulation core, and so the same generated world can run with fictional, licensed, localized, or
 test names. A canonical id is never a display name, and nothing downstream of generation keys
-behaviour off one.
+behaviour off one. The pack is a code asset rather than part of a save — a save records which pack it
+was generated against, so the same world can be reopened under a different one — and every display name
+is resolved at read time, never written into a row.
 
 **Region**:
 A grouping of Nations used for browsing and filtering during career setup. Carries no simulation
@@ -324,7 +352,8 @@ rather than migrated by guessing at renamed Competitions.
 **Season**:
 One full cycle of the League: a freshly-generated Fixture list played to completion, followed by a
 close-of-season transition into the next Season. Fixtures are reshuffled each Season with no seeding
-by prior standings — there is no promotion/relegation or qualification bracket to seed against.
+by prior standings. The close-of-season transition applies each Exchange Link, promoting and
+relegating clubs between Leagues.
 
 **Fixture**:
 One scheduled match between two League clubs, home and away assignment fixed at generation time. A
