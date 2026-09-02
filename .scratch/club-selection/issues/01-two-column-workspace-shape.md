@@ -1,7 +1,7 @@
 # 01 — Two-column workspace shape
 
 Type: prototype
-Status: open
+Status: resolved
 
 ## Question
 
@@ -30,27 +30,84 @@ What the prototype must answer:
 
 Build a throwaway prototype and put it in front of the user; do not settle this from prose.
 
-## Prototype (awaiting verdict)
+## Answer
 
-Built, not yet judged. `pnpm dev`, then New Career → pick a league → fill Step 2 → **Next: Select
-Club**. Five variants sit on the real `/create/step-2` route against real `getClubSelection` data;
-cycle them with the floating pill at the bottom or the `←`/`→` keys. Switching does not reload, so
-the world survives — the click-through is once per app launch.
+**Variant D wins.** The full five-variant set is captured on the throwaway branch
+`prototype/club-selection-workspace`; it is deleted from the main line.
 
-| Key | Variant | Row carries | Panel before a club is chosen | Loading |
-|-----|---------|-------------|-------------------------------|---------|
-| `0` | Today — single scrolling column | all six facts | n/a | whole body |
-| `A` | Dense rail, dossier right | name, tier, transfer budget | auto-selects first club | rail skeleton + panel spinner, independent |
-| `B` | Three-fact rows, empty until chosen | name, tier, objective | empty state; `Pick a team for me` is the panel's CTA | whole workspace, as today |
-| `C` | Name-only rail, grouped by stature | name only (tier is a sticky group heading) | auto-selects first club | rail skeleton + panel spinner, independent |
-| `D` | Quality meters, league-summary fallback | name, tier, squad-quality meter | league summary — never blank, never implies a selection | rail skeleton, inline rail error |
+### What a club list row shows
 
-Code: `apps/desktop/src/renderer/create/clubSelectionPrototype/`, dev-only, mounted from
-`ClubSelectionScreen.tsx`. Throwaway — the whole directory gets deleted and the winner rewritten
-properly.
+Three facts: **club name**, **stature tier**, and **squad quality as a six-segment meter** with its
+band label. Board objective, transfer budget and wage budget are detail-panel only.
 
-**Finding the prototype forced out, ahead of any verdict:** `CreateFlowLayout`'s `<main>` is a
-`max-w-5xl` centred `overflow-y-auto` column and `RouteView`'s wrapper passes no height down, so
-nothing inside can be a full-height two-column workspace. The variants fake it with a viewport
-calc and a negative-margin breakout. Shipping any of them means making the creation shell a
-flex-height, full-width band for this step.
+Squad quality earns the row slot because it is the one fact a narrow rail can render
+*comparatively* — twenty meters scanned down a column say "which of these is a rebuild" in a way
+twenty copies of the word `Competitive` do not. The two budgets lose their slot for the mirror
+reason: as truncated currency they read as noise, and they are the facts a manager wants precisely
+once, about the club they are already considering.
+
+The variants that showed a budget in the row (`A`) or the objective range (`B`) were legible but
+answered no question at a glance. Name-only (`C`) was the cleanest rail and the least useful one —
+picking a club became twenty round trips to the panel.
+
+### The detail panel before a club is chosen
+
+**No auto-selection, and no empty state.** Before a club is picked the panel shows a **league
+summary**: the club count and the stature-tier distribution.
+
+Auto-selecting the first club (`A`, `C`) keeps the panel populated by asserting something false —
+that the manager has chosen a club — which then has to be untangled from Continue gating
+([02](02-selected-club-in-the-creation-session.md)) and from `Pick a team for me`
+([05](05-pick-a-team-for-me-semantics.md)). An empty state (`B`) is honest but wastes the larger
+half of the workspace at exactly the moment the user knows least. The league summary is honest
+*and* useful: it is true before any selection exists, and it says nothing about what has been
+chosen.
+
+### Loading and error states
+
+**The rail loads independently of the panel.** The rail renders skeleton rows; the panel renders
+its league-summary shell throughout and fills in as the count arrives. A load failure renders
+**inline in the rail**, not as a whole-screen replacement — the selector and the chrome stay put, so
+a retry does not feel like a different screen.
+
+`B`'s whole-workspace spinner (today's behaviour, kept deliberately as a control) was the clearest
+loser: it makes a two-column layout flash into existence, and it throws away the chrome that was
+already correct.
+
+### How selection reads against focus
+
+**Selection is redundantly coded three ways; focus is the single ring.**
+
+- Selected row: `bg-row-selected` fill, plus a left accent bar in `text-highlight`, plus a
+  `Selected` badge in the row.
+- Focused row: `FOCUS_RING` only.
+
+This matches the split `renderer/table/DataTable.tsx` already enforces (`Space` toggles selection;
+focus ≠ selection) and survives being read without colour. `B`'s filled `chrome-gradient` row was
+the most striking and the worst behaved — at chrome saturation it competed with the header band and
+with the focus ring simultaneously.
+
+One wart to fix on the way in: in the prototype the `Selected` badge *replaces* the stature-tier
+badge, so the selected row silently drops a fact. The implementation should keep the tier badge and
+carry selection some other way in that slot.
+
+### Where the component boundary falls
+
+This also settles the map's open question. **One parent owns the selection state; the rail and the
+panel are two sibling children taking props.** No provider, no compound component: three regions
+and a single piece of state do not earn a context, and props keep both regions trivially testable
+against a fixed selection. Revisit only if a third consumer of the selection appears.
+
+### The shell change this requires
+
+`CreateFlowLayout`'s `<main>` is a `max-w-5xl` centred `overflow-y-auto` column, and `RouteView`'s
+wrapper passes no height down — so nothing inside it can be a full-height two-column workspace. The
+prototype faked it with a viewport calc and a negative-margin breakout, which is not shippable.
+**Implementing D means making the creation shell a flex-height, full-width band for this step.**
+That belongs in the spec ([08](08-assemble-spec.md)) as an explicit change to the creation flow
+layout, not as a workaround inside the club screen.
+
+### Still open
+
+Virtualization stays unanswered — twenty meter rows are cheap, and the threshold is a question for
+whenever a second league actually generates.

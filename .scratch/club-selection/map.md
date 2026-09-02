@@ -23,7 +23,7 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
 
 ### Ground truth as of charting (2026-09-01)
 
-Four facts constrain every ticket. None is a decision to re-litigate.
+Five facts constrain every ticket. None is a decision to re-litigate.
 
 - **Nothing selects a club.** `router/createFlow.tsx:331` passes
   `selectedClubId: ClubId.make("temp-club-id")` into `commitCareer`. `CreationSession` has no
@@ -38,6 +38,10 @@ Four facts constrain every ticket. None is a decision to re-litigate.
   world; the only available source is the `LeagueSelectionSnapshot` on `CreationSession`.
 - **No facilities data exists** in the schema, so no facilities readout is possible in the
   detail panel.
+- **The creation shell cannot host a workspace as it stands** (found by ticket 01's prototype).
+  `CreateFlowLayout`'s `<main>` is a `max-w-5xl` centred `overflow-y-auto` column and `RouteView`'s
+  wrapper passes no height down. A full-height two-column step needs the shell to become a
+  flex-height, full-width band — shared layout, not club-screen code.
 
 ### Standing decisions from charting
 
@@ -56,11 +60,15 @@ Four facts constrain every ticket. None is a decision to re-litigate.
 
 <!-- populated as tickets resolve -->
 
+- [01 — Two-column workspace shape](issues/01-two-column-workspace-shape.md): the rail row carries
+  name, stature tier and a squad-quality meter; the panel shows a league summary until a club is
+  picked, with no auto-selection and no empty state; the rail loads and fails independently of the
+  panel; selection is redundantly coded (fill, accent bar, badge) against the single focus ring.
+  Recorded as [Agent Note: The Club Selection two-column workspace](../../.agents/notes/proposed/architecture/2026-09-01-club-selection-workspace-shape.md).
+  Variant set captured on the throwaway branch `prototype/club-selection-workspace`.
+
 ## Not yet specified
 
-- **Where the detail panel's component boundary falls.** The screen is 71 lines today and grows
-  into three regions with shared selection state; whether that is a compound component with a
-  provider, or props from a single parent, is not sharp until the prototype exists.
 - **Whether the club list needs virtualization.** Twenty rows do not, but the selector exists
   precisely because more leagues are coming. The threshold, and whether the shared
   `renderer/table/` layer is the right host instead of a bespoke list, waits on the list's
