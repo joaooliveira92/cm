@@ -1,6 +1,6 @@
 # Agent Note: The club detail panel is a compact squad readout over one payload
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -31,7 +31,7 @@ CONTEXT.md defines **Credits** as the single currency unit, and TransfersScreen 
 credits as `amount.toLocaleString()` + `" Cr"` (`TransfersScreen.tsx:74`). The `$` is a leftover,
 and there is no shared formatter anywhere in the renderer.
 
-## Proposal
+## Decision
 
 ### The panel shows a compact squad readout, not a relocated card
 
@@ -100,14 +100,18 @@ copy stays until that screen is touched — promoting it there is out of this ma
   sacks only on two consecutive, so the truthful form is the band statement, and the 
   `club-selection-at-new-game` note already fixed this copy constraint.
 
-## Acceptance criteria
+## Consequences
+
+What shipped:
 
 - `getClubSelection` returns, per club, the existing row fields plus a compact detail block:
   expectation context, Transfer Budget and Wage Budget, squad size, average age, and the top five
   players by `overallRating` with name and Position — computed from the generated squad at query
   time, never hardcoded onto a club definition.
-- The renderer derives the expectation prose from the shared `BOARD_OBJECTIVE_BANDS` constant, not
-  from a UI-local band table.
+- The expectation prose derives from the shared `BOARD_OBJECTIVE_BANDS` constant, not from a
+  UI-local band table: `getClubSelection` reads the band from the constant onto the row, and the
+  renderer only phrases the numbers it is given — including against the league's own size, so the
+  copy cannot drift from a 20-club assumption.
 - The panel shows budgets as two labeled rows rendered through the shared `formatCredits`, and no
   `$`/`toFixed(0)` inline formatting remains.
 - Selecting a club renders the panel from the already-fetched payload with no additional RPC and no
@@ -116,7 +120,7 @@ copy stays until that screen is touched — promoting it there is out of this ma
   figures on the rail.
 - No facilities and no prior-season values appear in the panel.
 
-## Risks
+What it costs:
 
 - **The panel's data is "as of first load".** The read-only query is a fixed snapshot of the
   provisional world at selection time; it is not a projection that tracks later world changes. That
@@ -137,8 +141,8 @@ copy stays until that screen is touched — promoting it there is out of this ma
 - Ticket: `.scratch/club-selection/issues/03-club-detail-contract.md`
 - The panel's field philosophy and copy constraints this refines — budgets, expectation context, the
   size-as-subordinate rule, last-season-position absence, generation-order mechanics:
-  [Club selection at new game](../feature/2026-08-29-club-selection-at-new-game.md) (partially
-  superseded, alongside, by [Squad Quality summary bands](../../implemented/feature/2026-08-29-squad-quality-summary-bands.md)).
+  [Club selection at new game](../../proposed/feature/2026-08-29-club-selection-at-new-game.md) (partially
+  superseded, alongside, by [Squad Quality summary bands](../feature/2026-08-29-squad-quality-summary-bands.md)).
 - The row-vs-panel split this fills in, and the no-auto-selection call:
   [The Club Selection two-column workspace](2026-09-01-club-selection-workspace-shape.md)
 - The selection record this panel hangs off:

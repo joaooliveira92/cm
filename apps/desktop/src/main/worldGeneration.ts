@@ -1,10 +1,12 @@
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { ClubId, PlayerId } from "@cm-clone/contracts";
+import { ClubId, PlayerId, type SnapshotId } from "@cm-clone/contracts";
 import { createSeededRng, deriveId, deriveSeed } from "@cm-clone/game-engine";
 import {
+  BASE_CONTENT_PACK,
   CITIES,
   LEAGUE_CLUBS,
+  LEAGUE_SETUP_INDEX,
   NATION_CODES,
   canonicalCityId,
   canonicalNationId,
@@ -38,6 +40,11 @@ export interface WorldGenerationConfig {
   /** The season year player ages are measured against. Pinned per save, never read from the clock,
    *  so a world regenerated in a later year is still the same world. */
   readonly referenceYear: number;
+  /** The League Selection Snapshot this world is generated on behalf of. Recorded in the manifest
+   *  as provenance, and — for the single-league generator — deliberately *not* an input to what
+   *  gets generated: the re-resolution that validated it happened in `beginCareer`, and threading
+   *  the resolved scope into competition rows is the next ticket's work. */
+  readonly snapshotId: SnapshotId;
 }
 
 const attr = (attributes: GeneratedPlayer["attributes"], key: keyof GeneratedPlayer["attributes"]) =>
@@ -50,6 +57,11 @@ const attr = (attributes: GeneratedPlayer["attributes"], key: keyof GeneratedPla
  * `commitCareer`.
  *
  * The manifest is written first, so a partially-written save still records what was producing it.
+ * It records the catalogue fingerprint, the content pack id/version, and the snapshot id beside
+ * the seed and versions — the whole identity of this world if a later reader ever needs to
+ * reproduce or diagnose it. None of these is an input to anything generated below: the catalogue
+ * and the pack are code-derived static data (like `nations` and `cities`), and the snapshot's role
+ * ended at `beginCareer`'s validation, so the rows are identical in every save from this ruleset.
  * The catalogue is written before any club so the rows are provably selection-independent: nothing
  * in this function reads what a selection could change (see the `WorldGenerationConfig`), so the
  * catalogue rows are identical in every save from this ruleset.
@@ -59,7 +71,7 @@ const attr = (attributes: GeneratedPlayer["attributes"], key: keyof GeneratedPla
  * harmless while generation stays provisional — but any ticket that later scales these writes
  * should decide whether the sequence deserves `sql.withTransaction`.
  */
-export const generateWorld = ({ worldSeed, referenceYear }: WorldGenerationConfig) =>
+export const generateWorld = ({ worldSeed, referenceYear, snapshotId }: WorldGenerationConfig) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
 
@@ -68,8 +80,9 @@ export const generateWorld = ({ worldSeed, referenceYear }: WorldGenerationConfi
       Effect.map((millis) => new Date(millis).toISOString()),
     );
 
-    yield* sql`INSERT INTO generation_manifest (id, world_seed, generator_version, ruleset_version, reference_year, generated_at)
-      VALUES (1, ${worldSeed}, ${GENERATOR_VERSION}, ${RULESET_VERSION}, ${referenceYear}, ${generatedAt})`;
+    yield* sql`INSERT INTO generation_manifest (id, world_seed, generator_version, ruleset_version, reference_year, generated_at, catalogue_fingerprint, content_pack_id, content_pack_version, snapshot_id)
+      VALUES (1, ${worldSeed}, ${GENERATOR_VERSION}, ${RULESET_VERSION}, ${referenceYear}, ${generatedAt},
+        ${LEAGUE_SETUP_INDEX.fingerprint}, ${BASE_CONTENT_PACK.id}, ${BASE_CONTENT_PACK.version}, ${snapshotId})`;
 
     // The world catalogue, written before any club on the same connection as the rest of
     // generation. `nations` and `cities` are copied unconditionally — one nations row per

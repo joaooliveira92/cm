@@ -23,7 +23,7 @@ enter the effect's requirements.
 - The rail row carries name, stature tier and a squad-quality meter; the panel shows a league
   summary until a club is picked, with no auto-selection and no empty state; the rail loads and
   fails independently of the panel; selection is redundantly coded (fill, accent bar, badge)
-  against the single focus ring. See [Agent Note: The Club Selection two-column workspace](../../../.agents/notes/proposed/architecture/2026-09-01-club-selection-workspace-shape.md).
+  against the single focus ring. See [Agent Note: The Club Selection two-column workspace](../../../.agents/notes/implemented/architecture/2026-09-01-club-selection-workspace-shape.md).
 
 **Blocked by:** None (can start immediately).
 

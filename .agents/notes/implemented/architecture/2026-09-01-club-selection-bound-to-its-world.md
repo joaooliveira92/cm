@@ -1,6 +1,6 @@
 # Agent Note: The club selection is bound to the world it was picked from
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -20,7 +20,7 @@ and `Failed`, and `ClubSelectionScreen` mounts only in `Ready`, so no second wor
 club is pickable. Nothing in the club code states that invariant, tests it, or would notice losing
 it.
 
-## Proposal
+## Decision
 
 **The selection carries the world it was picked from.**
 
@@ -37,8 +37,12 @@ readonly clubSelection: {
 along because Step 3 renders it, and `getClubSelection`'s rows live inside `ClubSelectionScreen` and
 die with it.
 
-**One write path.** `CreateSessionApi` gains `selectClub: (clubId, clubName) => void`, which reads
-`provisionalIdOf(session.generation)` itself and writes both halves, or no-ops outside `Ready`.
+**One write path.** `CreateSessionApi` gains
+`selectClub: (club: { clubId, clubName } | null) => void`, which reads
+`provisionalIdOf(session.generation)` itself and writes both halves, or no-ops outside `Ready`. It
+takes one nullable record rather than the two arguments this note first proposed, because the
+listbox's Space toggles a pick off as well as on: a separate clear would have been a second write
+path, which is the one property this decision exists to keep.
 Recording a club against a world that is not the current one becomes impossible rather than
 discouraged. This is the shape the context already has — `retryGeneration` is an intent, not a patch
 hole.
@@ -85,10 +89,12 @@ identity; it has nothing to do with which club.
 - **Re-querying the club name on Step 3.** Rejected: one string, one extra round trip, and a review
   step that is no longer a pure render of session state.
 
-## Acceptance criteria
+## Consequences
+
+What shipped:
 
 - `CreationSession.clubSelection` carries `provisionalId` alongside `clubId`, and the only way to
-  write it is `selectClub`.
+  write it is `selectClub`, whose `null` argument is also the only way to clear it.
 - With a club selected, replacing the generation state with a `Ready` carrying a different
   `provisionalId` makes `selectedClubOf` return `null` — asserted directly, not through the UI.
 - Step 2's Continue is disabled with a stated reason until a club is picked.
@@ -98,7 +104,7 @@ identity; it has nothing to do with which club.
 - `ReviewPane` shows the chosen club's name.
 - No `temp-club-id` remains in the renderer.
 
-## Risks
+What it costs:
 
 - **`selectClub`'s no-op outside `Ready` is silent.** A caller that fires while generation is not
   ready loses the click with no feedback. Acceptable because the only affordances that can call it
@@ -118,4 +124,4 @@ identity; it has nothing to do with which club.
 - The other half of the world-swap problem, spun out:
   `.scratch/club-selection/issues/09-league-rescope-after-generation.md`
 - The lifecycle this binds against: `apps/desktop/src/renderer/create/generation.ts`
-- Error-channel precedent: [Tagged domain errors for game-engine invariants](../../implemented/architecture/2026-08-29-tagged-domain-errors.md)
+- Error-channel precedent: [Tagged domain errors for game-engine invariants](2026-08-29-tagged-domain-errors.md)

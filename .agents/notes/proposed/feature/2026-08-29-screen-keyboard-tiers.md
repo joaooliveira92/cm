@@ -24,7 +24,7 @@ Per-screen assignment:
 | CreationStep1 | 2 | Linear form fields and buttons — full tab nav covers it; no table or multi-row interaction |
 | FixturesScreen | 1 | Zero interactive controls — read-only list |
 | SeasonSummaryScreen | 1 | Zero interactive controls — read-only cards and banners |
-| ClubSelectionScreen | 2 | Selectable club list + `Pick a team for me` button — roving listbox, Enter selects, Continue gated on a pick (updated 2026-09-01; see [Club Selection is a level-2 listbox, not a DataTable](../architecture/2026-09-01-club-selection-keyboard-tier-and-listbox.md)) |
+| ClubSelectionScreen | 2 | Selectable club list + `Pick a team for me` button — roving listbox, Enter selects, Continue gated on a pick (updated 2026-09-01; see [Club Selection is a level-2 listbox, not a DataTable](../../implemented/architecture/2026-09-01-club-selection-keyboard-tier-and-listbox.md)) |
 | SaveListScreen | 2 | Two interactive control types (per-save clickable buttons + Start New Career button); primary-action shortcut Enter on focused row, C on most-recent save |
 
 The native `prompt()` call at `TransfersScreen.tsx:57` is replaced with an inline modal dialog (text input + OK/Cancel, focus trapped, Enter to submit), reusable across screens.

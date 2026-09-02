@@ -74,4 +74,29 @@ describe("generated DDL", () => {
       /`cities` \(\n\t`id` text PRIMARY KEY NOT NULL,\n\t`nation_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`population_band` text NOT NULL,\n\tFOREIGN KEY \(`nation_id`\) REFERENCES `nations`\(`id`\) ON UPDATE no action ON DELETE no action,\n\tCONSTRAINT "cities_population_band" CHECK\(population_band IN \('major','large','mid','small'\)\)\n\);/,
     );
   });
+
+  it("generation_manifest records provenance without growing a foreign key (ticket 03)", () => {
+    const ddl = MIGRATION_STATEMENTS.join("\n");
+    const block = (table: string) => {
+      const start = ddl.indexOf(`CREATE TABLE \`${table}\``);
+      expect(start, `${table} table missing`).toBeGreaterThanOrEqual(0);
+      return ddl.slice(start, ddl.indexOf(");", start) + 2);
+    };
+    const manifestBlock = block("generation_manifest");
+
+    // The catalogue fingerprint, the content pack id/version, and the snapshot id join the seed
+    // and versions, and the single-row + seed-range CHECKs survive untouched.
+    expect(manifestBlock).toContain("`catalogue_fingerprint` text NOT NULL");
+    expect(manifestBlock).toContain("`content_pack_id` text NOT NULL");
+    expect(manifestBlock).toContain("`content_pack_version` text NOT NULL");
+    expect(manifestBlock).toContain("`snapshot_id` text NOT NULL");
+    expect(manifestBlock).toContain('CONSTRAINT "generation_manifest_single_row" CHECK(id = 1)');
+    expect(manifestBlock).toContain(
+      'CONSTRAINT "generation_manifest_world_seed_range" CHECK(world_seed BETWEEN 0 AND 4294967295)',
+    );
+
+    // `snapshot_id` is a diagnostic pointer, explicitly not a foreign key (the snapshot file is
+    // machine-local and will not exist beside a copied save).
+    expect(manifestBlock).not.toContain("FOREIGN KEY");
+  });
 });

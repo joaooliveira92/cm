@@ -9,6 +9,7 @@ import {
   type LeagueSelectionSnapshot,
   type NationSelectionIntentPayload,
 } from "@cm-clone/contracts";
+import { LEAGUE_SETUP_INDEX, blockingIssues, resolveSelection } from "@cm-clone/shared";
 import {
   applyLeaguePreset,
   buildLeaguePresetIntents,
@@ -24,6 +25,7 @@ import {
   SETUP_DRAFT_FILE,
   submissionKey,
   submitLeagueSelection,
+  toDomainIntents,
 } from "../src/main/leagueSelection.js";
 
 const run = <A, E>(effect: Effect.Effect<A, E>): Promise<A> => Effect.runPromise(effect);
@@ -184,6 +186,33 @@ describe("submission (§17)", () => {
       getLeagueSelectionSnapshot(dir, "00000000-0000-0000-0000-000000000000" as LeagueSelectionSnapshot["id"]),
     );
     expect(found).toBeNull();
+  });
+
+  it("re-resolution over the snapshot's intents reproduces the recorded selection exactly (ticket 03)", async () => {
+    const dir = await tempDir();
+    const snapshot = await run(submitLeagueSelection(dir, VALID));
+
+    // The invariant generation's snapshot handling is built on: under a matching fingerprint the
+    // catalogue is identical, resolution is a pure function of the intents, so the re-resolution
+    // must reproduce the snapshot's stored `selections` byte for byte — a divergence is a
+    // resolver defect, never a selection to migrate around.
+    const resolved = resolveSelection(LEAGUE_SETUP_INDEX, toDomainIntents(snapshot.intents));
+    expect(blockingIssues(resolved.issues)).toEqual([]);
+    expect(resolved.selections).toEqual(
+      snapshot.selections.map((row) => ({
+        nationId: row.nationId,
+        mode: row.mode,
+        ...(row.scopeOptionId === undefined ? {} : { scopeOptionId: row.scopeOptionId }),
+        playableCompetitionIds: row.playableCompetitionIds,
+        backgroundCompetitionIds: row.backgroundCompetitionIds,
+        viewOnlyCompetitionIds: row.viewOnlyCompetitionIds,
+        dependencyCompetitionIds: row.dependencyCompetitionIds,
+      })),
+    );
+    expect(resolved.dependencies.map((entry) => entry.competitionId).sort()).toEqual(
+      snapshot.dependencies.map((entry) => entry.competitionId).sort(),
+    );
+    expect(LEAGUE_SETUP_INDEX.fingerprint).toBe(snapshot.databaseFingerprint);
   });
 });
 

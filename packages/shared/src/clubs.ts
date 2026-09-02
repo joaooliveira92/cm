@@ -2,6 +2,14 @@ export const STATURE_TIERS = ["big", "mid", "small"] as const;
 
 export type StatureTier = (typeof STATURE_TIERS)[number];
 
+/**
+ * The one generated League's name. Fully fictional content, the same replaceable class as
+ * `LEAGUE_CLUBS` beside it — the two move together, which is why the name lives here rather than
+ * in the renderer that displays it. It names the world generation actually materializes, never the
+ * scope a `LeagueSelectionSnapshot` recorded as intent.
+ */
+export const LEAGUE_NAME = "Meridian Premier League";
+
 /** Fully fictional 20-club League and each club's permanent Stature Tier assignment (4 big / 8 mid / 8 small). */
 export const LEAGUE_CLUBS: ReadonlyArray<{ readonly name: string; readonly statureTier: StatureTier }> = [
   { name: "Castlemere United", statureTier: "big" },

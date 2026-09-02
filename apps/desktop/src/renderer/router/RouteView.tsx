@@ -16,7 +16,17 @@ import {
  * ring, so a screen with no other interactive control (read-only career screens)
  * still shows where focus landed on keyboard arrival.
  */
-export const RouteView = ({ screenId, children }: { screenId: string; children: ReactNode }) => {
+export const RouteView = ({
+  screenId,
+  fill = false,
+  children,
+}: {
+  screenId: string;
+  /** Let the screen own the height its parent gives it, for a step that is a full-height
+   *  workspace rather than a document. Off by default: every other screen is a reading column. */
+  fill?: boolean;
+  children: ReactNode;
+}) => {
   useEffect(() => {
     const target = consumePendingFocus();
     if (target === null) return;
@@ -28,7 +38,11 @@ export const RouteView = ({ screenId, children }: { screenId: string; children: 
   }, [screenId]);
 
   return (
-    <div data-focus-id={screenId} tabIndex={-1} className={FOCUS_RING.join(" ")}>
+    <div
+      data-focus-id={screenId}
+      tabIndex={-1}
+      className={`${FOCUS_RING.join(" ")}${fill ? " flex min-h-0 flex-1 flex-col" : ""}`}
+    >
       {children}
     </div>
   );

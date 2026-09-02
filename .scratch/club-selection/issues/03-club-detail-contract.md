@@ -40,4 +40,4 @@ Decisions this ticket owns:
 average age (subordinate), and a top-five-by-`overallRating` players row — shipped in one widened
 `ClubSelectionView` payload (no per-club RPC), with a shared `formatCredits` replacing the inline
 `$`.** See
-[Agent Note: The club detail panel is a compact squad readout over one payload](../../../.agents/notes/proposed/architecture/2026-09-01-club-detail-contract.md).
+[Agent Note: The club detail panel is a compact squad readout over one payload](../../../.agents/notes/implemented/architecture/2026-09-01-club-detail-contract.md).

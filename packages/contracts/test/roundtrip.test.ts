@@ -185,6 +185,25 @@ describe("tagged errors", () => {
     roundTrip(AppRpcs.loadSave.error, { _tag: "SaveNotFoundError", id: "s1" });
   });
 
+  it("beginCareer's payload round-trips a SnapshotId (ticket 03)", () => {
+    roundTrip(AppRpcs.beginCareer.payload, { snapshotId: "snap-1" });
+  });
+
+  it("beginCareer's stale-snapshot failure round-trips through the method error schema (ticket 03)", () => {
+    roundTrip(AppRpcs.beginCareer.error, {
+      _tag: "PresetFingerprintMismatchError",
+      expected: "real-geography@1.0.0",
+      found: "some-other-database@9.9.9",
+    });
+  });
+
+  it("commitCareer's unknown-club failure round-trips through the method error schema", () => {
+    roundTrip(AppRpcs.commitCareer.error, {
+      _tag: "ClubNotFoundError",
+      id: "club_eng_01",
+    });
+  });
+
   it("SaveArchivedError round-trips the cause the renderer words its copy from", () => {
     for (const cause of ["sacked", "retired"] as const) {
       roundTrip(SaveArchivedError, { _tag: "SaveArchivedError", saveId: "s1", cause });

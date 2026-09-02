@@ -1,4 +1,4 @@
-import { type AppRpcMethod, type RpcPayload, type RpcSuccess, type SaveId } from "@cm-clone/contracts";
+import { type AppRpcMethod, type RpcPayload, type RpcSuccess, type SaveId, type SnapshotId } from "@cm-clone/contracts";
 import type { Effect } from "effect";
 import { call } from "./call.js";
 import type { RpcClientError } from "./errors.js";
@@ -17,7 +17,8 @@ export const listSaves = (): RpcRead<"listSaves"> => call("listSaves", undefined
 
 export const loadSave = (id: SaveId): RpcRead<"loadSave"> => call("loadSave", { id });
 
-export const beginCareer = (): RpcRead<"beginCareer"> => call("beginCareer", undefined);
+export const beginCareer = (snapshotId: SnapshotId): RpcRead<"beginCareer"> =>
+  call("beginCareer", { snapshotId });
 
 export const discardCareer = (id: SaveId): RpcRead<"discardCareer"> => call("discardCareer", { id });
 

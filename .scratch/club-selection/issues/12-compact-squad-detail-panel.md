@@ -23,7 +23,7 @@ never from UI-local band tables or format leftovers.
   labeled Transfer/Wage Budget rows in Credits, squad size + average age (subordinate), and a
   top-five-by-`overallRating` players row — shipped in one widened `ClubSelectionView` payload (no
   per-club RPC), with a shared `formatCredits` replacing the inline `$`. See [Agent Note: The club
-  detail panel is a compact squad readout over one payload](../../../.agents/notes/proposed/architecture/2026-09-01-club-detail-contract.md).
+  detail panel is a compact squad readout over one payload](../../../.agents/notes/implemented/architecture/2026-09-01-club-detail-contract.md).
 
 **Blocked by:** 11 — World-bound selection record that reaches commitCareer.
 

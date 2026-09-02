@@ -1,7 +1,8 @@
 import { createContext } from "react";
-import type { LeagueSelectionSnapshot } from "@cm-clone/contracts";
+import type { ClubId, LeagueSelectionSnapshot } from "@cm-clone/contracts";
 import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
 import type { ReactNode } from "react";
+import type { ClubSelectionRecord } from "../create/clubSelection.js";
 import type { GenerationState } from "../create/generation.js";
 
 export type CommitStatus = "idle" | "committing" | "committed";
@@ -17,6 +18,9 @@ export interface CreationSession {
   readonly pillars: PillarDistribution;
   /** The provisional-world lifecycle. `provisionalIdOf` is the only way to reach the save id. */
   readonly generation: GenerationState;
+  /** The picked club, bound to the world it was picked from. Never read directly — `selectedClubOf`
+   *  is the read path, because a record left over from a replaced world is not a selection. */
+  readonly clubSelection: ClubSelectionRecord | null;
   readonly commit: CommitStatus;
   readonly error: string | null;
 }
@@ -25,6 +29,10 @@ export interface CreateSessionApi {
   readonly session: CreationSession;
   readonly update: (patch: Partial<CreationSession>) => void;
   readonly retryGeneration: () => void;
+  /** The only write path for the club selection. It reads the current world's id itself and
+   *  records both halves, so a club can never be recorded against a world that is not the current
+   *  one; `null` clears the pick. Outside a ready generation it is a no-op. */
+  readonly selectClub: (club: { readonly clubId: ClubId; readonly clubName: string } | null) => void;
   /** The content the current step wants rendered in the shell's bottom bar. */
   readonly registerBottomBar: (content: ReactNode | null) => void;
 }

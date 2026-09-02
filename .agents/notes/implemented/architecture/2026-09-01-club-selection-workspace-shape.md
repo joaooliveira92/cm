@@ -1,6 +1,6 @@
 # Agent Note: The Club Selection two-column workspace
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -18,7 +18,7 @@ Those are not answerable from prose. Five variants were built against real `getC
 on the live `/create/step-2` route and judged side by side; the set is captured on the throwaway
 branch `prototype/club-selection-workspace`.
 
-## Proposal
+## Decision
 
 Adopt the shape the prototype settled on.
 
@@ -51,7 +51,9 @@ Adopt the shape the prototype settled on.
   regions and one piece of state do not earn a context or a compound component, and props keep both
   regions testable against a fixed selection.
 
-## Acceptance criteria
+## Consequences
+
+What shipped:
 
 - A club row renders exactly name, stature tier and the squad-quality meter; no budget or objective
   appears in the rail.
@@ -63,13 +65,15 @@ Adopt the shape the prototype settled on.
   identifiable in greyscale.
 - The selected row still shows its stature tier — the selection marker does not displace a fact.
 
-## Risks
+What it costs:
 
-- **The creation shell blocks this.** `CreateFlowLayout`'s `<main>` is a `max-w-5xl` centred,
+- **The creation shell had to change, and did.** `CreateFlowLayout`'s `<main>` is a `max-w-5xl` centred,
   `overflow-y-auto` column and `RouteView`'s wrapper passes no height down, so nothing inside can be
   a full-height two-column workspace. The prototype faked it with a viewport calc and a
-  negative-margin breakout, which is not shippable. Implementing this means making the creation flow
-  a flex-height, full-width band for this step — a change to shared layout, not to the club screen.
+  negative-margin breakout, which is not shippable. What shipped instead is the shared-layout
+  change: the shell's `<main>` becomes a flex-height, full-width band on the club step and keeps the
+  centred reading column everywhere else, and `RouteView` gained an opt-in `fill` so a step can own
+  the height its parent gives it.
 - **The squad-quality meter is a six-step ordinal over `SQUAD_QUALITY_BANDS`.** It inherits whatever
   the band thresholds are; if generation retunes, the meter's spread retunes with it silently.
 - **Virtualization stays undecided.** Twenty meter rows are cheap. The threshold is a question for
@@ -80,5 +84,5 @@ Adopt the shape the prototype settled on.
 - Ticket: `.scratch/club-selection/issues/01-two-column-workspace-shape.md`
 - Selection state that survives into `commitCareer`:
   `.scratch/club-selection/issues/02-selected-club-in-the-creation-session.md`
-- Selection-vs-focus precedent: [Table and grid navigation](../../implemented/feature/2026-08-29-table-and-grid-navigation.md)
-- Row density precedent: [Dense table visuals and the player-status vocabulary](../../implemented/architecture/2026-08-31-dense-table-and-status-vocabulary.md)
+- Selection-vs-focus precedent: [Table and grid navigation](../feature/2026-08-29-table-and-grid-navigation.md)
+- Row density precedent: [Dense table visuals and the player-status vocabulary](2026-08-31-dense-table-and-status-vocabulary.md)

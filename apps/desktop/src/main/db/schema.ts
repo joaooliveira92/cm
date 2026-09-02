@@ -42,7 +42,9 @@ export const saveMeta = sqliteTable("save_meta", {
  * Written by `beginCareer` before any entity exists, and never modified. It is what makes a save
  * reproducible — `world_seed` plus the two versions determine every generated club, player, and
  * fixture, so the same triple regenerates the same world. `reference_year` is pinned here rather
- * than read from the clock at generation time, for the same reason.
+ * than read from the clock at generation time, for the same reason. The Setup Catalogue
+ * fingerprint, the content pack id/version, and the snapshot id record *which selection and which
+ * names* produced the ids in this file — provenance, never inputs to generation or simulation.
  *
  * `generated_at` is recorded for operator diagnosis only. Nothing in generation or simulation may
  * read it: a world that varies with its creation timestamp is not reproducible.
@@ -56,6 +58,22 @@ export const generationManifest = sqliteTable(
     rulesetVersion: text("ruleset_version").notNull(),
     referenceYear: integer("reference_year").notNull(),
     generatedAt: text("generated_at").notNull(),
+    /** The Setup Catalogue fingerprint this world was generated against (ticket 03). Together with
+     *  the content pack record below, it lets a later reader say which catalogue and which pack
+     *  produced the ids in this file — a catalogue that has since moved on is shown as provenance,
+     *  never silently re-resolved. */
+    catalogueFingerprint: text("catalogue_fingerprint").notNull(),
+    /** The content pack (id + version) the save was generated against, recorded the same way — so
+     *  reopening the same world under a pack whose ids no longer overlap is a reported condition
+     *  rather than a screen full of raw identifiers. */
+    contentPackId: text("content_pack_id").notNull(),
+    contentPackVersion: text("content_pack_version").notNull(),
+    /** The League Selection Snapshot this world was generated from. Diagnostic pointer, explicitly
+     *  **not** a foreign key: the snapshot file is machine-local (`league-snapshots.json` in
+     *  Electron userData) and will not exist beside a save copied to another machine, so nothing
+     *  may join to it. The snapshot's intents are never persisted — re-resolution happens against
+     *  the live catalogue at `beginCareer` time, and this id only says which selection asked. */
+    snapshotId: text("snapshot_id").notNull(),
   },
   () => [
     check("generation_manifest_single_row", sql`id = 1`),

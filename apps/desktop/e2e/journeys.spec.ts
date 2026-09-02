@@ -15,14 +15,57 @@ const parseCr = (text: string) => Number(text.replace(/[^\d]/g, ""));
 const parseTransferBudget = (text: string) =>
   parseCr(text.match(/Transfer Budget:\s*([\d,]+)/)?.[1] ?? "");
 
+test("a career is created end to end at the club the player picked", async ({ window: page }) => {
+  // The whole loop over the shipped app: choose a club, review it, commit, and arrive in the
+  // career at that club. Before the club-selection effort this was unreachable — the renderer
+  // shipped a placeholder club id no club matched — so this journey is also the regression test
+  // for the placeholder coming back.
+  await page.getByRole("button", { name: "Start New Career" }).click();
+  await expect(page.getByRole("heading", { name: "New Career" })).toBeVisible();
+
+  // Step 1 — the scope the world is generated at, which is the gate on generation.
+  const continueLeagues = page.getByRole("button", { name: /^Continue/ });
+  await expect(continueLeagues).toBeEnabled({ timeout: 30_000 });
+  await continueLeagues.click();
+
+  await page.getByPlaceholder("My Career").fill("Journey Career");
+  await page.getByRole("button", { name: "Next: Select Club" }).click();
+
+  const rail = page.getByRole("listbox", { name: "Clubs" });
+  await expect(rail).toBeVisible({ timeout: 30_000 });
+
+  // The assist is keyboard-reachable from the list: Tab out of the rail lands on it.
+  const firstRow = rail.getByRole("option").first();
+  await firstRow.focus();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Pick a team for me" })).toBeFocused();
+
+  // Pick by hand — Enter on the focused row, the level-2 listbox's primary action.
+  await firstRow.focus();
+  await page.keyboard.press("Enter");
+  await expect(firstRow).toHaveAttribute("aria-selected", "true");
+  const clubName = (await firstRow.locator("span").first().textContent())!.trim();
+
+  await page.getByRole("button", { name: "Next: Review" }).click();
+  await expect(page.getByRole("heading", { name: "Review Career" })).toBeVisible();
+  await expect(page.getByText("Club:")).toBeVisible();
+  await expect(page.getByText(clubName, { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Create Career" }).click();
+
+  // Arrival in the career, at the club that was picked — the chrome reads the user club from
+  // the save, so this fails if `commitCareer` marked the wrong club or none at all. The
+  // first-run teaching splash opens over this; it is deliberately left up, because visibility
+  // here is a render assertion and dismissing it would add a modal round trip this journey is
+  // not about.
+  await expect(page.getByText(/players$/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(clubName).first()).toBeVisible();
+});
+
 test("a save persists across app restarts", async ({ userDataDir }) => {
-  // NOTE: the shipped creation flow cannot commit a career — the router stage's
-  // known ClubSelection gap (a read-only club list, so `commitCareer` receives
-  // the placeholder "temp-club-id" and main rejects it; see router.spec.ts's
-  // AC-13 "failed commit" test). The persistence claim is therefore proven over
-  // a real seeded save: it survives a relaunch, remains listed, and continues
-  // into the same career state. The creation-commit breakage is routed to the
-  // orchestrator as a genuine app finding, not worked around here.
+  // The persistence claim is proven over a real seeded save rather than a created one: it
+  // survives a relaunch, remains listed, and continues into the same career state. Creating a
+  // career end to end is the journey above.
   await seedFresh(savesDir(userDataDir));
 
   const firstApp = await launchApp(userDataDir);

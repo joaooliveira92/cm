@@ -20,6 +20,23 @@ import type { NationCode } from "./nations.js";
 /** A stable, licence-free identifier. Every entity the player can see has one. */
 export type CanonicalId = string;
 
+/**
+ * The pack a freshly generated save is generated against, and the one `generation_manifest`
+ * records (id + version) so a later reader can say which pack produced the ids in that file.
+ *
+ * The manifest carries the pack's identity as provenance only — nothing downstream keys behaviour
+ * off it, and the same world can be reopened under a different pack. The display-name layer is the
+ * next ticket's work, so `displayNames` is empty today: a missing name falls back to the canonical
+ * id itself, which is the documented behaviour for an unnamed id until the pack names it.
+ */
+export const BASE_CONTENT_PACK: ContentPack = {
+  id: "fictional-names",
+  displayName: "Fictional identities",
+  version: "1.0.0",
+  contentSource: "FICTIONAL",
+  displayNames: {},
+};
+
 /** BCP 47 language tag, or `"*"` for the fallback every pack must provide. */
 export type LocaleTag = string;
 

@@ -32,4 +32,4 @@ Decisions this ticket owns:
 
 **The screen is a level-2 listbox, not a DataTable — bespoke `role="listbox"` on the renderer's
 roving primitives, Enter selects, focus order list → assist → Cancel → Next: Review, one polite
-panel announcer, no key binding and no Clear Selection.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-01-club-selection-keyboard-tier-and-listbox.md). The screen-keyboard-tiers table row for Club Selection is updated to level 2.
+panel announcer, no key binding and no Clear Selection.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-01-club-selection-keyboard-tier-and-listbox.md). The screen-keyboard-tiers table row for Club Selection is updated to level 2.

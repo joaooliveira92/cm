@@ -31,4 +31,4 @@ Decisions this ticket owns:
 ## Answer
 
 **The pick is an unseeded, exclusion-rolled assist: one press of `Math.random()` over the loaded
-clubs, excluding the currently selected one.** See [Agent Note](/.agents/notes/proposed/architecture/2026-09-01-pick-a-team-for-me-semantics.md).
+clubs, excluding the currently selected one.** See [Agent Note](/.agents/notes/implemented/architecture/2026-09-01-pick-a-team-for-me-semantics.md).

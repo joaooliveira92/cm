@@ -95,6 +95,10 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	\`ruleset_version\` text NOT NULL,
 	\`reference_year\` integer NOT NULL,
 	\`generated_at\` text NOT NULL,
+	\`catalogue_fingerprint\` text NOT NULL,
+	\`content_pack_id\` text NOT NULL,
+	\`content_pack_version\` text NOT NULL,
+	\`snapshot_id\` text NOT NULL,
 	CONSTRAINT "generation_manifest_single_row" CHECK(id = 1),
 	CONSTRAINT "generation_manifest_world_seed_range" CHECK(world_seed BETWEEN 0 AND 4294967295)
 );`,

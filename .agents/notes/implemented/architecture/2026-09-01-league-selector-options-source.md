@@ -1,6 +1,6 @@
 # Agent Note: The league selector sources a named, inert, single-option control
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -21,7 +21,7 @@ four questions without an answer: where the single option comes from, what selec
 exactly one League in the world, whether the `ClubSelectionRow` contract changes now, and how a
 single-option control is presented without the single-option accessibility trap.
 
-## Proposal
+## Decision
 
 ### The selector reads the generated world's one League, named by a new shared constant
 
@@ -92,7 +92,9 @@ than the disabled control.
   next to proper-noun competition names the setup screens already use; the league is where the whole
   career plays, so it gets a name.
 
-## Acceptance criteria
+## Consequences
+
+What shipped:
 
 - The selector on the Club Selection screen shows exactly one option, labelled with `LEAGUE_NAME`
   from `packages/shared/src/clubs.ts`, never from the `LeagueSelectionSnapshot` and never hardcoded
@@ -105,7 +107,7 @@ than the disabled control.
 - The panel league summary (club count, stature tier distribution) still derives from the club list
   itself with no new wire field.
 
-## Risks
+What it costs:
 
 - **The name is invented here but `LEAGUE_CLUBS` is the same class of content.** If the world's
   naming is later relocated or retuned, `LEAGUE_NAME` must move with `LEAGUE_CLUBS`; the note pins
@@ -126,4 +128,4 @@ than the disabled control.
 - The contract stance the no-field decision continues (one payload, no per-club RPC):
   [The club detail panel is a compact squad readout over one payload](2026-09-01-club-detail-contract.md)
 - The snapshot-vs-world distinction this leans on, and the generation boundary it records:
-  [League and Nation Selection](../../implemented/feature/2026-08-31-league-and-nation-selection.md)
+  [League and Nation Selection](../feature/2026-08-31-league-and-nation-selection.md)

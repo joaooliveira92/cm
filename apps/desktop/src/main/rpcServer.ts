@@ -95,9 +95,13 @@ const handlers: Record<AppRpcMethod, Handler> = {
   createSave: (payload, ctx) =>
     Effect.gen(function* () {
       const { name } = yield* Schema.decodeUnknownEffect(AppRpcs.createSave.payload)(payload);
-      return yield* createSave(ctx.savesDir, name);
+      return yield* createSave(ctx.savesDir, name, ctx.userDataDir);
     }),
-  beginCareer: (_payload, ctx) => beginCareer(ctx.savesDir),
+  beginCareer: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { snapshotId } = yield* Schema.decodeUnknownEffect(AppRpcs.beginCareer.payload)(payload);
+      return yield* beginCareer(ctx.savesDir, { userDataDir: ctx.userDataDir, snapshotId });
+    }),
   commitCareer: (payload, ctx) =>
     Effect.gen(function* () {
       const { id, name, selectedClubId, managerName, archetypeOrigin, pillars } = yield* Schema.decodeUnknownEffect(AppRpcs.commitCareer.payload)(payload);

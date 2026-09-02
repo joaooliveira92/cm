@@ -27,7 +27,7 @@ new RPC method), and the binding read is a pure helper in the renderer's shared 
   id cannot reach `commitCareer`. Continue is gated on a pick with a stated reason; the pick
   survives back-navigation; `commitCareer` rejects an unknown id with the existing
   `ClubNotFoundError`; `ReviewPane` gains a club row. See [Agent Note: The club selection is bound
-  to the world it was picked from](../../../.agents/notes/proposed/architecture/2026-09-01-club-selection-bound-to-its-world.md).
+  to the world it was picked from](../../../.agents/notes/implemented/architecture/2026-09-01-club-selection-bound-to-its-world.md).
 
 **Blocked by:** 10 — Two-column workspace in a full-width creation band.
 

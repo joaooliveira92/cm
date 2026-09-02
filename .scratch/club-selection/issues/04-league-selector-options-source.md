@@ -38,4 +38,4 @@ world holds one League; `ClubSelectionRow` gains no league field now (the identi
 to the multi-league effort); and it renders as a disabled native `<select>` with helper text, never
 the enabled single-option trap.
 
-**Resolved as [Agent Note: The league selector sources a named, inert, single-option control](../../../.agents/notes/proposed/architecture/2026-09-01-league-selector-options-source.md).**
+**Resolved as [Agent Note: The league selector sources a named, inert, single-option control](../../../.agents/notes/implemented/architecture/2026-09-01-league-selector-options-source.md).**

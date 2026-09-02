@@ -85,12 +85,16 @@ export const AppRpcs = {
     success: SaveSummary,
     error: Schema.Never,
   },
+  /** Generate a provisional world from the League Selection Snapshot the player submitted. The
+   *  snapshot is loaded by id in main and refused — before any save file exists — when its
+   *  catalogue fingerprint no longer matches the live Setup Catalogue, or when the id names no
+   *  snapshot at all (the caller's recovery is to re-run selection). */
   beginCareer: {
-    payload: Schema.Void,
+    payload: Schema.Struct({ snapshotId: SnapshotId }),
     success: Schema.Struct({ id: SaveId }),
-    error: Schema.Never,
+    error: PresetFingerprintMismatchError,
   },
-  commitCareer: {
+commitCareer: {
     payload: Schema.Struct({
       id: SaveId,
       name: Schema.String,
@@ -100,7 +104,7 @@ export const AppRpcs = {
       pillars: PillarDistribution,
     }),
     success: SaveSummary,
-    error: Schema.Union([InvalidPillarDistributionError]),
+    error: Schema.Union([InvalidPillarDistributionError, ClubNotFoundError]),
   },
   getManagerProfile: {
     payload: Schema.Struct({ saveId: SaveId }),

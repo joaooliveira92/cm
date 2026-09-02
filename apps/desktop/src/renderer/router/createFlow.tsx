@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { Outlet, useLocation } from "@tanstack/react-router";
-import { ClubId, type LeagueSelectionSnapshot } from "@cm-clone/contracts";
+import { type ClubId, type LeagueSelectionSnapshot } from "@cm-clone/contracts";
 import type { PillarDistribution } from "@cm-clone/shared";
 import { Effect, Result } from "effect";
 import { ClubSelectionScreen } from "../ClubSelectionScreen.js";
@@ -40,6 +40,7 @@ import {
   type GenerationState,
   type GenerationTransition,
 } from "../create/generation.js";
+import { selectedClubOf } from "../create/clubSelection.js";
 import { RouteView } from "./RouteView.js";
 import {
   CreateSessionContext,
@@ -61,6 +62,7 @@ const createEmptySession = (): CreationSession => ({
   archetype: "professor",
   pillars: { ...DEFAULT_PILLARS },
   generation: initialGeneration,
+  clubSelection: null,
   commit: "idle",
   error: null,
 });
@@ -180,18 +182,23 @@ export const StepOneRouteContent = () => {
 };
 
 export const StepTwoRouteContent = () => {
-  const { session, retryGeneration } = useCreateSession();
+  const { session, retryGeneration, selectClub } = useCreateSession();
   const provisionalId = provisionalIdOf(session.generation);
+  const selectedClub = selectedClubOf(session);
 
   return (
-    <RouteView screenId="createStep2">
+    <RouteView screenId="createStep2" fill>
       {provisionalId === null ? (
         <GenerationStatus
           state={session.generation}
           onRetry={retryGeneration}
         />
       ) : (
-        <ClubSelectionScreen saveId={provisionalId} />
+        <ClubSelectionScreen
+          saveId={provisionalId}
+          selectedClubId={selectedClub?.clubId ?? null}
+          onSelect={selectClub}
+        />
       )}
     </RouteView>
   );
@@ -261,10 +268,29 @@ export const CreateFlowLayout = () => {
     applyGeneration(startGeneration);
 
     const run = (async (): Promise<void> => {
-      const outcome = await runAtEdge(beginCareer());
+      const snapshot = sessionRef.current.leagueSelection;
+      if (snapshot === null) return;
+      const outcome = await runAtEdge(beginCareer(snapshot.id));
 
       if (Result.isFailure(outcome)) {
-        const message = describeRpcError(outcome.failure);
+        const failure = outcome.failure;
+        // The snapshot's catalogue fingerprint no longer matches the live catalogue (or the id
+        // names no snapshot at all). Generation was refused before touching disk; the only
+        // recovery is to re-run selection, so the player is taken back to the League step.
+        if (
+          failure._tag === "RemoteFailure" &&
+          failure.error._tag === "PresetFingerprintMismatchError"
+        ) {
+          applyGeneration((state) =>
+            generationFailed(
+              state,
+              "Your league selection no longer matches the current database.",
+            ),
+          );
+          navigate({ type: "createLeagues" });
+          return;
+        }
+        const message = describeRpcError(failure);
         applyGeneration((state) => generationFailed(state, message));
         return;
       }
@@ -284,6 +310,27 @@ export const CreateFlowLayout = () => {
   const retryGeneration = useCallback((): void => {
     void runGeneration();
   }, [runGeneration]);
+
+  /**
+   * The single write path for the club selection. It reads the current world's id itself rather
+   * than taking one from the caller, which is what makes recording a club against a world that is
+   * not the current one impossible instead of merely discouraged. Outside a ready generation it is
+   * a no-op — the only affordances that can call it are mounted exclusively in `Ready`.
+   */
+  const selectClub = useCallback(
+    (club: { readonly clubId: ClubId; readonly clubName: string } | null): void => {
+      const provisionalId = provisionalIdOf(sessionRef.current.generation);
+
+      if (provisionalId === null) {
+        return;
+      }
+
+      update({
+        clubSelection: club === null ? null : { ...club, provisionalId },
+      });
+    },
+    [update],
+  );
 
   const registerBottomBar = useCallback(
     (content: ReactNode | null): void => {
@@ -319,6 +366,16 @@ export const CreateFlowLayout = () => {
       return;
     }
 
+    const selectedClub = selectedClubOf(currentSession);
+
+    // The selection is bound to the world it was picked from, so a record left over from a
+    // replaced world reads as no selection here rather than reaching the commit as a dangling id.
+    if (selectedClub === null) {
+      update({ error: "Choose a club to continue." });
+      navigate({ type: "createStep2" });
+      return;
+    }
+
     update({
       commit: "committing",
       error: null,
@@ -328,7 +385,7 @@ export const CreateFlowLayout = () => {
       commitCareer({
         id: provisionalId,
         name: saveName,
-        selectedClubId: ClubId.make("temp-club-id"),
+        selectedClubId: selectedClub.clubId,
         managerName,
         archetypeOrigin: currentSession.archetype,
         pillars: currentSession.pillars,
@@ -343,7 +400,9 @@ export const CreateFlowLayout = () => {
           ? `Invalid pillar distribution: ${
               error.error.errors?.join(", ") || "unknown error"
             }`
-          : `Failed to create career: ${describeRpcError(error)}`;
+          : error._tag === "RemoteFailure" && error.error._tag === "ClubNotFoundError"
+            ? "That club is no longer available. Choose another."
+            : `Failed to create career: ${describeRpcError(error)}`;
 
       update({
         commit: "idle",
@@ -420,15 +479,18 @@ export const CreateFlowLayout = () => {
     session.saveName.trim().length > 0 && sumPillars(session.pillars) === 12;
   const selectionReady = isSelectionReady(session.generation);
   const blocked = blockedReason(session.generation);
+  /** Continue past the club step is gated on the decision that step exists to collect. */
+  const clubPicked = selectedClubOf(session) !== null;
 
   const contextValue = useMemo<CreateSessionApi>(
     () => ({
       session,
       update,
       retryGeneration,
+      selectClub,
       registerBottomBar,
     }),
-    [registerBottomBar, retryGeneration, session, update],
+    [registerBottomBar, retryGeneration, selectClub, session, update],
   );
 
   return (
@@ -440,17 +502,20 @@ export const CreateFlowLayout = () => {
             <span className="text-sm text-text-primary">
               {STEP_LABELS[step]}
             </span>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleCancel}
-            >
-              Cancel
-            </Button>
           </div>
         </header>
 
-        <main className="mx-auto min-h-0 w-full max-w-5xl flex-1 overflow-y-auto p-8">
+        {/* The club step is a full-height, full-width band: its workspace is two columns that
+            scroll independently, which a centred `max-w-5xl` `overflow-y-auto` column cannot host
+            — the height has to come from the shell rather than from a viewport calc inside the
+            step. Every other step keeps the centred reading column. */}
+        <main
+          className={
+            step === "2"
+              ? "flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden p-4"
+              : "mx-auto min-h-0 w-full max-w-5xl flex-1 overflow-y-auto p-8"
+          }
+        >
           <Outlet />
 
           {session.error !== null && (
@@ -474,6 +539,17 @@ export const CreateFlowLayout = () => {
 
         <footer className="border-t border-border-subtle bg-surface px-4 py-3">
           <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4">
+            {/* Cancel sits in the footer rather than the header band so the tab sequence runs in
+                task order — the step's own controls, then Cancel, then the step's primary action.
+                In the header it would have preceded everything on the screen. */}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleCancel}
+            >
+              Cancel
+            </Button>
+
             {bottomBarContent ?? (
               <div className="flex gap-4">
                 {step === "1" && (
@@ -513,13 +589,27 @@ export const CreateFlowLayout = () => {
                 )}
 
                 {step === "2" && (
-                  <Button
-                    type="button"
-                    onClick={handleGoToReview}
-                    disabled={!selectionReady}
-                  >
-                    Next: Review
-                  </Button>
+                  <div>
+                    <Button
+                      type="button"
+                      onClick={handleGoToReview}
+                      disabled={!selectionReady || !clubPicked}
+                      aria-describedby={
+                        clubPicked ? undefined : "club-selection-required-reason"
+                      }
+                    >
+                      Next: Review
+                    </Button>
+
+                    {!clubPicked && (
+                      <p
+                        id="club-selection-required-reason"
+                        className="mt-2 text-sm text-text-secondary"
+                      >
+                        Choose a club to continue.
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {step === "3" && (
@@ -578,6 +668,11 @@ const ReviewPane = ({
           <dd className="capitalize">
             {session.archetype.replaceAll("_", " ")}
           </dd>
+        </div>
+
+        <div className="flex gap-4">
+          <dt className="text-text-muted">Club:</dt>
+          <dd>{selectedClubOf(session)?.clubName ?? "Not selected"}</dd>
         </div>
 
         <div className="flex gap-4">

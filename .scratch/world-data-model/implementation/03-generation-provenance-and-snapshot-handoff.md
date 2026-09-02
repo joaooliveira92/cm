@@ -31,7 +31,7 @@ the same failure. Everything else about generation stays a defect if it goes wro
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 **Files:** `packages/contracts/src/rpc.ts` and `schemas.ts`, `apps/desktop/src/main/saves.ts`,
 `apps/desktop/src/main/rpcServer.ts`, `apps/desktop/src/main/leagueSelection.ts`,

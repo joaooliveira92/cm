@@ -17,7 +17,6 @@ import { SquadScreen } from "../src/renderer/SquadScreen.js";
 import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
 import { FixturesScreen } from "../src/renderer/FixturesScreen.js";
 import { SeasonSummaryScreen } from "../src/renderer/SeasonSummaryScreen.js";
-import { ClubSelectionScreen } from "../src/renderer/ClubSelectionScreen.js";
 import { CreationStep1 } from "../src/renderer/CreationStep1.js";
 import { TacticsScreen } from "../src/renderer/TacticsScreen.js";
 import { TransfersScreen } from "../src/renderer/TransfersScreen.js";
@@ -90,21 +89,6 @@ const seasonSummaryView = () => ({
   managerOutcome: "none" as const,
   consecutiveMisses: 0,
   archivedCause: null,
-});
-
-const clubSelectionView = () => ({
-  clubs: [
-    {
-      clubId: rid("c1"),
-      clubName: "Select FC",
-      statureTier: STATURE_TIERS[0],
-      boardObjectiveMin: 6,
-      boardObjectiveMax: 10,
-      squadQualityBand: "Competitive" as const,
-      transferBudget: 1000000,
-      wageBudget: 900000,
-    },
-  ],
 });
 
 const transfersView = () => ({
@@ -318,26 +302,6 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
     expect(main).toBe(document.activeElement);
   });
 
-  it("the read-only Club Selection screen exposes a focusable region with the ring", async () => {
-    mockPreload(async (method) => {
-      if (method === "getClubSelection") {
-        return { _tag: "Success", value: clubSelectionView() } as never;
-      }
-      return { _tag: "Failure", error: NOT_FOUND } as never;
-    });
-    render(
-      <RegistryProvider>
-        <ClubSelectionScreen saveId={rid("s1")} />
-      </RegistryProvider>,
-    );
-    await screen.findByText(/Select FC/);
-    const region = document.querySelector("div[tabindex]") as HTMLElement;
-    expect(region.tabIndex).toBe(-1);
-    expect(region.className).toContain("focus-visible:ring-2");
-    region.focus();
-    expect(region).toBe(document.activeElement);
-  });
-
   it("CreationStep1: every control is natively focusable with the ring, inputs first in tab order", () => {
     render(
       <CreationStep1
@@ -399,7 +363,7 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
       if (method === "getTactics") return { _tag: "Success", value: tacticsView() } as never;
       return { _tag: "Failure", error: NOT_FOUND } as never;
     });
-    render(
+render(
       <RegistryProvider>
         <TacticsScreen saveId={rid("s1")} />
       </RegistryProvider>,

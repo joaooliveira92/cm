@@ -1,11 +1,11 @@
 # Agent Note: Club Selection is a level-2 listbox, not a DataTable
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
 The Club Selection screen is assigned **level 1** ("zero interactive controls — read-only card
-list") in the [screen keyboard tiers](../feature/2026-08-29-screen-keyboard-tiers.md) table. That note's own
+list") in the [screen keyboard tiers](../../proposed/feature/2026-08-29-screen-keyboard-tiers.md) table. That note's own
 rule makes level 1 conditional on the screen having no interaction beyond nav/back, and its risk
 section says the assignment "must be revisited" when the screen gains controls. This effort turns
 the static list into a selection surface — a selectable list, a `Pick a team for me` assist
@@ -18,7 +18,7 @@ primary action; `renderer/focus.ts` owns `rovingTabIndex`, `focusIdOf`, semantic
 focus bookmarks; `mainMenu.tsx` is the bespoke roving-list precedent. The question is which tier
 the screen commits to and which of these it builds on.
 
-## Proposal
+## Decision
 
 **The screen lands at level 2**, and the club list is a **bespoke `role="listbox"`** built on the
 renderer's roving primitives — not a `DataTable`.
@@ -38,8 +38,11 @@ renderer's roving primitives — not a `DataTable`.
   along for nothing. Rowing behaviour is the DataTable model nonetheless: ↑/↓ rove, Home/End to
   the ends, Enter activates (selects the focused row), Space toggles selection (focus and selection
   are separate), Tab moves in and out.
-- **Focus order: club list → `Pick a team for me` → Cancel (shell header) → `Next: Review` (shell
-  footer).** The degenerate league selector is a *disabled* native `<select>` (ticket 04 decision),
+- **Focus order: club list → `Pick a team for me` → Cancel → `Next: Review`, both in the shell
+  footer.** Cancel moved out of the header band to get there: tab order follows DOM order, and in
+  the header Cancel preceded every control on the screen, so the order this decision asserts was
+  unreachable while it stayed there. The shell footer now reads Cancel on the left, the step's
+  actions on the right. The degenerate league selector is a *disabled* native `<select>` (ticket 04 decision),
   so it is not in the tab sequence. Cancel and Continue live in the creation shell's chrome
   (`createFlow.tsx`), not in the club screen component, so focus order is a screen-level fact.
 - **The detail panel carries one polite live region.** When the shown club changes — via the pick
@@ -79,7 +82,9 @@ renderer's roving primitives — not a `DataTable`.
   never moved, so the panel change must be spoken; the single-polite-announcer shape keeps the
   narration to one line.
 
-## Acceptance criteria
+## Consequences
+
+What shipped:
 
 - The screen-keyboard-tiers note's table lists Club Selection at level 2 with a rationale.
 - The club list is a `role="listbox"` with one roving tab stop; rows are options with
@@ -94,7 +99,7 @@ renderer's roving primitives — not a `DataTable`.
 - RECONCILIATION.md's keyboard row for Screen 11 no longer reads `deferred` against level 1 (ticket
   07 restates it at level 2).
 
-## Risks
+What it costs:
 
 - **The tier fact has two homes.** The tiers-note table and this note both state level 2; the table
   stays canonical and this note cross-links it. A future screen change that re-tiers Club Selection
@@ -109,11 +114,11 @@ renderer's roving primitives — not a `DataTable`.
 
 - Ticket: `.scratch/club-selection/issues/06-keyboard-and-accessibility-tier.md`
 - The tier table this updates:
-  [Screen keyboard tiers](../feature/2026-08-29-screen-keyboard-tiers.md)
+  [Screen keyboard tiers](../../proposed/feature/2026-08-29-screen-keyboard-tiers.md)
 - The roving machinery this reuses:
-  [Intra-screen focus model](2026-08-29-intra-screen-focus-model.md)
+  [Intra-screen focus model](../../proposed/architecture/2026-08-29-intra-screen-focus-model.md)
 - The DataTable model this deliberately does not adopt:
-  [Table and grid navigation](../../implemented/feature/2026-08-29-table-and-grid-navigation.md)
+  [Table and grid navigation](../feature/2026-08-29-table-and-grid-navigation.md)
 - The assist the panel announces:
   [`Pick a team for me` is an unseeded, exclusion-rolled assist](2026-09-01-pick-a-team-for-me-semantics.md)
 - Selection state and Continue gating that make Clear Selection redundant:

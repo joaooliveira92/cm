@@ -141,6 +141,24 @@ export class ManagerProfileScreenView extends Schema.Class<ManagerProfileScreenV
 
 export const SquadQualityBandSchema = Schema.Literals(SQUAD_QUALITY_BANDS);
 
+/** One line of the detail panel's top-five readout: the player's name and the Position they are
+ * strongest in. Deliberately not a `SquadPlayerView` — no raw player object crosses this boundary,
+ * because the panel needs a name and a Position, not twenty attributes. */
+export class ClubSelectionTopPlayer extends Schema.Class<ClubSelectionTopPlayer>("ClubSelectionTopPlayer")({
+  name: Schema.String,
+  position: PositionSchema,
+  overallRating: Schema.Finite,
+}) {}
+
+/** The detail panel's squad readout, computed at query time from the squad `getClubSelection`
+ * already loads to derive Squad Quality. It ships with every row rather than behind a per-club
+ * call, so selecting a club fills the panel with no second fetch and no loading state. */
+export class ClubSelectionDetail extends Schema.Class<ClubSelectionDetail>("ClubSelectionDetail")({
+  squadSize: Schema.Finite,
+  averageAge: Schema.Finite,
+  topPlayers: Schema.Array(ClubSelectionTopPlayer),
+}) {}
+
 export class ClubSelectionRow extends Schema.Class<ClubSelectionRow>("ClubSelectionRow")({
   clubId: ClubId,
   clubName: Schema.String,
@@ -150,6 +168,7 @@ export class ClubSelectionRow extends Schema.Class<ClubSelectionRow>("ClubSelect
   squadQualityBand: SquadQualityBandSchema,
   transferBudget: Schema.Finite,
   wageBudget: Schema.Finite,
+  detail: ClubSelectionDetail,
 }) {}
 
 export class ClubSelectionView extends Schema.Class<ClubSelectionView>("ClubSelectionView")({
@@ -879,8 +898,11 @@ export class InvalidLeagueSelectionError extends Schema.TaggedError<InvalidLeagu
   { issues: Schema.Array(SelectionIssueRow) },
 ) {}
 
-/** §13, §30.4. A stored preset or draft captured against a different database. Never migrated by
- *  guessing at similar names — the user is told and chooses again. */
+/** §13, §30.4. A stored preset, setup draft, or League Selection Snapshot captured against a
+ *  different database. Never migrated by guessing at similar names — the user is told and chooses
+ *  again. Also the single typed failure `beginCareer` raises: the snapshot's catalogue fingerprint
+ *  no longer matches the live Setup Catalogue, or the snapshot id names no snapshot at all
+ *  (`found` then carries a descriptive marker such as "(snapshot not found)"). */
 export class PresetFingerprintMismatchError extends Schema.TaggedError<PresetFingerprintMismatchError>()(
   "PresetFingerprintMismatchError",
   { expected: Schema.String, found: Schema.String },

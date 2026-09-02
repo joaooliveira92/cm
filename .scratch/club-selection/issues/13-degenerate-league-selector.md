@@ -21,7 +21,7 @@ field, and nothing new enters the effect graph; the control is presentational an
   selecting it is inert chrome while the world holds one League; `ClubSelectionRow` gains no league
   field now (league identity's scheme belongs to the multi-league effort); and it renders as a
   disabled native `<select>` with a stated reason, never the enabled single-option trap. See
-  [Agent Note: The league selector sources a named, inert, single-option control](../../../.agents/notes/proposed/architecture/2026-09-01-league-selector-options-source.md).
+  [Agent Note: The league selector sources a named, inert, single-option control](../../../.agents/notes/implemented/architecture/2026-09-01-league-selector-options-source.md).
 
 **Blocked by:** 10 — Two-column workspace in a full-width creation band.
 

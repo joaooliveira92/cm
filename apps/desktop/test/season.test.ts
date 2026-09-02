@@ -10,6 +10,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { beginCareer, commitCareer, createSave } from "../src/main/saves.js";
+import { createDefaultSnapshot } from "./snapshot-helpers.js";
 import { getSquad } from "../src/main/squad.js";
 import {
   advanceCalendar,
@@ -48,7 +49,13 @@ const loadFirstClubId = (saveId: string) =>
 /** A committed career generated deterministically from a world seed (ticket 01). */
 const createCareerFromWorldSeed = (worldSeed: number, name: string) =>
   Effect.gen(function* () {
-    const { id } = yield* beginCareer(savesDir, { worldSeed, referenceYear: 2026 });
+    const snapshotId = yield* createDefaultSnapshot(savesDir);
+    const { id } = yield* beginCareer(savesDir, {
+      worldSeed,
+      referenceYear: 2026,
+      userDataDir: savesDir,
+      snapshotId,
+    });
     const selectedClubId = yield* loadFirstClubId(id);
     return yield* commitCareer(savesDir, id, name, selectedClubId, {
       managerName: name,

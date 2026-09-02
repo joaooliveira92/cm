@@ -85,8 +85,8 @@ test("creation keeps beginCareer before Club Selection and returning discards it
   await page.getByRole("button", { name: "Next: Select Club" }).click();
 
   // Club Selection depends on the generated world + persisted economy, so
-  // beginCareer ran before we arrived (clubs render from the provisional save).
-  await expect(page.getByText("Board Objective").first()).toBeVisible();
+  // beginCareer ran before we arrived (the rail's options render from the provisional save).
+  await expect(page.getByRole("listbox", { name: "Clubs" })).toBeVisible();
 
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).toBeVisible();
@@ -99,7 +99,7 @@ test("reloading mid-creation redirects to step 1 (AC-13)", async ({ window: page
   await page.getByRole("button", { name: "Start New Career" }).click();
   await page.getByPlaceholder("My Career").fill("Reload Career");
   await page.getByRole("button", { name: "Next: Select Club" }).click();
-  await expect(page.getByText("Board Objective").first()).toBeVisible();
+  await expect(page.getByRole("listbox", { name: "Clubs" })).toBeVisible();
 
   // The creation session is in-memory: a reload lands on step 2 with nothing
   // recoverable, so the flow redirects back to step 1.
@@ -108,28 +108,25 @@ test("reloading mid-creation redirects to step 1 (AC-13)", async ({ window: page
   await expect(page.getByRole("button", { name: "Next: Select Club" })).toBeVisible();
 });
 
-test("a failed commit discards the provisional career and recovers to step 1 (AC-13)", async ({ window: page }) => {
-  // NOTE: the renderer's commit path passes a placeholder club id
-  // ("temp-club-id") that no real club matches, so commitCareer fails in main
-  // — a pre-existing creation-UI gap (the read-only ClubSelectionScreen never
-  // selected a club), carried over unchanged from App.tsx. This test proves the
-  // router-stage session lifecycle handles that failure: idempotent discard of
-  // the provisional save, then recovery to step 1 — not a crash or a dead end.
+test("the flow never advances past the club decision (AC-13)", async ({ window: page }) => {
+  // This test used to prove recovery from a commit that always failed: the renderer shipped a
+  // placeholder club id no club matched. The club-selection effort wired the real selection, so
+  // the reachable session fact here is the gate — Continue is closed until a club is picked, and
+  // the commit-failure recovery path is exercised at the seam that can still trigger it
+  // (`test/create-flow-club-selection.test.tsx`).
   await page.getByRole("button", { name: "Start New Career" }).click();
-  await page.getByPlaceholder("My Career").fill("Commit Career");
+  await page.getByPlaceholder("My Career").fill("Gated Career");
   await page.getByRole("button", { name: "Next: Select Club" }).click();
-  await expect(page.getByText("Board Objective").first()).toBeVisible();
+  await expect(page.getByRole("listbox", { name: "Clubs" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Next: Review" }).click();
-  await expect(page.getByRole("heading", { name: "Review Career" })).toBeVisible();
-  await page.getByRole("button", { name: "Create Career" }).click();
+  const next = page.getByRole("button", { name: "Next: Review" });
+  await expect(next).toBeDisabled();
+  await expect(page.getByText("Choose a club to continue.")).toBeVisible();
 
-  // Failure path: the provisional career is discarded and the flow recovers to
-  // step 1 (a fresh, empty creation session) with no crash.
-  await expect(page.getByPlaceholder("My Career")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Next: Select Club" })).toBeVisible();
+  await page.getByRole("option").first().click();
+  await expect(next).toBeEnabled();
 
-  // Nothing leaked into the save list.
+  // Nothing leaked into the save list: no career is committed by picking.
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).toBeVisible();
   await page.getByRole("button", { name: "Load Career" }).click();

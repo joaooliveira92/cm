@@ -16,6 +16,7 @@ import {
   canonicalNationId,
 } from "@cm-clone/shared";
 import { beginCareer } from "../src/main/saves.js";
+import { createDefaultSnapshot } from "./snapshot-helpers.js";
 
 let savesDir: string;
 
@@ -71,7 +72,13 @@ const readWorld = Effect.gen(function* () {
 
 const generate = (worldSeed: number) =>
   Effect.gen(function* () {
-    const { id } = yield* beginCareer(savesDir, { worldSeed, referenceYear: 2026 });
+    const snapshotId = yield* createDefaultSnapshot(savesDir);
+    const { id } = yield* beginCareer(savesDir, {
+      worldSeed,
+      referenceYear: 2026,
+      userDataDir: savesDir,
+      snapshotId,
+    });
     return yield* withSave(id, readWorld);
   });
 
@@ -96,8 +103,19 @@ describe("world generation determinism", () => {
 
   it.effect("does not vary with the reference year for the same seed", () =>
     Effect.gen(function* () {
-      const { id: idA } = yield* beginCareer(savesDir, { worldSeed: 55, referenceYear: 2026 });
-      const { id: idB } = yield* beginCareer(savesDir, { worldSeed: 55, referenceYear: 2031 });
+      const snapshotId = yield* createDefaultSnapshot(savesDir);
+      const { id: idA } = yield* beginCareer(savesDir, {
+        worldSeed: 55,
+        referenceYear: 2026,
+        userDataDir: savesDir,
+        snapshotId,
+      });
+      const { id: idB } = yield* beginCareer(savesDir, {
+        worldSeed: 55,
+        referenceYear: 2031,
+        userDataDir: savesDir,
+        snapshotId,
+      });
       const a = yield* withSave(idA, readWorld);
       const b = yield* withSave(idB, readWorld);
 
@@ -135,7 +153,13 @@ describe("world generation determinism", () => {
 
   it.effect("records the manifest that makes the save reproducible", () =>
     Effect.gen(function* () {
-      const { id } = yield* beginCareer(savesDir, { worldSeed: 4242, referenceYear: 2026 });
+      const snapshotId = yield* createDefaultSnapshot(savesDir);
+      const { id } = yield* beginCareer(savesDir, {
+        worldSeed: 4242,
+        referenceYear: 2026,
+        userDataDir: savesDir,
+        snapshotId,
+      });
       const rows = yield* withSave(
         id,
         Effect.gen(function* () {
@@ -160,7 +184,13 @@ describe("world generation determinism", () => {
 
   it.effect("writes the whole world catalogue — one nations row per member, every curated city", () =>
     Effect.gen(function* () {
-      const { id } = yield* beginCareer(savesDir, { worldSeed: 4242, referenceYear: 2026 });
+      const snapshotId = yield* createDefaultSnapshot(savesDir);
+      const { id } = yield* beginCareer(savesDir, {
+        worldSeed: 4242,
+        referenceYear: 2026,
+        userDataDir: savesDir,
+        snapshotId,
+      });
       const { nations, cities } = yield* withSave(id, readCatalogue);
 
       // The save's catalogue is the code catalogue, copied wholesale — nothing conditions it on the
@@ -188,15 +218,31 @@ describe("world generation determinism", () => {
 
   it.effect("carries identical catalogue rows under every save from one world seed", () =>
     Effect.gen(function* () {
-      // Two saves from one world seed whose other inputs differ (the reference year — the only
-      // generation input beside the seed until ticket 03 threads the selection snapshot into
-      // generation), plus a third from a different world seed: the catalogue row counts — and the
-      // rows themselves — are identical in every one. Selection does not reach generation yet, which
-      // is the point: the catalogue write is blind to whatever a save will eventually differ by, so
-      // two careers under two different selections from one seed necessarily carry the same rows.
-      const { id: idA } = yield* beginCareer(savesDir, { worldSeed: 31337, referenceYear: 2026 });
-      const { id: idB } = yield* beginCareer(savesDir, { worldSeed: 31337, referenceYear: 2031 });
-      const { id: idC } = yield* beginCareer(savesDir, { worldSeed: 999, referenceYear: 2026 });
+      // Two saves from one world seed whose other inputs differ (the reference year), plus a
+      // third from a different world seed — all three generated from the same default snapshot
+      // (ticket 03): the catalogue row counts — and the rows themselves — are identical in every
+      // one. Selection validates `beginCareer` but does not reach the catalogue write, which is
+      // the point: the catalogue is blind to whatever a save will eventually differ by, so two
+      // careers under two different selections from one seed necessarily carry the same rows.
+      const snapshotId = yield* createDefaultSnapshot(savesDir);
+      const { id: idA } = yield* beginCareer(savesDir, {
+        worldSeed: 31337,
+        referenceYear: 2026,
+        userDataDir: savesDir,
+        snapshotId,
+      });
+      const { id: idB } = yield* beginCareer(savesDir, {
+        worldSeed: 31337,
+        referenceYear: 2031,
+        userDataDir: savesDir,
+        snapshotId,
+      });
+      const { id: idC } = yield* beginCareer(savesDir, {
+        worldSeed: 999,
+        referenceYear: 2026,
+        userDataDir: savesDir,
+        snapshotId,
+      });
 
       const a = yield* withSave(idA, readCatalogue);
       const b = yield* withSave(idB, readCatalogue);

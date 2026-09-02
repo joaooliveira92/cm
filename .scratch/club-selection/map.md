@@ -69,7 +69,7 @@ Six facts constrain every ticket. None is a decision to re-litigate.
   name, stature tier and a squad-quality meter; the panel shows a league summary until a club is
   picked, with no auto-selection and no empty state; the rail loads and fails independently of the
   panel; selection is redundantly coded (fill, accent bar, badge) against the single focus ring.
-  Recorded as [Agent Note: The Club Selection two-column workspace](../../.agents/notes/proposed/architecture/2026-09-01-club-selection-workspace-shape.md).
+  Recorded as [Agent Note: The Club Selection two-column workspace](../../.agents/notes/implemented/architecture/2026-09-01-club-selection-workspace-shape.md).
   Variant set captured on the throwaway branch `prototype/club-selection-workspace`.
 
 - [02 — Selected club in the creation session](issues/02-selected-club-in-the-creation-session.md): the
@@ -78,13 +78,13 @@ Six facts constrain every ticket. None is a decision to re-litigate.
   `selectedClubOf` helper that returns `null` on a binding mismatch, so a stale id cannot reach
   `commitCareer`. Continue is gated on a pick with a stated reason; the pick survives back-navigation;
   `commitCareer` rejects an unknown id with the existing `ClubNotFoundError`; `ReviewPane` gains a club
-  row. Recorded as [Agent Note: The club selection is bound to the world it was picked from](../../.agents/notes/proposed/architecture/2026-09-01-club-selection-bound-to-its-world.md).
+  row. Recorded as [Agent Note: The club selection is bound to the world it was picked from](../../.agents/notes/implemented/architecture/2026-09-01-club-selection-bound-to-its-world.md).
 
 - [03 — Club detail contract](issues/03-club-detail-contract.md): the panel is a compact squad
   readout — board expectation as prose from the shared constant, labeled Transfer/Wage Budget rows in
   Credits, squad size + average age (subordinate), and a top-five-by-`overallRating` players row —
   shipped in one widened `ClubSelectionView` payload (no per-club RPC), with a shared `formatCredits`
-   replacing the inline `$`. Recorded as [Agent Note: The club detail panel is a compact squad readout over one payload](../../.agents/notes/proposed/architecture/2026-09-01-club-detail-contract.md).
+   replacing the inline `$`. Recorded as [Agent Note: The club detail panel is a compact squad readout over one payload](../../.agents/notes/implemented/architecture/2026-09-01-club-detail-contract.md).
 
 - [04 — League selector options source](issues/04-league-selector-options-source.md): the selector is
   built degenerate — the single option names the one generated League from a new shared `LEAGUE_NAME`
@@ -92,14 +92,14 @@ Six facts constrain every ticket. None is a decision to re-litigate.
   while the world holds one League; `ClubSelectionRow` gains no league field now (league identity's
   scheme belongs to the multi-league effort); and it renders as a disabled native `<select>` with a
   stated reason, never the enabled single-option trap. Recorded as
-  [Agent Note: The league selector sources a named, inert, single-option control](../../.agents/notes/proposed/architecture/2026-09-01-league-selector-options-source.md).
+  [Agent Note: The league selector sources a named, inert, single-option control](../../.agents/notes/implemented/architecture/2026-09-01-league-selector-options-source.md).
 
 - [05 — `Pick a team for me` semantics](issues/05-pick-a-team-for-me-semantics.md): the pick is one
   press of `Math.random()` over the loaded clubs, excluding the currently selected one — unseeded
   (the world seed never reaches the renderer, and the suggestion isn't persisted), every club, not a
   league; focus stays on the button with the result announced through an `aria-live` region; a
   subdued button below the list, disabled while the list is empty. Recorded as
-  [Agent Note: `Pick a team for me` is an unseeded, exclusion-rolled assist](../../.agents/notes/proposed/architecture/2026-09-01-pick-a-team-for-me-semantics.md).
+  [Agent Note: `Pick a team for me` is an unseeded, exclusion-rolled assist](../../.agents/notes/implemented/architecture/2026-09-01-pick-a-team-for-me-semantics.md).
   The row-reading and panel-live-region half lands in ticket 06.
 
 - [06 — Keyboard and accessibility tier](issues/06-keyboard-and-accessibility-tier.md): the screen is
@@ -107,7 +107,7 @@ Six facts constrain every ticket. None is a decision to re-litigate.
   `aria-activedescendant`), Enter selects, ↑/↓ Home/End rove, focus order list → `Pick a team for
   me` → Cancel → `Next: Review`; one polite panel announcer on show-change; no key binding for the
   assist and no Clear Selection (both reconciliation deviations). Recorded as
-  [Agent Note: Club Selection is a level-2 listbox, not a DataTable](../../.agents/notes/proposed/architecture/2026-09-01-club-selection-keyboard-tier-and-listbox.md).
+  [Agent Note: Club Selection is a level-2 listbox, not a DataTable](../../.agents/notes/implemented/architecture/2026-09-01-club-selection-keyboard-tier-and-listbox.md).
   The screen-keyboard-tiers table row updates from 1 to 2.
 
 - [07 — Screen 11 reconciliation update](issues/07-screen-11-reconciliation-update.md): the register

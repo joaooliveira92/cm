@@ -22,7 +22,7 @@ announcer for the panel — with nothing new entering the RPC graph.
   `DataTable`, not `aria-activedescendant`), Enter selects, ↑/↓ Home/End rove, focus order list →
   `Pick a team for me` → Cancel → `Next: Review`; one polite panel announcer on show-change; no key
   binding for the assist and no Clear Selection (both reconciliation deviations). See [Agent Note:
-  Club Selection is a level-2 listbox, not a DataTable](../../../.agents/notes/proposed/architecture/2026-09-01-club-selection-keyboard-tier-and-listbox.md).
+  Club Selection is a level-2 listbox, not a DataTable](../../../.agents/notes/implemented/architecture/2026-09-01-club-selection-keyboard-tier-and-listbox.md).
 
 **Blocked by:** 10 — Two-column workspace in a full-width creation band; 11 — World-bound selection
 record that reaches commitCareer; 13 — Degenerate league selector; 14 — Pick a team for me.

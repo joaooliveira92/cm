@@ -19,7 +19,7 @@ enters the scene, nothing is persisted; the button's only guard is whether the l
   one — unseeded (the world seed never reaches the renderer, and the suggestion isn't persisted),
   every club, not a league; focus stays on the button with the result announced through an
   `aria-live` region; a subdued button below the list, disabled while the list is empty. See
-  [Agent Note: `Pick a team for me` is an unseeded, exclusion-rolled assist](../../../.agents/notes/proposed/architecture/2026-09-01-pick-a-team-for-me-semantics.md).
+  [Agent Note: `Pick a team for me` is an unseeded, exclusion-rolled assist](../../../.agents/notes/implemented/architecture/2026-09-01-pick-a-team-for-me-semantics.md).
 
 **Blocked by:** 11 — World-bound selection record that reaches commitCareer.
 

@@ -160,8 +160,10 @@ export const getLeagueSetupIndex = Effect.sync(
 // ---------------------------------------------------------------------------
 
 /** Wire intents in, domain intents out. The brands come off here because the pure resolver takes
- *  plain strings — it validates them against the catalogue, which is the actual check. */
-const toDomainIntents = (
+ *  plain strings — it validates them against the catalogue, which is the actual check. Exported
+ *  because generation's snapshot handling re-resolves the same intents through the same
+ *  conversion. */
+export const toDomainIntents = (
   intents: readonly NationSelectionIntentPayload[],
 ): readonly NationSelectionIntent[] =>
   intents.map((intent) => ({

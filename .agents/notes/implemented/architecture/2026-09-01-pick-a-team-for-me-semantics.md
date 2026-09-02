@@ -1,6 +1,6 @@
 # Agent Note: `Pick a team for me` is an unseeded, exclusion-rolled assist
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -13,7 +13,7 @@ a "random" suggestion should carry the same reproducibility, and whether the but
 allowed to produce a no-op. A selection surface that changes the detail panel without the user's
 pointer or keyboard moving has to say what the user hears and where focus goes.
 
-## Proposal
+## Decision
 
 **The pick is one press of `Math.random()` over the loaded club list, excluding the currently
 selected club.** It selects a club and stays (settled at charting), and the suggestion carries no
@@ -59,7 +59,9 @@ reproducibility.
   disabled until a club exists there is nothing selected to exclude, and a list of one row has no
   second row to roll into.
 
-## Acceptance criteria
+## Consequences
+
+What shipped:
 
 - Pressing `Pick a team for me` selects a club other than the one currently selected, when one is
   selected; with nothing selected it selects a uniformly random club from the loaded list.
@@ -70,7 +72,7 @@ reproducibility.
 - The button is disabled while the list is loading or failed, and appears subdued below the list.
 - Picking does not advance the step; Continue remains the user's action.
 
-## Risks
+What it costs:
 
 - **The pick is unseeded by design, so a save is not state-complete across presses** — acceptable
   because nothing downstream reads the suggestion; the world itself stays reproducible.
@@ -90,6 +92,6 @@ reproducibility.
 - Selection state the picked club writes into:
   [The club selection is bound to the world it was picked from](2026-09-01-club-selection-bound-to-its-world.md)
 - World-seed reproducibility and the "no unseeded content" rule:
-  [Deterministic world generation and the Drizzle schema](../../implemented/architecture/2026-09-01-deterministic-world-generation-and-drizzle-schema.md)
+  [Deterministic world generation and the Drizzle schema](2026-09-01-deterministic-world-generation-and-drizzle-schema.md)
 - Unseeded randomness warning that this decision does not conflict with:
   [Human fixture pre-match boundary](../../proposed/architecture/2026-08-29-human-fixture-pre-match-boundary.md)
