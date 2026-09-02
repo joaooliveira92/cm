@@ -94,6 +94,22 @@ Six facts constrain every ticket. None is a decision to re-litigate.
   stated reason, never the enabled single-option trap. Recorded as
   [Agent Note: The league selector sources a named, inert, single-option control](../../.agents/notes/proposed/architecture/2026-09-01-league-selector-options-source.md).
 
+- [05 — `Pick a team for me` semantics](issues/05-pick-a-team-for-me-semantics.md): the pick is one
+  press of `Math.random()` over the loaded clubs, excluding the currently selected one — unseeded
+  (the world seed never reaches the renderer, and the suggestion isn't persisted), every club, not a
+  league; focus stays on the button with the result announced through an `aria-live` region; a
+  subdued button below the list, disabled while the list is empty. Recorded as
+  [Agent Note: `Pick a team for me` is an unseeded, exclusion-rolled assist](../../.agents/notes/proposed/architecture/2026-09-01-pick-a-team-for-me-semantics.md).
+  The row-reading and panel-live-region half lands in ticket 06.
+
+- [06 — Keyboard and accessibility tier](issues/06-keyboard-and-accessibility-tier.md): the screen is
+  level 2 — a bespoke `role="listbox"` on the renderer's roving primitives (not `DataTable`, not
+  `aria-activedescendant`), Enter selects, ↑/↓ Home/End rove, focus order list → `Pick a team for
+  me` → Cancel → `Next: Review`; one polite panel announcer on show-change; no key binding for the
+  assist and no Clear Selection (both reconciliation deviations). Recorded as
+  [Agent Note: Club Selection is a level-2 listbox, not a DataTable](../../.agents/notes/proposed/architecture/2026-09-01-club-selection-keyboard-tier-and-listbox.md).
+  The screen-keyboard-tiers table row updates from 1 to 2.
+
 ## Not yet specified
 
 - **Whether the club list needs virtualization.** Twenty rows do not, but the selector exists

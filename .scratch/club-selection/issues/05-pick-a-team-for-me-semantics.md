@@ -1,7 +1,7 @@
 # 05 — `Pick a team for me` semantics
 
 Type: grilling
-Status: open
+Status: resolved
 
 Blocked by: 02
 
@@ -27,3 +27,8 @@ Decisions this ticket owns:
   the detail panel changes under them. What is announced, and does focus move to the picked row?
 - **Label and placement.** The button sits below the list per the layout intent; whether it
   reads as a primary or a subdued action depends on how the screen wants to be used.
+
+## Answer
+
+**The pick is an unseeded, exclusion-rolled assist: one press of `Math.random()` over the loaded
+clubs, excluding the currently selected one.** See [Agent Note](/.agents/notes/proposed/architecture/2026-09-01-pick-a-team-for-me-semantics.md).
