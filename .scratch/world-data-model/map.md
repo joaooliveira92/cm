@@ -60,6 +60,19 @@ are not re-openable by a ticket without redrawing it:
 
 <!-- one line per resolved ticket -->
 
+- [01 - The Calendar's unit, and what Transfer Windows are defined against](issues/01-calendar-unit-and-transfer-windows.md):
+  the Calendar becomes **date-bearing** — a fixture carries an ISO `scheduled_date` plus a
+  competition-local `round`, one August-to-May shape serves every nation (per-nation cycles wait on
+  cross-nation transfers, because that is what makes the offset observable), advancing to date D
+  resolves every fixture in the world dated on or before D but stops only at **playable** competitions,
+  `season` stays a singleton with `current_date` replacing `current_matchday`, and a Season concludes at
+  its last dated fixture, cup final included. **Matchday** is redefined as *a date on which fixtures are
+  played* and **Round** takes the competition-local number; Transfer Windows become date ranges but
+  legality still reads `season.phase`, so the five `isWindowOpen` call sites are untouched. Dates come
+  from a code-held slot template, weekends before midweeks, cups reserving first, failing loudly rather
+  than double-booking; a club never plays twice on one date, enforced by the generator and a test rather
+  than by a half-covering index.
+
 - [02 - The competition graph: tiers, dependency edges, and promotion/relegation](issues/02-competition-graph-and-promotion.md):
   the catalogue stays code and only the resolved world is persisted — an activated-only `competitions`
   table, symmetric Exchange Links for promotion and relegation, a closed world at the edge of the chosen
@@ -82,6 +95,19 @@ are not re-openable by a ticket without redrawing it:
   scout quality drives the accrual rate while Stature Tier keeps owning headcount, the coach scales the
   passive development baseline that Technical Coaching is forbidden to touch, one static 1-20 quality
   column each, and no wages or hiring market, so `Contract` and `Wage Budget` are untouched.
+
+- [06 - Season and fixture generalization, including cup rounds](issues/06-season-and-fixture-generalization.md):
+  one `competition_participants` table keyed `(competition_id, season_number, club_id)` answers ticket
+  02's membership and freezes final positions onto itself — **no `competition_seasons` header table**,
+  because every column it would hold derives from its own children. One `fixtures` table serves leagues
+  and cups, gaining nullable penalty scores and an integer id; cup rows materialise only once both
+  participants are known, their dates still a pure function of round. A drawn tie goes **straight to a
+  shootout** — no extra time, no replays, no second legs — because the engine's two halves are
+  structural and its fatigue model is calibrated on 90 minutes. Draw and match seeds both hash canonical
+  ids, so the bracket reproduces as a chain rather than being stored; non-power-of-two fields take byes
+  rather than a preliminary round; `results-only` competitions get full fixture lists, since Depth
+  decides how a fixture resolves and never whether it exists; and past-Season fixtures survive only for
+  competitions the human's club played in, which destroys background history irreversibly.
 
 - [07 - What each Simulation Depth actually stores](issues/07-simulation-depth-persistence.md):
   `results-only` ships, justified **solely** on recurring per-matchday simulation cost — one match
@@ -112,6 +138,40 @@ are not re-openable by a ticket without redrawing it:
   club ids are minted as competition-plus-ordinal; and club strength becomes a function of competition
   tier and nation prior, with Stature Tier demoted to a spread within its own competition.
 
+- [11 - Event streams and read models at world scale](issues/11-event-streams-and-read-models.md):
+  only the Match Decider ever folds a stream — `loadStreamEvents` is called from two places, both in
+  `match.ts`, and the Club Decider's invariants are enforced against tables — so the governing rule
+  becomes **an event is appended only where it is the sole record of a fact**. Club streams shrink to
+  the human's club alone, which removes a measured ~204 MB per Season of `PlayerDeveloped` payloads
+  (~510 bytes per player, more than the player row it describes); `MatchdayResolved` stops carrying
+  every result, dropping a ~1.2 MB single row per Continue; background matches stay un-event-sourced,
+  priced at the 2,035 MB per Season it avoids; and every event gains a `game_date`. **None of the five
+  named read models becomes a table** — `league_table`'s measured 302 ms is a missing `competition_id`
+  predicate rather than a missing projection, and materialising it would duplicate ticket 06's frozen
+  participant standings — so a read model is redefined as a query shape over authoritative tables, with
+  the materialisation condition stated. One new table ships: `player_transfers`, authoritative rather
+  than projected, because the transfer events it replaces are being removed for exactly the clubs whose
+  history is hardest to reconstruct. Pruning reuses ticket 06's participation rule verbatim; no
+  partitioning and no snapshotting, since the only fold in the system is one 90-minute match.
+
+- [12 - Assemble the MVP world schema spec](issues/12-assemble-the-schema-spec.md): the destination,
+  written — [spec.md](spec.md) carries the complete table set for an MVP save at **28 tables**: today's
+  eighteen, seven of them changed and none removed, plus ten new ones. Each table states what it is
+  authoritative for, its columns, and the invariants and `CHECK` constraints that hold it, under four
+  governing rules — one home per fact; the catalogue lives in code while the save records the resolved
+  world, split on whether anything outside the loaded world points at a row (`nations` and `cities`
+  unconditional, `competitions` and `clubs` activated-only); Simulation Depth conditions only the five
+  tables beneath a club; and a canonical id is never a display name. The **index list is two** —
+  `players(club_id)` and `fixtures(competition_id, season_number, played)` — with every other table
+  unindexed as a stated choice: ticket 04's third measured index is dropped because `contracts.player_id`
+  is already that table's primary key, and tickets 09's and 11's no-index-needed claims are verified
+  rather than rediscovered. Row costs are stated in ticket 04's measured units, the delta from today's
+  schema is enumerated for `cm-to-tickets`, and every `CONTEXT.md` entry this effort touched is confirmed
+  reconciled when its own ticket landed. Four gaps no decision covered are recorded as **open questions**
+  rather than answered: an index for the calendar's date sweep, an index for the club-keyed membership
+  join, `player_transfers`' primary key and player-keyed index, and whether the paired-penalty invariant
+  is a `CHECK`.
+
 - [13 - How much geography a results-only nation is worth](issues/13-results-only-geography-cost.md):
   **Simulation Depth conditions what hangs beneath a club, never the world catalogue and never the club
   row itself** — so a `results-only` nation keeps its cities; the trim was never economic (~24 KB and
@@ -138,11 +198,14 @@ are not re-openable by a ticket without redrawing it:
   the Competition definition; whether any ship in MVP is a scope call that depends on how much the
   cup work costs.
 - **Youth and reserve squads.** Named in the reference material, absent from every shipped system.
-  Player career history left this list via ticket 08: it is a projection over existing transfer events,
-  and whether it is materialised is now a question on ticket 11.
+  Player career history has left this list entirely: ticket 08 removed it from the fog and ticket 11
+  settled it as a query over `players` and a new authoritative `player_transfers` table, not as a
+  materialised projection.
 - **Promotion playoffs.** Deferred rather than ruled out by ticket 02. A playoff is a knockout bracket
-  seeded from league positions — ticket 06's cup machinery pointed at a league, plus a calendar window
-  ticket 01 has not settled. Plausibly cheap once brackets exist; unspecifiable before.
+  seeded from league positions. Both prerequisites now exist — ticket 01's slot list has dates after the
+  last league round, and ticket 06 supplied the bracket, byes, and shootout. What remains is a scoping
+  call rather than a fog patch: a playoff is a cup competition whose entrants are decided by final
+  positions rather than by `competition_entrants`, which is a new entrant rule, not a new shape.
 
 ## Out of scope
 
@@ -191,3 +254,36 @@ are not re-openable by a ticket without redrawing it:
 
 - **The Drizzle migration itself**, the generator rewrite, and the query-layer changes. They are the
   work this spec is handed off to, not steps on the route to it.
+
+- **The concrete calendar constants.** Ticket 01 fixed the *structure* — a season-start constant, window
+  bounds as month-day pairs, a weekend-before-midweek slot list derived from them. Choosing whether
+  August-to-May starts on the 8th or the 15th is generation content, like ticket 10's club-strength
+  tuning constants.
+
+- **Rewriting the chrome's season readout.** Ticket 01 contradicts an `implemented` note whose
+  acceptance criteria fix the readout at `Season {n} · Matchday {m}/38` with "no copy expresses time in
+  days or dates". The replacement copy is a renderer decision rather than a shape on disk, and belongs
+  to whoever next opens the career-chrome note.
+
+- **A cup's missing fidelity: extra time, replays, and two-legged ties.** Ticket 06 shipped single-leg
+  ties settled by shootout, because extra time means adding halves 3 and 4 to an engine whose fatigue
+  model is calibrated on 90 minutes, and replays need dates the slot allocator never reserved. All
+  three are gameplay and engine work rather than shapes on disk.
+
+- **Showing a shootout in the match timeline.** Ticket 06 resolves shootouts outside the minute loop,
+  so they emit no match events and the timeline shows a drawn 90 minutes with a winner from elsewhere.
+  Surfacing it is a read model, not a table.
+
+- **Reworking the match RPC surface around fixture ids.** Ticket 11 fixed the *keyspace* — a Match
+  stream's `stream_id` is a `fixtures.id`, restoring what ADR-0007 specified and the code drifted from.
+  Collapsing the `MatchId` brand onto `FixtureId` and making `startMatch` fixture-addressed rather than
+  opponent-addressed is a contracts and handler change, handed off with the rest of the query layer.
+
+- **A news or inbox feed over the season stream.** Ticket 11 keeps the Season stream as the career's
+  narrative record and adds an in-world `game_date` to every event, which is what such a feed would
+  read. Building the feed is a screen, not a shape on disk.
+
+- **The unseeded background match.** `resolveFixtureScore` seeds the engine with `Math.random()`,
+  contradicting ticket 06's determinism chain. Surfaced by ticket 11 while deciding those events are
+  not worth storing, and left there: it is an engine-call defect, not a shape on disk, and it belongs
+  to whoever implements ticket 06's chain.

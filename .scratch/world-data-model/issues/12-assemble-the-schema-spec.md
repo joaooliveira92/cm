@@ -1,7 +1,7 @@
 # 12 - Assemble the MVP world schema spec
 
 Type: task
-Status: open
+Status: resolved
 Blocked by: 01, 02, 03, 05, 06, 07, 08, 09, 10, 11
 
 ## Question
@@ -25,6 +25,14 @@ The destination. With every decision above resolved, write the spec the effort e
 
 Publish as `.scratch/world-data-model/spec.md`. This ticket writes the spec; it does not write the
 migration.
+
+## Answer
+
+**The MVP save is 28 tables — today's eighteen, seven of them changed and none removed, plus ten new
+ones — with `nations` and `cities` unconditional, `competitions` and `clubs` activated-only,
+Simulation Depth conditioning only the five tables beneath a club, and an index list of two:
+`players(club_id)` and `fixtures(competition_id, season_number, played)`.** See
+[spec.md](../spec.md).
 
 ## Comments
 

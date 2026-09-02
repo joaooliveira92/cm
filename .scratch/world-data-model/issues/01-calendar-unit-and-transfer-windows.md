@@ -1,7 +1,7 @@
 # 01 - The Calendar's unit, and what Transfer Windows are defined against
 
 Type: grilling
-Status: claimed
+Status: resolved
 
 ## Question
 
@@ -31,3 +31,11 @@ competition graph's shape, which is why it goes first.
 
 Overturns recorded decisions in `CONTEXT.md` (Matchday, Calendar, Transfer Window). Reconcile the
 glossary in the same change.
+
+## Answer
+
+**The Calendar becomes date-bearing: fixtures carry an ISO date plus a competition-local round, one
+August-to-May shape serves every nation, Continue resolves everything dated on or before the target
+date and stops only at playable fixtures, `season` stays a singleton keyed on `current_date`, Matchday
+is redefined as a date and Round is the competition-local number, and Transfer Windows become date
+ranges still read through `season.phase`.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-02-date-bearing-calendar.md).

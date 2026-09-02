@@ -1,7 +1,7 @@
 # 11 - Event streams and read models at world scale
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 06, 07
 
 ## Question
@@ -39,3 +39,10 @@ scale problem this ticket already owns.
   batched `ScoutingProgressed` event per club with active assignments, at most N entries for a
   single-digit scout count. Small, but it is another stream growing every matchday for the life of the
   save, and it is the one place in this map where a value is stored rather than derived.
+
+## Answer
+
+**Two Deciders fold a stream and the third never did: the log records only facts no table holds, it
+grows at human scale rather than world scale, none of the five named read models becomes a table, and
+one new authoritative table `player_transfers` replaces the transfer events this removes.** See
+[Agent Note](../../../.agents/notes/proposed/architecture/2026-09-02-event-streams-and-read-models.md).

@@ -1,7 +1,7 @@
 # 06 - Season and fixture generalization, including cup rounds
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 01, 02
 
 ## Question
@@ -43,3 +43,13 @@ name or shape that row: this ticket owns it. Two requirements land here as a res
 
 The invariant 02 relies on: for every competition and Season, the participant count equals
 `competitions.club_count`.
+
+## Answer
+
+**One `competition_participants` table carrying frozen final positions replaces both the `season`
+generalization and ticket 02's unnamed per-Season row; one `fixtures` table serves leagues and cups
+with nullable penalty scores; cup fixtures materialise as their participants become known, with dates
+still a pure function of round; drawn ties go straight to a shootout, leaving the two-half engine
+untouched; both draw and match seeds hash canonical ids, so the bracket reproduces without being
+stored; `results-only` competitions get full fixture lists; and past-Season fixtures survive only for
+competitions the human played in.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-02-season-fixture-and-cup-schedule.md).

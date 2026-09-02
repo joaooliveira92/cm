@@ -325,7 +325,8 @@ each Competition it activates then reads at the Depth that Mode implies. A Compe
 as a dependency is capped at `standard` and is not depth-editable. The two readings are both
 glossary terms so the distinction outlives the screen they were coined for. On disk the three values
 collapse to two shapes: `full` and `standard` clubs are stored identically, and only `results-only`
-changes the table set, replacing a squad with a derived Results Strength.
+changes the table set, replacing a squad with a derived Results Strength. Depth governs how a Fixture
+resolves, never whether one exists: every loaded Competition has a full Fixture list.
 _Avoid_: Simulation Mode (the per-Nation grain, a different concept), detail level
 
 **Advanced Options**:
@@ -380,25 +381,53 @@ rather than migrated by guessing at renamed Competitions.
 > and [generation reads the snapshot](.agents/notes/proposed/architecture/2026-09-02-generation-reads-the-snapshot.md).
 
 **Season**:
-One full cycle of the League: a freshly-generated Fixture list played to completion, followed by a
-close-of-season transition into the next Season. Fixtures are reshuffled each Season with no seeding
-by prior standings. The close-of-season transition applies each Exchange Link, promoting and
-relegating clubs between Leagues.
+One full cycle of every loaded Competition: a freshly-generated Fixture list played to completion,
+followed by a close-of-season transition into the next Season. Every Nation runs the same
+August-to-May Season, on real dates; Nations whose real-world calendar runs spring-to-autumn ship on
+the wrong cycle in MVP. Fixtures are reshuffled each Season with no seeding by prior standings. The
+close-of-season transition applies each Exchange Link, promoting and relegating clubs between Leagues.
 
 **Fixture**:
-One scheduled match between two League clubs, home and away assignment fixed at generation time. A
-Season is a double round-robin: 38 Fixtures per club (19 opponents, home and away).
+One scheduled match between two clubs, home and away assignment fixed at generation time. A Fixture
+carries a real date and the Round it belongs to within its own Competition. A club never holds two
+Fixtures on one date. A 20-club League Season is a double round-robin: 38 Fixtures per club (19
+opponents, home and away); other Competitions have other lengths.
 _Avoid_: Match (Match is the live/resolved event a Fixture becomes; Fixture is the scheduled slot)
 
+**Cup Tie**:
+A Fixture in a knockout Competition, which must produce a winner. Single leg only: a Tie level after
+90 minutes goes straight to a Penalty Shootout, with no extra time and no replay. A Tie's two clubs
+are not known until the previous Round resolves, so its Fixture comes into existence then, on the date
+its Round would always have had.
+_Avoid_: Leg (there are no second legs in MVP), Replay
+
+**Bye**:
+A pass into Round 2 held by a club in a cup whose entrant count is not a power of two. Byes go to
+clubs from the highest-tier source Competitions, ties broken by canonical id.
+
+**Penalty Shootout**:
+How a level Cup Tie is settled. Resolved outside the match's minute-by-minute simulation, so it
+produces no match events and appears only as the Tie's penalty score.
+
 **Matchday**:
-The League-wide round number (1–38) a Fixture belongs to. The unit the calendar advances by and the
-unit Transfer Window boundaries are defined against — never a calendar date.
+A date on which Fixtures are played anywhere in the world. **This term was redefined**: it previously
+meant the League-wide round number 1–38, which no longer identifies a point in time once Competitions
+of different lengths run concurrently. That sense is now Round.
+_Avoid_: using Matchday for a round number, in copy or in a column name
+
+**Round**:
+The number a Fixture holds within its own Competition, counted from 1. Scoped to that Competition and
+meaningless across Competitions — a cup's Round 3 and a League's Round 3 are unrelated. In a knockout
+Competition it is the bracket depth, so it survives byes and replays.
+_Avoid_: Matchday (see above), Gameweek, Leg (a Leg is one match of a two-legged tie)
 
 **Calendar**:
-The career's sense of time, advanced only by jumping to the next scheduled event (a Matchday's
-Fixtures or a Transfer Window open/close), never by a day-by-day clock. v1 has no training, scouting,
-or press content to occupy a day with no Fixture, so a finer-grained clock would have nothing to
-display.
+The career's sense of time, carried as a real date and advanced only by jumping to the next scheduled
+event (a Matchday, or a Transfer Window opening or closing), never by a day-by-day clock. There is no
+training or press content to occupy a date with no Fixture, so a finer-grained clock would have
+nothing to display. Advancing to a date resolves every unplayed Fixture in the world dated on or
+before it, and stops at the first Matchday carrying a Fixture in a playable Competition — Fixtures in
+background Competitions resolve without stopping the career.
 _Avoid_: Schedule (Schedule is the generated list of Fixtures; Calendar is the mechanism for moving
 through it)
 
@@ -421,13 +450,14 @@ _Avoid_: Reminder, warning message, checklist (all imply something dismissible o
 independently of the underlying state)
 
 **Transfer Window**:
-One of two spans per Season during which transfer commands are legal: the pre-season window (open
-until Matchday 1) and the mid-season window (opens immediately after Matchday 19, closes when Matchday
-20 is due). Transfer commands raised outside an open window are rejected. No deadline-day mechanic.
+One of two date ranges per Season during which transfer commands are legal: the pre-season window,
+open from the date the career starts until the season's first Round, and the mid-season window. One
+pair of dates serves every Nation, following from the single Season shape. Transfer commands raised
+outside an open window are rejected. No deadline-day mechanic.
 _Avoid_: Transfer period (Window is the term used in commands/events)
 
 **League Table**:
-The standings derived from all resolved Fixtures in the current Season, ordered by points, then goal
+The standings derived from all resolved Fixtures of one League in the current Season, ordered by points, then goal
 difference, then goals scored. Head-to-head is deliberately not a tie-break.
 
 ### Transfers & contracts
@@ -636,7 +666,8 @@ Attribute Category.
 **Board Objective**:
 A League-position band (`{ lowerBound, upperBound }`) set for the player's club at the start of each
 Season, derived from its Stature Tier via a fixed `packages/shared` tier→band table (exact bands are
-tuning data, not decided here). Only the player's club receives one — AI clubs are never judged.
+tuning data, not decided here). Only the player's club receives one — AI clubs are never judged. It
+names the Competition it judges, which is always the club's League: a cup run is never judged.
 _Avoid_: Target, expectation
 
 **Verdict**:
@@ -649,7 +680,8 @@ zero. Reaching 1 triggers a warning; reaching 2 ends the career (see Manager Sac
 _Avoid_: Warning count, strikes
 
 **Season Concluded** (event):
-Fires once a Season's final Matchday's Fixtures have all resolved, carrying the final League Table.
+Fires once no unplayed Fixture remains for the Season in any loaded Competition — cup finals included,
+so it may fall after the last League Round — carrying the final League Table.
 The trigger for Board Objective judgment and every other season-boundary reaction.
 
 **Board Objective Judged** (event):
@@ -727,14 +759,26 @@ fix. Normal unresolved setup, not an error.
 ### Technical contract
 
 **Decider**:
-The event-sourced write-side boundary that accepts Commands and folds a single stream of Events into
-its own consistency invariants (e.g. Wage Budget never exceeded). v1 has three: the **Club Decider**
-(one stream per club, ×20 per save — Contracts, Transfer Budget, Wage Budget, Board Objective,
-Consecutive-Miss Counter), the **Match Decider** (one stream per Fixture — Match Events plus mid-match
-`ChangeTactics`/`MakeSubstitution`), and the **Season/Calendar Decider** (one stream per save —
-Matchday counter, Fixture generation, Transfer Window state). League Table is deliberately *not* a
-Decider — nothing commands it into a new state, so it's a projection, not an aggregate.
+The write-side boundary that accepts Commands and upholds one set of consistency invariants (e.g. Wage
+Budget never exceeded). There are three, and only one of them enforces its invariants by folding a
+Stream. The **Match Decider** owns one Stream per Fixture, keyed on that Fixture's id, holding the
+match seed plus mid-match `ChangeTactics`/`MakeSubstitution`; the timeline is folded from it on every
+read and never stored. The **Club Decider** owns Contracts, Transfer Budget, Wage Budget, Board
+Objective, and the Consecutive-Miss Counter, all of which are enforced against their own tables; its
+Stream is a ledger, exists only for the human's club, and records only what no table holds. The
+**Season/Calendar Decider** owns one Stream per Save — the current date, Fixture generation, and
+Transfer Window state — and is likewise a ledger. League Table is deliberately *not* a Decider —
+nothing commands it into a new state, so it's a projection, not an aggregate.
 _Avoid_: Aggregate (fine as the general event-sourcing term; Decider is this project's concrete unit)
+
+**Stream**:
+One append-only sequence of Events, addressed by a stream type and a stream id. A **folded** Stream is
+the sole record of state that no table holds, so reading that state means replaying it — the Match
+Decider's is the only one. A **ledger** Stream is written in the same transaction as the authoritative
+rows it describes and is never read back; it exists as a record of what happened, not as a source of
+truth. An Event is appended only where it is the sole record of a fact, which is why a Ledger stream
+never restates a column.
+_Avoid_: Log (fine for the `events` table as a whole; a Stream is one keyed sequence within it)
 
 **RpcGroup**:
 The `@effect/rpc` contract, defined in `packages/contracts`, that is the only channel between the
@@ -746,11 +790,13 @@ since only the renderer needs the IPC boundary.
 _Avoid_: API, endpoint (Rpc method is the term; there is no HTTP layer)
 
 **Read model**:
-The persisted, projector-maintained tables the RpcGroup's queries actually serve (`squad_view`,
-`league_table`, `transfer_inbox`, `match_day_timeline`, `season_summary`). Not every field in a read
-model is stored: derived values that ADR-0001 already fixed as computed-on-read (Position Rating,
-Overall Rating, Transfer Value) are still computed at query time from stored primitives, not persisted
-a second time.
+A named query shape the RpcGroup's queries serve, computed from authoritative tables at read time
+(`squad_view`, `league_table`, `transfer_inbox`, `match_day_timeline`, `season_summary`). None of them
+is a table, and derived values that ADR-0001 fixed as computed-on-read (Position Rating, Overall
+Rating, Transfer Value) are computed at query time from stored primitives rather than persisted a
+second time. A read model is materialised into a table only when its query stays O(world) after the
+indexes it needs exist *and* its inputs change less often than it is read; no read model meets both
+conditions today.
 _Avoid_: Projection table (fine informally; "read model" is the term used across tickets)
 
 ### Application shell
