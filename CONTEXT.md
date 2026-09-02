@@ -97,6 +97,31 @@ from the Position Ratings of the players occupying that phase's Positions (Defen
 Midfield: DM/MC/ML/MR; Attack: AMC/ST), before Tactical Modifiers or Home Advantage are applied.
 _Avoid_: Team strength, team rating
 
+**Nationality**:
+The single Nation a player is drawn from at generation, and the thing that selects their Name Pool. One
+per player, never several: work permits and national teams do not exist, so nothing in MVP reads a
+second one. Distinct from the nation of the club the player plays for — a player whose Nationality
+differs from their club's nation was drawn through a migration link.
+_Avoid_: citizenship, eligibility (neither is modelled)
+
+**Name Pool**:
+The per-Nation lists of given names and surnames a generated person's name is drawn from. Factual
+linguistic data held in code beside the Nation Profiles, never content-pack data and never in the save,
+on the same reasoning that keeps city names out of the pack. Feeds players and Staff alike. A generated
+name is stored directly as text: it is an attribute of a person, not an identifier, so the canonical-id
+rule does not reach it. See
+[player provenance](.agents/notes/proposed/architecture/2026-09-01-player-provenance-and-nationality.md).
+_Avoid_: name list, name bank
+
+**Results Strength**:
+A single derived score, 1-100, standing in for a club that has no players — the clubs of a
+`results-only` Competition. Computed on read from the world seed, the club's Stature Tier, and the
+season number, never stored, so it walks continuously across seasons without any system writing to it.
+Calibrated to the distribution real squads produce when their three Phase Strengths are averaged, which
+is how a squad-bearing club is compared against one without a squad in a mixed cup tie. See
+[what each Simulation Depth stores](.agents/notes/proposed/architecture/2026-09-01-simulation-depth-persistence.md).
+_Avoid_: club strength, team strength (the latter is already reserved against Phase Strength)
+
 **Tactical Modifiers**:
 A flat struct of numeric multipliers and biases — one each for attack, midfield, defense, tempo, and
 pressing-aggression — that a team's tactics (formation, roles, instructions; vocabulary owned by the
@@ -298,7 +323,9 @@ The per-competition detail tier the Active Leagues screen is built around: `full
 Simulation Mode, which is the per-Nation selection grain: a Nation is selected at a Mode, and
 each Competition it activates then reads at the Depth that Mode implies. A Competition pulled in
 as a dependency is capped at `standard` and is not depth-editable. The two readings are both
-glossary terms so the distinction outlives the screen they were coined for.
+glossary terms so the distinction outlives the screen they were coined for. On disk the three values
+collapse to two shapes: `full` and `standard` clubs are stored identically, and only `results-only`
+changes the table set, replacing a squad with a derived Results Strength.
 _Avoid_: Simulation Mode (the per-Nation grain, a different concept), detail level
 
 **Advanced Options**:
@@ -308,9 +335,10 @@ match-simulation detail, transfer-market activity, roster-generation detail, and
 visibility — each feeding the processing-cost/entity estimate or a real information policy, so a
 checkbox can never change nothing. Each category owns a small legal value set, and the four
 combine under checked incompatibility rules (a full roster conflicts with quick match
-simulation; an active transfer market conflicts with ranged information visibility). Staff
-generation and editor/developer capabilities carry no such system in v1 and stay recorded as
-future slots, not modeled options.
+simulation; an active transfer market conflicts with ranged information visibility).
+Editor/developer capabilities carry no such system in v1 and stay recorded as a future slot, not a
+modeled option. Staff generation is no longer among them — Staff ship, but they are derived from a
+club's Stature Tier rather than tuned, so they are still not an Advanced Option.
 _Avoid_: reference-game option labels (the brief's checklist is a vocabulary to translate, not
 to copy; see [the implementation brief](docs/active-leagues-setup-screen-implementation-brief.md))
 
@@ -453,12 +481,36 @@ screen that owns the state.
 _Avoid_: Inbox unqualified, News, Messages (the seed doc `docs/game-onboarding.md` uses "inbox" for a
 news feed; that meaning is not this project's)
 
+### Staff
+
+**Staff**:
+A named non-playing employee of a club, on a 1-20 **quality** scale, in one of exactly two roles —
+Coach or Scout. Every Staff member exists to carry a mechanical binding; everything else about them is
+presence. Quality is static: Staff neither develop nor age. Staff rows exist **only** for a club that
+is or has been human-managed, at any Simulation Depth, because no shipped system reads an AI club's
+Staff. Fixed at generation, derived from the club's Stature Tier with seeded variance: there are no
+Staff wages, no hiring, and no firing, so Staff never touch Contract or Wage Budget. See
+[the staff entity and its two bindings](.agents/notes/proposed/feature/2026-09-01-staff-entity-and-bindings.md).
+_Avoid_: backroom, coaching staff (fine informally; Staff is the modelled noun)
+
+**Coach**:
+The single Staff member of role `coach` a human-managed club holds. Scales the passive baseline every
+player receives from Player Development — never the focused Category, which Technical Coaching owns —
+so a Coach lifts the whole squad including players the manager never sets a Training Focus for. The
+Coach's effect never falls below neutral at any quality, so a weak Coach is felt as an absence rather
+than a penalty. Distinct from the human manager, who has Manager Pillars rather than a quality.
+_Avoid_: Head Coach, Manager (the human is the Manager)
+
 ### Scouting
 
 **Scout**:
-A per-club resource the manager assigns to observe a specific Player or Club, the mechanism by which
-Scouting Progress advances. Distinct from the human manager themself — a Scout is the assignable
-unit, not the player-facing role.
+A Staff member of role `scout`, assigned by the manager to observe a specific Player or Club, and the
+mechanism by which Scouting Progress advances. A club holds exactly as many Scouts as its Stature Tier
+grants, and each holds at most one assignment at a time, so the Scouts *are* the assignment slots.
+A Scout's quality sets the accrual rate of the assignment they hold, never how many assignments the
+club can run. Distinct from the human manager themself — a Scout is a named person the manager
+directs, not the player-facing role.
+_Avoid_: scout slot (Scouts stopped being fungible slots when they became Staff)
 
 **Scouting Assignment**:
 The act of assigning a Scout to a Player or Club, started and ended by explicit manager action.
@@ -564,8 +616,8 @@ _Avoid_: Training Intensity (collides with Training Focus and Match Intensity), 
 **Technical Coaching**:
 The Manager Pillar governing the manager's contribution to player development. In v1 it modifies the
 effectiveness of the manager's own Training Focus decision - it scales the focused Category's
-development, never the passive baseline every player receives - so a manager who sets no Training
-Focus draws no benefit from it. Youth integration and youth promotion are cut from v1: no youth or
+development, never the passive baseline every player receives (which the club's Coach owns instead) -
+so a manager who sets no Training Focus draws no benefit from it. Youth integration and youth promotion are cut from v1: no youth or
 reserve squad exists. Always qualified as a Manager Pillar to keep it distinct from Technical, the
 Attribute Category.
 

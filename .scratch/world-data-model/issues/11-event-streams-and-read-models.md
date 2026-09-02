@@ -23,3 +23,12 @@ three Deciders assume one save with twenty clubs and one season stream. None of 
 - Whether the event log needs partitioning, pruning, or snapshotting, and whether that contradicts
   the "durable at commit" and reproducibility properties the project relies on.
 - What replaying a stream costs after several seasons, and whether anything depends on being able to.
+
+## Handoff from ticket 08
+
+[08](08-player-provenance-and-nationality.md) ruled out a `player_career_history` table: completed
+transfers already append `PlayerTransferredOut`/`PlayerTransferredIn` to both clubs' streams, so a
+career history is a projection over an existing log rather than new authoritative state. What this
+ticket inherits is the sharpened question — **does `player_career_history` join the materialised
+read-model set?** Reconstructing one player's history means scanning both clubs' streams, which is the
+scale problem this ticket already owns.

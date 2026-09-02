@@ -1,7 +1,7 @@
 # 08 - Player provenance: nationality, birthplace, and identity across a multi-nation world
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 03
 
 ## Question
@@ -23,3 +23,11 @@ work-permit or eligibility rule.
   argument that forced the split for clubs may not apply.)
 - Is there a `player_career_history` in MVP, or is that fog? A transfer today leaves no trace beyond
   the changed `club_id`, and there is no completed-transfer record anywhere in the schema.
+
+## Answer
+
+**One nationality with a stated reintroduction condition, a nullable `birth_city_id` whose NULL means
+"born outside the loaded world", nation-keyed name pools in code as factual data (today's pool is 400
+combinations and must grow), names stored directly because a pack cannot name players it predates, and
+no career-history table because the event log already holds it.** See
+[Agent Note](../../../.agents/notes/proposed/architecture/2026-09-01-player-provenance-and-nationality.md).

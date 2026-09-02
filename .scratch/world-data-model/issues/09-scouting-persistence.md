@@ -1,7 +1,7 @@
 # 09 - Scouting: assignments, progress, and information policy at world scale
 
 Type: grilling
-Status: open
+Status: claimed
 Blocked by: 05, 07
 
 ## Question

@@ -49,7 +49,9 @@ are not re-openable by a ticket without redrawing it:
    Transfer Windows become date ranges.
 7. Domestic cups ship as real knockout competitions with bracket progression.
 8. `standard` depth carries full generated squads; `results-only` carries a club strength scalar and
-   no player rows. There is no third, reduced player representation.
+   no player rows. There is no third, reduced player representation. *(Refined by ticket 07: the scalar
+   is Results Strength, and it is derived on read rather than stored, so "carries" means the club is
+   described by one number, not that a column holds it.)*
 9. Nations, Cities, Competitions, and Clubs all become rows carrying canonical ids, with display names
    resolved from a content pack at read time.
 10. Scouting ships in MVP.
@@ -75,11 +77,32 @@ are not re-openable by a ticket without redrawing it:
   from 127 ms to 0.9 ms; the real cliff is quadratic JS in `loadAllPlayersEcon`, not storage; and
   event-sourcing background matches would cost 6x the rest of the save combined.
 
+- [05 - The staff entity and its two bindings](issues/05-staff-entity-and-bindings.md): two roles only,
+  Coach and Scout, and rows exist **only for the human's club** — so staff cost world generation nothing;
+  scout quality drives the accrual rate while Stature Tier keeps owning headcount, the coach scales the
+  passive development baseline that Technical Coaching is forbidden to touch, one static 1-20 quality
+  column each, and no wages or hiring market, so `Contract` and `Wage Budget` are untouched.
+
+- [07 - What each Simulation Depth actually stores](issues/07-simulation-depth-persistence.md):
+  `results-only` ships, justified **solely** on recurring per-matchday simulation cost — one match
+  simulation is ~1.0 ms measured, so a 16,000-club world costs ~8 s of blocking JS per Continue;
+  `full` and `standard` are byte-identical on disk, so Depth collapses to has-a-squad or not; and
+  Results Strength is one 1-100 number **derived on read** from seed, Stature Tier, and season,
+  calibrated against measured squads, with a collapse function serving mixed cup ties.
+
+- [08 - Player provenance: nationality, birthplace, and identity across a multi-nation world](issues/08-player-provenance-and-nationality.md):
+  one nationality column with a stated reintroduction condition (work permits or national teams), a
+  nullable `birth_city_id` whose NULL means "born outside the loaded world", nation-keyed name pools in
+  code as **factual** data beside `nations.ts` — today's pool is 20x20 = 400 combinations and must grow
+  to ~20k per nation — player names stored directly because a content pack ships before the players it
+  would have to name, and **no** career-history table, since the transfer events already hold it.
+
 ## Not yet specified
 
 - **AI club behaviour in background competitions.** Who signs, sells, and sets tactics for a club
-  nobody manages, and whether that differs by Simulation Depth. Blocked on knowing what a `standard`
-  club actually stores.
+  nobody manages. Ticket 07 settled that a `standard` club stores exactly what a `full` club stores, so
+  the shape is no longer the blocker: what remains is a behaviour question about who acts on those rows,
+  and at what per-matchday cost on top of the ~1.0 ms match.
 - **The cross-nation transfer market.** Whether a `standard`-depth club in another nation can bid for
   the human's players, and what `MIGRATION_LINKS` means once nations are rows rather than constants.
 - **Club finances beyond the budget pair.** Gate revenue, facilities, ownership — the reference
@@ -89,11 +112,9 @@ are not re-openable by a ticket without redrawing it:
 - **Continental competitions and national teams.** `CONTEXT.md` mentions cross-border tournaments in
   the Competition definition; whether any ship in MVP is a scope call that depends on how much the
   cup work costs.
-- **Youth, reserve squads, and player career history.** Named in the reference material, absent from
-  every shipped system.
-- **How much of a `results-only` nation's geography is worth writing.** Ticket 03 writes city rows for
-  every activated nation regardless of Simulation Depth. Whether a nation nobody can see the inside of
-  needs sixty cities is a cost question ticket 07 is better placed to answer than 03 was.
+- **Youth and reserve squads.** Named in the reference material, absent from every shipped system.
+  Player career history left this list via ticket 08: it is a projection over existing transfer events,
+  and whether it is materialised is now a question on ticket 11.
 - **Promotion playoffs.** Deferred rather than ruled out by ticket 02. A playoff is a knockout bracket
   seeded from league positions — ticket 06's cup machinery pointed at a league, plus a calendar window
   ticket 01 has not settled. Plausibly cheap once brackets exist; unspecifiable before.
@@ -114,6 +135,10 @@ are not re-openable by a ticket without redrawing it:
   in the world to render one league. All three are real and all three get far worse at world scale,
   but they are query-layer bugs rather than shapes on disk, and the query layer is already handed off.
   The **index list is not** out of scope: indexes are part of a schema, and ticket 12 carries them.
+
+- **A staff hiring market.** Ticket 05 fixed staff at generation: no wages, no candidate pool, no
+  hiring or firing. Making staff a lever the manager pulls means reopening `Contract` and `Wage
+  Budget`, which is a gameplay effort rather than a shape on disk.
 
 - **The Drizzle migration itself**, the generator rewrite, and the query-layer changes. They are the
   work this spec is handed off to, not steps on the route to it.

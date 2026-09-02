@@ -1,7 +1,7 @@
 # 07 - What each Simulation Depth actually stores
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 02, 03, 04
 
 ## Question
@@ -35,3 +35,10 @@ wall-clock, per-matchday simulation cost, or read-path cost — or conclude it d
 [02](02-competition-graph-and-promotion.md) placed Simulation Depth as a column on the `competitions`
 row — one row per *activated* competition, none for those resolved to `not_loaded`. What each Depth
 value implies on disk remains this ticket's subject; only where the value is written is settled.
+
+## Answer
+
+**`results-only` ships, justified solely on recurring per-matchday simulation cost (~1.0 ms per
+fixture, measured); `full` and `standard` are byte-identical on disk; and Results Strength is one
+1-100 number derived on read, never a stored column.** See
+[Agent Note](../../../.agents/notes/proposed/architecture/2026-09-01-simulation-depth-persistence.md).

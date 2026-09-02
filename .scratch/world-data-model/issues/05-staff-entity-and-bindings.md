@@ -1,7 +1,7 @@
 # 05 - The staff entity and its two bindings
 
 Type: grilling
-Status: claimed
+Status: resolved
 
 ## Question
 
@@ -27,3 +27,9 @@ Decide the staff model:
   `results-only` competition.
 
 Adds vocabulary to `CONTEXT.md`: Staff, and whatever roles survive.
+
+## Answer
+
+**Two roles, Coach and Scout, on the human's club only: scout quality drives accrual rate, the coach
+scales the passive development baseline, one static 1-20 quality column each, no wages and no hiring
+market.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-09-01-staff-entity-and-bindings.md).
