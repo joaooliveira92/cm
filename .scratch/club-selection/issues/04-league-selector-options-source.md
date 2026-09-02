@@ -1,7 +1,7 @@
 # 04 — League selector options source
 
 Type: grilling
-Status: open
+Status: resolved
 
 ## Question
 
@@ -29,3 +29,13 @@ Decisions this ticket owns:
   retrofitting it later touches the contract, the query, and every consumer.
 - **The disabled and single-option presentation.** A select with one option is a common
   accessibility trap: it reads as interactive and isn't.
+
+## Answer
+
+The selector is built degenerate: the single option names the one generated League from a new
+shared `LEAGUE_NAME` constant, not the session snapshot; selecting it is inert chrome while the
+world holds one League; `ClubSelectionRow` gains no league field now (the identity scheme belongs
+to the multi-league effort); and it renders as a disabled native `<select>` with helper text, never
+the enabled single-option trap.
+
+**Resolved as [Agent Note: The league selector sources a named, inert, single-option control](../../../.agents/notes/proposed/architecture/2026-09-01-league-selector-options-source.md).**

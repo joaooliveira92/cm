@@ -1,7 +1,7 @@
 # 03 — Club detail contract
 
 Type: grilling
-Status: open
+Status: resolved
 
 Blocked by: 01
 
@@ -33,3 +33,11 @@ Decisions this ticket owns:
 - **Where budget formatting belongs.** The screen currently renders `$` with
   `toFixed(0)` inline and prints transfer and wage budgets adjacent with no labels. Money
   formatting is a display concern that recurs across screens.
+
+## Answer
+
+**The panel is a compact squad readout — expectation prose, labeled Credits budgets, squad size and
+average age (subordinate), and a top-five-by-`overallRating` players row — shipped in one widened
+`ClubSelectionView` payload (no per-club RPC), with a shared `formatCredits` replacing the inline
+`$`.** See
+[Agent Note: The club detail panel is a compact squad readout over one payload](../../../.agents/notes/proposed/architecture/2026-09-01-club-detail-contract.md).

@@ -80,6 +80,20 @@ Six facts constrain every ticket. None is a decision to re-litigate.
   `commitCareer` rejects an unknown id with the existing `ClubNotFoundError`; `ReviewPane` gains a club
   row. Recorded as [Agent Note: The club selection is bound to the world it was picked from](../../.agents/notes/proposed/architecture/2026-09-01-club-selection-bound-to-its-world.md).
 
+- [03 — Club detail contract](issues/03-club-detail-contract.md): the panel is a compact squad
+  readout — board expectation as prose from the shared constant, labeled Transfer/Wage Budget rows in
+  Credits, squad size + average age (subordinate), and a top-five-by-`overallRating` players row —
+  shipped in one widened `ClubSelectionView` payload (no per-club RPC), with a shared `formatCredits`
+   replacing the inline `$`. Recorded as [Agent Note: The club detail panel is a compact squad readout over one payload](../../.agents/notes/proposed/architecture/2026-09-01-club-detail-contract.md).
+
+- [04 — League selector options source](issues/04-league-selector-options-source.md): the selector is
+  built degenerate — the single option names the one generated League from a new shared `LEAGUE_NAME`
+  constant (not the session snapshot, which records un-honoured intent); selecting it is inert chrome
+  while the world holds one League; `ClubSelectionRow` gains no league field now (league identity's
+  scheme belongs to the multi-league effort); and it renders as a disabled native `<select>` with a
+  stated reason, never the enabled single-option trap. Recorded as
+  [Agent Note: The league selector sources a named, inert, single-option control](../../.agents/notes/proposed/architecture/2026-09-01-league-selector-options-source.md).
+
 ## Not yet specified
 
 - **Whether the club list needs virtualization.** Twenty rows do not, but the selector exists
