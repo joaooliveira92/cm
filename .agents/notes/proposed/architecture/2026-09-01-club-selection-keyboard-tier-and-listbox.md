@@ -5,7 +5,7 @@ Status: proposed
 ## Problem
 
 The Club Selection screen is assigned **level 1** ("zero interactive controls — read-only card
-list") in the [screen keyboard tiers](2026-08-29-screen-keyboard-tiers.md) table. That note's own
+list") in the [screen keyboard tiers](../feature/2026-08-29-screen-keyboard-tiers.md) table. That note's own
 rule makes level 1 conditional on the screen having no interaction beyond nav/back, and its risk
 section says the assignment "must be revisited" when the screen gains controls. This effort turns
 the static list into a selection surface — a selectable list, a `Pick a team for me` assist
@@ -109,7 +109,7 @@ renderer's roving primitives — not a `DataTable`.
 
 - Ticket: `.scratch/club-selection/issues/06-keyboard-and-accessibility-tier.md`
 - The tier table this updates:
-  [Screen keyboard tiers](2026-08-29-screen-keyboard-tiers.md)
+  [Screen keyboard tiers](../feature/2026-08-29-screen-keyboard-tiers.md)
 - The roving machinery this reuses:
   [Intra-screen focus model](2026-08-29-intra-screen-focus-model.md)
 - The DataTable model this deliberately does not adopt:

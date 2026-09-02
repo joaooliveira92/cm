@@ -110,21 +110,37 @@ Six facts constrain every ticket. None is a decision to re-litigate.
   [Agent Note: Club Selection is a level-2 listbox, not a DataTable](../../.agents/notes/proposed/architecture/2026-09-01-club-selection-keyboard-tier-and-listbox.md).
   The screen-keyboard-tiers table row updates from 1 to 2.
 
+- [07 — Screen 11 reconciliation update](issues/07-screen-11-reconciliation-update.md): the register
+  edit ships **with the implementing code**, not before it; this ticket settles the exact
+  restatement the spec carries forward — the Screen 11 audit table is fully replaced (rows+kind),
+  with mode selector / availability / eligibility, search / filter, and facilities / staff /
+  performance ruled deliberate `out-of-scope` deviations, keyboard and state-model rows restated at
+  level 2 and world-bound, virtualization and autosave `deferred`/`unscheduled`, the stale
+  `temp-club-id` paragraph replaced, and Screen 12's unreachable-commit paragraph updated to match.
+  Scoping + transcription of the six decisions above: no new note.
+
+- [08 — Assemble the spec](issues/08-assemble-spec.md): the spec is assembled at `spec.md` in the
+  `/cm-to-spec` shape from tickets 01–07 and their six notes — Implementation Decisions carry each
+  ticket's gist-link verbatim, the Screen 11 restatement rides as a normative instruction, and the
+  out-of-scope set is restated — `Status: ready-for-agent`, ready for `/cm-to-tickets` →
+  `/cm-implement`. Assembling it confirmed 09 sits past the destination (generation lifecycle, not
+  Club Selection work) and it is ruled out of scope below. No new note: assembly, not a decision.
+  **The map is done: nothing is left to decide before the hand-off.**
+
 ## Not yet specified
 
-- **Whether the club list needs virtualization.** Twenty rows do not, but the selector exists
-  precisely because more leagues are coming. The threshold, and whether the shared
-  `renderer/table/` layer is the right host instead of a bespoke list, waits on the list's
-  shape.
-- **Alignment with the visual-design-language effort.** That map's create-career surface ticket
-  covers chrome bands and surface fields for the creation flow. Whether this screen adopts
-  those tokens directly or needs its own workspace grammar is not yet answerable.
+_(None. The two charting-era patches — club-list virtualization and alignment with the
+visual-design-language effort — resolved past this destination when the spec was assembled
+(ticket 08) and are recorded under Out of scope. The frontier is clear; the map is complete.)_
 
 ## Out of scope
 
 - **Multi-league world generation.** Materializing the League Selection Snapshot into more than
   the fixed 20-club League is world generation's subject, per the recorded generation boundary.
-  This effort builds the selector that will consume it.
+  This effort builds the selector that will consume it. Includes the **changing-league-scope-after-
+  generation lifecycle**, [closed as 09](issues/09-league-rescope-after-generation.md): whether a
+  rescope regenerates or is frozen, what happens to the world in flight, and what the user sees
+  are generation-lifecycle decisions, invisible until generation honours the snapshot.
 - **Search and filter over the club list**, per the imported Screen 11 spec.
 - **The eligibility model** — availability states (eligible / unavailable / occupied /
   restricted / unsuitable), manager reputation, qualifications, nationality, and language
@@ -133,3 +149,8 @@ Six facts constrain every ticket. None is a decision to re-litigate.
 - **A manager-to-club fit model.** `Pick a team for me` is uniform random; weighting a
   recommendation by Pillars or Archetype needs a fit model that does not exist.
 - **A facilities readout**, absent from the schema.
+- **Club list virtualization.** Twenty meter rows render eagerly; the threshold — and whether the
+  shared `renderer/table/` layer is the host — belongs to whenever a second league generates.
+- **Alignment with the visual-design-language effort.** Whether this screen adopts that map's
+  create-career chrome band and surface-field tokens directly, or needs its own workspace grammar,
+  is that effort's decision, not this map's.

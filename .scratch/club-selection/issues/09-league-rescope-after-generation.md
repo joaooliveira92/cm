@@ -1,7 +1,7 @@
 # 09 — Changing league scope after generation
 
 Type: grilling
-Status: open
+Status: resolved
 
 ## Question
 
@@ -46,3 +46,24 @@ Decisions this ticket owns:
 
 Not blocked. 02's binding means a rescope can never produce a dangling club id whatever this
 ticket decides, so the two are independent.
+
+## Answer
+
+**Closed out of scope** by ticket 08 on assembling the spec. This question sits past the
+club-selection map's destination: the regenerate-or-freeze decision, the abandonment-race
+handling for a world in flight or on disk, whether a rescope reuses `abandon` or gets its own
+transition, what the user sees (confirmation, and what it says about a club already picked), and
+the `LeagueSelectionSnapshot`-equality definition of "different" are all generation-lifecycle
+decisions. They are untestable today (the same fixed 20-club League generates whatever scope was
+chosen, so a wrong world is indistinguishable from the right one) and become real bugs only when
+generation honours the snapshot — which is the multi-league world-generation effort, out of scope
+here per CONTEXT.md's recorded generation boundary.
+
+The dangling-id half of this problem was owned and fixed by [02 — Selected club in the creation
+session](02-selected-club-in-the-creation-session.md): the world-bound `clubSelection` record and
+the `selectedClubOf` read helper mean a rescope can never reach `commitCareer` with a stale club
+id, whatever this ticket's eventual owner decides.
+
+Recorded on the [club-selection map](../map.md) under Out of scope. Returns only if a generation
+effort redraws the destination — then as a fresh effort, not a resumption. No Agent Note (pure
+scoping call).
