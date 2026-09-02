@@ -67,7 +67,7 @@ are not re-openable by a ticket without redrawing it:
 
 - [03 - The world catalogue: nations, cities, stadiums, and canonical-id enforcement](issues/03-world-catalogue-and-canonical-ids.md):
   nations are unconditional thin referent rows with the Nation Profile left in code, cities are curated
-  real geography resolved per activated nation, no stadium table, and the canonical-id rule lands
+  real geography resolved per activated nation *(widened to unconditional by ticket 13)*, no stadium table, and the canonical-id rule lands
   everywhere at once — `clubs.name` deleted, competition names moved into the content pack, and one
   underscore id convention across the catalogue.
 
@@ -96,6 +96,31 @@ are not re-openable by a ticket without redrawing it:
   code as **factual** data beside `nations.ts` — today's pool is 20x20 = 400 combinations and must grow
   to ~20k per nation — player names stored directly because a content pack ships before the players it
   would have to name, and **no** career-history table, since the transfer events already hold it.
+
+- [09 - Scouting: assignments, progress, and information policy at world scale](issues/09-scouting-persistence.md):
+  two tables — `scouting_assignments` keyed on the **scout**, so the N-slot cap is structural rather than
+  checked, and a **sparse** `scouting_progress` where absence means Unscouted; the scoutable set is
+  exactly the players who have rows, so a `results-only` nation hides a **transfer market** as well as a
+  simulation; a player deleted by relegation takes their scouting with them; Progress stays stored but on
+  a new justification, since a date-bearing Calendar voids the old one; and neither club-scouting nor a
+  Tactical Acumen binding ships.
+
+- [10 - Generation reads the League Selection Snapshot](issues/10-generation-reads-the-snapshot.md):
+  `beginCareer` takes a `SnapshotId` and **re-resolves** its intents against the live catalogue rather
+  than trusting the recorded selection; every seed and canonical id keys on canonical ids alone, buying
+  a superset property — a broader selection reproduces the narrower world byte-identically plus extra;
+  club ids are minted as competition-plus-ordinal; and club strength becomes a function of competition
+  tier and nation prior, with Stature Tier demoted to a spread within its own competition.
+
+- [13 - How much geography a results-only nation is worth](issues/13-results-only-geography-cost.md):
+  **Simulation Depth conditions what hangs beneath a club, never the world catalogue and never the club
+  row itself** — so a `results-only` nation keeps its cities; the trim was never economic (~24 KB and
+  ~480 rows for the entire catalogue, with curation paid once in code rather than per save) and would
+  have bought the first Depth-dependent column on `clubs` plus a geography backfill on promotion; and
+  `cities` widens past the ticket's own question to **unconditional**, matching `nations`, because an
+  activated-only city set made `players.birth_city_id` depend on the selection scope, which ticket 10's
+  determinism invariant forbids. Ticket 03's activated-only rule and ticket 08's "NULL birthplaces may
+  be common" risk are reconciled in the same change.
 
 ## Not yet specified
 
@@ -139,6 +164,30 @@ are not re-openable by a ticket without redrawing it:
 - **A staff hiring market.** Ticket 05 fixed staff at generation: no wages, no candidate pool, no
   hiring or firing. Making staff a lever the manager pulls means reopening `Contract` and `Wage
   Budget`, which is a gameplay effort rather than a shape on disk.
+
+- **Scouting a Club rather than a Player.** `CONTEXT.md` allowed it as an assignment target; ticket 09
+  cut it and fixed the glossary. No hidden club-level value exists for fog to narrow, so it would
+  accrue progress against nothing readable. Returns only if such a value ships.
+
+- **Tactical Acumen's scouting binding.** Deferred to "the Scouting effort" by `CONTEXT.md`; scouting
+  now ships and the binding still does not. Both of scouting's numeric terms are spoken for or
+  off-limits, so a binding needs a report-interpretation term that does not exist. Ruled out by ticket
+  09 with the condition recorded in the glossary.
+
+- **Telling the manager a scouted player has vanished.** Ticket 09 deletes assignments when relegation
+  deletes their target, silently reopening the scout's slot. Surfacing that is an inbox message, not a
+  shape on disk.
+
+- **Adding a nation to a career already in progress.** Ticket 10's superset determinism property makes
+  this coherent — the existing world regenerates byte-identically and the new nation is additive — but
+  buying the property is not shipping the feature. It needs a re-resolution path against a save rather
+  than a snapshot, and it is beyond a schema spec for the MVP world.
+
+- **Calibrating the club-strength curve, and naming 382 clubs.** Ticket 10 fixed the *shape* of club
+  strength (competition tier and nation prior, with Stature Tier as a within-competition spread) and the
+  *key space* for club ids (competition plus ordinal). Choosing the tuning constants, and writing the
+  base pack's names for every id the catalogue's `clubCount` values imply, are generation-content work
+  rather than shapes on disk.
 
 - **The Drizzle migration itself**, the generator rewrite, and the query-layer changes. They are the
   work this spec is handed off to, not steps on the route to it.

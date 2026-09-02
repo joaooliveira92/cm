@@ -1,7 +1,7 @@
 # 10 - Generation reads the League Selection Snapshot
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 02, 03, 07
 
 ## Question
@@ -26,3 +26,11 @@ this map is about the shape of the data; this ticket is about the one function t
   concern at all.
 
 Reconcile the generation-boundary paragraph in `CONTEXT.md` once this lands.
+
+## Answer
+
+**`beginCareer` takes a `SnapshotId` and re-resolves its intents against the live catalogue rather than
+trusting the recorded selection; every seed and canonical id is keyed on canonical ids alone, which buys
+a superset determinism property; and club strength becomes a function of competition tier and nation
+prior, with Stature Tier demoted to a spread within its own competition.** See
+[Agent Note](../../../.agents/notes/proposed/architecture/2026-09-02-generation-reads-the-snapshot.md).

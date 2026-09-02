@@ -42,3 +42,12 @@ value implies on disk remains this ticket's subject; only where the value is wri
 fixture, measured); `full` and `standard` are byte-identical on disk; and Results Strength is one
 1-100 number derived on read, never a stored column.** See
 [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-01-simulation-depth-persistence.md).
+
+## Refinement from ticket 10
+
+[10](10-generation-reads-the-snapshot.md) made Stature Tier a spread *within* a competition rather than
+an absolute world-wide scale, which leaves this ticket's Results Strength formula — seed, Stature Tier,
+season — under-determined: with no vertical term, every `results-only` division in a pyramid would come
+out equally strong. Results Strength therefore also takes the competition's tier and its nation's
+strength prior. This refines the formula, not the decision: Results Strength is still one derived 1-100
+number, computed on read, never a stored column.

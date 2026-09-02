@@ -32,3 +32,10 @@ career history is a projection over an existing log rather than new authoritativ
 ticket inherits is the sharpened question — **does `player_career_history` join the materialised
 read-model set?** Reconstructing one player's history means scanning both clubs' streams, which is the
 scale problem this ticket already owns.
+
+## Comments
+
+- From [09](09-scouting-persistence.md): scouting adds a per-matchday writer to the club stream — one
+  batched `ScoutingProgressed` event per club with active assignments, at most N entries for a
+  single-digit scout count. Small, but it is another stream growing every matchday for the life of the
+  save, and it is the one place in this map where a value is stored rather than derived.

@@ -1,7 +1,7 @@
 # 13 - How much geography a results-only nation is worth
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 03, 07
 
 ## Question
@@ -30,3 +30,9 @@ meaning "born outside the loaded world". That prices part of this ticket's quest
 `results-only` nation's city rows gives every player originating from that nation a NULL birthplace.
 Whether that is a cost worth paying, or invisible because nobody opens the profile of a player in a
 competition they cannot see inside, is this ticket's to weigh.
+
+## Answer
+
+**Simulation Depth never conditions the world catalogue or the club row — a `results-only` nation keeps
+its cities, and `cities` widens further to unconditional across the catalogue, matching `nations`.** See
+[Agent Note](../../../.agents/notes/proposed/architecture/2026-09-02-results-only-geography-cost.md).

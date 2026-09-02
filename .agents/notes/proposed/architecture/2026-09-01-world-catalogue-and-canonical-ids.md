@@ -75,10 +75,18 @@ club-stature plausibility at generation time, which needs an ordering and not a 
 population figure is a factual claim that goes stale while nothing in the simulation notices.
 Coordinates are not carried: no system computes distance, and travel is not modelled.
 
-The code list is the catalogue; the save records the resolved subset. City rows are written only for
-nations that have competitions in this save, which is the same catalogue-in-code, resolved-world-on-disk
-shape ticket 02 established for competitions. This is narrower than the nations table on purpose: cities
-are per-nation and numerous, nations are eight.
+The code list is the catalogue; the save records the resolved subset.
+
+> **Superseded in part by ticket 13**
+> ([results-only geography](2026-09-02-results-only-geography-cost.md)). This note originally wrote city
+> rows only for nations that have competitions in this save — the same catalogue-in-code,
+> resolved-world-on-disk shape ticket 02 established for competitions — narrower than the nations table
+> on the grounds that cities are per-nation and numerous while nations are eight. Ticket 13 overturned
+> that: ~60 cities across 8 nations is ~24 KB, which is not a volume problem, and an activated-only
+> city set makes `players.birth_city_id` depend on the selection scope, which ticket 10's determinism
+> invariant forbids. **`cities` is unconditional**, matching `nations`: every nation in `NATION_CODES`
+> contributes its rows to every save. The rest of this section — the city shape, population as a band,
+> no coordinates — stands.
 
 ### City names are real data, not content-pack data
 
@@ -145,8 +153,9 @@ fingerprint mechanism working as designed, exactly as it did when the fictional 
 - **Ticket 10** (generation reads the snapshot) inherits `LEAGUE_CLUBS` as an ordinal-to-stature list
   for one nation. A multi-nation world needs stature distributions per competition, which this note does
   not shape.
-- **Ticket 07** (simulation depth) inherits city rows written per activated nation regardless of depth;
-  whether a `results-only` nation needs its cities at all is that ticket's to answer.
+- **Ticket 07** (simulation depth) inherited city rows written per activated nation regardless of depth.
+  **Resolved by ticket 13** ([results-only geography](2026-09-02-results-only-geography-cost.md)): a
+  `results-only` nation keeps its cities, and Simulation Depth never conditions the world catalogue.
 
 ## Alternatives considered
 
@@ -179,8 +188,10 @@ fingerprint mechanism working as designed, exactly as it did when the fictional 
 - `nations` contains one row per `NATION_CODES` member in every save, whatever the selection scope.
 - No column anywhere stores whether a nation is activated; the answer comes from `competitions`.
 - No table stores a Nation Profile value or a factual nation attribute.
-- `cities` contains rows only for nations that have at least one row in `competitions`, and every city
-  row's population band is one of the four defined values.
+- `cities` contains one row per curated city of every nation in `NATION_CODES`, in every save,
+  whatever the selection scope (widened by ticket 13; this note originally scoped it to nations with at
+  least one row in `competitions`), and every city row's population band is one of the four defined
+  values.
 - No `stadiums` table exists; `clubs` carries `stadium_name` and `stadium_capacity`.
 - `clubs` has no `name` column, and no test asserts a club display name against a main-process result.
 - `leagueSetup.ts` contains no competition display name, and every id in it matches the underscore

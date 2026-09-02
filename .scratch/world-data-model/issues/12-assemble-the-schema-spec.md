@@ -25,3 +25,17 @@ The destination. With every decision above resolved, write the spec the effort e
 
 Publish as `.scratch/world-data-model/spec.md`. This ticket writes the spec; it does not write the
 migration.
+
+## Comments
+
+- From [09](09-scouting-persistence.md): scouting claims **no index beyond its two primary keys** —
+  `scouting_assignments(scout_id)` and `scouting_progress(club_id, player_id)`. Every read is either
+  the `club_id` prefix or the full key. Stated as a claim for this ticket to verify, not to
+  rediscover.
+
+- From [13](13-results-only-geography-cost.md): the spec must state the rule that separates the two
+  halves of the catalogue, or it reads as inconsistency. `nations` and `cities` are **unconditional**
+  (copied wholesale from code, because something outside the loaded world points at them —
+  `players.nationality` and `players.birth_city_id`); `competitions` and `clubs` are **activated-only**.
+  The same section carries the invariant that Simulation Depth conditions only the rows beneath a club,
+  never the catalogue and never a column on `clubs`.

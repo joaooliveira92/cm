@@ -1,7 +1,7 @@
 # 09 - Scouting: assignments, progress, and information policy at world scale
 
 Type: grilling
-Status: claimed
+Status: resolved
 Blocked by: 05, 07
 
 ## Question
@@ -25,3 +25,9 @@ With the staff model (05) and the depth model (07) settled, decide the persisten
 
 The proposed notes are the input, not the output: this ticket may contradict them, and if it does it
 says so explicitly.
+
+## Answer
+
+**Two tables — `scouting_assignments` keyed on the scout, and a sparse `scouting_progress` keyed on
+(club, player) — with the scoutable set defined by which players have rows at all, so `results-only`
+hides a transfer market as well as a simulation.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-02-scouting-persistence.md).

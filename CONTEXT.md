@@ -115,8 +115,8 @@ _Avoid_: name list, name bank
 
 **Results Strength**:
 A single derived score, 1-100, standing in for a club that has no players — the clubs of a
-`results-only` Competition. Computed on read from the world seed, the club's Stature Tier, and the
-season number, never stored, so it walks continuously across seasons without any system writing to it.
+`results-only` Competition. Computed on read from the world seed, the club's Stature Tier, its
+Competition's tier and Nation strength prior, and the season number, never stored, so it walks continuously across seasons without any system writing to it.
 Calibrated to the distribution real squads produce when their three Phase Strengths are averaged, which
 is how a squad-bearing club is compared against one without a squad in a mixed cup tie. See
 [what each Simulation Depth stores](.agents/notes/proposed/architecture/2026-09-01-simulation-depth-persistence.md).
@@ -371,11 +371,13 @@ Scope Options, and dependency edges, identified by a **fingerprint**. Every pers
 and preset carries that fingerprint, and one captured against a different catalogue is refused
 rather than migrated by guessing at renamed Competitions.
 
-> **Generation boundary, as of 2026-08-31.** The League Selection Snapshot is recorded and carried
-> through creation, but `beginCareer` still generates only the fixed 20-club League. Choosing a
-> broader scope is captured and shown on the Review step; materializing it is world generation's
-> subject, not this screen's. See
-> [League and Nation Selection](.agents/notes/implemented/feature/2026-08-31-league-and-nation-selection.md).
+> **Generation boundary, as of 2026-09-02.** World generation is handed a snapshot's identifier and
+> **re-resolves its Selection Intents** against the Setup Catalogue, refusing a fingerprint mismatch
+> rather than trusting the Effective Selection the snapshot recorded — the snapshot's recorded
+> selection is display and audit data, never a generation input. The screen's job still ends at
+> producing the snapshot. See
+> [League and Nation Selection](.agents/notes/implemented/feature/2026-08-31-league-and-nation-selection.md)
+> and [generation reads the snapshot](.agents/notes/proposed/architecture/2026-09-02-generation-reads-the-snapshot.md).
 
 **Season**:
 One full cycle of the League: a freshly-generated Fixture list played to completion, followed by a
@@ -436,8 +438,13 @@ currency tie. Nations carry a real `currencyCode`, but it is descriptive metadat
 conversion, or per-Nation wage unit is modelled, and clubs and players remain fully generated.
 
 **Stature Tier**:
-A club's fixed rank among the League's 20 clubs (e.g. big/mid/small), set once and permanent for the
-life of a career in v1 — nothing in v1 moves a club between tiers. The single shared input both
+A club's fixed rank among the clubs of its **own Competition** (e.g. big/mid/small), set once and
+permanent for the life of a career — nothing moves a club between tiers. It is deliberately *relative*,
+not a world-wide scale: a big club in a fourth division is big among its peers, not comparable to a big
+club in a first division. The vertical term is the Competition's tier and its Nation's strength prior,
+which is what squad quality and Results Strength read alongside it. See
+[generation reads the snapshot](.agents/notes/proposed/architecture/2026-09-02-generation-reads-the-snapshot.md).
+The single shared input both
 Transfer Budget/Wage Budget (below) and Board Objective (see "Board & objectives") derive from
 independently; deriving one from the other was considered and rejected (see
 [board objectives and manager sacking](.agents/notes/implemented/feature/2026-08-27-board-objectives-and-manager-sacking.md)).
@@ -504,7 +511,7 @@ _Avoid_: Head Coach, Manager (the human is the Manager)
 ### Scouting
 
 **Scout**:
-A Staff member of role `scout`, assigned by the manager to observe a specific Player or Club, and the
+A Staff member of role `scout`, assigned by the manager to observe a specific Player, and the
 mechanism by which Scouting Progress advances. A club holds exactly as many Scouts as its Stature Tier
 grants, and each holds at most one assignment at a time, so the Scouts *are* the assignment slots.
 A Scout's quality sets the accrual rate of the assignment they hold, never how many assignments the
@@ -513,8 +520,9 @@ directs, not the player-facing role.
 _Avoid_: scout slot (Scouts stopped being fungible slots when they became Staff)
 
 **Scouting Assignment**:
-The act of assigning a Scout to a Player or Club, started and ended by explicit manager action.
-Determines which Player(s) accrue Scouting Progress while active.
+The act of assigning a Scout to a Player, started and ended by explicit manager action. Determines
+which Player accrues Scouting Progress while active. Only a Player is a valid target: a Club carries
+no hidden value for Attribute Range to narrow.
 _Avoid_: Scouting Report (implies a one-shot document; this is an ongoing state, not a delivered
 artifact)
 
@@ -585,9 +593,11 @@ _Avoid_: Effect, Modifier, Hook
 **Tactical Acumen**:
 The Manager Pillar governing the manager's tactical preparation and the effectiveness with which a
 chosen Tactic is executed. In v1 it modifies the magnitude of resolved tactical instruction effects,
-deterministically. Its application to the interpretation of scouting reports is deferred to the
-Scouting effort; when it lands there it must affect only information quality and must not replace a
-Scout's own evaluation capability. Opponent analysis is cut from v1: no opponent-scouting or
+deterministically. It has no Scouting binding: Scouting's two numeric terms are the accrual rate,
+owned by a Scout's quality, and the noise band, which the Pillar cannot scale without varying one
+Scout's output by who employs them. A binding returns only if a surface ships that separates what a
+Scout observed from what the manager concludes from it, and it must then affect only information
+quality and never replace a Scout's own evaluation capability. Opponent analysis is cut from v1: no opponent-scouting or
 pre-match report system exists.
 _Avoid_: Tactical IQ (reads as a literal intelligence score)
 
