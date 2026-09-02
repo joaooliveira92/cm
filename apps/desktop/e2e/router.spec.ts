@@ -2,6 +2,15 @@ import type { Page } from "@playwright/test";
 import { dismissTeachingSplash, expect, test } from "./launchApp.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
+/** Clear the League and Nation stage, which gates world generation: the creation flow opens on
+ *  scope selection, and the manager step is only reachable once a snapshot exists. */
+const advanceThroughLeagues = async (page: Page) => {
+  const button = page.getByRole("button", { name: /^Continue/ });
+  await expect(button).toBeEnabled({ timeout: 30_000 });
+  await button.click();
+  await expect(page.getByPlaceholder("My Career")).toBeVisible();
+};
+
 /** Seed a fresh save, reload, then continue it — landing on the Squad route,
  *  dismissing the first-run teaching splash so tab clicks are not intercepted. */
 const enterCareer = async (page: Page, userDataDir: string) => {
@@ -81,6 +90,7 @@ test("creation keeps beginCareer before Club Selection and returning discards it
   await page.getByRole("button", { name: "Start New Career" }).click();
   await expect(page.getByRole("heading", { name: "New Career" })).toBeVisible();
 
+  await advanceThroughLeagues(page);
   await page.getByPlaceholder("My Career").fill("Keyboard Career");
   await page.getByRole("button", { name: "Next: Select Club" }).click();
 
@@ -92,20 +102,20 @@ test("creation keeps beginCareer before Club Selection and returning discards it
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).toBeVisible();
   // Leaving creation never leaks a provisional save into the load list.
   await page.getByRole("button", { name: "Load Career" }).click();
-  await expect(page.getByText("No saves yet.")).toBeVisible();
+  await expect(page.getByText("No saves yet.", { exact: true })).toBeVisible();
 });
 
 test("reloading mid-creation redirects to step 1 (AC-13)", async ({ window: page }) => {
   await page.getByRole("button", { name: "Start New Career" }).click();
+  await advanceThroughLeagues(page);
   await page.getByPlaceholder("My Career").fill("Reload Career");
   await page.getByRole("button", { name: "Next: Select Club" }).click();
   await expect(page.getByRole("listbox", { name: "Clubs" })).toBeVisible();
 
-  // The creation session is in-memory: a reload lands on step 2 with nothing
-  // recoverable, so the flow redirects back to step 1.
+  // The creation session is in-memory: a reload lands on step 2 with nothing recoverable — not
+  // even the league scope generation is gated on — so the flow redirects to the front of it.
   await page.reload();
-  await expect(page.getByPlaceholder("My Career")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Next: Select Club" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Select Leagues" })).toBeVisible();
 });
 
 test("the flow never advances past the club decision (AC-13)", async ({ window: page }) => {
@@ -115,6 +125,7 @@ test("the flow never advances past the club decision (AC-13)", async ({ window: 
   // the commit-failure recovery path is exercised at the seam that can still trigger it
   // (`test/create-flow-club-selection.test.tsx`).
   await page.getByRole("button", { name: "Start New Career" }).click();
+  await advanceThroughLeagues(page);
   await page.getByPlaceholder("My Career").fill("Gated Career");
   await page.getByRole("button", { name: "Next: Select Club" }).click();
   await expect(page.getByRole("listbox", { name: "Clubs" })).toBeVisible();
@@ -123,14 +134,14 @@ test("the flow never advances past the club decision (AC-13)", async ({ window: 
   await expect(next).toBeDisabled();
   await expect(page.getByText("Choose a club to continue.")).toBeVisible();
 
-  await page.getByRole("option").first().click();
+  await page.getByRole("listbox", { name: "Clubs" }).getByRole("option").first().click();
   await expect(next).toBeEnabled();
 
   // Nothing leaked into the save list: no career is committed by picking.
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).toBeVisible();
   await page.getByRole("button", { name: "Load Career" }).click();
-  await expect(page.getByText("No saves yet.")).toBeVisible();
+  await expect(page.getByText("No saves yet.", { exact: true })).toBeVisible();
 });
 
 test("pointer nav does not force focus; keyboard nav focuses the destination (AC-15)", async ({ window: page, userDataDir }) => {

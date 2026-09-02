@@ -27,16 +27,16 @@ never from UI-local band tables or format leftovers.
 
 **Blocked by:** 11 — World-bound selection record that reaches commitCareer.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The club-selection read returns, per club, the existing row fields plus a compact detail
+- [x] The club-selection read returns, per club, the existing row fields plus a compact detail
       block: expectation context, Transfer and Wage Budget, squad size, average age, and the top
       five players by `overallRating` with name and strongest Position — computed from the
       generated squad at query time, never hardcoded onto a club definition.
-- [ ] The renderer derives the expectation prose from the shared band constant, not from a UI-local
+- [x] The renderer derives the expectation prose from the shared band constant, not from a UI-local
       band table.
-- [ ] Budgets render as two labeled rows through the shared Credits formatter; no inline `$` /
+- [x] Budgets render as two labeled rows through the shared Credits formatter; no inline `$` /
       `toFixed(0)` formatting remains on this screen.
-- [ ] The panel fills from the already-fetched payload on pick with no additional method call and
+- [x] The panel fills from the already-fetched payload on pick with no additional method call and
       no loading state for the detail block.
-- [ ] No facilities or prior-season values appear in the panel.
+- [x] No facilities or prior-season values appear in the panel.

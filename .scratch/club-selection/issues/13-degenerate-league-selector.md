@@ -25,12 +25,12 @@ field, and nothing new enters the effect graph; the control is presentational an
 
 **Blocked by:** 10 — Two-column workspace in a full-width creation band.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The selector shows exactly one option, labelled from the new shared `LEAGUE_NAME` content
+- [x] The selector shows exactly one option, labelled from the new shared `LEAGUE_NAME` content
       constant — never from the session snapshot and never hardcoded in the renderer.
-- [ ] The control is a disabled native `<select>` with a persistent label and `aria-describedby`
+- [x] The control is a disabled native `<select>` with a persistent label and `aria-describedby`
       helper text explaining why it is disabled.
-- [ ] Interacting with the selector has no effect on the club list.
-- [ ] The club row/view contracts and the club-selection read gain no league field; the panel's
+- [x] Interacting with the selector has no effect on the club list.
+- [x] The club row/view contracts and the club-selection read gain no league field; the panel's
       league summary still derives from the club list itself.

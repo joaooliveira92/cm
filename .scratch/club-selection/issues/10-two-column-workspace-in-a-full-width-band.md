@@ -27,17 +27,17 @@ enter the effect's requirements.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The creation shell hosts a full-height, full-width step band for this stage; the league and
+- [x] The creation shell hosts a full-height, full-width step band for this stage; the league and
       manager steps keep rendering correctly (existing create-flow tests stay green).
-- [ ] A club row shows exactly name, stature tier, and the squad-quality meter; no budget or board
+- [x] A club row shows exactly name, stature tier, and the squad-quality meter; no budget or board
       objective appears in the rail.
-- [ ] With no club selected, the detail panel renders the league summary — not a spinner, not an
+- [x] With no club selected, the detail panel renders the league summary — not a spinner, not an
       empty state, not a club.
-- [ ] The rail shows skeleton rows while loading and renders a load failure inline, with the
+- [x] The rail shows skeleton rows while loading and renders a load failure inline, with the
       selector slot and `Pick a team for me` chrome still mounted.
-- [ ] A selected row and a focused row are distinguishable from each other, and a selected row is
+- [x] A selected row and a focused row are distinguishable from each other, and a selected row is
       identifiable in greyscale; the selected row still shows its stature tier.
-- [ ] The rail and the panel render independently of each other; a slow read does not blank the
+- [x] The rail and the panel render independently of each other; a slow read does not blank the
       whole screen.

@@ -16,10 +16,10 @@ reappears.
 **Blocked by:** 10 — Two-column workspace in a full-width creation band; 11 — World-bound selection
 record that reaches commitCareer; 15 — Level-2 listbox keyboard and accessibility.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The existing creation journey e2e is extended to: pick a club, Continue, verify the Review
+- [x] The existing creation journey e2e is extended to: pick a club, Continue, verify the Review
       `Club:` row shows the chosen club, Create Career, and assert arrival in the career with the
       chosen club as the user club.
-- [ ] The journey fails if a `temp-club-id` placeholder reaches `commitCareer`.
-- [ ] Once Playwright drives the list, the pick button is keyboard-reachable in the journey.
+- [x] The journey fails if a `temp-club-id` placeholder reaches `commitCareer`.
+- [x] Once Playwright drives the list, the pick button is keyboard-reachable in the journey.

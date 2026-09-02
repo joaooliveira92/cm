@@ -27,15 +27,15 @@ announcer for the panel — with nothing new entering the RPC graph.
 **Blocked by:** 10 — Two-column workspace in a full-width creation band; 11 — World-bound selection
 record that reaches commitCareer; 13 — Degenerate league selector; 14 — Pick a team for me.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The club list is a `role="listbox"` with one roving tab stop; rows are `role="option"` with
+- [x] The club list is a `role="listbox"` with one roving tab stop; rows are `role="option"` with
       `aria-selected`; ↑/↓ rove, Home/End jump, Enter selects the focused row, Space toggles, Tab
       moves in and out.
-- [ ] Tab order reaches exactly club list → `Pick a team for me` → Cancel → `Next: Review`; the
+- [x] Tab order reaches exactly club list → `Pick a team for me` → Cancel → `Next: Review`; the
       disabled league selector is skipped.
-- [ ] The detail panel carries exactly one polite announcer that updates only when the shown club
+- [x] The detail panel carries exactly one polite announcer that updates only when the shown club
       changes; arrow navigation does not narrate per row.
-- [ ] The screen-keyboard-tiers table lists Club Selection at level 2 with a rationale.
-- [ ] No key binding for the assist and no Clear Selection control ship with this screen; both are
+- [x] The screen-keyboard-tiers table lists Club Selection at level 2 with a rationale.
+- [x] No key binding for the assist and no Clear Selection control ship with this screen; both are
       recorded as deliberate deviations in the Screen 11 register restatement.

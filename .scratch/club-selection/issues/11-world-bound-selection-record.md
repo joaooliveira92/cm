@@ -31,17 +31,17 @@ new RPC method), and the binding read is a pure helper in the renderer's shared 
 
 **Blocked by:** 10 — Two-column workspace in a full-width creation band.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The session carries a `clubSelection` record with `clubId`, `clubName`, and `provisionalId`;
+- [x] The session carries a `clubSelection` record with `clubId`, `clubName`, and `provisionalId`;
       the only write path is the intent-named action, which records both halves and no-ops outside
       a ready generation.
-- [ ] With a club selected, replacing the generation state with a `Ready` carrying a different
+- [x] With a club selected, replacing the generation state with a `Ready` carrying a different
       `provisionalId` makes the helper return `null` — asserted directly through the helper, not
       merely through the UI.
-- [ ] `Next: Review` is disabled with the stated reason until a club is picked, and enabled after.
-- [ ] Stepping back to the Manager step and forward again re-opens on the same club with the panel
+- [x] `Next: Review` is disabled with the stated reason until a club is picked, and enabled after.
+- [x] Stepping back to the Manager step and forward again re-opens on the same club with the panel
       populated.
-- [ ] `commitCareer` with an id matching no club fails with `ClubNotFoundError` and leaves the save
+- [x] `commitCareer` with an id matching no club fails with `ClubNotFoundError` and leaves the save
       undiscoverable; `ReviewPane` shows the chosen club's name.
-- [ ] No `temp-club-id` placeholder survives anywhere in the flow.
+- [x] No `temp-club-id` placeholder survives anywhere in the flow.

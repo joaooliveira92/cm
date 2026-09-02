@@ -23,12 +23,12 @@ enters the scene, nothing is persisted; the button's only guard is whether the l
 
 **Blocked by:** 11 — World-bound selection record that reaches commitCareer.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Pressing the button selects a club other than the one currently selected when one is selected;
+- [x] Pressing the button selects a club other than the one currently selected when one is selected;
       with nothing selected it picks a uniformly random club from the loaded list.
-- [ ] Re-pressing always changes the selection in a list of more than one club.
-- [ ] The pick is unseeded and nothing about it is persisted; focus remains on the button; the
+- [x] Re-pressing always changes the selection in a list of more than one club.
+- [x] The pick is unseeded and nothing about it is persisted; focus remains on the button; the
       announced text names the picked club.
-- [ ] The button is subdued, below the list, and disabled while the list is loading or failed.
-- [ ] Picking does not advance the step; Continue remains the player's action.
+- [x] The button is subdued, below the list, and disabled while the list is loading or failed.
+- [x] Picking does not advance the step; Continue remains the player's action.

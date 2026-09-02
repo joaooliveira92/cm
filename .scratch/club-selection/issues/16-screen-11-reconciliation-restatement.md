@@ -22,13 +22,13 @@ record that reaches commitCareer; 12 — Compact squad detail panel over one wid
 Degenerate league selector; 14 — Pick a team for me; 15 — Level-2 listbox keyboard and
 accessibility.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The register's Screen 11 section matches the settled restatement: re-audit note appended to
+- [x] The register's Screen 11 section matches the settled restatement: re-audit note appended to
       the status block, the second audit table replaced, and the trailing `temp-club-id` paragraph
       replaced by the wired-selection statement.
-- [ ] Screen 12's trailing paragraph no longer asserts the unreachable commit; it reflects the
+- [x] Screen 12's trailing paragraph no longer asserts the unreachable commit; it reflects the
       club-selection effort's wiring.
-- [ ] Rows the restatement keeps `out-of-scope` or `deferred` carry the reasons the recorded
+- [x] Rows the restatement keeps `out-of-scope` or `deferred` carry the reasons the recorded
       decisions fixed.
-- [ ] No row still describes the old static list as the implementation.
+- [x] No row still describes the old static list as the implementation.
