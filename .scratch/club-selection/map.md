@@ -23,7 +23,7 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
 
 ### Ground truth as of charting (2026-09-01)
 
-Five facts constrain every ticket. None is a decision to re-litigate.
+Six facts constrain every ticket. None is a decision to re-litigate.
 
 - **Nothing selects a club.** `router/createFlow.tsx:331` passes
   `selectedClubId: ClubId.make("temp-club-id")` into `commitCareer`. `CreationSession` has no
@@ -38,6 +38,11 @@ Five facts constrain every ticket. None is a decision to re-litigate.
   world; the only available source is the `LeagueSelectionSnapshot` on `CreationSession`.
 - **No facilities data exists** in the schema, so no facilities readout is possible in the
   detail panel.
+- **A changed league scope after generation is silently ignored.** `runGeneration` fires on every
+  `leagueSelection` change but is a no-op from `Ready`, so re-choosing scope keeps the first world.
+  Invisible today (one League generates whatever scope was chosen) and a silent data bug the moment
+  generation honours the snapshot. Found by ticket 02, spun out as
+  [09 — Changing league scope after generation](issues/09-league-rescope-after-generation.md).
 - **The creation shell cannot host a workspace as it stands** (found by ticket 01's prototype).
   `CreateFlowLayout`'s `<main>` is a `max-w-5xl` centred `overflow-y-auto` column and `RouteView`'s
   wrapper passes no height down. A full-height two-column step needs the shell to become a
@@ -66,6 +71,14 @@ Five facts constrain every ticket. None is a decision to re-litigate.
   panel; selection is redundantly coded (fill, accent bar, badge) against the single focus ring.
   Recorded as [Agent Note: The Club Selection two-column workspace](../../.agents/notes/proposed/architecture/2026-09-01-club-selection-workspace-shape.md).
   Variant set captured on the throwaway branch `prototype/club-selection-workspace`.
+
+- [02 — Selected club in the creation session](issues/02-selected-club-in-the-creation-session.md): the
+  selection is a record bound to the world it was picked from — `{ clubId, clubName, provisionalId }`
+  or `null` — written only through a new `selectClub` on `CreateSessionApi` and read only through a
+  `selectedClubOf` helper that returns `null` on a binding mismatch, so a stale id cannot reach
+  `commitCareer`. Continue is gated on a pick with a stated reason; the pick survives back-navigation;
+  `commitCareer` rejects an unknown id with the existing `ClubNotFoundError`; `ReviewPane` gains a club
+  row. Recorded as [Agent Note: The club selection is bound to the world it was picked from](../../.agents/notes/proposed/architecture/2026-09-01-club-selection-bound-to-its-world.md).
 
 ## Not yet specified
 
