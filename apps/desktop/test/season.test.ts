@@ -1,13 +1,15 @@
 import { mkdtempSync } from "node:fs";
-import { rm } from "node:fs/promises";
+import { copyFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
+import { SaveId } from "@cm-clone/contracts";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
+import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../src/main/saves.js";
+import { beginCareer, commitCareer, createSave } from "../src/main/saves.js";
 import { getSquad } from "../src/main/squad.js";
 import {
   advanceCalendar,
@@ -31,6 +33,29 @@ const loadSeasonStreamEvents = (saveId: string) =>
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
     Effect.scoped,
   );
+
+/** The first club by insert order — mirrors `createSave`'s compat-shim user-club choice. */
+const loadFirstClubId = (saveId: string) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ id: string }>`SELECT id FROM clubs ORDER BY rowid LIMIT 1`;
+    return rows[0]!.id;
+  }).pipe(
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
+    Effect.scoped,
+  );
+
+/** A committed career generated deterministically from a world seed (ticket 01). */
+const createCareerFromWorldSeed = (worldSeed: number, name: string) =>
+  Effect.gen(function* () {
+    const { id } = yield* beginCareer(savesDir, { worldSeed, referenceYear: 2026 });
+    const selectedClubId = yield* loadFirstClubId(id);
+    return yield* commitCareer(savesDir, id, name, selectedClubId, {
+      managerName: name,
+      archetypeOrigin: "custom",
+      pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
+    });
+  });
 
 // ---------------------------------------------------------------------------
 // Pure fixture generation
@@ -231,6 +256,58 @@ it.effect("advanceCalendar fails once the season has fully concluded", () =>
 
     const result = yield* Effect.exit(advanceCalendar(savesDir, save.id));
     ok(result._tag === "Failure");
+  }),
+  20_000,
+);
+
+// ---------------------------------------------------------------------------
+// Deterministic background match resolution (ticket 01)
+// ---------------------------------------------------------------------------
+
+it.effect("two advances of the same save from the same starting state resolve every fixture identically", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    // A byte-for-byte copy of the save BEFORE any advance: the same save, the same starting state.
+    const copyId = SaveId.make("copy-of-original");
+    yield* Effect.promise(() =>
+      copyFile(path.join(savesDir, `${save.id}.sqlite`), path.join(savesDir, `${copyId}.sqlite`)),
+    );
+
+    for (let advance = 0; advance < 3; advance++) {
+      yield* advanceCalendar(savesDir, save.id);
+      yield* advanceCalendar(savesDir, copyId);
+    }
+
+    const [original, copy] = yield* Effect.all(
+      [getFixtures(savesDir, save.id), getFixtures(savesDir, copyId)],
+      { concurrency: 1 },
+    );
+    // Every resolved fixture carries identical goals — before this ticket the seed came from
+    // Math.random(), so two advances of the same save produced different league tables.
+    deepStrictEqual(copy.fixtures, original.fixtures);
+    ok(original.fixtures.some((fixture) => fixture.played));
+  }),
+  20_000,
+);
+
+it.effect("two saves generated from one world seed resolve identically after the same advances", () =>
+  Effect.gen(function* () {
+    const saveA = yield* createCareerFromWorldSeed(4242, "Career A");
+    const saveB = yield* createCareerFromWorldSeed(4242, "Career B");
+
+    for (let advance = 0; advance < 3; advance++) {
+      yield* advanceCalendar(savesDir, saveA.id);
+      yield* advanceCalendar(savesDir, saveB.id);
+    }
+
+    const [fixturesA, fixturesB] = yield* Effect.all(
+      [getFixtures(savesDir, saveA.id), getFixtures(savesDir, saveB.id)],
+      { concurrency: 1 },
+    );
+    // Same world seed → same clubs, same fixtures, same derived match seeds → same results, so a
+    // bug report that names the world seed reproduces the whole world's league tables.
+    deepStrictEqual(fixturesB.fixtures, fixturesA.fixtures);
+    ok(fixturesA.fixtures.some((fixture) => fixture.played));
   }),
   20_000,
 );

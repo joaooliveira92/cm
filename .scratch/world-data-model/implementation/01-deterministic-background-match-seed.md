@@ -27,20 +27,20 @@ typed failure, and an undrawable seed is impossible rather than an error.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Files:** `apps/desktop/src/main/season.ts` (`resolveFixtureScore`, and `resolveMatchday` which
 calls it), `packages/game-engine/src/seed.ts` if a derivation helper is missing,
 `apps/desktop/test/season.test.ts`.
 
-- [ ] No call to `Math.random()` remains anywhere in `apps/desktop/src/main`; the match seed for a
+- [x] No call to `Math.random()` remains anywhere in `apps/desktop/src/main`; the match seed for a
       fixture is derived from the save's world seed together with values that identify that fixture
       and no other.
-- [ ] The derivation reads only stored, replayable values. It does not read the clock, a row count,
+- [x] The derivation reads only stored, replayable values. It does not read the clock, a row count,
       a collection length, or an iteration position.
-- [ ] A test advances the same save twice from the same starting state and asserts every fixture's
+- [x] A test advances the same save twice from the same starting state and asserts every fixture's
       goals are identical, and that two saves generated from one world seed produce identical
       results after the same number of advances.
-- [ ] The human's own watched fixture is unaffected: its seed still comes from where it comes from
+- [x] The human's own watched fixture is unaffected: its seed still comes from where it comes from
       today, and the match-stream replay tests stay green.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] `pnpm check:all` is green at this commit.

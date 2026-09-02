@@ -283,7 +283,10 @@ are not re-openable by a ticket without redrawing it:
   narrative record and adds an in-world `game_date` to every event, which is what such a feed would
   read. Building the feed is a screen, not a shape on disk.
 
-- **The unseeded background match.** `resolveFixtureScore` seeds the engine with `Math.random()`,
+- **The unseeded background match.** ~~`resolveFixtureScore` seeds the engine with `Math.random()`,
   contradicting ticket 06's determinism chain. Surfaced by ticket 11 while deciding those events are
   not worth storing, and left there: it is an engine-call defect, not a shape on disk, and it belongs
-  to whoever implements ticket 06's chain.
+  to whoever implements ticket 06's chain.~~ **Shipped by implementation ticket 01**
+  ([implementation/01-deterministic-background-match-seed.md](implementation/01-deterministic-background-match-seed.md)):
+  the match seed derives from the world seed plus the fixture's own identity, so the whole world
+  replays; the League stands in for the competition until date-bearing Competitions land.

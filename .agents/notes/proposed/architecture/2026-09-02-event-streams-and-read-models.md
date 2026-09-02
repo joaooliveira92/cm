@@ -343,11 +343,13 @@ progress. The alternative is dangling rows naming a player who no longer exists.
   response is to measure before assuming 64 MB is still the twenty-Season figure.
 - **The `MatchId`-to-`FixtureId` collapse touches the RPC contract.** It is the one decision here that
   cannot be delivered by a migration alone, and the note leaves that work unscheduled.
-- **Background match resolution is not deterministic today.** `resolveFixtureScore` seeds the engine
-  with `Math.random()` (`season.ts:337`), which contradicts ticket 06's determinism chain. Discarding
-  the events is safe regardless — a non-reproducible timeline is one more reason not to store it — but
-  the seed defect is real, belongs to whoever implements ticket 06's chain, and is recorded here because
-  this is the note that decided the events are not worth keeping.
+- **Background match resolution is deterministic, so the discarded events truly cost nothing.**
+  `resolveFixtureScore` derives its match seed from the save's world seed and the fixture's own
+  identity (`season`, `matchday`, and the two club ids — ticket 01 of the implementation slice), so a
+  regenerated world replays its whole fixture list to the same scores. The timeline is reproducible
+  from a seed rather than from stored events, which removes the last argument for recording the
+  discarded events: results can always be regenerated, so the events stay not-worth-keeping on their
+  own terms.
 - **Restricting the Club stream is hard to reverse per save.** A save played for ten Seasons under this
   rule cannot later produce an AI club's development history, because the events were never written.
   Reintroducing them is additive for new saves and impossible for existing ones.

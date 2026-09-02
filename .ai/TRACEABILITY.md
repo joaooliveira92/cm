@@ -25,6 +25,7 @@ defined in [CONTEXT.md](../CONTEXT.md) and mean exactly what it says there.
 |---|---|---|---|---|
 | Derived player ratings and value | **Position Rating**, **Overall Rating**, **Transfer Value**, **Attribute** | note `2026-08-29-player-ratings-are-derived-projections` (`proposed/architecture/`, absorbed ADR-0001) | `player-ratings-derived/` | `packages/shared/test/ratings.test.ts` |
 | Match strength and deterministic seeding | **Position**, seeded simulation | note `2026-08-27-match-engine-three-phase-and-deterministic-seed` (`implemented/architecture/`) | `cm-clone/` | `packages/game-engine/test/match/` |
+| Deterministic background match resolution | **Position**, seeded simulation, **World Seed** | note `2026-09-02-season-fixture-and-cup-schedule` (`proposed/architecture/`) | `world-data-model/` | `apps/desktop/test/season.test.ts` (two-advances and two-saves determinism tests) |
 | Role rating outside the match engine | **Role**, **Position Rating** | note `2026-08-27-role-rating-outside-match-engine` (`implemented/architecture/`) | `cm-clone/` | `packages/shared/test/ratings.test.ts` |
 | Fixture-driven calendar | **Matchday**, **Season** | note `2026-08-27-fixture-driven-calendar` (`implemented/architecture/`) | `cm-clone/` | `apps/desktop/test/season.test.ts` |
 | Formula-driven transfer economy | **Transfer Value** | note `2026-08-27-formula-driven-transfer-economy` (`implemented/architecture/`) | `cm-clone/` | `apps/desktop/test/transfers.test.ts` |

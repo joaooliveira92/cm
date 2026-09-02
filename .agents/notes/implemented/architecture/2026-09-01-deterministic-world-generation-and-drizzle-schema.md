@@ -80,11 +80,10 @@ untouched.
   the seam the spec's §6 squad-template work builds on.
 - Any future generation step that draws its own randomness silently breaks reproducibility, and
   nothing mechanical catches it. New generation code must derive from the manifest.
-- **Not covered:** `season.ts`'s AI-vs-AI fixture simulation still seeds from `Math.random` at play
-  time. That is match simulation rather than world generation, and changing it touches the replay
-  semantics recorded in
-  [domain-bounded deciders and chunked resimulation](2026-08-27-domain-bounded-deciders-and-chunked-resimulation.md),
-  so it was deliberately left alone.
+- **Covered by the slice:** `season.ts`'s AI-vs-AI fixture simulation now derives its match seed from
+  the world seed and the fixture's own identity (implementation ticket 01), so a regenerated world
+  replays its whole fixture list. The human's *watched* fixture still seeds from the live `MatchId`
+  clock (a boundary choice recorded in the pre-match-boundary note), deliberately outside generation.
 - **Not covered:** there is no migration path for existing save files. `db:generate` regenerates a
   single `0000_schema.sql` rather than accumulating migrations, matching the current reality that
   saves are created fresh and never migrated in place.

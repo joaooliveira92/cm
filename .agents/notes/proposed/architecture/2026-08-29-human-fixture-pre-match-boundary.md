@@ -268,23 +268,19 @@ do. Play and Quick result stay unavailable there until blocking readiness passes
 activity may be stated only if an authoritative result exposes it; the renderer must not reconstruct
 domain events by informal before-and-after comparison.
 
-### AI Fixture determinism is out of scope
+### AI Fixture determinism is in scope, and shipped
 
-AI-vs-AI Fixtures draw an unrecorded `Math.random()` seed in `resolveFixtureScore` and persist only
-their final score, discarding events. Their timelines cannot be reproduced from event history, so
-ADR-0002's reproducibility guarantee covers only matches entering through `PersistedMatchStarted`.
+AI-vs-AI Fixtures derive an unrecorded seed deterministically from the world seed and the fixture's
+own identity (`season`, `matchday`, and the two club ids — implementation ticket 01 of the
+world-data-model slice), and persist only their final score, discarding events. Their timelines can
+therefore be reproduced from a seed rather than from event history, so ADR-0002's reproducibility
+guarantee now covers them.
 
-This predates the onboarding effort and would exist without a pre-match boundary. It is a
-whole-simulation determinism question and is recorded as unspecified rather than decided here. It is
-distinct from ruleset versioning: seed persistence concerns recording simulation inputs, while ruleset
-versioning concerns preserving the transformation applied to those inputs.
+A rolled-back completion transaction re-derives the same seed on retry, because derivation reads only
+stored, replayable values. The failed attempt commits no scores and no lasting Condition changes, and
+no persisted record claims it occurred.
 
-A rolled-back completion transaction may draw different AI seeds on retry. This does not threaten
-exactly-once committed state, because the failed attempt commits no scores and no lasting Condition
-changes, and no persisted record claims it occurred. The uncommitted attempt is simply not
-reproducible, which this decision does not need to solve.
-
-This work must not add nine AI seeds to `MatchdayResolved`, create streams for AI Fixtures, promise
+This work does not add nine AI seeds to `MatchdayResolved`, create streams for AI Fixtures, promise
 replay for AI-vs-AI games, change ADR-0002's guarantee, or introduce ruleset versioning.
 
 ## Alternatives considered

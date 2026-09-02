@@ -304,7 +304,25 @@ const recordFixtureConditions = (
     `;
   });
 
-const resolveFixtureScore = (homeClubId: ClubId, awayClubId: ClubId, seasonNumber: number) =>
+/**
+ * Resolves one un-watched Fixture: recovers both clubs' Conditions (ticket 10), loads squads and
+ * Tactics, simulates, and returns the full-time score plus the fitness write-backs. The match seed
+ * is **derived, never drawn**: a pure hash of the save's world seed with the Fixture's own stored
+ * identity — the season, the Matchday (this schema's Round), and the two clubs — so a regenerated
+ * world reproduces the same clubs and the same fixture list and therefore plays this Fixture to the
+ * same score. All five inputs are stored, replayable values: none of them is the clock, a row
+ * count, a collection length, or an iteration position. This is the season-fixture note's chain
+ * applied pre-schema-reshape — draw seed from (world seed, season, round), match seed from that
+ * plus the two club ids — with the League standing in for the competition until date-bearing
+ * Competitions land.
+ */
+const resolveFixtureScore = (
+  homeClubId: ClubId,
+  awayClubId: ClubId,
+  seasonNumber: number,
+  matchday: number,
+  worldSeed: number,
+) =>
   Effect.gen(function* () {
     // Recover both clubs' squads toward full before the Fixture — a player carries a shortfall
     // into this match only for what they haven't yet recovered (ticket 10).
@@ -335,8 +353,14 @@ const resolveFixtureScore = (homeClubId: ClubId, awayClubId: ClubId, seasonNumbe
       tactic: awayTactic,
     };
 
-    const seed = Math.floor(Math.random() * 0xffffffff);
-    const { events, conditions } = yield* Effect.sync(() => simulateMatchWithCondition({ seed, home, away }));
+    const matchSeed = deriveSeed(
+      deriveSeed(worldSeed, "season", seasonNumber),
+      "match",
+      matchday,
+      homeClubId,
+      awayClubId,
+    );
+    const { events, conditions } = yield* Effect.sync(() => simulateMatchWithCondition({ seed: matchSeed, home, away }));
     const fullTime = events.find((event) => event._tag === "FullTimeWhistle");
     if (!fullTime || fullTime._tag !== "FullTimeWhistle") {
       return yield* new FullTimeWhistleMissingError();
@@ -358,12 +382,16 @@ const resolveFixtureScore = (homeClubId: ClubId, awayClubId: ClubId, seasonNumbe
 const resolveMatchday = (matchday: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+    // The fixture's match seed derives from the world seed (ticket 01). Read once per Matchday —
+    // the value is stored and replayable, so this is not a fresh-entropy draw.
+    const manifest = yield* readGenerationManifest;
     const fixtureRows = yield* sql<{
       id: FixtureId;
       homeClubId: ClubId;
       awayClubId: ClubId;
       seasonNumber: number;
-    }>`SELECT id, home_club_id as "homeClubId", away_club_id as "awayClubId", season_number as "seasonNumber" FROM fixtures WHERE matchday = ${matchday}`;
+      matchday: number;
+    }>`SELECT id, home_club_id as "homeClubId", away_club_id as "awayClubId", season_number as "seasonNumber", matchday FROM fixtures WHERE matchday = ${matchday}`;
 
     const results: Array<FixtureResult> = [];
     for (const fixture of fixtureRows) {
@@ -371,6 +399,8 @@ const resolveMatchday = (matchday: number) =>
         fixture.homeClubId,
         fixture.awayClubId,
         fixture.seasonNumber,
+        fixture.matchday,
+        manifest.worldSeed,
       );
       yield* sql`UPDATE fixtures SET home_goals = ${homeGoals}, away_goals = ${awayGoals}, played = 1 WHERE id = ${fixture.id}`;
       results.push({ fixtureId: fixture.id, homeClubId: fixture.homeClubId, awayClubId: fixture.awayClubId, homeGoals, awayGoals });
