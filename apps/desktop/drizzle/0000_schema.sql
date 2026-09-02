@@ -27,6 +27,15 @@ CREATE TABLE `board_objective` (
 	CONSTRAINT "board_objective_verdict" CHECK(verdict IS NULL OR verdict IN ('exceeded','met','missed'))
 );
 --> statement-breakpoint
+CREATE TABLE `cities` (
+	`id` text PRIMARY KEY NOT NULL,
+	`nation_id` text NOT NULL,
+	`name` text NOT NULL,
+	`population_band` text NOT NULL,
+	FOREIGN KEY (`nation_id`) REFERENCES `nations`(`id`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "cities_population_band" CHECK(population_band IN ('major','large','mid','small'))
+);
+--> statement-breakpoint
 CREATE TABLE `club_budgets` (
 	`club_id` text PRIMARY KEY NOT NULL,
 	`season_number` integer NOT NULL,
@@ -119,6 +128,10 @@ CREATE TABLE `manager_status` (
 	CONSTRAINT "manager_status_single_row" CHECK(id = 1),
 	CONSTRAINT "manager_status_archived_cause" CHECK(archived_cause IS NULL OR archived_cause IN ('sacked','retired')),
 	CONSTRAINT "manager_status_last_outcome" CHECK(last_outcome IN ('none','warned','sacked'))
+);
+--> statement-breakpoint
+CREATE TABLE `nations` (
+	`id` text PRIMARY KEY NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `player_fitness` (

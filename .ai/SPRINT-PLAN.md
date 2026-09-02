@@ -2,9 +2,10 @@
 
 ## Immediate next action
 
-`.scratch/world-data-model/implementation/02-nations-and-cities-rows` — the world-data-model
-implementation frontier: lowest-numbered `ready-for-agent` build ticket in that effort. Re-derive from
-`.scratch/world-data-model/implementation/` before starting; plan rows decay, the tracker is truth.
+`.scratch/world-data-model/implementation/03-generation-provenance-and-snapshot-handoff` — the
+world-data-model implementation frontier: lowest-numbered `ready-for-agent` build ticket in that
+effort. Re-derive from `.scratch/world-data-model/implementation/` before starting; plan rows decay,
+the tracker is truth.
 
 ## Queue
 

@@ -95,6 +95,66 @@ export const managerProfile = sqliteTable(
   ],
 );
 
+/*
+ * The world catalogue — `nations` and `cities` — copied **unconditionally** into every save,
+ * whatever the selection scope and whatever Simulation Depth its competitions run at (spec rule 2:
+ * the catalogue line runs on whether anything outside the loaded world points at a row).
+ *
+ * `nations` and `cities` are referents, not participants: a player's nationality and birthplace are
+ * drawn from the whole catalogue, so a row may be pointed at by a nation the selection never
+ * activated. `competitions` and `clubs`, by contrast, are activated-only — nothing outside the
+ * loaded world points in. A `results-only` nation keeps its cities; Depth's footprint is exactly the
+ * presence or absence of squad rows ([results-only geography] Agent Note).
+ */
+
+/**
+ * Authoritative for the existence of a nation as a referent, and for nothing else.
+ *
+ * The row is deliberately thin: it carries its canonical id and nothing else. It does not mirror the
+ * factual columns of `nations.ts` and it does not hold the 0-1 Nation Profile priors, because
+ * nothing reads a profile after generation and `generation_manifest.ruleset_version` already pins
+ * which `nations.ts` a save was generated against — a mirror would be identical data in every save
+ * with no reader. No column stores whether a nation is activated: that answer is
+ * `SELECT DISTINCT nation_id FROM competitions`. No `generation_seed`: nations are resolved, not
+ * generated.
+ *
+ * **Reintroduction condition**: the first time a system reads a Nation Profile *during* a career
+ * rather than at generation, the profile must be snapshotted into the save. Until then a ruleset
+ * upgrade only changes how future worlds are generated.
+ */
+export const nations = sqliteTable("nations", {
+  /** Canonical id in the one underscore convention (`nation_eng`), minted by
+   *  `canonicalNationId` in `packages/shared`. */
+  id: text("id").primaryKey(),
+});
+
+/**
+ * Authoritative for a club's hometown and a player's birthplace.
+ *
+ * One row per curated city of every nation in `NATION_CODES`, in every save, whatever the selection
+ * scope — unconditional, matching `nations`. The list is code (`CITIES_BY_NATION` in
+ * `packages/shared`), copied straight into the save at generation; the code list is the catalogue
+ * and the save records the resolved subset, here the whole of it. `name` is carried directly and
+ * never resolved through a content pack: city names are factual, licence-free geography, the same
+ * kind of claim a country name is. No coordinates (distance is not modelled) and no population
+ * figure: `population_band` is an ordering for club-stature plausibility, never a claim that goes
+ * stale. No `generation_seed`: cities are resolved, not generated.
+ */
+export const cities = sqliteTable(
+  "cities",
+  {
+    /** Canonical id in the one underscore convention (`city_eng_london`), minted by
+     *  `canonicalCityId` in `packages/shared`. */
+    id: text("id").primaryKey(),
+    nationId: text("nation_id")
+      .notNull()
+      .references(() => nations.id),
+    name: text("name").notNull(),
+    populationBand: text("population_band").notNull(),
+  },
+  () => [check("cities_population_band", oneOf("population_band", ["major", "large", "mid", "small"]))],
+);
+
 export const clubs = sqliteTable(
   "clubs",
   {

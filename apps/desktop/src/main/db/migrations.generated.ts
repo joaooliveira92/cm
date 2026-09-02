@@ -30,6 +30,14 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	FOREIGN KEY (\`club_id\`) REFERENCES \`clubs\`(\`id\`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT "board_objective_verdict" CHECK(verdict IS NULL OR verdict IN ('exceeded','met','missed'))
 );`,
+  `CREATE TABLE \`cities\` (
+	\`id\` text PRIMARY KEY NOT NULL,
+	\`nation_id\` text NOT NULL,
+	\`name\` text NOT NULL,
+	\`population_band\` text NOT NULL,
+	FOREIGN KEY (\`nation_id\`) REFERENCES \`nations\`(\`id\`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "cities_population_band" CHECK(population_band IN ('major','large','mid','small'))
+);`,
   `CREATE TABLE \`club_budgets\` (
 	\`club_id\` text PRIMARY KEY NOT NULL,
 	\`season_number\` integer NOT NULL,
@@ -115,6 +123,9 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	CONSTRAINT "manager_status_single_row" CHECK(id = 1),
 	CONSTRAINT "manager_status_archived_cause" CHECK(archived_cause IS NULL OR archived_cause IN ('sacked','retired')),
 	CONSTRAINT "manager_status_last_outcome" CHECK(last_outcome IN ('none','warned','sacked'))
+);`,
+  `CREATE TABLE \`nations\` (
+	\`id\` text PRIMARY KEY NOT NULL
 );`,
   `CREATE TABLE \`player_fitness\` (
 	\`player_id\` text PRIMARY KEY NOT NULL,

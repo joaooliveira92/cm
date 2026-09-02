@@ -7,7 +7,14 @@ import { it } from "@effect/vitest";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { afterEach, beforeEach, describe } from "vitest";
+import { afterEach, beforeEach, describe, expect } from "vitest";
+import {
+  CITIES,
+  NATION_CODES,
+  NATION_IDS,
+  canonicalCityId,
+  canonicalNationId,
+} from "@cm-clone/shared";
 import { beginCareer } from "../src/main/saves.js";
 
 let savesDir: string;
@@ -36,6 +43,19 @@ interface PlayerRow {
   readonly generationSeed: number;
 }
 
+/** The world catalogue, which this suite asserts is identical across every save from a ruleset. */
+const readCatalogue = Effect.gen(function* () {
+  const sql = yield* SqlClient;
+  const nations = yield* sql<{ id: string }>`SELECT id FROM nations ORDER BY id`;
+  const cities = yield* sql<{
+    id: string;
+    nationId: string;
+    name: string;
+    populationBand: string;
+  }>`SELECT id, nation_id as "nationId", name, population_band as "populationBand" FROM cities ORDER BY id`;
+  return { nations, cities };
+});
+
 /** The whole generated world as rows, ordered deterministically for comparison. */
 const readWorld = Effect.gen(function* () {
   const sql = yield* SqlClient;
@@ -45,7 +65,8 @@ const readWorld = Effect.gen(function* () {
       generation_seed as "generationSeed"
     FROM players ORDER BY club_id, squad_slot`;
   const contracts = yield* sql`SELECT player_id as "playerId", wage, years_remaining as "yearsRemaining" FROM contracts ORDER BY player_id`;
-  return { clubs, players, contracts };
+  const catalogue = yield* readCatalogue;
+  return { clubs, players, contracts, ...catalogue };
 });
 
 const generate = (worldSeed: number) =>
@@ -134,6 +155,58 @@ describe("world generation determinism", () => {
       strictEqual(rows[0]!.referenceYear, 2026);
       strictEqual(rows[0]!.generatorVersion, "1.0.0");
       strictEqual(rows[0]!.rulesetVersion, "1.0.0");
+    }),
+  );
+
+  it.effect("writes the whole world catalogue — one nations row per member, every curated city", () =>
+    Effect.gen(function* () {
+      const { id } = yield* beginCareer(savesDir, { worldSeed: 4242, referenceYear: 2026 });
+      const { nations, cities } = yield* withSave(id, readCatalogue);
+
+      // The save's catalogue is the code catalogue, copied wholesale — nothing conditions it on the
+      // save, because a player's nationality and birthplace may name a nation the selection never
+      // activated. Names are carried directly: the persisted `name` is the module's plain data,
+      // never a content-pack resolution.
+      expect(nations).toEqual([...NATION_IDS].sort().map((id) => ({ id })));
+      expect(cities).toEqual(
+        [...CITIES]
+          .map((city) => ({
+            id: canonicalCityId(city.nationCode, city.name),
+            nationId: canonicalNationId(city.nationCode),
+            name: city.name,
+            populationBand: city.populationBand,
+          }))
+          .sort((a, b) => a.id.localeCompare(b.id)),
+      );
+
+      // The catalogue write order (nations, then cities, then clubs) is visible in `worldGeneration.ts`
+      // itself; the equality assertions above prove the rows, and db-schema's full-shape match
+      // proves the tables. An insert-order probe across three tables would need schema
+      // instrumentation (rowids are per-table in SQLite), which this ticket does not warrant.
+    }),
+  );
+
+  it.effect("carries identical catalogue rows under every save from one world seed", () =>
+    Effect.gen(function* () {
+      // Two saves from one world seed whose other inputs differ (the reference year — the only
+      // generation input beside the seed until ticket 03 threads the selection snapshot into
+      // generation), plus a third from a different world seed: the catalogue row counts — and the
+      // rows themselves — are identical in every one. Selection does not reach generation yet, which
+      // is the point: the catalogue write is blind to whatever a save will eventually differ by, so
+      // two careers under two different selections from one seed necessarily carry the same rows.
+      const { id: idA } = yield* beginCareer(savesDir, { worldSeed: 31337, referenceYear: 2026 });
+      const { id: idB } = yield* beginCareer(savesDir, { worldSeed: 31337, referenceYear: 2031 });
+      const { id: idC } = yield* beginCareer(savesDir, { worldSeed: 999, referenceYear: 2026 });
+
+      const a = yield* withSave(idA, readCatalogue);
+      const b = yield* withSave(idB, readCatalogue);
+      const c = yield* withSave(idC, readCatalogue);
+
+      strictEqual(a.nations.length, NATION_CODES.length);
+      strictEqual(a.cities.length, CITIES.length);
+      deepStrictEqual(b.nations, a.nations);
+      deepStrictEqual(b.cities, a.cities);
+      deepStrictEqual(c, a);
     }),
   );
 });

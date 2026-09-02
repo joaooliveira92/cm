@@ -2,7 +2,15 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { ClubId, PlayerId } from "@cm-clone/contracts";
 import { createSeededRng, deriveId, deriveSeed } from "@cm-clone/game-engine";
-import { LEAGUE_CLUBS, generateSquad, type GeneratedPlayer } from "@cm-clone/shared";
+import {
+  CITIES,
+  LEAGUE_CLUBS,
+  NATION_CODES,
+  canonicalCityId,
+  canonicalNationId,
+  generateSquad,
+  type GeneratedPlayer,
+} from "@cm-clone/shared";
 
 /**
  * Deterministic world generation.
@@ -36,11 +44,20 @@ const attr = (attributes: GeneratedPlayer["attributes"], key: keyof GeneratedPla
   attributes[key] ?? null;
 
 /**
- * Generates the fixed 20-club League and each club's squad, writing the generation manifest and
- * then clubs/players/player_positions. No club is marked as the user's club — that happens in
+ * Generates the fixed 20-club League and each club's squad, writing the generation manifest, the
+ * whole world catalogue (`nations` then `cities`), and then clubs/players/player_positions — all in
+ * one sequence over the save's SQL client. No club is marked as the user's club — that happens in
  * `commitCareer`.
  *
  * The manifest is written first, so a partially-written save still records what was producing it.
+ * The catalogue is written before any club so the rows are provably selection-independent: nothing
+ * in this function reads what a selection could change (see the `WorldGenerationConfig`), so the
+ * catalogue rows are identical in every save from this ruleset.
+ *
+ * Note: this is a single *sequence*, not an explicit SQLite transaction. A partially-written
+ * provisional save is invisible (no `save_meta` row) and disposable, so the distinction is
+ * harmless while generation stays provisional — but any ticket that later scales these writes
+ * should decide whether the sequence deserves `sql.withTransaction`.
  */
 export const generateWorld = ({ worldSeed, referenceYear }: WorldGenerationConfig) =>
   Effect.gen(function* () {
@@ -53,6 +70,22 @@ export const generateWorld = ({ worldSeed, referenceYear }: WorldGenerationConfi
 
     yield* sql`INSERT INTO generation_manifest (id, world_seed, generator_version, ruleset_version, reference_year, generated_at)
       VALUES (1, ${worldSeed}, ${GENERATOR_VERSION}, ${RULESET_VERSION}, ${referenceYear}, ${generatedAt})`;
+
+    // The world catalogue, written before any club on the same connection as the rest of
+    // generation. `nations` and `cities` are copied unconditionally — one nations row per
+    // `NATION_CODES` member and one row per curated city of every nation, whatever a later
+    // selection resolves to — because a player's nationality and birthplace are drawn from the whole
+    // catalogue, not from the nations a save activated (spec rule 2). Both tables are code-derived
+    // static data, so nothing here reads a seed, a count, or a collection length; the rows are
+    // identical in every save this ruleset generates.
+    for (const code of NATION_CODES) {
+      yield* sql`INSERT INTO nations (id) VALUES (${canonicalNationId(code)})`;
+    }
+
+    for (const city of CITIES) {
+      yield* sql`INSERT INTO cities (id, nation_id, name, population_band)
+        VALUES (${canonicalCityId(city.nationCode, city.name)}, ${canonicalNationId(city.nationCode)}, ${city.name}, ${city.populationBand})`;
+    }
 
     for (const clubDef of LEAGUE_CLUBS) {
       // Keyed on the club's canonical name rather than its ordinal, so reordering the roster does

@@ -5,7 +5,8 @@
  *
  * **Factual and stable** — country names, ISO 3166-1 alpha-3 codes, continents, confederation
  * membership, languages, currency codes. These are recorded because they are true and rarely
- * change, and they are the only real-world data the simulation core depends on.
+ * change; with the city catalogue in `cities.ts` they are the real-world data the simulation core
+ * depends on.
  *
  * **Gameplay priors** — every 0-1 weight in a `NationProfile`, and every value in
  * `MIGRATION_LINKS`. These are *not* measurements and must never be presented as facts about a
@@ -52,6 +53,9 @@ export const CONFEDERATION_BY_ID: Readonly<Record<ConfederationId, Confederation
 export type NationCode = (typeof NATION_CODES)[number];
 
 export const NATION_CODES = ["ENG", "ESP", "PRT", "FRA", "DEU", "BRA", "AND", "ITA"] as const;
+
+/** The canonical nation id in the one underscore convention the whole catalogue uses (`nation_eng`). */
+export const canonicalNationId = (code: NationCode): string => `nation_${code.toLowerCase()}`;
 
 /**
  * A Nation's tactical leaning. Weights, not rules: they nudge the distribution an archetype is

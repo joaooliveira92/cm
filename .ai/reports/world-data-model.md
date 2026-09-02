@@ -1,53 +1,55 @@
 # Validation Report: world-data-model
 
-## Sprint
+## Sprint (latest — ticket 02)
 
 - Effort: `.scratch/world-data-model/`
-- Tickets closed: `implementation/01-deterministic-background-match-seed`
+- Tickets closed: `implementation/02-nations-and-cities-rows`
 - Branch: `dev`
 - Commits: pending (this report precedes the commit)
 
-## Acceptance criteria → evidence
+Prior sprint in this effort: `implementation/01-deterministic-background-match-seed`, commit `8070a62`.
+
+## Acceptance criteria → evidence (ticket 02)
 
 | # | Criterion | Proving test | Result |
 |---|---|---|---|
-| 1 | No `Math.random()` in `apps/desktop/src/main`; seed derived from world seed + fixture identity | `rg "Math.random" apps/desktop/src/main` → no matches; `resolveFixtureScore` derives `deriveSeed(deriveSeed(worldSeed, "season", seasonNumber), "match", matchday, homeClubId, awayClubId)` | PASS |
-| 2 | Derivation reads only stored, replayable values | By construction — `worldSeed` from `generation_manifest`, `seasonNumber`/`matchday`/`homeClubId`/`awayClubId` from the fixture row; no clock/count/length/position | PASS |
-| 3 | Same save twice → identical goals; two saves from one world seed → identical results | `season.test.ts` "two advances of the same save from the same starting state resolve every fixture identically" + "two saves generated from one world seed resolve identically after the same advances" | PASS (both ✓, 20s timeout) |
-| 4 | Human's watched fixture unaffected; replay tests stay green | `match.ts` untouched; `match.test.ts` + `matchCommands.test.ts` green in full suite | PASS |
-| 5 | `pnpm check:all` green | see Gate | PASS |
+| 1 | `nations` = canonical id (`nation_eng`) only, no activation/factual/profile/seed | `db-schema.test.ts` "keeps the world catalogue thin" (full-block match) + `world-determinism.test.ts` "writes the whole world catalogue" | PASS |
+| 2 | `cities` = canonical id (`city_eng_london`), nation FK, name, band CHECK; no coords/figure/seed | `db-schema.test.ts` full-shape `cities` block | PASS |
+| 3 | ≥1 city per nation; names plain data, never content-pack | `cities.test.ts` "curates at least one city for every nation" + module imports only `nations.js` | PASS |
+| 4 | Catalogue written before clubs; identical rows across saves from one seed | `world-determinism.test.ts` two-seed/three-save `deepStrictEqual` test; insert order in `worldGeneration.ts` | PASS (framing deviation documented on ticket) |
+| 5 | DDL regenerated; `verify-db-schema` passes | `pnpm db:generate` + `pnpm verify-db-schema` → "generated DDL matches db/schema.ts" | PASS |
+| 6 | `pnpm check:all` green | see Gate | PASS |
 
-## Gate
+## Gate (ticket 02)
 
 | Gate | Command | Result |
 |---|---|---|
-| check:all | `pnpm check:all` | PASS — `✓ typecheck (1179ms) · ✓ lint (394ms) · ✓ effect-lint (515ms) · ✓ verify-md-links (494ms) · ✓ verify-db-schema (839ms) · ✓ test (23154ms)`; desktop 73 files / 708 tests passed |
+| check:all | `pnpm check:all` | PASS — `✓ typecheck (1390ms) · ✓ lint (409ms) · ✓ effect-lint (510ms) · ✓ verify-md-links (482ms) · ✓ verify-db-schema (830ms) · ✓ test (23331ms)` |
 | e2e | `pnpm --filter @cm-clone/desktop test:e2e` | not applicable — no screen changed |
-| determinism | `cd apps/desktop && pnpm vitest run test/season.test.ts --reporter=verbose` | run — the two determinism tests above pass by name; 13/13 in `season.test.ts` |
-| save compatibility | — | not applicable — no schema change; old saves advance silently onto derived seeds (prior played matchdays keep their drawn scores) |
+| determinism | `cd apps/desktop && pnpm vitest run test/world-determinism.test.ts test/db-schema.test.ts` | run — 10/10 pass; catalogue rows identical across two seeds and two reference years |
+| save compatibility | — | not applicable per contract — this is a new-schema addition (saves are created fresh); nothing reads the new tables yet, so old saves are unaffected |
 
-The jsdom `window.scrollTo` "Not implemented" traces in the test log are pre-existing renderer noise (TanStack router scroll restoration under jsdom), observed before this change; not a failure.
+## Prior sprint — ticket 01 (commit `8070a62`)
 
-## Behavior changes
-
-Background fixture scores are now deterministic: same world seed + same fixture → same result, across runs and across saves generated from one seed. Watched fixtures unchanged. No save is affected — no schema change, and already-played matchdays are not rewritten.
-
-## Decision records
-
-- ADRs added: none
-- Agent Notes written (`proposed/`): none
-- Agent Notes promoted (`implemented/`): none — the two linked notes (`event-streams-and-read-models`, `season-fixture-and-cup-schedule`) span far more than the clause this ticket ships; promotion happens with the last ticket carrying each note, per `implementation/README.md`.
-- Agent Notes edited (stale passages): `2026-09-02-event-streams-and-read-models.md`, `2026-08-29-human-fixture-pre-match-boundary.md`, `2026-09-01-deterministic-world-generation-and-drizzle-schema.md` — each claimed the background match still seeded from `Math.random()`, which this ticket fixed.
-
-## Pre-existing failures
-
-None observed this sprint. The jsdom `window.scrollTo` renderer noise predates and is unrelated.
-
-## Deferred and known limitations
-
-- The human's watched fixture still seeds from `Date.now() ^ hash(matchId)` in `match.ts` — kept per criterion 4; its replay semantics are recorded in the pre-match-boundary note.
-- The derivation stands in with `matchday` as Round and the League as competition; the note's full `(world_seed, competition_id, season_number, round)` form slots in when tickets 05/09 land.
+- Gate: `pnpm check:all` PASS — `✓ typecheck (1179ms) · ✓ lint (394ms) · ✓ effect-lint (515ms) · ✓ verify-md-links (494ms) · ✓ verify-db-schema (839ms) · ✓ test (23154ms)`.
+- Determinism evidence: `pnpm vitest run test/season.test.ts --reporter=verbose` — 13/13 pass, including "two advances of the same save from the same starting state resolve every fixture identically" and "two saves generated from one world seed resolve identically after the same advances".
+- Behavior change: background fixture seed derived from world seed + fixture identity (`Math.random()` removed from `apps/desktop/src/main`); watched fixture unchanged.
+- Review: APPROVE, no blockers. One low finding (three stale Agent Note passages claiming the `Math.random()` defect) repaired in-commit.
 
 ## Review
 
-Reviewer verdict: **APPROVE** (no blocker, no high). One low finding — three stale Agent Note passages describing the removed `Math.random()` defect — repaired by the orchestrator as noted above before the gate. Reviewer also confirmed the seed-derivation is not fixture-direction-symmetric (length-prefixed parts), so A-home-vs-B-away cannot collide with A-away-vs-B-home.
+- Ticket 02 reviewer verdict: **APPROVE**, no blocker, no high. Four optional hardenings — F1 (transaction-comment accuracy: sequence ≠ explicit transaction), F2 (exact-shape `cities` DDL assertion), F3 (`nations.ts` header no longer claims nations are the only real-world data), F4 (insert-order probe). F1–F3 applied. F4 attempted then reverted: SQLite rowids are per-table, so a cross-table insert-order probe is not possible without schema instrumentation; ordering is verified by inspection of `worldGeneration.ts` and the equality assertions. Recorded on the ticket.
+- Framing deviation (AC4 "two different selections"): selection does not reach generation until ticket 03; the test pins the property with the save-varying inputs that exist (two reference years, two world seeds). Reviewer judged acceptable as shipped; handoff to ticket 03 recorded on the ticket.
+
+## Decision records
+
+- ADRs added: none.
+- Agent Notes written: none.
+- Agent Notes promoted: none — the linked notes (`world-catalogue-and-canonical-ids`, `results-only-geography-cost`) span later tickets (04/06 for `clubs.name` and competition names, 05 for `competitions`, 08 for `birth_city_id`).
+- Agent Notes edited: none this sprint.
+
+## Pre-existing failures / deferred
+
+- jsdom `window.scrollTo` renderer noise in the test log: pre-existing, unrelated.
+- The `nations.ts` "only real-world data" wording was a stale claim fixed as part of F3.
+- Save-format note: older saves predating these two tables lack them; nothing reads them yet, so no breakage. The repo regenerates the `0000` initial schema rather than shipping ALTER migrations; whichever ticket first *reads* the catalogue inherits that pattern decision.
