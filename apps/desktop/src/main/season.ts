@@ -22,13 +22,20 @@ import {
   simulateMatchWithCondition,
   type MatchTeamSetup,
 } from "@cm-clone/game-engine";
-import type { ManagerOutcome, PlayerAttributes, RandomSource, Verdict } from "@cm-clone/shared";
 import {
   BOARD_OBJECTIVE_BANDS,
   judgeBoardObjective,
   leagueRoundDates,
   nextManagerOutcome,
+  seasonStartDate,
   seasonStartYear,
+  seasonWindows,
+  withinMidSeasonWindow,
+  type ManagerOutcome,
+  type PlayerAttributes,
+  type RandomSource,
+  type SeasonWindows,
+  type Verdict,
 } from "@cm-clone/shared";
 import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -43,9 +50,10 @@ import { loadPersistedTactic } from "./tactics.js";
 import { expireContractsForSeason } from "./transfers.js";
 
 const STREAM_TYPE = "season";
-const TOTAL_MATCHDAYS = 38;
-/** Mid-season Transfer Window opens immediately after this Matchday resolves (ADR-0004). */
-const MID_WINDOW_MATCHDAY = 19;
+
+/** The depth a competition the human can be stopped for runs at. Background and results-only
+ *  fixtures resolve as their dates pass, but they never interrupt the human. */
+const PLAYABLE_DEPTH = "full";
 
 // ---------------------------------------------------------------------------
 // Domain errors
@@ -212,7 +220,6 @@ const generateLeagueFixtures = (seasonNumber: number, worldSeed: number, referen
     const sql = yield* SqlClient;
     const startYear = seasonStartYear(referenceYear, seasonNumber);
     const fields = yield* loadLeagueFields(seasonNumber);
-    const humanCompetitionId = yield* loadHumanCompetitionId(seasonNumber);
     let total = 0;
 
     for (const { competitionId, clubIds } of fields) {
@@ -222,14 +229,8 @@ const generateLeagueFixtures = (seasonNumber: number, worldSeed: number, referen
       const dates = yield* scheduleRounds(competitionId, rounds, startYear);
 
       for (const fixture of fixtures) {
-        // The retired global Matchday, written for the human's competition only and only where its
-        // 1..38 range still reaches. Ticket 10 deletes the column and this line with it.
-        const matchday =
-          competitionId === humanCompetitionId && fixture.round <= TOTAL_MATCHDAYS
-            ? fixture.round
-            : null;
-        yield* sql`INSERT INTO fixtures (season_number, competition_id, round, scheduled_date, matchday, home_club_id, away_club_id, home_goals, away_goals, home_penalties, away_penalties, played)
-          VALUES (${seasonNumber}, ${competitionId}, ${fixture.round}, ${dates[fixture.round - 1]!}, ${matchday},
+        yield* sql`INSERT INTO fixtures (season_number, competition_id, round, scheduled_date, home_club_id, away_club_id, home_goals, away_goals, home_penalties, away_penalties, played)
+          VALUES (${seasonNumber}, ${competitionId}, ${fixture.round}, ${dates[fixture.round - 1]!},
             ${fixture.homeClubId}, ${fixture.awayClubId}, NULL, NULL, NULL, NULL, 0)`;
       }
       total += fixtures.length;
@@ -251,7 +252,11 @@ export const startSeason = (saveId: SaveId) =>
     const sql = yield* SqlClient;
     const manifest = yield* readGenerationManifest;
 
-    yield* sql`INSERT INTO season (season_number, current_matchday, phase) VALUES (1, 0, 'pre_season')`;
+    // A career opens in the pre-season, some weeks before the first league round, so the human has
+    // somewhere to stand before round 1 and the pre-season window has a real open date rather than
+    // a phase written directly at season start.
+    yield* sql`INSERT INTO season (season_number, game_date, phase)
+      VALUES (1, ${seasonStartDate(manifest.referenceYear, 1)}, 'pre_season')`;
     const fixtureCount = yield* generateLeagueFixtures(1, manifest.worldSeed, manifest.referenceYear);
 
     // Fitness ledger (ticket 10): every generated player enters Season 1 at full Condition (100%),
@@ -286,7 +291,7 @@ type SeasonPhase = (typeof SEASON_PHASES)[number];
 
 interface SeasonRow {
   readonly seasonNumber: number;
-  readonly currentMatchday: number;
+  readonly currentDate: string;
   readonly phase: SeasonPhase;
 }
 
@@ -294,14 +299,14 @@ const loadSeasonRow = Effect.gen(function* () {
   const sql = yield* SqlClient;
   const rows = yield* sql<{
     seasonNumber: number;
-    currentMatchday: number;
+    currentDate: string;
     phase: SeasonRow["phase"];
-  }>`SELECT season_number as "seasonNumber", current_matchday as "currentMatchday", phase FROM season LIMIT 1`;
+  }>`SELECT season_number as "seasonNumber", game_date as "currentDate", phase FROM season LIMIT 1`;
   return rows[0]!;
 });
 
 const toSeasonView = (row: SeasonRow) =>
-  new SeasonView({ seasonNumber: row.seasonNumber, currentMatchday: row.currentMatchday, phase: row.phase });
+  new SeasonView({ seasonNumber: row.seasonNumber, currentDate: row.currentDate, phase: row.phase });
 
 // ---------------------------------------------------------------------------
 // Tactic resolution for match simulation
@@ -484,13 +489,21 @@ const resolveFixtureScore = (
     return { homeGoals: fullTime.homeScore, awayGoals: fullTime.awayScore };
   });
 
-/** Resolves every Fixture scheduled for one Matchday — the player's Fixture in full via
- * `simulateMatch`, and the other 9 the same way (an internal-only helper, not a separate RPC
- * method per ticket 15). Persists results in the caller's SQL transaction. */
-const resolveMatchday = (matchday: number) =>
+/**
+ * Resolves every unplayed fixture in the world dated on or before `throughDate`.
+ *
+ * World-wide rather than per-competition: a background division whose fixtures went unresolved
+ * would leave its league table stale, so background fixtures must resolve as their dates pass. What
+ * Depth decides is how often the human is *stopped*, never how often matches run.
+ *
+ * The returned results cover playable competitions only. Reporting every resolved fixture would put
+ * thousands of rows into one IPC payload per Continue, and nothing on the other side reads a
+ * background result.
+ */
+const resolveDueFixtures = (throughDate: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    // The fixture's match seed derives from the world seed (ticket 01). Read once per Matchday —
+    // The fixture's match seed derives from the world seed (ticket 01). Read once per advance —
     // the value is stored and replayable, so this is not a fresh-entropy draw.
     const manifest = yield* readGenerationManifest;
     const fixtureRows = yield* sql<{
@@ -500,9 +513,13 @@ const resolveMatchday = (matchday: number) =>
       seasonNumber: number;
       competitionId: string;
       round: number;
-    }>`SELECT id, home_club_id as "homeClubId", away_club_id as "awayClubId", season_number as "seasonNumber",
-              competition_id as "competitionId", round
-       FROM fixtures WHERE matchday = ${matchday} ORDER BY id ASC`;
+      depth: string;
+    }>`SELECT f.id, f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
+              f.season_number as "seasonNumber", f.competition_id as "competitionId", f.round, c.depth
+       FROM fixtures f
+       JOIN competitions c ON c.id = f.competition_id
+       WHERE f.played = 0 AND f.scheduled_date <= ${throughDate}
+       ORDER BY f.scheduled_date ASC, f.id ASC`;
 
     const results: Array<FixtureResult> = [];
     for (const fixture of fixtureRows) {
@@ -515,7 +532,15 @@ const resolveMatchday = (matchday: number) =>
         manifest.worldSeed,
       );
       yield* sql`UPDATE fixtures SET home_goals = ${homeGoals}, away_goals = ${awayGoals}, played = 1 WHERE id = ${fixture.id}`;
-      results.push({ fixtureId: fixture.id, homeClubId: fixture.homeClubId, awayClubId: fixture.awayClubId, homeGoals, awayGoals });
+      if (fixture.depth === PLAYABLE_DEPTH) {
+        results.push({
+          fixtureId: fixture.id,
+          homeClubId: fixture.homeClubId,
+          awayClubId: fixture.awayClubId,
+          homeGoals,
+          awayGoals,
+        });
+      }
     }
     return results;
   });
@@ -525,32 +550,74 @@ const resolveMatchday = (matchday: number) =>
 // ---------------------------------------------------------------------------
 
 type CalendarBoundary =
-  | { readonly type: "matchday"; readonly matchday: number; readonly closesWindow: "pre_season" | "mid_season" | null }
-  | { readonly type: "windowOpen" }
+  | { readonly type: "windowOpen"; readonly date: string }
+  | { readonly type: "matchDate"; readonly date: string }
+  | { readonly type: "seasonEnd"; readonly date: string }
   | { readonly type: "seasonComplete" };
 
-/** Pure: given the Season's current state, what does the next `AdvanceCalendar` call resolve?
- * Exported for direct unit testing of the state machine, independent of the DB (ticket 15). */
-export const nextCalendarBoundary = (row: {
-  readonly currentMatchday: number;
-  readonly phase: SeasonRow["phase"];
-}): CalendarBoundary => {
-  if (row.currentMatchday === MID_WINDOW_MATCHDAY && row.phase === "in_season") {
-    return { type: "windowOpen" };
+/** What the calendar can see ahead of it, all of it read from fixture rows rather than stored. */
+export interface CalendarHorizon {
+  readonly currentDate: string;
+  /** The earliest date after `currentDate` carrying an unplayed fixture of a playable competition,
+   *  or `null` when the human has no football left this season. */
+  readonly nextPlayableDate: string | null;
+  /** The latest unplayed fixture date anywhere in the world, cup final included, or `null` once
+   *  every fixture of the season has resolved. */
+  readonly finalUnplayedDate: string | null;
+  readonly windows: SeasonWindows;
+}
+
+/**
+ * Pure: given where the calendar stands and what is ahead of it, where does the next Continue land?
+ *
+ * The advance stops only where a **playable** competition has a fixture. Stopping at every date with
+ * a fixture anywhere would halt the human because a background third division played on a Tuesday;
+ * stopping only where the human's own club plays would skip past a date on which a rival's result
+ * moved the table they are about to read.
+ *
+ * Landing on a date with no fixture at all is not a failure — it is what the mid-season window's
+ * open looks like, and it is why the pre-season exists.
+ */
+export const nextCalendarBoundary = (horizon: CalendarHorizon): CalendarBoundary => {
+  if (horizon.finalUnplayedDate === null) return { type: "seasonComplete" };
+
+  // The window's open is a boundary the way a fixture date is, which is what gives the human a
+  // moment to act inside it. Once the calendar has reached it the guard cannot fire again, so the
+  // window opens exactly once per season.
+  const { midSeasonOpen } = horizon.windows;
+  if (
+    horizon.currentDate < midSeasonOpen &&
+    (horizon.nextPlayableDate === null || midSeasonOpen <= horizon.nextPlayableDate)
+  ) {
+    return { type: "windowOpen", date: midSeasonOpen };
   }
-  if (row.currentMatchday >= TOTAL_MATCHDAYS) {
-    return { type: "seasonComplete" };
-  }
-  const matchday = row.currentMatchday + 1;
-  const closesWindow = matchday === 1 ? "pre_season" : matchday === MID_WINDOW_MATCHDAY + 1 ? "mid_season" : null;
-  return { type: "matchday", matchday, closesWindow };
+
+  if (horizon.nextPlayableDate !== null) return { type: "matchDate", date: horizon.nextPlayableDate };
+
+  // No playable football left, but the world still has fixtures — a cup final, or a background
+  // league running past the human's last round. The season ends at the last of them rather than at
+  // a tidy invented end date.
+  return { type: "seasonEnd", date: horizon.finalUnplayedDate };
 };
 
-/** The sole time-advancing command (ticket 15 / ADR-0004): jumps to the next scheduled boundary — a
- * Matchday's Fixtures, or a Transfer Window open/close — never a day-by-day clock. Crossing a
- * Matchday resolves all 10 of that Matchday's Fixtures (the player's and the 9 AI Fixtures alike)
- * synchronously in this same request. Emits Season-stream events and projects the fixtures/season
- * read model in the same SQL transaction. */
+/** Reads the horizon from the fixture rows themselves. Per-competition progress is never stored. */
+const loadCalendarHorizon = (row: SeasonRow, referenceYear: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const playable = yield* sql<{ date: string | null }>`
+      SELECT MIN(f.scheduled_date) as "date"
+      FROM fixtures f JOIN competitions c ON c.id = f.competition_id
+      WHERE f.played = 0 AND f.scheduled_date > ${row.currentDate} AND c.depth = ${PLAYABLE_DEPTH}`;
+    const remaining = yield* sql<{ date: string | null }>`
+      SELECT MAX(scheduled_date) as "date" FROM fixtures WHERE played = 0`;
+
+    return {
+      currentDate: row.currentDate,
+      nextPlayableDate: playable[0]?.date ?? null,
+      finalUnplayedDate: remaining[0]?.date ?? null,
+      windows: seasonWindows(seasonStartYear(referenceYear, row.seasonNumber)),
+    } satisfies CalendarHorizon;
+  });
 
 /**
  * Board Objective judgment + Consecutive-Miss Counter (ticket 18 / ADR-0006): runs as an
@@ -566,7 +633,8 @@ const judgeSeasonEnd = (
 ) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const standings = yield* computeStandings(seasonNumber);
+    const competitionId = yield* loadHumanCompetitionId(seasonNumber);
+    const standings = yield* computeStandings(competitionId ?? "", seasonNumber);
 
     const objectiveRows = yield* sql<{
       clubId: ClubId;
@@ -641,58 +709,93 @@ export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
       yield* assertSaveNotArchived(saveId);
       yield* expireStalePendingBids;
 
-      const boundary = nextCalendarBoundary(row);
+      const manifest = yield* readGenerationManifest;
+      const horizon = yield* loadCalendarHorizon(row, manifest.referenceYear);
+      const boundary = nextCalendarBoundary(horizon);
       const streamEvents: Array<{ readonly tag: string; readonly payload: unknown }> = [];
-      let resolvedMatchday: number | null = null;
+      let resolvedDate: string | null = null;
       let transferWindowClosed: "pre_season" | "mid_season" | null = null;
       let transferWindowOpened: "mid_season" | null = null;
       let seasonConcluded = false;
       let boardObjectiveVerdict: Verdict | null = null;
       let managerOutcome: ManagerOutcome = "none";
 
+      if (boundary.type === "seasonComplete") {
+        // Every fixture of the season has already resolved and the conclusion has run.
+        return yield* new SeasonCompleteError({ saveId });
+      }
+
+      /** The phase the calendar stands in once it reaches `date`, derived from the window bounds
+       *  rather than tracked separately, so phase has one writer and no memory of its own. */
+      const phaseAt = (date: string): SeasonPhase =>
+        withinMidSeasonWindow(horizon.windows, date) ? "mid_window_open" : "in_season";
+
       if (boundary.type === "windowOpen") {
-        yield* sql`UPDATE season SET phase = 'mid_window_open' WHERE season_number = ${row.seasonNumber}`;
-        streamEvents.push({ tag: "TransferWindowOpened", payload: { window: "mid_season", afterMatchday: row.currentMatchday } });
+        yield* sql`UPDATE season SET game_date = ${boundary.date}, phase = 'mid_window_open' WHERE season_number = ${row.seasonNumber}`;
+        streamEvents.push({
+          tag: "TransferWindowOpened",
+          payload: { window: "mid_season", date: boundary.date },
+        });
         transferWindowOpened = "mid_season";
         // AI-club transfer activity (ticket 17 / ADR-0005) fires at the mid-season window's open —
         // this `windowOpen` boundary *is* that open. Self-issued in-process, never through the
         // RpcGroup.
         yield* runAiTransferWindow(row.seasonNumber);
-      } else if (boundary.type === "matchday") {
-        if (boundary.closesWindow) {
-          streamEvents.push({ tag: "TransferWindowClosed", payload: { window: boundary.closesWindow, matchday: boundary.matchday } });
-          transferWindowClosed = boundary.closesWindow;
-          if (boundary.closesWindow === "pre_season") {
-            // The pre-season window has been open since Season start (`startSeason` sets
-            // `phase: 'pre_season'` directly — `nextCalendarBoundary` never emits a `windowOpen`
-            // boundary for it, only for the mid-season one), so there's no earlier "open" moment
-            // to hook AI activity into. This is the closest analogous point: right as the window
-            // closes, before Matchday 1 resolves (ticket 17).
-            yield* runAiTransferWindow(row.seasonNumber);
-          }
-        }
-        const results = yield* resolveMatchday(boundary.matchday);
-        streamEvents.push({ tag: "MatchdayResolved", payload: { matchday: boundary.matchday, results } });
-        resolvedMatchday = boundary.matchday;
-        yield* sql`UPDATE season SET current_matchday = ${boundary.matchday}, phase = 'in_season' WHERE season_number = ${row.seasonNumber}`;
       } else {
-        streamEvents.push({ tag: "SeasonConcluded", payload: { seasonNumber: row.seasonNumber } });
-        yield* sql`UPDATE season SET phase = 'season_complete' WHERE season_number = ${row.seasonNumber}`;
-        // Contract expiry -> Free Agent (ticket 16 / ADR-0005) is specified as happening "at Season
-        // start." This repo has no multi-season rollover yet (ticket 15 only builds Season 1's
-        // calendar), so there's no "next Season's pre-season" seam to hook into — `SeasonConcluded`
-        // is the closest one-per-Season boundary that currently exists.
-        yield* expireContractsForSeason;
-        // Player Development (spec: `.scratch/training/spec.md`): every player on every club
-        // develops toward their age-appropriate ceiling once per `SeasonConcluded`, appending one
-        // `PlayerDeveloped` event per club to its own Club stream — same in-process synchronous
-        // reactor pattern as the reactions above (ADR-0007).
-        yield* developPlayersForSeason(row.seasonNumber);
-        seasonConcluded = true;
 
-        const judged = yield* judgeSeasonEnd(row.seasonNumber, streamEvents);
-        boardObjectiveVerdict = judged.verdict;
-        managerOutcome = judged.managerOutcome;
+        // A window closes when the calendar moves out of it, which is a fact about the two dates
+        // rather than about which fixture was played. The pre-season window has been open since the
+        // season's opening date and closes the moment the football starts.
+        if (row.phase === "pre_season") {
+          streamEvents.push({
+            tag: "TransferWindowClosed",
+            payload: { window: "pre_season", date: boundary.date },
+          });
+          transferWindowClosed = "pre_season";
+          // The pre-season window's open is the season's start rather than a boundary the advance
+          // stops at, so its close is the first moment AI transfer activity has to hook into.
+          yield* runAiTransferWindow(row.seasonNumber);
+        } else if (
+          row.phase === "mid_window_open" &&
+          !withinMidSeasonWindow(horizon.windows, boundary.date)
+        ) {
+          streamEvents.push({
+            tag: "TransferWindowClosed",
+            payload: { window: "mid_season", date: boundary.date },
+          });
+          transferWindowClosed = "mid_season";
+        }
+
+        const results = yield* resolveDueFixtures(boundary.date);
+        streamEvents.push({ tag: "MatchdayResolved", payload: { date: boundary.date, results } });
+        resolvedDate = boundary.date;
+
+        // The season is over when no unplayed fixture remains anywhere, cup final included —
+        // never at a tidy invented end date. Competitions genuinely end on different days, and the
+        // league table is already final by the time a cup final plays.
+        const remaining = yield* sql<{ count: number }>`
+          SELECT COUNT(*) as "count" FROM fixtures WHERE played = 0`;
+        const concluded = (remaining[0]?.count ?? 0) === 0;
+        const phase = concluded ? "season_complete" : phaseAt(boundary.date);
+        yield* sql`UPDATE season SET game_date = ${boundary.date}, phase = ${phase} WHERE season_number = ${row.seasonNumber}`;
+
+        if (concluded) {
+          streamEvents.push({ tag: "SeasonConcluded", payload: { seasonNumber: row.seasonNumber } });
+          // Contract expiry -> Free Agent (ticket 16 / ADR-0005) is specified as happening "at
+          // Season start." There is no next season's pre-season to hook into yet, so
+          // `SeasonConcluded` stays the one-per-season boundary it attaches to.
+          yield* expireContractsForSeason;
+          // Player Development (spec: `.scratch/training/spec.md`): every player on every club
+          // develops toward their age-appropriate ceiling once per `SeasonConcluded`, appending one
+          // `PlayerDeveloped` event per club to its own Club stream — same in-process synchronous
+          // reactor pattern as the reactions above (ADR-0007).
+          yield* developPlayersForSeason(row.seasonNumber);
+          seasonConcluded = true;
+
+          const judged = yield* judgeSeasonEnd(row.seasonNumber, streamEvents);
+          boardObjectiveVerdict = judged.verdict;
+          managerOutcome = judged.managerOutcome;
+        }
       }
 
       const startSeq = yield* nextStreamSeq(STREAM_TYPE, saveId);
@@ -701,7 +804,7 @@ export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
       const updatedRow = yield* loadSeasonRow;
       return new AdvanceCalendarResult({
         season: toSeasonView(updatedRow),
-        resolvedMatchday,
+        resolvedDate,
         transferWindowClosed,
         transferWindowOpened,
         seasonConcluded,
@@ -775,13 +878,12 @@ export const getFixtures = (savesDir: string, saveId: SaveId) =>
         id: FixtureId;
         round: number;
         scheduledDate: string;
-        matchday: number | null;
         homeClubId: ClubId;
         awayClubId: ClubId;
         homeGoals: number | null;
         awayGoals: number | null;
         played: number;
-      }>`SELECT f.id, f.round, f.scheduled_date as "scheduledDate", f.matchday,
+      }>`SELECT f.id, f.round, f.scheduled_date as "scheduledDate",
                 f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
                 f.home_goals as "homeGoals", f.away_goals as "awayGoals", f.played
          FROM fixtures f
@@ -794,9 +896,6 @@ export const getFixtures = (savesDir: string, saveId: SaveId) =>
             id: row.id,
             round: row.round,
             date: row.scheduledDate,
-            // The retired global Matchday. Within one competition it is the round, which is what
-            // the column still holds wherever it is written; ticket 10 removes the field.
-            matchday: row.matchday ?? row.round,
             homeClubId: row.homeClubId,
             homeClubName: nameOf(row.homeClubId),
             awayClubId: row.awayClubId,
@@ -822,14 +921,21 @@ interface ClubTally {
 
 const emptyTally = (): ClubTally => ({ played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0 });
 
-/** League Table standings for one Season — points, then goal difference, then goals scored, no
- * head-to-head (ADR-0004). Assumes a `SqlClient` in context. Shared by `getLeagueTable` and, since
- * ticket 18, the Board Objective judgment at `SeasonConcluded` and `getSeasonSummary`. */
-const computeStandings = (seasonNumber: number) =>
+/**
+ * League Table standings for one competition's season — points, then goal difference, then goals
+ * scored, no head-to-head.
+ *
+ * Scoped to a competition on both sides: the clubs are its participant rows and the fixtures are
+ * its own. A world with a pyramid in it has several tables running at once, and tallying every club
+ * against every played fixture would blend them into one meaningless league.
+ */
+const computeStandings = (competitionId: string, seasonNumber: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const nameOf = yield* displayNames;
-    const clubRows = yield* sql<{ id: ClubId }>`SELECT id FROM clubs`;
+    const clubRows = yield* sql<{ id: ClubId }>`
+      SELECT club_id as "id" FROM competition_participants
+      WHERE competition_id = ${competitionId} AND season_number = ${seasonNumber}`;
     const fixtureRows = yield* sql<{
       homeClubId: ClubId;
       awayClubId: ClubId;
@@ -837,7 +943,8 @@ const computeStandings = (seasonNumber: number) =>
       awayGoals: number;
     }>`SELECT home_club_id as "homeClubId", away_club_id as "awayClubId",
               home_goals as "homeGoals", away_goals as "awayGoals"
-       FROM fixtures WHERE season_number = ${seasonNumber} AND played = 1`;
+       FROM fixtures
+       WHERE season_number = ${seasonNumber} AND competition_id = ${competitionId} AND played = 1`;
 
     const tallies = new Map<string, ClubTally>(clubRows.map((club) => [club.id, emptyTally()]));
 
@@ -890,7 +997,8 @@ export const getLeagueTable = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const seasonRow = yield* loadSeasonRow;
-      const standings = yield* computeStandings(seasonRow.seasonNumber);
+      const competitionId = yield* loadHumanCompetitionId(seasonRow.seasonNumber);
+      const standings = yield* computeStandings(competitionId ?? "", seasonRow.seasonNumber);
       return new LeagueTableView({ season: toSeasonView(seasonRow), standings });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
@@ -905,7 +1013,8 @@ export const getSeasonSummary = (savesDir: string, saveId: SaveId) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;
       const seasonRow = yield* loadSeasonRow;
-      const standings = yield* computeStandings(seasonRow.seasonNumber);
+      const competitionId = yield* loadHumanCompetitionId(seasonRow.seasonNumber);
+      const standings = yield* computeStandings(competitionId ?? "", seasonRow.seasonNumber);
       const club = yield* loadUserClub;
       const managerStatus = yield* loadManagerStatus;
 

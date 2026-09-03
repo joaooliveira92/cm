@@ -571,18 +571,36 @@ export const events = sqliteTable(
   (table) => [primaryKey({ columns: [table.streamType, table.streamId, table.seq] })],
 );
 
-/** Season/Calendar Decider's read model (ticket 15) — a single row per Season, projected from the
- * "season" event stream (streamId = save id, ADR-0007). `current_matchday` is the last Matchday
- * whose Fixtures have been resolved (0 before Matchday 1). */
+/**
+ * The save's position in time — one row, projected from the "season" event stream.
+ *
+ * `game_date` is where the calendar stands: every fixture in the world dated on or before it has
+ * been resolved. It replaces the retired `current_matchday`, which counted a round number that only
+ * identified a moment while the world held exactly one 38-round league. Round 12 of a league and
+ * round 3 of a cup are not the same instant, and nothing ordered them against each other.
+ *
+ * The column is **not** named `current_date`, which is what the decision record proposed, because
+ * `CURRENT_DATE` is a SQLite keyword: `SELECT current_date FROM season` returns the machine's wall
+ * clock rather than the column, silently and without an error. Every query in this repo is raw SQL,
+ * so one unquoted read anywhere would hand the simulation the real-world date — the precise failure
+ * `generation_manifest.generated_at` is fenced off to prevent. `game_date` is the word the project
+ * already uses for an in-world date on a row, so the vocabulary is unchanged and only the hazard is
+ * gone.
+ *
+ * The row stays a per-save singleton. Everything that reads it is save-wide: the Board Objective is
+ * per-season, Player Development runs once per `SeasonConcluded`, Wage Budget derives at season
+ * start. Per-competition progress — "this cup has reached round 4", "this league has concluded" —
+ * is derived from that competition's own fixture rows and is stored nowhere.
+ */
 export const season = sqliteTable(
   "season",
   {
     seasonNumber: integer("season_number").primaryKey(),
-    currentMatchday: integer("current_matchday").notNull().default(0),
+    /** ISO `YYYY-MM-DD`. No upper bound to check: a date is not a count of rounds. */
+    gameDate: text("game_date").notNull(),
     phase: text("phase").notNull(),
   },
   () => [
-    check("season_current_matchday", sql`current_matchday BETWEEN 0 AND 38`),
     check(
       "season_phase",
       oneOf("phase", ["pre_season", "in_season", "mid_window_open", "season_complete"]),
@@ -633,11 +651,6 @@ export const fixtures = sqliteTable(
     /** ISO `YYYY-MM-DD`, matching `players.date_of_birth`. Text sorts lexicographically, so the
      *  advance's `WHERE scheduled_date <= ?` sweep needs no conversion. */
     scheduledDate: text("scheduled_date").notNull(),
-    /** The retired global Matchday number, kept for exactly one ticket. The advance still walks it
-     *  and it is still written for the human's competition; ticket 10 deletes it and switches the
-     *  advance to dates. Nullable because a world with more than one competition has fixtures it
-     *  never named. */
-    matchday: integer("matchday"),
     homeClubId: text("home_club_id")
       .notNull()
       .references(() => clubs.id),
@@ -652,7 +665,6 @@ export const fixtures = sqliteTable(
   },
   () => [
     check("fixtures_round", sql`round >= 1`),
-    check("fixtures_matchday", sql`matchday IS NULL OR matchday BETWEEN 1 AND 38`),
     check("fixtures_played", sql`played IN (0,1)`),
     check(
       "fixtures_penalties_paired",

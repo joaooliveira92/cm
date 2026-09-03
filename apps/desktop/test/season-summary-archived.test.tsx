@@ -8,7 +8,7 @@ import { RegistryProvider } from "../src/renderer/rpc.js";
 const saveId = SaveId.make("s1");
 
 const summaryView = (overrides: Record<string, unknown> = {}) => ({
-  season: { seasonNumber: 3, currentMatchday: 38, phase: "season_complete" },
+  season: { seasonNumber: 3, currentDate: "2027-05-26", phase: "season_complete" },
   standings: [],
   clubId: ClubId.make("me"),
   clubName: "My Club",

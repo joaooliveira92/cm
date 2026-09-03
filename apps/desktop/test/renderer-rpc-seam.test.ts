@@ -63,8 +63,8 @@ const squadViewPayload = (saveId: string, clubName: string) => ({
 });
 
 const advanceResult = () => ({
-  season: { seasonNumber: 1, currentMatchday: 2, phase: "in_season" as const },
-  resolvedMatchday: 1,
+  season: { seasonNumber: 1, currentDate: "2026-08-08", phase: "in_season" as const },
+  resolvedDate: "2026-08-01",
   transferWindowClosed: null,
   transferWindowOpened: null,
   seasonConcluded: false,

@@ -54,12 +54,12 @@ describe("projectNewsMessage", () => {
     expect(message?.body).toContain("38");
   });
 
-  it("reports the manager's own result for a resolved matchday", () => {
+  it("reports the manager's own result for a resolved date", () => {
     const message = projectNewsMessage(
       event({
         tag: "MatchdayResolved",
         payload: {
-          matchday: 4,
+          date: "2026-09-12",
           results: [
             { fixtureId: "f1", homeClubId: "club-9", awayClubId: "club-8", homeGoals: 0, awayGoals: 0 },
             { fixtureId: "f2", homeClubId: "club-1", awayClubId: "club-2", homeGoals: 3, awayGoals: 1 },
@@ -70,18 +70,18 @@ describe("projectNewsMessage", () => {
       CLUB,
     );
     expect(message?.category).toBe("result");
-    expect(message?.matchday).toBe(4);
-    expect(message?.subject).toContain("Matchday 4");
+    expect(message?.date).toBe("2026-09-12");
+    expect(message?.subject).toContain("2026-09-12");
     expect(message?.body).toContain("3-1");
     expect(message?.body).toContain("Northgate United");
   });
 
-  it("still projects a matchday the manager's club did not play in", () => {
+  it("still projects a resolved date the manager's club did not play in", () => {
     const message = projectNewsMessage(
       event({
         tag: "MatchdayResolved",
         payload: {
-          matchday: 4,
+          date: "2026-09-12",
           results: [
             { fixtureId: "f1", homeClubId: "club-9", awayClubId: "club-8", homeGoals: 0, awayGoals: 0 },
           ],
@@ -136,12 +136,12 @@ describe("projectNewsMessage", () => {
 
   it("projects both transfer window boundaries", () => {
     const opened = projectNewsMessage(
-      event({ tag: "TransferWindowOpened", payload: { window: "mid_season", afterMatchday: 19 } }),
+      event({ tag: "TransferWindowOpened", payload: { window: "mid_season", date: "2027-01-01" } }),
       UNTOUCHED,
       CLUB,
     );
     const closed = projectNewsMessage(
-      event({ tag: "TransferWindowClosed", payload: { window: "pre_season", matchday: 1 } }),
+      event({ tag: "TransferWindowClosed", payload: { window: "pre_season", date: "2026-08-01" } }),
       UNTOUCHED,
       CLUB,
     );
@@ -208,7 +208,7 @@ describe("projectNews", () => {
   const events: ReadonlyArray<NewsSourceEvent> = [
     event({ tag: "SeasonStarted", payload: { seasonNumber: 1, fixtureCount: 38 }, seq: 1 }),
     event({ tag: "MatchStarted", payload: {}, seq: 2 }),
-    event({ tag: "MatchdayResolved", payload: { matchday: 1, results: [] }, seq: 3 }),
+    event({ tag: "MatchdayResolved", payload: { date: "2026-08-01", results: [] }, seq: 3 }),
   ];
 
   it("skips unprojectable events without shifting the others", () => {
@@ -241,7 +241,7 @@ describe("filterNews", () => {
     subject: "Season 1 begins",
     body: "38 fixtures scheduled.",
     seasonNumber: 1,
-    matchday: null,
+    date: null,
     occurredAt: "2026-01-01 10:00:00",
     seq: 1,
     ordinal: 1,
@@ -321,7 +321,7 @@ describe("countNews", () => {
     subject: "s",
     body: "b",
     seasonNumber: 1,
-    matchday: null,
+    date: null,
     occurredAt: "2026-01-01 10:00:00",
     seq: 1,
     ordinal: 1,
@@ -443,7 +443,7 @@ describe("the action view", () => {
     subject: "Transfer offer",
     body: "b",
     seasonNumber: 1,
-    matchday: null,
+    date: null,
     occurredAt: "2026-01-01 10:00:00",
     seq: 1,
     ordinal: 1,

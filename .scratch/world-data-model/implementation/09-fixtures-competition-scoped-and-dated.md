@@ -31,7 +31,7 @@ it is reachable from a catalogue that describes more rounds than the season hold
   date and stops only at playable fixtures, `season` stays a singleton keyed on `current_date`,
   Matchday is redefined as a date and Round is the competition-local number, and Transfer Windows
   become date ranges still read through `season.phase`. See
-  [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-02-date-bearing-calendar.md).
+  [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-02-date-bearing-calendar.md).
 
 **Blocked by:** 06, 07, 23 (the paired-penalty invariant must be assigned to a constraint or to a
 writer before the two columns are defined).

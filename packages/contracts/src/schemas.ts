@@ -293,14 +293,16 @@ export class TacticsScreenView extends Schema.Class<TacticsScreenView>("TacticsS
   tactic: Schema.NullOr(Tactic),
 }) {}
 
-/** Season/Calendar Decider vocabulary (ticket 15 / ADR-0004): the Calendar advances only by jumping to
- * the next Matchday or Transfer Window boundary, never a day-by-day clock. */
+/** Season/Calendar vocabulary: the Calendar advances only by jumping to the next dated boundary — a
+ * date carrying a playable competition's fixture, or a Transfer Window's open — never a day-by-day
+ * clock. */
 export const SEASON_PHASES = ["pre_season", "in_season", "mid_window_open", "season_complete"] as const;
 export const SeasonPhaseSchema = Schema.Literals(SEASON_PHASES);
 
 export class SeasonView extends Schema.Class<SeasonView>("SeasonView")({
   seasonNumber: Schema.Finite,
-  currentMatchday: Schema.Finite,
+  /** ISO `YYYY-MM-DD`: where the calendar stands. Every fixture dated on or before it has resolved. */
+  currentDate: Schema.String,
   phase: SeasonPhaseSchema,
 }) {}
 
@@ -310,7 +312,6 @@ export class FixtureView extends Schema.Class<FixtureView>("FixtureView")({
   round: Schema.Finite,
   /** ISO `YYYY-MM-DD`: when this fixture is played. */
   date: Schema.String,
-  matchday: Schema.Finite,
   homeClubId: ClubId,
   homeClubName: Schema.String,
   awayClubId: ClubId,
@@ -355,7 +356,9 @@ export const ManagerOutcomeSchema = Schema.Literals(MANAGER_OUTCOMES);
 
 export class AdvanceCalendarResult extends Schema.Class<AdvanceCalendarResult>("AdvanceCalendarResult")({
   season: SeasonView,
-  resolvedMatchday: Schema.NullOr(Schema.Finite),
+  /** The date the advance landed on, or `null` when it stopped at a Transfer Window's open rather
+   *  than at football. */
+  resolvedDate: Schema.NullOr(Schema.String),
   transferWindowClosed: Schema.NullOr(Schema.String),
   transferWindowOpened: Schema.NullOr(Schema.String),
   seasonConcluded: Schema.Boolean,
@@ -369,8 +372,7 @@ export class AdvanceCalendarResult extends Schema.Class<AdvanceCalendarResult>("
   managerOutcome: ManagerOutcomeSchema,
 }) {}
 
-/** Raised when `AdvanceCalendar` is invoked after the Season's final Matchday has already resolved —
- * Season rollover into a new Season is out of this ticket's scope. */
+/** Raised when `AdvanceCalendar` is invoked after every fixture of the Season has resolved. */
 export class SeasonCompleteError extends Schema.TaggedError<SeasonCompleteError>()(
   "SeasonCompleteError",
   {
@@ -1016,10 +1018,10 @@ export class NewsMessageView extends Schema.Class<NewsMessageView>("NewsMessageV
   flagged: Schema.Boolean,
   subject: Schema.String,
   body: Schema.String,
-  /** In-world position. The Calendar carries no dates yet, so these are what place a message in the
-   *  career; `occurredAt` orders it. Either may be `null` for an event the field does not apply to. */
+  /** In-world position — the season and the date the message belongs to; `occurredAt` orders it.
+   *  Either may be `null` for an event the field does not apply to. */
   seasonNumber: Schema.NullOr(Schema.Finite),
-  matchday: Schema.NullOr(Schema.Finite),
+  date: Schema.NullOr(Schema.String),
   occurredAt: Schema.String,
 }) {}
 

@@ -45,7 +45,7 @@ const marketPlayer = (id: string) => ({
 
 const transfersView = () => ({
   club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
-  season: { seasonNumber: 1, currentMatchday: 1, phase: "in_season" as const },
+  season: { seasonNumber: 1, currentDate: "2026-08-01", phase: "in_season" as const },
   windowOpen: true,
   transferBudgetRemaining: 500000,
   wageBudget: 1000000,
@@ -57,7 +57,7 @@ const transfersView = () => ({
 });
 
 const leagueView = (phase: "in_season" | "season_complete") => ({
-  season: { seasonNumber: 1, currentMatchday: 1, phase },
+  season: { seasonNumber: 1, currentDate: "2026-08-01", phase },
   standings: [],
 });
 
@@ -235,8 +235,8 @@ describe("AC-19 — Space→Continue honours the safety guard through the live s
         return {
           _tag: "Success",
           value: {
-            season: { seasonNumber: 1, currentMatchday: 2, phase: "in_season" as const },
-            resolvedMatchday: 1,
+            season: { seasonNumber: 1, currentDate: "2026-08-08", phase: "in_season" as const },
+            resolvedDate: "2026-08-01",
             transferWindowClosed: null,
             transferWindowOpened: null,
             seasonConcluded: false,

@@ -1,3 +1,4 @@
+import { formatCalendarDate } from "@cm-clone/shared";
 /**
  * Presentation state for the header's secondary band.
  *
@@ -29,12 +30,9 @@ export type HeaderState =
   | { readonly view: "create"; readonly step: string; readonly hint: string }
   | { readonly view: "career"; readonly career: HeaderCareer };
 
-/** The number of matchdays in a season — the readout's denominator. */
-export const MATCHDAYS_PER_SEASON = 38;
-
 /**
- * The phase word that replaces the matchday segment outside the in-season
- * phase. `in_season` has no word: that is when the matchday is the orientation.
+ * The phase word that replaces the date segment outside the in-season phase.
+ * `in_season` has no word: that is when the date is the orientation.
  */
 const PHASE_WORDS: Readonly<Record<string, string>> = {
   pre_season: "Pre-season",
@@ -44,20 +42,19 @@ const PHASE_WORDS: Readonly<Record<string, string>> = {
 
 export interface SeasonReadoutInput {
   readonly seasonNumber: number;
-  readonly currentMatchday: number;
+  readonly currentDate: string;
   readonly phase: string;
 }
 
 /**
- * `Season 3 · Matchday 12/38`, or the phase word in place of the matchday.
+ * `Season 3 · 12 Aug 2026`, or the phase word in place of the date.
  *
- * The unit is always the Matchday. The Calendar has no day-by-day clock, so no
- * copy here may express time in days or dates — a date would claim a state the
- * domain does not model.
+ * The unit is the date the calendar stands on. It still never walks day by day
+ * — Continue jumps between dated events — so no copy here offers a "next day".
  */
 export const seasonReadout = (season: SeasonReadoutInput): string => {
   const phaseWord = PHASE_WORDS[season.phase];
-  const tail = phaseWord ?? `Matchday ${season.currentMatchday}/${MATCHDAYS_PER_SEASON}`;
+  const tail = phaseWord ?? formatCalendarDate(season.currentDate);
   return `Season ${season.seasonNumber} · ${tail}`;
 };
 

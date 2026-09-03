@@ -1,19 +1,20 @@
 # Agent Note: The Calendar becomes date-bearing
 
-Status: proposed
+Status: implemented
 
-> Partially supersedes [The calendar advances by Matchday, not by calendar date](../../implemented/architecture/2026-08-27-fixture-driven-calendar.md).
+> Partially supersedes [The calendar advances by Matchday, not by calendar date](2026-08-27-fixture-driven-calendar.md).
 > That note's calendar half — Matchday as a 1–38 League-wide round number, Transfer Windows defined
 > against Matchday arithmetic, "no event carries a real-world date" — is overturned here. Its
 > League Table tie-break rule (points, then goal difference, then goals scored, with head-to-head
 > deliberately omitted) is untouched and remains the live statement, which is why that note stays
 > active rather than being archived.
 >
-> Also contradicts the season-readout acceptance criteria in
-> [Career chrome frame and date/Continue bar](../../implemented/architecture/2026-08-31-career-chrome-and-date-continue-bar.md)
-> ("`Season {n} · Matchday {m}/38`", "no copy expresses time in days or dates"). That note is
-> `implemented`, so the shipped chrome is wrong at HEAD once this lands; the replacement copy is a
-> renderer decision, not a shape on disk, and is left to whoever next opens that note.
+> Also overturns the season-readout acceptance criteria in
+> [Career chrome frame and date/Continue bar](2026-08-31-career-chrome-and-date-continue-bar.md)
+> ("`Season {n} · Matchday {m}/38`", "no copy expresses time in days or dates"). The readout now
+> reads `Season 3 · 17 Oct 2026`, and the phase words that replace it outside the in-season phase
+> are unchanged. That note stays `implemented` and otherwise stands; only its two date-related
+> criteria are dead.
 
 ## Problem
 
@@ -29,7 +30,7 @@ identifies a point in time: round 12 of a 38-round league and round 3 of a cup a
 moment, and nothing orders them against each other. Transfer Windows inherit the problem, because
 they are defined against a number that has stopped meaning anything world-wide.
 
-## Proposal
+## Decision
 
 The Calendar becomes date-bearing. A date is the world's unit of time; a round number survives, but
 demoted to a label local to one competition.
@@ -87,7 +88,16 @@ would put thousands of results into one IPC payload per Continue.
 
 `season` stays a per-save singleton. Everything reading it is save-wide: Board Objective is per-season,
 Player Development runs once per `SeasonConcluded`, Wage Budget derives at season start. Its
-`current_matchday` column becomes `current_date`, so no column carries the retired sense of Matchday.
+`current_matchday` column is replaced by a date column, so no column carries the retired sense of
+Matchday.
+
+That column is named **`game_date`**, not `current_date` as this note first proposed. `CURRENT_DATE`
+is a SQLite keyword: `SELECT current_date FROM season` returns the machine's wall clock rather than
+the column, silently and with no error. Every query in this repo is raw SQL through the `SqlClient`,
+so a single unquoted read anywhere would hand the simulation the real-world date — the exact failure
+`generation_manifest.generated_at` is fenced off to prevent, and one that no test asserting on
+relative dates would catch. `game_date` is the word this project already uses for an in-world date on
+a row, so the correction costs no vocabulary.
 
 Per-competition progress — "this cup has reached round 4", "this league has concluded" — is derived
 from that competition's own fixture rows rather than stored.
@@ -184,10 +194,14 @@ that entry stands as written. **Round** enters the glossary as a new term.
   cannot ship at its real size.
 - **Unique indexes as congestion enforcement.** Rejected as half-covering, above.
 
-## Acceptance criteria
+## Consequences
+
+What shipped, and what it costs.
+
+### What holds now
 
 - `fixtures` carries `scheduled_date` (ISO text) and `round`, with `round >= 1` and no upper CHECK.
-- `season` carries `current_date` and no `current_matchday`; no CHECK mentions 38.
+- `season` carries a date column and no `current_matchday`; no CHECK mentions 38.
 - Advancing to date D leaves no unplayed fixture in the world dated on or before D, and lands on a
   date carrying a playable-competition fixture.
 - Two saves generated from the same inputs produce byte-identical `scheduled_date` values.
@@ -199,13 +213,14 @@ that entry stands as written. **Round** enters the glossary as a new term.
 - `CONTEXT.md` defines Matchday as a date, Round as competition-local, and Transfer Windows as date
   ranges.
 
-## Risks
+### What it cost
 
 - **Nations on a real spring-to-autumn cycle ship on the wrong calendar.** Knowingly accepted; visible
   to anyone who knows those leagues, and reversible only by taking the per-nation cost above.
-- **The shipped chrome contradicts this.** `Season {n} · Matchday {m}/38` and "no day-or-date copy"
-  are acceptance criteria of an `implemented` note. The renderer will read wrong until that note is
-  reopened, and this decision does not do that work.
+- **The chrome now says a date where it said a round.** `Season {n} · Matchday {m}/38` was an
+  acceptance criterion of an `implemented` note, and the readout was changed here rather than left
+  reading wrong. The copy is deliberately minimal — the date and nothing else — because choosing what
+  else a date-bearing header should say is a design question this decision has no standing to answer.
 - **Congestion is unenforced at the schema.** A generator bug double-books a club and only a test
   catches it. Accepted over an index that would look like a guarantee.
 - **The slot allocator is a new failure mode at world generation.** A catalogue edit that pushes a

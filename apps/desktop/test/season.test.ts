@@ -4,14 +4,20 @@ import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
-import { SaveId, type SnapshotId } from "@cm-clone/contracts";
+import {
+  NationId,
+  NationSelectionIntentPayload,
+  SaveId,
+  ScopeOptionId,
+  type SnapshotId,
+} from "@cm-clone/contracts";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { leagueRoundDates } from "@cm-clone/shared";
 import { beginCareer, commitCareer, createSave } from "../src/main/saves.js";
-import { createDefaultSnapshot, createPyramidSnapshot } from "./snapshot-helpers.js";
+import { createDefaultSnapshot, createPyramidSnapshot, createSnapshotFor } from "./snapshot-helpers.js";
 import { getSquad } from "../src/main/squad.js";
 import {
   advanceCalendar,
@@ -135,30 +141,66 @@ it.effect("generateRoundRobinFixtures is deterministic from its seed but reshuff
 // Calendar state machine (pure)
 // ---------------------------------------------------------------------------
 
-it.effect("nextCalendarBoundary walks Matchday 1, closing the pre-season window", () =>
+const WINDOWS = { preSeasonOpen: "2026-07-04", midSeasonOpen: "2027-01-01", midSeasonClose: "2027-02-01" };
+
+it.effect("nextCalendarBoundary stops at the next playable fixture date", () =>
   Effect.sync(() => {
-    const boundary = nextCalendarBoundary({ currentMatchday: 0, phase: "pre_season" });
-    deepStrictEqual(boundary, { type: "matchday", matchday: 1, closesWindow: "pre_season" });
+    const boundary = nextCalendarBoundary({
+      currentDate: "2026-07-04",
+      nextPlayableDate: "2026-08-01",
+      finalUnplayedDate: "2027-05-26",
+      windows: WINDOWS,
+    });
+    deepStrictEqual(boundary, { type: "matchDate", date: "2026-08-01" });
   }),
 );
 
-it.effect("nextCalendarBoundary opens the mid-season window right after Matchday 19", () =>
+it.effect("nextCalendarBoundary stops at the mid-season window's open before the fixture beyond it", () =>
   Effect.sync(() => {
-    const boundary = nextCalendarBoundary({ currentMatchday: 19, phase: "in_season" });
-    deepStrictEqual(boundary, { type: "windowOpen" });
+    const boundary = nextCalendarBoundary({
+      currentDate: "2026-12-19",
+      nextPlayableDate: "2027-01-09",
+      finalUnplayedDate: "2027-05-26",
+      windows: WINDOWS,
+    });
+    deepStrictEqual(boundary, { type: "windowOpen", date: "2027-01-01" });
   }),
 );
 
-it.effect("nextCalendarBoundary resolves Matchday 20 and closes the mid-season window once it's open", () =>
+it.effect("nextCalendarBoundary does not reopen a window the calendar has already passed", () =>
   Effect.sync(() => {
-    const boundary = nextCalendarBoundary({ currentMatchday: 19, phase: "mid_window_open" });
-    deepStrictEqual(boundary, { type: "matchday", matchday: 20, closesWindow: "mid_season" });
+    const boundary = nextCalendarBoundary({
+      currentDate: "2027-01-09",
+      nextPlayableDate: "2027-01-16",
+      finalUnplayedDate: "2027-05-26",
+      windows: WINDOWS,
+    });
+    deepStrictEqual(boundary, { type: "matchDate", date: "2027-01-16" });
   }),
 );
 
-it.effect("nextCalendarBoundary concludes the season after Matchday 38", () =>
+it.effect("nextCalendarBoundary sweeps to the last dated fixture once the human has no football left", () =>
   Effect.sync(() => {
-    const boundary = nextCalendarBoundary({ currentMatchday: 38, phase: "in_season" });
+    // The human's league has finished, but a cup final or a background division has not. The
+    // season ends at the last of them rather than at the human's last round.
+    const boundary = nextCalendarBoundary({
+      currentDate: "2027-05-26",
+      nextPlayableDate: null,
+      finalUnplayedDate: "2027-05-29",
+      windows: WINDOWS,
+    });
+    deepStrictEqual(boundary, { type: "seasonEnd", date: "2027-05-29" });
+  }),
+);
+
+it.effect("nextCalendarBoundary reports a season with nothing left unplayed as complete", () =>
+  Effect.sync(() => {
+    const boundary = nextCalendarBoundary({
+      currentDate: "2027-05-29",
+      nextPlayableDate: null,
+      finalUnplayedDate: null,
+      windows: WINDOWS,
+    });
     deepStrictEqual(boundary, { type: "seasonComplete" });
   }),
 );
@@ -167,44 +209,47 @@ it.effect("nextCalendarBoundary concludes the season after Matchday 38", () =>
 // End-to-end via the save-file seam
 // ---------------------------------------------------------------------------
 
-it.effect("createSave generates a 380-fixture season schedule up front", () =>
+it.effect("a career opens in a pre-season, weeks before the first league round", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const view = yield* getFixtures(savesDir, save.id);
 
-    strictEqual(view.season.currentMatchday, 0);
     strictEqual(view.season.phase, "pre_season");
     strictEqual(view.fixtures.length, 380);
     ok(view.fixtures.every((fixture) => !fixture.played));
+    // The human stands somewhere before round 1 rather than on it, which is what gives the
+    // pre-season transfer window a real open date.
+    ok(view.season.currentDate < view.fixtures[0]!.date);
   }),
 );
 
-it.effect("advanceCalendar resolves Matchday 1 for every club, including the player's own fixture", () =>
+it.effect("advanceCalendar lands on the first fixture date, closing the pre-season window", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const squad = yield* getSquad(savesDir, save.id);
+    const before = yield* getFixtures(savesDir, save.id);
+    const firstDate = before.fixtures[0]!.date;
 
     const result = yield* advanceCalendar(savesDir, save.id);
-    strictEqual(result.resolvedMatchday, 1);
+    strictEqual(result.resolvedDate, firstDate);
     strictEqual(result.transferWindowClosed, "pre_season");
-    strictEqual(result.season.currentMatchday, 1);
+    strictEqual(result.season.currentDate, firstDate);
     strictEqual(result.season.phase, "in_season");
 
     const fixtures = yield* getFixtures(savesDir, save.id);
-    const matchday1 = fixtures.fixtures.filter((fixture) => fixture.matchday === 1);
-    strictEqual(matchday1.length, 10);
-    for (const fixture of matchday1) {
+    const opening = fixtures.fixtures.filter((fixture) => fixture.date === firstDate);
+    strictEqual(opening.length, 10);
+    for (const fixture of opening) {
       ok(fixture.played);
       ok(fixture.homeGoals !== null && fixture.awayGoals !== null);
     }
 
-    const playersFixture = matchday1.find(
+    const playersFixture = opening.find(
       (fixture) => fixture.homeClubId === squad.club.id || fixture.awayClubId === squad.club.id,
     );
-    ok(playersFixture, "the player's club should have exactly one fixture in Matchday 1");
+    ok(playersFixture, "the player's club should have exactly one fixture on the opening date");
 
-    const laterFixtures = fixtures.fixtures.filter((fixture) => fixture.matchday !== 1);
-    ok(laterFixtures.every((fixture) => !fixture.played));
+    ok(fixtures.fixtures.filter((fixture) => fixture.date !== firstDate).every((f) => !f.played));
 
     const seasonEvents = yield* loadSeasonStreamEvents(save.id);
     ok(seasonEvents.some((event) => event.tag === "SeasonStarted"));
@@ -213,26 +258,88 @@ it.effect("advanceCalendar resolves Matchday 1 for every club, including the pla
   }),
 );
 
-it.effect("advancing to Matchday 19 then again opens, then closes, the mid-season Transfer Window", () =>
+it.effect("the advance leaves no unplayed fixture dated on or before where it lands", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
 
-    for (let matchday = 1; matchday <= 19; matchday++) {
+    for (let advance = 0; advance < 6; advance++) {
       const result = yield* advanceCalendar(savesDir, save.id);
-      strictEqual(result.resolvedMatchday, matchday);
+      const view = yield* getFixtures(savesDir, save.id);
+      const overdue = view.fixtures.filter(
+        (fixture) => !fixture.played && fixture.date <= view.season.currentDate,
+      );
+      strictEqual(overdue.length, 0, `advance ${advance} left ${overdue.length} fixtures behind`);
+      ok(result.resolvedDate === null || result.resolvedDate === view.season.currentDate);
+    }
+  }),
+  30_000,
+);
+
+it.effect("a background competition's fixtures resolve as their dates pass without stopping the human", () =>
+  Effect.gen(function* () {
+    // England's top division is playable; the second division it pulls in as a dependency is
+    // capped at background depth. Both play, only one interrupts.
+    const snapshotId = yield* createSnapshotFor(savesDir, [
+      new NationSelectionIntentPayload({
+        nationId: NationId.make("nation_eng"),
+        mode: "playable",
+        scopeOptionId: ScopeOptionId.make("scope_eng_top"),
+        source: "user",
+      }),
+      new NationSelectionIntentPayload({
+        nationId: NationId.make("nation_deu"),
+        mode: "background",
+        scopeOptionId: ScopeOptionId.make("scope_deu_top"),
+        source: "user",
+      }),
+    ]);
+    const save = yield* createCareerFrom(snapshotId, 909, "Two Nations");
+
+    const stops: Array<string> = [];
+    for (let advance = 0; advance < 4; advance++) {
+      const result = yield* advanceCalendar(savesDir, save.id);
+      if (result.resolvedDate !== null) stops.push(result.resolvedDate);
     }
 
-    const windowOpen = yield* advanceCalendar(savesDir, save.id);
-    strictEqual(windowOpen.resolvedMatchday, null);
-    strictEqual(windowOpen.transferWindowOpened, "mid_season");
-    strictEqual(windowOpen.season.phase, "mid_window_open");
-
-    const matchday20 = yield* advanceCalendar(savesDir, save.id);
-    strictEqual(matchday20.resolvedMatchday, 20);
-    strictEqual(matchday20.transferWindowClosed, "mid_season");
-    strictEqual(matchday20.season.phase, "in_season");
+    const resolved = yield* loadResolvedFixtures(save.id);
+    const german = resolved.filter((row) => row.competitionId === "comp_deu_1");
+    const english = resolved.filter((row) => row.competitionId === "comp_eng_1");
+    // The background league played, and never on a date of its own that the human was stopped on
+    // — every stop is a date the playable league had a fixture on.
+    ok(german.length > 0, "the background league should have resolved fixtures");
+    ok(english.length > 0);
+    for (const stop of stops) {
+      ok(english.some((row) => row.scheduledDate === stop), `stopped on ${stop} with no playable fixture`);
+    }
   }),
-  20_000,
+  60_000,
+);
+
+it.effect("the mid-season window opens on its date and closes when the calendar leaves it", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    // The window's dates follow the season's own year, which under a test clock is not the year
+    // the wall calendar is in — so the expectation is derived from the fixture list, not pinned.
+    const before = yield* getFixtures(savesDir, save.id);
+    const secondYear = Number(before.fixtures[0]!.date.slice(0, 4)) + 1;
+
+    let opened: string | null = null;
+    let closed: string | null = null;
+    for (let advance = 0; advance < 45; advance++) {
+      const result = yield* advanceCalendar(savesDir, save.id);
+      if (result.transferWindowOpened === "mid_season") {
+        opened = result.season.currentDate;
+        strictEqual(result.resolvedDate, null, "the window's open resolves no football");
+        strictEqual(result.season.phase, "mid_window_open");
+      }
+      if (result.transferWindowClosed === "mid_season") closed = result.season.currentDate;
+      if (result.seasonConcluded) break;
+    }
+
+    strictEqual(opened, `${secondYear}-01-01`);
+    ok(closed !== null && closed >= `${secondYear}-02-01`, `window closed at ${closed}`);
+  }),
+  120_000,
 );
 
 it.effect("league table orders by points, then goal difference, then goals scored", () =>
@@ -266,24 +373,33 @@ it.effect("league table orders by points, then goal difference, then goals score
   }),
 );
 
-it.effect("advanceCalendar fails once the season has fully concluded", () =>
+it.effect("the season concludes once, after the last dated fixture, and then refuses to advance", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
 
-    // Matchday 1..19, window open, Matchday 20..38, then one more call to reach seasonComplete
-    // = 19 + 1 + 19 + 1 = 40 calls.
-    for (let i = 0; i < 40; i++) {
-      yield* advanceCalendar(savesDir, save.id);
+    let conclusions = 0;
+    let advances = 0;
+    while (advances < 60) {
+      advances += 1;
+      const result = yield* advanceCalendar(savesDir, save.id);
+      if (result.seasonConcluded) {
+        conclusions += 1;
+        break;
+      }
     }
+
+    strictEqual(conclusions, 1, "the season should conclude exactly once");
 
     const view = yield* getFixtures(savesDir, save.id);
     strictEqual(view.season.phase, "season_complete");
     ok(view.fixtures.every((fixture) => fixture.played));
+    // Conclusion lands on the last dated fixture of the season rather than on an invented end.
+    strictEqual(view.season.currentDate, view.fixtures.at(-1)!.date);
 
     const result = yield* Effect.exit(advanceCalendar(savesDir, save.id));
     ok(result._tag === "Failure");
   }),
-  20_000,
+  120_000,
 );
 
 // ---------------------------------------------------------------------------
@@ -351,12 +467,23 @@ const loadAllFixtures = (saveId: string) =>
       competitionId: string;
       round: number;
       scheduledDate: string;
-      matchday: number | null;
       homeClubId: string;
       awayClubId: string;
-    }>`SELECT competition_id as "competitionId", round, scheduled_date as "scheduledDate", matchday,
+    }>`SELECT competition_id as "competitionId", round, scheduled_date as "scheduledDate",
               home_club_id as "homeClubId", away_club_id as "awayClubId"
        FROM fixtures ORDER BY id ASC`;
+  }).pipe(
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
+    Effect.scoped,
+  );
+
+/** Every fixture that has actually been played, with the competition it belongs to. */
+const loadResolvedFixtures = (saveId: string) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    return yield* sql<{ competitionId: string; scheduledDate: string }>`
+      SELECT competition_id as "competitionId", scheduled_date as "scheduledDate"
+      FROM fixtures WHERE played = 1`;
   }).pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
     Effect.scoped,

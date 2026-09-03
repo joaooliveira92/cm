@@ -1,3 +1,4 @@
+import { formatCalendarDate } from "@cm-clone/shared";
 import { useEffect } from "react";
 import { type SaveId } from "@cm-clone/contracts";
 import { ACTION_REGISTRY } from "./actions/allActions.js";
@@ -72,8 +73,8 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         <h1 className="text-2xl font-bold">League Table</h1>
         <div className="flex items-center gap-3 text-sm text-text-secondary">
           <span>
-            Season {table.season.seasonNumber} &middot; Matchday {table.season.currentMatchday}/38 &middot;{" "}
-            {table.season.phase.replace("_", " ")}
+            Season {table.season.seasonNumber} &middot; {formatCalendarDate(table.season.currentDate)}{" "}
+            &middot; {table.season.phase.replace("_", " ")}
           </span>
           <Button
             type="button"

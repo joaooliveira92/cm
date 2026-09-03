@@ -44,7 +44,7 @@ const squadView = (saveId: string, clubName: string) => ({
 });
 
 const leagueTable = (saveId: string) => ({
-  season: { seasonNumber: 1, currentMatchday: 1, phase: "in_season" as const },
+  season: { seasonNumber: 1, currentDate: "2026-08-01", phase: "in_season" as const },
   standings: [
     {
       clubId: relaxedSaveId("club-a"),
@@ -159,7 +159,8 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
             ...leagueTable("s1"),
             season: {
               seasonNumber: 1,
-              currentMatchday: leagueTableCalls,
+              // A different date per refetch, which is what the test observes changing.
+              currentDate: `2026-08-${String(leagueTableCalls).padStart(2, "0")}`,
               phase: "in_season" as const,
             },
           },
@@ -170,8 +171,8 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
         return {
           _tag: "Success",
           value: {
-            season: { seasonNumber: 1, currentMatchday: 2, phase: "in_season" as const },
-            resolvedMatchday: 1,
+            season: { seasonNumber: 1, currentDate: "2026-08-08", phase: "in_season" as const },
+            resolvedDate: "2026-08-01",
             transferWindowClosed: null,
             transferWindowOpened: null,
             seasonConcluded: false,
@@ -187,11 +188,11 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
         <LeagueTableScreen saveId={relaxedSaveId("s1")} />
       </RegistryProvider>,
     );
-    expect(await screen.findByText(/Matchday 1\/38/)).toBeTruthy();
+    expect(await screen.findByText(/1 Aug 2026/)).toBeTruthy();
     expect(leagueTableCalls).toBe(1);
 
     fireEvent.click(screen.getByRole("button", { name: /Advance Calendar/ }));
-    expect(await screen.findByText(/Matchday 2\/38/)).toBeTruthy();
+    expect(await screen.findByText(/2 Aug 2026/)).toBeTruthy();
 
     expect(advanceCalls).toBe(1);
     expect(leagueTableCalls).toBe(2);

@@ -71,7 +71,6 @@ export { NAV_SECTIONS as CAREER_SECTIONS } from "../navigation/nav-config.js";
  * path callers and tests already know them by.
  */
 export {
-  MATCHDAYS_PER_SEASON,
   matchReadout,
   seasonReadout,
   type SeasonReadoutInput,

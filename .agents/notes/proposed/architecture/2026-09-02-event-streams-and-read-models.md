@@ -20,7 +20,7 @@ Status: proposed
 > from one entity to the whole read side: that note's derived-on-read default is what decides, below,
 > that none of the five named read models becomes a table.
 >
-> Depends on [The Calendar becomes date-bearing](2026-09-02-date-bearing-calendar.md), which flagged
+> Depends on [The Calendar becomes date-bearing](../../implemented/architecture/2026-09-02-date-bearing-calendar.md), which flagged
 > that every Matchday-keyed event predates dates and left the consequence here, and on
 > [Season, fixture, and cup bracket generalization](2026-09-02-season-fixture-and-cup-schedule.md),
 > whose past-Season retention rule is reused verbatim as the log's only pruning rule.

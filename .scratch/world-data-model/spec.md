@@ -217,7 +217,7 @@ log stops recording. None of the five named read models becomes a table.
   nation, Continue resolves everything dated on or before the target date and stops only at playable
   fixtures, `season` stays a singleton keyed on `current_date`, Matchday is redefined as a date and
   Round is the competition-local number, and Transfer Windows become date ranges still read through
-  `season.phase`.** See [Agent Note](../../.agents/notes/proposed/architecture/2026-09-02-date-bearing-calendar.md).
+  `season.phase`.** See [Agent Note](../../.agents/notes/implemented/architecture/2026-09-02-date-bearing-calendar.md).
 
 - **The competition graph is persisted as the resolved world, and membership has exactly one home.**
   `competitions` holds one row per activated competition keyed by the catalogue's own canonical id;

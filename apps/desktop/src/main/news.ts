@@ -157,7 +157,7 @@ const readInbox = Effect.gen(function* () {
           subject: message.subject,
           body: message.body,
           seasonNumber: message.seasonNumber,
-          matchday: message.matchday,
+          date: message.date,
           occurredAt: message.occurredAt,
         }),
     ),

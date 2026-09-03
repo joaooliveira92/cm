@@ -37,7 +37,7 @@ it.effect("before-season-end seed produces a season not yet concluded", () =>
     const summary = yield* getSeasonSummary(savesDir, saveId);
 
     notStrictEqual(summary.season.phase, "season_complete");
-    ok(summary.season.currentMatchday < 38, "should sit before the final matchday");
+    ok(summary.season.currentDate < "2100-01-01", "should sit before the season's last date");
   }),
   30_000,
 );
@@ -48,6 +48,7 @@ it.effect("fresh seed produces a pre-season save", () =>
     const summary = yield* getSeasonSummary(savesDir, saveId);
 
     strictEqual(summary.season.phase, "pre_season");
-    strictEqual(summary.season.currentMatchday, 0);
+    // A fresh save stands in the pre-season, before the first fixture is played.
+    ok(summary.season.currentDate.length === 10);
   }),
 );

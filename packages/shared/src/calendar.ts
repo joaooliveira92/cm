@@ -148,3 +148,60 @@ export const seasonStartYear = (referenceYear: number, seasonNumber: number): nu
 /** The date a season opens on — the pre-season the human stands in before round 1. */
 export const seasonStartDate = (referenceYear: number, seasonNumber: number): IsoDate =>
   seasonSlots(seasonStartYear(referenceYear, seasonNumber)).seasonStartDate;
+
+// ---------------------------------------------------------------------------
+// Transfer Windows
+// ---------------------------------------------------------------------------
+
+/**
+ * The two Transfer Windows, as dates rather than as Matchday arithmetic.
+ *
+ * One pair globally, which follows from one season shape serving every nation: with a single
+ * August-to-May calendar there is nothing for a per-nation window to be relative to.
+ *
+ * Legality is still read through `season.phase`, not by comparing the current date against these
+ * bounds at each call site. Five transfer commands ask "is a window open"; comparing dates in each
+ * would make five readers of one rule. The calendar advance stays the single writer of phase and
+ * these bounds are its input, so the transfer commands are untouched by the move to dates.
+ */
+export interface SeasonWindows {
+  /** The pre-season window runs from the season's opening date until the first fixture is played,
+   *  so it closes on the day the football starts rather than on a date of its own. */
+  readonly preSeasonOpen: IsoDate;
+  /** The mid-season window opens on this date: the advance stops here the way it stops at a
+   *  fixture date, which is what gives the human a moment to act inside it. */
+  readonly midSeasonOpen: IsoDate;
+  /** The first date the mid-season window is shut again — exclusive, so a fixture on this date is
+   *  played with the window closed. */
+  readonly midSeasonClose: IsoDate;
+}
+
+/** January 1st to February 1st of the season's second calendar year. */
+export const seasonWindows = (seasonStartYear: number): SeasonWindows => ({
+  preSeasonOpen: seasonSlots(seasonStartYear).seasonStartDate,
+  midSeasonOpen: toIso(utc(seasonStartYear + 1, 0, 1)),
+  midSeasonClose: toIso(utc(seasonStartYear + 1, 1, 1)),
+});
+
+/** Whether a date falls inside the mid-season window's range. */
+export const withinMidSeasonWindow = (windows: SeasonWindows, date: IsoDate): boolean =>
+  date >= windows.midSeasonOpen && date < windows.midSeasonClose;
+
+// ---------------------------------------------------------------------------
+// Display
+// ---------------------------------------------------------------------------
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/**
+ * An ISO date as the game says it: `1 Aug 2026`.
+ *
+ * Formatted here rather than through `Intl` so a date reads identically wherever it is shown and in
+ * whatever locale the machine runs — the calendar is world state, not a machine setting, and two
+ * screens disagreeing about how to say one date would read as two different dates.
+ */
+export const formatCalendarDate = (date: IsoDate): string => {
+  const [year, month, day] = date.split("-");
+  if (year === undefined || month === undefined || day === undefined) return date;
+  return `${Number(day)} ${MONTHS[Number(month) - 1] ?? month} ${year}`;
+};

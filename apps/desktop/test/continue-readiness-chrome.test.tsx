@@ -41,7 +41,7 @@ const preload = (tactic: unknown) => {
       return {
         _tag: "Success",
         value: {
-          season: { seasonNumber: 3, currentMatchday: 12, phase: "in_season" as const },
+          season: { seasonNumber: 3, currentDate: "2026-10-17", phase: "in_season" as const },
           standings: [],
         },
       } as never;

@@ -60,12 +60,12 @@ const squadView = (players: ReturnType<typeof playerRow>[]) => ({
 });
 
 const leagueView = () => ({
-  season: { seasonNumber: 1, currentMatchday: 1, phase: "in_season" as const },
+  season: { seasonNumber: 1, currentDate: "2026-08-01", phase: "in_season" as const },
   standings: [],
 });
 
 const fixturesView = () => ({
-  season: { seasonNumber: 1, currentMatchday: 1, phase: "in_season" as const },
+  season: { seasonNumber: 1, currentDate: "2026-08-01", phase: "in_season" as const },
   fixtures: [
     {
       // A fixture's key is an integer now, and it carries the date it is played on and its
@@ -73,7 +73,6 @@ const fixturesView = () => ({
       id: 1,
       round: 1,
       date: "2026-08-01",
-      matchday: 1,
       homeClubId: rid("home"),
       homeClubName: "Home FC",
       awayClubId: rid("away"),
@@ -86,7 +85,7 @@ const fixturesView = () => ({
 });
 
 const seasonSummaryView = () => ({
-  season: { seasonNumber: 1, currentMatchday: 38, phase: "season_complete" as const },
+  season: { seasonNumber: 1, currentDate: "2027-05-26", phase: "season_complete" as const },
   standings: [],
   clubId: rid("me"),
   clubName: "My Club",
@@ -99,7 +98,7 @@ const seasonSummaryView = () => ({
 
 const transfersView = () => ({
   club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
-  season: { seasonNumber: 1, currentMatchday: 1, phase: "in_season" as const },
+  season: { seasonNumber: 1, currentDate: "2026-08-01", phase: "in_season" as const },
   windowOpen: true,
   transferBudgetRemaining: 500000,
   wageBudget: 1000000,

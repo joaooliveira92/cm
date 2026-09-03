@@ -7,7 +7,7 @@ import {
   type HeaderCareer,
 } from "../src/renderer/chrome/header/career-header-state.js";
 
-const season = { seasonNumber: 3, currentMatchday: 12, phase: "in_season" } as const;
+const season = { seasonNumber: 3, currentDate: "2026-10-17", phase: "in_season" } as const;
 
 const career = (over: Partial<HeaderCareer> = {}): HeaderCareer => ({
   clubName: "Northport Rovers",
@@ -25,11 +25,11 @@ const metricValue = (row: ReturnType<typeof describeSecondaryRow>, label: string
 };
 
 describe("seasonReadout", () => {
-  it("counts in matchdays while the season is running", () => {
-    expect(seasonReadout(season)).toBe("Season 3 · Matchday 12/38");
+  it("stands on a date while the season is running", () => {
+    expect(seasonReadout(season)).toBe("Season 3 · 17 Oct 2026");
   });
 
-  it("names the phase instead of a matchday outside the in-season phase", () => {
+  it("names the phase instead of a date outside the in-season phase", () => {
     expect(seasonReadout({ ...season, phase: "pre_season" })).toBe("Season 3 · Pre-season");
     expect(seasonReadout({ ...season, phase: "season_complete" })).toBe(
       "Season 3 · Season complete",
@@ -74,7 +74,7 @@ describe("describeSecondaryRow", () => {
     const row = describeSecondaryRow({ view: "career", career: career() });
 
     expect(row.kind).toBe("career");
-    expect(metricValue(row, "Calendar")?.value).toBe("Season 3 · Matchday 12/38");
+    expect(metricValue(row, "Calendar")?.value).toBe("Season 3 · 17 Oct 2026");
     expect(metricValue(row, "Position")?.value).toBe("4th");
     expect(metricValue(row, "Points")?.value).toBe("24");
     expect(metricValue(row, "Played")?.value).toBe("12");

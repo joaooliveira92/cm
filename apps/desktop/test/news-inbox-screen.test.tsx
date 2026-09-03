@@ -17,7 +17,7 @@ interface MessageOverrides {
   readonly subject?: string;
   readonly body?: string;
   readonly seasonNumber?: number | null;
-  readonly matchday?: number | null;
+  readonly date?: string | null;
 }
 
 const message = (overrides: MessageOverrides) => ({
@@ -30,14 +30,14 @@ const message = (overrides: MessageOverrides) => ({
   subject: "Season 1 begins",
   body: "38 fixtures are scheduled.",
   seasonNumber: 1,
-  matchday: null,
+  date: null,
   occurredAt: "2026-01-01 10:00:00",
   ...overrides,
 });
 
 const MESSAGES = [
   message({ messageId: "m-board", category: "board", priority: "high", subject: "The board has issued a warning", body: "Another miss puts the job at risk." }),
-  message({ messageId: "m-result", category: "result", state: "read", subject: "Matchday 4 results", body: "Test FC won 3-1 at home.", seasonNumber: null, matchday: 4 }),
+  message({ messageId: "m-result", category: "result", state: "read", subject: "Results for 2026-09-12", body: "Test FC won 3-1 at home.", seasonNumber: null, date: "2026-09-12" }),
   message({ messageId: "m-season", category: "season", state: "read", flagged: true, subject: "Season 1 begins" }),
   message({ messageId: "m-old", category: "transfer", state: "archived", subject: "The pre-season transfer window has closed" }),
 ];
@@ -124,7 +124,7 @@ describe("News Filters (Screen 26)", () => {
 
     fireEvent.change(screen.getByLabelText("Search news"), { target: { value: "won 3-1" } });
     await waitFor(() => expect(rows()).toHaveLength(1));
-    expect(rows()[0]!.textContent).toContain("Matchday 4");
+    expect(rows()[0]!.textContent).toContain("Results for 2026-09-12");
   });
 
   it("shows archived messages only in the archived view", async () => {
@@ -182,9 +182,9 @@ describe("Individual News Message (Screen 25)", () => {
     mount();
     await waitFor(() => expect(rows()).toHaveLength(3));
 
-    fireEvent.click(rows().find((row) => row.textContent?.includes("Matchday 4"))!);
+    fireEvent.click(rows().find((row) => row.textContent?.includes("Results for 2026-09-12"))!);
     await waitFor(() =>
-      expect(screen.getByRole("heading", { level: 2 }).textContent).toContain("Matchday 4"),
+      expect(screen.getByRole("heading", { level: 2 }).textContent).toContain("Results for 2026-09-12"),
     );
     expect(patches).toHaveLength(0);
   });

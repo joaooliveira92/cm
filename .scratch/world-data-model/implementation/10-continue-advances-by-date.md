@@ -26,11 +26,11 @@ on a date with no fixture at all is not a failure; it is what the pre-season loo
   date and stops only at playable fixtures, `season` stays a singleton keyed on `current_date`,
   Matchday is redefined as a date and Round is the competition-local number, and Transfer Windows
   become date ranges still read through `season.phase`. See
-  [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-02-date-bearing-calendar.md).
+  [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-02-date-bearing-calendar.md).
 
 **Blocked by:** 09.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/schema.ts` and the regenerated DDL,
 `apps/desktop/src/main/season.ts` (`startSeason`, `nextCalendarBoundary`, `advanceCalendar`,
@@ -39,17 +39,17 @@ on a date with no fixture at all is not a failure; it is what the pre-season loo
 `apps/desktop/test/season.test.ts`, `apps/desktop/test/transfers.test.ts`,
 `apps/desktop/test/boardObjectives.test.ts`.
 
-- [ ] `season` keeps its singleton row and its phase `CHECK`, with an ISO current date replacing
+- [x] `season` keeps its singleton row and its phase `CHECK`, with an ISO current date replacing
       `current_matchday`; the `0..38` `CHECK` is gone.
-- [ ] `fixtures` no longer carries the global matchday column or its `1..38` `CHECK`.
-- [ ] Advancing to a date leaves no unplayed fixture in the world dated on or before it, and lands
+- [x] `fixtures` no longer carries the global matchday column or its `1..38` `CHECK`.
+- [x] Advancing to a date leaves no unplayed fixture in the world dated on or before it, and lands
       on a date carrying a fixture of a playable competition. A test covers a background competition
       playing on a date the advance passes through without stopping.
-- [ ] A career starts in a pre-season some weeks before the first league round, and season
+- [x] A career starts in a pre-season some weeks before the first league round, and season
       conclusion fires exactly once per season, after the last dated fixture of any loaded
       competition.
-- [ ] Transfer window bounds are month-day pairs rather than matchday numbers, and every existing
+- [x] Transfer window bounds are month-day pairs rather than matchday numbers, and every existing
       window-legality call site still reads the season phase and is otherwise unchanged.
-- [ ] No event payload and no column anywhere carries a field named `matchday`.
-- [ ] Per-competition progress is derived from that competition's fixture rows; no column stores it.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] No event payload and no column anywhere carries a field named `matchday`.
+- [x] Per-competition progress is derived from that competition's fixture rows; no column stores it.
+- [x] `pnpm check:all` is green at this commit.

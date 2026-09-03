@@ -1,3 +1,4 @@
+import { formatCalendarDate } from "@cm-clone/shared";
 import { type SaveId } from "@cm-clone/contracts";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card.js";
 import { Spinner } from "./components/ui/spinner.js";
@@ -21,9 +22,11 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   const fixtures = fixturesResult.value;
 
-  const byMatchday = new Map<number, typeof fixtures.fixtures>();
+  // Grouped by the date they are played on, which is what the fixture list is: a calendar. The
+  // round is a label inside the day rather than the thing days are counted in.
+  const byDate = new Map<string, typeof fixtures.fixtures>();
   for (const fixture of fixtures.fixtures) {
-    byMatchday.set(fixture.matchday, [...(byMatchday.get(fixture.matchday) ?? []), fixture]);
+    byDate.set(fixture.date, [...(byDate.get(fixture.date) ?? []), fixture]);
   }
 
   return (
@@ -39,17 +42,17 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       </p>
 
       <div className="mt-6 space-y-3">
-        {[...byMatchday.entries()].map(([matchday, matchdayFixtures]) => (
-          <Card key={matchday}>
+        {[...byDate.entries()].map(([date, dayFixtures]) => (
+          <Card key={date}>
             <CardHeader>
               <CardTitle className="text-2xs uppercase tracking-wide text-text-secondary">
-                Matchday {matchday}
+                {formatCalendarDate(date)} &middot; Round {dayFixtures[0]?.round}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableBody>
-                  {matchdayFixtures.map((fixture) => (
+                  {dayFixtures.map((fixture) => (
                     <TableRow key={fixture.id}>
                       <TableCell>
                         {fixture.homeClubName} vs {fixture.awayClubName}

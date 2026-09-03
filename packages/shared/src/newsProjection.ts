@@ -89,10 +89,10 @@ export interface NewsMessage {
   readonly subject: string;
   readonly body: string;
   readonly seasonNumber: number | null;
-  readonly matchday: number | null;
-  /** The log's wall-clock `created_at`. The Calendar has no in-world dates yet, so the in-world
-   * position of a message is carried by `seasonNumber`/`matchday` and this field is for ordering
-   * only. It becomes the in-world date when `events.game_date` lands. */
+  /** The in-world date this message belongs to, ISO `YYYY-MM-DD`, or `null` for a message the
+   *  calendar does not place. */
+  readonly date: string | null;
+  /** The log's wall-clock `created_at`, which orders messages and is not an in-world date. */
   readonly occurredAt: string;
   readonly seq: number;
   /** Where this message sits in the log's global append order — what breaks a `occurredAt` tie
@@ -162,17 +162,17 @@ interface Projected {
   readonly subject: string;
   readonly body: string;
   readonly seasonNumber: number | null;
-  readonly matchday: number | null;
+  readonly date: string | null;
   /** Omitted for the messages that are pure record, which is all of them but one. */
   readonly actionState?: NewsActionState;
 }
 
-const matchdayMessage = (
+const matchdayResolvedMessage = (
   payload: Record<string, unknown>,
   club: NewsClubContext,
 ): Projected | null => {
-  const matchday = num(payload["matchday"]);
-  if (matchday === null) return null;
+  const date = str(payload["date"]);
+  if (date === null) return null;
   const rawResults = payload["results"];
   const results = Array.isArray(rawResults)
     ? rawResults.map((entry) => fixture(entry)).filter((entry): entry is Fixture => entry !== null)
@@ -194,16 +194,16 @@ const matchdayMessage = (
     const conceded = atHome ? own.awayGoals : own.homeGoals;
     const outcome = scored > conceded ? "won" : scored < conceded ? "lost" : "drew";
     const venue = atHome ? "at home" : "away";
-    return `${club.clubName} ${outcome} ${scored}-${conceded} ${venue}. ${plural(results.length, "fixture", "fixtures")} resolved across the matchday.`;
+    return `${club.clubName} ${outcome} ${scored}-${conceded} ${venue}. ${plural(results.length, "fixture", "fixtures")} resolved on the day.`;
   })();
 
   return {
     category: "result",
     priority: "normal",
-    subject: `Matchday ${matchday} results`,
+    subject: `Results for ${date}`,
     body,
     seasonNumber: null,
-    matchday,
+    date,
   };
 };
 
@@ -228,17 +228,17 @@ const boardVerdictMessage = (payload: Record<string, unknown>): Projected | null
     subject: `Board verdict on season ${seasonNumber}`,
     body: `${placing} against ${target}. The board's verdict is "${verdict}".`,
     seasonNumber,
-    matchday: null,
+    date: null,
   };
 };
 
 const seasonScoped = (
   payload: Record<string, unknown>,
-  build: (seasonNumber: number) => Omit<Projected, "seasonNumber" | "matchday">,
+  build: (seasonNumber: number) => Omit<Projected, "seasonNumber" | "date">,
 ): Projected | null => {
   const seasonNumber = num(payload["seasonNumber"]);
   if (seasonNumber === null) return null;
-  return { ...build(seasonNumber), seasonNumber, matchday: null };
+  return { ...build(seasonNumber), seasonNumber, date: null };
 };
 
 const WINDOW_LABEL: Readonly<Record<string, string>> = {
@@ -287,7 +287,7 @@ const project = (
         subject: `The ${windowLabel(payload)} transfer window is open`,
         body: `Bids can be placed and received until the window closes.`,
         seasonNumber: null,
-        matchday: num(payload["afterMatchday"]),
+        date: str(payload["date"]),
       };
 
     case "TransferWindowClosed":
@@ -297,11 +297,11 @@ const project = (
         subject: `The ${windowLabel(payload)} transfer window has closed`,
         body: `No further bids can be placed until the next window opens.`,
         seasonNumber: null,
-        matchday: num(payload["matchday"]),
+        date: str(payload["date"]),
       };
 
     case "MatchdayResolved":
-      return matchdayMessage(payload, club);
+      return matchdayResolvedMessage(payload, club);
 
     case "BoardObjectiveJudged":
       return boardVerdictMessage(payload);
@@ -363,7 +363,7 @@ const project = (
             : `Transfer offer for ${playerName} (${actionState === "expired" ? "lapsed" : "settled"})`,
         body,
         seasonNumber: num(payload["seasonNumber"]),
-        matchday: null,
+        date: null,
         actionState,
       };
     }
@@ -409,7 +409,7 @@ export const projectNewsMessage = (
     subject: projected.subject,
     body: projected.body,
     seasonNumber: projected.seasonNumber,
-    matchday: projected.matchday,
+    date: projected.date,
     occurredAt: event.createdAt,
     seq: event.seq,
     ordinal: event.ordinal ?? event.seq,

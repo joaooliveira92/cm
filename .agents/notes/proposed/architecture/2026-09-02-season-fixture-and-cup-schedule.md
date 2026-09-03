@@ -2,7 +2,7 @@
 
 Status: proposed
 
-> Builds directly on [The Calendar becomes date-bearing](2026-09-02-date-bearing-calendar.md), which
+> Builds directly on [The Calendar becomes date-bearing](../../implemented/architecture/2026-09-02-date-bearing-calendar.md), which
 > supplied the date a fixture carries and the rule that a date is a pure function of
 > `(season number, competition, round)`, and on
 > [The competition graph](2026-09-01-competition-graph-and-promotion.md), which required a
@@ -32,7 +32,7 @@ Table at exactly one instant and the next Season's fixtures overwrite its inputs
 
 ### The tables
 
-The `season` singleton stays as the date-bearing calendar left it: `season_number`, `current_date`,
+The `season` singleton stays as the date-bearing calendar left it: `season_number`, `game_date`,
 `phase`. It answers "which Season is the save in" and nothing about any individual competition.
 
 One new table, `competition_participants`, keyed `(competition_id, season_number, club_id)`. It

@@ -46,7 +46,7 @@ const preload = (phase: Phase) => {
     if (method === "getLeagueTable") {
       return {
         _tag: "Success",
-        value: { season: { seasonNumber: 3, currentMatchday: 12, phase }, standings: [] },
+        value: { season: { seasonNumber: 3, currentDate: "2026-10-17", phase }, standings: [] },
       } as never;
     }
     if (method === "getManagerProfileScreen") {
@@ -87,8 +87,8 @@ const preload = (phase: Phase) => {
       return {
         _tag: "Success",
         value: {
-          season: { seasonNumber: 3, currentMatchday: 13, phase: "in_season" as const },
-          resolvedMatchday: 12,
+          season: { seasonNumber: 3, currentDate: "2026-10-24", phase: "in_season" as const },
+          resolvedDate: "2026-10-17",
           transferWindowClosed: null,
           transferWindowOpened: null,
           seasonConcluded: false,
@@ -100,7 +100,7 @@ const preload = (phase: Phase) => {
     if (method === "getFixtures") {
       return {
         _tag: "Success",
-        value: { season: { seasonNumber: 3, currentMatchday: 12, phase }, fixtures: [] },
+        value: { season: { seasonNumber: 3, currentDate: "2026-10-17", phase }, fixtures: [] },
       } as never;
     }
     return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: rid("s1") } } as never;
@@ -158,15 +158,15 @@ afterEach(() => {
 });
 
 describe("season readout", () => {
-  it("counts in matchdays, never in days or dates", () => {
-    expect(seasonReadout({ seasonNumber: 3, currentMatchday: 12, phase: "in_season" })).toBe(
-      "Season 3 · Matchday 12/38",
+  it("stands on the calendar date the season has reached", () => {
+    expect(seasonReadout({ seasonNumber: 3, currentDate: "2026-10-17", phase: "in_season" })).toBe(
+      "Season 3 · 17 Oct 2026",
     );
   });
 
-  it("replaces the matchday with a phase word outside the in-season phase", () => {
+  it("replaces the date with a phase word outside the in-season phase", () => {
     const at = (phase: string) =>
-      seasonReadout({ seasonNumber: 3, currentMatchday: 12, phase });
+      seasonReadout({ seasonNumber: 3, currentDate: "2026-10-17", phase });
     expect(at("pre_season")).toBe("Season 3 · Pre-season");
     expect(at("mid_window_open")).toBe("Season 3 · Transfer window open");
     expect(at("season_complete")).toBe("Season 3 · Season complete");
@@ -177,7 +177,7 @@ describe("the career chrome", () => {
   it("carries club identity and the temporal cluster on every career screen", async () => {
     await mountCareer("in_season", "fixtures");
     expect(await screen.findByText("Northport Rovers")).toBeTruthy();
-    expect(screen.getByText("Season 3 · Matchday 12/38")).toBeTruthy();
+    expect(screen.getByText("Season 3 · 17 Oct 2026")).toBeTruthy();
     expect(screen.getByText("My Save")).toBeTruthy();
   });
 
@@ -295,7 +295,7 @@ describe("Continue in the chrome", () => {
     act(() => {
       clearScopeState("match");
     });
-    expect(screen.getByText("Season 3 · Matchday 12/38")).toBeTruthy();
+    expect(screen.getByText("Season 3 · 17 Oct 2026")).toBeTruthy();
     expect(screen.queryByText("The season cannot advance during a match.")).toBeNull();
     const enabled = screen.getByRole("button", { name: /Continue/ }) as HTMLButtonElement;
     expect(enabled.disabled).toBe(false);

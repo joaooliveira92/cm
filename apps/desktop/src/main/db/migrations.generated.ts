@@ -123,7 +123,6 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	\`competition_id\` text NOT NULL,
 	\`round\` integer NOT NULL,
 	\`scheduled_date\` text NOT NULL,
-	\`matchday\` integer,
 	\`home_club_id\` text NOT NULL,
 	\`away_club_id\` text NOT NULL,
 	\`home_goals\` integer,
@@ -136,7 +135,6 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	FOREIGN KEY (\`home_club_id\`) REFERENCES \`clubs\`(\`id\`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (\`away_club_id\`) REFERENCES \`clubs\`(\`id\`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT "fixtures_round" CHECK(round >= 1),
-	CONSTRAINT "fixtures_matchday" CHECK(matchday IS NULL OR matchday BETWEEN 1 AND 38),
 	CONSTRAINT "fixtures_played" CHECK(played IN (0,1)),
 	CONSTRAINT "fixtures_penalties_paired" CHECK((home_penalties IS NULL) = (away_penalties IS NULL))
 );`,
@@ -296,9 +294,8 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 );`,
   `CREATE TABLE \`season\` (
 	\`season_number\` integer PRIMARY KEY NOT NULL,
-	\`current_matchday\` integer DEFAULT 0 NOT NULL,
+	\`game_date\` text NOT NULL,
 	\`phase\` text NOT NULL,
-	CONSTRAINT "season_current_matchday" CHECK(current_matchday BETWEEN 0 AND 38),
 	CONSTRAINT "season_phase" CHECK(phase IN ('pre_season','in_season','mid_window_open','season_complete'))
 );`,
   `CREATE TABLE \`staff\` (

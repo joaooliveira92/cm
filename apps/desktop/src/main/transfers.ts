@@ -49,7 +49,7 @@ type BidStatus = "pending" | "countered" | "accepted" | "rejected" | "withdrawn"
 
 interface SeasonRow {
   readonly seasonNumber: number;
-  readonly currentMatchday: number;
+  readonly currentDate: string;
   readonly phase: "pre_season" | "in_season" | "mid_window_open" | "season_complete";
 }
 
@@ -57,17 +57,20 @@ const loadSeasonRow = Effect.gen(function* () {
   const sql = yield* SqlClient;
   const rows = yield* sql<{
     seasonNumber: number;
-    currentMatchday: number;
+    currentDate: string;
     phase: SeasonRow["phase"];
-  }>`SELECT season_number as "seasonNumber", current_matchday as "currentMatchday", phase FROM season LIMIT 1`;
+  }>`SELECT season_number as "seasonNumber", game_date as "currentDate", phase FROM season LIMIT 1`;
   return rows[0]!;
 });
 
 const toSeasonView = (row: SeasonRow) =>
-  new SeasonView({ seasonNumber: row.seasonNumber, currentMatchday: row.currentMatchday, phase: row.phase });
+  new SeasonView({ seasonNumber: row.seasonNumber, currentDate: row.currentDate, phase: row.phase });
 
-/** Transfer commands are legal only inside an open Transfer Window: pre-season (before Matchday 1)
- * or the mid-season window (Matchday 19 -> 20), per ADR-0004/ticket 15's `season.phase`. */
+/** Transfer commands are legal only inside an open Transfer Window: the pre-season one, open from
+ * the season's start date until the first fixture, or the mid-season one, open across its date
+ * range. Both are read here as `season.phase` and nothing in this module compares dates — the
+ * calendar advance is the single writer of phase, which is what keeps one rule from becoming five
+ * readers of two bounds. */
 const isWindowOpen = (phase: SeasonRow["phase"]) => phase === "pre_season" || phase === "mid_window_open";
 
 // ---------------------------------------------------------------------------

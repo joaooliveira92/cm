@@ -34,6 +34,26 @@ const loadSeasonStreamEvents = (saveId: string) =>
     Effect.scoped,
   );
 
+/**
+ * Leaves the season's last fixture between two other clubs unplayed, and parks the calendar the day
+ * before it.
+ *
+ * A season now concludes in the advance that resolves its final fixture, so a test that forced every
+ * fixture played would leave nothing for Continue to land on and would be refused rather than
+ * judged. Reopening one fixture the human's club is not in gives the advance a boundary to reach
+ * without touching the standings the test is asserting on. Assumes a `SqlClient` in context.
+ */
+const reopenFinalFixture = (clubId: string) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    yield* sql`UPDATE fixtures SET played = 0, home_goals = NULL, away_goals = NULL
+      WHERE id = (SELECT id FROM fixtures
+                  WHERE home_club_id <> ${clubId} AND away_club_id <> ${clubId}
+                  ORDER BY scheduled_date DESC, id DESC LIMIT 1)`;
+    yield* sql`UPDATE season SET phase = 'in_season',
+      game_date = (SELECT date(MIN(scheduled_date), '-1 day') FROM fixtures WHERE played = 0)`;
+  });
+
 /** Test-only DB manipulation: forces every fixture in the current Season to a lopsided result for
  * `clubId` (win-everything or lose-everything), guaranteeing it finishes 1st or last respectively —
  * a controlled substitute for running 380 real (randomly seeded) match simulations, per the ticket's
@@ -47,12 +67,12 @@ const forceLopsidedFixtures = (saveId: string, clubId: string, outcome: "winEver
       yield* sql`UPDATE fixtures SET played = 1,
           home_goals = CASE WHEN home_club_id = ${clubId} THEN ${clubGoals} WHEN away_club_id = ${clubId} THEN ${otherGoals} ELSE 1 END,
           away_goals = CASE WHEN away_club_id = ${clubId} THEN ${clubGoals} WHEN home_club_id = ${clubId} THEN ${otherGoals} ELSE 1 END`;
-      yield* sql`UPDATE season SET current_matchday = 38, phase = 'in_season'`;
+      yield* reopenFinalFixture(clubId);
     }),
   );
 
 /** Advances past pre-season (closes the window) so the Season is `in_season` before test setup
- * forces the remaining fixtures/matchday state directly. */
+ * forces the remaining fixture state directly. */
 const advancePastPreSeason = (saveId: string) => advanceCalendar(savesDir, saveId);
 
 // ---------------------------------------------------------------------------
@@ -159,6 +179,7 @@ const forceSecondSeasonConcludingWith = (saveId: string, clubId: string, outcome
           home_goals = CASE WHEN home_club_id = ${clubId} THEN ${clubGoals} WHEN away_club_id = ${clubId} THEN ${otherGoals} ELSE 1 END,
           away_goals = CASE WHEN away_club_id = ${clubId} THEN ${clubGoals} WHEN home_club_id = ${clubId} THEN ${otherGoals} ELSE 1 END
         WHERE season_number = 1`;
+      yield* reopenFinalFixture(clubId);
     }),
   );
 

@@ -86,7 +86,7 @@ const transfersFixture = (overrides: {
   freeAgents?: ReturnType<typeof marketPlayer>[];
 } = {}) => ({
   club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
-  season: { seasonNumber: 1, currentMatchday: 1, phase: "in_season" as const },
+  season: { seasonNumber: 1, currentDate: "2026-08-01", phase: "in_season" as const },
   windowOpen: overrides.windowOpen ?? true,
   transferBudgetRemaining: 500000,
   wageBudget: 1000000,

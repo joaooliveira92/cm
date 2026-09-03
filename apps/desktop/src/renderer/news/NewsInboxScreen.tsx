@@ -1,5 +1,5 @@
 import type { NewsCategory, NewsView } from "@cm-clone/shared";
-import { EMPTY_NEWS_FILTER, NEWS_CATEGORIES, filterNews } from "@cm-clone/shared";
+import { EMPTY_NEWS_FILTER, NEWS_CATEGORIES, filterNews, formatCalendarDate } from "@cm-clone/shared";
 import type { NewsMessageView, SaveId } from "@cm-clone/contracts";
 import { useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Badge } from "../components/ui/badge.js";
@@ -59,10 +59,10 @@ const CATEGORY_LABELS: Record<NewsCategory, string> = {
   development: "Development",
 };
 
-/** The in-world position of a message. The Calendar has no dates yet, so a message is placed by
- *  season and matchday; this is the one place that formatting lives. */
+/** The in-world position of a message: the date it happened on, or the season for a message the
+ *  calendar does not place on a day. This is the one place that formatting lives. */
 const whenLabel = (message: NewsMessageView): string => {
-  if (message.matchday !== null) return `Matchday ${message.matchday}`;
+  if (message.date !== null) return formatCalendarDate(message.date);
   if (message.seasonNumber !== null) return `Season ${message.seasonNumber}`;
   return "—";
 };
