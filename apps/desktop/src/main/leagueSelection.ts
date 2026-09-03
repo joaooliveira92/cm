@@ -344,8 +344,9 @@ const withDecodableAdvancedOptions = (raw: unknown): Effect.Effect<unknown> =>
       record["advancedOptions"],
     ).pipe(Effect.option);
     if (decoded._tag === "Some") return raw;
-    const { advancedOptions: _dropped, ...rest } = record;
-    return rest;
+    return Object.fromEntries(
+      Object.entries(record).filter(([key]) => key !== "advancedOptions"),
+    );
   });
 
 export const loadSetupDraft = (

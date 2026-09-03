@@ -115,7 +115,7 @@ test("reloading mid-creation redirects to step 1 (AC-13)", async ({ window: page
   // The creation session is in-memory: a reload lands on step 2 with nothing recoverable — not
   // even the league scope generation is gated on — so the flow redirects to the front of it.
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Select Leagues" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Active Leagues" })).toBeVisible();
 });
 
 test("the flow never advances past the club decision (AC-13)", async ({ window: page }) => {

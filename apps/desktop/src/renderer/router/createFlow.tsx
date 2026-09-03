@@ -515,13 +515,13 @@ export const CreateFlowLayout = () => {
           }}
         />
 
-        {/* The club step is a full-height, full-width band: its workspace is two columns that
-            scroll independently, which a centred `max-w-5xl` `overflow-y-auto` column cannot host
-            — the height has to come from the shell rather than from a viewport calc inside the
-            step. Every other step keeps the centred reading column. */}
+        {/* The leagues and club steps are full-height, full-width bands: each is a workspace of
+            columns that scroll independently, which a centred `max-w-5xl` `overflow-y-auto`
+            column cannot host — the height has to come from the shell rather than from a viewport
+            calc inside the step. Every other step keeps the centred reading column. */}
         <main
           className={
-            step === "2"
+            step === "2" || step === "leagues"
               ? "flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden p-4"
               : "mx-auto min-h-0 w-full max-w-5xl flex-1 overflow-y-auto p-8"
           }

@@ -241,7 +241,7 @@ describe("Screen 2 — generation runs underneath the manager step", () => {
     deferredBeginCareer();
     mountCreateFlow({ at: "/create/step-2" });
 
-    await screen.findByRole("heading", { name: "Select Leagues" }, { timeout: 3000 });
+    await screen.findByRole("heading", { name: "Active Leagues" }, { timeout: 3000 });
     expect(methodsCalled("beginCareer")).toHaveLength(0);
   });
 
@@ -251,7 +251,7 @@ describe("Screen 2 — generation runs underneath the manager step", () => {
     deferredBeginCareer();
     mountCreateFlow();
 
-    await screen.findByRole("heading", { name: "Select Leagues" }, { timeout: 3000 });
+    await screen.findByRole("heading", { name: "Active Leagues" }, { timeout: 3000 });
     expect(methodsCalled("beginCareer")).toHaveLength(0);
 
     await advanceThroughLeagues();

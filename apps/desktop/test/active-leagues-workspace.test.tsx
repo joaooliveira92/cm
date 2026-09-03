@@ -72,6 +72,7 @@ let manageCalls = 0;
 const Host = () => {
   const {
     rows,
+    addableLeagues,
     activeLeagueCount,
     nationCount,
     entityEstimate,
@@ -86,11 +87,13 @@ const Host = () => {
       workspace={
         <ActiveLeaguesWorkspace
           rows={rows}
+          addableLeagues={addableLeagues}
           activeLeagueCount={activeLeagueCount}
           nationCount={nationCount}
           advancedOptions={advancedOptions}
           blockingMessages={validation.blockingMessages}
           stale={stale}
+          onAddLeague={(leagueId) => dispatch({ type: "addActiveLeague", leagueId })}
           onChangeDepth={(leagueId, simulationDepth) =>
             dispatch({ type: "changeSimulationDepth", leagueId, simulationDepth })
           }
@@ -283,7 +286,8 @@ describe("keyboard reachability across the workspace", () => {
     // Visual order down the column: introduction, list, workspace actions, advanced section.
     expect(at("Change scope")).toBeGreaterThanOrEqual(0);
     expect(at("Change scope")).toBeLessThan(at("Simulation depth for English First Division"));
-    expect(at("Simulation depth for English First Division")).toBeLessThan(at("Use setup preset"));
+    expect(at("Simulation depth for English First Division")).toBeLessThan(at("Add league"));
+    expect(at("Add league")).toBeLessThan(at("Use setup preset"));
     expect(at("Use setup preset")).toBeLessThan(at("Manage leagues"));
     expect(at("Manage leagues")).toBeLessThan(at("Advanced options"));
     expect(at("Advanced options")).toBeLessThan(at("About Match simulation detail"));

@@ -96,8 +96,8 @@ export type LeagueSelectionScreenProps =
 
 export const LeagueSelectionScreen = (props: LeagueSelectionScreenProps) => {
   const manage = props.mode === "manage" ? props : null;
-  const onContinue = manage === null ? props.onContinue : null;
-  const onBack = manage === null ? props.onBack : manage.onCancel;
+  const onContinue = props.mode === "manage" ? null : props.onContinue;
+  const onBack = props.mode === "manage" ? props.onCancel : props.onBack;
   const [index, setIndex] = useState<LeagueSetupIndexView | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [state, dispatch] = useReducer(reduce, initialState(""));
