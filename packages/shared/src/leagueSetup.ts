@@ -114,6 +114,37 @@ export interface NationNode {
   readonly recommendedScopeOptionId: string | null;
 }
 
+/**
+ * One pairing of a higher and a lower Competition, and how many clubs swap between them at the
+ * end of each Season.
+ *
+ * Promotion and relegation are **one symmetric fact read in two directions**, not two. A single
+ * `slots` count governing both is what guarantees a division never changes size — the invariant a
+ * pair of independent counts would silently break. It also expresses what a `promotion_slots`
+ * column on the Competition cannot: with parallel regional divisions feeding one division above,
+ * no arithmetic on tier identifies the destination, so the link names it.
+ *
+ * Asymmetric exchange ("three up, four down") is deliberately not expressible.
+ */
+export interface ExchangeLink {
+  readonly higherCompetitionId: string;
+  readonly lowerCompetitionId: string;
+  readonly slots: number;
+}
+
+/**
+ * One Competition whose clubs enter another — a national cup's feeder divisions, or the top
+ * divisions that qualify into a continental tournament.
+ *
+ * Its own relation rather than a `kind` discriminator on `ExchangeLink`, because an entry edge has
+ * no slot count: merging them would leave `slots` meaningless for half the rows, which is the shape
+ * that invites a query to forget the discriminator.
+ */
+export interface CupEntrant {
+  readonly cupCompetitionId: string;
+  readonly sourceCompetitionId: string;
+}
+
 export interface RegionNode {
   readonly id: string;
   readonly name: string;
@@ -537,6 +568,65 @@ export const LEAGUE_SETUP_INDEX: LeagueSetupIndex = {
     },
   ],
 };
+
+
+/**
+ * The Pyramids: which division sits above which, and how many clubs exchange between them.
+ *
+ * Structure lives here rather than on the `CompetitionNode` for one reason — nothing that browses
+ * the catalogue reads it. The setup screens render Nations, Competitions, and scope options; this
+ * is what *generation* reads to write a save's competition graph, and keeping it beside the
+ * catalogue rather than inside its row types leaves the read model the renderer receives unchanged.
+ * `competition-graph.test.ts` is what keeps the two from drifting: every endpoint below must name a
+ * Competition this index carries, and every league below the top of its Pyramid must have a link
+ * upward.
+ *
+ * Note what is *absent*: the reserve league, and Brazil's state championships. Neither sits on a
+ * ladder — a reserve side is not promoted into the first division, and the state championships run
+ * beside the national pyramid rather than feeding it — so neither has a link, which is exactly the
+ * fact a tier number cannot express.
+ */
+export const EXCHANGE_LINKS: readonly ExchangeLink[] = [
+  { higherCompetitionId: "comp_eng_1", lowerCompetitionId: "comp_eng_2", slots: 3 },
+  { higherCompetitionId: "comp_eng_2", lowerCompetitionId: "comp_eng_3", slots: 3 },
+  { higherCompetitionId: "comp_eng_3", lowerCompetitionId: "comp_eng_4", slots: 3 },
+  // Spain's parallel regional second tier: two links of one slot each, so the division above
+  // relegates one club into each region and the destination is named rather than guessed.
+  { higherCompetitionId: "comp_esp_1", lowerCompetitionId: "comp_esp_2n", slots: 1 },
+  { higherCompetitionId: "comp_esp_1", lowerCompetitionId: "comp_esp_2s", slots: 1 },
+  { higherCompetitionId: "comp_deu_1", lowerCompetitionId: "comp_deu_2", slots: 3 },
+  { higherCompetitionId: "comp_deu_2", lowerCompetitionId: "comp_deu_3", slots: 3 },
+  { higherCompetitionId: "comp_fra_1", lowerCompetitionId: "comp_fra_2", slots: 3 },
+  { higherCompetitionId: "comp_prt_1", lowerCompetitionId: "comp_prt_2", slots: 2 },
+  { higherCompetitionId: "comp_bra_1", lowerCompetitionId: "comp_bra_2", slots: 4 },
+];
+
+/**
+ * Which Competitions' clubs enter which cups and continental tournaments.
+ *
+ * A continental tournament is a cup for this relation's purposes: it owns no clubs of its own and
+ * draws its field from elsewhere, which is the only property the relation cares about.
+ */
+export const CUP_ENTRANTS: readonly CupEntrant[] = [
+  { cupCompetitionId: "comp_eng_cup", sourceCompetitionId: "comp_eng_1" },
+  { cupCompetitionId: "comp_eng_cup", sourceCompetitionId: "comp_eng_2" },
+  { cupCompetitionId: "comp_eng_cup", sourceCompetitionId: "comp_eng_3" },
+  { cupCompetitionId: "comp_eng_cup", sourceCompetitionId: "comp_eng_4" },
+  { cupCompetitionId: "comp_esp_cup", sourceCompetitionId: "comp_esp_1" },
+  { cupCompetitionId: "comp_esp_cup", sourceCompetitionId: "comp_esp_2n" },
+  { cupCompetitionId: "comp_esp_cup", sourceCompetitionId: "comp_esp_2s" },
+  { cupCompetitionId: "comp_deu_cup", sourceCompetitionId: "comp_deu_1" },
+  { cupCompetitionId: "comp_deu_cup", sourceCompetitionId: "comp_deu_2" },
+  { cupCompetitionId: "comp_deu_cup", sourceCompetitionId: "comp_deu_3" },
+  { cupCompetitionId: "comp_fra_cup", sourceCompetitionId: "comp_fra_1" },
+  { cupCompetitionId: "comp_fra_cup", sourceCompetitionId: "comp_fra_2" },
+  { cupCompetitionId: "comp_bra_cup", sourceCompetitionId: "comp_bra_1" },
+  { cupCompetitionId: "comp_bra_cup", sourceCompetitionId: "comp_bra_2" },
+  { cupCompetitionId: "comp_uefa_champions", sourceCompetitionId: "comp_eng_1" },
+  { cupCompetitionId: "comp_uefa_champions", sourceCompetitionId: "comp_esp_1" },
+  { cupCompetitionId: "comp_uefa_champions", sourceCompetitionId: "comp_deu_1" },
+  { cupCompetitionId: "comp_conmebol_champions", sourceCompetitionId: "comp_bra_1" },
+];
 
 /** Every Competition in the index, flattened. Built once per index, not per lookup. */
 export const allCompetitions = (index: LeagueSetupIndex): readonly CompetitionNode[] =>

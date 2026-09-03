@@ -22,6 +22,7 @@ import {
   blockingIssues,
   LEAGUE_SETUP_INDEX,
   resolveSelection,
+  resolveWorld,
   validatePillarDistribution,
 } from "@cm-clone/shared";
 import { createSchema } from "./schema.js";
@@ -170,7 +171,12 @@ export const beginCareer = (savesDir: string, options: BeginCareerOptions) =>
 
     yield* Effect.gen(function* () {
       yield* createSchema;
-      yield* generateWorld({ worldSeed, referenceYear, snapshotId: options.snapshotId });
+      yield* generateWorld({
+        worldSeed,
+        referenceYear,
+        snapshotId: options.snapshotId,
+        world: resolveWorld(LEAGUE_SETUP_INDEX, resolved),
+      });
       yield* initializeSeasonEconomy(1, deriveSeed(worldSeed, "economy", 1));
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped);
 

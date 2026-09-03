@@ -12,6 +12,7 @@ import {
   NATION_CODES,
   canonicalCityId,
   canonicalNationId,
+  type ResolvedWorld,
   generateSquad,
   type GeneratedPlayer,
 } from "@cm-clone/shared";
@@ -45,10 +46,13 @@ export interface WorldGenerationConfig {
    *  so a world regenerated in a later year is still the same world. */
   readonly referenceYear: number;
   /** The League Selection Snapshot this world is generated on behalf of. Recorded in the manifest
-   *  as provenance, and — for the single-league generator — deliberately *not* an input to what
-   *  gets generated: the re-resolution that validated it happened in `beginCareer`, and threading
-   *  the resolved scope into competition rows is the next ticket's work. */
+   *  as provenance only: what the selection *resolved to* arrives as `world` below, already
+   *  re-resolved against the live catalogue by `beginCareer`. */
   readonly snapshotId: SnapshotId;
+  /** The resolved world — the competitions the Effective Selection activated, with the promotion
+   *  structure and cup entry structure that connect them. Generation writes exactly these and no
+   *  others; a competition resolved to `not_loaded` is simply absent. */
+  readonly world: ResolvedWorld;
 }
 
 const attr = (attributes: GeneratedPlayer["attributes"], key: keyof GeneratedPlayer["attributes"]) =>
@@ -75,7 +79,7 @@ const attr = (attributes: GeneratedPlayer["attributes"], key: keyof GeneratedPla
  * harmless while generation stays provisional — but any ticket that later scales these writes
  * should decide whether the sequence deserves `sql.withTransaction`.
  */
-export const generateWorld = ({ worldSeed, referenceYear, snapshotId }: WorldGenerationConfig) =>
+export const generateWorld = ({ worldSeed, referenceYear, snapshotId, world }: WorldGenerationConfig) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
 
@@ -102,6 +106,30 @@ export const generateWorld = ({ worldSeed, referenceYear, snapshotId }: WorldGen
     for (const city of CITIES) {
       yield* sql`INSERT INTO cities (id, nation_id, name, population_band)
         VALUES (${canonicalCityId(city.nationCode, city.name)}, ${canonicalNationId(city.nationCode)}, ${city.name}, ${city.populationBand})`;
+    }
+
+    // The competition graph: the resolved world, activated-only. Written after the catalogue —
+    // a competition references a nation — and before any club, since a club's competition is what
+    // later tickets mint its id from. Nothing here reads a seed or a collection length: these rows
+    // are a function of the selection alone, which is what makes two saves from one selection
+    // carry an identical graph whatever their seeds.
+    for (const competition of world.competitions) {
+      yield* sql`INSERT INTO competitions (id, nation_id, kind, tier, depth, club_count)
+        VALUES (${competition.id}, ${competition.nationId}, ${competition.kind}, ${competition.tier}, ${competition.depth}, ${competition.clubCount})`;
+    }
+
+    // Both structural relations are already filtered to links whose endpoints are both loaded, so
+    // every row written here names two competitions that have rows in this save. A dangling
+    // endpoint would be a resolver defect rather than a condition to handle: `resolveWorld` closes
+    // the world at the edge of the chosen scope before generation ever runs.
+    for (const link of world.links) {
+      yield* sql`INSERT INTO competition_links (higher_competition_id, lower_competition_id, slots)
+        VALUES (${link.higherCompetitionId}, ${link.lowerCompetitionId}, ${link.slots})`;
+    }
+
+    for (const entrant of world.entrants) {
+      yield* sql`INSERT INTO competition_entrants (cup_competition_id, source_competition_id)
+        VALUES (${entrant.cupCompetitionId}, ${entrant.sourceCompetitionId})`;
     }
 
     for (const [ordinal, statureTier] of LEAGUE_CLUBS.entries()) {

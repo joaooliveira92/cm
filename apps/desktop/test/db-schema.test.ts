@@ -17,6 +17,9 @@ describe("generated DDL", () => {
         "manager_profile",
         "nations",
         "cities",
+        "competitions",
+        "competition_links",
+        "competition_entrants",
         "clubs",
         "players",
         "player_positions",
@@ -48,6 +51,15 @@ describe("generated DDL", () => {
     expect(ddl).toContain(
       "CONSTRAINT \"cities_population_band\" CHECK(population_band IN ('major','large','mid','small'))",
     );
+    expect(ddl).toContain(
+      "CONSTRAINT \"competitions_depth\" CHECK(depth IN ('full','standard','results-only'))",
+    );
+    expect(ddl).toContain(
+      "CONSTRAINT \"competitions_kind\" CHECK(kind IN ('league','cup','reserve','continental'))",
+    );
+    // Symmetry is the load-bearing property: one count read in two directions, so no rollover can
+    // change a division's size. A zero-slot link would be a link that exchanges nothing.
+    expect(ddl).toContain("CONSTRAINT \"competition_links_slots\" CHECK(slots >= 1)");
   });
 
   it("keeps the world catalogue thin — a nations row is its id and nothing else", () => {

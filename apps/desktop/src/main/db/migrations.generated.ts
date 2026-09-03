@@ -55,6 +55,33 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	CONSTRAINT "clubs_is_user_club" CHECK(is_user_club IN (0,1)),
 	CONSTRAINT "clubs_generation_seed_range" CHECK(generation_seed BETWEEN 0 AND 4294967295)
 );`,
+  `CREATE TABLE \`competition_entrants\` (
+	\`cup_competition_id\` text NOT NULL,
+	\`source_competition_id\` text NOT NULL,
+	PRIMARY KEY(\`cup_competition_id\`, \`source_competition_id\`),
+	FOREIGN KEY (\`cup_competition_id\`) REFERENCES \`competitions\`(\`id\`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (\`source_competition_id\`) REFERENCES \`competitions\`(\`id\`) ON UPDATE no action ON DELETE no action
+);`,
+  `CREATE TABLE \`competition_links\` (
+	\`higher_competition_id\` text NOT NULL,
+	\`lower_competition_id\` text NOT NULL,
+	\`slots\` integer NOT NULL,
+	PRIMARY KEY(\`higher_competition_id\`, \`lower_competition_id\`),
+	FOREIGN KEY (\`higher_competition_id\`) REFERENCES \`competitions\`(\`id\`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (\`lower_competition_id\`) REFERENCES \`competitions\`(\`id\`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "competition_links_slots" CHECK(slots >= 1)
+);`,
+  `CREATE TABLE \`competitions\` (
+	\`id\` text PRIMARY KEY NOT NULL,
+	\`nation_id\` text,
+	\`kind\` text NOT NULL,
+	\`tier\` integer,
+	\`depth\` text NOT NULL,
+	\`club_count\` integer,
+	FOREIGN KEY (\`nation_id\`) REFERENCES \`nations\`(\`id\`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "competitions_kind" CHECK(kind IN ('league','cup','reserve','continental')),
+	CONSTRAINT "competitions_depth" CHECK(depth IN ('full','standard','results-only'))
+);`,
   `CREATE TABLE \`contracts\` (
 	\`player_id\` text PRIMARY KEY NOT NULL,
 	\`wage\` integer NOT NULL,

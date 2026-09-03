@@ -173,6 +173,95 @@ export const cities = sqliteTable(
   () => [check("cities_population_band", oneOf("population_band", ["major", "large", "mid", "small"]))],
 );
 
+/*
+ * The competition graph — the **resolved world**, activated-only.
+ *
+ * Unlike `nations` and `cities` above, these tables carry only what the player's Effective
+ * Selection resolved to: nothing outside the loaded world points at a competition, and their volume
+ * scales with the chosen scope. A competition resolved to `not_loaded` gets no row at all.
+ *
+ * Dependency (`requires`) edges are persisted **nowhere**. They are setup-time input to closure
+ * resolution, and once the world exists the fact that a top division required its national cup
+ * governs nothing a simulation reads. Promotion structure is the opposite case — read at every
+ * season rollover for the life of the save — which is why it is a table.
+ */
+
+export const competitions = sqliteTable(
+  "competitions",
+  {
+    /** The catalogue's own canonical id (`comp_eng_1`), so the save and the catalogue join. */
+    id: text("id").primaryKey(),
+    /** `NULL` for a cross-border tournament: the catalogue models confederations as Nation-shaped
+     *  branches so its browser stays one uniform tree, but a branch is a container rather than a
+     *  territory and has no `nations` row to point at. */
+    nationId: text("nation_id").references(() => nations.id),
+    kind: text("kind").notNull(),
+    /** Pyramid tier, 1 = highest. `NULL` for a kind that does not sit on the ladder — and never a
+     *  substitute for `competition_links`: with parallel regional divisions at one tier, no
+     *  arithmetic on this number identifies which division sits above which. */
+    tier: integer("tier"),
+    /** Effective Simulation Depth. What each value implies on disk is a later ticket's; this is
+     *  where the value itself lives. */
+    depth: text("depth").notNull(),
+    /** Authoritative, not derived from participant rows: it is what the symmetric-exchange
+     *  invariant is checked *against*, and counting participants against participants would only
+     *  prove last season equalled last season. `NULL` for a competition whose field is a function
+     *  of its sources. */
+    clubCount: integer("club_count"),
+  },
+  () => [
+    check("competitions_kind", oneOf("kind", ["league", "cup", "reserve", "continental"])),
+    check("competitions_depth", oneOf("depth", ["full", "standard", "results-only"])),
+  ],
+);
+
+/**
+ * Exchange Links — promotion and relegation as one symmetric fact.
+ *
+ * One row, read in two directions: `slots` clubs go up and `slots` clubs come down. A single count
+ * governing both is what guarantees a division never changes size, which two independent counts
+ * would silently break. Both endpoints always have rows in this save, which is what closes the
+ * world at the edge of the chosen scope — the lowest loaded division never relegates anyone out of
+ * the world, and the highest never promotes anyone out of it.
+ */
+export const competitionLinks = sqliteTable(
+  "competition_links",
+  {
+    higherCompetitionId: text("higher_competition_id")
+      .notNull()
+      .references(() => competitions.id),
+    lowerCompetitionId: text("lower_competition_id")
+      .notNull()
+      .references(() => competitions.id),
+    slots: integer("slots").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.higherCompetitionId, table.lowerCompetitionId] }),
+    check("competition_links_slots", sql`slots >= 1`),
+  ],
+);
+
+/**
+ * Which competitions' clubs enter a given cup.
+ *
+ * Its own table rather than a `kind` discriminator on `competition_links`, because an entry edge
+ * has no slot count: merging them would leave `slots` meaningless for half the rows, which is the
+ * shape that invites a query to forget the discriminator. A continental tournament is a cup here —
+ * the relation cares only that the competition owns no clubs and draws its field from elsewhere.
+ */
+export const competitionEntrants = sqliteTable(
+  "competition_entrants",
+  {
+    cupCompetitionId: text("cup_competition_id")
+      .notNull()
+      .references(() => competitions.id),
+    sourceCompetitionId: text("source_competition_id")
+      .notNull()
+      .references(() => competitions.id),
+  },
+  (table) => [primaryKey({ columns: [table.cupCompetitionId, table.sourceCompetitionId] })],
+);
+
 export const clubs = sqliteTable(
   "clubs",
   {
