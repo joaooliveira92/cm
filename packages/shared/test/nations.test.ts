@@ -14,6 +14,7 @@ import {
   competitionIndex,
   scopeOptionIndex,
 } from "../src/leagueSetup.js";
+import { catalogueName } from "../src/contentPack.js";
 
 const PRIOR_FIELDS = [
   "footballImportance",
@@ -113,7 +114,7 @@ describe("setup catalogue referential integrity", () => {
     }
   });
 
-  it("has unique competition and scope-option ids", () => {
+  it("has unique competition and scope_option ids", () => {
     const competitionIds = allCompetitions(LEAGUE_SETUP_INDEX).map((c) => c.id);
     expect(new Set(competitionIds).size).toBe(competitionIds.length);
     const scopeIds = LEAGUE_SETUP_INDEX.nations.flatMap((n) => n.scopeOptions.map((s) => s.id));
@@ -168,12 +169,12 @@ describe("setup catalogue referential integrity", () => {
   it("keeps the structural shapes the selection model has to survive", () => {
     const nations = LEAGUE_SETUP_INDEX.nations;
     // A pyramid deeper than two tiers, with a reserve league hanging off it.
-    const england = nations.find((n) => n.id === "nation-eng");
+    const england = nations.find((n) => n.id === "nation_eng");
     expect(england?.competitions.filter((c) => c.kind === "league" && c.tier !== null).length)
       .toBeGreaterThanOrEqual(4);
     expect(england?.competitions.some((c) => c.kind === "reserve")).toBe(true);
     // Two competitions at the same tier under the same parent — a tier number cannot express this.
-    const spain = nations.find((n) => n.id === "nation-esp");
+    const spain = nations.find((n) => n.id === "nation_esp");
     expect(spain?.competitions.filter((c) => c.tier === 2)).toHaveLength(2);
     // A visible nation with no playable league, and one present in metadata only.
     expect(nations.some((n) => n.available && !n.playableSupported)).toBe(true);
@@ -187,10 +188,15 @@ describe("setup catalogue referential integrity", () => {
     expect(owners.size).toBeGreaterThan(1);
   });
 
-  it("names no real club and no real competition brand", () => {
-    // The licensing boundary, asserted rather than trusted: competition names in the base
-    // catalogue describe structure, and clubs are not named here at all.
-    const names = allCompetitions(LEAGUE_SETUP_INDEX).map((c) => c.name);
+  it("names no competition at all, leaving every display name to the content pack", () => {
+    // The licensing boundary, asserted rather than trusted: the catalogue carries ids and
+    // structure, and every name a player reads is the pack's to decide.
+    for (const competition of allCompetitions(LEAGUE_SETUP_INDEX)) {
+      expect(competition).not.toHaveProperty("name");
+    }
+
+    // The base pack's own names describe structure rather than a real brand.
+    const names = allCompetitions(LEAGUE_SETUP_INDEX).map((c) => catalogueName(c.id));
     for (const name of names) {
       expect(name).toMatch(
         /(Division|Cup|League|Tournament|Championship|Group)/,

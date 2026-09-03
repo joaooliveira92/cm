@@ -8,7 +8,7 @@ import { afterEach, beforeAll, afterAll, describe, expect, it } from "vitest";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import type { ClubId } from "@cm-clone/contracts";
-import { LEAGUE_NAME } from "@cm-clone/shared";
+import { BASE_CONTENT_PACK, LEAGUE_COMPETITION_ID, displayName } from "@cm-clone/shared";
 import { getClubSelection } from "../src/main/clubSelection.js";
 import { createSave } from "../src/main/saves.js";
 import { ClubSelectionScreen } from "../src/renderer/ClubSelectionScreen.js";
@@ -135,7 +135,11 @@ describe("the rail reads comparatively and the panel carries the detail", () => 
     const selector = screen.getByLabelText("League") as HTMLSelectElement;
     expect(selector.disabled).toBe(true);
     expect(selector.options.length).toBe(1);
-    expect(selector.options[0]!.textContent).toBe(LEAGUE_NAME);
+    // The pack's name for the League, not a constant the renderer holds: the screen shows what
+    // the save's content pack says `comp_eng_1` is called.
+    expect(selector.options[0]!.textContent).toBe(
+      displayName(BASE_CONTENT_PACK, LEAGUE_COMPETITION_ID),
+    );
     const hint = document.getElementById(selector.getAttribute("aria-describedby")!);
     expect(hint?.textContent).toMatch(/one League/);
   });

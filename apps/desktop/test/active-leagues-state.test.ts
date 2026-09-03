@@ -31,19 +31,19 @@ describe("addActiveLeague", () => {
   it("adds the owning Nation at the narrowest scope that carries the league playable", () => {
     const state = applyIntent(domainIndex, setup([]), {
       type: "addActiveLeague",
-      leagueId: "comp-fra-2",
+      leagueId: "comp_fra_2",
     });
     expect(state.intents).toEqual([
-      { nationId: "nation-fra", mode: "playable", scopeOptionId: "scope-fra-two", source: "user" },
+      { nationId: "nation_fra", mode: "playable", scopeOptionId: "scope_fra_two", source: "user" },
     ]);
   });
 
   it("adds a league no scope can make playable at background, never as fabricated full", () => {
     const state = applyIntent(domainIndex, setup([]), {
       type: "addActiveLeague",
-      leagueId: "comp-and-1",
+      leagueId: "comp_and_1",
     });
-    expect(state.intents).toEqual([{ nationId: "nation-and", mode: "background", source: "user" }]);
+    expect(state.intents).toEqual([{ nationId: "nation_and", mode: "background", source: "user" }]);
   });
 
   it("is a checked no-op for an unknown league id", () => {
@@ -58,30 +58,30 @@ describe("changeSimulationDepth", () => {
   it("moves a league to a shallower depth by retargeting its Nation's mode", () => {
     const state = applyIntent(
       domainIndex,
-      setup([{ nationId: "nation-eng", mode: "playable", scopeOptionId: "scope-eng-two", source: "user" }]),
-      { type: "changeSimulationDepth", leagueId: "comp-eng-1", simulationDepth: "standard" },
+      setup([{ nationId: "nation_eng", mode: "playable", scopeOptionId: "scope_eng_two", source: "user" }]),
+      { type: "changeSimulationDepth", leagueId: "comp_eng_1", simulationDepth: "standard" },
     );
-    expect(state.intents).toEqual([{ nationId: "nation-eng", mode: "background", source: "user" }]);
+    expect(state.intents).toEqual([{ nationId: "nation_eng", mode: "background", source: "user" }]);
     expect(state.revision).toBe(1);
   });
 
   it("picks the narrowest scope that can carry the league playable", () => {
     const state = applyIntent(
       domainIndex,
-      setup([{ nationId: "nation-eng", mode: "background", source: "preset" }]),
-      { type: "changeSimulationDepth", leagueId: "comp-eng-2", simulationDepth: "full" },
+      setup([{ nationId: "nation_eng", mode: "background", source: "preset" }]),
+      { type: "changeSimulationDepth", leagueId: "comp_eng_2", simulationDepth: "full" },
     );
     // The two-division scope, not the top-only one the engine would otherwise default to.
     expect(state.intents).toEqual([
-      { nationId: "nation-eng", mode: "playable", scopeOptionId: "scope-eng-two", source: "user" },
+      { nationId: "nation_eng", mode: "playable", scopeOptionId: "scope_eng_two", source: "user" },
     ]);
   });
 
   it("is a checked no-op when no scope option can make the league playable", () => {
-    const state = setup([{ nationId: "nation-and", mode: "background", source: "user" }]);
+    const state = setup([{ nationId: "nation_and", mode: "background", source: "user" }]);
     const next = applyIntent(domainIndex, state, {
       type: "changeSimulationDepth",
-      leagueId: "comp-and-1",
+      leagueId: "comp_and_1",
       simulationDepth: "full",
     });
     // Andorra has no scope option that can carry its league playable — the request is refused,
@@ -101,11 +101,11 @@ describe("changeSimulationDepth", () => {
 
   it("refuses to re-depth a dependency-capped competition (the cup its scope requires)", () => {
     const state = setup([
-      { nationId: "nation-eng", mode: "playable", scopeOptionId: "scope-eng-two", source: "user" },
+      { nationId: "nation_eng", mode: "playable", scopeOptionId: "scope_eng_two", source: "user" },
     ]);
     const next = applyIntent(domainIndex, state, {
       type: "changeSimulationDepth",
-      leagueId: "comp-eng-cup",
+      leagueId: "comp_eng_cup",
       simulationDepth: "standard",
     });
     // The cup is active only as England's dependency — the reducer refuses, so nothing short of
@@ -119,13 +119,13 @@ describe("removeActiveLeague", () => {
     const state = applyIntent(
       domainIndex,
       setup([
-        { nationId: "nation-eng", mode: "playable", scopeOptionId: "scope-eng-two", source: "user" },
-        { nationId: "nation-esp", mode: "playable", scopeOptionId: "scope-esp-top", source: "user" },
+        { nationId: "nation_eng", mode: "playable", scopeOptionId: "scope_eng_two", source: "user" },
+        { nationId: "nation_esp", mode: "playable", scopeOptionId: "scope_esp_top", source: "user" },
       ]),
-      { type: "removeActiveLeague", leagueId: "comp-eng-2" },
+      { type: "removeActiveLeague", leagueId: "comp_eng_2" },
     );
     expect(state.intents).toEqual([
-      { nationId: "nation-esp", mode: "playable", scopeOptionId: "scope-esp-top", source: "user" },
+      { nationId: "nation_esp", mode: "playable", scopeOptionId: "scope_esp_top", source: "user" },
     ]);
   });
 
@@ -141,14 +141,14 @@ describe("applySetupPreset", () => {
   it("replaces the intents wholesale and bumps the revision", () => {
     const state = applyIntent(
       domainIndex,
-      setup([{ nationId: "nation-fra", mode: "background", source: "user" }]),
+      setup([{ nationId: "nation_fra", mode: "background", source: "user" }]),
       {
         type: "applySetupPreset",
-        intents: [{ nationId: "nation-bra", mode: "background", source: "preset" }],
+        intents: [{ nationId: "nation_bra", mode: "background", source: "preset" }],
         notice: "Preset applied",
       },
     );
-    expect(state.intents).toEqual([{ nationId: "nation-bra", mode: "background", source: "preset" }]);
+    expect(state.intents).toEqual([{ nationId: "nation_bra", mode: "background", source: "preset" }]);
     expect(state.notice).toBe("Preset applied");
     expect(state.revision).toBe(1);
   });
@@ -157,7 +157,7 @@ describe("applySetupPreset", () => {
 describe("changeAdvancedOption", () => {
   it("stores the requested pair and lets validation report the conflict as a value", async () => {
     const base = setup([
-      { nationId: "nation-eng", mode: "playable", scopeOptionId: "scope-eng-two", source: "user" },
+      { nationId: "nation_eng", mode: "playable", scopeOptionId: "scope_eng_two", source: "user" },
     ]);
     const first = applyIntent(domainIndex, base, {
       type: "changeAdvancedOption",

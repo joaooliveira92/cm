@@ -45,15 +45,15 @@ describe("the draft saver", () => {
       },
     });
 
-    saver.schedule(payload("nation-eng"));
-    saver.schedule(payload("nation-esp"));
-    saver.schedule(payload("nation-ita"));
+    saver.schedule(payload("nation_eng"));
+    saver.schedule(payload("nation_esp"));
+    saver.schedule(payload("nation_ita"));
     expect(written).toHaveLength(0);
 
     await vi.advanceTimersByTimeAsync(50);
 
     expect(written).toHaveLength(1);
-    expect(written[0]?.intents[0]?.nationId).toBe("nation-ita");
+    expect(written[0]?.intents[0]?.nationId).toBe("nation_ita");
   });
 
   it("reports the latest write that actually landed, not the newest one attempted", async () => {
@@ -62,12 +62,12 @@ describe("the draft saver", () => {
       save: async () => null,
     });
 
-    saver.schedule(payload("nation-eng"));
+    saver.schedule(payload("nation_eng"));
     await vi.advanceTimersByTimeAsync(10);
 
     const state = saver.state();
     expect(state._tag).toBe("Success");
-    expect(state._tag === "Success" ? state.payload.intents[0]?.nationId : null).toBe("nation-eng");
+    expect(state._tag === "Success" ? state.payload.intents[0]?.nationId : null).toBe("nation_eng");
   });
 
   it("discards a superseded write's outcome instead of publishing it as the saved state", async () => {
@@ -89,12 +89,12 @@ describe("the draft saver", () => {
       },
     });
 
-    saver.schedule(payload("nation-eng"));
+    saver.schedule(payload("nation_eng"));
     await vi.advanceTimersByTimeAsync(10);
     expect(saver.state()._tag).toBe("Pending");
 
     // A newer edit starts and lands while the first write is still out.
-    saver.schedule(payload("nation-esp"));
+    saver.schedule(payload("nation_esp"));
     await vi.advanceTimersByTimeAsync(10);
 
     // The stale write now fails. Its outcome must not become the state — the current draft is
@@ -104,7 +104,7 @@ describe("the draft saver", () => {
 
     const state = saver.state();
     expect(state._tag).toBe("Success");
-    expect(state._tag === "Success" ? state.payload.intents[0]?.nationId : null).toBe("nation-esp");
+    expect(state._tag === "Success" ? state.payload.intents[0]?.nationId : null).toBe("nation_esp");
   });
 
   it("surfaces a write failure as a readable message, not a throw", async () => {
@@ -113,7 +113,7 @@ describe("the draft saver", () => {
       save: async () => "The draft could not be written.",
     });
 
-    saver.schedule(payload("nation-eng"));
+    saver.schedule(payload("nation_eng"));
     await vi.advanceTimersByTimeAsync(10);
 
     const state = saver.state();
@@ -131,11 +131,11 @@ describe("the draft saver", () => {
       },
     });
 
-    saver.schedule(payload("nation-eng"));
+    saver.schedule(payload("nation_eng"));
     await saver.dispose();
 
     expect(written).toHaveLength(1);
-    expect(written[0]?.intents[0]?.nationId).toBe("nation-eng");
+    expect(written[0]?.intents[0]?.nationId).toBe("nation_eng");
   });
 
   it("refuses further work once disposed", async () => {
@@ -149,7 +149,7 @@ describe("the draft saver", () => {
     });
 
     await saver.dispose();
-    saver.schedule(payload("nation-eng"));
+    saver.schedule(payload("nation_eng"));
     await vi.advanceTimersByTimeAsync(100);
 
     expect(written).toHaveLength(0);

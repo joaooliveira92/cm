@@ -45,7 +45,7 @@ const intent = (
     source: "user",
   }) as NationSelectionIntentPayload;
 
-const VALID = [intent("nation-eng", "scope-eng-top")];
+const VALID = [intent("nation_eng", "scope_eng_top")];
 
 describe("setup index read model (§23)", () => {
   it("exposes the catalogue with sanitized labels and no raw database values", async () => {
@@ -66,9 +66,9 @@ describe("setup index read model (§23)", () => {
 
   it("carries the dependency edges the browser explains selections with", async () => {
     const index = await run(getLeagueSetupIndex);
-    const eng = index.nations.find((nation) => nation.id === "nation-eng");
-    const top = eng?.competitions.find((competition) => competition.id === "comp-eng-1");
-    expect(top?.requires).toContain("comp-eng-cup");
+    const eng = index.nations.find((nation) => nation.id === "nation_eng");
+    const top = eng?.competitions.find((competition) => competition.id === "comp_eng_1");
+    expect(top?.requires).toContain("comp_eng_cup");
   });
 });
 
@@ -80,19 +80,19 @@ describe("resolution echoes the revision it was asked for (§11.5)", () => {
 
   it("resolves dependencies rather than trusting the caller", async () => {
     const view = await run(resolveLeagueSelection(1, VALID));
-    const cup = view.dependencies.find((d) => d.competitionId === "comp-eng-cup");
+    const cup = view.dependencies.find((d) => d.competitionId === "comp_eng_cup");
     expect(cup?.chosenDirectly).toBe(false);
   });
 
   it("reports a forged Nation id as a blocking issue instead of failing or accepting it", async () => {
-    const view = await run(resolveLeagueSelection(1, [intent("nation-../../etc/passwd", "scope-eng-top")]));
+    const view = await run(resolveLeagueSelection(1, [intent("nation-../../etc/passwd", "scope_eng_top")]));
     expect(view.issues.some((issue) => issue.code === "unknown_nation")).toBe(true);
     expect(view.selections).toHaveLength(0);
   });
 
   it("rejects a scope option belonging to another Nation", async () => {
     const view = await run(
-      resolveLeagueSelection(1, [intent("nation-esp", "scope-eng-top")]),
+      resolveLeagueSelection(1, [intent("nation_esp", "scope_eng_top")]),
     );
     expect(view.issues.some((issue) => issue.code === "scope_option_nation_mismatch")).toBe(true);
   });
@@ -109,7 +109,7 @@ describe("submission (§17)", () => {
     const dir = await tempDir();
     const snapshot = await run(submitLeagueSelection(dir, VALID));
     expect(snapshot.id).toBeTruthy();
-    expect(snapshot.databaseFingerprint).toBe("real-geography@1.0.0");
+    expect(snapshot.databaseFingerprint).toBe(LEAGUE_SETUP_INDEX.fingerprint);
     expect(snapshot.selections.length).toBeGreaterThan(0);
     expect(snapshot.estimate.playableCompetitionCount).toBe(1);
   });
@@ -124,7 +124,7 @@ describe("submission (§17)", () => {
 
   it("treats a reordered but equivalent intent set as the same submission", async () => {
     const dir = await tempDir();
-    const forwards = [intent("nation-eng", "scope-eng-top"), intent("nation-deu", "scope-deu-top")];
+    const forwards = [intent("nation_eng", "scope_eng_top"), intent("nation_deu", "scope_deu_top")];
     const backwards = [...forwards].reverse();
     const first = await run(submitLeagueSelection(dir, forwards));
     const second = await run(submitLeagueSelection(dir, backwards));
@@ -135,15 +135,15 @@ describe("submission (§17)", () => {
     const dir = await tempDir();
     const first = await run(submitLeagueSelection(dir, VALID));
     const second = await run(
-      submitLeagueSelection(dir, [intent("nation-eng", "scope-eng-pyramid")]),
+      submitLeagueSelection(dir, [intent("nation_eng", "scope_eng_pyramid")]),
     );
     expect(second.id).not.toBe(first.id);
   });
 
   it("ignores `source` when deciding whether two submissions are the same", () => {
-    const viaClick = [intent("nation-eng", "scope-eng-top")];
+    const viaClick = [intent("nation_eng", "scope_eng_top")];
     const viaPreset = [
-      { ...intent("nation-eng", "scope-eng-top"), source: "preset" } as NationSelectionIntentPayload,
+      { ...intent("nation_eng", "scope_eng_top"), source: "preset" } as NationSelectionIntentPayload,
     ];
     expect(submissionKey(viaPreset)).toBe(submissionKey(viaClick));
   });
@@ -160,7 +160,7 @@ describe("submission (§17)", () => {
   it("refuses a selection whose ids do not survive revalidation, even if the client accepted it", async () => {
     const dir = await tempDir();
     const error = await run(
-      submitLeagueSelection(dir, [intent("nation-eng", "scope-deu-top")]).pipe(Effect.flip),
+      submitLeagueSelection(dir, [intent("nation_eng", "scope_deu_top")]).pipe(Effect.flip),
     );
     expect(error.issues.some((issue) => issue.code === "scope_option_nation_mismatch")).toBe(true);
   });
@@ -223,14 +223,14 @@ describe("setup draft (§18, §29)", () => {
       saveSetupDraft(dir, {
         intents: VALID,
         searchQuery: "ara",
-        regionFilterId: "region-western-europe",
+        regionFilterId: "region_western_europe",
         statusFilter: "selected",
       }),
     );
     const draft = await run(loadSetupDraft(dir));
     expect(draft?.intents).toHaveLength(1);
     expect(draft?.searchQuery).toBe("ara");
-    expect(draft?.regionFilterId).toBe("region-western-europe");
+    expect(draft?.regionFilterId).toBe("region_western_europe");
   });
 
   it("reads as absent when there is no draft", async () => {
@@ -265,9 +265,9 @@ describe("setup draft (§18, §29)", () => {
     await writeFile(
       path.join(dir, SETUP_DRAFT_FILE),
       JSON.stringify({
-        databaseFingerprint: "real-geography@1.0.0",
+        databaseFingerprint: LEAGUE_SETUP_INDEX.fingerprint,
         savedAt: new Date().toISOString(),
-        intents: [...VALID, intent("nation-vanished", "scope-vanished")],
+        intents: [...VALID, intent("nation_vanished", "scope_vanished")],
         searchQuery: "",
         regionFilterId: null,
         statusFilter: "all",
@@ -276,7 +276,7 @@ describe("setup draft (§18, §29)", () => {
     );
     const draft = await run(loadSetupDraft(dir));
     expect(draft?.intents).toHaveLength(1);
-    expect(draft?.intents[0]?.nationId).toBe("nation-eng");
+    expect(draft?.intents[0]?.nationId).toBe("nation_eng");
   });
 
   it("overwrites rather than appending on a second save", async () => {
@@ -371,16 +371,16 @@ describe("presets (§13)", () => {
         {
           id: "mine",
           name: "Mine",
-          databaseFingerprint: "real-geography@1.0.0",
+          databaseFingerprint: LEAGUE_SETUP_INDEX.fingerprint,
           savedAt: new Date().toISOString(),
-          intents: [...VALID, intent("nation-gone", "scope-gone")],
+          intents: [...VALID, intent("nation_gone", "scope_gone")],
         },
       ]),
       "utf8",
     );
     const applied = await run(applyLeaguePreset(dir, "mine"));
     expect(applied.intents).toHaveLength(1);
-    expect(applied.droppedNationIds).toEqual(["nation-gone"]);
+    expect(applied.droppedNationIds).toEqual(["nation_gone"]);
   });
 
   it("fails rather than throwing for a preset id that does not exist", async () => {

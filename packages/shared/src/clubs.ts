@@ -1,35 +1,46 @@
+import { canonicalCompetitionId, type CanonicalId } from "./contentPack.js";
+
 export const STATURE_TIERS = ["big", "mid", "small"] as const;
 
 export type StatureTier = (typeof STATURE_TIERS)[number];
 
 /**
- * The one generated League's name. Fully fictional content, the same replaceable class as
- * `LEAGUE_CLUBS` beside it — the two move together, which is why the name lives here rather than
- * in the renderer that displays it. It names the world generation actually materializes, never the
- * scope a `LeagueSelectionSnapshot` recorded as intent.
+ * The Competition generation actually materializes today — one league, the catalogue's English
+ * first division. It names the world that exists on disk, never the scope a
+ * `LeagueSelectionSnapshot` recorded as intent.
+ *
+ * It is an id, not a name: what the player reads is the content pack's name for it, resolved on
+ * the way out of the main process like every other display name.
  */
-export const LEAGUE_NAME = "Meridian Premier League";
+export const LEAGUE_COMPETITION_ID: CanonicalId = canonicalCompetitionId("ENG", "1");
 
-/** Fully fictional 20-club League and each club's permanent Stature Tier assignment (4 big / 8 mid / 8 small). */
-export const LEAGUE_CLUBS: ReadonlyArray<{ readonly name: string; readonly statureTier: StatureTier }> = [
-  { name: "Castlemere United", statureTier: "big" },
-  { name: "Northgate Athletic", statureTier: "big" },
-  { name: "Vantage Rovers", statureTier: "big" },
-  { name: "Ashford Wanderers", statureTier: "big" },
-  { name: "Brackenfield Town", statureTier: "mid" },
-  { name: "Duncaster City", statureTier: "mid" },
-  { name: "Elmsworth FC", statureTier: "mid" },
-  { name: "Fenwick Albion", statureTier: "mid" },
-  { name: "Greymoor United", statureTier: "mid" },
-  { name: "Harrowgate Villa", statureTier: "mid" },
-  { name: "Ironbridge Rangers", statureTier: "mid" },
-  { name: "Kestrel Park", statureTier: "mid" },
-  { name: "Lowmoor Athletic", statureTier: "small" },
-  { name: "Millbrook Town", statureTier: "small" },
-  { name: "Norwood Forest", statureTier: "small" },
-  { name: "Oakfield United", statureTier: "small" },
-  { name: "Pinehaven Rovers", statureTier: "small" },
-  { name: "Quayside FC", statureTier: "small" },
-  { name: "Ridgeway Town", statureTier: "small" },
-  { name: "Southmere Albion", statureTier: "small" },
+/**
+ * The generated League's twenty club slots and each slot's permanent Stature Tier
+ * (4 big / 8 mid / 8 small).
+ *
+ * An ordinal-to-stature list, and deliberately nothing more: a club's canonical id is minted from
+ * its ordinal and its name comes from the content pack, so this file carries the one thing that is
+ * neither an identity nor a label — how strong the slot is meant to be.
+ */
+export const LEAGUE_CLUBS: readonly StatureTier[] = [
+  "big",
+  "big",
+  "big",
+  "big",
+  "mid",
+  "mid",
+  "mid",
+  "mid",
+  "mid",
+  "mid",
+  "mid",
+  "mid",
+  "small",
+  "small",
+  "small",
+  "small",
+  "small",
+  "small",
+  "small",
+  "small",
 ];

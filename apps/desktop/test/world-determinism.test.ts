@@ -60,7 +60,9 @@ const readCatalogue = Effect.gen(function* () {
 /** The whole generated world as rows, ordered deterministically for comparison. */
 const readWorld = Effect.gen(function* () {
   const sql = yield* SqlClient;
-  const clubs = yield* sql`SELECT id, name, stature_tier as "statureTier", generation_seed as "generationSeed" FROM clubs ORDER BY name`;
+  // No `name`: a club's display name is the content pack's, resolved on read, and the column is
+  // vestigial until it is dropped. Ordering is by canonical id, which is the club's identity.
+  const clubs = yield* sql`SELECT id, stature_tier as "statureTier", generation_seed as "generationSeed" FROM clubs ORDER BY id`;
   const players = yield* sql<PlayerRow>`SELECT id, club_id as "clubId", first_name as "firstName", last_name as "lastName",
       date_of_birth as "dateOfBirth", potential_ability as "potentialAbility", passing, squad_slot as "squadSlot",
       generation_seed as "generationSeed"

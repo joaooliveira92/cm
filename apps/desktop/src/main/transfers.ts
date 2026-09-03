@@ -40,6 +40,7 @@ import {
 import { createSeededRng } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { displayNames } from "./displayNames.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
 import { assertSaveNotArchived } from "./managerStatus.js";
 import { loadUserClub } from "./squad.js";
@@ -92,7 +93,6 @@ const attributeSelectList = (prefix: string) =>
 interface PlayerEconRow {
   readonly id: PlayerId;
   readonly clubId: ClubId | null;
-  readonly clubName: string | null;
   readonly firstName: string;
   readonly lastName: string;
   readonly dateOfBirth: string;
@@ -118,10 +118,11 @@ interface PlayerEcon {
  * (ticket 17), which needs the same league-wide player pool to scout weak-slot targets. */
 export const loadAllPlayersEcon = Effect.gen(function* () {
   const sql = yield* SqlClient;
+  const nameOf = yield* displayNames;
   const playerRows = yield* sql.unsafe<PlayerEconRow>(
-    `SELECT p.id, p.club_id as "clubId", c.name as "clubName", p.first_name as "firstName", p.last_name as "lastName",
+    `SELECT p.id, p.club_id as "clubId", p.first_name as "firstName", p.last_name as "lastName",
             p.date_of_birth as "dateOfBirth", p.potential_ability as "potentialAbility", ${attributeSelectList("p.")}
-     FROM players p LEFT JOIN clubs c ON c.id = p.club_id`,
+     FROM players p`,
     [],
   );
   const positionRows = yield* sql<{
@@ -140,7 +141,8 @@ export const loadAllPlayersEcon = Effect.gen(function* () {
     return {
       id: row.id,
       clubId: row.clubId,
-      clubName: row.clubName,
+      // A Free Agent has no club and so no club name; every other name is the pack's.
+      clubName: row.clubId === null ? null : nameOf(row.clubId),
       firstName: row.firstName,
       lastName: row.lastName,
       age: ageFromDateOfBirth(row.dateOfBirth),
@@ -279,26 +281,23 @@ const loadBidRow = (bidId: BidId) =>
 const loadBidsForClub = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+    const nameOf = yield* displayNames;
     const rows = yield* sql<{
       id: BidId;
       playerId: PlayerId;
       playerFirstName: string;
       playerLastName: string;
       sellingClubId: ClubId;
-      sellingClubName: string;
       biddingClubId: ClubId;
-      biddingClubName: string;
       amount: number;
       counterAmount: number | null;
       status: BidStatus;
     }>`SELECT b.id, b.player_id as "playerId", p.first_name as "playerFirstName", p.last_name as "playerLastName",
-              b.selling_club_id as "sellingClubId", sc.name as "sellingClubName",
-              b.bidding_club_id as "biddingClubId", bc.name as "biddingClubName",
+              b.selling_club_id as "sellingClubId",
+              b.bidding_club_id as "biddingClubId",
               b.amount, b.counter_amount as "counterAmount", b.status
        FROM bids b
        JOIN players p ON p.id = b.player_id
-       JOIN clubs sc ON sc.id = b.selling_club_id
-       JOIN clubs bc ON bc.id = b.bidding_club_id
        WHERE b.selling_club_id = ${clubId} OR b.bidding_club_id = ${clubId}
        ORDER BY b.created_at DESC`;
 
@@ -309,9 +308,9 @@ const loadBidsForClub = (clubId: ClubId) =>
           playerId: row.playerId,
           playerName: `${row.playerFirstName} ${row.playerLastName}`,
           sellingClubId: row.sellingClubId,
-          sellingClubName: row.sellingClubName,
+          sellingClubName: nameOf(row.sellingClubId),
           biddingClubId: row.biddingClubId,
-          biddingClubName: row.biddingClubName,
+          biddingClubName: nameOf(row.biddingClubId),
           amount: row.amount,
           counterAmount: row.counterAmount,
           status: row.status,

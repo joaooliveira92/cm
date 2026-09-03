@@ -83,8 +83,8 @@ const lastResolveIntents = (): readonly { readonly nationId: string; readonly mo
 
 /** England playable at the top-two scope, Spain playable at the top division. */
 const BASE_INTENTS = [
-  { nationId: "nation-eng", mode: "playable", scopeOptionId: "scope-eng-two", source: "user" },
-  { nationId: "nation-esp", mode: "playable", scopeOptionId: "scope-esp-top", source: "user" },
+  { nationId: "nation_eng", mode: "playable", scopeOptionId: "scope_eng_two", source: "user" },
+  { nationId: "nation_esp", mode: "playable", scopeOptionId: "scope_esp_top", source: "user" },
 ] as const;
 
 /** The workspace host ticket 04 tests against: the grid plus the derived reads the sidebar will
@@ -204,10 +204,10 @@ describe("the league grid renders the active leagues (§density, identity by lea
     );
     expect(depthSelect("Spanish First Division").value).toBe("full");
     // The trusted layer received the intent for England's Nation at background.
-    expect(lastResolveIntents().find((intent) => intent.nationId === "nation-eng")?.mode).toBe(
+    expect(lastResolveIntents().find((intent) => intent.nationId === "nation_eng")?.mode).toBe(
       "background",
     );
-    expect(lastResolveIntents().find((intent) => intent.nationId === "nation-esp")?.mode).toBe(
+    expect(lastResolveIntents().find((intent) => intent.nationId === "nation_esp")?.mode).toBe(
       "playable",
     );
   });
@@ -235,7 +235,7 @@ describe("remove targets the correct stable league id", () => {
     // …and the other Nation's rows stayed — the remove was routed through the right league id.
     expect(screen.getByText("Spanish First Division")).toBeTruthy();
     expect(lastResolveIntents()).toHaveLength(1);
-    expect(lastResolveIntents()[0]).toMatchObject({ nationId: "nation-esp" });
+    expect(lastResolveIntents()[0]).toMatchObject({ nationId: "nation_esp" });
   });
 });
 

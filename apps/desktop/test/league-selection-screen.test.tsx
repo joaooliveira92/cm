@@ -6,6 +6,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Effect } from "effect";
 import type { LeagueSelectionSnapshot } from "@cm-clone/contracts";
+import { LEAGUE_SETUP_INDEX } from "@cm-clone/shared";
 import { LeagueSelectionScreen } from "../src/renderer/LeagueSelectionScreen.js";
 import {
   applyLeaguePreset,
@@ -167,9 +168,9 @@ describe("initial state (§6.1)", () => {
       saveSetupDraft(userDataDir, {
         intents: [
           {
-            nationId: "nation-deu",
+            nationId: "nation_deu",
             mode: "playable",
-            scopeOptionId: "scope-deu-top",
+            scopeOptionId: "scope_deu_top",
             source: "user",
           },
         ] as never,
@@ -350,7 +351,7 @@ describe("continue (§17)", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Continue/ }));
 
     await waitFor(() => expect(continued).toHaveLength(1));
-    expect(continued[0]?.databaseFingerprint).toBe("real-geography@1.0.0");
+    expect(continued[0]?.databaseFingerprint).toBe(LEAGUE_SETUP_INDEX.fingerprint);
     expect(continued[0]?.selections.length).toBeGreaterThan(0);
   });
 

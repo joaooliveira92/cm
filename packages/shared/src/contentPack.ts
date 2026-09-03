@@ -25,16 +25,74 @@ export type CanonicalId = string;
  * records (id + version) so a later reader can say which pack produced the ids in that file.
  *
  * The manifest carries the pack's identity as provenance only — nothing downstream keys behaviour
- * off it, and the same world can be reopened under a different pack. The display-name layer is the
- * next ticket's work, so `displayNames` is empty today: a missing name falls back to the canonical
- * id itself, which is the documented behaviour for an unnamed id until the pack names it.
+ * off it, and the same world can be reopened under a different pack. Every club and competition
+ * name the player sees comes from here: the catalogue and the club roster carry ids and structure,
+ * and a name they do not carry cannot be baked into a save row.
+ *
+ * The names below are entirely fictional, so the default build carries no licensing question.
+ * Competition names read as structural descriptions ("English First Division") rather than real
+ * brands; that is a property of *this* pack, not of the layer — a licensed pack replaces them
+ * without touching a line of simulation code.
  */
 export const BASE_CONTENT_PACK: ContentPack = {
   id: "fictional-names",
   displayName: "Fictional identities",
-  version: "1.0.0",
+  version: "2.0.0",
   contentSource: "FICTIONAL",
-  displayNames: {},
+  displayNames: {
+    // Competitions — every id `LEAGUE_SETUP_INDEX` carries. The catalogue holds the structure
+    // (tier, club count, dependency edges); the names live here.
+    comp_eng_1: { "*": "English First Division" },
+    comp_eng_2: { "*": "English Second Division" },
+    comp_eng_3: { "*": "English Third Division" },
+    comp_eng_4: { "*": "English Fourth Division" },
+    comp_eng_cup: { "*": "English National Cup" },
+    comp_eng_reserve: { "*": "English Reserve League" },
+    comp_esp_1: { "*": "Spanish First Division" },
+    comp_esp_2n: { "*": "Spanish Second Division – Northern Group" },
+    comp_esp_2s: { "*": "Spanish Second Division – Southern Group" },
+    comp_esp_cup: { "*": "Spanish National Cup" },
+    comp_deu_1: { "*": "German First Division" },
+    comp_deu_2: { "*": "German Second Division" },
+    comp_deu_3: { "*": "German Third Division" },
+    comp_deu_cup: { "*": "German National Cup" },
+    comp_fra_1: { "*": "French First Division" },
+    comp_fra_2: { "*": "French Second Division" },
+    comp_fra_cup: { "*": "French National Cup" },
+    comp_prt_1: { "*": "Portuguese First Division" },
+    comp_prt_2: { "*": "Portuguese Second Division" },
+    comp_bra_1: { "*": "Brazilian First Division" },
+    comp_bra_2: { "*": "Brazilian Second Division" },
+    comp_bra_state_se: { "*": "Brazilian State Championship – South East" },
+    comp_bra_state_ne: { "*": "Brazilian State Championship – North East" },
+    comp_bra_cup: { "*": "Brazilian National Cup" },
+    comp_and_1: { "*": "Andorran First Division" },
+    comp_uefa_champions: { "*": "European Champions Tournament" },
+    comp_conmebol_champions: { "*": "South American Champions Tournament" },
+
+    // Clubs — the twenty the generator materializes today, in `comp_eng_1`. The rest of the
+    // catalogue's club ids are unnamed until generation mints them (see `packCoverageGaps`).
+    club_eng_01: { "*": "Castlemere United" },
+    club_eng_02: { "*": "Northgate Athletic" },
+    club_eng_03: { "*": "Vantage Rovers" },
+    club_eng_04: { "*": "Ashford Wanderers" },
+    club_eng_05: { "*": "Brackenfield Town" },
+    club_eng_06: { "*": "Duncaster City" },
+    club_eng_07: { "*": "Elmsworth FC" },
+    club_eng_08: { "*": "Fenwick Albion" },
+    club_eng_09: { "*": "Greymoor United" },
+    club_eng_10: { "*": "Harrowgate Villa" },
+    club_eng_11: { "*": "Ironbridge Rangers" },
+    club_eng_12: { "*": "Kestrel Park" },
+    club_eng_13: { "*": "Lowmoor Athletic" },
+    club_eng_14: { "*": "Millbrook Town" },
+    club_eng_15: { "*": "Norwood Forest" },
+    club_eng_16: { "*": "Oakfield United" },
+    club_eng_17: { "*": "Pinehaven Rovers" },
+    club_eng_18: { "*": "Quayside FC" },
+    club_eng_19: { "*": "Ridgeway Town" },
+    club_eng_20: { "*": "Southmere Albion" },
+  },
 };
 
 /** BCP 47 language tag, or `"*"` for the fallback every pack must provide. */
@@ -71,9 +129,35 @@ export const displayName = (
   return entry[locale] ?? entry["*"] ?? id;
 };
 
+/**
+ * The build's own pack, resolved for a canonical id.
+ *
+ * Setup-time reads — the catalogue browser, its search, the Active Leagues consequences — run
+ * before any save exists, so there is no recorded pack to resolve against and exactly one pack in
+ * play: this build's. Save-backed reads must not use this; they resolve through the pack the save
+ * recorded, which is the main process's own seam.
+ */
+export const catalogueName = (id: CanonicalId, locale: LocaleTag = "*"): string =>
+  displayName(BASE_CONTENT_PACK, id, locale);
+
 /** Every canonical id a pack names, for the validation pass that reports missing localization. */
 export const packCoverage = (pack: ContentPack): ReadonlySet<CanonicalId> =>
   new Set(Object.keys(pack.displayNames));
+
+/**
+ * The ids a pack fails to name, in the order they were asked for.
+ *
+ * Resolution never fails — an unnamed id renders as itself — so this is the only thing that turns
+ * a missing name into something a test or a startup check can act on, rather than a raw
+ * `club_eng_07` reaching a screen unnoticed.
+ */
+export const packCoverageGaps = (
+  pack: ContentPack,
+  ids: Iterable<CanonicalId>,
+): readonly CanonicalId[] => {
+  const covered = packCoverage(pack);
+  return [...ids].filter((id) => !covered.has(id));
+};
 
 /**
  * Canonical club ids, one per Nation that ships club content, numbered within the Nation.

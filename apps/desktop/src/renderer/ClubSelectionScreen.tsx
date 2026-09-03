@@ -30,6 +30,7 @@ export interface ClubSelectionScreenProps {
  */
 export const ClubSelectionScreen = ({ saveId, selectedClubId, onSelect }: ClubSelectionScreenProps) => {
   const [clubs, setClubs] = useState<ReadonlyArray<ClubSelectionRow>>([]);
+  const [leagueName, setLeagueName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
@@ -45,6 +46,7 @@ export const ClubSelectionScreen = ({ saveId, selectedClubId, onSelect }: ClubSe
         return;
       }
       setClubs(outcome.success.clubs);
+      setLeagueName(outcome.success.leagueName);
       setLoading(false);
     };
     void load();
@@ -80,7 +82,7 @@ export const ClubSelectionScreen = ({ saveId, selectedClubId, onSelect }: ClubSe
   return (
     <div className="flex h-full min-h-0 gap-4">
       <div className="flex min-h-0 w-80 shrink-0 flex-col gap-2">
-        <LeagueSelector />
+        <LeagueSelector leagueName={leagueName} />
 
         <ClubRail
           clubs={clubs}

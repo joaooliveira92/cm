@@ -47,6 +47,7 @@ import {
   type NationSelectionIntent,
   type ResolvedSelection,
 } from "./leagueSelection.js";
+import { catalogueName } from "./contentPack.js";
 import { MIGRATION_LINKS, type NationCode } from "./nations.js";
 import { modeFromDepth } from "./simulation.js";
 
@@ -281,7 +282,7 @@ export const resolveLeagueRecommendations = (
       const record = resolved.dependencies.find(
         (dependency) => dependency.competitionId === row.leagueId,
       );
-      const requiredBy = (record?.requiredBy ?? []).map((id) => competitions.get(id)?.name ?? id);
+      const requiredBy = (record?.requiredBy ?? []).map((id) => catalogueName(id));
       const text =
         requiredBy.length === 0
           ? "Required competition in this setup"

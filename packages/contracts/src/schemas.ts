@@ -173,6 +173,10 @@ export class ClubSelectionRow extends Schema.Class<ClubSelectionRow>("ClubSelect
 
 export class ClubSelectionView extends Schema.Class<ClubSelectionView>("ClubSelectionView")({
   clubs: Schema.Array(ClubSelectionRow),
+  /** The name of the League these clubs play in, already resolved through the save's content pack.
+   *  Carried on the wire rather than imported by the renderer: a display name is the pack's to
+   *  decide, and the renderer must never hold a second copy of that answer. */
+  leagueName: Schema.String,
 }) {}
 
 export class PlayerPositionView extends Schema.Class<PlayerPositionView>("PlayerPositionView")({

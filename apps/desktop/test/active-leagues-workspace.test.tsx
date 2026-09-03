@@ -59,8 +59,8 @@ const installPreload = (): void => {
 };
 
 const BASE_INTENTS = [
-  { nationId: "nation-eng", mode: "playable", scopeOptionId: "scope-eng-two", source: "user" },
-  { nationId: "nation-esp", mode: "playable", scopeOptionId: "scope-esp-top", source: "user" },
+  { nationId: "nation_eng", mode: "playable", scopeOptionId: "scope_eng_two", source: "user" },
+  { nationId: "nation_esp", mode: "playable", scopeOptionId: "scope_esp_top", source: "user" },
 ] as const;
 
 let presetCalls = 0;

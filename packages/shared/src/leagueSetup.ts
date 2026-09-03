@@ -7,10 +7,12 @@
  * labels, and hands the renderer a read model.
  *
  * Nations are real — real names, ISO 3166-1 alpha-3 codes, real confederation membership — because
- * geography is stable, factual, and what a player recognises. Competition names are structural
- * descriptions rather than real competition brands, and no club is named here at all: those are
- * licensed identities that live in a replaceable content pack (`contentPack.ts`), so the default
- * build carries no licensing question.
+ * geography is stable, factual, and what a player recognises. Nothing below a Nation is named here:
+ * a Competition node carries its canonical id and its structure, and its display name is resolved
+ * through the content pack (`contentPack.ts`), as a club's is. Ids follow that module's underscore
+ * convention — `nation_eng`, `comp_eng_1` — because it is the module that states the rule a
+ * canonical id is never a display name, so it is the one the catalogue follows rather than the
+ * reverse.
  */
 
 import type { ConfederationId, NationCode } from "./nations.js";
@@ -61,7 +63,6 @@ export type CompetitionKind = "league" | "cup" | "reserve" | "continental";
 export interface CompetitionNode {
   readonly id: string;
   readonly nationId: string;
-  readonly name: string;
   readonly kind: CompetitionKind;
   /** Pyramid tier, 1 = highest. `null` for cups, reserve, and continental competitions, which do
    *  not sit on the ladder — §8.3's reason the UI must not derive structure from tier numbers. */
@@ -134,7 +135,6 @@ export interface LeagueSetupIndex {
 const league = (
   nationId: string,
   id: string,
-  name: string,
   tier: number,
   requires: readonly string[],
   clubCount: number,
@@ -142,7 +142,6 @@ const league = (
 ): CompetitionNode => ({
   id,
   nationId,
-  name,
   kind: "league",
   tier,
   requires,
@@ -156,12 +155,10 @@ const league = (
 const cup = (
   nationId: string,
   id: string,
-  name: string,
   annualMatches: number,
 ): CompetitionNode => ({
   id,
   nationId,
-  name,
   kind: "cup",
   tier: null,
   requires: [],
@@ -175,11 +172,11 @@ const cup = (
  * The shipped catalogue: real Nations, fictional identities.
  *
  * Geography is factual — country names, ISO 3166-1 alpha-3 codes, continents, and confederation
- * membership are real, and are what a player recognises when choosing where to manage. Everything
- * *named* below a Nation is not: competition names here are structural descriptions ("English
- * First Division"), never real competition brands, because competition and club names are licensed
- * commercial assets that must stay replaceable through a content pack. See `contentPack.ts` for
- * that boundary and `nations.ts` for the profiles these Nations generate against.
+ * membership are real, and are what a player recognises when choosing where to manage. Nothing
+ * below a Nation is named here at all: competition and club names are licensed commercial assets
+ * that stay replaceable through a content pack, so this file carries `comp_eng_1` and the pack
+ * decides what that reads as. See `contentPack.ts` for that boundary and `nations.ts` for the
+ * profiles these Nations generate against.
  *
  * Club counts and tier depths are shaped after real pyramids, but they are configuration rather
  * than a claim about any particular season — competition structures change, and §9 of the spec
@@ -196,45 +193,44 @@ const cup = (
  * - cross-border tournaments whose dependencies span several Nations (the confederation branches).
  */
 export const LEAGUE_SETUP_INDEX: LeagueSetupIndex = {
-  // The fingerprint identifies the database *content*. Moving from the fictional world to real
-  // geography renamed every Nation and Competition, so persisted presets and setup drafts from the
-  // old catalogue must be refused rather than half-restored against ids that no longer mean the
-  // same thing (§29, §6.3).
-  fingerprint: "real-geography@1.0.0",
+  // The fingerprint identifies the database *content*. Moving competition names out to the content
+  // pack and every id to the underscore convention changed every key in here, so persisted presets
+  // and setup drafts from the old catalogue must be refused rather than half-restored against ids
+  // that no longer mean the same thing (§29, §6.3).
+  fingerprint: "real-geography@2.0.0",
   databaseName: "World Football",
   databaseVersion: "1.0.0",
   regions: [
-    { id: "region-western-europe", name: "Western Europe" },
-    { id: "region-southern-europe", name: "Southern Europe" },
-    { id: "region-south-america", name: "South America" },
-    { id: "region-continental", name: "Continental" },
+    { id: "region_western_europe", name: "Western Europe" },
+    { id: "region_southern_europe", name: "Southern Europe" },
+    { id: "region_south_america", name: "South America" },
+    { id: "region_continental", name: "Continental" },
   ],
   nations: [
     {
-      id: "nation-eng",
+      id: "nation_eng",
       code: "ENG",
       confederationId: "UEFA",
-      regionId: "region-western-europe",
+      regionId: "region_western_europe",
       name: "England",
       alternativeNames: ["English Football"],
       available: true,
       playableSupported: true,
-      recommendedScopeOptionId: "scope-eng-two",
+      recommendedScopeOptionId: "scope_eng_two",
       competitions: [
         // The top division requires its national cup: the two share entrants and a calendar,
         // so loading one without the other leaves the season with holes (§3.7).
-        league("nation-eng", "comp-eng-1", "English First Division", 1, ["comp-eng-cup"], 20),
-        league("nation-eng", "comp-eng-2", "English Second Division", 2, ["comp-eng-1"], 24),
-        league("nation-eng", "comp-eng-3", "English Third Division", 3, ["comp-eng-2"], 24),
-        league("nation-eng", "comp-eng-4", "English Fourth Division", 4, ["comp-eng-3"], 24),
-        cup("nation-eng", "comp-eng-cup", "English National Cup", 126),
+        league("nation_eng", "comp_eng_1", 1, ["comp_eng_cup"], 20),
+        league("nation_eng", "comp_eng_2", 2, ["comp_eng_1"], 24),
+        league("nation_eng", "comp_eng_3", 3, ["comp_eng_2"], 24),
+        league("nation_eng", "comp_eng_4", 4, ["comp_eng_3"], 24),
+        cup("nation_eng", "comp_eng_cup", 126),
         {
-          id: "comp-eng-reserve",
-          nationId: "nation-eng",
-          name: "English Reserve League",
+          id: "comp_eng_reserve",
+          nationId: "nation_eng",
           kind: "reserve",
           tier: null,
-          requires: ["comp-eng-1"],
+          requires: ["comp_eng_1"],
           clubCount: 20,
           annualMatches: 380,
           playableSupported: false,
@@ -243,134 +239,134 @@ export const LEAGUE_SETUP_INDEX: LeagueSetupIndex = {
       ],
       scopeOptions: [
         {
-          id: "scope-eng-top",
-          nationId: "nation-eng",
+          id: "scope_eng_top",
+          nationId: "nation_eng",
           displayName: "Top division only",
-          playableCompetitionIds: ["comp-eng-1"],
+          playableCompetitionIds: ["comp_eng_1"],
           backgroundCompetitionIds: [],
         },
         {
-          id: "scope-eng-two",
-          nationId: "nation-eng",
+          id: "scope_eng_two",
+          nationId: "nation_eng",
           displayName: "Top two divisions",
-          playableCompetitionIds: ["comp-eng-1", "comp-eng-2"],
+          playableCompetitionIds: ["comp_eng_1", "comp_eng_2"],
           backgroundCompetitionIds: [],
         },
         {
-          id: "scope-eng-pyramid",
-          nationId: "nation-eng",
+          id: "scope_eng_pyramid",
+          nationId: "nation_eng",
           displayName: "National pyramid",
-          playableCompetitionIds: ["comp-eng-1", "comp-eng-2", "comp-eng-3", "comp-eng-4"],
-          backgroundCompetitionIds: ["comp-eng-reserve"],
+          playableCompetitionIds: ["comp_eng_1", "comp_eng_2", "comp_eng_3", "comp_eng_4"],
+          backgroundCompetitionIds: ["comp_eng_reserve"],
         },
       ],
     },
     {
-      id: "nation-esp",
+      id: "nation_esp",
       code: "ESP",
       confederationId: "UEFA",
-      regionId: "region-southern-europe",
+      regionId: "region_southern_europe",
       name: "Spain",
       alternativeNames: ["España", "Espana"],
       available: true,
       playableSupported: true,
-      recommendedScopeOptionId: "scope-esp-top",
+      recommendedScopeOptionId: "scope_esp_top",
       competitions: [
-        league("nation-esp", "comp-esp-1", "Spanish First Division", 1, ["comp-esp-cup"], 20),
+        league("nation_esp", "comp_esp_1", 1, ["comp_esp_cup"], 20),
         // Parallel regional second tier: two Competitions at the same depth, both feeding the
         // same division above. A depth *number* cannot express this, which is why the scope
         // option is the unit of selection (§8.3).
-        league("nation-esp", "comp-esp-2n", "Spanish Second Division – Northern Group", 2, ["comp-esp-1"], 20),
-        league("nation-esp", "comp-esp-2s", "Spanish Second Division – Southern Group", 2, ["comp-esp-1"], 20),
-        cup("nation-esp", "comp-esp-cup", "Spanish National Cup", 118),
+        league("nation_esp", "comp_esp_2n", 2, ["comp_esp_1"], 20),
+        league("nation_esp", "comp_esp_2s", 2, ["comp_esp_1"], 20),
+        cup("nation_esp", "comp_esp_cup", 118),
       ],
       scopeOptions: [
         {
-          id: "scope-esp-top",
-          nationId: "nation-esp",
+          id: "scope_esp_top",
+          nationId: "nation_esp",
           displayName: "Top division only",
-          playableCompetitionIds: ["comp-esp-1"],
+          playableCompetitionIds: ["comp_esp_1"],
           backgroundCompetitionIds: [],
         },
         {
-          id: "scope-esp-regional",
-          nationId: "nation-esp",
+          id: "scope_esp_regional",
+          nationId: "nation_esp",
           displayName: "National and regional pyramid",
-          playableCompetitionIds: ["comp-esp-1", "comp-esp-2n", "comp-esp-2s"],
+          playableCompetitionIds: ["comp_esp_1", "comp_esp_2n", "comp_esp_2s"],
           backgroundCompetitionIds: [],
         },
       ],
     },
     {
-      id: "nation-deu",
+      id: "nation_deu",
       code: "DEU",
       confederationId: "UEFA",
-      regionId: "region-western-europe",
+      regionId: "region_western_europe",
       name: "Germany",
       alternativeNames: ["Deutschland"],
       available: true,
       playableSupported: true,
-      recommendedScopeOptionId: "scope-deu-top",
+      recommendedScopeOptionId: "scope_deu_top",
       competitions: [
-        league("nation-deu", "comp-deu-1", "German First Division", 1, ["comp-deu-cup"], 18),
-        league("nation-deu", "comp-deu-2", "German Second Division", 2, ["comp-deu-1"], 18),
-        league("nation-deu", "comp-deu-3", "German Third Division", 3, ["comp-deu-2"], 20),
-        cup("nation-deu", "comp-deu-cup", "German National Cup", 96),
+        league("nation_deu", "comp_deu_1", 1, ["comp_deu_cup"], 18),
+        league("nation_deu", "comp_deu_2", 2, ["comp_deu_1"], 18),
+        league("nation_deu", "comp_deu_3", 3, ["comp_deu_2"], 20),
+        cup("nation_deu", "comp_deu_cup", 96),
       ],
       scopeOptions: [
         {
-          id: "scope-deu-top",
-          nationId: "nation-deu",
+          id: "scope_deu_top",
+          nationId: "nation_deu",
           displayName: "Top division only",
-          playableCompetitionIds: ["comp-deu-1"],
+          playableCompetitionIds: ["comp_deu_1"],
           backgroundCompetitionIds: [],
         },
         {
-          id: "scope-deu-pyramid",
-          nationId: "nation-deu",
+          id: "scope_deu_pyramid",
+          nationId: "nation_deu",
           displayName: "National pyramid",
-          playableCompetitionIds: ["comp-deu-1", "comp-deu-2", "comp-deu-3"],
+          playableCompetitionIds: ["comp_deu_1", "comp_deu_2", "comp_deu_3"],
           backgroundCompetitionIds: [],
         },
       ],
     },
     {
-      id: "nation-fra",
+      id: "nation_fra",
       code: "FRA",
       confederationId: "UEFA",
-      regionId: "region-western-europe",
+      regionId: "region_western_europe",
       name: "France",
       alternativeNames: [],
       available: true,
       playableSupported: true,
       recommendedScopeOptionId: null,
       competitions: [
-        league("nation-fra", "comp-fra-1", "French First Division", 1, ["comp-fra-cup"], 20),
-        league("nation-fra", "comp-fra-2", "French Second Division", 2, ["comp-fra-1"], 20),
-        cup("nation-fra", "comp-fra-cup", "French National Cup", 110),
+        league("nation_fra", "comp_fra_1", 1, ["comp_fra_cup"], 20),
+        league("nation_fra", "comp_fra_2", 2, ["comp_fra_1"], 20),
+        cup("nation_fra", "comp_fra_cup", 110),
       ],
       scopeOptions: [
         {
-          id: "scope-fra-top",
-          nationId: "nation-fra",
+          id: "scope_fra_top",
+          nationId: "nation_fra",
           displayName: "Top division only",
-          playableCompetitionIds: ["comp-fra-1"],
+          playableCompetitionIds: ["comp_fra_1"],
           backgroundCompetitionIds: [],
         },
         {
-          id: "scope-fra-two",
-          nationId: "nation-fra",
+          id: "scope_fra_two",
+          nationId: "nation_fra",
           displayName: "Top two divisions",
-          playableCompetitionIds: ["comp-fra-1", "comp-fra-2"],
+          playableCompetitionIds: ["comp_fra_1", "comp_fra_2"],
           backgroundCompetitionIds: [],
         },
       ],
     },
     {
-      id: "nation-prt",
+      id: "nation_prt",
       code: "PRT",
       confederationId: "UEFA",
-      regionId: "region-southern-europe",
+      regionId: "region_southern_europe",
       name: "Portugal",
       alternativeNames: [],
       available: true,
@@ -379,74 +375,74 @@ export const LEAGUE_SETUP_INDEX: LeagueSetupIndex = {
       competitions: [
         // Portugal's cost figures are extrapolated rather than measured, so any scope that
         // selects it reports reduced confidence (§11.1).
-        league("nation-prt", "comp-prt-1", "Portuguese First Division", 1, [], 18, {
+        league("nation_prt", "comp_prt_1", 1, [], 18, {
           estimatesVerified: false,
         }),
-        league("nation-prt", "comp-prt-2", "Portuguese Second Division", 2, ["comp-prt-1"], 18, {
+        league("nation_prt", "comp_prt_2", 2, ["comp_prt_1"], 18, {
           estimatesVerified: false,
         }),
       ],
       scopeOptions: [
         {
-          id: "scope-prt-top",
-          nationId: "nation-prt",
+          id: "scope_prt_top",
+          nationId: "nation_prt",
           displayName: "Top division only",
-          playableCompetitionIds: ["comp-prt-1"],
+          playableCompetitionIds: ["comp_prt_1"],
           backgroundCompetitionIds: [],
         },
         {
-          id: "scope-prt-two",
-          nationId: "nation-prt",
+          id: "scope_prt_two",
+          nationId: "nation_prt",
           displayName: "Top two divisions",
-          playableCompetitionIds: ["comp-prt-1", "comp-prt-2"],
+          playableCompetitionIds: ["comp_prt_1", "comp_prt_2"],
           backgroundCompetitionIds: [],
         },
       ],
     },
     {
-      id: "nation-bra",
+      id: "nation_bra",
       code: "BRA",
       confederationId: "CONMEBOL",
-      regionId: "region-south-america",
+      regionId: "region_south_america",
       name: "Brazil",
       alternativeNames: ["Brasil", "República Federativa do Brasil"],
       available: true,
       playableSupported: true,
-      recommendedScopeOptionId: "scope-bra-top",
+      recommendedScopeOptionId: "scope_bra_top",
       competitions: [
-        league("nation-bra", "comp-bra-1", "Brazilian First Division", 1, ["comp-bra-cup"], 20),
-        league("nation-bra", "comp-bra-2", "Brazilian Second Division", 2, ["comp-bra-1"], 20),
+        league("nation_bra", "comp_bra_1", 1, ["comp_bra_cup"], 20),
+        league("nation_bra", "comp_bra_2", 2, ["comp_bra_1"], 20),
         // A second parallel-regional shape, and a different one from Spain's: these sit beside the
         // national pyramid on their own calendar rather than feeding a division above.
-        league("nation-bra", "comp-bra-state-se", "Brazilian State Championship – South East", 1, [], 16, {
+        league("nation_bra", "comp_bra_state_se", 1, [], 16, {
           estimatesVerified: false,
         }),
-        league("nation-bra", "comp-bra-state-ne", "Brazilian State Championship – North East", 1, [], 16, {
+        league("nation_bra", "comp_bra_state_ne", 1, [], 16, {
           estimatesVerified: false,
         }),
-        cup("nation-bra", "comp-bra-cup", "Brazilian National Cup", 122),
+        cup("nation_bra", "comp_bra_cup", 122),
       ],
       scopeOptions: [
         {
-          id: "scope-bra-top",
-          nationId: "nation-bra",
+          id: "scope_bra_top",
+          nationId: "nation_bra",
           displayName: "Top division only",
-          playableCompetitionIds: ["comp-bra-1"],
+          playableCompetitionIds: ["comp_bra_1"],
           backgroundCompetitionIds: [],
         },
         {
-          id: "scope-bra-two",
-          nationId: "nation-bra",
+          id: "scope_bra_two",
+          nationId: "nation_bra",
           displayName: "Top two divisions",
-          playableCompetitionIds: ["comp-bra-1", "comp-bra-2"],
+          playableCompetitionIds: ["comp_bra_1", "comp_bra_2"],
           backgroundCompetitionIds: [],
         },
         {
-          id: "scope-bra-with-state",
-          nationId: "nation-bra",
+          id: "scope_bra_with_state",
+          nationId: "nation_bra",
           displayName: "National pyramid and state championships",
-          playableCompetitionIds: ["comp-bra-1", "comp-bra-2"],
-          backgroundCompetitionIds: ["comp-bra-state-se", "comp-bra-state-ne"],
+          playableCompetitionIds: ["comp_bra_1", "comp_bra_2"],
+          backgroundCompetitionIds: ["comp_bra_state_se", "comp_bra_state_ne"],
         },
       ],
     },
@@ -454,17 +450,17 @@ export const LEAGUE_SETUP_INDEX: LeagueSetupIndex = {
       // §7.3. A real association whose domestic league this database carries as background data
       // only. The row stays visible and reads "Background data only"; no scope option offers
       // Playable.
-      id: "nation-and",
+      id: "nation_and",
       code: "AND",
       confederationId: "UEFA",
-      regionId: "region-southern-europe",
+      regionId: "region_southern_europe",
       name: "Andorra",
       alternativeNames: ["Principat d'Andorra"],
       available: true,
       playableSupported: false,
       recommendedScopeOptionId: null,
       competitions: [
-        league("nation-and", "comp-and-1", "Andorran First Division", 1, [], 10, {
+        league("nation_and", "comp_and_1", 1, [], 10, {
           playableSupported: false,
           estimatesVerified: false,
         }),
@@ -474,10 +470,10 @@ export const LEAGUE_SETUP_INDEX: LeagueSetupIndex = {
     {
       // §7.1 `unavailable`. Present in metadata, absent from content — the ordinary case of a
       // database that ships partial coverage. Selecting it is refused rather than silently ignored.
-      id: "nation-ita",
+      id: "nation_ita",
       code: "ITA",
       confederationId: "UEFA",
-      regionId: "region-southern-europe",
+      regionId: "region_southern_europe",
       name: "Italy",
       alternativeNames: ["Italia"],
       available: false,
@@ -490,10 +486,10 @@ export const LEAGUE_SETUP_INDEX: LeagueSetupIndex = {
       // Confederation tournaments are modelled as Nation-shaped branches so the browser stays one
       // uniform tree. Neither is playable on its own; they exist to be pulled in as dependencies,
       // or selected as background alongside the Nations that qualify into them.
-      id: "nation-uefa",
+      id: "nation_uefa",
       code: "ENG",
       confederationId: "UEFA",
-      regionId: "region-continental",
+      regionId: "region_continental",
       name: "European Competitions",
       alternativeNames: ["UEFA"],
       available: true,
@@ -501,12 +497,11 @@ export const LEAGUE_SETUP_INDEX: LeagueSetupIndex = {
       recommendedScopeOptionId: null,
       competitions: [
         {
-          id: "comp-uefa-champions",
-          nationId: "nation-uefa",
-          name: "European Champions Tournament",
+          id: "comp_uefa_champions",
+          nationId: "nation_uefa",
           kind: "continental",
           tier: null,
-          requires: ["comp-eng-1", "comp-esp-1", "comp-deu-1"],
+          requires: ["comp_eng_1", "comp_esp_1", "comp_deu_1"],
           clubCount: 0,
           annualMatches: 125,
           playableSupported: false,
@@ -516,10 +511,10 @@ export const LEAGUE_SETUP_INDEX: LeagueSetupIndex = {
       scopeOptions: [],
     },
     {
-      id: "nation-conmebol",
+      id: "nation_conmebol",
       code: "BRA",
       confederationId: "CONMEBOL",
-      regionId: "region-continental",
+      regionId: "region_continental",
       name: "South American Competitions",
       alternativeNames: ["CONMEBOL"],
       available: true,
@@ -527,12 +522,11 @@ export const LEAGUE_SETUP_INDEX: LeagueSetupIndex = {
       recommendedScopeOptionId: null,
       competitions: [
         {
-          id: "comp-conmebol-champions",
-          nationId: "nation-conmebol",
-          name: "South American Champions Tournament",
+          id: "comp_conmebol_champions",
+          nationId: "nation_conmebol",
           kind: "continental",
           tier: null,
-          requires: ["comp-bra-1"],
+          requires: ["comp_bra_1"],
           clubCount: 0,
           annualMatches: 138,
           playableSupported: false,

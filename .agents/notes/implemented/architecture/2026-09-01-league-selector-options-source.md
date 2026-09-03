@@ -2,6 +2,17 @@
 
 Status: implemented
 
+> **Partially superseded by** [the world catalogue and canonical ids](../../proposed/architecture/2026-09-01-world-catalogue-and-canonical-ids.md).
+> Two of this note's decisions move there: the single option's label is no longer the shared
+> `LEAGUE_NAME` constant beside `LEAGUE_CLUBS` — that constant is gone, and the League's name is the
+> content pack's name for `comp_eng_1`, resolved in the main process — and `ClubSelectionView`
+> therefore does gain one league field, `leagueName`, carrying the resolved name to a renderer that
+> must not hold a second copy of it. This note's own cost bullet predicted the first half ("if the
+> world's naming is later relocated or retuned, `LEAGUE_NAME` must move with `LEAGUE_CLUBS`"): both
+> moved, to the pack. Everything else here stands — the option still names the League generation
+> materializes rather than the snapshot's intent, the control is still inert and disabled with its
+> stated reason, and nothing may re-enable it before multi-league generation lands.
+
 ## Problem
 
 The Club Selection workspace carries a league selector (ticket 01's shape), but the world has no

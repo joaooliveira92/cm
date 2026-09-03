@@ -222,7 +222,7 @@ const flowResponses =
       case "beginCareer":
         return { _tag: "Success", value: { id: "provisional-1" } };
       case "getClubSelection":
-        return { _tag: "Success", value: { clubs: CLUBS } };
+        return { _tag: "Success", value: { clubs: CLUBS, leagueName: "English First Division" } };
       case "commitCareer":
         return {
           _tag: "Success",

@@ -24,7 +24,7 @@ const projectionFor = (intents: Parameters<typeof resolveSelection>[1]) =>
   projectActiveLeagues(index, resolveSelection(index, intents));
 
 const engTop = () =>
-  projectionFor([{ nationId: "nation-eng", mode: "playable", scopeOptionId: "scope-eng-top", source: "user" }]);
+  projectionFor([{ nationId: "nation_eng", mode: "playable", scopeOptionId: "scope_eng_top", source: "user" }]);
 
 const baseOptions = (overrides: Partial<AdvancedOptionsState> = {}): AdvancedOptionsState => ({
   ...defaultAdvancedOptions(),
@@ -166,7 +166,7 @@ describe("the estimate feed reactions (sidebar feedback moves when an option cha
   });
 
   it("the combined consequence read reacts to the same options", () => {
-    const intents = [{ nationId: "nation-eng", mode: "playable", scopeOptionId: "scope-eng-top", source: "user" }] as const;
+    const intents = [{ nationId: "nation_eng", mode: "playable", scopeOptionId: "scope_eng_top", source: "user" }] as const;
     const resolved = resolveSelection(index, intents);
     const projection = projectActiveLeagues(index, resolved);
 
@@ -208,7 +208,7 @@ describe("versioned shape and the empty/absent-options case", () => {
   it("defaults resolve legally when no options field exists", () => {
     const options = defaultAdvancedOptions();
     // estimateActiveLeaguesConsequences is unchanged when a caller omits the options field
-    const intents = [{ nationId: "nation-eng", mode: "playable", scopeOptionId: "scope-eng-top", source: "user" }] as const;
+    const intents = [{ nationId: "nation_eng", mode: "playable", scopeOptionId: "scope_eng_top", source: "user" }] as const;
     const resolved = resolveSelection(index, intents);
     const projection = projectActiveLeagues(index, resolved);
     const withDefault = estimateActiveLeaguesConsequences(index, projection, resolved, intents);

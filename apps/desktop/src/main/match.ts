@@ -44,6 +44,7 @@ import {
   withExistingSave,
   type StreamEvent,
 } from "./decider.js";
+import { displayNames } from "./displayNames.js";
 import { assertSaveNotArchived } from "./managerStatus.js";
 import { loadManagerProfile } from "./managerProfile.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
@@ -120,13 +121,14 @@ const loadTeamSetup = (clubId: ClubId) =>
 const loadClubSummary = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+    const nameOf = yield* displayNames;
     const rows = yield* sql<{
       id: ClubId;
-      name: string;
       statureTier: "big" | "mid" | "small";
-    }>`SELECT id, name, stature_tier as "statureTier" FROM clubs WHERE id = ${clubId}`;
-    if (rows.length === 0) return null;
-    return yield* Schema.decodeUnknownEffect(ClubSummary)(rows[0]);
+    }>`SELECT id, stature_tier as "statureTier" FROM clubs WHERE id = ${clubId}`;
+    const row = rows[0];
+    if (row === undefined) return null;
+    return yield* Schema.decodeUnknownEffect(ClubSummary)({ ...row, name: nameOf(row.id) });
   });
 
 /** Every club but the user's own — the "pick-an-opponent" stopgap this ticket uses in place of a
@@ -135,12 +137,17 @@ export const listOpponentClubs = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;
+      const nameOf = yield* displayNames;
       const club = yield* loadUserClub;
-      const rows = yield* sql<{
+      const clubRows = yield* sql<{
         id: ClubId;
-        name: string;
         statureTier: "big" | "mid" | "small";
-      }>`SELECT id, name, stature_tier as "statureTier" FROM clubs WHERE id != ${club.id} ORDER BY name`;
+      }>`SELECT id, stature_tier as "statureTier" FROM clubs WHERE id != ${club.id}`;
+      // Alphabetical by *display* name, so the order the player reads follows the pack rather than
+      // the identifiers underneath it. The database can no longer sort this list.
+      const rows = clubRows
+        .map((row) => ({ ...row, name: nameOf(row.id) }))
+        .sort((a, b) => a.name.localeCompare(b.name));
       // Pure, synchronous schema decoding over an already-materialized result set — no IO per
       // item, so concurrency buys nothing and only adds fiber overhead. Explicit `concurrency: 1`
       // states the sequential intent rather than relying on `Effect.forEach`'s default.
@@ -393,11 +400,10 @@ const buildResumeSimulationView = (
     const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
 
     const sql = yield* SqlClient;
-    const clubRows = yield* sql<{
-      id: ClubId;
-      name: string;
-    }>`SELECT id, name FROM clubs WHERE id IN (${started.homeClubId}, ${started.awayClubId})`;
-    const clubNameById = new Map<string, string>(clubRows.map((row) => [row.id, row.name]));
+    const nameOf = yield* displayNames;
+    const clubNameById = new Map<string, string>(
+      [started.homeClubId, started.awayClubId].map((id) => [id, nameOf(id)]),
+    );
 
     const playerIds = [...new Set(events.flatMap(collectPlayerIds))];
     const playerRows =

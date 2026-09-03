@@ -27,6 +27,7 @@ import type { ManagerOutcome, PlayerAttributes, RandomSource, Verdict } from "@c
 import { BOARD_OBJECTIVE_BANDS, judgeBoardObjective, nextManagerOutcome } from "@cm-clone/shared";
 import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { displayNames } from "./displayNames.js";
 import { assignAiTactics, pickBestFormationTactic, runAiTransferWindow } from "./aiClubs.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
 import { developPlayersForSeason } from "./development.js";
@@ -625,23 +626,20 @@ export const getFixtures = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;
+      const nameOf = yield* displayNames;
       const seasonRow = yield* loadSeasonRow;
       const rows = yield* sql<{
         id: FixtureId;
         matchday: number;
         homeClubId: ClubId;
-        homeClubName: string;
         awayClubId: ClubId;
-        awayClubName: string;
         homeGoals: number | null;
         awayGoals: number | null;
         played: number;
-      }>`SELECT f.id, f.matchday, f.home_club_id as "homeClubId", hc.name as "homeClubName",
-                f.away_club_id as "awayClubId", ac.name as "awayClubName",
+      }>`SELECT f.id, f.matchday, f.home_club_id as "homeClubId",
+                f.away_club_id as "awayClubId",
                 f.home_goals as "homeGoals", f.away_goals as "awayGoals", f.played
          FROM fixtures f
-         JOIN clubs hc ON hc.id = f.home_club_id
-         JOIN clubs ac ON ac.id = f.away_club_id
          WHERE f.season_number = ${seasonRow.seasonNumber}
          ORDER BY f.matchday ASC, f.id ASC`;
 
@@ -651,9 +649,9 @@ export const getFixtures = (savesDir: string, saveId: SaveId) =>
             id: row.id,
             matchday: row.matchday,
             homeClubId: row.homeClubId,
-            homeClubName: row.homeClubName,
+            homeClubName: nameOf(row.homeClubId),
             awayClubId: row.awayClubId,
-            awayClubName: row.awayClubName,
+            awayClubName: nameOf(row.awayClubId),
             homeGoals: row.homeGoals,
             awayGoals: row.awayGoals,
             played: row.played === 1,
@@ -681,7 +679,8 @@ const emptyTally = (): ClubTally => ({ played: 0, won: 0, drawn: 0, lost: 0, goa
 const computeStandings = (seasonNumber: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const clubRows = yield* sql<{ id: ClubId; name: string }>`SELECT id, name FROM clubs`;
+    const nameOf = yield* displayNames;
+    const clubRows = yield* sql<{ id: ClubId }>`SELECT id FROM clubs`;
     const fixtureRows = yield* sql<{
       homeClubId: ClubId;
       awayClubId: ClubId;
@@ -722,7 +721,7 @@ const computeStandings = (seasonNumber: number) =>
         const tally = tallies.get(club.id)!;
         return new LeagueTableRow({
           clubId: club.id,
-          clubName: club.name,
+          clubName: nameOf(club.id),
           played: tally.played,
           won: tally.won,
           drawn: tally.drawn,

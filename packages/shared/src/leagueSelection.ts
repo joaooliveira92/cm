@@ -24,6 +24,7 @@ import {
   type NationSelectionState,
   type SimulationMode,
 } from "./leagueSetup.js";
+import { catalogueName } from "./contentPack.js";
 import { depthFromMode, type SimulationDepth } from "./simulation.js";
 
 // ---------------------------------------------------------------------------
@@ -537,7 +538,7 @@ export const projectActiveLeagues = (
       const row: ActiveLeaguesRow = {
         competitionId: compId,
         leagueId: compId,
-        leagueName: node.name,
+        leagueName: catalogueName(compId),
         nationId: nation.id,
         nationName: nation.name,
         scopeDescription,
@@ -946,7 +947,7 @@ export const searchIndex = (index: LeagueSetupIndex, query: string): readonly Se
       hits.push({ nationId: nation.id, competitionId: null });
     }
     for (const competition of nation.competitions) {
-      if (normalizeSearchText(competition.name).includes(needle)) {
+      if (normalizeSearchText(catalogueName(competition.id)).includes(needle)) {
         hits.push({ nationId: nation.id, competitionId: competition.id });
       }
     }

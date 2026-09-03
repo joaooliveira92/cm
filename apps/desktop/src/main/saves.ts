@@ -55,9 +55,9 @@ export interface BeginCareerOptions {
  */
 export const DEFAULT_CAREER_INTENTS: readonly NationSelectionIntentPayload[] = [
   new NationSelectionIntentPayload({
-    nationId: NationId.make("nation-eng"),
+    nationId: NationId.make("nation_eng"),
     mode: "playable",
-    scopeOptionId: ScopeOptionId.make("scope-eng-top"),
+    scopeOptionId: ScopeOptionId.make("scope_eng_top"),
     source: "user",
   }),
 ];
@@ -69,10 +69,11 @@ const currentYear = Effect.clockWith((clock) =>
   Effect.map(clock.currentTimeMillis, (millis) => new Date(millis).getUTCFullYear()),
 );
 
-/** All clubs in a save, ordered by insertion order (used by `createSave` compat shim). */
+/** Every club id in a save, in insertion order (used by the `createSave` compat shim, which only
+ *  needs the first club to hand `commitCareer` — no name, so no content pack). */
 const loadAllClubs = Effect.gen(function* () {
   const sql = yield* SqlClient;
-  return yield* sql<{ id: ClubId; name: string }>`SELECT id, name FROM clubs ORDER BY rowid`;
+  return yield* sql<{ id: ClubId }>`SELECT id FROM clubs ORDER BY rowid`;
 });
 
 /** The Save List's row for one save file. `archivedCause` comes from `manager_status` rather than

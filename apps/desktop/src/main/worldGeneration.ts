@@ -6,6 +6,8 @@ import {
   BASE_CONTENT_PACK,
   CITIES,
   LEAGUE_CLUBS,
+  canonicalClubId,
+  displayName,
   LEAGUE_SETUP_INDEX,
   NATION_CODES,
   canonicalCityId,
@@ -23,9 +25,11 @@ import {
  * produced it rather than a world nobody can get back.
  *
  * Seeds are *derived*, never shared: each club derives its seed from the world seed and its
- * canonical name, and each player derives theirs from their club's seed and their squad slot. So
- * adding a club, or renaming one, moves only that club's squad; with a single running stream every
- * entity after the change would shift.
+ * canonical id, and each player derives theirs from their club's seed and their squad slot. So
+ * adding a club moves only that club's squad; with a single running stream every entity after the
+ * change would shift. Keying on the canonical id rather than on a display name is what keeps a
+ * world stable across a change of content pack: renaming a club under a licensed pack must not
+ * regenerate its squad.
  */
 
 /** Bumped when the generation *code* changes shape in a way that alters output. */
@@ -100,16 +104,21 @@ export const generateWorld = ({ worldSeed, referenceYear, snapshotId }: WorldGen
         VALUES (${canonicalCityId(city.nationCode, city.name)}, ${canonicalNationId(city.nationCode)}, ${city.name}, ${city.populationBand})`;
     }
 
-    for (const clubDef of LEAGUE_CLUBS) {
-      // Keyed on the club's canonical name rather than its ordinal, so reordering the roster does
-      // not regenerate unrelated clubs' squads.
-      const clubSeed = deriveSeed(worldSeed, "club", clubDef.name);
-      const clubId = ClubId.make(deriveId(worldSeed, "club", clubDef.name));
+    for (const [ordinal, statureTier] of LEAGUE_CLUBS.entries()) {
+      // The canonical id is the club's identity and its seed's only key, so a change of content
+      // pack renames the club and regenerates nothing.
+      const clubId = ClubId.make(canonicalClubId("ENG", ordinal + 1));
+      const clubSeed = deriveSeed(worldSeed, "club", clubId);
+
+      // `clubs.name` is vestigial: nothing reads it, every display name resolves through the pack
+      // in the main process's `displayNames` seam, and the column is dropped when clubs are
+      // generated per competition. It is written here only so the column stays non-null until then.
+      const vestigialName = displayName(BASE_CONTENT_PACK, clubId);
 
       yield* sql`INSERT INTO clubs (id, name, stature_tier, is_user_club, generation_seed)
-        VALUES (${clubId}, ${clubDef.name}, ${clubDef.statureTier}, 0, ${clubSeed})`;
+        VALUES (${clubId}, ${vestigialName}, ${statureTier}, 0, ${clubSeed})`;
 
-      const squad = generateSquad(clubDef.statureTier, {
+      const squad = generateSquad(statureTier, {
         referenceYear,
         randomForSlot: (slot) => createSeededRng(deriveSeed(clubSeed, "player", slot.index)),
       });

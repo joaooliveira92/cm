@@ -1,6 +1,7 @@
 import type { LeagueSetupIndexView, ResolvedSelectionView } from "@cm-clone/contracts";
 import {
   estimateActiveLeaguesConsequences,
+  catalogueName,
   projectActiveLeagues,
   validateAdvancedOptions,
   type ActiveLeaguesEntityEstimate,
@@ -187,7 +188,7 @@ export const deriveActiveLeaguesView = (
         .filter((competition) => !activeIds.has(competition.id))
         .map((competition) => ({
           leagueId: competition.id,
-          leagueName: competition.name,
+          leagueName: catalogueName(competition.id),
           nationName: nation.name,
         })),
     )

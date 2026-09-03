@@ -31,6 +31,7 @@ import {
   applyStoredIntents,
   blockingIssues,
   buildPreset,
+  catalogueName,
   estimateCareerScope,
   estimateIssues,
   LEAGUE_SETUP_INDEX,
@@ -85,10 +86,11 @@ export const systemProfile = Effect.sync(
 // Read model (§23 — labels are sanitized exactly once, here)
 // ---------------------------------------------------------------------------
 
+/** The catalogue carries no competition name, so the row's `name` is resolved here — the one place
+ *  a setup-screen competition id becomes display text — and sanitized like any other label. */
 const toCompetitionRow = (competition: {
   readonly id: string;
   readonly nationId: string;
-  readonly name: string;
   readonly kind: "league" | "cup" | "reserve" | "continental";
   readonly tier: number | null;
   readonly requires: readonly string[];
@@ -99,7 +101,7 @@ const toCompetitionRow = (competition: {
   new CompetitionRow({
     id: CompetitionId.make(competition.id),
     nationId: NationId.make(competition.nationId),
-    name: sanitizeLabel(competition.name),
+    name: sanitizeLabel(catalogueName(competition.id)),
     kind: competition.kind,
     tier: competition.tier,
     requires: competition.requires.map((id) => CompetitionId.make(id)),

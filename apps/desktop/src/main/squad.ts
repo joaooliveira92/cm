@@ -14,6 +14,7 @@ import {
 } from "@cm-clone/shared";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { displayNames } from "./displayNames.js";
 
 const ageFromDateOfBirth = (dateOfBirth: string): number => {
   const dob = new Date(dateOfBirth);
@@ -43,15 +44,20 @@ const attributeSelectList = [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map(
   (attribute) => `${attribute.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)} as "${attribute}"`,
 ).join(", ");
 
-/** The user's club — assumes the caller already has a `SqlClient` for the save's SQLite file in context. */
+/** The user's club — assumes the caller already has a `SqlClient` for the save's SQLite file in
+ *  context. The name is the pack's, resolved through the `displayNames` seam; no read path takes a
+ *  club name from a column. */
 export const loadUserClub = Effect.gen(function* () {
   const sql = yield* SqlClient;
+  const nameOf = yield* displayNames;
   const clubRows = yield* sql<{
     id: ClubId;
-    name: string;
     statureTier: "big" | "mid" | "small";
-  }>`SELECT id, name, stature_tier as "statureTier" FROM clubs WHERE is_user_club = 1 LIMIT 1`;
-  return yield* Schema.decodeUnknownEffect(ClubSummary)(clubRows[0]);
+  }>`SELECT id, stature_tier as "statureTier" FROM clubs WHERE is_user_club = 1 LIMIT 1`;
+  const row = clubRows[0];
+  return yield* Schema.decodeUnknownEffect(ClubSummary)(
+    row === undefined ? row : { ...row, name: nameOf(row.id) },
+  );
 });
 
 /** A club's squad, ratings included — assumes the caller already has a `SqlClient` for the save's SQLite file in context. */

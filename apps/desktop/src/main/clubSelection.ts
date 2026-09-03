@@ -1,7 +1,8 @@
 import { ClubSelectionDetail, ClubSelectionRow, ClubSelectionTopPlayer, ClubSelectionView, type ClubId } from "@cm-clone/contracts";
-import { BOARD_OBJECTIVE_BANDS, POSITIONS, computeSquadQuality, type Position } from "@cm-clone/shared";
+import { BOARD_OBJECTIVE_BANDS, LEAGUE_COMPETITION_ID, POSITIONS, computeSquadQuality, type Position } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { displayNames } from "./displayNames.js";
 import { loadSquadPlayers } from "./squad.js";
 
 /** How many players the detail panel's top readout carries. */
@@ -77,11 +78,11 @@ export const summarizeSquad = (squad: ReadonlyArray<SquadReadoutPlayer>): ClubSe
  */
 export const getClubSelection = Effect.gen(function* () {
   const sql = yield* SqlClient;
+  const nameOf = yield* displayNames;
   const clubRows = yield* sql<{
     id: ClubId;
-    name: string;
     statureTier: "big" | "mid" | "small";
-  }>`SELECT c.id, c.name, c.stature_tier as "statureTier"
+  }>`SELECT c.id, c.stature_tier as "statureTier"
      FROM clubs c ORDER BY c.id`;
 
   const budgetRows = yield* sql<{
@@ -104,7 +105,7 @@ export const getClubSelection = Effect.gen(function* () {
 
     clubs.push(new ClubSelectionRow({
       clubId: club.id,
-      clubName: club.name,
+      clubName: nameOf(club.id),
       statureTier: club.statureTier,
       boardObjectiveMin: boardBand.minPosition,
       boardObjectiveMax: boardBand.maxPosition,
@@ -115,5 +116,5 @@ export const getClubSelection = Effect.gen(function* () {
     }));
   }
 
-  return new ClubSelectionView({ clubs });
+  return new ClubSelectionView({ clubs, leagueName: nameOf(LEAGUE_COMPETITION_ID) });
 });
