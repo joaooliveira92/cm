@@ -299,7 +299,7 @@ log stops recording. None of the five named read models becomes a table.
   NULL means "born outside the loaded world", nation-keyed name pools in code as factual data
   (today's pool is 400 combinations and must grow), names stored directly because a pack cannot name
   players it predates, and no career-history table because the event log already holds it.** See
-  [Agent Note](../../.agents/notes/proposed/architecture/2026-09-01-player-provenance-and-nationality.md).
+  [Agent Note](../../.agents/notes/implemented/architecture/2026-09-01-player-provenance-and-nationality.md).
   The career-history clause of that gist is superseded by the event-streams decision below, which
   ships `player_transfers` as authoritative state; everything else in it stands.
 

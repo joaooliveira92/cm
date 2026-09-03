@@ -110,7 +110,7 @@ linguistic data held in code beside the Nation Profiles, never content-pack data
 on the same reasoning that keeps city names out of the pack. Feeds players and Staff alike. A generated
 name is stored directly as text: it is an attribute of a person, not an identifier, so the canonical-id
 rule does not reach it. See
-[player provenance](.agents/notes/proposed/architecture/2026-09-01-player-provenance-and-nationality.md).
+[player provenance](.agents/notes/implemented/architecture/2026-09-01-player-provenance-and-nationality.md).
 _Avoid_: name list, name bank
 
 **Results Strength**:

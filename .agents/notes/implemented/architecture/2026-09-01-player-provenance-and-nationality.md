@@ -1,6 +1,6 @@
 # Agent Note: Player provenance — nationality, birthplace, and names
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -51,7 +51,7 @@ closes. The player profile then reads "Born: Portugal" rather than inventing a c
 carries the fallback. Fabricating a city name for a nation whose geography was never loaded would put a
 display name where a canonical id belongs, which is the same violation by a different route.
 
-> **Narrowed by ticket 13** ([results-only geography](2026-09-02-results-only-geography-cost.md)). That
+> **Narrowed by ticket 13** ([results-only geography](../../proposed/architecture/2026-09-02-results-only-geography-cost.md)). That
 > ticket made `cities` unconditional across the catalogue, partly *because* of this column: an
 > activated-only city set gives the same player a birthplace in one save and NULL in another, making a
 > generated value depend on the selection scope, which ticket 10 forbids. The column stays nullable and
@@ -99,7 +99,7 @@ This is recorded explicitly because the rule it appears to bend — no display n
 identifier — governs catalogue entities a pack can replace. A player's identifier is already a canonical
 id; the name is an attribute hanging off it. Generated content is not catalogue.
 
-Staff names follow the same path: [the staff entity](../feature/2026-09-01-staff-entity-and-bindings.md)
+Staff names follow the same path: [the staff entity](../../proposed/feature/2026-09-01-staff-entity-and-bindings.md)
 defers naming to this decision, and staff are drawn from their club's nation's pools by the same
 machinery.
 
@@ -172,7 +172,7 @@ which is exactly the scale problem that ticket owns.
   it is bounded by never touching attributes or ability. If a pool is ever wired to anything mechanical,
   that boundary is gone and this decision must be revisited.
 - ~~**NULL birthplaces may be common.**~~ *Retired by ticket 13*
-  ([results-only geography](2026-09-02-results-only-geography-cost.md)): with `cities` unconditional
+  ([results-only geography](../../proposed/architecture/2026-09-02-results-only-geography-cost.md)): with `cities` unconditional
   across the catalogue, a narrow selection no longer strips birthplaces. The nationality fallback is
   still worth designing in, but for a nation whose geography is uncurated rather than for the common
   case.

@@ -59,6 +59,8 @@ const player = {
   positionRatings: { ST: 80 },
   condition: 95,
   trainingFocus: null,
+  nationality: "nation_eng_england",
+  birthplace: "London",
 };
 
 describe("simple view classes", () => {

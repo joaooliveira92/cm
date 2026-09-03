@@ -30,4 +30,4 @@ work-permit or eligibility rule.
 "born outside the loaded world", nation-keyed name pools in code as factual data (today's pool is 400
 combinations and must grow), names stored directly because a pack cannot name players it predates, and
 no career-history table because the event log already holds it.** See
-[Agent Note](../../../.agents/notes/proposed/architecture/2026-09-01-player-provenance-and-nationality.md).
+[Agent Note](../../../.agents/notes/implemented/architecture/2026-09-01-player-provenance-and-nationality.md).

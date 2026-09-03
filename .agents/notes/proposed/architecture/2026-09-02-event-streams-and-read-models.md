@@ -10,7 +10,7 @@ Status: proposed
 > that note stays active rather than being archived.
 >
 > Partially supersedes the career-history clause of
-> [Player provenance: nationality, birthplace, and identity](2026-09-01-player-provenance-and-nationality.md).
+> [Player provenance: nationality, birthplace, and identity](../../implemented/architecture/2026-09-01-player-provenance-and-nationality.md).
 > That note rejected a career-history table "since the transfer events already hold it" and handed the
 > materialisation question here. The premise is withdrawn below — the transfer events stop being
 > written for the clubs that would need them — so a transfer table ships, as authoritative state rather
