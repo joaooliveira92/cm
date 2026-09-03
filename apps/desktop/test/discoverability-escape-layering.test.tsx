@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, afterEach, describe, expect, it } from "vitest";
 import {
   createMemoryHistory,
@@ -237,17 +237,23 @@ describe("AC-26 — the one-shot teaching splash lives at the spine, topmost, on
     const dismiss = screen.getByRole("button", { name: /Got it/i }) as HTMLElement;
     expect(document.activeElement).toBe(dismiss);
     // Escape is not suppressed by react-hotkeys-hook's form-tag exemption; it
-    // must dismiss even while the focus sits on the autofocused button.
+    // must dismiss even while the focus sits on the autofocused button. The
+    // removal is deferred one macrotask (see useTeachingSplashVisibility), so
+    // the assertions wait for the settle.
     act(() => fireEvent.keyDown(document, { key: "Escape", code: "Escape" }));
-    expect(screen.queryByRole("dialog", { name: /Playing a new career/i })).toBeNull();
     expect(readTeachingSplashSeen()).toBe(true);
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: /Playing a new career/i })).toBeNull(),
+    );
   });
 
   it("Escape dismisses it, persists the flag, and it never re-shows", async () => {
     await mountTransfersWithSpine({ splashSeen: false });
     keyDown("Escape");
-    expect(screen.queryByRole("dialog", { name: /Playing a new career/i })).toBeNull();
     expect(readTeachingSplashSeen()).toBe(true);
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: /Playing a new career/i })).toBeNull(),
+    );
 
     // A remount (new save / later session) reads the flag and stays silent.
     cleanup();

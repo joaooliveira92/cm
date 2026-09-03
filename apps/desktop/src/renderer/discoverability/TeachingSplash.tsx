@@ -50,7 +50,14 @@ export const useTeachingSplashVisibility = (): {
   const [visible, setVisible] = useState(() => !readTeachingSplashSeen());
   const dismiss = useCallback(() => {
     writeTeachingSplashSeen();
-    setVisible(false);
+    // Defer the visual removal one macrotask. The splash is *not* torn down in
+    // the same tick as the trusted input (real click / Enter / Escape) that
+    // dismissed it: React's synchronous discrete commit inside that input's
+    // flush wedges the renderer in a tight loop on a first-run career screen
+    // (reproduced across real click, Enter, and Escape; the same commit from an
+    // untrusted event, or deferred one turn, never hangs). A cosmetic overlay is
+    // not urgent, so committing on the next turn is invisible to the player.
+    setTimeout(() => setVisible(false), 0);
   }, []);
   return { visible, dismiss };
 };

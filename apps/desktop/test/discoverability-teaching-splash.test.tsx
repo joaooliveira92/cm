@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   readTeachingSplashSeen,
@@ -27,7 +27,7 @@ describe("AC-26 — one-shot persistence (before/after splash)", () => {
     expect(window.localStorage.getItem(teachingSplashStorageKey)).toBe("1");
   });
 
-  it("the visor starts visible when never seen, and dismissal is remembered forever", () => {
+  it("the visor starts visible when never seen, and dismissal is remembered forever", async () => {
     let rendered: { visible: boolean; dismiss: () => void };
     const Probe = () => {
       rendered = useTeachingSplashVisibility();
@@ -36,9 +36,13 @@ describe("AC-26 — one-shot persistence (before/after splash)", () => {
     window.localStorage.clear();
     render(<Probe />);
     expect(rendered!.visible).toBe(true);
+    // Dismissal applies on the next turn (the renderer must never tear the
+    // splash down inside a trusted event's synchronous commit — see the
+    // dismiss() comment), so the flag flips immediately but the visibility
+    // state settles on the following macrotask.
     act(() => rendered.dismiss());
-    expect(rendered.visible).toBe(false);
     expect(readTeachingSplashSeen()).toBe(true);
+    await waitFor(() => expect(rendered!.visible).toBe(false));
 
     // A fresh mount (e.g. next career screen / next session) never re-shows.
     cleanup();
