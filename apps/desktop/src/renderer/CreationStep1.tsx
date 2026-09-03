@@ -1,15 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import type {
-  ManagerArchetype,
-  PillarDistribution,
-} from "@cm-clone/shared";
-import {
-  MANAGER_ARCHETYPES,
-  MANAGER_ARCHETYPE_DISTRIBUTIONS,
-  MANAGER_PILLARS,
-  validatePillarDistribution,
-} from "@cm-clone/shared";
+import type { PillarDistribution } from "@cm-clone/shared";
+import { MANAGER_PILLARS, validatePillarDistribution } from "@cm-clone/shared";
 import { Alert } from "./components/ui/alert.js";
 import { Button } from "./components/ui/button.js";
 import { Input } from "./components/ui/input.js";
@@ -19,11 +11,9 @@ import { FOCUS_RING } from "./focus.js";
 export interface CreationStep1Props {
   saveName: string;
   managerName: string;
-  archetype: ManagerArchetype;
   pillars: PillarDistribution;
   onSaveNameChange: (name: string) => void;
   onManagerNameChange: (name: string) => void;
-  onArchetypeChange: (archetype: ManagerArchetype) => void;
   onPillarsChange: (pillars: PillarDistribution) => void;
 }
 
@@ -47,7 +37,7 @@ const STEPS: ReadonlyArray<{
     {
       number: 2,
       title: "Manager identity",
-      description: "Choose your style and strengths",
+      description: "Allocate your manager's strengths",
     },
   ];
 
@@ -76,30 +66,6 @@ const PILLAR_WARNINGS: Readonly<Record<Pillar, string>> = {
     "Low technical coaching means focused player development has minimal effect. Academy players and potential gains from training focus will be minimal.",
 };
 
-const ARCHETYPE_DISPLAY_NAMES: Readonly<Record<ManagerArchetype, string>> = {
-  professor: "Professor",
-  motivator: "Motivator",
-  sergeant: "Sergeant",
-  academy_head: "Academy Head",
-  custom: "Custom",
-};
-
-const ARCHETYPE_DESCRIPTIONS: Readonly<Record<ManagerArchetype, string>> = {
-  professor: "A cerebral manager who reads the match before it unfolds.",
-  motivator: "A magnetic leader who inspires belief and wins people over.",
-  sergeant: "A relentless disciplinarian who demands peak condition.",
-  academy_head: "A patient developer focused on long-term player growth.",
-  custom: "Build a managerial identity around your own philosophy.",
-};
-
-const ARCHETYPE_SYMBOLS: Readonly<Record<ManagerArchetype, string>> = {
-  professor: "♟",
-  motivator: "✦",
-  sergeant: "◆",
-  academy_head: "◇",
-  custom: "＋",
-};
-
 const panelVariants = {
   enter: (direction: number) => ({
     opacity: 0,
@@ -121,16 +87,13 @@ const sumPillars = (pillars: PillarDistribution): number =>
 export const CreationStep1 = ({
   saveName,
   managerName,
-  archetype,
   pillars,
   onSaveNameChange,
   onManagerNameChange,
-  onArchetypeChange,
   onPillarsChange,
 }: CreationStep1Props) => {
   const [step, setStep] = useState<FormStep>(1);
   const [direction, setDirection] = useState(1);
-  const customMode = archetype === "custom";
   const personalDetailsComplete = saveName.trim().length > 0;
 
   const totalPoints = useMemo(() => sumPillars(pillars), [pillars]);
@@ -161,25 +124,8 @@ export const CreationStep1 = ({
     [personalDetailsComplete, step],
   );
 
-  const handleArchetypeSelect = useCallback(
-    (selected: ManagerArchetype): void => {
-      onArchetypeChange(selected);
-
-      if (selected !== "custom") {
-        onPillarsChange({
-          ...MANAGER_ARCHETYPE_DISTRIBUTIONS[selected],
-        });
-      }
-    },
-    [onArchetypeChange, onPillarsChange],
-  );
-
   const handlePillarChange = useCallback(
     (pillar: Pillar, delta: -1 | 1): void => {
-      if (!customMode) {
-        return;
-      }
-
       const currentValue = pillars[pillar];
       const nextValue = Math.min(
         MAX_PILLAR_VALUE,
@@ -195,7 +141,7 @@ export const CreationStep1 = ({
         [pillar]: nextValue,
       });
     },
-    [customMode, onPillarsChange, pillars],
+    [onPillarsChange, pillars],
   );
 
   return (
@@ -294,17 +240,6 @@ export const CreationStep1 = ({
                   </motion.div>
                 </div>
 
-                {/* <div className="mt-8 flex justify-end border-t border-border-subtle pt-5">
-                  <Button
-                    type="button"
-                    onClick={() => goToStep(2)}
-                    disabled={!personalDetailsComplete}
-                    className="min-w-40"
-                  >
-                    Continue
-                    <span aria-hidden="true">→</span>
-                  </Button>
-                </div> */}
               </div>
             </motion.section>
           ) : (
@@ -330,132 +265,10 @@ export const CreationStep1 = ({
                   Manager identity
                 </h2>
                 <p className="mt-2 text-sm text-text-secondary">
-                  Choose the philosophy and strengths that define your
-                  managerial career.
+                  Allocate the strengths that define your managerial career.
                 </p>
               </div>
 
-              {/* <div
-                className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-                role="group"
-                aria-label="Manager archetype"
-              >
-                {MANAGER_ARCHETYPES.map((candidate, index) => {
-                  const isSelected = candidate === archetype;
-                  const distribution =
-                    candidate === "custom"
-                      ? null
-                      : MANAGER_ARCHETYPE_DISTRIBUTIONS[candidate];
-
-                  return (
-                    <motion.div
-                      key={candidate}
-                      layout
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        delay: index * 0.05,
-                        type: "spring",
-                        stiffness: 320,
-                        damping: 26,
-                      }}
-                      whileHover={{ y: -4 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="relative"
-                    >
-                      {isSelected && (
-                        <motion.div
-                          layoutId="selected-archetype"
-                          className="absolute -inset-px rounded-2xl bg-gradient-to-br from-primary via-primary/40 to-transparent"
-                          transition={{
-                            type: "spring",
-                            stiffness: 400,
-                            damping: 32,
-                          }}
-                        />
-                      )}
-
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        aria-pressed={isSelected}
-                        className={`relative h-full min-h-36 w-full flex-col items-start justify-between rounded-2xl border p-4 text-left ${
-                          isSelected
-                            ? "border-transparent bg-surface-raised"
-                            : "border-border-subtle bg-surface hover:border-primary/30"
-                        }`}
-                        onClick={() => handleArchetypeSelect(candidate)}
-                      >
-                        <div className="flex w-full items-start justify-between">
-                          <motion.span
-                            className={`flex size-11 items-center justify-center rounded-xl text-xl ${
-                              isSelected
-                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                                : "bg-background text-text-secondary"
-                            }`}
-                            animate={
-                              isSelected
-                                ? {
-                                    rotate: [0, -5, 5, 0],
-                                    scale: [1, 1.08, 1],
-                                  }
-                                : undefined
-                            }
-                          >
-                            {ARCHETYPE_SYMBOLS[candidate]}
-                          </motion.span>
-
-                          <AnimatePresence>
-                            {isSelected && (
-                              <motion.span
-                                initial={{ opacity: 0, scale: 0.7 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.7 }}
-                                className="rounded-full bg-primary/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary"
-                              >
-                                Selected
-                              </motion.span>
-                            )}
-                          </AnimatePresence>
-                        </div>
-
-                        <div className="mt-5">
-                          <span className="block font-semibold">
-                            {ARCHETYPE_DISPLAY_NAMES[candidate]}
-                          </span>
-                          <span className="mt-1 block text-xs font-normal leading-relaxed text-text-secondary">
-                            {ARCHETYPE_DESCRIPTIONS[candidate]}
-                          </span>
-                        </div>
-
-                        {distribution !== null && (
-                          <div className="mt-4 flex w-full gap-1.5">
-                            {MANAGER_PILLARS.map((pillar) => (
-                              <div
-                                key={pillar}
-                                className="h-1.5 flex-1 overflow-hidden rounded-full bg-background"
-                                title={`${PILLAR_DISPLAY_NAMES[pillar]}: ${distribution[pillar]}`}
-                              >
-                                <motion.div
-                                  className={`h-full rounded-full bg-gradient-to-r ${PILLAR_ACCENTS[pillar]}`}
-                                  initial={{ width: 0 }}
-                                  animate={{
-                                    width: `${(distribution[pillar] / MAX_PILLAR_VALUE) * 100}%`,
-                                  }}
-                                  transition={{
-                                    delay: 0.18 + index * 0.04,
-                                    duration: 0.4,
-                                  }}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </Button>
-                    </motion.div>
-                  );
-                })}
-              </div> */}
 
               <div className="overflow-hidden rounded-md border border-border-subtle bg-surface shadow-sm">
                 <div className="flex flex-col gap-4 border-b border-border-subtle p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -560,7 +373,7 @@ export const CreationStep1 = ({
                             aria-label={`Decrease ${PILLAR_DISPLAY_NAMES[pillar]}`}
                             onClick={() => handlePillarChange(pillar, -1)}
                             disabled={
-                              !customMode || value <= MIN_PILLAR_VALUE
+                              value <= MIN_PILLAR_VALUE
                             }
                           >
                             −
@@ -632,7 +445,7 @@ export const CreationStep1 = ({
                             aria-label={`Increase ${PILLAR_DISPLAY_NAMES[pillar]}`}
                             onClick={() => handlePillarChange(pillar, 1)}
                             disabled={
-                              !customMode || value >= MAX_PILLAR_VALUE
+                              value >= MAX_PILLAR_VALUE
                             }
                           >
                             +
@@ -645,7 +458,7 @@ export const CreationStep1 = ({
               </div>
 
               <AnimatePresence initial={false}>
-                {customMode && pillarErrors.length > 0 && (
+                {pillarErrors.length > 0 && (
                   <motion.div
                     initial={{ opacity: 0, y: 12, height: 0 }}
                     animate={{ opacity: 1, y: 0, height: "auto" }}
@@ -663,7 +476,7 @@ export const CreationStep1 = ({
               </AnimatePresence>
 
               <AnimatePresence initial={false}>
-                {customMode && lowPillars.length > 0 && (
+                {lowPillars.length > 0 && (
                   <motion.div
                     initial={{ opacity: 0, y: 12, height: 0 }}
                     animate={{ opacity: 1, y: 0, height: "auto" }}

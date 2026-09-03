@@ -307,11 +307,9 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
       <CreationStep1
         saveName=""
         managerName=""
-        archetype="professor"
         pillars={{ tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 }}
         onSaveNameChange={() => undefined}
         onManagerNameChange={() => undefined}
-        onArchetypeChange={() => undefined}
         onPillarsChange={() => undefined}
       />,
     );

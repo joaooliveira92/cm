@@ -64,6 +64,9 @@ const createEmptySession = (): CreationSession => ({
   leagueSelection: null,
   saveName: "",
   managerName: "",
+  // The archetype picker was deliberately retired from step 1; the field stays because the career
+  // submission (`archetypeOrigin`) and the Review summary still read it, so every career now
+  // records this fixed origin and the manager is defined purely by their pillar allocation.
   archetype: "professor",
   pillars: { ...DEFAULT_PILLARS },
   generation: initialGeneration,
@@ -159,13 +162,6 @@ export const StepOneRouteContent = () => {
     [update],
   );
 
-  const handleArchetypeChange = useCallback(
-    (archetype: CreationSession["archetype"]): void => {
-      update({ archetype });
-    },
-    [update],
-  );
-
   const handlePillarsChange = useCallback(
     (pillars: PillarDistribution): void => {
       update({ pillars });
@@ -178,11 +174,9 @@ export const StepOneRouteContent = () => {
       <CreationStep1
         saveName={session.saveName}
         managerName={session.managerName}
-        archetype={session.archetype}
         pillars={session.pillars}
         onSaveNameChange={handleSaveNameChange}
         onManagerNameChange={handleManagerNameChange}
-        onArchetypeChange={handleArchetypeChange}
         onPillarsChange={handlePillarsChange}
       />
     </RouteView>
