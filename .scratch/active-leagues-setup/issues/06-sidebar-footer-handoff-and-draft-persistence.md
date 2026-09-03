@@ -11,11 +11,11 @@ The slice's edge promise: the boundary is crossed here for the first time — sa
 
 **Blocked by:** 02 — Consequences — entity count, processing cost, and recommendations (the sidebar renders those figures); 04 — Setup state, derived atoms, and the league grid (the screen and intents it wires); 05 — Workspace layout, the advanced disclosure, and the introduction (the sidebar and footer complete the screen).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The sidebar shows the derived entity count, the processing-cost meter with label and expensive warning, and a pinned validation/next-step slot; no start-date or database-preset control exists.
-- [ ] Cancel and Continue sit right-aligned below the sidebar; Continue shows pending state, prevents duplicate submission, disables invalidating controls, restores an actionable state on failure, and passes an `AbortSignal` where cancellation is supported; errors read understandably.
-- [ ] Continue records the same `LeagueSelectionSnapshot` and lands the player on Step 2 · Manager; step 1's route renders the Active Leagues screen; the four-stage flow and its gating are unchanged; the heading reads "Active Leagues".
-- [ ] Draft persistence debounces at the application boundary, cancels stale saves, keeps the latest successful state identifiable, and flushes/cancels pending work on disposal; the draft is fingerprint-bound and carries the versioned shape including advanced options.
-- [ ] Component tests cover Continue disabled on validation failure and the failure state when creation fails; unit tests cover the operation lifecycle and draft round-trip.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] The sidebar shows the derived entity count, the processing-cost meter with label and expensive warning, and a pinned validation/next-step slot; no start-date or database-preset control exists.
+- [x] Cancel and Continue sit right-aligned below the sidebar; Continue shows pending state, prevents duplicate submission, disables invalidating controls, restores an actionable state on failure, and passes an `AbortSignal` where cancellation is supported; errors read understandably.
+- [x] Continue records the same `LeagueSelectionSnapshot` and lands the player on Step 2 · Manager; step 1's route renders the Active Leagues screen; the four-stage flow and its gating are unchanged; the heading reads "Active Leagues".
+- [x] Draft persistence debounces at the application boundary, cancels stale saves, keeps the latest successful state identifiable, and flushes/cancels pending work on disposal; the draft is fingerprint-bound and carries the versioned shape including advanced options.
+- [x] Component tests cover Continue disabled on validation failure and the failure state when creation fails; unit tests cover the operation lifecycle and draft round-trip.
+- [x] `pnpm check:all` is green at this commit.

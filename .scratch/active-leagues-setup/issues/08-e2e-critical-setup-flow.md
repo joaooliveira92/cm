@@ -18,9 +18,9 @@ The slice's edge promise: the flow is the whole vertical path through the shippe
 
 **Blocked by:** 05 — Workspace layout, the advanced disclosure, and the introduction (the flow drives add/depth/preset/options on the workspace); 06 — Sidebar, footer, handoff, and draft persistence (the flow asserts the estimate, the sidebar, and Continue's handoff); 07 — Manage leagues retention, responsive behavior, and accessibility (the screen it drives must be complete and accessible).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A single Playwright spec drives the setup path above from the built app and asserts navigation to Step 2 · Manager at the end.
-- [ ] The flow verifies the estimate and entity count change after the configuration edits.
-- [ ] Selectors are role-based; no CSS selectors or implementation-specific class names are used.
-- [ ] `pnpm test:e2e` passes; `pnpm check:all` is green at this commit.
+- [x] A single Playwright spec drives the setup path above from the built app and asserts navigation to Step 2 · Manager at the end.
+- [x] The flow verifies the estimate and entity count change after the configuration edits.
+- [x] Selectors are role-based; no CSS selectors or implementation-specific class names are used.
+- [x] `pnpm test:e2e` passes; `pnpm check:all` is green at this commit.

@@ -11,11 +11,11 @@ The slice's edge promise: renderer-only — no I/O and no new RPC method exist y
 
 **Blocked by:** 05 — Workspace layout, the advanced disclosure, and the introduction (Manage leagues hangs off the workspace and the intro's change action); 06 — Sidebar, footer, handoff, and draft persistence (the responsive reflow and footer-sticky behavior complete the screen it ships).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Manage leagues opens the retained tree, which edits the same intent model as the grid; both the workspace action and the intro's inline change action reach it.
-- [ ] Responsive behavior at the three breakpoints: side-by-side with all columns at 1280px+; truncated recommendation labels and reduced padding at 960–1279px; sidebar inline and rows on two lines below 960px, with the footer sticky and no control shrunk until unreadable.
-- [ ] Every control is keyboard-reachable with focus order following visual order; triggers expose expanded/controlled state; remove buttons name the league; recommendations carry visible text; a polite live region announces performance changes; validation failures connect to their control; tooltips never hold essential information.
-- [ ] Focus after removal moves to the next row's equivalent control, else the previous row's, else Manage leagues.
-- [ ] Layout transitions are restrained and reduced-motion-aware; no large or spring-heavy animations.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] Manage leagues opens the retained tree, which edits the same intent model as the grid; both the workspace action and the intro's inline change action reach it.
+- [x] Responsive behavior at the three breakpoints: side-by-side with all columns at 1280px+; truncated recommendation labels and reduced padding at 960–1279px; sidebar inline and rows on two lines below 960px, with the footer sticky and no control shrunk until unreadable.
+- [x] Every control is keyboard-reachable with focus order following visual order; triggers expose expanded/controlled state; remove buttons name the league; recommendations carry visible text; a polite live region announces performance changes; validation failures connect to their control; tooltips never hold essential information.
+- [x] Focus after removal moves to the next row's equivalent control, else the previous row's, else Manage leagues.
+- [x] Layout transitions are restrained and reduced-motion-aware; no large or spring-heavy animations.
+- [x] `pnpm check:all` is green at this commit.
