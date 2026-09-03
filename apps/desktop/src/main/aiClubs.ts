@@ -144,8 +144,14 @@ export const identifyWeakPositions = (
  * this club or an earlier one) is already reflected. One target per weak Position per window; if
  * two AI clubs would target the same player this window, the first (by club-id processing order)
  * gets it and the later club simply skips that player this window — this ticket's documented
- * simplification for concurrent-target conflicts, not a real negotiation. Self-issued in-process —
- * never through the RpcGroup.
+ * simplification for concurrent-target conflicts, not a real negotiation.
+ *
+ * After that weakness-driven buying, a deterministic guarantee pass makes the seller side reachable:
+ * because every non-human seller is resolved inline, the weakness pass alone would never leave the
+ * human's own players bid on. If the window produced no pending bid on the human club, the human
+ * club's strongest affordable player is bid on by the AI club (of the affordable ones) with the most
+ * Wage Budget headroom, leaving a pending `BidReceived` for the manager to answer. Self-issued
+ * in-process — never through the RpcGroup.
  */
 export const runAiTransferWindow = (seasonNumber: number) =>
   Effect.gen(function* () {
@@ -165,6 +171,9 @@ export const runAiTransferWindow = (seasonNumber: number) =>
     // Players already targeted by an earlier AI club this window — a later club skips them
     // (ticket 17's documented same-window-conflict simplification, see doc comment above).
     const targetedThisWindow = new Set<string>();
+
+    const userClubRow = clubRows.find((club) => club.isUserClub === 1);
+    const userClubId = userClubRow?.id;
 
     for (const club of clubRows) {
       if (club.isUserClub === 1) continue;
@@ -203,6 +212,51 @@ export const runAiTransferWindow = (seasonNumber: number) =>
           yield* aiSignFreeAgent(club.id, target.player.id, seasonNumber);
         } else {
           yield* aiPlaceBid(club.id, target.player.id, target.value, seasonNumber);
+        }
+      }
+    }
+
+    // Guarantee the seller side is reachable (incoming-bid flow): the weakness-driven buying above
+    // only ever bids on clubs it can afford to prise a player away from, and it resolves every seller
+    // that isn't the human inline — so left to that pass alone the manager's own players are never
+    // bid on and `BidReceived` never fires for them. If no AI club has left the human a pending bid
+    // this window, deterministically pick the human club's strongest player and bid on it from an AI
+    // club that can actually afford the transfer — both its Transfer Budget must cover the value and
+    // its Wage Budget must have headroom for the wage — so that if the manager accepts,
+    // `completeTransfer`'s own affordability checks pass.
+    if (userClubId) {
+      const userPlayers = allPlayers
+        .filter((player) => player.clubId === userClubId)
+        .map((player) => ({
+          player,
+          value: transferValue(player.overallRating, player.age, player.potentialAbility),
+          wage: weeklyWage(player.overallRating, player.age, player.potentialAbility),
+        }))
+        .sort((a, b) => b.value - a.value || a.player.id.localeCompare(b.player.id));
+
+      const existingUserBid = yield* sql<{ n: number }>`
+        SELECT COUNT(*) as n FROM bids WHERE selling_club_id = ${userClubId}`;
+      if (userPlayers.length > 0 && existingUserBid[0]!.n === 0) {
+        loop: for (const candidate of userPlayers) {
+          // Collect every AI club that can afford the value, then pick the one with the most Wage
+          // Budget headroom so that accepting the incoming bid never teeters on a knife-edge of
+          // wage capacity (ties broken by club id — deterministic). Only fall through to a cheaper
+          // user player if no AI club can afford this one at all.
+          const affordableBuyers: Array<{ club: ClubId; headroom: number }> = [];
+          for (const club of clubRows) {
+            if (club.isUserClub === 1) continue;
+            const budget = yield* loadClubBudgetRow(club.id);
+            const wageUsed = yield* loadWageBudgetUsed(club.id);
+            if (candidate.value <= budget.transferBudgetRemaining && wageUsed + candidate.wage <= budget.wageBudget) {
+              affordableBuyers.push({ club: club.id, headroom: budget.wageBudget - wageUsed - candidate.wage });
+            }
+          }
+          affordableBuyers.sort((a, b) => b.headroom - a.headroom || a.club.localeCompare(b.club));
+          const buyer = affordableBuyers[0];
+          if (buyer) {
+            yield* aiPlaceBid(buyer.club, candidate.player.id, candidate.value, seasonNumber);
+            break loop;
+          }
         }
       }
     }

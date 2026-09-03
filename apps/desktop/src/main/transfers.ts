@@ -740,9 +740,10 @@ export const respondToBid = (
       if (bid.status !== "pending") {
         return yield* new InvalidBidActionError({ reason: `Bid is ${bid.status}, not awaiting a seller response` });
       }
-      if (!isWindowOpen(seasonRow.phase)) {
-        return yield* new TransferWindowClosedError({ saveId });
-      }
+      // No transfer-window gate here by design: answering a bid that the market already placed in a
+      // window merely resolves a negotiation that is in flight, it does not open a new one. An
+      // unanswered incoming bid lapses at the next Continue (`expireStalePendingBids`), so the only
+      // thing gating a response is whether the bid is still `pending` — checked above.
 
       if (action === "reject") {
         yield* sql`UPDATE bids SET status = 'rejected' WHERE id = ${bidId}`;
