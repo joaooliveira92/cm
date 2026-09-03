@@ -11,7 +11,7 @@ import {
   type PlayerAttributes,
   type Position,
 } from "./positions.js";
-import type { StatureTier } from "./clubs.js";
+import { potentialAbilityRange, type ClubStrength } from "./clubGeneration.js";
 
 /** How many players to generate per primary Position, per squad — enough to fill every Formation plus backups. */
 const SQUAD_COMPOSITION: Record<Position, number> = {
@@ -93,12 +93,6 @@ const clamp = (value: number, min: number, max: number): number =>
 const rightSkewed = (min: number, max: number, random: RandomSource, skew = 2.5): number =>
   Math.round(min + (max - min) * Math.pow(random.next(), skew));
 
-const POTENTIAL_ABILITY_RANGE: Record<StatureTier, readonly [number, number]> = {
-  big: [55, 95],
-  mid: [40, 80],
-  small: [30, 65],
-};
-
 /**
  * Ages 16-23 grow toward Potential Ability, 24-29 plateau at it. Only Physical attributes decline
  * 1-2 points/season (on the 1-20 scale) from 30+; Technical/Mental hold at Potential Ability.
@@ -160,7 +154,9 @@ const birthDateForAge = (age: number, referenceYear: number, random: RandomSourc
 /** Everything a single player's generation depends on. Bundled rather than passed as three
  *  positional arguments so a new determinism input cannot be forgotten at a call site. */
 export interface PlayerGenerationContext {
-  readonly statureTier: StatureTier;
+  /** Where this club's squad is drawn from: its competition's tier, its nation's prior, and its
+   *  own Stature Tier within that competition. */
+  readonly strength: ClubStrength;
   readonly random: RandomSource;
   /** The season year ages are relative to. */
   readonly referenceYear: number;
@@ -168,9 +164,9 @@ export interface PlayerGenerationContext {
 
 export const generatePlayer = (
   primaryPosition: Position,
-  { statureTier, random, referenceYear }: PlayerGenerationContext,
+  { strength, random, referenceYear }: PlayerGenerationContext,
 ): GeneratedPlayer => {
-  const [paMin, paMax] = POTENTIAL_ABILITY_RANGE[statureTier];
+  const [paMin, paMax] = potentialAbilityRange(strength);
   const potentialAbility = rightSkewed(paMin, paMax, random);
   const age = randomAge(random);
 
@@ -237,12 +233,12 @@ export interface GeneratedSquadPlayer extends GeneratedPlayer {
 }
 
 export const generateSquad = (
-  statureTier: StatureTier,
+  strength: ClubStrength,
   { referenceYear, randomForSlot }: SquadGenerationContext,
 ): ReadonlyArray<GeneratedSquadPlayer> =>
   SQUAD_SLOTS.map((slot) => ({
     ...generatePlayer(slot.position, {
-      statureTier,
+      strength,
       referenceYear,
       random: randomForSlot(slot),
     }),

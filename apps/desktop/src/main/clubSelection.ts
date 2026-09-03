@@ -1,5 +1,5 @@
 import { ClubSelectionDetail, ClubSelectionRow, ClubSelectionTopPlayer, ClubSelectionView, type ClubId } from "@cm-clone/contracts";
-import { BOARD_OBJECTIVE_BANDS, LEAGUE_COMPETITION_ID, POSITIONS, computeSquadQuality, type Position } from "@cm-clone/shared";
+import { BOARD_OBJECTIVE_BANDS, POSITIONS, computeSquadQuality, type Position } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "./displayNames.js";
@@ -79,6 +79,13 @@ export const summarizeSquad = (squad: ReadonlyArray<SquadReadoutPlayer>): ClubSe
 export const getClubSelection = Effect.gen(function* () {
   const sql = yield* SqlClient;
   const nameOf = yield* displayNames;
+
+  // The League the career is played in: the deepest-simulated league in the save. With one playable
+  // competition today this is exactly that competition; it is read from the save rather than named
+  // by a constant because the world now records which competitions it actually generated.
+  const leagueRows = yield* sql<{ id: string }>`
+    SELECT id FROM competitions WHERE depth = 'full' AND kind = 'league' ORDER BY tier, id LIMIT 1`;
+
   const clubRows = yield* sql<{
     id: ClubId;
     statureTier: "big" | "mid" | "small";
@@ -116,5 +123,9 @@ export const getClubSelection = Effect.gen(function* () {
     }));
   }
 
-  return new ClubSelectionView({ clubs, leagueName: nameOf(LEAGUE_COMPETITION_ID) });
+  const leagueId = leagueRows[0]?.id;
+  return new ClubSelectionView({
+    clubs,
+    leagueName: leagueId === undefined ? "" : nameOf(leagueId),
+  });
 });

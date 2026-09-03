@@ -2,7 +2,7 @@
 
 Status: implemented
 
-> **Partially superseded by** [the world catalogue and canonical ids](../../proposed/architecture/2026-09-01-world-catalogue-and-canonical-ids.md).
+> **Partially superseded by** [the world catalogue and canonical ids](2026-09-01-world-catalogue-and-canonical-ids.md).
 > Two of this note's decisions move there: the single option's label is no longer the shared
 > `LEAGUE_NAME` constant beside `LEAGUE_CLUBS` — that constant is gone, and the League's name is the
 > content pack's name for `comp_eng_1`, resolved in the main process — and `ClubSelectionView`

@@ -10,16 +10,15 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 import {
   BASE_CONTENT_PACK,
-  LEAGUE_CLUBS,
-  LEAGUE_COMPETITION_ID,
   LEAGUE_SETUP_INDEX,
   allCompetitions,
   canonicalClubId,
+  catalogueClubIds,
   displayName,
   packCoverageGaps,
 } from "@cm-clone/shared";
 import { getClubSelection } from "../src/main/clubSelection.js";
-import { savePack } from "../src/main/displayNames.js";
+import { reportPackCoverage, savePack } from "../src/main/displayNames.js";
 import { beginCareer } from "../src/main/saves.js";
 import { createDefaultSnapshot } from "./snapshot-helpers.js";
 
@@ -56,17 +55,27 @@ describe("the content pack covers what generation mints", () => {
     expect(packCoverageGaps(BASE_CONTENT_PACK, ids)).toEqual([]);
   });
 
-  it("names every club the generator materializes", () => {
-    const ids = LEAGUE_CLUBS.map((_, index) => canonicalClubId("ENG", index + 1));
+  it("names every club of the league the default career generates", () => {
+    const ids = Array.from({ length: 20 }, (_, slot) => canonicalClubId("comp_eng_1", slot + 1));
     expect(packCoverageGaps(BASE_CONTENT_PACK, ids)).toEqual([]);
   });
 
+  it("reports the rest of the key space as an unnamed gap rather than hiding it", () => {
+    // The whole catalogue implies far more clubs than the base pack names, and naming them is
+    // authored content. What must not happen is the gap going unnoticed: a missing key surfaces as
+    // a raw `club_eng_2_11` in the interface, and this is what makes that a reported condition.
+    const gaps = packCoverageGaps(BASE_CONTENT_PACK, catalogueClubIds(LEAGUE_SETUP_INDEX));
+    expect(gaps.length).toBeGreaterThan(0);
+    expect(gaps).not.toContain("club_eng_1_01");
+    expect(gaps).toContain("club_eng_2_01");
+  });
+
   it("reports, rather than hides, an id it does not name", () => {
-    expect(packCoverageGaps(BASE_CONTENT_PACK, ["club_eng_01", "club_zzz_99"])).toEqual([
-      "club_zzz_99",
+    expect(packCoverageGaps(BASE_CONTENT_PACK, ["club_eng_1_01", "club_zzz_1_99"])).toEqual([
+      "club_zzz_1_99",
     ]);
     // And resolution still succeeds, showing the id itself.
-    expect(displayName(BASE_CONTENT_PACK, "club_zzz_99")).toBe("club_zzz_99");
+    expect(displayName(BASE_CONTENT_PACK, "club_zzz_1_99")).toBe("club_zzz_1_99");
   });
 });
 
@@ -76,8 +85,8 @@ describe("display names resolve through the save's pack", () => {
       const saveId = yield* generatedSave;
       const view = yield* withSave(saveId, getClubSelection);
 
-      expect(view.leagueName).toBe(displayName(BASE_CONTENT_PACK, LEAGUE_COMPETITION_ID));
-      expect(view.clubs).toHaveLength(LEAGUE_CLUBS.length);
+      expect(view.leagueName).toBe(displayName(BASE_CONTENT_PACK, "comp_eng_1"));
+      expect(view.clubs).toHaveLength(20);
       for (const club of view.clubs) {
         expect(club.clubName).toBe(displayName(BASE_CONTENT_PACK, club.clubId));
         // The id is an identity, never the label: a name reaching the screen unresolved would
@@ -92,6 +101,31 @@ describe("display names resolve through the save's pack", () => {
       const saveId = yield* generatedSave;
       const pack = yield* withSave(saveId, savePack);
       expect(pack.id).toBe(BASE_CONTENT_PACK.id);
+    }),
+  );
+
+  it.effect("reports the ids the save uses that its pack cannot name", () =>
+    Effect.gen(function* () {
+      const saveId = yield* generatedSave;
+      // The default career's twenty clubs and its two competitions are all named, so a save this
+      // build generated opens with nothing to report.
+      expect(yield* withSave(saveId, reportPackCoverage)).toEqual([]);
+
+      // A save whose ids the pack has lost coverage of reports them rather than degrading to raw
+      // identifiers on a screen with no warning anywhere.
+      const gaps = yield* withSave(
+        saveId,
+        Effect.gen(function* () {
+          const sql = yield* SqlClient;
+          // A club the pack has no name for — the shape a partially-covered pack produces, and
+          // what the wider catalogue will look like until its clubs are authored.
+          yield* sql`INSERT INTO clubs (id, stature_tier, is_user_club, generation_seed, city_id, stadium_name, stadium_capacity)
+            SELECT 'club_unnamed_1_01', stature_tier, 0, generation_seed, city_id, stadium_name, stadium_capacity
+            FROM clubs WHERE id = 'club_eng_1_01'`;
+          return yield* reportPackCoverage;
+        }),
+      );
+      expect(gaps).toEqual(["club_unnamed_1_01"]);
     }),
   );
 

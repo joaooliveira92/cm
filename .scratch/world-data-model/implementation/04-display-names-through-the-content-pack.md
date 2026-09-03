@@ -24,7 +24,7 @@ which is deliberately visible in the UI rather than an empty string or a raised 
 - Nations are unconditional referent rows and thin, cities are curated real geography resolved per
   activated nation, no stadium table, and the canonical-id rule lands everywhere at once —
   `clubs.name` deleted, competition names moved to the pack, one underscore id convention. See
-  [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-01-world-catalogue-and-canonical-ids.md).
+  [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-01-world-catalogue-and-canonical-ids.md).
 
 **Blocked by:** None (can start immediately).
 

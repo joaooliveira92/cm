@@ -25,6 +25,7 @@ import {
   resolveWorld,
   validatePillarDistribution,
 } from "@cm-clone/shared";
+import { reportPackCoverage } from "./displayNames.js";
 import { createSchema } from "./schema.js";
 import { startSeason } from "./season.js";
 import { deriveSeed } from "@cm-clone/game-engine";
@@ -70,11 +71,19 @@ const currentYear = Effect.clockWith((clock) =>
   Effect.map(clock.currentTimeMillis, (millis) => new Date(millis).getUTCFullYear()),
 );
 
-/** Every club id in a save, in insertion order (used by the `createSave` compat shim, which only
- *  needs the first club to hand `commitCareer` — no name, so no content pack). */
-const loadAllClubs = Effect.gen(function* () {
+/**
+ * The club the `createSave` compat shim hands `commitCareer`.
+ *
+ * A `big` club, chosen by canonical id, then any club. The shim used to take the first row by
+ * insertion order, which under the old fixed roster was always `LEAGUE_CLUBS[0]` — a `big` club —
+ * and every caller inherited that. Now that Stature Tier is drawn per competition, "first by
+ * insertion order" is a club of arbitrary standing, which makes anything downstream of the Board
+ * Objective band vary run to run. Naming the stature restores what the shim actually promised.
+ */
+const loadDefaultUserClub = Effect.gen(function* () {
   const sql = yield* SqlClient;
-  return yield* sql<{ id: ClubId }>`SELECT id FROM clubs ORDER BY rowid`;
+  return yield* sql<{ id: ClubId }>`
+    SELECT id FROM clubs ORDER BY CASE stature_tier WHEN 'big' THEN 0 ELSE 1 END, id LIMIT 1`;
 });
 
 /** The Save List's row for one save file. `archivedCause` comes from `manager_status` rather than
@@ -263,7 +272,7 @@ export const createSave = (savesDir: string, name: string, userDataDir?: string)
     const setupDir = userDataDir ?? path.join(savesDir, ".user-data");
     const snapshot = yield* submitLeagueSelection(setupDir, DEFAULT_CAREER_INTENTS);
     const { id } = yield* beginCareer(savesDir, { userDataDir: setupDir, snapshotId: snapshot.id });
-    const clubs = yield* loadAllClubs.pipe(
+    const clubs = yield* loadDefaultUserClub.pipe(
       Effect.provide(SqliteClient.layer({ filename: dbPath(savesDir, id) })),
       Effect.scoped,
     );
@@ -286,5 +295,11 @@ export const loadSave = (savesDir: string, id: SaveId) =>
     if (!exists) {
       return yield* new SaveNotFoundError({ id });
     }
+    // Opening a save under a pack that cannot name its ids is a reported condition, not a screen
+    // full of raw identifiers nobody was told about. It never blocks the open.
+    yield* reportPackCoverage.pipe(
+      Effect.provide(SqliteClient.layer({ filename, readonly: true })),
+      Effect.scoped,
+    );
     return yield* readSaveSummary(filename);
   });

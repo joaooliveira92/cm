@@ -27,7 +27,7 @@ runtime failure, so it is caught by a test over the module, not by an error chan
 - Nations are unconditional referent rows and thin, cities are curated real geography resolved per
   activated nation, no stadium table, and the canonical-id rule lands everywhere at once —
   `clubs.name` deleted, competition names moved to the pack, one underscore id convention. See
-  [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-01-world-catalogue-and-canonical-ids.md).
+  [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-01-world-catalogue-and-canonical-ids.md).
   The city-scoping half of that gist is superseded by the geography decision below; the
   `clubs.name` and competition-name halves land in tickets 04 and 06 respectively.
 - Simulation Depth never conditions the world catalogue or the club row — a `results-only` nation

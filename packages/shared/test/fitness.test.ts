@@ -7,17 +7,20 @@ import {
   POSITION_WEIGHTS,
   type PlayerAttributes,
 } from "../src/positions.js";
+import type { ClubStrength } from "../src/clubGeneration.js";
+
+const MID_TABLE: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" };
 
 /** Generation takes an explicit seed, so these assertions describe one fixed squad rather than
  *  whatever `Math.random` produced on the day. */
 const squadOf = (tier: "big" | "mid" | "small", seed: number) =>
-  generateSquad(tier, {
+  generateSquad({ tier: 1, nationPrior: 0.5, statureTier: tier }, {
     referenceYear: 2026,
     randomForSlot: (slot) => createSeededRng(seed + slot.index),
   });
 
 const playerAt = (position: Parameters<typeof generatePlayer>[0], seed: number) =>
-  generatePlayer(position, { statureTier: "mid", referenceYear: 2026, random: createSeededRng(seed) });
+  generatePlayer(position, { strength: MID_TABLE, referenceYear: 2026, random: createSeededRng(seed) });
 
 const allAttributes = (players: ReadonlyArray<{ readonly attributes: PlayerAttributes }>): ReadonlyArray<PlayerAttributes> =>
   players.map((p) => p.attributes);

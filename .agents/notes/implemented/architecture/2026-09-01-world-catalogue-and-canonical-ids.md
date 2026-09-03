@@ -1,6 +1,6 @@
 # Agent Note: The world catalogue — nations, cities, stadiums, and canonical ids
 
-Status: proposed
+Status: implemented
 
 > **Partially supersedes** [real geography, replaceable identities](../../implemented/architecture/2026-09-01-real-geography-with-replaceable-identities.md).
 > Three of that note's consequences move here: competition display names leave `leagueSetup.ts` for the
@@ -27,7 +27,7 @@ stops being believed. And two id conventions are live at once: the catalogue min
 `comp-eng-1`, while `contentPack.ts` mints `club_eng_01` and `comp_eng_slug`. Ticket 02 requires a
 competition row to reuse the catalogue's own id so the two join, so one convention has to lose.
 
-## Proposal
+## Decision
 
 ### Nations are rows, and every nation the ruleset ships gets one
 
@@ -78,7 +78,7 @@ Coordinates are not carried: no system computes distance, and travel is not mode
 The code list is the catalogue; the save records the resolved subset.
 
 > **Superseded in part by ticket 13**
-> ([results-only geography](2026-09-02-results-only-geography-cost.md)). This note originally wrote city
+> ([results-only geography](../../proposed/architecture/2026-09-02-results-only-geography-cost.md)). This note originally wrote city
 > rows only for nations that have competitions in this save — the same catalogue-in-code,
 > resolved-world-on-disk shape ticket 02 established for competitions — narrower than the nations table
 > on the grounds that cities are per-nation and numerous while nations are eight. Ticket 13 overturned
@@ -101,7 +101,7 @@ is corrected in the same change.
 
 ### No stadium table
 
-`clubs` gains `stadium_name` and `stadium_capacity`, both generated. There is no stadium entity.
+`clubs` carries `stadium_name` and `stadium_capacity`, both generated. There is no stadium entity.
 
 A table would buy ground-sharing and a city parent for the ground distinct from the club's own. Neither
 is read by anything in MVP: "Stadium as a mechanic" is already ruled out of scope, capacity feeds
@@ -124,7 +124,7 @@ pack.
 
 ### The content pack is a code asset, recorded on the manifest
 
-The pack is not a table. `generation_manifest` gains `content_pack_id` and the pack version.
+The pack is not a table. `generation_manifest` carries `content_pack_id` and the pack version.
 
 Persisting the pack into the save defeats its whole purpose — an existing save could never be reopened
 under a localized or licensed pack, which is the one thing the layer was built to allow. The manifest
@@ -136,12 +136,12 @@ its ids is a reported condition rather than a screen full of `club_eng_07`.
 Underscores win: `nation_eng`, `comp_eng_1`, `club_eng_01`. The `contentPack.ts` helpers are the ones
 that state the canonical-id rule, so the catalogue migrates to them rather than the reverse.
 
-Competition display names move out of `leagueSetup.ts` into the base pack in this same change. Leaving
+Competition display names moved out of `leagueSetup.ts` into the base pack in the same change. Leaving
 `name: "English First Division"` in code while deleting `clubs.name` would fix the club violation and
 leave the identical competition violation in place. The catalogue node keeps `alternativeNames`: that is
 setup-screen search input, consumed before a save exists, and it never reaches the simulation core.
 
-Changing every id in the catalogue changes the catalogue's *content*, so its `fingerprint` moves. Every
+Changing every id in the catalogue changed the catalogue's *content*, so its `fingerprint` moved to `real-geography@2.0.0`. Every
 persisted preset and setup draft from the current catalogue is refused rather than half-restored — the
 fingerprint mechanism working as designed, exactly as it did when the fictional catalogue was replaced.
 
@@ -154,7 +154,7 @@ fingerprint mechanism working as designed, exactly as it did when the fictional 
   for one nation. A multi-nation world needs stature distributions per competition, which this note does
   not shape.
 - **Ticket 07** (simulation depth) inherited city rows written per activated nation regardless of depth.
-  **Resolved by ticket 13** ([results-only geography](2026-09-02-results-only-geography-cost.md)): a
+  **Resolved by ticket 13** ([results-only geography](../../proposed/architecture/2026-09-02-results-only-geography-cost.md)): a
   `results-only` nation keeps its cities, and Simulation Depth never conditions the world catalogue.
 
 ## Alternatives considered
@@ -183,40 +183,54 @@ fingerprint mechanism working as designed, exactly as it did when the fictional 
 - **Correcting `clubs.name` only, leaving competition names in the catalogue.** Rejected: a rule
   enforced in one of two identical cases is a rule nobody believes.
 
-## Acceptance criteria
+## Consequences
 
-- `nations` contains one row per `NATION_CODES` member in every save, whatever the selection scope.
-- No column anywhere stores whether a nation is activated; the answer comes from `competitions`.
-- No table stores a Nation Profile value or a factual nation attribute.
-- `cities` contains one row per curated city of every nation in `NATION_CODES`, in every save,
-  whatever the selection scope (widened by ticket 13; this note originally scoped it to nations with at
-  least one row in `competitions`), and every city row's population band is one of the four defined
-  values.
-- No `stadiums` table exists; `clubs` carries `stadium_name` and `stadium_capacity`.
-- `clubs` has no `name` column, and no test asserts a club display name against a main-process result.
+What shipped, across tickets 02 (nations and cities), 04 (the display-name seam and the id
+migration), and 06 (the club row):
+
+- `nations` holds one row per `NATION_CODES` member in every save, whatever the selection scope, and
+  `cities` one row per curated city of every one of them. No column stores whether a nation is
+  activated; the answer is `SELECT DISTINCT nation_id FROM competitions`. No table stores a Nation
+  Profile value or a factual nation attribute.
+- Every city row's population band is one of the four defined values, enforced by a `CHECK`.
+- There is no `stadiums` table. `clubs` carries `city_id`, `stadium_name`, and `stadium_capacity`,
+  and nothing forbids two clubs sharing a city.
+- `clubs` has no `name` column. Display names resolve once, in the main process's `displayNames.ts`
+  seam, against the pack the save's manifest recorded; a source scan over `src/main` fails if a
+  second reader appears.
 - `leagueSetup.ts` contains no competition display name, and every id in it matches the underscore
   convention `contentPack.ts` mints.
 - `generation_manifest` records `content_pack_id` and the pack version.
-- Opening a save under a pack missing ids the save uses produces a reported coverage warning, not a
-  silent fallback to raw ids in the UI.
-- `CONTEXT.md` defines City, and its Nation entry names nations and cities as the real-world foundation
-  rather than nations alone.
+- Opening a save whose ids the pack cannot name logs a coverage warning naming the count and a
+  sample, rather than degrading silently to raw ids on a screen.
+- `CONTEXT.md` defines City, and its Nation entry names nations and cities as the real-world
+  foundation.
 
-## Risks
+Where the shipped code diverged from the proposal above:
 
-- **The thin nation row will look like a mistake to the next reader.** A one-column table invites a
-  well-meaning "fix" that mirrors `nations.ts` into it. The reintroduction condition is the defence, and
-  it only works if it is read.
-- **Curating sixty cities per nation is real, unglamorous work** — around 480 rows of hand-checked data
-  for the shipped eight — and it is on the critical path for generation, since a club cannot be placed
-  without one.
-- **The fingerprint bump invalidates every existing preset and setup draft.** Correct behaviour, but it
-  lands on any user mid-setup at the moment this ships, and it is the second such bump in this
-  catalogue's short life.
-- **Single-seam name resolution is a load-bearing assumption that has never been tested.** If any read
-  path bypasses the main-process query layer, canonical ids reach the screen. Nothing enforces the seam
-  today beyond the deletion of the column.
-- **Deleting `clubs.name` breaks every main-process test asserting a club name at once**, and the blast
-  radius has been reasoned about rather than measured.
-- **Ticket 08's birthplace edge is deferred, not solved.** If it resolves toward persisting cities for
-  every nation, the activated-nations-only rule for `cities` set here is the thing that gives way.
+- **The club id form is competition-scoped, not nation-scoped.** This note proposed `club_eng_01`.
+  The later generation decision refined it to competition-plus-ordinal — `club_eng_1_07` — because a
+  multi-competition world needs the competition in the key, and `clubCount` already fixes the
+  ordinal range. `canonicalClubId` takes a competition id.
+- **`cities` is unconditional**, widened by ticket 13 from this note's activated-nations-only rule.
+  The supersession is recorded inline in the section above.
+- **The 20 fictional club names moved into the pack, but the wider key space did not.** The base
+  pack names the twenty clubs of `comp_eng_1` and every competition the catalogue carries; the
+  several hundred club ids the rest of the catalogue implies are unnamed and surface as raw ids.
+  That gap is what the coverage warning exists to report, and closing it is authored content rather
+  than a schema change.
+
+What it costs, carried forward:
+
+- **The thin nation row still looks like a mistake to a new reader.** A one-column table invites a
+  well-meaning "fix" that mirrors `nations.ts` into it. The reintroduction condition stated above is
+  the only defence, and it only works if it is read.
+- **The curated city set is a fraction of what the spec budgets.** Roughly sixty rows against a
+  target of ~480, so club hometowns repeat far more than intended. Collisions are legitimate by
+  design, which means an under-curated catalogue degrades quietly rather than failing.
+- **The fingerprint bump invalidated every persisted preset and setup draft.** Correct behaviour,
+  and the second such bump in this catalogue's short life.
+- **Single-seam name resolution is enforced by a test over source text, not by the type system.**
+  It catches the SQL shapes this codebase actually writes; a sufficiently different query would slip
+  past it.
+

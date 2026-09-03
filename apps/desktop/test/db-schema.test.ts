@@ -87,6 +87,29 @@ describe("generated DDL", () => {
     );
   });
 
+  it("gives a club a place and a ground, and no name", () => {
+    const ddl = MIGRATION_STATEMENTS.join("\n");
+    const clubsBlock = ddl.slice(
+      ddl.indexOf("CREATE TABLE `clubs`"),
+      ddl.indexOf(");", ddl.indexOf("CREATE TABLE `clubs`")) + 2,
+    );
+
+    // The name is gone: a club's display name is the content pack's, resolved on read, so a name
+    // written into the row is a name that save could never be re-read under a different pack.
+    expect(clubsBlock).not.toMatch(/\n\t`name` text/);
+    // Membership has one home — participant rows — so no competition column here either.
+    expect(clubsBlock).not.toContain("competition_id");
+    // A hometown and a ground, both non-null at every Simulation Depth: Depth governs what hangs
+    // *beneath* a club, never the club row.
+    expect(clubsBlock).toContain("`city_id` text NOT NULL");
+    expect(clubsBlock).toContain("`stadium_name` text NOT NULL");
+    expect(clubsBlock).toContain("`stadium_capacity` integer NOT NULL");
+    // Nothing forbids two clubs sharing a city, which is the point.
+    expect(clubsBlock).not.toMatch(/UNIQUE.*city_id/);
+    // And no stadium entity: the columns are the whole model.
+    expect(ddl).not.toContain("CREATE TABLE `stadiums`");
+  });
+
   it("generation_manifest records provenance without growing a foreign key (ticket 03)", () => {
     const ddl = MIGRATION_STATEMENTS.join("\n");
     const block = (table: string) => {

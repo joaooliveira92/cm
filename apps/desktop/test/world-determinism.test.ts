@@ -15,9 +15,15 @@ import {
   canonicalCityId,
   canonicalNationId,
 } from "@cm-clone/shared";
+import { type SnapshotId } from "@cm-clone/contracts";
 import { getLeagueSelectionSnapshot } from "../src/main/leagueSelection.js";
 import { beginCareer } from "../src/main/saves.js";
-import { createDefaultSnapshot, createWiderSnapshot } from "./snapshot-helpers.js";
+import {
+  createDefaultSnapshot,
+  createPyramidSnapshot,
+  createRegionalPlusEnglandSnapshot,
+  createWiderSnapshot,
+} from "./snapshot-helpers.js";
 
 let savesDir: string;
 
@@ -61,9 +67,11 @@ const readCatalogue = Effect.gen(function* () {
 /** The whole generated world as rows, ordered deterministically for comparison. */
 const readWorld = Effect.gen(function* () {
   const sql = yield* SqlClient;
-  // No `name`: a club's display name is the content pack's, resolved on read, and the column is
-  // vestigial until it is dropped. Ordering is by canonical id, which is the club's identity.
-  const clubs = yield* sql`SELECT id, stature_tier as "statureTier", generation_seed as "generationSeed" FROM clubs ORDER BY id`;
+  // No `name`: a club's display name is the content pack's, resolved on read. Ordering is by
+  // canonical id, which is the club's identity.
+  const clubs = yield* sql`SELECT id, stature_tier as "statureTier", generation_seed as "generationSeed",
+      city_id as "cityId", stadium_name as "stadiumName", stadium_capacity as "stadiumCapacity"
+    FROM clubs ORDER BY id`;
   const players = yield* sql<PlayerRow>`SELECT id, club_id as "clubId", first_name as "firstName", last_name as "lastName",
       date_of_birth as "dateOfBirth", potential_ability as "potentialAbility", passing, squad_slot as "squadSlot",
       generation_seed as "generationSeed"
@@ -72,6 +80,35 @@ const readWorld = Effect.gen(function* () {
   const catalogue = yield* readCatalogue;
   return { clubs, players, contracts, ...catalogue };
 });
+
+type World = Awaited<ReturnType<typeof readWorld>> extends Effect.Effect<infer A> ? A : never;
+
+/** A world from a named snapshot, so a test can vary the *selection* rather than only the seed. */
+const generateFrom = (snapshotId: SnapshotId, worldSeed: number) =>
+  Effect.gen(function* () {
+    const { id } = yield* beginCareer(savesDir, {
+      worldSeed,
+      referenceYear: 2026,
+      userDataDir: savesDir,
+      snapshotId,
+    });
+    return yield* withSave(id, readWorld);
+  });
+
+/** The wider world cut down to the narrower one's entities, so the two can be compared directly.
+ *  Anything the narrower world does not contain is dropped rather than diffed. */
+const subsetOf = (wide: World, narrow: World): World => {
+  const clubIds = new Set(narrow.clubs.map((club) => (club as { id: string }).id));
+  const playerIds = new Set(narrow.players.map((player) => player.id));
+  return {
+    ...wide,
+    clubs: wide.clubs.filter((club) => clubIds.has((club as { id: string }).id)),
+    players: wide.players.filter((player) => playerIds.has(player.id)),
+    contracts: wide.contracts.filter((contract) =>
+      playerIds.has((contract as { playerId: string }).playerId),
+    ),
+  };
+};
 
 const generate = (worldSeed: number) =>
   Effect.gen(function* () {
@@ -290,6 +327,79 @@ describe("world generation determinism", () => {
       deepStrictEqual(b.nations, a.nations);
       deepStrictEqual(b.cities, a.cities);
       deepStrictEqual(c, a);
+    }),
+  );
+});
+
+describe("a broader selection extends a world rather than replacing it", () => {
+  it.effect("reproduces the narrower world exactly when a nation is added", () =>
+    Effect.gen(function* () {
+      // The superset property, in the shape a player would hit it: same seed, one more nation.
+      // Every club and player that existed in the narrower world is byte-identical in the wider
+      // one, and the additions are new rows. A single count, length, or loop index reaching into a
+      // generated value would break this silently, which is what makes it worth asserting.
+      const narrow = yield* generateFrom(yield* createDefaultSnapshot(savesDir), 51966);
+      const wide = yield* generateFrom(yield* createWiderSnapshot(savesDir), 51966);
+
+      expect(wide.clubs.length).toBeGreaterThan(narrow.clubs.length);
+      deepStrictEqual(subsetOf(wide, narrow), narrow);
+    }),
+  );
+
+  it.effect("reproduces the narrower world exactly when one nation's scope widens", () =>
+    Effect.gen(function* () {
+      // The other shape: the same nation, a deeper League Scope Option. England's top division is
+      // a strict subset of England's full pyramid, down to every player's attributes.
+      const narrow = yield* generateFrom(yield* createDefaultSnapshot(savesDir), 51966);
+      const wide = yield* generateFrom(yield* createPyramidSnapshot(savesDir), 51966);
+
+      expect(wide.clubs.length).toBeGreaterThan(narrow.clubs.length);
+      deepStrictEqual(subsetOf(wide, narrow), narrow);
+    }),
+  );
+
+  it.effect("gives a competition the same clubs whether it is loaded alone or beside others", () =>
+    Effect.gen(function* () {
+      // The same property stated per entity, and the direct reading of "no generated value is
+      // computed from a count, a length, or a position in an iteration over what is being
+      // generated": `comp_eng_1`'s twenty clubs cannot know what else the save loaded.
+      const alone = yield* generateFrom(yield* createDefaultSnapshot(savesDir), 7);
+      const beside = yield* generateFrom(yield* createRegionalPlusEnglandSnapshot(savesDir), 7);
+
+      const english = (world: World) =>
+        world.clubs.filter((club) => (club as { id: string }).id.startsWith("club_eng_1_"));
+      expect(english(alone)).toHaveLength(20);
+      deepStrictEqual(english(beside), english(alone));
+    }),
+  );
+});
+
+describe("a club belongs to a real place", () => {
+  it.effect("gives every club a hometown, and lets two clubs share one", () =>
+    Effect.gen(function* () {
+      const world = yield* generateFrom(yield* createDefaultSnapshot(savesDir), 4242);
+      const cityIds = world.clubs.map((club) => (club as { cityId: string }).cityId);
+
+      // Set at every Simulation Depth and never null: a club without a home town is a club that
+      // cannot be placed.
+      expect(cityIds.every((id) => typeof id === "string" && id.length > 0)).toBe(true);
+      // Collisions are the point, not a defect — two clubs in one large city is what real football
+      // looks like, and avoiding them would mean dealing from a pool, which is the one construction
+      // that breaks the superset property.
+      expect(new Set(cityIds).size).toBeLessThan(cityIds.length);
+    }),
+  );
+
+  it.effect("gives every club a named ground with a capacity", () =>
+    Effect.gen(function* () {
+      const world = yield* generateFrom(yield* createDefaultSnapshot(savesDir), 4242);
+      for (const club of world.clubs as ReadonlyArray<{
+        stadiumName: string;
+        stadiumCapacity: number;
+      }>) {
+        expect(club.stadiumName.length).toBeGreaterThan(0);
+        expect(club.stadiumCapacity).toBeGreaterThan(0);
+      }
     }),
   );
 });

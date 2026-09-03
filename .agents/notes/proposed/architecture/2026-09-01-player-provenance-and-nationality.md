@@ -41,7 +41,7 @@ national teams ship, this decision reopens, and the migration is additive.
 ### Birthplace is a nullable city reference
 
 `players` gains a nullable `birth_city_id` referencing the cities table
-[ticket 03 established](2026-09-01-world-catalogue-and-canonical-ids.md). Free text is not an option: a
+[ticket 03 established](../../implemented/architecture/2026-09-01-world-catalogue-and-canonical-ids.md). Free text is not an option: a
 city name stored as a player attribute is a display name used as data, which `contentPack.ts` forbids
 and which ticket 03 spent an entire decision removing.
 

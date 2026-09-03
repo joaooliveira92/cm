@@ -5,16 +5,21 @@ import { createSeededRng, deriveId, deriveSeed } from "@cm-clone/game-engine";
 import {
   BASE_CONTENT_PACK,
   CITIES,
-  LEAGUE_CLUBS,
-  canonicalClubId,
-  displayName,
   LEAGUE_SETUP_INDEX,
   NATION_CODES,
+  NATION_PROFILES,
   canonicalCityId,
+  canonicalClubId,
   canonicalNationId,
-  type ResolvedWorld,
+  drawHometown,
+  drawStadiumCapacity,
+  drawStadiumName,
+  statureTiersFor,
   generateSquad,
+  nationCodeFromId,
+  type ClubStrength,
   type GeneratedPlayer,
+  type ResolvedWorld,
 } from "@cm-clone/shared";
 
 /**
@@ -132,48 +137,72 @@ export const generateWorld = ({ worldSeed, referenceYear, snapshotId, world }: W
         VALUES (${entrant.cupCompetitionId}, ${entrant.sourceCompetitionId})`;
     }
 
-    for (const [ordinal, statureTier] of LEAGUE_CLUBS.entries()) {
-      // The canonical id is the club's identity and its seed's only key, so a change of content
-      // pack renames the club and regenerates nothing.
-      const clubId = ClubId.make(canonicalClubId("ENG", ordinal + 1));
-      const clubSeed = deriveSeed(worldSeed, "club", clubId);
+    // One club per slot of every competition's club count. Nothing here reads a running counter,
+    // a collection length, or a position in an iteration over the clubs being generated: a club is
+    // a pure function of its own canonical id and the world seed. That is what buys the superset
+    // property — the same seed under a broader selection reproduces the narrower world exactly and
+    // adds to it — and it is the property a single `index` variable would silently destroy.
+    for (const competition of world.competitions) {
+      if (competition.clubCount === null) continue;
+      const nationCode = competition.nationId === null ? null : nationCodeFromId(competition.nationId);
+      if (nationCode === null) continue;
 
-      // `clubs.name` is vestigial: nothing reads it, every display name resolves through the pack
-      // in the main process's `displayNames` seam, and the column is dropped when clubs are
-      // generated per competition. It is written here only so the column stays non-null until then.
-      const vestigialName = displayName(BASE_CONTENT_PACK, clubId);
-
-      yield* sql`INSERT INTO clubs (id, name, stature_tier, is_user_club, generation_seed)
-        VALUES (${clubId}, ${vestigialName}, ${statureTier}, 0, ${clubSeed})`;
-
-      const squad = generateSquad(statureTier, {
-        referenceYear,
-        randomForSlot: (slot) => createSeededRng(deriveSeed(clubSeed, "player", slot.index)),
+      // The competition's clubs and their seeds, both a function of the catalogue's `clubCount`
+      // alone, so this list is identical in every save that loads this competition.
+      const clubSeeds = Array.from({ length: competition.clubCount }, (_, slot) => {
+        const clubId = canonicalClubId(competition.id, slot + 1);
+        return { clubId, seed: deriveSeed(worldSeed, "club", clubId) };
       });
+      const statureTiers = statureTiersFor(clubSeeds);
 
-      for (const generated of squad) {
-        const playerSeed = deriveSeed(clubSeed, "player", generated.slot.index);
-        const playerId = PlayerId.make(deriveId(clubSeed, "player", generated.slot.index));
-        const a = generated.attributes;
+      for (const { clubId: id, seed: clubSeed } of clubSeeds) {
+        const clubId = ClubId.make(id);
+        // One stream per club, drawn from the club's own seed, so a club's home town and ground
+        // never depend on how many clubs were generated before it.
+        const clubRandom = createSeededRng(clubSeed);
 
-        yield* sql`INSERT INTO players (
-          id, club_id, first_name, last_name, date_of_birth, potential_ability,
-          passing, shooting, tackling, dribbling, heading, crossing, finishing, first_touch,
-          positioning, decisions, composure, determination, teamwork, flair, bravery, aggression,
-          pace, acceleration, stamina, strength, agility, natural_fitness, injury_proneness,
-          gk_handling, gk_reflexes, gk_aerial_reach, gk_command_of_area, gk_kicking,
-          squad_slot, generation_seed
-        ) VALUES (
-          ${playerId}, ${clubId}, ${generated.firstName}, ${generated.lastName}, ${generated.dateOfBirth}, ${generated.potentialAbility},
-          ${attr(a, "passing")}, ${attr(a, "shooting")}, ${attr(a, "tackling")}, ${attr(a, "dribbling")}, ${attr(a, "heading")}, ${attr(a, "crossing")}, ${attr(a, "finishing")}, ${attr(a, "firstTouch")},
-          ${attr(a, "positioning")}, ${attr(a, "decisions")}, ${attr(a, "composure")}, ${attr(a, "determination")}, ${attr(a, "teamwork")}, ${attr(a, "flair")}, ${attr(a, "bravery")}, ${attr(a, "aggression")},
-          ${attr(a, "pace")}, ${attr(a, "acceleration")}, ${attr(a, "stamina")}, ${attr(a, "strength")}, ${attr(a, "agility")}, ${attr(a, "naturalFitness")}, ${attr(a, "injuryProneness")},
-          ${attr(a, "gkHandling")}, ${attr(a, "gkReflexes")}, ${attr(a, "gkAerialReach")}, ${attr(a, "gkCommandOfArea")}, ${attr(a, "gkKicking")},
-          ${generated.slot.index}, ${playerSeed}
-        )`;
+        const strength: ClubStrength = {
+          tier: competition.tier,
+          nationPrior: NATION_PROFILES[nationCode].footballImportance,
+          statureTier: statureTiers.get(id) ?? "small",
+        };
+        const hometown = drawHometown(nationCode, clubRandom);
+        const stadiumName = drawStadiumName(clubRandom);
+        const stadiumCapacity = drawStadiumCapacity(strength, clubRandom);
 
-        for (const position of generated.positions) {
-          yield* sql`INSERT INTO player_positions (player_id, position, familiarity) VALUES (${playerId}, ${position.position}, ${position.familiarity})`;
+        yield* sql`INSERT INTO clubs (id, stature_tier, is_user_club, generation_seed, city_id, stadium_name, stadium_capacity)
+          VALUES (${clubId}, ${strength.statureTier}, 0, ${clubSeed},
+            ${canonicalCityId(hometown.nationCode, hometown.name)}, ${stadiumName}, ${stadiumCapacity})`;
+
+        const squad = generateSquad(strength, {
+          referenceYear,
+          randomForSlot: (slot) => createSeededRng(deriveSeed(clubSeed, "player", slot.index)),
+        });
+
+        for (const generated of squad) {
+          const playerSeed = deriveSeed(clubSeed, "player", generated.slot.index);
+          const playerId = PlayerId.make(deriveId(clubSeed, "player", generated.slot.index));
+          const a = generated.attributes;
+
+          yield* sql`INSERT INTO players (
+            id, club_id, first_name, last_name, date_of_birth, potential_ability,
+            passing, shooting, tackling, dribbling, heading, crossing, finishing, first_touch,
+            positioning, decisions, composure, determination, teamwork, flair, bravery, aggression,
+            pace, acceleration, stamina, strength, agility, natural_fitness, injury_proneness,
+            gk_handling, gk_reflexes, gk_aerial_reach, gk_command_of_area, gk_kicking,
+            squad_slot, generation_seed
+          ) VALUES (
+            ${playerId}, ${clubId}, ${generated.firstName}, ${generated.lastName}, ${generated.dateOfBirth}, ${generated.potentialAbility},
+            ${attr(a, "passing")}, ${attr(a, "shooting")}, ${attr(a, "tackling")}, ${attr(a, "dribbling")}, ${attr(a, "heading")}, ${attr(a, "crossing")}, ${attr(a, "finishing")}, ${attr(a, "firstTouch")},
+            ${attr(a, "positioning")}, ${attr(a, "decisions")}, ${attr(a, "composure")}, ${attr(a, "determination")}, ${attr(a, "teamwork")}, ${attr(a, "flair")}, ${attr(a, "bravery")}, ${attr(a, "aggression")},
+            ${attr(a, "pace")}, ${attr(a, "acceleration")}, ${attr(a, "stamina")}, ${attr(a, "strength")}, ${attr(a, "agility")}, ${attr(a, "naturalFitness")}, ${attr(a, "injuryProneness")},
+            ${attr(a, "gkHandling")}, ${attr(a, "gkReflexes")}, ${attr(a, "gkAerialReach")}, ${attr(a, "gkCommandOfArea")}, ${attr(a, "gkKicking")},
+            ${generated.slot.index}, ${playerSeed}
+          )`;
+
+          for (const position of generated.positions) {
+            yield* sql`INSERT INTO player_positions (player_id, position, familiarity) VALUES (${playerId}, ${position.position}, ${position.familiarity})`;
+          }
         }
       }
     }

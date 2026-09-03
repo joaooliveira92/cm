@@ -47,10 +47,13 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 );`,
   `CREATE TABLE \`clubs\` (
 	\`id\` text PRIMARY KEY NOT NULL,
-	\`name\` text NOT NULL,
 	\`stature_tier\` text NOT NULL,
 	\`is_user_club\` integer DEFAULT 0 NOT NULL,
 	\`generation_seed\` integer NOT NULL,
+	\`city_id\` text NOT NULL,
+	\`stadium_name\` text NOT NULL,
+	\`stadium_capacity\` integer NOT NULL,
+	FOREIGN KEY (\`city_id\`) REFERENCES \`cities\`(\`id\`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT "clubs_stature_tier" CHECK(stature_tier IN ('big','mid','small')),
 	CONSTRAINT "clubs_is_user_club" CHECK(is_user_club IN (0,1)),
 	CONSTRAINT "clubs_generation_seed_range" CHECK(generation_seed BETWEEN 0 AND 4294967295)
@@ -157,6 +160,19 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 );`,
   `CREATE TABLE \`nations\` (
 	\`id\` text PRIMARY KEY NOT NULL
+);`,
+  `CREATE TABLE \`news_message_state\` (
+	\`stream_type\` text NOT NULL,
+	\`stream_id\` text NOT NULL,
+	\`seq\` integer NOT NULL,
+	\`read\` integer DEFAULT 0 NOT NULL,
+	\`archived\` integer DEFAULT 0 NOT NULL,
+	\`flagged\` integer DEFAULT 0 NOT NULL,
+	\`updated_at\` text DEFAULT (datetime('now')) NOT NULL,
+	PRIMARY KEY(\`stream_type\`, \`stream_id\`, \`seq\`),
+	CONSTRAINT "news_message_state_read" CHECK(read IN (0,1)),
+	CONSTRAINT "news_message_state_archived" CHECK(archived IN (0,1)),
+	CONSTRAINT "news_message_state_flagged" CHECK(flagged IN (0,1))
 );`,
   `CREATE TABLE \`player_fitness\` (
 	\`player_id\` text PRIMARY KEY NOT NULL,

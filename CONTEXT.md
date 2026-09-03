@@ -273,7 +273,7 @@ Nations and Cities are the real-world foundation the simulation depends on, and 
 data it carries. Clubs, players, staff, and stadiums are generated; club and competition display names
 are replaceable Content Pack entries. See
 [real geography with replaceable identities](.agents/notes/implemented/architecture/2026-09-01-real-geography-with-replaceable-identities.md)
-and [the world catalogue](.agents/notes/proposed/architecture/2026-09-01-world-catalogue-and-canonical-ids.md).
+and [the world catalogue](.agents/notes/implemented/architecture/2026-09-01-world-catalogue-and-canonical-ids.md).
 _Avoid_: Country (fine informally; Nation is the term the catalogue and the screen use)
 
 **City**:
@@ -372,11 +372,12 @@ Scope Options, and dependency edges, identified by a **fingerprint**. Every pers
 and preset carries that fingerprint, and one captured against a different catalogue is refused
 rather than migrated by guessing at renamed Competitions.
 
-> **Generation boundary, as of 2026-09-02.** World generation is handed a snapshot's identifier and
+> **Generation boundary, as of 2026-09-03.** World generation is handed a snapshot's identifier and
 > **re-resolves its Selection Intents** against the Setup Catalogue, refusing a fingerprint mismatch
 > rather than trusting the Effective Selection the snapshot recorded — the snapshot's recorded
-> selection is display and audit data, never a generation input. The screen's job still ends at
-> producing the snapshot. See
+> selection is display and audit data, never a generation input. It then materialises what that
+> re-resolution produced: every Competition in the Effective Selection, and one Club per slot of
+> each Competition's club count. The screen's job still ends at producing the snapshot. See
 > [League and Nation Selection](.agents/notes/implemented/feature/2026-08-31-league-and-nation-selection.md)
 > and [generation reads the snapshot](.agents/notes/proposed/architecture/2026-09-02-generation-reads-the-snapshot.md).
 
@@ -511,12 +512,9 @@ _Avoid_: Offer (fine as an informal synonym in prose, not as the event/command n
 
 **Transfer Inbox**:
 The Bid queue on the Transfer market screen: incoming Bids for this club's players and the status of
-Bids this club has made. This is the only thing "inbox" means in the project. There is no news feed,
-message screen, or notification centre, and onboarding ticket 05 decided there will not be one in v1.
-What changed on each Calendar advance comes back on `AdvanceCalendarResult` and is surfaced by the
-screen that owns the state.
-_Avoid_: Inbox unqualified, News, Messages (the seed doc `docs/game-onboarding.md` uses "inbox" for a
-news feed; that meaning is not this project's)
+Bids this club has made. Distinct from the News Inbox, which is a career record and never a queue of
+decisions; the two share a word and nothing else.
+_Avoid_: Inbox unqualified (the word alone is now ambiguous — say which one)
 
 ### Staff
 
@@ -789,9 +787,26 @@ cross-Decider reactions) never go through the RpcGroup at all; they're invoked d
 since only the renderer needs the IPC boundary.
 _Avoid_: API, endpoint (Rpc method is the term; there is no HTTP layer)
 
+**News Message**:
+One career event read as a message: a subject, a body, a Category, and a priority, derived on read
+from a single row of the `events` log. Never stored — the message *is* the event, and its identity is
+that event's coordinates (`"<stream_type>:<stream_id>:<seq>"`), so a message id can never name
+something that does not exist. Only whether the manager has read, flagged, or archived it is
+persisted, because that is a fact about the person rather than about the world.
+_Avoid_: Notification (nothing is pushed and nothing interrupts), Alert, Message unqualified
+
+**News Inbox**:
+The screen listing every News Message newest-first, with filters, whole-inbox counts, and a message
+pane. A Read model in this glossary's sense — a query shape over the Season stream and the human
+club's stream, not a table. It is a career record, not a work queue: nothing in it waits on the
+manager, because every AI action still resolves inside the command that triggers it. Distinct from
+the Transfer Inbox, which is the Bid queue on the Transfer market screen.
+_Avoid_: News feed, Message centre, Notification centre
+
 **Read model**:
 A named query shape the RpcGroup's queries serve, computed from authoritative tables at read time
-(`squad_view`, `league_table`, `transfer_inbox`, `match_day_timeline`, `season_summary`). None of them
+(`squad_view`, `league_table`, `transfer_inbox`, `match_day_timeline`, `season_summary`, and the
+News Inbox). None of them
 is a table, and derived values that ADR-0001 fixed as computed-on-read (Position Rating, Overall
 Rating, Transfer Value) are computed at query time from stored primitives rather than persisted a
 second time. A read model is materialised into a table only when its query stays O(world) after the

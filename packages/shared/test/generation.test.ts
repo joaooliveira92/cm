@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "@cm-clone/game-engine";
 import { SQUAD_SLOTS, generatePlayer, generateSquad, type RandomSource } from "../src/generation.js";
+import type { ClubStrength } from "../src/clubGeneration.js";
+
+const MID_TABLE: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" };
 
 const context = (seed: number, referenceYear = 2026) => ({
-  statureTier: "mid" as const,
+  strength: MID_TABLE,
   random: createSeededRng(seed),
   referenceYear,
 });
@@ -43,7 +46,7 @@ describe("generateSquad", () => {
     createSeededRng(worldSeed * 1000 + slot.index);
 
   it("fills every declared squad slot", () => {
-    const squad = generateSquad("mid", { referenceYear: 2026, randomForSlot: randomForSlot(7) });
+    const squad = generateSquad(MID_TABLE, { referenceYear: 2026, randomForSlot: randomForSlot(7) });
     expect(squad).toHaveLength(SQUAD_SLOTS.length);
     expect(squad.map((player) => player.slot.position)).toEqual(
       SQUAD_SLOTS.map((slot) => slot.position),
@@ -51,8 +54,8 @@ describe("generateSquad", () => {
   });
 
   it("is identical for identical slot seeds", () => {
-    const a = generateSquad("mid", { referenceYear: 2026, randomForSlot: randomForSlot(7) });
-    const b = generateSquad("mid", { referenceYear: 2026, randomForSlot: randomForSlot(7) });
+    const a = generateSquad(MID_TABLE, { referenceYear: 2026, randomForSlot: randomForSlot(7) });
+    const b = generateSquad(MID_TABLE, { referenceYear: 2026, randomForSlot: randomForSlot(7) });
     expect(a).toEqual(b);
   });
 
@@ -60,8 +63,8 @@ describe("generateSquad", () => {
     // The property the whole seed-derivation scheme exists for: a player is a function of their
     // own slot seed alone, never of a stream their neighbours advanced. Without it, inserting one
     // player shifts every player after them.
-    const base = generateSquad("mid", { referenceYear: 2026, randomForSlot: randomForSlot(7) });
-    const perturbed = generateSquad("mid", {
+    const base = generateSquad(MID_TABLE, { referenceYear: 2026, randomForSlot: randomForSlot(7) });
+    const perturbed = generateSquad(MID_TABLE, {
       referenceYear: 2026,
       randomForSlot: (slot) =>
         slot.index === 3 ? createSeededRng(123456) : randomForSlot(7)(slot),

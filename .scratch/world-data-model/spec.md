@@ -240,7 +240,7 @@ log stops recording. None of the five named read models becomes a table.
   catalogue. **Nations are unconditional referent rows and thin, cities are curated real geography
   resolved per activated nation, no stadium table, and the canonical-id rule lands everywhere at
   once — `clubs.name` deleted, competition names moved to the pack, one underscore id convention.**
-  See [Agent Note](../../.agents/notes/proposed/architecture/2026-09-01-world-catalogue-and-canonical-ids.md).
+  See [Agent Note](../../.agents/notes/implemented/architecture/2026-09-01-world-catalogue-and-canonical-ids.md).
   The city-scoping half of that gist is superseded by the geography decision below, which widened
   `cities` to unconditional; everything else in it stands.
 

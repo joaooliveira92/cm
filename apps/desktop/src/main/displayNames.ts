@@ -1,4 +1,10 @@
-import { BASE_CONTENT_PACK, displayName, type ContentPack, type LocaleTag } from "@cm-clone/shared";
+import {
+  BASE_CONTENT_PACK,
+  displayName,
+  packCoverageGaps,
+  type ContentPack,
+  type LocaleTag,
+} from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 
@@ -72,4 +78,38 @@ export const savePack = Effect.gen(function* () {
 export const displayNames = Effect.gen(function* () {
   const pack = yield* savePack;
   return (id: string): string => resolveDisplayName(pack, id);
+});
+
+/**
+ * Reports the ids this save uses that its pack cannot name.
+ *
+ * Resolution never fails, so without this an incomplete pack is invisible until a raw
+ * `club_eng_2_11` appears on a screen and someone notices. Opening a save under a pack that has
+ * lost — or never had — coverage of its ids is therefore a *reported* condition: logged once, with
+ * the count and a sample, rather than silently degrading.
+ *
+ * It reads the ids actually on disk rather than the catalogue's whole key space, because what
+ * matters is what this save will try to display.
+ */
+export const reportPackCoverage = Effect.gen(function* () {
+  const sql = yield* SqlClient;
+  const pack = yield* savePack;
+  const clubs = yield* sql<{ id: string }>`SELECT id FROM clubs ORDER BY id`;
+  const competitions = yield* sql<{ id: string }>`SELECT id FROM competitions ORDER BY id`;
+
+  const gaps = packCoverageGaps(pack, [
+    ...competitions.map((row) => row.id),
+    ...clubs.map((row) => row.id),
+  ]);
+  if (gaps.length > 0) {
+    yield* Effect.logWarning("content pack does not name every id in this save").pipe(
+      Effect.annotateLogs({
+        contentPackId: pack.id,
+        contentPackVersion: pack.version,
+        unnamedCount: gaps.length,
+        unnamedSample: gaps.slice(0, 5),
+      }),
+    );
+  }
+  return gaps;
 });

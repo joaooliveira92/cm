@@ -58,6 +58,16 @@ export const NATION_CODES = ["ENG", "ESP", "PRT", "FRA", "DEU", "BRA", "AND", "I
 export const canonicalNationId = (code: NationCode): string => `nation_${code.toLowerCase()}`;
 
 /**
+ * The reverse leg, for a caller holding a persisted `nations.id` that needs the profile behind it.
+ *
+ * Returns `null` for an id no member of `NATION_CODES` mints — a competition owned by a
+ * confederation branch rather than a territory has no nation, and inventing one here would be a
+ * worse answer than saying so.
+ */
+export const nationCodeFromId = (nationId: string): NationCode | null =>
+  NATION_CODES.find((code) => canonicalNationId(code) === nationId) ?? null;
+
+/**
  * A Nation's tactical leaning. Weights, not rules: they nudge the distribution an archetype is
  * drawn from, and are dominated by the individual player's own draw.
  */

@@ -15,6 +15,7 @@ export * from "./managerPillars.js";
 export * from "./nations.js";
 export * from "./cities.js";
 export * from "./contentPack.js";
+export * from "./clubGeneration.js";
 export * from "./resolvedWorld.js";
 export * from "./leagueSetup.js";
 export * from "./leagueSelection.js";

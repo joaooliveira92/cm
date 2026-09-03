@@ -1,6 +1,8 @@
+import { canonicalClubId } from "./contentPack.js";
 import {
   CUP_ENTRANTS,
   EXCHANGE_LINKS,
+  allCompetitions,
   competitionIndex,
   type CompetitionKind,
   type CupEntrant,
@@ -54,6 +56,22 @@ export interface ResolvedWorld {
 
 /** A Competition that owns no clubs of its own draws its field from its entrant sources. */
 const ownsClubs = (kind: CompetitionKind): boolean => kind === "league" || kind === "reserve";
+
+/**
+ * Every club id the catalogue implies, whatever any one save loads.
+ *
+ * The key space a content pack has to name, derived from the same `clubCount` values generation
+ * mints against rather than listed a second time — the two cannot drift because there is only one
+ * of them.
+ */
+export const catalogueClubIds = (index: LeagueSetupIndex): readonly string[] =>
+  allCompetitions(index)
+    .filter((competition) => ownsClubs(competition.kind))
+    .flatMap((competition) =>
+      Array.from({ length: competition.clubCount }, (_, slot) =>
+        canonicalClubId(competition.id, slot + 1),
+      ),
+    );
 
 /**
  * Turns an Effective Selection into the rows a save records.

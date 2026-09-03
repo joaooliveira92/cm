@@ -262,16 +262,46 @@ export const competitionEntrants = sqliteTable(
   (table) => [primaryKey({ columns: [table.cupCompetitionId, table.sourceCompetitionId] })],
 );
 
+/**
+ * A club: an identifier plus attributes, and no name.
+ *
+ * There is no `name` column. A club's display name is the content pack's, resolved on read in the
+ * main process, so the same generated world can run under fictional, licensed, or localized names;
+ * a name written into the row at generation time is a name that save could never be re-read under a
+ * different pack.
+ *
+ * There is no competition column either. A club's membership is its participant row for the current
+ * season, and its generated home is that row for season 1 — exactly and permanently. A copy here
+ * would be a second home for one fact, drifting at the rollover, which is the only moment
+ * membership changes. Note that a club's *id* names the competition it was generated in and keeps
+ * naming it after promotion: an id is an identity, not a description.
+ *
+ * No column here is Simulation Depth-conditional. Depth's whole footprint on disk is the presence
+ * or absence of the rows that hang *beneath* a club — squads, contracts, fitness, tactics — so a
+ * `results-only` club still has a hometown and a ground.
+ */
 export const clubs = sqliteTable(
   "clubs",
   {
+    /** Canonical id, minted from the club's competition and its ordinal within it
+     *  (`club_eng_1_07`), by `canonicalClubId` in `packages/shared`. */
     id: text("id").primaryKey(),
-    name: text("name").notNull(),
     statureTier: text("stature_tier").notNull(),
     isUserClub: integer("is_user_club").notNull().default(0),
     /** The child seed this club was generated from. Kept per-row so a single club can be
      *  regenerated in place without replaying the whole world (see `generationManifest`). */
     generationSeed: integer("generation_seed").notNull(),
+    /** The club's home town. Two clubs may share one — no constraint forbids it, because two clubs
+     *  in one large city is what real football looks like rather than a defect. */
+    cityId: text("city_id")
+      .notNull()
+      .references(() => cities.id),
+    /** The ground, generated. There is no stadium entity: a table would buy ground-sharing and a
+     *  city parent distinct from the club's own, and nothing in MVP reads either. It stays cheap to
+     *  add later precisely because nothing joins to it yet. */
+    stadiumName: text("stadium_name").notNull(),
+    /** Display only in MVP — no system reads it as a constraint on anything. */
+    stadiumCapacity: integer("stadium_capacity").notNull(),
   },
   () => [
     check("clubs_stature_tier", oneOf("stature_tier", ["big", "mid", "small"])),
@@ -625,5 +655,38 @@ export const bids = sqliteTable(
       "bids_status",
       oneOf("status", ["pending", "countered", "accepted", "rejected", "withdrawn"]),
     ),
+  ],
+);
+
+/**
+ * The News Inbox's only writable state.
+ *
+ * A news message is a projection over the `events` log (see `newsProjection.ts` in
+ * `@cm-clone/shared`), so the message itself is never stored — storing it would give one fact two
+ * sources that can disagree. What the log cannot answer is whether the manager has read, archived,
+ * or flagged a message, and that is user state rather than simulation state.
+ *
+ * The primary key is the event's own coordinates, which is what makes a row here unable to name a
+ * message that does not exist. The table is empty in a fresh save and gains a row only when the
+ * manager first acts on a message, so an inbox that is only ever read costs nothing on disk.
+ */
+export const newsMessageState = sqliteTable(
+  "news_message_state",
+  {
+    streamType: text("stream_type").notNull(),
+    streamId: text("stream_id").notNull(),
+    seq: integer("seq").notNull(),
+    read: integer("read").notNull().default(0),
+    archived: integer("archived").notNull().default(0),
+    flagged: integer("flagged").notNull().default(0),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (table) => [
+    primaryKey({ columns: [table.streamType, table.streamId, table.seq] }),
+    check("news_message_state_read", sql`read IN (0,1)`),
+    check("news_message_state_archived", sql`archived IN (0,1)`),
+    check("news_message_state_flagged", sql`flagged IN (0,1)`),
   ],
 );

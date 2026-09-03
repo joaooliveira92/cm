@@ -70,28 +70,29 @@ export const BASE_CONTENT_PACK: ContentPack = {
     comp_uefa_champions: { "*": "European Champions Tournament" },
     comp_conmebol_champions: { "*": "South American Champions Tournament" },
 
-    // Clubs — the twenty the generator materializes today, in `comp_eng_1`. The rest of the
-    // catalogue's club ids are unnamed until generation mints them (see `packCoverageGaps`).
-    club_eng_01: { "*": "Castlemere United" },
-    club_eng_02: { "*": "Northgate Athletic" },
-    club_eng_03: { "*": "Vantage Rovers" },
-    club_eng_04: { "*": "Ashford Wanderers" },
-    club_eng_05: { "*": "Brackenfield Town" },
-    club_eng_06: { "*": "Duncaster City" },
-    club_eng_07: { "*": "Elmsworth FC" },
-    club_eng_08: { "*": "Fenwick Albion" },
-    club_eng_09: { "*": "Greymoor United" },
-    club_eng_10: { "*": "Harrowgate Villa" },
-    club_eng_11: { "*": "Ironbridge Rangers" },
-    club_eng_12: { "*": "Kestrel Park" },
-    club_eng_13: { "*": "Lowmoor Athletic" },
-    club_eng_14: { "*": "Millbrook Town" },
-    club_eng_15: { "*": "Norwood Forest" },
-    club_eng_16: { "*": "Oakfield United" },
-    club_eng_17: { "*": "Pinehaven Rovers" },
-    club_eng_18: { "*": "Quayside FC" },
-    club_eng_19: { "*": "Ridgeway Town" },
-    club_eng_20: { "*": "Southmere Albion" },
+    // Clubs — the twenty of `comp_eng_1`. The rest of the key space the catalogue's `clubCount`
+    // values imply is unnamed, and shows as raw ids until it is authored (see `packCoverageGaps`
+    // and `catalogueClubIds`).
+    club_eng_1_01: { "*": "Castlemere United" },
+    club_eng_1_02: { "*": "Northgate Athletic" },
+    club_eng_1_03: { "*": "Vantage Rovers" },
+    club_eng_1_04: { "*": "Ashford Wanderers" },
+    club_eng_1_05: { "*": "Brackenfield Town" },
+    club_eng_1_06: { "*": "Duncaster City" },
+    club_eng_1_07: { "*": "Elmsworth FC" },
+    club_eng_1_08: { "*": "Fenwick Albion" },
+    club_eng_1_09: { "*": "Greymoor United" },
+    club_eng_1_10: { "*": "Harrowgate Villa" },
+    club_eng_1_11: { "*": "Ironbridge Rangers" },
+    club_eng_1_12: { "*": "Kestrel Park" },
+    club_eng_1_13: { "*": "Lowmoor Athletic" },
+    club_eng_1_14: { "*": "Millbrook Town" },
+    club_eng_1_15: { "*": "Norwood Forest" },
+    club_eng_1_16: { "*": "Oakfield United" },
+    club_eng_1_17: { "*": "Pinehaven Rovers" },
+    club_eng_1_18: { "*": "Quayside FC" },
+    club_eng_1_19: { "*": "Ridgeway Town" },
+    club_eng_1_20: { "*": "Southmere Albion" },
   },
 };
 
@@ -160,14 +161,23 @@ export const packCoverageGaps = (
 };
 
 /**
- * Canonical club ids, one per Nation that ships club content, numbered within the Nation.
+ * Canonical club ids, minted from the club's competition and its ordinal within it: the seventh
+ * club of `comp_eng_1` is `club_eng_1_07`.
  *
- * The number is an address, not a ranking: `club_eng_01` is not "England's best club". Sorting or
- * seeding off the ordinal would make the id meaningful, which is exactly what a canonical id must
- * not be.
+ * The number is an address, not a ranking: `club_eng_1_07` is not "the seventh best club in the
+ * English first division". Sorting or seeding off the ordinal would make the id meaningful, which
+ * is exactly what a canonical id must not be.
+ *
+ * Nothing new enters the catalogue to support this — a competition's `clubCount` already fixes the
+ * ordinal range — so a content-pack author can enumerate the whole key space mechanically rather
+ * than hand-maintaining a second copy of it.
+ *
+ * Promotion moves a club out of the competition its id names, so `club_eng_2_03` can end up in the
+ * first division. That is correct: an id is an identity, not a description, and rewriting it on
+ * promotion would break every foreign key, transfer record, and scouting row pointing at it.
  */
-export const canonicalClubId = (nation: NationCode, ordinal: number): CanonicalId =>
-  `club_${nation.toLowerCase()}_${String(ordinal).padStart(2, "0")}`;
+export const canonicalClubId = (competitionId: CanonicalId, ordinal: number): CanonicalId =>
+  `club_${competitionId.replace(/^comp_/, "")}_${String(ordinal).padStart(2, "0")}`;
 
 export const canonicalCompetitionId = (nation: NationCode, slug: string): CanonicalId =>
   `comp_${nation.toLowerCase()}_${slug}`;

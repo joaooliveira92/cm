@@ -47,3 +47,28 @@ export const createRegionalSnapshot = (userDataDir: string): Effect.Effect<Snaps
       source: "user",
     }),
   ]);
+
+/** England's whole pyramid — the *widened scope option* shape of the superset property, as opposed
+ *  to `createWiderSnapshot`'s added nation. */
+export const createPyramidSnapshot = (userDataDir: string): Effect.Effect<SnapshotId> =>
+  createSnapshotFor(userDataDir, [
+    new NationSelectionIntentPayload({
+      nationId: NationId.make("nation_eng"),
+      mode: "playable",
+      scopeOptionId: ScopeOptionId.make("scope_eng_pyramid"),
+      source: "user",
+    }),
+  ]);
+
+/** England's top division beside Spain's regional pyramid: England's own competitions are
+ *  unchanged, but a great deal else is loaded around them. */
+export const createRegionalPlusEnglandSnapshot = (userDataDir: string): Effect.Effect<SnapshotId> =>
+  createSnapshotFor(userDataDir, [
+    ...DEFAULT_CAREER_INTENTS,
+    new NationSelectionIntentPayload({
+      nationId: NationId.make("nation_esp"),
+      mode: "playable",
+      scopeOptionId: ScopeOptionId.make("scope_esp_regional"),
+      source: "user",
+    }),
+  ]);

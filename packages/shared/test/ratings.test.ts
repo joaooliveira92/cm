@@ -3,6 +3,9 @@ import { positionRating, overallRating } from "../src/ratings.js";
 import { createSeededRng } from "@cm-clone/game-engine";
 import { generatePlayer, generateSquad } from "../src/generation.js";
 import type { PlayerAttributes } from "../src/positions.js";
+import type { ClubStrength } from "../src/clubGeneration.js";
+
+const MID_TABLE: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" };
 
 const maxedOutfieldAttributes: PlayerAttributes = {
   passing: 20,
@@ -53,7 +56,7 @@ describe("overallRating", () => {
 });
 
 const playerAt = (position: Parameters<typeof generatePlayer>[0], seed: number) =>
-  generatePlayer(position, { statureTier: "mid", referenceYear: 2026, random: createSeededRng(seed) });
+  generatePlayer(position, { strength: MID_TABLE, referenceYear: 2026, random: createSeededRng(seed) });
 
 describe("generation", () => {
   it("never generates goalkeeping attributes for an outfield player", () => {
@@ -67,7 +70,7 @@ describe("generation", () => {
   });
 
   it("fills every Position with enough depth for a matchday squad", () => {
-    const squad = generateSquad("mid", {
+    const squad = generateSquad(MID_TABLE, {
       referenceYear: 2026,
       randomForSlot: (slot) => createSeededRng(6000 + slot.index),
     });
