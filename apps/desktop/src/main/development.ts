@@ -3,11 +3,13 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import {
   ALL_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
+  coachModifier,
   developPlayer,
   type Category,
   type PlayerAttributes,
 } from "@cm-clone/shared";
 import { appendStreamEvents, nextStreamSeq } from "./decider.js";
+import { loadCoachQuality } from "./staff.js";
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
 
 const CLUB_STREAM = "club";
@@ -58,6 +60,12 @@ const developClubPlayers = (clubId: ClubId, seasonNumber: number) =>
     );
     if (rows.length === 0) return;
 
+    // A club with no coach — every AI club, and any club nobody has managed — develops on the
+    // unmodified baseline. `coachModifier` is floor-anchored at 1.0, so having a coach is never
+    // worse than having none.
+    const coachQuality = yield* loadCoachQuality(clubId);
+    const coachMultiplier = coachQuality === null ? 1 : coachModifier(coachQuality);
+
     const developed = rows.map((row) => {
       const attributes = Object.fromEntries(
         [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map((attribute) => [attribute, row[attribute] ?? undefined]),
@@ -67,6 +75,7 @@ const developClubPlayers = (clubId: ClubId, seasonNumber: number) =>
         ageFromDateOfBirth(row.dateOfBirth),
         row.potentialAbility,
         row.focus ?? undefined,
+        coachMultiplier,
       );
       return { playerId: row.id, attributes: next };
     });

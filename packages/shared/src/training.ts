@@ -39,23 +39,41 @@ export const developPlayer = (
   age: number,
   potentialAbility: number,
   focus?: Category,
+  /**
+   * The club coach's multiplier on the passive baseline — 1 for a club with no coach, which is
+   * every AI club. It scales the baseline and never `TRAINING_FOCUS_MULTIPLIER`, which Technical
+   * Coaching owns: partitioning the two terms is what keeps two multipliers off one number, and
+   * `coachModifier` is floor-anchored at 1.0 so a poor coach is never worse than no coach.
+   */
+  coachMultiplier = 1,
 ): PlayerAttributes => {
+  const baseline = PLAYER_DEVELOPMENT_FRACTION * coachMultiplier;
   const next = { ...attributes } as PlayerAttributes;
 
-  const step = (attribute: Attribute | HiddenAttribute, current: number, fraction: number): number =>
-    Math.round(current + (attributeCeilingOn20Scale(attribute, age, potentialAbility) - current) * fraction);
+  const step = (attribute: Attribute | HiddenAttribute, current: number, fraction: number): number => {
+    const ceiling = attributeCeilingOn20Scale(attribute, age, potentialAbility);
+    const moved = current + (ceiling - current) * fraction;
+    // Never past the ceiling, in either direction. The fraction was below 1 for the whole life of
+    // this function — 0.65, or 0.975 focused — so undershooting was guaranteed and the clamp was
+    // implicit. A coach multiplier on the baseline can push the focused fraction above 1, at which
+    // point an unclamped step overshoots the ceiling and can leave the 1-20 attribute range
+    // entirely. Clamping here keeps the "self-clamps at the ceiling" promise true for any fraction.
+    return Math.round(
+      Math.min(Math.max(moved, Math.min(current, ceiling)), Math.max(current, ceiling)),
+    );
+  };
 
   for (const attribute of ALL_ATTRIBUTES) {
     const current = next[attribute];
     if (current === undefined) continue;
     const focused = focus !== undefined && CATEGORY_ATTRIBUTES[focus].includes(attribute);
-    next[attribute] = step(attribute, current, focused ? PLAYER_DEVELOPMENT_FRACTION * TRAINING_FOCUS_MULTIPLIER : PLAYER_DEVELOPMENT_FRACTION);
+    next[attribute] = step(attribute, current, focused ? baseline * TRAINING_FOCUS_MULTIPLIER : baseline);
   }
 
   for (const attribute of HIDDEN_ATTRIBUTES) {
     const current = next[attribute];
     if (current === undefined) continue;
-    next[attribute] = step(attribute, current, PLAYER_DEVELOPMENT_FRACTION);
+    next[attribute] = step(attribute, current, baseline);
   }
 
   return next;

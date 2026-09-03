@@ -1,4 +1,4 @@
-import { SaveArchivedError, type SaveId } from "@cm-clone/contracts";
+import { SaveArchivedError, type ClubId, type SaveId } from "@cm-clone/contracts";
 import type { ArchivedCause, ManagerOutcome } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -40,4 +40,18 @@ export const assertSaveNotArchived = (saveId: SaveId) =>
     if (managerStatus.archivedCause !== null) {
       return yield* new SaveArchivedError({ saveId, cause: managerStatus.archivedCause });
     }
+  });
+
+/**
+ * Everything that stops belonging to the manager when they leave a club.
+ *
+ * Staff exist for a club that is or has been human-managed; once the manager is gone, nobody reads
+ * either binding, so the rows go with them. Re-deriving them on a later return costs nothing and
+ * yields the same people, because they are a function of the world seed and the club's canonical
+ * id — never of arrival time or career history.
+ */
+export const releaseClubStaff = (clubId: ClubId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    yield* sql`DELETE FROM staff WHERE club_id = ${clubId}`;
   });

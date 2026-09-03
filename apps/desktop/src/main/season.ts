@@ -32,7 +32,7 @@ import { assignAiTactics, pickBestFormationTactic, runAiTransferWindow } from ".
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
 import { developPlayersForSeason } from "./development.js";
 import { readGenerationManifest } from "./worldGeneration.js";
-import { assertSaveNotArchived, loadManagerStatus } from "./managerStatus.js";
+import { assertSaveNotArchived, loadManagerStatus, releaseClubStaff } from "./managerStatus.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
 import { expireContractsForSeason } from "./transfers.js";
@@ -489,6 +489,7 @@ const judgeSeasonEnd = (
     // in `advanceCalendar` rejects first) and un-archiving is not a transition the domain has.
     if (outcome === "sacked") {
       yield* sql`UPDATE manager_status SET consecutive_misses = ${consecutiveMisses}, archived_cause = 'sacked', last_outcome = ${outcome} WHERE id = 1`;
+      yield* releaseClubStaff(objective.clubId);
     } else {
       yield* sql`UPDATE manager_status SET consecutive_misses = ${consecutiveMisses}, last_outcome = ${outcome} WHERE id = 1`;
     }
@@ -634,6 +635,8 @@ export const retireManager = (savesDir: string, saveId: SaveId) =>
             { tag: "ManagerRetired", payload: { seasonNumber: row.seasonNumber } },
           ]);
           yield* sql`UPDATE manager_status SET archived_cause = 'retired' WHERE id = 1`;
+          const userClub = yield* loadUserClub;
+          yield* releaseClubStaff(userClub.id);
         }),
       );
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),

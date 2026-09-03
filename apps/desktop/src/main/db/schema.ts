@@ -328,6 +328,46 @@ export const competitionParticipants = sqliteTable(
   ],
 );
 
+/**
+ * The human club's backroom — one coach and N scouts, and nothing else.
+ *
+ * **A row exists only for a club that is or has been human-managed**, at any Simulation Depth. AI
+ * clubs have none, and the reason is not row cost (a handful per club is noise against 400k
+ * players) but that neither binding reads one: AI clubs never scout, and AI players develop
+ * unmodified. There is no depth branch anywhere in the staff model.
+ *
+ * Written by `commitCareer`, never by world generation, so staff cost generation nothing. The rows
+ * are a deterministic function of the world seed and the club's canonical id, so taking the same
+ * club at two points in one career yields identical rows; leaving the club deletes them, and
+ * retaking it derives the same people again.
+ *
+ * One generic `quality` column rather than the reference material's coaching specialisms: one
+ * binding per role means one number, and specialism columns would be dead. `name` is stored
+ * directly and is not the identifier — the players' treatment, not the clubs' — because the
+ * canonical-id rule exists for licensing and staff are generated fiction.
+ *
+ * No wage, no contract, no candidate pool: `Contract` and `Wage Budget` stay player-to-club
+ * concepts, and a hiring market would reopen both bindings.
+ */
+export const staff = sqliteTable(
+  "staff",
+  {
+    id: text("id").primaryKey(),
+    clubId: text("club_id")
+      .notNull()
+      .references(() => clubs.id),
+    role: text("role").notNull(),
+    /** Static, on the 1-20 player attribute scale. No staff development and no ageing curve: a
+     *  second development curve buys nothing when the value it moves is read by one formula. */
+    quality: integer("quality").notNull(),
+    name: text("name").notNull(),
+  },
+  () => [
+    check("staff_role", oneOf("role", ["coach", "scout"])),
+    check("staff_quality", sql`quality BETWEEN 1 AND 20`),
+  ],
+);
+
 export const clubs = sqliteTable(
   "clubs",
   {

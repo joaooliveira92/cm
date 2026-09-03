@@ -293,6 +293,16 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	CONSTRAINT "season_current_matchday" CHECK(current_matchday BETWEEN 0 AND 38),
 	CONSTRAINT "season_phase" CHECK(phase IN ('pre_season','in_season','mid_window_open','season_complete'))
 );`,
+  `CREATE TABLE \`staff\` (
+	\`id\` text PRIMARY KEY NOT NULL,
+	\`club_id\` text NOT NULL,
+	\`role\` text NOT NULL,
+	\`quality\` integer NOT NULL,
+	\`name\` text NOT NULL,
+	FOREIGN KEY (\`club_id\`) REFERENCES \`clubs\`(\`id\`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "staff_role" CHECK(role IN ('coach','scout')),
+	CONSTRAINT "staff_quality" CHECK(quality BETWEEN 1 AND 20)
+);`,
   `CREATE TABLE \`tactic_slots\` (
 	\`club_id\` text NOT NULL,
 	\`slot_index\` integer NOT NULL,

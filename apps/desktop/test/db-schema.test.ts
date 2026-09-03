@@ -21,6 +21,7 @@ describe("generated DDL", () => {
         "competition_links",
         "competition_entrants",
         "competition_participants",
+        "staff",
         "clubs",
         "players",
         "player_positions",
@@ -86,6 +87,22 @@ describe("generated DDL", () => {
     expect(citiesBlock).toMatch(
       /`cities` \(\n\t`id` text PRIMARY KEY NOT NULL,\n\t`nation_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`population_band` text NOT NULL,\n\tFOREIGN KEY \(`nation_id`\) REFERENCES `nations`\(`id`\) ON UPDATE no action ON DELETE no action,\n\tCONSTRAINT "cities_population_band" CHECK\(population_band IN \('major','large','mid','small'\)\)\n\);/,
     );
+  });
+
+  it("constrains a staff member to a role and a legal quality", () => {
+    const ddl = MIGRATION_STATEMENTS.join("\n");
+    expect(ddl).toContain("CONSTRAINT \"staff_role\" CHECK(role IN ('coach','scout'))");
+    expect(ddl).toContain("CONSTRAINT \"staff_quality\" CHECK(quality BETWEEN 1 AND 20)");
+
+    const block = ddl.slice(
+      ddl.indexOf("CREATE TABLE `staff`"),
+      ddl.indexOf(");", ddl.indexOf("CREATE TABLE `staff`")) + 2,
+    );
+    // No wage, no contract, no hiring path: staff are a property of the club, not a market.
+    expect(block).not.toContain("wage");
+    expect(block).not.toContain("contract");
+    // And no Simulation Depth branch — a row exists for a human-managed club, at any depth.
+    expect(block).not.toContain("depth");
   });
 
   it("puts membership and the frozen standing on one row, with no header above it", () => {

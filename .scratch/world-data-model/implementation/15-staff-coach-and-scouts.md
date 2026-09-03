@@ -33,7 +33,7 @@ which is an ordinary empty result rather than a failure.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/schema.ts` and the regenerated DDL,
 `apps/desktop/src/main/saves.ts` (`commitCareer`), `apps/desktop/src/main/managerStatus.ts` (leaving
@@ -41,16 +41,48 @@ a club), `apps/desktop/src/main/development.ts`, `packages/contracts/src/schemas
 `apps/desktop/test/development.test.ts`, `apps/desktop/test/retireManager.test.ts`,
 `apps/desktop/test/db-schema.test.ts`.
 
-- [ ] `staff` exists with a surrogate id, a club reference, a role, a quality, and a directly stored
+- [x] `staff` exists with a surrogate id, a club reference, a role, a quality, and a directly stored
       name, with `CHECK role IN ('coach','scout')` and `CHECK quality BETWEEN 1 AND 20`.
-- [ ] Committing a career writes exactly one coach row and exactly N scout rows for the chosen club,
+- [x] Committing a career writes exactly one coach row and exactly N scout rows for the chosen club,
       N from the Stature Tier table; world generation writes no staff row at all, and a test asserts
       a provisional world has none.
-- [ ] Staff rows are a deterministic function of the world seed and the club's canonical id, and a
+- [x] Staff rows are a deterministic function of the world seed and the club's canonical id, and a
       test asserts taking the same club at two points in one career produces identical rows.
-- [ ] The coach's modifier on the passive development baseline is at least 1.0 across the whole 1-20
+- [x] The coach's modifier on the passive development baseline is at least 1.0 across the whole 1-20
       domain, and a test asserts it over the full domain.
-- [ ] Leaving a club deletes that club's staff rows.
-- [ ] Nothing in the schema or the code gives a staff member a wage, a contract, or a hiring path,
+- [x] Leaving a club deletes that club's staff rows.
+- [x] Nothing in the schema or the code gives a staff member a wage, a contract, or a hiring path,
       and no code path branches on Simulation Depth to decide whether staff exist.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] `pnpm check:all` is green at this commit.
+
+## Comments
+
+**The ticket and its Agent Note disagree about what happens when a manager leaves, and the ticket
+wins.** The note says staff rows are "retained rather than deleted — harmless, and the derivation
+then never runs twice for one club". The ticket says twice that leaving deletes them, and the spec
+agrees ("a manager leaving a club deletes that club's staff, assignments, and progress"), because
+the scouting-persistence decision that came later needs assignments and progress to go with them.
+Deletion is safe for the identical-rows criterion precisely because the rows are derived: re-taking a
+club re-derives the same people *and the same ids*, which `staff.test.ts` asserts by deleting and
+re-materialising. The note is not promoted here, so its text still says "retained"; whoever promotes
+it after ticket 16 should reconcile that sentence.
+
+**A coach on the baseline can push the focused fraction above 1, and that was a live bug.** The
+development step read `current + (ceiling - current) * fraction` with no clamp, which is safe only
+while `fraction < 1` — true for the whole life of that function (0.65, or 0.975 focused). A good
+coach makes the focused fraction ~1.35, so the step overshoots the ceiling and can leave the 1-20
+attribute range entirely, which surfaced as an intermittent `CHECK` violation in
+`development.test.ts` on the world seeds that produced a strong enough coach. `developPlayer` now
+clamps at the ceiling in both directions, which makes its documented "self-clamps at the ceiling"
+promise true for any fraction rather than only for the ones it happened to be called with.
+
+**Scout headcount and the quality bands are new numbers.** The note refers to "the existing tier-count
+table" for scout headcount, but no such table existed — scouting has never shipped. `SCOUT_HEADCOUNT`
+(4/3/2) and the per-tier quality bands are invented here and uncalibrated. The tests assert the
+*relationships* — a bigger club has more scouts, every quality is legal, the coach modifier never
+drops below 1 — rather than the numbers, so retuning is free.
+
+**The Agent Note stays `proposed/`.** Only one of its two bindings is built: the coach scales the
+passive baseline, but a scout's quality does not yet drive anything, because `scouting_assignments`
+and `scouting_progress` are ticket 16. Its criteria about accrual being strictly positive and
+assignment naming a specific scout are unmet by construction.

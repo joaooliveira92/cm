@@ -26,6 +26,7 @@ import {
   validatePillarDistribution,
 } from "@cm-clone/shared";
 import { reportPackCoverage } from "./displayNames.js";
+import { materialiseStaff } from "./staff.js";
 import { createSchema } from "./schema.js";
 import { startSeason } from "./season.js";
 import { deriveSeed } from "@cm-clone/game-engine";
@@ -235,6 +236,7 @@ export const commitCareer = (
         return yield* new ClubNotFoundError({ id: selectedClubId });
       }
       yield* sql`UPDATE clubs SET is_user_club = 1 WHERE id = ${selectedClubId}`;
+      yield* materialiseStaff(selectedClubId);
       yield* sql`INSERT INTO manager_profile (id, manager_name, archetype_origin, tactical_acumen, influence, regimen, technical_coaching)
         VALUES (1, ${managerProfile.managerName}, ${managerProfile.archetypeOrigin},
           ${managerProfile.pillars.tacticalAcumen}, ${managerProfile.pillars.influence}, ${managerProfile.pillars.regimen}, ${managerProfile.pillars.technicalCoaching})`;

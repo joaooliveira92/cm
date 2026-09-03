@@ -5,7 +5,8 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { developPlayer, type Category } from "@cm-clone/shared";
+import { coachModifier, developPlayer, type Category } from "@cm-clone/shared";
+import { loadCoachQuality } from "../src/main/staff.js";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
@@ -94,10 +95,18 @@ it.effect("advancing to SeasonConcluded develops every user-club player determin
 
     const before = yield* withSave(save.id, loadSquadPlayers(clubId));
     const meta = yield* loadPlayerMeta(save.id, clubId);
+    // The user's club has a coach, so its baseline is scaled. Read the multiplier from the same
+    // place development does rather than hard-coding one — the coach's quality is derived from the
+    // world seed, so it differs per save.
+    const coach = yield* withSave(save.id, loadCoachQuality(clubId));
+    const coachMultiplier = coach === null ? 1 : coachModifier(coach);
     const expected = new Map(
       before.map((player) => {
         const m = meta.get(player.id)!;
-        return [player.id, developPlayer(player.attributes, player.age, m.potentialAbility, m.focus ?? undefined)];
+        return [
+          player.id,
+          developPlayer(player.attributes, player.age, m.potentialAbility, m.focus ?? undefined, coachMultiplier),
+        ];
       }),
     );
 
@@ -205,8 +214,10 @@ it.effect("a focused Category's growth step is multiplied at SeasonConcluded whi
     const m = meta.get(targetPlayerId)!;
 
     // Focus Technical: the expected next-season set applies the multiplier only to Technical.
-    const expectedFocused = developPlayer(beforePlayer.attributes, beforePlayer.age, m.potentialAbility, "technical");
-    const expectedUnmodified = developPlayer(beforePlayer.attributes, beforePlayer.age, m.potentialAbility, undefined);
+    const coach = yield* withSave(save.id, loadCoachQuality(clubId));
+    const coachMultiplier = coach === null ? 1 : coachModifier(coach);
+    const expectedFocused = developPlayer(beforePlayer.attributes, beforePlayer.age, m.potentialAbility, "technical", coachMultiplier);
+    const expectedUnmodified = developPlayer(beforePlayer.attributes, beforePlayer.age, m.potentialAbility, undefined, coachMultiplier);
 
     yield* setTrainingFocus(savesDir, save.id, targetPlayerId, "technical");
     yield* advanceToSeasonEnd(save.id);
