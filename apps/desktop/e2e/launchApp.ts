@@ -13,6 +13,43 @@ export const launchApp = (userDataDir: string) =>
     env: { ...process.env, ELECTRON_RUN_AS_NODE: "" },
   });
 
+/**
+ * How long a well-behaved app gets to shut itself down before it is killed.
+ *
+ * `app.close()` waits on the renderer, so a wedged one never resolves and
+ * Playwright's worker teardown — which has no timeout of its own — stalls for a
+ * further 30s per test and then fails the *worker*, burying the real failure
+ * under "Worker teardown timeout". A test that already failed must not also cost
+ * the run half a minute of silence.
+ */
+const CLOSE_TIMEOUT_MS = 5_000;
+
+/** Close the app, or kill it if it will not go. */
+export const closeOrKill = async (app: ElectronApplication): Promise<void> => {
+  const pid = app.process().pid;
+  let timer: NodeJS.Timeout | undefined;
+  const closed = await Promise.race([
+    app.close().then(
+      () => true,
+      () => false,
+    ),
+    new Promise<boolean>((resolve) => {
+      timer = setTimeout(() => resolve(false), CLOSE_TIMEOUT_MS);
+    }),
+  ]);
+  if (timer !== undefined) clearTimeout(timer);
+  if (closed || pid === undefined) return;
+
+  // SIGKILL rather than SIGTERM: the app is already not answering, and a
+  // surviving Electron process holds the temp userDataDir the fixture is about
+  // to remove.
+  try {
+    process.kill(pid, "SIGKILL");
+  } catch {
+    // Already gone between the race and the kill — nothing to clean up.
+  }
+};
+
 export interface LaunchFixtures {
   userDataDir: string;
   app: ElectronApplication;
@@ -90,7 +127,7 @@ export const test = base.extend<LaunchFixtures>({
   app: async ({ userDataDir }, use) => {
     const app = await launchApp(userDataDir);
     await use(app);
-    await app.close();
+    await closeOrKill(app);
   },
   window: async ({ app }, use) => {
     const page = await app.firstWindow();

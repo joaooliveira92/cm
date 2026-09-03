@@ -152,7 +152,9 @@ export const MainMenuScreen = () => {
   return (
     <RouteView screenId="mainMenu">
       <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-        <Header.Shell title={PRODUCT_TITLE} state={{ view: "menu" }} />
+        {/* The menu's identity block below is the page heading; the band only
+            names the window. */}
+        <Header.Shell title={PRODUCT_TITLE} titleAsHeading={false} state={{ view: "menu" }} />
 
         <div
           className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-y-auto px-6 lg:px-12"

@@ -1,7 +1,7 @@
+import type { BottomBarPlan } from "../chrome/bottom-bar/index.js";
 import { createContext } from "react";
 import type { ClubId, LeagueSelectionSnapshot } from "@cm-clone/contracts";
 import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
-import type { ReactNode } from "react";
 import type { ClubSelectionRecord } from "../create/clubSelection.js";
 import type { GenerationState } from "../create/generation.js";
 
@@ -33,8 +33,12 @@ export interface CreateSessionApi {
    *  records both halves, so a club can never be recorded against a world that is not the current
    *  one; `null` clears the pick. Outside a ready generation it is a no-op. */
   readonly selectClub: (club: { readonly clubId: ClubId; readonly clubName: string } | null) => void;
-  /** The content the current step wants rendered in the shell's bottom bar. */
-  readonly registerBottomBar: (content: ReactNode | null) => void;
+  /**
+   * The bar the current step wants, as a plan rather than as rendered markup:
+   * the shell decides where a control sits, so a step cannot invent its own
+   * footer layout. `null` restores the shell's own plan for the step.
+   */
+  readonly registerBottomBar: (plan: BottomBarPlan | null) => void;
 }
 
 /**

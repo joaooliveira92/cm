@@ -5,7 +5,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
 import { Outlet, useLocation } from "@tanstack/react-router";
 import { type ClubId, type LeagueSelectionSnapshot } from "@cm-clone/contracts";
@@ -13,7 +12,7 @@ import type { PillarDistribution } from "@cm-clone/shared";
 import { Effect, Result } from "effect";
 import { ClubSelectionScreen } from "../ClubSelectionScreen.js";
 import { CreationStep1 } from "../CreationStep1.js";
-import { LeagueSelectionScreen } from "../LeagueSelectionScreen.js";
+import { ActiveLeaguesScreen } from "../activeLeagues/ActiveLeaguesScreen.js";
 import {
   beginCareer,
   commitCareer,
@@ -21,10 +20,16 @@ import {
   discardCareer,
 } from "../rpc.js";
 import { Alert } from "../components/ui/alert.js";
-import { Button } from "../components/ui/button.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
 import { GenerationStatus } from "../create/GenerationStatus.js";
 import { Header } from "../chrome/header/index.js";
+import {
+  creationCancelButton,
+  describeCreationBottomBar,
+  ShellBottomBar,
+  withShellCancel,
+  type BottomBarPlan,
+} from "../chrome/bottom-bar/index.js";
 import {
   abandon,
   blockedReason,
@@ -109,6 +114,12 @@ const runAtEdge = <A, E>(
 const sumPillars = (pillars: PillarDistribution): number =>
   Object.values(pillars).reduce((total, value) => total + value, 0);
 
+/**
+ * Step 1. The Active Leagues setup screen replaced the League & Nation tree as the primary
+ * surface here; the tree is retained and reachable from inside it through Manage leagues. The
+ * step's contract with the rest of the flow is unchanged: Continue records the same
+ * `LeagueSelectionSnapshot` and lands the player on Step 2 · Manager.
+ */
 export const LeagueSelectionRouteContent = () => {
   const { update } = useCreateSession();
 
@@ -120,16 +131,13 @@ export const LeagueSelectionRouteContent = () => {
     [update],
   );
 
-  const handleBack = useCallback((): void => {
+  const handleCancel = useCallback((): void => {
     navigate({ type: "mainMenu" });
   }, []);
 
   return (
-    <RouteView screenId="createLeagues">
-      <LeagueSelectionScreen
-        onContinue={handleContinue}
-        onBack={handleBack}
-      />
+    <RouteView screenId="createLeagues" fill>
+      <ActiveLeaguesScreen onContinue={handleContinue} onCancel={handleCancel} />
     </RouteView>
   );
 };
@@ -216,8 +224,7 @@ export const StepThreeRouteContent = () => {
 
 export const CreateFlowLayout = () => {
   const [session, setSession] = useState<CreationSession>(createEmptySession);
-  const [bottomBarContent, setBottomBarContent] =
-    useState<ReactNode | null>(null);
+  const [registeredBar, setRegisteredBar] = useState<BottomBarPlan | null>(null);
   const sessionRef = useRef(session);
   const generationRunRef = useRef<Promise<void> | null>(null);
   const mountedRef = useRef(true);
@@ -333,8 +340,8 @@ export const CreateFlowLayout = () => {
   );
 
   const registerBottomBar = useCallback(
-    (content: ReactNode | null): void => {
-      setBottomBarContent(content);
+    (plan: BottomBarPlan | null): void => {
+      setRegisteredBar(plan);
     },
     [],
   );
@@ -465,7 +472,7 @@ export const CreateFlowLayout = () => {
   }, [step]);
 
   useEffect(() => {
-    setBottomBarContent(null);
+    setRegisteredBar(null);
   }, [step]);
 
   useEffect(
@@ -540,94 +547,30 @@ export const CreateFlowLayout = () => {
           )}
         </main>
 
-        <footer className="border-t border-border-subtle bg-surface px-4 py-3">
-          <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4">
-            {/* Cancel sits in the footer rather than the header band so the tab sequence runs in
-                task order — the step's own controls, then Cancel, then the step's primary action.
-                In the header it would have preceded everything on the screen. */}
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleCancel}
-            >
-              Cancel
-            </Button>
-
-            {bottomBarContent ?? (
-              <div className="flex gap-4">
-                {step === "1" && (
-                  <>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={handleBackToLeagues}
-                    >
-                      Back: Leagues
-                    </Button>
-
-                    <div>
-                      <Button
-                        type="button"
-                        onClick={handleGoToClubSelection}
-                        disabled={!managerStepComplete || !selectionReady}
-                        aria-describedby={
-                          blocked === null
-                            ? undefined
-                            : "generation-blocked-reason"
-                        }
-                      >
-                        Next: Select Club
-                      </Button>
-
-                      {blocked !== null && (
-                        <p
-                          id="generation-blocked-reason"
-                          className="mt-2 text-sm text-text-secondary"
-                        >
-                          {blocked}
-                        </p>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {step === "2" && (
-                  <div>
-                    <Button
-                      type="button"
-                      onClick={handleGoToReview}
-                      disabled={!selectionReady || !clubPicked}
-                      aria-describedby={
-                        clubPicked ? undefined : "club-selection-required-reason"
-                      }
-                    >
-                      Next: Review
-                    </Button>
-
-                    {!clubPicked && (
-                      <p
-                        id="club-selection-required-reason"
-                        className="mt-2 text-sm text-text-secondary"
-                      >
-                        Choose a club to continue.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {step === "3" && (
-                  <Button
-                    type="button"
-                    onClick={handleCreateCareer}
-                    disabled={session.commit === "committing"}
-                  >
-                    Create Career
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-        </footer>
+        {/* One bar, described rather than assembled: Cancel keeps its zone on
+            every step, the step's forward verb keeps its own, and the reason
+            row is always in the layout, so nothing under the pointer moves when
+            a step blocks or unblocks. A step that wants different controls
+            registers a different plan — never a different layout. */}
+        <ShellBottomBar
+          plan={
+            registeredBar === null
+              ? describeCreationBottomBar({
+                  step,
+                  generationBlockedReason: blocked,
+                  managerStepComplete,
+                  selectionReady,
+                  clubPicked,
+                  committing: session.commit === "committing",
+                  onCancel: handleCancel,
+                  onBackToLeagues: handleBackToLeagues,
+                  onGoToClubSelection: handleGoToClubSelection,
+                  onGoToReview: handleGoToReview,
+                  onCreateCareer: handleCreateCareer,
+                })
+              : withShellCancel(registeredBar, creationCancelButton(handleCancel))
+          }
+        />
       </div>
     </CreateSessionContext.Provider>
   );

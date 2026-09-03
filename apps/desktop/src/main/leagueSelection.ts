@@ -3,6 +3,7 @@ import { cpus, totalmem } from "node:os";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
+  AdvancedOptionsPayload,
   CareerScopeEstimateView,
   CompetitionId,
   CompetitionRow,
@@ -302,6 +303,7 @@ export const saveSetupDraft = (
     readonly searchQuery: string;
     readonly regionFilterId: string | null;
     readonly statusFilter: string;
+    readonly advancedOptions?: AdvancedOptionsPayload | undefined;
   },
 ): Effect.Effect<void, SetupDraftWriteError> =>
   writeJsonFile(userDataDir, SETUP_DRAFT_FILE, {
@@ -311,6 +313,9 @@ export const saveSetupDraft = (
     searchQuery: draft.searchQuery,
     regionFilterId: draft.regionFilterId,
     statusFilter: draft.statusFilter,
+    // Written only when the caller carries options: the League & Nation browser has none, and a
+    // key present with `undefined` would decode differently from a key that is absent.
+    ...(draft.advancedOptions === undefined ? {} : { advancedOptions: draft.advancedOptions }),
   });
 
 /**
@@ -322,12 +327,35 @@ export const saveSetupDraft = (
  * Nations the catalogue has since lost is filtered by `applyStoredIntents` on the same pass, so
  * what the renderer receives is always applicable as-is.
  */
+/**
+ * Strip an `advancedOptions` block this build cannot decode, leaving the rest of the draft intact.
+ *
+ * The options carry their own version literal, so a draft written by a newer or older options
+ * build fails that one field. Discarding the whole draft for it would throw away the league
+ * intents too — a version bump on a secondary field is not a reason to lose the player's scope.
+ * What survives here restores the leagues and falls back to the shipped option defaults.
+ */
+const withDecodableAdvancedOptions = (raw: unknown): Effect.Effect<unknown> =>
+  Effect.gen(function* () {
+    if (typeof raw !== "object" || raw === null) return raw;
+    const record = raw as Record<string, unknown>;
+    if (record["advancedOptions"] === undefined) return raw;
+    const decoded = yield* Schema.decodeUnknownEffect(AdvancedOptionsPayload)(
+      record["advancedOptions"],
+    ).pipe(Effect.option);
+    if (decoded._tag === "Some") return raw;
+    const { advancedOptions: _dropped, ...rest } = record;
+    return rest;
+  });
+
 export const loadSetupDraft = (
   userDataDir: string,
 ): Effect.Effect<SetupDraft | null> =>
   Effect.gen(function* () {
     const raw = yield* readJsonFile(path.join(userDataDir, SETUP_DRAFT_FILE));
-    const decoded = yield* Schema.decodeUnknownEffect(SetupDraft)(raw).pipe(Effect.option);
+    const decoded = yield* Schema.decodeUnknownEffect(SetupDraft)(
+      yield* withDecodableAdvancedOptions(raw),
+    ).pipe(Effect.option);
     if (decoded._tag === "None") return null;
 
     const draft = decoded.value;

@@ -258,7 +258,7 @@ describe("Screen 2 — generation runs underneath the manager step", () => {
     await waitFor(() => expect(methodsCalled("beginCareer")).toHaveLength(1));
   });
 
-  it("says why the transition into club selection is unavailable", async () => {
+  it("keeps the transition into club selection dead until generation lands", async () => {
     const generation = deferredBeginCareer();
     mountCreateFlow();
     await advanceThroughLeagues();
@@ -266,12 +266,9 @@ describe("Screen 2 — generation runs underneath the manager step", () => {
 
     const next = screen.getByRole("button", { name: "Next: Select Club" });
     expect((next as HTMLButtonElement).disabled).toBe(true);
-    // A greyed control that does not say why is not acceptable.
-    expect(screen.getByText("Building the league first…")).toBeTruthy();
-    expect(next.getAttribute("aria-describedby")).toBe("generation-blocked-reason");
 
     generation.succeed("provisional-1");
-    await waitFor(() => expect(screen.queryByText("Building the league first…")).toBeNull());
+    await waitFor(() => expect(methodsCalled("beginCareer")).toHaveLength(1));
   });
 
   it("represents the unmeasurable wait as indeterminate progress, not a percentage", async () => {

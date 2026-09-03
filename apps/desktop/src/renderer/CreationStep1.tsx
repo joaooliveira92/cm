@@ -39,17 +39,17 @@ const STEPS: ReadonlyArray<{
   title: string;
   description: string;
 }> = [
-  {
-    number: 1,
-    title: "Personal details",
-    description: "Name your career and manager",
-  },
-  {
-    number: 2,
-    title: "Manager identity",
-    description: "Choose your style and strengths",
-  },
-];
+    {
+      number: 1,
+      title: "Personal details",
+      description: "Name your career and manager",
+    },
+    {
+      number: 2,
+      title: "Manager identity",
+      description: "Choose your style and strengths",
+    },
+  ];
 
 const PILLAR_DISPLAY_NAMES: Readonly<Record<Pillar, string>> = {
   tacticalAcumen: "Tactical Acumen",
@@ -219,7 +219,7 @@ export const CreationStep1 = ({
                 stiffness: 300,
                 damping: 30,
               }}
-              className="relative overflow-hidden rounded-2xl border border-border-subtle bg-surface p-6 shadow-sm"
+              className="relative overflow-hidden rounded-md border border-border-subtle bg-surface p-6 shadow-sm"
             >
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
 
@@ -294,7 +294,7 @@ export const CreationStep1 = ({
                   </motion.div>
                 </div>
 
-                <div className="mt-8 flex justify-end border-t border-border-subtle pt-5">
+                {/* <div className="mt-8 flex justify-end border-t border-border-subtle pt-5">
                   <Button
                     type="button"
                     onClick={() => goToStep(2)}
@@ -304,7 +304,7 @@ export const CreationStep1 = ({
                     Continue
                     <span aria-hidden="true">→</span>
                   </Button>
-                </div>
+                </div> */}
               </div>
             </motion.section>
           ) : (
@@ -335,7 +335,7 @@ export const CreationStep1 = ({
                 </p>
               </div>
 
-              <div
+              {/* <div
                 className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
                 role="group"
                 aria-label="Manager archetype"
@@ -455,9 +455,9 @@ export const CreationStep1 = ({
                     </motion.div>
                   );
                 })}
-              </div>
+              </div> */}
 
-              <div className="overflow-hidden rounded-2xl border border-border-subtle bg-surface shadow-sm">
+              <div className="overflow-hidden rounded-md border border-border-subtle bg-surface shadow-sm">
                 <div className="flex flex-col gap-4 border-b border-border-subtle p-5 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h3 className="font-semibold text-text-primary">
@@ -470,13 +470,12 @@ export const CreationStep1 = ({
 
                   <motion.div
                     layout
-                    className={`rounded-xl border px-4 py-2 text-center ${
-                      pointsRemaining === 0
-                        ? "border-text-success/30 bg-text-success/10"
-                        : pointsRemaining > 0
-                          ? "border-text-warning/30 bg-text-warning/10"
-                          : "border-destructive/30 bg-destructive/10"
-                    }`}
+                    className={`rounded-xl border px-4 py-2 text-center ${pointsRemaining === 0
+                      ? "border-text-success/30 bg-text-success/10"
+                      : pointsRemaining > 0
+                        ? "border-text-warning/30 bg-text-warning/10"
+                        : "border-destructive/30 bg-destructive/10"
+                      }`}
                   >
                     <AnimatePresence mode="popLayout">
                       <motion.div
@@ -486,13 +485,12 @@ export const CreationStep1 = ({
                         exit={{ opacity: 0, y: 6 }}
                       >
                         <span
-                          className={`block text-lg font-bold tabular-nums ${
-                            pointsRemaining === 0
-                              ? "text-text-success"
-                              : pointsRemaining > 0
-                                ? "text-text-warning"
-                                : "text-destructive"
-                          }`}
+                          className={`block text-md font-bold tabular-nums ${pointsRemaining === 0
+                            ? "text-text-success"
+                            : pointsRemaining > 0
+                              ? "text-text-warning"
+                              : "text-destructive"
+                            }`}
                         >
                           {pointsRemaining === 0
                             ? "Ready"
@@ -588,11 +586,10 @@ export const CreationStep1 = ({
                                     y: 6,
                                     scale: 0.8,
                                   }}
-                                  className={`inline-block text-lg font-bold tabular-nums ${
-                                    isMinimum
-                                      ? "text-text-warning"
-                                      : "text-text-primary"
-                                  }`}
+                                  className={`inline-block text-lg font-bold tabular-nums ${isMinimum
+                                    ? "text-text-warning"
+                                    : "text-text-primary"
+                                    }`}
                                 >
                                   {value}
                                 </motion.span>
@@ -608,11 +605,10 @@ export const CreationStep1 = ({
                                   return (
                                     <motion.div
                                       key={index}
-                                      className={`h-2 flex-1 rounded-full ${
-                                        active
-                                          ? `bg-gradient-to-r ${PILLAR_ACCENTS[pillar]}`
-                                          : "bg-background"
-                                      }`}
+                                      className={`h-2 flex-1 rounded-full ${active
+                                        ? `bg-gradient-to-r ${PILLAR_ACCENTS[pillar]}`
+                                        : "bg-background"
+                                        }`}
                                       animate={{
                                         scaleY: active ? 1 : 0.65,
                                         opacity: active ? 1 : 0.5,
@@ -695,16 +691,7 @@ export const CreationStep1 = ({
                 )}
               </AnimatePresence>
 
-              <div className="flex justify-start border-t border-border-subtle pt-5">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => goToStep(1)}
-                >
-                  <span aria-hidden="true">←</span>
-                  Back to personal details
-                </Button>
-              </div>
+
             </motion.section>
           )}
         </AnimatePresence>
@@ -752,13 +739,12 @@ export const CreationStep1 = ({
                   aria-current={isActive ? "step" : undefined}
                 >
                   <motion.span
-                    className={`relative z-10 flex size-10 items-center justify-center rounded-full border text-sm font-bold transition-colors ${
-                      isActive
-                        ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                        : isComplete
-                          ? "border-primary bg-primary/15 text-primary"
-                          : "border-border-subtle bg-surface text-text-muted"
-                    }`}
+                    className={`relative z-10 flex size-10 items-center justify-center rounded-full border text-sm font-bold transition-colors ${isActive
+                      ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                      : isComplete
+                        ? "border-primary bg-primary/15 text-primary"
+                        : "border-border-subtle bg-surface text-text-muted"
+                      }`}
                     animate={{
                       scale: isActive ? 1.08 : 1,
                     }}
@@ -795,11 +781,10 @@ export const CreationStep1 = ({
                   </motion.span>
 
                   <span
-                    className={`mt-3 text-sm font-semibold ${
-                      isActive || isComplete
-                        ? "text-text-primary"
-                        : "text-text-muted"
-                    }`}
+                    className={`mt-3 text-sm font-semibold ${isActive || isComplete
+                      ? "text-text-primary"
+                      : "text-text-muted"
+                      }`}
                   >
                     {item.title}
                   </span>

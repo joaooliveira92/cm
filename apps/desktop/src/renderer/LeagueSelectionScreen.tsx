@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from "react";
+import { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type {
   LeagueSelectionSnapshot,
   LeagueSetupIndexView,
@@ -22,6 +22,12 @@ import { Card } from "./components/ui/card.js";
 import { Input } from "./components/ui/input.js";
 import { FOCUS_RING } from "./focus.js";
 import { CreateSessionContext } from "./router/createSessionContext.js";
+import {
+  describeLeagueSelectionBottomBar,
+  describeManageLeaguesBottomBar,
+  ShellBottomBar,
+  type BottomBarPlan,
+} from "./chrome/bottom-bar/index.js";
 import {
   blockingIssueRows,
   browserView,
@@ -56,18 +62,52 @@ export const ESTIMATE_DEBOUNCE_MS = 250;
 const runAtEdge = <A, E>(effect: Effect.Effect<A, E>): Promise<Result.Result<A, E>> =>
   Effect.runPromise(Effect.result(effect));
 
-export interface LeagueSelectionScreenProps {
+/**
+ * The step presentation: this screen *is* the League step, so it loads its own draft, submits the
+ * selection, and hands a snapshot to the creation flow.
+ */
+export interface LeagueSelectionStepProps {
+  readonly mode?: undefined;
   /** Called with the snapshot once `Continue` succeeds. The screen never navigates itself — the
    *  creation flow owns where the career goes next. */
   readonly onContinue: (snapshot: LeagueSelectionSnapshot) => void;
   readonly onBack: () => void;
 }
 
-export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScreenProps) => {
+/**
+ * The **Manage leagues** presentation: the same tree, opened *from* the Active Leagues setup
+ * screen for the full-pyramid and scope work the dense grid cannot express.
+ *
+ * Here the tree edits a working copy of the setup's own intents rather than a state of its own:
+ * it is seeded from `intents` when it opens and hands its intents back through `onApply` when it
+ * closes, so the two presentations cannot drift into disagreeing configurations. Nothing is
+ * submitted and no draft is loaded in this mode — the setup screen owns both.
+ */
+export interface LeagueSelectionManageProps {
+  readonly mode: "manage";
+  readonly intents: readonly NationSelectionIntentPayload[];
+  readonly onApply: (intents: readonly NationSelectionIntentPayload[]) => void;
+  readonly onCancel: () => void;
+}
+
+export type LeagueSelectionScreenProps =
+  | LeagueSelectionStepProps
+  | LeagueSelectionManageProps;
+
+export const LeagueSelectionScreen = (props: LeagueSelectionScreenProps) => {
+  const manage = props.mode === "manage" ? props : null;
+  const onContinue = manage === null ? props.onContinue : null;
+  const onBack = manage === null ? props.onBack : manage.onCancel;
   const [index, setIndex] = useState<LeagueSetupIndexView | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [state, dispatch] = useReducer(reduce, initialState(""));
   const [warningPrompt, setWarningPrompt] = useState(false);
+
+  // Read once, on mount, by the bootstrap effect. A ref rather than a dependency: reseeding the
+  // tree because the setup's intents changed underneath it would discard the edit in progress.
+  const manageIntentsRef = useRef<readonly NationSelectionIntentPayload[] | null>(
+    manage === null ? null : manage.intents,
+  );
 
   // The creation shell's bottom bar. `null` outside the shell (a standalone
   // render keeps the actions inline below the section); inside it, every render
@@ -87,6 +127,13 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
         return;
       }
       setIndex(outcome.success);
+
+      // Manage mode is a working copy of somebody else's intents: seeding it from a draft or a
+      // preset would silently replace the setup the player came here to edit.
+      if (manageIntentsRef.current !== null) {
+        dispatch({ type: "APPLY_INTENTS", intents: manageIntentsRef.current, notice: null });
+        return;
+      }
 
       const draft = await runAtEdge(loadSetupDraft());
       if (cancelled) return;
@@ -185,7 +232,7 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
         return;
       }
       dispatch({ type: "SUBMISSION_SETTLED", notice: null });
-      onContinue(outcome.success);
+      onContinue?.(outcome.success);
     })();
   }, [dispatch, onContinue, persistDraft, state.intents, state.submitting]);
 
@@ -216,33 +263,31 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
     index !== null &&
     index.nations.every((nation) => !nation.playableSupported || !nation.available);
 
-  // Memoized so the registration effect below only re-fires when the actual
-  // action state changes — a fresh JSX identity per render would re-register on
-  // every render and churn the shell's bottom bar state into an update loop.
-  const actionsNode: ReactNode = useMemo(
+  // The step describes its bar; the shell places the controls. Memoized so the
+  // registration effect below only re-fires when the described state actually
+  // changes — a fresh identity per render would churn the shell's state into an
+  // update loop.
+  const bottomBar: BottomBarPlan | null = useMemo(
     () =>
       index === null
         ? null
-        : noPlayableNations
-          ? (
-              <div className="flex w-full items-center justify-between gap-4">
-                <Button type="button" onClick={onBack} variant="secondary">
-                  Back
-                </Button>
-              </div>
-            )
-          : (
-              <LeagueSelectionActions
-                canContinue={canContinueNow(state)}
-                submitting={state.submitting}
-                stale={stale}
-                blockingCount={blocking.length}
-                onBack={handleBack}
-                onContinue={handleContinue}
-                onClearSelection={clearSelection}
-              />
-            ),
-    [blocking.length, handleBack, handleContinue, clearSelection, index, noPlayableNations, onBack, stale, state],
+        : manage !== null
+        ? describeManageLeaguesBottomBar({
+            onCancel: manage.onCancel,
+            onApply: () => manage.onApply(state.intents),
+            onClearSelection: clearSelection,
+          })
+        : describeLeagueSelectionBottomBar({
+            canContinue: canContinueNow(state),
+            submitting: state.submitting,
+            stale,
+            blockingCount: blocking.length,
+            noPlayableNations,
+            onBack: noPlayableNations ? onBack : handleBack,
+            onContinue: handleContinue,
+            onClearSelection: clearSelection,
+          }),
+    [blocking.length, handleBack, handleContinue, clearSelection, index, manage, noPlayableNations, onBack, stale, state],
   );
 
   // `registerBottomBar` is a stable `useCallback` in the shell, so this effect
@@ -250,9 +295,9 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
   const registerBottomBar = createApi?.registerBottomBar;
   useEffect(() => {
     if (registerBottomBar === undefined) return undefined;
-    registerBottomBar(actionsNode);
+    registerBottomBar(bottomBar);
     return () => registerBottomBar(null);
-  }, [actionsNode, registerBottomBar]);
+  }, [bottomBar, registerBottomBar]);
 
   if (loadError !== null) {
     return (
@@ -288,7 +333,7 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
     <section aria-labelledby="league-selection-heading" className="text-text-strong">
       <header>
         <h2 id="league-selection-heading" className="text-lg font-semibold">
-          Select Leagues
+          {manage === null ? "Select Leagues" : "Manage leagues"}
         </h2>
         <p className="text-sm text-text-secondary">
           Database: {index.databaseName}, version {index.databaseVersion}
@@ -516,43 +561,14 @@ export const LeagueSelectionScreen = ({ onContinue, onBack }: LeagueSelectionScr
         </Alert>
       )}
 
-      {/* Inside the creation shell the actions live in the bottom bar; a
-          standalone render keeps them here, beneath the section. */}
-      {createApi === null && (
-        <>
-          <div className="mt-6 flex gap-3">
-            <Button type="button" onClick={handleBack} variant="secondary">
-              Back
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => dispatch({ type: "CLEAR_SELECTION" })}
-            >
-              Clear Selection
-            </Button>
-            <Button
-              type="button"
-              onClick={handleContinue}
-              disabled={!canContinueNow(state)}
-              aria-describedby={canContinueNow(state) ? undefined : "continue-blocked-reason"}
-            >
-              {state.submitting ? "Continuing…" : "Continue"}
-            </Button>
-          </div>
-          {/* A greyed control that does not say why is not acceptable. */}
-          {!canContinueNow(state) && (
-            <p id="continue-blocked-reason" className="mt-2 text-sm text-text-secondary">
-              {state.submitting
-                ? "Creating your selection…"
-                : stale
-                  ? "Checking this selection…"
-                  : blocking.length > 0
-                    ? "Resolve the problems listed above to continue."
-                    : "Select at least one playable league to continue."}
-            </p>
-          )}
-        </>
+      {/* Inside the creation shell the actions live in the shell's bottom bar;
+          a standalone render puts the same described bar beneath the section,
+          so the two paths cannot drift into different layouts. */}
+      {createApi === null && bottomBar !== null && (
+        <ShellBottomBar
+          plan={bottomBar}
+          className="mt-6 flex min-h-20 w-full flex-col justify-center gap-1"
+        />
       )}
 
       {/* §17.1. Warnings are confirmed, not silently accepted — and the confirmation is bound to
@@ -621,62 +637,6 @@ const SummaryRow = ({ label, value }: { readonly label: string; readonly value: 
   </div>
 );
 
-/**
- * The Back / Clear Selection / Continue cluster for the creation shell's
- * bottom bar. Back sits at the bar's left edge and the forward verb at its
- * right, mirroring the step footer's leading-back / trailing-continue grammar.
- * The disabled-reason copy stays visually attached to the control it explains.
- */
-const LeagueSelectionActions = ({
-  canContinue,
-  submitting,
-  stale,
-  blockingCount,
-  onBack,
-  onContinue,
-  onClearSelection,
-}: {
-  readonly canContinue: boolean;
-  readonly submitting: boolean;
-  readonly stale: boolean;
-  readonly blockingCount: number;
-  readonly onBack: () => void;
-  readonly onContinue: () => void;
-  readonly onClearSelection: () => void;
-}) => (
-  <div className="flex w-full flex-col gap-2">
-    <div className="flex items-center justify-between gap-4">
-      <Button type="button" onClick={onBack} variant="secondary">
-        Back
-      </Button>
-      <div className="flex items-center gap-3">
-        <Button type="button" variant="secondary" onClick={onClearSelection}>
-          Clear Selection
-        </Button>
-        <Button
-          type="button"
-          onClick={onContinue}
-          disabled={!canContinue}
-          aria-describedby={canContinue ? undefined : "continue-blocked-reason"}
-        >
-          {submitting ? "Continuing…" : "Continue"}
-        </Button>
-      </div>
-    </div>
-    {/* A greyed control that does not say why is not acceptable. */}
-    {!canContinue && (
-      <p id="continue-blocked-reason" className="text-right text-sm text-text-secondary">
-        {submitting
-          ? "Creating your selection…"
-          : stale
-            ? "Checking this selection…"
-            : blockingCount > 0
-              ? "Resolve the problems listed above to continue."
-              : "Select at least one playable league to continue."}
-      </p>
-    )}
-  </div>
-);
 
 /**
  * One Nation row and its pyramid.

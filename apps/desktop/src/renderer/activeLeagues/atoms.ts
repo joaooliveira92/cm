@@ -59,6 +59,13 @@ export interface ActiveLeaguesValidation {
   readonly blockingMessages: readonly string[];
 }
 
+/** One league the catalogue offers that the current setup does not carry yet. */
+export interface AddableLeagueView {
+  readonly leagueId: string;
+  readonly leagueName: string;
+  readonly nationName: string;
+}
+
 /** The complete derived view the workspace and sidebar consume. */
 export interface ActiveLeaguesDerivedView {
   readonly rows: readonly GridRowView[];
@@ -69,6 +76,10 @@ export interface ActiveLeaguesDerivedView {
   readonly entityEstimate: ActiveLeaguesEntityEstimate;
   readonly processingCost: ProcessingCostReading;
   readonly recommendations: readonly LeagueRecommendation[];
+  /** The catalogue's leagues that are not active yet, so the add control offers a real choice
+   *  and a league already on the grid can never be added twice (the duplicate rail, at the
+   *  affordance rather than only in the reducer). */
+  readonly addableLeagues: readonly AddableLeagueView[];
   readonly validation: ActiveLeaguesValidation;
   readonly canContinue: boolean;
   /** True while the current selection has no fresh answer (nothing answered yet, or a newer
@@ -165,6 +176,27 @@ export const deriveActiveLeaguesView = (
           };
         });
 
+  // The catalogue minus what is already on the grid. Sorted by nation then league so the list
+  // reads the same on every render — an add control whose options reorder under the pointer is
+  // its own bug.
+  const activeIds = new Set(rows.map((row) => row.leagueId));
+  const addableLeagues: readonly AddableLeagueView[] = domainIndex.nations
+    .filter((nation) => nation.available)
+    .flatMap((nation) =>
+      nation.competitions
+        .filter((competition) => !activeIds.has(competition.id))
+        .map((competition) => ({
+          leagueId: competition.id,
+          leagueName: competition.name,
+          nationName: nation.name,
+        })),
+    )
+    .sort((a, b) =>
+      a.nationName === b.nationName
+        ? a.leagueName.localeCompare(b.leagueName)
+        : a.nationName.localeCompare(b.nationName),
+    );
+
   const blockingMessages = [
     ...(projection?.issues.filter((entry) => entry.level === "blocking").map((entry) => entry.message) ?? []),
     ...optionsValidation.issues
@@ -186,6 +218,7 @@ export const deriveActiveLeaguesView = (
     entityEstimate: consequences?.entityEstimate ?? EMPTY_ENTITY_ESTIMATE,
     processingCost: consequences?.processingCost ?? EMPTY_PROCESSING_COST,
     recommendations: consequences?.recommendations ?? [],
+    addableLeagues,
     validation: {
       valid,
       hasAtLeastOneActiveLeague: projection?.hasAtLeastOneActiveLeague ?? false,
@@ -220,6 +253,7 @@ export interface ActiveLeaguesAtoms {
   readonly entityEstimateAtom: Atom.Atom<ActiveLeaguesEntityEstimate>;
   readonly processingCostAtom: Atom.Atom<ProcessingCostReading>;
   readonly recommendationsAtom: Atom.Atom<readonly LeagueRecommendation[]>;
+  readonly addableLeaguesAtom: Atom.Atom<readonly AddableLeagueView[]>;
   readonly validationAtom: Atom.Atom<ActiveLeaguesValidation>;
   readonly canContinueAtom: Atom.Atom<boolean>;
   readonly staleAtom: Atom.Atom<boolean>;
@@ -252,6 +286,7 @@ export const createActiveLeaguesAtoms = (
     entityEstimateAtom: read((view) => view.entityEstimate),
     processingCostAtom: read((view) => view.processingCost),
     recommendationsAtom: read((view) => view.recommendations),
+    addableLeaguesAtom: read((view) => view.addableLeagues),
     validationAtom: read((view) => view.validation),
     canContinueAtom: read((view) => view.canContinue),
     staleAtom: read((view) => view.stale),

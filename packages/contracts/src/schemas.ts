@@ -879,6 +879,13 @@ export class SetupDraft extends Schema.Class<SetupDraft>("SetupDraft")({
   searchQuery: Schema.String,
   regionFilterId: Schema.NullOr(RegionId),
   statusFilter: Schema.String,
+  /**
+   * The Active Leagues setup's advanced options, carried at their own version. Optional because
+   * a draft written by the League & Nation browser has none, and because the options carry their
+   * *own* version literal: a draft from an older options build restores its league intents and
+   * falls back to the shipped defaults rather than being discarded whole.
+   */
+  advancedOptions: Schema.optional(AdvancedOptionsPayload),
 }) {}
 
 /** A user-saved preset (§13). Fingerprint-bound for the same reason the draft is. */

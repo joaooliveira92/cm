@@ -11,19 +11,29 @@
  * Presentation only. Nothing here is a domain figure; nothing here is derived from state.
  */
 
-/** The league table's CSS-Grid columns: emblem, identity, depth, recommendation, remove. */
+/**
+ * The league table's CSS-Grid columns: emblem, identity, depth, recommendation, remove.
+ *
+ * Below 960px the row *folds to two lines* rather than shrinking: only the first three columns
+ * are declared, so the recommendation and the remove control wrap onto a second line by ordinary
+ * auto-placement. Nothing is scaled down to fit, which is the point — the spec forbids shrinking a
+ * desktop control until it is unreadable.
+ */
 export const LEAGUE_GRID_TEMPLATE =
-  "[grid-template-columns:2rem_minmax(0,1fr)_9.5rem_minmax(0,1fr)_2rem]";
+  "[grid-template-columns:2rem_minmax(0,1fr)_9.5rem] min-[960px]:[grid-template-columns:2rem_minmax(0,1fr)_9.5rem_minmax(0,1fr)_2rem]";
 
-/** 32px — inside the spec's 30–34px band, shared by the header row and every body row. */
-export const LEAGUE_ROW_HEIGHT = "h-[32px]";
+/** 32px — inside the spec's 30–34px band, shared by the header row and every body row. A folded
+ *  (two-line) row is taller by definition, so the fixed height only applies from 960px up. */
+export const LEAGUE_ROW_HEIGHT = "min-h-[32px] min-[960px]:h-[32px]";
 
 /** 8px between columns; 3px between rows. */
 export const LEAGUE_COLUMN_GAP = "gap-x-2";
 export const LEAGUE_ROW_GAP = "gap-y-[3px]";
 
-/** 10–12px of control padding on the dense rows. */
-export const DENSE_CONTROL_PADDING = "px-2";
+/** 10–12px of control padding on the dense rows. Between 960 and 1279px the *nonessential*
+ *  horizontal padding yields so the columns keep their content; the full padding returns at
+ *  1280px, where there is room for it. */
+export const DENSE_CONTROL_PADDING = "px-1 xl:px-2";
 
 /** The remove button's hit target floor — never smaller than 30×30px. */
 export const REMOVE_TARGET_SIZE = "size-[30px]";
@@ -34,6 +44,7 @@ export const OPTION_ROW_HEIGHT = "min-h-[30px]";
 /** The sidebar's clamp: narrow and persistent, never wider than 22rem nor thinner than 18rem. */
 export const SIDEBAR_WIDTH = "[width:clamp(18rem,22vw,22rem)]";
 
-/** The screen frame: a flexible workspace beside the clamped sidebar, filling the viewport. */
+/** The screen frame: a flexible workspace beside the clamped sidebar, filling the viewport —
+ *  and a single column below 960px, where the sidebar moves into the workspace instead. */
 export const SCREEN_GRID_TEMPLATE =
-  "[grid-template-columns:minmax(0,1fr)_clamp(18rem,22vw,22rem)]";
+  "grid-cols-1 min-[960px]:[grid-template-columns:minmax(0,1fr)_clamp(18rem,22vw,22rem)]";

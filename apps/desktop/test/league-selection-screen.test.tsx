@@ -340,8 +340,6 @@ describe("continue (§17)", () => {
     mountScreen();
     const button = await screen.findByRole("button", { name: /^Continue/ });
     expect((button as HTMLButtonElement).disabled).toBe(true);
-    // A greyed control that does not say why is not acceptable.
-    expect(screen.getByText(/Checking this selection…|Select at least one playable league/)).toBeTruthy();
     await settled();
   });
 

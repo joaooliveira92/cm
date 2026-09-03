@@ -16,14 +16,27 @@ import type { HeaderState } from "./career-header-state.js";
 
 export interface ShellHeaderProps {
   readonly title: string;
+  /** False when the shell owns its own page heading. See `HeaderTitle`. */
+  readonly titleAsHeading?: boolean;
   readonly state: HeaderState;
   readonly leading?: ReactNode;
   readonly actions?: ReactNode;
 }
 
-export const ShellHeader = ({ title, state, leading, actions }: ShellHeaderProps) => (
+export const ShellHeader = ({
+  title,
+  titleAsHeading,
+  state,
+  leading,
+  actions,
+}: ShellHeaderProps) => (
   <header className="shrink-0 text-text-primary">
-    <AppTitleBar title={title} leading={leading} actions={actions} />
+    <AppTitleBar
+      title={title}
+      titleAsHeading={titleAsHeading}
+      leading={leading}
+      actions={actions}
+    />
     <div
       className="flex h-7 w-full items-center border-b border-border-subtle bg-bg-raised px-3"
       style={NO_DRAG}

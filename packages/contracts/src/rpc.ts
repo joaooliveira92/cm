@@ -1,6 +1,7 @@
 import { Schema } from "effect";
 import {
   AdvanceCalendarResult,
+  AdvancedOptionsPayload,
   BidderBidActionSchema,
   BidId,
   BidNotFoundError,
@@ -384,6 +385,9 @@ commitCareer: {
       searchQuery: Schema.String,
       regionFilterId: Schema.NullOr(Schema.String),
       statusFilter: Schema.String,
+      /** The Active Leagues setup's advanced options. Absent from a draft the League & Nation
+       *  browser writes, which has no advanced options to carry. */
+      advancedOptions: Schema.optional(AdvancedOptionsPayload),
     }),
     success: Schema.Void,
     error: SetupDraftWriteError,

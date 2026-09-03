@@ -5,6 +5,7 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { useMemo } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { GitBranch, Layers, Minus, Package, Sparkles, X } from "lucide-react";
 import type {
   SimulationDepth,
@@ -45,6 +46,9 @@ const DEPTH_LABELS: Readonly<Record<SimulationDepth, string>> = {
   standard: "Standard",
   "results-only": "Results only",
 };
+
+/** Restrained by construction: a short linear fade, never a spring. */
+const ROW_TRANSITION = { duration: 0.12, ease: "easeOut" } as const;
 
 const DEPTH_ORDER: readonly SimulationDepth[] = ["full", "standard", "results-only"];
 
@@ -123,6 +127,7 @@ export const LeagueGrid = ({
     [onChangeDepth, onRemove],
   );
 
+  const reducedMotion = useReducedMotion();
   const table = useReactTable<GridRowView>({
     data: rows as GridRowView[],
     columns: columns as ColumnDef<GridRowView, unknown>[],
@@ -154,20 +159,31 @@ export const LeagueGrid = ({
             ))}
           </div>
           <div role="rowgroup">
-            {rowModel.map((row) => (
-              <div
-                key={row.id}
-                role="row"
-                data-league-row={row.id}
-                className={`${GRID_ROW_CLASS} border-t border-panel-border`}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <div key={cell.id} role="cell" className="min-w-0">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </div>
-                ))}
-              </div>
-            ))}
+            {/* The only motion on the screen: a 120ms opacity fade as a row joins or leaves, and
+                a position-only layout transition for the rows that shift to fill the gap. No
+                entrance, no scale, no spring. Under `prefers-reduced-motion` every one of those
+                is switched off rather than merely shortened. */}
+            <AnimatePresence initial={false}>
+              {rowModel.map((row) => (
+                <motion.div
+                  key={row.id}
+                  layout={reducedMotion === true ? false : "position"}
+                  initial={reducedMotion === true ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={reducedMotion === true ? { opacity: 1 } : { opacity: 0 }}
+                  transition={reducedMotion === true ? { duration: 0 } : ROW_TRANSITION}
+                  role="row"
+                  data-league-row={row.id}
+                  className={`${GRID_ROW_CLASS} border-t border-panel-border`}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <div key={cell.id} role="cell" className="min-w-0">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </div>
+                  ))}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         </div>
       )}
@@ -264,6 +280,7 @@ const RemoveCell = ({
     size="icon"
     aria-label={removeAriaLabel(row)}
     title={removeAriaLabel(row)}
+    data-remove-league={row.leagueId}
     onClick={() => onRemove(row.leagueId)}
     className={REMOVE_TARGET_SIZE}
   >

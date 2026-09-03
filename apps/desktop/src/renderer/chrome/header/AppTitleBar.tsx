@@ -21,9 +21,17 @@ export interface AppTitleBarProps {
   readonly actions?: ReactNode;
   /** Rendered in place of the centred title — the career shell's club identity. */
   readonly identity?: ReactNode;
+  /** False when the shell owns its own page heading. See `HeaderTitle`. */
+  readonly titleAsHeading?: boolean;
 }
 
-export const AppTitleBar = ({ title, leading, actions, identity }: AppTitleBarProps) => (
+export const AppTitleBar = ({
+  title,
+  leading,
+  actions,
+  identity,
+  titleAsHeading = true,
+}: AppTitleBarProps) => (
   <div
     className={`relative flex h-11 w-full shrink-0 items-center justify-between gap-3 border-b border-border-subtle bg-bg-raised pr-3 select-none ${trafficLightInset()}`}
     style={DRAG}
@@ -33,7 +41,7 @@ export const AppTitleBar = ({ title, leading, actions, identity }: AppTitleBarPr
       {identity}
     </div>
 
-    {identity === undefined && <HeaderTitle title={title} />}
+    {identity === undefined && <HeaderTitle title={title} asHeading={titleAsHeading} />}
 
     <div className="flex shrink-0 items-center gap-2" style={NO_DRAG}>
       {actions}

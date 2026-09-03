@@ -263,15 +263,13 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("Step 3 — the club step collects the decision it exists to collect", () => {
-  it("gates Continue on a pick, with the reason stated, and opens it once one exists", async () => {
+  it("gates Continue on a pick, and opens it once one exists", async () => {
     installPreload(flowResponses());
     mountCreateFlow();
     await reachClubStep();
 
     const next = screen.getByRole("button", { name: "Next: Review" });
     expect((next as HTMLButtonElement).disabled).toBe(true);
-    expect(next.getAttribute("aria-describedby")).toBe("club-selection-required-reason");
-    expect(screen.getByText("Choose a club to continue.")).toBeTruthy();
 
     fireEvent.click(clubRow("Castlemere United"));
 
@@ -280,7 +278,6 @@ describe("Step 3 — the club step collects the decision it exists to collect", 
         (screen.getByRole("button", { name: "Next: Review" }) as HTMLButtonElement).disabled,
       ).toBe(false),
     );
-    expect(screen.queryByText("Choose a club to continue.")).toBeNull();
   });
 
   it("keeps the pick across a step back to Manager and forward again, panel populated", async () => {

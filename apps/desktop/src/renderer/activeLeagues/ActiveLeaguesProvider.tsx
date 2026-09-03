@@ -24,6 +24,7 @@ import {
   createActiveLeaguesAtoms,
   type ActiveLeaguesAtoms,
   type ActiveLeaguesValidation,
+  type AddableLeagueView,
   type GridRowView,
 } from "./atoms.js";
 import { applyIntent, initialState } from "./state.js";
@@ -57,12 +58,16 @@ export interface ActiveLeaguesContextValue {
   readonly entityEstimate: ActiveLeaguesEntityEstimate;
   readonly processingCost: ProcessingCostReading;
   readonly recommendations: readonly LeagueRecommendation[];
+  readonly addableLeagues: readonly AddableLeagueView[];
   readonly validation: ActiveLeaguesValidation;
   readonly canContinue: boolean;
   readonly stale: boolean;
   /** The authoritative advanced-option values the disclosure renders. Authoritative, not
    *  derived — it is what the player asked for, so it comes straight off the setup state. */
   readonly advancedOptions: AdvancedOptionsPayload;
+  /** The authoritative per-Nation Selection Intents. Authoritative, not derived: this is the
+   *  model the Manage leagues tree edits a working copy of, and the shape the draft persists. */
+  readonly intents: readonly NationSelectionIntentPayload[];
   readonly notice: string | null;
   /** The one way user interactions reach the authoritative state. */
   readonly dispatch: (intent: ActiveLeaguesIntent) => void;
@@ -198,14 +203,16 @@ const ActiveLeaguesInner = ({
       entityEstimate: view.entityEstimate,
       processingCost: view.processingCost,
       recommendations: view.recommendations,
+      addableLeagues: view.addableLeagues,
       validation: view.validation,
       canContinue: view.canContinue,
       stale: view.stale,
       advancedOptions: state.advancedOptions,
+      intents: state.intents,
       notice: state.notice,
       dispatch,
     }),
-    [dispatch, index, state.advancedOptions, state.notice, view],
+    [dispatch, index, state.advancedOptions, state.intents, state.notice, view],
   );
 
   return (
