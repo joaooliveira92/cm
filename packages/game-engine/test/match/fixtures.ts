@@ -1,4 +1,4 @@
-import { FORMATION_SLOTS, POSITION_ROLES, generateSquad, type GeneratedPlayer, type Position } from "@cm-clone/shared";
+import { FORMATION_SLOTS, POSITION_ROLES, generateSquad, type ClubStrength, type GeneratedPlayer, type Position } from "@cm-clone/shared";
 import { createSeededRng } from "../../src/rng.js";
 import { deriveSeed } from "../../src/seed.js";
 import { ClubId, PlayerId } from "@cm-clone/contracts";
@@ -24,11 +24,16 @@ const withIds = (
     primaryPosition: player.positions[0]!.position,
   }));
 
+/** A mid-table first-division club in an average nation — the squad these match-sim fixtures were
+ *  written against, spelled out now that club strength reads its competition rather than a tier
+ *  enum alone. */
+const MID_TABLE: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" };
+
 /** Builds a full squad + a Tactic filling every Formation slot from a natural-fit player, for match-sim tests. */
 export const buildTeam = (clubId: ClubId, seed: number, formation: keyof typeof FORMATION_SLOTS = "4-4-2"): GeneratedTeam => {
   const squad = withIds(
     clubId,
-    generateSquad("mid", {
+    generateSquad(MID_TABLE, {
       referenceYear: 2026,
       randomForSlot: (slot) => createSeededRng(deriveSeed(seed, "player", slot.index)),
     }),
