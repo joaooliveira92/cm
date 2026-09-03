@@ -7,6 +7,11 @@
  * with `NO_DRAG` or they stop taking clicks. On macOS it also reserves the
  * traffic-light inset: the band reaches the top edge, and the lights sit inside
  * it rather than on top of the leftmost control.
+ *
+ * It paints in the `--color-header-*` roles rather than the neutral surface
+ * tokens directly. Those roles default to exactly the neutral values it used to
+ * name, so the shells with no club are unchanged; the career shell overrides
+ * the pair on an ancestor and this band follows without knowing a club exists.
  */
 import type { ReactNode } from "react";
 import { HeaderTitle } from "./HeaderTitle.js";
@@ -33,7 +38,7 @@ export const AppTitleBar = ({
   titleAsHeading = true,
 }: AppTitleBarProps) => (
   <div
-    className={`relative flex h-11 w-full shrink-0 items-center justify-between gap-3 border-b border-border-subtle bg-bg-raised pr-3 select-none ${trafficLightInset()}`}
+    className={`relative flex h-11 w-full shrink-0 items-center justify-between gap-3 border-b border-header-border bg-header-bg pr-3 text-header-fg select-none ${trafficLightInset()}`}
     style={DRAG}
   >
     <div className="flex min-w-0 items-center gap-2" style={NO_DRAG}>

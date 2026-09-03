@@ -2,13 +2,16 @@
  * The match-day scoreboard — the one match-only element in the renderer.
  *
  * A neutral chrome-band with white score boxes: the two club names flanking the
- * score. It renders from club name and score alone, because that is all the
- * domain exposes (`ClubSummary` carries no colours or crests), so the neutral
- * archetype is the match-day picture and needs no club data.
+ * score. It renders from club name and score alone — the neutral archetype is
+ * the match-day picture, and a scoreboard that took each side's colours would
+ * have to solve two arbitrary palettes meeting in the middle, which is a design
+ * question nobody has answered.
  *
- * Its token family (`--color-scoreboard-*` in `index.css`) is deliberate: the
- * only match-only tokens, so a future club-colour upgrade is a token change,
- * not a redesign. Everything else on the surface is shared.
+ * `ClubSummary` does now carry colours (the career header paints itself in the
+ * user club's primary pair), so this is a deliberate abstention rather than a
+ * missing capability. Its token family (`--color-scoreboard-*` in `index.css`)
+ * is what a later club-coloured treatment would override: a token change, not a
+ * redesign. Everything else on the surface is shared.
  */
 export interface ScoreboardProps {
   readonly homeClubName: string;

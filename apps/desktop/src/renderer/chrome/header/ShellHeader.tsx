@@ -38,7 +38,7 @@ export const ShellHeader = ({
       actions={actions}
     />
     <div
-      className="flex h-7 w-full items-center border-b border-border-subtle bg-bg-raised px-3"
+      className="flex h-7 w-full items-center border-b border-header-border bg-header-bg px-3 text-header-fg"
       style={NO_DRAG}
     >
       <HeaderSecondaryRow state={state} />

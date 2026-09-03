@@ -107,6 +107,30 @@
   --color-field-bg: #0f151d;
   --color-focus-ring: var(--color-text-highlight);
 
+  /* --- Career header (club-coloured) ------------------------------------
+     The top band paints itself in the user club's PRIMARY pair. These are
+     declared as roles with the existing neutral chrome as their default, so
+     every shell that has no club — the main menu, the save list, the creation
+     flow — renders exactly as before and nothing about them changes.
+
+     Only the two base roles live here. The derived ones (border, muted text,
+     hover) are declared by the `club-header` utility instead, NOT in this
+     block: a custom property's `var()` references are substituted at
+     computed-value time on the element that declares it, so a derivation
+     written here would resolve against `:root`'s neutral values once and stay
+     resolved no matter what a descendant overrides. Declaring them on the same
+     element that carries the club override is what makes them track it. */
+  --color-header-bg: var(--color-bg-raised);
+  --color-header-fg: var(--color-text-primary);
+  /* The derived three are declared here too, at their neutral values, purely so
+     Tailwind generates `border-header-border` / `text-header-muted` /
+     `bg-header-hover`. `club-header` re-declares them as club-tracking mixes on
+     the element that carries the override; these are what every shell without
+     a club resolves to. */
+  --color-header-border: var(--color-border-subtle);
+  --color-header-muted: var(--color-text-secondary);
+  --color-header-hover: var(--color-surface-raised);
+
   /* --- Scoreboard (match-day only) ---------------------------------------
      The one match-only token family. The neutral chrome-band + white-score-box
      pattern is the archetypal match-day picture and needs no club data; a
@@ -236,4 +260,25 @@
     color-mix(in oklab, var(--color-chrome-bottom) 45%, var(--color-panel-bg) 55%) 55%,
     var(--color-panel-bg) 100%
   );
+}
+
+/*
+ * The career header's club paint.
+ *
+ * The element carrying this also carries the club's primary pair as two inline
+ * custom properties (see `Navbar`), which is the whole override: everything
+ * below resolves through `--color-header-*`, so one scope repaints the band and
+ * no descendant names a colour. Without the club override it renders in the
+ * neutral defaults from `@theme`, which is what the pre-career shells get.
+ *
+ * The three derived roles are declared HERE rather than in `@theme` so they
+ * recompute against whatever pair this element was given — see the note there.
+ * They are mixes toward the club's own foreground rather than fixed greys,
+ * because a fixed border is invisible on half the palette and a fixed muted
+ * grey is illegible on the other half.
+ */
+@utility club-header {
+  --color-header-border: color-mix(in oklab, var(--color-header-fg) 26%, var(--color-header-bg));
+  --color-header-muted: color-mix(in oklab, var(--color-header-fg) 70%, var(--color-header-bg));
+  --color-header-hover: color-mix(in oklab, var(--color-header-fg) 14%, var(--color-header-bg));
 }

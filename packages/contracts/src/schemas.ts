@@ -80,6 +80,29 @@ export const PositionSchema = Schema.Literals(POSITIONS);
 export const FamiliarityTierSchema = Schema.Literals(FAMILIARITY_TIERS);
 export const StatureTierSchema = Schema.Literals(STATURE_TIERS);
 
+/**
+ * A foreground/background pair. Crosses the wire as a pair because contrast is a property of the
+ * pair, never of either colour alone — see `clubColours.ts` in `@cm-clone/shared`.
+ *
+ * The values are CSS colours, unvalidated beyond being strings. Validating hex here would reject
+ * the `rgb()`/`oklch()` forms a future pack may legitimately author, and the renderer's failure
+ * mode for a malformed colour is an unpainted surface, not a crash.
+ */
+export class ColourPairView extends Schema.Class<ColourPairView>("ColourPairView")({
+  foreground: Schema.String,
+  background: Schema.String,
+}) {}
+
+/** A club's colours, already resolved through the save's content pack (or its id-derived fallback).
+ *  `primary` and `secondary` are always present; the last two ranks are usually null. */
+export class ClubColoursView extends Schema.Class<ClubColoursView>("ClubColoursView")({
+  primary: ColourPairView,
+  secondary: ColourPairView,
+  tertiary: Schema.NullOr(ColourPairView),
+  quaternary: Schema.NullOr(ColourPairView),
+}) {}
+
+
 /** The four Attribute Categories a Training Focus may name (Player Development / Training Focus). */
 export const TrainingFocusSchema = Schema.Literals(CATEGORIES);
 
@@ -127,6 +150,9 @@ export class ManagerProfileScreenView extends Schema.Class<ManagerProfileScreenV
 )({
   profile: ManagerProfileView,
   clubName: Schema.String,
+  /** The club's scheme, carried alongside its name because the career chrome reads this view for
+   *  both: the header paints itself in `colours.primary`. */
+  clubColours: ClubColoursView,
   seasonNumber: Schema.Finite,
   /** Seasons served with this club, counting the current one. */
   tenureSeasons: Schema.Finite,

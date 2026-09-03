@@ -16,6 +16,14 @@ const pack: ContentPack = {
     club_esp_1_01: { "*": "Castlemere United", "pt-BR": "Castlemere Unido" },
     club_esp_1_02: { "*": "Northgate Athletic" },
   },
+  clubColours: {
+    club_esp_1_01: {
+      primary: { foreground: "#ffffff", background: "#111111" },
+      secondary: { foreground: "#111111", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+  },
 };
 
 describe("content pack display names", () => {

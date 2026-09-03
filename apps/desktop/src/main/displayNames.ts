@@ -1,7 +1,9 @@
 import {
   BASE_CONTENT_PACK,
+  clubColours,
   displayName,
   packCoverageGaps,
+  type ClubColours,
   type ContentPack,
   type LocaleTag,
 } from "@cm-clone/shared";
@@ -9,7 +11,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 
 /**
- * The one place a canonical id becomes a display name for a save.
+ * The one place a canonical id becomes a display name — or a set of club colours — for a save.
  *
  * Every club and competition name the player sees comes from the content pack rather than from a
  * column, so the same generated world can run under fictional, licensed, or localized names. That
@@ -78,6 +80,24 @@ export const savePack = Effect.gen(function* () {
 export const displayNames = Effect.gen(function* () {
   const pack = yield* savePack;
   return (id: string): string => resolveDisplayName(pack, id);
+});
+
+/**
+ * The same seam for a club's colours: one resolution point, bound to the save's pack.
+ *
+ * Colours resolve here rather than in the renderer for the reason names do — the pack owns the
+ * answer, and a second resolution site is a second place for a pack swap to go stale. They live in
+ * this module rather than a sibling because both reads are the same question ("what does this
+ * save's pack say about this id?") over the same single `generation_manifest` row; splitting them
+ * would read the manifest twice to answer it.
+ *
+ * Unlike a name, this never degrades visibly: an uncoloured id resolves to an id-derived scheme,
+ * because a header cannot paint "missing". `reportPackCoverage` stays keyed to names, which are
+ * the reads where a gap is a defect rather than a default.
+ */
+export const clubColourResolver = Effect.gen(function* () {
+  const pack = yield* savePack;
+  return (id: string): ClubColours => clubColours(pack.clubColours, id);
 });
 
 /**

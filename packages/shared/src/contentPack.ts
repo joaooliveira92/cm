@@ -1,3 +1,4 @@
+import type { ClubColours } from "./clubColours.js";
 import type { NationCode } from "./nations.js";
 
 /**
@@ -94,6 +95,131 @@ export const BASE_CONTENT_PACK: ContentPack = {
     club_eng_1_19: { "*": "Ridgeway Town" },
     club_eng_1_20: { "*": "Southmere Albion" },
   },
+  clubColours: {
+    // The same twenty clubs the names above cover. A club this map omits still has colours —
+    // resolution falls back to an id-derived scheme (see `clubColours.ts`) — so a pack author can
+    // author the ones that matter and leave the rest of the key space alone, exactly as with names.
+    club_eng_1_01: {
+      primary: { foreground: "#ffffff", background: "#111111" },
+      secondary: { foreground: "#111111", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_02: {
+      primary: { foreground: "#ffffff", background: "#a01722" },
+      secondary: { foreground: "#a01722", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_03: {
+      primary: { foreground: "#ffffff", background: "#14346b" },
+      secondary: { foreground: "#14346b", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_04: {
+      primary: { foreground: "#14346b", background: "#f2e34c" },
+      secondary: { foreground: "#f2e34c", background: "#14346b" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_05: {
+      primary: { foreground: "#ffffff", background: "#0d5c2f" },
+      secondary: { foreground: "#0d5c2f", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_06: {
+      primary: { foreground: "#f2e34c", background: "#5c1030" },
+      secondary: { foreground: "#5c1030", background: "#f2e34c" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_07: {
+      primary: { foreground: "#111111", background: "#8fbfe0" },
+      secondary: { foreground: "#8fbfe0", background: "#111111" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_08: {
+      primary: { foreground: "#ffffff", background: "#7a2f12" },
+      secondary: { foreground: "#7a2f12", background: "#e6d5b8" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_09: {
+      primary: { foreground: "#111111", background: "#c9d1d9" },
+      secondary: { foreground: "#c9d1d9", background: "#111111" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_10: {
+      primary: { foreground: "#ffffff", background: "#6a1b7a" },
+      secondary: { foreground: "#6a1b7a", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_11: {
+      primary: { foreground: "#111111", background: "#e88b1a" },
+      secondary: { foreground: "#e88b1a", background: "#111111" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_12: {
+      primary: { foreground: "#ffffff", background: "#1f6f8b" },
+      secondary: { foreground: "#1f6f8b", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_13: {
+      primary: { foreground: "#14346b", background: "#ffffff" },
+      secondary: { foreground: "#ffffff", background: "#14346b" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_14: {
+      primary: { foreground: "#ffffff", background: "#2f4f2f" },
+      secondary: { foreground: "#2f4f2f", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_15: {
+      primary: { foreground: "#ffffff", background: "#8a1538" },
+      secondary: { foreground: "#8a1538", background: "#d8c8a8" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_16: {
+      primary: { foreground: "#111111", background: "#d9c25a" },
+      secondary: { foreground: "#d9c25a", background: "#111111" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_17: {
+      primary: { foreground: "#ffffff", background: "#1b5e4a" },
+      secondary: { foreground: "#1b5e4a", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_18: {
+      primary: { foreground: "#ffffff", background: "#26476e" },
+      secondary: { foreground: "#26476e", background: "#a8c4dd" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_19: {
+      primary: { foreground: "#ffffff", background: "#b23a1f" },
+      secondary: { foreground: "#b23a1f", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_20: {
+      primary: { foreground: "#111111", background: "#e4e4e4" },
+      secondary: { foreground: "#e4e4e4", background: "#111111" },
+      tertiary: null,
+      quaternary: null,
+    },
+  },
 };
 
 /** BCP 47 language tag, or `"*"` for the fallback every pack must provide. */
@@ -111,6 +237,15 @@ export interface ContentPack {
   readonly contentSource: "FICTIONAL" | "LICENSED";
   /** Canonical id -> locale -> display name. `"*"` is the fallback. */
   readonly displayNames: Readonly<Record<CanonicalId, Readonly<Record<LocaleTag, string>>>>;
+  /**
+   * Canonical club id -> the club's colours. Not keyed by locale: a club's colours are the same
+   * identity in every language, where its name is not.
+   *
+   * Partial by design, and partial in a different sense from `displayNames`. An unnamed id shows
+   * as itself; an uncoloured one falls back to a scheme derived from the id, because a header has
+   * to paint something. See `clubColours.ts`.
+   */
+  readonly clubColours: Readonly<Record<CanonicalId, ClubColours>>;
 }
 
 /**

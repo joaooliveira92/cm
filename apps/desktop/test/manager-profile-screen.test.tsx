@@ -16,6 +16,12 @@ const profileView = (overrides: Record<string, unknown> = {}) => ({
     pillars: { tacticalAcumen: 2, influence: 4, regimen: 1, technicalCoaching: 5 },
   },
   clubName: "Test FC",
+  clubColours: {
+    primary: { foreground: "#ffffff", background: "#000000" },
+    secondary: { foreground: "#000000", background: "#ffffff" },
+    tertiary: null,
+    quaternary: null,
+  },
   seasonNumber: 3,
   tenureSeasons: 3,
   archived: false,

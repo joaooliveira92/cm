@@ -1,4 +1,4 @@
-import type { SaveId } from "@cm-clone/contracts";
+import type { ClubColoursView, SaveId } from "@cm-clone/contracts";
 import { useLocation } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useRef } from "react";
 import { navigateCareer } from "../../navigation/adapter.js";
@@ -7,6 +7,7 @@ import { NAV_SECTIONS, type NavSectionId } from "../../navigation/nav-config.js"
 import { sectionIdForDestination } from "../../navigation/nav-route-index.js";
 import { useNavState } from "../../navigation/use-nav-state.js";
 import { AppTitleBar } from "../../chrome/header/AppTitleBar.js";
+import { clubHeaderStyle } from "../../chrome/header/club-scheme.js";
 import { NO_DRAG } from "../../chrome/header/drag-region.js";
 import { ContextNav } from "./ContextNav.js";
 import { PrimaryNavItem } from "./PrimaryNavItem.js";
@@ -38,6 +39,9 @@ const routeChildToDestination: Readonly<Record<string, CareerDestination["type"]
  * - Center zone: the primary sections, each opening a context submenu strip.
  * - Right zone: the Continue action and profile / back-to-saves.
  *
+ * The identity band and the adaptive row beneath it paint in the user club's primary colours; the
+ * section nav and context strip stay on the neutral surface (see the note at the nav element).
+ *
  * The primary row hosts the section items; the context strip below it shows the
  * active (or hover-previewed) section's items. Hover preview never changes the
  * active route (spec §6 rule 4): it only swaps which section's items the strip
@@ -46,6 +50,7 @@ const routeChildToDestination: Readonly<Record<string, CareerDestination["type"]
 export const Navbar = ({
   saveId,
   clubName,
+  clubColours = null,
   badges,
   leading,
   secondary,
@@ -53,6 +58,9 @@ export const Navbar = ({
 }: {
   readonly saveId: SaveId;
   readonly clubName: string | null;
+  /** The club's scheme. Null until the profile read lands — the header then paints in the neutral
+   *  chrome, which is the same thing every pre-career shell shows, not a flash of wrong colour. */
+  readonly clubColours?: ClubColoursView | null;
   /** Unanswered work per section id. The navbar owns none of these numbers — it renders whichever
    *  the chrome supplies, so a future section can carry one without this component changing. */
   readonly badges?: Readonly<Record<string, { readonly count: number; readonly label: string }>>;
@@ -151,7 +159,10 @@ export const Navbar = ({
   };
 
   return (
-    <header className="text-text-primary">
+    // The club scope. The two inline properties are the club's primary pair; `club-header` derives
+    // the rest from them here, so the bands below inherit a complete scheme. With no club it
+    // carries no inline style and every role falls back to the neutral chrome.
+    <header className="club-header text-header-fg" style={clubHeaderStyle(clubColours)}>
       {/* Left + right zones share the first row band, which is also the
           window's drag handle and the macOS traffic-light inset. */}
       <AppTitleBar
@@ -167,16 +178,18 @@ export const Navbar = ({
           of truth for it. See `chrome/header/career-header-state.ts`. */}
       {secondary !== undefined && (
         <div
-          className="flex h-7 w-full items-center border-b border-border-subtle bg-bg-raised px-3"
+          className="flex h-7 w-full items-center border-b border-header-border bg-header-bg px-3"
           style={NO_DRAG}
         >
           {secondary}
         </div>
       )}
 
-      {/* Center zone: primary sections */}
+      {/* Center zone: primary sections. Deliberately NOT club-coloured: the section items carry
+          their own active/hover chrome, and painting them over an arbitrary club background is
+          what turns a legible nav into an unreadable one. The club identity is the band above. */}
       <nav
-        className="flex items-center gap-1 overflow-x-auto border-b border-border-subtle bg-bg-raised px-2 py-1"
+        className="flex items-center gap-1 overflow-x-auto border-b border-border-subtle bg-bg-raised px-2 py-1 text-text-primary"
         aria-label="Primary navigation"
       >
         {NAV_SECTIONS.map((section) => (

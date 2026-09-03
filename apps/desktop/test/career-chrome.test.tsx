@@ -59,6 +59,12 @@ const preload = (phase: Phase) => {
             pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
           },
           clubName: "Northport Rovers",
+          clubColours: {
+            primary: { foreground: "#ffffff", background: "#000000" },
+            secondary: { foreground: "#000000", background: "#ffffff" },
+            tertiary: null,
+            quaternary: null,
+          },
           seasonNumber: 3,
           tenureSeasons: 2,
           archived: false,

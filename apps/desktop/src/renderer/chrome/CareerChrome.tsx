@@ -141,6 +141,10 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
 
   const clubName =
     profileResult._tag === "Success" ? profileResult.value.clubName : null;
+  // The club's scheme rides the same read as its name, so the header paints and titles in one pass
+  // rather than settling into colour a frame after the name appears.
+  const clubColours =
+    profileResult._tag === "Success" ? profileResult.value.clubColours : null;
   const season = tableResult._tag === "Success" ? tableResult.value.season : null;
   const saveName = saveResult._tag === "Success" ? saveResult.value.name : null;
 
@@ -247,6 +251,7 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
       }
       saveId={saveId}
       clubName={clubName}
+      clubColours={clubColours}
       leading={
         // The router's history reports whether a back step exists but has no
         // forward counterpart, so forward stays enabled and is a no-op at the

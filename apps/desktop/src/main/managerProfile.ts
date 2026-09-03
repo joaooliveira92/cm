@@ -10,6 +10,7 @@ import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "./decider.js";
 import { loadManagerStatus } from "./managerStatus.js";
+import { clubColourResolver } from "./displayNames.js";
 import { loadUserClub } from "./squad.js";
 
 /** Read the manager_profile row for the current save. Returns null if no profile exists. */
@@ -77,6 +78,10 @@ export const getManagerProfileScreen = (savesDir: string, saveId: SaveId) =>
       const sql = yield* SqlClient;
       const profile = yield* decodeProfile;
       const club = yield* loadUserClub;
+      // Resolved here rather than carried on `ClubSummary`: the career header is the only consumer,
+      // and widening a contract class shared by the squad, transfer, and match views to serve one
+      // screen is an API expansion the other consumers pay for and never use.
+      const coloursOf = yield* clubColourResolver;
       const seasonRows = yield* sql<{
         seasonNumber: number;
       }>`SELECT season_number as "seasonNumber" FROM season ORDER BY season_number DESC`;
@@ -85,6 +90,7 @@ export const getManagerProfileScreen = (savesDir: string, saveId: SaveId) =>
       return new ManagerProfileScreenView({
         profile,
         clubName: club.name,
+        clubColours: coloursOf(club.id),
         seasonNumber: seasonRows[0]?.seasonNumber ?? 1,
         tenureSeasons: seasonRows.length,
         archived: managerStatus.archivedCause !== null,
