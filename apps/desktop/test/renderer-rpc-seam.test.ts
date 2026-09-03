@@ -56,6 +56,8 @@ const squadViewPayload = (saveId: string, clubName: string) => ({
       positionRatings: { WB: 12 },
       condition: 100,
       trainingFocus: null,
+      nationality: "England",
+      birthplace: "London",
     },
   ],
 });

@@ -12,7 +12,7 @@ CREATE TABLE `bids` (
 	FOREIGN KEY (`selling_club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`bidding_club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT "bids_amount" CHECK(amount >= 0),
-	CONSTRAINT "bids_status" CHECK(status IN ('pending','countered','accepted','rejected','withdrawn'))
+	CONSTRAINT "bids_status" CHECK(status IN ('pending','countered','accepted','rejected','withdrawn','expired'))
 );
 --> statement-breakpoint
 CREATE TABLE `board_objective` (
@@ -256,9 +256,13 @@ CREATE TABLE `players` (
 	`gk_aerial_reach` integer,
 	`gk_command_of_area` integer,
 	`gk_kicking` integer,
+	`nationality` text NOT NULL,
+	`birth_city_id` text,
 	`squad_slot` integer NOT NULL,
 	`generation_seed` integer NOT NULL,
 	FOREIGN KEY (`club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`nationality`) REFERENCES `nations`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`birth_city_id`) REFERENCES `cities`(`id`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT "players_potential_ability" CHECK(potential_ability BETWEEN 1 AND 100),
 	CONSTRAINT "players_passing" CHECK(passing BETWEEN 1 AND 20),
 	CONSTRAINT "players_shooting" CHECK(shooting BETWEEN 1 AND 20),

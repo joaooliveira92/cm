@@ -283,6 +283,18 @@ export const MIGRATION_LINKS: Readonly<
 
 export const nationProfile = (code: NationCode): NationProfile => NATION_PROFILES[code];
 
+/**
+ * The display name of a persisted `nations.id`, or the id itself if it names no known nation.
+ *
+ * A country name is factual, licence-free geography — the same class of claim as a city name — so
+ * it is read straight from code rather than resolved through the content pack, which exists only
+ * for club and competition identities.
+ */
+export const nationName = (nationId: string): string => {
+  const code = nationCodeFromId(nationId);
+  return code === null ? nationId : NATION_PROFILES[code].displayName;
+};
+
 /** The recruitment weight from `from` toward `to`, or 0 when the pair has no modelled link. */
 export const migrationLink = (from: NationCode, to: NationCode): number =>
   MIGRATION_LINKS[from]?.[to] ?? 0;

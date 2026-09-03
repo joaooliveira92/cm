@@ -56,7 +56,7 @@ describe("overallRating", () => {
 });
 
 const playerAt = (position: Parameters<typeof generatePlayer>[0], seed: number) =>
-  generatePlayer(position, { strength: MID_TABLE, referenceYear: 2026, random: createSeededRng(seed) });
+  generatePlayer(position, { strength: MID_TABLE, clubNation: "ENG", referenceYear: 2026, random: createSeededRng(seed) });
 
 describe("generation", () => {
   it("never generates goalkeeping attributes for an outfield player", () => {
@@ -72,6 +72,7 @@ describe("generation", () => {
   it("fills every Position with enough depth for a matchday squad", () => {
     const squad = generateSquad(MID_TABLE, {
       referenceYear: 2026,
+      clubNation: "ENG",
       randomForSlot: (slot) => createSeededRng(6000 + slot.index),
     });
     const positionsCovered = new Set(squad.flatMap((p) => p.positions.map((pp) => pp.position)));

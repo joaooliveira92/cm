@@ -46,8 +46,14 @@ const FIRST_SEASON = 1;
 export const GENERATOR_VERSION = "1.0.0";
 
 /** Bumped when the generation *data* or its interpretation changes (squad demand, ability bands,
- *  club roster). Together with the world seed this identifies a world exactly. */
-export const RULESET_VERSION = "1.0.0";
+ *  club roster). Together with the world seed this identifies a world exactly.
+ *
+ *  2.0.0: clubs are generated per competition with canonical ids, Stature Tier became a
+ *  per-competition quota, squad quality became a function of tier and nation prior, and players
+ *  gained a nationality and a birthplace drawn before their name. Every one of those changes moves
+ *  what a given world seed produces, so a 1.0.0 save and a 2.0.0 save from the same seed are
+ *  different worlds and the version is what says so. */
+export const RULESET_VERSION = "2.0.0";
 
 export interface WorldGenerationConfig {
   readonly worldSeed: number;
@@ -187,6 +193,7 @@ export const generateWorld = ({ worldSeed, referenceYear, snapshotId, world }: W
 
         const squad = generateSquad(strength, {
           referenceYear,
+          clubNation: nationCode,
           randomForSlot: (slot) => createSeededRng(deriveSeed(clubSeed, "player", slot.index)),
         });
 
@@ -196,7 +203,7 @@ export const generateWorld = ({ worldSeed, referenceYear, snapshotId, world }: W
           const a = generated.attributes;
 
           yield* sql`INSERT INTO players (
-            id, club_id, first_name, last_name, date_of_birth, potential_ability,
+            id, club_id, first_name, last_name, date_of_birth, potential_ability, nationality, birth_city_id,
             passing, shooting, tackling, dribbling, heading, crossing, finishing, first_touch,
             positioning, decisions, composure, determination, teamwork, flair, bravery, aggression,
             pace, acceleration, stamina, strength, agility, natural_fitness, injury_proneness,
@@ -204,6 +211,8 @@ export const generateWorld = ({ worldSeed, referenceYear, snapshotId, world }: W
             squad_slot, generation_seed
           ) VALUES (
             ${playerId}, ${clubId}, ${generated.firstName}, ${generated.lastName}, ${generated.dateOfBirth}, ${generated.potentialAbility},
+            ${canonicalNationId(generated.nationality)},
+            ${generated.birthCity === null ? null : canonicalCityId(generated.birthCity.nationCode, generated.birthCity.name)},
             ${attr(a, "passing")}, ${attr(a, "shooting")}, ${attr(a, "tackling")}, ${attr(a, "dribbling")}, ${attr(a, "heading")}, ${attr(a, "crossing")}, ${attr(a, "finishing")}, ${attr(a, "firstTouch")},
             ${attr(a, "positioning")}, ${attr(a, "decisions")}, ${attr(a, "composure")}, ${attr(a, "determination")}, ${attr(a, "teamwork")}, ${attr(a, "flair")}, ${attr(a, "bravery")}, ${attr(a, "aggression")},
             ${attr(a, "pace")}, ${attr(a, "acceleration")}, ${attr(a, "stamina")}, ${attr(a, "strength")}, ${attr(a, "agility")}, ${attr(a, "naturalFitness")}, ${attr(a, "injuryProneness")},

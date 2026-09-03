@@ -496,6 +496,26 @@ const judgeSeasonEnd = (
     return { verdict, managerOutcome: outcome as ManagerOutcome };
   });
 
+/**
+ * Lapse every Bid the human club never answered.
+ *
+ * Runs at the *start* of an advance, which is what encodes the rule "a pending Bid gets exactly one
+ * Continue to be answered": a Bid placed by `runAiTransferWindow` later in this same advance is
+ * inserted after this statement and therefore survives it, and is still pending at the start of the
+ * next one only if the manager left it alone.
+ *
+ * That timing is the whole reason no `placed_at_matchday` column is needed — "was it here before
+ * the player pressed Continue" is exactly what being pending at this point means.
+ *
+ * Only human-club Bids can be pending at all (`aiPlaceBid` resolves every other seller inline), so
+ * this needs no seller predicate. Lapsing is deliberately not the same as rejecting: `expired` says
+ * the manager never answered, which is what the News Inbox reports.
+ */
+export const expireStalePendingBids = Effect.gen(function* () {
+  const sql = yield* SqlClient;
+  yield* sql`UPDATE bids SET status = 'expired' WHERE status = 'pending'`;
+});
+
 export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
@@ -507,6 +527,7 @@ export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
       }
 
       yield* assertSaveNotArchived(saveId);
+      yield* expireStalePendingBids;
 
       const boundary = nextCalendarBoundary(row);
       const streamEvents: Array<{ readonly tag: string; readonly payload: unknown }> = [];

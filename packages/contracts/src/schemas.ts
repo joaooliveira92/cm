@@ -211,6 +211,12 @@ export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerV
   /** The player's Training Focus Category, or `null` for the no-focus default (Training Focus).
    * A missing persisted value reads as `null` — no migration/backfill. */
   trainingFocus: NullableTrainingFocusSchema,
+  /** The player's single nationality, as a real country name — factual geography, so it is carried
+   *  directly rather than resolved through the content pack. */
+  nationality: Schema.String,
+  /** The city the player was born in, or `null` for a player born outside the loaded world. Real
+   *  geography, carried directly for the same reason. */
+  birthplace: Schema.NullOr(Schema.String),
 }) {}
 
 export class ClubSummary extends Schema.Class<ClubSummary>("ClubSummary")({
@@ -492,7 +498,17 @@ export const MatchCommandPayload = Schema.Union([
 // Transfers & contracts (ticket 16 / ADR-0005)
 // ---------------------------------------------------------------------------
 
-export const BID_STATUSES = ["pending", "countered", "accepted", "rejected", "withdrawn"] as const;
+/** `expired` is a Bid the selling club never answered — distinct from `rejected`, which is an
+ *  answer. Only reachable for a Bid whose seller is the human club, since every other seller
+ *  resolves inside the command that placed the Bid. */
+export const BID_STATUSES = [
+  "pending",
+  "countered",
+  "accepted",
+  "rejected",
+  "withdrawn",
+  "expired",
+] as const;
 export const BidStatusSchema = Schema.Literals(BID_STATUSES);
 
 export const SELLER_BID_ACTIONS = ["accept", "reject", "counter"] as const;

@@ -6,6 +6,7 @@ import {
   ALL_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   POSITIONS,
+  nationName,
   overallRating,
   positionRating,
   type Category,
@@ -34,6 +35,8 @@ interface PlayerRow {
   readonly dateOfBirth: string;
   readonly condition: number;
   readonly trainingFocus: string | null;
+  readonly nationality: string;
+  readonly birthplace: string | null;
   readonly [attribute: string]: unknown;
 }
 
@@ -67,11 +70,15 @@ export const loadSquadPlayers = (clubId: ClubId) =>
 
     const playerRows = yield* sql.unsafe<PlayerRow>(
       `SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", p.date_of_birth as "dateOfBirth", ${attributeSelectList},
-              COALESCE(pf.condition, 100) as "condition", tf.focus as "trainingFocus"
+              COALESCE(pf.condition, 100) as "condition", tf.focus as "trainingFocus",
+              p.nationality as "nationality", bc.name as "birthplace"
        FROM players p
        LEFT JOIN player_fitness pf ON pf.player_id = p.id
          AND pf.season_number = (SELECT MAX(season_number) FROM season)
        LEFT JOIN training_focus tf ON tf.player_id = p.id
+       -- Real geography, so the city's name is read straight off the row. Only club and
+       -- competition names go through the content pack.
+       LEFT JOIN cities bc ON bc.id = p.birth_city_id
        WHERE p.club_id = ?`,
       [clubId],
     );
@@ -109,6 +116,8 @@ export const loadSquadPlayers = (clubId: ClubId) =>
         positionRatings,
         condition: row.condition,
         trainingFocus: (row.trainingFocus as Category | null) ?? null,
+        nationality: nationName(row.nationality),
+        birthplace: row.birthplace,
       });
     });
   });

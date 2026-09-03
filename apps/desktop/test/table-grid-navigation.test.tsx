@@ -49,6 +49,8 @@ const squadPlayer = (id: string, name: string, position: string) => ({
   positionRatings: { ST: 12 },
   condition: 100,
   trainingFocus: null,
+  nationality: "England",
+  birthplace: "London",
 });
 
 const squadView = (players: ReturnType<typeof squadPlayer>[]) => ({

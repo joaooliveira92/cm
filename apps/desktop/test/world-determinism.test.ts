@@ -18,6 +18,7 @@ import {
 import { type SnapshotId } from "@cm-clone/contracts";
 import { getLeagueSelectionSnapshot } from "../src/main/leagueSelection.js";
 import { beginCareer } from "../src/main/saves.js";
+import { GENERATOR_VERSION, RULESET_VERSION } from "../src/main/worldGeneration.js";
 import {
   createDefaultSnapshot,
   createPyramidSnapshot,
@@ -49,6 +50,8 @@ interface PlayerRow {
   readonly passing: number;
   readonly squadSlot: number;
   readonly generationSeed: number;
+  readonly nationality: string;
+  readonly birthCityId: string | null;
 }
 
 /** The world catalogue, which this suite asserts is identical across every save from a ruleset. */
@@ -74,7 +77,7 @@ const readWorld = Effect.gen(function* () {
     FROM clubs ORDER BY id`;
   const players = yield* sql<PlayerRow>`SELECT id, club_id as "clubId", first_name as "firstName", last_name as "lastName",
       date_of_birth as "dateOfBirth", potential_ability as "potentialAbility", passing, squad_slot as "squadSlot",
-      generation_seed as "generationSeed"
+      generation_seed as "generationSeed", nationality, birth_city_id as "birthCityId"
     FROM players ORDER BY club_id, squad_slot`;
   const contracts = yield* sql`SELECT player_id as "playerId", wage, years_remaining as "yearsRemaining" FROM contracts ORDER BY player_id`;
   const catalogue = yield* readCatalogue;
@@ -217,8 +220,8 @@ describe("world generation determinism", () => {
       strictEqual(rows.length, 1);
       strictEqual(rows[0]!.worldSeed, 4242);
       strictEqual(rows[0]!.referenceYear, 2026);
-      strictEqual(rows[0]!.generatorVersion, "1.0.0");
-      strictEqual(rows[0]!.rulesetVersion, "1.0.0");
+      strictEqual(rows[0]!.generatorVersion, GENERATOR_VERSION);
+      strictEqual(rows[0]!.rulesetVersion, RULESET_VERSION);
     }),
   );
 
@@ -400,6 +403,72 @@ describe("a club belongs to a real place", () => {
         expect(club.stadiumName.length).toBeGreaterThan(0);
         expect(club.stadiumCapacity).toBeGreaterThan(0);
       }
+    }),
+  );
+});
+
+describe("a player has an origin", () => {
+  it.effect("gives the same player the same birthplace whatever the selection loaded", () =>
+    Effect.gen(function* () {
+      // The geography catalogue is unconditional precisely so this holds: a player's birthplace
+      // cannot depend on which nations the player happened to select, or the same person would be
+      // born in different places in two saves from one seed.
+      const narrow = yield* generateFrom(yield* createDefaultSnapshot(savesDir), 31415);
+      const wide = yield* generateFrom(yield* createWiderSnapshot(savesDir), 31415);
+
+      const birthplaces = (world: World) =>
+        new Map(world.players.map((player) => [player.id, player.birthCityId]));
+      const inNarrow = birthplaces(narrow);
+      const inWide = birthplaces(wide);
+
+      expect(inNarrow.size).toBeGreaterThan(100);
+      for (const [playerId, cityId] of inNarrow) {
+        expect(inWide.get(playerId), playerId).toBe(cityId);
+      }
+    }),
+  );
+
+  it.effect("gives every generated player a nationality and a birthplace", () =>
+    Effect.gen(function* () {
+      const world = yield* generateFrom(yield* createDefaultSnapshot(savesDir), 2718);
+
+      // NULL means "born outside the loaded world", and MVP never reaches it: every nationality a
+      // player can hold is a catalogue nation, and every catalogue nation has curated cities.
+      expect(world.players.every((player) => player.birthCityId !== null)).toBe(true);
+      expect(world.players.every((player) => player.nationality.startsWith("nation_"))).toBe(true);
+      // And a player is born in the nation they hold, never somewhere unrelated to it.
+      for (const player of world.players) {
+        expect(player.birthCityId?.startsWith(player.nationality.replace("nation_", "city_"))).toBe(true);
+      }
+    }),
+  );
+
+  it.effect("carries exactly one nationality, with no second one anywhere in the schema", () =>
+    Effect.gen(function* () {
+      const snapshotId = yield* createDefaultSnapshot(savesDir);
+      const { id } = yield* beginCareer(savesDir, {
+        worldSeed: 2718,
+        referenceYear: 2026,
+        userDataDir: savesDir,
+        snapshotId,
+      });
+
+      yield* withSave(
+        id,
+        Effect.gen(function* () {
+          const sql = yield* SqlClient;
+          const columns = yield* sql<{ table: string; column: string }>`
+            SELECT m.name as "table", p.name as "column"
+            FROM sqlite_master AS m JOIN pragma_table_info(m.name) AS p
+            WHERE p.name LIKE '%national%'
+            ORDER BY m.name, p.name`;
+          expect(columns).toEqual([{ table: "players", column: "nationality" }]);
+
+          const tables = yield* sql<{ name: string }>`
+            SELECT name FROM sqlite_master WHERE type = 'table'`;
+          expect(tables.map((table) => table.name)).not.toContain("player_nationalities");
+        }),
+      );
     }),
   );
 });

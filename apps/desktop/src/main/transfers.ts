@@ -45,7 +45,7 @@ import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.j
 import { assertSaveNotArchived } from "./managerStatus.js";
 import { loadUserClub } from "./squad.js";
 
-type BidStatus = "pending" | "countered" | "accepted" | "rejected" | "withdrawn";
+type BidStatus = "pending" | "countered" | "accepted" | "rejected" | "withdrawn" | "expired";
 
 interface SeasonRow {
   readonly seasonNumber: number;
@@ -457,15 +457,23 @@ export const resolveAiCounterOffer = (bidId: BidId, biddingClubId: ClubId, seaso
   });
 
 /**
- * AI-club buyer's `PlaceBid` (ticket 17): the same seller-resolution path as the user-facing
- * `placeBid` below (the selling club always resolved instantly via `decideAiSellerResponse`),
- * just parameterized so any club — not only the user's — can be the bidder. Self-issued
- * in-process by `aiClubs.ts`'s transfer-window orchestration, never through the RpcGroup. Doesn't
- * gate on window-open or re-validate the target — callers only invoke this with a target already
- * screened for affordability, during an open window.
+ * AI-club buyer's `PlaceBid` (ticket 17), parameterized so any club — not only the user's — can be
+ * the bidder. Self-issued in-process by `aiClubs.ts`'s transfer-window orchestration, never through
+ * the RpcGroup. Doesn't gate on window-open or re-validate the target — callers only invoke this
+ * with a target already screened for affordability, during an open window.
+ *
+ * **The selling club decides how this resolves.** An AI seller answers instantly via
+ * `decideAiSellerResponse`, as it always has. A Bid for one of the *human* club's players is
+ * inserted `pending` and answered by nobody: it is the first thing in this simulation that waits on
+ * the manager, and it is what makes `respondToBid`, `TransfersScreenView.incomingBids`, and the
+ * `pending` status reachable in play rather than only from tests.
+ *
+ * A pending Bid also appends `BidReceived` to the human club's stream, which is what the News Inbox
+ * projects it from. The event records that the Bid arrived; whether it is still awaiting an answer
+ * is read live off the `bids` row, so the message can never disagree with the decision.
  *
  * `decideAiSellerResponse`'s counter/reject branches only trigger when `amount` is below Transfer
- * Value; `aiClubs.ts` always bids exactly Transfer Value, so in practice this always takes the
+ * Value; `aiClubs.ts` always bids exactly Transfer Value, so an AI-to-AI bid always takes the
  * outright-accept branch. The counter handling is kept for spec-completeness (ticket 17's
  * checklist explicitly describes a "countered" reaction) and for any future caller that bids a
  * different amount.
@@ -479,6 +487,34 @@ export const aiPlaceBid = (buyingClubId: ClubId, playerId: PlayerId, amount: num
     }
 
     const id = BidId.make(randomUUID());
+
+    // A Bid for a human-club player is left for the manager. Nothing else in the transfer path
+    // branches on who the seller is, which is exactly why the seller side has never been reachable.
+    const sellerRows = yield* sql<{
+      isUserClub: number;
+    }>`SELECT is_user_club as "isUserClub" FROM clubs WHERE id = ${player.clubId}`;
+    if (sellerRows[0]?.isUserClub === 1) {
+      yield* sql`INSERT INTO bids (id, player_id, selling_club_id, bidding_club_id, amount, counter_amount, status, season_number)
+        VALUES (${id}, ${playerId}, ${player.clubId}, ${buyingClubId}, ${amount}, ${null}, 'pending', ${seasonNumber})`;
+
+      const seq = yield* nextStreamSeq("club", player.clubId);
+      yield* appendStreamEvents("club", player.clubId, seq, [
+        {
+          tag: "BidReceived",
+          payload: {
+            bidId: id,
+            playerId,
+            playerName: `${player.firstName} ${player.lastName}`,
+            biddingClubId: buyingClubId,
+            amount,
+            seasonNumber,
+          },
+        },
+      ]);
+
+      return { id, status: "pending" as BidStatus };
+    }
+
     const value = transferValue(player.overallRating, player.age, player.potentialAbility);
     const decision = decideAiSellerResponse(amount, value);
     const status: BidStatus =

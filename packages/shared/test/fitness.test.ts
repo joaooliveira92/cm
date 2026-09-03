@@ -16,11 +16,12 @@ const MID_TABLE: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" 
 const squadOf = (tier: "big" | "mid" | "small", seed: number) =>
   generateSquad({ tier: 1, nationPrior: 0.5, statureTier: tier }, {
     referenceYear: 2026,
+    clubNation: "ENG",
     randomForSlot: (slot) => createSeededRng(seed + slot.index),
   });
 
 const playerAt = (position: Parameters<typeof generatePlayer>[0], seed: number) =>
-  generatePlayer(position, { strength: MID_TABLE, referenceYear: 2026, random: createSeededRng(seed) });
+  generatePlayer(position, { strength: MID_TABLE, clubNation: "ENG", referenceYear: 2026, random: createSeededRng(seed) });
 
 const allAttributes = (players: ReadonlyArray<{ readonly attributes: PlayerAttributes }>): ReadonlyArray<PlayerAttributes> =>
   players.map((p) => p.attributes);

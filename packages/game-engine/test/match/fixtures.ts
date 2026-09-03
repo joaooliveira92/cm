@@ -35,6 +35,7 @@ export const buildTeam = (clubId: ClubId, seed: number, formation: keyof typeof 
     clubId,
     generateSquad(MID_TABLE, {
       referenceYear: 2026,
+      clubNation: "ENG",
       randomForSlot: (slot) => createSeededRng(deriveSeed(seed, "player", slot.index)),
     }),
   );

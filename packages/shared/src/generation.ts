@@ -12,6 +12,9 @@ import {
   type Position,
 } from "./positions.js";
 import { potentialAbilityRange, type ClubStrength } from "./clubGeneration.js";
+import { CITIES_BY_NATION, type City } from "./cities.js";
+import { NAME_POOLS } from "./namePools.js";
+import { MIGRATION_LINKS, type NationCode } from "./nations.js";
 
 /** How many players to generate per primary Position, per squad — enough to fill every Formation plus backups. */
 const SQUAD_COMPOSITION: Record<Position, number> = {
@@ -26,52 +29,6 @@ const SQUAD_COMPOSITION: Record<Position, number> = {
   AMC: 2,
   ST: 3,
 };
-
-const FIRST_NAMES = [
-  "Milo",
-  "Kaden",
-  "Farid",
-  "Dante",
-  "Lucas",
-  "Emeka",
-  "Rasmus",
-  "Tomasz",
-  "Idris",
-  "Oskar",
-  "Bruno",
-  "Kai",
-  "Nate",
-  "Yusuf",
-  "Pietro",
-  "Aleksander",
-  "Sione",
-  "Marcus",
-  "Dominik",
-  "Reuben",
-];
-
-const LAST_NAMES = [
-  "Adeyemi",
-  "Brennan",
-  "Castillo",
-  "Dvorak",
-  "Ekwueme",
-  "Falkner",
-  "Girard",
-  "Holt",
-  "Ivanov",
-  "Jansen",
-  "Kowalski",
-  "Lindqvist",
-  "Marchetti",
-  "Novak",
-  "Okafor",
-  "Petrov",
-  "Quinlan",
-  "Reyes",
-  "Sorensen",
-  "Tavares",
-];
 
 export interface RandomSource {
   readonly next: () => number; // uniform [0, 1)
@@ -138,7 +95,42 @@ export interface GeneratedPlayer {
   readonly potentialAbility: number;
   readonly attributes: PlayerAttributes;
   readonly positions: ReadonlyArray<{ readonly position: Position; readonly familiarity: FamiliarityTier }>;
+  /** The player's single nationality. Drawn before the name, because it decides which pool the
+   *  name comes from — which is what makes this a value something reads rather than a constant
+   *  copy of the club's nation. */
+  readonly nationality: NationCode;
+  /** Where the player was born, always within their nationality. `null` means "born outside the
+   *  loaded world" — reachable only for a catalogue nation whose geography has not been curated,
+   *  since `cities` is unconditional. */
+  readonly birthCity: City | null;
 }
+
+/**
+ * Draws a player's nationality: usually the club's nation, sometimes one of its recruitment
+ * sources, at the weights `MIGRATION_LINKS` already carries.
+ *
+ * Those weights are gameplay priors under the rule `nations.ts` states — they shift a distribution
+ * and never set a value. A nation absent from `MIGRATION_LINKS` generates a fully domestic squad;
+ * that is a gap in the shipped data, not a statement about the country.
+ */
+export const drawNationality = (clubNation: NationCode, random: RandomSource): NationCode => {
+  const links = MIGRATION_LINKS[clubNation];
+  if (links === undefined) return clubNation;
+
+  let roll = random.next();
+  for (const [source, weight] of Object.entries(links) as ReadonlyArray<[NationCode, number]>) {
+    roll -= weight;
+    if (roll < 0) return source;
+  }
+  return clubNation;
+};
+
+/** Where a player of this nationality was born, drawn uniformly from that nation's curated cities. */
+const drawBirthCity = (nationality: NationCode, random: RandomSource): City | null => {
+  const cities = CITIES_BY_NATION[nationality];
+  if (cities.length === 0) return null;
+  return cities[Math.floor(random.next() * cities.length)] ?? null;
+};
 
 const randomAge = (random: RandomSource): number => 17 + Math.floor(random.next() * 18); // 17-34
 
@@ -157,15 +149,37 @@ export interface PlayerGenerationContext {
   /** Where this club's squad is drawn from: its competition's tier, its nation's prior, and its
    *  own Stature Tier within that competition. */
   readonly strength: ClubStrength;
+  /** The nation the club plays in — the origin most of its squad is drawn from. */
+  readonly clubNation: NationCode;
   readonly random: RandomSource;
   /** The season year ages are relative to. */
   readonly referenceYear: number;
+  /** Full names already used in this squad, so a redraw can avoid repeating one. Names are
+   *  attributes rather than identifiers and no `UNIQUE` constraint enforces this — avoiding a
+   *  duplicate inside one squad is generation's job. */
+  readonly taken?: ReadonlySet<string>;
 }
+
+/** How many times a duplicate full name is redrawn before it is accepted. Bounded so a small pool
+ *  cannot make generation loop; a repeat is cosmetic, a hang is not. */
+const NAME_REDRAW_LIMIT = 8;
 
 export const generatePlayer = (
   primaryPosition: Position,
-  { strength, random, referenceYear }: PlayerGenerationContext,
+  { strength, clubNation, random, referenceYear, taken }: PlayerGenerationContext,
 ): GeneratedPlayer => {
+  // Origin first: it decides the name pool and the birthplace, so it must be drawn before either.
+  const nationality = drawNationality(clubNation, random);
+  const birthCity = drawBirthCity(nationality, random);
+  const pool = NAME_POOLS[nationality];
+
+  let firstName = pick(pool.givenNames, random);
+  let lastName = pick(pool.surnames, random);
+  for (let attempt = 0; attempt < NAME_REDRAW_LIMIT && taken?.has(`${firstName} ${lastName}`); attempt++) {
+    firstName = pick(pool.givenNames, random);
+    lastName = pick(pool.surnames, random);
+  }
+
   const [paMin, paMax] = potentialAbilityRange(strength);
   const potentialAbility = rightSkewed(paMin, paMax, random);
   const age = randomAge(random);
@@ -192,12 +206,14 @@ export const generatePlayer = (
   }
 
   return {
-    firstName: pick(FIRST_NAMES, random),
-    lastName: pick(LAST_NAMES, random),
+    firstName,
+    lastName,
     dateOfBirth: birthDateForAge(age, referenceYear, random),
     potentialAbility,
     attributes: attributes as PlayerAttributes,
     positions,
+    nationality,
+    birthCity,
   };
 };
 
@@ -222,9 +238,18 @@ export const SQUAD_SLOTS: ReadonlyArray<SquadSlot> = (
 
 export interface SquadGenerationContext {
   readonly referenceYear: number;
+  /** The nation the club plays in. Most of its squad is drawn from here; the rest from the
+   *  recruitment links `MIGRATION_LINKS` describes. */
+  readonly clubNation: NationCode;
   /** The stream one slot's player is drawn from. Per slot rather than one stream for the whole
-   *  squad: a player must be a function of their own slot seed alone, so that re-rolling or
-   *  inserting one player leaves their team-mates untouched. */
+   *  squad: a player is drawn from their own slot seed, so re-rolling or inserting one player
+   *  leaves their team-mates' *streams* untouched.
+   *
+   *  One narrowing since names became nation-keyed: a player whose full name is already taken in
+   *  this squad redraws — from their own stream — so a player is now a function of their own seed
+   *  *plus the names of earlier slots*. That is still deterministic and still confined to one club,
+   *  so it cannot reach across the world; but a slot is no longer independent of the slots before
+   *  it, and a change to slot 3's name can move slot 20's. */
   readonly randomForSlot: (slot: SquadSlot) => RandomSource;
 }
 
@@ -234,13 +259,18 @@ export interface GeneratedSquadPlayer extends GeneratedPlayer {
 
 export const generateSquad = (
   strength: ClubStrength,
-  { referenceYear, randomForSlot }: SquadGenerationContext,
-): ReadonlyArray<GeneratedSquadPlayer> =>
-  SQUAD_SLOTS.map((slot) => ({
-    ...generatePlayer(slot.position, {
+  { referenceYear, clubNation, randomForSlot }: SquadGenerationContext,
+): ReadonlyArray<GeneratedSquadPlayer> => {
+  const taken = new Set<string>();
+  return SQUAD_SLOTS.map((slot) => {
+    const player = generatePlayer(slot.position, {
       strength,
+      clubNation,
       referenceYear,
       random: randomForSlot(slot),
-    }),
-    slot,
-  }));
+      taken,
+    });
+    taken.add(`${player.firstName} ${player.lastName}`);
+    return { ...player, slot };
+  });
+};

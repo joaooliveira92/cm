@@ -402,6 +402,26 @@ export const players = sqliteTable(
     gkKicking: integer("gk_kicking"),
 
     /** Provenance: the squad slot this player fills and the child seed that produced them. */
+    /**
+     * The player's single nationality.
+     *
+     * **Exactly one**, and no `player_nationalities` table. Dual nationality is real football, but
+     * nothing in MVP reads a second one: work permits do not exist, national teams are not in
+     * scope, and `MIGRATION_LINKS` drives *where a player is drawn from* rather than eligibility —
+     * so a second column would be stored data with no reader.
+     *
+     * **Reintroduction condition**, stated so it is not rediscovered by argument: the moment work
+     * permits or national teams ship, this reopens. The migration is purely additive — a second
+     * nullable column or a join table beside this one — and existing saves are backfillable,
+     * because generation is reproducible from the world seed.
+     */
+    nationality: text("nationality")
+      .notNull()
+      .references(() => nations.id),
+    /** Where the player was born. NULL means "born outside the loaded world" — reachable only for a
+     *  catalogue nation whose geography has not been curated, since `cities` is unconditional. No
+     *  free-text city name: that would be a display name used as data. */
+    birthCityId: text("birth_city_id").references(() => cities.id),
     squadSlot: integer("squad_slot").notNull(),
     generationSeed: integer("generation_seed").notNull(),
   },
@@ -701,7 +721,7 @@ export const bids = sqliteTable(
     check("bids_amount", sql`amount >= 0`),
     check(
       "bids_status",
-      oneOf("status", ["pending", "countered", "accepted", "rejected", "withdrawn"]),
+      oneOf("status", ["pending", "countered", "accepted", "rejected", "withdrawn", "expired"]),
     ),
   ],
 );
