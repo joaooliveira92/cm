@@ -15,8 +15,9 @@ import {
   canonicalCityId,
   canonicalNationId,
 } from "@cm-clone/shared";
+import { getLeagueSelectionSnapshot } from "../src/main/leagueSelection.js";
 import { beginCareer } from "../src/main/saves.js";
-import { createDefaultSnapshot } from "./snapshot-helpers.js";
+import { createDefaultSnapshot, createWiderSnapshot } from "./snapshot-helpers.js";
 
 let savesDir: string;
 
@@ -218,14 +219,48 @@ describe("world generation determinism", () => {
     }),
   );
 
+  it.effect("carries identical catalogue rows under two different selections from one world seed", () =>
+    Effect.gen(function* () {
+      // The criterion ticket 02 could only approximate and ticket 03 owes in full: now that
+      // `beginCareer` re-resolves a real selection, selection-independence is observable by
+      // varying the selection itself. One world seed, two genuinely different scopes — England's
+      // top division, and England's plus Spain's — and the whole catalogue is identical.
+      const narrow = yield* createDefaultSnapshot(savesDir);
+      const wide = yield* createWiderSnapshot(savesDir);
+
+      // The guard that keeps this test from going vacuous: if the two snapshots ever resolved to
+      // the same scope, everything below would pass while proving nothing.
+      const [narrowScope, wideScope] = [
+        yield* getLeagueSelectionSnapshot(savesDir, narrow),
+        yield* getLeagueSelectionSnapshot(savesDir, wide),
+      ];
+      notDeepStrictEqual(wideScope?.selections, narrowScope?.selections);
+
+      const { id: idNarrow } = yield* beginCareer(savesDir, {
+        worldSeed: 20260903,
+        referenceYear: 2026,
+        userDataDir: savesDir,
+        snapshotId: narrow,
+      });
+      const { id: idWide } = yield* beginCareer(savesDir, {
+        worldSeed: 20260903,
+        referenceYear: 2026,
+        userDataDir: savesDir,
+        snapshotId: wide,
+      });
+
+      deepStrictEqual(
+        yield* withSave(idWide, readCatalogue),
+        yield* withSave(idNarrow, readCatalogue),
+      );
+    }),
+  );
+
   it.effect("carries identical catalogue rows under every save from one world seed", () =>
     Effect.gen(function* () {
-      // Two saves from one world seed whose other inputs differ (the reference year), plus a
-      // third from a different world seed — all three generated from the same default snapshot
-      // (ticket 03): the catalogue row counts — and the rows themselves — are identical in every
-      // one. Selection validates `beginCareer` but does not reach the catalogue write, which is
-      // the point: the catalogue is blind to whatever a save will eventually differ by, so two
-      // careers under two different selections from one seed necessarily carry the same rows.
+      // The same property across the save's other inputs: two saves from one world seed whose
+      // reference year differs, plus a third from a different world seed. The catalogue is blind
+      // to every one of them.
       const snapshotId = yield* createDefaultSnapshot(savesDir);
       const { id: idA } = yield* beginCareer(savesDir, {
         worldSeed: 31337,

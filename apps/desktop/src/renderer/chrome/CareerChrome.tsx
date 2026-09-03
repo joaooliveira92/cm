@@ -20,6 +20,7 @@
  * and dispatch are the shipped spine's; this is how they look.
  */
 import type { SaveId } from "@cm-clone/contracts";
+import { assessContinueReadiness } from "@cm-clone/shared";
 import { useEffect, useSyncExternalStore } from "react";
 import { ACTION_REGISTRY } from "../actions/allActions.js";
 import {
@@ -44,6 +45,7 @@ import {
   leagueTableAtom,
   managerProfileAtom,
   saveSummaryAtom,
+  tacticsAtom,
   useAtom,
   useAtomValue,
 } from "../rpc.js";
@@ -130,6 +132,7 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
   const tableResult = useAtomValue(leagueTableAtom(saveId));
   const saveResult = useAtomValue(saveSummaryAtom(saveId));
   const [advance, runAdvance] = useAtom(advanceCalendarMutation);
+  const tacticsResult = useAtomValue(tacticsAtom(saveId));
 
   const clubName =
     profileResult._tag === "Success" ? profileResult.value.clubName : null;
@@ -184,6 +187,24 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
       ? standingFor(tableResult.value.standings, clubName)
       : null;
 
+  // The standing readiness check behind Continue. The project ships no notification centre, so a
+  // pending condition is surfaced next to the control it concerns — here the career band's warning
+  // slot, which stayed silent whenever the loop was free to advance. Blockers keep their existing
+  // copy paths above; this adds only the advisory case, which nothing reported before.
+  //
+  // `hasTactic` defaults true unless the query has actually come back saying otherwise, so neither
+  // a load in flight nor a failed read flashes a warning about state we have not read.
+  const readinessAdvisory =
+    season === null
+      ? undefined
+      : assessContinueReadiness({
+          phase: season.phase,
+          hasTactic:
+            tacticsResult._tag === "Success" ? tacticsResult.value.tactic !== null : true,
+          matchInProgress: liveMatch !== undefined,
+          advancing,
+        }).items.find((item) => item.severity === "advisory");
+
   // Everything the band reports, described in one place. A blocked career loop
   // is stated here rather than left to a `title` no disabled control delivers.
   const career: HeaderCareer = {
@@ -197,7 +218,7 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
         ? "The season cannot advance during a match."
         : continueDisabled && season !== null
           ? (continueUnavailableReason() ?? null)
-          : null,
+          : (readinessAdvisory?.detail ?? null),
   };
 
   return (

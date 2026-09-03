@@ -20,4 +20,5 @@ export * from "./leagueSelection.js";
 export * from "./simulation.js";
 export * from "./advancedOptions.js";
 export * from "./activeLeaguesConsequences.js";
+export * from "./continueReadiness.js";
 
