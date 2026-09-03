@@ -4,6 +4,7 @@ import { RPC_CHANNEL, type AppRpcMethod } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import electron from "electron";
 import { handleRpc } from "./rpcServer.js";
+import { LoggerLayer } from "./logging.js";
 
 const { app, BrowserWindow, ipcMain } = electron;
 
@@ -15,6 +16,13 @@ const createWindow = () => {
   const window = new BrowserWindow({
     width: 1200,
     height: 800,
+    // macOS keeps its own traffic lights but drops the OS title bar, so the
+    // app's own band reaches the top edge the way a native macOS app's does.
+    // The renderer pays for this by reserving the traffic-light inset and by
+    // marking the band as the window's drag handle (`chrome/header/drag-region.ts`).
+    ...(process.platform === "darwin"
+      ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 12, y: 14 } }
+      : {}),
     webPreferences: {
       preload: path.join(dirname, "../preload/index.cjs"),
       contextIsolation: true,
@@ -41,7 +49,10 @@ app.whenReady().then(() => {
   const savesDir = path.join(app.getPath("userData"), "saves");
 
   ipcMain.handle(RPC_CHANNEL, (_event, method: AppRpcMethod, payload: unknown) =>
-    Effect.runPromise(handleRpc(method, payload, { savesDir, userDataDir: app.getPath("userData") })),
+    Effect.provide(
+      handleRpc(method, payload, { savesDir, userDataDir: app.getPath("userData") }),
+      LoggerLayer,
+    ).pipe(Effect.runPromise),
   );
 
   createWindow();

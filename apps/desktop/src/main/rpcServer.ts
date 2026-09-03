@@ -36,6 +36,7 @@ import {
   signFreeAgent,
 } from "./transfers.js";
 import { setTrainingFocus } from "./training.js";
+import { withWideEvent } from "./logging.js";
 
 export interface RpcContext {
   readonly savesDir: string;
@@ -44,6 +45,14 @@ export interface RpcContext {
 }
 
 type Handler = (payload: unknown, ctx: RpcContext) => Effect.Effect<unknown, unknown>;
+
+/** Extract a save-scoped id from a payload when the method carries one, so the
+ *  wide event can attribute the request to a save without decoding it. */
+const saveIdOf = (method: AppRpcMethod, payload: unknown): string | null => {
+  if (payload === null || typeof payload !== "object") return null;
+  const record = payload as Record<string, unknown>;
+  return typeof record["saveId"] === "string" ? record["saveId"] : null;
+};
 
 const handlers: Record<AppRpcMethod, Handler> = {
   ping: () => Effect.succeed("pong"),
@@ -273,7 +282,10 @@ export const handleRpc = (
   payload: unknown,
   ctx: RpcContext,
 ): Effect.Effect<RpcResult<AppRpcMethod>> =>
-  handlers[method](payload, ctx).pipe(
+  withWideEvent(
+    handlers[method](payload, ctx),
+    { method, saveId: saveIdOf(method, payload) },
+  ).pipe(
     Effect.map((value) => ({ _tag: "Success", value }) as RpcResult<AppRpcMethod>),
     Effect.catch((error) =>
       Effect.succeed<RpcResult<AppRpcMethod>>({ _tag: "Failure", error }),

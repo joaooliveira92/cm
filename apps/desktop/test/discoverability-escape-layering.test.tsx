@@ -97,7 +97,7 @@ const mountTransfersWithSpine = async (options: MountOptions = {}): Promise<void
   });
   bindRouter({
     navigate: () => undefined,
-    history: { back: () => undefined },
+    history: { back: () => undefined, forward: () => undefined, canGoBack: () => false },
   } as never);
   render(<RouterProvider router={router} />);
   await screen.findByRole("button", { name: /Market Player/ });

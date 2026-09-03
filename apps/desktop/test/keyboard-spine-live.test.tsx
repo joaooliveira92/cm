@@ -93,7 +93,7 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
     });
     bindRouter({
       navigate: (opts: { to: string }) => navCalls.push({ to: opts.to }),
-      history: { back: () => (backCalls += 1) },
+      history: { back: () => (backCalls += 1), forward: () => undefined, canGoBack: () => true },
     } as never);
     render(<RouterProvider router={router} />);
     await screen.findByRole("button", { name: /Test MP/ });
@@ -276,7 +276,7 @@ describe("AC-19 — Space→Continue honours the safety guard through the live s
       ]),
       history: createMemoryHistory({ initialEntries: ["/career/s1/league"] }),
     });
-    bindRouter({ navigate: () => undefined, history: { back: () => undefined } } as never);
+    bindRouter({ navigate: () => undefined, history: { back: () => undefined, forward: () => undefined, canGoBack: () => false } } as never);
     render(<RouterProvider router={router} />);
     await screen.findByRole("button", { name: /Advance Calendar/ });
   };

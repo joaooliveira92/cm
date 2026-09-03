@@ -61,7 +61,7 @@ const mountWithSpine = async (preload: Preload): Promise<void> => {
     routeTree: rootRoute.addChildren([transfersRoute]),
     history: createMemoryHistory({ initialEntries: ["/career/s1/transfers"] }),
   });
-  bindRouter({ navigate: () => undefined, history: { back: () => undefined } } as never);
+  bindRouter({ navigate: () => undefined, history: { back: () => undefined, forward: () => undefined, canGoBack: () => false } } as never);
   render(
     <HotkeysBoundaryProvider>
       <RouterProvider router={router} />

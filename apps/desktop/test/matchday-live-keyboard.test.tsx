@@ -195,7 +195,7 @@ const mountMatchDayWithSpine = async (
     routeTree: rootRoute.addChildren([matchRoute]),
     history: createMemoryHistory({ initialEntries: ["/career/s1/match"] }),
   });
-  bindRouter({ navigate: () => undefined, history: { back: () => undefined } } as never);
+  bindRouter({ navigate: () => undefined, history: { back: () => undefined, forward: () => undefined, canGoBack: () => false } } as never);
   render(<RouterProvider router={router} />);
   // The live panel is mounted once the resumed match renders with a loaded tactic.
   await screen.findByRole("button", { name: /Tactics & substitutions/ });

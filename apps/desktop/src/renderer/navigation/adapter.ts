@@ -99,3 +99,14 @@ export const navigateBack = (): void => {
   requestBackFocus();
   getRouter().history.back();
 };
+
+/** Whether a back step exists, so a header control can disable rather than
+ *  pretend. There is no `canGoForward` counterpart in the router's history. */
+export const canNavigateBack = (): boolean => getRouter().history.canGoBack();
+
+/** The forward step. Focus is restored the same way a back step restores it:
+ *  the arriving screen takes its main region. */
+export const navigateForward = (): void => {
+  requestBackFocus();
+  getRouter().history.forward();
+};

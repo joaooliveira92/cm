@@ -3,6 +3,7 @@ import { Effect, Result } from "effect";
 import { listSaves } from "../rpc.js";
 import { navigate } from "../navigation/adapter.js";
 import { RouteView } from "./RouteView.js";
+import { Header } from "../chrome/header/index.js";
 import { LightweightDialog } from "../dialog/LightweightDialog.js";
 import { Button } from "../components/ui/button.js";
 import {
@@ -150,9 +151,11 @@ export const MainMenuScreen = () => {
 
   return (
     <RouteView screenId="mainMenu">
-      <div className="min-h-screen bg-background text-foreground">
+      <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+        <Header.Shell title={PRODUCT_TITLE} state={{ view: "menu" }} />
+
         <div
-          className="mx-auto flex min-h-screen max-w-3xl flex-col px-6 lg:px-12"
+          className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-y-auto px-6 lg:px-12"
           onKeyDown={handleKeyDown}
           data-focus-id="mainMenu.menu"
         >

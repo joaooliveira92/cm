@@ -15,7 +15,19 @@
 import type { MatchReadout } from "../../actions/types.js";
 
 /** Which shell the header is decorating. Drives the adaptive second row. */
-export type HeaderView = "menu" | "create" | "career";
+export type HeaderView = "menu" | "load" | "create" | "career";
+
+/**
+ * The whole input to the row description, as a union rather than a view plus a
+ * bag of optional data: the creation flow has a step and no career, the career
+ * shell has a career and no step, and a union is how that stops being a set of
+ * conditionals every caller has to get right.
+ */
+export type HeaderState =
+  | { readonly view: "menu" }
+  | { readonly view: "load" }
+  | { readonly view: "create"; readonly step: string; readonly hint: string }
+  | { readonly view: "career"; readonly career: HeaderCareer };
 
 /** The number of matchdays in a season — the readout's denominator. */
 export const MATCHDAYS_PER_SEASON = 38;
@@ -74,7 +86,7 @@ export interface HeaderCareer {
   readonly blockedReason: string | null;
 }
 
-export type MetricIcon = "club" | "season" | "position" | "points" | "played";
+export type MetricIcon = "season" | "position" | "points" | "played";
 
 export interface HeaderMetric {
   readonly icon: MetricIcon;
@@ -109,47 +121,48 @@ export const formatPosition = (position: number): string => {
   return `${whole}${suffix}`;
 };
 
-export function describeSecondaryRow(view: HeaderView, career: HeaderCareer | null): SecondaryRow {
-  switch (view) {
-    case "career":
+export function describeSecondaryRow(state: HeaderState): SecondaryRow {
+  switch (state.view) {
+    case "career": {
+      const { career } = state;
       return {
         kind: "career",
         metrics: careerMetrics(career),
         status:
-          career !== null && career.liveMatch !== null
-            ? matchReadout(career.liveMatch)
-            : (career?.saveName ?? NO_VALUE),
-        warning: career?.blockedReason ?? null,
+          career.liveMatch === null ? (career.saveName ?? NO_VALUE) : matchReadout(career.liveMatch),
+        warning: career.blockedReason,
       };
+    }
 
     case "create":
+      return { kind: "wizard", heading: state.step, hint: state.hint };
+
+    case "load":
       return {
-        kind: "wizard",
-        heading: "Career setup",
-        hint: "Choose a league and a club to continue",
+        kind: "status",
+        leading: "Saved careers",
+        trailing: "Choose a career to continue",
       };
 
     case "menu":
       return {
         kind: "status",
-        leading: "Saves",
+        leading: "Main menu",
         trailing: "No career loaded",
       };
   }
 }
 
-function careerMetrics(career: HeaderCareer | null): readonly HeaderMetric[] {
-  const clubName = career?.clubName ?? null;
-  const season = career?.season ?? null;
-  const standing = career?.standing ?? null;
+/**
+ * The row deliberately does not restate the club: identity is the band's left
+ * zone, and a header that says the same thing twice teaches the reader to stop
+ * reading it. `clubName` stays on `HeaderCareer` because the standing lookup
+ * and future rows need it.
+ */
+function careerMetrics(career: HeaderCareer): readonly HeaderMetric[] {
+  const { season, standing } = career;
 
   return [
-    {
-      icon: "club",
-      label: "Club",
-      value: clubName ?? NO_VALUE,
-      placeholder: clubName === null,
-    },
     {
       icon: "season",
       label: "Calendar",

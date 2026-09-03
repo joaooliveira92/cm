@@ -3,20 +3,18 @@
  * it is decorating. It renders a `SecondaryRow` and nothing else — every
  * decision about what a value means lives in `career-header-state.ts`.
  */
-import { CalendarDays, ClipboardList, ListOrdered, Shield, Trophy } from "lucide-react";
+import { CalendarDays, ClipboardList, ListOrdered, Trophy } from "lucide-react";
 import { Separator } from "../../components/ui/separator.js";
 import { cn } from "../../lib/utils.js";
 import {
   describeSecondaryRow,
-  type HeaderCareer,
   type HeaderMetric,
-  type HeaderView,
+  type HeaderState,
   type MetricIcon,
   type SecondaryRow,
 } from "./career-header-state.js";
 
-const METRIC_ICONS: Record<MetricIcon, typeof Shield> = {
-  club: Shield,
+const METRIC_ICONS: Record<MetricIcon, typeof CalendarDays> = {
   season: CalendarDays,
   position: ListOrdered,
   points: Trophy,
@@ -24,12 +22,11 @@ const METRIC_ICONS: Record<MetricIcon, typeof Shield> = {
 };
 
 export interface HeaderSecondaryRowProps {
-  readonly view: HeaderView;
-  readonly career?: HeaderCareer | null;
+  readonly state: HeaderState;
 }
 
-export const HeaderSecondaryRow = ({ view, career = null }: HeaderSecondaryRowProps) => (
-  <SecondaryRowContent row={describeSecondaryRow(view, career)} />
+export const HeaderSecondaryRow = ({ state }: HeaderSecondaryRowProps) => (
+  <SecondaryRowContent row={describeSecondaryRow(state)} />
 );
 
 const SecondaryRowContent = ({ row }: { readonly row: SecondaryRow }) => {
@@ -45,10 +42,12 @@ const SecondaryRowContent = ({ row }: { readonly row: SecondaryRow }) => {
               </div>
             ))}
           </div>
-          <div className="shrink-0 text-right">
-            {row.warning === null ? (
-              <span>{row.status}</span>
-            ) : (
+          {/* The status, plus the blocking reason when the loop cannot advance.
+              The reason is shown, not hidden in a `title`: a disabled control
+              never delivers one. */}
+          <div className="flex shrink-0 flex-col items-end leading-tight text-right">
+            <span>{row.status}</span>
+            {row.warning !== null && (
               <span className="text-text-warning">{row.warning}</span>
             )}
           </div>
@@ -82,8 +81,9 @@ const Metric = ({ metric }: { readonly metric: HeaderMetric }) => {
       title={metric.placeholder ? `${metric.label} is not available yet` : undefined}
     >
       <Icon aria-hidden="true" className="h-3 w-3 shrink-0" />
-      <span className="truncate tabular-nums">
-        <span className="text-text-muted">{metric.label}:</span> {metric.value}
+      <span className="flex min-w-0 items-center gap-1 truncate tabular-nums">
+        <span className="text-text-muted">{metric.label}:</span>
+        <span className="truncate">{metric.value}</span>
       </span>
     </div>
   );

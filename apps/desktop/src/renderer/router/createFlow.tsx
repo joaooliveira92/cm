@@ -24,7 +24,7 @@ import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
 import { GenerationStatus } from "../create/GenerationStatus.js";
-import { CHROME_BAND } from "../theme.js";
+import { Header } from "../chrome/header/index.js";
 import {
   abandon,
   blockedReason,
@@ -496,14 +496,17 @@ export const CreateFlowLayout = () => {
   return (
     <CreateSessionContext.Provider value={contextValue}>
       <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-        <header className={CHROME_BAND}>
-          <h1 className="truncate text-lg font-bold">New Career</h1>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-text-primary">
-              {STEP_LABELS[step]}
-            </span>
-          </div>
-        </header>
+        {/* The step lives in the adaptive row, not in the title band: it is
+            what the header reports about this shell, the same way the career
+            shell's row reports the calendar. */}
+        <Header.Shell
+          title="New Career"
+          state={{
+            view: "create",
+            step: STEP_LABELS[step],
+            hint: "Every step is reversible until the career is created",
+          }}
+        />
 
         {/* The club step is a full-height, full-width band: its workspace is two columns that
             scroll independently, which a centred `max-w-5xl` `overflow-y-auto` column cannot host

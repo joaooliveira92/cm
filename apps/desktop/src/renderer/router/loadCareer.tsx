@@ -5,7 +5,8 @@ import { listSaves, loadSave } from "../rpc.js";
 import { type RpcClientError } from "../rpc/errors.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
 import { RouteView } from "./RouteView.js";
-import { PANEL, CHROME_BAND } from "../theme.js";
+import { PANEL } from "../theme.js";
+import { Header } from "../chrome/header/index.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
 
@@ -39,19 +40,23 @@ export const LoadCareerScreen = () => {
 
   return (
     <RouteView screenId="loadCareer">
-      <div className="min-h-screen bg-background text-foreground">
-        <header className={CHROME_BAND}>
-          <h1 className="truncate text-lg font-bold">Load Career</h1>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => navigate({ type: "mainMenu" })}
-          >
-            Back
-          </Button>
-        </header>
+      <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+        <Header.Shell
+          title="Load Career"
+          state={{ view: "load" }}
+          actions={
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate({ type: "mainMenu" })}
+            >
+              Back
+            </Button>
+          }
+        />
 
-        <main className="mx-auto max-w-3xl p-8">
+        <main className="mx-auto w-full max-w-3xl flex-1 overflow-y-auto p-8">
           <section className={PANEL}>
             <h2 className="text-lg font-semibold">Saved careers</h2>
             <ul className="mt-2 space-y-1">

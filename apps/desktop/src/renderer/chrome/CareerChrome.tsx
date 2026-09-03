@@ -28,12 +28,14 @@ import {
 } from "../actions/bindingState.js";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
 import { effectiveBinding } from "../actions/overrides.js";
-import type { MatchReadout } from "../actions/types.js";
 import { clearScopeState, getScopeState, setScopeState, subscribeScopeState } from "../actions/scopeState.js";
 import { ActionKeyBadge } from "../discoverability/ActionKeyBadge.js";
 import { FOCUS_RING, type NavigationIntent } from "../focus.js";
 import {
+  canNavigateBack,
   navigate,
+  navigateBack,
+  navigateForward,
   navigateWithFocus,
 } from "../navigation/adapter.js";
 import { Navbar } from "../navigation/components/Navbar.js";
@@ -46,6 +48,8 @@ import {
   useAtomValue,
 } from "../rpc.js";
 import { BTN_PRIMARY } from "../theme.js";
+import { Header } from "./header/index.js";
+import type { HeaderCareer, HeaderStanding } from "./header/career-header-state.js";
 
 /**
  * The set of section groups making up the primary row. Exported so the reachability
@@ -57,44 +61,18 @@ import { BTN_PRIMARY } from "../theme.js";
  */
 export { NAV_SECTIONS as CAREER_SECTIONS } from "../navigation/nav-config.js";
 
-/** The number of matchdays in a season — the readout's denominator. */
-const MATCHDAYS_PER_SEASON = 38;
-
 /**
- * The phase word that replaces the matchday segment outside the in-season
- * phase. `in_season` has no word: that is when the matchday is the orientation.
+ * The season/match readouts and the header's row description live in
+ * `header/career-header-state.ts` — a pure module, so what the band reports is
+ * testable without mounting the shell. Re-exported here because this is the
+ * path callers and tests already know them by.
  */
-const PHASE_WORDS: Readonly<Record<string, string>> = {
-  pre_season: "Pre-season",
-  mid_window_open: "Transfer window open",
-  season_complete: "Season complete",
-};
-
-export interface SeasonReadoutInput {
-  readonly seasonNumber: number;
-  readonly currentMatchday: number;
-  readonly phase: string;
-}
-
-/**
- * `Season 3 · Matchday 12/38`, or the phase word in place of the matchday.
- *
- * The unit is always the Matchday. The Calendar has no day-by-day clock, so no
- * copy here may express time in days or dates — a date would claim a state the
- * domain does not model.
- */
-export const seasonReadout = (season: SeasonReadoutInput): string => {
-  const phaseWord = PHASE_WORDS[season.phase];
-  const tail =
-    phaseWord ?? `Matchday ${season.currentMatchday}/${MATCHDAYS_PER_SEASON}`;
-  return `Season ${season.seasonNumber} · ${tail}`;
-};
-
-/** Match-only verb: the live-match readout. The unit is minutes (a clock would
- *  claim a state the domain does not model). The chrome shows this in place of
- *  the season readout while a match is in flight. */
-export const matchReadout = (match: MatchReadout): string =>
-  `${match.currentMinute}' · ${match.homeClubName} ${match.homeScore}–${match.awayScore} ${match.awayClubName}`;
+export {
+  MATCHDAYS_PER_SEASON,
+  matchReadout,
+  seasonReadout,
+  type SeasonReadoutInput,
+} from "./header/career-header-state.js";
 
 /**
  * Continue, rendered from the `continue` Action record.
@@ -197,34 +175,48 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
     }
   };
 
-  const readout = liveMatch !== undefined
-    ? matchReadout(liveMatch)
-    : season === null
-      ? ""
-      : seasonReadout(season);
+  // The player club's line in the League Table, matched by name — the table view
+  // carries no "this is you" flag, and the profile's club name is the only
+  // identity the chrome is given. Absent (table still loading, or the club not
+  // in this table) means the band shows placeholders, never a fabricated row.
+  const standing: HeaderStanding | null =
+    tableResult._tag === "Success" && clubName !== null
+      ? standingFor(tableResult.value.standings, clubName)
+      : null;
+
+  // Everything the band reports, described in one place. A blocked career loop
+  // is stated here rather than left to a `title` no disabled control delivers.
+  const career: HeaderCareer = {
+    clubName,
+    saveName,
+    season,
+    standing,
+    liveMatch: liveMatch ?? null,
+    blockedReason:
+      liveMatch !== undefined
+        ? "The season cannot advance during a match."
+        : continueDisabled && season !== null
+          ? (continueUnavailableReason() ?? null)
+          : null,
+  };
 
   return (
     <Navbar
       saveId={saveId}
       clubName={clubName}
-      readout={readout === "" ? undefined : (
-        <span className="flex flex-col items-end leading-tight">
-          <span>{readout}</span>
-          {continueDisabled && season !== null ? (
-            <span className="text-2xs text-text-warning">
-              {liveMatch !== undefined
-                ? "The season cannot advance during a match."
-                : continueUnavailableReason()}
-            </span>
-          ) : (
-            saveName !== null && (
-              <span className="text-2xs text-text-secondary">{saveName}</span>
-            )
-          )}
-        </span>
-      )}
+      leading={
+        // The router's history reports whether a back step exists but has no
+        // forward counterpart, so forward stays enabled and is a no-op at the
+        // end of the stack — the same contract a browser's forward button has.
+        <Header.Nav
+          back={{ disabled: !canNavigateBack(), onTrigger: navigateBack }}
+          forward={{ disabled: false, onTrigger: navigateForward }}
+        />
+      }
+      secondary={<Header.SecondaryRow state={{ view: "career", career }} />}
       actions={
         <>
+          <Header.Search />
           <button
             type="button"
             className={`rounded-control border border-border-subtle px-3 py-1 text-text-secondary hover:text-text-primary ${FOCUS_RING.join(" ")}`}
@@ -239,4 +231,15 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
       }
     />
   );
+};
+
+/** The club's League Table line, or null when the table does not contain it. */
+const standingFor = (
+  standings: readonly { readonly clubName: string; readonly played: number; readonly points: number }[],
+  clubName: string,
+): HeaderStanding | null => {
+  const index = standings.findIndex((row) => row.clubName === clubName);
+  const row = standings[index];
+  if (row === undefined) return null;
+  return { position: index + 1, played: row.played, points: row.points };
 };

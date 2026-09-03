@@ -42,7 +42,7 @@ const mountNavbar = async (initialChild: string) => {
     ]),
     history: createMemoryHistory({ initialEntries: [`/career/s1/${initialChild}`] }),
   });
-  bindRouter({ navigate: () => undefined, history: { back: () => undefined } } as never);
+  bindRouter({ navigate: () => undefined, history: { back: () => undefined, forward: () => undefined, canGoBack: () => false } } as never);
   render(<RouterProvider router={router} />);
   await screen.findByRole("button", { name: "Squad" });
 };

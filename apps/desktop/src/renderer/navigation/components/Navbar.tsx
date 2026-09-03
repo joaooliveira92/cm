@@ -6,6 +6,8 @@ import type { CareerDestination } from "../../navigation/destinations.js";
 import { NAV_SECTIONS, type NavSectionId } from "../../navigation/nav-config.js";
 import { sectionIdForDestination } from "../../navigation/nav-route-index.js";
 import { useNavState } from "../../navigation/use-nav-state.js";
+import { AppTitleBar } from "../../chrome/header/AppTitleBar.js";
+import { NO_DRAG } from "../../chrome/header/drag-region.js";
 import { ContextNav } from "./ContextNav.js";
 import { PrimaryNavItem } from "./PrimaryNavItem.js";
 
@@ -44,13 +46,16 @@ const routeChildToDestination: Readonly<Record<string, CareerDestination["type"]
 export const Navbar = ({
   saveId,
   clubName,
-  readout,
+  leading,
+  secondary,
   actions,
 }: {
   readonly saveId: SaveId;
   readonly clubName: string | null;
-  /** Optional temporal context (season readout) shown under the club identity. */
-  readonly readout?: ReactNode;
+  /** Left-zone controls preceding the identity (the history cluster). */
+  readonly leading?: ReactNode;
+  /** The adaptive band under the identity row — the header's described state. */
+  readonly secondary?: ReactNode;
   /** Right-zone controls (back-to-saves, Continue, profile) composed by the caller. */
   readonly actions?: ReactNode;
 }) => {
@@ -143,22 +148,27 @@ export const Navbar = ({
 
   return (
     <header className="text-text-primary">
-      {/* Left + right zones share the first row band */}
-      <div className="flex items-center justify-between gap-3 border-b border-border-subtle bg-bg-raised px-3 py-1.5">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="text-lg font-bold truncate">
-            {clubName ?? "\u00a0"}
-          </span>
-          {readout !== undefined && (
-            <span className="hidden text-xs text-text-secondary sm:block">
-              {readout}
-            </span>
-          )}
+      {/* Left + right zones share the first row band, which is also the
+          window's drag handle and the macOS traffic-light inset. */}
+      <AppTitleBar
+        title={clubName ?? ""}
+        leading={leading}
+        identity={
+          <span className="truncate text-lg font-bold">{clubName ?? "\u00a0"}</span>
+        }
+        actions={actions}
+      />
+
+      {/* The adaptive band: the header's described state, never a second source
+          of truth for it. See `chrome/header/career-header-state.ts`. */}
+      {secondary !== undefined && (
+        <div
+          className="flex h-7 w-full items-center border-b border-border-subtle bg-bg-raised px-3"
+          style={NO_DRAG}
+        >
+          {secondary}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {actions}
-        </div>
-      </div>
+      )}
 
       {/* Center zone: primary sections */}
       <nav

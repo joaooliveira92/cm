@@ -131,7 +131,7 @@ const mountCareer = async (phase: Phase, child: "league" | "fixtures") => {
     ]),
     history: createMemoryHistory({ initialEntries: [`/career/s1/${child}`] }),
   });
-  bindRouter({ navigate: () => undefined, history: { back: () => undefined } } as never);
+  bindRouter({ navigate: () => undefined, history: { back: () => undefined, forward: () => undefined, canGoBack: () => false } } as never);
   render(<RouterProvider router={router} />);
   await screen.findByRole("button", { name: /Continue/ });
 };
