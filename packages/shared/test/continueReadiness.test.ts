@@ -7,6 +7,7 @@ const READY: ContinueReadinessFacts = {
   hasTactic: true,
   matchInProgress: false,
   advancing: false,
+  pendingIncomingBids: 0,
 };
 
 const idsOf = (facts: ContinueReadinessFacts) =>
@@ -90,6 +91,7 @@ describe("assessContinueReadiness", () => {
         hasTactic: true,
         matchInProgress: true,
         advancing: true,
+        pendingIncomingBids: 0,
       });
 
       expect(ids).toEqual(["match-in-progress", "advance-in-flight", "season-complete"]);
@@ -101,9 +103,10 @@ describe("assessContinueReadiness", () => {
         hasTactic: false,
         matchInProgress: true,
         advancing: true,
+        pendingIncomingBids: 1,
       });
 
-      expect(items).toHaveLength(4);
+      expect(items).toHaveLength(5);
       for (const item of items) {
         expect(item.title.length).toBeGreaterThan(0);
         expect(item.detail.length).toBeGreaterThan(0);
@@ -115,5 +118,62 @@ describe("assessContinueReadiness", () => {
     it.each(["pre_season", "in_season", "mid_window_open"] as const)("allows %s", (phase) => {
       expect(assessContinueReadiness({ ...READY, phase }).canAdvance).toBe(true);
     });
+  });
+});
+
+describe("bids awaiting the manager", () => {
+  it("says nothing when no bid is waiting", () => {
+    expect(idsOf(READY)).not.toContain("bids-awaiting-response");
+  });
+
+  it("reports a waiting bid without blocking the advance", () => {
+    const readiness = assessContinueReadiness({ ...READY, pendingIncomingBids: 1 });
+
+    expect(readiness.canAdvance).toBe(true);
+    expect(readiness.items[0]!.id).toBe("bids-awaiting-response");
+    expect(readiness.items[0]!.severity).toBe("advisory");
+  });
+
+  /** The advance is what lapses these bids, so an advisory that only counted them would be a trap. */
+  it("names the consequence of advancing, not just the count", () => {
+    const item = assessContinueReadiness({ ...READY, pendingIncomingBids: 2 }).items[0]!;
+
+    expect(item.detail).toContain("2 clubs");
+    expect(item.detail).toContain("lapse");
+  });
+
+  it("reads naturally for a single bid", () => {
+    const item = assessContinueReadiness({ ...READY, pendingIncomingBids: 1 }).items[0]!;
+
+    expect(item.detail).toContain("A club has");
+    expect(item.detail).not.toContain("1 clubs");
+  });
+
+  /** The career band shows one advisory. A lapsing bid outranks a standing condition that will
+   *  still be true after the advance. */
+  it("outranks the no-Tactic advisory", () => {
+    const items = assessContinueReadiness({
+      ...READY,
+      hasTactic: false,
+      pendingIncomingBids: 1,
+    }).items;
+
+    expect(items.map((item) => item.id)).toEqual(["bids-awaiting-response", "no-tactic"]);
+  });
+
+  it("still reports both advisories behind a blocker", () => {
+    const readiness = assessContinueReadiness({
+      ...READY,
+      matchInProgress: true,
+      hasTactic: false,
+      pendingIncomingBids: 1,
+    });
+
+    expect(readiness.canAdvance).toBe(false);
+    expect(readiness.items.map((item) => item.id)).toEqual([
+      "match-in-progress",
+      "bids-awaiting-response",
+      "no-tactic",
+    ]);
   });
 });

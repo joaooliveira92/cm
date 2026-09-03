@@ -69,11 +69,16 @@ than fetching them, and is unit-tested with no database.
   messages without a projector running").
 - **No action-required workflow, no deadlines.** Screens 24-26 specify an `actionState` of
   `none | optional | required | completed | expired` and a deadline per message. The 2026-08-29
-  note's "nothing is pending" argument is unrefuted, so there is no referent for any value but
-  `none`. Shipping a five-state enum that can only ever hold one value, and a UI for filtering on it,
-  would be building the container before anything can go in it — which is the one thing the old note
-  got most right. This is the largest deliberate gap against the import and it closes the day AI
-  origination of bids into the human club lands.
+  note's "nothing is pending" argument was unrefuted at the time, so there was no referent for any
+  value but `none`. Shipping a five-state enum that could only ever hold one value, and a UI for
+  filtering on it, would have been building the container before anything could go in it.
+
+  **Closed on 2026-09-03**, on exactly the trigger this note named, by
+  [AI clubs bid for your players](2026-09-03-the-first-pending-decision.md). `actionState` now
+  carries `none | required | completed | expired`, derived live from the `bids` row rather than
+  stored on the message. `optional` is still not modelled — nothing in the game asks for a decision
+  the manager may skip without consequence. Deadlines are still not modelled either: a pending Bid
+  lapses on the next Continue, which is a rule about the loop rather than a per-message date.
 - **No unread-driven Continue stop.** The 2026-08-29 note handed the career loop a simplification —
   "an unread message exists" is not available as a stop condition — and that stands. The inbox does
   not interrupt anything.
@@ -165,12 +170,11 @@ the next reader to a rule the code contradicts.
 
 ## Risks
 
-- **The old note's "nothing is pending" argument is now load-bearing in a new place.** It used to
-  justify not building the screen; it now justifies not building `actionState`. If AI origination of
-  bids into the human club lands and nobody revisits this note, the inbox will list a pending
-  decision as an ordinary read-and-forget message, which is worse than the Transfers screen surfacing
-  it — a dismissable message about a decision that is still open is exactly the failure the old note
-  warned about for injuries.
+- ~~**The old note's "nothing is pending" argument is now load-bearing in a new place.**~~
+  *Retired 2026-09-03.* This risk fired as written — AI origination landed — and was answered rather
+  than realised: `actionState` is derived live from the `bids` row, so a message about an open
+  decision cannot be read-and-forgotten into looking settled, and archiving one does not drop it from
+  the action-required count.
 - **Copy lives in one pure function and is not localized.** Every subject and body is an English
   template with interpolated values. `newsProjection.ts` is the single place that changes when
   localization arrives, which is the cheap version of this problem, but §13's "complete message

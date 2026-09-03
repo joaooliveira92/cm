@@ -46,12 +46,16 @@ const routeChildToDestination: Readonly<Record<string, CareerDestination["type"]
 export const Navbar = ({
   saveId,
   clubName,
+  badges,
   leading,
   secondary,
   actions,
 }: {
   readonly saveId: SaveId;
   readonly clubName: string | null;
+  /** Unanswered work per section id. The navbar owns none of these numbers — it renders whichever
+   *  the chrome supplies, so a future section can carry one without this component changing. */
+  readonly badges?: Readonly<Record<string, { readonly count: number; readonly label: string }>>;
   /** Left-zone controls preceding the identity (the history cluster). */
   readonly leading?: ReactNode;
   /** The adaptive band under the identity row — the header's described state. */
@@ -180,6 +184,8 @@ export const Navbar = ({
             key={section.id}
             section={section}
             active={section.id === activeSectionId}
+            badgeCount={badges?.[section.id]?.count}
+            badgeLabel={badges?.[section.id]?.label}
             submenuOpen={isSubmenuVisible(section.id)}
             children={section.items}
             onNavigate={() =>

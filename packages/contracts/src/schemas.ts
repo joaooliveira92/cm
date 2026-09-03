@@ -967,6 +967,12 @@ export type NewsCategory = typeof NewsCategorySchema.Type;
 export const NewsPrioritySchema = Schema.Literals(["normal", "high"]);
 export const NewsReadStateSchema = Schema.Literals(["unread", "read", "archived"]);
 
+/** Whether a message is waiting on the manager. `none` for every message that records something
+ *  that already happened, which is all of them but an unanswered Bid for one of this club's
+ *  players — the only decision in the simulation that waits. Derived live from the `bids` row, so
+ *  the inbox cannot claim a decision is open after it has been answered. */
+export const NewsActionStateSchema = Schema.Literals(["none", "required", "completed", "expired"]);
+
 /** One projected message. Immutable and fully self-describing: the renderer never re-derives copy
  *  from a tag, so message text has exactly one source. */
 export class NewsMessageView extends Schema.Class<NewsMessageView>("NewsMessageView")({
@@ -974,6 +980,7 @@ export class NewsMessageView extends Schema.Class<NewsMessageView>("NewsMessageV
   category: NewsCategorySchema,
   priority: NewsPrioritySchema,
   state: NewsReadStateSchema,
+  actionState: NewsActionStateSchema,
   flagged: Schema.Boolean,
   subject: Schema.String,
   body: Schema.String,
@@ -989,6 +996,8 @@ export class NewsMessageView extends Schema.Class<NewsMessageView>("NewsMessageV
 export class NewsCountsView extends Schema.Class<NewsCountsView>("NewsCountsView")({
   total: Schema.Finite,
   unread: Schema.Finite,
+  /** Open decisions. Counted across archived messages too: filing one away does not answer it. */
+  actionRequired: Schema.Finite,
   flagged: Schema.Finite,
   archived: Schema.Finite,
   highPriorityUnread: Schema.Finite,

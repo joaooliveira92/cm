@@ -12,6 +12,8 @@ import type { NavItem, NavSection } from "../nav-config.js";
 export const PrimaryNavItem = ({
   section,
   active,
+  badgeCount,
+  badgeLabel,
   submenuOpen,
   children,
   onNavigate,
@@ -21,6 +23,11 @@ export const PrimaryNavItem = ({
 }: {
   readonly section: NavSection;
   readonly active: boolean;
+  /** An unanswered-work count for this section, or `undefined` for the sections that have none.
+   *  Rendered with its own accessible label rather than as a bare number, so it is not a count
+   *  whose meaning only the colour and position convey. */
+  readonly badgeCount?: number | undefined;
+  readonly badgeLabel?: string | undefined;
   readonly submenuOpen: boolean;
   readonly children: ReadonlyArray<NavItem>;
   readonly onNavigate: () => void;
@@ -52,6 +59,14 @@ export const PrimaryNavItem = ({
         >
           {Icon !== undefined && <Icon className="size-4" />}
           <span>{section.label}</span>
+          {badgeCount !== undefined && badgeCount > 0 && (
+            <span
+              aria-label={`${badgeCount} ${badgeLabel ?? "unread"}`}
+              className="ml-0.5 min-w-4 rounded-full bg-destructive px-1 text-center text-[0.625rem] font-semibold leading-4 text-white tabular-nums"
+            >
+              {badgeCount > 99 ? "99+" : badgeCount}
+            </span>
+          )}
         </button>
         {hasChildren && (
           <button

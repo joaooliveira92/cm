@@ -47,6 +47,7 @@ import {
   saveSummaryAtom,
   tacticsAtom,
   useAtom,
+  newsInboxAtom,
   useAtomValue,
 } from "../rpc.js";
 import { BTN_PRIMARY } from "../theme.js";
@@ -133,6 +134,10 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
   const saveResult = useAtomValue(saveSummaryAtom(saveId));
   const [advance, runAdvance] = useAtom(advanceCalendarMutation);
   const tacticsResult = useAtomValue(tacticsAtom(saveId));
+  // One query serves two things: the unread badge on the News destination, and the count of open
+  // decisions behind the readiness advisory. Reading `getTransfersScreen` for the latter would be
+  // far heavier — it loads every player's economics — for a number the inbox already computes.
+  const newsResult = useAtomValue(newsInboxAtom(saveId));
 
   const clubName =
     profileResult._tag === "Success" ? profileResult.value.clubName : null;
@@ -194,6 +199,8 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
   //
   // `hasTactic` defaults true unless the query has actually come back saying otherwise, so neither
   // a load in flight nor a failed read flashes a warning about state we have not read.
+  const newsCounts = newsResult._tag === "Success" ? newsResult.value.counts : null;
+
   const readinessAdvisory =
     season === null
       ? undefined
@@ -203,6 +210,9 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
             tacticsResult._tag === "Success" ? tacticsResult.value.tactic !== null : true,
           matchInProgress: liveMatch !== undefined,
           advancing,
+          // Zero until the read comes back, on the same reasoning as `hasTactic` above: a load in
+          // flight must not flash a warning about state we have not read.
+          pendingIncomingBids: newsCounts?.actionRequired ?? 0,
         }).items.find((item) => item.severity === "advisory");
 
   // Everything the band reports, described in one place. A blocked career loop
@@ -223,6 +233,18 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
 
   return (
     <Navbar
+      // Unread news is the one ambient signal the career loop has. Without it the inbox is only
+      // seen by a player who thinks to look, which is the same failure as having no inbox.
+      badges={
+        newsCounts === null || newsCounts.unread === 0
+          ? undefined
+          : {
+              news: {
+                count: newsCounts.unread,
+                label: newsCounts.actionRequired > 0 ? "unread, some awaiting an answer" : "unread",
+              },
+            }
+      }
       saveId={saveId}
       clubName={clubName}
       leading={

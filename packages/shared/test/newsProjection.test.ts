@@ -236,6 +236,7 @@ describe("filterNews", () => {
     category: "season",
     priority: "normal",
     state: "unread",
+    actionState: "none",
     flagged: false,
     subject: "Season 1 begins",
     body: "38 fixtures scheduled.",
@@ -243,6 +244,7 @@ describe("filterNews", () => {
     matchday: null,
     occurredAt: "2026-01-01 10:00:00",
     seq: 1,
+    ordinal: 1,
     ...overrides,
   });
 
@@ -314,6 +316,7 @@ describe("countNews", () => {
     category: "season",
     priority: "normal",
     state: "unread",
+    actionState: "none",
     flagged: false,
     subject: "s",
     body: "b",
@@ -321,6 +324,7 @@ describe("countNews", () => {
     matchday: null,
     occurredAt: "2026-01-01 10:00:00",
     seq: 1,
+    ordinal: 1,
     ...overrides,
   });
 
@@ -331,7 +335,14 @@ describe("countNews", () => {
       message({ messageId: "c", state: "archived" }),
       message({ messageId: "d", state: "unread", priority: "high" }),
     ]);
-    expect(counts).toEqual({ total: 3, unread: 2, flagged: 1, archived: 1, highPriorityUnread: 1 });
+    expect(counts).toEqual({
+      total: 3,
+      unread: 2,
+      actionRequired: 0,
+      flagged: 1,
+      archived: 1,
+      highPriorityUnread: 1,
+    });
   });
 
   it("excludes archived messages from the unread count", () => {
@@ -344,9 +355,163 @@ describe("countNews", () => {
     expect(countNews([])).toEqual({
       total: 0,
       unread: 0,
+      actionRequired: 0,
       flagged: 0,
       archived: 0,
       highPriorityUnread: 0,
     });
+  });
+});
+
+describe("BidReceived — the one message that waits on the manager", () => {
+  const bidEvent = event({
+    tag: "BidReceived",
+    streamType: "club",
+    streamId: "club-1",
+    payload: {
+      bidId: "bid-1",
+      playerId: "p-1",
+      playerName: "Ada Baker",
+      biddingClubId: "club-2",
+      amount: 2_500_000,
+      seasonNumber: 1,
+    },
+  });
+
+  it("is action-required while the bid is still pending", () => {
+    const message = projectNewsMessage(bidEvent, UNTOUCHED, CLUB, new Map([["bid-1", "pending"]]));
+    expect(message?.actionState).toBe("required");
+    expect(message?.category).toBe("transfer");
+    expect(message?.priority).toBe("high");
+    expect(message?.subject).toContain("Ada Baker");
+    expect(message?.body).toContain("£2.5m");
+  });
+
+  it("warns that advancing lets the bid lapse", () => {
+    const message = projectNewsMessage(bidEvent, UNTOUCHED, CLUB, new Map([["bid-1", "pending"]]));
+    expect(message?.body).toContain("lapse");
+  });
+
+  it("reads as settled once the bid is answered", () => {
+    for (const status of ["accepted", "rejected", "countered", "withdrawn"]) {
+      const message = projectNewsMessage(bidEvent, UNTOUCHED, CLUB, new Map([["bid-1", status]]));
+      expect(message?.actionState).toBe("completed");
+      expect(message?.priority).toBe("normal");
+    }
+  });
+
+  it("reads as lapsed once the bid expires, and says the player stayed", () => {
+    const message = projectNewsMessage(bidEvent, UNTOUCHED, CLUB, new Map([["bid-1", "expired"]]));
+    expect(message?.actionState).toBe("expired");
+    expect(message?.body).toContain("lapsed");
+    expect(message?.body).toContain("Northgate United");
+  });
+
+  it("does not claim a decision is open when the bid row is gone", () => {
+    expect(projectNewsMessage(bidEvent, UNTOUCHED, CLUB, new Map())?.actionState).toBe("completed");
+  });
+
+  it("drops the message when the payload names no bid", () => {
+    expect(
+      projectNewsMessage(
+        event({ tag: "BidReceived", payload: { amount: 1 } }),
+        UNTOUCHED,
+        CLUB,
+        new Map(),
+      ),
+    ).toBeNull();
+  });
+
+  it("leaves every other message with no action state", () => {
+    const message = projectNewsMessage(
+      event({ tag: "SeasonConcluded", payload: { seasonNumber: 1 } }),
+      UNTOUCHED,
+      CLUB,
+    );
+    expect(message?.actionState).toBe("none");
+  });
+});
+
+describe("the action view", () => {
+  const actionable = (overrides: Partial<NewsMessage>): NewsMessage => ({
+    messageId: "m",
+    category: "transfer",
+    priority: "high",
+    state: "unread",
+    actionState: "required",
+    flagged: false,
+    subject: "Transfer offer",
+    body: "b",
+    seasonNumber: 1,
+    matchday: null,
+    occurredAt: "2026-01-01 10:00:00",
+    seq: 1,
+    ordinal: 1,
+    ...overrides,
+  });
+
+  const messages = [
+    actionable({ messageId: "open" }),
+    actionable({ messageId: "settled", actionState: "completed" }),
+    actionable({ messageId: "filed", state: "archived" }),
+    actionable({ messageId: "plain", actionState: "none", category: "season" }),
+  ];
+
+  it("shows only decisions that are still open", () => {
+    expect(
+      filterNews(messages, { view: "action", categories: [], search: "" }).map((m) => m.messageId),
+    ).toEqual(["open", "filed"]);
+  });
+
+  it("counts open decisions even when they have been archived", () => {
+    expect(countNews(messages).actionRequired).toBe(2);
+  });
+});
+
+describe("cross-stream ordering", () => {
+  /** `seq` counts within one stream, so the Season stream's seq 1 and the club stream's seq 1 are
+   *  not comparable. Two events written by the same advance share a `created_at` to the second, so
+   *  without a global ordinal the inbox's order across streams is arbitrary. */
+  it("breaks a same-timestamp tie on the log's append order, not on seq", () => {
+    const messages = projectNews(
+      [
+        {
+          streamType: "season",
+          streamId: "save-1",
+          seq: 9,
+          ordinal: 1,
+          tag: "SeasonStarted",
+          payload: { seasonNumber: 1, fixtureCount: 38 },
+          createdAt: "2026-01-01 10:00:00",
+        },
+        {
+          streamType: "club",
+          streamId: "club-1",
+          seq: 1,
+          ordinal: 2,
+          tag: "BidReceived",
+          payload: { bidId: "b1", playerName: "Ada", amount: 1_000_000, seasonNumber: 1 },
+          createdAt: "2026-01-01 10:00:00",
+        },
+      ],
+      new Map(),
+      CLUB,
+      new Map([["b1", "pending"]]),
+    );
+
+    expect(messages.map((m) => m.category)).toEqual(["transfer", "season"]);
+  });
+
+  it("falls back to seq when no ordinal is supplied", () => {
+    const messages = projectNews(
+      [
+        event({ tag: "SeasonConcluded", payload: { seasonNumber: 1 }, seq: 1 }),
+        event({ tag: "SeasonStarted", payload: { seasonNumber: 2, fixtureCount: 38 }, seq: 2 }),
+      ],
+      new Map(),
+      CLUB,
+    );
+
+    expect(messages.map((m) => m.seq)).toEqual([2, 1]);
   });
 });

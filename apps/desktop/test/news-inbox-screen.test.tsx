@@ -12,6 +12,7 @@ interface MessageOverrides {
   readonly category?: string;
   readonly priority?: string;
   readonly state?: string;
+  readonly actionState?: string;
   readonly flagged?: boolean;
   readonly subject?: string;
   readonly body?: string;
@@ -24,6 +25,7 @@ const message = (overrides: MessageOverrides) => ({
   category: "season",
   priority: "normal",
   state: "unread",
+  actionState: "none",
   flagged: false,
   subject: "Season 1 begins",
   body: "38 fixtures are scheduled.",
@@ -43,6 +45,7 @@ const MESSAGES = [
 const counts = {
   total: 3,
   unread: 1,
+  actionRequired: 0,
   flagged: 1,
   archived: 1,
   highPriorityUnread: 1,
@@ -282,5 +285,95 @@ describe("keyboard and bulk actions", () => {
     await waitFor(() =>
       expect(list.getAttribute("aria-activedescendant")).toBe("news-row-m-result"),
     );
+  });
+});
+
+describe("action-required messages", () => {
+  const ACTIONABLE = [
+    message({
+      messageId: "m-bid",
+      category: "transfer",
+      priority: "high",
+      actionState: "required",
+      subject: "Transfer offer for Ada Baker",
+      body: "A club has offered £2.5m for Ada Baker.",
+    }),
+    message({
+      messageId: "m-lapsed",
+      category: "transfer",
+      state: "read",
+      actionState: "expired",
+      subject: "Transfer offer for Bo Reid (lapsed)",
+      body: "The offer lapsed without an answer.",
+    }),
+    message({ messageId: "m-plain", category: "season", state: "read" }),
+  ];
+
+  const mountActionable = () => {
+    (window as unknown as { cmClone: { call: unknown } }).cmClone = {
+      call: async (method: string, payload: unknown) => {
+        if (method === "getNewsInbox")
+          return {
+            _tag: "Success",
+            value: {
+              messages: ACTIONABLE,
+              counts: { ...counts, total: 3, unread: 1, actionRequired: 1, archived: 0 },
+            },
+          };
+        if (method === "setNewsMessageState") {
+          patches.push(payload);
+          return { _tag: "Success", value: undefined };
+        }
+        return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: saveId } };
+      },
+    };
+    return mount();
+  };
+
+  it("says an open decision is waiting, in words", async () => {
+    mountActionable();
+    await waitFor(() => expect(rows()).toHaveLength(3));
+
+    const row = rows().find((r) => r.textContent?.includes("Ada Baker"))!;
+    expect(row.textContent).toContain("Action required");
+  });
+
+  it("counts open decisions in the header", async () => {
+    mountActionable();
+    await waitFor(() => expect(screen.getByText(/1 awaiting your answer/)).toBeTruthy());
+  });
+
+  it("filters to just the open decisions", async () => {
+    mountActionable();
+    await waitFor(() => expect(rows()).toHaveLength(3));
+
+    fireEvent.click(screen.getByRole("tab", { name: "Action required" }));
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(rows()[0]!.textContent).toContain("Ada Baker");
+  });
+
+  it("routes to the screen that owns the decision rather than answering it here", async () => {
+    mountActionable();
+    await waitFor(() => expect(rows()).toHaveLength(3));
+
+    expect(screen.getByRole("button", { name: "Answer on Transfers" })).toBeTruthy();
+  });
+
+  it("offers no answer route once a decision has lapsed", async () => {
+    mountActionable();
+    await waitFor(() => expect(rows()).toHaveLength(3));
+
+    fireEvent.click(rows().find((r) => r.textContent?.includes("Bo Reid"))!);
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { level: 2 }).textContent).toContain("Bo Reid"),
+    );
+    expect(screen.queryByRole("button", { name: "Answer on Transfers" })).toBeNull();
+  });
+
+  it("marks a lapsed decision as lapsed in the list", async () => {
+    mountActionable();
+    await waitFor(() => expect(rows()).toHaveLength(3));
+
+    expect(rows().find((r) => r.textContent?.includes("Bo Reid"))!.textContent).toContain("Lapsed");
   });
 });

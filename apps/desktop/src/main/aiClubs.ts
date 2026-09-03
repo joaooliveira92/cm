@@ -234,8 +234,13 @@ export const runAiTransferWindow = (seasonNumber: number) =>
         }))
         .sort((a, b) => b.value - a.value || a.player.id.localeCompare(b.player.id));
 
+      // `status = 'pending'` is load-bearing. Counting every Bid ever sent to the human club would
+      // make this guarantee fire once per career rather than once per window: the first window's Bid
+      // is still on the table afterwards — answered or lapsed — so the count is never zero again.
+      // What the pass is guarding against is the manager having *nothing to answer*, which is a
+      // question about open Bids only.
       const existingUserBid = yield* sql<{ n: number }>`
-        SELECT COUNT(*) as n FROM bids WHERE selling_club_id = ${userClubId}`;
+        SELECT COUNT(*) as n FROM bids WHERE selling_club_id = ${userClubId} AND status = 'pending'`;
       if (userPlayers.length > 0 && existingUserBid[0]!.n === 0) {
         loop: for (const candidate of userPlayers) {
           // Collect every AI club that can afford the value, then pick the one with the most Wage

@@ -46,6 +46,10 @@ export interface ContinueReadinessFacts {
   readonly matchInProgress: boolean;
   /** An advance is already in flight. */
   readonly advancing: boolean;
+  /** Bids from AI clubs for this club's players that the manager has not answered. The only
+   *  decision in the game that waits on the manager, and the only readiness fact whose condition
+   *  the advance itself resolves — by lapsing them. */
+  readonly pendingIncomingBids: number;
 }
 
 export interface ContinueReadiness {
@@ -54,19 +58,22 @@ export interface ContinueReadiness {
   readonly items: ReadonlyArray<ReadinessItem>;
 }
 
-const BLOCKING: ReadonlyArray<{
+interface ReadinessRule {
   readonly id: string;
   readonly applies: (facts: ContinueReadinessFacts) => boolean;
   readonly title: string;
-  readonly detail: string;
-}> = [
+  /** A function rather than a string because a rule may need to name a count. */
+  readonly detail: (facts: ContinueReadinessFacts) => string;
+}
+
+const BLOCKING: ReadonlyArray<ReadinessRule> = [
   {
     id: "match-in-progress",
     applies: (facts) => facts.matchInProgress,
     title: "A match is in progress",
     // The sentence the career chrome already shows for this case — kept verbatim so adopting this
     // module changes what the player is told about a *new* condition only.
-    detail: "The season cannot advance during a match.",
+    detail: () => "The season cannot advance during a match.",
   },
   {
     // Acceptance criterion 6 — duplicate requests cannot advance twice. The disabled button is the
@@ -74,22 +81,36 @@ const BLOCKING: ReadonlyArray<{
     id: "advance-in-flight",
     applies: (facts) => facts.advancing,
     title: "Already advancing",
-    detail: "The Calendar is still processing the previous advance.",
+    detail: () => "The Calendar is still processing the previous advance.",
   },
   {
     id: "season-complete",
     applies: (facts) => facts.phase === "season_complete",
     title: "The season is complete",
-    detail: "There are no further Matchdays to play in this season.",
+    detail: () => "There are no further Matchdays to play in this season.",
   },
 ];
 
-const ADVISORY: ReadonlyArray<{
-  readonly id: string;
-  readonly applies: (facts: ContinueReadinessFacts) => boolean;
-  readonly title: string;
-  readonly detail: string;
-}> = [
+/**
+ * Ordered by which one a single-slot surface should show: the career band renders only the first
+ * advisory, so the one the advance itself *destroys* has to outrank the standing condition that
+ * will still be true afterwards.
+ */
+const ADVISORY: ReadonlyArray<ReadinessRule> = [
+  {
+    // The first decision in this game that waits on the manager. Advisory rather than blocking:
+    // letting a bid lapse is a legitimate answer, and blocking Continue on it would turn a
+    // negotiation the player may not care about into a soft-lock.
+    //
+    // The detail names the consequence rather than just the count, because this is the one advisory
+    // the advance itself *resolves* — pressing Continue lapses every bid named here, and an
+    // advisory that did not say so would be a trap rather than a notice.
+    id: "bids-awaiting-response",
+    applies: (facts) => facts.pendingIncomingBids > 0,
+    title: "Bids awaiting your response",
+    detail: (facts) =>
+      `${facts.pendingIncomingBids === 1 ? "A club has" : `${facts.pendingIncomingBids} clubs have`} bid for your players. Advancing lets ${facts.pendingIncomingBids === 1 ? "it" : "them"} lapse.`,
+  },
   {
     // The sharpest unannounced gap in the career loop: every AI club is assigned a Tactic at season
     // start and the player's club is not, so `synthesizeDefaultTactic` quietly fills a 4-4-2 in and
@@ -99,7 +120,7 @@ const ADVISORY: ReadonlyArray<{
     id: "no-tactic",
     applies: (facts) => !facts.hasTactic,
     title: "No Tactic set",
-    detail: "Matches will be played with an automatic 4-4-2 until you set one.",
+    detail: () => "Matches will be played with an automatic 4-4-2 until you set one.",
   },
 ];
 
@@ -119,13 +140,13 @@ export const assessContinueReadiness = (
       id: rule.id,
       severity: "blocking" as const,
       title: rule.title,
-      detail: rule.detail,
+      detail: rule.detail(facts),
     })),
     ...advisories.map((rule) => ({
       id: rule.id,
       severity: "advisory" as const,
       title: rule.title,
-      detail: rule.detail,
+      detail: rule.detail(facts),
     })),
   ];
 

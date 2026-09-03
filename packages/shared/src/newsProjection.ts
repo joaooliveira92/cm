@@ -31,6 +31,21 @@ export type NewsPriority = "normal" | "high";
  * of the inbox whether or not it was ever read, which is why `state` collapses the two. */
 export type NewsReadState = "unread" | "read" | "archived";
 
+/**
+ * Whether a message is waiting on the manager.
+ *
+ * Almost every message is a record of something that already happened, and carries `none`. The one
+ * exception is a Bid for one of this club's players: it is the only thing in the simulation that
+ * waits, because every other AI action resolves inside the command that triggered it.
+ *
+ * This is derived live from the `bids` row rather than stored on the message, so the inbox can
+ * never claim a decision is open after it has been answered.
+ */
+export type NewsActionState = "none" | "required" | "completed" | "expired";
+
+/** The live status of a Bid the inbox has a message about, keyed by Bid id. */
+export type BidStatuses = ReadonlyMap<string, string>;
+
 /** One row of the `events` log, as the inbox query returns it. */
 export interface NewsSourceEvent {
   readonly streamType: string;
@@ -39,6 +54,11 @@ export interface NewsSourceEvent {
   readonly tag: string;
   readonly payload: unknown;
   readonly createdAt: string;
+  /** The log's global append order (SQLite's `rowid`). `seq` cannot order the inbox on its own: it
+   *  counts within one stream, so the Season stream's seq 1 and the club stream's seq 1 are not
+   *  comparable, and `created_at` ties them whenever two events land in the same second — which is
+   *  every advance. Optional so callers that only ever pass one stream need not supply it. */
+  readonly ordinal?: number;
 }
 
 /** The per-message user state held in `news_message_state`. Absent means untouched — unread, not
@@ -64,6 +84,7 @@ export interface NewsMessage {
   readonly category: NewsCategory;
   readonly priority: NewsPriority;
   readonly state: NewsReadState;
+  readonly actionState: NewsActionState;
   readonly flagged: boolean;
   readonly subject: string;
   readonly body: string;
@@ -74,6 +95,9 @@ export interface NewsMessage {
    * only. It becomes the in-world date when `events.game_date` lands. */
   readonly occurredAt: string;
   readonly seq: number;
+  /** Where this message sits in the log's global append order — what breaks a `occurredAt` tie
+   *  across two streams. Falls back to `seq` when the source did not carry one. */
+  readonly ordinal: number;
 }
 
 /**
@@ -139,6 +163,8 @@ interface Projected {
   readonly body: string;
   readonly seasonNumber: number | null;
   readonly matchday: number | null;
+  /** Omitted for the messages that are pure record, which is all of them but one. */
+  readonly actionState?: NewsActionState;
 }
 
 const matchdayMessage = (
@@ -223,9 +249,16 @@ const WINDOW_LABEL: Readonly<Record<string, string>> = {
 const windowLabel = (payload: Record<string, unknown>): string =>
   WINDOW_LABEL[str(payload["window"]) ?? ""] ?? "transfer";
 
+/** Currency for message copy. Deliberately not locale-aware — see the note's localization risk. */
+const formatAmount = (amount: number): string =>
+  amount >= 1_000_000
+    ? `£${(amount / 1_000_000).toFixed(amount % 1_000_000 === 0 ? 0 : 1)}m`
+    : `£${Math.round(amount / 1000)}k`;
+
 const project = (
   event: NewsSourceEvent,
   club: NewsClubContext,
+  bidStatuses: BidStatuses,
 ): Projected | null => {
   if (!isRecord(event.payload)) return null;
   const payload = event.payload;
@@ -297,6 +330,44 @@ const project = (
         body: `Your career ended after season ${seasonNumber}. This save is now archived.`,
       }));
 
+    case "BidReceived": {
+      const bidId = str(payload["bidId"]);
+      const amount = num(payload["amount"]);
+      if (bidId === null || amount === null) return null;
+      const playerName = str(payload["playerName"]) ?? "One of your players";
+
+      // Read live, never from the payload: the event records that the Bid arrived and is immutable,
+      // while whether it is still open is a fact about the `bids` row that the manager changes.
+      const status = bidStatuses.get(bidId);
+      const actionState: NewsActionState =
+        status === "pending" ? "required" : status === "expired" ? "expired" : "completed";
+
+      const body = (() => {
+        switch (actionState) {
+          case "required":
+            return `A club has offered ${formatAmount(amount)} for ${playerName}. Answer it on the Transfers screen — advancing the Calendar lets it lapse.`;
+          case "expired":
+            return `The offer of ${formatAmount(amount)} for ${playerName} lapsed without an answer. ${playerName} stays at ${club.clubName}.`;
+          default:
+            return `The offer of ${formatAmount(amount)} for ${playerName} has been settled.`;
+        }
+      })();
+
+      return {
+        category: "transfer",
+        // An open decision outranks a record of one. Once answered it is ordinary news.
+        priority: actionState === "required" ? "high" : "normal",
+        subject:
+          actionState === "required"
+            ? `Transfer offer for ${playerName}`
+            : `Transfer offer for ${playerName} (${actionState === "expired" ? "lapsed" : "settled"})`,
+        body,
+        seasonNumber: num(payload["seasonNumber"]),
+        matchday: null,
+        actionState,
+      };
+    }
+
     case "PlayerDeveloped": {
       const rawPlayers = payload["players"];
       const count = Array.isArray(rawPlayers) ? rawPlayers.length : null;
@@ -324,14 +395,16 @@ export const projectNewsMessage = (
   event: NewsSourceEvent,
   state: NewsMessageState,
   club: NewsClubContext,
+  bidStatuses: BidStatuses = new Map(),
 ): NewsMessage | null => {
-  const projected = project(event, club);
+  const projected = project(event, club, bidStatuses);
   if (projected === null) return null;
   return {
     messageId: newsMessageId(event),
     category: projected.category,
     priority: projected.priority,
     state: readState(state),
+    actionState: projected.actionState ?? "none",
     flagged: state.flagged,
     subject: projected.subject,
     body: projected.body,
@@ -339,6 +412,7 @@ export const projectNewsMessage = (
     matchday: projected.matchday,
     occurredAt: event.createdAt,
     seq: event.seq,
+    ordinal: event.ordinal ?? event.seq,
   };
 };
 
@@ -353,6 +427,7 @@ export const projectNews = (
   events: ReadonlyArray<NewsSourceEvent>,
   states: ReadonlyMap<string, NewsMessageState>,
   club: NewsClubContext,
+  bidStatuses: BidStatuses = new Map(),
 ): ReadonlyArray<NewsMessage> => {
   const messages: Array<NewsMessage> = [];
   for (const event of events) {
@@ -360,11 +435,12 @@ export const projectNews = (
       event,
       states.get(newsMessageId(event)) ?? UNTOUCHED,
       club,
+      bidStatuses,
     );
     if (message !== null) messages.push(message);
   }
   return messages.sort((a, b) =>
-    a.occurredAt === b.occurredAt ? b.seq - a.seq : a.occurredAt < b.occurredAt ? 1 : -1,
+    a.occurredAt === b.occurredAt ? b.ordinal - a.ordinal : a.occurredAt < b.occurredAt ? 1 : -1,
   );
 };
 
@@ -374,7 +450,7 @@ export const projectNews = (
 
 /** The four inbox views. `all` means the live inbox — read and unread, archived excluded — because
  * archiving exists precisely to take a message out of the default list. */
-export type NewsView = "all" | "unread" | "flagged" | "archived";
+export type NewsView = "all" | "unread" | "action" | "flagged" | "archived";
 
 export interface NewsFilter {
   readonly view: NewsView;
@@ -391,6 +467,7 @@ export const EMPTY_NEWS_FILTER: NewsFilter = { view: "all", categories: [], sear
 export interface FilterableNewsMessage {
   readonly category: NewsCategory;
   readonly state: NewsReadState;
+  readonly actionState: NewsActionState;
   readonly flagged: boolean;
   readonly subject: string;
   readonly body: string;
@@ -399,6 +476,7 @@ export interface FilterableNewsMessage {
 /** The minimum a message needs to be counted. */
 export interface CountableNewsMessage {
   readonly state: NewsReadState;
+  readonly actionState: NewsActionState;
   readonly flagged: boolean;
   readonly priority: NewsPriority;
 }
@@ -409,6 +487,10 @@ const matchesView = (message: FilterableNewsMessage, view: NewsView): boolean =>
       return message.state !== "archived";
     case "unread":
       return message.state === "unread";
+    // Archived is deliberately not excluded here: archiving a message does not answer the decision
+    // it carries, and an open decision the manager filed away is exactly the one worth finding.
+    case "action":
+      return message.actionState === "required";
     case "flagged":
       return message.flagged && message.state !== "archived";
     case "archived":
@@ -436,6 +518,9 @@ export interface NewsCounts {
   /** The live inbox size — archived messages excluded, matching the `all` view. */
   readonly total: number;
   readonly unread: number;
+  /** Decisions still open. Counted across archived messages too, for the reason `matchesView`
+   *  gives: filing a decision away does not answer it. */
+  readonly actionRequired: number;
   readonly flagged: number;
   readonly archived: number;
   readonly highPriorityUnread: number;
@@ -446,10 +531,12 @@ export interface NewsCounts {
 export const countNews = (messages: ReadonlyArray<CountableNewsMessage>): NewsCounts => {
   let total = 0;
   let unread = 0;
+  let actionRequired = 0;
   let flagged = 0;
   let archived = 0;
   let highPriorityUnread = 0;
   for (const message of messages) {
+    if (message.actionState === "required") actionRequired += 1;
     if (message.state === "archived") {
       archived += 1;
       continue;
@@ -461,5 +548,5 @@ export const countNews = (messages: ReadonlyArray<CountableNewsMessage>): NewsCo
     }
     if (message.flagged) flagged += 1;
   }
-  return { total, unread, flagged, archived, highPriorityUnread };
+  return { total, unread, actionRequired, flagged, archived, highPriorityUnread };
 };

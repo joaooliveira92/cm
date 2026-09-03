@@ -43,6 +43,7 @@ interface EventRow {
   readonly tag: string;
   readonly payload: string;
   readonly createdAt: string;
+  readonly ordinal: number;
 }
 
 interface StateRow {
@@ -66,13 +67,29 @@ const loadNewsEvents = (clubId: string) =>
     const sql = yield* SqlClient;
     const rows = yield* sql<EventRow>`
       SELECT stream_type as "streamType", stream_id as "streamId", seq, tag, payload,
-             created_at as "createdAt"
+             created_at as "createdAt", rowid as "ordinal"
       FROM events
       WHERE stream_type = ${SEASON_STREAM}
          OR (stream_type = ${CLUB_STREAM} AND stream_id = ${clubId})
-      ORDER BY created_at DESC, seq DESC`;
+      ORDER BY created_at DESC, rowid DESC`;
     return rows;
   });
+
+/**
+ * The live status of every Bid this save holds, keyed by Bid id.
+ *
+ * The inbox's `BidReceived` messages read their action state from here rather than from the event
+ * payload, so a decision the manager has already answered can never still read as open. Bids are
+ * bounded by transfer activity rather than by world size, so this is a small table scan.
+ */
+const loadBidStatuses = Effect.gen(function* () {
+  const sql = yield* SqlClient;
+  const rows = yield* sql<{
+    readonly id: string;
+    readonly status: string;
+  }>`SELECT id, status FROM bids`;
+  return new Map(rows.map((row) => [row.id, row.status]));
+});
 
 const loadMessageStates = Effect.gen(function* () {
   const sql = yield* SqlClient;
@@ -105,9 +122,10 @@ const parsePayload = (payload: string): unknown => {
 
 const readInbox = Effect.gen(function* () {
   const club = yield* loadUserClub;
-  const [rows, states] = yield* Effect.all([loadNewsEvents(club.id), loadMessageStates], {
-    concurrency: 1,
-  });
+  const [rows, states, bidStatuses] = yield* Effect.all(
+    [loadNewsEvents(club.id), loadMessageStates, loadBidStatuses],
+    { concurrency: 1 },
+  );
 
   const events: ReadonlyArray<NewsSourceEvent> = rows.map((row) => ({
     streamType: row.streamType,
@@ -116,9 +134,15 @@ const readInbox = Effect.gen(function* () {
     tag: row.tag,
     payload: parsePayload(row.payload),
     createdAt: row.createdAt,
+    ordinal: row.ordinal,
   }));
 
-  const messages = projectNews(events, states, { clubId: club.id, clubName: club.name });
+  const messages = projectNews(
+    events,
+    states,
+    { clubId: club.id, clubName: club.name },
+    bidStatuses,
+  );
 
   return new NewsInboxView({
     messages: messages.map(
@@ -128,6 +152,7 @@ const readInbox = Effect.gen(function* () {
           category: message.category,
           priority: message.priority,
           state: message.state,
+          actionState: message.actionState,
           flagged: message.flagged,
           subject: message.subject,
           body: message.body,

@@ -7,6 +7,7 @@ import { Button } from "../components/ui/button.js";
 import { Card } from "../components/ui/card.js";
 import { Input } from "../components/ui/input.js";
 import { FOCUS_RING } from "../focus.js";
+import { navigate } from "../navigation/adapter.js";
 import { PANEL } from "../theme.js";
 import {
   describeRpcError,
@@ -43,6 +44,7 @@ import {
 const VIEW_TABS: ReadonlyArray<{ readonly view: NewsView; readonly label: string }> = [
   { view: "all", label: "All" },
   { view: "unread", label: "Unread" },
+  { view: "action", label: "Action required" },
   { view: "flagged", label: "Flagged" },
   { view: "archived", label: "Archived" },
 ];
@@ -105,7 +107,12 @@ const MessageRow = ({
         {message.state === "unread" ? "Unread" : message.state === "read" ? "Read" : "Archived"}
       </span>
       {message.flagged && <span>Flagged</span>}
-      {message.priority === "high" && <Badge variant="destructive">Priority</Badge>}
+      {message.actionState === "required" ? (
+        <Badge variant="destructive">Action required</Badge>
+      ) : (
+        message.priority === "high" && <Badge variant="destructive">Priority</Badge>
+      )}
+      {message.actionState === "expired" && <span>Lapsed</span>}
     </div>
   </div>
 );
@@ -117,24 +124,38 @@ const MessagePane = ({
   onToggleRead,
   onToggleFlag,
   onToggleArchive,
+  onOpenTransfers,
   pending,
 }: {
   readonly message: NewsMessageView;
   readonly onToggleRead: () => void;
   readonly onToggleFlag: () => void;
   readonly onToggleArchive: () => void;
+  readonly onOpenTransfers: () => void;
   readonly pending: boolean;
 }) => (
   <Card className="flex h-full flex-col px-4 py-3">
     <div className="flex items-baseline justify-between gap-3">
       <h2 className="text-lg font-semibold text-text-primary">{message.subject}</h2>
-      {message.priority === "high" && <Badge variant="destructive">Priority</Badge>}
+      {message.actionState === "required" ? (
+        <Badge variant="destructive">Action required</Badge>
+      ) : (
+        message.priority === "high" && <Badge variant="destructive">Priority</Badge>
+      )}
     </div>
     <p className="mt-1 text-xs text-text-secondary">
       {CATEGORY_LABELS[message.category]} · {whenLabel(message)}
     </p>
     <p className="mt-4 flex-1 text-sm leading-relaxed text-text-body">{message.body}</p>
     <div className="mt-4 flex flex-wrap gap-2">
+      {/* The inbox reports the decision; it never resolves it. Answering a bid belongs to the
+          screen that owns bids, so this routes there rather than growing a second respond surface
+          whose state could disagree with the first. */}
+      {message.actionState === "required" && (
+        <Button type="button" onClick={onOpenTransfers}>
+          Answer on Transfers
+        </Button>
+      )}
       <Button type="button" variant="secondary" disabled={pending} onClick={onToggleRead}>
         {message.state === "read" ? "Mark unread" : "Mark read"}
       </Button>
@@ -222,7 +243,10 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             narrowing the list must not appear to change how much news there is. */}
         <p aria-live="polite" className="text-sm text-text-secondary">
           {counts.unread} unread of {counts.total}
-          {counts.highPriorityUnread > 0 && ` · ${counts.highPriorityUnread} needing attention`}
+          {counts.actionRequired > 0 && ` · ${counts.actionRequired} awaiting your answer`}
+          {counts.actionRequired === 0 &&
+            counts.highPriorityUnread > 0 &&
+            ` · ${counts.highPriorityUnread} needing attention`}
           {inboxResult.waiting && " · Refreshing…"}
         </p>
       </header>
@@ -339,6 +363,7 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
               onToggleArchive={() =>
                 patch([selected.messageId], { archived: selected.state !== "archived" })
               }
+              onOpenTransfers={() => navigate({ type: "transfers", saveId })}
             />
           )}
         </div>
