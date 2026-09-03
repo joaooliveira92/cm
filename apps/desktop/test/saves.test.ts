@@ -18,7 +18,6 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   LEAGUE_SNAPSHOTS_FILE,
   getLeagueSelectionSnapshot,
-  submitLeagueSelection,
   toDomainIntents,
 } from "../src/main/leagueSelection.js";
 import { beginCareer, createSave, listSaves } from "../src/main/saves.js";

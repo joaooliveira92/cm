@@ -71,6 +71,12 @@
       "forked": true,
       "forkReason": "ADR references retargeted at Agent Notes; this repo has no docs/adr/. Upstream hash is the pre-fork baseline; do not re-sync without re-applying the fork."
     },
+    "logging-best-practices": {
+      "source": "boristane/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/logging-best-practices/SKILL.md",
+      "computedHash": "b4810947c33b5356bf385c84cfe387afa9c54af652baaedb7d642a083cceaa4c"
+    },
     "prototype": {
       "source": "mattpocock/skills",
       "sourceType": "github",

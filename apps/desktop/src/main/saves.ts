@@ -18,13 +18,17 @@ import {
 import type { PillarDistribution } from "@cm-clone/shared";
 import { Effect, Random, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { blockingIssues, LEAGUE_SETUP_INDEX, resolveSelection } from "@cm-clone/shared";
+import {
+  blockingIssues,
+  LEAGUE_SETUP_INDEX,
+  resolveSelection,
+  validatePillarDistribution,
+} from "@cm-clone/shared";
 import { createSchema } from "./schema.js";
 import { startSeason } from "./season.js";
 import { deriveSeed } from "@cm-clone/game-engine";
 import { generateWorld } from "./worldGeneration.js";
 import { initializeSeasonEconomy } from "./transfers.js";
-import { validatePillarDistribution } from "@cm-clone/shared";
 import { getLeagueSelectionSnapshot, submitLeagueSelection, toDomainIntents } from "./leagueSelection.js";
 
 const dbPath = (savesDir: string, id: SaveId) => path.join(savesDir, `${id}.sqlite`);
