@@ -53,12 +53,16 @@ export interface ActiveLeaguesContextValue {
   readonly index: LeagueSetupIndexView;
   readonly rows: readonly GridRowView[];
   readonly activeLeagueCount: number;
+  readonly nationCount: number;
   readonly entityEstimate: ActiveLeaguesEntityEstimate;
   readonly processingCost: ProcessingCostReading;
   readonly recommendations: readonly LeagueRecommendation[];
   readonly validation: ActiveLeaguesValidation;
   readonly canContinue: boolean;
   readonly stale: boolean;
+  /** The authoritative advanced-option values the disclosure renders. Authoritative, not
+   *  derived — it is what the player asked for, so it comes straight off the setup state. */
+  readonly advancedOptions: AdvancedOptionsPayload;
   readonly notice: string | null;
   /** The one way user interactions reach the authoritative state. */
   readonly dispatch: (intent: ActiveLeaguesIntent) => void;
@@ -190,16 +194,18 @@ const ActiveLeaguesInner = ({
       index,
       rows: view.rows,
       activeLeagueCount: view.activeLeagueCount,
+      nationCount: view.nationCount,
       entityEstimate: view.entityEstimate,
       processingCost: view.processingCost,
       recommendations: view.recommendations,
       validation: view.validation,
       canContinue: view.canContinue,
       stale: view.stale,
+      advancedOptions: state.advancedOptions,
       notice: state.notice,
       dispatch,
     }),
-    [dispatch, index, state.notice, view],
+    [dispatch, index, state.advancedOptions, state.notice, view],
   );
 
   return (

@@ -13,6 +13,13 @@ import type {
 import { Button } from "../components/ui/button.js";
 import { FOCUS_RING } from "../focus.js";
 import type { GridRowView } from "./atoms.js";
+import {
+  DENSE_CONTROL_PADDING,
+  LEAGUE_COLUMN_GAP,
+  LEAGUE_GRID_TEMPLATE,
+  LEAGUE_ROW_HEIGHT,
+  REMOVE_TARGET_SIZE,
+} from "./density.js";
 
 /**
  * The Active Leagues league table — the dense workspace control of the reworked step 1.
@@ -29,14 +36,9 @@ import type { GridRowView } from "./atoms.js";
  * cells (identity, depth, recommendation, remove) so the layout lives in one place.
  */
 
-/** The CSS-Grid column template, declared once so the header and every body row align by
- *  construction and the grid definition is a single extracted value (spec density: repeated
- *  grid definitions are extracted, never restated as arbitrary values). */
-export const LEAGUE_GRID_TEMPLATE =
-  "[grid-template-columns:2rem_minmax(0,1fr)_9.5rem_minmax(0,1fr)_2rem]";
-
-/** 30–34px rows per the density contract — a repeated compact structure, never spacious cards. */
-export const LEAGUE_ROW_HEIGHT = "h-[32px]";
+/** The column template and row height come from the one density module the workspace, the
+ *  header, and every body row share, so the grid definition exists exactly once. */
+const GRID_ROW_CLASS = `grid items-center ${LEAGUE_COLUMN_GAP} ${DENSE_CONTROL_PADDING} ${LEAGUE_ROW_HEIGHT} ${LEAGUE_GRID_TEMPLATE}`;
 
 const DEPTH_LABELS: Readonly<Record<SimulationDepth, string>> = {
   full: "Full",
@@ -141,7 +143,7 @@ export const LeagueGrid = ({
         <div className="overflow-hidden rounded-panel border border-panel-border bg-panel-bg">
           <div
             role="row"
-            className={`grid items-center gap-x-2 border-b border-panel-border bg-surface-raised px-2 text-2xs font-semibold uppercase tracking-wider text-text-secondary ${LEAGUE_ROW_HEIGHT} ${LEAGUE_GRID_TEMPLATE}`}
+            className={`${GRID_ROW_CLASS} border-b border-panel-border bg-surface-raised text-2xs font-semibold uppercase tracking-wider text-text-secondary`}
           >
             {headerGroup.headers.map((header) => (
               <div key={header.id} role="columnheader" className="min-w-0 truncate">
@@ -157,7 +159,7 @@ export const LeagueGrid = ({
                 key={row.id}
                 role="row"
                 data-league-row={row.id}
-                className={`grid items-center gap-x-2 border-t border-panel-border px-2 ${LEAGUE_ROW_HEIGHT} ${LEAGUE_GRID_TEMPLATE}`}
+                className={`${GRID_ROW_CLASS} border-t border-panel-border`}
               >
                 {row.getVisibleCells().map((cell) => (
                   <div key={cell.id} role="cell" className="min-w-0">
@@ -263,7 +265,7 @@ const RemoveCell = ({
     aria-label={removeAriaLabel(row)}
     title={removeAriaLabel(row)}
     onClick={() => onRemove(row.leagueId)}
-    className="size-[30px]"
+    className={REMOVE_TARGET_SIZE}
   >
     <X aria-hidden="true" />
   </Button>

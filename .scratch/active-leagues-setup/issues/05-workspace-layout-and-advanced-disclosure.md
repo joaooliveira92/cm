@@ -12,12 +12,26 @@ The slice's edge promise: renderer-only composition — the workspace renders th
 
 **Blocked by:** 03 — Advanced options model (the disclosure renders the option set modeled there); 04 — Setup state, derived atoms, and the league grid (the workspace composes the grid and state).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The screen uses the full viewport with a flexible workspace and a clamped sidebar; only the league-list region scrolls when rows overflow.
-- [ ] Rows are dense per the spec's dimensions, never spacious cards; repeated grid definitions are extracted rather than duplicated as arbitrary values.
-- [ ] The introduction shows the current scope selection with an inline change action opening Manage leagues; no team chip exists.
-- [ ] Setup preset (left) and Manage leagues (right) sit below the list, subordinate to the final action and absent from the table header.
-- [ ] The advanced section collapses below a full-width separator with correct `aria-expanded`/`aria-controls`; a two-column grid of Base UI checkboxes with independently keyboard-accessible help controls; labelled groups once the list outgrows a plain checklist.
-- [ ] Component tests cover the advanced section expanding and collapsing and keyboard navigation reaching every control.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] The screen uses the full viewport with a flexible workspace and a clamped sidebar; only the league-list region scrolls when rows overflow.
+- [x] Rows are dense per the spec's dimensions, never spacious cards; repeated grid definitions are extracted rather than duplicated as arbitrary values.
+- [x] The introduction shows the current scope selection with an inline change action opening Manage leagues; no team chip exists.
+- [x] Setup preset (left) and Manage leagues (right) sit below the list, subordinate to the final action and absent from the table header.
+- [x] The advanced section collapses below a full-width separator with correct `aria-expanded`/`aria-controls`; a two-column grid of Base UI checkboxes with independently keyboard-accessible help controls; labelled groups once the list outgrows a plain checklist.
+- [x] Component tests cover the advanced section expanding and collapsing and keyboard navigation reaching every control.
+- [x] `pnpm check:all` is green at this commit.
+## Resolution note — the advanced controls are selects, not checkboxes
+
+The spec inherited the brief's phrasing ("Base UI checkbox primitives") from a section the brief
+imagined as a boolean checklist. Ticket 03 then modelled the four categories as **enumerated**
+values — match-simulation detail alone has three — so a checkbox could only be honest here by
+fabricating a boolean the domain does not have, which is the exact failure mode the spec's
+"every advanced option changes something real" decision exists to prevent.
+
+Each option therefore renders as a labelled native `<select>`, the same keyboard-complete control
+the league grid's depth cell already uses on this screen. Everything else in that criterion ships
+as written: the full-width separator, the Base UI `Collapsible` disclosure with `aria-expanded`
+and `aria-controls`, the two-column option grid, the labelled `fieldset`/`legend` groups, the
+28–32px rows, and help controls that are their own tab stops carrying inline text rather than
+tooltips.

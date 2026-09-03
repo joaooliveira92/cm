@@ -63,6 +63,9 @@ export interface ActiveLeaguesValidation {
 export interface ActiveLeaguesDerivedView {
   readonly rows: readonly GridRowView[];
   readonly activeLeagueCount: number;
+  /** Distinct Nations the active leagues span — the introduction's scope summary reads it, so
+   *  the figure is derived here with the rest and never counted inside a component. */
+  readonly nationCount: number;
   readonly entityEstimate: ActiveLeaguesEntityEstimate;
   readonly processingCost: ProcessingCostReading;
   readonly recommendations: readonly LeagueRecommendation[];
@@ -179,6 +182,7 @@ export const deriveActiveLeaguesView = (
   return {
     rows,
     activeLeagueCount: projection?.rows.length ?? 0,
+    nationCount: new Set(rows.map((row) => row.nationId)).size,
     entityEstimate: consequences?.entityEstimate ?? EMPTY_ENTITY_ESTIMATE,
     processingCost: consequences?.processingCost ?? EMPTY_PROCESSING_COST,
     recommendations: consequences?.recommendations ?? [],
@@ -212,6 +216,7 @@ export interface ActiveLeaguesAtoms {
   readonly viewAtom: Atom.Atom<ActiveLeaguesDerivedView>;
   readonly rowsAtom: Atom.Atom<readonly GridRowView[]>;
   readonly activeLeagueCountAtom: Atom.Atom<number>;
+  readonly nationCountAtom: Atom.Atom<number>;
   readonly entityEstimateAtom: Atom.Atom<ActiveLeaguesEntityEstimate>;
   readonly processingCostAtom: Atom.Atom<ProcessingCostReading>;
   readonly recommendationsAtom: Atom.Atom<readonly LeagueRecommendation[]>;
@@ -243,6 +248,7 @@ export const createActiveLeaguesAtoms = (
     viewAtom,
     rowsAtom: read((view) => view.rows),
     activeLeagueCountAtom: read((view) => view.activeLeagueCount),
+    nationCountAtom: read((view) => view.nationCount),
     entityEstimateAtom: read((view) => view.entityEstimate),
     processingCostAtom: read((view) => view.processingCost),
     recommendationsAtom: read((view) => view.recommendations),
