@@ -12,6 +12,7 @@ describe("nav route index (spec §6 rule 1 & §8)", () => {
     expect(sectionIdForDestination("match")).toBe("analysis");
     expect(sectionIdForDestination("seasonSummary")).toBe("analysis");
     expect(sectionIdForDestination("manager")).toBe("club");
+    expect(sectionIdForDestination("news")).toBe("news");
   });
 
   it("the union of section defaults and items covers exactly the career screens", () => {
@@ -30,6 +31,7 @@ describe("nav route index (spec §6 rule 1 & §8)", () => {
         "match",
         "seasonSummary",
         "manager",
+        "news",
       ]),
     );
   });

@@ -9,6 +9,7 @@ export const transfersKey = (saveId: SaveId): readonly ["transfers", SaveId] => 
 export const economyKey = (saveId: SaveId): readonly ["economy", SaveId] => ["economy", saveId];
 export const tacticsKey = (saveId: SaveId): readonly ["tactics", SaveId] => ["tactics", saveId];
 export const trainingKey = (saveId: SaveId): readonly ["training", SaveId] => ["training", saveId];
+export const newsKey = (saveId: SaveId): readonly ["news", SaveId] => ["news", saveId];
 export const matchKey = (saveId: SaveId, matchId: string): readonly ["match", SaveId, string] => [
   "match",
   saveId,
@@ -71,6 +72,20 @@ export const transfersAtom = Atom.family((saveId: SaveId) =>
     ),
   ),
 );
+/**
+ * getNewsInbox — `["save", saveId]`, `["news", saveId]`.
+ *
+ * Reactive on the save-wide key as well as its own: every Continue appends to the event streams the
+ * inbox projects from, so an advance that invalidates the save must refresh the inbox too.
+ */
+export const newsInboxAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getNewsInbox", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), newsKey(saveId)]),
+    ),
+  ),
+);
+
 /**
  * loadSave — `["save", saveId]`. The career chrome's save-name read.
  *

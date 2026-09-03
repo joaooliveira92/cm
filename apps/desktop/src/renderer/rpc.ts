@@ -17,12 +17,14 @@ export {
   managerProfileAtom,
   transfersAtom,
   saveSummaryAtom,
+  newsInboxAtom,
   saveKey,
   squadKey,
   transfersKey,
   economyKey,
   tacticsKey,
   matchKey,
+  newsKey,
 } from "./rpc/queries.js";
 
 export {
@@ -34,6 +36,7 @@ export {
   respondToBidMutation,
   respondAsBidderMutation,
   retireManagerMutation,
+  setNewsMessageStateMutation,
   submitMatchCommandMutation,
 } from "./rpc/mutations.js";
 

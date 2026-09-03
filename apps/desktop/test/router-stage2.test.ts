@@ -66,13 +66,14 @@ describe("AC-14 — career g bindings never point at creation steps", () => {
     }
   });
 
-  it("the registry covers all eight career screens and nothing else", () => {
+  it("the registry covers all nine career screens and nothing else", () => {
     expect(Object.keys(CAREER_G_BINDINGS).sort()).toEqual([
       "a",
       "d",
       "f",
       "l",
       "m",
+      "n",
       "s",
       "t",
       "y",

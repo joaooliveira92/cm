@@ -11,6 +11,7 @@ import { FixturesScreen } from "../FixturesScreen.js";
 import { LeagueTableScreen } from "../LeagueTableScreen.js";
 import { ManagerProfileScreen } from "../ManagerProfileScreen.js";
 import { MatchDayScreen } from "../MatchDayScreen.js";
+import { NewsInboxScreen } from "../news/NewsInboxScreen.js";
 import { SeasonSummaryScreen } from "../SeasonSummaryScreen.js";
 import { SquadScreen } from "../SquadScreen.js";
 import { TacticsScreen } from "../TacticsScreen.js";
@@ -107,6 +108,7 @@ const seasonSummaryRoute = defineCareerChild(
   SeasonSummaryScreen,
 );
 const managerRoute = defineCareerChild("manager", "manager", ManagerProfileScreen);
+const newsRoute = defineCareerChild("news", "news", NewsInboxScreen);
 
 // ---------------------------------------------------------------------------
 // Creation branch
@@ -163,6 +165,7 @@ const routeTree = rootRoute.addChildren([
       matchRoute,
       seasonSummaryRoute,
       managerRoute,
+      newsRoute,
     ]),
   ]),
 ]);

@@ -134,8 +134,10 @@ afterEach(() => {
 
 /**
  * Every AI club is assigned a Tactic at season start and the player's club is not, so the match
- * engine quietly synthesizes a 4-4-2 and the player is never told. There is no news feed to carry
- * that, so the career band states it next to Continue for as long as it stays true.
+ * engine quietly synthesizes a 4-4-2 and the player is never told. The News Inbox cannot carry that —
+ * it records what happened, and this is a standing condition that has not happened yet — and a
+ * message could be marked read while the condition it describes is still true. So the career band
+ * states it next to Continue for as long as it stays true.
  */
 describe("Continue readiness in the career chrome", () => {
   it("tells the player their matches will use an automatic 4-4-2 when no Tactic is set", async () => {

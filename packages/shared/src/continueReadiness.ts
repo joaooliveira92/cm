@@ -1,10 +1,11 @@
 /**
  * Continue readiness — what the career loop has to say before the Calendar advances.
  *
- * The project ships no news feed or notification centre (see CONTEXT.md's Transfer Inbox entry):
- * what changed comes back on `AdvanceCalendarResult`, and what is *pending* is surfaced next to the
- * control it concerns. This module is the second half of that — the standing readiness check behind
- * Continue.
+ * The News Inbox is a career record rather than a work queue — nothing in it waits on the manager,
+ * and it never interrupts the loop. So what changed still comes back on `AdvanceCalendarResult`, and
+ * what is *pending* is still surfaced next to the control it concerns. This module is the second
+ * half of that — the standing readiness check behind Continue. "An unread message exists" is
+ * deliberately not a stop condition; see the news-inbox note.
  *
  * It is pure and takes facts rather than fetching them, so the same rules can be unit-tested here
  * and evaluated in the renderer from atoms it already holds. No new RPC method exists for it.

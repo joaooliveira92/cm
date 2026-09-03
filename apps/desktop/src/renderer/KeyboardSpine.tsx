@@ -251,6 +251,7 @@ export const KeyboardSpine = () => {
         match: () => navigateCareer({ type: "match", saveId }, "keyboard"),
         seasonSummary: () => navigateCareer({ type: "seasonSummary", saveId }, "keyboard"),
         manager: () => navigateCareer({ type: "manager", saveId }, "keyboard"),
+        news: () => navigateCareer({ type: "news", saveId }, "keyboard"),
       };
       for (const [id, type] of Object.entries({
         "go-to-squad": "squad",

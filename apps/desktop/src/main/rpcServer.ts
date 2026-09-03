@@ -23,6 +23,7 @@ import {
 } from "./keybindings.js";
 import { listOpponentClubs, resumeSimulation, startMatch, submitMatchCommand } from "./match.js";
 import { getManagerProfile, getManagerProfileScreen } from "./managerProfile.js";
+import { getNewsInbox, setNewsMessageState } from "./news.js";
 import { advanceCalendar, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "./season.js";
 import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave } from "./saves.js";
 import { getSquad } from "./squad.js";
@@ -275,6 +276,18 @@ const handlers: Record<AppRpcMethod, Handler> = {
       return yield* resetKeyBinding(ctx.userDataDir, actionId);
     }),
   resetAllKeyBindings: (_payload, ctx) => resetAllKeyBindings(ctx.userDataDir),
+  getNewsInbox: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getNewsInbox.payload)(payload);
+      return yield* getNewsInbox(ctx.savesDir, saveId);
+    }),
+  setNewsMessageState: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, messageIds, patch } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.setNewsMessageState.payload,
+      )(payload);
+      return yield* setNewsMessageState(ctx.savesDir, saveId, messageIds, patch);
+    }),
 };
 
 export const handleRpc = (

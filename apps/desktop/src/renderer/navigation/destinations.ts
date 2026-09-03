@@ -7,7 +7,7 @@ import type { SaveId } from "@cm-clone/contracts";
  * resolve it through `resolveDestination`/the navigation adapter.
  *
  * The set is deliberately closed: `mainMenu`, the four creation steps
- * (league selection, then manager, club, and review), and the eight
+ * (league selection, then manager, club, and review), and the nine
  * persistent career screens. Career `g <key>` bindings draw from
  * `CareerDestination` only, which excludes the creation steps, the main menu,
  * and the load screen by construction (see `CAREER_G_BINDINGS`).
@@ -20,7 +20,8 @@ export type CareerDestination =
   | { readonly type: "fixtures"; readonly saveId: SaveId }
   | { readonly type: "match"; readonly saveId: SaveId }
   | { readonly type: "seasonSummary"; readonly saveId: SaveId }
-  | { readonly type: "manager"; readonly saveId: SaveId };
+  | { readonly type: "manager"; readonly saveId: SaveId }
+  | { readonly type: "news"; readonly saveId: SaveId };
 
 export type CreationStepDestination =
   | { readonly type: "createLeagues" }
@@ -34,7 +35,7 @@ export type NavigationDestination =
   | CreationStepDestination
   | CareerDestination;
 
-/** The eight persistent career screens a `g <key>` binding may target. */
+/** The nine persistent career screens a `g <key>` binding may target. */
 export const CAREER_SCREEN_TYPES = [
   "squad",
   "tactics",
@@ -44,6 +45,7 @@ export const CAREER_SCREEN_TYPES = [
   "match",
   "seasonSummary",
   "manager",
+  "news",
 ] as const;
 
 export const careerDestination = (type: CareerDestination["type"], saveId: SaveId): CareerDestination =>
@@ -66,6 +68,7 @@ export const CAREER_G_BINDINGS: Readonly<
   d: (saveId) => careerDestination("match", saveId),
   y: (saveId) => careerDestination("seasonSummary", saveId),
   m: (saveId) => careerDestination("manager", saveId),
+  n: (saveId) => careerDestination("news", saveId),
 } as const;
 
 /**
@@ -90,7 +93,8 @@ export type ResolvedDestination =
       readonly to: "/career/$saveId/season-summary";
       readonly params: { readonly saveId: SaveId };
     }
-  | { readonly to: "/career/$saveId/manager"; readonly params: { readonly saveId: SaveId } };
+  | { readonly to: "/career/$saveId/manager"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/news"; readonly params: { readonly saveId: SaveId } };
 
 /** Pure mapping from a typed destination to its route; unit-tested (AC-14). */
 export const resolveDestination = (destination: NavigationDestination): ResolvedDestination => {
@@ -115,6 +119,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "match":
     case "seasonSummary":
     case "manager":
+    case "news":
       return careerRoute(destination);
   }
 };
@@ -142,5 +147,7 @@ const careerRoute = (
       };
     case "manager":
       return { to: "/career/$saveId/manager", params: { saveId: destination.saveId } };
+    case "news":
+      return { to: "/career/$saveId/news", params: { saveId: destination.saveId } };
   }
 };

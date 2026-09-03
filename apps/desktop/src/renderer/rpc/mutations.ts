@@ -7,6 +7,7 @@ import type { RpcClientError } from "./errors.js";
 import {
   economyKey,
   matchKey,
+  newsKey,
   saveKey,
   squadKey,
   tacticsKey,
@@ -45,6 +46,9 @@ export const INVALIDATION_RULES = {
    * answer), so it invalidates the save-wide key and nothing narrower. */
   retireManager: (saveId: SaveId): ReadonlyArray<unknown> => [saveKey(saveId)],
   commitCareer: (_saveId: SaveId): ReadonlyArray<unknown> => [],
+  /** Read/flagged/archived is inbox-local user state: it changes no simulation state, so it
+   * invalidates the inbox key and nothing wider. */
+  setNewsMessageState: (saveId: SaveId): ReadonlyArray<unknown> => [newsKey(saveId)],
 } as const;
 
 export type MutationName = keyof typeof INVALIDATION_RULES;
@@ -67,6 +71,14 @@ export const advanceCalendarEffect = (
 export const retireManagerEffect = (saveId: SaveId): MutationEffect<"retireManager"> =>
   call("retireManager", { saveId }).pipe(
     Reactivity.mutation(INVALIDATION_RULES.retireManager(saveId)),
+  );
+
+/** `setNewsMessageState` — invalidates `["news", saveId]` only. */
+export const setNewsMessageStateEffect = (
+  input: RpcPayload<"setNewsMessageState">,
+): MutationEffect<"setNewsMessageState"> =>
+  call("setNewsMessageState", input).pipe(
+    Reactivity.mutation(INVALIDATION_RULES.setNewsMessageState(input.saveId)),
   );
 
 /** `changeTactics` — invalidates `["tactics", saveId]` and the save-wide key. */
@@ -123,6 +135,11 @@ export const advanceCalendarMutation = rpcRuntime.fn((input: RpcPayload<"advance
 /** `retireManager` — mutation atom. */
 export const retireManagerMutation = rpcRuntime.fn((input: RpcPayload<"retireManager">) =>
   retireManagerEffect(input.saveId),
+);
+
+/** `setNewsMessageState` — mutation atom. */
+export const setNewsMessageStateMutation = rpcRuntime.fn(
+  (input: RpcPayload<"setNewsMessageState">) => setNewsMessageStateEffect(input),
 );
 
 /** `changeTactics` — mutation atom. */

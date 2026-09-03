@@ -105,6 +105,13 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
           return "That preset was saved for a different database and cannot be applied.";
         case "SetupDraftWriteError":
           return "Your setup could not be saved to disk.";
+        // News Inbox (Screen 24). Both mean the renderer is holding a message id the save no longer
+        // agrees with, which a refresh fixes — so the sentence points at the refresh rather than at
+        // the id, which the player has no way to act on.
+        case "NewsMessageNotFoundError":
+          return "That message is no longer in your inbox. Refresh to see the current list.";
+        case "MalformedNewsMessageIdError":
+          return "That message could not be identified. Refresh to see the current list.";
       }
   }
 };

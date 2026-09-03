@@ -35,8 +35,13 @@ import {
   ManagerArchetypeSchema,
   MatchCommandPayload,
   MatchId,
+  MalformedNewsMessageIdError,
   MatchNotFoundError,
   MatchSummary,
+  NewsInboxView,
+  NewsMessageId,
+  NewsMessageNotFoundError,
+  NewsMessageStatePatch,
   NotYourPlayerError,
   NullableTrainingFocusSchema,
   PillarDistribution,
@@ -434,6 +439,37 @@ commitCareer: {
       droppedScopeOptionIds: Schema.Array(Schema.String),
     }),
     error: PresetFingerprintMismatchError,
+  },
+  /** News Inbox (Screen 24) — the career's event streams read as messages, newest first, with the
+   * whole-inbox counts the header shows. Returns every message including archived ones: a career's
+   * narrative is a few hundred rows over twenty seasons, so the renderer filters what it already
+   * holds rather than paying a round trip per view change. Pure read; safe on an archived save. */
+  getNewsInbox: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: NewsInboxView,
+    error: SaveNotFoundError,
+  },
+  /** Mark, flag, or archive one or more messages (Screen 24 §7 bulk actions, Screen 25's
+   * open-marks-read). Idempotent: applying the same patch twice is a no-op, so a double submit is
+   * harmless. Every id is validated before anything is written, so a bulk action either applies to
+   * all of its messages or to none of them — a partial apply would report success over work it did
+   * not do.
+   *
+   * Deliberately **not** guarded by `assertSaveNotArchived`. That guard protects simulation state,
+   * and read/flagged/archived is user state on a projection; blocking it would leave the message
+   * announcing a dismissal permanently unread on the save that dismissal archived. */
+  setNewsMessageState: {
+    payload: Schema.Struct({
+      saveId: SaveId,
+      messageIds: Schema.Array(NewsMessageId),
+      patch: NewsMessageStatePatch,
+    }),
+    success: Schema.Void,
+    error: Schema.Union([
+      SaveNotFoundError,
+      NewsMessageNotFoundError,
+      MalformedNewsMessageIdError,
+    ]),
   },
 } as const;
 

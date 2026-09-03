@@ -9,6 +9,7 @@ import {
   Dumbbell,
   Flag,
   LayoutGrid,
+  Newspaper,
   Search,
   Trophy,
   Tv,
@@ -43,7 +44,7 @@ export interface NavSection {
 }
 
 /**
- * The seven primary navigation sections, in display order (spec §2).
+ * The primary navigation sections, in display order (spec §2).
  *
  * Section IDs are stable identifiers — they appear in telemetry, last-route
  * storage, and focus bookmarks. Labels are display copy, not keys.
@@ -148,6 +149,20 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
         label: "Season Summary",
         destination: "seasonSummary",
         icon: Flag,
+      },
+    ],
+  },
+  {
+    id: "news",
+    label: "News",
+    icon: Newspaper,
+    defaultDestination: "news",
+    items: [
+      {
+        id: "news-inbox",
+        label: "Inbox",
+        destination: "news",
+        icon: Newspaper,
       },
     ],
   },

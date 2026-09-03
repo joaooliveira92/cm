@@ -165,6 +165,7 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   match: { showKeyBadges: false },
   seasonSummary: { showKeyBadges: false },
   manager: { showKeyBadges: false },
+  news: { showKeyBadges: false },
   createLeagues: { showKeyBadges: false },
   createStep1: { showKeyBadges: false },
   createStep2: { showKeyBadges: false },
