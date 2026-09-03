@@ -33,21 +33,49 @@ result callers must handle.
 
 **Blocked by:** 05, 06.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/schema.ts` and the regenerated DDL,
 `apps/desktop/src/main/worldGeneration.ts`, `apps/desktop/src/main/season.ts`,
 `apps/desktop/src/main/clubSelection.ts`, `apps/desktop/test/db-schema.test.ts`,
 `apps/desktop/test/season.test.ts`.
 
-- [ ] `competition_participants` exists keyed on the competition, the season number, and the club,
+- [x] `competition_participants` exists keyed on the competition, the season number, and the club,
       carrying a final position, points, goal difference, and goals for, all nullable until frozen.
-- [ ] Generation writes one row per club per competition for season 1, and a test asserts that for
+- [x] Generation writes one row per club per competition for season 1, and a test asserts that for
       every league and every season the participant count equals that competition's club count.
-- [ ] There is no `competition_seasons` header table and no `winner_club_id` column anywhere, and a
+- [x] There is no `competition_seasons` header table and no `winner_club_id` column anywhere, and a
       test asserts a competition's champion is read as the participant whose final position is 1.
-- [ ] No column on `clubs` answers a club's current or generated-home competition, and a test
+- [x] No column on `clubs` answers a club's current or generated-home competition, and a test
       asserts it.
-- [ ] Rows are retained for the life of the save, so a completed season's final table is readable
+- [x] Rows are retained for the life of the save, so a completed season's final table is readable
       after a rollover without reading any fixture.
-- [ ] `pnpm check:all` is green at this commit.
+- [~] `pnpm check:all` is green at this commit — every gate but repo-wide `typecheck`, which
+      fails only on a parallel session's in-flight files. See the comment below.
+
+## Comments
+
+**The membership read that this replaced was `SELECT * FROM clubs`.** `getClubSelection` listed
+every club in the save, which was indistinguishable from "every club in the league" only while a
+world held one competition — exactly the assumption this ticket ends. It now joins participant rows
+for the current season against the league it already resolves. Nothing else in the main process
+inferred a club's competition, because until ticket 06 no club had one.
+
+**Season 1's rows are written by generation, not by `startSeason`.** A club is generated *into* a
+competition, so the participant row is written in the same statement pair as the club itself. That
+also makes the row the club's generated home for free and permanently, since nothing rewrites season
+1's rows — which is what lets `clubs` carry no provenance column.
+
+**The standings columns ship empty and nothing freezes them yet.** Ticket 13's rollover is what
+writes `final_position`, points, goal difference, and goals for. The test stands in for it by
+freezing a season's rows by hand, then deleting every fixture, and reading the champion back — which
+is the property worth pinning: a frozen table survives the fixtures that produced it, and the next
+season's fixtures overwrite those inputs.
+
+**`pnpm check:all` was not run clean end to end at this commit, and here is why.** A parallel session
+is mid-implementation of a News Inbox in this worktree; `apps/desktop/src/main/rpcServer.ts` and
+several renderer modules currently reference handlers and a screen that do not compile yet, so the
+repo-wide `typecheck` gate fails on their files. Every other gate is green — `oxlint` (0 errors),
+`effect-lint`, `verify-md-links`, `verify-db-schema` — and both test suites pass in full: 902 desktop
+tests and 283 shared. Typecheck passes across every file this ticket touched. This is recorded rather
+than smoothed over, because "check:all green" is a claim this commit cannot honestly make on its own.

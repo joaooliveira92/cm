@@ -5,6 +5,9 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "./displayNames.js";
 import { loadSquadPlayers } from "./squad.js";
 
+/** Club selection happens before a career exists, so the world is always in its first season. */
+const CURRENT_SEASON = 1;
+
 /** How many players the detail panel's top readout carries. */
 const TOP_PLAYER_COUNT = 5;
 
@@ -86,11 +89,18 @@ export const getClubSelection = Effect.gen(function* () {
   const leagueRows = yield* sql<{ id: string }>`
     SELECT id FROM competitions WHERE depth = 'full' AND kind = 'league' ORDER BY tier, id LIMIT 1`;
 
+  // The clubs of that league, through their participant rows. Membership has exactly one home and
+  // this is a read of it — not "every club in the save", which was only ever right while a world
+  // held one competition.
+  const leagueId = leagueRows[0]?.id ?? null;
   const clubRows = yield* sql<{
     id: ClubId;
     statureTier: "big" | "mid" | "small";
   }>`SELECT c.id, c.stature_tier as "statureTier"
-     FROM clubs c ORDER BY c.id`;
+     FROM clubs c
+     JOIN competition_participants p ON p.club_id = c.id
+     WHERE p.competition_id = ${leagueId} AND p.season_number = ${CURRENT_SEASON}
+     ORDER BY c.id`;
 
   const budgetRows = yield* sql<{
     clubId: ClubId;
@@ -123,9 +133,8 @@ export const getClubSelection = Effect.gen(function* () {
     }));
   }
 
-  const leagueId = leagueRows[0]?.id;
   return new ClubSelectionView({
     clubs,
-    leagueName: leagueId === undefined ? "" : nameOf(leagueId),
+    leagueName: leagueId === null ? "" : nameOf(leagueId),
   });
 });

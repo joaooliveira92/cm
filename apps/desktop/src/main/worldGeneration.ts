@@ -38,6 +38,10 @@ import {
  * regenerate its squad.
  */
 
+/** The season a generated world starts in. Membership for later seasons is written by the
+ *  rollover, never here. */
+const FIRST_SEASON = 1;
+
 /** Bumped when the generation *code* changes shape in a way that alters output. */
 export const GENERATOR_VERSION = "1.0.0";
 
@@ -173,6 +177,13 @@ export const generateWorld = ({ worldSeed, referenceYear, snapshotId, world }: W
         yield* sql`INSERT INTO clubs (id, stature_tier, is_user_club, generation_seed, city_id, stadium_name, stadium_capacity)
           VALUES (${clubId}, ${strength.statureTier}, 0, ${clubSeed},
             ${canonicalCityId(hometown.nationCode, hometown.name)}, ${stadiumName}, ${stadiumCapacity})`;
+
+        // The club's membership, and the only record of it. Season 1's participant row is also the
+        // club's *generated home* — permanently, since the row is never rewritten — which is why no
+        // column on `clubs` names a competition. The standings columns stay NULL until the season
+        // concludes and the rollover freezes them.
+        yield* sql`INSERT INTO competition_participants (competition_id, season_number, club_id)
+          VALUES (${competition.id}, ${FIRST_SEASON}, ${clubId})`;
 
         const squad = generateSquad(strength, {
           referenceYear,

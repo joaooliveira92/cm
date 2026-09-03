@@ -20,6 +20,7 @@ describe("generated DDL", () => {
         "competitions",
         "competition_links",
         "competition_entrants",
+        "competition_participants",
         "clubs",
         "players",
         "player_positions",
@@ -85,6 +86,30 @@ describe("generated DDL", () => {
     expect(citiesBlock).toMatch(
       /`cities` \(\n\t`id` text PRIMARY KEY NOT NULL,\n\t`nation_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`population_band` text NOT NULL,\n\tFOREIGN KEY \(`nation_id`\) REFERENCES `nations`\(`id`\) ON UPDATE no action ON DELETE no action,\n\tCONSTRAINT "cities_population_band" CHECK\(population_band IN \('major','large','mid','small'\)\)\n\);/,
     );
+  });
+
+  it("puts membership and the frozen standing on one row, with no header above it", () => {
+    const ddl = MIGRATION_STATEMENTS.join("\n");
+
+    // Keyed on all three, so a club has one membership per competition per season and the
+    // rollover has nowhere to write a second answer.
+    expect(ddl).toContain(
+      "PRIMARY KEY(`competition_id`, `season_number`, `club_id`)",
+    );
+    // The standings are nullable because they are frozen at season end, not kept live.
+    const block = ddl.slice(
+      ddl.indexOf("CREATE TABLE `competition_participants`"),
+      ddl.indexOf(");", ddl.indexOf("CREATE TABLE `competition_participants`")) + 2,
+    );
+    for (const column of ["final_position", "points", "goal_difference", "goals_for"]) {
+      expect(block).toContain(`\`${column}\` integer`);
+      expect(block).not.toContain(`\`${column}\` integer NOT NULL`);
+    }
+
+    // No header table above the rows: every column one would carry derives from the rows
+    // themselves, and rows existing for a (competition, season) already says it ran.
+    expect(ddl).not.toContain("CREATE TABLE `competition_seasons`");
+    expect(ddl).not.toContain("winner_club_id");
   });
 
   it("gives a club a place and a ground, and no name", () => {

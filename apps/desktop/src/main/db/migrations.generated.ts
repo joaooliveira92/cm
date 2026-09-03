@@ -74,6 +74,20 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	FOREIGN KEY (\`lower_competition_id\`) REFERENCES \`competitions\`(\`id\`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT "competition_links_slots" CHECK(slots >= 1)
 );`,
+  `CREATE TABLE \`competition_participants\` (
+	\`competition_id\` text NOT NULL,
+	\`season_number\` integer NOT NULL,
+	\`club_id\` text NOT NULL,
+	\`final_position\` integer,
+	\`points\` integer,
+	\`goal_difference\` integer,
+	\`goals_for\` integer,
+	PRIMARY KEY(\`competition_id\`, \`season_number\`, \`club_id\`),
+	FOREIGN KEY (\`competition_id\`) REFERENCES \`competitions\`(\`id\`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (\`club_id\`) REFERENCES \`clubs\`(\`id\`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "competition_participants_season_number" CHECK(season_number >= 1),
+	CONSTRAINT "competition_participants_final_position" CHECK(final_position IS NULL OR final_position >= 1)
+);`,
   `CREATE TABLE \`competitions\` (
 	\`id\` text PRIMARY KEY NOT NULL,
 	\`nation_id\` text,

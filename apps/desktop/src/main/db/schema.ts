@@ -280,6 +280,54 @@ export const competitionEntrants = sqliteTable(
  * or absence of the rows that hang *beneath* a club — squads, contracts, fitness, tactics — so a
  * `results-only` club still has a hometown and a ground.
  */
+/**
+ * One club's participation in one competition in one season — the only record of membership, and
+ * the frozen final standing once the season ends.
+ *
+ * A club's **current** competition is its row for the current season; its **generated home** is its
+ * row for season 1. Neither is a column on `clubs`, so promotion — the one moment membership
+ * changes — cannot leave two answers on disk disagreeing with each other.
+ *
+ * There is deliberately **no `competition_seasons` header** above these rows. Every column such a
+ * header would carry — the champion, a concluded flag, the participant list — derives from the rows
+ * themselves, and the existence of rows for a `(competition, season)` already records that the
+ * competition ran that season. A header whose every column is a derivation of its children is a
+ * second source for facts that already have one. For the same reason there is no `winner_club_id`
+ * anywhere: a champion is the participant whose `final_position` is 1.
+ *
+ * The four standings columns are NULL while a season runs and are frozen at `SeasonConcluded`.
+ * Freezing them is what makes last season's table survive into this one: the League Table is
+ * recomputed from resolved fixtures, and the next season's fixtures overwrite its inputs, so a
+ * position that is only derivable-in-principle is a position that is gone.
+ */
+export const competitionParticipants = sqliteTable(
+  "competition_participants",
+  {
+    competitionId: text("competition_id")
+      .notNull()
+      .references(() => competitions.id),
+    seasonNumber: integer("season_number").notNull(),
+    clubId: text("club_id")
+      .notNull()
+      .references(() => clubs.id),
+    /** 1 = champion. NULL until the season concludes. */
+    finalPosition: integer("final_position"),
+    points: integer("points"),
+    goalDifference: integer("goal_difference"),
+    goalsFor: integer("goals_for"),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.competitionId, table.seasonNumber, table.clubId],
+    }),
+    check("competition_participants_season_number", sql`season_number >= 1`),
+    check(
+      "competition_participants_final_position",
+      sql`final_position IS NULL OR final_position >= 1`,
+    ),
+  ],
+);
+
 export const clubs = sqliteTable(
   "clubs",
   {
