@@ -18,13 +18,18 @@ import {
 import {
   conditionAfterDays,
   createSeededRng,
-  deriveId,
   deriveSeed,
   simulateMatchWithCondition,
   type MatchTeamSetup,
 } from "@cm-clone/game-engine";
 import type { ManagerOutcome, PlayerAttributes, RandomSource, Verdict } from "@cm-clone/shared";
-import { BOARD_OBJECTIVE_BANDS, judgeBoardObjective, nextManagerOutcome } from "@cm-clone/shared";
+import {
+  BOARD_OBJECTIVE_BANDS,
+  judgeBoardObjective,
+  leagueRoundDates,
+  nextManagerOutcome,
+  seasonStartYear,
+} from "@cm-clone/shared";
 import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "./displayNames.js";
@@ -52,6 +57,18 @@ export class FixtureGenerationError extends Data.TaggedError("FixtureGenerationE
   readonly clubCount: number;
 }> {}
 
+/**
+ * Raised when a competition needs more rounds than the season's slot template holds.
+ *
+ * A typed failure rather than a defect: it is reachable from a catalogue that describes a league
+ * longer than August-to-May can seat, and the caller's recovery is to report which competition
+ * asked for what. The alternative the slot template refuses is silently double-booking a date.
+ */
+export class CalendarSlotsExhaustedError extends Data.TaggedError("CalendarSlotsExhaustedError")<{
+  readonly competitionId: string;
+  readonly rounds: number;
+}> {}
+
 /** Raised when `simulateMatch` returns without a `FullTimeWhistle` event — an invariant of the
  * engine's match simulation. */
 class FullTimeWhistleMissingError extends Data.TaggedError("FullTimeWhistleMissingError")<{}> {}
@@ -70,7 +87,8 @@ const shuffle = <T,>(items: ReadonlyArray<T>, random: RandomSource): Array<T> =>
 };
 
 export interface GeneratedFixture {
-  readonly matchday: number;
+  /** Competition-local round number, 1-based. */
+  readonly round: number;
   readonly homeClubId: ClubId;
   readonly awayClubId: ClubId;
 }
@@ -104,13 +122,13 @@ export const generateRoundRobinFixtures = (
         const a = roundClubs[i]!;
         const b = roundClubs[n - 1 - i]!;
         const [homeClubId, awayClubId] = round % 2 === 0 ? [a, b] : [b, a];
-        firstLeg.push({ matchday: round + 1, homeClubId, awayClubId });
+        firstLeg.push({ round: round + 1, homeClubId, awayClubId });
       }
       rotating = [rotating[rotating.length - 1]!, ...rotating.slice(0, -1)];
     }
 
     const secondLeg: Array<GeneratedFixture> = firstLeg.map((fixture) => ({
-      matchday: fixture.matchday + (n - 1),
+      round: fixture.round + (n - 1),
       homeClubId: fixture.awayClubId,
       awayClubId: fixture.homeClubId,
     }));
@@ -122,29 +140,119 @@ export const generateRoundRobinFixtures = (
 // Season start
 // ---------------------------------------------------------------------------
 
-/** Generates and persists Season 1's fixture list for a freshly created save, and emits
- * `SeasonStarted` on the Season stream (streamId = the save's id, per ADR-0007). Assumes a
- * `SqlClient` for the save's SQLite file in context — called from `saves.ts`'s `createSave` right
- * after `generateWorld`.
+/**
+ * Every competition that owns clubs and has participants this season, with its field.
  *
- * The fixture order and the fixture ids both derive from the save's world seed rather than fresh
- * randomness, so the calendar is part of the reproducible world: regenerating from a seed yields
- * the same fixtures under the same ids. */
+ * Membership is read from participant rows — the only record of it — so this answers "who plays in
+ * what" without a competition column on `clubs`. Ordered by canonical id, and each field ordered by
+ * canonical id too, so the schedule is a function of *which* clubs are in a competition rather than
+ * of the order SQLite happened to return them.
+ */
+const loadLeagueFields = (seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ competitionId: string; clubId: ClubId }>`
+      SELECT cp.competition_id as "competitionId", cp.club_id as "clubId"
+      FROM competition_participants cp
+      JOIN competitions c ON c.id = cp.competition_id
+      WHERE cp.season_number = ${seasonNumber} AND c.kind IN ('league','reserve')
+      ORDER BY cp.competition_id ASC, cp.club_id ASC`;
+
+    const fields = new Map<string, Array<ClubId>>();
+    for (const row of rows) {
+      const field = fields.get(row.competitionId);
+      if (field) field.push(row.clubId);
+      else fields.set(row.competitionId, [row.clubId]);
+    }
+    return [...fields.entries()].map(([competitionId, clubIds]) => ({ competitionId, clubIds }));
+  });
+
+/**
+ * The dates a competition's rounds are played on, or a typed failure when the season has no room.
+ *
+ * The slot template is pure and code-held; this is the seam where its refusal to double-book
+ * becomes something a caller can report.
+ */
+const scheduleRounds = (competitionId: string, rounds: number, startYear: number) =>
+  Effect.gen(function* () {
+    const dates = leagueRoundDates(startYear, rounds);
+    if (dates === null) {
+      return yield* new CalendarSlotsExhaustedError({ competitionId, rounds });
+    }
+    return dates;
+  });
+
+/** The competition the human's club plays in this season, or `null` before a club is chosen. */
+const loadHumanCompetitionId = (seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ competitionId: string }>`
+      SELECT cp.competition_id as "competitionId"
+      FROM competition_participants cp
+      JOIN clubs c ON c.id = cp.club_id
+      WHERE cp.season_number = ${seasonNumber} AND c.is_user_club = 1
+      LIMIT 1`;
+    return rows[0]?.competitionId ?? null;
+  });
+
+/**
+ * Generates and persists one season's league fixture lists — **every** loaded competition that owns
+ * clubs, `results-only` included, not only the one the human plays in.
+ *
+ * A competition's draw is seeded from `(world seed, competition id, season number)`, so it depends
+ * on the competition's own identity and never on how many other competitions this save loaded: two
+ * saves at different scopes produce the same fixture list for a competition they share. Dates come
+ * from the shared slot template, which is a pure function of the round and the season's year.
+ *
+ * Cups get no rows here. A knockout tie's participants are unknown at season start, so its fixtures
+ * materialise round by round as the bracket resolves.
+ */
+const generateLeagueFixtures = (seasonNumber: number, worldSeed: number, referenceYear: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const startYear = seasonStartYear(referenceYear, seasonNumber);
+    const fields = yield* loadLeagueFields(seasonNumber);
+    const humanCompetitionId = yield* loadHumanCompetitionId(seasonNumber);
+    let total = 0;
+
+    for (const { competitionId, clubIds } of fields) {
+      const drawSeed = deriveSeed(worldSeed, "draw", competitionId, seasonNumber);
+      const fixtures = yield* generateRoundRobinFixtures(clubIds, drawSeed);
+      const rounds = clubIds.length * 2 - 2;
+      const dates = yield* scheduleRounds(competitionId, rounds, startYear);
+
+      for (const fixture of fixtures) {
+        // The retired global Matchday, written for the human's competition only and only where its
+        // 1..38 range still reaches. Ticket 10 deletes the column and this line with it.
+        const matchday =
+          competitionId === humanCompetitionId && fixture.round <= TOTAL_MATCHDAYS
+            ? fixture.round
+            : null;
+        yield* sql`INSERT INTO fixtures (season_number, competition_id, round, scheduled_date, matchday, home_club_id, away_club_id, home_goals, away_goals, home_penalties, away_penalties, played)
+          VALUES (${seasonNumber}, ${competitionId}, ${fixture.round}, ${dates[fixture.round - 1]!}, ${matchday},
+            ${fixture.homeClubId}, ${fixture.awayClubId}, NULL, NULL, NULL, NULL, 0)`;
+      }
+      total += fixtures.length;
+    }
+
+    return total;
+  });
+
+/** Generates and persists Season 1's fixture lists for a freshly created save, and emits
+ * `SeasonStarted` on the Season stream (streamId = the save's id, per ADR-0007). Assumes a
+ * `SqlClient` for the save's SQLite file in context — called from `saves.ts`'s `commitCareer` right
+ * after the user's club is chosen, which is what lets the schedule know whose competition is whose.
+ *
+ * The fixture order derives from the save's world seed rather than fresh randomness, so the calendar
+ * is part of the reproducible world: regenerating from a seed yields the same fixtures on the same
+ * dates. */
 export const startSeason = (saveId: SaveId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const clubRows = yield* sql<{ id: ClubId }>`SELECT id FROM clubs`;
-    const clubIds = clubRows.map((row) => row.id);
     const manifest = yield* readGenerationManifest;
-    const seasonSeed = deriveSeed(manifest.worldSeed, "season", 1);
-    const fixtures = yield* generateRoundRobinFixtures(clubIds, seasonSeed);
 
     yield* sql`INSERT INTO season (season_number, current_matchday, phase) VALUES (1, 0, 'pre_season')`;
-    for (const [index, fixture] of fixtures.entries()) {
-      const fixtureId = deriveId(seasonSeed, "fixture", index);
-      yield* sql`INSERT INTO fixtures (id, season_number, matchday, home_club_id, away_club_id, home_goals, away_goals, played)
-        VALUES (${fixtureId}, 1, ${fixture.matchday}, ${fixture.homeClubId}, ${fixture.awayClubId}, NULL, NULL, 0)`;
-    }
+    const fixtureCount = yield* generateLeagueFixtures(1, manifest.worldSeed, manifest.referenceYear);
 
     // Fitness ledger (ticket 10): every generated player enters Season 1 at full Condition (100%),
     // with no injury history. `resolveMatchday` writes back full-time Conditions and injury severity
@@ -170,7 +278,7 @@ export const startSeason = (saveId: SaveId) =>
 
     const startSeq = yield* nextStreamSeq(STREAM_TYPE, saveId);
     yield* appendStreamEvents(STREAM_TYPE, saveId, startSeq, [
-      { tag: "SeasonStarted", payload: { seasonNumber: 1, seed: seasonSeed, fixtureCount: fixtures.length } },
+      { tag: "SeasonStarted", payload: { seasonNumber: 1, seed: manifest.worldSeed, fixtureCount } },
     ]);
   });
 
@@ -321,7 +429,8 @@ const resolveFixtureScore = (
   homeClubId: ClubId,
   awayClubId: ClubId,
   seasonNumber: number,
-  matchday: number,
+  competitionId: string,
+  round: number,
   worldSeed: number,
 ) =>
   Effect.gen(function* () {
@@ -354,13 +463,11 @@ const resolveFixtureScore = (
       tactic: awayTactic,
     };
 
-    const matchSeed = deriveSeed(
-      deriveSeed(worldSeed, "season", seasonNumber),
-      "match",
-      matchday,
-      homeClubId,
-      awayClubId,
-    );
+    // The determinism chain, hashing canonical ids only: the draw seed from (world seed,
+    // competition, season, round), the match seed from that plus the two clubs. No row id, no
+    // insertion ordinal, no clock — so the same world seed replays the same season.
+    const drawSeed = deriveSeed(worldSeed, "draw", competitionId, seasonNumber, round);
+    const matchSeed = deriveSeed(drawSeed, "match", homeClubId, awayClubId);
     const { events, conditions } = yield* Effect.sync(() => simulateMatchWithCondition({ seed: matchSeed, home, away }));
     const fullTime = events.find((event) => event._tag === "FullTimeWhistle");
     if (!fullTime || fullTime._tag !== "FullTimeWhistle") {
@@ -391,8 +498,11 @@ const resolveMatchday = (matchday: number) =>
       homeClubId: ClubId;
       awayClubId: ClubId;
       seasonNumber: number;
-      matchday: number;
-    }>`SELECT id, home_club_id as "homeClubId", away_club_id as "awayClubId", season_number as "seasonNumber", matchday FROM fixtures WHERE matchday = ${matchday}`;
+      competitionId: string;
+      round: number;
+    }>`SELECT id, home_club_id as "homeClubId", away_club_id as "awayClubId", season_number as "seasonNumber",
+              competition_id as "competitionId", round
+       FROM fixtures WHERE matchday = ${matchday} ORDER BY id ASC`;
 
     const results: Array<FixtureResult> = [];
     for (const fixture of fixtureRows) {
@@ -400,7 +510,8 @@ const resolveMatchday = (matchday: number) =>
         fixture.homeClubId,
         fixture.awayClubId,
         fixture.seasonNumber,
-        fixture.matchday,
+        fixture.competitionId,
+        fixture.round,
         manifest.worldSeed,
       );
       yield* sql`UPDATE fixtures SET home_goals = ${homeGoals}, away_goals = ${awayGoals}, played = 1 WHERE id = ${fixture.id}`;
@@ -646,32 +757,46 @@ export const retireManager = (savesDir: string, saveId: SaveId) =>
 // Read-side queries
 // ---------------------------------------------------------------------------
 
+/**
+ * The human's own fixture list: every fixture of the competition their club plays in this season.
+ *
+ * Scoped to that competition rather than to the whole save, which is what a fixture carrying its
+ * competition buys — a world with a pyramid and a cup in it has tens of thousands of fixtures, and
+ * the screen this feeds is the club's own calendar, not the world's.
+ */
 export const getFixtures = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;
       const nameOf = yield* displayNames;
       const seasonRow = yield* loadSeasonRow;
+      const competitionId = yield* loadHumanCompetitionId(seasonRow.seasonNumber);
       const rows = yield* sql<{
         id: FixtureId;
-        matchday: number;
+        round: number;
+        scheduledDate: string;
+        matchday: number | null;
         homeClubId: ClubId;
         awayClubId: ClubId;
         homeGoals: number | null;
         awayGoals: number | null;
         played: number;
-      }>`SELECT f.id, f.matchday, f.home_club_id as "homeClubId",
-                f.away_club_id as "awayClubId",
+      }>`SELECT f.id, f.round, f.scheduled_date as "scheduledDate", f.matchday,
+                f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
                 f.home_goals as "homeGoals", f.away_goals as "awayGoals", f.played
          FROM fixtures f
-         WHERE f.season_number = ${seasonRow.seasonNumber}
-         ORDER BY f.matchday ASC, f.id ASC`;
+         WHERE f.season_number = ${seasonRow.seasonNumber} AND f.competition_id = ${competitionId}
+         ORDER BY f.scheduled_date ASC, f.id ASC`;
 
       const fixtures = rows.map(
         (row) =>
           new FixtureView({
             id: row.id,
-            matchday: row.matchday,
+            round: row.round,
+            date: row.scheduledDate,
+            // The retired global Matchday. Within one competition it is the round, which is what
+            // the column still holds wherever it is written; ticket 10 removes the field.
+            matchday: row.matchday ?? row.round,
             homeClubId: row.homeClubId,
             homeClubName: nameOf(row.homeClubId),
             awayClubId: row.awayClubId,

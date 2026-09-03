@@ -14,6 +14,24 @@ import { check, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlit
  * they are the last enforcement of a domain invariant before a row lands on disk, and several
  * encode rules (a pillar distribution summing to 12, ability on a 1-20 scale) that no query-side
  * type can restate.
+ *
+ * ## Invariants upheld by a writer rather than by a constraint
+ *
+ * Every pairing invariant in this schema is assigned explicitly to one or the other, and the two
+ * below are the writers' — not because a `CHECK` was passed over, but because neither is a
+ * statement about the shape of a single row, which is the only thing a `CHECK` can see:
+ *
+ * - **A club never plays twice on one date.** Cross-row, and a unique index on either club column
+ *   misses a club playing home in a league fixture and away in a cup tie on the same day. Upheld by
+ *   the slot template — cups reserve their dates before leagues draw theirs — and covered by a test.
+ * - **A scouting-progress row is never written at 0.** Absence means Unscouted, so this is a rule
+ *   about which rows exist rather than about what a row contains; `CHECK progress BETWEEN 0 AND 100`
+ *   admits the zero row a sparse table must never hold.
+ *
+ * The third pairing invariant — a fixture's two penalty columns are NULL together or set together —
+ * belongs with the constraints, not with these. It is a single-row, two-column shape, which is
+ * exactly what a `CHECK` expresses, and the shootout writer sets both columns in one statement, so
+ * no legitimate write path is refused by it. See `fixtures` below.
  */
 
 /** SQLite has no native enum; a `CHECK ... IN` is how a column is constrained to a vocabulary. */
@@ -572,17 +590,54 @@ export const season = sqliteTable(
   ],
 );
 
-/** The Season's full fixture list, generated once at Season start (double round-robin, ticket 15)
- * and filled in as `AdvanceCalendar` resolves each Matchday. Not a Decider — projected from
- * Match/Season stream events, per ADR-0007 ("League Table is a projection"). */
+/**
+ * Every fixture in the world, league and cup alike.
+ *
+ * A fixture is competition-scoped and dated. `scheduled_date` orders it against every other fixture
+ * anywhere — it is what the calendar advance sweeps — while `round` is a label local to its own
+ * competition and means nothing across competitions: round 3 of a cup and round 3 of a league are
+ * unrelated. Round is stored rather than derived from date ordering because a knockout round is a
+ * bracket depth that ordering cannot reconstruct, and because a league table wants "played 12 of 38"
+ * without counting rows. Its `CHECK` has no upper bound: 38 is a property of one 20-club league, not
+ * of the schema.
+ *
+ * One table serves both kinds. There is no `cup_ties` table — under single-leg ties a tie *is* a
+ * fixture, so a tie table would hold one row per fixture row — and no `winner_club_id`, because
+ * goals plus penalties already determine a winner and a column would give that fact a second source
+ * that can disagree.
+ *
+ * `home_penalties` and `away_penalties` are **NULL together or set together**: NULL in both means
+ * the tie did not go to a shootout, which is every league fixture and most cup ties. That pairing is
+ * a `CHECK` rather than a writer's promise — see the module docstring for why it lands on this side
+ * of that line, and the other two invariants that do not.
+ *
+ * The primary key is an integer. A canonical composite id would cost roughly 60 bytes across the
+ * ~300k rows a 16,000-club world generates each season and would restate four columns that are
+ * already columns; the canonical-id rule governs entities a content pack names, and nothing outside
+ * the save ever names a fixture. Generation order is deterministic, so integer ids reproduce, and no
+ * seed keys on a fixture id — the draw and match seeds hash canonical ids — which is the only thing
+ * that would have made a stable fixture id load-bearing.
+ */
 export const fixtures = sqliteTable(
   "fixtures",
   {
-    id: text("id").primaryKey(),
+    id: integer("id").primaryKey(),
     seasonNumber: integer("season_number")
       .notNull()
       .references(() => season.seasonNumber),
-    matchday: integer("matchday").notNull(),
+    competitionId: text("competition_id")
+      .notNull()
+      .references(() => competitions.id),
+    /** Competition-local, 1-based. No upper bound: a 24-club league runs 46 of these. */
+    round: integer("round").notNull(),
+    /** ISO `YYYY-MM-DD`, matching `players.date_of_birth`. Text sorts lexicographically, so the
+     *  advance's `WHERE scheduled_date <= ?` sweep needs no conversion. */
+    scheduledDate: text("scheduled_date").notNull(),
+    /** The retired global Matchday number, kept for exactly one ticket. The advance still walks it
+     *  and it is still written for the human's competition; ticket 10 deletes it and switches the
+     *  advance to dates. Nullable because a world with more than one competition has fixtures it
+     *  never named. */
+    matchday: integer("matchday"),
     homeClubId: text("home_club_id")
       .notNull()
       .references(() => clubs.id),
@@ -591,11 +646,18 @@ export const fixtures = sqliteTable(
       .references(() => clubs.id),
     homeGoals: integer("home_goals"),
     awayGoals: integer("away_goals"),
+    homePenalties: integer("home_penalties"),
+    awayPenalties: integer("away_penalties"),
     played: integer("played").notNull().default(0),
   },
   () => [
-    check("fixtures_matchday", sql`matchday BETWEEN 1 AND 38`),
+    check("fixtures_round", sql`round >= 1`),
+    check("fixtures_matchday", sql`matchday IS NULL OR matchday BETWEEN 1 AND 38`),
     check("fixtures_played", sql`played IN (0,1)`),
+    check(
+      "fixtures_penalties_paired",
+      sql`(home_penalties IS NULL) = (away_penalties IS NULL)`,
+    ),
   ],
 );
 

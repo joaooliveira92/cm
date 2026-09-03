@@ -49,7 +49,9 @@ export type PlayerId = Schema.Schema.Type<typeof PlayerId>;
 export const MatchId = Schema.String.pipe(Schema.brand("MatchId"));
 export type MatchId = Schema.Schema.Type<typeof MatchId>;
 
-export const FixtureId = Schema.String.pipe(Schema.brand("FixtureId"));
+/** A fixture's key is an integer: nothing outside the save ever names a fixture, so the
+ *  canonical-id rule that governs clubs and players does not reach it. */
+export const FixtureId = Schema.Finite.pipe(Schema.brand("FixtureId"));
 export type FixtureId = Schema.Schema.Type<typeof FixtureId>;
 
 export const BidId = Schema.String.pipe(Schema.brand("BidId"));
@@ -304,6 +306,10 @@ export class SeasonView extends Schema.Class<SeasonView>("SeasonView")({
 
 export class FixtureView extends Schema.Class<FixtureView>("FixtureView")({
   id: FixtureId,
+  /** The competition-local round number. Means nothing across competitions. */
+  round: Schema.Finite,
+  /** ISO `YYYY-MM-DD`: when this fixture is played. */
+  date: Schema.String,
   matchday: Schema.Finite,
   homeClubId: ClubId,
   homeClubName: Schema.String,

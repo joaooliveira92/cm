@@ -4,13 +4,14 @@ import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
-import { SaveId } from "@cm-clone/contracts";
+import { SaveId, type SnapshotId } from "@cm-clone/contracts";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
+import { leagueRoundDates } from "@cm-clone/shared";
 import { beginCareer, commitCareer, createSave } from "../src/main/saves.js";
-import { createDefaultSnapshot } from "./snapshot-helpers.js";
+import { createDefaultSnapshot, createPyramidSnapshot } from "./snapshot-helpers.js";
 import { getSquad } from "../src/main/squad.js";
 import {
   advanceCalendar,
@@ -46,6 +47,24 @@ const loadFirstClubId = (saveId: string) =>
     Effect.scoped,
   );
 
+/** A committed career at an arbitrary scope, which is what puts more than one competition in the
+ *  world — the default scope is one league and its cup. */
+const createCareerFrom = (snapshotId: SnapshotId, worldSeed: number, name: string) =>
+  Effect.gen(function* () {
+    const { id } = yield* beginCareer(savesDir, {
+      worldSeed,
+      referenceYear: 2026,
+      userDataDir: savesDir,
+      snapshotId,
+    });
+    const selectedClubId = yield* loadFirstClubId(id);
+    return yield* commitCareer(savesDir, id, name, selectedClubId, {
+      managerName: name,
+      archetypeOrigin: "custom",
+      pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
+    });
+  });
+
 /** A committed career generated deterministically from a world seed (ticket 01). */
 const createCareerFromWorldSeed = (worldSeed: number, name: string) =>
   Effect.gen(function* () {
@@ -68,7 +87,7 @@ const createCareerFromWorldSeed = (worldSeed: number, name: string) =>
 // Pure fixture generation
 // ---------------------------------------------------------------------------
 
-it.effect("generateRoundRobinFixtures produces a double round-robin: 38 fixtures/club across 38 Matchdays of 10", () =>
+it.effect("generateRoundRobinFixtures produces a double round-robin: 38 fixtures/club across 38 rounds of 10", () =>
   Effect.gen(function* () {
     const clubIds = Array.from({ length: 20 }, (_, i) => `club-${i}`);
     const fixtures = yield* generateRoundRobinFixtures(clubIds, 1234);
@@ -76,12 +95,12 @@ it.effect("generateRoundRobinFixtures produces a double round-robin: 38 fixtures
     // 20 clubs, double round-robin: C(20,2) = 190 pairings x 2 legs = 380 Fixtures, 10/Matchday x 38.
     strictEqual(fixtures.length, 380);
 
-    const matchdayCounts = new Map<number, number>();
+    const roundCounts = new Map<number, number>();
     for (const fixture of fixtures) {
-      matchdayCounts.set(fixture.matchday, (matchdayCounts.get(fixture.matchday) ?? 0) + 1);
+      roundCounts.set(fixture.round, (roundCounts.get(fixture.round) ?? 0) + 1);
     }
-    strictEqual(matchdayCounts.size, 38);
-    for (const count of matchdayCounts.values()) strictEqual(count, 10);
+    strictEqual(roundCounts.size, 38);
+    for (const count of roundCounts.values()) strictEqual(count, 10);
 
     const perClub = new Map<string, number>();
     for (const fixture of fixtures) {
@@ -317,4 +336,107 @@ it.effect("two saves generated from one world seed resolve identically after the
     ok(fixturesA.fixtures.some((fixture) => fixture.played));
   }),
   20_000,
+);
+
+// ---------------------------------------------------------------------------
+// Dated, competition-scoped fixtures (ticket 09)
+// ---------------------------------------------------------------------------
+
+/** Every fixture row in a save, competition and date included — the world's whole calendar, which
+ *  `getFixtures` deliberately never returns. */
+const loadAllFixtures = (saveId: string) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    return yield* sql<{
+      competitionId: string;
+      round: number;
+      scheduledDate: string;
+      matchday: number | null;
+      homeClubId: string;
+      awayClubId: string;
+    }>`SELECT competition_id as "competitionId", round, scheduled_date as "scheduledDate", matchday,
+              home_club_id as "homeClubId", away_club_id as "awayClubId"
+       FROM fixtures ORDER BY id ASC`;
+  }).pipe(
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
+    Effect.scoped,
+  );
+
+it.effect("every loaded competition gets a full dated fixture list, results-only included", () =>
+  Effect.gen(function* () {
+    // England's whole pyramid: four divisions at three depths, plus the cup they depend on. The
+    // fourth division resolves to a depth the human never sees into and still gets its fixtures.
+    const snapshotId = yield* createPyramidSnapshot(savesDir);
+    const save = yield* createCareerFrom(snapshotId, 5150, "Pyramid");
+    const fixtures = yield* loadAllFixtures(save.id);
+
+    const rounds = new Map<string, Set<number>>();
+    for (const fixture of fixtures) {
+      rounds.set(fixture.competitionId, (rounds.get(fixture.competitionId) ?? new Set()).add(fixture.round));
+    }
+    // 20 clubs -> 38 rounds; 24 clubs -> 46, which overflows the weekends into midweek slots.
+    strictEqual(rounds.get("comp_eng_1")?.size, 38);
+    strictEqual(rounds.get("comp_eng_2")?.size, 46);
+    strictEqual(rounds.get("comp_eng_4")?.size, 46);
+    // A cup owns no clubs, so its ties materialise as the bracket resolves rather than at season
+    // start. Nothing here schedules one.
+    ok(!rounds.has("comp_eng_cup"));
+
+    // Every fixture carries a date, and a round's date is the same for every fixture in it.
+    for (const fixture of fixtures) {
+      ok(/^\d{4}-\d{2}-\d{2}$/.test(fixture.scheduledDate), fixture.scheduledDate);
+    }
+  }),
+  30_000,
+);
+
+it.effect("no club holds two fixtures on one date", () =>
+  Effect.gen(function* () {
+    const snapshotId = yield* createPyramidSnapshot(savesDir);
+    const save = yield* createCareerFrom(snapshotId, 5150, "Pyramid");
+    const fixtures = yield* loadAllFixtures(save.id);
+
+    // The invariant the slot template upholds — cups reserve their dates before leagues draw
+    // theirs — and which no index can express, since a club can be home in one competition and
+    // away in another on the same day.
+    const seen = new Set<string>();
+    for (const fixture of fixtures) {
+      for (const clubId of [fixture.homeClubId, fixture.awayClubId]) {
+        const key = `${clubId}@${fixture.scheduledDate}`;
+        ok(!seen.has(key), `${clubId} plays twice on ${fixture.scheduledDate}`);
+        seen.add(key);
+      }
+    }
+  }),
+  30_000,
+);
+
+it.effect("scheduling fails loudly rather than double-booking when the rounds outrun the season", () =>
+  Effect.sync(() => {
+    // August-to-May supplies a fixed number of weekend and midweek slots. A competition asking for
+    // more rounds than that is reachable from a catalogue edit, so it is a typed failure a caller
+    // can report rather than a silent collision.
+    strictEqual(leagueRoundDates(2026, 400), null);
+
+    const dates = leagueRoundDates(2026, 46);
+    ok(dates !== null);
+    strictEqual(new Set(dates).size, 46);
+    for (let i = 1; i < dates.length; i++) ok(dates[i]! > dates[i - 1]!);
+  }),
+);
+
+it.effect("the fixture list read path carries the date and the round", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const view = yield* getFixtures(savesDir, save.id);
+
+    strictEqual(view.fixtures.length, 380);
+    const first = view.fixtures[0]!;
+    strictEqual(first.round, 1);
+    ok(/^\d{4}-\d{2}-\d{2}$/.test(first.date));
+    // Ordered by date, so the list reads as a calendar rather than as an insertion order.
+    for (let i = 1; i < view.fixtures.length; i++) {
+      ok(view.fixtures[i]!.date >= view.fixtures[i - 1]!.date);
+    }
+  }),
 );

@@ -36,25 +36,25 @@ it is reachable from a catalogue that describes more rounds than the season hold
 **Blocked by:** 06, 07, 23 (the paired-penalty invariant must be assigned to a constraint or to a
 writer before the two columns are defined).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/schema.ts` and the regenerated DDL, a calendar slot-template
 module in `packages/shared/src`, `apps/desktop/src/main/season.ts` (`generateRoundRobinFixtures`,
 `startSeason`, `getFixtures`), `apps/desktop/test/season.test.ts`,
 `apps/desktop/test/db-schema.test.ts`.
 
-- [ ] `fixtures` has an integer primary key in place of its text one, and gains a competition
+- [x] `fixtures` has an integer primary key in place of its text one, and gains a competition
       reference, a competition-local round with `CHECK round >= 1` and no upper bound, an ISO
       scheduled date, and nullable home and away penalty columns. Its `CHECK played IN (0,1)` is
       unchanged, and no club id is nullable.
-- [ ] There is no winner column and no separate cup-tie table; goals plus penalties determine a
+- [x] There is no winner column and no separate cup-tie table; goals plus penalties determine a
       winner.
-- [ ] Every loaded competition, including a `results-only` one, gets a full league fixture list at
+- [x] Every loaded competition, including a `results-only` one, gets a full league fixture list at
       season start, with dates from the shared slot template.
-- [ ] A test asserts no club holds two fixtures on one date in a generated world, and that
+- [x] A test asserts no club holds two fixtures on one date in a generated world, and that
       generation raises a typed failure rather than double-booking when a competition's rounds
       exceed the season's slots.
-- [ ] The old global matchday column is still present and still populated, and the existing Continue
+- [x] The old global matchday column is still present and still populated, and the existing Continue
       loop and its tests are unchanged by this ticket.
-- [ ] The fixture list read path returns the date and the round.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] The fixture list read path returns the date and the round.
+- [x] `pnpm check:all` is green at this commit.

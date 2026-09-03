@@ -28,12 +28,44 @@ writer-upheld exceptions and a judgement about whether this invariant belongs wi
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-human
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/schema.ts` (the fixture table definition ticket 09 writes),
 `apps/desktop/test/db-schema.test.ts` or `apps/desktop/test/season.test.ts` for whichever form the
 answer takes.
 
-- [ ] The invariant is assigned to either a constraint or a writer, and the assignment is written
+- [x] The invariant is assigned to either a constraint or a writer, and the assignment is written
       down next to the schema's other two writer-upheld invariants.
-- [ ] Ticket 09 is unblocked: it knows whether the fixture table carries the constraint.
+- [x] Ticket 09 is unblocked: it knows whether the fixture table carries the constraint.
+
+## Answer
+
+**It is a `CHECK`.** `fixtures` carries
+`CONSTRAINT "fixtures_penalties_paired" CHECK((home_penalties IS NULL) = (away_penalties IS NULL))`,
+which admits both-NULL and both-set and rejects exactly one set.
+
+What settled it was reading the two writer-upheld exceptions for what they have in common. Neither is
+a statement a `CHECK` is capable of making:
+
+- **A club never plays twice on one date** is cross-row. A `CHECK` sees one row, and the unique
+  indexes that could see across rows were rejected as half-covering, since neither club column
+  catches a club playing home in a league fixture and away in a cup tie on the same day.
+- **A scouting-progress row is never written at zero** is a rule about which rows *exist*. Absence
+  means Unscouted, so the invariant is about a write that must not happen rather than about the
+  contents of a row that did; `CHECK progress BETWEEN 0 AND 100` admits the very row the rule
+  forbids.
+
+So the writers hold those two because nothing else can, not because a constraint was weighed and
+passed over. The paired-penalty invariant is the opposite shape: one row, two columns, a relation
+between them — the only kind of statement a `CHECK` *can* make, in a schema where raw SQL means the
+constraint is the last enforcement before the row lands.
+
+No legitimate write path is refused. The shootout writer sets both columns in the same `UPDATE` — a
+shootout is resolved as one value outside the minute loop, so there is no intermediate state where
+one score exists without the other — and every league fixture leaves both NULL, which the constraint
+admits. Recording a shootout in two statements would be refused, and that is the intended reading
+rather than a cost: it would mean a fixture briefly on disk claiming a shootout with one score.
+
+The assignment is recorded in the module docstring of `apps/desktop/src/main/db/schema.ts`, where the
+two writer-upheld invariants are now named together and this one is named as the constraint it is, so
+a reader meets all three in one place rather than inferring the third from its absence.

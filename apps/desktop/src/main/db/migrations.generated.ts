@@ -118,19 +118,27 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	PRIMARY KEY(\`stream_type\`, \`stream_id\`, \`seq\`)
 );`,
   `CREATE TABLE \`fixtures\` (
-	\`id\` text PRIMARY KEY NOT NULL,
+	\`id\` integer PRIMARY KEY NOT NULL,
 	\`season_number\` integer NOT NULL,
-	\`matchday\` integer NOT NULL,
+	\`competition_id\` text NOT NULL,
+	\`round\` integer NOT NULL,
+	\`scheduled_date\` text NOT NULL,
+	\`matchday\` integer,
 	\`home_club_id\` text NOT NULL,
 	\`away_club_id\` text NOT NULL,
 	\`home_goals\` integer,
 	\`away_goals\` integer,
+	\`home_penalties\` integer,
+	\`away_penalties\` integer,
 	\`played\` integer DEFAULT 0 NOT NULL,
 	FOREIGN KEY (\`season_number\`) REFERENCES \`season\`(\`season_number\`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (\`competition_id\`) REFERENCES \`competitions\`(\`id\`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (\`home_club_id\`) REFERENCES \`clubs\`(\`id\`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (\`away_club_id\`) REFERENCES \`clubs\`(\`id\`) ON UPDATE no action ON DELETE no action,
-	CONSTRAINT "fixtures_matchday" CHECK(matchday BETWEEN 1 AND 38),
-	CONSTRAINT "fixtures_played" CHECK(played IN (0,1))
+	CONSTRAINT "fixtures_round" CHECK(round >= 1),
+	CONSTRAINT "fixtures_matchday" CHECK(matchday IS NULL OR matchday BETWEEN 1 AND 38),
+	CONSTRAINT "fixtures_played" CHECK(played IN (0,1)),
+	CONSTRAINT "fixtures_penalties_paired" CHECK((home_penalties IS NULL) = (away_penalties IS NULL))
 );`,
   `CREATE TABLE \`generation_manifest\` (
 	\`id\` integer PRIMARY KEY NOT NULL,

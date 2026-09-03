@@ -68,7 +68,11 @@ const fixturesView = () => ({
   season: { seasonNumber: 1, currentMatchday: 1, phase: "in_season" as const },
   fixtures: [
     {
-      id: rid("f1"),
+      // A fixture's key is an integer now, and it carries the date it is played on and its
+      // competition-local round.
+      id: 1,
+      round: 1,
+      date: "2026-08-01",
       matchday: 1,
       homeClubId: rid("home"),
       homeClubName: "Home FC",

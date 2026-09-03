@@ -129,6 +129,40 @@ describe("generated DDL", () => {
     expect(ddl).not.toContain("winner_club_id");
   });
 
+  it("makes a fixture competition-scoped, dated, and able to record a shootout", () => {
+    const ddl = MIGRATION_STATEMENTS.join("\n");
+    const block = ddl.slice(
+      ddl.indexOf("CREATE TABLE `fixtures`"),
+      ddl.indexOf(");", ddl.indexOf("CREATE TABLE `fixtures`")) + 2,
+    );
+
+    // An integer key: nothing outside the save names a fixture, so the canonical-id rule that
+    // governs clubs and players does not reach it.
+    expect(block).toContain("`id` integer PRIMARY KEY NOT NULL");
+    expect(block).toContain("`competition_id` text NOT NULL");
+    expect(block).toContain("`scheduled_date` text NOT NULL");
+    // A round is competition-local and has no upper bound — 38 is a property of one 20-club
+    // league, and a 24-club one runs 46.
+    expect(block).toContain('CONSTRAINT "fixtures_round" CHECK(round >= 1)');
+    expect(block).not.toContain("round BETWEEN");
+    // Neither club id is nullable: a fixture exists only once both participants are known.
+    expect(block).toContain("`home_club_id` text NOT NULL");
+    expect(block).toContain("`away_club_id` text NOT NULL");
+    expect(block).toContain('CONSTRAINT "fixtures_played" CHECK(played IN (0,1))');
+
+    // The paired-penalty invariant is a constraint rather than a writer's promise: it is a
+    // single-row, two-column shape, which is the only kind a CHECK can see. Both NULL means the
+    // tie never went to a shootout, which is every league fixture.
+    expect(block).toContain(
+      'CONSTRAINT "fixtures_penalties_paired" CHECK((home_penalties IS NULL) = (away_penalties IS NULL))',
+    );
+
+    // Goals plus penalties determine a winner, so no column stores one, and a single-leg tie is a
+    // fixture rather than an entity above one.
+    expect(block).not.toContain("winner");
+    expect(ddl).not.toContain("CREATE TABLE `cup_ties`");
+  });
+
   it("gives a club a place and a ground, and no name", () => {
     const ddl = MIGRATION_STATEMENTS.join("\n");
     const clubsBlock = ddl.slice(
