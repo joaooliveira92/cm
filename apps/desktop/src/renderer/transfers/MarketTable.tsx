@@ -2,6 +2,7 @@ import { TablePanel } from "../table/TablePanel.js";
 import { useTransfers } from "../TransfersProvider.js";
 import { marketPlayerColumns } from "../table/transfers/marketColumns.js";
 import { STATE_COPY } from "../table/viewState.js";
+import { TransferFilterBar } from "./TransferFilterBar.js";
 
 const MARKET = "transfer-market";
 
@@ -39,8 +40,16 @@ export const MarketTable = () => {
           setFiltersFor(MARKET, next);
           speak(MARKET, "filter-set", `${next.length === 0 ? "Cleared the Market filters." : "Filters updated."}`);
         }}
-        enableNameSearch
-        enablePositionFilter
+        filterArea={
+          <TransferFilterBar
+            label="Market"
+            filters={market.filters}
+            onSetFilters={(next) => {
+              setFiltersFor(MARKET, next);
+              speak(MARKET, "filter-set", `${next.length === 0 ? "Cleared the Market filters." : "Filters updated."}`);
+            }}
+          />
+        }
         activeId={market.active}
         onActiveChange={onActiveChangeFor(MARKET)}
         onBookmarkChange={onBookmarkChangeFor(MARKET)}

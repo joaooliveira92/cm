@@ -63,7 +63,7 @@ const MatchDayLayout = () => {
 
       {state.match && (
         <section className="stadium-wash mt-6 rounded-panel border border-panel-border-dark p-4 shadow-panel">
-          {state.isComplete ? (
+          {state.phase === "complete" ? (
             <MatchComplete match={state.match} />
           ) : (
             <MatchOngoing />

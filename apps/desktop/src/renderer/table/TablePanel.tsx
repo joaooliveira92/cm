@@ -8,29 +8,15 @@
  * states. Squad composes the same primitives directly (it additionally owns
  * column visibility/persistence).
  */
+import type { ReactNode } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { POSITIONS } from "@cm-clone/shared";
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
-import { Input } from "../components/ui/input.js";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select.js";
-import { FOCUS_RING } from "../focus.js";
 import type { FilterClause, SortState, TableId, TableRowShape } from "./types.js";
 import type { TableFocusBookmark } from "./focusBookmark.js";
 import { DataTable } from "./DataTable.js";
 import { useDataTable, visibleRowIds } from "./useDataTable.js";
-import {
-  clearFilters,
-  nameSearchClause,
-  positionClause,
-  upsertFilter,
-} from "./features/filtering.js";
+import { clearFilters } from "./features/filtering.js";
 import { deriveViewState, type TableStateCopy } from "./viewState.js";
 
 export interface TablePanelProps<Row extends TableRowShape> {
@@ -49,8 +35,9 @@ export interface TablePanelProps<Row extends TableRowShape> {
   readonly onSortChange: (sort: SortState | null) => void;
   readonly filters: readonly FilterClause[];
   readonly onSetFilters: (filters: readonly FilterClause[]) => void;
-  readonly enableNameSearch: boolean;
-  readonly enablePositionFilter: boolean;
+  /** Composable filter controls area — callers compose their own filter UI
+   *  instead of the panel toggling features with boolean props. */
+  readonly filterArea: ReactNode;
   readonly activeId: string | null;
   readonly onActiveChange: (id: string) => void;
   readonly onBookmarkChange: (bookmark: TableFocusBookmark) => void;
@@ -81,8 +68,7 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
     onSortChange,
     filters,
     onSetFilters,
-    enableNameSearch,
-    enablePositionFilter,
+    filterArea,
     activeId,
     onActiveChange,
     onBookmarkChange,
@@ -118,70 +104,14 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
 
   const orderedIds = visibleRowIds(table);
 
-  const nameQuery =
-    filters.find((f) => f._tag === "nameSearch")?._tag === "nameSearch"
-      ? (filters.find((f) => f._tag === "nameSearch") as { readonly query: string }).query
-      : "";
-  const activePosition = filters.find((f) => f._tag === "position")?.position;
-
-  const setNameQuery = (query: string): void => {
-    if (query.trim() === "") {
-      onSetFilters(filters.filter((f) => f._tag !== "nameSearch"));
-    } else {
-      onSetFilters(upsertFilter(filters, nameSearchClause(query)));
-    }
-  };
-  const setPosition = (position: string): void => {
-    onSetFilters(
-      position === ""
-        ? filters.filter((f) => f._tag !== "position")
-        : upsertFilter(filters, positionClause(position)),
-    );
-  };
-  const clearVisibleFilters = (): void => onSetFilters(clearFilters());
-
   const filterActive = rows.length !== unfilteredRowCount;
 
   return (
     <>
       <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-        {enableNameSearch && (
-          <label className="flex items-center gap-2 text-text-body">
-            Name
-            <Input
-              type="text"
-              aria-label={`Search ${label} by name`}
-              value={nameQuery}
-              onChange={(event) => setNameQuery(event.target.value)}
-              className="w-32"
-            />
-          </label>
-        )}
-        {enablePositionFilter && (
-          <div className="flex items-center gap-2 text-text-body">
-            Position
-            <Select
-              value={activePosition ?? ""}
-              onValueChange={(value) => {
-                if (value !== null) setPosition(value);
-              }}
-            >
-              <SelectTrigger aria-label={`Filter ${label} by position`} className={SELECT_CLASS}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All positions</SelectItem>
-                {POSITIONS.map((position) => (
-                  <SelectItem key={position} value={position}>
-                    {position}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+        {filterArea}
         {filterActive && (
-          <Button type="button" variant="secondary" onClick={clearVisibleFilters}>
+          <Button type="button" variant="secondary" onClick={() => onSetFilters(clearFilters())}>
             {copy.clearFiltersLabel}
           </Button>
         )}
@@ -210,7 +140,7 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
           {viewState._tag === "NoFilterResults" && (
             <div className="py-6 text-text-secondary">
               <p>{copy.noFilterResults}</p>
-              <Button type="button" variant="secondary" className="mt-2" onClick={clearVisibleFilters}>
+              <Button type="button" variant="secondary" className="mt-2" onClick={() => onSetFilters(clearFilters())}>
                 {copy.clearFiltersLabel}
               </Button>
             </div>
@@ -245,6 +175,3 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
   );
 };
 
-/** The position-filter trigger paint, matching `components/ui/input.tsx` and the Base UI select
- *  primitive's popup styling. */
-const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;

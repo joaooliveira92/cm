@@ -2,6 +2,7 @@ import { TablePanel } from "../table/TablePanel.js";
 import { useTransfers } from "../TransfersProvider.js";
 import { freeAgentColumns } from "../table/transfers/freeAgentColumns.js";
 import { STATE_COPY } from "../table/viewState.js";
+import { TransferFilterBar } from "./TransferFilterBar.js";
 
 const FREE = "free-agents";
 
@@ -39,8 +40,16 @@ export const FreeAgentsTable = () => {
           setFiltersFor(FREE, next);
           speak(FREE, "filter-set", `${next.length === 0 ? "Cleared the Free Agents filters." : "Filters updated."}`);
         }}
-        enableNameSearch
-        enablePositionFilter
+        filterArea={
+          <TransferFilterBar
+            label="Free Agents"
+            filters={free.filters}
+            onSetFilters={(next) => {
+              setFiltersFor(FREE, next);
+              speak(FREE, "filter-set", `${next.length === 0 ? "Cleared the Free Agents filters." : "Filters updated."}`);
+            }}
+          />
+        }
         activeId={free.active}
         onActiveChange={onActiveChangeFor(FREE)}
         onBookmarkChange={onBookmarkChangeFor(FREE)}

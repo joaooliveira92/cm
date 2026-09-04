@@ -12,7 +12,7 @@ import { useMatchContext } from "./MatchProvider.js";
 import { SELECT_CLASS } from "./controls.js";
 
 /** The pre-match opponent picker (Phase 1: reads the provider's opponent state instead of owning
- *  it). Consumes `state.opponents`/`state.opponentId`/`state.starting` and `actions.chooseOpponent`
+ *  it). Consumes `state.opponents`/`state.opponentId`/`state.phase` and `actions.chooseOpponent`
  *  from context; the start command goes through the registered `start-match` Action (ADR-0012). */
 export const OpponentPicker = () => {
   const { state, actions } = useMatchContext();
@@ -41,10 +41,10 @@ export const OpponentPicker = () => {
       <Button
         type="button"
         data-action-id="start-match"
-        disabled={!state.opponentId || state.starting}
+        disabled={!state.opponentId || state.phase === "starting"}
         onClick={() => void dispatchAction("start-match")}
       >
-        {state.starting ? "Starting..." : "Start match"}
+        {state.phase === "starting" ? "Starting..." : "Start match"}
       </Button>
     </section>
   );

@@ -22,7 +22,7 @@ export const MatchCommentaryStream = () => {
         awayClubName={match.awayClubName}
       />
       <p className="mt-3 text-sm text-text-secondary">
-        {state.isComplete ? "Full time" : state.paused ? "Paused — awaiting decision" : "Live"}
+        {state.phase === "complete" ? "Full time" : state.phase === "paused" ? "Paused — awaiting decision" : "Live"}
       </p>
 
       <ul className="mt-4 max-h-[60vh] space-y-1 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-4 text-sm shadow-panel">

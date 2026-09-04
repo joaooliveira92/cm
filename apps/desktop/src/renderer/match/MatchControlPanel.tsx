@@ -49,7 +49,19 @@ import { tacticsAtom, useAtomValue } from "../rpc.js";
  * the panel's draft/open/flags state behind a shared context, and the focused
  * sub-components — TeamInstructionSliders, SubstitutionControl and
  * InjuryDecisionModal — consume that context instead of an eleven-prop drill.
+ *
+ * The panel's operational mode is a discriminated union (PanelMode) that makes
+ * illegal states unrepresentable: only one mode is active at a time. Injury
+ * severity and shorthandedness remain as derived metadata because they can
+ * coexist with any mode.
  * ------------------------------------------------------------------------- */
+
+type PanelMode =
+  | { readonly _tag: "closed" }
+  | { readonly _tag: "open" }
+  | { readonly _tag: "injury-prompt"; readonly severity: "red" | "orange" }
+  | { readonly _tag: "injury-decision" }
+  | { readonly _tag: "sub-draft" };
 
 interface MatchControlState {
   readonly open: boolean;
@@ -60,6 +72,7 @@ interface MatchControlState {
   readonly isHalftime: boolean;
   readonly status: string | null;
   readonly subAlert: string | null;
+  readonly mode: PanelMode;
   /** Live match facts mirrored from the parent MatchProvider (Phase 1) so sub-components
    *  derive their variants locally instead of receiving boolean props. */
   readonly subsStatus: SubstitutionStatusView;
@@ -68,10 +81,6 @@ interface MatchControlState {
   readonly hasRedInjury: boolean;
   readonly orangeInjury: InjuryView | undefined;
   readonly isShorthanded: boolean;
-  /** The orange no-subs knock decision: orange injury + cap reached + 11 on pitch. */
-  readonly injuryDecisionPrompt: boolean;
-  /** The two-step substitution draft is complete enough to confirm (Enter). */
-  readonly subDraftComplete: boolean;
 }
 
 interface MatchControlActions {
@@ -232,7 +241,7 @@ const SubstitutionControl = () => {
         </Alert>
       )}
 
-      {state.hasRedInjury && !state.isShorthanded && (
+      {state.mode._tag === "injury-prompt" && state.mode.severity === "red" && !state.isShorthanded && (
         <Alert variant="destructive">
           <p className="font-semibold">A severe injury has forced a player off.</p>
           <p className="mt-1">
@@ -328,7 +337,7 @@ const SubstitutionControl = () => {
  *  bring the player off to 10 men. Only renders while the decision is genuinely pending. */
 const InjuryDecisionModal = () => {
   const { state } = useMatchControlContext();
-  if (!state.injuryDecisionPrompt || !state.orangeInjury) return null;
+  if (state.mode._tag !== "injury-decision" || !state.orangeInjury) return null;
   return (
     <Alert className="border-text-warning/40 bg-text-warning/10 text-text-warning">
       <p className="font-semibold">
@@ -427,23 +436,31 @@ const MatchControlProvider = ({
     (injury) => injury.teamClubId === homeClubId && injury.tier === "orange",
   );
   const isShorthanded = onPitchCount < 11;
-  /** The no-subs knock decision modal: orange injury + cap reached + 11 on pitch. */
-  const injuryDecisionPrompt = orangeInjury !== undefined && subsStatus.capReached && !isShorthanded;
-  /** The two-step substitution draft is complete enough to confirm (Enter). */
-  const subDraftComplete = !subsStatus.capReached && outPlayerId !== "" && inPlayerId !== "";
+
+  // Derived panel mode: one of closed, open, injury-prompt, injury-decision,
+  // or sub-draft. Makes illegal state combinations unrepresentable.
+  const computeMode = (): PanelMode => {
+    if (!open) return { _tag: "closed" };
+    if (orangeInjury !== undefined && subsStatus.capReached && !isShorthanded)
+      return { _tag: "injury-decision" };
+    if (!subsStatus.capReached && outPlayerId !== "" && inPlayerId !== "")
+      return { _tag: "sub-draft" };
+    if (hasRedInjury) return { _tag: "injury-prompt", severity: "red" };
+    if (injuryPrompt) return { _tag: "injury-prompt", severity: "orange" };
+    return { _tag: "open" };
+  };
+  const mode = computeMode();
 
   // The panel-scoped key handlers read a fresh snapshot each keystroke (the
   // seam keeps the functions themselves stable — no re-subscription churn).
   const panelRef = useRef({
     open,
-    injuryDecisionPrompt,
-    subDraftComplete,
+    mode,
     subDraftStarted: outPlayerId !== "" || inPlayerId !== "",
   });
   panelRef.current = {
     open,
-    injuryDecisionPrompt,
-    subDraftComplete,
+    mode,
     subDraftStarted: outPlayerId !== "" || inPlayerId !== "",
   };
 
@@ -620,11 +637,11 @@ const MatchControlProvider = ({
         return;
       }
       event.preventDefault();
-      if (panelRef.current.injuryDecisionPrompt) {
+      if (panelRef.current.mode._tag === "injury-decision") {
         void dispatchAction("play-on");
         return;
       }
-      if (panelRef.current.subDraftComplete) {
+      if (panelRef.current.mode._tag === "sub-draft") {
         void dispatchAction("make-substitution");
       }
     },
@@ -639,7 +656,7 @@ const MatchControlProvider = ({
     (event) => {
       if (!panelRef.current.open || !isPanelTopmost()) return;
       if (isTextEntryTarget(event.target)) return;
-      if (!panelRef.current.injuryDecisionPrompt) return;
+      if (panelRef.current.mode._tag !== "injury-decision") return;
       event.preventDefault();
       void dispatchAction("bring-off");
     },
@@ -658,14 +675,13 @@ const MatchControlProvider = ({
       isHalftime,
       status,
       subAlert,
+      mode,
       subsStatus,
       onPitchCount,
       injuryPrompt,
       hasRedInjury,
       orangeInjury,
       isShorthanded,
-      injuryDecisionPrompt,
-      subDraftComplete,
     },
     actions: {
       setIsHalftime,

@@ -845,6 +845,93 @@ const materialiseCupRounds = (seasonNumber: number, worldSeed: number, reference
   });
 
 /**
+ * A season's table for the summary screen, from the frozen rows once they exist.
+ *
+ * A past season's table must not depend on its fixtures still being there: the rollover keeps only
+ * the competitions the human played in, and even for those the frozen rows are the authoritative
+ * record — recomputing would risk an answer that disagrees with the verdict already given.
+ *
+ * `played`, `won`, `drawn` and `lost` are not frozen, so they are recovered from the fixtures where
+ * those survive and reported as zero where they do not. The freeze stores the four columns that
+ * decide a table — position, points, goal difference, goals for — and nothing that can be derived
+ * from them; a season whose fixtures are gone shows its final standing without its match record,
+ * which is the trade the retention rule makes.
+ */
+const standingsForSummary = (competitionId: string, seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const nameOf = yield* displayNames;
+    const frozen = yield* sql<{
+      clubId: ClubId;
+      points: number;
+      goalDifference: number;
+      goalsFor: number;
+    }>`SELECT club_id as "clubId", points, goal_difference as "goalDifference", goals_for as "goalsFor"
+       FROM competition_participants
+       WHERE competition_id = ${competitionId} AND season_number = ${seasonNumber}
+         AND final_position IS NOT NULL
+       ORDER BY final_position ASC`;
+
+    if (frozen.length === 0) return yield* computeStandings(competitionId, seasonNumber);
+
+    const record = yield* matchRecordFor(competitionId, seasonNumber);
+    return frozen.map((row) => {
+      const played = record.get(row.clubId) ?? { played: 0, won: 0, drawn: 0, lost: 0 };
+      return new LeagueTableRow({
+        clubId: row.clubId,
+        clubName: nameOf(row.clubId),
+        played: played.played,
+        won: played.won,
+        drawn: played.drawn,
+        lost: played.lost,
+        goalsFor: row.goalsFor ?? 0,
+        goalsAgainst: (row.goalsFor ?? 0) - (row.goalDifference ?? 0),
+        goalDifference: row.goalDifference ?? 0,
+        points: row.points ?? 0,
+      });
+    });
+  });
+
+/** Played/won/drawn/lost per club, from whatever fixtures of that season are still on disk. */
+const matchRecordFor = (competitionId: string, seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const fixtures = yield* sql<{
+      homeClubId: ClubId;
+      awayClubId: ClubId;
+      homeGoals: number;
+      awayGoals: number;
+    }>`SELECT home_club_id as "homeClubId", away_club_id as "awayClubId",
+              home_goals as "homeGoals", away_goals as "awayGoals"
+       FROM fixtures
+       WHERE season_number = ${seasonNumber} AND competition_id = ${competitionId} AND played = 1`;
+
+    const record = new Map<ClubId, { played: number; won: number; drawn: number; lost: number }>();
+    const entry = (clubId: ClubId) => {
+      const existing = record.get(clubId) ?? { played: 0, won: 0, drawn: 0, lost: 0 };
+      record.set(clubId, existing);
+      return existing;
+    };
+    for (const fixture of fixtures) {
+      const home = entry(fixture.homeClubId);
+      const away = entry(fixture.awayClubId);
+      home.played += 1;
+      away.played += 1;
+      if (fixture.homeGoals > fixture.awayGoals) {
+        home.won += 1;
+        away.lost += 1;
+      } else if (fixture.homeGoals < fixture.awayGoals) {
+        away.won += 1;
+        home.lost += 1;
+      } else {
+        home.drawn += 1;
+        away.drawn += 1;
+      }
+    }
+    return record;
+  });
+
+/**
  * Freezes every competition's outcome onto its participant rows for the concluded season.
  *
  * Done once, at conclusion. Afterwards the previous season's final positions are readable without
@@ -1020,6 +1107,49 @@ const rolloverToNextSeason = (concludedSeason: number, referenceYear: number, wo
     }
 
     yield* reconcileSquadsWithDepth(nextSeason, concludedSeason, referenceYear, worldSeed);
+    yield* pruneConcludedSeason(concludedSeason);
+  });
+
+/**
+ * Discards the world's past and keeps the player's.
+ *
+ * A save that kept every fixture of every competition forever would double in size roughly every
+ * twenty seasons, almost all of it football nobody watched. The rule is **participation**: a
+ * past season's fixtures survive only for the competitions the human's club actually played in.
+ *
+ * The deletion is irreversible and its consequence is worth carrying forward as a constraint rather
+ * than a footnote: **no screen can ever show a rival nation's history.** What remains of every other
+ * competition's season is its frozen participant rows — final position, points, goal difference,
+ * goals for — which is why the freeze happens before this runs and why discarding fixtures never
+ * discards a table.
+ *
+ * A match stream is pruned exactly when its fixture is, so the log never outlives the thing it
+ * describes. Nothing else in the log is touched: there is no partitioning and no snapshotting here,
+ * because the only fold in the system is one 90-minute match.
+ *
+ * Deleting nothing is the normal case for a first season played entirely in one's own division, and
+ * is not a failure.
+ */
+const pruneConcludedSeason = (concludedSeason: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+
+    // The competitions the human's club played in — its league and any cup it entered.
+    const doomed = yield* sql<{ id: FixtureId }>`
+      SELECT f.id FROM fixtures f
+      WHERE f.season_number = ${concludedSeason}
+        AND f.competition_id NOT IN (
+          SELECT cp.competition_id FROM competition_participants cp
+          JOIN clubs c ON c.id = cp.club_id
+          WHERE cp.season_number = ${concludedSeason} AND c.is_user_club = 1
+        )`;
+    if (doomed.length === 0) return;
+
+    // The stream before the fixture: a match stream is keyed on its fixture's id (ticket 17), so
+    // the ids are the same values rendered as text.
+    const streamIds = doomed.map((row) => String(row.id));
+    yield* sql`DELETE FROM events WHERE stream_type = 'match' AND ${sql.in("stream_id", streamIds)}`;
+    yield* sql`DELETE FROM fixtures WHERE ${sql.in("id", doomed.map((row) => row.id))}`;
   });
 
 /**
@@ -1780,7 +1910,7 @@ export const getSeasonSummary = (savesDir: string, saveId: SaveId) =>
       const summarisedSeason = objectiveRow?.seasonNumber ?? seasonRow.seasonNumber;
       const competitionId =
         objectiveRow?.competitionId ?? (yield* loadHumanCompetitionId(summarisedSeason));
-      const standings = yield* computeStandings(competitionId ?? "", summarisedSeason);
+      const standings = yield* standingsForSummary(competitionId ?? "", summarisedSeason);
 
       const boardObjective = objectiveRow
         ? new BoardObjectiveView({

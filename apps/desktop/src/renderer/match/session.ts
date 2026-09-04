@@ -5,11 +5,12 @@ import type {
   SaveId,
   SubstitutionStatusView,
 } from "@cm-clone/contracts";
+import type { MatchPhase } from "./MatchProvider.js";
 
 /**
  * The in-flight match UI session, kept across child-route switches (e.g. the
  * player leaves Match Day for Transfers and `g m`'s back) and across a reload
- * while the authoritative match lives on in the main process. The terminal
+ * while the authoritative match lives in the main process. The terminal
  * state here is *ephemeral UI continuation*, never authoritative game state:
  * the Match Decider stream server-side stays the source of truth, and this
  * only lets the renderer resume the conversation instead of starting a fresh
@@ -22,7 +23,7 @@ export interface ActiveMatchSession {
   readonly revealed: ReadonlyArray<CommentaryLineView>;
   readonly homeScore: number;
   readonly awayScore: number;
-  readonly isComplete: boolean;
+  readonly phase: MatchPhase;
   readonly homeSubs: SubstitutionStatusView;
   readonly homeOnPitchCount: number;
   readonly chunkInjuries: ReadonlyArray<InjuryView>;

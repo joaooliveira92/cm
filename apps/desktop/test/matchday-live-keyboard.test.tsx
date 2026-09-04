@@ -336,9 +336,12 @@ describe("AC-33 — two-step substitution by keyboard (Enter confirms, Escape ab
     const inSelect = document.querySelector<HTMLSelectElement>(
       '[data-action-id="set-live-substitute-in"]',
     )!;
-    act(() => {
-      fireEvent.change(outSelect, { target: { value: String(rid("on-0")) } });
-      fireEvent.change(inSelect, { target: { value: String(rid("bench-1")) } });
+    // Each dispatch re-renders first, so the submit handler reads both picks.
+    await act(async () => {
+      dispatchAction("set-live-substitute-off", { playerId: rid("on-0") });
+    });
+    await act(async () => {
+      dispatchAction("set-live-substitute-in", { playerId: rid("bench-1") });
     });
     // The draft is complete → Enter (not over a native clickable) confirms.
     keyDown("Enter", {}, "Enter");

@@ -42,22 +42,27 @@ const NO_SUBS: SubstitutionStatusView = {
   capReached: false,
 };
 
+export type MatchPhase =
+  | "selecting-opponent"
+  | "starting"
+  | "live"
+  | "paused"
+  | "complete";
+
 export interface MatchState {
   readonly opponents: ReadonlyArray<ClubSummary>;
   readonly opponentId: ClubId;
   readonly match: MatchSummary | null;
   readonly error: string | null;
-  readonly starting: boolean;
+  readonly phase: MatchPhase;
   /** The revealed, scrollable commentary feed. */
   readonly revealed: ReadonlyArray<CommentaryLineView>;
   readonly homeScore: number;
   readonly awayScore: number;
-  readonly isComplete: boolean;
   readonly homeSubs: SubstitutionStatusView;
   readonly homeOnPitchCount: number;
   readonly chunkInjuries: ReadonlyArray<InjuryView>;
   readonly currentMinute: number;
-  readonly paused: boolean;
   /** True once the provider's mount narration (session restore / opponent load) has run. Child
    *  effects (the streaming hook) run BEFORE this provider's own effects, so the streaming loop
    *  gates its first poll on this flag — it must never fire a fetch ahead of a restored session's
@@ -123,17 +128,16 @@ export const MatchProvider = ({
   const [opponentId, setOpponentId] = useState(ClubId.make(""));
   const [match, setMatch] = useState<MatchSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [starting, setStarting] = useState(false);
+  const [phase, setPhase] = useState<MatchPhase>("selecting-opponent");
 
   const [revealed, setRevealed] = useState<ReadonlyArray<CommentaryLineView>>([]);
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
-  const [isComplete, setIsComplete] = useState(false);
   const [homeSubs, setHomeSubs] = useState<SubstitutionStatusView>(NO_SUBS);
   const [homeOnPitchCount, setHomeOnPitchCount] = useState(11);
   const [chunkInjuries, setChunkInjuries] = useState<ReadonlyArray<InjuryView>>([]);
   const [currentMinute, setCurrentMinute] = useState(0);
-  const [pausedState, setPausedState] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   // Mutable cursor/pacing/polling state that doesn't need to trigger re-renders on its own.
@@ -159,9 +163,9 @@ export const MatchProvider = ({
     setCurrentMinute(line.minute);
   }, []);
 
-  const markStreamComplete = useCallback(() => setIsComplete(true), []);
+  const markStreamComplete = useCallback(() => setPhase("complete"), []);
 
-  const setPaused = useCallback((paused: boolean) => setPausedState(paused), []);
+  const setPaused = useCallback((paused: boolean) => setPhase(paused ? "paused" : "live"), []);
 
   const reportError = useCallback((message: string) => setError(message), []);
 
@@ -212,16 +216,14 @@ export const MatchProvider = ({
   const startMatch = useCallback(async (): Promise<void> => {
     if (!opponentId) return;
     setError(null);
-    setStarting(true);
+    setPhase("starting");
     setRevealed([]);
     setHomeScore(0);
     setAwayScore(0);
-    setIsComplete(false);
     setHomeSubs(NO_SUBS);
     setHomeOnPitchCount(11);
     setChunkInjuries([]);
     setCurrentMinute(0);
-    setPaused(false);
     cursorRef.current = 0;
     pendingRef.current = [];
     streamCompleteRef.current = false;
@@ -231,11 +233,11 @@ export const MatchProvider = ({
     );
     if (Result.isFailure(outcome)) {
       setError("Failed to start match");
-      setStarting(false);
+      setPhase("selecting-opponent");
       return;
     }
     setMatch(outcome.success);
-    setStarting(false);
+    setPhase("live");
   }, [saveId, opponentId]);
 
   // Arrive at an in-flight match, don't start one on mount (router note AC-16): when a session
@@ -247,7 +249,7 @@ export const MatchProvider = ({
       setRevealed(resumed.revealed);
       setHomeScore(resumed.homeScore);
       setAwayScore(resumed.awayScore);
-      setIsComplete(resumed.isComplete);
+      setPhase(resumed.phase);
       setHomeSubs(resumed.homeSubs);
       setHomeOnPitchCount(resumed.homeOnPitchCount);
       setChunkInjuries(resumed.chunkInjuries);
@@ -284,7 +286,7 @@ export const MatchProvider = ({
       revealed,
       homeScore,
       awayScore,
-      isComplete,
+      phase,
       homeSubs,
       homeOnPitchCount,
       chunkInjuries,
@@ -297,7 +299,7 @@ export const MatchProvider = ({
     revealed,
     homeScore,
     awayScore,
-    isComplete,
+    phase,
     homeSubs,
     homeOnPitchCount,
     chunkInjuries,
@@ -306,15 +308,15 @@ export const MatchProvider = ({
 
   // A finished match is no longer "pending": forget the resume session.
   useEffect(() => {
-    if (isComplete) clearActiveMatch(saveId);
-  }, [isComplete, saveId]);
+    if (phase === "complete") clearActiveMatch(saveId);
+  }, [phase, saveId]);
 
   // Publish the live-match readout so the career chrome's temporal cluster shows the match (and
   // Continue is suspended) for the whole in-flight match, and returns to the season readout at
   // full time or on leaving the surface (match-day note AC-4). `clearScopeState` on unmount keeps
   // the key from leaking across route changes.
   useEffect(() => {
-    if (match === null || isComplete) {
+    if (match === null || phase === "complete") {
       clearScopeState("match");
       return;
     }
@@ -328,7 +330,7 @@ export const MatchProvider = ({
       },
     });
     return () => clearScopeState("match");
-  }, [match, isComplete, homeScore, awayScore, currentMinute, saveId]);
+  }, [match, phase, homeScore, awayScore, currentMinute, saveId]);
 
   // Register the Match Day screen's operation handlers (start + reset) so buttons and the key
   // map dispatch the same registered Actions (ADR-0012).
@@ -349,16 +351,14 @@ export const MatchProvider = ({
       opponentId,
       match,
       error,
-      starting,
+      phase,
       revealed,
       homeScore,
       awayScore,
-      isComplete,
       homeSubs,
       homeOnPitchCount,
       chunkInjuries,
       currentMinute,
-      paused: pausedState,
       hydrated,
     },
     actions: {

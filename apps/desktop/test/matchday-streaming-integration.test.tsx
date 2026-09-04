@@ -76,7 +76,7 @@ const session = (overrides: Record<string, unknown> = {}) => ({
   revealed: [],
   homeScore: 0,
   awayScore: 0,
-  isComplete: false,
+  phase: "live" as const,
   homeSubs: noSubs(),
   awaySubs: noSubs(),
   homeOnPitchCount: 11,
@@ -97,7 +97,7 @@ const Probe = () => {
   const { state } = useMatchContext();
   return (
     <output data-testid="probe">
-      {state.revealed.length}|{state.isComplete ? "complete" : "live"}|{state.paused ? "paused" : "running"}|{state.homeScore}-{state.awayScore}
+      {state.revealed.length}|{state.phase === "complete" ? "complete" : "live"}|{state.phase === "paused" ? "paused" : "running"}|{state.homeScore}-{state.awayScore}
     </output>
   );
 };
