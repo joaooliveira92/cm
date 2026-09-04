@@ -33,6 +33,10 @@ export interface WideEvent {
   readonly outcome: "success" | "error";
   readonly duration_ms: number;
   readonly errorTag: string | null;
+  /** A human-readable extract of the failure, when one exists — e.g. the SQLite
+   *  message behind a `SqlError` — so a handler failure is diagnosable from the
+   *  log instead of collapsing to an opaque "unexpected response" at the edge. */
+  readonly errorMessage: string | null;
 }
 
 const errorTagOf = (value: unknown): string | null => {
@@ -41,9 +45,36 @@ const errorTagOf = (value: unknown): string | null => {
   return typeof candidate === "string" ? candidate : null;
 };
 
-const errorTagOfExit = <A, E>(exit: Exit.Exit<A, E>): string | null => {
+/**
+ * Picks the most specific human-readable message from a thrown failure. SQL
+ * errors nest the meaningful text (`SqlError` -> `reason` -> `cause` -> `errstr`,
+ * or `operation`) under a generic top-level `message`, so this digs down rather
+ * than returning "Failed to execute statement" for every one.
+ */
+const errorMessageOf = (value: unknown): string | null => {
+  const dig = (v: unknown, depth: number): string | null => {
+    if (v === null || typeof v !== "object" || depth > 6) return null;
+    const c = v as { message?: unknown; reason?: unknown; cause?: unknown; errstr?: unknown; operation?: unknown };
+    if (typeof c.errstr === "string" && c.errstr.length > 0) return c.errstr;
+    if (c.reason !== undefined) {
+      const nested = dig(c.reason, depth + 1);
+      if (nested !== null) return nested;
+    }
+    if (c.cause !== undefined) {
+      const nested = dig(c.cause, depth + 1);
+      if (nested !== null) return nested;
+    }
+    if (typeof c.operation === "string" && c.operation.length > 0) return c.operation;
+    if (typeof c.message === "string" && c.message.length > 0) return c.message;
+    return null;
+  };
+  return dig(value, 0);
+};
+
+const errorTagOfExit = <A, E>(exit: Exit.Exit<A, E>): { readonly tag: string | null; readonly message: string | null } => {
   const failure = Exit.findErrorOption(exit);
-  return Option.isSome(failure) ? errorTagOf(failure.value) : null;
+  if (Option.isNone(failure)) return { tag: null, message: null };
+  return { tag: errorTagOf(failure.value), message: errorMessageOf(failure.value) };
 };
 
 const wideEvent = (
@@ -51,14 +82,15 @@ const wideEvent = (
   meta: { readonly method: string; readonly saveId: string | null },
   outcome: "success" | "error",
   durationMs: number,
-  errorTag: string | null,
+  error: { readonly tag: string | null; readonly message: string | null },
 ): WideEvent => ({
   request_id: requestId,
   method: meta.method,
   saveId: meta.saveId,
   outcome,
   duration_ms: durationMs,
-  errorTag,
+  errorTag: error.tag,
+  errorMessage: outcome === "error" ? error.message : null,
 });
 
 /**
@@ -79,7 +111,7 @@ export const withWideEvent = <A, E, R>(
       Effect.onExit((exit) => {
         const durationMs = Math.max(0, Date.now() - start);
         return Exit.isSuccess(exit)
-          ? Effect.logInfo(wideEvent(requestId, meta, "success", durationMs, null))
+          ? Effect.logInfo(wideEvent(requestId, meta, "success", durationMs, { tag: null, message: null }))
           : Effect.logError(
               wideEvent(requestId, meta, "error", durationMs, errorTagOfExit(exit)),
             );

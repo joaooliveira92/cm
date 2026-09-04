@@ -39,6 +39,7 @@ describe("main-process RPC wide events", () => {
     expect(event.request_id).toBeTruthy();
     expect(event.saveId).toBeNull();
     expect(event.errorTag).toBeNull();
+    expect(event.errorMessage).toBeNull();
     expect(event.duration_ms).toBeGreaterThanOrEqual(0);
   });
 
@@ -65,5 +66,31 @@ describe("main-process RPC wide events", () => {
     expect(events[0]!.method).toBe("fakeMethod");
     expect(events[0]!.outcome).toBe("error");
     expect(events[0]!.errorTag).toBe("SomeError");
+    expect(events[0]!.errorMessage).toBe("boom");
+  });
+
+  it("logs the specific SQLite message behind a raw SqlError so a commit failure is diagnosable", async () => {
+    class SqlError {
+      readonly _tag = "SqlError";
+      readonly reason: unknown;
+      constructor(reason: unknown) {
+        this.reason = reason;
+      }
+    }
+    const sqlError = new SqlError({
+      _tag: "ConstraintError",
+      message: "Failed to execute statement",
+      cause: { code: "ERR_SQLITE_ERROR", errstr: "UNIQUE constraint failed: manager_profile.id" },
+    });
+    const failing = withWideEvent(Effect.fail(sqlError), {
+      method: "commitCareer",
+      saveId: null,
+    });
+    const events: Array<WideEvent> = [];
+    await Effect.runPromise(Effect.provide(Effect.result(failing), captureLayer(events)));
+    expect(events[0]!.outcome).toBe("error");
+    expect(events[0]!.errorTag).toBe("SqlError");
+    // The dig prefers the specific SQLite `errstr` over the generic wrapper message.
+    expect(events[0]!.errorMessage).toBe("UNIQUE constraint failed: manager_profile.id");
   });
 });
