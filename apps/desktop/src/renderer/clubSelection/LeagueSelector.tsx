@@ -1,3 +1,11 @@
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select.js";
+
 export interface LeagueSelectorProps {
   /** The pack-resolved name of the League this save generated, from `ClubSelectionView`. */
   readonly leagueName: string;
@@ -27,16 +35,18 @@ export const LeagueSelector = ({ leagueName }: LeagueSelectorProps) => (
     >
       League
     </label>
-    <select
-      id="club-selection-league"
-      disabled
-      aria-describedby="club-selection-league-hint"
-      value={leagueName}
-      onChange={() => {}}
-      className="rounded-control border border-border-subtle bg-surface-raised px-2 py-1 text-sm text-text-primary disabled:cursor-not-allowed disabled:opacity-70"
-    >
-      <option value={leagueName}>{leagueName}</option>
-    </select>
+    <Select disabled value={leagueName}>
+      <SelectTrigger
+        id="club-selection-league"
+        aria-describedby="club-selection-league-hint"
+        className="rounded-control border border-border-subtle bg-surface-raised px-2 py-1 text-sm text-text-primary disabled:cursor-not-allowed disabled:opacity-70"
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={leagueName}>{leagueName}</SelectItem>
+      </SelectContent>
+    </Select>
     <p id="club-selection-league-hint" className="text-xs text-text-muted">
       A career is generated in one League, so there is nothing to switch between yet.
     </p>

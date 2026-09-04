@@ -3,6 +3,13 @@ import { PlayerId, Tactic, type SaveId, type TacticSlot } from "@cm-clone/contra
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
 import { Button } from "./components/ui/button.js";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./components/ui/select.js";
+import {
   Table,
   TableBody,
   TableCell,
@@ -225,26 +232,38 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   <TableCell className="pr-4">{slot.position}</TableCell>
                   <TableCell className="pr-4">{slot.role}</TableCell>
                   <TableCell className="pr-4">
-                    <select
-                      data-action-id="assign-slot-player"
-                      className={SELECT_CLASS}
+                    <Select
                       value={slot.playerId}
-                      onChange={(event) =>
-                        void dispatchAction("assign-slot-player", {
-                          index,
-                          playerId: PlayerId.make(event.target.value),
-                        })
-                      }
+                      onValueChange={(value) => {
+                        if (value !== null) {
+                          void dispatchAction("assign-slot-player", {
+                            index,
+                            playerId: PlayerId.make(value),
+                          });
+                        }
+                      }}
                     >
-                      <option value="">Unassigned</option>
-                      {view.squad
-                        .filter((candidate) => !taken.has(candidate.id) || candidate.id === slot.playerId)
-                        .map((candidate) => (
-                          <option key={candidate.id} value={candidate.id}>
-                            {candidate.firstName} {candidate.lastName}
-                          </option>
-                        ))}
-                    </select>
+                      <SelectTrigger
+                        data-action-id="assign-slot-player"
+                        aria-label={`Slot ${index + 1} player`}
+                        className={SELECT_CLASS}
+                      >
+                        <SelectValue placeholder="Unassigned" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Unassigned</SelectItem>
+                        {view.squad
+                          .filter(
+                            (candidate) =>
+                              !taken.has(candidate.id) || candidate.id === slot.playerId,
+                          )
+                          .map((candidate) => (
+                            <SelectItem key={candidate.id} value={candidate.id}>
+                              {candidate.firstName} {candidate.lastName}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell className="pr-4 font-semibold tabular-nums">
                     {player
@@ -272,5 +291,5 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   );
 };
 
-/** Native `<select>` paint. See the note in `table/TablePanel.tsx`. */
+/** The slot-player picker's trigger paint. See the note in `table/TablePanel.tsx`. */
 const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;
