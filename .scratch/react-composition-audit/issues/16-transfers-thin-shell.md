@@ -1,7 +1,7 @@
 # 16 — Thin the TransfersScreen shell to pure composition
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
 **What to build:** `TransfersScreen` becomes a thin, state-free shell. Mounting the provider, it composes the screen from the extracted leaves in their screen order — title and budget/status header, the two hand-rendered bid tables, the Free Agents and Market tables, the bid composer, and the counter-offer modal — plus the two guard views (blocking load failure with retry, and the initial loading state).
 
@@ -13,6 +13,6 @@ Ashley the acceptance target: this ticket's only job is that the shell shrinks a
 
 **Status:** ready-for-agent
 
-- [ ] `TransfersScreen` is a thin composition (target: well under ~100 lines of body, dominated by provider mount + ordered leaf composition + the two guard views), with no useState/useEffect/refs/RPC/mutation/command of its own.
-- [ ] The screen renders identically to before the whole change set: budget header, status/refresh lines, incoming/outgoing bid tables, Free Agents and Market tables with all their interactions, the contextual Actions region, keep/discard dialog, and counter-offer modal.
-- [ ] `pnpm check:all` passes.
+- [x] `TransfersScreen` is a thin composition (target: well under ~100 lines of body, dominated by provider mount + ordered leaf composition + the two guard views), with no useState/useEffect/refs/RPC/mutation/command of its own.
+- [x] The screen renders identically to before the whole change set: budget header, status/refresh lines, incoming/outgoing bid tables, Free Agents and Market tables with all their interactions, the contextual Actions region, keep/discard dialog, and counter-offer modal.
+- [x] `pnpm check:all` passes.

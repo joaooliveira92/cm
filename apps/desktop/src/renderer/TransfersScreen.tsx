@@ -1,10 +1,8 @@
 /**
- * Transfers screen (ticket 19, Stage 5 — level-3 grid). Market and Free Agents
- * adopt TanStack tables with row-roving, sortable headers, visible + palette
- * filtering, and identity-based focus restoration; bid entry lives in a single
- * contextual Actions region behind the dirty-draft lifecycle (no silent
- * discard); the incoming/outgoing bid tables stay hand-rendered; the native
- * `prompt()` counter-offer path is replaced by an inline modal (ticket 04).
+ * Transfers screen — thin composition shell. Mounts the provider and composes
+ * guard views, header, and all table/bid leaves via useTransfers(). All state,
+ * refs, and wiring live in the provider (tickets 12–13) and leaf components
+ * (tickets 14–15).
  */
 import type { SaveId } from "@cm-clone/contracts";
 import { dispatchAction } from "./actions/dispatch.js";
