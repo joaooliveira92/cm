@@ -1,7 +1,7 @@
 # 12 — Extract TransfersScreen orchestration into a useTransfersScreen hook
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
 **What to build:** The transfers screen stops doing all of its own wiring inside the component body and instead delegates every non-rendering concern to a single `useTransfersScreen(saveId)` hook that returns one plain state object. The caller (initially `TransfersScreen`) simply renders that state.
 
@@ -15,10 +15,10 @@ The critical non-negotiable: the refs (the live-view ref, the draft ref, the sel
 
 **Status:** ready-for-agent
 
-- [ ] The screen's non-JSX state and wiring all resolve through a single `useTransfersScreen(saveId)` hook call in the component body.
-- [ ] Every ref today read inside the action-handler registration still exists in the hook with identical read/write order, so the once-per-save handlers see current state (verify the bid/respond/focus-bid/palette action paths actually round-trip).
-- [ ] The bid-draft, keep/discard, counter-offer, selection, availability/visibility, and both focus-restoration behaviours are unchanged.
-- [ ] `pnpm check:all` passes.
+- [x] The screen's non-JSX state and wiring all resolve through a single `useTransfersScreen(saveId)` hook call in the component body.
+- [x] Every ref today read inside the action-handler registration still exists in the hook with identical read/write order, so the once-per-save handlers see current state (verify the bid/respond/focus-bid/palette action paths actually round-trip).
+- [x] The bid-draft, keep/discard, counter-offer, selection, availability/visibility, and both focus-restoration behaviours are unchanged.
+- [x] `pnpm check:all` passes.
 
 ## Comments
 
