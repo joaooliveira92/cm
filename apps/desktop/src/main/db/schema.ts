@@ -17,11 +17,14 @@ import { check, index, integer, primaryKey, sqliteTable, text } from "drizzle-or
  *
  * ## Indexes
  *
- * The save carries **exactly two**, both measured against the scale probe rather than assumed:
- * `players(club_id)` and `fixtures(competition_id, season_number, played)`. Every other table is
- * unindexed, and each one says below why — a later reader should find a decision, not a gap. An
- * index is not free: it is written on every insert, and world generation writes hundreds of
- * thousands of rows.
+ * The save carries **exactly three**, every one measured against the scale probe rather than
+ * assumed: `players(club_id)`, `fixtures(competition_id, season_number, played)`, and
+ * `player_transfers(player_id, transferred_on)`. Every other table is unindexed, and each one says
+ * below why — a later reader should find a decision, not a gap. An index is not free: it is written
+ * on every insert, and world generation writes hundreds of thousands of rows.
+ *
+ * The third was added by open question 22 rather than by whoever happened to be writing the
+ * migration, which is what the index-count test exists to force.
  *
  * The probe measured a third, on `contracts(player_id)`. It does not ship: that column is already
  * the table's primary key, so SQLite's automatic index serves the same lookups and a second index
@@ -596,9 +599,27 @@ export const tacticSlots = sqliteTable(
   ],
 );
 
-/** Generic append-only event log (ADR-0007 domain-bounded streams: `stream_type` e.g.
- * "match"/"season", `stream_id` the Fixture/save id) — Deciders append here and read models are
- * projected from it.
+/**
+ * The append-only event log — and the rule that decides what reaches it.
+ *
+ * **An event is appended only where it is the sole record of a fact.** Everything a table already
+ * holds authoritatively is read from that table instead, which is what makes this log grow with the
+ * player's own career rather than with the size of the world. Two measured costs went with the rule:
+ * ~204 MB per season of development payloads across every club, and a ~1.2 MB single row on every
+ * Continue that restated every fixture it had just resolved.
+ *
+ * One deliberate exception: scouting progress restates a table, kept as the recovery path for a
+ * missed or double-fired accrual hook. It costs about forty rows a season, because scouts exist only
+ * for the club the human manages.
+ *
+ * `stream_id` is text and carries **no foreign key**, because the stream type decides what it
+ * points at: a "match" stream's id is the fixture's own integer id rendered as text, a "season"
+ * stream's is the save's id, and a "club" stream's is a club id. One column cannot reference three
+ * tables, and inventing a nullable column per referent would be worse than the constraint is worth.
+ *
+ * `game_date` is the in-world date the event happened on; `created_at` is the wall clock and orders
+ * rows within a date. A career reads as a chronology because of the former — the latter says only
+ * when the save file was written.
  *
  * No index: the three-column primary key already serves both access paths the code has.
  */
@@ -610,6 +631,9 @@ export const events = sqliteTable(
     seq: integer("seq").notNull(),
     tag: text("tag").notNull(),
     payload: text("payload").notNull(),
+    /** ISO `YYYY-MM-DD`, the save's own date when this was appended. Nullable only for events
+     *  appended before a calendar exists — career creation writes before season 1 opens. */
+    gameDate: text("game_date"),
     createdAt: text("created_at")
       .notNull()
       .default(sql`(datetime('now'))`),
@@ -1032,5 +1056,55 @@ export const scoutingProgress = sqliteTable(
   (table) => [
     primaryKey({ columns: [table.clubId, table.playerId] }),
     check("scouting_progress_range", sql`progress BETWEEN 0 AND 100`),
+  ],
+);
+
+/**
+ * Every completed transfer, world-wide and permanent.
+ *
+ * Authoritative rather than projected: a player's career history — which clubs, and when — is one
+ * query over this table ordered by date, with no fold over the log and no career-history table to
+ * keep in step. That is why transfers between two clubs the player never sees are recorded too. A
+ * freshly generated world has none of these rows; the table fills only as football is played.
+ *
+ * **The key is a surrogate, and that was a decision** (open question 22). No subset of the named
+ * columns is unique by construction: a player may join the same club twice, in two seasons or twice
+ * within one. Adding the date narrows it without closing it, and adding the destination narrows it
+ * again without closing it either — each leaves a sentence about the domain holding the key up, and
+ * when such a sentence turns out to be wrong the failure is a silently dropped row in a permanent
+ * historical record.
+ *
+ * A measured `WITHOUT ROWID` composite was 38 MB smaller and marginally faster across twenty seasons
+ * of rows, and was passed over for exactly that reason. See the probe's `RESULTS.md`.
+ *
+ * This is the one table in the schema with unbounded growth: ~32,000 rows a season, ~640,000 and
+ * ~124 MB after twenty. That is what makes the index below mandatory rather than a nicety — the
+ * unindexed career read scans the whole table and sorts into a temp B-tree, at 26.8 ms and rising
+ * every season.
+ */
+export const playerTransfers = sqliteTable(
+  "player_transfers",
+  {
+    id: integer("id").primaryKey(),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id),
+    /** NULL for a free agent signing: there was no club to leave. */
+    fromClubId: text("from_club_id").references(() => clubs.id),
+    toClubId: text("to_club_id")
+      .notNull()
+      .references(() => clubs.id),
+    /** ISO `YYYY-MM-DD`, the in-world date — never the wall clock. */
+    transferredOn: text("transferred_on").notNull(),
+    fee: integer("fee").notNull(),
+  },
+  (table) => [
+    /**
+     * The save's third index, and the only one that is not a performance nicety. See the table's
+     * own comment: without it the career-history read is a full scan plus a sort, over the one
+     * table that never stops growing.
+     */
+    index("player_transfers_player_date_idx").on(table.playerId, table.transferredOn),
+    check("player_transfers_fee", sql`fee >= 0`),
   ],
 );

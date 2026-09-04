@@ -94,6 +94,14 @@ const developClubPlayers = (clubId: ClubId, seasonNumber: number) =>
       ]);
     }
 
+    // Only the human's own squad's development is recorded. Writing this for every club cost a
+    // measured ~204 MB per season of payloads describing players nobody will ever look at, and the
+    // `players` rows are already authoritative for what those attributes became — so for every other
+    // club the event was a restatement, which is exactly what the log no longer holds.
+    const clubRows = yield* sql<{ isUserClub: number }>`
+      SELECT is_user_club as "isUserClub" FROM clubs WHERE id = ${clubId}`;
+    if (clubRows[0]?.isUserClub !== 1) return;
+
     const seq = yield* nextStreamSeq(CLUB_STREAM, clubId);
     yield* appendStreamEvents(CLUB_STREAM, clubId, seq, [
       {

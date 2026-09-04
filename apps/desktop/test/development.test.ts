@@ -127,7 +127,9 @@ it.effect("advancing to SeasonConcluded develops every user-club player determin
       );
     }
 
-    // One PlayerDeveloped event per club (20), on the Club streams.
+    // One PlayerDeveloped event, on the human club's stream and no other. Every club's players
+    // still develop — `players` is authoritative for what their attributes became — but recording
+    // that for clubs nobody manages cost a measured ~204 MB of payloads per season (ticket 17).
     const clubCount = yield* withSave(
       save.id,
       Effect.gen(function* () {
@@ -136,7 +138,7 @@ it.effect("advancing to SeasonConcluded develops every user-club player determin
         return rows[0]!.n;
       }),
     );
-    strictEqual(clubCount, 20, "exactly one PlayerDeveloped event per club (20 clubs)");
+    strictEqual(clubCount, 1, "PlayerDeveloped is recorded for the human's club alone");
   }),
   20000);
 

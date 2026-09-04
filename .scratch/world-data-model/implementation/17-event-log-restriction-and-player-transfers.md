@@ -38,7 +38,7 @@ service to `R` and no failure to any caller.
 fixture id), 11 (a background fixture must already resolve without the engine), 22 (the transfer
 table's primary key is an open question this ticket may not answer by itself).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/schema.ts` and the regenerated DDL,
 `apps/desktop/src/main/decider.ts`, `apps/desktop/src/main/match.ts`,
@@ -47,22 +47,28 @@ table's primary key is an open question this ticket may not answer by itself).
 `apps/desktop/test/decider.test.ts`, `apps/desktop/test/match.test.ts`,
 `apps/desktop/test/matchday-streaming.test.ts`, `apps/desktop/test/transfers.test.ts`.
 
-- [ ] `events` gains an in-world date column alongside its existing created-at column, keyed
+- [x] `events` gains an in-world date column alongside its existing created-at column, keyed
       unchanged on stream type, stream id, and sequence.
-- [ ] A club stream exists only for the human's club, and a test asserts no row carries a club stream
+- [x] A club stream exists only for the human's club, and a test asserts no row carries a club stream
       type for any other club.
-- [ ] A background fixture resolves with zero rows written to the log, and a test asserts it.
-- [ ] The per-advance resolution event carries the date and a resolved-fixture count; a test asserts
+- [x] A background fixture resolves with zero rows written to the log, and a test asserts it.
+- [x] The per-advance resolution event carries the date and a resolved-fixture count; a test asserts
       its payload size is independent of how many fixtures resolved, and that no payload anywhere
       carries a field named `matchday`.
-- [ ] A match stream's stream id is the fixture's id; the column stays text and carries no foreign
-      key, with a comment recording that the stream type varies.
-- [ ] `player_transfers` exists carrying the player, a nullable from-club, a to-club, the in-world
+- [x] A match stream's stream id is the fixture's id; the column stays text and carries no foreign
+      key, with a comment recording that the stream type varies. Two consequences had to be handled:
+      restarting a fixture now *replaces* its stream rather than appending a second kickoff to it,
+      and the match seed's per-call entropy moved to a uuid that no longer names anything — the seed
+      stays clock-derived, which is a separate determinism question this ticket does not open.
+- [x] `player_transfers` exists carrying the player, a nullable from-club, a to-club, the in-world
       date, and the fee. A freshly generated world has zero rows; every completed transfer
       world-wide writes exactly one.
-- [ ] A player's career history is answerable by one query over the player row and these rows
+- [x] A player's career history is answerable by one query over the player row and these rows
       ordered by date, without reading the log, and a test asserts it. No career-history table
       exists.
-- [ ] Deleting a player deletes their transfer rows.
-- [ ] None of the five named read models becomes a table; a test asserts no such table exists.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] Deleting a player deletes their transfer rows.
+- [x] None of the five named read models becomes a table; a test asserts no such table exists.
+- [ ] `pnpm check:all` is green at this commit. **Not met, and not by this ticket's doing** — see
+      ticket 11's note. HEAD is red from the Base UI Select migration and a second session's
+      in-flight squad and transfers refactors. Typecheck, lint, effect-lint, verify-md-links and
+      verify-db-schema are green for every file this ticket touches, as is every suite it touches.

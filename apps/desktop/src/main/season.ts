@@ -676,6 +676,9 @@ export const discardSquadsForClubs = (clubIds: ReadonlyArray<string>) =>
     // The scouting of a player who is about to stop existing goes with them: retaining it would
     // attach progress to someone the world will no longer contain.
     yield* discardScoutingForPlayers(playerIds);
+    // So does their transfer history. The rows are a permanent record of a person, and a person the
+    // world no longer contains has no history to keep — the foreign key would refuse it anyway.
+    yield* sql`DELETE FROM player_transfers WHERE ${doomed}`;
 
     yield* sql`DELETE FROM bids WHERE ${doomed}`;
     yield* sql`DELETE FROM training_focus WHERE ${doomed}`;
@@ -1444,7 +1447,10 @@ export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
         // strand a fixture the calendar has already gone by.
         const overdue = yield* resolveDueFixtures(boundary.date);
         if (overdue.length > 0) {
-          streamEvents.push({ tag: "MatchdayResolved", payload: { date: boundary.date, results: overdue } });
+          streamEvents.push({
+            tag: "MatchdayResolved",
+            payload: { date: boundary.date, resolved: overdue.length },
+          });
           resolvedDate = boundary.date;
         }
         yield* sql`UPDATE season SET game_date = ${boundary.date}, phase = 'mid_window_open' WHERE season_number = ${row.seasonNumber}`;
@@ -1483,7 +1489,14 @@ export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
         }
 
         const results = yield* resolveDueFixtures(boundary.date);
-        streamEvents.push({ tag: "MatchdayResolved", payload: { date: boundary.date, results } });
+        // The date and a count, never the results themselves. `fixtures` is authoritative for
+        // every scoreline, so restating them here made one row on every Continue whose size grew
+        // with the world — a measured ~1.2 MB at pyramid scale. This payload is the same size
+        // whether one fixture resolved or four thousand did.
+        streamEvents.push({
+          tag: "MatchdayResolved",
+          payload: { date: boundary.date, resolved: results.length },
+        });
         resolvedDate = boundary.date;
 
         // Scouts watch while the calendar moves. Accrual is per advance rather than per fixture:

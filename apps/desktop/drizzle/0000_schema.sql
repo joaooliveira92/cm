@@ -121,6 +121,7 @@ CREATE TABLE `events` (
 	`seq` integer NOT NULL,
 	`tag` text NOT NULL,
 	`payload` text NOT NULL,
+	`game_date` text,
 	`created_at` text DEFAULT (datetime('now')) NOT NULL,
 	PRIMARY KEY(`stream_type`, `stream_id`, `seq`)
 );
@@ -230,6 +231,20 @@ CREATE TABLE `player_positions` (
 	CONSTRAINT "player_positions_familiarity" CHECK(familiarity IN ('natural','competent','unfamiliar'))
 );
 --> statement-breakpoint
+CREATE TABLE `player_transfers` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`player_id` text NOT NULL,
+	`from_club_id` text,
+	`to_club_id` text NOT NULL,
+	`transferred_on` text NOT NULL,
+	`fee` integer NOT NULL,
+	FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`from_club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`to_club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "player_transfers_fee" CHECK(fee >= 0)
+);
+--> statement-breakpoint
+CREATE INDEX `player_transfers_player_date_idx` ON `player_transfers` (`player_id`,`transferred_on`);--> statement-breakpoint
 CREATE TABLE `players` (
 	`id` text PRIMARY KEY NOT NULL,
 	`club_id` text,

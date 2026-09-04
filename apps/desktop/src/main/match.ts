@@ -50,7 +50,14 @@ import { loadManagerProfile } from "./managerProfile.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
 
-/** The Match Decider's stream type (ADR-0007) — `streamId` is a fresh matchId per started match. */
+/**
+ * The Match Decider's stream type (ADR-0007).
+ *
+ * `streamId` is **the fixture's own id**, rendered as text. The `events.stream_id` column is text
+ * and carries no foreign key precisely because the stream type decides what it points at — a match
+ * stream's id is a fixture, a season stream's is the save, a club stream's is a club — and one
+ * column cannot reference three tables.
+ */
 const MATCH_STREAM_TYPE = "match";
 
 /** Chunk size cap for a single `ResumeSimulation` response when no boundary event is hit first
@@ -210,6 +217,7 @@ interface PersistedForcedOff {
 export const startMatch = (savesDir: string, saveId: SaveId, opponentClubId: ClubId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
+      const sql = yield* SqlClient;
       yield* assertSaveNotArchived(saveId);
       const userClub = yield* loadUserClub;
       const opponentClub = yield* loadClubSummary(opponentClubId);
@@ -224,10 +232,34 @@ export const startMatch = (savesDir: string, saveId: SaveId, opponentClubId: Clu
       const profile = yield* loadManagerProfile;
       const pillars = profile ? profile.pillars : { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 };
 
-      const matchId = MatchId.make(randomUUID());
-      // Deterministic per match (ADR-0002) — Date.now() picks a fresh seed per `StartMatch` call,
-      // matchId keeps every call's seed distinct even within the same millisecond.
-      const seed = (Date.now() ^ hashString(matchId)) >>> 0;
+      // The fixture this match plays out, which is what the stream is keyed on. Restores the
+      // keyspace the code drifted from while matches predated real fixtures: a match stream and the
+      // fixture it belongs to were two identities for one thing.
+      const fixtures = yield* sql<{ id: number }>`
+        SELECT f.id FROM fixtures f
+        WHERE f.played = 0 AND f.season_number = (SELECT MAX(season_number) FROM season)
+          AND ((f.home_club_id = ${userClub.id} AND f.away_club_id = ${opponentClubId})
+            OR (f.home_club_id = ${opponentClubId} AND f.away_club_id = ${userClub.id}))
+        ORDER BY f.scheduled_date ASC, f.id ASC LIMIT 1`;
+
+      // A match with no fixture behind it is not a state the game produces — every match the human
+      // plays is one the calendar scheduled. The fallback exists so a caller that reaches here
+      // without one gets a usable stream rather than a crash, and it is the only id in this
+      // codebase that is not derived from the world.
+      const matchId = MatchId.make(
+        fixtures[0] === undefined ? randomUUID() : String(fixtures[0].id),
+      );
+      // The seed's entropy is unchanged by this ticket, and deliberately so. It used to come from
+      // the clock plus the fresh uuid the stream was keyed on; the stream is keyed on the fixture
+      // now, so the uuid stays purely as the seed's distinguisher — two starts of the same fixture
+      // within one millisecond still play differently.
+      //
+      // That leaves the match seed clock-derived, which is the one seed in this codebase that is
+      // not a function of the world. Making it `deriveSeed(worldSeed, "match", fixtureId)` would
+      // make a watched match as reproducible as a background one already is, and is a change to
+      // ADR-0002's determinism story rather than to where a stream is keyed — so it is not made
+      // here.
+      const seed = (Date.now() ^ hashString(randomUUID())) >>> 0;
 
       const started: PersistedMatchStarted = {
         seed,

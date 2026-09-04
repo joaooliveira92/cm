@@ -1034,7 +1034,7 @@ it.effect("a league table reads one competition's fixtures, through the index", 
   60_000,
 );
 
-it.effect("carries exactly two indexes, so a third cannot appear without a decision", () =>
+it.effect("carries exactly three indexes, each one a recorded decision", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Indexes");
 
@@ -1052,9 +1052,15 @@ it.effect("carries exactly two indexes, so a third cannot appear without a decis
       Effect.scoped,
     );
 
+    // The third was added by open question 22 rather than by whoever happened to be writing the
+    // migration, which is exactly what this assertion exists to force.
     deepStrictEqual(
       indexes.map((row) => row.name),
-      ["fixtures_competition_season_played_idx", "players_club_id_idx"],
+      [
+        "fixtures_competition_season_played_idx",
+        "player_transfers_player_date_idx",
+        "players_club_id_idx",
+      ],
     );
   }),
   60_000,

@@ -339,6 +339,59 @@ const loadBidsForClub = (clubId: ClubId) =>
  * spend-down/no-replenishment rule; crediting the seller is this ticket's reasonable extension,
  * not dictated by the design ticket.
  */
+
+
+/**
+ * Appends to a club's stream, but only for the club the human manages.
+ *
+ * A club stream exists to give the manager a record of their own club's story — it feeds the news
+ * inbox. For every other club in the world the same events would be a restatement of
+ * `player_transfers` and `contracts`, which are authoritative, and there would be one stream per
+ * club in a sixteen-thousand-club world.
+ *
+ * Stated once here rather than at each of the six append sites, because a rule spelled out six times
+ * is one that gets forgotten at the seventh.
+ */
+const appendHumanClubEvents = (
+  clubId: ClubId,
+  events: ReadonlyArray<{ readonly tag: string; readonly payload: unknown }>,
+) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ isUserClub: number }>`
+      SELECT is_user_club as "isUserClub" FROM clubs WHERE id = ${clubId}`;
+    if (rows[0]?.isUserClub !== 1) return;
+
+    const seq = yield* nextStreamSeq("club", clubId);
+    yield* appendStreamEvents("club", clubId, seq, events);
+  });
+
+/**
+ * Records a completed transfer, world-wide and permanently.
+ *
+ * The one authoritative record of who moved where and when. A player's career history is a query
+ * over these rows rather than a fold over the log, which is why transfers between two clubs the
+ * human never sees are written too: a player they sign in five seasons' time has a history, and it
+ * has to have been recorded while nobody was watching.
+ *
+ * `fromClubId` is NULL for a free-agent signing — there was no club to leave.
+ */
+const recordTransfer = (params: {
+  readonly playerId: PlayerId;
+  readonly fromClubId: ClubId | null;
+  readonly toClubId: ClubId;
+  readonly fee: number;
+}) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const dates = yield* sql<{ gameDate: string }>`
+      SELECT game_date as "gameDate" FROM season ORDER BY season_number DESC LIMIT 1`;
+    const on = dates[0]?.gameDate;
+    if (on === undefined) return;
+    yield* sql`INSERT INTO player_transfers (player_id, from_club_id, to_club_id, transferred_on, fee)
+      VALUES (${params.playerId}, ${params.fromClubId}, ${params.toClubId}, ${on}, ${params.fee})`;
+  });
+
 const completeTransfer = (params: {
   readonly playerId: PlayerId;
   readonly sellingClubId: ClubId;
@@ -379,6 +432,12 @@ const completeTransfer = (params: {
         }
 
         yield* sql`UPDATE players SET club_id = ${params.biddingClubId} WHERE id = ${params.playerId}`;
+        yield* recordTransfer({
+          playerId: params.playerId,
+          fromClubId: params.sellingClubId,
+          toClubId: params.biddingClubId,
+          fee: params.amount,
+        });
         yield* sql`DELETE FROM contracts WHERE player_id = ${params.playerId}`;
         yield* sql`INSERT INTO contracts (player_id, wage, years_remaining, signed_season)
           VALUES (${params.playerId}, ${wage}, ${DEFAULT_CONTRACT_YEARS}, ${params.seasonNumber})`;
@@ -386,15 +445,13 @@ const completeTransfer = (params: {
         yield* sql`UPDATE club_budgets SET transfer_budget_remaining = transfer_budget_remaining - ${params.amount} WHERE club_id = ${params.biddingClubId}`;
         yield* sql`UPDATE club_budgets SET transfer_budget_remaining = transfer_budget_remaining + ${params.amount} WHERE club_id = ${params.sellingClubId}`;
 
-        const sellerSeq = yield* nextStreamSeq("club", params.sellingClubId);
-        yield* appendStreamEvents("club", params.sellingClubId, sellerSeq, [
+        yield* appendHumanClubEvents(params.sellingClubId, [
           {
             tag: "PlayerTransferredOut",
             payload: { playerId: params.playerId, toClubId: params.biddingClubId, amount: params.amount },
           },
         ]);
-        const buyerSeq = yield* nextStreamSeq("club", params.biddingClubId);
-        yield* appendStreamEvents("club", params.biddingClubId, buyerSeq, [
+        yield* appendHumanClubEvents(params.biddingClubId, [
           {
             tag: "PlayerTransferredIn",
             payload: {
@@ -500,8 +557,7 @@ export const aiPlaceBid = (buyingClubId: ClubId, playerId: PlayerId, amount: num
       yield* sql`INSERT INTO bids (id, player_id, selling_club_id, bidding_club_id, amount, counter_amount, status, season_number)
         VALUES (${id}, ${playerId}, ${player.clubId}, ${buyingClubId}, ${amount}, ${null}, 'pending', ${seasonNumber})`;
 
-      const seq = yield* nextStreamSeq("club", player.clubId);
-      yield* appendStreamEvents("club", player.clubId, seq, [
+      yield* appendHumanClubEvents(player.clubId, [
         {
           tag: "BidReceived",
           payload: {
@@ -556,11 +612,11 @@ export const aiSignFreeAgent = (clubId: ClubId, playerId: PlayerId, seasonNumber
 
     const wage = weeklyWage(player.overallRating, player.age, player.potentialAbility);
     yield* sql`UPDATE players SET club_id = ${clubId} WHERE id = ${playerId}`;
+    yield* recordTransfer({ playerId, fromClubId: null, toClubId: clubId, fee: 0 });
     yield* sql`INSERT INTO contracts (player_id, wage, years_remaining, signed_season)
       VALUES (${playerId}, ${wage}, ${DEFAULT_CONTRACT_YEARS}, ${seasonNumber})`;
 
-    const seq = yield* nextStreamSeq("club", clubId);
-    yield* appendStreamEvents("club", clubId, seq, [
+    yield* appendHumanClubEvents(clubId, [
       { tag: "PlayerSigned", payload: { playerId, wage, years: DEFAULT_CONTRACT_YEARS } },
     ]);
   });
@@ -862,11 +918,11 @@ export const signFreeAgent = (savesDir: string, saveId: SaveId, playerId: Player
 
       const contractYears = clampYears(years);
       yield* sql`UPDATE players SET club_id = ${club.id} WHERE id = ${playerId}`;
+      yield* recordTransfer({ playerId, fromClubId: null, toClubId: club.id, fee: 0 });
       yield* sql`INSERT INTO contracts (player_id, wage, years_remaining, signed_season)
         VALUES (${playerId}, ${wage}, ${contractYears}, ${seasonRow.seasonNumber})`;
 
-      const seq = yield* nextStreamSeq("club", club.id);
-      yield* appendStreamEvents("club", club.id, seq, [
+      yield* appendHumanClubEvents(club.id, [
         { tag: "PlayerSigned", payload: { playerId, wage, years: contractYears } },
       ]);
 
@@ -911,8 +967,7 @@ export const renewContract = (savesDir: string, saveId: SaveId, playerId: Player
       const contractYears = clampYears(years);
       yield* sql`UPDATE contracts SET wage = ${wage}, years_remaining = ${contractYears}, signed_season = ${seasonRow.seasonNumber} WHERE player_id = ${playerId}`;
 
-      const seq = yield* nextStreamSeq("club", club.id);
-      yield* appendStreamEvents("club", club.id, seq, [
+      yield* appendHumanClubEvents(club.id, [
         { tag: "ContractRenewed", payload: { playerId, wage, years: contractYears } },
       ]);
 

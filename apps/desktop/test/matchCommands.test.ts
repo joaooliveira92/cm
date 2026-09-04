@@ -59,10 +59,13 @@ const drain = (savesDir: string, saveId: string, matchId: string) =>
  * directly: it drains a full no-op simulation of each candidate match first (cheap — `simulateMatch`
  * is pure and sub-millisecond, ADR-0007) and retries with a fresh seed if any Injury fired.
  */
-const startMatchWithNoInjuries = (savesDir: string, saveId: string, opponentClubId: string) =>
+const startMatchWithNoInjuries = (savesDir: string, saveId: string, opponentClubId: string, alternatives: ReadonlyArray<string> = []) =>
   Effect.gen(function* () {
+    const candidates = [opponentClubId, ...alternatives];
     for (let attempt = 0; attempt < 25; attempt++) {
-      const summary = yield* startMatch(savesDir, saveId, opponentClubId);
+      // A match stream is keyed on its fixture (ticket 17), so retrying the same opponent retries
+      // one fixture. Cycling opponents is what makes these attempts independent draws.
+      const summary = yield* startMatch(savesDir, saveId, candidates[attempt % candidates.length]!);
       const chunks = yield* drain(savesDir, saveId, summary.matchId);
       const hadInjury = chunks.some((chunk) => chunk.lines.some((line) => line.tag === "Injury"));
       if (!hadInjury) return summary;
@@ -72,10 +75,11 @@ const startMatchWithNoInjuries = (savesDir: string, saveId: string, opponentClub
 
 /** Twin of `startMatchWithNoInjuries` that also excludes red cards, so a deterministic 11-on-11
  * on-pitch count holds — what ticket 11's no-subs tests need to assert a clean ForceOff to 10. */
-const startMatchWithCleanLineup = (savesDir: string, saveId: string, opponentClubId: string) =>
+const startMatchWithCleanLineup = (savesDir: string, saveId: string, opponentClubId: string, alternatives: ReadonlyArray<string> = []) =>
   Effect.gen(function* () {
+    const candidates = [opponentClubId, ...alternatives];
     for (let attempt = 0; attempt < 25; attempt++) {
-      const summary = yield* startMatch(savesDir, saveId, opponentClubId);
+      const summary = yield* startMatch(savesDir, saveId, candidates[attempt % candidates.length]!);
       const chunks = yield* drain(savesDir, saveId, summary.matchId);
       const disruptive = chunks.some((chunk) =>
         chunk.lines.some((line) => line.tag === "Injury" || line.tag === "RedCard"),
@@ -89,7 +93,7 @@ it.effect("submitMatchCommand applies a mid-match substitution and reflects it i
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatchWithNoInjuries(savesDir, save.id, opponents[0]!.id);
+    const summary = yield* startMatchWithNoInjuries(savesDir, save.id, opponents[0]!.id, opponents.slice(1).map((club) => club.id));
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
@@ -131,7 +135,7 @@ it.effect("substitutions are capped at 5 per team across 3 windows, enforced sil
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatchWithNoInjuries(savesDir, save.id, opponents[0]!.id);
+    const summary = yield* startMatchWithNoInjuries(savesDir, save.id, opponents[0]!.id, opponents.slice(1).map((club) => club.id));
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
@@ -243,7 +247,7 @@ it.effect("ForceOff brings a player off to 10 men without consuming a substituti
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatchWithCleanLineup(savesDir, save.id, opponents[0]!.id);
+    const summary = yield* startMatchWithCleanLineup(savesDir, save.id, opponents[0]!.id, opponents.slice(1).map((club) => club.id));
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
@@ -275,7 +279,7 @@ it.effect("a ForceOff for a player not on the pitch is a silent no-op (count unc
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatchWithCleanLineup(savesDir, save.id, opponents[0]!.id);
+    const summary = yield* startMatchWithCleanLineup(savesDir, save.id, opponents[0]!.id, opponents.slice(1).map((club) => club.id));
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
@@ -308,9 +312,10 @@ it.effect("an Injury event's chunk lists the injured club in injuredClubIds", ()
     const opponents = yield* listOpponentClubs(savesDir, save.id);
 
     for (let attempt = 0; attempt < MAX_ATTEMPTS && !found; attempt++) {
-      // Each `startMatch` call mints a fresh matchId (and thus a fresh seed, ADR-0002), so reusing
-      // the same save/opponent across attempts still exercises independent random draws.
-      const summary = yield* startMatch(savesDir, save.id, opponents[0]!.id);
+      // A match stream is keyed on its fixture now (ticket 17), so "a fresh match" means a fresh
+      // fixture rather than a fresh id for the same one — cycling opponents is what makes these
+      // attempts the independent draws this retry loop assumes.
+      const summary = yield* startMatch(savesDir, save.id, opponents[attempt % opponents.length]!.id);
       const chunks = yield* drain(savesDir, save.id, summary.matchId);
 
       for (const chunk of chunks) {

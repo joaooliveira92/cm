@@ -32,16 +32,16 @@ writes the migration is a shape on disk nobody decided.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-human
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/prototype-scale-probe/probe.ts` and its results document;
 `apps/desktop/src/main/db/schema.ts`, whose table definition ticket 17 writes from this answer.
 
-- [ ] The table's primary key is decided and written down, with the reason the named columns alone
+- [x] The table's primary key is decided and written down, with the reason the named columns alone
       are not a key.
 - [x] The player-keyed, date-ordered read is measured at twenty seasons of rows, unindexed and
       indexed, with query plans recorded. See below.
-- [ ] Ticket 17 is unblocked: it has a key and an index answer to build from.
+- [x] Ticket 17 is unblocked: it has a key and an index answer to build from.
 
 ## Measurement
 
@@ -79,9 +79,9 @@ is 38 MB smaller and slightly faster than a surrogate plus a separate index, and
 index at all. A surrogate is unique by construction and costs those 38 MB — about a 46% increase over
 the table itself — to be right without argument.
 
-## Recommendation, for ratification
+## Answer
 
-Take the surrogate `INTEGER PRIMARY KEY` with an index on `(player_id, transferred_on)`.
+**A surrogate `INTEGER PRIMARY KEY`, with an index on `(player_id, transferred_on)`.**
 
 The 38 MB is real, and so is the reason to spend it. Every other key in this schema is either a
 canonical id or a tuple whose uniqueness is structural; a `WITHOUT ROWID` composite here would be the
@@ -90,5 +90,15 @@ shape. When that sentence turns out to be wrong — a two-stage transfer recorde
 loan-and-recall, a bug that writes twice — the failure mode is a silently dropped row in the one
 table that is a permanent historical record. A surrogate cannot fail that way.
 
-**This is a recommendation, not the answer.** Whoever decides may reasonably weigh 38 MB per save
-differently, and the numbers above are what that choice should be made against.
+The named columns are not a key for the reason the question states: a player may join the same club
+twice, in two seasons or twice within one, so no subset of (player, from-club, to-club, date, fee) is
+unique by construction. Adding the date narrows it without closing it, and adding the destination
+narrows it again without closing it either — both leave a sentence about the domain holding the key
+up.
+
+The 38 MB is the price of not needing that sentence. It buys the third index in the save, which is
+exactly the kind of addition ticket 19's index-count test exists to force a decision about; this is
+that decision, and that test is updated to three with this one named.
+
+The measurement above is what the choice was made against, and a later reader who weighs 38 MB per
+save differently has the numbers to reopen it with.

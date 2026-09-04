@@ -120,7 +120,7 @@ it.effect("signFreeAgent and renewContract are rejected outside an open window",
 // Bid flow: single counter-offer round
 // ---------------------------------------------------------------------------
 
-it.effect("placeBid at/above Transfer Value completes the transfer immediately (CompleteTransfer, both club streams)", () =>
+it.effect("placeBid at/above Transfer Value completes the transfer immediately, recorded once", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const before = yield* getTransfersScreen(savesDir, save.id);
@@ -139,10 +139,27 @@ it.effect("placeBid at/above Transfer Value completes the transfer immediately (
     ok(squadAfter.players.some((player) => player.id === target.id), "bought player should now be in the squad");
 
     // CompleteTransfer wrote to both clubs' "club" streams atomically (ADR-0007/ticket 16).
+    // The buyer is the human's club, so its own stream still carries the moment — that stream is
+    // what the news inbox reads.
     const buyerEvents = yield* withSave(save.id, loadStreamEvents("club", before.club.id));
     ok(buyerEvents.some((event) => event.tag === "PlayerTransferredIn"));
+
+    // The seller is an AI club and no longer has a stream at all. The transfer is recorded once,
+    // authoritatively, in `player_transfers` — which is what a career history is read from.
     const sellerEvents = yield* withSave(save.id, loadStreamEvents("club", target.clubId!));
-    ok(sellerEvents.some((event) => event.tag === "PlayerTransferredOut"));
+    strictEqual(sellerEvents.length, 0);
+    const recorded = yield* withSave(
+      save.id,
+      Effect.gen(function* () {
+        const sql = yield* SqlClient;
+        return yield* sql<{ fromClubId: string | null; toClubId: string; fee: number }>`
+          SELECT from_club_id as "fromClubId", to_club_id as "toClubId", fee
+          FROM player_transfers WHERE player_id = ${target.id}`;
+      }),
+    );
+    strictEqual(recorded.length, 1);
+    strictEqual(recorded[0]!.fromClubId, target.clubId);
+    strictEqual(recorded[0]!.toClubId, before.club.id);
   }),
 );
 

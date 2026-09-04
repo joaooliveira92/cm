@@ -39,7 +39,16 @@ export const nextStreamSeq = (streamType: string, streamId: string) =>
     return (rows[0]?.maxSeq ?? 0) + 1;
   });
 
-/** Appends events to a stream starting at `startSeq`, in the caller's SQL transaction. Assumes a `SqlClient` in context. */
+/**
+ * Appends events to a stream starting at `startSeq`, in the caller's SQL transaction.
+ *
+ * Every row carries the save's own in-world date, read here rather than passed in by each of the
+ * dozen call sites — a date that had to be threaded through every appender would eventually be
+ * forgotten at one of them, and an event with no date is one a career chronology cannot place.
+ * It is NULL only before a calendar exists, which is career creation and nothing else.
+ *
+ * Assumes a `SqlClient` in context.
+ */
 export const appendStreamEvents = (
   streamType: string,
   streamId: string,
@@ -48,11 +57,21 @@ export const appendStreamEvents = (
 ) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+    const gameDate = yield* currentGameDate;
     for (const [offset, event] of events.entries()) {
       const seq = startSeq + offset;
-      yield* sql`INSERT INTO events (stream_type, stream_id, seq, tag, payload) VALUES (${streamType}, ${streamId}, ${seq}, ${event.tag}, ${JSON.stringify(event.payload)})`;
+      yield* sql`INSERT INTO events (stream_type, stream_id, seq, tag, payload, game_date)
+        VALUES (${streamType}, ${streamId}, ${seq}, ${event.tag}, ${JSON.stringify(event.payload)}, ${gameDate})`;
     }
   });
+
+/** The save's current in-world date, or NULL before a season exists. Never the wall clock. */
+const currentGameDate = Effect.gen(function* () {
+  const sql = yield* SqlClient;
+  const rows = yield* sql<{ gameDate: string | null }>`
+    SELECT game_date as "gameDate" FROM season ORDER BY season_number DESC LIMIT 1`;
+  return rows[0]?.gameDate ?? null;
+});
 
 /** Loads a stream's full event history in `seq` order. Assumes a `SqlClient` in context. */
 export const loadStreamEvents = (streamType: string, streamId: string) =>

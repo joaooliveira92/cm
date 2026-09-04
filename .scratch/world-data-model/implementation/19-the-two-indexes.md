@@ -53,6 +53,9 @@ service set changes. What is observable is the query plan, and that is what the 
       and a test asserts the count so a third cannot be added without a decision. The test excludes
       `UNIQUE` indexes explicitly: `scouting_assignments(player_id)` is a constraint making a state
       unreachable, not a read made fast, and Drizzle emits it as its own statement.
+      **A third has since been added, and the test did its job:** ticket 22 decided
+      `player_transfers(player_id, transferred_on)` against measured numbers, and ticket 17 shipped
+      it. The assertion now names three.
 - [x] Each unindexed table carries a comment recording why it needs no index.
 - [x] The N+1 club loop, the quadratic position filter, and the other read-path defects the scale
       probe measured are deliberately untouched: they are out of scope per the map.
