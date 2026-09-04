@@ -28,7 +28,7 @@ import { InlineModal } from "./transfers/InlineModal.js";
 import { useDialogKeyboard } from "./transfers/dialogKeyboard.js";
 import { formatCredits, marketPlayerColumns } from "./table/transfers/marketColumns.js";
 import { freeAgentColumns } from "./table/transfers/freeAgentColumns.js";
-import { useTransfersScreen } from "./useTransfersScreen.js";
+import { TransfersProvider, useTransfers } from "./TransfersProvider.js";
 import { TablePanel } from "./table/TablePanel.js";
 import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "./theme.js";
 import { STATE_COPY } from "./table/viewState.js";
@@ -97,21 +97,22 @@ const KeepDiscardDialog = ({
   );
 };
 
-export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
+export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => (
+  <TransfersProvider saveId={saveId}>
+    <TransfersScreenInner />
+  </TransfersProvider>
+);
+
+const TransfersScreenInner = () => {
+  const { state, actions, meta } = useTransfers();
   const {
     status,
     bidAlert,
     selected,
-    setSelected,
     draftState,
-    draftRef,
-    setDraft,
     counters,
     counterAmount,
     counterError,
-    setCounter,
-    setCounterAmount,
-    setCounterError,
     market,
     free,
     marketRows,
@@ -128,18 +129,23 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     counterAmountValid,
     viewError,
     view,
+  } = state;
+  const {
+    setSelected,
+    setDraft,
+    setCounter,
+    setCounterAmount,
+    setCounterError,
     setFiltersFor,
-    speak,
-    amountInputRef,
     run,
-    findPlayer,
     runRespond,
     onSortChangeFor,
     onToggleSelectionFor,
     onActiveChangeFor,
     onBookmarkChangeFor,
     onRowPrimaryFor,
-  } = useTransfersScreen(saveId);
+  } = actions;
+  const { amountInputRef, draftRef, speak, findPlayer, saveId } = meta;
 
   // Blocking load failure = error with NO retained rows (a failed revalidation
   // keeps `view` — that path renders the tables with a non-blocking line, F1).

@@ -1,7 +1,7 @@
 # 13 — Provide the Transfers screen state through a TransfersProvider context
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
 **What to build:** The transfers screen exposes its state to sibling components through a `TransfersProvider` that wraps the `useTransfersScreen` hook and delivers one generic, typed context value via a `useTransfers()` read hook. Callers never see how the state is held (it remains React state plus refs inside the provider); they only see a single interface of data, actions, focus helpers, and meta.
 
@@ -15,7 +15,7 @@ Keep the context value as one coherent interface — state, actions, and meta �
 
 **Status:** ready-for-agent
 
-- [ ] A `TransfersProvider` exposes a single typed context value and companion `useTransfers()` read hook; only the provider calls the underlying state hook.
-- [ ] `TransfersScreen` mounts the provider and renders from `useTransfers()`; no behaviour change.
-- [ ] The once-per-save action-handler registration and all live-handler refs remain intact (no re-registration, no stale closures).
-- [ ] `pnpm check:all` passes.
+- [x] A `TransfersProvider` exposes a single typed context value and companion `useTransfers()` read hook; only the provider calls the underlying state hook.
+- [x] `TransfersScreen` mounts the provider and renders from `useTransfers()`; no behaviour change.
+- [x] The once-per-save action-handler registration and all live-handler refs remain intact (no re-registration, no stale closures).
+- [x] `pnpm check:all` passes.
