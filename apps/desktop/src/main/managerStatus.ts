@@ -2,6 +2,7 @@ import { SaveArchivedError, type ClubId, type SaveId } from "@cm-clone/contracts
 import type { ArchivedCause, ManagerOutcome } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { discardScoutingForClubs } from "./scouting.js";
 
 export interface ManagerStatusRow {
   readonly consecutiveMisses: number;
@@ -53,5 +54,10 @@ export const assertSaveNotArchived = (saveId: SaveId) =>
 export const releaseClubStaff = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+    // Scouting goes with the backroom. It belongs to the club rather than to the manager, so a
+    // career move starts the next club Unscouted on everyone rather than importing an inheritance —
+    // and leaving the rows behind would let the old club's assignments block the new one's, through
+    // the unique index on `player_id`.
+    yield* discardScoutingForClubs([clubId]);
     yield* sql`DELETE FROM staff WHERE club_id = ${clubId}`;
   });

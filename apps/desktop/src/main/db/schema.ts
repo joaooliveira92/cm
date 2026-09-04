@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { check, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { check, index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 /**
  * The save file's schema, defined once in Drizzle and nowhere else.
@@ -15,6 +15,18 @@ import { check, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlit
  * encode rules (a pillar distribution summing to 12, ability on a 1-20 scale) that no query-side
  * type can restate.
  *
+ * ## Indexes
+ *
+ * The save carries **exactly two**, both measured against the scale probe rather than assumed:
+ * `players(club_id)` and `fixtures(competition_id, season_number, played)`. Every other table is
+ * unindexed, and each one says below why — a later reader should find a decision, not a gap. An
+ * index is not free: it is written on every insert, and world generation writes hundreds of
+ * thousands of rows.
+ *
+ * The probe measured a third, on `contracts(player_id)`. It does not ship: that column is already
+ * the table's primary key, so SQLite's automatic index serves the same lookups and a second index
+ * over the same column would be pure cost.
+ *
  * ## Invariants upheld by a writer rather than by a constraint
  *
  * Every pairing invariant in this schema is assigned explicitly to one or the other, and the two
@@ -22,11 +34,11 @@ import { check, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlit
  * statement about the shape of a single row, which is the only thing a `CHECK` can see:
  *
  * - **A club never plays twice on one date.** Cross-row, and a unique index on either club column
- *   misses a club playing home in a league fixture and away in a cup tie on the same day. Upheld by
- *   the slot template — cups reserve their dates before leagues draw theirs — and covered by a test.
+ *  misses a club playing home in a league fixture and away in a cup tie on the same day. Upheld by
+ *  the slot template — cups reserve their dates before leagues draw theirs — and covered by a test.
  * - **A scouting-progress row is never written at 0.** Absence means Unscouted, so this is a rule
- *   about which rows exist rather than about what a row contains; `CHECK progress BETWEEN 0 AND 100`
- *   admits the zero row a sparse table must never hold.
+ *  about which rows exist rather than about what a row contains; `CHECK progress BETWEEN 0 AND 100`
+ *  admits the zero row a sparse table must never hold. Upheld by `scouting.ts`, covered by a test.
  *
  * The third pairing invariant — a fixture's two penalty columns are NULL together or set together —
  * belongs with the constraints, not with these. It is a single-row, two-column shape, which is
@@ -48,6 +60,7 @@ const SEED_RANGE = "BETWEEN 0 AND 4294967295";
 const attribute = (name: string) =>
   integer(name).notNull();
 
+/** No index: point lookups on its primary key. */
 export const saveMeta = sqliteTable("save_meta", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -66,6 +79,8 @@ export const saveMeta = sqliteTable("save_meta", {
  *
  * `generated_at` is recorded for operator diagnosis only. Nothing in generation or simulation may
  * read it: a world that varies with its creation timestamp is not reproducible.
+ *
+ * No index: a single row.
  */
 export const generationManifest = sqliteTable(
   "generation_manifest",
@@ -101,7 +116,10 @@ export const generationManifest = sqliteTable(
 
 /** Manager Profile (ticket 03): immutable creation-time identity, single-row table. Written by
  * `commitCareer` and never modified. Four Manager Pillars on a 1-5 scale summing to exactly 12;
- * `archetype_origin` records which preset or Custom was chosen. */
+ * `archetype_origin` records which preset or Custom was chosen.
+ *
+ * No index: a single row.
+ */
 export const managerProfile = sqliteTable(
   "manager_profile",
   {
@@ -157,6 +175,8 @@ export const managerProfile = sqliteTable(
  * **Reintroduction condition**: the first time a system reads a Nation Profile *during* a career
  * rather than at generation, the profile must be snapshotted into the save. Until then a ruleset
  * upgrade only changes how future worlds are generated.
+ *
+ * No index: a few hundred rows, read by id or wholesale.
  */
 export const nations = sqliteTable("nations", {
   /** Canonical id in the one underscore convention (`nation_eng`), minted by
@@ -175,6 +195,8 @@ export const nations = sqliteTable("nations", {
  * kind of claim a country name is. No coordinates (distance is not modelled) and no population
  * figure: `population_band` is an ordering for club-stature plausibility, never a claim that goes
  * stale. No `generation_seed`: cities are resolved, not generated.
+ *
+ * No index: a few hundred rows, read by id or wholesale.
  */
 export const cities = sqliteTable(
   "cities",
@@ -202,6 +224,8 @@ export const cities = sqliteTable(
  * resolution, and once the world exists the fact that a top division required its national cup
  * governs nothing a simulation reads. Promotion structure is the opposite case — read at every
  * season rollover for the life of the save — which is why it is a table.
+ *
+ * No index: tens of rows, read by id or wholesale.
  */
 
 export const competitions = sqliteTable(
@@ -241,6 +265,8 @@ export const competitions = sqliteTable(
  * would silently break. Both endpoints always have rows in this save, which is what closes the
  * world at the edge of the chosen scope — the lowest loaded division never relegates anyone out of
  * the world, and the highest never promotes anyone out of it.
+ *
+ * No index: read wholesale, once per rollover.
  */
 export const competitionLinks = sqliteTable(
   "competition_links",
@@ -266,6 +292,8 @@ export const competitionLinks = sqliteTable(
  * has no slot count: merging them would leave `slots` meaningless for half the rows, which is the
  * shape that invites a query to forget the discriminator. A continental tournament is a cup here —
  * the relation cares only that the competition owns no clubs and draws its field from elsewhere.
+ *
+ * No index: read wholesale, once per cup draw.
  */
 export const competitionEntrants = sqliteTable(
   "competition_entrants",
@@ -317,6 +345,8 @@ export const competitionEntrants = sqliteTable(
  * Freezing them is what makes last season's table survive into this one: the League Table is
  * recomputed from resolved fixtures, and the next season's fixtures overwrite its inputs, so a
  * position that is only derivable-in-principle is a position that is gone.
+ *
+ * No index: the key's (competition, season) prefix serves every read.
  */
 export const competitionParticipants = sqliteTable(
   "competition_participants",
@@ -366,6 +396,8 @@ export const competitionParticipants = sqliteTable(
  *
  * No wage, no contract, no candidate pool: `Contract` and `Wage Budget` stay player-to-club
  * concepts, and a hiring market would reopen both bindings.
+ *
+ * No index: read by club, and a club's backroom is single digits.
  */
 export const staff = sqliteTable(
   "staff",
@@ -386,6 +418,7 @@ export const staff = sqliteTable(
   ],
 );
 
+/** No index: point lookups on the primary key, or the whole (small) set. */
 export const clubs = sqliteTable(
   "clubs",
   {
@@ -483,7 +516,14 @@ export const players = sqliteTable(
     squadSlot: integer("squad_slot").notNull(),
     generationSeed: integer("generation_seed").notNull(),
   },
-  () => [
+  (table) => [
+    /**
+     * The save's first index, and one of only two. Measured rather than assumed: opening a squad
+     * goes from 127 ms to 0.9 ms at 400,000 players — faster than the same query on an unindexed
+     * 20,000-player save, because the scan it replaces is proportional to the whole world rather
+     * than to the eighteen rows it wants. See `db/prototype-scale-probe/RESULTS.md`.
+     */
+    index("players_club_id_idx").on(table.clubId),
     check("players_potential_ability", sql`potential_ability BETWEEN 1 AND 100`),
     ...[
       "passing", "shooting", "tackling", "dribbling", "heading", "crossing", "finishing",
@@ -499,6 +539,7 @@ export const players = sqliteTable(
   ],
 );
 
+/** No index: read by the player_id prefix of its own key. */
 export const playerPositions = sqliteTable(
   "player_positions",
   {
@@ -515,6 +556,7 @@ export const playerPositions = sqliteTable(
   ],
 );
 
+/** No index: a point lookup on the club. */
 export const tactics = sqliteTable(
   "tactics",
   {
@@ -534,6 +576,7 @@ export const tactics = sqliteTable(
   ],
 );
 
+/** No index: read by the club prefix of its own key. */
 export const tacticSlots = sqliteTable(
   "tactic_slots",
   {
@@ -555,7 +598,10 @@ export const tacticSlots = sqliteTable(
 
 /** Generic append-only event log (ADR-0007 domain-bounded streams: `stream_type` e.g.
  * "match"/"season", `stream_id` the Fixture/save id) — Deciders append here and read models are
- * projected from it. */
+ * projected from it.
+ *
+ * No index: the three-column primary key already serves both access paths the code has.
+ */
 export const events = sqliteTable(
   "events",
   {
@@ -597,6 +643,8 @@ export const events = sqliteTable(
  * Readers still want one row: the current season is the highest `season_number`. Per-competition
  * progress — "this cup has reached round 4", "this league has concluded" — is derived from that
  * competition's own fixture rows and is stored nowhere.
+ *
+ * No index: one row per season, and a career holds a handful.
  */
 export const season = sqliteTable(
   "season",
@@ -669,7 +717,18 @@ export const fixtures = sqliteTable(
     awayPenalties: integer("away_penalties"),
     played: integer("played").notNull().default(0),
   },
-  () => [
+  (table) => [
+    /**
+     * The save's second index. It only pays because the standings query names the competition it is
+     * rendering: an unindexed scan cost 302 ms at 400,000 players precisely because it read every
+     * played fixture in the save rather than one competition's. The predicate came first; this
+     * makes it cheap.
+     */
+    index("fixtures_competition_season_played_idx").on(
+      table.competitionId,
+      table.seasonNumber,
+      table.played,
+    ),
     check("fixtures_round", sql`round >= 1`),
     check("fixtures_played", sql`played IN (0,1)`),
     check(
@@ -693,6 +752,8 @@ export const fixtures = sqliteTable(
  * judged against.
  *
  * A cup run is unjudged: no objective row ever names a cup.
+ *
+ * No index: a point lookup on the season number, which is its key.
  */
 export const boardObjective = sqliteTable(
   "board_objective",
@@ -725,7 +786,10 @@ export const boardObjective = sqliteTable(
  *
  * The table name is a technical artifact, not a domain term: it tracks manager *outcome* state
  * (`ManagerOutcome`), never manager identity, which lives in `manager_profile`. "Manager Status"
- * is retired as player-facing vocabulary — the screen is called Manager Profile. */
+ * is retired as player-facing vocabulary — the screen is called Manager Profile.
+ *
+ * No index: a single row.
+ */
 export const managerStatus = sqliteTable(
   "manager_status",
   {
@@ -747,7 +811,10 @@ export const managerStatus = sqliteTable(
 /** Transfer/Wage economy read model (ticket 16 / ADR-0005) — one row per club, seeded at Season
  * start from the club's fixed Stature Tier. `transfer_budget_remaining` spends down within a
  * Season with no replenishment between the two Transfer Windows; `wage_budget` is a running cap
- * checked against the sum of `contracts.wage` for that club, not itself spent down. */
+ * checked against the sum of `contracts.wage` for that club, not itself spent down.
+ *
+ * No index: a point lookup on the club, which is its key.
+ */
 export const clubBudgets = sqliteTable("club_budgets", {
   clubId: text("club_id")
     .primaryKey()
@@ -762,7 +829,10 @@ export const clubBudgets = sqliteTable("club_budgets", {
  * the most recent injury's Severity; the Condition then recovers toward 100% between Fixtures
  * keyed to Natural Fitness and `last_injury_severity` (a knock recovers faster than a severe).
  * Feeds a not-fully-recovered player's `startingCondition` at kickoff and the squad view's
- * Condition. */
+ * Condition.
+ *
+ * No index: a point lookup on the player, which is its key.
+ */
 export const playerFitness = sqliteTable(
   "player_fitness",
   {
@@ -788,7 +858,11 @@ export const playerFitness = sqliteTable(
  * negotiation UI. A player with no row here (and `players.club_id IS NULL`) is a Free Agent,
  * signable for Credits 0 via the normal signing flow. `years_remaining` is allowed to reach 0
  * transiently mid-expiry-sweep (`transfers.ts`'s `expireContractsForSeason` decrements every row
- * before deleting the ones that hit 0) — every row a Sign/Renew command writes is still 1-5. */
+ * before deleting the ones that hit 0) — every row a Sign/Renew command writes is still 1-5.
+ *
+ * No index: player_id is the primary key, so the automatic index already serves it — which is why
+ * the probe's third measured index does not ship.
+ */
 export const contracts = sqliteTable(
   "contracts",
   {
@@ -808,7 +882,10 @@ export const contracts = sqliteTable(
 /** Per-player Training Focus (spec: `.scratch/training/spec.md`) — the one Category a manager is
  * concentrating on, or `NULL` for the no-focus default. A missing row also reads as no-focus (no
  * migration/backfill for existing or freshly generated players); a row is written only when a
- * manager sets a focus. AI clubs' players never have a focus row. */
+ * manager sets a focus. AI clubs' players never have a focus row.
+ *
+ * No index: a point lookup on the player.
+ */
 export const trainingFocus = sqliteTable(
   "training_focus",
   {
@@ -827,7 +904,10 @@ export const trainingFocus = sqliteTable(
 
 /** In-flight Bid state (ticket 16 / ADR-0005) — any player is biddable regardless of a Listed
  * flag (not modeled, per ticket 05). Single-round: the selling club accepts/rejects/counters
- * exactly once (`countered`), then the bidding club accepts/withdraws. */
+ * exactly once (`countered`), then the bidding club accepts/withdraws.
+ *
+ * No index: a save's open bids are tens of rows, read wholesale.
+ */
 export const bids = sqliteTable(
   "bids",
   {
@@ -869,6 +949,8 @@ export const bids = sqliteTable(
  * The primary key is the event's own coordinates, which is what makes a row here unable to name a
  * message that does not exist. The table is empty in a fresh save and gains a row only when the
  * manager first acts on a message, so an inbox that is only ever read costs nothing on disk.
+ *
+ * No index: a point lookup on the message id.
  */
 export const newsMessageState = sqliteTable(
   "news_message_state",
@@ -888,5 +970,67 @@ export const newsMessageState = sqliteTable(
     check("news_message_state_read", sql`read IN (0,1)`),
     check("news_message_state_archived", sql`archived IN (0,1)`),
     check("news_message_state_flagged", sql`flagged IN (0,1)`),
+  ],
+);
+
+/**
+ * Which scout is watching which player. One row per active assignment.
+ *
+ * Keyed on the **scout**, so a scout has at most one assignment by the shape of the table rather
+ * than by a rule code could violate. The club has exactly N scout rows, so the N-slot cap is the row
+ * count of this table: "already at cap" and "duplicate assignment" are unreachable states rather
+ * than errors anyone has to raise. `UNIQUE(player_id)` carries "at most one scout on a player at a
+ * time", which is exactly right because scout rows exist only for the club the human manages.
+ *
+ * There is deliberately **no `club_id`**. A scout's club is `staff.club_id`; duplicating it here
+ * would be the same column the competition graph already refused to put on `clubs`.
+ *
+ * No index: point lookups on the key, with the unique player constraint itself answering "is this
+ * player already watched".
+ */
+export const scoutingAssignments = sqliteTable("scouting_assignments", {
+  scoutId: text("scout_id")
+    .primaryKey()
+    .references(() => staff.id),
+  playerId: text("player_id")
+    .notNull()
+    .unique()
+    .references(() => players.id),
+});
+
+/**
+ * What a club knows about a player, as a single 0-100 number.
+ *
+ * **Sparse: a row exists only for a player who has actually been scouted.** Absence means Unscouted,
+ * so no code path ever writes a progress-0 row — that is a writer-upheld invariant, and it is one
+ * because it is a rule about which rows *exist* rather than about what a row contains, which is
+ * something no `CHECK` can say. `CHECK progress BETWEEN 0 AND 100` admits the very row the rule
+ * forbids; see this module's header.
+ *
+ * A dense row per (club, scoutable player) was rejected on measured cost: ~180 MB of zeroes at
+ * 400,000 players, to record a default that absence already expresses.
+ *
+ * Progress belongs to the **club**, not the manager. A career move starts the new club Unscouted on
+ * everyone, and the old club's rows are deleted when the manager leaves — the observation was done
+ * by that club's scouts, who do not follow anyone. Nothing here stores an Attribute Range, a
+ * narrowed bound, or a fogged Transfer Value: all of those are pure functions of this number and the
+ * true stored value.
+ *
+ * No index: read by the club prefix of its own key, or as a full-key point lookup.
+ */
+export const scoutingProgress = sqliteTable(
+  "scouting_progress",
+  {
+    clubId: text("club_id")
+      .notNull()
+      .references(() => clubs.id),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id),
+    progress: integer("progress").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.clubId, table.playerId] }),
+    check("scouting_progress_range", sql`progress BETWEEN 0 AND 100`),
   ],
 );

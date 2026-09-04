@@ -90,6 +90,10 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
           return "That bid action is not valid right now.";
         case "NotYourPlayerError":
           return "That player does not belong to your club.";
+        // There is no "already at cap" or "already assigned" sentence to write: the scouting
+        // tables make both states unreachable, so an unknown scout is the only thing left to say.
+        case "UnknownScoutError":
+          return "That scout is not on your staff.";
         case "LockedKeyOverrideError":
           return "That key is locked and cannot be rebound.";
         case "CollidingOverrideError":

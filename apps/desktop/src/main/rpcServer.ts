@@ -37,6 +37,7 @@ import {
   signFreeAgent,
 } from "./transfers.js";
 import { setTrainingFocus } from "./training.js";
+import { assignScout, getScouting, unassignScout } from "./scouting.js";
 import { withWideEvent } from "./logging.js";
 
 export interface RpcContext {
@@ -259,6 +260,25 @@ const handlers: Record<AppRpcMethod, Handler> = {
         AppRpcs.setTrainingFocus.payload,
       )(payload);
       return yield* setTrainingFocus(ctx.savesDir, saveId, playerId, focus);
+    }),
+  assignScout: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, scoutId, playerId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.assignScout.payload,
+      )(payload);
+      return yield* assignScout(ctx.savesDir, saveId, scoutId, playerId);
+    }),
+  unassignScout: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, scoutId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.unassignScout.payload,
+      )(payload);
+      return yield* unassignScout(ctx.savesDir, saveId, scoutId);
+    }),
+  getScouting: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getScouting.payload)(payload);
+      return yield* getScouting(ctx.savesDir, saveId);
     }),
   getKeyBindingOverrides: (_payload, ctx) => getKeyBindingOverrides(ctx.userDataDir),
   setKeyBindingOverride: (payload, ctx) =>

@@ -60,6 +60,7 @@ import { displayNames } from "./displayNames.js";
 import { ELEVEN, assignAiTactics, pickBestFormationTactic, runAiTransferWindow } from "./aiClubs.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
 import { developPlayersForSeason } from "./development.js";
+import { accrueScoutingProgress, discardScoutingForPlayers } from "./scouting.js";
 import { insertGeneratedSquad, readGenerationManifest } from "./worldGeneration.js";
 import { assertSaveNotArchived, loadManagerStatus, releaseClubStaff } from "./managerStatus.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
@@ -669,7 +670,12 @@ export const discardSquadsForClubs = (clubIds: ReadonlyArray<string>) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     if (clubIds.length === 0) return;
-    const doomed = sql.in("player_id", yield* playerIdsForClubs(clubIds));
+    const playerIds = yield* playerIdsForClubs(clubIds);
+    const doomed = sql.in("player_id", playerIds);
+
+    // The scouting of a player who is about to stop existing goes with them: retaining it would
+    // attach progress to someone the world will no longer contain.
+    yield* discardScoutingForPlayers(playerIds);
 
     yield* sql`DELETE FROM bids WHERE ${doomed}`;
     yield* sql`DELETE FROM training_focus WHERE ${doomed}`;
@@ -1479,6 +1485,10 @@ export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
         const results = yield* resolveDueFixtures(boundary.date);
         streamEvents.push({ tag: "MatchdayResolved", payload: { date: boundary.date, results } });
         resolvedDate = boundary.date;
+
+        // Scouts watch while the calendar moves. Accrual is per advance rather than per fixture:
+        // a scout is observing a player, not attending their club's matches.
+        yield* accrueScoutingProgress;
 
         // The season is over when no unplayed fixture remains anywhere, cup final included —
         // never at a tidy invented end date. Competitions genuinely end on different days, and the

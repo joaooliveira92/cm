@@ -37,6 +37,8 @@ describe("generated DDL", () => {
         "contracts",
         "training_focus",
         "bids",
+        "scouting_assignments",
+        "scouting_progress",
       ]),
     );
   });
@@ -209,5 +211,35 @@ describe("generated DDL", () => {
     // `snapshot_id` is a diagnostic pointer, explicitly not a foreign key (the snapshot file is
     // machine-local and will not exist beside a copied save).
     expect(manifestBlock).not.toContain("FOREIGN KEY");
+  });
+
+  it("makes the scout the key of an assignment, so the slot cap cannot be violated", () => {
+    const ddl = MIGRATION_STATEMENTS.join("\n");
+    const table = /CREATE TABLE `scouting_assignments`[^;]+/.exec(ddl)?.[0] ?? "";
+
+    // Keyed on the scout: at most one assignment each, so "already at cap" is not a state.
+    expect(table).toMatch(/`scout_id` text PRIMARY KEY/);
+    // And unique on the player: at most one scout on a player at a time.
+    expect(ddl).toMatch(/CREATE UNIQUE INDEX `scouting_assignments_player_id_unique`/);
+    // A scout's club is their staff row's. Duplicating it here would be a second source for it.
+    expect(table).not.toMatch(/club_id/);
+  });
+
+  it("keys progress on the club and the player, bounded but not forced to exist", () => {
+    const ddl = MIGRATION_STATEMENTS.join("\n");
+    const table = /CREATE TABLE `scouting_progress`[^;]+/.exec(ddl)?.[0] ?? "";
+
+    expect(table).toMatch(/PRIMARY KEY\(`club_id`, `player_id`\)/);
+    expect(table).toMatch(/CHECK\(progress BETWEEN 0 AND 100\)/);
+  });
+
+  it("stores no fogged value anywhere — every range is derived from progress", () => {
+    const ddl = MIGRATION_STATEMENTS.join("\n");
+    // Attribute Range, narrowed bounds, and the fogged Transfer Value are pure functions of
+    // progress and the true stored value. A column for any of them would be a third copy of
+    // something already held twice, free to drift from both.
+    for (const forbidden of [/`[a-z_]*range[a-z_]*`/, /`[a-z_]*fog[a-z_]*`/, /`[a-z_]*_low`/, /`[a-z_]*_high`/]) {
+      expect(ddl).not.toMatch(forbidden);
+    }
   });
 });

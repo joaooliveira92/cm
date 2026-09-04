@@ -147,6 +147,7 @@ CREATE TABLE `fixtures` (
 	CONSTRAINT "fixtures_penalties_paired" CHECK((home_penalties IS NULL) = (away_penalties IS NULL))
 );
 --> statement-breakpoint
+CREATE INDEX `fixtures_competition_season_played_idx` ON `fixtures` (`competition_id`,`season_number`,`played`);--> statement-breakpoint
 CREATE TABLE `generation_manifest` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`world_seed` integer NOT NULL,
@@ -304,10 +305,29 @@ CREATE TABLE `players` (
 	CONSTRAINT "players_generation_seed_range" CHECK(generation_seed BETWEEN 0 AND 4294967295)
 );
 --> statement-breakpoint
+CREATE INDEX `players_club_id_idx` ON `players` (`club_id`);--> statement-breakpoint
 CREATE TABLE `save_meta` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`created_at` text NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `scouting_assignments` (
+	`scout_id` text PRIMARY KEY NOT NULL,
+	`player_id` text NOT NULL,
+	FOREIGN KEY (`scout_id`) REFERENCES `staff`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `scouting_assignments_player_id_unique` ON `scouting_assignments` (`player_id`);--> statement-breakpoint
+CREATE TABLE `scouting_progress` (
+	`club_id` text NOT NULL,
+	`player_id` text NOT NULL,
+	`progress` integer NOT NULL,
+	PRIMARY KEY(`club_id`, `player_id`),
+	FOREIGN KEY (`club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "scouting_progress_range" CHECK(progress BETWEEN 0 AND 100)
 );
 --> statement-breakpoint
 CREATE TABLE `season` (

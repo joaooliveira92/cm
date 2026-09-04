@@ -34,7 +34,7 @@ exist in the error channel because they cannot occur.
 
 **Blocked by:** 15.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/schema.ts` and the regenerated DDL, a new scouting module in
 `apps/desktop/src/main`, `apps/desktop/src/main/rpcServer.ts`, `packages/contracts/src/rpc.ts` and
@@ -42,15 +42,20 @@ exist in the error channel because they cannot occur.
 `apps/desktop/src/main/managerStatus.ts`, `apps/desktop/test/db-schema.test.ts` and new scouting
 tests.
 
-- [ ] `scouting_assignments` has the scout id as its primary key and a `UNIQUE` player id, and
+- [x] `scouting_assignments` has the scout id as its primary key and a `UNIQUE` player id, and
       carries no club column; a scout's club is read from the staff row.
-- [ ] `scouting_progress` is keyed on the club and the player with a progress column constrained by
+- [x] `scouting_progress` is keyed on the club and the player with a progress column constrained by
       `CHECK progress BETWEEN 0 AND 100`, and a test asserts no code path writes a row at 0.
-- [ ] Accrual is strictly positive across the whole 1-20 scout-quality domain, so Fully Scouted is
+- [x] Accrual is strictly positive across the whole 1-20 scout-quality domain, so Fully Scouted is
       reachable for every scout, and progress never decreases.
-- [ ] No player in a `results-only` competition appears in any scoutable set, and no scouting code
+- [x] No player in a `results-only` competition appears in any scoutable set, and no scouting code
       branches on Simulation Depth to achieve it.
-- [ ] Deleting a player deletes their assignment and their progress rows; a manager leaving a club
+- [x] Deleting a player deletes their assignment and their progress rows; a manager leaving a club
       deletes that club's assignments and progress.
-- [ ] No table stores an Attribute Range, a narrowed bound, or a fogged transfer value.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] No table stores an Attribute Range, a narrowed bound, or a fogged transfer value.
+- [ ] `pnpm check:all` is green at this commit. **Not met, and not by this ticket's doing** — see
+      ticket 11's note. HEAD is red from the Base UI Select migration: 23 renderer failures across
+      `active-leagues-*`, `league-selection-screen`, `club-selection-screen`, `table-*`,
+      `level1-a11y`, `matchday-live-keyboard`, and `tactics-keyboard-reachability`. Typecheck, lint,
+      effect-lint, verify-md-links and verify-db-schema are green, as is every test suite this
+      ticket touches.
