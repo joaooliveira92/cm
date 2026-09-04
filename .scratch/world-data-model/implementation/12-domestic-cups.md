@@ -33,24 +33,32 @@ generation, since it is reachable from a catalogue that names too few or too man
 **Blocked by:** 05 (cup entry edges), 09 (dated fixtures and penalty columns), 10 (the advance is
 date-driven before a cup can interleave with a league), 11 (a mixed tie needs the depth collapse).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/season.ts` (the advance and the round draw), a bracket module in
 `packages/shared/src`, `packages/game-engine/src/seed.ts`, the calendar slot-template module,
 `apps/desktop/test/season.test.ts`.
 
-- [ ] A cup competition's first round is drawn from the clubs its entrant edges name, and each later
+- [x] A cup competition's first round is drawn from the clubs its entrant edges name, and each later
       round is drawn once its participants are known; no bracket is stored.
-- [ ] A field of 44 produces a valid bracket with byes held by clubs from the highest-tier source
+- [x] A field of 44 produces a valid bracket with byes held by clubs from the highest-tier source
       competitions, and a test covers it.
-- [ ] Two saves from one world seed produce identical draws through every round, and a test asserts
+- [x] Two saves from one world seed produce identical draws through every round, and a test asserts
       it.
-- [ ] A drawn tie is settled by a shootout recorded in the fixture's penalty columns; both penalty
+- [x] A drawn tie is settled by a shootout recorded in the fixture's penalty columns; both penalty
       columns are NULL together or set together, and no fixture goes to extra time or a replay.
-- [ ] A cup fixture exists only once both participants are known, at the date its round would always
+- [x] A cup fixture exists only once both participants are known, at the date its round would always
       have had.
-- [ ] A tie between a squad-bearing club and a `results-only` club resolves without invoking the
-      match engine, and a test covers it.
-- [ ] The cup winner is readable as the participant whose final position is 1; no winner column
+- [x] A tie between a squad-bearing club and a `results-only` club resolves without invoking the
+      match engine, and a test covers it. **Note:** no shipped scope option can produce this tie yet
+      — England's pyramid loads all four divisions playable, and a nation set to `view_only` has no
+      playable division for one to meet. The test stages the state instead: it puts the fourth
+      division at `results-only` and discards its squads, which is exactly and entirely what a
+      results-only division is on disk. The code path is real; the catalogue cannot currently reach
+      it. Worth a scope option that mixes depths within one nation.
+- [x] The cup winner is readable as the participant whose final position is 1; no winner column
       exists.
-- [ ] `pnpm check:all` is green at this commit.
+- [ ] `pnpm check:all` is green at this commit. **Not met, and not by this ticket's doing** — see
+      ticket 11's note. HEAD is red from the Base UI Select migration, and a second session's
+      in-flight `useTransfersScreen.ts` now also fails typecheck. Every test this ticket touches is
+      green, and no failure is attributable to it.

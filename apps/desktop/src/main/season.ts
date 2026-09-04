@@ -603,6 +603,42 @@ const resolveFixtureScore = (
     );
   });
 
+/**
+ * Deletes every player of the named clubs, and everything keyed on those players.
+ *
+ * Crossing into a `results-only` tier **discards downward**: the club keeps its row, its ground and
+ * its hometown, and loses its squad. The deletion is irreversible and player identity does not
+ * survive the round trip — a club that spends a season down there returns with different players.
+ * That is acceptable only because `results-only` is defined as having no persistent squads, so no
+ * human ever saw them. If results-only players ever become visible, this becomes user-visible data
+ * loss and the depth decision has to be reopened rather than patched.
+ *
+ * The six tables below are every table keyed on a player. A seventh added later and not added here
+ * would fail loudly on the foreign key rather than silently orphan rows.
+ */
+export const discardSquadsForClubs = (clubIds: ReadonlyArray<string>) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    if (clubIds.length === 0) return;
+    const doomed = sql.in("player_id", yield* playerIdsForClubs(clubIds));
+
+    yield* sql`DELETE FROM bids WHERE ${doomed}`;
+    yield* sql`DELETE FROM training_focus WHERE ${doomed}`;
+    yield* sql`DELETE FROM contracts WHERE ${doomed}`;
+    yield* sql`DELETE FROM player_fitness WHERE ${doomed}`;
+    yield* sql`DELETE FROM tactic_slots WHERE ${doomed}`;
+    yield* sql`DELETE FROM player_positions WHERE ${doomed}`;
+    yield* sql`DELETE FROM tactics WHERE ${sql.in("club_id", clubIds)}`;
+    yield* sql`DELETE FROM players WHERE ${sql.in("club_id", clubIds)}`;
+  });
+
+const playerIdsForClubs = (clubIds: ReadonlyArray<string>) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ id: string }>`SELECT id FROM players WHERE ${sql.in("club_id", clubIds)}`;
+    return rows.map((row) => row.id);
+  });
+
 // ---------------------------------------------------------------------------
 // Cup brackets: drawn round by round, stored only as the fixtures they produce
 // ---------------------------------------------------------------------------
@@ -699,6 +735,14 @@ const materialiseCupRounds = (seasonNumber: number, worldSeed: number, reference
       let nextRound: number;
       let participants: ReadonlyArray<string>;
       if (lastRound === 0) {
+        // Entering a cup is membership, and membership lives on participant rows — the same shape a
+        // league's does. It is what the cup's final positions are frozen onto at conclusion, which
+        // is why a cup needs no winner column of its own.
+        for (const entrant of field) {
+          yield* sql`INSERT OR IGNORE INTO competition_participants (competition_id, season_number, club_id)
+            VALUES (${cupId}, ${seasonNumber}, ${entrant.clubId})`;
+        }
+
         const byes = new Set(byeHolders(field, shape.byes));
         nextRound = 1;
         participants = field.map((entrant) => entrant.clubId).filter((clubId) => !byes.has(clubId));
@@ -736,6 +780,87 @@ const materialiseCupRounds = (seasonNumber: number, worldSeed: number, reference
           VALUES (${seasonNumber}, ${cupId}, ${nextRound}, ${date}, ${tie.homeClubId}, ${tie.awayClubId}, NULL, NULL, NULL, NULL, 0)`;
       }
     }
+  });
+
+/**
+ * Freezes every competition's outcome onto its participant rows for the concluded season.
+ *
+ * Done once, at conclusion. Afterwards the previous season's final positions are readable without
+ * recomputing anything from fixtures — which matters because the next season's fixtures overwrite
+ * the inputs a recomputation would need, and because promotion reads the table at exactly one
+ * instant. A verdict that recomputed its own evidence could disagree with the table it judged.
+ *
+ * There is no `winner_club_id` column and no header row above these: a cup's winner is simply the
+ * participant whose `final_position` is 1, the same shape a league champion has.
+ */
+const freezeFinalStandings = (seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const competitions = yield* sql<{ id: string; kind: string }>`
+      SELECT DISTINCT c.id, c.kind FROM competitions c
+      JOIN competition_participants cp ON cp.competition_id = c.id
+      WHERE cp.season_number = ${seasonNumber} ORDER BY c.id ASC`;
+
+    for (const competition of competitions) {
+      const ranked =
+        competition.kind === "cup"
+          ? yield* cupFinishingOrder(competition.id, seasonNumber)
+          : (yield* computeStandings(competition.id, seasonNumber)).map((row) => ({
+              clubId: row.clubId as string,
+              points: row.points,
+              goalDifference: row.goalDifference,
+              goalsFor: row.goalsFor,
+            }));
+
+      for (const [index, entry] of ranked.entries()) {
+        yield* sql`UPDATE competition_participants
+          SET final_position = ${index + 1}, points = ${entry.points},
+              goal_difference = ${entry.goalDifference}, goals_for = ${entry.goalsFor}
+          WHERE competition_id = ${competition.id} AND season_number = ${seasonNumber} AND club_id = ${entry.clubId}`;
+      }
+    }
+  });
+
+/**
+ * A cup's clubs in finishing order: the winner, then the beaten finalist, then everyone else by how
+ * far they got.
+ *
+ * A knockout has no points table, so the ordering is the bracket itself — the round a club last
+ * appeared in. Clubs eliminated in the same round are level in every sense the domain models, and
+ * are separated by canonical id so the order is stable rather than arbitrary.
+ */
+const cupFinishingOrder = (cupId: string, seasonNumber: number) =>
+  Effect.gen(function* () {
+    const ties = yield* loadCupRounds(cupId, seasonNumber);
+    const lastRoundOf = new Map<string, number>();
+    const wonRound = new Map<string, number>();
+
+    for (const tie of ties) {
+      if (tie.played === 0) continue;
+      const winner = tieWinner({
+        homeClubId: tie.homeClubId,
+        awayClubId: tie.awayClubId,
+        homeGoals: tie.homeGoals ?? 0,
+        awayGoals: tie.awayGoals ?? 0,
+        homePenalties: tie.homePenalties,
+        awayPenalties: tie.awayPenalties,
+      });
+      for (const clubId of [tie.homeClubId, tie.awayClubId]) {
+        lastRoundOf.set(clubId, Math.max(lastRoundOf.get(clubId) ?? 0, tie.round));
+      }
+      wonRound.set(winner, Math.max(wonRound.get(winner) ?? 0, tie.round));
+    }
+
+    return [...lastRoundOf.entries()]
+      .map(([clubId, round]) => ({
+        clubId,
+        // Winning your last tie means you went out in the round after it — or won the cup.
+        reached: round + (wonRound.get(clubId) === round ? 1 : 0),
+        points: 0,
+        goalDifference: 0,
+        goalsFor: 0,
+      }))
+      .sort((a, b) => b.reached - a.reached || a.clubId.localeCompare(b.clubId));
   });
 
 /**
@@ -1052,6 +1177,15 @@ export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
         withinMidSeasonWindow(horizon.windows, date) ? "mid_window_open" : "in_season";
 
       if (boundary.type === "windowOpen") {
+        // The window's open is still a date the calendar passes through, so anything due on or
+        // before it is played on the way. Usually there is nothing — but a competition the human is
+        // never stopped for can have a date sitting behind this one, and walking past it would
+        // strand a fixture the calendar has already gone by.
+        const overdue = yield* resolveDueFixtures(boundary.date);
+        if (overdue.length > 0) {
+          streamEvents.push({ tag: "MatchdayResolved", payload: { date: boundary.date, results: overdue } });
+          resolvedDate = boundary.date;
+        }
         yield* sql`UPDATE season SET game_date = ${boundary.date}, phase = 'mid_window_open' WHERE season_number = ${row.seasonNumber}`;
         streamEvents.push({
           tag: "TransferWindowOpened",
@@ -1102,6 +1236,9 @@ export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
         yield* sql`UPDATE season SET game_date = ${boundary.date}, phase = ${phase} WHERE season_number = ${row.seasonNumber}`;
 
         if (concluded) {
+          // Freeze before anything reads a final position: the board's verdict below judges the
+          // frozen row rather than recomputing the table it is judging.
+          yield* freezeFinalStandings(row.seasonNumber);
           streamEvents.push({ tag: "SeasonConcluded", payload: { seasonNumber: row.seasonNumber } });
           // Contract expiry -> Free Agent (ticket 16 / ADR-0005) is specified as happening "at
           // Season start." There is no next season's pre-season to hook into yet, so
