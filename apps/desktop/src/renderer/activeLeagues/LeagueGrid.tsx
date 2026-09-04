@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "../components/ui/select.js";
 import type { GridRowView } from "./atoms.js";
+import { nationFlagUrl } from "./nationFlags.js";
 import {
   DENSE_CONTROL_PADDING,
   LEAGUE_COLUMN_GAP,
@@ -206,18 +207,37 @@ const LeagueCell = ({ row }: { readonly row: GridRowView }) => (
   </div>
 );
 
-/** The emblem is a compact nation-code shield: the catalogue's stable ISO 3166-1 alpha-3 code
- *  rendered as a badge. No licensed club/competition mark exists at this grain, and inventing
- *  one would be cosmetic rather than data-native. */
-const EmblemCell = ({ row }: { readonly row: GridRowView }) => (
-  <span
-    aria-hidden="true"
-    title={`${row.nationName} (${row.nationCode})`}
-    className="flex size-6 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-raised text-2xs font-semibold text-text-secondary"
-  >
-    {row.nationCode.slice(0, 3)}
-  </span>
-);
+/**
+ * The emblem: the row Nation's flag, keyed by the catalogue's stable alpha-3 code.
+ *
+ * Decorative, as the badge it replaces was: the row identifies itself by its league name and
+ * scope description in text, so the flag is a scanning aid for sighted users rather than a second
+ * announcement — hence `aria-hidden` and an empty `alt`.
+ *
+ * Where no flag is shipped for the Nation — and for a confederation-owned competition, which has
+ * no Nation — the badge falls back to the code itself.
+ *
+ * The shield is a squircle: `corner-shape` turns the `rounded-panel` radius from a circular arc
+ * into a superellipse, so the corners stay full rather than being eaten by a circle at this size.
+ * It is a Chromium-only property, which is exactly what this renderer is. The flags are 3:2-ish,
+ * so `object-cover` crops the sides rather than distorting the ratio.
+ */
+const EmblemCell = ({ row }: { readonly row: GridRowView }) => {
+  const flagUrl = nationFlagUrl(row.nationCode);
+  return (
+    <span
+      aria-hidden="true"
+      title={`${row.nationName} (${row.nationCode})`}
+      className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-panel [corner-shape:squircle] border border-border-subtle bg-surface-raised"
+    >
+      {flagUrl === undefined ? (
+        <span className="text-2xs font-semibold text-text-secondary">{row.nationCode}</span>
+      ) : (
+        <img src={flagUrl} alt="" className="size-full object-cover" />
+      )}
+    </span>
+  );
+};
 
 /** The depth control: a native select exposing the tiers the row can express. A dependency row
  *  shows its effective, capped value as static text — the grid never fabricates an override. */

@@ -1,6 +1,6 @@
 import {
+  use,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -76,7 +76,7 @@ const createEmptySession = (): CreationSession => ({
 });
 
 const useCreateSession = (): CreateSessionApi => {
-  const api = useContext(CreateSessionContext);
+  const api = use(CreateSessionContext);
 
   if (api === null) {
     throw new Error("creation step rendered outside CreateFlowLayout");
@@ -397,10 +397,9 @@ export const CreateFlowLayout = () => {
       const error = outcome.failure;
       const message =
         error._tag === "RemoteFailure" &&
-        error.error._tag === "InvalidPillarDistributionError"
-          ? `Invalid pillar distribution: ${
-              error.error.errors?.join(", ") || "unknown error"
-            }`
+          error.error._tag === "InvalidPillarDistributionError"
+          ? `Invalid pillar distribution: ${error.error.errors?.join(", ") || "unknown error"
+          }`
           : error._tag === "RemoteFailure" && error.error._tag === "ClubNotFoundError"
             ? "That club is no longer available. Choose another."
             : `Failed to create career: ${describeRpcError(error)}`;
@@ -550,18 +549,18 @@ export const CreateFlowLayout = () => {
           plan={
             registeredBar === null
               ? describeCreationBottomBar({
-                  step,
-                  generationBlockedReason: blocked,
-                  managerStepComplete,
-                  selectionReady,
-                  clubPicked,
-                  committing: session.commit === "committing",
-                  onCancel: handleCancel,
-                  onBackToLeagues: handleBackToLeagues,
-                  onGoToClubSelection: handleGoToClubSelection,
-                  onGoToReview: handleGoToReview,
-                  onCreateCareer: handleCreateCareer,
-                })
+                step,
+                generationBlockedReason: blocked,
+                managerStepComplete,
+                selectionReady,
+                clubPicked,
+                committing: session.commit === "committing",
+                onCancel: handleCancel,
+                onBackToLeagues: handleBackToLeagues,
+                onGoToClubSelection: handleGoToClubSelection,
+                onGoToReview: handleGoToReview,
+                onCreateCareer: handleCreateCareer,
+              })
               : withShellCancel(registeredBar, creationCancelButton(handleCancel))
           }
         />
@@ -578,15 +577,12 @@ const ReviewPane = ({
   const leagueScope =
     session.leagueSelection === null
       ? "Not selected"
-      : `${session.leagueSelection.estimate.playableNationCount} playable nation${
-          session.leagueSelection.estimate.playableNationCount === 1 ? "" : "s"
-        }, ${
-          session.leagueSelection.estimate.playableCompetitionCount
-        } playable competition${
-          session.leagueSelection.estimate.playableCompetitionCount === 1
-            ? ""
-            : "s"
-        }`;
+      : `${session.leagueSelection.estimate.playableNationCount} playable nation${session.leagueSelection.estimate.playableNationCount === 1 ? "" : "s"
+      }, ${session.leagueSelection.estimate.playableCompetitionCount
+      } playable competition${session.leagueSelection.estimate.playableCompetitionCount === 1
+        ? ""
+        : "s"
+      }`;
 
   return (
     <div className="text-text-body">

@@ -1,4 +1,5 @@
-import { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import * as React from "react";
 import type {
   LeagueSelectionSnapshot,
   LeagueSetupIndexView,
@@ -120,7 +121,7 @@ export const LeagueSelectionScreen = (props: LeagueSelectionScreenProps) => {
   // render keeps the actions inline below the section); inside it, every render
   // re-registers the action cluster so the registered callbacks can never go
   // stale against this screen's reducer state.
-  const createApi = useContext(CreateSessionContext);
+  const createApi = React.use(CreateSessionContext);
 
   // Mount: fetch the catalogue, then restore a setup draft if one applies to this database.
   // Sequential on purpose — a draft is only meaningful once the catalogue it names is present.

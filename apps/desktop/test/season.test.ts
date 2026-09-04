@@ -15,7 +15,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { leagueRoundDates } from "@cm-clone/shared";
+import { cupRoundDate, leagueRoundDates, seasonStartYear, tieWinner } from "@cm-clone/shared";
 import { beginCareer, commitCareer, createSave } from "../src/main/saves.js";
 import { createDefaultSnapshot, createPyramidSnapshot, createSnapshotFor } from "./snapshot-helpers.js";
 import { getSquad } from "../src/main/squad.js";
@@ -505,9 +505,9 @@ it.effect("every loaded competition gets a full dated fixture list, results-only
     strictEqual(rounds.get("comp_eng_1")?.size, 38);
     strictEqual(rounds.get("comp_eng_2")?.size, 46);
     strictEqual(rounds.get("comp_eng_4")?.size, 46);
-    // A cup owns no clubs, so its ties materialise as the bracket resolves rather than at season
-    // start. Nothing here schedules one.
-    ok(!rounds.has("comp_eng_cup"));
+    // A cup owns no clubs, so only the round whose participants are known exists at season start.
+    // Its later rounds materialise as the bracket resolves.
+    deepStrictEqual([...(rounds.get("comp_eng_cup") ?? [])], [1]);
 
     // Every fixture carries a date, and a round's date is the same for every fixture in it.
     for (const fixture of fixtures) {
@@ -566,4 +566,152 @@ it.effect("the fixture list read path carries the date and the round", () =>
       ok(view.fixtures[i]!.date >= view.fixtures[i - 1]!.date);
     }
   }),
+);
+
+// ---------------------------------------------------------------------------
+// Domestic cups (ticket 12)
+// ---------------------------------------------------------------------------
+
+/** Every cup fixture of a save, in bracket order. */
+const loadCupFixtures = (saveId: string, cupId: string) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    return yield* sql<{
+      round: number;
+      homeClubId: string;
+      awayClubId: string;
+      homeGoals: number | null;
+      awayGoals: number | null;
+      homePenalties: number | null;
+      awayPenalties: number | null;
+      scheduledDate: string;
+      played: number;
+    }>`SELECT round, home_club_id as "homeClubId", away_club_id as "awayClubId",
+              home_goals as "homeGoals", away_goals as "awayGoals",
+              home_penalties as "homePenalties", away_penalties as "awayPenalties",
+              scheduled_date as "scheduledDate", played
+       FROM fixtures WHERE competition_id = ${cupId} ORDER BY round ASC, id ASC`;
+  }).pipe(
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
+    Effect.scoped,
+  );
+
+/** How many non-cup fixtures carry a penalty score. Must always be zero. */
+const loadPenaltyBearingLeagueFixtures = (saveId: string) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ count: number }>`
+      SELECT COUNT(*) as "count" FROM fixtures f JOIN competitions c ON c.id = f.competition_id
+      WHERE c.kind <> 'cup' AND (f.home_penalties IS NOT NULL OR f.away_penalties IS NOT NULL)`;
+    return rows[0]?.count ?? 0;
+  }).pipe(
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
+    Effect.scoped,
+  );
+
+/** Advances until the season concludes, or gives up — a season that never ends is the failure. */
+const playWholeSeason = (saveId: SaveId) =>
+  Effect.gen(function* () {
+    for (let advance = 0; advance < 80; advance += 1) {
+      const result = yield* advanceCalendar(savesDir, saveId);
+      if (result.seasonConcluded) return advance + 1;
+    }
+    return null;
+  });
+
+it.effect("a cup runs round by round, and every round is drawn from the last one's winners", () =>
+  Effect.gen(function* () {
+    const snapshotId = yield* createPyramidSnapshot(savesDir);
+    const save = yield* createCareerFrom(snapshotId, 5150, "Cup Career");
+
+    ok((yield* playWholeSeason(save.id)) !== null, "the season should conclude");
+
+    const ties = yield* loadCupFixtures(save.id, "comp_eng_cup");
+    ok(ties.length > 0, "the cup should have played ties");
+    ok(ties.every((tie) => tie.played === 1));
+
+    const byRound = new Map<number, typeof ties>();
+    for (const tie of ties) byRound.set(tie.round, [...(byRound.get(tie.round) ?? []), tie]);
+    const rounds = [...byRound.keys()].sort((a, b) => a - b);
+
+    // Each round is exactly half the size of the one before it, so the bracket is a real bracket.
+    for (let index = 1; index < rounds.length; index += 1) {
+      const previous = byRound.get(rounds[index - 1]!)!;
+      const current = byRound.get(rounds[index]!)!;
+      const winners = new Set(previous.map((tie) => tieWinner({ ...tie, homeGoals: tie.homeGoals ?? 0, awayGoals: tie.awayGoals ?? 0 })));
+      // Round 2 also admits the bye holders; every later round is winners alone.
+      for (const tie of current) {
+        const contested = [tie.homeClubId, tie.awayClubId];
+        if (index > 1) {
+          for (const clubId of contested) {
+            ok(winners.has(clubId), `round ${rounds[index]}: ${clubId} did not win its last tie`);
+          }
+        }
+      }
+    }
+
+    // The final is one tie, and it produced a winner.
+    const final = byRound.get(rounds.at(-1)!)!;
+    strictEqual(final.length, 1);
+  }),
+  180_000,
+);
+
+it.effect("a drawn tie is settled by a shootout, and no other fixture carries penalties", () =>
+  Effect.gen(function* () {
+    const snapshotId = yield* createPyramidSnapshot(savesDir);
+    const save = yield* createCareerFrom(snapshotId, 5150, "Cup Career");
+    yield* playWholeSeason(save.id);
+
+    const ties = yield* loadCupFixtures(save.id, "comp_eng_cup");
+    for (const tie of ties) {
+      // The paired invariant the schema's CHECK enforces, asserted from the other side.
+      strictEqual(tie.homePenalties === null, tie.awayPenalties === null);
+      if (tie.homeGoals === tie.awayGoals) {
+        ok(tie.homePenalties !== null, "a level tie must have gone to penalties");
+        ok(tie.homePenalties !== tie.awayPenalties, "a shootout must produce a winner");
+      } else {
+        strictEqual(tie.homePenalties, null);
+      }
+    }
+
+    ok(
+      ties.some((tie) => tie.homePenalties !== null),
+      "a whole cup should contain at least one shootout",
+    );
+
+    // No league fixture ever goes to penalties: a draw is a legitimate league result.
+    const leaguePenalties = yield* loadPenaltyBearingLeagueFixtures(save.id);
+    strictEqual(leaguePenalties, 0);
+  }),
+  180_000,
+);
+
+it.effect("the bracket reproduces from the world seed alone", () =>
+  Effect.gen(function* () {
+    const first = yield* createCareerFrom(yield* createPyramidSnapshot(savesDir), 5150, "Cup A");
+    const second = yield* createCareerFrom(yield* createPyramidSnapshot(savesDir), 5150, "Cup B");
+    yield* playWholeSeason(first.id);
+    yield* playWholeSeason(second.id);
+
+    const a = yield* loadCupFixtures(first.id, "comp_eng_cup");
+    const b = yield* loadCupFixtures(second.id, "comp_eng_cup");
+
+    deepStrictEqual(a, b);
+  }),
+  300_000,
+);
+
+it.effect("a cup fixture sits on the date its round always had, however late it was drawn", () =>
+  Effect.gen(function* () {
+    const snapshotId = yield* createPyramidSnapshot(savesDir);
+    const save = yield* createCareerFrom(snapshotId, 5150, "Cup Career");
+    const startYear = seasonStartYear(2026, 1);
+    yield* playWholeSeason(save.id);
+
+    for (const tie of yield* loadCupFixtures(save.id, "comp_eng_cup")) {
+      strictEqual(tie.scheduledDate, cupRoundDate(startYear, tie.round));
+    }
+  }),
+  180_000,
 );

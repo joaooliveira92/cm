@@ -3,7 +3,6 @@
 import {
   type CSSProperties,
   type HTMLAttributes,
-  forwardRef,
   useCallback,
   useEffect,
   useId,
@@ -139,20 +138,18 @@ export type LiquidGlassProps = HTMLAttributes<HTMLDivElement> & {
   saturation?: number;
 };
 
-export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(function LiquidGlass(
-  {
-    blur = 2,
-    refraction = 15,
-    mapSize: _mapSize,
-    bezel = 0.34,
-    saturation = 1.28,
-    className,
-    style,
-    children,
-    ...props
-  },
+export function LiquidGlass({
+  blur = 2,
+  refraction = 15,
+  mapSize: _mapSize,
+  bezel = 0.34,
+  saturation = 1.28,
+  className,
+  style,
+  children,
   ref,
-) {
+  ...props
+}: LiquidGlassProps & { ref?: React.Ref<HTMLDivElement> }) {
   const rawId = useId();
   const filterId = useMemo(() => `liquid-glass-${rawId.replace(/:/g, "")}`, [rawId]);
 
@@ -299,4 +296,4 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(function
       )}
     </>
   );
-});
+}

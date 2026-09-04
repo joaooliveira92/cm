@@ -28,11 +28,17 @@ import {
   leagueRoundDates,
   nextManagerOutcome,
   NATION_PROFILES,
+  bracketShape,
+  byeHolders,
   collapseSquadStrength,
+  cupRoundDate,
+  drawRound,
   computeSquadQuality,
   nationCodeFromId,
   resolveByStrength,
+  resolveShootout,
   resultsStrength,
+  tieWinner,
   seasonStartDate,
   seasonStartYear,
   seasonWindows,
@@ -40,6 +46,7 @@ import {
   type ManagerOutcome,
   type PlayerAttributes,
   type RandomSource,
+  type CupFieldEntrant,
   type SeasonWindows,
   type StatureTier,
   type Verdict,
@@ -265,6 +272,9 @@ export const startSeason = (saveId: SaveId) =>
     yield* sql`INSERT INTO season (season_number, game_date, phase)
       VALUES (1, ${seasonStartDate(manifest.referenceYear, 1)}, 'pre_season')`;
     const fixtureCount = yield* generateLeagueFixtures(1, manifest.worldSeed, manifest.referenceYear);
+    // Round 1 of every cup, drawn now because its participants are known now — the field is the
+    // source competitions' opening participant rows.
+    yield* materialiseCupRounds(1, manifest.worldSeed, manifest.referenceYear);
 
     // Fitness ledger (ticket 10): every generated player enters Season 1 at full Condition (100%),
     // with no injury history. `resolveMatchday` writes back full-time Conditions and injury severity
@@ -489,6 +499,14 @@ const clubStrength = (
     });
   });
 
+/** A scoreline, plus the shootout that settled it where one was needed. */
+interface FixtureScore {
+  readonly homeGoals: number;
+  readonly awayGoals: number;
+  readonly homePenalties: number | null;
+  readonly awayPenalties: number | null;
+}
+
 const resolveFixtureScore = (
   homeClubId: ClubId,
   awayClubId: ClubId,
@@ -496,6 +514,8 @@ const resolveFixtureScore = (
   competitionId: string,
   round: number,
   worldSeed: number,
+  /** Knockout ties must produce a winner; a league fixture may draw. */
+  mustProduceWinner: boolean,
 ) =>
   Effect.gen(function* () {
     const homeSquad = yield* loadSquadPlayers(homeClubId);
@@ -512,10 +532,22 @@ const resolveFixtureScore = (
     // with a side that has no players to fill a formation. One match simulation is about a
     // millisecond, so this is what keeps a sixteen-thousand-club world's Continue from costing
     // seconds of blocking work.
+    const settle = (
+      score: { readonly homeGoals: number; readonly awayGoals: number },
+      homeStrength: number,
+      awayStrength: number,
+    ): FixtureScore => {
+      if (!mustProduceWinner || score.homeGoals !== score.awayGoals) {
+        return { ...score, homePenalties: null, awayPenalties: null };
+      }
+      // A drawn tie goes straight to penalties: no extra time, no replay, no second leg.
+      return { ...score, ...resolveShootout(homeStrength, awayStrength, matchSeed) };
+    };
+
     if (homeSquad.length === 0 || awaySquad.length === 0) {
       const home = yield* clubStrength(homeClubId, homeSquad, seasonNumber, worldSeed);
       const away = yield* clubStrength(awayClubId, awaySquad, seasonNumber, worldSeed);
-      return resolveByStrength(home, away, matchSeed);
+      return settle(resolveByStrength(home, away, matchSeed), home, away);
     }
 
     // Recover both clubs' squads toward full before the Fixture — a player carries a shortfall
@@ -558,7 +590,173 @@ const resolveFixtureScore = (
     }
     yield* recordFixtureConditions(seasonNumber, conditions, injuries);
 
-    return { homeGoals: fullTime.homeScore, awayGoals: fullTime.awayScore };
+    // A shootout between two squad-bearing clubs is still decided outside the minute loop, from
+    // the same collapse the depth boundary uses — the engine has no shootout to run.
+    const score = { homeGoals: fullTime.homeScore, awayGoals: fullTime.awayScore };
+    if (!mustProduceWinner || score.homeGoals !== score.awayGoals) {
+      return { ...score, homePenalties: null, awayPenalties: null } satisfies FixtureScore;
+    }
+    return settle(
+      score,
+      yield* clubStrength(homeClubId, homeSquad, seasonNumber, worldSeed),
+      yield* clubStrength(awayClubId, awaySquad, seasonNumber, worldSeed),
+    );
+  });
+
+// ---------------------------------------------------------------------------
+// Cup brackets: drawn round by round, stored only as the fixtures they produce
+// ---------------------------------------------------------------------------
+
+/** Every cup in the save, with the source competitions its entrant edges name. */
+const loadCups = Effect.gen(function* () {
+  const sql = yield* SqlClient;
+  const rows = yield* sql<{ cupId: string; sourceId: string; sourceTier: number | null }>`
+    SELECT ce.cup_competition_id as "cupId", ce.source_competition_id as "sourceId", src.tier as "sourceTier"
+    FROM competition_entrants ce
+    JOIN competitions src ON src.id = ce.source_competition_id
+    ORDER BY ce.cup_competition_id ASC, ce.source_competition_id ASC`;
+
+  const cups = new Map<string, Array<{ sourceId: string; sourceTier: number | null }>>();
+  for (const row of rows) {
+    const sources = cups.get(row.cupId);
+    const source = { sourceId: row.sourceId, sourceTier: row.sourceTier };
+    if (sources) sources.push(source);
+    else cups.set(row.cupId, [source]);
+  }
+  return cups;
+});
+
+/**
+ * A cup's field for one season: the clubs playing in each of its source competitions.
+ *
+ * Derived from participant rows, so a cup's field follows promotion and relegation without anything
+ * being rewritten — the club that went up plays the cup as a top-flight club the season after.
+ */
+const loadCupField = (
+  sources: ReadonlyArray<{ readonly sourceId: string; readonly sourceTier: number | null }>,
+  seasonNumber: number,
+) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const field: Array<CupFieldEntrant> = [];
+    for (const source of sources) {
+      const clubs = yield* sql<{ clubId: ClubId }>`
+        SELECT club_id as "clubId" FROM competition_participants
+        WHERE competition_id = ${source.sourceId} AND season_number = ${seasonNumber}
+        ORDER BY club_id ASC`;
+      for (const club of clubs) field.push({ clubId: club.clubId, sourceTier: source.sourceTier });
+    }
+    return field;
+  });
+
+/** The rounds of one cup that already have fixture rows, with each round's state. */
+const loadCupRounds = (cupId: string, seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    return yield* sql<{
+      round: number;
+      homeClubId: ClubId;
+      awayClubId: ClubId;
+      homeGoals: number | null;
+      awayGoals: number | null;
+      homePenalties: number | null;
+      awayPenalties: number | null;
+      played: number;
+    }>`SELECT round, home_club_id as "homeClubId", away_club_id as "awayClubId",
+              home_goals as "homeGoals", away_goals as "awayGoals",
+              home_penalties as "homePenalties", away_penalties as "awayPenalties", played
+       FROM fixtures WHERE competition_id = ${cupId} AND season_number = ${seasonNumber}
+       ORDER BY round ASC, id ASC`;
+  });
+
+/**
+ * Creates the fixtures of every cup round whose participants have become known.
+ *
+ * Called at season start — where it draws round 1 — and again inside the resolution loop, so a
+ * single Continue that jumps past two cup dates draws the second round from the first round's
+ * results rather than stalling. A round whose previous round is still being played is simply not
+ * drawn yet: that is a state, not an error.
+ *
+ * The date a round is played on comes from the slot template and is a pure function of the round, so
+ * it is the same date whether the row was computed in August or in March.
+ */
+const materialiseCupRounds = (seasonNumber: number, worldSeed: number, referenceYear: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const cups = yield* loadCups;
+    const startYear = seasonStartYear(referenceYear, seasonNumber);
+
+    for (const [cupId, sources] of cups) {
+      const field = yield* loadCupField(sources, seasonNumber);
+      const shape = bracketShape(field.length);
+      if (shape === null) continue;
+
+      const existing = yield* loadCupRounds(cupId, seasonNumber);
+      const lastRound = existing.reduce((highest, row) => Math.max(highest, row.round), 0);
+
+      // Who contests the next round. Round 1 is the field minus its byes; every later round is the
+      // previous round's winners, joined in round 2 by the clubs that sat out.
+      let nextRound: number;
+      let participants: ReadonlyArray<string>;
+      if (lastRound === 0) {
+        const byes = new Set(byeHolders(field, shape.byes));
+        nextRound = 1;
+        participants = field.map((entrant) => entrant.clubId).filter((clubId) => !byes.has(clubId));
+      } else {
+        const previous = existing.filter((row) => row.round === lastRound);
+        if (previous.some((row) => row.played === 0)) continue;
+
+        const winners = previous.map((row) =>
+          tieWinner({
+            homeClubId: row.homeClubId,
+            awayClubId: row.awayClubId,
+            homeGoals: row.homeGoals ?? 0,
+            awayGoals: row.awayGoals ?? 0,
+            homePenalties: row.homePenalties,
+            awayPenalties: row.awayPenalties,
+          }),
+        );
+        const byesEnteringNow =
+          lastRound === 1 ? byeHolders(field, shape.byes) : ([] as ReadonlyArray<string>);
+        nextRound = lastRound + 1;
+        participants = [...winners, ...byesEnteringNow];
+      }
+
+      // One club left is the cup won, not a round to draw.
+      if (participants.length < 2 || nextRound > shape.rounds) continue;
+
+      const date = cupRoundDate(startYear, nextRound);
+      if (date === null) {
+        return yield* new CalendarSlotsExhaustedError({ competitionId: cupId, rounds: nextRound });
+      }
+
+      const drawSeed = deriveSeed(worldSeed, "draw", cupId, seasonNumber, nextRound);
+      for (const tie of drawRound(participants, drawSeed)) {
+        yield* sql`INSERT INTO fixtures (season_number, competition_id, round, scheduled_date, home_club_id, away_club_id, home_goals, away_goals, home_penalties, away_penalties, played)
+          VALUES (${seasonNumber}, ${cupId}, ${nextRound}, ${date}, ${tie.homeClubId}, ${tie.awayClubId}, NULL, NULL, NULL, NULL, 0)`;
+      }
+    }
+  });
+
+/**
+ * Whether any cup still has a round to draw — a season is not over while one has.
+ *
+ * The unplayed-fixture count cannot answer this on its own: between a round resolving and the next
+ * being drawn there is a moment with no unplayed cup fixture and a cup that is not finished.
+ */
+const cupRoundsOutstanding = (seasonNumber: number) =>
+  Effect.gen(function* () {
+    const cups = yield* loadCups;
+    for (const [cupId, sources] of cups) {
+      const field = yield* loadCupField(sources, seasonNumber);
+      const shape = bracketShape(field.length);
+      if (shape === null) continue;
+      const existing = yield* loadCupRounds(cupId, seasonNumber);
+      const lastRound = existing.reduce((highest, row) => Math.max(highest, row.round), 0);
+      if (lastRound < shape.rounds) return true;
+      if (existing.some((row) => row.played === 0)) return true;
+    }
+    return false;
   });
 
 /**
@@ -578,43 +776,57 @@ const resolveDueFixtures = (throughDate: string) =>
     // The fixture's match seed derives from the world seed (ticket 01). Read once per advance —
     // the value is stored and replayable, so this is not a fresh-entropy draw.
     const manifest = yield* readGenerationManifest;
-    const fixtureRows = yield* sql<{
-      id: FixtureId;
-      homeClubId: ClubId;
-      awayClubId: ClubId;
-      seasonNumber: number;
-      competitionId: string;
-      round: number;
-      depth: string;
-    }>`SELECT f.id, f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
-              f.season_number as "seasonNumber", f.competition_id as "competitionId", f.round, c.depth
-       FROM fixtures f
-       JOIN competitions c ON c.id = f.competition_id
-       WHERE f.played = 0 AND f.scheduled_date <= ${throughDate}
-       ORDER BY f.scheduled_date ASC, f.id ASC`;
-
     const results: Array<FixtureResult> = [];
-    for (const fixture of fixtureRows) {
-      const { homeGoals, awayGoals } = yield* resolveFixtureScore(
-        fixture.homeClubId,
-        fixture.awayClubId,
-        fixture.seasonNumber,
-        fixture.competitionId,
-        fixture.round,
-        manifest.worldSeed,
-      );
-      yield* sql`UPDATE fixtures SET home_goals = ${homeGoals}, away_goals = ${awayGoals}, played = 1 WHERE id = ${fixture.id}`;
-      if (fixture.depth === PLAYABLE_DEPTH) {
-        results.push({
-          fixtureId: fixture.id,
-          homeClubId: fixture.homeClubId,
-          awayClubId: fixture.awayClubId,
-          homeGoals,
-          awayGoals,
-        });
+
+    // Draw, resolve, draw again. One Continue can jump past two cup dates, and the second round's
+    // participants are not known until the first has been played — so materialising once up front
+    // would silently skip a round rather than play it.
+    for (;;) {
+      const seasonNumber = (yield* loadSeasonRow).seasonNumber;
+      yield* materialiseCupRounds(seasonNumber, manifest.worldSeed, manifest.referenceYear);
+
+      const fixtureRows = yield* sql<{
+        id: FixtureId;
+        homeClubId: ClubId;
+        awayClubId: ClubId;
+        seasonNumber: number;
+        competitionId: string;
+        round: number;
+        depth: string;
+        kind: string;
+      }>`SELECT f.id, f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
+                f.season_number as "seasonNumber", f.competition_id as "competitionId", f.round,
+                c.depth, c.kind
+         FROM fixtures f
+         JOIN competitions c ON c.id = f.competition_id
+         WHERE f.played = 0 AND f.scheduled_date <= ${throughDate}
+         ORDER BY f.scheduled_date ASC, f.id ASC`;
+      if (fixtureRows.length === 0) return results;
+
+      for (const fixture of fixtureRows) {
+        const score = yield* resolveFixtureScore(
+          fixture.homeClubId,
+          fixture.awayClubId,
+          fixture.seasonNumber,
+          fixture.competitionId,
+          fixture.round,
+          manifest.worldSeed,
+          fixture.kind === "cup",
+        );
+        yield* sql`UPDATE fixtures SET home_goals = ${score.homeGoals}, away_goals = ${score.awayGoals},
+            home_penalties = ${score.homePenalties}, away_penalties = ${score.awayPenalties}, played = 1
+          WHERE id = ${fixture.id}`;
+        if (fixture.depth === PLAYABLE_DEPTH) {
+          results.push({
+            fixtureId: fixture.id,
+            homeClubId: fixture.homeClubId,
+            awayClubId: fixture.awayClubId,
+            homeGoals: score.homeGoals,
+            awayGoals: score.awayGoals,
+          });
+        }
       }
     }
-    return results;
   });
 
 // ---------------------------------------------------------------------------
@@ -672,6 +884,33 @@ export const nextCalendarBoundary = (horizon: CalendarHorizon): CalendarBoundary
   return { type: "seasonEnd", date: horizon.finalUnplayedDate };
 };
 
+/**
+ * The date the next undrawn cup round would be played on, from the slot template.
+ *
+ * The template is a pure function of the round, so this is knowable before the round exists — which
+ * is exactly what lets a fixture be created only once its participants are known while its date was
+ * fixed all along.
+ */
+const nextCupRoundDate = (row: SeasonRow, referenceYear: number) =>
+  Effect.gen(function* () {
+    const cups = yield* loadCups;
+    const startYear = seasonStartYear(referenceYear, row.seasonNumber);
+    let soonest: string | null = null;
+    for (const [cupId, sources] of cups) {
+      const field = yield* loadCupField(sources, row.seasonNumber);
+      const shape = bracketShape(field.length);
+      if (shape === null) continue;
+      const existing = yield* loadCupRounds(cupId, row.seasonNumber);
+      const lastRound = existing.reduce((highest, entry) => Math.max(highest, entry.round), 0);
+      if (lastRound >= shape.rounds) continue;
+      const date = cupRoundDate(startYear, lastRound + 1);
+      if (date !== null && date > row.currentDate && (soonest === null || date < soonest)) {
+        soonest = date;
+      }
+    }
+    return soonest;
+  });
+
 /** Reads the horizon from the fixture rows themselves. Per-competition progress is never stored. */
 const loadCalendarHorizon = (row: SeasonRow, referenceYear: number) =>
   Effect.gen(function* () {
@@ -683,10 +922,20 @@ const loadCalendarHorizon = (row: SeasonRow, referenceYear: number) =>
     const remaining = yield* sql<{ date: string | null }>`
       SELECT MAX(scheduled_date) as "date" FROM fixtures WHERE played = 0`;
 
+    // A cup between rounds holds no unplayed fixture and is not finished. Its next round is drawn
+    // inside the resolution loop, so the horizon has to admit that there is still football ahead of
+    // it — otherwise the advance would conclude the season on the evening of a semi-final.
+    const cupPending = yield* cupRoundsOutstanding(row.seasonNumber);
+    const nextCupDate = cupPending ? yield* nextCupRoundDate(row, referenceYear) : null;
+    const later = (a: string | null, b: string | null) =>
+      a === null ? b : b === null ? a : a > b ? a : b;
+    const earlier = (a: string | null, b: string | null) =>
+      a === null ? b : b === null ? a : a < b ? a : b;
+
     return {
       currentDate: row.currentDate,
-      nextPlayableDate: playable[0]?.date ?? null,
-      finalUnplayedDate: remaining[0]?.date ?? null,
+      nextPlayableDate: earlier(playable[0]?.date ?? null, nextCupDate),
+      finalUnplayedDate: later(remaining[0]?.date ?? null, nextCupDate),
       windows: seasonWindows(seasonStartYear(referenceYear, row.seasonNumber)),
     } satisfies CalendarHorizon;
   });
@@ -847,7 +1096,8 @@ export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
         // league table is already final by the time a cup final plays.
         const remaining = yield* sql<{ count: number }>`
           SELECT COUNT(*) as "count" FROM fixtures WHERE played = 0`;
-        const concluded = (remaining[0]?.count ?? 0) === 0;
+        const concluded =
+          (remaining[0]?.count ?? 0) === 0 && !(yield* cupRoundsOutstanding(row.seasonNumber));
         const phase = concluded ? "season_complete" : phaseAt(boundary.date);
         yield* sql`UPDATE season SET game_date = ${boundary.date}, phase = ${phase} WHERE season_number = ${row.seasonNumber}`;
 

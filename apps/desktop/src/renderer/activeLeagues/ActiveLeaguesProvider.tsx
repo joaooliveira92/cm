@@ -1,12 +1,12 @@
 import {
   createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
-  type ReactNode,
+  useState,
 } from "react";
+import * as React from "react";
 import type {
   AdvancedOptionsPayload,
   LeagueSetupIndexView,
@@ -76,7 +76,7 @@ export interface ActiveLeaguesContextValue {
 const ActiveLeaguesContext = createContext<ActiveLeaguesContextValue | null>(null);
 
 export const useActiveLeagues = (): ActiveLeaguesContextValue => {
-  const value = useContext(ActiveLeaguesContext);
+  const value = React.use(ActiveLeaguesContext);
   if (value === null) {
     throw new Error("active-leagues screen rendered outside ActiveLeaguesProvider");
   }
@@ -87,7 +87,7 @@ export interface ActiveLeaguesProviderProps {
   readonly index: LeagueSetupIndexView;
   readonly initialIntents?: readonly NationSelectionIntentPayload[];
   readonly initialAdvancedOptions?: AdvancedOptionsPayload;
-  readonly children: ReactNode;
+  readonly children: React.ReactNode;
 }
 
 export const ActiveLeaguesProvider = ({
@@ -126,7 +126,7 @@ const ActiveLeaguesInner = ({
 }: {
   readonly index: LeagueSetupIndexView;
   readonly initial: ActiveLeaguesSetupState;
-  readonly children: ReactNode;
+  readonly children: React.ReactNode;
 }) => {
   const atomsRef = useRef<ActiveLeaguesAtoms | null>(null);
   atomsRef.current ??= createActiveLeaguesAtoms(index, initial);

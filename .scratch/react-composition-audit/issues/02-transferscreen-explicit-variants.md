@@ -72,6 +72,7 @@ Move the Keep/Discard dialog logic into a dedicated `DraftLifecycle` compound co
 
 ## Comments
 
+- **Superseded** by tickets 12–16 in this directory. This ticket's proposed `TransferMarketProvider` draft dropped the stable-handler ref mechanism (a stale-closure correctness risk) and described state that does not match the code. The superseding set preserves those refs as a standalone prefactoring (12) before lifting state to a provider (13), then splits the presentational leaves (14), the bid composer and counter-offer modal (15), and finally thins the shell (16). This ticket's approved body is left unchanged.
 - This refactor addresses CRITICAL composition violations and duplicated logic between market and free agent tables.
 - The shared sort/filter logic should be extracted into a `useTableSortAndFilter` hook before splitting components.
 - The dirty-draft lifecycle is a good candidate for an explicit variant component since it represents a distinct UI flow.
