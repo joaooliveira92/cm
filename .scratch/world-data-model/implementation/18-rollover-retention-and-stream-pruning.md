@@ -40,3 +40,22 @@ season and is not a failure.
 - [ ] A season summary for a past season still reads, sourced from the frozen participant rows rather
       than from deleted fixtures.
 - [ ] `pnpm check:all` is green at this commit.
+
+## Input from ticket 13
+
+The rollover landed with **nothing pruned**, which is a starting position rather than an answer.
+
+`season` was described as a per-save singleton, but three tables key onto `season_number` —
+`fixtures`, `board_objective`, and `player_fitness`. A singleton whose number advanced at the
+rollover could only work by deleting every child row of the season just finished, which would have
+made this ticket's decision by deletion. So `season` now holds one row per season and nothing is
+discarded: season 1's fixtures are still on disk after the rollover, and so is its board objective.
+
+`player_fitness` is the exception, and not by choice: its primary key is `player_id` alone, so it is
+a current-state ledger with a season stamp rather than per-season history. The rollover updates those
+rows in place. If retention wants a fitness history, that table needs a composite key first.
+
+What this ticket has to decide: whether a save keeps every season's fixtures forever, and what a
+growing `fixtures` table costs after ten seasons at pyramid scale. The freeze is what makes any
+answer safe — final positions live on participant rows, so discarding fixtures never discards a
+table.

@@ -59,7 +59,7 @@ const loadSeasonRow = Effect.gen(function* () {
     seasonNumber: number;
     currentDate: string;
     phase: SeasonRow["phase"];
-  }>`SELECT season_number as "seasonNumber", game_date as "currentDate", phase FROM season LIMIT 1`;
+  }>`SELECT season_number as "seasonNumber", game_date as "currentDate", phase FROM season ORDER BY season_number DESC LIMIT 1`;
   return rows[0]!;
 });
 

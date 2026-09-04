@@ -9,9 +9,19 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe } from "vitest";
 import { NationId, NationSelectionIntentPayload, ScopeOptionId } from "@cm-clone/contracts";
+import { createSeededRng, deriveSeed } from "@cm-clone/game-engine";
+import {
+  collapseSquadStrength,
+  computeSquadQuality,
+  generateSquadAtStrength,
+  positionRating,
+  POSITIONS,
+  SQUAD_SLOTS,
+  type PlayerAttributes,
+} from "@cm-clone/shared";
 import { beginCareer, commitCareer } from "../src/main/saves.js";
-import { advanceCalendar } from "../src/main/season.js";
-import { createSnapshotFor } from "./snapshot-helpers.js";
+import { advanceCalendar, discardSquadsForClubs } from "../src/main/season.js";
+import { createPyramidSnapshot, createSnapshotFor } from "./snapshot-helpers.js";
 
 /**
  * Simulation Depth's whole footprint on disk.
@@ -112,6 +122,47 @@ const clubRow = (clubId: string) =>
 
 const GERMAN_CLUB = "club_deu_1_01";
 
+/** The collapse the depth boundary uses, over a freshly generated squad. */
+const collapseOf = (squad: ReadonlyArray<{ readonly attributes: unknown }>): number =>
+  collapseSquadStrength(
+    computeSquadQuality(
+      squad.map((player, index) => ({
+        id: String(index),
+        positionRatings: Object.fromEntries(
+          POSITIONS.map((position) => [
+            position,
+            positionRating(player.attributes as PlayerAttributes, position),
+          ]),
+        ),
+      })),
+    )?.meanPositionRating ?? 0,
+  );
+
+/** A committed career from an arbitrary snapshot, managing a top-division club. */
+const committedCareerFrom = (snapshotId: Parameters<typeof beginCareer>[1]["snapshotId"], worldSeed: number) =>
+  Effect.gen(function* () {
+    const { id } = yield* beginCareer(savesDir, {
+      worldSeed,
+      referenceYear: 2026,
+      userDataDir: savesDir,
+      snapshotId,
+    });
+    const clubId = yield* withSave(
+      id,
+      Effect.gen(function* () {
+        const sql = yield* SqlClient;
+        const rows = yield* sql<{ id: string }>`SELECT id FROM clubs WHERE id LIKE 'club_eng_1_%' ORDER BY id LIMIT 1`;
+        return rows[0]!.id;
+      }),
+    );
+    yield* commitCareer(savesDir, id, "Depth Rollover", clubId, {
+      managerName: "Depth Rollover",
+      archetypeOrigin: "custom",
+      pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
+    });
+    return id;
+  });
+
 describe("a results-only club", () => {
   it.effect("holds no rows in the five tables beneath it", () =>
     Effect.gen(function* () {
@@ -193,4 +244,84 @@ describe("a results-only competition still plays its season", () => {
     }),
     120_000,
   );
+});
+
+describe("crossing the depth boundary at the rollover", () => {
+  it.effect("discards a relegated club's squad and conjures one for a promoted club", () =>
+    Effect.gen(function* () {
+      // Staged rather than selected, for the reason ticket 12's mixed-tie test records: no shipped
+      // scope option puts a results-only division and a playable one in the same pyramid. Putting
+      // the fourth division at results-only and discarding its squads *is* what that state is.
+      const snapshotId = yield* createPyramidSnapshot(savesDir);
+      const saveId = yield* committedCareerFrom(snapshotId, 5150);
+
+      yield* withSave(
+        saveId,
+        Effect.gen(function* () {
+          const sql = yield* SqlClient;
+          yield* sql`UPDATE competitions SET depth = 'results-only' WHERE id = 'comp_eng_4'`;
+          const demoted = yield* sql<{ clubId: string }>`
+            SELECT club_id as "clubId" FROM competition_participants
+            WHERE competition_id = 'comp_eng_4' AND season_number = 1`;
+          yield* discardSquadsForClubs(demoted.map((row) => row.clubId));
+        }),
+      );
+
+      for (let advance = 0; advance < 200; advance += 1) {
+        const result = yield* advanceCalendar(savesDir, saveId);
+        if (result.season.seasonNumber >= 2) break;
+      }
+
+      const crossings = yield* withSave(
+        saveId,
+        Effect.gen(function* () {
+          const sql = yield* SqlClient;
+          // Clubs whose division changed depth across the rollover, and the squads they now hold.
+          return yield* sql<{ clubId: string; from: string; to: string; squadSize: number }>`
+            SELECT a.club_id as "clubId", ca.depth as "from", cb.depth as "to",
+                   (SELECT COUNT(*) FROM players p WHERE p.club_id = a.club_id) as "squadSize"
+            FROM competition_participants a
+            JOIN competition_participants b ON b.club_id = a.club_id AND b.season_number = 2
+            JOIN competitions ca ON ca.id = a.competition_id
+            JOIN competitions cb ON cb.id = b.competition_id
+            WHERE a.season_number = 1 AND ca.kind <> 'cup' AND cb.kind <> 'cup'
+              AND ca.depth <> cb.depth`;
+        }),
+      );
+
+      const promoted = crossings.filter((row) => row.from === "results-only");
+      const relegated = crossings.filter((row) => row.to === "results-only");
+      ok(promoted.length > 0, "a club should have climbed out of the results-only division");
+      ok(relegated.length > 0, "a club should have dropped into it");
+
+      // Conjured upward: a promoted club arrives with a squad it can field.
+      for (const club of promoted) {
+        ok(club.squadSize >= 11, `${club.clubId} was promoted with ${club.squadSize} players`);
+      }
+      // Discarded downward: a relegated club's players are gone, irreversibly.
+      for (const club of relegated) {
+        strictEqual(club.squadSize, 0, `${club.clubId} kept players it should have lost`);
+      }
+    }),
+    900_000,
+  );
+
+  it("gives a promoted club a squad at the strength it was already performing at", () => {
+      // Directly against the calibration, without a whole pyramid season: the search has to land on
+      // the target, and that is what stops a promoted club's first fixture contradicting its last.
+      const target = 44;
+      const squad = generateSquadAtStrength(
+        { tier: 2, nationPrior: 0.8, statureTier: "mid" },
+        {
+          referenceYear: 2026,
+          clubNation: "ENG",
+          randomForSlot: (slot) => createSeededRng(deriveSeed(4242, "player", slot.index)),
+        },
+        target,
+        (generated) => collapseOf(generated),
+      );
+
+    ok(Math.abs(collapseOf(squad) - target) <= 2, `landed on ${collapseOf(squad)}, wanted ${target}`);
+    strictEqual(squad.length, SQUAD_SLOTS.length);
+  });
 });

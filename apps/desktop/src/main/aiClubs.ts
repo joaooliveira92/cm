@@ -76,6 +76,9 @@ export const pickBestFormationTactic = (
  * independent so order has no effect on the outcome — kept for consistency with the transfer-
  * window orchestration below, where order does matter.
  */
+/** A side. Below this no formation can be filled, whatever the formation. */
+export const ELEVEN = 11;
+
 export const assignAiTactics = Effect.gen(function* () {
   const sql = yield* SqlClient;
   const clubs = yield* sql<{
@@ -86,10 +89,12 @@ export const assignAiTactics = Effect.gen(function* () {
   for (const club of clubs) {
     if (club.isUserClub === 1) continue;
     const squad = yield* loadSquadPlayers(club.id);
-    // A club with no players has no formation to pick and nothing to write a tactic about. This is
-    // not a Depth branch: it reads the rows, and the absence of rows *is* Depth's whole footprint
-    // on disk. A results-only club and a club whose squad was deleted are the same case here.
-    if (squad.length === 0) continue;
+    // A club that cannot field eleven has no formation to pick and nothing to write a tactic about.
+    // This is not a Depth branch: it reads the rows, and the absence of rows *is* Depth's whole
+    // footprint on disk. A results-only club, a club whose squad was deleted, and a club left short
+    // by a season's contract expiries are all the same case here — and the last one is why the test
+    // is "can field a side" rather than "has any players at all".
+    if (squad.length < ELEVEN) continue;
     const tactic = yield* pickBestFormationTactic(squad);
     yield* validateTactic(tactic, new Set(squad.map((player) => player.id)));
     yield* persistTactic(club.id, tactic);

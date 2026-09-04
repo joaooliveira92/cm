@@ -17,7 +17,12 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { cupRoundDate, leagueRoundDates, tieWinner } from "@cm-clone/shared";
 import { beginCareer, commitCareer, createSave } from "../src/main/saves.js";
-import { createDefaultSnapshot, createPyramidSnapshot, createSnapshotFor } from "./snapshot-helpers.js";
+import {
+  createDefaultSnapshot,
+  createPyramidSnapshot,
+  createRegionalSnapshot,
+  createSnapshotFor,
+} from "./snapshot-helpers.js";
 import { getSquad } from "../src/main/squad.js";
 import {
   advanceCalendar,
@@ -374,14 +379,12 @@ it.effect("league table orders by points, then goal difference, then goals score
   }),
 );
 
-it.effect("the season concludes once, after the last dated fixture, and then refuses to advance", () =>
+it.effect("the season concludes once, after the last dated fixture, and the career rolls on", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
 
     let conclusions = 0;
-    let advances = 0;
-    while (advances < 60) {
-      advances += 1;
+    for (let advance = 0; advance < 60; advance += 1) {
       const result = yield* advanceCalendar(savesDir, save.id);
       if (result.seasonConcluded) {
         conclusions += 1;
@@ -391,16 +394,19 @@ it.effect("the season concludes once, after the last dated fixture, and then ref
 
     strictEqual(conclusions, 1, "the season should conclude exactly once");
 
+    // Season 1's football is all played, and season 2 is open in its pre-season. A career has a
+    // direction beyond one table, so conclusion is a rollover rather than a full stop.
     const view = yield* getFixtures(savesDir, save.id);
-    strictEqual(view.season.phase, "season_complete");
-    ok(view.fixtures.every((fixture) => fixture.played));
-    // Conclusion lands on the last dated fixture of the season rather than on an invented end.
-    strictEqual(view.season.currentDate, view.fixtures.at(-1)!.date);
+    strictEqual(view.season.seasonNumber, 2);
+    strictEqual(view.season.phase, "pre_season");
+    ok(view.fixtures.every((fixture) => !fixture.played), "season 2 has not kicked off yet");
 
-    const result = yield* Effect.exit(advanceCalendar(savesDir, save.id));
-    ok(result._tag === "Failure");
+    // Continue keeps working.
+    const next = yield* advanceCalendar(savesDir, save.id);
+    strictEqual(next.season.seasonNumber, 2);
+    ok(next.resolvedDate !== null);
   }),
-  120_000,
+  180_000,
 );
 
 // ---------------------------------------------------------------------------
@@ -591,7 +597,8 @@ const loadCupFixtures = (saveId: string, cupId: string) =>
               home_goals as "homeGoals", away_goals as "awayGoals",
               home_penalties as "homePenalties", away_penalties as "awayPenalties",
               scheduled_date as "scheduledDate", played
-       FROM fixtures WHERE competition_id = ${cupId} ORDER BY round ASC, id ASC`;
+       FROM fixtures WHERE competition_id = ${cupId} AND season_number = 1
+       ORDER BY round ASC, id ASC`;
   }).pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
     Effect.scoped,
@@ -702,7 +709,7 @@ it.effect("the bracket reproduces from the world seed alone", () =>
     const a = yield* loadCupFixtures(first.id, "comp_eng_cup");
     const b = yield* loadCupFixtures(second.id, "comp_eng_cup");
 
-    ok(a.length > 0 && a.some((tie) => tie.round > 1), "the bracket should have progressed");
+    ok(a.some((tie) => tie.round > 1), "the bracket should have progressed");
     deepStrictEqual(a, b);
   }),
   180_000,
@@ -835,4 +842,141 @@ it.effect("the cup winner is the participant whose final position is 1", () =>
     ok([final[0]!.homeClubId, final[0]!.awayClubId].includes(frozen[1]!.clubId));
   }),
   180_000,
+);
+
+// ---------------------------------------------------------------------------
+// Promotion, relegation, and the rollover (ticket 13)
+// ---------------------------------------------------------------------------
+
+/** Every competition's field for one season, keyed by competition, in frozen order where frozen. */
+const loadFields = (saveId: string, seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{
+      competitionId: string;
+      clubId: string;
+      finalPosition: number | null;
+      points: number | null;
+    }>`SELECT competition_id as "competitionId", club_id as "clubId",
+              final_position as "finalPosition", points
+       FROM competition_participants WHERE season_number = ${seasonNumber}
+       ORDER BY competition_id ASC, final_position ASC, club_id ASC`;
+    const fields = new Map<string, Array<(typeof rows)[number]>>();
+    for (const row of rows) fields.set(row.competitionId, [...(fields.get(row.competitionId) ?? []), row]);
+    return fields;
+  }).pipe(
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
+    Effect.scoped,
+  );
+
+/** Plays seasons until the save has rolled into `target`. */
+const playUntilSeason = (saveId: SaveId, target: number) =>
+  Effect.gen(function* () {
+    for (let advance = 0; advance < 200; advance += 1) {
+      const result = yield* advanceCalendar(savesDir, saveId);
+      if (result.season.seasonNumber >= target) return true;
+    }
+    return false;
+  });
+
+it.effect("the rollover exchanges clubs along every link and keeps each division the same size", () =>
+  Effect.gen(function* () {
+    const snapshotId = yield* createPyramidSnapshot(savesDir);
+    const save = yield* createCareerFrom(snapshotId, 5150, "Rollover");
+    ok(yield* playUntilSeason(save.id, 2), "the save should reach season 2");
+
+    const first = yield* loadFields(save.id, 1);
+    const second = yield* loadFields(save.id, 2);
+
+    for (const [competitionId, field] of first) {
+      if (competitionId.endsWith("_cup")) continue;
+      strictEqual(
+        second.get(competitionId)?.length,
+        field.length,
+        `${competitionId} changed size across the rollover`,
+      );
+    }
+
+    // Somebody actually moved: a rollover that exchanged nobody would satisfy the count check.
+    const movers = [...first].filter(([competitionId, field]) => {
+      if (competitionId.endsWith("_cup")) return false;
+      const next = new Set((second.get(competitionId) ?? []).map((row) => row.clubId));
+      return field.some((row) => !next.has(row.clubId));
+    });
+    ok(movers.length > 0, "at least one division should have exchanged clubs");
+  }),
+  600_000,
+);
+
+it.effect("the frozen table survives into the next season unchanged", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Rollover");
+    ok(yield* playUntilSeason(save.id, 2));
+
+    const frozen = yield* loadFields(save.id, 1);
+    const league = frozen.get("comp_eng_1")!;
+    // Every club has a final position, and they are exactly 1..20 with no gaps or repeats.
+    deepStrictEqual(
+      league.map((row) => row.finalPosition),
+      Array.from({ length: league.length }, (_, index) => index + 1),
+    );
+    ok(league.every((row) => row.points !== null));
+
+    // Season 2's football does not touch it: the previous season's table is readable without
+    // recomputing anything from fixtures that have since been replaced.
+    yield* advanceCalendar(savesDir, save.id);
+    deepStrictEqual(yield* loadFields(save.id, 1), frozen);
+  }),
+  240_000,
+);
+
+it.effect("nothing drops out of the lowest division or climbs out of the highest", () =>
+  Effect.gen(function* () {
+    const snapshotId = yield* createPyramidSnapshot(savesDir);
+    const save = yield* createCareerFrom(snapshotId, 5150, "Closed World");
+    ok(yield* playUntilSeason(save.id, 2));
+
+    const first = yield* loadFields(save.id, 1);
+    const second = yield* loadFields(save.id, 2);
+
+    // The world is closed at the edge of the chosen scope: every club in season 2 was in the world
+    // in season 1, and every club in season 1 is still in it.
+    const clubsIn = (fields: typeof first) =>
+      new Set([...fields].filter(([id]) => !id.endsWith("_cup")).flatMap(([, field]) => field.map((row) => row.clubId)));
+    deepStrictEqual([...clubsIn(second)].sort(), [...clubsIn(first)].sort());
+  }),
+  600_000,
+);
+
+it.effect("a division fed by two parallel regional divisions exchanges with both", () =>
+  Effect.gen(function* () {
+    const snapshotId = yield* createRegionalSnapshot(savesDir);
+    const save = yield* createCareerFrom(snapshotId, 5150, "Regional");
+    ok(yield* playUntilSeason(save.id, 2));
+
+    const links = yield* withSaveWrite(
+      save.id,
+      Effect.gen(function* () {
+        const sql = yield* SqlClient;
+        return yield* sql<{ higher: string; lower: string; slots: number }>`
+          SELECT higher_competition_id as "higher", lower_competition_id as "lower", slots
+          FROM competition_links ORDER BY lower_competition_id ASC`;
+      }),
+    );
+    const parallel = links.filter((link) => link.higher === links[0]!.higher);
+    ok(parallel.length >= 2, "the regional scope should have two divisions feeding one");
+
+    const first = yield* loadFields(save.id, 1);
+    const second = yield* loadFields(save.id, 2);
+    for (const link of parallel) {
+      const before = new Set((first.get(link.lower) ?? []).map((row) => row.clubId));
+      const after = new Set((second.get(link.lower) ?? []).map((row) => row.clubId));
+      strictEqual(before.size, after.size, `${link.lower} changed size`);
+      ok(
+        [...before].some((clubId) => !after.has(clubId)),
+        `${link.lower} promoted nobody into the division above`,
+      );
+    }
+  }),
+  600_000,
 );

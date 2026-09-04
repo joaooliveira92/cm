@@ -204,33 +204,56 @@ export const generateWorld = ({ worldSeed, referenceYear, snapshotId, world }: W
           randomForSlot: (slot) => createSeededRng(deriveSeed(clubSeed, "player", slot.index)),
         });
 
-        for (const generated of squad) {
-          const playerSeed = deriveSeed(clubSeed, "player", generated.slot.index);
-          const playerId = PlayerId.make(deriveId(clubSeed, "player", generated.slot.index));
-          const a = generated.attributes;
+        yield* insertGeneratedSquad(clubId, squad, clubSeed);
+      }
+    }
+  });
 
-          yield* sql`INSERT INTO players (
-            id, club_id, first_name, last_name, date_of_birth, potential_ability, nationality, birth_city_id,
-            passing, shooting, tackling, dribbling, heading, crossing, finishing, first_touch,
-            positioning, decisions, composure, determination, teamwork, flair, bravery, aggression,
-            pace, acceleration, stamina, strength, agility, natural_fitness, injury_proneness,
-            gk_handling, gk_reflexes, gk_aerial_reach, gk_command_of_area, gk_kicking,
-            squad_slot, generation_seed
-          ) VALUES (
-            ${playerId}, ${clubId}, ${generated.firstName}, ${generated.lastName}, ${generated.dateOfBirth}, ${generated.potentialAbility},
-            ${canonicalNationId(generated.nationality)},
-            ${generated.birthCity === null ? null : canonicalCityId(generated.birthCity.nationCode, generated.birthCity.name)},
-            ${attr(a, "passing")}, ${attr(a, "shooting")}, ${attr(a, "tackling")}, ${attr(a, "dribbling")}, ${attr(a, "heading")}, ${attr(a, "crossing")}, ${attr(a, "finishing")}, ${attr(a, "firstTouch")},
-            ${attr(a, "positioning")}, ${attr(a, "decisions")}, ${attr(a, "composure")}, ${attr(a, "determination")}, ${attr(a, "teamwork")}, ${attr(a, "flair")}, ${attr(a, "bravery")}, ${attr(a, "aggression")},
-            ${attr(a, "pace")}, ${attr(a, "acceleration")}, ${attr(a, "stamina")}, ${attr(a, "strength")}, ${attr(a, "agility")}, ${attr(a, "naturalFitness")}, ${attr(a, "injuryProneness")},
-            ${attr(a, "gkHandling")}, ${attr(a, "gkReflexes")}, ${attr(a, "gkAerialReach")}, ${attr(a, "gkCommandOfArea")}, ${attr(a, "gkKicking")},
-            ${generated.slot.index}, ${playerSeed}
-          )`;
 
-          for (const position of generated.positions) {
-            yield* sql`INSERT INTO player_positions (player_id, position, familiarity) VALUES (${playerId}, ${position.position}, ${position.familiarity})`;
-          }
-        }
+/**
+ * Writes one generated squad: the player rows and their position familiarities.
+ *
+ * Shared by world generation and by the rollover that conjures a squad for a club promoted out of a
+ * `results-only` division, so the two produce byte-identical shapes — a promoted club's players are
+ * not a second kind of player. The seed is supplied by the caller because the two differ in exactly
+ * one respect: a rollover squad keys on the season as well as the slot, so a club promoted twice
+ * does not get the same eleven back.
+ */
+export const insertGeneratedSquad = (
+  clubId: ClubId,
+  squad: ReadonlyArray<GeneratedPlayer & { readonly slot: { readonly index: number } }>,
+  /** What the squad's per-player seeds and ids derive from. World generation passes the club seed;
+   *  the rollover passes a seed that also keys on the season, so a club promoted twice does not get
+   *  the same eleven back. */
+  baseSeed: number,
+) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    for (const generated of squad) {
+      const playerSeed = deriveSeed(baseSeed, "player", generated.slot.index);
+      const playerId = PlayerId.make(deriveId(baseSeed, "player", generated.slot.index));
+      const a = generated.attributes;
+
+      yield* sql`INSERT INTO players (
+        id, club_id, first_name, last_name, date_of_birth, potential_ability, nationality, birth_city_id,
+        passing, shooting, tackling, dribbling, heading, crossing, finishing, first_touch,
+        positioning, decisions, composure, determination, teamwork, flair, bravery, aggression,
+        pace, acceleration, stamina, strength, agility, natural_fitness, injury_proneness,
+        gk_handling, gk_reflexes, gk_aerial_reach, gk_command_of_area, gk_kicking,
+        squad_slot, generation_seed
+      ) VALUES (
+        ${playerId}, ${clubId}, ${generated.firstName}, ${generated.lastName}, ${generated.dateOfBirth}, ${generated.potentialAbility},
+        ${canonicalNationId(generated.nationality)},
+        ${generated.birthCity === null ? null : canonicalCityId(generated.birthCity.nationCode, generated.birthCity.name)},
+        ${attr(a, "passing")}, ${attr(a, "shooting")}, ${attr(a, "tackling")}, ${attr(a, "dribbling")}, ${attr(a, "heading")}, ${attr(a, "crossing")}, ${attr(a, "finishing")}, ${attr(a, "firstTouch")},
+        ${attr(a, "positioning")}, ${attr(a, "decisions")}, ${attr(a, "composure")}, ${attr(a, "determination")}, ${attr(a, "teamwork")}, ${attr(a, "flair")}, ${attr(a, "bravery")}, ${attr(a, "aggression")},
+        ${attr(a, "pace")}, ${attr(a, "acceleration")}, ${attr(a, "stamina")}, ${attr(a, "strength")}, ${attr(a, "agility")}, ${attr(a, "naturalFitness")}, ${attr(a, "injuryProneness")},
+        ${attr(a, "gkHandling")}, ${attr(a, "gkReflexes")}, ${attr(a, "gkAerialReach")}, ${attr(a, "gkCommandOfArea")}, ${attr(a, "gkKicking")},
+        ${generated.slot.index}, ${playerSeed}
+      )`;
+
+      for (const position of generated.positions) {
+        yield* sql`INSERT INTO player_positions (player_id, position, familiarity) VALUES (${playerId}, ${position.position}, ${position.familiarity})`;
       }
     }
   });

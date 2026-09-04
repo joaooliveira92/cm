@@ -39,7 +39,7 @@ export const setTrainingFocus = (savesDir: string, saveId: SaveId, playerId: Pla
       yield* sql`INSERT INTO training_focus (player_id, focus) VALUES (${playerId}, ${focus})
                  ON CONFLICT(player_id) DO UPDATE SET focus = excluded.focus`;
 
-      const seasonRows = yield* sql<{ seasonNumber: number }>`SELECT season_number as "seasonNumber" FROM season LIMIT 1`;
+      const seasonRows = yield* sql<{ seasonNumber: number }>`SELECT season_number as "seasonNumber" FROM season ORDER BY season_number DESC LIMIT 1`;
       const seasonNumber = seasonRows[0]!.seasonNumber;
 
       const seq = yield* nextStreamSeq(CLUB_STREAM, club.id);

@@ -274,3 +274,50 @@ export const generateSquad = (
     return { ...player, slot };
   });
 };
+
+/**
+ * Generates a squad whose collapsed strength matches a number the club already carries.
+ *
+ * A club promoted out of a `results-only` division arrives with no players and a season's worth of
+ * results behind it. Generating from its new tier alone would hand it whatever a club in that slot
+ * usually gets — which is a different strength from the one it just earned, so its first fixture
+ * would contradict its last. This searches the ceiling shift instead, and the search is what makes
+ * "conjures upward" honest rather than approximate.
+ *
+ * A bisection over a bounded shift, deterministic in the seeds it is given: the same club promoted
+ * from the same season gets the same squad in every save. It always returns a squad — the closest
+ * one found — because a promoted club with no players is not a state the world can be left in.
+ */
+export const generateSquadAtStrength = (
+  strength: ClubStrength,
+  context: SquadGenerationContext,
+  /** The strength to hit, on the 1-100 Position Rating scale. */
+  target: number,
+  /** How a squad collapses to that scale, supplied by the caller so this stays free of `bestXi`. */
+  collapse: (squad: ReadonlyArray<GeneratedSquadPlayer>) => number,
+): ReadonlyArray<GeneratedSquadPlayer> => {
+  const MAX_SHIFT = 30;
+  const ITERATIONS = 12;
+  const TOLERANCE = 0.5;
+
+  let low = -MAX_SHIFT;
+  let high = MAX_SHIFT;
+  let best = generateSquad({ ...strength, ceilingShift: 0 }, context);
+  let bestError = Math.abs(collapse(best) - target);
+
+  for (let step = 0; step < ITERATIONS && bestError > TOLERANCE; step += 1) {
+    const shift = (low + high) / 2;
+    const squad = generateSquad({ ...strength, ceilingShift: shift }, context);
+    const collapsed = collapse(squad);
+    const error = Math.abs(collapsed - target);
+    if (error < bestError) {
+      best = squad;
+      bestError = error;
+    }
+    // Squad strength rises monotonically with the ceiling, so a bisection converges.
+    if (collapsed < target) low = shift;
+    else high = shift;
+  }
+
+  return best;
+};

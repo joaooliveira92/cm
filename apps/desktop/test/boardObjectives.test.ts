@@ -46,6 +46,12 @@ const loadSeasonStreamEvents = (saveId: string) =>
 const reopenFinalFixture = (clubId: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+    // These tests are about the board's verdict on a league. A season does not conclude while a cup
+    // still has rounds to draw, so the cup is removed from the world rather than played out — its
+    // field is derived from its entrant edges, and with no edges there is no cup.
+    yield* sql`DELETE FROM fixtures WHERE competition_id IN (SELECT id FROM competitions WHERE kind = 'cup')`;
+    yield* sql`DELETE FROM competition_participants WHERE competition_id IN (SELECT id FROM competitions WHERE kind = 'cup')`;
+    yield* sql`DELETE FROM competition_entrants`;
     yield* sql`UPDATE fixtures SET played = 0, home_goals = NULL, away_goals = NULL
       WHERE id = (SELECT id FROM fixtures
                   WHERE home_club_id <> ${clubId} AND away_club_id <> ${clubId}
@@ -159,26 +165,28 @@ it.effect("BoardObjectiveJudged fires Missed, and ManagerWarned on the first mis
 // ---------------------------------------------------------------------------
 
 /**
- * Simulates a second Season concluding without building a full rollover system (out of this
- * ticket's scope, per the ticket's checklist): re-opens the existing (already-concluded)
- * `season`/`board_objective` row for a fresh judgment, rather than fabricating a real Season 2
- * (which would need a full fixture-regeneration/rollover mechanism this ticket doesn't build). This
- * only exercises the Consecutive-Miss Counter's transition logic across two judgments — it's not a
- * claim about what real Season rollover will look like.
+ * Drives the season the save is *currently* in to a lopsided finish.
+ *
+ * The Consecutive-Miss Counter spans seasons, so testing it needs a second one. The rollover is
+ * real now — after the first verdict the save has already opened season 2 — so this forces that
+ * season's fixtures rather than reopening the concluded one, which is what this helper used to do
+ * back when no rollover existed to carry the save forward.
  */
-const forceSecondSeasonConcludingWith = (saveId: string, clubId: string, outcome: "winEverything" | "loseEverything") =>
+const forceCurrentSeasonConcludingWith = (saveId: string, clubId: string, outcome: "winEverything" | "loseEverything") =>
   withSave(
     saveId,
     Effect.gen(function* () {
       const sql = yield* SqlClient;
-      yield* sql`UPDATE season SET phase = 'in_season' WHERE season_number = 1`;
-      yield* sql`UPDATE board_objective SET final_position = NULL, verdict = NULL WHERE season_number = 1`;
+      const current = yield* sql<{ seasonNumber: number }>`
+        SELECT MAX(season_number) as "seasonNumber" FROM season`;
+      const seasonNumber = current[0]!.seasonNumber;
+      yield* sql`UPDATE season SET phase = 'in_season' WHERE season_number = ${seasonNumber}`;
 
       const [clubGoals, otherGoals] = outcome === "winEverything" ? [5, 0] : [0, 5];
       yield* sql`UPDATE fixtures SET played = 1,
           home_goals = CASE WHEN home_club_id = ${clubId} THEN ${clubGoals} WHEN away_club_id = ${clubId} THEN ${otherGoals} ELSE 1 END,
           away_goals = CASE WHEN away_club_id = ${clubId} THEN ${clubGoals} WHEN home_club_id = ${clubId} THEN ${otherGoals} ELSE 1 END
-        WHERE season_number = 1`;
+        WHERE season_number = ${seasonNumber}`;
       yield* reopenFinalFixture(clubId);
     }),
   );
@@ -193,7 +201,7 @@ it.effect("a second consecutive Missed Season sacks the manager and archives the
     const firstMiss = yield* advanceCalendar(savesDir, save.id);
     strictEqual(firstMiss.managerOutcome, "warned");
 
-    yield* forceSecondSeasonConcludingWith(save.id, squad.club.id, "loseEverything");
+    yield* forceCurrentSeasonConcludingWith(save.id, squad.club.id, "loseEverything");
     const secondMiss = yield* advanceCalendar(savesDir, save.id);
     strictEqual(secondMiss.seasonConcluded, true);
     strictEqual(secondMiss.boardObjectiveVerdict, "missed");
@@ -223,7 +231,7 @@ it.effect("an Exceeded/Met Season resets the Consecutive-Miss Counter to zero", 
     const firstMiss = yield* advanceCalendar(savesDir, save.id);
     strictEqual(firstMiss.managerOutcome, "warned");
 
-    yield* forceSecondSeasonConcludingWith(save.id, squad.club.id, "winEverything");
+    yield* forceCurrentSeasonConcludingWith(save.id, squad.club.id, "winEverything");
     const bounceBack = yield* advanceCalendar(savesDir, save.id);
     strictEqual(bounceBack.managerOutcome, "none");
 
@@ -241,7 +249,7 @@ it.effect("advanceCalendar rejects further commands once the save is archived, b
     yield* advancePastPreSeason(save.id);
     yield* forceLopsidedFixtures(save.id, squad.club.id, "loseEverything");
     yield* advanceCalendar(savesDir, save.id);
-    yield* forceSecondSeasonConcludingWith(save.id, squad.club.id, "loseEverything");
+    yield* forceCurrentSeasonConcludingWith(save.id, squad.club.id, "loseEverything");
     yield* advanceCalendar(savesDir, save.id);
 
     const summaryBefore = yield* getSeasonSummary(savesDir, save.id);
@@ -264,18 +272,79 @@ it.effect("the archived guard itself (not just SeasonCompleteError) rejects furt
     yield* advancePastPreSeason(save.id);
     yield* forceLopsidedFixtures(save.id, squad.club.id, "loseEverything");
     yield* advanceCalendar(savesDir, save.id);
-    yield* forceSecondSeasonConcludingWith(save.id, squad.club.id, "loseEverything");
+    yield* forceCurrentSeasonConcludingWith(save.id, squad.club.id, "loseEverything");
     yield* advanceCalendar(savesDir, save.id);
 
-    // Simulate a hypothetical future where a Season rollover reopened the calendar (phase no
-    // longer `season_complete`) while the save remains archived — `archived_cause` alone, not the
-    // `season_complete` phase check, must still reject `AdvanceCalendar`.
+    // A sacking stops the rollover, so an archived save sits at `season_complete` and would be
+    // rejected by the phase check before the archive check was reached. Reopening the calendar
+    // isolates the guard under test: `archived_cause` alone must still reject the advance.
     yield* withSave(save.id, Effect.gen(function* () {
       const sql = yield* SqlClient;
-      yield* sql`UPDATE season SET phase = 'in_season' WHERE season_number = 1`;
+      yield* sql`UPDATE season SET phase = 'in_season'
+        WHERE season_number = (SELECT MAX(season_number) FROM season)`;
     }));
 
     const failure = yield* Effect.flip(advanceCalendar(savesDir, save.id));
     strictEqual((failure as { readonly _tag: string })._tag, "SaveArchivedError");
+  }),
+);
+
+// ---------------------------------------------------------------------------
+// The objective names the competition it judges (ticket 14)
+// ---------------------------------------------------------------------------
+
+it.effect("the objective names its competition, and its verdict matches the frozen table", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const squad = yield* getSquad(savesDir, save.id);
+
+    yield* advancePastPreSeason(save.id);
+    yield* forceLopsidedFixtures(save.id, squad.club.id, "winEverything");
+    yield* advanceCalendar(savesDir, save.id);
+
+    const read = yield* withSave(
+      save.id,
+      Effect.gen(function* () {
+        const sql = yield* SqlClient;
+        const objective = yield* sql<{
+          competitionId: string | null;
+          finalPosition: number | null;
+          verdict: string | null;
+        }>`SELECT competition_id as "competitionId", final_position as "finalPosition", verdict
+           FROM board_objective WHERE season_number = 1`;
+        const frozen = yield* sql<{ finalPosition: number | null }>`
+          SELECT final_position as "finalPosition" FROM competition_participants
+          WHERE competition_id = ${objective[0]!.competitionId} AND season_number = 1
+            AND club_id = ${squad.club.id}`;
+        return { objective: objective[0]!, frozen: frozen[0] };
+      }),
+    );
+
+    // The verdict says which competition it was about rather than leaving it to be inferred.
+    strictEqual(read.objective.competitionId, "comp_eng_1");
+    // And it reports the frozen row rather than a second, independently computed answer.
+    strictEqual(read.objective.finalPosition, read.frozen?.finalPosition);
+    strictEqual(read.objective.finalPosition, 1);
+  }),
+);
+
+it.effect("no objective ever names a cup", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    yield* advancePastPreSeason(save.id);
+
+    const cupObjectives = yield* withSave(
+      save.id,
+      Effect.gen(function* () {
+        const sql = yield* SqlClient;
+        const rows = yield* sql<{ count: number }>`
+          SELECT COUNT(*) as "count" FROM board_objective bo
+          JOIN competitions c ON c.id = bo.competition_id WHERE c.kind = 'cup'`;
+        return rows[0]!.count;
+      }),
+    );
+
+    // A cup run is unjudged in MVP: reaching a final is neither a hit nor a miss.
+    strictEqual(cupObjectives, 0);
   }),
 );

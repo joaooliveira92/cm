@@ -32,23 +32,30 @@ caught by ticket 05's symmetric slot count, not a failure this ticket handles.
 
 **Blocked by:** 07, 10, 11.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/season.ts` (season conclusion and the new season's start),
 `apps/desktop/src/main/worldGeneration.ts` (generating a squad for a promoted results-only club),
 `apps/desktop/test/season.test.ts`.
 
-- [ ] At season conclusion every participant row for that season is frozen with its final position,
+- [x] At season conclusion every participant row for that season is frozen with its final position,
       points, goal difference, and goals for, and a test asserts the frozen table survives into the
       next season unchanged.
-- [ ] Clubs are exchanged along every link with the link's slot count in both directions, and a test
+- [x] Clubs are exchanged along every link with the link's slot count in both directions, and a test
       asserts every division's participant count is identical in season 2 and season 1.
-- [ ] A test covers a pyramid whose tier below is two parallel regional divisions feeding one
+- [x] A test covers a pyramid whose tier below is two parallel regional divisions feeding one
       division above.
-- [ ] No club is relegated out of the lowest loaded competition and none is promoted out of the
+- [x] No club is relegated out of the lowest loaded competition and none is promoted out of the
       highest, and a test asserts it.
-- [ ] A club promoted out of a `results-only` division has a full squad at the start of the next
-      season, generated to a strength consistent with its Results Strength in its last one.
-- [ ] A club relegated into a `results-only` division has its player rows deleted, together with
-      everything keyed on those players.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] A club promoted out of a `results-only` division has a full squad at the start of the next
+      season, generated to a strength consistent with its Results Strength in its last one. The
+      calibration is a bisection over a ceiling shift, tested to land within two rating points.
+- [x] A club relegated into a `results-only` division has its player rows deleted, together with
+      everything keyed on those players. **Both halves are staged rather than selected in the test**,
+      for the reason ticket 12 records: no shipped scope option puts a results-only division in the
+      same pyramid as a playable one.
+- [ ] `pnpm check:all` is green at this commit. **Not met, and not by this ticket's doing** — see
+      ticket 11's note. HEAD is red from the Base UI Select migration, and a second session's
+      in-flight renderer work fails typecheck. Every gate this ticket can answer for is green:
+      typecheck across the main process and packages, lint, effect-lint, verify-md-links,
+      verify-db-schema, and every test suite these tickets touch.

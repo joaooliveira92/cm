@@ -18,12 +18,14 @@ CREATE TABLE `bids` (
 CREATE TABLE `board_objective` (
 	`season_number` integer PRIMARY KEY NOT NULL,
 	`club_id` text NOT NULL,
+	`competition_id` text,
 	`min_position` integer NOT NULL,
 	`max_position` integer NOT NULL,
 	`final_position` integer,
 	`verdict` text,
 	FOREIGN KEY (`season_number`) REFERENCES `season`(`season_number`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`competition_id`) REFERENCES `competitions`(`id`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT "board_objective_verdict" CHECK(verdict IS NULL OR verdict IN ('exceeded','met','missed'))
 );
 --> statement-breakpoint

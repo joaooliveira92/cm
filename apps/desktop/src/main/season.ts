@@ -28,13 +28,16 @@ import {
   leagueRoundDates,
   nextManagerOutcome,
   NATION_PROFILES,
+  POSITIONS,
   bracketShape,
   byeHolders,
   collapseSquadStrength,
   cupRoundDate,
   drawRound,
+  generateSquadAtStrength,
   computeSquadQuality,
   nationCodeFromId,
+  positionRating,
   resolveByStrength,
   resolveShootout,
   resultsStrength,
@@ -54,10 +57,10 @@ import {
 import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "./displayNames.js";
-import { assignAiTactics, pickBestFormationTactic, runAiTransferWindow } from "./aiClubs.js";
+import { ELEVEN, assignAiTactics, pickBestFormationTactic, runAiTransferWindow } from "./aiClubs.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
 import { developPlayersForSeason } from "./development.js";
-import { readGenerationManifest } from "./worldGeneration.js";
+import { insertGeneratedSquad, readGenerationManifest } from "./worldGeneration.js";
 import { assertSaveNotArchived, loadManagerStatus, releaseClubStaff } from "./managerStatus.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
@@ -253,6 +256,45 @@ const generateLeagueFixtures = (seasonNumber: number, worldSeed: number, referen
     return total;
   });
 
+/**
+ * Opens the season the rollover has just built: its calendar row, its fixtures, its cup's first
+ * round, and the state that is per-season rather than per-save.
+ *
+ * Deliberately not `startSeason`. That one runs at career creation and also writes the things a save
+ * has exactly once — the manager's status, the very first board objective row. This runs every year
+ * after the first and writes only what a new season needs.
+ */
+const startNextSeason = (
+  seasonNumber: number,
+  manifest: { readonly worldSeed: number; readonly referenceYear: number },
+) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    yield* sql`INSERT INTO season (season_number, game_date, phase)
+      VALUES (${seasonNumber}, ${seasonStartDate(manifest.referenceYear, seasonNumber)}, 'pre_season')`;
+
+    yield* generateLeagueFixtures(seasonNumber, manifest.worldSeed, manifest.referenceYear);
+    yield* materialiseCupRounds(seasonNumber, manifest.worldSeed, manifest.referenceYear);
+
+    // Every squad enters the new season at full Condition, including the squads the rollover has
+    // just conjured for promoted clubs. The ledger holds one row per player rather than one per
+    // player per season, so this rolls the existing rows forward and adds only the new players.
+    yield* sql`UPDATE player_fitness
+      SET season_number = ${seasonNumber}, condition = 100, last_injury_severity = 'none'`;
+    yield* sql`INSERT OR IGNORE INTO player_fitness (player_id, season_number, condition, last_injury_severity)
+      SELECT id, ${seasonNumber}, 100, 'none' FROM players`;
+
+    // The board judges the human against the division they are now in, which after a promotion or a
+    // relegation is not the one they were judged in last year.
+    const userClub = yield* loadUserClub;
+    const band = BOARD_OBJECTIVE_BANDS[userClub.statureTier];
+    const competitionId = yield* loadHumanCompetitionId(seasonNumber);
+    yield* sql`INSERT INTO board_objective (season_number, club_id, competition_id, min_position, max_position, final_position, verdict)
+      VALUES (${seasonNumber}, ${userClub.id}, ${competitionId}, ${band.minPosition}, ${band.maxPosition}, NULL, NULL)`;
+
+    yield* assignAiTactics;
+  });
+
 /** Generates and persists Season 1's fixture lists for a freshly created save, and emits
  * `SeasonStarted` on the Season stream (streamId = the save's id, per ADR-0007). Assumes a
  * `SqlClient` for the save's SQLite file in context — called from `saves.ts`'s `commitCareer` right
@@ -289,8 +331,9 @@ export const startSeason = (saveId: SaveId) =>
     // — multi-season rollover is out of this ticket's scope).
     const userClub = yield* loadUserClub;
     const band = BOARD_OBJECTIVE_BANDS[userClub.statureTier];
-    yield* sql`INSERT INTO board_objective (season_number, club_id, min_position, max_position, final_position, verdict)
-      VALUES (1, ${userClub.id}, ${band.minPosition}, ${band.maxPosition}, NULL, NULL)`;
+    const judgedCompetitionId = yield* loadHumanCompetitionId(1);
+    yield* sql`INSERT INTO board_objective (season_number, club_id, competition_id, min_position, max_position, final_position, verdict)
+      VALUES (1, ${userClub.id}, ${judgedCompetitionId}, ${band.minPosition}, ${band.maxPosition}, NULL, NULL)`;
     yield* sql`INSERT INTO manager_status (id, consecutive_misses, archived_cause, last_outcome) VALUES (1, 0, NULL, 'none')`;
 
     // AI Tactic assignment (ticket 17 / ADR-0005): every AI club (all clubs but the user's) gets
@@ -318,7 +361,8 @@ const loadSeasonRow = Effect.gen(function* () {
     seasonNumber: number;
     currentDate: string;
     phase: SeasonRow["phase"];
-  }>`SELECT season_number as "seasonNumber", game_date as "currentDate", phase FROM season LIMIT 1`;
+  }>`SELECT season_number as "seasonNumber", game_date as "currentDate", phase FROM season
+     ORDER BY season_number DESC LIMIT 1`;
   return rows[0]!;
 });
 
@@ -544,7 +588,12 @@ const resolveFixtureScore = (
       return { ...score, ...resolveShootout(homeStrength, awayStrength, matchSeed) };
     };
 
-    if (homeSquad.length === 0 || awaySquad.length === 0) {
+    // A fixture where either club cannot field eleven resolves from two numbers instead of ninety
+    // minutes. Usually that is a results-only club with no players at all; it is also a club left
+    // short by a season of contract expiries, which the engine can no more simulate than an empty
+    // one. One match simulation is about a millisecond, so this is also what keeps a
+    // sixteen-thousand-club world's Continue from costing seconds of blocking work.
+    if (homeSquad.length < ELEVEN || awaySquad.length < ELEVEN) {
       const home = yield* clubStrength(homeClubId, homeSquad, seasonNumber, worldSeed);
       const away = yield* clubStrength(awayClubId, awaySquad, seasonNumber, worldSeed);
       return settle(resolveByStrength(home, away, matchSeed), home, away);
@@ -626,8 +675,12 @@ export const discardSquadsForClubs = (clubIds: ReadonlyArray<string>) =>
     yield* sql`DELETE FROM training_focus WHERE ${doomed}`;
     yield* sql`DELETE FROM contracts WHERE ${doomed}`;
     yield* sql`DELETE FROM player_fitness WHERE ${doomed}`;
-    yield* sql`DELETE FROM tactic_slots WHERE ${doomed}`;
     yield* sql`DELETE FROM player_positions WHERE ${doomed}`;
+    // Slots go by club, not by player. A transfer can leave a club's tactic naming someone who has
+    // since moved on, and deleting only the slots whose player is doomed would leave that row
+    // behind to block the tactic it belongs to.
+    yield* sql`DELETE FROM tactic_slots WHERE ${sql.in("club_id", clubIds)}`;
+    yield* sql`DELETE FROM tactic_slots WHERE ${doomed}`;
     yield* sql`DELETE FROM tactics WHERE ${sql.in("club_id", clubIds)}`;
     yield* sql`DELETE FROM players WHERE ${sql.in("club_id", clubIds)}`;
   });
@@ -863,6 +916,195 @@ const cupFinishingOrder = (cupId: string, seasonNumber: number) =>
       .sort((a, b) => b.reached - a.reached || a.clubId.localeCompare(b.clubId));
   });
 
+// ---------------------------------------------------------------------------
+// The season rollover: promotion, relegation, and the world one year on
+// ---------------------------------------------------------------------------
+
+/**
+ * Moves the world into the next season: exchanges clubs along every link, rebuilds membership, and
+ * reconciles each club's squad with the depth it now plays at.
+ *
+ * One effect inside the advance's existing transaction, so a world is never half-promoted — a save
+ * with the champions moved up and the relegated clubs still in place is not a state any reader
+ * should have to handle.
+ *
+ * The world is **closed at the edge of the chosen scope**: links exist only between competitions
+ * this save loaded, so nothing is relegated out of the lowest division or promoted out of the
+ * highest. Buying the drop is what choosing a wider scope means.
+ */
+const rolloverToNextSeason = (concludedSeason: number, referenceYear: number, worldSeed: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const nextSeason = concludedSeason + 1;
+
+    // Every league's field as it finished, in frozen order. Cups are excluded: their field is
+    // re-derived from the source competitions when next season's round 1 is drawn, so copying it
+    // forward would carry last season's entrants into a world that has already changed.
+    const finished = yield* sql<{ competitionId: string; clubId: ClubId; finalPosition: number }>`
+      SELECT cp.competition_id as "competitionId", cp.club_id as "clubId", cp.final_position as "finalPosition"
+      FROM competition_participants cp
+      JOIN competitions c ON c.id = cp.competition_id
+      WHERE cp.season_number = ${concludedSeason} AND c.kind <> 'cup' AND cp.final_position IS NOT NULL
+      ORDER BY cp.competition_id ASC, cp.final_position ASC`;
+
+    const fields = new Map<string, Array<ClubId>>();
+    for (const row of finished) {
+      const field = fields.get(row.competitionId);
+      if (field) field.push(row.clubId);
+      else fields.set(row.competitionId, [row.clubId]);
+    }
+
+    const links = yield* sql<{ higher: string; lower: string; slots: number }>`
+      SELECT higher_competition_id as "higher", lower_competition_id as "lower", slots
+      FROM competition_links ORDER BY higher_competition_id ASC, lower_competition_id ASC`;
+
+    // Each link is one fact carrying both directions, so the same number goes down as comes up and
+    // a division's size cannot drift. Where one division feeds two parallel regional ones, the
+    // relegated clubs are dealt to those links in canonical order — the domain records no region on
+    // a club, so there is nothing truer than a stable order to sort them by.
+    const goingDown = new Map<string, Array<ClubId>>();
+    const goingUp = new Map<string, Array<ClubId>>();
+    const takenFromBottom = new Map<string, number>();
+
+    for (const link of links) {
+      const higherField = fields.get(link.higher);
+      const lowerField = fields.get(link.lower);
+      if (higherField === undefined || lowerField === undefined) continue;
+
+      const alreadyTaken = takenFromBottom.get(link.higher) ?? 0;
+      const relegated = higherField.slice(
+        Math.max(0, higherField.length - alreadyTaken - link.slots),
+        higherField.length - alreadyTaken,
+      );
+      takenFromBottom.set(link.higher, alreadyTaken + link.slots);
+      const promoted = lowerField.slice(0, link.slots);
+
+      goingDown.set(link.higher, [...(goingDown.get(link.higher) ?? []), ...relegated]);
+      goingUp.set(link.lower, [...(goingUp.get(link.lower) ?? []), ...promoted]);
+      // The clubs each division receives from the other end of this link.
+      goingUp.set(link.higher, [...(goingUp.get(link.higher) ?? []), ...promoted]);
+      goingDown.set(link.lower, [...(goingDown.get(link.lower) ?? []), ...relegated]);
+    }
+
+    for (const [competitionId, field] of fields) {
+      const leaving = new Set<string>([
+        ...(links.some((link) => link.higher === competitionId)
+          ? (goingDown.get(competitionId) ?? []).filter((clubId) =>
+              // A club leaves downward only if it was in this division to begin with.
+              field.includes(clubId),
+            )
+          : []),
+        ...(links.some((link) => link.lower === competitionId)
+          ? (goingUp.get(competitionId) ?? []).filter((clubId) => field.includes(clubId))
+          : []),
+      ]);
+      const arriving = [
+        ...(goingUp.get(competitionId) ?? []),
+        ...(goingDown.get(competitionId) ?? []),
+      ].filter((clubId) => !field.includes(clubId));
+
+      const nextField = [...field.filter((clubId) => !leaving.has(clubId)), ...new Set(arriving)];
+      for (const clubId of nextField) {
+        yield* sql`INSERT OR IGNORE INTO competition_participants (competition_id, season_number, club_id)
+          VALUES (${competitionId}, ${nextSeason}, ${clubId})`;
+      }
+    }
+
+    yield* reconcileSquadsWithDepth(nextSeason, concludedSeason, referenceYear, worldSeed);
+  });
+
+/**
+ * Brings every club's squad into line with the depth it plays at next season.
+ *
+ * Crossing the boundary **discards downward and conjures upward**. A club dropping into a
+ * results-only tier loses its players permanently; one climbing out of it is given a squad
+ * generated to the strength it was already performing at, so its first fixture does not contradict
+ * its last.
+ *
+ * Neither branch reads a Depth column on a club, because there is none: the question asked is
+ * whether the club has player rows, and the competition it now belongs to says whether it should.
+ */
+const reconcileSquadsWithDepth = (
+  nextSeason: number,
+  concludedSeason: number,
+  referenceYear: number,
+  worldSeed: number,
+) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const clubs = yield* sql<{
+      clubId: ClubId;
+      depth: string;
+      tier: number | null;
+      nationId: string | null;
+      statureTier: StatureTier;
+      generationSeed: number;
+      squadSize: number;
+    }>`SELECT cp.club_id as "clubId", c.depth, c.tier, c.nation_id as "nationId",
+              cl.stature_tier as "statureTier", cl.generation_seed as "generationSeed",
+              (SELECT COUNT(*) FROM players p WHERE p.club_id = cp.club_id) as "squadSize"
+       FROM competition_participants cp
+       JOIN competitions c ON c.id = cp.competition_id
+       JOIN clubs cl ON cl.id = cp.club_id
+       WHERE cp.season_number = ${nextSeason} AND c.kind <> 'cup'
+       ORDER BY cp.club_id ASC`;
+
+    const relegated = clubs.filter((club) => club.depth === "results-only" && club.squadSize > 0);
+    yield* discardSquadsForClubs(relegated.map((club) => club.clubId));
+
+    for (const club of clubs) {
+      if (club.depth === "results-only" || club.squadSize > 0) continue;
+      const nationCode = club.nationId === null ? null : nationCodeFromId(club.nationId);
+      if (nationCode === null) continue;
+
+      // The strength it was performing at in the division it just left.
+      const target = resultsStrength({
+        worldSeed,
+        clubId: club.clubId,
+        statureTier: club.statureTier,
+        tier: club.tier,
+        nationPrior: NATION_PROFILES[nationCode].footballImportance,
+        seasonNumber: concludedSeason,
+      });
+
+      const squad = generateSquadAtStrength(
+        {
+          tier: club.tier,
+          nationPrior: NATION_PROFILES[nationCode].footballImportance,
+          statureTier: club.statureTier,
+        },
+        {
+          referenceYear,
+          clubNation: nationCode,
+          randomForSlot: (slot) =>
+            createSeededRng(
+              deriveSeed(deriveSeed(club.generationSeed, "promoted", nextSeason), "player", slot.index),
+            ),
+        },
+        target,
+        (generated) =>
+          collapseSquadStrength(
+            computeSquadQuality(
+              generated.map((player, index) => ({
+                id: String(index),
+                positionRatings: positionRatingsFor(player.attributes as PlayerAttributes),
+              })),
+            )?.meanPositionRating ?? 0,
+          ),
+      );
+
+      yield* insertGeneratedSquad(
+        club.clubId,
+        squad,
+        deriveSeed(club.generationSeed, "promoted", nextSeason),
+      );
+    }
+  });
+
+/** Every position's rating for one player, which is what a squad collapses over. */
+const positionRatingsFor = (attributes: PlayerAttributes): Record<string, number> =>
+  Object.fromEntries(POSITIONS.map((position) => [position, positionRating(attributes, position)]));
+
 /**
  * Whether any cup still has a round to draw — a season is not over while one has.
  *
@@ -1079,25 +1321,38 @@ const judgeSeasonEnd = (
 ) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const competitionId = yield* loadHumanCompetitionId(seasonNumber);
-    const standings = yield* computeStandings(competitionId ?? "", seasonNumber);
-
     const objectiveRows = yield* sql<{
       clubId: ClubId;
+      competitionId: string | null;
       minPosition: number;
       maxPosition: number;
-    }>`SELECT club_id as "clubId", min_position as "minPosition", max_position as "maxPosition"
+    }>`SELECT club_id as "clubId", competition_id as "competitionId",
+              min_position as "minPosition", max_position as "maxPosition"
        FROM board_objective WHERE season_number = ${seasonNumber}`;
     const objective = objectiveRows[0]!;
 
-    const finalPosition = standings.findIndex((row) => row.clubId === objective.clubId) + 1;
+    // The frozen row, not a fresh tally. The rollover freezes before it judges, so this reads
+    // authoritative state — and a verdict that recomputed its own evidence could disagree with the
+    // table the player is looking at.
+    const frozen = yield* sql<{ finalPosition: number }>`
+      SELECT final_position as "finalPosition" FROM competition_participants
+      WHERE competition_id = ${objective.competitionId} AND season_number = ${seasonNumber}
+        AND club_id = ${objective.clubId}`;
+    const finalPosition = frozen[0]?.finalPosition ?? 0;
     const band = { minPosition: objective.minPosition, maxPosition: objective.maxPosition };
     const verdict: Verdict = judgeBoardObjective(finalPosition, band);
 
     yield* sql`UPDATE board_objective SET final_position = ${finalPosition}, verdict = ${verdict} WHERE season_number = ${seasonNumber}`;
     streamEvents.push({
       tag: "BoardObjectiveJudged",
-      payload: { seasonNumber, clubId: objective.clubId, finalPosition, band, verdict },
+      payload: {
+        seasonNumber,
+        clubId: objective.clubId,
+        competitionId: objective.competitionId,
+        finalPosition,
+        band,
+        verdict,
+      },
     });
 
     const managerStatus = yield* loadManagerStatus;
@@ -1254,6 +1509,13 @@ export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
           const judged = yield* judgeSeasonEnd(row.seasonNumber, streamEvents);
           boardObjectiveVerdict = judged.verdict;
           managerOutcome = judged.managerOutcome;
+
+          // The world moves on one year, in this same transaction. A save that stopped here would
+          // hold a concluded season with no next one — a state every reader would have to handle.
+          if (managerOutcome !== "sacked") {
+            yield* rolloverToNextSeason(row.seasonNumber, manifest.referenceYear, manifest.worldSeed);
+            yield* startNextSeason(row.seasonNumber + 1, manifest);
+          }
         }
       }
 
@@ -1472,24 +1734,34 @@ export const getSeasonSummary = (savesDir: string, saveId: SaveId) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;
       const seasonRow = yield* loadSeasonRow;
-      const competitionId = yield* loadHumanCompetitionId(seasonRow.seasonNumber);
-      const standings = yield* computeStandings(competitionId ?? "", seasonRow.seasonNumber);
       const club = yield* loadUserClub;
       const managerStatus = yield* loadManagerStatus;
 
+      // The summary is what the player reads *about a season that finished*, and the rollover has
+      // already opened the next one by the time they can read it. So it reports the most recently
+      // judged season, falling back to the current one before the first verdict exists.
       const objectiveRows = yield* sql<{
+        seasonNumber: number;
+        competitionId: string | null;
         minPosition: number;
         maxPosition: number;
         finalPosition: number | null;
         verdict: Verdict | null;
-      }>`SELECT min_position as "minPosition", max_position as "maxPosition",
+      }>`SELECT season_number as "seasonNumber", competition_id as "competitionId",
+                min_position as "minPosition", max_position as "maxPosition",
                 final_position as "finalPosition", verdict
-         FROM board_objective WHERE season_number = ${seasonRow.seasonNumber} AND club_id = ${club.id}`;
+         FROM board_objective WHERE club_id = ${club.id}
+         ORDER BY verdict IS NULL ASC, season_number DESC LIMIT 1`;
       const objectiveRow = objectiveRows[0];
+
+      const summarisedSeason = objectiveRow?.seasonNumber ?? seasonRow.seasonNumber;
+      const competitionId =
+        objectiveRow?.competitionId ?? (yield* loadHumanCompetitionId(summarisedSeason));
+      const standings = yield* computeStandings(competitionId ?? "", summarisedSeason);
 
       const boardObjective = objectiveRow
         ? new BoardObjectiveView({
-            seasonNumber: seasonRow.seasonNumber,
+            seasonNumber: objectiveRow.seasonNumber,
             clubId: club.id,
             minPosition: objectiveRow.minPosition,
             maxPosition: objectiveRow.maxPosition,

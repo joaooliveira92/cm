@@ -48,6 +48,17 @@ export interface ClubStrength {
   readonly nationPrior: number;
   /** This club's standing among its peers in its own competition. */
   readonly statureTier: StatureTier;
+  /**
+   * Points added to the squad's ceiling, used only when a squad has to be generated to a strength
+   * that already exists rather than to the club's position in the pyramid.
+   *
+   * A club promoted out of a `results-only` division has been performing at a known Results Strength
+   * all season, and its first fixture in its new division must not contradict its last one in the
+   * old. Its tier and Stature Tier alone would generate whatever a club in that slot usually gets,
+   * which is a different number. This is the knob a calibrated generation turns; everywhere else it
+   * is absent and the ceiling is exactly what the pyramid implies.
+   */
+  readonly ceilingShift?: number;
 }
 
 const TOP_TIER_CEILING = 95;
@@ -70,13 +81,15 @@ export const potentialAbilityRange = ({
   tier,
   nationPrior,
   statureTier,
+  ceilingShift = 0,
 }: ClubStrength): readonly [number, number] => {
   const ladderTier = tier ?? OFF_LADDER_TIER;
   const ceiling = clamp(
     TOP_TIER_CEILING -
       (ladderTier - 1) * CEILING_LOST_PER_TIER +
       (nationPrior - 0.5) * NATION_PRIOR_SWING +
-      STATURE_CEILING_SHIFT[statureTier],
+      STATURE_CEILING_SHIFT[statureTier] +
+      ceilingShift,
     20,
     99,
   );

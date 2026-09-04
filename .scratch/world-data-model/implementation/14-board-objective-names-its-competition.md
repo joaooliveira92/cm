@@ -21,15 +21,19 @@ is a defect, since the rollover freezes before it judges.
 
 **Blocked by:** 07, 13.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/schema.ts` and the regenerated DDL,
 `apps/desktop/src/main/season.ts` (`judgeSeasonEnd`), `packages/shared/src/board.ts`,
 `apps/desktop/test/boardObjectives.test.ts`.
 
-- [ ] `board_objective` gains a competition reference, keeping its one-row-per-season-for-the-human's-club
+- [x] `board_objective` gains a competition reference, keeping its one-row-per-season-for-the-human's-club
       shape and its verdict `CHECK`.
-- [ ] The objective's final position is read from the frozen participant row for the named
+- [x] The objective's final position is read from the frozen participant row for the named
       competition and season, and a test asserts the verdict matches the frozen table.
-- [ ] A cup competition is never judged, and a test asserts no objective row names one.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] A cup competition is never judged, and a test asserts no objective row names one.
+- [ ] `pnpm check:all` is green at this commit. **Not met, and not by this ticket's doing** — see
+      ticket 11's note. HEAD is red from the Base UI Select migration, and a second session's
+      in-flight renderer work fails typecheck. Every gate this ticket can answer for is green:
+      typecheck across the main process and packages, lint, effect-lint, verify-md-links,
+      verify-db-schema, and every test suite these tickets touch.

@@ -587,10 +587,16 @@ export const events = sqliteTable(
  * already uses for an in-world date on a row, so the vocabulary is unchanged and only the hazard is
  * gone.
  *
- * The row stays a per-save singleton. Everything that reads it is save-wide: the Board Objective is
- * per-season, Player Development runs once per `SeasonConcluded`, Wage Budget derives at season
- * start. Per-competition progress — "this cup has reached round 4", "this league has concluded" —
- * is derived from that competition's own fixture rows and is stored nowhere.
+ * One row per season, not the per-save singleton this table was first described as. Three tables key
+ * onto `season_number` — `fixtures`, `board_objective`, and `player_fitness` — so a singleton whose
+ * number advanced at the rollover could only work by deleting every child row of the season just
+ * finished. Keeping any history at all therefore requires a row per season; what is *worth* keeping
+ * is a retention question ticket 18 owns, and this shape leaves that decision open rather than
+ * making it by deletion.
+ *
+ * Readers still want one row: the current season is the highest `season_number`. Per-competition
+ * progress — "this cup has reached round 4", "this league has concluded" — is derived from that
+ * competition's own fixture rows and is stored nowhere.
  */
 export const season = sqliteTable(
   "season",
@@ -673,10 +679,21 @@ export const fixtures = sqliteTable(
   ],
 );
 
-/** Board Objective (ticket 18 / ADR-0006) — one row per Season for the player's club only (AI
- * clubs are never judged). The band is set at Season start from the fixed Stature Tier -> band
- * table in `@cm-clone/shared`; `final_position`/`verdict` stay NULL until `SeasonConcluded`
- * triggers `BoardObjectiveJudged`. */
+/**
+ * Board Objective — one row per Season for the player's club only, since AI clubs are never judged.
+ *
+ * The band is set at Season start from the fixed Stature Tier -> band table in `@cm-clone/shared`;
+ * `final_position`/`verdict` stay NULL until `SeasonConcluded` triggers `BoardObjectiveJudged`.
+ *
+ * `competition_id` names **which competition the verdict was about**, rather than leaving it to be
+ * inferred from there having once been only one. A save now holds several tables at once, and the
+ * human's own division changes at a promotion, so "the league" is no longer a thing a reader can
+ * resolve on its own. Its final position is read from the frozen participant row for this
+ * competition and season rather than recomputed, so a verdict cannot disagree with the table it was
+ * judged against.
+ *
+ * A cup run is unjudged: no objective row ever names a cup.
+ */
 export const boardObjective = sqliteTable(
   "board_objective",
   {
@@ -686,6 +703,7 @@ export const boardObjective = sqliteTable(
     clubId: text("club_id")
       .notNull()
       .references(() => clubs.id),
+    competitionId: text("competition_id").references(() => competitions.id),
     minPosition: integer("min_position").notNull(),
     maxPosition: integer("max_position").notNull(),
     finalPosition: integer("final_position"),

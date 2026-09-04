@@ -19,14 +19,17 @@ afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
 // Advancing a full season runs many in-process calendar steps (DB writes per matchday); give the
 // heavy seeds a generous timeout so they hold up under parallel-suite load.
-it.effect("concluded seed produces a season_complete save with a board verdict", () =>
+it.effect("concluded seed produces a save with a board verdict on the season just played", () =>
   Effect.gen(function* () {
     const saveId = yield* Effect.promise(() => seedConcluded(savesDir));
     const summary = yield* getSeasonSummary(savesDir, saveId);
 
-    strictEqual(summary.season.phase, "season_complete");
+    // The rollover opens the next season as soon as one concludes, so the save is not parked at
+    // `season_complete` — the summary reports the season that was judged, which is the one the
+    // player has just finished reading about.
     ok(summary.boardObjective?.verdict, "concluded season yields a board verdict");
     ok(summary.managerOutcome, "concluded season yields a manager outcome");
+    strictEqual(summary.boardObjective!.seasonNumber, 1);
   }),
   30_000,
 );
