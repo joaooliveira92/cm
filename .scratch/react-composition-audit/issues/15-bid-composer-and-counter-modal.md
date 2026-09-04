@@ -1,7 +1,7 @@
 # 15 — Extract the bid composer and counter-offer modal as compound leaves
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
 **What to build:** Two distinct UI flows on the transfers screen become their own compound components, both reading from `useTransfers()`:
 
@@ -14,7 +14,7 @@ Both are *compound* in the composition-patterns sense: they render as a small cl
 
 **Status:** ready-for-agent
 
-- [ ] A bid composer compound renders the Actions region and Keep/Discard dialog from `useTransfers()`, and still honours the no-silent-discard lifecycle (dirty draft surfaces the keep/discard decision; Escape keeps and closes; focus returns to the invoking row on keep, to the bid input on discard).
-- [ ] A counter-offer compound renders from shared counter state with its inline error on invalid/empty submit; accept/reject/counter still dispatch correctly.
-- [ ] No behaviour change to bid validity, the disabled-submit gate, the window-closed notice, or the bid alert.
-- [ ] `pnpm check:all` passes.
+- [x] A bid composer compound renders the Actions region and Keep/Discard dialog from `useTransfers()`, and still honours the no-silent-discard lifecycle (dirty draft surfaces the keep/discard decision; Escape keeps and closes; focus returns to the invoking row on keep, to the bid input on discard).
+- [x] A counter-offer compound renders from shared counter state with its inline error on invalid/empty submit; accept/reject/counter still dispatch correctly.
+- [x] No behaviour change to bid validity, the disabled-submit gate, the window-closed notice, or the bid alert.
+- [x] `pnpm check:all` passes.
