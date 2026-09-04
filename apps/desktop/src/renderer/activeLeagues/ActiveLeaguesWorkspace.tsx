@@ -2,7 +2,13 @@ import type { AdvancedOptionsPayload } from "@cm-clone/contracts";
 import type { AdvancedOptionsKey, SimulationDepth } from "@cm-clone/shared";
 import { useState, type ReactNode, type RefObject } from "react";
 import { Button } from "../components/ui/button.js";
-import { FOCUS_RING } from "../focus.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select.js";
 import { AdvancedOptions } from "./AdvancedOptions.js";
 import type { AddableLeagueView, GridRowView } from "./atoms.js";
 import { LeagueGrid } from "./LeagueGrid.js";
@@ -135,22 +141,29 @@ const AddLeagueControl = ({
 
   return (
     <div className="flex min-w-0 items-center gap-1">
-      <select
-        aria-label="League to add"
-        className={`h-8 min-w-0 max-w-56 rounded-control border border-border-subtle bg-field-bg px-2 text-xs ${FOCUS_RING.join(" ")}`}
-        value={selectable ? chosen : ""}
+      <Select
         disabled={candidates.length === 0}
-        onChange={(event) => setChosen(event.target.value)}
+        value={selectable ? chosen : ""}
+        onValueChange={(next) => {
+          if (next !== null) setChosen(next);
+        }}
       >
-        <option value="">
-          {candidates.length === 0 ? "Every league is active" : "Choose a league…"}
-        </option>
-        {candidates.map((candidate) => (
-          <option key={candidate.leagueId} value={candidate.leagueId}>
-            {candidate.nationName} — {candidate.leagueName}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger aria-label="League to add" className="h-8 max-w-56 px-2 text-xs">
+          <SelectValue
+            placeholder={candidates.length === 0 ? "Every league is active" : "Choose a league…"}
+          />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">
+            {candidates.length === 0 ? "Every league is active" : "Choose a league…"}
+          </SelectItem>
+          {candidates.map((candidate) => (
+            <SelectItem key={candidate.leagueId} value={candidate.leagueId}>
+              {candidate.nationName} — {candidate.leagueName}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <Button
         type="button"
         variant="secondary"

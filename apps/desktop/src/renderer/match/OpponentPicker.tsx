@@ -1,5 +1,12 @@
 import { ClubId } from "@cm-clone/contracts";
 import { Button } from "../components/ui/button.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select.js";
 import { dispatchAction } from "../actions/dispatch.js";
 import { useMatchContext } from "./MatchProvider.js";
 import { SELECT_CLASS } from "./controls.js";
@@ -13,17 +20,23 @@ export const OpponentPicker = () => {
     <section className="mt-6 flex items-end gap-2">
       <div>
         <p className="text-sm text-text-secondary">Opponent</p>
-        <select
-          className={`mt-1 ${SELECT_CLASS}`}
+        <Select
           value={state.opponentId}
-          onChange={(event) => actions.chooseOpponent(ClubId.make(event.target.value))}
+          onValueChange={(value) => {
+            if (value !== null) actions.chooseOpponent(ClubId.make(value));
+          }}
         >
-          {state.opponents.map((club) => (
-            <option key={club.id} value={club.id}>
-              {club.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger aria-label="Opponent" className={`mt-1 ${SELECT_CLASS}`}>
+            <SelectValue placeholder="Choose an opponent" />
+          </SelectTrigger>
+          <SelectContent>
+            {state.opponents.map((club) => (
+              <SelectItem key={club.id} value={club.id}>
+                {club.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <Button
         type="button"

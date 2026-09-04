@@ -20,6 +20,13 @@ import { Alert } from "./components/ui/alert.js";
 import { Button } from "./components/ui/button.js";
 import { Card } from "./components/ui/card.js";
 import { Input } from "./components/ui/input.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./components/ui/select.js";
 import { FOCUS_RING } from "./focus.js";
 import { CreateSessionContext } from "./router/createSessionContext.js";
 import {
@@ -367,39 +374,52 @@ export const LeagueSelectionScreen = (props: LeagueSelectionScreenProps) => {
         </label>
         <label className="flex flex-col text-xs text-text-secondary">
           Region
-          <select
+          <Select
             value={state.regionFilterId ?? ""}
-            onChange={(event) =>
+            onValueChange={(value) =>
               dispatch({
                 type: "SET_REGION_FILTER",
-                regionId: event.target.value === "" ? null : event.target.value,
+                regionId: value === "" || value === null ? null : value,
               })
             }
-            className={SELECT_CLASS}
           >
-            <option value="">All regions</option>
-            {index.regions.map((region) => (
-              <option key={region.id} value={region.id}>
-                {region.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger aria-label="Region" className={SELECT_CLASS}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All regions</SelectItem>
+              {index.regions.map((region) => (
+                <SelectItem key={region.id} value={region.id}>
+                  {region.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
         <label className="flex flex-col text-xs text-text-secondary">
           Status
-          <select
+          <Select
             value={state.statusFilter}
-            onChange={(event) =>
-              dispatch({ type: "SET_STATUS_FILTER", filter: event.target.value as StatusFilter })
-            }
-            className={SELECT_CLASS}
+            onValueChange={(value) => {
+              if (value !== null) {
+                dispatch({
+                  type: "SET_STATUS_FILTER",
+                  filter: value as StatusFilter,
+                });
+              }
+            }}
           >
-            {STATUS_FILTERS.map((filter) => (
-              <option key={filter} value={filter}>
-                {STATUS_FILTER_LABELS[filter]}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger aria-label="Status" className={SELECT_CLASS}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_FILTERS.map((filter) => (
+                <SelectItem key={filter} value={filter}>
+                  {STATUS_FILTER_LABELS[filter]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
         <div className="flex items-end gap-2">
           <Button type="button" variant="secondary" onClick={() => applyPreset("recommended")}>
@@ -604,10 +624,9 @@ export const LeagueSelectionScreen = (props: LeagueSelectionScreenProps) => {
 };
 
 /*
- * Native `<select>`, not `components/ui/select.tsx`. The vendored Select is a
- * Base UI listbox with its own focus and typeahead handling; a native select is
- * already keyboard-complete and is what the spine's level-1 contract assumes.
- * Only the paint is borrowed.
+ * These sizing/paint tokens are shared by every Base UI Select trigger on this
+ * screen. The primitive (`components/ui/select.tsx`) supplies the popup listbox;
+ * `aria-label`s on the triggers carry the accessible names.
  */
 const SELECT_CLASS = `mt-1 rounded-control border border-border-subtle bg-field-bg px-2 py-1 text-sm ${FOCUS_RING.join(" ")}`;
 const SELECT_CLASS_COMPACT = `rounded-control border border-border-subtle bg-field-bg px-1 py-0.5 text-text-primary ${FOCUS_RING.join(" ")}`;
@@ -710,38 +729,54 @@ const NationTreeRow = ({
         {nation.available && (
           <label className="flex items-center gap-1 text-xs text-text-secondary">
             Mode
-            <select
+            <Select
               value={row.mode}
-              onChange={(event) => onMode(event.target.value as SimulationMode)}
-              aria-label={`Simulation mode for ${nation.name}`}
-              className={SELECT_CLASS_COMPACT}
+              onValueChange={(value) => {
+                if (value !== null) onMode(value as SimulationMode);
+              }}
             >
-              {SIMULATION_MODES.filter(
-                (mode) => mode !== "playable" || nation.playableSupported,
-              ).map((mode) => (
-                <option key={mode} value={mode}>
-                  {MODE_LABELS[mode]}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                aria-label={`Simulation mode for ${nation.name}`}
+                className={SELECT_CLASS_COMPACT}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SIMULATION_MODES.filter(
+                  (mode) => mode !== "playable" || nation.playableSupported,
+                ).map((mode) => (
+                  <SelectItem key={mode} value={mode}>
+                    {MODE_LABELS[mode]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </label>
         )}
 
         {row.mode === "playable" && nation.scopeOptions.length > 0 && (
           <label className="flex items-center gap-1 text-xs text-text-secondary">
             Scope
-            <select
+            <Select
               value={row.scopeOptionId ?? ""}
-              onChange={(event) => onScope(event.target.value)}
-              aria-label={`League scope for ${nation.name}`}
-              className={SELECT_CLASS_COMPACT}
+              onValueChange={(value) => {
+                if (value !== null) onScope(value);
+              }}
             >
-              {nation.scopeOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.displayName}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                aria-label={`League scope for ${nation.name}`}
+                className={SELECT_CLASS_COMPACT}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {nation.scopeOptions.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </label>
         )}
 

@@ -12,7 +12,13 @@ import type {
   RecommendationIcon,
 } from "@cm-clone/shared";
 import { Button } from "../components/ui/button.js";
-import { FOCUS_RING } from "../focus.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select.js";
 import type { GridRowView } from "./atoms.js";
 import {
   DENSE_CONTROL_PADDING,
@@ -68,15 +74,11 @@ const ICON_BY_REASON: Readonly<Record<RecommendationIcon, typeof Sparkles>> = {
   neutral: Minus,
 };
 
-/** The depth control's accessible name is anchored to the league, so a screen-reader user lands
+/** The depth selector's accessible name is anchored to the league, so a screen-reader user lands
  *  on "Simulation depth for English First Division", never on an anonymous select. */
 const depthAriaLabel = (row: GridRowView): string => `Simulation depth for ${row.leagueName}`;
 
 const removeAriaLabel = (row: GridRowView): string => `Remove ${row.leagueName}`;
-
-/** The native select the grid uses — same decision as the League & Nation browser: a native
- *  select is already keyboard-complete, so no vendored listbox is needed here. */
-const SELECT_CLASS = `h-6 min-w-0 rounded-control border border-border-subtle bg-field-bg px-1 text-xs ${FOCUS_RING.join(" ")}`;
 
 export interface LeagueGridProps {
   readonly rows: readonly GridRowView[];
@@ -235,18 +237,23 @@ const DepthCell = ({
     );
   }
   return (
-    <select
-      aria-label={depthAriaLabel(row)}
-      className={SELECT_CLASS}
+    <Select
       value={row.depth}
-      onChange={(event) => onChange(event.target.value as SimulationDepth)}
+      onValueChange={(value) => {
+        if (value !== null) onChange(value as SimulationDepth);
+      }}
     >
-      {options.map((depth) => (
-        <option key={depth} value={depth}>
-          {DEPTH_LABELS[depth]}
-        </option>
-      ))}
-    </select>
+      <SelectTrigger aria-label={depthAriaLabel(row)} className="h-6 min-w-0 px-1 text-xs">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((depth) => (
+          <SelectItem key={depth} value={depth}>
+            {DEPTH_LABELS[depth]}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 };
 

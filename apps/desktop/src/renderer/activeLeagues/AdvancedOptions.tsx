@@ -4,6 +4,13 @@ import { useCallback, useId, useState } from "react";
 import type { AdvancedOptionsPayload } from "@cm-clone/contracts";
 import type { AdvancedOptionsKey } from "@cm-clone/shared";
 import { Separator } from "../components/ui/separator.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select.js";
 import { FOCUS_RING } from "../focus.js";
 import { OPTION_ROW_HEIGHT } from "./density.js";
 
@@ -111,8 +118,6 @@ export const ADVANCED_OPTION_GROUPS: readonly OptionGroup[] = [
     ],
   },
 ];
-
-const SELECT_CLASS = `h-6 min-w-0 rounded-control border border-border-subtle bg-field-bg px-1 text-xs ${FOCUS_RING.join(" ")}`;
 
 export interface AdvancedOptionsProps {
   readonly options: AdvancedOptionsPayload;
@@ -234,18 +239,23 @@ const AdvancedOptionRow = ({
         >
           <CircleHelp aria-hidden="true" className="size-3.5" />
         </button>
-        <select
-          id={`${helpId}-control`}
-          className={`${SELECT_CLASS} w-[8rem]`}
+        <Select
           value={value}
-          onChange={(event) => onChange(option.key, event.target.value)}
+          onValueChange={(next) => {
+            if (next !== null) onChange(option.key, next);
+          }}
         >
-          {option.values.map((entry) => (
-            <option key={entry.value} value={entry.value}>
-              {entry.label}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id={`${helpId}-control`} className="h-6 w-[8rem] px-1 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {option.values.map((entry) => (
+              <SelectItem key={entry.value} value={entry.value}>
+                {entry.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       {/* Always rendered, hidden when closed: `aria-controls` on the help button must resolve
           to a real element whether or not the paragraph is showing. */}

@@ -29,6 +29,13 @@ import { clearScopeState, getScopeState, setScopeState } from "../actions/scopeS
 import { Alert } from "../components/ui/alert.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select.js";
 import { FOCUS_RING } from "../focus.js";
 import { useSeamHotkeys } from "../hotkeys.js";
 import { isTextEntryTarget } from "../keymap/keystroke.js";
@@ -239,45 +246,63 @@ const SubstitutionControl = () => {
         <div className="flex items-end gap-2">
           <div>
             <p className="text-xs text-text-secondary">Off</p>
-            <select
-              data-action-id="set-live-substitute-off"
-              className={SELECT_CLASS}
+            <Select
               value={state.outPlayerId}
-              onChange={(event) =>
-                void dispatchAction("set-live-substitute-off", {
-                  playerId: PlayerId.make(event.target.value),
-                })
-              }
               disabled={state.subsStatus.capReached}
+              onValueChange={(value) => {
+                if (value !== null) {
+                  void dispatchAction("set-live-substitute-off", {
+                    playerId: PlayerId.make(value),
+                  });
+                }
+              }}
             >
-              <option value="">Select player</option>
-              {tactic.slots.map((slot: TacticSlot) => (
-                <option key={slot.playerId} value={slot.playerId}>
-                  {fullNameOf(slot.playerId)} ({slot.position})
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                data-action-id="set-live-substitute-off"
+                aria-label="Player to bring off"
+                className={SELECT_CLASS}
+              >
+                <SelectValue placeholder="Select player" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Select player</SelectItem>
+                {tactic.slots.map((slot: TacticSlot) => (
+                  <SelectItem key={slot.playerId} value={slot.playerId}>
+                    {fullNameOf(slot.playerId)} ({slot.position})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <p className="text-xs text-text-secondary">On</p>
-            <select
-              data-action-id="set-live-substitute-in"
-              className={SELECT_CLASS}
+            <Select
               value={state.inPlayerId}
-              onChange={(event) =>
-                void dispatchAction("set-live-substitute-in", {
-                  playerId: PlayerId.make(event.target.value),
-                })
-              }
               disabled={state.subsStatus.capReached}
+              onValueChange={(value) => {
+                if (value !== null) {
+                  void dispatchAction("set-live-substitute-in", {
+                    playerId: PlayerId.make(value),
+                  });
+                }
+              }}
             >
-              <option value="">Select player</option>
-              {bench.map((player) => (
-                <option key={player.id} value={player.id}>
-                  {player.firstName} {player.lastName}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                data-action-id="set-live-substitute-in"
+                aria-label="Player to bring on"
+                className={SELECT_CLASS}
+              >
+                <SelectValue placeholder="Select player" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Select player</SelectItem>
+                {bench.map((player) => (
+                  <SelectItem key={player.id} value={player.id}>
+                    {player.firstName} {player.lastName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <Button
             type="button"

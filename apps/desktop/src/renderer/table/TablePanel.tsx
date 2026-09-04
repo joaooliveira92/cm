@@ -13,6 +13,13 @@ import { POSITIONS } from "@cm-clone/shared";
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import { Input } from "../components/ui/input.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select.js";
 import { FOCUS_RING } from "../focus.js";
 import type { FilterClause, SortState, TableId, TableRowShape } from "./types.js";
 import type { TableFocusBookmark } from "./focusBookmark.js";
@@ -151,22 +158,27 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
           </label>
         )}
         {enablePositionFilter && (
-          <label className="flex items-center gap-2 text-text-body">
+          <div className="flex items-center gap-2 text-text-body">
             Position
-            <select
-              aria-label={`Filter ${label} by position`}
+            <Select
               value={activePosition ?? ""}
-              onChange={(event) => setPosition(event.target.value)}
-              className={SELECT_CLASS}
+              onValueChange={(value) => {
+                if (value !== null) setPosition(value);
+              }}
             >
-              <option value="">All positions</option>
-              {POSITIONS.map((position) => (
-                <option key={position} value={position}>
-                  {position}
-                </option>
-              ))}
-            </select>
-          </label>
+              <SelectTrigger aria-label={`Filter ${label} by position`} className={SELECT_CLASS}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All positions</SelectItem>
+                {POSITIONS.map((position) => (
+                  <SelectItem key={position} value={position}>
+                    {position}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
         {filterActive && (
           <Button type="button" variant="secondary" onClick={clearVisibleFilters}>
@@ -233,7 +245,6 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
   );
 };
 
-/** Native `<select>` paint, matching `components/ui/input.tsx`. The vendored
- *  Select is a Base UI listbox with its own focus handling; a native select is
- *  already keyboard-complete and is what the spine's contract assumes. */
+/** The position-filter trigger paint, matching `components/ui/input.tsx` and the Base UI select
+ *  primitive's popup styling. */
 const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;

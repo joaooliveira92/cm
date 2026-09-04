@@ -23,6 +23,13 @@ import {
 import { dispatchAction, registerActionHandler } from "./actions/dispatch.js";
 import { Alert } from "./components/ui/alert.js";
 import { Button } from "./components/ui/button.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./components/ui/select.js";
 import { focusIdOf, FOCUS_RING } from "./focus.js";
 import { SQUAD_PALETTE_OPTIONS, tableSortAndFilterActions } from "./table/paletteActions.js";
 import {
@@ -477,22 +484,27 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
       {/* Visible filter controls (AC-30): native controls showing active state. */}
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-2 text-text-body">
+        <div className="flex items-center gap-2 text-text-body">
           Position
-          <select
-            aria-label="Filter squad by position"
+          <Select
             value={activePosition?.position ?? ""}
-            onChange={(event) => setPositionFilter(event.target.value)}
-            className={SELECT_CLASS}
+            onValueChange={(value) => {
+              if (value !== null) setPositionFilter(value);
+            }}
           >
-            <option value="">All positions</option>
-            {POSITIONS.map((position) => (
-              <option key={position} value={position}>
-                {position}
-              </option>
-            ))}
-          </select>
-        </label>
+            <SelectTrigger aria-label="Filter squad by position" className={SELECT_CLASS}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All positions</SelectItem>
+              {POSITIONS.map((position) => (
+                <SelectItem key={position} value={position}>
+                  {position}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         {activeFilterCount(filters) > 0 && (
           <Button
             type="button"
@@ -507,24 +519,26 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
       {/* Column visibility controls (Squad only): presets + per-column toggles. */}
       <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-2 text-text-body">
+        <div className="flex items-center gap-2 text-text-body">
           Columns
-          <select
-            aria-label="Squad column preset"
+          <Select
             value={preferences.activePresetId ?? DEFAULT_SQUAD_PRESET_ID}
-            onChange={(event) => {
-              const value = event.target.value;
-              if (isSquadPresetId(value)) setPreset(value);
+            onValueChange={(value) => {
+              if (value !== null && isSquadPresetId(value)) setPreset(value);
             }}
-            className={SELECT_CLASS}
           >
-            {SQUAD_PRESETS.map((preset) => (
-              <option key={preset.id} value={preset.id}>
-                {preset.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            <SelectTrigger aria-label="Squad column preset" className={SELECT_CLASS}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SQUAD_PRESETS.map((preset) => (
+                <SelectItem key={preset.id} value={preset.id}>
+                  {preset.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <Button
           type="button"
           variant="secondary"
@@ -633,5 +647,5 @@ export const SquadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   );
 };
 
-/** Native `<select>` paint. See the note in `table/TablePanel.tsx`. */
+/** The squad filter/preset trigger paint. */
 const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;
