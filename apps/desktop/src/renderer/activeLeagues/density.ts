@@ -22,9 +22,12 @@
 export const LEAGUE_GRID_TEMPLATE =
   "[grid-template-columns:2rem_minmax(0,1fr)_9.5rem] min-[960px]:[grid-template-columns:2rem_minmax(0,1fr)_9.5rem_minmax(0,1fr)_2rem]";
 
-/** 32px — inside the spec's 30–34px band, shared by the header row and every body row. A folded
- *  (two-line) row is taller by definition, so the fixed height only applies from 960px up. */
-export const LEAGUE_ROW_HEIGHT = "min-h-[32px] min-[960px]:h-[32px]";
+/** 36px and content-driven, shared by the header row and every body row. The identity cell stacks
+ *  the league name and its scope description on two lines, so a *fixed* height would clip the
+ *  second line; the row floors at 36px and grows with its content instead. Kept at the low end of
+ *  the spec's density intent — a folded or two-line row is taller by definition, so it must never
+ *  be forced to a single fixed height. */
+export const LEAGUE_ROW_HEIGHT = "min-h-9";
 
 /** 8px between columns; 3px between rows. */
 export const LEAGUE_COLUMN_GAP = "gap-x-2";

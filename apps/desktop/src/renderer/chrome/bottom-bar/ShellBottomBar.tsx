@@ -16,21 +16,21 @@ export const ShellBottomBar = ({ plan, className }: ShellBottomBarProps) => (
   <footer
     className={
       className ??
-      "flex min-h-14 w-full shrink-0 items-center border-t border-border-subtle bg-bg-raised px-4"
+      "flex h-11 w-full shrink-0 items-center border-t border-border-subtle bg-bg-raised px-4"
     }
   >
     <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4">
       {/* Leading: leaving the flow, then stepping back. Cancel keeps its place
           across every step, which is what makes it findable without reading. */}
       <div className="flex items-center gap-3">
-        {plan.cancel !== null && <BarButton button={plan.cancel} variant="secondary" />}
-        {plan.back !== null && <BarButton button={plan.back} variant="secondary" />}
+        {plan.cancel !== null && <BarButton button={plan.cancel} variant="outline" />}
+        {plan.back !== null && <BarButton button={plan.back} variant="outline" />}
       </div>
 
       {/* Trailing: supporting verbs, then the step's one forward verb. */}
       <div className="flex items-center gap-3">
         {plan.secondary.map((button) => (
-          <BarButton key={button.id} button={button} variant="secondary" />
+          <BarButton key={button.id} button={button} variant="outline" />
         ))}
         {plan.primary !== null && <BarButton button={plan.primary} />}
       </div>
@@ -43,7 +43,7 @@ const BarButton = ({
   variant,
 }: {
   readonly button: BottomBarButton;
-  readonly variant?: "secondary";
+  readonly variant?: "outline";
 }) => (
   <Button
     type="button"

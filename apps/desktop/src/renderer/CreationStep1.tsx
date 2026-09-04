@@ -48,11 +48,13 @@ const PILLAR_DISPLAY_NAMES: Readonly<Record<Pillar, string>> = {
   technicalCoaching: "Technical Coaching",
 };
 
+/** One restrained accent for every pillar — the same primary the Active Leagues workspace uses
+ *  for its chrome — so the step reads as a calm panel rather than a burst of disjoint colours. */
 const PILLAR_ACCENTS: Readonly<Record<Pillar, string>> = {
-  tacticalAcumen: "from-sky-500 to-cyan-400",
-  influence: "from-violet-500 to-fuchsia-400",
-  regimen: "from-amber-500 to-orange-400",
-  technicalCoaching: "from-emerald-500 to-teal-400",
+  tacticalAcumen: "bg-primary",
+  influence: "bg-primary",
+  regimen: "bg-primary",
+  technicalCoaching: "bg-primary",
 };
 
 const PILLAR_WARNINGS: Readonly<Record<Pillar, string>> = {
@@ -165,11 +167,9 @@ export const CreationStep1 = ({
                 stiffness: 300,
                 damping: 30,
               }}
-              className="relative overflow-hidden rounded-md border border-border-subtle bg-surface p-6 shadow-sm"
+              className="rounded-panel border border-panel-border bg-card p-6 shadow-panel"
             >
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
-
-              <div className="relative">
+              <div>
                 <div className="mb-7">
                   <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                     Step 1
@@ -270,8 +270,8 @@ export const CreationStep1 = ({
               </div>
 
 
-              <div className="overflow-hidden rounded-md border border-border-subtle bg-surface shadow-sm">
-                <div className="flex flex-col gap-4 border-b border-border-subtle p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="overflow-hidden rounded-panel border border-panel-border bg-panel-bg shadow-panel">
+                <div className="flex flex-col gap-4 border-b border-panel-border p-5 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h3 className="font-semibold text-text-primary">
                       Pillar distribution
@@ -283,7 +283,7 @@ export const CreationStep1 = ({
 
                   <motion.div
                     layout
-                    className={`rounded-xl border px-4 py-2 text-center ${pointsRemaining === 0
+                    className={`rounded-panel border px-4 py-2 text-center ${pointsRemaining === 0
                       ? "border-text-success/30 bg-text-success/10"
                       : pointsRemaining > 0
                         ? "border-text-warning/30 bg-text-warning/10"
@@ -321,7 +321,7 @@ export const CreationStep1 = ({
                   </motion.div>
                 </div>
 
-                <div className="grid gap-px bg-border-subtle md:grid-cols-2">
+                <div className="grid gap-px bg-panel-border md:grid-cols-2">
                   {MANAGER_PILLARS.map((pillar) => {
                     const value = pillars[pillar];
                     const isMinimum = value === MIN_PILLAR_VALUE;
@@ -329,7 +329,7 @@ export const CreationStep1 = ({
                     return (
                       <div
                         key={pillar}
-                        className="bg-surface p-5"
+                        className="bg-card p-5"
                       >
                         <div className="flex items-center justify-between gap-4">
                           <span className="font-medium text-text-primary">
@@ -419,8 +419,8 @@ export const CreationStep1 = ({
                                     <motion.div
                                       key={index}
                                       className={`h-2 flex-1 rounded-full ${active
-                                        ? `bg-gradient-to-r ${PILLAR_ACCENTS[pillar]}`
-                                        : "bg-background"
+                                        ? PILLAR_ACCENTS[pillar]
+                                        : "bg-surface-raised"
                                         }`}
                                       animate={{
                                         scaleY: active ? 1 : 0.65,
