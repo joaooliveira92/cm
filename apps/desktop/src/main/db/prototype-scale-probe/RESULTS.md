@@ -101,3 +101,32 @@ hiding, and no schema decision fixes it.
 Write throughput under simulation (the probe writes in one big transaction, which is not how a
 matchday writes), WAL vs rollback journal, concurrent reads, and save-file load time into the
 Electron main process.
+
+## `player_transfers` key and index (open question 22)
+
+Measured by `player-transfers-key-probe.ts`, a focused harness beside this one. The original probe
+was not revived for it: that harness builds a whole world against a DDL that has since moved on —
+`clubs.name`, `season.current_matchday` and `fixtures.matchday` are all gone — and the question is
+about one table's key and one read.
+
+640,000 transfers (20 seasons x 32,000), 400,000 players, 16,000 clubs, 36-character ids. The read is
+`WHERE player_id = ? ORDER BY transferred_on ASC`, averaged over 25 players on a cold connection.
+
+| Candidate | Rows kept | File | Career read | Plan |
+|---|---|---|---|---|
+| Surrogate `id`, no index | 640,000 | 82.5 MB | 26.821 ms | `SCAN` + `USE TEMP B-TREE FOR ORDER BY` |
+| Surrogate `id` + `(player_id, transferred_on)` | 640,000 | 123.9 MB | 0.149 ms | `SEARCH ... USING INDEX` |
+| `PRIMARY KEY (player_id, transferred_on)` | 596,120 | 112.8 MB | 0.139 ms | `SEARCH ... USING sqlite_autoindex` |
+| `PRIMARY KEY (player_id, transferred_on, to_club_id)` | 597,520 | 137.9 MB | 0.143 ms | `SEARCH ... USING sqlite_autoindex` |
+| The same, `WITHOUT ROWID` | 597,520 | 85.8 MB | 0.088 ms | `SEARCH ... USING PRIMARY KEY` |
+
+Unindexed is not viable: 26.8 ms per career read, scanning every transfer in the save and sorting
+into a temp B-tree, against the one table with unbounded growth.
+
+Both composites dropped rows under `INSERT OR IGNORE` — the probe draws players, clubs and dates at
+random over a small date space, so the collision rate is an artefact rather than a prediction. What
+it shows is that uniqueness under a natural key rests on a domain claim, never on construction.
+
+`WITHOUT ROWID` stores the row inside the primary-key B-tree rather than beside it, which is why it
+beats a surrogate plus a separate index on both size and speed. The choice is 38 MB against a key
+whose correctness is an argument rather than a shape. The decision itself belongs to ticket 22.

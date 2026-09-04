@@ -39,6 +39,56 @@ writes the migration is a shape on disk nobody decided.
 
 - [ ] The table's primary key is decided and written down, with the reason the named columns alone
       are not a key.
-- [ ] The player-keyed, date-ordered read is measured at twenty seasons of rows, unindexed and
-      indexed, with query plans recorded.
+- [x] The player-keyed, date-ordered read is measured at twenty seasons of rows, unindexed and
+      indexed, with query plans recorded. See below.
 - [ ] Ticket 17 is unblocked: it has a key and an index answer to build from.
+
+## Measurement
+
+Run against `player-transfers-key-probe.ts`, a focused harness beside the original probe. The
+original was not revived: it builds a whole world against a DDL that has since moved on —
+`clubs.name`, `season.current_matchday` and `fixtures.matchday` are all gone — and this question is
+about one table's key and one read.
+
+640,000 transfers (20 seasons x 32,000), 400,000 players, 16,000 clubs, 36-character ids as
+`deriveId` produces them. The read is `WHERE player_id = ? ORDER BY transferred_on ASC`, averaged
+over 25 players, measured on a cold connection.
+
+| Candidate | Rows kept | File | Career read | Plan |
+|---|---|---|---|---|
+| Surrogate `id`, no index | 640,000 | 82.5 MB | **26.821 ms** | `SCAN` + `USE TEMP B-TREE FOR ORDER BY` |
+| Surrogate `id` + `(player_id, transferred_on)` | 640,000 | 123.9 MB | 0.149 ms | `SEARCH ... USING INDEX` |
+| `PRIMARY KEY (player_id, transferred_on)` | 596,120 | 112.8 MB | 0.139 ms | `SEARCH ... USING sqlite_autoindex` |
+| `PRIMARY KEY (player_id, transferred_on, to_club_id)` | 597,520 | 137.9 MB | 0.143 ms | `SEARCH ... USING sqlite_autoindex` |
+| The same, `WITHOUT ROWID` | 597,520 | **85.8 MB** | **0.088 ms** | `SEARCH ... USING PRIMARY KEY` |
+
+**Unindexed is not viable.** 26.8 ms to read one career, scanning every transfer in the save and
+sorting into a temp B-tree, growing without bound. This is the one table with unbounded growth, so
+the cost is not a fixed tax but a rising one.
+
+**No natural tuple is unique.** Both composite candidates dropped rows under `INSERT OR IGNORE` —
+43,880 and 42,480 respectively. Those collisions are an artefact of the probe drawing players, clubs
+and dates at random over a small date space, not a claim that the game produces them at that rate.
+What they establish is the ticket's own point from the other side: uniqueness under a natural key
+rests on a domain claim ("a player cannot transfer to the same club twice on one date"), never on
+construction.
+
+**The trade-off is 38 MB and a domain claim.** `WITHOUT ROWID` on the three-column composite stores
+the row inside the primary-key B-tree rather than beside it, so it pays for no duplicate storage: it
+is 38 MB smaller and slightly faster than a surrogate plus a separate index, and needs no second
+index at all. A surrogate is unique by construction and costs those 38 MB — about a 46% increase over
+the table itself — to be right without argument.
+
+## Recommendation, for ratification
+
+Take the surrogate `INTEGER PRIMARY KEY` with an index on `(player_id, transferred_on)`.
+
+The 38 MB is real, and so is the reason to spend it. Every other key in this schema is either a
+canonical id or a tuple whose uniqueness is structural; a `WITHOUT ROWID` composite here would be the
+first key in the save whose correctness rests on a sentence about the domain rather than on the
+shape. When that sentence turns out to be wrong — a two-stage transfer recorded on one date, a
+loan-and-recall, a bug that writes twice — the failure mode is a silently dropped row in the one
+table that is a permanent historical record. A surrogate cannot fail that way.
+
+**This is a recommendation, not the answer.** Whoever decides may reasonably weigh 38 MB per save
+differently, and the numbers above are what that choice should be made against.
