@@ -7,29 +7,23 @@
  * `prompt()` counter-offer path is replaced by an inline modal (ticket 04).
  */
 import { useRef } from "react";
-import type { BidId, PlayerId, SaveId } from "@cm-clone/contracts";
+import type { PlayerId, SaveId } from "@cm-clone/contracts";
 import { ACTION_REGISTRY } from "./actions/allActions.js";
 import { dispatchAction } from "./actions/dispatch.js";
 import { Alert } from "./components/ui/alert.js";
 import { Button } from "./components/ui/button.js";
 import { Input } from "./components/ui/input.js";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./components/ui/table.js";
 import { ActionKeyBadge, actionBadgeBinding } from "./discoverability/ActionKeyBadge.js";
 import { describeRpcError } from "./rpc.js";
 import { restoreFocusAfterOverlay } from "./focus.js";
 import { InlineModal } from "./transfers/InlineModal.js";
 import { useDialogKeyboard } from "./transfers/dialogKeyboard.js";
-import { formatCredits, marketPlayerColumns } from "./table/transfers/marketColumns.js";
-import { freeAgentColumns } from "./table/transfers/freeAgentColumns.js";
+import { MarketTable } from "./transfers/MarketTable.js";
+import { FreeAgentsTable } from "./transfers/FreeAgentsTable.js";
+import { IncomingBidsTable } from "./transfers/IncomingBidsTable.js";
+import { OutgoingBidsTable } from "./transfers/OutgoingBidsTable.js";
+import { formatCredits } from "./table/transfers/marketColumns.js";
 import { TransfersProvider, useTransfers } from "./TransfersProvider.js";
-import { TablePanel } from "./table/TablePanel.js";
 import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "./theme.js";
 import { STATE_COPY } from "./table/viewState.js";
 import { reduceBidDraft } from "./table/bidDraft.js";
@@ -108,17 +102,11 @@ const TransfersScreenInner = () => {
   const {
     status,
     bidAlert,
-    selected,
     draftState,
     counters,
     counterAmount,
     counterError,
-    market,
-    free,
     marketRows,
-    freeAgentRows,
-    marketFiltered,
-    freeFiltered,
     refreshState,
     windowOpen,
     draft,
@@ -136,16 +124,10 @@ const TransfersScreenInner = () => {
     setCounter,
     setCounterAmount,
     setCounterError,
-    setFiltersFor,
     run,
     runRespond,
-    onSortChangeFor,
-    onToggleSelectionFor,
-    onActiveChangeFor,
-    onBookmarkChangeFor,
-    onRowPrimaryFor,
   } = actions;
-  const { amountInputRef, draftRef, speak, findPlayer, saveId } = meta;
+  const { amountInputRef, draftRef, findPlayer, saveId } = meta;
 
   // Blocking load failure = error with NO retained rows (a failed revalidation
   // keeps `view` — that path renders the tables with a non-blocking line, F1).
@@ -183,106 +165,6 @@ const TransfersScreenInner = () => {
   const bidBadge =
     focusBidAction !== undefined ? actionBadgeBinding(focusBidAction, "transfers") : null;
 
-  const renderIncomingBid = (bid: {
-    readonly id: BidId;
-    readonly playerName: string;
-    readonly biddingClubName: string;
-    readonly amount: number;
-    readonly status: string;
-  }) => (
-    <TableRow key={String(bid.id)}>
-      <TableCell className="pr-4">{bid.playerName}</TableCell>
-      <TableCell className="pr-4">{bid.biddingClubName}</TableCell>
-      <TableCell className="pr-4">{formatCredits(bid.amount)}</TableCell>
-      <TableCell className="pr-4">{bid.status}</TableCell>
-      <TableCell className="pr-4">
-        {bid.status === "pending" && (
-          <div className="flex gap-1">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              data-action-id="respond-accept"
-              onClick={() => void dispatchAction("respond-accept", { bidId: bid.id })}
-            >
-              Accept
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              data-action-id="respond-counter"
-              onClick={() => void dispatchAction("respond-counter", { bidId: bid.id })}
-            >
-              Counter
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              data-action-id="respond-reject"
-              onClick={() => void dispatchAction("respond-reject", { bidId: bid.id })}
-            >
-              Reject
-            </Button>
-          </div>
-        )}
-      </TableCell>
-    </TableRow>
-  );
-
-  const renderOutgoingBid = (bid: {
-    readonly id: BidId;
-    readonly playerName: string;
-    readonly sellingClubName: string;
-    readonly amount: number;
-    readonly counterAmount: number | null;
-    readonly status: string;
-  }) => (
-    <TableRow key={String(bid.id)}>
-      <TableCell className="pr-4">{bid.playerName}</TableCell>
-      <TableCell className="pr-4">{bid.sellingClubName}</TableCell>
-      <TableCell className="pr-4">{formatCredits(bid.amount)}</TableCell>
-      <TableCell className="pr-4">{bid.counterAmount !== null ? formatCredits(bid.counterAmount) : "-"}</TableCell>
-      <TableCell className="pr-4">{bid.status}</TableCell>
-      <TableCell className="pr-4">
-        {bid.status === "countered" && (
-          <div className="flex gap-1">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              data-action-id="accept-counter"
-              onClick={() => void dispatchAction("accept-counter", { bidId: bid.id })}
-            >
-              Accept counter
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              data-action-id="withdraw-bid"
-              onClick={() => void dispatchAction("withdraw-bid", { bidId: bid.id })}
-            >
-              Withdraw
-            </Button>
-          </div>
-        )}
-        {bid.status === "pending" && (
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            data-action-id="withdraw-bid"
-            onClick={() => void dispatchAction("withdraw-bid", { bidId: bid.id })}
-          >
-            Withdraw
-          </Button>
-        )}
-      </TableCell>
-    </TableRow>
-  );
-
   return (
     <main className="bg-background p-8 text-foreground">
       <h1 className="text-2xl font-bold">Transfers</h1>
@@ -310,120 +192,13 @@ const TransfersScreenInner = () => {
         </p>
       )}
 
-      <section className="mt-6">
-        <h2 className="text-lg font-semibold">Incoming Bids</h2>
-        <Table className="mt-2 min-w-full text-left">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="pr-4">Player</TableHead>
-              <TableHead className="pr-4">From</TableHead>
-              <TableHead className="pr-4">Amount</TableHead>
-              <TableHead className="pr-4">Status</TableHead>
-              <TableHead className="pr-4">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {view.incomingBids.map(renderIncomingBid)}
-            {view.incomingBids.length === 0 && (
-              <TableRow>
-                <TableCell className="py-2 text-text-muted" colSpan={5}>
-                  No incoming Bids.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </section>
+      <IncomingBidsTable />
 
-      <section className="mt-6">
-        <h2 className="text-lg font-semibold">Outgoing Bids</h2>
-        <Table className="mt-2 min-w-full text-left">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="pr-4">Player</TableHead>
-              <TableHead className="pr-4">To</TableHead>
-              <TableHead className="pr-4">Amount</TableHead>
-              <TableHead className="pr-4">Counter</TableHead>
-              <TableHead className="pr-4">Status</TableHead>
-              <TableHead className="pr-4">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {view.outgoingBids.map(renderOutgoingBid)}
-            {view.outgoingBids.length === 0 && (
-              <TableRow>
-                <TableCell className="py-2 text-text-muted" colSpan={6}>
-                  No outgoing Bids.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </section>
+      <OutgoingBidsTable />
 
-      <section className="mt-6">
-        <h2 className="text-lg font-semibold">Free Agents</h2>
-        <TablePanel
-          tableId={FREE}
-          screen="transfers"
-          region="freeAgentTable"
-          label="Free Agents"
-          columns={freeAgentColumns()}
-          rows={freeFiltered}
-          unfilteredRowCount={freeAgentRows.length}
-          sort={free.sort}
-          onSortChange={onSortChangeFor(FREE)}
-          filters={free.filters}
-          onSetFilters={(next) => {
-            setFiltersFor(FREE, next);
-            speak(FREE, "filter-set", `${next.length === 0 ? "Cleared the Free Agents filters." : "Filters updated."}`);
-          }}
-          enableNameSearch
-          enablePositionFilter
-          activeId={free.active}
-          onActiveChange={onActiveChangeFor(FREE)}
-          onBookmarkChange={onBookmarkChangeFor(FREE)}
-          selectedId={selected !== null && selected.tableId === FREE ? selected.player.id : null}
-          onToggleSelection={onToggleSelectionFor(FREE)}
-          onRowPrimary={onRowPrimaryFor(FREE)}
-          busy={refreshState._tag === "Refreshing"}
-          announcement={free.announcement?.message ?? ""}
-          copy={STATE_COPY["free-agents"]}
-          loadError={null}
-        />
-      </section>
+      <FreeAgentsTable />
 
-      <section className="mt-6">
-        <h2 className="text-lg font-semibold">Market</h2>
-        <TablePanel
-          tableId={MARKET}
-          screen="transfers"
-          region="marketTable"
-          label="Market"
-          columns={marketPlayerColumns()}
-          rows={marketFiltered}
-          unfilteredRowCount={marketRows.length}
-          sort={market.sort}
-          onSortChange={onSortChangeFor(MARKET)}
-          filters={market.filters}
-          onSetFilters={(next) => {
-            setFiltersFor(MARKET, next);
-            speak(MARKET, "filter-set", `${next.length === 0 ? "Cleared the Market filters." : "Filters updated."}`);
-          }}
-          enableNameSearch
-          enablePositionFilter
-          activeId={market.active}
-          onActiveChange={onActiveChangeFor(MARKET)}
-          onBookmarkChange={onBookmarkChangeFor(MARKET)}
-          selectedId={selected !== null && selected.tableId === MARKET ? selected.player.id : null}
-          onToggleSelection={onToggleSelectionFor(MARKET)}
-          onRowPrimary={onRowPrimaryFor(MARKET)}
-          busy={refreshState._tag === "Refreshing"}
-          announcement={market.announcement?.message ?? ""}
-          copy={STATE_COPY["transfer-market"]}
-          loadError={null}
-        />
-      </section>
+      <MarketTable />
 
       {/* Contextual Actions region (AC-29): bid entry lives here, never in a row. */}
       {draft !== null && draftedPlayer !== null && (

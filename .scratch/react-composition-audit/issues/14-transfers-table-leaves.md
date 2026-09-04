@@ -1,7 +1,7 @@
 # 14 — Split the transfers presentational table leaves into explicit variants
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
 **What to build:** The transfers screen's table sections become explicit components instead of two near-identical inline blocks. Four composed leaves render from `useTransfers()`: a Market table, a Free Agents table, an incoming-bids table, and an outgoing-bids table.
 
@@ -15,7 +15,7 @@ Do not collapse Market and Free Agents into a single configurable component behi
 
 **Status:** ready-for-agent
 
-- [ ] Four leaves exist (Market, Free Agents, Incoming Bids, Outgoing Bids), each composed from `useTransfers()` and rendering the existing table infrastructure.
-- [ ] Market and Free Agents are two explicit variants with no `isMarket`/mode boolean; their shared selection still behaves as one subject across both tables.
-- [ ] No behaviour change: sorting, filtering, roving focus, selection, bookmarks, and announcements work exactly as before on both tables, and the incoming/outgoing bid actions (accept/reject/counter/accept-counter/withdraw) still dispatch correctly.
-- [ ] `pnpm check:all` passes.
+- [x] Four leaves exist (Market, Free Agents, Incoming Bids, Outgoing Bids), each composed from `useTransfers()` and rendering the existing table infrastructure.
+- [x] Market and Free Agents are two explicit variants with no `isMarket`/mode boolean; their shared selection still behaves as one subject across both tables.
+- [x] No behaviour change: sorting, filtering, roving focus, selection, bookmarks, and announcements work exactly as before on both tables, and the incoming/outgoing bid actions (accept/reject/counter/accept-counter/withdraw) still dispatch correctly.
+- [x] `pnpm check:all` passes.
