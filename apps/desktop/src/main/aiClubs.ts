@@ -86,6 +86,10 @@ export const assignAiTactics = Effect.gen(function* () {
   for (const club of clubs) {
     if (club.isUserClub === 1) continue;
     const squad = yield* loadSquadPlayers(club.id);
+    // A club with no players has no formation to pick and nothing to write a tactic about. This is
+    // not a Depth branch: it reads the rows, and the absence of rows *is* Depth's whole footprint
+    // on disk. A results-only club and a club whose squad was deleted are the same case here.
+    if (squad.length === 0) continue;
     const tactic = yield* pickBestFormationTactic(squad);
     yield* validateTactic(tactic, new Set(squad.map((player) => player.id)));
     yield* persistTactic(club.id, tactic);
@@ -118,9 +122,12 @@ const bestRatingAtPosition = (
 export const computeLeagueAveragePositionRatings = (
   squadsByClub: ReadonlyArray<ReadonlyArray<{ readonly positionRatings: Record<string, number> }>>,
 ): Record<Position, number> => {
+  // A club with no squad is not evidence that the league is weak at a position — it is evidence of
+  // nothing, so it is left out of the average rather than counted as a zero.
+  const squads = squadsByClub.filter((squad) => squad.length > 0);
   const result = {} as Record<Position, number>;
   for (const position of POSITIONS) {
-    const bestPerClub = squadsByClub.map((squad) => bestRatingAtPosition(squad, position));
+    const bestPerClub = squads.map((squad) => bestRatingAtPosition(squad, position));
     result[position] = bestPerClub.length === 0 ? 0 : bestPerClub.reduce((sum, r) => sum + r, 0) / bestPerClub.length;
   }
   return result;
@@ -178,6 +185,9 @@ export const runAiTransferWindow = (seasonNumber: number) =>
     for (const club of clubRows) {
       if (club.isUserClub === 1) continue;
       const mySquad = squadsByClub.get(club.id)!;
+      // No squad, no transfer activity: a results-only club has no contracts to sign into and no
+      // weak position to identify. Read from the rows, never from a Depth column.
+      if (mySquad.length === 0) continue;
       const weakPositions = identifyWeakPositions(mySquad, leagueAverages);
 
       for (const position of weakPositions) {

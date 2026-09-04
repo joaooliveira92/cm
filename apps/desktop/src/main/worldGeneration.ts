@@ -191,6 +191,13 @@ export const generateWorld = ({ worldSeed, referenceYear, snapshotId, world }: W
         yield* sql`INSERT INTO competition_participants (competition_id, season_number, club_id)
           VALUES (${competition.id}, ${FIRST_SEASON}, ${clubId})`;
 
+        // Simulation Depth's entire footprint on disk: whether the five tables beneath a club have
+        // rows in them. Nothing above is conditional — a `results-only` club has the same columns,
+        // the same hometown, and the same ground as any other, so a club becoming manageable needs
+        // no conversion of its own row. What stands in for its squad is Results Strength, derived
+        // on read from this club's id and its competition's shape.
+        if (competition.depth === "results-only") continue;
+
         const squad = generateSquad(strength, {
           referenceYear,
           clubNation: nationCode,

@@ -27,6 +27,12 @@ import {
   judgeBoardObjective,
   leagueRoundDates,
   nextManagerOutcome,
+  NATION_PROFILES,
+  collapseSquadStrength,
+  computeSquadQuality,
+  nationCodeFromId,
+  resolveByStrength,
+  resultsStrength,
   seasonStartDate,
   seasonStartYear,
   seasonWindows,
@@ -35,6 +41,7 @@ import {
   type PlayerAttributes,
   type RandomSource,
   type SeasonWindows,
+  type StatureTier,
   type Verdict,
 } from "@cm-clone/shared";
 import { Data, Effect } from "effect";
@@ -430,6 +437,58 @@ const recordFixtureConditions = (
  * plus the two club ids — with the League standing in for the competition until date-bearing
  * Competitions land.
  */
+/**
+ * A club's strength on the 1-100 scale, whichever side of the Depth boundary it stands on.
+ *
+ * The branch is on **whether the club has player rows**, never on a Depth value: Depth's only
+ * footprint on disk is the presence or absence of those rows, so reading them is reading Depth. A
+ * club with a squad is collapsed from it; a club without one derives its Results Strength.
+ */
+const clubStrength = (
+  clubId: ClubId,
+  squad: ReadonlyArray<{ readonly id: string; readonly positionRatings: Record<string, number> }>,
+  seasonNumber: number,
+  worldSeed: number,
+) =>
+  Effect.gen(function* () {
+    if (squad.length > 0) {
+      // The best XI's mean Position Rating is the same quantity the calibration was measured
+      // against. A squad too small to field a formation has no XI to average, so it collapses from
+      // what its players are individually worth — the alternative, treating it as squad-less, would
+      // let a club with eight players borrow a strength it has no basis for.
+      const quality = computeSquadQuality(squad);
+      const mean =
+        quality?.meanPositionRating ??
+        squad.reduce((total, player) => total + Math.max(...Object.values(player.positionRatings)), 0) /
+          squad.length;
+      return collapseSquadStrength(mean);
+    }
+    const sql = yield* SqlClient;
+    // Effective Depth, derived: the club's competition is its participant row, and the competition
+    // carries the tier and the nation whose prior shifts the draw. Nothing about Depth or strength
+    // is stored on the club row.
+    const rows = yield* sql<{
+      statureTier: StatureTier;
+      tier: number | null;
+      nationId: string | null;
+    }>`SELECT c.stature_tier as "statureTier", comp.tier, comp.nation_id as "nationId"
+       FROM clubs c
+       JOIN competition_participants cp ON cp.club_id = c.id AND cp.season_number = ${seasonNumber}
+       JOIN competitions comp ON comp.id = cp.competition_id
+       WHERE c.id = ${clubId}`;
+    const row = rows[0];
+    const nationCode =
+      row === undefined || row.nationId === null ? null : nationCodeFromId(row.nationId);
+    return resultsStrength({
+      worldSeed,
+      clubId,
+      statureTier: row?.statureTier ?? "small",
+      tier: row?.tier ?? null,
+      nationPrior: nationCode === null ? 0.5 : NATION_PROFILES[nationCode].footballImportance,
+      seasonNumber,
+    });
+  });
+
 const resolveFixtureScore = (
   homeClubId: ClubId,
   awayClubId: ClubId,
@@ -439,13 +498,31 @@ const resolveFixtureScore = (
   worldSeed: number,
 ) =>
   Effect.gen(function* () {
+    const homeSquad = yield* loadSquadPlayers(homeClubId);
+    const awaySquad = yield* loadSquadPlayers(awayClubId);
+
+    // The determinism chain, hashing canonical ids only: the draw seed from (world seed,
+    // competition, season, round), the match seed from that plus the two clubs. No row id, no
+    // insertion ordinal, no clock — so the same world seed replays the same season.
+    const drawSeed = deriveSeed(worldSeed, "draw", competitionId, seasonNumber, round);
+    const matchSeed = deriveSeed(drawSeed, "match", homeClubId, awayClubId);
+
+    // A fixture where either club has no squad resolves from two numbers instead of ninety minutes
+    // — a mixed tie at the shallower of the two sides, which is the only thing the engine cannot do
+    // with a side that has no players to fill a formation. One match simulation is about a
+    // millisecond, so this is what keeps a sixteen-thousand-club world's Continue from costing
+    // seconds of blocking work.
+    if (homeSquad.length === 0 || awaySquad.length === 0) {
+      const home = yield* clubStrength(homeClubId, homeSquad, seasonNumber, worldSeed);
+      const away = yield* clubStrength(awayClubId, awaySquad, seasonNumber, worldSeed);
+      return resolveByStrength(home, away, matchSeed);
+    }
+
     // Recover both clubs' squads toward full before the Fixture — a player carries a shortfall
     // into this match only for what they haven't yet recovered (ticket 10).
     yield* recoverClubFitness(homeClubId, seasonNumber);
     yield* recoverClubFitness(awayClubId, seasonNumber);
 
-    const homeSquad = yield* loadSquadPlayers(homeClubId);
-    const awaySquad = yield* loadSquadPlayers(awayClubId);
     const homeTactic = yield* getTacticForClub(homeClubId, homeSquad);
     const awayTactic = yield* getTacticForClub(awayClubId, awaySquad);
 
@@ -468,11 +545,6 @@ const resolveFixtureScore = (
       tactic: awayTactic,
     };
 
-    // The determinism chain, hashing canonical ids only: the draw seed from (world seed,
-    // competition, season, round), the match seed from that plus the two clubs. No row id, no
-    // insertion ordinal, no clock — so the same world seed replays the same season.
-    const drawSeed = deriveSeed(worldSeed, "draw", competitionId, seasonNumber, round);
-    const matchSeed = deriveSeed(drawSeed, "match", homeClubId, awayClubId);
     const { events, conditions } = yield* Effect.sync(() => simulateMatchWithCondition({ seed: matchSeed, home, away }));
     const fullTime = events.find((event) => event._tag === "FullTimeWhistle");
     if (!fullTime || fullTime._tag !== "FullTimeWhistle") {

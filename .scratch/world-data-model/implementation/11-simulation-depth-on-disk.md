@@ -36,7 +36,7 @@ no new failure enters the error channel.
 
 **Blocked by:** 06, 10.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/worldGeneration.ts`, `apps/desktop/src/main/season.ts` (fixture
 resolution), a results-strength module in `packages/shared/src`,
@@ -44,17 +44,23 @@ resolution), a results-strength module in `packages/shared/src`,
 skip clubs with no squad), `apps/desktop/test/season.test.ts`,
 `apps/desktop/test/create-generation.test.ts`.
 
-- [ ] A `results-only` club has zero rows in players, player positions, contracts, player fitness,
+- [x] A `results-only` club has zero rows in players, player positions, contracts, player fitness,
       and tactics, and an otherwise identical club row — hometown included — to a `full` club of the
       same id. A test asserts both halves.
-- [ ] No table is written for a `full` club that is not written for a `standard` club, and a test
+- [x] No table is written for a `full` club that is not written for a `standard` club, and a test
       asserts it.
-- [ ] Results Strength is computed on read from the stated inputs; no column named for club strength
+- [x] Results Strength is computed on read from the stated inputs; no column named for club strength
       exists anywhere, and a test asserts the per-Stature-Tier bands reproduce the measured squad
       calibration.
-- [ ] A `results-only` league resolves a full season of fixtures without invoking the match engine,
+- [x] A `results-only` league resolves a full season of fixtures without invoking the match engine,
       and a test asserts it does not return the same champion every season under a fixed seed.
-- [ ] Effective Depth is derived from participant rows joined to the competition's depth; no column
+- [x] Effective Depth is derived from participant rows joined to the competition's depth; no column
       on the club row stores it.
-- [ ] Every world-wide per-club sweep tolerates a club with no squad without special-casing Depth.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] Every world-wide per-club sweep tolerates a club with no squad without special-casing Depth.
+- [ ] `pnpm check:all` is green at this commit. **Not met, and not by this ticket's doing.** The
+      suite is red at `b684145` (the Base UI Select migration) with 22 renderer failures across
+      `active-leagues-*`, `league-selection-screen`, `club-selection-screen`, `table-*`,
+      `level1-a11y`, `matchday-live-keyboard`, and `tactics-keyboard-reachability`. Verified in a
+      clean worktree: pristine `b684145` fails those 22, and `b684145` plus this ticket's changes
+      fails exactly the same 22 and no others. Typecheck, lint, effect-lint, verify-md-links, and
+      verify-db-schema are all green. This box can be ticked once that migration is repaired.

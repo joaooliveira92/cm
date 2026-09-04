@@ -28,3 +28,4 @@ export * from "./activeLeaguesConsequences.js";
 export * from "./continueReadiness.js";
 export * from "./calendar.js";
 export * from "./newsProjection.js";
+export * from "./resultsStrength.js";
