@@ -7,7 +7,7 @@ import {
   simulateMatchWithCondition,
   simulateMatchWithCounts,
   type SimulateMatchInput,
-} from "../../src/match/simulate.js";
+} from "../../src/match/simulate/index.js";
 import type { MatchPlayerInput, MatchTeamSetup } from "../../src/match/types.js";
 import { buildTeam, clubId as makeClubId, playerId as makePlayerId } from "./fixtures.js";
 
