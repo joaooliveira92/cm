@@ -1,17 +1,17 @@
 # 06: Mirror `apps/desktop/test/` onto the `src/` tree
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
-## Progress 2026-09-05 — landed except one file
+## Landed 2026-09-05
 
 Commit `7cd45a0` did the move. `apps/desktop/test/` is now 99 spec files across 31 directories
 mirroring `src/main/` and `src/renderer/`, on one kebab-case convention. Same file count as before,
 so nothing was dropped. `test/setup/` stayed put (`vitest.config.ts` names it directly).
 
-**One file is deliberately still flat: `test/season.test.ts`.** It is 1200 lines and its split is
-ticket 13, which is the same rewrite — moving it now and splitting it later would move it twice.
-This ticket stays open until 13 lands and that file's pieces arrive in `test/main/season/`.
+Ticket 13 then split the last flat file, `test/season.test.ts`, into eight specs under
+`test/main/season/`. **Nothing is left at `test/` root**: 106 spec files across 33 directories,
+every one of them mirroring the source module it covers.
 
 
 **What to build:** `apps/desktop/test/` is 100 files at one level, with no grouping and two

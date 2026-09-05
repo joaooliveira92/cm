@@ -4,6 +4,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { beginCareer, commitCareer } from "../../../src/main/world/index.js";
+import { advanceCalendar } from "../../../src/main/season/index.js";
 import { loadStreamEvents } from "../../../src/main/season/decider.js";
 import { createDefaultSnapshot } from "../snapshot-helpers.js";
 
@@ -77,11 +78,35 @@ export const seasonHelpers = (savesDir: () => string) => {
       Effect.scoped,
     );
 
+  /** Every fixture that has actually been played, with the competition it belongs to. */
+  const loadResolvedFixtures = (saveId: string) =>
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      return yield* sql<{ competitionId: string; scheduledDate: string }>`
+      SELECT competition_id as "competitionId", scheduled_date as "scheduledDate"
+      FROM fixtures WHERE played = 1`;
+    }).pipe(
+      Effect.provide(SqliteClient.layer({ filename: path.join(savesDir(), `${saveId}.sqlite`), readonly: true })),
+      Effect.scoped,
+    );
+
+  /** Plays seasons until the save has rolled into `target`. */
+  const playUntilSeason = (saveId: SaveId, target: number) =>
+    Effect.gen(function* () {
+      for (let advance = 0; advance < 200; advance += 1) {
+        const result = yield* advanceCalendar(savesDir(), saveId);
+        if (result.season.seasonNumber >= target) return true;
+      }
+      return false;
+    });
+
   return {
     loadSeasonStreamEvents,
     loadFirstClubId,
     createCareerFrom,
     createCareerFromWorldSeed,
     withSaveWrite,
+    loadResolvedFixtures,
+    playUntilSeason,
   } as const;
 };

@@ -1,7 +1,7 @@
 # 13: Split `apps/desktop/test/season.test.ts` (1200 lines)
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
 **What to build:** the largest test file in the repo, and the one whose subject was itself split
 into eight modules by ticket 02. `main/season.ts` became `main/season/`; its spec did not follow.
@@ -17,10 +17,35 @@ The file is already sectioned by `// ---` banners along the same seams:
 | `test/main/season/query-plans.test.ts` | the `queryPlan` index assertions |
 | `test/main/season/helpers.ts` | the shared builders: `createCareerFrom`, `createCareerFromWorldSeed`, `loadFirstClubId`, `loadSeasonStreamEvents`, `withSaveWrite` |
 
-## Attempt 2026-09-05 — cut short, nothing landed
+## Landed 2026-09-05
 
-A first pass was interrupted mid-work and left no split behind; `test/season.test.ts` is still one
-1200-line file at the old flat path. What that pass established, so the next one need not redo it:
+A first pass was interrupted mid-work and landed nothing; a second finished it. The 1200-line file
+is gone, replaced by eight specs under `test/main/season/`, none over 300 lines:
+
+| File | Lines | Tests | Covers |
+|---|---|---|---|
+| `fixture-generation.test.ts` | 55 | 2 | pure double round-robin shape and seed determinism |
+| `calendar-boundary.test.ts` | 75 | 5 | `nextCalendarBoundary`, transfer windows, season-complete |
+| `query-plans.test.ts` | 106 | 3 | the two indexes, read through SQLite's own query plan |
+| `dated-fixtures.test.ts` | 129 | 4 | dated competition-scoped fixture lists (ticket 09) |
+| `rollover.test.ts` | 153 | 4 | promotion, relegation, the rollover (ticket 13) |
+| `retention.test.ts` | 157 | 4 | what survives a concluded season on disk (ticket 18) |
+| `advance.test.ts` | 273 | 9 | advancing through the save-file seam, and its determinism |
+| `cups.test.ts` | 289 | 6 | domestic cups (ticket 12) |
+
+37 tests before, 37 after. `loadResolvedFixtures` and `playUntilSeason` were each used from two
+sections, so both moved into `helpers.ts` rather than being duplicated; `withSaveWrite` was already
+there.
+
+**The split made the suite faster, not slower.** The ticket warned about multiplying world
+generation, and that did not happen — no `beforeAll` was added and each test still builds exactly
+the world it built before. What changed is that vitest can now run these specs in parallel across
+workers: 51 tests in 574s wall against 1255s of test time. It also fixed a real failure. `a
+background competition's fixtures resolve as their dates pass without stopping the human` was
+timing out at the 60s limit while sharing one worker with 36 other world-generating tests; it
+passes comfortably now.
+
+What the interrupted first pass had established, kept here because it is still true:
 
 - The seams hold. The banner-comment sections map onto the target files with only two ranges
   needing to be stitched from non-adjacent line spans (calendar and rollover).
