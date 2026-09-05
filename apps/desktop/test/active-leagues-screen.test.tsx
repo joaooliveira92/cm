@@ -354,10 +354,12 @@ describe("Continue and the handoff", () => {
     await settled();
 
     // Empty the setup one row at a time; a scope with nothing active cannot be continued from.
+    // Each removal must settle before the next click, so the awaits cannot be parallelised.
     for (let guard = 0; guard < 40; guard += 1) {
       const removes = screen.queryAllByRole("button", { name: /^Remove / });
       if (removes.length === 0) break;
       fireEvent.click(removes[0]!);
+      // eslint-disable-next-line no-await-in-loop
       await waitFor(
         () => {
           expect(screen.queryAllByRole("button", { name: /^Remove / }).length).toBeLessThan(

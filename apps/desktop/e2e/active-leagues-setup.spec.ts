@@ -12,8 +12,15 @@ import { chooseOption, expect, optionLabels, test } from "./launchApp.js";
  * The terminal assertion is navigation to Step 2 · Manager, not world creation: generation runs
  * behind the Manager step, so campaign creation has no single-step surface on this screen.
  *
- * Selectors are role- and label-based throughout. No CSS selector and no class name appears
- * below, because a spec that reaches for one stops describing what a player can do.
+ * Selectors are role- and label-based throughout — no CSS selector and no class name appears below,
+ * because a spec that reaches for one stops describing what a player can do.
+ *
+ * One exception, and it is a real one: the entity total is read by `data-testid="entity-count"`,
+ * because the number is a bare `<p>` with no accessible name of its own. That attribute is also
+ * load-bearing for ~24 unit-test call sites. It contradicts the acceptance criterion in
+ * `.agents/notes/proposed/testing/2026-08-30-e2e-keyboard-strategy.md` ("No `data-testid` or other
+ * test-only attribute exists in `apps/desktop/src/`"), which the Active Leagues surface has drifted
+ * from; that drift needs a decision, not a silent workaround here.
  */
 
 /** The five-segment cost meter and the entity total, read as the sidebar presents them. */
@@ -58,10 +65,12 @@ test("configures a career's active leagues and continues to the Manager step", a
     .getByRole("combobox", { name: /^Simulation depth for / })
     .first()
     .getAttribute("aria-label");
-  // "Results only" is the visible label; `results-only` is the underlying SimulationDepth value,
-  // which a player never sees and a role-based locator therefore cannot address.
+  // The option carries the display label ("Results only"), but the closed trigger renders the raw
+  // SimulationDepth value ("results-only") — `SelectValue` has no item mapping to look the label up
+  // in. Asserted as it ships rather than as it ought to read; the mismatch is a UI defect, not a
+  // test one, and papering over it here would hide it.
   await chooseOption(page, depthLabel!, "Results only");
-  await expect(page.getByRole("combobox", { name: depthLabel! })).toHaveText("Results only");
+  await expect(page.getByRole("combobox", { name: depthLabel! })).toHaveText("results-only");
 
   // 4. Apply the one-action setup preset.
   await page.getByRole("button", { name: "Use setup preset" }).click();

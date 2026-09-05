@@ -33,7 +33,9 @@ test("creating a save with a whitespace name produces no save and no crash", asy
   // Leaving creation never leaks a provisional save into the load list.
   await window.getByRole("button", { name: "Cancel" }).click();
   await window.getByRole("button", { name: "Load Career" }).click();
-  await expect(window.getByText("No saves yet.")).toBeVisible();
+  // `exact` disambiguates the empty *list item* from the empty-state paragraph beneath it
+  // ("No saves yet. Start a new career…"); the claim here is that the list stayed empty.
+  await expect(window.getByText("No saves yet.", { exact: true })).toBeVisible();
 });
 
 test("duplicate save names are allowed and both appear in the load list", async ({ userDataDir, window }) => {

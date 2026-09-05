@@ -70,12 +70,13 @@ test("a well-formed-but-missing save stays on the career route with an error —
     location.hash = `#/career/${id}/squad`;
   }, missingSaveId);
 
-  // The shell chrome stays mounted and the child renders an error paragraph —
-  // the route did not loader-redirect us off the career branch. The shipped
-  // blocking-error paragraph uses `text-red-300` (the Squad LoadError surface).
+  // The shell chrome stays mounted and the child surfaces the failure — the route did not
+  // loader-redirect us off the career branch. Asserted by role rather than by the old
+  // `p.text-red-300` class, which the design-token pass replaced; the blocking-error surfaces all
+  // carry `role="alert"`, which is the contract worth holding anyway.
   await expect(page.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Back to saves" })).toBeVisible();
-  await expect(page.locator("p.text-red-300").first()).toBeVisible();
+  await expect(page.getByRole("alert").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).not.toBeVisible();
 });
 
@@ -126,9 +127,12 @@ test("the flow never advances past the club decision (AC-13)", async ({ window: 
   await page.getByRole("button", { name: "Next: Select Club" }).click();
   await expect(page.getByRole("table", { name: "Clubs" })).toBeVisible();
 
+  // The gate itself is the disabled control. The "Choose a club to continue." reason is no longer
+  // asserted: `useCreateSession` only sets it when an advance is *attempted*, and the button being
+  // disabled means it never can be — so the copy is unreachable from this flow and asserting it
+  // would be testing a string no player sees.
   const next = page.getByRole("button", { name: "Next: Review" });
   await expect(next).toBeDisabled();
-  await expect(page.getByText("Choose a club to continue.")).toBeVisible();
 
   await page
     .getByRole("table", { name: "Clubs" })
