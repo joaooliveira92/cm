@@ -247,12 +247,13 @@ const reachClubStep = async (): Promise<void> => {
   const next = await screen.findByRole("button", { name: "Next: Select Club" });
   await waitFor(() => expect((next as HTMLButtonElement).disabled).toBe(false));
   fireEvent.click(next);
-  await screen.findByRole("listbox", { name: "Clubs" });
+  await screen.findByRole("table", { name: "Clubs" });
 };
 
 const clubRow = (name: string): HTMLElement =>
-  within(screen.getByRole("listbox", { name: "Clubs" }))
-    .getAllByRole("option")
+  within(screen.getByRole("table", { name: "Clubs" }))
+    .getAllByRole("row")
+    .filter((row) => within(row).queryAllByRole("columnheader").length === 0)
     .find((row) => row.textContent?.includes(name))!;
 
 beforeEach(() => {
@@ -295,7 +296,7 @@ describe("Step 3 — the club step collects the decision it exists to collect", 
     await screen.findByPlaceholderText("My Career");
     act(() => navigate({ type: "createStep2" }));
 
-    await screen.findByRole("listbox", { name: "Clubs" });
+    await screen.findByRole("table", { name: "Clubs" });
     await waitFor(() => expect(clubRow("Millbrook Town").getAttribute("aria-selected")).toBe("true"));
     const panel = screen.getByRole("region", { name: "Club detail" });
     expect(within(panel).getByText("Millbrook Town")).toBeTruthy();
@@ -314,7 +315,7 @@ describe("Step 3 — the club step collects the decision it exists to collect", 
       .filter((node) => !(node instanceof HTMLButtonElement && node.disabled));
 
     expect(stops).toHaveLength(3);
-    expect(stops[0]!.getAttribute("role")).toBe("option");
+    expect(stops[0]!.getAttribute("role")).toBe("row");
     expect(stops[0]!.textContent).toContain("Castlemere United");
     expect(stops[1]!.textContent?.trim()).toBe("Pick a team for me");
     expect(stops[2]!.textContent?.trim()).toBe("Cancel");

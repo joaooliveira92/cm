@@ -4,7 +4,6 @@ import { Alert } from "../components/ui/alert.js";
 import { Badge } from "../components/ui/badge.js";
 import { Skeleton } from "../components/ui/skeleton.js";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
-import { PANEL } from "../theme.js";
 import { QUALITY_SEGMENTS, filledSegments } from "./model.js";
 
 export interface ClubRailProps {
@@ -18,17 +17,24 @@ export interface ClubRailProps {
 
 const SKELETON_ROWS = 6;
 
+/** The club table's CSS-Grid columns: identity, stature, squad quality. The identity column takes
+ *  the flexible width; stature and quality stay fixed so their labels and badges never wrap. */
+const CLUB_GRID_TEMPLATE = "grid-cols-[minmax(0,1fr)_4.5rem_6.5rem]";
+
+const HEADER_ROW_CLASS = `grid items-center gap-2 px-3 py-1.5 ${CLUB_GRID_TEMPLATE}`;
+const BODY_ROW_CLASS = `grid items-center gap-2 px-3 py-1.5 ${CLUB_GRID_TEMPLATE}`;
+
 /**
- * The club list: a bespoke `role="listbox"` on the renderer's roving primitives, not a
- * `DataTable`. The table layer is TanStack column machinery — sortable headers, pinned cells,
- * dense-table styling — and this is a flat three-fact list with no headers, columns or sorting, so
- * wrapping it would drag all of that along unused. `mainMenu.tsx` is the lighter-weight roving
- * precedent this follows: real focus moves with the tab stop, never `aria-activedescendant`.
+ * The club list, presented as a dense table in the same grammar as the Active Leagues league grid:
+ * a bordered container, a fixed header row of column labels, and one grid row per club. It reads
+ * tabularly because the data is tabular — a stable club name against a fixed stature tier and a
+ * squad-quality band — and the identity column stays flexible while the two derived columns hold
+ * their width.
  *
- * Focus and selection stay separate: ↑/↓ and Home/End move focus only, Enter selects the focused
- * row, Space toggles it. The row is coded selected three ways — fill, left accent bar, and a
- * marker beside the stature-tier badge, which it keeps — so selection survives being read without
- * colour, against the single focus ring.
+ * Selection is a native roving tabindex over the rows (the renderer's `rovingTabIndex`), not an
+ * ARIA grid: one row holds the tab stop, ↑/↓ and Home/End move focus only, Enter selects the
+ * focused row, Space toggles it off. The row is coded selected beyond colour, and the header never
+ * participates in roving.
  */
 export const ClubRail = ({ clubs, loading, error, selectedClubId, onSelect }: ClubRailProps) => {
   const [activeClubId, setActiveClubId] = useState<ClubId | null>(null);
@@ -88,7 +94,7 @@ export const ClubRail = ({ clubs, loading, error, selectedClubId, onSelect }: Cl
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1" aria-busy="true">
         {Array.from({ length: SKELETON_ROWS }, (_, index) => (
-          <Skeleton key={index} className="h-14 w-full" />
+          <Skeleton key={index} className="h-10 w-full" />
         ))}
         <span className="sr-only">Loading clubs…</span>
       </div>
@@ -105,61 +111,79 @@ export const ClubRail = ({ clubs, loading, error, selectedClubId, onSelect }: Cl
 
   return (
     <div
-      role="listbox"
+      role="table"
       aria-label="Clubs"
       tabIndex={-1}
       data-focus-id={focusIdOf("createStep2", "clubs")}
       onKeyDown={handleKeyDown}
-      className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-1"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-panel border border-panel-border bg-panel-bg"
     >
-      {clubs.map((club) => {
-        const selected = club.clubId === selectedClubId;
-        return (
-          <div
-            key={club.clubId}
-            role="option"
-            aria-selected={selected}
-            tabIndex={rovingTabIndex(tabStopId, club.clubId)}
-            ref={(node) => {
-              rowRefs.current.set(club.clubId, node);
-            }}
-            data-focus-id={focusIdOf("createStep2", "clubs", club.clubId)}
-            onFocus={() => setActiveClubId(club.clubId)}
-            onClick={() => onSelect(club)}
-            className={`${PANEL} flex cursor-pointer items-center gap-3 border-l-4 ${
-              selected ? "bg-row-selected border-l-text-highlight" : "border-l-transparent hover:bg-row-hover"
-            } ${FOCUS_RING.join(" ")}`}
-          >
-            <span className="min-w-0 flex-1 truncate text-sm font-medium text-text-primary">
-              {club.clubName}
-            </span>
+      <div
+        role="row"
+        className={`${HEADER_ROW_CLASS} border-b border-panel-border bg-surface-raised text-2xs font-semibold uppercase tracking-wider text-text-secondary`}
+      >
+        <div role="columnheader" className="min-w-0 truncate">
+          Club
+        </div>
+        <div role="columnheader" className="min-w-0 truncate">
+          Stature
+        </div>
+        <div role="columnheader" className="min-w-0 truncate">
+          Squad
+        </div>
+      </div>
 
-            <span className="flex items-center gap-1">
-              <Badge variant="outline">{club.statureTier}</Badge>
-              {selected && <Badge variant="success">Selected</Badge>}
-            </span>
+      <div role="rowgroup" className="min-h-0 flex-1 overflow-y-auto pr-1">
+        {clubs.map((club) => {
+          const selected = club.clubId === selectedClubId;
+          return (
+            <div
+              key={club.clubId}
+              role="row"
+              aria-selected={selected}
+              tabIndex={rovingTabIndex(tabStopId, club.clubId)}
+              ref={(node) => {
+                rowRefs.current.set(club.clubId, node);
+              }}
+              data-focus-id={focusIdOf("createStep2", "clubs", club.clubId)}
+              onFocus={() => setActiveClubId(club.clubId)}
+              onClick={() => onSelect(club)}
+              className={`${BODY_ROW_CLASS} cursor-pointer border-t border-panel-border ${
+                selected ? "bg-row-selected" : "hover:bg-row-hover"
+              } ${FOCUS_RING.join(" ")}`}
+            >
+              <div role="cell" className="min-w-0">
+                <span className="block truncate text-sm font-medium text-text-primary">
+                  {club.clubName}
+                </span>
+              </div>
 
-            <span className="flex items-center gap-2">
-              {/* Decorative: the band's word carries the same fact in the accessible name. */}
-              <span aria-hidden="true" className="flex gap-0.5">
-                {Array.from({ length: QUALITY_SEGMENTS }, (_, index) => (
-                  <span
-                    key={index}
-                    className={`h-3 w-1.5 rounded-xs ${
-                      index < filledSegments(club.squadQualityBand)
-                        ? "bg-text-highlight"
-                        : "bg-surface-raised"
-                    }`}
-                  />
-                ))}
-              </span>
-              <span className="w-24 text-2xs tracking-wide text-text-muted uppercase">
-                {club.squadQualityBand}
-              </span>
-            </span>
-          </div>
-        );
-      })}
+              <div role="cell" className="flex min-w-0 items-center gap-1">
+                <Badge variant="outline">{club.statureTier}</Badge>
+              </div>
+
+              <div role="cell" className="flex min-w-0 items-center gap-2">
+                {/* Decorative: the band's word carries the same fact in the accessible name. */}
+                <span aria-hidden="true" className="flex gap-0.5">
+                  {Array.from({ length: QUALITY_SEGMENTS }, (_, index) => (
+                    <span
+                      key={index}
+                      className={`h-3 w-1.5 rounded-xs ${
+                        index < filledSegments(club.squadQualityBand)
+                          ? "bg-text-highlight"
+                          : "bg-surface-raised"
+                      }`}
+                    />
+                  ))}
+                </span>
+                <span className="truncate text-2xs tracking-wide text-text-muted uppercase">
+                  {club.squadQualityBand}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

@@ -96,7 +96,7 @@ test("creation keeps beginCareer before Club Selection and returning discards it
 
   // Club Selection depends on the generated world + persisted economy, so
   // beginCareer ran before we arrived (the rail's options render from the provisional save).
-  await expect(page.getByRole("listbox", { name: "Clubs" })).toBeVisible();
+  await expect(page.getByRole("table", { name: "Clubs" })).toBeVisible();
 
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).toBeVisible();
@@ -110,7 +110,7 @@ test("reloading mid-creation redirects to step 1 (AC-13)", async ({ window: page
   await advanceThroughLeagues(page);
   await page.getByPlaceholder("My Career").fill("Reload Career");
   await page.getByRole("button", { name: "Next: Select Club" }).click();
-  await expect(page.getByRole("listbox", { name: "Clubs" })).toBeVisible();
+  await expect(page.getByRole("table", { name: "Clubs" })).toBeVisible();
 
   // The creation session is in-memory: a reload lands on step 2 with nothing recoverable — not
   // even the league scope generation is gated on — so the flow redirects to the front of it.
@@ -128,13 +128,18 @@ test("the flow never advances past the club decision (AC-13)", async ({ window: 
   await advanceThroughLeagues(page);
   await page.getByPlaceholder("My Career").fill("Gated Career");
   await page.getByRole("button", { name: "Next: Select Club" }).click();
-  await expect(page.getByRole("listbox", { name: "Clubs" })).toBeVisible();
+  await expect(page.getByRole("table", { name: "Clubs" })).toBeVisible();
 
   const next = page.getByRole("button", { name: "Next: Review" });
   await expect(next).toBeDisabled();
   await expect(page.getByText("Choose a club to continue.")).toBeVisible();
 
-  await page.getByRole("listbox", { name: "Clubs" }).getByRole("option").first().click();
+  await page
+    .getByRole("table", { name: "Clubs" })
+    .getByRole("row")
+    .filter({ has: page.locator('[role="cell"]') })
+    .first()
+    .click();
   await expect(next).toBeEnabled();
 
   // Nothing leaked into the save list: no career is committed by picking.

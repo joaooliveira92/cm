@@ -31,16 +31,16 @@ test("a career is created end to end at the club the player picked", async ({ wi
   await page.getByPlaceholder("My Career").fill("Journey Career");
   await page.getByRole("button", { name: "Next: Select Club" }).click();
 
-  const rail = page.getByRole("listbox", { name: "Clubs" });
+  const rail = page.getByRole("table", { name: "Clubs" });
   await expect(rail).toBeVisible({ timeout: 30_000 });
 
-  // The assist is keyboard-reachable from the list: Tab out of the rail lands on it.
-  const firstRow = rail.getByRole("option").first();
+  // The assist is keyboard-reachable from the table: Tab out of the rail lands on it.
+  const firstRow = rail.getByRole("row").filter({ has: page.locator('[role="cell"]') }).first();
   await firstRow.focus();
   await page.keyboard.press("Tab");
   await expect(page.getByRole("button", { name: "Pick a team for me" })).toBeFocused();
 
-  // Pick by hand — Enter on the focused row, the level-2 listbox's primary action.
+  // Pick by hand — Enter on the focused row, the table's primary action.
   await firstRow.focus();
   await page.keyboard.press("Enter");
   await expect(firstRow).toHaveAttribute("aria-selected", "true");
