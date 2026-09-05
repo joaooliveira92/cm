@@ -12,6 +12,7 @@ import { withExistingSave } from "./decider.js";
 import { loadManagerStatus } from "./managerStatus.js";
 import { clubColourResolver } from "./displayNames.js";
 import { loadUserClub } from "./squad.js";
+import { loadSeasonNumbersDesc } from "./season/currentSeason.js";
 
 /** Read the manager_profile row for the current save. Returns null if no profile exists. */
 export const loadManagerProfile = Effect.gen(function* () {
@@ -75,16 +76,13 @@ export const getManagerProfile = (savesDir: string, saveId: SaveId) =>
 export const getManagerProfileScreen = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const sql = yield* SqlClient;
       const profile = yield* decodeProfile;
       const club = yield* loadUserClub;
       // Resolved here rather than carried on `ClubSummary`: the career header is the only consumer,
       // and widening a contract class shared by the squad, transfer, and match views to serve one
       // screen is an API expansion the other consumers pay for and never use.
       const coloursOf = yield* clubColourResolver;
-      const seasonRows = yield* sql<{
-        seasonNumber: number;
-      }>`SELECT season_number as "seasonNumber" FROM season ORDER BY season_number DESC`;
+      const seasonRows = yield* loadSeasonNumbersDesc;
       const managerStatus = yield* loadManagerStatus;
 
       return new ManagerProfileScreenView({

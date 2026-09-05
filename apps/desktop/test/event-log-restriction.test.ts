@@ -9,7 +9,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe } from "vitest";
 import { MIGRATION_STATEMENTS } from "../src/main/db/migrations.generated.js";
-import { advanceCalendar } from "../src/main/season.js";
+import { advanceCalendar } from "../src/main/season/index.js";
 import { getSquad } from "../src/main/squad.js";
 import { createPyramidSnapshot } from "./snapshot-helpers.js";
 import { beginCareer, commitCareer, createSave } from "../src/main/saves.js";

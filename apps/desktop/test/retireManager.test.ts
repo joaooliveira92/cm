@@ -11,7 +11,7 @@ import { afterEach, beforeEach } from "vitest";
 import { loadStreamEvents } from "../src/main/decider.js";
 import { getManagerProfileScreen } from "../src/main/managerProfile.js";
 import { createSave, listSaves } from "../src/main/saves.js";
-import { getSeasonSummary, retireManager } from "../src/main/season.js";
+import { getSeasonSummary, retireManager } from "../src/main/season/index.js";
 
 let savesDir: string;
 

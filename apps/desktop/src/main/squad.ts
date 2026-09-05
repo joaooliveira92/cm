@@ -16,6 +16,7 @@ import {
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "./displayNames.js";
+import { CURRENT_SEASON_NUMBER_SQL } from "./season/currentSeason.js";
 
 const ageFromDateOfBirth = (dateOfBirth: string): number => {
   const dob = new Date(dateOfBirth);
@@ -74,7 +75,7 @@ export const loadSquadPlayers = (clubId: ClubId) =>
               p.nationality as "nationality", bc.name as "birthplace"
        FROM players p
        LEFT JOIN player_fitness pf ON pf.player_id = p.id
-         AND pf.season_number = (SELECT MAX(season_number) FROM season)
+         AND pf.season_number = ${CURRENT_SEASON_NUMBER_SQL}
        LEFT JOIN training_focus tf ON tf.player_id = p.id
        -- Real geography, so the city's name is read straight off the row. Only club and
        -- competition names go through the content pack.

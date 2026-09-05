@@ -14,7 +14,7 @@ import {
   identifyWeakPositions,
   pickBestFormationTactic,
 } from "../src/main/aiClubs.js";
-import { advanceCalendar } from "../src/main/season.js";
+import { advanceCalendar } from "../src/main/season/index.js";
 import { createSave } from "../src/main/saves.js";
 import { getSquad, loadSquadPlayers } from "../src/main/squad.js";
 import { loadPersistedTactic, validateTactic } from "../src/main/tactics.js";

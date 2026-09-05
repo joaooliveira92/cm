@@ -12,6 +12,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
 import { assertSaveNotArchived } from "./managerStatus.js";
 import { loadUserClub } from "./squad.js";
+import { loadSeasonRow } from "./season/currentSeason.js";
 
 const CLUB_STREAM = "club";
 
@@ -39,8 +40,7 @@ export const setTrainingFocus = (savesDir: string, saveId: SaveId, playerId: Pla
       yield* sql`INSERT INTO training_focus (player_id, focus) VALUES (${playerId}, ${focus})
                  ON CONFLICT(player_id) DO UPDATE SET focus = excluded.focus`;
 
-      const seasonRows = yield* sql<{ seasonNumber: number }>`SELECT season_number as "seasonNumber" FROM season ORDER BY season_number DESC LIMIT 1`;
-      const seasonNumber = seasonRows[0]!.seasonNumber;
+      const { seasonNumber } = yield* loadSeasonRow;
 
       const seq = yield* nextStreamSeq(CLUB_STREAM, club.id);
       yield* appendStreamEvents(CLUB_STREAM, club.id, seq, [

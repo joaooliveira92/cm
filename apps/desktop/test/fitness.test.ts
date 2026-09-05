@@ -8,7 +8,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { advanceCalendar, recoverClubFitness } from "../src/main/season.js";
+import { advanceCalendar, recoverClubFitness } from "../src/main/season/index.js";
 import { createSave } from "../src/main/saves.js";
 import { getSquad } from "../src/main/squad.js";
 

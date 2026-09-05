@@ -31,7 +31,7 @@ import {
   getFixtures,
   getLeagueTable,
   getSeasonSummary,
-} from "../src/main/season.js";
+} from "../src/main/season/index.js";
 import { loadStreamEvents } from "../src/main/decider.js";
 
 let savesDir: string;

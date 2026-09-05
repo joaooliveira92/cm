@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect } from "vitest";
 import { PlayerId } from "@cm-clone/contracts";
 import { FULLY_SCOUTED, attributeRange, nextProgress, scoutingAccrual } from "@cm-clone/shared";
 import { createSave } from "../src/main/saves.js";
-import { advanceCalendar, discardSquadsForClubs } from "../src/main/season.js";
+import { advanceCalendar, discardSquadsForClubs } from "../src/main/season/index.js";
 import { assignScout, getScouting, unassignScout } from "../src/main/scouting.js";
 import { getSquad } from "../src/main/squad.js";
 import { releaseClubStaff } from "../src/main/managerStatus.js";

@@ -47,6 +47,7 @@ import {
 import { displayNames } from "./displayNames.js";
 import { assertSaveNotArchived } from "./managerStatus.js";
 import { loadManagerProfile } from "./managerProfile.js";
+import { CURRENT_SEASON_NUMBER_SQL } from "./season/currentSeason.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 import { loadPersistedTactic } from "./tactics.js";
 
@@ -237,7 +238,7 @@ export const startMatch = (savesDir: string, saveId: SaveId, opponentClubId: Clu
       // fixture it belongs to were two identities for one thing.
       const fixtures = yield* sql<{ id: number }>`
         SELECT f.id FROM fixtures f
-        WHERE f.played = 0 AND f.season_number = (SELECT MAX(season_number) FROM season)
+        WHERE f.played = 0 AND f.season_number = ${sql.literal(CURRENT_SEASON_NUMBER_SQL)}
           AND ((f.home_club_id = ${userClub.id} AND f.away_club_id = ${opponentClubId})
             OR (f.home_club_id = ${opponentClubId} AND f.away_club_id = ${userClub.id}))
         ORDER BY f.scheduled_date ASC, f.id ASC LIMIT 1`;

@@ -9,7 +9,7 @@ import { TRANSFER_BUDGET_BY_TIER, WAGE_BUDGET_BY_TIER } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { advanceCalendar } from "../src/main/season.js";
+import { advanceCalendar } from "../src/main/season/index.js";
 import { createSave } from "../src/main/saves.js";
 import { getSquad } from "../src/main/squad.js";
 import { loadStreamEvents } from "../src/main/decider.js";

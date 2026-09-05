@@ -3,6 +3,7 @@ import path from "node:path";
 import { SaveNotFoundError, type SaveId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { loadCurrentSeasonRow } from "./season/currentSeason.js";
 
 /** Resolves a save's `.sqlite` filename and calls `onFound`, or `SaveNotFoundError` if the save
  * doesn't exist under `savesDir`. Shared by every command/query handler module (`tactics.ts`,
@@ -66,12 +67,7 @@ export const appendStreamEvents = (
   });
 
 /** The save's current in-world date, or NULL before a season exists. Never the wall clock. */
-const currentGameDate = Effect.gen(function* () {
-  const sql = yield* SqlClient;
-  const rows = yield* sql<{ gameDate: string | null }>`
-    SELECT game_date as "gameDate" FROM season ORDER BY season_number DESC LIMIT 1`;
-  return rows[0]?.gameDate ?? null;
-});
+const currentGameDate = loadCurrentSeasonRow.pipe(Effect.map((row) => row?.currentDate ?? null));
 
 /** Loads a stream's full event history in `seq` order. Assumes a `SqlClient` in context. */
 export const loadStreamEvents = (streamType: string, streamId: string) =>

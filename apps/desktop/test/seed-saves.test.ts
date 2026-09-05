@@ -7,7 +7,7 @@ import { notStrictEqual, ok, strictEqual } from "node:assert";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { seedBeforeSeasonEnd, seedConcluded, seedFresh } from "../e2e/seedSaves.js";
-import { getSeasonSummary } from "../src/main/season.js";
+import { getSeasonSummary } from "../src/main/season/index.js";
 
 let savesDir: string;
 

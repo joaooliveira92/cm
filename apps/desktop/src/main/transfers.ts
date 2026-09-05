@@ -8,7 +8,6 @@ import {
   MarketPlayerView,
   PlayerNotFoundError,
   PlayerNotFreeAgentError,
-  SeasonView,
   TransferWindowClosedError,
   TransfersScreenView,
   WageBudgetExceededError,
@@ -44,34 +43,9 @@ import { displayNames } from "./displayNames.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
 import { assertSaveNotArchived } from "./managerStatus.js";
 import { loadUserClub } from "./squad.js";
+import { isWindowOpen, loadCurrentSeasonRow, loadSeasonRow, toSeasonView } from "./season/currentSeason.js";
 
 type BidStatus = "pending" | "countered" | "accepted" | "rejected" | "withdrawn" | "expired";
-
-interface SeasonRow {
-  readonly seasonNumber: number;
-  readonly currentDate: string;
-  readonly phase: "pre_season" | "in_season" | "mid_window_open" | "season_complete";
-}
-
-const loadSeasonRow = Effect.gen(function* () {
-  const sql = yield* SqlClient;
-  const rows = yield* sql<{
-    seasonNumber: number;
-    currentDate: string;
-    phase: SeasonRow["phase"];
-  }>`SELECT season_number as "seasonNumber", game_date as "currentDate", phase FROM season ORDER BY season_number DESC LIMIT 1`;
-  return rows[0]!;
-});
-
-const toSeasonView = (row: SeasonRow) =>
-  new SeasonView({ seasonNumber: row.seasonNumber, currentDate: row.currentDate, phase: row.phase });
-
-/** Transfer commands are legal only inside an open Transfer Window: the pre-season one, open from
- * the season's start date until the first fixture, or the mid-season one, open across its date
- * range. Both are read here as `season.phase` and nothing in this module compares dates — the
- * calendar advance is the single writer of phase, which is what keeps one rule from becoming five
- * readers of two bounds. */
-const isWindowOpen = (phase: SeasonRow["phase"]) => phase === "pre_season" || phase === "mid_window_open";
 
 // ---------------------------------------------------------------------------
 // Player economics: Overall Rating / age / Potential Ability -> Transfer Value / wage
@@ -384,9 +358,7 @@ const recordTransfer = (params: {
 }) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const dates = yield* sql<{ gameDate: string }>`
-      SELECT game_date as "gameDate" FROM season ORDER BY season_number DESC LIMIT 1`;
-    const on = dates[0]?.gameDate;
+    const on = (yield* loadCurrentSeasonRow)?.currentDate;
     if (on === undefined) return;
     yield* sql`INSERT INTO player_transfers (player_id, from_club_id, to_club_id, transferred_on, fee)
       VALUES (${params.playerId}, ${params.fromClubId}, ${params.toClubId}, ${on}, ${params.fee})`;

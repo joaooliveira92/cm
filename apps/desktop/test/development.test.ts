@@ -10,7 +10,7 @@ import { loadCoachQuality } from "../src/main/staff.js";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { advanceCalendar } from "../src/main/season.js";
+import { advanceCalendar } from "../src/main/season/index.js";
 import { createSave } from "../src/main/saves.js";
 import { getSquad, loadSquadPlayers } from "../src/main/squad.js";
 import { setTrainingFocus } from "../src/main/training.js";

@@ -11,7 +11,7 @@ import { afterEach, beforeEach } from "vitest";
 import type { BidId, ClubId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { createSave } from "../src/main/saves.js";
 import { getSquad } from "../src/main/squad.js";
-import { advanceCalendar } from "../src/main/season.js";
+import { advanceCalendar } from "../src/main/season/index.js";
 import { aiPlaceBid, getTransfersScreen, respondToBid } from "../src/main/transfers.js";
 import { loadStreamEvents } from "../src/main/decider.js";
 import { getNewsInbox } from "../src/main/news.js";

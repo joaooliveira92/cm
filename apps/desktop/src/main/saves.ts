@@ -29,7 +29,7 @@ import {
 import { reportPackCoverage } from "./displayNames.js";
 import { materialiseStaff } from "./staff.js";
 import { createSchema } from "./db/createSaveSchema.js";
-import { startSeason } from "./season.js";
+import { startSeason } from "./season/index.js";
 import { generateWorld } from "./worldGeneration.js";
 import { initializeSeasonEconomy } from "./transfers.js";
 import { getLeagueSelectionSnapshot, submitLeagueSelection, toDomainIntents } from "./leagueSelection.js";

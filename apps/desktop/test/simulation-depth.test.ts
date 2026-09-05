@@ -21,7 +21,7 @@ import {
   type PlayerAttributes,
 } from "@cm-clone/shared";
 import { beginCareer, commitCareer } from "../src/main/saves.js";
-import { advanceCalendar, discardSquadsForClubs } from "../src/main/season.js";
+import { advanceCalendar, discardSquadsForClubs } from "../src/main/season/index.js";
 import { createPyramidSnapshot, createSnapshotFor } from "./snapshot-helpers.js";
 
 /**

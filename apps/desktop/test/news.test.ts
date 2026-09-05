@@ -10,7 +10,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import type { NewsMessageId, SaveId } from "@cm-clone/contracts";
 import { createSave } from "../src/main/saves.js";
-import { advanceCalendar } from "../src/main/season.js";
+import { advanceCalendar } from "../src/main/season/index.js";
 import { getNewsInbox, parseNewsMessageId, setNewsMessageState } from "../src/main/news.js";
 
 let savesDir: string;

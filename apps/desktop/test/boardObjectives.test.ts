@@ -11,7 +11,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../src/main/saves.js";
 import { getSquad } from "../src/main/squad.js";
-import { advanceCalendar, getSeasonSummary } from "../src/main/season.js";
+import { advanceCalendar, getSeasonSummary } from "../src/main/season/index.js";
 import { loadStreamEvents } from "../src/main/decider.js";
 
 let savesDir: string;

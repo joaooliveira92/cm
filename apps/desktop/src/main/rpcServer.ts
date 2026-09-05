@@ -24,7 +24,7 @@ import {
 import { listOpponentClubs, resumeSimulation, startMatch, submitMatchCommand } from "./match.js";
 import { getManagerProfile, getManagerProfileScreen } from "./managerProfile.js";
 import { getNewsInbox, setNewsMessageState } from "./news.js";
-import { advanceCalendar, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "./season.js";
+import { advanceCalendar, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "./season/index.js";
 import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave } from "./saves.js";
 import { getSquad } from "./squad.js";
 import { changeTactics, getTactics } from "./tactics.js";
