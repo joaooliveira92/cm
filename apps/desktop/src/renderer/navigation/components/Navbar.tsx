@@ -3,6 +3,7 @@ import { useLocation } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useRef } from "react";
 import { navigateCareer } from "../../navigation/adapter.js";
 import type { CareerDestination } from "../../navigation/destinations.js";
+import type { NavigationIntent } from "../../focus.js";
 import { NAV_SECTIONS, type NavSectionId } from "../../navigation/nav-config.js";
 import { sectionIdForDestination } from "../../navigation/nav-route-index.js";
 import { useNavState } from "../../navigation/use-nav-state.js";
@@ -149,9 +150,12 @@ export const Navbar = ({
     }, CLOSE_TOLERANCE_MS);
   };
 
-  const goTo = (destination: CareerDestination["type"]) => {
+  // The intent comes from the event, never a constant: Enter on a focused nav item must focus the
+  // destination (AC-15), and hardcoding "pointer" here made every keyboard navigation leave focus
+  // stranded on the navbar.
+  const goTo = (destination: CareerDestination["type"], intent: NavigationIntent) => {
     clearTransient();
-    navigateCareer({ type: destination, saveId }, "pointer");
+    navigateCareer({ type: destination, saveId }, intent);
   };
 
   const handleToggleSubmenu = (sectionId: NavSectionId) => {
@@ -201,9 +205,7 @@ export const Navbar = ({
             badgeLabel={badges?.[section.id]?.label}
             submenuOpen={isSubmenuVisible(section.id)}
             children={section.items}
-            onNavigate={() =>
-              goTo(section.defaultDestination)
-            }
+            onNavigate={(intent) => goTo(section.defaultDestination, intent)}
             onToggleSubmenu={() => handleToggleSubmenu(section.id)}
             onMouseEnter={() => handleSectionEnter(section.id)}
             onMouseLeave={handleSectionLeave}

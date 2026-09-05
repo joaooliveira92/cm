@@ -110,3 +110,14 @@ export const navigateForward = (): void => {
   requestBackFocus();
   getRouter().history.forward();
 };
+/**
+ * Which intent a click handler was actually invoked with.
+ *
+ * A `<button>` fires `onClick` for Enter and Space just as it does for a mouse press, so a handler
+ * that hardcodes one intent silently reports every keyboard activation as a pointer arrival — and
+ * `navigateCareer` then skips the destination focus request that AC-15 requires. `event.detail` is
+ * the click count, and it is `0` for a keyboard-synthesised click, which is the standard way to
+ * tell the two apart without wiring a parallel `onKeyDown`.
+ */
+export const intentOfClick = (event: { readonly detail: number }): NavigationIntent =>
+  event.detail === 0 ? "keyboard" : "pointer";

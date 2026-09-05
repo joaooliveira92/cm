@@ -1,4 +1,5 @@
-import { FOCUS_RING } from "../../focus.js";
+import { FOCUS_RING, type NavigationIntent } from "../../focus.js";
+import { intentOfClick } from "../adapter.js";
 import type { NavItem, NavSection } from "../nav-config.js";
 
 /**
@@ -30,7 +31,8 @@ export const PrimaryNavItem = ({
   readonly badgeLabel?: string | undefined;
   readonly submenuOpen: boolean;
   readonly children: ReadonlyArray<NavItem>;
-  readonly onNavigate: () => void;
+  /** Receives how the item was activated, so keyboard arrivals can take focus (AC-15). */
+  readonly onNavigate: (intent: NavigationIntent) => void;
   readonly onToggleSubmenu: () => void;
   readonly onMouseEnter: () => void;
   readonly onMouseLeave: () => void;
@@ -55,7 +57,7 @@ export const PrimaryNavItem = ({
           type="button"
           aria-current={active ? "page" : undefined}
           className="flex items-center gap-1.5 whitespace-nowrap py-1"
-          onClick={onNavigate}
+          onClick={(event) => onNavigate(intentOfClick(event))}
         >
           {Icon !== undefined && <Icon className="size-4" />}
           <span>{section.label}</span>

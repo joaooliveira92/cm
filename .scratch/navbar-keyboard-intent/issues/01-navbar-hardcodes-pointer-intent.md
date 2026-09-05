@@ -1,7 +1,7 @@
 # 01: The redesigned navbar reports every navigation as pointer intent, breaking AC-15
 
 Type: bug
-Status: ready-for-agent
+Status: resolved
 
 ## What was measured
 
@@ -61,11 +61,32 @@ is `event.detail === 0` on the click event (keyboard-synthesised clicks report 0
 `onKeyDown` for Enter/Space separately from `onClick`. Whichever is chosen, the same treatment is
 needed for the context-strip items, which navigate through the same `goTo`.
 
-Note this is unrelated to the renderer wedge in `.scratch/renderer-input-wedge/` — that one is a
-CPU spin, this one is a clean wrong-value bug. They were found in the same session but do not share
-a cause.
+Note this is unrelated to the render loop in `.scratch/renderer-render-loop/` — that one is a
+runaway re-render on Squad and Transfers, this one is a clean wrong-value bug that fails in 1.5s
+with a real assertion. They were found in the same session but do not share a cause, and this one
+is fixable without waiting on that one.
 
 - [ ] Navbar and context strip report keyboard activation as keyboard intent
 - [ ] `e2e/router.spec.ts` AC-15 passes without weakening the assertion
 - [ ] A unit test at the `PrimaryNavItem` seam covers Enter-vs-click intent, so this cannot regress
       silently again
+
+## Resolution
+
+`navigation/adapter.ts` gained one shared predicate:
+
+```ts
+export const intentOfClick = (event: { readonly detail: number }): NavigationIntent =>
+  event.detail === 0 ? "keyboard" : "pointer";
+```
+
+`event.detail` is the click count and is `0` for a keyboard-synthesised click, which is the standard
+way to separate Enter/Space activation from a real press without wiring a parallel `onKeyDown` that
+would then have to stay in step with the click path.
+
+`Navbar.goTo` now takes the intent instead of hardcoding `"pointer"`, and both activation sites pass
+it through: `PrimaryNavItem` (`onNavigate: (intent) => void`) and `ContextNav`
+(`onNavigate: (destination, intent) => void`). Putting the discriminator in `adapter.ts` rather than
+in each component keeps it next to `navigateCareer`, the only consumer of the distinction.
+
+`e2e/router.spec.ts` AC-15 passes unchanged, along with the rest of that spec (12/12).

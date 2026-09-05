@@ -1,4 +1,5 @@
-import { FOCUS_RING } from "../../focus.js";
+import { FOCUS_RING, type NavigationIntent } from "../../focus.js";
+import { intentOfClick } from "../adapter.js";
 import type { NavItem, NavSection } from "../nav-config.js";
 
 /**
@@ -21,7 +22,10 @@ export const ContextNav = ({
   readonly section: NavSection | null;
   readonly items: ReadonlyArray<NavItem>;
   readonly activeItemId: string | null;
-  readonly onNavigate: (destination: (typeof items)[number]["destination"]) => void;
+  readonly onNavigate: (
+    destination: (typeof items)[number]["destination"],
+    intent: NavigationIntent,
+  ) => void;
   readonly onMouseEnter: () => void;
   readonly onMouseLeave: () => void;
 }) => {
@@ -51,7 +55,7 @@ export const ContextNav = ({
                 ? "bg-surface-raised font-medium text-text-primary"
                 : "text-text-secondary hover:bg-surface hover:text-text-primary"
             } ${FOCUS_RING.join(" ")}`}
-            onClick={() => onNavigate(item.destination)}
+            onClick={(event) => onNavigate(item.destination, intentOfClick(event))}
           >
             {ItemIcon !== undefined && <ItemIcon className="size-3.5" />}
             {item.label}
