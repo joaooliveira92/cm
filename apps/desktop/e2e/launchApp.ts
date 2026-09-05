@@ -143,7 +143,14 @@ export const pressPrefix = async (page: Page, key: string): Promise<void> => {
  */
 export const dismissTeachingSplash = async (page: Page): Promise<void> => {
   const gotIt = page.getByRole("button", { name: "Got it" });
-  await expect(gotIt).toBeVisible({ timeout: 15_000 });
+  // Tolerant by design: the splash is a genuine *one-shot*, keyed per userDataDir in localStorage,
+  // so a spec that opens a second career in the same fixture will not see it again. Requiring it
+  // here would fail those specs for doing nothing wrong. That the splash *does* appear on a real
+  // first run is asserted on its own, unconditionally, in `teaching-splash-dismiss.spec.ts`.
+  if (!(await gotIt.isVisible().catch(() => false))) {
+    await gotIt.waitFor({ state: "visible", timeout: 15_000 }).catch(() => undefined);
+  }
+  if (!(await gotIt.isVisible().catch(() => false))) return;
   await gotIt.click();
   await expect(gotIt).not.toBeVisible();
 };
@@ -257,6 +264,13 @@ export const enterCareer = async (page: Page, userDataDir: string): Promise<void
  * their own copy of these six lines and they drifted apart on the `Save ` prefix.
  */
 export const continueSeededCareer = async (page: Page, name: string): Promise<void> => {
+  // Return to the root route *before* reloading. Hash history survives a reload by design (AC-10),
+  // so a spec that already entered one career would reload straight back into it and never see the
+  // "Load Career" button — which is what happens when a test opens a second, differently-seeded
+  // career partway through.
+  await page.evaluate(() => {
+    location.hash = "#/";
+  });
   await page.reload();
   await page.getByRole("button", { name: "Load Career" }).click();
   const entry = saveEntry(page, name);

@@ -100,7 +100,7 @@ test("a substitution is driven by keyboard through the match day live control pa
   await expect(page.locator('[data-focus-id="tactics"]')).toBeFocused();
   await assignFullTactic(page);
 
-  await pressPrefix(page, "m");
+  await pressPrefix(page, "d");
   await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
   await expect(page.locator('[data-focus-id="match"]')).toBeFocused();
 

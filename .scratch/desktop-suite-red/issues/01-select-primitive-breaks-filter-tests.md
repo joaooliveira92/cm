@@ -62,3 +62,41 @@ the depth boundary, rollover club exchange) and need their own diagnosis.
 - [ ] Any remaining failures triaged individually, with the `season.test.ts` three separated out.
 - [ ] `pnpm check:all` is green -- or, if that is not reachable in one pass, this file records the
       exact remaining list so the next agent starts from a known number rather than re-measuring.
+
+## Comments
+
+### 2026-09-05 — re-count after the Base UI select migration
+
+Recorded here so the next agent starts from a number instead of re-measuring, per the last checkbox.
+
+`apps/desktop` alone (`npx vitest run`), on `1e4816a`:
+
+```
+Test Files  1 failed | 98 passed (99)
+     Tests  1 failed | 1005 passed (1006)
+  Duration  1349.88s
+```
+
+**25 failures → 1.** The select-primitive theory in this ticket held: fixing how the suites drive
+the vendored Base UI `Select` cleared the whole table/filter cascade at once, exactly as predicted.
+
+The single survivor is one of the three `season.test.ts` failures this ticket had already separated
+out as unrelated:
+
+- `season.test.ts:285` — "a background competition's fixtures resolve as their dates pass without
+  stopping the human" — **still failing**
+- the drawn-tie/depth-boundary and rollover-club-exchange cases — **now passing**
+
+It touches no renderer code (zero references to the table stack), so it is independent of
+everything above and needs its own diagnosis.
+
+Two caveats on the number, both in the honest direction:
+
+- Scope is `apps/desktop` only, not `pnpm -r test` — the `packages/` suites were not in this run.
+- The run overlapped with e2e work on the same machine, and this ticket warns that contention
+  inflates the count. So 1 is an upper bound; a quiet machine may show 0.
+
+Separately, the renderer bug found while repairing the e2e suite —
+`.scratch/renderer-render-loop/` — was a runaway re-render on Squad and Transfers driven by
+TanStack's `autoResetPageIndex`. It is fixed, and is not related to this ticket's select-primitive
+cause despite both surfacing in the same table screens.
