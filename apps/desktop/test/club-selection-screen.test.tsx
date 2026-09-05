@@ -135,14 +135,11 @@ describe("the rail reads comparatively and the panel carries the detail", () => 
     renderScreen();
     await waitFor(() => expect(rows().length).toBe(20));
 
-    const selector = screen.getByLabelText("League") as HTMLSelectElement;
+    const selector = screen.getByLabelText("League") as HTMLButtonElement;
     expect(selector.disabled).toBe(true);
-    expect(selector.options.length).toBe(1);
     // The pack's name for the League, not a constant the renderer holds: the screen shows what
     // the save's content pack says `comp_eng_1` is called.
-    expect(selector.options[0]!.textContent).toBe(
-      displayName(BASE_CONTENT_PACK, "comp_eng_1"),
-    );
+    expect(selector.textContent).toBe(displayName(BASE_CONTENT_PACK, "comp_eng_1"));
     const hint = document.getElementById(selector.getAttribute("aria-describedby")!);
     expect(hint?.textContent).toMatch(/one League/);
   });

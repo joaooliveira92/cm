@@ -18,6 +18,7 @@ import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../src/renderer/actions/scopeState.js";
 import { readTableSession, resetTableSessions } from "../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../src/renderer/table/announcement.js";
+import { chooseOptionByLabel, comboboxByLabel, selectValueOf } from "./setup/baseUiSelect.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -120,9 +121,7 @@ describe("AC-27 (review F-8) — table session state never leaks across a save s
     fireEvent.click(within(marketGroup).getByRole("button", { name: "OVR" }));
     expect(marketGroup.querySelector("th[aria-sort]")).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText("Filter Market by position"), {
-      target: { value: "DC" },
-    });
+    await chooseOptionByLabel(/Filter Market by position/, "DC");
     const row = document.querySelector(
       '[data-focus-id="transfers.marketTable.mp2"]',
     ) as HTMLElement;
@@ -157,7 +156,7 @@ describe("AC-27 (review F-8) — table session state never leaks across a save s
     // ...but inherits nothing from the first save:
     expect(screen.queryByRole("region", { name: "Place bid" })).toBeNull(); // no draft
     expect(screen.getByRole("group", { name: "Market" }).querySelector("th[aria-sort]")).toBeNull(); // no sort
-    expect((screen.getByLabelText("Filter Market by position") as HTMLSelectElement).value).toBe(""); // no filter
+    expect(selectValueOf(comboboxByLabel(/Filter Market by position/))).toBe(""); // no filter
     expect(readTableSession("transfer-market")).toBeNull(); // session map is clean
   });
 });

@@ -1,20 +1,4 @@
-import type { Page } from "@playwright/test";
-import { dismissTeachingSplash, expect, test } from "./launchApp.js";
-import { savesDir, seedFresh } from "./seedSaves.js";
-
-/** Navigate to a tab by clicking its button. */
-const goto = async (window: Page, tab: string) => {
-  await window.getByRole("button", { name: tab, exact: true }).click();
-};
-
-/** Seed, continue, and dismiss the first-run teaching splash. */
-const enterCareer = async (window: Page, userDataDir: string) => {
-  await seedFresh(savesDir(userDataDir));
-  await window.reload();
-  await window.getByRole("button", { name: "Load Career" }).click();
-  await window.getByRole("button", { name: "Seed: fresh" }).click();
-  await dismissTeachingSplash(window);
-};
+import { enterCareer, expect, goto, test } from "./launchApp.js";
 
 test("generic transfer failure — bidding above budget shows failed status", async ({ userDataDir, window }) => {
   await enterCareer(window, userDataDir);
@@ -35,44 +19,20 @@ test("generic transfer failure — bidding above budget shows failed status", as
   await expect(window.getByText(/Bid: failed\./)).toBeVisible();
 });
 
-test("InvalidTacticError shows specific hint text when players are duplicated", async ({ userDataDir, window }) => {
-  await enterCareer(window, userDataDir);
-  await goto(window, "tactics");
-
-  const rows = window.locator("tbody tr");
-  await expect(rows).toHaveCount(11);
-
-  // The frontend removes already-assigned players from each <select>'s options,
-  // preventing duplicate selection through the standard UI. We re-add the
-  // option and dispatch native change events to set the React state with a
-  // duplicate, then verify the backend rejects it and the UI shows the
-  // specific hint text.
-  await window.evaluate(() => {
-    const selects = document.querySelectorAll<HTMLSelectElement>("tbody tr select");
-    const [first, second] = selects;
-    if (!first || !second) throw new Error("expected at least two tactic slot selects");
-    const firstReal = Array.from(first.options).find((o) => o.value !== "");
-    if (firstReal) {
-      first.value = firstReal.value;
-      first.dispatchEvent(new Event("change", { bubbles: true }));
-      const option = document.createElement("option");
-      option.value = firstReal.value;
-      option.textContent = "Duplicate";
-      second.appendChild(option);
-      second.value = firstReal.value;
-      second.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-  });
-
-  await window.getByRole("button", { name: "Save Tactic" }).click();
-  await expect(
-    window.getByText(/Failed to save tactic — check every slot has a unique player assigned/),
-  ).toBeVisible();
-});
-
-// TODO(#01): Restore when a sacking seed is available. Requires ticket 01
-// (Seed scenarios for wave-2 features) to produce a deterministic seed where
-// the manager has been sacked (season concluded with missed board objectives).
-// From a fresh seed, SaveArchivedError is unreachable through the UI by sacking. (Retirement
-// reaches the same error from Manager Profile, but that is a different, deliberate path.)
-test.skip("sacking error smoke", () => {});
+// Two error paths are deliberately not asserted here, because neither is reachable through the
+// shipped UI — an e2e test for either could only be a lie about what a player can do:
+//
+//   InvalidTacticError (duplicate players). `TacticsScreen` filters players already assigned
+//   elsewhere out of every other slot's options, so no sequence of clicks produces a duplicate.
+//   The spec that used to stand here injected an <option> into a native <select> with
+//   `page.evaluate`; that DOM no longer exists (the selects are the vendored Base UI primitive),
+//   and the rejection it was reaching for is already asserted at the seam that can trigger it —
+//   `test/tactics.test.ts`, "changeTactics rejects a Tactic that assigns the same player twice".
+//
+//   SaveArchivedError by sacking. From a fresh seed the manager cannot be sacked through the UI;
+//   it needs a deterministic seed where the season concluded with missed board objectives, which
+//   ticket 01 (Seed scenarios for wave-2 features) has not produced. Retirement reaches the same
+//   error from Manager Profile, but that is a different, deliberate path.
+//
+// Both used to sit here as empty `test.skip(...)` stubs, which reported as skipped tests forever
+// while asserting nothing and hiding that the coverage lives elsewhere.

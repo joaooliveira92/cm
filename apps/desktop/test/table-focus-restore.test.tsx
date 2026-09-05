@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import { FAMILIARITY_TIERS, STATURE_TIERS } from "@cm-clone/shared";
@@ -10,6 +10,7 @@ import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../src/renderer/table/announcement.js";
+import { chooseOptionByLabel } from "./setup/baseUiSelect.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -112,9 +113,7 @@ describe("AC-31 (review F-1) — Transfers restores focus when a sort/filter/ref
 
     // Filter out mp1 (ST): only DC rows remain. The roving universe loses the
     // focused row; the restore effect must land focus on mp2 (old next).
-    fireEvent.change(screen.getByLabelText("Filter Market by position"), {
-      target: { value: "DC" },
-    });
+    await chooseOptionByLabel(/Filter Market by position/, "DC");
     await waitFor(() => {
       expect(document.activeElement?.getAttribute("data-focus-id")).toBe(
         "transfers.marketTable.mp2",
@@ -137,9 +136,7 @@ describe("AC-31 (review F-1) — Transfers restores focus when a sort/filter/ref
 
     // A position with no Market row → empty result state; the restore effect's
     // empty-target hands focus to the screen primary (RouteView), never body.
-    fireEvent.change(screen.getByLabelText("Filter Market by position"), {
-      target: { value: "AMC" },
-    });
+    await chooseOptionByLabel(/Filter Market by position/, "AMC");
     await waitFor(() => screen.findByText("No players match the current filters."));
     expect(document.activeElement?.getAttribute("data-focus-id")).toBe("transfers");
     expect(document.activeElement).not.toBe(document.body);
@@ -166,9 +163,7 @@ describe("AC-31 (review F-1) — Transfers restores focus when a sort/filter/ref
       focused.focus();
     });
 
-    fireEvent.change(screen.getByLabelText("Filter Free Agents by position"), {
-      target: { value: "DC" },
-    });
+    await chooseOptionByLabel(/Filter Free Agents by position/, "DC");
     await waitFor(() => {
       expect(document.activeElement?.getAttribute("data-focus-id")).toBe(
         "transfers.freeAgentTable.fa2",

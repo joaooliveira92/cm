@@ -22,6 +22,7 @@ import { ACTION_REGISTRY } from "../src/renderer/actions/allActions.js";
 import { resetScopeState } from "../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../src/renderer/table/announcement.js";
+import { chooseOptionByLabel, selectValueOf } from "./setup/baseUiSelect.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -292,15 +293,11 @@ describe("AC-30 — visible filter controls show active state and drive the same
     expect(within(group).getByRole("button", { name: /Bob Player/ })).toBeTruthy();
 
     // Position filter is an independent visible control.
-    fireEvent.change(screen.getByLabelText("Filter Market by position"), {
-      target: { value: "DC" },
-    });
+    await chooseOptionByLabel(/Filter Market by position/, "DC");
     expect(within(group).getByRole("button", { name: /Bob Player/ })).toBeTruthy();
 
     // Filters that hide every Market row surface the explicit no-filter-results state.
-    fireEvent.change(screen.getByLabelText("Filter Market by position"), {
-      target: { value: "ST" },
-    });
+    await chooseOptionByLabel(/Filter Market by position/, "ST");
     fireEvent.change(screen.getByLabelText("Search Market by name"), {
       target: { value: "" },
     });
@@ -327,9 +324,7 @@ describe("AC-30 — visible filter controls show active state and drive the same
     expect(await screen.findByText("No players match the current filters.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Alan Player/ })).toBeNull();
     // The visible control reflects the same active state as the palette command.
-    expect((screen.getByLabelText("Filter Market by position") as HTMLSelectElement).value).toBe(
-      "ST",
-    );
+    expect(selectValueOf(screen.getByLabelText("Filter Market by position"))).toBe("ST");
   });
 
   it("a palette set-filter announces the new result count on Transfers (F-7: parity with the Squad set-filter)", async () => {
@@ -357,9 +352,7 @@ describe("AC-31 — selection cleared when the selected row is filtered out (exp
     fireEvent.click(document.querySelector('[data-focus-id="squad.squadTable.gk"]')!);
     expect(document.querySelector('tr[aria-selected="true"]')).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText("Filter squad by position"), {
-      target: { value: "DC" },
-    });
+    await chooseOptionByLabel(/Filter squad by position/, "DC");
     await screen.findByText(/Dorso Player/);
     expect(document.querySelector('tr[aria-selected="true"]')).toBeNull();
     expect(screen.queryByRole("button", { name: /Garek Player/ })).toBeNull();
@@ -373,9 +366,7 @@ describe("AC-31 — selection cleared when the selected row is filtered out (exp
     fireEvent.click(screen.getByRole("button", { name: /Alan Player/ }));
     expect(screen.getByRole("region", { name: "Place bid" })).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText("Filter Market by position"), {
-      target: { value: "DC" },
-    });
+    await chooseOptionByLabel(/Filter Market by position/, "DC");
     await screen.findByRole("button", { name: /Bob Player/ });
     // Alan is filtered out → selection cleared → the Actions region unmounts.
     expect(screen.queryByRole("region", { name: "Place bid" })).toBeNull();
@@ -574,9 +565,7 @@ describe("review repairs (stage-5 review) — F1 refresh keeps rows, F2 retry, F
     // A filter with no matching rows flips the screen to NoFilterResults in the
     // same render the old announcer would unmount; the one status region must
     // persist and keep the latest line.
-    fireEvent.change(screen.getByLabelText("Filter squad by position"), {
-      target: { value: "ST" },
-    });
+    await chooseOptionByLabel(/Filter squad by position/, "ST");
     expect(screen.getByText("No players match the current filters.")).toBeTruthy();
     const status = screen.getByRole("status");
     expect(status.textContent).toContain("hidden by the current filters");

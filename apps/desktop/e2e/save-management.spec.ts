@@ -1,20 +1,25 @@
 import { rmSync } from "node:fs";
 import path from "node:path";
-import { expect, test } from "./launchApp.js";
+import { expect, saveEntry, test } from "./launchApp.js";
 import { savesDir, seedFresh, seedNamed } from "./seedSaves.js";
 
 // NOTE: these specs stay click-driven (creation/save-management are mouse-first
 // surfaces per the e2e strategy note). Two of them were re-targeted from the
 // stage-2-era landing DOM ("Save name" input + Create button), which shipped
-// away with the router: creation now lives on `/create/step-1`. The UI cannot
-// complete a commit through the shipped flow (the ClubSelection reading gap —
-// see journeys.spec.ts's persistence note), so the duplicate-name case seeds
-// two real saves instead of exercising the moot in-flow path.
+// away with the router: creation now lives on `/create/step-1`. The
+// duplicate-name case seeds two real saves rather than driving the whole
+// creation flow twice, which is a journeys.spec.ts concern.
 
 test("creating a save with a whitespace name produces no save and no crash", async ({ window }) => {
   await window.getByRole("button", { name: "Start New Career" }).click();
 
+  // Step 1 is Active Leagues — the naming field lives on step 2, behind it.
+  const continueLeagues = window.getByRole("button", { name: /^Continue/ });
+  await expect(continueLeagues).toBeEnabled({ timeout: 30_000 });
+  await continueLeagues.click();
+
   const nameInput = window.getByPlaceholder("My Career");
+  await expect(nameInput).toBeVisible();
   const next = window.getByRole("button", { name: "Next: Manager Identity" });
 
   // Whitespace-only name: the creation step cannot proceed — no save is produced.
@@ -37,8 +42,7 @@ test("duplicate save names are allowed and both appear in the load list", async 
   await window.reload();
 
   await window.getByRole("button", { name: "Load Career" }).click();
-  const buttons = window.getByRole("button", { name: "Duplicate Career" });
-  await expect(buttons).toHaveCount(2);
+  await expect(saveEntry(window, "Duplicate Career")).toHaveCount(2);
 });
 
 test("clicking a stale save entry (file deleted) is a silent no-op — stays on load screen", async ({ userDataDir, window }) => {
@@ -46,12 +50,12 @@ test("clicking a stale save entry (file deleted) is a silent no-op — stays on 
   await window.reload();
 
   await window.getByRole("button", { name: "Load Career" }).click();
-  const button = window.getByRole("button", { name: "Seed: fresh" });
-  await expect(button).toBeVisible();
+  const entry = saveEntry(window, "Seed: fresh");
+  await expect(entry).toBeVisible();
 
   rmSync(path.join(savesDir(userDataDir), `${id}.sqlite`));
 
-  await button.click();
+  await entry.click();
   await expect(window.getByRole("heading", { name: "Load Career" })).toBeVisible();
-  await expect(window.getByRole("button", { name: "Seed: fresh" })).toBeVisible();
+  await expect(entry).toBeVisible();
 });

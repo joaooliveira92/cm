@@ -9,23 +9,25 @@ import path from "node:path";
 import {
   dismissTeachingSplash,
   expect,
-  launchApp,
   pressPrimary,
+  saveEntry,
   test,
 } from "./launchApp.js";
 import { savesDir, seedNamed } from "./seedSaves.js";
 
 test("a rebind applied in the help overlay survives an app restart (AC-34)", async ({
   userDataDir,
+  launchExtraApp,
 }) => {
   // A fixed-name seeded save so both sessions can find the career by label.
   await seedNamed(savesDir(userDataDir), "Rebind Career");
 
-  const firstApp = await launchApp(userDataDir);
+  const firstApp = await launchExtraApp();
   const firstWindow = await firstApp.firstWindow();
-  await firstWindow.getByRole("button", { name: "Rebind Career" }).click();
-  await dismissTeachingSplash(firstWindow);
+  await firstWindow.getByRole("button", { name: "Load Career" }).click();
+  await saveEntry(firstWindow, "Rebind Career").click();
   await expect(firstWindow.getByText(/players$/)).toBeVisible();
+  await dismissTeachingSplash(firstWindow);
 
   // Primary+/ opens the help overlay — the rebinding surface (AC-36).
   await pressPrimary(firstWindow, "/");
@@ -49,6 +51,8 @@ test("a rebind applied in the help overlay survives an app restart (AC-34)", asy
   await firstWindow.keyboard.press("n");
   await expect(firstWindow.getByRole("heading", { name: /Transfers/ })).toBeVisible();
 
+  // Closed explicitly rather than left to the fixture: the assertion below reads
+  // `keybindings.json`, which is only flushed on shutdown.
   await firstApp.close();
 
   // The override was persisted under userData, sibling of saves/ (never in the
@@ -59,12 +63,11 @@ test("a rebind applied in the help overlay survives an app restart (AC-34)", asy
   expect(stored["go-to-transfers"]).toBe("n");
 
   // Relaunch against the same userDataDir: the binding still applies.
-  const relaunched = await launchApp(userDataDir);
+  const relaunched = await launchExtraApp();
   const relaunchedWindow = await relaunched.firstWindow();
-  await relaunchedWindow.getByRole("button", { name: "Rebind Career" }).click();
+  await relaunchedWindow.getByRole("button", { name: "Load Career" }).click();
+  await saveEntry(relaunchedWindow, "Rebind Career").click();
   await expect(relaunchedWindow.getByText(/players$/)).toBeVisible();
   await relaunchedWindow.keyboard.press("n");
   await expect(relaunchedWindow.getByRole("heading", { name: /Transfers/ })).toBeVisible();
-
-  await relaunched.close();
 });

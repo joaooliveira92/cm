@@ -1,4 +1,4 @@
-import { expect, launchApp, test } from "./launchApp.js";
+import { expect, saveEntry, test } from "./launchApp.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
 /**
@@ -10,13 +10,12 @@ import { savesDir, seedFresh } from "./seedSaves.js";
  * real click and asserts the click resolves, the dialog is gone, and the
  * renderer is still responsive afterwards.
  */
-test("dismissing the teaching splash from a real click resolves and does not wedge the renderer", async ({ userDataDir }) => {
+test("dismissing the teaching splash from a real click resolves and does not wedge the renderer", async ({ userDataDir, window: page }) => {
   await seedFresh(savesDir(userDataDir));
-  const app = await launchApp(userDataDir);
-  const page = await app.firstWindow();
+  await page.reload();
 
   await page.getByRole("button", { name: "Load Career" }).click();
-  await page.getByRole("button", { name: "Seed: fresh" }).click();
+  await saveEntry(page, "Seed: fresh").click();
   const gotIt = page.getByRole("button", { name: "Got it" });
   await expect(gotIt).toBeVisible({ timeout: 20_000 });
 
@@ -34,5 +33,4 @@ test("dismissing the teaching splash from a real click resolves and does not wed
   await expect(page.getByRole("dialog", { name: /Playing a new career/i })).toHaveCount(0);
   // The renderer answered a request; it is not blocked.
   await expect(page.evaluate(() => "alive")).resolves.toBe("alive");
-  await app.close();
 });

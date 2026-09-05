@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, test } from "./launchApp.js";
+import { chooseOption, expect, optionLabels, test } from "./launchApp.js";
 
 /**
  * The critical setup path through the shipped Active Leagues screen, in the built app.
@@ -45,23 +45,23 @@ test("configures a career's active leagues and continues to the Manager step", a
   expect(baseline.entities).toBeGreaterThan(0);
 
   // 2. Add a league from the available catalogue.
-  const addSelect = page.getByLabel("League to add");
-  const firstCandidate = addSelect.locator("option").nth(1);
-  const candidateValue = await firstCandidate.getAttribute("value");
-  const candidateLabel = (await firstCandidate.innerText()).trim();
-  expect(candidateValue).toBeTruthy();
+  const candidateLabel = (await optionLabels(page, "League to add"))[1];
+  expect(candidateLabel).toBeTruthy();
 
   const rowsBefore = await removeButtons.count();
-  await addSelect.selectOption(candidateValue!);
+  await chooseOption(page, "League to add", candidateLabel!);
   await page.getByRole("button", { name: "Add league" }).click();
   await expect(removeButtons).not.toHaveCount(rowsBefore, { timeout: 30_000 });
-  expect(candidateLabel.length).toBeGreaterThan(0);
 
   // 3. Change one league's simulation depth, and only that one.
-  const depthSelect = page.getByRole("combobox", { name: /^Simulation depth for / }).first();
-  const depthLabel = await depthSelect.getAttribute("aria-label");
-  await depthSelect.selectOption("results-only");
-  await expect(page.getByRole("combobox", { name: depthLabel! })).toHaveValue("results-only");
+  const depthLabel = await page
+    .getByRole("combobox", { name: /^Simulation depth for / })
+    .first()
+    .getAttribute("aria-label");
+  // "Results only" is the visible label; `results-only` is the underlying SimulationDepth value,
+  // which a player never sees and a role-based locator therefore cannot address.
+  await chooseOption(page, depthLabel!, "Results only");
+  await expect(page.getByRole("combobox", { name: depthLabel! })).toHaveText("Results only");
 
   // 4. Apply the one-action setup preset.
   await page.getByRole("button", { name: "Use setup preset" }).click();
@@ -72,14 +72,11 @@ test("configures a career's active leagues and continues to the Manager step", a
   await page.getByRole("button", { name: /Advanced options/ }).click();
   const rosterDetail = page.getByRole("combobox", { name: "Roster generation detail" });
   await expect(rosterDetail).toBeVisible();
-  const currentRoster = await rosterDetail.inputValue();
-  const otherRoster = (await rosterDetail.locator("option").all()).map((option) =>
-    option.getAttribute("value"),
+  const currentRoster = (await rosterDetail.innerText()).trim();
+  const nextRoster = (await optionLabels(page, "Roster generation detail")).find(
+    (label) => label !== currentRoster,
   );
-  const nextRoster = (await Promise.all(otherRoster)).find(
-    (value) => value !== null && value !== currentRoster,
-  );
-  await rosterDetail.selectOption(nextRoster!);
+  await chooseOption(page, "Roster generation detail", nextRoster!);
 
   // 6. The consequence panel moved with the configuration — no figure here is hardcoded.
   await expect

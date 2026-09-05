@@ -10,6 +10,7 @@ import {
   useActiveLeagues,
 } from "../src/renderer/activeLeagues/ActiveLeaguesProvider.js";
 import { ActiveLeaguesWorkspace } from "../src/renderer/activeLeagues/ActiveLeaguesWorkspace.js";
+import { chooseOption, selectValueOf } from "./setup/baseUiSelect.js";
 
 /**
  * The workspace, the introduction, and the advanced disclosure on the shipped state owner, over
@@ -226,8 +227,8 @@ describe("the advanced disclosure", () => {
     await settled();
     fireEvent.click(advancedTrigger());
 
-    const control = screen.getByRole("combobox", { name: "Roster generation detail" }) as HTMLSelectElement;
-    const before = control.value;
+    const control = screen.getByRole("combobox", { name: "Roster generation detail" });
+    const before = selectValueOf(control);
 
     const help = screen.getByRole("button", { name: "About Roster generation detail" });
     expect(help.getAttribute("aria-expanded")).toBe("false");
@@ -242,7 +243,7 @@ describe("the advanced disclosure", () => {
     expect(helpText?.textContent).toContain("squad");
 
     // Reading the help changed nothing about the setting it explains.
-    expect(control.value).toBe(before);
+    expect(selectValueOf(control)).toBe(before);
   });
 
   it("moves the derived estimate when a real option changes — no option is a no-op", async () => {
@@ -254,9 +255,10 @@ describe("the advanced disclosure", () => {
     const before = entityCount();
     expect(before).toBeGreaterThan(0);
 
-    fireEvent.change(screen.getByRole("combobox", { name: "Roster generation detail" }), {
-      target: { value: "first_team" },
-    });
+    await chooseOption(
+      screen.getByRole("combobox", { name: "Roster generation detail" }),
+      "First team only",
+    );
 
     await waitFor(() => {
       expect(entityCount()).toBeLessThan(before);

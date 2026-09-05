@@ -356,6 +356,10 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
         // Row-roving controls (AC-28): the one focusable control per row keeps
         // its roving tabindex — the composite-widget carve-out in the focus model.
         expect(["0", "-1"]).toContain(button.getAttribute("tabindex"));
+      } else if (button.getAttribute("data-slot") === "select-trigger") {
+        // The vendored Base UI select trigger is a native button Base UI explicitly
+        // puts in the tab order (tabindex="0"), so it is a legitimate tab stop.
+        expect(["0"]).toContain(button.getAttribute("tabindex"));
       } else {
         expect(button.getAttribute("tabindex")).toBeNull();
       }
@@ -363,6 +367,11 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
     const inputs = [...document.querySelectorAll("input")] as HTMLElement[];
     expect(inputs.length).toBeGreaterThan(0);
     for (const input of inputs) {
+      if (input.id !== "" && input.id.endsWith("-hidden-input")) {
+        // The vendored Base UI Select emits an invisible hidden input to power form
+        // association; it is not a user-facing control, so it carries no ring.
+        continue;
+      }
       expect(input.className).toContain("focus-visible:ring-2");
     }
   });

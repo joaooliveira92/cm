@@ -6,6 +6,12 @@ import type { LeagueSetupIndexView } from "@cm-clone/contracts";
 import { resolveLeagueSelection, getLeagueSetupIndex } from "../src/main/leagueSelection.js";
 import { ActiveLeaguesProvider, useActiveLeagues } from "../src/renderer/activeLeagues/ActiveLeaguesProvider.js";
 import { LeagueGrid } from "../src/renderer/activeLeagues/LeagueGrid.js";
+import {
+  chooseOptionByLabel,
+  openSelect,
+  pickOpenOption,
+  selectValueOf,
+} from "./setup/baseUiSelect.js";
 
 /**
  * The shipped grid on the shipped state owner against the shipped service.
@@ -142,8 +148,8 @@ const settled = async () =>
     { timeout: 3000 },
   );
 
-const depthSelect = (league: string): HTMLSelectElement =>
-  screen.getByLabelText(`Simulation depth for ${league}`) as HTMLSelectElement;
+const depthSelect = (league: string): HTMLElement =>
+  screen.getByLabelText(`Simulation depth for ${league}`);
 
 beforeEach(async () => {
   calls.length = 0;
@@ -195,14 +201,14 @@ describe("the league grid renders the active leagues (§density, identity by lea
     );
     await settled();
 
-    fireEvent.change(depthSelect("English First Division"), { target: { value: "standard" } });
+    await chooseOptionByLabel(/Simulation depth for English First Division/, "Standard");
 
     // Depth change is per row identity: England's row moved, Spain's did not.
     await waitFor(
-      () => expect(depthSelect("English First Division").value).toBe("standard"),
+      () => expect(selectValueOf(depthSelect("English First Division"))).toBe("standard"),
       { timeout: 3000 },
     );
-    expect(depthSelect("Spanish First Division").value).toBe("full");
+    expect(selectValueOf(depthSelect("Spanish First Division"))).toBe("full");
     // The trusted layer received the intent for England's Nation at background.
     expect(lastResolveIntents().find((intent) => intent.nationId === "nation_eng")?.mode).toBe(
       "background",
@@ -251,7 +257,7 @@ describe("derived summary values (ticket 02) move with the configuration", () =>
     const entitiesBefore = screen.getByTestId("entity-count").textContent;
     const meterBefore = screen.getByTestId("cost-meter").textContent;
 
-    fireEvent.change(depthSelect("English First Division"), { target: { value: "results-only" } });
+    await chooseOptionByLabel(/Simulation depth for English First Division/, "Results only");
 
     await waitFor(
       () => expect(screen.getByTestId("entity-count").textContent).not.toBe(entitiesBefore),
@@ -269,7 +275,7 @@ describe("derived summary values (ticket 02) move with the configuration", () =>
     await settled();
     expect(screen.getByTestId("stale").textContent).toBe("fresh");
 
-    fireEvent.change(depthSelect("English First Division"), { target: { value: "results-only" } });
+    await chooseOptionByLabel(/Simulation depth for English First Division/, "Results only");
     // Immediately after the change the previous figures stay up but are marked stale.
     expect(screen.getByTestId("stale").textContent).toBe("stale");
 
@@ -291,7 +297,7 @@ describe("a resolve failure is a checked value, never a throw", () => {
     expect(screen.getByTestId("stale").textContent).toBe("fresh");
 
     failResolve = true;
-    fireEvent.change(depthSelect("English First Division"), { target: { value: "standard" } });
+    await chooseOptionByLabel(/Simulation depth for English First Division/, "Standard");
 
     // The failure lands in the checked `failed` slot: the previous rows stay visible (no blank),
     // the summary is marked stale, and Continue is dead until a fresh answer arrives — nothing

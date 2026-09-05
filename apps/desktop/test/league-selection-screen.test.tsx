@@ -9,6 +9,10 @@ import type { LeagueSelectionSnapshot } from "@cm-clone/contracts";
 import { LEAGUE_SETUP_INDEX } from "@cm-clone/shared";
 import { LeagueSelectionScreen } from "../src/renderer/leagueSelection/LeagueSelectionScreen.js";
 import {
+  openSelect,
+  pickOpenOption,
+} from "./setup/baseUiSelect.js";
+import {
   applyLeaguePreset,
   buildLeaguePresetIntents,
   getLeagueSetupIndex,
@@ -204,9 +208,12 @@ describe("the browser (§5.3, §7)", () => {
     fireEvent.click(screen.getByRole("treeitem", { name: /Southern Europe/ }));
 
     await screen.findByText("Andorra");
-    const modes = screen.getByLabelText("Simulation mode for Andorra") as HTMLSelectElement;
-    const offered = [...modes.options].map((option) => option.value);
-    expect(offered).not.toContain("playable");
+    // Open the (Base UI) mode select for Andorra and confirm no Playable option is offered.
+    const mode = screen.getByLabelText("Simulation mode for Andorra");
+    await openSelect(mode);
+    expect(screen.queryByRole("option", { name: "Playable" })).toBeNull();
+    expect(screen.getByRole("option", { name: "Background" })).toBeTruthy();
+    await pickOpenOption("Background");
     expect(screen.getByText("Background data only")).toBeTruthy();
   });
 
@@ -299,13 +306,16 @@ describe("debounced, revision-guarded estimation (§11.5, AC-11)", () => {
 
     fireEvent.click(screen.getByRole("treeitem", { name: /Western Europe/ }));
     await screen.findByText("England");
-    const mode = screen.getByLabelText("Simulation mode for England") as HTMLSelectElement;
+    const mode = screen.getByLabelText("Simulation mode for England");
 
-    // Four changes inside one debounce window.
-    fireEvent.change(mode, { target: { value: "background" } });
-    fireEvent.change(mode, { target: { value: "view_only" } });
-    fireEvent.change(mode, { target: { value: "not_loaded" } });
-    fireEvent.change(mode, { target: { value: "background" } });
+    // Four changes inside one debounce window (the trigger always reopens from the closed
+    // state, so each burst step re-opens the popup).
+    const burst = ["Background", "View only", "Not loaded", "Background"];
+    await openSelect(mode);
+    for (const label of burst) {
+      await pickOpenOption(label);
+      await openSelect(mode);
+    }
 
     await settled();
     expect(methodsCalled("resolveLeagueSelection").length - before).toBe(1);
@@ -322,9 +332,9 @@ describe("debounced, revision-guarded estimation (§11.5, AC-11)", () => {
 
     fireEvent.click(screen.getByRole("treeitem", { name: /Western Europe/ }));
     await screen.findByText("England");
-    fireEvent.change(screen.getByLabelText("Simulation mode for England"), {
-      target: { value: "background" },
-    });
+    const mode = screen.getByLabelText("Simulation mode for England");
+    await openSelect(mode);
+    await pickOpenOption("Background");
 
     // Immediately after the change and before the debounce fires, the previous figures are still
     // rendered — marked stale and dimmed, not blanked.

@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { dismissTeachingSplash, expect, test } from "./launchApp.js";
+import { enterCareer, expect, goto, matchScore, saveEntry, test, type Screen } from "./launchApp.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
 /** Clear the League and Nation stage, which gates world generation: the creation flow opens on
@@ -11,21 +11,10 @@ const advanceThroughLeagues = async (page: Page) => {
   await expect(page.getByPlaceholder("My Career")).toBeVisible();
 };
 
-/** Seed a fresh save, reload, then continue it — landing on the Squad route,
- *  dismissing the first-run teaching splash so tab clicks are not intercepted. */
-const enterCareer = async (page: Page, userDataDir: string) => {
-  await seedFresh(savesDir(userDataDir));
-  await page.reload();
-  await page.getByRole("button", { name: "Load Career" }).click();
-  await page.getByRole("button", { name: "Seed: fresh" }).click();
-  await expect(page.getByText(/players$/)).toBeVisible();
-  await dismissTeachingSplash(page);
-};
-
 test("hash history survives a reload on the active route (AC-10)", async ({ window: page, userDataDir }) => {
   await enterCareer(page, userDataDir);
 
-  await page.getByRole("button", { name: "transfers", exact: true }).click();
+  await goto(page, "transfers");
   await expect(page.getByRole("heading", { name: /Transfers/ })).toBeVisible();
   const before = await page.evaluate(() => location.hash);
   expect(before).toMatch(/^#\/career\/.+\/transfers$/);
@@ -39,27 +28,31 @@ test("hash history survives a reload on the active route (AC-10)", async ({ wind
 test("the career parent owns the persistent shell across every child route (AC-11)", async ({ window: page, userDataDir }) => {
   await enterCareer(page, userDataDir);
 
-  const shell = page.locator("nav");
-  await expect(shell).toBeVisible();
-  await expect(shell).toContainText("Back to saves");
+  // The shell is the primary navbar plus the persistent back-to-saves control. Both are owned by
+  // the career parent, so both must survive every child route without remounting.
+  const primaryNav = page.getByRole("navigation", { name: "Primary navigation" });
+  const backToSaves = page.getByRole("button", { name: "Back to saves" });
+  await expect(primaryNav).toBeVisible();
+  await expect(backToSaves).toBeVisible();
 
   const routes: ReadonlyArray<{
-    readonly tab: string;
+    readonly screen: Screen;
     readonly assert: () => Promise<unknown>;
   }> = [
-    { tab: "tactics", assert: () => expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible() },
-    { tab: "transfers", assert: () => expect(page.getByRole("heading", { name: /Transfers/ })).toBeVisible() },
-    { tab: "league table", assert: () => expect(page.getByRole("heading", { name: "League Table" })).toBeVisible() },
-    { tab: "fixtures", assert: () => expect(page.getByRole("heading", { name: "Fixtures" })).toBeVisible() },
-    { tab: "season summary", assert: () => expect(page.getByRole("heading", { name: "Season Summary" })).toBeVisible() },
-    { tab: "squad", assert: () => expect(page.getByText(/players$/)).toBeVisible() },
+    { screen: "tactics", assert: () => expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible() },
+    { screen: "transfers", assert: () => expect(page.getByRole("heading", { name: /Transfers/ })).toBeVisible() },
+    { screen: "league table", assert: () => expect(page.getByRole("heading", { name: "League Table" })).toBeVisible() },
+    { screen: "fixtures", assert: () => expect(page.getByRole("heading", { name: "Fixtures" })).toBeVisible() },
+    { screen: "season summary", assert: () => expect(page.getByRole("heading", { name: "Season Summary" })).toBeVisible() },
+    { screen: "squad", assert: () => expect(page.getByText(/players$/)).toBeVisible() },
   ];
 
   for (const route of routes) {
-    await page.getByRole("button", { name: route.tab, exact: true }).click();
+    await goto(page, route.screen);
     await route.assert();
-    await expect(page.locator("nav")).toHaveCount(1);
-    await expect(page.locator("nav")).toContainText("Back to saves");
+    // Exactly one of each: a second would mean the child mounted its own shell.
+    await expect(primaryNav).toHaveCount(1);
+    await expect(backToSaves).toHaveCount(1);
   }
 });
 
@@ -67,7 +60,7 @@ test("a well-formed-but-missing save stays on the career route with an error —
   await seedFresh(savesDir(userDataDir));
   await page.reload();
   await page.getByRole("button", { name: "Load Career" }).click();
-  await expect(page.getByRole("button", { name: "Seed: fresh" })).toBeVisible();
+  await expect(saveEntry(page, "Seed: fresh")).toBeVisible();
 
   // Well-formed saveId (a UUID) that no save exists for — the career route must
   // mount and surface a failure through the seam (no loader, no redirect to the
@@ -80,7 +73,7 @@ test("a well-formed-but-missing save stays on the career route with an error —
   // The shell chrome stays mounted and the child renders an error paragraph —
   // the route did not loader-redirect us off the career branch. The shipped
   // blocking-error paragraph uses `text-red-300` (the Squad LoadError surface).
-  await expect(page.locator("nav")).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Back to saves" })).toBeVisible();
   await expect(page.locator("p.text-red-300").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).not.toBeVisible();
@@ -155,14 +148,16 @@ test("the flow never advances past the club decision (AC-13)", async ({ window: 
 test("pointer nav does not force focus; keyboard nav focuses the destination (AC-15)", async ({ window: page, userDataDir }) => {
   await enterCareer(page, userDataDir);
 
-  await page.getByRole("button", { name: "transfers", exact: true }).click();
+  await goto(page, "transfers");
   await expect(page.getByRole("heading", { name: /Transfers/ })).toBeVisible();
   const afterPointer = await page.evaluate(
     () => document.activeElement?.getAttribute("data-focus-id") ?? null,
   );
   expect(afterPointer).not.toBe("transfers");
 
-  const tacticsTab = page.getByRole("button", { name: "tactics", exact: true });
+  const tacticsTab = page
+    .getByRole("navigation", { name: "Primary navigation" })
+    .getByRole("button", { name: "Tactics", exact: true });
   await tacticsTab.focus();
   await tacticsTab.press("Enter");
   await expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible();
@@ -175,18 +170,18 @@ test("pointer nav does not force focus; keyboard nav focuses the destination (AC
 test("Match Day arrival resumes a pending match instead of starting one (AC-15)", async ({ window: page, userDataDir }) => {
   await enterCareer(page, userDataDir);
 
-  await page.getByRole("button", { name: "match day", exact: true }).click();
+  await goto(page, "match day");
   await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
   const start = page.getByRole("button", { name: "Start match" });
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
-  await expect(page.getByRole("heading", { name: / - / })).toBeVisible();
+  await expect(matchScore(page)).toBeVisible();
 
-  await page.getByRole("button", { name: "transfers", exact: true }).click();
+  await goto(page, "transfers");
   await expect(page.getByRole("heading", { name: /Transfers/ })).toBeVisible();
 
-  await page.getByRole("button", { name: "match day", exact: true }).click();
+  await goto(page, "match day");
   // Resumed: the same live scoreboard, and no fresh match picker on arrival.
-  await expect(page.getByRole("heading", { name: / - / })).toBeVisible();
+  await expect(matchScore(page)).toBeVisible();
   await expect(page.getByRole("button", { name: "Start match" })).not.toBeVisible();
 });

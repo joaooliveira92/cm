@@ -16,7 +16,7 @@
  */
 import {
   assignFullTactic,
-  dismissTeachingSplash,
+  continueSeededCareer,
   enterCareer,
   expect,
   pressPrefix,
@@ -156,14 +156,11 @@ test("Escape closes only the topmost transient layer (AC-20)", async ({
   // open match-day control panel behind an open palette proves the ordering:
   // Escape closes the palette first, then the panel — never both at once.
   await seedBeforeMatchday(savesDir(userDataDir));
-  await page.reload();
-  await page.getByRole("button", { name: "Load Career" }).click();
-  await page.getByRole("button", { name: "Seed: before-matchday" }).click();
-  await dismissTeachingSplash(page);
+  await continueSeededCareer(page, "Seed: before-matchday");
 
   await pressPrefix(page, "a");
   await expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible();
-  await assignFullTactic(page.locator("tbody tr"));
+  await assignFullTactic(page);
 
   await pressPrefix(page, "m");
   const start = page.getByRole("button", { name: "Start match" });

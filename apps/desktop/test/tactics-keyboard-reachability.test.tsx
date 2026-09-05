@@ -101,8 +101,11 @@ describe("tier-3 remainder — Tactics is driveable with no mouse (Level 1 guara
     await mountTactics();
     await screen.findByRole("button", { name: "Save Tactic" });
 
-    // The eleven slot selects are native SELECTs (arrow keys navigate their options).
-    const selects = [...document.querySelectorAll<HTMLSelectElement>("main select")];
+    // The eleven slot-player triggers are Base UI combobox buttons (the same picker the
+    // migration vendored everywhere); each carries its slot's action id.
+    const selects = [
+      ...document.querySelectorAll<HTMLButtonElement>('main button[data-action-id="assign-slot-player"]'),
+    ];
     expect(selects.length).toBe(11);
     expect(selects[0]!.disabled).toBe(false);
 

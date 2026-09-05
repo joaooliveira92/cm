@@ -8,6 +8,12 @@ import { Effect } from "effect";
 import type { LeagueSelectionSnapshot } from "@cm-clone/contracts";
 import { ActiveLeaguesScreen } from "../src/renderer/activeLeagues/ActiveLeaguesScreen.js";
 import {
+  chooseOption,
+  commitPointerClick,
+  openSelect,
+  selectValueOf,
+} from "./setup/baseUiSelect.js";
+import {
   buildLeaguePresetIntents,
   getLeagueSetupIndex,
   loadSetupDraft,
@@ -37,6 +43,15 @@ let userDataDir = "";
 let submitCalls = 0;
 /** Set by a test that wants the boundary to refuse the submission. */
 let failSubmit = false;
+const calls: Array<{ method: string; payload: unknown }> = [];
+
+const lastResolveIntents = (): readonly { readonly nationId?: string; readonly mode?: string }[] => {
+  const resolveCalls = calls.filter((call) => call.method === "resolveLeagueSelection");
+  const last = resolveCalls.at(-1);
+  if (last === undefined) return [];
+  return (last.payload as { readonly intents: readonly { readonly nationId?: string; readonly mode?: string }[] })
+    .intents;
+};
 
 const respond = async (method: string, payload: unknown): Promise<unknown> => {
   const p = payload as Record<string, never>;
@@ -86,6 +101,7 @@ const installPreload = (): void => {
     }
   ).cmClone = {
     call: async (method, payload) => {
+      calls.push({ method, payload });
       try {
         return { _tag: "Success", value: await respond(method, payload) };
       } catch (cause) {
@@ -129,6 +145,7 @@ beforeEach(async () => {
   failSubmit = false;
   continued = null;
   cancelled = 0;
+  calls.length = 0;
   installPreload();
   // jsdom has no `matchMedia`; the screen's placement decision reads it, so give it the wide
   // answer — the narrow reflow is a layout behaviour confirmed by the human breakpoint pass.
@@ -219,18 +236,35 @@ describe("the league list", () => {
     mount();
     await settled();
 
-    const select = screen.getByLabelText("League to add") as HTMLSelectElement;
-    const candidate = [...select.options].find((option) => option.value !== "");
+    // The catalogue is a Base UI select: open it, take a concrete candidate by its visible
+    // "Nation — League" label, and commit the pick with a pointer sequence.
+    await openSelect(screen.getByLabelText("League to add"));
+    const candidate = (await screen.findAllByRole("option")).find(
+      (option) => (option.textContent ?? "").includes(" — "),
+    );
     expect(candidate).toBeTruthy();
     const label = candidate!.textContent ?? "";
+    commitPointerClick(candidate!);
+    await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
 
-    fireEvent.change(select, { target: { value: candidate!.value } });
     fireEvent.click(screen.getByRole("button", { name: "Add league" }));
 
+    // The catalogue minus the newly active league no longer offers the candidate. The option
+    // set only refreshes on a reopen, so each retry closes and reopens the popup.
     await waitFor(
-      () => {
-        const options = [...(screen.getByLabelText("League to add") as HTMLSelectElement).options];
-        expect(options.some((option) => option.value === candidate!.value)).toBe(false);
+      async () => {
+        const trigger = screen.getByLabelText("League to add");
+        if (screen.queryByRole("listbox") === null) {
+          fireEvent.click(trigger);
+          await screen.findByRole("listbox");
+        }
+        const now = await screen.findAllByRole("option");
+        const stillOffered = now.some((option) => option.textContent === label);
+        if (stillOffered) {
+          fireEvent.click(trigger);
+          await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+        }
+        expect(stillOffered).toBe(false);
       },
       { timeout: 4000 },
     );
@@ -247,18 +281,20 @@ describe("the league list", () => {
     const leagueId = row.getAttribute("data-league-row");
     expect(leagueId).toBeTruthy();
 
-    const select = within(row).getByRole("combobox") as HTMLSelectElement;
+    const select = within(row).getByRole("combobox");
     const name = select.getAttribute("aria-label") ?? "";
-    fireEvent.change(select, { target: { value: "results-only" } });
+    await chooseOption(select, /Results only/);
 
-    // The same league — identified by name, which is what the id keys — still carries the change.
+    // The league — re-found by its name, which is what the id keys — still carries the change.
     await waitFor(
       () => {
-        const again = screen.getByLabelText(name) as HTMLSelectElement;
-        expect(again.value).toBe("results-only");
+        expect(selectValueOf(screen.getByLabelText(name))).toBe("results-only");
       },
       { timeout: 4000 },
     );
+    // And the trusted layer actually received the new depth for the owning Nation — the change
+    // drove the resolve, rather than showing a value only a test had written.
+    expect(lastResolveIntents().some((intent) => intent.mode === "view_only")).toBe(true);
   });
 
   it("moves focus to a neighbouring control after a removal, never to nowhere", async () => {
