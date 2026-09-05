@@ -16,8 +16,8 @@ model and glossary, and [.agents/notes/](.agents/notes/) for design decisions.
 
 | Directory / File | Type | Description |
 |---|---|---|
-| [apps/desktop](apps/desktop) | Application | Electron app: `src/main` (SQLite + RPC wiring), `src/preload`, `src/renderer` (React), plus `test/` unit tests and `e2e/` Playwright specs. |
-| [packages/contracts](packages/contracts) | Package | The `@effect/rpc` contract shared between renderer and main. `rpc.ts` is the whole IPC surface as one object; `schemas.ts` is the shared schema vocabulary. |
+| [apps/desktop](apps/desktop) | Application | Electron app, and the largest tree here -- see its own [AGENTS.md](apps/desktop/AGENTS.md) for the layout. `src/main` (SQLite + RPC wiring, grouped into subsystems behind barrels), `src/preload`, `src/renderer` (React, one folder per feature), plus `test/` unit tests and `e2e/` Playwright specs. |
+| [packages/contracts](packages/contracts) | Package | The `@effect/rpc` contract shared between renderer and main. `rpc.ts` is the whole IPC surface as one object; `schemas/` is the shared schema vocabulary, one module per domain over `schemas/ids.ts`. |
 | [packages/game-engine](packages/game-engine) | Package | Match simulation. |
 | [packages/shared](packages/shared) | Package | Domain logic and game-design data (position/role weights, commentary templates, nation and club content) used across packages. |
 | [scripts/](scripts/) | Tooling | Repo gates and agent tooling: `run-gates.ts` defines the `check:all` / `check:ci` profiles that CI and local runs share. |

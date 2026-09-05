@@ -3,6 +3,36 @@
 Type: task
 Status: claimed
 
+## Retargeted 2026-09-05 — read this before starting
+
+This ticket was written against `CreationStep1.tsx` (818 lines). **That file no longer exists.** It
+became `renderer/create/ManagerIdentityStep.tsx`, and ticket 12 of
+[main-process-decomposition](../../main-process-decomposition/issues/12-split-manager-identity-step.md)
+has since split it three ways along its existing sub-step boundary:
+
+| File | Lines | Holds |
+|---|---|---|
+| `create/ManagerIdentityStep.tsx` | 274 | the step machine and the personal-details sub-step |
+| `create/ManagerPillarsPane.tsx` | 319 | the pillar-allocation sub-step |
+| `create/managerIdentityCopy.ts` | 78 | `STEPS`, the pillar display names, accents, warnings and bounds |
+
+That was a mechanical extraction for file size, not a composition fix, so **this ticket's substance
+is still entirely open**. Verified 2026-09-05: `isMinimum` is still a boolean prop in
+`ManagerPillarsPane.tsx`, and `personalDetailsComplete`, `isActive`, `isComplete` and
+`isAccessible` are still boolean props in `ManagerIdentityStep.tsx`.
+
+Two amendments to the phases below:
+
+- **Phase 1 (`ArchetypeSelector`) is out of scope here.** Archetype selection is no longer in this
+  component; it lives in `create/ReviewPane.tsx` and `create/useCreateSession.ts`. Either retarget
+  phase 1 at those files or drop it from this ticket — do not go looking for it in
+  `ManagerIdentityStep.tsx`.
+- **Phase 2 (`PillarDistribution`) now starts from `ManagerPillarsPane.tsx`**, which is already the
+  isolated pane. Making it compound is what remains.
+
+The "Done When" line "`CreationStep1.tsx` reduced to under 200 lines" should be read as
+"`ManagerIdentityStep.tsx`".
+
 ## Problem
 
 `CreationStep1.tsx` (818 lines) has several composition issues:
