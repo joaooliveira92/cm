@@ -308,7 +308,7 @@ describe("AC-30 — visible filter controls show active state and drive the same
     // Both the filter row and the empty-result state offer a clear path (two
     // identical buttons is expected here).
     expect(
-      screen.getAllByRole("button", { name: "Clear all filters", exact: true }).length,
+      screen.getAllByRole("button", { name: "Clear all filters" }).length,
     ).toBeGreaterThanOrEqual(1);
   });
 

@@ -7,6 +7,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe, expect } from "vitest";
+import type { SnapshotId } from "@cm-clone/contracts";
 import { beginCareer } from "../src/main/saves.js";
 import { createPyramidSnapshot, createDefaultSnapshot } from "./snapshot-helpers.js";
 
@@ -18,14 +19,14 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-const generate = (snapshot: Effect.Effect<string>) =>
+const generate = <E>(snapshot: Effect.Effect<SnapshotId, E>) =>
   Effect.gen(function* () {
     const snapshotId = yield* snapshot;
     const { id } = yield* beginCareer(savesDir, {
       worldSeed: 606,
       referenceYear: 2026,
       userDataDir: savesDir,
-      snapshotId: snapshotId as never,
+      snapshotId,
     });
     return id;
   });

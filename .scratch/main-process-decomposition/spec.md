@@ -62,3 +62,26 @@ something no gate covers.
   and a directory sharing a basename is the exact confusion the audit removed from
   `main/schema.ts` vs `main/db/schema.ts`.
 - Splits are pure moves. No behaviour change, no signature change, no opportunistic cleanup.
+
+## Round 2 (2026-09-05, second audit pass)
+
+A follow-up folder audit ran after 01-03 landed. It found the `main/` decomposition on track and
+added five tickets outside the original scope, four of which are unblocked today:
+
+| Ticket | Why it was missed the first time |
+|---|---|
+| 06 mirror `test/` onto `src/` | The first pass audited `src/`. `apps/desktop/test/` is 100 flat files with two competing naming conventions -- the largest single navigation cost left in the repo. |
+| 07 renderer root screens | `0890d19` moved most screens into feature folders and left six behind, so `renderer/` root now reads as two organising schemes at once. |
+| 08 split `contracts/schemas.ts` | 1099 lines. Unlike `db/schema.ts` it carries no whole-file invariant, and nearly every screen imports it. |
+| 09 split `shared/setup/leagueSelection.ts` | 716 lines, four spec-sectioned concerns; its 699-line spec splits the same way. |
+| 10 split `game-engine/match/simulate.ts` | 651 lines. Constants, team state, resolvers and clock loop in one file. |
+
+Sequencing: 08, 09 and 10 are each confined to a single package and independent of everything else.
+05 comes before 04 and 07 so that a broken import in a moved file fails typecheck in seconds
+instead of a 15-minute vitest run. 06 comes last -- it rewrites the import in all ~100 spec files,
+so it must follow every ticket that moves a source path.
+
+Files deliberately left alone: `main/db/schema.ts` (whole-schema invariant, drizzle-pinned path),
+`external-reference/` (documented, gate-excluded, not ours), the renderer component splits already
+claimed under `.scratch/react-composition-audit/`, and `docs/specs/` (a 300-file reference corpus
+that is correctly shaped for what it is).

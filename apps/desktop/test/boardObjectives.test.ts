@@ -6,6 +6,7 @@ import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { BOARD_OBJECTIVE_BANDS } from "@cm-clone/shared";
+import type { SaveId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
@@ -22,7 +23,7 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E>) =>
+const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E, SqlClient>) =>
   effect.pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
     Effect.scoped,
@@ -79,7 +80,7 @@ const forceLopsidedFixtures = (saveId: string, clubId: string, outcome: "winEver
 
 /** Advances past pre-season (closes the window) so the Season is `in_season` before test setup
  * forces the remaining fixture state directly. */
-const advancePastPreSeason = (saveId: string) => advanceCalendar(savesDir, saveId);
+const advancePastPreSeason = (saveId: SaveId) => advanceCalendar(savesDir, saveId);
 
 // ---------------------------------------------------------------------------
 // Board Objective band assignment at Season start

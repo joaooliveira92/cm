@@ -7,7 +7,7 @@ import {
   lintFileSet,
   readSlateBaseline,
   reconcileSlateBaseline,
-} from "../../scripts/effect-lint.js";
+} from "../../../scripts/effect-lint.js";
 
 const repoRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const fixtureRoot = join(repoRoot, "scripts", "effect-lint-fixtures");

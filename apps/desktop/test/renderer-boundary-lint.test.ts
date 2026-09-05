@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { fixtureRuleName, isBoundaryEnforced, lintFileSet } from "../../scripts/effect-lint.js";
+import { fixtureRuleName, isBoundaryEnforced, lintFileSet } from "../../../scripts/effect-lint.js";
 
 const repoRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const fixtureRoot = join(repoRoot, "scripts", "effect-lint-fixtures");

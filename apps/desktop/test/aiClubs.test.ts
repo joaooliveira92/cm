@@ -5,7 +5,8 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { FORMATIONS, selectBestFormationXI, transferValue } from "@cm-clone/shared";
+import { FORMATIONS, selectBestFormationXI, transferValue, type BestXiSlot } from "@cm-clone/shared";
+import { BidId, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
@@ -28,7 +29,7 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E>) =>
+const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E, SqlClient>) =>
   effect.pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
     Effect.scoped,
@@ -40,7 +41,7 @@ const allClubs = (saveId: string) =>
     Effect.gen(function* () {
       const sql = yield* SqlClient;
       return yield* sql<{
-        id: string;
+        id: ClubId;
         statureTier: "big" | "mid" | "small";
         isUserClub: number;
       }>`SELECT id, stature_tier as "statureTier", is_user_club as "isUserClub" FROM clubs ORDER BY id`;
@@ -213,7 +214,7 @@ it.effect("respondToBid's counter branch resolves the AI bidder immediately: acc
     const aiBidderClubId = clubs.find((club) => club.isUserClub === 0)!.id;
     const targetPlayerId = userSquad.players[0]!.id;
 
-    const bidId = "test-bid-1";
+    const bidId = BidId.make("test-bid-1");
     const { value } = yield* withSave(
       save.id,
       Effect.gen(function* () {
@@ -258,7 +259,7 @@ it.effect("respondToBid's counter branch withdraws the AI bidder immediately whe
     const aiBidderClubId = clubs.find((club) => club.isUserClub === 0)!.id;
     const targetPlayerId = userSquad.players[0]!.id;
 
-    const bidId = "test-bid-2";
+    const bidId = BidId.make("test-bid-2");
     const { value } = yield* withSave(
       save.id,
       Effect.gen(function* () {
@@ -352,7 +353,7 @@ it.effect("pickBestFormationTactic returns the same formation and slots as selec
           `slot count must match for club ${club.id}`,
         );
         for (let i = 0; i < algorithmResult.slots.length; i++) {
-          const algorithmSlot = algorithmResult.slots[i]!;
+          const algorithmSlot: BestXiSlot<PlayerId> = algorithmResult.slots[i]!;
           const tacticSlot = tacticYielded.slots[i]!;
           strictEqual(
             tacticSlot.position,

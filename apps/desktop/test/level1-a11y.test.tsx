@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { SaveId } from "@cm-clone/contracts";
+import { ClubId, MatchId, SaveId } from "@cm-clone/contracts";
 import {
   FAMILIARITY_TIERS,
   FORMATION_SLOTS,
@@ -163,10 +163,10 @@ const noSubs = () => ({
 const resumedMatch = () => ({
   saveId: rid("s1"),
   match: {
-    matchId: rid("m1"),
-    homeClubId: rid("home"),
+    matchId: MatchId.make("m1"),
+    homeClubId: ClubId.make("home"),
     homeClubName: "Home FC",
-    awayClubId: rid("away"),
+    awayClubId: ClubId.make("away"),
     awayClubName: "Away FC",
   },
   cursor: 0,
@@ -174,6 +174,9 @@ const resumedMatch = () => ({
   homeScore: 0,
   awayScore: 0,
   isComplete: false,
+  // The session is mid-stream: `resumedMatch` stands in for a live resume, which is the
+  // phase the control panel stays mounted in.
+  phase: "live" as const,
   homeSubs: noSubs(),
   awaySubs: noSubs(),
   homeOnPitchCount: 11,

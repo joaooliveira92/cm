@@ -110,7 +110,7 @@ describe("Load Career — empty state and navigation", () => {
     mount([]);
 
     await screen.findByText("No saves yet.");
-    fireEvent.click(screen.getAllByRole("button", { name: "Start New Career" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Start New Career" })[0]!);
     expect(mountedNavigate).toHaveBeenCalledWith({ type: "createLeagues" });
   });
 

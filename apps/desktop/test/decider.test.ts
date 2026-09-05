@@ -6,6 +6,7 @@ import { it } from "@effect/vitest";
 import { deepStrictEqual, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
+import type { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../src/main/saves.js";
 import { appendStreamEvents, loadStreamEvents, nextStreamSeq } from "../src/main/decider.js";
@@ -18,7 +19,7 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E>) =>
+const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E, SqlClient>) =>
   effect.pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
     Effect.scoped,
@@ -71,8 +72,8 @@ it.effect("streams are isolated by stream_type and stream_id", () =>
         const clubEvents = yield* loadStreamEvents("club", save.id);
         strictEqual(matchEvents.length, 1);
         strictEqual(clubEvents.length, 1);
-        strictEqual(matchEvents[0].tag, "MatchStarted");
-        strictEqual(clubEvents[0].tag, "ClubCreated");
+        strictEqual(matchEvents[0]!.tag, "MatchStarted");
+        strictEqual(clubEvents[0]!.tag, "ClubCreated");
       }),
     );
   }),

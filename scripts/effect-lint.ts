@@ -9,7 +9,7 @@
  * coverage cannot drift apart.
  */
 import { fileURLToPath } from "node:url";
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, type Dirent } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, extname, relative } from "node:path"
 import type { CallExpression, ImportDeclaration, Node, SourceFile } from "typescript/unstable/ast"
@@ -365,7 +365,7 @@ const sourceDirs = ["packages", "apps"]
  */
 function findSourceFiles(root: string): string[] {
   const results: string[] = []
-  let entries: ReturnType<typeof readdirSync<{ withFileTypes: true }>>
+  let entries: Dirent[]
   try {
     entries = readdirSync(root, { withFileTypes: true })
   } catch (error) {
@@ -477,7 +477,7 @@ export function lintFileSet(cwd: string, files: string[]): LintFileSetResult {
     if (parseErrors.length > 0) {
       const first = parseErrors[0]!
       throw new Error(
-        `effect-lint: ${parseErrors.length} parse error(s); refusing to pass. First: ${first.file?.fileName ?? "<unknown>"} — ${String(first.messageText)}`,
+        `effect-lint: ${parseErrors.length} parse error(s); refusing to pass. First: ${first.fileName ?? "<unknown>"} — ${first.text}`,
       )
     }
     for (const file of files) {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Effect } from "effect";
-import type { LeagueSetupIndexView } from "@cm-clone/contracts";
+import { NationId, type LeagueSetupIndexView } from "@cm-clone/contracts";
 import { resolveLeagueSelection, getLeagueSetupIndex } from "../src/main/leagueSelection.js";
 import { applyIntent, initialState } from "../src/renderer/activeLeagues/state.js";
 import { deriveActiveLeaguesView } from "../src/renderer/activeLeagues/atoms.js";
@@ -144,7 +144,7 @@ describe("applySetupPreset", () => {
       setup([{ nationId: "nation_fra", mode: "background", source: "user" }]),
       {
         type: "applySetupPreset",
-        intents: [{ nationId: "nation_bra", mode: "background", source: "preset" }],
+        intents: [{ nationId: NationId.make("nation_bra"), mode: "background", source: "preset" }],
         notice: "Preset applied",
       },
     );

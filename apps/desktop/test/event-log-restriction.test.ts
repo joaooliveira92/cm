@@ -8,6 +8,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe } from "vitest";
+import type { ClubId } from "@cm-clone/contracts";
 import { MIGRATION_STATEMENTS } from "../src/main/db/migrations.generated.js";
 import { advanceCalendar } from "../src/main/season/index.js";
 import { getSquad } from "../src/main/squad.js";
@@ -83,7 +84,7 @@ describe("what reaches the log", () => {
         id,
         Effect.gen(function* () {
           const sql = yield* SqlClient;
-          const rows = yield* sql<{ id: string }>`SELECT id FROM clubs WHERE id LIKE 'club_eng_1_%' ORDER BY id LIMIT 1`;
+          const rows = yield* sql<{ id: ClubId }>`SELECT id FROM clubs WHERE id LIKE 'club_eng_1_%' ORDER BY id LIMIT 1`;
           return rows[0]!.id;
         }),
       );

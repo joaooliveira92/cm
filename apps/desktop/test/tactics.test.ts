@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
-import { Tactic } from "@cm-clone/contracts";
+import { Tactic, type PlayerId } from "@cm-clone/contracts";
 import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
@@ -19,13 +19,13 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-const buildTactic = (squadIds: ReadonlyArray<string>): Tactic =>
+const buildTactic = (squadIds: ReadonlyArray<PlayerId>): Tactic =>
   new Tactic({
     formation: "4-4-2",
     slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
       position,
       role: POSITION_ROLES[position],
-      playerId: squadIds[index],
+      playerId: squadIds[index]!,
     })),
     mentality: "balanced",
     tempo: "normal",
@@ -60,7 +60,7 @@ it.effect("changeTactics rejects a Tactic that assigns the same player twice", (
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const before = yield* getTactics(savesDir, save.id);
-    const duplicatePlayerId = before.squad[0].id;
+    const duplicatePlayerId = before.squad[0]!.id;
     const tactic = new Tactic({
       ...buildTactic(before.squad.map((player) => player.id)),
       slots: FORMATION_SLOTS["4-4-2"].map((position) => ({
@@ -82,7 +82,7 @@ it.effect("changeTactics rejects a slot whose Role doesn't match its Position", 
     const tactic = buildTactic(before.squad.map((player) => player.id));
     const badTactic = new Tactic({
       ...tactic,
-      slots: [{ ...tactic.slots[0], role: "Poacher" }, ...tactic.slots.slice(1)],
+      slots: [{ ...tactic.slots[0]!, role: "Poacher" }, ...tactic.slots.slice(1)],
     });
 
     const result = yield* Effect.exit(changeTactics(savesDir, save.id, badTactic));
@@ -106,7 +106,7 @@ it.effect("changeTactics rejects a slot position that doesn't match the formatio
     const tactic = buildTactic(before.squad.map((player) => player.id));
     const badTactic = new Tactic({
       ...tactic,
-      slots: [{ ...tactic.slots[0], position: "ST", role: "Poacher" }, ...tactic.slots.slice(1)],
+      slots: [{ ...tactic.slots[0]!, position: "ST", role: "Poacher" }, ...tactic.slots.slice(1)],
     });
 
     const result = yield* Effect.exit(changeTactics(savesDir, save.id, badTactic));

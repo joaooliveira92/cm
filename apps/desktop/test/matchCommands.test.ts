@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
-import { Tactic, type ResumeSimulationView, type SquadPlayerView } from "@cm-clone/contracts";
+import { Tactic, type ClubId, type MatchId, type ResumeSimulationView, type SaveId, type SquadPlayerView } from "@cm-clone/contracts";
 import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
@@ -38,7 +38,7 @@ const buildKnownTactic = (squad: ReadonlyArray<SquadPlayerView>): Tactic =>
     pressing: "medium",
   });
 
-const drain = (savesDir: string, saveId: string, matchId: string) =>
+const drain = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
   Effect.gen(function* () {
     let cursor = 0;
     let isComplete = false;
@@ -59,7 +59,7 @@ const drain = (savesDir: string, saveId: string, matchId: string) =>
  * directly: it drains a full no-op simulation of each candidate match first (cheap — `simulateMatch`
  * is pure and sub-millisecond, ADR-0007) and retries with a fresh seed if any Injury fired.
  */
-const startMatchWithNoInjuries = (savesDir: string, saveId: string, opponentClubId: string, alternatives: ReadonlyArray<string> = []) =>
+const startMatchWithNoInjuries = (savesDir: string, saveId: SaveId, opponentClubId: ClubId, alternatives: ReadonlyArray<ClubId> = []) =>
   Effect.gen(function* () {
     const candidates = [opponentClubId, ...alternatives];
     for (let attempt = 0; attempt < 25; attempt++) {
@@ -75,7 +75,7 @@ const startMatchWithNoInjuries = (savesDir: string, saveId: string, opponentClub
 
 /** Twin of `startMatchWithNoInjuries` that also excludes red cards, so a deterministic 11-on-11
  * on-pitch count holds — what ticket 11's no-subs tests need to assert a clean ForceOff to 10. */
-const startMatchWithCleanLineup = (savesDir: string, saveId: string, opponentClubId: string, alternatives: ReadonlyArray<string> = []) =>
+const startMatchWithCleanLineup = (savesDir: string, saveId: SaveId, opponentClubId: ClubId, alternatives: ReadonlyArray<ClubId> = []) =>
   Effect.gen(function* () {
     const candidates = [opponentClubId, ...alternatives];
     for (let attempt = 0; attempt < 25; attempt++) {

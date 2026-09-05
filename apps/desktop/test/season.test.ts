@@ -5,6 +5,7 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import {
+  ClubId,
   NationId,
   NationSelectionIntentPayload,
   SaveId,
@@ -42,17 +43,17 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-const loadSeasonStreamEvents = (saveId: string) =>
+const loadSeasonStreamEvents = (saveId: SaveId) =>
   loadStreamEvents("season", saveId).pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
     Effect.scoped,
   );
 
 /** The first club by insert order — mirrors `createSave`'s compat-shim user-club choice. */
-const loadFirstClubId = (saveId: string) =>
+const loadFirstClubId = (saveId: SaveId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const rows = yield* sql<{ id: string }>`SELECT id FROM clubs ORDER BY rowid LIMIT 1`;
+    const rows = yield* sql<{ id: ClubId }>`SELECT id FROM clubs ORDER BY rowid LIMIT 1`;
     return rows[0]!.id;
   }).pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
@@ -101,7 +102,7 @@ const createCareerFromWorldSeed = (worldSeed: number, name: string) =>
 
 it.effect("generateRoundRobinFixtures produces a double round-robin: 38 fixtures/club across 38 rounds of 10", () =>
   Effect.gen(function* () {
-    const clubIds = Array.from({ length: 20 }, (_, i) => `club-${i}`);
+    const clubIds = Array.from({ length: 20 }, (_, i) => ClubId.make(`club-${i}`));
     const fixtures = yield* generateRoundRobinFixtures(clubIds, 1234);
 
     // 20 clubs, double round-robin: C(20,2) = 190 pairings x 2 legs = 380 Fixtures, 10/Matchday x 38.
@@ -133,7 +134,7 @@ it.effect("generateRoundRobinFixtures produces a double round-robin: 38 fixtures
 
 it.effect("generateRoundRobinFixtures is deterministic from its seed but reshuffles across seeds", () =>
   Effect.gen(function* () {
-    const clubIds = Array.from({ length: 20 }, (_, i) => `club-${i}`);
+    const clubIds = Array.from({ length: 20 }, (_, i) => ClubId.make(`club-${i}`));
     const a = yield* generateRoundRobinFixtures(clubIds, 42);
     const b = yield* generateRoundRobinFixtures(clubIds, 42);
     deepStrictEqual(a, b);
@@ -366,10 +367,10 @@ it.effect("league table orders by points, then goal difference, then goals score
     strictEqual(totalPlayed, 20); // 10 fixtures x 2 clubs each, Matchday 1 only
 
     for (let i = 1; i < table.standings.length; i++) {
-      const prev = table.standings[i - 1];
-      const curr = table.standings[i];
-      const prevKey = [prev.points, prev.goalDifference, prev.goalsFor];
-      const currKey = [curr.points, curr.goalDifference, curr.goalsFor];
+      const prev = table.standings[i - 1]!;
+      const curr = table.standings[i]!;
+      const prevKey = [prev.points, prev.goalDifference, prev.goalsFor] as const;
+      const currKey = [curr.points, curr.goalDifference, curr.goalsFor] as const;
       ok(
         prevKey[0] > currKey[0] ||
           (prevKey[0] === currKey[0] && prevKey[1] > currKey[1]) ||

@@ -4,6 +4,6 @@ export default defineConfig({
   test: {
     include: ["test/**/*.test.{ts,tsx}"],
     passWithNoTests: true,
-    reporter: process.env.VERBOSE ? "verbose" : "dot",
+    reporters: [process.env.VERBOSE ? "verbose" : "dot"],
   },
 });

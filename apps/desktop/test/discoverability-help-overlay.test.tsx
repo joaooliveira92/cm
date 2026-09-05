@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ALL_ACTIONS } from "../src/renderer/actions/allActions.js";
 import { actionsInTiers } from "../src/renderer/actions/registry.js";
-import type { Action } from "../src/renderer/actions/types.js";
+import type { Action, ScopeState } from "../src/renderer/actions/types.js";
 import { HelpOverlay } from "../src/renderer/discoverability/HelpOverlay.js";
 import { HotkeysBoundaryProvider } from "../src/renderer/hotkeys.js";
 
@@ -13,7 +13,7 @@ const keyDown = (code: string): void => {
 
 const mount = (
   screenName: string,
-  state: Record<string, unknown>,
+  state: ScopeState,
   onClose: () => void,
   overrides: Record<string, string> = {},
 ) =>

@@ -109,7 +109,7 @@ export const assignFullTactic = async (rows: Locator) => {
     const select = rows.nth(i).locator("select");
     const options = await select.locator("option").all();
     // options[0] is "Unassigned"; pick a distinct real player per slot to avoid duplicate-player rejection.
-    const optionValue = await options[i + 1].getAttribute("value");
+    const optionValue = await options[i + 1]!.getAttribute("value");
     await select.selectOption(optionValue!);
   }
   await rows.page().getByRole("button", { name: "Save Tactic" }).click();

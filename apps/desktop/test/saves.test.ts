@@ -12,7 +12,8 @@ import {
   blockingIssues,
   resolveSelection,
 } from "@cm-clone/shared";
-import { SnapshotId } from "@cm-clone/contracts";
+import { PresetFingerprintMismatchError, SnapshotId } from "@cm-clone/contracts";
+import type { SqlError } from "effect/unstable/sql/SqlError";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
@@ -54,9 +55,18 @@ it.effect("createSave generates a 20-club League with a squad for the user's clu
 );
 
 describe("beginCareer reads the League Selection Snapshot (ticket 03)", () => {
-  /** A typed refusal read as a value, yieldable inside a `gen`. */
-  const refusedAsError = <A>(effect: Effect.Effect<A, PresetFingerprintMismatchError>) =>
-    Effect.flip(effect);
+  /** A typed refusal read as a value, yieldable inside a `gen`. `beginCareer` can also fail with
+   *  a `SqlError`; the assertion here is that it did not — these cases refuse before any SQL runs. */
+  const refusedAsError = <A>(effect: Effect.Effect<A, PresetFingerprintMismatchError | SqlError>) =>
+    Effect.flip(effect).pipe(
+      Effect.map((error) => {
+        ok(
+          error instanceof PresetFingerprintMismatchError,
+          `expected a typed refusal, got ${error._tag}`,
+        );
+        return error;
+      }),
+    );
 
   /** `beginCareer` with a fixed world and the snapshot stored under `savesDir`. */
   const generate = (snapshotId: SnapshotId, worldSeed = 7) =>

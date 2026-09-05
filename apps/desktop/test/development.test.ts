@@ -5,7 +5,8 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { coachModifier, developPlayer, type Category } from "@cm-clone/shared";
+import { coachModifier, developPlayer, type Category, type PlayerAttributes } from "@cm-clone/shared";
+import type { ClubId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { loadCoachQuality } from "../src/main/staff.js";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -23,7 +24,7 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E>) =>
+const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E, SqlClient>) =>
   effect.pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
     Effect.scoped,
@@ -36,13 +37,13 @@ interface PlayerMeta {
 }
 
 /** Player id -> (potentialAbility, dateOfBirth, focus) for asserting deterministic development. */
-const loadPlayerMeta = (saveId: string, clubId: string) =>
+const loadPlayerMeta = (saveId: SaveId, clubId: ClubId) =>
   withSave(
     saveId,
     Effect.gen(function* () {
       const sql = yield* SqlClient;
       const rows = yield* sql<{
-        playerId: string;
+        playerId: PlayerId;
         potentialAbility: number;
         dateOfBirth: string;
         focus: Category | null;
@@ -53,12 +54,12 @@ const loadPlayerMeta = (saveId: string, clubId: string) =>
     }),
   );
 
-const userClubId = (saveId: string) =>
+const userClubId = (saveId: SaveId) =>
   withSave(
     saveId,
     Effect.gen(function* () {
       const sql = yield* SqlClient;
-      const rows = yield* sql<{ id: string }>`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`;
+      const rows = yield* sql<{ id: ClubId }>`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`;
       return rows[0]!.id;
     }),
   );
@@ -75,7 +76,7 @@ const countEvents = (saveId: string, streamType: string, tag: string) =>
 
 /** Advances the calendar until `SeasonConcluded` fires (the per-Season Player Development
  * boundary), bounded so a broken state machine can't hang the suite. */
-const advanceToSeasonEnd = (saveId: string) =>
+const advanceToSeasonEnd = (saveId: SaveId) =>
   Effect.gen(function* () {
     for (let i = 0; i < 60; i++) {
       const result = yield* advanceCalendar(savesDir, saveId);
@@ -105,7 +106,7 @@ it.effect("advancing to SeasonConcluded develops every user-club player determin
         const m = meta.get(player.id)!;
         return [
           player.id,
-          developPlayer(player.attributes, player.age, m.potentialAbility, m.focus ?? undefined, coachMultiplier),
+          developPlayer(player.attributes as PlayerAttributes, player.age, m.potentialAbility, m.focus ?? undefined, coachMultiplier),
         ];
       }),
     );
@@ -178,7 +179,7 @@ it.effect("sets and reads a player's Training Focus, rejecting non-own-squad pla
       save.id,
       Effect.gen(function* () {
         const sql = yield* SqlClient;
-        const rows = yield* sql<{ id: string }>`SELECT p.id FROM players p JOIN clubs c ON c.id = p.club_id WHERE c.is_user_club = 0 LIMIT 1`;
+        const rows = yield* sql<{ id: PlayerId }>`SELECT p.id FROM players p JOIN clubs c ON c.id = p.club_id WHERE c.is_user_club = 0 LIMIT 1`;
         return rows[0]!.id;
       }),
     );
@@ -218,8 +219,8 @@ it.effect("a focused Category's growth step is multiplied at SeasonConcluded whi
     // Focus Technical: the expected next-season set applies the multiplier only to Technical.
     const coach = yield* withSave(save.id, loadCoachQuality(clubId));
     const coachMultiplier = coach === null ? 1 : coachModifier(coach);
-    const expectedFocused = developPlayer(beforePlayer.attributes, beforePlayer.age, m.potentialAbility, "technical", coachMultiplier);
-    const expectedUnmodified = developPlayer(beforePlayer.attributes, beforePlayer.age, m.potentialAbility, undefined, coachMultiplier);
+    const expectedFocused = developPlayer(beforePlayer.attributes as PlayerAttributes, beforePlayer.age, m.potentialAbility, "technical", coachMultiplier);
+    const expectedUnmodified = developPlayer(beforePlayer.attributes as PlayerAttributes, beforePlayer.age, m.potentialAbility, undefined, coachMultiplier);
 
     yield* setTrainingFocus(savesDir, save.id, targetPlayerId, "technical");
     yield* advanceToSeasonEnd(save.id);

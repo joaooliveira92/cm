@@ -41,7 +41,7 @@ Run `pnpm check:all` (or `check:ci`) after every task. Both profiles are defined
 
 | Gate | Command | Purpose |
 |------|---------|---------|
-| typecheck | `pnpm -r typecheck` | TypeScript errors |
+| typecheck | `pnpm -r typecheck` | TypeScript errors. Every package's `include` covers its tests as well as its sources (`apps/desktop` adds `e2e/` too), so a file move that breaks only a spec's import fails here rather than fifteen minutes later in `test`. |
 | lint | `oxlint .` | oxlint with stricter rules (typescript/unicorn/oxc/import plugins) |
 | effect-lint | `tsx scripts/effect-lint.ts` | Custom Effect anti-pattern detection (no Effect.ignore, no Effect.asVoid, no Effect.catchAllCause, no Effect.serviceOption, no disableValidation, no void expressions, no nested Layer.provide, explicit concurrency on Effect.all/Effect.forEach). AST-based, so mentions in comments and strings do not trip it. |
 | verify-md-links | `tsx scripts/verify-md-links.ts` | No broken markdown links |

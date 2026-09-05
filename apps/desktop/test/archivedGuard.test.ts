@@ -6,7 +6,7 @@ import { it } from "@effect/vitest";
 import { ok } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { FORMATION_SLOTS, POSITION_ROLES, type ArchivedCause } from "@cm-clone/shared";
-import { Tactic } from "@cm-clone/contracts";
+import { BidId, ClubId, MatchId, PlayerId, Tactic } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
@@ -64,30 +64,30 @@ const everyMutatingCommandRejects = (cause: ArchivedCause) =>
     });
 
     ok(rejectsAsArchived(yield* Effect.flip(changeTactics(savesDir, save.id, tactic)), cause));
-    ok(rejectsAsArchived(yield* Effect.flip(startMatch(savesDir, save.id, "irrelevant-club-id")), cause));
+    ok(rejectsAsArchived(yield* Effect.flip(startMatch(savesDir, save.id, ClubId.make("irrelevant-club-id"))), cause));
     ok(
       rejectsAsArchived(
         yield* Effect.flip(
-          submitMatchCommand(savesDir, save.id, "irrelevant-match-id", 0, 1, false, {
+          submitMatchCommand(savesDir, save.id, MatchId.make("irrelevant-match-id"), 0, 1, false, {
             _tag: "MakeSubstitution",
             clubId: squad.club.id,
-            outPlayerId: "irrelevant",
-            inPlayerId: "irrelevant",
+            outPlayerId: PlayerId.make("irrelevant"),
+            inPlayerId: PlayerId.make("irrelevant"),
           }),
         ),
         cause,
       ),
     );
-    ok(rejectsAsArchived(yield* Effect.flip(placeBid(savesDir, save.id, "irrelevant-player-id", 1000)), cause));
+    ok(rejectsAsArchived(yield* Effect.flip(placeBid(savesDir, save.id, PlayerId.make("irrelevant-player-id"), 1000)), cause));
     ok(
       rejectsAsArchived(
-        yield* Effect.flip(respondToBid(savesDir, save.id, "irrelevant-bid-id", "accept", undefined)),
+        yield* Effect.flip(respondToBid(savesDir, save.id, BidId.make("irrelevant-bid-id"), "accept", undefined)),
         cause,
       ),
     );
-    ok(rejectsAsArchived(yield* Effect.flip(respondAsBidder(savesDir, save.id, "irrelevant-bid-id", "accept")), cause));
-    ok(rejectsAsArchived(yield* Effect.flip(signFreeAgent(savesDir, save.id, "irrelevant-player-id", undefined)), cause));
-    ok(rejectsAsArchived(yield* Effect.flip(renewContract(savesDir, save.id, "irrelevant-player-id", undefined)), cause));
+    ok(rejectsAsArchived(yield* Effect.flip(respondAsBidder(savesDir, save.id, BidId.make("irrelevant-bid-id"), "accept")), cause));
+    ok(rejectsAsArchived(yield* Effect.flip(signFreeAgent(savesDir, save.id, PlayerId.make("irrelevant-player-id"), undefined)), cause));
+    ok(rejectsAsArchived(yield* Effect.flip(renewContract(savesDir, save.id, PlayerId.make("irrelevant-player-id"), undefined)), cause));
   });
 
 it.effect("a sacked save is read-only: every mutating command rejects with SaveArchivedError", () =>

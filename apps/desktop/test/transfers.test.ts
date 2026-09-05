@@ -6,6 +6,7 @@ import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { TRANSFER_BUDGET_BY_TIER, WAGE_BUDGET_BY_TIER } from "@cm-clone/shared";
+import { BidId, PlayerId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
@@ -31,7 +32,7 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E>) =>
+const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E, SqlClient>) =>
   effect.pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
     Effect.scoped,
@@ -106,11 +107,11 @@ it.effect("signFreeAgent and renewContract are rejected outside an open window",
     const squad = yield* getSquad(savesDir, save.id);
     yield* advanceCalendar(savesDir, save.id); // closes the pre-season window
 
-    const signResult = yield* Effect.exit(signFreeAgent(savesDir, save.id, "nonexistent-player", undefined));
+    const signResult = yield* Effect.exit(signFreeAgent(savesDir, save.id, PlayerId.make("nonexistent-player"), undefined));
     ok(signResult._tag === "Failure");
 
     const renewResult = yield* Effect.exit(
-      renewContract(savesDir, save.id, squad.players[0].id, undefined),
+      renewContract(savesDir, save.id, squad.players[0]!.id, undefined),
     );
     ok(renewResult._tag === "Failure");
   }),
@@ -219,7 +220,7 @@ it.effect("respondToBid lets the user's club, as seller, accept/reject/counter a
     const screen = yield* getTransfersScreen(savesDir, save.id);
     const club = screen.club;
     const otherClubId = screen.marketPlayers[0]!.clubId!;
-    const myPlayerId = (yield* getSquad(savesDir, save.id)).players[0].id;
+    const myPlayerId = (yield* getSquad(savesDir, save.id)).players[0]!.id;
 
     // Simulate an incoming Bid from another club directly (no AI-bid-origination automation is
     // built in this ticket — see transfers.ts's `placeBid` doc comment).
@@ -232,7 +233,7 @@ it.effect("respondToBid lets the user's club, as seller, accept/reject/counter a
       }),
     );
 
-    const rejected = yield* respondToBid(savesDir, save.id, "test-bid-1", "reject", undefined);
+    const rejected = yield* respondToBid(savesDir, save.id, BidId.make("test-bid-1"), "reject", undefined);
     ok(rejected.incomingBids.some((b) => b.id === "test-bid-1" && b.status === "rejected"));
   }),
 );
@@ -243,7 +244,7 @@ it.effect("respondToBid rejects a second response once a Bid is already resolved
     const screen = yield* getTransfersScreen(savesDir, save.id);
     const club = screen.club;
     const otherClubId = screen.marketPlayers[0]!.clubId!;
-    const myPlayerId = (yield* getSquad(savesDir, save.id)).players[0].id;
+    const myPlayerId = (yield* getSquad(savesDir, save.id)).players[0]!.id;
 
     yield* withSave(
       save.id,
@@ -254,8 +255,8 @@ it.effect("respondToBid rejects a second response once a Bid is already resolved
       }),
     );
 
-    yield* respondToBid(savesDir, save.id, "test-bid-2", "reject", undefined);
-    const result = yield* Effect.exit(respondToBid(savesDir, save.id, "test-bid-2", "accept", undefined));
+    yield* respondToBid(savesDir, save.id, BidId.make("test-bid-2"), "reject", undefined);
+    const result = yield* Effect.exit(respondToBid(savesDir, save.id, BidId.make("test-bid-2"), "accept", undefined));
     ok(result._tag === "Failure");
   }),
   20_000,
@@ -321,7 +322,7 @@ it.effect("renewContract reuses the signing flow against the player's current cl
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const squad = yield* getSquad(savesDir, save.id);
-    const playerId = squad.players[0].id;
+    const playerId = squad.players[0]!.id;
 
     const renewed = yield* renewContract(savesDir, save.id, playerId, 5);
     ok(renewed.wageBudgetUsed > 0);

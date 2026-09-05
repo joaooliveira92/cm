@@ -49,16 +49,18 @@ test("InvalidTacticError shows specific hint text when players are duplicated", 
   // specific hint text.
   await window.evaluate(() => {
     const selects = document.querySelectorAll<HTMLSelectElement>("tbody tr select");
-    const firstReal = Array.from(selects[0].options).find((o) => o.value !== "");
+    const [first, second] = selects;
+    if (!first || !second) throw new Error("expected at least two tactic slot selects");
+    const firstReal = Array.from(first.options).find((o) => o.value !== "");
     if (firstReal) {
-      selects[0].value = firstReal.value;
-      selects[0].dispatchEvent(new Event("change", { bubbles: true }));
+      first.value = firstReal.value;
+      first.dispatchEvent(new Event("change", { bubbles: true }));
       const option = document.createElement("option");
       option.value = firstReal.value;
       option.textContent = "Duplicate";
-      selects[1].appendChild(option);
-      selects[1].value = firstReal.value;
-      selects[1].dispatchEvent(new Event("change", { bubbles: true }));
+      second.appendChild(option);
+      second.value = firstReal.value;
+      second.dispatchEvent(new Event("change", { bubbles: true }));
     }
   });
 

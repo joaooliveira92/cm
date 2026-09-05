@@ -27,7 +27,7 @@ afterEach(() => rm(userDataDir, { recursive: true, force: true }));
 const filePath = (): string => path.join(userDataDir, KEYBINDINGS_FILE);
 
 describe("AC-36 — tolerant decode of a corrupt override file", () => {
-  it("a missing file reads as the empty map (never a startup error)", () =>
+  it.effect("a missing file reads as the empty map (never a startup error)", () =>
     Effect.gen(function* () {
       deepStrictEqual(yield* getKeyBindingOverrides(userDataDir), {});
     }));
@@ -49,7 +49,7 @@ describe("AC-36 — tolerant decode of a corrupt override file", () => {
     deepStrictEqual(parseOverridesFile(text), { "focus-bid": "v" });
   });
 
-  it("a corrupt file is fixed on the next write", () =>
+  it.effect("a corrupt file is fixed on the next write", () =>
     Effect.gen(function* () {
       writeFileSync(filePath(), "not json at all");
       const next = yield* setKeyBindingOverride(userDataDir, "focus-bid", "v");
@@ -60,7 +60,7 @@ describe("AC-36 — tolerant decode of a corrupt override file", () => {
 });
 
 describe("AC-34 — overrides roundtrip the typed seam and persist under userData", () => {
-  it("set → get persists across reads (a restart reads the same file)", () =>
+  it.effect("set → get persists across reads (a restart reads the same file)", () =>
     Effect.gen(function* () {
       const next = yield* setKeyBindingOverride(userDataDir, "go-to-squad", "g q");
       deepStrictEqual(next, { "go-to-squad": "g q" });
@@ -71,14 +71,14 @@ describe("AC-34 — overrides roundtrip the typed seam and persist under userDat
       });
     }));
 
-  it("a two-step prefix is rebound as one entry", () =>
+  it.effect("a two-step prefix is rebound as one entry", () =>
     Effect.gen(function* () {
       const next = yield* setKeyBindingOverride(userDataDir, "go-to-tactics", "g z");
       deepStrictEqual(next, { "go-to-tactics": "g z" });
       deepStrictEqual(yield* getKeyBindingOverrides(userDataDir), { "go-to-tactics": "g z" });
     }));
 
-  it("overrides accumulate and the last write wins", () =>
+  it.effect("overrides accumulate and the last write wins", () =>
     Effect.gen(function* () {
       yield* setKeyBindingOverride(userDataDir, "focus-bid", "v");
       yield* setKeyBindingOverride(userDataDir, "go-to-squad", "g q");
@@ -89,7 +89,7 @@ describe("AC-34 — overrides roundtrip the typed seam and persist under userDat
       });
     }));
 
-  it("resetKeyBinding removes one override and returns the updated map", () =>
+  it.effect("resetKeyBinding removes one override and returns the updated map", () =>
     Effect.gen(function* () {
       yield* setKeyBindingOverride(userDataDir, "focus-bid", "v");
       yield* setKeyBindingOverride(userDataDir, "go-to-squad", "g q");
@@ -98,13 +98,13 @@ describe("AC-34 — overrides roundtrip the typed seam and persist under userDat
       deepStrictEqual(yield* getKeyBindingOverrides(userDataDir), { "go-to-squad": "g q" });
     }));
 
-  it("resetKeyBinding is idempotent for an absent override", () =>
+  it.effect("resetKeyBinding is idempotent for an absent override", () =>
     Effect.gen(function* () {
       deepStrictEqual(yield* resetKeyBinding(userDataDir, "nope"), {});
       deepStrictEqual(yield* getKeyBindingOverrides(userDataDir), {});
     }));
 
-  it("resetAllKeyBindings returns the empty map and persists it", () =>
+  it.effect("resetAllKeyBindings returns the empty map and persists it", () =>
     Effect.gen(function* () {
       yield* setKeyBindingOverride(userDataDir, "focus-bid", "v");
       deepStrictEqual(yield* resetAllKeyBindings(userDataDir), {});
@@ -113,7 +113,7 @@ describe("AC-34 — overrides roundtrip the typed seam and persist under userDat
 });
 
 describe("AC-35 — main-side guard rejects locked values and unexpressible shapes", () => {
-  it("a locked infra key as the new binding is rejected with the reason", () =>
+  it.effect("a locked infra key as the new binding is rejected with the reason", () =>
     Effect.gen(function* () {
       for (const locked of ["Escape", "Primary+K", "Primary+/", "Enter"]) {
         const outcome = yield* Effect.result(
@@ -131,7 +131,7 @@ describe("AC-35 — main-side guard rejects locked values and unexpressible shap
       deepStrictEqual(yield* getKeyBindingOverrides(userDataDir), {});
     }));
 
-  it("a shape the framework cannot express is rejected (arrows, modifiers, lone g)", () =>
+  it.effect("a shape the framework cannot express is rejected (arrows, modifiers, lone g)", () =>
     Effect.gen(function* () {
       for (const bad of ["ArrowDown", "F5", "g", "Control+Z", "g  s"]) {
         const outcome = yield* Effect.result(
@@ -145,7 +145,7 @@ describe("AC-35 — main-side guard rejects locked values and unexpressible shap
       deepStrictEqual(yield* getKeyBindingOverrides(userDataDir), {});
     }));
 
-  it("the four expressible shapes are accepted", () =>
+  it.effect("the four expressible shapes are accepted", () =>
     Effect.gen(function* () {
       for (const good of ["b", "Space", "Primary+H", "g q"]) {
         const outcome = yield* Effect.result(

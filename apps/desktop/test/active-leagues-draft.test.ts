@@ -71,7 +71,10 @@ describe("the draft saver", () => {
   });
 
   it("discards a superseded write's outcome instead of publishing it as the saved state", async () => {
-    let resolveFirst: ((value: string | null) => void) | null = null;
+    // Held on an object rather than a bare `let`: TypeScript's control-flow analysis does not
+    // see the assignment made inside the `save` callback below and would narrow a plain local
+    // back to `null` at the call site.
+    const first: { resolve: ((value: string | null) => void) | null } = { resolve: null };
     let call = 0;
     const saver = createDraftSaver({
       delayMs: 10,
@@ -79,7 +82,7 @@ describe("the draft saver", () => {
         call += 1;
         if (call === 1) {
           return new Promise<string | null>((resolve) => {
-            resolveFirst = resolve;
+            first.resolve = resolve;
           });
         }
         return Promise.resolve(null).then(() => {
@@ -99,7 +102,7 @@ describe("the draft saver", () => {
 
     // The stale write now fails. Its outcome must not become the state — the current draft is
     // the one that landed, not the one nobody is asking about any more.
-    resolveFirst?.("disk full");
+    first.resolve?.("disk full");
     await vi.advanceTimersByTimeAsync(0);
 
     const state = saver.state();

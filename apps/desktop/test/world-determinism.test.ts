@@ -40,6 +40,21 @@ const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E, SqlClient>) 
     Effect.scoped,
   );
 
+interface ClubRow {
+  readonly id: string;
+  readonly statureTier: string;
+  readonly generationSeed: number;
+  readonly cityId: string;
+  readonly stadiumName: string;
+  readonly stadiumCapacity: number;
+}
+
+interface ContractRow {
+  readonly playerId: string;
+  readonly wage: number;
+  readonly yearsRemaining: number;
+}
+
 interface PlayerRow {
   readonly id: string;
   readonly clubId: string;
@@ -72,19 +87,19 @@ const readWorld = Effect.gen(function* () {
   const sql = yield* SqlClient;
   // No `name`: a club's display name is the content pack's, resolved on read. Ordering is by
   // canonical id, which is the club's identity.
-  const clubs = yield* sql`SELECT id, stature_tier as "statureTier", generation_seed as "generationSeed",
+  const clubs = yield* sql<ClubRow>`SELECT id, stature_tier as "statureTier", generation_seed as "generationSeed",
       city_id as "cityId", stadium_name as "stadiumName", stadium_capacity as "stadiumCapacity"
     FROM clubs ORDER BY id`;
   const players = yield* sql<PlayerRow>`SELECT id, club_id as "clubId", first_name as "firstName", last_name as "lastName",
       date_of_birth as "dateOfBirth", potential_ability as "potentialAbility", passing, squad_slot as "squadSlot",
       generation_seed as "generationSeed", nationality, birth_city_id as "birthCityId"
     FROM players ORDER BY club_id, squad_slot`;
-  const contracts = yield* sql`SELECT player_id as "playerId", wage, years_remaining as "yearsRemaining" FROM contracts ORDER BY player_id`;
+  const contracts = yield* sql<ContractRow>`SELECT player_id as "playerId", wage, years_remaining as "yearsRemaining" FROM contracts ORDER BY player_id`;
   const catalogue = yield* readCatalogue;
   return { clubs, players, contracts, ...catalogue };
 });
 
-type World = Awaited<ReturnType<typeof readWorld>> extends Effect.Effect<infer A> ? A : never;
+type World = Effect.Success<typeof readWorld>;
 
 /** A world from a named snapshot, so a test can vary the *selection* rather than only the seed. */
 const generateFrom = (snapshotId: SnapshotId, worldSeed: number) =>
@@ -101,15 +116,13 @@ const generateFrom = (snapshotId: SnapshotId, worldSeed: number) =>
 /** The wider world cut down to the narrower one's entities, so the two can be compared directly.
  *  Anything the narrower world does not contain is dropped rather than diffed. */
 const subsetOf = (wide: World, narrow: World): World => {
-  const clubIds = new Set(narrow.clubs.map((club) => (club as { id: string }).id));
+  const clubIds = new Set(narrow.clubs.map((club) => club.id));
   const playerIds = new Set(narrow.players.map((player) => player.id));
   return {
     ...wide,
-    clubs: wide.clubs.filter((club) => clubIds.has((club as { id: string }).id)),
+    clubs: wide.clubs.filter((club) => clubIds.has(club.id)),
     players: wide.players.filter((player) => playerIds.has(player.id)),
-    contracts: wide.contracts.filter((contract) =>
-      playerIds.has((contract as { playerId: string }).playerId),
-    ),
+    contracts: wide.contracts.filter((contract) => playerIds.has(contract.playerId)),
   };
 };
 
@@ -370,7 +383,7 @@ describe("a broader selection extends a world rather than replacing it", () => {
       const beside = yield* generateFrom(yield* createRegionalPlusEnglandSnapshot(savesDir), 7);
 
       const english = (world: World) =>
-        world.clubs.filter((club) => (club as { id: string }).id.startsWith("club_eng_1_"));
+        world.clubs.filter((club) => club.id.startsWith("club_eng_1_"));
       expect(english(alone)).toHaveLength(20);
       deepStrictEqual(english(beside), english(alone));
     }),

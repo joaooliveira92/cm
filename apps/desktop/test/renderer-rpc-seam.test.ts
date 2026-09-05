@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { SaveId } from "@cm-clone/contracts";
-import { SaveId as SaveIdSchema } from "@cm-clone/contracts";
+import {
+  CollidingOverrideError,
+  InvalidBindingShapeError,
+  LockedKeyOverrideError,
+  SaveNotFoundError,
+  SaveId as SaveIdSchema,
+} from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { AsyncResult, Reactivity } from "effect/unstable/reactivity";
 import {
@@ -340,7 +346,7 @@ describe("renderer RPC seam — typed error surface (AC-03)", () => {
       describeRpcError({
         _tag: "RemoteFailure",
         method: "getSquad",
-        error: { _tag: "SaveNotFoundError", id: save },
+        error: new SaveNotFoundError({ id: save }),
       }),
     ).toBe("That save could not be found.");
   });
@@ -349,24 +355,23 @@ describe("renderer RPC seam — typed error surface (AC-03)", () => {
     const locked = describeRpcError({
       _tag: "RemoteFailure",
       method: "setKeyBindingOverride",
-      error: { _tag: "LockedKeyOverrideError", actionId: "open-palette", binding: "Primary+K" },
+      error: new LockedKeyOverrideError({ actionId: "open-palette", binding: "Primary+K" }),
     });
     expect(locked).toMatch(/locked/i);
     const colliding = describeRpcError({
       _tag: "RemoteFailure",
       method: "setKeyBindingOverride",
-      error: {
-        _tag: "CollidingOverrideError",
+      error: new CollidingOverrideError({
         actionId: "place-bid",
         binding: "b",
         conflictingActionId: "focus-bid",
-      },
+      }),
     });
     expect(colliding).toMatch(/already bound/i);
     const shape = describeRpcError({
       _tag: "RemoteFailure",
       method: "setKeyBindingOverride",
-      error: { _tag: "InvalidBindingShapeError", actionId: "focus-bid", binding: "F5" },
+      error: new InvalidBindingShapeError({ actionId: "focus-bid", binding: "F5" }),
     });
     expect(shape).toMatch(/cannot be bound/i);
   });

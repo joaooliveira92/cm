@@ -8,7 +8,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe } from "vitest";
-import { NationId, NationSelectionIntentPayload, ScopeOptionId } from "@cm-clone/contracts";
+import { NationId, NationSelectionIntentPayload, ScopeOptionId, type ClubId } from "@cm-clone/contracts";
 import {
   collapseSquadStrength,
   computeSquadQuality,
@@ -79,7 +79,7 @@ const committedCareerWithGermanyAt = (mode: string, worldSeed: number) =>
       saveId,
       Effect.gen(function* () {
         const sql = yield* SqlClient;
-        const rows = yield* sql<{ id: string }>`SELECT id FROM clubs WHERE id LIKE 'club_eng_1_%' ORDER BY id LIMIT 1`;
+        const rows = yield* sql<{ id: ClubId }>`SELECT id FROM clubs WHERE id LIKE 'club_eng_1_%' ORDER BY id LIMIT 1`;
         return rows[0]!.id;
       }),
     );
@@ -152,7 +152,7 @@ const committedCareerFrom = (snapshotId: Parameters<typeof beginCareer>[1]["snap
       id,
       Effect.gen(function* () {
         const sql = yield* SqlClient;
-        const rows = yield* sql<{ id: string }>`SELECT id FROM clubs WHERE id LIKE 'club_eng_1_%' ORDER BY id LIMIT 1`;
+        const rows = yield* sql<{ id: ClubId }>`SELECT id FROM clubs WHERE id LIKE 'club_eng_1_%' ORDER BY id LIMIT 1`;
         return rows[0]!.id;
       }),
     );

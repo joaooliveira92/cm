@@ -106,7 +106,7 @@ describe("F-2 — the counter-offer InlineModal owns the keyboard (take, trap, E
 
     const dialog = screen.getByRole("dialog", { name: "Counter Incoming" });
     const input = within(dialog).getByLabelText("Counter-offer amount (Credits)");
-    const submit = within(dialog).getByRole("button", { name: "Counter", exact: true });
+    const submit = within(dialog).getByRole("button", { name: "Counter" });
     // Initial focus lands inside the dialog, on the amount input.
     expect(document.activeElement).toBe(input);
 
@@ -156,7 +156,7 @@ describe("F8 family — the counter-offer submit guard is never a silent no-op",
     const input = within(dialog).getByLabelText("Counter-offer amount (Credits)");
     fireEvent.change(input, { target: { value: "abc" } });
 
-    const submit = within(dialog).getByRole("button", { name: "Counter", exact: true });
+    const submit = within(dialog).getByRole("button", { name: "Counter" });
     expect((submit as HTMLButtonElement).disabled).toBe(true);
     expect(within(dialog).getByRole("alert").textContent).toContain("valid counter-offer");
 
@@ -177,7 +177,7 @@ describe("F8 family — the counter-offer submit guard is never a silent no-op",
     const input = within(dialog).getByLabelText("Counter-offer amount (Credits)");
     for (const bad of ["0", "-5", "1e309"]) {
       fireEvent.change(input, { target: { value: bad } });
-      const submit = within(dialog).getByRole("button", { name: "Counter", exact: true });
+      const submit = within(dialog).getByRole("button", { name: "Counter" });
       expect((submit as HTMLButtonElement).disabled).toBe(true);
     }
   });
@@ -186,7 +186,7 @@ describe("F8 family — the counter-offer submit guard is never a silent no-op",
     await mountTransfers(transfersView());
     fireEvent.click(await screen.findByRole("button", { name: "Counter" }));
     const dialog = screen.getByRole("dialog", { name: "Counter Incoming" });
-    const submit = within(dialog).getByRole("button", { name: "Counter", exact: true });
+    const submit = within(dialog).getByRole("button", { name: "Counter" });
     fireEvent.click(submit);
     expect(within(dialog).getByRole("alert").textContent).toContain("valid counter-offer");
     // The dialog stays open until a valid amount is entered.
@@ -197,7 +197,7 @@ describe("F8 family — the counter-offer submit guard is never a silent no-op",
     await mountTransfers(transfersView());
     fireEvent.click(await screen.findByRole("button", { name: "Counter" }));
     const dialog = screen.getByRole("dialog", { name: "Counter Incoming" });
-    const submit = within(dialog).getByRole("button", { name: "Counter", exact: true });
+    const submit = within(dialog).getByRole("button", { name: "Counter" });
     // Empty draft + Counter click → the inline error surfaces (F8), then
     // Cancel closes the modal with that error still in state.
     fireEvent.click(submit);

@@ -8,8 +8,12 @@ import { withWideEvent, type WideEvent } from "../src/main/logging.js";
 const captureLayer = (events: Array<WideEvent>): Layer.Layer<never> =>
   Layer.merge(
     Logger.layer([
-      Logger.make<WideEvent, void>(({ message }) => {
-        for (const event of message) {
+      // `Logger.layer` composes `Logger<unknown, unknown>`: a logger has to accept whatever the
+      // runtime hands it, and `Effect.logInfo(event)` is variadic, so `message` arrives as the
+      // array of logged arguments. Narrow to the wide events here rather than declaring a
+      // `Logger<WideEvent, ...>` the runtime would never satisfy.
+      Logger.make<unknown, void>(({ message }) => {
+        for (const event of Array.isArray(message) ? message : [message]) {
           if (event && typeof event === "object" && "request_id" in event) {
             events.push(event as WideEvent);
           }

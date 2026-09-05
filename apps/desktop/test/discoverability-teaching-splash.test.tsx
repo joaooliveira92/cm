@@ -40,14 +40,14 @@ describe("AC-26 — one-shot persistence (before/after splash)", () => {
     // splash down inside a trusted event's synchronous commit — see the
     // dismiss() comment), so the flag flips immediately but the visibility
     // state settles on the following macrotask.
-    act(() => rendered.dismiss());
+    act(() => rendered!.dismiss());
     expect(readTeachingSplashSeen()).toBe(true);
     await waitFor(() => expect(rendered!.visible).toBe(false));
 
     // A fresh mount (e.g. next career screen / next session) never re-shows.
     cleanup();
     render(<Probe />);
-    expect(rendered.visible).toBe(false);
+    expect(rendered!.visible).toBe(false);
   });
 });
 

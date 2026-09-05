@@ -1,12 +1,20 @@
 import path from "node:path";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { advanceCalendar } from "../src/main/season/index.js";
 import { createSave } from "../src/main/saves.js";
 
-const run = <A>(effect: Effect.Effect<A>): Promise<A> => Effect.runPromise(effect);
+const run = <A, E>(effect: Effect.Effect<A, E>): Promise<A> => Effect.runPromise(effect);
 
 /** The app stores saves under `<userDataDir>/saves` (src/main/index.ts). */
 export const savesDir = (userDataDir: string) => path.join(userDataDir, "saves");
+
+/** A seed helper that advanced the calendar to its bound without the Season concluding: the
+ *  fixture list, not the test, is wrong. Tagged so it stays distinguishable in the failure
+ *  channel rather than merging with every other untagged `Error`. */
+export class SeasonNeverConcludedError extends Schema.TaggedError<SeasonNeverConcludedError>()(
+  "SeasonNeverConcludedError",
+  { advances: Schema.Finite },
+) {}
 
 const MAX_ADVANCES = 200;
 /** Deep enough into the season for a league table to have shape, short of its conclusion. */
@@ -59,7 +67,7 @@ export const seedConcluded = (savesDir: string) =>
         concluded = result.seasonConcluded;
       }
       if (!concluded) {
-        return yield* Effect.fail(new Error("season did not conclude within bounded advances"));
+        return yield* new SeasonNeverConcludedError({ advances: guard });
       }
       return id;
     }),

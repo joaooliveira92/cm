@@ -223,7 +223,7 @@ describe("Main Menu — keyboard navigation", () => {
     const menuButtons = MENU_BUTTONS();
     const tabStops = menuButtons.filter((button) => button.tabIndex === 0);
     expect(tabStops).toHaveLength(1);
-    expect(tabStops[0].textContent).toBe("Start New Career");
+    expect(tabStops[0]!.textContent).toBe("Start New Career");
   });
 
   it("activating the focused item emits its command (Exit opens its dialog)", async () => {
@@ -234,7 +234,7 @@ describe("Main Menu — keyboard navigation", () => {
 
     fireEvent.keyDown(list, { key: "End" });
     expect(buttons[MENU_LABELS.length - 1]).toBe(document.activeElement);
-    fireEvent.click(buttons[MENU_LABELS.length - 1]);
+    fireEvent.click(buttons[MENU_LABELS.length - 1]!);
     expect(screen.getByRole("dialog", { name: "Exit application?" })).toBeTruthy();
   });
 });
