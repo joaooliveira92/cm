@@ -3,7 +3,7 @@
  * state for the squad table lives here. The provider publishes it through context;
  * the view components consume it.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SaveId } from "@cm-clone/contracts";
 import { Option } from "effect";
 import {
@@ -224,22 +224,35 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
 
   const copy: TableStateCopy = STATE_COPY.squad;
 
-  const columns = squadColumns({
-    expanded: legendExpanded,
-    legendId: STATUS_LEGEND_ID,
-    onToggle: () => setLegendExpanded((open) => !open),
-  });
+  // TanStack keys its internal memos on the identity of `columns` and `columnVisibility`. Rebuilt
+  // inline on every render, they invalidated every column, row, and cell object each pass — the
+  // allocation churn behind the renderer's GC load. `legendExpanded` is the only real input.
+  const toggleLegend = useCallback(() => setLegendExpanded((open) => !open), []);
+  const columns = useMemo(
+    () =>
+      squadColumns({
+        expanded: legendExpanded,
+        legendId: STATUS_LEGEND_ID,
+        onToggle: toggleLegend,
+      }),
+    [legendExpanded, toggleLegend],
+  );
+  const columnVisibility = useMemo(
+    () =>
+      Object.fromEntries(
+        SQUAD_ALL_COLUMN_IDS.map((columnId) => [
+          columnId,
+          preferences.visibleColumnIds.includes(columnId),
+        ]),
+      ),
+    [preferences.visibleColumnIds],
+  );
   const table = useDataTable<SquadRow>({
     columns,
     data: filtered,
     sort,
     onSortChange: setSort,
-    columnVisibility: Object.fromEntries(
-      SQUAD_ALL_COLUMN_IDS.map((columnId) => [
-        columnId,
-        preferences.visibleColumnIds.includes(columnId),
-      ]),
-    ),
+    columnVisibility,
     pinnedColumnIds: preferences.pinnedColumnIds,
   });
 

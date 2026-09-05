@@ -73,5 +73,19 @@ export const marketColumns = (
   },
 ];
 
+/**
+ * Built once, at module load, and handed back by reference.
+ *
+ * The column defs are static — `marketColumns` closes over nothing per-call — but the factory used
+ * to build a fresh array on every call, and every call site invokes it inside render. TanStack keys
+ * its internal memos on `columns` identity, so a new array each render rebuilt every column, row,
+ * and cell object on every render: measured at 31.6% of renderer time in GC alone. Sharing one
+ * frozen def array across the Market and Free Agents tables is safe — TanStack derives per-table
+ * `Column` instances from the defs and never mutates them.
+ */
+const MARKET_PLAYER_COLUMNS: ReadonlyArray<ColumnDef<MarketPlayerRow, unknown>> = marketColumns(
+  (row) => row.clubName ?? "Free Agent",
+);
+
 export const marketPlayerColumns = (): ReadonlyArray<ColumnDef<MarketPlayerRow, unknown>> =>
-  marketColumns((row) => row.clubName ?? "Free Agent");
+  MARKET_PLAYER_COLUMNS;
