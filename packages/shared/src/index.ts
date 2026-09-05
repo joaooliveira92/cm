@@ -19,6 +19,8 @@ export * from "./content/nations.js";
 export * from "./content/cities.js";
 export * from "./content/contentPack.js";
 export * from "./content/brazilSeriesA.js";
+export * from "./content/brazilSeriesB.js";
+export * from "./content/englishPremierLeague.js";
 export * from "./rules/clubGeneration.js";
 export * from "./content/namePools.js";
 export * from "./rules/staff.js";

@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect } from "vitest";
 import {
   BASE_CONTENT_PACK,
   BRAZIL_SERIES_A_PACK,
+  BRAZIL_SERIES_B_PACK,
   LEAGUE_SETUP_INDEX,
   allCompetitions,
   canonicalClubId,
@@ -171,6 +172,29 @@ describe("display names resolve through the save's pack", () => {
       expect(names.league).toBe("Campeonato Brasileiro Série A");
       expect(names.flamengo).toBe("Flamengo");
       expect(names.flamengo).not.toBe("club_bra_1_09");
+    }),
+  );
+
+  it.effect("resolves a save re-recorded to the licensed Série B pack against its real names", () =>
+    Effect.gen(function* () {
+      const saveId = yield* generatedSave;
+      const names = yield* withSave(
+        saveId,
+        Effect.gen(function* () {
+          const sql = yield* SqlClient;
+          yield* sql`UPDATE generation_manifest SET content_pack_id = ${BRAZIL_SERIES_B_PACK.id} WHERE id = 1`;
+          const pack = yield* savePack;
+          return {
+            pack,
+            league: resolveDisplayName(pack, "comp_bra_2"),
+            sport: resolveDisplayName(pack, "club_bra_2_19"),
+          };
+        }),
+      );
+      expect(names.pack.id).toBe(BRAZIL_SERIES_B_PACK.id);
+      expect(names.league).toBe("Campeonato Brasileiro Série B");
+      expect(names.sport).toBe("Sport");
+      expect(names.sport).not.toBe("club_bra_2_19");
     }),
   );
 });

@@ -1,6 +1,8 @@
 import {
   BASE_CONTENT_PACK,
   BRAZIL_SERIES_A_PACK,
+  BRAZIL_SERIES_B_PACK,
+  ENGLISH_PREMIER_LEAGUE_PACK,
   clubColours,
   displayName,
   packCoverageGaps,
@@ -41,10 +43,12 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
  */
 const PACKS: Readonly<Record<string, ContentPack>> = {
   [BASE_CONTENT_PACK.id]: BASE_CONTENT_PACK,
-  // The licensed Brazilian pack ships beside the base pack. No save is generated under it yet —
-  // `generateWorld` records the base pack — but the moment one is (or a save is re-recorded to its
-  // id), its licensed club and competition names are what this build resolves.
+  // The licensed Brazilian packs ship beside the base pack. No save is generated under them yet —
+  // `generateWorld` records the base pack — but the moment one is (or a save is re-recorded to
+  // its id), its licensed club and competition names are what this build resolves.
   [BRAZIL_SERIES_A_PACK.id]: BRAZIL_SERIES_A_PACK,
+  [BRAZIL_SERIES_B_PACK.id]: BRAZIL_SERIES_B_PACK,
+  [ENGLISH_PREMIER_LEAGUE_PACK.id]: ENGLISH_PREMIER_LEAGUE_PACK,
 };
 
 /**
