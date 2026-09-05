@@ -1,2 +1,2 @@
-export * from "./schemas.js";
+export * from "./schemas/index.js";
 export * from "./rpc.js";

@@ -31,7 +31,7 @@ import {
   TrainingFocusSetEvent,
   TrainingFocusView,
   TransfersScreenView,
-} from "../src/schemas.js";
+} from "../src/schemas/index.js";
 
 const roundTrip = <A, I>(schema: Schema.ConstraintCodec<A, I>, wire: unknown): void => {
   const decoded = Schema.decodeUnknownSync(schema)(wire);

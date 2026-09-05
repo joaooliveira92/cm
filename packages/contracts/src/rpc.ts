@@ -65,7 +65,7 @@ import {
   WageBudgetExceededError,
   ScoutingView,
   UnknownScoutError,
-} from "./schemas.js";
+} from "./schemas/index.js";
 
 /**
  * Hand-rolled stand-in for `@effect/rpc`'s RpcGroup: as of this writing
