@@ -20,6 +20,7 @@ import { Effect, Random, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import {
   blockingIssues,
+  deriveSeed,
   LEAGUE_SETUP_INDEX,
   resolveSelection,
   resolveWorld,
@@ -27,9 +28,8 @@ import {
 } from "@cm-clone/shared";
 import { reportPackCoverage } from "./displayNames.js";
 import { materialiseStaff } from "./staff.js";
-import { createSchema } from "./schema.js";
+import { createSchema } from "./db/createSaveSchema.js";
 import { startSeason } from "./season.js";
-import { deriveSeed } from "@cm-clone/game-engine";
 import { generateWorld } from "./worldGeneration.js";
 import { initializeSeasonEconomy } from "./transfers.js";
 import { getLeagueSelectionSnapshot, submitLeagueSelection, toDomainIntents } from "./leagueSelection.js";

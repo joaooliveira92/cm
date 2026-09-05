@@ -14,23 +14,21 @@ model and glossary, and [.agents/notes/](.agents/notes/) for design decisions.
 
 ## Project layout
 
-Here is the structured table summarizing the codebase directories and their functions:
-
 | Directory / File | Type | Description |
 |---|---|---|
-| [apps/desktop](apps/desktop)  | Application | Electron app containing main, preload, and renderer processes, along with Playwright end-to-end tests. |
-| [packages/contracts](packages/contracts)  | Package | Contains the @effect/rpc contract shared between the renderer and main processes. |
-| [packages/game-engine](packages/game-engine) | Package | Handles match simulation. |
-| [packages/shared](packages/shared) | Package | Contains domain logic and game-design data (e.g., position/role weights, commentary templates) shared across all packages. |
-| [.agents/notes/](.agents/notes/) | Documentation | Agent Notes: the decision record, tracking structural and feature design choices through a proposed → implemented lifecycle. |
-| [docs/agents/](docs/agents/), [AGENTS.md](AGENTS.md) | Documentation | Operational guidelines and conventions for AI or automated agents working in the repository. |
-| [.scratch/](.scratch/) | Tooling / Logs | Internal repository issue tracker (referenced via docs/agents/issue-tracker.md). |
-
-
-
-
-
-
+| [apps/desktop](apps/desktop) | Application | Electron app: `src/main` (SQLite + RPC wiring), `src/preload`, `src/renderer` (React), plus `test/` unit tests and `e2e/` Playwright specs. |
+| [packages/contracts](packages/contracts) | Package | The `@effect/rpc` contract shared between renderer and main. `rpc.ts` is the whole IPC surface as one object; `schemas.ts` is the shared schema vocabulary. |
+| [packages/game-engine](packages/game-engine) | Package | Match simulation. |
+| [packages/shared](packages/shared) | Package | Domain logic and game-design data (position/role weights, commentary templates, nation and club content) used across packages. |
+| [scripts/](scripts/) | Tooling | Repo gates and agent tooling: `run-gates.ts` defines the `check:all` / `check:ci` profiles that CI and local runs share. |
+| [docs/](docs/) | Documentation | Human-facing docs, indexed by [docs/README.md](docs/README.md): contributor guides, CM 03/04 design reference, and the per-screen specs in [docs/specs/](docs/specs/). |
+| [CONTEXT.md](CONTEXT.md) | Documentation | The domain model and glossary. Read this before touching game logic. |
+| [.agents/notes/](.agents/notes/) | Documentation | Agent Notes: the decision record, tracking structural and feature design choices through a proposed to implemented lifecycle. |
+| [.agents/skills/](.agents/skills/) | Tooling | The skill library -- the single source of truth. `.claude/skills/` is nothing but symlinks into it; never put real files there. |
+| [docs/agents/](docs/agents/), [AGENTS.md](AGENTS.md) | Documentation | Conventions for agents working in this repository. |
+| [.ai/](.ai/) | Tooling | Autonomous-sprint governance: the engineering contract, orchestration rules, `SPRINT-PLAN.md` (the work queue) and `TRACEABILITY.md` (ADR identifier map). |
+| [.opencode/](.opencode/) | Tooling | The opencode CLI harness (agents and slash commands) over the same `.agents/skills/` library that `.claude/` uses. |
+| [.scratch/](.scratch/) | Tooling | The repository issue tracker: one directory per effort, holding its spec, map and issues. See [issue-tracker.md](docs/agents/issue-tracker.md). |
 
 ## Requirements
 

@@ -68,7 +68,7 @@ const TIRED: ReservedStatus = {
 };
 
 /**
- * The reserved catalogue, in CM 03/04's own order (`docs/ui-elements.md`).
+ * The reserved catalogue, in CM 03/04's own order (`docs/design/ui-elements.md`).
  * Exactly one entry is `modeled` today. Adding an entry here reserves a slot;
  * it renders only once `statusesOf` can derive it from engine state.
  */

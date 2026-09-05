@@ -11,7 +11,7 @@ import {
   POSITIONS,
   STATURE_TIERS,
 } from "@cm-clone/shared";
-import { SquadScreen } from "../src/renderer/SquadScreen.js";
+import { SquadScreen } from "../src/renderer/squad/SquadScreen.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
 import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../src/renderer/actions/scopeState.js";

@@ -16,7 +16,13 @@ const root = resolve(import.meta.dirname, "..")
 const IGNORED_DIRS = new Set([
   "node_modules",
   ".git",
-  "reference-project", // external mirror, not this repo's authored content
+  // `.claude/skills/*` are symlinks into `.agents/skills/`. statSync follows them, so
+  // scanning here would check every skill twice AND resolve its relative links against
+  // the symlink's directory instead of the real one, reporting phantom breakage.
+  ".claude",
+  // Not this repo's authored content: a read-only copy of another project kept for
+  // UI reference. Its links point at that project's tickets, which do not exist here.
+  "external-reference",
   "dist",
   "build",
   ".turbo",

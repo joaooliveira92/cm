@@ -95,9 +95,9 @@ it, and a link into `.scratch/` would fail `verify-md-links` the day the effort 
 ## Duplicate screens in the import
 
 `Screen 2: New Game, Database Initialization` appears in full, with an identical 29-section structure,
-in both `01_app_sheell.md` and `02_new_game.md`. `01_app_sheell.md` additionally contains Screen 1 and a
+in both `01_app_shell.md` and `02_new_game.md`. `01_app_shell.md` additionally contains Screen 1 and a
 screen-inventory preamble, so its `## N.` numbering restarts three times and is not unique within the
-file. `02_new_game.md` is canonical for Screen 2; the copy inside `01_app_sheell.md` is not audited
+file. `02_new_game.md` is canonical for Screen 2; the copy inside `01_app_shell.md` is not audited
 separately, and the file-plus-heading citation key is what keeps the two distinguishable.
 
 ## Alternatives considered

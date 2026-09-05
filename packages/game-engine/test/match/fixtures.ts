@@ -1,6 +1,4 @@
-import { FORMATION_SLOTS, POSITION_ROLES, generateSquad, type ClubStrength, type GeneratedPlayer, type Position } from "@cm-clone/shared";
-import { createSeededRng } from "../../src/rng.js";
-import { deriveSeed } from "../../src/seed.js";
+import { FORMATION_SLOTS, POSITION_ROLES, createSeededRng, deriveSeed, generateSquad, type ClubStrength, type GeneratedPlayer, type Position } from "@cm-clone/shared";
 import { ClubId, PlayerId } from "@cm-clone/contracts";
 import type { MatchPlayerInput, MatchTactic, MatchTeamSetup } from "../../src/match/types.js";
 

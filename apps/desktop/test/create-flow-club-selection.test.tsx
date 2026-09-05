@@ -16,8 +16,8 @@ import {
   getLeagueSetupIndex,
   resolveLeagueSelection,
 } from "../src/main/leagueSelection.js";
+import { CreateFlowLayout } from "../src/renderer/create/CreateFlowLayout.js";
 import {
-  CreateFlowLayout,
   LeagueSelectionRouteContent,
   StepOneRouteContent,
   StepThreeRouteContent,

@@ -11,7 +11,7 @@ import {
   STATURE_TIERS,
 } from "@cm-clone/shared";
 import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
-import { SquadScreen } from "../src/renderer/SquadScreen.js";
+import { SquadScreen } from "../src/renderer/squad/SquadScreen.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
 
 const relaxedSaveId = (id: string) => SaveId.make(id);

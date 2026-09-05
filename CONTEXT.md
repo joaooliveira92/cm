@@ -341,7 +341,7 @@ Editor/developer capabilities carry no such system in v1 and stay recorded as a 
 modeled option. Staff generation is no longer among them — Staff ship, but they are derived from a
 club's Stature Tier rather than tuned, so they are still not an Advanced Option.
 _Avoid_: reference-game option labels (the brief's checklist is a vocabulary to translate, not
-to copy; see [the implementation brief](docs/active-leagues-setup-screen-implementation-brief.md))
+to copy; see [the implementation brief](.scratch/active-leagues-setup/brief.md))
 
 **League Scope Option**:
 A supported scope for one Nation, named by the setup catalogue — "Top division only", "National

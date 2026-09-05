@@ -130,3 +130,86 @@ it shows is that uniqueness under a natural key rests on a domain claim, never o
 `WITHOUT ROWID` stores the row inside the primary-key B-tree rather than beside it, which is why it
 beats a surrogate plus a separate index on both size and speed. The choice is 38 MB against a key
 whose correctness is an argument rather than a shape. The decision itself belongs to ticket 22.
+
+## The calendar advance's date sweep (open question 20)
+
+Measured 2026-09-04 by `calendar-sweep-index-probe.ts`, same machine and driver as above. 800
+twenty-club competitions, 304,000 live league fixtures on a shared slot template, plus 7,372
+fixtures of the human's own retained history — ticket 18 prunes every other competition's past
+season, so the table does not grow with the life of the save. One playable competition; the rest
+resolve without stopping the advance.
+
+The season is **played through**, not sampled: the probe sweeps to each of the 38 matchdays in turn,
+marks everything it returns played, and reads the horizon, because the sweep's selectivity is not
+constant. Early in a season the date predicate is what narrows; late in a season almost nothing is
+unplayed and the `played` predicate is.
+
+| Candidate | File | Sweep / season | md 1 / 19 / 38 | Horizon / season | Mark-played / season |
+|---|---|---|---|---|---|
+| Shipping index only | 28.7 MB | 636 ms | 19.1 / 16.8 / 14.8 ms | 1,380 ms | 1,380 ms |
+| `+ (scheduled_date)` | 34.3 MB | 887 ms | 5.6 / 26.8 / **39.6** ms | 58 ms | 1,403 ms |
+| `+ (scheduled_date, played)` | 34.6 MB | 385 ms | 6.5 / 12.7 / 13.7 ms | 6 ms | 1,592 ms |
+| `+ (played, scheduled_date)` | 34.6 MB | **214 ms** | 5.4 / 5.5 / 5.3 ms | **1 ms** | 1,574 ms |
+
+Three things the numbers say that the question did not anticipate.
+
+**The date alone is worse than no index at all.** It leads on the wrong column: `scheduled_date <= ?`
+is a range that widens as the season runs, so by matchday 38 the index walks nearly every row in the
+save to filter on `played`, and 5.6 ms becomes 39.6 ms. It is the only candidate whose cost grows
+through the season.
+
+**The `played` flag belongs first.** Leading on it seeks straight to the unplayed set — which shrinks
+as the season runs — and then range-scans the date inside it. That is the only plan with no temp
+B-tree for the `ORDER BY` and the only one whose per-advance cost is flat: 5.4 ms at matchday 1,
+5.3 ms at matchday 38. A two-value leading column is normally the textbook argument against an index;
+here it is the whole point, because the query always asks for the same one of the two values and that
+value's share of the table falls to nothing.
+
+**The horizon read, not the sweep, is where the cost actually is.** `loadCalendarHorizon` runs
+`MIN(scheduled_date)` and `MAX(scheduled_date)` over unplayed rows on every advance, and unindexed
+that is 1,380 ms a season — more than double the sweep it accompanies. `(played, scheduled_date)`
+takes it to 1 ms, because both aggregates become a single seek to one end of the index. The question
+asked about the sweep; the sweep is the cheaper half.
+
+The write cost is real but small: marking a season's 304,000 fixtures played goes from 1,380 ms to
+1,574 ms, ~194 ms a season, against ~2,600 ms saved on the reads. Bytes are 5.9 MB on a 28.7 MB
+table.
+
+## The club-keyed membership join (open question 21)
+
+Measured 2026-09-04 by `membership-join-index-probe.ts`. 16,000 clubs in 800 competitions,
+participant rows for every club every season — ticket 18 prunes fixtures, never these, so this table
+*does* grow with the life of the save: 16,000 rows at season 1, 320,000 at season 20. Clubs drift
+between competitions across seasons, so a club-keyed read after twenty seasons looks for one row
+among twenty scattered ones rather than a contiguous run.
+
+**Frequency first, because it changes what the cost means.** The club-keyed read is `clubStrength` in
+`season.ts`. `resolveFixtureScore` calls it once per side of any fixture where either club cannot
+field eleven, which is every results-only fixture in the world. At 799 results-only competitions
+playing ten fixtures each, **one Continue makes this call 15,980 times.** It is not a screen read.
+
+| Candidate | Season | Rows | File | Per call | Per Continue | Plan |
+|---|---|---|---|---|---|---|
+| Primary key only | 1 | 16,000 | 2.6 MB | 0.359 ms | 5.74 s | `SCAN cp USING COVERING INDEX` |
+| `+ (club_id)` | 1 | 16,000 | 3.0 MB | 0.0047 ms | 0.08 s | `SEARCH cp USING cp_club_idx` |
+| `+ (club_id, season_number)` | 1 | 16,000 | 3.0 MB | 0.0048 ms | 0.08 s | `SEARCH cp USING cp_club_season_idx` |
+| Primary key only | 20 | 320,000 | 28.5 MB | 8.838 ms | **141.22 s** | `SCAN cp USING COVERING INDEX` |
+| `+ (club_id)` | 20 | 320,000 | 35.9 MB | 0.0119 ms | 0.19 s | `SEARCH cp USING cp_club_idx` |
+| `+ (club_id, season_number)` | 20 | 320,000 | 36.5 MB | **0.0054 ms** | **0.09 s** | `SEARCH cp USING cp_club_season_idx` |
+
+**Unindexed, this is the worst cliff the probe has measured that is still SQLite's.** Every one of
+16,000 calls scans the whole participant table, so the cost is quadratic in the size of the world and
+linear again in the age of the save: 5.7 s of blocking JS per Continue in a first season, 141 s after
+twenty. The original probe's 4.8-hour quadratic JS is worse in absolute terms but lives in the query
+layer; this one is a missing index and nothing else.
+
+The composite beats the single column at twenty seasons and ties it at one, for 0.6 MB. The reason is
+the drift: `(club_id)` alone seeks to the club and then walks its twenty rows checking the season,
+and that walk grows by one row per season forever. `(club_id, season_number)` seeks to the pair, so
+its cost is flat in the age of the save — 0.0048 ms at season 1, 0.0054 ms at season 20 — which is
+the property that matters for a table nothing prunes.
+
+The other read with no competition prefix, `loadHumanCompetitionId`, scans 320,000 rows in 0.03 ms
+and runs once per season. No index changes it and none is needed for it.
+
+The decisions themselves belong to tickets 20 and 21.

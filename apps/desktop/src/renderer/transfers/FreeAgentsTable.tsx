@@ -1,5 +1,5 @@
 import { TablePanel } from "../table/TablePanel.js";
-import { useTransfers } from "../TransfersProvider.js";
+import { useTransfers } from "./TransfersProvider.js";
 import { freeAgentColumns } from "../table/transfers/freeAgentColumns.js";
 import { STATE_COPY } from "../table/viewState.js";
 import { TransferFilterBar } from "./TransferFilterBar.js";

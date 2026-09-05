@@ -39,7 +39,6 @@
     "builtin": true
   },
   "ignorePatterns": [
-    "reference-project/**",
     "external-reference/**",
     "**/dist/**",
     "**/node_modules/**"

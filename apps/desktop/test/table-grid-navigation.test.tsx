@@ -10,8 +10,8 @@ import {
   POSITIONS,
   STATURE_TIERS,
 } from "@cm-clone/shared";
-import { SquadScreen } from "../src/renderer/SquadScreen.js";
-import { TransfersScreen } from "../src/renderer/TransfersScreen.js";
+import { SquadScreen } from "../src/renderer/squad/SquadScreen.js";
+import { TransfersScreen } from "../src/renderer/transfers/TransfersScreen.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
 import {
   dispatchAction,

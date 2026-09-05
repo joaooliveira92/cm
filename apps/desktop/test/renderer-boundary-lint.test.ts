@@ -39,10 +39,10 @@ describe("renderer dependency-boundary lint (AC-09)", () => {
 
   it("Stage-2 route/creation/navigation + Stage-3 keyboard-spine surfaces import only the seams and trip no boundary violation", async () => {
     const screenFiles = [
-      join(rendererDir, "SquadScreen.tsx"),
+      join(rendererDir, "squad", "SquadScreen.tsx"),
       join(rendererDir, "LeagueTableScreen.tsx"),
-      join(rendererDir, "TransfersScreen.tsx"),
-      join(rendererDir, "MatchDayScreen.tsx"),
+      join(rendererDir, "transfers", "TransfersScreen.tsx"),
+      join(rendererDir, "match", "MatchDayScreen.tsx"),
       join(rendererDir, "TacticsScreen.tsx"),
       join(rendererDir, "KeyboardSpine.tsx"),
       join(rendererDir, "actions", "allActions.ts"),
@@ -88,7 +88,7 @@ describe("renderer dependency-boundary lint (AC-09)", () => {
   it("the seam itself is exempt from the boundary", () => {
     expect(isBoundaryEnforced(join(rendererDir, "rpc.ts"))).toBe(false);
     expect(isBoundaryEnforced(join(rendererDir, "rpc", "call.ts"))).toBe(false);
-    expect(isBoundaryEnforced(join(rendererDir, "SquadScreen.tsx"))).toBe(true);
+    expect(isBoundaryEnforced(join(rendererDir, "squad", "SquadScreen.tsx"))).toBe(true);
     expect(isBoundaryEnforced(join(fixtureRoot, "renderer-boundary.tsx"))).toBe(true);
   });
 });

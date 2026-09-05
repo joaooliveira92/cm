@@ -18,7 +18,7 @@ import { resetScopeState } from "../src/renderer/actions/scopeState.js";
 import { G_PREFIX_COMPLETIONS } from "../src/renderer/actions/allActions.js";
 import { setPrefixTimeoutMs } from "../src/renderer/keymap/timeout.js";
 import { teachingSplashStorageKey } from "../src/renderer/discoverability/TeachingSplash.js";
-import { TransfersScreen } from "../src/renderer/TransfersScreen.js";
+import { TransfersScreen } from "../src/renderer/transfers/TransfersScreen.js";
 import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
 import { CareerShell } from "../src/renderer/router/career.js";

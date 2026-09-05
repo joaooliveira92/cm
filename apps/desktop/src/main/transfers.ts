@@ -24,6 +24,7 @@ import {
   AI_COUNTER_TARGET_MULTIPLIER,
   AI_REJECT_BID_MULTIPLIER,
   ALL_ATTRIBUTES,
+  createSeededRng,
   DEFAULT_CONTRACT_YEARS,
   MAX_CONTRACT_YEARS,
   MIN_CONTRACT_YEARS,
@@ -37,7 +38,6 @@ import {
   type PlayerPosition,
   type StatureTier,
 } from "@cm-clone/shared";
-import { createSeededRng } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "./displayNames.js";

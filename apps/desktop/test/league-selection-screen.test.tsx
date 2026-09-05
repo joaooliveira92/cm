@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Effect } from "effect";
 import type { LeagueSelectionSnapshot } from "@cm-clone/contracts";
 import { LEAGUE_SETUP_INDEX } from "@cm-clone/shared";
-import { LeagueSelectionScreen } from "../src/renderer/LeagueSelectionScreen.js";
+import { LeagueSelectionScreen } from "../src/renderer/leagueSelection/LeagueSelectionScreen.js";
 import {
   applyLeaguePreset,
   buildLeaguePresetIntents,

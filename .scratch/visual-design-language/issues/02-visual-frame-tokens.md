@@ -6,7 +6,7 @@ Blocked by: 01
 
 ## Question
 
-What are the concrete visual design tokens for the cm-clone renderer, informed by `docs/ui-elements.md` and the current state audit (ticket 01)?
+What are the concrete visual design tokens for the cm-clone renderer, informed by `docs/design/ui-elements.md` and the current state audit (ticket 01)?
 
 Decide for each token category:
 

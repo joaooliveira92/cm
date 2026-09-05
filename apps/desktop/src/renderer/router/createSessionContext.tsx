@@ -1,5 +1,5 @@
 import type { BottomBarPlan } from "../chrome/bottom-bar/index.js";
-import { createContext } from "react";
+import { createContext, use } from "react";
 import type { ClubId, LeagueSelectionSnapshot } from "@cm-clone/contracts";
 import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
 import type { ClubSelectionRecord } from "../create/clubSelection.js";
@@ -47,3 +47,14 @@ export interface CreateSessionApi {
  * consume it without importing the layout that imports them.
  */
 export const CreateSessionContext = createContext<CreateSessionApi | null>(null);
+
+/** The step routes' read path onto the parent-owned session. */
+export const useCreateSessionApi = (): CreateSessionApi => {
+  const api = use(CreateSessionContext);
+
+  if (api === null) {
+    throw new Error("creation step rendered outside CreateFlowLayout");
+  }
+
+  return api;
+};

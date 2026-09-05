@@ -9,10 +9,11 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe } from "vitest";
 import { NationId, NationSelectionIntentPayload, ScopeOptionId } from "@cm-clone/contracts";
-import { createSeededRng, deriveSeed } from "@cm-clone/game-engine";
 import {
   collapseSquadStrength,
   computeSquadQuality,
+  createSeededRng,
+  deriveSeed,
   generateSquadAtStrength,
   positionRating,
   POSITIONS,

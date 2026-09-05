@@ -10,7 +10,9 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 ### Domain docs
 
-Single-context: one [CONTEXT.md](CONTEXT.md)  + `docs/adr/` at the repo root. See [domain.md](docs/agents/domain.md).
+Single-context: one [CONTEXT.md](CONTEXT.md) at the repo root. There is no `docs/adr/` -- design
+decisions live in [.agents/notes/](.agents/notes/), and ADR identifiers map through
+[`.ai/TRACEABILITY.md`](.ai/TRACEABILITY.md). See [domain.md](docs/agents/domain.md).
 
 ### Agent Notes
 
@@ -28,13 +30,14 @@ Effect v4 pair: `effect-code` for writing v4 code, `effect-v4-migration` for rev
 
 `doc-standards` for writing, moving, reviewing, or auditing any Markdown doc in this repo: placement, hierarchy and detail, tutorial-vs-reference classification, and corpus audits. Its sibling-prose source is [unslop.md](docs/agents/unslop.md). See the skill's own [`SKILL.md`](.agents/skills/doc-standards/SKILL.md).
 
-### Comunication
+### Communication
 
 Use [unslop.md](docs/agents/unslop.md)
 
 ### Quality gates
 
-Run `pnpm check:all` (or `check:ci`) after every task. This runs:
+Run `pnpm check:all` (or `check:ci`) after every task. Both profiles are defined in one place,
+`scripts/run-gates.ts`, so this table must be kept in step with that file. This runs:
 
 | Gate | Command | Purpose |
 |------|---------|---------|
@@ -42,6 +45,7 @@ Run `pnpm check:all` (or `check:ci`) after every task. This runs:
 | lint | `oxlint .` | oxlint with stricter rules (typescript/unicorn/oxc/import plugins) |
 | effect-lint | `tsx scripts/effect-lint.ts` | Custom Effect anti-pattern detection (no Effect.ignore, no Effect.asVoid, no Effect.catchAllCause, no Effect.serviceOption, no disableValidation, no void expressions, no nested Layer.provide, explicit concurrency on Effect.all/Effect.forEach). AST-based, so mentions in comments and strings do not trip it. |
 | verify-md-links | `tsx scripts/verify-md-links.ts` | No broken markdown links |
+| verify-db-schema | `tsx scripts/verify-db-schema.ts` | The committed drizzle artifacts still match `db/schema.ts` |
 | test | `pnpm -r test` | All unit tests (dot reporter; set `VERBOSE=1` for full names) |
 
 Add new Effect-specific lint rules to `scripts/effect-lint.ts`. They fire before tests in the gate pipeline. See the [accountability repo](https://github.com/mikearnaldi/accountability) for inspiration on Effect lint conventions.

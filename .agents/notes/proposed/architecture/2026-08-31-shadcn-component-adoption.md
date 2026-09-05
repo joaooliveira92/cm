@@ -92,5 +92,5 @@ Three concrete places, all found by the existing tests rather than by argument:
   substring and so fired on `translate-x-1/2`. Fixed with a left boundary in
   `scripts/effect-lint.ts`.
 - `lucide-react` introduces the renderer's first icon set, against a reference UI
-  (`docs/ui-elements.md`) that is text-led and abbreviation-driven. Icons stay decorative and
+  (`docs/design/ui-elements.md`) that is text-led and abbreviation-driven. Icons stay decorative and
   optional; no status is communicated by icon alone.

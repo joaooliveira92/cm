@@ -11,7 +11,7 @@ import type { ClubId } from "@cm-clone/contracts";
 import { BASE_CONTENT_PACK, displayName } from "@cm-clone/shared";
 import { getClubSelection } from "../src/main/clubSelection.js";
 import { createSave } from "../src/main/saves.js";
-import { ClubSelectionScreen } from "../src/renderer/ClubSelectionScreen.js";
+import { ClubSelectionScreen } from "../src/renderer/clubSelection/ClubSelectionScreen.js";
 
 /**
  * The shipped workspace over the shipped read.

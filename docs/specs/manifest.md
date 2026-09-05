@@ -22,13 +22,13 @@ This manifest lists the key markdown files in the `docs/specs/` directory.
 - [Group P - Statistics Records and Analytics](/docs/specs/group_p_statistics_records_and_analytics/00_group_p_index.md)
 - [Group Q - Awards Honours and Season Transitions](/docs/specs/group_q_awards_honours_and_season_transitions/00_group_q_index.md)
 - [Group R - Multiplayer Administration](/docs/specs/group_r_multiplayer_administration/00_group_r_index.md)
-- [Group S - Search Utilities and Reference](/docs/specs/group_r_search_utilities_and_reference/00_group_s_index.md)
+- [Group S - Search Utilities and Reference](/docs/specs/group_s_search_utilities_and_reference/00_group_s_index.md)
 
 ## Additional Resources
 - [Architecture Overview](/docs/architecture.md)
 - [Development Guide](/docs/development.md)
 - [E2E Testing Docs](/docs/e2e.md)
-- [Game Onboarding](/docs/game-onboarding.md)
+- [Game Onboarding](/docs/design/game-onboarding.md)
 - [Research Notes](/docs/research/)
 - [Roadmap](/docs/roadmap.md)
 

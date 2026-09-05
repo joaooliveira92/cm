@@ -15,7 +15,7 @@ Status: ready-for-agent
 
 ## Problem Statement
 
-The `@cm-clone/desktop` renderer has no visual design language informed by the CM 03/04 reference at `docs/ui-elements.md`. All nine screens render a flat dark slate (`bg-slate-950`) with default Tailwind typography, no panel system, no status vocabulary, no persistent chrome, and no skin architecture - a generic, text-dense-but-flat surface that carries none of the retro identity the reference material specifies.
+The `@cm-clone/desktop` renderer has no visual design language informed by the CM 03/04 reference at `docs/design/ui-elements.md`. All nine screens render a flat dark slate (`bg-slate-950`) with default Tailwind typography, no panel system, no status vocabulary, no persistent chrome, and no skin architecture - a generic, text-dense-but-flat surface that carries none of the retro identity the reference material specifies.
 
 This is not a greenfield problem. A visual frame was adopted on 2026-08-29 and then **sat unbuilt** while flat-slate styling spread further: exactly 391 hardcoded `slate-*` call sites sit across 25 files today. The decision did not fail because it was wrong; it failed because nothing said how to apply it to a tree that was already styled. A spec that only says what the UI should look like reproduces that failure. It must also say how to get there from here.
 

@@ -49,13 +49,13 @@ before any screen was audited. Those rows are all `out-of-scope` and each screen
 They narrow what an audit has to read; they do not make the screen audited.
 
 `Screen 2: New Game, Database Initialization` appears in full in two files. `02_new_game.md` is
-canonical; the copy inside `01_app_sheell.md` is redundant and is not audited separately.
+canonical; the copy inside `01_app_shell.md` is redundant and is not audited separately.
 
 ## Coverage
 
 | Screen | Import file | Status |
 |---|---|---|
-| 1 Main Menu | [01_app_sheell.md](01_app_sheell.md) | Audited |
+| 1 Main Menu | [01_app_shell.md](01_app_shell.md) | Audited |
 | 2 New Game, Database Initialization | [02_new_game.md](02_new_game.md) | Reviewed |
 | 3 League and Nation Selection | [03_league_and_nation_selection.md](03_league_and_nation_selection.md) | Audited — implemented 2026-08-31 |
 | 4 Competition Detail Selection | [04_competition_detail_selection.md](04_competition_detail_selection.md) | Reviewed |

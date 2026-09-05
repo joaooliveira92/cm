@@ -16,9 +16,8 @@ import { ActionKeyBadge, actionBadgeBinding } from "../discoverability/ActionKey
 import { restoreFocusAfterOverlay } from "../focus.js";
 import { useDialogKeyboard } from "./dialogKeyboard.js";
 import { formatCredits } from "../table/transfers/marketColumns.js";
-import { useTransfers } from "../TransfersProvider.js";
+import { useTransfers } from "./TransfersProvider.js";
 import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "../theme.js";
-import { reduceBidDraft } from "../table/bidDraft.js";
 
 const MARKET = "transfer-market";
 const FREE = "free-agents";
@@ -91,8 +90,8 @@ export const BidComposer = () => {
     windowOpen,
     marketRows,
   } = state;
-  const { setSelected, setDraft } = actions;
-  const { amountInputRef, draftRef, findPlayer } = meta;
+  const { setSelected, updateDraft } = actions;
+  const { amountInputRef, findPlayer } = meta;
 
   // Render the keep/discard dialog independently of the actions region
   // (confirmDiscard is reachable before draft is nulled on the discard path).
@@ -101,7 +100,7 @@ export const BidComposer = () => {
       <KeepDiscardDialog
         playerName={draftedPlayerName}
         onKeep={() => {
-          setDraft(reduceBidDraft(draftRef.current, { _tag: "keepCurrent" }));
+          updateDraft({ _tag: "keepCurrent" });
           const kept = findPlayer(draftState.draft!.playerId);
           setSelected(
             kept !== null
@@ -114,7 +113,7 @@ export const BidComposer = () => {
           restoreFocusAfterOverlay();
         }}
         onDiscard={() => {
-          setDraft(reduceBidDraft(draftRef.current, { _tag: "discardRequested" }));
+          updateDraft({ _tag: "discardRequested" });
           amountInputRef.current?.focus();
         }}
       />
@@ -171,7 +170,7 @@ export const BidComposer = () => {
               placeholder="Amount"
               value={draft.amountInput}
               onChange={(event) =>
-                setDraft(reduceBidDraft(draftRef.current, { _tag: "amountChanged", value: event.target.value }))
+                updateDraft({ _tag: "amountChanged", value: event.target.value })
               }
             />
             <Button

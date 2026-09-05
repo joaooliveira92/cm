@@ -15,7 +15,7 @@ player-status vocabulary at all.
 
 CM 03/04's most distinctive element — a set of ~20 compact status abbreviations (Lmp, Inj, Sus,
 Wnt, Bid, Yel, Int, Fgn, Ine, Wpm, Tir, Cup, Loa, Lst, Unh, Unf, Sct, Yth, Req) beside player
-names (`docs/ui-elements.md`) — has no counterpart here. Only `condition` on `SquadPlayerView`
+names (`docs/design/ui-elements.md`) — has no counterpart here. Only `condition` on `SquadPlayerView`
 (`packages/contracts/src/schemas.ts`) is a modeled per-player status state; injury is a per-match
 match event (`packages/game-engine/src/match/injury.ts`) with no season-long "currently injured,
 days out" state, and there is no suspension, transfer-listed, or wanted state surfaced on the squad

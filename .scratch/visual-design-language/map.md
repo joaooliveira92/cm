@@ -11,7 +11,7 @@ Label: wayfinder:map
 
 A **spec** at `.scratch/visual-design-language/spec.md` describing (a) the visual design
 language and UI element inventory for the `@cm-clone/desktop` renderer, grounded in the CM
-03/04 analysis at `docs/ui-elements.md`, and (b) the **incremental adoption path** that moves
+03/04 analysis at `docs/design/ui-elements.md`, and (b) the **incremental adoption path** that moves
 the renderer's ~391 hardcoded `slate-*` call sites onto that language without a big-bang
 restyle.
 
@@ -26,7 +26,7 @@ Plan-only: the map is done when nothing is left to decide and the spec can be ha
 ## Notes
 
 - Domain: the `@cm-clone/desktop` Electron renderer (React 19, Tailwind 4, Effect stack).
-- **Source material**: `docs/ui-elements.md` — CM 03/04's UI: entry flow, squad table, status
+- **Source material**: `docs/design/ui-elements.md` — CM 03/04's UI: entry flow, squad table, status
   abbreviations, navigation model, news/task surface, tactics/training screens, and visual
   design language (dense, text-led, abbreviated, skin-based).
 - **Keyboard-first is shipped code, not a sibling effort.** The Action registry, focus model

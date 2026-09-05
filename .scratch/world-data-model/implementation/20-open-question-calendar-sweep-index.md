@@ -33,12 +33,48 @@ index, adding it is a small follow-up ticket; the shape on disk does not otherwi
 
 **Status:** ready-for-human
 
-**Files:** `apps/desktop/src/main/db/prototype-scale-probe/probe.ts` and its results document;
+**Files:** `apps/desktop/src/main/db/prototype-scale-probe/calendar-sweep-index-probe.ts` and its results document;
 `apps/desktop/src/main/db/schema.ts` only if the answer is an index.
 
-- [ ] The sweep is measured at the probe's representative world, unindexed and under each candidate
+- [x] The sweep is measured at the probe's representative world, unindexed and under each candidate
       index, with query plans recorded.
 - [ ] A decision is recorded with its measured value and its cost, in the same units as the two
       shipping indexes.
 - [ ] If the answer is an index, a follow-up implementation ticket exists for it; if it is not, the
       fixture table's unindexed-by-choice line says so and why.
+
+## Measured, not answered
+
+The measurement the ticket asked for is done — `calendar-sweep-index-probe.ts` and the *calendar
+advance's date sweep* section of
+[RESULTS.md](../../../apps/desktop/src/main/db/prototype-scale-probe/RESULTS.md). The decision is
+still open, and this file is still `ready-for-human`.
+
+What the numbers say, at 800 competitions and 304,000 live fixtures played through a whole season:
+
+| Candidate | File | Sweep / season | Horizon / season | Mark-played / season |
+|---|---|---|---|---|
+| Shipping index only | 28.7 MB | 636 ms | 1,380 ms | 1,380 ms |
+| `+ (scheduled_date)` | 34.3 MB | 887 ms | 58 ms | 1,403 ms |
+| `+ (scheduled_date, played)` | 34.6 MB | 385 ms | 6 ms | 1,592 ms |
+| `+ (played, scheduled_date)` | 34.6 MB | 214 ms | 1 ms | 1,574 ms |
+
+Three findings the question did not anticipate, and each of them bears on the decision:
+
+- **The date alone is worse than no index.** It leads on a range that widens as the season runs, so
+  matchday 38 costs 39.6 ms against 14.8 ms unindexed. The candidate the ticket names first is the
+  one to rule out.
+- **`played` belongs before the date.** Leading on the flag seeks to the shrinking unplayed set and
+  range-scans the date inside it — the only plan with no temp B-tree for the `ORDER BY`, and the only
+  one whose per-advance cost is flat across the season (5.4 ms at matchday 1, 5.3 ms at 38).
+- **The horizon read, not the sweep, is where the cost is.** `loadCalendarHorizon`'s `MIN`/`MAX` over
+  unplayed rows costs 1,380 ms a season unindexed — more than double the sweep — and 1 ms under
+  `(played, scheduled_date)`. The ticket priced the wrong query; the same index serves both.
+
+Cost, in the spec's units: 5.9 MB on a 28.7 MB table, ~153 ms of index build, and ~194 ms a season of
+extra write on marking fixtures played, against ~2,600 ms a season saved on reads.
+
+What is left is the call itself, and it is a real one: a two-value leading column is normally the
+argument *against* an index, and adopting `(played, scheduled_date)` means saying why this query is
+the exception. Whoever takes it should record the answer in the spec's form — the query it serves,
+its measured value, its cost — or a per-table line saying the fixture table stays as it is and why.

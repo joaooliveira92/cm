@@ -7,7 +7,7 @@ Blocked by: 02, 03
 ## Question
 
 Does the implemented application shell follow
-[01_app_sheell.md](../../../docs/specs/group_a_application_shell_and_game_lifecycle_remaining/01_app_sheell.md),
+[01_app_shell.md](../../../docs/specs/group_a_application_shell_and_game_lifecycle_remaining/01_app_shell.md),
 and where does it deliberately not?
 
 The shell is the spine the other sixteen implemented screens sit inside, so it is worth auditing
@@ -25,7 +25,7 @@ registered; it is not an invitation to redesign the shell.
 Register entries exist for spec 01, and any place the implementation must change is stated as a spec
 requirement rather than fixed in place.
 
-**Scope narrowed by ticket 02.** `01_app_sheell.md` also contains a full duplicate of Screen 2 and a
+**Scope narrowed by ticket 02.** `01_app_shell.md` also contains a full duplicate of Screen 2 and a
 screen-inventory preamble. `02_new_game.md` is canonical for Screen 2, so this ticket audits **Screen 1
 (Main Menu) only** out of file 01, and records the duplicate as a single ledger row. Findings go into
 [RECONCILIATION.md

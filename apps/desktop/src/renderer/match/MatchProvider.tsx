@@ -137,7 +137,6 @@ export const MatchProvider = ({
   const [homeOnPitchCount, setHomeOnPitchCount] = useState(11);
   const [chunkInjuries, setChunkInjuries] = useState<ReadonlyArray<InjuryView>>([]);
   const [currentMinute, setCurrentMinute] = useState(0);
-  const [isComplete, setIsComplete] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   // Mutable cursor/pacing/polling state that doesn't need to trigger re-renders on its own.

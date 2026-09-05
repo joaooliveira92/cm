@@ -1,5 +1,4 @@
-import type { RandomSource } from "@cm-clone/shared";
-import { pickRandom } from "../rng.js";
+import { pickRandom, type RandomSource } from "@cm-clone/shared";
 import type { InjurySeverity, InjuryTier, InjuryTrigger, InjuryType } from "./events.js";
 
 /**

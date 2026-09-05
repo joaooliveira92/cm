@@ -1,279 +1,237 @@
-# Component Audit: God Components & Production-Readiness
+# Component Composition Audit
 
-**Date:** 2026-09-03
-**Scope:** `apps/desktop/src/renderer/` (96 .tsx files, 15,761 lines)
-**Method:** [React Composition Patterns](https://github.com/vercel/composition-patterns) audit for boolean prop proliferation, compound component violations, render props, React 19 migration gaps, and god-component heuristics (useState > 10, useEffect > 5, local imports > 10, JSX > 100 lines, mixed concerns).
+> **Date:** 2026-09-04
+> **Scope:** `apps/desktop/src/renderer/` — all active React components (142 `.tsx` files, excluding `components/ui/` primitives and test files)
+> **Method:** Audit against the [vercel-composition-patterns](../../.agents/skills/vercel-composition-patterns/AGENTS.md) skill rules
 
 ---
 
 ## Executive Summary
 
-| Severity | Count | Description |
+This codebase scores **strong** on composition patterns overall. Boolean prop proliferation is essentially absent, compound component mechanics are used in domain components, and render props have been fully eliminated in favour of children + context. The main areas for improvement are React 19 API migration consistency and a few context interface deviations from the established `state/actions/meta` convention.
+
+| Category | Grade | Key Finding |
 |----------|-------|-------------|
-| CRITICAL | 3 | God components — single-file screen components mixing data, business logic, and rendering |
-| HIGH | 3 | Boolean-prop state interfaces (5+ booleans in a single context/state type) |
-| MEDIUM | 4 | React 19 migration gaps (`useContext` → `use()`, `forwardRef`) |
-| LOW | 2 | Render prop-adjacent patterns, minor composition opportunities |
-
-**Total lines in the top 6 offenders: ~4,200 (27% of all renderer code).**
-
----
-
-## 1. God Components (CRITICAL)
-
-These components own too many responsibilities. They mix data fetching, business logic, state orchestration, keyboard handling, and rendering in a single file. They are difficult to test, reason about, and refactor.
-
-### 1.1 `TransfersScreen.tsx`, 1,133 lines
-
-**File:** `TransfersScreen.tsx`
-**Heuristics hit:** 7 useState, 6 useEffect, 26 local non-UI imports, ~281-line JSX return, 4 RPC mutation seams
-
-This is the strongest god-component in the codebase. It owns:
-
-| Concern | Evidence |
-|---------|----------|
-| **Market data fetching** | `transfersAtom`, `placeBidMutation`, `signFreeAgentMutation`, `respondToBidMutation`, `respondAsBidderMutation`, 4 mutation seams via `useAtomSet` |
-| **Bid-draft state machine** | `reduceBidDraft`, `BidDraftState`, `KeepDiscardDialog` — a full dirty-draft lifecycle |
-| **Two TanStack tables** | Market + Free Agents, each with their own `useDataTable`, `useTransferTableState`, sort/filter/bookmark |
-| **Counter-offer modal** | `InlineModal`, `counterAmount`, `counterError`, `runRespondAsBidder` |
-| **Action-handler registration** | `registerActionHandler` for both tables |
-| **Focus restoration** | `makeTableFocusBookmark`, `resolveTableFocus`, `restoreFocusAfterOverlay` |
-| **Selection** | Shared `selected` state across two tables |
-
-**What it should be:** At minimum three components, a `TransferMarketTable`, a `FreeAgentTable`, and a `BidComposer`, each behind its own provider or at minimum a shared `TransferScreenState` context. The bid-draft lifecycle (`reduceBidDraft` + `KeepDiscardDialog`) is a self-contained state machine that could be a compound component with its own provider.
+| Boolean prop proliferation | **A** | Zero instances of 3+ boolean props. Discriminated unions used throughout. |
+| Compound components | **B+** | Good mechanics (shared context), but only one namespace export (`Header`). `MatchControlPanel` is compound but un-exported. |
+| State management coupling | **B** | All providers isolate state. Two components duplicate atom values into `useState`. |
+| Context interface (state/actions/meta) | **B+** | 4 of 6 providers follow `state/actions/meta`. 2 outliers (ad-hoc / flat). |
+| State lifting | **A-** | Providers own state correctly. `stateRef` patterns are intentional and documented. |
+| Explicit variants | **A** | Screen-level components are explicit, self-contained variants. No boolean-driven mode switching. |
+| Children over render props | **A** | Zero render props in app code. Children composition used exclusively. |
+| React 19 APIs | **B** | Zero `forwardRef` usage (clean). 5 files still use `useContext` instead of `use()`. |
 
 ---
 
-### 1.2 `MatchProvider.tsx`, 394 lines
+## 1. Boolean Prop Proliferation — `architecture-avoid-boolean-props`
 
-**File:** `match/MatchProvider.tsx`
-**Heuristics hit:** **15 useState** (far exceeds the 10-rule), 5 useEffect, 5 useRef
+**Verdict: No remediation needed.**
 
-The provider owns every facet of a live match:
+### Findings
 
-| Concern | useState count |
-|---------|---------------|
-| Opponent selection | `opponents`, `opponentId` |
-| Match lifecycle | `match`, `error`, `starting`, `hydrated` |
-| Commentary streaming | `revealed`, `currentMinute` |
-| Scoreboard | `homeScore`, `awayScore` |
-| Match state | `isComplete`, `paused` |
-| Substitutions/injuries | `homeSubs`, `homeOnPitchCount`, `chunkInjuries` |
+| Component | File:Line | Boolean Props | Severity |
+|-----------|-----------|---------------|----------|
+| `DataTable` | `table/DataTable.tsx:64` | `busy`, `enableShiftScroll?` | LOW |
+| `TablePanel` | `table/TablePanel.tsx:22` | `busy` | LOW |
+| `ActiveLeaguesWorkspace` | `activeLeagues/ActiveLeaguesWorkspace.tsx:36` | `stale?`, `advancedDefaultOpen?` | LOW |
+| `SetupIntroduction` | `activeLeagues/SetupIntroduction.tsx:15` | `stale?` | LOW |
+| `ActiveLeaguesSidebar` | `activeLeagues/ActiveLeaguesSidebar.tsx:28` | `stale?` | LOW |
+| `InlineModal` | `transfers/InlineModal.tsx:15` | `submitDisabled?` | LOW |
+| `ShellHeader` | `chrome/header/ShellHeader.tsx:17` | `titleAsHeading?` | LOW |
+| `ClubRail` | `clubSelection/ClubRail.tsx:10` | `loading` | LOW |
 
-Plus 5 mutable refs for streaming pacing (`cursorRef`, `pendingRef`, `fetchingRef`, `streamCompleteRef`, `pausedRef`).
+All boolean props are simple, well-scoped, and used for standard React patterns (aria attributes, disabled states, disclosure defaults). No component has 3+ boolean props.
 
-**What it should be:** The streaming/commentary subsystem is a separate concern from opponent selection and scoreboard state. The provider could be split into:
-- `MatchProvider` - opponent lifecycle + match start/reset (3-4 useState)
-- `CommentaryProvider` — streaming, pacing, cursor management (useReducer + refs)
-- Scoreboard derived from commentary state
+### What prevents the anti-pattern
 
----
-
-### 1.3 `SquadScreen.tsx`, 637 lines
-
-**File:** `SquadScreen.tsx`
-**Heuristics hit:** 9 useState, 4 useEffect, 22 local non-UI imports, ~181-line JSX return
-
-Owns the canonical CRUD+sort+filter+visibility+preferences+focus screen:
-
-| Concern | Evidence |
-|---------|----------|
-| Data fetching | `squadAtom` |
-| Sorting | `sortDirectionOf`, `setSortFor` |
-| Filtering | `applyFilters`, `clearFilters`, `positionClause`, `upsertFilter` |
-| Column visibility | `SQUAD_PRESETS`, `toggleColumn`, `loadSquadColumnPreferences` |
-| Focus restoration | `makeTableFocusBookmark`, `resolveTableFocus` |
-| Session persistence | `readTableSession`, `updateTableSession`, `discardSelectionForNavigation` |
-| Announcements | `announce`, `statusTermsOf` |
-
-**What it should be:** The table features (sort, filter, visibility, focus, session) are already modularized into separate files under `table/features/`. The screen itself should be a thin composition of a `SquadProvider` (data + session state) and a composed `SquadTable` (DataTable + toolbars + status bar). The current file conflates the provider and the view.
+- **Discriminated unions** replace boolean flags: `PanelMode` (`closed | open | injury-prompt | ...`), `Boot` (`Loading | Failed | Ready`), `viewState._tag`
+- **Slot composition** replaces visibility booleans: `ActiveLeaguesLayout` takes `workspace`, `sidebar?`, `footer?` as ReactNode slots; `TablePanel` takes `filterArea: ReactNode`
+- **Derived state** in atoms/reducers: `canContinue`, `stale`, `validation` computed from setup state, not stored as independent booleans
 
 ---
 
-## 2. Boolean-Prop State Interfaces (HIGH)
+## 2. Compound Components — `architecture-compound-components`
 
-Components that use compound contexts (good!) but with overly boolean-heavy state types. Each boolean doubles the conditional branches downstream.
+### Context creation audit
 
-### 2.1 `MatchControlState`, 7 booleans
+| Context | File:Line | Interface Shape | Quality |
+|---------|-----------|-----------------|---------|
+| `MatchContext` | `match/MatchProvider.tsx:115` | `{ state, actions, meta }` | **Good** |
+| `TransfersContext` | `TransfersProvider.tsx:69` | `{ state, actions, meta }` | **Good** |
+| `SquadContext` | `SquadProvider.tsx:10` | `SquadScreenValue` = `{ state, actions, meta }` | **Good** |
+| `MatchControlContext` | `match/MatchControlPanel.tsx:100` | `{ state, actions, meta }` | **Good** |
+| `CreateSessionContext` | `router/createSessionContext.tsx:49` | Ad-hoc `{ session, update, retryGeneration, selectClub, registerBottomBar }` | **Needs improvement** |
+| `ActiveLeaguesContext` | `activeLeagues/ActiveLeaguesProvider.tsx:76` | Flat value: derived views + `dispatch` + `index` | **Needs improvement** |
 
-**File:** `match/MatchControlPanel.tsx:47`
+### Namespace exports
 
-```typescript
-interface MatchControlState {
-  readonly open: boolean;
-  readonly isHalftime: boolean;
-  readonly injuryPrompt: boolean;
-  readonly hasRedInjury: boolean;
-  readonly isShorthanded: boolean;
-  readonly injuryDecisionPrompt: boolean;
-  readonly subDraftComplete: boolean;
-  // + 5 non-boolean fields
-}
-```
+Only one compound component namespace exists in app code:
 
-These 7 booleans create 2^7 = 128 possible states. The sub-components (`SubstitutionControl`, `PanelHeader`, `InjuryDecisionModal`) consume 3–4 booleans each, resulting in complex conditional rendering:
+- **`Header`** (`chrome/header/index.ts:20`) — `export const Header = { TitleBar, Nav, Title, Search, SecondaryRow, Shell }`
 
-```typescript
-// SubstitutionControl reads: isShorthanded, hasRedInjury, subsStatus.capReached
-// PanelHeader reads: injuryPrompt, hasRedInjury, open
-```
+**Gap:** `MatchControlPanel.tsx` implements compound component mechanics (shared context, sub-components consuming `MatchControlContext`) but does not export a namespace like `MatchControl.Provider`, `MatchControl.Header`, etc. The sub-components (`TeamInstructionSliders`, `SubstitutionControl`, `InjuryDecisionModal`, `PanelHeader`) are private consts used inline.
 
-**Recommendation:** Replace boolean flags with a discriminated union for the panel's mode:
+### Context consumption
 
-```typescript
-type PanelMode =
-  | { _tag: "closed" }
-  | { _tag: "open"; halftime: boolean }
-  | { _tag: "injury-prompt"; severity: "red" | "orange" }
-  | { _tag: "injury-decision" }
-  | { _tag: "sub-draft" }
-```
-
-This makes illegal states unrepresentable and eliminates the conditional matrix.
-
-### 2.2 `MatchState`, 4 booleans
-
-**File:** `match/MatchProvider.tsx:45`
-
-```typescript
-readonly starting: boolean;
-readonly isComplete: boolean;
-readonly paused: boolean;
-readonly hydrated: boolean;
-```
-
-**Recommendation:** A status enum covers this better:
-
-```typescript
-type MatchPhase = "hydrating" | "selecting-opponent" | "starting" | "live" | "paused" | "complete";
-```
-
-### 2.3 `TablePanelProps`, 3 booleans
-
-**File:** `table/TablePanel.tsx:29`
-
-```typescript
-enableNameSearch: boolean;
-enablePositionFilter: boolean;
-busy: boolean;
-```
-
-**Recommendation:** `enableNameSearch` and `enablePositionFilter` suggest the panel should be composed differently per table variant rather than toggling features with booleans.
+All branded hooks (`useSquad`, `useTransfers`, `useMatchContext`, `useMatchControlContext`, `useActiveLeagues`) null-check and throw outside the provider. Consumers are decoupled from state implementations — UI reads only the provider's context.
 
 ---
 
-## 3. React 19 Migration Gaps (MEDIUM)
+## 3. State Management Decoupling — `state-decouple-implementation`
 
-The codebase targets React 19.2.0 but has incomplete migration from React 18 APIs.
+### Provider quality
 
-### 3.1 `forwardRef`, 1 occurrence
+| Provider | State Source | Pattern | Quality |
+|----------|-------------|---------|---------|
+| `ActiveLeaguesProvider` | Effect atoms (`useAtom`/`useAtomValue`) | Atom-based with typed intent dispatch | **Excellent** |
+| `SquadProvider` | Delegates to `useSquadScreen` hook | Thin context wrapper | **Good** |
+| `TransfersProvider` | Delegates to `useTransfersScreen` hook | Thin wrapper with state/actions/meta | **Good** |
+| `MatchProvider` | 15× `useState` + 5× `useRef` | Traditional React state owner | **Adequate but heavy** |
+| `MatchControlProvider` | 8× `useState` | Panel-scoped local state | **Adequate** |
 
-**File:** `components/ui/liquid-glass.tsx:142`
+All providers properly isolate state — UI components never touch atoms/hooks directly.
 
-```typescript
-export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(function LiquidGlass(
-  { ... },
-  ref,
-) { ... });
-```
+### Atom-to-useState duplication
 
-**Fix:** In React 19, `ref` is a regular prop. Replace with:
+Two components duplicate atom values into local `useState`, creating a two-source-of-truth risk:
 
-```typescript
-export function LiquidGlass({ ref, ...props }: LiquidGlassProps & { ref?: React.Ref<HTMLDivElement> }) {
-  // ...
-}
-```
+| Component | File:Line | Pattern |
+|-----------|-----------|---------|
+| `MatchControlPanel` | `match/MatchControlPanel.tsx:471-479` | `useEffect` syncs atom `tacticsResult` into `useState` |
+| `TacticsScreen` | `TacticsScreen.tsx:106-110` | `useEffect` syncs atom `viewResult` into `useState` draft |
 
-### 3.2 `useContext` instead of `use()`, 6 call sites
+### State coupling in MatchProvider
 
-| File | Line | Context |
-|------|------|---------|
-| `router/createFlow.tsx` | 79 | `CreateSessionContext` |
-| `activeLeagues/ActiveLeaguesProvider.tsx` | 79 | `ActiveLeaguesContext` |
-| `match/MatchProvider.tsx` | 390 | `MatchContext` |
-| `match/MatchControlPanel.tsx` | 87 | `MatchControlContext` |
-| `activeLeagues/ActiveLeaguesScreen.tsx` | 173 | `CreateSessionContext` |
-| `LeagueSelectionScreen.tsx` | 116 | `CreateSessionContext` |
-
-**Note:** `sidebar.tsx` and `toggle-group.tsx` have already been migrated to `use()`. The remaining 6 call sites should be updated for consistency.
+`MatchProvider.tsx` has **15 separate `useState` calls** (`:127-141`) plus **5 `useRef`** for mutable polling state. While well-structured as a provider, this volume suggests `useReducer` or atom-based state would improve maintainability — matching `ActiveLeaguesProvider`'s approach.
 
 ---
 
-## 4. Complex Conditional Chains (MEDIUM)
+## 4. Context Interface Convention — `state-context-interface`
 
-Nested ternaries driven by multiple booleans are hard to read and maintain.
+### Compliance
 
-### 4.1 `KeyboardSpine.tsx:194`
+4 of 6 contexts follow the `state/actions/meta` convention:
 
-```typescript
-const topLayer: OverlayLayer =
-  splashActive ? "splash"
-    : layer !== "none" ? layer
-      : panelOpen ? "panel"
-        : "none";
-```
+- `MatchContext`, `TransfersContext`, `SquadContext`, `MatchControlContext` — all define `{ state, actions, meta }`
 
-Triple-nested ternary. Could be a `resolveTopLayer()` helper with early returns.
+### Deviations
 
-### 4.2 `SquadScreen.tsx:187`
+| Context | Deviation | Impact |
+|---------|-----------|--------|
+| `CreateSessionContext` | Ad-hoc shape: `{ session, update, retryGeneration, selectClub, registerBottomBar }` | No `actions`/`meta` split. Methods are flat. |
+| `ActiveLeaguesContext` | Flat value: derived views + `dispatch` (reducer intent funnel) + `index` | Defensible reducer model, but breaks the convention. |
 
-```typescript
-blockingFailure ? "failure" : view !== undefined ? "success" : "loading"
-```
-
-### 4.3 `MatchControlPanel.tsx:353–356`
-
-```typescript
-{state.injuryPrompt && (
-  <Badge variant={state.hasRedInjury ? "destructive" : "warning"}>
-```
-
-Multiple boolean combinations in `SubstitutionControl` (lines 218–228) and `PanelHeader` (lines 341–362).
+Both deviations are functionally correct but reduce discoverability and consistency with the dominant pattern.
 
 ---
 
-## 5. Render Props (LOW)
+## 5. State Lifting — `state-lift-state`
 
-**No render prop anti-patterns found.** The codebase does not use custom `renderX` props or children-as-function patterns. TanStack Table's `cell`/`header` function properties are framework-standard, not custom render props.
+**Verdict: Strong. Providers own state correctly. Documented `stateRef` patterns are intentional.**
 
----
+### Intentional ref patterns
 
-## 6. Well-Factored Counterexamples
+| Pattern | File:Line | Purpose | Assessment |
+|---------|-----------|---------|------------|
+| `stateRef` (latest-value ref) | `ActiveLeaguesProvider.tsx:141-142` | Avoids stale-closure in async `useEffect` | **Intentional, documented, correct** |
+| `panelRef` (keyboard snapshot) | `MatchControlPanel.tsx:456-465` | Keyboard handler reads current state without re-binding | **Intentional, documented, correct** |
 
-These components demonstrate good patterns the rest of the codebase should follow:
+### useEffect-based state sync
 
-| Component | Lines | Pattern |
-|-----------|-------|---------|
-| `MatchDayScreen.tsx` | ~75 | Thin composition shell, delegates to `MatchProvider` + `OpponentPicker` + `MatchCommentaryStream` + `MatchControlPanel` |
-| `components/ui/toggle-group.tsx` | — | Already uses `use()` instead of `useContext` |
-| `components/ui/sidebar.tsx` | — | Already uses `use()` (compound component pattern) |
-| **MatchControlPanel.tsx** | — | Uses `state/actions/meta` context interface pattern (the right idea, just boolean-heavy state) |
-| `table/features/` directory | — | Modular table features (sorting, filtering, visibility) extracted into separate files |
-
----
-
-## 7. Recommended Refactoring Priority
-
-| Priority | Component | Effort | Impact |
-|----------|-----------|--------|--------|
-| P0 | `TransfersScreen` | High | Decouple bid-draft lifecycle into provider; split market/free-agent tables |
-| P0 | `MatchProvider` | Medium | Extract commentary streaming into separate provider |
-| P1 | `MatchControlState` | Low | Replace 7 booleans with discriminated union |
-| P1 | `MatchState` | Low | Replace 4 booleans with `MatchPhase` enum |
-| P2 | `SquadScreen` | Medium | Extract data + session state into provider; thin composition shell |
-| P2 | `KeyboardSpine` | Low | Extract overlay resolution into helper |
-| P3 | React 19 migration | Low | `forwardRef` → ref prop, `useContext` → `use()` (6 sites + 1 file) |
+| Location | Pattern | Quality |
+|----------|---------|---------|
+| `ActiveLeaguesProvider.tsx:163-195` | Debounced async resolve into slot atom | **Good** — debounced, revision-guarded, cancelled on cleanup |
+| `MatchProvider.tsx:245-277` | Session restore on mount | **Good** — one-shot restore, gated by `hydrated` flag |
+| `MatchProvider.tsx:280-307` | Recording match to session store | **Good** — side-effect only, no upward state sync |
 
 ---
 
-## Appendix: Full File Size Distribution
+## 6. Explicit Variants — `patterns-explicit-variants`
 
-| Lines | Files | % of total |
-|-------|-------|-----------|
-| 600+ | 6 | 29% |
-| 300–599 | 8 | 22% |
-| 100–299 | 25 | 30% |
-| <100 | 57 | 19% |
+**Verdict: Screen-level components are clean, explicit variants. No boolean-driven mode switching.**
 
-The codebase is top-heavy: 14 files over 300 lines contain ~60% of all renderer code.
+Each screen is a self-contained variant with its own provider, composing the pieces it needs:
+
+- `SquadScreen` — `SquadProvider` + `SquadTable`
+- `TransfersScreen` — `TransfersProvider` + filter bar + tables
+- `MatchDayScreen` — `MatchProvider` + `MatchControlPanel` + `Scoreboard` + `MatchCommentaryStream`
+- `TacticsScreen` — local draft state + `TacticPitch`
+
+No screen passes `isX`/`showX` boolean props to switch between rendering modes.
+
+---
+
+## 7. Children Over Render Props — `patterns-children-over-render-props`
+
+**Verdict: Zero render props in app code. Children composition used exclusively.**
+
+A search for `render[A-Z]` prop patterns returned zero matches in the active codebase. All composition uses children:
+
+- `ActiveLeaguesLayout` takes `workspace`, `sidebar?`, `footer?` as ReactNode slots
+- `TablePanel` takes `filterArea: ReactNode`
+- `TablePanel` takes `inlineSidebar?: ReactNode`
+- Screen components compose sub-components as JSX children
+
+---
+
+## 8. React 19 APIs — `react19-no-forwardref`
+
+### forwardRef
+
+**Zero instances.** The codebase has been fully migrated — no `forwardRef` calls exist.
+
+### useContext vs use()
+
+| Pattern | Files | Assessment |
+|---------|-------|------------|
+| `useContext()` | `SquadProvider.tsx:29`, `TransfersProvider.tsx:138`, `MatchProvider.tsx:390`, `MatchControlPanel.tsx:103`, `ActiveLeaguesScreen.tsx:173` | Legacy |
+| `use()` (React 19) | `ActiveLeaguesProvider.tsx:79`, `LeagueSelectionScreen.tsx:124`, `router/createFlow.tsx:79` (3 calls) | Idiomatic |
+
+5 consumers still use `useContext` vs 3 using `use()`. The newer providers (ActiveLeagues) use `use()`; older ones (Squad, Transfers, Match, MatchControlPanel) still use `useContext`. Not broken, but inconsistent.
+
+---
+
+## Recommendations
+
+### High priority
+
+None. The codebase is clean on all critical patterns.
+
+### Medium priority
+
+| # | Finding | Recommendation | Pattern Rule |
+|---|---------|----------------|--------------|
+| 1 | `useContext` still used in 5 files | Migrate to `use()` for React 19 consistency | `react19-no-forwardref` |
+| 2 | `MatchProvider` has 15 `useState` calls | Consider `useReducer` or atom-based state (like `ActiveLeaguesProvider`) | `state-decouple-implementation` |
+| 3 | Atom→useState duplication in `MatchControlPanel` and `TacticsScreen` | Consume atoms directly or use `useAtom` for draft state | `state-decouple-implementation` |
+| 4 | `MatchControlPanel` compound not exported as namespace | Add `MatchControl = { Provider, Header, Sliders, Subs, InjuryModal }` to match `Header` convention | `architecture-compound-components` |
+| 5 | `CreateSessionContext` deviates from `state/actions/meta` | Refactor to `{ state: { session }, actions: { update, retryGeneration, selectClub, registerBottomBar } }` | `state-context-interface` |
+| 6 | `ActiveLeaguesContext` flat value + `dispatch` | Consider whether the reducer-funnel model is intentional or should migrate to `state/actions/meta` | `state-context-interface` |
+
+### Low priority
+
+| # | Finding | Recommendation |
+|---|---------|----------------|
+| 7 | `.displayName` not set on app-level compound components | Add `displayName` for DevTools consistency (matching `components/ui/` convention) |
+| 8 | `MatchControlPanel` actions bucket is thin (`setIsHalftime` only) | Review whether `dispatchAction` should be formalized into the `actions` interface |
+
+---
+
+## Appendix: Files Audited
+
+### Active application components (142 `.tsx` files)
+
+All files under `apps/desktop/src/renderer/` were read or sampled, excluding:
+- `components/ui/*.tsx` — shadcn/radix primitives (third-party composition patterns)
+- `*.test.tsx` — test files (35 files)
+
+### Pattern rules applied
+
+1. `architecture-avoid-boolean-props` — Boolean prop proliferation
+2. `architecture-compound-components` — Compound component structure and context
+3. `state-decouple-implementation` — State management decoupled from UI
+4. `state-context-interface` — Generic context interface with state/actions/meta
+5. `state-lift-state` — State lifted into provider components
+6. `patterns-explicit-variants` — Explicit variant components vs boolean modes
+7. `patterns-children-over-render-props` — Children over render props
+8. `react19-no-forwardref` — React 19 API migration

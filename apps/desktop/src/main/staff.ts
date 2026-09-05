@@ -1,7 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { type ClubId } from "@cm-clone/contracts";
-import { createSeededRng, deriveId, deriveSeed } from "@cm-clone/game-engine";
-import { generateStaff, nationCodeFromId, type StatureTier } from "@cm-clone/shared";
+import {
+  createSeededRng,
+  deriveId,
+  deriveSeed,
+  generateStaff,
+  nationCodeFromId,
+  type StatureTier,
+} from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 

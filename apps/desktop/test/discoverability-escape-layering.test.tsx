@@ -16,7 +16,7 @@ import { bindRouter } from "../src/renderer/navigation/adapter.js";
 import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../src/renderer/actions/scopeState.js";
 import { teachingSplashStorageKey, readTeachingSplashSeen } from "../src/renderer/discoverability/TeachingSplash.js";
-import { TransfersScreen } from "../src/renderer/TransfersScreen.js";
+import { TransfersScreen } from "../src/renderer/transfers/TransfersScreen.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
 
 const rid = (id: string) => SaveId.make(id);

@@ -21,7 +21,9 @@ import {
 import {
   MAX_SUBSTITUTIONS_PER_TEAM,
   MAX_SUBSTITUTION_WINDOWS_PER_TEAM,
+  renderCommentary,
   simulateMatchWithCounts,
+  type CommentaryNameResolver,
   type MatchCommand,
   type MatchEvent,
   type MatchPlayerCountEntry,
@@ -30,8 +32,6 @@ import {
 import {
   FORMATION_SLOTS,
   POSITION_ROLES,
-  renderCommentary,
-  type CommentaryNameResolver,
   type PillarDistribution,
   type PlayerAttributes,
 } from "@cm-clone/shared";

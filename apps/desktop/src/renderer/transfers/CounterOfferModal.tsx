@@ -5,7 +5,7 @@
  */
 import { InlineModal } from "./InlineModal.js";
 import { formatCredits } from "../table/transfers/marketColumns.js";
-import { useTransfers } from "../TransfersProvider.js";
+import { useTransfers } from "./TransfersProvider.js";
 
 export const CounterOfferModal = () => {
   const { state, actions, meta } = useTransfers();

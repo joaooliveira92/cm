@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import { FAMILIARITY_TIERS, STATURE_TIERS } from "@cm-clone/shared";
-import { TransfersScreen } from "../src/renderer/TransfersScreen.js";
+import { TransfersScreen } from "../src/renderer/transfers/TransfersScreen.js";
 import { RouteView } from "../src/renderer/router/RouteView.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
 import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";

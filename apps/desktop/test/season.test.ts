@@ -15,7 +15,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { cupRoundDate, leagueRoundDates, tieWinner } from "@cm-clone/shared";
+import { cupRoundDate, leagueRoundDates, nextCalendarBoundary, tieWinner } from "@cm-clone/shared";
 import { beginCareer, commitCareer, createSave } from "../src/main/saves.js";
 import {
   createDefaultSnapshot,
@@ -31,7 +31,6 @@ import {
   getFixtures,
   getLeagueTable,
   getSeasonSummary,
-  nextCalendarBoundary,
 } from "../src/main/season.js";
 import { loadStreamEvents } from "../src/main/decider.js";
 

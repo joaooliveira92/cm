@@ -27,7 +27,7 @@ let seed = 12345;
 const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
 const attr = () => 1 + Math.floor(rnd() * 20);
 
-/** The real id shape: a 36-char UUID-format string (see `deriveId` in packages/game-engine/src/seed.ts). */
+/** The real id shape: a 36-char UUID-format string (see `deriveId` in packages/shared/src/seed.ts). */
 const hex = (n: number, w: number) => (n >>> 0).toString(16).padStart(w, "0").slice(-w);
 let idCounter = 0;
 const makeId = () => {

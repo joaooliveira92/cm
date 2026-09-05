@@ -12,7 +12,7 @@ import {
   ShellBottomBar,
   type BottomBarPlan,
 } from "../chrome/bottom-bar/index.js";
-import { LeagueSelectionScreen } from "../LeagueSelectionScreen.js";
+import { LeagueSelectionScreen } from "../leagueSelection/LeagueSelectionScreen.js";
 import {
   buildLeaguePreset,
   describeRpcError,

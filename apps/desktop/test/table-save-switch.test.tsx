@@ -12,7 +12,7 @@ import {
 import { SaveId } from "@cm-clone/contracts";
 import { FAMILIARITY_TIERS, STATURE_TIERS } from "@cm-clone/shared";
 import { CareerShell, CareerChildView } from "../src/renderer/router/career.js";
-import { TransfersScreen } from "../src/renderer/TransfersScreen.js";
+import { TransfersScreen } from "../src/renderer/transfers/TransfersScreen.js";
 import { bindRouter } from "../src/renderer/navigation/adapter.js";
 import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../src/renderer/actions/scopeState.js";

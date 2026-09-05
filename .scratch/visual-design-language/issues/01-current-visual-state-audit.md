@@ -5,7 +5,7 @@ Status: resolved
 
 ## Question
 
-What is the current visual state of the `@cm-clone/desktop` renderer, cataloged against the CM 03/04 UI reference at `docs/ui-elements.md`?
+What is the current visual state of the `@cm-clone/desktop` renderer, cataloged against the CM 03/04 UI reference at `docs/design/ui-elements.md`?
 
 Survey every screen and shared component in `apps/desktop/src/renderer/` and document:
 

@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table.js";
-import { useTransfers } from "../TransfersProvider.js";
+import { useTransfers } from "./TransfersProvider.js";
 import { formatCredits } from "../table/transfers/marketColumns.js";
 
 /** The incoming-bids table leaf: hand-rendered rows driven by the shared

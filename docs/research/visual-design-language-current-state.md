@@ -1,12 +1,12 @@
 # Current visual state of the cm-clone desktop renderer
 
 **Question:** What is the current visual state of the `@cm-clone/desktop` renderer,
-catalogued against the CM 03/04 UI reference at `docs/ui-elements.md`?
+catalogued against the CM 03/04 UI reference at `docs/design/ui-elements.md`?
 
 **Sources:**
 - Primary: every file under `apps/desktop/src/renderer/` (10 screen files, 1 CSS,
   1 App shell, ~15 match-screen component files)
-- Reference: `docs/ui-elements.md` (CM 03/04 UI analysis, 533 lines)
+- Reference: `docs/design/ui-elements.md` (CM 03/04 UI analysis, 533 lines)
 - Context: `CONTEXT.md`, `.scratch/visual-design-language/map.md`
 
 ---
@@ -102,7 +102,7 @@ stack (`ui-sans-serif, system-ui, ...`).
 
 ### Comparison to CM 03/04
 
-CM 03/04 used "small typography intended for 1024×768" (docs/ui-elements.md:23).
+CM 03/04 used "small typography intended for 1024×768" (docs/design/ui-elements.md:23).
 The original game rendered at 1024×768 and used small, compact fonts (likely
 MS Sans Serif / Tahoma equivalents at 8–11pt). The clone's `text-sm` (14px) on modern
 high-DPI displays produces roughly equivalent apparent size, but the default sans-serif
@@ -400,7 +400,7 @@ is text-only.
 ## Gaps
 
 - **Font rendering differences.** I could not verify the exact font family or rendering of
-  CM 03/04's UI on original hardware. The `docs/ui-elements.md` describes "small typography
+  CM 03/04's UI on original hardware. The `docs/design/ui-elements.md` describes "small typography
   intended for 1024×768" but does not specify the exact font. A CM 03/04 installation or
   screenshot analysis at pixel level would be needed.
 - **CM 03/04 button appearance at pixel level.** The reference document says "rectangular,

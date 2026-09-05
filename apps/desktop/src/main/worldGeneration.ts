@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { ClubId, PlayerId, type SnapshotId } from "@cm-clone/contracts";
-import { createSeededRng, deriveId, deriveSeed } from "@cm-clone/game-engine";
 import {
   BASE_CONTENT_PACK,
   CITIES,
@@ -11,6 +10,9 @@ import {
   canonicalCityId,
   canonicalClubId,
   canonicalNationId,
+  createSeededRng,
+  deriveId,
+  deriveSeed,
   drawHometown,
   drawStadiumCapacity,
   drawStadiumName,

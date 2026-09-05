@@ -13,14 +13,14 @@ import {
   POSITIONS,
   STATURE_TIERS,
 } from "@cm-clone/shared";
-import { SquadScreen } from "../src/renderer/SquadScreen.js";
+import { SquadScreen } from "../src/renderer/squad/SquadScreen.js";
 import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
 import { FixturesScreen } from "../src/renderer/FixturesScreen.js";
 import { SeasonSummaryScreen } from "../src/renderer/SeasonSummaryScreen.js";
-import { CreationStep1 } from "../src/renderer/CreationStep1.js";
+import { ManagerIdentityStep } from "../src/renderer/create/ManagerIdentityStep.js";
 import { TacticsScreen } from "../src/renderer/TacticsScreen.js";
-import { TransfersScreen } from "../src/renderer/TransfersScreen.js";
-import { MatchDayScreen } from "../src/renderer/MatchDayScreen.js";
+import { TransfersScreen } from "../src/renderer/transfers/TransfersScreen.js";
+import { MatchDayScreen } from "../src/renderer/match/MatchDayScreen.js";
 import { setActiveMatch, clearActiveMatch } from "../src/renderer/match/session.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
 
@@ -307,9 +307,9 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
     expect(main).toBe(document.activeElement);
   });
 
-  it("CreationStep1: every control is natively focusable with the ring, inputs first in tab order", () => {
+  it("ManagerIdentityStep: every control is natively focusable with the ring, inputs first in tab order", () => {
     render(
-      <CreationStep1
+      <ManagerIdentityStep
         saveName=""
         managerName=""
         pillars={{ tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 }}

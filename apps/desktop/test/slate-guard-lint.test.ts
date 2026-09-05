@@ -36,14 +36,14 @@ describe("no-slate-class-name guard", () => {
   });
 
   it("guards renderer source and the fixtures, not the rest of the tree", () => {
-    expect(isSlateGuarded(join(rendererDir, "SquadScreen.tsx"))).toBe(true);
+    expect(isSlateGuarded(join(rendererDir, "squad", "SquadScreen.tsx"))).toBe(true);
     expect(isSlateGuarded(join(fixtureRoot, "no-slate-class-name.tsx"))).toBe(true);
     expect(isSlateGuarded(join(repoRoot, "scripts", "run-gates.ts"))).toBe(false);
   });
 
   it("fails on a fresh slate class beyond the recorded backlog", () => {
-    const baseline = { "apps/desktop/src/renderer/SquadScreen.tsx": 3 };
-    const grown = new Map([["apps/desktop/src/renderer/SquadScreen.tsx", 4]]);
+    const baseline = { "apps/desktop/src/renderer/squad/SquadScreen.tsx": 3 };
+    const grown = new Map([["apps/desktop/src/renderer/squad/SquadScreen.tsx", 4]]);
     const violations = reconcileSlateBaseline(repoRoot, baseline, grown);
     expect(violations).toHaveLength(1);
     expect(violations[0]!.message).toContain("fresh");
@@ -57,15 +57,15 @@ describe("no-slate-class-name guard", () => {
   });
 
   it("fails on a migrated file whose backlog entry was not tightened", () => {
-    const baseline = { "apps/desktop/src/renderer/SquadScreen.tsx": 3 };
+    const baseline = { "apps/desktop/src/renderer/squad/SquadScreen.tsx": 3 };
     const violations = reconcileSlateBaseline(repoRoot, baseline, new Map());
     expect(violations).toHaveLength(1);
     expect(violations[0]!.message).toContain("Tighten");
   });
 
   it("passes when the tree matches the backlog exactly", () => {
-    const baseline = { "apps/desktop/src/renderer/SquadScreen.tsx": 3 };
-    const exact = new Map([["apps/desktop/src/renderer/SquadScreen.tsx", 3]]);
+    const baseline = { "apps/desktop/src/renderer/squad/SquadScreen.tsx": 3 };
+    const exact = new Map([["apps/desktop/src/renderer/squad/SquadScreen.tsx", 3]]);
     expect(reconcileSlateBaseline(repoRoot, baseline, exact)).toHaveLength(0);
   });
 

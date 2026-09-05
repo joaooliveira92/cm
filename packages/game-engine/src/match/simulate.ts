@@ -1,5 +1,4 @@
-import type { RandomSource } from "@cm-clone/shared";
-import { createSeededRng, pickRandom } from "../rng.js";
+import { createSeededRng, pickRandom, type RandomSource } from "@cm-clone/shared";
 import { MAX_SUBSTITUTIONS_PER_TEAM, MAX_SUBSTITUTION_WINDOWS_PER_TEAM, type MatchCommand } from "./commands.js";
 import {
   NON_CONTACT_CONDITION_THRESHOLD,

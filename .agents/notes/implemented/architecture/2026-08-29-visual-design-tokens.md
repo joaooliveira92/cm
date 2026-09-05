@@ -4,13 +4,13 @@ Status: implemented
 
 ## Problem
 
-The cm-clone renderer had no visual design language informed by the CM 03/04 reference (`docs/ui-elements.md`). All nine screens used a flat dark slate palette (`bg-slate-950`) with default Tailwind typography, no panel system, no status abbreviations, and no skin architecture. An unwired chrome-blue prototype in `components/match-screen/` (deleted since; recoverable at its recorded historical revision) carried a look that approximated the CM 03/04 tone, but its tokens were designed for a single match-day display rather than a coherent system.
+The cm-clone renderer had no visual design language informed by the CM 03/04 reference (`docs/design/ui-elements.md`). All nine screens used a flat dark slate palette (`bg-slate-950`) with default Tailwind typography, no panel system, no status abbreviations, and no skin architecture. An unwired chrome-blue prototype in `components/match-screen/` (deleted since; recoverable at its recorded historical revision) carried a look that approximated the CM 03/04 tone, but its tokens were designed for a single match-day display rather than a coherent system.
 
 Without adopted design tokens, every screen was individually styled and the renderer had no visual identity.
 
 ## Decision
 
-Adopt a retro chrome-blue visual frame across every career surface, grounded in the CM 03/04 analysis at `docs/ui-elements.md` and the former match-screen prototype. It shipped as the renderer's only visual language: every screen renders through the token system below, `scripts/slate-baseline.json` is empty, and no flat `slate-*` class has entered the tree since the guard landed.
+Adopt a retro chrome-blue visual frame across every career surface, grounded in the CM 03/04 analysis at `docs/design/ui-elements.md` and the former match-screen prototype. It shipped as the renderer's only visual language: every screen renders through the token system below, `scripts/slate-baseline.json` is empty, and no flat `slate-*` class has entered the tree since the guard landed.
 
 **Mechanism.** The `:root` + Tailwind `theme.extend` plumbing proposed below is a Tailwind 3 answer that does not run on this repo's Tailwind 4; it is superseded by [Token adoption mechanism and migration strategy](../../proposed/architecture/2026-08-31-token-adoption-and-migration.md). The decision is one non-inline `@theme` block in `apps/desktop/src/renderer/index.css`: role-named `--color-*` tokens are emitted as custom properties on `:root` *and* generate utilities that reference them via `var()`, so a future skin override is a scoped re-declaration rather than a new foundation.
 

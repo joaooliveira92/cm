@@ -10,12 +10,12 @@ import { KeyboardSpine } from "../KeyboardSpine.js";
 import { FixturesScreen } from "../FixturesScreen.js";
 import { LeagueTableScreen } from "../LeagueTableScreen.js";
 import { ManagerProfileScreen } from "../ManagerProfileScreen.js";
-import { MatchDayScreen } from "../MatchDayScreen.js";
+import { MatchDayScreen } from "../match/MatchDayScreen.js";
 import { NewsInboxScreen } from "../news/NewsInboxScreen.js";
 import { SeasonSummaryScreen } from "../SeasonSummaryScreen.js";
-import { SquadScreen } from "../SquadScreen.js";
+import { SquadScreen } from "../squad/SquadScreen.js";
 import { TacticsScreen } from "../TacticsScreen.js";
-import { TransfersScreen } from "../TransfersScreen.js";
+import { TransfersScreen } from "../transfers/TransfersScreen.js";
 import { MainMenuScreen } from "./mainMenu.js";
 import { LoadCareerScreen } from "./loadCareer.js";
 import {
@@ -23,8 +23,8 @@ import {
   CareerIndexRedirect,
   CareerShell,
 } from "./career.js";
+import { CreateFlowLayout } from "../create/CreateFlowLayout.js";
 import {
-  CreateFlowLayout,
   LeagueSelectionRouteContent,
   StepOneRouteContent,
   StepThreeRouteContent,

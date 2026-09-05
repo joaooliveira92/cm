@@ -3,7 +3,7 @@
 Status: ready-for-agent
 
 > Synthesized by `cm-to-spec` from the conversation and the implementation brief at
-> `docs/active-leagues-setup-screen-implementation-brief.md`. No wayfinder map or tickets were run:
+> `.scratch/active-leagues-setup/brief.md`. No wayfinder map or tickets were run:
 > every decision below was reached by direct interview (Q1–Q10) and approved wholesale. There are no
 > resolved tickets and no proposed Agent Notes, so Implementation Decisions are stated in plain prose
 > with no links by design.
@@ -388,7 +388,7 @@ and consequence-feedback are confirmed by a human pass at the responsive breakpo
 ## Further Notes
 
 - **This spec supersedes the brief where the domain disagrees.** The implementation brief at
-  `docs/active-leagues-setup-screen-implementation-brief.md` remains the reference for structure and
+  `.scratch/active-leagues-setup/brief.md` remains the reference for structure and
   detail wherever this spec does not override it, but every fabricated-input deviation above
   (start date, database preset, team chip, club recommendations, staff/editor options) is deliberate:
   carry this divergence list into implementation copy so nobody reintroduces the dead controls "to

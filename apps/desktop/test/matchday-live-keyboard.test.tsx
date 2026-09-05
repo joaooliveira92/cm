@@ -19,7 +19,7 @@ import {
   POSITION_ROLES,
   STATURE_TIERS,
 } from "@cm-clone/shared";
-import { MatchDayScreen } from "../src/renderer/MatchDayScreen.js";
+import { MatchDayScreen } from "../src/renderer/match/MatchDayScreen.js";
 import { KeyboardSpine } from "../src/renderer/KeyboardSpine.js";
 import { bindRouter } from "../src/renderer/navigation/adapter.js";
 import { setActiveMatch, clearActiveMatch } from "../src/renderer/match/session.js";
@@ -330,12 +330,12 @@ describe("AC-33 — two-step substitution by keyboard (Enter confirms, Escape ab
     const submissions = await mountMatchDayWithSpine(session());
     openPanel();
 
-    const outSelect = document.querySelector<HTMLSelectElement>(
-      '[data-action-id="set-live-substitute-off"]',
-    )!;
-    const inSelect = document.querySelector<HTMLSelectElement>(
-      '[data-action-id="set-live-substitute-in"]',
-    )!;
+    expect(
+      document.querySelector<HTMLSelectElement>('[data-action-id="set-live-substitute-off"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector<HTMLSelectElement>('[data-action-id="set-live-substitute-in"]'),
+    ).not.toBeNull();
     // Each dispatch re-renders first, so the submit handler reads both picks.
     await act(async () => {
       dispatchAction("set-live-substitute-off", { playerId: rid("on-0") });

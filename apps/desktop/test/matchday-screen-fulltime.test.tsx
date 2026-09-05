@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ClubId, SaveId, type CommentaryLineView, type SubstitutionStatusView } from "@cm-clone/contracts";
-import { MatchDayScreen } from "../src/renderer/MatchDayScreen.js";
+import { MatchDayScreen } from "../src/renderer/match/MatchDayScreen.js";
 import { clearActiveMatch, setActiveMatch } from "../src/renderer/match/session.js";
 import { resetScopeState } from "../src/renderer/actions/scopeState.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";

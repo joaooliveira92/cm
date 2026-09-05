@@ -38,7 +38,7 @@ overturns them — and the disagreement gets written into the register rather th
 - The twelve numbered ADRs were deliberately deleted and are not coming back. Agent Notes under
   `.agents/notes/` are the repo's sole decision record from here.
 
-**The import duplicates Screen 2.** `01_app_sheell.md` contains Screen 1, a screen-inventory preamble,
+**The import duplicates Screen 2.** `01_app_shell.md` contains Screen 1, a screen-inventory preamble,
 *and* a full copy of Screen 2 with the same 29 sections as `02_new_game.md`. `02_new_game.md` is
 canonical; file 01's copy is not audited separately, and `## N.` numbering is not unique inside file 01.
 

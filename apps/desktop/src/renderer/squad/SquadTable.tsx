@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "../components/ui/select.js";
 import { FOCUS_RING } from "../focus.js";
-import { useSquad } from "../SquadProvider.js";
+import { useSquad } from "./SquadProvider.js";
 import { DataTable } from "../table/DataTable.js";
 import {
   DEFAULT_SQUAD_PRESET_ID,
@@ -34,8 +34,6 @@ export const SquadTable = () => {
   const { state, actions, meta } = useSquad();
   const {
     allPlayers,
-    filtered,
-    sort,
     filters,
     activeId,
     selectedId,
@@ -47,17 +45,11 @@ export const SquadTable = () => {
     refreshState,
     copy,
     orderedIds,
-    bookmark,
     table,
   } = state;
   const {
-    setSort,
-    setFilters,
-    setSelection,
-    setActiveAndBookmark,
     setBookmark,
     commitScroll,
-    setLegendExpanded,
     onSortCycle,
     onToggleSelection,
     onActiveChange,
@@ -66,9 +58,8 @@ export const SquadTable = () => {
     setPreset,
     toggleOneColumn,
     clearFilterCommand,
-    refreshSquad,
   } = actions;
-  const { speak, STATUS_LEGEND_ID } = meta;
+  const { STATUS_LEGEND_ID } = meta;
 
   if (viewState._tag === "LoadError") {
     return (
