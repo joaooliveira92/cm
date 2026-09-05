@@ -32,3 +32,29 @@ Lower value than 01-03; do it only once those are settled.
       actually assert (it fails open if the path is wrong).
 - [ ] `test/display-names.test.ts`, which walks `../src/main` recursively, still passes.
 - [ ] `pnpm check:all` is green at this commit.
+
+## Execution decisions (2026-09-05, round 2)
+
+Measured again after 02, 03 and 05 landed. `main/` holds 21 loose `.ts` files; `db/`, `season/`
+and `transfers/` already exist. Import sites by module:
+
+```
+31 saves        14 leagueSelection   6 clubSelection   4 news            3 logging
+30 squad        12 tactics           5 worldGeneration 4 managerProfile  3 keybindings
+18 decider      10 displayNames      5 match           4 aiClubs         2 rpcServer
+                 9 managerStatus     4 staff           3 training        1 development
+```
+
+**The `saves.ts` / `squad.ts` escape hatch above is declined.** Leaving two loose files sitting
+among six folders recreates exactly the two-competing-schemes problem that ticket 07 exists to fix
+in the renderer; accepting it here would be inconsistent. The hatch was written for when the cost
+is not worth it, and the cost changed: ticket 05 landed, so `test/` is now typechecked and a
+missed import fails in seconds instead of hiding until a 15-minute vitest run.
+
+**`match/` is a real module, not a one-file directory.** `match.ts` is 577 lines with four exported
+functions, one of which (`startMatch`) is 300 lines on its own. Moving it to `match/index.ts` would
+put a 577-line body where every other module in `main/` has a thin barrel. Split it the way
+`season/` and `transfers/` were split -- `start.ts`, `queries.ts`, `commands.ts` and a barrel --
+following the seams already in the file.
+
+Everything else in this ticket is a pure move behind a barrel.
