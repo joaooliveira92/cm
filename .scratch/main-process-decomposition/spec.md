@@ -118,3 +118,34 @@ reference corpus), and the three renderer files in the 400-600 band
 (`squad/useSquadScreen.ts` 502, `leagueSelection/viewModel.ts` 418, `create/useCreateSession.ts`
 418) -- none crosses the 600-line bar this effort works to, and splitting on line count alone is
 how a decomposition effort turns into churn.
+
+## Closed 2026-09-05
+
+All thirteen tickets are `resolved`. What the effort changed, end to end:
+
+| Before | After |
+|---|---|
+| `main/season.ts` 1886, `main/transfers.ts` 983, `main/match.ts` 577 | eight, five and five modules behind barrels |
+| `main/` ~30 files at one level | eight documented subsystems |
+| `contracts/schemas.ts` 1099, `shared/leagueSelection.ts` 716, `game-engine/simulate.ts` 651 | split per domain, barrels preserving the exact export surface |
+| six screens loose at `renderer/` root beside ten feature folders | every screen in a folder; seven cross-cutting files at root |
+| `useTransfersScreen.ts` 717, `ManagerIdentityStep.tsx` 621 | four composed hooks; a step machine, a pane and a copy module |
+| `test/` 100 files at one level, two naming conventions | 106 specs across 33 directories mirroring `src/`, one convention |
+| desktop `test/` not typechecked | `tsconfig` covers `src`, `test`, `e2e`, `scripts` |
+
+**One file over 600 lines remains, deliberately: `main/db/schema.ts` (1110).** Its path is pinned by
+`drizzle.config.ts` and its docstring asserts whole-schema invariants. The next largest thing in the
+repo is 598 lines.
+
+Two findings came out of the work rather than going in:
+
+- **Splitting a spec file buys wall-clock, not just readability.** vitest parallelises across files,
+  not within them, so `season.test.ts` had 37 world-generating tests serialised onto one worker —
+  one of them timing out at the 60s limit. Eight files: 574s wall against 1255s of test time, and
+  the timeout cleared. Recorded in `apps/desktop/AGENTS.md`.
+- **`test/matchCommands.test.ts` is genuinely flaky**, not a casualty of any move here. It seeds
+  matches from `Date.now()` and retries against a ~0.4% roll. Filed as
+  [desktop-suite-red 02](../desktop-suite-red/issues/02-injury-spec-is-wall-clock-seeded.md).
+
+The repo's documentation trees were audited and deliberately left alone; see Round 3 above for why.
+`apps/desktop` gained the local `AGENTS.md` it had been missing while `packages/` had one.
