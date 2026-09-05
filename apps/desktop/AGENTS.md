@@ -61,6 +61,24 @@ those two seams are exempt by path. Moving a renderer file can therefore change 
 boundary applies to it — `test/renderer-boundary-lint.test.ts` asserts specific paths and must move
 with them.
 
+### `test/` — mirrors `src/`
+
+99 spec files across 31 directories, laid out as `test/main/<subsystem>/`,
+`test/renderer/<feature>/` and `test/shared/`, mirroring the two source trees above. One naming
+convention throughout: kebab-case, `<subject>.test.ts`. To find a module's specs, take its source
+path and swap `src/` for `test/`.
+
+Two exceptions, both deliberate:
+
+- **`test/setup/` must stay at that exact path** — `vitest.config.ts` names
+  `./test/setup/nwsapi-recursion-guard.ts` as its `setupFiles` entry.
+- **`test/season.test.ts` is still flat at the root.** It is 1200 lines and its split is
+  [ticket 13](../../.scratch/main-process-decomposition/issues/13-split-season-test.md); moving it
+  before splitting it would move it twice. It is the only file left at `test/` root.
+
+`vitest.config.ts`'s `include` is `test/**/*.test.{ts,tsx}`, which already recurses, so a new
+directory needs no config change.
+
 ## Specs that read source files by path
 
 A few specs assert on file *contents* rather than behaviour, so typecheck cannot see the path and a

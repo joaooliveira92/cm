@@ -17,6 +17,21 @@ The file is already sectioned by `// ---` banners along the same seams:
 | `test/main/season/query-plans.test.ts` | the `queryPlan` index assertions |
 | `test/main/season/helpers.ts` | the shared builders: `createCareerFrom`, `createCareerFromWorldSeed`, `loadFirstClubId`, `loadSeasonStreamEvents`, `withSaveWrite` |
 
+## Attempt 2026-09-05 — cut short, nothing landed
+
+A first pass was interrupted mid-work and left no split behind; `test/season.test.ts` is still one
+1200-line file at the old flat path. What that pass established, so the next one need not redo it:
+
+- The seams hold. The banner-comment sections map onto the target files with only two ranges
+  needing to be stitched from non-adjacent line spans (calendar and rollover).
+- `test/main/season/helpers.ts` already exists from that pass and holds the shared builders. It
+  takes the temp saves directory as a **getter**, not a value, because each spec file mints its own
+  directory in its own `beforeEach` — the builders are constructed once per module but must read
+  the directory at call time. Check it before rewriting it.
+- Ticket 06 has since moved every other spec, so this file's imports are now the odd ones out:
+  it still reaches `./snapshot-helpers.js`, which now lives at `test/main/snapshot-helpers.ts`.
+
+
 ## Constraints
 
 - **Each of these specs generates a world.** They are the slowest specs in the suite. Splitting
