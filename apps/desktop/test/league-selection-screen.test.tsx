@@ -308,12 +308,16 @@ describe("debounced, revision-guarded estimation (§11.5, AC-11)", () => {
     await screen.findByText("England");
     const mode = screen.getByLabelText("Simulation mode for England");
 
-    // Four changes inside one debounce window (the trigger always reopens from the closed
-    // state, so each burst step re-opens the popup).
     const burst = ["Background", "View only", "Not loaded", "Background"];
+    // Four changes inside one debounce window (the trigger always reopens from the closed
+    // state, so each burst step re-opens the popup). The steps are inherently sequential
+    // closed→open→pick→reopen cycles, so they cannot be collected into a Promise.all.
+    // eslint-disable-next-line no-await-in-loop
     await openSelect(mode);
     for (const label of burst) {
+      // eslint-disable-next-line no-await-in-loop
       await pickOpenOption(label);
+      // eslint-disable-next-line no-await-in-loop
       await openSelect(mode);
     }
 

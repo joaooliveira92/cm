@@ -8,8 +8,6 @@ import { ActiveLeaguesProvider, useActiveLeagues } from "../src/renderer/activeL
 import { LeagueGrid } from "../src/renderer/activeLeagues/LeagueGrid.js";
 import {
   chooseOptionByLabel,
-  openSelect,
-  pickOpenOption,
   selectValueOf,
 } from "./setup/baseUiSelect.js";
 
