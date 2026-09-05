@@ -3,8 +3,8 @@ import { fileURLToPath } from "node:url";
 import { RPC_CHANNEL, type AppRpcMethod } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import electron from "electron";
-import { handleRpc } from "./rpcServer.js";
-import { LoggerLayer } from "./logging.js";
+import { handleRpc } from "./rpc/rpcServer.js";
+import { LoggerLayer } from "./rpc/logging.js";
 
 const { app, BrowserWindow, ipcMain } = electron;
 

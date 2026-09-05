@@ -10,11 +10,16 @@ import { BidId, ClubId, MatchId, PlayerId, Tactic } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../src/main/saves.js";
-import { getSquad } from "../src/main/squad.js";
-import { changeTactics } from "../src/main/tactics.js";
-import { startMatch, submitMatchCommand } from "../src/main/match.js";
-import { placeBid, respondAsBidder, respondToBid, renewContract, signFreeAgent } from "../src/main/transfers/index.js";
+import { createSave } from "../src/main/world/index.js";
+import { getSquad, changeTactics } from "../src/main/club/index.js";
+import { startMatch, submitMatchCommand } from "../src/main/match/index.js";
+import {
+  placeBid,
+  respondAsBidder,
+  respondToBid,
+  renewContract,
+  signFreeAgent,
+} from "../src/main/transfers/index.js";
 
 let savesDir: string;
 

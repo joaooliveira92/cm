@@ -8,9 +8,9 @@ import {
   POSITION_ROLES,
   STATURE_TIERS,
 } from "@cm-clone/shared";
-import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
+import { LeagueTableScreen } from "../src/renderer/leagueTable/LeagueTableScreen.js";
 import { TransfersScreen } from "../src/renderer/transfers/TransfersScreen.js";
-import { TacticsScreen } from "../src/renderer/TacticsScreen.js";
+import { TacticsScreen } from "../src/renderer/tactics/TacticsScreen.js";
 import { MatchDayScreen } from "../src/renderer/match/MatchDayScreen.js";
 import { setActiveMatch, clearActiveMatch } from "../src/renderer/match/session.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";

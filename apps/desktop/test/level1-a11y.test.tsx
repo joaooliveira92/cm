@@ -14,11 +14,11 @@ import {
   STATURE_TIERS,
 } from "@cm-clone/shared";
 import { SquadScreen } from "../src/renderer/squad/SquadScreen.js";
-import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
-import { FixturesScreen } from "../src/renderer/FixturesScreen.js";
-import { SeasonSummaryScreen } from "../src/renderer/SeasonSummaryScreen.js";
+import { LeagueTableScreen } from "../src/renderer/leagueTable/LeagueTableScreen.js";
+import { FixturesScreen } from "../src/renderer/fixtures/FixturesScreen.js";
+import { SeasonSummaryScreen } from "../src/renderer/seasonSummary/SeasonSummaryScreen.js";
 import { ManagerIdentityStep } from "../src/renderer/create/ManagerIdentityStep.js";
-import { TacticsScreen } from "../src/renderer/TacticsScreen.js";
+import { TacticsScreen } from "../src/renderer/tactics/TacticsScreen.js";
 import { TransfersScreen } from "../src/renderer/transfers/TransfersScreen.js";
 import { MatchDayScreen } from "../src/renderer/match/MatchDayScreen.js";
 import { setActiveMatch, clearActiveMatch } from "../src/renderer/match/session.js";

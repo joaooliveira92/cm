@@ -9,7 +9,7 @@ import {
   Outlet,
   RouterProvider,
 } from "@tanstack/react-router";
-import { KeyboardSpine } from "../src/renderer/KeyboardSpine.js";
+import { KeyboardSpine } from "../src/renderer/keyboard/KeyboardSpine.js";
 import { bindRouter } from "../src/renderer/navigation/adapter.js";
 import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../src/renderer/actions/scopeState.js";

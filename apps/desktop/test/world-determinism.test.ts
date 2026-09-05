@@ -16,9 +16,12 @@ import {
   canonicalNationId,
 } from "@cm-clone/shared";
 import { type SnapshotId } from "@cm-clone/contracts";
-import { getLeagueSelectionSnapshot } from "../src/main/leagueSelection.js";
-import { beginCareer } from "../src/main/saves.js";
-import { GENERATOR_VERSION, RULESET_VERSION } from "../src/main/worldGeneration.js";
+import {
+  getLeagueSelectionSnapshot,
+  beginCareer,
+  GENERATOR_VERSION,
+  RULESET_VERSION,
+} from "../src/main/world/index.js";
 import {
   createDefaultSnapshot,
   createPyramidSnapshot,

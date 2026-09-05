@@ -15,7 +15,7 @@ import {
 } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { insertGeneratedSquad } from "../worldGeneration.js";
+import { insertGeneratedSquad } from "../world/worldGeneration.js";
 import { discardSquadsForClubs } from "./matchday.js";
 
 // ---------------------------------------------------------------------------

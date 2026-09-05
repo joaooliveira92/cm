@@ -20,7 +20,7 @@ import {
   resolveLeagueSelection,
   saveSetupDraft,
   submitLeagueSelection,
-} from "../src/main/leagueSelection.js";
+} from "../src/main/world/index.js";
 
 /**
  * The shipped Active Leagues screen against the shipped trusted service.

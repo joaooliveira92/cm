@@ -20,7 +20,7 @@ import {
   STATURE_TIERS,
 } from "@cm-clone/shared";
 import { MatchDayScreen } from "../src/renderer/match/MatchDayScreen.js";
-import { KeyboardSpine } from "../src/renderer/KeyboardSpine.js";
+import { KeyboardSpine } from "../src/renderer/keyboard/KeyboardSpine.js";
 import { bindRouter } from "../src/renderer/navigation/adapter.js";
 import { setActiveMatch, clearActiveMatch } from "../src/renderer/match/session.js";
 import { resetActionHandlers, dispatchAction } from "../src/renderer/actions/dispatch.js";

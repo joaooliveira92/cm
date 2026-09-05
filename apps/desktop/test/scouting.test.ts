@@ -10,11 +10,10 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 import { PlayerId } from "@cm-clone/contracts";
 import { FULLY_SCOUTED, attributeRange, nextProgress, scoutingAccrual } from "@cm-clone/shared";
-import { createSave } from "../src/main/saves.js";
+import { createSave } from "../src/main/world/index.js";
 import { advanceCalendar, discardSquadsForClubs } from "../src/main/season/index.js";
-import { assignScout, getScouting, unassignScout } from "../src/main/scouting.js";
-import { getSquad } from "../src/main/squad.js";
-import { releaseClubStaff } from "../src/main/managerStatus.js";
+import { assignScout, getScouting, unassignScout, getSquad } from "../src/main/club/index.js";
+import { releaseClubStaff } from "../src/main/career/index.js";
 
 let savesDir: string;
 
@@ -339,7 +338,7 @@ describe("scouting belongs to the club", () => {
 describe("no scouting code branches on Simulation Depth", () => {
   it("mentions depth only to explain why it does not read it", async () => {
     const source = await readFile(
-      new URL("../src/main/scouting.ts", import.meta.url),
+      new URL("../src/main/club/scouting.ts", import.meta.url),
       "utf8",
     );
     // Comments may discuss Depth — the module's header explains precisely why the rule enforces

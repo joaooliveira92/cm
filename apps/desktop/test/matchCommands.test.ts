@@ -8,9 +8,9 @@ import { Tactic, type ClubId, type MatchId, type ResumeSimulationView, type Save
 import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../src/main/saves.js";
-import { getTactics } from "../src/main/tactics.js";
-import { listOpponentClubs, resumeSimulation, startMatch, submitMatchCommand } from "../src/main/match.js";
+import { createSave } from "../src/main/world/index.js";
+import { getTactics } from "../src/main/club/index.js";
+import { listOpponentClubs, resumeSimulation, startMatch, submitMatchCommand } from "../src/main/match/index.js";
 
 let savesDir: string;
 

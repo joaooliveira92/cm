@@ -9,7 +9,7 @@ import {
   leagueSummaryOf,
   rollClub,
 } from "../src/renderer/clubSelection/model.js";
-import { strongestPosition, summarizeSquad, type SquadReadoutPlayer } from "../src/main/clubSelection.js";
+import { strongestPosition, summarizeSquad, type SquadReadoutPlayer } from "../src/main/career/index.js";
 
 /**
  * The pure readings behind the Club Selection workspace: the world-binding on the selection

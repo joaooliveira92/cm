@@ -52,7 +52,7 @@ do not fail the gate and are not part of this ticket.
 
 **Blocked by:** None (independent of 01-04, and most useful before them).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] `apps/desktop/tsconfig.json` covers `test/` (and `e2e/`, or a stated reason why not).
 - [ ] `pnpm -r typecheck` is green with the wider scope, with any pre-existing errors fixed rather

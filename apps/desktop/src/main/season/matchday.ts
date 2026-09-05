@@ -14,10 +14,10 @@ import {
 } from "@cm-clone/shared";
 import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { ELEVEN, pickBestFormationTactic } from "../aiClubs.js";
-import { discardScoutingForPlayers } from "../scouting.js";
-import { loadSquadPlayers } from "../squad.js";
-import { loadPersistedTactic } from "../tactics.js";
+import { ELEVEN, pickBestFormationTactic } from "../club/aiClubs.js";
+import { discardScoutingForPlayers } from "../club/scouting.js";
+import { loadSquadPlayers } from "../club/squad.js";
+import { loadPersistedTactic } from "../club/tactics.js";
 
 /** Raised when `simulateMatch` returns without a `FullTimeWhistle` event — an invariant of the
  * engine's match simulation. */

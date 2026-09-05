@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-router";
 import { SaveId } from "@cm-clone/contracts";
 import { STATURE_TIERS } from "@cm-clone/shared";
-import { KeyboardSpine } from "../src/renderer/KeyboardSpine.js";
+import { KeyboardSpine } from "../src/renderer/keyboard/KeyboardSpine.js";
 import { bindRouter } from "../src/renderer/navigation/adapter.js";
 import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../src/renderer/actions/scopeState.js";

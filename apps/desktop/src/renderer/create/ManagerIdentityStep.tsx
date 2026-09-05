@@ -1,13 +1,12 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { PillarDistribution } from "@cm-clone/shared";
-import { MANAGER_PILLARS, validatePillarDistribution } from "@cm-clone/shared";
-import { Alert } from "../components/ui/alert.js";
-import { Button } from "../components/ui/button.js";
 import { Input } from "../components/ui/input.js";
 import { Label } from "../components/ui/label.js";
 import { FOCUS_RING } from "../focus.js";
 import type { ManagerSubStep } from "../router/createSessionContext.js";
+import { ManagerPillarsPane } from "./ManagerPillarsPane.js";
+import { STEPS, panelVariants, type FormStep } from "./managerIdentityCopy.js";
 
 export interface ManagerIdentityStepProps {
   saveName: string;
@@ -22,75 +21,6 @@ export interface ManagerIdentityStepProps {
   onPillarsChange: (pillars: PillarDistribution) => void;
 }
 
-type FormStep = ManagerSubStep;
-type Pillar = (typeof MANAGER_PILLARS)[number];
-
-const TOTAL_PILLAR_POINTS = 12;
-const MIN_PILLAR_VALUE = 1;
-const MAX_PILLAR_VALUE = 5;
-
-const STEPS: ReadonlyArray<{
-  number: FormStep;
-  title: string;
-  description: string;
-}> = [
-    {
-      number: 1,
-      title: "Personal details",
-      description: "Name your career and manager",
-    },
-    {
-      number: 2,
-      title: "Manager identity",
-      description: "Allocate your manager's strengths",
-    },
-  ];
-
-const PILLAR_DISPLAY_NAMES: Readonly<Record<Pillar, string>> = {
-  tacticalAcumen: "Tactical Acumen",
-  influence: "Influence",
-  regimen: "Regimen",
-  technicalCoaching: "Technical Coaching",
-};
-
-/** One restrained accent for every pillar — the same primary the Active Leagues workspace uses
- *  for its chrome — so the step reads as a calm panel rather than a burst of disjoint colours. */
-const PILLAR_ACCENTS: Readonly<Record<Pillar, string>> = {
-  tacticalAcumen: "bg-primary",
-  influence: "bg-primary",
-  regimen: "bg-primary",
-  technicalCoaching: "bg-primary",
-};
-
-const PILLAR_WARNINGS: Readonly<Record<Pillar, string>> = {
-  tacticalAcumen:
-    "Low tactical acumen means your tactical instructions have minimal effect on match outcomes. Your players will follow generic instructions only.",
-  influence:
-    "Low influence makes it harder to negotiate with selling clubs. Counter-offers will be less favorable and rejections more common.",
-  regimen:
-    "Low regimen means players lose condition faster between matches and recover more slowly. Squad fitness management will be challenging.",
-  technicalCoaching:
-    "Low technical coaching means focused player development has minimal effect. Academy players and potential gains from training focus will be minimal.",
-};
-
-const panelVariants = {
-  enter: (direction: number) => ({
-    opacity: 0,
-    x: direction > 0 ? 48 : -48,
-  }),
-  center: {
-    opacity: 1,
-    x: 0,
-  },
-  exit: (direction: number) => ({
-    opacity: 0,
-    x: direction > 0 ? -48 : 48,
-  }),
-};
-
-const sumPillars = (pillars: PillarDistribution): number =>
-  MANAGER_PILLARS.reduce((total, pillar) => total + pillars[pillar], 0);
-
 export const ManagerIdentityStep = ({
   saveName,
   managerName,
@@ -104,22 +34,6 @@ export const ManagerIdentityStep = ({
   const [direction, setDirection] = useState(1);
   const personalDetailsComplete = saveName.trim().length > 0;
 
-  const totalPoints = useMemo(() => sumPillars(pillars), [pillars]);
-  const pointsRemaining = TOTAL_PILLAR_POINTS - totalPoints;
-
-  const pillarErrors = useMemo(
-    () => validatePillarDistribution(pillars),
-    [pillars],
-  );
-
-  const lowPillars = useMemo(
-    () =>
-      MANAGER_PILLARS.filter(
-        (pillar) => pillars[pillar] === MIN_PILLAR_VALUE,
-      ),
-    [pillars],
-  );
-
   const goToStep = useCallback(
     (nextStep: FormStep): void => {
       if (nextStep === 2 && !personalDetailsComplete) {
@@ -130,26 +44,6 @@ export const ManagerIdentityStep = ({
       onStepChange(nextStep);
     },
     [personalDetailsComplete, step, onStepChange],
-  );
-
-  const handlePillarChange = useCallback(
-    (pillar: Pillar, delta: -1 | 1): void => {
-      const currentValue = pillars[pillar];
-      const nextValue = Math.min(
-        MAX_PILLAR_VALUE,
-        Math.max(MIN_PILLAR_VALUE, currentValue + delta),
-      );
-
-      if (nextValue === currentValue) {
-        return;
-      }
-
-      onPillarsChange({
-        ...pillars,
-        [pillar]: nextValue,
-      });
-    },
-    [onPillarsChange, pillars],
   );
 
   return (
@@ -263,252 +157,10 @@ export const ManagerIdentityStep = ({
               }}
               className="space-y-8"
             >
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                  Step 2
-                </span>
-                <h2 className="mt-2 text-2xl font-bold text-text-primary">
-                  Manager identity
-                </h2>
-                <p className="mt-2 text-sm text-text-secondary">
-                  Allocate the strengths that define your managerial career.
-                </p>
-              </div>
-
-
-              <div className="overflow-hidden rounded-panel border border-panel-border bg-panel-bg shadow-panel">
-                <div className="flex flex-col gap-4 border-b border-panel-border p-5 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h3 className="font-semibold text-text-primary">
-                      Pillar distribution
-                    </h3>
-                    <p className="mt-1 text-sm text-text-secondary">
-                      Balance the qualities that shape your management style.
-                    </p>
-                  </div>
-
-                  <motion.div
-                    layout
-                    className={`rounded-panel border px-4 py-2 text-center ${pointsRemaining === 0
-                      ? "border-text-success/30 bg-text-success/10"
-                      : pointsRemaining > 0
-                        ? "border-text-warning/30 bg-text-warning/10"
-                        : "border-destructive/30 bg-destructive/10"
-                      }`}
-                  >
-                    <AnimatePresence mode="popLayout">
-                      <motion.div
-                        key={pointsRemaining}
-                        initial={{ opacity: 0, y: -6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 6 }}
-                      >
-                        <span
-                          className={`block text-md font-bold tabular-nums ${pointsRemaining === 0
-                            ? "text-text-success"
-                            : pointsRemaining > 0
-                              ? "text-text-warning"
-                              : "text-destructive"
-                            }`}
-                        >
-                          {pointsRemaining === 0
-                            ? "Ready"
-                            : Math.abs(pointsRemaining)}
-                        </span>
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                          {pointsRemaining === 0
-                            ? `${totalPoints} points assigned`
-                            : pointsRemaining > 0
-                              ? "Points remaining"
-                              : "Points over"}
-                        </span>
-                      </motion.div>
-                    </AnimatePresence>
-                  </motion.div>
-                </div>
-
-                <div className="grid gap-px bg-panel-border md:grid-cols-2">
-                  {MANAGER_PILLARS.map((pillar) => {
-                    const value = pillars[pillar];
-                    const isMinimum = value === MIN_PILLAR_VALUE;
-
-                    return (
-                      <div
-                        key={pillar}
-                        className="bg-card p-5"
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <span className="font-medium text-text-primary">
-                            {PILLAR_DISPLAY_NAMES[pillar]}
-                          </span>
-
-                          <AnimatePresence>
-                            {isMinimum && (
-                              <motion.span
-                                initial={{
-                                  opacity: 0,
-                                  scale: 0.5,
-                                  rotate: -15,
-                                }}
-                                animate={{
-                                  opacity: 1,
-                                  scale: 1,
-                                  rotate: 0,
-                                }}
-                                exit={{
-                                  opacity: 0,
-                                  scale: 0.5,
-                                  rotate: 15,
-                                }}
-                                className="text-text-warning"
-                                title={PILLAR_WARNINGS[pillar]}
-                                role="img"
-                                aria-label={PILLAR_WARNINGS[pillar]}
-                              >
-                                ⚠
-                              </motion.span>
-                            )}
-                          </AnimatePresence>
-                        </div>
-
-                        <div className="mt-5 flex items-center gap-4">
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="icon"
-                            aria-label={`Decrease ${PILLAR_DISPLAY_NAMES[pillar]}`}
-                            onClick={() => handlePillarChange(pillar, -1)}
-                            disabled={
-                              value <= MIN_PILLAR_VALUE
-                            }
-                          >
-                            −
-                          </Button>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="mb-2 text-center">
-                              <AnimatePresence mode="popLayout">
-                                <motion.span
-                                  key={value}
-                                  initial={{
-                                    opacity: 0,
-                                    y: -6,
-                                    scale: 0.8,
-                                  }}
-                                  animate={{
-                                    opacity: 1,
-                                    y: 0,
-                                    scale: 1,
-                                  }}
-                                  exit={{
-                                    opacity: 0,
-                                    y: 6,
-                                    scale: 0.8,
-                                  }}
-                                  className={`inline-block text-lg font-bold tabular-nums ${isMinimum
-                                    ? "text-text-warning"
-                                    : "text-text-primary"
-                                    }`}
-                                >
-                                  {value}
-                                </motion.span>
-                              </AnimatePresence>
-                            </div>
-
-                            <div className="flex gap-1.5">
-                              {Array.from(
-                                { length: MAX_PILLAR_VALUE },
-                                (_, index) => {
-                                  const active = index < value;
-
-                                  return (
-                                    <motion.div
-                                      key={index}
-                                      className={`h-2 flex-1 rounded-full ${active
-                                        ? PILLAR_ACCENTS[pillar]
-                                        : "bg-surface-raised"
-                                        }`}
-                                      animate={{
-                                        scaleY: active ? 1 : 0.65,
-                                        opacity: active ? 1 : 0.5,
-                                      }}
-                                      transition={{
-                                        type: "spring",
-                                        stiffness: 450,
-                                        damping: 28,
-                                      }}
-                                    />
-                                  );
-                                },
-                              )}
-                            </div>
-                          </div>
-
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="icon"
-                            aria-label={`Increase ${PILLAR_DISPLAY_NAMES[pillar]}`}
-                            onClick={() => handlePillarChange(pillar, 1)}
-                            disabled={
-                              value >= MAX_PILLAR_VALUE
-                            }
-                          >
-                            +
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <AnimatePresence initial={false}>
-                {pillarErrors.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 12, height: 0 }}
-                    animate={{ opacity: 1, y: 0, height: "auto" }}
-                    exit={{ opacity: 0, y: -8, height: 0 }}
-                  >
-                    <Alert variant="destructive">
-                      <ul className="space-y-1 text-sm">
-                        {pillarErrors.map((error) => (
-                          <li key={error}>{error}</li>
-                        ))}
-                      </ul>
-                    </Alert>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <AnimatePresence initial={false}>
-                {lowPillars.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 12, height: 0 }}
-                    animate={{ opacity: 1, y: 0, height: "auto" }}
-                    exit={{ opacity: 0, y: -8, height: 0 }}
-                  >
-                    <Alert className="border-text-warning/40 bg-text-warning/10">
-                      <h4 className="text-sm font-medium text-text-warning">
-                        Pillar warnings
-                      </h4>
-                      <ul className="mt-3 space-y-3 text-xs leading-relaxed text-text-warning">
-                        {lowPillars.map((pillar) => (
-                          <motion.li
-                            key={pillar}
-                            layout
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                          >
-                            <strong>{PILLAR_DISPLAY_NAMES[pillar]}:</strong>{" "}
-                            {PILLAR_WARNINGS[pillar]}
-                          </motion.li>
-                        ))}
-                      </ul>
-                    </Alert>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <ManagerPillarsPane
+                pillars={pillars}
+                onPillarsChange={onPillarsChange}
+              />
 
 
             </motion.section>

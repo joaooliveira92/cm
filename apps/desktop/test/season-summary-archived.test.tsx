@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId, ClubId } from "@cm-clone/contracts";
-import { SeasonSummaryScreen } from "../src/renderer/SeasonSummaryScreen.js";
+import { SeasonSummaryScreen } from "../src/renderer/seasonSummary/SeasonSummaryScreen.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
 
 const saveId = SaveId.make("s1");

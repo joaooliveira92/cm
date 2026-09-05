@@ -2,7 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
-import { ManagerProfileScreen } from "../src/renderer/ManagerProfileScreen.js";
+import { ManagerProfileScreen } from "../src/renderer/managerProfile/ManagerProfileScreen.js";
 import { clearActiveMatch, setActiveMatch } from "../src/renderer/match/session.js";
 import { bindRouter } from "../src/renderer/navigation/adapter.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";

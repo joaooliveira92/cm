@@ -17,14 +17,14 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { cupRoundDate, leagueRoundDates, nextCalendarBoundary, tieWinner } from "@cm-clone/shared";
-import { beginCareer, commitCareer, createSave } from "../src/main/saves.js";
+import { beginCareer, commitCareer, createSave } from "../src/main/world/index.js";
 import {
   createDefaultSnapshot,
   createPyramidSnapshot,
   createRegionalSnapshot,
   createSnapshotFor,
 } from "./snapshot-helpers.js";
-import { getSquad } from "../src/main/squad.js";
+import { getSquad } from "../src/main/club/index.js";
 import {
   advanceCalendar,
   discardSquadsForClubs,
@@ -33,7 +33,7 @@ import {
   getLeagueTable,
   getSeasonSummary,
 } from "../src/main/season/index.js";
-import { loadStreamEvents } from "../src/main/decider.js";
+import { loadStreamEvents } from "../src/main/season/decider.js";
 
 let savesDir: string;
 

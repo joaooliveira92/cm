@@ -20,9 +20,11 @@ import {
   LEAGUE_SNAPSHOTS_FILE,
   getLeagueSelectionSnapshot,
   toDomainIntents,
-} from "../src/main/leagueSelection.js";
-import { beginCareer, createSave, listSaves } from "../src/main/saves.js";
-import { getSquad } from "../src/main/squad.js";
+  beginCareer,
+  createSave,
+  listSaves,
+} from "../src/main/world/index.js";
+import { getSquad } from "../src/main/club/index.js";
 import { createDefaultSnapshot } from "./snapshot-helpers.js";
 
 let savesDir: string;

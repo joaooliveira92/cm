@@ -6,15 +6,15 @@ import {
   Outlet,
 } from "@tanstack/react-router";
 import { bindRouter } from "../navigation/adapter.js";
-import { KeyboardSpine } from "../KeyboardSpine.js";
-import { FixturesScreen } from "../FixturesScreen.js";
-import { LeagueTableScreen } from "../LeagueTableScreen.js";
-import { ManagerProfileScreen } from "../ManagerProfileScreen.js";
+import { KeyboardSpine } from "../keyboard/KeyboardSpine.js";
+import { FixturesScreen } from "../fixtures/FixturesScreen.js";
+import { LeagueTableScreen } from "../leagueTable/LeagueTableScreen.js";
+import { ManagerProfileScreen } from "../managerProfile/ManagerProfileScreen.js";
 import { MatchDayScreen } from "../match/MatchDayScreen.js";
 import { NewsInboxScreen } from "../news/NewsInboxScreen.js";
-import { SeasonSummaryScreen } from "../SeasonSummaryScreen.js";
+import { SeasonSummaryScreen } from "../seasonSummary/SeasonSummaryScreen.js";
 import { SquadScreen } from "../squad/SquadScreen.js";
-import { TacticsScreen } from "../TacticsScreen.js";
+import { TacticsScreen } from "../tactics/TacticsScreen.js";
 import { TransfersScreen } from "../transfers/TransfersScreen.js";
 import { MainMenuScreen } from "./mainMenu.js";
 import { LoadCareerScreen } from "./loadCareer.js";

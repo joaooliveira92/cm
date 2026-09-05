@@ -7,7 +7,10 @@
  * season one), `fixtureGeneration` (the pure round-robin draw), `matchday` (resolving a fixture
  * into a score), `cups` (brackets drawn round by round), `standings` (tables, live and frozen),
  * `rollover` (promotion, relegation, the world a year on), `advance` (the calendar state machine),
- * `queries` (the read side), and `currentSeason` (the one home for "the save's current season").
+ * `queries` (the read side), `currentSeason` (the one home for "the save's current season"), and
+ * `decider` (the save-scoped event-stream primitives). The last two are not on this barrel: like
+ * `currentSeason`, `decider` is a primitive the whole main process appends through rather than
+ * part of what a *season* offers, so its call sites name `season/decider.js` directly.
  */
 
 export { advanceCalendar, expireStalePendingBids, retireManager } from "./advance.js";

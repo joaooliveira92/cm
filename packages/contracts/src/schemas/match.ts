@@ -26,7 +26,7 @@ export class CommentaryLineView extends Schema.Class<CommentaryLineView>("Commen
 }) {}
 
 /** Per-club substitution cap status (ticket 14: 5 subs / 3 windows, halftime doesn't count as a
- * window — see `computeSubstitutionStatus` in `apps/desktop/src/main/match.ts`) — lets the UI
+ * window — see `computeSubstitutionStatus` in `apps/desktop/src/main/match/view.ts`) — lets the UI
  * disable the substitution control and show subs used/remaining without guessing at the engine's
  * cap enforcement (which otherwise just silently no-ops an over-cap `MakeSubstitution`). */
 export class SubstitutionStatusView extends Schema.Class<SubstitutionStatusView>("SubstitutionStatusView")({

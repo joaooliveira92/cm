@@ -10,7 +10,7 @@ import {
   POSITIONS,
   STATURE_TIERS,
 } from "@cm-clone/shared";
-import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
+import { LeagueTableScreen } from "../src/renderer/leagueTable/LeagueTableScreen.js";
 import { SquadScreen } from "../src/renderer/squad/SquadScreen.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
 

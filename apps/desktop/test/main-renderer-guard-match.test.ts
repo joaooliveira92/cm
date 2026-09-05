@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { BINDING_SHAPE, LOCKED_INFRA_BINDINGS as MAIN_LOCKED } from "../src/main/keybindings.js";
+import { BINDING_SHAPE, LOCKED_INFRA_BINDINGS as MAIN_LOCKED } from "../src/main/rpc/index.js";
 import { LOCKED_INFRA_BINDINGS as RENDERER_LOCKED } from "../src/renderer/actions/registry.js";
 import { isValidBindingShape } from "../src/renderer/actions/overrides.js";
 
 /**
  * Drift guard (F3) for main's locked-key / binding-shape mirror.
  *
- * Main keeps two string-level guards in `src/main/keybindings.ts` (`LOCKED_INFRA_BINDINGS` and
+ * Main keeps two string-level guards in `src/main/rpc/keybindings.ts` (`LOCKED_INFRA_BINDINGS` and
  * `BINDING_SHAPE`) as a documented backstop for a misbehaving client: a bad binding must never
  * persist even if the renderer is bypassed. The renderer is the authority — it knows the
  * registry, the defaults, and the collisions, which main never sees — so main's mirror is safe

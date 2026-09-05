@@ -11,11 +11,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Effect } from "effect";
 import { bindRouter, navigate } from "../src/renderer/navigation/adapter.js";
-import {
-  buildLeaguePresetIntents,
-  getLeagueSetupIndex,
-  resolveLeagueSelection,
-} from "../src/main/leagueSelection.js";
+import { buildLeaguePresetIntents, getLeagueSetupIndex, resolveLeagueSelection } from "../src/main/world/index.js";
 import { CreateFlowLayout } from "../src/renderer/create/CreateFlowLayout.js";
 import {
   LeagueSelectionRouteContent,

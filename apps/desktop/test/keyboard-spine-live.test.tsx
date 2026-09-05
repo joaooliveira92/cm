@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-router";
 import { SaveId } from "@cm-clone/contracts";
 import { STATURE_TIERS } from "@cm-clone/shared";
-import { KeyboardSpine, PrefixIndicator, PREFIX_INDICATOR_ENTRIES } from "../src/renderer/KeyboardSpine.js";
+import { KeyboardSpine, PrefixIndicator, PREFIX_INDICATOR_ENTRIES } from "../src/renderer/keyboard/KeyboardSpine.js";
 import { bindRouter } from "../src/renderer/navigation/adapter.js";
 import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../src/renderer/actions/scopeState.js";
@@ -19,7 +19,7 @@ import { G_PREFIX_COMPLETIONS } from "../src/renderer/actions/allActions.js";
 import { setPrefixTimeoutMs } from "../src/renderer/keymap/timeout.js";
 import { teachingSplashStorageKey } from "../src/renderer/discoverability/TeachingSplash.js";
 import { TransfersScreen } from "../src/renderer/transfers/TransfersScreen.js";
-import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
+import { LeagueTableScreen } from "../src/renderer/leagueTable/LeagueTableScreen.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
 import { CareerShell } from "../src/renderer/router/career.js";
 

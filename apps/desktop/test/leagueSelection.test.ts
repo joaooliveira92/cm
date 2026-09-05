@@ -26,7 +26,7 @@ import {
   submissionKey,
   submitLeagueSelection,
   toDomainIntents,
-} from "../src/main/leagueSelection.js";
+} from "../src/main/world/index.js";
 
 const run = <A, E>(effect: Effect.Effect<A, E>): Promise<A> => Effect.runPromise(effect);
 const runExit = <A, E>(effect: Effect.Effect<A, E>) => Effect.runPromise(Effect.exit(effect));

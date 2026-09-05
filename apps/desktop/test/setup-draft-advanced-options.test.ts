@@ -4,11 +4,7 @@ import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Effect } from "effect";
 import { defaultAdvancedOptions } from "@cm-clone/shared";
-import {
-  buildLeaguePresetIntents,
-  loadSetupDraft,
-  saveSetupDraft,
-} from "../src/main/leagueSelection.js";
+import { buildLeaguePresetIntents, loadSetupDraft, saveSetupDraft } from "../src/main/world/index.js";
 
 /**
  * The setup draft's round-trip now that it carries the Active Leagues advanced options.

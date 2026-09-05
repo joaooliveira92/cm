@@ -22,7 +22,7 @@ import {
   saveLeaguePreset,
   saveSetupDraft,
   submitLeagueSelection,
-} from "../src/main/leagueSelection.js";
+} from "../src/main/world/index.js";
 
 /**
  * The shipped screen against the shipped service.

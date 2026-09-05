@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Effect } from "effect";
 import { NationId, type LeagueSetupIndexView } from "@cm-clone/contracts";
-import { resolveLeagueSelection, getLeagueSetupIndex } from "../src/main/leagueSelection.js";
+import { resolveLeagueSelection, getLeagueSetupIndex } from "../src/main/world/index.js";
 import { applyIntent, initialState } from "../src/renderer/activeLeagues/state.js";
 import { deriveActiveLeaguesView } from "../src/renderer/activeLeagues/atoms.js";
 import { toDomainIndex } from "../src/renderer/activeLeagues/adapters.js";

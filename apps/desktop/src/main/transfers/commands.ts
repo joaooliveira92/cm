@@ -24,9 +24,9 @@ import {
 } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { withExistingSave } from "../decider.js";
-import { assertSaveNotArchived } from "../managerStatus.js";
-import { loadUserClub } from "../squad.js";
+import { withExistingSave } from "../season/decider.js";
+import { assertSaveNotArchived } from "../career/managerStatus.js";
+import { loadUserClub } from "../club/squad.js";
 import { isWindowOpen, loadSeasonRow, toSeasonView } from "../season/currentSeason.js";
 import { decideAiSellerResponse, resolveAiCounterOffer } from "./ai.js";
 import {

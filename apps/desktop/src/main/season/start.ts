@@ -8,10 +8,10 @@ import {
 } from "@cm-clone/shared";
 import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { assignAiTactics } from "../aiClubs.js";
-import { appendStreamEvents, nextStreamSeq } from "../decider.js";
-import { loadUserClub } from "../squad.js";
-import { readGenerationManifest } from "../worldGeneration.js";
+import { assignAiTactics } from "../club/aiClubs.js";
+import { appendStreamEvents, nextStreamSeq } from "./decider.js";
+import { loadUserClub } from "../club/squad.js";
+import { readGenerationManifest } from "../world/worldGeneration.js";
 import { materialiseCupRounds } from "./cups.js";
 import { generateRoundRobinFixtures } from "./fixtureGeneration.js";
 

@@ -19,9 +19,8 @@ import {
   displayName,
   packCoverageGaps,
 } from "@cm-clone/shared";
-import { getClubSelection } from "../src/main/clubSelection.js";
-import { reportPackCoverage, resolveDisplayName, savePack } from "../src/main/displayNames.js";
-import { beginCareer } from "../src/main/saves.js";
+import { getClubSelection } from "../src/main/career/index.js";
+import { reportPackCoverage, resolveDisplayName, savePack, beginCareer } from "../src/main/world/index.js";
 import { createDefaultSnapshot } from "./snapshot-helpers.js";
 
 let savesDir: string;

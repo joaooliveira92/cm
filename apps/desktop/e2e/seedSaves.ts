@@ -1,7 +1,7 @@
 import path from "node:path";
 import { Effect, Schema } from "effect";
 import { advanceCalendar } from "../src/main/season/index.js";
-import { createSave } from "../src/main/saves.js";
+import { createSave } from "../src/main/world/index.js";
 
 const run = <A, E>(effect: Effect.Effect<A, E>): Promise<A> => Effect.runPromise(effect);
 

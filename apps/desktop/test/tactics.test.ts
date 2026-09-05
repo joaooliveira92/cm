@@ -8,8 +8,8 @@ import { Tactic, type PlayerId } from "@cm-clone/contracts";
 import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../src/main/saves.js";
-import { getTactics, changeTactics } from "../src/main/tactics.js";
+import { createSave } from "../src/main/world/index.js";
+import { getTactics, changeTactics } from "../src/main/club/index.js";
 
 let savesDir: string;
 

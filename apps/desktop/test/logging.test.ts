@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Effect, Layer, Logger, References } from "effect";
-import { handleRpc } from "../src/main/rpcServer.js";
-import { withWideEvent, type WideEvent } from "../src/main/logging.js";
+import { handleRpc, withWideEvent, type WideEvent } from "../src/main/rpc/index.js";
 
 /** A capturing logger that records each structured wide event instead of writing
  *  to stdout, so tests assert on the emitted payload without touching real IO. */

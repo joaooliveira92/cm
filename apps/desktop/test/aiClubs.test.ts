@@ -14,11 +14,13 @@ import {
   computeLeagueAveragePositionRatings,
   identifyWeakPositions,
   pickBestFormationTactic,
-} from "../src/main/aiClubs.js";
+  getSquad,
+  loadSquadPlayers,
+  loadPersistedTactic,
+  validateTactic,
+} from "../src/main/club/index.js";
 import { advanceCalendar } from "../src/main/season/index.js";
-import { createSave } from "../src/main/saves.js";
-import { getSquad, loadSquadPlayers } from "../src/main/squad.js";
-import { loadPersistedTactic, validateTactic } from "../src/main/tactics.js";
+import { createSave } from "../src/main/world/index.js";
 import { aiPlaceBid, loadAllPlayersEcon, respondToBid } from "../src/main/transfers/index.js";
 
 let savesDir: string;
@@ -372,7 +374,7 @@ it.effect("pickBestFormationTactic returns the same formation and slots as selec
 );
 
 it("aiClubs.ts never imports the rpcServer/renderer IPC surface", () => {
-  const source = readFileSync(path.join(__dirname, "../src/main/aiClubs.ts"), "utf8");
+  const source = readFileSync(path.join(__dirname, "../src/main/club/aiClubs.ts"), "utf8");
   ok(!source.includes("rpcServer.js"), "no import from the RpcGroup dispatch module");
   ok(!source.includes("window.cmClone"), "no renderer-side IPC bridge call");
 });

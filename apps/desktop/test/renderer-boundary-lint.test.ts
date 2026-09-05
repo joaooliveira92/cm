@@ -34,17 +34,17 @@ describe("renderer dependency-boundary lint (AC-09)", () => {
 
   it("the keyboard-binding seam hotkeys.ts is exempt from the hotkeys boundary", () => {
     expect(isBoundaryEnforced(join(rendererDir, "hotkeys.ts"))).toBe(false);
-    expect(isBoundaryEnforced(join(rendererDir, "KeyboardSpine.tsx"))).toBe(true);
+    expect(isBoundaryEnforced(join(rendererDir, "keyboard", "KeyboardSpine.tsx"))).toBe(true);
   });
 
   it("Stage-2 route/creation/navigation + Stage-3 keyboard-spine surfaces import only the seams and trip no boundary violation", async () => {
     const screenFiles = [
       join(rendererDir, "squad", "SquadScreen.tsx"),
-      join(rendererDir, "LeagueTableScreen.tsx"),
+      join(rendererDir, "leagueTable", "LeagueTableScreen.tsx"),
       join(rendererDir, "transfers", "TransfersScreen.tsx"),
       join(rendererDir, "match", "MatchDayScreen.tsx"),
-      join(rendererDir, "TacticsScreen.tsx"),
-      join(rendererDir, "KeyboardSpine.tsx"),
+      join(rendererDir, "tactics", "TacticsScreen.tsx"),
+      join(rendererDir, "keyboard", "KeyboardSpine.tsx"),
       join(rendererDir, "actions", "allActions.ts"),
       join(rendererDir, "actions", "registry.ts"),
       join(rendererDir, "actions", "dispatch.ts"),

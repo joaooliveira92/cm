@@ -9,8 +9,8 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { advanceCalendar, recoverClubFitness } from "../src/main/season/index.js";
-import { createSave } from "../src/main/saves.js";
-import { getSquad } from "../src/main/squad.js";
+import { createSave } from "../src/main/world/index.js";
+import { getSquad } from "../src/main/club/index.js";
 
 let savesDir: string;
 

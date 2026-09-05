@@ -6,8 +6,8 @@ import { it } from "@effect/vitest";
 import { deepStrictEqual, notStrictEqual, ok, strictEqual } from "node:assert";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../src/main/saves.js";
-import { listOpponentClubs, resumeSimulation, startMatch } from "../src/main/match.js";
+import { createSave } from "../src/main/world/index.js";
+import { listOpponentClubs, resumeSimulation, startMatch } from "../src/main/match/index.js";
 
 let savesDir: string;
 

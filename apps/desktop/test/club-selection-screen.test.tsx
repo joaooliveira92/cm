@@ -9,8 +9,8 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import type { ClubId } from "@cm-clone/contracts";
 import { BASE_CONTENT_PACK, displayName } from "@cm-clone/shared";
-import { getClubSelection } from "../src/main/clubSelection.js";
-import { createSave } from "../src/main/saves.js";
+import { getClubSelection } from "../src/main/career/index.js";
+import { createSave } from "../src/main/world/index.js";
 import { ClubSelectionScreen } from "../src/renderer/clubSelection/ClubSelectionScreen.js";
 
 /**

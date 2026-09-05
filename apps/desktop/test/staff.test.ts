@@ -8,8 +8,8 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 import { SCOUT_HEADCOUNT, type StatureTier } from "@cm-clone/shared";
-import { beginCareer, commitCareer, createSave } from "../src/main/saves.js";
-import { materialiseStaff } from "../src/main/staff.js";
+import { beginCareer, commitCareer, createSave } from "../src/main/world/index.js";
+import { materialiseStaff } from "../src/main/career/index.js";
 import { createDefaultSnapshot } from "./snapshot-helpers.js";
 
 let savesDir: string;

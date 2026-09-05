@@ -14,7 +14,7 @@ import {
   resetAllKeyBindings,
   resetKeyBinding,
   setKeyBindingOverride,
-} from "../src/main/keybindings.js";
+} from "../src/main/rpc/index.js";
 
 let userDataDir: string;
 

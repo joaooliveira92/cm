@@ -20,7 +20,7 @@ import {
   SQUAD_SLOTS,
   type PlayerAttributes,
 } from "@cm-clone/shared";
-import { beginCareer, commitCareer } from "../src/main/saves.js";
+import { beginCareer, commitCareer } from "../src/main/world/index.js";
 import { advanceCalendar, discardSquadsForClubs } from "../src/main/season/index.js";
 import { createPyramidSnapshot, createSnapshotFor } from "./snapshot-helpers.js";
 

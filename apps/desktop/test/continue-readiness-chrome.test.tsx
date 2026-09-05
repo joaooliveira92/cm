@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-router";
 import { SaveId } from "@cm-clone/contracts";
 import { CareerChildView, CareerShell } from "../src/renderer/router/career.js";
-import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
+import { LeagueTableScreen } from "../src/renderer/leagueTable/LeagueTableScreen.js";
 import { bindRouter } from "../src/renderer/navigation/adapter.js";
 import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../src/renderer/actions/scopeState.js";

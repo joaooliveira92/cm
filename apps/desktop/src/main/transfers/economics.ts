@@ -9,7 +9,7 @@ import {
 } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { displayNames } from "../displayNames.js";
+import { displayNames } from "../world/displayNames.js";
 
 // ---------------------------------------------------------------------------
 // Player economics: Overall Rating / age / Potential Ability -> Transfer Value / wage

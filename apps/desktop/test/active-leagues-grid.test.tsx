@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Effect } from "effect";
 import type { LeagueSetupIndexView } from "@cm-clone/contracts";
-import { resolveLeagueSelection, getLeagueSetupIndex } from "../src/main/leagueSelection.js";
+import { resolveLeagueSelection, getLeagueSetupIndex } from "../src/main/world/index.js";
 import { ActiveLeaguesProvider, useActiveLeagues } from "../src/renderer/activeLeagues/ActiveLeaguesProvider.js";
 import { LeagueGrid } from "../src/renderer/activeLeagues/LeagueGrid.js";
 import {

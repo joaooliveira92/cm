@@ -10,8 +10,8 @@ import {
 import { DEFAULT_CONTRACT_YEARS, weeklyWage } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { displayNames } from "../displayNames.js";
-import { appendStreamEvents, nextStreamSeq } from "../decider.js";
+import { displayNames } from "../world/displayNames.js";
+import { appendStreamEvents, nextStreamSeq } from "../season/decider.js";
 import { loadCurrentSeasonRow } from "../season/currentSeason.js";
 import { loadClubBudgetRow, loadWageBudgetUsed } from "./budgets.js";
 import { loadPlayerEcon } from "./economics.js";

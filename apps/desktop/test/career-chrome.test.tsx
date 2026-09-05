@@ -13,8 +13,8 @@ import {
 import { SaveId } from "@cm-clone/contracts";
 import { CareerChildView, CareerShell } from "../src/renderer/router/career.js";
 import { seasonReadout, matchReadout } from "../src/renderer/chrome/CareerChrome.js";
-import { LeagueTableScreen } from "../src/renderer/LeagueTableScreen.js";
-import { FixturesScreen } from "../src/renderer/FixturesScreen.js";
+import { LeagueTableScreen } from "../src/renderer/leagueTable/LeagueTableScreen.js";
+import { FixturesScreen } from "../src/renderer/fixtures/FixturesScreen.js";
 import { bindRouter } from "../src/renderer/navigation/adapter.js";
 import { ALL_ACTIONS } from "../src/renderer/actions/allActions.js";
 import { resetActionHandlers } from "../src/renderer/actions/dispatch.js";
@@ -29,7 +29,7 @@ const rid = (s: string) => SaveId.make(s);
 // instead of the module URL.
 const leagueTableSourcePath = path.join(
   process.cwd(),
-  "src/renderer/LeagueTableScreen.tsx",
+  "src/renderer/leagueTable/LeagueTableScreen.tsx",
 );
 
 const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown>) => {

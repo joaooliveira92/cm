@@ -6,7 +6,7 @@ import { ClubId } from "@cm-clone/contracts";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect, Exit } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { beginCareer, commitCareer, listSaves } from "../src/main/saves.js";
+import { beginCareer, commitCareer, listSaves } from "../src/main/world/index.js";
 import { createDefaultSnapshot } from "./snapshot-helpers.js";
 
 /**

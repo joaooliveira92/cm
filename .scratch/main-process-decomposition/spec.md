@@ -44,11 +44,17 @@ something no gate covers.
   entry. No test catches a break here; only `pnpm build` does.
 - **Do not decompose the body of `advanceCalendar`.** It is one transaction whose statement
   ordering is the specification, explained by its own comments. Split the file around it.
-- **`test/aiClubs.test.ts` reads `../src/main/aiClubs.ts` by path** as a layering assertion and
-  **fails open** -- if the path stops resolving it passes vacuously rather than erroring.
-- **The desktop tests are not typechecked.** `apps/desktop/tsconfig.json` has
-  `"include": ["src", ...]`, so `pnpm -r typecheck` says "Done" while `test/` is never checked.
-  Moving a symbol a test imports will not be caught by typecheck. Grep and run the specs.
+- **Two specs reach for source files by filesystem path**, so typecheck cannot see them and a
+  move must update the string by hand: `test/aiClubs.test.ts` (`../src/main/.../aiClubs.ts`) and
+  `test/career-chrome.test.tsx` (`src/renderer/.../LeagueTableScreen.tsx`). Both read through
+  `readFile`, which **throws** on a path that no longer resolves -- corrected 2026-09-05, an
+  earlier revision of this spec claimed `aiClubs.test.ts` "fails open", and it does not. The real
+  hazard is narrower: both assertions are negative (`not.toContain`), so a path retargeted at the
+  *wrong but existing* file passes vacuously.
+- **The desktop tests are now typechecked** (ticket 05, resolved 2026-09-05).
+  `apps/desktop/tsconfig.json` covers `src`, `test`, `e2e` and `scripts`, so a move that breaks a
+  spec's import fails `pnpm -r typecheck` in seconds rather than surfacing in a 15-minute vitest
+  run. This is what makes the remaining move tickets cheap to verify.
 - **Pure code cannot simply move to `packages/shared`.** `shared` now has zero dependencies (the
   audit removed a real runtime cycle to get there) and `contracts` depends on `shared`. Anything
   needing `ClubId` or `Effect` cannot live in `shared` without recreating the cycle. Only code
@@ -85,3 +91,30 @@ Files deliberately left alone: `main/db/schema.ts` (whole-schema invariant, driz
 `external-reference/` (documented, gate-excluded, not ours), the renderer component splits already
 claimed under `.scratch/react-composition-audit/`, and `docs/specs/` (a 300-file reference corpus
 that is correctly shaped for what it is).
+
+## Round 3 (2026-09-05, third pass)
+
+A third audit ran once 08-10 had landed. It confirmed the repo's documentation trees are already
+coherent and mapped from the root [README.md](../../README.md) -- the five parallel agent
+directories (`docs/`, `.agents/`, `.ai/`, `.opencode/`, `.scratch/`) each carry their own index and
+cross-link, and the apparent skill duplication is two deliberate arrangements, not drift: the short
+names (`triage`, `to-spec`, ...) are alias stubs for the `cm-*` forks, and the `vercel-*` trees are
+vendored upstream and hash-pinned by `skills-lock.json`. None of it should be "tidied".
+
+What it did find was that rounds 1 and 2 audited `src/` and the packages, and never measured the
+renderer's hooks or the test tree. Three tickets close that gap:
+
+| Ticket | File | Lines |
+|---|---|---|
+| 11 split `renderer/transfers/useTransfersScreen.ts` | the largest splittable source file left | 717 |
+| 12 split `renderer/create/ManagerIdentityStep.tsx` | one file holding a step machine, its copy tables and its pillar arithmetic | 621 |
+| 13 split `test/season.test.ts` | ticket 02 split its subject into eight modules; its spec never followed | 1200 |
+
+13 is folded into 06 rather than run separately -- it is the same rewrite over the same files.
+
+Files confirmed as deliberately out of scope, in addition to round 2's list:
+`renderer/components/ui/` (vendored shadcn, customized in place), `docs/specs/` (a 277-file
+reference corpus), and the three renderer files in the 400-600 band
+(`squad/useSquadScreen.ts` 502, `leagueSelection/viewModel.ts` 418, `create/useCreateSession.ts`
+418) -- none crosses the 600-line bar this effort works to, and splitting on line count alone is
+how a decomposition effort turns into churn.

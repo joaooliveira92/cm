@@ -8,9 +8,9 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { getManagerProfileScreen } from "../src/main/managerProfile.js";
-import { createSave } from "../src/main/saves.js";
-import { getSquad } from "../src/main/squad.js";
+import { getManagerProfileScreen } from "../src/main/career/index.js";
+import { createSave } from "../src/main/world/index.js";
+import { getSquad } from "../src/main/club/index.js";
 
 let savesDir: string;
 

@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import { FORMATION_SLOTS, FORMATIONS, POSITION_ROLES, STATURE_TIERS } from "@cm-clone/shared";
-import { TacticsScreen } from "../src/renderer/TacticsScreen.js";
+import { TacticsScreen } from "../src/renderer/tactics/TacticsScreen.js";
 import { RegistryProvider } from "../src/renderer/rpc.js";
 
 const rid = (id: string) => SaveId.make(id);

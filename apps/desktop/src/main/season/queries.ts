@@ -12,10 +12,10 @@ import {
 import { type Verdict } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { withExistingSave } from "../decider.js";
-import { displayNames } from "../displayNames.js";
-import { loadManagerStatus } from "../managerStatus.js";
-import { loadUserClub } from "../squad.js";
+import { withExistingSave } from "./decider.js";
+import { displayNames } from "../world/displayNames.js";
+import { loadManagerStatus } from "../career/managerStatus.js";
+import { loadUserClub } from "../club/squad.js";
 import { loadSeasonRow, toSeasonView } from "./currentSeason.js";
 import { computeStandings, standingsForSummary } from "./standings.js";
 import { loadHumanCompetitionId } from "./start.js";

@@ -6,8 +6,7 @@ import {
   type SnapshotId,
 } from "@cm-clone/contracts";
 import { Effect } from "effect";
-import { submitLeagueSelection } from "../src/main/leagueSelection.js";
-import { DEFAULT_CAREER_INTENTS } from "../src/main/saves.js";
+import { submitLeagueSelection, DEFAULT_CAREER_INTENTS } from "../src/main/world/index.js";
 
 /**
  * The default snapshot ticket 03's test helpers construct: submit the default career scope

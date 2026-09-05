@@ -1,7 +1,7 @@
 import { LeagueTableRow, type ClubId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { displayNames } from "../displayNames.js";
+import { displayNames } from "../world/displayNames.js";
 import { cupFinishingOrder } from "./cups.js";
 
 /**
