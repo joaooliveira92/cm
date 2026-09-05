@@ -42,6 +42,9 @@ export interface ResolveContext {
   readonly keystroke: Keystroke;
   /** True when the focus target is a text entry (bare keys suppressed — AC-19). */
   readonly typing: boolean;
+  /** True when the focused control natively activates on this key (Space on a button). The key is
+   *  the control's, not a binding's — see `controlOwnsSpace`. Defaults to false. */
+  readonly nativeActivation?: boolean;
   readonly prefix: PrefixState;
   readonly now: number;
   /** The currently active Action set (current scope + globals). */
@@ -99,6 +102,7 @@ const isPrefixG = (keystroke: Keystroke, actions: ReadonlyArray<Action>): boolea
  */
 export const resolveDispatch = (ctx: ResolveContext): DispatchDecision => {
   const { keystroke, typing, prefix, now, actions, prefixCompletions, overlay } = ctx;
+  const nativeActivation = ctx.nativeActivation ?? false;
 
   // Priority 2 — topmost overlay layer. An open palette/help/splash takes
   // precedence over every binding beneath it: the overlay's own components
@@ -136,6 +140,12 @@ export const resolveDispatch = (ctx: ResolveContext): DispatchDecision => {
     }
     return { kind: "native" };
   }
+
+  // Priority 1b — the focused control owns this key natively. A button activates on Space, so a
+  // career-global Space binding beneath it would be the *second* action fired by one keystroke
+  // (AC-17). Placed with the typing carve-out because it is the same idea — the focused control
+  // has first claim — and above the prefix and binding priorities for the same reason.
+  if (nativeActivation) return { kind: "native" };
 
   // Priority 3 — active prefix completion/cancellation.
   if (prefix.active) {

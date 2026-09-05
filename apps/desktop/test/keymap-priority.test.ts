@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { resolveDispatch, IDLE_PREFIX, type ResolveContext } from "../src/renderer/keymap/priority.js";
-import { shouldSuppressForTextEntry, keyOf } from "../src/renderer/keymap/keystroke.js";
+import { controlOwnsSpace, shouldSuppressForTextEntry, keyOf } from "../src/renderer/keymap/keystroke.js";
 import { prefixTimeoutMs } from "../src/renderer/keymap/timeout.js";
 import { ACTION_REGISTRY, G_PREFIX_COMPLETIONS } from "../src/renderer/actions/allActions.js";
 import type { Action, Keystroke } from "../src/renderer/actions/types.js";
@@ -260,3 +260,37 @@ describe("four-views reconcile — a registered binding is exactly what the live
     expect(d.kind).toBe("complete-prefix");
   });
 });
+
+describe("AC-17 — a control that owns Space natively is not shadowed by a career-global binding", () => {
+  const space: Keystroke = { key: " ", ctrl: false, meta: false, shift: false, primary: false };
+
+  it("Space on a focused grid row is the row's, not Continue's", () => {
+    // The regression: a row button activates on Space *and* the career-global Space binding fired,
+    // so selecting a row also advanced the Calendar out of pre-season — one keystroke, two actions.
+    const decision = resolveDispatch(ctx({ keystroke: space, nativeActivation: true }));
+    expect(decision.kind).toBe("native");
+  });
+
+  it("Space away from any control still reaches Continue", () => {
+    const decision = resolveDispatch(ctx({ keystroke: space, nativeActivation: false }));
+    expect(decision).toEqual({ kind: "action", action: expect.objectContaining({ id: "continue" }) });
+  });
+
+  it("controlOwnsSpace is true for a button and its descendants, false for a plain region", () => {
+    document.body.innerHTML = `
+      <div id="screen">
+        <button id="row"><span id="label">Marcus Wood</span></button>
+      </div>`;
+    const at = (id: string) => document.getElementById(id);
+    expect(controlOwnsSpace(at("row"), space)).toBe(true);
+    // The event target is usually the inner span, not the button itself.
+    expect(controlOwnsSpace(at("label"), space)).toBe(true);
+    expect(controlOwnsSpace(at("screen"), space)).toBe(false);
+  });
+
+  it("only Space is claimed — a bare letter on a button still reaches its binding", () => {
+    document.body.innerHTML = `<button id="row">row</button>`;
+    const b: Keystroke = { key: "b", ctrl: false, meta: false, shift: false, primary: false };
+    expect(controlOwnsSpace(document.getElementById("row"), b)).toBe(false);
+  });
+})

@@ -27,7 +27,7 @@ import {
   IDLE_PREFIX,
   type OverlayLayer,
 } from "./keymap/priority.js";
-import { keyOf, shouldSuppressForTextEntry } from "./keymap/keystroke.js";
+import { controlOwnsSpace, keyOf, shouldSuppressForTextEntry } from "./keymap/keystroke.js";
 import { type PrefixState } from "./keymap/prefix.js";
 import { prefixTimeoutMs } from "./keymap/timeout.js";
 import {
@@ -289,10 +289,12 @@ export const KeyboardSpine = () => {
     (event: KeyboardEvent) => {
       const keystroke = keyOf(event);
       const typing = shouldSuppressForTextEntry(event.target, keystroke);
+      const nativeActivation = controlOwnsSpace(event.target, keystroke);
       const now = performance.now();
       const decision = resolveDispatch({
         keystroke,
         typing,
+        nativeActivation,
         prefix,
         now,
         actions: activeActions,
