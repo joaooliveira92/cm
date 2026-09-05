@@ -46,7 +46,7 @@ export const LeagueSelectionRouteContent = () => {
 };
 
 export const StepOneRouteContent = () => {
-  const { session, update } = useCreateSessionApi();
+  const { session, update, setManagerStep } = useCreateSessionApi();
 
   const handleSaveNameChange = useCallback(
     (saveName: string): void => {
@@ -75,6 +75,8 @@ export const StepOneRouteContent = () => {
         saveName={session.saveName}
         managerName={session.managerName}
         pillars={session.pillars}
+        step={session.managerStep}
+        onStepChange={setManagerStep}
         onSaveNameChange={handleSaveNameChange}
         onManagerNameChange={handleManagerNameChange}
         onPillarsChange={handlePillarsChange}

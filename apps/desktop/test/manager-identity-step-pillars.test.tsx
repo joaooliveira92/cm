@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { PillarDistribution } from "@cm-clone/shared";
 import { ManagerIdentityStep } from "../src/renderer/create/ManagerIdentityStep.js";
@@ -12,22 +13,29 @@ const EVEN: PillarDistribution = {
 };
 
 /** Renders step 1 already switched to the "Manager identity" sub-panel, which is where the pillar
- * allocation lives. The stepper is the only route between sub-panels, and it stays disabled until a
- * save name is present — so a name is required to reach the pillars at all. */
+ *  allocation lives. The stepper is the only route between sub-panels, and it stays disabled until a
+ *  save name is present — so a name is required to reach the pillars at all. The sub-panel step is
+ *  controlled, so the harness holds it in state and re-renders on change. */
 const renderIdentityPanel = async (
   pillars: PillarDistribution,
   onPillarsChange: (next: PillarDistribution) => void,
 ) => {
-  render(
-    <ManagerIdentityStep
-      saveName="My Career"
-      managerName=""
-      pillars={pillars}
-      onSaveNameChange={() => undefined}
-      onManagerNameChange={() => undefined}
-      onPillarsChange={onPillarsChange}
-    />,
-  );
+  const Harness = () => {
+    const [step, setStep] = useState<1 | 2>(1);
+    return (
+      <ManagerIdentityStep
+        saveName="My Career"
+        managerName=""
+        pillars={pillars}
+        step={step}
+        onStepChange={setStep}
+        onSaveNameChange={() => undefined}
+        onManagerNameChange={() => undefined}
+        onPillarsChange={onPillarsChange}
+      />
+    );
+  };
+  render(<Harness />);
   fireEvent.click(screen.getByRole("button", { name: /Manager identity/ }));
   // `AnimatePresence mode="wait"` swaps the sub-panels across a frame, so the pillar controls are
   // not in the tree synchronously after the click.

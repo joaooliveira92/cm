@@ -165,8 +165,10 @@ const leagueStageResponse = async (method: string, payload: unknown): Promise<un
 const json = (value: unknown): unknown => JSON.parse(JSON.stringify(value)) as unknown;
 
 /**
- * Drive the leagues stage to completion. This is the real path into the manager step: the
- * snapshot it produces is what unblocks generation.
+ * Drive the leagues stage to completion, then past the Manager step's
+ * personal-details panel and onto the manager-identity panel, where the club
+ * transition lives. The snapshot the leagues Continue produces unblocks
+ * generation; a save name lets the bar advance into the identity panel.
  */
 const advanceThroughLeagues = async (): Promise<void> => {
   const button = await screen.findByRole("button", { name: /^Continue/ }, { timeout: 3000 });
@@ -174,6 +176,11 @@ const advanceThroughLeagues = async (): Promise<void> => {
     timeout: 3000,
   });
   fireEvent.click(button);
+
+  const nameInput = await screen.findByPlaceholderText("My Career", { timeout: 3000 });
+  fireEvent.change(nameInput, { target: { value: "Test Career" } });
+  const identity = await screen.findByRole("button", { name: "Next: Manager Identity" });
+  fireEvent.click(identity);
   await screen.findByRole("button", { name: "Next: Select Club" }, { timeout: 3000 });
 };
 
@@ -241,9 +248,6 @@ const flowResponses =
 /** Drive leagues → manager → club step, arriving on the workspace. */
 const reachClubStep = async (): Promise<void> => {
   await advanceThroughLeagues();
-  fireEvent.change(screen.getByPlaceholderText("My Career"), {
-    target: { value: "Test Career" },
-  });
   const next = await screen.findByRole("button", { name: "Next: Select Club" });
   await waitFor(() => expect((next as HTMLButtonElement).disabled).toBe(false));
   fireEvent.click(next);
@@ -291,9 +295,10 @@ describe("Step 3 — the club step collects the decision it exists to collect", 
 
     // The club step ships no Back control, so the round trip is driven through the app's own
     // navigation adapter — the same call the shell makes — rather than through a button that
-    // does not exist.
+    // does not exist. The Manager step's sub-panel is preserved, so the identity panel the flow
+    // reached on the way out is what shows on the way back in.
     act(() => navigate({ type: "createStep1" }));
-    await screen.findByPlaceholderText("My Career");
+    await screen.findByRole("heading", { name: "Manager identity" });
     act(() => navigate({ type: "createStep2" }));
 
     await screen.findByRole("table", { name: "Clubs" });

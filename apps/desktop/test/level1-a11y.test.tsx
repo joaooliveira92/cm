@@ -316,6 +316,8 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
         saveName=""
         managerName=""
         pillars={{ tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 }}
+        step={1}
+        onStepChange={() => undefined}
         onSaveNameChange={() => undefined}
         onManagerNameChange={() => undefined}
         onPillarsChange={() => undefined}

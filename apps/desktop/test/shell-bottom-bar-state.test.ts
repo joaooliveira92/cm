@@ -13,12 +13,15 @@ const noop = (): void => undefined;
 const creationInput = (over: Partial<CreationBottomBarInput> = {}): CreationBottomBarInput => ({
   step: "1",
   generationBlockedReason: null,
+  personalDetailsComplete: true,
+  managerStep: 2,
   managerStepComplete: true,
   selectionReady: true,
   clubPicked: false,
   committing: false,
   onCancel: noop,
   onBackToLeagues: noop,
+  onNextManagerSubStep: noop,
   onGoToClubSelection: noop,
   onGoToReview: noop,
   onCreateCareer: noop,
@@ -97,6 +100,7 @@ describe("describeCreationBottomBar", () => {
     const plan = describeCreationBottomBar(
       creationInput({
         step: "1",
+        managerStep: 2,
         managerStepComplete: false,
         selectionReady: false,
         generationBlockedReason: "Building the league first…",
@@ -111,6 +115,38 @@ describe("describeCreationBottomBar", () => {
 
     expect(plan.primary?.disabled).toBe(false);
     expect(plan.reason).toBeNull();
+  });
+
+  it("advances to the manager-identity panel while personal details are showing", () => {
+    const next = { called: 0 };
+    let pressed: (() => void) | null = null;
+    const plan = describeCreationBottomBar(
+      creationInput({
+        managerStep: 1,
+        personalDetailsComplete: true,
+        onNextManagerSubStep: () => {
+          next.called += 1;
+        },
+      }),
+    );
+
+    expect(plan.primary?.id).toBe("next-manager-identity");
+    expect(plan.primary?.label).toBe("Next: Manager Identity");
+    expect(plan.primary?.disabled).toBe(false);
+    expect(plan.reason).toBeNull();
+    pressed = plan.primary?.onTrigger ?? null;
+    pressed?.();
+    expect(next.called).toBe(1);
+  });
+
+  it("blocks the jump to manager identity until a save name is present", () => {
+    const plan = describeCreationBottomBar(
+      creationInput({ managerStep: 1, personalDetailsComplete: false }),
+    );
+
+    expect(plan.primary?.id).toBe("next-manager-identity");
+    expect(plan.primary?.disabled).toBe(true);
+    expect(plan.reason).toBe("Name your career to continue.");
   });
 });
 

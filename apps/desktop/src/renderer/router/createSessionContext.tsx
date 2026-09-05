@@ -7,6 +7,12 @@ import type { GenerationState } from "../create/generation.js";
 
 export type CommitStatus = "idle" | "committing" | "committed";
 
+/** Which sub-panel of the Manager step ("Step 2 of 4") is showing: the personal
+ *  details form (1) or the pillar-allocation panel (2). Lives in the session so
+ *  the shell's bottom bar can drive the same progression the in-panel stepper
+ *  does; the Manager step's depends on it. */
+export type ManagerSubStep = 1 | 2;
+
 export interface CreationSession {
   /** The scope this career is being created at (Screen 3). `null` until League and Nation
    *  Selection is submitted, which is also the gate on world generation: nothing is generated
@@ -16,6 +22,8 @@ export interface CreationSession {
   readonly managerName: string;
   readonly archetype: ManagerArchetype;
   readonly pillars: PillarDistribution;
+  /** The Manager step's active sub-panel: 1 = personal details, 2 = manager identity. */
+  readonly managerStep: ManagerSubStep;
   /** The provisional-world lifecycle. `provisionalIdOf` is the only way to reach the save id. */
   readonly generation: GenerationState;
   /** The picked club, bound to the world it was picked from. Never read directly — `selectedClubOf`
@@ -28,6 +36,8 @@ export interface CreationSession {
 export interface CreateSessionApi {
   readonly session: CreationSession;
   readonly update: (patch: Partial<CreationSession>) => void;
+  /** Move the Manager step to a specific sub-panel (1 = personal details, 2 = manager identity). */
+  readonly setManagerStep: (step: ManagerSubStep) => void;
   readonly retryGeneration: () => void;
   /** The only write path for the club selection. It reads the current world's id itself and
    *  records both halves, so a club can never be recorded against a world that is not the current

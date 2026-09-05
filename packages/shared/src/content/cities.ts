@@ -117,6 +117,7 @@ export const CITIES_BY_NATION: Readonly<Record<NationCode, readonly City[]>> = {
     { nationCode: "BRA", name: "Porto Alegre", populationBand: "large" },
     { nationCode: "BRA", name: "Recife", populationBand: "large" },
     { nationCode: "BRA", name: "Salvador", populationBand: "large" },
+    { nationCode: "BRA", name: "Fortaleza", populationBand: "large" },
     { nationCode: "BRA", name: "Curitiba", populationBand: "mid" },
     { nationCode: "BRA", name: "Manaus", populationBand: "mid" },
   ],

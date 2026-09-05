@@ -71,12 +71,17 @@ export interface CreationBottomBarInput {
   readonly step: CreationStep;
   /** Why the world is not ready yet, from the generation state machine. */
   readonly generationBlockedReason: string | null;
+  /** True once the Manager step's personal-details sub-panel has a save name. */
+  readonly personalDetailsComplete: boolean;
+  /** Which sub-panel of the Manager step is showing: 1 = personal details, 2 = manager identity. */
+  readonly managerStep: 1 | 2;
   readonly managerStepComplete: boolean;
   readonly selectionReady: boolean;
   readonly clubPicked: boolean;
   readonly committing: boolean;
   readonly onCancel: () => void;
   readonly onBackToLeagues: () => void;
+  readonly onNextManagerSubStep: () => void;
   readonly onGoToClubSelection: () => void;
   readonly onGoToReview: () => void;
   readonly onCreateCareer: () => void;
@@ -100,28 +105,53 @@ export function describeCreationBottomBar(input: CreationBottomBarInput): Bottom
       return { ...EMPTY_BOTTOM_BAR, cancel };
 
     case "1":
-      return {
-        cancel,
-        back: {
-          id: "back-to-leagues",
-          label: "Back: Leagues",
-          disabled: false,
-          onTrigger: input.onBackToLeagues,
-        },
-        secondary: [],
-        primary: {
-          id: "next-club",
-          label: "Next: Select Club",
-          disabled: !input.managerStepComplete || !input.selectionReady,
-          onTrigger: input.onGoToClubSelection,
-        },
-        // The world's own blocking reason speaks first (it clears itself when
-        // generation lands); the manager step's own gap is only worth stating
-        // once there is nothing else waiting.
-        reason:
-          input.generationBlockedReason ??
-          (input.managerStepComplete ? null : "Name your career and spend all 12 pillar points."),
-      };
+      // The Manager step holds two panels behind one route. The bar's primary
+      // verb drives the same progression the in-panel stepper does: while the
+      // personal-details panel is showing it advances to the manager-identity
+      // panel, and once there it hands over to the club step. One bar, one
+      // forward verb, whose meaning depends on which panel is showing.
+      return input.managerStep === 1
+        ? {
+          cancel,
+          back: {
+            id: "back-to-leagues",
+            label: "Back: Leagues",
+            disabled: false,
+            onTrigger: input.onBackToLeagues,
+          },
+          secondary: [],
+          primary: {
+            id: "next-manager-identity",
+            label: "Next: Manager Identity",
+            disabled: !input.personalDetailsComplete,
+            onTrigger: input.onNextManagerSubStep,
+          },
+          reason: input.personalDetailsComplete
+            ? null
+            : "Name your career to continue.",
+        }
+        : {
+          cancel,
+          back: {
+            id: "back-to-leagues",
+            label: "Back: Leagues",
+            disabled: false,
+            onTrigger: input.onBackToLeagues,
+          },
+          secondary: [],
+          primary: {
+            id: "next-club",
+            label: "Next: Select Club",
+            disabled: !input.managerStepComplete || !input.selectionReady,
+            onTrigger: input.onGoToClubSelection,
+          },
+          // The world's own blocking reason speaks first (it clears itself when
+          // generation lands); the manager step's own gap is only worth stating
+          // once there is nothing else waiting.
+          reason:
+            input.generationBlockedReason ??
+            (input.managerStepComplete ? null : "Name your career and spend all 12 pillar points."),
+        };
 
     case "2":
       return {

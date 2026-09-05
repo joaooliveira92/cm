@@ -169,8 +169,10 @@ const leagueStageResponse = async (method: string, payload: unknown): Promise<un
 const json = (value: unknown): unknown => JSON.parse(JSON.stringify(value)) as unknown;
 
 /**
- * Drive the leagues stage to completion. This is the real path into the manager step: the
- * snapshot it produces is what unblocks generation.
+ * Drive the leagues stage to completion, then past the Manager step's
+ * personal-details panel and onto the manager-identity panel. The snapshot the
+ * leagues Continue produces is what unblocks generation; a save name lets the
+ * bar advance into the identity panel, which is where the club transition lives.
  */
 const advanceThroughLeagues = async (): Promise<void> => {
   const button = await screen.findByRole("button", { name: /^Continue/ }, { timeout: 3000 });
@@ -178,6 +180,11 @@ const advanceThroughLeagues = async (): Promise<void> => {
     timeout: 3000,
   });
   fireEvent.click(button);
+
+  const nameInput = await screen.findByPlaceholderText("My Career", { timeout: 3000 });
+  fireEvent.change(nameInput, { target: { value: "Test Career" } });
+  const identity = await screen.findByRole("button", { name: "Next: Manager Identity" });
+  fireEvent.click(identity);
   await screen.findByRole("button", { name: "Next: Select Club" }, { timeout: 3000 });
 };
 

@@ -33,7 +33,7 @@ import {
   type GenerationTransition,
 } from "./generation.js";
 import { selectedClubOf } from "./clubSelection.js";
-import type { CreateSessionApi, CreationSession } from "../router/createSessionContext.js";
+import type { CreateSessionApi, CreationSession, ManagerSubStep } from "../router/createSessionContext.js";
 
 const DEFAULT_PILLARS: PillarDistribution = {
   tacticalAcumen: 3,
@@ -46,6 +46,7 @@ const createEmptySession = (): CreationSession => ({
   leagueSelection: null,
   saveName: "",
   managerName: "",
+  managerStep: 1,
   // The archetype picker was deliberately retired from step 1; the field stays because the career
   // submission (`archetypeOrigin`) and the Review summary still read it, so every career now
   // records this fixed origin and the manager is defined purely by their pillar allocation.
@@ -232,6 +233,23 @@ export const useCreateSession = (): CreateFlowSession => {
     navigate({ type: "createStep3" });
   }, []);
 
+  /** Advance the Manager step from its personal-details sub-panel to the
+   *  manager-identity sub-panel. Gated on a save name, matching the in-panel
+   *  stepper's own guard, so the bottom bar cannot jump past an empty form. */
+  const handleNextManagerSubStep = useCallback((): void => {
+    if (sessionRef.current.saveName.trim().length === 0) return;
+    update({ managerStep: 2 as ManagerSubStep });
+  }, [update]);
+
+  /** Direct control of the Manager step's sub-panel, used by the in-panel stepper. */
+  const setManagerStep = useCallback(
+    (next: ManagerSubStep): void => {
+      if (next === 2 && sessionRef.current.saveName.trim().length === 0) return;
+      update({ managerStep: next });
+    },
+    [update],
+  );
+
   const handleCommitCareer = useCallback(async (): Promise<void> => {
     const currentSession = sessionRef.current;
     const provisionalId = provisionalIdOf(currentSession.generation);
@@ -283,6 +301,7 @@ export const useCreateSession = (): CreateFlowSession => {
       update({
         commit: "idle",
         error: message,
+        managerStep: 1,
       });
       applyGeneration(abandon);
       navigate({ type: "createStep1" });
@@ -362,11 +381,12 @@ export const useCreateSession = (): CreateFlowSession => {
     () => ({
       session,
       update,
+      setManagerStep,
       retryGeneration,
       selectClub,
       registerBottomBar,
     }),
-    [registerBottomBar, retryGeneration, selectClub, session, update],
+    [registerBottomBar, retryGeneration, selectClub, session, setManagerStep, update],
   );
 
   // One bar, described rather than assembled: Cancel keeps its zone on every
@@ -379,12 +399,15 @@ export const useCreateSession = (): CreateFlowSession => {
       ? describeCreationBottomBar({
         step,
         generationBlockedReason: blocked,
+        personalDetailsComplete: session.saveName.trim().length > 0,
+        managerStep: session.managerStep,
         managerStepComplete,
         selectionReady,
         clubPicked,
         committing: session.commit === "committing",
         onCancel: handleCancel,
         onBackToLeagues: handleBackToLeagues,
+        onNextManagerSubStep: handleNextManagerSubStep,
         onGoToClubSelection: handleGoToClubSelection,
         onGoToReview: handleGoToReview,
         onCreateCareer: handleCreateCareer,

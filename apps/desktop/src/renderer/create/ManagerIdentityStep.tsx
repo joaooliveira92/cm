@@ -7,17 +7,22 @@ import { Button } from "../components/ui/button.js";
 import { Input } from "../components/ui/input.js";
 import { Label } from "../components/ui/label.js";
 import { FOCUS_RING } from "../focus.js";
+import type { ManagerSubStep } from "../router/createSessionContext.js";
 
 export interface ManagerIdentityStepProps {
   saveName: string;
   managerName: string;
   pillars: PillarDistribution;
+  /** The active sub-panel: 1 = personal details, 2 = manager identity. Owned by the
+   *  creation session (and thus the shell's bottom bar), passed down as a controlled value. */
+  step: ManagerSubStep;
+  onStepChange: (step: ManagerSubStep) => void;
   onSaveNameChange: (name: string) => void;
   onManagerNameChange: (name: string) => void;
   onPillarsChange: (pillars: PillarDistribution) => void;
 }
 
-type FormStep = 1 | 2;
+type FormStep = ManagerSubStep;
 type Pillar = (typeof MANAGER_PILLARS)[number];
 
 const TOTAL_PILLAR_POINTS = 12;
@@ -90,11 +95,12 @@ export const ManagerIdentityStep = ({
   saveName,
   managerName,
   pillars,
+  step,
+  onStepChange,
   onSaveNameChange,
   onManagerNameChange,
   onPillarsChange,
 }: ManagerIdentityStepProps) => {
-  const [step, setStep] = useState<FormStep>(1);
   const [direction, setDirection] = useState(1);
   const personalDetailsComplete = saveName.trim().length > 0;
 
@@ -121,9 +127,9 @@ export const ManagerIdentityStep = ({
       }
 
       setDirection(nextStep > step ? 1 : -1);
-      setStep(nextStep);
+      onStepChange(nextStep);
     },
-    [personalDetailsComplete, step],
+    [personalDetailsComplete, step, onStepChange],
   );
 
   const handlePillarChange = useCallback(
