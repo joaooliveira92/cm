@@ -5,9 +5,9 @@ import {
   LEAGUE_SETUP_INDEX,
 } from "../../src/content/leagueSetupCatalogue.js";
 import { allCompetitions, competitionIndex } from "../../src/setup/leagueSetup.js";
-import { resolveSelection } from "../../src/setup/leagueSelection.js";
+import { resolveSelection } from "../../src/setup/leagueSelection/index.js";
 import { resolveWorld } from "../../src/setup/resolvedWorld.js";
-import type { NationSelectionIntent } from "../../src/setup/leagueSelection.js";
+import type { NationSelectionIntent } from "../../src/setup/leagueSelection/index.js";
 
 const intent = (nationId: string, scopeOptionId: string | undefined, mode = "playable"): NationSelectionIntent =>
   ({ nationId, mode, scopeOptionId, source: "user" }) as NationSelectionIntent;

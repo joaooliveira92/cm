@@ -1,7 +1,7 @@
 /**
  * Nation and Competition search and status filtering (§10).
  *
- * Text matching and filter predicates over the catalogue, kept apart from `./leagueSelection.js`
+ * Text matching and filter predicates over the catalogue, kept apart from `./leagueSelection/index.js`
  * because nothing here reads or produces a selection — a filtered list is a view of the catalogue,
  * not a decision about it.
  */

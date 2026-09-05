@@ -44,7 +44,7 @@ import {
   type ActiveLeaguesProjection,
   type NationSelectionIntent,
   type ResolvedSelection,
-} from "./leagueSelection.js";
+} from "./leagueSelection/index.js";
 import { catalogueName } from "../content/contentPack.js";
 import { MIGRATION_LINKS, type NationCode } from "../content/nations.js";
 import { modeFromDepth } from "./simulation.js";

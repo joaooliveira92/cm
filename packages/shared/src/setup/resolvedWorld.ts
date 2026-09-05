@@ -8,7 +8,7 @@ import {
   type ExchangeLink,
   type LeagueSetupIndex,
 } from "./leagueSetup.js";
-import { projectActiveLeagues, type ResolvedSelection } from "./leagueSelection.js";
+import { projectActiveLeagues, type ResolvedSelection } from "./leagueSelection/index.js";
 import type { SimulationDepth } from "./simulation.js";
 
 /**

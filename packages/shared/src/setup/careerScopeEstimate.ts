@@ -1,13 +1,13 @@
 /**
  * Career scope estimates (§11): what a selection will cost the machine that runs it.
  *
- * Split out of `./leagueSelection.js`, which resolves *what* is selected. This module answers the
+ * Split out of `./leagueSelection/index.js`, which resolves *what* is selected. This module answers the
  * separate question of whether that selection is affordable, and it is the only part of the
  * selection layer whose answer depends on the machine rather than on the catalogue.
  */
 
 import { competitionIndex, type LeagueSetupIndex, type SimulationMode } from "./leagueSetup.js";
-import type { IssueCode, IssueLevel, ResolvedSelection, SelectionIssue } from "./leagueSelection.js";
+import type { IssueCode, IssueLevel, ResolvedSelection, SelectionIssue } from "./leagueSelection/index.js";
 
 /** Local mirror of `leagueSelection`'s private constructor: estimate issues are the same shape,
  *  and exporting the helper there would widen that module's public surface for one caller. */

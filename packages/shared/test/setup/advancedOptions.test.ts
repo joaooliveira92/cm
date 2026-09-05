@@ -11,9 +11,11 @@ import {
   estimateProcessingCost,
   estimateFactorsFor,
   LEAGUE_SETUP_INDEX,
+  MAX_LABEL_LENGTH,
   projectActiveLeagues,
   resolveInformationPolicy,
   resolveSelection,
+  sanitizeLabel,
   type AdvancedOptionsState,
 } from "../../src/index.js";
 
@@ -235,5 +237,36 @@ describe("callers observe the legal option set", () => {
         expect(result.issues.map((issue) => issue.code)).not.toContain("unsupported_option_value");
       }
     }
+  });
+});
+describe("untrusted labels (§23, AC-18)", () => {
+  it("leaves an ordinary name alone", () => {
+    expect(sanitizeLabel("English First Division")).toBe("English First Division");
+  });
+
+  it("strips bidirectional-control characters", () => {
+    expect(sanitizeLabel("Safe‮Name")).toBe("SafeName");
+    expect(sanitizeLabel("⁦Left⁩")).toBe("Left");
+  });
+
+  it("strips zero-width and control characters", () => {
+    expect(sanitizeLabel("A​BC")).toBe("ABC");
+  });
+
+  it("clamps an oversized name", () => {
+    const long = "x".repeat(500);
+    const result = sanitizeLabel(long);
+    expect(result).toHaveLength(MAX_LABEL_LENGTH);
+    expect(result.endsWith("…")).toBe(true);
+  });
+
+  it("never returns an empty label", () => {
+    expect(sanitizeLabel("\u202E\u200B  ")).toBe("(unnamed)");
+  });
+
+  it("leaves markup as inert text — escaping is the renderer's job, not a rewrite here", () => {
+    // Stripping tags would corrupt a legitimate name containing a bracket. React escapes on
+    // render; what this function owns is direction, width, and hidden characters.
+    expect(sanitizeLabel("<script>alert(1)</script>")).toBe("<script>alert(1)</script>");
   });
 });

@@ -3,7 +3,7 @@
  * share with every other database-sourced string.
  *
  * A preset is a *starting point*, not a selection: it produces intents, which `resolveSelection`
- * then resolves like any other. That is why this sits above `./leagueSelection.js` rather than
+ * then resolves like any other. That is why this sits above `./leagueSelection/index.js` rather than
  * inside it.
  */
 
@@ -14,7 +14,7 @@ import {
   type LeagueSetupIndex,
   type NationNode,
 } from "./leagueSetup.js";
-import { resolveSelection, type NationSelectionIntent } from "./leagueSelection.js";
+import { resolveSelection, type NationSelectionIntent } from "./leagueSelection/index.js";
 import {
   DEFAULT_SYSTEM_PROFILE,
   estimateCareerScope,

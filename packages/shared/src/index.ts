@@ -24,7 +24,7 @@ export * from "./rules/staff.js";
 export * from "./setup/resolvedWorld.js";
 export * from "./content/leagueSetupCatalogue.js";
 export * from "./setup/leagueSetup.js";
-export * from "./setup/leagueSelection.js";
+export * from "./setup/leagueSelection/index.js";
 export * from "./setup/careerScopeEstimate.js";
 export * from "./setup/leagueSearch.js";
 export * from "./setup/leaguePresets.js";
