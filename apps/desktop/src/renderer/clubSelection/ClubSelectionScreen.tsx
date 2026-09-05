@@ -81,7 +81,7 @@ export const ClubSelectionScreen = ({ saveId, selectedClubId, onSelect }: ClubSe
 
   return (
     <div className="flex h-full min-h-0 gap-4">
-      <div className="flex min-h-0 w-80 shrink-0 flex-col gap-2">
+      <div className="flex min-h-0 w-[370px] shrink-0 flex-col gap-2">
         <LeagueSelector leagueName={leagueName} />
 
         <ClubRail
