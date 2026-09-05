@@ -18,7 +18,7 @@ import { advanceCalendar } from "../src/main/season/index.js";
 import { createSave } from "../src/main/saves.js";
 import { getSquad, loadSquadPlayers } from "../src/main/squad.js";
 import { loadPersistedTactic, validateTactic } from "../src/main/tactics.js";
-import { aiPlaceBid, loadAllPlayersEcon, respondToBid } from "../src/main/transfers.js";
+import { aiPlaceBid, loadAllPlayersEcon, respondToBid } from "../src/main/transfers/index.js";
 
 let savesDir: string;
 

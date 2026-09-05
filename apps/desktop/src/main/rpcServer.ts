@@ -35,7 +35,7 @@ import {
   respondAsBidder,
   respondToBid,
   signFreeAgent,
-} from "./transfers.js";
+} from "./transfers/index.js";
 import { setTrainingFocus } from "./training.js";
 import { assignScout, getScouting, unassignScout } from "./scouting.js";
 import { withWideEvent } from "./logging.js";

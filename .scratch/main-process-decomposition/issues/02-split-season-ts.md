@@ -24,7 +24,7 @@ from `./season.js` to `./season/index.js` and keep naming the same symbols.
 
 **Blocked by:** 01.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] `main/season.ts` is gone; `main/season/index.ts` re-exports the identical public surface.
 - [ ] No file in `main/season/` exceeds ~450 lines.
@@ -33,3 +33,19 @@ from `./season.js` to `./season/index.js` and keep naming the same symbols.
       affected specs was actually run, not just typechecked.
 - [ ] Pure move: no behaviour or signature changes.
 - [ ] `pnpm check:all` is green at this commit.
+
+## Answer
+
+Done. `main/season.ts` (1885 lines) is now nine modules behind `main/season/index.ts`:
+`advance.ts` 419, `matchday.ts` 355, `rollover.ts` 251, `cups.ts` 248, `start.ts` 220,
+`standings.ts` 214, `queries.ts` 145, `fixtureGeneration.ts` 76, `currentSeason.ts` 61.
+
+Verified: the barrel's export surface is identical to the pre-split file's 13 symbols (diffed
+against commit `0890d19`); `advanceCalendar` is one unbroken block with its ordering comments
+attached; `cupFinishingOrder`, `cupRoundsOutstanding` and `nextCupRoundDate` were pulled into
+`cups.ts` from where they had been misfiled. All 16 import sites changed path only, never the names
+they ask for. `fixtureGeneration.ts` stayed in `main/` as specified -- moving it to
+`packages/shared` would have recreated the package cycle removed in the previous audit.
+
+All five fast gates green; every affected `.ts` spec was run, including the 15-minute
+`season.test.ts` (37 passed).

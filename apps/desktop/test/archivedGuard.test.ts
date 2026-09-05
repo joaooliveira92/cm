@@ -14,7 +14,7 @@ import { createSave } from "../src/main/saves.js";
 import { getSquad } from "../src/main/squad.js";
 import { changeTactics } from "../src/main/tactics.js";
 import { startMatch, submitMatchCommand } from "../src/main/match.js";
-import { placeBid, respondAsBidder, respondToBid, renewContract, signFreeAgent } from "../src/main/transfers.js";
+import { placeBid, respondAsBidder, respondToBid, renewContract, signFreeAgent } from "../src/main/transfers/index.js";
 
 let savesDir: string;
 

@@ -31,7 +31,7 @@ import { materialiseStaff } from "./staff.js";
 import { createSchema } from "./db/createSaveSchema.js";
 import { startSeason } from "./season/index.js";
 import { generateWorld } from "./worldGeneration.js";
-import { initializeSeasonEconomy } from "./transfers.js";
+import { initializeSeasonEconomy } from "./transfers/index.js";
 import { getLeagueSelectionSnapshot, submitLeagueSelection, toDomainIntents } from "./leagueSelection.js";
 
 const dbPath = (savesDir: string, id: SaveId) => path.join(savesDir, `${id}.sqlite`);

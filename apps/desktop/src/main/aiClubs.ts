@@ -15,7 +15,7 @@ import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadSquadPlayers } from "./squad.js";
 import { persistTactic, validateTactic } from "./tactics.js";
-import { aiPlaceBid, aiSignFreeAgent, loadAllPlayersEcon, loadClubBudgetRow, loadWageBudgetUsed } from "./transfers.js";
+import { aiPlaceBid, aiSignFreeAgent, loadAllPlayersEcon, loadClubBudgetRow, loadWageBudgetUsed } from "./transfers/index.js";
 
 // ---------------------------------------------------------------------------
 // Domain errors

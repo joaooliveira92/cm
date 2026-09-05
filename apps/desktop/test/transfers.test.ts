@@ -21,7 +21,7 @@ import {
   respondAsBidder,
   respondToBid,
   signFreeAgent,
-} from "../src/main/transfers.js";
+} from "../src/main/transfers/index.js";
 
 let savesDir: string;
 

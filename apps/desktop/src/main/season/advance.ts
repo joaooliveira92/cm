@@ -25,7 +25,7 @@ import { developPlayersForSeason } from "../development.js";
 import { assertSaveNotArchived, loadManagerStatus, releaseClubStaff } from "../managerStatus.js";
 import { accrueScoutingProgress } from "../scouting.js";
 import { loadUserClub } from "../squad.js";
-import { expireContractsForSeason } from "../transfers.js";
+import { expireContractsForSeason } from "../transfers/index.js";
 import { readGenerationManifest } from "../worldGeneration.js";
 import { loadSeasonRow, toSeasonView, type SeasonPhase, type SeasonRow } from "./currentSeason.js";
 import { cupRoundsOutstanding, materialiseCupRounds, nextCupRoundDate } from "./cups.js";

@@ -31,10 +31,13 @@ referenced throughout.
   shipped several of them. Needs a re-status pass before the count means anything.
 - **[.scratch/group-a-reconciliation/](../.scratch/group-a-reconciliation/)** — 21/23. Open:
   03 (quit confirmation) and 04 (save-list chrome).
-- **[.scratch/main-process-decomposition/](../.scratch/main-process-decomposition/)** — 0/5. Opened
-  by the 2026-09-05 folder-organization audit. Splits `main/season.ts` (1886 lines) and
-  `main/transfers.ts` (983), collapses the six duplicate current-season queries, and closes the
-  gap where `apps/desktop/test/` is excluded from typecheck.
+- **[.scratch/main-process-decomposition/](../.scratch/main-process-decomposition/)** — 3/5. Opened
+  by the 2026-09-05 folder-organization audit. Tickets 01–03 are done: the six duplicate
+  current-season queries collapsed into `main/season/currentSeason.ts`, `main/season.ts` (1885
+  lines) became nine modules, and `main/transfers.ts` became five. Remaining: 04 (group the rest of
+  the flat `main/` directory into subfolders — optional, ~161 mechanical import edits) and 05
+  (bring `apps/desktop/test/` into typecheck; a spike measured 281 pre-existing errors in 33 files
+  and is written up in the ticket).
 - **[.scratch/match-composition/](../.scratch/match-composition/)** — 0/2, both `ready-for-agent`.
   Note these two files sit at the effort root rather than under `issues/`, against the
   issue-tracker convention.
