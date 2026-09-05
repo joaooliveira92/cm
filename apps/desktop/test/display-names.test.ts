@@ -10,6 +10,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 import {
   BASE_CONTENT_PACK,
+  BRAZIL_SERIES_A_PACK,
   LEAGUE_SETUP_INDEX,
   allCompetitions,
   canonicalClubId,
@@ -18,7 +19,7 @@ import {
   packCoverageGaps,
 } from "@cm-clone/shared";
 import { getClubSelection } from "../src/main/clubSelection.js";
-import { reportPackCoverage, savePack } from "../src/main/displayNames.js";
+import { reportPackCoverage, resolveDisplayName, savePack } from "../src/main/displayNames.js";
 import { beginCareer } from "../src/main/saves.js";
 import { createDefaultSnapshot } from "./snapshot-helpers.js";
 
@@ -143,6 +144,33 @@ describe("display names resolve through the save's pack", () => {
         }),
       );
       expect(pack.id).toBe(BASE_CONTENT_PACK.id);
+    }),
+  );
+
+  it.effect("resolves a save re-recorded to the licensed Brazilian pack against its real names", () =>
+    Effect.gen(function* () {
+      const saveId = yield* generatedSave;
+      // The licensed pack sits in this build's seam even though no save is generated under it yet
+      // (generation records the base pack). Re-recording a manifest is the literal "same world
+      // reopened under a different pack" case `savePack` exists for, so a save pointed at Série A
+      // resolves Flamengo's name rather than falling back to a raw id or a fictional rename.
+      const names = yield* withSave(
+        saveId,
+        Effect.gen(function* () {
+          const sql = yield* SqlClient;
+          yield* sql`UPDATE generation_manifest SET content_pack_id = ${BRAZIL_SERIES_A_PACK.id} WHERE id = 1`;
+          const pack = yield* savePack;
+          return {
+            pack,
+            league: resolveDisplayName(pack, "comp_bra_1"),
+            flamengo: resolveDisplayName(pack, "club_bra_1_09"),
+          };
+        }),
+      );
+      expect(names.pack.id).toBe(BRAZIL_SERIES_A_PACK.id);
+      expect(names.league).toBe("Campeonato Brasileiro Série A");
+      expect(names.flamengo).toBe("Flamengo");
+      expect(names.flamengo).not.toBe("club_bra_1_09");
     }),
   );
 });

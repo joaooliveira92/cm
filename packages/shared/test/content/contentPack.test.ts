@@ -24,6 +24,8 @@ const pack: ContentPack = {
       quaternary: null,
     },
   },
+  stadiums: {},
+  homeCities: {},
 };
 
 describe("content pack display names", () => {

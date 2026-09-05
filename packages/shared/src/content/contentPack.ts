@@ -218,10 +218,49 @@ export const BASE_CONTENT_PACK: ContentPack = {
       quaternary: null,
     },
   },
+  // The fictional base pack asserts no real stadium and pins no real home town. Its clubs draw
+  // both at generation, exactly as the ground-name and city rules in `clubGeneration.ts` describe.
+  stadiums: {},
+  homeCities: {},
 };
 
 /** BCP 47 language tag, or `"*"` for the fallback every pack must provide. */
 export type LocaleTag = string;
+
+/**
+ * The identity a licensed pack asserts for a club's ground, replacing what generation would
+ * otherwise draw at random. `name` and `capacity` are the stadium's real identity; the club id is
+ * what the ground belongs to.
+ *
+ * Deliberately not keyed by locale the way `displayNames` is: a stadium is a place, and "the
+ * Maracanã, Rio de Janeiro" is the same place in any language. A pack that authors one of a club's
+ * fields without the other (a name with no capacity, or a capacity over a fictional name) is
+ * incoherent, so a stadium entry always carries both.
+ */
+export interface StadiumIdentity {
+  /** The real name of the ground, e.g. `"Maracanã"`. */
+  readonly name: string;
+  /** The real seated or match-day capacity. */
+  readonly capacity: number;
+}
+
+/**
+ * The real home settlement a licensed pack pins a club to, ahead of generation's weighted draw.
+ *
+ * This is the *one* place a city name reaches the pack — and it does so as identity, not as the
+ * `City` value the catalogue carries (see `cities.ts`). A licensed real club has a real home town,
+ * so the pack that names the club also names its place; the normal path where city names are plain
+ * factual geography that never resolves through the pack is untouched. What the pin holds is the
+ * plain factual name and the population band it should read as, which is exactly what the
+ * `cities.ts` catalogue would carry if the settlement were curated there — so generation can
+ * `canonicalCityId` from this exactly as it does from a catalogue `City`.
+ */
+export interface HomeCityPin {
+  /** The plain factual settlement name, e.g. `"Sao Paulo"`. */
+  readonly name: string;
+  /** The coarse population band the settlement reads as. `cities.ts` defines the vocabulary. */
+  readonly populationBand: "major" | "large" | "mid" | "small";
+}
 
 export interface ContentPack {
   readonly id: string;
@@ -244,6 +283,23 @@ export interface ContentPack {
    * to paint something. See `clubColours.ts`.
    */
   readonly clubColours: Readonly<Record<CanonicalId, ClubColours>>;
+  /**
+   * Canonical club id -> the real stadium identity the pack asserts for that club's ground.
+   *
+   * Provisioned but **unused by MVP generation**: the schema gives every club a `stadium_name` and
+   * `stadium_capacity` and nothing computes from them, so this map is where a licensed pack records
+   * the fact today. A future ticket decides when these override the fictional draw and whether a
+   * pack that authors only some stadiums degrades those off-author clubs to the fictional fallback
+   * or refuses to load. The fictional base pack carries an empty map.
+   */
+  readonly stadiums: Readonly<Record<CanonicalId, StadiumIdentity>>;
+  /**
+   * Canonical club id -> the real home settlement a licensed pack pins the club to.
+   *
+   * Same status as `stadiums`: recorded today, unread by generation until a ticket decides how a
+   * pack that pins some clubs' home towns deals with the clubs it leaves to the weighted draw.
+   */
+  readonly homeCities: Readonly<Record<CanonicalId, HomeCityPin>>;
 }
 
 /**

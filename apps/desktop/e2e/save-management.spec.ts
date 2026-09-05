@@ -15,7 +15,7 @@ test("creating a save with a whitespace name produces no save and no crash", asy
   await window.getByRole("button", { name: "Start New Career" }).click();
 
   const nameInput = window.getByPlaceholder("My Career");
-  const next = window.getByRole("button", { name: "Next: Select Club" });
+  const next = window.getByRole("button", { name: "Next: Manager Identity" });
 
   // Whitespace-only name: the creation step cannot proceed — no save is produced.
   await nameInput.fill("   ");

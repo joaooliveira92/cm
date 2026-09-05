@@ -181,7 +181,7 @@ const advanceThroughLeagues = async (): Promise<void> => {
   });
   fireEvent.click(button);
 
-  const nameInput = await screen.findByPlaceholderText("My Career", { timeout: 3000 });
+  const nameInput = await screen.findByPlaceholderText("My Career");
   fireEvent.change(nameInput, { target: { value: "Test Career" } });
   const identity = await screen.findByRole("button", { name: "Next: Manager Identity" });
   fireEvent.click(identity);

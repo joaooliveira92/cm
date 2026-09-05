@@ -29,6 +29,7 @@ test("a career is created end to end at the club the player picked", async ({ wi
   await continueLeagues.click();
 
   await page.getByPlaceholder("My Career").fill("Journey Career");
+  await page.getByRole("button", { name: "Next: Manager Identity" }).click();
   await page.getByRole("button", { name: "Next: Select Club" }).click();
 
   const rail = page.getByRole("table", { name: "Clubs" });
