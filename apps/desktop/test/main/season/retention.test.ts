@@ -1,6 +1,9 @@
 /**
- * Retention at the rollover (ticket 18): what survives of a concluded season on disk, and
- * what is pruned with it.
+ * Retention at the rollover (ticket 18) on worlds small enough to play in seconds: a past season's
+ * summary reads from the frozen rows, and nothing but match streams is pruned.
+ *
+ * The two whole-pyramid retention assertions live in `retention-participation.test.ts` and
+ * `retention-match-streams.test.ts`, one per file — see `rollover-exchange.test.ts` for why.
  */
 
 import { mkdtempSync } from "node:fs";
@@ -8,13 +11,11 @@ import { rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
-import { deepStrictEqual, ok, strictEqual } from "node:assert";
-import { SqliteClient } from "@effect/sql-sqlite-node";
+import { ok, strictEqual } from "node:assert";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../../../src/main/world/index.js";
-import { createPyramidSnapshot } from "../snapshot-helpers.js";
 import { getSeasonSummary } from "../../../src/main/season/index.js";
 import { seasonHelpers } from "./helpers.js";
 
@@ -26,82 +27,8 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-const { createCareerFrom, withSaveWrite, playUntilSeason } = seasonHelpers(() => savesDir);
+const { withSaveWrite, playUntilSeason } = seasonHelpers(() => savesDir);
 
-/** What survives of a season on disk: its fixtures by competition, and its match streams. */
-const survivingSeason = (saveId: string, seasonNumber: number) =>
-  Effect.gen(function* () {
-    const sql = yield* SqlClient;
-    const fixtures = yield* sql<{ competitionId: string; id: number }>`
-      SELECT competition_id as "competitionId", id FROM fixtures
-      WHERE season_number = ${seasonNumber} ORDER BY id ASC`;
-    const streams = yield* sql<{ streamId: string }>`
-      SELECT DISTINCT stream_id as "streamId" FROM events WHERE stream_type = 'match'`;
-    // Every fixture in the save, not just this season's. Match streams are not season-scoped, so
-    // checking them against one season's fixtures would call a live season-2 stream an orphan. That
-    // used to be unreachable — the human's league Fixture resolved headlessly and no stream existed
-    // for it — and became reachable the moment every human Matchday started producing one.
-    const allFixtures = yield* sql<{ id: number }>`SELECT id FROM fixtures`;
-    return {
-      fixtures,
-      allFixtureIds: allFixtures.map((row) => String(row.id)),
-      streamIds: streams.map((row) => row.streamId),
-    };
-  }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
-    Effect.scoped,
-  );
-
-it.effect("the rollover keeps the player's past and discards the world's", () =>
-  Effect.gen(function* () {
-    // A four-division pyramid, so there is a rival nation's worth of football to discard.
-    const snapshotId = yield* createPyramidSnapshot(savesDir);
-    const save = yield* createCareerFrom(snapshotId, 5150, "Retention");
-
-    const before = yield* survivingSeason(save.id, 1);
-    const playedIn = new Set(before.fixtures.map((row) => row.competitionId));
-    ok(playedIn.size > 2, "the pyramid should schedule several competitions");
-
-    ok(yield* playUntilSeason(save.id, 2), "the save should reach season 2");
-
-    const after = yield* survivingSeason(save.id, 1);
-    const kept = new Set(after.fixtures.map((row) => row.competitionId));
-
-    // Participation is the rule: the human's own competitions survive, everything else is gone.
-    const humanCompetitions = yield* withSaveWrite(
-      save.id,
-      Effect.gen(function* () {
-        const sql = yield* SqlClient;
-        const rows = yield* sql<{ competitionId: string }>`
-          SELECT cp.competition_id as "competitionId" FROM competition_participants cp
-          JOIN clubs c ON c.id = cp.club_id
-          WHERE cp.season_number = 1 AND c.is_user_club = 1`;
-        return new Set(rows.map((row) => row.competitionId));
-      }),
-    );
-
-    deepStrictEqual([...kept].sort(), [...humanCompetitions].sort());
-    ok(kept.size < playedIn.size, "a rival division's season should have been discarded");
-  }),
-  900_000,
-);
-
-it.effect("prunes a match stream exactly when its fixture goes", () =>
-  Effect.gen(function* () {
-    const snapshotId = yield* createPyramidSnapshot(savesDir);
-    const save = yield* createCareerFrom(snapshotId, 5150, "Retention");
-    ok(yield* playUntilSeason(save.id, 2));
-
-    const after = yield* survivingSeason(save.id, 1);
-    const surviving = new Set(after.allFixtureIds);
-
-    // A match stream is keyed on its fixture, so the log never outlives the thing it describes.
-    for (const streamId of after.streamIds) {
-      ok(surviving.has(streamId), `a match stream survived its deleted fixture: ${streamId}`);
-    }
-  }),
-  900_000,
-);
 
 it.effect("reads a past season's summary from the frozen rows, not from its fixtures", () =>
   Effect.gen(function* () {

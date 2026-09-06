@@ -1,6 +1,9 @@
 /**
- * Promotion, relegation and the rollover (ticket 13): clubs exchange along every link, the
- * frozen table survives, and the pyramid's ends stay closed.
+ * The rollover on worlds small enough to play in seconds (ticket 13): the frozen table survives
+ * into the next season, and a division fed by two parallel regional divisions exchanges with both.
+ *
+ * The two whole-pyramid rollover assertions live in `rollover-exchange.test.ts` and
+ * `rollover-closed-world.test.ts`, one per file — see `rollover-exchange.test.ts` for why.
  */
 
 import { mkdtempSync } from "node:fs";
@@ -9,12 +12,11 @@ import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
-import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../../../src/main/world/index.js";
-import { createPyramidSnapshot, createRegionalSnapshot } from "../snapshot-helpers.js";
+import { createRegionalSnapshot } from "../snapshot-helpers.js";
 import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { seasonHelpers } from "./helpers.js";
 
@@ -26,62 +28,7 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-const { createCareerFrom, withSaveWrite, playUntilSeason } = seasonHelpers(() => savesDir);
-
-/** Every competition's field for one season, keyed by competition, in frozen order where frozen. */
-const loadFields = (saveId: string, seasonNumber: number) =>
-  Effect.gen(function* () {
-    const sql = yield* SqlClient;
-    const rows = yield* sql<{
-      competitionId: string;
-      clubId: string;
-      finalPosition: number | null;
-      points: number | null;
-    }>`SELECT competition_id as "competitionId", club_id as "clubId",
-              final_position as "finalPosition", points
-       FROM competition_participants WHERE season_number = ${seasonNumber}
-       ORDER BY competition_id ASC, final_position ASC, club_id ASC`;
-    const fields = new Map<string, Array<(typeof rows)[number]>>();
-    for (const row of rows) fields.set(row.competitionId, [...(fields.get(row.competitionId) ?? []), row]);
-    return fields;
-  }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
-    Effect.scoped,
-  );
-
-
-it.effect("the rollover exchanges clubs along every link and keeps each division the same size", () =>
-  Effect.gen(function* () {
-    const snapshotId = yield* createPyramidSnapshot(savesDir);
-    const save = yield* createCareerFrom(snapshotId, 5150, "Rollover");
-    ok(yield* playUntilSeason(save.id, 2), "the save should reach season 2");
-
-    const first = yield* loadFields(save.id, 1);
-    const second = yield* loadFields(save.id, 2);
-
-    for (const [competitionId, field] of first) {
-      if (competitionId.endsWith("_cup")) continue;
-      strictEqual(
-        second.get(competitionId)?.length,
-        field.length,
-        `${competitionId} changed size across the rollover`,
-      );
-    }
-
-    // Somebody actually moved: a rollover that exchanged nobody would satisfy the count check.
-    const movers = [...first].filter(([competitionId, field]) => {
-      if (competitionId.endsWith("_cup")) return false;
-      const next = new Set((second.get(competitionId) ?? []).map((row) => row.clubId));
-      return field.some((row) => !next.has(row.clubId));
-    });
-    ok(movers.length > 0, "at least one division should have exchanged clubs");
-  }),
-  // A whole pyramid season, and a season is now ~38 presses of Continue that each reach a boundary,
-  // play the human's Fixture and commit the Matchday, where one press used to resolve it headlessly.
-  // 900s matches its sibling in `retention.test.ts`, which plays the same season for a different
-  // assertion.
-  900_000,
-);
+const { createCareerFrom, withSaveWrite, playUntilSeason, loadFields } = seasonHelpers(() => savesDir);
 
 it.effect("the frozen table survives into the next season unchanged", () =>
   Effect.gen(function* () {
@@ -103,24 +50,6 @@ it.effect("the frozen table survives into the next season unchanged", () =>
     deepStrictEqual(yield* loadFields(save.id, 1), frozen);
   }),
   240_000,
-);
-
-it.effect("nothing drops out of the lowest division or climbs out of the highest", () =>
-  Effect.gen(function* () {
-    const snapshotId = yield* createPyramidSnapshot(savesDir);
-    const save = yield* createCareerFrom(snapshotId, 5150, "Closed World");
-    ok(yield* playUntilSeason(save.id, 2));
-
-    const first = yield* loadFields(save.id, 1);
-    const second = yield* loadFields(save.id, 2);
-
-    // The world is closed at the edge of the chosen scope: every club in season 2 was in the world
-    // in season 1, and every club in season 1 is still in it.
-    const clubsIn = (fields: typeof first) =>
-      new Set([...fields].filter(([id]) => !id.endsWith("_cup")).flatMap(([, field]) => field.map((row) => row.clubId)));
-    deepStrictEqual([...clubsIn(second)].sort(), [...clubsIn(first)].sort());
-  }),
-  900_000,
 );
 
 it.effect("a division fed by two parallel regional divisions exchanges with both", () =>

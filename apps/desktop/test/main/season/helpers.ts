@@ -16,6 +16,12 @@ import { createDefaultSnapshot } from "../snapshot-helpers.js";
  * per module but read the directory at call time. Nothing here generates a world by itself: a
  * world costs one `createCareerFrom*` call inside the test that needs it, exactly as it did when
  * these specs were one file.
+ *
+ * **A test that plays a whole four-division season gets a file to itself.** `playUntilSeason` on a
+ * pyramid costs ~6 minutes, because a season is ~38 presses of Continue and each press opens the
+ * save four times. vitest parallelises across files but never within one, so two such tests in one
+ * file serialise onto a single worker and their sum becomes the whole suite's critical path — which
+ * is what `rollover.test.ts` and `retention.test.ts` each were until they were split.
  */
 export const seasonHelpers = (savesDir: () => string) => {
   const loadSeasonStreamEvents = (saveId: SaveId) =>
@@ -106,6 +112,51 @@ export const seasonHelpers = (savesDir: () => string) => {
       return false;
     });
 
+  /** Every competition's field for one season, keyed by competition, in frozen order where frozen. */
+  const loadFields = (saveId: string, seasonNumber: number) =>
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const rows = yield* sql<{
+        competitionId: string;
+        clubId: string;
+        finalPosition: number | null;
+        points: number | null;
+      }>`SELECT competition_id as "competitionId", club_id as "clubId",
+              final_position as "finalPosition", points
+       FROM competition_participants WHERE season_number = ${seasonNumber}
+       ORDER BY competition_id ASC, final_position ASC, club_id ASC`;
+      const fields = new Map<string, Array<(typeof rows)[number]>>();
+      for (const row of rows) fields.set(row.competitionId, [...(fields.get(row.competitionId) ?? []), row]);
+      return fields;
+    }).pipe(
+      Effect.provide(SqliteClient.layer({ filename: path.join(savesDir(), `${saveId}.sqlite`), readonly: true })),
+      Effect.scoped,
+    );
+
+  /** What survives of a season on disk: its fixtures by competition, and its match streams. */
+  const survivingSeason = (saveId: string, seasonNumber: number) =>
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const fixtures = yield* sql<{ competitionId: string; id: number }>`
+      SELECT competition_id as "competitionId", id FROM fixtures
+      WHERE season_number = ${seasonNumber} ORDER BY id ASC`;
+      const streams = yield* sql<{ streamId: string }>`
+      SELECT DISTINCT stream_id as "streamId" FROM events WHERE stream_type = 'match'`;
+      // Every fixture in the save, not just this season's. Match streams are not season-scoped, so
+      // checking them against one season's fixtures would call a live season-2 stream an orphan. That
+      // used to be unreachable — the human's league Fixture resolved headlessly and no stream existed
+      // for it — and became reachable the moment every human Matchday started producing one.
+      const allFixtures = yield* sql<{ id: number }>`SELECT id FROM fixtures`;
+      return {
+        fixtures,
+        allFixtureIds: allFixtures.map((row) => String(row.id)),
+        streamIds: streams.map((row) => row.streamId),
+      };
+    }).pipe(
+      Effect.provide(SqliteClient.layer({ filename: path.join(savesDir(), `${saveId}.sqlite`), readonly: true })),
+      Effect.scoped,
+    );
+
   return {
     loadSeasonStreamEvents,
     loadFirstClubId,
@@ -114,5 +165,7 @@ export const seasonHelpers = (savesDir: () => string) => {
     withSaveWrite,
     loadResolvedFixtures,
     playUntilSeason,
+    loadFields,
+    survivingSeason,
   } as const;
 };
