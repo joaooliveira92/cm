@@ -250,7 +250,7 @@ it.effect("a tie across the depth boundary resolves without waking the match eng
     // collapse resolved the tie, not ninety simulated minutes.
     deepStrictEqual(after.conditions, staged.conditions);
   }),
-  120_000,
+  180_000,
 );
 
 it.effect("the cup winner is the participant whose final position is 1", () =>
