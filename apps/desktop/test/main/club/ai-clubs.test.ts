@@ -91,7 +91,10 @@ it.effect("an AI club's Season-start Tactic never changes across a later advance
     const before = yield* withSave(save.id, loadPersistedTactic(aiClub.id));
     ok(before);
 
-    yield* advanceCalendar(savesDir, save.id); // resolves Matchday 1 (and closes the pre-season window)
+    // Reaches the Matchday 1 boundary and closes the pre-season window on the way. The window's
+    // close is a fact about the two dates rather than about which fixture was played, so it still
+    // happens at a press that resolves no football.
+    yield* advanceCalendar(savesDir, save.id);
 
     const after = yield* withSave(save.id, loadPersistedTactic(aiClub.id));
     deepStrictEqual(after, before, "the AI club's Tactic must be unchanged by a Matchday/window boundary");
@@ -161,9 +164,10 @@ it.effect(
         }),
       );
 
-      // Matchday 1 also closes the pre-season Transfer Window — the hook season.ts fires AI
-      // transfer activity from for the pre-season window (there's no separate "windowOpen"
-      // boundary for it; see season.ts's comment at that call site).
+      // Reaching Matchday 1 also closes the pre-season Transfer Window — the hook AI transfer
+      // activity fires from for the pre-season window (there's no separate "windowOpen" boundary
+      // for it). The press stops at the pre-match boundary without resolving football, and the
+      // window still closes.
       yield* advanceCalendar(savesDir, save.id);
 
       const after = yield* withSave(save.id, loadSquadPlayers(weakClub!.id));

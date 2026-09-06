@@ -14,6 +14,7 @@
  */
 
 export { advanceCalendar, expireStalePendingBids, retireManager } from "./advance.js";
+export { commitMatchday } from "./commitMatchday.js";
 export { FixtureGenerationError, generateRoundRobinFixtures, type GeneratedFixture } from "./fixtureGeneration.js";
 export { discardSquadsForClubs, recoverClubFitness } from "./matchday.js";
 export { getFixtures, getLeagueTable, getSeasonSummary } from "./queries.js";

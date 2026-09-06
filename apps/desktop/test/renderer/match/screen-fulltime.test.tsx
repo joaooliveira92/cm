@@ -87,7 +87,9 @@ describe("MatchDayScreen at full time — the settled feed stays on screen (no l
 
     // The completed-match row and its reset affordance render below the feed.
     expect(screen.getByText(/Final score: Home FC 2 - 1 Away FC/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Back to opponent picker" })).toBeTruthy();
+    // Full time is not the career accepting the result: the Matchday is committed by an explicit
+    // press, and until it happens the division has not played and the Calendar has not moved.
+    expect(screen.getByRole("button", { name: "Accept result" })).toBeTruthy();
 
     // The live control panel is gone at full time.
     expect(screen.queryByRole("button", { name: /Tactics & substitutions/ })).toBeNull();

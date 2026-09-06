@@ -38,7 +38,7 @@ raise.
   chain of toasts: it states why Continue stopped, groups related consequences, preserves every
   interrupt-worthy field, provides direct navigation to owning screens, and remains inspectable
   until deliberately dismissed or acted on. The stop set is exactly the fields the advance's result
-  returns. See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-continue-as-global-career-loop.md).
+  returns. See [Agent Note](../../../.agents/notes/implemented/feature/2026-08-29-continue-as-global-career-loop.md).
 
 **Blocked by:** 02 (Continue exists once) — the surviving control is the one that grows the surface,
 and the removed one carried the only error line.

@@ -1,5 +1,13 @@
 import { sql } from "drizzle-orm";
-import { check, index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  check,
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  type AnySQLiteColumn,
+} from "drizzle-orm/sqlite-core";
 
 /**
  * The save file's schema, defined once in Drizzle and nowhere else.
@@ -677,6 +685,43 @@ export const season = sqliteTable(
     /** ISO `YYYY-MM-DD`. No upper bound to check: a date is not a count of rounds. */
     gameDate: text("game_date").notNull(),
     phase: text("phase").notNull(),
+    /**
+     * The human club's scheduled fixture the calendar has reached and cannot advance past, or NULL
+     * when nothing is pending.
+     *
+     * This is the pre-match boundary. The advance stops here rather than resolving the human's
+     * match headlessly, which is what gives a readiness rule a moment to execute and the player a
+     * stable state to inspect and repair: the fixture is due, the fixture is unplayed, and the
+     * calendar has not crossed it.
+     *
+     * A column rather than a new `phase` value. A phase would record that *some* fixture is pending
+     * without naming which, mix pending-action vocabulary into a season lifecycle enum, and leak to
+     * the player as literal text wherever a screen renders the phase directly.
+     *
+     * What a foreign key cannot express, and application code therefore must: that the fixture
+     * belongs to this season, includes the human club, and is unplayed while pending. Those are
+     * integrity violations that fail loudly rather than being repaired.
+     */
+    awaitingFixtureId: integer("awaiting_fixture_id").references(
+      // `season` and `fixtures` reference each other, so one side needs an explicit annotation to
+      // stop the inferred types recursing. Drizzle's own answer to a circular foreign key.
+      (): AnySQLiteColumn => fixtures.id,
+    ),
+    /**
+     * The started match stream for the pending fixture, or NULL before Play or Quick result is
+     * accepted. Together with the column above it encodes the whole boundary:
+     *
+     * - `(null, null)` — nothing pending.
+     * - `(fixture, null)` — standing at the boundary, match not started.
+     * - `(fixture, match)` — a match in progress, or one whose simulation has finished but whose
+     *   career consequences have not been committed.
+     *
+     * Every other combination is an integrity violation and fails loudly. A column rather than a
+     * scan of match streams for one claiming the pending fixture: the scan would make ordinary
+     * navigation back to Match day cost a sweep, and would leave "two streams claim this fixture"
+     * representable. This makes that state impossible.
+     */
+    awaitingMatchId: text("awaiting_match_id"),
   },
   () => [
     check(

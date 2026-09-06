@@ -57,7 +57,12 @@ const reopenFinalFixture = (clubId: string) =>
       WHERE id = (SELECT id FROM fixtures
                   WHERE home_club_id <> ${clubId} AND away_club_id <> ${clubId}
                   ORDER BY scheduled_date DESC, id DESC LIMIT 1)`;
+    // The boundary goes with the fixtures it named. This helper marks the human's own Fixture
+    // played, so a pending link left behind would point at a played Fixture — an integrity
+    // violation, and rightly so. Test-only manipulation that invalidates the boundary has to clear
+    // it rather than leave the game to discover the contradiction.
     yield* sql`UPDATE season SET phase = 'in_season',
+      awaiting_fixture_id = NULL, awaiting_match_id = NULL,
       game_date = (SELECT date(MIN(scheduled_date), '-1 day') FROM fixtures WHERE played = 0)`;
   });
 

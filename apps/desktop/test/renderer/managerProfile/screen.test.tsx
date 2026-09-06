@@ -22,7 +22,7 @@ const profileView = (overrides: Record<string, unknown> = {}) => ({
     tertiary: null,
     quaternary: null,
   },
-  seasonNumber: 3,
+  seasonNumber: 3, awaitingFixture: null,
   tenureSeasons: 3,
   archived: false,
   ...overrides,
@@ -105,7 +105,7 @@ describe("Manager Profile (Screen 19)", () => {
   });
 
   it("singularises a one-season tenure", async () => {
-    mockPreload(profileView({ seasonNumber: 1, tenureSeasons: 1 }));
+    mockPreload(profileView({ seasonNumber: 1, awaitingFixture: null, tenureSeasons: 1 }));
     mount();
     expect(await screen.findByText("Tenure: 1 season")).toBeTruthy();
   });

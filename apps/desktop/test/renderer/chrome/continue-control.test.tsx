@@ -105,7 +105,7 @@ describe("Continue in the chrome", () => {
         return {
           _tag: "Success",
           value: {
-            season: { seasonNumber: 3, currentDate: "2026-10-17", phase: "season_complete" as const },
+            season: { seasonNumber: 3, awaitingFixture: null, currentDate: "2026-10-17", phase: "season_complete" as const },
             standings: [],
           },
         } as never;
@@ -153,7 +153,7 @@ describe("Continue in the chrome", () => {
         return {
           _tag: "Success",
           value: {
-            season: { seasonNumber: 3, currentDate: "2026-10-17", phase: "in_season" as const },
+            season: { seasonNumber: 3, awaitingFixture: null, currentDate: "2026-10-17", phase: "in_season" as const },
             standings: [],
           },
         } as never;
@@ -163,7 +163,7 @@ describe("Continue in the chrome", () => {
         return {
           _tag: "Success",
           value: {
-            season: { seasonNumber: 3, currentDate: "2026-10-24", phase: "in_season" as const },
+            season: { seasonNumber: 3, awaitingFixture: null, currentDate: "2026-10-24", phase: "in_season" as const },
             resolvedDate: "2026-10-17",
             transferWindowClosed: null,
             transferWindowOpened: null,
@@ -197,7 +197,7 @@ describe("Continue in the chrome", () => {
         return {
           _tag: "Success",
           value: {
-            season: { seasonNumber: 3, currentDate: "2027-05-22", phase: "in_season" as const },
+            season: { seasonNumber: 3, awaitingFixture: null, currentDate: "2027-05-22", phase: "in_season" as const },
             standings: [],
           },
         } as never;
@@ -206,7 +206,7 @@ describe("Continue in the chrome", () => {
         return {
           _tag: "Success",
           value: {
-            season: { seasonNumber: 4, currentDate: "2027-07-01", phase: "pre_season" as const },
+            season: { seasonNumber: 4, awaitingFixture: null, currentDate: "2027-07-01", phase: "pre_season" as const },
             resolvedDate: "2027-05-22",
             transferWindowClosed: "mid_season",
             transferWindowOpened: null,
@@ -271,7 +271,7 @@ describe("Continue in the chrome", () => {
         return {
           _tag: "Success",
           value: {
-            season: { seasonNumber: 3, currentDate: "2026-10-17", phase: "in_season" as const },
+            season: { seasonNumber: 3, awaitingFixture: null, currentDate: "2026-10-17", phase: "in_season" as const },
             standings: [],
           },
         } as never;
@@ -307,7 +307,7 @@ describe("Continue in the chrome", () => {
           value: {
             // A different date per refetch, which is what the test observes changing.
             season: {
-              seasonNumber: 3,
+              seasonNumber: 3, awaitingFixture: null,
               currentDate: `2026-10-${String(16 + leagueTableCalls).padStart(2, "0")}`,
               phase: "in_season" as const,
             },
@@ -320,7 +320,7 @@ describe("Continue in the chrome", () => {
         return {
           _tag: "Success",
           value: {
-            season: { seasonNumber: 3, currentDate: "2026-10-24", phase: "in_season" as const },
+            season: { seasonNumber: 3, awaitingFixture: null, currentDate: "2026-10-24", phase: "in_season" as const },
             resolvedDate: "2026-10-17",
             transferWindowClosed: null,
             transferWindowOpened: null,

@@ -10,7 +10,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import type { NewsMessageId, SaveId } from "@cm-clone/contracts";
 import { createSave } from "../../../src/main/world/index.js";
-import { advanceCalendar } from "../../../src/main/season/index.js";
+import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { getNewsInbox, parseNewsMessageId, setNewsMessageState } from "../../../src/main/career/index.js";
 
 let savesDir: string;
@@ -77,7 +77,7 @@ it.effect("advancing the calendar adds messages without a projector running", ()
     const save = yield* createSave(savesDir, "Test Career");
     const before = yield* getNewsInbox(savesDir, save.id);
 
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
     const after = yield* getNewsInbox(savesDir, save.id);
 
     ok(
@@ -91,8 +91,8 @@ it.effect("advancing the calendar adds messages without a projector running", ()
 it.effect("orders the inbox newest first", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
-    yield* advanceCalendar(savesDir, save.id);
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
     const inbox = yield* getNewsInbox(savesDir, save.id);
 
     const seqs = inbox.messages
@@ -198,7 +198,7 @@ it.effect("applying the same patch twice is a no-op", () =>
 it.effect("marks a batch read in one command", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
     const before = yield* getNewsInbox(savesDir, save.id);
     ok(before.messages.length >= 2, "need at least two messages to bulk-mark");
 

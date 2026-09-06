@@ -11,7 +11,8 @@ import { afterEach, beforeEach, describe, expect } from "vitest";
 import { PlayerId } from "@cm-clone/contracts";
 import { FULLY_SCOUTED, attributeRange, nextProgress, scoutingAccrual } from "@cm-clone/shared";
 import { createSave } from "../../../src/main/world/index.js";
-import { advanceCalendar, discardSquadsForClubs } from "../../../src/main/season/index.js";
+import { discardSquadsForClubs } from "../../../src/main/season/index.js";
+import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { assignScout, getScouting, unassignScout, getSquad } from "../../../src/main/club/index.js";
 import { releaseClubStaff } from "../../../src/main/career/index.js";
 
@@ -204,7 +205,7 @@ describe("progress accrues as the calendar moves", () => {
 
       strictEqual((yield* progressRows(save.id)).length, 0);
 
-      yield* advanceCalendar(savesDir, save.id);
+      yield* advanceThroughBoundary(savesDir, save.id);
       const rows = yield* progressRows(save.id);
       strictEqual(rows.length, 1);
       ok(rows[0]!.progress > 0, "no code path writes a progress-0 row");
@@ -212,7 +213,7 @@ describe("progress accrues as the calendar moves", () => {
       // And it keeps rising, monotonically, toward Fully Scouted.
       let previous = rows[0]!.progress;
       for (let advance = 0; advance < 5; advance += 1) {
-        yield* advanceCalendar(savesDir, save.id);
+        yield* advanceThroughBoundary(savesDir, save.id);
         const [row] = yield* progressRows(save.id);
         ok(row!.progress >= previous, "progress must never decrease");
         previous = row!.progress;
@@ -230,12 +231,12 @@ describe("progress accrues as the calendar moves", () => {
       const scoutId = board.scouts[0]!.scoutId;
 
       yield* assignScout(savesDir, save.id, scoutId, first!.id);
-      yield* advanceCalendar(savesDir, save.id);
+      yield* advanceThroughBoundary(savesDir, save.id);
       const watched = (yield* progressRows(save.id))[0]!.progress;
 
       // Knowledge is not un-learned: the club keeps what it observed.
       yield* assignScout(savesDir, save.id, scoutId, second!.id);
-      yield* advanceCalendar(savesDir, save.id);
+      yield* advanceThroughBoundary(savesDir, save.id);
       const rows = yield* progressRows(save.id);
       strictEqual(rows.length, 2);
       strictEqual(rows.find((row) => row.playerId === first!.id)?.progress, watched);
@@ -246,7 +247,7 @@ describe("progress accrues as the calendar moves", () => {
   it.effect("accrues nothing for an unassigned scout", () =>
     Effect.gen(function* () {
       const save = yield* createSave(savesDir, "Scouting");
-      yield* advanceCalendar(savesDir, save.id);
+      yield* advanceThroughBoundary(savesDir, save.id);
       strictEqual((yield* progressRows(save.id)).length, 0);
     }),
     120_000,
@@ -286,7 +287,7 @@ describe("scouting belongs to the club", () => {
       const board = yield* getScouting(savesDir, save.id);
       const [target] = yield* someOtherClubsPlayer(save.id);
       yield* assignScout(savesDir, save.id, board.scouts[0]!.scoutId, target!.id);
-      yield* advanceCalendar(savesDir, save.id);
+      yield* advanceThroughBoundary(savesDir, save.id);
       ok((yield* progressRows(save.id)).length > 0);
 
       const club = yield* getSquad(savesDir, save.id);
@@ -313,7 +314,7 @@ describe("scouting belongs to the club", () => {
       const board = yield* getScouting(savesDir, save.id);
       const [target] = yield* someOtherClubsPlayer(save.id);
       yield* assignScout(savesDir, save.id, board.scouts[0]!.scoutId, target!.id);
-      yield* advanceCalendar(savesDir, save.id);
+      yield* advanceThroughBoundary(savesDir, save.id);
       ok((yield* progressRows(save.id)).length > 0);
 
       // Relegation into a results-only tier deletes players. The scout's slot silently reopens.

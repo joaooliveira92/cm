@@ -23,7 +23,7 @@ one the chrome already holds.
 
 - Readiness is a derived state displayed persistently while its predicate holds, never a notice that
   is marked read or dismissed, because dismissal does not resolve the condition. At a boundary the
-  loop lists every blocking condition and routes to the owning screens. See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-continue-as-global-career-loop.md).
+  loop lists every blocking condition and routes to the owning screens. See [Agent Note](../../../.agents/notes/implemented/feature/2026-08-29-continue-as-global-career-loop.md).
 - Blockers and advisories are both reported, so resolving a blocker does not reveal a second
   surprise; an advisory that blocked the advance would turn the affordance into a soft-lock. See
   [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-03-the-first-pending-decision.md).

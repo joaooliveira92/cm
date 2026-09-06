@@ -11,7 +11,7 @@ import { afterEach, beforeEach } from "vitest";
 import type { BidId, ClubId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { createSave } from "../../../src/main/world/index.js";
 import { getSquad } from "../../../src/main/club/index.js";
-import { advanceCalendar } from "../../../src/main/season/index.js";
+import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { aiPlaceBid, getTransfersScreen, respondToBid } from "../../../src/main/transfers/index.js";
 import { loadStreamEvents } from "../../../src/main/season/decider.js";
 import { getNewsInbox } from "../../../src/main/career/index.js";
@@ -304,7 +304,7 @@ it.effect("a bid the manager ignores expires on the next advance", () =>
     const save = yield* createSave(savesDir, "Test Career");
     const seeded = yield* seedBidForUserPlayer(save.id);
 
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
 
     strictEqual(
       (yield* bidById(save.id, seeded.bidId)).status,
@@ -319,7 +319,7 @@ it.effect("lapsing is not accepting — the player stays", () =>
     const save = yield* createSave(savesDir, "Test Career");
     const seeded = yield* seedBidForUserPlayer(save.id);
 
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
 
     const squad = yield* getSquad(savesDir, save.id);
     ok(squad.players.some((player) => player.id === seeded.playerId));
@@ -332,7 +332,7 @@ it.effect("an answered bid is untouched by the next advance", () =>
     const seeded = yield* seedBidForUserPlayer(save.id);
 
     yield* respondToBid(savesDir, save.id, seeded.bidId as BidId, "reject", undefined);
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
 
     strictEqual(
       (yield* bidById(save.id, seeded.bidId)).status,
@@ -348,7 +348,7 @@ it.effect("an expired bid can no longer be answered", () =>
     yield* seedBidForUserPlayer(save.id);
     const bid = (yield* bidsAgainstUser(save.id))[0]!;
 
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
     const exit = yield* Effect.exit(
       respondToBid(savesDir, save.id, bid.id as BidId, "accept", undefined),
     );
@@ -386,7 +386,7 @@ it.effect("a real transfer window never resolves a human-club bid on the manager
     yield* clearFreeAgentsAndLiftBudgets(save.id);
 
     // The pre-season window closes on this advance, which is where `runAiTransferWindow` fires.
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
 
     const bids = yield* allBids(save.id);
     ok(bids.length > 0, "the window should have produced bids");
@@ -441,7 +441,7 @@ it.effect("the message reads as lapsed after the bid expires", () =>
     const save = yield* createSave(savesDir, "Test Career");
     const seeded = yield* seedBidForUserPlayer(save.id);
 
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
 
     const inbox = yield* getNewsInbox(savesDir, save.id);
     const lapsed = inbox.messages.find((m) => m.actionState === "expired");
@@ -473,14 +473,14 @@ it.effect("guarantees a fresh bid in a later window, not just the first one", ()
     });
 
     // The pre-season window closes on the first advance.
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
     strictEqual(yield* pendingCount, 1, "the first window should leave a bid to answer");
 
     // Walk to the mid-season window. The next advance lapses the first bid; somewhere further on the
     // mid-season window opens and must produce another.
     let sawSecond = false;
     for (let advance = 0; advance < 30 && !sawSecond; advance += 1) {
-      const outcome = yield* Effect.exit(advanceCalendar(savesDir, save.id));
+      const outcome = yield* Effect.exit(advanceThroughBoundary(savesDir, save.id));
       if (Exit.isFailure(outcome)) break;
       if ((yield* pendingCount) > 0) sawSecond = true;
     }

@@ -17,7 +17,8 @@ import { afterEach, beforeEach } from "vitest";
 import { cupRoundDate, tieWinner } from "@cm-clone/shared";
 import { createSave } from "../../../src/main/world/index.js";
 import { createPyramidSnapshot } from "../snapshot-helpers.js";
-import { advanceCalendar, discardSquadsForClubs, getFixtures } from "../../../src/main/season/index.js";
+import { discardSquadsForClubs, getFixtures } from "../../../src/main/season/index.js";
+import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { seasonHelpers } from "./helpers.js";
 
 let savesDir: string;
@@ -72,8 +73,8 @@ const loadPenaltyBearingLeagueFixtures = (saveId: string) =>
 const playWholeSeason = (saveId: SaveId) =>
   Effect.gen(function* () {
     for (let advance = 0; advance < 80; advance += 1) {
-      const result = yield* advanceCalendar(savesDir, saveId);
-      if (result.seasonConcluded) return advance + 1;
+      const { seasonConcluded } = yield* advanceThroughBoundary(savesDir, saveId);
+      if (seasonConcluded) return advance + 1;
     }
     return null;
   });
@@ -146,8 +147,8 @@ it.effect("the bracket reproduces from the world seed alone", () =>
     const first = yield* createCareerFromWorldSeed(5150, "Cup A");
     const second = yield* createCareerFromWorldSeed(5150, "Cup B");
     for (let advance = 0; advance < 12; advance += 1) {
-      yield* advanceCalendar(savesDir, first.id);
-      yield* advanceCalendar(savesDir, second.id);
+      yield* advanceThroughBoundary(savesDir, first.id);
+      yield* advanceThroughBoundary(savesDir, second.id);
     }
 
     const a = yield* loadCupFixtures(first.id, "comp_eng_cup");
@@ -217,7 +218,7 @@ it.effect("a tie across the depth boundary resolves without waking the match eng
       }),
     );
 
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
 
     const after = yield* withSaveWrite(
       save.id,

@@ -70,7 +70,7 @@ const squadViewPayload = (saveId: string, clubName: string) => ({
 });
 
 const advanceResult = () => ({
-  season: { seasonNumber: 1, currentDate: "2026-08-08", phase: "in_season" as const },
+  season: { seasonNumber: 1, awaitingFixture: null, currentDate: "2026-08-08", phase: "in_season" as const },
   resolvedDate: "2026-08-01",
   transferWindowClosed: null,
   transferWindowOpened: null,
@@ -293,7 +293,7 @@ describe("renderer RPC seam — staleness policy (AC-06)", () => {
     const match = await import("../../../src/renderer/rpc/match.js");
     expect(typeof match.resumeSimulation).toBe("function");
     expect(typeof match.startMatch).toBe("function");
-    expect(typeof match.listOpponentClubs).toBe("function");
+    expect(typeof match.commitMatchday).toBe("function");
     expect(Object.keys(match).some((k) => k.endsWith("Atom"))).toBe(false);
   });
 

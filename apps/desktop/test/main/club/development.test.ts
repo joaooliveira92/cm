@@ -11,7 +11,7 @@ import { loadCoachQuality } from "../../../src/main/career/index.js";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { advanceCalendar } from "../../../src/main/season/index.js";
+import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { createSave } from "../../../src/main/world/index.js";
 import { getSquad, loadSquadPlayers, setTrainingFocus } from "../../../src/main/club/index.js";
 
@@ -78,10 +78,10 @@ const countEvents = (saveId: string, streamType: string, tag: string) =>
 const advanceToSeasonEnd = (saveId: SaveId) =>
   Effect.gen(function* () {
     for (let i = 0; i < 60; i++) {
-      const result = yield* advanceCalendar(savesDir, saveId);
-      if (result.seasonConcluded) return;
+      const { seasonConcluded } = yield* advanceThroughBoundary(savesDir, saveId);
+      if (seasonConcluded) return;
     }
-    throw new Error("SeasonConcluded never fired within 60 advanceCalendar calls");
+    throw new Error("SeasonConcluded never fired within 60 Continue presses");
   });
 
 // ---------------------------------------------------------------------------

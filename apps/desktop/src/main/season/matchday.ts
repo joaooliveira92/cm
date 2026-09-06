@@ -1,4 +1,4 @@
-import { type ClubId, type FixtureId, type PlayerId } from "@cm-clone/contracts";
+import { TacticMissingError, type ClubId, type FixtureId, type PlayerId } from "@cm-clone/contracts";
 import { conditionAfterDays, simulateMatchWithCondition, type MatchTeamSetup } from "@cm-clone/game-engine";
 import {
   NATION_PROFILES,
@@ -14,10 +14,11 @@ import {
 } from "@cm-clone/shared";
 import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { ELEVEN, pickBestFormationTactic } from "../club/aiClubs.js";
+import { ELEVEN } from "../club/aiClubs.js";
 import { discardScoutingForPlayers } from "../club/scouting.js";
 import { loadSquadPlayers } from "../club/squad.js";
 import { loadPersistedTactic } from "../club/tactics.js";
+import { readGenerationManifest } from "../world/worldGeneration.js";
 
 /** Raised when `simulateMatch` returns without a `FullTimeWhistle` event — an invariant of the
  * engine's match simulation. */
@@ -28,19 +29,26 @@ class FullTimeWhistleMissingError extends Data.TaggedError("FullTimeWhistleMissi
 // ---------------------------------------------------------------------------
 
 /**
- * Every AI club gets a persisted Tactic at Season start now (ticket 17's `assignAiTactics`), so
- * `loadPersistedTactic` should always hit for them. `pickBestFormationTactic` (`aiClubs.ts`) stays
- * wired in as a fallback purely for robustness — e.g. a save created before ticket 17 shipped, or
- * any other unforeseen gap — not because it's expected to fire in normal play.
+ * A club's Tactic, or a loud failure.
+ *
+ * There is no fallback any more. Every AI club is assigned one at Season start by `assignAiTactics`
+ * and the human club is covered by the readiness gate at the pre-match boundary, so a miss here
+ * means something upstream is genuinely broken. The fallback this used to carry is precisely how
+ * the human's club came to play a machine-picked formation every Matchday without anyone noticing
+ * until an audit: a fallback that fires is indistinguishable from one that does not.
+ *
+ * `pickBestFormationTactic` itself stays — `assignAiTactics` is its real caller, and generating
+ * Tactics at a defined initialization boundary is a legitimate decision. Discovering a missing one
+ * at kickoff and synthesizing it is not.
+ *
+ * The compatibility consequence is accepted: development saves written before `assignAiTactics`
+ * shipped fail loudly at Matchday 1 rather than limping.
  */
-const getTacticForClub = (
-  clubId: ClubId,
-  squad: ReadonlyArray<{ readonly id: PlayerId; readonly positionRatings: Record<string, number> }>,
-) =>
+const getTacticForClub = (clubId: ClubId) =>
   Effect.gen(function* () {
     const persisted = yield* loadPersistedTactic(clubId);
-    if (persisted) return persisted;
-    return yield* pickBestFormationTactic(squad);
+    if (persisted === null) return yield* new TacticMissingError({ clubId });
+    return persisted;
   });
 
 // ---------------------------------------------------------------------------
@@ -98,7 +106,7 @@ export const recoverClubFitness = (clubId: ClubId, seasonNumber: number) =>
 
 /** Writes each on-pitch player's full-time Condition back to the Season's fitness ledger, recording
  * the most recent injury's Severity for any player who picked one up this fixture (ticket 10). */
-const recordFixtureConditions = (
+export const recordMatchdayConditions = (
   seasonNumber: number,
   conditions: ReadonlyMap<PlayerId, number>,
   injuries: ReadonlyMap<PlayerId, "none" | "light" | "medium" | "severe">,
@@ -258,8 +266,8 @@ export const resolveFixtureScore = (
     yield* recoverClubFitness(homeClubId, seasonNumber);
     yield* recoverClubFitness(awayClubId, seasonNumber);
 
-    const homeTactic = yield* getTacticForClub(homeClubId, homeSquad);
-    const awayTactic = yield* getTacticForClub(awayClubId, awaySquad);
+    const homeTactic = yield* getTacticForClub(homeClubId);
+    const awayTactic = yield* getTacticForClub(awayClubId);
 
     const home: MatchTeamSetup = {
       clubId: homeClubId,
@@ -291,7 +299,7 @@ export const resolveFixtureScore = (
     for (const event of events) {
       if (event._tag === "Injury") injuries.set(event.playerId, event.severity);
     }
-    yield* recordFixtureConditions(seasonNumber, conditions, injuries);
+    yield* recordMatchdayConditions(seasonNumber, conditions, injuries);
 
     // A shootout between two squad-bearing clubs is still decided outside the minute loop, from
     // the same collapse the depth boundary uses — the engine has no shootout to run.
@@ -352,4 +360,48 @@ const playerIdsForClubs = (clubIds: ReadonlyArray<string>) =>
     const sql = yield* SqlClient;
     const rows = yield* sql<{ id: string }>`SELECT id FROM players WHERE ${sql.in("club_id", clubIds)}`;
     return rows.map((row) => row.id);
+  });
+
+/**
+ * Resolves every other unplayed fixture dated on `date`, leaving `exceptFixtureId` alone.
+ *
+ * The human's own fixture is written from its persisted match stream by the commit that calls this,
+ * so it must not be re-resolved here — that would discard the timeline the player watched and could
+ * produce a different score from the one they saw.
+ *
+ * Assumes a `SqlClient` in context, and the caller's transaction around it.
+ */
+export const resolveOtherFixturesOn = (date: string, exceptFixtureId: FixtureId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const manifest = yield* readGenerationManifest;
+    const fixtureRows = yield* sql<{
+      id: FixtureId;
+      homeClubId: ClubId;
+      awayClubId: ClubId;
+      seasonNumber: number;
+      competitionId: string;
+      round: number;
+      kind: string;
+    }>`SELECT f.id, f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
+              f.season_number as "seasonNumber", f.competition_id as "competitionId", f.round, c.kind
+       FROM fixtures f JOIN competitions c ON c.id = f.competition_id
+       WHERE f.played = 0 AND f.scheduled_date <= ${date} AND f.id != ${exceptFixtureId}
+       ORDER BY f.scheduled_date ASC, f.id ASC`;
+
+    for (const fixture of fixtureRows) {
+      const score = yield* resolveFixtureScore(
+        fixture.homeClubId,
+        fixture.awayClubId,
+        fixture.seasonNumber,
+        fixture.competitionId,
+        fixture.round,
+        manifest.worldSeed,
+        fixture.kind === "cup",
+      );
+      yield* sql`UPDATE fixtures SET home_goals = ${score.homeGoals}, away_goals = ${score.awayGoals},
+          home_penalties = ${score.homePenalties}, away_penalties = ${score.awayPenalties}, played = 1
+        WHERE id = ${fixture.id}`;
+    }
+    return fixtureRows.length;
   });

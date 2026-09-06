@@ -10,7 +10,7 @@ import { BidId, PlayerId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { advanceCalendar } from "../../../src/main/season/index.js";
+import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { createSave } from "../../../src/main/world/index.js";
 import { getSquad } from "../../../src/main/club/index.js";
 import { loadStreamEvents } from "../../../src/main/season/decider.js";
@@ -91,7 +91,7 @@ it.effect("placeBid is rejected once the Transfer Window has closed", () =>
     const target = screen.marketPlayers[0];
     ok(target, "expected at least one other club's player on the market");
 
-    yield* advanceCalendar(savesDir, save.id); // resolves Matchday 1, closes the pre-season window
+    yield* advanceThroughBoundary(savesDir, save.id); // resolves Matchday 1, closes the pre-season window
 
     const closedScreen = yield* getTransfersScreen(savesDir, save.id);
     strictEqual(closedScreen.windowOpen, false);
@@ -105,7 +105,7 @@ it.effect("signFreeAgent and renewContract are rejected outside an open window",
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const squad = yield* getSquad(savesDir, save.id);
-    yield* advanceCalendar(savesDir, save.id); // closes the pre-season window
+    yield* advanceThroughBoundary(savesDir, save.id); // closes the pre-season window
 
     const signResult = yield* Effect.exit(signFreeAgent(savesDir, save.id, PlayerId.make("nonexistent-player"), undefined));
     ok(signResult._tag === "Failure");

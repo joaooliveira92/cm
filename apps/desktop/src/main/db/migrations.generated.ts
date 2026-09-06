@@ -330,6 +330,9 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	\`season_number\` integer PRIMARY KEY NOT NULL,
 	\`game_date\` text NOT NULL,
 	\`phase\` text NOT NULL,
+	\`awaiting_fixture_id\` integer,
+	\`awaiting_match_id\` text,
+	FOREIGN KEY (\`awaiting_fixture_id\`) REFERENCES \`fixtures\`(\`id\`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT "season_phase" CHECK(phase IN ('pre_season','in_season','mid_window_open','season_complete'))
 );`,
   `CREATE TABLE \`staff\` (

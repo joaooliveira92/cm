@@ -37,7 +37,16 @@ const survivingSeason = (saveId: string, seasonNumber: number) =>
       WHERE season_number = ${seasonNumber} ORDER BY id ASC`;
     const streams = yield* sql<{ streamId: string }>`
       SELECT DISTINCT stream_id as "streamId" FROM events WHERE stream_type = 'match'`;
-    return { fixtures, streamIds: streams.map((row) => row.streamId) };
+    // Every fixture in the save, not just this season's. Match streams are not season-scoped, so
+    // checking them against one season's fixtures would call a live season-2 stream an orphan. That
+    // used to be unreachable — the human's league Fixture resolved headlessly and no stream existed
+    // for it — and became reachable the moment every human Matchday started producing one.
+    const allFixtures = yield* sql<{ id: number }>`SELECT id FROM fixtures`;
+    return {
+      fixtures,
+      allFixtureIds: allFixtures.map((row) => String(row.id)),
+      streamIds: streams.map((row) => row.streamId),
+    };
   }).pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
     Effect.scoped,
@@ -84,7 +93,7 @@ it.effect("prunes a match stream exactly when its fixture goes", () =>
     ok(yield* playUntilSeason(save.id, 2));
 
     const after = yield* survivingSeason(save.id, 1);
-    const surviving = new Set(after.fixtures.map((row) => String(row.id)));
+    const surviving = new Set(after.allFixtureIds);
 
     // A match stream is keyed on its fixture, so the log never outlives the thing it describes.
     for (const streamId of after.streamIds) {

@@ -8,7 +8,8 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { advanceCalendar, recoverClubFitness } from "../../../src/main/season/index.js";
+import { recoverClubFitness } from "../../../src/main/season/index.js";
+import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { createSave } from "../../../src/main/world/index.js";
 import { getSquad } from "../../../src/main/club/index.js";
 
@@ -57,7 +58,7 @@ it.effect("the ledger seeds every player at full Condition, and resolving a Fixt
     ok(fresh.players.length > 0);
     for (const player of fresh.players) strictEqual(player.condition, 100);
 
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
 
     const afterFixture = yield* getSquad(savesDir, save.id);
     const conditions = afterFixture.players.map((player) => player.condition);

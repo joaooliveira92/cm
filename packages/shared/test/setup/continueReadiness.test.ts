@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assessContinueReadiness, type ContinueReadinessFacts } from "../../src/index.js";
+import { assessContinueReadiness, assessMatchReadiness, type ContinueReadinessFacts } from "../../src/index.js";
 
 /** A career that is free to advance: in season, nothing running, Tactic set. */
 const READY: ContinueReadinessFacts = {
@@ -59,11 +59,14 @@ describe("assessContinueReadiness", () => {
       expect(readiness.items[0]!.severity).toBe("advisory");
     });
 
-    it("names what happens instead, rather than only that something is missing", () => {
+    it("names the consequence, rather than only that something is missing", () => {
       const [item] = assessContinueReadiness({ ...READY, hasTactic: false }).items;
 
       expect(item!.title).toBe("No Tactic set");
-      expect(item!.detail).toContain("4-4-2");
+      // It used to promise an automatic 4-4-2, which was true while a fallback silently supplied
+      // one. The fallback is gone, so the honest consequence is that the Fixture cannot be played.
+      expect(item!.detail).toContain("Fixture");
+      expect(item!.detail).not.toContain("4-4-2");
     });
 
     it("says nothing about the Tactic once one is set", () => {
@@ -208,5 +211,43 @@ describe("bids awaiting the manager", () => {
       expect(everything.length).toBeGreaterThan(3);
       expect(everything.filter((i) => i.destination === null)).toEqual([]);
     });
+  });
+});
+
+describe("assessMatchReadiness", () => {
+  const READY_TO_PLAY = { hasTactic: true, missingSlotPlayers: 0 };
+
+  it("lets a prepared club play", () => {
+    const readiness = assessMatchReadiness(READY_TO_PLAY);
+    expect(readiness.canPlay).toBe(true);
+    expect(readiness.blockers).toEqual([]);
+  });
+
+  it("blocks a club with no Tactic, where the advance only advises", () => {
+    // The same fact, two answers: advisory before the boundary, blocking at it. That is the whole
+    // of the boundary-aware rule — a career several Matchdays from kickoff is not gated, and the
+    // Fixture itself is not crossable.
+    const readiness = assessMatchReadiness({ ...READY_TO_PLAY, hasTactic: false });
+    expect(readiness.canPlay).toBe(false);
+    expect(readiness.blockers.map((blocker) => blocker.id)).toEqual(["no-tactic"]);
+  });
+
+  it("blocks a Tactic whose slots name players who have left", () => {
+    // A Tactic is eleven slots by construction, so a departed player is the only way the club can
+    // arrive at kickoff unable to field a legal eleven.
+    const readiness = assessMatchReadiness({ hasTactic: true, missingSlotPlayers: 2 });
+    expect(readiness.canPlay).toBe(false);
+    expect(readiness.blockers.map((blocker) => blocker.id)).toEqual(["tactic-names-departed-players"]);
+    expect(readiness.blockers[0]!.detail).toContain("2 slots");
+  });
+
+  it("carries a destination on every blocker, so resolving one is a step and not a hunt", () => {
+    const readiness = assessMatchReadiness({ hasTactic: false, missingSlotPlayers: 0 });
+    expect(readiness.blockers.every((blocker) => blocker.destination !== null)).toBe(true);
+  });
+
+  it("says nothing about a weak but legal selection", () => {
+    // Strategic failure is the player's to own; only structurally absent or invalid state blocks.
+    expect(assessMatchReadiness(READY_TO_PLAY).blockers).toEqual([]);
   });
 });

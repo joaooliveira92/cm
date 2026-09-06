@@ -21,7 +21,8 @@ import {
   type PlayerAttributes,
 } from "@cm-clone/shared";
 import { beginCareer, commitCareer } from "../../../src/main/world/index.js";
-import { advanceCalendar, discardSquadsForClubs } from "../../../src/main/season/index.js";
+import { discardSquadsForClubs } from "../../../src/main/season/index.js";
+import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { createPyramidSnapshot, createSnapshotFor } from "../snapshot-helpers.js";
 
 /**
@@ -218,7 +219,7 @@ describe("a results-only competition still plays its season", () => {
       const saveId = yield* committedCareerWithGermanyAt("view_only", 5150);
 
       for (let advance = 0; advance < 4; advance += 1) {
-        yield* advanceCalendar(savesDir, saveId);
+        yield* advanceThroughBoundary(savesDir, saveId);
       }
 
       const resolved = yield* withSave(
@@ -269,8 +270,8 @@ describe("crossing the depth boundary at the rollover", () => {
       );
 
       for (let advance = 0; advance < 200; advance += 1) {
-        const result = yield* advanceCalendar(savesDir, saveId);
-        if (result.season.seasonNumber >= 2) break;
+        const result = yield* advanceThroughBoundary(savesDir, saveId);
+        if (result.advance.season.seasonNumber >= 2) break;
       }
 
       const crossings = yield* withSave(

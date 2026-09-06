@@ -4,7 +4,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { beginCareer, commitCareer } from "../../../src/main/world/index.js";
-import { advanceCalendar } from "../../../src/main/season/index.js";
+import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { loadStreamEvents } from "../../../src/main/season/decider.js";
 import { createDefaultSnapshot } from "../snapshot-helpers.js";
 
@@ -90,12 +90,18 @@ export const seasonHelpers = (savesDir: () => string) => {
       Effect.scoped,
     );
 
-  /** Plays seasons until the save has rolled into `target`. */
+  /**
+   * Plays seasons until the save has rolled into `target`.
+   *
+   * Each iteration is one press of Continue *plus* the human Fixture it may have stopped at, which
+   * is what one `advanceCalendar` used to mean on its own. Without playing through the boundary the
+   * loop would spin on the first Matchday for all two hundred iterations.
+   */
   const playUntilSeason = (saveId: SaveId, target: number) =>
     Effect.gen(function* () {
       for (let advance = 0; advance < 200; advance += 1) {
-        const result = yield* advanceCalendar(savesDir(), saveId);
-        if (result.season.seasonNumber >= target) return true;
+        const stepped = yield* advanceThroughBoundary(savesDir(), saveId);
+        if (stepped.advance.season.seasonNumber >= target) return true;
       }
       return false;
     });

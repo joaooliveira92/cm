@@ -58,7 +58,7 @@ const buildTransfersScreenView = (club: ClubSummary) =>
 
     return new TransfersScreenView({
       club,
-      season: toSeasonView(seasonRow),
+      season: yield* toSeasonView(seasonRow),
       windowOpen: isWindowOpen(seasonRow.phase),
       transferBudgetRemaining: budget.transferBudgetRemaining,
       wageBudget: budget.wageBudget,

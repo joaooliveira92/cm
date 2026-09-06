@@ -9,23 +9,26 @@ import {
 } from "react";
 import { Effect, Result } from "effect";
 import {
-  ClubId,
-  type ClubSummary,
   type CommentaryLineView,
   type InjuryView,
+  type MatchMode,
   type MatchSummary,
+  type PendingFixtureView,
   type RpcPayload,
   type RpcSuccess,
   type SaveId,
   type SubstitutionStatusView,
 } from "@cm-clone/contracts";
 import {
-  listOpponentClubs,
+  commitMatchday as commitMatchdayRpc,
+  leagueTableAtom,
   startMatch as startMatchRpc,
   submitMatchCommandMutation,
   useAtomSet,
+  useAtomValue,
   type RpcClientError,
 } from "../rpc.js";
+import { describeRpcError } from "../rpc/errors.js";
 import { registerActionHandler } from "../actions/dispatch.js";
 import { clearScopeState, setScopeState } from "../actions/scopeState.js";
 import { clearActiveMatch, getActiveMatch, setActiveMatch } from "./session.js";
@@ -42,16 +45,24 @@ const NO_SUBS: SubstitutionStatusView = {
   capReached: false,
 };
 
+/**
+ * `awaiting-kickoff` is the pre-match boundary as the screen sees it: a Fixture is pending, nothing
+ * has been started, and the player chooses Play or Quick result. `complete` is the simulation
+ * reaching full time — which is *not* the career accepting it, so `committed` is a separate phase
+ * reached only through `commitMatchday`.
+ */
 export type MatchPhase =
-  | "selecting-opponent"
+  | "awaiting-kickoff"
   | "starting"
   | "live"
   | "paused"
-  | "complete";
+  | "complete"
+  | "committing"
+  | "committed";
 
 export interface MatchState {
-  readonly opponents: ReadonlyArray<ClubSummary>;
-  readonly opponentId: ClubId;
+  /** The Fixture the Calendar has stopped before, or `null` when nothing is pending. */
+  readonly pending: PendingFixtureView | null;
   readonly match: MatchSummary | null;
   readonly error: string | null;
   readonly phase: MatchPhase;
@@ -71,11 +82,11 @@ export interface MatchState {
 }
 
 export interface MatchActions {
-  chooseOpponent: (clubId: ClubId) => void;
-  /** Start a new match against the chosen opponent (action `start-match`). */
-  startMatch: () => void;
-  /** Forget the running match and return to the opponent picker (action `reset-match`). */
-  resetMatch: () => void;
+  /** Play the pending Fixture (action `start-match`), watched or quick-resulted. */
+  startMatch: (mode: MatchMode) => void;
+  /** Commit the finished match to the career (action `commit-matchday`). Explicit, because the
+   *  polling loop above must never be what moves the Calendar. */
+  commitResult: () => void;
   /** Submit a mid-match command; `isHalftime` flies it at minute 45 without consuming a
    *  substitution window. Resyncs the whole feed from the command's resimulation. Resolves
    *  `void` for both success and a RemoteFailure (the engine may still reject it silently);
@@ -114,8 +125,8 @@ export interface MatchContextValue {
 
 export const MatchContext = createContext<MatchContextValue | null>(null);
 
-/** Match state lives in this provider (Phase 1): the screen's sibling components — the opponent
- *  picker, the commentary stream, and the live control panel — consume the same context interface
+/** Match state lives in this provider (Phase 1): the screen's sibling components — the kickoff
+ *  panel, the commentary stream, and the live control panel — consume the same context interface
  *  (state/actions/meta) instead of drilling props or owning copies of the same state. */
 export const MatchProvider = ({
   saveId,
@@ -124,11 +135,14 @@ export const MatchProvider = ({
   readonly saveId: SaveId;
   readonly children: ReactNode;
 }) => {
-  const [opponents, setOpponents] = useState<ReadonlyArray<ClubSummary>>([]);
-  const [opponentId, setOpponentId] = useState(ClubId.make(""));
   const [match, setMatch] = useState<MatchSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [phase, setPhase] = useState<MatchPhase>("selecting-opponent");
+  const [phase, setPhase] = useState<MatchPhase>("awaiting-kickoff");
+
+  // The pending Fixture rides the season, so it comes from the same read every other surface uses
+  // rather than a fetch built for this screen.
+  const tableResult = useAtomValue(leagueTableAtom(saveId));
+  const pending = tableResult._tag === "Success" ? tableResult.value.season.awaitingFixture : null;
 
   const [revealed, setRevealed] = useState<ReadonlyArray<CommentaryLineView>>([]);
   const [homeScore, setHomeScore] = useState(0);
@@ -206,41 +220,61 @@ export const MatchProvider = ({
   );
 
   // --- Match lifecycle. ---
-  const chooseOpponent = useCallback((clubId: ClubId) => setOpponentId(clubId), []);
-
-  const resetMatch = useCallback(() => setMatch(null), []);
-
   const resume = useCallback(() => setChunkInjuries([]), []);
 
-  const startMatch = useCallback(async (): Promise<void> => {
-    if (!opponentId) return;
+  const startMatch = useCallback(
+    async (mode: MatchMode): Promise<void> => {
+      if (pending === null) return;
+      setError(null);
+      setPhase("starting");
+      setRevealed([]);
+      setHomeScore(0);
+      setAwayScore(0);
+      setHomeSubs(NO_SUBS);
+      setHomeOnPitchCount(11);
+      setChunkInjuries([]);
+      setCurrentMinute(0);
+      cursorRef.current = 0;
+      pendingRef.current = [];
+      streamCompleteRef.current = false;
+      pausedRef.current = false;
+      const outcome = await Effect.runPromise(
+        startMatchRpc({ saveId, fixtureId: pending.fixtureId, mode }).pipe(Effect.result),
+      );
+      if (Result.isFailure(outcome)) {
+        // The refusal's own sentence, not a generic one: a readiness block names what to fix, and
+        // flattening it to "Failed to start match" is what the boundary exists to prevent.
+        setError(describeRpcError(outcome.failure as RpcClientError<"startMatch">));
+        setPhase("awaiting-kickoff");
+        return;
+      }
+      setMatch(outcome.success);
+      setPhase("live");
+    },
+    [saveId, pending],
+  );
+
+  /** The career accepting the result. Separate from the poll that observed full time, and from the
+   *  simulation that produced it. */
+  const commitResult = useCallback(async (): Promise<void> => {
+    if (match === null) return;
     setError(null);
-    setPhase("starting");
-    setRevealed([]);
-    setHomeScore(0);
-    setAwayScore(0);
-    setHomeSubs(NO_SUBS);
-    setHomeOnPitchCount(11);
-    setChunkInjuries([]);
-    setCurrentMinute(0);
-    cursorRef.current = 0;
-    pendingRef.current = [];
-    streamCompleteRef.current = false;
-    pausedRef.current = false;
+    setPhase("committing");
     const outcome = await Effect.runPromise(
-      startMatchRpc({ saveId, opponentClubId: opponentId }).pipe(Effect.result),
+      commitMatchdayRpc({ saveId, fixtureId: match.fixtureId }).pipe(Effect.result),
     );
     if (Result.isFailure(outcome)) {
-      setError("Failed to start match");
-      setPhase("selecting-opponent");
+      setError(describeRpcError(outcome.failure as RpcClientError<"commitMatchday">));
+      setPhase("complete");
       return;
     }
-    setMatch(outcome.success);
-    setPhase("live");
-  }, [saveId, opponentId]);
+    setPhase("committed");
+  }, [saveId, match]);
 
-  // Arrive at an in-flight match, don't start one on mount (router note AC-16): when a session
-  // was recorded for this save, restore the UI from it instead of showing the opponent picker.
+  // Arrive at an in-flight match, don't start one on mount (router note AC-16): when a session was
+  // recorded for this save, restore the UI from it instead of offering kickoff again. The season's
+  // own `awaitingFixture.matchId` is the durable version of the same fact, so a restart of the
+  // application resumes the stream too rather than only a re-route within one run.
   useEffect(() => {
     const resumed = getActiveMatch(saveId);
     if (resumed !== null) {
@@ -256,22 +290,9 @@ export const MatchProvider = ({
       cursorRef.current = resumed.cursor;
       pendingRef.current = [];
       streamCompleteRef.current = resumed.streamComplete;
-    } else {
-      const load = async (): Promise<void> => {
-        const outcome = await Effect.runPromise(listOpponentClubs(saveId).pipe(Effect.result));
-        if (Result.isFailure(outcome)) {
-          setError("Failed to load opponents");
-          return;
-        }
-        const clubs = outcome.success;
-        setOpponents(clubs);
-        if (clubs.length > 0) setOpponentId(clubs[0]!.id);
-      };
-      void load();
     }
     // Lift the gate for the streaming hook (child effects run before this provider effect): the
-    // sync restore above has now armed cursor/streamComplete. The async opponent load does not hold
-    // it — the poll only needs match/streamComplete armed.
+    // sync restore above has now armed cursor/streamComplete.
     setHydrated(true);
   }, [saveId]);
 
@@ -335,19 +356,24 @@ export const MatchProvider = ({
   // map dispatch the same registered Actions (ADR-0012).
   useEffect(() => {
     const unregister = registerActionHandler("start-match", () => {
-      void startMatch();
+      void startMatch("play");
     });
-    const unregisterReset = registerActionHandler("reset-match", () => resetMatch());
+    const unregisterQuick = registerActionHandler("quick-result", () => {
+      void startMatch("quick");
+    });
+    const unregisterCommit = registerActionHandler("commit-matchday", () => {
+      void commitResult();
+    });
     return () => {
       unregister();
-      unregisterReset();
+      unregisterQuick();
+      unregisterCommit();
     };
-  }, [saveId, startMatch, resetMatch]);
+  }, [saveId, startMatch, commitResult]);
 
   const value: MatchContextValue = {
     state: {
-      opponents,
-      opponentId,
+      pending,
       match,
       error,
       phase,
@@ -361,9 +387,8 @@ export const MatchProvider = ({
       hydrated,
     },
     actions: {
-      chooseOpponent,
       startMatch,
-      resetMatch,
+      commitResult,
       submitCommand,
       resume,
     },

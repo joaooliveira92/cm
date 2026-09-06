@@ -35,25 +35,25 @@ so a second call is a typed already-completed outcome rather than a second commi
 - Completion is an explicit idempotent command keyed by Fixture identity, committing the human
   result, the remaining Fixtures, the Condition write-backs, the resolution event, and the calendar
   step in one transaction; polling must never acquire career mutation because one read happened to
-  observe the final whistle. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-human-fixture-pre-match-boundary.md).
+  observe the final whistle. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-human-fixture-pre-match-boundary.md).
 - The human result is derived from the persisted stream, never by re-running the human simulation.
-  See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-human-fixture-pre-match-boundary.md).
+  See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-human-fixture-pre-match-boundary.md).
 - A Save is durable at commit: a rolled-back completion leaves no record claiming the Matchday
   occurred. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-30-durable-at-commit-persistence.md).
 
 **Blocked by:** 02 (Match day is the scheduled Fixture) — there is no started match stream to commit
 from until the Fixture-bound start exists.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Reading or polling a running match commits no Fixture or Matchday state.
-- [ ] The completion command commits the human result, the Matchday's remaining Fixtures, every
+- [x] Reading or polling a running match commits no Fixture or Matchday state.
+- [x] The completion command commits the human result, the Matchday's remaining Fixtures, every
       Condition write-back, the resolution event, and the calendar step in one transaction.
-- [ ] Calling it twice commits once: no doubled Condition recovery, no second resolution event, no
+- [x] Calling it twice commits once: no doubled Condition recovery, no second resolution event, no
       changed score; the second call returns a typed already-completed outcome.
-- [ ] An induced failure mid-commit leaves the boundary intact, the Matchday unresolved, and a retry
+- [x] An induced failure mid-commit leaves the boundary intact, the Matchday unresolved, and a retry
       succeeds with the same result.
-- [ ] The human result is derived from the persisted stream; the human simulation is not re-run.
-- [ ] The League table never shows a partially resolved Matchday.
-- [ ] After completion, Continue advances to the next boundary as before.
-- [ ] `pnpm check:all` is green.
+- [x] The human result is derived from the persisted stream; the human simulation is not re-run.
+- [x] The League table never shows a partially resolved Matchday.
+- [x] After completion, Continue advances to the next boundary as before.
+- [x] `pnpm check:all` is green.

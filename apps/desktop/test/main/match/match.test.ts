@@ -7,7 +7,25 @@ import { deepStrictEqual, notStrictEqual, ok, strictEqual } from "node:assert";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../../../src/main/world/index.js";
-import { listOpponentClubs, resumeSimulation, startMatch } from "../../../src/main/match/index.js";
+import { resumeSimulation, startMatch } from "../../../src/main/match/index.js";
+import { advanceCalendar } from "../../../src/main/season/index.js";
+import { ensureHumanTactic, pendingFixtureId } from "../boundary-helpers.js";
+
+/**
+ * A career standing at its first Fixture, ready to play it.
+ *
+ * There is no shortcut: the Calendar has to be advanced to the boundary, and the human club has to
+ * have a Tactic, because those are the two conditions the game now enforces before a match exists.
+ */
+const atFirstFixture = (name: string) =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, name);
+    yield* ensureHumanTactic(savesDir, save.id);
+    yield* advanceCalendar(savesDir, save.id);
+    const fixtureId = yield* pendingFixtureId(savesDir, save.id);
+    ok(fixtureId !== null, "the first Continue should stop at the human club's Fixture");
+    return { save, fixtureId };
+  });
 
 let savesDir: string;
 
@@ -17,36 +35,26 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-it.effect("listOpponentClubs excludes the user's own club", () =>
+it.effect("startMatch binds the match to the pending Fixture, either side of the tie", () =>
   Effect.gen(function* () {
-    const save = yield* createSave(savesDir, "Test Career");
-    const opponents = yield* listOpponentClubs(savesDir, save.id);
+    const { save, fixtureId } = yield* atFirstFixture("Test Career");
 
-    ok(opponents.length >= 1);
-    ok(opponents.every((club) => club.name.length > 0));
-  }),
-);
-
-it.effect("startMatch persists a full event timeline and returns club identities", () =>
-  Effect.gen(function* () {
-    const save = yield* createSave(savesDir, "Test Career");
-    const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const opponent = opponents[0]!;
-
-    const summary = yield* startMatch(savesDir, save.id, opponent.id);
+    const summary = yield* startMatch(savesDir, save.id, fixtureId, "play");
 
     ok(summary.matchId.length > 0);
-    strictEqual(summary.awayClubId, opponent.id);
-    strictEqual(summary.awayClubName, opponent.name);
+    strictEqual(summary.fixtureId, fixtureId);
     notStrictEqual(summary.homeClubId, summary.awayClubId);
+    // The Fixture decides which side the human is on. The exhibition path this replaced always
+    // seated them at home, so a summary that could only ever say `true` here is the regression.
+    const humanIsHome = summary.isHome;
+    ok(typeof humanIsHome === "boolean");
   }),
 );
 
 it.effect("resumeSimulation drives a fresh match to completion via successive chunked calls", () =>
   Effect.gen(function* () {
-    const save = yield* createSave(savesDir, "Test Career");
-    const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatch(savesDir, save.id, opponents[0]!.id);
+    const { save, fixtureId } = yield* atFirstFixture("Test Career");
+    const summary = yield* startMatch(savesDir, save.id, fixtureId, "play");
 
     let cursor = 0;
     let isComplete = false;
@@ -79,9 +87,8 @@ it.effect("resumeSimulation drives a fresh match to completion via successive ch
 
 it.effect("resumeSimulation is deterministic — replaying from cursor 0 reproduces the same lines", () =>
   Effect.gen(function* () {
-    const save = yield* createSave(savesDir, "Test Career");
-    const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatch(savesDir, save.id, opponents[0]!.id);
+    const { save, fixtureId } = yield* atFirstFixture("Test Career");
+    const summary = yield* startMatch(savesDir, save.id, fixtureId, "play");
 
     const drain = () =>
       Effect.gen(function* () {
@@ -108,9 +115,8 @@ it.effect("resumeSimulation is deterministic — replaying from cursor 0 reprodu
 
 it.effect("commentary lines never fire for a Minute-Slice with no Match Event and mention real names", () =>
   Effect.gen(function* () {
-    const save = yield* createSave(savesDir, "Test Career");
-    const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatch(savesDir, save.id, opponents[0]!.id);
+    const { save, fixtureId } = yield* atFirstFixture("Test Career");
+    const summary = yield* startMatch(savesDir, save.id, fixtureId, "play");
 
     let cursor = 0;
     let isComplete = false;

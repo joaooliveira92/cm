@@ -17,6 +17,13 @@ referenced throughout.
   `brief.md`.
 - **[.scratch/club-selection/](../.scratch/club-selection/)** — 17/17. Club selection rail,
   detail panel and the generated-league selector.
+- **[.scratch/human-fixture-pre-match-boundary/](../.scratch/human-fixture-pre-match-boundary/)** —
+  3/3. The Calendar stops before the human club's Fixture and resolves none of that Matchday; Match
+  day is that Fixture rather than a free-opponent exhibition, refusing an unprepared start with typed
+  blockers; and an explicit `commitMatchday` writes the human result, the rest of the division, every
+  Condition write-back and the Calendar's step in one idempotent transaction. Landed as one change
+  rather than three: ticket 01 alone creates a boundary nothing can cross until ticket 03 exists, so
+  a career stalls at its first Fixture in between.
 - **[.scratch/continue-and-advance-time/](../.scratch/continue-and-advance-time/)** — 5/5. Screen 23
   of the Group B import reconciled against the shipped Continue loop: Group B has a reconciliation
   ledger with Screen 23 `Reviewed`, the League table's duplicate advance control is gone, one press
@@ -59,10 +66,6 @@ referenced throughout.
   issue-tracker convention.
 - **[.scratch/save-list-error-handling/](../.scratch/save-list-error-handling/)** — 0/1, a
   `ready-for-agent` bug-fix.
-- **[.scratch/human-fixture-pre-match-boundary/](../.scratch/human-fixture-pre-match-boundary/)** —
-  0/3, all `ready-for-agent`, and blocked on `continue-and-advance-time` ticket 05. Implements the
-  proposed note of the same name: Continue stops before the human club's Fixture, Match day binds to
-  that Fixture behind a real readiness gate, and the Matchday commits exactly once.
 
 ## Needs a decision, not a ticket
 

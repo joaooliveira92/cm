@@ -7,7 +7,7 @@ import {
   type HeaderCareer,
 } from "../../../src/renderer/chrome/header/career-header-state.js";
 
-const season = { seasonNumber: 3, currentDate: "2026-10-17", phase: "in_season" } as const;
+const season = { seasonNumber: 3, awaitingFixture: null, currentDate: "2026-10-17", phase: "in_season" } as const;
 
 const career = (over: Partial<HeaderCareer> = {}): HeaderCareer => ({
   clubName: "Northport Rovers",

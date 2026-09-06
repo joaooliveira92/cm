@@ -22,7 +22,7 @@ Seam: renderer-only. No RPC method, payload, or failure changes.
 - Continue moves out of the League table and into the shared shell: it must be visible from every
   primary management screen, consistently located, reachable by keyboard, and independent of the
   current route. Screen-bound Continue asserts that the League table owns time, which the domain
-  does not say. See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-continue-as-global-career-loop.md).
+  does not say. See [Agent Note](../../../.agents/notes/implemented/feature/2026-08-29-continue-as-global-career-loop.md).
 - Continue is expressed exactly once and renders from the `continue` Action record, never as a
   hardcoded second definition; the handler lives in the chrome so the binding and the button
   dispatch the same advance from every career screen. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-31-career-chrome-and-date-continue-bar.md).

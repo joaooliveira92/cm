@@ -159,7 +159,7 @@ they inherited, which positions are strong or thin, who is injured, and what Con
 in — the raw material for the first tactical decision. Landing on Tactics was prototyped and
 rejected: it presents an unset task before establishing what is being managed. The requirement to set
 a Tactic before the first match is already carried by the persistent readiness affordance defined in
-[Continue as the global career loop](2026-08-29-continue-as-global-career-loop.md), so Tactics does
+[Continue as the global career loop](../../implemented/feature/2026-08-29-continue-as-global-career-loop.md), so Tactics does
 not need to be the landing screen for that requirement to be visible.
 
 The **Board Objective joins the persistent shell identity**, beneath or beside the existing

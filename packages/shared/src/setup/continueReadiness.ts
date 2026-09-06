@@ -125,15 +125,16 @@ const ADVISORY: ReadonlyArray<ReadinessRule> = [
     destination: "transfers",
   },
   {
-    // The sharpest unannounced gap in the career loop: every AI club is assigned a Tactic at season
-    // start and the player's club is not, so `synthesizeDefaultTactic` quietly fills a 4-4-2 in and
-    // the player's matches are played on a formation they never chose. Advisory rather than
-    // blocking — the career is playable without a Tactic, so refusing to advance would punish a
-    // player for a default the game picked for them.
+    // Advisory *here* and blocking at the match boundary, which is the whole of the boundary-aware
+    // rule: a career several Matchdays from its first kickoff must not be gated on a Tactic, and
+    // the Fixture itself must not be crossable without one. See `assessMatchReadiness` below.
+    //
+    // The copy no longer promises an automatic 4-4-2. It used to be true — `synthesizeDefaultTactic`
+    // quietly filled one in — and that silent substitution is exactly what this effort deleted.
     id: "no-tactic",
     applies: (facts) => !facts.hasTactic,
     title: "No Tactic set",
-    detail: () => "Matches will be played with an automatic 4-4-2 until you set one.",
+    detail: () => "You will not be able to play your next Fixture until you set one.",
     destination: "tactics",
   },
 ];
@@ -167,4 +168,75 @@ export const assessContinueReadiness = (
   ];
 
   return { canAdvance: blockers.length === 0, items };
+};
+
+// ---------------------------------------------------------------------------
+// Match readiness — the gate at the pre-match boundary
+// ---------------------------------------------------------------------------
+
+/**
+ * What blocks *crossing into* the human's Fixture, as opposed to what blocks the Calendar in
+ * general. The two are deliberately different questions: incomplete preparation must not gate a
+ * career several Matchdays before its first kickoff, but it must not be crossable either.
+ *
+ * These rules are evaluated twice — advisorily when the boundary is read, and authoritatively when
+ * Play or Quick result is requested. The second evaluation is the integrity boundary; the first is
+ * a courtesy, because the player may repair a blocker a moment after reading it.
+ */
+export interface MatchReadinessFacts {
+  /** Whether the human club has a persisted Tactic. A new career starts without one. */
+  readonly hasTactic: boolean;
+  /** Slots naming players who are no longer in the squad — a Tactic outlived by a transfer. */
+  readonly missingSlotPlayers: number;
+}
+
+export interface MatchReadiness {
+  readonly canPlay: boolean;
+  readonly blockers: ReadonlyArray<ReadinessItem>;
+}
+
+/**
+ * The line this draws is between strategic failure and accidental failure. A weak formation, an
+ * unbalanced selection, a tired but legally selectable player are all valid preparation and are not
+ * listed here — their consequences are the player's to own. Only structurally absent or invalid
+ * required state blocks, because a match resolved on state the player never chose teaches nothing.
+ */
+const MATCH_BLOCKING: ReadonlyArray<{
+  readonly id: string;
+  readonly applies: (facts: MatchReadinessFacts) => boolean;
+  readonly title: string;
+  readonly detail: (facts: MatchReadinessFacts) => string;
+  readonly destination: ContinueDestination | null;
+}> = [
+  {
+    id: "no-tactic",
+    applies: (facts) => !facts.hasTactic,
+    title: "No Tactic set",
+    detail: () => "Your club has no Tactic. Set one before this Fixture can be played.",
+    destination: "tactics",
+  },
+  {
+    // A Tactic is eleven slots by construction, so a slot whose player has left is the only way the
+    // human club can arrive at kickoff unable to field a legal eleven. Checking the slots is
+    // therefore also the minimum-squad check, without inventing a squad-size rule the domain does
+    // not have.
+    id: "tactic-names-departed-players",
+    applies: (facts) => facts.missingSlotPlayers > 0,
+    title: "Your Tactic names players who have left",
+    detail: (facts) =>
+      `${facts.missingSlotPlayers === 1 ? "One slot names a player" : `${facts.missingSlotPlayers} slots name players`} no longer in your squad. Fill ${facts.missingSlotPlayers === 1 ? "it" : "them"} before kickoff.`,
+    destination: "tactics",
+  },
+];
+
+/** Classifies whether the human's pending Fixture may be resolved, and why not when it may not. */
+export const assessMatchReadiness = (facts: MatchReadinessFacts): MatchReadiness => {
+  const blockers = MATCH_BLOCKING.filter((rule) => rule.applies(facts)).map((rule) => ({
+    id: rule.id,
+    severity: "blocking" as const,
+    title: rule.title,
+    detail: rule.detail(facts),
+    destination: rule.destination,
+  }));
+  return { canPlay: blockers.length === 0, blockers };
 };

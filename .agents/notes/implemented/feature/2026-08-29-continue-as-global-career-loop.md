@@ -1,6 +1,6 @@
 # Agent Note: Continue as the global career loop
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -11,7 +11,7 @@ is `advanceCalendar`, and it ships as a button in the header of the League table
 secondary screen, reachable only by first navigating somewhere unrelated to it, which makes the
 League table the de facto owner of time.
 
-[No onboarding inbox](../architecture/2026-08-29-no-onboarding-inbox.md) removed the alternative
+[No onboarding inbox](../../proposed/architecture/2026-08-29-no-onboarding-inbox.md) removed the alternative
 answer to every question that follows. With no message feed, "an unread message exists" is not
 available as a stop condition, so each interrupt needs its own ruling; and the transient half of the
 notification load lands on whatever renders at the point of the press, making the Continue result
@@ -24,9 +24,9 @@ done something required — the human's club starts with no Tactic at all and no
 so. And is there a keyboard binding, the seed doc's space bar having done double duty that only half
 of which survives.
 
-## Proposal
+## Decision
 
-**Continue becomes a persistent application-shell control, keeps the label "Continue", stops at every
+**Continue is a persistent application-shell control, keeps the label "Continue", stops at every
 boundary `AdvanceCalendarResult` can report, renders one structured durable result per press, and
 refuses to cross into the human's match with invalid or absent required setup while never blocking
 advancement before that boundary.**
@@ -259,7 +259,7 @@ tapering guidance: help that stops once the player is judged experienced is a sc
 regardless of the surface it sits on. Readiness is derived from a predicate and disappears when the
 predicate is false, not when the player has seen it enough times.
 
-## Acceptance criteria
+## Consequences
 
 - Continue is visible and operable from every primary management screen, owned by the application
   shell, and no longer owned by `LeagueTableScreen`.
@@ -288,6 +288,30 @@ predicate is false, not when the player has seen it enough times.
 - Duplicate Continue requests are prevented, and the `unavailable` state always states its reason.
 - Ticket 07 owns the full readiness inventory and its per-condition severity classification; ticket 08
   owns the final copy and presentation.
+
+### What shipped, and where it diverged
+
+Everything here is built. The surface half landed in `.scratch/continue-and-advance-time/` — one
+Continue in the career chrome, a structured result per press, every outstanding item listed with the
+screen that owns its fix, and an advance that commits as a unit. The readiness half landed in
+`.scratch/human-fixture-pre-match-boundary/`, which is where the boundary this note specified actually
+came to exist.
+
+Two divergences, both deliberate and both recorded in [the pre-match boundary
+note](../../implemented/architecture/2026-08-29-human-fixture-pre-match-boundary.md), which is
+authoritative where the two disagree:
+
+- **The Tactic fallbacks are deleted for every club, not only the human's.** This note asked only that
+  they stop applying to the user's club. That is weaker than it should have been: a fallback that
+  fires is indistinguishable from one that does not, which is exactly how the human's club came to be
+  silently assigned a machine-picked formation until an audit found it.
+- **The boundary is durable state on the Season, and crossing it is an explicit commit.** This note
+  specified the *rule* — advancement stops before the human's match and lists every blocker — without
+  settling the mechanism. The mechanism is two nullable columns plus a `commitMatchday` command.
+
+The first risk below landed as predicted, and larger than described: removing the fallback did not
+just touch `resolveMatchday`, it made a Tactic a precondition of a match existing at all, so every
+test that plays a career forward now sets one first.
 
 ## Risks
 

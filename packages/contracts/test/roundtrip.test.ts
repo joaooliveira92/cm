@@ -234,7 +234,7 @@ describe("tagged errors", () => {
 describe("optional and nullable fields", () => {
   it("AdvanceCalendarResult round-trips nulls and the verdict literal", () => {
     roundTrip(AdvanceCalendarResult, {
-      season: { seasonNumber: 1, currentDate: "2027-05-26", phase: "season_complete" },
+      season: { seasonNumber: 1, awaitingFixture: null, currentDate: "2027-05-26", phase: "season_complete" },
       resolvedDate: "2027-05-26",
       transferWindowClosed: null,
       transferWindowOpened: null,
@@ -257,7 +257,7 @@ describe("RPC screen views", () => {
   it("TransfersScreenView round-trips empty bid lists", () => {
     roundTrip(TransfersScreenView, {
       club,
-      season: { seasonNumber: 1, currentDate: "2026-08-01", phase: "pre_season" },
+      season: { seasonNumber: 1, awaitingFixture: null, currentDate: "2026-08-01", phase: "pre_season" },
       windowOpen: true,
       transferBudgetRemaining: 8000000,
       wageBudget: 20000,

@@ -15,7 +15,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../../../src/main/world/index.js";
 import { createPyramidSnapshot, createRegionalSnapshot } from "../snapshot-helpers.js";
-import { advanceCalendar } from "../../../src/main/season/index.js";
+import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { seasonHelpers } from "./helpers.js";
 
 let savesDir: string;
@@ -76,7 +76,11 @@ it.effect("the rollover exchanges clubs along every link and keeps each division
     });
     ok(movers.length > 0, "at least one division should have exchanged clubs");
   }),
-  600_000,
+  // A whole pyramid season, and a season is now ~38 presses of Continue that each reach a boundary,
+  // play the human's Fixture and commit the Matchday, where one press used to resolve it headlessly.
+  // 900s matches its sibling in `retention.test.ts`, which plays the same season for a different
+  // assertion.
+  900_000,
 );
 
 it.effect("the frozen table survives into the next season unchanged", () =>
@@ -95,7 +99,7 @@ it.effect("the frozen table survives into the next season unchanged", () =>
 
     // Season 2's football does not touch it: the previous season's table is readable without
     // recomputing anything from fixtures that have since been replaced.
-    yield* advanceCalendar(savesDir, save.id);
+    yield* advanceThroughBoundary(savesDir, save.id);
     deepStrictEqual(yield* loadFields(save.id, 1), frozen);
   }),
   240_000,
@@ -116,7 +120,7 @@ it.effect("nothing drops out of the lowest division or climbs out of the highest
       new Set([...fields].filter(([id]) => !id.endsWith("_cup")).flatMap(([, field]) => field.map((row) => row.clubId)));
     deepStrictEqual([...clubsIn(second)].sort(), [...clubsIn(first)].sort());
   }),
-  600_000,
+  900_000,
 );
 
 it.effect("a division fed by two parallel regional divisions exchanges with both", () =>
@@ -149,5 +153,5 @@ it.effect("a division fed by two parallel regional divisions exchanges with both
       );
     }
   }),
-  600_000,
+  900_000,
 );

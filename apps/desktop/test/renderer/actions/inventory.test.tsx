@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ClubId, MatchId, SaveId } from "@cm-clone/contracts";
+import { ClubId, FixtureId, MatchId, SaveId } from "@cm-clone/contracts";
 import {
   FORMATION_SLOTS,
   FORMATIONS,
@@ -29,7 +29,7 @@ const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown
 const NOT_FOUND = { _tag: "SaveNotFoundError", id: rid("s1") };
 
 const leagueView = () => ({
-  season: { seasonNumber: 1, currentDate: "2026-08-01", phase: "in_season" as const },
+  season: { seasonNumber: 1, awaitingFixture: null, currentDate: "2026-08-01", phase: "in_season" as const },
   standings: [],
 });
 
@@ -47,7 +47,7 @@ const marketPlayer = (id: string, club: boolean) => ({
 
 const transfersView = () => ({
   club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
-  season: { seasonNumber: 1, currentDate: "2026-08-01", phase: "in_season" as const },
+  season: { seasonNumber: 1, awaitingFixture: null, currentDate: "2026-08-01", phase: "in_season" as const },
   windowOpen: true,
   transferBudgetRemaining: 500000,
   wageBudget: 1000000,
@@ -118,10 +118,12 @@ const resumedMatch = () => ({
   saveId: rid("s1"),
   match: {
     matchId: MatchId.make("m1"),
+    fixtureId: FixtureId.make(1),
     homeClubId: ClubId.make("home"),
     homeClubName: "Home FC",
     awayClubId: ClubId.make("away"),
     awayClubName: "Away FC",
+    isHome: true,
   },
   cursor: 0,
   revealed: [],
@@ -327,7 +329,7 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
     // The match-scope actions that show only in deep injury states are still
     // registered, dispatchable, and listed by the registry for this scope.
     const matchActive = ACTION_REGISTRY.active("match", { ready: true }).map((a) => a.id);
-    for (const id of ["play-on", "bring-off", "start-match", "reset-match"]) {
+    for (const id of ["play-on", "bring-off", "start-match", "quick-result", "commit-matchday"]) {
       expect(matchActive).toContain(id);
       expect(hasActionHandler(id), `${id} has no live handler`).toBe(true);
     }

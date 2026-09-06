@@ -20,7 +20,7 @@ import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 
 const rid = (s: string) => SaveId.make(s);
 
-const NO_TACTIC_COPY = "Matches will be played with an automatic 4-4-2 until you set one.";
+const NO_TACTIC_COPY = "You will not be able to play your next Fixture until you set one.";
 
 const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown>) => {
   (window as unknown as { cmClone: { call: unknown } }).cmClone = { call: impl };
@@ -41,7 +41,7 @@ const preload = (tactic: unknown) => {
       return {
         _tag: "Success",
         value: {
-          season: { seasonNumber: 3, currentDate: "2026-10-17", phase: "in_season" as const },
+          season: { seasonNumber: 3, awaitingFixture: null, currentDate: "2026-10-17", phase: "in_season" as const },
           standings: [],
         },
       } as never;
@@ -56,7 +56,7 @@ const preload = (tactic: unknown) => {
             pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
           },
           clubName: "Northport Rovers",
-          seasonNumber: 3,
+          seasonNumber: 3, awaitingFixture: null,
           tenureSeasons: 2,
           archived: false,
         },
@@ -140,7 +140,7 @@ afterEach(() => {
  * states it next to Continue for as long as it stays true.
  */
 describe("Continue readiness in the career chrome", () => {
-  it("tells the player their matches will use an automatic 4-4-2 when no Tactic is set", async () => {
+  it("tells the player their next Fixture is unplayable when no Tactic is set", async () => {
     await mountCareer(null);
 
     expect(await screen.findByText(NO_TACTIC_COPY)).toBeTruthy();

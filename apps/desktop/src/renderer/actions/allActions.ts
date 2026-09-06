@@ -121,7 +121,8 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   { id: "set-pressing", label: "Set pressing", scope: "tactics", available: ready, handler: () => undefined },
   { id: "assign-slot-player", label: "Assign a player to a tactics slot", scope: "tactics", available: ready, handler: () => undefined },
   // match day
-  { id: "start-match", label: "Start the match", scope: "match", available: ready, handler: () => undefined },
+  { id: "start-match", label: "Play the match", scope: "match", available: ready, handler: () => undefined },
+  { id: "quick-result", label: "Quick result", scope: "match", available: ready, handler: () => undefined },
   { id: "toggle-control-panel", label: "Toggle the live control panel", scope: "match", available: ready, handler: () => undefined },
   { id: "apply-live-tactics", label: "Apply live tactics change", scope: "match", available: ready, handler: () => undefined },
   { id: "set-live-mentality", label: "Set live mentality", scope: "match", available: ready, handler: () => undefined },
@@ -132,7 +133,7 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   { id: "make-substitution", label: "Make a substitution", scope: "match", available: ready, handler: () => undefined },
   { id: "play-on", label: "Play on (crippled)", scope: "match", available: ready, handler: () => undefined },
   { id: "bring-off", label: "Bring off (10 men)", scope: "match", available: ready, handler: () => undefined },
-  { id: "reset-match", label: "Back to the opponent picker", scope: "match", available: ready, handler: () => undefined },
+  { id: "commit-matchday", label: "Accept the result", scope: "match", available: ready, handler: () => undefined },
 ];
 
 /** The compiled registry. Build-time collision/locked-key checks run here (AC-17). */

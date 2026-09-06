@@ -71,7 +71,7 @@ export const preload = (phase: Phase) => {
     if (method === "getLeagueTable") {
       return {
         _tag: "Success",
-        value: { season: { seasonNumber: 3, currentDate: "2026-10-17", phase }, standings: [] },
+        value: { season: { seasonNumber: 3, awaitingFixture: null, currentDate: "2026-10-17", phase }, standings: [] },
       } as never;
     }
     if (method === "getManagerProfileScreen") {
@@ -90,7 +90,7 @@ export const preload = (phase: Phase) => {
             tertiary: null,
             quaternary: null,
           },
-          seasonNumber: 3,
+          seasonNumber: 3, awaitingFixture: null,
           tenureSeasons: 2,
           archived: false,
         },
@@ -112,7 +112,7 @@ export const preload = (phase: Phase) => {
       return {
         _tag: "Success",
         value: {
-          season: { seasonNumber: 3, currentDate: "2026-10-24", phase: "in_season" as const },
+          season: { seasonNumber: 3, awaitingFixture: null, currentDate: "2026-10-24", phase: "in_season" as const },
           resolvedDate: "2026-10-17",
           transferWindowClosed: null,
           transferWindowOpened: null,
@@ -125,7 +125,7 @@ export const preload = (phase: Phase) => {
     if (method === "getFixtures") {
       return {
         _tag: "Success",
-        value: { season: { seasonNumber: 3, currentDate: "2026-10-17", phase }, fixtures: [] },
+        value: { season: { seasonNumber: 3, awaitingFixture: null, currentDate: "2026-10-17", phase }, fixtures: [] },
       } as never;
     }
     return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: rid("s1") } } as never;

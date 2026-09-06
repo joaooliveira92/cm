@@ -3,11 +3,11 @@
 Screen 23 of the Group B import, [23_continue_and_advance_time.md](../../docs/specs/group_b_global_navigation_and_inbox/23_continue_and_advance_time.md),
 reconciled against what this game has already decided about Continue.
 
-The import does not supply the design. Two Agent Notes do, and both are still `proposed`:
+The import does not supply the design. Two Agent Notes do, both now `implemented`:
 
-- [Continue as the global career loop](../../.agents/notes/proposed/feature/2026-08-29-continue-as-global-career-loop.md)
+- [Continue as the global career loop](../../.agents/notes/implemented/feature/2026-08-29-continue-as-global-career-loop.md)
   — placement, label, the stop set, one structured result per press, boundary-aware readiness.
-- [The human Fixture's pre-match boundary](../../.agents/notes/proposed/architecture/2026-08-29-human-fixture-pre-match-boundary.md)
+- [The human Fixture's pre-match boundary](../../.agents/notes/implemented/architecture/2026-08-29-human-fixture-pre-match-boundary.md)
   — the stop before the human's Matchday. Split out as its own effort, `.scratch/human-fixture-pre-match-boundary/`,
   because it is the riskiest transaction in the game and does not fit beside the surface work here.
 

@@ -42,33 +42,33 @@ nothing about the engine changes.
 - Play and Quick result share Fixture identity, readiness validation, seed policy, team setups, the
   persisted start event, the simulation, and the completion command, differing only by live reveal;
   resolving Quick result as though the human Fixture were an AI Fixture would make a presentation
-  choice decide whether a career match has a stream at all. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-human-fixture-pre-match-boundary.md).
+  choice decide whether a career match has a stream at all. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-human-fixture-pre-match-boundary.md).
 - The Fixture seed is derived from the Season seed and the Fixture id, independent of wall-clock
   time, renderer state, and presentation mode, to close the quit-and-retry-until-you-win path. See
-  [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-human-fixture-pre-match-boundary.md).
+  [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-human-fixture-pre-match-boundary.md).
 - Match day becomes Fixture-bound and the free-opponent exhibition path is removed from v1; the
   Tactic fallbacks are deleted for every club rather than narrowed to exclude the human's. See
-  [Agent Note](../../../.agents/notes/proposed/architecture/2026-08-29-human-fixture-pre-match-boundary.md).
+  [Agent Note](../../../.agents/notes/implemented/architecture/2026-08-29-human-fixture-pre-match-boundary.md).
 - Readiness is recomputed authoritatively when resolution is requested and rejects with typed
-  blockers; client-side disabled controls are never the integrity boundary. See [Agent Note](../../../.agents/notes/proposed/feature/2026-08-29-continue-as-global-career-loop.md).
+  blockers; client-side disabled controls are never the integrity boundary. See [Agent Note](../../../.agents/notes/implemented/feature/2026-08-29-continue-as-global-career-loop.md).
 
 **Blocked by:** 01 (Continue stops before the human club's Matchday) — there is no pending Fixture to
 bind to until the boundary exists.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Match day derives its Fixture from authoritative season state; the player cannot choose or
+- [x] Match day derives its Fixture from authoritative season state; the player cannot choose or
       override the opponent, and an away Fixture is played away.
-- [ ] Play and Quick result produce the same stream shape for the same Fixture; a quick-resulted
+- [x] Play and Quick result produce the same stream shape for the same Fixture; a quick-resulted
       match is inspectable afterwards.
-- [ ] The same Fixture simulated twice from the same save produces the same result; abandoning and
+- [x] The same Fixture simulated twice from the same save produces the same result; abandoning and
       returning resumes the same match rather than re-rolling it.
-- [ ] A start requested with a blocking readiness condition is refused with a typed failure carrying
+- [x] A start requested with a blocking readiness condition is refused with a typed failure carrying
       the blockers, records no start event, and creates no stream — including when the renderer's
       control is bypassed.
-- [ ] Navigating away and returning, and restarting the application, both resume the started match.
-- [ ] A Fixture with a started match cannot be started again.
-- [ ] No match-start path manufactures a missing Tactic for any club; a missing Tactic is a typed
+- [x] Navigating away and returning, and restarting the application, both resume the started match.
+- [x] A Fixture with a started match cannot be started again.
+- [x] No match-start path manufactures a missing Tactic for any club; a missing Tactic is a typed
       failure naming which club it belongs to.
-- [ ] The free-opponent exhibition entry point no longer exists in the product or the contract.
-- [ ] `pnpm check:all` is green.
+- [x] The free-opponent exhibition entry point no longer exists in the product or the contract.
+- [x] `pnpm check:all` is green.

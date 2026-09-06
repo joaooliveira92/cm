@@ -29,7 +29,7 @@ const message = (overrides: MessageOverrides) => ({
   flagged: false,
   subject: "Season 1 begins",
   body: "38 fixtures are scheduled.",
-  seasonNumber: 1,
+  seasonNumber: 1, awaitingFixture: null,
   date: null,
   occurredAt: "2026-01-01 10:00:00",
   ...overrides,

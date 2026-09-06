@@ -1,8 +1,7 @@
 /**
  * The match subsystem's public surface — every symbol `main/match.ts` exported before it became
- * this directory, plus `MatchSeedSource` — the `Context.Reference` a test provides to pin a
- * match's seed, and nothing more. Call sites changed their import *path* and not one of the names
- * they ask for.
+ * this directory, minus the free-opponent exhibition path that a scheduled Fixture replaced, plus
+ * `deriveFixtureMatchSeed` — the pure seed policy a Fixture's match is played under.
  *
  * The modules behind it, in the order a match runs through them: `start` (the kickoff snapshot a
  * `StartMatch` freezes into the stream), `stream` (the persisted shapes and the pure re-derivation
@@ -11,5 +10,5 @@
  */
 
 export { submitMatchCommand } from "./commands.js";
-export { listOpponentClubs, resumeSimulation } from "./queries.js";
-export { MatchSeedSource, startMatch } from "./start.js";
+export { resumeSimulation } from "./queries.js";
+export { MatchSeedSource, deriveFixtureMatchSeed, startMatch } from "./start.js";

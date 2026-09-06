@@ -1,7 +1,7 @@
 import path from "node:path";
 import { Effect, Schema } from "effect";
-import { advanceCalendar } from "../src/main/season/index.js";
 import { createSave } from "../src/main/world/index.js";
+import { advanceThroughBoundary } from "../test/main/boundary-helpers.js";
 
 const run = <A, E>(effect: Effect.Effect<A, E>): Promise<A> => Effect.runPromise(effect);
 
@@ -47,8 +47,8 @@ export const seedBeforeSeasonEnd = (savesDir: string) =>
       let guard = 0;
       while (guard < ADVANCES_BEFORE_SEASON_END) {
         guard += 1;
-        const result = yield* advanceCalendar(savesDir, id);
-        if (result.seasonConcluded) break;
+        const stepped = yield* advanceThroughBoundary(savesDir, id);
+        if (stepped.seasonConcluded) break;
       }
       return id;
     }),
@@ -63,8 +63,7 @@ export const seedConcluded = (savesDir: string) =>
       let concluded = false;
       while (!concluded && guard < MAX_ADVANCES) {
         guard += 1;
-        const result = yield* advanceCalendar(savesDir, id);
-        concluded = result.seasonConcluded;
+        concluded = (yield* advanceThroughBoundary(savesDir, id)).seasonConcluded;
       }
       if (!concluded) {
         return yield* new SeasonNeverConcludedError({ advances: guard });

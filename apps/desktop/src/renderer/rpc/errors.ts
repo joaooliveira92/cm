@@ -78,6 +78,28 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
         // no-op, which reads as the first press having been lost.
         case "AdvanceInProgressError":
           return "The Calendar is still advancing. Wait for it to finish.";
+        // Nothing the player can act on, and nothing this sentence should try to
+        // explain: the save's boundary names a fixture that cannot be what it
+        // claims, and the reason travels in the error for a log to carry.
+        case "PendingFixtureIntegrityError":
+          return "This career's next fixture is inconsistent and cannot be opened.";
+        // The Calendar moved under the caller — a stale window, or a Fixture already committed.
+        case "FixtureNotPendingError":
+          return "That Fixture is not the one the Calendar is waiting on.";
+        // Not an error the player caused, and not one they can undo: the match is already under way
+        // and its seed and squads are frozen. Returning to Match day resumes it.
+        case "MatchAlreadyStartedError":
+          return "That Fixture is already under way. Return to Match day to continue it.";
+        // The blockers travel with this error; a surface that can list them should, and this
+        // sentence is the fallback for one that cannot.
+        case "MatchNotReadyError":
+          return "Your club is not ready to play this Fixture yet.";
+        case "MatchNotStartedError":
+          return "That Fixture has not been played yet.";
+        case "MatchNotCompleteError":
+          return "That match has not reached full time.";
+        case "TacticMissingError":
+          return "A club in this Fixture has no Tactic, so the match cannot be played.";
         case "InvalidTacticError":
           return "That tactic is invalid — every slot needs a unique player.";
         case "InvalidPillarDistributionError":

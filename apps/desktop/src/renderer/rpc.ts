@@ -61,7 +61,7 @@ export {
   applyLeaguePreset,
 } from "./rpc/precareer.js";
 
-export { listOpponentClubs, startMatch, resumeSimulation } from "./rpc/match.js";
+export { commitMatchday, startMatch, resumeSimulation } from "./rpc/match.js";
 
 export {
   REVEAL_INTERVAL_MS,

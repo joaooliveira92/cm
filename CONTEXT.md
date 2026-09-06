@@ -430,9 +430,21 @@ event (a Matchday, or a Transfer Window opening or closing), never by a day-by-d
 training or press content to occupy a date with no Fixture, so a finer-grained clock would have
 nothing to display. Advancing to a date resolves every unplayed Fixture in the world dated on or
 before it, and stops at the first Matchday carrying a Fixture in a playable Competition — Fixtures in
-background Competitions resolve without stopping the career.
+background Competitions resolve without stopping the career. When that Matchday contains the manager's
+own Fixture the Calendar stops *before* resolving any of it, at the Pre-match Boundary below.
 _Avoid_: Schedule (Schedule is the generated list of Fixtures; Calendar is the mechanism for moving
 through it)
+
+**Pre-match Boundary**:
+Where the Calendar stops when the next Matchday contains the manager's own Fixture. None of that
+Matchday resolves — not the human's Fixture and not the ones around it — so the career sits in a state
+the player can inspect and repair: the Fixture is due, the Fixture is unplayed, and the date has not
+moved. It is durable state on the Season naming which Fixture is pending, never a Season phase, which
+would record that *some* Fixture is pending without saying which. Crossing it is the one place Match
+Readiness stops being advice: the Fixture is played through Match day, and an explicit commit is what
+moves the career past it.
+_Avoid_: calling it a pause, a prompt, or a confirmation — nothing is being asked; the career has
+arrived somewhere and is waiting for a decision that only the player can make
 
 **Continue**:
 The single player-facing control that advances the Calendar, and the name of the career's core rhythm:
@@ -442,6 +454,13 @@ the player sees; the command behind it is the Calendar advance.
 _Avoid_: Advance Calendar, Simulate, Next Day, Proceed as player-facing names (Next Day additionally
 implies a day-by-day clock the Calendar does not have); "continue" for resuming a saved career, which
 is Load
+
+**Quick result**:
+Resolving the manager's Fixture without watching it. It runs the same authoritative simulation as
+playing it does, over the same persisted match stream and with an empty command journal, and skips
+only the live reveal — so a quick-resulted match stays as inspectable afterwards as a watched one.
+_Avoid_: describing it as a lightweight, simplified, approximate, or secondary simulation; it means
+*do not make me watch this now*, never *discard this match's history*
 
 **Match Readiness**:
 Whether the manager's club has the setup a Fixture legally requires — at minimum a Tactic, which a

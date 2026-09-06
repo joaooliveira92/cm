@@ -21,7 +21,8 @@ import {
   resetKeyBinding,
   setKeyBindingOverride,
 } from "./keybindings.js";
-import { listOpponentClubs, resumeSimulation, startMatch, submitMatchCommand } from "../match/index.js";
+import { resumeSimulation, startMatch, submitMatchCommand } from "../match/index.js";
+import { commitMatchday } from "../season/commitMatchday.js";
 import { getManagerProfile, getManagerProfileScreen } from "../career/managerProfile.js";
 import { getNewsInbox, setNewsMessageState } from "../career/news.js";
 import { advanceCalendar, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "../season/index.js";
@@ -188,17 +189,19 @@ const handlers: Record<AppRpcMethod, Handler> = {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getSeasonSummary.payload)(payload);
       return yield* getSeasonSummary(ctx.savesDir, saveId);
     }),
-  listOpponentClubs: (payload, ctx) =>
-    Effect.gen(function* () {
-      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.listOpponentClubs.payload)(payload);
-      return yield* listOpponentClubs(ctx.savesDir, saveId);
-    }),
   startMatch: (payload, ctx) =>
     Effect.gen(function* () {
-      const { saveId, opponentClubId } = yield* Schema.decodeUnknownEffect(AppRpcs.startMatch.payload)(
+      const { saveId, fixtureId, mode } = yield* Schema.decodeUnknownEffect(AppRpcs.startMatch.payload)(
         payload,
       );
-      return yield* startMatch(ctx.savesDir, saveId, opponentClubId);
+      return yield* startMatch(ctx.savesDir, saveId, fixtureId, mode);
+    }),
+  commitMatchday: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, fixtureId } = yield* Schema.decodeUnknownEffect(AppRpcs.commitMatchday.payload)(
+        payload,
+      );
+      return yield* commitMatchday(ctx.savesDir, saveId, fixtureId);
     }),
   resumeSimulation: (payload, ctx) =>
     Effect.gen(function* () {

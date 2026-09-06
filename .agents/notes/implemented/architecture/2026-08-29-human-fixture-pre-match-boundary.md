@@ -1,6 +1,6 @@
 # Agent Note: The human Fixture's pre-match boundary
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -32,7 +32,7 @@ one `runSimulation` implementation, and `deriveMatchEvents` (`apps/desktop/src/m
 command journal, both paths produce identical events. The design question is therefore not a choice
 between match engines. It is a choice between live event reveal and immediate result projection.
 
-## Proposal
+## Decision
 
 **Continue advances to the human club's scheduled Fixture and stops before resolving any of that
 Matchday. The stop is the authoritative readiness gate. Once readiness passes, the player chooses Play
@@ -40,10 +40,11 @@ or Quick result; both run the same simulation through the same persisted match s
 idempotent completion command commits the human result and the remaining nine Fixtures in one
 transaction.**
 
-Onboarding owns this transition contract. The cm-clone match effort owns its implementation — changing
-`startMatch` and `resolveMatchday`, binding Match day to a scheduled Fixture, and removing the
-exhibition flow. This mirrors the ownership split already used for the Training UI: onboarding decides
-the required player experience and the contract it must satisfy, and does not deliver the surface.
+The boundary lives on `season.awaiting_fixture_id` and `season.awaiting_match_id`; `startMatch` is
+Fixture-bound and refuses an unready or already-started Fixture with typed failures; and
+`commitMatchday` writes the human result derived from its stream, the rest of the Matchday, every
+Condition write-back, the resolution event and the Calendar's step in one transaction, idempotent on
+the Fixture already being played.
 
 ### Rejecting the stop-versus-preflight dichotomy
 
@@ -328,7 +329,7 @@ worst possible moment.
 **Decompose the first Continue into additional calendar stops.** Rejected: it invents calendar state to
 solve a presentation problem the pre-match boundary already solves.
 
-## Acceptance criteria
+## Consequences
 
 - A Continue press reaching a Matchday containing the human club resolves zero of that Matchday's ten
   Fixtures and stops at a pre-match boundary.
@@ -364,6 +365,32 @@ solve a presentation problem the pre-match boundary already solves.
   repaired heuristically.
 - The League table never exposes a partially resolved Matchday.
 - No AI Fixture seed persistence is added, and no ruleset versioning is introduced.
+
+### What it cost, and what is now true
+
+The three tickets landed as one change rather than three. Ticket 01 creates a boundary nothing can
+cross until ticket 03 exists, so a career stops permanently at its first Fixture in between — which is
+not a state the test suite, or a player, can be handed. The sequencing note's claim that each ticket
+is "sized to one session" held for the work but not for the greenness.
+
+Every test that plays a career forward now goes through the boundary the way a player does — set a
+Tactic, resolve the Fixture, accept the result — via one shared helper rather than a back door that
+clears the columns. That is more setup per test, and it is the honest amount: a career that could be
+advanced without playing its matches was the thing being fixed.
+
+Two shipped behaviours are gone. The free-opponent exhibition path (`listOpponentClubs` and an
+arbitrary `opponentClubId`) is deleted, and with it the assumption that the human is always the home
+side — several match tests asserted on `homeSubs` and had to be re-pointed at whichever side the
+Fixture puts the player on. And both Tactic fallbacks are deleted for every club, so a save written
+before `assignAiTactics` shipped now fails loudly at Matchday 1.
+
+The match seed is derived from the world seed and the Fixture id, so quitting and restarting cannot
+re-roll a result. `MatchSeedSource` survives as a test-only `Context.Reference` whose default *is*
+that derivation, which is what lets the substitution and injury tests pin a known timeline without
+hunting for a world seed whose first Fixture happens to produce one.
+
+The advance and the commit share one lock. Taking two would let an advance and a commit interleave,
+which is the same corruption by another route.
 
 ## Risks
 

@@ -1,7 +1,7 @@
 import { Schema } from "effect";
 import { MANAGER_OUTCOMES, VERDICTS } from "@cm-clone/shared";
 
-import { ClubId, FixtureId, SaveId } from "./ids.js";
+import { ClubId, FixtureId, MatchId, SaveId } from "./ids.js";
 import { ArchivedCauseSchema } from "./saves.js";
 
 /** Season/Calendar vocabulary: the Calendar advances only by jumping to the next dated boundary — a
@@ -10,12 +10,74 @@ import { ArchivedCauseSchema } from "./saves.js";
 export const SEASON_PHASES = ["pre_season", "in_season", "mid_window_open", "season_complete"] as const;
 export const SeasonPhaseSchema = Schema.Literals(SEASON_PHASES);
 
+/**
+ * One reason a Fixture cannot be played, carried as data rather than assembled by the surface that
+ * shows it. `destination` is the screen that owns the fix, so "resolve this" is a step rather than
+ * a hunt, and a reworded blocker never breaks the routing.
+ */
+export class ReadinessBlockerView extends Schema.Class<ReadinessBlockerView>("ReadinessBlockerView")({
+  id: Schema.String,
+  title: Schema.String,
+  detail: Schema.String,
+  destination: Schema.NullOr(Schema.String),
+}) {}
+
+/**
+ * The human club's scheduled fixture the Calendar has reached and stopped before.
+ *
+ * Advisory on read. It reports what is pending, not whether it may be played: readiness is derived
+ * fresh whenever resolution is actually requested, because the player may repair a blocker a moment
+ * after reading this.
+ */
+export class PendingFixtureView extends Schema.Class<PendingFixtureView>("PendingFixtureView")({
+  fixtureId: FixtureId,
+  /** ISO `YYYY-MM-DD`: the date the Calendar has stopped on. */
+  date: Schema.String,
+  competitionId: Schema.String,
+  opponentClubId: ClubId,
+  opponentClubName: Schema.String,
+  /** Whether the human club is the home side. Taken from the fixture, never assumed. */
+  isHome: Schema.Boolean,
+  /** The started match stream for this Fixture, or `null` while the boundary is un-entered.
+   *  Non-null means Match day resumes that stream rather than starting a new one. */
+  matchId: Schema.NullOr(MatchId),
+  /** What currently stops this Fixture being played. Advisory: recomputed authoritatively when
+   *  Play or Quick result is actually requested, because the player may repair one in between. */
+  blockers: Schema.Array(ReadinessBlockerView),
+}) {}
+
 export class SeasonView extends Schema.Class<SeasonView>("SeasonView")({
   seasonNumber: Schema.Finite,
   /** ISO `YYYY-MM-DD`: where the calendar stands. Every fixture dated on or before it has resolved. */
   currentDate: Schema.String,
   phase: SeasonPhaseSchema,
+  /**
+   * The pre-match boundary, or `null` when nothing is pending.
+   *
+   * It rides the season rather than one screen's view because it is a fact about where the career
+   * stands, like the date beside it: every surface that orients the player needs it, and it has to
+   * survive a restart rather than existing only in the reply to the advance that created it.
+   */
+  awaitingFixture: Schema.NullOr(PendingFixtureView),
 }) {}
+
+/**
+ * The season names a pending fixture that cannot be what it claims — already played, belonging to
+ * another season, or not involving the human club.
+ *
+ * Raised rather than repaired. A boundary that picked the "closest matching" fixture, cleared
+ * itself, or silently advanced would turn a corrupted career into a career that quietly plays the
+ * wrong match, and no foreign key can express these invariants.
+ */
+export class PendingFixtureIntegrityError extends Schema.TaggedError<PendingFixtureIntegrityError>()(
+  "PendingFixtureIntegrityError",
+  {
+    /** `null` for the one violation that has no fixture to name: a match link with no pending
+     *  fixture behind it. */
+    fixtureId: Schema.NullOr(FixtureId),
+    reason: Schema.String,
+  },
+) {}
 
 export class FixtureView extends Schema.Class<FixtureView>("FixtureView")({
   id: FixtureId,

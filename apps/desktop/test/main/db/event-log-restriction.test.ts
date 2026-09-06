@@ -10,7 +10,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe } from "vitest";
 import type { ClubId } from "@cm-clone/contracts";
 import { MIGRATION_STATEMENTS } from "../../../src/main/db/migrations.generated.js";
-import { advanceCalendar } from "../../../src/main/season/index.js";
+import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { getSquad } from "../../../src/main/club/index.js";
 import { createPyramidSnapshot } from "../snapshot-helpers.js";
 import { beginCareer, commitCareer, createSave } from "../../../src/main/world/index.js";
@@ -57,7 +57,7 @@ describe("what reaches the log", () => {
   it.effect("dates every event with the save's own date, never the wall clock", () =>
     Effect.gen(function* () {
       const save = yield* createSave(savesDir, "Log");
-      const advance = yield* advanceCalendar(savesDir, save.id);
+      const { advance } = yield* advanceThroughBoundary(savesDir, save.id);
 
       const dated = (yield* events(save.id)).filter((event) => event.gameDate !== null);
       ok(dated.length > 0, "the advance should have appended dated events");
@@ -96,8 +96,8 @@ describe("what reaches the log", () => {
 
       // A whole season, so player development runs for every club in a four-division pyramid.
       for (let advance = 0; advance < 80; advance += 1) {
-        const result = yield* advanceCalendar(savesDir, id);
-        if (result.seasonConcluded) break;
+        const { seasonConcluded } = yield* advanceThroughBoundary(savesDir, id);
+        if (seasonConcluded) break;
       }
 
       const clubStreams = new Set(
@@ -115,7 +115,7 @@ describe("what reaches the log", () => {
   it.effect("writes a resolution event whose size does not grow with the world", () =>
     Effect.gen(function* () {
       const save = yield* createSave(savesDir, "Log");
-      yield* advanceCalendar(savesDir, save.id);
+      yield* advanceThroughBoundary(savesDir, save.id);
 
       const resolved = (yield* events(save.id)).filter((event) => event.tag === "MatchdayResolved");
       ok(resolved.length > 0);
@@ -134,7 +134,7 @@ describe("what reaches the log", () => {
   it.effect("carries no field named matchday in any payload", () =>
     Effect.gen(function* () {
       const save = yield* createSave(savesDir, "Log");
-      for (let advance = 0; advance < 3; advance += 1) yield* advanceCalendar(savesDir, save.id);
+      for (let advance = 0; advance < 3; advance += 1) yield* advanceThroughBoundary(savesDir, save.id);
 
       for (const event of yield* events(save.id)) {
         ok(!/"matchday"/.test(event.payload), `${event.tag}: ${event.payload.slice(0, 120)}`);

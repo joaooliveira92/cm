@@ -2,6 +2,15 @@ import { Schema } from "effect";
 import {
   AdvanceCalendarResult,
   AdvanceInProgressError,
+  CommitMatchdayResult,
+  FixtureNotPendingError,
+  MatchAlreadyStartedError,
+  MatchModeSchema,
+  MatchNotCompleteError,
+  MatchNotReadyError,
+  MatchNotStartedError,
+  PendingFixtureIntegrityError,
+  TacticMissingError,
   AdvancedOptionsPayload,
   BidderBidActionSchema,
   BidId,
@@ -21,7 +30,6 @@ import {
   ClubId,
   ClubNotFoundError,
   ClubSelectionView,
-  ClubSummary,
   CollidingOverrideError,
   FixturesView,
   InsufficientTransferBudgetError,
@@ -35,6 +43,7 @@ import {
   ManagerProfileView,
   ManagerArchetypeSchema,
   MatchCommandPayload,
+  FixtureId,
   MatchId,
   MalformedNewsMessageIdError,
   MatchNotFoundError,
@@ -169,12 +178,12 @@ commitCareer: {
   getLeagueTable: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: LeagueTableView,
-    error: SaveNotFoundError,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
   getFixtures: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: FixturesView,
-    error: SaveNotFoundError,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
   advanceCalendar: {
     payload: Schema.Struct({ saveId: SaveId }),
@@ -184,22 +193,59 @@ commitCareer: {
       SeasonCompleteError,
       SaveArchivedError,
       AdvanceInProgressError,
+      PendingFixtureIntegrityError,
     ]),
   },
   getSeasonSummary: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: SeasonSummaryView,
-    error: SaveNotFoundError,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
-  listOpponentClubs: {
-    payload: Schema.Struct({ saveId: SaveId }),
-    success: Schema.Array(ClubSummary),
-    error: SaveNotFoundError,
-  },
+  /**
+   * Starts the Fixture the Calendar is standing at. Fixture-bound: there is no opponent to choose
+   * and no automatic seating at home, both of which the free-opponent exhibition path supplied and
+   * neither of which a scheduled Fixture tolerates.
+   *
+   * `mode` is presentation only. Both modes persist the same `MatchStarted` and the same stream;
+   * `quick` runs straight to full time without a live reveal.
+   */
   startMatch: {
-    payload: Schema.Struct({ saveId: SaveId, opponentClubId: ClubId }),
+    payload: Schema.Struct({ saveId: SaveId, fixtureId: FixtureId, mode: MatchModeSchema }),
     success: MatchSummary,
-    error: Schema.Union([SaveNotFoundError, ClubNotFoundError, SaveArchivedError]),
+    error: Schema.Union([
+      SaveNotFoundError,
+      SaveArchivedError,
+      FixtureNotPendingError,
+      MatchAlreadyStartedError,
+      MatchNotReadyError,
+      TacticMissingError,
+      PendingFixtureIntegrityError,
+    ]),
+  },
+  /**
+   * Commits the Matchday: the human's result derived from its persisted stream, the rest of that
+   * Matchday's Fixtures, every Condition write-back, the resolution event and the Calendar's step,
+   * in one transaction.
+   *
+   * Explicit rather than a side effect of `resumeSimulation` observing full time — polling is
+   * read-shaped, and durable career state must not depend on polling cadence, component lifecycle
+   * or whether the player is still looking at the screen. Idempotent on the Fixture already being
+   * played, so a retry after a rollback is safe.
+   */
+  commitMatchday: {
+    payload: Schema.Struct({ saveId: SaveId, fixtureId: FixtureId }),
+    success: CommitMatchdayResult,
+    error: Schema.Union([
+      SaveNotFoundError,
+      SaveArchivedError,
+      FixtureNotPendingError,
+      MatchNotFoundError,
+      MatchNotStartedError,
+      MatchNotCompleteError,
+      TacticMissingError,
+      AdvanceInProgressError,
+      PendingFixtureIntegrityError,
+    ]),
   },
   resumeSimulation: {
     payload: Schema.Struct({ saveId: SaveId, matchId: MatchId, cursor: Schema.Finite }),
@@ -227,7 +273,7 @@ commitCareer: {
   getTransfersScreen: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: TransfersScreenView,
-    error: SaveNotFoundError,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
   placeBid: {
     payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId, amount: Schema.Finite }),

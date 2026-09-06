@@ -94,4 +94,4 @@ What it costs:
 - World-seed reproducibility and the "no unseeded content" rule:
   [Deterministic world generation and the Drizzle schema](2026-09-01-deterministic-world-generation-and-drizzle-schema.md)
 - Unseeded randomness warning that this decision does not conflict with:
-  [Human fixture pre-match boundary](../../proposed/architecture/2026-08-29-human-fixture-pre-match-boundary.md)
+  [Human fixture pre-match boundary](../../implemented/architecture/2026-08-29-human-fixture-pre-match-boundary.md)

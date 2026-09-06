@@ -70,7 +70,7 @@ export const getFixtures = (savesDir: string, saveId: SaveId) =>
           }),
       );
 
-      return new FixturesView({ season: toSeasonView(seasonRow), fixtures });
+      return new FixturesView({ season: yield* toSeasonView(seasonRow), fixtures });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
 
@@ -80,7 +80,7 @@ export const getLeagueTable = (savesDir: string, saveId: SaveId) =>
       const seasonRow = yield* loadSeasonRow;
       const competitionId = yield* loadHumanCompetitionId(seasonRow.seasonNumber);
       const standings = yield* computeStandings(competitionId ?? "", seasonRow.seasonNumber);
-      return new LeagueTableView({ season: toSeasonView(seasonRow), standings });
+      return new LeagueTableView({ season: yield* toSeasonView(seasonRow), standings });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
 
@@ -131,7 +131,7 @@ export const getSeasonSummary = (savesDir: string, saveId: SaveId) =>
         : null;
 
       return new SeasonSummaryView({
-        season: toSeasonView(seasonRow),
+        season: yield* toSeasonView(seasonRow),
         standings,
         clubId: club.id,
         clubName: club.name,
