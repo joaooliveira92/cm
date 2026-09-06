@@ -25,7 +25,7 @@ import {
   listSaves,
 } from "../../../src/main/world/index.js";
 import { getSquad } from "../../../src/main/club/index.js";
-import { createDefaultSnapshot } from "../../../snapshot-helpers.js";
+import { createDefaultSnapshot } from "../snapshot-helpers.js";
 
 let savesDir: string;
 

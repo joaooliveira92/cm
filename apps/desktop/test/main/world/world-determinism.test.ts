@@ -27,7 +27,7 @@ import {
   createPyramidSnapshot,
   createRegionalPlusEnglandSnapshot,
   createWiderSnapshot,
-} from "../../../snapshot-helpers.js";
+} from "../snapshot-helpers.js";
 
 let savesDir: string;
 

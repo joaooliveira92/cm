@@ -298,7 +298,9 @@ simulation core, and so the same generated world can run with fictional, license
 test names. A canonical id is never a display name, and nothing downstream of generation keys
 behaviour off one. The pack is a code asset rather than part of a save — a save records which pack it
 was generated against, so the same world can be reopened under a different one — and every display name
-is resolved at read time, never written into a row.
+is resolved at read time, never written into a row. Generation picks the pack from the world it
+resolves: a career whose playable league a licensed pack names (Brazilian Série A) is generated under
+that pack, so its real names reach the interface; everything else keeps the fictional base pack.
 
 **Region**:
 A grouping of Nations used for browsing and filtering during career setup. Carries no simulation

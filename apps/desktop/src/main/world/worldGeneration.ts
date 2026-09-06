@@ -2,7 +2,6 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { ClubId, PlayerId, type SnapshotId } from "@cm-clone/contracts";
 import {
-  BASE_CONTENT_PACK,
   CITIES,
   LEAGUE_SETUP_INDEX,
   NATION_CODES,
@@ -10,6 +9,7 @@ import {
   canonicalCityId,
   canonicalClubId,
   canonicalNationId,
+  contentPackForWorld,
   createSeededRng,
   deriveId,
   deriveSeed,
@@ -84,12 +84,15 @@ const attr = (attributes: GeneratedPlayer["attributes"], key: keyof GeneratedPla
  * The manifest is written first, so a partially-written save still records what was producing it.
  * It records the catalogue fingerprint, the content pack id/version, and the snapshot id beside
  * the seed and versions — the whole identity of this world if a later reader ever needs to
- * reproduce or diagnose it. None of these is an input to anything generated below: the catalogue
- * and the pack are code-derived static data (like `nations` and `cities`), and the snapshot's role
- * ended at `beginCareer`'s validation, so the rows are identical in every save from this ruleset.
- * The catalogue is written before any club so the rows are provably selection-independent: nothing
- * in this function reads what a selection could change (see the `WorldGenerationConfig`), so the
- * catalogue rows are identical in every save from this ruleset.
+ * reproduce or diagnose it. The pack is the one manifest value that varies with the selection:
+ * a world whose playable league a licensed pack names (Brazilian Série A) records that pack, so
+ * the save's names are the real ones from the day it is generated; every other choice records the
+ * fictional base pack. The remainder are code-derived static data (like `nations` and `cities`),
+ * and the snapshot's role ended at `beginCareer`'s validation, so the rows other than the pack are
+ * identical in every save from this ruleset. The catalogue is written before any club so the rows
+ * are provably selection-independent: nothing in this function reads what a selection could change
+ * besides the pack (see the `WorldGenerationConfig`), so the catalogue rows are identical in every
+ * save from this ruleset.
  *
  * Note: this is a single *sequence*, not an explicit SQLite transaction. A partially-written
  * provisional save is invisible (no `save_meta` row) and disposable, so the distinction is
@@ -100,6 +103,11 @@ export const generateWorld = ({ worldSeed, referenceYear, snapshotId, world }: W
   Effect.gen(function* () {
     const sql = yield* SqlClient;
 
+    // The pack a save's names come from, as a pure function of the world it will contain. Base
+    // pack for a fictional (or as-yet-unauthored) league; the licensed Série A pack for a career
+    // played in Brazilian Série A, so Step 3 lists real club names rather than `club_bra_1_09`.
+    const contentPack = contentPackForWorld(world.competitions);
+
     // Diagnostic only — deliberately not an input to anything generated below.
     const generatedAt = yield* Effect.clockWith((clock) => clock.currentTimeMillis).pipe(
       Effect.map((millis) => new Date(millis).toISOString()),
@@ -107,7 +115,7 @@ export const generateWorld = ({ worldSeed, referenceYear, snapshotId, world }: W
 
     yield* sql`INSERT INTO generation_manifest (id, world_seed, generator_version, ruleset_version, reference_year, generated_at, catalogue_fingerprint, content_pack_id, content_pack_version, snapshot_id)
       VALUES (1, ${worldSeed}, ${GENERATOR_VERSION}, ${RULESET_VERSION}, ${referenceYear}, ${generatedAt},
-        ${LEAGUE_SETUP_INDEX.fingerprint}, ${BASE_CONTENT_PACK.id}, ${BASE_CONTENT_PACK.version}, ${snapshotId})`;
+        ${LEAGUE_SETUP_INDEX.fingerprint}, ${contentPack.id}, ${contentPack.version}, ${snapshotId})`;
 
     // The world catalogue, written before any club on the same connection as the rest of
     // generation. `nations` and `cities` are copied unconditionally — one nations row per

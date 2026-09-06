@@ -22,7 +22,7 @@ import {
 } from "@cm-clone/shared";
 import { beginCareer, commitCareer } from "../../../src/main/world/index.js";
 import { advanceCalendar, discardSquadsForClubs } from "../../../src/main/season/index.js";
-import { createPyramidSnapshot, createSnapshotFor } from "../../../snapshot-helpers.js";
+import { createPyramidSnapshot, createSnapshotFor } from "../snapshot-helpers.js";
 
 /**
  * Simulation Depth's whole footprint on disk.

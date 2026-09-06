@@ -9,7 +9,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 import type { SnapshotId } from "@cm-clone/contracts";
 import { beginCareer } from "../../../src/main/world/index.js";
-import { createPyramidSnapshot, createDefaultSnapshot } from "../../../snapshot-helpers.js";
+import { createPyramidSnapshot, createDefaultSnapshot } from "../snapshot-helpers.js";
 
 let savesDir: string;
 

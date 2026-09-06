@@ -1,6 +1,7 @@
 import type { CanonicalId } from "./canonicalId.js";
 import type { ClubColours } from "./clubColours.js";
 import type { NationCode } from "./nations.js";
+import { BRAZIL_SERIES_A_PACK } from "./brazilSeriesA.js";
 
 /**
  * The boundary between what the simulation *is* and what it is *called*.
@@ -370,3 +371,46 @@ export const canonicalClubId = (competitionId: CanonicalId, ordinal: number): Ca
 
 export const canonicalCompetitionId = (nation: NationCode, slug: string): CanonicalId =>
   `comp_${nation.toLowerCase()}_${slug}`;
+
+/** The slice of a resolved world the content-pack decision reads. Structural on purpose: the
+ *  helper keys off ids, kinds, and depths rather than a specific world type, so a test can hand it
+ *  a fixture without building a `ResolvedWorld`. */
+export interface WorldCompetitionShape {
+  readonly id: string;
+  readonly kind: string;
+  /** Pyramid tier, 1 = highest. `null` for a Competition that does not sit on a ladder. */
+  readonly tier: number | null;
+  readonly depth: string;
+}
+
+/**
+ * The content pack a save should be generated under, as a pure function of the world it will
+ * contain.
+ *
+ * A save's names come from the pack its manifest records, so generation has to pick one. The rule
+ * keys to the league the career is played in — the deepest playable league, tie-broken exactly as
+ * `getClubSelection` reads it — because that is the league whose clubs Step 3 lists and the one a
+ * player sees first. A career played in Brazilian Série A is generated under the licensed Série A
+ * pack, so Step 3 lists Flamengo rather than `club_bra_1_09`; every other world keeps the fictional
+ * base pack. This is a map, not an algorithm: a world owns at most one pack today, and giving
+ * another league its own pack is one entry.
+ *
+ * A selection wider than the pack's league (a Brazil career that also loads Série B, or a world
+ * with two playable nations) keeps the pack of the playable league it is played in. Ids the pack
+ * does not name resolve through the save's normal fallbacks and are reported by coverage reporting,
+ * exactly as any partially-covered pack is — the pack is provenance, not a promise of coverage of
+ * the whole world.
+ */
+export const contentPackForWorld = (
+  competitions: readonly WorldCompetitionShape[],
+): ContentPack => {
+  const primary = competitions
+    .filter((competition) => competition.kind === "league" && competition.depth === "full")
+    .sort(
+      (a, b) =>
+        (a.tier ?? Number.MAX_SAFE_INTEGER) - (b.tier ?? Number.MAX_SAFE_INTEGER) ||
+        a.id.localeCompare(b.id),
+    )[0];
+  if (primary?.id === "comp_bra_1") return BRAZIL_SERIES_A_PACK;
+  return BASE_CONTENT_PACK;
+};

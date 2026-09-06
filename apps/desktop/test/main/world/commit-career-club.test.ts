@@ -7,7 +7,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect, Exit } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { beginCareer, commitCareer, listSaves } from "../../../src/main/world/index.js";
-import { createDefaultSnapshot } from "../../../snapshot-helpers.js";
+import { createDefaultSnapshot } from "../snapshot-helpers.js";
 
 /**
  * The commit boundary rejects a club id that matches no club.

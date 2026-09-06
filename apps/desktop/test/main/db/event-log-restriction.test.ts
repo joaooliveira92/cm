@@ -12,7 +12,7 @@ import type { ClubId } from "@cm-clone/contracts";
 import { MIGRATION_STATEMENTS } from "../../../src/main/db/migrations.generated.js";
 import { advanceCalendar } from "../../../src/main/season/index.js";
 import { getSquad } from "../../../src/main/club/index.js";
-import { createPyramidSnapshot } from "../../../snapshot-helpers.js";
+import { createPyramidSnapshot } from "../snapshot-helpers.js";
 import { beginCareer, commitCareer, createSave } from "../../../src/main/world/index.js";
 
 /**

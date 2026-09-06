@@ -21,7 +21,7 @@ import {
 } from "@cm-clone/shared";
 import { getClubSelection } from "../../../src/main/career/index.js";
 import { reportPackCoverage, resolveDisplayName, savePack, beginCareer } from "../../../src/main/world/index.js";
-import { createDefaultSnapshot } from "../../../snapshot-helpers.js";
+import { createBrazilSnapshot, createDefaultSnapshot } from "../snapshot-helpers.js";
 
 let savesDir: string;
 
@@ -39,6 +39,17 @@ const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E, SqlClient>) 
 
 const generatedSave = Effect.gen(function* () {
   const snapshotId = yield* createDefaultSnapshot(savesDir);
+  const { id } = yield* beginCareer(savesDir, {
+    worldSeed: 4242,
+    referenceYear: 2026,
+    userDataDir: savesDir,
+    snapshotId,
+  });
+  return id;
+});
+
+const brazilSave = Effect.gen(function* () {
+  const snapshotId = yield* createBrazilSnapshot(savesDir);
   const { id } = yield* beginCareer(savesDir, {
     worldSeed: 4242,
     referenceYear: 2026,
@@ -105,6 +116,38 @@ describe("display names resolve through the save's pack", () => {
     }),
   );
 
+  it.effect("generates a Brazilian Série A career under the licensed pack, so Step 3 lists real clubs", () =>
+    Effect.gen(function* () {
+      // `generateWorld` picks the pack from the world it resolves, so a career played in Brazilian
+      // Série A is born under the licensed pack, not the fictional base one.
+      const saveId = yield* brazilSave;
+      const pack = yield* withSave(saveId, savePack);
+      expect(pack.id).toBe(BRAZIL_SERIES_A_PACK.id);
+      expect(pack.version).toBe(BRAZIL_SERIES_A_PACK.version);
+
+      const view = yield* withSave(saveId, getClubSelection);
+      expect(view.leagueName).toBe("Campeonato Brasileiro Série A");
+      expect(view.clubs).toHaveLength(20);
+      const flamengo = view.clubs.find((club) => club.clubId === "club_bra_1_09");
+      expect(flamengo?.clubName).toBe("Flamengo");
+      for (const club of view.clubs) {
+        // The id is an identity, never the label: the whole point of generating under the licensed
+        // pack is that Step 3 shows a name rather than `club_bra_1_09`.
+        expect(club.clubName).not.toBe(club.clubId);
+      }
+    }),
+  );
+
+  it.effect("reports the ids a Brazilian save uses that its pack cannot name", () =>
+    Effect.gen(function* () {
+      // scope_bra_top plays Série A and loads its cup as a required dependency; the licensed pack
+      // names the league and its twenty clubs. The cup is the only id it cannot name — a reported
+      // condition, resolved to its raw id on screen, exactly as any partially-covered pack is.
+      const saveId = yield* brazilSave;
+      expect(yield* withSave(saveId, reportPackCoverage)).toEqual(["comp_bra_cup"]);
+    }),
+  );
+
   it.effect("reports the ids the save uses that its pack cannot name", () =>
     Effect.gen(function* () {
       const saveId = yield* generatedSave;
@@ -150,10 +193,10 @@ describe("display names resolve through the save's pack", () => {
   it.effect("resolves a save re-recorded to the licensed Brazilian pack against its real names", () =>
     Effect.gen(function* () {
       const saveId = yield* generatedSave;
-      // The licensed pack sits in this build's seam even though no save is generated under it yet
-      // (generation records the base pack). Re-recording a manifest is the literal "same world
-      // reopened under a different pack" case `savePack` exists for, so a save pointed at Série A
-      // resolves Flamengo's name rather than falling back to a raw id or a fictional rename.
+      // Re-recording a manifest is the literal "same world reopened under a different pack" case
+      // `savePack` exists for. Pointing an England save at Série A resolves Flamengo's name rather
+      // than falling back to a raw id or a fictional rename, independent of generation: Brazil
+      // careers now *are* generated under this pack, but the seam must not depend on that fact.
       const names = yield* withSave(
         saveId,
         Effect.gen(function* () {
