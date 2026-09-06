@@ -83,7 +83,7 @@ Plan-only: the map is done when nothing is left to decide and the spec can be ha
   into CareerShell; label stays "Continue" (the CM-style "Go to Match" switch deferred to a
   future slot past this effort); screens keep section headings while the chrome owns club
   identity. Supersedes the Navigation-frame section of the visual-design-tokens note. Agent
-  Note at `.agents/notes/proposed/architecture/2026-08-31-career-chrome-and-date-continue-bar.md`.
+  Note at `.agents/notes/implemented/architecture/2026-08-31-career-chrome-and-date-continue-bar.md`.
 
 - [Token adoption mechanism and migration strategy](issues/05-token-adoption-and-migration.md):
   **Tailwind 4 `@theme` (non-inline) in `index.css`** — role-named `--color-*` tokens emit custom

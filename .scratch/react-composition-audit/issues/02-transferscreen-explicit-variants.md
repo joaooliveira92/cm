@@ -1,8 +1,19 @@
 # 02 — Extract TransferMarketProvider and split TransfersScreen into explicit variants
 
 Type: task
-Status: claimed
+Status: needs-triage
 
+> **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
+> `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so
+> no work had ever started on it. Ten of this effort's sixteen tickets were in that state.
+> `claimed` is a lock -- [issue-tracker.md](../../../docs/agents/issue-tracker.md) has the frontier
+> scan skip claimed tickets -- so the effort looked in progress while nothing could pick it up.
+> **Why `needs-triage` and not `ready-for-agent`:** the size goal has since been met by other work.
+> `TransfersScreen.tsx` is 103 lines (target: under 200), reached through tickets 12-16 of this
+> effort, which built `TransfersProvider` rather than the `TransferMarketProvider` named below.
+> What remains open is the boolean-prop and shared-sort/filter-hook half. Someone needs to decide
+> whether that is still worth a ticket now the screen is thin, and rewrite this against the names
+> that actually exist.
 ## Problem
 
 `TransfersScreen.tsx` (1134 lines) is a massive monolithic component violating multiple composition patterns:

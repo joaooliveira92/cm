@@ -1,7 +1,7 @@
 # E2E suite
 
-Playwright + Electron tests for the desktop app. Two suites, canonical spec at
-`.scratch/e2e-coverage/spec.md`.
+Playwright + Electron tests for the desktop app. Two suites. The canonical spec came from the
+`e2e-coverage` effort, since archived out of the working tree; it is recoverable from git history.
 
 ## Smoke — `e2e/app.spec.ts`
 

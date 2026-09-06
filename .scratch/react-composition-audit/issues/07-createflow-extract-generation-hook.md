@@ -1,8 +1,17 @@
 # 07 — Refactor CreateFlowLayout: extract generation hook and ReviewPane
 
 Type: task
-Status: claimed
+Status: needs-triage
 
+> **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
+> `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so
+> no work had ever started on it. Ten of this effort's sixteen tickets were in that state.
+> `claimed` is a lock -- [issue-tracker.md](../../../docs/agents/issue-tracker.md) has the frontier
+> scan skip claimed tickets -- so the effort looked in progress while nothing could pick it up.
+> **Why `needs-triage` and not `ready-for-agent`:** `CreateFlowLayout.tsx` is now 75 lines (target:
+> under 200) and `ReviewPane` exists. The `useGeneration` hook named below does not -- generation
+> lives in `create/generation.ts` and `create/useCreateSession.ts`. Decide whether the remaining
+> boolean-prop item justifies keeping this open.
 ## Problem
 
 `CreateFlowLayout.tsx` (598 lines) has several composition issues:

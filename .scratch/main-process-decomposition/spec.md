@@ -1,6 +1,10 @@
 # Spec: Decompose the main-process wiring layer
 
-Status: ready-for-agent
+Status: resolved
+
+> Landed 2026-09-06: all thirteen tickets under `issues/` are resolved and `main/season.ts`
+> and `main/transfers.ts` are now the `main/season/` and `main/transfers/` directories. The
+> file paths below describe the layout this spec was written against, not today's.
 
 > Written during the 2026-09-05 folder-organization audit. The audit split `packages/shared`,
 > reorganized the renderer into feature folders, and renamed `main/schema.ts`. The two largest

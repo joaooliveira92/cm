@@ -1,8 +1,16 @@
 # 11 — Refactor TablePanel: split into table content and filters
 
 Type: task
-Status: claimed
+Status: ready-for-agent
 
+> **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
+> `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so
+> no work had ever started on it. Ten of this effort's sixteen tickets were in that state.
+> `claimed` is a lock -- [issue-tracker.md](../../../docs/agents/issue-tracker.md) has the frontier
+> scan skip claimed tickets -- so the effort looked in progress while nothing could pick it up.
+> **Still open and unstarted**, verified 2026-09-06 against the tree: none of the components,
+> providers or hooks in its Done-When list exist yet. Moved to `ready-for-agent` so the frontier
+> scan can see it.
 ## Problem
 
 `TablePanel.tsx` (239 lines) has several composition issues:

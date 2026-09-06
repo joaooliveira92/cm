@@ -1,8 +1,18 @@
 # 03 — Refactor SquadScreen: lift table state into TableSessionProvider
 
 Type: task
-Status: claimed
+Status: needs-triage
 
+> **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
+> `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so
+> no work had ever started on it. Ten of this effort's sixteen tickets were in that state.
+> `claimed` is a lock -- [issue-tracker.md](../../../docs/agents/issue-tracker.md) has the frontier
+> scan skip claimed tickets -- so the effort looked in progress while nothing could pick it up.
+> **Why `needs-triage` and not `ready-for-agent`:** `SquadScreen.tsx` is now 14 lines (target: under
+> 200) and a `SquadProvider` exists, but the `TableSessionProvider` and `useColumnPreferences` hook
+> named below do not -- the session state lives in `table/tableState.ts` and
+> `table/columnPreferences.ts` instead. Someone needs to decide whether this ticket still describes
+> a real gap or was solved under different names.
 ## Problem
 
 `SquadScreen.tsx` (637 lines) has several composition issues:

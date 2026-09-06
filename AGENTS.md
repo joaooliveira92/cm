@@ -6,7 +6,15 @@ Issues live as markdown files under `.scratch/<feature>/` in this repo. See [iss
 
 ### Triage labels
 
-Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See [triage-labels.md](docs/agents/triage-labels.md).
+Two vocabularies, for two different questions, and it matters which one a ticket is using.
+
+- **Intake state** -- `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See [triage-labels.md](docs/agents/triage-labels.md).
+- **Work lifecycle** -- `claimed` then `resolved`, for child tickets under `.scratch/<effort>/issues/`. See [issue-tracker.md](docs/agents/issue-tracker.md), which defines the claim/resolve protocol, and `scripts/resolve-ticket.ts`, which automates the resolve half.
+
+**`claimed` is a lock, so treat it as one.** The frontier scan skips claimed tickets, which means a
+ticket claimed and then abandoned is invisible to every future agent -- the effort looks in
+progress while nothing can pick it up. Set `claimed` immediately before starting work, not when
+filing, and never in bulk. A ticket that is merely written and ready is `ready-for-agent`.
 
 ### Domain docs
 
@@ -43,7 +51,7 @@ Run `pnpm check:all` (or `check:ci`) after every task. Both profiles are defined
 |------|---------|---------|
 | typecheck | `pnpm -r typecheck` | TypeScript errors. Every package's `include` covers its tests as well as its sources (`apps/desktop` adds `e2e/` too), so a file move that breaks only a spec's import fails here rather than fifteen minutes later in `test`. |
 | lint | `oxlint .` | oxlint with stricter rules (typescript/unicorn/oxc/import plugins) |
-| effect-lint | `tsx scripts/effect-lint.ts` | Custom Effect anti-pattern detection (no Effect.ignore, no Effect.asVoid, no Effect.catchAllCause, no Effect.serviceOption, no disableValidation, no void expressions, no nested Layer.provide, explicit concurrency on Effect.all/Effect.forEach). AST-based, so mentions in comments and strings do not trip it. |
+| effect-lint | `tsx scripts/effect-lint.ts` | Custom Effect anti-pattern detection (no Effect.ignore, no Effect.asVoid, no Effect.catchAllCause, no Effect.serviceOption, no disableValidation, no void expressions, no nested Layer.provide, explicit concurrency on Effect.all/Effect.forEach), plus a 600-line ceiling on source files. AST-based, so mentions in comments and strings do not trip it -- except the line ceiling, which is the one non-AST check. Its exemptions are a hard-coded allowlist in the script: `db/schema.ts` (drizzle-pinned path, whole-schema invariants) and `db/migrations.generated.ts` (generated). |
 | verify-md-links | `tsx scripts/verify-md-links.ts` | No broken markdown links |
 | verify-db-schema | `tsx scripts/verify-db-schema.ts` | The committed drizzle artifacts still match `db/schema.ts` |
 | test | `pnpm -r test` | All unit tests (dot reporter; set `VERBOSE=1` for full names) |

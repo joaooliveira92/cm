@@ -1,8 +1,16 @@
 # 05 — Refactor CreationStep1: extract ArchetypeSelector, PillarDistribution, CreationStepper
 
 Type: task
-Status: claimed
+Status: ready-for-agent
 
+> **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
+> `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so
+> no work had ever started on it. Ten of this effort's sixteen tickets were in that state.
+> `claimed` is a lock -- [issue-tracker.md](../../../docs/agents/issue-tracker.md) has the frontier
+> scan skip claimed tickets -- so the effort looked in progress while nothing could pick it up.
+> **Still open and unstarted**, verified 2026-09-06 against the tree: none of the components,
+> providers or hooks in its Done-When list exist yet. Moved to `ready-for-agent` so the frontier
+> scan can see it.
 ## Retargeted 2026-09-05 — read this before starting
 
 This ticket was written against `CreationStep1.tsx` (818 lines). **That file no longer exists.** It

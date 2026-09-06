@@ -26,9 +26,19 @@ referenced throughout.
   `apps/desktop/src/main/db/prototype-scale-probe/`), plus 22 and 23.
 - **[.scratch/visual-design-language/](../.scratch/visual-design-language/)** — 10/15. Tickets
   11–15 are `ready-for-agent`.
-- **[.scratch/react-composition-audit/](../.scratch/react-composition-audit/)** — 6/16 by status,
-  but the statuses are stale: tickets 02–11 sit in `claimed` while recent commits appear to have
-  shipped several of them. Needs a re-status pass before the count means anything.
+- **[.scratch/react-composition-audit/](../.scratch/react-composition-audit/)** — 6/16. Re-statused
+  2026-09-06, and the answer was the opposite of what was assumed here: tickets 02–11 had **not**
+  been shipped by recent commits, they had never been started. All ten still held the untouched
+  `<!-- to be filled by implementation -->` placeholder, and not one of the 17 providers, hooks or
+  components in their Done-When lists exists in the tree. They were labelled `claimed` at filing
+  rather than at start, which is a lock nobody held — the frontier scan skips claimed tickets, so
+  the effort read as in-progress while nothing could pick it up.
+
+  Now: 7 `ready-for-agent` (04, 05, 06, 08, 09, 10, 11) and 3 `needs-triage` (02, 03, 07). The
+  three need a human call rather than an agent: their size targets were met incidentally by other
+  work under different names — `TransfersScreen.tsx` is 103 lines and `SquadScreen.tsx` is 14 —
+  so what survives is the boolean-prop half, which may or may not still be worth a ticket.
+  Ticket 05 was additionally retargeted; it named `CreationStep1.tsx`, renamed long ago.
 - **[.scratch/group-a-reconciliation/](../.scratch/group-a-reconciliation/)** — 21/23. Open:
   03 (quit confirmation) and 04 (save-list chrome).
 - **[.scratch/main-process-decomposition/](../.scratch/main-process-decomposition/)** — 3/5. Opened
