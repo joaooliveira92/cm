@@ -21,7 +21,7 @@ import {
   POSITION_ROLES,
   type PlayerAttributes,
 } from "@cm-clone/shared";
-import { Effect, Schema } from "effect";
+import { Context, Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadManagerProfile } from "../career/managerProfile.js";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
@@ -60,6 +60,31 @@ const synthesizeDefaultTactic = (
 
   return new Tactic({ formation: "4-4-2", slots, mentality: "balanced", tempo: "normal", pressing: "medium" });
 };
+
+/**
+ * Where a match's seed comes from — a `Context.Reference`, so it is a service with a default and
+ * not a requirement: `startMatch` still types as `Effect<MatchSummary, ..., never>` and no
+ * production call site provides anything. The default is the clock-derived draw this line always
+ * was; a test overrides it with `Effect.provideService(MatchSeedSource, () => 1234)` to pin a
+ * match to a known timeline.
+ *
+ * It holds a *function* rather than a number because a `Context.Reference`'s default value is
+ * computed once and cached: a plain `number` default would hand every match started in one process
+ * the same seed, which is a production behaviour change rather than a test seam.
+ *
+ * The seed's entropy is unchanged by this seam, and deliberately so. It used to come from the
+ * clock plus the fresh uuid the stream was keyed on; the stream is keyed on the fixture now, so
+ * the uuid stays purely as the seed's distinguisher — two starts of the same fixture within one
+ * millisecond still play differently.
+ *
+ * That leaves the *default* match seed clock-derived, which is the one seed in this codebase that
+ * is not a function of the world. Making it `deriveSeed(worldSeed, "match", fixtureId)` would make
+ * a watched match as reproducible as a background one already is, and is a change to ADR-0002's
+ * determinism story rather than a test seam — so it is still not made here.
+ */
+export const MatchSeedSource = Context.Reference<() => number>("cm-clone/main/match/MatchSeedSource", {
+  defaultValue: () => () => (Date.now() ^ hashString(randomUUID())) >>> 0,
+});
 
 /** Builds a `MatchTeamSetup` for any club: its persisted Tactic if `ChangeTactics` was ever issued
  * for it, else the synthesized default above. Assumes a `SqlClient` in context. */
@@ -137,17 +162,10 @@ export const startMatch = (savesDir: string, saveId: SaveId, opponentClubId: Clu
       const matchId = MatchId.make(
         fixtures[0] === undefined ? randomUUID() : String(fixtures[0].id),
       );
-      // The seed's entropy is unchanged by this ticket, and deliberately so. It used to come from
-      // the clock plus the fresh uuid the stream was keyed on; the stream is keyed on the fixture
-      // now, so the uuid stays purely as the seed's distinguisher — two starts of the same fixture
-      // within one millisecond still play differently.
-      //
-      // That leaves the match seed clock-derived, which is the one seed in this codebase that is
-      // not a function of the world. Making it `deriveSeed(worldSeed, "match", fixtureId)` would
-      // make a watched match as reproducible as a background one already is, and is a change to
-      // ADR-0002's determinism story rather than to where a stream is keyed — so it is not made
-      // here.
-      const seed = (Date.now() ^ hashString(randomUUID())) >>> 0;
+      // Drawn through `MatchSeedSource` above: the clock-derived default in production, a pinned
+      // seed under a test that provides one.
+      const nextSeed = yield* MatchSeedSource;
+      const seed = nextSeed();
 
       const started: PersistedMatchStarted = {
         seed,

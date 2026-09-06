@@ -8,9 +8,22 @@ import { Tactic, type ClubId, type MatchId, type ResumeSimulationView, type Save
 import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../../../src/main/world/index.js";
+import { SqliteClient } from "@effect/sql-sqlite-node";
+import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { beginCareer, commitCareer } from "../../../src/main/world/index.js";
 import { getTactics } from "../../../src/main/club/index.js";
-import { listOpponentClubs, resumeSimulation, startMatch, submitMatchCommand } from "../../../src/main/match/index.js";
+import {
+  MatchSeedSource,
+  listOpponentClubs,
+  resumeSimulation,
+  startMatch,
+  submitMatchCommand,
+} from "../../../src/main/match/index.js";
+import { createDefaultSnapshot } from "../snapshot-helpers.js";
+
+/** The world every test in this file plays its matches in. Pinned so the match seeds below name a
+ *  fixed pair of squads rather than whatever `createSave` happened to draw. */
+const WORLD_SEED = 20260906;
 
 let savesDir: string;
 
@@ -53,47 +66,98 @@ const drain = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
   });
 
 /**
- * `startMatch` seeds each match from `Date.now()` (no test hook to pin it), so an Injury event can
- * rarely force its own substitution and throw off a test's exact sub-count expectations. Tests that
- * need a known, uninterrupted substitution budget start via this helper instead of `startMatch`
- * directly: it drains a full no-op simulation of each candidate match first (cheap — `simulateMatch`
- * is pure and sub-millisecond, ADR-0007) and retries with a fresh seed if any Injury fired.
+ * A career generated from a pinned world seed rather than `createSave`'s fresh draw.
+ *
+ * Pinning the match seed alone would not make this file deterministic: an Injury roll is a
+ * function of the match seed *and* the squads it plays out between, and `createSave` draws a
+ * fresh world seed on every call. Both ends have to be pinned for a seed constant below to mean
+ * the same match tomorrow. Mirrors `test/main/season/helpers.ts`'s `createCareerFromWorldSeed`.
  */
-const startMatchWithNoInjuries = (savesDir: string, saveId: SaveId, opponentClubId: ClubId, alternatives: ReadonlyArray<ClubId> = []) =>
+const createSeededCareer = Effect.gen(function* () {
+  const snapshotId = yield* createDefaultSnapshot(savesDir);
+  const { id } = yield* beginCareer(savesDir, {
+    worldSeed: WORLD_SEED,
+    referenceYear: 2026,
+    userDataDir: savesDir,
+    snapshotId,
+  });
+  const clubs = yield* Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    return yield* sql<{ id: ClubId }>`SELECT id FROM clubs ORDER BY rowid LIMIT 1`;
+  }).pipe(
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${id}.sqlite`) })),
+    Effect.scoped,
+  );
+  return yield* commitCareer(savesDir, id, "Test Career", clubs[0]!.id, {
+    managerName: "Test Career",
+    archetypeOrigin: "custom",
+    pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
+  });
+});
+
+/**
+ * `startMatch` under a pinned seed. `MatchSeedSource` is a `Context.Reference`, so this overrides
+ * the clock-derived default without `startMatch` carrying a requirement in production — the whole
+ * point of the seam. Every match below is started through here: a match started on the clock is a
+ * different match on every run, which is what made this file's assertions probabilistic.
+ */
+const startSeededMatch = (savesDir: string, saveId: SaveId, opponentClubId: ClubId, seed: number) =>
+  startMatch(savesDir, saveId, opponentClubId).pipe(Effect.provideService(MatchSeedSource, () => seed));
+
+/**
+ * The match seeds this file plays, all against `opponents[0]` in the `WORLD_SEED` world. Found by enumerating seeds through the same public path the tests take (`startSeededMatch`
+ * + `drain`) and recording what each one produced.
+ *
+ * These are *not* interchangeable with any other seed: repin them by rerunning that enumeration if
+ * the engine's draw order or this world's squads ever change. The two helpers below re-check their
+ * seed's property on every run and fail with that instruction, rather than silently asserting
+ * against a match that no longer has the shape the test needs.
+ */
+const INJURY_SEED = 1;
+const INJURY_FREE_SEED = 3;
+const CLEAN_LINEUP_SEED = 3;
+/** For the tests that hold whatever the match happens to produce — they assert on replay equality
+ *  or on reaching full time, not on a particular event — but still want the same match each run. */
+const ANY_MATCH_SEED = 7;
+
+/**
+ * Tests that need a known, uninterrupted substitution budget start from `INJURY_FREE_SEED`: an
+ * Injury can force its own substitution and throw off an exact sub-count expectation. The guard
+ * drains a full no-op simulation first (cheap — `simulateMatch` is pure and sub-millisecond,
+ * ADR-0007) and asserts the seed still has that property, so a drifted seed reports itself instead
+ * of surfacing as a confusing off-by-one further down the test.
+ */
+const startMatchWithNoInjuries = (savesDir: string, saveId: SaveId, opponentClubId: ClubId) =>
   Effect.gen(function* () {
-    const candidates = [opponentClubId, ...alternatives];
-    for (let attempt = 0; attempt < 25; attempt++) {
-      // A match stream is keyed on its fixture (ticket 17), so retrying the same opponent retries
-      // one fixture. Cycling opponents is what makes these attempts independent draws.
-      const summary = yield* startMatch(savesDir, saveId, candidates[attempt % candidates.length]!);
-      const chunks = yield* drain(savesDir, saveId, summary.matchId);
-      const hadInjury = chunks.some((chunk) => chunk.lines.some((line) => line.tag === "Injury"));
-      if (!hadInjury) return summary;
-    }
-    throw new Error("could not find an Injury-free match seed after 25 attempts");
+    const summary = yield* startSeededMatch(savesDir, saveId, opponentClubId, INJURY_FREE_SEED);
+    const chunks = yield* drain(savesDir, saveId, summary.matchId);
+    ok(
+      !chunks.some((chunk) => chunk.lines.some((line) => line.tag === "Injury")),
+      `seed ${INJURY_FREE_SEED} no longer produces an Injury-free match — repin INJURY_FREE_SEED`,
+    );
+    return summary;
   });
 
 /** Twin of `startMatchWithNoInjuries` that also excludes red cards, so a deterministic 11-on-11
  * on-pitch count holds — what ticket 11's no-subs tests need to assert a clean ForceOff to 10. */
-const startMatchWithCleanLineup = (savesDir: string, saveId: SaveId, opponentClubId: ClubId, alternatives: ReadonlyArray<ClubId> = []) =>
+const startMatchWithCleanLineup = (savesDir: string, saveId: SaveId, opponentClubId: ClubId) =>
   Effect.gen(function* () {
-    const candidates = [opponentClubId, ...alternatives];
-    for (let attempt = 0; attempt < 25; attempt++) {
-      const summary = yield* startMatch(savesDir, saveId, candidates[attempt % candidates.length]!);
-      const chunks = yield* drain(savesDir, saveId, summary.matchId);
-      const disruptive = chunks.some((chunk) =>
+    const summary = yield* startSeededMatch(savesDir, saveId, opponentClubId, CLEAN_LINEUP_SEED);
+    const chunks = yield* drain(savesDir, saveId, summary.matchId);
+    ok(
+      !chunks.some((chunk) =>
         chunk.lines.some((line) => line.tag === "Injury" || line.tag === "RedCard"),
-      );
-      if (!disruptive) return summary;
-    }
-    throw new Error("could not find a clean match seed (no Injury/RedCard) after 25 attempts");
+      ),
+      `seed ${CLEAN_LINEUP_SEED} no longer produces a clean match (no Injury/RedCard) — repin CLEAN_LINEUP_SEED`,
+    );
+    return summary;
   });
 
 it.effect("submitMatchCommand applies a mid-match substitution and reflects it in homeSubs", () =>
   Effect.gen(function* () {
-    const save = yield* createSave(savesDir, "Test Career");
+    const save = yield* createSeededCareer;
     const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatchWithNoInjuries(savesDir, save.id, opponents[0]!.id, opponents.slice(1).map((club) => club.id));
+    const summary = yield* startMatchWithNoInjuries(savesDir, save.id, opponents[0]!.id);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
@@ -133,9 +197,9 @@ it.effect("submitMatchCommand applies a mid-match substitution and reflects it i
 
 it.effect("substitutions are capped at 5 per team across 3 windows, enforced silently by the engine", () =>
   Effect.gen(function* () {
-    const save = yield* createSave(savesDir, "Test Career");
+    const save = yield* createSeededCareer;
     const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatchWithNoInjuries(savesDir, save.id, opponents[0]!.id, opponents.slice(1).map((club) => club.id));
+    const summary = yield* startMatchWithNoInjuries(savesDir, save.id, opponents[0]!.id);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
@@ -185,9 +249,9 @@ it.effect("substitutions are capped at 5 per team across 3 windows, enforced sil
 
 it.effect("a mid-match ChangeTactics command is accepted and the match still resolves to FullTimeWhistle", () =>
   Effect.gen(function* () {
-    const save = yield* createSave(savesDir, "Test Career");
+    const save = yield* createSeededCareer;
     const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatch(savesDir, save.id, opponents[0]!.id);
+    const summary = yield* startSeededMatch(savesDir, save.id, opponents[0]!.id, ANY_MATCH_SEED);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = new Tactic({ ...buildKnownTactic(tacticsView.squad), mentality: "attacking", pressing: "high" });
@@ -209,9 +273,9 @@ it.effect(
   "determinism: replaying the same match+command sequence from cursor 0 twice reproduces the same timeline",
   () =>
     Effect.gen(function* () {
-      const save = yield* createSave(savesDir, "Test Career");
+      const save = yield* createSeededCareer;
       const opponents = yield* listOpponentClubs(savesDir, save.id);
-      const summary = yield* startMatch(savesDir, save.id, opponents[0]!.id);
+      const summary = yield* startSeededMatch(savesDir, save.id, opponents[0]!.id, ANY_MATCH_SEED);
 
       const tacticsView = yield* getTactics(savesDir, save.id);
       const tactic = buildKnownTactic(tacticsView.squad);
@@ -245,9 +309,9 @@ it.effect(
 
 it.effect("ForceOff brings a player off to 10 men without consuming a substitution (ticket 11)", () =>
   Effect.gen(function* () {
-    const save = yield* createSave(savesDir, "Test Career");
+    const save = yield* createSeededCareer;
     const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatchWithCleanLineup(savesDir, save.id, opponents[0]!.id, opponents.slice(1).map((club) => club.id));
+    const summary = yield* startMatchWithCleanLineup(savesDir, save.id, opponents[0]!.id);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
@@ -277,9 +341,9 @@ it.effect("ForceOff brings a player off to 10 men without consuming a substituti
 
 it.effect("a ForceOff for a player not on the pitch is a silent no-op (count unchanged)", () =>
   Effect.gen(function* () {
-    const save = yield* createSave(savesDir, "Test Career");
+    const save = yield* createSeededCareer;
     const opponents = yield* listOpponentClubs(savesDir, save.id);
-    const summary = yield* startMatchWithCleanLineup(savesDir, save.id, opponents[0]!.id, opponents.slice(1).map((club) => club.id));
+    const summary = yield* startMatchWithCleanLineup(savesDir, save.id, opponents[0]!.id);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
@@ -302,36 +366,27 @@ it.effect("a ForceOff for a player not on the pitch is a silent no-op (count unc
 
 it.effect("an Injury event's chunk lists the injured club in injuredClubIds", () =>
   Effect.gen(function* () {
-    // Injury is a low-probability per-slice roll (~0.4%) — retry across fresh matches (each cheap,
-    // sub-millisecond `simulateMatch` calls) until one produces an Injury, rather than trying to
-    // force it deterministically through the public API.
-    const MAX_ATTEMPTS = 40;
-    let found = false;
-
-    const save = yield* createSave(savesDir, "Test Career");
+    const save = yield* createSeededCareer;
     const opponents = yield* listOpponentClubs(savesDir, save.id);
+    // `INJURY_SEED` is a seed known to produce an Injury in this world. This test used to start up
+    // to 40 clock-seeded matches and assert that one of them happened to injure somebody — a
+    // probabilistic assertion, so it had a real failure rate rather than an outcome.
+    const summary = yield* startSeededMatch(savesDir, save.id, opponents[0]!.id, INJURY_SEED);
+    const chunks = yield* drain(savesDir, save.id, summary.matchId);
 
-    for (let attempt = 0; attempt < MAX_ATTEMPTS && !found; attempt++) {
-      // A match stream is keyed on its fixture now (ticket 17), so "a fresh match" means a fresh
-      // fixture rather than a fresh id for the same one — cycling opponents is what makes these
-      // attempts the independent draws this retry loop assumes.
-      const summary = yield* startMatch(savesDir, save.id, opponents[attempt % opponents.length]!.id);
-      const chunks = yield* drain(savesDir, save.id, summary.matchId);
+    const injuredChunks = chunks.filter((chunk) => chunk.lines.some((line) => line.tag === "Injury"));
+    ok(
+      injuredChunks.length > 0,
+      `seed ${INJURY_SEED} no longer produces an Injury — repin INJURY_SEED`,
+    );
 
-      for (const chunk of chunks) {
-        if (chunk.lines.some((line) => line.tag === "Injury")) {
-          found = true;
-          ok(chunk.injuredClubIds.length > 0, "a chunk with an Injury line must list the injured club");
-          ok(
-            chunk.injuries.some(
-              (i) => i.trigger === "contact" || i.trigger === "non-contact",
-            ) && chunk.injuries.every((i) => ["orange", "red"].includes(i.tier)),
-            "a chunk with an Injury line must carry its typed trigger and tier",
-          );
-        }
-      }
+    for (const chunk of injuredChunks) {
+      ok(chunk.injuredClubIds.length > 0, "a chunk with an Injury line must list the injured club");
+      ok(
+        chunk.injuries.some((i) => i.trigger === "contact" || i.trigger === "non-contact") &&
+          chunk.injuries.every((i) => ["orange", "red"].includes(i.tier)),
+        "a chunk with an Injury line must carry its typed trigger and tier",
+      );
     }
-
-    ok(found, `no Injury event occurred in ${MAX_ATTEMPTS} attempts — investigate INJURY_PROBABILITY`);
   }),
 );

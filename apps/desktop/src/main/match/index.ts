@@ -1,7 +1,8 @@
 /**
  * The match subsystem's public surface — every symbol `main/match.ts` exported before it became
- * this directory, and nothing more. Call sites changed their import *path* and not one of the
- * names they ask for.
+ * this directory, plus `MatchSeedSource` — the `Context.Reference` a test provides to pin a
+ * match's seed, and nothing more. Call sites changed their import *path* and not one of the names
+ * they ask for.
  *
  * The modules behind it, in the order a match runs through them: `start` (the kickoff snapshot a
  * `StartMatch` freezes into the stream), `stream` (the persisted shapes and the pure re-derivation
@@ -11,4 +12,4 @@
 
 export { submitMatchCommand } from "./commands.js";
 export { listOpponentClubs, resumeSimulation } from "./queries.js";
-export { startMatch } from "./start.js";
+export { MatchSeedSource, startMatch } from "./start.js";

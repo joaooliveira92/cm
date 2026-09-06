@@ -1,7 +1,7 @@
 # 02: `matchCommands.test.ts` retries against a wall-clock seed and flakes
 
 Type: bug
-Status: ready-for-agent
+Status: resolved
 
 **Symptom:** `test/matchCommands.test.ts > an Injury event's chunk lists the injured club in
 injuredClubIds` fails intermittently with
@@ -27,7 +27,47 @@ injectable settles both.
 
 Do not fix this by raising `MAX_ATTEMPTS`. That trades a visible flake for a slower, rarer one.
 
-- [ ] `startMatch` accepts an explicit seed in tests without changing its production signature.
-- [ ] The Injury spec asserts against a seed known to produce an Injury, with no retry loop.
-- [ ] The two `Injury-free`/`clean match` helpers pin their seeds the same way.
-- [ ] 20 consecutive runs of `test/matchCommands.test.ts` are green.
+- [x] `startMatch` accepts an explicit seed in tests without changing its production signature.
+- [x] The Injury spec asserts against a seed known to produce an Injury, with no retry loop.
+- [x] The two `Injury-free`/`clean match` helpers pin their seeds the same way.
+- [x] 20 consecutive runs of `test/matchCommands.test.ts` are green.
+
+## Comments
+
+Built 2026-09-06. The seam is `MatchSeedSource`, a `Context.Reference<() => number>` in
+`apps/desktop/src/main/match/start.ts`: a service *with a default*, so `startMatch`'s production
+signature and requirements are unchanged and tests override it with `Effect.provideService`. The
+spec also pins its world seed via `beginCareer`, because whether a seed injures anybody depends on
+the squads as well as the match seed. The three retry loops are gone; the file now runs in ~1.3s
+instead of hundreds of simulated matches. 20 consecutive runs green.
+
+Rationale and rejected alternatives:
+[.agents/notes/proposed/testing/2026-09-06-deterministic-match-seed-seam.md](../../../.agents/notes/proposed/testing/2026-09-06-deterministic-match-seed-seam.md).
+
+The paths in this ticket predate the test-tree split: the spec is
+`apps/desktop/test/main/match/commands.test.ts`.
+
+## Resolved 2026-09-06
+
+`MatchSeedSource`, a `Context.Reference<() => number>` on `main/match/start.ts` whose default is the
+clock draw the line always was. `startMatch`'s signature, its `R`, and every production call site
+are unchanged; a test pins a match with `Effect.provideService(MatchSeedSource, () => 3)`. It holds
+a *function* rather than a number because a `Context.Reference`'s default is computed once and
+cached — a `Reference<number>` defaulting to the clock would hand every match in a process the same
+seed, which is a production behaviour change wearing a test seam's clothes. See
+[the Agent Note](../../../.agents/notes/proposed/testing/2026-09-06-deterministic-match-seed-seam.md)
+for the four alternatives rejected.
+
+Pinning the match seed alone was not enough: whether a seed injures anyone depends on the squads
+too, and `createSave` draws a fresh world seed every call. The spec now builds its career through
+`beginCareer`/`commitCareer` at a pinned `WORLD_SEED`. All three retry loops are gone; the two
+sibling helpers keep a drain-and-check as a guard that says "repin `<CONSTANT>`" rather than
+retrying. **20 consecutive runs green**, and the spec went from hundreds of simulated matches to
+~1.2s.
+
+One correction to this ticket's premise: it quoted ~0.4% as the injury chance. That is the
+*per-slice* roll — compounded over a match it comes out near 40% of matches, which is why 40
+attempts usually but not always found one. The diagnosis was right; only the arithmetic in the
+framing was loose.
+
+The force-off e2e coverage this unblocks is **not** done — see ticket 03.
