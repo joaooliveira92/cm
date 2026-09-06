@@ -56,11 +56,12 @@ import {
   newsInboxAtom,
   useAtomValue,
 } from "../rpc.js";
-import { BTN_PRIMARY } from "../theme.js";
+import { BTN_HEADER_PRIMARY } from "../theme.js";
 import { ContinueOutstandingBand } from "./ContinueOutstanding.js";
 import { ContinueResultBand, type ContinueReport } from "./ContinueResult.js";
 import { Header } from "./header/index.js";
 import type { HeaderCareer, HeaderStanding } from "./header/career-header-state.js";
+import { Button } from "../components/ui/button.js";
 
 /**
  * The set of section groups making up the primary row. Exported so the reachability
@@ -89,9 +90,12 @@ export {
  *
  * The record is the single source of truth for the label, the binding badge,
  * and the disabled reason. `primary: true` on that record drives the
- * gradient-primary treatment — presentation only, never automatic dispatch. A
- * later screen that marks its own primary must reach this same treatment, or
- * "primary verb" degrades into a special case for Continue.
+ * club-adaptive primary treatment — presentation only, never automatic
+ * dispatch. This control lives on the club-coloured title band, so its
+ * treatment is `BTN_HEADER_PRIMARY` (the `--color-header-*` pair inverted),
+ * not the neutral `BTN_PRIMARY`. A later screen that marks its own primary
+ * must reach this same treatment, or "primary verb" degrades into a special
+ * case for Continue.
  */
 const ContinueControl = ({
   disabled,
@@ -109,7 +113,7 @@ const ContinueControl = ({
   if (action === undefined) return null;
 
   const binding = effectiveBinding(action, overrides);
-  const treatment = action.primary === true ? BTN_PRIMARY : "";
+  const treatment = action.primary === true ? BTN_HEADER_PRIMARY : "";
 
   return (
     <button
@@ -252,15 +256,15 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
     season === null
       ? []
       : assessContinueReadiness({
-          phase: season.phase,
-          hasTactic:
-            tacticsResult._tag === "Success" ? tacticsResult.value.tactic !== null : true,
-          matchInProgress: liveMatch !== undefined,
-          advancing,
-          // Zero until the read comes back, on the same reasoning as `hasTactic` above: a load in
-          // flight must not flash a warning about state we have not read.
-          pendingIncomingBids: newsCounts?.actionRequired ?? 0,
-        }).items;
+        phase: season.phase,
+        hasTactic:
+          tacticsResult._tag === "Success" ? tacticsResult.value.tactic !== null : true,
+        matchInProgress: liveMatch !== undefined,
+        advancing,
+        // Zero until the read comes back, on the same reasoning as `hasTactic` above: a load in
+        // flight must not flash a warning about state we have not read.
+        pendingIncomingBids: newsCounts?.actionRequired ?? 0,
+      }).items;
 
   // Everything the band reports, described in one place. A blocked career loop
   // is stated here rather than left to a `title` no disabled control delivers.
@@ -287,11 +291,11 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
           newsCounts === null || newsCounts.unread === 0
             ? undefined
             : {
-                news: {
-                  count: newsCounts.unread,
-                  label: newsCounts.actionRequired > 0 ? "unread, some awaiting an answer" : "unread",
-                },
-              }
+              news: {
+                count: newsCounts.unread,
+                label: newsCounts.actionRequired > 0 ? "unread, some awaiting an answer" : "unread",
+              },
+            }
         }
         saveId={saveId}
         clubName={clubName}
@@ -309,15 +313,15 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
         actions={
           <>
             <Header.Search />
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               className={`rounded-control border border-border-subtle px-3 py-1 text-text-secondary hover:text-text-primary ${FOCUS_RING.join(" ")}`}
               onClick={(event) =>
                 onBackToSaves(event.detail > 0 ? "pointer" : "keyboard")
               }
             >
               Back to saves
-            </button>
+            </Button>
             <ContinueControl disabled={continueDisabled} busy={advancing} />
           </>
         }

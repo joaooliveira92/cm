@@ -163,9 +163,11 @@ export const Navbar = ({
   };
 
   return (
-    // The club scope. The two inline properties are the club's primary pair; `club-header` derives
-    // the rest from them here, so the bands below inherit a complete scheme. With no club it
-    // carries no inline style and every role falls back to the neutral chrome.
+    // The club scope. `club-header` derives the rest from the two custom properties set here, so
+    // the bands below inherit a complete scheme. The background is the club's primary background;
+    // the foreground is its primary foreground when that pair reads, else the most readable colour
+    // the club owns (`club-scheme.ts` applies the AA correction). With no club it carries no inline
+    // style and every role falls back to the neutral chrome.
     <header className="club-header text-header-fg" style={clubHeaderStyle(clubColours)}>
       {/* Left + right zones share the first row band, which is also the
           window's drag handle and the macOS traffic-light inset. */}
