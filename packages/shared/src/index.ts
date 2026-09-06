@@ -4,6 +4,7 @@ export * from "./random.js";
 export * from "./seed.js";
 export * from "./rules/positions.js";
 export * from "./rules/tactics.js";
+export * from "./rules/tacticsSummary.js";
 export * from "./rules/ratings.js";
 export * from "./content/clubs.js";
 export * from "./content/canonicalId.js";

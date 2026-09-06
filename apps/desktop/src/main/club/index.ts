@@ -30,4 +30,5 @@ export {
 } from "./scouting.js";
 export { getSquad, loadSquadPlayers, loadUserClub } from "./squad.js";
 export { changeTactics, getTactics, loadPersistedTactic, persistTactic, validateTactic } from "./tactics.js";
+export { getTacticsOverview } from "./tacticsOverview.js";
 export { setTrainingFocus } from "./training.js";

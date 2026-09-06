@@ -77,3 +77,130 @@ export class TacticsScreenView extends Schema.Class<TacticsScreenView>("TacticsS
    *  caller that later learns a larger revision knows its read is stale. */
   revision: Schema.Natural,
 }) {}
+
+// ---------------------------------------------------------------------------
+// Tactics Overview snapshot (Screen 80 / ticket 02)
+// ---------------------------------------------------------------------------
+
+/** One slot of the formation preview — the Position the formation fills, in fixed slot order. */
+export class FormationSlotView extends Schema.Class<FormationSlotView>("FormationSlotView")({
+  position: PositionSchema,
+}) {}
+
+/** The formation summary: the active Formation's name and its eleven preview slots, so the overview
+ *  can draw a pitch without importing `FORMATION_SLOTS` itself. */
+export class FormationSummaryView extends Schema.Class<FormationSummaryView>("FormationSummaryView")({
+  formation: FormationSchema,
+  /** The formation's slots, the implicit GK first, in the fixed order the formation defines. */
+  slots: Schema.Array(FormationSlotView),
+}) {}
+
+/** The three Team Instructions as the active Tactic carries them. */
+export class TeamInstructionSummaryView extends Schema.Class<TeamInstructionSummaryView>(
+  "TeamInstructionSummaryView",
+)({
+  mentality: MentalitySchema,
+  tempo: TempoSchema,
+  pressing: PressingSchema,
+}) {}
+
+/**
+ * One starter's assignment to a Tactic slot, with the ratings that justify it already computed at
+ * the trusted boundary — the renderer displays numbers and derives nothing tactical itself.
+ *
+ * `firstName`/`lastName`/`positionRating`/`roleRating` are null for a slot whose named player has
+ * since left the squad: the readiness issues name that blocker and the overview shows the gap.
+ */
+export class PlayerAssignmentView extends Schema.Class<PlayerAssignmentView>("PlayerAssignmentView")({
+  playerId: PlayerId,
+  firstName: Schema.NullOr(Schema.String),
+  lastName: Schema.NullOr(Schema.String),
+  position: PositionSchema,
+  role: RoleSchema,
+  /** The assigned player's 1-100 Position Rating at `position`, computed on this read. */
+  positionRating: Schema.NullOr(Schema.Finite),
+  /** The assigned player's 1-100 Role Rating at `role`, computed on this read. */
+  roleRating: Schema.NullOr(Schema.Finite),
+}) {}
+
+/**
+ * The derived familiarity summary: how many of the starters are Natural, Competent, or Unfamiliar
+ * in the Position their slot assigns. Derived, never assigned — folded from each starter's existing
+ * position-familiarity tier and the selection the Tactic makes of them. Formation- and
+ * instruction-level familiarity are deferred to the Training domain, so v1 carries these counts only.
+ */
+export class FamiliaritySummaryView extends Schema.Class<FamiliaritySummaryView>(
+  "FamiliaritySummaryView",
+)({
+  natural: Schema.Finite,
+  competent: Schema.Finite,
+  unfamiliar: Schema.Finite,
+}) {}
+
+/** A named player on the selection lists — identity for routing plus the name the overview shows. */
+export class SelectedPlayerView extends Schema.Class<SelectedPlayerView>("SelectedPlayerView")({
+  id: PlayerId,
+  firstName: Schema.String,
+  lastName: Schema.String,
+}) {}
+
+/**
+ * The selection summary. Starters are exactly the registered players the active Tactic's slots
+ * name, in slot order; substitutes are every other registered player. The two are a partition of
+ * the squad — never overlapping, never missing a member. An explicit starters-and-bench model is
+ * Screen 89's effort; this records that mapping rather than inventing one.
+ */
+export class SelectionSummaryView extends Schema.Class<SelectionSummaryView>("SelectionSummaryView")({
+  starters: Schema.Array(SelectedPlayerView),
+  substitutes: Schema.Array(SelectedPlayerView),
+}) {}
+
+/**
+ * Set-piece status. "none" until Screen 86 (Set Pieces) lands: v1's Tactic carries no set-piece
+ * plans, so the summary is one status rather than an empty list that would imply configuration
+ * could exist. The snapshot neither invents set pieces nor reveals hidden opposition or scouting data.
+ */
+export class SetPieceStatusView extends Schema.Class<SetPieceStatusView>("SetPieceStatusView")({
+  status: Schema.Literal("none"),
+}) {}
+
+/**
+ * One blocker or advisory readiness finding on the snapshot, with the severity the rule assigned
+ * and the screen that owns fixing it. Blockers and advisories are reported together so resolving
+ * one never unmasks a second surprise.
+ */
+export class ReadinessIssueView extends Schema.Class<ReadinessIssueView>("ReadinessIssueView")({
+  id: Schema.String,
+  severity: Schema.Literals(["blocking", "advisory"]),
+  title: Schema.String,
+  detail: Schema.String,
+  /** The screen that owns the fix, or `null` when the condition clears itself. */
+  destination: Schema.NullOr(Schema.String),
+}) {}
+
+/**
+ * The Tactics Overview's one read: an immutable snapshot of the active club's tactical preparation.
+ *
+ * Every value in it is bound to one club-and-tactic revision pair (the club tactic `revision` below,
+ * the same value ticket 01's accepted save echoes), so a requester that later learns a newer
+ * revision exists discards the snapshot whole rather than rendering a mix of old and new.
+ */
+export class TacticsOverviewView extends Schema.Class<TacticsOverviewView>("TacticsOverviewView")({
+  club: ClubSummary,
+  /** The club tactic revision this snapshot was read at — every section binds to this one revision. */
+  revision: Schema.Natural,
+  /** The active formation and its preview slots, or `null` while no Tactic is saved. */
+  formation: Schema.NullOr(FormationSummaryView),
+  /** The three Team Instruction values, or `null` while no Tactic is saved. */
+  instructions: Schema.NullOr(TeamInstructionSummaryView),
+  /** One assignment per Tactic slot; empty while no Tactic is saved. */
+  assignments: Schema.Array(PlayerAssignmentView),
+  /** The derived familiarity counts over the starters, or `null` while no Tactic is saved. */
+  familiarity: Schema.NullOr(FamiliaritySummaryView),
+  /** Starters and substitutes, a partition of the registered squad. */
+  selection: SelectionSummaryView,
+  /** No set pieces configured until Screen 86 lands. */
+  setPieces: SetPieceStatusView,
+  /** Every blocking and advisory readiness finding, with the screen that owns fixing it. */
+  issues: Schema.Array(ReadinessIssueView),
+}) {}

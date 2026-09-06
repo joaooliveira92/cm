@@ -29,6 +29,7 @@ import { advanceCalendar, getFixtures, getLeagueTable, getSeasonSummary, retireM
 import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave } from "../world/saves.js";
 import { getSquad } from "../club/squad.js";
 import { changeTactics, getTactics } from "../club/tactics.js";
+import { getTacticsOverview } from "../club/tacticsOverview.js";
 import {
   getTransfersScreen,
   placeBid,
@@ -156,6 +157,13 @@ const handlers: Record<AppRpcMethod, Handler> = {
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getTactics.payload)(payload);
       return yield* getTactics(ctx.savesDir, saveId);
+    }),
+  getTacticsOverview: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getTacticsOverview.payload)(
+        payload,
+      );
+      return yield* getTacticsOverview(ctx.savesDir, saveId);
     }),
   changeTactics: (payload, ctx) =>
     Effect.gen(function* () {

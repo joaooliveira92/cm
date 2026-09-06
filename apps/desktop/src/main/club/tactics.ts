@@ -17,7 +17,7 @@ import { assertSaveNotArchived } from "../career/managerStatus.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 
 /**
- * The per-save write gate for `changeTactics`.
+ * The per-save gate around one tactic write (or the overview's snapshot read).
  *
  * One process owns every save (the same single-writer premise `advanceLock.ts` rests on), so a
  * module-level semaphore per save serialises genuinely concurrent saves — a double-click on Save
@@ -36,6 +36,14 @@ const changeTacticsPermit = (saveId: SaveId) => {
   }
   return lock.withPermits(1);
 };
+
+/**
+ * Runs `effect` under one permit of the save's tactic gate. Shared by `changeTactics` (the write)
+ * and the overview's snapshot read, so a snapshot read can never interleave with an accepted save
+ * and return a tactic from one revision beside a revision counter from another.
+ */
+export const withTacticSavePermit = <A, E, R>(saveId: SaveId, effect: Effect.Effect<A, E, R>) =>
+  changeTacticsPermit(saveId)(effect);
 
 /** The club's persisted Tactic, if `ChangeTactics` has ever been issued — assumes a `SqlClient` in
  * context. Exported for season.ts (ticket 15, synthesizes a default for AI clubs without one) and
@@ -66,7 +74,7 @@ export const loadPersistedTactic = (clubId: ClubId) =>
 
 /** The revision guard a submit compares against — the stored `revision`; a club that has never
  * been saved reads as 0. Assumes a `SqlClient` in context. */
-const loadTacticRevision = (clubId: ClubId) =>
+export const loadTacticRevision = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql<{ revision: number }>`SELECT revision FROM tactics WHERE club_id = ${clubId}`;
@@ -171,7 +179,8 @@ export const changeTactics = (
   expectedRevision: number,
   requestId: WriteRequestId,
 ) =>
-  changeTacticsPermit(saveId)(
+  withTacticSavePermit(
+    saveId,
     withExistingSave(savesDir, saveId, (filename) =>
       Effect.gen(function* () {
         yield* assertSaveNotArchived(saveId);

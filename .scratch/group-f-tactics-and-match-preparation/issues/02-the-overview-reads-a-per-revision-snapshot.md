@@ -19,12 +19,12 @@ Seam: read of one club's tactical preparation. A caller observes one fresh snaps
 
 **Blocked by:** 01 (Tactic saves carry revisions and refuse stale or duplicate writes) — the snapshot binds to the club tactic revision that ticket introduces; there is nothing to bind to before it.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The snapshot's every value reads from one tactic-and-club revision pair, returned together so a stale snapshot can be discarded whole.
-- [ ] Formation, instruction, assignment, familiarity, selection, set-piece, and issue sections are all present in one response.
-- [ ] Selection sum is consistent: starters equal the players named in the tactic's slots and substitutes equal the rest of the registered squad, never an overlapping or missing set.
-- [ ] Ratings and familiarity arrive computed: the renderer receives derived numbers and derives nothing tactical itself.
-- [ ] The issues list includes both blocking and advisory findings, each with the screen that owns its fix.
-- [ ] Set-piece status reports no set pieces configured; the snapshot neither invents nor reveals hidden opposition or scouting data.
-- [ ] `pnpm check:all` is green.
+- [x] The snapshot's every value reads from one tactic-and-club revision pair, returned together so a stale snapshot can be discarded whole.
+- [x] Formation, instruction, assignment, familiarity, selection, set-piece, and issue sections are all present in one response.
+- [x] Selection sum is consistent: starters equal the players named in the tactic's slots and substitutes equal the rest of the registered squad, never an overlapping or missing set.
+- [x] Ratings and familiarity arrive computed: the renderer receives derived numbers and derives nothing tactical itself.
+- [x] The issues list includes both blocking and advisory findings, each with the screen that owns its fix.
+- [x] Set-piece status reports no set pieces configured; the snapshot neither invents nor reveals hidden opposition or scouting data.
+- [x] `pnpm check:all` is green.

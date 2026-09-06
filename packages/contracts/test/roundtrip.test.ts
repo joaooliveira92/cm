@@ -29,6 +29,7 @@ import {
   SquadPlayerView,
   SquadView,
   Tactic,
+  TacticsOverviewView,
   TacticsScreenView,
   TrainingFocusSetEvent,
   TrainingFocusView,
@@ -275,6 +276,90 @@ describe("optional and nullable fields", () => {
       tactic: null,
       revision: 3,
     });
+  });
+});
+
+describe("tactics overview snapshot (Screen 80)", () => {
+  const fourFourTwoSlots = [
+    "GK", "DC", "DC", "DL", "DR", "MC", "MC", "ML", "MR", "ST", "ST",
+  ].map((position) => ({ position }));
+
+  const snapshot = {
+    club,
+    revision: 4,
+    formation: { formation: "4-4-2", slots: fourFourTwoSlots },
+    instructions: { mentality: "balanced", tempo: "normal", pressing: "high" },
+    assignments: [
+      {
+        playerId: "p1",
+        firstName: "Alex",
+        lastName: "Brown",
+        position: "ST",
+        role: "Poacher",
+        positionRating: 81,
+        roleRating: 85,
+      },
+    ],
+    familiarity: { natural: 7, competent: 3, unfamiliar: 1 },
+    selection: {
+      starters: [{ id: "p1", firstName: "Alex", lastName: "Brown" }],
+      substitutes: [{ id: "p2", firstName: "Sam", lastName: "Smith" }],
+    },
+    setPieces: { status: "none" },
+    issues: [
+      {
+        id: "bids-awaiting-response",
+        severity: "advisory",
+        title: "Bids awaiting your response",
+        detail: "A club has bid for your players. Advancing lets it lapse.",
+        destination: "transfers",
+      },
+    ],
+  } as const;
+
+  it("round-trips a fully populated snapshot", () => {
+    roundTrip(TacticsOverviewView, snapshot);
+  });
+
+  it("round-trips the no-tactic state — null formation, instructions, familiarity, empty assignments", () => {
+    roundTrip(TacticsOverviewView, {
+      club,
+      revision: 0,
+      formation: null,
+      instructions: null,
+      assignments: [],
+      familiarity: null,
+      selection: { starters: [], substitutes: [] },
+      setPieces: { status: "none" },
+      issues: [],
+    });
+  });
+
+  it("round-trips a departed-player assignment — nulls where the player has left", () => {
+    roundTrip(TacticsOverviewView, {
+      ...snapshot,
+      assignments: [
+        {
+          playerId: "gone",
+          firstName: null,
+          lastName: null,
+          position: "ST",
+          role: "Poacher",
+          positionRating: null,
+          roleRating: null,
+        },
+      ],
+    });
+  });
+
+  it("rejects a setPiece status other than none", () => {
+    expect(() =>
+      Schema.decodeUnknownSync(TacticsOverviewView)({ ...snapshot, setPieces: { status: "few" } }),
+    ).toThrow();
+  });
+
+  it("getTacticsOverview's success schema is the snapshot", () => {
+    expect(TacticsOverviewView).toBe(AppRpcs.getTacticsOverview.success);
   });
 });
 

@@ -68,6 +68,7 @@ import {
   SeasonSummaryView,
   SellerBidActionSchema,
   SquadView,
+  TacticsOverviewView,
   TacticsScreenView,
   TacticRevisionConflictError,
   TrainingFocusView,
@@ -169,6 +170,15 @@ commitCareer: {
   getTactics: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: TacticsScreenView,
+    error: SaveNotFoundError,
+  },
+  /** Tactics Overview (Screen 80): one immutable snapshot of the active club's tactical
+   *  preparation, every value bound to the club tactic revision it was read at. Consumed by the
+   *  Tactics Overview and nothing else to begin with. Pure read — safe on an archived save, where
+   *  the overview's presentation maps the saved-state guard to its permission-limited view. */
+  getTacticsOverview: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: TacticsOverviewView,
     error: SaveNotFoundError,
   },
   changeTactics: {
