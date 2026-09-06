@@ -75,7 +75,7 @@ factor out, so this ticket should not plan around it.
 
 Ticket 04 stays as it is: the application shell is audited first regardless, and its result is an input
 here. The output shape it settled — read the implementation, write ledger rows, change no code — is
-recorded in the [screen-audit note](../../../.agents/notes/proposed/process/2026-08-30-screen-audit-against-imported-spec.md)
+recorded in the [screen-audit note](../../../.agents/notes/implemented/process/2026-08-30-screen-audit-against-imported-spec.md)
 and is what the remaining tickets should copy, with the caveat that Screen 1's reach across six
 directories was specific to the shell and would be scope creep on a single-component screen.
 
@@ -91,7 +91,7 @@ re-litigate them:
   owning spec group, rules the section out of scope, or cuts it a ticket.
 
 Both are written up in the
-[screen-audit note](../../../.agents/notes/proposed/process/2026-08-30-screen-audit-against-imported-spec.md),
+[screen-audit note](../../../.agents/notes/implemented/process/2026-08-30-screen-audit-against-imported-spec.md),
 and `RECONCILIATION.md` now carries `Reviewed` in its status table.
 
 What is left for this ticket is the mechanical part: cut the fifteen audit tickets (one per surviving

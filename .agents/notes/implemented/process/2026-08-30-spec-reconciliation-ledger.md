@@ -1,6 +1,6 @@
 # Agent Note: Reconciliation ledger for imported screen specs
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -20,11 +20,11 @@ That last distinction is the one that carries weight. "We will never do this" an
 yet" read identically in a flat list of gaps, and conflating them is how such a record decays into an
 undifferentiated backlog nobody trusts.
 
-## Proposal
+## Decision
 
-Each spec group gets one **reconciliation ledger** at
-`docs/specs/<group>/RECONCILIATION.md`, recording only divergence. Group A's is the pilot; the other
-eighteen groups adopt it only if the pilot holds.
+Each spec group gets one **reconciliation ledger** at `docs/specs/<group>/RECONCILIATION.md`,
+recording only divergence. Group A's was the pilot. It held: Group B adopted the same format for
+Screen 23, and the remaining groups adopt it as each is audited rather than up front.
 
 ### The ledger is an index, not a store
 
@@ -121,29 +121,24 @@ separately, and the file-plus-heading citation key is what keeps the two disting
   authority it does not have; the reconciliation framing also survives the case where the import is
   right and this codebase has a genuine gap.
 
-## Acceptance criteria
+## Consequences
 
-- `docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md` exists, explains
-  the four kinds and the status lines, and carries a coverage table naming all 21 screens.
-- Screen 21 is written out in full as the worked example, exercising all four kinds.
-- Every row has a populated Anchor.
-- No file under `docs/specs/` has been edited other than the new ledger.
-- `pnpm check:all` is green, including `verify-md-links`.
-- `CONTEXT.md` carries the terms any `renamed` row anchors to.
-
-## Risks
-
+- Two ledgers exist: `docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md`,
+  which explains the four kinds and the status lines and covers all 21 Group A screens, and
+  `docs/specs/group_b_global_navigation_and_inbox/RECONCILIATION.md`, which covers Group B's eleven and
+  points at Group A as the fuller worked example rather than restating it.
+- Group A's Screen 21 is written out in full as the worked example, exercising all four kinds.
+- Every row carries a populated Anchor, and no file under `docs/specs/` has been edited other than the
+  two ledgers.
+- `CONTEXT.md` carries the terms the `renamed` rows anchor to.
 - **The status line is the whole coverage guarantee and nothing enforces it.** An audit ticket that
   closes without flipping `Not yet audited` leaves the ledger asserting less than it should; worse, one
   that flips the line without doing the work leaves it asserting more. There is no gate for this, by
   design — enforcement is prose-only in this repo — so it rests on the audit tickets themselves.
 - **`deferred` rows can still accumulate** even with a mandatory owner, if `unscheduled` becomes the
   habitual answer. The anchor makes the rot visible rather than preventing it.
-- **A ledger per group is 19 files if the pilot generalises**, with the cross-group divergences (the
-  multiplayer axis appears in most groups) restated in each. Extracting shared rows was not attempted;
-  the pilot is deliberately one group, and whether the repetition is tolerable is a question for the
-  second group, not this one.
-- **Anchoring `contradicted` rows to notes that do not exist yet.** Screen 21's durable-at-commit rows
-  currently anchor to the domain-bounded-deciders note, which establishes the single-writer local SQLite
-  premise but does not itself state "there is no unsaved progress". That explicit note is owed by the
-  screen 21 design ticket, and until it lands the anchor is weaker than the rule demands.
+- **A ledger per group is up to 19 files**, with the cross-group divergences (the multiplayer axis
+  appears in most groups) restated in each. Group B's rows duplicate Group A's on multiplayer,
+  telemetry, and localization, which is the cost this predicted; extracting shared rows was considered
+  and not attempted, because a row that lives in one file and is cited from another is harder to read
+  than the repetition it saves.

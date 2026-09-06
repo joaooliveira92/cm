@@ -1,6 +1,6 @@
 # Agent Note: Auditing a screen against the imported spec
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -13,7 +13,7 @@ is allowed to travel, or what stops the exercise turning into a redesign of the 
 The shell was audited first because it is the spine the other screens sit inside, and because
 whatever it produced was going to be copied fifteen more times. The question is what that shape is.
 
-## Proposal
+## Decision
 
 **A screen audit reads the implementation, writes ledger rows, and changes no code.** Its entire
 output is one screen's section of `RECONCILIATION.md` plus the coverage-table status flip. A place
@@ -134,23 +134,24 @@ rather than of one import section:
   for it, and it would have removed two rows. Rejected as beyond an auditor's authority: unlike the
   mod indicator, localization has an obvious referent and someone may well want it.
 
-## Acceptance criteria
+## Consequences
 
-- A screen's section of `RECONCILIATION.md` carries a row for every section the implementation does
-  not follow, each with a populated anchor, and the coverage table reads `Audited`.
-- No file outside `RECONCILIATION.md`, the effort map, and the ticket changes during an audit.
-- Every `contradicted` row names an existing note or `CONTEXT.md` term; no audit invents one.
-- Any section ruled out of scope during an audit appears on the effort map's Out of scope section
-  with the ticket that ruled it.
-
-## Risks
-
+- A screen's section of its group's `RECONCILIATION.md` carries a row for every section the
+  implementation does not follow, each with a populated Anchor, and the coverage table carries the
+  status the pass earned — `Audited` only where a section-by-section pass was made.
+- No file outside the ledger, the effort map, and the ticket changes during an audit.
+- Every `contradicted` row names an existing Agent Note or `CONTEXT.md` term; no audit invents one.
+- Any section ruled out of scope during an audit appears on the effort map's Out of scope section with
+  the ticket that ruled it.
+- The reach stays with the screen. Group B's Screen 23 audit followed Continue into the chrome, the
+  Calendar advance, and the readiness module, which is the screen's own surface rather than Screen 1's
+  shell-wide licence.
 - **The no-`unscheduled` rule can be satisfied dishonestly.** Forcing every row to name an owner
   invites parking sections in whichever spec group is nearest, or ruling them out of scope to avoid the
   work of placing them. That failure is harder to see than an honest `unscheduled` pile was, because
   the row looks resolved.
 - **"Register, don't fix" is unenforced.** Nothing stops a later audit from editing the screen it is
   reading, and the divergence would be invisible until someone re-read the ledger against HEAD.
-- **The shell audit's reach is a bad precedent if copied literally.** Following Screen 1's sections
-  into four directories was right for the spine and would be scope creep on Screen 8. The judgment is
+- **The shell audit's reach is a bad precedent if copied literally.** Following Screen 1's sections into
+  four directories was right for the spine and would be scope creep on a single screen. The judgment is
   stated here but not encoded anywhere a future session must read.
