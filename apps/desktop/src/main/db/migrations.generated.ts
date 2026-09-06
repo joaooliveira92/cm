@@ -356,12 +356,20 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	FOREIGN KEY (\`player_id\`) REFERENCES \`players\`(\`id\`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT "tactic_slots_position" CHECK(position IN ('GK','DC','DL','DR','DM','MC','ML','MR','AMC','ST'))
 );`,
+  `CREATE TABLE \`tactic_write_requests\` (
+	\`club_id\` text NOT NULL,
+	\`request_id\` text NOT NULL,
+	\`created_at\` text DEFAULT (datetime('now')) NOT NULL,
+	PRIMARY KEY(\`club_id\`, \`request_id\`),
+	FOREIGN KEY (\`club_id\`) REFERENCES \`clubs\`(\`id\`) ON UPDATE no action ON DELETE no action
+);`,
   `CREATE TABLE \`tactics\` (
 	\`club_id\` text PRIMARY KEY NOT NULL,
 	\`formation\` text NOT NULL,
 	\`mentality\` text NOT NULL,
 	\`tempo\` text NOT NULL,
 	\`pressing\` text NOT NULL,
+	\`revision\` integer DEFAULT 0 NOT NULL,
 	FOREIGN KEY (\`club_id\`) REFERENCES \`clubs\`(\`id\`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT "tactics_formation" CHECK(formation IN ('4-4-2','4-3-3','4-5-1','3-5-2','5-3-2')),
 	CONSTRAINT "tactics_mentality" CHECK(mentality IN ('defensive','balanced','attacking')),

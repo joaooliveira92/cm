@@ -6,7 +6,7 @@ import { it } from "@effect/vitest";
 import { ok } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { FORMATION_SLOTS, POSITION_ROLES, type ArchivedCause } from "@cm-clone/shared";
-import { BidId, FixtureId, MatchId, PlayerId, Tactic } from "@cm-clone/contracts";
+import { BidId, FixtureId, MatchId, PlayerId, Tactic, WriteRequestId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
@@ -68,7 +68,14 @@ const everyMutatingCommandRejects = (cause: ArchivedCause) =>
       pressing: "medium",
     });
 
-    ok(rejectsAsArchived(yield* Effect.flip(changeTactics(savesDir, save.id, tactic)), cause));
+    ok(
+      rejectsAsArchived(
+        yield* Effect.flip(
+          changeTactics(savesDir, save.id, tactic, 0, WriteRequestId.make("irrelevant-request-id")),
+        ),
+        cause,
+      ),
+    );
     // The archived guard runs before the boundary check, so an irrelevant fixture id is still the
     // right probe: the point is that an archived save refuses the command outright.
     ok(rejectsAsArchived(yield* Effect.flip(startMatch(savesDir, save.id, FixtureId.make(1), "play")), cause));

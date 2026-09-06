@@ -1,5 +1,14 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { InvalidTacticError, Tactic, TacticsScreenView, type SaveId, type ClubId, type PlayerId } from "@cm-clone/contracts";
+import {
+  InvalidTacticError,
+  Tactic,
+  TacticRevisionConflictError,
+  TacticsScreenView,
+  type SaveId,
+  type ClubId,
+  type PlayerId,
+  type WriteRequestId,
+} from "@cm-clone/contracts";
 import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -34,6 +43,24 @@ export const loadPersistedTactic = (clubId: ClubId) =>
     });
   });
 
+/** The revision guard a submit compares against — the stored `revision`; a club that has never
+ * been saved reads as 0. Assumes a `SqlClient` in context. */
+const loadTacticRevision = (clubId: ClubId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ revision: number }>`SELECT revision FROM tactics WHERE club_id = ${clubId}`;
+    return rows[0]?.revision ?? 0;
+  });
+
+/** True when `requestId` was already accepted for this club — the idempotency side of the guard.
+ * Assumes a `SqlClient` in context. */
+const hasAcceptedRequestId = (clubId: ClubId, requestId: WriteRequestId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ found: number }>`
+      SELECT 1 as found FROM tactic_write_requests WHERE club_id = ${clubId} AND request_id = ${requestId}`;
+    return rows.length > 0;
+  });
 
 export const getTactics = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
@@ -41,7 +68,8 @@ export const getTactics = (savesDir: string, saveId: SaveId) =>
       const club = yield* loadUserClub;
       const squad = yield* loadSquadPlayers(club.id);
       const tactic = yield* loadPersistedTactic(club.id);
-      return new TacticsScreenView({ club, squad, tactic });
+      const revision = yield* loadTacticRevision(club.id);
+      return new TacticsScreenView({ club, squad, tactic, revision });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
 
@@ -97,15 +125,58 @@ export const validateTactic = (tactic: Tactic, squadPlayerIds: ReadonlySet<strin
     }
   });
 
-export const changeTactics = (savesDir: string, saveId: SaveId, tactic: Tactic) =>
+/**
+ * The revision-bound, idempotent tactics save. A submit carries the `expectedRevision` the caller
+ * read and a fresh `requestId`; reading the stored state, refusing a stale write, and persisting
+ * happen in one transaction so a concurrent save cannot land between the check and the write.
+ *
+ * - An accepted submit replaces the tactic and raises the club's revision by exactly one, echoing
+ *   the new revision in the returned view.
+ * - A submit whose `expectedRevision` no longer matches the stored one fails with a
+ *   `TacticRevisionConflictError` naming the current revision, and changes nothing.
+ * - A replay carrying an already-seen `requestId` is a no-op success returning the *current* state,
+ *   never an error and never a second write — checked before the revision comparison.
+ */
+export const changeTactics = (
+  savesDir: string,
+  saveId: SaveId,
+  tactic: Tactic,
+  expectedRevision: number,
+  requestId: WriteRequestId,
+) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       yield* assertSaveNotArchived(saveId);
+      const sql = yield* SqlClient;
       const club = yield* loadUserClub;
       const squad = yield* loadSquadPlayers(club.id);
       yield* validateTactic(tactic, new Set(squad.map((player) => player.id)));
-      yield* persistTactic(club.id, tactic);
 
-      return new TacticsScreenView({ club, squad, tactic });
+      // `sql.withTransaction` (BEGIN/COMMIT/ROLLBACK) is what makes the read-check-write atomic —
+      // without it a concurrent save could land between the check and the write.
+      const newRevision = yield* sql.withTransaction(
+        Effect.gen(function* () {
+          const currentRevision = yield* loadTacticRevision(club.id);
+          // A replay is a no-op, not a conflict and not a second write — checked before the revision
+          // comparison, so an already-seen request id returns the current state however stale its
+          // expected revision is.
+          if (yield* hasAcceptedRequestId(club.id, requestId)) {
+            return yield* Effect.succeed(currentRevision);
+          }
+          if (currentRevision !== expectedRevision) {
+            return yield* new TacticRevisionConflictError({
+              saveId,
+              currentRevision,
+            });
+          }
+          yield* persistTactic(club.id, tactic);
+          yield* sql`UPDATE tactics SET revision = ${currentRevision + 1} WHERE club_id = ${club.id}`;
+          yield* sql`INSERT INTO tactic_write_requests (club_id, request_id) VALUES (${club.id}, ${requestId})`;
+          return yield* Effect.succeed(currentRevision + 1);
+        }),
+      );
+
+      const storedTactic = yield* loadPersistedTactic(club.id);
+      return new TacticsScreenView({ club, squad, tactic: storedTactic, revision: newRevision });
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );

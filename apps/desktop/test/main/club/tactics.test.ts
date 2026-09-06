@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
-import { Tactic, type PlayerId } from "@cm-clone/contracts";
+import { Tactic, WriteRequestId, type PlayerId } from "@cm-clone/contracts";
 import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
@@ -32,12 +32,15 @@ const buildTactic = (squadIds: ReadonlyArray<PlayerId>): Tactic =>
     pressing: "medium",
   });
 
-it.effect("getTactics returns no persisted Tactic for a fresh save", () =>
+const rid = (s: string) => WriteRequestId.make(s);
+
+it.effect("getTactics returns no persisted Tactic and revision 0 for a fresh save", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const view = yield* getTactics(savesDir, save.id);
 
     strictEqual(view.tactic, null);
+    strictEqual(view.revision, 0);
     ok(view.squad.length >= 11);
   }),
 );
@@ -48,11 +51,86 @@ it.effect("changeTactics persists a Tactic and getTactics loads it back unchange
     const before = yield* getTactics(savesDir, save.id);
     const tactic = buildTactic(before.squad.map((player) => player.id));
 
-    const afterChange = yield* changeTactics(savesDir, save.id, tactic);
+    const afterChange = yield* changeTactics(
+      savesDir,
+      save.id,
+      tactic,
+      before.revision,
+      rid("first-save"),
+    );
     deepStrictEqual(afterChange.tactic, tactic);
+    strictEqual(afterChange.revision, 1);
 
     const reloaded = yield* getTactics(savesDir, save.id);
     deepStrictEqual(reloaded.tactic, tactic);
+    strictEqual(reloaded.revision, 1);
+  }),
+);
+
+it.effect("every accepted save raises the revision by exactly one, from 0", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    strictEqual(before.revision, 0);
+    const tactic = buildTactic(before.squad.map((player) => player.id));
+
+    const first = yield* changeTactics(savesDir, save.id, tactic, 0, rid("r1"));
+    strictEqual(first.revision, 1);
+
+    const secondTactic = new Tactic({ ...tactic, mentality: "attacking" });
+    const second = yield* changeTactics(savesDir, save.id, secondTactic, first.revision, rid("r2"));
+    strictEqual(second.revision, 2);
+
+    const reloaded = yield* getTactics(savesDir, save.id);
+    strictEqual(reloaded.revision, 2);
+    deepStrictEqual(reloaded.tactic, secondTactic);
+  }),
+);
+
+it.effect("a submit whose expected revision is stale is refused with a typed conflict naming the current revision", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const tactic = buildTactic(before.squad.map((player) => player.id));
+    yield* changeTactics(savesDir, save.id, tactic, before.revision, rid("first"));
+
+    // A second window that still believes revision 0 submits — refused, never silently overwritten.
+    const error = yield* Effect.flip(
+      changeTactics(savesDir, save.id, tactic, 0, rid("second-window")),
+    );
+    strictEqual(error._tag, "TacticRevisionConflictError");
+    strictEqual((error as { readonly currentRevision: number }).currentRevision, 1);
+
+    // A conflict changes nothing: the stored tactic and revision are untouched.
+    const reloaded = yield* getTactics(savesDir, save.id);
+    strictEqual(reloaded.revision, 1);
+    deepStrictEqual(reloaded.tactic, tactic);
+  }),
+);
+
+it.effect("replaying an accepted request id is a no-op that returns the current state, not an error", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const tactic = buildTactic(before.squad.map((player) => player.id));
+
+    const first = yield* changeTactics(savesDir, save.id, tactic, before.revision, rid("accepted"));
+    strictEqual(first.revision, 1);
+
+    // The same submit replayed — even with a stale expected revision — is a success, not a conflict
+    // and not a second write.
+    const replayed = yield* changeTactics(savesDir, save.id, tactic, 999, rid("accepted"));
+    strictEqual(replayed.revision, 1);
+    deepStrictEqual(replayed.tactic, tactic);
+
+    // And it still returns the current state once the club has moved on to a later revision.
+    const secondTactic = new Tactic({ ...tactic, mentality: "attacking" });
+    const second = yield* changeTactics(savesDir, save.id, secondTactic, 1, rid("second"));
+    strictEqual(second.revision, 2);
+
+    const stillReplayed = yield* changeTactics(savesDir, save.id, tactic, 1, rid("accepted"));
+    strictEqual(stillReplayed.revision, 2);
+    deepStrictEqual(stillReplayed.tactic, secondTactic);
   }),
 );
 
@@ -70,7 +148,9 @@ it.effect("changeTactics rejects a Tactic that assigns the same player twice", (
       })),
     });
 
-    const result = yield* Effect.exit(changeTactics(savesDir, save.id, tactic));
+    const result = yield* Effect.exit(
+      changeTactics(savesDir, save.id, tactic, before.revision, rid("dup")),
+    );
     ok(result._tag === "Failure");
   }),
 );
@@ -85,7 +165,9 @@ it.effect("changeTactics rejects a slot whose Role doesn't match its Position", 
       slots: [{ ...tactic.slots[0]!, role: "Poacher" }, ...tactic.slots.slice(1)],
     });
 
-    const result = yield* Effect.exit(changeTactics(savesDir, save.id, badTactic));
+    const result = yield* Effect.exit(
+      changeTactics(savesDir, save.id, badTactic, before.revision, rid("bad")),
+    );
     ok(result._tag === "Failure");
   }),
 );
@@ -109,7 +191,9 @@ it.effect("changeTactics rejects a slot position that doesn't match the formatio
       slots: [{ ...tactic.slots[0]!, position: "ST", role: "Poacher" }, ...tactic.slots.slice(1)],
     });
 
-    const result = yield* Effect.exit(changeTactics(savesDir, save.id, badTactic));
+    const result = yield* Effect.exit(
+      changeTactics(savesDir, save.id, badTactic, before.revision, rid("bad")),
+    );
     ok(result._tag === "Failure");
   }),
 );

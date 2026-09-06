@@ -80,6 +80,7 @@ const preload = (tactic: unknown) => {
           club: { id: "c1", name: "Northport Rovers", statureTier: "mid" },
           squad: [],
           tactic,
+          revision: 0,
         },
       } as never;
     }

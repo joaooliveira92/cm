@@ -144,6 +144,7 @@ const tacticsView = () => ({
   club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
   squad: [],
   tactic: null,
+  revision: 0,
 });
 
 const noSubs = () => ({
@@ -396,6 +397,7 @@ render(
               tempo: "normal",
               pressing: "medium",
             },
+            revision: 0,
           },
         } as never;
       }

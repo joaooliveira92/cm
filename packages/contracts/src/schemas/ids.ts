@@ -28,6 +28,15 @@ export const BidId = Schema.String.pipe(Schema.brand("BidId"));
 export type BidId = Schema.Schema.Type<typeof BidId>;
 
 /**
+ * The idempotency key of one club write: a caller mints a fresh one per submit and replays the
+ * same submit with the same request id later is a no-op rather than a second write. Branded because
+ * `changeTactics`'s payload carries a `SaveId` beside it, and the two transposed is a well-typed
+ * call that writes to the wrong save. Construct one from a fresh UUID with `WriteRequestId.make(...)`.
+ */
+export const WriteRequestId = Schema.String.pipe(Schema.brand("WriteRequestId"));
+export type WriteRequestId = Schema.Schema.Type<typeof WriteRequestId>;
+
+/**
  * Setup-scope identifiers. Branded for the same reason `SaveId`/`ClubId` are: `resolveLeagueSelection`
  * takes a Nation id and a League Scope Option id side by side, and without the brand the two
  * transposed is a well-typed call that resolves to the wrong career.

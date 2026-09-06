@@ -8,7 +8,7 @@ import {
 } from "@cm-clone/shared";
 
 import { ClubSummary } from "./clubs.js";
-import { PlayerId } from "./ids.js";
+import { PlayerId, SaveId, WriteRequestId } from "./ids.js";
 import { PositionSchema, SquadPlayerView } from "./squad.js";
 
 export const FormationSchema = Schema.Literals(FORMATIONS);
@@ -40,8 +40,40 @@ export class InvalidTacticError extends Schema.TaggedError<InvalidTacticError>()
   },
 ) {}
 
+/**
+ * Raised when a `changeTactics` submit's `expectedRevision` no longer matches the stored revision,
+ * so the caller offered a stale write. Names the revision that won the race so a caller can offer
+ * Refresh rather than guessing. A replay carrying an already-seen `requestId` never raises this —
+ * it is a no-op success. See the revision-and-idempotency note.
+ */
+export class TacticRevisionConflictError extends Schema.TaggedError<TacticRevisionConflictError>()(
+  "TacticRevisionConflictError",
+  {
+    saveId: SaveId,
+    currentRevision: Schema.Finite,
+  },
+) {}
+
+/**
+ * The `changeTactics` command payload: the Tactic to write, the `expectedRevision` the caller
+ * read, and a fresh `requestId` per submit. A submit whose revision is stale fails with a typed
+ * conflict; a replay of an already-accepted `requestId` is a no-op that returns the current state.
+ */
+export class ChangeTacticsPayload extends Schema.Class<ChangeTacticsPayload>(
+  "ChangeTacticsPayload",
+)({
+  saveId: SaveId,
+  tactic: Tactic,
+  expectedRevision: Schema.Finite,
+  requestId: WriteRequestId,
+}) {}
+
 export class TacticsScreenView extends Schema.Class<TacticsScreenView>("TacticsScreenView")({
   club: ClubSummary,
   squad: Schema.Array(SquadPlayerView),
   tactic: Schema.NullOr(Tactic),
+  /** The club tactic's monotonically increasing revision, from 0 (never saved) upward. Both
+   *  `getTactics` and an accepted `changeTactics` echo the revision their value was read at, so a
+   *  caller that later learns a larger revision knows its read is stale. */
+  revision: Schema.Finite,
 }) {}

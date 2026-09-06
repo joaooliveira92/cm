@@ -12,6 +12,7 @@ import {
   AdvanceInProgressError,
   AttributesSchema,
   BidView,
+  ChangeTacticsPayload,
   ClubSummary,
   InjuryView,
   InvalidTacticError,
@@ -217,6 +218,29 @@ describe("tagged errors", () => {
     roundTrip(InvalidTacticError, { _tag: "InvalidTacticError", reason: "bad slot" });
   });
 
+  it("TacticRevisionConflictError round-trips through the changeTactics error union", () => {
+    roundTrip(AppRpcs.changeTactics.error, {
+      _tag: "TacticRevisionConflictError",
+      saveId: "s1",
+      currentRevision: 4,
+    });
+  });
+
+  it("changeTactics payload round-trips expectedRevision and requestId", () => {
+    roundTrip(ChangeTacticsPayload, {
+      saveId: "s1",
+      tactic: {
+        formation: "4-4-2",
+        slots: [{ position: "ST", role: "Poacher", playerId: "p1" }],
+        mentality: "balanced",
+        tempo: "normal",
+        pressing: "medium",
+      },
+      expectedRevision: 2,
+      requestId: "req-1234",
+    });
+  });
+
   it("InsufficientTransferBudgetError round-trips all numeric fields", () => {
     roundTrip(AdvanceInProgressError, {
       _tag: "AdvanceInProgressError",
@@ -249,6 +273,7 @@ describe("optional and nullable fields", () => {
       club,
       squad: [player],
       tactic: null,
+      revision: 3,
     });
   });
 });

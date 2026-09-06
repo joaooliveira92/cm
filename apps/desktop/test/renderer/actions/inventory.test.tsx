@@ -88,6 +88,7 @@ const tacticsView = (tactic?: unknown) => ({
   club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
   squad: [],
   tactic: tactic ?? null,
+  revision: 0,
 });
 
 /** A minimal valid tactic so the live Match Day control panel has something to edit. */

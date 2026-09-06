@@ -61,6 +61,7 @@ export const tacticsPayload = (tactic: typeof SAMPLE_TACTIC | null) =>
       club: { id: rid("club"), name: "Northport Rovers", statureTier: "mid" as const },
       squad: [],
       tactic,
+      revision: 0,
     },
   }) as never;
 

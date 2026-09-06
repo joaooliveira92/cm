@@ -30,6 +30,7 @@ const tacticsView = (tactic = tacticOf(FORMATIONS[0])) => ({
   club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
   squad: [],
   tactic,
+  revision: 0,
 });
 
 const mountTactics = async (view: unknown = tacticsView()): Promise<void> => {

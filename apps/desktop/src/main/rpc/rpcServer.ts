@@ -159,10 +159,10 @@ const handlers: Record<AppRpcMethod, Handler> = {
     }),
   changeTactics: (payload, ctx) =>
     Effect.gen(function* () {
-      const { saveId, tactic } = yield* Schema.decodeUnknownEffect(AppRpcs.changeTactics.payload)(
-        payload,
-      );
-      return yield* changeTactics(ctx.savesDir, saveId, tactic);
+      const { saveId, tactic, expectedRevision, requestId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.changeTactics.payload,
+      )(payload);
+      return yield* changeTactics(ctx.savesDir, saveId, tactic, expectedRevision, requestId);
     }),
   getLeagueTable: (payload, ctx) =>
     Effect.gen(function* () {

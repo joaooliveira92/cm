@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { PlayerId, Tactic, type SaveId, type TacticSlot } from "@cm-clone/contracts";
+import { useEffect, useRef, useState } from "react";
+import { PlayerId, Tactic, WriteRequestId, type SaveId, type TacticSlot } from "@cm-clone/contracts";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
 import { Button } from "../components/ui/button.js";
 import {
@@ -37,8 +37,10 @@ import {
   describeRpcError,
   tacticsAtom,
   typedError,
+  useAtomRefresh,
   useAtomSet,
   useAtomValue,
+  type RpcClientError,
 } from "../rpc.js";
 
 const defaultTacticFor = (formation: Formation): Tactic =>
@@ -62,6 +64,15 @@ const changeSlotPlayer = (tactic: Tactic, slotIndex: number, playerId: PlayerId)
     ...tactic,
     slots: tactic.slots.map((slot, index) => (index === slotIndex ? { ...slot, playerId } : slot)),
   });
+
+/** The server's current tactic revision, when a save failed because a newer one won the race.
+ * `null` for every other failure — a stale submit is the one case the editor offers Refresh for. */
+const conflictRevisionOf = (error: unknown): number | null => {
+  const failure = error as RpcClientError<"changeTactics"> | null;
+  return failure?._tag === "RemoteFailure" && failure.error._tag === "TacticRevisionConflictError"
+    ? failure.error.currentRevision
+    : null;
+};
 
 const InstructionSlider = <T extends string>({
   label,
@@ -98,16 +109,42 @@ const InstructionSlider = <T extends string>({
 
 export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const viewResult = useAtomValue(tacticsAtom(saveId));
+  const refreshTactics = useAtomRefresh(tacticsAtom(saveId));
   const [draft, setDraft] = useState<Tactic | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  // The revision the current draft was read at — the `expectedRevision` every submit carries. It
+  // only moves when a save succeeds, so a stale submit is detected server-side as a conflict.
+  const [revision, setRevision] = useState<number>(0);
+  // Set to the server's current revision when a save lost the race; while set, the editor shows a
+  // distinct conflicted state and offers Refresh instead of a bare failure line.
+  const [conflict, setConflict] = useState<number | null>(null);
+  // The Revision a refresh is waiting to move past. The refetch passes a still-stale view through
+  // before the fresh one lands, so a refresh only discards the draft once the view's revision has
+  // actually advanced — the stale view can never re-seed it.
+  const refreshFrom = useRef<number | null>(null);
+  const revisionRef = useRef(revision);
+  revisionRef.current = revision;
 
   const saveTactic = useAtomSet(changeTacticsMutation, { mode: "promise" });
 
   useEffect(() => {
     if (draft === null && viewResult._tag === "Success") {
       setDraft(viewResult.value.tactic ?? defaultTacticFor("4-4-2"));
+      setRevision(viewResult.value.revision);
     }
   }, [draft, viewResult]);
+
+  // A refresh discards the draft and the conflict once the refetched view moves past the stale
+  // revision — not before, when the view still carries the old value.
+  useEffect(() => {
+    if (viewResult._tag !== "Success" || refreshFrom.current === null) return;
+    if (viewResult.value.revision === refreshFrom.current) return;
+    setDraft(viewResult.value.tactic ?? defaultTacticFor("4-4-2"));
+    setRevision(viewResult.value.revision);
+    refreshFrom.current = null;
+    setConflict(null);
+    setStatus(null);
+  }, [viewResult]);
 
   const viewError = typedError(viewResult);
 
@@ -118,13 +155,36 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   const onSubmit = async () => {
     setStatus("Saving...");
+    setConflict(null);
     try {
-      const saved = await saveTactic({ saveId, tactic });
+      // A fresh request id per submit: replaying this exact submit later is a server-side no-op.
+      const saved = await saveTactic({
+        saveId,
+        tactic,
+        expectedRevision: revision,
+        requestId: WriteRequestId.make(crypto.randomUUID()),
+      });
       setDraft(saved.tactic ?? tactic);
+      setRevision(saved.revision);
       setStatus("Saved.");
-    } catch {
-      setStatus("Failed to save tactic — check every slot has a unique player assigned.");
+    } catch (error) {
+      const currentRevision = conflictRevisionOf(error);
+      if (currentRevision !== null) {
+        // The draft keeps what the player typed; only the save itself is refused.
+        setConflict(currentRevision);
+        setStatus(
+          "A newer tactic was saved since you loaded this page. Your draft is kept — refresh to load the current version.",
+        );
+      } else {
+        setStatus("Failed to save tactic — check every slot has a unique player assigned.");
+      }
     }
+  };
+
+  const refreshFromServer = () => {
+    refreshFrom.current = revisionRef.current;
+    setStatus("Refreshing...");
+    refreshTactics();
   };
 
   // Register the Tactics screen's operation handlers (save + the draft edits).
@@ -154,7 +214,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     return () => {
       for (const unregister of unregisters) unregister();
     };
-  }, [saveId, tactic]);
+  }, [saveId, tactic, revision]);
 
   if (viewError) return <p className="p-8 text-text-danger">{describeRpcError(viewError)}</p>;
   if (viewResult._tag === "Initial") return <p className="p-8 text-text-secondary">Loading tactics...</p>;
@@ -277,7 +337,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         </Table>
       </section>
 
-      <section className="mt-6">
+      <section className="mt-6 flex items-center gap-3">
         <Button
           type="button"
           data-action-id="save-tactic"
@@ -285,6 +345,22 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         >
           Save Tactic
         </Button>
+        {conflict !== null && (
+          <>
+            <span role="alert" className="text-sm text-text-danger" data-testid="tactic-conflict">
+              A newer tactic was saved since you loaded this page. Your draft is kept — refresh to
+              load the current version.
+            </span>
+            <Button
+              type="button"
+              variant="secondary"
+              data-action-id="refresh-tactics"
+              onClick={refreshFromServer}
+            >
+              Refresh
+            </Button>
+          </>
+        )}
         {status && <span className="ml-3 text-sm text-text-secondary">{status}</span>}
       </section>
     </main>

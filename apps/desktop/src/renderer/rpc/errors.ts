@@ -102,6 +102,10 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
           return "A club in this Fixture has no Tactic, so the match cannot be played.";
         case "InvalidTacticError":
           return "That tactic is invalid — every slot needs a unique player.";
+        // A newer save won the race; the editor itself renders the refresh path, and this sentence
+        // is the fallback for a surface that has no room for a button.
+        case "TacticRevisionConflictError":
+          return "That tactic was saved elsewhere since you loaded it — refresh to load the current version.";
         case "InvalidPillarDistributionError":
           return "Invalid pillar distribution.";
         case "TransferWindowClosedError":

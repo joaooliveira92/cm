@@ -95,6 +95,7 @@ const tacticView = (tactic = fullTactic()) => {
     club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
     squad: [...onPitch, ...bench],
     tactic,
+    revision: 0,
   };
 };
 

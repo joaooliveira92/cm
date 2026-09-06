@@ -578,12 +578,39 @@ export const tactics = sqliteTable(
     mentality: text("mentality").notNull(),
     tempo: text("tempo").notNull(),
     pressing: text("pressing").notNull(),
+    /** The club tactic's monotonic revision, raised by exactly one on every accepted save. The
+     *  integer is the version a submit's `expectedRevision` compares against, and the value the
+     *  Tactics Overview later binds reads to. A fresh save (no row) reads as revision 0. */
+    revision: integer("revision").notNull().default(0),
   },
   () => [
     check("tactics_formation", oneOf("formation", ["4-4-2", "4-3-3", "4-5-1", "3-5-2", "5-3-2"])),
     check("tactics_mentality", oneOf("mentality", ["defensive", "balanced", "attacking"])),
     check("tactics_tempo", oneOf("tempo", ["slow", "normal", "fast"])),
     check("tactics_pressing", oneOf("pressing", ["low", "medium", "high"])),
+  ],
+);
+
+/**
+ * The append-only log of accepted tactics writes — the idempotency side of the revision guard.
+ * A replay carrying a request id that was already accepted — even after the club moved to a later
+ * revision — is a no-op that returns the current state rather than a second write. Rows are only
+ * written in the same transaction as the save they accepted, so a rolled-back write logs nothing.
+ * Keyed on the club so one club's fresh request ids can never be replayed against another.
+ */
+export const tacticWriteRequests = sqliteTable(
+  "tactic_write_requests",
+  {
+    clubId: text("club_id")
+      .notNull()
+      .references(() => clubs.id),
+    requestId: text("request_id").notNull(),
+    createdAt: text("created_at")
+      .default(sql`(datetime('now'))`)
+      .notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.clubId, table.requestId] }),
   ],
 );
 

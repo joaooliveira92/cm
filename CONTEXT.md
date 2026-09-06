@@ -237,6 +237,20 @@ The full value a manager sets for a team: a Formation, a Role and player assigne
 slots, and the three Team Instructions. The payload of the `ChangeTactics` command, both pre-match and
 mid-match.
 
+**Expected Revision**:
+The monotonic Tactic version a save submit claims it was read at. The club's Tactic revision starts
+at 0 and is raised by exactly one on every accepted save; a submit whose Expected Revision no longer
+matches the stored one is refused with a typed conflict that names the current revision, so the
+editor can offer Refresh rather than silently overwrite. Distinct from a Request Id: the Expected
+Revision picks which value the write is allowed to replace.
+_Avoid_: version (revision is the stored, monotonic counter the command and the overview share)
+
+**Request Id**:
+The idempotency key of one Tactic save: the editor mints a fresh one per submit, and a replayed
+submit carrying an already-accepted Request Id is a no-op that returns the current state rather than
+a second write or a conflict — checked before the Expected Revision comparison, so a retry after a
+lost response never double-applies, however far the club has since moved on.
+
 ### Season & calendar
 
 **League**:
