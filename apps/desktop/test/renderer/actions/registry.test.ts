@@ -141,36 +141,28 @@ describe("AC-19 — the Continue safety contract is a registry predicate, not a 
   const leagueIds = (state: Parameters<typeof ACTION_REGISTRY.active>[1]): string[] =>
     ACTION_REGISTRY.active("league", state)
       .map((a) => a.id)
-      .filter((id) => id === "continue" || id === "advance-calendar");
+      .filter((id) => id === "continue");
 
-  it("at season completion Continue and advance-calendar are unavailable", () => {
+  it("at season completion Continue is unavailable", () => {
     expect(leagueIds({ ready: true, phase: "season_complete", advancing: false })).toEqual([]);
   });
 
-  it("mid-season with no advance running both are available", () => {
-    expect(
-      leagueIds({ ready: true, phase: "in_season", advancing: false }).sort(),
-    ).toEqual(["advance-calendar", "continue"]);
+  it("mid-season with no advance running Continue is available", () => {
+    expect(leagueIds({ ready: true, phase: "in_season", advancing: false })).toEqual(["continue"]);
   });
 
   it("while an advance is already running Continue is unavailable", () => {
     expect(leagueIds({ ready: true, phase: "in_season", advancing: true })).toEqual([]);
   });
 
-  it("the league scope's 'c' binding is only active when the contract permits", () => {
-    const activeWhenPermitted = ACTION_REGISTRY.active("league", {
-      ready: true,
-      phase: "in_season",
-      advancing: false,
-    }).map((a) => a.id);
-    expect(activeWhenPermitted).toContain("advance-calendar");
+  it("the contract is carried by one Action: no screen scope declares a second advance", () => {
+    // The career-global `continue` is the only Action the predicate guards. A
+    // screen-scoped duplicate would have its own availability state and its own
+    // in-flight flag, which is how the League table came to report a failed
+    // advance that the chrome swallowed.
     expect(
-      ACTION_REGISTRY.active("league", {
-        ready: true,
-        phase: "season_complete",
-        advancing: false,
-      }).map((a) => a.id),
-    ).not.toContain("advance-calendar");
+      ACTION_REGISTRY.all.filter((a) => a.available === ACTION_REGISTRY.get("continue")!.available),
+    ).toHaveLength(1);
   });
 });
 

@@ -14,7 +14,6 @@ import {
   STATURE_TIERS,
 } from "@cm-clone/shared";
 import { SquadScreen } from "../../src/renderer/squad/SquadScreen.js";
-import { LeagueTableScreen } from "../../src/renderer/leagueTable/LeagueTableScreen.js";
 import { FixturesScreen } from "../../src/renderer/fixtures/FixturesScreen.js";
 import { SeasonSummaryScreen } from "../../src/renderer/seasonSummary/SeasonSummaryScreen.js";
 import { ManagerIdentityStep } from "../../src/renderer/create/ManagerIdentityStep.js";
@@ -57,11 +56,6 @@ const playerRow = (id: string, name: string) => ({
 const squadView = (players: ReturnType<typeof playerRow>[]) => ({
   club: { id: rid("me"), name: "Test FC", statureTier: STATURE_TIERS[0] },
   players,
-});
-
-const leagueView = () => ({
-  season: { seasonNumber: 1, currentDate: "2026-08-01", phase: "in_season" as const },
-  standings: [],
 });
 
 const fixturesView = () => ({
@@ -254,24 +248,6 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
     await screen.findByText(/Alan Player/);
     const row = document.querySelector('[data-focus-id="squad.squadTable.p1"]')!;
     expect(row.className).toContain("focus-visible:ring-2");
-  });
-
-  it("the League Continue button is a native button (Enter/Space work) with the focus ring", async () => {
-    mockPreload(async (method) =>
-      method === "getLeagueTable"
-        ? ({ _tag: "Success", value: leagueView() } as never)
-        : ({ _tag: "Failure", error: NOT_FOUND } as never),
-    );
-    render(
-      <RegistryProvider>
-        <LeagueTableScreen saveId={rid("s1")} />
-      </RegistryProvider>,
-    );
-    const button = (await screen.findByRole("button", { name: /Advance Calendar/ })) as HTMLElement;
-    expect(button.tagName).toBe("BUTTON");
-    expect(button.className).toContain("focus-visible:ring-2");
-    button.focus();
-    expect(button).toBe(document.activeElement);
   });
 
   it("the read-only Fixtures screen exposes a focusable main region with the ring", async () => {

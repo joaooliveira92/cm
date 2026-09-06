@@ -54,19 +54,16 @@ describe("AC-23 — the palette lists global + current-screen Actions, available
   it("ranks available above unavailable and shows unavailable entries disabled-with-reason, never hidden", () => {
     render(<CommandPalette screen="league" state={seasonCompleteState()} overrides={{}} onClose={() => undefined} />);
     const continueOption = optionFor(/Continue/);
-    const advanceOption = optionFor(/Advance the Calendar/);
     // Present (never hidden), disabled, with the per-predicate plain-language reason.
     expect(continueOption.getAttribute("aria-disabled")).toBe("true");
-    expect(advanceOption.getAttribute("aria-disabled")).toBe("true");
     expect(continueOption.textContent).toContain("The Calendar cannot advance right now.");
 
     const options = [...document.querySelectorAll('[role="option"]')] as HTMLElement[];
     const ids = options.map((el) => el.getAttribute("data-action-id"));
     // Available actions rank above unavailable: the first row is available...
     expect(options[0]!.getAttribute("aria-disabled")).not.toBe("true");
-    // ...and the unavailable pairs are last (still listed — never hidden).
-    const lastTwo = ids.slice(-2);
-    expect(lastTwo.sort()).toEqual(["advance-calendar", "continue"]);
+    // ...and the one unavailable command is last (still listed — never hidden).
+    expect(ids.at(-1)).toBe("continue");
   });
 
   it("typing filters to matching commands and drops everything else (strict command surface)", () => {

@@ -123,17 +123,15 @@ describe("AC-23 — the palette over the real registry is a strict command surfa
     }
   });
 
-  it("the real continue/advance-calendar rows surface disabled-with-reason on a complete season", () => {
+  it("the real Continue row surfaces disabled-with-reason on a complete season", () => {
     const rows = rankPaletteActions(
       ACTION_REGISTRY.all,
       "",
       ready({ phase: "season_complete", advancing: false }),
     );
-    for (const id of ["continue", "advance-calendar"]) {
-      const row = rows.find((entry) => entry.action.id === id);
-      expect(row, `${id} must remain listed (never hidden)`).toBeDefined();
-      expect(row!.available).toBe(false);
-      expect(row!.reason).toBe("The Calendar cannot advance right now.");
-    }
+    const row = rows.find((entry) => entry.action.id === "continue");
+    expect(row, "continue must remain listed (never hidden)").toBeDefined();
+    expect(row!.available).toBe(false);
+    expect(row!.reason).toBe("The Calendar cannot advance right now.");
   });
 });

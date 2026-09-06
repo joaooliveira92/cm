@@ -1,9 +1,5 @@
 import { formatCalendarDate } from "@cm-clone/shared";
-import { useEffect } from "react";
 import { type SaveId } from "@cm-clone/contracts";
-import { ACTION_REGISTRY } from "../actions/allActions.js";
-import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
-import { Button } from "../components/ui/button.js";
 import {
   Table,
   TableBody,
@@ -12,49 +8,16 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table.js";
-import { ActionKeyBadge, actionBadgeBinding } from "../discoverability/ActionKeyBadge.js";
 import {
-  advanceCalendarMutation,
   describeRpcError,
   leagueTableAtom,
   typedError,
-  useAtom,
   useAtomValue,
 } from "../rpc.js";
 
 export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const tableResult = useAtomValue(leagueTableAtom(saveId));
-  const [advance, runAdvance] = useAtom(advanceCalendarMutation);
-
   const tableError = typedError(tableResult);
-  const advancing = advance.waiting;
-  const advanceError = typedError(advance);
-
-  // The Continue safety contract (AC-19 / tickets 05, 15): Continue advances the
-  // Calendar only while a career is shown, no advance is running, and the season
-  // has not concluded. The registry's `continueAvailable` predicate carries the
-  // same rule; this live guard is the handler half of the contract, matching the
-  // button's disabled condition at render time.
-  const seasonComplete =
-    tableResult._tag === "Success" && tableResult.value.season.phase === "season_complete";
-
-  const onAdvanceCalendar = () => {
-    if (advancing || seasonComplete) return;
-    runAdvance({ saveId });
-  };
-
-  // Register this screen's own handler only. The career-global `continue`
-  // handler and the `phase`/`advancing` read model both moved to the career
-  // chrome: while this screen owned them, `Space` worked from the League table
-  // alone, and navigating away cleared the predicates' state out from under
-  // every other screen.
-  useEffect(() => {
-    return registerActionHandler("advance-calendar", () => {
-      onAdvanceCalendar();
-    });
-    // onAdvanceCalendar closes over `advancing`/`seasonComplete`; re-register
-    // when either or saveId change.
-  }, [advancing, saveId, seasonComplete]);
 
   if (tableError) return <p className="p-8 text-destructive">{describeRpcError(tableError)}</p>;
   if (tableResult._tag === "Initial") return <p className="p-8 text-text-secondary">Loading league table...</p>;
@@ -62,34 +25,20 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   const table = tableResult.value;
 
-  // Inline key badge (AC-25): the League screen opts in via registry metadata;
-  // the badge reads the registry's coded binding so it can never lie.
-  const advanceAction = ACTION_REGISTRY.get("advance-calendar");
-  const advanceBadge = advanceAction !== undefined ? actionBadgeBinding(advanceAction, "league") : null;
-
   return (
     <main className="bg-background p-8 text-foreground">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">League Table</h1>
-        <div className="flex items-center gap-3 text-sm text-text-secondary">
-          <span>
-            Season {table.season.seasonNumber} &middot; {formatCalendarDate(table.season.currentDate)}{" "}
-            &middot; {table.season.phase.replace("_", " ")}
-          </span>
-          <Button
-            type="button"
-            variant="secondary"
-            data-action-id="advance-calendar"
-            disabled={advancing || table.season.phase === "season_complete"}
-            onClick={() => void dispatchAction("advance-calendar")}
-          >
-            {advanceBadge !== null && <ActionKeyBadge binding={advanceBadge} />}
-            {advancing ? "Advancing..." : "Advance Calendar"}
-          </Button>
-        </div>
+        {/* The season readout only. Time advances from the chrome's Continue, on
+            every career route — a second control here made the League table a
+            place time is advanced from, and made which control the player used
+            decide whether a failed advance was reported at all. */}
+        <span className="text-sm text-text-secondary">
+          Season {table.season.seasonNumber} &middot; {formatCalendarDate(table.season.currentDate)}{" "}
+          &middot; {table.season.phase.replace("_", " ")}
+        </span>
       </div>
 
-      {advanceError && <p className="mt-2 text-sm text-destructive">{describeRpcError(advanceError)}</p>}
       {tableResult.waiting && <p className="mt-2 text-sm text-text-muted">Refreshing…</p>}
 
       <div className="mt-6 overflow-x-auto">

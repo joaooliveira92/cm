@@ -29,13 +29,13 @@ Seam: renderer-only. No RPC method, payload, or failure changes.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Exactly one Action record in the registry advances the Calendar.
-- [ ] The League table renders no advance control and registers no advance handler.
-- [ ] The career loop is reachable by pointer and by keyboard from every career screen, including
+- [x] Exactly one Action record in the registry advances the Calendar.
+- [x] The League table renders no advance control and registers no advance handler.
+- [x] The career loop is reachable by pointer and by keyboard from every career screen, including
       the League table, through the chrome's control alone.
-- [ ] No screen displays a key badge for a removed Action.
-- [ ] Tests that exercised the advance through the League table now drive it through the chrome, or
+- [x] No screen displays a key badge for a removed Action.
+- [x] Tests that exercised the advance through the League table now drive it through the chrome, or
       are deleted with a stated reason.
-- [ ] `pnpm check:all` is green.
+- [x] `pnpm check:all` is green.

@@ -161,7 +161,7 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
     expect(ACTION_REGISTRY.all.length).toBe(ALL_ACTIONS.length);
   });
 
-  it("the League button dispatches the registered advance-calendar action for the league scope", async () => {
+  it("the League table dispatches nothing: it shows standings and does not advance time", async () => {
     mockPreload(async (method) => {
       if (method === "getLeagueTable") return { _tag: "Success", value: leagueView() } as never;
       return { _tag: "Failure", error: NOT_FOUND } as never;
@@ -171,11 +171,8 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
         <LeagueTableScreen saveId={rid("s1")} />
       </RegistryProvider>,
     );
-    await screen.findByRole("button", { name: /Advance Calendar/ });
-    const ids = renderedActionIds();
-    expect(ids).toContain("advance-calendar");
-    const registered = ACTION_REGISTRY.get("advance-calendar");
-    expect(registered?.scope).toBe("league");
+    await screen.findByRole("heading", { name: "League Table" });
+    expect(renderedActionIds()).toEqual([]);
   });
 
   it("every rendered Transfers button maps to a registered action in the transfers scope", async () => {

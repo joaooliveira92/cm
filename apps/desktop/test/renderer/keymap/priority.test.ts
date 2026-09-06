@@ -216,11 +216,11 @@ describe("four-views reconcile — a registered binding is exactly what the live
     return ks({ key: binding });
   };
 
-  it("advance-calendar's coded 'c' resolves on the league scope (MEDIUM binding-drift)", () => {
-    const actions = [ACTION_REGISTRY.get("advance-calendar")!];
-    const d = resolveDispatch(ctx({ keystroke: ks({ key: "c" }), actions }));
+  it("Continue's coded Space resolves wherever a career screen is shown (MEDIUM binding-drift)", () => {
+    const actions = [ACTION_REGISTRY.get("continue")!];
+    const d = resolveDispatch(ctx({ keystroke: ks({ key: " " }), actions }));
     expect(d.kind).toBe("action");
-    if (d.kind === "action") expect(d.action.id).toBe("advance-calendar");
+    if (d.kind === "action") expect(d.action.id).toBe("continue");
   });
 
   it("every non-prefix registered binding resolves to its own action in isolation", () => {

@@ -278,7 +278,7 @@ describe("AC-19 — Space→Continue honours the safety guard through the live s
     });
     bindRouter({ navigate: () => undefined, history: { back: () => undefined, forward: () => undefined, canGoBack: () => false } } as never);
     render(<RouterProvider router={router} />);
-    await screen.findByRole("button", { name: /Advance Calendar/ });
+    await screen.findByRole("button", { name: /Continue/ });
   };
 
   beforeEach(() => {
@@ -297,7 +297,7 @@ describe("AC-19 — Space→Continue honours the safety guard through the live s
 
   it("does NOT fire when the season is complete", async () => {
     await mountLeagueWithSpine("season_complete");
-    const button = screen.getByRole("button", { name: /Advance Calendar/ }) as HTMLButtonElement;
+    const button = screen.getByRole("button", { name: /Continue/ }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     act(() => fireEvent.keyDown(document, { key: " " }));
     expect(advanceCalls).toBe(0);

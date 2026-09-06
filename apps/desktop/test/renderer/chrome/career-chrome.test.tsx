@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import path from "node:path";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   createMemoryHistory,
@@ -114,6 +114,12 @@ const preload = (phase: Phase) => {
  */
 const mountCareer = async (phase: Phase, child: "league" | "fixtures") => {
   preload(phase);
+  await mountRoutedCareer(child);
+};
+
+/** The router half of `mountCareer`, without the canned preload — for a test
+ *  that needs its own wire responses (a payload that changes between calls). */
+const mountRoutedCareer = async (child: "league" | "fixtures") => {
   const rootRoute = createRootRoute({ component: () => <Outlet /> });
   const careerRoute = createRoute({ getParentRoute: () => rootRoute, path: "career" });
   const saveRoute = createRoute({
@@ -255,6 +261,15 @@ describe("Continue in the chrome", () => {
     expect(screen.queryByLabelText("Keyboard shortcut Space")).toBeNull();
   });
 
+  it("is a native button carrying the focus ring, so Enter and Space reach it", async () => {
+    await mountCareer("in_season", "league");
+    const button = screen.getByRole("button", { name: /Continue/ });
+    expect(button.tagName).toBe("BUTTON");
+    expect(button.className).toContain("focus-visible:ring-2");
+    button.focus();
+    expect(button).toBe(document.activeElement);
+  });
+
   it("keeps the label fixed — no contextual Go to Match until the calendar supplies one", () => {
     const action = ALL_ACTIONS.find((a) => a.id === "continue");
     expect(action?.label).toBe("Continue");
@@ -268,6 +283,61 @@ describe("Continue in the chrome", () => {
       fs.readFile(leagueTableSourcePath, "utf8"),
     );
     expect(source).not.toContain('registerActionHandler("continue"');
+    // Nor by any other name. The screen owned a second advance control of its
+    // own for long enough that only one of the two reported a failure, so what
+    // is asserted is that the screen dispatches nothing at all.
+    expect(source).not.toContain("registerActionHandler");
+    expect(source).not.toContain("advanceCalendarMutation");
+    expect(source).not.toContain("data-action-id");
+  });
+
+  it("advancing from the chrome refreshes the mounted screen with no manual reload", async () => {
+    let leagueTableCalls = 0;
+    mockPreload(async (method) => {
+      if (method === "getLeagueTable") {
+        leagueTableCalls += 1;
+        return {
+          _tag: "Success",
+          value: {
+            // A different date per refetch, which is what the test observes changing.
+            season: {
+              seasonNumber: 3,
+              currentDate: `2026-10-${String(16 + leagueTableCalls).padStart(2, "0")}`,
+              phase: "in_season" as const,
+            },
+            standings: [],
+          },
+        } as never;
+      }
+      if (method === "advanceCalendar") {
+        advanceCalls += 1;
+        return {
+          _tag: "Success",
+          value: {
+            season: { seasonNumber: 3, currentDate: "2026-10-24", phase: "in_season" as const },
+            resolvedDate: "2026-10-17",
+            transferWindowClosed: null,
+            transferWindowOpened: null,
+            seasonConcluded: false,
+            boardObjectiveVerdict: null,
+            managerOutcome: "none" as const,
+          },
+        } as never;
+      }
+      return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: rid("s1") } } as never;
+    });
+    advanceCalls = 0;
+    await mountRoutedCareer("league");
+
+    // Scoped to the child screen: the shell renders its own readout from the
+    // same query, and this test is about the screen refreshing under it.
+    const table = await screen.findByRole("main");
+    expect(await within(table).findByText(/17 Oct 2026/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Continue/ }));
+
+    expect(await within(table).findByText(/18 Oct 2026/)).toBeTruthy();
+    expect(advanceCalls).toBe(1);
+    expect(screen.queryByText(/Refreshing…/)).toBeNull();
   });
 
   it("swaps the temporal cluster to the match readout and disables during a live match", async () => {

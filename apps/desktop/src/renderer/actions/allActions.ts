@@ -69,8 +69,6 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   navAction("go-to-season-summary", "Go to Season Summary", "g y", { destination: "seasonSummary" }),
   navAction("go-to-manager", "Go to Manager Profile", "g m", { destination: "manager" }),
   navAction("go-back", "Go to previous screen", "g b"),
-  // league
-  { id: "advance-calendar", label: "Advance the Calendar", scope: "league", available: continueAvailable, unavailableReason: "The Calendar cannot advance right now.", handler: () => undefined, binding: "c", primary: true },
   // transfers
   { id: "focus-bid", label: "Focus the bid workflow", scope: "transfers", available: ready, handler: () => undefined, binding: "b" },
   { id: "place-bid", label: "Place a bid", scope: "transfers", available: ready, handler: () => undefined },

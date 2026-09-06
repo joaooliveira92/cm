@@ -25,20 +25,24 @@ describe("AC-25 — inline key badges are toggleable per screen via registry met
 
   it("the badge binding is shown only for the screen's own bound actions on an opted-in screen", () => {
     const focusBid = ACTION_REGISTRY.get("focus-bid")!;
-    const advanceCalendar = ACTION_REGISTRY.get("advance-calendar")!;
     expect(actionBadgeBinding(focusBid, "transfers")).toBe("b");
-    expect(actionBadgeBinding(advanceCalendar, "league")).toBe("c");
   });
 
   it("no badge on an opted-out screen, on a foreign scope, or for an unbound action", () => {
     const focusBid = ACTION_REGISTRY.get("focus-bid")!;
-    const advanceCalendar = ACTION_REGISTRY.get("advance-calendar")!;
-    // A screen that opted out shows no badge even for its own bound action.
-    expect(actionBadgeBinding(advanceCalendar, "squad")).toBeNull();
+    // A screen that opted out shows no badge even for a bound action.
+    expect(actionBadgeBinding(focusBid, "squad")).toBeNull();
     // The screens' other registered actions carry no binding at all.
     const placeBid = ACTION_REGISTRY.get("place-bid")!;
     expect(actionBadgeBinding(placeBid, "transfers")).toBeNull();
     // A bound action never badged on a screen it does not belong to.
     expect(actionBadgeBinding(focusBid, "league")).toBeNull();
+  });
+
+  it("the league scope owns no action to badge: time advances from the chrome alone", () => {
+    // The screen stays opted in — that is a statement about its density, not
+    // about how many Actions it happens to own — but nothing is left to badge,
+    // and a second advance control here is what this asserts cannot come back.
+    expect(ACTION_REGISTRY.all.filter((a) => a.scope === "league")).toEqual([]);
   });
 });

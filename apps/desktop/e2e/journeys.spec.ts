@@ -152,11 +152,10 @@ test("a substitution is driven by keyboard through the match day live control pa
 });
 
 // Not covered here: "advancing the calendar through the UI reaches a Season Summary verdict".
-// Measured 2026-09-05 — the shipped Advance Calendar button steps straight from
-// "Season 1 · 22 May 2027" to "Season 2 · Pre-season" in a single advance. The `season_complete`
-// phase is never rendered, and the button (which `LeagueTableScreen` disables on that phase) stays
-// enabled through the rollover, so there is no moment a player or a test can observe the season
-// concluding. `seedConcluded` reaches the phase through `advanceCalendar` directly, and
+// Measured 2026-09-05 — a single advance steps straight from "Season 1 · 22 May 2027" to
+// "Season 2 · Pre-season". The `season_complete` phase is never rendered, and Continue (which the
+// chrome disables on that phase) stays enabled through the rollover, so there is no moment a player
+// or a test can observe the season concluding. `seedConcluded` reaches the phase through `advanceCalendar` directly, and
 // `app.spec.ts` "Season Summary screen shows a verdict for a concluded, seeded save" asserts the
 // verdict from it — so the verdict itself stays covered.
 // The skipped-conclusion behaviour is filed at .scratch/season-rollover-skips-conclusion/.
