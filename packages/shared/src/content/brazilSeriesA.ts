@@ -78,7 +78,128 @@ export const BRAZIL_SERIES_A_PACK: ContentPack = {
     club_bra_1_19: { "*": "Vasco da Gama" },
     club_bra_1_20: { "*": "Vitória" },
   },
-  clubColours: {},
+  clubColours: {
+    club_bra_1_01: { // Athletico Paranaense
+      primary: { background: "#E30613", foreground: "#FFFFFF" },
+      secondary: { background: "#000000", foreground: "#FFFFFF" },
+      tertiary: { background: "#E30613", foreground: "#000000" },
+      quaternary: null
+    },
+    club_bra_1_02: { // Atlético Mineiro
+      primary: { background: "#000000", foreground: "#FFFFFF" },
+      secondary: { background: "#FFFFFF", foreground: "#000000" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_03: { // Bahia
+      primary: { background: "#FFFFFF", foreground: "#005BA3" },
+      secondary: { background: "#005BA3", foreground: "#FFFFFF" },
+      tertiary: { background: "#E30613", foreground: "#FFFFFF" },
+      quaternary: null
+    },
+    club_bra_1_04: { // Botafogo
+      primary: { background: "#000000", foreground: "#FFFFFF" },
+      secondary: { background: "#FFFFFF", foreground: "#000000" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_05: { // Chapecoense
+      primary: { background: "#008751", foreground: "#FFFFFF" },
+      secondary: { background: "#FFFFFF", foreground: "#008751" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_06: { // Corinthians
+      primary: { background: "#FFFFFF", foreground: "#000000" },
+      secondary: { background: "#000000", foreground: "#FFFFFF" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_07: { // Coritiba
+      primary: { background: "#FFFFFF", foreground: "#008040" },
+      secondary: { background: "#008040", foreground: "#FFFFFF" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_08: { // Cruzeiro
+      primary: { background: "#003399", foreground: "#FFFFFF" },
+      secondary: { background: "#FFFFFF", foreground: "#003399" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_09: { // Flamengo
+      primary: { background: "#C4122D", foreground: "#000000" },
+      secondary: { background: "#FFFFFF", foreground: "#C4122D" },
+      tertiary: { background: "#000000", foreground: "#C4122D" },
+      quaternary: null
+    },
+    club_bra_1_10: { // Fluminense
+      primary: { background: "#800020", foreground: "#006633" },
+      secondary: { background: "#FFFFFF", foreground: "#800020" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_11: { // Grêmio
+      primary: { background: "#0D80BF", foreground: "#FFFFFF" },
+      secondary: { background: "#FFFFFF", foreground: "#0D80BF" },
+      tertiary: { background: "#000000", foreground: "#FFFFFF" },
+      quaternary: null
+    },
+    club_bra_1_12: { // Internacional
+      primary: { background: "#E30613", foreground: "#FFFFFF" },
+      secondary: { background: "#FFFFFF", foreground: "#E30613" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_13: { // Mirassol
+      primary: { background: "#FFF200", foreground: "#00A651" },
+      secondary: { background: "#00A651", foreground: "#FFF200" },
+      tertiary: { background: "#FFFFFF", foreground: "#00A651" },
+      quaternary: null
+    },
+    club_bra_1_14: { // Palmeiras
+      primary: { background: "#006437", foreground: "#FFFFFF" },
+      secondary: { background: "#FFFFFF", foreground: "#006437" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_15: { // Red Bull Bragantino
+      primary: { background: "#FFFFFF", foreground: "#E20037" },
+      secondary: { background: "#121E31", foreground: "#FFFFFF" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_16: { // Remo
+      primary: { background: "#161B3D", foreground: "#FFFFFF" },
+      secondary: { background: "#FFFFFF", foreground: "#161B3D" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_17: { // Santos
+      primary: { background: "#FFFFFF", foreground: "#000000" },
+      secondary: { background: "#000000", foreground: "#FFFFFF" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_18: { // São Paulo
+      primary: { background: "#FFFFFF", foreground: "#000000" },
+      secondary: { background: "#C4122D", foreground: "#FFFFFF" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_19: { // Vasco da Gama
+      primary: { background: "#000000", foreground: "#FFFFFF" },
+      secondary: { background: "#FFFFFF", foreground: "#000000" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_1_20: { // Vitória
+      primary: { background: "#E30613", foreground: "#000000" },
+      secondary: { background: "#FFFFFF", foreground: "#E30613" },
+      tertiary: null,
+      quaternary: null
+    }
+  },
   stadiums: {
     club_bra_1_01: { name: "Arena da Baixada", capacity: 42372 },
     club_bra_1_02: { name: "Arena MRV", capacity: 44892 },

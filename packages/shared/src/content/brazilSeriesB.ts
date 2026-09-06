@@ -70,7 +70,128 @@ export const BRAZIL_SERIES_B_PACK: ContentPack = {
     club_bra_2_19: { "*": "Sport" },
     club_bra_2_20: { "*": "Vila Nova" },
   },
-  clubColours: {},
+  clubColours: {
+    club_bra_2_01: { // América Mineiro
+      primary: { background: "#008040", foreground: "#FFFFFF" }, // Verde e Branco
+      secondary: { background: "#FFFFFF", foreground: "#008040" },
+      tertiary: { background: "#000000", foreground: "#FFFFFF" }, // Preto alternativo
+      quaternary: null
+    },
+    club_bra_2_02: { // Athletic
+      primary: { background: "#000000", foreground: "#FFFFFF" }, // Alvinegro tradicional
+      secondary: { background: "#FFFFFF", foreground: "#000000" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_03: { // Atlético Goianiense
+      primary: { background: "#C4122D", foreground: "#FFFFFF" }, // Rubro-negro
+      secondary: { background: "#FFFFFF", foreground: "#000000" }, // Branco total
+      tertiary: { background: "#000000", foreground: "#FFFFFF" },
+      quaternary: null
+    },
+    club_bra_2_04: { // Avaí
+      primary: { background: "#005BA3", foreground: "#FFFFFF" }, // Azul e Branco
+      secondary: { background: "#FFFFFF", foreground: "#005BA3" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_05: { // Botafogo-SP
+      primary: { background: "#FFFFFF", foreground: "#C4122D" }, // Tricolor (Branco/Vermelho/Preto)
+      secondary: { background: "#C4122D", foreground: "#FFFFFF" },
+      tertiary: { background: "#000000", foreground: "#FFFFFF" },
+      quaternary: null
+    },
+    club_bra_2_06: { // Ceará
+      primary: { background: "#000000", foreground: "#FFFFFF" }, // Alvinegro
+      secondary: { background: "#FFFFFF", foreground: "#000000" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_07: { // CRB
+      primary: { background: "#E30613", foreground: "#FFFFFF" }, // Alvirrubro (Vermelho e Branco)
+      secondary: { background: "#FFFFFF", foreground: "#E30613" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_08: { // Criciúma
+      primary: { background: "#FFF200", foreground: "#000000" }, // Carvoeiro (Amarelo, Preto e Branco)
+      secondary: { background: "#000000", foreground: "#FFF200" },
+      tertiary: { background: "#FFFFFF", foreground: "#000000" },
+      quaternary: null
+    },
+    club_bra_2_09: { // Cuiabá
+      primary: { background: "#008751", foreground: "#FFF200" }, // Verde e Amarelo
+      secondary: { background: "#FFFFFF", foreground: "#008751" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_10: { // Fortaleza
+      primary: { background: "#104E8B", foreground: "#FFFFFF" }, // Tricolor do Pici (Azul/Vermelho/Branco)
+      secondary: { background: "#FFFFFF", foreground: "#104E8B" },
+      tertiary: { background: "#E30613", foreground: "#FFFFFF" },
+      quaternary: null
+    },
+    club_bra_2_11: { // Goiás
+      primary: { background: "#00563B", foreground: "#FFFFFF" }, // Esmeraldino (Verde e Branco)
+      secondary: { background: "#FFFFFF", foreground: "#00563B" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_12: { // Juventude
+      primary: { background: "#00824A", foreground: "#FFFFFF" }, // Jaconero (Verde e Branco)
+      secondary: { background: "#FFFFFF", foreground: "#00824A" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_13: { // Londrina
+      primary: { background: "#7AC1EB", foreground: "#FFFFFF" }, // Tubarão (Azul-Celeste e Branco)
+      secondary: { background: "#FFFFFF", foreground: "#7AC1EB" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_14: { // Náutico
+      primary: { background: "#E30613", foreground: "#FFFFFF" }, // Timbu (Vermelho e Branco)
+      secondary: { background: "#FFFFFF", foreground: "#E30613" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_15: { // Novorizontino
+      primary: { background: "#FFF200", foreground: "#000000" }, // Aurinegro (Amarelo e Preto)
+      secondary: { background: "#000000", foreground: "#FFF200" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_16: { // Operário Ferroviário
+      primary: { background: "#000000", foreground: "#FFFFFF" }, // Alvinegro de Vila Oficinas
+      secondary: { background: "#FFFFFF", foreground: "#000000" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_17: { // Ponte Preta
+      primary: { background: "#FFFFFF", foreground: "#000000" }, // Macaca (Branco com faixa Preta)
+      secondary: { background: "#000000", foreground: "#FFFFFF" }, // Preto com faixa Branca
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_18: { // São Bernardo
+      primary: { background: "#000000", foreground: "#FFF200" }, // Aurinegro do ABC (Preto e Amarelo)
+      secondary: { background: "#FFFFFF", foreground: "#000000" },
+      tertiary: null,
+      quaternary: null
+    },
+    club_bra_2_19: { // Sport
+      primary: { background: "#C4122D", foreground: "#FFF200" }, // Leão da Ilha (Rubro-negro/Amarelo)
+      secondary: { background: "#FFFFFF", foreground: "#C4122D" },
+      tertiary: { background: "#000000", foreground: "#C4122D" },
+      quaternary: null
+    },
+    club_bra_2_20: { // Vila Nova
+      primary: { background: "#C4122D", foreground: "#FFFFFF" }, // Tigre (Vermelho e Branco)
+      secondary: { background: "#FFFFFF", foreground: "#C4122D" },
+      tertiary: null,
+      quaternary: null
+    }
+  },
   stadiums: {
     club_bra_2_01: { name: "Arena Independência", capacity: 23018 },
     club_bra_2_02: { name: "Arena Sicredi", capacity: 6000 },

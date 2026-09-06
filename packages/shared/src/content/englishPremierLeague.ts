@@ -79,7 +79,128 @@ export const ENGLISH_PREMIER_LEAGUE_PACK: ContentPack = {
     club_eng_1_19: { "*": "West Ham United" },
     club_eng_1_20: { "*": "Wolverhampton Wanderers" },
   },
-  clubColours: {},
+  clubColours: {
+    club_eng_1_01: { // Arsenal
+      primary: { background: "#EF0107", foreground: "#FFFFFF" }, // Red & White
+      secondary: { background: "#FFFFFF", foreground: "#EF0107" }, // White away
+      tertiary: { background: "#063672", foreground: "#FFFFFF" }, // Dark Blue alternate
+      quaternary: null
+    },
+    club_eng_1_02: { // Aston Villa
+      primary: { background: "#95BFE5", foreground: "#7B193A" }, // Claret & Blue (Blue background for high header contrast)
+      secondary: { background: "#FFFFFF", foreground: "#7B193A" }, // White away
+      tertiary: { background: "#7B193A", foreground: "#95BFE5" }, // Claret surface
+      quaternary: null
+    },
+    club_eng_1_03: { // Bournemouth
+      primary: { background: "#B50E12", foreground: "#000000" }, // Red & Black
+      secondary: { background: "#FFFFFF", foreground: "#B50E12" }, // White/Mint away
+      tertiary: null,
+      quaternary: null
+    },
+    club_eng_1_04: { // Brentford
+      primary: { background: "#E30613", foreground: "#FFFFFF" }, // Red & White
+      secondary: { background: "#1A2E3B", foreground: "#FFFFFF" }, // Navy / Dark change kit
+      tertiary: null,
+      quaternary: null
+    },
+    club_eng_1_05: { // Brighton & Hove Albion
+      primary: { background: "#0057B8", foreground: "#FFFFFF" }, // Blue & White
+      secondary: { background: "#FFFFFF", foreground: "#0057B8" }, // White change
+      tertiary: { background: "#FFCD00", foreground: "#000000" }, // Yellow alternate
+      quaternary: null
+    },
+    club_eng_1_06: { // Burnley
+      primary: { background: "#6C1D45", foreground: "#81B7E2" }, // Claret & Sky Blue
+      secondary: { background: "#FFFFFF", foreground: "#6C1D45" }, // White change
+      tertiary: null,
+      quaternary: null
+    },
+    club_eng_1_07: { // Chelsea
+      primary: { background: "#034694", foreground: "#FFFFFF" }, // Royal Blue
+      secondary: { background: "#FFFFFF", foreground: "#034694" }, // White away
+      tertiary: null,
+      quaternary: null
+    },
+    club_eng_1_08: { // Crystal Palace
+      primary: { background: "#1B458F", foreground: "#C4122E" }, // Red & Blue
+      secondary: { background: "#FFFFFF", foreground: "#1B458F" }, // White away with bar
+      tertiary: { background: "#000000", foreground: "#FFFFFF" }, // Black alternative
+      quaternary: null
+    },
+    club_eng_1_09: { // Everton
+      primary: { background: "#004898", foreground: "#FFFFFF" }, // Everton Blue
+      secondary: { background: "#FFFFFF", foreground: "#004898" }, // White away
+      tertiary: null,
+      quaternary: null
+    },
+    club_eng_1_10: { // Fulham
+      primary: { background: "#FFFFFF", foreground: "#000000" }, // White & Black
+      secondary: { background: "#000000", foreground: "#FFFFFF" }, // Black away
+      tertiary: null,
+      quaternary: null
+    },
+    club_eng_1_11: { // Leeds United
+      primary: { background: "#FFFFFF", foreground: "#0D2240" }, // All White (with Blue/Yellow details)
+      secondary: { background: "#0D2240", foreground: "#AC9416" }, // Navy & Yellow change kit
+      tertiary: null,
+      quaternary: null
+    },
+    club_eng_1_12: { // Liverpool
+      primary: { background: "#C8102E", foreground: "#FFFFFF" }, // Liverpool Red
+      secondary: { background: "#FFFFFF", foreground: "#00B2A9" }, // White & Teal away
+      tertiary: { background: "#1C2422", foreground: "#C8102E" }, // Dark charcoal/purple alternate
+      quaternary: null
+    },
+    club_eng_1_13: { // Manchester City
+      primary: { background: "#6CABDD", foreground: "#1C2C5B" }, // Sky Blue
+      secondary: { background: "#1C2C5B", foreground: "#6CABDD" }, // Dark Navy change kit
+      tertiary: { background: "#000000", foreground: "#E0FF60" }, // Neon accent alternate
+      quaternary: null
+    },
+    club_eng_1_14: { // Manchester United
+      primary: { background: "#DA291C", foreground: "#FFFFFF" }, // Red Devils
+      secondary: { background: "#FFFFFF", foreground: "#132257" }, // White away
+      tertiary: { background: "#132257", foreground: "#FFFFFF" }, // Navy alternative
+      quaternary: null
+    },
+    club_eng_1_15: { // Newcastle United
+      primary: { background: "#000000", foreground: "#FFFFFF" }, // Magpies Black & White
+      secondary: { background: "#FFFFFF", foreground: "#000000" }, // White surface alternate
+      tertiary: { background: "#41B6E6", foreground: "#FFFFFF" }, // Light blue/Green alternate kit
+      quaternary: null
+    },
+    club_eng_1_16: { // Nottingham Forest
+      primary: { background: "#DD0000", foreground: "#FFFFFF" }, // Garibaldi Red
+      secondary: { background: "#FFFFFF", foreground: "#DD0000" }, // White away
+      tertiary: null,
+      quaternary: null
+    },
+    club_eng_1_17: { // Sunderland
+      primary: { background: "#E50027", foreground: "#FFFFFF" }, // Red & White stripes
+      secondary: { background: "#FFFFFF", foreground: "#002855" }, // White change
+      tertiary: { background: "#002855", foreground: "#FFFFFF" }, // Navy / Royal alternate
+      quaternary: null
+    },
+    club_eng_1_18: { // Tottenham Hotspur
+      primary: { background: "#FFFFFF", foreground: "#132257" }, // Lilywhites (White & Navy)
+      secondary: { background: "#132257", foreground: "#FFFFFF" }, // Navy away
+      tertiary: null,
+      quaternary: null
+    },
+    club_eng_1_19: { // West Ham United
+      primary: { background: "#7C2C4A", foreground: "#7ACAF1" }, // Claret & Blue
+      secondary: { background: "#FFFFFF", foreground: "#7C2C4A" }, // White away
+      tertiary: { background: "#000000", foreground: "#7C2C4A" }, // Black alternative
+      quaternary: null
+    },
+    club_eng_1_20: { // Wolverhampton Wanderers
+      primary: { background: "#FDB913", foreground: "#231F20" }, // Old Gold & Black
+      secondary: { background: "#231F20", foreground: "#FDB913" }, // Black away
+      tertiary: null,
+      quaternary: null
+    }
+  },
   stadiums: {
     club_eng_1_01: { name: "Emirates Stadium", capacity: 60704 },
     club_eng_1_02: { name: "Villa Park", capacity: 43205 },
