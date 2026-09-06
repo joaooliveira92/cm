@@ -77,8 +77,13 @@ directory needs no config change.
 
 Prefer several focused spec files over one large one, and not only for readability: vitest
 parallelises across *files*, so a single file holding many world-generating specs serialises them
-onto one worker. Splitting `season.test.ts` into eight cut its wall-clock from 1255s of test time
-to 574s and cleared a spec that had been timing out at the 60s limit.
+onto one worker.
+
+Splitting `season.test.ts` (1200 lines, 37 world-generating tests) into eight files roughly halved
+the whole desktop suite: the two full runs before it took 992s and 1391s, the run after took 508s.
+It also cleared a spec that had been failing the 60s per-test timeout purely from sharing a worker
+with the other 36. If this suite feels slow, look for a fat spec file before assuming the tests
+themselves are the cost.
 
 ## Specs that read source files by path
 

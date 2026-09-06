@@ -141,11 +141,15 @@ Two findings came out of the work rather than going in:
 
 - **Splitting a spec file buys wall-clock, not just readability.** vitest parallelises across files,
   not within them, so `season.test.ts` had 37 world-generating tests serialised onto one worker —
-  one of them timing out at the 60s limit. Eight files: 574s wall against 1255s of test time, and
-  the timeout cleared. Recorded in `apps/desktop/AGENTS.md`.
+  one of them timing out at the 60s limit. Splitting it into eight roughly halved the whole desktop
+  suite: 992s and 1391s on the two full runs before, 508s after, with the timeout cleared. Recorded
+  in `apps/desktop/AGENTS.md`.
 - **`test/matchCommands.test.ts` is genuinely flaky**, not a casualty of any move here. It seeds
   matches from `Date.now()` and retries against a ~0.4% roll. Filed as
   [desktop-suite-red 02](../desktop-suite-red/issues/02-injury-spec-is-wall-clock-seeded.md).
 
 The repo's documentation trees were audited and deliberately left alone; see Round 3 above for why.
 `apps/desktop` gained the local `AGENTS.md` it had been missing while `packages/` had one.
+
+**Verified at close:** `pnpm check:all` green on all six gates — typecheck, lint, effect-lint,
+verify-md-links, verify-db-schema, and 1012 tests across 106 files.
