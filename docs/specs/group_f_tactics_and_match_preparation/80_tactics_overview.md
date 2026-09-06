@@ -31,14 +31,14 @@ The screen preserves the active club, manager, tactic, fixture, source list, and
 
 ```text
 +------------------------------------------------------------------------------+
-| NORTH UNITED > TACTICS                         Active: Balanced 4-4-2         |
+| NORTH UNITED > TACTICS                         Active: Balanced 4-4-2        |
 |------------------------------------------------------------------------------|
 | Formation preview       Team instructions       Familiarity                  |
 | 4-4-2                   Balanced mentality      Formation: High              |
 |                         Medium tempo            Instructions: Medium         |
 |                         Standard width          Roles: High                  |
 |------------------------------------------------------------------------------|
-| Selection: 11 starters, 7 substitutes | Warnings: 1                         |
+| Selection: 11 starters, 7 substitutes | Warnings: 1                          |
 | [Formation] [Team Instructions] [Player Instructions] [Set Pieces]           |
 | [Save Tactic] [Load Tactic] [Match Selection]                         [Back] |
 +------------------------------------------------------------------------------+
@@ -207,25 +207,3 @@ Record operation duration, validation issue codes, import compatibility, conflic
 - Deadline expiry.
 - Keyboard and screen-reader flow.
 - High text scaling and right-to-left layout.
-
-## 23. Condensed LLM implementation brief
-
-```text
-Implement Tactics Overview for an original football-management simulation. Use stable
-tactic, formation, slot, role, instruction, player, fixture, and report IDs;
-immutable revisioned drafts; authoritative rule, permission, eligibility, and
-deadline validation; cancellable asynchronous previews; deterministic automatic
-actions; safe spatial and list-based editing; and idempotent revision-bound
-commands. Preserve uncertainty and scouting knowledge. Never trust renderer-
-calculated suitability, conflicts, assignments, or match submissions. Support
-keyboard operation, non-drag alternatives, accessible pitch semantics, visible
-focus, high text scaling, localization, and right-to-left layouts. Treat names,
-reports, imports, labels, IDs, and network payloads as untrusted. Do not copy
-proprietary artwork, exact wording, source code, logos, likenesses, or databases.
-```
-
-## Suggested Git commit
-
-```text
-docs(game-ui): specify tactics overview screen
-```
