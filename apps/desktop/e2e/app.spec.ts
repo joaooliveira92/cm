@@ -5,6 +5,7 @@ import {
   expect,
   goto,
   matchScore,
+  openTacticsEditor,
   test,
 } from "./launchApp.js";
 import { savesDir, seedConcluded, seedFresh } from "./seedSaves.js";
@@ -25,24 +26,28 @@ test("Squad screen renders the club heading and the full starting squad table", 
   await expect(window.locator("tbody tr")).toHaveCount(playersCount);
 });
 
-test("Tactics screen shows 11 slot rows and persists a saved tactic across a reload", async ({ userDataDir, window }) => {
+test("Tactics opens on the read-only overview; the editor is one step away and the save persists", async ({ userDataDir, window }) => {
   await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
   await goto(window, "tactics");
 
-  await expect(window.getByRole("heading", { name: /Tactics/ })).toBeVisible();
-  await expect(window.locator("tbody tr")).toHaveCount(11);
+  // Opening Tactics shows the overview, not the editor (ticket 03) — a fresh career has no
+  // Tactic, so the overview says so instead of presenting eleven slots to edit.
+  await expect(window.getByRole("heading", { name: "Tactics Overview" })).toBeVisible();
+  await expect(window.locator("tbody")).toHaveCount(0);
+  await expect(window.getByText("No tactic saved — set one to prepare.")).toBeVisible();
 
+  // The editor is one step from the overview; the assignment round-trips through the save.
+  await openTacticsEditor(window);
+  await expect(window.locator("tbody tr")).toHaveCount(11);
   await assignFullTactic(window);
 
+  // Returning to the overview reads the saved snapshot: the formation is named, the starters are
+  // a real selection, and the no-tactic issue cleared.
   await goto(window, "squad");
   await goto(window, "tactics");
-
-  await expect(window.locator("tbody tr")).toHaveCount(11);
-  // The first slot came back with a player, not the "Unassigned" placeholder — the assignment
-  // round-tripped through the save rather than living in renderer state.
-  await expect(
-    window.getByRole("combobox", { name: "Slot 1 player", exact: true }),
-  ).not.toHaveText("Unassigned");
+  await expect(window.getByRole("heading", { name: "Tactics Overview" })).toBeVisible();
+  await expect(window.getByText(/starters · \d+ substitutes/)).toBeVisible();
+  await expect(window.getByText("No Tactic set.")).toHaveCount(0);
 });
 
 test("Transfers screen renders the budget line and the Market and Free Agents sections", async ({ userDataDir, window }) => {
@@ -76,6 +81,7 @@ test("Match Day starts a match, reveals a feed, and applies a live control comma
 
   // The control panel only renders once the club has a persisted Tactic; set one first.
   await goto(window, "tactics");
+  await openTacticsEditor(window);
   await assignFullTactic(window);
 
   await goto(window, "match day");

@@ -11,6 +11,7 @@ export { describeRpcError, typedError } from "./rpc/errors.js";
 export {
   squadAtom,
   tacticsAtom,
+  tacticsOverviewAtom,
   leagueTableAtom,
   fixturesAtom,
   seasonSummaryAtom,

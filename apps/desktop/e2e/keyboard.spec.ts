@@ -19,6 +19,7 @@ import {
   continueSeededCareer,
   enterCareer,
   expect,
+  openTacticsEditor,
   pressPrefix,
   pressPrimary,
   test,
@@ -169,6 +170,7 @@ test("Escape closes only the topmost transient layer (AC-20)", async ({
 
   await pressPrefix(page, "a");
   await expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible();
+  await openTacticsEditor(page);
   await assignFullTactic(page);
 
   await pressPrefix(page, "d");

@@ -34,6 +34,22 @@ export const tacticsAtom = Atom.family((saveId: SaveId) =>
   ),
 );
 
+/**
+ * getTacticsOverview — `["save", saveId]`, `["tactics", saveId]`.
+ *
+ * The Tactics Overview's one immutable snapshot read. Reacts to the same domain keys the editor's
+ * save invalidates (`tacticsKey`, `saveKey`), so an accepted save elsewhere re-reads the snapshot
+ * for this screen. The screen itself decides — by declared revision, never by arrival order —
+ * whether a refetched response may replace the one it renders.
+ */
+export const tacticsOverviewAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getTacticsOverview", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), tacticsKey(saveId)]),
+    ),
+  ),
+);
+
 /** getLeagueTable — `["save", saveId]`. */
 export const leagueTableAtom = Atom.family((saveId: SaveId) =>
   managementReadPolicy(

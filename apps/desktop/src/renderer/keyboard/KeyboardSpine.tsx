@@ -245,6 +245,7 @@ export const KeyboardSpine = () => {
       const target: Record<CareerDestination["type"], () => void> = {
         squad: () => navigateCareer({ type: "squad", saveId }, "keyboard"),
         tactics: () => navigateCareer({ type: "tactics", saveId }, "keyboard"),
+        tacticsEditor: () => navigateCareer({ type: "tacticsEditor", saveId }, "keyboard"),
         transfers: () => navigateCareer({ type: "transfers", saveId }, "keyboard"),
         league: () => navigateCareer({ type: "league", saveId }, "keyboard"),
         fixtures: () => navigateCareer({ type: "fixtures", saveId }, "keyboard"),

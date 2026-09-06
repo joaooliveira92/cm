@@ -281,6 +281,17 @@ export const continueSeededCareer = async (page: Page, name: string): Promise<vo
 };
 
 /**
+ * Open the tactics editor from the read-only overview.
+ *
+ * Opening Tactics now lands on the overview, not the editor (ticket 03), so every spec that edits
+ * a tactic reaches the editor through the overview's one-step launch before `assignFullTactic`.
+ */
+export const openTacticsEditor = async (page: Page): Promise<void> => {
+  await page.getByRole("button", { name: "Open the tactics editor" }).click();
+  await expect(page.getByRole("combobox", { name: "Slot 1 player", exact: true })).toBeVisible();
+};
+
+/**
  * Assign a distinct real player to each of the 11 tactic slots and save — the minimum valid Tactic
  * (11 unique players), required before the Match Day control panel will render.
  *

@@ -24,6 +24,9 @@ const CLOSE_TOLERANCE_MS = 300;
 const routeChildToDestination: Readonly<Record<string, CareerDestination["type"]>> = {
   squad: "squad",
   tactics: "tactics",
+  // The tactics editor is a sub-surface of the Tactics area: its route nests under `/tactics/`
+  // and the section keeps highlighting while it is open.
+  editor: "tactics",
   transfers: "transfers",
   league: "league",
   fixtures: "fixtures",

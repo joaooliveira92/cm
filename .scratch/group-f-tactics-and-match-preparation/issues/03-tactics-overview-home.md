@@ -19,12 +19,12 @@ Seam: read-mostly screen consuming the snapshot command and the existing navigat
 
 **Blocked by:** 02 (The overview reads one per-revision tactical snapshot) — the overview is a consumer of that snapshot; there is no summary to render before it exists.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Opening Tactics shows the overview, not the editor: formation preview, instruction summary, familiarity, selection totals, set-piece status, and issues with destinations.
-- [ ] Every supported workflow is reachable from the overview in one step and returns to it: the tactics editor, and match preparation when a fixture is pending.
-- [ ] Loading, ready, conflicted, permission-limited, and failed are distinct, observable states that appear for their own trigger and clear again.
-- [ ] A response from an older tactic, fixture, or save revision — or a mismatched context — is discarded, never partially rendered.
-- [ ] The full supported task set completes by keyboard and by screen reader with no drag-only interaction; meaningful totals are announced without reading every change; state is communicated by more than color alone.
-- [ ] The overview resolves no match results and surfaces no opposition or hidden state.
-- [ ] `pnpm check:all` is green.
+- [x] Opening Tactics shows the overview, not the editor: formation preview, instruction summary, familiarity, selection totals, set-piece status, and issues with destinations.
+- [x] Every supported workflow is reachable from the overview in one step and returns to it: the tactics editor, and match preparation when a fixture is pending.
+- [x] Loading, ready, conflicted, permission-limited, and failed are distinct, observable states that appear for their own trigger and clear again.
+- [x] A response from an older tactic, fixture, or save revision — or a mismatched context — is discarded, never partially rendered.
+- [x] The full supported task set completes by keyboard and by screen reader with no drag-only interaction; meaningful totals are announced without reading every change; state is communicated by more than color alone.
+- [x] The overview resolves no match results and surfaces no opposition or hidden state.
+- [x] `pnpm check:all` is green.

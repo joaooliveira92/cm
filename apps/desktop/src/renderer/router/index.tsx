@@ -14,6 +14,7 @@ import { MatchDayScreen } from "../match/MatchDayScreen.js";
 import { NewsInboxScreen } from "../news/NewsInboxScreen.js";
 import { SeasonSummaryScreen } from "../seasonSummary/SeasonSummaryScreen.js";
 import { SquadScreen } from "../squad/SquadScreen.js";
+import { TacticsOverviewScreen } from "../tactics/TacticsOverviewScreen.js";
 import { TacticsScreen } from "../tactics/TacticsScreen.js";
 import { TransfersScreen } from "../transfers/TransfersScreen.js";
 import { MainMenuScreen } from "./mainMenu.js";
@@ -97,7 +98,6 @@ const defineCareerChild = <const P extends string>(
   });
 
 const squadRoute = defineCareerChild("squad", "squad", SquadScreen);
-const tacticsRoute = defineCareerChild("tactics", "tactics", TacticsScreen);
 const transfersRoute = defineCareerChild("transfers", "transfers", TransfersScreen);
 const leagueRoute = defineCareerChild("league", "league", LeagueTableScreen);
 const fixturesRoute = defineCareerChild("fixtures", "fixtures", FixturesScreen);
@@ -109,6 +109,30 @@ const seasonSummaryRoute = defineCareerChild(
 );
 const managerRoute = defineCareerChild("manager", "manager", ManagerProfileScreen);
 const newsRoute = defineCareerChild("news", "news", NewsInboxScreen);
+
+/**
+ * The Tactics area is the one career surface with its own read-only home: `/tactics` lands on the
+ * overview, and the editor sits one step beneath it at `/tactics/editor` (ticket 03). Both share
+ * the `tactics` screen scope, so focus restoration, action availability, and the navbar's
+ * "Formation" highlight treat the editor as a sub-surface rather than a tenth career screen.
+ */
+const tacticsRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "tactics",
+  component: () => <Outlet />,
+});
+
+const tacticsIndexRoute = createRoute({
+  getParentRoute: () => tacticsRoute,
+  path: "/",
+  component: () => <CareerChildView screenId="tactics" Screen={TacticsOverviewScreen} />,
+});
+
+const tacticsEditorRoute = createRoute({
+  getParentRoute: () => tacticsRoute,
+  path: "editor",
+  component: () => <CareerChildView screenId="tactics" Screen={TacticsScreen} />,
+});
 
 // ---------------------------------------------------------------------------
 // Creation branch
@@ -158,7 +182,7 @@ const routeTree = rootRoute.addChildren([
     saveRoute.addChildren([
       careerIndexRoute,
       squadRoute,
-      tacticsRoute,
+      tacticsRoute.addChildren([tacticsIndexRoute, tacticsEditorRoute]),
       transfersRoute,
       leagueRoute,
       fixturesRoute,

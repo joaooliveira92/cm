@@ -2,6 +2,7 @@ import {
   assignFullTactic,
   continueSeededCareer,
   expect,
+  openTacticsEditor,
   pressPrefix,
   saveEntry,
   test,
@@ -98,6 +99,7 @@ test("a substitution is driven by keyboard through the match day live control pa
   await pressPrefix(page, "a");
   await expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible();
   await expect(page.locator('[data-focus-id="tactics"]')).toBeFocused();
+  await openTacticsEditor(page);
   await assignFullTactic(page);
 
   await pressPrefix(page, "d");

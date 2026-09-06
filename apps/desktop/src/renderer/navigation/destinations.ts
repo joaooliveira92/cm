@@ -15,6 +15,9 @@ import type { SaveId } from "@cm-clone/contracts";
 export type CareerDestination =
   | { readonly type: "squad"; readonly saveId: SaveId }
   | { readonly type: "tactics"; readonly saveId: SaveId }
+  /** The tactics editor — a sub-surface of the Tactics area reached from the read-only overview,
+   *  not a top-level career screen (no `g` binding, not in `CAREER_SCREEN_TYPES`). */
+  | { readonly type: "tacticsEditor"; readonly saveId: SaveId }
   | { readonly type: "transfers"; readonly saveId: SaveId }
   | { readonly type: "league"; readonly saveId: SaveId }
   | { readonly type: "fixtures"; readonly saveId: SaveId }
@@ -85,6 +88,10 @@ export type ResolvedDestination =
   | { readonly to: "/create/step-3" }
   | { readonly to: "/career/$saveId/squad"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/tactics"; readonly params: { readonly saveId: SaveId } }
+  | {
+      readonly to: "/career/$saveId/tactics/editor";
+      readonly params: { readonly saveId: SaveId };
+    }
   | { readonly to: "/career/$saveId/transfers"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/league"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/fixtures"; readonly params: { readonly saveId: SaveId } }
@@ -113,6 +120,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
       return { to: "/create/step-3" };
     case "squad":
     case "tactics":
+    case "tacticsEditor":
     case "transfers":
     case "league":
     case "fixtures":
@@ -132,6 +140,11 @@ const careerRoute = (
       return { to: "/career/$saveId/squad", params: { saveId: destination.saveId } };
     case "tactics":
       return { to: "/career/$saveId/tactics", params: { saveId: destination.saveId } };
+    case "tacticsEditor":
+      return {
+        to: "/career/$saveId/tactics/editor",
+        params: { saveId: destination.saveId },
+      };
     case "transfers":
       return { to: "/career/$saveId/transfers", params: { saveId: destination.saveId } };
     case "league":
