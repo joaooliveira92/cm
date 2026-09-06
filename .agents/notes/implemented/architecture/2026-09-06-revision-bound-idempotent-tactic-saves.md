@@ -24,11 +24,25 @@ as a distinct state — last draft preserved, Refresh offered — rather than a 
 Refresh affordance discards the draft only once the refetched view actually moves past the stale
 revision, never on the still-stale intermediate value.
 
+The decision and the write share one SQLite transaction, and the transaction is gated by a per-save
+`Semaphore` (a module-level map, one permit per save). One process owns every save, so the in-process
+gate fully serialises genuinely concurrent submissions — a double-click on Save, or a window racing a
+retry. Without it two deferred SQLite transactions can both read the same revision and both commit,
+silently clobbering the first (the classic SQLite write-skew); with it the second submission runs
+after the first has committed and reads the fresh revision, so it surfaces the typed conflict rather
+than a defect or a lost update. `Self` ordering inside the transaction is: read the revision →
+replay check → conflict check → validate → write → read the stored Tactic back. The stored Tactic
+and the new revision therefore come from the same transaction and can never disagree, and a replay
+returns the current state *before* validation — a replayed request id whose (once-valid) payload has
+since become invalid is still a no-op, not an `InvalidTacticError`.
+
 The idempotency log records only the accepted writes' request ids, never the rejected ones: a
 conflicted submit has nothing to replay. It is keyed on `(club_id, request_id)` so one club's fresh
-request ids cannot collide with another's. This follows the patterns established in the League and
-Nation Selection note (echoed revisions for staleness) and the tagged-domain-errors note (typed,
-narrow failures a caller can branch on).
+request ids cannot collide with another's. The revision-carrying fields (`expectedRevision`,
+`currentRevision`, `TacticsScreenView.revision`) are `Schema.Natural` — a non-negative integer is
+the documented contract, and the schema now enforces it. This follows the patterns established in
+the League and Nation Selection note (echoed revisions for staleness) and the tagged-domain-errors
+note (typed, narrow failures a caller can branch on).
 
 ## Alternatives considered
 
@@ -53,7 +67,15 @@ narrow failures a caller can branch on).
   in-place migration (per `drizzle.config.ts`), so an old save would fail a `SELECT revision`. This
   matches the project's established schema-change policy — no migration runner exists.
 - **AI clubs write revision 0 and no request id.** `aiClubs.ts` persists season-start tactics
-  through the same `persistTactic` helper, untouched: the revision is a human-editing concept, and
-  no one reads an AI club's Tactic revision.
+  through the same `persistTactic` helper, passing revision 0 explicitly — the helper writes the
+  caller's revision into the row rather than relying on the column default, so a caller that
+  bypasses `changeTactics` (the AI path, the test boundary helpers) states its intent out loud.
+  No one reads an AI club's Tactic revision.
 - **The renderer mints the request id with `crypto.randomUUID()`** at submit time, branded
   `WriteRequestId` at the wire boundary so a `saveId` and a `requestId` can never be transposed.
+- **The conflict is worded once, not twice.** The editor renders the conflict sentence as the
+  `role="alert"` span beside the Refresh button, and the line-status text is cleared rather than
+  restated; the generic `describeRpcError` fallback in `errors.ts` exists only for surfaces without
+  room for a button.
+- **The request log's only columns are the key.** No timestamp rides on a `tactic_write_requests`
+  row — nothing reads it, and the log is pruned only by the career ending.

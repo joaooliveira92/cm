@@ -50,7 +50,7 @@ export class TacticRevisionConflictError extends Schema.TaggedError<TacticRevisi
   "TacticRevisionConflictError",
   {
     saveId: SaveId,
-    currentRevision: Schema.Finite,
+    currentRevision: Schema.Natural,
   },
 ) {}
 
@@ -64,7 +64,7 @@ export class ChangeTacticsPayload extends Schema.Class<ChangeTacticsPayload>(
 )({
   saveId: SaveId,
   tactic: Tactic,
-  expectedRevision: Schema.Finite,
+  expectedRevision: Schema.Natural,
   requestId: WriteRequestId,
 }) {}
 
@@ -75,5 +75,5 @@ export class TacticsScreenView extends Schema.Class<TacticsScreenView>("TacticsS
   /** The club tactic's monotonically increasing revision, from 0 (never saved) upward. Both
    *  `getTactics` and an accepted `changeTactics` echo the revision their value was read at, so a
    *  caller that later learns a larger revision knows its read is stale. */
-  revision: Schema.Finite,
+  revision: Schema.Natural,
 }) {}

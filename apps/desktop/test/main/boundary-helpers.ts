@@ -56,7 +56,7 @@ const readyPendingFixture = (savesDir: string, saveId: SaveId) =>
       if (blockers.length > 0) {
         const squad = yield* loadSquadPlayers(club.id);
         if (squad.length >= ELEVEN) {
-          yield* persistTactic(club.id, yield* pickBestFormationTactic(squad));
+          yield* persistTactic(club.id, yield* pickBestFormationTactic(squad), 0);
         }
       }
       return row.awaitingFixtureId;
@@ -74,7 +74,7 @@ export const ensureHumanTactic = (savesDir: string, saveId: SaveId) =>
       if (blockers.length === 0) return;
       const squad = yield* loadSquadPlayers(club.id);
       if (squad.length < ELEVEN) return;
-      yield* persistTactic(club.id, yield* pickBestFormationTactic(squad));
+      yield* persistTactic(club.id, yield* pickBestFormationTactic(squad), 0);
     }),
   );
 

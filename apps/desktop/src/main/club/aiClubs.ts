@@ -97,7 +97,10 @@ export const assignAiTactics = Effect.gen(function* () {
     if (squad.length < ELEVEN) continue;
     const tactic = yield* pickBestFormationTactic(squad);
     yield* validateTactic(tactic, new Set(squad.map((player) => player.id)));
-    yield* persistTactic(club.id, tactic);
+    // Revision 0, explicitly: an AI club's Tactic is never revisioned — nothing reads an AI club's
+    // revision, and `persistTactic` writes the caller's value rather than relying on the column
+    // default.
+    yield* persistTactic(club.id, tactic, 0);
   }
 });
 

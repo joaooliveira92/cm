@@ -605,9 +605,6 @@ export const tacticWriteRequests = sqliteTable(
       .notNull()
       .references(() => clubs.id),
     requestId: text("request_id").notNull(),
-    createdAt: text("created_at")
-      .default(sql`(datetime('now'))`)
-      .notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.clubId, table.requestId] }),

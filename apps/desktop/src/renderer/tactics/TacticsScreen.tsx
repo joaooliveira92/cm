@@ -65,6 +65,12 @@ const changeSlotPlayer = (tactic: Tactic, slotIndex: number, playerId: PlayerId)
     slots: tactic.slots.map((slot, index) => (index === slotIndex ? { ...slot, playerId } : slot)),
   });
 
+/** The one conflict sentence, rendered as the `role="alert"` span beside the Refresh button. It is
+ * the only place the editor words a conflict — the generic `describeRpcError` fallback in
+ * `errors.ts` exists for surfaces with no room for a button, not for this screen. */
+const CONFLICT_MESSAGE =
+  "A newer tactic was saved since you loaded this page. Your draft is kept — refresh to load the current version.";
+
 /** The server's current tactic revision, when a save failed because a newer one won the race.
  * `null` for every other failure — a stale submit is the one case the editor offers Refresh for. */
 const conflictRevisionOf = (error: unknown): number | null => {
@@ -170,11 +176,10 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     } catch (error) {
       const currentRevision = conflictRevisionOf(error);
       if (currentRevision !== null) {
-        // The draft keeps what the player typed; only the save itself is refused.
+        // The draft keeps what the player typed; only the save itself is refused. The conflict
+        // alert span above the button is the one place the outcome is worded — not this status.
         setConflict(currentRevision);
-        setStatus(
-          "A newer tactic was saved since you loaded this page. Your draft is kept — refresh to load the current version.",
-        );
+        setStatus(null);
       } else {
         setStatus("Failed to save tactic — check every slot has a unique player assigned.");
       }
@@ -183,7 +188,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   const refreshFromServer = () => {
     refreshFrom.current = revisionRef.current;
-    setStatus("Refreshing...");
+    setStatus("Loading the current tactic...");
     refreshTactics();
   };
 
@@ -348,8 +353,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         {conflict !== null && (
           <>
             <span role="alert" className="text-sm text-text-danger" data-testid="tactic-conflict">
-              A newer tactic was saved since you loaded this page. Your draft is kept — refresh to
-              load the current version.
+              {CONFLICT_MESSAGE}
             </span>
             <Button
               type="button"

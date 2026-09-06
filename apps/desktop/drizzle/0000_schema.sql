@@ -381,7 +381,6 @@ CREATE TABLE `tactic_slots` (
 CREATE TABLE `tactic_write_requests` (
 	`club_id` text NOT NULL,
 	`request_id` text NOT NULL,
-	`created_at` text DEFAULT (datetime('now')) NOT NULL,
 	PRIMARY KEY(`club_id`, `request_id`),
 	FOREIGN KEY (`club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action
 );

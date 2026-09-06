@@ -6,7 +6,7 @@ import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { Tactic, WriteRequestId, type PlayerId } from "@cm-clone/contracts";
 import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../../../src/main/world/index.js";
 import { getTactics, changeTactics } from "../../../src/main/club/index.js";
@@ -131,6 +131,77 @@ it.effect("replaying an accepted request id is a no-op that returns the current 
     const stillReplayed = yield* changeTactics(savesDir, save.id, tactic, 1, rid("accepted"));
     strictEqual(stillReplayed.revision, 2);
     deepStrictEqual(stillReplayed.tactic, secondTactic);
+  }),
+);
+
+it.effect("a replayed request id with a now-invalid payload is still a no-op, not an error", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const tactic = buildTactic(before.squad.map((player) => player.id));
+    const accepted = yield* changeTactics(
+      savesDir,
+      save.id,
+      tactic,
+      before.revision,
+      rid("accepted"),
+    );
+    strictEqual(accepted.revision, 1);
+
+    // The same request id replayed with a payload that would now fail validation (the same player
+    // in every slot). The no-op guarantee wins over validation — the submit was accepted once, so
+    // returning the current state is the pinned behaviour, before any re-validation.
+    const invalidTactic = new Tactic({
+      ...tactic,
+      slots: FORMATION_SLOTS["4-4-2"].map((position) => ({
+        position,
+        role: POSITION_ROLES[position],
+        playerId: tactic.slots[0]!.playerId,
+      })),
+    });
+    const replayed = yield* changeTactics(
+      savesDir,
+      save.id,
+      invalidTactic,
+      999,
+      rid("accepted"),
+    );
+    strictEqual(replayed.revision, 1);
+    deepStrictEqual(replayed.tactic, tactic);
+  }),
+);
+
+it.effect("two concurrent saves on the same expected revision yield exactly one success and one typed conflict", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const tactic = buildTactic(before.squad.map((player) => player.id));
+
+    const outcomes = yield* Effect.all(
+      [
+        Effect.result(changeTactics(savesDir, save.id, tactic, 0, rid("race-a"))),
+        Effect.result(changeTactics(savesDir, save.id, tactic, 0, rid("race-b"))),
+      ],
+      { concurrency: 2 },
+    );
+
+    const wins = outcomes.filter((outcome) => Result.isSuccess(outcome));
+    const losses = outcomes.filter((outcome) => Result.isFailure(outcome));
+    strictEqual(wins.length, 1, "exactly one concurrent save wins the race");
+    strictEqual(losses.length, 1, "the losing save must not be silently overwritten");
+    strictEqual(wins[0]!.success.revision, 1);
+
+    const loser = losses[0]!;
+    if (Result.isFailure(loser)) {
+      strictEqual(loser.failure._tag, "TacticRevisionConflictError");
+      strictEqual(
+        (loser.failure as { readonly currentRevision: number }).currentRevision,
+        1,
+      );
+    }
+
+    const reloaded = yield* getTactics(savesDir, save.id);
+    strictEqual(reloaded.revision, 1);
   }),
 );
 
