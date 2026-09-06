@@ -17,6 +17,12 @@ referenced throughout.
   `brief.md`.
 - **[.scratch/club-selection/](../.scratch/club-selection/)** — 17/17. Club selection rail,
   detail panel and the generated-league selector.
+- **[.scratch/continue-and-advance-time/](../.scratch/continue-and-advance-time/)** — 5/5. Screen 23
+  of the Group B import reconciled against the shipped Continue loop: Group B has a reconciliation
+  ledger with Screen 23 `Reviewed`, the League table's duplicate advance control is gone, one press
+  of Continue reports what it did and why it failed, everything outstanding is listed with the
+  screen that owns its fix, and the advance commits as one transaction and refuses a second
+  concurrent press.
 
 ## In flight
 
@@ -53,12 +59,6 @@ referenced throughout.
   issue-tracker convention.
 - **[.scratch/save-list-error-handling/](../.scratch/save-list-error-handling/)** — 0/1, a
   `ready-for-agent` bug-fix.
-- **[.scratch/continue-and-advance-time/](../.scratch/continue-and-advance-time/)** — 4/5. Screen 23
-  of the Group B import reconciled against the shipped Continue loop. Done: Group B has a
-  reconciliation ledger with Screen 23 `Reviewed`, the League table's duplicate advance control is
-  gone, one press of Continue reports what it did and why it failed, and everything outstanding is
-  listed with the screen that owns its fix. Remaining: making the advance transactional and
-  single-flight.
 - **[.scratch/human-fixture-pre-match-boundary/](../.scratch/human-fixture-pre-match-boundary/)** —
   0/3, all `ready-for-agent`, and blocked on `continue-and-advance-time` ticket 05. Implements the
   proposed note of the same name: Continue stops before the human club's Fixture, Match day binds to

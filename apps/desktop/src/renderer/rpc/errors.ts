@@ -74,6 +74,10 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
           return "That match could not be found.";
         case "SeasonCompleteError":
           return "The season is already complete.";
+        // The player pressed Continue twice. Saying so is better than a silent
+        // no-op, which reads as the first press having been lost.
+        case "AdvanceInProgressError":
+          return "The Calendar is still advancing. Wait for it to finish.";
         case "InvalidTacticError":
           return "That tactic is invalid — every slot needs a unique player.";
         case "InvalidPillarDistributionError":

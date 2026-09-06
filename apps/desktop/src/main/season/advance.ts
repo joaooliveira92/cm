@@ -1,6 +1,7 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   AdvanceCalendarResult,
+  AdvanceInProgressError,
   SeasonCompleteError,
   type ClubId,
   type FixtureId,
@@ -224,157 +225,203 @@ export const expireStalePendingBids = Effect.gen(function* () {
   yield* sql`UPDATE bids SET status = 'expired' WHERE status = 'pending'`;
 });
 
+/**
+ * Saves with an advance already running.
+ *
+ * One process owns every Save (ADR-0007's single-writer premise), so a module-level set is the
+ * whole mechanism — there is no second process to coordinate with. It exists because the advance is
+ * not idempotent: two interleaved runs would lapse the same Bids, resolve the same Matchday, and at
+ * a Season's end roll the world over twice.
+ *
+ * SQLite serialises the individual writes, which is exactly why this is needed anyway: serialised
+ * statements from two interleaved advances are still two advances.
+ */
+const advancesInFlight = new Set<SaveId>();
+
+/**
+ * Runs `body` while holding the Save's advance lock, refusing a second concurrent advance.
+ *
+ * `acquireUseRelease` rather than a try/finally: the release runs on success, on failure, and on
+ * interruption, and it runs only if this call is the one that took the lock — a refused second
+ * advance must not clear the first one's hold.
+ */
+const withAdvanceLock = <A, E>(saveId: SaveId, body: Effect.Effect<A, E>) =>
+  Effect.acquireUseRelease(
+    Effect.suspend(() =>
+      advancesInFlight.has(saveId)
+        ? Effect.fail(new AdvanceInProgressError({ saveId }))
+        : Effect.sync(() => advancesInFlight.add(saveId)),
+    ),
+    () => body,
+    () => Effect.sync(() => advancesInFlight.delete(saveId)),
+  );
+
 export const advanceCalendar = (savesDir: string, saveId: SaveId) =>
-  withExistingSave(savesDir, saveId, (filename) =>
-    Effect.gen(function* () {
-      const sql = yield* SqlClient;
-      const row = yield* loadSeasonRow;
+  withAdvanceLock(
+    saveId,
+    withExistingSave(savesDir, saveId, (filename) =>
+      Effect.gen(function* () {
+        const sql = yield* SqlClient;
+        // Every write below commits together or not at all. The advance lapses Bids, resolves every
+        // due Fixture in the world, moves the date, and at a Season's end freezes standings, judges
+        // the board, develops every player and rolls the world over. A failure partway through
+        // without this leaves a save whose date moved but whose season never concluded — a state no
+        // reader is written for, and one the player cannot undo.
+        return yield* sql.withTransaction(runAdvance(saveId));
+      }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
+    ),
+  );
 
-      if (row.phase === "season_complete") {
-        return yield* new SeasonCompleteError({ saveId });
-      }
+/** The advance itself, inside the caller's transaction. Assumes a `SqlClient` in context. */
+const runAdvance = (saveId: SaveId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const row = yield* loadSeasonRow;
 
-      yield* assertSaveNotArchived(saveId);
-      yield* expireStalePendingBids;
+    if (row.phase === "season_complete") {
+      return yield* new SeasonCompleteError({ saveId });
+    }
 
-      const manifest = yield* readGenerationManifest;
-      const horizon = yield* loadCalendarHorizon(row, manifest.referenceYear);
-      const boundary = nextCalendarBoundary(horizon);
-      const streamEvents: Array<{ readonly tag: string; readonly payload: unknown }> = [];
-      let resolvedDate: string | null = null;
-      let transferWindowClosed: "pre_season" | "mid_season" | null = null;
-      let transferWindowOpened: "mid_season" | null = null;
-      let seasonConcluded = false;
-      let boardObjectiveVerdict: Verdict | null = null;
-      let managerOutcome: ManagerOutcome = "none";
+    yield* assertSaveNotArchived(saveId);
+    yield* expireStalePendingBids;
 
-      if (boundary.type === "seasonComplete") {
-        // Every fixture of the season has already resolved and the conclusion has run.
-        return yield* new SeasonCompleteError({ saveId });
-      }
+    const manifest = yield* readGenerationManifest;
+    const horizon = yield* loadCalendarHorizon(row, manifest.referenceYear);
+    const boundary = nextCalendarBoundary(horizon);
+    const streamEvents: Array<{ readonly tag: string; readonly payload: unknown }> = [];
+    let resolvedDate: string | null = null;
+    let transferWindowClosed: "pre_season" | "mid_season" | null = null;
+    let transferWindowOpened: "mid_season" | null = null;
+    let seasonConcluded = false;
+    let boardObjectiveVerdict: Verdict | null = null;
+    let managerOutcome: ManagerOutcome = "none";
 
-      /** The phase the calendar stands in once it reaches `date`, derived from the window bounds
-       *  rather than tracked separately, so phase has one writer and no memory of its own. */
-      const phaseAt = (date: string): SeasonPhase =>
-        withinMidSeasonWindow(horizon.windows, date) ? "mid_window_open" : "in_season";
+    if (boundary.type === "seasonComplete") {
+      // Every fixture of the season has already resolved and the conclusion has run.
+      return yield* new SeasonCompleteError({ saveId });
+    }
 
-      if (boundary.type === "windowOpen") {
-        // The window's open is still a date the calendar passes through, so anything due on or
-        // before it is played on the way. Usually there is nothing — but a competition the human is
-        // never stopped for can have a date sitting behind this one, and walking past it would
-        // strand a fixture the calendar has already gone by.
-        const overdue = yield* resolveDueFixtures(boundary.date);
-        if (overdue.length > 0) {
-          streamEvents.push({
-            tag: "MatchdayResolved",
-            payload: { date: boundary.date, resolved: overdue.length },
-          });
-          resolvedDate = boundary.date;
-        }
-        yield* sql`UPDATE season SET game_date = ${boundary.date}, phase = 'mid_window_open' WHERE season_number = ${row.seasonNumber}`;
-        streamEvents.push({
-          tag: "TransferWindowOpened",
-          payload: { window: "mid_season", date: boundary.date },
-        });
-        transferWindowOpened = "mid_season";
-        // AI-club transfer activity (ticket 17 / ADR-0005) fires at the mid-season window's open —
-        // this `windowOpen` boundary *is* that open. Self-issued in-process, never through the
-        // RpcGroup.
-        yield* runAiTransferWindow(row.seasonNumber);
-      } else {
+    /** The phase the calendar stands in once it reaches `date`, derived from the window bounds
+     *  rather than tracked separately, so phase has one writer and no memory of its own. */
+    const phaseAt = (date: string): SeasonPhase =>
+      withinMidSeasonWindow(horizon.windows, date) ? "mid_window_open" : "in_season";
 
-        // A window closes when the calendar moves out of it, which is a fact about the two dates
-        // rather than about which fixture was played. The pre-season window has been open since the
-        // season's opening date and closes the moment the football starts.
-        if (row.phase === "pre_season") {
-          streamEvents.push({
-            tag: "TransferWindowClosed",
-            payload: { window: "pre_season", date: boundary.date },
-          });
-          transferWindowClosed = "pre_season";
-          // The pre-season window's open is the season's start rather than a boundary the advance
-          // stops at, so its close is the first moment AI transfer activity has to hook into.
-          yield* runAiTransferWindow(row.seasonNumber);
-        } else if (
-          row.phase === "mid_window_open" &&
-          !withinMidSeasonWindow(horizon.windows, boundary.date)
-        ) {
-          streamEvents.push({
-            tag: "TransferWindowClosed",
-            payload: { window: "mid_season", date: boundary.date },
-          });
-          transferWindowClosed = "mid_season";
-        }
-
-        const results = yield* resolveDueFixtures(boundary.date);
-        // The date and a count, never the results themselves. `fixtures` is authoritative for
-        // every scoreline, so restating them here made one row on every Continue whose size grew
-        // with the world — a measured ~1.2 MB at pyramid scale. This payload is the same size
-        // whether one fixture resolved or four thousand did.
+    if (boundary.type === "windowOpen") {
+      // The window's open is still a date the calendar passes through, so anything due on or
+      // before it is played on the way. Usually there is nothing — but a competition the human is
+      // never stopped for can have a date sitting behind this one, and walking past it would
+      // strand a fixture the calendar has already gone by.
+      const overdue = yield* resolveDueFixtures(boundary.date);
+      if (overdue.length > 0) {
         streamEvents.push({
           tag: "MatchdayResolved",
-          payload: { date: boundary.date, resolved: results.length },
+          payload: { date: boundary.date, resolved: overdue.length },
         });
         resolvedDate = boundary.date;
+      }
+      yield* sql`UPDATE season SET game_date = ${boundary.date}, phase = 'mid_window_open' WHERE season_number = ${row.seasonNumber}`;
+      streamEvents.push({
+        tag: "TransferWindowOpened",
+        payload: { window: "mid_season", date: boundary.date },
+      });
+      transferWindowOpened = "mid_season";
+      // AI-club transfer activity (ticket 17 / ADR-0005) fires at the mid-season window's open —
+      // this `windowOpen` boundary *is* that open. Self-issued in-process, never through the
+      // RpcGroup.
+      yield* runAiTransferWindow(row.seasonNumber);
+    } else {
 
-        // Scouts watch while the calendar moves. Accrual is per advance rather than per fixture:
-        // a scout is observing a player, not attending their club's matches.
-        yield* accrueScoutingProgress;
-
-        // The season is over when no unplayed fixture remains anywhere, cup final included —
-        // never at a tidy invented end date. Competitions genuinely end on different days, and the
-        // league table is already final by the time a cup final plays.
-        const remaining = yield* sql<{ count: number }>`
-          SELECT COUNT(*) as "count" FROM fixtures WHERE played = 0`;
-        const concluded =
-          (remaining[0]?.count ?? 0) === 0 && !(yield* cupRoundsOutstanding(row.seasonNumber));
-        const phase = concluded ? "season_complete" : phaseAt(boundary.date);
-        yield* sql`UPDATE season SET game_date = ${boundary.date}, phase = ${phase} WHERE season_number = ${row.seasonNumber}`;
-
-        if (concluded) {
-          // Freeze before anything reads a final position: the board's verdict below judges the
-          // frozen row rather than recomputing the table it is judging.
-          yield* freezeFinalStandings(row.seasonNumber);
-          streamEvents.push({ tag: "SeasonConcluded", payload: { seasonNumber: row.seasonNumber } });
-          // Contract expiry -> Free Agent (ticket 16 / ADR-0005) is specified as happening "at
-          // Season start." There is no next season's pre-season to hook into yet, so
-          // `SeasonConcluded` stays the one-per-season boundary it attaches to.
-          yield* expireContractsForSeason;
-          // Player Development (spec: `.scratch/training/spec.md`): every player on every club
-          // develops toward their age-appropriate ceiling once per `SeasonConcluded`, appending one
-          // `PlayerDeveloped` event per club to its own Club stream — same in-process synchronous
-          // reactor pattern as the reactions above (ADR-0007).
-          yield* developPlayersForSeason(row.seasonNumber);
-          seasonConcluded = true;
-
-          const judged = yield* judgeSeasonEnd(row.seasonNumber, streamEvents);
-          boardObjectiveVerdict = judged.verdict;
-          managerOutcome = judged.managerOutcome;
-
-          // The world moves on one year, in this same transaction. A save that stopped here would
-          // hold a concluded season with no next one — a state every reader would have to handle.
-          if (managerOutcome !== "sacked") {
-            yield* rolloverToNextSeason(row.seasonNumber, manifest.referenceYear, manifest.worldSeed);
-            yield* startNextSeason(row.seasonNumber + 1, manifest);
-          }
-        }
+      // A window closes when the calendar moves out of it, which is a fact about the two dates
+      // rather than about which fixture was played. The pre-season window has been open since the
+      // season's opening date and closes the moment the football starts.
+      if (row.phase === "pre_season") {
+        streamEvents.push({
+          tag: "TransferWindowClosed",
+          payload: { window: "pre_season", date: boundary.date },
+        });
+        transferWindowClosed = "pre_season";
+        // The pre-season window's open is the season's start rather than a boundary the advance
+        // stops at, so its close is the first moment AI transfer activity has to hook into.
+        yield* runAiTransferWindow(row.seasonNumber);
+      } else if (
+        row.phase === "mid_window_open" &&
+        !withinMidSeasonWindow(horizon.windows, boundary.date)
+      ) {
+        streamEvents.push({
+          tag: "TransferWindowClosed",
+          payload: { window: "mid_season", date: boundary.date },
+        });
+        transferWindowClosed = "mid_season";
       }
 
-      const startSeq = yield* nextStreamSeq(STREAM_TYPE, saveId);
-      yield* appendStreamEvents(STREAM_TYPE, saveId, startSeq, streamEvents);
-
-      const updatedRow = yield* loadSeasonRow;
-      return new AdvanceCalendarResult({
-        season: toSeasonView(updatedRow),
-        resolvedDate,
-        transferWindowClosed,
-        transferWindowOpened,
-        seasonConcluded,
-        boardObjectiveVerdict,
-        managerOutcome,
+      const results = yield* resolveDueFixtures(boundary.date);
+      // The date and a count, never the results themselves. `fixtures` is authoritative for
+      // every scoreline, so restating them here made one row on every Continue whose size grew
+      // with the world — a measured ~1.2 MB at pyramid scale. This payload is the same size
+      // whether one fixture resolved or four thousand did.
+      streamEvents.push({
+        tag: "MatchdayResolved",
+        payload: { date: boundary.date, resolved: results.length },
       });
-    }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
-  );
+      resolvedDate = boundary.date;
+
+      // Scouts watch while the calendar moves. Accrual is per advance rather than per fixture:
+      // a scout is observing a player, not attending their club's matches.
+      yield* accrueScoutingProgress;
+
+      // The season is over when no unplayed fixture remains anywhere, cup final included —
+      // never at a tidy invented end date. Competitions genuinely end on different days, and the
+      // league table is already final by the time a cup final plays.
+      const remaining = yield* sql<{ count: number }>`
+        SELECT COUNT(*) as "count" FROM fixtures WHERE played = 0`;
+      const concluded =
+        (remaining[0]?.count ?? 0) === 0 && !(yield* cupRoundsOutstanding(row.seasonNumber));
+      const phase = concluded ? "season_complete" : phaseAt(boundary.date);
+      yield* sql`UPDATE season SET game_date = ${boundary.date}, phase = ${phase} WHERE season_number = ${row.seasonNumber}`;
+
+      if (concluded) {
+        // Freeze before anything reads a final position: the board's verdict below judges the
+        // frozen row rather than recomputing the table it is judging.
+        yield* freezeFinalStandings(row.seasonNumber);
+        streamEvents.push({ tag: "SeasonConcluded", payload: { seasonNumber: row.seasonNumber } });
+        // Contract expiry -> Free Agent (ticket 16 / ADR-0005) is specified as happening "at
+        // Season start." There is no next season's pre-season to hook into yet, so
+        // `SeasonConcluded` stays the one-per-season boundary it attaches to.
+        yield* expireContractsForSeason;
+        // Player Development (spec: `.scratch/training/spec.md`): every player on every club
+        // develops toward their age-appropriate ceiling once per `SeasonConcluded`, appending one
+        // `PlayerDeveloped` event per club to its own Club stream — same in-process synchronous
+        // reactor pattern as the reactions above (ADR-0007).
+        yield* developPlayersForSeason(row.seasonNumber);
+        seasonConcluded = true;
+
+        const judged = yield* judgeSeasonEnd(row.seasonNumber, streamEvents);
+        boardObjectiveVerdict = judged.verdict;
+        managerOutcome = judged.managerOutcome;
+
+        // The world moves on one year, in this same transaction. A save that stopped here would
+        // hold a concluded season with no next one — a state every reader would have to handle.
+        if (managerOutcome !== "sacked") {
+          yield* rolloverToNextSeason(row.seasonNumber, manifest.referenceYear, manifest.worldSeed);
+          yield* startNextSeason(row.seasonNumber + 1, manifest);
+        }
+      }
+    }
+
+    const startSeq = yield* nextStreamSeq(STREAM_TYPE, saveId);
+    yield* appendStreamEvents(STREAM_TYPE, saveId, startSeq, streamEvents);
+
+    const updatedRow = yield* loadSeasonRow;
+    return new AdvanceCalendarResult({
+      season: toSeasonView(updatedRow),
+      resolvedDate,
+      transferWindowClosed,
+      transferWindowOpened,
+      seasonConcluded,
+      boardObjectiveVerdict,
+      managerOutcome,
+    });
+  });
 
 /**
  * `RetireManager` (ticket 02 / Screen 20) — the player deliberately ends their own career from the

@@ -32,13 +32,13 @@ consumes the result has to move.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The advance's writes commit as one transaction; an induced failure part-way leaves the save's
+- [x] The advance's writes commit as one transaction; an induced failure part-way leaves the save's
       date, Fixtures, Bids, and season phase exactly as they were before the press.
-- [ ] A second advance for the same Save while one is in flight is refused with a typed failure and
+- [x] A second advance for the same Save while one is in flight is refused with a typed failure and
       mutates nothing.
-- [ ] The refusal renders a player-facing sentence wherever typed failures are rendered.
-- [ ] The guard lives in the main process; disabling the renderer's control is not what enforces it.
-- [ ] A refused or failed advance leaves no partial event appended to the Season stream.
-- [ ] `pnpm check:all` is green.
+- [x] The refusal renders a player-facing sentence wherever typed failures are rendered.
+- [x] The guard lives in the main process; disabling the renderer's control is not what enforces it.
+- [x] A refused or failed advance leaves no partial event appended to the Season stream.
+- [x] `pnpm check:all` is green.

@@ -10,7 +10,9 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { NationId, NationSelectionIntentPayload, SaveId, ScopeOptionId } from "@cm-clone/contracts";
+import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
+import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../../../src/main/world/index.js";
 import { createSnapshotFor } from "../snapshot-helpers.js";
@@ -27,6 +29,22 @@ beforeEach(() => {
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
 const { loadSeasonStreamEvents, createCareerFrom, createCareerFromWorldSeed, loadResolvedFixtures } = seasonHelpers(() => savesDir);
+
+/** Breaks the save so the advance fails *after* it has resolved fixtures.
+ *
+ * Scouting accrual is the first step past the fixture sweep, and it reads a table nothing before it
+ * touches. Dropping `events` instead would fail during the cup draw, before a single fixture had
+ * been written, and the test would pass with or without a transaction — which is exactly what it
+ * did before this was measured.
+ */
+const breakScoutingTable = (saveId: SaveId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    yield* sql`DROP TABLE scouting_assignments`;
+  }).pipe(
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
+    Effect.scoped,
+  );
 
 it.effect("a career opens in a pre-season, weeks before the first league round", () =>
   Effect.gen(function* () {
@@ -270,4 +288,82 @@ it.effect("two saves generated from one world seed resolve identically after the
     ok(fixturesA.fixtures.some((fixture) => fixture.played));
   }),
   20_000,
+);
+
+it.effect("a second advance arriving while one is running is refused, not queued", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getFixtures(savesDir, save.id);
+
+    // Both start before either finishes, which is the shape a repeated key press
+    // takes when it outruns the renderer's disabled control.
+    const [first, second] = yield* Effect.all(
+      [
+        Effect.result(advanceCalendar(savesDir, save.id)),
+        Effect.result(advanceCalendar(savesDir, save.id)),
+      ],
+      { concurrency: 2 },
+    );
+
+    const outcomes = [first, second].map((r) =>
+      r._tag === "Success" ? "advanced" : (r.failure as { _tag: string })._tag,
+    );
+    deepStrictEqual(outcomes.slice().sort(), ["AdvanceInProgressError", "advanced"]);
+
+    // Exactly one Matchday was played: the refusal resolved nothing.
+    const after = yield* getFixtures(savesDir, save.id);
+    const played = after.fixtures.filter((fixture) => fixture.played);
+    strictEqual(played.length, 10);
+    ok(after.season.currentDate === before.fixtures[0]!.date);
+  }),
+);
+
+it.effect("the lock is released after an advance, so the next press is accepted", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+
+    yield* advanceCalendar(savesDir, save.id);
+    const second = yield* advanceCalendar(savesDir, save.id);
+
+    ok(second.resolvedDate !== null);
+  }),
+);
+
+it.effect("a refused advance releases nothing: the running advance still commits", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    // A refusal that cleared the holder's lock would let a third press interleave
+    // with the advance still in flight.
+    const [running, refused, third] = yield* Effect.all(
+      [
+        Effect.result(advanceCalendar(savesDir, save.id)),
+        Effect.result(advanceCalendar(savesDir, save.id)),
+        Effect.result(advanceCalendar(savesDir, save.id)),
+      ],
+      { concurrency: 3 },
+    );
+
+    const succeeded = [running, refused, third].filter((r) => r._tag === "Success");
+    strictEqual(succeeded.length, 1);
+    const after = yield* getFixtures(savesDir, save.id);
+    strictEqual(after.fixtures.filter((fixture) => fixture.played).length, 10);
+  }),
+);
+
+it.effect("an advance that fails partway commits nothing", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getFixtures(savesDir, save.id);
+
+    // Fails after every due fixture has already been resolved — the exact partial
+    // state the transaction exists to prevent.
+    yield* breakScoutingTable(save.id);
+    const failed = yield* Effect.result(advanceCalendar(savesDir, save.id));
+
+    strictEqual(failed._tag, "Failure");
+    const after = yield* getFixtures(savesDir, save.id);
+    strictEqual(after.fixtures.filter((fixture) => fixture.played).length, 0);
+    strictEqual(after.season.currentDate, before.season.currentDate);
+    strictEqual(after.season.phase, "pre_season");
+  }),
 );

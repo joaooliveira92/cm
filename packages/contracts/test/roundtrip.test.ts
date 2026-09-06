@@ -9,6 +9,7 @@ import { AppRpcs } from "../src/rpc.js";
 import {
   AdvancedOptionsPayload,
   AdvanceCalendarResult,
+  AdvanceInProgressError,
   AttributesSchema,
   BidView,
   ClubSummary,
@@ -217,6 +218,10 @@ describe("tagged errors", () => {
   });
 
   it("InsufficientTransferBudgetError round-trips all numeric fields", () => {
+    roundTrip(AdvanceInProgressError, {
+      _tag: "AdvanceInProgressError",
+      saveId: "s1",
+    });
     roundTrip(InsufficientTransferBudgetError, {
       _tag: "InsufficientTransferBudgetError",
       clubId: "c1",

@@ -1,6 +1,7 @@
 import { Schema } from "effect";
 import {
   AdvanceCalendarResult,
+  AdvanceInProgressError,
   AdvancedOptionsPayload,
   BidderBidActionSchema,
   BidId,
@@ -178,7 +179,12 @@ commitCareer: {
   advanceCalendar: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: AdvanceCalendarResult,
-    error: Schema.Union([SaveNotFoundError, SeasonCompleteError, SaveArchivedError]),
+    error: Schema.Union([
+      SaveNotFoundError,
+      SeasonCompleteError,
+      SaveArchivedError,
+      AdvanceInProgressError,
+    ]),
   },
   getSeasonSummary: {
     payload: Schema.Struct({ saveId: SaveId }),

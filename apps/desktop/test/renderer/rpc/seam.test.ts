@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { SaveId } from "@cm-clone/contracts";
 import {
+  AdvanceInProgressError,
   CollidingOverrideError,
   InvalidBindingShapeError,
   LockedKeyOverrideError,
@@ -349,6 +350,15 @@ describe("renderer RPC seam — typed error surface (AC-03)", () => {
         error: new SaveNotFoundError({ id: save }),
       }),
     ).toBe("That save could not be found.");
+    // A refused second advance is a sentence, not a silent no-op: a press that
+    // appeared to do nothing reads as the first one having been lost.
+    expect(
+      describeRpcError({
+        _tag: "RemoteFailure",
+        method: "advanceCalendar",
+        error: new AdvanceInProgressError({ saveId: save }),
+      }),
+    ).toBe("The Calendar is still advancing. Wait for it to finish.");
   });
 
   it("describeRpcError renders the rebinding rejection tags (Stage 6)", () => {

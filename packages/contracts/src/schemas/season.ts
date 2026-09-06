@@ -91,6 +91,25 @@ export class SeasonCompleteError extends Schema.TaggedError<SeasonCompleteError>
   },
 ) {}
 
+/**
+ * Raised when a second `AdvanceCalendar` arrives for a Save while one is still running.
+ *
+ * The Calendar advance is not idempotent — it lapses pending Bids, resolves every due Fixture,
+ * draws cup rounds, and at a Season's end rolls the world over — so two interleaved advances would
+ * play the same Matchday twice. The renderer disables Continue while one is in flight, but a
+ * disabled control is a convenience: a repeated key press that outruns a re-render still reaches
+ * the command, and the guard that matters is the one in the main process.
+ *
+ * Refusal rather than queueing: the second press was made without seeing the first one's result, so
+ * running it afterwards would advance the career past a boundary the player never read.
+ */
+export class AdvanceInProgressError extends Schema.TaggedError<AdvanceInProgressError>()(
+  "AdvanceInProgressError",
+  {
+    saveId: SaveId,
+  },
+) {}
+
 /** The player's club's Board Objective for one Season (ticket 18 / ADR-0006) — `finalPosition`/
  * `verdict` are `null` until `SeasonConcluded` triggers `BoardObjectiveJudged`. */
 export class BoardObjectiveView extends Schema.Class<BoardObjectiveView>("BoardObjectiveView")({
