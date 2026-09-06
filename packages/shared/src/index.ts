@@ -35,6 +35,7 @@ export * from "./setup/simulation.js";
 export * from "./setup/advancedOptions.js";
 export * from "./setup/activeLeaguesConsequences.js";
 export * from "./setup/continueReadiness.js";
+export * from "./setup/continueOutcome.js";
 export * from "./season/calendar.js";
 export * from "./season/calendarBoundary.js";
 export * from "./news/newsProjection.js";

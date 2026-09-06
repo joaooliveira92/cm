@@ -20,8 +20,12 @@
  * and dispatch are the shipped spine's; this is how they look.
  */
 import type { SaveId } from "@cm-clone/contracts";
-import { assessContinueReadiness } from "@cm-clone/shared";
-import { useEffect, useSyncExternalStore } from "react";
+import {
+  assessContinueReadiness,
+  describeContinueOutcome,
+  type ContinueDestination,
+} from "@cm-clone/shared";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { ACTION_REGISTRY } from "../actions/allActions.js";
 import {
   getBindingOverrides,
@@ -42,6 +46,8 @@ import {
 import { Navbar } from "../navigation/components/Navbar.js";
 import {
   advanceCalendarMutation,
+  describeRpcError,
+  typedError,
   leagueTableAtom,
   managerProfileAtom,
   saveSummaryAtom,
@@ -51,6 +57,7 @@ import {
   useAtomValue,
 } from "../rpc.js";
 import { BTN_PRIMARY } from "../theme.js";
+import { ContinueResultBand, type ContinueReport } from "./ContinueResult.js";
 import { Header } from "./header/index.js";
 import type { HeaderCareer, HeaderStanding } from "./header/career-header-state.js";
 
@@ -178,6 +185,38 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
     });
   }, [continueDisabled, runAdvance, saveId]);
 
+  // What the last press did. Held in state rather than derived on every render
+  // so that dismissing it sticks: the mutation atom keeps its last result for
+  // as long as the chrome is mounted, and a purely derived band would reappear
+  // on the next unrelated re-render.
+  const [report, setReport] = useState<ContinueReport | null>(null);
+  const advanceError = typedError(advance);
+  useEffect(() => {
+    if (advance.waiting) return;
+    if (advance._tag === "Success") {
+      setReport({
+        kind: "outcome",
+        outcome: describeContinueOutcome({
+          resolvedDate: advance.value.resolvedDate,
+          transferWindowClosed: advance.value.transferWindowClosed,
+          transferWindowOpened: advance.value.transferWindowOpened,
+          seasonConcluded: advance.value.seasonConcluded,
+          boardObjectiveVerdict: advance.value.boardObjectiveVerdict,
+          managerOutcome: advance.value.managerOutcome,
+        }),
+      });
+    } else if (advanceError !== null) {
+      // The career is exactly where it was — a refused advance changes nothing
+      // — so the band is the whole report, and nothing else needs unwinding.
+      setReport({ kind: "failure", message: describeRpcError(advanceError) });
+    }
+  }, [advance, advanceError]);
+
+  const openConsequence = (destination: ContinueDestination): void => {
+    navigate({ type: destination, saveId });
+    setReport(null);
+  };
+
   const onBackToSaves = (intent: NavigationIntent): void => {
     if (intent === "keyboard") {
       navigateWithFocus({ type: "mainMenu" }, { screen: "mainMenu" });
@@ -235,48 +274,57 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
   };
 
   return (
-    <Navbar
-      // Unread news is the one ambient signal the career loop has. Without it the inbox is only
-      // seen by a player who thinks to look, which is the same failure as having no inbox.
-      badges={
-        newsCounts === null || newsCounts.unread === 0
-          ? undefined
-          : {
-              news: {
-                count: newsCounts.unread,
-                label: newsCounts.actionRequired > 0 ? "unread, some awaiting an answer" : "unread",
-              },
-            }
-      }
-      saveId={saveId}
-      clubName={clubName}
-      clubColours={clubColours}
-      leading={
-        // The router's history reports whether a back step exists but has no
-        // forward counterpart, so forward stays enabled and is a no-op at the
-        // end of the stack — the same contract a browser's forward button has.
-        <Header.Nav
-          back={{ disabled: !canNavigateBack(), onTrigger: navigateBack }}
-          forward={{ disabled: false, onTrigger: navigateForward }}
+    <>
+      <Navbar
+        // Unread news is the one ambient signal the career loop has. Without it the inbox is only
+        // seen by a player who thinks to look, which is the same failure as having no inbox.
+        badges={
+          newsCounts === null || newsCounts.unread === 0
+            ? undefined
+            : {
+                news: {
+                  count: newsCounts.unread,
+                  label: newsCounts.actionRequired > 0 ? "unread, some awaiting an answer" : "unread",
+                },
+              }
+        }
+        saveId={saveId}
+        clubName={clubName}
+        clubColours={clubColours}
+        leading={
+          // The router's history reports whether a back step exists but has no
+          // forward counterpart, so forward stays enabled and is a no-op at the
+          // end of the stack — the same contract a browser's forward button has.
+          <Header.Nav
+            back={{ disabled: !canNavigateBack(), onTrigger: navigateBack }}
+            forward={{ disabled: false, onTrigger: navigateForward }}
+          />
+        }
+        secondary={<Header.SecondaryRow state={{ view: "career", career }} />}
+        actions={
+          <>
+            <Header.Search />
+            <button
+              type="button"
+              className={`rounded-control border border-border-subtle px-3 py-1 text-text-secondary hover:text-text-primary ${FOCUS_RING.join(" ")}`}
+              onClick={(event) =>
+                onBackToSaves(event.detail > 0 ? "pointer" : "keyboard")
+              }
+            >
+              Back to saves
+            </button>
+            <ContinueControl disabled={continueDisabled} busy={advancing} />
+          </>
+        }
+      />
+      {report !== null && (
+        <ContinueResultBand
+          report={report}
+          onOpen={openConsequence}
+          onDismiss={() => setReport(null)}
         />
-      }
-      secondary={<Header.SecondaryRow state={{ view: "career", career }} />}
-      actions={
-        <>
-          <Header.Search />
-          <button
-            type="button"
-            className={`rounded-control border border-border-subtle px-3 py-1 text-text-secondary hover:text-text-primary ${FOCUS_RING.join(" ")}`}
-            onClick={(event) =>
-              onBackToSaves(event.detail > 0 ? "pointer" : "keyboard")
-            }
-          >
-            Back to saves
-          </button>
-          <ContinueControl disabled={continueDisabled} busy={advancing} />
-        </>
-      }
-    />
+      )}
+    </>
   );
 };
 

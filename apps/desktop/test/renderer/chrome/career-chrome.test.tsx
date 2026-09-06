@@ -291,6 +291,112 @@ describe("Continue in the chrome", () => {
     expect(source).not.toContain("data-action-id");
   });
 
+  it("reports why the advance stopped, and routes each consequence to the screen that owns it", async () => {
+    mockPreload(async (method) => {
+      if (method === "getLeagueTable") {
+        return {
+          _tag: "Success",
+          value: {
+            season: { seasonNumber: 3, currentDate: "2027-05-22", phase: "in_season" as const },
+            standings: [],
+          },
+        } as never;
+      }
+      if (method === "advanceCalendar") {
+        return {
+          _tag: "Success",
+          value: {
+            season: { seasonNumber: 4, currentDate: "2027-07-01", phase: "pre_season" as const },
+            resolvedDate: "2027-05-22",
+            transferWindowClosed: "mid_season",
+            transferWindowOpened: null,
+            seasonConcluded: true,
+            boardObjectiveVerdict: "met" as const,
+            managerOutcome: "warned" as const,
+          },
+        } as never;
+      }
+      return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: rid("s1") } } as never;
+    });
+    await mountRoutedCareer("league");
+    fireEvent.click(screen.getByRole("button", { name: /Continue/ }));
+
+    const band = await screen.findByRole("region", { name: "What Continue did" });
+    // The highest-priority consequence is the heading — it can change whether
+    // the career continues in its current form.
+    expect(
+      within(band).getByRole("heading", { name: "The board has warned you" }),
+    ).toBeTruthy();
+    // ...and the lower-priority ones are still listed, never dropped.
+    expect(within(band).getByText(/The season is over/)).toBeTruthy();
+    expect(within(band).getByText(/Transfer window has closed/)).toBeTruthy();
+    expect(within(band).getByText(/has been resolved/)).toBeTruthy();
+    // The reason arrives without looking, once.
+    expect(within(band).getAllByRole("status")[0]!.textContent).toBe("The board has warned you");
+  });
+
+  it("a consequence opens the screen that owns it, and closes the report", async () => {
+    const navigated: string[] = [];
+    await mountCareer("in_season", "league");
+    bindRouter({
+      navigate: (opts: { to: string }) => navigated.push(opts.to),
+      history: { back: () => undefined, forward: () => undefined, canGoBack: () => false },
+    } as never);
+
+    fireEvent.click(screen.getByRole("button", { name: /Continue/ }));
+    const band = await screen.findByRole("region", { name: "What Continue did" });
+    // The canned advance resolves a Matchday, whose consequence the League table owns.
+    fireEvent.click(within(band).getByRole("button", { name: "League table" }));
+
+    expect(navigated).toEqual(["/career/$saveId/league"]);
+    expect(screen.queryByRole("region", { name: "What Continue did" })).toBeNull();
+  });
+
+  it("dismissing the report leaves it dismissed", async () => {
+    await mountCareer("in_season", "league");
+    fireEvent.click(screen.getByRole("button", { name: /Continue/ }));
+    const band = await screen.findByRole("region", { name: "What Continue did" });
+
+    fireEvent.click(within(band).getByRole("button", { name: "Dismiss" }));
+
+    expect(screen.queryByRole("region", { name: "What Continue did" })).toBeNull();
+    // A re-render for an unrelated reason must not bring it back.
+    act(() => setScopeState({ ready: true }));
+    expect(screen.queryByRole("region", { name: "What Continue did" })).toBeNull();
+  });
+
+  it("a failed advance says so rather than vanishing", async () => {
+    mockPreload(async (method) => {
+      if (method === "getLeagueTable") {
+        return {
+          _tag: "Success",
+          value: {
+            season: { seasonNumber: 3, currentDate: "2026-10-17", phase: "in_season" as const },
+            standings: [],
+          },
+        } as never;
+      }
+      if (method === "advanceCalendar") {
+        return {
+          _tag: "Failure",
+          error: { _tag: "SaveArchivedError", saveId: rid("s1"), cause: "sacked" },
+        } as never;
+      }
+      return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: rid("s1") } } as never;
+    });
+    await mountRoutedCareer("league");
+    fireEvent.click(screen.getByRole("button", { name: /Continue/ }));
+
+    // The sentence the League table's own control used to be the only place to
+    // see. It is now reported wherever the player pressed Continue.
+    const band = await screen.findByRole("region", { name: "What Continue did" });
+    expect(
+      within(band).getByRole("heading", {
+        name: "You have been sacked — this save is archived.",
+      }),
+    ).toBeTruthy();
+  });
+
   it("advancing from the chrome refreshes the mounted screen with no manual reload", async () => {
     let leagueTableCalls = 0;
     mockPreload(async (method) => {

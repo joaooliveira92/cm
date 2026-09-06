@@ -43,17 +43,17 @@ raise.
 **Blocked by:** 02 (Continue exists once) — the surviving control is the one that grows the surface,
 and the removed one carried the only error line.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Advancing from any career screen produces a result surface naming why the advance stopped.
-- [ ] Every consequence the advance reports appears; when several arrive together they are ordered
+- [x] Advancing from any career screen produces a result surface naming why the advance stopped.
+- [x] Every consequence the advance reports appears; when several arrive together they are ordered
       manager outcome, board verdict, season conclusion, Matchday result, window transition, and
       none is dropped.
-- [ ] Each consequence offers navigation to the screen that owns it.
-- [ ] The surface survives until dismissed or acted on, and persists nothing across a reload.
-- [ ] A failed advance renders its typed sentence and leaves the career unchanged.
-- [ ] The stop is announced once to assistive technology; an advance in flight is not announced
+- [x] Each consequence offers navigation to the screen that owns it.
+- [x] The surface survives until dismissed or acted on, and persists nothing across a reload.
+- [x] A failed advance renders its typed sentence and leaves the career unchanged.
+- [x] The stop is announced once to assistive technology; an advance in flight is not announced
       repeatedly.
-- [ ] No copy in the surface expresses time in days or dates, and none claims Continue stops
+- [x] No copy in the surface expresses time in days or dates, and none claims Continue stops
       whenever something needs attention.
-- [ ] `pnpm check:all` is green.
+- [x] `pnpm check:all` is green.

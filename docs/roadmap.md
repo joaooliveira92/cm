@@ -53,11 +53,11 @@ referenced throughout.
   issue-tracker convention.
 - **[.scratch/save-list-error-handling/](../.scratch/save-list-error-handling/)** — 0/1, a
   `ready-for-agent` bug-fix.
-- **[.scratch/continue-and-advance-time/](../.scratch/continue-and-advance-time/)** — 2/5. Screen 23
+- **[.scratch/continue-and-advance-time/](../.scratch/continue-and-advance-time/)** — 3/5. Screen 23
   of the Group B import reconciled against the shipped Continue loop. Done: Group B has a
-  reconciliation ledger with Screen 23 `Reviewed`, and the League table's duplicate advance control
-  is gone, so time advances from the chrome alone. Remaining: the structured result surface,
-  actionable readiness items, and making the advance transactional and single-flight.
+  reconciliation ledger with Screen 23 `Reviewed`, the League table's duplicate advance control is
+  gone, and one press of Continue now reports what it did and why it failed. Remaining: actionable
+  readiness items, and making the advance transactional and single-flight.
 - **[.scratch/human-fixture-pre-match-boundary/](../.scratch/human-fixture-pre-match-boundary/)** —
   0/3, all `ready-for-agent`, and blocked on `continue-and-advance-time` ticket 05. Implements the
   proposed note of the same name: Continue stops before the human club's Fixture, Match day binds to
