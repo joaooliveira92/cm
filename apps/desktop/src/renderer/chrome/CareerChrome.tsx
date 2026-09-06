@@ -57,6 +57,7 @@ import {
   useAtomValue,
 } from "../rpc.js";
 import { BTN_PRIMARY } from "../theme.js";
+import { ContinueOutstandingBand } from "./ContinueOutstanding.js";
 import { ContinueResultBand, type ContinueReport } from "./ContinueResult.js";
 import { Header } from "./header/index.js";
 import type { HeaderCareer, HeaderStanding } from "./header/career-header-state.js";
@@ -212,7 +213,10 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
     }
   }, [advance, advanceError]);
 
-  const openConsequence = (destination: ContinueDestination): void => {
+  /** Following a link out of either band closes the per-press report: the player
+   *  has acted on it. The outstanding band is not closed here — it is derived,
+   *  and it clears itself when its condition does. */
+  const openDestination = (destination: ContinueDestination): void => {
     navigate({ type: destination, saveId });
     setReport(null);
   };
@@ -235,17 +239,18 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
       : null;
 
   // The standing readiness check behind Continue. The project ships no notification centre, so a
-  // pending condition is surfaced next to the control it concerns — here the career band's warning
-  // slot, which stayed silent whenever the loop was free to advance. Blockers keep their existing
-  // copy paths above; this adds only the advisory case, which nothing reported before.
+  // pending condition is surfaced next to the control it concerns — every one of them, in the
+  // outstanding band below, each with the screen that owns its fix. The header's warning slot keeps
+  // the narrower job of explaining the *control*: why the button is greyed, which is not the same
+  // question as what is outstanding.
   //
   // `hasTactic` defaults true unless the query has actually come back saying otherwise, so neither
   // a load in flight nor a failed read flashes a warning about state we have not read.
   const newsCounts = newsResult._tag === "Success" ? newsResult.value.counts : null;
 
-  const readinessAdvisory =
+  const outstanding =
     season === null
-      ? undefined
+      ? []
       : assessContinueReadiness({
           phase: season.phase,
           hasTactic:
@@ -255,7 +260,7 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
           // Zero until the read comes back, on the same reasoning as `hasTactic` above: a load in
           // flight must not flash a warning about state we have not read.
           pendingIncomingBids: newsCounts?.actionRequired ?? 0,
-        }).items.find((item) => item.severity === "advisory");
+        }).items;
 
   // Everything the band reports, described in one place. A blocked career loop
   // is stated here rather than left to a `title` no disabled control delivers.
@@ -265,12 +270,12 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
     season,
     standing,
     liveMatch: liveMatch ?? null,
+    // Why the *control* is greyed, which is a narrower question than what is
+    // outstanding: the specific blocker, and the screen that clears it, is a row
+    // in the outstanding band. Restating the blocker here printed the same
+    // sentence twice on screen during a live match.
     blockedReason:
-      liveMatch !== undefined
-        ? "The season cannot advance during a match."
-        : continueDisabled && season !== null
-          ? (continueUnavailableReason() ?? null)
-          : (readinessAdvisory?.detail ?? null),
+      continueDisabled && season !== null ? (continueUnavailableReason() ?? null) : null,
   };
 
   return (
@@ -317,10 +322,11 @@ export const CareerChrome = ({ saveId }: { readonly saveId: SaveId }) => {
           </>
         }
       />
+      <ContinueOutstandingBand items={outstanding} onOpen={openDestination} />
       {report !== null && (
         <ContinueResultBand
           report={report}
-          onOpen={openConsequence}
+          onOpen={openDestination}
           onDismiss={() => setReport(null)}
         />
       )}

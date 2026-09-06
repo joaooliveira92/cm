@@ -176,4 +176,37 @@ describe("bids awaiting the manager", () => {
       "no-tactic",
     ]);
   });
+
+  describe("every item names where its fix lives", () => {
+    it("sends an unset Tactic to Tactics and unanswered bids to Transfers", () => {
+      const items = assessContinueReadiness({
+        ...READY,
+        hasTactic: false,
+        pendingIncomingBids: 2,
+      }).items;
+
+      expect(items.find((i) => i.id === "no-tactic")!.destination).toBe("tactics");
+      expect(items.find((i) => i.id === "bids-awaiting-response")!.destination).toBe("transfers");
+    });
+
+    it("offers nothing to open for a condition that clears itself", () => {
+      const [item] = assessContinueReadiness({ ...READY, advancing: true }).items;
+
+      expect(item!.id).toBe("advance-in-flight");
+      expect(item!.destination).toBeNull();
+    });
+
+    it("carries a destination on every other rule, so no item is a dead end", () => {
+      const everything = assessContinueReadiness({
+        phase: "season_complete",
+        hasTactic: false,
+        matchInProgress: true,
+        advancing: false,
+        pendingIncomingBids: 1,
+      }).items;
+
+      expect(everything.length).toBeGreaterThan(3);
+      expect(everything.filter((i) => i.destination === null)).toEqual([]);
+    });
+  });
 });

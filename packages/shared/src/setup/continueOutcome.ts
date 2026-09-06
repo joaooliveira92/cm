@@ -25,7 +25,27 @@ import { formatCalendarDate } from "../season/calendar.js";
 
 /** Where a consequence's detail lives. Mirrors the renderer's career destinations; restated because
  *  this package deliberately does not depend on the renderer or on contracts. */
-export type ContinueDestination = "league" | "transfers" | "seasonSummary" | "manager" | "news";
+export type ContinueDestination =
+  | "league"
+  | "transfers"
+  | "seasonSummary"
+  | "manager"
+  | "news"
+  | "tactics"
+  | "match";
+
+/** What each destination is called where it is offered as a link. Lives beside the type it keys, so
+ *  a new destination cannot be added without naming it, and the two bands that offer links cannot
+ *  drift into calling the same screen two things. */
+export const CONTINUE_DESTINATION_LABELS: Readonly<Record<ContinueDestination, string>> = {
+  league: "League table",
+  transfers: "Transfers",
+  seasonSummary: "Season summary",
+  manager: "Manager profile",
+  news: "News",
+  tactics: "Tactics",
+  match: "Match day",
+};
 
 /** One thing an advance did. `id` is the stable handle; the copy is display text, never matched on. */
 export interface ContinueConsequence {

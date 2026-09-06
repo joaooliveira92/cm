@@ -31,12 +31,12 @@ one the chrome already holds.
 **Blocked by:** 03 (Continue says why it stopped) — both land in the same surface, and where the
 result panel sits decides where the outstanding list sits.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Every outstanding item is listed, blockers first, in a stable order.
-- [ ] Each item states its consequence and offers navigation to the screen that owns the fix.
-- [ ] Following an item's destination and resolving it removes that item without a manual reload.
-- [ ] An advisory never prevents the advance; a blocker always does, with its reason visible rather
+- [x] Every outstanding item is listed, blockers first, in a stable order.
+- [x] Each item states its consequence and offers navigation to the screen that owns the fix.
+- [x] Following an item's destination and resolving it removes that item without a manual reload.
+- [x] An advisory never prevents the advance; a blocker always does, with its reason visible rather
       than hidden behind a disabled control's tooltip.
-- [ ] The destination is carried by the item; no component maps copy to a route.
-- [ ] `pnpm check:all` is green.
+- [x] The destination is carried by the item; no component maps copy to a route.
+- [x] `pnpm check:all` is green.

@@ -14,7 +14,12 @@
  * pagination. It shows the most recent advance and nothing else; after it is dismissed the durable
  * consequences stay visible on the screens that own them.
  */
-import type { ContinueConsequence, ContinueDestination, ContinueOutcome } from "@cm-clone/shared";
+import {
+  CONTINUE_DESTINATION_LABELS,
+  type ContinueConsequence,
+  type ContinueDestination,
+  type ContinueOutcome,
+} from "@cm-clone/shared";
 import { FOCUS_RING } from "../focus.js";
 import { BTN_SECONDARY, PANEL } from "../theme.js";
 
@@ -23,13 +28,6 @@ export type ContinueReport =
   | { readonly kind: "outcome"; readonly outcome: ContinueOutcome }
   | { readonly kind: "failure"; readonly message: string };
 
-const DESTINATION_LABELS: Readonly<Record<ContinueDestination, string>> = {
-  league: "League table",
-  transfers: "Transfers",
-  seasonSummary: "Season summary",
-  manager: "Manager profile",
-  news: "News",
-};
 
 const ConsequenceRow = ({
   consequence,
@@ -58,7 +56,7 @@ const ConsequenceRow = ({
           className={`shrink-0 text-sm underline underline-offset-2 hover:text-text-primary ${FOCUS_RING.join(" ")}`}
           onClick={() => onOpen(destination)}
         >
-          {DESTINATION_LABELS[destination]}
+          {CONTINUE_DESTINATION_LABELS[destination]}
         </button>
       )}
     </li>

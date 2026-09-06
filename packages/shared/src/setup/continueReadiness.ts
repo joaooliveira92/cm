@@ -10,6 +10,7 @@
  * It is pure and takes facts rather than fetching them, so the same rules can be unit-tested here
  * and evaluated in the renderer from atoms it already holds. No new RPC method exists for it.
  */
+import type { ContinueDestination } from "./continueOutcome.js";
 
 /** The Calendar's phases. Mirrors `SEASON_PHASES` in `@cm-clone/contracts`, restated because this
  * package deliberately does not depend on contracts (see `bestXi.ts` for the same posture). */
@@ -26,13 +27,19 @@ export type ReadinessSeasonPhase =
  */
 export type ReadinessSeverity = "blocking" | "advisory";
 
-/** One thing worth saying before Continue. `id` is the stable handle the renderer maps to a route
- * or action — the copy is display text and is never matched on. */
+/** One thing worth saying before Continue. `id` is the stable handle; the copy is display text and
+ * is never matched on.
+ *
+ * `destination` is the screen that owns the fix, carried by the item rather than derived by whatever
+ * renders it. An item that says what is outstanding and leaves finding it to the player is a notice,
+ * not an affordance — and a component that mapped copy to a route would break the moment the copy
+ * was reworded. `null` means there is nothing to open: the condition clears itself. */
 export interface ReadinessItem {
   readonly id: string;
   readonly severity: ReadinessSeverity;
   readonly title: string;
   readonly detail: string;
+  readonly destination: ContinueDestination | null;
 }
 
 /** Everything the assessment reads. Each field is a fact some caller already holds, so nothing here
@@ -64,6 +71,7 @@ interface ReadinessRule {
   readonly title: string;
   /** A function rather than a string because a rule may need to name a count. */
   readonly detail: (facts: ContinueReadinessFacts) => string;
+  readonly destination: ContinueDestination | null;
 }
 
 const BLOCKING: ReadonlyArray<ReadinessRule> = [
@@ -74,6 +82,7 @@ const BLOCKING: ReadonlyArray<ReadinessRule> = [
     // The sentence the career chrome already shows for this case — kept verbatim so adopting this
     // module changes what the player is told about a *new* condition only.
     detail: () => "The season cannot advance during a match.",
+    destination: "match",
   },
   {
     // Acceptance criterion 6 — duplicate requests cannot advance twice. The disabled button is the
@@ -82,12 +91,15 @@ const BLOCKING: ReadonlyArray<ReadinessRule> = [
     applies: (facts) => facts.advancing,
     title: "Already advancing",
     detail: () => "The Calendar is still processing the previous advance.",
+    // Nothing to open: this clears itself when the advance returns.
+    destination: null,
   },
   {
     id: "season-complete",
     applies: (facts) => facts.phase === "season_complete",
     title: "The season is complete",
     detail: () => "There are no further Matchdays to play in this season.",
+    destination: "seasonSummary",
   },
 ];
 
@@ -110,6 +122,7 @@ const ADVISORY: ReadonlyArray<ReadinessRule> = [
     title: "Bids awaiting your response",
     detail: (facts) =>
       `${facts.pendingIncomingBids === 1 ? "A club has" : `${facts.pendingIncomingBids} clubs have`} bid for your players. Advancing lets ${facts.pendingIncomingBids === 1 ? "it" : "them"} lapse.`,
+    destination: "transfers",
   },
   {
     // The sharpest unannounced gap in the career loop: every AI club is assigned a Tactic at season
@@ -121,6 +134,7 @@ const ADVISORY: ReadonlyArray<ReadinessRule> = [
     applies: (facts) => !facts.hasTactic,
     title: "No Tactic set",
     detail: () => "Matches will be played with an automatic 4-4-2 until you set one.",
+    destination: "tactics",
   },
 ];
 
@@ -141,12 +155,14 @@ export const assessContinueReadiness = (
       severity: "blocking" as const,
       title: rule.title,
       detail: rule.detail(facts),
+      destination: rule.destination,
     })),
     ...advisories.map((rule) => ({
       id: rule.id,
       severity: "advisory" as const,
       title: rule.title,
       detail: rule.detail(facts),
+      destination: rule.destination,
     })),
   ];
 
