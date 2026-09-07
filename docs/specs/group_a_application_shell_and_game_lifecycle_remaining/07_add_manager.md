@@ -151,32 +151,7 @@ For a new career, the initial world must remain recoverable even though it has n
 
 ## 5. Conceptual desktop layout
 
-```text
-+--------------------------------------------------------------------------------+
-| ADD MANAGER                                              Career: CW-7K4M-2P9Q  |
-|--------------------------------------------------------------------------------|
-| Human managers in this career                                             0/4. |
-|                                                                                |
-| +----------------------------------------------------------------------------+ |
-| | No manager has been added yet.                                             | |
-| |                                                                            | |
-| | Create a manager to begin controlling a club, national team, or to start   | |
-| | the career unemployed.                                                     | |
-| |                                                                            | |
-| | [Add Local Manager]              [Invite Network Manager]                  | |
-| +----------------------------------------------------------------------------+ |
-|                                                                                |
-| Manager slots                                                                  |
-| +----------------------------------------------------------------------------+ |
-| | Slot 1     Empty                                      [Create Manager]     | |
-| | Slot 2     Empty                                      [Create Manager]     | |
-| | Slot 3     Empty                                      [Create Manager]     | |
-| | Slot 4     Empty                                      [Create Manager]     | |
-| +----------------------------------------------------------------------------+ |
-|                                                                                |
-| [Career Setup Summary] [Multiplayer Settings]                           [Back] |
-+--------------------------------------------------------------------------------+
-```
+![image](../../images/16626368-championship-manager-season-0304-windows-manager-setup-choose-a-.png)
 
 Existing-career example:
 

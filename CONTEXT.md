@@ -606,20 +606,24 @@ _Avoid_: Head Coach, Manager (the human is the Manager)
 ### Scouting
 
 **Scout**:
-A Staff member of role `scout`, assigned by the manager to observe a specific Player, and the
-mechanism by which Scouting Progress advances. A club holds exactly as many Scouts as its Stature Tier
-grants, and each holds at most one assignment at a time, so the Scouts *are* the assignment slots.
+A Staff member of role `scout`, assigned by the manager to observe a specific Player or Club, and
+the mechanism by which Scouting Progress advances. A club holds exactly as many Scouts as its
+Stature Tier grants, and each holds at most one assignment at a time, so the Scouts *are* the
+assignment slots.
 A Scout's quality sets the accrual rate of the assignment they hold, never how many assignments the
 club can run. Distinct from the human manager themself — a Scout is a named person the manager
 directs, not the player-facing role.
 _Avoid_: scout slot (Scouts stopped being fungible slots when they became Staff)
 
 **Scouting Assignment**:
-The act of assigning a Scout to a Player, started and ended by explicit manager action. Determines
-which Player accrues Scouting Progress while active. Only a Player is a valid target: a Club carries
-no hidden value for Attribute Range to narrow.
-_Avoid_: Scouting Report (implies a one-shot document; this is an ongoing state, not a delivered
-artifact)
+The act of assigning a Scout to a Player or a Club, started and ended by explicit manager action.
+Determines which Players accrue Scouting Progress while active. A Club target is shorthand for that
+club's squad: it advances the Scouting Progress of the club's Players under the same per-Player
+rules, and a Club never carries a hidden value of its own for an Attribute Range to narrow. It costs
+one Scout however wide the target — a Club assignment occupies exactly one of the club's Scouts, the
+same as a Player assignment, and never one per Player observed.
+_Avoid_: scouting a formation/tactic directly (what a Scout observes is always Players; a Club-level
+reading is derived from them)
 
 **Scouting Progress**:
 A per-(Player, human club) percentage, starting at 0 (Unscouted) for every player outside the
@@ -639,6 +643,31 @@ Range signals continuous narrowing, not a fixed bucket)
 The terminal state (Scouting Progress at 100) where a player's Attributes, Potential Ability, Injury
 Proneness, and Transfer Value display as exact figures, identical to the manager's own-squad view.
 Never regresses once reached.
+
+**Team Scout Report**:
+The delivered artifact of a Club-targeted Scouting Assignment: a dated, immutable reading of one
+Club, presented on the Team Scout Report screen. Its content is derived entirely from the Scouting
+Progress already accrued on that Club's Players plus what the manager can already observe of the
+club's form and tactics — it aggregates scouted knowledge and never reads a hidden per-Club value,
+because none exists. A Club with no scouted Players yields no report rather than an estimated one,
+and nothing in a report states an exact figure that the underlying Player's Attribute Range would
+withhold. Distinct from a Scouting Assignment, which is the ongoing state that produces the reading.
+*Scouting Report* is the acceptable short form where the Club is clear from context; it was
+previously an `_Avoid_` on the grounds that no delivered artifact existed, and now one does.
+_Avoid_: Opponent Report, Pre-Match Report (a report is about a Club, not about a fixture, and is
+not tied to playing them)
+
+**Knowledge Confidence**:
+How much of a Team Scout Report rests on scouted knowledge rather than on gaps, rising as the target
+squad's Scouting Progress rises. Distinct from Freshness, which measures the report's calendar age,
+not its coverage. Unknown information stays Unknown at any Knowledge Confidence: neither term ever
+licenses estimating a value from a hidden one.
+_Avoid_: accuracy, reliability (both imply the report can be wrong; it can only be incomplete)
+
+**Freshness**:
+How recently a Team Scout Report was observed, decaying with the calendar as the report ages. A
+decayed report stays readable and is never rewritten in place — the manager renews it by taking a
+new reading, which produces a new report alongside the previous ones.
 
 ### Manager
 
@@ -692,8 +721,8 @@ deterministically. It has no Scouting binding: Scouting's two numeric terms are 
 owned by a Scout's quality, and the noise band, which the Pillar cannot scale without varying one
 Scout's output by who employs them. A binding returns only if a surface ships that separates what a
 Scout observed from what the manager concludes from it, and it must then affect only information
-quality and never replace a Scout's own evaluation capability. Opponent analysis is cut from v1: no opponent-scouting or
-pre-match report system exists.
+quality and never replace a Scout's own evaluation capability. The Team Scout Report is not such a
+surface: it derives deterministically from scouted knowledge and reads no Pillar.
 _Avoid_: Tactical IQ (reads as a literal intelligence score)
 
 **Influence**:

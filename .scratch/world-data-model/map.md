@@ -129,7 +129,8 @@ are not re-openable by a ticket without redrawing it:
   exactly the players who have rows, so a `results-only` nation hides a **transfer market** as well as a
   simulation; a player deleted by relegation takes their scouting with them; Progress stays stored but on
   a new justification, since a date-bearing Calendar voids the old one; and neither club-scouting nor a
-  Tactical Acumen binding ships.
+  Tactical Acumen binding ships. (Club-scouting was later reinstated by the `team-scout-report`
+  effort; the Tactical Acumen binding still does not ship.)
 
 - [10 - Generation reads the League Selection Snapshot](issues/10-generation-reads-the-snapshot.md):
   `beginCareer` takes a `SnapshotId` and **re-resolves** its intents against the live catalogue rather
@@ -228,9 +229,13 @@ are not re-openable by a ticket without redrawing it:
   hiring or firing. Making staff a lever the manager pulls means reopening `Contract` and `Wage
   Budget`, which is a gameplay effort rather than a shape on disk.
 
-- **Scouting a Club rather than a Player.** `CONTEXT.md` allowed it as an assignment target; ticket 09
-  cut it and fixed the glossary. No hidden club-level value exists for fog to narrow, so it would
-  accrue progress against nothing readable. Returns only if such a value ships.
+- **~~Scouting a Club rather than a Player.~~** *No longer out of scope.* Ticket 09 cut it on the
+  grounds that no hidden club-level value exists for fog to narrow, so a Club assignment would accrue
+  progress against nothing readable. That premise still holds and no such value has shipped — but the
+  `team-scout-report` effort reinstated the Club target on a different footing: a Club assignment
+  accrues progress against the club's *Players* under the existing per-Player rules, and the Team
+  Scout Report aggregates that per-Player knowledge. See
+  [Team Scout Reports supersede the opponent-analysis cut](../../.agents/notes/implemented/architecture/2026-09-07-team-scout-reports-supersede-opponent-analysis-cut.md).
 
 - **Tactical Acumen's scouting binding.** Deferred to "the Scouting effort" by `CONTEXT.md`; scouting
   now ships and the binding still does not. Both of scouting's numeric terms are spoken for or
