@@ -49,6 +49,12 @@ export interface CreateSessionApi {
    * footer layout. `null` restores the shell's own plan for the step.
    */
   readonly registerBottomBar: (plan: BottomBarPlan | null) => void;
+  /**
+   * Leave the flow, subject to the discard confirmation. Every player-initiated
+   * exit calls this rather than navigating away itself, so a step cannot ship a
+   * departure that skips the gate.
+   */
+  readonly requestLeave: () => void;
 }
 
 /**

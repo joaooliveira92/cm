@@ -118,6 +118,16 @@ export const commit = (state: GenerationState): GenerationTransition =>
 export const provisionalIdOf = (state: GenerationState): SaveId | null =>
   state._tag === "Ready" ? state.provisionalId : null;
 
+/**
+ * Whether leaving now would throw away a world the player has waited for — the gate on the
+ * discard confirmation (§21). True while a world is being built and once one exists: in both
+ * cases something provisional dies on the way out, and the player is asked first. False
+ * everywhere else, because there is nothing to lose: no job has started, the job failed and
+ * left nothing behind, the world committed and is a career now, or it is already discarded.
+ */
+export const leavingDiscardsWorld = (state: GenerationState): boolean =>
+  state._tag === "Running" || state._tag === "Ready";
+
 /** Club selection opens on a complete comparison set or not at all. */
 export const isSelectionReady = (state: GenerationState): boolean => state._tag === "Ready";
 

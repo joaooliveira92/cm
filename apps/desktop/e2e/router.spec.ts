@@ -2,6 +2,16 @@ import type { Page } from "@playwright/test";
 import { enterCareer, expect, goto, matchScore, saveEntry, test, type Screen } from "./launchApp.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
+/** Leave creation once a world exists: the Cancel control raises the discard confirmation
+ *  (Screen 7 §21), and the destructive choice inside it is what actually leaves. */
+const leaveCreationDiscarding = async (page: Page) => {
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await page
+    .getByRole("dialog", { name: "Discard this career?" })
+    .getByRole("button", { name: "Discard" })
+    .click();
+};
+
 /** Clear the League and Nation stage, which gates world generation: the creation flow opens on
  *  scope selection, and the manager step is only reachable once a snapshot exists. */
 const advanceThroughLeagues = async (page: Page) => {
@@ -93,7 +103,7 @@ test("creation keeps beginCareer before Club Selection and returning discards it
   // beginCareer ran before we arrived (the rail's options render from the provisional save).
   await expect(page.getByRole("table", { name: "Clubs" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Cancel" }).click();
+  await leaveCreationDiscarding(page);
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).toBeVisible();
   // Leaving creation never leaks a provisional save into the load list.
   await page.getByRole("button", { name: "Load Career" }).click();
@@ -143,7 +153,7 @@ test("the flow never advances past the club decision (AC-13)", async ({ window: 
   await expect(next).toBeEnabled();
 
   // Nothing leaked into the save list: no career is committed by picking.
-  await page.getByRole("button", { name: "Cancel" }).click();
+  await leaveCreationDiscarding(page);
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).toBeVisible();
   await page.getByRole("button", { name: "Load Career" }).click();
   await expect(page.getByText("No saves yet.", { exact: true })).toBeVisible();

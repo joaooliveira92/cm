@@ -24,7 +24,7 @@ import { useCreateSessionApi } from "./createSessionContext.js";
  * `LeagueSelectionSnapshot` and lands the player on Step 2 · Manager.
  */
 export const LeagueSelectionRouteContent = () => {
-  const { update } = useCreateSessionApi();
+  const { update, requestLeave } = useCreateSessionApi();
 
   const handleContinue = useCallback(
     (snapshot: LeagueSelectionSnapshot): void => {
@@ -34,13 +34,12 @@ export const LeagueSelectionRouteContent = () => {
     [update],
   );
 
-  const handleCancel = useCallback((): void => {
-    navigate({ type: "mainMenu" });
-  }, []);
-
   return (
     <RouteView screenId="createLeagues" fill>
-      <ActiveLeaguesScreen onContinue={handleContinue} onCancel={handleCancel} />
+      {/* Leaving from here is not always cheap: a player who stepped back from
+          the Manager step is standing in front of a world that already exists,
+          so this Cancel goes through the same gate the shell's does. */}
+      <ActiveLeaguesScreen onContinue={handleContinue} onCancel={requestLeave} />
     </RouteView>
   );
 };

@@ -30,8 +30,13 @@ test("creating a save with a whitespace name produces no save and no crash", asy
   await nameInput.fill("Empty-name career");
   await expect(next).toBeEnabled();
 
-  // Leaving creation never leaks a provisional save into the load list.
+  // Leaving creation never leaks a provisional save into the load list. A world is already
+  // being built underneath the manager step, so leaving goes through the discard confirmation.
   await window.getByRole("button", { name: "Cancel" }).click();
+  await window
+    .getByRole("dialog", { name: "Discard this career?" })
+    .getByRole("button", { name: "Discard" })
+    .click();
   await window.getByRole("button", { name: "Load Career" }).click();
   // `exact` disambiguates the empty *list item* from the empty-state paragraph beneath it
   // ("No saves yet. Start a new career…"); the claim here is that the list stayed empty.

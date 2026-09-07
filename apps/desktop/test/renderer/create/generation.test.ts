@@ -10,6 +10,7 @@ import {
   generationSucceeded,
   initialGeneration,
   isSelectionReady,
+  leavingDiscardsWorld,
   provisionalIdOf,
   reenter,
   startGeneration,
@@ -147,5 +148,23 @@ describe("generation lifecycle — what the screen reads", () => {
     expect(announcement(generationFailed(running, "disk unavailable").state)).toBe(
       "Building the league failed. disk unavailable",
     );
+  });
+});
+
+describe("generation lifecycle — what leaving would cost", () => {
+  it("has nothing to lose before a job starts, and nothing once one has failed", () => {
+    // A failed job left no world behind, so leaving is as cheap as it was before it ran.
+    expect(leavingDiscardsWorld(pending)).toBe(false);
+    expect(leavingDiscardsWorld(generationFailed(running, "boom").state)).toBe(false);
+  });
+
+  it("has something to lose while a world is being built and once one exists", () => {
+    expect(leavingDiscardsWorld(running)).toBe(true);
+    expect(leavingDiscardsWorld(ready)).toBe(true);
+  });
+
+  it("has nothing to lose once the world became a career, or was already discarded", () => {
+    expect(leavingDiscardsWorld(commit(ready).state)).toBe(false);
+    expect(leavingDiscardsWorld(abandon(ready).state)).toBe(false);
   });
 });

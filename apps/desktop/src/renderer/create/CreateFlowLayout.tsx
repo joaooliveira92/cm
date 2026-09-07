@@ -8,6 +8,7 @@ import { Alert } from "../components/ui/alert.js";
 import { Header } from "../chrome/header/index.js";
 import { ShellBottomBar } from "../chrome/bottom-bar/index.js";
 import { CreateSessionContext } from "../router/createSessionContext.js";
+import { DiscardCareerDialog } from "./DiscardCareerDialog.js";
 import { GenerationStatus } from "./GenerationStatus.js";
 import { useCreateSession, type CreationStep } from "./useCreateSession.js";
 
@@ -19,7 +20,16 @@ const STEP_LABELS: Readonly<Record<CreationStep, string>> = {
 };
 
 export const CreateFlowLayout = () => {
-  const { session, step, bottomBarPlan, retryGeneration, contextValue } = useCreateSession();
+  const {
+    session,
+    step,
+    bottomBarPlan,
+    retryGeneration,
+    leaveConfirmOpen,
+    keepEditing,
+    confirmLeave,
+    contextValue,
+  } = useCreateSession();
 
   return (
     <CreateSessionContext.Provider value={contextValue}>
@@ -69,6 +79,14 @@ export const CreateFlowLayout = () => {
         </main>
 
         <ShellBottomBar plan={bottomBarPlan} />
+
+        {leaveConfirmOpen && (
+          <DiscardCareerDialog
+            session={session}
+            onKeep={keepEditing}
+            onDiscard={confirmLeave}
+          />
+        )}
       </div>
     </CreateSessionContext.Provider>
   );

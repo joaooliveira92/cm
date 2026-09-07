@@ -26,6 +26,7 @@ import {
   generationSucceeded,
   initialGeneration,
   isSelectionReady,
+  leavingDiscardsWorld,
   provisionalIdOf,
   reenter,
   startGeneration,
@@ -89,6 +90,12 @@ export interface CreateFlowSession {
   /** The bar the shell renders: the step's own plan unless a step registered one. */
   readonly bottomBarPlan: BottomBarPlan;
   readonly retryGeneration: () => void;
+  /** True while the leave confirmation is up; the shell renders the dialog. */
+  readonly leaveConfirmOpen: boolean;
+  /** Stay in creation, on the step the confirmation was raised from. */
+  readonly keepEditing: () => void;
+  /** Discard the provisional world and leave for the Main Menu. */
+  readonly confirmLeave: () => void;
   /** What the step routes read through `CreateSessionContext`. */
   readonly contextValue: CreateSessionApi;
 }
@@ -96,6 +103,7 @@ export interface CreateFlowSession {
 export const useCreateSession = (): CreateFlowSession => {
   const [session, setSession] = useState<CreationSession>(createEmptySession);
   const [registeredBar, setRegisteredBar] = useState<BottomBarPlan | null>(null);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const sessionRef = useRef(session);
   const generationRunRef = useRef<Promise<void> | null>(null);
   const mountedRef = useRef(true);
@@ -217,7 +225,35 @@ export const useCreateSession = (): CreateFlowSession => {
     [],
   );
 
-  const handleCancel = useCallback((): void => {
+  /**
+   * Every player-initiated way out of the flow goes through here, not just the
+   * bar's Cancel — the guarantee §21 asks for is about leaving, so a second
+   * departure path that skipped the gate would simply be the old silent
+   * discard under a different label.
+   *
+   * Leaving is immediate when there is nothing provisional to lose: before the
+   * league selection is submitted no world exists, and after the career commits
+   * the world is a career. In between, the player is asked first.
+   */
+  const requestLeave = useCallback((): void => {
+    if (leavingDiscardsWorld(sessionRef.current.generation)) {
+      setLeaveConfirmOpen(true);
+      return;
+    }
+
+    navigate({ type: "mainMenu" });
+  }, []);
+
+  /** Declining. Nothing is reset: the world, the manager entries, and the club
+   *  pick are the session the player came back to. */
+  const keepEditing = useCallback((): void => {
+    setLeaveConfirmOpen(false);
+  }, []);
+
+  /** Confirming. The discard itself still falls out of the teardown transition,
+   *  as it did when leaving was unconditional. */
+  const confirmLeave = useCallback((): void => {
+    setLeaveConfirmOpen(false);
     navigate({ type: "mainMenu" });
   }, []);
 
@@ -339,6 +375,13 @@ export const useCreateSession = (): CreateFlowSession => {
   }, [runGeneration, session.leagueSelection]);
 
   useEffect(() => {
+    // A departure moves the location before this shell unmounts, and every path outside the flow
+    // reads as step "1" — so without this the guard below would fire on the way out and pull a
+    // player who just left the flow straight back into it.
+    if (!pathname.startsWith("/create")) {
+      return;
+    }
+
     if (step === "leagues") {
       return;
     }
@@ -357,7 +400,7 @@ export const useCreateSession = (): CreateFlowSession => {
     ) {
       navigate({ type: "createStep1" });
     }
-  }, [step]);
+  }, [pathname, step]);
 
   useEffect(() => {
     setRegisteredBar(null);
@@ -385,8 +428,17 @@ export const useCreateSession = (): CreateFlowSession => {
       retryGeneration,
       selectClub,
       registerBottomBar,
+      requestLeave,
     }),
-    [registerBottomBar, retryGeneration, selectClub, session, setManagerStep, update],
+    [
+      registerBottomBar,
+      requestLeave,
+      retryGeneration,
+      selectClub,
+      session,
+      setManagerStep,
+      update,
+    ],
   );
 
   // One bar, described rather than assembled: Cancel keeps its zone on every
@@ -405,14 +457,23 @@ export const useCreateSession = (): CreateFlowSession => {
         selectionReady,
         clubPicked,
         committing: session.commit === "committing",
-        onCancel: handleCancel,
+        onCancel: requestLeave,
         onBackToLeagues: handleBackToLeagues,
         onNextManagerSubStep: handleNextManagerSubStep,
         onGoToClubSelection: handleGoToClubSelection,
         onGoToReview: handleGoToReview,
         onCreateCareer: handleCreateCareer,
       })
-      : withShellCancel(registeredBar, creationCancelButton(handleCancel));
+      : withShellCancel(registeredBar, creationCancelButton(requestLeave));
 
-  return { session, step, bottomBarPlan, retryGeneration, contextValue };
+  return {
+    session,
+    step,
+    bottomBarPlan,
+    retryGeneration,
+    leaveConfirmOpen,
+    keepEditing,
+    confirmLeave,
+    contextValue,
+  };
 };

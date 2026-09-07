@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { StrictMode } from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import {
   createMemoryHistory,
   createRootRoute,
@@ -204,6 +204,20 @@ const deferredBeginCareer = () => {
   };
 };
 
+/**
+ * Leave the flow the way a player does now: press Cancel, then confirm the discard the
+ * confirmation names. `flow-leave-confirmation.test.tsx` owns the gate itself; these tests are
+ * about what the discard does once it is through it.
+ */
+const cancelAndConfirmDiscard = (): void => {
+  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  fireEvent.click(
+    within(screen.getByRole("dialog", { name: "Discard this career?" })).getByRole("button", {
+      name: "Discard",
+    }),
+  );
+};
+
 beforeEach(() => {
   calls.length = 0;
   // The router restores scroll on every navigation; jsdom has no scrollTo.
@@ -317,7 +331,7 @@ describe("Screen 2 — leaving creation never orphans a provisional world", () =
     generation.succeed("provisional-1");
     await waitFor(() => expect(screen.queryByRole("progressbar")).toBeNull());
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    cancelAndConfirmDiscard();
 
     await waitFor(() => expect(methodsCalled("discardCareer")).toHaveLength(1));
     expect(methodsCalled("discardCareer")[0]?.payload).toEqual({ id: "provisional-1" });
@@ -331,7 +345,7 @@ describe("Screen 2 — leaving creation never orphans a provisional world", () =
 
     // Cancel lands while `beginCareer` is still in flight: the id being
     // discarded does not exist yet at the moment the player asks.
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    cancelAndConfirmDiscard();
     await screen.findByText("Save List");
     expect(methodsCalled("discardCareer")).toHaveLength(0);
 
@@ -349,7 +363,7 @@ describe("Screen 2 — leaving creation never orphans a provisional world", () =
     generation.succeed("provisional-1");
     await waitFor(() => expect(screen.queryByRole("progressbar")).toBeNull());
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    cancelAndConfirmDiscard();
     await waitFor(() => expect(methodsCalled("discardCareer")).toHaveLength(1));
     unmount();
 
