@@ -78,7 +78,11 @@ export const ClubStaffScreen = ({
   }
   if (state === "loading") {
     return (
-      <main className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`} tabIndex={-1}>
+      <main
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        tabIndex={-1}
+        aria-label="Club staff"
+      >
         <p className="text-text-secondary">Loading club staff...</p>
       </main>
     );

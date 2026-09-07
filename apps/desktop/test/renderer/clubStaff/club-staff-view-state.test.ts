@@ -48,7 +48,8 @@ describe("ticket 04 — exactly three view states, none left as a hook", () => {
   it("isOwnClub compares canonical ids, not names", () => {
     expect(isOwnClub(clubStaff("club-7"), squad("club-7"))).toBe(true);
     expect(isOwnClub(clubStaff("club-8"), squad("club-7"))).toBe(false);
-    // Unknown identity reads as your own club — the page's own-club-first bias.
+    // Unknown identity answers "not your club", but no rendered state asks: `ready` is reached
+    // only once the squad read has settled, so this is the guard, not a visible default.
     expect(isOwnClub(clubStaff("club-8"), squad(null))).toBe(false);
   });
 });

@@ -32,7 +32,7 @@ The screen must preserve the active manager, career revision, navigation history
 
 ss
 
-![image](/Users/joao/dev/audit/docs/images/16626431-championship-manager-season-0304-windows-team-instructions.png)
+![image](../../images/16626431-championship-manager-season-0304-windows-team-instructions.png)
 
 ![image](../../images/16626416-championship-manager-season-0304-windows-reports-from-other-big-.png)
 

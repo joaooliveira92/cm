@@ -47,8 +47,9 @@ export const clubStaffViewState = (input: {
 /**
  * Whether the club being read is the user's own. Comparison by canonical id, never by display
  * name — two clubs can share a name in a pack and the `[Not your club]` marker must still tell
- * them apart. When the own-club identity is genuinely unknown (the read has not settled), the
- * neutral default is the user's own club, matching the page's own-club-first bias.
+ * them apart. An unsettled or failed own-club read answers `false`, but the page never sees that
+ * answer: `clubStaffViewState` holds `loading` until the squad read settles and turns its failure
+ * into `error`, so `ready` is the only state that asks, and by then the identity is in hand.
  */
 export const isOwnClub = (
   view: { readonly club: { readonly id: string } },

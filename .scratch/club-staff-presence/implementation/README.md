@@ -38,6 +38,12 @@ check constraint stays honest at `coach` and `scout`; `PRESENCE_ROLES` sits besi
 | 02 | [getClubStaff reads a club's whole backroom over the RPC](02-get-club-staff-rpc-read.md) | 01 |
 | 03 | [The Club Staff screen and its club-scoped route](03-club-staff-screen-and-route.md) | 02 |
 | 04 | [The President names the board's warnings and dismissals](04-presidents-voice-in-board-news.md) | 01 |
+| 05 | [The club segment's keyboard identity and the two club drill-downs' entry points](05-club-segment-keyboard-identity-and-entry-points.md) | — |
+
+Ticket 05 was not sliced from the spec. It records a gap ticket 03 exposed: the club segment hangs
+off the save rather than off a career screen, so a club-scoped route has no career screen identity
+to inherit, and ticket 03's league table row took over the Team Scout Report's only entry point.
+See the ticket for why the keyboard scope and the entry point are one root and not two bugs.
 
 ## Agent Notes
 

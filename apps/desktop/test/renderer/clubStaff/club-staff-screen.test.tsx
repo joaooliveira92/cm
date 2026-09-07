@@ -126,7 +126,9 @@ describe("ticket 04 — the Club Staff page renders who works at the club", () =
     const rows = await screen.findAllByRole("listitem");
     expect(rows.length).toBeGreaterThan(0);
     const focusable = [
-      ...document.querySelectorAll("button, a, [tabindex='0'] input, input, select, textarea"),
+      // `[tabindex]` unqualified: a row given any tabindex is a focusable row, which is the
+      // regression this guards. Scoped to `<main>` so the harness's own chrome never counts.
+      ...document.querySelectorAll("main :is(button, a, [tabindex], input, select, textarea)"),
     ];
     expect(focusable).toHaveLength(0);
     const main = document.querySelector("main") as HTMLElement;
