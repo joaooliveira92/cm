@@ -9,38 +9,11 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ClubId, SaveId } from "@cm-clone/contracts";
-import { STAFF_DEPARTMENTS, STATURE_TIERS } from "@cm-clone/shared";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { CareerClubChildView } from "../../../src/renderer/router/career.js";
 import { ClubStaffScreen } from "../../../src/renderer/clubStaff/ClubStaffScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
-
-const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown>) => {
-  (window as unknown as { cmClone: { call: unknown } }).cmClone = { call: impl };
-};
-
-const rid = (id: string) => SaveId.make(id);
-const cid = (id: string) => ClubId.make(id);
-
-const staffView = (clubId: string, clubName: string) => ({
-  club: { id: cid(clubId), name: clubName, statureTier: STATURE_TIERS[0] },
-  groups: STAFF_DEPARTMENTS.map((department, index) => ({
-    department,
-    members: [
-      {
-        role: index === 0 ? "president" : index === 1 ? "coach" : index === 2 ? "scout" : "physio",
-        firstName: "Alan",
-        lastName: "Reyes",
-      },
-    ],
-  })),
-});
-
-const squadView = () => ({
-  club: { id: cid("club-7"), name: "My Club", statureTier: STATURE_TIERS[0] },
-  players: [],
-});
+import { cid, mockPreload, rid, staffView } from "./fixtures.js";
 
 /**
  * The real club segment mounted at its real path, so the test exercises the parameter decode and
@@ -95,10 +68,7 @@ describe("ticket 03 — the club-scoped staff route carries the target club to t
     mockPreload(async (method, payload) => {
       seen.push(payload);
       if (method === "getClubStaff") {
-        return { _tag: "Success", value: staffView("club-7", "Northport Rovers") } as never;
-      }
-      if (method === "getSquad") {
-        return { _tag: "Success", value: squadView() } as never;
+        return { _tag: "Success", value: staffView() } as never;
       }
       return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: rid("s1") } } as never;
     });
@@ -122,9 +92,6 @@ describe("ticket 03 — the club-scoped staff route carries the target club to t
           error: { _tag: "ClubNotFoundError", id: cid("ghost") },
         } as never;
       }
-      if (method === "getSquad") {
-        return { _tag: "Success", value: squadView() } as never;
-      }
       return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: rid("s1") } } as never;
     });
 
@@ -139,10 +106,7 @@ describe("ticket 03 — the club-scoped staff route carries the target club to t
   it("renders the departments on a well-formed club", async () => {
     mockPreload(async (method) => {
       if (method === "getClubStaff") {
-        return { _tag: "Success", value: staffView("club-7", "Northport Rovers") } as never;
-      }
-      if (method === "getSquad") {
-        return { _tag: "Success", value: squadView() } as never;
+        return { _tag: "Success", value: staffView() } as never;
       }
       return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: rid("s1") } } as never;
     });

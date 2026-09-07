@@ -347,6 +347,30 @@ describe("getClubStaff — the club-scoped read (Screen 38)", () => {
     60_000,
   );
 
+  it.effect("says whose club it is, so the screen never needs a second read to find out", () =>
+    Effect.gen(function* () {
+      const save = yield* createSave(savesDir, "Career");
+      const ownClubId = yield* inSave(save.id, userClubId());
+
+      // A rival in the same save: same read, same shape, opposite answer. Both come from the one
+      // `is_user_club` flag, so the marker can never disagree with the club the header names.
+      const rivalClubId = yield* inSave(
+        save.id,
+        Effect.gen(function* () {
+          const sql = yield* SqlClient;
+          const rows = yield* sql<{ id: ClubId }>`
+            SELECT id FROM clubs WHERE is_user_club = 0 ORDER BY id LIMIT 1`;
+          return rows[0]!.id;
+        }),
+      );
+      expect(rivalClubId).not.toBe(ownClubId);
+
+      expect((yield* getClubStaff(savesDir, save.id, ownClubId)).isUserClub).toBe(true);
+      expect((yield* getClubStaff(savesDir, save.id, rivalClubId)).isUserClub).toBe(false);
+    }),
+    60_000,
+  );
+
   it.effect("has exactly two failures: an unknown club, and a missing save", () =>
     Effect.gen(function* () {
       const save = yield* createSave(savesDir, "Career");

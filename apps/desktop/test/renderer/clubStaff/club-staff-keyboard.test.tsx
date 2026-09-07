@@ -9,8 +9,6 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ClubId, SaveId } from "@cm-clone/contracts";
-import { STAFF_DEPARTMENTS, STATURE_TIERS } from "@cm-clone/shared";
 import { KeyboardSpine } from "../../../src/renderer/keyboard/KeyboardSpine.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
@@ -18,47 +16,13 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { teachingSplashStorageKey } from "../../../src/renderer/discoverability/TeachingSplash.js";
 import { CareerClubChildView } from "../../../src/renderer/router/career.js";
 import { ClubStaffScreen } from "../../../src/renderer/clubStaff/ClubStaffScreen.js";
-
-const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown>) => {
-  (window as unknown as { cmClone: { call: unknown } }).cmClone = { call: impl };
-};
-
-const rid = (id: string) => SaveId.make(id);
-const cid = (id: string) => ClubId.make(id);
-const tier = STATURE_TIERS[0];
-
-const staffView = () => ({
-  club: { id: cid("club-7"), name: "Northport Rovers", statureTier: tier },
-  groups: STAFF_DEPARTMENTS.map((department, index) => ({
-    department,
-    members: [
-      {
-        role: index === 0 ? "president" : index === 1 ? "coach" : index === 2 ? "scout" : "physio",
-        firstName: "Alan",
-        lastName: "Reyes",
-      },
-    ],
-  })),
-});
-
-const squadView = () => ({
-  club: { id: cid("club-7"), name: "My Club", statureTier: tier },
-  players: [],
-});
+import { respondWithStaff, staffView } from "./fixtures.js";
 
 describe("ticket 03 — `g b` returns from the club staff page via real history", () => {
   let backCalls: number;
 
   const mountClubStaffWithSpine = async () => {
-    mockPreload(async (method) => {
-      if (method === "getClubStaff") {
-        return { _tag: "Success", value: staffView() } as never;
-      }
-      if (method === "getSquad") {
-        return { _tag: "Success", value: squadView() } as never;
-      }
-      return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: rid("s1") } } as never;
-    });
+    respondWithStaff(staffView());
     const rootRoute = createRootRoute({
       component: () => (
         <>

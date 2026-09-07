@@ -13,45 +13,21 @@ export type ClubStaffViewState = (typeof CLUB_STAFF_VIEW_STATES)[number];
 /** The `_tag` shape of a read that can still be waiting or failed — AsyncResult, structurally. */
 export type ReadTag = "Initial" | "Success" | "Failure";
 
-type ReadTags = { readonly _tag: ReadTag };
-
-/** The own-club read discriminated on a Success carrying its value, structurally. */
-export type OwnClubRead =
-  | { readonly _tag: "Success"; readonly value: { readonly club: { readonly id: string } } }
-  | { readonly _tag: "Initial" }
-  | { readonly _tag: "Failure" };
-
 /**
- * Pick the screen's view state from the two reads it makes: the club staff read itself and the
- * save's own-club identity (which club is the user's, for the header marker). Structural over the
- * `_tag` discriminant so the same function drives both the unit tests and the live atoms.
+ * Pick the screen's view state from the one read it makes. Structural over the `_tag` discriminant
+ * so the same function drives both the unit tests and the live atom.
  *
- * - `error` — the club staff read produced a typed failure (unknown club, missing save, or a
- *   transport/decode failure). The own-club read failing is the same save telling the same
- *   lie, because both queries open the same file.
- * - `loading` — nothing actionable read yet: a read is still in flight.
- * - `ready` — the club staff view has arrived and the own-club identity it labels itself with has
- *   too, so the header can claim whose club this is from the first paint.
+ * The screen reads `getClubStaff` and nothing else: whose club it is rides on that same view
+ * (`isUserClub`), so there is no second read to reconcile and no state where the page knows the
+ * staff but not whose they are.
+ *
+ * - `error` — the read produced a typed failure (unknown club, missing save, or a transport or
+ *   decode failure).
+ * - `loading` — the read is still in flight.
+ * - `ready` — the view has arrived, header included.
  */
-export const clubStaffViewState = (input: {
-  readonly staff: ReadTags;
-  readonly squad: ReadTags;
-}): ClubStaffViewState => {
-  const { staff, squad } = input;
+export const clubStaffViewState = (staff: { readonly _tag: ReadTag }): ClubStaffViewState => {
   if (staff._tag === "Failure") return "error";
-  if (staff._tag === "Initial" || squad._tag === "Initial") return "loading";
-  if (squad._tag === "Failure") return "error";
+  if (staff._tag === "Initial") return "loading";
   return "ready";
 };
-
-/**
- * Whether the club being read is the user's own. Comparison by canonical id, never by display
- * name — two clubs can share a name in a pack and the `[Not your club]` marker must still tell
- * them apart. An unsettled or failed own-club read answers `false`, but the page never sees that
- * answer: `clubStaffViewState` holds `loading` until the squad read settles and turns its failure
- * into `error`, so `ready` is the only state that asks, and by then the identity is in hand.
- */
-export const isOwnClub = (
-  view: { readonly club: { readonly id: string } },
-  squad: OwnClubRead,
-): boolean => squad._tag === "Success" && squad.value.club.id === view.club.id;

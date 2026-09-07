@@ -26,14 +26,14 @@ export type CareerDestination =
   | { readonly type: "manager"; readonly saveId: SaveId }
   | { readonly type: "news"; readonly saveId: SaveId }
   /**
-    * The Team Scout Report on another club — a drill-down reached from a surface that already
-    * names a club (a league-table row), not a top-level screen. It is the first destination to
-    * carry a second parameter, and the reason the club segment is `club/$clubId/...` rather than
-    * a report-specific path: every club surface that follows hangs off the same segment.
-    *
-    * Like `tacticsEditor` it has no `g` binding and is absent from `CAREER_SCREEN_TYPES`, so the
-    * navbar, the palette, and the keyboard spine never show it without a club in hand.
-    */
+   * The Team Scout Report on another club — a drill-down reached from a surface that already
+   * names a club (a league-table row), not a top-level screen. It is the first destination to
+   * carry a second parameter, and the reason the club segment is `club/$clubId/...` rather than
+   * a report-specific path: every club surface that follows hangs off the same segment.
+   *
+   * Like `tacticsEditor` it has no `g` binding and is absent from `CAREER_SCREEN_TYPES`, so the
+   * navbar, the palette, and the keyboard spine never offer it without a club in hand.
+   */
   | { readonly type: "teamScoutReport"; readonly saveId: SaveId; readonly clubId: ClubId }
   /**
    * Club Staff (Screen 38) — who works at any club in the save, grouped by department. A

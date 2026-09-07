@@ -8,12 +8,11 @@ import { FOCUS_RING } from "../focus.js";
 import {
   clubStaffAtom,
   describeRpcError,
-  squadAtom,
   typedError,
   useAtomValue,
   type RpcClientError,
 } from "../rpc.js";
-import { clubStaffViewState, isOwnClub } from "./clubStaffViewState.js";
+import { clubStaffViewState } from "./clubStaffViewState.js";
 
 /** The department heading the wire's `department` key becomes, in the one place a reader sees it. */
 const DEPARTMENT_LABELS: Readonly<Record<StaffDepartment, string>> = {
@@ -32,16 +31,7 @@ const ROLE_TITLES: Readonly<Record<ClubPersonRole, string>> = {
   physio: "Physio",
 };
 
-/** A club's named people, in the department order the page promises (Executive → Coaching →
- *  Recruitment → Medical), whatever order the wire happens to carry them in. A group the wire
- *  omits is skipped, not rendered out of order. */
-const groupsByDepartment = <G extends { readonly department: StaffDepartment }>(
-  groups: readonly G[],
-): readonly G[] =>
-  STAFF_DEPARTMENTS.flatMap((department) => {
-    const group = groups.find((candidate) => candidate.department === department);
-    return group === undefined ? [] : [group];
-  });
+const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /**
  * Club Staff (Screen 38): who works at any club in the save, grouped by department. Reached from
@@ -55,9 +45,11 @@ const groupsByDepartment = <G extends { readonly department: StaffDepartment }>(
  *   that is not the user's.
  * - `error` — the RPC's own answer (an unknown club is `ClubNotFoundError`, never a redirect).
  *
+ * One read answers all three: `getClubStaff` carries whose club it is, so there is no second read
+ * whose failure could render an error over staff that loaded perfectly well.
+ *
  * Rows are not focusable: the closure of interaction is the entry point that brought the manager
- * here and `g b` that leaves, so keyboard arrival lands on the club header — the `<main>` region's
- * label — and reading order is the design.
+ * here and `g b` that leaves, so reading order is the design.
  */
 export const ClubStaffScreen = ({
   saveId,
@@ -67,38 +59,24 @@ export const ClubStaffScreen = ({
   readonly clubId: ClubId;
 }) => {
   const staffResult = useAtomValue(clubStaffAtom(saveId, clubId));
-  const squadResult = useAtomValue(squadAtom(saveId));
+  const state = clubStaffViewState(staffResult);
 
-  const state = clubStaffViewState({ staff: staffResult, squad: squadResult });
   if (state === "error") {
-    // `error` means at least one of the two reads failed. The club read's typed failure is the
-    // primary message; a defect-only cause (typedError null) falls back to the generic line.
-    const error = typedError(staffResult) ?? typedError(squadResult);
-    return <ClubStaffError error={error} />;
+    return <ClubStaffMessage message={messageOf(typedError(staffResult))} />;
   }
-  if (state === "loading") {
-    return (
-      <main
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
-        tabIndex={-1}
-        aria-label="Club staff"
-      >
-        <p className="text-text-secondary">Loading club staff...</p>
-      </main>
-    );
+  // The `_tag` check narrows for the type checker; `clubStaffViewState` has already decided, so it
+  // never changes the branch taken at runtime.
+  if (state === "loading" || staffResult._tag !== "Success") {
+    return <ClubStaffMessage message="Loading club staff..." />;
   }
 
-  // `ready` is only reached when `staff` is a Success (see `clubStaffViewState`), so the value
-  // is in hand here; the discriminant is asserted for the type checker rather than re-branched.
-  const view = (staffResult as Extract<typeof staffResult, { readonly _tag: "Success" }>).value;
-  const own = isOwnClub(view, squadResult);
-  const groups = groupsByDepartment(view.groups);
+  const view = staffResult.value;
 
   return (
     <main
       id="club-staff-page"
       aria-labelledby="club-staff-heading"
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={PAGE_CLASS}
       tabIndex={-1}
     >
       <header>
@@ -106,52 +84,58 @@ export const ClubStaffScreen = ({
             staff this is — and the foreign marker when that club is not the user's. */}
         <h1 id="club-staff-heading" className="text-2xl font-bold">
           {view.club.name} · Club Staff{" "}
-          {!own && <span className="text-sm font-semibold text-text-secondary">[Not your club]</span>}
+          {!view.isUserClub && (
+            <span className="text-sm font-semibold text-text-secondary">[Not your club]</span>
+          )}
         </h1>
       </header>
 
-      {groups.map((group, groupIndex) => (
-        <section
-          key={group.department}
-          aria-labelledby={`club-staff-${group.department}`}
-          className="mt-6"
-        >
-          <h2 id={`club-staff-${group.department}`} className="text-lg font-semibold">
-            {DEPARTMENT_LABELS[group.department]}
-          </h2>
-          <ul className="mt-1 list-inside">
-            {group.members.map((member, memberIndex) => (
-              <li
-                key={`${groupIndex}-${memberIndex}`}
-                aria-label={`${ROLE_TITLES[member.role]} ${member.firstName} ${member.lastName}`}
-              >
-                <span className="inline-block w-28 text-text-secondary">{ROLE_TITLES[member.role]}</span>
-                <span>{member.firstName} {member.lastName}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+      {/* Driven by `STAFF_DEPARTMENTS`, not by the wire's order: the page promises four headings in
+          a fixed order, so it renders four whatever order — or shortfall — a view arrives with. A
+          department the derivation somehow omitted shows as an empty list rather than vanishing,
+          because a missing heading reads as "this club has no medical staff" when what it means is
+          "the read is broken". */}
+      {STAFF_DEPARTMENTS.map((department) => {
+        const members = view.groups.find((group) => group.department === department)?.members ?? [];
+        const headingId = `club-staff-${department}`;
+        return (
+          <section key={department} className="mt-6">
+            <h2 id={headingId} className="text-lg font-semibold">
+              {DEPARTMENT_LABELS[department]}
+            </h2>
+            <ul aria-labelledby={headingId} className="mt-1 list-inside">
+              {members.map((member) => (
+                <li
+                  key={`${member.role}-${member.firstName}-${member.lastName}`}
+                  aria-label={`${ROLE_TITLES[member.role]} ${member.firstName} ${member.lastName}`}
+                >
+                  <span className="inline-block w-28 text-text-secondary">
+                    {ROLE_TITLES[member.role]}
+                  </span>
+                  <span>
+                    {member.firstName} {member.lastName}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
     </main>
   );
 };
 
-/** The error state, on the same surface every blocking failure renders on: a `<main>` region
- *  carrying the failure message. `error` is null only for a defect-only (untagged) failure, which
- *  renders the generic line — an unknown club or missing save always carries its typed sentence. */
-const ClubStaffError = ({
-  error,
-}: {
-  readonly error: RpcClientError<"getClubStaff"> | RpcClientError<"getSquad"> | null;
-}) => (
-  <main
-    className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
-    tabIndex={-1}
-    aria-label="Club staff"
-  >
+/** The sentence a failed read shows. A defect-only cause carries no typed error, so it falls back
+ *  to the generic line; an unknown club or missing save always carries its own sentence. */
+const messageOf = (error: RpcClientError<"getClubStaff"> | null): string =>
+  error === null ? "Club staff could not be loaded." : describeRpcError(error);
+
+/** The non-`ready` states, on the surface every one of them renders on: a labelled `<main>` region
+ *  carrying one line. Labelled rather than heading-labelled because neither state knows the club's
+ *  name — that arrives with the view. */
+const ClubStaffMessage = ({ message }: { readonly message: string }) => (
+  <main className={PAGE_CLASS} tabIndex={-1} aria-label="Club staff">
     <h1 className="text-2xl font-bold">Club Staff</h1>
-    <p className="mt-4 text-text-secondary">
-      {error === null ? "Club staff could not be loaded." : describeRpcError(error)}
-    </p>
+    <p className="mt-4 text-text-secondary">{message}</p>
   </main>
 );

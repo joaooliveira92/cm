@@ -40,7 +40,9 @@ const loadClubIdentity = (clubId: ClubId) =>
     const clubRows = yield* sql<{
       statureTier: StatureTier;
       nationId: string | null;
-    }>`SELECT c.stature_tier as "statureTier", comp.nation_id as "nationId"
+      isUserClub: number;
+    }>`SELECT c.stature_tier as "statureTier", comp.nation_id as "nationId",
+              c.is_user_club as "isUserClub"
        FROM clubs c
        JOIN competition_participants p ON p.club_id = c.id AND p.season_number = 1
        JOIN competitions comp ON comp.id = p.competition_id
@@ -152,6 +154,8 @@ const readClubStaff = (clubId: ClubId) =>
 
     return new ClubStaffView({
       club: summary,
+      // SQLite has no boolean: the column is the integer flag world generation writes.
+      isUserClub: club.isUserClub === 1,
       groups: groups.map(
         (group) =>
           new ClubStaffDepartmentGroupView({

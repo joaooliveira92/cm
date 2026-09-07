@@ -70,5 +70,13 @@ export class ClubStaffDepartmentGroupView extends Schema.Class<ClubStaffDepartme
  * answers like any other and the view agrees with the `staff` rows wherever they exist. */
 export class ClubStaffView extends Schema.Class<ClubStaffView>("ClubStaffView")({
   club: ClubSummary,
+  /**
+   * Whether this club is the one the manager manages, answered by the same read that names the
+   * club. The screen marks a foreign club `[Not your club]`, and asking the save directly keeps
+   * that a property of the club being read rather than a second read the screen has to reconcile:
+   * one read, one failure to render, and no state where the page knows the staff but not whose
+   * they are.
+   */
+  isUserClub: Schema.Boolean,
   groups: Schema.Array(ClubStaffDepartmentGroupView),
 }) {}
