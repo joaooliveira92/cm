@@ -5,9 +5,9 @@ Written by the orchestrator after the gate, before the commit. Records what was 
 ## Sprint
 
 - Effort: `.scratch/club-staff-presence/`
-- Tickets closed: `01-presence-staff-derivation`
+- Tickets closed: `01-presence-staff-derivation`, `02-get-club-staff-rpc-read`
 - Branch: `dev` (per `.ai/AUTONOMOUS-AGENT.md` § Git policy — no feature branches)
-- Commits: `f898d85` fix(docs): link the app-shell main-menu image repo-relative; `ecaa4c0` feat(shared): presence staff derive from the world seed and the club id
+- Commits: `f898d85` fix(docs) · `ecaa4c0` feat(shared) presence derivation · `55a641e` docs(report hashes) · `b5b64de` feat(contracts-desktop) getClubStaff
 
 ## Acceptance criteria → evidence
 

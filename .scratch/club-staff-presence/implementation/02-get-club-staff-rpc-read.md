@@ -31,23 +31,28 @@ surface like every other in this app.
 
 **Blocked by:** 01 — the presence derivation and the composing `deriveClubStaff`.
 
-**Status:** claimed
+**Status:** done
+
+## Comments
+
+**Reviewer APPROVE (2026-09-07) after one flagged-index pass:** the reviewer's single HIGH was that the
+implementator's `git add` had swept three `docs/specs/group_*` files (another effort's in-flight ASCII-art-to-image edits) plus a broken absolute image link in `23_continue_and_advance_time.md:35` into the staged index, redlining `verify-md-links`; the LOW was a dead `export readWorldSeed` with no importer. Repairs: the commit stages exactly this ticket's nine files (foreign files left in the working tree, untouched, and reported to the owning group-b effort); `readWorldSeed` reverted to module-private; `verify-md-links` re-run green on this ticket's bench with the foreign files stashed (845 files), `verify-db-schema` green, `effect-lint` green.
 
 **Files:** `packages/contracts/src/schemas/clubs.ts`, `packages/contracts/src/rpc.ts`,
 `packages/contracts/test/roundtrip.test.ts`, the main-process handler beside
 `apps/desktop/src/main/career/staff.ts`, `apps/desktop/src/main/rpc/rpcServer.ts`,
 `apps/desktop/test/main/career/staff.test.ts`.
 
-- [ ] `getClubStaff(saveId, clubId)` is an `AppRpcs` method returning `ClubStaffView { club,
+- [x] `getClubStaff(saveId, clubId)` is an `AppRpcs` method returning `ClubStaffView { club,
       groups: [{ department, members: [{ role, firstName, lastName }] }] }`, error union
       `SaveNotFoundError | ClubNotFoundError`.
-- [ ] The handler reads the club's Stature Tier and nation (the same nation join `materialiseStaff`
+- [x] The handler reads the club's Stature Tier and nation (the same nation join `materialiseStaff`
       runs) and the world seed from the manifest, and returns the composition of
       `deriveClubStaff` — never reading the bound two from the `staff` table.
-- [ ] The `ClubStaffView` wire shape round-trips in `packages/contracts/test/roundtrip.test.ts`.
-- [ ] The human's own club shows exactly one derived coach, and that coach is the same person the
+- [x] The `ClubStaffView` wire shape round-trips in `packages/contracts/test/roundtrip.test.ts`.
+- [x] The human's own club shows exactly one derived coach, and that coach is the same person the
       scouting screen names (the row was materialised from the same derivation).
-- [ ] A `results-only` club — one with no `staff` rows — returns its four people like any other.
-- [ ] An unknown club id returns `ClubNotFoundError`; a missing save returns `SaveNotFoundError`.
-- [ ] No schema change: no table, column, or migration.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] A `results-only` club — one with no `staff` rows — returns its four people like any other.
+- [x] An unknown club id returns `ClubNotFoundError`; a missing save returns `SaveNotFoundError`.
+- [x] No schema change: no table, column, or migration.
+- [x] `pnpm check:all` is green at this commit.

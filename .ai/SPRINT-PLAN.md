@@ -2,7 +2,7 @@
 
 ## Immediate next action
 
-`.scratch/club-staff-presence/implementation/02-get-club-staff-rpc-read` — the club-staff-presence
+`.scratch/club-staff-presence/implementation/03-club-staff-screen-and-route` — the club-staff-presence
 implementation frontier: lowest-numbered open build ticket in that effort. Re-derive from
 `.scratch/club-staff-presence/implementation/` before starting; plan rows decay, the tracker is
 truth.
@@ -15,8 +15,8 @@ and specced on 2026-09-07, sliced into four implementation tickets (in dependenc
 `ready-for-agent` unless noted):
 
 - 01 presence-staff-derivation ← done (shipped this session)
-- 02 get-club-staff-rpc-read ← next (blocked by 01)
-- 03 club-staff-screen-and-route (blocked by 02)
+- 02 get-club-staff-rpc-read ← done (shipped this session)
+- 03 club-staff-screen-and-route ← next (blocked by 02)
 - 04 presidents-voice-in-board-news (blocked by 01)
 
 The group C ledger (`docs/specs/group_c_club_information/RECONCILIATION.md`) and the CONTEXT.md
