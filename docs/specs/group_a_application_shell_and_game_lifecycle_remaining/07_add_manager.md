@@ -224,13 +224,13 @@ The list displays all active, draft, pending, disconnected, retired, and empty m
 Possible actions:
 
 - `Add Local Manager`
-- `Invite Network Manager`
+
 - `Resume Draft`
 - `Open Manager`
 - `Manage Ownership`
 - `Remove Draft`
 - `Career Setup Summary`
-- `Multiplayer Settings`
+
 - `Back`
 
 ### 6.5 Contextual help

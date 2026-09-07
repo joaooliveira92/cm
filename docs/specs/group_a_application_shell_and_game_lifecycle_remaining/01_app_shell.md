@@ -33,166 +33,166 @@
 
 ## B. Global navigation and inbox
 
-21. Global Application Shell
-22. Continue / Advance Time
-23. News Inbox
-24. Individual News Message
-25. News Filters
-26. Background Processing / Updating Game
-27. Calendar and Schedule
-28. Manager Notebook
-29. Manager History
-30. Manager Profile
-31. Manager Chat / Multiplayer Communication
+ 1. Global Application Shell
+ 2. Continue / Advance Time
+ 3. News Inbox
+ 4. Individual News Message
+ 5. News Filters
+ 6. Background Processing / Updating Game
+ 7. Calendar and Schedule
+ 8. Manager Notebook
+ 9. Manager History
+10. Manager Profile
+11. Manager Chat / Multiplayer Communication
 
 ## C. Club information
 
-32. Club Overview
-33. Club General Information
-34. Club Squad
-35. Reserve Squad
-36. Youth Squad
-37. Club Staff
-38. Club Finances
-39. Club Fixtures
-40. Club Results
-41. Club Transfers
-42. Club History
-43. Club Records
-44. Club Honours
-45. Club Information and Facilities
-46. Supporter / Board Confidence
-47. Club Comparison
-48. Team Scout Report
+ 1. Club Overview
+ 2. Club General Information
+ 3. Club Squad
+ 4. Reserve Squad
+ 5. Youth Squad
+ 6. Club Staff
+ 7. Club Finances
+ 8. Club Fixtures
+ 9. Club Results
+10. Club Transfers
+11. Club History
+12. Club Records
+13. Club Honours
+14. Club Information and Facilities
+15. Supporter / Board Confidence
+16. Club Comparison
+17. Team Scout Report
 
 ## D. Player and staff records
 
-49. Player Profile
-50. Player Attributes
-51. Player Positions
-52. Player Form
-53. Player Statistics
-54. Player History
-55. Player Contract
-56. Player Transfer Status
-57. Player Happiness
-58. Player Injuries
-59. Player Discipline
-60. Player Development / Training Effects
-61. Player Action Menu
-62. Player Comparison
-63. Staff Profile
-64. Staff Contract
-65. Staff History
-66. Coach Report
-67. Scout Report
+ 1. Player Profile
+ 2. Player Attributes
+ 3. Player Positions
+ 4. Player Form
+ 5. Player Statistics
+ 6. Player History
+ 7. Player Contract
+ 8. Player Transfer Status
+ 9. Player Happiness
+10. Player Injuries
+11. Player Discipline
+12. Player Development / Training Effects
+13. Player Action Menu
+14. Player Comparison
+15. Staff Profile
+16. Staff Contract
+17. Staff History
+18. Coach Report
+19. Scout Report
 
 ## E. Squad management
 
-68. Squad Selection
-69. Squad View Selector
-70. Selection Filters
-71. Player Sorting
-72. Shirt Number Assignment
-73. Captain Selection
-74. Set-Piece Takers
-75. Squad Registration
-76. Availability and Eligibility
-77. Player Interaction / Grievance
-78. Team Meeting or Discipline Decision
+ 1. Squad Selection
+ 2. Squad View Selector
+ 3. Selection Filters
+ 4. Player Sorting
+ 5. Shirt Number Assignment
+ 6. Captain Selection
+ 7. Set-Piece Takers
+ 8. Squad Registration
+ 9. Availability and Eligibility
+10. Player Interaction / Grievance
+11. Team Meeting or Discipline Decision
 
 ## F. Tactics and match preparation
 
-79. Tactics Overview
-80. Formation Editor
-81. Starting XI and Substitute Bench
-82. Team Instructions
-83. Individual Player Instructions
-84. Player Position Assignment
-85. Set Pieces
-86. Saved Tactics
-87. Load / Import Tactic
-88. Pre-Match Team Selection
-89. Opposition Scout Report
+ 1. Tactics Overview
+ 2. Formation Editor
+ 3. Starting XI and Substitute Bench
+ 4. Team Instructions
+ 5. Individual Player Instructions
+ 6. Player Position Assignment
+ 7. Set Pieces
+ 8. Saved Tactics
+ 9. Load / Import Tactic
+10. Pre-Match Team Selection
+11. Opposition Scout Report
 
 ## G. Training
 
-90. Training Overview
-91. Training Schedule
-92. Training Categories
-93. Player Training Assignment
-94. Coach Assignment
-95. Training Progress
-96. Training Comparison
-97. Rest and Injury Management
+ 1. Training Overview
+ 2. Training Schedule
+ 3. Training Categories
+ 4. Player Training Assignment
+ 5. Coach Assignment
+ 6. Training Progress
+ 7. Training Comparison
+ 8. Rest and Injury Management
 
 ## H. Recruitment, transfers, and contracts
 
-98. Transfer Centre
-99. Player Search
-100.  Search Filters
-101.  Search Results
-102.  Shortlist
-103.  Scouting Assignment
-104.  Scouting Knowledge
-105.  Transfer Offer
-106.  Transfer Negotiation
-107.  Contract Offer
-108.  Contract Negotiation
-109.  Loan Offer
-110.  Loan Contract Details
-111.  Transfer Listing
-112.  Loan Listing
-113.  Offer to Clubs
-114.  Transfer History
-115.  Future Transfers
-116.  Media Transfer Speculation
+1. Transfer Centre
+2. Player Search
+3. Search Filters
+4. Search Results
+5. Shortlist
+6. Scouting Assignment
+7. Scouting Knowledge
+8. Transfer Offer
+9. Transfer Negotiation
+10. Contract Offer
+11. Contract Negotiation
+12. Loan Offer
+13. Loan Contract Details
+14. Transfer Listing
+15. Loan Listing
+16. Offer to Clubs
+17. Transfer History
+18. Future Transfers
+19. Media Transfer Speculation
 
 ## I. Competitions and world navigation
 
-117. Competition Overview
-118. League Table
-119. Live League Table
-120. Competition Fixtures
-121. Competition Results
-122. Competition Statistics
-123. Competition Rules
-124. Competition History
-125. Competition Records
-126. Cup Bracket
-127. Live Cup Draw
-128. Awards
-129. Goal of the Month
-130. Goal of the Season
-131. Nation Overview
-132. National Team
-133. World / Region Browser
-134. Club Browser
+  1. Competition Overview
+  2. League Table
+  3. Live League Table
+  4. Competition Fixtures
+  5. Competition Results
+  6. Competition Statistics
+  7. Competition Rules
+  8. Competition History
+  9. Competition Records
+ 10. Cup Bracket
+ 11. Live Cup Draw
+ 12. Awards
+ 13. Goal of the Month
+ 14. Goal of the Season
+ 15. Nation Overview
+ 16. National Team
+ 17. World / Region Browser
+ 18. Club Browser
 
 ## J. Match-day experience
 
-135. Match Preview
-136. Team Sheet
-137. Pre-Match Tactical Setup
-138. Match View
-139. 2D Pitch
-140. Match Commentary
-141. Scoreboard and Clock
-142. Match Statistics
-143. Player Ratings
-144. Live League Table Panel
-145. Tactical Changes During Match
-146. Substitution Dialog
-147. Injury Dialog
-148. Booking / Sending-Off Event
-149. Goal Event
-150. Disallowed Goal Event
-151. Goal Replay
-152. Half-Time Screen
-153. Full-Time Summary
-154. Post-Match Player Statistics
-155. Post-Match News
-156. Result Processing
+  1. Match Preview
+  2. Team Sheet
+  3. Pre-Match Tactical Setup
+  4. Match View
+  5. 2D Pitch
+  6. Match Commentary
+  7. Scoreboard and Clock
+  8. Match Statistics
+  9. Player Ratings
+ 10. Live League Table Panel
+ 11. Tactical Changes During Match
+ 12. Substitution Dialog
+ 13. Injury Dialog
+ 14. Booking / Sending-Off Event
+ 15. Goal Event
+ 16. Disallowed Goal Event
+ 17. Goal Replay
+ 18. Half-Time Screen
+ 19. Full-Time Summary
+ 20. Post-Match Player Statistics
+ 21. Post-Match News
+ 22. Result Processing
 
 ---
 
@@ -226,22 +226,7 @@ The clone should not reproduce the original logo, background image, typography, 
 
 The Main Menu occupies the entire game window.
 
-```text
-+-----------------------------------------------------------+
-| Product identity / game title                             |
-|                                                           |
-|               +---------------------------+               |
-|               | Start New Career          |               |
-|               | Load Career               |               |
-|               |                           |               |
-|               | Preferences               |               |
-|               | Credits                   |               |
-|               | Exit                      |               |
-|               +---------------------------+               |
-|                                                           |
-| Version information                 Status / legal info   |
-+-----------------------------------------------------------+
-```
+![audit/docs/images/16626362-championship-manager-season-0304-windows-main-menu.png](/Users/joao/dev/audit/docs/images/16626362-championship-manager-season-0304-windows-main-menu.png)
 
 This diagram is conceptual and does not prescribe exact pixel positions.
 
@@ -281,7 +266,6 @@ Suggested ordering:
 3. Preferences
 4. Credits
 5. Exit
-
 
 ## 4. Component specification
 
@@ -362,7 +346,6 @@ If no saves exist:
 - Keep the user on the load screen.
 - Present a clear empty state.
 - Offer a direct `Start New Career` action.
-
 
 ### 5.3 Preferences
 
