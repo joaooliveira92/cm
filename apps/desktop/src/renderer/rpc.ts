@@ -20,6 +20,7 @@ export {
   saveSummaryAtom,
   newsInboxAtom,
   teamScoutReportAtom,
+  clubStaffAtom,
   saveKey,
   squadKey,
   transfersKey,

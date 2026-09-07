@@ -140,3 +140,27 @@ const reportsForSave = Atom.family((saveId: SaveId) =>
 
 export const teamScoutReportAtom = (saveId: SaveId, clubId: ClubId) =>
   reportsForSave(saveId)(clubId);
+
+/**
+ * getClubStaff — `["save", saveId]`.
+ *
+ * Club Staff (Screen 38): who works at any club in the save, grouped by department. Keyed by save
+ * then club, the same two-level nested family as the scout report (a `{ saveId, clubId }` object
+ * key would miss on `MutableHashMap`'s reference comparison and refetch forever).
+ *
+ * Reactive on the save-wide key only: the view is a pure derivation of the world seed and the
+ * club's canonical id — no later command changes it — so the read never goes stale between
+ * save-level invalidations.
+ */
+const clubStaffForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((clubId: ClubId) =>
+    managementReadPolicy(
+      Atom.make(call("getClubStaff", { saveId, clubId })).pipe(
+        Atom.withReactivity([saveKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const clubStaffAtom = (saveId: SaveId, clubId: ClubId) =>
+  clubStaffForSave(saveId)(clubId);

@@ -57,19 +57,19 @@ beforeEach(() => {
 
 afterEach(() => cleanup());
 
-describe("ticket 05 — the league table row is the report's entry point", () => {
-  it("each club's row opens that club's report, not a shared one", async () => {
+describe("ticket 03 — the league table row is the club staff entry point", () => {
+  it("each club's row opens that club's staff page, not a shared one", async () => {
     mount();
 
     fireEvent.click(await screen.findByRole("button", { name: "Northport Rovers" }));
     expect(navigateSpy).toHaveBeenLastCalledWith({
-      to: "/career/$saveId/club/$clubId/scout-report",
+      to: "/career/$saveId/club/$clubId/staff",
       params: { saveId: SaveId.make("s1"), clubId: ClubId.make("club-7") },
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Eastvale United" }));
     expect(navigateSpy).toHaveBeenLastCalledWith({
-      to: "/career/$saveId/club/$clubId/scout-report",
+      to: "/career/$saveId/club/$clubId/staff",
       params: { saveId: SaveId.make("s1"), clubId: ClubId.make("club-9") },
     });
   });
@@ -81,5 +81,15 @@ describe("ticket 05 — the league table row is the report's entry point", () =>
     // the arriving screen rather than leaving it stranded on the table.
     fireEvent.click(row, { detail: 0 });
     expect(navigateSpy).toHaveBeenCalled();
+  });
+
+  it("only the club name is a control — the result cells stay unclickable", async () => {
+    mount();
+    await screen.findByRole("button", { name: "Northport Rovers" });
+    const buttons = [...document.querySelectorAll("button")];
+    expect(buttons.map((button) => button.textContent?.trim())).toEqual([
+      "Northport Rovers",
+      "Eastvale United",
+    ]);
   });
 });

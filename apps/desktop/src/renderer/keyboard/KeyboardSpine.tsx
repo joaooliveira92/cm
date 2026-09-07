@@ -112,7 +112,11 @@ export const KeyboardSpine = () => {
   const career = careerScreenOfId(currentScreen);
   const saveId: SaveId | undefined = decoded._tag === "Success" ? decoded.success : undefined;
   const isCareer = isCareerScreen(currentScreen as never);
-  const nav = career !== null && saveId !== undefined;
+  // A club-scoped surface (`/career/$saveId/club/$clubId/...`) sits inside the career: the
+  // manager reached it mid-career, so `g b` and the career `g <key>` nav still apply. The screen
+  // index gives such paths the `club` currentScreen (there is no higher id to key on), so treat
+  // that branch like a career screen for nav-handler registration.
+  const nav = (career !== null || currentScreen === "club") && saveId !== undefined;
 
   // Screens publish their availability read-model (League: phase/advancing) into
   // the shared scope state; the spine merges it over its own readiness.

@@ -20,6 +20,7 @@ import { TransfersScreen } from "../transfers/TransfersScreen.js";
 import { MainMenuScreen } from "./mainMenu.js";
 import { LoadCareerScreen } from "./loadCareer.js";
 import { TeamScoutReportScreen } from "../scouting/TeamScoutReportScreen.js";
+import { ClubStaffScreen } from "../clubStaff/ClubStaffScreen.js";
 import {
   CareerChildView,
   CareerClubChildView,
@@ -144,7 +145,7 @@ const tacticsEditorRoute = createRoute({
  * is decoded once at a shared boundary instead of each screen inventing its own parameter.
  *
  * It has no index route: `club/$clubId` alone names a club without saying what about it, so there
- * is nothing honest to land on. The report is reached at its own child path.
+ * is nothing honest to land on. Each club surface is reached at its own child path.
  */
 const clubRoute = createRoute({
   getParentRoute: () => saveRoute,
@@ -158,6 +159,12 @@ const clubScoutReportRoute = createRoute({
   component: () => (
     <CareerClubChildView screenId="teamScoutReport" Screen={TeamScoutReportScreen} />
   ),
+});
+
+const clubStaffRoute = createRoute({
+  getParentRoute: () => clubRoute,
+  path: "staff",
+  component: () => <CareerClubChildView screenId="clubStaff" Screen={ClubStaffScreen} />,
 });
 
 // ---------------------------------------------------------------------------
@@ -216,7 +223,7 @@ const routeTree = rootRoute.addChildren([
       seasonSummaryRoute,
       managerRoute,
       newsRoute,
-      clubRoute.addChildren([clubScoutReportRoute]),
+      clubRoute.addChildren([clubScoutReportRoute, clubStaffRoute]),
     ]),
   ]),
 ]);

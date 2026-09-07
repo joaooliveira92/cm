@@ -62,18 +62,18 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             {table.standings.map((row, index) => (
               <TableRow key={row.clubId}>
                 <TableCell className="pr-4">{index + 1}</TableCell>
-                {/* The club name is the entry point to that club's scout report — the row already
-                    names a club, which is what the report needs and what nothing else on this
-                    screen has. A button rather than a link: navigation goes through the adapter so
-                    focus follows the intent, and `intentOfClick` keeps a keyboard activation from
-                    being reported as a pointer arrival. */}
+                {/* The club name is the entry point to that club's staff page — the row already
+                    names a club, which is what the club-scoped surface needs and what nothing else
+                    on this screen has. A button rather than a link: navigation goes through the
+                    adapter so focus follows the intent, and `intentOfClick` keeps a keyboard
+                    activation from being reported as a pointer arrival. */}
                 <TableCell className="pr-4 whitespace-nowrap">
                   <button
                     type="button"
                     className="underline-offset-2 hover:underline focus-visible:underline"
                     onClick={(event) =>
                       navigateCareer(
-                        { type: "teamScoutReport", saveId, clubId: row.clubId },
+                        { type: "clubStaff", saveId, clubId: row.clubId },
                         intentOfClick(event),
                       )
                     }

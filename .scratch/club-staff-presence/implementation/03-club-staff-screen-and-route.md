@@ -49,7 +49,7 @@ drill-down sub-surface like the tactics editor, not a tenth career screen.
 
 **Blocked by:** 02 — the `getClubStaff` read the screen renders.
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 **Files:** `apps/desktop/src/renderer/navigation/destinations.ts`,
 `apps/desktop/src/renderer/router/`, `apps/desktop/src/renderer/leagueTable/LeagueTableScreen.tsx`,
