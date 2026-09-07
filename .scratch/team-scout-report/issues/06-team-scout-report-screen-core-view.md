@@ -8,7 +8,7 @@ The screen distinguishes the seven view states — loading, ready, refreshing, e
 
 **Blocked by:** 05 (the club-scoped route and shell entry).
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Reading the report for a scouted target shows header (scout, updated date, knowledge confidence), formation, recent form, strengths, weaknesses, key players, and set-piece findings.
 - [ ] The tab shell renders Squad, Tactical View, Previous Reports, and Assign Scout; non-first-pass tabs show an explicit not-yet-available state rather than functioning.
