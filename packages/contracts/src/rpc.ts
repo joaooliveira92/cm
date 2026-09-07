@@ -77,9 +77,8 @@ import {
   TransferWindowClosedError,
   TransfersScreenView,
   WageBudgetExceededError,
-  ScoutingView,
-  UnknownScoutError,
 } from "./schemas/index.js";
+import { ScoutingRpcs } from "./rpc-scouting.js";
 
 /**
  * Hand-rolled stand-in for `@effect/rpc`'s RpcGroup: as of this writing
@@ -92,6 +91,7 @@ import {
  * release.
  */
 export const AppRpcs = {
+  ...ScoutingRpcs,
   ping: {
     payload: Schema.Void,
     success: Schema.String,
@@ -381,26 +381,6 @@ commitCareer: {
     }),
     success: TrainingFocusView,
     error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError, SaveArchivedError]),
-  },
-  /** Scouting: point a named scout at a player. The scout's club is read from their staff row, so
-   * no club is named here. Reassigning a scout who is already watching someone is legitimate —
-   * the manager is redirecting a person — and progress the club has accrued stays with the club. */
-  assignScout: {
-    payload: Schema.Struct({ saveId: SaveId, scoutId: Schema.String, playerId: PlayerId }),
-    success: ScoutingView,
-    error: Schema.Union([SaveNotFoundError, UnknownScoutError, PlayerNotFoundError, SaveArchivedError]),
-  },
-  /** Frees a scout. Their accrued progress stays: knowledge is not un-learned. */
-  unassignScout: {
-    payload: Schema.Struct({ saveId: SaveId, scoutId: Schema.String }),
-    success: ScoutingView,
-    error: Schema.Union([SaveNotFoundError, UnknownScoutError, SaveArchivedError]),
-  },
-  /** The scouting board — every scout at the human's club and what they are watching. */
-  getScouting: {
-    payload: Schema.Struct({ saveId: SaveId }),
-    success: ScoutingView,
-    error: Schema.Union([SaveNotFoundError]),
   },
   /** Club Staff (Screen 38): who works at any club in the save. A pure read — every person derived
    * on demand, so a `results-only` club answers like any other; only the save or the club id can fail. */

@@ -19,6 +19,7 @@ export {
   runAiTransferWindow,
 } from "./aiClubs.js";
 export { developPlayersForSeason } from "./development.js";
+export { getTeamScoutReport } from "./teamScoutReport.js";
 export {
   FULLY_SCOUTED,
   accrueScoutingProgress,

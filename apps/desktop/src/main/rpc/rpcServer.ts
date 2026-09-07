@@ -42,6 +42,7 @@ import {
 import { setTrainingFocus } from "../club/training.js";
 import { assignScout, getScouting, unassignScout } from "../club/scouting.js";
 import { getClubStaff } from "../career/staff.js";
+import { getTeamScoutReport } from "../club/teamScoutReport.js";
 import { withWideEvent } from "./logging.js";
 
 export interface RpcContext {
@@ -302,6 +303,13 @@ const handlers: Record<AppRpcMethod, Handler> = {
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getScouting.payload)(payload);
       return yield* getScouting(ctx.savesDir, saveId);
+    }),
+  getTeamScoutReport: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, clubId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.getTeamScoutReport.payload,
+      )(payload);
+      return yield* getTeamScoutReport(ctx.savesDir, saveId, clubId);
     }),
   getClubStaff: (payload, ctx) =>
     Effect.gen(function* () {

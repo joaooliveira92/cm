@@ -70,6 +70,10 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
           return "That bid could not be found.";
         case "ClubNotFoundError":
           return "That club could not be found.";
+        // Absence of knowledge, never a judgement about the club. "No report" must read as
+        // "go and look", because "this club has no strengths" is a claim the data cannot support.
+        case "ClubNotScoutedError":
+          return "Your scouts have not watched this club yet, so there is nothing to report.";
         case "MatchNotFoundError":
           return "That match could not be found.";
         case "SeasonCompleteError":

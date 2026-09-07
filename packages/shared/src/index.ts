@@ -44,3 +44,4 @@ export * from "./news/newsProjection.js";
 export * from "./rules/resultsStrength.js";
 export * from "./season/cupBracket.js";
 export * from "./rules/scouting.js";
+export * from "./rules/teamScoutReport.js";

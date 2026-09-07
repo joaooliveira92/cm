@@ -56,3 +56,31 @@ export const attributeRange = (
     Math.min(ceiling, Math.round(trueValue + band)),
   ];
 };
+
+/**
+ * Team Scout Report vocabulary.
+ *
+ * A report has an **observed half and a predicted half**, and the two bands below sit either side of
+ * that seam. `KnowledgeConfidence` grades the observed half — how much of the target squad has been
+ * scouted at all — and is never a claim about correctness, because an observation cannot be wrong,
+ * only partial. `ReportFreshness` grades how far the reading has fallen behind the club it
+ * describes. The two are independent: a report can be thorough and stale, or fresh and mostly gaps,
+ * so neither can be derived from the other. See CONTEXT.md's Scouting section.
+ */
+
+/** How much of the target squad the report actually rests on, worst to best. Ordered, so a band's
+ *  index is comparable — the derivation relies on that to keep confidence monotonic in progress. */
+export const KNOWLEDGE_CONFIDENCES = ["low", "moderate", "high", "complete"] as const;
+export type KnowledgeConfidence = (typeof KNOWLEDGE_CONFIDENCES)[number];
+
+/** How far the reading has fallen behind, best to worst. Ordered for the same reason. */
+export const REPORT_FRESHNESSES = ["current", "recent", "aging", "stale"] as const;
+export type ReportFreshness = (typeof REPORT_FRESHNESSES)[number];
+
+/**
+ * The part of a club a finding speaks about. A closed set rather than free text so the screen can
+ * group findings without parsing prose, and so a finding can never name a part of the game the
+ * report has no knowledge of.
+ */
+export const FINDING_AREAS = ["attack", "midfield", "defense", "setPieces"] as const;
+export type FindingArea = (typeof FINDING_AREAS)[number];

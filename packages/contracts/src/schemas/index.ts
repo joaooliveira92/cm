@@ -14,3 +14,4 @@ export * from "./league-setup.js";
 export * from "./news.js";
 export * from "./scouting.js";
 export * from "./career-setup.js";
+export * from "./team-scout-report.js";
