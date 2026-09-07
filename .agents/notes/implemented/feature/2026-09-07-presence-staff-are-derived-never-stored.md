@@ -1,6 +1,6 @@
 # Agent Note: Presence Staff are derived, never stored
 
-Status: proposed
+Status: implemented
 
 ## Problem
 

@@ -135,37 +135,37 @@ reconcile".
   the world has them at every Simulation Depth, at zero storage cost and zero world-generation cost.
   **A Presence Staff member is a name and a role, derived per-role from the World Seed and the club
   id, domestic, invariant across Stature Tier, and never stored.** See
-  [Agent Note](../../.agents/notes/proposed/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
+  [Agent Note](../../.agents/notes/implemented/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
 
 - **Per-role seeds keep the load-bearing staff stream untouched.** Each presence person derives from
   their own seed, `deriveSeed(worldSeed, "presence", "<clubId>:president")` and the same for the
   physio; neither touches `deriveSeed(worldSeed, "staff", clubId)`, whose draw order every existing
   save's backroom depends on. Adding a fifth role later changes nobody else's name. The cost is one
   extra `deriveSeed` call per person. **Per-role seeds, because the existing stream is a landmine.**
-  See [Agent Note](../../.agents/notes/proposed/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
+  See [Agent Note](../../.agents/notes/implemented/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
 
 - **Domestic names, because a nationality would be a value nothing reads.** Presence Staff draw from
   `NAME_POOLS[clubNation]` directly, following the staff precedent rather than the player
   migration-weighted one; no nationality is drawn because no surface would display one. The
   players-versus-staff divergence is recorded rather than repaired, because changing the bound staff
   draw would alter every shipped save's backroom. **Domestic names, because a nationality would be a
-  value nothing reads.** See [Agent Note](../../.agents/notes/proposed/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
+  value nothing reads.** See [Agent Note](../../.agents/notes/implemented/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
 
 - **Nothing varies by Stature Tier.** Presence Staff have no quality for the tier to own; a
   tier-varying job title would ship the glossary-banned **Chairman** as a big-club variant, and
   tier-varying name pools are unfalsifiable. **Nothing varies by Stature Tier.** See
-  [Agent Note](../../.agents/notes/proposed/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
+  [Agent Note](../../.agents/notes/implemented/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
 
 - **Two role unions keep the check constraint honest.** `STAFF_ROLES` and `StaffRole` keep meaning
   exactly `coach` and `scout`, matching `check("staff_role", oneOf("role", ["coach", "scout"]))`;
   `PRESENCE_ROLES` and `PresenceRole` cover `president` and `physio`; `ClubPersonRole` serves a
   caller that needs both. The derivation returns `{ role, firstName, lastName }` — `GeneratedStaff`
   minus `quality` — so both tiers produce the same shape of person. **Two role unions, so the check
-  constraint stays honest.** See [Agent Note](../../.agents/notes/proposed/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
+  constraint stays honest.** See [Agent Note](../../.agents/notes/implemented/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
 
 - **Both roles live in `rules/staff.ts`.** Two kinds of one concept, one file; the separation that
   matters is the seed, and it is structural already. **Both roles live in `rules/staff.ts`.** See
-  [Agent Note](../../.agents/notes/proposed/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
+  [Agent Note](../../.agents/notes/implemented/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
 
 - **One function composes the whole club, and the read is a main-process RPC.** A pure
   `deriveClubStaff({ clubId, statureTier, clubNation, worldSeed })` in `rules/staff.ts` returns the

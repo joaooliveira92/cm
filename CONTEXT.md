@@ -560,7 +560,7 @@ of both kinds, at every Simulation Depth. Fixed for the life of a career: Staff 
 nor turn over, and there are no Staff wages, no hiring, and no firing, so Staff never touch Contract
 or Wage Budget. See
 [the staff entity and its two bindings](.agents/notes/proposed/feature/2026-09-01-staff-entity-and-bindings.md)
-and [presence staff are derived, never stored](.agents/notes/proposed/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
+and [presence staff are derived, never stored](.agents/notes/implemented/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
 _Avoid_: backroom, coaching staff (fine informally; Staff is the modelled noun)
 
 **Bound Staff**:

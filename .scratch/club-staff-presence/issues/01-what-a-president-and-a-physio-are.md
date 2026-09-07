@@ -35,4 +35,4 @@ distinct from Chairman, Owner, and the Board itself.
 
 **A Presence Staff member is a name and a role, derived per-role from the World Seed and the club id,
 domestic, invariant across Stature Tier, and never stored.** See
-[Agent Note](../../../.agents/notes/proposed/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
+[Agent Note](../../../.agents/notes/implemented/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
