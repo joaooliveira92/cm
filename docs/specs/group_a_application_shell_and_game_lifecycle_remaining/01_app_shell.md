@@ -226,7 +226,7 @@ The clone should not reproduce the original logo, background image, typography, 
 
 The Main Menu occupies the entire game window.
 
-![audit/docs/images/16626362-championship-manager-season-0304-windows-main-menu.png](/Users/joao/dev/audit/docs/images/16626362-championship-manager-season-0304-windows-main-menu.png)
+![Championship Manager 2003/04 main menu](../../images/16626362-championship-manager-season-0304-windows-main-menu.png)
 
 This diagram is conceptual and does not prescribe exact pixel positions.
 
