@@ -2,7 +2,7 @@
 
 Type: grilling
 Blocked by: 01
-Status: open
+Status: resolved
 
 ## Question
 
@@ -30,3 +30,39 @@ Settle:
 
 This ticket touches a projection with existing tests, so it is a real change rather than a copy
 tweak.
+
+## Answer
+
+**The President names the warning and the dismissal; the Board Objective verdict stays
+institutional; the name is resolved in the main process and handed to the projection; and the
+retroactive re-voicing of old messages is fine — and said so — because the name is derived and
+stable.**
+
+- **Which messages change.** `ManagerWarned` and `ManagerSacked` gain the President's voice — those
+  are the President's own acts, the Board speaking through its face. `BoardObjectiveJudged` stays
+  institutional: setting and judging the Board Objective is the Board acting on its own instrument,
+  and personifying the verdict would blur the face-versus-institution line ticket 01 drew. That
+  settles the map's fog in the direction of the distinction, not of more personal copy.
+- **What the copy says.** The subject names the person; the sacking keeps the club name in the
+  subject (it anchors which club fired you); the body keeps the recorded objective-miss count the
+  high-priority mechanic already depends on. Draft:
+  - Warned — subject `Alan Reyes has issued a warning`; body `After season <N>, Alan Reyes has
+    recorded <M> consecutive missed objectives. Another miss puts the job at risk.`
+  - Sacked — subject `<Club> has terminated your contract` (unchanged); body `Alan Reyes has
+    dismissed you after season <N>, following <M> consecutive missed objectives.`
+- **Where the name comes from at projection time.** It does not ride on the event, and it is not
+  derived inside the projection. `newsProjection` stays pure and takes facts; the main-process news
+  query (`readInbox`, `career/news.ts:140`) already resolves the club context through the
+  `displayNames` seam, and that is where `presidentName` is derived and added to
+  `NewsClubContext`. The copy table formats it, so the projection and its tests change shape only
+  in that one field. Messages projected years later name the same person automatically, because
+  the President is a pure function of the world seed, club id, and nation — fixed for the life of
+  the career — so "always the same person" is a property of the derivation, not an invariant copy
+  must enforce. Riding the name on the event is rejected outright: it would log a second copy of a
+  derivable value, which the projection exists to avoid.
+- **Historical messages change, and that is fine — so it is said.** The copy table is a projection
+  with no persistence of its own: every read re-projects the stored events, so a copy change
+  re-voices the whole inbox retroactively by construction. Because the President's name is derived
+  and fixed, the re-voicing changes the voice and never the person — a season-2 warning and a
+  season-5 warning name the same person the day after the change. That is recorded in the note's
+  relationship section (or the ledger) rather than left hidden in the diff.

@@ -75,18 +75,37 @@ they are not open questions and no session re-litigates them.
   role, nothing else; each person on their own seed so no draw order is load-bearing; domestic names
   because no surface would show a nationality; nothing varies by Stature Tier; `PresenceRole` sits
   beside an unchanged `StaffRole` so the `staff_role` check constraint keeps telling the truth.
+- [One function answers who works here](issues/02-one-function-answers-who-works-here.md):
+  `deriveClubStaff({ clubId, statureTier, clubNation, worldSeed })` in `rules/staff.ts` composes the
+  whole club; the read is a main-process RPC (`getClubStaff`, `ClubStaffView`
+  `{ club, groups: [{ department, members }] }`); the bound two are always re-derived, never read
+  from the `staff` table, agreeing with the rows by construction.
+- [The first club-scoped route](issues/03-the-first-club-scoped-route.md): one closed destination
+  `clubStaff` carrying `saveId` + `clubId`, resolving to `/career/$saveId/club/$clubId/staff`; a
+  leaf in its own right until a second club screen exists; the league table is the single entry
+  point (fixtures and transfers deferred); `g b` real history is Back; registry gains one route,
+  keymap and focus coordinator unchanged.
+- [What the Club Staff page shows](issues/04-what-the-club-staff-page-shows.md): four department
+  groups in fixed order, name and role per row and nothing else, three states
+  (`loading`/`ready`/`error`, five dropped on the record), a club header that names the club and
+  marks `[Not your club]`, reading order as the design. Prototype
+  [here](prototypes/04-club-staff-page.md).
+- [The President's voice in board news](issues/05-the-presidents-voice-in-board-news.md):
+  `ManagerWarned` and `ManagerSacked` gain the President's name; the Board Objective verdict stays
+  institutional; the name is derived in the main process into `NewsClubContext`, never ridden on
+  the event; retroactive re-voicing is fine because the name is derived and stable.
+- [Screen 38's reconciliation rows](issues/06-screen-38-reconciliation-rows.md): the group C
+  ledger ships with screen 38 audited and the other fifteen marked unreconciled; contracts,
+  workload, vacancies, responsibilities, search, and the permission model out-of-scope; the
+  President/Physio additions recorded as this effort's, not the import's omissions.
 
 ## Not yet specified
 
-- **Whether the shell needs a "viewed club" context.** The import's screen 38 keeps the viewed club
-  independent of the controlled club. Whether that needs breadcrumbs, a club header band, or
-  anything in the chrome at all depends on what the route ticket settles.
-- **Whether the President appears in Board Objective copy**, not only in Manager Warned and Manager
-  Sacked. The objective-setting message is a different voice — institutional rather than personal —
-  and the answer depends on what the news ticket decides the President sounds like.
-- **What the page does for a club whose competition the save loaded thinly.** A `results-only` club
-  has a President and a Physio but no squad; whether the page says anything about that, or simply
-  lists the four people, hangs on the page design.
+All three items charting listed as open fog are settled by the tickets above: the shell needs no
+viewed-club context beyond the page's own club header (`[Not your club]` marker, ticket 04); the
+President does **not** appear in Board Objective copy (the verdict stays institutional, ticket 05);
+and the page for a `results-only` club simply lists the four people like any other (no squad is
+mentioned, ticket 04). Nothing is left to decide; the map is ready for `/to-spec`.
 
 ## Out of scope
 

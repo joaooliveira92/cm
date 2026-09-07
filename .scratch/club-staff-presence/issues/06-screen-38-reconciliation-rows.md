@@ -2,7 +2,7 @@
 
 Type: task
 Blocked by: 04
-Status: open
+Status: resolved
 
 ## Question
 
@@ -25,6 +25,30 @@ Do the work:
   at all.
 - **Do not edit the import file.** The ledger's own preamble rule: import files are never edited,
   because their value is that you can always see what arrived.
+
+## Answer
+
+**Done in this resolution:** the group C ledger
+[`docs/specs/group_c_club_information/RECONCILIATION.md`](../../../docs/specs/group_c_club_information/RECONCILIATION.md)
+ships with screen 38 classified against this effort's design and the other fifteen screens marked
+unreconciled.
+
+- **The ledger exists** with a preamble stating plainly that it covers screen 38 alone and that
+  silence about screens 33-37 and 39-49 means "not yet reconciled", not "nothing to reconcile" —
+  the Group B posture, transplanted before any screen has been read.
+- **Screen 38 is classified** with the Group A/B vocabulary. The read-only department-grouped
+  list and the viewed-club-independence clause survive (`renamed`); filters, contracts, workload,
+  vacancies, responsibilities, search, the permission/knowledge model, revisions, virtualization,
+  and the eight view states are `out-of-scope` or `contradicted`, each anchored to the decision
+  that disposes of it (the staff note cutting contracts/wages, ticket 02's wire shape, ticket 04's
+  three states); accessibility rows anchor to this repo's screen standards; localization and
+  responsive behaviour carry the same deferred rows Groups A and B carry.
+- **What was added is recorded** in the screen's preamble paragraph, not in the row vocabulary:
+  the President and Physio and the Executive department have no referent in the import at all, and
+  a Coach and four Scouts at *every* club — `results-only` included — is not what "24 staff with
+  contracts" describes. A later reader must be able to tell additive divergence from an import
+  omission.
+- **The import file is untouched**, per the ledger's own preamble rule.
 
 Blocked on the page design because a ledger row describing what shipped needs the thing to have
 shipped in design, not just in principle.
