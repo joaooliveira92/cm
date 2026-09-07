@@ -28,11 +28,11 @@ screen 28 must find the disposal on screen 28.
 **Blocked by:** 01 (write contention on the ledger, and screens 29 and 32 must already be disposed so
 this sweep skips them).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] All twenty-four surviving scaffolding sections are classified `out-of-scope`, per screen.
-- [ ] Each row's anchor cites the Group A ruling rather than re-arguing it.
-- [ ] Screens 26 and 22 are handled correctly despite their missing sections; no row cites a section that does not exist.
-- [ ] No row duplicates one screen 23 already carries.
-- [ ] The import files are unedited.
-- [ ] `pnpm exec tsx scripts/verify-md-links.ts` reports nothing new.
+- [x] All twenty-four surviving scaffolding sections are classified `out-of-scope`, per screen.
+- [x] Each row's anchor cites the Group A ruling rather than re-arguing it.
+- [x] Screens 26 and 22 are handled correctly despite their missing sections; no row cites a section that does not exist.
+- [x] No row duplicates one screen 23 already carries.
+- [x] The import files are unedited.
+- [x] `pnpm exec tsx scripts/verify-md-links.ts` reports nothing new.

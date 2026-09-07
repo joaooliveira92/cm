@@ -13,8 +13,8 @@ The import files are never edited. Their value is that you can always see what a
 
 The format is the one the [Group A ledger](../group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md)
 pilots; that file is the fuller worked example. Group B adopts it screen by screen as each is audited,
-so unlike Group A there is no blanket scope trim behind these rows — a screen with no section below has
-been read by nobody.
+and, as in Group A, a blanket scope trim ran across the whole group before any screen was audited. So a
+screen can carry rows without anyone having read it; the status line is what says which.
 
 ## How to read a row
 
@@ -48,6 +48,12 @@ line:
 Those four are the whole vocabulary. Every screen in the Coverage table carries exactly one of them,
 and a screen moves between them only by a ticket that says so.
 
+A screen carrying rows is therefore not the same as an audited screen. The **blanket sweeps**
+(group-b-blanket-disposals, 2026-09-07) applied rulings settled at charting or inherited from Group A
+across every surviving screen at once, before any of them was read. Those rows narrow what an audit has
+to cover; they do not make the screen audited, and its status stays `Not yet audited` until a session
+reads it.
+
 ## Coverage
 
 | Screen | Import file | Status |
@@ -63,6 +69,15 @@ and a screen moves between them only by a ticket that says so.
 | 30 Manager History | [30_manager_history.md](30_manager_history.md) | Not yet audited |
 | 31 Manager Profile | [31_manager_profile.md](31_manager_profile.md) | Not yet audited |
 | 32 Manager Chat and Multiplayer Communication | [32_manager_chat_and_multiplayer_communication.md](32_manager_chat_and_multiplayer_communication.md) | Disposed in full |
+
+## Screen 22: Global Application Shell
+
+Status: **Not yet audited**. The rows below come from the blanket sweeps; nobody has read this
+screen.
+
+| Sections | Kind | What the spec asks | Disposition | Anchor |
+|---|---|---|---|---|
+| §22 Condensed LLM implementation brief, §23 Next planned item | `out-of-scope` | A restatement of the whole file and a pointer to the next file the import author intended to write. | Not audited. Auditing the brief would double-count every section it summarizes. | Non-normative import scaffolding — the [Group A ruling](../group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md), applied unchanged. |
 
 ## Screen 23: Continue and Advance Time
 
@@ -95,6 +110,51 @@ which are more specific than the import on every point where they overlap it.
 | §22 Condensed LLM implementation brief, §23 Next planned item, Suggested Git commit | `out-of-scope` | A prose restatement of the whole file, the next screen in the import's order, and a commit message. | Not audited. Auditing the brief would double-count every section it summarizes. | Non-normative import scaffolding — an artifact of how the import was generated, not a requirement. |
 | §20 criterion 1, §7 Principal interactions, §21 Recommended tests (Blocked decision) | `deferred` | Mandatory decisions cannot be skipped: the advance stops before them and offers to open them. | The advance does not stop before the human club's Fixture — it resolves that Fixture headlessly and reports a count — so the one mandatory decision in the game is skippable today. | [The human Fixture's pre-match boundary](../../../.agents/notes/implemented/architecture/2026-08-29-human-fixture-pre-match-boundary.md), ticketed as its own effort. |
 
+## Screen 24: News Inbox
+
+Status: **Not yet audited**. The rows below come from the blanket sweeps; nobody has read this
+screen.
+
+| Sections | Kind | What the spec asks | Disposition | Anchor |
+|---|---|---|---|---|
+| §22 Condensed LLM implementation brief, §23 Next planned item, `Suggested Git commit` | `out-of-scope` | A restatement of the whole file, a pointer to the next file the import author intended to write, and a commit message. | Not audited. Auditing the brief would double-count every section it summarizes. | Non-normative import scaffolding — the [Group A ruling](../group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md), applied unchanged. |
+
+## Screen 25: Individual News Message
+
+Status: **Not yet audited**. The rows below come from the blanket sweeps; nobody has read this
+screen.
+
+| Sections | Kind | What the spec asks | Disposition | Anchor |
+|---|---|---|---|---|
+| §22 Condensed LLM implementation brief, §23 Next planned item, `Suggested Git commit` | `out-of-scope` | A restatement of the whole file, a pointer to the next file the import author intended to write, and a commit message. | Not audited. Auditing the brief would double-count every section it summarizes. | Non-normative import scaffolding — the [Group A ruling](../group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md), applied unchanged. |
+
+## Screen 26: News Filters
+
+Status: **Not yet audited**. The rows below come from the blanket sweeps; nobody has read this
+screen.
+
+| Sections | Kind | What the spec asks | Disposition | Anchor |
+|---|---|---|---|---|
+| §22 Condensed LLM implementation brief | `out-of-scope` | A restatement of the whole file. | Not audited. Auditing the brief would double-count every section it summarizes. | Non-normative import scaffolding — the [Group A ruling](../group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md), applied unchanged. |
+
+## Screen 27: Background Processing and Updating Game
+
+Status: **Not yet audited**. The rows below come from the blanket sweeps; nobody has read this
+screen.
+
+| Sections | Kind | What the spec asks | Disposition | Anchor |
+|---|---|---|---|---|
+| §22 Condensed LLM implementation brief, §23 Next planned item, `Suggested Git commit` | `out-of-scope` | A restatement of the whole file, a pointer to the next file the import author intended to write, and a commit message. | Not audited. Auditing the brief would double-count every section it summarizes. | Non-normative import scaffolding — the [Group A ruling](../group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md), applied unchanged. |
+
+## Screen 28: Calendar and Schedule
+
+Status: **Not yet audited**. The rows below come from the blanket sweeps; nobody has read this
+screen.
+
+| Sections | Kind | What the spec asks | Disposition | Anchor |
+|---|---|---|---|---|
+| §22 Condensed LLM implementation brief, §23 Next planned item, `Suggested Git commit` | `out-of-scope` | A restatement of the whole file, a pointer to the next file the import author intended to write, and a commit message. | Not audited. Auditing the brief would double-count every section it summarizes. | Non-normative import scaffolding — the [Group A ruling](../group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md), applied unchanged. |
+
 ## Screen 29: Manager Notebook
 
 Status: **Disposed in full** (ruled at charting, group-b-blanket-disposals ticket 01, 2026-09-07).
@@ -107,6 +167,24 @@ covers every section, so nothing here is silent and no audit of this screen is o
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
 | §1–§23 and Suggested Git commit — the whole file | `out-of-scope` | A manager-private notebook: free-prose notes with tags and pinning, annotations linked to players, staff, clubs, competitions, fixtures and dates, search and filter over them, note-to-reminder conversion, and export or deletion under a privacy policy. | Nothing exists and nothing is planned. There is no note, tag, pin, annotation, or reminder anywhere in the domain. | Two independent grounds. **First**, the note concept is an import invention: it appears in no code, in no `CONTEXT.md` term, and in no recorded decision, and nothing in the game asks the player to keep private prose — the player's record of a career is the career state itself. **Second**, the screen takes manager-private data as its premise, and privacy between managers presupposes more than one; [`CONTEXT.md`](../../../CONTEXT.md)'s **Save** entry fixes exactly one human manager per Save, and the multiplayer, network and multi-manager axis was removed wholesale from this project at Group A. Returns only if this game acquires a reason for the player to write prose the game itself does not model — a new effort against a redrawn scope, not a resumption of this one. Overturning the multiplayer ruling alone would not bring it back, because the first ground would still stand. |
+
+## Screen 30: Manager History
+
+Status: **Not yet audited**. The rows below come from the blanket sweeps; nobody has read this
+screen.
+
+| Sections | Kind | What the spec asks | Disposition | Anchor |
+|---|---|---|---|---|
+| §22 Condensed LLM implementation brief, §23 Next planned item, `Suggested Git commit` | `out-of-scope` | A restatement of the whole file, a pointer to the next file the import author intended to write, and a commit message. | Not audited. Auditing the brief would double-count every section it summarizes. | Non-normative import scaffolding — the [Group A ruling](../group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md), applied unchanged. |
+
+## Screen 31: Manager Profile
+
+Status: **Not yet audited**. The rows below come from the blanket sweeps; nobody has read this
+screen.
+
+| Sections | Kind | What the spec asks | Disposition | Anchor |
+|---|---|---|---|---|
+| §22 Condensed LLM implementation brief, §23 Next planned item, `Suggested Git commit` | `out-of-scope` | A restatement of the whole file, a pointer to the next file the import author intended to write, and a commit message. | Not audited. Auditing the brief would double-count every section it summarizes. | Non-normative import scaffolding — the [Group A ruling](../group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md), applied unchanged. |
 
 ## Screen 32: Manager Chat and Multiplayer Communication
 
