@@ -25,6 +25,14 @@ export const discardCareer = (id: SaveId): RpcRead<"discardCareer"> => call("dis
 export const getClubSelection = (saveId: SaveId): RpcRead<"getClubSelection"> =>
   call("getClubSelection", { saveId });
 
+/**
+ * §22's Career Setup Summary — what the provisional world contains, read at the Review step. The
+ * same edge that built the world reads it back; the caller degrades to an explicit "unavailable"
+ * line on failure rather than blocking the commit.
+ */
+export const getCareerSetupSummary = (saveId: SaveId): RpcRead<"getCareerSetupSummary"> =>
+  call("getCareerSetupSummary", { saveId });
+
 export const createSave = (name: string): RpcRead<"createSave"> => call("createSave", { name });
 
 export const getManagerProfile = (saveId: SaveId): RpcRead<"getManagerProfile"> =>

@@ -149,6 +149,17 @@ export const seasonStartYear = (referenceYear: number, seasonNumber: number): nu
 export const seasonStartDate = (referenceYear: number, seasonNumber: number): IsoDate =>
   seasonSlots(seasonStartYear(referenceYear, seasonNumber)).seasonStartDate;
 
+/**
+ * A season named by the two calendar years it spans — `2026/27`. A season runs July to May, so a
+ * single year never identifies one; the two-digit tail is the convention every football table
+ * uses. Lives here rather than in a renderer because the span is a fact about this calendar, and a
+ * screen that reconstructed it would be holding a second copy of the July-to-May rule.
+ */
+export const seasonLabel = (referenceYear: number, seasonNumber: number): string => {
+  const start = seasonStartYear(referenceYear, seasonNumber);
+  return `${start}/${String((start + 1) % 100).padStart(2, "0")}`;
+};
+
 // ---------------------------------------------------------------------------
 // Transfer Windows
 // ---------------------------------------------------------------------------

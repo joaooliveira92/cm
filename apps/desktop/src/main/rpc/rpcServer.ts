@@ -2,6 +2,7 @@ import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { AppRpcs, type AppRpcMethod, type RpcResult } from "@cm-clone/contracts";
 import { Effect, Schema } from "effect";
+import { getCareerSetupSummary } from "../career/careerSetupSummary.js";
 import { getClubSelection } from "../career/clubSelection.js";
 import {
   applyLeaguePreset,
@@ -139,6 +140,16 @@ const handlers: Record<AppRpcMethod, Handler> = {
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getClubSelection.payload)(payload);
       return yield* getClubSelection.pipe(
+        Effect.provide(SqliteClient.layer({ filename: path.join(ctx.savesDir, `${saveId}.sqlite`) })),
+        Effect.scoped,
+      );
+    }),
+  getCareerSetupSummary: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.getCareerSetupSummary.payload,
+      )(payload);
+      return yield* getCareerSetupSummary.pipe(
         Effect.provide(SqliteClient.layer({ filename: path.join(ctx.savesDir, `${saveId}.sqlite`) })),
         Effect.scoped,
       );

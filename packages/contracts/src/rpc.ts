@@ -16,6 +16,7 @@ import {
   BidId,
   BidNotFoundError,
   CareerScopeEstimateView,
+  CareerSetupSummaryView,
   InvalidLeagueSelectionError,
   LeaguePreset,
   LeagueSelectionSnapshot,
@@ -150,6 +151,15 @@ commitCareer: {
   getClubSelection: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: ClubSelectionView,
+    error: Schema.Never,
+  },
+  /** §22's Career Setup Summary: what the provisional world on disk contains, read at the Review
+   *  step. A pure read of a world that cannot change while the panel is open, and one the flow can
+   *  do without — the caller renders the configuration it already holds and an explicit
+   *  "unavailable" line when this fails, rather than blocking the commit. */
+  getCareerSetupSummary: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: CareerSetupSummaryView,
     error: Schema.Never,
   },
   discardCareer: {

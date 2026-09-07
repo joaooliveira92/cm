@@ -47,6 +47,7 @@ export {
   loadSave,
   beginCareer,
   discardCareer,
+  getCareerSetupSummary,
   getClubSelection,
   createSave,
   getManagerProfile,
