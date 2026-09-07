@@ -119,9 +119,15 @@ glossary would leave each of them re-deciding the same question.
 
 ## Consequences
 
-- CONTEXT.md's Scouting section gains `Team Scout Report`, `Knowledge Confidence`, and `Freshness`;
-  `Scout` and `Scouting Assignment` admit a Club target; the `_Avoid_: Scouting Report` entry is
-  gone, replaced by an `_Avoid_` against scouting a formation or tactic directly.
+- CONTEXT.md's Scouting section gains `Team Scout Report`, `Scouting Report`, `Knowledge Confidence`,
+  and `Freshness`; `Scout` and `Scouting Assignment` admit a Club target; the `_Avoid_: Scouting
+  Report` entry is gone, replaced by an `_Avoid_` against scouting a formation or tactic directly.
+- A report has an **observed half and a predicted half**, and the glossary keeps them apart. The
+  observed half is never wrong, only partial. The predicted half — likely shape, set-piece
+  tendencies — is inferred from the target's public results and performances and may be wrong, per
+  spec §16. A report never reads the target's own tactical record: spec §8 lists tactical information
+  among the things requiring explicit permission, so scouting must infer it rather than unlock it.
+  This is why `Knowledge Confidence` avoids "accuracy" — that word conflates the two halves.
 - The Tactical Acumen entry no longer asserts the v1 cut and instead records why the report is not a
   Pillar-binding surface.
 - Constraint 2 is the load-bearing one for tickets 02-06: it is why the wire shape carries
@@ -130,6 +136,33 @@ glossary would leave each of them re-deciding the same question.
 - The `world-data-model` map's **Out of scope** list no longer carries "Scouting a Club rather than a
   Player" as a permanent exclusion; the entry is struck through and points here. That list is meant
   to hold permanently-ruled-out items, so leaving a reversed one in it is worse than an edit.
-- Nothing else moved. No source, contract, or schema file changed with this note — the runtime
-  Scouting implementation still only knows Player targets, and widening it is ticket 07's job. Until
-  then the glossary describes a Club target the code cannot yet accept.
+- No source, contract, or schema file changed with this note. The glossary therefore describes a Club
+  target the running code cannot yet accept: `packages/contracts/src/rpc.ts` types `assignScout` as
+  `{saveId, scoutId, playerId}` with a `PlayerNotFoundError`, which admits no Club.
+
+## Left open
+
+Three things this decision touches but does not settle. They are recorded here so the next session
+finds them rather than rediscovering them:
+
+- **The Club-target command is unticketed.** Tickets 02-06 build the *read* path only — the report
+  shape, its derivation, its RPC, its route, its screen — all of which work off Scouting Progress
+  that a Player-targeted assignment already produces. Nothing in 02-06 widens `assignScout`, and
+  ticket 07, which would, is parked as a follow-on. So the first slice ships a report about a Club
+  the manager cannot yet point a Scout at as a Club. That is coherent as a tracer bullet, but it is
+  not what a reader of the glossary alone would assume, and the widening needs its own ticket.
+- **The technical contract still models assignments per Player.**
+  [Scouting technical contract](../../proposed/architecture/2026-08-28-scouting-technical-contract.md)
+  specifies `scouting_assignments (clubId, playerId)` and an `AssignScout(playerId)` that rejects at
+  the Stature-Tier scout cap. Taken literally, a Club target expands into N player rows against an
+  N-slot cap and would exhaust it instantly — contradicting the one-Scout-per-assignment rule this
+  note asserts. The [persistence note](../../proposed/architecture/2026-09-02-scouting-persistence.md)'s
+  later `scout_id` primary key is the shape that makes one-slot-per-Club-target work. Both notes are
+  `proposed`; whichever ships must carry the Club target on the assignment row, not fan out into it.
+- **Club and Player assignments can collide on the same Player.**
+  [Scout resource and assignment model](../../proposed/feature/2026-08-28-scout-resource-and-assignment-model.md)
+  forbids stacking two Scouts on one target. A Club assignment advances every squad member, so it
+  overlaps any existing Player assignment on one of them. Nothing rules on whether that is a
+  rejection, a no-op on the overlapping Player, or simply permitted because progress is monotonic and
+  the double-count is harmless. Monotonic progress makes the third option most likely correct, but it
+  needs deciding before either assignment path ships.

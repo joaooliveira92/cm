@@ -10,10 +10,10 @@ Type: task
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] CONTEXT.md no longer states that opponent analysis / opponent-scouting is cut from v1.
-- [ ] The Scouting glossary allows a Club as a scouting target and lists "Scouting Report" as a term, not an `_Avoid_`.
-- [ ] The vocabulary stays consistent with the existing per-Player scouting: a report on a Club aggregates the scouted knowledge of that Club's players and never invents a per-Club hidden value that the glossary forbids.
-- [ ] An Agent Note records the supersession and sits in `implemented/` in the same commit that edits CONTEXT.md.
-- [ ] No source, contract, or schema file changes in this ticket.
+- [x] CONTEXT.md no longer states that opponent analysis / opponent-scouting is cut from v1.
+- [x] The Scouting glossary allows a Club as a scouting target and lists "Scouting Report" as a term, not an `_Avoid_`.
+- [x] The vocabulary stays consistent with the existing per-Player scouting: a report on a Club aggregates the scouted knowledge of that Club's players and never invents a per-Club hidden value that the glossary forbids.
+- [x] An Agent Note records the supersession and sits in `implemented/` in the same commit that edits CONTEXT.md.
+- [x] No source, contract, or schema file changes in this ticket.

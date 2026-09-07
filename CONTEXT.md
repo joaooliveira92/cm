@@ -645,29 +645,44 @@ Proneness, and Transfer Value display as exact figures, identical to the manager
 Never regresses once reached.
 
 **Team Scout Report**:
-The delivered artifact of a Club-targeted Scouting Assignment: a dated, immutable reading of one
-Club, presented on the Team Scout Report screen. Its content is derived entirely from the Scouting
-Progress already accrued on that Club's Players plus what the manager can already observe of the
-club's form and tactics — it aggregates scouted knowledge and never reads a hidden per-Club value,
-because none exists. A Club with no scouted Players yields no report rather than an estimated one,
-and nothing in a report states an exact figure that the underlying Player's Attribute Range would
-withhold. Distinct from a Scouting Assignment, which is the ongoing state that produces the reading.
-*Scouting Report* is the acceptable short form where the Club is clear from context; it was
-previously an `_Avoid_` on the grounds that no delivered artifact existed, and now one does.
+The delivered artifact of a Club-targeted Scouting Assignment: a reading of one Club, pinned to the
+revision at which it was taken and unchanged by later ones, presented on the Team Scout Report
+screen. It has an observed half and a predicted half, and the distinction is load-bearing. The
+observed half aggregates the Scouting Progress already accrued on that Club's Players; it is never
+wrong, only partial, and it never reads a hidden per-Club value, because none exists. The predicted
+half — likely shape, strengths, weaknesses, set-piece tendencies — is *inferred* from what the Club
+has publicly done, its results and its observed performances, and may simply be wrong. A report never
+reads the target's own tactical record, which is private to that Club and not something scouting
+unlocks. A Club with no scouted Players yields no report rather than an estimated one, and nothing in
+a report states an exact figure that the underlying Player's Attribute Range would withhold. Distinct
+from a Scouting Assignment, which is the ongoing state that produces the reading.
 _Avoid_: Opponent Report, Pre-Match Report (a report is about a Club, not about a fixture, and is
 not tied to playing them)
 
+**Scouting Report**:
+The general form of a Team Scout Report, acceptable where the Club is clear from context. Formerly an
+`_Avoid_` on the grounds that "report" implied a one-shot document while scouting was only ongoing
+state; both now exist and are named separately, so the term is restored.
+_Avoid_: using it for a *Player* (a Player's scouted knowledge surfaces as Attribute Ranges on that
+player, not as a document)
+
 **Knowledge Confidence**:
 How much of a Team Scout Report rests on scouted knowledge rather than on gaps, rising as the target
-squad's Scouting Progress rises. Distinct from Freshness, which measures the report's calendar age,
-not its coverage. Unknown information stays Unknown at any Knowledge Confidence: neither term ever
-licenses estimating a value from a hidden one.
-_Avoid_: accuracy, reliability (both imply the report can be wrong; it can only be incomplete)
+squad's Scouting Progress rises. Distinct from Freshness, which measures how far the report has
+fallen behind, not how much of the squad it covers. Unknown information stays Unknown at any Knowledge Confidence: neither term ever
+licenses estimating a value from a hidden one. It qualifies what a report *observed*, which is never
+wrong, only partial — it does not qualify what a report *predicts*, and a predicted shape may simply
+be wrong however high the confidence behind it.
+_Avoid_: accuracy (it reads as "how often the report is right", which conflates the observed half
+with the predicted half)
 
 **Freshness**:
-How recently a Team Scout Report was observed, decaying with the calendar as the report ages. A
-decayed report stays readable and is never rewritten in place — the manager renews it by taking a
-new reading, which produces a new report alongside the previous ones.
+How far a Team Scout Report has fallen behind the Club it describes. Calendar age drives it, but age
+is a proxy for the real thing: a report goes stale as the target's squad, tactics, and injuries move
+away from what was observed, so a transfer window can date a recent report faster than a quiet month
+dates an old one. Distinct from Knowledge Confidence, which measures coverage rather than currency —
+a report can be thorough and stale, or fresh and mostly gaps. A decayed report stays readable and is
+never silently rewritten; the manager renews it by taking a new reading at the current revision.
 
 ### Manager
 
