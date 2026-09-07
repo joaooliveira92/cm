@@ -7,7 +7,7 @@ Written by the orchestrator after the gate, before the commit. Records what was 
 - Effort: `.scratch/club-staff-presence/`
 - Tickets closed: `01-presence-staff-derivation`
 - Branch: `dev` (per `.ai/AUTONOMOUS-AGENT.md` § Git policy — no feature branches)
-- Commits: (commit hashes appended on commit)
+- Commits: `f898d85` fix(docs): link the app-shell main-menu image repo-relative; `ecaa4c0` feat(shared): presence staff derive from the world seed and the club id
 
 ## Acceptance criteria → evidence
 
