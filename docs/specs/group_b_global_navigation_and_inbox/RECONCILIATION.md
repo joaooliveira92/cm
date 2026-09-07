@@ -43,6 +43,10 @@ line:
 | `Audited` | Everything not listed below is followed. A section-by-section pass was made. |
 | `Reviewed` | Nothing. The rows are the material conflicts a single-session pass found; unlisted sections were not individually checked. |
 | `Not yet audited` | Nothing. |
+| `Disposed in full` | Nothing is left silent. The screen was ruled out of scope as a whole file, and its one row below disposes of every section at once. No section-by-section pass was made and none is owed. |
+
+Those four are the whole vocabulary. Every screen in the Coverage table carries exactly one of them,
+and a screen moves between them only by a ticket that says so.
 
 ## Coverage
 
@@ -55,10 +59,10 @@ line:
 | 26 News Filters | [26_news_filters.md](26_news_filters.md) | Not yet audited |
 | 27 Background Processing and Updating Game | [27_background_processing_and_updating_game.md](27_background_processing_and_updating_game.md) | Not yet audited |
 | 28 Calendar and Schedule | [28_calendar_and_schedule.md](28_calendar_and_schedule.md) | Not yet audited |
-| 29 Manager Notebook | [29_manager_notebook.md](29_manager_notebook.md) | Not yet audited |
+| 29 Manager Notebook | [29_manager_notebook.md](29_manager_notebook.md) | Disposed in full |
 | 30 Manager History | [30_manager_history.md](30_manager_history.md) | Not yet audited |
 | 31 Manager Profile | [31_manager_profile.md](31_manager_profile.md) | Not yet audited |
-| 32 Manager Chat and Multiplayer Communication | [32_manager_chat_and_multiplayer_communication.md](32_manager_chat_and_multiplayer_communication.md) | Not yet audited |
+| 32 Manager Chat and Multiplayer Communication | [32_manager_chat_and_multiplayer_communication.md](32_manager_chat_and_multiplayer_communication.md) | Disposed in full |
 
 ## Screen 23: Continue and Advance Time
 
@@ -90,3 +94,29 @@ which are more specific than the import on every point where they overlap it.
 | §11 Validation and error handling (offline, conflicted) | `out-of-scope` | Distinguish offline and conflicted states from empty, unavailable, and failed. | Neither exists to distinguish. The renderer's only remote is the main process in the same application. | Same axis as the revision model: there is no network to be offline from and no second writer to conflict with. |
 | §22 Condensed LLM implementation brief, §23 Next planned item, Suggested Git commit | `out-of-scope` | A prose restatement of the whole file, the next screen in the import's order, and a commit message. | Not audited. Auditing the brief would double-count every section it summarizes. | Non-normative import scaffolding — an artifact of how the import was generated, not a requirement. |
 | §20 criterion 1, §7 Principal interactions, §21 Recommended tests (Blocked decision) | `deferred` | Mandatory decisions cannot be skipped: the advance stops before them and offers to open them. | The advance does not stop before the human club's Fixture — it resolves that Fixture headlessly and reports a count — so the one mandatory decision in the game is skippable today. | [The human Fixture's pre-match boundary](../../../.agents/notes/implemented/architecture/2026-08-29-human-fixture-pre-match-boundary.md), ticketed as its own effort. |
+
+## Screen 29: Manager Notebook
+
+Status: **Disposed in full** (ruled at charting, group-b-blanket-disposals ticket 01, 2026-09-07).
+
+The screen was ruled out of scope as a whole file before any Group B ticket opened, on two grounds that
+hold independently: the notebook itself has no referent in this game, and the privacy model it is built
+on is the multi-manager one Group A removed. Either alone disposes of the file. The single row below
+covers every section, so nothing here is silent and no audit of this screen is owed.
+
+| Sections | Kind | What the spec asks | Disposition | Anchor |
+|---|---|---|---|---|
+| §1–§23 and Suggested Git commit — the whole file | `out-of-scope` | A manager-private notebook: free-prose notes with tags and pinning, annotations linked to players, staff, clubs, competitions, fixtures and dates, search and filter over them, note-to-reminder conversion, and export or deletion under a privacy policy. | Nothing exists and nothing is planned. There is no note, tag, pin, annotation, or reminder anywhere in the domain. | Two independent grounds. **First**, the note concept is an import invention: it appears in no code, in no `CONTEXT.md` term, and in no recorded decision, and nothing in the game asks the player to keep private prose — the player's record of a career is the career state itself. **Second**, the screen takes manager-private data as its premise, and privacy between managers presupposes more than one; [`CONTEXT.md`](../../../CONTEXT.md)'s **Save** entry fixes exactly one human manager per Save, and the multiplayer, network and multi-manager axis was removed wholesale from this project at Group A. Returns only if this game acquires a reason for the player to write prose the game itself does not model — a new effort against a redrawn scope, not a resumption of this one. Overturning the multiplayer ruling alone would not bring it back, because the first ground would still stand. |
+
+## Screen 32: Manager Chat and Multiplayer Communication
+
+Status: **Disposed in full** (ruled at charting, group-b-blanket-disposals ticket 01, 2026-09-07).
+
+The screen was ruled out of scope as a whole file before any Group B ticket opened. It is the
+multiplayer, network and multi-manager axis end to end, with no residue on any other axis, so a
+section-by-section pass would restate the same disposal twenty-three times. The single row below
+covers every section, so nothing here is silent and no audit of this screen is owed.
+
+| Sections | Kind | What the spec asks | Disposition | Anchor |
+|---|---|---|---|---|
+| §1–§23 and Suggested Git commit — the whole file | `out-of-scope` | Career-scoped communication between participants: a lobby with manager presence, public, team, direct and system channels, message send and receive, mute, block and report, connection and delivery state, and shared entity links that leak no private knowledge. | Nothing exists and nothing is planned. There is no chat surface, no channel, no participant list, and no transport for a message to cross. | Every section rests on there being a second human manager to talk to, and there is not one: [`CONTEXT.md`](../../../CONTEXT.md)'s **Save** entry fixes exactly one human manager per Save, and the multiplayer, network and host axis was removed wholesale from this project at Group A. AI-managed clubs are simulated, not correspondents. Returns only if a Save gains multiple human managers, which would be a new effort against a redrawn scope, not a resumption of this one. |
