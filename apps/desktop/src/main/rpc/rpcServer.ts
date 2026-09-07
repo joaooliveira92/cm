@@ -41,6 +41,7 @@ import {
 } from "../transfers/index.js";
 import { setTrainingFocus } from "../club/training.js";
 import { assignScout, getScouting, unassignScout } from "../club/scouting.js";
+import { getClubStaff } from "../career/staff.js";
 import { withWideEvent } from "./logging.js";
 
 export interface RpcContext {
@@ -301,6 +302,13 @@ const handlers: Record<AppRpcMethod, Handler> = {
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getScouting.payload)(payload);
       return yield* getScouting(ctx.savesDir, saveId);
+    }),
+  getClubStaff: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, clubId } = yield* Schema.decodeUnknownEffect(AppRpcs.getClubStaff.payload)(
+        payload,
+      );
+      return yield* getClubStaff(ctx.savesDir, saveId, clubId);
     }),
   getKeyBindingOverrides: (_payload, ctx) => getKeyBindingOverrides(ctx.userDataDir),
   setKeyBindingOverride: (payload, ctx) =>

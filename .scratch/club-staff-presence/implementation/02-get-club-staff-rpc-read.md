@@ -31,7 +31,7 @@ surface like every other in this app.
 
 **Blocked by:** 01 — the presence derivation and the composing `deriveClubStaff`.
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 **Files:** `packages/contracts/src/schemas/clubs.ts`, `packages/contracts/src/rpc.ts`,
 `packages/contracts/test/roundtrip.test.ts`, the main-process handler beside

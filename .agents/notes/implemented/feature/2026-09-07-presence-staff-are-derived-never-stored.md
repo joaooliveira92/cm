@@ -5,7 +5,7 @@ Status: implemented
 ## Problem
 
 `CONTEXT.md` recorded that a Staff member exists to carry a mechanical binding and that everything
-else about them is presence, and [staff are two bound roles](2026-09-01-staff-entity-and-bindings.md)
+else about them is presence, and [staff are two bound roles](../../proposed/feature/2026-09-01-staff-entity-and-bindings.md)
 closed the role set at Coach and Scout on exactly that test — each candidate role was weighed and
 rejected because no shipped system had a term for it to bind to. That note also established that
 staff rows exist only for a club that is or has been human-managed, since no shipped system reads an
@@ -120,7 +120,7 @@ already. Splitting the file would invite a third place for someone to re-derive 
 
 ## Relationship to existing notes
 
-- **[Staff are two bound roles on the human's club](2026-09-01-staff-entity-and-bindings.md)** is
+- **[Staff are two bound roles on the human's club](../../proposed/feature/2026-09-01-staff-entity-and-bindings.md)** is
   **partially superseded, and mostly ratified.** Its two bindings, both hard invariants
   (`coachModifier(q) >= 1.0`, strictly positive scout accrual), the no-market stance, static quality,
   one-coach-N-scouts, the generic quality column, and every rejected role all stand unchanged. Its
@@ -131,13 +131,13 @@ already. Splitting the file would invite a third place for someone to re-derive 
   is untouched. Its name pools are reused as-is, and its owed pool-growing work is reinforced: at
   today's 20x20 pools a page-level name collision between a presence person and a bound one is
   roughly 1 in 400, and at that note's own 100x200 target it is 1 in 20,000.
-- **[Simulation depth persistence](../architecture/2026-09-01-simulation-depth-persistence.md)** is
+- **[Simulation depth persistence](../../proposed/architecture/2026-09-01-simulation-depth-persistence.md)** is
   **partially superseded**. Its statement that per-club things "key off *human-managed*, not off
   Depth" stays true of rows and becomes false of staff: a `results-only` club now has a President and
   a Physio like every other club. Its no-depth-branch property is preserved rather than weakened —
   the derivation reads Stature Tier, nation, and seed, all of which exist at every Depth. Both stay
   active.
-- **[No onboarding inbox](../architecture/2026-08-29-no-onboarding-inbox.md)** says staff
+- **[No onboarding inbox](../../proposed/architecture/2026-08-29-no-onboarding-inbox.md)** says staff
   recommendations are impossible because *"there are no staff"*. That premise was already false and is
   now further from true. Whether its conclusion should change is for whoever next opens it; this note
   does not reopen it.

@@ -13,6 +13,7 @@ import {
   AttributesSchema,
   BidView,
   ChangeTacticsPayload,
+  ClubStaffView,
   ClubSummary,
   InjuryView,
   InvalidTacticError,
@@ -79,6 +80,52 @@ describe("simple view classes", () => {
 
   it("ClubSummary round-trips", () => {
     roundTrip(ClubSummary, club);
+  });
+});
+
+describe("Club Staff view (Screen 38)", () => {
+  const staffView = {
+    club,
+    groups: [
+      { department: "executive", members: [{ role: "president", firstName: "Alan", lastName: "Reyes" }] },
+      { department: "coaching", members: [{ role: "coach", firstName: "Beth", lastName: "Cross" }] },
+      {
+        department: "recruitment",
+        members: [
+          { role: "scout", firstName: "Cara", lastName: "Devlin" },
+          { role: "scout", firstName: "Dmitri", lastName: "Sorel" },
+        ],
+      },
+      { department: "medical", members: [{ role: "physio", firstName: "Elsa", lastName: "Marchetti" }] },
+    ],
+  } as const;
+
+  it("round-trips the four people grouped by department", () => {
+    roundTrip(ClubStaffView, staffView);
+  });
+
+  it("is the getClubStaff success schema, and rejects a role the derivation cannot produce", () => {
+    expect(ClubStaffView).toBe(AppRpcs.getClubStaff.success);
+    expect(() =>
+      Schema.decodeUnknownSync(ClubStaffView)({
+        ...staffView,
+        groups: [
+          {
+            department: "executive",
+            members: [{ role: "chairman", firstName: "Alan", lastName: "Reyes" }],
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
+  it("getClubStaff payload round-trips saveId and clubId", () => {
+    roundTrip(AppRpcs.getClubStaff.payload, { saveId: "s1", clubId: "club_eng_01" });
+  });
+
+  it("getClubStaff error schema round-trips each of its two failures", () => {
+    roundTrip(AppRpcs.getClubStaff.error, { _tag: "SaveNotFoundError", id: "s1" });
+    roundTrip(AppRpcs.getClubStaff.error, { _tag: "ClubNotFoundError", id: "club_nobody" });
   });
 });
 

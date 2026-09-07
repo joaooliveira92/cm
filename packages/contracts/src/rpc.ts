@@ -31,6 +31,7 @@ import {
   ClubId,
   ClubNotFoundError,
   ClubSelectionView,
+  ClubStaffView,
   CollidingOverrideError,
   FixturesView,
   InsufficientTransferBudgetError,
@@ -139,10 +140,9 @@ commitCareer: {
     error: SaveNotFoundError,
   },
   /** `RetireManager` (ticket 02 / Screen 20): the player ends their own career from the Manager
-   * Profile screen. Appends `ManagerRetired` to the season stream and archives the save with cause
-   * `"retired"`. Irreversible, and rejected by the same `SaveArchivedError` guard every other
-   * mutating command carries, so retiring twice is not possible. Returns nothing — the renderer
-   * navigates back to the Save List, where the save now reads as archived. */
+   * Profile screen. Appends `ManagerRetired` and archives the save with cause `"retired"`; the
+   * same `SaveArchivedError` guard every mutating command carries makes retiring twice impossible.
+   * Returns nothing — the renderer navigates back to the Save List. */
   retireManager: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: Schema.Void,
@@ -231,7 +231,6 @@ commitCareer: {
    * Starts the Fixture the Calendar is standing at. Fixture-bound: there is no opponent to choose
    * and no automatic seating at home, both of which the free-opponent exhibition path supplied and
    * neither of which a scheduled Fixture tolerates.
-   *
    * `mode` is presentation only. Both modes persist the same `MatchStarted` and the same stream;
    * `quick` runs straight to full time without a live reveal.
    */
@@ -251,12 +250,10 @@ commitCareer: {
   /**
    * Commits the Matchday: the human's result derived from its persisted stream, the rest of that
    * Matchday's Fixtures, every Condition write-back, the resolution event and the Calendar's step,
-   * in one transaction.
-   *
-   * Explicit rather than a side effect of `resumeSimulation` observing full time — polling is
-   * read-shaped, and durable career state must not depend on polling cadence, component lifecycle
-   * or whether the player is still looking at the screen. Idempotent on the Fixture already being
-   * played, so a retry after a rollback is safe.
+   * in one transaction. Explicit rather than a side effect of `resumeSimulation` observing full
+   * time — polling is read-shaped, and durable career state must not depend on polling cadence,
+   * component lifecycle or whether the player is still looking at the screen. Idempotent on the
+   * Fixture already being played, so a retry after a rollback is safe.
    */
   commitMatchday: {
     payload: Schema.Struct({ saveId: SaveId, fixtureId: FixtureId }),
@@ -405,6 +402,13 @@ commitCareer: {
     success: ScoutingView,
     error: Schema.Union([SaveNotFoundError]),
   },
+  /** Club Staff (Screen 38): who works at any club in the save. A pure read — every person derived
+   * on demand, so a `results-only` club answers like any other; only the save or the club id can fail. */
+  getClubStaff: {
+    payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
+    success: ClubStaffView,
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+  },
   /** Key binding overrides (ticket 14 / Stage 6): a machine-local `record<ActionId, binding>`
    * layered over — never replacing — the coded defaults. The file lives in Electron `userData`
    * (`keybindings.json`, a sibling of `saves/`) and is owned by main; the renderer never touches
@@ -514,8 +518,7 @@ commitCareer: {
     }),
     error: Schema.Never,
   },
-  /** The user's saved presets for the current database. Presets stored against another database
-   * fingerprint are omitted, not offered-then-rejected. */
+  /** The user's saved presets for this database (a different database's are omitted, not rejected). */
   listLeaguePresets: {
     payload: Schema.Void,
     success: Schema.Array(LeaguePreset),

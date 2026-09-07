@@ -25,4 +25,4 @@ export {
   type ManagerStatusRow,
 } from "./managerStatus.js";
 export { getNewsInbox, parseNewsMessageId, setNewsMessageState } from "./news.js";
-export { freshStaffId, loadCoachQuality, materialiseStaff } from "./staff.js";
+export { freshStaffId, getClubStaff, loadCoachQuality, materialiseStaff } from "./staff.js";

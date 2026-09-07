@@ -1,15 +1,52 @@
 import { randomUUID } from "node:crypto";
-import { type ClubId } from "@cm-clone/contracts";
+import {
+  ClubNotFoundError,
+  ClubStaffDepartmentGroupView,
+  ClubStaffMemberView,
+  ClubStaffView,
+  ClubSummary,
+  type ClubId,
+  type SaveId,
+} from "@cm-clone/contracts";
 import {
   createSeededRng,
+  deriveClubStaff,
   deriveId,
   deriveSeed,
   generateStaff,
   nationCodeFromId,
   type StatureTier,
 } from "@cm-clone/shared";
+import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { withExistingSave } from "../season/decider.js";
+import { displayNames } from "../world/displayNames.js";
+
+/**
+ * A club's Stature Tier and first-season competition's nation id, or `null` when the id names no
+ * club in this save.
+ *
+ * The join is the same one everywhere a club's backroom is derived or materialised — the nation is
+ * where the name pool comes from, and for a world-generated club it is always Season 1's
+ * competition — so this single row read is shared by `materialiseStaff` (which dies on a missing
+ * club, because committing a career already proved it exists) and `getClubStaff` (which turns the
+ * same absence into the read's one typed failure, `ClubNotFoundError`). Two copies of the join
+ * would drift apart.
+ */
+const loadClubIdentity = (clubId: ClubId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const clubRows = yield* sql<{
+      statureTier: StatureTier;
+      nationId: string | null;
+    }>`SELECT c.stature_tier as "statureTier", comp.nation_id as "nationId"
+       FROM clubs c
+       JOIN competition_participants p ON p.club_id = c.id AND p.season_number = 1
+       JOIN competitions comp ON comp.id = p.competition_id
+       WHERE c.id = ${clubId}`;
+    return clubRows[0] ?? null;
+  });
 
 /**
  * The human club's backroom, materialised the moment the club becomes human-managed.
@@ -26,16 +63,8 @@ export const materialiseStaff = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
 
-    const clubRows = yield* sql<{
-      statureTier: StatureTier;
-      nationId: string | null;
-    }>`SELECT c.stature_tier as "statureTier", comp.nation_id as "nationId"
-       FROM clubs c
-       JOIN competition_participants p ON p.club_id = c.id AND p.season_number = 1
-       JOIN competitions comp ON comp.id = p.competition_id
-       WHERE c.id = ${clubId}`;
-    const club = clubRows[0];
-    if (club === undefined) {
+    const club = yield* loadClubIdentity(clubId);
+    if (club === null) {
       return yield* Effect.die(new Error(`no club to staff: ${clubId}`));
     }
 
@@ -75,6 +104,70 @@ const readWorldSeed = Effect.gen(function* () {
   }
   return manifest;
 });
+
+/**
+ * Club Staff (Screen 38): who works at any club in the save, grouped by department.
+ *
+ * Every person is derived on read from the world seed, the club's Stature Tier, and its nation —
+ * never read from the `staff` table — so the bound two are re-derived exactly as `materialiseStaff`
+ * writes them and agree with the rows by construction, and a `results-only` club with no rows at all
+ * answers like any other. A pure query: the save being missing is `SaveNotFoundError`, a club id
+ * naming nothing in that save is `ClubNotFoundError`, and nothing is written.
+ */
+export const getClubStaff = (savesDir: string, saveId: SaveId, clubId: ClubId) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    readClubStaff(clubId).pipe(
+      Effect.provide(SqliteClient.layer({ filename, readonly: true })),
+      Effect.scoped,
+    ),
+  );
+
+const readClubStaff = (clubId: ClubId) =>
+  Effect.gen(function* () {
+    const club = yield* loadClubIdentity(clubId);
+    if (club === null) {
+      return yield* new ClubNotFoundError({ id: clubId });
+    }
+
+    // The same cross-border defect the materialiser dies on: a generated club always has a nation
+    // to draw names from, and inventing a fallback here would silently change a name pool.
+    const nationCode = club.nationId === null ? null : nationCodeFromId(club.nationId);
+    if (nationCode === null) {
+      return yield* Effect.die(new Error(`club ${clubId} has no nation to draw staff from`));
+    }
+
+    const { worldSeed } = yield* readWorldSeed;
+    const groups = deriveClubStaff({
+      clubId,
+      statureTier: club.statureTier,
+      clubNation: nationCode,
+      worldSeed,
+    });
+    const nameOf = yield* displayNames;
+    const summary = new ClubSummary({
+      id: clubId,
+      name: nameOf(clubId),
+      statureTier: club.statureTier,
+    });
+
+    return new ClubStaffView({
+      club: summary,
+      groups: groups.map(
+        (group) =>
+          new ClubStaffDepartmentGroupView({
+            department: group.department,
+            members: group.members.map(
+              (person) =>
+                new ClubStaffMemberView({
+                  role: person.role,
+                  firstName: person.firstName,
+                  lastName: person.lastName,
+                }),
+            ),
+          }),
+      ),
+    });
+  });
 
 /** The coach's quality at a club, or `null` where nobody manages it — every AI club. */
 export const loadCoachQuality = (clubId: ClubId) =>
