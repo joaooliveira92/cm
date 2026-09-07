@@ -1,4 +1,4 @@
-import type { SaveId } from "@cm-clone/contracts";
+import type { ClubId, SaveId } from "@cm-clone/contracts";
 import { Atom } from "effect/unstable/reactivity";
 import { call } from "./call.js";
 import { managementReadPolicy } from "./policy.js";
@@ -15,6 +15,7 @@ export const matchKey = (saveId: SaveId, matchId: string): readonly ["match", Sa
   saveId,
   matchId,
 ];
+export const scoutingKey = (saveId: SaveId): readonly ["scouting", SaveId] => ["scouting", saveId];
 
 /** getSquad — `["save", saveId]`, `["squad", saveId]`. */
 export const squadAtom = Atom.family((saveId: SaveId) =>
@@ -115,3 +116,27 @@ export const saveSummaryAtom = Atom.family((saveId: SaveId) =>
     Atom.make(call("loadSave", { id: saveId })).pipe(Atom.withReactivity([saveKey(saveId)])),
   ),
 );
+
+/**
+ * getTeamScoutReport — `["save", saveId]`, `["scouting", saveId]`.
+ *
+ * The first query keyed by more than the save, so it is two nested families rather than one taking
+ * a pair. `Atom.family` memoises through `MutableHashMap`, which compares plain objects by
+ * reference: a `{ saveId, clubId }` key would miss on every render and mint a fresh atom each
+ * time, refetching forever. Strings hash structurally, so each level keys on one.
+ *
+ * Reactive on the save-wide key as well as scouting's own: an advance moves every assigned scout's
+ * progress, which is exactly what the report reads.
+ */
+const reportsForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((clubId: ClubId) =>
+    managementReadPolicy(
+      Atom.make(call("getTeamScoutReport", { saveId, clubId })).pipe(
+        Atom.withReactivity([saveKey(saveId), scoutingKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const teamScoutReportAtom = (saveId: SaveId, clubId: ClubId) =>
+  reportsForSave(saveId)(clubId);

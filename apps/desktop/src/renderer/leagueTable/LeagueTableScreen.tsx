@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table.js";
+import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import {
   describeRpcError,
   leagueTableAtom,
@@ -61,7 +62,25 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             {table.standings.map((row, index) => (
               <TableRow key={row.clubId}>
                 <TableCell className="pr-4">{index + 1}</TableCell>
-                <TableCell className="pr-4 whitespace-nowrap">{row.clubName}</TableCell>
+                {/* The club name is the entry point to that club's scout report — the row already
+                    names a club, which is what the report needs and what nothing else on this
+                    screen has. A button rather than a link: navigation goes through the adapter so
+                    focus follows the intent, and `intentOfClick` keeps a keyboard activation from
+                    being reported as a pointer arrival. */}
+                <TableCell className="pr-4 whitespace-nowrap">
+                  <button
+                    type="button"
+                    className="underline-offset-2 hover:underline focus-visible:underline"
+                    onClick={(event) =>
+                      navigateCareer(
+                        { type: "teamScoutReport", saveId, clubId: row.clubId },
+                        intentOfClick(event),
+                      )
+                    }
+                  >
+                    {row.clubName}
+                  </button>
+                </TableCell>
                 <TableCell className="pr-2 text-center tabular-nums">{row.played}</TableCell>
                 <TableCell className="pr-2 text-center tabular-nums">{row.won}</TableCell>
                 <TableCell className="pr-2 text-center tabular-nums">{row.drawn}</TableCell>

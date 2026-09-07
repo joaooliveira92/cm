@@ -1,4 +1,4 @@
-import type { SaveId } from "@cm-clone/contracts";
+import type { ClubId, SaveId } from "@cm-clone/contracts";
 
 /**
  * Typed navigation destinations. The keyboard spine (ticket 17), the command
@@ -24,7 +24,17 @@ export type CareerDestination =
   | { readonly type: "match"; readonly saveId: SaveId }
   | { readonly type: "seasonSummary"; readonly saveId: SaveId }
   | { readonly type: "manager"; readonly saveId: SaveId }
-  | { readonly type: "news"; readonly saveId: SaveId };
+  | { readonly type: "news"; readonly saveId: SaveId }
+  /**
+   * The Team Scout Report on another club — a drill-down reached from a surface that already
+   * names a club (a league-table row), not a top-level screen. It is the first destination to
+   * carry a second parameter, and the reason the club segment is `club/$clubId/...` rather than
+   * a report-specific path: every club surface that follows hangs off the same segment.
+   *
+   * Like `tacticsEditor` it has no `g` binding and is absent from `CAREER_SCREEN_TYPES`, so the
+   * navbar, the palette, and the keyboard spine never offer it without a club in hand.
+   */
+  | { readonly type: "teamScoutReport"; readonly saveId: SaveId; readonly clubId: ClubId };
 
 export type CreationStepDestination =
   | { readonly type: "createLeagues" }
@@ -51,8 +61,27 @@ export const CAREER_SCREEN_TYPES = [
   "news",
 ] as const;
 
-export const careerDestination = (type: CareerDestination["type"], saveId: SaveId): CareerDestination =>
-  ({ type, saveId }) as CareerDestination;
+/**
+ * The career destinations a save alone is enough to reach. Everything except `teamScoutReport`,
+ * which needs a target club and so can only be built where one is in hand.
+ *
+ * The navbar, the keyboard spine, and the Tactics overview's issue links all build a destination
+ * from a bare type plus the current save, and this is the type that keeps them honest: without it
+ * each would happily construct a report destination with no club and fail at the router instead.
+ */
+export type SaveScopedCareerDestinationType = Exclude<
+  CareerDestination["type"],
+  "teamScoutReport"
+>;
+
+/**
+ * Build a save-scoped career destination. `teamScoutReport` is excluded by type: it needs a
+ * `clubId`, and the cast below would otherwise happily mint one without it.
+ */
+export const careerDestination = (
+  type: SaveScopedCareerDestinationType,
+  saveId: SaveId,
+): CareerDestination => ({ type, saveId }) as CareerDestination;
 
 /**
  * The coded `g <key>` default bindings — the registry ticket 17's key map and
@@ -101,7 +130,11 @@ export type ResolvedDestination =
       readonly params: { readonly saveId: SaveId };
     }
   | { readonly to: "/career/$saveId/manager"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/news"; readonly params: { readonly saveId: SaveId } };
+  | { readonly to: "/career/$saveId/news"; readonly params: { readonly saveId: SaveId } }
+  | {
+      readonly to: "/career/$saveId/club/$clubId/scout-report";
+      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
+    };
 
 /** Pure mapping from a typed destination to its route; unit-tested (AC-14). */
 export const resolveDestination = (destination: NavigationDestination): ResolvedDestination => {
@@ -128,13 +161,14 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "seasonSummary":
     case "manager":
     case "news":
+    case "teamScoutReport":
       return careerRoute(destination);
   }
 };
 
 const careerRoute = (
   destination: CareerDestination,
-): ResolvedDestination & { readonly params: { readonly saveId: SaveId } } => {
+): Extract<ResolvedDestination, { readonly params: { readonly saveId: SaveId } }> => {
   switch (destination.type) {
     case "squad":
       return { to: "/career/$saveId/squad", params: { saveId: destination.saveId } };
@@ -162,5 +196,10 @@ const careerRoute = (
       return { to: "/career/$saveId/manager", params: { saveId: destination.saveId } };
     case "news":
       return { to: "/career/$saveId/news", params: { saveId: destination.saveId } };
+    case "teamScoutReport":
+      return {
+        to: "/career/$saveId/club/$clubId/scout-report",
+        params: { saveId: destination.saveId, clubId: destination.clubId },
+      };
   }
 };

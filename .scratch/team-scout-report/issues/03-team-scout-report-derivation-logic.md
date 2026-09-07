@@ -8,11 +8,21 @@ The functions are deterministic and purely computational — `R = never`, no dat
 
 **Blocked by:** 02 (needs the report wire shape).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Given identical inputs, the derivation produces identical output (deterministic; test asserts it).
-- [ ] `knowledgeConfidence` rises monotonically as the target squad's scouting progress rises, and `freshness` decays as the observations' calendar age grows — never the reverse.
-- [ ] `keyPlayers` is drawn from the scouted members of the target club, ordered by a deterministic tie-breaker on stable IDs.
-- [ ] Hidden exact attributes of a below-Fully-Scouted player never leak through any prose or sorting output the derivation produces (spec §16).
-- [ ] A target club with no scouted members yields the not-scouted state, not an estimated report.
-- [ ] The functions are exercised by unit tests with no Electron or SQLite in the test environment.
+- [x] Given identical inputs, the derivation produces identical output (deterministic; test asserts it).
+- [x] `knowledgeConfidence` rises monotonically as the target squad's scouting progress rises, and `freshness` decays as the observations' calendar age grows — never the reverse.
+- [x] `keyPlayers` is drawn from the scouted members of the target club, ordered by a deterministic tie-breaker on stable IDs.
+- [x] Hidden exact attributes of a below-Fully-Scouted player never leak through any prose or sorting output the derivation produces (spec §16).
+- [x] A target club with no scouted members yields the not-scouted state, not an estimated report.
+- [x] The functions are exercised by unit tests with no Electron or SQLite in the test environment.
+
+## Notes
+
+**The derivation takes no tactics input at all**, though this ticket said to derive
+`predictedFormation` "from the tactics". Spec §8 lists another club's tactical information among
+the things requiring explicit permission, and ticket 01's CONTEXT.md decision rules that scouting
+is not that permission — so reading the target's tactic record would have been the leak the whole
+effort is built to avoid. The predicted shape is instead inferred from where the *scouted* players
+play, and is withheld entirely (`null`) at `low` knowledge confidence, where the sample is too thin
+to infer from.

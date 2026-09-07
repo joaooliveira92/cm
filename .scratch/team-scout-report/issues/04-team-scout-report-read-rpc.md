@@ -8,10 +8,19 @@ The edge this slice promises, inherited by every screen that calls it: `Effect<T
 
 **Blocked by:** 02 (the wire shape), 03 (the derivation).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Requesting a report for a club with scouted members returns the report composed through the derivation, keyed on the target club id from the route.
-- [ ] Requesting a club with no scouted knowledge returns the not-scouted failure, not an empty or inferred report.
-- [ ] A club id that names no club in the save returns the club-not-found failure.
-- [ ] The read is read-only for a non-controlled club: nothing beyond public data and the manager's own scouted knowledge of the target appears in the payload.
-- [ ] The report is immutable per calendar revision: advancing the save's revision changes nothing about a report already returned for the prior revision.
+- [x] Requesting a report for a club with scouted members returns the report composed through the derivation, keyed on the target club id from the route.
+- [x] Requesting a club with no scouted knowledge returns the not-scouted failure, not an empty or inferred report.
+- [x] A club id that names no club in the save returns the club-not-found failure.
+- [x] The read is read-only for a non-controlled club: nothing beyond public data and the manager's own scouted knowledge of the target appears in the payload.
+- [x] The report is immutable per calendar revision: advancing the save's revision changes nothing about a report already returned for the prior revision.
+
+## Notes
+
+**Freshness is conservative, not accurate.** Nothing on disk records *when* a club's scouting
+progress last advanced — `scouting_progress` stores a number and no date — so a watched target
+reads as `current` and an unwatched one as `stale`, with nothing in between. That errs toward "go
+look again" rather than presenting a report that predates a transfer window as fresh. A truthful
+decay needs a `last_observed_on` column; that is a schema change, so it is left to a follow-on
+rather than smuggled into this ticket. See the Agent Note's **Left open**.

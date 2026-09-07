@@ -8,13 +8,13 @@ A route whose `clubId` names no club in the save is the RPC's club-not-found fai
 
 **Blocked by:** 04 (the report RPC the screen will call).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Navigating to `teamScoutReport` with a `saveId` and `clubId` resolves to the club route and renders the report screen with the correct target club.
-- [ ] The target club's context (league table row) can reach the report for that club; other clubs' rows reach other clubs' reports.
-- [ ] Back from the report returns via history to the surface the manager came from.
-- [ ] The report destination has no `g` binding and joins no top-level screen registry, matching the drill-down rule.
-- [ ] A `clubId` naming no club reaches the report screen's club-not-found failure state — it never redirects and never throws.
-- [ ] Focus restoration after navigating into and out of the report works (the fixed screen id is enough to re-focus).
+- [x] Navigating to `teamScoutReport` with a `saveId` and `clubId` resolves to the club route and renders the report screen with the correct target club.
+- [x] The target club's context (league table row) can reach the report for that club; other clubs' rows reach other clubs' reports.
+- [x] Back from the report returns via history to the surface the manager came from.
+- [x] The report destination has no `g` binding and joins no top-level screen registry, matching the drill-down rule.
+- [x] A `clubId` naming no club reaches the report screen's club-not-found failure state — it never redirects and never throws.
+- [x] Focus restoration after navigating into and out of the report works (the fixed screen id is enough to re-focus).
 
 All screens that follow reuse the same `club/$clubId` segment, so keep the route shape stable.

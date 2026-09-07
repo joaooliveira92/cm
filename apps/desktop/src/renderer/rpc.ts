@@ -19,6 +19,7 @@ export {
   transfersAtom,
   saveSummaryAtom,
   newsInboxAtom,
+  teamScoutReportAtom,
   saveKey,
   squadKey,
   transfersKey,
@@ -26,6 +27,7 @@ export {
   tacticsKey,
   matchKey,
   newsKey,
+  scoutingKey,
 } from "./rpc/queries.js";
 
 export {

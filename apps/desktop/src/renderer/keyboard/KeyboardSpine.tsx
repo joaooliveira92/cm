@@ -3,7 +3,7 @@ import { useLocation, useParams } from "@tanstack/react-router";
 import { type SaveId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { navigateBack, navigateCareer } from "../navigation/adapter.js";
-import { type CareerDestination } from "../navigation/destinations.js";
+import { type SaveScopedCareerDestinationType } from "../navigation/destinations.js";
 import { decodeSaveId } from "../navigation/params.js";
 import { ACTION_REGISTRY, ALL_ACTIONS } from "../actions/allActions.js";
 import { isCareerScreen } from "../actions/registry.js";
@@ -64,11 +64,11 @@ import {
  * `g` prefix and every binding beneath it.
  */
 
-const careerScreenOfId = (id: string): CareerDestination["type"] | null =>
+const careerScreenOfId = (id: string): SaveScopedCareerDestinationType | null =>
   ["squad", "tactics", "transfers", "league", "fixtures", "match", "seasonSummary", "manager"].includes(
     id,
   )
-    ? (id as CareerDestination["type"])
+    ? (id as SaveScopedCareerDestinationType)
     : null;
 
 /** Given the route path, derive the current screen-id (scope). */
@@ -242,7 +242,7 @@ export const KeyboardSpine = () => {
     );
 
     if (nav && saveId !== undefined) {
-      const target: Record<CareerDestination["type"], () => void> = {
+      const target: Record<SaveScopedCareerDestinationType, () => void> = {
         squad: () => navigateCareer({ type: "squad", saveId }, "keyboard"),
         tactics: () => navigateCareer({ type: "tactics", saveId }, "keyboard"),
         tacticsEditor: () => navigateCareer({ type: "tacticsEditor", saveId }, "keyboard"),
@@ -263,7 +263,7 @@ export const KeyboardSpine = () => {
         "go-to-match": "match",
         "go-to-season-summary": "seasonSummary",
         "go-to-manager": "manager",
-      }) as ReadonlyArray<[string, CareerDestination["type"]]>) {
+      }) as ReadonlyArray<[string, SaveScopedCareerDestinationType]>) {
         unregisters.push(registerActionHandler(id, target[type]));
       }
       unregisters.push(registerActionHandler("go-back", () => navigateBack()));

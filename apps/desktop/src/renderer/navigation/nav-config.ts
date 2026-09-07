@@ -17,16 +17,20 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import type { CareerDestination } from "./destinations.js";
+import type { SaveScopedCareerDestinationType } from "./destinations.js";
 
 /**
  * A single navigable item within a primary section. Each item maps to exactly
  * one career route and carries an icon for the context submenu.
+ *
+ * The destination type is the save-scoped subset, which is what keeps drill-downs out of the
+ * navbar by construction rather than by convention: a surface needing a target club has no club
+ * to offer from a standing navbar entry, so it cannot be listed here.
  */
 export interface NavItem {
   readonly id: string;
   readonly label: string;
-  readonly destination: CareerDestination["type"];
+  readonly destination: SaveScopedCareerDestinationType;
   readonly icon: LucideIcon;
 }
 
@@ -39,7 +43,7 @@ export interface NavSection {
   readonly label: string;
   readonly icon: LucideIcon;
   /** The destination navigated to when the primary label is clicked directly. */
-  readonly defaultDestination: CareerDestination["type"];
+  readonly defaultDestination: SaveScopedCareerDestinationType;
   readonly items: ReadonlyArray<NavItem>;
 }
 

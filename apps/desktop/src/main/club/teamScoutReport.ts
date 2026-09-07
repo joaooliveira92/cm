@@ -1,5 +1,7 @@
-import { PlayerId, type ClubId, type SaveId } from "@cm-clone/contracts";
 import {
+  PlayerId,
+  type ClubId,
+  type SaveId,
   ClubNotFoundError,
   ClubNotScoutedError,
   FormationPredictionView,

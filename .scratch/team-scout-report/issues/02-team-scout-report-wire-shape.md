@@ -8,9 +8,17 @@ The report carries: `reportId`, `targetClubId`, `scout`, `observedAt`, `knowledg
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A `TeamScoutReport` schema carries every field listed above, each validated at the process boundary (IDs are stable entity IDs, confidence and freshness are closed enumerations, findings and key players are bounded lists).
-- [ ] The failure channel is a closed union covering save-not-found, save-archived, club-not-found, and not-scouted.
-- [ ] Round-trip encode/decode is proven by test, and the schema is exported from the shared contract surface so both processes import the same shape.
-- [ ] Nothing in the shape leaks a hidden exact attribute: key players and findings carry knowledge-gated summaries, never exact values a scouted player would not be shown.
+- [x] A `TeamScoutReport` schema carries every field listed above, each validated at the process boundary (IDs are stable entity IDs, confidence and freshness are closed enumerations, findings and key players are bounded lists).
+- [x] The failure channel is a closed union covering save-not-found, save-archived, club-not-found, and not-scouted.
+- [x] Round-trip encode/decode is proven by test, and the schema is exported from the shared contract surface so both processes import the same shape.
+- [x] Nothing in the shape leaks a hidden exact attribute: key players and findings carry knowledge-gated summaries, never exact values a scouted player would not be shown.
+
+## Notes
+
+**`SaveArchivedError` is not in the failure channel**, though this ticket listed it. An Archived
+Save is read-only, not unreadable: every pure read in this repo omits the guard, and only mutating
+commands call `assertSaveNotArchived`. Carrying it here would make the report *fail* on a finished
+career, which is the opposite of what the archived-save rule intends. Recorded in the schema's doc
+comment and asserted in `packages/contracts/test/team-scout-report.test.ts`.

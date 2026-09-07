@@ -2,7 +2,7 @@ import type { ClubColoursView, SaveId } from "@cm-clone/contracts";
 import { useLocation } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useRef } from "react";
 import { navigateCareer } from "../../navigation/adapter.js";
-import type { CareerDestination } from "../../navigation/destinations.js";
+import type { SaveScopedCareerDestinationType } from "../../navigation/destinations.js";
 import type { NavigationIntent } from "../../focus.js";
 import { NAV_SECTIONS, type NavSectionId } from "../../navigation/nav-config.js";
 import { sectionIdForDestination } from "../../navigation/nav-route-index.js";
@@ -21,7 +21,7 @@ import { PrimaryNavItem } from "./PrimaryNavItem.js";
 const INTENT_DELAY_MS = 170;
 const CLOSE_TOLERANCE_MS = 300;
 
-const routeChildToDestination: Readonly<Record<string, CareerDestination["type"]>> = {
+const routeChildToDestination: Readonly<Record<string, SaveScopedCareerDestinationType>> = {
   squad: "squad",
   tactics: "tactics",
   // The tactics editor is a sub-surface of the Tactics area: its route nests under `/tactics/`
@@ -156,7 +156,7 @@ export const Navbar = ({
   // The intent comes from the event, never a constant: Enter on a focused nav item must focus the
   // destination (AC-15), and hardcoding "pointer" here made every keyboard navigation leave focus
   // stranded on the navbar.
-  const goTo = (destination: CareerDestination["type"], intent: NavigationIntent) => {
+  const goTo = (destination: SaveScopedCareerDestinationType, intent: NavigationIntent) => {
     clearTransient();
     navigateCareer({ type: destination, saveId }, intent);
   };
@@ -234,7 +234,7 @@ export const Navbar = ({
 };
 
 const findActiveItemId = (
-  destination: CareerDestination["type"] | null,
+  destination: SaveScopedCareerDestinationType | null,
   activeSectionId: NavSectionId | null,
 ): string | null => {
   if (destination === null || activeSectionId === null) return null;

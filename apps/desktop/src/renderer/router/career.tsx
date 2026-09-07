@@ -1,10 +1,10 @@
-import type { SaveId } from "@cm-clone/contracts";
+import type { ClubId, SaveId } from "@cm-clone/contracts";
 import { Outlet, useLocation, useParams } from "@tanstack/react-router";
 import { type ComponentType, useEffect, useLayoutEffect, useRef } from "react";
 import {
   navigateCareer,
 } from "../navigation/adapter.js";
-import { decodeSaveId } from "../navigation/params.js";
+import { decodeClubId, decodeSaveId } from "../navigation/params.js";
 import { CareerChrome } from "../chrome/CareerChrome.js";
 import { Alert } from "../components/ui/alert.js";
 import { RegistryProvider } from "../rpc.js";
@@ -111,6 +111,42 @@ export const CareerChildView = ({
     </RouteView>
   ) : (
     <RouteParamErrorScreen reason={decoded.reason} />
+  );
+};
+
+interface ClubScreenProps {
+  readonly saveId: SaveId;
+  readonly clubId: ClubId;
+}
+
+/**
+ * One club-scoped child route surface (`/career/$saveId/club/$clubId/...`). The same boundary
+ * decode as `CareerChildView`, for both parameters.
+ *
+ * The `screenId` is fixed per surface and deliberately does NOT include the club: focus
+ * restoration resolves a screen by identity, so keying it on the club would make every target a
+ * distinct focus scope and leave a back-navigation to a different club unable to restore anything.
+ * Which club is being read is route state, not focus identity.
+ *
+ * A well-formed `clubId` naming no club in the save reaches the screen, which renders the RPC's
+ * club-not-found failure. Only a structurally undecodable parameter is an address error.
+ */
+export const CareerClubChildView = ({
+  screenId,
+  Screen,
+}: {
+  readonly screenId: string;
+  readonly Screen: ComponentType<ClubScreenProps>;
+}) => {
+  const params = useParams({ strict: false });
+  const save = decodeSaveId(params.saveId ?? "");
+  const club = decodeClubId(params.clubId ?? "");
+  if (save._tag === "Malformed") return <RouteParamErrorScreen reason={save.reason} />;
+  if (club._tag === "Malformed") return <RouteParamErrorScreen reason={club.reason} />;
+  return (
+    <RouteView screenId={screenId}>
+      <Screen saveId={save.success} clubId={club.success} />
+    </RouteView>
   );
 };
 

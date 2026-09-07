@@ -1,4 +1,9 @@
-import { SaveId as SaveIdSchema, type SaveId } from "@cm-clone/contracts";
+import {
+  ClubId as ClubIdSchema,
+  SaveId as SaveIdSchema,
+  type ClubId,
+  type SaveId,
+} from "@cm-clone/contracts";
 import { Schema } from "effect";
 
 /**
@@ -24,5 +29,21 @@ export const decodeSaveId = (raw: string): RouteParamDecode<SaveId> => {
     return { _tag: "Success", success: Schema.decodeUnknownSync(SaveIdSchema)(raw) };
   } catch {
     return malformed("saveId parameter is not a string");
+  }
+};
+
+/** Decode the `:clubId` path parameter into the contract's branded `ClubId`.
+ *  Same shape as `decodeSaveId` and for the same reason: the brand is nominal
+ *  only, so the empty string is the one structurally-wrong value worth
+ *  rejecting here. A well-formed id naming no club in the save is NOT a route
+ *  concern — it is the report RPC's `ClubNotFoundError`, rendered by the
+ *  screen. Conflating the two would turn a missing club into an "invalid
+ *  address" panel, which tells the manager nothing true. */
+export const decodeClubId = (raw: string): RouteParamDecode<ClubId> => {
+  if (raw === "") return malformed("clubId parameter is empty");
+  try {
+    return { _tag: "Success", success: Schema.decodeUnknownSync(ClubIdSchema)(raw) };
+  } catch {
+    return malformed("clubId parameter is not a string");
   }
 };

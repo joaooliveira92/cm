@@ -6,7 +6,10 @@ import { Button } from "../components/ui/button.js";
 import { Card, CardContent } from "../components/ui/card.js";
 import { FOCUS_RING } from "../focus.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
-import type { CareerDestination } from "../navigation/destinations.js";
+import type {
+  CareerDestination,
+  SaveScopedCareerDestinationType,
+} from "../navigation/destinations.js";
 import {
   describeRpcError,
   leagueTableAtom,
@@ -355,7 +358,7 @@ const SetPiecesCard = ({ view }: { readonly view: TacticsOverviewView }) => (
 );
 
 /** Where an issue's owning screen lives, from the overview's point of view. */
-const ISSUE_DESTINATION: Readonly<Record<string, CareerDestination["type"]>> = {
+const ISSUE_DESTINATION: Readonly<Record<string, SaveScopedCareerDestinationType>> = {
   // From the overview, a "tactics"-owned fix means opening the editor — the overview itself is
   // already the Tactics home, so pointing an issue back at it would be a no-op.
   tactics: "tacticsEditor",

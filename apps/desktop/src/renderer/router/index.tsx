@@ -19,8 +19,10 @@ import { TacticsScreen } from "../tactics/TacticsScreen.js";
 import { TransfersScreen } from "../transfers/TransfersScreen.js";
 import { MainMenuScreen } from "./mainMenu.js";
 import { LoadCareerScreen } from "./loadCareer.js";
+import { TeamScoutReportScreen } from "../scouting/TeamScoutReportScreen.js";
 import {
   CareerChildView,
+  CareerClubChildView,
   CareerIndexRedirect,
   CareerShell,
 } from "./career.js";
@@ -134,6 +136,30 @@ const tacticsEditorRoute = createRoute({
   component: () => <CareerChildView screenId="tactics" Screen={TacticsScreen} />,
 });
 
+/**
+ * The club segment: `/career/$saveId/club/$clubId/...`, a surface scoped to some *other* club.
+ *
+ * Deliberately a reusable segment rather than a report-specific path. Every club-scoped screen
+ * that follows (squad, tactical view, previous reports) hangs off the same `$clubId`, so the club
+ * is decoded once at a shared boundary instead of each screen inventing its own parameter.
+ *
+ * It has no index route: `club/$clubId` alone names a club without saying what about it, so there
+ * is nothing honest to land on. The report is reached at its own child path.
+ */
+const clubRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "club/$clubId",
+  component: () => <Outlet />,
+});
+
+const clubScoutReportRoute = createRoute({
+  getParentRoute: () => clubRoute,
+  path: "scout-report",
+  component: () => (
+    <CareerClubChildView screenId="teamScoutReport" Screen={TeamScoutReportScreen} />
+  ),
+});
+
 // ---------------------------------------------------------------------------
 // Creation branch
 // ---------------------------------------------------------------------------
@@ -190,6 +216,7 @@ const routeTree = rootRoute.addChildren([
       seasonSummaryRoute,
       managerRoute,
       newsRoute,
+      clubRoute.addChildren([clubScoutReportRoute]),
     ]),
   ]),
 ]);
