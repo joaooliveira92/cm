@@ -2,6 +2,7 @@ import type { CanonicalId } from "./canonicalId.js";
 import type { ClubColours } from "./clubColours.js";
 import type { NationCode } from "./nations.js";
 import { BRAZIL_SERIES_A_PACK } from "./brazilSeriesA.js";
+import { SPANISH_LA_LIGA_PACK } from "./spanishLaLiga.js";
 
 /**
  * The boundary between what the simulation *is* and what it is *called*.
@@ -412,5 +413,6 @@ export const contentPackForWorld = (
         a.id.localeCompare(b.id),
     )[0];
   if (primary?.id === "comp_bra_1") return BRAZIL_SERIES_A_PACK;
+  if (primary?.id === "comp_esp_1") return SPANISH_LA_LIGA_PACK;
   return BASE_CONTENT_PACK;
 };

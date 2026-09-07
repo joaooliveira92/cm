@@ -9,6 +9,7 @@ import {
   type ContentPack,
 } from "../../src/content/contentPack.js";
 import { BRAZIL_SERIES_A_PACK } from "../../src/content/brazilSeriesA.js";
+import { SPANISH_LA_LIGA_PACK } from "../../src/content/spanishLaLiga.js";
 
 const pack: ContentPack = {
   id: "test-pack",
@@ -93,6 +94,21 @@ describe("content pack for a generated world", () => {
     // Série B present but not playable does not displace the Série A career.
     const world = [league("comp_bra_2", 2, "full"), league("comp_bra_1", 1, "full")];
     expect(contentPackForWorld(world)).toBe(BRAZIL_SERIES_A_PACK);
+  });
+
+  it("generates a Spanish La Liga career under the licensed La Liga pack", () => {
+    // scope_esp_top resolves to comp_esp_1 playable (full) with its cup a dependency (standard).
+    const world = [
+      league("comp_esp_1", 1, "full"),
+      league("comp_esp_cup", null, "standard"),
+    ];
+    expect(contentPackForWorld(world)).toBe(SPANISH_LA_LIGA_PACK);
+  });
+
+  it("returns the licensed Spain pack only for the first-division career, not its lower tiers", () => {
+    // A career played in the Spanish second tier keeps the fictional base pack; La Liga is the
+    // league whose park names the clubs Step 3 lists.
+    expect(contentPackForWorld([league("comp_esp_2n", 2, "full")])).toBe(BASE_CONTENT_PACK);
   });
 
   it("falls back to the base pack for a playable league no pack names", () => {
