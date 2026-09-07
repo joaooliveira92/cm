@@ -554,17 +554,49 @@ _Avoid_: Inbox unqualified (the word alone is now ambiguous — say which one)
 ### Staff
 
 **Staff**:
-A named non-playing employee of a club, on a 1-20 **quality** scale, in one of exactly two roles —
-Coach or Scout. Every Staff member exists to carry a mechanical binding; everything else about them is
-presence. Quality is static: Staff neither develop nor age. Staff rows exist **only** for a club that
-is or has been human-managed, at any Simulation Depth, because no shipped system reads an AI club's
-Staff. Fixed at generation, derived from the club's Stature Tier with seeded variance: there are no
-Staff wages, no hiring, and no firing, so Staff never touch Contract or Wage Budget. See
-[the staff entity and its two bindings](.agents/notes/proposed/feature/2026-09-01-staff-entity-and-bindings.md).
+A named non-playing employee of a club, in one of exactly four roles across two kinds — **Bound
+Staff** (Coach, Scout) and **Presence Staff** (President, Physio). Every club in the world has Staff
+of both kinds, at every Simulation Depth. Fixed for the life of a career: Staff neither develop, age,
+nor turn over, and there are no Staff wages, no hiring, and no firing, so Staff never touch Contract
+or Wage Budget. See
+[the staff entity and its two bindings](.agents/notes/proposed/feature/2026-09-01-staff-entity-and-bindings.md)
+and [presence staff are derived, never stored](.agents/notes/proposed/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
 _Avoid_: backroom, coaching staff (fine informally; Staff is the modelled noun)
 
+**Bound Staff**:
+A Staff member who carries a mechanical binding and therefore a 1-20 **quality** that a formula
+reads — Coach or Scout, and no others. Quality is derived from the club's Stature Tier with seeded
+variance. Bound Staff are the only Staff with **rows**, and a row exists only for a club that is or
+has been human-managed, because a row exists to give a Scouting Assignment something stable to point
+at, not to make the person exist. A row is a materialisation of the same derivation that answers for
+every other club.
+_Avoid_: real staff, mechanical staff (the contrast is binding, not authenticity)
+
+**Presence Staff**:
+A Staff member who exists to be seen rather than read by a formula — President or Physio, and no
+others. Carries a name and a role and nothing else: no quality, because no formula reads one. Never
+stored: a pure function of the World Seed and the club's canonical id, computed when a screen asks,
+so every club in the world has them at no storage cost. The rule they satisfy is that some shipped
+surface reads them — the Club Staff screen, and for the President the board News Messages.
+_Avoid_: flavour staff, cosmetic staff (they are read by a surface; that is the whole justification)
+
+**President**:
+The single Presence Staff member of role `president` every club holds, and the face of the **Board** —
+the same authority that sets the Board Objective and issues the warning and the dismissal, now with a
+name to issue them in. Carries no number of any kind: a President who moved the Consecutive-Miss
+Counter would be a second owner of when careers end.
+_Avoid_: Chairman, Owner (Owner implies a financial stake nothing models), Board (the Board is the
+institution; the President is its face)
+
+**Physio**:
+The single Presence Staff member of role `physio` every club holds. Purely presence: Regimen owns
+Condition decay, recovery, and injury severity outright, so a Physio has no term to bind to and
+deliberately takes none.
+_Avoid_: Doctor, Medical Team (one named person, not a department)
+
 **Coach**:
-The single Staff member of role `coach` a human-managed club holds. Scales the passive baseline every
+The single Bound Staff member of role `coach` every club holds, with a row only where the club is or
+has been human-managed. Scales the passive baseline every
 player receives from Player Development — never the focused Category, which Technical Coaching owns —
 so a Coach lifts the whole squad including players the manager never sets a Training Focus for. The
 Coach's effect never falls below neutral at any quality, so a weak Coach is felt as an absence rather
