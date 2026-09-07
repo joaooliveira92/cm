@@ -29,12 +29,12 @@ its screen's audit. Do not mark a section fully disposed because one bullet in i
 
 **Blocked by:** 02 (write contention on the ledger).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] All nine surviving `## 10` sections are classified, per screen.
-- [ ] The bleed outside §10 is swept for and recorded, with §16, §9 and §17 checked on every screen.
-- [ ] "Active manager", "career revision" and "permission context" each have one stated disposal the audit tickets can cite.
-- [ ] Partly-multiplayer sections are dispositioned at clause level, leaving the remainder for the screen's audit.
-- [ ] Each row's anchor cites the Group A ruling or `CONTEXT.md`'s Save entry, rather than re-arguing it.
-- [ ] The import files are unedited.
-- [ ] `pnpm exec tsx scripts/verify-md-links.ts` reports nothing new.
+- [x] All nine surviving `## 10` sections are classified, per screen.
+- [x] The bleed outside §10 is swept for and recorded, with §16, §9 and §17 checked on every screen.
+- [x] "Active manager", "career revision" and "permission context" each have one stated disposal the audit tickets can cite.
+- [x] Partly-multiplayer sections are dispositioned at clause level, leaving the remainder for the screen's audit.
+- [x] Each row's anchor cites the Group A ruling or `CONTEXT.md`'s Save entry, rather than re-arguing it.
+- [x] The import files are unedited.
+- [x] `pnpm exec tsx scripts/verify-md-links.ts` reports nothing new.
