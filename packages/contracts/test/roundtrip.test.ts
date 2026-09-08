@@ -86,6 +86,8 @@ describe("simple view classes", () => {
 describe("Club Staff view (Screen 38)", () => {
   const staffView = {
     club,
+    // Whose club it is rides on this view, so the screen needs no second read to mark a rival.
+    isUserClub: false,
     groups: [
       { department: "executive", members: [{ role: "president", firstName: "Alan", lastName: "Reyes" }] },
       { department: "coaching", members: [{ role: "coach", firstName: "Beth", lastName: "Cross" }] },
