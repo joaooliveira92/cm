@@ -88,8 +88,8 @@ export const SquadTable = () => {
 
   return (
     <main className="bg-background p-8 text-foreground">
-      <h1 className="text-2xl font-bold">Squad</h1>
-      <p className="mt-1 text-sm text-text-secondary">
+
+      <div className="mt-1 text-sm text-text-secondary">
         {allPlayers.length} players
         {refreshState._tag === "Refreshing" && (
           <span className="ml-2 text-text-muted">Refreshing…</span>
@@ -108,7 +108,7 @@ export const SquadTable = () => {
             </Button>
           </span>
         )}
-      </p>
+      </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
         <div className="flex items-center gap-2 text-text-body">
@@ -120,7 +120,9 @@ export const SquadTable = () => {
             }}
           >
             <SelectTrigger aria-label="Filter squad by position" className={SELECT_CLASS}>
-              <SelectValue />
+              {/* An empty slot means "no position filter": show that as the
+                  All positions label rather than a blank trigger. */}
+              <SelectValue>{() => activePosition?.position ?? "All positions"}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">All positions</SelectItem>
@@ -132,19 +134,6 @@ export const SquadTable = () => {
             </SelectContent>
           </Select>
         </div>
-        {activeFilterCount(filters) > 0 && (
-          <Button
-            type="button"
-            variant="secondary"
-            data-action-id="clear-squad-filters"
-            onClick={clearFilterCommand}
-          >
-            {copy.clearFiltersLabel}
-          </Button>
-        )}
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
         <div className="flex items-center gap-2 text-text-body">
           View
           <Select
@@ -167,6 +156,16 @@ export const SquadTable = () => {
             </SelectContent>
           </Select>
         </div>
+        {activeFilterCount(filters) > 0 && (
+          <Button
+            type="button"
+            variant="secondary"
+            data-action-id="clear-squad-filters"
+            onClick={clearFilterCommand}
+          >
+            {copy.clearFiltersLabel}
+          </Button>
+        )}
         {/* Columns belong to the table layouts. The position list carries one
             field beside the name, so a show/hide control over it would offer
             choices that change nothing on screen. */}

@@ -178,7 +178,7 @@ export const SquadPositionList = () => {
         // roving stops are the name buttons inside it, and this handler only
         // routes the keys they bubble.
         <div
-          className="flex gap-6 rounded-panel border border-panel-border bg-panel-bg p-2"
+          className="flex gap-6 rounded-panel bg-panel-bg p-2"
           onKeyDown={onKeyDown}
         >
           {column(rows.slice(0, split), false)}

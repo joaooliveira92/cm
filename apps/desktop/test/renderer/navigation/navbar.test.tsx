@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createMemoryHistory,
@@ -44,7 +44,7 @@ const mountNavbar = async (initialChild: string) => {
   });
   bindRouter({ navigate: () => undefined, history: { back: () => undefined, forward: () => undefined, canGoBack: () => false } } as never);
   render(<RouterProvider router={router} />);
-  await screen.findByRole("button", { name: "Squad" });
+  await screen.findByRole("navigation", { name: "Primary navigation" });
 };
 
 beforeEach(() => {
@@ -63,6 +63,27 @@ describe("the redesigned navbar (spec §2 / §4 / §5.1)", () => {
     expect(screen.getByRole("button", { name: "League Table" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Fixtures" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Match Day" })).toBeTruthy();
+  });
+
+  it("the Squad submenu lists the club menu options and marks Squad active on the squad route", async () => {
+    await mountNavbar("squad");
+    const submenu = within(screen.getByRole("navigation", { name: "Squad submenu" }));
+    for (const option of [
+      "Squad",
+      "Staff",
+      "Information",
+      "Finances",
+      "Fixtures",
+      "Transfers",
+      "Last Match",
+      "Serie A",
+      "History",
+    ]) {
+      expect(submenu.getByRole("button", { name: option })).toBeTruthy();
+    }
+    expect(
+      submenu.getByRole("button", { name: "Squad" }).getAttribute("aria-current"),
+    ).toBe("page");
   });
 
   /**

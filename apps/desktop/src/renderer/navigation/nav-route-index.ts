@@ -14,8 +14,9 @@ interface SectionEntry {
 
 const destinationToSection = new Map<CareerDestination["type"], SectionEntry>();
 
+// Pass 1 — every section default, first-wins: a destination is owned by the section that
+// defaults to it, even when an earlier section lists it as an item cross-link.
 for (const section of NAV_SECTIONS) {
-  // Register the section's default destination
   const existing = destinationToSection.get(section.defaultDestination);
   if (existing === undefined) {
     destinationToSection.set(section.defaultDestination, {
@@ -23,16 +24,21 @@ for (const section of NAV_SECTIONS) {
       defaultDestination: section.defaultDestination,
     });
   }
+}
 
-  // Register each item's destination (may map to a different section than the
-  // default if an item routes to a destination that belongs to another section's
-  // default, e.g. Training items routing to Squad).
-  for (const item of section.items) {
+// Pass 2 — items, scanned in reverse section order (first-wins): a destination that no section
+// defaults to is owned by the LAST section to list it. Squad's club menu cross-links Fixtures,
+// Transfers, Last Match, and Serie A into Analysis and Recruitment; a forward scan would let the
+// first section to list them (Squad) re-home the screens and strip the owner's highlight on
+// arrival. Reverse order keeps the native section's claim — Analysis before Squad — while still
+// letting genuinely new item destinations (e.g. Training routing to Squad) be claimed.
+for (let i = NAV_SECTIONS.length - 1; i >= 0; i--) {
+  for (const item of NAV_SECTIONS[i]!.items) {
     const entry = destinationToSection.get(item.destination);
     if (entry === undefined) {
       destinationToSection.set(item.destination, {
-        sectionId: section.id,
-        defaultDestination: section.defaultDestination,
+        sectionId: NAV_SECTIONS[i]!.id,
+        defaultDestination: NAV_SECTIONS[i]!.defaultDestination,
       });
     }
   }
