@@ -78,6 +78,9 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/manager":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
+    case "/career/$saveId/news":
+      getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
+      break;
     // The one two-parameter route: the club segment carries the target club as well as the save.
     case "/career/$saveId/club/$clubId/scout-report":
     case "/career/$saveId/club/$clubId/staff":
@@ -86,7 +89,17 @@ export const navigate = (destination: NavigationDestination): void => {
         params: { saveId: resolved.params.saveId, clubId: resolved.params.clubId },
       });
       break;
+    default:
+      // A resolved route with no arm here is a routing hole, not a no-op: the News Inbox spent a
+      // release silently ignoring every click because its arm was missing and the switch simply
+      // fell through. `never` makes the next omission a compile error rather than a dead button.
+      return assertNoUnhandledRoute(resolved);
   }
+};
+
+/** The exhaustiveness guard for the route switch above. */
+const assertNoUnhandledRoute = (resolved: never): never => {
+  throw new Error(`unhandled navigation route: ${JSON.stringify(resolved)}`);
 };
 
 /** Navigate to a career destination, requesting destination focus on keyboard/

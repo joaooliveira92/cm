@@ -65,6 +65,19 @@ describe("the redesigned navbar (spec §2 / §4 / §5.1)", () => {
     expect(screen.getByRole("button", { name: "Match Day" })).toBeTruthy();
   });
 
+  /**
+   * Arriving on a career route must leave the navbar oriented. The News route was absent from the
+   * navbar's route-to-destination map, so landing on the inbox cleared the active section and took
+   * the whole contextual strip down with it — the screen rendered, but the nav around it went blank.
+   */
+  it("keeps the News section active and its strip up on the inbox route", async () => {
+    await mountNavbar("news");
+    expect(screen.getByRole("button", { name: "Inbox" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Inbox" }).getAttribute("aria-current"),
+    ).toBe("page");
+  });
+
   it("opens a section's submenu after the hover-intent delay", async () => {
     await mountNavbar("league");
     vi.useFakeTimers();

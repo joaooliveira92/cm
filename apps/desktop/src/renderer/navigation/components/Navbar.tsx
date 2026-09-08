@@ -21,18 +21,38 @@ import { PrimaryNavItem } from "./PrimaryNavItem.js";
 const INTENT_DELAY_MS = 170;
 const CLOSE_TOLERANCE_MS = 300;
 
-const routeChildToDestination: Readonly<Record<string, SaveScopedCareerDestinationType>> = {
+/**
+ * Each save-scoped destination and the route child that lands on it.
+ *
+ * Keyed by destination rather than by path so the type is a complete `Record` over the destination
+ * union: omitting one is a compile error. The inverse map is what lookups need, and it is derived
+ * below — News was once missing from a hand-kept path-keyed map, which silently cleared the active
+ * section and took the whole contextual strip down on arrival.
+ */
+const destinationToRouteChild: Readonly<Record<SaveScopedCareerDestinationType, string>> = {
   squad: "squad",
   tactics: "tactics",
-  // The tactics editor is a sub-surface of the Tactics area: its route nests under `/tactics/`
-  // and the section keeps highlighting while it is open.
-  editor: "tactics",
   transfers: "transfers",
   league: "league",
   fixtures: "fixtures",
   match: "match",
-  "season-summary": "seasonSummary",
+  seasonSummary: "season-summary",
   manager: "manager",
+  news: "news",
+  tacticsEditor: "editor",
+};
+
+const routeChildToDestination: Readonly<Record<string, SaveScopedCareerDestinationType>> = {
+  ...Object.fromEntries(
+    Object.entries(destinationToRouteChild).map(([destination, child]) => [
+      child,
+      destination as SaveScopedCareerDestinationType,
+    ]),
+  ),
+  // Overrides the derived `editor -> tacticsEditor` entry. The tactics editor is a sub-surface of
+  // the Tactics area rather than a section of its own, so the navbar resolves it to `tactics` and
+  // keeps that section highlighted while the editor is open.
+  editor: "tactics",
 };
 
 /**
