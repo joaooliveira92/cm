@@ -13,6 +13,7 @@ import {
 } from "@cm-clone/shared";
 import { SquadScreen } from "../../../src/renderer/squad/SquadScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
+import { saveSquadViewId } from "../../../src/renderer/squad/squadViews.js";
 import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
@@ -92,6 +93,9 @@ const reset = () => {
   resetTableSessions();
   resetAnnouncements();
   window.localStorage.clear();
+  // The Squad screen opens on the position list. Everything below asserts the
+  // table layout, so each test starts from a view that draws one.
+  saveSquadViewId("overview");
 };
 
 beforeEach(reset);
@@ -158,7 +162,7 @@ describe("the Status column in the Squad table", () => {
 
     // Overview hides most columns; Goalkeeping swaps the attribute set. The
     // protected pair rides through both.
-    fireEvent.change(screen.getByLabelText("Squad column preset"), { target: { value: "goalkeeping" } });
+    fireEvent.change(screen.getByLabelText("Squad view"), { target: { value: "goalkeeping" } });
     expect(header()).toBeTruthy();
     expect(screen.getByText(/Alan Player/)).toBeTruthy();
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ClubId, FixtureId, MatchId, SaveId } from "@cm-clone/contracts";
 import {
   FAMILIARITY_TIERS,
@@ -21,6 +21,7 @@ import { TacticsScreen } from "../../src/renderer/tactics/TacticsScreen.js";
 import { TransfersScreen } from "../../src/renderer/transfers/TransfersScreen.js";
 import { MatchDayScreen } from "../../src/renderer/match/MatchDayScreen.js";
 import { setActiveMatch, clearActiveMatch } from "../../src/renderer/match/session.js";
+import { saveSquadViewId } from "../../src/renderer/squad/squadViews.js";
 import { RegistryProvider } from "../../src/renderer/rpc.js";
 
 const rid = (s: string) => SaveId.make(s);
@@ -183,9 +184,16 @@ const resumedMatch = () => ({
   streamComplete: false,
 });
 
+// The Squad screen opens on the position list; these are the table layout's
+// focus tests, so they pin the view that draws a table.
+beforeEach(() => {
+  saveSquadViewId("overview");
+});
+
 afterEach(() => {
   cleanup();
   clearActiveMatch(rid("s1"));
+  window.localStorage.clear();
 });
 
 describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space on every control", () => {

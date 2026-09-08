@@ -41,11 +41,27 @@ export const SQUAD_BASE_COLUMN_IDS = [
   "overall",
 ] as const;
 
+/**
+ * The non-attribute detail columns: who the player is, rather than how good.
+ * They exist so a view can change the *kind* of information on screen and not
+ * only which attribute group it shows. Every one is backed by a field
+ * `SquadPlayerView` already carries — the renderer never invents a column it
+ * has no state for, which is why there is no wage, contract or asking-price
+ * column here.
+ */
+export const SQUAD_PERSONAL_COLUMN_IDS = [
+  "nationality",
+  "birthplace",
+  "condition",
+  "trainingFocus",
+] as const;
+
 /** Every column the Squad table can show: base + the visible attribute set.
  *  Hidden attributes (`injuryProneness`) are deliberately absent — they never
  *  surface to any UI (shared package's standing rule). */
 export const SQUAD_ALL_COLUMN_IDS: readonly string[] = [
   ...SQUAD_BASE_COLUMN_IDS,
+  ...SQUAD_PERSONAL_COLUMN_IDS,
   ...ALL_ATTRIBUTES,
 ];
 
@@ -62,6 +78,7 @@ export const SQUAD_TOGGLEABLE_COLUMN_IDS: readonly string[] = SQUAD_ALL_COLUMN_I
 
 export type SquadPresetId =
   | "overview"
+  | "personal"
   | "physical"
   | "technical"
   | "mental"
@@ -79,6 +96,11 @@ export const SQUAD_PRESETS: readonly SquadPreset[] = [
     id: "overview",
     label: "Overview",
     visibleColumnIds: [...SQUAD_BASE_COLUMN_IDS],
+  },
+  {
+    id: "personal",
+    label: "Personal details",
+    visibleColumnIds: [...SQUAD_BASE_COLUMN_IDS, ...SQUAD_PERSONAL_COLUMN_IDS],
   },
   {
     id: "physical",

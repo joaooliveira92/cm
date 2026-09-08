@@ -34,6 +34,9 @@ export interface SquadRow extends TableRowShape {
   readonly positionRatings: Readonly<Record<string, number>>;
   /** Current Condition (%) — the one engine-modeled input to the Status column. */
   readonly condition: number;
+  readonly nationality: string;
+  readonly birthplace: string | null;
+  readonly trainingFocus: string | null;
 }
 
 export const squadRowOf = (player: SquadPlayerView): SquadRow => ({
@@ -46,6 +49,9 @@ export const squadRowOf = (player: SquadPlayerView): SquadRow => ({
   attributes: player.attributes,
   positionRatings: player.positionRatings,
   condition: player.condition,
+  nationality: player.nationality,
+  birthplace: player.birthplace,
+  trainingFocus: player.trainingFocus,
 });
 
 /** Header/column label for an attribute key: capitalized display ("firstTouch"
@@ -59,6 +65,10 @@ export const SQUAD_COLUMN_LABELS: Readonly<Record<string, string>> = {
   age: "Age",
   positions: "Positions",
   overall: "OVR",
+  nationality: "Nationality",
+  birthplace: "Birthplace",
+  condition: "Condition",
+  trainingFocus: "Training Focus",
   ...Object.fromEntries(ALL_ATTRIBUTES.map((attribute) => [attribute, attributeLabel(attribute)])),
 };
 
@@ -122,6 +132,40 @@ export const squadColumns = (
     accessorKey: "overallRating",
     header: "OVR",
     enableSorting: true,
+  },
+  {
+    id: "nationality",
+    accessorKey: "nationality",
+    header: "Nationality",
+    enableSorting: true,
+  },
+  {
+    id: "birthplace",
+    // A player born outside the loaded world has no birthplace, and an em dash
+    // says so without implying the town is called "Unknown".
+    accessorFn: (row) => row.birthplace ?? "",
+    header: "Birthplace",
+    enableSorting: true,
+    cell: (info) => {
+      const value = info.getValue<string>();
+      return value === "" ? "—" : value;
+    },
+  },
+  {
+    id: "condition",
+    accessorKey: "condition",
+    header: "Condition",
+    enableSorting: true,
+    cell: (info) => `${Math.round(info.getValue<number>())}%`,
+  },
+  {
+    id: "trainingFocus",
+    // None is a first-class Training Focus value (CONTEXT.md), not an unfilled
+    // slot, so it is spelled out rather than blanked.
+    accessorFn: (row) => row.trainingFocus ?? "None",
+    header: "Training Focus",
+    enableSorting: true,
+    cell: (info) => info.getValue<unknown>() as string,
   },
   ...ALL_ATTRIBUTES.map(
     (attribute): ColumnDef<SquadRow, unknown> => ({

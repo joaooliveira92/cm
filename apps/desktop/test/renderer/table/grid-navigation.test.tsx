@@ -13,6 +13,7 @@ import {
 import { SquadScreen } from "../../../src/renderer/squad/SquadScreen.js";
 import { TransfersScreen } from "../../../src/renderer/transfers/TransfersScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
+import { saveSquadViewId } from "../../../src/renderer/squad/squadViews.js";
 import {
   dispatchAction,
   registerActionHandler,
@@ -134,6 +135,9 @@ beforeEach(() => {
   resetTableSessions();
   resetAnnouncements();
   window.localStorage.clear();
+  // The Squad screen opens on the position list. Everything below asserts the
+  // table layout, so each test starts from a view that draws one.
+  saveSquadViewId("overview");
 });
 
 afterEach(() => {

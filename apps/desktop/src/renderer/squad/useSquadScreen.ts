@@ -41,6 +41,12 @@ import {
 } from "../table/features/visibility.js";
 import { statusTermsOf } from "../table/squad/playerStatus.js";
 import {
+  loadSquadViewId,
+  saveSquadViewId,
+  squadViewById,
+  type SquadViewId,
+} from "./squadViews.js";
+import {
   loadSquadColumnPreferences,
   resetSquadColumnPreferences,
   saveSquadColumnPreferences,
@@ -78,6 +84,8 @@ export interface SquadScreenState {
   readonly scrollLeft: number;
   readonly legendExpanded: boolean;
   readonly preferences: SquadColumnPreferences;
+  /** The chosen view (Screen 70): the position list, or one of the table presets. */
+  readonly viewId: SquadViewId;
   readonly announcement: TableAnnouncement | null;
   readonly viewState: ReturnType<typeof deriveViewState>;
   readonly refreshState: ReturnType<typeof deriveRefreshState>;
@@ -101,6 +109,7 @@ export interface SquadScreenActions {
   readonly onRowPrimary: (id: string) => void;
   readonly setPositionFilter: (position: string) => void;
   readonly setPreset: (presetId: SquadPresetId) => void;
+  readonly setView: (viewId: SquadViewId) => void;
   readonly toggleOneColumn: (columnId: string) => void;
   readonly clearFilterCommand: () => void;
   readonly clearSortCommand: () => void;
@@ -174,6 +183,8 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   }, []);
 
   const [legendExpanded, setLegendExpanded] = useState(false);
+
+  const [viewId, setViewIdState] = useState<SquadViewId>(() => loadSquadViewId());
 
   const [preferences, setPreferences] = useState<SquadColumnPreferences>(() =>
     loadSquadColumnPreferences(),
@@ -421,6 +432,20 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     [applyPreferences, preferences.pinnedColumnIds, speak],
   );
 
+  /** Choosing a view is one act: the layout changes, and a table view also
+   *  applies its columns. The two never drift apart, because nothing else can
+   *  set the layout. */
+  const setView = useCallback(
+    (nextViewId: SquadViewId) => {
+      const view = squadViewById(nextViewId);
+      setViewIdState(view.id);
+      saveSquadViewId(view.id);
+      if (view.presetId !== undefined) setPreset(view.presetId);
+      else speak("view-changed", `Showing the squad by ${view.label}.`);
+    },
+    [setPreset, speak],
+  );
+
   const toggleOneColumn = useCallback(
     (columnId: string) => {
       const next = toggleColumn(preferences.visibleColumnIds, columnId);
@@ -464,6 +489,7 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       scrollLeft,
       legendExpanded,
       preferences,
+      viewId,
       announcement,
       viewState,
       refreshState,
@@ -486,6 +512,7 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       onRowPrimary,
       setPositionFilter,
       setPreset,
+      setView,
       toggleOneColumn,
       clearFilterCommand,
       clearSortCommand,

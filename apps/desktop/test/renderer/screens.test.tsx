@@ -96,7 +96,12 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
     // chrome's title bar, so the screen no longer repeats it.
     expect(await screen.findByRole("heading", { name: "Squad" })).toBeTruthy();
     expect(screen.queryByText("Test FC")).toBeNull();
-    expect(await screen.findByText(/Alan Shearer/)).toBeTruthy();
+    // A fresh install opens on the position list, which names players the way
+    // the list does — surname first.
+    expect(
+      await screen.findByRole("heading", { name: "Players (Position(s))" }),
+    ).toBeTruthy();
+    expect(await screen.findByText(/Shearer, Alan/)).toBeTruthy();
   });
 
   // Two tests stood here and drove the Calendar through the League table's own

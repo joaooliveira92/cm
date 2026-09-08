@@ -12,12 +12,9 @@ import {
 import { FOCUS_RING } from "../focus.js";
 import { useSquad } from "./SquadProvider.js";
 import { DataTable } from "../table/DataTable.js";
-import {
-  DEFAULT_SQUAD_PRESET_ID,
-  isSquadPresetId,
-  SQUAD_PRESETS,
-  SQUAD_TOGGLEABLE_COLUMN_IDS,
-} from "../table/features/visibility.js";
+import { SQUAD_TOGGLEABLE_COLUMN_IDS } from "../table/features/visibility.js";
+import { isSquadViewId, SQUAD_VIEWS, squadViewById } from "./squadViews.js";
+import { SquadPositionList } from "./SquadPositionList.js";
 import { SQUAD_COLUMN_LABELS } from "../table/squad/squadColumns.js";
 import { StatusLegend } from "../table/squad/playerStatus.js";
 import { activeFilterCount } from "../table/viewState.js";
@@ -27,9 +24,10 @@ const REGION = "squadTable";
 
 const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;
 
-/** The squad table leaf: filter toolbar, column visibility controls, view-state
- *  placeholders, status legend, and the DataTable. Owns no state — everything
- *  flows from the SquadProvider context. */
+/** The squad list leaf: filter toolbar, the View selector, column visibility
+ *  controls, view-state placeholders, status legend, and the body — the
+ *  two-column position list or the DataTable, whichever the chosen view draws.
+ *  Owns no state — everything flows from the SquadProvider context. */
 export const SquadTable = () => {
   const { state, actions, meta } = useSquad();
   const {
@@ -40,6 +38,7 @@ export const SquadTable = () => {
     scrollLeft,
     legendExpanded,
     preferences,
+    viewId,
     announcement,
     viewState,
     refreshState,
@@ -55,7 +54,7 @@ export const SquadTable = () => {
     onActiveChange,
     onRowPrimary,
     setPositionFilter,
-    setPreset,
+    setView,
     toggleOneColumn,
     clearFilterCommand,
   } = actions;
@@ -80,6 +79,8 @@ export const SquadTable = () => {
       </main>
     );
   }
+
+  const view = squadViewById(viewId);
 
   const activePosition = filters.find(
     (f): f is Extract<FilterClause, { readonly _tag: "position" }> => f._tag === "position",
@@ -145,52 +146,67 @@ export const SquadTable = () => {
 
       <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
         <div className="flex items-center gap-2 text-text-body">
-          Columns
+          View
           <Select
-            value={preferences.activePresetId ?? DEFAULT_SQUAD_PRESET_ID}
+            value={viewId}
             onValueChange={(value) => {
-              if (value !== null && isSquadPresetId(value)) setPreset(value);
+              if (value !== null && isSquadViewId(value)) setView(value);
             }}
           >
-            <SelectTrigger aria-label="Squad column preset" className={SELECT_CLASS}>
-              <SelectValue />
+            <SelectTrigger aria-label="Squad view" className={SELECT_CLASS}>
+              {/* The trigger shows the view's name, not its id: `positions` is
+                  the stored value, "Position(s)" is what the screen calls it. */}
+              <SelectValue>{() => view.label}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {SQUAD_PRESETS.map((preset) => (
-                <SelectItem key={preset.id} value={preset.id}>
-                  {preset.label}
+              {SQUAD_VIEWS.map((option) => (
+                <SelectItem key={option.id} value={option.id}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <Button
-          type="button"
-          variant="secondary"
-          data-action-id="restore-squad-columns"
-          onClick={() => void dispatchAction("restore-squad-columns")}
-        >
-          Restore defaults
-        </Button>
-        <details className="text-text-body">
-          <summary className={`cursor-pointer ${FOCUS_RING.join(" ")}`}>
-            Show / hide columns
-          </summary>
-          <div className="mt-2 grid max-h-64 grid-cols-3 gap-x-4 gap-y-1 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-3 text-xs">
-            {SQUAD_TOGGLEABLE_COLUMN_IDS.map((columnId) => (
-              <label key={columnId} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={preferences.visibleColumnIds.includes(columnId)}
-                  onChange={() => toggleOneColumn(columnId)}
-                  className={`accent-text-highlight ${FOCUS_RING.join(" ")}`}
-                />
-                {SQUAD_COLUMN_LABELS[columnId] ?? columnId}
-              </label>
-            ))}
-          </div>
-        </details>
+        {/* Columns belong to the table layouts. The position list carries one
+            field beside the name, so a show/hide control over it would offer
+            choices that change nothing on screen. */}
+        {view.layout === "table" && (
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              data-action-id="restore-squad-columns"
+              onClick={() => void dispatchAction("restore-squad-columns")}
+            >
+              Restore defaults
+            </Button>
+            <details className="text-text-body">
+              <summary className={`cursor-pointer ${FOCUS_RING.join(" ")}`}>
+                Show / hide columns
+              </summary>
+              <div className="mt-2 grid max-h-64 grid-cols-3 gap-x-4 gap-y-1 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-3 text-xs">
+                {SQUAD_TOGGLEABLE_COLUMN_IDS.map((columnId) => (
+                  <label key={columnId} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={preferences.visibleColumnIds.includes(columnId)}
+                      onChange={() => toggleOneColumn(columnId)}
+                      className={`accent-text-highlight ${FOCUS_RING.join(" ")}`}
+                    />
+                    {SQUAD_COLUMN_LABELS[columnId] ?? columnId}
+                  </label>
+                ))}
+              </div>
+            </details>
+          </>
+        )}
       </div>
+
+      {/* The panel title CM 03/04 put over the list: what you are looking at,
+          named by the view that drew it. */}
+      <h2 className="mt-4 text-lg font-semibold text-text-highlight">
+        Players ({view.label})
+      </h2>
 
       {viewState._tag === "InitialLoading" && (
         <div aria-busy="true" className="py-10 text-text-secondary">
@@ -237,27 +253,31 @@ export const SquadTable = () => {
       )}
       {legendExpanded && <StatusLegend id={STATUS_LEGEND_ID} />}
 
-      <DataTable
-        tableId="squad"
-        screen="squad"
-        region={REGION}
-        table={table}
-        orderedIds={orderedIds}
-        identityColumnId="name"
-        activeId={activeId}
-        onActiveChange={onActiveChange}
-        onBookmarkChange={setBookmark}
-        selectedId={selectedId}
-        onToggleSelection={onToggleSelection}
-        onSortChange={onSortCycle}
-        busy={refreshState._tag === "Refreshing"}
-        enableShiftScroll
-        onRowPrimary={onRowPrimary}
-        ariaLabel="Squad"
-        announcement={announcement?.message ?? ""}
-        initialScrollLeft={scrollLeft}
-        onScrollCommit={commitScroll}
-      />
+      {view.layout === "list" ? (
+        <SquadPositionList />
+      ) : (
+        <DataTable
+          tableId="squad"
+          screen="squad"
+          region={REGION}
+          table={table}
+          orderedIds={orderedIds}
+          identityColumnId="name"
+          activeId={activeId}
+          onActiveChange={onActiveChange}
+          onBookmarkChange={setBookmark}
+          selectedId={selectedId}
+          onToggleSelection={onToggleSelection}
+          onSortChange={onSortCycle}
+          busy={refreshState._tag === "Refreshing"}
+          enableShiftScroll
+          onRowPrimary={onRowPrimary}
+          ariaLabel="Squad"
+          announcement={announcement?.message ?? ""}
+          initialScrollLeft={scrollLeft}
+          onScrollCommit={commitScroll}
+        />
+      )}
     </main>
   );
 };

@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import {
   assignFullTactic,
+  chooseOption,
   continueSeededCareer,
   expect,
   goto,
@@ -16,14 +17,24 @@ const seedAndContinue = async (window: Page, userDataDir: string, name: string, 
   await continueSeededCareer(window, name);
 };
 
-test("Squad screen renders the club heading and the full starting squad table", async ({ userDataDir, window }) => {
+test("Squad opens on the position list and the View selector swaps it for a table of the same squad", async ({ userDataDir, window }) => {
   await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
 
   await expect(window.locator("h1")).toBeVisible();
   const playersCount = Number(
     (await window.getByText(/players$/).innerText()).match(/(\d+) players/)![1],
   );
+
+  // The career opens on the two-column position list: every player, no table.
+  await expect(window.getByRole("heading", { name: "Players (Position(s))" })).toBeVisible();
+  await expect(window.locator("tbody")).toHaveCount(0);
+  await expect(window.locator("li:has(button[data-focus-id])")).toHaveCount(playersCount);
+
+  // A view change alters presentation only — the same squad, drawn as a table.
+  await chooseOption(window, "Squad view", "Personal details");
+  await expect(window.getByRole("heading", { name: "Players (Personal details)" })).toBeVisible();
   await expect(window.locator("tbody tr")).toHaveCount(playersCount);
+  await expect(window.getByRole("columnheader", { name: "Nationality" })).toBeVisible();
 });
 
 test("Tactics opens on the read-only overview; the editor is one step away and the save persists", async ({ userDataDir, window }) => {
