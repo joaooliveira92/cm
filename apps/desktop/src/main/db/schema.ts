@@ -631,6 +631,25 @@ export const tacticSlots = sqliteTable(
   ],
 );
 
+/** The match-day bench's fixed substitute slots, parallel to `tactic_slots`: same club/slot_index
+ *  key, and rows are rewritten wholesale on every accepted save. A `NULL` `player_id` is an
+ *  unnamed substitute slot — a club may field fewer than the competition rule's full bench. The
+ *  count is enforced by `validateTactic`, not by a row presence check, so empty slots exist as rows
+ *  rather than by absence. */
+export const tacticBenchSlots = sqliteTable(
+  "tactic_bench_slots",
+  {
+    clubId: text("club_id")
+      .notNull()
+      .references(() => tactics.clubId),
+    slotIndex: integer("slot_index").notNull(),
+    playerId: text("player_id").references(() => players.id),
+  },
+  (table) => [
+    primaryKey({ columns: [table.clubId, table.slotIndex] }),
+  ],
+);
+
 /**
  * The append-only event log — and the rule that decides what reaches it.
  *

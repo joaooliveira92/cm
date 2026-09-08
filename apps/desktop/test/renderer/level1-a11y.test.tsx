@@ -12,6 +12,7 @@ import {
   POSITION_ROLES,
   POSITIONS,
   STATURE_TIERS,
+  emptyBench,
 } from "@cm-clone/shared";
 import { SquadScreen } from "../../src/renderer/squad/SquadScreen.js";
 import { FixturesScreen } from "../../src/renderer/fixtures/FixturesScreen.js";
@@ -401,6 +402,7 @@ render(
                 role: POSITION_ROLES[position],
                 playerId: rid(`p-${index}`),
               })),
+              bench: emptyBench(),
               mentality: "balanced",
               tempo: "normal",
               pressing: "medium",

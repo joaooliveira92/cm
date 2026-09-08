@@ -3,6 +3,15 @@ import type { Attribute, Position } from "./positions.js";
 export const FORMATIONS = ["4-4-2", "4-3-3", "4-5-1", "3-5-2", "5-3-2"] as const;
 export type Formation = (typeof FORMATIONS)[number];
 
+/** How many named substitutes the match-day squad rule concedes (11 starters + this = 18). The
+ *  competition rule is one knob until a league models its own; the Squad lineup bar and the
+ *  Tactic's bench both key off it. */
+export const BENCH_SIZE = 7;
+export const MATCH_DAY_SQUAD_SIZE = 11 + BENCH_SIZE;
+
+/** A bench with every slot empty — the default fresh Tactic starts with, and AI clubs get. */
+export const emptyBench = (): ReadonlyArray<null> => Array<null>(BENCH_SIZE).fill(null);
+
 /**
  * Fixed multiset of 10 outfield Position slots (+ implicit GK) per Formation, in a stable slot
  * order. Purely structural per ADR-0003: determines which Positions are filled, never carries a

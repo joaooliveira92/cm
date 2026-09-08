@@ -1,9 +1,22 @@
 /**
- * Squad screen state hook — all useState, useEffect, useCallback, and derived
- * state for the squad table lives here. The provider publishes it through context;
- * the view components consume it.
+ * Squad screen state hook — the assembly. All cross-cutting state, derived
+ * values, and action handlers for the squad table were historically one 500+
+ * line file. It is now composed from focused sub-hooks:
+ *
+ * - `useSquadSession` — the six persistable session inputs (sort, filters,
+ *   focus, selection, bookmark, scroll) and their setters.
+ * - `useSquadColumns` — the presentation preferences (view, column presets,
+ *   status-legend disclosure).
+ * - `useSquadAnnouncements` — the one polite screen-reader announcer.
+ * - `useSquadTable` — the TanStack table wiring (columns, visibility, row ids).
+ *
+ * The assembly keeps what genuinely stitches those together: the atom data +
+ * derived view state, the focus bookmarks, the callbacks that cross a concern
+ * boundary, and the once-per-save global action-handler registration. It
+ * publishes the flattened { state, actions, meta } triple through
+ * `SquadProvider`; the shared shapes live in `squadScreenTypes.ts`.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { SaveId } from "@cm-clone/contracts";
 import { Option } from "effect";
 import {
@@ -19,12 +32,9 @@ import { focusIdOf } from "../focus.js";
 import { SQUAD_PALETTE_OPTIONS, tableSortAndFilterActions } from "../table/paletteActions.js";
 import {
   SQUAD_COLUMN_LABELS,
-  squadColumns,
   squadRowOf,
   type SquadRow,
 } from "../table/squad/squadColumns.js";
-import { useDataTable, visibleRowIds } from "../table/useDataTable.js";
-import type { Table } from "@tanstack/react-table";
 import { classifyTableParamAction } from "../table/paramActions.js";
 import { sortDirectionOf } from "../table/features/sorting.js";
 import {
@@ -34,165 +44,68 @@ import {
   upsertFilter,
 } from "../table/features/filtering.js";
 import {
-  SQUAD_ALL_COLUMN_IDS,
   SQUAD_PRESETS,
   toggleColumn,
   type SquadPresetId,
 } from "../table/features/visibility.js";
 import { statusTermsOf } from "../table/squad/playerStatus.js";
 import {
-  loadSquadViewId,
-  saveSquadViewId,
   squadViewById,
   type SquadViewId,
 } from "./squadViews.js";
 import {
-  loadSquadColumnPreferences,
   resetSquadColumnPreferences,
-  saveSquadColumnPreferences,
-  type SquadColumnPreferences,
 } from "../table/columnPreferences.js";
 import {
   discardSelectionForNavigation,
-  readTableSession,
-  updateTableSession,
 } from "../table/tableState.js";
 import {
   makeTableFocusBookmark,
   resolveTableFocus,
-  type TableFocusBookmark,
 } from "../table/focusBookmark.js";
-import { announce } from "../table/announcement.js";
 import {
   deriveRefreshState,
   deriveViewState,
   STATE_COPY,
   type TableStateCopy,
 } from "../table/viewState.js";
-import type { FilterClause, SortState, TableAnnouncement } from "../table/types.js";
+import type { FilterClause } from "../table/types.js";
+import { useSquadSession } from "./useSquadSession.js";
+import { useSquadColumns } from "./useSquadColumns.js";
+import { useSquadAnnouncements } from "./useSquadAnnouncements.js";
+import { useSquadTable, STATUS_LEGEND_ID } from "./useSquadTable.js";
+import type { SquadScreenValue } from "./squadScreenTypes.js";
+
+export type {
+  SquadScreenActions,
+  SquadScreenMeta,
+  SquadScreenState,
+  SquadScreenValue,
+} from "./squadScreenTypes.js";
 
 const TABLE_ID = "squad";
-
-export interface SquadScreenState {
-  readonly allPlayers: ReadonlyArray<SquadRow>;
-  readonly filtered: ReadonlyArray<SquadRow>;
-  readonly sort: SortState | null;
-  readonly filters: readonly FilterClause[];
-  readonly activeId: string | null;
-  readonly selectedId: string | null;
-  readonly bookmark: TableFocusBookmark | null;
-  readonly scrollLeft: number;
-  readonly legendExpanded: boolean;
-  readonly preferences: SquadColumnPreferences;
-  /** The chosen view (Screen 70): the position list, or one of the table presets. */
-  readonly viewId: SquadViewId;
-  readonly announcement: TableAnnouncement | null;
-  readonly viewState: ReturnType<typeof deriveViewState>;
-  readonly refreshState: ReturnType<typeof deriveRefreshState>;
-  readonly copy: TableStateCopy;
-  readonly orderedIds: readonly string[];
-  readonly table: Table<SquadRow>;
-}
-
-export interface SquadScreenActions {
-  readonly setSort: (next: SquadScreenState["sort"]) => void;
-  readonly setFilters: (next: readonly FilterClause[]) => void;
-  readonly setSelection: (next: string | null) => void;
-  readonly setActiveAndBookmark: (id: string | null, bookmark: TableFocusBookmark | null) => void;
-  readonly setBookmark: (bookmark: TableFocusBookmark | null) => void;
-  readonly commitScroll: (left: number) => void;
-  readonly applyPreferences: (next: SquadColumnPreferences) => void;
-  readonly setLegendExpanded: React.Dispatch<React.SetStateAction<boolean>>;
-  readonly onSortCycle: (next: SquadScreenState["sort"]) => void;
-  readonly onToggleSelection: (id: string) => void;
-  readonly onActiveChange: (id: string) => void;
-  readonly onRowPrimary: (id: string) => void;
-  readonly setPositionFilter: (position: string) => void;
-  readonly setPreset: (presetId: SquadPresetId) => void;
-  readonly setView: (viewId: SquadViewId) => void;
-  readonly toggleOneColumn: (columnId: string) => void;
-  readonly clearFilterCommand: () => void;
-  readonly clearSortCommand: () => void;
-  readonly refreshSquad: () => void;
-}
-
-export interface SquadScreenMeta {
-  readonly saveId: SaveId;
-  readonly speak: (eventId: string, message: string) => void;
-  readonly TABLE_ID: string;
-  readonly STATUS_LEGEND_ID: string;
-  readonly allPlayers: ReadonlyArray<SquadRow>;
-}
-
-export interface SquadScreenValue {
-  readonly state: SquadScreenState;
-  readonly actions: SquadScreenActions;
-  readonly meta: SquadScreenMeta;
-}
-
 const REGION = "squadTable";
-const STATUS_LEGEND_ID = "squad-status-legend";
 
 export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   const squadResult = useAtomValue(squadAtom(saveId));
   const refreshSquad = useAtomRefresh(squadAtom(saveId));
 
-  const initialSession = useRef(readTableSession(TABLE_ID));
-  const [sort, setSortState] = useState(initialSession.current?.sort ?? null);
-  const [filters, setFiltersState] = useState<readonly FilterClause[]>(
-    initialSession.current?.filters ?? [],
-  );
-  const [activeId, setActiveId] = useState<string | null>(
-    initialSession.current?.focusBookmark?.itemId ?? null,
-  );
-  const [selectedId, setSelectedId] = useState<string | null>(
-    initialSession.current?.selectedId ?? null,
-  );
-  const [bookmark, setBookmarkState] = useState<TableFocusBookmark | null>(
-    initialSession.current?.focusBookmark ?? null,
-  );
-  const [scrollLeft, setScrollLeft] = useState(initialSession.current?.scrollLeft ?? 0);
+  const { session, sessionActions } = useSquadSession();
+  const { sort, filters, activeId, selectedId, bookmark, scrollLeft } = session;
+  const {
+    setSort,
+    setFilters,
+    setSelection,
+    setActiveAndBookmark,
+    setBookmark,
+    commitScroll,
+  } = sessionActions;
 
-  const setSort = useCallback((next: typeof sort) => {
-    setSortState(next);
-    updateTableSession(TABLE_ID, { sort: next });
-  }, []);
-  const setFilters = useCallback((next: readonly FilterClause[]) => {
-    setFiltersState(next);
-    updateTableSession(TABLE_ID, { filters: next });
-  }, []);
-  const setSelection = useCallback((next: string | null) => {
-    setSelectedId(next);
-    updateTableSession(TABLE_ID, { selectedId: next });
-  }, []);
-  const setActiveAndBookmark = useCallback(
-    (next: string | null, nextBookmark: TableFocusBookmark | null) => {
-      setActiveId(next);
-      setBookmarkState(nextBookmark);
-      updateTableSession(TABLE_ID, { focusBookmark: nextBookmark });
-    },
-    [],
-  );
-  const setBookmark = useCallback((next: TableFocusBookmark | null) => {
-    setBookmarkState(next);
-    updateTableSession(TABLE_ID, { focusBookmark: next });
-  }, []);
-  const commitScroll = useCallback((left: number) => {
-    setScrollLeft(left);
-    updateTableSession(TABLE_ID, { scrollLeft: left });
-  }, []);
+  const { columnState, columnActions } = useSquadColumns();
+  const { viewId, preferences, legendExpanded } = columnState;
+  const { setViewId, applyPreferences, setLegendExpanded } = columnActions;
 
-  const [legendExpanded, setLegendExpanded] = useState(false);
-
-  const [viewId, setViewIdState] = useState<SquadViewId>(() => loadSquadViewId());
-
-  const [preferences, setPreferences] = useState<SquadColumnPreferences>(() =>
-    loadSquadColumnPreferences(),
-  );
-  const applyPreferences = useCallback((next: SquadColumnPreferences) => {
-    setPreferences(next);
-    saveSquadColumnPreferences(next);
-  }, []);
+  const { announcement, speak } = useSquadAnnouncements();
 
   const latest = useRef({
     sort,
@@ -206,16 +119,12 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   latest.current.activeId = activeId;
   latest.current.bookmark = bookmark;
 
-  const [announcement, setAnnouncement] = useState<TableAnnouncement | null>(null);
-  const speak = useCallback((eventId: string, message: string) => {
-    if (announce({ tableId: TABLE_ID, eventId, message })) {
-      setAnnouncement({ tableId: TABLE_ID, eventId, message });
-    }
-  }, []);
-
   const error = typedError(squadResult);
   const view = Option.getOrUndefined(AsyncResult.value(squadResult));
-  const allPlayers = (view !== undefined ? view.players : []).map(squadRowOf);
+  const allPlayers = useMemo(
+    () => (view !== undefined ? view.players : []).map(squadRowOf),
+    [view],
+  );
   latest.current.players = allPlayers;
 
   const blockingFailure = error !== null && view === undefined;
@@ -235,39 +144,15 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
 
   const copy: TableStateCopy = STATE_COPY.squad;
 
-  // TanStack keys its internal memos on the identity of `columns` and `columnVisibility`. Rebuilt
-  // inline on every render, they invalidated every column, row, and cell object each pass — the
-  // allocation churn behind the renderer's GC load. `legendExpanded` is the only real input.
-  const toggleLegend = useCallback(() => setLegendExpanded((open) => !open), []);
-  const columns = useMemo(
-    () =>
-      squadColumns({
-        expanded: legendExpanded,
-        legendId: STATUS_LEGEND_ID,
-        onToggle: toggleLegend,
-      }),
-    [legendExpanded, toggleLegend],
-  );
-  const columnVisibility = useMemo(
-    () =>
-      Object.fromEntries(
-        SQUAD_ALL_COLUMN_IDS.map((columnId) => [
-          columnId,
-          preferences.visibleColumnIds.includes(columnId),
-        ]),
-      ),
-    [preferences.visibleColumnIds],
-  );
-  const table = useDataTable<SquadRow>({
-    columns,
+  const toggleLegend = useCallback(() => setLegendExpanded((open) => !open), [setLegendExpanded]);
+  const { table, orderedIds } = useSquadTable({
     data: filtered,
     sort,
     onSortChange: setSort,
-    columnVisibility,
-    pinnedColumnIds: preferences.pinnedColumnIds,
+    preferences,
+    legendExpanded,
+    onToggleLegend: toggleLegend,
   });
-
-  const orderedIds = visibleRowIds(table);
 
   const focusRow = useCallback((id: string): void => {
     (
@@ -378,7 +263,7 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
 
   const onToggleSelection = useCallback(
     (id: string) => {
-      const player = allPlayers.find((p) => p.id === id);
+      const player = latest.current.players.find((p) => p.id === id);
       const name = player !== undefined ? `${player.firstName} ${player.lastName}` : id;
       const next = selectedId === id ? null : id;
       setSelection(next);
@@ -387,7 +272,7 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
         next === null ? `Deselected ${name}.` : `Selected ${name}.`,
       );
     },
-    [selectedId, allPlayers, setSelection, speak],
+    [selectedId, setSelection, speak],
   );
 
   const onActiveChange = useCallback(
@@ -438,12 +323,11 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   const setView = useCallback(
     (nextViewId: SquadViewId) => {
       const view = squadViewById(nextViewId);
-      setViewIdState(view.id);
-      saveSquadViewId(view.id);
+      setViewId(view.id);
       if (view.presetId !== undefined) setPreset(view.presetId);
       else speak("view-changed", `Showing the squad by ${view.label}.`);
     },
-    [setPreset, speak],
+    [setViewId, setPreset, speak],
   );
 
   const toggleOneColumn = useCallback(

@@ -30,6 +30,13 @@ const REGION = "squadTable";
  *  count, so the list reads top-left to bottom-right without a gap. */
 export const leftColumnLength = (total: number): number => Math.ceil(total / 2);
 
+/** Whether a second column gets the divider that separates it from the first.
+ *  `true` only when the split leaves rows to the right; a split with nothing
+ *  on the right (one player, or zero) is a solo list and draws no border.
+ *  Pure so a call reading `variantOf(split, total)` needs no comment. */
+const variantOf = (split: number, total: number): "leading" | "trailing" =>
+  split < total ? "trailing" : "leading";
+
 /**
  * The keyboard move a key requests, as an index into the ordered rows, or
  * `null` when the key is not ours. Pure so the two-column geometry — down the
@@ -135,10 +142,17 @@ export const SquadPositionList = () => {
     focusRow(nextId);
   };
 
-  const column = (slice: readonly SquadRow[], rule: boolean) => (
+  /**
+   * One of the two columns. A trailing column (the second of a two-column
+   * squad) draws the divider that separates it from the first; a solo column
+   * and a leading column do not. Expressed as an explicit variant rather than
+   * a `rule: boolean` flag, so a reader cannot pair a bare true/false against
+   * the border that follows.
+   */
+  const column = (slice: readonly SquadRow[], variant: "leading" | "trailing") => (
     <ul
       className={`min-w-0 flex-1 divide-y divide-border-subtle ${
-        rule ? "border-l border-border-subtle pl-4" : ""
+        variant === "trailing" ? "border-l border-border-subtle pl-4" : ""
       }`}
     >
       {slice.map((row) => (
@@ -181,10 +195,11 @@ export const SquadPositionList = () => {
           className="flex gap-6 rounded-panel bg-panel-bg p-2"
           onKeyDown={onKeyDown}
         >
-          {column(rows.slice(0, split), false)}
-          {/* The rule between the columns, drawn only when there is a second
-              column to separate — a one-player squad is one list, not two. */}
-          {column(rows.slice(split), rows.length > 1)}
+          {column(rows.slice(0, split), "leading")}
+          {/* The rule between the columns is deliberate: a one-player squad is
+              one list and draws no divider, but two columns of the same list
+              read as two lists without it. */}
+          {column(rows.slice(split), variantOf(split, rows.length))}
         </div>
       )}
       {/* The same one polite announcer the table layout carries (AC-32), so a

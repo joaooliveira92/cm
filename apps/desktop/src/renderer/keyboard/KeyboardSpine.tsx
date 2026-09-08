@@ -10,6 +10,7 @@ import { isInsideCareer } from "../actions/registry.js";
 import {
   gByKeyOf,
   gPrefixCompletionsOf,
+  navKeyByDestinationOf,
   prefixIndicatorEntriesOf,
   withEffectiveBindings,
   type KeyBindingOverrides,
@@ -294,6 +295,14 @@ export const KeyboardSpine = () => {
     const timer = setTimeout(() => setPrefix(IDLE_PREFIX), prefixTimeoutMs());
     return () => clearTimeout(timer);
   }, [prefix]);
+
+  // Publish the active-prefix flag so the navbar can reveal the `g <key>`
+  // navigation hotkeys on its buttons while the prefix is pending (in-between
+  // `g` and the destination key). Cleaned on spine unmount, like the overlay.
+  useEffect(() => {
+    setScopeState({ prefixActive: prefix.active });
+    return () => clearScopeState("prefixActive");
+  }, [prefix.active]);
 
   // ONE keystroke input: normalize, suppress-if-typing, resolve, apply.
   const onKeyDown = useCallback(

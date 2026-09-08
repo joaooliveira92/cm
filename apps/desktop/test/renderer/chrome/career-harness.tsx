@@ -16,6 +16,7 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { SaveId } from "@cm-clone/contracts";
+import { emptyBench } from "@cm-clone/shared";
 import { CareerChildView, CareerShell } from "../../../src/renderer/router/career.js";
 import { LeagueTableScreen } from "../../../src/renderer/leagueTable/LeagueTableScreen.js";
 import { FixturesScreen } from "../../../src/renderer/fixtures/FixturesScreen.js";
@@ -49,6 +50,7 @@ export const counters = { advanceCalls: 0 };
 export const SAMPLE_TACTIC = {
   formation: "4-4-2" as const,
   slots: [],
+  bench: emptyBench(),
   mentality: "balanced" as const,
   tempo: "normal" as const,
   pressing: "medium" as const,

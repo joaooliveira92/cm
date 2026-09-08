@@ -40,6 +40,7 @@ const buildTactic = (squadIds: ReadonlyArray<PlayerId>): Tactic =>
       role: POSITION_ROLES[position],
       playerId: squadIds[index]!,
     })),
+    bench: Array.from({ length: 7 }, (_, benchIndex) => squadIds[11 + benchIndex] ?? null),
     mentality: "balanced",
     tempo: "normal",
     pressing: "medium",
@@ -54,7 +55,7 @@ const withSaveWrite = <A, E>(saveId: SaveId, effect: Effect.Effect<A, E, SqlClie
     Effect.scoped,
   );
 
-it.effect("a fresh save's snapshot is the no-tactic state: revision 0, null tactic sections, the whole squad as substitutes", () =>
+it.effect("a fresh save's snapshot is the no-tactic state: revision 0, null tactic sections, and no match-day selection", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const snapshot = yield* getTacticsOverview(savesDir, save.id);
@@ -65,7 +66,7 @@ it.effect("a fresh save's snapshot is the no-tactic state: revision 0, null tact
     strictEqual(snapshot.assignments.length, 0);
     strictEqual(snapshot.familiarity, null);
     strictEqual(snapshot.selection.starters.length, 0);
-    ok(snapshot.selection.substitutes.length >= 11, "registered squad all sits on the bench");
+    strictEqual(snapshot.selection.substitutes.length, 0, "no Tactic means nobody is benched yet");
     deepStrictEqual({ ...snapshot.setPieces }, { status: "none" });
 
     strictEqual(snapshot.issues.length, 1);
@@ -121,7 +122,7 @@ it.effect("every section binds to the revision the tactic was saved at, and rati
       );
     }
 
-    // Familiarity sums to the eleven starters; selection is a partition of the squad.
+    // Familiarity sums to the eleven starters; selection is the match-day eighteen.
     strictEqual(
       snapshot.familiarity!.natural +
         snapshot.familiarity!.competent +
@@ -133,13 +134,22 @@ it.effect("every section binds to the revision the tactic was saved at, and rati
       snapshot.selection.starters.map((player) => player.id),
       tactic.slots.map((slot) => slot.playerId),
     );
-    const squadIds = before.squad.map((player) => player.id);
-    const allSelected = [
-      ...snapshot.selection.starters,
-      ...snapshot.selection.substitutes,
-    ].map((player) => player.id);
-    deepStrictEqual(new Set(allSelected), new Set(squadIds));
-    ok(snapshot.selection.starters.every((p) => p.firstName.length > 0 && p.lastName.length > 0));
+    deepStrictEqual(
+      snapshot.selection.substitutes.map((player) => player.id),
+      tactic.bench.filter((id): id is PlayerId => id !== null),
+    );
+    const selectedIds = new Set([
+      ...snapshot.selection.starters.map((p) => p.id),
+      ...snapshot.selection.substitutes.map((p) => p.id),
+    ]);
+    strictEqual(selectedIds.size, 18, "eleven starters and seven benched, nobody doubled");
+    ok(before.squad.length > 18, "the fixture squad has someone outside the match-day eighteen");
+    ok(
+      snapshot.selection.starters.every((p) => p.firstName.length > 0 && p.lastName.length > 0),
+    );
+    ok(
+      snapshot.selection.substitutes.every((p) => p.firstName.length > 0 && p.lastName.length > 0),
+    );
 
     deepStrictEqual(snapshot.issues, []);
   }),
@@ -177,14 +187,15 @@ it.effect("a slot that names a departed player reports the blocker, nulls that a
     strictEqual(departedAssignment.positionRating, null);
     strictEqual(departedAssignment.roleRating, null);
 
-    // The departed player is neither a starter nor a substitute: starters and substitutes remain a
-    // partition of the *registered* squad.
+    // The departed player is not on the match-day eighteen: starters drop to ten, the bench keeps its
+// seven, and the gap is the blocker rather than a phantom starter or substitute.
     const selectedIds = new Set([
       ...snapshot.selection.starters.map((p) => p.id),
       ...snapshot.selection.substitutes.map((p) => p.id),
     ]);
     ok(!selectedIds.has(departed), "the departed player is not in either selection list");
     strictEqual(snapshot.selection.starters.length, 10);
+    strictEqual(snapshot.selection.substitutes.length, 7);
     strictEqual(
       snapshot.familiarity!.natural + snapshot.familiarity!.competent + snapshot.familiarity!.unfamiliar,
       10,

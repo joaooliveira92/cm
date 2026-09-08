@@ -223,6 +223,28 @@ export const gByKeyOf = (actions: ReadonlyArray<Action>): ReadonlyMap<string, Ac
       .map((action) => [action.binding!.slice(2).trim(), action]),
   );
 
+/**
+ * The `g <key>` navigation key by career destination, from the (effective)
+ * career-global nav actions. Consumed by the navbar so the revealed hotkey for a
+ * destination is the same binding the spine dispatches on — never a second copy.
+ */
+export const navKeyByDestinationOf = (
+  actions: ReadonlyArray<Action>,
+): ReadonlyMap<string, string> =>
+  new Map(
+    actions
+      .filter(
+        (action) =>
+          action.scope === "career-global" &&
+          action.binding?.startsWith("g ") &&
+          typeof action.metadata?.destination === "string",
+      )
+      .map((action) => [
+        action.metadata!.destination as string,
+        action.binding!.slice(2).trim().toUpperCase(),
+      ]),
+  );
+
 /** "Go to: Squad [S] · Tactics [A] · …" — derived from the (effective) g-actions. */
 export const prefixIndicatorEntriesOf = (
   actions: ReadonlyArray<Action>,

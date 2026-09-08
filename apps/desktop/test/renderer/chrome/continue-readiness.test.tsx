@@ -10,6 +10,7 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { SaveId } from "@cm-clone/contracts";
+import { emptyBench } from "@cm-clone/shared";
 import { CareerChildView, CareerShell } from "../../../src/renderer/router/career.js";
 import { LeagueTableScreen } from "../../../src/renderer/leagueTable/LeagueTableScreen.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
@@ -30,6 +31,7 @@ const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown
 const A_TACTIC = {
   formation: "4-4-2",
   slots: [],
+  bench: emptyBench(),
   mentality: "balanced",
   tempo: "normal",
   pressing: "medium",

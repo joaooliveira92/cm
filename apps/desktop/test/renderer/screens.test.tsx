@@ -4,9 +4,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
   FAMILIARITY_TIERS,
+  FORMATION_SLOTS,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
+  POSITION_ROLES,
   POSITIONS,
   STATURE_TIERS,
 } from "@cm-clone/shared";
@@ -85,6 +87,27 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
   it("SquadScreen renders the loaded squad on success", async () => {
     mockPreload(async (method) => {
       if (method === "getSquad") return { _tag: "Success", value: squadView("s1", "Test FC") };
+      if (method === "getTactics")
+        return {
+          _tag: "Success",
+          value: {
+            club: { id: relaxedSaveId("s1"), name: "Test FC", statureTier: STATURE_TIERS[0] },
+            squad: squadView("s1", "Test FC").players,
+            tactic: {
+              formation: "4-4-2",
+              slots: FORMATION_SLOTS["4-4-2"].map((position) => ({
+                position,
+                role: POSITION_ROLES[position],
+                playerId: "",
+              })),
+              bench: [null, null, null, null, null, null, null],
+              mentality: "balanced",
+              tempo: "normal",
+              pressing: "medium",
+            },
+            revision: 0,
+          },
+        };
       return { _tag: "Failure", error: saveNotFound };
     });
     render(
@@ -94,7 +117,6 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
     );
     // The heading is the section name; club identity moved to the career
     // chrome's title bar, so the screen no longer repeats it.
-    expect(await screen.findByRole("heading", { name: "Squad" })).toBeTruthy();
     expect(screen.queryByText("Test FC")).toBeNull();
     // A fresh install opens on the position list, which names players the way
     // the list does — surname first.

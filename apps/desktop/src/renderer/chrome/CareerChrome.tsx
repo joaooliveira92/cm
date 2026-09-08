@@ -19,6 +19,7 @@
  * What this file does NOT do: change any keyboard behaviour. Bindings, focus,
  * and dispatch are the shipped spine's; this is how they look.
  */
+import { ArrowRight } from "lucide-react";
 import type { SaveId } from "@cm-clone/contracts";
 import {
   assessContinueReadiness,
@@ -27,14 +28,8 @@ import {
 } from "@cm-clone/shared";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { ACTION_REGISTRY } from "../actions/allActions.js";
-import {
-  getBindingOverrides,
-  subscribeBindingOverrides,
-} from "../actions/bindingState.js";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
-import { effectiveBinding } from "../actions/overrides.js";
 import { clearScopeState, getScopeState, setScopeState, subscribeScopeState } from "../actions/scopeState.js";
-import { ActionKeyBadge } from "../discoverability/ActionKeyBadge.js";
 import { FOCUS_RING, type NavigationIntent } from "../focus.js";
 import {
   canNavigateBack,
@@ -104,15 +99,9 @@ const ContinueControl = ({
   readonly disabled: boolean;
   readonly busy: boolean;
 }) => {
-  const overrides = useSyncExternalStore(
-    subscribeBindingOverrides,
-    getBindingOverrides,
-    getBindingOverrides,
-  );
   const action = ACTION_REGISTRY.get("continue");
   if (action === undefined) return null;
 
-  const binding = effectiveBinding(action, overrides);
   const treatment = action.primary === true ? BTN_HEADER_PRIMARY : "";
 
   return (
@@ -124,8 +113,8 @@ const ContinueControl = ({
       className={`flex items-center gap-1.5 text-sm ${treatment} ${FOCUS_RING.join(" ")}`}
       onClick={() => void dispatchAction(action.id)}
     >
-      {binding !== undefined && <ActionKeyBadge binding={binding} />}
       {busy ? "Advancing…" : action.label}
+      {!busy && <ArrowRight aria-hidden="true" className="h-4 w-4" />}
     </button>
   );
 };

@@ -8,24 +8,13 @@
  * button, the palette, and the help overlay cannot drift apart.
  */
 import { SearchIcon } from "lucide-react";
-import { useSyncExternalStore } from "react";
 import { ACTION_REGISTRY } from "../../actions/allActions.js";
-import { getBindingOverrides, subscribeBindingOverrides } from "../../actions/bindingState.js";
 import { dispatchAction } from "../../actions/dispatch.js";
-import { effectiveBinding } from "../../actions/overrides.js";
-import { ActionKeyBadge } from "../../discoverability/ActionKeyBadge.js";
 import { Button } from "../../components/ui/button.js";
 
 export const HeaderSearch = () => {
-  const overrides = useSyncExternalStore(
-    subscribeBindingOverrides,
-    getBindingOverrides,
-    getBindingOverrides,
-  );
   const action = ACTION_REGISTRY.get("open-palette");
   if (action === undefined) return null;
-
-  const binding = effectiveBinding(action, overrides);
 
   return (
     <Button
@@ -38,7 +27,6 @@ export const HeaderSearch = () => {
       onClick={() => void dispatchAction(action.id)}
     >
       <SearchIcon aria-hidden="true" className="h-4 w-4" />
-      {binding !== undefined && <ActionKeyBadge binding={binding} />}
     </Button>
   );
 };

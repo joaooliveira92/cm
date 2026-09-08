@@ -69,6 +69,8 @@ export const getTacticsOverview = (savesDir: string, saveId: SaveId) =>
 
         const squadById = new Map(squad.map((player) => [player.id, player]));
         const slotIds = tactic === null ? [] : tactic.slots.map((slot) => slot.playerId);
+        const benchIds =
+          tactic === null ? [] : tactic.bench.filter((id): id is PlayerId => id !== null);
 
         const assignments = (tactic?.slots ?? []).map((slot) => {
           const player = squadById.get(slot.playerId);
@@ -104,6 +106,7 @@ export const getTacticsOverview = (savesDir: string, saveId: SaveId) =>
         const { starters, substitutes } = partitionSelection(
           squad.map((player) => player.id),
           slotIds,
+          benchIds,
         );
         const toSelected = (id: string): SelectedPlayerView => {
           const player = squadById.get(id as PlayerId);

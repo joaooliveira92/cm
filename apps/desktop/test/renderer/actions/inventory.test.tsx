@@ -7,6 +7,7 @@ import {
   FORMATIONS,
   POSITION_ROLES,
   STATURE_TIERS,
+  emptyBench,
 } from "@cm-clone/shared";
 import { LeagueTableScreen } from "../../../src/renderer/leagueTable/LeagueTableScreen.js";
 import { TransfersScreen } from "../../../src/renderer/transfers/TransfersScreen.js";
@@ -101,6 +102,7 @@ const fullTactic = () => {
       role: POSITION_ROLES[position],
       playerId: rid(`slot-${index}`),
     })),
+    bench: emptyBench(),
     mentality: "balanced",
     tempo: "normal",
     pressing: "medium",

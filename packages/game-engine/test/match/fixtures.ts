@@ -48,6 +48,7 @@ export const buildTeam = (clubId: ClubId, seed: number, formation: keyof typeof 
   const tactic: MatchTactic = {
     formation,
     slots,
+    bench: [null, null, null, null, null, null, null],
     mentality: "balanced",
     tempo: "normal",
     pressing: "medium",

@@ -5,7 +5,7 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { Tactic, type ClubId, type FixtureId, type MatchId, type MatchSummary, type ResumeSimulationView, type SaveId, type SquadPlayerView } from "@cm-clone/contracts";
-import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
+import { FORMATION_SLOTS, POSITION_ROLES, emptyBench } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { SqliteClient } from "@effect/sql-sqlite-node";
@@ -47,6 +47,7 @@ const buildKnownTactic = (squad: ReadonlyArray<SquadPlayerView>): Tactic =>
       role: POSITION_ROLES[position],
       playerId: squad[index]!.id,
     })),
+    bench: emptyBench(),
     mentality: "balanced",
     tempo: "normal",
     pressing: "medium",

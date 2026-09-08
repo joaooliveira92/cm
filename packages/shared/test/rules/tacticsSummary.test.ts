@@ -7,33 +7,46 @@ import {
 describe("partitionSelection", () => {
   const squad = ["p1", "p2", "p3", "p4", "p5"];
 
-  it("names the slot players starters in slot order and everyone else substitutes", () => {
-    const { starters, substitutes } = partitionSelection(squad, ["p3", "p1", "p5"]);
+  it("names the slot players starters in slot order and the bench players substitutes in bench order", () => {
+    const { starters, substitutes } = partitionSelection(
+      squad,
+      ["p3", "p1", "p5"],
+      ["p2", "p4"],
+    );
     expect(starters).toEqual(["p3", "p1", "p5"]);
     expect(substitutes).toEqual(["p2", "p4"]);
   });
 
-  it("keeps starters and substitutes a partition of the squad — no overlap, nothing missing", () => {
-    for (const slots of [
-      [],
-      ["p1"],
-      ["p5", "p3", "p2", "p4", "p1"],
-      ["p2", "p2", "p1"],
-    ]) {
-      const { starters, substitutes } = partitionSelection(squad, slots);
-      expect(new Set([...starters, ...substitutes])).toEqual(new Set(squad));
+  it("keeps starters and substitutes disjoint and inside the squad — the match-day eighteen", () => {
+    for (const [slots, bench] of [
+      [[], []],
+      [["p1"], ["p2"]],
+      [["p5", "p3", "p2", "p4", "p1"], []],
+      [["p2", "p2", "p1"], ["p2", "p3", "breadcrumb"]],
+    ] as const) {
+      const { starters, substitutes } = partitionSelection(squad, slots, bench);
+      const selected = new Set([...starters, ...substitutes]);
+      for (const id of selected) {
+        expect(squad).toContain(id);
+      }
       expect(starters.some((id) => substitutes.includes(id))).toBe(false);
     }
   });
 
-  it("excludes slot players who have left the squad from both lists", () => {
-    const { starters, substitutes } = partitionSelection(squad, ["p1", "gone", "p3"]);
-    expect(starters).toEqual(["p1", "p3"]);
-    expect(substitutes).toEqual(["p2", "p4", "p5"]);
+  it("never double-counts a bench player who also starts", () => {
+    const { starters, substitutes } = partitionSelection(squad, ["p1", "p2"], ["p2", "p4"]);
+    expect(starters).toEqual(["p1", "p2"]);
+    expect(substitutes).toEqual(["p4"]);
   });
 
-  it("returns an empty squad partition for an empty squad", () => {
-    const { starters, substitutes } = partitionSelection([], ["p1"]);
+  it("excludes players who have left the squad from both lists, and empty bench slots contribute nothing", () => {
+    const { starters, substitutes } = partitionSelection(squad, ["p1", "gone", "p3"], ["p4", "gone"]);
+    expect(starters).toEqual(["p1", "p3"]);
+    expect(substitutes).toEqual(["p4"]);
+  });
+
+  it("returns empty lists for an empty squad", () => {
+    const { starters, substitutes } = partitionSelection([], ["p1"], ["p2"]);
     expect(starters).toEqual([]);
     expect(substitutes).toEqual([]);
   });

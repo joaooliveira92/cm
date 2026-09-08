@@ -3,6 +3,7 @@ import {
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
+  emptyBench,
 } from "@cm-clone/shared";
 import { describe, expect, it } from "vitest";
 import { AppRpcs } from "../src/rpc.js";
@@ -192,6 +193,7 @@ describe("discriminated union command payload", () => {
   const tactic = {
     formation: "4-4-2",
     slots: [{ position: "ST", role: "Poacher", playerId: PlayerId.make("p1") }],
+    bench: emptyBench(),
     mentality: "balanced",
     tempo: "normal",
     pressing: "medium",
@@ -282,6 +284,7 @@ describe("tagged errors", () => {
       tactic: {
         formation: "4-4-2",
         slots: [{ position: "ST", role: "Poacher", playerId: "p1" }],
+        bench: emptyBench(),
         mentality: "balanced",
         tempo: "normal",
         pressing: "medium",

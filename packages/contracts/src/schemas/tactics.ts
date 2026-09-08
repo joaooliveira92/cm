@@ -24,10 +24,12 @@ export class TacticSlot extends Schema.Class<TacticSlot>("TacticSlot")({
 }) {}
 
 /** The `ChangeTactics` command payload shape (ADR-0003 / ticket 03): a Formation, a Role and
- * player per slot, and the 3 Team Instructions. */
+ *  player per slot, the 3 Team Instructions, and the fixed-size match-day bench. A bench entry is
+ *  `null` while that substitute slot is unnamed — a club may field fewer than the rule allows. */
 export class Tactic extends Schema.Class<Tactic>("Tactic")({
   formation: FormationSchema,
   slots: Schema.Array(TacticSlot),
+  bench: Schema.Array(Schema.NullOr(PlayerId)),
   mentality: MentalitySchema,
   tempo: TempoSchema,
   pressing: PressingSchema,
@@ -146,9 +148,9 @@ export class SelectedPlayerView extends Schema.Class<SelectedPlayerView>("Select
 
 /**
  * The selection summary. Starters are exactly the registered players the active Tactic's slots
- * name, in slot order; substitutes are every other registered player. The two are a partition of
- * the squad — never overlapping, never missing a member. An explicit starters-and-bench model is
- * Screen 89's effort; this records that mapping rather than inventing one.
+ * name, in slot order; substitutes are the registered players named on the active Tactic's bench.
+ * The two never overlap, and together they are the match-day eighteen — a subset of the squad, so
+ * squad members outside the eighteen are part of no selection.
  */
 export class SelectionSummaryView extends Schema.Class<SelectionSummaryView>("SelectionSummaryView")({
   starters: Schema.Array(SelectedPlayerView),
@@ -197,7 +199,7 @@ export class TacticsOverviewView extends Schema.Class<TacticsOverviewView>("Tact
   assignments: Schema.Array(PlayerAssignmentView),
   /** The derived familiarity counts over the starters, or `null` while no Tactic is saved. */
   familiarity: Schema.NullOr(FamiliaritySummaryView),
-  /** Starters and substitutes, a partition of the registered squad. */
+  /** Starters and named bench, the match-day eighteen; nobody outside it. */
   selection: SelectionSummaryView,
   /** No set pieces configured until Screen 86 lands. */
   setPieces: SetPieceStatusView,

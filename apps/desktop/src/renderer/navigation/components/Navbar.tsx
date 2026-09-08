@@ -1,12 +1,16 @@
 import type { ClubColoursView, SaveId } from "@cm-clone/contracts";
 import { useLocation } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { navigateCareer } from "../../navigation/adapter.js";
 import type { SaveScopedCareerDestinationType } from "../../navigation/destinations.js";
 import type { NavigationIntent } from "../../focus.js";
 import { NAV_SECTIONS, type NavSectionId } from "../../navigation/nav-config.js";
 import { sectionIdForDestination } from "../../navigation/nav-route-index.js";
 import { useNavState } from "../../navigation/use-nav-state.js";
+import { ALL_ACTIONS } from "../../actions/allActions.js";
+import { getBindingOverrides, subscribeBindingOverrides } from "../../actions/bindingState.js";
+import { navKeyByDestinationOf, withEffectiveBindings } from "../../actions/overrides.js";
+import { getScopeState, subscribeScopeState } from "../../actions/scopeState.js";
 import { AppTitleBar } from "../../chrome/header/AppTitleBar.js";
 import { clubHeaderStyle } from "../../chrome/header/club-scheme.js";
 import { NO_DRAG } from "../../chrome/header/drag-region.js";
@@ -20,6 +24,9 @@ import { PrimaryNavItem } from "./PrimaryNavItem.js";
  */
 const INTENT_DELAY_MS = 170;
 const CLOSE_TOLERANCE_MS = 300;
+
+/** An empty destination→key map passed to the context strip when the prefix is inactive. */
+const EMPTY_NAV_KEYS: ReadonlyMap<string, string> = new Map();
 
 /**
  * Each save-scoped destination and the route child that lands on it.
@@ -97,6 +104,25 @@ export const Navbar = ({
 }) => {
   const location = useLocation();
   const activeChild = location.pathname.split("/").at(-1) ?? "";
+
+  // While the keyboard spine's `g <key>` prefix is pending, reveal the navigation
+  // hotkey on each destination button. The key shown is the *effective* binding
+  // (overrides layered over the registry default), so a rebind re-badges here the
+  // moment a player commits it — the same value the spine dispatches on.
+  const prefixActive = useSyncExternalStore(
+    subscribeScopeState,
+    () => getScopeState().prefixActive === true,
+    () => getScopeState().prefixActive === true,
+  );
+  const overrides = useSyncExternalStore(
+    subscribeBindingOverrides,
+    getBindingOverrides,
+    getBindingOverrides,
+  );
+  const navKeys = useMemo(
+    () => navKeyByDestinationOf(withEffectiveBindings(ALL_ACTIONS, overrides)),
+    [overrides],
+  );
 
   // Derive the current section/item from the route (spec §6 rule 1: the route is
   // the source of truth for the active section/item).
@@ -229,6 +255,7 @@ export const Navbar = ({
             badgeCount={badges?.[section.id]?.count}
             badgeLabel={badges?.[section.id]?.label}
             submenuOpen={isSubmenuVisible(section.id)}
+            revealKey={prefixActive ? navKeys.get(section.defaultDestination) : undefined}
             children={section.items}
             onNavigate={(intent) => goTo(section.defaultDestination, intent)}
             onToggleSubmenu={() => handleToggleSubmenu(section.id)}
@@ -243,6 +270,7 @@ export const Navbar = ({
         section={stripSection}
         items={stripSection?.items ?? []}
         activeItemId={activeItemId}
+        revealKeys={prefixActive ? navKeys : EMPTY_NAV_KEYS}
         onNavigate={goTo}
         onMouseEnter={() => {
           if (stripSection !== null) handleSectionEnter(stripSection.id);

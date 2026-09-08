@@ -5,7 +5,7 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { Tactic, WriteRequestId, type PlayerId } from "@cm-clone/contracts";
-import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
+import { FORMATION_SLOTS, POSITION_ROLES, emptyBench } from "@cm-clone/shared";
 import { Effect, Result } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../../../src/main/world/index.js";
@@ -27,6 +27,7 @@ const buildTactic = (squadIds: ReadonlyArray<PlayerId>): Tactic =>
       role: POSITION_ROLES[position],
       playerId: squadIds[index]!,
     })),
+    bench: emptyBench(),
     mentality: "balanced",
     tempo: "normal",
     pressing: "medium",
@@ -264,6 +265,82 @@ it.effect("changeTactics rejects a slot position that doesn't match the formatio
 
     const result = yield* Effect.exit(
       changeTactics(savesDir, save.id, badTactic, before.revision, rid("bad")),
+    );
+    ok(result._tag === "Failure");
+  }),
+);
+
+/** A valid 4-4-2 whose first 11 squad players start and the next 7 fill the bench. */
+const buildTacticWithBench = (squadIds: ReadonlyArray<PlayerId>): Tactic =>
+  new Tactic({
+    ...buildTactic(squadIds),
+    bench: squadIds.slice(11, 11 + 7).map((playerId) => playerId ?? null),
+  });
+
+it.effect("a named bench round-trips through changeTactics and getTactics", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const withBench = buildTacticWithBench(before.squad.map((player) => player.id));
+
+    const accepted = yield* changeTactics(savesDir, save.id, withBench, before.revision, rid("bench"));
+    deepStrictEqual(accepted.tactic, withBench);
+
+    const reloaded = yield* getTactics(savesDir, save.id);
+    deepStrictEqual(reloaded.tactic, withBench);
+  }),
+);
+
+it.effect("changeTactics accepts a bench with empty slots", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const tactic = buildTactic(before.squad.map((player) => player.id));
+    const partiallyFilled = new Tactic({
+      ...tactic,
+      bench: [before.squad[11]!.id, null, null, null, null, null, null],
+    });
+
+    const accepted = yield* changeTactics(
+      savesDir,
+      save.id,
+      partiallyFilled,
+      before.revision,
+      rid("partial-bench"),
+    );
+    deepStrictEqual(accepted.tactic, partiallyFilled);
+  }),
+);
+
+it.effect("changeTactics rejects a bench that names a starter", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const tactic = buildTactic(before.squad.map((player) => player.id));
+    const overlap = new Tactic({
+      ...tactic,
+      bench: [tactic.slots[0]!.playerId, null, null, null, null, null, null],
+    });
+
+    const result = yield* Effect.exit(
+      changeTactics(savesDir, save.id, overlap, before.revision, rid("overlap")),
+    );
+    ok(result._tag === "Failure");
+  }),
+);
+
+it.effect("changeTactics rejects a bench that names the same player twice", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const tactic = buildTactic(before.squad.map((player) => player.id));
+    const doubled = new Tactic({
+      ...tactic,
+      bench: [before.squad[11]!.id, before.squad[11]!.id, null, null, null, null, null],
+    });
+
+    const result = yield* Effect.exit(
+      changeTactics(savesDir, save.id, doubled, before.revision, rid("double")),
     );
     ok(result._tag === "Failure");
   }),

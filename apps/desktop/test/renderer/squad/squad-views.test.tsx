@@ -4,9 +4,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
   FAMILIARITY_TIERS,
+  FORMATION_SLOTS,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
+  POSITION_ROLES,
   STATURE_TIERS,
 } from "@cm-clone/shared";
 import { SquadScreen } from "../../../src/renderer/squad/SquadScreen.js";
@@ -35,6 +37,21 @@ const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown
 };
 
 const NOT_FOUND = { _tag: "SaveNotFoundError", id: rid("s1") };
+
+/** An all-empty 4-4-2 Tactic: no starters, no named subs. The bar renders this as 18 empty slots
+ *  with the whole squad as the draggable pool. */
+const emptyTactic = () => ({
+  formation: "4-4-2" as const,
+  slots: FORMATION_SLOTS["4-4-2"].map((position) => ({
+    position,
+    role: POSITION_ROLES[position],
+    playerId: "",
+  })),
+  bench: [null, null, null, null, null, null, null],
+  mentality: "balanced" as const,
+  tempo: "normal" as const,
+  pressing: "medium" as const,
+});
 
 const attributes = (value: number): Record<string, number> => ({
   ...Object.fromEntries(OUTFIELD_ATTRIBUTES.map((a) => [a, value])),
@@ -71,7 +88,17 @@ const mountSquad = async (players: ReturnType<typeof player>[]): Promise<void> =
             players,
           },
         } as never)
-      : ({ _tag: "Failure", error: NOT_FOUND } as never),
+      : method === "getTactics"
+        ? ({
+            _tag: "Success",
+            value: {
+              club: { id: rid("me"), name: "Test FC", statureTier: STATURE_TIERS[0] },
+              squad: players,
+              tactic: emptyTactic(),
+              revision: 0,
+            },
+          } as never)
+        : ({ _tag: "Failure", error: NOT_FOUND } as never),
   );
   render(
     <RegistryProvider>
@@ -170,5 +197,29 @@ describe("choosing a view", () => {
     // None is a first-class Training Focus value, spelled out rather than blank.
     expect(screen.getByText("None")).toBeTruthy();
     expect(loadSquadViewId()).toBe("personal");
+  });
+});
+
+describe("the squad screen mounts the match-day bar", () => {
+  it("renders the eighteen empty slots and the Save button on a fresh squad", async () => {
+    await mountSquad([player("p1", "Alan", "Shearer")]);
+
+    // The eleven formation slots, labelled by the position they fill — a position repeats when
+    // the formation calls for more than one of it (4-4-2 has two DCs and two MCs).
+    for (const position of new Set(FORMATION_SLOTS["4-4-2"])) {
+      const expected = FORMATION_SLOTS["4-4-2"].filter((p) => p === position).length;
+      expect(screen.getAllByRole("button", { name: `${position} slot` })).toHaveLength(
+        expected,
+      );
+    }
+    // The bench is SB1..SB7.
+    for (const label of ["SB1", "SB2", "SB3", "SB4", "SB5", "SB6", "SB7"]) {
+      expect(screen.getByRole("button", { name: `${label} slot` })).toBeTruthy();
+    }
+    // An empty lineup leaves the whole squad in the pool.
+    expect(
+      screen.getByRole("button", { name: "Shearer, unassigned" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Save Lineup" })).toBeTruthy();
   });
 });

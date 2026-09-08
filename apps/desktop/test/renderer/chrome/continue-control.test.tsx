@@ -61,12 +61,12 @@ describe("Continue in the chrome", () => {
     expect(counters.advanceCalls).toBe(0);
   });
 
-  it("shows the effective binding, following a rebind rather than the coded default", async () => {
+  it("renders no key badge on the Continue control", async () => {
     await mountCareer("in_season", "fixtures");
-    expect(screen.getByLabelText("Keyboard shortcut Space")).toBeTruthy();
-    act(() => publishBindingOverrides({ continue: "n" }));
-    expect(screen.getByLabelText("Keyboard shortcut n")).toBeTruthy();
     expect(screen.queryByLabelText("Keyboard shortcut Space")).toBeNull();
+    act(() => publishBindingOverrides({ continue: "n" }));
+    expect(screen.queryByLabelText("Keyboard shortcut n")).toBeNull();
+    expect(screen.getByRole("button", { name: /Continue/ })).toBeTruthy();
   });
 
   it("is a native button carrying the focus ring, so Enter and Space reach it", async () => {

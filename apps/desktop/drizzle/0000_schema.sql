@@ -366,6 +366,15 @@ CREATE TABLE `staff` (
 	CONSTRAINT "staff_quality" CHECK(quality BETWEEN 1 AND 20)
 );
 --> statement-breakpoint
+CREATE TABLE `tactic_bench_slots` (
+	`club_id` text NOT NULL,
+	`slot_index` integer NOT NULL,
+	`player_id` text,
+	PRIMARY KEY(`club_id`, `slot_index`),
+	FOREIGN KEY (`club_id`) REFERENCES `tactics`(`club_id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
 CREATE TABLE `tactic_slots` (
 	`club_id` text NOT NULL,
 	`slot_index` integer NOT NULL,

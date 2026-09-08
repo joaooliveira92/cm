@@ -5,7 +5,7 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { ok } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { FORMATION_SLOTS, POSITION_ROLES, type ArchivedCause } from "@cm-clone/shared";
+import { FORMATION_SLOTS, POSITION_ROLES, emptyBench, type ArchivedCause } from "@cm-clone/shared";
 import { BidId, FixtureId, MatchId, PlayerId, Tactic, WriteRequestId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -63,6 +63,7 @@ const everyMutatingCommandRejects = (cause: ArchivedCause) =>
         role: POSITION_ROLES[position],
         playerId: squad.players[index]!.id,
       })),
+      bench: emptyBench(),
       mentality: "balanced",
       tempo: "normal",
       pressing: "medium",

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { PlayerId, Tactic, WriteRequestId, type SaveId, type TacticSlot } from "@cm-clone/contracts";
+import { useEffect } from "react";
+import { PlayerId, Tactic, type SaveId, type TacticSlot } from "@cm-clone/contracts";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
 import { Button } from "../components/ui/button.js";
 import {
@@ -20,9 +20,7 @@ import {
 import { FOCUS_RING } from "../focus.js";
 import {
   FORMATIONS,
-  FORMATION_SLOTS,
   MENTALITY_OPTIONS,
-  POSITION_ROLES,
   PRESSING_OPTIONS,
   TEMPO_OPTIONS,
   roleRating,
@@ -32,37 +30,24 @@ import {
   type Pressing,
   type Tempo,
 } from "@cm-clone/shared";
-import {
-  changeTacticsMutation,
-  describeRpcError,
-  tacticsAtom,
-  typedError,
-  useAtomRefresh,
-  useAtomSet,
-  useAtomValue,
-  type RpcClientError,
-} from "../rpc.js";
-
-const defaultTacticFor = (formation: Formation): Tactic =>
-  new Tactic({
-    formation,
-    slots: FORMATION_SLOTS[formation].map((position) => ({
-      position,
-      role: POSITION_ROLES[position],
-      playerId: PlayerId.make(""),
-    })),
-    mentality: "balanced",
-    tempo: "normal",
-    pressing: "medium",
-  });
+import { defaultTacticFor, useTacticDraft } from "./useTacticDraft.js";
+import { describeRpcError } from "../rpc.js";
 
 const changeFormation = (tactic: Tactic, formation: Formation): Tactic =>
-  new Tactic({ ...defaultTacticFor(formation), mentality: tactic.mentality, tempo: tactic.tempo, pressing: tactic.pressing });
+  new Tactic({
+    ...defaultTacticFor(formation),
+    mentality: tactic.mentality,
+    tempo: tactic.tempo,
+    pressing: tactic.pressing,
+    bench: tactic.bench,
+  });
 
 const changeSlotPlayer = (tactic: Tactic, slotIndex: number, playerId: PlayerId): Tactic =>
   new Tactic({
     ...tactic,
-    slots: tactic.slots.map((slot, index) => (index === slotIndex ? { ...slot, playerId } : slot)),
+    slots: tactic.slots.map((slot, index) =>
+      index === slotIndex ? { ...slot, playerId } : slot,
+    ),
   });
 
 /** The one conflict sentence, rendered as the `role="alert"` span beside the Refresh button. It is
@@ -70,15 +55,6 @@ const changeSlotPlayer = (tactic: Tactic, slotIndex: number, playerId: PlayerId)
  * `errors.ts` exists for surfaces with no room for a button, not for this screen. */
 const CONFLICT_MESSAGE =
   "A newer tactic was saved since you loaded this page. Your draft is kept — refresh to load the current version.";
-
-/** The server's current tactic revision, when a save failed because a newer one won the race.
- * `null` for every other failure — a stale submit is the one case the editor offers Refresh for. */
-const conflictRevisionOf = (error: unknown): number | null => {
-  const failure = error as RpcClientError<"changeTactics"> | null;
-  return failure?._tag === "RemoteFailure" && failure.error._tag === "TacticRevisionConflictError"
-    ? failure.error.currentRevision
-    : null;
-};
 
 const InstructionSlider = <T extends string>({
   label,
@@ -114,112 +90,39 @@ const InstructionSlider = <T extends string>({
 );
 
 export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const viewResult = useAtomValue(tacticsAtom(saveId));
-  const refreshTactics = useAtomRefresh(tacticsAtom(saveId));
-  const [draft, setDraft] = useState<Tactic | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
-  // The revision the current draft was read at — the `expectedRevision` every submit carries. It
-  // only moves when a save succeeds, so a stale submit is detected server-side as a conflict.
-  const [revision, setRevision] = useState<number>(0);
-  // Set to the server's current revision when a save lost the race; while set, the editor shows a
-  // distinct conflicted state and offers Refresh instead of a bare failure line.
-  const [conflict, setConflict] = useState<number | null>(null);
-  // The Revision a refresh is waiting to move past. The refetch passes a still-stale view through
-  // before the fresh one lands, so a refresh only discards the draft once the view's revision has
-  // actually advanced — the stale view can never re-seed it.
-  const refreshFrom = useRef<number | null>(null);
-  const revisionRef = useRef(revision);
-  revisionRef.current = revision;
-
-  const saveTactic = useAtomSet(changeTacticsMutation, { mode: "promise" });
-
-  useEffect(() => {
-    if (draft === null && viewResult._tag === "Success") {
-      setDraft(viewResult.value.tactic ?? defaultTacticFor("4-4-2"));
-      setRevision(viewResult.value.revision);
-    }
-  }, [draft, viewResult]);
-
-  // A refresh discards the draft and the conflict once the refetched view moves past the stale
-  // revision — not before, when the view still carries the old value.
-  useEffect(() => {
-    if (viewResult._tag !== "Success" || refreshFrom.current === null) return;
-    if (viewResult.value.revision === refreshFrom.current) return;
-    setDraft(viewResult.value.tactic ?? defaultTacticFor("4-4-2"));
-    setRevision(viewResult.value.revision);
-    refreshFrom.current = null;
-    setConflict(null);
-    setStatus(null);
-  }, [viewResult]);
-
-  const viewError = typedError(viewResult);
-
-  // A screen-safe tactic that also holds pre-load / error states, so the live
-  // handler registration below never sits behind a conditional early return.
-  const pendingView = viewResult._tag === "Success" ? viewResult.value : null;
-  const tactic = draft ?? pendingView?.tactic ?? defaultTacticFor("4-4-2");
-
-  const onSubmit = async () => {
-    setStatus("Saving...");
-    setConflict(null);
-    try {
-      // A fresh request id per submit: replaying this exact submit later is a server-side no-op.
-      const saved = await saveTactic({
-        saveId,
-        tactic,
-        expectedRevision: revision,
-        requestId: WriteRequestId.make(crypto.randomUUID()),
-      });
-      setDraft(saved.tactic ?? tactic);
-      setRevision(saved.revision);
-      setStatus("Saved.");
-    } catch (error) {
-      const currentRevision = conflictRevisionOf(error);
-      if (currentRevision !== null) {
-        // The draft keeps what the player typed; only the save itself is refused. The conflict
-        // alert span above the button is the one place the outcome is worded — not this status.
-        setConflict(currentRevision);
-        setStatus(null);
-      } else {
-        setStatus("Failed to save tactic — check every slot has a unique player assigned.");
-      }
-    }
-  };
-
-  const refreshFromServer = () => {
-    refreshFrom.current = revisionRef.current;
-    setStatus("Loading the current tactic...");
-    refreshTactics();
-  };
+  const { viewResult, viewError, tactic, revision, conflict, status, setTactic, save, refresh } =
+    useTacticDraft(saveId, {
+      saveFailureMessage: "Failed to save tactic — check every slot has a unique player assigned.",
+    });
 
   // Register the Tactics screen's operation handlers (save + the draft edits).
   // Decided before the error/loading returns so hook order is unconditional.
   useEffect(() => {
     const unregisters = [
       registerActionHandler("save-tactic", () => {
-        void onSubmit();
+        void save();
       }),
       registerActionHandler("set-formation", (params) =>
-        setDraft(changeFormation(tactic, (params as { formation: Formation }).formation)),
+        setTactic(changeFormation(tactic, (params as { formation: Formation }).formation)),
       ),
       registerActionHandler("set-mentality", (params) =>
-        setDraft(new Tactic({ ...tactic, mentality: (params as { value: Mentality }).value })),
+        setTactic(new Tactic({ ...tactic, mentality: (params as { value: Mentality }).value })),
       ),
       registerActionHandler("set-tempo", (params) =>
-        setDraft(new Tactic({ ...tactic, tempo: (params as { value: Tempo }).value })),
+        setTactic(new Tactic({ ...tactic, tempo: (params as { value: Tempo }).value })),
       ),
       registerActionHandler("set-pressing", (params) =>
-        setDraft(new Tactic({ ...tactic, pressing: (params as { value: Pressing }).value })),
+        setTactic(new Tactic({ ...tactic, pressing: (params as { value: Pressing }).value })),
       ),
       registerActionHandler("assign-slot-player", (params) => {
         const p = params as { index: number; playerId: PlayerId };
-        setDraft(changeSlotPlayer(tactic, p.index, p.playerId));
+        setTactic(changeSlotPlayer(tactic, p.index, p.playerId));
       }),
     ];
     return () => {
       for (const unregister of unregisters) unregister();
     };
-  }, [saveId, tactic, revision]);
+  }, [saveId, tactic, revision, setTactic, save]);
 
   if (viewError) return <p className="p-8 text-text-danger">{describeRpcError(viewError)}</p>;
   if (viewResult._tag === "Initial") return <p className="p-8 text-text-secondary">Loading tactics...</p>;
@@ -359,7 +262,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
               type="button"
               variant="secondary"
               data-action-id="refresh-tactics"
-              onClick={refreshFromServer}
+              onClick={refresh}
             >
               Refresh
             </Button>

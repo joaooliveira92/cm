@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
-import { FORMATION_SLOTS, POSITION_ROLES, STATURE_TIERS, type FORMATIONS } from "@cm-clone/shared";
+import { FORMATION_SLOTS, POSITION_ROLES, STATURE_TIERS, emptyBench, type FORMATIONS } from "@cm-clone/shared";
 import { TacticsScreen } from "../../../src/renderer/tactics/TacticsScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 
@@ -19,6 +19,7 @@ const tacticOf = (formation: (typeof FORMATIONS)[number]) => ({
     role: POSITION_ROLES[position],
     playerId: rid(`p-${index}`),
   })),
+  bench: emptyBench(),
   mentality: "balanced" as const,
   tempo: "normal" as const,
   pressing: "medium" as const,

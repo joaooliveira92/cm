@@ -44,6 +44,7 @@ const craftTeam = (clubId: ClubId, attributes: PlayerAttributes, formation: keyo
       role: POSITION_ROLES[position],
       playerId: makePlayerId(`${clubId}-${index}`),
     })),
+    bench: [null, null, null, null, null, null, null],
     mentality: "balanced" as const,
     tempo: "normal" as const,
     pressing: "high" as const,

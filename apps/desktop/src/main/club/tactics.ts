@@ -9,7 +9,7 @@ import {
   type PlayerId,
   type WriteRequestId,
 } from "@cm-clone/contracts";
-import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
+import { BENCH_SIZE, FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Effect, Schema, Semaphore } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
@@ -66,9 +66,13 @@ export const loadPersistedTactic = (clubId: ClubId) =>
       playerId: PlayerId;
     }>`SELECT position, role, player_id as "playerId" FROM tactic_slots WHERE club_id = ${clubId} ORDER BY slot_index`;
 
+    const benchRows = yield* sql<{ playerId: PlayerId | null }>`
+      SELECT player_id as "playerId" FROM tactic_bench_slots WHERE club_id = ${clubId} ORDER BY slot_index`;
+
     return yield* Schema.decodeUnknownEffect(Tactic)({
       ...tacticRows[0],
       slots: slotRows,
+      bench: benchRows.map((row) => row.playerId),
     });
   });
 
@@ -112,11 +116,15 @@ export const getTactics = (savesDir: string, saveId: SaveId) =>
 export const persistTactic = (clubId: ClubId, tactic: Tactic, revision: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+    yield* sql`DELETE FROM tactic_bench_slots WHERE club_id = ${clubId}`;
     yield* sql`DELETE FROM tactic_slots WHERE club_id = ${clubId}`;
     yield* sql`DELETE FROM tactics WHERE club_id = ${clubId}`;
     yield* sql`INSERT INTO tactics (club_id, formation, mentality, tempo, pressing, revision) VALUES (${clubId}, ${tactic.formation}, ${tactic.mentality}, ${tactic.tempo}, ${tactic.pressing}, ${revision})`;
     for (const [index, slot] of tactic.slots.entries()) {
       yield* sql`INSERT INTO tactic_slots (club_id, slot_index, position, role, player_id) VALUES (${clubId}, ${index}, ${slot.position}, ${slot.role}, ${slot.playerId})`;
+    }
+    for (const [index, playerId] of tactic.bench.entries()) {
+      yield* sql`INSERT INTO tactic_bench_slots (club_id, slot_index, player_id) VALUES (${clubId}, ${index}, ${playerId})`;
     }
   });
 
@@ -154,6 +162,32 @@ export const validateTactic = (tactic: Tactic, squadPlayerIds: ReadonlySet<strin
         });
       }
       seenPlayers.add(slot.playerId);
+    }
+
+    if (tactic.bench.length !== BENCH_SIZE) {
+      return yield* new InvalidTacticError({
+        reason: `${tactic.formation} needs a ${BENCH_SIZE}-strong bench, got ${tactic.bench.length} entries`,
+      });
+    }
+    const benchPlayers = new Set<string>();
+    for (const playerId of tactic.bench) {
+      if (playerId === null) continue;
+      if (!squadPlayerIds.has(playerId)) {
+        return yield* new InvalidTacticError({
+          reason: `bench player ${playerId} is not in the squad`,
+        });
+      }
+      if (seenPlayers.has(playerId)) {
+        return yield* new InvalidTacticError({
+          reason: `player ${playerId} is assigned to both a slot and the bench`,
+        });
+      }
+      if (benchPlayers.has(playerId)) {
+        return yield* new InvalidTacticError({
+          reason: `player ${playerId} is named on the bench more than once`,
+        });
+      }
+      benchPlayers.add(playerId);
     }
   });
 
