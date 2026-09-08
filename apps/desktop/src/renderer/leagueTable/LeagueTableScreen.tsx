@@ -62,15 +62,19 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             {table.standings.map((row, index) => (
               <TableRow key={row.clubId}>
                 <TableCell className="pr-4">{index + 1}</TableCell>
-                {/* The club name is the entry point to that club's staff page — the row already
-                    names a club, which is what the club-scoped surface needs and what nothing else
-                    on this screen has. A button rather than a link: navigation goes through the
-                    adapter so focus follows the intent, and `intentOfClick` keeps a keyboard
-                    activation from being reported as a pointer arrival. */}
+                {/* The row is the entry point to both of that club's surfaces — it already names a
+                    club, which is what a club-scoped surface needs and what nothing else on this
+                    screen has. Two of them now hang off the club segment, so the row carries one
+                    control each rather than one club surface quietly taking the other's place.
+                    Buttons rather than links: navigation goes through the adapter so focus follows
+                    the intent, and `intentOfClick` keeps a keyboard activation from being reported
+                    as a pointer arrival. Each control names its club, because "Scout report"
+                    repeated down twenty rows tells a screen-reader user nothing about which. */}
                 <TableCell className="pr-4 whitespace-nowrap">
                   <button
                     type="button"
                     className="underline-offset-2 hover:underline focus-visible:underline"
+                    aria-label={`${row.clubName} — club staff`}
                     onClick={(event) =>
                       navigateCareer(
                         { type: "clubStaff", saveId, clubId: row.clubId },
@@ -79,6 +83,19 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                     }
                   >
                     {row.clubName}
+                  </button>
+                  <button
+                    type="button"
+                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    aria-label={`${row.clubName} — scout report`}
+                    onClick={(event) =>
+                      navigateCareer(
+                        { type: "teamScoutReport", saveId, clubId: row.clubId },
+                        intentOfClick(event),
+                      )
+                    }
+                  >
+                    Scout report
                   </button>
                 </TableCell>
                 <TableCell className="pr-2 text-center tabular-nums">{row.played}</TableCell>

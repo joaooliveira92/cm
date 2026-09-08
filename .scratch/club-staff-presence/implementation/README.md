@@ -39,11 +39,17 @@ check constraint stays honest at `coach` and `scout`; `PRESENCE_ROLES` sits besi
 | 03 | [The Club Staff screen and its club-scoped route](03-club-staff-screen-and-route.md) | 02 |
 | 04 | [The President names the board's warnings and dismissals](04-presidents-voice-in-board-news.md) | 01 |
 | 05 | [The club segment's keyboard identity and the two club drill-downs' entry points](05-club-segment-keyboard-identity-and-entry-points.md) | — |
+| 06 | [Keyboard arrival focus lands on an unlabelled wrapper](06-arrival-focus-lands-on-an-unlabelled-wrapper.md) | — |
 
 Ticket 05 was not sliced from the spec. It records a gap ticket 03 exposed: the club segment hangs
 off the save rather than off a career screen, so a club-scoped route has no career screen identity
 to inherit, and ticket 03's league table row took over the Team Scout Report's only entry point.
 See the ticket for why the keyboard scope and the entry point are one root and not two bugs.
+
+Ticket 06 likewise was not sliced from the spec. Ticket 03 promised that keyboard arrival lands on
+the club header; it lands on an unlabelled wrapper `<div>`, and does so on every screen. That is an
+app-wide focus-model question rather than a Club Staff defect, so the criterion was amended and the
+real problem filed on its own.
 
 ## Agent Notes
 

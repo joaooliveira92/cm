@@ -75,6 +75,32 @@ a new `apps/desktop/src/renderer/clubStaff/` feature folder (the screen, its RPC
 - [ ] The club header names the club through the `displayNames` seam and shows `[Not your club]`
       when the club is not the user's, absent for the user's own club; the header labels the
       `<main>` region.
-- [ ] Rows are not focusable; keyboard arrival lands on the club header.
+- [ ] Rows are not focusable, so the page is the terminal list it promises to be. (Amended: see
+      "Arrival focus" below — the second half of this criterion described behaviour the app does
+      not have on any screen.)
 - [ ] `pnpm check:all` is green at this commit, and the desktop e2e suite passes where a screen
       changed.
+
+---
+
+**Amendment — arrival focus (recorded, not quietly dropped).** This ticket promised that "keyboard
+arrival lands on the club header (the `<main>` region's label)". It does not, and it never did on
+any screen. `requestFocus({ screen })` carries no `region`, so `querySemanticTarget` resolves it to
+`[data-focus-id="<screen>"]` — the `RouteView` wrapper `<div tabIndex={-1}>`, which sits *outside*
+`<main>` and carries no accessible name. The Club Staff `<main>` is labelled by the club heading
+and would satisfy the promise if it were the focus target, but the wrapper wins the selector.
+
+This is the app's arrival-focus convention, not a Club Staff defect: every screen behaves this way.
+Changing it means changing `RouteView` or the semantic-target resolution for all fifteen screens,
+which is a larger blast radius than this ticket bought and wants its own ticket with its own
+accessibility review. The criterion has been narrowed to the half that is true and was actually
+built — rows are not focusable — rather than checked off against a promise the code does not keep.
+
+The unmet half is filed as [ticket 06](06-arrival-focus-lands-on-an-unlabelled-wrapper.md) rather
+than left in this ticket's prose, because the fix is app-wide and this effort has no claim on the
+shared focus model.
+
+**Amendment — the entry point is one control per surface.** This ticket says the league table rows
+become "the single entry point". They did, by taking over the Team Scout Report's only entry point
+and orphaning it for three commits. The row now carries one control per club surface; see
+[ticket 05](05-club-segment-keyboard-identity-and-entry-points.md).

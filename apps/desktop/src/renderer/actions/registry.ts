@@ -40,6 +40,26 @@ export const isCareerScreen = (screen: ScreenName): boolean =>
   screen === "seasonSummary" ||
   screen === "manager";
 
+/**
+ * The club-scoped drill-downs: `/career/$saveId/club/$clubId/...`. Inside a career, but not one of
+ * the nine — no `g` binding targets them and no screen-scoped Action belongs to them.
+ */
+export const CLUB_SCOPED_SCREENS = ["teamScoutReport", "clubStaff"] as const;
+
+/**
+ * True when `screen` is shown *within* a career, which is a wider question than whether it is one
+ * of the nine career screens, and the one the career-global tier actually turns on.
+ *
+ * Every other drill-down answers this by inheriting its parent's id — the tactics editor registers
+ * as `tactics`, so it is a career screen by construction. The club segment hangs off the save
+ * rather than off a career screen, so it has no parent id to inherit and must be named here
+ * instead. Without it, the spine registers the career-global handlers on a club route while
+ * `activeSet` filters them out: the palette and help overlay disagree with what the keys do, and
+ * `g b` works only because prefix completion dispatches without consulting availability.
+ */
+export const isInsideCareer = (screen: ScreenName): boolean =>
+  isCareerScreen(screen) || (CLUB_SCOPED_SCREENS as readonly string[]).includes(screen);
+
 /** A scope-tier label helper for the key map (which scope a bound action lives in). */
 export const scopeLabel = (scope: ActionScope): string => scope;
 
@@ -97,7 +117,7 @@ export const activeSet = (
   current: ScreenName,
   state: ScopeState,
 ): ReadonlyArray<Action> => {
-  const includeCareerGlobals = isCareerScreen(current);
+  const includeCareerGlobals = isInsideCareer(current);
   return actions.filter((action) => {
     if (action.scope === "app-global") {
       return action.available(state);
@@ -115,7 +135,7 @@ export const actionsInTiers = (
   actions: ReadonlyArray<Action>,
   current: ScreenName,
 ): ReadonlyArray<Action> => {
-  const includeCareerGlobals = isCareerScreen(current);
+  const includeCareerGlobals = isInsideCareer(current);
   return actions.filter((action) => {
     if (action.scope === "app-global") return true;
     if (action.scope === "career-global") return includeCareerGlobals;

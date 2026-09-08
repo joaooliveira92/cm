@@ -6,7 +6,7 @@ import { navigateBack, navigateCareer } from "../navigation/adapter.js";
 import { type SaveScopedCareerDestinationType } from "../navigation/destinations.js";
 import { decodeSaveId } from "../navigation/params.js";
 import { ACTION_REGISTRY, ALL_ACTIONS } from "../actions/allActions.js";
-import { isCareerScreen } from "../actions/registry.js";
+import { isInsideCareer } from "../actions/registry.js";
 import {
   gByKeyOf,
   gPrefixCompletionsOf,
@@ -64,18 +64,25 @@ import {
  * `g` prefix and every binding beneath it.
  */
 
-const careerScreenOfId = (id: string): SaveScopedCareerDestinationType | null =>
-  ["squad", "tactics", "transfers", "league", "fixtures", "match", "seasonSummary", "manager"].includes(
-    id,
-  )
-    ? (id as SaveScopedCareerDestinationType)
-    : null;
+/**
+ * The club segment's leaf path to its screen id. `/career/$saveId/club/$clubId/<segment>` is the
+ * one route shape whose third segment names no screen — it is the literal `club` — so the id lives
+ * one level deeper. Keyed by the same path segments `resolveDestination` builds.
+ */
+const CLUB_SURFACE_BY_SEGMENT: Readonly<Record<string, string>> = {
+  "scout-report": "teamScoutReport",
+  staff: "clubStaff",
+};
 
 /** Given the route path, derive the current screen-id (scope). */
 const screenIdOfPath = (pathname: string): string => {
   const segs = pathname.split("/").filter(Boolean);
   if (segs[0] === "create") return `createStep${segs[1]?.replace("step-", "") ?? "1"}`;
-  if (segs[0] === "career") return segs[2] ?? "";
+  if (segs[0] === "career") {
+    // A club-scoped drill-down: the surface is the leaf, not the `club` segment that scopes it.
+    if (segs[2] === "club") return CLUB_SURFACE_BY_SEGMENT[segs[4] ?? ""] ?? "";
+    return segs[2] ?? "";
+  }
   if (segs[0] === "load") return "loadCareer";
   return "mainMenu";
 };
@@ -109,14 +116,13 @@ export const KeyboardSpine = () => {
   const decoded = decodeSaveId(params.saveId ?? "");
 
   const currentScreen = screenIdOfPath(pathname);
-  const career = careerScreenOfId(currentScreen);
   const saveId: SaveId | undefined = decoded._tag === "Success" ? decoded.success : undefined;
-  const isCareer = isCareerScreen(currentScreen as never);
-  // A club-scoped surface (`/career/$saveId/club/$clubId/...`) sits inside the career: the
-  // manager reached it mid-career, so `g b` and the career `g <key>` nav still apply. The screen
-  // index gives such paths the `club` currentScreen (there is no higher id to key on), so treat
-  // that branch like a career screen for nav-handler registration.
-  const nav = (career !== null || currentScreen === "club") && saveId !== undefined;
+  // A club-scoped drill-down sits inside the career — the manager reached it mid-career, so the
+  // career `g <key>` nav and `g b` still apply — without being one of the nine. One predicate
+  // answers both what the spine registers and what `activeSet` admits, so the two cannot drift:
+  // an action bound here is an action the registry agrees is available here.
+  const isCareer = isInsideCareer(currentScreen as never);
+  const nav = isCareer && saveId !== undefined;
 
   // Screens publish their availability read-model (League: phase/advancing) into
   // the shared scope state; the spine merges it over its own readiness.
@@ -276,7 +282,7 @@ export const KeyboardSpine = () => {
     return () => {
       for (const unregister of unregisters) unregister();
     };
-  }, [nav, saveId, career]);
+  }, [nav, saveId, currentScreen]);
 
   // The live `g <key>` prefix lifecycle. The state machine itself is
   // `prefixReduce` (pure, unit-tested); the spine only renders the outcome.

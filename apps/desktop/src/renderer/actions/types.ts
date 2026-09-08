@@ -19,6 +19,12 @@ export type ScreenName =
   | "seasonSummary"
   | "manager"
   | "news"
+  // The club-scoped drill-downs. They are route screen-ids like any other — the spine derives
+  // them from the path and the focus coordinator keys on them — but they carry no `g` binding and
+  // own no screen-scoped Action, so they appear here and in neither `CareerScreenName` nor
+  // `CAREER_SCREEN_TYPES`.
+  | "teamScoutReport"
+  | "clubStaff"
   | "createLeagues"
   | "createStep1"
   | "createStep2"

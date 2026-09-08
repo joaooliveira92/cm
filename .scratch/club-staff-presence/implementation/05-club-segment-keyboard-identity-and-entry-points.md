@@ -37,7 +37,29 @@ hardening nobody would expect to be load-bearing — silently breaks Back on eve
 
 **Blocked by:** none — ticket 03's code ships or does not ship independently of this.
 
-**Status:** ready-for-agent
+**Status:** claimed
+
+**What was decided:**
+
+- **The keyboard identity is the leaf, and "inside a career" is its own predicate.**
+  `screenIdOfPath` resolves `/career/$saveId/club/$clubId/<segment>` to the surface it names
+  (`staff` → `clubStaff`, `scout-report` → `teamScoutReport`) rather than to the literal `club`
+  segment, so a club route has a real screen id like every other route. `isInsideCareer` then
+  answers the question the career-global tier actually asks, which is wider than "is one of the
+  nine": `isCareerScreen(screen) || CLUB_SCOPED_SCREENS.includes(screen)`. Both the spine's
+  registration and `activeSet`/`actionsInTiers` read that one predicate, so what is bound on a
+  club route and what the registry reports active cannot drift apart. `g b` is now available
+  rather than merely dispatchable, and the palette and help overlay list what the keys do.
+  `CAREER_SCREEN_TYPES` and the keymap are untouched — the drill-downs gain no `g` binding.
+- **The row carries one control per club surface, not a club parent destination.** The ticket
+  anticipated a `club` parent, but the router records a deliberate decision against an index route
+  on that segment — "`club/$clubId` alone names a club without saying what about it, so there is
+  nothing honest to land on". A parent destination needs somewhere to land, so taking that option
+  meant inventing a club hub screen and overturning a recorded decision, which is a bigger change
+  than this ticket buys and a design question of its own. The league table row instead carries the
+  club name (Club Staff) and a `Scout report` control, each with a club-qualified accessible name
+  so twenty rows of "Scout report" still tell a screen-reader user which club. If a third club
+  surface arrives, the hub question is worth reopening on its own terms.
 
 **Files:** `apps/desktop/src/renderer/keyboard/KeyboardSpine.tsx` (`screenIdOfPath`, the `nav`
 branch), `apps/desktop/src/renderer/actions/registry.ts` (`isCareerScreen`, `activeSet`),
