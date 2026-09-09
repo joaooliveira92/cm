@@ -148,7 +148,7 @@ beforeEach(reset);
 afterEach(reset);
 
 describe("the match-day bar", () => {
-  it("renders the seeded eighteen: starters by formation, the bench beneath, the rest in the pool", async () => {
+  it("renders the seeded eighteen: starters by formation and the bench beneath", async () => {
     await mountSquadScreen();
     const slotButtons = screen
       .getAllByRole("button")
@@ -162,32 +162,53 @@ describe("the match-day bar", () => {
       ...starterLabels,
       ...benchLabels,
     ]);
-    // The three starters are not in the pool; the other three players are.
-    for (const name of ["Van Persie", "Beresford", "Solano"]) {
-      expect(screen.getByRole("button", { name: `${name}, unassigned` })).toBeTruthy();
-    }
-    expect(screen.queryByRole("button", { name: "Shearer, unassigned" })).toBeNull();
   });
 
-  it("assigns a pool player onto an empty slot by dragging", async () => {
+  it("assigns a squad player onto an empty slot by dragging from the roster", async () => {
     await mountSquadScreen();
     drag(
-      screen.getByRole("button", { name: "Van Persie, unassigned" }),
+      screen.getByRole("button", { name: "Van Persie, Pep" }),
       screen.getByRole("button", { name: "ML slot" }),
     );
     expect(screen.getByRole("button", { name: "ML slot, Pep Van Persie" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Van Persie, unassigned" })).toBeNull();
   });
 
-  it("replaces the occupant when a pool player lands on a filled slot, the occupant returns to the pool", async () => {
+  it("flips the roster row's leading indicator to Playing as the player is dragged into a slot", async () => {
+    await mountSquadScreen();
+    // Seeded lineup: the first three slots are filled; six players, so three
+    // rows read Not selected.
+    expect(screen.getByRole("img", { name: "Playing (GK)" })).toBeTruthy();
+    expect(screen.getAllByRole("img", { name: "Not selected" })).toHaveLength(3);
+
+    drag(
+      screen.getByRole("button", { name: "Van Persie, Pep" }),
+      screen.getByRole("button", { name: "ML slot" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("img", { name: "Playing (ML)" })).toBeTruthy(),
+    );
+    expect(screen.getAllByRole("img", { name: "Not selected" })).toHaveLength(2);
+
+    // Unassigning the slot hands the player back to the unselected pool, and
+    // the indicator empties with it.
+    drag(
+      screen.getByRole("button", { name: "ML slot, Pep Van Persie" }),
+      screen.getByTestId("lineup-bar"),
+    );
+    await waitFor(() =>
+      expect(screen.getAllByRole("img", { name: "Not selected" })).toHaveLength(3),
+    );
+    expect(screen.queryByRole("img", { name: "Playing (ML)" })).toBeNull();
+  });
+
+  it("replaces the occupant when a squad player lands on a filled slot, the occupant leaves the lineup", async () => {
     await mountSquadScreen();
     drag(
-      screen.getByRole("button", { name: "Van Persie, unassigned" }),
+      screen.getByRole("button", { name: "Van Persie, Pep" }),
       screen.getByRole("button", { name: "GK slot, Pep Shearer" }),
     );
     expect(screen.getByRole("button", { name: "GK slot, Pep Van Persie" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Shearer, unassigned" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "GK slot, Pep Shearer" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /slot, Pep Shearer/ })).toBeNull();
   });
 
   it("swaps two filled slots when one is dragged onto the other", async () => {
@@ -200,14 +221,13 @@ describe("the match-day bar", () => {
     expect(screen.getByRole("button", { name: "DC slot, Pep Shearer" })).toBeTruthy();
   });
 
-  it("unassigns a slot by dragging it back onto the pool strip", async () => {
+  it("unassigns a slot by dragging it back onto the bar", async () => {
     await mountSquadScreen();
     drag(
       screen.getByRole("button", { name: "GK slot, Pep Shearer" }),
-      screen.getByRole("button", { name: "Unassigned players" }),
+      screen.getByTestId("lineup-bar"),
     );
     expect(screen.getByRole("button", { name: "GK slot" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Shearer, unassigned" })).toBeTruthy();
   });
 
   it("persists the edited lineup through the shared save path on Save Lineup", async () => {
@@ -228,7 +248,7 @@ describe("the match-day bar", () => {
     });
 
     drag(
-      screen.getByRole("button", { name: "Van Persie, unassigned" }),
+      screen.getByRole("button", { name: "Van Persie, Pep" }),
       screen.getByRole("button", { name: "ML slot" }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Save Lineup" }));
@@ -267,7 +287,7 @@ describe("the match-day bar", () => {
     });
 
     drag(
-      screen.getByRole("button", { name: "Van Persie, unassigned" }),
+      screen.getByRole("button", { name: "Van Persie, Pep" }),
       screen.getByRole("button", { name: "ML slot" }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Save Lineup" }));
@@ -282,23 +302,24 @@ describe("the match-day bar", () => {
     expect(screen.getByRole("button", { name: "DR slot" })).toBeTruthy();
   });
 
-  it("carries a player by keyboard: Enter picks up from the pool, Enter on a slot places them", async () => {
+  it("carries a player by keyboard: Enter picks up a filled slot, Enter on a slot places them, Escape releases", async () => {
     await mountSquadScreen();
-    const poolChip = screen.getByRole("button", { name: "Van Persie, unassigned" });
-    fireEvent.keyDown(poolChip, { key: "Enter" });
-    expect(screen.getByTestId("lineup-carried").textContent).toMatch(/Van Persie/);
-    expect(poolChip.getAttribute("aria-pressed")).toBe("true");
+    const gk = screen.getByRole("button", { name: "GK slot, Pep Shearer" });
+    fireEvent.keyDown(gk, { key: "Enter" });
+    expect(screen.getByTestId("lineup-carried").textContent).toMatch(/Shearer/);
+    expect(gk.getAttribute("aria-pressed")).toBe("true");
 
     fireEvent.keyDown(screen.getByRole("button", { name: "ML slot" }), { key: "Enter" });
-    expect(screen.getByRole("button", { name: "ML slot, Pep Van Persie" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "ML slot, Pep Shearer" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "GK slot" })).toBeTruthy();
     expect(screen.queryByTestId("lineup-carried")).toBeNull();
 
     // Escape releases the carry without changing anything.
-    const another = screen.getByRole("button", { name: "GK slot, Pep Shearer" });
+    const another = screen.getByRole("button", { name: "DC slot, Pep Nistelrooy" });
     fireEvent.keyDown(another, { key: "Enter" });
     expect(screen.getByTestId("lineup-carried")).toBeTruthy();
     fireEvent.keyDown(another, { key: "Escape" });
     expect(screen.queryByTestId("lineup-carried")).toBeNull();
-    expect(screen.getByRole("button", { name: "GK slot, Pep Shearer" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "DC slot, Pep Nistelrooy" })).toBeTruthy();
   });
 });

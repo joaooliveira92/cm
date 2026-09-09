@@ -120,9 +120,7 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
     expect(screen.queryByText("Test FC")).toBeNull();
     // A fresh install opens on the position list, which names players the way
     // the list does — surname first.
-    expect(
-      await screen.findByRole("heading", { name: "Players (Position(s))" }),
-    ).toBeTruthy();
+
     expect(await screen.findByText(/Shearer, Alan/)).toBeTruthy();
   });
 

@@ -26,7 +26,7 @@ test("Squad opens on the position list and the View selector swaps it for a tabl
   );
 
   // The career opens on the two-column position list: every player, no table.
-  await expect(window.getByRole("heading", { name: "Players (Position(s))" })).toBeVisible();
+
   await expect(window.locator("tbody")).toHaveCount(0);
   await expect(window.locator("li:has(button[data-focus-id])")).toHaveCount(playersCount);
 

@@ -78,7 +78,10 @@ const player = (id: string, firstName: string, lastName: string) => ({
   birthplace: "Santos",
 });
 
-const mountSquad = async (players: ReturnType<typeof player>[]): Promise<void> => {
+const mountSquad = async (
+  players: ReturnType<typeof player>[],
+  tactic: unknown = emptyTactic(),
+): Promise<void> => {
   mockPreload(async (method) =>
     method === "getSquad"
       ? ({
@@ -94,7 +97,7 @@ const mountSquad = async (players: ReturnType<typeof player>[]): Promise<void> =
             value: {
               club: { id: rid("me"), name: "Test FC", statureTier: STATURE_TIERS[0] },
               squad: players,
-              tactic: emptyTactic(),
+              tactic,
               revision: 0,
             },
           } as never)
@@ -173,7 +176,7 @@ describe("choosing a view", () => {
   it("draws the squad as a two-column list of names and positions, not a table", async () => {
     await mountSquad([player("p1", "Alan", "Shearer"), player("p2", "Bobby", "Moore")]);
 
-    expect(screen.getByRole("heading", { name: "Players (Position(s))" })).toBeTruthy();
+
     expect(document.querySelector("table")).toBeNull();
     expect(screen.getByText(/Shearer, Alan/)).toBeTruthy();
     expect(screen.getByText(/Moore, Bobby/)).toBeTruthy();
@@ -216,10 +219,36 @@ describe("the squad screen mounts the match-day bar", () => {
     for (const label of ["SB1", "SB2", "SB3", "SB4", "SB5", "SB6", "SB7"]) {
       expect(screen.getByRole("button", { name: `${label} slot` })).toBeTruthy();
     }
-    // An empty lineup leaves the whole squad in the pool.
-    expect(
-      screen.getByRole("button", { name: "Shearer, unassigned" }),
-    ).toBeTruthy();
+    // An empty lineup leaves the whole squad in the roster, ready to be dragged in.
+    expect(screen.getByRole("button", { name: "Shearer, Alan" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Save Lineup" })).toBeTruthy();
+  });
+});
+
+describe("the leading match-day indicator", () => {
+  it("reports the lineup slot each row is selected into: playing, on the bench, or not selected", async () => {
+    // Shearer is handed a starter slot (GK), Moore a bench slot, Doe nothing.
+    const lineupTactic = () => ({
+      formation: "4-4-2" as const,
+      slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
+        position,
+        role: POSITION_ROLES[position],
+        playerId: index === 0 ? rid("p1") : "",
+      })),
+      bench: [rid("p2"), null, null, null, null, null, null],
+      mentality: "balanced" as const,
+      tempo: "normal" as const,
+      pressing: "medium" as const,
+    });
+    await mountSquad(
+      [player("p1", "Alan", "Shearer"), player("p2", "Bobby", "Moore"), player("p3", "John", "Doe")],
+      lineupTactic(),
+    );
+
+    // Playing reads the slot code the bar shows for the same slot; the bench
+    // reads Sub; an unselected player gets a hollow box.
+    expect(screen.getByRole("img", { name: "Playing (GK)" }).textContent).toBe("GK");
+    expect(screen.getByRole("img", { name: "On the bench" }).textContent).toBe("Sub");
+    expect(screen.getByRole("img", { name: "Not selected" }).textContent).toBe("");
   });
 });

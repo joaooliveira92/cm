@@ -12,6 +12,7 @@ import type { SquadRow } from "../table/squad/squadColumns.js";
 import type { FilterClause, SortState, TableAnnouncement } from "../table/types.js";
 import type { deriveRefreshState, deriveViewState, TableStateCopy } from "../table/viewState.js";
 import type { SquadPresetId } from "../table/features/visibility.js";
+import type { TacticDraft } from "../tactics/useTacticDraft.js";
 import type { SquadViewId } from "./squadViews.js";
 
 export interface SquadScreenState {
@@ -72,4 +73,8 @@ export interface SquadScreenValue {
   readonly state: SquadScreenState;
   readonly actions: SquadScreenActions;
   readonly meta: SquadScreenMeta;
+  /** The shared match-day lineup draft: the eighteen slots the roster rows
+   *  report against and the bottom bar edits. Lifted so both read the same
+   *  assignment under one save lifecycle. */
+  readonly lineup: TacticDraft;
 }

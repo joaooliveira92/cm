@@ -56,6 +56,7 @@ import {
 import {
   resetSquadColumnPreferences,
 } from "../table/columnPreferences.js";
+import { useTacticDraft } from "../tactics/useTacticDraft.js";
 import {
   discardSelectionForNavigation,
 } from "../table/tableState.js";
@@ -86,6 +87,11 @@ export type {
 const TABLE_ID = "squad";
 const REGION = "squadTable";
 
+/** The wording for a non-conflict lineup save failure (every slot must name a
+ *  player; distinct ids are enforced client-side and server-side). */
+const SAVE_FAILURE =
+  "Failed to save lineup — every slot must name a distinct, still-registered player.";
+
 export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   const squadResult = useAtomValue(squadAtom(saveId));
   const refreshSquad = useAtomRefresh(squadAtom(saveId));
@@ -106,6 +112,13 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   const { setViewId, applyPreferences, setLegendExpanded } = columnActions;
 
   const { announcement, speak } = useSquadAnnouncements();
+
+  // The shared match-day lineup draft, lifted from the bottom bar so the roster
+  // rows can report who is selected to play or sit on the bench. The bar edits
+  // it; the list only reads it.
+  const lineup = useTacticDraft(saveId, { saveFailureMessage: SAVE_FAILURE });
+
+  useEffect(() => registerActionHandler("save-tactic", () => void lineup.save()), [lineup.save]);
 
   const latest = useRef({
     sort,
@@ -409,5 +422,6 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       STATUS_LEGEND_ID,
       allPlayers,
     },
+    lineup,
   };
 };

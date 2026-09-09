@@ -1,6 +1,7 @@
 /**
  * The Squad screen's position list — the layout CM 03/04 opened a career on:
- * every player at once, two balanced columns, each row a status runner, a name,
+ * every player at once, two balanced columns, each row a leading match-day
+ * indicator (playing, on the bench, or not selected), a status runner, a name,
  * and the positions that player can fill. It is the "who is in this squad"
  * reading; the table views are the "how good are they at X" readings.
  *
@@ -22,6 +23,9 @@ import type { FamiliarityTier } from "@cm-clone/shared";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
 import { StatusCell, statusesOf } from "../table/squad/playerStatus.js";
 import type { SquadRow } from "../table/squad/squadColumns.js";
+import type { LineupSlot } from "./lineupEdits.js";
+import { lineupSlotsOf } from "./lineupEdits.js";
+import { writeLineupDrag } from "./lineupDrag.js";
 import { useSquad } from "./SquadProvider.js";
 
 const REGION = "squadTable";
@@ -83,6 +87,34 @@ const FAMILIARITY_TONE: Readonly<Record<FamiliarityTier, string>> = {
 /** Sentence case for a tier in a tooltip ("natural" → "Natural"). UI copy. */
 const tierLabel = (tier: string): string => tier.charAt(0).toUpperCase() + tier.slice(1);
 
+/** The leading match-day indicator: a compact box, one per roster row, that
+ *  reports whether the player is selected to play or sit on the bench, against
+ *  the same lineup slots the bottom bar edits. Read-only — selection happens by
+ *  dragging the row onto a slot, or by Swapping in the bar. The code the eye
+ *  reads is the slot's label, and the state ("playing", "on the bench", "not
+ *  selected") is the accessible name, following the status-runner convention:
+ *  decoration is aria-hidden, the meaning is the text. */
+const SelectionIndicator = ({ slot }: { readonly slot: LineupSlot | null }) => {
+  const labelled = slot === null ? "Not selected" : slot.kind === "bench"
+    ? "On the bench"
+    : `Playing (${slot.label})`;
+  const tone = slot === null
+    ? "border-border-subtle text-transparent"
+    : slot.kind === "bench"
+      ? "border-border-subtle bg-surface-raised text-text-secondary"
+      : "border-text-highlight bg-text-highlight/15 text-text-highlight";
+  return (
+    <span
+      role="img"
+      aria-label={labelled}
+      title={labelled}
+      className={`flex h-5 min-w-9 shrink-0 items-center justify-center rounded-control border px-1 font-mono text-xs leading-none ${tone} ${FOCUS_RING.join(" ")}`}
+    >
+      {slot === null ? "" : slot.kind === "bench" ? "Sub" : slot.label}
+    </span>
+  );
+};
+
 const PositionRunner = ({ row }: { readonly row: SquadRow }) => (
   <span className="ml-auto flex shrink-0 gap-1 font-mono text-xs">
     {row.positions.length === 0 ? (
@@ -102,13 +134,23 @@ const PositionRunner = ({ row }: { readonly row: SquadRow }) => (
 );
 
 export const SquadPositionList = () => {
-  const { state, actions } = useSquad();
+  const { state, actions, lineup } = useSquad();
   const { orderedIds, activeId, selectedId, announcement, refreshState, table } = state;
   const { onActiveChange, onToggleSelection, onRowPrimary, setBookmark } = actions;
 
   const rows = table.getRowModel().rows.map((row) => row.original);
   const effectiveActive = activeId ?? orderedIds[0] ?? null;
   const split = leftColumnLength(rows.length);
+
+  // The match-day assignment each roster row reports against: player id → the
+  // slot they are selected into. Mirrors the bar's slots live, so dragging a
+  // player onto a slot flips their indicator and swapping is not even needed
+  // to keep the list honest.
+  const slotByPlayer = new Map(
+    lineupSlotsOf(lineup.tactic)
+      .filter((slot) => slot.playerId !== null)
+      .map((slot) => [String(slot.playerId), slot]),
+  );
 
   const focusRow = (id: string): void => {
     (
@@ -120,7 +162,13 @@ export const SquadPositionList = () => {
 
   const onKeyDown = (event: React.KeyboardEvent): void => {
     const current = effectiveActive === null ? -1 : orderedIds.indexOf(effectiveActive);
+    // Space/Enter are the row's selection/primary actions, owned by the roving
+    // name button. Guard on the roving stop's `data-focus-id` so a future
+    // focusable control in a row keeps its own Space/Enter semantics instead of
+    // inheriting the row's.
     if (event.key === " " || event.key === "Enter") {
+      const target = event.target as HTMLElement | null;
+      if (!(target instanceof HTMLElement) || target.dataset.focusId === undefined) return;
       event.preventDefault();
       if (effectiveActive === null) return;
       if (event.key === " ") onToggleSelection(effectiveActive);
@@ -161,11 +209,14 @@ export const SquadPositionList = () => {
           aria-selected={selectedId === row.id || undefined}
           className="flex min-w-0 items-center gap-2 px-2 py-1 hover:bg-row-hover aria-selected:bg-row-selected"
         >
+          <SelectionIndicator slot={slotByPlayer.get(row.id) ?? null} />
           <StatusCell statuses={statusesOf(row)} />
           <button
             type="button"
             data-focus-id={focusIdOf("squad", REGION, row.id)}
             tabIndex={rovingTabIndex(effectiveActive, row.id)}
+            draggable
+            onDragStart={(event) => writeLineupDrag(event, "roster", row.id)}
             onFocus={() => {
               if (activeId !== row.id) onActiveChange(row.id);
             }}

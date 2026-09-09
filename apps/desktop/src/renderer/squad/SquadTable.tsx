@@ -16,6 +16,7 @@ import { SQUAD_TOGGLEABLE_COLUMN_IDS } from "../table/features/visibility.js";
 import { isSquadViewId, SQUAD_VIEWS, squadViewById, type SquadViewId } from "./squadViews.js";
 import { SquadPositionList } from "./SquadPositionList.js";
 import { MatchDayBar } from "./MatchDayBar.js";
+import { writeLineupDrag } from "./lineupDrag.js";
 import { SQUAD_COLUMN_LABELS } from "../table/squad/squadColumns.js";
 import { StatusLegend } from "../table/squad/playerStatus.js";
 import { activeFilterCount } from "../table/viewState.js";
@@ -371,6 +372,7 @@ export const SquadTable = () => {
             busy={refreshState._tag === "Refreshing"}
             enableShiftScroll
             onRowPrimary={onRowPrimary}
+            onRowDragStart={(event, id) => writeLineupDrag(event, "roster", id)}
             ariaLabel="Squad"
             announcement={announcement?.message ?? ""}
             initialScrollLeft={scrollLeft}

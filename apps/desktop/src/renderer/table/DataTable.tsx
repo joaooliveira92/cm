@@ -91,6 +91,9 @@ export interface DataTableProps<Row extends TableRowShape> {
   readonly announcement: string;
   /** Optional extra region (blocking errors — `role="alert"`). */
   readonly alertMessage?: string;
+  /** Squad-only: start a drag carrying the row's player to the lineup bar. The
+   *  identity cell (the per-row focus button) is the grab handle. */
+  readonly onRowDragStart?: (event: React.DragEvent<HTMLButtonElement>, rowId: string) => void;
   /** Initial horizontal scroll offset restored on mount (Squad Shift+Arrow). */
   readonly initialScrollLeft?: number;
   /** Reports a Shift+Arrow horizontal scroll commit (session persistence). */
@@ -114,6 +117,7 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
     ariaLabel,
     announcement,
     alertMessage,
+    onRowDragStart,
     initialScrollLeft,
     onScrollCommit,
   } = props;
@@ -319,6 +323,10 @@ export const DataTable = <Row extends TableRowShape>(props: DataTableProps<Row>)
                             type="button"
                             data-focus-id={focusIdOf(props.screen, props.region, id)}
                             tabIndex={rovingTabIndex(effectiveActive, id)}
+                            draggable={onRowDragStart !== undefined}
+                            onDragStart={(event) => {
+                              if (onRowDragStart !== undefined) onRowDragStart(event, id);
+                            }}
                             onFocus={() => {
                               if (activeId !== id) onActiveChange(id);
                             }}

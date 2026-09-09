@@ -41,6 +41,9 @@ interface UseTacticDraftOptions {
   readonly saveFailureMessage: string;
 }
 
+/** Everything a surface that edits the Tactic needs — see the hook's return for the shape. */
+export type TacticDraft = ReturnType<typeof useTacticDraft>;
+
 /**
  * The one draft lifecycle behind every surface that edits the persisted Tactic: load it, hold the
  * manager's edits as a draft against the revision it was read at, save with an expected revision,
