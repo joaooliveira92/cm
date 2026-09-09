@@ -10,7 +10,7 @@ import {
   type NewsSourceEvent,
 } from "../../src/news/newsProjection.js";
 
-const CLUB = { clubId: "club-1", clubName: "Northgate United" };
+const CLUB = { clubId: "club-1", clubName: "Northgate United", presidentName: "Alan Reyes" };
 
 const event = (
   overrides: Partial<NewsSourceEvent> & Pick<NewsSourceEvent, "tag" | "payload">,
@@ -201,6 +201,84 @@ describe("projectNewsMessage", () => {
     expect(
       projectNewsMessage(event({ tag: "SeasonStarted", payload: { seasonNumber: "one" } }), UNTOUCHED, CLUB),
     ).toBeNull();
+  });
+});
+
+describe("the President's voice in board copy", () => {
+  it("names the President in a warning's subject and body", () => {
+    const warned = projectNewsMessage(
+      event({ tag: "ManagerWarned", payload: { seasonNumber: 2, consecutiveMisses: 1 } }),
+      UNTOUCHED,
+      CLUB,
+    );
+    expect(warned?.subject).toBe("Alan Reyes has issued a warning");
+    expect(warned?.body).toContain("After season 2, Alan Reyes has recorded");
+    expect(warned?.body).toContain("1 consecutive missed objective");
+    expect(warned?.body).toContain("Another miss puts the job at risk.");
+    expect(warned?.priority).toBe("high");
+  });
+
+  it("takes the President's name from the club context, never off the event", () => {
+    // A payload that (wrongly) rode a name on the event must be ignored: the projection is the
+    // only voice, and it reads the context the main-process query derived.
+    const warned = projectNewsMessage(
+      event({
+        tag: "ManagerWarned",
+        payload: { seasonNumber: 2, consecutiveMisses: 1, presidentName: "Not the President" },
+      }),
+      UNTOUCHED,
+      CLUB,
+    );
+    expect(warned?.subject).toBe("Alan Reyes has issued a warning");
+    expect(warned?.subject).not.toContain("Not the President");
+  });
+
+  it("names the President in a dismissal's body while the subject keeps the club name and the miss count", () => {
+    const sacked = projectNewsMessage(
+      event({ tag: "ManagerSacked", payload: { seasonNumber: 3, consecutiveMisses: 2 } }),
+      UNTOUCHED,
+      CLUB,
+    );
+    expect(sacked?.subject).toBe("Northgate United has terminated your contract");
+    expect(sacked?.subject).not.toContain("Alan Reyes");
+    expect(sacked?.body).toBe(
+      "Alan Reyes has dismissed you after season 3, following 2 consecutive missed objectives.",
+    );
+  });
+
+  it("keeps the Board Objective verdict institutional", () => {
+    const missed = projectNewsMessage(
+      event({
+        tag: "BoardObjectiveJudged",
+        payload: {
+          seasonNumber: 1,
+          clubId: "club-1",
+          finalPosition: 18,
+          band: { minPosition: 1, maxPosition: 10 },
+          verdict: "missed",
+        },
+      }),
+      UNTOUCHED,
+      CLUB,
+    );
+    expect(missed?.subject).toBe("Board verdict on season 1");
+    expect(missed?.body).toContain('The board\'s verdict is "missed"');
+    expect(missed?.subject + missed!.body).not.toContain("Alan Reyes");
+  });
+
+  it("names the same President for warnings a season apart", () => {
+    const season2 = projectNewsMessage(
+      event({ tag: "ManagerWarned", payload: { seasonNumber: 2, consecutiveMisses: 1 } }),
+      UNTOUCHED,
+      CLUB,
+    );
+    const season5 = projectNewsMessage(
+      event({ tag: "ManagerWarned", payload: { seasonNumber: 5, consecutiveMisses: 1 } }),
+      UNTOUCHED,
+      CLUB,
+    );
+    expect(season2?.subject).toBe(season5?.subject);
+    expect(season5?.subject).toBe("Alan Reyes has issued a warning");
   });
 });
 

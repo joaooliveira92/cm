@@ -47,10 +47,17 @@ export interface NewsSourceEvent {
   readonly ordinal?: number;
 }
 /** Whose inbox this is. The projection needs the manager's club to say "you won" rather than
- * reciting two club ids, and to name the club in board copy. */
+ * reciting two club ids, to name the club in board copy, and the President whose name the two
+ * career-ending board messages speak as.
+ *
+ * `presidentName` is a fact the projection takes, never one it derives or reads off the event: the
+ * main-process news query resolves it from the presence derivation through the club id, and the
+ * copy table formats it. The President is a pure function of the world seed, the club id, and the
+ * nation, so messages projected years apart name the same person by construction. */
 export interface NewsClubContext {
   readonly clubId: string | null;
   readonly clubName: string;
+  readonly presidentName: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -247,22 +254,28 @@ export const project = (
       return matchdayResolvedMessage(payload, club);
 
     case "BoardObjectiveJudged":
+      // Deliberately institutional: setting and judging the Board Objective is the Board acting on
+      // its own instrument, so the verdict carries no personal name even though the President names
+      // the warning and the dismissal that bookend it.
       return boardVerdictMessage(payload);
 
     case "ManagerWarned":
       return seasonScoped(payload, (seasonNumber) => ({
         category: "board",
         priority: "high",
-        subject: `The board has issued a warning`,
-        body: `After season ${seasonNumber} the board has recorded ${plural(num(payload["consecutiveMisses"]) ?? 0, "consecutive missed objective", "consecutive missed objectives")}. Another miss puts the job at risk.`,
+        subject: `${club.presidentName} has issued a warning`,
+        body: `After season ${seasonNumber}, ${club.presidentName} has recorded ${plural(num(payload["consecutiveMisses"]) ?? 0, "consecutive missed objective", "consecutive missed objectives")}. Another miss puts the job at risk.`,
       }));
 
     case "ManagerSacked":
       return seasonScoped(payload, (seasonNumber) => ({
         category: "board",
         priority: "high",
+        // The subject keeps the club name: it anchors which club fired the manager, while the body
+        // speaks as the President, keeping the recorded objective-miss count the high-priority
+        // mechanic depends on. The name comes from `club.presidentName`, never off the event.
         subject: `${club.clubName} has terminated your contract`,
-        body: `The board has dismissed you after season ${seasonNumber}, following ${plural(num(payload["consecutiveMisses"]) ?? 0, "consecutive missed objective", "consecutive missed objectives")}.`,
+        body: `${club.presidentName} has dismissed you after season ${seasonNumber}, following ${plural(num(payload["consecutiveMisses"]) ?? 0, "consecutive missed objective", "consecutive missed objectives")}.`,
       }));
 
     case "ManagerRetired":

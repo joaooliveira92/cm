@@ -11,7 +11,10 @@ import { afterEach, beforeEach } from "vitest";
 import type { NewsMessageId, SaveId } from "@cm-clone/contracts";
 import { createSave } from "../../../src/main/world/index.js";
 import { advanceThroughBoundary } from "../boundary-helpers.js";
-import { getNewsInbox, parseNewsMessageId, setNewsMessageState } from "../../../src/main/career/index.js";
+import { getClubStaff, getNewsInbox, parseNewsMessageId, setNewsMessageState } from "../../../src/main/career/index.js";
+import { getSquad } from "../../../src/main/club/index.js";
+import { advanceCalendar } from "../../../src/main/season/index.js";
+import { loadStreamEvents } from "../../../src/main/season/decider.js";
 
 let savesDir: string;
 
@@ -289,3 +292,149 @@ it("rejects ids that are not three parts with a numeric sequence", () => {
   strictEqual(parseNewsMessageId("season::1"), null);
   strictEqual(parseNewsMessageId(""), null);
 });
+
+// ---------------------------------------------------------------------------
+// The President's voice in board copy
+//
+// The warning and the dismissal speak as the President, whose name the main-process news query
+// derives and hands the projection through `NewsClubContext` — same seam as the Club Staff read,
+// so a warning and a dismissal a season apart must name the same person.
+// ---------------------------------------------------------------------------
+
+/** Leaves the season's last fixture between two other clubs unplayed, and parks the calendar the
+ * day before it — the board-objectives test pattern, verbatim, so the drive below concludes each
+ * Season the way that suite does. Assumes a `SqlClient` in context. */
+const reopenFinalFixture = (clubId: string) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    yield* sql`DELETE FROM fixtures WHERE competition_id IN (SELECT id FROM competitions WHERE kind = 'cup')`;
+    yield* sql`DELETE FROM competition_participants WHERE competition_id IN (SELECT id FROM competitions WHERE kind = 'cup')`;
+    yield* sql`DELETE FROM competition_entrants`;
+    yield* sql`UPDATE fixtures SET played = 0, home_goals = NULL, away_goals = NULL
+      WHERE id = (SELECT id FROM fixtures
+                  WHERE home_club_id <> ${clubId} AND away_club_id <> ${clubId}
+                  ORDER BY scheduled_date DESC, id DESC LIMIT 1)`;
+    yield* sql`UPDATE season SET phase = 'in_season',
+      awaiting_fixture_id = NULL, awaiting_match_id = NULL,
+      game_date = (SELECT date(MIN(scheduled_date), '-1 day') FROM fixtures WHERE played = 0)`;
+  });
+
+/** Test-only DB manipulation: forces every fixture in the current Season to a lopsided result for
+ * `clubId`, guaranteeing it finishes 1st or last — a controlled substitute for running 380 real
+ * match simulations, the board-objectives suite's established driver. */
+const forceLopsidedFixtures = (saveId: string, clubId: string, outcome: "winEverything" | "loseEverything") =>
+  withSave(
+    saveId,
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const [clubGoals, otherGoals] = outcome === "winEverything" ? [5, 0] : [0, 5];
+      yield* sql`UPDATE fixtures SET played = 1,
+          home_goals = CASE WHEN home_club_id = ${clubId} THEN ${clubGoals} WHEN away_club_id = ${clubId} THEN ${otherGoals} ELSE 1 END,
+          away_goals = CASE WHEN away_club_id = ${clubId} THEN ${clubGoals} WHEN home_club_id = ${clubId} THEN ${otherGoals} ELSE 1 END`;
+      yield* reopenFinalFixture(clubId);
+    }),
+  );
+
+/** Forces the Season the save is currently in to a lopsided finish — the driver for every Season
+ * after the first, whose rollover has already opened a new `season` row. */
+const forceCurrentSeasonConcludingWith = (saveId: string, clubId: string, outcome: "winEverything" | "loseEverything") =>
+  withSave(
+    saveId,
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const current = yield* sql<{ seasonNumber: number }>`
+        SELECT MAX(season_number) as "seasonNumber" FROM season`;
+      const seasonNumber = current[0]!.seasonNumber;
+      yield* sql`UPDATE season SET phase = 'in_season' WHERE season_number = ${seasonNumber}`;
+
+      const [clubGoals, otherGoals] = outcome === "winEverything" ? [5, 0] : [0, 5];
+      yield* sql`UPDATE fixtures SET played = 1,
+          home_goals = CASE WHEN home_club_id = ${clubId} THEN ${clubGoals} WHEN away_club_id = ${clubId} THEN ${otherGoals} ELSE 1 END,
+          away_goals = CASE WHEN away_club_id = ${clubId} THEN ${clubGoals} WHEN home_club_id = ${clubId} THEN ${otherGoals} ELSE 1 END
+        WHERE season_number = ${seasonNumber}`;
+      yield* reopenFinalFixture(clubId);
+    }),
+  );
+
+const loadSeasonStreamEvents = (saveId: string) =>
+  loadStreamEvents("season", saveId).pipe(
+    Effect.provide(
+      SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true }),
+    ),
+    Effect.scoped,
+  );
+
+it.effect("the warning and the dismissal speak as the President — derived, never stored on the event", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const squad = yield* getSquad(savesDir, save.id);
+    const clubId = squad.club.id;
+
+    // Season 1 misses → warning (counter 0→1); Season 2 meets → counter resets; Season 3 misses
+    // → second warning; Season 4 misses → sacked (1→2). Two warnings a season apart plus the
+    // dismissal, one save — the shape the "same President across a projection run years apart"
+    // criterion reads.
+    yield* advanceCalendar(savesDir, save.id); // past pre-season
+    yield* forceLopsidedFixtures(save.id, clubId, "loseEverything");
+    strictEqual((yield* advanceCalendar(savesDir, save.id)).managerOutcome, "warned");
+
+    yield* forceCurrentSeasonConcludingWith(save.id, clubId, "winEverything");
+    strictEqual((yield* advanceCalendar(savesDir, save.id)).managerOutcome, "none");
+
+    yield* forceCurrentSeasonConcludingWith(save.id, clubId, "loseEverything");
+    strictEqual((yield* advanceCalendar(savesDir, save.id)).managerOutcome, "warned");
+    yield* forceCurrentSeasonConcludingWith(save.id, clubId, "loseEverything");
+    const sacked = yield* advanceCalendar(savesDir, save.id);
+    strictEqual(sacked.managerOutcome, "sacked");
+
+    const inbox = yield* getNewsInbox(savesDir, save.id);
+    const warnings = inbox.messages.filter((message) =>
+      message.subject.includes("has issued a warning"),
+    );
+    const dismissal = inbox.messages.find((message) =>
+      message.subject.includes("has terminated your contract"),
+    );
+
+    // Two warnings a season apart, against the same save, name the same President.
+    strictEqual(warnings.length, 2);
+    ok(warnings.every((message) => message.subject === warnings[0]!.subject));
+    const presidentName = warnings[0]!.subject.slice(0, -" has issued a warning".length);
+    ok(
+      presidentName.length > 0 && warnings[0]!.subject === `${presidentName} has issued a warning`,
+      "the warning's subject is the President's derived name plus the warning act",
+    );
+    ok(warnings[0]!.body.includes(`${presidentName} has recorded`));
+
+    // The dismissal speaks with the same voice: body names the President and keeps the recorded
+    // miss count, subject keeps the club name and never names the person.
+    ok(dismissal, "a second consecutive miss produces the dismissal message");
+    ok(dismissal!.body.startsWith(`${presidentName} has dismissed you`));
+    ok(dismissal!.body.includes("2 consecutive missed objectives"));
+    strictEqual(dismissal!.subject, `${squad.club.name} has terminated your contract`);
+    ok(!dismissal!.subject.includes(presidentName));
+
+    // ... and it is the same President the Club Staff read derives: the news query and the staff
+    // page are two readers of one derivation, so they cannot name two different people.
+    const staff = yield* getClubStaff(savesDir, save.id, clubId);
+    const executive = staff.groups.find((group) => group.department === "executive")!;
+    const president = executive.members.find((member) => member.role === "president")!;
+    strictEqual(`${president.firstName} ${president.lastName}`, presidentName);
+
+    // The events themselves carry no name: the voice is derived on read, never ridden on the
+    // event, so an old save re-voices on the next read and never the person.
+    const events = yield* loadSeasonStreamEvents(save.id);
+    const warnedEvent = events.find((event) => event.tag === "ManagerWarned");
+    const sackedEvent = events.find((event) => event.tag === "ManagerSacked");
+    ok(warnedEvent, "the drive must have written a ManagerWarned event");
+    ok(sackedEvent, "the drive must have written a ManagerSacked event");
+    deepStrictEqual(
+      Object.keys(warnedEvent!.payload as Record<string, unknown>).sort(),
+      ["consecutiveMisses", "seasonNumber"],
+    );
+    deepStrictEqual(
+      Object.keys(sackedEvent!.payload as Record<string, unknown>).sort(),
+      ["consecutiveMisses", "seasonNumber"],
+    );
+  }),
+  30_000,
+);

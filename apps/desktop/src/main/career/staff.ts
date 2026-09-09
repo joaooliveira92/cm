@@ -12,6 +12,7 @@ import {
   createSeededRng,
   deriveClubStaff,
   deriveId,
+  derivePresenceStaff,
   deriveSeed,
   generateStaff,
   nationCodeFromId,
@@ -106,6 +107,35 @@ const readWorldSeed = Effect.gen(function* () {
   }
   return manifest;
 });
+
+/**
+ * The President's full name, derived for the board-news voice.
+ *
+ * The board-news copy table speaks as the President for `ManagerWarned` and `ManagerSacked`, and
+ * takes the name as a fact rather than deriving it — the news query resolves it here, on the same
+ * reads `readClubStaff` makes (club identity for the nation, then the world seed), so the
+ * club-to-nation join keeps its one home. The President is a pure function of `(clubId, nation,
+ * worldSeed)`, so every read of the same save names the same person, and a message projected years
+ * after the event that warned the manager re-reads the same name the day it was warned with.
+ */
+export const loadPresidentName = (clubId: ClubId) =>
+  Effect.gen(function* () {
+    const club = yield* loadClubIdentity(clubId);
+    if (club === null) {
+      return yield* Effect.die(new Error(`no club to name a president for: ${clubId}`));
+    }
+    const nationCode = club.nationId === null ? null : nationCodeFromId(club.nationId);
+    if (nationCode === null) {
+      return yield* Effect.die(new Error(`club ${clubId} has no nation to draw a president from`));
+    }
+
+    const { worldSeed } = yield* readWorldSeed;
+    const president = derivePresenceStaff({ clubId, clubNation: nationCode, worldSeed })[0];
+    if (president === undefined) {
+      return yield* Effect.die(new Error(`presence derivation produced no president for ${clubId}`));
+    }
+    return `${president.firstName} ${president.lastName}`;
+  });
 
 /**
  * Club Staff (Screen 38): who works at any club in the save, grouped by department.

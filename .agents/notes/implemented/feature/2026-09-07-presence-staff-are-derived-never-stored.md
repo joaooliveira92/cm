@@ -142,6 +142,14 @@ already. Splitting the file would invite a third place for someone to re-derive 
   now further from true. Whether its conclusion should change is for whoever next opens it; this note
   does not reopen it.
 
+**Retroactive re-voicing is a consequence, not a migration.** The board-news copy table is a
+projection with no persistence of its own: every read re-projects the stored `ManagerWarned` and
+`ManagerSacked` events, so a copy change re-voices the whole inbox retroactively by construction.
+That is fine because the President's name is derived and fixed — the re-voicing changes the voice and
+never the person, and a season-2 warning and a season-5 warning name the same person the day after
+the change ships. Recorded here rather than left hidden in the diff that shipped the President's
+board copy.
+
 ## Acceptance criteria
 
 - `PRESENCE_ROLES` is exactly `["president", "physio"]`, and `STAFF_ROLES` is unchanged at

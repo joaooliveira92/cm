@@ -18,6 +18,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
 import { loadUserClub } from "../club/squad.js";
+import { loadPresidentName } from "./staff.js";
 
 /**
  * News Inbox (Screens 24-26) — the career's event streams, read as messages.
@@ -122,8 +123,8 @@ const parsePayload = (payload: string): unknown => {
 
 const readInbox = Effect.gen(function* () {
   const club = yield* loadUserClub;
-  const [rows, states, bidStatuses] = yield* Effect.all(
-    [loadNewsEvents(club.id), loadMessageStates, loadBidStatuses],
+  const [rows, states, bidStatuses, presidentName] = yield* Effect.all(
+    [loadNewsEvents(club.id), loadMessageStates, loadBidStatuses, loadPresidentName(club.id)],
     { concurrency: 1 },
   );
 
@@ -140,7 +141,9 @@ const readInbox = Effect.gen(function* () {
   const messages = projectNews(
     events,
     states,
-    { clubId: club.id, clubName: club.name },
+    // The President's name is derived here from the presence derivation — never read off the
+    // event, never stored — and handed to the projection as the face of the board copy.
+    { clubId: club.id, clubName: club.name, presidentName },
     bidStatuses,
   );
 
