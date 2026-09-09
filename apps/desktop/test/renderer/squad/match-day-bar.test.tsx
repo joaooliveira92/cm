@@ -177,17 +177,17 @@ describe("the match-day bar", () => {
     await mountSquadScreen();
     // Seeded lineup: the first three slots are filled; six players, so three
     // rows read Not selected.
-    expect(screen.getByRole("img", { name: "Playing (GK)" })).toBeTruthy();
-    expect(screen.getAllByRole("img", { name: "Not selected" })).toHaveLength(3);
+    expect(screen.getByRole("button", { name: "Playing (GK)" })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Not selected" })).toHaveLength(3);
 
     drag(
       screen.getByRole("button", { name: "Van Persie, Pep" }),
       screen.getByRole("button", { name: "ML slot" }),
     );
     await waitFor(() =>
-      expect(screen.getByRole("img", { name: "Playing (ML)" })).toBeTruthy(),
+      expect(screen.getByRole("button", { name: "Playing (ML)" })).toBeTruthy(),
     );
-    expect(screen.getAllByRole("img", { name: "Not selected" })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "Not selected" })).toHaveLength(2);
 
     // Unassigning the slot hands the player back to the unselected pool, and
     // the indicator empties with it.
@@ -196,9 +196,9 @@ describe("the match-day bar", () => {
       screen.getByTestId("lineup-bar"),
     );
     await waitFor(() =>
-      expect(screen.getAllByRole("img", { name: "Not selected" })).toHaveLength(3),
+      expect(screen.getAllByRole("button", { name: "Not selected" })).toHaveLength(3),
     );
-    expect(screen.queryByRole("img", { name: "Playing (ML)" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Playing (ML)" })).toBeNull();
   });
 
   it("replaces the occupant when a squad player lands on a filled slot, the occupant leaves the lineup", async () => {

@@ -20,6 +20,7 @@
  * selection, Enter runs the row's primary action.
  */
 import type { FamiliarityTier } from "@cm-clone/shared";
+import { Button } from "../components/ui/button.js";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
 import { StatusCell, statusesOf } from "../table/squad/playerStatus.js";
 import type { SquadRow } from "../table/squad/squadColumns.js";
@@ -87,13 +88,15 @@ const FAMILIARITY_TONE: Readonly<Record<FamiliarityTier, string>> = {
 /** Sentence case for a tier in a tooltip ("natural" → "Natural"). UI copy. */
 const tierLabel = (tier: string): string => tier.charAt(0).toUpperCase() + tier.slice(1);
 
-/** The leading match-day indicator: a compact box, one per roster row, that
+/** The leading match-day indicator: a compact button, one per roster row, that
  *  reports whether the player is selected to play or sit on the bench, against
- *  the same lineup slots the bottom bar edits. Read-only — selection happens by
- *  dragging the row onto a slot, or by Swapping in the bar. The code the eye
- *  reads is the slot's label, and the state ("playing", "on the bench", "not
- *  selected") is the accessible name, following the status-runner convention:
- *  decoration is aria-hidden, the meaning is the text. */
+ *  the same lineup slots the bottom bar edits, from the bar's own labels — the
+ *  starter's position code (GK, DC, DE…) or the bench slot (SB1, SB2…).
+ *  Read-only for now — selection happens by dragging the row onto a slot, or
+ *  by Swapping in the bar. The code the eye reads is the slot's label, and the
+ *  state ("playing", "on the bench", "not selected") is the accessible name,
+ *  following the status-runner convention: decoration is aria-hidden, the
+ *  meaning is the text. */
 const SelectionIndicator = ({ slot }: { readonly slot: LineupSlot | null }) => {
   const labelled = slot === null ? "Not selected" : slot.kind === "bench"
     ? "On the bench"
@@ -104,14 +107,15 @@ const SelectionIndicator = ({ slot }: { readonly slot: LineupSlot | null }) => {
       ? "border-border-subtle bg-surface-raised text-text-secondary"
       : "border-text-highlight bg-text-highlight/15 text-text-highlight";
   return (
-    <span
-      role="img"
+    <Button
+      type="button"
+      variant="ghost"
       aria-label={labelled}
       title={labelled}
-      className={`flex h-5 min-w-9 shrink-0 items-center justify-center rounded-control border px-1 font-mono text-xs leading-none ${tone} ${FOCUS_RING.join(" ")}`}
+      className={`h-5 min-w-9 shrink-0 px-1 font-mono text-xs leading-none ${tone}`}
     >
-      {slot === null ? "" : slot.kind === "bench" ? "Sub" : slot.label}
-    </span>
+      {slot === null ? "" : slot.label}
+    </Button>
   );
 };
 
@@ -199,7 +203,7 @@ export const SquadPositionList = () => {
    */
   const column = (slice: readonly SquadRow[], variant: "leading" | "trailing") => (
     <ul
-      className={`min-w-0 flex-1 divide-y divide-border-subtle ${
+      className={`min-w-0 flex-1 ${
         variant === "trailing" ? "border-l border-border-subtle pl-4" : ""
       }`}
     >

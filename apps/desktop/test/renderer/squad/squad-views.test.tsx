@@ -246,9 +246,9 @@ describe("the leading match-day indicator", () => {
     );
 
     // Playing reads the slot code the bar shows for the same slot; the bench
-    // reads Sub; an unselected player gets a hollow box.
-    expect(screen.getByRole("img", { name: "Playing (GK)" }).textContent).toBe("GK");
-    expect(screen.getByRole("img", { name: "On the bench" }).textContent).toBe("Sub");
-    expect(screen.getByRole("img", { name: "Not selected" }).textContent).toBe("");
+    // reads the slot it sits in (SB1..); an unselected player gets a hollow box.
+    expect(screen.getByRole("button", { name: "Playing (GK)" }).textContent).toBe("GK");
+    expect(screen.getByRole("button", { name: "On the bench" }).textContent).toBe("SB1");
+    expect(screen.getByRole("button", { name: "Not selected" }).textContent).toBe("");
   });
 });

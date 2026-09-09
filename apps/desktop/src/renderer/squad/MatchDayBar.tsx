@@ -71,15 +71,12 @@ const SlotBox = ({
     onDragOver={(event) => event.preventDefault()}
     onDrop={onDrop}
     onKeyDown={onKeyDown}
-    className={`flex min-h-10 min-w-12 flex-col items-center justify-center rounded-control border px-1 py-0.5 ${slot.playerId === null
+    className={`flex min-h-10 min-w-12 items-center justify-center rounded-control border px-1 py-0.5 ${slot.playerId === null
       ? "border-border-subtle text-text-secondary"
       : "border-bright text-text-highlight"
       } ${FOCUS_RING.join(" ")}`}
   >
-    <span className="text-xs leading-tight">{slot.label}</span>
-    <span className="w-12 truncate text-[10px] leading-tight">
-      {occupantName?.split(" ").at(-1) ?? "—"}
-    </span>
+    <span className="text-xs font-bold leading-tight">{slot.label}</span>
   </Button>
 );
 
