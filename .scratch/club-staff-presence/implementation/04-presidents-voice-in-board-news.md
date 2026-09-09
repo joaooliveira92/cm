@@ -29,7 +29,7 @@ and because the name is derived and fixed, the re-voicing changes the voice and 
 
 **Blocked by:** 01 — the presence derivation that supplies the President's name.
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Files:** `packages/shared/src/news/newsCopy.ts` and `newsProjection.ts`,
 `packages/shared/test/news/`, `apps/desktop/src/main/career/news.ts`, `apps/desktop/test/main/career/news.test.ts`.
@@ -46,3 +46,21 @@ and because the name is derived and fixed, the re-voicing changes the voice and 
 - [ ] Retroactive re-voicing is recorded where the note or ledger keeps design context (the spec's
       "said so" requirement), not left hidden in the diff.
 - [ ] `pnpm check:all` is green at this commit.
+
+---
+
+**Comments**
+
+- Reviewer: APPROVE (no blocker/high). Criterion 7 checked with a caveat — see "Pre-existing
+  failures" in `.ai/SPRINT-PLAN.md`. The ticket's phrase "through the `displayNames` seam" is loose:
+  the President is a person, not a display name, so `loadPresidentName` derives at the presence seam
+  in `staff.ts` (same club→nation join as `readClubStaff`), as the Decisions section intends.
+- Deferred LOW findings (not gates):
+  1. The season-driver helpers `reopenFinalFixture`, `forceLopsidedFixtures`, and
+     `loadSeasonStreamEvents` in `apps/desktop/test/main/career/news.test.ts` duplicate
+     `board-objectives.test.ts` and the export already living in `test/main/season/helpers.ts`.
+     Extract into `helpers.ts` the next time the season-boundary machinery changes, so the boundary
+     semantics are not edited in two files.
+  2. `loadPresidentName`'s `president === undefined` guard cannot fire (`derivePresenceStaff` always
+     returns `[president, physio]`); kept as the file's belt-and-braces norm — remove only if that
+     norm changes.
