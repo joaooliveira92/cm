@@ -15,9 +15,39 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
   const summaryResult = useAtomValue(seasonSummaryAtom(saveId));
 
   const error = typedError(summaryResult);
-  if (error) return <p className="p-8 text-destructive">{describeRpcError(error)}</p>;
-  if (summaryResult._tag === "Initial") return <p className="p-8 text-text-secondary">Loading season summary...</p>;
-  if (summaryResult._tag === "Failure") return <p className="p-8 text-destructive">Failed to load season summary</p>;
+  if (error)
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="seasonSummary"
+        aria-label="Season Summary"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-destructive">{describeRpcError(error)}</p>
+      </main>
+    );
+  if (summaryResult._tag === "Initial")
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="seasonSummary"
+        aria-label="Season Summary"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-text-secondary">Loading season summary...</p>
+      </main>
+    );
+  if (summaryResult._tag === "Failure")
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="seasonSummary"
+        aria-label="Season Summary"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-destructive">Failed to load season summary</p>
+      </main>
+    );
 
   const summary = summaryResult.value;
 
@@ -25,7 +55,12 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
   const rank = summary.finalPosition ? summary.standings.findIndex((row) => row.clubId === summary.clubId) + 1 : null;
 
   return (
-    <main tabIndex={-1} className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+    <main
+      tabIndex={-1}
+      data-focus-id="seasonSummary"
+      aria-label="Season Summary"
+      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+    >
       <h1 className="text-2xl font-bold">Season Summary</h1>
       <p className="mt-1 text-sm text-text-secondary">
         Season {summary.season.seasonNumber} &middot; {summary.season.phase.replace("_", " ")}

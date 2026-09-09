@@ -1,6 +1,7 @@
 import { type MatchSummary, type SaveId } from "@cm-clone/contracts";
 import { Button } from "../components/ui/button.js";
 import { dispatchAction } from "../actions/dispatch.js";
+import { FOCUS_RING } from "../focus.js";
 import { MatchProvider, useMatchContext } from "./MatchProvider.js";
 import { KickoffPanel } from "./KickoffPanel.js";
 import { MatchCommentaryStream } from "./MatchCommentaryStream.js";
@@ -66,7 +67,12 @@ export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => (
 const MatchDayLayout = () => {
   const { state } = useMatchContext();
   return (
-    <main className="bg-background p-8 text-foreground">
+    <main
+      tabIndex={-1}
+      data-focus-id="match"
+      aria-label="Match day"
+      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+    >
       <h1 className="text-2xl font-bold">Match day</h1>
       {state.error && <p className="mt-2 text-destructive">{state.error}</p>}
 

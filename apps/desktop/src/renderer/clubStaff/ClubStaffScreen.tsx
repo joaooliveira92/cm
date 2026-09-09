@@ -75,6 +75,7 @@ export const ClubStaffScreen = ({
   return (
     <main
       id="club-staff-page"
+      data-focus-id="clubStaff"
       aria-labelledby="club-staff-heading"
       className={PAGE_CLASS}
       tabIndex={-1}
@@ -134,7 +135,12 @@ const messageOf = (error: RpcClientError<"getClubStaff"> | null): string =>
  *  carrying one line. Labelled rather than heading-labelled because neither state knows the club's
  *  name — that arrives with the view. */
 const ClubStaffMessage = ({ message }: { readonly message: string }) => (
-  <main className={PAGE_CLASS} tabIndex={-1} aria-label="Club staff">
+  <main
+    className={PAGE_CLASS}
+    tabIndex={-1}
+    data-focus-id="clubStaff"
+    aria-label="Club staff"
+  >
     <h1 className="text-2xl font-bold">Club Staff</h1>
     <p className="mt-4 text-text-secondary">{message}</p>
   </main>

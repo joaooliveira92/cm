@@ -9,6 +9,7 @@ import { dispatchAction } from "../actions/dispatch.js";
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import { describeRpcError } from "../rpc.js";
+import { FOCUS_RING } from "../focus.js";
 import { MarketTable } from "./MarketTable.js";
 import { FreeAgentsTable } from "./FreeAgentsTable.js";
 import { IncomingBidsTable } from "./IncomingBidsTable.js";
@@ -33,7 +34,12 @@ const TransfersScreenInner = () => {
   // keeps `view` — that path renders the tables with a non-blocking line, F1).
   if (viewError !== null && view === undefined) {
     return (
-      <main className="bg-background p-8 text-foreground">
+      <main
+        tabIndex={-1}
+        data-focus-id="transfers"
+        aria-label="Transfers"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
         <h1 className="text-2xl font-bold">Transfers</h1>
         <Alert variant="destructive" className="mt-6">
           <p>{describeRpcError(viewError)}</p>
@@ -52,7 +58,12 @@ const TransfersScreenInner = () => {
   }
   if (view === undefined) {
     return (
-      <main className="bg-background p-8 text-foreground">
+      <main
+        tabIndex={-1}
+        data-focus-id="transfers"
+        aria-label="Transfers"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
         <h1 className="text-2xl font-bold">Transfers</h1>
         <div aria-busy="true" className="py-8 text-text-secondary">
           Loading transfers…
@@ -62,7 +73,12 @@ const TransfersScreenInner = () => {
   }
 
   return (
-    <main className="bg-background p-8 text-foreground">
+    <main
+      tabIndex={-1}
+      data-focus-id="transfers"
+      aria-label="Transfers"
+      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+    >
       <h1 className="text-2xl font-bold">Transfers</h1>
       <p className="mt-1 text-sm text-text-secondary">
         Transfer Window: {view.windowOpen ? "Open" : "Closed"} &middot; Transfer Budget:{" "}

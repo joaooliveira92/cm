@@ -41,6 +41,18 @@ describe("AC-15 — the focus coordinator", () => {
     expect(document.activeElement?.getAttribute("data-focus-id")).toBe("transfers");
   });
 
+  it("a bare screen request lands on the main region's accessible name, not the element's identity", () => {
+    // Ticket 06: the arrival target is the screen's labelled `<main>`, so what
+    // gets announced is where the user is ("Transfers"), not the opaque handle.
+    document.body.innerHTML = `
+      <main data-focus-id="transfers" tabindex="-1" aria-label="Transfers"></main>
+      <main data-focus-id="league" tabindex="-1" aria-label="League Table"></main>
+    `;
+    focusSemanticTarget({ screen: "transfers" });
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("Transfers");
+    expect(document.activeElement?.getAttribute("data-focus-id")).toBe("transfers");
+  });
+
   it("querying an absent region returns null and focus is a no-op", () => {
     expect(querySemanticTarget({ screen: "nope" })).toBeNull();
     focusSemanticTarget({ screen: "nope" });

@@ -124,9 +124,39 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     };
   }, [saveId, tactic, revision, setTactic, save]);
 
-  if (viewError) return <p className="p-8 text-text-danger">{describeRpcError(viewError)}</p>;
-  if (viewResult._tag === "Initial") return <p className="p-8 text-text-secondary">Loading tactics...</p>;
-  if (viewResult._tag === "Failure") return <p className="p-8 text-text-danger">Failed to load tactics</p>;
+  if (viewError)
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="tactics"
+        aria-label="Tactics"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-text-danger">{describeRpcError(viewError)}</p>
+      </main>
+    );
+  if (viewResult._tag === "Initial")
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="tactics"
+        aria-label="Tactics"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-text-secondary">Loading tactics...</p>
+      </main>
+    );
+  if (viewResult._tag === "Failure")
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="tactics"
+        aria-label="Tactics"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-text-danger">Failed to load tactics</p>
+      </main>
+    );
 
   const view = viewResult.value;
   const squadById = new Map(view.squad.map((player) => [player.id, player]));
@@ -134,7 +164,12 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     new Set(tactic.slots.filter((_, index) => index !== slotIndex).map((slot) => slot.playerId));
 
   return (
-    <main className="bg-background p-8 text-foreground">
+    <main
+      tabIndex={-1}
+      data-focus-id="tactics"
+      aria-label="Tactics"
+      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+    >
       <h1 className="text-2xl font-bold">Tactics</h1>
 
       <section className="mt-6">

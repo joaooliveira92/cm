@@ -1,5 +1,6 @@
 import { formatCalendarDate } from "@cm-clone/shared";
 import { type SaveId } from "@cm-clone/contracts";
+import type { ReactNode } from "react";
 import {
   Table,
   TableBody,
@@ -15,19 +16,51 @@ import {
   typedError,
   useAtomValue,
 } from "../rpc.js";
+import { FOCUS_RING } from "../focus.js";
+
+const LEAGUE_PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+
+/** The arrival target is the screen's labelled `<main>`, in every state (read-only screen: its
+ *  loading and error branches render the same labelled region so keyboard arrival is announced
+ *  the same way whether the read is settled or not). */
+const LeagueMain = ({ children }: { readonly children: ReactNode }) => (
+  <main
+    tabIndex={-1}
+    data-focus-id="league"
+    aria-label="League Table"
+    className={LEAGUE_PAGE_CLASS}
+  >
+    {children}
+  </main>
+);
 
 export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const tableResult = useAtomValue(leagueTableAtom(saveId));
   const tableError = typedError(tableResult);
 
-  if (tableError) return <p className="p-8 text-destructive">{describeRpcError(tableError)}</p>;
-  if (tableResult._tag === "Initial") return <p className="p-8 text-text-secondary">Loading league table...</p>;
-  if (tableResult._tag === "Failure") return <p className="p-8 text-text-danger">Failed to load league table</p>;
+  if (tableError)
+    return (
+      <LeagueMain>
+        <p className="p-8 text-destructive">{describeRpcError(tableError)}</p>
+      </LeagueMain>
+    );
+  if (tableResult._tag === "Initial")
+    return (
+      <LeagueMain>
+        <p className="p-8 text-text-secondary">Loading league table...</p>
+      </LeagueMain>
+    );
+  if (tableResult._tag === "Failure")
+    return (
+      <LeagueMain>
+        <p className="p-8 text-text-danger">Failed to load league table</p>
+      </LeagueMain>
+    );
 
   const table = tableResult.value;
 
   return (
-    <main className="bg-background p-8 text-foreground">
+    <LeagueMain>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">League Table</h1>
         {/* The season readout only. Time advances from the chrome's Continue, on
@@ -111,6 +144,6 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           </TableBody>
         </Table>
       </div>
-    </main>
+    </LeagueMain>
   );
 };

@@ -135,11 +135,39 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
   }, [retired]);
 
   const error = typedError(profileResult);
-  if (error) return <p className="p-8 text-destructive">{describeRpcError(error)}</p>;
+  if (error)
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="manager"
+        aria-label="Manager Profile"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-destructive">{describeRpcError(error)}</p>
+      </main>
+    );
   if (profileResult._tag === "Initial")
-    return <p className="p-8 text-text-secondary">Loading manager profile...</p>;
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="manager"
+        aria-label="Manager Profile"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-text-secondary">Loading manager profile...</p>
+      </main>
+    );
   if (profileResult._tag === "Failure")
-    return <p className="p-8 text-destructive">Failed to load manager profile</p>;
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="manager"
+        aria-label="Manager Profile"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-destructive">Failed to load manager profile</p>
+      </main>
+    );
 
   const view = profileResult.value;
   const { profile } = view;
@@ -161,7 +189,12 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
   };
 
   return (
-    <main tabIndex={-1} className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+    <main
+      tabIndex={-1}
+      data-focus-id="manager"
+      aria-label="Manager Profile"
+      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+    >
       {view.archived && (
         <Alert className="mb-4">[Archived] This career has ended. The save is read-only.</Alert>
       )}

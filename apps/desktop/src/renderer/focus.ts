@@ -13,13 +13,21 @@
  * roving-focus primitives for composite widgets. Resolution never lands on
  * `document.body` — the fallback chain ends at the region empty-state target,
  * then the screen primary, then the heading.
+ *
+ * A bare `{ screen }` target (no region, no item) resolves to the screen's
+ * labelled `<main>` region: each screen's main carries `data-focus-id={screenId}`
+ * and a `tabIndex={-1}` alongside its accessible name, so keyboard arrival and
+ * back-restoration both land on the element that announces where the user is.
+ * The former RouteView wrapper is a plain layout container and is never a focus
+ * target (ticket 06).
  */
 
 export type NavigationIntent = "keyboard" | "pointer";
 
 /** A focus target by semantic identity, not DOM position (note AC-14). */
 export interface SemanticTarget {
-  /** The screen id the RouteView wrapper is keyed on (`data-focus-id`). */
+  /** The screen id every navigable surface keys its labelled `<main>` region on
+   *  (`data-focus-id`), which is the arrival/restoration focus target. */
   readonly screen: string;
   /** Region within the screen. */
   readonly region?: string;

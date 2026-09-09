@@ -276,6 +276,10 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
     const main = document.querySelector("main") as HTMLElement;
     expect(main.tabIndex).toBe(-1);
     expect(main.className).toContain("focus-visible:ring-2");
+    // Ticket 06: the read-only main is the screen's arrival target — it carries
+    // the screen identity AND the name an assistive user actually hears.
+    expect(main.dataset.focusId).toBe("fixtures");
+    expect(main.getAttribute("aria-label")).toBe("Fixtures");
     main.focus();
     expect(main).toBe(document.activeElement);
   });
@@ -294,6 +298,8 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
     const main = document.querySelector("main") as HTMLElement;
     expect(main.tabIndex).toBe(-1);
     expect(main.className).toContain("focus-visible:ring-2");
+    expect(main.dataset.focusId).toBe("seasonSummary");
+    expect(main.getAttribute("aria-label")).toBe("Season Summary");
     main.focus();
     expect(main).toBe(document.activeElement);
   });

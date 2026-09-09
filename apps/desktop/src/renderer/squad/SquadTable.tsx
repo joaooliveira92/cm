@@ -294,7 +294,12 @@ export const SquadTable = () => {
 
   if (viewState._tag === "LoadError") {
     return (
-      <main className="bg-background p-8 text-foreground">
+      <main
+        tabIndex={-1}
+        data-focus-id="squad"
+        aria-label="Squad"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
         <h1 className="text-2xl font-bold">Squad</h1>
         <Alert variant="destructive" className="mt-6">
           <p>{viewState.error.message}</p>
@@ -320,7 +325,12 @@ export const SquadTable = () => {
 
   return (
     <div className="flex min-h-full flex-col bg-background text-foreground">
-      <main className="flex-1 p-8">
+      <main
+        tabIndex={-1}
+        data-focus-id="squad"
+        aria-label="Squad"
+        className={`flex-1 p-8 ${FOCUS_RING.join(" ")}`}
+      >
 
         <RefreshStatusLine count={allPlayers.length} refreshState={refreshState} copy={copy} />
 

@@ -1,5 +1,6 @@
 import type { ClubId, SaveId } from "@cm-clone/contracts";
 import { describeRpcError, teamScoutReportAtom, typedError, useAtomValue } from "../rpc.js";
+import { FOCUS_RING } from "../focus.js";
 
 /**
  * Team Scout Report (Screen 49) — what this club's scouts have learned about another.
@@ -26,23 +27,51 @@ export const TeamScoutReportScreen = ({
   // and neither is an error the manager did anything to cause.
   if (error) {
     return (
-      <main className="bg-background p-8 text-foreground">
+      <main
+        tabIndex={-1}
+        data-focus-id="teamScoutReport"
+        aria-label="Team Scout Report"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
         <h1 className="text-2xl font-bold">Team Scout Report</h1>
         <p className="mt-4 text-text-secondary">{describeRpcError(error)}</p>
       </main>
     );
   }
   if (result._tag === "Initial") {
-    return <p className="p-8 text-text-secondary">Loading scout report...</p>;
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="teamScoutReport"
+        aria-label="Team Scout Report"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-text-secondary">Loading scout report...</p>
+      </main>
+    );
   }
   if (result._tag === "Failure") {
-    return <p className="p-8 text-text-danger">Failed to load the scout report</p>;
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="teamScoutReport"
+        aria-label="Team Scout Report"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-text-danger">Failed to load the scout report</p>
+      </main>
+    );
   }
 
   const report = result.value;
 
   return (
-    <main className="bg-background p-8 text-foreground">
+    <main
+      tabIndex={-1}
+      data-focus-id="teamScoutReport"
+      aria-label="Team Scout Report"
+      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+    >
       <h1 className="text-2xl font-bold">{report.targetClubName}</h1>
       <p className="text-sm text-text-secondary">Team Scout Report</p>
 

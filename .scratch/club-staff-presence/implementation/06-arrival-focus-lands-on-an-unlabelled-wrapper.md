@@ -26,15 +26,39 @@ answer for the screens with no heading at all.
 
 **Blocked by:** none.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/renderer/focus.ts`, `apps/desktop/src/renderer/router/RouteView.tsx`,
 every screen's `<main>`, and the renderer focus tests.
 
-- [ ] Arrival focus lands on an element with an accessible name, on every screen, and a test
+- [x] Arrival focus lands on an element with an accessible name, on every screen, and a test
       asserts the announced name rather than the element's identity.
-- [ ] The choice between labelling `<main>`, naming the wrapper, and targeting the `<h1>` is
+- [x] The choice between labelling `<main>`, naming the wrapper, and targeting the `<h1>` is
       recorded with its reason, including what happens on a screen with no heading.
-- [ ] Back-restoration (`BACK_RESTORE_MARKER`) lands on the same target as forward arrival, so
+- [x] Back-restoration (`BACK_RESTORE_MARKER`) lands on the same target as forward arrival, so
       leaving and returning are not two different experiences.
-- [ ] `pnpm check:all` is green, and the desktop e2e suite passes.
+- [x] `pnpm check:all` is green, and the desktop e2e suite passes.
+
+---
+
+**Comments**
+
+- Implemented 2026-09-09. The decision (recorded in
+  `.agents/notes/implemented/architecture/2026-09-09-arrival-focus-lands-on-the-labelled-main-region.md`)
+  labels every `<main>` and moves the target onto it; a screen with no heading gets an `aria-label`
+  on the region. Every state (loading/ready/error) of the keyboard-navigable screens renders inside
+  the labelled main, so arrival lands the same way fast or slow.
+- Reviewer: ACCEPT. Criterion 4 checked with a caveat — `pnpm check:all` is red at the dev baseline
+  (see "Repo-level block", `.ai/SPRINT-PLAN.md`): 2 typecheck errors in `Navbar.tsx` and the match
+  live-panel failures reproduce with this diff stashed. This diff adds zero new failures on any gate
+  (typecheck, lint, effect-lint, verify-*, renderer tests, and the keyboard/router e2e specs — the
+  "g <key> / g b", AC-15 pointer-keyboard, and palette focus assertions all pass).
+- Deferred (not gates, other work's debt):
+  1. `Navbar.tsx` calls its extracted nav components with `revealKey`/`revealKeys` props they no
+     longer declare — the keyboard reveal-keys went unrendered when the react-composition-audit
+     extraction landed. The caller still computes them, so re-wiring belongs to that effort's ready
+     ticket 09, not here.
+  2. `test/renderer/match/live-keyboard.test.tsx` (16) and the two match-family e2e flows
+     (`keyboard.spec` AC-20, `router.spec` "Match Day arrival") fail at HEAD — the same live-panel
+     family as the squad work's red tests. Not filed anywhere; the next desktop-suite-red pass
+     should split it into its own ticket.

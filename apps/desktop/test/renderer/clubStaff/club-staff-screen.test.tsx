@@ -94,9 +94,10 @@ describe("ticket 04 — the Club Staff page renders who works at the club", () =
 
   it("names the club in the `<main>` region's label", async () => {
     mount(populatedStaffView());
-    await waitFor(() => {
-      expect(screen.getByRole("main", { name: /Northport Rovers/ })).toBeTruthy();
-    });
+    const main = await screen.findByRole("main", { name: /Northport Rovers/ });
+    // The club-labelled main is also the arrival-focus target (ticket 06): the
+    // screen identity key and the name that gets announced live on the same element.
+    expect(main.getAttribute("data-focus-id")).toBe("clubStaff");
   });
 
   it("renders no focusable row", async () => {

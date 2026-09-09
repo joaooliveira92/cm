@@ -10,15 +10,41 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const fixturesResult = useAtomValue(fixturesAtom(saveId));
 
   const error = typedError(fixturesResult);
-  if (error) return <p className="p-8 text-destructive">{describeRpcError(error)}</p>;
+  if (error)
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="fixtures"
+        aria-label="Fixtures"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-destructive">{describeRpcError(error)}</p>
+      </main>
+    );
   if (fixturesResult._tag === "Initial")
     return (
-      <p className="flex items-center gap-2 p-8 text-text-secondary">
-        <Spinner /> Loading fixtures...
-      </p>
+      <main
+        tabIndex={-1}
+        data-focus-id="fixtures"
+        aria-label="Fixtures"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="flex items-center gap-2 p-8 text-text-secondary">
+          <Spinner /> Loading fixtures...
+        </p>
+      </main>
     );
   if (fixturesResult._tag === "Failure")
-    return <p className="p-8 text-destructive">Failed to load fixtures</p>;
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="fixtures"
+        aria-label="Fixtures"
+        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-destructive">Failed to load fixtures</p>
+      </main>
+    );
 
   const fixtures = fixturesResult.value;
 
@@ -30,7 +56,12 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   }
 
   return (
-    <main tabIndex={-1} className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+    <main
+      tabIndex={-1}
+      data-focus-id="fixtures"
+      aria-label="Fixtures"
+      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+    >
       <h1 className="text-2xl font-bold">Fixtures</h1>
       <p className="mt-1 text-sm text-text-secondary">
         Season {fixtures.season.seasonNumber} &middot; {fixtures.fixtures.length} fixtures

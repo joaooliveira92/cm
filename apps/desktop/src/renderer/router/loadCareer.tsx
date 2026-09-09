@@ -6,6 +6,7 @@ import { type RpcClientError } from "../rpc/errors.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
 import { RouteView } from "./RouteView.js";
 import { PANEL } from "../theme.js";
+import { FOCUS_RING } from "../focus.js";
 import { Header } from "../chrome/header/index.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
@@ -56,7 +57,12 @@ export const LoadCareerScreen = () => {
           }
         />
 
-        <main className="mx-auto w-full max-w-3xl flex-1 overflow-y-auto p-8">
+        <main
+          tabIndex={-1}
+          data-focus-id="loadCareer"
+          aria-label="Load Career"
+          className={`mx-auto w-full max-w-3xl flex-1 overflow-y-auto p-8 ${FOCUS_RING.join(" ")}`}
+        >
           <section className={PANEL}>
             <h2 className="text-lg font-semibold">Saved careers</h2>
             <ul className="mt-2 space-y-1">

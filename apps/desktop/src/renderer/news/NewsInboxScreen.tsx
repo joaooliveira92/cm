@@ -187,11 +187,39 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const selected = visible.find((message) => message.messageId === selectedId) ?? null;
 
   const loadError = typedError(inboxResult);
-  if (loadError) return <p className="p-8 text-destructive">{describeRpcError(loadError)}</p>;
+  if (loadError)
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="news"
+        aria-label="News Inbox"
+        className={`bg-background p-6 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-destructive">{describeRpcError(loadError)}</p>
+      </main>
+    );
   if (inboxResult._tag === "Initial")
-    return <p className="p-8 text-text-secondary">Loading news...</p>;
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="news"
+        aria-label="News Inbox"
+        className={`bg-background p-6 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-text-secondary">Loading news...</p>
+      </main>
+    );
   if (inboxResult._tag === "Failure")
-    return <p className="p-8 text-destructive">Failed to load news.</p>;
+    return (
+      <main
+        tabIndex={-1}
+        data-focus-id="news"
+        aria-label="News Inbox"
+        className={`bg-background p-6 text-foreground ${FOCUS_RING.join(" ")}`}
+      >
+        <p className="p-8 text-destructive">Failed to load news.</p>
+      </main>
+    );
 
   const counts = inboxResult.value.counts;
   const patchError = typedError(patchState);
@@ -234,6 +262,7 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   return (
     <main
       tabIndex={-1}
+      data-focus-id="news"
       aria-label="News Inbox"
       className={`bg-background p-6 text-foreground ${FOCUS_RING.join(" ")}`}
     >
