@@ -1,7 +1,7 @@
 # 01: The desktop suite is red, and one primitive probably explains most of it
 
 Type: bug
-Status: ready-for-agent
+Status: claimed
 
 ## What was measured
 
