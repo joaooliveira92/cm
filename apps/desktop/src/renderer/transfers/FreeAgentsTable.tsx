@@ -1,4 +1,5 @@
 import { TablePanel } from "../table/TablePanel.js";
+import { TableLoadingProvider } from "../table/TableLoadingProvider.js";
 import { useTransfers } from "./TransfersProvider.js";
 import { freeAgentColumns } from "../table/transfers/freeAgentColumns.js";
 import { STATE_COPY } from "../table/viewState.js";
@@ -25,42 +26,42 @@ export const FreeAgentsTable = () => {
   return (
     <section className="mt-6">
       <h2 className="text-lg font-semibold">Free Agents</h2>
-      <TablePanel
-        tableId={FREE}
-        screen="transfers"
-        region="freeAgentTable"
-        label="Free Agents"
-        columns={freeAgentColumns()}
-        rows={freeFiltered}
-        unfilteredRowCount={freeAgentRows.length}
-        sort={free.sort}
-        onSortChange={onSortChangeFor(FREE)}
-        filters={free.filters}
-        onSetFilters={(next) => {
-          setFiltersFor(FREE, next);
-          speak(FREE, "filter-set", `${next.length === 0 ? "Cleared the Free Agents filters." : "Filters updated."}`);
-        }}
-        filterArea={
-          <TransferFilterBar
-            label="Free Agents"
-            filters={free.filters}
-            onSetFilters={(next) => {
-              setFiltersFor(FREE, next);
-              speak(FREE, "filter-set", `${next.length === 0 ? "Cleared the Free Agents filters." : "Filters updated."}`);
-            }}
-          />
-        }
-        activeId={free.active}
-        onActiveChange={onActiveChangeFor(FREE)}
-        onBookmarkChange={onBookmarkChangeFor(FREE)}
-        selectedId={selected !== null && selected.tableId === FREE ? selected.player.id : null}
-        onToggleSelection={onToggleSelectionFor(FREE)}
-        onRowPrimary={onRowPrimaryFor(FREE)}
-        busy={refreshState._tag === "Refreshing"}
-        announcement={free.announcement?.message ?? ""}
-        copy={STATE_COPY["free-agents"]}
-        loadError={null}
-      />
+      <TableLoadingProvider busy={refreshState._tag === "Refreshing"} loadError={null}>
+        <TablePanel
+          tableId={FREE}
+          screen="transfers"
+          region="freeAgentTable"
+          label="Free Agents"
+          columns={freeAgentColumns()}
+          rows={freeFiltered}
+          unfilteredRowCount={freeAgentRows.length}
+          sort={free.sort}
+          onSortChange={onSortChangeFor(FREE)}
+          filters={free.filters}
+          onSetFilters={(next) => {
+            setFiltersFor(FREE, next);
+            speak(FREE, "filter-set", `${next.length === 0 ? "Cleared the Free Agents filters." : "Filters updated."}`);
+          }}
+          filterArea={
+            <TransferFilterBar
+              label="Free Agents"
+              filters={free.filters}
+              onSetFilters={(next) => {
+                setFiltersFor(FREE, next);
+                speak(FREE, "filter-set", `${next.length === 0 ? "Cleared the Free Agents filters." : "Filters updated."}`);
+              }}
+            />
+          }
+          activeId={free.active}
+          onActiveChange={onActiveChangeFor(FREE)}
+          onBookmarkChange={onBookmarkChangeFor(FREE)}
+          selectedId={selected !== null && selected.tableId === FREE ? selected.player.id : null}
+          onToggleSelection={onToggleSelectionFor(FREE)}
+          onRowPrimary={onRowPrimaryFor(FREE)}
+          announcement={free.announcement?.message ?? ""}
+          copy={STATE_COPY["free-agents"]}
+        />
+      </TableLoadingProvider>
     </section>
   );
 };

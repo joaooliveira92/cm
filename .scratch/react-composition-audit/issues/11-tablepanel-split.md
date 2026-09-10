@@ -1,7 +1,7 @@
 # 11 — Refactor TablePanel: split into table content and filters
 
 Type: task
-Status: claimed
+Status: resolved
 
 > **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
 > `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so
