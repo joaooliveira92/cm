@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
+import { Table } from "../components/ui/table.js";
 import type { FilterClause, SortState, TableId, TableRowShape } from "./types.js";
 import type { TableFocusBookmark } from "./focusBookmark.js";
 import { DataTable } from "./DataTable.js";
@@ -103,6 +104,7 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
   });
 
   const orderedIds = visibleRowIds(table);
+  const tableRows = table.getRowModel().rows;
 
   const filterActive = rows.length !== unfilteredRowCount;
 
@@ -161,14 +163,25 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
             selectedId={selectedId}
             onToggleSelection={onToggleSelection}
             onSortChange={onSortChange}
-            busy={busy}
+            ariaBusy={busy}
             onRowPrimary={onRowPrimary}
             ariaLabel={label}
             announcement={announcement}
-            alertMessage={alertMessage}
             initialScrollLeft={initialScrollLeft}
             onScrollCommit={onScrollCommit}
-          />
+          >
+            {tableRows.length > 0 && (
+              <Table className="min-w-full text-left">
+                <DataTable.Header table={table} />
+                <DataTable.Body rows={tableRows} />
+              </Table>
+            )}
+          </DataTable>
+          {alertMessage !== undefined && (
+            <Alert variant="destructive" className="mt-2">
+              {alertMessage}
+            </Alert>
+          )}
         </>
       )}
     </>

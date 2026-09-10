@@ -18,7 +18,7 @@ import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
-import { scrollEdges } from "../../../src/renderer/table/DataTable.js";
+import { scrollEdges } from "../../../src/renderer/table/useScrollEdges.js";
 import {
   RESERVED_STATUSES,
   statusesOf,

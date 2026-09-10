@@ -12,6 +12,7 @@ import {
 import { FOCUS_RING } from "../focus.js";
 import { useSquad } from "./SquadProvider.js";
 import { DataTable } from "../table/DataTable.js";
+import { Table } from "../components/ui/table.js";
 import { SQUAD_TOGGLEABLE_COLUMN_IDS } from "../table/features/visibility.js";
 import { isSquadViewId, SQUAD_VIEWS, squadViewById, type SquadViewId } from "./squadViews.js";
 import { SquadPositionList } from "./SquadPositionList.js";
@@ -278,6 +279,7 @@ export const SquadTable = () => {
     orderedIds,
     table,
   } = state;
+  const rows = table.getRowModel().rows;
   const {
     setBookmark,
     commitScroll,
@@ -379,15 +381,21 @@ export const SquadTable = () => {
             selectedId={selectedId}
             onToggleSelection={onToggleSelection}
             onSortChange={onSortCycle}
-            busy={refreshState._tag === "Refreshing"}
-            enableShiftScroll
+            ariaBusy={refreshState._tag === "Refreshing"}
             onRowPrimary={onRowPrimary}
-            onRowDragStart={(event, id) => writeLineupDrag(event, "roster", id)}
+            onRowDragStart={(event: React.DragEvent<HTMLButtonElement>, id: string) => writeLineupDrag(event, "roster", id)}
             ariaLabel="Squad"
             announcement={announcement?.message ?? ""}
             initialScrollLeft={scrollLeft}
             onScrollCommit={commitScroll}
-          />
+          >
+            {rows.length > 0 && (
+              <Table className="min-w-full text-left">
+                <DataTable.Header table={table} />
+                <DataTable.Body rows={rows} />
+              </Table>
+            )}
+          </DataTable>
         )}
       </main>
 

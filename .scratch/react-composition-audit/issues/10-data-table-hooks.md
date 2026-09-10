@@ -1,7 +1,7 @@
 # 10 — Refactor DataTable: extract scroll and keyboard hooks
 
 Type: task
-Status: ready-for-agent
+Status: claimed
 
 > **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
 > `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so
