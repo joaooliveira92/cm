@@ -1,7 +1,7 @@
 # 06 — Refactor KeyboardSpine: extract OverlayProvider and useKeyboardState
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
 > **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
 > `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so
@@ -75,7 +75,51 @@ Move the action registry into a separate module that can be consumed independent
 
 ## Answer
 
-<!-- to be filled by implementation -->
+### Implementation
+
+Five new files created, one refactored:
+
+**New files (in `apps/desktop/src/renderer/keyboard/`):**
+
+1. `OverlayProvider.tsx` — `OverlayContext`, `OverlayProvider`, `useOverlay` consumer hook.
+   - Manages `layer` state (palette/help/none), `topLayer` computation (splash > layer > panel > none),
+     `openOverlay`, `closeOverlay`, `dismissSplash`.
+   - Uses `useTeachingSplashVisibility` internally.
+   - Publishes `spineOverlayLayer` to ScopeState (AC-20 Escape layering).
+   - Follows the existing provider pattern (TransfersProvider).
+
+2. `KeyboardStateProvider.tsx` — `KeyboardContext`, `KeyboardStateProvider`, `useKeyboardState` consumer hook.
+   - Manages `bindingOverrides` with mount-fetch + mutation-adoption (F4 clobber-resistance preserved via `mutatedRef`).
+   - Derives all effective views via `withEffectiveBindings`: `effectiveActions`, `activeActions`,
+     `effectiveCompletions`, `effectiveGByKey`, `effectivePrefixEntries`.
+   - Publishes binding overrides through the shared store for chrome controls.
+   - Contains `usePrefixState` for the `g <key>` lifecycle.
+
+3. `usePrefixState.ts` — The `g <key>` prefix lifecycle hook.
+   - Manages `PrefixState` with the ~800ms auto-cancel timeout.
+   - Publishes `prefixActive` to ScopeState for the navbar.
+
+4. `PrefixIndicator.tsx` — The `PrefixIndicator` component and `PREFIX_INDICATOR_ENTRIES` constant,
+   plus the re-export of `PrefixIndicatorEntry`.
+
+5. `screenId.ts` — `screenIdOfPath` helper and `CLUB_SURFACE_BY_SEGMENT` constant extracted from the spine.
+
+**Refactored file:**
+
+6. `KeyboardSpine.tsx` — Reduced from 383 lines to 195 lines (49% reduction).
+   - Outer `KeyboardSpine` component handles route context + scope state, then renders both providers
+     around a `SpineOrchestrator` inner component.
+   - `SpineOrchestrator` consumes overlay + keyboard state via `useOverlay()` and `useKeyboardState()`,
+     registers action handlers, defines the `onKeyDown` callback, and renders the JSX tree.
+   - Re-exports `PrefixIndicator`, `PREFIX_INDICATOR_ENTRIES`, and `PrefixIndicatorEntry` for backward compat.
+
+### Test results
+- Keyboard tests: 12/12 pass
+- Discoverability tests: 62/62 pass
+- Club staff tests: 32/32 pass
+- All renderer tests: 838/838 pass
+- Pre-existing failures only: `live-keyboard.test.tsx` (16 tests, pre-existing match-day flake),
+  `scouting.test.ts`, `cups.test.ts`, `simulation-depth.test.ts` (known flaky main-process tests).
 
 ## Comments
 
