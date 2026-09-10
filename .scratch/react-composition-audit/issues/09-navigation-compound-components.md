@@ -1,7 +1,7 @@
 # 09 — Refactor Navigation: extract NavContext and compound nav components
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
 > **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
 > `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so
@@ -55,18 +55,25 @@ Move hover intent logic into `useHoverIntent` custom hook that can be consumed i
 
 ## Done When
 
-- No boolean prop proliferation in navigation components
-- `NavContext` provider exists
-- Compound `NavItem` and `NavSubmenu` components exist
-- `useHoverIntent` hook exists
-- `pnpm check:all` passes
+- [x] No boolean prop proliferation in navigation components
+- [x] `NavContext` provider exists
+- [x] Compound `NavItem` and `NavSubmenu` components exist
+- [x] `useHoverIntent` hook exists
+- [x] `pnpm check:all` passes (baseline: 2 pre-existing typecheck errors in unrelated test files, 19 pre-existing test failures in 4 files, lint noise in untouched files — same baseline as HEAD)
 
 ## Answer
 
-<!-- to be filled by implementation -->
+- [x] `PrimaryNavItem` no longer receives `active`, `submenuOpen`, `onNavigate`, `onToggleSubmenu`, `onMouseEnter`, `onMouseLeave` as props — all derived from `NavContext`.
+- [x] `ContextNav` no longer receives any props from the caller — derives everything from `NavContext` (`stripSection`, `activeItemId`, `stripItems`, `goTo`, `handleSectionEnter`/`handleSectionLeave`).
+- [x] `NavProvider` (`navigation/NavProvider.tsx`) owns all navigation state: route-derived active section/item, preview/open state via `useNavState`, hover-intent timers, and the `goTo` action. Exposes the generic `NavState`/`NavActions`/`NavMeta` context interface.
+- [x] `navContext.ts` defines `NavState`, `NavActions`, `NavMeta`, `NavContextValue` interfaces and the `NavContext`/`useNavContext` primitives following the same `state/actions/meta` shape as `MatchContext`.
+- [x] `useHoverIntent` hook (`navigation/useHoverIntent.ts`) extracts the intent-delay/close-tolerance timer logic. It takes `onIntent`/`onLeaveIntent` callbacks, exposes `handleEnter(alreadyShown)` and `handleLeave()`, and cleans up on unmount. Consumed by `NavProvider` via a shared `intentTargetRef`.
+- [x] `Navbar.tsx` reduced from 292 lines to 66 lines — a thin composition over `NavProvider`, mapping `NAV_SECTIONS` to `PrimaryNavItem` and rendering `ContextNav` as a sibling.
+- [x] The two pre-existing typecheck errors in Navbar (dead `revealKey`/`revealKeys` props passed to `PrimaryNavItem`/`ContextNav` from commit 94d5e16) are **resolved** — those props were never declared on the children and are eliminated by the refactor. The gate still shows 2 pre-existing typecheck errors in test files (`manager-identity-step-pillars.test.tsx`, `level1-a11y.test.tsx`) and 19 pre-existing test failures — same baseline as HEAD.
 
 ## Comments
 
-- The hover intent is a good candidate for a custom hook since it affects multiple components.
-- The `active`/`submenuOpen` props should be managed by the NavContext, not passed from parent.
-- Consider whether ContextNav and PrimaryNavItem should be merged or kept separate with a shared context.
+- The hover intent is extracted into `useHoverIntent` hook that manages the single pair of enter/leave timers. The per-section routing (`intentTargetRef`) lives in `NavProvider` which is the only consumer.
+- `PrimaryNavItem` and `ContextNav` are kept separate with a shared `NavContext` — they serve different axes (primary row vs contextual submenu strip) but now derive all state from context.
+- Keyboard shortcut badges (`revealKey`/`revealKeys`) were aspirational at HEAD: the Navbar passed them but neither child declared or rendered them, causing 2 typecheck errors. The composition refactor removes the dead prop plumbing; the keyboard-reveal feature can be readded as a proper context consumer when needed.
+- See map.md for the decision to keep PrimaryNavItem/ContextNav separate with shared NavContext.

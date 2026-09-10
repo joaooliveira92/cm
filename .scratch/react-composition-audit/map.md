@@ -14,7 +14,12 @@ A refactored codebase where god components have been split into compound compone
 
 ## Decisions so far
 
-<!-- Will be populated as tickets are resolved -->
+- **09 (nav, 2026-09-10):** Keep `PrimaryNavItem` and `ContextNav` as separate components sharing a
+  `NavContext` (state/actions/meta), rather than merging them into one compound. They serve different
+  axes of the redesigned-navbar spec — the primary row and the contextual submenu strip — and context
+  removes the boolean props/prop-drilling between them. The shared state (route-derived active
+  section/item, preview/open, hover-intent timers) lives in `NavProvider`. Fallback to `useHoverIntent`
+  hook for the intent/close-tolerance timers, per-section routing via a single shared target ref.
 
 ## Out of scope
 

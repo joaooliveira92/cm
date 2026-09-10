@@ -1,50 +1,30 @@
-import { FOCUS_RING, type NavigationIntent } from "../../focus.js";
+import { FOCUS_RING } from "../../focus.js";
 import { intentOfClick } from "../adapter.js";
+import { useNavContext } from "../navContext.js";
 import type { NavItem, NavSection } from "../nav-config.js";
 
-/**
- * The primary-level navigation item: one section in the center zone.
- *
- * The item is two adjacent controls (never nested buttons): the label button
- * navigates to the section's default route, and the chevron button toggles the
- * context submenu. Hovering the container starts the preview intent via
- * `onMouseEnter`/`onMouseLeave`.
- */
 export const PrimaryNavItem = ({
   section,
-  active,
   badgeCount,
   badgeLabel,
-  submenuOpen,
   children,
-  onNavigate,
-  onToggleSubmenu,
-  onMouseEnter,
-  onMouseLeave,
 }: {
   readonly section: NavSection;
-  readonly active: boolean;
-  /** An unanswered-work count for this section, or `undefined` for the sections that have none.
-   *  Rendered with its own accessible label rather than as a bare number, so it is not a count
-   *  whose meaning only the colour and position convey. */
   readonly badgeCount?: number | undefined;
   readonly badgeLabel?: string | undefined;
-  readonly submenuOpen: boolean;
   readonly children: ReadonlyArray<NavItem>;
-  /** Receives how the item was activated, so keyboard arrivals can take focus (AC-15). */
-  readonly onNavigate: (intent: NavigationIntent) => void;
-  readonly onToggleSubmenu: () => void;
-  readonly onMouseEnter: () => void;
-  readonly onMouseLeave: () => void;
 }) => {
+  const { state, actions } = useNavContext();
+  const active = state.activeSectionId === section.id;
+  const submenuOpen = state.isSubmenuVisible(section.id);
   const Icon = section.icon;
   const hasChildren = children.length > 0;
 
   return (
     <div
       className="relative flex h-10 shrink-0 items-center"
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      onMouseEnter={() => actions.handleSectionEnter(section.id)}
+      onMouseLeave={actions.handleSectionLeave}
     >
       <div
         className={`flex items-center gap-1.5 rounded-control pl-3 pr-1 text-sm transition-colors ${
@@ -57,7 +37,7 @@ export const PrimaryNavItem = ({
           type="button"
           aria-current={active ? "page" : undefined}
           className="flex items-center gap-1.5 whitespace-nowrap py-1"
-          onClick={(event) => onNavigate(intentOfClick(event))}
+          onClick={(event) => actions.goTo(section.defaultDestination, intentOfClick(event))}
         >
           {Icon !== undefined && <Icon className="size-4" />}
           <span>{section.label}</span>
@@ -79,7 +59,7 @@ export const PrimaryNavItem = ({
             className={`flex size-4 items-center justify-center text-xs transition-transform ${
               submenuOpen ? "rotate-180" : ""
             }`}
-            onClick={onToggleSubmenu}
+            onClick={() => actions.handleToggleSubmenu(section.id)}
           >
             ▾
           </button>
