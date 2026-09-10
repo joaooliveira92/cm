@@ -47,6 +47,11 @@ export const usePrefixHintKey = (
  * The badge is a sibling of the control, not a child, and `aria-hidden`: the
  * control's accessible name stays its label, and the `PrefixIndicator` live
  * region already announces the full key list.
+ *
+ * It paints in the selected club's header pair through `--color-header-*`, which
+ * the career header scopes (`chrome/header/club-scheme.ts`), so the foreground is
+ * the contrast-corrected one. Outside a club header the tokens fall back to the
+ * neutral chrome.
  */
 export const ShortcutHint = ({
   destination,
@@ -63,7 +68,7 @@ export const ShortcutHint = ({
         <Kbd
           aria-hidden
           data-shortcut-hint={destination}
-          className="absolute -top-1.5 -left-1.5 z-10 border-text-highlight/60 bg-panel-bg-strong text-text-highlight shadow-md"
+          className="absolute -top-1.5 -left-1.5 z-10 border-header-fg/50 bg-header-bg text-header-fg shadow-md"
         >
           {hintKey}
         </Kbd>
