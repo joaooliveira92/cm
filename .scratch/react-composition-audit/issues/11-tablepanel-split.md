@@ -1,7 +1,7 @@
 # 11 — Refactor TablePanel: split into table content and filters
 
 Type: task
-Status: ready-for-agent
+Status: claimed
 
 > **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
 > `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so
@@ -11,6 +11,7 @@ Status: ready-for-agent
 > **Still open and unstarted**, verified 2026-09-06 against the tree: none of the components,
 > providers or hooks in its Done-When list exist yet. Moved to `ready-for-agent` so the frontier
 > scan can see it.
+
 ## Problem
 
 `TablePanel.tsx` (239 lines) has several composition issues:
@@ -23,24 +24,31 @@ Status: ready-for-agent
 ## Solution
 
 ### Phase 1: Create `TablePanelContent` compound component
+
 Extract the table content portion:
+
 - `TablePanelContent.Root` – the table container
 - `TablePanelContent.Header` – sortable headers
 - `TablePanelContent.Body` – table rows
 
 ### Phase 2: Create `TableFilters` compound component
+
 Extract filter controls:
+
 - `TableFilters.Search` – name search
 - `TableFilters.Position` – position filter
 - `TableFilters.Reset` – filter reset button
 
 ### Phase 3: Lift loading states to provider
+
 Create `TableLoadingProvider` that manages:
+
 - Loading states (busy)
 - Error states (loadError)
 - Loading progress
 
 ### Phase 4: Replace boolean props
+
 - Remove `enableNameSearch`, `enablePositionFilter` booleans
 - Use component variants: `TablePanel.SearchEnabled`, `TablePanel.PositionFilterEnabled`
 - Replace `busy` with `TableLoadingProvider` loading state
