@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { type SaveId, type SaveSummary } from "@cm-clone/contracts";
 import { Effect, Result } from "effect";
 import { listSaves, loadSave } from "../rpc.js";
+import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
 import { type RpcClientError } from "../rpc/errors.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
 import { RouteView } from "./RouteView.js";
@@ -32,6 +33,12 @@ export const LoadCareerScreen = () => {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // The retry affordance is a registered Action, not a bare onClick: the
+  // registry holds the structure (`retry-save-list`, loadCareer scope) and this
+  // live handler closes over the refresh, so the button, palette, and help
+  // overlay dispatch by the same stable id (ADR-0012).
+  useEffect(() => registerActionHandler("retry-save-list", () => void refresh()), [refresh]);
 
   const handleContinue = async (id: SaveId): Promise<void> => {
     const outcome = await Effect.runPromise(loadSave(id).pipe(Effect.result));
@@ -85,7 +92,13 @@ export const LoadCareerScreen = () => {
               {listSavesError && (
                 <div className="mt-2">
                   <p className="text-sm text-destructive">Failed to load saves.</p>
-                  <Button type="button" variant="secondary" className="mt-1" onClick={() => refresh()}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="mt-1"
+                    data-action-id="retry-save-list"
+                    onClick={() => void dispatchAction("retry-save-list")}
+                  >
                     Retry
                   </Button>
                 </div>

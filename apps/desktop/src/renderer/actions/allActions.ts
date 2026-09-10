@@ -113,6 +113,25 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
     available: ready,
     handler: () => undefined,
   },
+  // main menu + load career — the one pre-career action: re-reading the Save
+  // repository after a failure (save-list-error-handling ticket 01). One id
+  // across two scopes is legal — same-id Actions in different scopes are
+  // distinct records (registry note) — and exactly one screen is mounted at a
+  // time, so the live handler map never serves a stale screen.
+  {
+    id: "retry-save-list",
+    label: "Retry loading saves",
+    scope: "mainMenu",
+    available: () => true,
+    handler: () => undefined,
+  },
+  {
+    id: "retry-save-list",
+    label: "Retry loading saves",
+    scope: "loadCareer",
+    available: () => true,
+    handler: () => undefined,
+  },
   // tactics
   { id: "save-tactic", label: "Save the tactic", scope: "tactics", available: ready, handler: () => undefined, primary: true },
   { id: "set-formation", label: "Choose a formation", scope: "tactics", available: ready, handler: () => undefined },

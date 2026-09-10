@@ -1,7 +1,7 @@
 # 01 — The saved-game browser swallows save-repository failures
 
 Type: bug-fix
-Status: ready-for-agent
+Status: claimed
 
 ## Problem
 

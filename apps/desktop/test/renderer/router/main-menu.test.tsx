@@ -3,6 +3,8 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MainMenuScreen } from "../../../src/renderer/router/mainMenu.js";
 import { navigate } from "../../../src/renderer/navigation/adapter.js";
+import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";
+import { hasActionHandler, resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 
 vi.mock("../../../src/renderer/navigation/adapter.js", () => ({
   navigate: vi.fn(),
@@ -42,6 +44,7 @@ const MENU_BUTTONS = () =>
 
 beforeEach(() => {
   mountedNavigate.mockClear();
+  resetActionHandlers();
 });
 afterEach(cleanup);
 
@@ -236,5 +239,34 @@ describe("Main Menu — keyboard navigation", () => {
     expect(buttons[MENU_LABELS.length - 1]).toBe(document.activeElement);
     fireEvent.click(buttons[MENU_LABELS.length - 1]!);
     expect(screen.getByRole("dialog", { name: "Exit application?" })).toBeTruthy();
+  });
+});
+
+describe("Main Menu — save-list retry Action", () => {
+  it("registers the retry as a mainMenu-scoped Action and wires the button to it", async () => {
+    mountWithRepositoryFailure();
+
+    const retry = await screen.findByRole("button", { name: "Retry" });
+    expect(retry.getAttribute("data-action-id")).toBe("retry-save-list");
+
+    // One id, two scope records — the registry model's legal cross-scope
+    // duplicate: the retry is the same operation on both pre-career screens.
+    const entries = ALL_ACTIONS.filter((action) => action.id === "retry-save-list");
+    expect(entries.map((action) => action.scope).sort()).toEqual(["loadCareer", "mainMenu"]);
+    expect(hasActionHandler("retry-save-list")).toBe(true);
+  });
+
+  it("retrying through the Action recovers from an unreachable repository", async () => {
+    mountWithRepositoryFailure();
+    await screen.findByText(/Saved careers could not be read/);
+
+    (window as unknown as { cmClone: { call: unknown } }).cmClone = {
+      call: async () => ({ _tag: "Success", value: [] }),
+    };
+
+    screen.getByRole("button", { name: "Retry" }).click();
+
+    await screen.findByText("No saved careers yet");
+    expect(screen.queryByText(/Saved careers could not be read/)).toBeNull();
   });
 });

@@ -3,6 +3,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoadCareerScreen } from "../../../src/renderer/router/loadCareer.js";
 import { navigate } from "../../../src/renderer/navigation/adapter.js";
+import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";
+import { hasActionHandler, resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 
 vi.mock("../../../src/renderer/navigation/adapter.js", () => ({
   navigate: vi.fn(),
@@ -41,6 +43,7 @@ const mountWithListSavesFailure = () => {
 
 beforeEach(() => {
   mountedNavigate.mockClear();
+  resetActionHandlers();
   cleanup();
 });
 afterEach(cleanup);
@@ -94,6 +97,19 @@ describe("Load Career — failed listSaves", () => {
 
     await screen.findByRole("button", { name: "Save Recovered Career" });
     expect(screen.queryByText("Failed to load saves.")).toBeNull();
+  });
+
+  it("registers the retry as a loadCareer-scoped Action and wires the button to it", async () => {
+    mountWithListSavesFailure();
+
+    const retry = await screen.findByRole("button", { name: "Retry" });
+    expect(retry.getAttribute("data-action-id")).toBe("retry-save-list");
+
+    // One id, two scope records — the registry model's legal cross-scope
+    // duplicate: the retry is the same operation on both pre-career screens.
+    const entries = ALL_ACTIONS.filter((action) => action.id === "retry-save-list");
+    expect(entries.map((action) => action.scope).sort()).toEqual(["loadCareer", "mainMenu"]);
+    expect(hasActionHandler("retry-save-list")).toBe(true);
   });
 });
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Effect, Result } from "effect";
 import { listSaves } from "../rpc.js";
+import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
 import { navigate } from "../navigation/adapter.js";
 import { RouteView } from "./RouteView.js";
 import { Header } from "../chrome/header/index.js";
@@ -92,6 +93,14 @@ export const MainMenuScreen = () => {
   useEffect(() => {
     void probeSaveRepository();
   }, [probeSaveRepository]);
+
+  // The retry affordance is a registered Action, not a bare onClick: the
+  // registry holds the structure (`retry-save-list`, mainMenu scope) and this
+  // live handler closes over the probe, so the button, palette, and help
+  // overlay dispatch by the same stable id (ADR-0012).
+  useEffect(() => registerActionHandler("retry-save-list", () => void probeSaveRepository()), [
+    probeSaveRepository,
+  ]);
 
   // Roving tabindex: exactly one menu item is the tab stop (spec §4.1).
   const [activeIndex, setActiveIndex] = useState(0);
@@ -224,7 +233,8 @@ export const MainMenuScreen = () => {
                 type="button"
                 variant="secondary"
                 size="sm"
-                onClick={() => void probeSaveRepository()}
+                data-action-id="retry-save-list"
+                onClick={() => void dispatchAction("retry-save-list")}
               >
                 Retry
               </Button>
