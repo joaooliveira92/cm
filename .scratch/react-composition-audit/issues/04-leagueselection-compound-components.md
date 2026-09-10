@@ -1,7 +1,7 @@
 # 04 — Split LeagueSelectionScreen into NationTree and SelectionSummary compound components
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
 > **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
 > `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so
@@ -11,6 +11,7 @@ Status: ready-for-agent
 > **Still open and unstarted**, verified 2026-09-06 against the tree: none of the components,
 > providers or hooks in its Done-When list exist yet. Moved to `ready-for-agent` so the frontier
 > scan can see it.
+
 ## Problem
 
 `LeagueSelectionScreen.tsx` (822 lines) violates several composition patterns:
@@ -24,6 +25,7 @@ Status: ready-for-agent
 ## Solution
 
 ### Phase 1: Create `LeagueSelectionProvider`
+
 Lift the reducer state into a provider context with a generic interface:
 
 ```tsx
@@ -43,19 +45,24 @@ interface LeagueSelectionActions {
 ```
 
 ### Phase 2: Extract `NationTree` compound component
+
 Create a `NationTree` compound component with:
+
 - `NationTree.Root` – the tree container
 - `NationTree.Row` – individual nation rows
 - `NationTree.Search` – search input for filtering
 - `NationTree.ExpansionControl` – expand/collapse controls
 
 ### Phase 3: Extract `SelectionSummary`
+
 Create a `SelectionSummary` compound component that:
+
 - Shows current selection
 - Calculates and displays estimates
 - Provides `SelectionSummary.Estimate` for inline use
 
 ### Phase 4: Replace boolean props with composition
+
 - Remove `expanded`, `dependencyOnly`, `matchesSearch`, `available` from `NationTreeRow`
 - Use explicit component variants: `NationRow.Available`, `NationRow.Blocked`, `NationRow.Selected`
 
