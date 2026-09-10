@@ -1,6 +1,7 @@
-import { createContext, use } from "react";
+import { createContext, use, type ReactNode } from "react";
 import type { LeagueSelectionScreenActions, LeagueSelectionScreenMeta, LeagueSelectionScreenState } from "./useLeagueSelection.js";
 import { useLeagueSelection } from "./useLeagueSelection.js";
+import type { LeagueSelectionSnapshot, NationSelectionIntentPayload } from "@cm-clone/contracts";
 
 export interface LeagueSelectionContextValue {
   readonly state: LeagueSelectionScreenState;
@@ -13,13 +14,13 @@ const LeagueSelectionContext = createContext<LeagueSelectionContextValue | null>
 
 export interface LeagueSelectionProviderProps {
   readonly manage: {
-    readonly intents: readonly import("@cm-clone/contracts").NationSelectionIntentPayload[];
-    readonly onApply: (intents: readonly import("@cm-clone/contracts").NationSelectionIntentPayload[]) => void;
+    readonly intents: readonly NationSelectionIntentPayload[];
+    readonly onApply: (intents: readonly NationSelectionIntentPayload[]) => void;
     readonly onCancel: () => void;
   } | null;
-  readonly onContinue: ((snapshot: import("@cm-clone/contracts").LeagueSelectionSnapshot) => void) | null;
+  readonly onContinue: ((snapshot: LeagueSelectionSnapshot) => void) | null;
   readonly onBack: () => void;
-  readonly children: React.ReactNode;
+  readonly children: ReactNode;
 }
 
 export const LeagueSelectionProvider = ({

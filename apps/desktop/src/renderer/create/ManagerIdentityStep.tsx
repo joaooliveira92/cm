@@ -2,7 +2,6 @@ import { useCallback, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Input } from "../components/ui/input.js";
 import { Label } from "../components/ui/label.js";
-import { FOCUS_RING } from "../focus.js";
 import { useCreateSessionApi } from "../router/createSessionContext.js";
 import { CreationStepper } from "./CreationStepper.js";
 import { ManagerPillarsPane } from "./ManagerPillarsPane.js";

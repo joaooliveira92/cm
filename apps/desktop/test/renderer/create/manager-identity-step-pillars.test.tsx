@@ -14,7 +14,7 @@ const BASE_SESSION: CreationSession = {
   archetype: "professor",
   pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
   managerStep: 1,
-  generation: { _tag: "Idle" },
+  generation: { _tag: "Pending" },
   clubSelection: null,
   commit: "idle",
   error: null,

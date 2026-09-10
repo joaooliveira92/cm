@@ -55,6 +55,7 @@ const fullTactic = () => {
       role: POSITION_ROLES[position],
       playerId: rid(`on-${index}`),
     })),
+    bench: [rid("bench-1"), rid("bench-2")],
     mentality: "balanced" as const,
     tempo: "normal" as const,
     pressing: "medium" as const,

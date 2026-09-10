@@ -315,7 +315,7 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
         archetype: "professor",
         pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
         managerStep: 1 as ManagerSubStep,
-        generation: { _tag: "Idle" },
+        generation: { _tag: "Pending" },
         clubSelection: null,
         commit: "idle",
         error: null,

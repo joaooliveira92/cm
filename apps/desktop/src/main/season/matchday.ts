@@ -351,6 +351,8 @@ export const discardSquadsForClubs = (clubIds: ReadonlyArray<string>) =>
     // behind to block the tactic it belongs to.
     yield* sql`DELETE FROM tactic_slots WHERE ${sql.in("club_id", clubIds)}`;
     yield* sql`DELETE FROM tactic_slots WHERE ${doomed}`;
+    yield* sql`DELETE FROM tactic_bench_slots WHERE ${sql.in("club_id", clubIds)}`;
+    yield* sql`DELETE FROM tactic_bench_slots WHERE ${doomed}`;
     yield* sql`DELETE FROM tactics WHERE ${sql.in("club_id", clubIds)}`;
     yield* sql`DELETE FROM players WHERE ${sql.in("club_id", clubIds)}`;
   });

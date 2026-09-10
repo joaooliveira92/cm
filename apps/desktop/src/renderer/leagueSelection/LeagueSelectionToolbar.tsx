@@ -1,4 +1,3 @@
-import type * as React from "react";
 import { STATUS_FILTERS, type StatusFilter } from "@cm-clone/shared";
 import { Button } from "../components/ui/button.js";
 import { Input } from "../components/ui/input.js";

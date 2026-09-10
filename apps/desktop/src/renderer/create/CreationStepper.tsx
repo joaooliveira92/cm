@@ -1,7 +1,7 @@
 import { createContext, use, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { FOCUS_RING } from "../focus.js";
-import { STEPS, panelVariants, type FormStep } from "./managerIdentityCopy.js";
+import { STEPS, type FormStep } from "./managerIdentityCopy.js";
 
 interface StepperValue {
   readonly step: FormStep;

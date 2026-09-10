@@ -1,4 +1,3 @@
-import type * as React from "react";
 import { SIMULATION_MODES, type SimulationMode } from "@cm-clone/shared";
 import {
   Select,
@@ -19,11 +18,7 @@ const MODE_LABELS: Readonly<Record<SimulationMode, string>> = {
   not_loaded: "Not loaded",
 };
 
-const NationTreeRoot = ({
-  children,
-}: {
-  readonly children?: React.ReactNode;
-}) => {
+const NationTreeRoot = () => {
   const { state: { view } } = useLeagueSelectionContext();
 
   if (view === null) {
@@ -41,9 +36,7 @@ const NationTreeRoot = ({
   return (
     <ul role="tree" aria-label="Nations and leagues" className="space-y-1">
       {view.regions.map((region) => (
-        <NationTreeRegion key={region.regionId} region={region}>
-          {children}
-        </NationTreeRegion>
+        <NationTreeRegion key={region.regionId} region={region} />
       ))}
     </ul>
   );
@@ -51,10 +44,8 @@ const NationTreeRoot = ({
 
 const NationTreeRegion = ({
   region,
-  children,
 }: {
   readonly region: RegionGroupView;
-  readonly children: React.ReactNode;
 }) => {
   const { actions: { dispatch } } = useLeagueSelectionContext();
 

@@ -1,11 +1,9 @@
 import type { SaveId } from "@cm-clone/contracts";
-import { canNavigateBack } from "../navigation/adapter.js";
-import { navigateBack, navigateForward } from "../navigation/adapter.js";
+import { canNavigateBack, navigateBack, navigateForward } from "../navigation/adapter.js";
 import { Navbar } from "../navigation/components/Navbar.js";
 import { Button } from "../components/ui/button.js";
 import { FOCUS_RING } from "../focus.js";
 import { Header } from "./header/index.js";
-import { HeaderSearch } from "./header/HeaderSearch.js";
 import { CareerStateProvider, useCareerState, continueUnavailableReason } from "./CareerStateProvider.js";
 import { ContinueAction } from "./ContinueAction.js";
 import { ContinueOutstandingBand } from "./ContinueOutstanding.js";
