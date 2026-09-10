@@ -2,16 +2,20 @@
 
 ## Immediate next action
 
-`.scratch/club-staff-presence/implementation/06-arrival-focus-lands-on-an-unlabelled-wrapper.md` —
-the club-staff-presence implementation frontier: lowest-numbered open, unblocked, unclaimed build
-ticket in that effort. Re-derive from `.scratch/club-staff-presence/implementation/` before
-starting; plan rows decay, the tracker is truth.
+`.scratch/react-composition-audit/issues/04-leagueselection-compound-components.md` — the
+react-composition-audit frontier: oldest live effort with open tickets after save-list-error-handling
+closed, its lowest-numbered open, unblocked, unclaimed decision ticket (`ready-for-agent`, verified
+2026-09-09). This is a charted map with a spec in the handoff — route by phase (one decision ticket
+per session, cm-wayfinder). Re-derive from `.scratch/react-composition-audit/` before starting; plan
+rows decay, the tracker is truth.
 
 > **Repo-level block on further ticket delivery (recorded 2026-09-09).** `pnpm check:all` is red at
 > `dev` HEAD — 2 typecheck errors in `apps/desktop/src/renderer/navigation/components/Navbar.tsx`
 > and 19 test failures in 4 files (`test/main/club/scouting.test.ts`,
 > `test/main/season/cups.test.ts`, `test/main/world/simulation-depth.test.ts`,
-> `test/renderer/match/live-keyboard.test.tsx`), plus lint noise in untouched files. These reproduce
+> `test/renderer/match/live-keyboard.test.tsx`), plus lint noise in untouched files. The desktop e2e
+> suite additionally carries 4 pre-existing failures at HEAD (router AC-15, `app.spec` ×2, keyboard
+> AC-20), same match-day/squad territory. These reproduce
 > identically with any ticket diff stashed; no charted effort owns them. They entered the tree during
 > squad work driven from the loose `squad-instructions.md` file, which is **not** a `.scratch/`
 > effort — so nothing ticket-backed covers the repair and the autonomous agent may not invent it.
@@ -22,18 +26,14 @@ starting; plan rows decay, the tracker is truth.
 
 ## Queue
 
-The live frontier is **club-staff-presence**, charted and specced on 2026-09-07, sliced into six
-implementation tickets in dependency order (all `ready-for-agent` unless noted):
+The live frontier is **react-composition-audit**, charted 2026-09-01, specced, frontier at ticket 04.
+The two efforts this plan previously charted are fully shipped:
 
-- 01 presence-staff-derivation — done (shipped, ticket closed)
-- 02 get-club-staff-rpc-read — done (shipped, ticket closed)
-- 03 club-staff-screen-and-route — **claimed** (shipped in commits `823c9e8`…`2b93774`; ticket was
-  never closed by the session that shipped it — left locked, not reconciled here)
-- 04 presidents-voice-in-board-news — done (shipped 2026-09-09 by the last boot)
-- 05 club-segment-keyboard-identity-and-entry-points — **claimed** (shipped in commits `189c8ff` and
-  `2b93774`; ticket never closed — left locked, not reconciled here)
-- 06 arrival-focus-lands-on-an-unlabelled-wrapper — next (no blocker; app-wide focus-model change
-  with its own accessibility review — see the ticket for the three weighed alternatives)
+- **club-staff-presence** — complete 2026-09-09 (06 resolved and shipped locally as `0aff906`;
+  tickets 01/02/04 `done`, 03/05 shipped-and-claimed, all six terminal).
+- **save-list-error-handling** — complete 2026-09-09 (ticket 01 `resolved`; retry shipped as a
+  registered Action; see `.ai/reports/save-list-error-handling.md`).
+- **world-data-model** — ships fully as before; rows decayed.
 
 ## Red baseline provenance
 

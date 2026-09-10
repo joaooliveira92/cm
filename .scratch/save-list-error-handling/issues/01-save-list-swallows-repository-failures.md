@@ -1,7 +1,7 @@
 # 01 — The saved-game browser swallows save-repository failures
 
 Type: bug-fix
-Status: claimed
+Status: resolved
 
 ## Problem
 
@@ -64,3 +64,23 @@ test, which is a separate decision and not in scope here.
   Exit/Preferences/Credits surface was settled by the 2026-09-01 Main Menu, which carries all three.
 - Neither screen declares any Actions (`mainMenu` and `loadCareer` are legal action scopes with zero
   members), so the retry affordance is the first one either would gain.
+
+## Comments
+
+- Implemented 2026-09-09. The remaining open requirement — Retry as a registered Action, not a bare
+  `onClick` — is shipped: `retry-save-list` is declared twice in `actions/allActions.ts` (scope
+  `mainMenu` and scope `loadCareer`; one id across two scopes is the registry model's documented
+  legal cross-scope record, ADR-0012 / action-model note), each screen registers the live handler on
+  mount and unregisters on unmount via the `useEffect` cleanup, and both Retry buttons now dispatch
+  through `data-action-id` + `dispatchAction`. The test bullet that said "covers the failed path,
+  which today has none" was stale — the amendment shipped failure/empty-state coverage with the
+  listSaves half; the new tests assert the Action registration and the retry-through-Action recovery.
+  `handleContinue`/`loadSave()` and `e2e/save-management.spec.ts` are untouched; the stale-entry
+  e2e spec passes 3/3.
+- Reviewer: **APPROVE**. No blocker or high. Two LOW (registry-content assertion duplicated across
+  the two specs; `hasActionHandler` inspects the same registration the effect performs) and two
+  informational (bindingless actions surface in palette/help regardless of repository health,
+  consistent with the retry precedent; the one-screen-mounted invariant is an assumption).
+  Criterion "check:all green" carries the recorded repo-level caveat: the baseline is red before and
+  after this diff, and the diff adds zero new failures (verified byte-identical canary on typecheck;
+  the 4 failing test files and both Navbar errors are the documented baseline set).
