@@ -5,7 +5,6 @@
  */
 import { useCallback } from "react";
 import { type LeagueSelectionSnapshot } from "@cm-clone/contracts";
-import type { PillarDistribution } from "@cm-clone/shared";
 import { ClubSelectionScreen } from "../clubSelection/ClubSelectionScreen.js";
 import { ManagerIdentityStep } from "../create/ManagerIdentityStep.js";
 import { ActiveLeaguesScreen } from "../activeLeagues/ActiveLeaguesScreen.js";
@@ -45,41 +44,9 @@ export const LeagueSelectionRouteContent = () => {
 };
 
 export const StepOneRouteContent = () => {
-  const { session, update, setManagerStep } = useCreateSessionApi();
-
-  const handleSaveNameChange = useCallback(
-    (saveName: string): void => {
-      update({ saveName });
-    },
-    [update],
-  );
-
-  const handleManagerNameChange = useCallback(
-    (managerName: string): void => {
-      update({ managerName });
-    },
-    [update],
-  );
-
-  const handlePillarsChange = useCallback(
-    (pillars: PillarDistribution): void => {
-      update({ pillars });
-    },
-    [update],
-  );
-
   return (
     <RouteView screenId="createStep1">
-      <ManagerIdentityStep
-        saveName={session.saveName}
-        managerName={session.managerName}
-        pillars={session.pillars}
-        step={session.managerStep}
-        onStepChange={setManagerStep}
-        onSaveNameChange={handleSaveNameChange}
-        onManagerNameChange={handleManagerNameChange}
-        onPillarsChange={handlePillarsChange}
-      />
+      <ManagerIdentityStep />
     </RouteView>
   );
 };

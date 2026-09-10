@@ -18,6 +18,8 @@ import { SquadScreen } from "../../src/renderer/squad/SquadScreen.js";
 import { FixturesScreen } from "../../src/renderer/fixtures/FixturesScreen.js";
 import { SeasonSummaryScreen } from "../../src/renderer/seasonSummary/SeasonSummaryScreen.js";
 import { ManagerIdentityStep } from "../../src/renderer/create/ManagerIdentityStep.js";
+import { CreateSessionContext } from "../../src/renderer/router/createSessionContext.js";
+import type { CreateSessionApi, ManagerSubStep } from "../../src/renderer/router/createSessionContext.js";
 import { TacticsScreen } from "../../src/renderer/tactics/TacticsScreen.js";
 import { TransfersScreen } from "../../src/renderer/transfers/TransfersScreen.js";
 import { MatchDayScreen } from "../../src/renderer/match/MatchDayScreen.js";
@@ -305,17 +307,30 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
   });
 
   it("ManagerIdentityStep: every control is natively focusable with the ring, inputs first in tab order", () => {
+    const api: CreateSessionApi = {
+      session: {
+        leagueSelection: null,
+        saveName: "",
+        managerName: "",
+        archetype: "professor",
+        pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
+        managerStep: 1 as ManagerSubStep,
+        generation: { _tag: "Idle" },
+        clubSelection: null,
+        commit: "idle",
+        error: null,
+      },
+      update: () => undefined,
+      setManagerStep: () => undefined,
+      retryGeneration: () => undefined,
+      selectClub: () => undefined,
+      registerBottomBar: () => undefined,
+      requestLeave: () => undefined,
+    };
     render(
-      <ManagerIdentityStep
-        saveName=""
-        managerName=""
-        pillars={{ tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 }}
-        step={1}
-        onStepChange={() => undefined}
-        onSaveNameChange={() => undefined}
-        onManagerNameChange={() => undefined}
-        onPillarsChange={() => undefined}
-      />,
+      <CreateSessionContext value={api}>
+        <ManagerIdentityStep />
+      </CreateSessionContext>,
     );
     const controls = [...document.querySelectorAll("input, button")];
     expect(controls.length).toBeGreaterThan(0);
