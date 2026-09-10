@@ -1,6 +1,8 @@
+import { ShortcutHint } from "../../discoverability/ShortcutHint.js";
 import { FOCUS_RING } from "../../focus.js";
 import { intentOfClick } from "../adapter.js";
 import { useNavContext } from "../navContext.js";
+import { itemCarriesHint } from "../nav-route-index.js";
 
 export const ContextNav = () => {
   const { state, actions, meta } = useNavContext();
@@ -25,20 +27,24 @@ export const ContextNav = () => {
         const active = item.id === activeItemId;
         const ItemIcon = item.icon;
         return (
-          <button
+          <ShortcutHint
             key={item.id}
-            type="button"
-            aria-current={active ? "page" : undefined}
-            className={`flex h-8 shrink-0 items-center gap-1.5 rounded-control px-3 whitespace-nowrap transition-colors ${
-              active
-                ? "bg-surface-raised font-medium text-text-primary"
-                : "text-text-secondary hover:bg-surface hover:text-text-primary"
-            } ${FOCUS_RING.join(" ")}`}
-            onClick={(event) => goTo(item.destination, intentOfClick(event))}
+            destination={itemCarriesHint(stripSection, item) ? item.destination : undefined}
           >
-            {ItemIcon !== undefined && <ItemIcon className="size-3.5" />}
-            {item.label}
-          </button>
+            <button
+              type="button"
+              aria-current={active ? "page" : undefined}
+              className={`flex h-8 shrink-0 items-center gap-1.5 rounded-control px-3 whitespace-nowrap transition-colors ${
+                active
+                  ? "bg-surface-raised font-medium text-text-primary"
+                  : "text-text-secondary hover:bg-surface hover:text-text-primary"
+              } ${FOCUS_RING.join(" ")}`}
+              onClick={(event) => goTo(item.destination, intentOfClick(event))}
+            >
+              {ItemIcon !== undefined && <ItemIcon className="size-3.5" />}
+              {item.label}
+            </button>
+          </ShortcutHint>
         );
       })}
     </nav>

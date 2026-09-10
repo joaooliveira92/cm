@@ -12,6 +12,11 @@ import {
 import { SaveId } from "@cm-clone/contracts";
 import { Navbar } from "../../../src/renderer/navigation/components/Navbar.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
+import { resetScopeState, setScopeState } from "../../../src/renderer/actions/scopeState.js";
+import {
+  publishBindingOverrides,
+  resetBindingOverrides,
+} from "../../../src/renderer/actions/bindingState.js";
 
 const saveId = SaveId.make("s1");
 
@@ -54,6 +59,8 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  resetScopeState();
+  resetBindingOverrides();
 });
 
 describe("the redesigned navbar (spec §2 / §4 / §5.1)", () => {
@@ -126,5 +133,55 @@ describe("the redesigned navbar (spec §2 / §4 / §5.1)", () => {
     // The previewed section's items appear but never receive the active
     // indicator; only the route's actual section carries aria-current.
     expect(screen.getByRole("button", { name: "Transfers" }).getAttribute("aria-current")).toBeNull();
+  });
+});
+
+describe("leader-key hints on the navbar (global-key-map note, g <key> prefix)", () => {
+  const hintsIn = (name: string): Array<string> =>
+    Array.from(
+      screen.getByRole("navigation", { name }).querySelectorAll("[data-shortcut-hint]"),
+      (badge) => badge.textContent ?? "",
+    );
+
+  it("shows no hints while the prefix is idle", async () => {
+    await mountNavbar("league");
+    expect(hintsIn("Primary navigation")).toEqual([]);
+    expect(hintsIn("Analysis submenu")).toEqual([]);
+  });
+
+  it("badges each destination's completion key while the prefix is pending", async () => {
+    await mountNavbar("league");
+    act(() => setScopeState({ prefixActive: true }));
+    // Sections carry their own default; Training (a Squad placeholder) carries nothing.
+    expect(hintsIn("Primary navigation")).toEqual(["S", "A", "T", "L", "M"]);
+    // The strip carries the destinations its section button does not.
+    expect(hintsIn("Analysis submenu")).toEqual(["F", "D", "Y"]);
+
+    act(() => setScopeState({ prefixActive: false }));
+    expect(hintsIn("Primary navigation")).toEqual([]);
+  });
+
+  it("keeps the hint out of the control's accessible name", async () => {
+    await mountNavbar("league");
+    act(() => setScopeState({ prefixActive: true }));
+    expect(screen.getByRole("button", { name: "Fixtures" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Squad" })).toBeTruthy();
+  });
+
+  it("shows the rebound key, not the coded default", async () => {
+    await mountNavbar("league");
+    act(() => {
+      publishBindingOverrides({ "go-to-fixtures": "g x" });
+      setScopeState({ prefixActive: true });
+    });
+    expect(hintsIn("Analysis submenu")).toEqual(["X", "D", "Y"]);
+  });
+
+  it("does not remount the control, so focus survives the hint appearing", async () => {
+    await mountNavbar("league");
+    const fixtures = screen.getByRole("button", { name: "Fixtures" });
+    fixtures.focus();
+    act(() => setScopeState({ prefixActive: true }));
+    expect(document.activeElement).toBe(fixtures);
   });
 });

@@ -2,11 +2,10 @@
 
 ## Immediate next action
 
-`.scratch/react-composition-audit/issues/10-data-table-hooks.md` — the react-composition-audit
-frontier: lowest-numbered open, unblocked, unclaimed `ready-for-agent` ticket (09 resolved and
-shipped 2026-09-10). This is a charted map with a spec in the handoff — route by phase (implement →
-review → gate). Re-derive from `.scratch/react-composition-audit/` before starting; plan rows decay,
-the tracker is truth.
+`.scratch/react-composition-audit/issues/11-tablepanel-split.md` — the react-composition-audit
+frontier: lowest-numbered open, unblocked, unclaimed `ready-for-agent` ticket (10 resolved and
+shipped 2026-09-10). Re-derive from `.scratch/react-composition-audit/` before starting; plan rows
+decay, the tracker is truth.
 
 > **Repo-level block on further ticket delivery (recorded 2026-09-09).** `pnpm check:all` is red at
 > `dev` HEAD — 2 typecheck errors in two test files

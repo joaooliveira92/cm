@@ -1,5 +1,5 @@
 import type { CareerDestination } from "./destinations.js";
-import { NAV_SECTIONS, type NavSectionId } from "./nav-config.js";
+import { NAV_SECTIONS, type NavItem, type NavSection, type NavSectionId } from "./nav-config.js";
 
 /**
  * Route-to-section index: given a career destination type, return the section
@@ -59,3 +59,22 @@ export const sectionForDestination = (
 export const sectionIdForDestination = (
   destination: CareerDestination["type"],
 ): NavSectionId | undefined => sectionForDestination(destination)?.sectionId;
+
+/**
+ * Whether a section's own button carries the `g <key>` hint for its default destination. Only the
+ * owning section does: Training defaults to Squad as a placeholder, and a hint there would tell the
+ * player that `g s` opens Training.
+ */
+export const sectionCarriesHint = (section: NavSection): boolean =>
+  sectionIdForDestination(section.defaultDestination) === section.id;
+
+/**
+ * Whether a strip item carries its destination's `g <key>` hint. Together with `sectionCarriesHint`
+ * this puts every key on exactly one control: the section button already shows its default
+ * destination, cross-links (Squad's Fixtures, Last Match) defer to the owning section, and repeated
+ * placeholders (Squad's Staff, Finances, History) defer to the first item that lists the destination.
+ */
+export const itemCarriesHint = (section: NavSection, item: NavItem): boolean =>
+  item.destination !== section.defaultDestination &&
+  sectionIdForDestination(item.destination) === section.id &&
+  section.items.find((candidate) => candidate.destination === item.destination) === item;
