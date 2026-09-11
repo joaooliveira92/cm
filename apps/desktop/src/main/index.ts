@@ -1,14 +1,34 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { RPC_CHANNEL, type AppRpcMethod } from "@cm-clone/contracts";
-import { Effect } from "effect";
+import { Effect, Layer } from "effect";
 import electron from "electron";
+import { MATCH_SEED_ENV, pinnedMatchSeedLayer, resolveMatchSeedOverride } from "./match/index.js";
 import { handleRpc } from "./rpc/rpcServer.js";
 import { LoggerLayer } from "./rpc/logging.js";
 
 const { app, BrowserWindow, ipcMain } = electron;
 
 app.setName("cm-clone-desktop");
+
+// The e2e suite's only way to pin the match a Fixture plays (see `match/seedOverride.ts`). Gated on
+// `app.isPackaged`: a build a player runs ignores it, while the unpackaged app Playwright launches
+// honours it. A malformed value stops the app here rather than playing a match nobody asked for.
+const matchSeedOverride = resolveMatchSeedOverride(process.env[MATCH_SEED_ENV], app.isPackaged);
+if (matchSeedOverride._tag === "Malformed") {
+  console.error(
+    `${MATCH_SEED_ENV}=${JSON.stringify(matchSeedOverride.raw)} is not a match seed ` +
+      "(expected a decimal integer from 0 to 4294967295). Refusing to start.",
+  );
+  app.exit(1);
+} else if (matchSeedOverride._tag === "IgnoredInPackagedBuild") {
+  console.warn(`${MATCH_SEED_ENV} is ignored in a packaged build; matches play under their derived seeds.`);
+}
+
+const rpcLayer =
+  matchSeedOverride._tag === "Pinned"
+    ? Layer.merge(LoggerLayer, pinnedMatchSeedLayer(matchSeedOverride.seed))
+    : LoggerLayer;
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -51,7 +71,7 @@ app.whenReady().then(() => {
   ipcMain.handle(RPC_CHANNEL, (_event, method: AppRpcMethod, payload: unknown) =>
     Effect.provide(
       handleRpc(method, payload, { savesDir, userDataDir: app.getPath("userData") }),
-      LoggerLayer,
+      rpcLayer,
     ).pipe(Effect.runPromise),
   );
 

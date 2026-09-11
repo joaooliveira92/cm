@@ -7,12 +7,11 @@
  */
 import { useRef } from "react";
 import type { PlayerId } from "@cm-clone/contracts";
-import { ACTION_REGISTRY } from "../actions/allActions.js";
 import { dispatchAction } from "../actions/dispatch.js";
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import { Input } from "../components/ui/input.js";
-import { ActionKeyBadge, actionBadgeBinding } from "../discoverability/ActionKeyBadge.js";
+import { ActionKeyBadge, useActionBadgeBinding } from "../discoverability/ActionKeyBadge.js";
 import { restoreFocusAfterOverlay } from "../focus.js";
 import { useDialogKeyboard } from "./dialogKeyboard.js";
 import { formatCredits } from "../table/transfers/marketColumns.js";
@@ -92,6 +91,7 @@ export const BidComposer = () => {
   } = state;
   const { setSelected, updateDraft } = actions;
   const { amountInputRef, findPlayer } = meta;
+  const bidBadge = useActionBadgeBinding("focus-bid", "transfers");
 
   // Render the keep/discard dialog independently of the actions region
   // (confirmDiscard is reachable before draft is nulled on the discard path).
@@ -121,10 +121,6 @@ export const BidComposer = () => {
   }
 
   if (draft === null || draftedPlayer === null) return null;
-
-  const focusBidAction = ACTION_REGISTRY.get("focus-bid");
-  const bidBadge =
-    focusBidAction !== undefined ? actionBadgeBinding(focusBidAction, "transfers") : null;
 
   return (
     <>
