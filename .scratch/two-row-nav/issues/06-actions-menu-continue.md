@@ -16,7 +16,7 @@ Implement as two new components under `apps/desktop/src/renderer/chrome/header/`
 
 **Decisions:**
 
-- Actions menu in page header, not in nav rows. See [Agent Note](../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
+- Actions menu in page header, not in nav rows. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
 
 **Blocked by:** 02 (PrimaryNav), 03 (SecondaryNav).
 

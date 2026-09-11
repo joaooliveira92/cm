@@ -18,7 +18,7 @@ Navigation rules (spec §6, §10.3):
 
 **Decisions:**
 
-- Entity origin in URL param. See [Agent Note](../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
+- Entity origin in URL param. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
 
 **Blocked by:** 03 (SecondaryNav).
 
