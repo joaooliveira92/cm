@@ -76,6 +76,7 @@ import { useSquadColumns } from "./useSquadColumns.js";
 import { useSquadAnnouncements } from "./useSquadAnnouncements.js";
 import { useSquadTable, STATUS_LEGEND_ID } from "./useSquadTable.js";
 import type { SquadScreenValue } from "./squadScreenTypes.js";
+import { useListState } from "../navigation/use-list-state.js";
 
 export type {
   SquadScreenActions,
@@ -96,7 +97,8 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   const squadResult = useAtomValue(squadAtom(saveId));
   const refreshSquad = useAtomRefresh(squadAtom(saveId));
 
-  const { session, sessionActions } = useSquadSession();
+  const { restored, isRestoration, captureForNavigation, restoreScroll } = useListState();
+  const { session, sessionActions } = useSquadSession(restored);
   const { sort, filters, activeId, selectedId, bookmark, scrollLeft } = session;
   const {
     setSort,
@@ -370,6 +372,13 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     speak("selection-hidden", "The selected player is hidden by the current filters.");
   }, [selectionOut]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Restore scroll position when arriving via back/forward
+  useEffect(() => {
+    if (isRestoration) {
+      restoreScroll();
+    }
+  }, [isRestoration, restoreScroll]);
+
   useEffect(() => {
     return () => discardSelectionForNavigation(TABLE_ID);
   }, []);
@@ -414,6 +423,8 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       clearFilterCommand,
       clearSortCommand,
       refreshSquad,
+      captureForNavigation: (state) => captureForNavigation(state),
+      restoreScroll,
     },
     meta: {
       saveId,

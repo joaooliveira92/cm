@@ -1,4 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
+
+// Node.js test environment — polyfill window
+vi.stubGlobal("window", {
+  scrollX: 0,
+  scrollY: 0,
+  scrollTo: () => undefined,
+  history: {
+    state: null,
+    replaceState: () => undefined,
+    back: () => undefined,
+    forward: () => undefined,
+    go: () => undefined,
+    length: 0,
+    scrollRestoration: "auto" as const,
+    pushState: () => undefined,
+  },
+  document: { querySelector: () => null },
+});
+
 import {
   ClubId as ClubIdSchema,
   SaveId as SaveIdSchema,

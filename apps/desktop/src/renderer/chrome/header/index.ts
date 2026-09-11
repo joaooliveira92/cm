@@ -11,6 +11,7 @@
  * cycler is also absent: it needs a theme other than the one this app has.
  */
 import { AppTitleBar } from "./AppTitleBar.js";
+import { HeaderActionsMenu } from "./HeaderActionsMenu.js";
 import { HeaderNav } from "./HeaderNav.js";
 import { HeaderSearch } from "./HeaderSearch.js";
 import { HeaderSecondaryRow } from "./HeaderSecondaryRow.js";
@@ -24,9 +25,18 @@ export const Header = {
   Search: HeaderSearch,
   SecondaryRow: HeaderSecondaryRow,
   Shell: ShellHeader,
+  ActionsMenu: HeaderActionsMenu,
 };
 
-export { AppTitleBar, HeaderNav, HeaderSearch, HeaderSecondaryRow, HeaderTitle, ShellHeader };
+export {
+  AppTitleBar,
+  HeaderActionsMenu,
+  HeaderNav,
+  HeaderSearch,
+  HeaderSecondaryRow,
+  HeaderTitle,
+  ShellHeader,
+};
 export type { AppTitleBarProps } from "./AppTitleBar.js";
 export type { HeaderNavProps, NavAction } from "./HeaderNav.js";
 export type { HeaderSecondaryRowProps } from "./HeaderSecondaryRow.js";

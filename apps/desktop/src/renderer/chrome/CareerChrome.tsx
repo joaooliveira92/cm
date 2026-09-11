@@ -4,6 +4,7 @@ import { Navbar } from "../navigation/components/Navbar.js";
 import { Button } from "../components/ui/button.js";
 import { FOCUS_RING } from "../focus.js";
 import { Header } from "./header/index.js";
+import { HeaderActionsMenu } from "./header/HeaderActionsMenu.js";
 import { CareerStateProvider, useCareerState, continueUnavailableReason } from "./CareerStateProvider.js";
 import { ContinueAction } from "./ContinueAction.js";
 import { ContinueOutstandingBand } from "./ContinueOutstanding.js";
@@ -60,6 +61,10 @@ const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
           </>
         }
       />
+      <div className="flex items-center justify-between border-b border-border-subtle bg-bg px-3 py-1">
+        <HeaderActionsMenu />
+        <div className="flex-1" />
+      </div>
       <ContinueOutstandingBand items={outstanding} onOpen={openDestination} />
       {report !== null && (
         <ContinueResultBand

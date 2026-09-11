@@ -14,10 +14,11 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { useLocation } from "@tanstack/react-router";
 import { ACTION_REGISTRY } from "../actions/allActions.js";
 import { registerActionHandler } from "../actions/dispatch.js";
 import { clearScopeState, getScopeState, setScopeState, subscribeScopeState } from "../actions/scopeState.js";
-import type { MatchReadout } from "../actions/types.js";
+import type { MatchReadout, ScreenName } from "../actions/types.js";
 import { type NavigationIntent } from "../focus.js";
 import {
   navigate,
@@ -36,6 +37,7 @@ import {
   useAtomValue,
 } from "../rpc.js";
 import type { HeaderCareer, HeaderStanding, SeasonReadoutInput } from "./header/career-header-state.js";
+import { deriveContinueLabel } from "./header/continue-label.js";
 import type { ContinueReport } from "./ContinueResult.js";
 
 interface CareerState {
@@ -46,12 +48,14 @@ interface CareerState {
   readonly saveName: string | null;
   readonly advancing: boolean;
   readonly continueDisabled: boolean;
+  readonly continueLabel: string;
   readonly liveMatch: MatchReadout | undefined;
   readonly newsCounts: {
     readonly total: number;
     readonly unread: number;
     readonly actionRequired: number;
   } | null;
+  readonly screenId: ScreenName | null;
   readonly standing: HeaderStanding | null;
   readonly outstanding: readonly ReadinessItem[];
   readonly career: HeaderCareer;
@@ -111,6 +115,22 @@ export const CareerStateProvider = ({
   );
   const continueDisabled = season === null || advancing || seasonComplete || liveMatch !== undefined;
 
+  const location = useLocation();
+  const screenId: ScreenName | null = useMemo(() => {
+    const segments = location.pathname.split("/").filter(Boolean);
+    const screenSegment = segments[2];
+    if (screenSegment === "club") return segments[3] as ScreenName;
+    return (screenSegment ?? null) as ScreenName | null;
+  }, [location.pathname]);
+
+  const newsCounts = newsResult._tag === "Success" ? newsResult.value.counts : null;
+
+  const continueLabel: string = deriveContinueLabel({
+    season,
+    continueDisabled,
+    actionRequired: newsCounts?.actionRequired ?? null,
+  });
+
   useEffect(() => {
     if (season === null) return undefined;
     setScopeState({ phase: season.phase, advancing });
@@ -163,8 +183,6 @@ export const CareerStateProvider = ({
       ? standingFor(tableResult.value.standings, clubName)
       : null;
 
-  const newsCounts = newsResult._tag === "Success" ? newsResult.value.counts : null;
-
   const outstanding: readonly ReadinessItem[] =
     season === null
       ? []
@@ -196,8 +214,10 @@ export const CareerStateProvider = ({
       saveName,
       advancing,
       continueDisabled,
+      continueLabel,
       liveMatch,
       newsCounts,
+      screenId,
       standing,
       outstanding,
       career,
@@ -209,8 +229,8 @@ export const CareerStateProvider = ({
     }),
     [
       saveId, clubName, clubColours, season, saveName, advancing,
-      continueDisabled, liveMatch, newsCounts, standing, outstanding,
-      career, report,
+      continueDisabled, continueLabel, liveMatch, newsCounts, screenId,
+      standing, outstanding, career, report,
     ],
   );
 

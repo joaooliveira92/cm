@@ -20,14 +20,14 @@ Implement as two new components under `apps/desktop/src/renderer/chrome/header/`
 
 **Blocked by:** 02 (PrimaryNav), 03 (SecondaryNav).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Actions menu renders in page header below the navbar, above content
-- [ ] Actions menu label names the current entity/context (e.g., "Actions ▼")
-- [ ] Page-level commands are in the Actions menu — no page-level action appears as a nav tab
-- [ ] Disabled actions show an explanation (not silently ignored)
-- [ ] Continue button is always visible and visually prominent in the primary row's right side
-- [ ] Continue label matches state: "Continue" (normal), "Go to Match" (match pending), contextual ("Respond", etc.) for blocking decisions
-- [ ] Continue is disabled with explanation when progression is unavailable
-- [ ] Destructive actions (Resign, Retire) require confirmation
-- [ ] Tests cover: actions menu rendering, Continue button label derivation, disabled states, destructive confirmation
+- [x] Actions menu renders in page header below the navbar, above content
+- [x] Actions menu label names the current entity/context (e.g., "Actions ▼")
+- [x] Page-level commands are in the Actions menu — no page-level action appears as a nav tab
+- [x] Disabled actions show an explanation (not silently ignored)
+- [x] Continue button is always visible and visually prominent in the primary row's right side
+- [x] Continue label matches state: "Continue" (normal), "Go to Match" (match pending), contextual ("Respond", etc.) for blocking decisions
+- [x] Continue is disabled with explanation when progression is unavailable
+- [x] Destructive actions (Resign, Retire) require confirmation
+- [x] Tests cover: actions menu rendering, Continue button label derivation, disabled states, destructive confirmation

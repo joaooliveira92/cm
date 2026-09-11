@@ -14,6 +14,7 @@ import type { deriveRefreshState, deriveViewState, TableStateCopy } from "../tab
 import type { SquadPresetId } from "../table/features/visibility.js";
 import type { TacticDraft } from "../tactics/useTacticDraft.js";
 import type { SquadViewId } from "./squadViews.js";
+import type { DecodedListState } from "../navigation/list-state-storage.js";
 
 export interface SquadScreenState {
   readonly allPlayers: ReadonlyArray<SquadRow>;
@@ -59,6 +60,10 @@ export interface SquadScreenActions {
   readonly clearFilterCommand: () => void;
   readonly clearSortCommand: () => void;
   readonly refreshSquad: () => void;
+  /** Encode the current list state into URL search params so back/forward restores it. */
+  readonly captureForNavigation: (state: Partial<DecodedListState>) => void;
+  /** Restore scroll position from history.state after back/forward. */
+  readonly restoreScroll: (containerIds?: readonly string[]) => void;
 }
 
 export interface SquadScreenMeta {

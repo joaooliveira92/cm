@@ -12,6 +12,7 @@ import {
   BASE_CONTENT_PACK,
   BRAZIL_SERIES_A_PACK,
   BRAZIL_SERIES_B_PACK,
+  ENGLISH_PREMIER_LEAGUE_PACK,
   LEAGUE_SETUP_INDEX,
   allCompetitions,
   canonicalClubId,
@@ -97,10 +98,10 @@ describe("display names resolve through the save's pack", () => {
       const saveId = yield* generatedSave;
       const view = yield* withSave(saveId, getClubSelection);
 
-      expect(view.leagueName).toBe(displayName(BASE_CONTENT_PACK, "comp_eng_1"));
+      expect(view.leagueName).toBe(displayName(ENGLISH_PREMIER_LEAGUE_PACK, "comp_eng_1"));
       expect(view.clubs).toHaveLength(20);
       for (const club of view.clubs) {
-        expect(club.clubName).toBe(displayName(BASE_CONTENT_PACK, club.clubId));
+        expect(club.clubName).toBe(displayName(ENGLISH_PREMIER_LEAGUE_PACK, club.clubId));
         // The id is an identity, never the label: a name reaching the screen unresolved would
         // read as its own canonical id.
         expect(club.clubName).not.toBe(club.clubId);
@@ -112,7 +113,10 @@ describe("display names resolve through the save's pack", () => {
     Effect.gen(function* () {
       const saveId = yield* generatedSave;
       const pack = yield* withSave(saveId, savePack);
-      expect(pack.id).toBe(BASE_CONTENT_PACK.id);
+      // The default career plays the English top division, so it is born under the licensed
+      // Premier League pack exactly as a Série A career is born under Série A's.
+      expect(pack.id).toBe(ENGLISH_PREMIER_LEAGUE_PACK.id);
+      expect(pack.version).toBe(ENGLISH_PREMIER_LEAGUE_PACK.version);
     }),
   );
 
@@ -151,9 +155,9 @@ describe("display names resolve through the save's pack", () => {
   it.effect("reports the ids the save uses that its pack cannot name", () =>
     Effect.gen(function* () {
       const saveId = yield* generatedSave;
-      // The default career's twenty clubs and its two competitions are all named, so a save this
-      // build generated opens with nothing to report.
-      expect(yield* withSave(saveId, reportPackCoverage)).toEqual([]);
+      // The Premier League pack names the league and its twenty clubs. The cup the default career
+      // loads as a dependency is the one id it cannot name, reported exactly as Brazil's cup is.
+      expect(yield* withSave(saveId, reportPackCoverage)).toEqual(["comp_eng_cup"]);
 
       // A save whose ids the pack has lost coverage of reports them rather than degrading to raw
       // identifiers on a screen with no warning anywhere.
@@ -169,7 +173,7 @@ describe("display names resolve through the save's pack", () => {
           return yield* reportPackCoverage;
         }),
       );
-      expect(gaps).toEqual(["club_unnamed_1_01"]);
+      expect(gaps).toEqual(["comp_eng_cup", "club_unnamed_1_01"]);
     }),
   );
 

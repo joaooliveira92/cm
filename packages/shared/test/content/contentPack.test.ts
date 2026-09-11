@@ -9,6 +9,7 @@ import {
   type ContentPack,
 } from "../../src/content/contentPack.js";
 import { BRAZIL_SERIES_A_PACK } from "../../src/content/brazilSeriesA.js";
+import { ENGLISH_PREMIER_LEAGUE_PACK } from "../../src/content/englishPremierLeague.js";
 import { SPANISH_LA_LIGA_PACK } from "../../src/content/spanishLaLiga.js";
 
 const pack: ContentPack = {
@@ -70,9 +71,17 @@ describe("canonical ids", () => {
 describe("content pack for a generated world", () => {
   const league = (id: string, tier: number | null, depth: string) => ({ id, kind: "league", tier, depth });
 
-  it("keeps the fictional base pack for a world whose playable league it names", () => {
-    // The default career: England's top division, full depth.
-    expect(contentPackForWorld([league("comp_eng_1", 1, "full")])).toBe(BASE_CONTENT_PACK);
+  it("generates an English Premier League career under the licensed Premier League pack", () => {
+    // The default career: England's top division, full depth, with its cup a dependency.
+    const world = [
+      league("comp_eng_1", 1, "full"),
+      league("comp_eng_cup", null, "standard"),
+    ];
+    expect(contentPackForWorld(world)).toBe(ENGLISH_PREMIER_LEAGUE_PACK);
+  });
+
+  it("returns the licensed England pack only for the first-division career, not its lower tiers", () => {
+    expect(contentPackForWorld([league("comp_eng_2", 2, "full")])).toBe(BASE_CONTENT_PACK);
   });
 
   it("generates a Brazilian Série A career under the licensed Série A pack", () => {
@@ -87,7 +96,7 @@ describe("content pack for a generated world", () => {
   it("keys to the playable league, not to a league the world merely carries", () => {
     // comp_bra_1 at standard depth is a background load, not the league being played.
     const world = [league("comp_bra_1", 1, "standard"), league("comp_eng_1", 1, "full")];
-    expect(contentPackForWorld(world)).toBe(BASE_CONTENT_PACK);
+    expect(contentPackForWorld(world)).toBe(ENGLISH_PREMIER_LEAGUE_PACK);
   });
 
   it("picks the deepest playable league the way getClubSelection reads it", () => {

@@ -2,6 +2,7 @@ import type { CanonicalId } from "./canonicalId.js";
 import type { ClubColours } from "./clubColours.js";
 import type { NationCode } from "./nations.js";
 import { BRAZIL_SERIES_A_PACK } from "./brazilSeriesA.js";
+import { ENGLISH_PREMIER_LEAGUE_PACK } from "./englishPremierLeague.js";
 import { SPANISH_LA_LIGA_PACK } from "./spanishLaLiga.js";
 
 /**
@@ -391,9 +392,9 @@ export interface WorldCompetitionShape {
  * A save's names come from the pack its manifest records, so generation has to pick one. The rule
  * keys to the league the career is played in — the deepest playable league, tie-broken exactly as
  * `getClubSelection` reads it — because that is the league whose clubs Step 3 lists and the one a
- * player sees first. A career played in Brazilian Série A is generated under the licensed Série A
- * pack, so Step 3 lists Flamengo rather than `club_bra_1_09`; every other world keeps the fictional
- * base pack. This is a map, not an algorithm: a world owns at most one pack today, and giving
+ * player sees first. A career played in Brazilian Série A, the Premier League, or La Liga is
+ * generated under that league's licensed pack, so Step 3 lists Flamengo rather than
+ * `club_bra_1_09`; every other world keeps the fictional base pack. This is a map, not an algorithm: a world owns at most one pack today, and giving
  * another league its own pack is one entry.
  *
  * A selection wider than the pack's league (a Brazil career that also loads Série B, or a world
@@ -413,6 +414,7 @@ export const contentPackForWorld = (
         a.id.localeCompare(b.id),
     )[0];
   if (primary?.id === "comp_bra_1") return BRAZIL_SERIES_A_PACK;
+  if (primary?.id === "comp_eng_1") return ENGLISH_PREMIER_LEAGUE_PACK;
   if (primary?.id === "comp_esp_1") return SPANISH_LA_LIGA_PACK;
   return BASE_CONTENT_PACK;
 };

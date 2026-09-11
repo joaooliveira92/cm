@@ -29,12 +29,12 @@ List state is encoded as URL search params wherever practical to leverage browse
 
 **Blocked by:** 02 (PrimaryNav), 03 (SecondaryNav).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Back and Forward use browser `history.pushState` / `popstate` (spec §10.2)
-- [ ] Returning from an entity profile to a list restores: filters, sorting, visible columns, scroll position
-- [ ] Returning restores: selected squad, selected competition, selected stage/round, expanded groups
-- [ ] Navigating back to a section restores its secondary tab selection
-- [ ] History entries capture route, entity id, primary section, secondary tab, context selector
-- [ ] List state is encoded as URL search params (full-text search may use sessionStorage)
-- [ ] Tests cover: state preservation on back navigation, URL param encoding/decoding, sessionStorage fallback for search queries
+- [x] Back and Forward use browser `history.pushState` / `popstate` (spec §10.2)
+- [x] Returning from an entity profile to a list restores: filters, sorting, visible columns, scroll position
+- [x] Returning restores: selected squad, selected competition, selected stage/round, expanded groups
+- [x] Navigating back to a section restores its secondary tab selection
+- [x] History entries capture route, entity id, primary section, secondary tab, context selector
+- [x] List state is encoded as URL search params (full-text search may use sessionStorage)
+- [x] Tests cover: state preservation on back navigation, URL param encoding/decoding, sessionStorage fallback for search queries

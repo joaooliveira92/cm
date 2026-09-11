@@ -7,7 +7,7 @@ import { strictEqual, ok, deepStrictEqual } from "node:assert";
 import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 import {
-  BASE_CONTENT_PACK,
+  ENGLISH_PREMIER_LEAGUE_PACK,
   LEAGUE_SETUP_INDEX,
   blockingIssues,
   resolveSelection,
@@ -152,8 +152,8 @@ describe("beginCareer reads the League Selection Snapshot (ticket 03)", () => {
       strictEqual(manifest[0]!.worldSeed, 4242);
       ok(manifest[0]!.worldSeed >= 0 && manifest[0]!.worldSeed <= 4294967295);
       strictEqual(manifest[0]!.catalogueFingerprint, LEAGUE_SETUP_INDEX.fingerprint);
-      strictEqual(manifest[0]!.contentPackId, BASE_CONTENT_PACK.id);
-      strictEqual(manifest[0]!.contentPackVersion, BASE_CONTENT_PACK.version);
+      strictEqual(manifest[0]!.contentPackId, ENGLISH_PREMIER_LEAGUE_PACK.id);
+      strictEqual(manifest[0]!.contentPackVersion, ENGLISH_PREMIER_LEAGUE_PACK.version);
       strictEqual(manifest[0]!.snapshotId, snapshotId);
     }),
   );

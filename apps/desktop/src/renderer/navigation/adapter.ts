@@ -1,6 +1,7 @@
 import type { AnyRouter } from "@tanstack/react-router";
 import { requestBackFocus, requestFocus, type NavigationIntent } from "../focus.js";
 import { resolveDestination, type CareerDestination, type NavigationDestination } from "./destinations.js";
+import { captureScrollState } from "./scroll-state.js";
 
 /**
  * The navigation seam every navigation-action (career shell tabs, creation
@@ -28,9 +29,19 @@ const getRouter = (): AnyRouter => {
 
 const isPointerIntent = (intent: NavigationIntent): boolean => intent === "pointer";
 
+/** Capture scroll state into the current history entry before navigating away. */
+const enrichHistoryState = (): void => {
+  const scroll = captureScrollState();
+  window.history.replaceState(
+    { ...window.history.state, __scroll: scroll },
+    "",
+  );
+};
+
 /** Navigate to a typed destination. Focus policy delegated to the coordinator. */
 export const navigate = (destination: NavigationDestination): void => {
   const resolved = resolveDestination(destination);
+  enrichHistoryState();
   // The switch narrows `resolved` per literal `to` so each case keeps its params typing.
   switch (resolved.to) {
     case "/":
@@ -120,6 +131,7 @@ export const navigateWithFocus = (
 
 /** `g b` — real app history back; the arriving screen restores its main region. */
 export const navigateBack = (): void => {
+  enrichHistoryState();
   requestBackFocus();
   getRouter().history.back();
 };
@@ -131,6 +143,7 @@ export const canNavigateBack = (): boolean => getRouter().history.canGoBack();
 /** The forward step. Focus is restored the same way a back step restores it:
  *  the arriving screen takes its main region. */
 export const navigateForward = (): void => {
+  enrichHistoryState();
   requestBackFocus();
   getRouter().history.forward();
 };

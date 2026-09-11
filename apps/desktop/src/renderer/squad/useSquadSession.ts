@@ -13,11 +13,28 @@ import { useCallback, useRef, useState } from "react";
 import {
   readTableSession,
   updateTableSession,
+  seedTableSession,
+  type TableSessionState,
 } from "../table/tableState.js";
 import type { TableFocusBookmark } from "../table/focusBookmark.js";
 import type { FilterClause, SortState } from "../table/types.js";
+import type { DecodedListState } from "../navigation/list-state-storage.js";
 
 const TABLE_ID = "squad";
+
+const seedFromRestored = (restored?: DecodedListState): TableSessionState | null => {
+  if (restored === undefined) return null;
+  const { sort, filters } = restored;
+  const state: TableSessionState = {
+    sort: sort !== null ? sort : null,
+    filters: filters.length > 0 ? filters : [],
+    focusBookmark: null,
+    selectedId: null,
+    scrollLeft: 0,
+  };
+  seedTableSession(TABLE_ID, state);
+  return state;
+};
 
 export interface SquadSessionState {
   readonly sort: SortState | null;
@@ -40,11 +57,13 @@ export interface SquadSessionActions {
   readonly commitScroll: (left: number) => void;
 }
 
-export const useSquadSession = (): {
+export const useSquadSession = (
+  restored?: DecodedListState,
+): {
   readonly session: SquadSessionState;
   readonly sessionActions: SquadSessionActions;
 } => {
-  const initialSession = useRef(readTableSession(TABLE_ID));
+  const initialSession = useRef(readTableSession(TABLE_ID) ?? seedFromRestored(restored));
   const [sort, setSortState] = useState(initialSession.current?.sort ?? null);
   const [filters, setFiltersState] = useState<readonly FilterClause[]>(
     initialSession.current?.filters ?? [],
