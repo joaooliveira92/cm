@@ -1,9 +1,11 @@
+import { useSyncExternalStore } from "react";
 import { ShortcutHint } from "../../discoverability/ShortcutHint.js";
 import { FOCUS_RING } from "../../focus.js";
 import { intentOfClick } from "../adapter.js";
 import { useNavContext } from "../navContext.js";
 import type { NavItem, NavSection } from "../nav-config.js";
-import { sectionCarriesHint } from "../nav-route-index.js";
+import { NAV_SECTIONS } from "../nav-config.js";
+import { getScopeState, subscribeScopeState } from "../../actions/scopeState.js";
 
 export const PrimaryNavItem = ({
   section,
@@ -22,13 +24,18 @@ export const PrimaryNavItem = ({
   const Icon = section.icon;
   const hasChildren = children.length > 0;
 
+  const scope = useSyncExternalStore(subscribeScopeState, getScopeState, getScopeState);
+  const hintKey = scope.prefixActive === true && scope.prefixKind === "level0"
+    ? String(NAV_SECTIONS.indexOf(section) + 1)
+    : undefined;
+
   return (
     <div
       className="relative flex h-10 shrink-0 items-center"
       onMouseEnter={() => actions.handleSectionEnter(section.id)}
       onMouseLeave={actions.handleSectionLeave}
     >
-      <ShortcutHint destination={sectionCarriesHint(section) ? section.defaultDestination : undefined}>
+      <ShortcutHint hintKey={hintKey}>
         <div
           className={`flex items-center gap-1.5 rounded-control pl-3 pr-1 text-sm transition-colors ${
             active

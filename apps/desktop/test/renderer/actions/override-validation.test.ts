@@ -45,7 +45,7 @@ describe("AC-34 — overrides are a layered record over unchanged coded defaults
       expect(withOverrides[i]).toBe(registry[i]);
     }
     // The coded defaults themselves are not rewritten by layering anything.
-    expect(ALL_ACTIONS.find((a) => a.id === "go-to-squad")?.binding).toBe("g s");
+    expect(ALL_ACTIONS.find((a) => a.id === "go-to-squad")?.binding).toBe("g 1");
   });
 
   it("an override replaces the WHOLE binding string — a two-step g-prefix rebound as one entry", () => {
@@ -55,7 +55,7 @@ describe("AC-34 — overrides are a layered record over unchanged coded defaults
     );
     expect(rebound?.binding).toBe("h");
     // Every other action keeps its default (layered, not replaced).
-    expect(ALL_ACTIONS.find((a) => a.id === "go-to-squad")?.binding).toBe("g s");
+    expect(ALL_ACTIONS.find((a) => a.id === "go-to-squad")?.binding).toBe("g 1");
     // The two-step default was one entry, so the override that replaces it is one entry too.
     expect(effectiveBinding(ALL_ACTIONS.find((a) => a.id === "go-to-tactics")!, overrides)).toBe("h");
   });
@@ -205,8 +205,7 @@ describe("AC-36 — the g-prefix derivations follow the *effective* bindings", (
     const overrides = { "go-to-squad": "h" };
     const effective = withEffectiveBindings(ALL_ACTIONS, overrides);
     const completions = gPrefixCompletionsOf(effective);
-    expect(completions.has("s")).toBe(false);
-    // The bare career-global key still resolves to the action through the priority stack.
+    expect(completions.has("1")).toBe(false);
     const decision = resolveDispatch({
       keystroke: { key: "h", ctrl: false, meta: false, shift: false, primary: false },
       typing: false,
@@ -214,12 +213,13 @@ describe("AC-36 — the g-prefix derivations follow the *effective* bindings", (
       now: 0,
       actions: withEffectiveBindings(
         [
-          action({ id: "go-to-squad", scope: "career-global", binding: "g s" }),
+          action({ id: "go-to-squad", scope: "career-global", binding: "g 1" }),
           action({ id: "focus-bid", scope: "transfers", binding: "b" }),
         ],
         overrides,
       ).filter((a) => a.id !== "focus-bid"),
-      prefixCompletions: completions,
+      level0Completions: completions,
+      level1Completions: new Set(),
     });
     expect(decision.kind).toBe("action");
     if (decision.kind === "action") expect(decision.action.id).toBe("go-to-squad");
@@ -244,20 +244,21 @@ describe("AC-34/AC-36 — the resolution path consumes one effective view", () =
       typing: false,
       prefix: IDLE_PREFIX,
       now: 0,
-      actions: effective,
-      prefixCompletions: new Set(),
+actions: effective,
+      level0Completions: new Set(),
+      level1Completions: new Set(),
       overlay: "none",
     });
     expect(decision.kind).toBe("action");
     if (decision.kind === "action") expect(decision.action.id).toBe("focus-bid");
-    // The default binding is gone from the effective view: `b` no longer resolves.
     const oldDecision = resolveDispatch({
       keystroke: ks({ key: "b" }),
       typing: false,
       prefix: IDLE_PREFIX,
       now: 0,
       actions: effective,
-      prefixCompletions: new Set(),
+      level0Completions: new Set(),
+      level1Completions: new Set(),
       overlay: "none",
     });
     expect(oldDecision.kind).toBe("none");

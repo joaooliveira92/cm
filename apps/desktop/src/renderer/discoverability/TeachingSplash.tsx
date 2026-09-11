@@ -66,7 +66,7 @@ export const useTeachingSplashVisibility = (): {
 const SHORTCUTS: ReadonlyArray<{ readonly keys: string; readonly description: string }> = [
   { keys: "Cmd+K", description: "Open the command palette and find any action" },
   { keys: "Cmd+/", description: "Open the keyboard shortcuts reference" },
-  { keys: "g <key>", description: "Move between screens (g s Squad, g t Transfers, ...)" },
+  { keys: "g <key> <key>", description: "Navigate sections (g 1 Squad, g 2 Tactics…) then items (g 1 q Squad, g 1 w Staff…)" },
 ];
 
 /**

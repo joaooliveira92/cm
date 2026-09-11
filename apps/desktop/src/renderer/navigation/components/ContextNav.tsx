@@ -1,14 +1,26 @@
+import { useSyncExternalStore } from "react";
 import { ShortcutHint } from "../../discoverability/ShortcutHint.js";
 import { FOCUS_RING } from "../../focus.js";
 import { intentOfClick } from "../adapter.js";
 import { useNavContext } from "../navContext.js";
-import { itemCarriesHint } from "../nav-route-index.js";
+import { POSITION_KEYS, NAV_SECTIONS } from "../nav-config.js";
+import { getScopeState, subscribeScopeState } from "../../actions/scopeState.js";
+
+const sectionKeyForId = (id: string): string | undefined => {
+  const idx = NAV_SECTIONS.findIndex((s) => s.id === id);
+  return idx >= 0 ? String(idx + 1) : undefined;
+};
 
 export const ContextNav = () => {
   const { state, actions, meta } = useNavContext();
   const { stripSection, activeItemId } = state;
   const { goTo, handleSectionEnter, handleSectionLeave } = actions;
   const { stripItems } = meta;
+
+  const scope = useSyncExternalStore(subscribeScopeState, getScopeState, getScopeState);
+  const isDeep = scope.prefixActive === true && scope.prefixKind === "level1" && stripSection !== null
+    ? scope.deepSectionId === sectionKeyForId(stripSection.id)
+    : false;
 
   if (stripSection === null) return null;
 
@@ -23,13 +35,14 @@ export const ContextNav = () => {
       <span className="mr-2 shrink-0 text-xs uppercase tracking-wide text-text-muted">
         {stripSection.label}
       </span>
-      {stripItems.map((item) => {
+      {stripItems.map((item, idx) => {
         const active = item.id === activeItemId;
         const ItemIcon = item.icon;
+        const hintKey = isDeep ? POSITION_KEYS[idx] : undefined;
         return (
           <ShortcutHint
             key={item.id}
-            destination={itemCarriesHint(stripSection, item) ? item.destination : undefined}
+            hintKey={hintKey}
           >
             <button
               type="button"

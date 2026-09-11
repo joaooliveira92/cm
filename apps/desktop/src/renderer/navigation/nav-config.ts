@@ -241,3 +241,18 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
 
 export type NavSectionId = (typeof NAV_SECTIONS)[number]["id"];
 export type NavItemId = (typeof NAV_SECTIONS)[number]["items"][number]["id"];
+
+/**
+ * Position-based key mappings for the two-level prefix system.
+ * Level 0: `1`-`7` selects a section (by position in NAV_SECTIONS).
+ * Level 1: `q w e r t y u i o` selects a sub-item (by position in the section's items array).
+ */
+export const POSITION_KEYS = ["q", "w", "e", "r", "t", "y", "u", "i", "o"] as const;
+
+/** Maps section position keys (1-7) to the section id and its default destination. */
+export const sectionKeyToEntry: ReadonlyMap<string, { sectionId: NavSectionId; defaultDestination: SaveScopedCareerDestinationType }> = new Map(
+  NAV_SECTIONS.map((s, i) => [String(i + 1), { sectionId: s.id, defaultDestination: s.defaultDestination }]),
+);
+
+/** Gives the position key (q/w/e/...) for an item at a given index within its section. */
+export const positionKeyForIndex = (index: number): string | undefined => POSITION_KEYS[index];

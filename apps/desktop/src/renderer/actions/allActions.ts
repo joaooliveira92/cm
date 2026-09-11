@@ -60,14 +60,13 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   // `primary: true` is consumed by the career chrome for the gradient treatment —
   // presentation only, never automatic Enter dispatch (global-key-map note AC-11).
   { id: "continue", label: "Continue", scope: "career-global", available: continueAvailable, unavailableReason: "The Calendar cannot advance right now.", handler: () => undefined, binding: "Space", primary: true },
-  navAction("go-to-squad", "Go to Squad", "g s", { destination: "squad" }),
-  navAction("go-to-tactics", "Go to Tactics", "g a", { destination: "tactics" }),
-  navAction("go-to-transfers", "Go to Transfers", "g t", { destination: "transfers" }),
-  navAction("go-to-league", "Go to League Table", "g l", { destination: "league" }),
-  navAction("go-to-fixtures", "Go to Fixtures", "g f", { destination: "fixtures" }),
-  navAction("go-to-match", "Go to Match Day", "g d", { destination: "match" }),
-  navAction("go-to-season-summary", "Go to Season Summary", "g y", { destination: "seasonSummary" }),
-  navAction("go-to-manager", "Go to Manager Profile", "g m", { destination: "manager" }),
+  navAction("go-to-squad", "Go to Squad", "g 1", { destination: "squad", sectionKey: "1" }),
+  navAction("go-to-tactics", "Go to Tactics", "g 2", { destination: "tactics", sectionKey: "2" }),
+  navAction("go-to-training", "Go to Training", "g 3", { destination: "squad", sectionKey: "3" }),
+  navAction("go-to-recruitment", "Go to Recruitment", "g 4", { destination: "transfers", sectionKey: "4" }),
+  navAction("go-to-analysis", "Go to Analysis", "g 5", { destination: "league", sectionKey: "5" }),
+  navAction("go-to-news", "Go to News", "g 6", { destination: "news", sectionKey: "6" }),
+  navAction("go-to-club", "Go to Club", "g 7", { destination: "manager", sectionKey: "7" }),
   navAction("go-back", "Go to previous screen", "g b"),
   // transfers
   { id: "focus-bid", label: "Focus the bid workflow", scope: "transfers", available: ready, handler: () => undefined, binding: "b" },

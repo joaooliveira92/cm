@@ -124,9 +124,9 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
     render(<PrefixIndicator entries={PREFIX_INDICATOR_ENTRIES} />);
     const status = screen.getByRole("status");
     expect(status.textContent).toContain("Go to:");
-    expect(status.textContent).toContain("Squad [S]");
-    expect(status.textContent).toContain("Tactics [A]");
-    expect(status.textContent).toContain("Season Summary [Y]");
+    expect(status.textContent).toContain("Squad [1]");
+    expect(status.textContent).toContain("Tactics [2]");
+    expect(status.textContent).toContain("Club [7]");
   });
 
   it("pressing g alone shows the indicator and completes no navigation", async () => {
@@ -139,12 +139,15 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
     expect(screen.queryByText("Go to:")).toBeNull();
   });
 
-  it("a valid completion key navigates and hides the indicator", async () => {
+  it("a valid section key navigates and enters deep prefix showing sub-items", async () => {
     await mountTransfersWithSpine();
     act(() => fireEvent.keyDown(document, { key: "g" }));
-    act(() => fireEvent.keyDown(document, { key: "s" }));
-    expect(screen.queryByText("Go to:")).toBeNull();
+    act(() => fireEvent.keyDown(document, { key: "1" }));
+    // Navigation to Squad happened.
     expect(navCalls.map((c) => c.to)).toEqual(["/career/$saveId/squad"]);
+    // Deep prefix is active — the indicator now shows Squad's sub-items.
+    expect(screen.getByText("Go to:").parentElement?.textContent).toContain("Squad");
+    expect(screen.getByText("Go to:").parentElement?.textContent).toContain("Q");
   });
 
   it("an invalid key cancels without navigating and without firing a bare action", async () => {
@@ -314,6 +317,6 @@ describe("AC-17 — the registry's coded bindings are exactly what the live spin
   // The spine derives ALL key handling from the registry (via resolveDispatch);
   // a binding a screen advertises is reachable, and nothing else is hard-wired.
   it("the live prefix completion set is registry-derived and covers g b", () => {
-    expect(new Set(["s", "a", "t", "l", "f", "d", "y", "m", "b"])).toEqual(G_PREFIX_COMPLETIONS);
+    expect(new Set(["1", "2", "3", "4", "5", "6", "7", "b"])).toEqual(G_PREFIX_COMPLETIONS);
   });
 });

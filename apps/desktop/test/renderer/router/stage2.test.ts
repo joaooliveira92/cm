@@ -62,24 +62,22 @@ describe("AC-14 — career g bindings never point at creation steps", () => {
       expect(destination.type).not.toMatch(/^createStep/);
       expect(destination.type).not.toBe("mainMenu");
       expect((resolveDestination(destination).to as string)).toMatch(/^\/career\/\$saveId\//);
-      expect(key).toMatch(/^[a-z]$/);
+      expect(key).toMatch(/^[1-7]$/);
     }
   });
 
-  it("the registry covers all nine career screens and nothing else", () => {
+  it("the section-level g bindings cover the seven section defaults", () => {
     expect(Object.keys(CAREER_G_BINDINGS).sort()).toEqual([
-      "a",
-      "d",
-      "f",
-      "l",
-      "m",
-      "n",
-      "s",
-      "t",
-      "y",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
     ]);
     const types = Object.values(CAREER_G_BINDINGS).map((build) => build(save("x")).type);
-    expect(new Set(types)).toEqual(new Set(CAREER_SCREEN_TYPES));
+    expect(new Set(types)).toEqual(new Set(["squad", "tactics", "transfers", "league", "news", "manager"]));
   });
 });
 
@@ -105,11 +103,12 @@ describe("AC-11 — the redesigned navbar reaches every career screen", () => {
   });
 });
 
-describe("Screen 19 — `g m` reaches Manager Profile, Match Day moved to `g d`", () => {
-  it("g m resolves to the manager route and g d to the match route", () => {
+describe("g <key> navigation uses position-based number keys", () => {
+  it("g 1 resolves to Squad, g 2 to Tactics, g 7 to Manager", () => {
     const id = save("save-1");
-    expect(CAREER_G_BINDINGS["m"]!(id)).toEqual({ type: "manager", saveId: id });
-    expect(CAREER_G_BINDINGS["d"]!(id)).toEqual({ type: "match", saveId: id });
+    expect(CAREER_G_BINDINGS["1"]!(id)).toEqual({ type: "squad", saveId: id });
+    expect(CAREER_G_BINDINGS["2"]!(id)).toEqual({ type: "tactics", saveId: id });
+    expect(CAREER_G_BINDINGS["7"]!(id)).toEqual({ type: "manager", saveId: id });
   });
 });
 

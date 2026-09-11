@@ -92,23 +92,20 @@ export const careerDestination = (
 ): CareerDestination => ({ type, saveId }) as CareerDestination;
 
 /**
- * The coded `g <key>` default bindings — the registry ticket 17's key map and
- * the palette resolve through. Deliberately contains only career screens: the
- * main menu, load screen, and creation steps have no `g` binding (creation is a
- * focused-control flow by design).
+ * The coded `g <key>` default bindings for career screens (level 0).
+ * Number keys navigate to each section's default destination by display position.
+ * `b` remains for go-back.
  */
 export const CAREER_G_BINDINGS: Readonly<
   Record<string, (saveId: SaveId) => CareerDestination>
 > = {
-  s: (saveId) => careerDestination("squad", saveId),
-  a: (saveId) => careerDestination("tactics", saveId),
-  t: (saveId) => careerDestination("transfers", saveId),
-  l: (saveId) => careerDestination("league", saveId),
-  f: (saveId) => careerDestination("fixtures", saveId),
-  d: (saveId) => careerDestination("match", saveId),
-  y: (saveId) => careerDestination("seasonSummary", saveId),
-  m: (saveId) => careerDestination("manager", saveId),
-  n: (saveId) => careerDestination("news", saveId),
+  "1": (saveId) => careerDestination("squad", saveId),
+  "2": (saveId) => careerDestination("tactics", saveId),
+  "3": (saveId) => careerDestination("squad", saveId),
+  "4": (saveId) => careerDestination("transfers", saveId),
+  "5": (saveId) => careerDestination("league", saveId),
+  "6": (saveId) => careerDestination("news", saveId),
+  "7": (saveId) => careerDestination("manager", saveId),
 } as const;
 
 /**

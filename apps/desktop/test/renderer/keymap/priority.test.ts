@@ -18,23 +18,24 @@ const active: Action[] = [
   action({ id: "open-palette", scope: "app-global", binding: "Primary+K" }),
   action({ id: "open-help", scope: "app-global", binding: "Primary+/" }),
   action({ id: "continue", scope: "career-global", binding: "Space" }),
-  action({ id: "go-squad", scope: "career-global", binding: "g s" }),
+  action({ id: "go-squad", scope: "career-global", binding: "g 1" }),
   action({ id: "focus-bid", scope: "transfers", binding: "b" }),
 ];
 
-const completions = new Set(["s", "a", "t", "l", "f", "m", "y"]);
+const level0Completions = new Set(["1", "2", "3", "4", "5", "6", "7"]);
+const emptyLevel1 = new Set<string>();
 
-    const ctx = (partial: Partial<ResolveContext>): ResolveContext => ({
+const ctx = (partial: Partial<ResolveContext>): ResolveContext => ({
   keystroke: { key: "a", ctrl: false, meta: false, shift: false, primary: false },
   typing: false,
   prefix: IDLE_PREFIX,
   overlay: "none",
   now: 0,
   actions: active,
-  prefixCompletions: completions,
+  level0Completions,
+  level1Completions: emptyLevel1,
   ...partial,
 });
-
 
 const ks = (p: Partial<Keystroke>): Keystroke => ({
   key: "a",
@@ -75,12 +76,10 @@ describe("AC-17 — one keystroke executes at most one action", () => {
   });
 
   it("an active prefix captures the second key so no bare screen action fires", () => {
-    const prefix = { active: true, startedAt: 0 };
+    const prefix = { kind: "level0", startedAt: 0 } as const;
     const d = resolveDispatch(
-      ctx({ prefix, keystroke: ks({ key: "b" }), now: 10, prefixCompletions: completions }),
+      ctx({ prefix, keystroke: ks({ key: "b" }), now: 10 }),
     );
-    // `b` is not a valid completion, so the prefix cancels — but the screen `b`
-    // (focus-bid) must NOT fire; the prefix owns the keystroke.
     expect(d.kind).toBe("cancel-prefix");
   });
 });
@@ -169,27 +168,20 @@ describe("AC-19 — text-input suppression", () => {
   it("the resolver hands a suppressed bare key to the field (native), never an action", () => {
     const input = document.createElement("input");
     const d = resolveDispatch(
-      ctx({
-        typing: shouldSuppressForTextEntry(input, ks({ key: "a" })),
-        keystroke: ks({ key: "a" }),
-      }),
+      ctx({ typing: shouldSuppressForTextEntry(input, ks({ key: "a" })), keystroke: ks({ key: "a" }) }),
     );
     expect(d.kind).toBe("native");
   });
 
   it("the resolver still opens the palette via Primary+K while typing", () => {
     const d = resolveDispatch(
-      ctx({
-        typing: true,
-        keystroke: ks({ key: "k", primary: true }),
-      }),
+      ctx({ typing: true, keystroke: ks({ key: "k", primary: true }) }),
     );
     expect(d.kind).toBe("action");
     if (d.kind === "action") expect(d.action.id).toBe("open-palette");
   });
 
   it("keyOf maps the platform Primary modifier", () => {
-    // On non-mac (test env) Primary is Ctrl.
     const e = { key: "k", ctrlKey: true, metaKey: false, shiftKey: false, altKey: false };
     const normalized = keyOf(e);
     expect(normalized.primary).toBe(true);
@@ -199,9 +191,9 @@ describe("AC-19 — text-input suppression", () => {
 
 describe("prefix-vs-timeout at the resolver boundary", () => {
   it("a completed prefix past the timeout does not navigate", () => {
-    const prefix = { active: true, startedAt: 0 };
+    const prefix = { kind: "level0", startedAt: 0 } as const;
     const d = resolveDispatch(
-      ctx({ prefix, keystroke: ks({ key: "s" }), now: prefixTimeoutMs() + 1 }),
+      ctx({ prefix, keystroke: ks({ key: "1" }), now: prefixTimeoutMs() + 1 }),
     );
     expect(d.kind).toBe("cancel-prefix");
   });
@@ -227,7 +219,6 @@ describe("four-views reconcile — a registered binding is exactly what the live
     for (const action of ACTION_REGISTRY.all) {
       const binding = action.binding;
       if (binding === undefined) continue;
-      // `g <key>` sequences are prefix-machine territory (AC-18), asserted live.
       if (binding.includes(" ")) continue;
       const d = resolveDispatch(
         ctx({ keystroke: keystrokeForBinding(binding), actions: [action] }),
@@ -247,14 +238,14 @@ describe("four-views reconcile — a registered binding is exactly what the live
   });
 
   it("a prefix-active g then b completes go-back (b is a live completion, not an invalid key)", () => {
-    const prefix = { active: true, startedAt: 0 };
+    const prefix = { kind: "level0", startedAt: 0 } as const;
     const d = resolveDispatch(
       ctx({
         prefix,
         keystroke: ks({ key: "b" }),
         now: 10,
-        actions: active,
-        prefixCompletions: G_PREFIX_COMPLETIONS,
+        level0Completions: G_PREFIX_COMPLETIONS,
+        level1Completions: emptyLevel1,
       }),
     );
     expect(d.kind).toBe("complete-prefix");
@@ -265,8 +256,6 @@ describe("AC-17 — a control that owns Space natively is not shadowed by a care
   const space: Keystroke = { key: " ", ctrl: false, meta: false, shift: false, primary: false };
 
   it("Space on a focused grid row is the row's, not Continue's", () => {
-    // The regression: a row button activates on Space *and* the career-global Space binding fired,
-    // so selecting a row also advanced the Calendar out of pre-season — one keystroke, two actions.
     const decision = resolveDispatch(ctx({ keystroke: space, nativeActivation: true }));
     expect(decision.kind).toBe("native");
   });
@@ -283,7 +272,6 @@ describe("AC-17 — a control that owns Space natively is not shadowed by a care
       </div>`;
     const at = (id: string) => document.getElementById(id);
     expect(controlOwnsSpace(at("row"), space)).toBe(true);
-    // The event target is usually the inner span, not the button itself.
     expect(controlOwnsSpace(at("label"), space)).toBe(true);
     expect(controlOwnsSpace(at("screen"), space)).toBe(false);
   });
@@ -293,4 +281,4 @@ describe("AC-17 — a control that owns Space natively is not shadowed by a care
     const b: Keystroke = { key: "b", ctrl: false, meta: false, shift: false, primary: false };
     expect(controlOwnsSpace(document.getElementById("row"), b)).toBe(false);
   });
-})
+});

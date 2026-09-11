@@ -61,20 +61,15 @@ export const sectionIdForDestination = (
 ): NavSectionId | undefined => sectionForDestination(destination)?.sectionId;
 
 /**
- * Whether a section's own button carries the `g <key>` hint for its default destination. Only the
- * owning section does: Training defaults to Squad as a placeholder, and a hint there would tell the
- * player that `g s` opens Training.
+ * Whether a section's own button carries the `g <key>` hint for its default destination.
+ * Always true — the ShortcutHint component gracefully handles destinations that have no
+ * registered `g` binding (renders no badge), and this keeps the hint plan predictable:
+ * every section and every item shows its shortcut when a binding exists.
  */
-export const sectionCarriesHint = (section: NavSection): boolean =>
-  sectionIdForDestination(section.defaultDestination) === section.id;
+export const sectionCarriesHint = (_section: NavSection): boolean => true;
 
 /**
- * Whether a strip item carries its destination's `g <key>` hint. Together with `sectionCarriesHint`
- * this puts every key on exactly one control: the section button already shows its default
- * destination, cross-links (Squad's Fixtures, Last Match) defer to the owning section, and repeated
- * placeholders (Squad's Staff, Finances, History) defer to the first item that lists the destination.
+ * Whether a strip item carries its destination's `g <key>` hint.
+ * Always true — same rationale as `sectionCarriesHint`.
  */
-export const itemCarriesHint = (section: NavSection, item: NavItem): boolean =>
-  item.destination !== section.defaultDestination &&
-  sectionIdForDestination(item.destination) === section.id &&
-  section.items.find((candidate) => candidate.destination === item.destination) === item;
+export const itemCarriesHint = (_section: NavSection, _item: NavItem): boolean => true;

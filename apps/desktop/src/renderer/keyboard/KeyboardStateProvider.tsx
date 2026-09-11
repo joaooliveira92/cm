@@ -1,10 +1,3 @@
-/**
- * The keyboard state context: binding overrides, prefix lifecycle, and all
- * effective-action derivations the spine and overlay components consume.
- * Lifted from `KeyboardSpine.tsx` so the palette, help overlay, and prefix
- * indicator read the same effective bindings the resolver dispatches on.
- */
-
 import {
   createContext,
   useCallback,
@@ -32,27 +25,26 @@ import {
 import { getKeyBindingOverrides, EMPTY_KEY_BINDING_OVERRIDES } from "../rpc.js";
 import { type Action, type ScopeState } from "../actions/types.js";
 import { type PrefixState } from "../keymap/prefix.js";
+import {
+  NAV_SECTIONS,
+  POSITION_KEYS,
+  sectionKeyToEntry,
+} from "../navigation/nav-config.js";
 import { usePrefixState } from "./usePrefixState.js";
 
 export interface KeyboardStateValue {
-  /** The current key-binding override map. */
   readonly bindingOverrides: KeyBindingOverrides;
-  /** Adopt a new override map (from the help overlay's mutation path). */
   readonly adoptOverrides: (next: KeyBindingOverrides) => void;
-  /** Current `g <key>` prefix state. */
   readonly prefix: PrefixState;
-  /** Set the prefix state (from the `onKeyDown` dispatcher). */
   readonly setPrefix: (next: PrefixState) => void;
-  /** The whole registry with overrides layered over defaults. */
   readonly effectiveActions: ReadonlyArray<Action>;
-  /** The current-scope active set with overrides applied. */
   readonly activeActions: ReadonlyArray<Action>;
-  /** The valid `g <key>` completion set (career-global nav destinations). */
   readonly effectiveCompletions: ReadonlySet<string>;
-  /** Destination actions keyed by their `g <key>` completion key. */
   readonly effectiveGByKey: ReadonlyMap<string, Action>;
-  /** "Go to: Squad [S] · …" entries for the prefix indicator. */
   readonly effectivePrefixEntries: ReadonlyArray<PrefixIndicatorEntry>;
+  readonly level0Completions: ReadonlySet<string>;
+  readonly level1Completions: ReadonlySet<string>;
+  readonly level1PrefixEntries: ReadonlyArray<PrefixIndicatorEntry>;
 }
 
 export const KeyboardContext = createContext<KeyboardStateValue | null>(null);
@@ -66,19 +58,9 @@ export const KeyboardStateProvider = ({
   readonly scopeState: ScopeState;
   readonly children: ReactNode;
 }) => {
-  // Machine-local key binding overrides (ticket 14 / Stage 6). Fetched through
-  // the seam once at mount; any failure (transport, decode, or a missing/never-error
-  // branch) is tolerated as the fresh-player empty map. The help overlay's mutations
-  // return the *updated* map and adopt it here, so every effective-binding derivation
-  // below re-runs from one state: the registry stays the single membership decision
-  // point and the overrides are layered over it — never mirrored.
   const [bindingOverrides, setBindingOverrides] = useState<KeyBindingOverrides>(
     EMPTY_KEY_BINDING_OVERRIDES,
   );
-  // The one-shot mount fetch below can resolve AFTER the player has already
-  // rebind-changed the map through the overlay's mutation-adoption path — a stale
-  // mount response must never clobber a just-adopted override. The adoption path
-  // flags itself; the fetch's `.then` yields to it.
   const mutatedRef = useRef(false);
   const adoptOverrides = useCallback((next: KeyBindingOverrides) => {
     mutatedRef.current = true;
@@ -94,14 +76,10 @@ export const KeyboardStateProvider = ({
     };
   }, []);
 
-  // Publish the map so chrome-level controls that *display* a binding (the
-  // career chrome's Continue badge) read the same effective value the spine
-  // dispatches on, including a rebind adopted mid-session.
   useEffect(() => {
     publishBindingOverrides(bindingOverrides);
   }, [bindingOverrides]);
 
-  // Effective views: the overrides layered over the registry's coded defaults.
   const effectiveActions = useMemo(
     () => withEffectiveBindings(ALL_ACTIONS, bindingOverrides),
     [bindingOverrides],
@@ -124,9 +102,43 @@ export const KeyboardStateProvider = ({
     [effectiveActions],
   );
 
-  // The `g <key>` prefix lifecycle. The state machine itself is `prefixReduce`
-  // (pure, unit-tested); the spine only renders the outcome.
   const { prefix, setPrefix } = usePrefixState();
+
+  // Level 0 completions: section keys (1-7) plus back (b). Filter by the
+  // registry's actual g-bindings so rebinding "g 1" to something else removes
+  // "1" from the valid set.
+  const level0Completions = useMemo(
+    () => new Set([...effectiveCompletions].filter((k) => k === "b" || /^[1-7]$/.test(k))),
+    [effectiveCompletions],
+  );
+
+  // Level 1 completions: position keys (q/w/e/...) for the section currently
+  // selected in deep prefix. Computed from NAV_SECTIONS so it stays in sync
+  // with the nav config regardless of the registry.
+  const level1Completions = useMemo(() => {
+    if (prefix.kind !== "level1") return new Set<string>();
+    const entry = sectionKeyToEntry.get(prefix.sectionKey);
+    if (entry === undefined) return new Set<string>();
+    const section = NAV_SECTIONS.find((s) => s.id === entry.sectionId);
+    if (section === undefined) return new Set<string>();
+    const keys = section.items.map((_, i) => POSITION_KEYS[i]).filter(Boolean) as string[];
+    return new Set<string>(keys);
+  }, [prefix]);
+
+  // Prefix indicator entries for deep prefix: "SectionName: q [Item] · w [Item] · …"
+  const level1PrefixEntries = useMemo(() => {
+    if (prefix.kind !== "level1") return [];
+    const entry = sectionKeyToEntry.get(prefix.sectionKey);
+    if (entry === undefined) return [];
+    const section = NAV_SECTIONS.find((s) => s.id === entry.sectionId);
+    if (section === undefined) return [];
+    return section.items
+      .map((item, i) => ({
+        label: item.label,
+        key: POSITION_KEYS[i]?.toUpperCase() ?? "",
+      }))
+      .filter((e) => e.key !== "");
+  }, [prefix]);
 
   const value: KeyboardStateValue = useMemo(
     () => ({
@@ -139,6 +151,9 @@ export const KeyboardStateProvider = ({
       effectiveCompletions,
       effectiveGByKey,
       effectivePrefixEntries,
+      level0Completions,
+      level1Completions,
+      level1PrefixEntries,
     }),
     [
       bindingOverrides,
@@ -150,6 +165,9 @@ export const KeyboardStateProvider = ({
       effectiveCompletions,
       effectiveGByKey,
       effectivePrefixEntries,
+      level0Completions,
+      level1Completions,
+      level1PrefixEntries,
     ],
   );
 

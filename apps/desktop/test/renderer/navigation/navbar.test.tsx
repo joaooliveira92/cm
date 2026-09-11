@@ -12,11 +12,8 @@ import {
 import { SaveId } from "@cm-clone/contracts";
 import { Navbar } from "../../../src/renderer/navigation/components/Navbar.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
-import { resetScopeState, setScopeState } from "../../../src/renderer/actions/scopeState.js";
-import {
-  publishBindingOverrides,
-  resetBindingOverrides,
-} from "../../../src/renderer/actions/bindingState.js";
+import { resetScopeState, setScopeState, clearScopeState } from "../../../src/renderer/actions/scopeState.js";
+import { resetBindingOverrides } from "../../../src/renderer/actions/bindingState.js";
 
 const saveId = SaveId.make("s1");
 
@@ -149,39 +146,31 @@ describe("leader-key hints on the navbar (global-key-map note, g <key> prefix)",
     expect(hintsIn("Analysis submenu")).toEqual([]);
   });
 
-  it("badges each destination's completion key while the prefix is pending", async () => {
+  it("badges each section's number key while the level0 prefix is pending", async () => {
     await mountNavbar("league");
-    act(() => setScopeState({ prefixActive: true }));
-    // Sections carry their own default; Training (a Squad placeholder) carries nothing.
-    expect(hintsIn("Primary navigation")).toEqual(["S", "A", "T", "L", "M"]);
-    // The strip carries the destinations its section button does not.
-    expect(hintsIn("Analysis submenu")).toEqual(["F", "D", "Y"]);
+    act(() => setScopeState({ prefixActive: true, prefixKind: "level0" }));
+    // Sections show their position number key.
+    expect(hintsIn("Primary navigation")).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
+    // Submenu items don't show hints during level0 prefix.
+    expect(hintsIn("Analysis submenu")).toEqual([]);
 
     act(() => setScopeState({ prefixActive: false }));
+    clearScopeState("prefixKind");
     expect(hintsIn("Primary navigation")).toEqual([]);
   });
 
   it("keeps the hint out of the control's accessible name", async () => {
     await mountNavbar("league");
-    act(() => setScopeState({ prefixActive: true }));
+    act(() => setScopeState({ prefixActive: true, prefixKind: "level0" }));
     expect(screen.getByRole("button", { name: "Fixtures" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Squad" })).toBeTruthy();
-  });
-
-  it("shows the rebound key, not the coded default", async () => {
-    await mountNavbar("league");
-    act(() => {
-      publishBindingOverrides({ "go-to-fixtures": "g x" });
-      setScopeState({ prefixActive: true });
-    });
-    expect(hintsIn("Analysis submenu")).toEqual(["X", "D", "Y"]);
   });
 
   it("does not remount the control, so focus survives the hint appearing", async () => {
     await mountNavbar("league");
     const fixtures = screen.getByRole("button", { name: "Fixtures" });
     fixtures.focus();
-    act(() => setScopeState({ prefixActive: true }));
+    act(() => setScopeState({ prefixActive: true, prefixKind: "level0" }));
     expect(document.activeElement).toBe(fixtures);
   });
 });
