@@ -11,6 +11,7 @@
     "build:renderer": "vite build -c vite.renderer.config.ts",
     "build": "pnpm build:main && pnpm build:preload && pnpm build:renderer",
     "db:generate": "rm -rf drizzle && drizzle-kit generate --name schema && tsx scripts/generate-migrations.ts",
+    "import-club-badges": "tsx scripts/import-club-badges.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "pretest:e2e": "pnpm build",

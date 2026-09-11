@@ -31,3 +31,7 @@ apps/desktop/drizzle/meta/
 
 # Stray Python tooling caches (no Python in this repo; a one-off script left these)
 .mypy_cache/
+
+# The European club-logo dump the badge library is imported from (apps/desktop/scripts/import-club-badges.ts).
+# 55 MB of source art that must never be committed; the library holds the flattened result.
+football-logos-master/

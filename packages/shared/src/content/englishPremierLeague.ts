@@ -201,6 +201,7 @@ export const ENGLISH_PREMIER_LEAGUE_PACK: ContentPack = {
       quaternary: null
     }
   },
+  clubBadges: {},
   stadiums: {
     club_eng_1_01: { name: "Emirates Stadium", capacity: 60704 },
     club_eng_1_02: { name: "Villa Park", capacity: 43205 },

@@ -200,6 +200,7 @@ export const BRAZIL_SERIES_A_PACK: ContentPack = {
       quaternary: null
     }
   },
+  clubBadges: {},
   stadiums: {
     club_bra_1_01: { name: "Arena da Baixada", capacity: 42372 },
     club_bra_1_02: { name: "Arena MRV", capacity: 44892 },

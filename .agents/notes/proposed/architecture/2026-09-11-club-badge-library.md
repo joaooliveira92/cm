@@ -8,13 +8,15 @@ The app has no club badges. A source dump now sits untracked at the repo root,
 `football-logos-master/`: 2,160 PNGs (139x181, RGBA), 55 MB, laid out by season and league:
 `logos/<Nation> - <League>/<Club Name>.png` for 2026–27, and
 `history/<season>/<Nation> - <League>/…` back to 2021–22. It covers the top flight of 25 European
-nations. Brazilian badges will follow in some other layout.
+nations, 26 across its history, because Hungary appears in 2024–25 only. Brazilian badges will
+follow in some other layout.
 
 Keeping that layout means a club's file moves every time the club changes division or a season
 turns over. The English pack names the 2025–26 Premier League (Burnley, West Ham, Wolves), while
 `logos/` holds 2026–27 (Coventry, Hull, Ipswich instead). A season- or league-shaped library is out
-of date the day it is imported. League folders also get renamed by sponsors (27 folder names for 25
-leagues), and the filenames are display strings with accents, spaces, `&` and apostrophes.
+of date the day it is imported. League folders also carry sponsors' names, such as
+`Bulgaria - efbet Liga` and `Croatia - SuperSport HNL`, which change with the sponsor. The filenames
+are display strings with accents, spaces, `&` and apostrophes.
 
 This is an MVP. Licensing is explicitly out of scope: nothing below is shaped by it.
 
@@ -32,24 +34,31 @@ league or season. Promotion, relegation and a new season never move a file.
 ### Badge library
 
 - **Key**: `<nation>/<club-slug>`, e.g. `eng/manchester-united`, `bra/flamengo`. The nation is the
-  lowercase ISO alpha-3 code already used in canonical ids (`club_eng_…`). The slug is the club
-  name with accents removed, lowercased, and every other non-alphanumeric run turned into `-`.
+  lowercase ISO alpha-3 code already used in canonical ids (`club_eng_…`). England and Scotland have
+  no ISO country of their own and take their football association codes, `eng` and `sco`. The
+  slug is the club name with accents removed, lowercased, and every other non-alphanumeric run
+  turned into `-`.
   Same-named clubs in different countries don't collide, because each country has its own
   namespace.
 - **Files**: `club-badges/<nation>/<club-slug>.png`. A country folder holds every club of that country
   the sources know, whatever division it plays in: top flight, second tier, or Brazilian Série C
   when that arrives.
 - **Manifest**: `club-badges/manifest.json`, generated and committed. One entry per key:
-  `{ key, file, sha256, source }`, where `source` is the original path in the dump, kept for
-  traceability. Changing a badge is then a one-line hash diff in review.
+  `{ key, file, sha256, source, adapter }`, where `source` is the original path in the dump, kept
+  for traceability, and `adapter` names the adapter that imported it. An import only replaces or
+  removes its own adapter's keys, so a Brazilian import can't drop the European ones. Changing a
+  badge is then a one-line hash diff in review.
 - **One badge per club.** The dump has several seasons of the same club. Its season folders are only
   input to the import: the newest file for a club wins, and the season is not recorded as structure
-  anywhere. Flattening the dump by country gives 697 clubs, about 17 MB (down from 55 MB). That
-  includes clubs no longer in a top flight, such as Burnley, which the English pack still names.
+  anywhere. Flattening the dump by country gives 572 clubs, about 14 MB (down from 55 MB). The dump
+  has 697 distinct file names, but 125 of them are another spelling of a club already counted
+  (`Arsenal` in 2021–22, `Arsenal FC` since), so they share that club's key. The 572
+  include clubs no longer in a top flight, such as Burnley, which the English pack still names.
 
 ### Import script
 
-`scripts/import-club-badges.ts <source-dir> --adapter <name>` is the only way files enter the library.
+`pnpm import-club-badges <source-dir> --adapter <name>` (`apps/desktop/scripts/import-club-badges.ts`)
+is the only way files enter the library.
 
 - **One adapter per source layout**, each reducing its source to `(nation, club name, file)` rows.
   The first is `football-logos`. It holds a `league folder prefix → nation` table (`"England" →
@@ -58,10 +67,12 @@ league or season. Promotion, relegation and a new season never move a file.
   The Brazilian dump gets its own adapter whatever its layout. Everything after the adapter is
   shared.
 - **Slug collisions stop the import.** Two different clubs in one country that slug the same don't
-  overwrite each other. The adapter's override table assigns one a different slug.
+  overwrite each other. The slug rule can't tell a renamed club from a different one, so any two
+  spellings that land on one key stop the import. The adapter's override table records the answer:
+  it assigns a different club its own slug, or maps every spelling of one club onto one key.
 - The script copies files, rewrites the manifest, and prints what was added, replaced (by hash) and
-  dropped. Re-running it on the same dump changes nothing. It never drops a key that a pack still
-  references.
+  dropped. Re-running it on the same dump changes nothing. It never drops a key that a pack in
+  `CONTENT_PACKS` still references.
 - After the first import, `football-logos-master/` leaves the repo root (kept elsewhere or deleted).
   Add it to `.gitignore` until then so the 55 MB isn't committed by accident.
 
@@ -111,7 +122,7 @@ so only a pack can say which badge it wears. `ContentPack` gains
   relegations move files, and a pack naming last season's clubs points at folders the new dump no
   longer has.
 - **Blobs in the save database.** Rejected. Saves are generated per career, so every save would
-  carry its own 17 MB copy. Identity is resolved from the pack on read
+  carry its own 14 MB copy. Identity is resolved from the pack on read
   ([saves generated under the world's content pack](../../implemented/architecture/2026-09-05-saves-generated-under-the-worlds-content-pack.md)),
   and a badge baked into a save row would go stale exactly as a baked-in name would.
 - **A shared `badges.sqlite`.** Rejected. For under 1,000 immutable read-only images it adds a build
@@ -141,7 +152,7 @@ so only a pack can say which badge it wears. `ContentPack` gains
 - **Renderer build weight.** Vite copies about 700 files (more with Brazil) into every renderer
   build. They're copied, not transformed, so this is cheap. Switch to the deferred protocol
   alternative if build time or bundle size becomes a problem.
-- **Repo weight.** About 17 MB of PNGs now, and every crest refresh adds history. Move the directory to
+- **Repo weight.** About 14 MB of PNGs now, and every crest refresh adds history. Move the directory to
   Git LFS if it passes roughly 100 MB.
 - **A club that changes country.** This doesn't happen in practice (Welsh clubs in the English
   pyramid are the known edge). Their key stays under the country whose league they play in, which

@@ -11,6 +11,8 @@ src/main/       the wiring layer — SQLite and the RPC channel
 src/preload/    the context bridge, one file
 src/renderer/   the React app
 src/assets/     fonts and flags
+src/renderer/assets/club-badges/  club badges, <nation>/<club-slug>.png plus manifest.json; filled only by
+                pnpm import-club-badges (scripts/import-club-badges.ts), never by hand
 test/           vitest unit and component specs
 e2e/            Playwright specs, a separate suite with its own config
 ```

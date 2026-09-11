@@ -23,6 +23,7 @@ export * from "./content/brazilSeriesA.js";
 export * from "./content/brazilSeriesB.js";
 export * from "./content/englishPremierLeague.js";
 export * from "./content/spanishLaLiga.js";
+export * from "./content/contentPackRegistry.js";
 export * from "./rules/clubGeneration.js";
 export * from "./content/namePools.js";
 export * from "./rules/staff.js";

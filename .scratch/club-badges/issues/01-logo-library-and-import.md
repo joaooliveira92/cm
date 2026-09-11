@@ -9,7 +9,7 @@ leaves the repo root.
 The script has one adapter per source layout. Everything after the adapter is shared. The first
 adapter reads the European dump's layout: league folders named `<Country> - <League>`, current
 season under `logos/`, older seasons under `history/<season>/`. It carries a
-league-folder-prefix-to-nation table covering all 25 countries in the dump.
+league-folder-prefix-to-nation table covering all 26 countries in the dump (Hungary appears only in 2024-25).
 
 - **Order:** it walks the current season first, then older seasons newest first, and keeps the
   first file per key.
@@ -37,10 +37,10 @@ renderer, and no app-facing Effect gains a failure.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] `football-logos-master/` is listed in `.gitignore` before the first import runs, so the dump can't be committed.
-- [ ] The library holds one PNG per club under a folder per nation, and no path contains a league or a season. The current dump yields 697 keys.
+- [ ] The library holds one PNG per club under a folder per nation, and no path contains a league or a season. The current dump yields 572 keys. Its 697 distinct file names include 125 other spellings of a club already counted, which the adapter's override table maps onto one key.
 - [ ] A committed manifest lists every key with its file, SHA-256 and original source path.
 - [ ] Every content pack carries a `clubBadges` map (empty for now).
 - [ ] An integrity test fails on a manifest entry with no file, a file with no manifest entry, a stale hash, or any pack's `clubBadges` value missing from the manifest.

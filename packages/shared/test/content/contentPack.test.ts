@@ -29,6 +29,7 @@ const pack: ContentPack = {
       quaternary: null,
     },
   },
+  clubBadges: {},
   stadiums: {},
   homeCities: {},
 };

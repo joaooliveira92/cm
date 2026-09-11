@@ -1,9 +1,6 @@
 import {
   BASE_CONTENT_PACK,
-  BRAZIL_SERIES_A_PACK,
-  BRAZIL_SERIES_B_PACK,
-  ENGLISH_PREMIER_LEAGUE_PACK,
-  SPANISH_LA_LIGA_PACK,
+  CONTENT_PACKS,
   clubColours,
   displayName,
   packCoverageGaps,
@@ -42,17 +39,9 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
  * pack. A save recording a pack this build does not carry resolves against the base pack, which
  * shows the ids it cannot name rather than refusing to open the save.
  */
-const PACKS: Readonly<Record<string, ContentPack>> = {
-  [BASE_CONTENT_PACK.id]: BASE_CONTENT_PACK,
-  // The licensed Brazilian and English packs ship beside the base pack. A career played in
-  // Brazilian Série A is now generated under `BRAZIL_SERIES_A_PACK` (`generateWorld` picks it),
-  // and Série B re-reads resolve against its own pack; the moment a save records one of them,
-  // its licensed club and competition names are what this build resolves.
-  [BRAZIL_SERIES_A_PACK.id]: BRAZIL_SERIES_A_PACK,
-  [BRAZIL_SERIES_B_PACK.id]: BRAZIL_SERIES_B_PACK,
-  [ENGLISH_PREMIER_LEAGUE_PACK.id]: ENGLISH_PREMIER_LEAGUE_PACK,
-  [SPANISH_LA_LIGA_PACK.id]: SPANISH_LA_LIGA_PACK,
-};
+const PACKS: Readonly<Record<string, ContentPack>> = Object.fromEntries(
+  CONTENT_PACKS.map((pack) => [pack.id, pack]),
+);
 
 /**
  * The locale display names resolve at. There is no locale setting yet, so this is the wildcard the

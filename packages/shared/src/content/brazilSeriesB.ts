@@ -192,6 +192,7 @@ export const BRAZIL_SERIES_B_PACK: ContentPack = {
       quaternary: null
     }
   },
+  clubBadges: {},
   stadiums: {
     club_bra_2_01: { name: "Arena Independência", capacity: 23018 },
     club_bra_2_02: { name: "Arena Sicredi", capacity: 6000 },

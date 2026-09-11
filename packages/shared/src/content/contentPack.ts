@@ -221,6 +221,9 @@ export const BASE_CONTENT_PACK: ContentPack = {
       quaternary: null,
     },
   },
+  // Fictional clubs never wear a real club's crest, so the base pack maps no badge and every club
+  // draws the colour-and-initials shield.
+  clubBadges: {},
   // The fictional base pack asserts no real stadium and pins no real home town. Its clubs draw
   // both at generation, exactly as the ground-name and city rules in `clubGeneration.ts` describe.
   stadiums: {},
@@ -265,6 +268,15 @@ export interface HomeCityPin {
   readonly populationBand: "major" | "large" | "mid" | "small";
 }
 
+/**
+ * A badge's address in the club badge library: `<nation>/<club-slug>`, e.g. `eng/manchester-united`.
+ *
+ * The nation is the lowercase three-letter code canonical ids use. The slug is the club's name with
+ * accents removed, lowercased, and every other non-alphanumeric run turned into `-`. The key names a
+ * real club, never a canonical id, so two packs that name the same club share one badge.
+ */
+export type BadgeKey = string;
+
 export interface ContentPack {
   readonly id: string;
   readonly displayName: string;
@@ -286,6 +298,16 @@ export interface ContentPack {
    * to paint something. See `clubColours.ts`.
    */
   readonly clubColours: Readonly<Record<CanonicalId, ClubColours>>;
+  /**
+   * Canonical club id -> the key of the club's badge in the badge library. Not keyed by locale, for
+   * the same reason as `clubColours`.
+   *
+   * Only a pack can say which badge a club wears, because a canonical id carries no name. Mappings
+   * are authored explicitly and never matched by name at runtime, where "Arsenal" against
+   * "Arsenal FC" is exactly the guess that binds the wrong crest. Partial by design: a club this map
+   * omits has no badge, and screens draw a shield in its colours instead.
+   */
+  readonly clubBadges: Readonly<Record<CanonicalId, BadgeKey>>;
   /**
    * Canonical club id -> the real stadium identity the pack asserts for that club's ground.
    *

@@ -86,6 +86,7 @@ export const SPANISH_LA_LIGA_PACK: ContentPack = {
     club_esp_1_20: { "*": "Villarreal" },
   },
   clubColours: {},
+  clubBadges: {},
   stadiums: {
     club_esp_1_01: { name: "Estadio Mendizorrotza", capacity: 19840 },
     club_esp_1_02: { name: "Estadio San Mamés", capacity: 53289 },
