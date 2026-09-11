@@ -2,7 +2,10 @@ import {
   entityTabConfigForType,
   type EntityType,
 } from "./entity-nav-config.js";
-import type { MatchContext } from "./match-nav-config.js";
+import {
+  matchTabConfigForContext,
+  type MatchContext,
+} from "./match-nav-config.js";
 import {
   sectionById,
   type SpecSection,
@@ -97,6 +100,19 @@ export const parseNavState = (
     };
   }
 
+  const matchContextFromSegment = matchContextForRouteSegment(firstChild);
+  if (matchContextFromSegment !== null) {
+    const section = sectionById("squad") ?? null;
+    return {
+      primarySection: section,
+      activeTabId: thirdChild,
+      entityType: null,
+      entityId: secondChild,
+      originSectionId: null,
+      matchContext: matchContextFromSegment,
+    };
+  }
+
   const sectionId = routeSegmentToSectionId[firstChild] ?? null;
   const section = sectionId !== null ? sectionById(sectionId) ?? null : null;
 
@@ -137,6 +153,19 @@ const inferMatchContext = (child: string | null): MatchContext => {
   }
 };
 
+const matchContextForRouteSegment = (segment: string): MatchContext | null => {
+  switch (segment) {
+    case "pre-match":
+      return "pre-match";
+    case "live-match":
+      return "live-match";
+    case "post-match":
+      return "post-match";
+    default:
+      return null;
+  }
+};
+
 const emptyState = (): ParsedNavState => ({
   primarySection: null,
   activeTabId: null,
@@ -160,6 +189,16 @@ export const resolveEntityTabId = (
   rawTabId: string | null,
 ): string => {
   const config = entityTabConfigForType(entityType);
+  if (rawTabId === null) return config.defaultTab;
+  const tabExists = config.tabs.some((t) => t.id === rawTabId);
+  return tabExists ? rawTabId : config.defaultTab;
+};
+
+export const resolveMatchTabId = (
+  matchContext: MatchContext,
+  rawTabId: string | null,
+): string => {
+  const config = matchTabConfigForContext(matchContext);
   if (rawTabId === null) return config.defaultTab;
   const tabExists = config.tabs.some((t) => t.id === rawTabId);
   return tabExists ? rawTabId : config.defaultTab;

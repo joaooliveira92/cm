@@ -12,12 +12,12 @@ Route patterns: `/pre-match/:fixtureId/*`, `/live-match/:matchId/*`, `/post-matc
 
 **Blocked by:** 03 (SecondaryNav).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Pre-match context shows correct secondary tabs and blocks progression on unresolved lineup issues (identifies each blocking requirement)
-- [ ] Live-match context replaces tabs with match-specific set; Live Table appears conditionally
-- [ ] Live-match control updates to match-engine state (Pause, Play, Continue, etc.)
-- [ ] Post-match context replaces tabs with post-match set; Table appears when applicable
-- [ ] Post-match report accessible after user continues to later dates
-- [ ] Selecting Tactics during a live match keeps user inside the match context (does not navigate to out-of-match tactics)
-- [ ] Tests cover: context activation, tab switching, progression gates
+- [x] Pre-match context shows correct secondary tabs and blocks progression on unresolved lineup issues (identifies each blocking requirement)
+- [x] Live-match context replaces tabs with match-specific set; Live Table appears conditionally
+- [x] Live-match control updates to match-engine state (Pause, Play, Continue, etc.)
+- [x] Post-match context replaces tabs with post-match set; Table appears when applicable
+- [x] Post-match report accessible after user continues to later dates
+- [x] Selecting Tactics during a live match keeps user inside the match context (does not navigate to out-of-match tactics)
+- [x] Tests cover: context activation, tab switching, progression gates

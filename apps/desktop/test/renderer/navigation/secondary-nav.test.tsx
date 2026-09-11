@@ -348,6 +348,113 @@ describe("SecondaryNav — entity context (§6, §10.3)", () => {
   });
 });
 
+describe("SecondaryNav — match context (§7–§9)", () => {
+  it("renders pre-match tabs for /pre-match/:fixtureId route", async () => {
+    mountAtPath(["pre-match", "201"]);
+    const nav = await screen.findByRole("navigation", { name: "Pre-match tabs" });
+    const expected = ["Overview", "Team Selection", "Tactics", "Opposition", "Past Meetings", "Conditions"];
+    for (const label of expected) {
+      expect(within(nav).getByRole("tab", { name: label })).toBeTruthy();
+    }
+  });
+
+  it("renders live-match tabs for /live-match/:matchId route", async () => {
+    mountAtPath(["live-match", "301"], undefined, { matchTabVisibility: { "live-table": true } });
+    const nav = await screen.findByRole("navigation", { name: "Live Match tabs" });
+    const expected = ["Match", "Commentary", "Statistics", "Player Ratings", "Tactics", "Opposition", "Live Table"];
+    for (const label of expected) {
+      expect(within(nav).getByRole("tab", { name: label })).toBeTruthy();
+    }
+  });
+
+  it("renders post-match tabs for /post-match/:matchId route", async () => {
+    mountAtPath(["post-match", "401"], undefined, { matchTabVisibility: { "table": true } });
+    const nav = await screen.findByRole("navigation", { name: "Post-match tabs" });
+    const expected = ["Summary", "Statistics", "Player Ratings", "Commentary", "Other Results", "Table"];
+    for (const label of expected) {
+      expect(within(nav).getByRole("tab", { name: label })).toBeTruthy();
+    }
+  });
+
+  it("marks the correct pre-match tab active from the route", async () => {
+    mountAtPath(["pre-match", "201", "team-selection"]);
+    const nav = await screen.findByRole("navigation", { name: "Pre-match tabs" });
+    expect(
+      within(nav).getByRole("tab", { name: "Team Selection" }).getAttribute("aria-current"),
+    ).toBe("page");
+  });
+
+  it("marks the default pre-match tab when no tab in the route", async () => {
+    mountAtPath(["pre-match", "201"]);
+    const nav = await screen.findByRole("navigation", { name: "Pre-match tabs" });
+    expect(
+      within(nav).getByRole("tab", { name: "Overview" }).getAttribute("aria-current"),
+    ).toBe("page");
+  });
+
+  it("marks the default pre-match tab when an unknown tab id is in the route", async () => {
+    mountAtPath(["pre-match", "201", "nonexistent-tab"]);
+    const nav = await screen.findByRole("navigation", { name: "Pre-match tabs" });
+    expect(
+      within(nav).getByRole("tab", { name: "Overview" }).getAttribute("aria-current"),
+    ).toBe("page");
+  });
+
+  it("marks the correct live-match tab active from the route", async () => {
+    mountAtPath(["live-match", "301", "commentary"]);
+    const nav = await screen.findByRole("navigation", { name: "Live Match tabs" });
+    expect(
+      within(nav).getByRole("tab", { name: "Commentary" }).getAttribute("aria-current"),
+    ).toBe("page");
+  });
+
+  it("marks the correct post-match tab active from the route", async () => {
+    mountAtPath(["post-match", "401", "statistics"]);
+    const nav = await screen.findByRole("navigation", { name: "Post-match tabs" });
+    expect(
+      within(nav).getByRole("tab", { name: "Statistics" }).getAttribute("aria-current"),
+    ).toBe("page");
+  });
+
+  it("hides Live Table when matchTabVisibility indicates not applicable", async () => {
+    mountAtPath(["live-match", "301"], undefined, { matchTabVisibility: { "live-table": false } });
+    const nav = await screen.findByRole("navigation", { name: "Live Match tabs" });
+    expect(within(nav).queryByRole("tab", { name: "Live Table" })).toBeNull();
+  });
+
+  it("shows Live Table when matchTabVisibility indicates applicable", async () => {
+    mountAtPath(["live-match", "301"], undefined, { matchTabVisibility: { "live-table": true } });
+    const nav = await screen.findByRole("navigation", { name: "Live Match tabs" });
+    expect(within(nav).getByRole("tab", { name: "Live Table" })).toBeTruthy();
+  });
+
+  it("hides Table for post-match when matchTabVisibility indicates not applicable", async () => {
+    mountAtPath(["post-match", "401"], undefined, { matchTabVisibility: { "table": false } });
+    const nav = await screen.findByRole("navigation", { name: "Post-match tabs" });
+    expect(within(nav).queryByRole("tab", { name: "Table" })).toBeNull();
+  });
+
+  it("shows Table for post-match when matchTabVisibility indicates applicable", async () => {
+    mountAtPath(["post-match", "401"], undefined, { matchTabVisibility: { "table": true } });
+    const nav = await screen.findByRole("navigation", { name: "Post-match tabs" });
+    expect(within(nav).getByRole("tab", { name: "Table" })).toBeTruthy();
+  });
+
+  it("renders match tab with overflow styling when tabs exceed 6", async () => {
+    // Live-match has 7 tabs (including conditional Live Table) when visible
+    mountAtPath(["live-match", "301"], undefined, { matchTabVisibility: { "live-table": true } });
+    const liveNav = await screen.findByRole("navigation", { name: "Live Match tabs" });
+    expect(liveNav.className).toContain("overflow-x-auto");
+    expect(liveNav.className).toContain("mask-image");
+  });
+
+  it("does not render context selector on match context tabs", async () => {
+    mountAtPath(["pre-match", "201"]);
+    const nav = await screen.findByRole("navigation", { name: "Pre-match tabs" });
+    expect(within(nav).queryByText("Competition")).toBeNull();
+  });
+});
+
 describe("SecondaryNav — overflow scroll (§13.3, spec §14)", () => {
   const FAT_SECTION_TABS = "squad";
 

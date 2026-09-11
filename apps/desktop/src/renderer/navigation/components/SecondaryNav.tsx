@@ -10,14 +10,31 @@ import {
   entityTabConfigForType,
   type EntityType,
 } from "../entity-nav-config.js";
-import { parseNavState, resolveActiveTabId, resolveEntityTabId } from "../nav-route-parser.js";
+import {
+  matchTabConfigForContext,
+  type MatchConditionalTab,
+  type MatchContext,
+} from "../match-nav-config.js";
+import { parseNavState, resolveActiveTabId, resolveEntityTabId, resolveMatchTabId } from "../nav-route-parser.js";
 import { FOCUS_RING } from "../../focus.js";
 import { NO_DRAG } from "../../chrome/header/drag-region.js";
 
 export interface SecondaryNavProps {
   readonly competitionType?: string;
-  readonly onChangeTab?: (sectionId: SpecSectionId | EntityType, tabId: string) => void;
+  readonly onChangeTab?: (sectionId: SpecSectionId | EntityType | MatchContext, tabId: string) => void;
+  readonly matchTabVisibility?: Partial<Record<string, boolean>>;
 }
+
+const matchContextLabel = (context: MatchContext): string => {
+  switch (context) {
+    case "pre-match":
+      return "Pre-match";
+    case "live-match":
+      return "Live Match";
+    case "post-match":
+      return "Post-match";
+  }
+};
 
 const TabButton = ({
   tab,
@@ -48,6 +65,7 @@ const TabButton = ({
 export const SecondaryNav = ({
   competitionType,
   onChangeTab,
+  matchTabVisibility,
 }: SecondaryNavProps) => {
   const location = useLocation();
   const searchParams = useMemo(
@@ -58,6 +76,8 @@ export const SecondaryNav = ({
     () => parseNavState(location.pathname, searchParams),
     [location.pathname, searchParams],
   );
+
+  const { entityType, matchContext } = parsed;
 
   const section = useMemo(() => {
     if (parsed.primarySection !== null) return parsed.primarySection;
@@ -72,27 +92,48 @@ export const SecondaryNav = ({
     [entityType],
   );
 
+  const matchConfig = useMemo(
+    () => (matchContext !== null ? matchTabConfigForContext(matchContext) : null),
+    [matchContext],
+  );
+
   const tabs: ReadonlyArray<SecondaryTab> = useMemo(() => {
     if (entityConfig !== null) return entityConfig.tabs;
+    if (matchConfig !== null) {
+      return matchConfig.tabs.filter((tab) => {
+        if ("visible" in tab) {
+          const conditional = tab as MatchConditionalTab;
+          return conditional.visible(matchTabVisibility?.[tab.id]);
+        }
+        return true;
+      });
+    }
     if (section === null) return [];
     return section.tabs.filter((tab) => isTabVisible(tab, competitionType));
-  }, [entityConfig, section, competitionType]);
+  }, [entityConfig, matchConfig, matchTabVisibility, section, competitionType]);
 
   const resolvedTabId = useMemo(() => {
     if (entityConfig !== null) {
       return resolveEntityTabId(entityConfig.entityType, rawTabId);
     }
+    if (matchConfig !== null) {
+      const candidate = resolveMatchTabId(matchConfig.matchContext, rawTabId);
+      const exists = tabs.some((t) => t.id === candidate);
+      return exists ? candidate : matchConfig.defaultTab;
+    }
     if (section === null) return null;
     const candidate = resolveActiveTabId(section, rawTabId);
     const exists = tabs.some((t) => t.id === candidate);
     return exists ? candidate : section.defaultTab;
-  }, [entityConfig, section, rawTabId, tabs]);
+  }, [entityConfig, matchConfig, section, rawTabId, tabs]);
 
   const label = entityConfig !== null
     ? `${entityConfig.entityType.charAt(0).toUpperCase()}${entityConfig.entityType.slice(1)} tabs`
-    : section !== null
-      ? `${section.label} tabs`
-      : null;
+    : matchConfig !== null
+      ? `${matchContextLabel(matchConfig.matchContext)} tabs`
+      : section !== null
+        ? `${section.label} tabs`
+        : null;
 
   const tabListRef = useRef<HTMLDivElement | null>(null);
 
@@ -149,13 +190,15 @@ export const SecondaryNav = ({
   const handleTabSelect = useCallback(
     (tabId: string) => {
       if (onChangeTab !== undefined) {
-        const navId: SpecSectionId | EntityType = entityConfig !== null
-          ? entityConfig.entityType
-          : (section?.id ?? "squad") as SpecSectionId;
+        const navId: SpecSectionId | EntityType | MatchContext = matchConfig !== null
+          ? matchConfig.matchContext
+          : entityConfig !== null
+            ? entityConfig.entityType
+            : (section?.id ?? "squad") as SpecSectionId;
         onChangeTab(navId, tabId);
       }
     },
-    [section, entityConfig, onChangeTab],
+    [section, entityConfig, matchConfig, onChangeTab],
   );
 
   if (label === null || tabs.length === 0) {
