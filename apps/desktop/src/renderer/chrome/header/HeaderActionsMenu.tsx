@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ACTION_REGISTRY } from "../../actions/allActions.js";
 import { dispatchAction } from "../../actions/dispatch.js";
 import { getScopeState } from "../../actions/scopeState.js";
-import type { Action, ScreenName } from "../../actions/types.js";
+import type { Action } from "../../actions/types.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover.js";
 import { FOCUS_RING } from "../../focus.js";
 import { ChevronDown } from "lucide-react";

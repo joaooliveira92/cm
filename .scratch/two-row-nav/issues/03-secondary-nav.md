@@ -16,8 +16,8 @@ Behavior rules (spec §12, §14):
 
 **Decisions:**
 
-- Config objects with visibility predicates. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
-- Horizontal scroll with fade gradient for overflow tabs. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
+- Config objects with visibility predicates. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-10-menu-nav-architecture.md).
+- Horizontal scroll with fade gradient for overflow tabs. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-10-menu-nav-architecture.md).
 
 **Blocked by:** 01 (Nav config).
 

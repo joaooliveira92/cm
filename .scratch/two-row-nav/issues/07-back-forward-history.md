@@ -25,7 +25,7 @@ List state is encoded as URL search params wherever practical to leverage browse
 
 **Decisions:**
 
-- Browser history API for back/forward. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
+- Browser history API for back/forward. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-10-menu-nav-architecture.md).
 
 **Blocked by:** 02 (PrimaryNav), 03 (SecondaryNav).
 

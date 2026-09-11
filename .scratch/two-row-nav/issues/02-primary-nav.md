@@ -13,10 +13,10 @@ No animation on nav state changes (snap transitions). Uses `react-hotkeys-hook` 
 
 **Decisions:**
 
-- Two independent nav components. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
-- Responsive breakpoints (≥1200px / ≥768px / <768px). See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
-- "More" as dropdown/panel, not full page. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
-- Snap transitions for nav rows. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
+- Two independent nav components. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-10-menu-nav-architecture.md).
+- Responsive breakpoints (≥1200px / ≥768px / <768px). See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-10-menu-nav-architecture.md).
+- "More" as dropdown/panel, not full page. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-10-menu-nav-architecture.md).
+- Snap transitions for nav rows. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-10-menu-nav-architecture.md).
 
 **Blocked by:** 01 (Nav config).
 

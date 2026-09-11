@@ -11,7 +11,7 @@ The current navbar (`/apps/desktop/src/renderer/navigation/`) uses a single prim
 3. **Pre-match, live-match, and post-match contexts**: each with their own secondary row
 4. **No sidebar**: the original game had no left sidebar; the adaptation must not introduce one
 
-The spec at `docs/menu.md` (1796 lines) defines the full navigation model in exhaustive detail but leaves 10 implementation decisions unresolved. Those decisions were settled by wayfinding on 2026-09-10 and are captured in `.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md`.
+The spec at `docs/menu.md` (1796 lines) defines the full navigation model in exhaustive detail but leaves 10 implementation decisions unresolved. Those decisions were settled by wayfinding on 2026-09-10 and are captured in `.agents/notes/implemented/architecture/2026-09-10-menu-nav-architecture.md`.
 
 ## Solution
 
@@ -57,7 +57,7 @@ Rebuild the navbar to the two-row model specified in `docs/menu.md`, incorporati
 
 10. **"More" as dropdown/panel.** Not a full page. Uses the existing popover/overflow pattern from Base UI.
 
-Reference: `.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md`
+Reference: `.agents/notes/implemented/architecture/2026-09-10-menu-nav-architecture.md`
 
 ### Existing code to keep, replace, or modify
 
@@ -119,4 +119,4 @@ The highest testing seam is the route-aware `RouterProvider` wrapper (existing p
 
 ## Further Notes
 
-The primary source for navigation content (tab names, per-section secondary tabs, entity-profile tabs, match context tabs) is `docs/menu.md`. That document is the canonical definition; this spec adds the implementation architecture and decisions. The wayfinding note at `.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md` records the 10 settled decisions and their rationale.
+The primary source for navigation content (tab names, per-section secondary tabs, entity-profile tabs, match context tabs) is `docs/menu.md`. That document is the canonical definition; this spec adds the implementation architecture and decisions. The wayfinding note at `.agents/notes/implemented/architecture/2026-09-10-menu-nav-architecture.md` records the 10 settled decisions and their rationale.

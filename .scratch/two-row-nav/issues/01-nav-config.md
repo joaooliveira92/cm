@@ -15,8 +15,8 @@ Route ownership logic: when an entity profile is opened, `?origin=<sectionId>` e
 
 **Decisions:**
 
-- URL-only state ownership. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
-- Config objects with visibility predicates. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
+- URL-only state ownership. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-10-menu-nav-architecture.md).
+- Config objects with visibility predicates. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-10-menu-nav-architecture.md).
 
 **Blocked by:** None (can start immediately).
 
