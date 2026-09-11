@@ -3,7 +3,9 @@ import {
   parseNavState,
   inferSectionForEntity,
   resolveActiveTabId,
+  resolveEntityTabId,
 } from "../../../src/renderer/navigation/nav-route-parser.js";
+import type { SpecSection } from "../../../src/renderer/navigation/spec-nav-config.js";
 
 describe("nav route parser — primary section recognition", () => {
   it("parses /career/$saveId/manager as Manager section", () => {
@@ -52,6 +54,7 @@ describe("nav route parser — entity context recognition", () => {
     const result = parseNavState("/career/s1/players/42/overview", new URLSearchParams());
     expect(result.entityType).toBe("player");
     expect(result.entityId).toBe("42");
+    expect(result.activeTabId).toBe("overview");
     expect(result.primarySection?.id).toBe("squad");
   });
 
@@ -77,6 +80,7 @@ describe("nav route parser — origin param (§12)", () => {
     expect(result.primarySection?.id).toBe("squad");
     expect(result.originSectionId).toBe("squad");
     expect(result.entityType).toBe("player");
+    expect(result.activeTabId).toBe("overview");
   });
 
   it("uses ?origin=transfers when viewing a player from the transfers screen", () => {
@@ -86,6 +90,7 @@ describe("nav route parser — origin param (§12)", () => {
     );
     expect(result.primarySection?.id).toBe("transfers");
     expect(result.originSectionId).toBe("transfers");
+    expect(result.activeTabId).toBe("overview");
   });
 
   it("handles ?origin without entity path gracefully", () => {
@@ -144,7 +149,7 @@ describe("inferSectionForEntity", () => {
 });
 
 describe("resolveActiveTabId", () => {
-  const squad = { id: "squad", label: "Squad", defaultTab: "first-team" } as any;
+  const squad = { id: "squad", label: "Squad", defaultTab: "first-team" } as SpecSection;
 
   it("returns the default tab when no tab is specified", () => {
     expect(resolveActiveTabId(squad, null)).toBe("first-team");
@@ -158,7 +163,7 @@ describe("resolveActiveTabId", () => {
     const section = {
       ...squad,
       tabs: [{ id: "first-team", label: "First Team" }, { id: "reserves", label: "Reserves" }],
-    } as any;
+    } as SpecSection;
     expect(resolveActiveTabId(section, "reserves")).toBe("reserves");
   });
 
@@ -166,7 +171,46 @@ describe("resolveActiveTabId", () => {
     const section = {
       ...squad,
       tabs: [{ id: "first-team", label: "First Team" }],
-    } as any;
+    } as SpecSection;
     expect(resolveActiveTabId(section, "nonexistent")).toBe("first-team");
+  });
+});
+
+describe("resolveEntityTabId", () => {
+  it("returns the default tab for player when no tab specified", () => {
+    expect(resolveEntityTabId("player", null)).toBe("overview");
+  });
+
+  it("returns the requested tab for player when it exists", () => {
+    expect(resolveEntityTabId("player", "attributes")).toBe("attributes");
+    expect(resolveEntityTabId("player", "contract")).toBe("contract");
+  });
+
+  it("falls back to default tab for player when the requested tab does not exist", () => {
+    expect(resolveEntityTabId("player", "nonexistent")).toBe("overview");
+  });
+
+  it("returns the default tab for club when no tab specified", () => {
+    expect(resolveEntityTabId("club", null)).toBe("overview");
+  });
+
+  it("resolves tabs for staff entity", () => {
+    expect(resolveEntityTabId("staff", "career")).toBe("career");
+    expect(resolveEntityTabId("staff", "contract")).toBe("contract");
+  });
+
+  it("resolves tabs for nation entity", () => {
+    expect(resolveEntityTabId("nation", "senior-team")).toBe("senior-team");
+    expect(resolveEntityTabId("nation", "players")).toBe("players");
+  });
+
+  it("resolves tabs for competition entity", () => {
+    expect(resolveEntityTabId("competition", "fixtures")).toBe("fixtures");
+    expect(resolveEntityTabId("competition", "rules")).toBe("rules");
+  });
+
+  it("resolves tabs for match entity", () => {
+    expect(resolveEntityTabId("match", "lineups")).toBe("lineups");
+    expect(resolveEntityTabId("match", "statistics")).toBe("statistics");
   });
 });

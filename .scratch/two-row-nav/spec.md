@@ -91,8 +91,8 @@ A good test for this navigation system asserts external behavior: which tabs ren
 - `apps/desktop/src/renderer/navigation/components/PrimaryNav.tsx` — primary row rendering, active state, responsive hiding, overflow
 - `apps/desktop/src/renderer/navigation/components/SecondaryNav.tsx` — contextual tab rendering, entity-profile tabs, conditional visibility, horizontal scroll
 - `apps/desktop/src/renderer/navigation/nav-config.ts` — config shape, tab visibility predicates, section ordering
-- `apps/desktop/src/renderer/chrome/header/continue-button.tsx` (new) — Continue button label derivation and disabled states
-- `apps/desktop/src/renderer/chrome/header/actions-menu.tsx` (new) — actions menu rendering, conditional action enablement
+- `apps/desktop/src/renderer/chrome/ContinueAction.tsx` (new) — Continue button label derivation and disabled states
+- `apps/desktop/src/renderer/chrome/header/HeaderSearch.tsx` (new) — search shortcut, actions menu trigger
 
 ### Prior art
 

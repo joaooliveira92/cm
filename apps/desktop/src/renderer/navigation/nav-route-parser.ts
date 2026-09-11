@@ -1,10 +1,10 @@
-import type { EntityType } from "./entity-nav-config.js";
+import {
+  entityTabConfigForType,
+  type EntityType,
+} from "./entity-nav-config.js";
 import type { MatchContext } from "./match-nav-config.js";
 import {
-  SPEC_SECTIONS,
   sectionById,
-  type SecondaryTab,
-  type ConditionalTab,
   type SpecSection,
   type SpecSectionId,
 } from "./spec-nav-config.js";
@@ -60,9 +60,10 @@ export const parseNavState = (
   if (originSectionId !== null && sectionById(originSectionId) !== undefined) {
     const section = sectionById(originSectionId) ?? null;
     const entityType = routeSegmentToEntityType[firstChild] ?? null;
+    const entityTabId = entityType !== null ? thirdChild : secondChild;
     return {
       primarySection: section,
-      activeTabId: secondChild,
+      activeTabId: entityTabId,
       entityType,
       entityId,
       originSectionId,
@@ -75,7 +76,7 @@ export const parseNavState = (
     const section = inferSectionForEntity(entityType);
     return {
       primarySection: section,
-      activeTabId: null,
+      activeTabId: thirdChild,
       entityType,
       entityId,
       originSectionId: null,
@@ -152,4 +153,14 @@ export const resolveActiveTabId = (
   if (rawTabId === null || section === null) return section?.defaultTab ?? "";
   const tabExists = section.tabs.some((t) => t.id === rawTabId);
   return tabExists ? rawTabId : section.defaultTab;
+};
+
+export const resolveEntityTabId = (
+  entityType: EntityType,
+  rawTabId: string | null,
+): string => {
+  const config = entityTabConfigForType(entityType);
+  if (rawTabId === null) return config.defaultTab;
+  const tabExists = config.tabs.some((t) => t.id === rawTabId);
+  return tabExists ? rawTabId : config.defaultTab;
 };

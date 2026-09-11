@@ -54,7 +54,7 @@ The nav system will use the following architectural decisions, settled by wayfin
 - URL-only state means deeply nested UI state (scroll position inside a long list) cannot be restored from the URL alone. These are accepted as session-only losses.
 - The horizontal-scroll overflow pattern is less discoverable than a "More" dropdown for users who don't expect inline scroll in a nav row. The fade gradient mitigates this by signalling offscreen content.
 
-## Implementation status (2026-09-10, tickets 01-02)
+## Implementation status (2026-09-10, tickets 01-03)
 
 Shipped in ticket 01 (nav config + URL parser):
 
@@ -69,9 +69,12 @@ Shipped in ticket 02 (PrimaryNav component):
 - Decision 8 (Snap transitions): PrimaryNav uses `transition-colors` for hover/active states only, no animation on state changes (no animation/transition classes on responsive re-render).
 - Decision 10 ("More" as dropdown/panel): `MoreDropdown` uses Base UI Popover with `MORE_ITEMS` from `spec-nav-config.ts`.
 
-Remaining for future tickets (03-07):
+Shipped in ticket 03 (SecondaryNav component):
+
+- Decision 4 (Two independent nav components — SecondaryNav half): `SecondaryNav.tsx` renders contextual tabs for the active primary section, independent of PrimaryNav. Handles tab visibility predicates, context selector, overflow scroll with fade gradient, keyboard arrow navigation, and invalid-tab fallback.
+- Decision 9 (Horizontal scroll with fade gradient): Secondary tabs overflow scroll inline with CSS `mask-image` linear-gradient fade at each edge. No nested "More" overflow — applied when tab count exceeds 6.
+
+Remaining for future tickets (04-07):
 
 - Decision 3 (Browser history API): ticket 07
-- Decision 4 (Two independent nav components — SecondaryNav half): ticket 03
 - Decision 6 (Actions menu in page header): ticket 06
-- Decision 9 (Horizontal scroll with fade gradient): ticket 03

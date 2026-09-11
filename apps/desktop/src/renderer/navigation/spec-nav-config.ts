@@ -1,11 +1,7 @@
 import {
   ArrowLeftRight,
-  BarChart3,
-  BriefcaseBusiness,
   Building2,
-  CalendarDays,
   ClipboardList,
-  Coins,
   Contact,
   Crosshair,
   Dumbbell,
@@ -14,10 +10,7 @@ import {
   HelpCircle,
   History,
   Info,
-  LayoutGrid,
-  Newspaper,
   Play,
-  ScrollText,
   Search,
   Trophy,
   Tv,
@@ -54,8 +47,6 @@ export interface MoreItem {
   readonly label: string;
   readonly icon: LucideIcon;
 }
-
-const alwaysVisible = (): true => true;
 
 export const SPEC_SECTIONS: ReadonlyArray<SpecSection> = [
   {

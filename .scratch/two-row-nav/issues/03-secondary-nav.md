@@ -16,18 +16,18 @@ Behavior rules (spec §12, §14):
 
 **Decisions:**
 
-- Config objects with visibility predicates. See [Agent Note](.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
-- Horizontal scroll with fade gradient for overflow tabs. See [Agent Note](.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
+- Config objects with visibility predicates. See [Agent Note](../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
+- Horizontal scroll with fade gradient for overflow tabs. See [Agent Note](../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
 
 **Blocked by:** 01 (Nav config).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Secondary row renders the correct tabs for the active primary section (all 10 sections covered)
-- [ ] Context selector renders on the left when the section requires one (Competitions, Squad, Club)
-- [ ] Exactly one secondary tab has `aria-current="page"` at all times
-- [ ] Conditional tabs (Table, Tree, Draw, Coefficients, Awards, Stages, Live Table) appear only when their visibility predicate passes
-- [ ] When a selected tab becomes invalid (context change), the default tab for the new context is selected
-- [ ] Horizontal scroll with fade gradient on overflow — tabs do not wrap to a third row
-- [ ] Keyboard: arrow keys navigate between tabs, selected tab scrolls into view
-- [ ] Component tests with jsdom cover: tab rendering, context selector, conditional visibility, overflow scroll, fallback on invalid tab
+- [x] Secondary row renders the correct tabs for the active primary section (all 10 sections covered)
+- [x] Context selector renders on the left when the section requires one (Competitions, Squad, Club)
+- [x] Exactly one secondary tab has `aria-current="page"` at all times
+- [x] Conditional tabs (Table, Tree, Draw, Coefficients, Awards, Stages, Live Table) appear only when their visibility predicate passes
+- [x] When a selected tab becomes invalid (context change), the default tab for the new context is selected
+- [x] Horizontal scroll with fade gradient on overflow — tabs do not wrap to a third row
+- [x] Keyboard: arrow keys navigate between tabs, selected tab scrolls into view
+- [x] Component tests with jsdom cover: tab rendering, context selector, conditional visibility, overflow scroll, fallback on invalid tab

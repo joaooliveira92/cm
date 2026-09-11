@@ -18,20 +18,20 @@ Navigation rules (spec §6, §10.3):
 
 **Decisions:**
 
-- Entity origin in URL param. See [Agent Note](.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
+- Entity origin in URL param. See [Agent Note](../../.agents/notes/proposed/architecture/2026-09-10-menu-nav-architecture.md).
 
 **Blocked by:** 03 (SecondaryNav).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Opening a player profile switches secondary row to player-specific tabs (spec §6.1)
-- [ ] Opening a staff profile switches secondary row to staff-specific tabs (spec §6.2)
-- [ ] Opening a club profile switches secondary row to club-specific tabs (spec §6.3)
-- [ ] Opening a nation profile switches secondary row to nation-specific tabs (spec §6.4)
-- [ ] Opening a competition profile switches secondary row to competition-specific tabs (spec §6.5)
-- [ ] Opening a non-live match switches secondary row to match-specific tabs (spec §6.6)
-- [ ] Primary row remains visible and the originating section stays active (`aria-current`)
-- [ ] `?origin=<sectionId>` is set in the URL when navigating to an entity from a primary section
-- [ ] Back from an entity returns to the originating list route
-- [ ] Origin inference works for entities opened from global notifications (per spec §12)
-- [ ] Component and integration tests cover: entity tab switching, origin tracking, Back navigation, origin inference
+- [x] Opening a player profile switches secondary row to player-specific tabs (spec §6.1)
+- [x] Opening a staff profile switches secondary row to staff-specific tabs (spec §6.2)
+- [x] Opening a club profile switches secondary row to club-specific tabs (spec §6.3)
+- [x] Opening a nation profile switches secondary row to nation-specific tabs (spec §6.4)
+- [x] Opening a competition profile switches secondary row to competition-specific tabs (spec §6.5)
+- [x] Opening a non-live match switches secondary row to match-specific tabs (spec §6.6)
+- [x] Primary row remains visible and the originating section stays active (`aria-current`)
+- [x] `?origin=<sectionId>` is set in the URL when navigating to an entity from a primary section
+- [x] Back from an entity returns to the originating list route
+- [x] Origin inference works for entities opened from global notifications (per spec §12)
+- [x] Component and integration tests cover: entity tab switching, origin tracking, Back navigation, origin inference
