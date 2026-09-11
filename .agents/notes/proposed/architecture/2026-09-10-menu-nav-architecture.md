@@ -54,18 +54,24 @@ The nav system will use the following architectural decisions, settled by wayfin
 - URL-only state means deeply nested UI state (scroll position inside a long list) cannot be restored from the URL alone. These are accepted as session-only losses.
 - The horizontal-scroll overflow pattern is less discoverable than a "More" dropdown for users who don't expect inline scroll in a nav row. The fade gradient mitigates this by signalling offscreen content.
 
-## Implementation status (2026-09-10, ticket 01)
+## Implementation status (2026-09-10, tickets 01-02)
 
 Shipped in ticket 01 (nav config + URL parser):
+
 - Decision 1 (URL-only state ownership): `nav-route-parser.ts` implemented
 - Decision 2 (Entity origin in URL param): `?origin=` parsing in `nav-route-parser.ts`
 - Decision 5 (Config objects with visibility predicates): `spec-nav-config.ts`, `entity-nav-config.ts`, `match-nav-config.ts`
 
-Remaining for future tickets (02-07):
+Shipped in ticket 02 (PrimaryNav component):
+
+- Decision 4 (Two independent nav components — PrimaryNav half): `PrimaryNav.tsx` reads the top-level route segment to light the active item. Independent of SecondaryNav, receives badge counts and slot-based global controls.
+- Decision 7 (Responsive breakpoints): PrimaryNav adapts at 1200px and 768px. Wide: all 10 items visible. Medium: World/Search become icon-only. Narrow: compact top bar with section label and Continue slot.
+- Decision 8 (Snap transitions): PrimaryNav uses `transition-colors` for hover/active states only, no animation on state changes (no animation/transition classes on responsive re-render).
+- Decision 10 ("More" as dropdown/panel): `MoreDropdown` uses Base UI Popover with `MORE_ITEMS` from `spec-nav-config.ts`.
+
+Remaining for future tickets (03-07):
+
 - Decision 3 (Browser history API): ticket 07
-- Decision 4 (Two independent nav components): tickets 02, 03
+- Decision 4 (Two independent nav components — SecondaryNav half): ticket 03
 - Decision 6 (Actions menu in page header): ticket 06
-- Decision 7 (Responsive breakpoints): ticket 02
-- Decision 8 (Snap transitions): ticket 02
 - Decision 9 (Horizontal scroll with fade gradient): ticket 03
-- Decision 10 ("More" as dropdown/panel): ticket 02

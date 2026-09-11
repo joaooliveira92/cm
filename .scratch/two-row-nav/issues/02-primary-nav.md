@@ -20,15 +20,15 @@ No animation on nav state changes (snap transitions). Uses `react-hotkeys-hook` 
 
 **Blocked by:** 01 (Nav config).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] All 10 primary items render in spec order (Manager → Squad → Tactics → Training → Transfers → Club → Competitions → World → Search → More)
-- [ ] Active item receives `aria-current="page"` and appropriate styling
-- [ ] Club crest area renders on the far left
-- [ ] Continue button slot is always visible, positioned on the far right
-- [ ] Inbox badge shows unread count
-- [ ] Responsive: medium layout hides World and Search (± icon-only fallback), narrow layout shows compact top bar
-- [ ] "More" opens a dropdown/panel with all spec-defined items
-- [ ] No sidebar is introduced at any breakpoint
-- [ ] Snap transitions — no animation on nav state change
-- [ ] Component tests with jsdom cover: rendering, active state, responsive hiding, More dropdown
+- [x] All 10 primary items render in spec order (Manager → Squad → Tactics → Training → Transfers → Club → Competitions → World → Search → More)
+- [x] Active item receives `aria-current="page"` and appropriate styling
+- [x] Club crest area renders on the far left
+- [x] Continue button slot is always visible, positioned on the far right
+- [x] Inbox badge shows unread count
+- [x] Responsive: medium layout hides World and Search (± icon-only fallback), narrow layout shows compact top bar
+- [x] "More" opens a dropdown/panel with all spec-defined items
+- [x] No sidebar is introduced at any breakpoint
+- [x] Snap transitions — no animation on nav state change
+- [x] Component tests with jsdom cover: rendering, active state, responsive hiding, More dropdown
