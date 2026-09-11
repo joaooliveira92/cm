@@ -63,7 +63,7 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
           <TableFilters.Reset filterActive={filterActive} onSetFilters={onSetFilters} clearFiltersLabel={copy.clearFiltersLabel} />
         )}
       </div>
-      <TablePanelContent.Root viewState={viewState} copy={copy} alertMessage={alertMessage} filters={filters} onSetFilters={onSetFilters}>
+      <TablePanelContent.Root viewState={viewState} copy={copy} alertMessage={alertMessage} onSetFilters={onSetFilters}>
         <DataTable
           tableId={tableId} screen={screen} region={region} table={table}
           orderedIds={orderedIds} identityColumnId="name"

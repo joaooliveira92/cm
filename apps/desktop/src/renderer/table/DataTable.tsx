@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { useScrollEdges } from "./useScrollEdges.js";
-import { useTableKeyboard, effectiveActiveId } from "./useTableKeyboard.js";
+import { useTableKeyboard } from "./useTableKeyboard.js";
 import TableCtx from "./DataTableContext.js";
 import type { SortState, TableRowShape } from "./types.js";
 import type { TableFocusBookmark } from "./focusBookmark.js";
@@ -40,7 +40,7 @@ export interface DataTableRootProps<Row extends TableRowShape> {
 
 export const DataTableRoot = <Row extends TableRowShape>(props: DataTableRootProps<Row>) => {
   const {
-    tableId, screen, region, table, orderedIds, identityColumnId,
+    tableId, screen, region, orderedIds, identityColumnId,
     activeId, onActiveChange, onBookmarkChange, selectedId, onToggleSelection,
     onSortChange, onRowPrimary, onRowDragStart, ariaLabel, announcement,
     ariaBusy, initialScrollLeft, onScrollCommit, children,
@@ -51,8 +51,7 @@ export const DataTableRoot = <Row extends TableRowShape>(props: DataTableRootPro
 
   const { onBodyKeyDown, effectiveActive } = useTableKeyboard({
     orderedIds, activeId, onActiveChange, onBookmarkChange, onToggleSelection,
-    onRowPrimary, screen, region, tableId, onSortChange,
-    table: table as unknown as TanStackTable<TableRowShape>,
+    onRowPrimary, screen, region, tableId,
     shiftScrollRef: onScrollCommit !== undefined ? scrollRef : undefined,
     onShiftScrollCommit: onScrollCommit,
   });

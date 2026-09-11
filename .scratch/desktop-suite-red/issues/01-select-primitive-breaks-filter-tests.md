@@ -1,7 +1,7 @@
 # 01: The desktop suite is red, and one primitive probably explains most of it
 
 Type: bug
-Status: claimed
+Status: resolved
 
 ## What was measured
 
@@ -57,10 +57,10 @@ the depth boundary, rollover club exchange) and need their own diagnosis.
   contention but passes in isolation. Re-run a suspected fix in isolation before believing it, and
   do not tune `testTimeout` upward to make a real hang look green.
 
-- [ ] Root cause of the `ui-select` open timeout is named, not worked around.
-- [ ] Full suite re-counted after that one fix, with the new number recorded here.
-- [ ] Any remaining failures triaged individually, with the `season.test.ts` three separated out.
-- [ ] `pnpm check:all` is green -- or, if that is not reachable in one pass, this file records the
+- [x] Root cause of the `ui-select` open timeout is named, not worked around.
+- [x] Full suite re-counted after that one fix, with the new number recorded here.
+- [x] Any remaining failures triaged individually, with the `season.test.ts` three separated out.
+- [x] `pnpm check:all` is green -- or, if that is not reachable in one pass, this file records the
       exact remaining list so the next agent starts from a known number rather than re-measuring.
 
 ## Comments
@@ -100,3 +100,30 @@ Separately, the renderer bug found while repairing the e2e suite —
 `.scratch/renderer-render-loop/` — was a runaway re-render on Squad and Transfers driven by
 TanStack's `autoResetPageIndex`. It is fixed, and is not related to this ticket's select-primitive
 cause despite both surfacing in the same table screens.
+
+## Answer
+
+2026-09-10. `pnpm check:all` is green: exit 0, all six gates pass. Desktop is 134 files / 1222
+tests, shared 446, contracts 63, game-engine 50.
+
+- **Select primitive**: fixed by the Base UI select migration, per the 2026-09-05 comment above.
+- **`season.test.ts:285`**, the last survivor of that comment: it now runs as
+  `test/main/season/advance.test.ts` and passes in the full suite.
+- **The 2026-09-09 baseline in `.ai/SPRINT-PLAN.md`** (2 typecheck errors, 19 failures in
+  scouting/cups/simulation-depth/live-keyboard) had already cleared by `5d58f7c`. That commit's
+  baseline showed tests and typecheck green.
+- **The last red was `oxlint`**, with five `no-unused-vars` errors in `apps/desktop/src/renderer/table/`
+  left over from the ticket-10 (`f464885`) and ticket-11 (`ee1b029`) refactors. All five were dead
+  code: `useTableKeyboard` never cycled sort (only the header click does, now in
+  `DataTableHeader.tsx`), and `TablePanelContent` never read `filters` (`TablePanel` derives the
+  view state upstream). The unused inputs and props were removed along with their call-site
+  arguments.
+
+The first full run with this fix had 9 timeouts in `test/main/` (season, transfers, world). It
+overlapped another session's vitest run: 1046s against a quiet 694s. The same 9 files ran alone
+and passed (69/69), and a second full `check:all` on a quiet machine passed. This is the
+load-sensitivity the Constraints section warns about, not a regression.
+
+The review turned up an out-of-scope regression from `f464885`: the table edge fades no longer
+re-measure on scroll or on row/column changes. It is filed as
+[react-composition-audit 17](../../react-composition-audit/issues/17-data-table-edge-fade-resync.md).

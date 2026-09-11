@@ -10,7 +10,6 @@ export interface TablePanelContentRootProps {
   readonly viewState: TableViewState;
   readonly copy: TableStateCopy;
   readonly alertMessage?: string;
-  readonly filters: readonly FilterClause[];
   readonly onSetFilters: (filters: readonly FilterClause[]) => void;
   readonly children: ReactNode;
 }
@@ -19,7 +18,6 @@ const TablePanelContentRoot = ({
   viewState,
   copy,
   alertMessage,
-  filters,
   onSetFilters,
   children,
 }: TablePanelContentRootProps) => {

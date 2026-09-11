@@ -1,9 +1,6 @@
 import type { RefObject } from "react";
-import type { Table as TanStackTable } from "@tanstack/react-table";
 import { focusIdOf } from "../focus.js";
-import { cycleSort } from "./features/sorting.js";
 import type { TableFocusBookmark } from "./focusBookmark.js";
-import type { SortState, TableRowShape } from "./types.js";
 
 const HORIZONTAL_SCROLL_STEP = 120;
 
@@ -22,8 +19,6 @@ export interface UseTableKeyboardInput {
   readonly screen: string;
   readonly region: string;
   readonly tableId: TableFocusBookmark["tableId"];
-  readonly onSortChange: (sort: SortState | null) => void;
-  readonly table: TanStackTable<TableRowShape>;
   readonly shiftScrollRef?: RefObject<HTMLDivElement | null>;
   readonly onShiftScrollCommit?: (scrollLeft: number) => void;
 }
@@ -39,8 +34,6 @@ export const useTableKeyboard = (input: UseTableKeyboardInput) => {
     screen,
     region,
     tableId,
-    onSortChange,
-    table,
     shiftScrollRef,
     onShiftScrollCommit,
   } = input;
