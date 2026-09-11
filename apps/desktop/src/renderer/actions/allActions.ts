@@ -67,6 +67,7 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   navAction("go-to-analysis", "Go to Analysis", "g 5", { destination: "league", sectionKey: "5" }),
   navAction("go-to-news", "Go to News", "g 6", { destination: "news", sectionKey: "6" }),
   navAction("go-to-club", "Go to Club", "g 7", { destination: "manager", sectionKey: "7" }),
+  { id: "go-to-transfers", label: "Go to Transfer Market", scope: "squad", available: ready, handler: () => undefined },
   navAction("go-back", "Go to previous screen", "g b"),
   // transfers
   { id: "focus-bid", label: "Focus the bid workflow", scope: "transfers", available: ready, handler: () => undefined, binding: "b" },
