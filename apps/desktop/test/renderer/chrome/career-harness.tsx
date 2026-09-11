@@ -87,6 +87,7 @@ export const preload = (phase: Phase) => {
             pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
           },
           clubName: "Northport Rovers",
+          badgeKey: null,
           clubColours: {
             primary: { foreground: "#ffffff", background: "#000000" },
             secondary: { foreground: "#000000", background: "#ffffff" },

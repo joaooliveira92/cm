@@ -14,7 +14,7 @@ condition, never a failure or a defect.
 
 **Decisions:**
 
-- Missing logos are reported, not hidden, for any pack whose `clubBadges` is non-empty. The fictional pack is exempt. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
+- Missing logos are reported, not hidden, for any pack whose `clubBadges` is non-empty. The fictional pack is exempt. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
 
 **Blocked by:** 02 (Logos in club selection for Premier League and La Liga careers).
 

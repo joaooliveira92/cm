@@ -40,6 +40,8 @@ export class ManagerProfileScreenView extends Schema.Class<ManagerProfileScreenV
 )({
   profile: ManagerProfileView,
   clubName: Schema.String,
+  /** The club's badge key, resolved through the save's pack — null for fictional packs. */
+  badgeKey: Schema.NullOr(Schema.String),
   /** The club's scheme, carried alongside its name because the career chrome reads this view for
    *  both: the header paints itself in `colours.primary`. */
   clubColours: ClubColoursView,

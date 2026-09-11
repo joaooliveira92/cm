@@ -33,6 +33,7 @@ const profileView = (archived = false): ManagerProfileScreenView => ({
     pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
   },
   clubName: "My Club",
+  badgeKey: null,
   clubColours: {
     primary: { foreground: "#ffffff", background: "#123456" },
     secondary: { foreground: "#ffffff", background: "#654321" },

@@ -10,7 +10,7 @@ import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
 import { loadManagerStatus } from "./managerStatus.js";
-import { clubColourResolver } from "../world/displayNames.js";
+import { clubBadgeResolver, clubColourResolver } from "../world/displayNames.js";
 import { loadUserClub } from "../club/squad.js";
 import { loadSeasonNumbersDesc } from "../season/currentSeason.js";
 
@@ -82,12 +82,14 @@ export const getManagerProfileScreen = (savesDir: string, saveId: SaveId) =>
       // and widening a contract class shared by the squad, transfer, and match views to serve one
       // screen is an API expansion the other consumers pay for and never use.
       const coloursOf = yield* clubColourResolver;
+      const badgeOf = yield* clubBadgeResolver;
       const seasonRows = yield* loadSeasonNumbersDesc;
       const managerStatus = yield* loadManagerStatus;
 
       return new ManagerProfileScreenView({
         profile,
         clubName: club.name,
+        badgeKey: badgeOf(club.id),
         clubColours: coloursOf(club.id),
         seasonNumber: seasonRows[0]?.seasonNumber ?? 1,
         tenureSeasons: seasonRows.length,

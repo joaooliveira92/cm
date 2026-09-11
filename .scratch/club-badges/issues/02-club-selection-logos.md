@@ -23,20 +23,20 @@ never to an error or a defect.
 
 **Decisions:**
 
-- `ContentPack` gains `clubBadges`, canonical club id to badge key, and mappings are drafted by fuzzy match and then reviewed. Matching by name never happens at runtime. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
-- A club-badge resolver sits beside the club-colour resolver, bound to the same single read of the save's pack. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
-- Read models that show a club carry `badgeKey: string | null`, added per screen as it adopts logos. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
-- The renderer bundles the library through Vite, and one module turns a key into a URL. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
-- One `ClubBadge` component renders every logo, fitted without stretching, with a colour-and-initials shield as the fallback. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
+- `ContentPack` gains `clubBadges`, canonical club id to badge key, and mappings are drafted by fuzzy match and then reviewed. Matching by name never happens at runtime. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
+- A club-badge resolver sits beside the club-colour resolver, bound to the same single read of the save's pack. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
+- Read models that show a club carry `badgeKey: string | null`, added per screen as it adopts logos. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
+- The renderer bundles the library through Vite, and one module turns a key into a URL. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
+- One `ClubBadge` component renders every logo, fitted without stretching, with a colour-and-initials shield as the fallback. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
 
 **Blocked by:** 01 (Logo library and import script).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The English and Spanish packs map all 20 of their clubs to keys present in the manifest, including clubs absent from the dump's current top-flight folder (e.g. Burnley). The integrity test from 01 passes.
-- [ ] A generated Premier League save and a generated La Liga save return a non-null `badgeKey` for every club in the club selection read. A fictional-pack save returns null for every club.
-- [ ] `ClubBadge` renders an image with the logo's URL for a known key, and the colour-and-initials shield for a null key, an unknown key, or an image load error.
-- [ ] The image keeps its aspect ratio inside a square box.
-- [ ] The club selection screen test shows a logo reaching a club row.
-- [ ] Logos load in the dev app and in a production renderer build.
-- [ ] `pnpm check:all` passes.
+- [x] The English and Spanish packs map all 20 of their clubs to keys present in the manifest, including clubs absent from the dump's current top-flight folder (e.g. Burnley). The integrity test from 01 passes.
+- [x] A generated Premier League save and a generated La Liga save return a non-null `badgeKey` for every club in the club selection read. A fictional-pack save returns null for every club.
+- [x] `ClubBadge` renders an image with the logo's URL for a known key, and the colour-and-initials shield for a null key, an unknown key, or an image load error.
+- [x] The image keeps its aspect ratio inside a square box.
+- [x] The club selection screen test shows a logo reaching a club row.
+- [x] Logos load in the dev app and in a production renderer build.
+- [x] `pnpm check:all` passes.

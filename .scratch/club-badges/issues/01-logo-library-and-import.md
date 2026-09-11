@@ -28,12 +28,12 @@ renderer, and no app-facing Effect gains a failure.
 
 **Decisions:**
 
-- Country is the only organising axis. A logo belongs to its club's country, never to a league or a season. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
-- Badge key is `<nation>/<club-slug>`: lowercase ISO alpha-3 nation, and a slug with accents removed, lowercased, every other non-alphanumeric run turned into `-`. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
-- One logo per club, newest wins. A dump's season folders are only input to the import. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
-- A committed manifest indexes the library, one entry per key with file, SHA-256 and original source path. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
-- The import script is the only way files enter the library, with one adapter per source layout. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
-- The import fails loudly rather than guessing: it stops on collisions and unknown prefixes, is idempotent, reports changes, and never removes a pack-referenced key. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
+- Country is the only organising axis. A logo belongs to its club's country, never to a league or a season. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
+- Badge key is `<nation>/<club-slug>`: lowercase ISO alpha-3 nation, and a slug with accents removed, lowercased, every other non-alphanumeric run turned into `-`. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
+- One logo per club, newest wins. A dump's season folders are only input to the import. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
+- A committed manifest indexes the library, one entry per key with file, SHA-256 and original source path. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
+- The import script is the only way files enter the library, with one adapter per source layout. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
+- The import fails loudly rather than guessing: it stops on collisions and unknown prefixes, is idempotent, reports changes, and never removes a pack-referenced key. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
 
 **Blocked by:** None (can start immediately).
 

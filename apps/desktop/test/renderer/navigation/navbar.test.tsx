@@ -9,7 +9,7 @@ import {
   Outlet,
   RouterProvider,
 } from "@tanstack/react-router";
-import { SaveId } from "@cm-clone/contracts";
+import { SaveId, type ClubColoursView } from "@cm-clone/contracts";
 import { Navbar } from "../../../src/renderer/navigation/components/Navbar.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { resetScopeState, setScopeState, clearScopeState } from "../../../src/renderer/actions/scopeState.js";
@@ -17,7 +17,10 @@ import { resetBindingOverrides } from "../../../src/renderer/actions/bindingStat
 
 const saveId = SaveId.make("s1");
 
-const mountNavbar = async (initialChild: string) => {
+const mountNavbar = async (
+  initialChild: string,
+  overrides?: { readonly clubColours?: ClubColoursView | null; readonly badgeKey?: string | null },
+) => {
   const rootRoute = createRootRoute({ component: () => <Outlet /> });
   const careerRoute = createRoute({ getParentRoute: () => rootRoute, path: "career" });
   const saveRoute = createRoute({
@@ -27,6 +30,8 @@ const mountNavbar = async (initialChild: string) => {
       <Navbar
         saveId={saveId}
         clubName="Northport Rovers"
+        clubColours={overrides?.clubColours}
+        badgeKey={overrides?.badgeKey}
         actions={<button type="button">Back to saves</button>}
       />
     ),
@@ -172,5 +177,30 @@ describe("leader-key hints on the navbar (global-key-map note, g <key> prefix)",
     fixtures.focus();
     act(() => setScopeState({ prefixActive: true, prefixKind: "level0" }));
     expect(document.activeElement).toBe(fixtures);
+  });
+});
+
+const SAMPLE_COLOURS: ClubColoursView = {
+  primary: { foreground: "#ffffff", background: "#000000" },
+  secondary: { foreground: "#000000", background: "#ffffff" },
+  tertiary: null,
+  quaternary: null,
+};
+
+describe("club badge in the header identity zone", () => {
+  it("shows the colour-and-initials shield when badgeKey is null", async () => {
+    await mountNavbar("league", { clubColours: SAMPLE_COLOURS, badgeKey: null });
+    expect(screen.getByRole("img", { name: "Northport Rovers crest" })).toBeTruthy();
+  });
+
+  it("shows the club badge fallback shield when badgeKey is provided but the image is unavailable", async () => {
+    await mountNavbar("league", { clubColours: SAMPLE_COLOURS, badgeKey: "eng/northport-rovers" });
+    expect(screen.getByRole("img", { name: "Northport Rovers crest" })).toBeTruthy();
+  });
+
+  it("renders neither badge nor shield when clubColours is not set", async () => {
+    await mountNavbar("league");
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.getByText("Northport Rovers")).toBeTruthy();
   });
 });

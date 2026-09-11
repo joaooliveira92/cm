@@ -20,7 +20,7 @@ export { matchReadout, seasonReadout, type SeasonReadoutInput, continueUnavailab
 
 const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
   const {
-    clubName, clubColours, newsCounts, career, outstanding,
+    clubName, clubColours, badgeKey, newsCounts, career, outstanding,
     report, setReport, openDestination, onBackToSaves,
   } = useCareerState();
 
@@ -40,6 +40,7 @@ const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
         saveId={saveId}
         clubName={clubName}
         clubColours={clubColours}
+        badgeKey={badgeKey}
         leading={
           <Header.Nav
             back={{ disabled: !canNavigateBack(), onTrigger: navigateBack }}

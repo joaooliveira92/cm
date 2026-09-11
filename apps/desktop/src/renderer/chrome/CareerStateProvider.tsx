@@ -42,6 +42,7 @@ import type { ContinueReport } from "./ContinueResult.js";
 
 interface CareerState {
   readonly saveId: SaveId;
+  readonly badgeKey: string | null;
   readonly clubName: string | null;
   readonly clubColours: ClubColoursView | null;
   readonly season: SeasonReadoutInput | null;
@@ -103,6 +104,7 @@ export const CareerStateProvider = ({
 
   const clubName = profileResult._tag === "Success" ? profileResult.value.clubName : null;
   const clubColours = profileResult._tag === "Success" ? profileResult.value.clubColours : null;
+  const badgeKey = profileResult._tag === "Success" ? profileResult.value.badgeKey : null;
   const season = tableResult._tag === "Success" ? tableResult.value.season : null;
   const saveName = saveResult._tag === "Success" ? saveResult.value.name : null;
 
@@ -208,6 +210,7 @@ export const CareerStateProvider = ({
   const value = useMemo<CareerState>(
     () => ({
       saveId,
+      badgeKey,
       clubName,
       clubColours,
       season,
@@ -228,7 +231,7 @@ export const CareerStateProvider = ({
       runAdvance,
     }),
     [
-      saveId, clubName, clubColours, season, saveName, advancing,
+      saveId, badgeKey, clubName, clubColours, season, saveName, advancing,
       continueDisabled, continueLabel, liveMatch, newsCounts, screenId,
       standing, outstanding, career, report,
     ],

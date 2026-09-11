@@ -12,14 +12,14 @@ and no new failure.
 
 **Decisions:**
 
-- Read models that show a club carry `badgeKey: string | null`, added per screen as it adopts logos, never to a contract shared with screens that don't render one. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-11-club-badge-library.md).
+- Read models that show a club carry `badgeKey: string | null`, added per screen as it adopts logos, never to a contract shared with screens that don't render one. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-11-club-badge-library.md).
 
 **Blocked by:** 02 (Logos in club selection for Premier League and La Liga careers).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A Premier League or La Liga career's header shows the user club's logo through `ClubBadge`.
-- [ ] A fictional-pack career's header shows the colour-and-initials shield.
-- [ ] `badgeKey` is added only to the header's read model. `ClubSummary` and other shared club contracts are unchanged.
-- [ ] A header test covers both the logo and the fallback.
-- [ ] `pnpm check:all` passes.
+- [x] A Premier League or La Liga career's header shows the user club's logo through `ClubBadge`.
+- [x] A fictional-pack career's header shows the colour-and-initials shield.
+- [x] `badgeKey` is added only to the header's read model. `ClubSummary` and other shared club contracts are unchanged.
+- [x] A header test covers both the logo and the fallback.
+- [x] `pnpm check:all` passes.

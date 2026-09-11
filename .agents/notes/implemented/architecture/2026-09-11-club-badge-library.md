@@ -1,6 +1,16 @@
 # Agent Note: Club badges are a per-country file library, mapped to clubs by content packs
 
-Status: proposed
+Status: implemented
+
+## Implementation status
+
+**Shipped (tickets 01–03):** Import script, badge library on disk with manifest, integrity test.
+`clubBadges` on `ContentPack` with English and Spanish pack mappings. `clubBadgeResolver` in
+`displayNames.ts`. `clubBadges.ts` URL-map module, `<ClubBadge>` component with fallback shield.
+First consumer: club selection screen (Step 3), with badge in rail and detail panel. Second consumer:
+career header, with badge in the identity zone.
+
+**Remaining:** Further consumers (Step 4), Brazilian badges (Step 5).
 
 ## Problem
 
@@ -20,7 +30,7 @@ are display strings with accents, spaces, `&` and apostrophes.
 
 This is an MVP. Licensing is explicitly out of scope: nothing below is shaped by it.
 
-## Proposal
+## Decision
 
 **Country is the only organising axis.** A club's badge belongs to the club's country, and to no
 league or season. Promotion, relegation and a new season never move a file.
@@ -135,7 +145,7 @@ so only a pack can say which badge it wears. `ContentPack` gains
   pack, so an id-named file is wrong under every other pack.
 - **Match badges to clubs by name at runtime.** Rejected, see Pack mapping.
 
-## Acceptance criteria
+## Consequences
 
 - `football-logos-master/` is gone from the repo root. The library is
   `apps/desktop/src/renderer/assets/club-badges/<nation>/<club-slug>.png` with a committed
@@ -146,9 +156,6 @@ so only a pack can say which badge it wears. `ContentPack` gains
 - A Premier League or La Liga save shows real crests in club selection and the header, including for
   a club that isn't in the dump's current top-flight folder. A fictional-pack save shows
   colour/initials shields and logs no badge gaps.
-
-## Risks
-
 - **Renderer build weight.** Vite copies about 700 files (more with Brazil) into every renderer
   build. They're copied, not transformed, so this is cheap. Switch to the deferred protocol
   alternative if build time or bundle size becomes a problem.

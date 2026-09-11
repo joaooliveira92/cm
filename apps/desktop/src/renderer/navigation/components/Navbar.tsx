@@ -3,6 +3,7 @@ import { type ReactNode } from "react";
 import { NAV_SECTIONS } from "../../navigation/nav-config.js";
 import { AppTitleBar } from "../../chrome/header/AppTitleBar.js";
 import { clubHeaderStyle } from "../../chrome/header/club-scheme.js";
+import { ClubBadge } from "../../components/shared/ClubBadge.js";
 import { NO_DRAG } from "../../chrome/header/drag-region.js";
 import { NavProvider } from "../../navigation/NavProvider.js";
 import { ContextNav } from "./ContextNav.js";
@@ -12,6 +13,7 @@ export const Navbar = ({
   saveId,
   clubName,
   clubColours = null,
+  badgeKey,
   badges,
   leading,
   secondary,
@@ -20,6 +22,7 @@ export const Navbar = ({
   readonly saveId: SaveId;
   readonly clubName: string | null;
   readonly clubColours?: ClubColoursView | null;
+  readonly badgeKey?: string | null;
   readonly badges?: Readonly<Record<string, { readonly count: number; readonly label: string }>>;
   readonly leading?: ReactNode;
   readonly secondary?: ReactNode;
@@ -32,7 +35,12 @@ export const Navbar = ({
           title={clubName ?? ""}
           leading={leading}
           identity={
-            <span className="truncate text-lg font-bold">{clubName ?? "\u00a0"}</span>
+            <span className="flex min-w-0 items-center gap-2 truncate text-lg font-bold">
+              {clubName !== null && clubColours !== null && (
+                <ClubBadge badgeKey={badgeKey ?? null} colours={clubColours} clubName={clubName} size={24} />
+              )}
+              <span className="truncate">{clubName ?? "\u00a0"}</span>
+            </span>
           }
           actions={actions}
         />
