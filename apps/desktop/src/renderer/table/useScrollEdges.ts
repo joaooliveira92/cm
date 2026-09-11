@@ -20,16 +20,26 @@ export const scrollEdges = (metrics: {
   };
 };
 
+/**
+ * Measures on mount, on window resize, and whenever `extraDeps` change (pass
+ * whatever alters the content width: row count, visible columns). Wire the
+ * returned `syncEdges` to the container's `onScroll`; a programmatic
+ * `scrollLeft` write fires `scroll` in a browser, so that covers keyboard
+ * scrolling too. Declare a scroll-offset restore before this hook so the
+ * mount measurement reads the restored offset.
+ */
 export const useScrollEdges = (
   scrollRef: RefObject<HTMLDivElement | null>,
   extraDeps: readonly unknown[] = [],
-): ScrollEdges => {
+): { readonly edges: ScrollEdges; readonly syncEdges: () => void } => {
   const [edges, setEdges] = useState<ScrollEdges>({ left: false, right: false });
 
   const syncEdges = useCallback((): void => {
     const container = scrollRef.current;
     if (container === null) return;
-    setEdges(scrollEdges(container));
+    const next = scrollEdges(container);
+    // Scroll fires every frame; keep the previous object so React bails out.
+    setEdges((prev) => (prev.left === next.left && prev.right === next.right ? prev : next));
   }, [scrollRef]);
 
   useLayoutEffect(() => {
@@ -38,5 +48,5 @@ export const useScrollEdges = (
     return () => window.removeEventListener("resize", syncEdges);
   }, [syncEdges, ...extraDeps]);
 
-  return edges;
+  return { edges, syncEdges };
 };

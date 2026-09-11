@@ -52,7 +52,7 @@ player-status column that renders only engine-modeled state.
   `--color-row-selected` is that low-opacity chrome-blue flattened over `--color-bg-base`: it reads
   as the intended tint and composes deterministically under the sticky overlap.
 - **Horizontal overflow edge**: a scroll-position-driven fade on each side that has content hidden
-  beyond it, driven by the pure `scrollEdges` rule in `DataTable.tsx`; no persistent "scroll for
+  beyond it, driven by the pure `scrollEdges` rule in `useScrollEdges.ts`; no persistent "scroll for
   more" affordance.
 - **Pinned columns declare a fixed `size`.** The sticky `left` offset of each pinned column is the
   summed width of the pinned columns before it, so the widths cannot be left to content.

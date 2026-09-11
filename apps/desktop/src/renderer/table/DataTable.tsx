@@ -40,14 +40,27 @@ export interface DataTableRootProps<Row extends TableRowShape> {
 
 export const DataTableRoot = <Row extends TableRowShape>(props: DataTableRootProps<Row>) => {
   const {
-    tableId, screen, region, orderedIds, identityColumnId,
+    tableId, screen, region, table, orderedIds, identityColumnId,
     activeId, onActiveChange, onBookmarkChange, selectedId, onToggleSelection,
     onSortChange, onRowPrimary, onRowDragStart, ariaLabel, announcement,
     ariaBusy, initialScrollLeft, onScrollCommit, children,
   } = props;
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const edges = useScrollEdges(scrollRef);
+
+  // Restore before `useScrollEdges` measures: layout effects run in declaration
+  // order, and the re-render from the `scroll` this write fires commits after
+  // the first paint.
+  useLayoutEffect(() => {
+    if (scrollRef.current !== null && initialScrollLeft !== undefined) {
+      scrollRef.current.scrollLeft = initialScrollLeft;
+    }
+  }, [initialScrollLeft]);
+
+  const { edges, syncEdges } = useScrollEdges(scrollRef, [
+    orderedIds.length,
+    table.getVisibleFlatColumns().length,
+  ]);
 
   const { onBodyKeyDown, effectiveActive } = useTableKeyboard({
     orderedIds, activeId, onActiveChange, onBookmarkChange, onToggleSelection,
@@ -56,12 +69,6 @@ export const DataTableRoot = <Row extends TableRowShape>(props: DataTableRootPro
     onShiftScrollCommit: onScrollCommit,
   });
 
-  useLayoutEffect(() => {
-    if (scrollRef.current !== null && initialScrollLeft !== undefined) {
-      scrollRef.current.scrollLeft = initialScrollLeft;
-    }
-  }, [initialScrollLeft]);
-
   return (
     <TableCtx.Provider value={{
       screen, region, identityColumnId, activeId, onActiveChange, onSortChange,
@@ -69,7 +76,7 @@ export const DataTableRoot = <Row extends TableRowShape>(props: DataTableRootPro
       effectiveActive, onBodyKeyDown,
     }}>
       <div className="relative">
-        <div data-table-scroll ref={scrollRef} className="mt-2 overflow-x-auto" aria-busy={ariaBusy || undefined} role="group" aria-label={ariaLabel}>
+        <div data-table-scroll ref={scrollRef} className="mt-2 overflow-x-auto" aria-busy={ariaBusy || undefined} role="group" aria-label={ariaLabel} onScroll={syncEdges}>
           {children}
           <div role="status" aria-live="polite">{announcement}</div>
         </div>

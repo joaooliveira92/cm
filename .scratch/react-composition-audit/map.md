@@ -20,6 +20,11 @@ A refactored codebase where god components have been split into compound compone
   removes the boolean props/prop-drilling between them. The shared state (route-derived active
   section/item, preview/open, hover-intent timers) lives in `NavProvider`. Fallback to `useHoverIntent`
   hook for the intent/close-tolerance timers, per-section routing via a single shared target ref.
+- **17 (table, 2026-09-10):** `onScroll` is the single re-sync point for the edge fades, and it
+  also covers programmatic `scrollLeft` writes such as Shift+Arrow. Content-size changes re-measure
+  through `useScrollEdges`' `extraDeps`. A scroll-offset restore is declared before the hook so the
+  first paint reads the restored offset.
+  [Ticket](issues/17-data-table-edge-fade-resync.md).
 
 ## Out of scope
 
