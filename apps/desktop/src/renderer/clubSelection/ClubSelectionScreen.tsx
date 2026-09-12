@@ -72,7 +72,7 @@ export const ClubSelectionScreen = ({ saveId, selectedClubId, onSelect }: ClubSe
 
   return (
     <div className="flex h-full min-h-0 gap-4">
-      <div className="flex min-h-0 w-[370px] shrink-0 flex-col gap-2">
+      <div className="flex min-h-0 w-[420px] shrink-0 flex-col gap-2">
         {selectedLeagueId !== null && (
           <LeagueSelector
             leagues={leagues}
