@@ -28,8 +28,9 @@ them **by name** through the skill tool, and the flag does not block that.
 
 1. **Chart (cm-wayfinder)** — when an effort spans more than one session or the way is foggy: name
    the destination, map the frontier, write `map.md` plus decision tickets
-   (`research`/`prototype`/`grilling`/`task`), wire `Blocked by:` edges, and work **one decision
-   ticket per session**. Resolving a ticket writes its Agent Note atomically with the answer. If the
+   (`research`/`prototype`/`grilling`/`task`), wire `Blocked by:` edges, and work the frontier
+   **ticket by ticket, auto-advancing until no open, unblocked, unclaimed tickets remain**.
+   Resolving a ticket writes its Agent Note atomically with the answer. If the
    way is already clear and fits one session, skip to Spec.
 2. **Ground (research)** — for a sprint that needs facts it does not have (a real-world football
    rule, a library's actual API, a format), the research role reads primary sources in the background
@@ -65,8 +66,7 @@ them **by name** through the skill tool, and the flag does not block that.
   claims to have observed.
 - Write scope is role-locked. The spec-creator writes one spec file; research writes one note; the
   reviewer writes nothing at all. Anything else they think is needed gets reported to you instead.
-- One decision ticket per session (the wayfinder rule). Several small implementation tickets may
-  close in one session, but only if each one passes the gate on its own.
+- Several tickets — decision or implementation — may close in one session, as long as each one passes the gate on its own.
 - On `NEEDS_REWORK` (blocker or high), send the implementator back to repair that same ticket, then
   re-review. Never gate-and-commit over an unresolved blocker.
 - Keep each role's context small. The point of the split is that no single subagent accumulates the

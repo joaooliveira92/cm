@@ -65,8 +65,8 @@ gate is still shut, stop and say so; do not charter something new to stay busy.
 
 - **Foggy or multi-session, no map** → only if a human asked for this effort. Otherwise it is a
   decision request, not a sprint. When chartering is authorized, run `cm-wayfinder` yourself: chart it, write decision
-  tickets, resolve **one per session**, write the Agent Note with the answer. Stop there for the
-  session; a charted effort is a completed sprint.
+  tickets, and work them **one at a time**, writing the Agent Note with each answer. Stop when the
+  frontier is empty (all unblocked tickets resolved); the chart phase is a completed sprint.
 - **Map charted, decisions resolved, no spec** → spec-creator.
 - **Missing a fact, not a decision** → research first.
 - **Spec ready, no tickets** → run `cm-to-tickets` yourself to slice vertical tracer-bullet tickets.
