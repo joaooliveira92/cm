@@ -3,6 +3,7 @@ import type { ClubId, ClubSelectionRow } from "@cm-clone/contracts";
 import { Alert } from "../components/ui/alert.js";
 import { Badge } from "../components/ui/badge.js";
 import { Skeleton } from "../components/ui/skeleton.js";
+import { ClubBadge } from "../components/shared/ClubBadge.js";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
 import { QUALITY_SEGMENTS, filledSegments } from "./model.js";
 
@@ -152,7 +153,13 @@ export const ClubRail = ({ clubs, loading, error, selectedClubId, onSelect }: Cl
                 selected ? "bg-row-selected" : "hover:bg-row-hover"
               } ${FOCUS_RING.join(" ")}`}
             >
-              <div role="cell" className="min-w-0">
+              <div role="cell" className="flex min-w-0 items-center gap-2">
+                <ClubBadge
+                  badgeKey={club.badgeKey}
+                  colours={club.clubColours}
+                  clubName={club.clubName}
+                  size={24}
+                />
                 <span className="block truncate text-sm font-medium text-text-primary">
                   {club.clubName}
                 </span>

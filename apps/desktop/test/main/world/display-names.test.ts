@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { it } from "@effect/vitest";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { Effect } from "effect";
+import { Effect, Layer, Logger, References } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 import {
@@ -241,6 +241,80 @@ describe("display names resolve through the save's pack", () => {
       expect(names.league).toBe("Campeonato Brasileiro Série B");
       expect(names.sport).toBe("Sport");
       expect(names.sport).not.toBe("club_bra_2_19");
+    }),
+  );
+});
+
+describe("badge gap reporting extends pack coverage", () => {
+  const captureLogWarnings = (): {
+    layer: Layer.Layer<never>;
+    warnings: Array<string>;
+  } => {
+    const warnings: Array<string> = [];
+    const layer = Layer.merge(
+      Logger.layer([
+        Logger.make<unknown, void>(({ message }) => {
+          const msgs = Array.isArray(message) ? message : [message];
+          warnings.push(...msgs.filter((m): m is string => typeof m === "string"));
+        }),
+      ]),
+      Layer.succeed(References.MinimumLogLevel, "Warn"),
+    );
+    return { layer, warnings };
+  };
+
+  it.effect("reports badge gaps for clubs a pack names but has no badge mapping for", () =>
+    Effect.gen(function* () {
+      const saveId = yield* generatedSave;
+      const { layer, warnings } = captureLogWarnings();
+      yield* withSave(
+        saveId,
+        Effect.gen(function* () {
+          const sql = yield* SqlClient;
+          yield* sql`INSERT INTO clubs (id, stature_tier, is_user_club, generation_seed, city_id, stadium_name, stadium_capacity)
+            SELECT 'club_eng_1_99', stature_tier, 0, generation_seed, city_id, stadium_name, stadium_capacity
+            FROM clubs WHERE id = 'club_eng_1_01'`;
+          return yield* reportPackCoverage;
+        }).pipe(Effect.provide(layer)),
+      );
+      expect(warnings).toContain("content pack has clubs with no badge mapping");
+    }),
+  );
+
+  it.effect("reports no badge gaps for a fully mapped Premier League save", () =>
+    Effect.gen(function* () {
+      const saveId = yield* generatedSave;
+      const { layer, warnings } = captureLogWarnings();
+      yield* withSave(saveId, reportPackCoverage.pipe(Effect.provide(layer)));
+      // The Premier League pack has all 20 clubs mapped, so no badge gaps are expected.
+      // Only the cup name gap warning appears.
+      expect(warnings).not.toContain("content pack has clubs with no badge mapping");
+    }),
+  );
+
+  it.effect("reports no badge gaps for a fictional-pack save", () =>
+    Effect.gen(function* () {
+      const saveId = yield* generatedSave;
+      const { layer, warnings } = captureLogWarnings();
+      yield* withSave(
+        saveId,
+        Effect.gen(function* () {
+          const sql = yield* SqlClient;
+          yield* sql`UPDATE generation_manifest SET content_pack_id = ${BASE_CONTENT_PACK.id} WHERE id = 1`;
+          return yield* reportPackCoverage;
+        }).pipe(Effect.provide(layer)),
+      );
+      // The base pack has an empty clubBadges map, so it is exempt from badge gap reporting.
+      expect(warnings).not.toContain("content pack has clubs with no badge mapping");
+    }),
+  );
+
+  it.effect("still reports existing unnamed-id gaps alongside badge checks", () =>
+    Effect.gen(function* () {
+      const saveId = yield* generatedSave;
+      const gaps = yield* withSave(saveId, reportPackCoverage);
+      // The Premier League pack cannot name comp_eng_cup — unchanged behaviour.
+      expect(gaps).toEqual(["comp_eng_cup"]);
     }),
   );
 });

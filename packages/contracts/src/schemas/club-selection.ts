@@ -1,7 +1,7 @@
 import { Schema } from "effect";
 import { SQUAD_QUALITY_BANDS } from "@cm-clone/shared";
 
-import { StatureTierSchema } from "./clubs.js";
+import { ClubColoursView, StatureTierSchema } from "./clubs.js";
 import { ClubId } from "./ids.js";
 import { PositionSchema } from "./squad.js";
 
@@ -28,6 +28,11 @@ export class ClubSelectionDetail extends Schema.Class<ClubSelectionDetail>("Club
 export class ClubSelectionRow extends Schema.Class<ClubSelectionRow>("ClubSelectionRow")({
   clubId: ClubId,
   clubName: Schema.String,
+  /** The badge key for this club's crest, or null when the pack maps none. The renderer draws
+   *  a colour-and-initials shield when the key is null or unknown. */
+  badgeKey: Schema.NullOr(Schema.String),
+  /** The club's colours, resolved through the save's content pack (or its id-derived fallback). */
+  clubColours: ClubColoursView,
   statureTier: StatureTierSchema,
   boardObjectiveMin: Schema.Finite,
   boardObjectiveMax: Schema.Finite,

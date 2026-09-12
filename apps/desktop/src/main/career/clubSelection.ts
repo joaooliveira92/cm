@@ -2,7 +2,7 @@ import { ClubSelectionDetail, ClubSelectionRow, ClubSelectionTopPlayer, ClubSele
 import { BOARD_OBJECTIVE_BANDS, POSITIONS, computeSquadQuality, type Position } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { displayNames } from "../world/displayNames.js";
+import { clubBadgeResolver, clubColourResolver, displayNames } from "../world/displayNames.js";
 import { loadSquadPlayers } from "../club/squad.js";
 
 /** Club selection happens before a career exists, so the world is always in its first season. */
@@ -82,6 +82,8 @@ export const summarizeSquad = (squad: ReadonlyArray<SquadReadoutPlayer>): ClubSe
 export const getClubSelection = Effect.gen(function* () {
   const sql = yield* SqlClient;
   const nameOf = yield* displayNames;
+  const badgeOf = yield* clubBadgeResolver;
+  const coloursOf = yield* clubColourResolver;
 
   // The League the career is played in: the deepest-simulated league in the save. With one playable
   // competition today this is exactly that competition; it is read from the save rather than named
@@ -123,6 +125,8 @@ export const getClubSelection = Effect.gen(function* () {
     clubs.push(new ClubSelectionRow({
       clubId: club.id,
       clubName: nameOf(club.id),
+      badgeKey: badgeOf(club.id),
+      clubColours: coloursOf(club.id),
       statureTier: club.statureTier,
       boardObjectiveMin: boardBand.minPosition,
       boardObjectiveMax: boardBand.maxPosition,

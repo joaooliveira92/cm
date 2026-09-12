@@ -18,10 +18,10 @@ condition, never a failure or a defect.
 
 **Blocked by:** 02 (Logos in club selection for Premier League and La Liga careers).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A generated Premier League save, with one club's badge mapping removed, reports that club as a logo gap.
-- [ ] A fully mapped Premier League or La Liga save reports no logo gaps.
-- [ ] A fictional-pack save reports no logo gaps.
-- [ ] Existing unnamed-id reporting assertions still hold.
-- [ ] `pnpm check:all` passes.
+- [x] A generated Premier League save, with one club's badge mapping removed, reports that club as a logo gap.
+- [x] A fully mapped Premier League or La Liga save reports no logo gaps.
+- [x] A fictional-pack save reports no logo gaps.
+- [x] Existing unnamed-id reporting assertions still hold.
+- [x] `pnpm check:all` passes.

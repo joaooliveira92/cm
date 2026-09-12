@@ -115,11 +115,11 @@ describe("the rail reads comparatively and the panel carries the detail", () => 
     const before = calls.filter((method) => method === "getClubSelection").length;
 
     const first = rows()[0]!;
-    const name = first.querySelector("span")!.textContent!;
+    const name = first.querySelector("span.block")!.textContent!;
     fireEvent.click(first);
 
     const panel = screen.getByRole("region", { name: "Club detail" });
-    await waitFor(() => expect(within(panel).getByText(name)).toBeTruthy());
+    await waitFor(() => expect(within(panel).getByRole("heading", { name })).toBeTruthy());
     // The detail block: expectation prose, both budgets in Credits, the top five, size and age.
     expect(within(panel).getByText(/The board expects/)).toBeTruthy();
     expect(within(panel).getByText("Transfer Budget")).toBeTruthy();

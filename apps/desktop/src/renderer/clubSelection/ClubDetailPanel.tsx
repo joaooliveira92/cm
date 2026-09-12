@@ -1,5 +1,6 @@
 import type { ClubSelectionRow } from "@cm-clone/contracts";
 import { Badge } from "../components/ui/badge.js";
+import { ClubBadge } from "../components/shared/ClubBadge.js";
 import { formatCredits } from "../format.js";
 import { PANEL_STRONG } from "../theme.js";
 import { expectationProse, type LeagueSummary } from "./model.js";
@@ -51,6 +52,12 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
     ) : (
       <div className="text-text-body">
         <div className="flex items-center gap-3">
+          <ClubBadge
+            badgeKey={club.badgeKey}
+            colours={club.clubColours}
+            clubName={club.clubName}
+            size={32}
+          />
           <h3 className="text-base font-semibold text-text-primary">{club.clubName}</h3>
           <Badge variant="outline">{club.statureTier}</Badge>
         </div>

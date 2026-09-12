@@ -4,6 +4,7 @@ import {
   clubColours,
   displayName,
   packCoverageGaps,
+  type BadgeKey,
   type ClubColours,
   type ContentPack,
   type LocaleTag,
@@ -93,8 +94,8 @@ export const displayNames = Effect.gen(function* () {
  * would read the manifest twice to answer it.
  *
  * Unlike a name, this never degrades visibly: an uncoloured id resolves to an id-derived scheme,
- * because a header cannot paint "missing". `reportPackCoverage` stays keyed to names, which are
- * the reads where a gap is a defect rather than a default.
+ * because a header cannot paint "missing". `reportPackCoverage` stays keyed to names and badge
+ * mappings, which are the reads where a gap is a defect rather than a default.
  */
 export const clubColourResolver = Effect.gen(function* () {
   const pack = yield* savePack;
@@ -102,12 +103,28 @@ export const clubColourResolver = Effect.gen(function* () {
 });
 
 /**
- * Reports the ids this save uses that its pack cannot name.
+ * The same seam for a club's badge key: one resolution point, bound to the save's pack.
+ *
+ * A pack maps a canonical club id to a badge key, or does not — an absent key tells the renderer
+ * to draw the colour-and-initials fallback shield. Like colours, resolution is pure and never adds
+ * a failure to any caller: null means "no badge", never "error".
+ */
+export const clubBadgeResolver = Effect.gen(function* () {
+  const pack = yield* savePack;
+  return (id: string): BadgeKey | null => pack.clubBadges[id] ?? null;
+});
+
+/**
+ * Reports the ids this save uses that its pack cannot name, and — for packs with badge mappings —
+ * the clubs whose badge mapping is missing.
  *
  * Resolution never fails, so without this an incomplete pack is invisible until a raw
  * `club_eng_2_11` appears on a screen and someone notices. Opening a save under a pack that has
  * lost — or never had — coverage of its ids is therefore a *reported* condition: logged once, with
  * the count and a sample, rather than silently degrading.
+ *
+ * A missing badge is hidden by the shield fallback, so it is also logged for any pack whose
+ * `clubBadges` map is non-empty. The fictional base pack carries an empty map and is exempt.
  *
  * It reads the ids actually on disk rather than the catalogue's whole key space, because what
  * matters is what this save will try to display.
@@ -132,5 +149,22 @@ export const reportPackCoverage = Effect.gen(function* () {
       }),
     );
   }
+
+  const clubIds = clubs.map((row) => row.id);
+  const badgeKeys = pack.clubBadges;
+  if (Object.keys(badgeKeys).length > 0) {
+    const logoGaps = clubIds.filter((id) => !badgeKeys[id]);
+    if (logoGaps.length > 0) {
+      yield* Effect.logWarning("content pack has clubs with no badge mapping").pipe(
+        Effect.annotateLogs({
+          contentPackId: pack.id,
+          contentPackVersion: pack.version,
+          logoGapCount: logoGaps.length,
+          logoGapSample: logoGaps.slice(0, 5),
+        }),
+      );
+    }
+  }
+
   return gaps;
 });
