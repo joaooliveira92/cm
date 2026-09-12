@@ -23,11 +23,11 @@ export const LeagueSelector = ({ leagues, selectedLeagueId, onLeagueChange }: Le
     <Select value={selectedLeagueId} onValueChange={(value) => { if (value !== null) onLeagueChange(value); }}>
       <SelectTrigger
         id="club-selection-league"
-        className="rounded-control border border-border-subtle bg-surface-raised px-2 py-1 text-sm text-text-primary"
+        className="w-full rounded-control border border-border-subtle bg-surface-raised px-2 py-1 text-sm text-text-primary"
       >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent side="bottom" align="start" sideOffset={4}>
         {leagues.map((league) => (
           <SelectItem key={league.leagueId} value={league.leagueId}>
             {league.leagueName}

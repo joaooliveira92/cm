@@ -43,14 +43,18 @@ const SelectValue = SelectPrimitive.Value;
 function SelectContent({
   className,
   children,
+  side = "bottom",
+  align = "start",
   sideOffset = 4,
   ...props
 }: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Popup> & {
+  side?: "top" | "bottom" | "left" | "right";
+  align?: "start" | "center" | "end";
   sideOffset?: number;
 }) {
   return (
     <SelectPrimitive.Portal>
-      <SelectPrimitive.Positioner sideOffset={sideOffset}>
+      <SelectPrimitive.Positioner side={side} align={align} sideOffset={sideOffset}>
         <SelectPrimitive.Popup
           data-slot="select-content"
           className={cn(
