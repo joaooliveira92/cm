@@ -34,16 +34,16 @@ export const ClubSelectionScreen = ({ saveId, selectedClubId, onSelect }: ClubSe
       }
       setClubs(outcome.success.clubs);
       setLeagues(outcome.success.leagues);
-      if (outcome.success.leagues.length > 0 && selectedLeagueId === null) {
-        setSelectedLeagueId(outcome.success.leagues[0]!.leagueId);
-      }
+      setSelectedLeagueId((prev) =>
+        prev === null && outcome.success.leagues.length > 0 ? outcome.success.leagues[0]!.leagueId : prev,
+      );
       setLoading(false);
     };
     void load();
     return () => {
       live = false;
     };
-  }, [saveId, selectedLeagueId]);
+  }, [saveId]);
 
   const filteredClubs = useMemo(
     () => (selectedLeagueId === null ? clubs : clubs.filter((c) => c.leagueId === selectedLeagueId)),
