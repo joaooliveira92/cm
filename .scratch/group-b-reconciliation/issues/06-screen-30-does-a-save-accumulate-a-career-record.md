@@ -4,37 +4,35 @@ Type: grilling
 
 Blocked by: 03
 
-## Question
+Status: claimed
 
-[30_manager_history.md](../../../docs/specs/group_b_global_navigation_and_inbox/30_manager_history.md)
-asks for a chronological record of appointments, resignations, dismissals, retirements, honours,
-awards, and milestones. Taken literally it does not apply: this game has **one club per Save**, and
-resignation and the job market are Group A rulings pushed out to Group N. The timeline the import
-describes has exactly one appointment on it.
+Status: resolved
 
-But dismissing the screen on that basis would dismiss a real question with it. The question underneath,
-and the one this ticket resolves:
+## Answer
 
-**Does a Save accumulate a season-by-season record — final league positions, honours, tenure length,
-the sacking or retirement that ended it — that outlives the current season? And if so, is that a
-screen, or a section of Manager Profile?**
+**A career record accumulates, partially, and Season Summary is the surface it belongs to.**
 
-Facts to establish before deciding: what Season Summary already persists and shows, whether anything
-survives a season rollover in queryable form, and what `manager_status` and the archive path retain.
-It is entirely possible the data already exists and only the surface is missing — or that Season
-Summary already *is* this screen for the only season that has one.
+### What accumulates
 
-Blocked on ticket 03 so that "or a section of Manager Profile" is a decision against a profile whose
-contents are known rather than assumed.
+- **Per-season league positions and Verdicts** — `board_objective` stores one row per Season with
+  `season_number`, `final_position`, and `verdict`. Past seasons survive rollover.
+- **Consecutive-Miss Counter and final outcome** — `manager_status` is a single-row table (scoped to
+  the whole save) carrying `consecutive_misses`, `last_outcome` (none/warned/sacked), and
+  `archived_cause` (sacked/retired/null).
+- **Honours and match-count aggregates** — do not exist. No system computes total wins/draws/losses
+  across seasons or honours won.
 
-If the answer is that a career record exists and wants a surface, that is a design decision worth an
-Agent Note. If the answer is that Season Summary already covers it, screen 30 is disposed of by that
-row and the ticket says so.
+### Where it lives
 
-No code changes.
+Season Summary is the natural home. It already shows the most recent season's final position, Verdict,
+consecutive misses, and archived cause. An "all seasons" view on Season Summary — listing past
+seasons' positions, verdicts, and the terminal outcome — would serve the import's core "review
+career milestones" goal without a new screen.
 
-## Done when
+**Manager Profile is NOT the home.** The Group A Agent Note (`2026-08-30-manager-profile-screen.md`)
+explicitly reserves Manager Profile for creation-time identity: "Manager Profile shows only profile
+identity — the set-and-forget data chosen at creation." Board Objective, Verdict, Consecutive-Miss
+Counter, and Manager Outcome "stay exclusive to Season Summary." Ticket 03 confirmed this boundary
+by recording that Manager Profile holds nothing of a career record.
 
-- The career-record question has a stated answer: what accumulates, where it lives, and what surfaces it.
-- Screen 30 moves off `Not yet audited`, classified against that answer.
-- If a new surface is warranted, its navigation placement is handed to the map's fog, not decided here.
+Navigation placement for a new surface (the map's fog) is unaffected: no new screen was warranted.
