@@ -88,10 +88,14 @@ export const useMatchStreaming = (): void => {
   useEffect(() => {
     if (!hydrated) return;
     if (match === null) return;
+    // When restoring a session that is already at full time the provider's own restore
+    // has set phase to "complete". Do not overwrite it with "live" — the streaming
+    // loop should not interfere with a finished match.
+    if (state.phase === "complete") return;
     const needsDecision = shouldPauseMatch(chunkInjuries, match.homeClubId, homeSubs.capReached);
     pausedRef.current = needsDecision;
     setPaused(needsDecision);
-  }, [match, homeSubs.capReached, chunkInjuries, setPaused, hydrated]);
+  }, [match, state.phase, homeSubs.capReached, chunkInjuries, setPaused, hydrated]);
 
   // Drives successive ResumeSimulation calls (ticket 13) — no RPC streaming, just polling ahead of
   // the local reveal pace and buffering whatever comes back. Child effects run before the

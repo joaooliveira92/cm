@@ -41,7 +41,7 @@ const fullTimeSession = () => ({
   revealed: [line(23, "Goal!"), line(67, "Second!")],
   homeScore: 2,
   awayScore: 1,
-  isComplete: true,
+  phase: "complete" as const,
   homeSubs: noSubs(),
   awaySubs: noSubs(),
   homeOnPitchCount: 11,
@@ -86,7 +86,7 @@ describe("MatchDayScreen at full time — the settled feed stays on screen (no l
     expect(screen.getByText("Second!")).toBeTruthy();
 
     // The completed-match row and its reset affordance render below the feed.
-    expect(screen.getByText(/Final score: Home FC 2 - 1 Away FC/)).toBeTruthy();
+    await screen.findByText(/Final score: Home FC 2 - 1 Away FC/);
     // Full time is not the career accepting the result: the Matchday is committed by an explicit
     // press, and until it happens the division has not played and the Calendar has not moved.
     expect(screen.getByRole("button", { name: "Accept result" })).toBeTruthy();
