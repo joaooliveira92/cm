@@ -109,13 +109,12 @@ export const CareerStateProvider = ({
   const saveName = saveResult._tag === "Success" ? saveResult.value.name : null;
 
   const advancing = advance.waiting;
-  const seasonComplete = season?.phase === "season_complete";
   const liveMatch = useSyncExternalStore(
     subscribeScopeState,
     () => getScopeState().match,
     () => getScopeState().match,
   );
-  const continueDisabled = season === null || advancing || seasonComplete || liveMatch !== undefined;
+  const continueDisabled = season === null || advancing || liveMatch !== undefined;
 
   const location = useLocation();
   const screenId: ScreenName | null = useMemo(() => {

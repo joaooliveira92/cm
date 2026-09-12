@@ -28,7 +28,6 @@ const ready = (state: ScopeState): boolean => state.ready === true;
  *  unavailable until the match reaches full time. */
 const continueAvailable = (state: ScopeState): boolean =>
   ready(state) &&
-  state.phase !== "season_complete" &&
   state.advancing !== true &&
   state.match === undefined;
 
