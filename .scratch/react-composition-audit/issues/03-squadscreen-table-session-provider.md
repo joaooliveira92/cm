@@ -1,7 +1,7 @@
 # 03 — Refactor SquadScreen: lift table state into TableSessionProvider
 
 Type: task
-Status: needs-triage
+Status: resolved
 
 > **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
 > `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so

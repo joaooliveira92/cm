@@ -1,7 +1,7 @@
 # 02 — Extract TransferMarketProvider and split TransfersScreen into explicit variants
 
 Type: task
-Status: needs-triage
+Status: resolved
 
 > **Relabelled 2026-09-06 (tracker sweep).** This ticket was sitting at `Status: claimed` with its
 > `## Answer` still holding the untouched `<!-- to be filled by implementation -->` placeholder, so
