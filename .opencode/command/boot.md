@@ -1,16 +1,20 @@
 ---
-description: Boot the cm-clone autonomous orchestrator from a zero-context session. Resolves $ARGUMENTS (an effort name, a ticket path, or any file path) to a live ticket, runs a bounded preflight, then launches the frontier sprint via sprint.md. Boot is done when a ticket is claimed and routed — it is not a repo audit.
+description: Boot the cm-clone autonomous orchestrator from a zero-context session. Resolves $ARGUMENTS (an effort name, a ticket path, or any file path) to a live ticket — or, when the queue is empty, ingests the next spec group from docs/specs/ — runs a bounded preflight, then launches the frontier sprint via sprint.md. Boot is done when a ticket is claimed and routed, or a spec group is seeded and routed to charting; it is not a repo audit.
 agent: build
 ---
 
 You are booting the cm-clone autonomous orchestrator with no prior context. Your job is to pick the
 one ticket to build next and start it — not to audit the repository. Boot is complete when a ticket
-is claimed and routed by phase; everything after that is [sprint.md](sprint.md)'s loop.
+is claimed and routed by phase; everything after that is [sprint.md](sprint.md)'s loop. The loop
+does not stop after one ticket — it auto-advances through the queue until a hard stop fires
+(queue empty, repo corruption, or human saying stop).
 
 ## 0. Resolve the target ($ARGUMENTS)
 
 - **Nothing passed** → take the frontier the plan's **Immediate next action** names, then
-  immediately re-derive it from `.scratch/` (plan rows decay; the tracker is truth).
+  immediately re-derive it from `.scratch/` (plan rows decay; the tracker is truth). If the plan
+  says the queue is empty — no open, unblocked, unclaimed ticket in any effort — fall through to
+  the spec-group fallback below.
 - **An effort** (a name or a `.scratch/<effort>/` path) → that effort's frontier ticket.
 - **A ticket path** (`.scratch/<effort>/issues/<NN>-*.md`) → that ticket.
 - **Any other file path** → find the `.scratch/<effort>/` that owns that path and take that effort's
@@ -21,6 +25,28 @@ is claimed and routed by phase; everything after that is [sprint.md](sprint.md)'
 Compute the frontier the same way everywhere: scan `.scratch/<effort>/issues/` for the
 lowest-numbered file that is open, unblocked, and unclaimed (see
 [docs/agents/issue-tracker.md](../../docs/agents/issue-tracker.md)).
+
+### 0a. Spec-group fallback (plan queue is empty)
+
+When no ticket exists anywhere in `.scratch/`, pick the next spec group from `docs/specs/` that has
+no corresponding effort yet. This is how the pipeline ingests the 19 spec groups (A–S):
+
+1. List `docs/specs/` directories in alphabetical order (they are `group_a_*` through `group_s_*`).
+2. For each, extract the group letter from the directory name (`group_a_*` → `a`).
+3. Check whether `.scratch/group-X-*/` exists for that letter (glob).
+4. The **first group whose letter has no matching `.scratch/` directory** is the next spec group.
+5. Create `.scratch/<spec-slug>/` for it, copy the spec files there as the initial spec, then route
+   to `cm-wayfinder` to chart the effort (see sprint.md §2 — route by phase).
+6. If every spec group A–S already has a `.scratch/` effort, stop — the entire spec corpus has been
+   ingested and the queue is genuinely empty.
+
+Derive the spec slug from the directory name: replace underscores with hyphens and keep the full
+name. Example: `group_a_application_shell_and_game_lifecycle_remaining` →
+`group-a-application-shell-and-game-lifecycle-remaining`. This becomes both the `.scratch/`
+directory name and the effort name.
+
+This fallback ensures boot always has a target: either a live ticket or a spec waiting to be
+charted. It never invents work that has no spec behind it.
 
 ## 1. Verify state — a finite checklist, then move
 
@@ -66,7 +92,6 @@ skim the effort's tickets and resume its frontier rather than starting over.
 Follow [sprint.md](sprint.md) — the single source of truth for the sprint loop. What you verified
 in §1 and loaded in §2 satisfies its context-loading step; do not repeat it.
 
-## Final message
-
-Which sprints ran and their outcome, commit hashes, validation evidence (exact commands + observed
-results), whether the next sprint is queued, and the precise reason you stopped. Concise.
+sprint.md will loop continuously, auto-advancing through the queue until a hard stop condition
+(queue empty, repo corruption, or human saying stop). This session does not end after one sprint:
+keep running until one of those fires.

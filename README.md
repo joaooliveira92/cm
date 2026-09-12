@@ -1,16 +1,50 @@
 # cm-clone
 
 A local, single-player Football-management sim (Championship Manager 2003/04-style), built as an
-Electron desktop app. Game state is event-sourced. See [CONTEXT.md](CONTEXT.md) for the domain
-model and glossary, and [.agents/notes/](.agents/notes/) for design decisions.
+Electron desktop app. Game state is event-sourced with an Effect-based domain layer.
+
+See [CONTEXT.md](CONTEXT.md) for the domain model and glossary, and [.agents/notes/](.agents/notes/)
+for design decisions.
+
+## Current state
+
+The game is playable through a full season cycle. Shipped capabilities include:
+
+- **World generation** — seeded worlds with nations, cities, clubs, generated players, and
+  staff, driven by content packs that support real and fictional identities.
+- **Player system** — 1–20 Attributes, seeded Potential Ability with deterministic fractional
+  Player Development, Training Focus, Position Rating / Overall Rating / Transfer Value as
+  read-time projections, and scouting with attribute-range uncertainty.
+- **Match engine** — deterministic minute-by-minute simulation with Phase Strength (Attack /
+  Midfield / Defense), seeded randomness, contact and non-contact injuries, Condition decay,
+  tactical modifiers, and templated commentary.
+- **Tactics** — formations (4-4-2, 4-3-3, 4-5-1, 3-5-2, 5-3-2), Roles with Role Ratings,
+  Team Instructions (Mentality / Tempo / Pressing), and Tactic saves with conflict-safe
+  revision tracking.
+- **Season & calendar** — fixture generation, fixture-driven calendar, promotion/relegation
+  via Exchange Links, board objectives with manager sacking verdicts, transfer windows, and
+  results-only competitions.
+- **Transfers** — Bid system, Transfer Budget / Wage Budget per club, free agents, scouting
+  assignments with progress and team scout reports.
+- **Staff** — derived presence staff (President, Physio) and bound staff (Coach, Scout) with
+  seeded quality.
+- **Career setup** — league and nation selection with simulation depth (full / standard /
+  results-only), manager creation with Archetypes and Pillar Distribution (Tactical Acumen,
+  Influence, Regimen, Technical Coaching).
+- **Keyboard-first UI** — action registry, command palette, key binding overrides, table and
+  grid navigation (TanStack Table), hash-routed navigation with focus restoration.
+- **Screens** — 80+ renderer screens covering squad, transfers, tactics, match day, scouting,
+  staff, clubs, competitions, nations, league tables, news, manager profile, and more.
 
 ## Stack
 
 - Electron desktop shell ([apps/desktop](apps/desktop)), React renderer
-- [Effect](https://effect.website/) for the domain layer, `@effect/rpc` as the only channel
+- [Effect](https://effect.website/) v4 for the domain layer, `@effect/rpc` as the only channel
   between renderer and main process
+- Effect Atom for the renderer data layer
 - SQLite (`@effect/sql-sqlite-node`) for persistence
 - pnpm workspaces + TypeScript project references
+- Vitest for unit tests, Playwright for e2e
 
 ## Project layout
 
