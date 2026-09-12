@@ -10,9 +10,9 @@
 
 **Blocked by:** 03 (Quit button reuses the before-quit guard from Ticket 03)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Acceptance criterion 1: Save List has an app-chrome bar at the top with three icon-only buttons (Preferences, Credits, Quit)
-- [ ] Acceptance criterion 2: Save List keyboard tier is Level 2; Enter selects focused save row; C Continues on most-recent save
-- [ ] Acceptance criterion 3: Quit button reuses the before-quit guard from Ticket 03 (clicking it opens the quit confirmation dialog)
-- [ ] Acceptance criterion 4: Preferences and Credits buttons open lightweight dialogs (no routes, no navigation entries)
+- [x] Acceptance criterion 1: Save List has an app-chrome bar at the top with three icon-only buttons (Preferences, Credits, Quit)
+- [x] Acceptance criterion 2: Save List keyboard tier is Level 2; Enter selects focused save row; C Continues on most-recent save
+- [x] Acceptance criterion 3: Quit button reuses the before-quit guard from Ticket 03 (clicking it opens the quit confirmation dialog)
+- [x] Acceptance criterion 4: Preferences and Credits buttons open lightweight dialogs (no routes, no navigation entries)
