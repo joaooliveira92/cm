@@ -11,9 +11,6 @@ const { app, BrowserWindow, ipcMain } = electron;
 
 app.setName("cm-clone-desktop");
 
-// The e2e suite's only way to pin the match a Fixture plays (see `match/seedOverride.ts`). Gated on
-// `app.isPackaged`: a build a player runs ignores it, while the unpackaged app Playwright launches
-// honours it. A malformed value stops the app here rather than playing a match nobody asked for.
 const matchSeedOverride = resolveMatchSeedOverride(process.env[MATCH_SEED_ENV], app.isPackaged);
 if (matchSeedOverride._tag === "Malformed") {
   console.error(
@@ -32,14 +29,14 @@ const rpcLayer =
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
+/** The one window the app owns. Set once at `createWindow`, read by the
+ *  quit guard to send show/hide messages to the renderer. */
+let mainWindow: electron.BrowserWindow | null = null;
+
 const createWindow = () => {
   const window = new BrowserWindow({
     width: 1200,
     height: 800,
-    // macOS keeps its own traffic lights but drops the OS title bar, so the
-    // app's own band reaches the top edge the way a native macOS app's does.
-    // The renderer pays for this by reserving the traffic-light inset and by
-    // marking the band as the window's drag handle (`chrome/header/drag-region.ts`).
     ...(process.platform === "darwin"
       ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 12, y: 14 } }
       : {}),
@@ -63,7 +60,14 @@ const createWindow = () => {
   } else {
     window.loadFile(path.join(dirname, "../renderer/index.html"));
   }
+
+  mainWindow = window;
 };
+
+// Only mac OS quits the app when all windows close — on Linux/Windows we go through `before-quit`.
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
+});
 
 app.whenReady().then(() => {
   const savesDir = path.join(app.getPath("userData"), "saves");
@@ -82,6 +86,33 @@ app.whenReady().then(() => {
   });
 });
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+// Quit guard (ticket 03 / group-a-reconciliation): prevent shutdown until the
+// renderer confirms. The `before-quit` handler fires once for every quit path on
+// every platform. We prevent default and ask the renderer via IPC; the renderer
+// either confirms (quit-guard-confirmed) or cancels (quit-guard-cancelled).
+//
+// The flag prevents a second `before-quit` from blocking the `app.quit()` call
+// that `quit-guard-confirmed` triggers — without it the second `before-quit`
+// would prevent default again and start a new dialog request.
+let quitGuardConfirmed = false;
+
+app.on("before-quit", (event) => {
+  if (quitGuardConfirmed) return;
+
+  if (mainWindow === null || mainWindow.isDestroyed()) return;
+  event.preventDefault();
+  mainWindow.webContents.send("show-quit-guard");
+});
+
+ipcMain.on("quit-guard-confirmed", () => {
+  quitGuardConfirmed = true;
+  app.quit();
+});
+
+ipcMain.on("quit-guard-cancelled", () => {
+  quitGuardConfirmed = false;
+});
+
+ipcMain.on("request-quit", () => {
+  app.quit();
 });

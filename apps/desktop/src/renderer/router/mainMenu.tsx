@@ -149,7 +149,15 @@ export const MainMenuScreen = () => {
 
   const handleQuitConfirmed = () => {
     setOpenExit(false);
-    window.electronAPI?.showQuitGuard?.();
+    if (window.electronAPI.platform === "darwin") {
+      // On macOS the last window close does not quit the app (standard Cocoa
+      // convention), so ask the main process to quit directly.
+      window.electronAPI.quitApplication();
+    } else {
+      // On non-macOS closing the window triggers `before-quit`. The quit guard
+      // prevents it, shows the dialog, and on confirmation calls `app.quit()`.
+      window.close();
+    }
   };
 
   /** The one piece of repository-derived state the menu shows: a text hint, not

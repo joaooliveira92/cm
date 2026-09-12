@@ -13,12 +13,12 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** claimed
 
-- [ ] Acceptance criterion 1: Closing the last window on macOS does not prompt (app stays alive, standard Cocoa behaviour)
-- [ ] Acceptance criterion 2: Closing the window on non-macOS prompts (goes through `before-quit`)
-- [ ] Acceptance criterion 3: Cmd+Q on macOS prompts (goes through guard, Electron's default menu bar intercepts it)
+- [x] Acceptance criterion 1: Closing the last window on macOS does not prompt (app stays alive, standard Cocoa behaviour)
+- [x] Acceptance criterion 2: Closing the window on non-macOS prompts (goes through `before-quit`)
+- [x] Acceptance criterion 3: Cmd+Q on macOS prompts (goes through guard, Electron's default menu bar intercepts it)
 - [ ] Acceptance criterion 4: During creation flow (provisional career exists), the dialog body warns about lost creation state; outside creation flow, the dialog is the standard "Are you sure?"
-- [ ] Acceptance criterion 5: Cancel or Escape returns to the app without quitting
-- [ ] Acceptance criterion 6: Quit closes the app (or discards the provisional career and closes)
-- [ ] Acceptance criterion 7: On renderer crash or timeout, the guard does not block termination — `before-quit` falls through
+- [x] Acceptance criterion 5: Cancel or Escape returns to the app without quitting
+- [x] Acceptance criterion 6: Quit closes the app (or discards the provisional career and closes)
+- [x] Acceptance criterion 7: On renderer crash or timeout, the guard does not block termination — `before-quit` falls through
