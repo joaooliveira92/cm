@@ -14,9 +14,9 @@ This splits the 15 `useState` calls into logical groups, enabling the UI to cons
 
 **Blocked by:** None (this is a standalone refactoring)
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Acceptance criterion 1: MatchProvider exposes only match-related state (opponents, opponentId, match, error, starting, hydrated)
-- [ ] Acceptance criterion 2: CommentaryProvider exposes only commentary-related state (revealed, scores, timers, substitutions) and refs for streaming
-- [ ] Acceptance criterion 3: Both providers can be used independently by UI components via context
-- [ ] Acceptance criterion 4: Existing UI components can be migrated to use the new provider structure without breaking
+- [x] Acceptance criterion 1: MatchProvider exposes only match-related state (opponents, opponentId, match, error, starting, hydrated)
+- [x] Acceptance criterion 2: CommentaryProvider exposes only commentary-related state (revealed, scores, timers, substitutions) and refs for streaming
+- [x] Acceptance criterion 3: Both providers can be used independently by UI components via context
+- [x] Acceptance criterion 4: Existing UI components can be migrated to use the new provider structure without breaking

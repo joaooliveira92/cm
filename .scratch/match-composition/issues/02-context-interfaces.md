@@ -10,9 +10,9 @@
 
 **Blocked by:** 01-split-match-provider
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Acceptance criterion 1: `MatchContextValue` interface is defined with proper state/actions/meta structure
-- [ ] Acceptance criterion 2: `CommentaryContextValue` interface is defined with proper state/actions/meta structure
-- [ ] Acceptance criterion 3: Both contexts are exported from the module
-- [ ] Acceptance criterion 4: Provider functions return the appropriate context provider components
+- [x] Acceptance criterion 1: `MatchContextValue` interface is defined with proper state/actions/meta structure
+- [x] Acceptance criterion 2: `CommentaryContextValue` interface is defined with proper state/actions/meta structure
+- [x] Acceptance criterion 3: Both contexts are exported from the module
+- [x] Acceptance criterion 4: Provider functions return the appropriate context provider components
