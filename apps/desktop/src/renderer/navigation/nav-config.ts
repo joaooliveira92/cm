@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   BarChart3,
+  Bookmark,
   BriefcaseBusiness,
   Building2,
   CalendarDays,
@@ -10,8 +11,11 @@ import {
   Crosshair,
   Dumbbell,
   Flag,
+  Globe,
   Info,
   LayoutGrid,
+  MessageCircle,
+  Monitor,
   Newspaper,
   Play,
   ScrollText,
@@ -58,19 +62,10 @@ export interface NavSection {
  * Section IDs are stable identifiers — they appear in telemetry, last-route
  * storage, and focus bookmarks. Labels are display copy, not keys.
  *
- * The mapping from the current eight-tab strip to these seven sections:
- *   squad → Squad (direct)
- *   tactics → Tactics (direct)
- *   transfers → Recruitment > Transfers
- *   league → Analysis > League Table
- *   fixtures → Analysis > Fixtures
- *   match → Analysis > Match Day
- *   season-summary → Analysis > Season Summary
- *   manager → Club > Manager
- *
- * Sections without existing routes (Training, Home) carry placeholder items
- * that will be connected as their screens land — they fall back to the closest
- * existing destination so the navbar never offers a dead link.
+ * The keyboard prefix system maps positions 1-8 to these sections in display
+ * order, and the `g <key>` bindings in destinations.ts mirror that mapping.
+ * Sections without existing routes carry placeholder items that fall back to
+ * the closest existing destination so the navbar never offers a dead link.
  */
 export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
   {
@@ -153,12 +148,12 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
     id: "training",
     label: "Training",
     icon: Dumbbell,
-    defaultDestination: "squad",
+    defaultDestination: "training",
     items: [
       {
         id: "training-overview",
         label: "Overview",
-        destination: "squad",
+        destination: "training",
         icon: ClipboardList,
       },
     ],
@@ -174,6 +169,30 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
         label: "Transfers",
         destination: "transfers",
         icon: ArrowLeftRight,
+      },
+      {
+        id: "recruitment-shortlist",
+        label: "Shortlist",
+        destination: "shortlist",
+        icon: Bookmark,
+      },
+      {
+        id: "recruitment-scouting",
+        label: "Scouting",
+        destination: "scouting",
+        icon: Crosshair,
+      },
+      {
+        id: "recruitment-player-search",
+        label: "Player Search",
+        destination: "playerSearch",
+        icon: Search,
+      },
+      {
+        id: "recruitment-staff-search",
+        label: "Staff Search",
+        destination: "staffSearch",
+        icon: BriefcaseBusiness,
       },
     ],
   },
@@ -234,6 +253,74 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
         label: "Manager",
         destination: "manager",
         icon: Contact,
+      },
+      {
+        id: "club-information",
+        label: "Information",
+        destination: "clubInfo",
+        icon: Info,
+      },
+      {
+        id: "club-finances",
+        label: "Finances",
+        destination: "finances",
+        icon: Coins,
+      },
+      {
+        id: "club-staff",
+        label: "Staff",
+        destination: "staffOverview",
+        icon: BriefcaseBusiness,
+      },
+      {
+        id: "club-board-confidence",
+        label: "Board Confidence",
+        destination: "boardConfidence",
+        icon: BarChart3,
+      },
+      {
+        id: "club-history",
+        label: "History",
+        destination: "clubHistory",
+        icon: ScrollText,
+      },
+      {
+        id: "club-game-status",
+        label: "Game Status",
+        destination: "gameStatus",
+        icon: Monitor,
+      },
+      {
+        id: "club-manager-chat",
+        label: "Manager Chat",
+        destination: "managerChat",
+        icon: MessageCircle,
+      },
+    ],
+  },
+  {
+    id: "world",
+    label: "World",
+    icon: Globe,
+    defaultDestination: "competitions",
+    items: [
+      {
+        id: "world-competitions",
+        label: "Competitions",
+        destination: "competitions",
+        icon: Trophy,
+      },
+      {
+        id: "world-nations",
+        label: "Nations",
+        destination: "nations",
+        icon: Flag,
+      },
+      {
+        id: "world-clubs",
+        label: "Clubs",
+        destination: "clubs",
+        icon: Building2,
       },
     ],
   },

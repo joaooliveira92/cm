@@ -1,4 +1,4 @@
-import type { ClubId, SaveId } from "@cm-clone/contracts";
+import type { ClubId, PlayerId, SaveId } from "@cm-clone/contracts";
 
 /**
  * Typed navigation destinations. The keyboard spine (ticket 17), the command
@@ -25,6 +25,21 @@ export type CareerDestination =
   | { readonly type: "seasonSummary"; readonly saveId: SaveId }
   | { readonly type: "manager"; readonly saveId: SaveId }
   | { readonly type: "news"; readonly saveId: SaveId }
+  | { readonly type: "training"; readonly saveId: SaveId }
+  | { readonly type: "clubInfo"; readonly saveId: SaveId }
+  | { readonly type: "boardConfidence"; readonly saveId: SaveId }
+  | { readonly type: "clubHistory"; readonly saveId: SaveId }
+  | { readonly type: "finances"; readonly saveId: SaveId }
+  | { readonly type: "staffOverview"; readonly saveId: SaveId }
+  | { readonly type: "shortlist"; readonly saveId: SaveId }
+  | { readonly type: "scouting"; readonly saveId: SaveId }
+  | { readonly type: "playerSearch"; readonly saveId: SaveId }
+  | { readonly type: "staffSearch"; readonly saveId: SaveId }
+  | { readonly type: "competitions"; readonly saveId: SaveId }
+  | { readonly type: "nations"; readonly saveId: SaveId }
+  | { readonly type: "clubs"; readonly saveId: SaveId }
+  | { readonly type: "gameStatus"; readonly saveId: SaveId }
+  | { readonly type: "managerChat"; readonly saveId: SaveId }
   /**
    * The Team Scout Report on another club — a drill-down reached from a surface that already
    * names a club (a league-table row), not a top-level screen. It is the first destination to
@@ -40,7 +55,12 @@ export type CareerDestination =
    * drill-down reached the same way and subject to the same rule as `teamScoutReport`: it needs a
    * target club, so it carries both the save and the club id and no `g` binding.
    */
-  | { readonly type: "clubStaff"; readonly saveId: SaveId; readonly clubId: ClubId };
+  | { readonly type: "clubStaff"; readonly saveId: SaveId; readonly clubId: ClubId }
+  /**
+   * Player detail — a drill-down to a specific player's profile. Needs both save and player
+   * identity, so excluded from save-scoped nav like the club drill-downs.
+   */
+  | { readonly type: "playerDetail"; readonly saveId: SaveId; readonly playerId: PlayerId };
 
 export type CreationStepDestination =
   | { readonly type: "createLeagues" }
@@ -54,10 +74,11 @@ export type NavigationDestination =
   | CreationStepDestination
   | CareerDestination;
 
-/** The nine persistent career screens a `g <key>` binding may target. */
+/** The persistent career screens a `g <key>` binding may target. */
 export const CAREER_SCREEN_TYPES = [
   "squad",
   "tactics",
+  "training",
   "transfers",
   "league",
   "fixtures",
@@ -65,6 +86,20 @@ export const CAREER_SCREEN_TYPES = [
   "seasonSummary",
   "manager",
   "news",
+  "clubInfo",
+  "boardConfidence",
+  "clubHistory",
+  "finances",
+  "staffOverview",
+  "shortlist",
+  "scouting",
+  "playerSearch",
+  "staffSearch",
+  "competitions",
+  "nations",
+  "clubs",
+  "gameStatus",
+  "managerChat",
 ] as const;
 
 /**
@@ -79,7 +114,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff"
+  "teamScoutReport" | "clubStaff" | "playerDetail"
 >;
 
 /**
@@ -101,11 +136,12 @@ export const CAREER_G_BINDINGS: Readonly<
 > = {
   "1": (saveId) => careerDestination("squad", saveId),
   "2": (saveId) => careerDestination("tactics", saveId),
-  "3": (saveId) => careerDestination("squad", saveId),
+  "3": (saveId) => careerDestination("training", saveId),
   "4": (saveId) => careerDestination("transfers", saveId),
   "5": (saveId) => careerDestination("league", saveId),
   "6": (saveId) => careerDestination("news", saveId),
   "7": (saveId) => careerDestination("manager", saveId),
+  "8": (saveId) => careerDestination("competitions", saveId),
 } as const;
 
 /**
@@ -136,6 +172,21 @@ export type ResolvedDestination =
     }
   | { readonly to: "/career/$saveId/manager"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/news"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/training"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/club-info"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/board-confidence"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/club-history"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/finances"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/staff-overview"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/shortlist"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/scouting"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/player-search"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/staff-search"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/competitions"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/nations"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/clubs"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/game-status"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/manager-chat"; readonly params: { readonly saveId: SaveId } }
   | {
       readonly to: "/career/$saveId/club/$clubId/scout-report";
       readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
@@ -143,6 +194,10 @@ export type ResolvedDestination =
   | {
       readonly to: "/career/$saveId/club/$clubId/staff";
       readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
+    }
+  | {
+      readonly to: "/career/$saveId/player/$playerId/profile";
+      readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
     };
 
 /** Pure mapping from a typed destination to its route; unit-tested (AC-14). */
@@ -170,8 +225,24 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "seasonSummary":
     case "manager":
     case "news":
+    case "training":
+    case "clubInfo":
+    case "boardConfidence":
+    case "clubHistory":
+    case "finances":
+    case "staffOverview":
+    case "shortlist":
+    case "scouting":
+    case "playerSearch":
+    case "staffSearch":
+    case "competitions":
+    case "nations":
+    case "clubs":
+    case "gameStatus":
+    case "managerChat":
     case "teamScoutReport":
     case "clubStaff":
+    case "playerDetail":
       return careerRoute(destination);
   }
 };
@@ -206,6 +277,36 @@ const careerRoute = (
       return { to: "/career/$saveId/manager", params: { saveId: destination.saveId } };
     case "news":
       return { to: "/career/$saveId/news", params: { saveId: destination.saveId } };
+    case "training":
+      return { to: "/career/$saveId/training", params: { saveId: destination.saveId } };
+    case "clubInfo":
+      return { to: "/career/$saveId/club-info", params: { saveId: destination.saveId } };
+    case "boardConfidence":
+      return { to: "/career/$saveId/board-confidence", params: { saveId: destination.saveId } };
+    case "clubHistory":
+      return { to: "/career/$saveId/club-history", params: { saveId: destination.saveId } };
+    case "finances":
+      return { to: "/career/$saveId/finances", params: { saveId: destination.saveId } };
+    case "staffOverview":
+      return { to: "/career/$saveId/staff-overview", params: { saveId: destination.saveId } };
+    case "shortlist":
+      return { to: "/career/$saveId/shortlist", params: { saveId: destination.saveId } };
+    case "scouting":
+      return { to: "/career/$saveId/scouting", params: { saveId: destination.saveId } };
+    case "playerSearch":
+      return { to: "/career/$saveId/player-search", params: { saveId: destination.saveId } };
+    case "staffSearch":
+      return { to: "/career/$saveId/staff-search", params: { saveId: destination.saveId } };
+    case "competitions":
+      return { to: "/career/$saveId/competitions", params: { saveId: destination.saveId } };
+    case "nations":
+      return { to: "/career/$saveId/nations", params: { saveId: destination.saveId } };
+    case "clubs":
+      return { to: "/career/$saveId/clubs", params: { saveId: destination.saveId } };
+    case "gameStatus":
+      return { to: "/career/$saveId/game-status", params: { saveId: destination.saveId } };
+    case "managerChat":
+      return { to: "/career/$saveId/manager-chat", params: { saveId: destination.saveId } };
     case "teamScoutReport":
       return {
         to: "/career/$saveId/club/$clubId/scout-report",
@@ -215,6 +316,11 @@ const careerRoute = (
       return {
         to: "/career/$saveId/club/$clubId/staff",
         params: { saveId: destination.saveId, clubId: destination.clubId },
+      };
+    case "playerDetail":
+      return {
+        to: "/career/$saveId/player/$playerId/profile",
+        params: { saveId: destination.saveId, playerId: destination.playerId },
       };
   }
 };

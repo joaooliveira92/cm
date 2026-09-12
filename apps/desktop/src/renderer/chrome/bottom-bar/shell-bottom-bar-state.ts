@@ -156,7 +156,12 @@ export function describeCreationBottomBar(input: CreationBottomBarInput): Bottom
     case "2":
       return {
         cancel,
-        back: null,
+        back: {
+          id: "back-to-leagues",
+          label: "Back: Leagues",
+          disabled: false,
+          onTrigger: input.onBackToLeagues,
+        },
         secondary: [],
         primary: {
           id: "next-review",

@@ -1,7 +1,13 @@
 import {
   ClubId as ClubIdSchema,
+  CompetitionId as CompetitionIdSchema,
+  NationId as NationIdSchema,
+  PlayerId as PlayerIdSchema,
   SaveId as SaveIdSchema,
   type ClubId,
+  type CompetitionId,
+  type NationId,
+  type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
 import { Schema } from "effect";
@@ -45,5 +51,36 @@ export const decodeClubId = (raw: string): RouteParamDecode<ClubId> => {
     return { _tag: "Success", success: Schema.decodeUnknownSync(ClubIdSchema)(raw) };
   } catch {
     return malformed("clubId parameter is not a string");
+  }
+};
+
+/** Decode the `:playerId` path parameter into the contract's branded `PlayerId`.
+ *  Same shape as the other param decoders. */
+export const decodePlayerId = (raw: string): RouteParamDecode<PlayerId> => {
+  if (raw === "") return malformed("playerId parameter is empty");
+  try {
+    return { _tag: "Success", success: Schema.decodeUnknownSync(PlayerIdSchema)(raw) };
+  } catch {
+    return malformed("playerId parameter is not a string");
+  }
+};
+
+/** Decode the `:nationId` path parameter into the contract's branded `NationId`. */
+export const decodeNationId = (raw: string): RouteParamDecode<NationId> => {
+  if (raw === "") return malformed("nationId parameter is empty");
+  try {
+    return { _tag: "Success", success: Schema.decodeUnknownSync(NationIdSchema)(raw) };
+  } catch {
+    return malformed("nationId parameter is not a string");
+  }
+};
+
+/** Decode the `:competitionId` path parameter into the contract's branded `CompetitionId`. */
+export const decodeCompetitionId = (raw: string): RouteParamDecode<CompetitionId> => {
+  if (raw === "") return malformed("competitionId parameter is empty");
+  try {
+    return { _tag: "Success", success: Schema.decodeUnknownSync(CompetitionIdSchema)(raw) };
+  } catch {
+    return malformed("competitionId parameter is not a string");
   }
 };

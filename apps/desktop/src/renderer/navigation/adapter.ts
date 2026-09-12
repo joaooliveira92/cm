@@ -90,6 +90,21 @@ export const navigate = (destination: NavigationDestination): void => {
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     case "/career/$saveId/news":
+    case "/career/$saveId/training":
+    case "/career/$saveId/club-info":
+    case "/career/$saveId/board-confidence":
+    case "/career/$saveId/club-history":
+    case "/career/$saveId/finances":
+    case "/career/$saveId/staff-overview":
+    case "/career/$saveId/shortlist":
+    case "/career/$saveId/scouting":
+    case "/career/$saveId/player-search":
+    case "/career/$saveId/staff-search":
+    case "/career/$saveId/competitions":
+    case "/career/$saveId/nations":
+    case "/career/$saveId/clubs":
+    case "/career/$saveId/game-status":
+    case "/career/$saveId/manager-chat":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     // The one two-parameter route: the club segment carries the target club as well as the save.
@@ -98,6 +113,12 @@ export const navigate = (destination: NavigationDestination): void => {
       getRouter().navigate({
         to: resolved.to,
         params: { saveId: resolved.params.saveId, clubId: resolved.params.clubId },
+      });
+      break;
+    case "/career/$saveId/player/$playerId/profile":
+      getRouter().navigate({
+        to: resolved.to,
+        params: { saveId: resolved.params.saveId, playerId: resolved.params.playerId },
       });
       break;
     default:

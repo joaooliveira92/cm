@@ -1,10 +1,10 @@
-import type { ClubId, SaveId } from "@cm-clone/contracts";
+import type { ClubId, CompetitionId, NationId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { Outlet, useLocation, useParams } from "@tanstack/react-router";
 import { type ComponentType, useEffect, useLayoutEffect, useRef } from "react";
 import {
   navigateCareer,
 } from "../navigation/adapter.js";
-import { decodeClubId, decodeSaveId } from "../navigation/params.js";
+import { decodeClubId, decodeCompetitionId, decodeNationId, decodePlayerId, decodeSaveId } from "../navigation/params.js";
 import { CareerChrome } from "../chrome/CareerChrome.js";
 import { Alert } from "../components/ui/alert.js";
 import { RegistryProvider } from "../rpc.js";
@@ -146,6 +146,106 @@ export const CareerClubChildView = ({
   return (
     <RouteView screenId={screenId}>
       <Screen saveId={save.success} clubId={club.success} />
+    </RouteView>
+  );
+};
+
+interface PlayerScreenProps {
+  readonly saveId: SaveId;
+  readonly playerId: PlayerId;
+}
+
+/**
+ * One player-scoped child route surface (`/career/$saveId/player/$playerId/...`). Same
+ * boundary decode pattern as `CareerClubChildView`, but for a player target.
+ */
+export const CareerPlayerChildView = ({
+  screenId,
+  Screen,
+}: {
+  readonly screenId: string;
+  readonly Screen: ComponentType<PlayerScreenProps>;
+}) => {
+  const params = useParams({ strict: false });
+  const save = decodeSaveId(params.saveId ?? "");
+  const player = decodePlayerId(params.playerId ?? "");
+  if (save._tag === "Malformed") return <RouteParamErrorScreen reason={save.reason} />;
+  if (player._tag === "Malformed") return <RouteParamErrorScreen reason={player.reason} />;
+  return (
+    <RouteView screenId={screenId}>
+      <Screen saveId={save.success} playerId={player.success} />
+    </RouteView>
+  );
+};
+
+interface StaffScreenProps {
+  readonly saveId: SaveId;
+  readonly staffId: string;
+}
+
+export const CareerStaffChildView = ({
+  screenId,
+  Screen,
+}: {
+  readonly screenId: string;
+  readonly Screen: ComponentType<StaffScreenProps>;
+}) => {
+  const params = useParams({ strict: false });
+  const save = decodeSaveId(params.saveId ?? "");
+  const staffId = params.staffId ?? "";
+  if (save._tag === "Malformed") return <RouteParamErrorScreen reason={save.reason} />;
+  if (staffId === "") return <RouteParamErrorScreen reason="staffId parameter is empty" />;
+  return (
+    <RouteView screenId={screenId}>
+      <Screen saveId={save.success} staffId={staffId} />
+    </RouteView>
+  );
+};
+
+interface NationScreenProps {
+  readonly saveId: SaveId;
+  readonly nationId: NationId;
+}
+
+export const CareerNationChildView = ({
+  screenId,
+  Screen,
+}: {
+  readonly screenId: string;
+  readonly Screen: ComponentType<NationScreenProps>;
+}) => {
+  const params = useParams({ strict: false });
+  const save = decodeSaveId(params.saveId ?? "");
+  const nation = decodeNationId(params.nationId ?? "");
+  if (save._tag === "Malformed") return <RouteParamErrorScreen reason={save.reason} />;
+  if (nation._tag === "Malformed") return <RouteParamErrorScreen reason={nation.reason} />;
+  return (
+    <RouteView screenId={screenId}>
+      <Screen saveId={save.success} nationId={nation.success} />
+    </RouteView>
+  );
+};
+
+interface CompetitionScreenProps {
+  readonly saveId: SaveId;
+  readonly competitionId: CompetitionId;
+}
+
+export const CareerCompetitionChildView = ({
+  screenId,
+  Screen,
+}: {
+  readonly screenId: string;
+  readonly Screen: ComponentType<CompetitionScreenProps>;
+}) => {
+  const params = useParams({ strict: false });
+  const save = decodeSaveId(params.saveId ?? "");
+  const competition = decodeCompetitionId(params.competitionId ?? "");
+  if (save._tag === "Malformed") return <RouteParamErrorScreen reason={save.reason} />;
+  if (competition._tag === "Malformed") return <RouteParamErrorScreen reason={competition.reason} />;
+  return (
+    <RouteView screenId={screenId}>
+      <Screen saveId={save.success} competitionId={competition.success} />
     </RouteView>
   );
 };

@@ -62,11 +62,11 @@ describe("AC-14 — career g bindings never point at creation steps", () => {
       expect(destination.type).not.toMatch(/^createStep/);
       expect(destination.type).not.toBe("mainMenu");
       expect((resolveDestination(destination).to as string)).toMatch(/^\/career\/\$saveId\//);
-      expect(key).toMatch(/^[1-7]$/);
+      expect(key).toMatch(/^[1-8]$/);
     }
   });
 
-  it("the section-level g bindings cover the seven section defaults", () => {
+  it("the section-level g bindings cover the eight section defaults", () => {
     expect(Object.keys(CAREER_G_BINDINGS).sort()).toEqual([
       "1",
       "2",
@@ -75,9 +75,10 @@ describe("AC-14 — career g bindings never point at creation steps", () => {
       "5",
       "6",
       "7",
+      "8",
     ]);
     const types = Object.values(CAREER_G_BINDINGS).map((build) => build(save("x")).type);
-    expect(new Set(types)).toEqual(new Set(["squad", "tactics", "transfers", "league", "news", "manager"]));
+    expect(new Set(types)).toEqual(new Set(["squad", "tactics", "training", "transfers", "league", "news", "manager", "competitions"]));
   });
 });
 

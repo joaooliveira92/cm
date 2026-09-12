@@ -29,36 +29,147 @@ export interface CollisionViolation {
   readonly message: string;
 }
 
-/** True when `screen` is one of the eight persistent career screens. */
+/** True when `screen` is one of the persistent career screens. */
 export const isCareerScreen = (screen: ScreenName): boolean =>
   screen === "squad" ||
   screen === "tactics" ||
+  screen === "training" ||
   screen === "transfers" ||
   screen === "league" ||
   screen === "fixtures" ||
   screen === "match" ||
   screen === "seasonSummary" ||
-  screen === "manager";
+  screen === "manager" ||
+  screen === "news" ||
+  screen === "clubInfo" ||
+  screen === "boardConfidence" ||
+  screen === "clubHistory" ||
+  screen === "finances" ||
+  screen === "staffOverview" ||
+  screen === "shortlist" ||
+  screen === "scouting" ||
+  screen === "playerSearch" ||
+  screen === "staffSearch" ||
+  screen === "competitions" ||
+  screen === "nations" ||
+  screen === "clubs" ||
+  screen === "gameStatus" ||
+  screen === "managerChat";
 
 /**
  * The club-scoped drill-downs: `/career/$saveId/club/$clubId/...`. Inside a career, but not one of
- * the nine — no `g` binding targets them and no screen-scoped Action belongs to them.
+ * the persistent screens — no `g` binding targets them and no screen-scoped Action belongs to them.
  */
 export const CLUB_SCOPED_SCREENS = ["teamScoutReport", "clubStaff"] as const;
 
 /**
- * True when `screen` is shown *within* a career, which is a wider question than whether it is one
- * of the nine career screens, and the one the career-global tier actually turns on.
- *
- * Every other drill-down answers this by inheriting its parent's id — the tactics editor registers
- * as `tactics`, so it is a career screen by construction. The club segment hangs off the save
- * rather than off a career screen, so it has no parent id to inherit and must be named here
- * instead. Without it, the spine registers the career-global handlers on a club route while
- * `activeSet` filters them out: the palette and help overlay disagree with what the keys do, and
- * `g b` works only because prefix completion dispatches without consulting availability.
+ * The player-scoped drill-downs: `/career/$saveId/player/$playerId/...`. Same rationale as
+ * the club-scoped screens.
+ */
+export const PLAYER_SCOPED_SCREENS = [
+  "playerProfile",
+  "playerAttributes",
+  "playerContract",
+  "playerHistory",
+  "playerForm",
+  "playerInjuries",
+  "playerScoutReport",
+  "playerCoachReport",
+] as const;
+
+/**
+ * The staff-scoped drill-downs: `/career/$saveId/staff/$staffId/...`. Same rationale.
+ */
+export const STAFF_SCOPED_SCREENS = [
+  "staffProfile",
+  "staffAttributes",
+  "staffContract",
+  "staffHistory",
+  "staffJobInfo",
+] as const;
+
+/**
+ * The club sub-surface drill-downs: additional views at `/career/$saveId/club/$clubId/...`.
+ */
+export const CLUB_SUB_SURFACE_SCREENS = [
+  "clubSquadDetail",
+  "clubReservesDetail",
+  "clubYouthDetail",
+  "clubFixturesDetail",
+  "clubTransfersDetail",
+  "clubFinancesDetail",
+  "clubHistoryDetail",
+  "clubCompetitionsDetail",
+  "clubInformation",
+] as const;
+
+/**
+ * The nation-scoped drill-downs: `/career/$saveId/nation/$nationId/...`.
+ */
+export const NATION_SCOPED_SCREENS = [
+  "nationOverview",
+  "nationSeniorSquad",
+  "nationYouthSquads",
+  "nationFixtures",
+  "nationCompetitions",
+  "nationClubs",
+  "nationPlayers",
+  "nationStaff",
+  "nationHistory",
+  "nationInformation",
+] as const;
+
+/**
+ * The competition-scoped drill-downs: `/career/$saveId/competition/$competitionId/...`.
+ */
+export const COMPETITION_SCOPED_SCREENS = [
+  "competitionOverview",
+  "competitionTable",
+  "competitionFixturesDetail",
+  "competitionResults",
+  "competitionStages",
+  "competitionRules",
+  "competitionStatistics",
+  "competitionPastWinners",
+  "competitionRecords",
+  "competitionNews",
+  "competitionTeams",
+  "competitionPlayerStats",
+] as const;
+
+/**
+ * The match sub-screen placeholders — flat routes under `/career/$saveId/match-*`.
+ */
+export const MATCH_SUB_SCREENS = [
+  "matchStats",
+  "matchPlayerStats",
+  "matchHomeTeam",
+  "matchAwayTeam",
+  "matchRatings",
+  "matchLatestScores",
+  "matchLiveTable",
+  "matchMatchTactics",
+  "matchSubstitutions",
+  "matchOppositionInstructions",
+  "matchCommentary",
+  "matchReplays",
+  "matchReport",
+] as const;
+
+/**
+ * True when `screen` is shown *within* a career. This is a wider question than whether it is one
+ * of the persistent career screens — drill-downs (club, player, staff, nation, competition) and
+ * match sub-screens answer the same question.
  */
 export const isInsideCareer = (screen: ScreenName): boolean =>
-  isCareerScreen(screen) || (CLUB_SCOPED_SCREENS as readonly string[]).includes(screen);
+  isCareerScreen(screen) ||
+  (CLUB_SCOPED_SCREENS as readonly string[]).includes(screen) ||
+  (PLAYER_SCOPED_SCREENS as readonly string[]).includes(screen) ||
+  (STAFF_SCOPED_SCREENS as readonly string[]).includes(screen) ||
+  (CLUB_SUB_SURFACE_SCREENS as readonly string[]).includes(screen) ||
+  (NATION_SCOPED_SCREENS as readonly string[]).includes(screen) ||
+  (COMPETITION_SCOPED_SCREENS as readonly string[]).includes(screen) ||
+  (MATCH_SUB_SCREENS as readonly string[]).includes(screen);
 
 /** A scope-tier label helper for the key map (which scope a bound action lives in). */
 export const scopeLabel = (scope: ActionScope): string => scope;

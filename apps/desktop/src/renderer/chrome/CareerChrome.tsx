@@ -1,4 +1,5 @@
 import type { SaveId } from "@cm-clone/contracts";
+import type { ContinueDestination } from "@cm-clone/shared";
 import { canNavigateBack, navigateBack, navigateForward } from "../navigation/adapter.js";
 import { Navbar } from "../navigation/components/Navbar.js";
 import { Button } from "../components/ui/button.js";
@@ -20,9 +21,18 @@ export { matchReadout, seasonReadout, type SeasonReadoutInput, continueUnavailab
 
 const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
   const {
-    clubName, clubColours, badgeKey, newsCounts, career, outstanding,
+    clubName, clubColours, badgeKey, newsCounts, career, outstanding, screenId,
     report, setReport, openDestination, onBackToSaves,
   } = useCareerState();
+
+  // Don't show outstanding items whose destination is the current screen —
+  // the player is already where the fix lives.
+  const filteredOutstanding = outstanding.filter(
+    (item) =>
+      item.destination === null ||
+      screenId === null ||
+      item.destination !== screenId,
+  );
 
   return (
     <>
@@ -66,7 +76,7 @@ const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
         <HeaderActionsMenu />
         <div className="flex-1" />
       </div>
-      <ContinueOutstandingBand items={outstanding} onOpen={openDestination} />
+      <ContinueOutstandingBand items={filteredOutstanding} onOpen={openDestination} />
       {report !== null && (
         <ContinueResultBand
           report={report}

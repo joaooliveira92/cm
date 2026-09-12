@@ -35,7 +35,20 @@ const OutstandingRow = ({
   const { destination } = item;
   return (
     <li className="flex items-baseline justify-between gap-3">
-      <span>
+      <span
+        className={destination !== null ? "cursor-pointer" : undefined}
+        role={destination !== null ? "button" : undefined}
+        tabIndex={destination !== null ? 0 : undefined}
+        onClick={() => {
+          if (destination !== null) onOpen(destination);
+        }}
+        onKeyDown={(e) => {
+          if (destination !== null && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            onOpen(destination);
+          }
+        }}
+      >
         <span
           className={
             item.severity === "blocking"
