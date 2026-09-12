@@ -27,3 +27,7 @@ const child = spawn("electron", ["."], {
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () => child.kill(signal));
 }
+
+await new Promise((resolve) => {
+  child.on("exit", resolve);
+});

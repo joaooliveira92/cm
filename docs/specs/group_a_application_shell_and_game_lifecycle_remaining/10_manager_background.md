@@ -143,12 +143,12 @@ Before enabling edits, verify:
 
 ```text
 +--------------------------------------------------------------------------------+
-| CREATE MANAGER                          Step 3 of 5: Manager Background         |
+| CREATE MANAGER                          Step 3 of 5: Manager Background        |
 |--------------------------------------------------------------------------------|
 | EXPERIENCE                                                                     |
 |                                                                                |
 | Playing career       [Professional, national level v]                          |
-| Coaching qualification [Intermediate coaching certificate v]                  |
+| Coaching qualification [Intermediate coaching certificate v]                   |
 | Starting reputation  [Established professional v]                              |
 |                                                                                |
 | ARCHETYPE                                                                      |
@@ -163,15 +163,15 @@ Before enabling edits, verify:
 | Recruitment               [-] 2 [+]     Capable                                |
 | Club Management           [-] 2 [+]     Capable                                |
 |                                                                                |
-| Points remaining: 0                                                          |
+| Points remaining: 0                                                            |
 |                                                                                |
 | EFFECT PREVIEW                                                                 |
-| Strong tactical preparation and leadership. Balanced recruitment and          |
-| development. Starting reputation may attract professional-level vacancies.    |
+| Strong tactical preparation and leadership. Balanced recruitment and           |
+| development. Starting reputation may attract professional-level vacancies.     |
 |                                                                                |
 | Draft saved 16:53                                                              |
 |--------------------------------------------------------------------------------|
-| [Back] [Restore Balanced] [Save as Preset] [Save Draft]              [Continue]|
+| [Back] [Restore Balanced] [Save as Preset] [Save Draft]             [Continue] |
 +--------------------------------------------------------------------------------+
 ```
 

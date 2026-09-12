@@ -161,38 +161,38 @@ Before allowing edits, verify:
 ## 5. Conceptual desktop layout
 
 ```text
-+--------------------------------------------------------------------------------+
++---------------------------------------------------------------------------------+
 | CREATE MANAGER                     Step 2 of 5: Nationality and Languages       |
-|--------------------------------------------------------------------------------|
+|---------------------------------------------------------------------------------|
 | NATIONALITY                                                                     |
-|                                                                                |
+|                                                                                 |
 | Primary nationality *   [Search nations...____________________] [Select]        |
-|                         Example Federation                                     |
-|                                                                                |
-| Additional nationality [Search nations...____________________] [Add]           |
+|                         Example Federation                                      |
+|                                                                                 |
+| Additional nationality [Search nations...____________________] [Add]            |
 |                         North Republic                              [Remove]    |
-|                                                                                |
-| Place of birth          Brasília, Example Federation                           |
+|                                                                                 |
+| Place of birth          Brasília, Example Federation                            |
 |                         This does not automatically determine nationality.      |
-|                                                                                |
+|                                                                                 |
 | [Apply Suggested Nationality]                                                   |
-|--------------------------------------------------------------------------------|
-| LANGUAGES                                                                      |
-|                                                                                |
-| Language                 Proficiency                           Actions           |
+|---------------------------------------------------------------------------------|
+| LANGUAGES                                                                       |
+|                                                                                 |
+| Language                 Proficiency                           Actions          |
 | Example Portuguese       Native or bilingual [v]              [Remove]          |
-| International English    Professional         [v]              [Remove]          |
-|                                                                                |
-| [+ Add Language]                                                               |
-|                                                                                |
+| International English    Professional         [v]              [Remove]         |
+|                                                                                 |
+| [+ Add Language]                                                                |
+|                                                                                 |
 | Suggestions                                                                     |
-| [Add Example Portuguese] [Add Regional Spanish]                                |
-|                                                                                |
-| Communication summary: Strong communication in 2 selected languages            |
-|--------------------------------------------------------------------------------|
-| Draft saved 16:47                                                              |
-| [Back]                                      [Save Draft]             [Continue]|
-+--------------------------------------------------------------------------------+
+| [Add Example Portuguese] [Add Regional Spanish]                                 |
+|                                                                                 |
+| Communication summary: Strong communication in 2 selected languages             |
+|---------------------------------------------------------------------------------|
+| Draft saved 16:47                                                               |
+| [Back]                                      [Save Draft]             [Continue] |
++---------------------------------------------------------------------------------+
 ```
 
 Narrow layout:

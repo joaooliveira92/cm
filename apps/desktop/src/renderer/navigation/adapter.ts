@@ -1,6 +1,7 @@
 import type { AnyRouter } from "@tanstack/react-router";
 import { requestBackFocus, requestFocus, type NavigationIntent } from "../focus.js";
 import { resolveDestination, type CareerDestination, type NavigationDestination } from "./destinations.js";
+import { captureScrollState } from "./scroll-state.js";
 
 /**
  * The navigation seam every navigation-action (career shell tabs, creation
@@ -28,14 +29,30 @@ const getRouter = (): AnyRouter => {
 
 const isPointerIntent = (intent: NavigationIntent): boolean => intent === "pointer";
 
+/** Capture scroll state into the current history entry before navigating away. */
+const enrichHistoryState = (): void => {
+  const scroll = captureScrollState();
+  window.history.replaceState(
+    { ...window.history.state, __scroll: scroll },
+    "",
+  );
+};
+
 /** Navigate to a typed destination. Focus policy delegated to the coordinator. */
 export const navigate = (destination: NavigationDestination): void => {
   const resolved = resolveDestination(destination);
+  enrichHistoryState();
   // The switch narrows `resolved` per literal `to` so each case keeps its params typing.
   switch (resolved.to) {
     case "/":
       getRouter().navigate({ to: "/" });
       break;
+    case "/load":
+      getRouter().navigate({ to: "/load" });
+      break;
+    case "/create/leagues":
+      getRouter().navigate({ to: "/create/leagues" });
+      return;
     case "/create/step-1":
       getRouter().navigate({ to: "/create/step-1" });
       break;
@@ -49,6 +66,9 @@ export const navigate = (destination: NavigationDestination): void => {
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     case "/career/$saveId/tactics":
+      getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
+      break;
+    case "/career/$saveId/tactics/editor":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     case "/career/$saveId/transfers":
@@ -66,7 +86,52 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/season-summary":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
+    case "/career/$saveId/manager":
+      getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
+      break;
+    case "/career/$saveId/news":
+    case "/career/$saveId/training":
+    case "/career/$saveId/club-info":
+    case "/career/$saveId/board-confidence":
+    case "/career/$saveId/club-history":
+    case "/career/$saveId/finances":
+    case "/career/$saveId/staff-overview":
+    case "/career/$saveId/shortlist":
+    case "/career/$saveId/scouting":
+    case "/career/$saveId/player-search":
+    case "/career/$saveId/staff-search":
+    case "/career/$saveId/competitions":
+    case "/career/$saveId/nations":
+    case "/career/$saveId/clubs":
+    case "/career/$saveId/game-status":
+    case "/career/$saveId/manager-chat":
+      getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
+      break;
+    // The one two-parameter route: the club segment carries the target club as well as the save.
+    case "/career/$saveId/club/$clubId/scout-report":
+    case "/career/$saveId/club/$clubId/staff":
+      getRouter().navigate({
+        to: resolved.to,
+        params: { saveId: resolved.params.saveId, clubId: resolved.params.clubId },
+      });
+      break;
+    case "/career/$saveId/player/$playerId/profile":
+      getRouter().navigate({
+        to: resolved.to,
+        params: { saveId: resolved.params.saveId, playerId: resolved.params.playerId },
+      });
+      break;
+    default:
+      // A resolved route with no arm here is a routing hole, not a no-op: the News Inbox spent a
+      // release silently ignoring every click because its arm was missing and the switch simply
+      // fell through. `never` makes the next omission a compile error rather than a dead button.
+      return assertNoUnhandledRoute(resolved);
   }
+};
+
+/** The exhaustiveness guard for the route switch above. */
+const assertNoUnhandledRoute = (resolved: never): never => {
+  throw new Error(`unhandled navigation route: ${JSON.stringify(resolved)}`);
 };
 
 /** Navigate to a career destination, requesting destination focus on keyboard/
@@ -87,6 +152,30 @@ export const navigateWithFocus = (
 
 /** `g b` — real app history back; the arriving screen restores its main region. */
 export const navigateBack = (): void => {
+  enrichHistoryState();
   requestBackFocus();
   getRouter().history.back();
 };
+
+/** Whether a back step exists, so a header control can disable rather than
+ *  pretend. There is no `canGoForward` counterpart in the router's history. */
+export const canNavigateBack = (): boolean => getRouter().history.canGoBack();
+
+/** The forward step. Focus is restored the same way a back step restores it:
+ *  the arriving screen takes its main region. */
+export const navigateForward = (): void => {
+  enrichHistoryState();
+  requestBackFocus();
+  getRouter().history.forward();
+};
+/**
+ * Which intent a click handler was actually invoked with.
+ *
+ * A `<button>` fires `onClick` for Enter and Space just as it does for a mouse press, so a handler
+ * that hardcodes one intent silently reports every keyboard activation as a pointer arrival — and
+ * `navigateCareer` then skips the destination focus request that AC-15 requires. `event.detail` is
+ * the click count, and it is `0` for a keyboard-synthesised click, which is the standard way to
+ * tell the two apart without wiring a parallel `onKeyDown`.
+ */
+export const intentOfClick = (event: { readonly detail: number }): NavigationIntent =>
+  event.detail === 0 ? "keyboard" : "pointer";

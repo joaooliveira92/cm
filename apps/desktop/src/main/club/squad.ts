@@ -1,0 +1,141 @@
+import { readdir } from "node:fs/promises";
+import path from "node:path";
+import { SqliteClient } from "@effect/sql-sqlite-node";
+import { ClubSummary, SaveNotFoundError, SquadPlayerView, SquadView, type SaveId, type ClubId, type PlayerId } from "@cm-clone/contracts";
+import {
+  ALL_ATTRIBUTES,
+  HIDDEN_ATTRIBUTES,
+  POSITIONS,
+  nationName,
+  overallRating,
+  positionRating,
+  type Category,
+  type PlayerAttributes,
+  type PlayerPosition,
+} from "@cm-clone/shared";
+import { Effect, Schema } from "effect";
+import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { displayNames } from "../world/displayNames.js";
+import { CURRENT_SEASON_NUMBER_SQL } from "../season/currentSeason.js";
+
+const ageFromDateOfBirth = (dateOfBirth: string): number => {
+  const dob = new Date(dateOfBirth);
+  const now = new Date();
+  let age = now.getFullYear() - dob.getFullYear();
+  const hasHadBirthdayThisYear =
+    now.getMonth() > dob.getMonth() ||
+    (now.getMonth() === dob.getMonth() && now.getDate() >= dob.getDate());
+  if (!hasHadBirthdayThisYear) age -= 1;
+  return age;
+};
+
+interface PlayerRow {
+  readonly id: PlayerId;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly dateOfBirth: string;
+  readonly condition: number;
+  readonly trainingFocus: string | null;
+  readonly nationality: string;
+  readonly birthplace: string | null;
+  readonly [attribute: string]: unknown;
+}
+
+/** Every attribute column to SELECT. Hidden attributes (injury proneness) are included even though
+ * the UI never renders them — the match engine reads them from `player.attributes` when it builds a
+ * team setup, so they must be present in the read model. */
+const attributeSelectList = [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map(
+  (attribute) => `${attribute.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)} as "${attribute}"`,
+).join(", ");
+
+/** The user's club — assumes the caller already has a `SqlClient` for the save's SQLite file in
+ *  context. The name is the pack's, resolved through the `displayNames` seam; no read path takes a
+ *  club name from a column. */
+export const loadUserClub = Effect.gen(function* () {
+  const sql = yield* SqlClient;
+  const nameOf = yield* displayNames;
+  const clubRows = yield* sql<{
+    id: ClubId;
+    statureTier: "big" | "mid" | "small";
+  }>`SELECT id, stature_tier as "statureTier" FROM clubs WHERE is_user_club = 1 LIMIT 1`;
+  const row = clubRows[0];
+  return yield* Schema.decodeUnknownEffect(ClubSummary)(
+    row === undefined ? row : { ...row, name: nameOf(row.id) },
+  );
+});
+
+/** A club's squad, ratings included — assumes the caller already has a `SqlClient` for the save's SQLite file in context. */
+export const loadSquadPlayers = (clubId: ClubId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+
+    const playerRows = yield* sql.unsafe<PlayerRow>(
+      `SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", p.date_of_birth as "dateOfBirth", ${attributeSelectList},
+              COALESCE(pf.condition, 100) as "condition", tf.focus as "trainingFocus",
+              p.nationality as "nationality", bc.name as "birthplace"
+       FROM players p
+       LEFT JOIN player_fitness pf ON pf.player_id = p.id
+         AND pf.season_number = ${CURRENT_SEASON_NUMBER_SQL}
+       LEFT JOIN training_focus tf ON tf.player_id = p.id
+       -- Real geography, so the city's name is read straight off the row. Only club and
+       -- competition names go through the content pack.
+       LEFT JOIN cities bc ON bc.id = p.birth_city_id
+       WHERE p.club_id = ?`,
+      [clubId],
+    );
+
+    const positionRows = yield* sql<{
+      playerId: PlayerId;
+      position: (typeof POSITIONS)[number];
+      familiarity: PlayerPosition["familiarity"];
+    }>`SELECT player_id as "playerId", position, familiarity FROM player_positions WHERE player_id IN (SELECT id FROM players WHERE club_id = ${clubId})`;
+
+    return playerRows.map((row) => {
+      const positions: ReadonlyArray<PlayerPosition> = positionRows
+        .filter((p) => p.playerId === row.id)
+        .map((p) => ({ position: p.position, familiarity: p.familiarity }));
+
+      const attributes = Object.fromEntries(
+        [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map((attribute) => [attribute, row[attribute] ?? undefined]),
+      ) as PlayerAttributes;
+
+      const overall = overallRating(attributes, positions);
+      const age = ageFromDateOfBirth(row.dateOfBirth);
+      const positionRatings = Object.fromEntries(
+        POSITIONS.map((position) => [position, positionRating(attributes, position)]),
+      );
+
+      return new SquadPlayerView({
+        id: row.id,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        dateOfBirth: row.dateOfBirth,
+        age,
+        attributes,
+        positions: positions.map((p) => ({ position: p.position, familiarity: p.familiarity })),
+        overallRating: overall,
+        positionRatings,
+        condition: row.condition,
+        trainingFocus: (row.trainingFocus as Category | null) ?? null,
+        nationality: nationName(row.nationality),
+        birthplace: row.birthplace,
+      });
+    });
+  });
+
+export const getSquad = (savesDir: string, saveId: SaveId) =>
+  Effect.gen(function* () {
+    const filename = path.join(savesDir, `${saveId}.sqlite`);
+    const exists = yield* Effect.promise(() =>
+      readdir(savesDir).then((entries) => entries.includes(`${saveId}.sqlite`)),
+    );
+    if (!exists) {
+      return yield* new SaveNotFoundError({ id: saveId });
+    }
+
+    return yield* Effect.gen(function* () {
+      const club = yield* loadUserClub;
+      const players = yield* loadSquadPlayers(club.id);
+      return new SquadView({ club, players });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped);
+  });

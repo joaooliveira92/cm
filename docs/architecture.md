@@ -8,7 +8,7 @@ the decisions below.
 
 | Package | Role |
 | --- | --- |
-| `apps/desktop` | Electron shell: main process (RPC server, SQLite access, save/world generation), preload (`contextBridge`), and a React renderer. The only app — there is no separate server. |
+| [apps/desktop](../apps/desktop) | Electron shell: main process (RPC server, SQLite access, save/world generation), preload (`contextBridge`), and a React renderer. The only app — there is no separate server. |
 | `packages/contracts` | The `@effect/rpc`-shaped `AppRpcs` `RpcGroup` (hand-rolled stand-in until a v4-compatible `@effect/rpc` ships) plus every `Schema.Class` payload/view/error the renderer and main process share. |
 | `packages/game-engine` | Pure, DB-agnostic decider/projector/match-sim logic, unit-testable without Electron. Mostly a placeholder scaffold today; real deciders land as later tickets are implemented. |
 | `packages/shared` | Game-design constants and pure functions with no Effect/Node dependency: Position/Role taxonomy, Attribute weights, ratings math, world generation. Imported directly by both the main process and the renderer. |

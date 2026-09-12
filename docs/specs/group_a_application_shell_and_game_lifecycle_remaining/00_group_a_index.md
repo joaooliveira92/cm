@@ -54,8 +54,4 @@ Active Career
 - Support keyboard navigation, visible focus, localization, high text scaling, reduced motion, and right-to-left layouts.
 - Do not copy proprietary artwork, logos, exact wording, source code, or databases.
 
-## Suggested Git commit
 
-```text
-docs(game-ui): complete application lifecycle screen specifications
-```

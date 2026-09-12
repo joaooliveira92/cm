@@ -1,0 +1,442 @@
+import type { CanonicalId } from "./canonicalId.js";
+import type { ClubColours } from "./clubColours.js";
+import type { NationCode } from "./nations.js";
+import { BRAZIL_SERIES_A_PACK } from "./brazilSeriesA.js";
+import { ENGLISH_PREMIER_LEAGUE_PACK } from "./englishPremierLeague.js";
+import { SPANISH_LA_LIGA_PACK } from "./spanishLaLiga.js";
+
+/**
+ * The boundary between what the simulation *is* and what it is *called*.
+ *
+ * Geography is real (see `nations.ts`). Club and competition identities are not: club names,
+ * competition names, badges, kits, and stadium names are commonly licensed commercial assets, and
+ * a simulation that hard-codes them cannot ship without that licence. So the simulation core never
+ * names a club — it refers to `club_eng_01`, and a **content pack** decides whether that reads as a
+ * fictional name, a licensed real name, a localized name, or a test fixture.
+ *
+ * The rule that makes this work: **a canonical id is never a display name.** `"Real Madrid"` as a
+ * domain identifier couples the engine to one licensing arrangement forever; `club_esp_01` does
+ * not. Nothing downstream of generation may key behaviour off a display name.
+ *
+ * The base pack shipped here is entirely fictional, so the default build carries no licensing
+ * question at all.
+ */
+
+/**
+ * The pack a freshly generated save is generated against, and the one `generation_manifest`
+ * records (id + version) so a later reader can say which pack produced the ids in that file.
+ *
+ * The manifest carries the pack's identity as provenance only — nothing downstream keys behaviour
+ * off it, and the same world can be reopened under a different pack. Every club and competition
+ * name the player sees comes from here: the catalogue and the club roster carry ids and structure,
+ * and a name they do not carry cannot be baked into a save row.
+ *
+ * The names below are entirely fictional, so the default build carries no licensing question.
+ * Competition names read as structural descriptions ("English First Division") rather than real
+ * brands; that is a property of *this* pack, not of the layer — a licensed pack replaces them
+ * without touching a line of simulation code.
+ */
+export const BASE_CONTENT_PACK: ContentPack = {
+  id: "fictional-names",
+  displayName: "Fictional identities",
+  version: "2.0.0",
+  contentSource: "FICTIONAL",
+  displayNames: {
+    // Competitions — every id `LEAGUE_SETUP_INDEX` carries. The catalogue holds the structure
+    // (tier, club count, dependency edges); the names live here.
+    comp_eng_1: { "*": "English First Division" },
+    comp_eng_2: { "*": "English Second Division" },
+    comp_eng_3: { "*": "English Third Division" },
+    comp_eng_4: { "*": "English Fourth Division" },
+    comp_eng_cup: { "*": "English National Cup" },
+    comp_eng_reserve: { "*": "English Reserve League" },
+    comp_esp_1: { "*": "Spanish First Division" },
+    comp_esp_2n: { "*": "Spanish Second Division – Northern Group" },
+    comp_esp_2s: { "*": "Spanish Second Division – Southern Group" },
+    comp_esp_cup: { "*": "Spanish National Cup" },
+    comp_deu_1: { "*": "German First Division" },
+    comp_deu_2: { "*": "German Second Division" },
+    comp_deu_3: { "*": "German Third Division" },
+    comp_deu_cup: { "*": "German National Cup" },
+    comp_fra_1: { "*": "French First Division" },
+    comp_fra_2: { "*": "French Second Division" },
+    comp_fra_cup: { "*": "French National Cup" },
+    comp_prt_1: { "*": "Portuguese First Division" },
+    comp_prt_2: { "*": "Portuguese Second Division" },
+    comp_bra_1: { "*": "Brazilian First Division" },
+    comp_bra_2: { "*": "Brazilian Second Division" },
+    comp_bra_state_se: { "*": "Brazilian State Championship – South East" },
+    comp_bra_state_ne: { "*": "Brazilian State Championship – North East" },
+    comp_bra_cup: { "*": "Brazilian National Cup" },
+    comp_and_1: { "*": "Andorran First Division" },
+    comp_uefa_champions: { "*": "European Champions Tournament" },
+    comp_conmebol_champions: { "*": "South American Champions Tournament" },
+
+    // Clubs — the twenty of `comp_eng_1`. The rest of the key space the catalogue's `clubCount`
+    // values imply is unnamed, and shows as raw ids until it is authored (see `packCoverageGaps`
+    // and `catalogueClubIds`).
+    club_eng_1_01: { "*": "Castlemere United" },
+    club_eng_1_02: { "*": "Northgate Athletic" },
+    club_eng_1_03: { "*": "Vantage Rovers" },
+    club_eng_1_04: { "*": "Ashford Wanderers" },
+    club_eng_1_05: { "*": "Brackenfield Town" },
+    club_eng_1_06: { "*": "Duncaster City" },
+    club_eng_1_07: { "*": "Elmsworth FC" },
+    club_eng_1_08: { "*": "Fenwick Albion" },
+    club_eng_1_09: { "*": "Greymoor United" },
+    club_eng_1_10: { "*": "Harrowgate Villa" },
+    club_eng_1_11: { "*": "Ironbridge Rangers" },
+    club_eng_1_12: { "*": "Kestrel Park" },
+    club_eng_1_13: { "*": "Lowmoor Athletic" },
+    club_eng_1_14: { "*": "Millbrook Town" },
+    club_eng_1_15: { "*": "Norwood Forest" },
+    club_eng_1_16: { "*": "Oakfield United" },
+    club_eng_1_17: { "*": "Pinehaven Rovers" },
+    club_eng_1_18: { "*": "Quayside FC" },
+    club_eng_1_19: { "*": "Ridgeway Town" },
+    club_eng_1_20: { "*": "Southmere Albion" },
+  },
+  clubColours: {
+    // The same twenty clubs the names above cover. A club this map omits still has colours —
+    // resolution falls back to an id-derived scheme (see `clubColours.ts`) — so a pack author can
+    // author the ones that matter and leave the rest of the key space alone, exactly as with names.
+    club_eng_1_01: {
+      primary: { foreground: "#ffffff", background: "#111111" },
+      secondary: { foreground: "#111111", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_02: {
+      primary: { foreground: "#ffffff", background: "#a01722" },
+      secondary: { foreground: "#a01722", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_03: {
+      primary: { foreground: "#ffffff", background: "#14346b" },
+      secondary: { foreground: "#14346b", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_04: {
+      primary: { foreground: "#14346b", background: "#f2e34c" },
+      secondary: { foreground: "#f2e34c", background: "#14346b" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_05: {
+      primary: { foreground: "#ffffff", background: "#0d5c2f" },
+      secondary: { foreground: "#0d5c2f", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_06: {
+      primary: { foreground: "#f2e34c", background: "#5c1030" },
+      secondary: { foreground: "#5c1030", background: "#f2e34c" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_07: {
+      primary: { foreground: "#111111", background: "#8fbfe0" },
+      secondary: { foreground: "#8fbfe0", background: "#111111" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_08: {
+      primary: { foreground: "#ffffff", background: "#7a2f12" },
+      secondary: { foreground: "#7a2f12", background: "#e6d5b8" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_09: {
+      primary: { foreground: "#111111", background: "#c9d1d9" },
+      secondary: { foreground: "#c9d1d9", background: "#111111" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_10: {
+      primary: { foreground: "#ffffff", background: "#6a1b7a" },
+      secondary: { foreground: "#6a1b7a", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_11: {
+      primary: { foreground: "#111111", background: "#e88b1a" },
+      secondary: { foreground: "#e88b1a", background: "#111111" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_12: {
+      primary: { foreground: "#ffffff", background: "#1f6f8b" },
+      secondary: { foreground: "#1f6f8b", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_13: {
+      primary: { foreground: "#14346b", background: "#ffffff" },
+      secondary: { foreground: "#ffffff", background: "#14346b" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_14: {
+      primary: { foreground: "#ffffff", background: "#2f4f2f" },
+      secondary: { foreground: "#2f4f2f", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_15: {
+      primary: { foreground: "#ffffff", background: "#8a1538" },
+      secondary: { foreground: "#8a1538", background: "#d8c8a8" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_16: {
+      primary: { foreground: "#111111", background: "#d9c25a" },
+      secondary: { foreground: "#d9c25a", background: "#111111" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_17: {
+      primary: { foreground: "#ffffff", background: "#1b5e4a" },
+      secondary: { foreground: "#1b5e4a", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_18: {
+      primary: { foreground: "#ffffff", background: "#26476e" },
+      secondary: { foreground: "#26476e", background: "#a8c4dd" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_19: {
+      primary: { foreground: "#ffffff", background: "#b23a1f" },
+      secondary: { foreground: "#b23a1f", background: "#ffffff" },
+      tertiary: null,
+      quaternary: null,
+    },
+    club_eng_1_20: {
+      primary: { foreground: "#111111", background: "#e4e4e4" },
+      secondary: { foreground: "#e4e4e4", background: "#111111" },
+      tertiary: null,
+      quaternary: null,
+    },
+  },
+  // Fictional clubs never wear a real club's crest, so the base pack maps no badge and every club
+  // draws the colour-and-initials shield.
+  clubBadges: {},
+  // The fictional base pack asserts no real stadium and pins no real home town. Its clubs draw
+  // both at generation, exactly as the ground-name and city rules in `clubGeneration.ts` describe.
+  stadiums: {},
+  homeCities: {},
+};
+
+/** BCP 47 language tag, or `"*"` for the fallback every pack must provide. */
+export type LocaleTag = string;
+
+/**
+ * The identity a licensed pack asserts for a club's ground, replacing what generation would
+ * otherwise draw at random. `name` and `capacity` are the stadium's real identity; the club id is
+ * what the ground belongs to.
+ *
+ * Deliberately not keyed by locale the way `displayNames` is: a stadium is a place, and "the
+ * Maracanã, Rio de Janeiro" is the same place in any language. A pack that authors one of a club's
+ * fields without the other (a name with no capacity, or a capacity over a fictional name) is
+ * incoherent, so a stadium entry always carries both.
+ */
+export interface StadiumIdentity {
+  /** The real name of the ground, e.g. `"Maracanã"`. */
+  readonly name: string;
+  /** The real seated or match-day capacity. */
+  readonly capacity: number;
+}
+
+/**
+ * The real home settlement a licensed pack pins a club to, ahead of generation's weighted draw.
+ *
+ * This is the *one* place a city name reaches the pack — and it does so as identity, not as the
+ * `City` value the catalogue carries (see `cities.ts`). A licensed real club has a real home town,
+ * so the pack that names the club also names its place; the normal path where city names are plain
+ * factual geography that never resolves through the pack is untouched. What the pin holds is the
+ * plain factual name and the population band it should read as, which is exactly what the
+ * `cities.ts` catalogue would carry if the settlement were curated there — so generation can
+ * `canonicalCityId` from this exactly as it does from a catalogue `City`.
+ */
+export interface HomeCityPin {
+  /** The plain factual settlement name, e.g. `"Sao Paulo"`. */
+  readonly name: string;
+  /** The coarse population band the settlement reads as. `cities.ts` defines the vocabulary. */
+  readonly populationBand: "major" | "large" | "mid" | "small";
+}
+
+/**
+ * A badge's address in the club badge library: `<nation>/<club-slug>`, e.g. `eng/manchester-united`.
+ *
+ * The nation is the lowercase three-letter code canonical ids use. The slug is the club's name with
+ * accents removed, lowercased, and every other non-alphanumeric run turned into `-`. The key names a
+ * real club, never a canonical id, so two packs that name the same club share one badge.
+ */
+export type BadgeKey = string;
+
+export interface ContentPack {
+  readonly id: string;
+  readonly displayName: string;
+  readonly version: string;
+  /**
+   * Whether this pack's names are fictional or licensed real-world identities. Carried so a build
+   * can refuse to load licensed content it has no rights to, and so provenance is visible in a
+   * generated world's report rather than inferred from the names.
+   */
+  readonly contentSource: "FICTIONAL" | "LICENSED";
+  /** Canonical id -> locale -> display name. `"*"` is the fallback. */
+  readonly displayNames: Readonly<Record<CanonicalId, Readonly<Record<LocaleTag, string>>>>;
+  /**
+   * Canonical club id -> the club's colours. Not keyed by locale: a club's colours are the same
+   * identity in every language, where its name is not.
+   *
+   * Partial by design, and partial in a different sense from `displayNames`. An unnamed id shows
+   * as itself; an uncoloured one falls back to a scheme derived from the id, because a header has
+   * to paint something. See `clubColours.ts`.
+   */
+  readonly clubColours: Readonly<Record<CanonicalId, ClubColours>>;
+  /**
+   * Canonical club id -> the key of the club's badge in the badge library. Not keyed by locale, for
+   * the same reason as `clubColours`.
+   *
+   * Only a pack can say which badge a club wears, because a canonical id carries no name. Mappings
+   * are authored explicitly and never matched by name at runtime, where "Arsenal" against
+   * "Arsenal FC" is exactly the guess that binds the wrong crest. Partial by design: a club this map
+   * omits has no badge, and screens draw a shield in its colours instead.
+   */
+  readonly clubBadges: Readonly<Record<CanonicalId, BadgeKey>>;
+  /**
+   * Canonical club id -> the real stadium identity the pack asserts for that club's ground.
+   *
+   * Provisioned but **unused by MVP generation**: the schema gives every club a `stadium_name` and
+   * `stadium_capacity` and nothing computes from them, so this map is where a licensed pack records
+   * the fact today. A future ticket decides when these override the fictional draw and whether a
+   * pack that authors only some stadiums degrades those off-author clubs to the fictional fallback
+   * or refuses to load. The fictional base pack carries an empty map.
+   */
+  readonly stadiums: Readonly<Record<CanonicalId, StadiumIdentity>>;
+  /**
+   * Canonical club id -> the real home settlement a licensed pack pins the club to.
+   *
+   * Same status as `stadiums`: recorded today, unread by generation until a ticket decides how a
+   * pack that pins some clubs' home towns deals with the clubs it leaves to the weighted draw.
+   */
+  readonly homeCities: Readonly<Record<CanonicalId, HomeCityPin>>;
+}
+
+/**
+ * Resolves a canonical id to a display name, falling back locale -> `"*"` -> the id itself.
+ *
+ * Returning the canonical id when nothing matches is deliberate: a missing name should surface as
+ * a visible `club_eng_01` in the UI, which is obvious in a screenshot and caught by the validation
+ * pass, rather than as an empty string that reads as a rendering bug.
+ */
+export const displayName = (
+  pack: ContentPack,
+  id: CanonicalId,
+  locale: LocaleTag = "*",
+): string => {
+  const entry = pack.displayNames[id];
+  if (!entry) return id;
+  return entry[locale] ?? entry["*"] ?? id;
+};
+
+/**
+ * The build's own pack, resolved for a canonical id.
+ *
+ * Setup-time reads — the catalogue browser, its search, the Active Leagues consequences — run
+ * before any save exists, so there is no recorded pack to resolve against and exactly one pack in
+ * play: this build's. Save-backed reads must not use this; they resolve through the pack the save
+ * recorded, which is the main process's own seam.
+ */
+export const catalogueName = (id: CanonicalId, locale: LocaleTag = "*"): string =>
+  displayName(BASE_CONTENT_PACK, id, locale);
+
+/** Every canonical id a pack names, for the validation pass that reports missing localization. */
+export const packCoverage = (pack: ContentPack): ReadonlySet<CanonicalId> =>
+  new Set(Object.keys(pack.displayNames));
+
+/**
+ * The ids a pack fails to name, in the order they were asked for.
+ *
+ * Resolution never fails — an unnamed id renders as itself — so this is the only thing that turns
+ * a missing name into something a test or a startup check can act on, rather than a raw
+ * `club_eng_07` reaching a screen unnoticed.
+ */
+export const packCoverageGaps = (
+  pack: ContentPack,
+  ids: Iterable<CanonicalId>,
+): readonly CanonicalId[] => {
+  const covered = packCoverage(pack);
+  return [...ids].filter((id) => !covered.has(id));
+};
+
+/**
+ * Canonical club ids, minted from the club's competition and its ordinal within it: the seventh
+ * club of `comp_eng_1` is `club_eng_1_07`.
+ *
+ * The number is an address, not a ranking: `club_eng_1_07` is not "the seventh best club in the
+ * English first division". Sorting or seeding off the ordinal would make the id meaningful, which
+ * is exactly what a canonical id must not be.
+ *
+ * Nothing new enters the catalogue to support this — a competition's `clubCount` already fixes the
+ * ordinal range — so a content-pack author can enumerate the whole key space mechanically rather
+ * than hand-maintaining a second copy of it.
+ *
+ * Promotion moves a club out of the competition its id names, so `club_eng_2_03` can end up in the
+ * first division. That is correct: an id is an identity, not a description, and rewriting it on
+ * promotion would break every foreign key, transfer record, and scouting row pointing at it.
+ */
+export const canonicalClubId = (competitionId: CanonicalId, ordinal: number): CanonicalId =>
+  `club_${competitionId.replace(/^comp_/, "")}_${String(ordinal).padStart(2, "0")}`;
+
+export const canonicalCompetitionId = (nation: NationCode, slug: string): CanonicalId =>
+  `comp_${nation.toLowerCase()}_${slug}`;
+
+/** The slice of a resolved world the content-pack decision reads. Structural on purpose: the
+ *  helper keys off ids, kinds, and depths rather than a specific world type, so a test can hand it
+ *  a fixture without building a `ResolvedWorld`. */
+export interface WorldCompetitionShape {
+  readonly id: string;
+  readonly kind: string;
+  /** Pyramid tier, 1 = highest. `null` for a Competition that does not sit on a ladder. */
+  readonly tier: number | null;
+  readonly depth: string;
+}
+
+/**
+ * The content pack a save should be generated under, as a pure function of the world it will
+ * contain.
+ *
+ * A save's names come from the pack its manifest records, so generation has to pick one. The rule
+ * keys to the league the career is played in — the deepest playable league, tie-broken exactly as
+ * `getClubSelection` reads it — because that is the league whose clubs Step 3 lists and the one a
+ * player sees first. A career played in Brazilian Série A, the Premier League, or La Liga is
+ * generated under that league's licensed pack, so Step 3 lists Flamengo rather than
+ * `club_bra_1_09`; every other world keeps the fictional base pack. This is a map, not an algorithm: a world owns at most one pack today, and giving
+ * another league its own pack is one entry.
+ *
+ * A selection wider than the pack's league (a Brazil career that also loads Série B, or a world
+ * with two playable nations) keeps the pack of the playable league it is played in. Ids the pack
+ * does not name resolve through the save's normal fallbacks and are reported by coverage reporting,
+ * exactly as any partially-covered pack is — the pack is provenance, not a promise of coverage of
+ * the whole world.
+ */
+export const contentPackForWorld = (
+  competitions: readonly WorldCompetitionShape[],
+): ContentPack => {
+  const primary = competitions
+    .filter((competition) => competition.kind === "league" && competition.depth === "full")
+    .sort(
+      (a, b) =>
+        (a.tier ?? Number.MAX_SAFE_INTEGER) - (b.tier ?? Number.MAX_SAFE_INTEGER) ||
+        a.id.localeCompare(b.id),
+    )[0];
+  if (primary?.id === "comp_bra_1") return BRAZIL_SERIES_A_PACK;
+  if (primary?.id === "comp_eng_1") return ENGLISH_PREMIER_LEAGUE_PACK;
+  if (primary?.id === "comp_esp_1") return SPANISH_LA_LIGA_PACK;
+  return BASE_CONTENT_PACK;
+};

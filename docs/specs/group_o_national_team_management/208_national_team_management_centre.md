@@ -29,13 +29,13 @@ The view preserves the active manager, national team, team level, international 
 ## 4. Conceptual layout
 
 ```text
-+------------------------------------------------------------------------------+
-| National Team Management Centre                                              |
-|------------------------------------------------------------------------------|
-| International context, deadlines, status, evidence, warnings, and actions    |
-|                                                                              |
-| [Related Views] [Review] [Primary Action] [Back]                             |
-+------------------------------------------------------------------------------+
++--------------------------------------------------------------------------------+
+| National Team Management Centre                                                |
+|--------------------------------------------------------------------------------|
+| International context, deadlines, status, evidence, warnings, and actions.     |
+  |                                                                              |
+| [Related Views] [Review] [Primary Action] [Back]                               |
++--------------------------------------------------------------------------------+
 ```
 
 The presentation must be original and must not imitate proprietary layouts.

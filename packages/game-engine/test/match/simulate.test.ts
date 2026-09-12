@@ -7,7 +7,7 @@ import {
   simulateMatchWithCondition,
   simulateMatchWithCounts,
   type SimulateMatchInput,
-} from "../../src/match/simulate.js";
+} from "../../src/match/simulate/index.js";
 import type { MatchPlayerInput, MatchTeamSetup } from "../../src/match/types.js";
 import { buildTeam, clubId as makeClubId, playerId as makePlayerId } from "./fixtures.js";
 
@@ -44,6 +44,7 @@ const craftTeam = (clubId: ClubId, attributes: PlayerAttributes, formation: keyo
       role: POSITION_ROLES[position],
       playerId: makePlayerId(`${clubId}-${index}`),
     })),
+    bench: [null, null, null, null, null, null, null],
     mentality: "balanced" as const,
     tempo: "normal" as const,
     pressing: "high" as const,

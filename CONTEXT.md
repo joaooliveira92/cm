@@ -97,6 +97,31 @@ from the Position Ratings of the players occupying that phase's Positions (Defen
 Midfield: DM/MC/ML/MR; Attack: AMC/ST), before Tactical Modifiers or Home Advantage are applied.
 _Avoid_: Team strength, team rating
 
+**Nationality**:
+The single Nation a player is drawn from at generation, and the thing that selects their Name Pool. One
+per player, never several: work permits and national teams do not exist, so nothing in MVP reads a
+second one. Distinct from the nation of the club the player plays for — a player whose Nationality
+differs from their club's nation was drawn through a migration link.
+_Avoid_: citizenship, eligibility (neither is modelled)
+
+**Name Pool**:
+The per-Nation lists of given names and surnames a generated person's name is drawn from. Factual
+linguistic data held in code beside the Nation Profiles, never content-pack data and never in the save,
+on the same reasoning that keeps city names out of the pack. Feeds players and Staff alike. A generated
+name is stored directly as text: it is an attribute of a person, not an identifier, so the canonical-id
+rule does not reach it. See
+[player provenance](.agents/notes/implemented/architecture/2026-09-01-player-provenance-and-nationality.md).
+_Avoid_: name list, name bank
+
+**Results Strength**:
+A single derived score, 1-100, standing in for a club that has no players — the clubs of a
+`results-only` Competition. Computed on read from the world seed, the club's Stature Tier, its
+Competition's tier and Nation strength prior, and the season number, never stored, so it walks continuously across seasons without any system writing to it.
+Calibrated to the distribution real squads produce when their three Phase Strengths are averaged, which
+is how a squad-bearing club is compared against one without a squad in a mixed cup tie. See
+[what each Simulation Depth stores](.agents/notes/proposed/architecture/2026-09-01-simulation-depth-persistence.md).
+_Avoid_: club strength, team strength (the latter is already reserved against Phase Strength)
+
 **Tactical Modifiers**:
 A flat struct of numeric multipliers and biases — one each for attack, midfield, defense, tempo, and
 pressing-aggression — that a team's tactics (formation, roles, instructions; vocabulary owned by the
@@ -212,34 +237,228 @@ The full value a manager sets for a team: a Formation, a Role and player assigne
 slots, and the three Team Instructions. The payload of the `ChangeTactics` command, both pre-match and
 mid-match.
 
+**Expected Revision**:
+The monotonic Tactic version a save submit claims it was read at. The club's Tactic revision starts
+at 0 and is raised by exactly one on every accepted save; a submit whose Expected Revision no longer
+matches the stored one is refused with a typed conflict that names the current revision, so the
+editor can offer Refresh rather than silently overwrite. Distinct from a Request Id: the Expected
+Revision picks which value the write is allowed to replace.
+_Avoid_: version (revision is the stored, monotonic counter the command and the overview share)
+
+**Request Id**:
+The idempotency key of one Tactic save: the editor mints a fresh one per submit, and a replayed
+submit carrying an already-accepted Request Id is a no-op that returns the current state rather than
+a second write or a conflict — checked before the Expected Revision comparison, so a retry after a
+lost response never double-applies, however far the club has since moved on.
+
 ### Season & calendar
 
 **League**:
-The single fixed set of 20 clubs a career is played within. Membership never changes — no promotion,
-relegation, or multi-league structure.
-_Avoid_: Division, competition (competition is reserved for a cup-style bracket, not in v1 scope)
+A single Competition within a Nation's Pyramid: an ordered set of clubs that play each other on a
+Fixture list. A career is played within the Leagues its League Selection Snapshot made playable.
+_Avoid_: Division (a League's depth in its Nation's Pyramid is its Tier, below)
+
+**Tier**:
+A League's depth in its Nation's Pyramid, 1 being the highest. Cups, reserve, and continental
+Competitions have no Tier. A Tier is a label, never a structure: several Leagues may share one Tier
+as parallel regional divisions, so nothing may derive which League sits above another by comparing
+Tier numbers. That is what Exchange Links are for.
+_Avoid_: Level, division number
+
+**Pyramid**:
+A Nation's Leagues, ordered by Tier and joined by Exchange Links. Not necessarily a single vertical
+chain — a Tier may hold several parallel regional Leagues feeding one above them.
+
+**Exchange Link**:
+One pairing of a higher and a lower Competition, and the number of clubs that swap between them at
+the end of each Season. Promotion and relegation are the same Exchange Link read in two directions,
+which is what guarantees a League never changes size. A Link exists only when both Competitions are
+loaded in the save, so the lowest loaded League never relegates and the highest never promotes.
+_Avoid_: Promotion slot (a count with no destination, which parallel regional Leagues make ambiguous)
+
+**Nation**:
+The unit a player selects a career's scope by: a real country owning a pyramid of Leagues, its
+domestic cups, and any reserve Competitions. Identified canonically by its ISO 3166-1 alpha-3 code,
+and carrying a **Nation Profile** of gameplay priors that shape generation. A Nation may be
+*unavailable* (present in the setup catalogue's metadata, absent from its content) or have no
+playable League at all, and in both cases it stays visible with the reason rather than being hidden.
+
+Nations and Cities are the real-world foundation the simulation depends on, and the only real-world
+data it carries. Clubs, players, staff, and stadiums are generated; club and competition display names
+are replaceable Content Pack entries. See
+[real geography with replaceable identities](.agents/notes/implemented/architecture/2026-09-01-real-geography-with-replaceable-identities.md)
+and [the world catalogue](.agents/notes/implemented/architecture/2026-09-01-world-catalogue-and-canonical-ids.md).
+_Avoid_: Country (fine informally; Nation is the term the catalogue and the screen use)
+
+**City**:
+A real settlement within a Nation, giving a Club its hometown and a Player their birthplace. Factual
+and licence-free like the Nation above it, so its name is carried directly rather than resolved
+through a Content Pack. Carries a coarse **population band** — a plausibility input to generation —
+never a population figure, and no coordinates: distance and travel are not modelled.
+
+**Nation Profile**:
+A Nation's data-driven football character — youth production, coaching quality, economic power,
+export tendency, tactical leaning, and its recruitment links to other Nations. Every value is a
+**gameplay prior on a 0-1 scale, never a factual claim** about a country or its people. A prior
+shifts the distribution a generated player is drawn from; it never sets a value, and individual
+variation between two players of the same Nation is always larger than the gap between their
+Nations' profiles.
+_Avoid_: National modifier (the values are inputs to a distribution, not a modifier applied to a result)
+
+**Content Pack**:
+The replaceable layer mapping a canonical id (`club_esp_01`) to a display name, per locale. Exists
+so club and competition identities — which are licensed commercial assets — never reach the
+simulation core, and so the same generated world can run with fictional, licensed, localized, or
+test names. A canonical id is never a display name, and nothing downstream of generation keys
+behaviour off one. The pack is a code asset rather than part of a save — a save records which pack it
+was generated against, so the same world can be reopened under a different one — and every display name
+is resolved at read time, never written into a row. Generation picks the pack from the world it
+resolves: a career whose playable league a licensed pack names (Brazilian Série A) is generated under
+that pack, so its real names reach the interface; everything else keeps the fictional base pack.
+
+**Region**:
+A grouping of Nations used for browsing and filtering during career setup. Carries no simulation
+meaning — it exists so a catalogue of many Nations is navigable.
+
+**Competition**:
+Anything a club can take part in: a League, a domestic cup, a reserve competition, or a cross-border
+tournament. Competitions carry **dependency edges** — a second division requires the first division
+above it, a top division requires its national cup, a continental tournament requires the top
+divisions that qualify into it — and selecting one activates everything it requires.
+
+**Simulation Mode**:
+How much of a Competition the career carries: `playable` (clubs are manageable, full detail),
+`background` (simulated at reduced detail, promotions and qualification still occur, no club is
+manageable), `view_only` (standings, fixtures, and results with no persistent squads), or
+`not_loaded`. A Competition activated only because another selection requires it is capped at
+`background` — a parent division is *simulated*, never managed.
+
+**Simulation Depth**:
+The per-competition detail tier the Active Leagues screen is built around: `full` (as
+`playable`), `standard` (as `background`), or `results-only` (as `view_only`). Distinct from
+Simulation Mode, which is the per-Nation selection grain: a Nation is selected at a Mode, and
+each Competition it activates then reads at the Depth that Mode implies. A Competition pulled in
+as a dependency is capped at `standard` and is not depth-editable. The two readings are both
+glossary terms so the distinction outlives the screen they were coined for. On disk the three values
+collapse to two shapes: `full` and `standard` clubs are stored identically, and only `results-only`
+changes the table set, replacing a squad with a derived Results Strength. Depth governs how a Fixture
+resolves, never whether one exists: every loaded Competition has a full Fixture list.
+_Avoid_: Simulation Mode (the per-Nation grain, a different concept), detail level
+
+**Advanced Options**:
+The setup-screen settings that tune shipped systems, from the Active Leagues Setup spec's
+"advanced options ship only where a real system exists" decision. Four categories land in v1 —
+match-simulation detail, transfer-market activity, roster-generation detail, and information
+visibility — each feeding the processing-cost/entity estimate or a real information policy, so a
+checkbox can never change nothing. Each category owns a small legal value set, and the four
+combine under checked incompatibility rules (a full roster conflicts with quick match
+simulation; an active transfer market conflicts with ranged information visibility).
+Editor/developer capabilities carry no such system in v1 and stay recorded as a future slot, not a
+modeled option. Staff generation is no longer among them — Staff ship, but they are derived from a
+club's Stature Tier rather than tuned, so they are still not an Advanced Option.
+_Avoid_: reference-game option labels (the brief's checklist is a vocabulary to translate, not
+to copy; see [the implementation brief](.scratch/active-leagues-setup/brief.md))
+
+**League Scope Option**:
+A supported scope for one Nation, named by the setup catalogue — "Top division only", "National
+pyramid", "National and regional pyramid". The player picks one of these rather than assembling a
+competition graph by hand, which is what lets pyramids that are not a single vertical chain
+(parallel regional divisions, split leagues, franchise competitions) be expressed without letting
+the interface construct an invalid one.
+
+**Selection Intent**:
+What the player asked for: one record per Nation carrying a Simulation Mode and, when playable, a
+League Scope Option. Deliberately distinct from the Effective Selection, so the interface can always
+say which parts of the scope were chosen and which were required.
+
+**Effective Selection**:
+What the Selection Intents resolve to once dependency closure runs — every active Competition, its
+mode, and which selections require it. Every figure in the setup summary counts this, not the
+intents, so an automatically included Competition is visible in the totals.
+
+**League Selection Snapshot**:
+The single immutable record `Continue` produces on the League and Nation Selection screen: the
+intents, the Effective Selection, the cost estimate, and the setup catalogue's fingerprint.
+Creating it does **not** create the world — it is the scope the later setup stages and world
+generation are handed.
+
+**Setup Catalogue**:
+The validated index a career's scope is chosen from: its Regions, Nations, Competitions, League
+Scope Options, and dependency edges, identified by a **fingerprint**. Every persisted setup draft
+and preset carries that fingerprint, and one captured against a different catalogue is refused
+rather than migrated by guessing at renamed Competitions.
+
+> **Generation boundary, as of 2026-09-03.** World generation is handed a snapshot's identifier and
+> **re-resolves its Selection Intents** against the Setup Catalogue, refusing a fingerprint mismatch
+> rather than trusting the Effective Selection the snapshot recorded — the snapshot's recorded
+> selection is display and audit data, never a generation input. It then materialises what that
+> re-resolution produced: every Competition in the Effective Selection, and one Club per slot of
+> each Competition's club count. The screen's job still ends at producing the snapshot. See
+> [League and Nation Selection](.agents/notes/implemented/feature/2026-08-31-league-and-nation-selection.md)
+> and [generation reads the snapshot](.agents/notes/proposed/architecture/2026-09-02-generation-reads-the-snapshot.md).
 
 **Season**:
-One full cycle of the League: a freshly-generated Fixture list played to completion, followed by a
-close-of-season transition into the next Season. Fixtures are reshuffled each Season with no seeding
-by prior standings — there is no promotion/relegation or qualification bracket to seed against.
+One full cycle of every loaded Competition: a freshly-generated Fixture list played to completion,
+followed by a close-of-season transition into the next Season. Every Nation runs the same
+August-to-May Season, on real dates; Nations whose real-world calendar runs spring-to-autumn ship on
+the wrong cycle in MVP. Fixtures are reshuffled each Season with no seeding by prior standings. The
+close-of-season transition applies each Exchange Link, promoting and relegating clubs between Leagues.
 
 **Fixture**:
-One scheduled match between two League clubs, home and away assignment fixed at generation time. A
-Season is a double round-robin: 38 Fixtures per club (19 opponents, home and away).
+One scheduled match between two clubs, home and away assignment fixed at generation time. A Fixture
+carries a real date and the Round it belongs to within its own Competition. A club never holds two
+Fixtures on one date. A 20-club League Season is a double round-robin: 38 Fixtures per club (19
+opponents, home and away); other Competitions have other lengths.
 _Avoid_: Match (Match is the live/resolved event a Fixture becomes; Fixture is the scheduled slot)
 
+**Cup Tie**:
+A Fixture in a knockout Competition, which must produce a winner. Single leg only: a Tie level after
+90 minutes goes straight to a Penalty Shootout, with no extra time and no replay. A Tie's two clubs
+are not known until the previous Round resolves, so its Fixture comes into existence then, on the date
+its Round would always have had.
+_Avoid_: Leg (there are no second legs in MVP), Replay
+
+**Bye**:
+A pass into Round 2 held by a club in a cup whose entrant count is not a power of two. Byes go to
+clubs from the highest-tier source Competitions, ties broken by canonical id.
+
+**Penalty Shootout**:
+How a level Cup Tie is settled. Resolved outside the match's minute-by-minute simulation, so it
+produces no match events and appears only as the Tie's penalty score.
+
 **Matchday**:
-The League-wide round number (1–38) a Fixture belongs to. The unit the calendar advances by and the
-unit Transfer Window boundaries are defined against — never a calendar date.
+A date on which Fixtures are played anywhere in the world. **This term was redefined**: it previously
+meant the League-wide round number 1–38, which no longer identifies a point in time once Competitions
+of different lengths run concurrently. That sense is now Round.
+_Avoid_: using Matchday for a round number, in copy or in a column name
+
+**Round**:
+The number a Fixture holds within its own Competition, counted from 1. Scoped to that Competition and
+meaningless across Competitions — a cup's Round 3 and a League's Round 3 are unrelated. In a knockout
+Competition it is the bracket depth, so it survives byes and replays.
+_Avoid_: Matchday (see above), Gameweek, Leg (a Leg is one match of a two-legged tie)
 
 **Calendar**:
-The career's sense of time, advanced only by jumping to the next scheduled event (a Matchday's
-Fixtures or a Transfer Window open/close), never by a day-by-day clock. v1 has no training, scouting,
-or press content to occupy a day with no Fixture, so a finer-grained clock would have nothing to
-display.
+The career's sense of time, carried as a real date and advanced only by jumping to the next scheduled
+event (a Matchday, or a Transfer Window opening or closing), never by a day-by-day clock. There is no
+training or press content to occupy a date with no Fixture, so a finer-grained clock would have
+nothing to display. Advancing to a date resolves every unplayed Fixture in the world dated on or
+before it, and stops at the first Matchday carrying a Fixture in a playable Competition — Fixtures in
+background Competitions resolve without stopping the career. When that Matchday contains the manager's
+own Fixture the Calendar stops *before* resolving any of it, at the Pre-match Boundary below.
 _Avoid_: Schedule (Schedule is the generated list of Fixtures; Calendar is the mechanism for moving
 through it)
+
+**Pre-match Boundary**:
+Where the Calendar stops when the next Matchday contains the manager's own Fixture. None of that
+Matchday resolves — not the human's Fixture and not the ones around it — so the career sits in a state
+the player can inspect and repair: the Fixture is due, the Fixture is unplayed, and the date has not
+moved. It is durable state on the Season naming which Fixture is pending, never a Season phase, which
+would record that *some* Fixture is pending without saying which. Crossing it is the one place Match
+Readiness stops being advice: the Fixture is played through Match day, and an explicit commit is what
+moves the career past it.
+_Avoid_: calling it a pause, a prompt, or a confirmation — nothing is being asked; the career has
+arrived somewhere and is waiting for a decision that only the player can make
 
 **Continue**:
 The single player-facing control that advances the Calendar, and the name of the career's core rhythm:
@@ -249,6 +468,13 @@ the player sees; the command behind it is the Calendar advance.
 _Avoid_: Advance Calendar, Simulate, Next Day, Proceed as player-facing names (Next Day additionally
 implies a day-by-day clock the Calendar does not have); "continue" for resuming a saved career, which
 is Load
+
+**Quick result**:
+Resolving the manager's Fixture without watching it. It runs the same authoritative simulation as
+playing it does, over the same persisted match stream and with an empty command journal, and skips
+only the live reveal — so a quick-resulted match stays as inspectable afterwards as a watched one.
+_Avoid_: describing it as a lightweight, simplified, approximate, or secondary simulation; it means
+*do not make me watch this now*, never *discard this match's history*
 
 **Match Readiness**:
 Whether the manager's club has the setup a Fixture legally requires — at minimum a Tactic, which a
@@ -260,24 +486,31 @@ _Avoid_: Reminder, warning message, checklist (all imply something dismissible o
 independently of the underlying state)
 
 **Transfer Window**:
-One of two spans per Season during which transfer commands are legal: the pre-season window (open
-until Matchday 1) and the mid-season window (opens immediately after Matchday 19, closes when Matchday
-20 is due). Transfer commands raised outside an open window are rejected. No deadline-day mechanic.
+One of two date ranges per Season during which transfer commands are legal: the pre-season window,
+open from the date the career starts until the season's first Round, and the mid-season window. One
+pair of dates serves every Nation, following from the single Season shape. Transfer commands raised
+outside an open window are rejected. No deadline-day mechanic.
 _Avoid_: Transfer period (Window is the term used in commands/events)
 
 **League Table**:
-The standings derived from all resolved Fixtures in the current Season, ordered by points, then goal
+The standings derived from all resolved Fixtures of one League in the current Season, ordered by points, then goal
 difference, then goals scored. Head-to-head is deliberately not a tie-break.
 
 ### Transfers & contracts
 
 **Credits**:
 The single in-game currency unit for transfer fees, wages, and budgets. Fictional, with no real-world
-currency tie — consistent with the fully fictional League/clubs/players (see map's Out of scope).
+currency tie. Nations carry a real `currencyCode`, but it is descriptive metadata: no exchange rate,
+conversion, or per-Nation wage unit is modelled, and clubs and players remain fully generated.
 
 **Stature Tier**:
-A club's fixed rank among the League's 20 clubs (e.g. big/mid/small), set once and permanent for the
-life of a career in v1 — nothing in v1 moves a club between tiers. The single shared input both
+A club's fixed rank among the clubs of its **own Competition** (e.g. big/mid/small), set once and
+permanent for the life of a career — nothing moves a club between tiers. It is deliberately *relative*,
+not a world-wide scale: a big club in a fourth division is big among its peers, not comparable to a big
+club in a first division. The vertical term is the Competition's tier and its Nation's strength prior,
+which is what squad quality and Results Strength read alongside it. See
+[generation reads the snapshot](.agents/notes/proposed/architecture/2026-09-02-generation-reads-the-snapshot.md).
+The single shared input both
 Transfer Budget/Wage Budget (below) and Board Objective (see "Board & objectives") derive from
 independently; deriving one from the other was considered and rejected (see
 [board objectives and manager sacking](.agents/notes/implemented/feature/2026-08-27-board-objectives-and-manager-sacking.md)).
@@ -314,25 +547,83 @@ _Avoid_: Offer (fine as an informal synonym in prose, not as the event/command n
 
 **Transfer Inbox**:
 The Bid queue on the Transfer market screen: incoming Bids for this club's players and the status of
-Bids this club has made. This is the only thing "inbox" means in the project. There is no news feed,
-message screen, or notification centre, and onboarding ticket 05 decided there will not be one in v1.
-What changed on each Calendar advance comes back on `AdvanceCalendarResult` and is surfaced by the
-screen that owns the state.
-_Avoid_: Inbox unqualified, News, Messages (the seed doc `docs/game-onboarding.md` uses "inbox" for a
-news feed; that meaning is not this project's)
+Bids this club has made. Distinct from the News Inbox, which is a career record and never a queue of
+decisions; the two share a word and nothing else.
+_Avoid_: Inbox unqualified (the word alone is now ambiguous — say which one)
+
+### Staff
+
+**Staff**:
+A named non-playing employee of a club, in one of exactly four roles across two kinds — **Bound
+Staff** (Coach, Scout) and **Presence Staff** (President, Physio). Every club in the world has Staff
+of both kinds, at every Simulation Depth. Fixed for the life of a career: Staff neither develop, age,
+nor turn over, and there are no Staff wages, no hiring, and no firing, so Staff never touch Contract
+or Wage Budget. See
+[the staff entity and its two bindings](.agents/notes/proposed/feature/2026-09-01-staff-entity-and-bindings.md)
+and [presence staff are derived, never stored](.agents/notes/implemented/feature/2026-09-07-presence-staff-are-derived-never-stored.md).
+_Avoid_: backroom, coaching staff (fine informally; Staff is the modelled noun)
+
+**Bound Staff**:
+A Staff member who carries a mechanical binding and therefore a 1-20 **quality** that a formula
+reads — Coach or Scout, and no others. Quality is derived from the club's Stature Tier with seeded
+variance. Bound Staff are the only Staff with **rows**, and a row exists only for a club that is or
+has been human-managed, because a row exists to give a Scouting Assignment something stable to point
+at, not to make the person exist. A row is a materialisation of the same derivation that answers for
+every other club.
+_Avoid_: real staff, mechanical staff (the contrast is binding, not authenticity)
+
+**Presence Staff**:
+A Staff member who exists to be seen rather than read by a formula — President or Physio, and no
+others. Carries a name and a role and nothing else: no quality, because no formula reads one. Never
+stored: a pure function of the World Seed and the club's canonical id, computed when a screen asks,
+so every club in the world has them at no storage cost. The rule they satisfy is that some shipped
+surface reads them — the Club Staff screen, and for the President the board News Messages.
+_Avoid_: flavour staff, cosmetic staff (they are read by a surface; that is the whole justification)
+
+**President**:
+The single Presence Staff member of role `president` every club holds, and the face of the **Board** —
+the same authority that sets the Board Objective and issues the warning and the dismissal, now with a
+name to issue them in. Carries no number of any kind: a President who moved the Consecutive-Miss
+Counter would be a second owner of when careers end.
+_Avoid_: Chairman, Owner (Owner implies a financial stake nothing models), Board (the Board is the
+institution; the President is its face)
+
+**Physio**:
+The single Presence Staff member of role `physio` every club holds. Purely presence: Regimen owns
+Condition decay, recovery, and injury severity outright, so a Physio has no term to bind to and
+deliberately takes none.
+_Avoid_: Doctor, Medical Team (one named person, not a department)
+
+**Coach**:
+The single Bound Staff member of role `coach` every club holds, with a row only where the club is or
+has been human-managed. Scales the passive baseline every
+player receives from Player Development — never the focused Category, which Technical Coaching owns —
+so a Coach lifts the whole squad including players the manager never sets a Training Focus for. The
+Coach's effect never falls below neutral at any quality, so a weak Coach is felt as an absence rather
+than a penalty. Distinct from the human manager, who has Manager Pillars rather than a quality.
+_Avoid_: Head Coach, Manager (the human is the Manager)
 
 ### Scouting
 
 **Scout**:
-A per-club resource the manager assigns to observe a specific Player or Club, the mechanism by which
-Scouting Progress advances. Distinct from the human manager themself — a Scout is the assignable
-unit, not the player-facing role.
+A Staff member of role `scout`, assigned by the manager to observe a specific Player or Club, and
+the mechanism by which Scouting Progress advances. A club holds exactly as many Scouts as its
+Stature Tier grants, and each holds at most one assignment at a time, so the Scouts *are* the
+assignment slots.
+A Scout's quality sets the accrual rate of the assignment they hold, never how many assignments the
+club can run. Distinct from the human manager themself — a Scout is a named person the manager
+directs, not the player-facing role.
+_Avoid_: scout slot (Scouts stopped being fungible slots when they became Staff)
 
 **Scouting Assignment**:
-The act of assigning a Scout to a Player or Club, started and ended by explicit manager action.
-Determines which Player(s) accrue Scouting Progress while active.
-_Avoid_: Scouting Report (implies a one-shot document; this is an ongoing state, not a delivered
-artifact)
+The act of assigning a Scout to a Player or a Club, started and ended by explicit manager action.
+Determines which Players accrue Scouting Progress while active. A Club target is shorthand for that
+club's squad: it advances the Scouting Progress of the club's Players under the same per-Player
+rules, and a Club never carries a hidden value of its own for an Attribute Range to narrow. It costs
+one Scout however wide the target — a Club assignment occupies exactly one of the club's Scouts, the
+same as a Player assignment, and never one per Player observed.
+_Avoid_: scouting a formation/tactic directly (what a Scout observes is always Players; a Club-level
+reading is derived from them)
 
 **Scouting Progress**:
 A per-(Player, human club) percentage, starting at 0 (Unscouted) for every player outside the
@@ -353,6 +644,46 @@ The terminal state (Scouting Progress at 100) where a player's Attributes, Poten
 Proneness, and Transfer Value display as exact figures, identical to the manager's own-squad view.
 Never regresses once reached.
 
+**Team Scout Report**:
+The delivered artifact of a Club-targeted Scouting Assignment: a reading of one Club, pinned to the
+revision at which it was taken and unchanged by later ones, presented on the Team Scout Report
+screen. It has an observed half and a predicted half, and the distinction is load-bearing. The
+observed half aggregates the Scouting Progress already accrued on that Club's Players; it is never
+wrong, only partial, and it never reads a hidden per-Club value, because none exists. The predicted
+half — likely shape, strengths, weaknesses, set-piece tendencies — is *inferred* from what the Club
+has publicly done, its results and its observed performances, and may simply be wrong. A report never
+reads the target's own tactical record, which is private to that Club and not something scouting
+unlocks. A Club with no scouted Players yields no report rather than an estimated one, and nothing in
+a report states an exact figure that the underlying Player's Attribute Range would withhold. Distinct
+from a Scouting Assignment, which is the ongoing state that produces the reading.
+_Avoid_: Opponent Report, Pre-Match Report (a report is about a Club, not about a fixture, and is
+not tied to playing them)
+
+**Scouting Report**:
+The general form of a Team Scout Report, acceptable where the Club is clear from context. Formerly an
+`_Avoid_` on the grounds that "report" implied a one-shot document while scouting was only ongoing
+state; both now exist and are named separately, so the term is restored.
+_Avoid_: using it for a *Player* (a Player's scouted knowledge surfaces as Attribute Ranges on that
+player, not as a document)
+
+**Knowledge Confidence**:
+How much of a Team Scout Report rests on scouted knowledge rather than on gaps, rising as the target
+squad's Scouting Progress rises. Distinct from Freshness, which measures how far the report has
+fallen behind, not how much of the squad it covers. Unknown information stays Unknown at any Knowledge Confidence: neither term ever
+licenses estimating a value from a hidden one. It qualifies what a report *observed*, which is never
+wrong, only partial — it does not qualify what a report *predicts*, and a predicted shape may simply
+be wrong however high the confidence behind it.
+_Avoid_: accuracy (it reads as "how often the report is right", which conflates the observed half
+with the predicted half)
+
+**Freshness**:
+How far a Team Scout Report has fallen behind the Club it describes. Calendar age drives it, but age
+is a proxy for the real thing: a report goes stale as the target's squad, tactics, and injuries move
+away from what was observed, so a transfer window can date a recent report faster than a quiet month
+dates an old one. Distinct from Knowledge Confidence, which measures coverage rather than currency —
+a report can be thorough and stale, or fresh and mostly gaps. A decayed report stays readable and is
+never silently rewritten; the manager renews it by taking a new reading at the current revision.
+
 ### Manager
 
 **Manager Pillar**:
@@ -372,6 +703,10 @@ Archetype supplies a name, portrait, and flavour only: it is mechanically identi
 Manager with the same Pillar Distribution and never carries hidden bonuses, penalties, or distinct
 board/AI reactions.
 _Avoid_: Class, Preset (fine informally; Archetype is the term), Background
+
+**Manager Profile**:
+The set of identity data describing the human manager, chosen once at creation and immutable for the life of the save: manager name, Archetype origin (or Custom Manager), and the four Pillar values. Persisted in the `manager_profile` table. Distinct from `ManagerOutcome` and the `manager_status` projection, which track sacking tenure and are owned by Season Summary. The name of Screen 19 in the Group A reconciliation.
+_Avoid_: Manager Status (retired term; collides with the `manager_status` technical table and the imported spec's multiplayer screen)
 
 **Custom Manager**:
 A manager created by distributing the 12 creation points across the four Manager Pillars by hand
@@ -397,10 +732,12 @@ _Avoid_: Effect, Modifier, Hook
 **Tactical Acumen**:
 The Manager Pillar governing the manager's tactical preparation and the effectiveness with which a
 chosen Tactic is executed. In v1 it modifies the magnitude of resolved tactical instruction effects,
-deterministically. Its application to the interpretation of scouting reports is deferred to the
-Scouting effort; when it lands there it must affect only information quality and must not replace a
-Scout's own evaluation capability. Opponent analysis is cut from v1: no opponent-scouting or
-pre-match report system exists.
+deterministically. It has no Scouting binding: Scouting's two numeric terms are the accrual rate,
+owned by a Scout's quality, and the noise band, which the Pillar cannot scale without varying one
+Scout's output by who employs them. A binding returns only if a surface ships that separates what a
+Scout observed from what the manager concludes from it, and it must then affect only information
+quality and never replace a Scout's own evaluation capability. The Team Scout Report is not such a
+surface: it derives deterministically from scouted knowledge and reads no Pillar.
 _Avoid_: Tactical IQ (reads as a literal intelligence score)
 
 **Influence**:
@@ -428,8 +765,8 @@ _Avoid_: Training Intensity (collides with Training Focus and Match Intensity), 
 **Technical Coaching**:
 The Manager Pillar governing the manager's contribution to player development. In v1 it modifies the
 effectiveness of the manager's own Training Focus decision - it scales the focused Category's
-development, never the passive baseline every player receives - so a manager who sets no Training
-Focus draws no benefit from it. Youth integration and youth promotion are cut from v1: no youth or
+development, never the passive baseline every player receives (which the club's Coach owns instead) -
+so a manager who sets no Training Focus draws no benefit from it. Youth integration and youth promotion are cut from v1: no youth or
 reserve squad exists. Always qualified as a Manager Pillar to keep it distinct from Technical, the
 Attribute Category.
 
@@ -438,7 +775,8 @@ Attribute Category.
 **Board Objective**:
 A League-position band (`{ lowerBound, upperBound }`) set for the player's club at the start of each
 Season, derived from its Stature Tier via a fixed `packages/shared` tier→band table (exact bands are
-tuning data, not decided here). Only the player's club receives one — AI clubs are never judged.
+tuning data, not decided here). Only the player's club receives one — AI clubs are never judged. It
+names the Competition it judges, which is always the club's League: a cup run is never judged.
 _Avoid_: Target, expectation
 
 **Verdict**:
@@ -451,7 +789,8 @@ zero. Reaching 1 triggers a warning; reaching 2 ends the career (see Manager Sac
 _Avoid_: Warning count, strikes
 
 **Season Concluded** (event):
-Fires once a Season's final Matchday's Fixtures have all resolved, carrying the final League Table.
+Fires once no unplayed Fixture remains for the Season in any loaded Competition — cup finals included,
+so it may fall after the last League Round — carrying the final League Table.
 The trigger for Board Objective judgment and every other season-boundary reaction.
 
 **Board Objective Judged** (event):
@@ -464,9 +803,23 @@ effect beyond recording the warning — the career continues.
 
 **Manager Sacked** (event):
 Fires when Board Objective Judged is `Missed` and the Consecutive-Miss Counter moves 1→2. Ends the
-career: the save becomes archived and read-only (viewable, no further commands accepted). There is no
-explicit win state symmetric to this — a career that is never sacked simply continues indefinitely.
+career by archiving the save (see Archived Save). There is no explicit win state symmetric to this — a
+career that is never sacked simply continues indefinitely.
 _Avoid_: Game over (fine as player-facing copy, not as the event name)
+
+**Manager Retired** (event):
+Fires when the player deliberately ends their own career from the Manager Profile screen. Archives the
+save exactly as Manager Sacked does, differing only in cause and in the messaging shown afterwards. It
+never touches the Consecutive-Miss Counter or the last Verdict, so an archived save still records how
+close to the sack the career was when it ended.
+_Avoid_: Resignation (leaving a club for the job market, which this game has no referent for)
+
+**Archived Save**:
+A save that accepts no further commands: viewable, read-only, permanent. Two causes archive a save —
+Manager Sacked and Manager Retired — and only player-facing copy distinguishes them; every guard and
+every badge keys off the archived state alone.
+_Avoid_: Sacked save (one of two causes, not the state), Deleted save (a save file removed from disk,
+which is a different and unrelated action)
 
 ### Contextual help
 
@@ -515,14 +868,26 @@ fix. Normal unresolved setup, not an error.
 ### Technical contract
 
 **Decider**:
-The event-sourced write-side boundary that accepts Commands and folds a single stream of Events into
-its own consistency invariants (e.g. Wage Budget never exceeded). v1 has three: the **Club Decider**
-(one stream per club, ×20 per save — Contracts, Transfer Budget, Wage Budget, Board Objective,
-Consecutive-Miss Counter), the **Match Decider** (one stream per Fixture — Match Events plus mid-match
-`ChangeTactics`/`MakeSubstitution`), and the **Season/Calendar Decider** (one stream per save —
-Matchday counter, Fixture generation, Transfer Window state). League Table is deliberately *not* a
-Decider — nothing commands it into a new state, so it's a projection, not an aggregate.
+The write-side boundary that accepts Commands and upholds one set of consistency invariants (e.g. Wage
+Budget never exceeded). There are three, and only one of them enforces its invariants by folding a
+Stream. The **Match Decider** owns one Stream per Fixture, keyed on that Fixture's id, holding the
+match seed plus mid-match `ChangeTactics`/`MakeSubstitution`; the timeline is folded from it on every
+read and never stored. The **Club Decider** owns Contracts, Transfer Budget, Wage Budget, Board
+Objective, and the Consecutive-Miss Counter, all of which are enforced against their own tables; its
+Stream is a ledger, exists only for the human's club, and records only what no table holds. The
+**Season/Calendar Decider** owns one Stream per Save — the current date, Fixture generation, and
+Transfer Window state — and is likewise a ledger. League Table is deliberately *not* a Decider —
+nothing commands it into a new state, so it's a projection, not an aggregate.
 _Avoid_: Aggregate (fine as the general event-sourcing term; Decider is this project's concrete unit)
+
+**Stream**:
+One append-only sequence of Events, addressed by a stream type and a stream id. A **folded** Stream is
+the sole record of state that no table holds, so reading that state means replaying it — the Match
+Decider's is the only one. A **ledger** Stream is written in the same transaction as the authoritative
+rows it describes and is never read back; it exists as a record of what happened, not as a source of
+truth. An Event is appended only where it is the sole record of a fact, which is why a Ledger stream
+never restates a column.
+_Avoid_: Log (fine for the `events` table as a whole; a Stream is one keyed sequence within it)
 
 **RpcGroup**:
 The `@effect/rpc` contract, defined in `packages/contracts`, that is the only channel between the
@@ -533,12 +898,31 @@ cross-Decider reactions) never go through the RpcGroup at all; they're invoked d
 since only the renderer needs the IPC boundary.
 _Avoid_: API, endpoint (Rpc method is the term; there is no HTTP layer)
 
+**News Message**:
+One career event read as a message: a subject, a body, a Category, and a priority, derived on read
+from a single row of the `events` log. Never stored — the message *is* the event, and its identity is
+that event's coordinates (`"<stream_type>:<stream_id>:<seq>"`), so a message id can never name
+something that does not exist. Only whether the manager has read, flagged, or archived it is
+persisted, because that is a fact about the person rather than about the world.
+_Avoid_: Notification (nothing is pushed and nothing interrupts), Alert, Message unqualified
+
+**News Inbox**:
+The screen listing every News Message newest-first, with filters, whole-inbox counts, and a message
+pane. A Read model in this glossary's sense — a query shape over the Season stream and the human
+club's stream, not a table. It is a career record, not a work queue: nothing in it waits on the
+manager, because every AI action still resolves inside the command that triggers it. Distinct from
+the Transfer Inbox, which is the Bid queue on the Transfer market screen.
+_Avoid_: News feed, Message centre, Notification centre
+
 **Read model**:
-The persisted, projector-maintained tables the RpcGroup's queries actually serve (`squad_view`,
-`league_table`, `transfer_inbox`, `match_day_timeline`, `season_summary`). Not every field in a read
-model is stored: derived values that ADR-0001 already fixed as computed-on-read (Position Rating,
-Overall Rating, Transfer Value) are still computed at query time from stored primitives, not persisted
-a second time.
+A named query shape the RpcGroup's queries serve, computed from authoritative tables at read time
+(`squad_view`, `league_table`, `transfer_inbox`, `match_day_timeline`, `season_summary`, and the
+News Inbox). None of them
+is a table, and derived values that ADR-0001 fixed as computed-on-read (Position Rating, Overall
+Rating, Transfer Value) are computed at query time from stored primitives rather than persisted a
+second time. A read model is materialised into a table only when its query stays O(world) after the
+indexes it needs exist *and* its inputs change less often than it is read; no read model meets both
+conditions today.
 _Avoid_: Projection table (fine informally; "read model" is the term used across tickets)
 
 ### Application shell
@@ -551,7 +935,16 @@ is no save action for the player to invoke.
 _Avoid_: Career (used loosely in routes and types like `CareerDestination`, but the noun is Save),
 game, slot
 
-**Save List**:
-The top-level screen, and the only navigation destination outside a Save: it lists existing Saves and
-starts the creation flow. This is where quitting a Save returns to.
-_Avoid_: Main Menu, title screen (the imported specs' term; see the Group A reconciliation ledger)
+**Main Menu**:
+The application's entry point, at `/`: product identity over a vertical menu of five commands — Start
+New Career, Load Career, Preferences, Credits, Exit — above a footer carrying the application version
+and the database edition. It emits commands and holds no career state; it lists no Saves. This is
+where quitting a Save returns to.
+_Avoid_: Save List, boot screen, title screen (the Save List was the entry point until 2026-09-01,
+when the browser moved to Load Career; see the Group A reconciliation ledger)
+
+**Load Career**:
+The saved-game browser at `/load`, reached from the Main Menu's Load Career command. It lists
+existing Saves, marks archived ones, offers Start New Career when there are none, and returns to the
+Main Menu with Back. It is the only surface that enumerates Saves.
+_Avoid_: Save List, Load Game

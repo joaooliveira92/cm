@@ -9,9 +9,9 @@
  * coverage cannot drift apart.
  */
 import { fileURLToPath } from "node:url";
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs"
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, type Dirent } from "node:fs"
 import { tmpdir } from "node:os"
-import { join, extname } from "node:path"
+import { join, extname, relative } from "node:path"
 import type { CallExpression, ImportDeclaration, Node, SourceFile } from "typescript/unstable/ast"
 import {
   isCallExpression,
@@ -23,6 +23,7 @@ import {
   isPropertyAssignment,
   isSpreadAssignment,
   isStringLiteral,
+  isTemplateLiteralLikeNode,
   isTrueLiteral,
   isVoidExpression,
 } from "typescript/unstable/ast/is"
@@ -238,6 +239,115 @@ export function lintBoundary(sourceFile: SourceFile, filePath: string): LintViol
   return out
 }
 
+// ---------------------------------------------------------------------------
+// The flat-slate guard (visual design language, ticket 08).
+//
+// The adopted chrome-blue frame failed once already: it was decided, left
+// unbuilt, and flat `slate-*` styling kept spreading underneath it. This rule
+// is the schedule that stops that recurring. It is mechanical and
+// grep-detectable, so per the repo's routing discipline it lives in the linter
+// rather than in skill prose.
+//
+// The existing call sites are recorded per file in `scripts/slate-baseline.json`
+// — that registry IS the migration backlog. The comparison is exact in both
+// directions: a file over its baseline has grown fresh slate and fails; a file
+// under its baseline has been migrated and must tighten the number, so the
+// registry can only ratchet toward zero. Migration is done when the file is
+// `{}` and the `--color-slate-*` alias layer in `index.css` is gone.
+// ---------------------------------------------------------------------------
+
+const SLATE_BASELINE_FILE = join("scripts", "slate-baseline.json")
+
+/** Per-file counts of remaining `slate-*` sites, keyed by repo-relative POSIX path. */
+export type SlateBaseline = Readonly<Record<string, number>>
+
+export function readSlateBaseline(cwd: string): SlateBaseline {
+  const raw = readFileSync(join(cwd, SLATE_BASELINE_FILE), "utf8")
+  return JSON.parse(raw) as SlateBaseline
+}
+
+/** The guard covers renderer source and the fixtures that prove it still fires. */
+export function isSlateGuarded(filePath: string): boolean {
+  return filePath.includes(FIXTURE_ROOT) || filePath.includes(RENDERER_DIR)
+}
+
+/**
+ * Every `slate-` occurrence in a string-shaped literal in the file.
+ *
+ * Deliberately wider than "the initializer of a `className` attribute": a class
+ * list is just as often hoisted into a `const btn = "bg-slate-700 …"` and then
+ * interpolated, and a guard that only reads the JSX attribute lets that through.
+ * Template literals are covered by their head/middle/tail segments, which is
+ * what makes `className={`… ${FOCUS_RING.join(" ")} …`}` visible to the rule.
+ * In this renderer `slate-` appears only in class strings, so scanning literals
+ * closes the hoisting hole cheaply.
+ *
+ * The match is left-anchored on a non-letter. A bare substring search also hits
+ * `translate-x-1/2`, which is how the guard first read the vendored
+ * `components/ui/*` set: six phantom violations in files holding no slate at
+ * all. A dash may precede (`bg-slate-700`); a letter may not.
+ */
+const SLATE_CLASS_PATTERN = /(?<![a-zA-Z])slate-/g
+
+export function lintSlateClassNames(sourceFile: SourceFile, filePath: string): LintViolation[] {
+  const out: LintViolation[] = []
+  const visit = (node: Node): void => {
+    if (isStringLiteral(node) || isTemplateLiteralLikeNode(node)) {
+      const text = (node as Node & { text?: string }).text
+      if (typeof text === "string") {
+        // One violation per occurrence, not per literal: adding a second slate
+        // class to a line that already had one must still move the count.
+        const hits = text.match(SLATE_CLASS_PATTERN)?.length ?? 0
+        if (hits > 0) {
+          const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
+          for (let i = 0; i < hits; i += 1) {
+            out.push({
+              file: filePath,
+              line: line + 1,
+              rule: "no-slate-class-name",
+              message:
+                "Flat `slate-*` class. Use the adopted design tokens (see index.css @theme and renderer/theme.ts).",
+            })
+          }
+        }
+      }
+    }
+    node.forEachChild(visit)
+  }
+  visit(sourceFile)
+  out.sort((a, b) => a.line - b.line)
+  return out
+}
+
+/**
+ * Compare the tree's actual slate counts against the recorded backlog. Returns
+ * one violation per file that disagrees — over baseline (regression) or under
+ * it (a migrated file whose registry entry was not tightened).
+ */
+export function reconcileSlateBaseline(
+  cwd: string,
+  baseline: SlateBaseline,
+  actual: ReadonlyMap<string, number>,
+): LintViolation[] {
+  const out: LintViolation[] = []
+  const paths = new Set([...Object.keys(baseline), ...actual.keys()])
+  for (const path of [...paths].sort()) {
+    const recorded = baseline[path] ?? 0
+    const found = actual.get(path) ?? 0
+    if (found === recorded) continue
+    out.push({
+      file: join(cwd, path),
+      line: 1,
+      rule: "no-slate-class-name",
+      message:
+        found > recorded
+          ? `${found - recorded} fresh \`slate-*\` site(s) in this file (backlog records ${recorded}). The adopted palette ships as design tokens; do not add flat slate.`
+          : `This file is down to ${found} \`slate-*\` site(s) from ${recorded}. Tighten ${SLATE_BASELINE_FILE} (drop the key at zero) so the backlog keeps ratcheting.`,
+    })
+  }
+  return out
+}
+
 /** True when the file must go through the RPC seam: renderer files outside `rpc.ts`/`rpc/`,
  *  and the keyboard-binding seam `hotkeys.ts`. All other renderer files are enforced. */
 export function isBoundaryEnforced(filePath: string): boolean {
@@ -245,6 +355,77 @@ export function isBoundaryEnforced(filePath: string): boolean {
   if (!filePath.includes(RENDERER_DIR)) return false
   const rel = filePath.slice(filePath.indexOf(RENDERER_DIR) + RENDERER_DIR.length).replace(/\\/g, "/")
   return !rel.startsWith("/rpc.") && !rel.startsWith("/rpc/") && !rel.startsWith("/hotkeys.")
+}
+
+// ---------------------------------------------------------------------------
+// The file-length rule (main-process decomposition, `.scratch/main-process-decomposition/`).
+//
+// Thirteen tickets split every oversized file in this tree; the largest thing left that *could*
+// be split sits at 598 lines. Without a gate the next feature crosses 600 silently and the whole
+// effort erodes one commit at a time. Mechanical and grep-detectable, so per the repo's routing
+// discipline (AGENTS.md, "Routing repeat review findings") it lives in the linter.
+//
+// Exemptions are a hard-coded allowlist with the reason written at the exemption site, NOT a
+// baseline-ratchet like `slate-baseline.json`. A ratchet exists to burn down a backlog and force
+// the number toward zero; there is no backlog here, only two files that are permanently allowed
+// to be long. A ratchet would ask a future agent to keep tightening entries that will never move.
+// ---------------------------------------------------------------------------
+
+const MAX_FILE_LINES = 600
+
+/** Repo-relative POSIX path → why this file is permanently allowed past the line limit. */
+const FILE_LENGTH_EXEMPTIONS: Readonly<Record<string, string>> = {
+  // Its path is pinned by `drizzle.config.ts` (`schema: "./src/main/db/schema.ts"`), and its file
+  // docstring asserts whole-schema invariants — "the save carries exactly three indexes", the
+  // CHECK constraints that encode domain rules — which only hold when read against the whole
+  // declaration list. Splitting it would break the generator's entry point and scatter the
+  // invariants across files where none of them can be checked.
+  "apps/desktop/src/main/db/schema.ts":
+    "drizzle-pinned path + whole-schema invariants in its docstring; cannot be split",
+  // A build artifact: `pnpm db:generate` writes it from `schema.ts` and its header says "Do not
+  // edit". Its length is whatever the DDL happens to be; no human decision to gate.
+  "apps/desktop/src/main/db/migrations.generated.ts":
+    "generated by `pnpm db:generate`; header says do not edit",
+  // A route registry — one defineCareerChild per route, one createRoute per sub-route — that
+  // grows linearly with the number of screens. Splitting it would scatter the single route tree
+  // across files, making it harder to see the navigation structure at a glance.
+  "apps/desktop/src/renderer/router/index.tsx":
+    "route registry; grows linearly with screen count; structural value in a single tree",
+}
+
+/** The line count as `wc -l` reports it: newline-terminated files do not gain a phantom last line. */
+function countLines(text: string): number {
+  if (text.length === 0) return 0
+  return text.split("\n").length - (text.endsWith("\n") ? 1 : 0)
+}
+
+/**
+ * One violation when the file is longer than `maxLines` and is not on the exemption allowlist.
+ *
+ * `maxLines` is injectable so a spec can prove the rule fires without committing a 600-line
+ * fixture file to the repo.
+ */
+export function lintFileLength(
+  sourceFile: SourceFile,
+  filePath: string,
+  cwd: string,
+  maxLines: number = MAX_FILE_LINES,
+): LintViolation[] {
+  const rel = relative(cwd, filePath).replaceAll("\\", "/")
+  if (rel in FILE_LENGTH_EXEMPTIONS) return []
+  const lines = countLines(sourceFile.text)
+  if (lines <= maxLines) return []
+  return [
+    {
+      file: filePath,
+      line: maxLines + 1,
+      rule: "max-file-length",
+      message:
+        `${lines} lines (limit ${maxLines}). Split it along a seam — a module per responsibility, ` +
+        "re-exported from a barrel if callers must keep one import path. If it genuinely cannot be " +
+        "split, add it to FILE_LENGTH_EXEMPTIONS in scripts/effect-lint.ts with the reason.",
+    },
+  ]
 }
 
 const sourceDirs = ["packages", "apps"]
@@ -255,7 +436,7 @@ const sourceDirs = ["packages", "apps"]
  */
 function findSourceFiles(root: string): string[] {
   const results: string[] = []
-  let entries: ReturnType<typeof readdirSync<{ withFileTypes: true }>>
+  let entries: Dirent[]
   try {
     entries = readdirSync(root, { withFileTypes: true })
   } catch (error) {
@@ -297,14 +478,33 @@ function lintSourceFile(sourceFile: SourceFile, filePath: string): LintViolation
   return violations
 }
 
-/** Every fixture must trip at least one renderer-boundary violation, on pain of the gate failing. */
-function assertBoundaryCoverage(found: Array<{ file: string; violations: LintViolation[] }>): void {
+/**
+ * Every fixture must still trip the rule it exists to prove, on pain of the gate
+ * failing. A fixture's file stem names that rule (`renderer-boundary.tsx` proves
+ * `renderer-boundary`), so adding a rule means adding a fixture and nothing else
+ * has to be kept in sync. A rule that stops firing is a rule nobody needs, and
+ * nobody notices until it is too late.
+ *
+ * The check is fixture-driven, not rule-driven: it asserts every fixture on disk still trips its
+ * namesake rule, and never enumerates `rules` to demand a fixture per rule. So `max-file-length`
+ * is deliberately out of scope here — proving it on disk would mean committing a 600-line fixture
+ * whose only content is padding. It is proved instead by injecting a small `maxFileLines` in
+ * `max-file-length-lint.test.ts`, which is a stronger test anyway: it exercises the threshold, the
+ * allowlist, and the message in one place. Adding no fixture cannot make this function fail.
+ */
+export function fixtureRuleName(filePath: string): string {
+  const base = filePath.replace(/\\/g, "/").split("/").pop() ?? filePath
+  return base.replace(/\.[jt]sx?$/, "")
+}
+
+function assertFixtureCoverage(found: Array<{ file: string; violations: LintViolation[] }>): void {
   for (const entry of found) {
-    const hits = entry.violations.filter((v) => v.rule === "renderer-boundary")
+    const rule = fixtureRuleName(entry.file)
+    const hits = entry.violations.filter((v) => v.rule === rule)
     if (hits.length === 0) {
       throw new Error(
-        `effect-lint: boundary fixture ${entry.file} did NOT trip any renderer-boundary rule. ` +
-          "If the seam boundary moved, update the fixture before relaxing the rule.",
+        `effect-lint: fixture ${entry.file} did NOT trip the ${rule} rule. ` +
+          "If the rule moved, update the fixture before relaxing the rule.",
       )
     }
   }
@@ -313,13 +513,24 @@ function assertBoundaryCoverage(found: Array<{ file: string; violations: LintVio
 export interface LintFileSetResult {
   readonly treeViolations: LintViolation[]
   readonly fixtureBoundaries: Array<{ file: string; violations: LintViolation[] }>
+  /** Remaining `slate-*` sites per repo-relative path, for the backlog ratchet. */
+  readonly slateCounts: ReadonlyMap<string, number>
 }
 
 /**
  * Lint an explicit set of file paths (absolute). Kept separate from `main` so tests can drive
  * the exact same rules against fixtures and real files without re-implementing the harness.
  */
-export function lintFileSet(cwd: string, files: string[]): LintFileSetResult {
+export interface LintFileSetOptions {
+  /** Override the file-length limit, so a spec can prove that rule with a small fixture. */
+  readonly maxFileLines?: number
+}
+
+export function lintFileSet(
+  cwd: string,
+  files: string[],
+  options: LintFileSetOptions = {},
+): LintFileSetResult {
   const fixtureFiles = files.filter((f) => f.includes(FIXTURE_ROOT))
   const scratchDir = mkdtempSync(join(tmpdir(), "effect-lint-"))
   const configPath = join(scratchDir, "tsconfig.json")
@@ -343,6 +554,7 @@ export function lintFileSet(cwd: string, files: string[]): LintFileSetResult {
   const api = new API({ cwd })
   const treeViolations: LintViolation[] = []
   const fixtureBoundaries: Array<{ file: string; violations: LintViolation[] }> = []
+  const slateCounts = new Map<string, number>()
   try {
     const project = api.updateSnapshot({ openProjects: [configPath] }).getProjects()[0]
     if (!project) {
@@ -352,7 +564,7 @@ export function lintFileSet(cwd: string, files: string[]): LintFileSetResult {
     if (parseErrors.length > 0) {
       const first = parseErrors[0]!
       throw new Error(
-        `effect-lint: ${parseErrors.length} parse error(s); refusing to pass. First: ${first.file?.fileName ?? "<unknown>"} — ${String(first.messageText)}`,
+        `effect-lint: ${parseErrors.length} parse error(s); refusing to pass. First: ${first.fileName ?? "<unknown>"} — ${first.text}`,
       )
     }
     for (const file of files) {
@@ -362,10 +574,19 @@ export function lintFileSet(cwd: string, files: string[]): LintFileSetResult {
       }
       const standard = lintSourceFile(sourceFile, file)
       const boundary = isBoundaryEnforced(file) ? lintBoundary(sourceFile, file) : []
+      const slate = isSlateGuarded(file) ? lintSlateClassNames(sourceFile, file) : []
+      const length = lintFileLength(sourceFile, file, cwd, options.maxFileLines)
       if (fixtureFiles.includes(file)) {
-        fixtureBoundaries.push({ file, violations: [...standard, ...boundary] })
+        fixtureBoundaries.push({ file, violations: [...standard, ...boundary, ...slate, ...length] })
       } else {
-        treeViolations.push(...standard, ...boundary)
+        // Slate sites are counted, not reported here: the backlog ratchet in
+        // `main` decides which of them are a regression and which are the
+        // recorded migration debt. Reporting each one would drown the gate in
+        // 391 known violations.
+        treeViolations.push(...standard, ...boundary, ...length)
+        if (slate.length > 0) {
+          slateCounts.set(relative(cwd, file).replaceAll("\\", "/"), slate.length)
+        }
       }
     }
   } finally {
@@ -373,7 +594,7 @@ export function lintFileSet(cwd: string, files: string[]): LintFileSetResult {
     rmSync(scratchDir, { force: true, recursive: true })
   }
   treeViolations.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line)
-  return { treeViolations, fixtureBoundaries }
+  return { treeViolations, fixtureBoundaries, slateCounts }
 }
 
 export function main(): number {
@@ -383,23 +604,31 @@ export function main(): number {
     allFiles.push(...findSourceFiles(join(cwd, dir)))
   }
   const fixtureFiles = findFixtureFiles(cwd)
-  const { treeViolations, fixtureBoundaries } = lintFileSet(cwd, [...allFiles, ...fixtureFiles])
+  const { treeViolations, fixtureBoundaries, slateCounts } = lintFileSet(cwd, [
+    ...allFiles,
+    ...fixtureFiles,
+  ])
+  const slateDrift = reconcileSlateBaseline(cwd, readSlateBaseline(cwd), slateCounts)
+  treeViolations.push(...slateDrift)
+  treeViolations.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line)
 
   for (const violation of treeViolations) {
     console.error(`  ${violation.file}:${violation.line}`)
     console.error(`  ${violation.rule}: ${violation.message}`)
   }
 
-  // The fixtures must keep tripping the boundary rules — a rule that stops firing is a rule
-  // nobody needs, and nobody notices until it is too late.
-  assertBoundaryCoverage(fixtureBoundaries)
+  assertFixtureCoverage(fixtureBoundaries)
 
   if (treeViolations.length > 0) {
     console.error(`\neffect-lint: ${treeViolations.length} violation(s) found.`)
     return 1
   }
 
-  console.log(`effect-lint: no violations found (${allFiles.length} files).`)
+  const backlog = [...slateCounts.values()].reduce((sum, n) => sum + n, 0)
+  console.log(
+    `effect-lint: no violations found (${allFiles.length} files). ` +
+      `slate migration backlog: ${backlog} site(s) across ${slateCounts.size} file(s).`,
+  )
   return 0
 }
 

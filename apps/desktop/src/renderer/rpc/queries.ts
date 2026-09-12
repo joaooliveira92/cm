@@ -1,4 +1,4 @@
-import type { SaveId } from "@cm-clone/contracts";
+import type { ClubId, SaveId } from "@cm-clone/contracts";
 import { Atom } from "effect/unstable/reactivity";
 import { call } from "./call.js";
 import { managementReadPolicy } from "./policy.js";
@@ -9,11 +9,13 @@ export const transfersKey = (saveId: SaveId): readonly ["transfers", SaveId] => 
 export const economyKey = (saveId: SaveId): readonly ["economy", SaveId] => ["economy", saveId];
 export const tacticsKey = (saveId: SaveId): readonly ["tactics", SaveId] => ["tactics", saveId];
 export const trainingKey = (saveId: SaveId): readonly ["training", SaveId] => ["training", saveId];
+export const newsKey = (saveId: SaveId): readonly ["news", SaveId] => ["news", saveId];
 export const matchKey = (saveId: SaveId, matchId: string): readonly ["match", SaveId, string] => [
   "match",
   saveId,
   matchId,
 ];
+export const scoutingKey = (saveId: SaveId): readonly ["scouting", SaveId] => ["scouting", saveId];
 
 /** getSquad — `["save", saveId]`, `["squad", saveId]`. */
 export const squadAtom = Atom.family((saveId: SaveId) =>
@@ -28,6 +30,22 @@ export const squadAtom = Atom.family((saveId: SaveId) =>
 export const tacticsAtom = Atom.family((saveId: SaveId) =>
   managementReadPolicy(
     Atom.make(call("getTactics", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), tacticsKey(saveId)]),
+    ),
+  ),
+);
+
+/**
+ * getTacticsOverview — `["save", saveId]`, `["tactics", saveId]`.
+ *
+ * The Tactics Overview's one immutable snapshot read. Reacts to the same domain keys the editor's
+ * save invalidates (`tacticsKey`, `saveKey`), so an accepted save elsewhere re-reads the snapshot
+ * for this screen. The screen itself decides — by declared revision, never by arrival order —
+ * whether a refetched response may replace the one it renders.
+ */
+export const tacticsOverviewAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getTacticsOverview", { saveId })).pipe(
       Atom.withReactivity([saveKey(saveId), tacticsKey(saveId)]),
     ),
   ),
@@ -54,6 +72,15 @@ export const seasonSummaryAtom = Atom.family((saveId: SaveId) =>
   ),
 );
 
+/** getManagerProfileScreen — `["save", saveId]`. */
+export const managerProfileAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getManagerProfileScreen", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId)]),
+    ),
+  ),
+);
+
 /** getTransfersScreen — `["save", saveId]`, `["transfers", saveId]`, `["economy", saveId]`. */
 export const transfersAtom = Atom.family((saveId: SaveId) =>
   managementReadPolicy(
@@ -62,3 +89,78 @@ export const transfersAtom = Atom.family((saveId: SaveId) =>
     ),
   ),
 );
+/**
+ * getNewsInbox — `["save", saveId]`, `["news", saveId]`.
+ *
+ * Reactive on the save-wide key as well as its own: every Continue appends to the event streams the
+ * inbox projects from, so an advance that invalidates the save must refresh the inbox too.
+ */
+export const newsInboxAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getNewsInbox", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), newsKey(saveId)]),
+    ),
+  ),
+);
+
+/**
+ * loadSave — `["save", saveId]`. The career chrome's save-name read.
+ *
+ * `loadSave` is a pure read on the main side (it checks the file exists and
+ * returns its summary), so using it as a query rather than a command is safe.
+ * There is no narrower `getSaveSummary` method, and adding one is engine work
+ * this chrome does not need.
+ */
+export const saveSummaryAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("loadSave", { id: saveId })).pipe(Atom.withReactivity([saveKey(saveId)])),
+  ),
+);
+
+/**
+ * getTeamScoutReport — `["save", saveId]`, `["scouting", saveId]`.
+ *
+ * The first query keyed by more than the save, so it is two nested families rather than one taking
+ * a pair. `Atom.family` memoises through `MutableHashMap`, which compares plain objects by
+ * reference: a `{ saveId, clubId }` key would miss on every render and mint a fresh atom each
+ * time, refetching forever. Strings hash structurally, so each level keys on one.
+ *
+ * Reactive on the save-wide key as well as scouting's own: an advance moves every assigned scout's
+ * progress, which is exactly what the report reads.
+ */
+const reportsForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((clubId: ClubId) =>
+    managementReadPolicy(
+      Atom.make(call("getTeamScoutReport", { saveId, clubId })).pipe(
+        Atom.withReactivity([saveKey(saveId), scoutingKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const teamScoutReportAtom = (saveId: SaveId, clubId: ClubId) =>
+  reportsForSave(saveId)(clubId);
+
+/**
+ * getClubStaff — `["save", saveId]`.
+ *
+ * Club Staff (Screen 38): who works at any club in the save, grouped by department. Keyed by save
+ * then club, the same two-level nested family as the scout report (a `{ saveId, clubId }` object
+ * key would miss on `MutableHashMap`'s reference comparison and refetch forever).
+ *
+ * Reactive on the save-wide key only: the view is a pure derivation of the world seed and the
+ * club's canonical id — no later command changes it — so the read never goes stale between
+ * save-level invalidations.
+ */
+const clubStaffForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((clubId: ClubId) =>
+    managementReadPolicy(
+      Atom.make(call("getClubStaff", { saveId, clubId })).pipe(
+        Atom.withReactivity([saveKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const clubStaffAtom = (saveId: SaveId, clubId: ClubId) =>
+  clubStaffForSave(saveId)(clubId);

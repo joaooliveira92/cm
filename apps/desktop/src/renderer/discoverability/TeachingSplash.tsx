@@ -15,7 +15,9 @@
  * cosmetic first-run preference.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FOCUS_RING } from "../focus.js";
+import { Button } from "../components/ui/button.js";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card.js";
+import { Kbd } from "../components/ui/kbd.js";
 import { useSeamHotkeys } from "../hotkeys.js";
 
 export const teachingSplashStorageKey = "cmClone.teachingSplashSeen";
@@ -48,7 +50,14 @@ export const useTeachingSplashVisibility = (): {
   const [visible, setVisible] = useState(() => !readTeachingSplashSeen());
   const dismiss = useCallback(() => {
     writeTeachingSplashSeen();
-    setVisible(false);
+    // Defer the visual removal one macrotask. The splash is *not* torn down in
+    // the same tick as the trusted input (real click / Enter / Escape) that
+    // dismissed it: React's synchronous discrete commit inside that input's
+    // flush wedges the renderer in a tight loop on a first-run career screen
+    // (reproduced across real click, Enter, and Escape; the same commit from an
+    // untrusted event, or deferred one turn, never hangs). A cosmetic overlay is
+    // not urgent, so committing on the next turn is invisible to the player.
+    setTimeout(() => setVisible(false), 0);
   }, []);
   return { visible, dismiss };
 };
@@ -57,7 +66,7 @@ export const useTeachingSplashVisibility = (): {
 const SHORTCUTS: ReadonlyArray<{ readonly keys: string; readonly description: string }> = [
   { keys: "Cmd+K", description: "Open the command palette and find any action" },
   { keys: "Cmd+/", description: "Open the keyboard shortcuts reference" },
-  { keys: "g <key>", description: "Move between screens (g s Squad, g t Transfers, ...)" },
+  { keys: "g <key> <key>", description: "Navigate sections (g 1 Squad, g 2 Tactics…) then items (g 1 q Squad, g 1 w Staff…)" },
 ];
 
 /**
@@ -80,37 +89,34 @@ export const TeachingSplash = ({ onDismiss }: { readonly onDismiss: () => void }
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70">
-      <div
+      <Card
         role="dialog"
         aria-modal="true"
         aria-label="Playing a new career"
-        className="w-[28rem] max-w-[90vw] rounded-lg border border-amber-500/60 bg-slate-900 p-6 shadow-2xl"
+        className="w-[28rem] max-w-[90vw] bg-panel-bg-strong p-3 shadow-2xl"
       >
-        <h2 className="text-xl font-bold text-slate-100">This career is played from the keyboard</h2>
-        <p className="mt-2 text-sm text-slate-400">
-          Everything works without a mouse. These three shortcuts are all you need to start:
-        </p>
-        <ul className="mt-4 space-y-2">
-          {SHORTCUTS.map((shortcut) => (
-            <li key={shortcut.description} className="flex items-baseline gap-3 text-sm text-slate-200">
-              <kbd className="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs font-semibold text-amber-300">
-                {shortcut.keys}
-              </kbd>
-              <span>{shortcut.description}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-5 flex justify-end">
-          <button
-            ref={dismissRef}
-            type="button"
-            onClick={onDismiss}
-            className={`rounded bg-amber-500 px-4 py-1.5 text-sm font-semibold text-slate-900 hover:bg-amber-400 ${FOCUS_RING.join(" ")}`}
-          >
-            Got it
-          </button>
-        </div>
-      </div>
+        <CardHeader className="px-0 pt-0">
+          <CardTitle className="text-xl">This career is played from the keyboard</CardTitle>
+          <p className="text-sm text-text-secondary">
+            Everything works without a mouse. These three shortcuts are all you need to start:
+          </p>
+        </CardHeader>
+        <CardContent className="px-0 pb-0">
+          <ul className="space-y-2">
+            {SHORTCUTS.map((shortcut) => (
+              <li key={shortcut.description} className="flex items-baseline gap-3 text-sm text-text-strong">
+                <Kbd className="text-text-highlight">{shortcut.keys}</Kbd>
+                <span>{shortcut.description}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-5 flex justify-end">
+            <Button ref={dismissRef} type="button" onClick={onDismiss}>
+              Got it
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

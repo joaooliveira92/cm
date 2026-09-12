@@ -58,20 +58,58 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
       switch (error.error._tag) {
         case "SaveNotFoundError":
           return "That save could not be found.";
-        case "SaveSackedError":
-          return "You have been sacked — this save is archived.";
+        // The cause picks the sentence: "you have been sacked" is wrong for a save the player
+        // chose to retire from, and this string is the only place the two differ to the player.
+        case "SaveArchivedError":
+          return error.error.cause === "retired"
+            ? "You have retired — this save is archived."
+            : "You have been sacked — this save is archived.";
         case "PlayerNotFoundError":
           return "That player could not be found.";
         case "BidNotFoundError":
           return "That bid could not be found.";
         case "ClubNotFoundError":
           return "That club could not be found.";
+        // Absence of knowledge, never a judgement about the club. "No report" must read as
+        // "go and look", because "this club has no strengths" is a claim the data cannot support.
+        case "ClubNotScoutedError":
+          return "Your scouts have not watched this club yet, so there is nothing to report.";
         case "MatchNotFoundError":
           return "That match could not be found.";
         case "SeasonCompleteError":
           return "The season is already complete.";
+        // The player pressed Continue twice. Saying so is better than a silent
+        // no-op, which reads as the first press having been lost.
+        case "AdvanceInProgressError":
+          return "The Calendar is still advancing. Wait for it to finish.";
+        // Nothing the player can act on, and nothing this sentence should try to
+        // explain: the save's boundary names a fixture that cannot be what it
+        // claims, and the reason travels in the error for a log to carry.
+        case "PendingFixtureIntegrityError":
+          return "This career's next fixture is inconsistent and cannot be opened.";
+        // The Calendar moved under the caller — a stale window, or a Fixture already committed.
+        case "FixtureNotPendingError":
+          return "That Fixture is not the one the Calendar is waiting on.";
+        // Not an error the player caused, and not one they can undo: the match is already under way
+        // and its seed and squads are frozen. Returning to Match day resumes it.
+        case "MatchAlreadyStartedError":
+          return "That Fixture is already under way. Return to Match day to continue it.";
+        // The blockers travel with this error; a surface that can list them should, and this
+        // sentence is the fallback for one that cannot.
+        case "MatchNotReadyError":
+          return "Your club is not ready to play this Fixture yet.";
+        case "MatchNotStartedError":
+          return "That Fixture has not been played yet.";
+        case "MatchNotCompleteError":
+          return "That match has not reached full time.";
+        case "TacticMissingError":
+          return "A club in this Fixture has no Tactic, so the match cannot be played.";
         case "InvalidTacticError":
           return "That tactic is invalid — every slot needs a unique player.";
+        // A newer save won the race; the editor itself renders the refresh path, and this sentence
+        // is the fallback for a surface that has no room for a button.
+        case "TacticRevisionConflictError":
+          return "That tactic was saved elsewhere since you loaded it — refresh to load the current version.";
         case "InvalidPillarDistributionError":
           return "Invalid pillar distribution.";
         case "TransferWindowClosedError":
@@ -86,12 +124,32 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
           return "That bid action is not valid right now.";
         case "NotYourPlayerError":
           return "That player does not belong to your club.";
+        // There is no "already at cap" or "already assigned" sentence to write: the scouting
+        // tables make both states unreachable, so an unknown scout is the only thing left to say.
+        case "UnknownScoutError":
+          return "That scout is not on your staff.";
         case "LockedKeyOverrideError":
           return "That key is locked and cannot be rebound.";
         case "CollidingOverrideError":
           return "That key is already bound to another command.";
         case "InvalidBindingShapeError":
           return "That key combination cannot be bound.";
+        // League and Nation Selection (Screen 3). The blocking issues on
+        // `InvalidLeagueSelectionError` are rendered as an error summary by the screen itself;
+        // this sentence is the fallback for a caller that only has room for one line.
+        case "InvalidLeagueSelectionError":
+          return "That league selection is not valid. Review the highlighted problems.";
+        case "PresetFingerprintMismatchError":
+          return "That preset was saved for a different database and cannot be applied.";
+        case "SetupDraftWriteError":
+          return "Your setup could not be saved to disk.";
+        // News Inbox (Screen 24). Both mean the renderer is holding a message id the save no longer
+        // agrees with, which a refresh fixes — so the sentence points at the refresh rather than at
+        // the id, which the player has no way to act on.
+        case "NewsMessageNotFoundError":
+          return "That message is no longer in your inbox. Refresh to see the current list.";
+        case "MalformedNewsMessageIdError":
+          return "That message could not be identified. Refresh to see the current list.";
       }
   }
 };

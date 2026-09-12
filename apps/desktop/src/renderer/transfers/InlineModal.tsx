@@ -7,7 +7,9 @@
  * `document.body` while open.
  */
 import { useRef } from "react";
-import { FOCUS_RING } from "../focus.js";
+import { Button } from "../components/ui/button.js";
+import { Input } from "../components/ui/input.js";
+import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "../theme.js";
 import { useDialogKeyboard } from "./dialogKeyboard.js";
 
 export interface InlineModalProps {
@@ -65,7 +67,7 @@ export const InlineModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4"
+      className={MODAL_SCRIM}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onCancel();
       }}
@@ -76,45 +78,42 @@ export const InlineModal = ({
         aria-modal="true"
         aria-label={title}
         onKeyDown={onContainerKeyDown}
-        className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-900 p-4 text-slate-100 shadow-2xl"
+        className={MODAL_COMPACT}
       >
-        <h2 className="text-lg font-semibold">{title}</h2>
-        {description !== undefined && (
-          <p className="mt-1 text-sm text-slate-400">{description}</p>
-        )}
-        <label className="mt-3 block text-sm text-slate-300">
-          {inputLabel}
-          <input
-            ref={inputRef}
-            type="text"
-            inputMode="decimal"
-            value={amountValue}
-            onChange={(event) => onAmountChange(event.target.value)}
-            className={`mt-1 w-full rounded bg-slate-800 px-2 py-1 ${FOCUS_RING.join(" ")}`}
-          />
-        </label>
-        <div className="mt-4 flex items-center justify-end gap-2">
-          <button
-            type="button"
-            className={`rounded bg-slate-700 px-3 py-1 text-sm ${FOCUS_RING.join(" ")}`}
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={submitDisabled}
-            className={`rounded bg-amber-600 px-3 py-1 text-sm text-slate-950 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING.join(" ")}`}
-            onClick={onSubmit}
-          >
-            {submitLabel}
-          </button>
+        {/* The shared modal anatomy: chrome-gradient title band over the
+            strong-panel body (theme.ts `MODAL_*` constants). */}
+        <div className={MODAL_TITLE_BAND}>
+          <h2 className="font-semibold">{title}</h2>
         </div>
-        {error !== null && (
-          <p role="alert" className="mt-2 text-sm text-red-300">
-            {error}
-          </p>
-        )}
+        <div className={MODAL_BODY}>
+          {description !== undefined && (
+            <p className="mt-1 text-sm text-text-secondary">{description}</p>
+          )}
+          <label className="mt-3 block text-sm text-text-body">
+            {inputLabel}
+            <Input
+              ref={inputRef}
+              type="text"
+              inputMode="decimal"
+              value={amountValue}
+              onChange={(event) => onAmountChange(event.target.value)}
+              className="mt-1"
+            />
+          </label>
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="button" disabled={submitDisabled} onClick={onSubmit}>
+              {submitLabel}
+            </Button>
+          </div>
+          {error !== null && (
+            <p role="alert" className="mt-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

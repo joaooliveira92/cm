@@ -12,7 +12,7 @@ Found while reading the Effect v4 code-style docs; see [2026-08-29-effect-code-s
 
 ## Decision
 
-Six nominal brands live in [`schemas.ts`](../../../../packages/contracts/src/schemas.ts) — `SaveId`, `ClubId`, `PlayerId`, `MatchId`, `FixtureId`, `BidId` — each `Schema.String.pipe(Schema.brand("…"))` with a matching exported type. `Schema.brand` is nominal: it narrows the decoded type and adds no runtime check, so this costs nothing at runtime and the SQLite schema is untouched.
+Six nominal brands live in [`schemas`](../../../../packages/contracts/src/schemas) — `SaveId`, `ClubId`, `PlayerId`, `MatchId`, `FixtureId`, `BidId` — each `Schema.String.pipe(Schema.brand("…"))` with a matching exported type. `Schema.brand` is nominal: it narrows the decoded type and adds no runtime check, so this costs nothing at runtime and the SQLite schema is untouched.
 
 The brands are applied at three layers, and the layering is the point:
 

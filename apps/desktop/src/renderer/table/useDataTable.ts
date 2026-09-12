@@ -58,6 +58,11 @@ export const useDataTable = <Row extends TableRowShape>(options: {
           : updater;
       options.onColumnVisibilityChange(next);
     },
+    // These tables never paginate. Left on, TanStack's auto-reset fires
+    // `resetPageIndex` -> `setPagination` -> `onStateChange` on every data
+    // identity change, which re-renders, which produces the next data
+    // identity: a self-sustaining render loop. See the note in this file.
+    autoResetPageIndex: false,
     enableMultiSort: false,
     enableSortingRemoval: true,
     // Filters are applied before TanStack sees the rows — TanStack never filters.

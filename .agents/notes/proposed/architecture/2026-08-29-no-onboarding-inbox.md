@@ -1,6 +1,21 @@
 # Agent Note: No onboarding inbox
 
-Status: proposed
+Status: superseded
+
+> **Superseded on 2026-09-03 by
+> [The News Inbox is a projection over the event streams](../../implemented/architecture/2026-09-03-news-inbox-as-event-stream-projection.md).**
+> The News Inbox shipped as a core feature, so this note's ruling — "v1 ships no inbox, no news
+> screen, and no message feed" — and every acceptance criterion below are withdrawn. Read it for the
+> cost analysis, not for the decision: the "nothing is pending" argument is unrefuted and is what
+> keeps the shipped inbox from carrying an action-required workflow, and the distributed answer
+> (the Continue result, plus named surfacing duties on the six existing screens) is explicitly
+> retained by the superseding note rather than replaced by the screen.
+>
+> The premise that broke was the cost, not the reasoning. This note priced an inbox as a `messages`
+> table plus a projector plus a read/unread mutation, over streams that "have no global ordering
+> today". [Event streams and read models at world scale](2026-09-02-event-streams-and-read-models.md)
+> withdrew that premise a week later by fixing the Season stream as the career's ordered narrative,
+> which left the inbox as a query over a log that already existed.
 
 ## Problem
 

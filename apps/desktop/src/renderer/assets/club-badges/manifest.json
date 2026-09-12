@@ -1,0 +1,4006 @@
+[
+  {
+    "key": "aut/austria-vienna",
+    "file": "aut/austria-vienna.png",
+    "sha256": "c8f6c72e34d1b342a51b2adb0766c55000f8c511640db0ba4f9cb3aba5595796",
+    "source": "logos/Austria - Bundesliga/Austria Vienna.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/fc-admira-wacker-modling",
+    "file": "aut/fc-admira-wacker-modling.png",
+    "sha256": "a4d59b5b0b31a5bb7ad98c7f4e9c4b1912aba408a224294faeafd118a2d8f42e",
+    "source": "history/2021-22/Austria - Bundesliga/FC Admira Wacker Mödling.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/fc-blau-weiss-linz",
+    "file": "aut/fc-blau-weiss-linz.png",
+    "sha256": "677eeb723a69990565bffb1bd0025796b3fd69a80375ec54e13b25669dfe8cd0",
+    "source": "history/2025-26/Austria - Bundesliga/FC Blau-Weiss Linz.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/grazer-ak-1902",
+    "file": "aut/grazer-ak-1902.png",
+    "sha256": "9d011c938728c1b3fd0a1f5b8f6ed6aa93ee6852f7e944bf1ec76297dd65a650",
+    "source": "logos/Austria - Bundesliga/Grazer AK 1902.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/lask",
+    "file": "aut/lask.png",
+    "sha256": "85630672a39c2f4c68d09430d5a5727cdd4f95a337604dd232835aebeed3cf10",
+    "source": "logos/Austria - Bundesliga/LASK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/rapid-vienna",
+    "file": "aut/rapid-vienna.png",
+    "sha256": "c660f3bbb1d20cdbcc8fbe60807d9ee59fb838d5bbc144d222d3b57ed87d10c7",
+    "source": "logos/Austria - Bundesliga/Rapid Vienna.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/red-bull-salzburg",
+    "file": "aut/red-bull-salzburg.png",
+    "sha256": "ca7a8e2bff3c652bc85f4c99600e9c9b0ab199b1690599dd053f76eb2f77f652",
+    "source": "logos/Austria - Bundesliga/Red Bull Salzburg.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/sc-austria-lustenau",
+    "file": "aut/sc-austria-lustenau.png",
+    "sha256": "c9ce373d58f60d830640478aa95f8d9f7cca6ebf798b764b2586cc5e94bdf8fe",
+    "source": "logos/Austria - Bundesliga/SC Austria Lustenau.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/scr-altach",
+    "file": "aut/scr-altach.png",
+    "sha256": "a5d0dd2ebb2d001b5cf563ad889c3eff8dafaa9b72e1bc3a5927f92b28a8deb5",
+    "source": "logos/Austria - Bundesliga/SCR Altach.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/sk-austria-klagenfurt",
+    "file": "aut/sk-austria-klagenfurt.png",
+    "sha256": "c0a65d554bfd10606b4d4e9026d3f1507083e13dbf3d60234eca24e536cd9179",
+    "source": "history/2024-25/Austria - Bundesliga/SK Austria Klagenfurt.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/sk-sturm-graz",
+    "file": "aut/sk-sturm-graz.png",
+    "sha256": "f97ea3dd03a8c6fb2080ce411daf5f69eadb56692b5a2cfe8535630da7b515f3",
+    "source": "logos/Austria - Bundesliga/SK Sturm Graz.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/sv-ried",
+    "file": "aut/sv-ried.png",
+    "sha256": "bbc248ef293aff3a7cebd039fbfd5dde43d5ee5e26a765ece55ca39be493155c",
+    "source": "logos/Austria - Bundesliga/SV Ried.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/tsv-hartberg",
+    "file": "aut/tsv-hartberg.png",
+    "sha256": "ae58646fcbc3c6417eb55db85512462a7ffaaf71e87f60c54445ca6fd8a08a7d",
+    "source": "logos/Austria - Bundesliga/TSV Hartberg.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/wolfsberger-ac",
+    "file": "aut/wolfsberger-ac.png",
+    "sha256": "378652804b8c75f6b7ff7be6b6c63a237ee1b5fa6a9c9d4cba22dbf89c2f6fa3",
+    "source": "logos/Austria - Bundesliga/Wolfsberger AC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "aut/wsg-tirol",
+    "file": "aut/wsg-tirol.png",
+    "sha256": "34aada93a80850fb08463ff41895f4e6be3d102a04e1f389c604009de9c7ab56",
+    "source": "logos/Austria - Bundesliga/WSG Tirol.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/beerschot-va",
+    "file": "bel/beerschot-va.png",
+    "sha256": "6538a93d6dfeeb00c8a5a6b512562d463a1c48d676d9a2610a042e018680f0da",
+    "source": "history/2024-25/Belgium - Jupiler Pro League/Beerschot VA.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/cercle-brugge",
+    "file": "bel/cercle-brugge.png",
+    "sha256": "925bb15fb7fae92bbf943ea0e6eb85fc2215b2f248df44ed6e00fc934664703a",
+    "source": "logos/Belgium - Jupiler Pro League/Cercle Brugge.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/club-brugge-kv",
+    "file": "bel/club-brugge-kv.png",
+    "sha256": "aef445c53daf049cd755a2ae6614b8d8e83785a6fa641171d168c75f0b6de977",
+    "source": "logos/Belgium - Jupiler Pro League/Club Brugge KV.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/fcv-dender-eh",
+    "file": "bel/fcv-dender-eh.png",
+    "sha256": "8800ba719a43ed930da06baee240e40f6e25afc17300d7aa5ddf664ac020c654",
+    "source": "history/2025-26/Belgium - Jupiler Pro League/FCV Dender EH.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/kaa-gent",
+    "file": "bel/kaa-gent.png",
+    "sha256": "517bf82f2e2a6f654cd0684857e466d8b7560e3c0ee80f64a3d1e29adfc137b8",
+    "source": "logos/Belgium - Jupiler Pro League/KAA Gent.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/kas-eupen",
+    "file": "bel/kas-eupen.png",
+    "sha256": "ec306518efcfacf3cf9bd1f7793a57d696c1639bcd705711d2f093e42733659a",
+    "source": "history/2023-24/Belgium - Jupiler Pro League/KAS Eupen.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/krc-genk",
+    "file": "bel/krc-genk.png",
+    "sha256": "c9f681d6acd04a078909d49ad035d978adbef4980e907c5da22aa7589a73740e",
+    "source": "logos/Belgium - Jupiler Pro League/KRC Genk.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/kv-kortrijk",
+    "file": "bel/kv-kortrijk.png",
+    "sha256": "934f5c1dca2dcc5fee59e9f88d7582fe9463088e269e28663698dc22cb53270b",
+    "source": "logos/Belgium - Jupiler Pro League/KV Kortrijk.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/kv-mechelen",
+    "file": "bel/kv-mechelen.png",
+    "sha256": "590af35390d5e87850f500fde934fad744a50ab235509ccee50bed9e6dca22eb",
+    "source": "logos/Belgium - Jupiler Pro League/KV Mechelen.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/kv-oostende",
+    "file": "bel/kv-oostende.png",
+    "sha256": "82cf63b4a3e8638387c0de1c4870749c72250d8da0fd429247853e387f65ed61",
+    "source": "history/2022-23/Belgium - Jupiler Pro League/KV Oostende.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/kvc-westerlo",
+    "file": "bel/kvc-westerlo.png",
+    "sha256": "ed362aa617a27a4a9ab7c7681c8bebc73aa3927d6aed3e00e90d98234fd1ab90",
+    "source": "logos/Belgium - Jupiler Pro League/KVC Westerlo.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/lommel-sk",
+    "file": "bel/lommel-sk.png",
+    "sha256": "1af88636b862ca924c9d80b2784d7e34ca5a46173b9490961ed2b08df24ffff6",
+    "source": "logos/Belgium - Jupiler Pro League/Lommel SK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/oud-heverlee-leuven",
+    "file": "bel/oud-heverlee-leuven.png",
+    "sha256": "7e5a48d516a5396e78a6de287d55a71f5a70368821f20fe7a87e39e20fad926a",
+    "source": "logos/Belgium - Jupiler Pro League/Oud-Heverlee Leuven.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/raal-la-louviere",
+    "file": "bel/raal-la-louviere.png",
+    "sha256": "c0cc2d749c7315d8529d1d77a45d7e24f0b345d86eb6779ed91ac58143a73644",
+    "source": "logos/Belgium - Jupiler Pro League/RAAL La Louvière.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/rfc-seraing",
+    "file": "bel/rfc-seraing.png",
+    "sha256": "c3d3c93d61bc173666f6bfff8be90d61b497e33626db84b9e85a362d43522cd2",
+    "source": "history/2022-23/Belgium - Jupiler Pro League/RFC Seraing.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/royal-antwerp-fc",
+    "file": "bel/royal-antwerp-fc.png",
+    "sha256": "48764275a9f50f319ad24f7e97f2e5aba1e8b90d90e149744d7f3bf28d2de1b7",
+    "source": "logos/Belgium - Jupiler Pro League/Royal Antwerp FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/royal-charleroi-sc",
+    "file": "bel/royal-charleroi-sc.png",
+    "sha256": "9da91f577a4a17b9f5ca181123c0b5ab94423e79e936aff0890559e4ffdf144a",
+    "source": "logos/Belgium - Jupiler Pro League/Royal Charleroi SC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/rsc-anderlecht",
+    "file": "bel/rsc-anderlecht.png",
+    "sha256": "37cf4f81efa9fb414494d96ab53da97d4dcebd51ca533c052f6b6041420f7675",
+    "source": "logos/Belgium - Jupiler Pro League/RSC Anderlecht.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/rwd-molenbeek",
+    "file": "bel/rwd-molenbeek.png",
+    "sha256": "bca9c0595c077c076cd7022ab69fb833a42193d52f59dac9475d935fd1e8d00a",
+    "source": "history/2023-24/Belgium - Jupiler Pro League/RWD Molenbeek.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/sint-truidense-vv",
+    "file": "bel/sint-truidense-vv.png",
+    "sha256": "5de323ee9bdac49e5855d19af03e81338cb147a1f8882bfcb0a9e3d4f5e291a7",
+    "source": "logos/Belgium - Jupiler Pro League/Sint-Truidense VV.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/sk-beveren",
+    "file": "bel/sk-beveren.png",
+    "sha256": "6c1e2d049878c948593b0a6c2485ff2f6fc514e925f1f48fcc432090acd510dc",
+    "source": "logos/Belgium - Jupiler Pro League/SK Beveren.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/standard-liege",
+    "file": "bel/standard-liege.png",
+    "sha256": "661b1eff6e6ae80ca519b5afdab408b36f3c8b97c6c257987423ea83ddb92b3a",
+    "source": "logos/Belgium - Jupiler Pro League/Standard Liège.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/union-saint-gilloise",
+    "file": "bel/union-saint-gilloise.png",
+    "sha256": "9a698cee923ea0b466965f2ce684bc37bd905d32e38a4f7ad8c8dbd834345521",
+    "source": "logos/Belgium - Jupiler Pro League/Union Saint-Gilloise.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bel/zulte-waregem",
+    "file": "bel/zulte-waregem.png",
+    "sha256": "9a590828588fc7b7570e41e7533eec1ae7e441ef072280229a65d28194db3bec",
+    "source": "logos/Belgium - Jupiler Pro League/Zulte Waregem.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/arda-kardzhali",
+    "file": "bgr/arda-kardzhali.png",
+    "sha256": "5b66efa4e76d888223f8c562ae67d7f9b1e778f90d53b00240a0ad0f20f50dde",
+    "source": "logos/Bulgaria - efbet Liga/Arda Kardzhali.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/beroe-stara-zagora",
+    "file": "bgr/beroe-stara-zagora.png",
+    "sha256": "aca8bd9f6795aae351c8261ca2edf92e5a3f667614cede25a0b56cb1011a5820",
+    "source": "history/2025-26/Bulgaria - efbet Liga/Beroe Stara Zagora.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/botev-plovdiv",
+    "file": "bgr/botev-plovdiv.png",
+    "sha256": "b7745310504eca2dccc2e70988cb8007f529088310deb9680b34da1bf06eb193",
+    "source": "logos/Bulgaria - efbet Liga/Botev Plovdiv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/botev-vratsa",
+    "file": "bgr/botev-vratsa.png",
+    "sha256": "11811f2786b4fb4bc85e619913b110a6c327bbcfff29aa2ee3274a0148c8b6fe",
+    "source": "logos/Bulgaria - efbet Liga/Botev Vratsa.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/cherno-more-varna",
+    "file": "bgr/cherno-more-varna.png",
+    "sha256": "a39a867e72ed8f128f0b6534462242214ee34d0d4a4e833727c6666f9b8b25b6",
+    "source": "logos/Bulgaria - efbet Liga/Cherno More Varna.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/cska-1948",
+    "file": "bgr/cska-1948.png",
+    "sha256": "dc0f3c90d209cf776f6575c485026bc04fd73a4ab18f20d2262e9dcf27f01b72",
+    "source": "logos/Bulgaria - efbet Liga/CSKA 1948.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/cska-sofia",
+    "file": "bgr/cska-sofia.png",
+    "sha256": "9157c8fb5ba4614f12cac65edfb1ffc69336921a38922667c2b41913e046b7c1",
+    "source": "logos/Bulgaria - efbet Liga/CSKA Sofia.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/dobrudzha-dobrich",
+    "file": "bgr/dobrudzha-dobrich.png",
+    "sha256": "f98faee2ef23bd360face0f81e6b162235dd97ea9629337bc58ee81557ca9d20",
+    "source": "history/2025-26/Bulgaria - efbet Liga/Dobrudzha Dobrich.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/dunav-ruse",
+    "file": "bgr/dunav-ruse.png",
+    "sha256": "672bec607cd34acf1b4e79f91134d7f5bab71e9bed220927b345fc980800d6af",
+    "source": "logos/Bulgaria - efbet Liga/Dunav Ruse.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/hebar-pazardzhik",
+    "file": "bgr/hebar-pazardzhik.png",
+    "sha256": "ff45832d2587315a85e8952cfce7c6731941775a45efc06beaf6d6e85f6b6e3e",
+    "source": "history/2024-25/Bulgaria - efbet Liga/Hebar Pazardzhik.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/krumovgrad",
+    "file": "bgr/krumovgrad.png",
+    "sha256": "586fd0e84ccb6b3cf4e08f3a4f99766596569dccd2abfddf763a048752cc5053",
+    "source": "history/2024-25/Bulgaria - efbet Liga/Krumovgrad.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/levski-sofia",
+    "file": "bgr/levski-sofia.png",
+    "sha256": "7df393c8b3799250328a290c83c31a14ca66bf0937d2ad8e1ed113ad80bf9470",
+    "source": "logos/Bulgaria - efbet Liga/Levski Sofia.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/lokomotiv-plovdiv",
+    "file": "bgr/lokomotiv-plovdiv.png",
+    "sha256": "aab0f6c331aa31d4f5842e773cb9a0d106de16ab75a752e16af5774186a10d57",
+    "source": "logos/Bulgaria - efbet Liga/Lokomotiv Plovdiv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/lokomotiv-sofia",
+    "file": "bgr/lokomotiv-sofia.png",
+    "sha256": "e648bf2b9d1fb3d87afbaecc2e33d1eb575908b77e5c1d45910698a498a0245c",
+    "source": "logos/Bulgaria - efbet Liga/Lokomotiv Sofia.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/ludogorets-razgrad",
+    "file": "bgr/ludogorets-razgrad.png",
+    "sha256": "041d61854af69eee54e764013d8474b79f40045903b834acf09d7983a29f2597",
+    "source": "logos/Bulgaria - efbet Liga/Ludogorets Razgrad.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/montana",
+    "file": "bgr/montana.png",
+    "sha256": "2a3dc941f467734752ad4c45a55413ff91b91eb74ff010ef744d65bab73cf33c",
+    "source": "history/2025-26/Bulgaria - efbet Liga/Montana.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/septemvri-sofia",
+    "file": "bgr/septemvri-sofia.png",
+    "sha256": "a02bc5e647175efc42456d43756f9289d06d4a2bfb242b9ce0c5b561aac48452",
+    "source": "logos/Bulgaria - efbet Liga/Septemvri Sofia.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/slavia-sofia",
+    "file": "bgr/slavia-sofia.png",
+    "sha256": "ff0d3366b84d5cd847083db7ac36f3775abd66665d992f8f5b0c0d48762ab4b1",
+    "source": "logos/Bulgaria - efbet Liga/Slavia Sofia.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "bgr/spartak-varna",
+    "file": "bgr/spartak-varna.png",
+    "sha256": "8cba7b4771f4a5daef2d749b5b32a8cf2141e17421a7db3a3c5c0211abfef119",
+    "source": "logos/Bulgaria - efbet Liga/Spartak Varna.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/bsc-young-boys",
+    "file": "che/bsc-young-boys.png",
+    "sha256": "83c8380cc80869a728256d8eb16cb40359ef27771d986d741d98a35b9f50ab62",
+    "source": "logos/Switzerland - Super League/BSC Young Boys.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/fc-basel-1893",
+    "file": "che/fc-basel-1893.png",
+    "sha256": "1a74fbd79fa38db69121a73c153ea831b7882cbc59cee794eef874e8df7fbf7d",
+    "source": "logos/Switzerland - Super League/FC Basel 1893.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/fc-lausanne-sport",
+    "file": "che/fc-lausanne-sport.png",
+    "sha256": "fd8e01aae1c61a2819c97c15f90a021e044367a3c51014d5d082cd36336a4270",
+    "source": "logos/Switzerland - Super League/FC Lausanne-Sport.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/fc-lugano",
+    "file": "che/fc-lugano.png",
+    "sha256": "5e150114cd891e617f57ee41ab15552d33a673afd9ffc9aad61045a66372c324",
+    "source": "logos/Switzerland - Super League/FC Lugano.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/fc-luzern",
+    "file": "che/fc-luzern.png",
+    "sha256": "3e6f50e4de8ac46aa0ead89661d88e12b25f8d2fedefe3a111d103a1bf2ebc9f",
+    "source": "logos/Switzerland - Super League/FC Luzern.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/fc-sion",
+    "file": "che/fc-sion.png",
+    "sha256": "38bf10582f7f074b70c3a18a77eff2d5b74abe259cd3ed67d02ab201729b28c6",
+    "source": "logos/Switzerland - Super League/FC Sion.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/fc-st-gallen-1879",
+    "file": "che/fc-st-gallen-1879.png",
+    "sha256": "59deccba0cfa8f9151cec009eacadb64d8e7960f79911a15294117bf8645680e",
+    "source": "logos/Switzerland - Super League/FC St. Gallen 1879.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/fc-stade-lausanne-ouchy",
+    "file": "che/fc-stade-lausanne-ouchy.png",
+    "sha256": "1e485587af657c1d5efaa98fe9d73ea9b67faa70e53d936e4b5b67d2a11fa441",
+    "source": "history/2023-24/Switzerland - Super League/FC Stade-Lausanne-Ouchy.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/fc-thun",
+    "file": "che/fc-thun.png",
+    "sha256": "1c97b03af6310253ef3c3d555e8ae90487d8264dae5f346eda813d51529dbdc5",
+    "source": "logos/Switzerland - Super League/FC Thun.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/fc-vaduz",
+    "file": "che/fc-vaduz.png",
+    "sha256": "c498c4aededf3ed9266eb507b9e4249e189ac6aaf79e7afac96e56cda38cd273",
+    "source": "logos/Switzerland - Super League/FC Vaduz.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/fc-winterthur",
+    "file": "che/fc-winterthur.png",
+    "sha256": "d800edd18dafdebf0a3e49ddaf3132111021c966888f63bb6860f5830e30666a",
+    "source": "history/2025-26/Switzerland - Super League/FC Winterthur.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/fc-zurich",
+    "file": "che/fc-zurich.png",
+    "sha256": "0debca2aa3ca9c52472788ac1347824cf5093d8c4451c83d11dbd786ffd76194",
+    "source": "logos/Switzerland - Super League/FC Zürich.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/grasshopper-club-zurich",
+    "file": "che/grasshopper-club-zurich.png",
+    "sha256": "489750639a4a90034f13267e858635b4fe64689917698f424e531aa91f21dc82",
+    "source": "logos/Switzerland - Super League/Grasshopper Club Zurich.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/servette-fc",
+    "file": "che/servette-fc.png",
+    "sha256": "de5ce715a51e11e5cf5eded554e735425b86c774608a3abaf646e47ccd8a27da",
+    "source": "logos/Switzerland - Super League/Servette FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "che/yverdon-sport-fc",
+    "file": "che/yverdon-sport-fc.png",
+    "sha256": "e29624a5a5f7f487a6a759509944eed59f74c8b207f80cbe8c60a87b8d289532",
+    "source": "history/2024-25/Switzerland - Super League/Yverdon Sport FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/1-fc-slovacko",
+    "file": "cze/1-fc-slovacko.png",
+    "sha256": "4c77f3022fa0ace98e1cd8c908c3f2c45b85757dac641bf78d23d5e4534a8837",
+    "source": "logos/Czech Republic - Chance Liga/1.FC Slovacko.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/ac-sparta-prague",
+    "file": "cze/ac-sparta-prague.png",
+    "sha256": "2bab7b03541b8abdc1330fe5311f3f03011d8f678fb768a3801859ffb1504eca",
+    "source": "logos/Czech Republic - Chance Liga/AC Sparta Prague.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/bohemians-prague-1905",
+    "file": "cze/bohemians-prague-1905.png",
+    "sha256": "cb746d7a41223b9cb08a14ef1a2346520e3e4b15faf2c700111938d2f476dcf9",
+    "source": "logos/Czech Republic - Chance Liga/Bohemians Prague 1905.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/fc-banik-ostrava",
+    "file": "cze/fc-banik-ostrava.png",
+    "sha256": "f2a7e902629848e3b8f4523091b96b5f61d40d28d0ecf19b3517f86987903ead",
+    "source": "logos/Czech Republic - Chance Liga/FC Banik Ostrava.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/fc-hradec-kralove",
+    "file": "cze/fc-hradec-kralove.png",
+    "sha256": "7667990e7f888d43a569abc60cd1ae4ea6387cdbffa8d36df0e8ba3be3324ffd",
+    "source": "logos/Czech Republic - Chance Liga/FC Hradec Kralove.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/fc-slovan-liberec",
+    "file": "cze/fc-slovan-liberec.png",
+    "sha256": "433bbff4b8a7565e70d5c438f5dbbfdf04daa99d0005f1eec72365b68c1f4e1c",
+    "source": "logos/Czech Republic - Chance Liga/FC Slovan Liberec.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/fc-viktoria-plzen",
+    "file": "cze/fc-viktoria-plzen.png",
+    "sha256": "9345a760eb47ce366b5ec658b4b4868f3ba7802af26f43b2e7a5b1eaeecd3cd5",
+    "source": "logos/Czech Republic - Chance Liga/FC Viktoria Plzen.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/fc-zbrojovka-brno",
+    "file": "cze/fc-zbrojovka-brno.png",
+    "sha256": "d377d1463ff6e4e8e0e1eb647237ef13a8d55376738a9692e55086605748f2df",
+    "source": "logos/Czech Republic - Chance Liga/FC Zbrojovka Brno.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/fc-zlin",
+    "file": "cze/fc-zlin.png",
+    "sha256": "1097898a34233b09cd0d3762d229e3c5fbbc2ce0aca104dd49311e00a572c5d7",
+    "source": "logos/Czech Republic - Chance Liga/FC Zlin.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/fk-dukla-prague",
+    "file": "cze/fk-dukla-prague.png",
+    "sha256": "cf7b7004b82b480ee1964b30eb84d58abd1f1b9f38827fad8ed665f28870da4f",
+    "source": "history/2025-26/Czech Republic - Chance Liga/FK Dukla Prague.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/fk-jablonec",
+    "file": "cze/fk-jablonec.png",
+    "sha256": "43ef0822f057f6fe4b70cb66aeffd86a561b6d4e5b74e3173abb16c8459b4206",
+    "source": "logos/Czech Republic - Chance Liga/FK Jablonec.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/fk-mlada-boleslav",
+    "file": "cze/fk-mlada-boleslav.png",
+    "sha256": "799d9045f41bce82003334536ed7ca4cd754644c52d4f2f17cb7a9c8fa5e0e7e",
+    "source": "logos/Czech Republic - Chance Liga/FK Mlada Boleslav.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/fk-pardubice",
+    "file": "cze/fk-pardubice.png",
+    "sha256": "b336db8f481b496ad7587ff8bd5f138ada88c81cd857353bbfe230552bc7cc68",
+    "source": "logos/Czech Republic - Chance Liga/FK Pardubice.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/fk-teplice",
+    "file": "cze/fk-teplice.png",
+    "sha256": "48863928417043502d231696ccb7fc76a48f460ad5ddd3ab31dbea69dcd24794",
+    "source": "logos/Czech Republic - Chance Liga/FK Teplice.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/mfk-karvina",
+    "file": "cze/mfk-karvina.png",
+    "sha256": "6b27ca18454f2f49608dff50e48a5786adb4d187d4c327891a7d4a475395debf",
+    "source": "history/2025-26/Czech Republic - Chance Liga/MFK Karvina.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/sk-artis-brno",
+    "file": "cze/sk-artis-brno.png",
+    "sha256": "0e9d04dd01f3430bbae598bb463afc8c810172f6b41bb0ad6001fa468c64cf45",
+    "source": "logos/Czech Republic - Chance Liga/SK Artis Brno.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/sk-dynamo-ceske-budejovice",
+    "file": "cze/sk-dynamo-ceske-budejovice.png",
+    "sha256": "851fd8fae55aa2192a22c404956ae6ce579d709786fa2b77cee925b701062f7b",
+    "source": "history/2024-25/Czech Republic - Chance Liga/SK Dynamo Ceske Budejovice.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/sk-sigma-olomouc",
+    "file": "cze/sk-sigma-olomouc.png",
+    "sha256": "77aafb4cce9012e90efc7d6d036f2388a310b42fce09c195806cf7e56af7e4ff",
+    "source": "logos/Czech Republic - Chance Liga/SK Sigma Olomouc.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "cze/sk-slavia-prague",
+    "file": "cze/sk-slavia-prague.png",
+    "sha256": "8e810a8c44dbe8b7c04a030bf80d797400b96eddc4b46d7a546edff7c1ecb9a3",
+    "source": "logos/Czech Republic - Chance Liga/SK Slavia Prague.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/1-fc-heidenheim-1846",
+    "file": "deu/1-fc-heidenheim-1846.png",
+    "sha256": "31adda21354630490a1213a4dd6ee6ba6a86aeaeb0a97af117edb657282f5dcd",
+    "source": "history/2025-26/Germany - Bundesliga/1.FC Heidenheim 1846.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/1-fc-koln",
+    "file": "deu/1-fc-koln.png",
+    "sha256": "524dda6b95899ca20ffd70367fe69dee94b56aadba6c6920c9759d134aa97fb0",
+    "source": "logos/Germany - Bundesliga/1.FC Köln.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/1-fc-union-berlin",
+    "file": "deu/1-fc-union-berlin.png",
+    "sha256": "feae734c99d0c15d9d6eaf146914bc09650715130ff04faa91bbfbc82efdde95",
+    "source": "logos/Germany - Bundesliga/1.FC Union Berlin.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/1-fsv-mainz-05",
+    "file": "deu/1-fsv-mainz-05.png",
+    "sha256": "3b7bc54f1a701f3c17d64084ca4d34634da48c7fb6781bfed4409f101f74a838",
+    "source": "logos/Germany - Bundesliga/1.FSV Mainz 05.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/arminia-bielefeld",
+    "file": "deu/arminia-bielefeld.png",
+    "sha256": "a043bae9797537037ea13f95cd8d7939bac943d5cfdeb9da66f769cf7c789a7c",
+    "source": "history/2021-22/Germany - Bundesliga/Arminia Bielefeld.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/bayer-04-leverkusen",
+    "file": "deu/bayer-04-leverkusen.png",
+    "sha256": "ae01f5b056005b708bfc6ec54710984ec1536520a0a0c4c1954462db69273398",
+    "source": "logos/Germany - Bundesliga/Bayer 04 Leverkusen.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/bayern-munich",
+    "file": "deu/bayern-munich.png",
+    "sha256": "725c7d59e4bb089a3297fb8299ebe926f9c6bb1af46c2b45945698da9380a13d",
+    "source": "logos/Germany - Bundesliga/Bayern Munich.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/borussia-dortmund",
+    "file": "deu/borussia-dortmund.png",
+    "sha256": "6224c00dc0376cf74d96d15ff04de65d35c729da8b0870276a54f02a7ce7729b",
+    "source": "logos/Germany - Bundesliga/Borussia Dortmund.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/borussia-monchengladbach",
+    "file": "deu/borussia-monchengladbach.png",
+    "sha256": "3f6c21f0df011c65f54df1eccfd4e6edc336f4ff897e05961034f98231efd925",
+    "source": "logos/Germany - Bundesliga/Borussia Mönchengladbach.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/eintracht-frankfurt",
+    "file": "deu/eintracht-frankfurt.png",
+    "sha256": "66f935b1709bb9ad9b04c2a3d54c1fc98e8faa513a8c187022a996a0f11ac407",
+    "source": "logos/Germany - Bundesliga/Eintracht Frankfurt.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/fc-augsburg",
+    "file": "deu/fc-augsburg.png",
+    "sha256": "4518b403505b7d71624f5a73538cefaa3c839f848df87cf4bd4e6dcb351c5f32",
+    "source": "logos/Germany - Bundesliga/FC Augsburg.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/fc-schalke-04",
+    "file": "deu/fc-schalke-04.png",
+    "sha256": "eaf1163ccdf2b17f38a96e6b5be5ad7f7df7e5d3345efda1c950b93251dcc58c",
+    "source": "logos/Germany - Bundesliga/FC Schalke 04.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/fc-st-pauli",
+    "file": "deu/fc-st-pauli.png",
+    "sha256": "a5a07e5cdc6101d8d01c02fbbddac51887ae014aad444dae633f67e5a2de9809",
+    "source": "history/2025-26/Germany - Bundesliga/FC St. Pauli.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/greuther-furth",
+    "file": "deu/greuther-furth.png",
+    "sha256": "f49c192e75427e5eafdbd590f9c72fa4fc0f22b30bcc360a90e9fdc340515541",
+    "source": "history/2021-22/Germany - Bundesliga/Greuther Fürth.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/hamburger-sv",
+    "file": "deu/hamburger-sv.png",
+    "sha256": "7fde65e3c32c050041f0442649e9e8230692c252ea5e72f48590db5b89366b80",
+    "source": "logos/Germany - Bundesliga/Hamburger SV.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/hertha-bsc",
+    "file": "deu/hertha-bsc.png",
+    "sha256": "cb0c13f67ed18183a5b6c011284b602c13031c4f2af565e0f8e64a26438eb7fa",
+    "source": "history/2022-23/Germany - Bundesliga/Hertha BSC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/holstein-kiel",
+    "file": "deu/holstein-kiel.png",
+    "sha256": "6babd29481d7f2743ba79207079718015c0e91f4dbe2ea5708b4b764cba1b743",
+    "source": "history/2024-25/Germany - Bundesliga/Holstein Kiel.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/rb-leipzig",
+    "file": "deu/rb-leipzig.png",
+    "sha256": "d7aff81d6e7f491547f2a2fb48b19f548b8d8ddd374bbb757798d34133546e3d",
+    "source": "logos/Germany - Bundesliga/RB Leipzig.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/sc-freiburg",
+    "file": "deu/sc-freiburg.png",
+    "sha256": "ff998a845de9f53ad21f33326d125717bb018a2a69c26678f533e28ff357f346",
+    "source": "logos/Germany - Bundesliga/SC Freiburg.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/sc-paderborn-07",
+    "file": "deu/sc-paderborn-07.png",
+    "sha256": "07a80ece1364af5ed0bbc750e14c3c67951d14e7400bddc0bf89e34fe3642d99",
+    "source": "logos/Germany - Bundesliga/SC Paderborn 07.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/sv-07-elversberg",
+    "file": "deu/sv-07-elversberg.png",
+    "sha256": "de4b6e7e2373eb0a10d09351bf9ebcbb9bbb5e83facf697832707497dbc1ce8e",
+    "source": "logos/Germany - Bundesliga/SV 07 Elversberg.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/sv-darmstadt-98",
+    "file": "deu/sv-darmstadt-98.png",
+    "sha256": "3a9cd2ddd90fd69ee1d10f8dec1d1e27a038d4a2abc0d5ec1f2ec4f1ff3e2049",
+    "source": "history/2023-24/Germany - Bundesliga/SV Darmstadt 98.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/sv-werder-bremen",
+    "file": "deu/sv-werder-bremen.png",
+    "sha256": "76754f64c85552f78846117ddf82a29993f7d529edf180aa2828615aced21812",
+    "source": "logos/Germany - Bundesliga/SV Werder Bremen.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/tsg-1899-hoffenheim",
+    "file": "deu/tsg-1899-hoffenheim.png",
+    "sha256": "44664799e2df09cb8413e9f6b773435f1f16b926b02c322cf3f40c470da47204",
+    "source": "logos/Germany - Bundesliga/TSG 1899 Hoffenheim.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/vfb-stuttgart",
+    "file": "deu/vfb-stuttgart.png",
+    "sha256": "76d2aa9cc7fe9272c175d8c6a37bc588808d48fcebefe29375c8f7acf64ea0cb",
+    "source": "logos/Germany - Bundesliga/VfB Stuttgart.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/vfl-bochum",
+    "file": "deu/vfl-bochum.png",
+    "sha256": "59a785a8a718cfd7a1f793e5d0f6c2293dcf6ac23e8045aa3e5b295ded3b93fd",
+    "source": "history/2024-25/Germany - Bundesliga/VfL Bochum.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "deu/vfl-wolfsburg",
+    "file": "deu/vfl-wolfsburg.png",
+    "sha256": "fcfb12c5ecc003da1e2d67414ca8dba961b6bee093ae31f8c4d8429e9b2b73ae",
+    "source": "history/2025-26/Germany - Bundesliga/VfL Wolfsburg.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/aalborg-bk",
+    "file": "dnk/aalborg-bk.png",
+    "sha256": "8918e12761f5db7cda26205b0ae5093474d7519ee3e7f6ac5c6a58d3770b2158",
+    "source": "history/2024-25/Denmark - Superliga/Aalborg BK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/aarhus-gf",
+    "file": "dnk/aarhus-gf.png",
+    "sha256": "6b66864a024bbe8c1c8d42344860f4c2953ca1f40456fa746fc528a13f5cea13",
+    "source": "logos/Denmark - Superliga/Aarhus GF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/ac-horsens",
+    "file": "dnk/ac-horsens.png",
+    "sha256": "c092e7210abcdc09e4e06f90eb8a06337953e437f3e335fff36460bbfe1600e5",
+    "source": "logos/Denmark - Superliga/AC Horsens.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/brondby-if",
+    "file": "dnk/brondby-if.png",
+    "sha256": "36e666c41b02271ea553d2e046d9ef2f4e88ff38765adae1907783d4d9ef0ff4",
+    "source": "logos/Denmark - Superliga/Bröndby IF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/fc-copenhagen",
+    "file": "dnk/fc-copenhagen.png",
+    "sha256": "6d3f140d482b1c2022993531112e6aad416476ffe6eb09fc4e30f2c8c767c2ed",
+    "source": "logos/Denmark - Superliga/FC Copenhagen.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/fc-fredericia",
+    "file": "dnk/fc-fredericia.png",
+    "sha256": "af70d0ae58ce948ef65a62077731e50abd16117ad3a3a210018f20a08d230c06",
+    "source": "history/2025-26/Denmark - Superliga/FC Fredericia.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/fc-midtjylland",
+    "file": "dnk/fc-midtjylland.png",
+    "sha256": "e51b3ac7a383c0fc2c502388cc2266f562949598b2e9aaac731c9bcecefd3dc4",
+    "source": "logos/Denmark - Superliga/FC Midtjylland.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/fc-nordsjaelland",
+    "file": "dnk/fc-nordsjaelland.png",
+    "sha256": "affb14c155f2aa34e7070d527fea6f3c2252958593fd9c4e97241a0ff9c44e19",
+    "source": "logos/Denmark - Superliga/FC Nordsjaelland.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/hvidovre-if",
+    "file": "dnk/hvidovre-if.png",
+    "sha256": "cbaaaa8df15657c998f83cb57af354efff19102edc5ef3f11c24fbae5e9ee623",
+    "source": "history/2023-24/Denmark - Superliga/Hvidovre IF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/lyngby-boldklub",
+    "file": "dnk/lyngby-boldklub.png",
+    "sha256": "aae7c53a9626504d9e0344f7da558823ba1d3c399f49fc68a602e6d3ee231bad",
+    "source": "logos/Denmark - Superliga/Lyngby Boldklub.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/odense-boldklub",
+    "file": "dnk/odense-boldklub.png",
+    "sha256": "88e6332b809a5034785b1cf86daf0c9969fd02335f1c8b7cf2ee447f2668211f",
+    "source": "logos/Denmark - Superliga/Odense Boldklub.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/randers-fc",
+    "file": "dnk/randers-fc.png",
+    "sha256": "9976eb167b1fdb73b8dd15ebd016cb73a579eec8ee3387e1a7fee2e195995108",
+    "source": "logos/Denmark - Superliga/Randers FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/silkeborg-if",
+    "file": "dnk/silkeborg-if.png",
+    "sha256": "f06b60ca65a57d8c5ea4f79abb0174b5d142204d349b264d184a382f40e4cc14",
+    "source": "logos/Denmark - Superliga/Silkeborg IF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/sonderjyske-fodbold",
+    "file": "dnk/sonderjyske-fodbold.png",
+    "sha256": "f4a0e4722620437671d164b68b0f5fc3005008e30426aa970d908e9345c0808a",
+    "source": "logos/Denmark - Superliga/Sönderjyske Fodbold.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/vejle-boldklub",
+    "file": "dnk/vejle-boldklub.png",
+    "sha256": "ccbe1edcb9b499f27106507920920a636ec34d5cada851ea19745233751c1764",
+    "source": "history/2025-26/Denmark - Superliga/Vejle Boldklub.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "dnk/viborg-ff",
+    "file": "dnk/viborg-ff.png",
+    "sha256": "ee4758c3ef4abf6ff780e8a2978bf7093f31a3198400f4c1c6a247a9f5ab5fdc",
+    "source": "logos/Denmark - Superliga/Viborg FF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/afc-bournemouth",
+    "file": "eng/afc-bournemouth.png",
+    "sha256": "657f52dfba612dfaa8523f5da73ae67034c109301d65d1c144502acac87d7522",
+    "source": "logos/England - Premier League/AFC Bournemouth.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/arsenal-fc",
+    "file": "eng/arsenal-fc.png",
+    "sha256": "a3ad4f044686b6292b8f9b8f2eae65109e3f1bf4b7677ce07be66c9927297c5f",
+    "source": "logos/England - Premier League/Arsenal FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/aston-villa",
+    "file": "eng/aston-villa.png",
+    "sha256": "00e19d2343f80ab3d1bc880eaf6dec2a1e2cba328112cda2b36f74e0d517d979",
+    "source": "logos/England - Premier League/Aston Villa.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/brentford-fc",
+    "file": "eng/brentford-fc.png",
+    "sha256": "04be6116091082ae1354a645202d91394a0e0e9f36cedef4961b643c40b49749",
+    "source": "logos/England - Premier League/Brentford FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/brighton-hove-albion",
+    "file": "eng/brighton-hove-albion.png",
+    "sha256": "bb32a56a98c55d52b3412e24bdb8f3c067bb93fe7d51f1e0178f530f268885ac",
+    "source": "logos/England - Premier League/Brighton & Hove Albion.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/burnley-fc",
+    "file": "eng/burnley-fc.png",
+    "sha256": "b1706e95dd839ef0d4bffa7d9cbb35e7459c4276a8f07e0ed7ba3438495ab05d",
+    "source": "history/2025-26/England - Premier League/Burnley FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/chelsea-fc",
+    "file": "eng/chelsea-fc.png",
+    "sha256": "b330a1ee83b2a9cc89fc3317abd9f9da5ad4d8a5edc9e88677aaa5e99b02971b",
+    "source": "logos/England - Premier League/Chelsea FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/coventry-city",
+    "file": "eng/coventry-city.png",
+    "sha256": "b853dcff0f1dd4e125f8df9f3abadbbd26795966dd641abbe8ab7cfa1abdbe50",
+    "source": "logos/England - Premier League/Coventry City.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/crystal-palace",
+    "file": "eng/crystal-palace.png",
+    "sha256": "2cfc4952b29b007eeacca2324e94546c4c6257776a565733d17a66f5dd436e61",
+    "source": "logos/England - Premier League/Crystal Palace.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/everton-fc",
+    "file": "eng/everton-fc.png",
+    "sha256": "0ed1e5572f1feaa2a2da0e6c6df1265129a2d09de44f9c7367e11c0ee8b3479b",
+    "source": "logos/England - Premier League/Everton FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/fulham-fc",
+    "file": "eng/fulham-fc.png",
+    "sha256": "59c7c54d578e6dbc4fde4eaae88b6312f1b899da4542f86705b2b9f15917658d",
+    "source": "logos/England - Premier League/Fulham FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/hull-city",
+    "file": "eng/hull-city.png",
+    "sha256": "581f82057f8732388be5f8f3c59cf151e9530c25c1a0960315920e26b5e357c7",
+    "source": "logos/England - Premier League/Hull City.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/ipswich-town",
+    "file": "eng/ipswich-town.png",
+    "sha256": "63d763119728296c3eea019d60386f9441e66f15ba71eb32183037a394ca2563",
+    "source": "logos/England - Premier League/Ipswich Town.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/leeds-united",
+    "file": "eng/leeds-united.png",
+    "sha256": "2c45671a5212b74e47f7a87635e1121c84ad3971c2a700b0f925b9bb0c8bf08f",
+    "source": "logos/England - Premier League/Leeds United.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/leicester-city",
+    "file": "eng/leicester-city.png",
+    "sha256": "ee0f18c61dff477ae477f17719abc0a81e610d7ccf2a866779cc14b07484a577",
+    "source": "history/2024-25/England - Premier League/Leicester City.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/liverpool-fc",
+    "file": "eng/liverpool-fc.png",
+    "sha256": "bc0cdab4ad7fca467fbaf3c5b5280c92fc517ed5ee7392595286b89e64f2e91a",
+    "source": "logos/England - Premier League/Liverpool FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/luton-town",
+    "file": "eng/luton-town.png",
+    "sha256": "076d9bc694b142e9e2b78e491514171953588149442f7bdf1be1fadbd6b88964",
+    "source": "history/2023-24/England - Premier League/Luton Town.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/manchester-city",
+    "file": "eng/manchester-city.png",
+    "sha256": "cc469bbafdbb900947d36d0790713b31c6527f9c298770d39848aab5fa6ff3f2",
+    "source": "logos/England - Premier League/Manchester City.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/manchester-united",
+    "file": "eng/manchester-united.png",
+    "sha256": "9bfee26db13a48f5bff3e6d84fd5fc8438ad7db893b2d5f0c33e0779160d669c",
+    "source": "logos/England - Premier League/Manchester United.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/newcastle-united",
+    "file": "eng/newcastle-united.png",
+    "sha256": "8285f36ea4c9de20cd08d568222e2c74941b1f5a01d093c4853c44abfc5a3dd7",
+    "source": "logos/England - Premier League/Newcastle United.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/norwich",
+    "file": "eng/norwich.png",
+    "sha256": "e610cba76336a17343c6ab0639d5fccb53dea2848d344cf7362eaa54bb416cea",
+    "source": "history/2021-22/England - Premier League/Norwich.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/nottingham-forest",
+    "file": "eng/nottingham-forest.png",
+    "sha256": "9e3dd7742337dad9922bacf188f2f93ed1ac188e280a883dc1306a19d9f955e7",
+    "source": "logos/England - Premier League/Nottingham Forest.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/sheffield-united",
+    "file": "eng/sheffield-united.png",
+    "sha256": "6a4b4ce92fa8129b33f1346f06371d93b1fb34a82c3f72fed117a6aebe18e07f",
+    "source": "history/2023-24/England - Premier League/Sheffield United.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/southampton-fc",
+    "file": "eng/southampton-fc.png",
+    "sha256": "9da247339689a823833c5adecafcf738a0827f929828bc981e3593cf4b81aace",
+    "source": "history/2024-25/England - Premier League/Southampton FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/sunderland-afc",
+    "file": "eng/sunderland-afc.png",
+    "sha256": "81e31932e3b05179fd9c78d6b86ce804147a945cbe4a8bc4e83842d81b8cbd62",
+    "source": "logos/England - Premier League/Sunderland AFC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/tottenham-hotspur",
+    "file": "eng/tottenham-hotspur.png",
+    "sha256": "33b6b4f1baafcecd88f8499b250fe28ee55eaf60f67020c716b12418d4b6f555",
+    "source": "logos/England - Premier League/Tottenham Hotspur.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/watford-fc",
+    "file": "eng/watford-fc.png",
+    "sha256": "ed52881e114a012c7a4d68abbcb1eca87739294a09e1766efb4027c21425b4fb",
+    "source": "history/2021-22/England - Premier League/Watford FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/west-ham-united",
+    "file": "eng/west-ham-united.png",
+    "sha256": "7f5ba79d1baa86d073a9c1852526efed7602f58f7aea790ffd98b10d9d29eeb1",
+    "source": "history/2025-26/England - Premier League/West Ham United.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "eng/wolverhampton-wanderers",
+    "file": "eng/wolverhampton-wanderers.png",
+    "sha256": "93e7ebb3d6e1812a88fd8c79ca35519c22b1ab1f35b437c2461c86ece590bbf2",
+    "source": "history/2025-26/England - Premier League/Wolverhampton Wanderers.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/athletic-bilbao",
+    "file": "esp/athletic-bilbao.png",
+    "sha256": "1b14204cc3afd47bea3f1588e5b26594cfd8395c628e61cdd537825188b1b57c",
+    "source": "logos/Spain - LaLiga/Athletic Bilbao.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/atletico-de-madrid",
+    "file": "esp/atletico-de-madrid.png",
+    "sha256": "a111593f6c1570ce496624628233e84568741397d6d9764cc089f4fc1074b696",
+    "source": "logos/Spain - LaLiga/Atlético de Madrid.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/ca-osasuna",
+    "file": "esp/ca-osasuna.png",
+    "sha256": "dfb35b76146380f642c9f7c5d95474711a2901eb5cc8157a9bf3dea418a49239",
+    "source": "logos/Spain - LaLiga/CA Osasuna.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/cadiz-cf",
+    "file": "esp/cadiz-cf.png",
+    "sha256": "522657ec2560999e635889189706fa9b21db7d4cd31a3afd52a3257612a52ca3",
+    "source": "history/2023-24/Spain - LaLiga/Cádiz CF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/cd-leganes",
+    "file": "esp/cd-leganes.png",
+    "sha256": "5c4282e086cc2ef640913d1d7c261d29030fa335bdbff0d5d708c30cc5ba0c79",
+    "source": "history/2024-25/Spain - LaLiga/CD Leganés.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/celta-de-vigo",
+    "file": "esp/celta-de-vigo.png",
+    "sha256": "f357757a53ab9f9c4deac5e0a38d4764be3b214f961c17910bc93dea6067366d",
+    "source": "logos/Spain - LaLiga/Celta de Vigo.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/deportivo-a-coruna",
+    "file": "esp/deportivo-a-coruna.png",
+    "sha256": "22ee580495bf3be69dd5110f872506cdd7330754ba207017025489ac364a5a23",
+    "source": "logos/Spain - LaLiga/Deportivo A Coruña.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/deportivo-alaves",
+    "file": "esp/deportivo-alaves.png",
+    "sha256": "cdb3725c224c1bd5742f084845ed6a14f407aac37807758191f225146dd47378",
+    "source": "logos/Spain - LaLiga/Deportivo Alavés.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/elche-cf",
+    "file": "esp/elche-cf.png",
+    "sha256": "b68b21d6583b6d791d02dba0263881516c1d9cb08c46dfd6605ad8097dfaa7c6",
+    "source": "logos/Spain - LaLiga/Elche CF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/fc-barcelona",
+    "file": "esp/fc-barcelona.png",
+    "sha256": "115bad573e66f5c9b2e326a3ed6979c5fec2559c40d5ee2ef02a8e9774d24dc0",
+    "source": "logos/Spain - LaLiga/FC Barcelona.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/getafe-cf",
+    "file": "esp/getafe-cf.png",
+    "sha256": "769ba589d7ef3ff337077d1c9304a11aba9d7a409d164f15953e2b2b7cb747b3",
+    "source": "logos/Spain - LaLiga/Getafe CF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/girona-fc",
+    "file": "esp/girona-fc.png",
+    "sha256": "0c479a8b85defc39e179e223a3385d5db0daaeced250b004a08b452b6ff49047",
+    "source": "history/2025-26/Spain - LaLiga/Girona FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/granada-cf",
+    "file": "esp/granada-cf.png",
+    "sha256": "023d2b876343fa2a9dce1c15195d43000e6718fff7b254fb8ff986aa64b0d156",
+    "source": "history/2023-24/Spain - LaLiga/Granada CF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/levante-ud",
+    "file": "esp/levante-ud.png",
+    "sha256": "9d752afe8575ec174b6e381e449bc21bf78981655eb23d0b6fc3d200e1ac1e35",
+    "source": "logos/Spain - LaLiga/Levante UD.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/malaga-cf",
+    "file": "esp/malaga-cf.png",
+    "sha256": "27a8d41feb034d30f7131eaa6107a86a30d891b6aa0b7a698424009f4d73f7d4",
+    "source": "logos/Spain - LaLiga/Málaga CF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/racing-santander",
+    "file": "esp/racing-santander.png",
+    "sha256": "c36769dab38d666f2bfa601c4bf40a5fd86b18bc867c68a7ee1b42fbf6afbab3",
+    "source": "logos/Spain - LaLiga/Racing Santander.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/rayo-vallecano",
+    "file": "esp/rayo-vallecano.png",
+    "sha256": "76b7905594cf985cd131cfc5501cb268f6b83981c026f2092abcfca3d503b9f3",
+    "source": "logos/Spain - LaLiga/Rayo Vallecano.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/rcd-espanyol-barcelona",
+    "file": "esp/rcd-espanyol-barcelona.png",
+    "sha256": "d49b8ba301783bd542a0eff399817e61b10681c71a9289a60fce50941a3fdc78",
+    "source": "logos/Spain - LaLiga/RCD Espanyol Barcelona.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/rcd-mallorca",
+    "file": "esp/rcd-mallorca.png",
+    "sha256": "cb8173cb631569ecc548e7a93c3149b9e620e7cb9bd3d1f6c1fc7a9d0cfef214",
+    "source": "history/2025-26/Spain - LaLiga/RCD Mallorca.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/real-betis-balompie",
+    "file": "esp/real-betis-balompie.png",
+    "sha256": "cacc73be2c05879f7d7bd063e1deb72cf3b48d01de2c3c4cddfb0aa6ef2d6e3b",
+    "source": "logos/Spain - LaLiga/Real Betis Balompié.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/real-madrid",
+    "file": "esp/real-madrid.png",
+    "sha256": "64a3f808a067b89ad7aec392e100951a85189cc50688e11bd91d84e3f2967a1d",
+    "source": "logos/Spain - LaLiga/Real Madrid.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/real-oviedo",
+    "file": "esp/real-oviedo.png",
+    "sha256": "f42f8a06374792df11b30aa4d7d91e65dae097f082026ba23603abeb14476e52",
+    "source": "history/2025-26/Spain - LaLiga/Real Oviedo.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/real-sociedad",
+    "file": "esp/real-sociedad.png",
+    "sha256": "bf13daf42bab04cb88c67d73a5c7ef044fecb8ee9f65490260d92c0c24217c28",
+    "source": "logos/Spain - LaLiga/Real Sociedad.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/real-valladolid-cf",
+    "file": "esp/real-valladolid-cf.png",
+    "sha256": "94d2be30949ac450b6d4939c57a67d23f2c706bf9f07a6fbf04c3e4bba2fa39d",
+    "source": "history/2024-25/Spain - LaLiga/Real Valladolid CF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/sevilla-fc",
+    "file": "esp/sevilla-fc.png",
+    "sha256": "202dc4bc55bb7d7675d23ba69f67b753332cf6789311b8b15b0706167fe052f0",
+    "source": "logos/Spain - LaLiga/Sevilla FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/ud-almeria",
+    "file": "esp/ud-almeria.png",
+    "sha256": "56dc18c3f208c26001abab96b21c67cbe1104617eab0e7eef181122fb746ab2e",
+    "source": "history/2023-24/Spain - LaLiga/UD Almería.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/ud-las-palmas",
+    "file": "esp/ud-las-palmas.png",
+    "sha256": "6497c1be4922cc17f10abe45a91435f1dd9e47db20bf06a404b1fab9c53f42b8",
+    "source": "history/2024-25/Spain - LaLiga/UD Las Palmas.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/valencia-cf",
+    "file": "esp/valencia-cf.png",
+    "sha256": "280f4c7f1611c8332c3edd31403dc6542581b338cf4bf5093bfae8cd64c33008",
+    "source": "logos/Spain - LaLiga/Valencia CF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "esp/villarreal-cf",
+    "file": "esp/villarreal-cf.png",
+    "sha256": "14cfc14432a5c62050714be58fcf4a707849603acef9a579bfd7e274916a081e",
+    "source": "logos/Spain - LaLiga/Villarreal CF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/ac-ajaccio",
+    "file": "fra/ac-ajaccio.png",
+    "sha256": "fa4065ade0ad9fe23e1271d98f776429266a1bdb676014010548f86703d4259c",
+    "source": "history/2022-23/France - Ligue 1/AC Ajaccio.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/aj-auxerre",
+    "file": "fra/aj-auxerre.png",
+    "sha256": "654383850f1e4588e04e96777d98bf7581ab1a5047108b6f8e587504e1b0fa79",
+    "source": "logos/France - Ligue 1/AJ Auxerre.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/angers-sco",
+    "file": "fra/angers-sco.png",
+    "sha256": "24592af2138101823c25159864434880a2cdc438453c69fe893b10f4c19859d8",
+    "source": "logos/France - Ligue 1/Angers SCO.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/as-monaco",
+    "file": "fra/as-monaco.png",
+    "sha256": "025b5a8e0004b79a0f30101a7cab4907a9632f42c2776d9fb167b949253cafad",
+    "source": "logos/France - Ligue 1/AS Monaco.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/as-saint-etienne",
+    "file": "fra/as-saint-etienne.png",
+    "sha256": "ea694ee1f44183d3d0afe58030690b533f827a6743931d4815c351f9c4baa07e",
+    "source": "history/2024-25/France - Ligue 1/AS Saint-Étienne.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/clermont-foot-63",
+    "file": "fra/clermont-foot-63.png",
+    "sha256": "9d0f58f97c9988d36a969e8f3b300ed3cf97a028bec6aef559ed1c25bbb16320",
+    "source": "history/2023-24/France - Ligue 1/Clermont Foot 63.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/estac-troyes",
+    "file": "fra/estac-troyes.png",
+    "sha256": "76350608a08b02cf5d1818734cc8df36237aaba2fb00a37410ae9d42bea3698b",
+    "source": "logos/France - Ligue 1/ESTAC Troyes.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/fc-lorient",
+    "file": "fra/fc-lorient.png",
+    "sha256": "2ce56ed7283d96b082f357e777e8d0cd957c3e32b1767afd42242a7e4cfa3d0a",
+    "source": "logos/France - Ligue 1/FC Lorient.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/fc-metz",
+    "file": "fra/fc-metz.png",
+    "sha256": "c9abcebcc71f5d065e868089dfdff370b003d1fafa3a2d2446b53550115396d5",
+    "source": "history/2025-26/France - Ligue 1/FC Metz.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/fc-nantes",
+    "file": "fra/fc-nantes.png",
+    "sha256": "a4b0a5db1fdf1764a8591895b3b0d825ac7feee21fb412b976b2dc3c59742c6e",
+    "source": "history/2025-26/France - Ligue 1/FC Nantes.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/fc-toulouse",
+    "file": "fra/fc-toulouse.png",
+    "sha256": "7a11e170d417c190a0ec4d361ae5901bb32a6302ab4d35af02972b1a8a3cf5d0",
+    "source": "logos/France - Ligue 1/FC Toulouse.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/g-bordeaux",
+    "file": "fra/g-bordeaux.png",
+    "sha256": "839ad374c723b67269e3d26dbc2c6598942603741c63ca4a09357702d4b00247",
+    "source": "history/2021-22/France - Ligue 1/G. Bordeaux.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/le-havre-ac",
+    "file": "fra/le-havre-ac.png",
+    "sha256": "c8a11d488236257c59ae1423cb3ae03bbf12443b169ab4741cc36c0132b8a3cb",
+    "source": "logos/France - Ligue 1/Le Havre AC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/le-mans-fc",
+    "file": "fra/le-mans-fc.png",
+    "sha256": "dbedf26721038d1ecbdc77bc5ed266286a00a3bcc9fd8b793cc44081128526c5",
+    "source": "logos/France - Ligue 1/Le Mans FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/losc-lille",
+    "file": "fra/losc-lille.png",
+    "sha256": "634ff3ad567a7ec16a3f455d5bfff3d6a3a2947ec3dc55a71e037e7fa27e059c",
+    "source": "logos/France - Ligue 1/LOSC Lille.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/montpellier-hsc",
+    "file": "fra/montpellier-hsc.png",
+    "sha256": "42c8bc5067419124a0a13a21ff7615a0ee973e6b7b724b67cfbaa5b0823367ae",
+    "source": "history/2024-25/France - Ligue 1/Montpellier HSC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/ogc-nice",
+    "file": "fra/ogc-nice.png",
+    "sha256": "5e72474f0bc715de8d9cb7f32259c66b62f9e36c34fc7c6bc2e955431f999ec7",
+    "source": "logos/France - Ligue 1/OGC Nice.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/olympique-lyon",
+    "file": "fra/olympique-lyon.png",
+    "sha256": "522c5387aaabd66f130c70c710c92a0e8bfe634c40ac64bdd1e31a406dc54b00",
+    "source": "logos/France - Ligue 1/Olympique Lyon.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/olympique-marseille",
+    "file": "fra/olympique-marseille.png",
+    "sha256": "11b088a814fa0926dcce6d8c6111ed3e4cea33c0838aac1200368abf6dfc5e43",
+    "source": "logos/France - Ligue 1/Olympique Marseille.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/paris-fc",
+    "file": "fra/paris-fc.png",
+    "sha256": "69ee6c0e17f6bcdf98c4960f71469de3fba5f8d03f9d64cf476f8ceebca64c0e",
+    "source": "logos/France - Ligue 1/Paris FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/paris-saint-germain",
+    "file": "fra/paris-saint-germain.png",
+    "sha256": "deebaddea8388e3e7a356afcc4ee56078456d45c0644118c17c270029f1488f1",
+    "source": "logos/France - Ligue 1/Paris Saint-Germain.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/rc-lens",
+    "file": "fra/rc-lens.png",
+    "sha256": "7687ad7637a9a65785dad69b247d5c1aba0747efad732702e350c67d03639496",
+    "source": "logos/France - Ligue 1/RC Lens.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/rc-strasbourg-alsace",
+    "file": "fra/rc-strasbourg-alsace.png",
+    "sha256": "8f8568262700ae60e466c1e034ea008806038fce76b2c82d33e2b80510d61b21",
+    "source": "logos/France - Ligue 1/RC Strasbourg Alsace.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/stade-brestois-29",
+    "file": "fra/stade-brestois-29.png",
+    "sha256": "4a93ab132a42cb49dbe633259f20a3c96fc5a4b01433a642f3085ad451f55ba1",
+    "source": "logos/France - Ligue 1/Stade Brestois 29.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/stade-reims",
+    "file": "fra/stade-reims.png",
+    "sha256": "af21c9165a807c06c561d5cb77e7533c371d2d177f9435c0b510588723bff6c2",
+    "source": "history/2024-25/France - Ligue 1/Stade Reims.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "fra/stade-rennais-fc",
+    "file": "fra/stade-rennais-fc.png",
+    "sha256": "4a2d2d7ce2ef7e8ffd99c4ac634ebc9e6fcc37a9cfedd9b58eb77653ce1c2370",
+    "source": "logos/France - Ligue 1/Stade Rennais FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/ae-kifisia",
+    "file": "grc/ae-kifisia.png",
+    "sha256": "7f6dda03215d04084887eb8c478021818733e02310750fae22829a85cc6f0007",
+    "source": "logos/Greece - Super League 1/AE Kifisia.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/ae-larisa",
+    "file": "grc/ae-larisa.png",
+    "sha256": "96e7c4147a6244a84cb5f4550dc0f38b47c432669e76615926976ec7a503cc66",
+    "source": "history/2025-26/Greece - Super League 1/AE Larisa.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/aek-athens",
+    "file": "grc/aek-athens.png",
+    "sha256": "4b72023cc40806239119d1a125f5483bf1c8de70e1d5fe1a17798f384205ff90",
+    "source": "logos/Greece - Super League 1/AEK Athens.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/apollon-smyrnis",
+    "file": "grc/apollon-smyrnis.png",
+    "sha256": "62e9f8de183853d9565acec0de66ec0c3dd888b2c69458ea6f42df34cb02646a",
+    "source": "history/2021-22/Greece - Super League 1/Apollon Smyrnis.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/aris-thessaloniki",
+    "file": "grc/aris-thessaloniki.png",
+    "sha256": "7f2240faab1cd51b828b156b8130581304a4c8bde38a990c554c228c59702486",
+    "source": "logos/Greece - Super League 1/Aris Thessaloniki.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/asteras-aktor",
+    "file": "grc/asteras-aktor.png",
+    "sha256": "ab9e9d5340663d609edb23932c37807c12352cad3f5d10301f92e306b60d8737",
+    "source": "logos/Greece - Super League 1/Asteras Aktor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/athens-kallithea",
+    "file": "grc/athens-kallithea.png",
+    "sha256": "ecc9eb718b5b0535098d54e9c71f7de13147f3b8093d0d53448b1f7ac58af048",
+    "source": "history/2024-25/Greece - Super League 1/Athens Kallithea.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/atromitos-athens",
+    "file": "grc/atromitos-athens.png",
+    "sha256": "4eacb53a34588580a8a7b39ee54c078824b26dbbe3eaff26de2da1d1c70a8029",
+    "source": "logos/Greece - Super League 1/Atromitos Athens.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/ionikos-nikeas",
+    "file": "grc/ionikos-nikeas.png",
+    "sha256": "38652801ea19a936704bd71bfb5e8419aabd26bfb800e999f1e99f34c0306dd6",
+    "source": "history/2022-23/Greece - Super League 1/Ionikos Nikeas.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/iraklis-thessaloniki",
+    "file": "grc/iraklis-thessaloniki.png",
+    "sha256": "2df722ffc76f9a50757bda6472e851804374609d1907ae9cfbb0c33a4664f6e6",
+    "source": "logos/Greece - Super League 1/Iraklis Thessaloniki.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/kalamata-fc",
+    "file": "grc/kalamata-fc.png",
+    "sha256": "41e30025fc1c1e102e80ba2082bda1bf54732328a2f30eebb11c13a4c830c779",
+    "source": "logos/Greece - Super League 1/Kalamata FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/levadiakos",
+    "file": "grc/levadiakos.png",
+    "sha256": "5aaaee82a6799284689366f4449fe117c8eeb32dbbc19a8284892fef68683c10",
+    "source": "logos/Greece - Super League 1/Levadiakos.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/ofi-crete",
+    "file": "grc/ofi-crete.png",
+    "sha256": "f050cc9d1ccd4deee10ddb3047de1c87a667dc635a2f58db1d2d7cf5bb9994d4",
+    "source": "logos/Greece - Super League 1/OFI Crete.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/olympiacos-piraeus",
+    "file": "grc/olympiacos-piraeus.png",
+    "sha256": "9e77956cb30201e497b4a49ff12f62d961b3c26bc81c273478001a77e3573e10",
+    "source": "logos/Greece - Super League 1/Olympiacos Piraeus.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/panathinaikos",
+    "file": "grc/panathinaikos.png",
+    "sha256": "90f20c7655fd8329daeac4b4cae28b6feecd88839e50730cdbb6bc4b9cbf09bc",
+    "source": "logos/Greece - Super League 1/Panathinaikos.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/panetolikos",
+    "file": "grc/panetolikos.png",
+    "sha256": "6048a6a508f5be6b6f3cb85aa2539bf3e0994d2b6ba488b5dab21e57387247be",
+    "source": "logos/Greece - Super League 1/Panetolikos.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/panserraikos",
+    "file": "grc/panserraikos.png",
+    "sha256": "7fca7486c3b24f2ac7ca86dd6cfe45fa9e85b6c5abf479079b1bb29d19ccb967",
+    "source": "history/2025-26/Greece - Super League 1/Panserraikos.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/paok-thessaloniki",
+    "file": "grc/paok-thessaloniki.png",
+    "sha256": "399503444d02e2aa260bb1b361e06a15fa7e69dc1588d84d46a06d0ed218ed6d",
+    "source": "logos/Greece - Super League 1/PAOK Thessaloniki.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/pas-giannina",
+    "file": "grc/pas-giannina.png",
+    "sha256": "9b2e23325a448c278f63722394b4ef79aca94364677e678a2cc323d34fe2d42c",
+    "source": "history/2023-24/Greece - Super League 1/PAS Giannina.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/pas-lamia-1964",
+    "file": "grc/pas-lamia-1964.png",
+    "sha256": "771d9b6ab1430323f8617f27a09f7f64bb6348fecc6fb38be00f4c82ce96dad2",
+    "source": "history/2024-25/Greece - Super League 1/PAS Lamia 1964.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "grc/volos-nfc",
+    "file": "grc/volos-nfc.png",
+    "sha256": "1a860e1de7743db156ec3e991e009cbece6c5abfa4606ae6906c4e4e48150589",
+    "source": "logos/Greece - Super League 1/Volos NFC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/gnk-dinamo-zagreb",
+    "file": "hrv/gnk-dinamo-zagreb.png",
+    "sha256": "dc77d5b442f27635a485860702adaede4b14d3e465d784ae798367e14b308eec",
+    "source": "logos/Croatia - SuperSport HNL/GNK Dinamo Zagreb.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/hnk-gorica",
+    "file": "hrv/hnk-gorica.png",
+    "sha256": "8e18c2959f2c5580154a6f48982713cd2ebdacb9b75797084ba26f7ea7dcd72a",
+    "source": "logos/Croatia - SuperSport HNL/HNK Gorica.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/hnk-hajduk-split",
+    "file": "hrv/hnk-hajduk-split.png",
+    "sha256": "aeb646c2d4649657e10ee6bdfe4028f689539c9b0ff706999a2e320c71d23301",
+    "source": "logos/Croatia - SuperSport HNL/HNK Hajduk Split.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/hnk-rijeka",
+    "file": "hrv/hnk-rijeka.png",
+    "sha256": "e3dc1e0001b8a270756d145ee048b32c413fa2b62e46b87f79e9d85b52a54592",
+    "source": "logos/Croatia - SuperSport HNL/HNK Rijeka.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/hnk-sibenik",
+    "file": "hrv/hnk-sibenik.png",
+    "sha256": "af773706880670dd584e79cdd2988c95c7bd8ef8e285aba46b1b572e2fd81d1c",
+    "source": "history/2024-25/Croatia - SuperSport HNL/HNK Sibenik.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/hnk-vukovar-1991",
+    "file": "hrv/hnk-vukovar-1991.png",
+    "sha256": "248824096d18e8caff91a2373983f8f17a2417f9d24386dac106fa89fd714192",
+    "source": "history/2025-26/Croatia - SuperSport HNL/HNK Vukovar 1991.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/nk-hrvatski-dragovoljac",
+    "file": "hrv/nk-hrvatski-dragovoljac.png",
+    "sha256": "860529f432b61c9f3a54f21ac66b699767f8a9faf955d95fb1a3b0634526f96d",
+    "source": "history/2021-22/Croatia - SuperSport HNL/NK Hrvatski Dragovoljac.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/nk-istra-1961",
+    "file": "hrv/nk-istra-1961.png",
+    "sha256": "81deb205251cb1b92086b01a56e300c91c0f4f31a7ad434a68c5f161c2dd1aca",
+    "source": "logos/Croatia - SuperSport HNL/NK Istra 1961.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/nk-lokomotiva-zagreb",
+    "file": "hrv/nk-lokomotiva-zagreb.png",
+    "sha256": "696f94454a1b7d1dde2354593f533c97f5e0b3902e79bfc05c13d3f217e08e68",
+    "source": "logos/Croatia - SuperSport HNL/NK Lokomotiva Zagreb.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/nk-osijek",
+    "file": "hrv/nk-osijek.png",
+    "sha256": "1f22f0ae1204f07909374afb6a8bba3346093549570f78c03e9a28c1499d88ed",
+    "source": "logos/Croatia - SuperSport HNL/NK Osijek.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/nk-rudes",
+    "file": "hrv/nk-rudes.png",
+    "sha256": "41e0beaf69ec940b759c5d210865a338ca0e9398dd84307fb88a2aa50d721b07",
+    "source": "logos/Croatia - SuperSport HNL/NK Rudes.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/nk-varazdin",
+    "file": "hrv/nk-varazdin.png",
+    "sha256": "244491ed11e07b16843f02446a226af8c3d76ec6ea496fb74255da20290e31fb",
+    "source": "logos/Croatia - SuperSport HNL/NK Varazdin.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hrv/slaven-belupo-koprivnica",
+    "file": "hrv/slaven-belupo-koprivnica.png",
+    "sha256": "249c6c0e89adb682c6b9c134b0b4c6c4a2f8e5894da81061f8887b12ee7a91eb",
+    "source": "logos/Croatia - SuperSport HNL/Slaven Belupo Koprivnica.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hun/debreceni-vsc",
+    "file": "hun/debreceni-vsc.png",
+    "sha256": "3b93bbb1bb24548ffee3c4abce5c2c300e2b8e59f6c6f0bdf24903089ac42a04",
+    "source": "history/2024-25/Hungary - Nemzeti Bajnokság/Debreceni VSC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hun/diosgyori-vtk",
+    "file": "hun/diosgyori-vtk.png",
+    "sha256": "22a8ede8c047f0db253b7406826d49fc25ec9ff4075e58feb59fd4b81a74a5e9",
+    "source": "history/2024-25/Hungary - Nemzeti Bajnokság/Diósgyőri VTK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hun/eto-fc-gyor",
+    "file": "hun/eto-fc-gyor.png",
+    "sha256": "0c0c80370298d3f2d751ba491a3f22d6bd829578a6d1d9c0873961c72ac3d5e7",
+    "source": "history/2024-25/Hungary - Nemzeti Bajnokság/ETO FC Győr.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hun/fehervar-fc",
+    "file": "hun/fehervar-fc.png",
+    "sha256": "ce408bdc32988ac9eccdddbe708824ffbc6e102c4cabf894f56f8cafea119655",
+    "source": "history/2024-25/Hungary - Nemzeti Bajnokság/Fehérvár FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hun/ferencvarosi-tc",
+    "file": "hun/ferencvarosi-tc.png",
+    "sha256": "ae68b7c352627bd02dc6fdf9040074805bd014ba604f7cd252e4f6106c6e1d01",
+    "source": "history/2024-25/Hungary - Nemzeti Bajnokság/Ferencvárosi TC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hun/kecskemeti-te",
+    "file": "hun/kecskemeti-te.png",
+    "sha256": "0b1fb8b7ee710cf4b0664515ae365c8b5a8c67cfc8dda7ef7d6d152598ba4290",
+    "source": "history/2024-25/Hungary - Nemzeti Bajnokság/Kecskeméti TE.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hun/mtk-budapest",
+    "file": "hun/mtk-budapest.png",
+    "sha256": "37bd3705026333dafc30fec52daba99f9a44fff09ea625359073b9b7d4d36b76",
+    "source": "history/2024-25/Hungary - Nemzeti Bajnokság/MTK Budapest.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hun/nyiregyhaza-spartacus",
+    "file": "hun/nyiregyhaza-spartacus.png",
+    "sha256": "d599ea1b3645c442ab445a00742ceb13cf55b4f0b1ccfccf0e88d0086745907a",
+    "source": "history/2024-25/Hungary - Nemzeti Bajnokság/Nyíregyháza Spartacus.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hun/paksi-fc",
+    "file": "hun/paksi-fc.png",
+    "sha256": "5bbf1929967a6120910c9fc40c72a11586d3109273227fca345d5ed397ab1f94",
+    "source": "history/2024-25/Hungary - Nemzeti Bajnokság/Paksi FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hun/puskas-akademia-fc",
+    "file": "hun/puskas-akademia-fc.png",
+    "sha256": "72af5c99d7eb91b61106a5a429308790e667dcc4ded841928c18918db9384831",
+    "source": "history/2024-25/Hungary - Nemzeti Bajnokság/Puskás Akadémia FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hun/ujpest-fc",
+    "file": "hun/ujpest-fc.png",
+    "sha256": "2b0fad8f13530f9de0bd70f18164d8fcd6fdb2c0d0507d44795811d89a368a82",
+    "source": "history/2024-25/Hungary - Nemzeti Bajnokság/Újpest FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "hun/zalaegerszegi-te-fc",
+    "file": "hun/zalaegerszegi-te-fc.png",
+    "sha256": "87fea87a4378c36440e0daa74900c5a9bb7fe42b63aa301cd5d32faa6cc9ac3b",
+    "source": "history/2024-25/Hungary - Nemzeti Bajnokság/Zalaegerszegi TE FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/beitar-jerusalem",
+    "file": "isr/beitar-jerusalem.png",
+    "sha256": "db364bdcdfdce4cd5611c9e2ddcaee3d0c38f6fbe41b597a405f4a84d33b7c3b",
+    "source": "logos/Israel - Ligat ha'Al/Beitar Jerusalem.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/fc-ashdod",
+    "file": "isr/fc-ashdod.png",
+    "sha256": "57a742b79c6a7c284246cbb6374d2522f05d3891feac8340dca4a6dc9e5f53a4",
+    "source": "history/2025-26/Israel - Ligat ha'Al/FC Ashdod.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/hapoel-beer-sheva",
+    "file": "isr/hapoel-beer-sheva.png",
+    "sha256": "f1ce6959508fbd6775e0c51176c8f2bd209e24482ef26e701e3239622798a550",
+    "source": "logos/Israel - Ligat ha'Al/Hapoel Beer Sheva.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/hapoel-haifa",
+    "file": "isr/hapoel-haifa.png",
+    "sha256": "7bd25f24b4ed5ee4bec82c0786673cbf4750906d6d05f7cdfacc86ea2480113c",
+    "source": "logos/Israel - Ligat ha'Al/Hapoel Haifa.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/hapoel-jerusalem",
+    "file": "isr/hapoel-jerusalem.png",
+    "sha256": "9be002386cfc8b739ec51a5e3b8510040831eec4b4944966685a6c8314805149",
+    "source": "logos/Israel - Ligat ha'Al/Hapoel Jerusalem.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/hapoel-petah-tikva",
+    "file": "isr/hapoel-petah-tikva.png",
+    "sha256": "3dc1bd3c841fd6cd448f4bf10033463e95786d809e3c5952f3ac0e09c0cd2b6a",
+    "source": "logos/Israel - Ligat ha'Al/Hapoel Petah Tikva.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/hapoel-ramat-gan",
+    "file": "isr/hapoel-ramat-gan.png",
+    "sha256": "c92ddfbed7b8f3f73dcca0ef786ad64ec95f8dabdb8af910108c74da051836ad",
+    "source": "logos/Israel - Ligat ha'Al/Hapoel Ramat Gan.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/hapoel-tel-aviv",
+    "file": "isr/hapoel-tel-aviv.png",
+    "sha256": "c4d763f4422185ef9f069e489c7017e3fa102a05da3c8a5c586fccf4c0177aeb",
+    "source": "logos/Israel - Ligat ha'Al/Hapoel Tel Aviv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/ihud-bnei-sakhnin",
+    "file": "isr/ihud-bnei-sakhnin.png",
+    "sha256": "25273366f1e33f2e1f1a712e462c766dc81e46140542e3968a52046ca391d42f",
+    "source": "logos/Israel - Ligat ha'Al/Ihud Bnei Sakhnin.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/ironi-kiryat-shmona",
+    "file": "isr/ironi-kiryat-shmona.png",
+    "sha256": "b5e573ede5b39a18b17947d99fd623c8a7e8f2018ca8cc579eaba4cb01da428d",
+    "source": "logos/Israel - Ligat ha'Al/Ironi Kiryat Shmona.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/ironi-tiberias",
+    "file": "isr/ironi-tiberias.png",
+    "sha256": "ba14de1887d15d780941516dff433c83e032f77ea6e4e1d2b7618060e8222a74",
+    "source": "logos/Israel - Ligat ha'Al/Ironi Tiberias.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/maccabi-bnei-reineh",
+    "file": "isr/maccabi-bnei-reineh.png",
+    "sha256": "951e1baed06096ced4452e619eb5bfdb22ee1689d0602c32f9c0c7698aa43996",
+    "source": "history/2025-26/Israel - Ligat ha'Al/Maccabi Bnei Reineh.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/maccabi-haifa",
+    "file": "isr/maccabi-haifa.png",
+    "sha256": "a8709eeeb563ff736a2165b2e42a1ac0ee378c28811cf4321b73312ad7fd72fa",
+    "source": "logos/Israel - Ligat ha'Al/Maccabi Haifa.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/maccabi-netanya",
+    "file": "isr/maccabi-netanya.png",
+    "sha256": "f35499f87fd80a60bc751e7d587725107539c5f17160d3749cc5fbb8da0bd7bd",
+    "source": "logos/Israel - Ligat ha'Al/Maccabi Netanya.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/maccabi-petah-tikva",
+    "file": "isr/maccabi-petah-tikva.png",
+    "sha256": "375ede21b9dd7791add7394f133ddea9ab45478c62429316a43d2e7a173b7e70",
+    "source": "logos/Israel - Ligat ha'Al/Maccabi Petah Tikva.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "isr/maccabi-tel-aviv",
+    "file": "isr/maccabi-tel-aviv.png",
+    "sha256": "7df5c41fa1a539f0898ffe70a5ab2b03822ec384e5421aa82e4f91857a24e84b",
+    "source": "logos/Israel - Ligat ha'Al/Maccabi Tel Aviv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/ac-milan",
+    "file": "ita/ac-milan.png",
+    "sha256": "2dbf7c00965ede1ba39186bfc2d90e90cca069fe1129dc8f41f26b7d60a5f416",
+    "source": "logos/Italy - Serie A/AC Milan.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/ac-monza",
+    "file": "ita/ac-monza.png",
+    "sha256": "bdc83a6328cead062473b161e4318b8e272ad9c664f3183da6c390c86443f8a2",
+    "source": "logos/Italy - Serie A/AC Monza.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/acf-fiorentina",
+    "file": "ita/acf-fiorentina.png",
+    "sha256": "b1c2b9cc12b26e6187dbe761c9cb6c3cd8a07ec88ece0533e847de29f0c3f9e2",
+    "source": "logos/Italy - Serie A/ACF Fiorentina.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/as-roma",
+    "file": "ita/as-roma.png",
+    "sha256": "56b4077591336f465e9aefb0182a0627c2f17eb951559e8a34e7203af80d5d9a",
+    "source": "logos/Italy - Serie A/AS Roma.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/atalanta-bc",
+    "file": "ita/atalanta-bc.png",
+    "sha256": "4c349dfb0de734061a42cbcd220235ede0f28fc3d738aa9312cb0faf692cec15",
+    "source": "logos/Italy - Serie A/Atalanta BC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/bologna-fc-1909",
+    "file": "ita/bologna-fc-1909.png",
+    "sha256": "b467aaf0a4a898996d961e973cbfdf56c6b63fa50f0f973fd19131a6a734a93b",
+    "source": "logos/Italy - Serie A/Bologna FC 1909.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/cagliari-calcio",
+    "file": "ita/cagliari-calcio.png",
+    "sha256": "b22ce1ef7507ac5c325557c441672343a46ae25e98ee14e791e99f601e1709cd",
+    "source": "logos/Italy - Serie A/Cagliari Calcio.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/como-1907",
+    "file": "ita/como-1907.png",
+    "sha256": "2392352fa7e7bbde03e598bbe6e9b527dcecff64b46513dbeaaccdb72d083b61",
+    "source": "logos/Italy - Serie A/Como 1907.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/fc-empoli",
+    "file": "ita/fc-empoli.png",
+    "sha256": "53ed81e473c9cf9241f33250b2f9180ad00f7d4b14bef2eaea4152820f7f37bc",
+    "source": "history/2024-25/Italy - Serie A/FC Empoli.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/frosinone-calcio",
+    "file": "ita/frosinone-calcio.png",
+    "sha256": "2ea743ce8a708e5c15fc9b0c9893787dfaf19ce2f3bec83510bee9342ec0013a",
+    "source": "logos/Italy - Serie A/Frosinone Calcio.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/genoa-cfc",
+    "file": "ita/genoa-cfc.png",
+    "sha256": "9c61641924d84cd845beee535f83ab453f9186a6d4b7200cf5570279f761cd5b",
+    "source": "logos/Italy - Serie A/Genoa CFC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/hellas-verona",
+    "file": "ita/hellas-verona.png",
+    "sha256": "b1181f0441cb6070c3b7417ba5c6fb90a052fdfc0ae99f28d63028e7c827c2a1",
+    "source": "history/2025-26/Italy - Serie A/Hellas Verona.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/inter-milan",
+    "file": "ita/inter-milan.png",
+    "sha256": "0a7c7da7598737572dd20295b7232ef59fc9e2d8d9454534aafef0303bdf5db5",
+    "source": "logos/Italy - Serie A/Inter Milan.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/juventus-fc",
+    "file": "ita/juventus-fc.png",
+    "sha256": "145a255a90898096f04a4152ebc3f9799ce0b676cf0dbcf72037dcdeb9129e17",
+    "source": "logos/Italy - Serie A/Juventus FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/parma-calcio-1913",
+    "file": "ita/parma-calcio-1913.png",
+    "sha256": "a2997db4c885d5656f1a267226a2aa9e567ad836c3b8a184f6b21267c41958b9",
+    "source": "logos/Italy - Serie A/Parma Calcio 1913.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/pisa-sporting-club",
+    "file": "ita/pisa-sporting-club.png",
+    "sha256": "742cb31278fbe7147d936c2978ccc3628b19e71cacde142a731983b8e933300e",
+    "source": "history/2025-26/Italy - Serie A/Pisa Sporting Club.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/spezia-calcio",
+    "file": "ita/spezia-calcio.png",
+    "sha256": "95a1057403283ef95337b0700dd4a382c88de9b4ed109104318dc74aab6d4df5",
+    "source": "history/2022-23/Italy - Serie A/Spezia Calcio.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/ss-lazio",
+    "file": "ita/ss-lazio.png",
+    "sha256": "eb3114c7f704cda4f726d9f6d9840946ef7778cb65eb33e6a4a25ad114bdf94a",
+    "source": "logos/Italy - Serie A/SS Lazio.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/ssc-napoli",
+    "file": "ita/ssc-napoli.png",
+    "sha256": "7382d0fa4e186d4592c8ad9ac6fdc0973ea2f93c431fa65d5c5dbf2f1ab5eec7",
+    "source": "logos/Italy - Serie A/SSC Napoli.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/torino-fc",
+    "file": "ita/torino-fc.png",
+    "sha256": "5f3e8d1fec7fa15e12231d6889b778ad7fc95da9b30d89b2b44103b18fb679bd",
+    "source": "logos/Italy - Serie A/Torino FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/uc-sampdoria",
+    "file": "ita/uc-sampdoria.png",
+    "sha256": "97784064411ace94a7d6bc868416c77936b0f7a8ccc20d0ee4ceac23c1d8c470",
+    "source": "history/2022-23/Italy - Serie A/UC Sampdoria.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/udinese-calcio",
+    "file": "ita/udinese-calcio.png",
+    "sha256": "224904b9168115284cc74aa6c6c4de71ff797eec93718dfe9601fd841d0a4281",
+    "source": "logos/Italy - Serie A/Udinese Calcio.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/us-cremonese",
+    "file": "ita/us-cremonese.png",
+    "sha256": "53642697b6db8181103c9c10fafa19755f25daac7cbe37b837398ab4e21bbf04",
+    "source": "history/2025-26/Italy - Serie A/US Cremonese.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/us-lecce",
+    "file": "ita/us-lecce.png",
+    "sha256": "03a7d871273c0a92acc4f870d1c2ef4d2bff2c0597949cfe17d4befc67a7da6b",
+    "source": "logos/Italy - Serie A/US Lecce.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/us-salernitana-1919",
+    "file": "ita/us-salernitana-1919.png",
+    "sha256": "50f12a9cb5e65db1070e8315bd731ae78a91f66e65c8e1ce20b980e329bbd146",
+    "source": "history/2023-24/Italy - Serie A/US Salernitana 1919.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/us-sassuolo",
+    "file": "ita/us-sassuolo.png",
+    "sha256": "af2818ffebbfc0fd6e024971599df3426991a3d7fa50573539e8a37a9609f5dc",
+    "source": "logos/Italy - Serie A/US Sassuolo.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ita/venezia-fc",
+    "file": "ita/venezia-fc.png",
+    "sha256": "143991066aa669cf5e44bcf339c9216e62af75a0b454e5bd53f76156f5cf8911",
+    "source": "logos/Italy - Serie A/Venezia FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/ado-den-haag",
+    "file": "nld/ado-den-haag.png",
+    "sha256": "3de16c9f2b0b891c7a61c9f27ae6fab8a526ec0d0f17330db7aa2f6515408cbf",
+    "source": "logos/Netherlands - Eredivisie/ADO Den Haag.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/ajax-amsterdam",
+    "file": "nld/ajax-amsterdam.png",
+    "sha256": "c2b64287591709e86fa76e2607c6e39f5d42f97da5dc601cd00574f09f286cfa",
+    "source": "logos/Netherlands - Eredivisie/Ajax Amsterdam.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/almere-city-fc",
+    "file": "nld/almere-city-fc.png",
+    "sha256": "51a278d03371de3bc73a6d4d093ac67ec63d94b38b1d6f1b3b4aecd05e7cbff3",
+    "source": "history/2024-25/Netherlands - Eredivisie/Almere City FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/az-alkmaar",
+    "file": "nld/az-alkmaar.png",
+    "sha256": "59d21066b1657350aa0cd24de31b1d7b30997fae1168be002221a90a9f85dbd6",
+    "source": "logos/Netherlands - Eredivisie/AZ Alkmaar.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/excelsior-rotterdam",
+    "file": "nld/excelsior-rotterdam.png",
+    "sha256": "002fc4dacc278219a46fa7ee428ce4ac94dc1471ca7d73d2cd39241be702f9ad",
+    "source": "logos/Netherlands - Eredivisie/Excelsior Rotterdam.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/fc-emmen",
+    "file": "nld/fc-emmen.png",
+    "sha256": "8f40bbe04de8d355d2008688a820e8178c44dcd8dbc7a2e0e37f9ed79a04e590",
+    "source": "history/2022-23/Netherlands - Eredivisie/FC Emmen.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/fc-groningen",
+    "file": "nld/fc-groningen.png",
+    "sha256": "4a78bc3902578ad7500828be09c5636d9ba85007bc410738c43914ab8ae649e8",
+    "source": "logos/Netherlands - Eredivisie/FC Groningen.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/fc-twente-enschede",
+    "file": "nld/fc-twente-enschede.png",
+    "sha256": "826ec466724481119fcb512ddbf7acc50c7dc35519b9b7d76542257a8e112267",
+    "source": "logos/Netherlands - Eredivisie/FC Twente Enschede.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/fc-utrecht",
+    "file": "nld/fc-utrecht.png",
+    "sha256": "9f031d4d1d87254ced56a10fce0e70fd17ac4c19e5a35b423d37a3ad4f235b02",
+    "source": "logos/Netherlands - Eredivisie/FC Utrecht.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/fc-volendam",
+    "file": "nld/fc-volendam.png",
+    "sha256": "8bdc5ebc5c82be34aaab8f3cf17ef1062aa0f28c77490b182bf0cf11389f30ad",
+    "source": "history/2025-26/Netherlands - Eredivisie/FC Volendam.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/feyenoord-rotterdam",
+    "file": "nld/feyenoord-rotterdam.png",
+    "sha256": "4020fc2032181b069873f44e99d4b67b6f70c6286890ad32e19fb586ad2e6853",
+    "source": "logos/Netherlands - Eredivisie/Feyenoord Rotterdam.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/fortuna-sittard",
+    "file": "nld/fortuna-sittard.png",
+    "sha256": "ad56e58d097219cb741a7261174ad0a8dad81794253204dcda7b574dbf82834b",
+    "source": "logos/Netherlands - Eredivisie/Fortuna Sittard.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/go-ahead-eagles",
+    "file": "nld/go-ahead-eagles.png",
+    "sha256": "3960c123c085f22eb94b89b2b8745d0549681bf1abf50248f9ba67883c14a74b",
+    "source": "logos/Netherlands - Eredivisie/Go Ahead Eagles.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/heracles-almelo",
+    "file": "nld/heracles-almelo.png",
+    "sha256": "dfabf9a7e05194b7a6789c47ce4e3a3e73e892d8c04e4a8988c6d827b7778f0c",
+    "source": "history/2025-26/Netherlands - Eredivisie/Heracles Almelo.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/nac-breda",
+    "file": "nld/nac-breda.png",
+    "sha256": "c332851ebb7fb78c936ba6feb42329ded4205fe804b3327a8a15c43f14f6b83d",
+    "source": "history/2025-26/Netherlands - Eredivisie/NAC Breda.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/nec-nijmegen",
+    "file": "nld/nec-nijmegen.png",
+    "sha256": "4b5e4634d26fb32da6db44c3a3acfb8453436e1e9e0bd2909064b858ae110008",
+    "source": "logos/Netherlands - Eredivisie/NEC Nijmegen.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/pec-zwolle",
+    "file": "nld/pec-zwolle.png",
+    "sha256": "2d6465490ea2c9a93af6132d66070db3dfd3a3ca4364f9178fa00a26ac69cc1d",
+    "source": "logos/Netherlands - Eredivisie/PEC Zwolle.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/psv-eindhoven",
+    "file": "nld/psv-eindhoven.png",
+    "sha256": "6e729830547bd842fc40cd3e12ff15664f7e3fd2bdbbfdd5c94a697273d4ae69",
+    "source": "logos/Netherlands - Eredivisie/PSV Eindhoven.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/rkc-waalwijk",
+    "file": "nld/rkc-waalwijk.png",
+    "sha256": "67882d4899a2166af1be0343a0bc67c130075c928d38b503c13e7e52cc2d2785",
+    "source": "history/2024-25/Netherlands - Eredivisie/RKC Waalwijk.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/sc-cambuur-leeuwarden",
+    "file": "nld/sc-cambuur-leeuwarden.png",
+    "sha256": "04ae4cc8dd21b3514890d0deb92439a43919056489325c2ab2632fb3d2c35a42",
+    "source": "logos/Netherlands - Eredivisie/SC Cambuur Leeuwarden.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/sc-heerenveen",
+    "file": "nld/sc-heerenveen.png",
+    "sha256": "a96c08a700503278c5f636d945b4f513585aea9697d3fc3a9d84df9aa481403e",
+    "source": "logos/Netherlands - Eredivisie/SC Heerenveen.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/sc-telstar",
+    "file": "nld/sc-telstar.png",
+    "sha256": "9a1c79056c337ad082399b84a3391583e4524ad69e2b2ac744dd97fc3aa4165f",
+    "source": "logos/Netherlands - Eredivisie/SC Telstar.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/sparta-rotterdam",
+    "file": "nld/sparta-rotterdam.png",
+    "sha256": "54df9f34ddc900436dee35bd3c9d05e52ce2870e73ac135b4db1873d53bccd82",
+    "source": "logos/Netherlands - Eredivisie/Sparta Rotterdam.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/vitesse-arnhem",
+    "file": "nld/vitesse-arnhem.png",
+    "sha256": "23a4febbb0eca8e1299321eacd5ac55ada7e849614d882f2626b687b6351580d",
+    "source": "history/2023-24/Netherlands - Eredivisie/Vitesse Arnhem.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nld/willem-ii-tilburg",
+    "file": "nld/willem-ii-tilburg.png",
+    "sha256": "90db4fb31b8576c15edaf76323296dacb5f230f551f79babf16b91110bfa3084",
+    "source": "logos/Netherlands - Eredivisie/Willem II Tilburg.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/aalesunds-fk",
+    "file": "nor/aalesunds-fk.png",
+    "sha256": "1d05724017ae7d7645e945306e229f3d4e6bafa25770bf8bbe100aab9069572c",
+    "source": "logos/Norway - Eliteserien/Aalesunds FK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/bryne-fk",
+    "file": "nor/bryne-fk.png",
+    "sha256": "ce2982b284c78b70533eaaaad4f7fd227705640a7545cce94df351dbb4ab2eb0",
+    "source": "history/2025-26/Norway - Eliteserien/Bryne FK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/fk-bodo-glimt",
+    "file": "nor/fk-bodo-glimt.png",
+    "sha256": "44b88f1e57ab1aa90c1207a623897b6f6974a56287bd7b8f3fae13b77d3cb266",
+    "source": "logos/Norway - Eliteserien/FK BodøGlimt.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/fk-haugesund",
+    "file": "nor/fk-haugesund.png",
+    "sha256": "b28a8676ba08ef0078300609830a235e8c95ac3b7232032d0f070dd2784f56ca",
+    "source": "history/2025-26/Norway - Eliteserien/FK Haugesund.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/fredrikstad-fk",
+    "file": "nor/fredrikstad-fk.png",
+    "sha256": "97d9c069e6e2531416ef44935aebe1b1676cc7b05cd4dff48d327845cae654cf",
+    "source": "logos/Norway - Eliteserien/Fredrikstad FK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/hamarkameratene",
+    "file": "nor/hamarkameratene.png",
+    "sha256": "5f3a32afac11810ff0ab2ae1308dbb6bb966011e4a05bf7217e62495de5820d9",
+    "source": "logos/Norway - Eliteserien/Hamarkameratene.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/ik-start",
+    "file": "nor/ik-start.png",
+    "sha256": "fc1e8bcba189793f15ff62a8db8cc9da1f1dc1a24fcbba66b3b1646c413b6f50",
+    "source": "logos/Norway - Eliteserien/IK Start.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/kfum-kameratene-oslo",
+    "file": "nor/kfum-kameratene-oslo.png",
+    "sha256": "c2d76b282b99071c8125ce6b6557f7c442dd087903936ffe8cdbea3b826d3002",
+    "source": "logos/Norway - Eliteserien/KFUM-Kameratene Oslo.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/kristiansund-bk",
+    "file": "nor/kristiansund-bk.png",
+    "sha256": "a44585badfed8bdfe2f3ead6c2017782003f2e19e01a37e3d3a3a4f46c749053",
+    "source": "logos/Norway - Eliteserien/Kristiansund BK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/lillestrom-sk",
+    "file": "nor/lillestrom-sk.png",
+    "sha256": "ce2f9249262a547295584a638bb3bcc9e2eeb28dde759fb718a8738111beef97",
+    "source": "logos/Norway - Eliteserien/Lillestrøm SK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/molde-fk",
+    "file": "nor/molde-fk.png",
+    "sha256": "0817c207fdb9e53f2a9f9c2ad2f45cf781a05c76e98b09519a3b0f9b48ad587f",
+    "source": "logos/Norway - Eliteserien/Molde FK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/odds-bk",
+    "file": "nor/odds-bk.png",
+    "sha256": "e3d4ee4111caddb5f5e555cb8036115a372eeb181586d75dd9099e86493f09c2",
+    "source": "history/2024-25/Norway - Eliteserien/Odds BK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/rosenborg-bk",
+    "file": "nor/rosenborg-bk.png",
+    "sha256": "5d24a99cad29ef346af28053a0f13a08db3b6c0d111e195e96081db3238c7a3d",
+    "source": "logos/Norway - Eliteserien/Rosenborg BK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/sandefjord-fotball",
+    "file": "nor/sandefjord-fotball.png",
+    "sha256": "46b4c3a0aeea3441334e34161d7cfd2df8ba9e3a6af171e06ba34ee0d559326e",
+    "source": "logos/Norway - Eliteserien/Sandefjord Fotball.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/sarpsborg-08-ff",
+    "file": "nor/sarpsborg-08-ff.png",
+    "sha256": "1d4253fc73f18622e3d92393a045dd51bd5e2a4ef8cd9ae6e6f21a983ca3b46a",
+    "source": "logos/Norway - Eliteserien/Sarpsborg 08 FF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/sk-brann",
+    "file": "nor/sk-brann.png",
+    "sha256": "de42cc89095b3e504c9402374a71959ebf7ebf0579bb9440aadc317c65474b34",
+    "source": "logos/Norway - Eliteserien/SK Brann.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/stromsgodset-if",
+    "file": "nor/stromsgodset-if.png",
+    "sha256": "aebb5e888b8160e1e21794f4e930fa1833d61961587ff6c83ed2b26437652d56",
+    "source": "history/2025-26/Norway - Eliteserien/Strømsgodset IF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/tromso-il",
+    "file": "nor/tromso-il.png",
+    "sha256": "84c21b8e8e1069f525cde8dab4e70693be046118ecdf3c7076d0cac5e4d72ed7",
+    "source": "logos/Norway - Eliteserien/Tromsø IL.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/valerenga-fotball-elite",
+    "file": "nor/valerenga-fotball-elite.png",
+    "sha256": "30f08548774b64a7f09d971b8265832e55a60af7d925cf8710fe32aa0d769aa6",
+    "source": "logos/Norway - Eliteserien/Vålerenga Fotball Elite.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "nor/viking-fk",
+    "file": "nor/viking-fk.png",
+    "sha256": "bed041ee81f81fe531b1696804206ed68a81be99b6d6f7bd92b926ee6427b418",
+    "source": "logos/Norway - Eliteserien/Viking FK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/arka-gdynia",
+    "file": "pol/arka-gdynia.png",
+    "sha256": "5d738d711a82ecddcf81c3efb95a4209c89d74d25d7c033fa4ec6531bac0a069",
+    "source": "history/2025-26/Poland - PKO BP Ekstraklasa/Arka Gdynia.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/bruk-bet-termalica-nieciecza",
+    "file": "pol/bruk-bet-termalica-nieciecza.png",
+    "sha256": "7dc069a7551f6e3212e006efd33f8548d46c037f7d05ce843e190b09a1548c9d",
+    "source": "history/2025-26/Poland - PKO BP Ekstraklasa/Bruk-Bet Termalica Nieciecza.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/cracovia",
+    "file": "pol/cracovia.png",
+    "sha256": "2bb60df93a8d1874e52ba5f93fb6b4c3ac79d138842f95fc989d3b4bf9652982",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Cracovia.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/gks-katowice",
+    "file": "pol/gks-katowice.png",
+    "sha256": "01e8630fa83096da0ba28da89e189da67636a450033a3b9249b1b7365f81dfe1",
+    "source": "logos/Poland - PKO BP Ekstraklasa/GKS Katowice.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/gornik-leczna",
+    "file": "pol/gornik-leczna.png",
+    "sha256": "bf583b65253fea433b88f0e0ea243be7bb19dde7a68c163b80663b4ddd7d033c",
+    "source": "history/2021-22/Poland - PKO BP Ekstraklasa/Gornik Leczna.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/gornik-zabrze",
+    "file": "pol/gornik-zabrze.png",
+    "sha256": "22ffb93e31cfe81d3446159c0e0f59184bbb2c2c40290634603e191a787ba12e",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Górnik Zabrze.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/jagiellonia-bialystok",
+    "file": "pol/jagiellonia-bialystok.png",
+    "sha256": "bd232246f7efcde8a2792a9405e09d34f8c576137c9074f9262b45c7adc7b9cc",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Jagiellonia Bialystok.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/korona-kielce",
+    "file": "pol/korona-kielce.png",
+    "sha256": "6b01d0ebac7b178e31c34d2a790832b58fe438c459636bf8d009397adeff49d9",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Korona Kielce.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/lech-poznan",
+    "file": "pol/lech-poznan.png",
+    "sha256": "594809d554547293526109251d1a831b00933ef9b63fff4824c55bfd50c5c8b4",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Lech Poznan.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/lechia-gdansk",
+    "file": "pol/lechia-gdansk.png",
+    "sha256": "d5f6f6d93420f0d4fb5edf6e814f0128aed20f2557bd1d6a94594121eed3e204",
+    "source": "history/2025-26/Poland - PKO BP Ekstraklasa/Lechia Gdansk.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/legia-warszawa",
+    "file": "pol/legia-warszawa.png",
+    "sha256": "f7d78ae8c502046874f059a4ce99fce32f9ac96ff1079415c615300f427ef728",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Legia Warszawa.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/lks-lodz",
+    "file": "pol/lks-lodz.png",
+    "sha256": "857217c2e9f4cadbc70be8e6407360f5ab1c51554e33e38707a586dc8bcc7b90",
+    "source": "history/2023-24/Poland - PKO BP Ekstraklasa/LKS Lodz.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/miedz-legnica",
+    "file": "pol/miedz-legnica.png",
+    "sha256": "4358cf5b423ded7fd0fef10712c6988c508e2fc2fd5705f810cef577367de905",
+    "source": "history/2022-23/Poland - PKO BP Ekstraklasa/Miedz Legnica.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/motor-lublin",
+    "file": "pol/motor-lublin.png",
+    "sha256": "aa7dc0a643b67f2ba06fa0920ed4d17effd5e0b84737972f0a450d6771442576",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Motor Lublin.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/piast-gliwice",
+    "file": "pol/piast-gliwice.png",
+    "sha256": "63fab9712031b450d4dd2dd7fb3f96cffce9e1f1b53dd2627cb8172f4730d4ad",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Piast Gliwice.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/pogon-szczecin",
+    "file": "pol/pogon-szczecin.png",
+    "sha256": "5f53b92746bbd52dd028c1c78a2b05d51e3cd5e2c2d4b5ac0f0251e57c52e2f6",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Pogon Szczecin.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/puszcza-niepolomice",
+    "file": "pol/puszcza-niepolomice.png",
+    "sha256": "20d0eae43a6cac2ecf3529e714ef9c7f5fde91deff3ac68e9e6bdd25ebdf8e8c",
+    "source": "history/2024-25/Poland - PKO BP Ekstraklasa/Puszcza Niepolomice.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/radomiak-radom",
+    "file": "pol/radomiak-radom.png",
+    "sha256": "7c07ec9863bbbc59635c0f8f724f05bfdc9175d9fdec03cd671928cb695782b1",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Radomiak Radom.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/rakow-czestochowa",
+    "file": "pol/rakow-czestochowa.png",
+    "sha256": "087b17b773c3e1750e9e9f5d44f271eaa960fd556687d73a6d03df178c62c8b7",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Raków Częstochowa.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/ruch-chorzow",
+    "file": "pol/ruch-chorzow.png",
+    "sha256": "363b20154a5ce13174cda4c38bf40a31a68de8f998bff18a15fb4864c7a18396",
+    "source": "history/2023-24/Poland - PKO BP Ekstraklasa/Ruch Chorzow.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/slask-wroclaw",
+    "file": "pol/slask-wroclaw.png",
+    "sha256": "335b828f5a14b10718cb73ed778100c85ed59dfbfcd90c5633f6d314910211f2",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Slask Wroclaw.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/stal-mielec",
+    "file": "pol/stal-mielec.png",
+    "sha256": "319eabeb32303ef8d9dbbe7061620bcb908d0438eb8656fe022e6ac359128a5f",
+    "source": "history/2024-25/Poland - PKO BP Ekstraklasa/Stal Mielec.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/warta-poznan",
+    "file": "pol/warta-poznan.png",
+    "sha256": "0655ccba3fbe096d85bce1d9daf17ac789d5c64736fc3c9d298a4254236b7b6e",
+    "source": "history/2023-24/Poland - PKO BP Ekstraklasa/Warta Poznan.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/widzew-lodz",
+    "file": "pol/widzew-lodz.png",
+    "sha256": "97b304b02acd63ca243d146d9404f5efeef1134da0208fbaee35587b51068fd0",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Widzew Lodz.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/wieczysta-krakow",
+    "file": "pol/wieczysta-krakow.png",
+    "sha256": "2fcc9af9150800551b331fa5b64acda09b863f2d2ceb3148c05e3409d01fde24",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Wieczysta Krakow.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/wisla-krakow",
+    "file": "pol/wisla-krakow.png",
+    "sha256": "d7ccd67f5463869e2af35bc1e76b8441d085e3fe46b95e25a0f6e71df8876e55",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Wisla Kraków.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/wisla-plock",
+    "file": "pol/wisla-plock.png",
+    "sha256": "4bc24de6907c2cfb1847d984a6d8eba5d2fd681d4dc4973c3e6a5c6490fc4055",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Wisla Plock.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "pol/zaglebie-lubin",
+    "file": "pol/zaglebie-lubin.png",
+    "sha256": "cd2ed4196865e63b75c6ce79faea9336de7296ce1d43c0536efb5318d786db35",
+    "source": "logos/Poland - PKO BP Ekstraklasa/Zaglebie Lubin.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/academico-viseu-fc",
+    "file": "prt/academico-viseu-fc.png",
+    "sha256": "3c72f4b6e521487df8adae052f7895ab5ceabb5e51bfd361ef814173be014c76",
+    "source": "logos/Portugal - Liga Portugal/Académico Viseu FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/avs-futebol",
+    "file": "prt/avs-futebol.png",
+    "sha256": "810ce3961ff17da3cbd3ad329f9c4ca7c1a2145d6724b36abbd3a86fafaa4506",
+    "source": "history/2025-26/Portugal - Liga Portugal/Avs Futebol.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/belenenses-sad",
+    "file": "prt/belenenses-sad.png",
+    "sha256": "633b1480d12a18abcc21befc854e828847555baa41596726829562a54ab5a43e",
+    "source": "history/2021-22/Portugal - Liga Portugal/Belenenses SAD.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/boavista-fc",
+    "file": "prt/boavista-fc.png",
+    "sha256": "da50c5b3fd8b1d8e445c6caec7e71f1f0f41d6ecb2a3c1e300882760623317c9",
+    "source": "history/2024-25/Portugal - Liga Portugal/Boavista FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/casa-pia-ac",
+    "file": "prt/casa-pia-ac.png",
+    "sha256": "872998cf7303f2f2aefca8deb0706bb5913cbf737dc5f80d126a52fb815acd58",
+    "source": "logos/Portugal - Liga Portugal/Casa Pia AC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/cd-nacional",
+    "file": "prt/cd-nacional.png",
+    "sha256": "b70b15f94d57c8cb92004d012a6d6fe7d43e3bedca4bce3687106b43f355f817",
+    "source": "logos/Portugal - Liga Portugal/CD Nacional.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/cd-santa-clara",
+    "file": "prt/cd-santa-clara.png",
+    "sha256": "230c13f37c5ff0c3172586b083787b90d5a1fe78c251f691a40b455bf7a64326",
+    "source": "logos/Portugal - Liga Portugal/CD Santa Clara.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/cd-tondela",
+    "file": "prt/cd-tondela.png",
+    "sha256": "e3e02d65488e91344ed7ef1417fcea44b5b6cbae3a5e09746f278801ff4043f2",
+    "source": "history/2025-26/Portugal - Liga Portugal/CD Tondela.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/cf-estrela-amadora",
+    "file": "prt/cf-estrela-amadora.png",
+    "sha256": "42afb9a74be7019d56999ccf778a14a0ec242b8f1afcfa7482b8d8fcf865d9e4",
+    "source": "logos/Portugal - Liga Portugal/CF Estrela Amadora.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/cs-maritimo",
+    "file": "prt/cs-maritimo.png",
+    "sha256": "d6026bb86f37fbec6a58a14415a32c213f4e92e12bcd0365ba3ee297ce6b92b5",
+    "source": "logos/Portugal - Liga Portugal/CS Marítimo.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/fc-alverca",
+    "file": "prt/fc-alverca.png",
+    "sha256": "6d1b92f1342655182789c52bcb25650e598763b4ca04075de5ed6a786a23a140",
+    "source": "logos/Portugal - Liga Portugal/FC Alverca.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/fc-arouca",
+    "file": "prt/fc-arouca.png",
+    "sha256": "9fd46ad19d44bad75a8e9e80576f98cf53e7702f985cca5ca94361583dc7684d",
+    "source": "logos/Portugal - Liga Portugal/FC Arouca.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/fc-famalicao",
+    "file": "prt/fc-famalicao.png",
+    "sha256": "7d49edf734790608408d8d337d7c207bfd27273d8ef2fff89fe55a87b62ab428",
+    "source": "logos/Portugal - Liga Portugal/FC Famalicão.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/fc-pacos-de-ferreira",
+    "file": "prt/fc-pacos-de-ferreira.png",
+    "sha256": "3bbea0a8e90bf6d71fff5475fd51ea604b593dfd9c1e838787c9f507e3abd88b",
+    "source": "history/2022-23/Portugal - Liga Portugal/FC Paços de Ferreira.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/fc-porto",
+    "file": "prt/fc-porto.png",
+    "sha256": "af1d7d38e7615127573031cfbe1b30c564218c8e4c3829c1d02489f018af3a41",
+    "source": "logos/Portugal - Liga Portugal/FC Porto.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/fc-vizela",
+    "file": "prt/fc-vizela.png",
+    "sha256": "e38585f848a8e761e08db37ae021bc55fdd4b5f8345fdf9f6ee8ea372c5efd23",
+    "source": "history/2023-24/Portugal - Liga Portugal/FC Vizela.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/gd-chaves",
+    "file": "prt/gd-chaves.png",
+    "sha256": "9e93ba5e6902a8a3f513aee966e8022c71009d075e0f7459b8a1e12ab5755136",
+    "source": "history/2023-24/Portugal - Liga Portugal/GD Chaves.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/gd-estoril-praia",
+    "file": "prt/gd-estoril-praia.png",
+    "sha256": "f80bac9215a0bdbfbdb15dab2900cd935e49918d95907313763c5289b32fb570",
+    "source": "logos/Portugal - Liga Portugal/GD Estoril Praia.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/gil-vicente-fc",
+    "file": "prt/gil-vicente-fc.png",
+    "sha256": "0ebcd278f3e0a42feb44c0ebbbf1b5c4128ba8b98ea5ece8a4cc20903e5d7929",
+    "source": "logos/Portugal - Liga Portugal/Gil Vicente FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/moreirense-fc",
+    "file": "prt/moreirense-fc.png",
+    "sha256": "b3f836035899281d9c5257b1c19adf54474c34f05b046103a978771a237bab2d",
+    "source": "logos/Portugal - Liga Portugal/Moreirense FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/portimonense-sc",
+    "file": "prt/portimonense-sc.png",
+    "sha256": "86dfe4e604c6d171d89bb3fe00c3884c4030d612d6f14d5be907f395a6fbdfcd",
+    "source": "history/2023-24/Portugal - Liga Portugal/Portimonense SC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/rio-ave-fc",
+    "file": "prt/rio-ave-fc.png",
+    "sha256": "b66904cafffc0be012f4ded21b3e416ef7c9ccf8bc939fbbd57f57689b5950a4",
+    "source": "logos/Portugal - Liga Portugal/Rio Ave FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/sc-braga",
+    "file": "prt/sc-braga.png",
+    "sha256": "bf8b2fbb4a5985b6b5babb805df8e211494a33fc815110a50147f75cbfa76b9a",
+    "source": "logos/Portugal - Liga Portugal/SC Braga.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/sc-farense",
+    "file": "prt/sc-farense.png",
+    "sha256": "4f89ebcd6bdb42dbdfc2a04ab3c7258a87e36000b6abe97b125f0094ab402985",
+    "source": "history/2024-25/Portugal - Liga Portugal/SC Farense.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/sl-benfica",
+    "file": "prt/sl-benfica.png",
+    "sha256": "b2a3a18b904b69eb41b0235b480e4bf10fe0e701570233f80da91caa3bdc3664",
+    "source": "logos/Portugal - Liga Portugal/SL Benfica.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/sporting-cp",
+    "file": "prt/sporting-cp.png",
+    "sha256": "019eb62f7d28cf96366dbd5dffd0a7827d4c477098b064a5bbd75d7a1c99e56a",
+    "source": "logos/Portugal - Liga Portugal/Sporting CP.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "prt/vitoria-guimaraes-sc",
+    "file": "prt/vitoria-guimaraes-sc.png",
+    "sha256": "484325f4575ec215b36e7d78b8ac951ddceb0fc5800c52556ec5cd0a9ae87cc9",
+    "source": "logos/Portugal - Liga Portugal/Vitória Guimarães SC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/acsc-fc-arges",
+    "file": "rou/acsc-fc-arges.png",
+    "sha256": "28844520f5da210bf2837f36d39e217c980b387905339a1ad169375321e7c11e",
+    "source": "logos/Romania - SuperLiga/ACSC FC Arges.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/acsm-politehnica-iasi",
+    "file": "rou/acsm-politehnica-iasi.png",
+    "sha256": "5ff29483511be556ae660a3bd62d75c70dd1b7cfeb4655c3aeadf65dfd06d92c",
+    "source": "history/2024-25/Romania - SuperLiga/ACSM Politehnica Iasi.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/afc-unirea-04-slobozia",
+    "file": "rou/afc-unirea-04-slobozia.png",
+    "sha256": "1f0f145adbaae4cb91c0509775eaff7810eba3ad90810c702cae5077a8f0ae28",
+    "source": "history/2025-26/Romania - SuperLiga/AFC Unirea 04 Slobozia.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/cfr-cluj",
+    "file": "rou/cfr-cluj.png",
+    "sha256": "7ad09311735a016b71edbf3840d383e8576e762f6064612676f1775a9160ec84",
+    "source": "logos/Romania - SuperLiga/CFR Cluj.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/corvinul-hunedoara",
+    "file": "rou/corvinul-hunedoara.png",
+    "sha256": "59a7586c3788456ab64ce64e011334b785dfeea953882ded62010595f9a629b8",
+    "source": "logos/Romania - SuperLiga/Corvinul Hunedoara.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/fc-botosani",
+    "file": "rou/fc-botosani.png",
+    "sha256": "388243972fab99edf18a7b074d6387f0ea925742a2bf94d73b8349a887e074ea",
+    "source": "logos/Romania - SuperLiga/FC Botosani.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/fc-buzau",
+    "file": "rou/fc-buzau.png",
+    "sha256": "076dd4cc9be60bc2798ac18a0d5b71608b920ace756cd07c5d13f7b98d5d23d7",
+    "source": "history/2024-25/Romania - SuperLiga/FC Buzău.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/fc-dinamo-1948",
+    "file": "rou/fc-dinamo-1948.png",
+    "sha256": "10245550f447c9abe29e988f833ea27ac51d0adbea91fd106ca19eee6269db1c",
+    "source": "logos/Romania - SuperLiga/FC Dinamo 1948.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/fc-hermannstadt",
+    "file": "rou/fc-hermannstadt.png",
+    "sha256": "7cccf8ce0c928efbe4df1073e18deaa9c36f8a3b6dbb3e1b3676392df6ddb9d0",
+    "source": "history/2025-26/Romania - SuperLiga/FC Hermannstadt.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/fc-metaloglobus-bucharest",
+    "file": "rou/fc-metaloglobus-bucharest.png",
+    "sha256": "d38ba68adc67a8ba8c6402f13f4228cd48f5e0dbb6154978b696c6af32fca20d",
+    "source": "history/2025-26/Romania - SuperLiga/FC Metaloglobus Bucharest.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/fc-rapid-1923",
+    "file": "rou/fc-rapid-1923.png",
+    "sha256": "cbff8cbf0852613f3c14b450dd26b2e0b56c692a261311a96538638be2555de8",
+    "source": "logos/Romania - SuperLiga/FC Rapid 1923.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/fc-universitatea-cluj",
+    "file": "rou/fc-universitatea-cluj.png",
+    "sha256": "9c0f07932dc50cb5050f1eed6800c843e7aaf9be268ece5dd352e3ba9d66d4aa",
+    "source": "logos/Romania - SuperLiga/FC Universitatea Cluj.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/fc-voluntari",
+    "file": "rou/fc-voluntari.png",
+    "sha256": "0d985a2f5d7153f3f62fce7a2c68653d4ac48d207d01672b3260af615bc440f0",
+    "source": "logos/Romania - SuperLiga/FC Voluntari.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/fcsb",
+    "file": "rou/fcsb.png",
+    "sha256": "142c96ecb746b40c617887bb8edd9db116e93667bc40e37a79a322168f440bb6",
+    "source": "logos/Romania - SuperLiga/FCSB.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/fcv-farul-constanta",
+    "file": "rou/fcv-farul-constanta.png",
+    "sha256": "4b8dc55c8cc97391b0131bcd5a413175db3b36eae8230307fab4123492a49664",
+    "source": "logos/Romania - SuperLiga/FCV Farul Constanta.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/fk-csikszereda-miercurea-ciuc",
+    "file": "rou/fk-csikszereda-miercurea-ciuc.png",
+    "sha256": "6b69e0457dd58cff05d339ae711dd94f0126a526c7eac065b1036f330f822a9a",
+    "source": "logos/Romania - SuperLiga/FK Csikszereda Miercurea Ciuc.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/petrolul-ploiesti",
+    "file": "rou/petrolul-ploiesti.png",
+    "sha256": "4ce5037a8684d6f2eb1876c817b9ff37a5e38aa2c7dcf42d6332eef8bd7c4996",
+    "source": "logos/Romania - SuperLiga/Petrolul Ploiesti.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/sc-otelul-galati",
+    "file": "rou/sc-otelul-galati.png",
+    "sha256": "c9392af799424277d754e26053cd634eea613e1f786ac4ec048042d117bebf23",
+    "source": "logos/Romania - SuperLiga/SC Otelul Galati.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/sepsi-osk-sf-gheorghe",
+    "file": "rou/sepsi-osk-sf-gheorghe.png",
+    "sha256": "18cdc4cbdd21ac96881f69956f32c1475819dd47b4ca744188ab4869ca3755ee",
+    "source": "logos/Romania - SuperLiga/Sepsi OSK Sf. Gheorghe.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/universitatea-craiova",
+    "file": "rou/universitatea-craiova.png",
+    "sha256": "0312d871201c48d8bbaa15f5c6765db18adb8d1b062239b464773c8fb4afabe8",
+    "source": "logos/Romania - SuperLiga/Universitatea Craiova.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rou/uta-arad",
+    "file": "rou/uta-arad.png",
+    "sha256": "956035a25a9e45bfda156aea5448f01215e59d62c59ad1eaacb808452d60d178",
+    "source": "logos/Romania - SuperLiga/UTA Arad.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/akhmat-grozny",
+    "file": "rus/akhmat-grozny.png",
+    "sha256": "774d0c1e6288fd67e90f6e158153b48dd84c74db12c37b680f5e72bee9f2724b",
+    "source": "logos/Russia - Premier Liga/Akhmat Grozny.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/akron-tolyatti",
+    "file": "rus/akron-tolyatti.png",
+    "sha256": "81ea35c63abdfedbced39cdb5c9f9ca3f8cfcdc62726ad677decca80a2b5c64b",
+    "source": "logos/Russia - Premier Liga/Akron Tolyatti.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/arsenal-tula",
+    "file": "rus/arsenal-tula.png",
+    "sha256": "926633f7c4c511715c63dd9a21ce96de72b8a425f5da08405d92973113468df8",
+    "source": "history/2021-22/Russia - Premier Liga/Arsenal Tula.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/baltika-kaliningrad",
+    "file": "rus/baltika-kaliningrad.png",
+    "sha256": "816ce22b41adcf30ca22ce53c1a998a1aad7107bf5f6aa51a32e9cd47a6624ce",
+    "source": "logos/Russia - Premier Liga/Baltika Kaliningrad.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/cska-moscow",
+    "file": "rus/cska-moscow.png",
+    "sha256": "8d6219cf514c4e486090783672df94e467b6242414fd329cfd46f0d93fd2f15a",
+    "source": "logos/Russia - Premier Liga/CSKA Moscow.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/dinamo-makhachkala",
+    "file": "rus/dinamo-makhachkala.png",
+    "sha256": "ad7a1c92f00e1e89bd57087e743b0ddf13971e28379f0fdada83c3247fbf1adb",
+    "source": "logos/Russia - Premier Liga/Dinamo Makhachkala.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/dynamo-moscow",
+    "file": "rus/dynamo-moscow.png",
+    "sha256": "0f982dd9d2a7bcd5672ab49efe5628598c4e2a65cb69b602435272258c9a81f2",
+    "source": "logos/Russia - Premier Liga/Dynamo Moscow.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/fakel-voronezh",
+    "file": "rus/fakel-voronezh.png",
+    "sha256": "db9b03974fe41e65d424729b7a0736fe3a4dd4d4a16f33395ee01e236d53a9b2",
+    "source": "logos/Russia - Premier Liga/Fakel Voronezh.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/fc-khimki",
+    "file": "rus/fc-khimki.png",
+    "sha256": "884e7219af0f2f3716dadfe3aeb126cfb6c3ad25266d7ea7adf28d14c47a00a1",
+    "source": "history/2024-25/Russia - Premier Liga/FC Khimki.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/fc-krasnodar",
+    "file": "rus/fc-krasnodar.png",
+    "sha256": "268b03f553549c43422c77c2025369d9cc1c1c160df8b4ddd716fe72eae9d789",
+    "source": "logos/Russia - Premier Liga/FC Krasnodar.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/fc-orenburg",
+    "file": "rus/fc-orenburg.png",
+    "sha256": "6f2fded9f97142ac00c32cc92893fc395096201fa3cf559d1f5fbf9bb78d1475",
+    "source": "logos/Russia - Premier Liga/FC Orenburg.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/fc-pari-nizhniy-novgorod",
+    "file": "rus/fc-pari-nizhniy-novgorod.png",
+    "sha256": "14e4414e5cf2f1e31571dcb38c11272fbc10c81f537de3da770b96abdc57fc9d",
+    "source": "history/2025-26/Russia - Premier Liga/FC Pari Nizhniy Novgorod.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/fc-rostov",
+    "file": "rus/fc-rostov.png",
+    "sha256": "56413d81da89cb23cd96e3f2779a1c8608d0555879d97dad49f6d658102bfba6",
+    "source": "logos/Russia - Premier Liga/FC Rostov.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/fc-sochi",
+    "file": "rus/fc-sochi.png",
+    "sha256": "cfff5f4bf51a6fc8b9dc86cc80a85b0b544189276b484b694e616387d2697514",
+    "source": "history/2025-26/Russia - Premier Liga/FC Sochi.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/krylya-sovetov-samara",
+    "file": "rus/krylya-sovetov-samara.png",
+    "sha256": "252a6a8860c8aface6ddf73b141fd9f686a27f43cbe69dad6b50aeb490f97883",
+    "source": "logos/Russia - Premier Liga/Krylya Sovetov Samara.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/lokomotiv-moscow",
+    "file": "rus/lokomotiv-moscow.png",
+    "sha256": "19be89105cadff4bb73fd9bdc100485e3a3441ad21900b693f1d44a41848f7a8",
+    "source": "logos/Russia - Premier Liga/Lokomotiv Moscow.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/rodina-moscow",
+    "file": "rus/rodina-moscow.png",
+    "sha256": "aa43ad58d423f16479b6e02af5767310ba9fb7267f9c7e61a3464c27c6718dfc",
+    "source": "logos/Russia - Premier Liga/Rodina Moscow.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/rubin-kazan",
+    "file": "rus/rubin-kazan.png",
+    "sha256": "2a931d59cd954980861f1fc3e2bcca66fa235b6ff89e0aac93221fddb30d728c",
+    "source": "logos/Russia - Premier Liga/Rubin Kazan.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/spartak-moscow",
+    "file": "rus/spartak-moscow.png",
+    "sha256": "300a1b270636747a25f0dfae2b60756ec9089df98f6b7c32b3631b782c0bf6e9",
+    "source": "logos/Russia - Premier Liga/Spartak Moscow.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/torpedo-moscow",
+    "file": "rus/torpedo-moscow.png",
+    "sha256": "179c713cfa86c0f14507dc562102795acd588585372d6349eb478bfa3877546a",
+    "source": "history/2025-26/Russia - Premier Liga/Torpedo Moscow.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/ufa",
+    "file": "rus/ufa.png",
+    "sha256": "009dda12ac4b1184788281730dbdf46b38bb15485ec57e8abcb8d8ce199acb95",
+    "source": "history/2021-22/Russia - Premier Liga/Ufa.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/ural-yekaterinburg",
+    "file": "rus/ural-yekaterinburg.png",
+    "sha256": "6ba764a12826a2f7822e682447396c2b68f95516c3be2f62fe90887b4f15d05b",
+    "source": "history/2023-24/Russia - Premier Liga/Ural Yekaterinburg.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "rus/zenit-st-petersburg",
+    "file": "rus/zenit-st-petersburg.png",
+    "sha256": "923c4b57b8db27b6b00eb4637392ff6ca5915b12303c0e60c5091774657c7672",
+    "source": "logos/Russia - Premier Liga/Zenit St. Petersburg.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/aberdeen-fc",
+    "file": "sco/aberdeen-fc.png",
+    "sha256": "a5e083da9513c8e9bf357c7b470f9afaa5b6f0800041f720ef20057c75f180e8",
+    "source": "logos/Scotland - Scottish Premiership/Aberdeen FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/celtic-fc",
+    "file": "sco/celtic-fc.png",
+    "sha256": "c817daa24e843f6d1d3c5fa24021d143989c62fc75569641fd03ae74828f7440",
+    "source": "logos/Scotland - Scottish Premiership/Celtic FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/dundee-fc",
+    "file": "sco/dundee-fc.png",
+    "sha256": "4cda35718bc023305f880e439cab1537a48eadb5518ba8bd602dd151ee15672f",
+    "source": "logos/Scotland - Scottish Premiership/Dundee FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/dundee-united-fc",
+    "file": "sco/dundee-united-fc.png",
+    "sha256": "6e6e9def6d0976f3049b29a01a21cc1412ab5ed7cbafe29809e6dba6e0ea4190",
+    "source": "logos/Scotland - Scottish Premiership/Dundee United FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/falkirk-fc",
+    "file": "sco/falkirk-fc.png",
+    "sha256": "8b36e8e35ba788e7b8c076c5ba14424ac7bda0db732f4dcec90bb679f0d551c7",
+    "source": "logos/Scotland - Scottish Premiership/Falkirk FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/heart-of-midlothian-fc",
+    "file": "sco/heart-of-midlothian-fc.png",
+    "sha256": "74cc019f43749226dfbab05dae0a792eaf5398118631d703728af119e7102e0f",
+    "source": "logos/Scotland - Scottish Premiership/Heart of Midlothian FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/hibernian-fc",
+    "file": "sco/hibernian-fc.png",
+    "sha256": "13eaca1ba07dbebe18e4f67faf901c6e0ded17b0adb315c19d5718f36fcc1ace",
+    "source": "logos/Scotland - Scottish Premiership/Hibernian FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/kilmarnock-fc",
+    "file": "sco/kilmarnock-fc.png",
+    "sha256": "c50bf7374266aab410b733590fc02f18a3f5ae852a499d6af1babceaa8cff070",
+    "source": "logos/Scotland - Scottish Premiership/Kilmarnock FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/livingston-fc",
+    "file": "sco/livingston-fc.png",
+    "sha256": "88c871d66d58f6a2a2d4e15eb24ff791276994de7217a4570666400bd9408cb2",
+    "source": "history/2025-26/Scotland - Scottish Premiership/Livingston FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/motherwell-fc",
+    "file": "sco/motherwell-fc.png",
+    "sha256": "b991f7dda32f212b99897955656b6dbcc71dafd1bdd5d82852990c0dda7ed68d",
+    "source": "logos/Scotland - Scottish Premiership/Motherwell FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/rangers-fc",
+    "file": "sco/rangers-fc.png",
+    "sha256": "c31ce18a6a58cc3b3852b1c9ab0eb9194ef46af6173a86f04750f329ff36a99d",
+    "source": "logos/Scotland - Scottish Premiership/Rangers FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/ross-county-fc",
+    "file": "sco/ross-county-fc.png",
+    "sha256": "7df7153ef821da6f86351883c0103155e94e204bccd7338b9677b08e41bb1b76",
+    "source": "history/2024-25/Scotland - Scottish Premiership/Ross County FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/st-johnstone-fc",
+    "file": "sco/st-johnstone-fc.png",
+    "sha256": "c25c734078b3e70cd0d7548328b42eebdc499393a88f11339fdb9304ad3796ae",
+    "source": "logos/Scotland - Scottish Premiership/St. Johnstone FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "sco/st-mirren-fc",
+    "file": "sco/st-mirren-fc.png",
+    "sha256": "5cf9556252f978f032ee0f88aadd2715b30f1ed92044f0895827800d442b20ff",
+    "source": "logos/Scotland - Scottish Premiership/St. Mirren FC.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-cukaricki",
+    "file": "srb/fk-cukaricki.png",
+    "sha256": "3fe5c757f46db25ac40ecc061c035ad635776677969737ce91c0a4c70ddd3530",
+    "source": "logos/Serbia - Super liga Srbije/FK Cukaricki.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-imt-belgrad",
+    "file": "srb/fk-imt-belgrad.png",
+    "sha256": "3eebb07613bdd8ab3adc7c2792aebd1cf393ee925b8d1ccd4603eb63d6563958",
+    "source": "logos/Serbia - Super liga Srbije/FK IMT Belgrad.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-javor-matis-ivanjica",
+    "file": "srb/fk-javor-matis-ivanjica.png",
+    "sha256": "049540dd0cdb44ab72a2b600d43272c96f4ac6b76b807508006ac93ea807a29d",
+    "source": "history/2025-26/Serbia - Super liga Srbije/FK Javor-Matis Ivanjica.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-jedinstvo-ub",
+    "file": "srb/fk-jedinstvo-ub.png",
+    "sha256": "9ef40f8ceb69115c0dcdb9225550c3fa21f791807e4253ba5f3c7571167087a4",
+    "source": "history/2024-25/Serbia - Super liga Srbije/FK Jedinstvo Ub.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-kolubara-lazarevac",
+    "file": "srb/fk-kolubara-lazarevac.png",
+    "sha256": "9a4dcb02d7d19fda962434c953f2f8c9d6e0d9e0f2fd7c370daab6d09505e374",
+    "source": "history/2021-22/Serbia - Super liga Srbije/FK Kolubara Lazarevac.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-macva-sabac",
+    "file": "srb/fk-macva-sabac.png",
+    "sha256": "b2d2f458a44ab19f10803b0575ff162b7d465e516a198e9a1cb886fc196b0ad9",
+    "source": "logos/Serbia - Super liga Srbije/FK Macva Sabac.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-mladost-lucani",
+    "file": "srb/fk-mladost-lucani.png",
+    "sha256": "11fc13dd4b37278a4e26767e6fbcf636fa62716aece6a795c8ee46e1d0c7ccee",
+    "source": "logos/Serbia - Super liga Srbije/FK Mladost Lucani.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-napredak-krusevac",
+    "file": "srb/fk-napredak-krusevac.png",
+    "sha256": "a214366e2753766235c570c87a0cb777f3423e22f37d592b7aaad64dbae1ed1a",
+    "source": "history/2025-26/Serbia - Super liga Srbije/FK Napredak Krusevac.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-novi-pazar",
+    "file": "srb/fk-novi-pazar.png",
+    "sha256": "ef6fe76f31c606455e9dfa0c21413d0ebf1c7d1e0c63b0232fcc5a0203ebf43d",
+    "source": "logos/Serbia - Super liga Srbije/FK Novi Pazar.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-partizan-belgrade",
+    "file": "srb/fk-partizan-belgrade.png",
+    "sha256": "2e79c9460d5346998742e4f06f0259a21cef9b9eb2450b9010c4c9eadc521468",
+    "source": "logos/Serbia - Super liga Srbije/FK Partizan Belgrade.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-proleter-novi-sad",
+    "file": "srb/fk-proleter-novi-sad.png",
+    "sha256": "b5d5f9cb9542460a45a736200add8cc1b64065c0c626c990012883fc0a73c799",
+    "source": "history/2021-22/Serbia - Super liga Srbije/FK Proleter Novi Sad.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-radnicki-1923-kragujevac",
+    "file": "srb/fk-radnicki-1923-kragujevac.png",
+    "sha256": "366ab5dbff9f02f0e522fdbc8890f6486e98de9579c29ac1da59ce33e5d18d41",
+    "source": "logos/Serbia - Super liga Srbije/FK Radnicki 1923 Kragujevac.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-radnicki-nis",
+    "file": "srb/fk-radnicki-nis.png",
+    "sha256": "e1508a650cc0192cc8f411dee15bcfb82321cd5a44ffa6ed7aee9850d244d196",
+    "source": "logos/Serbia - Super liga Srbije/FK Radnicki Nis.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-radnik-surdulica",
+    "file": "srb/fk-radnik-surdulica.png",
+    "sha256": "0688060721655c073021ad82372219131a697c5110c15aece19f99c0bfe927e4",
+    "source": "logos/Serbia - Super liga Srbije/FK Radnik Surdulica.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-spartak-subotica",
+    "file": "srb/fk-spartak-subotica.png",
+    "sha256": "7367ed46536f66e81bfdefdee028c968bc4912126e4966ec31c7c13843182d79",
+    "source": "history/2025-26/Serbia - Super liga Srbije/FK Spartak Subotica.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-tekstilac-odzaci",
+    "file": "srb/fk-tekstilac-odzaci.png",
+    "sha256": "c2519a490b4af836c55c0bcd0698eb70b48399d9a7fa295a87ca9f09d572322d",
+    "source": "history/2024-25/Serbia - Super liga Srbije/FK Tekstilac Odzaci.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-tsc-backa-topola",
+    "file": "srb/fk-tsc-backa-topola.png",
+    "sha256": "02b32115455d881c1d2a2d3cbb929062ae777a972491710a3dd4de9740a2d6ed",
+    "source": "history/2025-26/Serbia - Super liga Srbije/FK TSC Backa Topola.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-vojvodina-novi-sad",
+    "file": "srb/fk-vojvodina-novi-sad.png",
+    "sha256": "493c719eed1033fe6690aed0ef823745ae51e752db40a9ad7b90748b049aae17",
+    "source": "logos/Serbia - Super liga Srbije/FK Vojvodina Novi Sad.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-vozdovac",
+    "file": "srb/fk-vozdovac.png",
+    "sha256": "694e72bd07af7fd2ac6d436a8e09c7422f272aaea139f2a86a42cbac6d985591",
+    "source": "history/2023-24/Serbia - Super liga Srbije/FK Vozdovac.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-zeleznicar-pancevo",
+    "file": "srb/fk-zeleznicar-pancevo.png",
+    "sha256": "331b76ef13e72a4a6fdf528a09287231462fe41e5cc4e9f3ad92aa39118df5c5",
+    "source": "logos/Serbia - Super liga Srbije/FK Zeleznicar Pancevo.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/fk-zemun",
+    "file": "srb/fk-zemun.png",
+    "sha256": "5aaffd75cb156f50a4095e352fb89bd24915d28d7fd92ba153a2097815fe770e",
+    "source": "logos/Serbia - Super liga Srbije/FK Zemun.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/metalac",
+    "file": "srb/metalac.png",
+    "sha256": "18a438630e5924252aacfe8e378e9adffd098d3e504935e07d841b609d64ce24",
+    "source": "history/2021-22/Serbia - Super liga Srbije/Metalac.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/ofk-beograd",
+    "file": "srb/ofk-beograd.png",
+    "sha256": "29ce42c7732cb54bca1f249f55f6be5da615b06bc1854a17ef9740a42db350fb",
+    "source": "logos/Serbia - Super liga Srbije/OFK Beograd.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "srb/red-star-belgrade",
+    "file": "srb/red-star-belgrade.png",
+    "sha256": "c5613a0d30183f89d61c4ccd66e6fe8777a72d5bead61624876f51bd2754cd12",
+    "source": "logos/Serbia - Super liga Srbije/Red Star Belgrade.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/aik",
+    "file": "swe/aik.png",
+    "sha256": "8133dc4093bb34626c80cdb91acdd43c03a7834e5b4ff33dc4aac8425602c386",
+    "source": "logos/Sweden - Allsvenskan/AIK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/bk-hacken",
+    "file": "swe/bk-hacken.png",
+    "sha256": "9d163f91fc40b0d79613fb667b6d3901904af1d6eb07359a774ebac337355298",
+    "source": "logos/Sweden - Allsvenskan/BK Häcken.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/degerfors-if",
+    "file": "swe/degerfors-if.png",
+    "sha256": "ddd3cb1dfdcc42b96723bb3adb19f1d69efff0bdb2481b8c723224b9ba9fbf39",
+    "source": "logos/Sweden - Allsvenskan/Degerfors IF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/djurgardens-if",
+    "file": "swe/djurgardens-if.png",
+    "sha256": "34170287b59f357f00827bd1480a8482648176ba15a05d1e65394912df913724",
+    "source": "logos/Sweden - Allsvenskan/Djurgårdens IF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/gais",
+    "file": "swe/gais.png",
+    "sha256": "c24a01d12e75f0bbfbe656a57b34655079cfe5bc6ed587ead072d0762b299908",
+    "source": "logos/Sweden - Allsvenskan/GAIS.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/gif-sundsvall",
+    "file": "swe/gif-sundsvall.png",
+    "sha256": "47cdaba2e00ac3de96beb30f7769f7a098477e449e537a42cf25d2386b75c485",
+    "source": "history/2022-23/Sweden - Allsvenskan/GIF Sundsvall.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/halmstads-bk",
+    "file": "swe/halmstads-bk.png",
+    "sha256": "c05110f48d87b92bcf57d8a2ac0c9b590f00b0d0d6a3fc79ca4147d2925cc2a8",
+    "source": "logos/Sweden - Allsvenskan/Halmstads BK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/hammarby-if",
+    "file": "swe/hammarby-if.png",
+    "sha256": "00fae00f3c348bcfb6a9d09ebfbe8cd189cb66c5849db7ae4ab81c8c33a39a5f",
+    "source": "logos/Sweden - Allsvenskan/Hammarby IF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/helsingborgs-if",
+    "file": "swe/helsingborgs-if.png",
+    "sha256": "8f5ae33a056a7df4bf546743ed6e34e0354ac90da71bc98ac88bef9c0ff13983",
+    "source": "history/2022-23/Sweden - Allsvenskan/Helsingborgs IF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/if-brommapojkarna",
+    "file": "swe/if-brommapojkarna.png",
+    "sha256": "5a16d198bc8ba5153b7816e879c5a107ea93e13f30224ebca816b669f546f7a6",
+    "source": "logos/Sweden - Allsvenskan/IF Brommapojkarna.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/if-elfsborg",
+    "file": "swe/if-elfsborg.png",
+    "sha256": "8f62931408e7e53c1c4fd133004ca742b4de4f7a00115185552874d4b5a84985",
+    "source": "logos/Sweden - Allsvenskan/IF Elfsborg.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/ifk-goteborg",
+    "file": "swe/ifk-goteborg.png",
+    "sha256": "03d2cc78295b8cb13be7758084264179106b0b4deac12384f72b8ef47e245a67",
+    "source": "logos/Sweden - Allsvenskan/IFK Göteborg.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/ifk-norrkoping",
+    "file": "swe/ifk-norrkoping.png",
+    "sha256": "efc5cb25ebec10d1f39e5426a5f65576b823711feeef7050a17ac294e3473e9c",
+    "source": "history/2025-26/Sweden - Allsvenskan/IFK Norrköping.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/ifk-varnamo",
+    "file": "swe/ifk-varnamo.png",
+    "sha256": "de65cde069d84094dc39181574145a77cdad07ed2014759d2a6cd8a7aebd3ce6",
+    "source": "history/2025-26/Sweden - Allsvenskan/IFK Värnamo.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/ik-sirius",
+    "file": "swe/ik-sirius.png",
+    "sha256": "3d628e9900c64cad698bedc42a7e80e3eeafb5a0ec3e18f18bb123e6cb8024ff",
+    "source": "logos/Sweden - Allsvenskan/IK Sirius.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/kalmar-ff",
+    "file": "swe/kalmar-ff.png",
+    "sha256": "5a78ad83d6ccbf643e7ae80c38fcc434f361c86c61002dfd4db42c9d83808df1",
+    "source": "logos/Sweden - Allsvenskan/Kalmar FF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/malmo-ff",
+    "file": "swe/malmo-ff.png",
+    "sha256": "f5c755db9e8dc348a63bc662250ca8c1c4b42cef5b24d17082e1b5e573344c0c",
+    "source": "logos/Sweden - Allsvenskan/Malmö FF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/mjallby-aif",
+    "file": "swe/mjallby-aif.png",
+    "sha256": "237f7f521e3f5c0dcb1ef77121eec3f444d447c11fe0a19fe217da64bae940d5",
+    "source": "logos/Sweden - Allsvenskan/Mjällby AIF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/orgryte-is",
+    "file": "swe/orgryte-is.png",
+    "sha256": "35c00f831c22eb2fbaad3f209e55fd009c00713b5f1b589ed349f3fb80efe0b3",
+    "source": "logos/Sweden - Allsvenskan/Örgryte IS.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/osters-if",
+    "file": "swe/osters-if.png",
+    "sha256": "bdb2943f55d19b21e73be7c3694c083c0cfad7b0996a3c476dff55a33aaeca48",
+    "source": "history/2025-26/Sweden - Allsvenskan/Östers IF.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/varbergs-bois",
+    "file": "swe/varbergs-bois.png",
+    "sha256": "085621957cb3f953f38e477798f7e682b77a280ee408754c2d681f49bbd2771a",
+    "source": "history/2022-23/Sweden - Allsvenskan/Varbergs BoIS.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "swe/vasteras-sk",
+    "file": "swe/vasteras-sk.png",
+    "sha256": "00dc6292b7c9d17a6468c764cb0c28ac92698efe81c7f8ead9c2b1760130b9e6",
+    "source": "logos/Sweden - Allsvenskan/Västerås SK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/adana-demirspor",
+    "file": "tur/adana-demirspor.png",
+    "sha256": "d7be596ab70a2b579d1f2fd3f487c0c909907c3d1f4a0cc02d08ec53c33f0420",
+    "source": "history/2024-25/Türkiye - Süper Lig/Adana Demirspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/alanyaspor",
+    "file": "tur/alanyaspor.png",
+    "sha256": "540d502d4bb9a99b0bd0a0870948602c7b3187f9c44382aa847b565f78de4d99",
+    "source": "logos/Türkiye - Süper Lig/Alanyaspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/altay-sk",
+    "file": "tur/altay-sk.png",
+    "sha256": "a4dfb91de16910a27331b133e9f41fc7b65dbeeba58be23e2076c84bb831d3a5",
+    "source": "history/2021-22/Türkiye - Süper Lig/Altay SK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/amed-sk",
+    "file": "tur/amed-sk.png",
+    "sha256": "c15fd3fb8e1e21e6e830c6d253ccc4f320e77d1b02ef683b327071ffff44494a",
+    "source": "logos/Türkiye - Süper Lig/Amed SK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/antalyaspor",
+    "file": "tur/antalyaspor.png",
+    "sha256": "82dc7c7b7030424481fec21767b2be4b30a9b282a9d54cfb89a51cab10d663e9",
+    "source": "history/2025-26/Türkiye - Süper Lig/Antalyaspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/basaksehir-fk",
+    "file": "tur/basaksehir-fk.png",
+    "sha256": "effedac0cba37c3e98daf0e8aec7a98f587f8f5bf68411ab42cfd1b6a633c9db",
+    "source": "logos/Türkiye - Süper Lig/Basaksehir FK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/besiktas-jk",
+    "file": "tur/besiktas-jk.png",
+    "sha256": "b3189738d04aed31811b5539241d7fb7cce4cb15795a23fa9c793a06994a9ec6",
+    "source": "logos/Türkiye - Süper Lig/Besiktas JK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/bodrum-fk",
+    "file": "tur/bodrum-fk.png",
+    "sha256": "d31ebb839474f860ab0c0e5ab749f4ed330dc00c31ecfd1a8956e4f129160e26",
+    "source": "history/2024-25/Türkiye - Süper Lig/Bodrum FK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/caykur-rizespor",
+    "file": "tur/caykur-rizespor.png",
+    "sha256": "6162b371bf8220e59db078afd79d87a7e13ff5feae12959d09cad29fad116cd0",
+    "source": "logos/Türkiye - Süper Lig/Caykur Rizespor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/corum-fk",
+    "file": "tur/corum-fk.png",
+    "sha256": "795e085261b9452f3a82b262a8481b64e5f60a38a670fb5483300a2fa7c17f58",
+    "source": "logos/Türkiye - Süper Lig/Corum FK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/erzurumspor-fk",
+    "file": "tur/erzurumspor-fk.png",
+    "sha256": "2e9a4d22e3a92889f07e3719055514e1b04b7710b45e249a434b0f22ff6e3960",
+    "source": "logos/Türkiye - Süper Lig/Erzurumspor FK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/eyupspor",
+    "file": "tur/eyupspor.png",
+    "sha256": "14fcf80d6da1e9aa287235dbbd1795cbc33fed7d6eacd616450e88b34b10f311",
+    "source": "logos/Türkiye - Süper Lig/Eyüpspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/fatih-karagumruk",
+    "file": "tur/fatih-karagumruk.png",
+    "sha256": "a51ed8262536e9a0e1086c506d7524d823bccbbd053039d8f2c8a814537d2e82",
+    "source": "history/2025-26/Türkiye - Süper Lig/Fatih Karagümrük.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/fenerbahce",
+    "file": "tur/fenerbahce.png",
+    "sha256": "603127920d42244c44a78dbe5082ec832ec30fcdbcd5a0088fc5f5e52867ccde",
+    "source": "logos/Türkiye - Süper Lig/Fenerbahce.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/galatasaray",
+    "file": "tur/galatasaray.png",
+    "sha256": "e6674d79bab5db91179821486d3916992b54163c526f945002cce62598f3f86d",
+    "source": "logos/Türkiye - Süper Lig/Galatasaray.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/gaziantep-fk",
+    "file": "tur/gaziantep-fk.png",
+    "sha256": "c1edca5556370965d41df96afacd923466441cf765e70e19e19b59d1404110af",
+    "source": "logos/Türkiye - Süper Lig/Gaziantep FK.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/genclerbirligi-ankara",
+    "file": "tur/genclerbirligi-ankara.png",
+    "sha256": "bb4ae420b8c0578c02be0256ccddfe4ffc904040c44c77bf2acec4a3c9324144",
+    "source": "logos/Türkiye - Süper Lig/Genclerbirligi Ankara.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/giresunspor",
+    "file": "tur/giresunspor.png",
+    "sha256": "abd2ecc2e6973faacb51896c0e3340f0a2460ccb6a208b615d012d1f64ed364f",
+    "source": "history/2022-23/Türkiye - Süper Lig/Giresunspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/goztepe",
+    "file": "tur/goztepe.png",
+    "sha256": "eb419b196d77b6b20d99dc38123561e5db788c270621fcf87793faef7c046993",
+    "source": "logos/Türkiye - Süper Lig/Göztepe.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/hatayspor",
+    "file": "tur/hatayspor.png",
+    "sha256": "e1cdc3b20a81ccb5f2f6effd562e79e1bbe0bd5fb328744039a50af9c4b03313",
+    "source": "history/2024-25/Türkiye - Süper Lig/Hatayspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/istanbulspor",
+    "file": "tur/istanbulspor.png",
+    "sha256": "a78661a3c79d66286fd097a4cb545db9f81416ddaf00febbe1958c0ebd278892",
+    "source": "history/2023-24/Türkiye - Süper Lig/Istanbulspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/kasimpasa",
+    "file": "tur/kasimpasa.png",
+    "sha256": "baf58f56d27173fed4367b623f16e54f944d69bc07c4f442885f4cd7ba669323",
+    "source": "logos/Türkiye - Süper Lig/Kasimpasa.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/kayserispor",
+    "file": "tur/kayserispor.png",
+    "sha256": "cce1205d7cce835ef625c12b5391550938467a64117966a1464509cf5a1328bf",
+    "source": "history/2025-26/Türkiye - Süper Lig/Kayserispor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/kocaelispor",
+    "file": "tur/kocaelispor.png",
+    "sha256": "02c921854ef389bfb3ee80f8c069da120fc2bf92bd6e6b6e6888a5d6e586ad5f",
+    "source": "logos/Türkiye - Süper Lig/Kocaelispor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/konyaspor",
+    "file": "tur/konyaspor.png",
+    "sha256": "5c25e9b6ad4503fae576d63fbfc6f6c50a68efdcf0eb332482af60211bf7b9d4",
+    "source": "logos/Türkiye - Süper Lig/Konyaspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/mke-ankaragucu",
+    "file": "tur/mke-ankaragucu.png",
+    "sha256": "53882020098b6eb2792c2b3b1ee7202aeffe2832a33c8db7644eb45de6c03208",
+    "source": "history/2023-24/Türkiye - Süper Lig/MKE Ankaragücü.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/pendikspor",
+    "file": "tur/pendikspor.png",
+    "sha256": "4dfca3d7c4c7fe4c6e6bc8d949e631157fa5f372fed74038f92f53203397b154",
+    "source": "history/2023-24/Türkiye - Süper Lig/Pendikspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/samsunspor",
+    "file": "tur/samsunspor.png",
+    "sha256": "eb83654df3ea8ed93541c2e1b26e1ba2684645e01584a548824bf6481d22d75a",
+    "source": "logos/Türkiye - Süper Lig/Samsunspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/sivasspor",
+    "file": "tur/sivasspor.png",
+    "sha256": "d3c72685cb371f4a8abd6e42d956bd1a97035658102cf8cf2d4a08cef2b2d759",
+    "source": "history/2024-25/Türkiye - Süper Lig/Sivasspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/trabzonspor",
+    "file": "tur/trabzonspor.png",
+    "sha256": "abbc30c9dd70520b5fdbbb5c45cf4756bbd0cab02278aac75d28eac88612a4ee",
+    "source": "logos/Türkiye - Süper Lig/Trabzonspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/umraniyespor",
+    "file": "tur/umraniyespor.png",
+    "sha256": "8d5a85c8083a9fcf1ad2ab03d214b6871e644e78ebf7db7028fff5836264a1c6",
+    "source": "history/2022-23/Türkiye - Süper Lig/Ümraniyespor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "tur/y-malatyaspor",
+    "file": "tur/y-malatyaspor.png",
+    "sha256": "838496cbdea6a312260b63fdcbc8bea25c47d10c4d7e4590e31e979ba0b2d7a8",
+    "source": "history/2021-22/Türkiye - Süper Lig/Y. Malatyaspor.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/bukovyna-chernivtsi",
+    "file": "ukr/bukovyna-chernivtsi.png",
+    "sha256": "b65bc9fd82e83ed1967d6cdea49e13fa8b8b4b1a89d58dbe3ebff6b5cf38c42b",
+    "source": "logos/Ukraine - Premier Liga/Bukovyna Chernivtsi.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/chornomorets-odesa",
+    "file": "ukr/chornomorets-odesa.png",
+    "sha256": "944f3c05a7957af95932a3f216090bfee3e93d3f569cc26c8dc2c48ab16e7fd7",
+    "source": "logos/Ukraine - Premier Liga/Chornomorets Odesa.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/desna",
+    "file": "ukr/desna.png",
+    "sha256": "aea15f17ea347a7bcfbafc7c0872449f98e1a83ef7b372a74c15099ffdaa9da6",
+    "source": "history/2021-22/Ukraine - Premier Liga/Desna.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/dynamo-kyiv",
+    "file": "ukr/dynamo-kyiv.png",
+    "sha256": "15e79b42e4d8a9bbf896ed26af28dd6a26891f868d44887f1016e3b6a89bfc03",
+    "source": "logos/Ukraine - Premier Liga/Dynamo Kyiv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/epicentr-kamyanets-podilskyi",
+    "file": "ukr/epicentr-kamyanets-podilskyi.png",
+    "sha256": "edb97e8a1869ce7a3acfdd483b224800402b590c1a487e1e2f4a72926719ebb5",
+    "source": "logos/Ukraine - Premier Liga/Epicentr Kamyanets-Podilskyi.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/fc-kharkiv",
+    "file": "ukr/fc-kharkiv.png",
+    "sha256": "80fb3e4a518c2dbf3d19ce3e6fe1e9e9235d0df83eb4afb01ef6bbbda9f63769",
+    "source": "logos/Ukraine - Premier Liga/FC Kharkiv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/fc-kudrivka",
+    "file": "ukr/fc-kudrivka.png",
+    "sha256": "d2641c501b426fc62b55c1f838ed5c6385d334e439a1ea980752c8cd2e1d4c84",
+    "source": "logos/Ukraine - Premier Liga/FC Kudrivka.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/fc-oleksandriya",
+    "file": "ukr/fc-oleksandriya.png",
+    "sha256": "45ff5b672bba6670329c8b2d12acdb6f4cb3a1dae573b06fe7f2cfcdaa5678e0",
+    "source": "history/2025-26/Ukraine - Premier Liga/FC Oleksandriya.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/fk-mariupol",
+    "file": "ukr/fk-mariupol.png",
+    "sha256": "f6e0d7d92a2b53040f8c75a228c1cdeef56afc8fc660731e99ce8f6c0eb154ba",
+    "source": "history/2021-22/Ukraine - Premier Liga/FK Mariupol.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/fk-minaj",
+    "file": "ukr/fk-minaj.png",
+    "sha256": "9a36de2ff3318b42dbeca9ef26ff17f3f391ae6fbf43bd63e3fa879c6fe73e17",
+    "source": "history/2023-24/Ukraine - Premier Liga/FK Minaj.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/ingulets-petrove",
+    "file": "ukr/ingulets-petrove.png",
+    "sha256": "fade519da591775a91e41f86b476074df97ad16f8cd6f90edd873f3dfce97700",
+    "source": "history/2024-25/Ukraine - Premier Liga/Ingulets Petrove.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/karpaty-lviv",
+    "file": "ukr/karpaty-lviv.png",
+    "sha256": "71011ca3b66e52df0fb9deb935263acd77c9eded833aada2fa2a7782c5cd22e1",
+    "source": "logos/Ukraine - Premier Liga/Karpaty Lviv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/kolos-kovalivka",
+    "file": "ukr/kolos-kovalivka.png",
+    "sha256": "c67975a431566168291db9abe4ad32a7669090120ab4cd47291c9a9746ee5951",
+    "source": "logos/Ukraine - Premier Liga/Kolos Kovalivka.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/kryvbas-kryvyi-rig",
+    "file": "ukr/kryvbas-kryvyi-rig.png",
+    "sha256": "f59e566458ab696851399b34518bcaf416b9614f0c00f824c3502186b46b44ba",
+    "source": "logos/Ukraine - Premier Liga/Kryvbas Kryvyi Rig.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/livyi-bereg-kyiv",
+    "file": "ukr/livyi-bereg-kyiv.png",
+    "sha256": "eb0a45d1395ec656a38a5f26dbce391890dcf68056743a52e263d871d974235e",
+    "source": "logos/Ukraine - Premier Liga/Livyi Bereg Kyiv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/lnz-cherkasy",
+    "file": "ukr/lnz-cherkasy.png",
+    "sha256": "198387ef9d7a67d33c7a34568c821c83986b3919b6949c739fb253e2b3e2931d",
+    "source": "logos/Ukraine - Premier Liga/LNZ Cherkasy.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/metalist-1925-kharkiv",
+    "file": "ukr/metalist-1925-kharkiv.png",
+    "sha256": "412b0deeec33b1271dc547f4cea99e9489ee7c8501b546bc6dea3c63638fb16f",
+    "source": "history/2025-26/Ukraine - Premier Liga/Metalist 1925 Kharkiv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/metalist-kharkiv",
+    "file": "ukr/metalist-kharkiv.png",
+    "sha256": "9e90fdc20bb3bacbcfce63379ab0dd311f180c38a996a6894d8a03970dbe4ecb",
+    "source": "history/2022-23/Ukraine - Premier Liga/Metalist Kharkiv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/nk-veres-rivne",
+    "file": "ukr/nk-veres-rivne.png",
+    "sha256": "3ac17eada84b98e539ea05f610bb27fe5adbe65707b5e4dd72fe259525e65817",
+    "source": "logos/Ukraine - Premier Liga/NK Veres Rivne.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/obolon-kyiv",
+    "file": "ukr/obolon-kyiv.png",
+    "sha256": "8aeae9d630126374abd0d6ceeb8df9e9d5bc3157558b00939cc38d466412e69f",
+    "source": "logos/Ukraine - Premier Liga/Obolon Kyiv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/pfk-lviv",
+    "file": "ukr/pfk-lviv.png",
+    "sha256": "838f0331fc13ec450ec401f7f14dd753ed347a5182c0a8bc21ac65bfa8488955",
+    "source": "history/2022-23/Ukraine - Premier Liga/PFK Lviv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/polissya-zhytomyr",
+    "file": "ukr/polissya-zhytomyr.png",
+    "sha256": "20bf0a8ef27e172bedc9eb595152a5b384e7edc3441e6f567a9f8455451fa8de",
+    "source": "logos/Ukraine - Premier Liga/Polissya Zhytomyr.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/rukh-lviv",
+    "file": "ukr/rukh-lviv.png",
+    "sha256": "9e2a4f5f4eb73ff00ea53dfb26120f732959ce3c776f8a731872ae451f8c82f8",
+    "source": "history/2025-26/Ukraine - Premier Liga/Rukh Lviv.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/sc-poltava",
+    "file": "ukr/sc-poltava.png",
+    "sha256": "3a5c150a6e708d2711b4d30f9ec5fc60c23f6abece638d6f7f04e20353e6873a",
+    "source": "history/2025-26/Ukraine - Premier Liga/SC Poltava.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/shakhtar-donetsk",
+    "file": "ukr/shakhtar-donetsk.png",
+    "sha256": "47480097a83b9164840043267532dee4886ee94696de90f5e20dc7b593ea6d66",
+    "source": "logos/Ukraine - Premier Liga/Shakhtar Donetsk.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/sk-dnipro-1",
+    "file": "ukr/sk-dnipro-1.png",
+    "sha256": "afa4384c835fb9dc5442715e6c9fb0ba4d779e6d497442c0d79b0aeb545e65bd",
+    "source": "history/2023-24/Ukraine - Premier Liga/SK Dnipro-1.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/vorskla-poltava",
+    "file": "ukr/vorskla-poltava.png",
+    "sha256": "10e76e8dad082b1c891b7aa26f653f78092003a97758f5c93f4f76e5a828bf33",
+    "source": "history/2024-25/Ukraine - Premier Liga/Vorskla Poltava.png",
+    "adapter": "football-logos"
+  },
+  {
+    "key": "ukr/zorya-lugansk",
+    "file": "ukr/zorya-lugansk.png",
+    "sha256": "6ab0b62d37b8a60c8c5487f5943e26ae7c84128b595af49894e8a11c2df04ce8",
+    "source": "logos/Ukraine - Premier Liga/Zorya Lugansk.png",
+    "adapter": "football-logos"
+  }
+]

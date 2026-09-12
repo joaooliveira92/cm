@@ -11,16 +11,24 @@ export { describeRpcError, typedError } from "./rpc/errors.js";
 export {
   squadAtom,
   tacticsAtom,
+  tacticsOverviewAtom,
   leagueTableAtom,
   fixturesAtom,
   seasonSummaryAtom,
+  managerProfileAtom,
   transfersAtom,
+  saveSummaryAtom,
+  newsInboxAtom,
+  teamScoutReportAtom,
+  clubStaffAtom,
   saveKey,
   squadKey,
   transfersKey,
   economyKey,
   tacticsKey,
   matchKey,
+  newsKey,
+  scoutingKey,
 } from "./rpc/queries.js";
 
 export {
@@ -31,6 +39,8 @@ export {
   signFreeAgentMutation,
   respondToBidMutation,
   respondAsBidderMutation,
+  retireManagerMutation,
+  setNewsMessageStateMutation,
   submitMatchCommandMutation,
 } from "./rpc/mutations.js";
 
@@ -40,13 +50,23 @@ export {
   loadSave,
   beginCareer,
   discardCareer,
+  getCareerSetupSummary,
   getClubSelection,
   createSave,
   getManagerProfile,
   commitCareer,
+  getLeagueSetupIndex,
+  resolveLeagueSelection,
+  submitLeagueSelection,
+  saveSetupDraft,
+  loadSetupDraft,
+  buildLeaguePreset,
+  listLeaguePresets,
+  saveLeaguePreset,
+  applyLeaguePreset,
 } from "./rpc/precareer.js";
 
-export { listOpponentClubs, startMatch, resumeSimulation } from "./rpc/match.js";
+export { commitMatchday, startMatch, resumeSimulation } from "./rpc/match.js";
 
 export {
   REVEAL_INTERVAL_MS,
@@ -71,3 +91,4 @@ export {
   useAtomRefresh,
 } from "@effect/atom-react";
 export { AsyncResult } from "effect/unstable/reactivity";
+export { Atom } from "effect/unstable/reactivity";

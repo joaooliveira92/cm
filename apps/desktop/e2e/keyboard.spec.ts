@@ -16,9 +16,11 @@
  */
 import {
   assignFullTactic,
-  dismissTeachingSplash,
+  continueSeededCareer,
+  chooseOption,
   enterCareer,
   expect,
+  openTacticsEditor,
   pressPrefix,
   pressPrimary,
   test,
@@ -41,8 +43,9 @@ test("g <key> navigation reaches the career screens and g b goes back (AC-18)", 
   await expect(page.getByRole("heading", { name: /Transfers/ })).toBeVisible();
   await expect(page.locator('[data-focus-id="transfers"]')).toBeFocused();
 
-  // g m → Match Day (no match pending on a fresh seed — the picker, not a resume)
-  await pressPrefix(page, "m");
+  // g d → Match Day (no match pending on a fresh seed — the picker, not a resume).
+  // `g m` is Manager Profile; the Match Day binding is `d` (actions/allActions.ts).
+  await pressPrefix(page, "d");
   await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
   await expect(page.locator('[data-focus-id="match"]')).toBeFocused();
 
@@ -103,6 +106,9 @@ test("the Squad grid roves by row, toggles selection with Space, and sorts by Ta
   userDataDir,
 }) => {
   await enterCareer(page, userDataDir);
+  // Squad opens on the position list; this test is about the table layout's
+  // grid behaviour, so it picks a view that draws one.
+  await chooseOption(page, "Squad view", "Overview");
   const table = page.getByRole("table");
   const rows = table.locator("tbody tr");
   await expect(rows.first()).toBeVisible();
@@ -134,7 +140,15 @@ test("the Squad grid roves by row, toggles selection with Space, and sorts by Ta
   await expect(ageButton).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(ageHeader).toHaveAttribute("aria-sort", "ascending");
-  await expect(table.getByRole("button", { name: playerName, exact: true })).toBeFocused();
+
+  // AC-31 across a *reorder*: the roving tabstop stays on the same player by identity, while DOM
+  // focus stays on the header so the sort can be cycled again. The previous assertion here demanded
+  // focus jump to the player's row, which contradicted the very next line — Enter would have fired
+  // the row's primary action instead of advancing the sort. AC-31's focus *restoration* is the
+  // separate case where a row is removed, covered in `test/table-focus-restore.test.tsx`.
+  await expect(table.getByRole("button", { name: playerName, exact: true })).toHaveAttribute("tabindex", "0");
+  await expect(ageButton).toBeFocused();
+
   await page.keyboard.press("Enter");
   await expect(ageHeader).toHaveAttribute("aria-sort", "descending");
 });
@@ -156,15 +170,14 @@ test("Escape closes only the topmost transient layer (AC-20)", async ({
   // open match-day control panel behind an open palette proves the ordering:
   // Escape closes the palette first, then the panel — never both at once.
   await seedBeforeMatchday(savesDir(userDataDir));
-  await page.reload();
-  await page.getByRole("button", { name: "Seed: before-matchday" }).click();
-  await dismissTeachingSplash(page);
+  await continueSeededCareer(page, "Seed: before-matchday");
 
   await pressPrefix(page, "a");
   await expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible();
-  await assignFullTactic(page.locator("tbody tr"));
+  await openTacticsEditor(page);
+  await assignFullTactic(page);
 
-  await pressPrefix(page, "m");
+  await pressPrefix(page, "d");
   const start = page.getByRole("button", { name: "Start match" });
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.focus();

@@ -1,22 +1,29 @@
 import { useEffect, type ReactNode } from "react";
-import {
-  BACK_RESTORE_MARKER,
-  consumePendingFocus,
-  focusSemanticTarget,
-  FOCUS_RING,
-} from "../focus.js";
+import { BACK_RESTORE_MARKER, consumePendingFocus, focusSemanticTarget } from "../focus.js";
 
 /**
- * Wraps every stable route surface with the screen's semantic focus identity.
- * On arrival it consumes the focus-coordinator's pending target (set by
- * keyboard/palette navigation or back) and focuses by identity, so a pointer
- * navigation — which sets no pending target — never forces focus.
+ * Wraps every stable route surface. On arrival it consumes the focus
+ * coordinator's pending target (set by keyboard/palette navigation or back) and
+ * focuses by semantic identity, so a pointer navigation — which sets no pending
+ * target — never forces focus.
  *
- * The wrapper is itself the level-1 primary focus target (AC-22): it carries the
- * ring, so a screen with no other interactive control (read-only career screens)
- * still shows where focus landed on keyboard arrival.
+ * The wrapper itself carries no focus identity (AC-22 level-1 target): each
+ * screen's labelled `<main>` region is the `data-focus-id` arrival target, so a
+ * screen-reader user hears the screen's name on keyboard arrival. The wrapper
+ * is a plain layout container; the `fill` variant lets the screen own the
+ * height of a full-height workspace instead of a reading column.
  */
-export const RouteView = ({ screenId, children }: { screenId: string; children: ReactNode }) => {
+export const RouteView = ({
+  screenId,
+  fill = false,
+  children,
+}: {
+  screenId: string;
+  /** Let the screen own the height its parent gives it, for a step that is a full-height
+   *  workspace rather than a document. Off by default: every other screen is a reading column. */
+  fill?: boolean;
+  children: ReactNode;
+}) => {
   useEffect(() => {
     const target = consumePendingFocus();
     if (target === null) return;
@@ -28,8 +35,6 @@ export const RouteView = ({ screenId, children }: { screenId: string; children: 
   }, [screenId]);
 
   return (
-    <div data-focus-id={screenId} tabIndex={-1} className={FOCUS_RING.join(" ")}>
-      {children}
-    </div>
+    <div className={fill ? "flex min-h-0 flex-1 flex-col" : undefined}>{children}</div>
   );
 };

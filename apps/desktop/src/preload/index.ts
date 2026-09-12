@@ -9,4 +9,24 @@ const call = async <M extends AppRpcMethod>(
   return result as RpcResult<M>;
 };
 
+ipcRenderer.on("show-quit-guard", () => {
+  const event = new CustomEvent("show-quit-guard");
+  window.dispatchEvent(event);
+});
+
+contextBridge.exposeInMainWorld("electronAPI", {
+  // The renderer reserves the macOS traffic-light inset in its own title band,
+  // so it needs to know the platform. Read once at preload time: it cannot
+  // change while the window lives.
+  platform: process.platform,
+  showQuitGuard: () => {
+    return new Promise<void>((resolve) => {
+      ipcRenderer.once("quit-guard-confirmed", () => {
+        resolve();
+      });
+      ipcRenderer.send("show-quit-guard");
+    });
+  },
+});
+
 contextBridge.exposeInMainWorld("cmClone", { call });

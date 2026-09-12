@@ -17,20 +17,125 @@ export type ScreenName =
   | "fixtures"
   | "match"
   | "seasonSummary"
+  | "manager"
+  | "news"
+  | "training"
+  | "clubInfo"
+  | "boardConfidence"
+  | "clubHistory"
+  | "finances"
+  | "staffOverview"
+  | "shortlist"
+  | "scouting"
+  | "playerSearch"
+  | "staffSearch"
+  | "competitions"
+  | "nations"
+  | "clubs"
+  | "gameStatus"
+  | "managerChat"
+  // The club-scoped drill-downs. They are route screen-ids like any other — the spine derives
+  // them from the path and the focus coordinator keys on them — but they carry no `g` binding and
+  // own no screen-scoped Action, so they appear here and in neither `CareerScreenName` nor
+  // `CAREER_SCREEN_TYPES`.
+  | "teamScoutReport"
+  | "clubStaff"
+  // The player-scoped drill-downs — same rationale as the club-scoped ones.
+  | "playerProfile"
+  | "playerAttributes"
+  | "playerContract"
+  | "playerHistory"
+  | "playerForm"
+  | "playerInjuries"
+  | "playerScoutReport"
+  | "playerCoachReport"
+  // The staff-scoped drill-downs.
+  | "staffProfile"
+  | "staffAttributes"
+  | "staffContract"
+  | "staffHistory"
+  | "staffJobInfo"
+  // The club sub-surface drill-downs (other club views).
+  | "clubSquadDetail"
+  | "clubReservesDetail"
+  | "clubYouthDetail"
+  | "clubFixturesDetail"
+  | "clubTransfersDetail"
+  | "clubFinancesDetail"
+  | "clubHistoryDetail"
+  | "clubCompetitionsDetail"
+  | "clubInformation"
+  // The nation-scoped drill-downs.
+  | "nationOverview"
+  | "nationSeniorSquad"
+  | "nationYouthSquads"
+  | "nationFixtures"
+  | "nationCompetitions"
+  | "nationClubs"
+  | "nationPlayers"
+  | "nationStaff"
+  | "nationHistory"
+  | "nationInformation"
+  // The competition-scoped drill-downs.
+  | "competitionOverview"
+  | "competitionTable"
+  | "competitionFixturesDetail"
+  | "competitionResults"
+  | "competitionStages"
+  | "competitionRules"
+  | "competitionStatistics"
+  | "competitionPastWinners"
+  | "competitionRecords"
+  | "competitionNews"
+  | "competitionTeams"
+  | "competitionPlayerStats"
+  // The match sub-screen placeholders — flat routes under /career/$saveId/.
+  | "matchStats"
+  | "matchPlayerStats"
+  | "matchHomeTeam"
+  | "matchAwayTeam"
+  | "matchRatings"
+  | "matchLatestScores"
+  | "matchLiveTable"
+  | "matchMatchTactics"
+  | "matchSubstitutions"
+  | "matchOppositionInstructions"
+  | "matchCommentary"
+  | "matchReplays"
+  | "matchReport"
+  | "createLeagues"
   | "createStep1"
   | "createStep2"
   | "createStep3"
-  | "saveList";
+  | "mainMenu"
+  | "loadCareer";
 
 /** A career screen id — the subset with `g <key>` navigation (note: creation is excluded). */
 export type CareerScreenName =
   | "squad"
   | "tactics"
+  | "training"
   | "transfers"
   | "league"
   | "fixtures"
   | "match"
-  | "seasonSummary";
+  | "seasonSummary"
+  | "manager"
+  | "news"
+  | "clubInfo"
+  | "boardConfidence"
+  | "clubHistory"
+  | "finances"
+  | "staffOverview"
+  | "shortlist"
+  | "scouting"
+  | "playerSearch"
+  | "staffSearch"
+  | "competitions"
+  | "nations"
+  | "clubs"
+  | "gameStatus"
+  | "managerChat";
 
 /**
  * The scope an Action lives in. `screen`/`career-global`/`app-global` spans the
@@ -46,7 +151,27 @@ export type ActionScope = "app-global" | "career-global" | ScreenName;
  */
 export interface ScopeState {
   readonly ready: boolean;
+  /**
+   * A live match readout, published by the Match Day screen while a match is
+   * in flight (match-day note AC-4). When present, the career chrome's temporal
+   * cluster shows the match instead of the season readout and Continue is
+   * unavailable; absent at full time, the season readout and Continue return.
+   */
+  readonly match?: MatchReadout | undefined;
   readonly [key: string]: unknown;
+}
+
+/**
+ * The read-only slice of a live match the chrome shows. Deliberately the same
+ * surface the domain exposes — club names and the score — so the temporal
+ * cluster and the scoreboard agree. The unit is minutes, never a clock.
+ */
+export interface MatchReadout {
+  readonly homeClubName: string;
+  readonly awayClubName: string;
+  readonly homeScore: number;
+  readonly awayScore: number;
+  readonly currentMinute: number;
 }
 
 /** A dispatchable, scoped, named operation. `handler` takes the operation's
