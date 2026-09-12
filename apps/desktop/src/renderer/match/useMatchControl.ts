@@ -24,6 +24,7 @@ import { useSeamHotkeys } from "../hotkeys.js";
 import { isTextEntryTarget } from "../keymap/keystroke.js";
 import { substitutionErrorLabel, validateLiveSubstitution } from "./substitution.js";
 import { useMatchContext, type MatchCommand } from "./MatchProvider.js";
+import { useCommentaryContext } from "./CommentaryProvider.js";
 import { tacticsAtom, useAtomValue } from "../rpc.js";
 import type { MatchControlContextValue, PanelMode } from "./matchControlContext.js";
 
@@ -40,8 +41,9 @@ export const useMatchControl = ({
   onPitchCount,
   injuries,
 }: MatchControlInput): MatchControlContextValue | null => {
-  const { actions: matchActions, meta: matchMeta } = useMatchContext();
-  const saveId = matchMeta.saveId;
+  const { state: matchState } = useMatchContext();
+  const { actions: commentaryActions } = useCommentaryContext();
+  const saveId = matchState.saveId;
 
   const [open, setOpen] = useState(false);
   const [squad, setSquad] = useState<ReadonlyArray<SquadPlayerView>>([]);
@@ -111,7 +113,7 @@ export const useMatchControl = ({
   const runSubmission = async (command: MatchCommand): Promise<void> => {
     setStatus("Submitting...");
     try {
-      await matchActions.submitCommand(command, isHalftime);
+      await commentaryActions.submitCommand(command, isHalftime);
       setStatus("Applied — the engine may still reject an invalid/over-cap command silently.");
     } catch {
       setStatus("Failed to submit command");
@@ -162,7 +164,7 @@ export const useMatchControl = ({
   };
 
   const onDecisionResolved = (): void => {
-    matchActions.resume();
+    commentaryActions.resume();
   };
 
   // Register the panel Actions so buttons and the key map dispatch the same registered handlers

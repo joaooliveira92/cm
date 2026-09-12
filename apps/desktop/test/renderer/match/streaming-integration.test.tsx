@@ -11,6 +11,7 @@ import {
 } from "@cm-clone/contracts";
 import { POLL_INTERVAL_MS, REVEAL_INTERVAL_MS, RegistryProvider } from "../../../src/renderer/rpc.js";
 import { MatchProvider, useMatchContext } from "../../../src/renderer/match/MatchProvider.js";
+import { CommentaryProvider, useCommentaryContext } from "../../../src/renderer/match/CommentaryProvider.js";
 import { useMatchStreaming } from "../../../src/renderer/match/streaming.js";
 import { clearActiveMatch, setActiveMatch } from "../../../src/renderer/match/session.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
@@ -73,15 +74,7 @@ const session = (overrides: Record<string, unknown> = {}) => ({
     awayClubName: "Away FC",
   },
   cursor: 0,
-  revealed: [],
-  homeScore: 0,
-  awayScore: 0,
   phase: "live" as const,
-  homeSubs: noSubs(),
-  awaySubs: noSubs(),
-  homeOnPitchCount: 11,
-  chunkInjuries: [],
-  currentMinute: 1,
   streamComplete: false,
   ...overrides,
 });
@@ -95,9 +88,10 @@ const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown
 const Probe = () => {
   useMatchStreaming();
   const { state } = useMatchContext();
+  const { state: comm } = useCommentaryContext();
   return (
     <output data-testid="probe">
-      {state.revealed.length}|{state.phase === "complete" ? "complete" : "live"}|{state.phase === "paused" ? "paused" : "running"}|{state.homeScore}-{state.awayScore}
+      {comm.revealed.length}|{state.phase === "complete" ? "complete" : "live"}|{state.phase === "paused" ? "paused" : "running"}|{comm.homeScore}-{comm.awayScore}
     </output>
   );
 };
@@ -125,7 +119,9 @@ const mountProbe = async (
   render(
     <RegistryProvider>
       <MatchProvider saveId={rid("s1")}>
-        <Probe />
+        <CommentaryProvider>
+          <Probe />
+        </CommentaryProvider>
       </MatchProvider>
     </RegistryProvider>,
   );
@@ -195,6 +191,7 @@ describe("useMatchStreaming — poll ahead, buffer, reveal one line per tick (AD
 
   it("holds the feed while a no-subs decision is pending — no poll reaches the wire", async () => {
     const sess = {
+      phase: "paused" as const,
       homeSubs: noSubs({ used: 5, remaining: 0, capReached: true }),
       chunkInjuries: [knock()],
     };

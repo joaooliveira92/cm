@@ -14,7 +14,7 @@ This splits the 15 `useState` calls into logical groups, enabling the UI to cons
 
 **Blocked by:** None (this is a standalone refactoring)
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Acceptance criterion 1: MatchProvider exposes only match-related state (opponents, opponentId, match, error, starting, hydrated)
 - [ ] Acceptance criterion 2: CommentaryProvider exposes only commentary-related state (revealed, scores, timers, substitutions) and refs for streaming

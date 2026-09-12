@@ -23,6 +23,7 @@ import {
 import { FOCUS_RING } from "../focus.js";
 import { SELECT_CLASS } from "./controls.js";
 import { useMatchContext } from "./MatchProvider.js";
+import { useCommentaryContext } from "./CommentaryProvider.js";
 import { MatchControlContext, useMatchControlContext } from "./matchControlContext.js";
 import { useMatchControl, type MatchControlInput } from "./useMatchControl.js";
 
@@ -375,14 +376,15 @@ const MatchControlProvider = (input: MatchControlInput) => {
  *  Rendered only while a match is live (the `MatchOngoing` variant). */
 export const MatchControlPanel = () => {
   const { state } = useMatchContext();
+  const { state: comm } = useCommentaryContext();
   const match = state.match;
   if (match === null) return null;
   return (
     <MatchControlProvider
       homeClubId={match.homeClubId}
-      subsStatus={state.homeSubs}
-      onPitchCount={state.homeOnPitchCount}
-      injuries={state.chunkInjuries}
+      subsStatus={comm.homeSubs}
+      onPitchCount={comm.homeOnPitchCount}
+      injuries={comm.chunkInjuries}
     />
   );
 };

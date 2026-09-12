@@ -3,19 +3,11 @@ import { Button } from "../components/ui/button.js";
 import { dispatchAction } from "../actions/dispatch.js";
 import { FOCUS_RING } from "../focus.js";
 import { MatchProvider, useMatchContext } from "./MatchProvider.js";
+import { CommentaryProvider, useCommentaryContext } from "./CommentaryProvider.js";
 import { KickoffPanel } from "./KickoffPanel.js";
 import { MatchCommentaryStream } from "./MatchCommentaryStream.js";
 import { MatchControlPanel } from "./MatchControlPanel.js";
 
-/**
- * Match day (Phases 1–4): the screen is a thin composition over the MatchProvider context. All
- * match lifecycle, streaming and control state lives in the provider; the kickoff panel, the
- * commentary stream and the live control panel are compound consumers, and the `isComplete`
- * boolean is lifted into one explicit variant choice (`MatchOngoing`/`MatchComplete`, Phase 3)
- * instead of scattered conditionals.
- */
-
-/** The live-match variant (Phase 3): the commentary stream plus the live control panel. */
 const MatchOngoing = () => (
   <>
     <MatchCommentaryStream />
@@ -23,23 +15,16 @@ const MatchOngoing = () => (
   </>
 );
 
-/**
- * The full-time variant (Phase 3): the settled feed stays on screen — scoreboard, status and
- * revealed lines — with the final score and the commit below it.
- *
- * Full time and the career accepting the result are two different things, so the button is real
- * work rather than navigation: until it is pressed the Matchday has not been committed, the rest of
- * the division has not played, and the Calendar has not moved.
- */
 const MatchComplete = ({ match }: { readonly match: MatchSummary }) => {
   const { state } = useMatchContext();
+  const { state: comm } = useCommentaryContext();
   const committed = state.phase === "committed";
   return (
     <>
       <MatchCommentaryStream />
       <div className="mt-4 flex items-center gap-3">
         <p className="font-semibold">
-          Final score: {match.homeClubName} {state.homeScore} - {state.awayScore} {match.awayClubName}
+          Final score: {match.homeClubName} {comm.homeScore} - {comm.awayScore} {match.awayClubName}
         </p>
         {committed ? (
           <p className="text-text-secondary">Result accepted. Continue to move on.</p>
@@ -60,7 +45,9 @@ const MatchComplete = ({ match }: { readonly match: MatchSummary }) => {
 
 export const MatchDayScreen = ({ saveId }: { readonly saveId: SaveId }) => (
   <MatchProvider saveId={saveId}>
-    <MatchDayLayout />
+    <CommentaryProvider>
+      <MatchDayLayout />
+    </CommentaryProvider>
   </MatchProvider>
 );
 
