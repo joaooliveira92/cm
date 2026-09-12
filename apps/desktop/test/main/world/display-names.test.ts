@@ -98,7 +98,7 @@ describe("display names resolve through the save's pack", () => {
       const saveId = yield* generatedSave;
       const view = yield* withSave(saveId, getClubSelection);
 
-      expect(view.leagueName).toBe(displayName(ENGLISH_PREMIER_LEAGUE_PACK, "comp_eng_1"));
+      expect(view.leagues[0]!.leagueName).toBe(displayName(ENGLISH_PREMIER_LEAGUE_PACK, "comp_eng_1"));
       expect(view.clubs).toHaveLength(20);
       for (const club of view.clubs) {
         expect(club.clubName).toBe(displayName(ENGLISH_PREMIER_LEAGUE_PACK, club.clubId));
@@ -130,7 +130,7 @@ describe("display names resolve through the save's pack", () => {
       expect(pack.version).toBe(BRAZIL_SERIES_A_PACK.version);
 
       const view = yield* withSave(saveId, getClubSelection);
-      expect(view.leagueName).toBe("Campeonato Brasileiro Série A");
+      expect(view.leagues[0]!.leagueName).toBe("Campeonato Brasileiro Série A");
       expect(view.clubs).toHaveLength(20);
       const flamengo = view.clubs.find((club) => club.clubId === "club_bra_1_09");
       expect(flamengo?.clubName).toBe("Flamengo");

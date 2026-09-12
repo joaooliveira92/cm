@@ -2,7 +2,7 @@ import { Schema } from "effect";
 import { SQUAD_QUALITY_BANDS } from "@cm-clone/shared";
 
 import { ClubColoursView, StatureTierSchema } from "./clubs.js";
-import { ClubId } from "./ids.js";
+import { ClubId, CompetitionId } from "./ids.js";
 import { PositionSchema } from "./squad.js";
 
 export const SquadQualityBandSchema = Schema.Literals(SQUAD_QUALITY_BANDS);
@@ -28,6 +28,8 @@ export class ClubSelectionDetail extends Schema.Class<ClubSelectionDetail>("Club
 export class ClubSelectionRow extends Schema.Class<ClubSelectionRow>("ClubSelectionRow")({
   clubId: ClubId,
   clubName: Schema.String,
+  /** The league this club plays in. */
+  leagueId: CompetitionId,
   /** The badge key for this club's crest, or null when the pack maps none. The renderer draws
    *  a colour-and-initials shield when the key is null or unknown. */
   badgeKey: Schema.NullOr(Schema.String),
@@ -44,8 +46,9 @@ export class ClubSelectionRow extends Schema.Class<ClubSelectionRow>("ClubSelect
 
 export class ClubSelectionView extends Schema.Class<ClubSelectionView>("ClubSelectionView")({
   clubs: Schema.Array(ClubSelectionRow),
-  /** The name of the League these clubs play in, already resolved through the save's content pack.
-   *  Carried on the wire rather than imported by the renderer: a display name is the pack's to
-   *  decide, and the renderer must never hold a second copy of that answer. */
-  leagueName: Schema.String,
+  /** The leagues the player selected, with their display names. */
+  leagues: Schema.Array(Schema.Struct({
+    leagueId: CompetitionId,
+    leagueName: Schema.String,
+  })),
 }) {}
