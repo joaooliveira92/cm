@@ -2,36 +2,21 @@
 
 Type: grilling
 
-Blocked by: 01
+Status: resolved
 
-## Question
+## Answer
 
-[27_background_processing_and_updating_game.md](../../../docs/specs/group_b_global_navigation_and_inbox/27_background_processing_and_updating_game.md)
-describes the progress, cancellation, and worker machinery behind an advance. Almost all of it is
-already disposed of by rulings this map inherits:
+Screen 27 is **entirely disposed**. Every section is classified against existing rulings and has a
+ledger row in RECONCILIATION.md. The residue is empty:
 
-- Worker pools, memory budgets, and resource-policy tuning are out of scope (Group A).
-- The advance dialog, progress UI, task checklist, and cancellation are already `Reviewed` and
-  disposed of on screen 23's ledger rows.
-- §10 is the multiplayer axis.
+- The candidate failure path (§2 "see why processing paused or stopped") is now implemented by
+  `ContinueResultBand` in the career chrome (`ContinueResult.tsx:27-29`), which reports a `failure`
+  kind with a message, a `Dismiss` button, and a red border — owned by continue-and-advance-time.
+- §16 (locks, idempotency) is architecturally satisfied: the Calendar advance is a single idempotent
+  command, not a multi-step transaction, and the single-flight guard in `CareerStateProvider.tsx`
+  prevents a second press.
+- §18 (local structured logging) is in scope and followed.
+- Everything else (progress UI, task checklist, cancellation states, worker pools, memory budgets) was
+  already disposed of by Screen 23's rows or the Group A inheritance.
 
-The question is whether **anything survives**, and the answer is not assumed to be "no". The candidate
-residue is the failure path: what the player is told when an advance *fails*, which
-[continue-and-advance-time](../../continue-and-advance-time/map.md) records as currently silent outside
-the League table, plus §18 Observability, where local structured logging is explicitly still in scope.
-
-Blocked on ticket 01 because the Continue control and its result rendering
-(`ContinueResult.tsx`, `ContinueOutstanding.tsx`) live in the chrome; auditing them twice would
-produce two sets of rows over the same code.
-
-Resolve as a disposal: either the residue is empty and the screen is `Audited` with everything
-classified, or the residue is real and this ticket states exactly what it is and where it belongs.
-
-No code changes.
-
-## Done when
-
-- Screen 27 moves off `Not yet audited`.
-- Every section is classified, with inherited rulings cited by name rather than re-argued.
-- The failure-path residue is either written into the spec or explicitly handed to
-  `continue-and-advance-time` as already-owned.
+Ledger status: **Audited**.
