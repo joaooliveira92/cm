@@ -12,6 +12,7 @@
 | # | Criterion | Proving test | Result |
 |---|---|---|---|
 | 1 | Screen 31 moves off `Not yet audited` with complement status | Ledger Coverage table: `Reviewed` (group-b-reconciliation ticket 03) | PASS — row reads `Reviewed` |
+| 2 | Every addition beyond Group A's ticket 06 has a row and an anchor | 12 ledger rows added covering languages, qualifications, background, reputation, relationships, tabs, entity links, contract, notebook, ownership, Manager Status, screen states, data model, §16 hidden-attributes, portrait/artwork, §22-23 scaffolding | PASS — each row has a Kind, disposition, and anchor |
 | 3 | Career-record question handed to ticket 06 unresolved | Ledger §4 row and ticket's Answer section name the handoff | PASS |
 
 ## Gate
