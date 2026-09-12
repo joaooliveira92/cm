@@ -75,6 +75,15 @@ an audit will find bugs in it. Findings become ledger rows and spec statements; 
   rather than the region the player left. See
   [issues/01-screen-22-career-chrome.md](issues/01-screen-22-career-chrome.md).
 
+- **Ticket 02 — Screens 24, 25, 26 (News Inbox, Message, Filters) are `Reviewed`.** Audited as one
+  ticket per the charting spec. All three screens move off `Not yet audited` to `Reviewed`. The
+  implementation handles all three as one list-and-detail route — Screen 25 is an inline pane rather
+  than a separate route, and Screen 26 is an inline filter bar. Main gaps recorded `deferred`: saved
+  filter presets, date-range/sender-type/priority criteria, sender summary and entity links on
+  messages, content blocks and attachments, virtualization, and the full filter lifecycle. No News
+  Message taxonomy hole was found. See
+  [issues/02-screens-24-26-news.md](issues/02-screens-24-26-news.md).
+
 The charting-time rulings above are written up as a spec at [charting-spec.md](charting-spec.md). It covers this effort's method and scope only; the Group B
 screens spec is `spec.md`, produced by ticket 07.
 

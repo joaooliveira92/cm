@@ -2,10 +2,12 @@
 
 ## Immediate next action
 
-03 (let e2e pin a match seed) is `Status: claimed` on disk — previously claimed and never resolved.
-04 (`screen-fulltime` flake) was resolved at `e0151ec`. Desktop-suite-red has no remaining
-agent-ready ticket. react-composition-audit has no agent-ready ticket either: 02, 03 and 07 are
-`needs-triage`, waiting on a maintainer. The queue is empty for agent-eligible work.
+**group-b-reconciliation ticket 03** (Screen 31 Manager Profile complement) — open, unblocked,
+unclaimed. The next decision ticket in the group-b-reconciliation frontier after ticket 02 resolved
+today.
+
+Desktop-suite-red 03 is `Status: claimed` on disk (abandoned). react-composition-audit 02, 03 and 07
+are `needs-triage`, waiting on a maintainer.
 
 ## Gate state (2026-09-12)
 
