@@ -2,16 +2,17 @@
 
 ## Immediate next action
 
-**group-b-reconciliation ticket 03** (Screen 31 Manager Profile complement) — open, unblocked,
-unclaimed. The next decision ticket in the group-b-reconciliation frontier after ticket 02 resolved
-today.
+**group-b-reconciliation is complete** — all 7 tickets resolved, spec.md written, ledger clean.
+The queue below lists remaining efforts; none is actionable by an autonomous agent without human
+intervention.
 
 Desktop-suite-red 03 is `Status: claimed` on disk (abandoned). react-composition-audit 02, 03 and 07
 are `needs-triage`, waiting on a maintainer.
 
 ## Gate state (2026-09-12)
 
-- **`pnpm check:all`**: pre-existing failures only — no regression from today's change (`e0151ec`):
+- **`pnpm check:all`**: pre-existing failures only — no regression from today's changes (commits
+  `8e2b1d5`, `66ac833`, `e696916`, `7f94e01`, `e0cb972`):
   - `test/renderer/managerProfile/screen.test.tsx` — mock RPC returns "unexpected response"
   - `test/renderer/chrome/shell-bottom-bar-state.test.ts` — expected `zones` mismatch
   - `test/renderer/navigation/navbar.test.tsx` and `route-index.test.ts` — route content mismatch
