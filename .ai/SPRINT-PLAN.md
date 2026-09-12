@@ -6,13 +6,17 @@
 The queue below lists remaining efforts; none is actionable by an autonomous agent without human
 intervention.
 
+**season-rollover-skips-conclusion ticket 01** (auto-rollover is intended) — resolved in this
+session. Dead `season_complete` phase checks removed from `CareerStateProvider.tsx` and
+`allActions.ts`. See commit `39f923f`.
+
 Desktop-suite-red 03 is `Status: claimed` on disk (abandoned). react-composition-audit 02, 03 and 07
 are `needs-triage`, waiting on a maintainer.
 
 ## Gate state (2026-09-12)
 
 - **`pnpm check:all`**: pre-existing failures only — no regression from today's changes (commits
-  `8e2b1d5`, `66ac833`, `e696916`, `7f94e01`, `e0cb972`):
+  `8e2b1d5`, `66ac833`, `e696916`, `7f94e01`, `e0cb972`, `39f923f`):
   - `test/renderer/managerProfile/screen.test.tsx` — mock RPC returns "unexpected response"
   - `test/renderer/chrome/shell-bottom-bar-state.test.ts` — expected `zones` mismatch
   - `test/renderer/navigation/navbar.test.tsx` and `route-index.test.ts` — route content mismatch
@@ -25,6 +29,7 @@ are `needs-triage`, waiting on a maintainer.
 
 1. **desktop-suite-red**: 01, 02, 04 resolved. 03 claimed-and-abandoned.
 2. **react-composition-audit**: 17 resolved 2026-09-10. 02, 03 and 07 are `needs-triage`, waiting on a human.
+3. **season-rollover-skips-conclusion**: 01 resolved. The auto-rollover is intentional — no further tickets pending.
 
 Shipped and closed:
 
