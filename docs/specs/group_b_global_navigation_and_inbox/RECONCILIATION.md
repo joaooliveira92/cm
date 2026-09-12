@@ -60,9 +60,9 @@ reads it.
 |---|---|---|
 | 22 Global Application Shell | [22_global_application_shell.md](22_global_application_shell.md) | Reviewed |
 | 23 Continue and Advance Time | [23_continue_and_advance_time.md](23_continue_and_advance_time.md) | Reviewed |
-| 24 News Inbox | [24_news_inbox.md](24_news_inbox.md) | Not yet audited |
-| 25 Individual News Message | [25_individual_news_message.md](25_individual_news_message.md) | Not yet audited |
-| 26 News Filters | [26_news_filters.md](26_news_filters.md) | Not yet audited |
+| 24 News Inbox | [24_news_inbox.md](24_news_inbox.md) | Reviewed |
+| 25 Individual News Message | [25_individual_news_message.md](25_individual_news_message.md) | Reviewed |
+| 26 News Filters | [26_news_filters.md](26_news_filters.md) | Reviewed |
 | 27 Background Processing and Updating Game | [27_background_processing_and_updating_game.md](27_background_processing_and_updating_game.md) | Audited |
 | 28 Calendar and Schedule | [28_calendar_and_schedule.md](28_calendar_and_schedule.md) | Reviewed |
 | 29 Manager Notebook | [29_manager_notebook.md](29_manager_notebook.md) | Disposed in full |
