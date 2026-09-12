@@ -1,6 +1,6 @@
 # 03 — Screen 31: Manager Profile complement
 
-Type: grilling
+Status: resolved
 
 ## Question
 
@@ -27,9 +27,21 @@ decides placement against a profile whose contents are known.
 
 No code changes.
 
-## Done when
+## Answer
 
-- Screen 31 moves off `Not yet audited`, with a status line saying it was read as a complement.
-- Every addition beyond Group A's ticket 06 has a row and an anchor.
-- The career-record question is handed to ticket 06 unresolved, with this ticket recording what the
-  profile does and does not currently hold.
+Screen 31 was read as a complement to Group A's Manager Profile (ticket 06). Every addition beyond that decision was audited and assigned a ledger row:
+
+- **Languages, qualifications, background, relationships, reputation, familiarity** — `contradicted`. The identity model is Archetype and Pillars with no manager-facing side data. Nationality is a player generation input only. (Ledger §1, §4, §6.)
+- **Club entity link and contract details** — `contradicted`. The route model has no entity-id routes (Screen 22 §9), and contract/board data belongs to Season Summary. (Ledger §2, §4, §7.)
+- **Notebook, ownership, resignation, Manager Status** — `contradicted`. Notebook is Screen 29 disposed; ownership and resignation are inherited Group A rulings; "Manager Status" is a retired term. The one lifecycle action that exists — Retire — is implemented. (Ledger §2, §4, §7.)
+- **Tabs (Overview, Career Record, History, Relationships, Contract)** — `contradicted`. Single-view scrolling layout, no tab infrastructure in the contract or the screen. (Ledger §4.)
+- **Full `ManagerProfileViewModel` data model** — `contradicted`. The actual contract is deliberately narrow per Group A. (Ledger §6.)
+- **Seven distinct screen states** — `contradicted`. Four states from the atom model (Initial/Success/Failure + waiting), with active/archived as display treatments. (Ledger §8.)
+- **§16 hidden-attribute rule** — `contradicted`. Silently followed: the manager has no hidden attributes to expose. Resolves the residue the blanket §16 row reserved for this ticket. (Ledger §16.)
+- **Portrait/proprietary artwork** — `contradicted`. No portrait slot exists at all. (Ledger §20.)
+- **§5, §12-15, §19, §21 (remaining)** — `deferred` as `unscheduled`, matching Screen 22's pattern.
+- **§22-23** — `out-of-scope` as import scaffolding.
+
+### Handed off to ticket 06
+
+The career-record question (§2, §4 career stats, §6 careerRecord/honours) is the one genuinely open piece. The profile currently holds nothing of it — no match counts, honours, or career aggregate of any kind — so ticket 06 can decide placement against known contents.
