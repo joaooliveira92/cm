@@ -2,21 +2,14 @@
 
 ## Immediate next action
 
-**group-b-reconciliation is complete** — all 7 tickets resolved, spec.md written, ledger clean.
-The queue below lists remaining efforts; none is actionable by an autonomous agent without human
-intervention.
+**react-composition-audit tickets 12-16** are `ready-for-agent` and unblocked (orchestration hook + provider extraction for TransfersScreen). Also: **visual-design-language tickets 11-14** are `ready-for-agent` and unblocked (08/09 resolved).
 
-**season-rollover-skips-conclusion ticket 01** (auto-rollover is intended) — resolved in this
-session. Dead `season_complete` phase checks removed from `CareerStateProvider.tsx` and
-`allActions.ts`. See commit `39f923f`.
-
-Desktop-suite-red 03 is `Status: claimed` on disk (abandoned). react-composition-audit 02, 03 and 07
-are `needs-triage`, waiting on a maintainer.
+Desktop-suite-red 03 is `Status: claimed` on disk (abandoned).
 
 ## Gate state (2026-09-12)
 
 - **`pnpm check:all`**: pre-existing failures only — no regression from today's changes (commits
-  `8e2b1d5`, `66ac833`, `e696916`, `7f94e01`, `e0cb972`, `39f923f`):
+  `8e2b1d5`, `66ac833`, `e696916`, `7f94e01`, `e0cb972`, `39f923f`, `305a204`, `a321bda`, `81401f6`, `32f4c84`):
   - `test/renderer/managerProfile/screen.test.tsx` — mock RPC returns "unexpected response"
   - `test/renderer/chrome/shell-bottom-bar-state.test.ts` — expected `zones` mismatch
   - `test/renderer/navigation/navbar.test.tsx` and `route-index.test.ts` — route content mismatch
@@ -28,14 +21,17 @@ are `needs-triage`, waiting on a maintainer.
 ## Queue
 
 1. **desktop-suite-red**: 01, 02, 04 resolved. 03 claimed-and-abandoned.
-2. **react-composition-audit**: 17 resolved 2026-09-10. 02, 03 and 07 are `needs-triage`, waiting on a human.
-3. **season-rollover-skips-conclusion**: 01 resolved. The auto-rollover is intentional — no further tickets pending.
+2. **react-composition-audit**: 02, 03, 07 resolved (superseded). 12-16 ready-for-agent.
+3. **season-rollover-skips-conclusion**: 01 resolved.
+4. **match-composition**: 01-02 resolved.
+5. **group-a-reconciliation**: 03-04 resolved (quit guard, save-list chrome).
 
 Shipped and closed:
 
 - **club-staff-presence**: complete 2026-09-09.
 - **save-list-error-handling**: complete 2026-09-09. See `.ai/reports/save-list-error-handling.md`.
 - **world-data-model**: shipped. Its rows decayed.
+- **group-b-reconciliation**: all 7 tickets resolved, spec.md written, ledger clean.
 
 ## Loose instructions
 
