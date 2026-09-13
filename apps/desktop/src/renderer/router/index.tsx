@@ -174,14 +174,16 @@ const defineCareerChild = <const P extends string>(
   path: P,
   screenId: string,
   Screen: typeof SquadScreen,
+  options: { readonly fullHeight?: boolean } = {},
 ) =>
   createRoute({
     getParentRoute: () => saveRoute,
     path,
-    component: () => <CareerChildView screenId={screenId} Screen={Screen} />,
+    component: () => <CareerChildView screenId={screenId} Screen={Screen} fullHeight={options.fullHeight} />,
   });
 
-const squadRoute = defineCareerChild("squad", "squad", SquadScreen);
+// Full height so the lineup bar sits on the bottom edge of the window, not under a short list.
+const squadRoute = defineCareerChild("squad", "squad", SquadScreen, { fullHeight: true });
 const transfersRoute = defineCareerChild("transfers", "transfers", TransfersScreen);
 const leagueRoute = defineCareerChild("league", "league", LeagueTableScreen);
 const fixturesRoute = defineCareerChild("fixtures", "fixtures", FixturesScreen);

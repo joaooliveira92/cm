@@ -16,12 +16,17 @@ import { BACK_RESTORE_MARKER, consumePendingFocus, focusSemanticTarget } from ".
 export const RouteView = ({
   screenId,
   fill = false,
+  fullHeight = false,
   children,
 }: {
   screenId: string;
   /** Let the screen own the height its parent gives it, for a step that is a full-height
    *  workspace rather than a document. Off by default: every other screen is a reading column. */
   fill?: boolean;
+  /** At least the height of the scroll region the screen sits in, for a screen that pins a bar to
+   *  the bottom of the window even when its content is short. `fill` needs a flex parent; this does
+   *  not, so it suits the career shell's plain scroll region. */
+  fullHeight?: boolean;
   children: ReactNode;
 }) => {
   useEffect(() => {
@@ -35,6 +40,8 @@ export const RouteView = ({
   }, [screenId]);
 
   return (
-    <div className={fill ? "flex min-h-0 flex-1 flex-col" : undefined}>{children}</div>
+    <div className={fill ? "flex min-h-0 flex-1 flex-col" : fullHeight ? "flex min-h-full flex-col" : undefined}>
+      {children}
+    </div>
   );
 };

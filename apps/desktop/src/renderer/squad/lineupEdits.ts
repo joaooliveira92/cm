@@ -32,6 +32,11 @@ export const lineupLengthOf = (formation: Formation): number =>
 
 const isEmptyId = (id: PlayerId | null): boolean => id === null || id === "";
 
+/** How many starter slots still name no player. The server refuses a Tactic with any, so a lineup
+ *  only autosaves once this reaches zero. */
+export const missingStartersOf = (tactic: Tactic): number =>
+  tactic.slots.filter((slot) => isEmptyId(slot.playerId)).length;
+
 /** The bar's 18 slots, in left-to-right order. */
 export const lineupSlotsOf = (tactic: Tactic): ReadonlyArray<LineupSlot> => {
   const starters = FORMATION_SLOTS[tactic.formation].map((position, index) => ({

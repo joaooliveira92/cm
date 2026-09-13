@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
@@ -28,6 +28,7 @@ import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
+import { renderInRouter } from "./renderInRouter.js";
 import { chooseOptionByLabel } from "../../setup/baseUiSelect.js";
 
 const rid = (s: string) => SaveId.make(s);
@@ -103,7 +104,7 @@ const mountSquad = async (
           } as never)
         : ({ _tag: "Failure", error: NOT_FOUND } as never),
   );
-  render(
+  renderInRouter(
     <RegistryProvider>
       <SquadScreen saveId={rid("s1")} />
     </RegistryProvider>,
@@ -204,7 +205,7 @@ describe("choosing a view", () => {
 });
 
 describe("the squad screen mounts the match-day bar", () => {
-  it("renders the eighteen empty slots and the Save button on a fresh squad", async () => {
+  it("renders the eighteen empty slots and says the lineup is not saved on a fresh squad", async () => {
     await mountSquad([player("p1", "Alan", "Shearer")]);
 
     // The eleven formation slots, labelled by the position they fill — a position repeats when
@@ -221,7 +222,9 @@ describe("the squad screen mounts the match-day bar", () => {
     }
     // An empty lineup leaves the whole squad in the roster, ready to be dragged in.
     expect(screen.getByRole("button", { name: "Shearer, Alan" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Save Lineup" })).toBeTruthy();
+    // Lineups autosave, so there is no Save button; an empty lineup says what saving waits on.
+    expect(screen.queryByRole("button", { name: "Save Lineup" })).toBeNull();
+    expect(screen.getByText("Not saved yet: pick 11 more starters.")).toBeTruthy();
   });
 });
 

@@ -120,8 +120,6 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   // it; the list only reads it.
   const lineup = useTacticDraft(saveId, { saveFailureMessage: SAVE_FAILURE });
 
-  useEffect(() => registerActionHandler("save-tactic", () => void lineup.save()), [lineup.save]);
-
   const latest = useRef({
     sort,
     filters,

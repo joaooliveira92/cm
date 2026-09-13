@@ -5,9 +5,11 @@
  * stays the home of the unselected; the bar itself no longer lists anyone.
  *
  * The draft is the same persisted Tactic the Tactics editor owns
- * (`useTacticDraft`), and a Save button in the bar commits it through the same
- * expected-revision submit, so a lost write race surfaces as the same
- * conflict-and-refresh offer. Editing here and editing in Tactics are the same
+ * (`useTacticDraft`). There is no Save button: every edit autosaves through the
+ * same expected-revision submit, so a lost write race surfaces as the same
+ * conflict-and-refresh offer. The server refuses a Tactic with an empty starter
+ * slot, so while any starter is missing the bar says the lineup is not saved
+ * yet, and the first complete lineup saves. Editing here and editing in Tactics are the same
  * edit. The draft is shared with the rest of the screen through the squad
  * provider — the roster rows report who is selected to play or sit on the
  * bench against the very slots this bar edits.
@@ -22,8 +24,7 @@
  * more than colour — see `aria-pressed`.
  */
 import { useState } from "react";
-import { PlayerId } from "@cm-clone/contracts";
-import { dispatchAction } from "../actions/dispatch.js";
+import { PlayerId, type Tactic } from "@cm-clone/contracts";
 import { Button } from "../components/ui/button.js";
 import { FOCUS_RING } from "../focus.js";
 import { describeRpcError } from "../rpc.js";
@@ -32,6 +33,7 @@ import {
   clearLineupSlot,
   dropOnLineupSlot,
   lineupSlotsOf,
+  missingStartersOf,
   swapLineupSlots,
 } from "./lineupEdits.js";
 import { readLineupDrag, writeLineupDrag } from "./lineupDrag.js";
@@ -71,19 +73,19 @@ const SlotBox = ({
     onDragOver={(event) => event.preventDefault()}
     onDrop={onDrop}
     onKeyDown={onKeyDown}
-    className={`flex min-h-10 min-w-12 items-center justify-center rounded-control border px-1 py-0.5 ${slot.playerId === null
-      ? "border-border-subtle text-text-secondary"
-      : "border-bright text-text-highlight"
+    className={`h-6 min-w-11 border px-1.5 ${slot.playerId === null
+      ? "border-panel-border-dark text-text-strong"
+      : "border-text-highlight text-text-highlight"
       } ${FOCUS_RING.join(" ")}`}
   >
-    <span className="text-xs font-bold leading-tight">{slot.label}</span>
+    <span className="text-2xs font-bold leading-tight">{slot.label}</span>
   </Button>
 );
 
 export const MatchDayBar = () => {
   const { state, lineup } = useSquad();
   const { allPlayers } = state;
-  const { viewError, tactic, conflict, status, setTactic, refresh } = lineup;
+  const { viewError, tactic, conflict, status, setTactic, autosave, refresh } = lineup;
 
   // The player being keyboard-carried between slots. `null` while idle.
   const [carriedId, setCarriedId] = useState<string | null>(null);
@@ -101,10 +103,17 @@ export const MatchDayBar = () => {
     slots.find((slot) => slot.playerId !== null && String(slot.playerId) === playerId)?.order ??
     null;
 
+  // Every edit goes through here: it replaces the draft and, once all starters are named, saves it.
+  const edit = (next: Tactic) => {
+    setTactic(next);
+    if (missingStartersOf(next) === 0) void autosave(next);
+  };
+
   const assignToSlot = (playerId: string, order: number) =>
-    setTactic(dropOnLineupSlot(tactic, order, PlayerId.make(playerId)));
-  const swapSlots = (from: number, to: number) => setTactic(swapLineupSlots(tactic, from, to));
-  const unassignSlot = (order: number) => setTactic(clearLineupSlot(tactic, order));
+    edit(dropOnLineupSlot(tactic, order, PlayerId.make(playerId)));
+  const swapSlots = (from: number, to: number) => edit(swapLineupSlots(tactic, from, to));
+  const unassignSlot = (order: number) => edit(clearLineupSlot(tactic, order));
+  const missingStarters = missingStartersOf(tactic);
 
   const dropOnSlot = (event: React.DragEvent, order: number) => {
     event.preventDefault();
@@ -155,7 +164,7 @@ export const MatchDayBar = () => {
     <footer
       aria-label="Lineup selector"
       data-testid="lineup-bar"
-      className="sticky bottom-0 z-10 mt-4 border-t border-border-subtle bg-bg-raised px-4 py-2"
+      className="sticky bottom-0 z-10 mt-3 bg-background px-4 pt-2 pb-3"
       onDragOver={(event) => event.preventDefault()}
       onDrop={dropOnBar}
     >
@@ -163,69 +172,72 @@ export const MatchDayBar = () => {
         <p className="mb-2 text-sm text-text-danger">{describeRpcError(viewError)}</p>
       )}
 
-      {/* Starters and bench on the same row. */}
-      <div className="flex flex-wrap items-end gap-1">
-        {slots
-          .filter((slot) => slot.kind === "starter")
-          .map((slot) => (
-            <SlotBox
-              key={`starter-${slot.groupIndex}`}
-              slot={slot}
-              occupantName={slotPlayerName(
-                slot.playerId === null ? null : String(slot.playerId),
-              )}
-              carried={carriedId !== null && slot.playerId !== null && String(slot.playerId) === carriedId}
-              onDragStart={(event) => {
-                if (slot.playerId !== null) writeLineupDrag(event, "slot", String(slot.playerId));
-              }}
-              onDrop={(event) => dropOnSlot(event, slot.order)}
-              onKeyDown={onKeyDown}
-            />
-          ))}
+      {/* CM 03/04's titled Positions panel: starters and bench on one centred row. */}
+      <section className="rounded-panel bg-panel-bg px-3 pt-1.5 pb-2.5">
+        <h2 className="text-center text-base font-bold text-text-highlight">Positions</h2>
+        <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1">
+          {slots
+            .filter((slot) => slot.kind === "starter")
+            .map((slot) => (
+              <SlotBox
+                key={`starter-${slot.groupIndex}`}
+                slot={slot}
+                occupantName={slotPlayerName(
+                  slot.playerId === null ? null : String(slot.playerId),
+                )}
+                carried={carriedId !== null && slot.playerId !== null && String(slot.playerId) === carriedId}
+                onDragStart={(event) => {
+                  if (slot.playerId !== null) writeLineupDrag(event, "slot", String(slot.playerId));
+                }}
+                onDrop={(event) => dropOnSlot(event, slot.order)}
+                onKeyDown={onKeyDown}
+              />
+            ))}
 
-        {slots
-          .filter((slot) => slot.kind === "bench")
-          .map((slot) => (
-            <SlotBox
-              key={`bench-${slot.groupIndex}`}
-              slot={slot}
-              occupantName={slotPlayerName(
-                slot.playerId === null ? null : String(slot.playerId),
-              )}
-              carried={carriedId !== null && slot.playerId !== null && String(slot.playerId) === carriedId}
-              onDragStart={(event) => {
-                if (slot.playerId !== null) writeLineupDrag(event, "slot", String(slot.playerId));
-              }}
-              onDrop={(event) => dropOnSlot(event, slot.order)}
-              onKeyDown={onKeyDown}
-            />
-          ))}
-        {carriedId !== null && (
-          <span className="ml-1 self-center text-xs text-text-secondary" data-testid="lineup-carried">
-            Holding {playerById.get(carriedId)?.lastName ?? carriedId}…
-          </span>
-        )}
-      </div>
+          {slots
+            .filter((slot) => slot.kind === "bench")
+            .map((slot) => (
+              <SlotBox
+                key={`bench-${slot.groupIndex}`}
+                slot={slot}
+                occupantName={slotPlayerName(
+                  slot.playerId === null ? null : String(slot.playerId),
+                )}
+                carried={carriedId !== null && slot.playerId !== null && String(slot.playerId) === carriedId}
+                onDragStart={(event) => {
+                  if (slot.playerId !== null) writeLineupDrag(event, "slot", String(slot.playerId));
+                }}
+                onDrop={(event) => dropOnSlot(event, slot.order)}
+                onKeyDown={onKeyDown}
+              />
+            ))}
+          {carriedId !== null && (
+            <span className="ml-1 self-center text-xs text-text-secondary" data-testid="lineup-carried">
+              Holding {playerById.get(carriedId)?.lastName ?? carriedId}…
+            </span>
+          )}
+        </div>
+      </section>
 
-      <div className="mt-2 flex items-center gap-3">
-        <Button
-          type="button"
-          data-action-id="save-tactic"
-          onClick={() => void dispatchAction("save-tactic")}
-        >
-          Save Lineup
-        </Button>
-        {conflict !== null && (
+      <div className="mt-1.5 flex min-h-5 items-center justify-center gap-3 text-xs" data-testid="lineup-save-state">
+        {conflict !== null ? (
           <>
-            <span role="alert" className="text-sm text-text-danger" data-testid="lineup-conflict">
+            <span role="alert" className="text-text-danger" data-testid="lineup-conflict">
               {CONFLICT_MESSAGE}
             </span>
-            <Button type="button" variant="secondary" onClick={refresh}>
+            <Button type="button" variant="secondary" size="sm" onClick={refresh}>
               Refresh
             </Button>
           </>
+        ) : missingStarters > 0 ? (
+          // The server refuses a lineup with an empty starter slot, so say what saving waits on
+          // rather than failing every drop while the lineup is being built.
+          <span className="text-text-secondary">
+            Not saved yet: pick {missingStarters} more {missingStarters === 1 ? "starter" : "starters"}.
+          </span>
+        ) : (
+          status && <span className="text-text-secondary">{status}</span>
         )}
-        {status && <span className="ml-3 text-sm text-text-secondary">{status}</span>}
       </div>
     </footer>
   );

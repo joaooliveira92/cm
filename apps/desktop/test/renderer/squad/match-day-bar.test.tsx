@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
@@ -17,6 +17,7 @@ import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
+import { renderInRouter } from "./renderInRouter.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -54,6 +55,7 @@ const player = (id: string, lastName: string): unknown => ({
 });
 
 interface SquadOverrides {
+  readonly squad?: ReadonlyArray<unknown>;
   readonly tactic?: unknown;
   readonly revision?: number;
   readonly changeTactics?: (payload: unknown) => Promise<unknown>;
@@ -92,7 +94,7 @@ const drag = (source: Element, target: Element): void => {
 };
 
 const mountSquadScreen = async (overrides: SquadOverrides = {}): Promise<void> => {
-  const squad = [p0, p1, p2, p3, p4, p5];
+  const squad = overrides.squad ?? [p0, p1, p2, p3, p4, p5];
   mockPreload(async (method, payload) => {
     if (method === "getSquad") {
       return {
@@ -120,7 +122,7 @@ const mountSquadScreen = async (overrides: SquadOverrides = {}): Promise<void> =
     }
     return { _tag: "Failure", error: NOT_FOUND } as never;
   });
-  render(
+  renderInRouter(
     <RegistryProvider>
       <SquadScreen saveId={rid("s1")} />
     </RegistryProvider>,
@@ -134,6 +136,36 @@ const p2 = player("p2", "Nistelrooy");
 const p3 = player("p3", "Van Persie");
 const p4 = player("p4", "Beresford");
 const p5 = player("p5", "Solano");
+
+/** Enough players for a whole lineup plus one spare: the server only accepts a Tactic whose eleven
+ *  starter slots all name a player, so autosave is exercised against a complete one. */
+const FULL_SQUAD = [
+  p0, p1, p2, p3, p4, p5,
+  ...["Hall", "Ince", "Keane", "Lee", "Batty", "Speed"].map((name, index) => player(`p${index + 6}`, name)),
+];
+
+/** p0..p10 start, p11 (Speed) is the spare. */
+const completeTactic = () => ({
+  ...seededTactic(),
+  slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
+    position,
+    role: POSITION_ROLES[position],
+    playerId: rid(`p${index}`),
+  })),
+});
+
+const ML_INDEX = FORMATION_SLOTS["4-4-2"].indexOf("ML");
+
+const successfulSave = (payload: unknown) =>
+  ({
+    _tag: "Success",
+    value: {
+      club: { id: rid("me"), name: "Test FC", statureTier: STATURE_TIERS[0] },
+      squad: FULL_SQUAD,
+      tactic: (payload as { tactic: unknown }).tactic,
+      revision: (payload as { expectedRevision: number }).expectedRevision + 1,
+    },
+  }) as never;
 
 const reset = () => {
   cleanup();
@@ -230,55 +262,94 @@ describe("the match-day bar", () => {
     expect(screen.getByRole("button", { name: "GK slot" })).toBeTruthy();
   });
 
-  it("persists the edited lineup through the shared save path on Save Lineup", async () => {
+  it("autosaves a complete lineup the moment it is edited, with no Save button", async () => {
     const saves: unknown[] = [];
     await mountSquadScreen({
+      squad: FULL_SQUAD,
+      tactic: completeTactic(),
       changeTactics: async (payload) => {
         saves.push(payload);
-        return {
-          _tag: "Success",
-          value: {
-            club: { id: rid("me"), name: "Test FC", statureTier: STATURE_TIERS[0] },
-            squad: [p0, p1, p2, p3, p4, p5],
-            tactic: (payload as { tactic: unknown }).tactic,
-            revision: (payload as { expectedRevision: number }).expectedRevision + 1,
-          },
-        } as never;
+        return successfulSave(payload);
       },
     });
+    expect(screen.queryByRole("button", { name: "Save Lineup" })).toBeNull();
 
     drag(
-      screen.getByRole("button", { name: "Van Persie, Pep" }),
-      screen.getByRole("button", { name: "ML slot" }),
+      screen.getByRole("button", { name: "Speed, Pep" }),
+      screen.getByRole("button", { name: /^ML slot, / }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Save Lineup" }));
     expect(await screen.findByText("Saved.")).toBeTruthy();
 
     expect(saves).toHaveLength(1);
     const payload = saves[0] as {
       expectedRevision: number;
       tactic: { slots: Array<{ position: string; playerId: unknown }> };
-      saveId: unknown;
     };
     expect(payload.expectedRevision).toBe(0);
-    const mlIndex = payload.tactic.slots.findIndex((slot) => slot.position === "ML");
-    expect(String(payload.tactic.slots[mlIndex]!.playerId)).toBe("p3");
+    expect(String(payload.tactic.slots[ML_INDEX]!.playerId)).toBe("p11");
     expect(String(payload.tactic.slots[0]!.playerId)).toBe("p0");
+  });
+
+  it("does not save while a starter slot is empty, and says how many are missing", async () => {
+    const saves: unknown[] = [];
+    await mountSquadScreen({
+      changeTactics: async (payload) => {
+        saves.push(payload);
+        return successfulSave(payload);
+      },
+    });
+    drag(
+      screen.getByRole("button", { name: "Van Persie, Pep" }),
+      screen.getByRole("button", { name: "ML slot" }),
+    );
+    expect(screen.getByText("Not saved yet: pick 7 more starters.")).toBeTruthy();
+    expect(saves).toHaveLength(0);
+  });
+
+  it("sends edits made during a save as one follow-up save at the new revision", async () => {
+    const saves: Array<{ expectedRevision: number; tactic: { slots: Array<{ playerId: unknown }> } }> = [];
+    const pending: Array<() => void> = [];
+    await mountSquadScreen({
+      squad: FULL_SQUAD,
+      tactic: completeTactic(),
+      changeTactics: (payload) => {
+        saves.push(payload as never);
+        return new Promise((resolve) => pending.push(() => resolve(successfulSave(payload))));
+      },
+    });
+
+    drag(screen.getByRole("button", { name: "Speed, Pep" }), screen.getByRole("button", { name: /^ML slot, / }));
+    await waitFor(() => expect(saves).toHaveLength(1));
+    // Two more edits while the first save is on the wire: they must not race it.
+    drag(screen.getByRole("button", { name: "GK slot, Pep Shearer" }), screen.getByRole("button", { name: "DC slot, Pep Moore" }));
+    drag(screen.getByRole("button", { name: "GK slot, Pep Moore" }), screen.getByRole("button", { name: "DC slot, Pep Shearer" }));
+    expect(saves).toHaveLength(1);
+
+    pending.shift()!();
+    await waitFor(() => expect(saves).toHaveLength(2));
+    expect(saves[1]!.expectedRevision).toBe(1);
+    // Only the newest draft is sent: the second swap undid the first.
+    expect(String(saves[1]!.tactic.slots[0]!.playerId)).toBe("p0");
+    expect(String(saves[1]!.tactic.slots[ML_INDEX]!.playerId)).toBe("p11");
+    pending.shift()!();
+    expect(await screen.findByText("Saved.")).toBeTruthy();
+    expect(saves).toHaveLength(2);
   });
 
   it("surfaces a lost write race as a distinct conflict with a Refresh path", async () => {
     let loads = 0;
     await mountSquadScreen({
+      squad: FULL_SQUAD,
       changeTactics: async () => ({ _tag: "Failure", error: CONFLICT } as never),
       getTactics: async () => {
         loads += 1;
         const revision = loads === 1 ? 3 : 5;
-        const tactic = loads === 1 ? seededTactic() : { ...seededTactic(), formation: "5-3-2" as const };
+        const tactic = loads === 1 ? completeTactic() : { ...completeTactic(), formation: "5-3-2" as const };
         return {
           _tag: "Success",
           value: {
             club: { id: rid("me"), name: "Test FC", statureTier: STATURE_TIERS[0] },
-            squad: [p0, p1, p2, p3, p4, p5],
+            squad: FULL_SQUAD,
             tactic,
             revision,
           },
@@ -287,10 +358,9 @@ describe("the match-day bar", () => {
     });
 
     drag(
-      screen.getByRole("button", { name: "Van Persie, Pep" }),
-      screen.getByRole("button", { name: "ML slot" }),
+      screen.getByRole("button", { name: "Speed, Pep" }),
+      screen.getByRole("button", { name: /^ML slot, / }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Save Lineup" }));
 
     const alert = await screen.findByTestId("lineup-conflict");
     expect(alert.textContent).toMatch(/newer tactic was saved/);
@@ -299,7 +369,7 @@ describe("the match-day bar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
     await waitFor(() => expect(screen.queryByTestId("lineup-conflict")).toBeNull());
     // The refreshed view (5-3-2) re-seeds the draft.
-    expect(screen.getByRole("button", { name: "DR slot" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^DR slot/ })).toBeTruthy();
   });
 
   it("carries a player by keyboard: Enter picks up a filled slot, Enter on a slot places them, Escape releases", async () => {

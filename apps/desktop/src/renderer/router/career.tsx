@@ -99,14 +99,17 @@ type CareerScreenComponent = ComponentType<CareerScreenProps>;
 export const CareerChildView = ({
   screenId,
   Screen,
+  fullHeight = false,
 }: {
   readonly screenId: string;
   readonly Screen: CareerScreenComponent;
+  /** See `RouteView`'s `fullHeight`. */
+  readonly fullHeight?: boolean;
 }) => {
   const params = useParams({ strict: false });
   const decoded = decodeSaveId(params.saveId ?? "");
   return decoded._tag === "Success" ? (
-    <RouteView screenId={screenId}>
+    <RouteView screenId={screenId} fullHeight={fullHeight}>
       <Screen saveId={decoded.success} />
     </RouteView>
   ) : (

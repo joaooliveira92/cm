@@ -103,20 +103,31 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
   tacticRef.current = tactic;
   revisionRef.current = revision;
 
-  const save = useCallback(async () => {
+  // The newest edit waiting for an autosave, and whether a save is already on the wire. Saves run one
+  // at a time: two in flight would carry the same expected revision, and the second would lose to the
+  // first as a conflict the manager never caused.
+  const queuedAutosave = useRef<Tactic | null>(null);
+  const autosaving = useRef(false);
+
+  /** Resolves `true` when the tactic persisted. */
+  const save = useCallback(async (tactic: Tactic = tacticRef.current): Promise<boolean> => {
     setStatus("Saving...");
     setConflict(null);
     try {
       // A fresh request id per submit: replaying this exact submit later is a server-side no-op.
       const saved = await saveTactic({
         saveId,
-        tactic: tacticRef.current,
+        tactic,
         expectedRevision: revisionRef.current,
         requestId: WriteRequestId.make(crypto.randomUUID()),
       });
-      setDraft(saved.tactic ?? tacticRef.current);
+      // Written through now rather than on the next render, so a queued save carries this revision.
+      revisionRef.current = saved.revision;
       setRevision(saved.revision);
+      // A newer edit already queued is the draft; the saved one would briefly undo it on screen.
+      if (queuedAutosave.current === null) setDraft(saved.tactic ?? tactic);
       setStatus("Saved.");
+      return true;
     } catch (error) {
       const currentRevision = conflictRevisionOf(error);
       if (currentRevision !== null) {
@@ -127,8 +138,31 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
       } else {
         setStatus(options.saveFailureMessage);
       }
+      return false;
     }
   }, [saveId, saveTactic, options.saveFailureMessage]);
+
+  /**
+   * Save an edit as soon as it is made, for a surface with no Save button. Edits made while a save is
+   * on the wire coalesce: only the newest is sent next. A failed save drops the queue, since the next
+   * edit would fail the same way, and the conflict or failure is already on screen.
+   */
+  const autosave = useCallback(async (tactic: Tactic): Promise<void> => {
+    queuedAutosave.current = tactic;
+    if (autosaving.current) return;
+    autosaving.current = true;
+    try {
+      while (queuedAutosave.current !== null) {
+        const next = queuedAutosave.current;
+        queuedAutosave.current = null;
+        if (!(await save(next))) {
+          queuedAutosave.current = null;
+        }
+      }
+    } finally {
+      autosaving.current = false;
+    }
+  }, [save]);
 
   const refresh = useCallback(() => {
     refreshFrom.current = revisionRef.current;
@@ -154,6 +188,8 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
     /** Save the draft against the revision it was read at. Rejects with a conflict rather than
      *  clobbering when a newer revision won. */
     save,
+    /** Save an edit immediately, coalescing edits made while a save is in flight. */
+    autosave,
     /** Refetch the persisted Tactic and reload the draft once the newer revision lands. */
     refresh,
   };

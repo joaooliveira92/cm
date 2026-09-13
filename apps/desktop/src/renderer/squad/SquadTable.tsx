@@ -27,7 +27,9 @@ import type { FilterClause, RefreshState, TableViewState } from "../table/types.
 
 const REGION = "squadTable";
 
-const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;
+/** CM 03/04's toolbar dropdowns: short chrome buttons named for what they open ("View ▾"), not
+ *  labelled form fields. */
+const TOOLBAR_TRIGGER_CLASS = `chrome-gradient h-7 w-auto min-w-20 border-panel-border-dark px-3 font-semibold text-text-bright shadow-chrome hover:brightness-110 data-[placeholder]:text-text-bright ${FOCUS_RING.join(" ")}`;
 
 /**
  * The players count line, with the non-blocking background refresh marker.
@@ -43,7 +45,7 @@ const RefreshStatusLine = ({
   readonly refreshState: RefreshState;
   readonly copy: TableStateCopy;
 }) => (
-  <div className="mt-1 text-sm text-text-secondary">
+  <div className="ml-auto text-xs text-text-secondary">
     {count} players
     {refreshState._tag === "Refreshing" && (
       <span className="ml-2 text-text-muted">Refreshing…</span>
@@ -104,14 +106,13 @@ const ColumnControls = ({
   </>
 );
 
-/** The filter toolbar: the Position select, the View select, and — when the
+/** The filter toolbar's controls: the View select, the Position select, and — when the
  *  filters are active — the clear-filters action. Whether the column controls
  *  render is decided by the caller from the chosen view's layout. */
 const SquadToolbar = ({
   filters,
   activePosition,
   viewId,
-  viewLabel,
   onPositionChange,
   onViewChange,
   onClearFilters,
@@ -123,7 +124,6 @@ const SquadToolbar = ({
   readonly filters: readonly FilterClause[];
   readonly activePosition: Extract<FilterClause, { readonly _tag: "position" }> | undefined;
   readonly viewId: SquadViewId;
-  readonly viewLabel: string;
   readonly onPositionChange: (position: string) => void;
   readonly onViewChange: (viewId: SquadViewId) => void;
   readonly onClearFilters: () => void;
@@ -132,52 +132,45 @@ const SquadToolbar = ({
   readonly onToggleColumn: (columnId: string) => void;
   readonly copy: TableStateCopy;
 }) => (
-  <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-    <div className="flex items-center gap-2 text-text-body">
-      Position
-      <Select
-        value={activePosition?.position ?? ""}
-        onValueChange={(value) => {
-          if (value !== null) onPositionChange(value);
-        }}
-      >
-        <SelectTrigger aria-label="Filter squad by position" className={SELECT_CLASS}>
-          {/* An empty slot means "no position filter": show that as the
-              All positions label rather than a blank trigger. */}
-          <SelectValue>{() => activePosition?.position ?? "All positions"}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="">All positions</SelectItem>
-          {POSITIONS.map((position) => (
-            <SelectItem key={position} value={position}>
-              {position}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-    <div className="flex items-center gap-2 text-text-body">
-      View
-      <Select
-        value={viewId}
-        onValueChange={(value) => {
-          if (value !== null && isSquadViewId(value)) onViewChange(value);
-        }}
-      >
-        <SelectTrigger aria-label="Squad view" className={SELECT_CLASS}>
-          {/* The trigger shows the view's name, not its id: `positions` is
-              the stored value, "Position(s)" is what the screen calls it. */}
-          <SelectValue>{() => viewLabel}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {SQUAD_VIEWS.map((option) => (
-            <SelectItem key={option.id} value={option.id}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+  <>
+    <Select
+      value={viewId}
+      onValueChange={(value) => {
+        if (value !== null && isSquadViewId(value)) onViewChange(value);
+      }}
+    >
+      <SelectTrigger aria-label="Squad view" className={TOOLBAR_TRIGGER_CLASS}>
+        {/* The panel title already names the chosen view, so the trigger
+            only names the control, as CM's did. */}
+        <SelectValue>{() => "View"}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {SQUAD_VIEWS.map((option) => (
+          <SelectItem key={option.id} value={option.id}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+    <Select
+      value={activePosition?.position ?? ""}
+      onValueChange={(value) => {
+        if (value !== null) onPositionChange(value);
+      }}
+    >
+      <SelectTrigger aria-label="Filter squad by position" className={TOOLBAR_TRIGGER_CLASS}>
+        {/* The trigger names the control; the filter, once set, rides beside it. */}
+        <SelectValue>{() => (activePosition === undefined ? "Position" : `Position: ${activePosition.position}`)}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="">All positions</SelectItem>
+        {POSITIONS.map((position) => (
+          <SelectItem key={position} value={position}>
+            {position}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
     {activeFilterCount(filters) > 0 && (
       <Button
         type="button"
@@ -194,7 +187,7 @@ const SquadToolbar = ({
     {showColumnControls && (
       <ColumnControls preferences={preferences} onToggleColumn={onToggleColumn} />
     )}
-  </div>
+  </>
 );
 
 /** A single non-populated result state: the initial load, the empty dataset,
@@ -326,77 +319,78 @@ export const SquadTable = () => {
   );
 
   return (
-    <div className="flex min-h-full flex-col bg-background text-foreground">
+    <div className="flex flex-1 flex-col bg-background text-foreground">
       <main
         tabIndex={-1}
         data-focus-id="squad"
         aria-label="Squad"
-        className={`flex-1 p-8 ${FOCUS_RING.join(" ")}`}
+        className={`flex-1 px-4 pt-3 ${FOCUS_RING.join(" ")}`}
       >
-
-        <RefreshStatusLine count={allPlayers.length} refreshState={refreshState} copy={copy} />
-
-        <SquadToolbar
-          filters={filters}
-          activePosition={activePosition}
-          viewId={viewId}
-          viewLabel={view.label}
-          onPositionChange={setPositionFilter}
-          onViewChange={setView}
-          onClearFilters={clearFilterCommand}
-          showColumnControls={view.layout === "table"}
-          preferences={preferences}
-          onToggleColumn={toggleOneColumn}
-          copy={copy}
-        />
-
-        {/* The panel title CM 03/04 put over the list: what you are looking at,
-            named by the view that drew it. */}
-        <h2 className="mt-4 text-lg font-semibold text-text-highlight">
-          Players ({view.label})
-        </h2>
-
-        {viewState._tag !== "Populated" && (
-          <ViewStateMessage
-            viewState={viewState}
-            copy={copy}
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <SquadToolbar
+            filters={filters}
+            activePosition={activePosition}
+            viewId={viewId}
+            onPositionChange={setPositionFilter}
+            onViewChange={setView}
             onClearFilters={clearFilterCommand}
+            showColumnControls={view.layout === "table"}
+            preferences={preferences}
+            onToggleColumn={toggleOneColumn}
+            copy={copy}
           />
-        )}
-        {legendExpanded && <StatusLegend id={STATUS_LEGEND_ID} />}
+          <RefreshStatusLine count={allPlayers.length} refreshState={refreshState} copy={copy} />
+        </div>
 
-        {view.layout === "list" ? (
-          <SquadPositionList />
-        ) : (
-          <DataTable
-            tableId="squad"
-            screen="squad"
-            region={REGION}
-            table={table}
-            orderedIds={orderedIds}
-            identityColumnId="name"
-            activeId={activeId}
-            onActiveChange={onActiveChange}
-            onBookmarkChange={setBookmark}
-            selectedId={selectedId}
-            onToggleSelection={onToggleSelection}
-            onSortChange={onSortCycle}
-            ariaBusy={refreshState._tag === "Refreshing"}
-            onRowPrimary={onRowPrimary}
-            onRowDragStart={(event: React.DragEvent<HTMLButtonElement>, id: string) => writeLineupDrag(event, "roster", id)}
-            ariaLabel="Squad"
-            announcement={announcement?.message ?? ""}
-            initialScrollLeft={scrollLeft}
-            onScrollCommit={commitScroll}
-          >
-            {rows.length > 0 && (
-              <Table className="min-w-full text-left">
-                <DataTable.Header table={table} />
-                <DataTable.Body rows={rows} />
-              </Table>
-            )}
-          </DataTable>
-        )}
+        {/* The panel CM 03/04 drew the list in, titled with what you are looking
+            at, named by the view that drew it. A tinted surface, no border. */}
+        <section className="mt-3 rounded-panel bg-panel-bg px-3 pt-2 pb-3">
+          <h2 className="text-base font-bold text-text-highlight">
+            Players ({view.label})
+          </h2>
+
+          {viewState._tag !== "Populated" && (
+            <ViewStateMessage
+              viewState={viewState}
+              copy={copy}
+              onClearFilters={clearFilterCommand}
+            />
+          )}
+          {legendExpanded && <StatusLegend id={STATUS_LEGEND_ID} />}
+
+          {view.layout === "list" ? (
+            <SquadPositionList />
+          ) : (
+            <DataTable
+              tableId="squad"
+              screen="squad"
+              region={REGION}
+              table={table}
+              orderedIds={orderedIds}
+              identityColumnId="name"
+              activeId={activeId}
+              onActiveChange={onActiveChange}
+              onBookmarkChange={setBookmark}
+              selectedId={selectedId}
+              onToggleSelection={onToggleSelection}
+              onSortChange={onSortCycle}
+              ariaBusy={refreshState._tag === "Refreshing"}
+              onRowPrimary={onRowPrimary}
+              onRowDragStart={(event: React.DragEvent<HTMLButtonElement>, id: string) => writeLineupDrag(event, "roster", id)}
+              ariaLabel="Squad"
+              announcement={announcement?.message ?? ""}
+              initialScrollLeft={scrollLeft}
+              onScrollCommit={commitScroll}
+            >
+              {rows.length > 0 && (
+                <Table className="min-w-full text-left">
+                  <DataTable.Header table={table} />
+                  <DataTable.Body rows={rows} />
+                </Table>
+              )}
+            </DataTable>
+          )}
+        </section>
       </main>
 
       <MatchDayBar />

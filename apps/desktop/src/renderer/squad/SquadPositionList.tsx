@@ -35,13 +35,6 @@ const REGION = "squadTable";
  *  count, so the list reads top-left to bottom-right without a gap. */
 export const leftColumnLength = (total: number): number => Math.ceil(total / 2);
 
-/** Whether a second column gets the divider that separates it from the first.
- *  `true` only when the split leaves rows to the right; a split with nothing
- *  on the right (one player, or zero) is a solo list and draws no border.
- *  Pure so a call reading `variantOf(split, total)` needs no comment. */
-const variantOf = (split: number, total: number): "leading" | "trailing" =>
-  split < total ? "trailing" : "leading";
-
 /**
  * The keyboard move a key requests, as an index into the ordered rows, or
  * `null` when the key is not ours. Pure so the two-column geometry — down the
@@ -101,10 +94,12 @@ const SelectionIndicator = ({ slot }: { readonly slot: LineupSlot | null }) => {
   const labelled = slot === null ? "Not selected" : slot.kind === "bench"
     ? "On the bench"
     : `Playing (${slot.label})`;
+  // Always drawn as a chrome chip, filled or not, the way CM's row buttons sat at the head of every
+  // line: an empty chip reads "not selected", not "missing control".
   const tone = slot === null
-    ? "border-border-subtle text-transparent"
+    ? "chrome-gradient border-panel-border-dark text-transparent opacity-70"
     : slot.kind === "bench"
-      ? "border-border-subtle bg-surface-raised text-text-secondary"
+      ? "chrome-gradient border-panel-border-dark text-text-bright"
       : "border-text-highlight bg-text-highlight/15 text-text-highlight";
   return (
     <Button
@@ -112,7 +107,7 @@ const SelectionIndicator = ({ slot }: { readonly slot: LineupSlot | null }) => {
       variant="ghost"
       aria-label={labelled}
       title={labelled}
-      className={`h-5 min-w-9 shrink-0 px-1 font-mono text-xs leading-none ${tone}`}
+      className={`h-5 min-w-10 shrink-0 border px-1 font-mono text-2xs leading-none shadow-chrome ${tone}`}
     >
       {slot === null ? "" : slot.label}
     </Button>
@@ -120,7 +115,7 @@ const SelectionIndicator = ({ slot }: { readonly slot: LineupSlot | null }) => {
 };
 
 const PositionRunner = ({ row }: { readonly row: SquadRow }) => (
-  <span className="ml-auto flex shrink-0 gap-1 font-mono text-xs">
+  <span className="ml-auto flex shrink-0 gap-1 text-xs font-bold">
     {row.positions.length === 0 ? (
       <span className="text-text-muted">—</span>
     ) : (
@@ -194,24 +189,14 @@ export const SquadPositionList = () => {
     focusRow(nextId);
   };
 
-  /**
-   * One of the two columns. A trailing column (the second of a two-column
-   * squad) draws the divider that separates it from the first; a solo column
-   * and a leading column do not. Expressed as an explicit variant rather than
-   * a `rule: boolean` flag, so a reader cannot pair a bare true/false against
-   * the border that follows.
-   */
-  const column = (slice: readonly SquadRow[], variant: "leading" | "trailing") => (
-    <ul
-      className={`min-w-0 flex-1 ${
-        variant === "trailing" ? "border-l border-border-subtle pl-4" : ""
-      }`}
-    >
+  /** One of the two columns. The gap between them separates them; there is no divider. */
+  const column = (slice: readonly SquadRow[]) => (
+    <ul className="min-w-0 flex-1">
       {slice.map((row) => (
         <li
           key={row.id}
           aria-selected={selectedId === row.id || undefined}
-          className="flex min-w-0 items-center gap-2 px-2 py-1 hover:bg-row-hover aria-selected:bg-row-selected"
+          className="flex min-w-0 items-center gap-2 px-1.5 py-0.5 odd:bg-surface/50 hover:bg-row-hover aria-selected:bg-row-selected"
         >
           <SelectionIndicator slot={slotByPlayer.get(row.id) ?? null} />
           <StatusCell statuses={statusesOf(row)} />
@@ -225,7 +210,7 @@ export const SquadPositionList = () => {
               if (activeId !== row.id) onActiveChange(row.id);
             }}
             onClick={() => onToggleSelection(row.id)}
-            className={`truncate text-left font-semibold text-text-primary ${FOCUS_RING.join(" ")}`}
+            className={`truncate text-left text-sm font-semibold text-text-bright ${FOCUS_RING.join(" ")}`}
           >
             {row.lastName}, {row.firstName}
           </button>
@@ -240,21 +225,18 @@ export const SquadPositionList = () => {
       role="group"
       aria-label="Squad"
       aria-busy={refreshState._tag === "Refreshing" || undefined}
-      className="mt-2"
+      className="mt-1.5"
     >
       {rows.length > 0 && (
         // The container listens for keys but is not itself a tab stop: the
         // roving stops are the name buttons inside it, and this handler only
         // routes the keys they bubble.
         <div
-          className="flex gap-6 rounded-panel bg-panel-bg p-2"
+          className="flex gap-6"
           onKeyDown={onKeyDown}
         >
-          {column(rows.slice(0, split), "leading")}
-          {/* The rule between the columns is deliberate: a one-player squad is
-              one list and draws no divider, but two columns of the same list
-              read as two lists without it. */}
-          {column(rows.slice(split), variantOf(split, rows.length))}
+          {column(rows.slice(0, split))}
+          {column(rows.slice(split))}
         </div>
       )}
       {/* The same one polite announcer the table layout carries (AC-32), so a
