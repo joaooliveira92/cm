@@ -1,8 +1,10 @@
 import { Schema } from "effect";
 
-import { PlayerId } from "./ids.js";
+import { ClubId, PlayerId } from "./ids.js";
 
-/** One scout at the human's club, and the player they are watching if any. */
+/** One scout at the human's club, and the player or club they are watching if any. At most one of
+ *  `playerId` and `targetClubId` is set: a scout holds one assignment, and a Club target is that
+ *  club's squad rather than a second slot. */
 export class ScoutingTargetView extends Schema.Class<ScoutingTargetView>("ScoutingTargetView")({
   scoutId: Schema.String,
   scoutName: Schema.String,
@@ -10,6 +12,8 @@ export class ScoutingTargetView extends Schema.Class<ScoutingTargetView>("Scouti
   quality: Schema.Finite,
   playerId: Schema.NullOr(PlayerId),
   playerName: Schema.NullOr(Schema.String),
+  targetClubId: Schema.NullOr(ClubId),
+  targetClubName: Schema.NullOr(Schema.String),
   /** 0-100, or `null` for Unscouted — the absence of a progress row, not a stored zero. */
   progress: Schema.NullOr(Schema.Finite),
 }) {}

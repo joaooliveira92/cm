@@ -5,11 +5,14 @@ import {
   ClubNotFoundError,
   ClubNotScoutedError,
   PlayerId,
+  OwnClubNotScoutableError,
   PlayerNotFoundError,
   SaveArchivedError,
   SaveId,
   SaveNotFoundError,
   ScoutingView,
+  StaleReportError,
+  TeamScoutReadingsView,
   TeamScoutReportView,
   UnknownScoutError,
 } from "./schemas/index.js";
@@ -42,6 +45,35 @@ export const ScoutingRpcs = {
     payload: Schema.Struct({ saveId: SaveId, scoutId: Schema.String, playerId: PlayerId }),
     success: ScoutingView,
     error: Schema.Union([SaveNotFoundError, UnknownScoutError, PlayerNotFoundError, SaveArchivedError]),
+  },
+  /** Team Scout Report (Screen 49), Previous Reports: the readings the human's club has filed about
+   * a club, newest first. A pure read, so an Archived Save still answers it. */
+  getTeamScoutReadings: {
+    payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
+    success: TeamScoutReadingsView,
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+  },
+  /** Scouting: point a named scout at a Club, which is shorthand for that club's squad. Occupies the
+   * scout exactly as a player assignment does. `expectedReportId` is the Team Scout Report reading
+   * the manager acted from; once the calendar has moved past it the command is refused with
+   * `StaleReportError` and changes nothing. Assigning the same scout to the same club again is a
+   * no-op, because an assignment is a state rather than an event. */
+  assignScoutToClub: {
+    payload: Schema.Struct({
+      saveId: SaveId,
+      scoutId: Schema.String,
+      clubId: ClubId,
+      expectedReportId: Schema.String,
+    }),
+    success: ScoutingView,
+    error: Schema.Union([
+      SaveNotFoundError,
+      UnknownScoutError,
+      ClubNotFoundError,
+      SaveArchivedError,
+      StaleReportError,
+      OwnClubNotScoutableError,
+    ]),
   },
   /** Frees a scout. Their accrued progress stays: knowledge is not un-learned. */
   unassignScout: {

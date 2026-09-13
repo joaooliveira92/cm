@@ -19,7 +19,9 @@ export {
   transfersAtom,
   saveSummaryAtom,
   newsInboxAtom,
+  scoutingAtom,
   teamScoutReportAtom,
+  teamScoutReadingsAtom,
   clubStaffAtom,
   saveKey,
   squadKey,
@@ -34,6 +36,7 @@ export {
 export {
   INVALIDATION_RULES,
   advanceCalendarMutation,
+  assignScoutToClubMutation,
   changeTacticsMutation,
   placeBidMutation,
   signFreeAgentMutation,

@@ -142,6 +142,9 @@ glossary would leave each of them re-deciding the same question.
 
 ## Left open
 
+> **2026-09-13:** the command, the storage question and the overlap question below are settled by
+> [Club-targeted scouting assignments ride the assignment row](../feature/2026-09-13-club-scouting-assignments.md).
+
 Three things this decision touches but does not settle. They are recorded here so the next session
 finds them rather than rediscovering them:
 

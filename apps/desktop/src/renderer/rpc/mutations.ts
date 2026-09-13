@@ -9,6 +9,7 @@ import {
   matchKey,
   newsKey,
   saveKey,
+  scoutingKey,
   squadKey,
   tacticsKey,
   trainingKey,
@@ -49,6 +50,9 @@ export const INVALIDATION_RULES = {
   /** Read/flagged/archived is inbox-local user state: it changes no simulation state, so it
    * invalidates the inbox key and nothing wider. */
   setNewsMessageState: (saveId: SaveId): ReadonlyArray<unknown> => [newsKey(saveId)],
+  /** A scouting assignment changes who is watching whom and nothing else, so it invalidates the
+   * scouting key — which the scouting board and every Team Scout Report read — and nothing wider. */
+  assignScoutToClub: (saveId: SaveId): ReadonlyArray<unknown> => [scoutingKey(saveId)],
 } as const;
 
 export type MutationName = keyof typeof INVALIDATION_RULES;
@@ -126,6 +130,19 @@ export const submitMatchCommandEffect = (
   call("submitMatchCommand", input).pipe(
     Reactivity.mutation(INVALIDATION_RULES.submitMatchCommand(input.saveId, input.matchId)),
   );
+
+/** `assignScoutToClub` — invalidates `["scouting", saveId]` only. */
+export const assignScoutToClubEffect = (
+  input: RpcPayload<"assignScoutToClub">,
+): MutationEffect<"assignScoutToClub"> =>
+  call("assignScoutToClub", input).pipe(
+    Reactivity.mutation(INVALIDATION_RULES.assignScoutToClub(input.saveId)),
+  );
+
+/** `assignScoutToClub` — mutation atom. */
+export const assignScoutToClubMutation = rpcRuntime.fn(
+  (input: RpcPayload<"assignScoutToClub">) => assignScoutToClubEffect(input),
+);
 
 /** `advanceCalendar` — mutation atom for registry-scoped invalidation. */
 export const advanceCalendarMutation = rpcRuntime.fn((input: RpcPayload<"advanceCalendar">) =>

@@ -138,6 +138,39 @@ const reportsForSave = Atom.family((saveId: SaveId) =>
   ),
 );
 
+/**
+ * getScouting — `["save", saveId]`, `["scouting", saveId]`.
+ *
+ * The scouting board: every scout at the human's club and what each is watching. Reactive on
+ * scouting's own key, which an assignment invalidates, and on the save-wide key an advance does.
+ */
+export const scoutingAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getScouting", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), scoutingKey(saveId)]),
+    ),
+  ),
+);
+
+/**
+ * getTeamScoutReadings — `["save", saveId]`, `["scouting", saveId]`.
+ *
+ * Previous Reports. Readings are filed by the scouting commands, which invalidate the scouting key,
+ * so the list refreshes the moment a watch ends. Nested families for the same reason as the report.
+ */
+const readingsForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((clubId: ClubId) =>
+    managementReadPolicy(
+      Atom.make(call("getTeamScoutReadings", { saveId, clubId })).pipe(
+        Atom.withReactivity([saveKey(saveId), scoutingKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const teamScoutReadingsAtom = (saveId: SaveId, clubId: ClubId) =>
+  readingsForSave(saveId)(clubId);
+
 export const teamScoutReportAtom = (saveId: SaveId, clubId: ClubId) =>
   reportsForSave(saveId)(clubId);
 

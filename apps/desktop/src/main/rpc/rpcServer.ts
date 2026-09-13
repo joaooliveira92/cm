@@ -40,9 +40,9 @@ import {
   signFreeAgent,
 } from "../transfers/index.js";
 import { setTrainingFocus } from "../club/training.js";
-import { assignScout, getScouting, unassignScout } from "../club/scouting.js";
+import { assignScout, assignScoutToClub, getScouting, unassignScout } from "../club/scouting.js";
 import { getClubStaff } from "../career/staff.js";
-import { getTeamScoutReport } from "../club/teamScoutReport.js";
+import { getTeamScoutReadings, getTeamScoutReport } from "../club/teamScoutReport.js";
 import { withWideEvent } from "./logging.js";
 
 export interface RpcContext {
@@ -292,6 +292,13 @@ const handlers: Record<AppRpcMethod, Handler> = {
       )(payload);
       return yield* assignScout(ctx.savesDir, saveId, scoutId, playerId);
     }),
+  assignScoutToClub: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, scoutId, clubId, expectedReportId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.assignScoutToClub.payload,
+      )(payload);
+      return yield* assignScoutToClub(ctx.savesDir, saveId, scoutId, clubId, expectedReportId);
+    }),
   unassignScout: (payload, ctx) =>
     Effect.gen(function* () {
       const { saveId, scoutId } = yield* Schema.decodeUnknownEffect(
@@ -310,6 +317,13 @@ const handlers: Record<AppRpcMethod, Handler> = {
         AppRpcs.getTeamScoutReport.payload,
       )(payload);
       return yield* getTeamScoutReport(ctx.savesDir, saveId, clubId);
+    }),
+  getTeamScoutReadings: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, clubId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.getTeamScoutReadings.payload,
+      )(payload);
+      return yield* getTeamScoutReadings(ctx.savesDir, saveId, clubId);
     }),
   getClubStaff: (payload, ctx) =>
     Effect.gen(function* () {

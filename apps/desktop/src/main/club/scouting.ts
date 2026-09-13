@@ -1,8 +1,11 @@
 import { type ClubId, type PlayerId, type SaveId } from "@cm-clone/contracts";
 import {
+  ClubNotFoundError,
+  OwnClubNotScoutableError,
   PlayerNotFoundError,
   ScoutingView,
   ScoutingTargetView,
+  StaleReportError,
   UnknownScoutError,
 } from "@cm-clone/contracts";
 import { FULLY_SCOUTED, nextProgress } from "@cm-clone/shared";
@@ -10,7 +13,10 @@ import { Effect } from "effect";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
+import { displayNames } from "../world/displayNames.js";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
+import { loadSeasonRow } from "../season/currentSeason.js";
+import { fileTeamScoutReading, reportIdFor } from "./teamScoutReport.js";
 
 /**
  * Scouting: assigning a named scout to a player, and the club's knowledge accruing over time.
@@ -25,6 +31,20 @@ import { assertSaveNotArchived } from "../career/managerStatus.js";
  * players who have rows and the rule enforces itself. That means Depth hides a transfer market as
  * well as a simulation: the human cannot sign from a nation they cannot see into.
  */
+
+/**
+ * Files the reading of the Club watch `scoutId` is about to leave, if any. `nextClubId` is where the
+ * scout is going, so reassigning a scout to the club they already watch ends nothing and files nothing.
+ */
+const fileEndingClubWatch = (scoutId: string, nextClubId: ClubId | null) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ targetClubId: ClubId | null }>`
+      SELECT target_club_id as "targetClubId" FROM scouting_assignments WHERE scout_id = ${scoutId}`;
+    const watching = rows[0]?.targetClubId ?? null;
+    if (watching === null || watching === nextClubId) return;
+    yield* fileTeamScoutReading(watching);
+  });
 
 /** The club the human manages, or `null` before one is chosen. */
 const loadHumanClubId = Effect.gen(function* () {
@@ -59,12 +79,73 @@ export const assignScout = (savesDir: string, saveId: SaveId, scoutId: string, p
 
       // Another scout at this club may already hold this player; redirecting is the manager's call,
       // so the earlier assignment yields rather than the command failing.
-      yield* sql`DELETE FROM scouting_assignments WHERE player_id = ${playerId}`;
-      yield* sql`INSERT INTO scouting_assignments (scout_id, player_id) VALUES (${scoutId}, ${playerId})
-        ON CONFLICT(scout_id) DO UPDATE SET player_id = excluded.player_id`;
+      yield* sql.withTransaction(
+        Effect.gen(function* () {
+          yield* fileEndingClubWatch(scoutId, null);
+          yield* sql`DELETE FROM scouting_assignments WHERE player_id = ${playerId}`;
+          yield* sql`INSERT INTO scouting_assignments (scout_id, player_id) VALUES (${scoutId}, ${playerId})
+            ON CONFLICT(scout_id) DO UPDATE SET player_id = excluded.player_id, target_club_id = NULL`;
+        }),
+      );
 
       return yield* readScouting;
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
+  );
+
+/**
+ * Assigns a scout to a Club: shorthand for that club's squad, costing one scout like any assignment.
+ *
+ * Refused, changing nothing, when the Team Scout Report reading the manager acted from is no longer
+ * the current one (`StaleReportError`), and when the target is the manager's own club, whose players
+ * are always read in full and never carry progress (`OwnClubNotScoutableError`).
+ *
+ * The same scout on the same club again is a no-op rather than an error: the row already says what
+ * the command asks for, and nothing is logged or counted per submit. Redirecting a scout, or taking
+ * a club over from another scout, is the manager's call exactly as it is for a player.
+ */
+export const assignScoutToClub = (
+  savesDir: string,
+  saveId: SaveId,
+  scoutId: string,
+  clubId: ClubId,
+  expectedReportId: string,
+) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      yield* assertSaveNotArchived(saveId);
+
+      const scouts = yield* sql<{ id: string }>`
+        SELECT id FROM staff WHERE id = ${scoutId} AND role = 'scout'`;
+      if (scouts[0] === undefined) return yield* new UnknownScoutError({ scoutId });
+
+      const clubs = yield* sql<{ id: ClubId }>`SELECT id FROM clubs WHERE id = ${clubId}`;
+      if (clubs[0] === undefined) return yield* new ClubNotFoundError({ id: clubId });
+      if ((yield* loadHumanClubId) === clubId) {
+        return yield* new OwnClubNotScoutableError({ clubId });
+      }
+
+      const season = yield* loadSeasonRow;
+      const currentReportId = reportIdFor(clubId, season.currentDate);
+      if (currentReportId !== expectedReportId) {
+        return yield* new StaleReportError({ expectedReportId, currentReportId });
+      }
+
+      yield* sql.withTransaction(
+        Effect.gen(function* () {
+          yield* fileEndingClubWatch(scoutId, clubId);
+          // Another scout taking this club over files nothing: the club is still watched.
+          yield* sql`DELETE FROM scouting_assignments WHERE target_club_id = ${clubId} AND scout_id <> ${scoutId}`;
+          yield* sql`INSERT INTO scouting_assignments (scout_id, target_club_id) VALUES (${scoutId}, ${clubId})
+            ON CONFLICT(scout_id) DO UPDATE SET player_id = NULL, target_club_id = excluded.target_club_id`;
+        }),
+      );
+
+      return yield* readScouting;
+    }).pipe(
+      Effect.provide(SqliteClient.layer({ filename })),
+      Effect.scoped,
+    ),
   );
 
 /** Frees a scout. Their accrued progress stays with the club: knowledge is not un-learned. */
@@ -78,7 +159,12 @@ export const unassignScout = (savesDir: string, saveId: SaveId, scoutId: string)
         SELECT id FROM staff WHERE id = ${scoutId} AND role = 'scout'`;
       if (scouts[0] === undefined) return yield* new UnknownScoutError({ scoutId });
 
-      yield* sql`DELETE FROM scouting_assignments WHERE scout_id = ${scoutId}`;
+      yield* sql.withTransaction(
+        Effect.gen(function* () {
+          yield* fileEndingClubWatch(scoutId, null);
+          yield* sql`DELETE FROM scouting_assignments WHERE scout_id = ${scoutId}`;
+        }),
+      );
       return yield* readScouting;
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );
@@ -99,9 +185,10 @@ const readScouting = Effect.gen(function* () {
     quality: number;
     playerId: PlayerId | null;
     playerName: string | null;
+    targetClubId: ClubId | null;
     progress: number | null;
   }>`SELECT s.id as "scoutId", s.name as "scoutName", s.quality,
-            a.player_id as "playerId",
+            a.player_id as "playerId", a.target_club_id as "targetClubId",
             p.first_name || ' ' || p.last_name as "playerName",
             sp.progress
      FROM staff s
@@ -111,6 +198,7 @@ const readScouting = Effect.gen(function* () {
      WHERE s.club_id = ${clubId} AND s.role = 'scout'
      ORDER BY s.id ASC`;
 
+  const nameOf = yield* displayNames;
   return new ScoutingView({
     scouts: rows.map(
       (row) =>
@@ -120,6 +208,8 @@ const readScouting = Effect.gen(function* () {
           quality: row.quality,
           playerId: row.playerId,
           playerName: row.playerName,
+          targetClubId: row.targetClubId,
+          targetClubName: row.targetClubId === null ? null : nameOf(row.targetClubId),
           // Absence of a progress row means Unscouted, which is what a null reports.
           progress: row.progress,
         }),
@@ -133,6 +223,12 @@ const readScouting = Effect.gen(function* () {
  * Called from the calendar advance. This is the only writer of `scouting_progress`, and it is where
  * the sparse table's invariant lives: a row is created at the first accrual, which is strictly
  * positive, so no row is ever written at zero.
+ *
+ * A Club assignment expands to that club's players here, and only here: nothing is stored per
+ * player. A player watched twice — by their own scout and by a scout on their club — advances
+ * **once** per advance, at the better scout's rate. Progress is monotonic, so stacking would be
+ * harmless to correctness, but it would let one player outrun the per-scout accrual rate by
+ * spending two slots, which is exactly the trade a Club target is meant to force.
  */
 export const accrueScoutingProgress = Effect.gen(function* () {
   const sql = yield* SqlClient;
@@ -140,12 +236,22 @@ export const accrueScoutingProgress = Effect.gen(function* () {
   if (clubId === null) return;
 
   const assigned = yield* sql<{ playerId: PlayerId; quality: number; progress: number | null }>`
-    SELECT a.player_id as "playerId", s.quality, sp.progress
-    FROM scouting_assignments a
-    JOIN staff s ON s.id = a.scout_id
-    LEFT JOIN scouting_progress sp ON sp.player_id = a.player_id AND sp.club_id = ${clubId}
-    WHERE s.club_id = ${clubId}
-    ORDER BY a.player_id ASC`;
+    SELECT w.player_id as "playerId", MAX(w.quality) as quality, sp.progress
+    FROM (
+      SELECT a.player_id, s.quality
+      FROM scouting_assignments a
+      JOIN staff s ON s.id = a.scout_id
+      WHERE s.club_id = ${clubId} AND a.player_id IS NOT NULL
+      UNION ALL
+      SELECT p.id as player_id, s.quality
+      FROM scouting_assignments a
+      JOIN staff s ON s.id = a.scout_id
+      JOIN players p ON p.club_id = a.target_club_id
+      WHERE s.club_id = ${clubId} AND a.target_club_id IS NOT NULL AND a.target_club_id <> ${clubId}
+    ) w
+    LEFT JOIN scouting_progress sp ON sp.player_id = w.player_id AND sp.club_id = ${clubId}
+    GROUP BY w.player_id
+    ORDER BY w.player_id ASC`;
 
   for (const row of assigned) {
     const updated = nextProgress(row.progress ?? 0, row.quality);
@@ -170,6 +276,8 @@ export const discardScoutingForClubs = (clubIds: ReadonlyArray<string>) =>
     yield* sql`DELETE FROM scouting_assignments WHERE scout_id IN (
       SELECT id FROM staff WHERE ${sql.in("club_id", clubIds)})`;
     yield* sql`DELETE FROM scouting_progress WHERE ${sql.in("club_id", clubIds)}`;
+    // Filed readings are that club's knowledge too, and go with it.
+    yield* sql`DELETE FROM team_scout_readings WHERE ${sql.in("club_id", clubIds)}`;
   });
 
 /**

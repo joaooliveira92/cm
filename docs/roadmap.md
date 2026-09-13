@@ -31,6 +31,10 @@ referenced throughout.
   screen that owns its fix, and the advance commits as one transaction and refuses a second
   concurrent press.
 
+- **[.scratch/team-scout-report/](../.scratch/team-scout-report/)** — 8/8, completed 2026-09-13. Screen 49,
+  the Team Scout Report: the report view, pointing a scout at a whole club, and earlier readings
+  kept whenever a club watch ends, with a comparison against the current report.
+
 ## In flight
 
 - **[.scratch/world-data-model/](../.scratch/world-data-model/)** — 13/13 tickets, and 19/24

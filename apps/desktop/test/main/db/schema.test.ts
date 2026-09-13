@@ -222,7 +222,11 @@ describe("generated DDL", () => {
     // And unique on the player: at most one scout on a player at a time.
     expect(ddl).toMatch(/CREATE UNIQUE INDEX `scouting_assignments_player_id_unique`/);
     // A scout's club is their staff row's. Duplicating it here would be a second source for it.
-    expect(table).not.toMatch(/club_id/);
+    // `target_club_id` is a different thing — the club being watched — and is allowed.
+    expect(table).not.toMatch(/`club_id`/);
+    // A Club target rides the same row, so it costs one scout; exactly one target per row.
+    expect(ddl).toMatch(/CREATE UNIQUE INDEX `scouting_assignments_target_club_id_unique`/);
+    expect(table).toMatch(/CHECK\(\(player_id IS NULL\) <> \(target_club_id IS NULL\)\)/);
   });
 
   it("keys progress on the club and the player, bounded but not forced to exist", () => {

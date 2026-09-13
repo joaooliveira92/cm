@@ -102,7 +102,11 @@ describe("TeamScoutReportView", () => {
 
 describe("the report's failure channel", () => {
   it("round-trips ClubNotScoutedError", () => {
-    roundTrip(ClubNotScoutedError, { _tag: "ClubNotScoutedError", clubId: "c2" });
+    roundTrip(ClubNotScoutedError, {
+      _tag: "ClubNotScoutedError",
+      clubId: "c2",
+      currentReportId: "c2:2024-08-01",
+    });
   });
 
   /**

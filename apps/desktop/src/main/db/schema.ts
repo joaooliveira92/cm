@@ -1097,18 +1097,35 @@ export const newsMessageState = sqliteTable(
  * There is deliberately **no `club_id`**. A scout's club is `staff.club_id`; duplicating it here
  * would be the same column the competition graph already refused to put on `clubs`.
  *
- * No index: point lookups on the key, with the unique player constraint itself answering "is this
- * player already watched".
+ * A row targets **either a player or a club, never both**. A Club target is shorthand for that
+ * club's squad and is carried on the row rather than fanned out into one row per player, so it still
+ * occupies exactly one scout; the `CHECK` below keeps the two targets exclusive. `UNIQUE` on each
+ * target keeps one scout per player and one scout per club; SQLite's `UNIQUE` admits many `NULL`s,
+ * which is what lets the unused target stay empty on every row.
+ *
+ * No index: point lookups on the key, with the unique target constraints themselves answering "is
+ * this player (or club) already watched".
  */
-export const scoutingAssignments = sqliteTable("scouting_assignments", {
-  scoutId: text("scout_id")
-    .primaryKey()
-    .references(() => staff.id),
-  playerId: text("player_id")
-    .notNull()
-    .unique()
-    .references(() => players.id),
-});
+export const scoutingAssignments = sqliteTable(
+  "scouting_assignments",
+  {
+    scoutId: text("scout_id")
+      .primaryKey()
+      .references(() => staff.id),
+    playerId: text("player_id")
+      .unique()
+      .references(() => players.id),
+    targetClubId: text("target_club_id")
+      .unique()
+      .references(() => clubs.id),
+  },
+  () => [
+    check(
+      "scouting_assignments_one_target",
+      sql`(player_id IS NULL) <> (target_club_id IS NULL)`,
+    ),
+  ],
+);
 
 /**
  * What a club knows about a player, as a single 0-100 number.
@@ -1145,6 +1162,37 @@ export const scoutingProgress = sqliteTable(
     primaryKey({ columns: [table.clubId, table.playerId] }),
     check("scouting_progress_range", sql`progress BETWEEN 0 AND 100`),
   ],
+);
+
+/**
+ * Team Scout Report readings the club has filed: one per ended Club watch.
+ *
+ * A live report is derived on read from `scouting_progress`, which keeps moving, so an earlier reading
+ * cannot be re-derived later. That makes this a fact no other table holds. It is written once, when a
+ * Club-targeted assignment ends, and never updated. A second filing for the same club on the same
+ * date replaces the first, because both read the same knowledge at the same revision.
+ *
+ * `report` is the encoded `TeamScoutReportView`, stored whole. The reading is self-contained, so it
+ * still renders after the target's squad, competition, or name moves on.
+ *
+ * Keyed on the reading club as well as the target, because knowledge belongs to the club that gathered
+ * it; the rows go with the rest of that club's scouting when the manager leaves. No index: read by the
+ * key's `(club_id, target_club_id)` prefix.
+ */
+export const teamScoutReadings = sqliteTable(
+  "team_scout_readings",
+  {
+    clubId: text("club_id")
+      .notNull()
+      .references(() => clubs.id),
+    targetClubId: text("target_club_id")
+      .notNull()
+      .references(() => clubs.id),
+    /** ISO `YYYY-MM-DD`: the calendar date the reading was taken at. */
+    observedOn: text("observed_on").notNull(),
+    report: text("report").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.clubId, table.targetClubId, table.observedOn] })],
 );
 
 /**

@@ -9,6 +9,7 @@ import {
   ReportScoutView,
   ScoutedPlayerSummaryView,
   ScoutingFindingView,
+  TeamScoutReadingsView,
   TeamScoutReportView,
 } from "@cm-clone/contracts";
 import {
@@ -16,7 +17,7 @@ import {
   type TargetFormResult,
   type TargetSquadMember,
 } from "@cm-clone/shared";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
@@ -54,6 +55,10 @@ const RECENT_FORM_LENGTH = 5;
  */
 const UNWATCHED_KNOWLEDGE_DAYS = 999;
 
+/** The id of the reading a report takes on a date. A reading is pinned to the calendar date, so the
+ *  pair names it; commands that act on a report compare against this to refuse a stale one. */
+export const reportIdFor = (clubId: ClubId, date: string): string => `${clubId}:${date}`;
+
 /** The club the human manages, or `null` before one is chosen. */
 const loadHumanClubId = Effect.gen(function* () {
   const sql = yield* SqlClient;
@@ -82,8 +87,9 @@ const loadProgressFor = (readerClubId: ClubId, targetClubId: ClubId) =>
     return new Map(rows.map((row) => [row.playerId, row.progress]));
   });
 
-/** The scout the reading club currently has pointed at someone in the target's squad, if any.
- *  Reports today are produced by per-player assignments, so a target may legitimately have none. */
+/** The scout the reading club currently has watching the target, if any. A scout on the Club
+ *  itself is the report's author and wins; failing that, a scout on one of its players still keeps
+ *  the reading current. A target may legitimately have neither. */
 const loadWatchingScout = (readerClubId: ClubId, targetClubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
@@ -91,9 +97,10 @@ const loadWatchingScout = (readerClubId: ClubId, targetClubId: ClubId) =>
       SELECT s.id as "scoutId", s.name as "scoutName"
       FROM scouting_assignments a
       JOIN staff s ON s.id = a.scout_id
-      JOIN players p ON p.id = a.player_id
-      WHERE s.club_id = ${readerClubId} AND s.role = 'scout' AND p.club_id = ${targetClubId}
-      ORDER BY s.id ASC LIMIT 1`;
+      LEFT JOIN players p ON p.id = a.player_id
+      WHERE s.club_id = ${readerClubId} AND s.role = 'scout'
+        AND (a.target_club_id = ${targetClubId} OR p.club_id = ${targetClubId})
+      ORDER BY (a.target_club_id IS NULL) ASC, s.id ASC LIMIT 1`;
     return rows[0] ?? null;
   });
 
@@ -140,20 +147,21 @@ export const getTeamScoutReport = (savesDir: string, saveId: SaveId, clubId: Clu
     ),
   );
 
-const readTeamScoutReport = (clubId: ClubId) =>
+export const readTeamScoutReport = (clubId: ClubId) =>
   Effect.gen(function* () {
     if (!(yield* clubExists(clubId))) {
       return yield* new ClubNotFoundError({ id: clubId });
     }
 
+    const season = yield* loadSeasonRow;
+    const currentReportId = reportIdFor(clubId, season.currentDate);
     const readerClubId = yield* loadHumanClubId;
     // No human club means nobody has scouted anybody: the same not-scouted state as an unvisited
     // club, reached before any join runs.
     if (readerClubId === null) {
-      return yield* new ClubNotScoutedError({ clubId });
+      return yield* new ClubNotScoutedError({ clubId, currentReportId });
     }
 
-    const season = yield* loadSeasonRow;
     const progress = yield* loadProgressFor(readerClubId, clubId);
     const players = yield* loadSquadPlayers(clubId);
 
@@ -180,13 +188,13 @@ const readTeamScoutReport = (clubId: ClubId) =>
     // The derivation returns null for a target nobody has scouted — including a `results-only` club,
     // which holds no player rows at all and so can never have been scouted.
     if (derived === null) {
-      return yield* new ClubNotScoutedError({ clubId });
+      return yield* new ClubNotScoutedError({ clubId, currentReportId });
     }
 
     const nameOf = yield* displayNames;
 
     return new TeamScoutReportView({
-      reportId: `${clubId}:${season.currentDate}`,
+      reportId: currentReportId,
       targetClubId: clubId,
       targetClubName: nameOf(clubId),
       scout:
@@ -212,3 +220,55 @@ const readTeamScoutReport = (clubId: ClubId) =>
       ),
     });
   });
+
+/**
+ * Files the reading a Club watch produced, as it stands at this moment. Called by the scouting
+ * commands just before an assignment on `targetClubId` ends, so the scout is still named.
+ *
+ * A club with nothing scouted files nothing: there is no reading to keep. A second filing for the same
+ * club on the same date replaces the first, because both derive from the same knowledge.
+ */
+export const fileTeamScoutReading = (targetClubId: ClubId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const readerClubId = yield* loadHumanClubId;
+    if (readerClubId === null) return;
+    const report = yield* readTeamScoutReport(targetClubId).pipe(
+      Effect.catchTags({
+        ClubNotScoutedError: () => Effect.succeed(null),
+        ClubNotFoundError: () => Effect.succeed(null),
+      }),
+    );
+    if (report === null) return;
+    const encoded = JSON.stringify(yield* Schema.encodeEffect(TeamScoutReportView)(report));
+    yield* sql`INSERT INTO team_scout_readings (club_id, target_club_id, observed_on, report)
+      VALUES (${readerClubId}, ${targetClubId}, ${report.observedAt}, ${encoded})
+      ON CONFLICT(club_id, target_club_id, observed_on) DO UPDATE SET report = excluded.report`;
+  });
+
+/** Previous Reports: every reading the human's club has filed about `clubId`, newest first. */
+export const getTeamScoutReadings = (savesDir: string, saveId: SaveId, clubId: ClubId) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      if (!(yield* clubExists(clubId))) {
+        return yield* new ClubNotFoundError({ id: clubId });
+      }
+      const readerClubId = yield* loadHumanClubId;
+      if (readerClubId === null) {
+        return new TeamScoutReadingsView({ targetClubId: clubId, readings: [] });
+      }
+      const sql = yield* SqlClient;
+      // The primary key makes (club, target, date) unique, so the date alone orders the list
+      // deterministically.
+      const rows = yield* sql<{ report: string }>`
+        SELECT report FROM team_scout_readings
+        WHERE club_id = ${readerClubId} AND target_club_id = ${clubId}
+        ORDER BY observed_on DESC`;
+      const readings = yield* Effect.forEach(
+        rows,
+        (row) => Schema.decodeUnknownEffect(TeamScoutReportView)(JSON.parse(row.report) as unknown),
+        { concurrency: 1 },
+      );
+      return new TeamScoutReadingsView({ targetClubId: clubId, readings });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
+  );

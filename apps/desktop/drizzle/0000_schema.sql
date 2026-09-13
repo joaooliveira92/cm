@@ -329,12 +329,16 @@ CREATE TABLE `save_meta` (
 --> statement-breakpoint
 CREATE TABLE `scouting_assignments` (
 	`scout_id` text PRIMARY KEY NOT NULL,
-	`player_id` text NOT NULL,
+	`player_id` text,
+	`target_club_id` text,
 	FOREIGN KEY (`scout_id`) REFERENCES `staff`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`target_club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "scouting_assignments_one_target" CHECK((player_id IS NULL) <> (target_club_id IS NULL))
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `scouting_assignments_player_id_unique` ON `scouting_assignments` (`player_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `scouting_assignments_target_club_id_unique` ON `scouting_assignments` (`target_club_id`);--> statement-breakpoint
 CREATE TABLE `scouting_progress` (
 	`club_id` text NOT NULL,
 	`player_id` text NOT NULL,
@@ -406,6 +410,16 @@ CREATE TABLE `tactics` (
 	CONSTRAINT "tactics_mentality" CHECK(mentality IN ('defensive','balanced','attacking')),
 	CONSTRAINT "tactics_tempo" CHECK(tempo IN ('slow','normal','fast')),
 	CONSTRAINT "tactics_pressing" CHECK(pressing IN ('low','medium','high'))
+);
+--> statement-breakpoint
+CREATE TABLE `team_scout_readings` (
+	`club_id` text NOT NULL,
+	`target_club_id` text NOT NULL,
+	`observed_on` text NOT NULL,
+	`report` text NOT NULL,
+	PRIMARY KEY(`club_id`, `target_club_id`, `observed_on`),
+	FOREIGN KEY (`club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`target_club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE TABLE `training_focus` (

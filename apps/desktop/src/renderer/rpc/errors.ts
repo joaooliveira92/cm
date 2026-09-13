@@ -128,6 +128,10 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
         // tables make both states unreachable, so an unknown scout is the only thing left to say.
         case "UnknownScoutError":
           return "That scout is not on your staff.";
+        case "StaleReportError":
+          return "This report has been updated since you opened it. Check the new reading and try again.";
+        case "OwnClubNotScoutableError":
+          return "Your scouts already know your own squad in full.";
         case "LockedKeyOverrideError":
           return "That key is locked and cannot be rebound.";
         case "CollidingOverrideError":

@@ -112,6 +112,17 @@ export class TeamScoutReportView extends Schema.Class<TeamScoutReportView>("Team
 }) {}
 
 /**
+ * The readings the human's club has filed about one target, newest first. A reading is filed when a
+ * Club watch ends, and each is a whole `TeamScoutReportView` as it stood on the day it was taken, so
+ * it reads correctly however far the target has since moved: squad, competition, or name. An empty
+ * list is an ordinary answer: no watch on this club has ended yet.
+ */
+export class TeamScoutReadingsView extends Schema.Class<TeamScoutReadingsView>("TeamScoutReadingsView")({
+  targetClubId: ClubId,
+  readings: Schema.Array(TeamScoutReportView),
+}) {}
+
+/**
  * Raised when the human club has scouted nobody at the target club.
  *
  * A distinct failure rather than an empty report, because the two mean opposite things to a
@@ -121,6 +132,34 @@ export class TeamScoutReportView extends Schema.Class<TeamScoutReportView>("Team
  */
 export class ClubNotScoutedError extends Schema.TaggedError<ClubNotScoutedError>()(
   "ClubNotScoutedError",
+  {
+    clubId: ClubId,
+    /** The id a reading taken now would carry. A command that sends a scout to look acts from this
+     *  reading, exactly as it would from a delivered report, so a stale "not scouted" is refused too. */
+    currentReportId: Schema.String,
+  },
+) {}
+
+/**
+ * Raised when a command acts on a Team Scout Report that is no longer the current reading.
+ *
+ * A report is pinned to the calendar date it was taken at, and its `reportId` names that reading. A
+ * command that says which reading it was issued from is refused once the calendar has moved past it,
+ * so a manager who decided on an old reading is shown the new one rather than acting blind. Carries
+ * the current id so the screen can show that reading without guessing.
+ */
+export class StaleReportError extends Schema.TaggedError<StaleReportError>()("StaleReportError", {
+  expectedReportId: Schema.String,
+  currentReportId: Schema.String,
+}) {}
+
+/**
+ * Raised when a scout is pointed at the manager's own club. Own-squad players are always read in
+ * full and never carry Scouting Progress, so there is nothing for such an assignment to learn, and
+ * accruing it would write the very rows that rule forbids.
+ */
+export class OwnClubNotScoutableError extends Schema.TaggedError<OwnClubNotScoutableError>()(
+  "OwnClubNotScoutableError",
   {
     clubId: ClubId,
   },

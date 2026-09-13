@@ -137,7 +137,11 @@ describe("ticket 05 — the route carries the target club to the screen", () => 
     mockPreload(() =>
       Promise.resolve({
         _tag: "Failure",
-        error: { _tag: "ClubNotScoutedError", clubId: ClubId.make("club-3") },
+        error: {
+          _tag: "ClubNotScoutedError",
+          clubId: ClubId.make("club-3"),
+          currentReportId: "club-3:2024-08-01",
+        },
       }),
     );
 
