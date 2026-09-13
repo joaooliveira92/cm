@@ -21,8 +21,9 @@ import {
   packCoverageGaps,
 } from "@cm-clone/shared";
 import { getClubSelection } from "../../../src/main/career/index.js";
-import { reportPackCoverage, resolveDisplayName, savePack, beginCareer } from "../../../src/main/world/index.js";
-import { createBrazilSnapshot, createDefaultSnapshot } from "../snapshot-helpers.js";
+import { DEFAULT_CAREER_INTENTS, reportPackCoverage, resolveDisplayName, savePack, beginCareer } from "../../../src/main/world/index.js";
+import { NationId, NationSelectionIntentPayload, ScopeOptionId } from "@cm-clone/contracts";
+import { createBrazilSnapshot, createDefaultSnapshot, createSnapshotFor } from "../snapshot-helpers.js";
 
 let savesDir: string;
 
@@ -51,6 +52,26 @@ const generatedSave = Effect.gen(function* () {
 
 const brazilSave = Effect.gen(function* () {
   const snapshotId = yield* createBrazilSnapshot(savesDir);
+  const { id } = yield* beginCareer(savesDir, {
+    worldSeed: 4242,
+    referenceYear: 2026,
+    userDataDir: savesDir,
+    snapshotId,
+  });
+  return id;
+});
+
+/** England's top division beside Brazil's: two licensed leagues, one recorded pack. */
+const brazilPlusEnglandSave = Effect.gen(function* () {
+  const snapshotId = yield* createSnapshotFor(savesDir, [
+    ...DEFAULT_CAREER_INTENTS,
+    new NationSelectionIntentPayload({
+      nationId: NationId.make("nation_bra"),
+      mode: "playable",
+      scopeOptionId: ScopeOptionId.make("scope_bra_top"),
+      source: "user",
+    }),
+  ]);
   const { id } = yield* beginCareer(savesDir, {
     worldSeed: 4242,
     referenceYear: 2026,
@@ -142,22 +163,43 @@ describe("display names resolve through the save's pack", () => {
     }),
   );
 
-  it.effect("reports the ids a Brazilian save uses that its pack cannot name", () =>
+  it.effect("names every league and club of a world carrying two licensed leagues", () =>
     Effect.gen(function* () {
-      // scope_bra_top plays Série A and loads its cup as a required dependency; the licensed pack
-      // names the league and its twenty clubs. The cup is the only id it cannot name — a reported
-      // condition, resolved to its raw id on screen, exactly as any partially-covered pack is.
+      // The manifest records one pack (Série A wins the tie-break), but England's league and clubs
+      // must still resolve through the Premier League pack rather than showing raw ids.
+      const saveId = yield* brazilPlusEnglandSave;
+      const pack = yield* withSave(saveId, savePack);
+      expect(pack.id).toBe(BRAZIL_SERIES_A_PACK.id);
+
+      const view = yield* withSave(saveId, getClubSelection);
+      expect(view.leagues.map((league) => league.leagueName)).toEqual([
+        "Campeonato Brasileiro Série A",
+        "Premier League",
+      ]);
+      expect(view.clubs).toHaveLength(40);
+      for (const club of view.clubs) {
+        expect(club.clubName).not.toBe(club.clubId);
+      }
+      expect(yield* withSave(saveId, reportPackCoverage)).toEqual([]);
+    }),
+  );
+
+  it.effect("names a Brazilian save's cup through the base pack", () =>
+    Effect.gen(function* () {
+      // scope_bra_top loads its cup as a dependency. The Série A pack does not name it, so it
+      // resolves through the base pack instead of reaching the screen as `comp_bra_cup`.
       const saveId = yield* brazilSave;
-      expect(yield* withSave(saveId, reportPackCoverage)).toEqual(["comp_bra_cup"]);
+      expect(yield* withSave(saveId, reportPackCoverage)).toEqual([]);
+      const pack = yield* withSave(saveId, savePack);
+      expect(resolveDisplayName(pack, "comp_bra_cup")).toBe("Brazilian National Cup");
     }),
   );
 
   it.effect("reports the ids the save uses that its pack cannot name", () =>
     Effect.gen(function* () {
       const saveId = yield* generatedSave;
-      // The Premier League pack names the league and its twenty clubs. The cup the default career
-      // loads as a dependency is the one id it cannot name, reported exactly as Brazil's cup is.
-      expect(yield* withSave(saveId, reportPackCoverage)).toEqual(["comp_eng_cup"]);
+      // The Premier League pack names the league and its twenty clubs; the base pack names the cup.
+      expect(yield* withSave(saveId, reportPackCoverage)).toEqual([]);
 
       // A save whose ids the pack has lost coverage of reports them rather than degrading to raw
       // identifiers on a screen with no warning anywhere.
@@ -173,7 +215,7 @@ describe("display names resolve through the save's pack", () => {
           return yield* reportPackCoverage;
         }),
       );
-      expect(gaps).toEqual(["comp_eng_cup", "club_unnamed_1_01"]);
+      expect(gaps).toEqual(["club_unnamed_1_01"]);
     }),
   );
 
@@ -287,7 +329,6 @@ describe("badge gap reporting extends pack coverage", () => {
       const { layer, warnings } = captureLogWarnings();
       yield* withSave(saveId, reportPackCoverage.pipe(Effect.provide(layer)));
       // The Premier League pack has all 20 clubs mapped, so no badge gaps are expected.
-      // Only the cup name gap warning appears.
       expect(warnings).not.toContain("content pack has clubs with no badge mapping");
     }),
   );
@@ -312,9 +353,16 @@ describe("badge gap reporting extends pack coverage", () => {
   it.effect("still reports existing unnamed-id gaps alongside badge checks", () =>
     Effect.gen(function* () {
       const saveId = yield* generatedSave;
-      const gaps = yield* withSave(saveId, reportPackCoverage);
-      // The Premier League pack cannot name comp_eng_cup — unchanged behaviour.
-      expect(gaps).toEqual(["comp_eng_cup"]);
+      const gaps = yield* withSave(
+        saveId,
+        Effect.gen(function* () {
+          const sql = yield* SqlClient;
+          yield* sql`INSERT INTO competitions (id, nation_id, kind, tier, depth)
+            SELECT 'comp_unnamed_1', nation_id, kind, tier, depth FROM competitions WHERE id = 'comp_eng_1'`;
+          return yield* reportPackCoverage;
+        }),
+      );
+      expect(gaps).toEqual(["comp_unnamed_1"]);
     }),
   );
 });

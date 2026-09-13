@@ -2,6 +2,13 @@
 
 Status: implemented
 
+> **Superseded in part, 2026-09-13**, by
+> [names resolve through every licensed league a save contains](2026-09-13-names-resolve-through-every-licensed-league.md).
+> The manifest still records one pack, chosen as below. What changed is resolution: a save no longer
+> resolves through that pack alone. The "England's clubs resolve raw" consequence and the
+> `comp_bra_cup` coverage gap no longer hold. Step 3 of a Brazil + England career showed
+> `comp_eng_1` and raw club ids, and the player reported it as a bug.
+
 ## Problem
 
 Step 3 of the creation flow ("Club") lists a Brazilian career's clubs as raw canonical ids —

@@ -315,6 +315,9 @@ was generated against, so the same world can be reopened under a different one â
 is resolved at read time, never written into a row. Generation picks the pack from the world it
 resolves: a career whose playable league a licensed pack names (Brazilian SÃ©rie A) is generated under
 that pack, so its real names reach the interface; everything else keeps the fictional base pack.
+That recorded pack is provenance. Names resolve through layers, first match wins: the licensed pack
+of every league the save contains, then the recorded pack, then the base pack. So a Brazil + England
+career names both leagues' clubs.
 
 **Region**:
 A grouping of Nations used for browsing and filtering during career setup. Carries no simulation

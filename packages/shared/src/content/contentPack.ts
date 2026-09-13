@@ -435,8 +435,57 @@ export const contentPackForWorld = (
         (a.tier ?? Number.MAX_SAFE_INTEGER) - (b.tier ?? Number.MAX_SAFE_INTEGER) ||
         a.id.localeCompare(b.id),
     )[0];
-  if (primary?.id === "comp_bra_1") return BRAZIL_SERIES_A_PACK;
-  if (primary?.id === "comp_eng_1") return ENGLISH_PREMIER_LEAGUE_PACK;
-  if (primary?.id === "comp_esp_1") return SPANISH_LA_LIGA_PACK;
-  return BASE_CONTENT_PACK;
+  return (primary && LEAGUE_PACKS[primary.id]) ?? BASE_CONTENT_PACK;
+};
+
+/**
+ * The licensed pack each league is authored for. One entry per pack: an id-prefix rule would mint
+ * licensed expectations for ids no pack names.
+ */
+const LEAGUE_PACKS: Readonly<Record<CanonicalId, ContentPack>> = {
+  comp_bra_1: BRAZIL_SERIES_A_PACK,
+  comp_eng_1: ENGLISH_PREMIER_LEAGUE_PACK,
+  comp_esp_1: SPANISH_LA_LIGA_PACK,
+};
+
+/**
+ * The pack a save's names resolve through: the recorded pack's identity over every pack the world
+ * needs to be named.
+ *
+ * The manifest records one pack, but a world can carry several licensed leagues. Resolving through
+ * the recorded pack alone left a Brazil + England career listing `comp_eng_1` and `club_eng_1_07`
+ * in Step 3, because the Série A pack names neither. So resolution layers, first match wins:
+ *
+ * 1. the licensed pack of every league the world contains, in tier-then-id order;
+ * 2. the recorded pack, so a save reopened under a different pack still resolves against it;
+ * 3. the fictional base pack, so an unlicensed competition reads "German First Division" rather
+ *    than `comp_deu_1`.
+ *
+ * An id no layer names still resolves to itself and is still reported by `packCoverageGaps`. The
+ * result keeps the recorded pack's id and version, since those are provenance.
+ */
+export const resolutionPackForWorld = (
+  recorded: ContentPack,
+  competitions: readonly WorldCompetitionShape[],
+): ContentPack => {
+  const leaguePacks = [...competitions]
+    .sort(
+      (a, b) =>
+        (a.tier ?? Number.MAX_SAFE_INTEGER) - (b.tier ?? Number.MAX_SAFE_INTEGER) ||
+        a.id.localeCompare(b.id),
+    )
+    .flatMap((competition) => LEAGUE_PACKS[competition.id] ?? []);
+  const layers = [...new Set([...leaguePacks, recorded, BASE_CONTENT_PACK])];
+  // Spread from the lowest-priority layer up, so the first layer's entries win.
+  const merge = <K extends keyof ContentPack>(key: K): ContentPack[K] =>
+    Object.assign({}, ...[...layers].reverse().map((layer) => layer[key]));
+  return {
+    ...recorded,
+    contentSource: layers.some((layer) => layer.contentSource === "LICENSED") ? "LICENSED" : "FICTIONAL",
+    displayNames: merge("displayNames"),
+    clubColours: merge("clubColours"),
+    clubBadges: merge("clubBadges"),
+    stadiums: merge("stadiums"),
+    homeCities: merge("homeCities"),
+  };
 };

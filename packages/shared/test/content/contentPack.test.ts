@@ -6,6 +6,7 @@ import {
   contentPackForWorld,
   displayName,
   packCoverage,
+  resolutionPackForWorld,
   type ContentPack,
 } from "../../src/content/contentPack.js";
 import { BRAZIL_SERIES_A_PACK } from "../../src/content/brazilSeriesA.js";
@@ -126,5 +127,35 @@ describe("content pack for a generated world", () => {
     // The Série A pack names the league Step 3 lists; Série B's clubs resolve through the pack's
     // fallbacks and coverage reporting, exactly as a partially-covered pack is handled.
     expect(contentPackForWorld([league("comp_bra_2", 2, "full")])).toBe(BASE_CONTENT_PACK);
+  });
+});
+
+describe("the pack a save resolves names through", () => {
+  const league = (id: string, tier: number | null, depth: string) => ({ id, kind: "league", tier, depth });
+
+  it("names every licensed league the world carries, not only the recorded pack's", () => {
+    const world = [league("comp_bra_1", 1, "full"), league("comp_eng_1", 1, "full")];
+    const resolved = resolutionPackForWorld(BRAZIL_SERIES_A_PACK, world);
+    expect(displayName(resolved, "comp_bra_1")).toBe("Campeonato Brasileiro Série A");
+    expect(displayName(resolved, "comp_eng_1")).toBe("Premier League");
+    expect(displayName(resolved, "club_eng_1_07")).toBe(displayName(ENGLISH_PREMIER_LEAGUE_PACK, "club_eng_1_07"));
+    expect(displayName(resolved, "club_eng_1_07")).not.toBe("club_eng_1_07");
+  });
+
+  it("keeps the recorded pack's identity as provenance", () => {
+    const resolved = resolutionPackForWorld(BRAZIL_SERIES_A_PACK, [league("comp_eng_1", 1, "full")]);
+    expect(resolved.id).toBe(BRAZIL_SERIES_A_PACK.id);
+    expect(resolved.version).toBe(BRAZIL_SERIES_A_PACK.version);
+  });
+
+  it("prefers a league's licensed names over the base pack's fictional ones", () => {
+    const resolved = resolutionPackForWorld(BASE_CONTENT_PACK, [league("comp_eng_1", 1, "stub")]);
+    expect(displayName(resolved, "comp_eng_1")).toBe("Premier League");
+  });
+
+  it("falls back to the base pack for an id no licensed pack names", () => {
+    const resolved = resolutionPackForWorld(SPANISH_LA_LIGA_PACK, [league("comp_esp_1", 1, "full")]);
+    expect(displayName(resolved, "comp_deu_1")).toBe("German First Division");
+    expect(displayName(resolved, "club_zzz_1_99")).toBe("club_zzz_1_99");
   });
 });

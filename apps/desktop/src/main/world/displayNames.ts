@@ -4,6 +4,7 @@ import {
   clubColours,
   displayName,
   packCoverageGaps,
+  resolutionPackForWorld,
   type BadgeKey,
   type ClubColours,
   type ContentPack,
@@ -56,7 +57,9 @@ export const resolveDisplayName = (pack: ContentPack, id: string): string =>
   displayName(pack, id, APP_LOCALE);
 
 /**
- * The pack a save was generated against, read from its manifest.
+ * The pack a save's names resolve through: the pack its manifest records, layered over the
+ * licensed pack of every league the save contains and the base pack (`resolutionPackForWorld`).
+ * The result carries the recorded pack's id and version.
  *
  * A save with no manifest row cannot exist — `generateWorld` writes it before any entity — so its
  * absence is a defect rather than a typed failure, exactly as `readGenerationManifest` treats it.
@@ -70,7 +73,13 @@ export const savePack = Effect.gen(function* () {
   if (!row) {
     return yield* Effect.die(new Error("save has no generation_manifest row"));
   }
-  return PACKS[row.contentPackId] ?? BASE_CONTENT_PACK;
+  const competitions = yield* sql<{
+    id: string;
+    kind: string;
+    tier: number | null;
+    depth: string;
+  }>`SELECT id, kind, tier, depth FROM competitions`;
+  return resolutionPackForWorld(PACKS[row.contentPackId] ?? BASE_CONTENT_PACK, competitions);
 });
 
 /**
