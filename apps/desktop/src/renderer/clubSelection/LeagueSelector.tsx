@@ -25,7 +25,9 @@ export const LeagueSelector = ({ leagues, selectedLeagueId, onLeagueChange }: Le
         id="club-selection-league"
         className="flex h-8 w-full items-center justify-between gap-2 rounded-control border border-border-subtle bg-field-bg px-2 text-xs text-text-primary outline-none transition-colors hover:border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 data-[placeholder]:text-text-muted"
       >
-        <SelectPrimitive.Value />
+        <SelectPrimitive.Value>
+          {leagues.find((l) => l.leagueId === selectedLeagueId)?.leagueName ?? selectedLeagueId}
+        </SelectPrimitive.Value>
         <SelectPrimitive.Icon className="shrink-0 text-text-muted [&>svg]:size-3">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
