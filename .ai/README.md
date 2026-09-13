@@ -16,6 +16,7 @@ via [/sprint](../.opencode/command/sprint.md) or [/boot](../.opencode/command/bo
 | [ORCHESTRATION.md](ORCHESTRATION.md) | The pipeline: four roles, which skill each runs, the handoff contract, the validation gate. |
 | [IMPLEMENTATION-PROMPT.md](IMPLEMENTATION-PROMPT.md) | The eight-step procedure a sprint follows. |
 | [REVIEW-PROMPT.md](REVIEW-PROMPT.md) | The adversarial review checklist and required finding format. |
+| [SPEC-ROADMAP.md](SPEC-ROADMAP.md) | The order to take the `docs/specs/` groups from import to shipped screens, and what blocks each. |
 | [SPRINT-PLAN.md](SPRINT-PLAN.md) | The queue and the **Immediate next action** pointer. |
 | [TRACEABILITY.md](TRACEABILITY.md) | Shipped capability → domain term → decision record → proving test. |
 | [templates/](templates/) | Validation report, decision request. |

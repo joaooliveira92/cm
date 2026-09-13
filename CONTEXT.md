@@ -99,8 +99,8 @@ _Avoid_: Team strength, team rating
 
 **Nationality**:
 The single Nation a player is drawn from at generation, and the thing that selects their Name Pool. One
-per player, never several: work permits and national teams do not exist, so nothing in MVP reads a
-second one. Distinct from the nation of the club the player plays for — a player whose Nationality
+per player, never several: work permits and national teams are not modelled, so nothing reads a
+second one. National teams are deferred rather than ruled out. Distinct from the nation of the club the player plays for — a player whose Nationality
 differs from their club's nation was drawn through a migration link.
 _Avoid_: citizenship, eligibility (neither is modelled)
 
@@ -806,8 +806,9 @@ effect beyond recording the warning — the career continues.
 
 **Manager Sacked** (event):
 Fires when Board Objective Judged is `Missed` and the Consecutive-Miss Counter moves 1→2. Ends the
-career by archiving the save (see Archived Save). There is no explicit win state symmetric to this — a
-career that is never sacked simply continues indefinitely.
+career by archiving the save (see Archived Save). There is no job market: a sacked manager does not
+seek another post, and that is deferred rather than ruled out. There is no explicit win state
+symmetric to this — a career that is never sacked simply continues indefinitely.
 _Avoid_: Game over (fine as player-facing copy, not as the event name)
 
 **Manager Retired** (event):
