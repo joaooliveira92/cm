@@ -103,3 +103,19 @@ export const MODAL_TITLE_BAND =
 
 /** The strong-panel body surface beneath the title band. */
 export const MODAL_BODY = "px-3 py-3";
+
+/** A shareable form-field surface: opaque background (`bg-field-bg`), a thin
+ *  rim, the single `:focus-visible` ring, and 12px text — so every input,
+ *  select, and textarea in the creation flow and beyond reads consistently
+ *  without a field component library. */
+export const FIELD_INPUT =
+  "flex h-7 w-full rounded-control border border-border-subtle bg-field-bg px-2 py-1 text-xs transition-colors";
+
+export const FIELD_SELECT =
+  "flex h-8 w-full items-center justify-between gap-2 rounded-control border border-border-subtle bg-field-bg px-2 text-xs text-text-primary outline-none transition-colors hover:border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 data-[placeholder]:text-text-muted";
+
+export const FIELD_LABEL =
+  "text-xs font-medium text-text-secondary";
+
+export const FIELD_RIM =
+  "border border-border-subtle rounded-control";

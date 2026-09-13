@@ -11,7 +11,7 @@ Ashley the acceptance target: this ticket's only job is that the shell shrinks a
 
 **Blocked by:** 14 (table leaves) and 15 (bid composer / counter-offer modal) — the shell cannot be thinned until all leaves it composes exist.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] `TransfersScreen` is a thin composition (target: well under ~100 lines of body, dominated by provider mount + ordered leaf composition + the two guard views), with no useState/useEffect/refs/RPC/mutation/command of its own.
 - [x] The screen renders identically to before the whole change set: budget header, status/refresh lines, incoming/outgoing bid tables, Free Agents and Market tables with all their interactions, the contextual Actions region, keep/discard dialog, and counter-offer modal.

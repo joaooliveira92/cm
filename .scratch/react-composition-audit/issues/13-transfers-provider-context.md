@@ -13,7 +13,7 @@ Keep the context value as one coherent interface â€” state, actions, and meta â€
 
 **Blocked by:** 12 (the orchestration hook must exist first so the provider has something to wrap).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] A `TransfersProvider` exposes a single typed context value and companion `useTransfers()` read hook; only the provider calls the underlying state hook.
 - [x] `TransfersScreen` mounts the provider and renders from `useTransfers()`; no behaviour change.

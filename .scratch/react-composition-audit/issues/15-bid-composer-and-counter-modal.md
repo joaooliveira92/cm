@@ -12,7 +12,7 @@ Both are *compound* in the composition-patterns sense: they render as a small cl
 
 **Blocked by:** 13 (the provider must be live so the composer and modal can read draft/counter state and fire submit commands).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] A bid composer compound renders the Actions region and Keep/Discard dialog from `useTransfers()`, and still honours the no-silent-discard lifecycle (dirty draft surfaces the keep/discard decision; Escape keeps and closes; focus returns to the invoking row on keep, to the bid input on discard).
 - [x] A counter-offer compound renders from shared counter state with its inline error on invalid/empty submit; accept/reject/counter still dispatch correctly.

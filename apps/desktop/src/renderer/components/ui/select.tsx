@@ -1,9 +1,8 @@
-"use client";
-
 import { Select as SelectPrimitive } from "@base-ui/react/select";
 import * as React from "react";
 
 import { cn } from "../../lib/utils.js";
+import { FIELD_SELECT } from "../../theme.js";
 
 function Select<Value, Multiple extends boolean | undefined = false>({
   ...props

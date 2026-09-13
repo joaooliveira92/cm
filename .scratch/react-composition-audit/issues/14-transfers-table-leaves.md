@@ -13,7 +13,7 @@ Do not collapse Market and Free Agents into a single configurable component behi
 
 **Blocked by:** 13 (the provider must be live so the table leaves can read shared state).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Four leaves exist (Market, Free Agents, Incoming Bids, Outgoing Bids), each composed from `useTransfers()` and rendering the existing table infrastructure.
 - [x] Market and Free Agents are two explicit variants with no `isMarket`/mode boolean; their shared selection still behaves as one subject across both tables.

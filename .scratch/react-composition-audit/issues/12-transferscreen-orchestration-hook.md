@@ -13,7 +13,7 @@ The critical non-negotiable: the refs (the live-view ref, the draft ref, the sel
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] The screen's non-JSX state and wiring all resolve through a single `useTransfersScreen(saveId)` hook call in the component body.
 - [x] Every ref today read inside the action-handler registration still exists in the hook with identical read/write order, so the once-per-save handlers see current state (verify the bid/respond/focus-bid/palette action paths actually round-trip).
