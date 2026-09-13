@@ -116,8 +116,6 @@ const SpineOrchestrator = ({
         competitions: () => navigateCareer({ type: "competitions", saveId }, "keyboard"),
         nations: () => navigateCareer({ type: "nations", saveId }, "keyboard"),
         clubs: () => navigateCareer({ type: "clubs", saveId }, "keyboard"),
-        gameStatus: () => navigateCareer({ type: "gameStatus", saveId }, "keyboard"),
-        managerChat: () => navigateCareer({ type: "managerChat", saveId }, "keyboard"),
       };
       for (const [id, type] of Object.entries({
         "go-to-squad": "squad",

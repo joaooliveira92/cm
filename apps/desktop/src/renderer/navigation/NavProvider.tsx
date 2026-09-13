@@ -34,8 +34,6 @@ const destinationToRouteChild: Readonly<Record<SaveScopedCareerDestinationType, 
   competitions: "competitions",
   nations: "nations",
   clubs: "clubs",
-  gameStatus: "game-status",
-  managerChat: "manager-chat",
 };
 
 const routeChildToDestination: Readonly<Record<string, SaveScopedCareerDestinationType>> = {

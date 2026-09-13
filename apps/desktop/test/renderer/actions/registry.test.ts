@@ -168,7 +168,7 @@ describe("AC-19 — the Continue safety contract is a registry predicate, not a 
 
 describe("AC-16/AC-14 — the g-navigation bindings resolve a stable career destination", () => {
   it("every career screen in the tier table has a g binding and nothing extra", () => {
-    expect(CAREER_SCREEN_TYPES.length).toBe(24);
+    expect(CAREER_SCREEN_TYPES.length).toBe(22);
     expect(CAREER_SCREEN_TYPES).toEqual(
       expect.arrayContaining([
         "squad",
@@ -193,8 +193,6 @@ describe("AC-16/AC-14 — the g-navigation bindings resolve a stable career dest
         "competitions",
         "nations",
         "clubs",
-        "gameStatus",
-        "managerChat",
       ]),
     );
   });

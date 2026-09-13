@@ -42,8 +42,6 @@ import { StaffSearchScreen } from "../staffSearch/StaffSearchScreen.js";
 import { CompetitionsScreen } from "../competitions/CompetitionsScreen.js";
 import { NationsScreen } from "../nations/NationsScreen.js";
 import { ClubsScreen } from "../clubs/ClubsScreen.js";
-import { GameStatusScreen } from "../gameStatus/GameStatusScreen.js";
-import { ManagerChatScreen } from "../managerChat/ManagerChatScreen.js";
 // Ticket 03 — Staff drill-downs
 import { StaffProfileScreen } from "../staffProfile/StaffProfileScreen.js";
 import { StaffAttributesScreen } from "../staffAttributes/StaffAttributesScreen.js";
@@ -209,8 +207,6 @@ const staffSearchRoute = defineCareerChild("staff-search", "staffSearch", StaffS
 const competitionsRoute = defineCareerChild("competitions", "competitions", CompetitionsScreen);
 const nationsRoute = defineCareerChild("nations", "nations", NationsScreen);
 const clubsRoute = defineCareerChild("clubs", "clubs", ClubsScreen);
-const gameStatusRoute = defineCareerChild("game-status", "gameStatus", GameStatusScreen);
-const managerChatRoute = defineCareerChild("manager-chat", "managerChat", ManagerChatScreen);
 
 /**
  * The Tactics area is the one career surface with its own read-only home: `/tactics` lands on the
@@ -681,8 +677,6 @@ const routeTree = rootRoute.addChildren([
       competitionsRoute,
       nationsRoute,
       clubsRoute,
-      gameStatusRoute,
-      managerChatRoute,
       clubRoute.addChildren([
         clubScoutReportRoute,
         clubStaffRoute,

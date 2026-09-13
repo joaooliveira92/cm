@@ -9,7 +9,6 @@ import {
   Globe,
   HelpCircle,
   History,
-  Info,
   Play,
   Search,
   Trophy,
@@ -199,7 +198,6 @@ export const SPEC_SECTIONS: ReadonlyArray<SpecSection> = [
 
 export const MORE_ITEMS: ReadonlyArray<MoreItem> = [
   { id: "history", label: "History", icon: History },
-  { id: "game-status", label: "Game Status", icon: Info },
   { id: "hall-of-fame", label: "Hall of Fame", icon: Trophy },
   { id: "add-manager", label: "Add Manager", icon: UserRound },
   { id: "preferences", label: "Preferences", icon: ClipboardList },

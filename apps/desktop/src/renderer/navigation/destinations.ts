@@ -38,8 +38,6 @@ export type CareerDestination =
   | { readonly type: "competitions"; readonly saveId: SaveId }
   | { readonly type: "nations"; readonly saveId: SaveId }
   | { readonly type: "clubs"; readonly saveId: SaveId }
-  | { readonly type: "gameStatus"; readonly saveId: SaveId }
-  | { readonly type: "managerChat"; readonly saveId: SaveId }
   /**
    * The Team Scout Report on another club — a drill-down reached from a surface that already
    * names a club (a league-table row), not a top-level screen. It is the first destination to
@@ -98,8 +96,6 @@ export const CAREER_SCREEN_TYPES = [
   "competitions",
   "nations",
   "clubs",
-  "gameStatus",
-  "managerChat",
 ] as const;
 
 /**
@@ -185,8 +181,6 @@ export type ResolvedDestination =
   | { readonly to: "/career/$saveId/competitions"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/nations"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/clubs"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/game-status"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/manager-chat"; readonly params: { readonly saveId: SaveId } }
   | {
       readonly to: "/career/$saveId/club/$clubId/scout-report";
       readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
@@ -238,8 +232,6 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "competitions":
     case "nations":
     case "clubs":
-    case "gameStatus":
-    case "managerChat":
     case "teamScoutReport":
     case "clubStaff":
     case "playerDetail":
@@ -303,10 +295,6 @@ const careerRoute = (
       return { to: "/career/$saveId/nations", params: { saveId: destination.saveId } };
     case "clubs":
       return { to: "/career/$saveId/clubs", params: { saveId: destination.saveId } };
-    case "gameStatus":
-      return { to: "/career/$saveId/game-status", params: { saveId: destination.saveId } };
-    case "managerChat":
-      return { to: "/career/$saveId/manager-chat", params: { saveId: destination.saveId } };
     case "teamScoutReport":
       return {
         to: "/career/$saveId/club/$clubId/scout-report",

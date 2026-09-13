@@ -305,7 +305,6 @@ describe("More items", () => {
   it("lists the expected items", () => {
     expect(MORE_ITEMS.map((i) => i.label)).toEqual([
       "History",
-      "Game Status",
       "Hall of Fame",
       "Add Manager",
       "Preferences",

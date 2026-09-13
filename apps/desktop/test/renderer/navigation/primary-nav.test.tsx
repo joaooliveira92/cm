@@ -274,7 +274,6 @@ describe("PrimaryNav — More dropdown", () => {
 
     const expected = [
       "History",
-      "Game Status",
       "Hall of Fame",
       "Add Manager",
       "Preferences",
