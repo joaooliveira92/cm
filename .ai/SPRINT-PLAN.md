@@ -20,13 +20,14 @@ Desktop-suite-red 03 is `Status: claimed` on disk (abandoned).
 
 ## Queue
 
-1. **desktop-suite-red**: 01, 02, 04 resolved. 03 claimed-and-abandoned.
-2. **react-composition-audit**: 02, 03, 07 resolved (superseded). 12-16 ready-for-agent.
-3. **season-rollover-skips-conclusion**: 01 resolved.
-4. **match-composition**: 01-02 resolved.
-5. **group-a-reconciliation**: 03-04 resolved (quit guard, save-list chrome).
-6. **team-scout-report**: complete 2026-09-13, 8/8 (06 report screen, 07 Club-targeted scouting, 08 kept readings). TRACEABILITY row added.
-7. **spec-roadmap**: its three decision requests were decided on 2026-09-13 under human delegation and recorded as Agent Notes (team sheet is the Tactic; national teams and job market deferred). Order of spec groups in `.ai/SPEC-ROADMAP.md`.
+1. ~~**group-c-club-information**: complete 2026-09-14. Screen 38 (Club Staff) already shipped via `club-staff-presence`. No code changes needed.~~
+2. **desktop-suite-red**: 01, 02, 04 resolved. 03 claimed-and-abandoned.
+3. **react-composition-audit**: 02, 03, 07 resolved (superseded). 12-16 ready-for-agent (all resolved — shipped).
+4. **season-rollover-skips-conclusion**: 01 resolved.
+5. **match-composition**: 01-02 resolved.
+6. **group-a-reconciliation**: 03-04 resolved (quit guard, save-list chrome).
+7. **team-scout-report**: complete 2026-09-13, 8/8 (06 report screen, 07 Club-targeted scouting, 08 kept readings). TRACEABILITY row added.
+8. **spec-roadmap**: its three decision requests were decided on 2026-09-13 under human delegation and recorded as Agent Notes (team sheet is the Tactic; national teams and job market deferred). Order of spec groups in `.ai/SPEC-ROADMAP.md`.
 
 Shipped and closed:
 
