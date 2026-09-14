@@ -27,7 +27,7 @@ so the divergence from its own convention is visible to the next reader.
 (The Review step becomes the Career Setup Summary) — the rows describe what those tickets build, so
 writing them first would describe an unbuilt screen as shipped.
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Screen 7's ledger section carries a status block naming this effort and the re-audit date, and
       no longer claims that nothing of the screen survives.
