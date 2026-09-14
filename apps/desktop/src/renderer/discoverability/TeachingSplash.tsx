@@ -16,8 +16,8 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../components/ui/button.js";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card.js";
 import { Kbd } from "../components/ui/kbd.js";
+import { MODAL_BODY, MODAL_SCRIM, MODAL_TITLE_BAND } from "../theme.js";
 import { useSeamHotkeys } from "../hotkeys.js";
 
 export const teachingSplashStorageKey = "cmClone.teachingSplashSeen";
@@ -88,21 +88,26 @@ export const TeachingSplash = ({ onDismiss }: { readonly onDismiss: () => void }
   }, []);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70">
-      <Card
+    <div
+      className={MODAL_SCRIM}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onDismiss();
+      }}
+    >
+      <div
         role="dialog"
         aria-modal="true"
         aria-label="Playing a new career"
-        className="w-[28rem] max-w-[90vw] bg-panel-bg-strong p-3 shadow-2xl"
+        className="w-[28rem] max-w-[90vw] rounded-panel border border-panel-border bg-panel-bg-strong text-text-primary shadow-2xl"
       >
-        <CardHeader className="px-0 pt-0">
-          <CardTitle className="text-xl">This career is played from the keyboard</CardTitle>
+        <div className={MODAL_TITLE_BAND}>
+          <h2 className="font-semibold text-xl">This career is played from the keyboard</h2>
+        </div>
+        <div className={MODAL_BODY}>
           <p className="text-sm text-text-secondary">
             Everything works without a mouse. These three shortcuts are all you need to start:
           </p>
-        </CardHeader>
-        <CardContent className="px-0 pb-0">
-          <ul className="space-y-2">
+          <ul className="mt-4 space-y-2">
             {SHORTCUTS.map((shortcut) => (
               <li key={shortcut.description} className="flex items-baseline gap-3 text-sm text-text-strong">
                 <Kbd className="text-text-highlight">{shortcut.keys}</Kbd>
@@ -115,8 +120,8 @@ export const TeachingSplash = ({ onDismiss }: { readonly onDismiss: () => void }
               Got it
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

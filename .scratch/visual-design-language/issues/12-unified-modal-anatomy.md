@@ -12,11 +12,11 @@ The slice's edge promise: `MODAL` constants plus a documented anatomy; the overl
 
 **Blocked by:** 08 — Token foundation, alias-first repaint, and the slate guard (the modal's chrome-gradient title band and strong-panel body consume the token system and the chrome-panel constant).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Every existing overlay renders the shared modal anatomy: chrome-gradient title band, strong-panel body, two sizes (compact centered; wide/anchored), and uniform scrim-click closing.
-- [ ] The command palette keeps its combobox anatomy; no keyboard behavior (Escape, tab trap, focus restore) changes anywhere.
-- [ ] The Keep/Discard scrim-click gap is closed.
-- [ ] No `<Dialog>` component is introduced; the anatomy is `MODAL` constants plus a documented definition.
-- [ ] Match-readiness is inline content, not a modal; no match-readiness overlay ships. The quit-confirm shell is patterned the same way when its feature builds.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] Every existing overlay renders the shared modal anatomy: chrome-gradient title band, strong-panel body, two sizes (compact centered; wide/anchored), and uniform scrim-click closing.
+- [x] The command palette keeps its combobox anatomy; no keyboard behavior (Escape, tab trap, focus restore) changes anywhere.
+- [x] The Keep/Discard scrim-click gap is closed.
+- [x] No `<Dialog>` component is introduced; the anatomy is `MODAL` constants plus a documented definition.
+- [x] Match-readiness is inline content, not a modal; no match-readiness overlay ships. The quit-confirm shell is patterned the same way when its feature builds.
+- [x] `pnpm check:all` is green at this commit.

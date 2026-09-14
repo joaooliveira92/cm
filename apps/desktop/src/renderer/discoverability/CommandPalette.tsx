@@ -24,6 +24,7 @@ import { Badge } from "../components/ui/badge.js";
 import { Kbd } from "../components/ui/kbd.js";
 import { FOCUS_RING } from "../focus.js";
 import { useSeamHotkeys } from "../hotkeys.js";
+import { MODAL_SCRIM, MODAL_WIDE } from "../theme.js";
 import { rankPaletteActions, type PaletteCandidate } from "./rank.js";
 
 export const CommandPalette = ({
@@ -129,7 +130,7 @@ export const CommandPalette = ({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex justify-center bg-black/60 pt-20"
+      className={`${MODAL_SCRIM} items-start sm:items-center`}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -138,7 +139,7 @@ export const CommandPalette = ({
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        className="flex max-h-[60vh] w-[32rem] max-w-[90vw] flex-col overflow-hidden rounded-panel border border-panel-border bg-panel-bg-strong shadow-2xl"
+        className={`flex max-h-[60vh] flex-col overflow-hidden ${MODAL_WIDE}`}
       >
         <input
           ref={inputRef}
