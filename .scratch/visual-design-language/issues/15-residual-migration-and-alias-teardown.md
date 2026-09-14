@@ -10,10 +10,10 @@ The slice's edge promise: this is the contract teardown of the wide refactor. Ev
 
 **Blocked by:** 09 — Career chrome, season readout, and Continue; 10 — Dense shared-table layer and the player-status vocabulary; 11 — Create-career surface — fields and the pre-career chrome band; 12 — Unified modal anatomy across overlays; 13 — Text-led empty and error grammar; 14 — Match-day visual language on the shared tokens. (Each of those renamed its demonstrated surfaces and deleted the aliases it was the last user of; this ticket sweeps every surface none of them touched.)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] No `slate-` reference remains anywhere in the renderer source, in any class position.
-- [ ] The full `--color-slate-*` alias layer is deleted — every alias was removed as its last user renamed, never before.
-- [ ] The `no-slate-class-name` baseline registry is zero; the rule remains live and the clean repository passes `pnpm check:all` with it enforced.
-- [ ] A human visual pass at each batch confirms no surface changed appearance during the teardown (the palette was stable; this ticket removed scaffolding only).
-- [ ] `pnpm check:all` is green at the final commit, with the alias layer and the lint baseline both at zero.
+- [x] No `slate-` reference remains anywhere in the renderer source, in any class position.
+- [x] The full `--color-slate-*` alias layer is deleted — every alias was removed as its last user renamed, never before.
+- [x] The `no-slate-class-name` baseline registry is zero; the rule remains live and the clean repository passes `pnpm check:all` with it enforced.
+- [x] A human visual pass at each batch confirms no surface changed appearance during the teardown (the palette was stable; this ticket removed scaffolding only).
+- [x] `pnpm check:all` is green at the final commit, with the alias layer and the lint baseline both at zero.
