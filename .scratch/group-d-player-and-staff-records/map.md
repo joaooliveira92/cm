@@ -28,24 +28,26 @@ A reconciled spec covering all 19 Group D screens (50-68) — player profile, at
 - [01 — Screen inventory](issues/01-screen-inventory.md): All 19 screens surveyed. All dedicated player/staff routes exist as WIP placeholders registered during Group A reconciliation — none show real data because no player-read RPCs exist. Screens 51 (Attributes), 52 (Positions), and 61 (Development/Training Focus) are partially satisfied by inline squad-table display. Screens 58 (Happiness), 60 (Discipline), 63 (Comparison), 54 (Statistics), 57 (Transfer Status), and 62 (Action Menu) have no modeled data.
 - [02 — Staff screens scope](issues/02-staff-screens-scope.md): All five staff screens (64-68) disposed. Screens 64-66 (Staff Profile, Contract, History) out-of-scope per closed role set. Screen 67 (Coach Report) out-of-scope — no counterpart. Screen 68 (Player Scout Report) deferred — Team Scout Report exists, player-level scouting is inline via Attribute Ranges.
 - [03 — Missing systems disposition](issues/03-missing-systems-disposition.md): Screens 58 (Happiness), 60 (Discipline), 63 (Comparison) out-of-scope — none of these systems exist. Screen 62 (Action Menu) deferred — actions exist through specific surfaces but no unified menu.
+- [04 — Remaining screens disposition](issues/04-remaining-screens-disposition.md): All 19 screens disposed. 11 out-of-scope, 3 satisfied-inline (51, 52, 53), 2 deferred (55, 62, 68), 3 needs-design (50 Player Profile, 56 Player Contract, 61 Player Development/Training Focus display).
 
 ## Not yet specified
 
-- **Which in-scope screens need dedicated surfaces vs are satisfied by inline display.** Screens 51 (Attributes), 52 (Positions), 61 (Development raise through Training Focus) are readable in the squad table — do they need dedicated screens? The WIP route stubs suggest they were expected.
-- **Remaining screens' disposition**: 50 (Profile), 53 (Form), 54 (Statistics), 55 (History), 56 (Contract), 59 (Injuries) — all have WIP route stubs but no data model. In scope or out?
-- **Whether the WIP placeholder routes are harmful** (dead UX paths a player can reach with a blank screen) vs acceptable scaffolding.
-- **What minimal RPCs and data models the in-scope screens need** — design decision for the remaining surfaces.
+None. All 19 screens disposed. Three needs-design surfaces identified.
 
 ## Out of scope
 
 - **Multiplayer, network sessions, multiple human managers** — inherited from Group A.
 - **Worker pools, memory budgets, resource tuning** — inherited from Group A.
 - **Off-device telemetry, crash reporting** — inherited from Group A.
-- **Non-normative import scaffolding** (Condensed LLM brief, Suggested Git commit) — inherited from Group A.
-- **Staff Profile / Contract / History (screens 64-66)** — out of scope per closed role set and no contracts.
-- **Coach Report (screen 67)** — out of scope, no counterpart exists.
-- **Player Happiness (screen 58)** — out of scope, no morale system exists.
-- **Player Discipline (screen 60)** — out of scope, no card accumulation or ban model.
-- **Player Comparison (screen 63)** — out of scope, no comparison mechanism.
-- **Player Statistics per-player (screen 54)** — out of scope, no per-player aggregated stats model.
-- **Player Transfer Status (screen 57)** — out of scope, transfer listing status has no model.
+- **Non-normative import scaffolding** — inherited from Group A.
+- **Staff Profile / Contract / History (screens 64-66)** — per closed role set.
+- **Coach Report (screen 67)** — no counterpart.
+- **Player Happiness (screen 58)** — no morale system.
+- **Player Discipline (screen 60)** — no card accumulation or ban model.
+- **Player Comparison (screen 63)** — no comparison mechanism.
+- **Player Statistics per-player (screen 54)** — no aggregated model.
+- **Player Transfer Status (screen 57)** — transfer listing not modeled.
+- **Player Form (screen 53)** — no match rating history model.
+- **Player Injuries history (screen 59)** — injury is per-match event, no durable record.
+- **Player Attributes dedicated screen (screen 51)** — satisfied inline in squad.
+- **Player Positions dedicated screen (screen 52)** — satisfied inline in squad.

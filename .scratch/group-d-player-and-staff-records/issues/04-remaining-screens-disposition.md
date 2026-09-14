@@ -23,7 +23,23 @@ For each: needs-design / satisfied-inline / out-of-scope / deferred.
 
 **Blocked by:** 01, 02, 03.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Each of the 8 remaining screens has a disposition.
-- [ ] Combined total: 19 screens all disposed (either out-of-scope, satisfied, deferred, or needs-design).
+## Answer
+
+Eight screens remain after tickets 01-03. Dispositions:
+
+| Screen | Disposition | Rationale |
+|--------|-------------|-----------|
+| 50 Player Profile | **needs-design** | Squad screen shows players as table rows with no drill-down. Profile is the natural surface a player row leads to. Needs RPC + screen + route. |
+| 51 Player Attributes | **satisfied-inline** | All attributes are toggleable squad table columns. A dedicated screen with no new data adds no value. The WIP placeholder route should be removed. |
+| 52 Player Positions | **satisfied-inline** | Positions + familiarity shown in squad position list and table column. Same reasoning as 51. |
+| 53 Player Form | **out-of-scope** | Form (last N matches) would require a new data model (per-player match rating history) and has no shipping feature depending on it. A dedicated effort if needed. |
+| 55 Player History | **deferred** | Career history (clubs played for, seasons, transfer dates) requires modeling the sequence of contracts/transfers a player passes through. Related to Season Summary. Not urgent. |
+| 56 Player Contract | **needs-design** | Contract terms (wage, length, expiry) are modeled but have no dedicated surface. A contract detail panel accessible from squad or profile would be useful. Needs getPlayerContract RPC. |
+| 59 Player Injuries | **out-of-scope** | Injuries are per-match events with no durable per-player record (no injury history table). Building one is a data-modeling effort not justified by current needs. |
+| 61 Player Development / Training Focus | **needs-design** | Training Focus is set per-player (setTrainingFocus RPC exists) and shown as a column. Development progress (attributes changing season to season) has no display. A dedicated screen or detail panel is the natural surface. |
+| 62 Player Action Menu | **deferred** (unchanged) | Actions exist through specific surfaces. A unified menu can be built when there's a stable action set to compose. |
+| 68 Scout Report (Player) | **deferred** (unchanged) | Team Scout Report is built. Player-level scouting progress surfaces as Attribute Ranges inline. A dedicated player report is deferred. |
+
+**Summary**: 11 of 19 screens disposed out-of-scope, 3 satisfied-inline, 2 deferred, 3 needs-design (50 Profile, 56 Contract, 61 Development). The needs-design screens should be the implementation scope if this effort continues to slicing. The 2 deferred and 3 satisfied-inline screens can be ticketed as instructions to remove their WIP route stubs.
