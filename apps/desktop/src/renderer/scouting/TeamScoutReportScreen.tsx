@@ -119,9 +119,13 @@ export const TeamScoutReportScreen = ({
         className={PAGE_CLASS}
       >
         <h1 className="text-2xl font-bold">Team Scout Report</h1>
-        <p className={`mt-4 ${state === "error" ? "text-text-danger" : "text-text-secondary"}`}>
-          {message}
-        </p>
+        {state === "error" ? (
+          <Alert variant="destructive" className="mt-4">
+            <p>{message}</p>
+          </Alert>
+        ) : (
+          <p className="mt-4 text-text-secondary">{message}</p>
+        )}
         {unscoutedReading !== null && (
           <div className="mt-6">
             <AssignScoutPanel saveId={saveId} report={unscoutedReading} readOnly={archived} />

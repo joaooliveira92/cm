@@ -124,9 +124,9 @@ export const ActiveLeaguesScreen = ({ onContinue, onCancel }: ActiveLeaguesScree
 
   if (boot._tag === "Failed") {
     return (
-      <div role="alert" className="text-text-danger">
+      <Alert variant="destructive">
         {boot.message}
-      </div>
+      </Alert>
     );
   }
   if (boot._tag === "Loading") {

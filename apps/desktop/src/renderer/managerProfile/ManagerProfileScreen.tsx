@@ -143,7 +143,9 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
         aria-label="Manager Profile"
         className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <p className="p-8 text-destructive">{describeRpcError(error)}</p>
+        <Alert variant="destructive">
+          <p>{describeRpcError(error)}</p>
+        </Alert>
       </main>
     );
   if (profileResult._tag === "Initial")
@@ -165,7 +167,9 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
         aria-label="Manager Profile"
         className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <p className="p-8 text-destructive">Failed to load manager profile</p>
+        <Alert variant="destructive">
+          <p>Failed to load manager profile</p>
+        </Alert>
       </main>
     );
 

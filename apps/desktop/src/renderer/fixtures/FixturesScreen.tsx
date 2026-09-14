@@ -1,5 +1,6 @@
 import { formatCalendarDate } from "@cm-clone/shared";
 import { type SaveId } from "@cm-clone/contracts";
+import { Alert } from "../components/ui/alert.js";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card.js";
 import { Spinner } from "../components/ui/spinner.js";
 import { Table, TableBody, TableCell, TableRow } from "../components/ui/table.js";
@@ -18,7 +19,9 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         aria-label="Fixtures"
         className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <p className="p-8 text-destructive">{describeRpcError(error)}</p>
+        <Alert variant="destructive">
+          <p>{describeRpcError(error)}</p>
+        </Alert>
       </main>
     );
   if (fixturesResult._tag === "Initial")
@@ -42,7 +45,9 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         aria-label="Fixtures"
         className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <p className="p-8 text-destructive">Failed to load fixtures</p>
+        <Alert variant="destructive">
+          <p>Failed to load fixtures</p>
+        </Alert>
       </main>
     );
 

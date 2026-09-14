@@ -23,7 +23,9 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
         aria-label="Season Summary"
         className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <p className="p-8 text-destructive">{describeRpcError(error)}</p>
+        <Alert variant="destructive">
+          <p>{describeRpcError(error)}</p>
+        </Alert>
       </main>
     );
   if (summaryResult._tag === "Initial")
@@ -45,7 +47,9 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
         aria-label="Season Summary"
         className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <p className="p-8 text-destructive">Failed to load season summary</p>
+        <Alert variant="destructive">
+          <p>Failed to load season summary</p>
+        </Alert>
       </main>
     );
 

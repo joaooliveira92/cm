@@ -2,6 +2,7 @@ import type { NewsCategory, NewsView } from "@cm-clone/shared";
 import { EMPTY_NEWS_FILTER, NEWS_CATEGORIES, filterNews, formatCalendarDate } from "@cm-clone/shared";
 import type { NewsMessageView, SaveId } from "@cm-clone/contracts";
 import { useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { Alert } from "../components/ui/alert.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
 import { Card } from "../components/ui/card.js";
@@ -195,7 +196,9 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         aria-label="News Inbox"
         className={`bg-background p-6 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <p className="p-8 text-destructive">{describeRpcError(loadError)}</p>
+        <Alert variant="destructive">
+          <p>{describeRpcError(loadError)}</p>
+        </Alert>
       </main>
     );
   if (inboxResult._tag === "Initial")
@@ -217,7 +220,9 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         aria-label="News Inbox"
         className={`bg-background p-6 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <p className="p-8 text-destructive">Failed to load news.</p>
+        <Alert variant="destructive">
+          <p>Failed to load news.</p>
+        </Alert>
       </main>
     );
 
@@ -352,11 +357,19 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       )}
 
       {visible.length === 0 ? (
-        <p className="mt-6 text-text-secondary">
-          {isNarrowed(filter)
-            ? "No messages match these filters."
-            : "No news yet. Press Continue to advance the season."}
-        </p>
+        <div className="mt-6 text-text-secondary">
+          <p>{isNarrowed(filter) ? "No messages match these filters." : "No news yet. Press Continue to advance the season."}</p>
+          {isNarrowed(filter) && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="mt-2"
+              onClick={() => setFilter(EMPTY_NEWS_FILTER)}
+            >
+              Clear all filters
+            </Button>
+          )}
+        </div>
       ) : (
         <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(18rem,24rem)_1fr]">
           <div

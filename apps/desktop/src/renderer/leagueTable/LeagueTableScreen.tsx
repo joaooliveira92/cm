@@ -1,6 +1,7 @@
 import { formatCalendarDate } from "@cm-clone/shared";
 import { type SaveId } from "@cm-clone/contracts";
 import type { ReactNode } from "react";
+import { Alert } from "../components/ui/alert.js";
 import {
   Table,
   TableBody,
@@ -41,7 +42,9 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   if (tableError)
     return (
       <LeagueMain>
-        <p className="p-8 text-destructive">{describeRpcError(tableError)}</p>
+        <Alert variant="destructive">
+          <p>{describeRpcError(tableError)}</p>
+        </Alert>
       </LeagueMain>
     );
   if (tableResult._tag === "Initial")
@@ -53,7 +56,9 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   if (tableResult._tag === "Failure")
     return (
       <LeagueMain>
-        <p className="p-8 text-text-danger">Failed to load league table</p>
+        <Alert variant="destructive">
+          <p>Failed to load league table</p>
+        </Alert>
       </LeagueMain>
     );
 

@@ -25,6 +25,7 @@
  */
 import { useState } from "react";
 import { PlayerId, type Tactic } from "@cm-clone/contracts";
+import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import { FOCUS_RING } from "../focus.js";
 import { describeRpcError } from "../rpc.js";
@@ -169,8 +170,10 @@ export const MatchDayBar = () => {
       onDrop={dropOnBar}
     >
       {viewError !== null && (
-        <p className="mb-2 text-sm text-text-danger">{describeRpcError(viewError)}</p>
-      )}
+          <Alert variant="destructive" className="mb-2">
+            <p className="text-sm">{describeRpcError(viewError)}</p>
+          </Alert>
+        )}
 
       {/* CM 03/04's titled Positions panel: starters and bench on one centred row. */}
       <section className="rounded-panel bg-panel-bg px-3 pt-1.5 pb-2.5">

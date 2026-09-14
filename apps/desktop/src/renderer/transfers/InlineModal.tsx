@@ -97,9 +97,14 @@ export const InlineModal = ({
               inputMode="decimal"
               value={amountValue}
               onChange={(event) => onAmountChange(event.target.value)}
-              className="mt-1"
+              className={`mt-1 ${error !== null ? "border-destructive" : ""}`}
             />
           </label>
+          {error !== null && (
+            <p role="alert" className="mt-1 text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <div className="mt-4 flex items-center justify-end gap-2">
             <Button type="button" variant="secondary" onClick={onCancel}>
               Cancel
@@ -108,11 +113,6 @@ export const InlineModal = ({
               {submitLabel}
             </Button>
           </div>
-          {error !== null && (
-            <p role="alert" className="mt-2 text-sm text-destructive">
-              {error}
-            </p>
-          )}
         </div>
       </div>
     </div>

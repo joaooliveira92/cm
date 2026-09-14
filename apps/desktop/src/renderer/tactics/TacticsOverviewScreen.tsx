@@ -124,9 +124,11 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
         className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <h1 className="text-2xl font-bold">Tactics Overview</h1>
-        <p className="mt-2 text-text-danger" data-testid="tactics-overview-failed">
-          {error !== null ? describeRpcError(error) : "Failed to load the tactics overview."}
-        </p>
+        <Alert variant="destructive" className="mt-2" data-testid="tactics-overview-failed">
+          <p>
+            {error !== null ? describeRpcError(error) : "Failed to load the tactics overview."}
+          </p>
+        </Alert>
         <Button type="button" variant="secondary" className="mt-4" onClick={() => refresh()}>
           Retry
         </Button>

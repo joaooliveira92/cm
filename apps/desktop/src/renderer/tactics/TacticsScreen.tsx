@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { PlayerId, Tactic, type SaveId, type TacticSlot } from "@cm-clone/contracts";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
+import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import {
   Select,
@@ -132,7 +133,9 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         aria-label="Tactics"
         className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <p className="p-8 text-text-danger">{describeRpcError(viewError)}</p>
+        <Alert variant="destructive">
+          <p>{describeRpcError(viewError)}</p>
+        </Alert>
       </main>
     );
   if (viewResult._tag === "Initial")
@@ -154,7 +157,9 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         aria-label="Tactics"
         className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <p className="p-8 text-text-danger">Failed to load tactics</p>
+        <Alert variant="destructive">
+          <p>Failed to load tactics</p>
+        </Alert>
       </main>
     );
 

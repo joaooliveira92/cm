@@ -10,10 +10,10 @@ The slice's edge promise: this is look, not behavior — the error and empty sta
 
 **Blocked by:** 08 — Token foundation, alias-first repaint, and the slate guard (the danger/warning tokens and the `BTN_SECONDARY` constant come from the token system).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Empty surfaces render a muted, text-led centered line; where filtering caused the emptiness, a "Clear all filters" action is present with the line.
-- [ ] No empty state uses icons; Squad's dual-action empty state is the only sanctioned action-bearing exception to the plain line.
-- [ ] Structural failures render a danger alert panel with a `BTN_SECONDARY` Retry action; the bad-address error screen uses the same grammar without Retry.
-- [ ] Inline errors render as a danger line under the field with the field danger-tinted — no box, no panel.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] Empty surfaces render a muted, text-led centered line; where filtering caused the emptiness, a "Clear all filters" action is present with the line.
+- [x] No empty state uses icons; Squad's dual-action empty state is the only sanctioned action-bearing exception to the plain line.
+- [x] Structural failures render a danger alert panel with a `BTN_SECONDARY` Retry action; the bad-address error screen uses the same grammar without Retry.
+- [x] Inline errors render as a danger line under the field with the field danger-tinted — no box, no panel.
+- [x] `pnpm check:all` is green at this commit.
