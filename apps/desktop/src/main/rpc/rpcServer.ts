@@ -42,6 +42,7 @@ import {
 import { setTrainingFocus } from "../club/training.js";
 import { assignScout, assignScoutToClub, getScouting, unassignScout } from "../club/scouting.js";
 import { getClubStaff } from "../career/staff.js";
+import { getPlayerContract, getPlayerProfile } from "../career/player.js";
 import { getTeamScoutReadings, getTeamScoutReport } from "../club/teamScoutReport.js";
 import { withWideEvent } from "./logging.js";
 
@@ -331,6 +332,20 @@ const handlers: Record<AppRpcMethod, Handler> = {
         payload,
       );
       return yield* getClubStaff(ctx.savesDir, saveId, clubId);
+    }),
+  getPlayerProfile: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, playerId } = yield* Schema.decodeUnknownEffect(AppRpcs.getPlayerProfile.payload)(
+        payload,
+      );
+      return yield* getPlayerProfile(ctx.savesDir, saveId, playerId);
+    }),
+  getPlayerContract: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, playerId } = yield* Schema.decodeUnknownEffect(AppRpcs.getPlayerContract.payload)(
+        payload,
+      );
+      return yield* getPlayerContract(ctx.savesDir, saveId, playerId);
     }),
   getKeyBindingOverrides: (_payload, ctx) => getKeyBindingOverrides(ctx.userDataDir),
   setKeyBindingOverride: (payload, ctx) =>

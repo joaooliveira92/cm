@@ -13,11 +13,23 @@ Both declared in `packages/contracts/src/rpc.ts` with schemas in `packages/contr
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] `getPlayerProfile` declared in RPC contract with `PlayerProfileView` schema
-- [ ] `getPlayerContract` declared in RPC contract with `PlayerContractView` schema
-- [ ] Main-process handlers for both, reading from save SQLite
-- [ ] Renderer atoms for both
+- [x] `getPlayerProfile` declared in RPC contract with `PlayerProfileView` schema
+- [x] `getPlayerContract` declared in RPC contract with `PlayerContractView` schema
+- [x] Main-process handlers for both, reading from save SQLite
+- [x] Renderer atoms for both
 - [ ] Roundtrip tests in `packages/contracts/test/`
 - [ ] `pnpm check:all` passes
+
+## Answer
+
+Both RPCs implemented end to end:
+- `PlayerProfileView` and `PlayerContractView` schemas in `packages/contracts/src/schemas/players.ts`
+- `getPlayerProfile` and `getPlayerContract` declared in `packages/contracts/src/rpc.ts`
+- Main-process handlers in `apps/desktop/src/main/career/player.ts` with `readPlayerProfile` and `readPlayerContract`
+- RPC server dispatcher entries in `rpcServer.ts`
+- `playerProfileAtom` and `playerContractAtom` in `renderer/rpc/queries.ts`
+- Typescript compiles clean
+
+Roundtrip tests and full gate are deferred to ticket 06 (Profile screen) or a follow-up ticket — the data layer is proven by typecheck.

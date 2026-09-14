@@ -1,4 +1,4 @@
-import type { ClubId, SaveId } from "@cm-clone/contracts";
+import type { ClubId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { Atom } from "effect/unstable/reactivity";
 import { call } from "./call.js";
 import { managementReadPolicy } from "./policy.js";
@@ -197,3 +197,29 @@ const clubStaffForSave = Atom.family((saveId: SaveId) =>
 
 export const clubStaffAtom = (saveId: SaveId, clubId: ClubId) =>
   clubStaffForSave(saveId)(clubId);
+
+const playerProfileForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((playerId: PlayerId) =>
+    managementReadPolicy(
+      Atom.make(call("getPlayerProfile", { saveId, playerId })).pipe(
+        Atom.withReactivity([saveKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const playerProfileAtom = (saveId: SaveId, playerId: PlayerId) =>
+  playerProfileForSave(saveId)(playerId);
+
+const playerContractForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((playerId: PlayerId) =>
+    managementReadPolicy(
+      Atom.make(call("getPlayerContract", { saveId, playerId })).pipe(
+        Atom.withReactivity([saveKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const playerContractAtom = (saveId: SaveId, playerId: PlayerId) =>
+  playerContractForSave(saveId)(playerId);

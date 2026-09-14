@@ -26,3 +26,4 @@ export {
 } from "./managerStatus.js";
 export { getNewsInbox, parseNewsMessageId, setNewsMessageState } from "./news.js";
 export { freshStaffId, getClubStaff, loadCoachQuality, materialiseStaff } from "./staff.js";
+export { getPlayerProfile, getPlayerContract } from "./player.js";

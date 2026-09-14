@@ -58,8 +58,10 @@ import {
   NotYourPlayerError,
   NullableTrainingFocusSchema,
   PillarDistribution,
+  PlayerContractView,
   PlayerId,
   PlayerNotFoundError,
+  PlayerProfileView,
   PlayerNotFreeAgentError,
   ResumeSimulationView,
   SaveArchivedError,
@@ -382,12 +384,25 @@ commitCareer: {
     success: TrainingFocusView,
     error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError, SaveArchivedError]),
   },
-  /** Club Staff (Screen 38): who works at any club in the save. A pure read — every person derived
-   * on demand, so a `results-only` club answers like any other; only the save or the club id can fail. */
+/** Club Staff (Screen 38): who works at any club in the save. A pure read — every person derived
+   *  on demand, so a `results-only` club answers like any other; only the save or the club id can fail. */
   getClubStaff: {
     payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
     success: ClubStaffView,
     error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+  },
+  /** Player Profile (Screen 50): identity, positions, attributes, club, contract expiry, transfer
+   *  value, and injury status for one player. */
+  getPlayerProfile: {
+    payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId }),
+    success: PlayerProfileView,
+    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError]),
+  },
+  /** Player Contract (Screen 56): wage, length, start date, expiry date for one player. */
+  getPlayerContract: {
+    payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId }),
+    success: PlayerContractView,
+    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError]),
   },
   /** Key binding overrides (ticket 14 / Stage 6): a machine-local `record<ActionId, binding>`
    * layered over — never replacing — the coded defaults. The file lives in Electron `userData`
