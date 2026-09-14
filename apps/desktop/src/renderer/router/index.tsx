@@ -88,6 +88,7 @@ import { MatchStatsScreen } from "../matchStats/MatchStatsScreen.js";
 import { MatchPlayerStatsScreen } from "../matchPlayerStats/MatchPlayerStatsScreen.js";
 import { MatchHomeTeamScreen } from "../matchHomeTeam/MatchHomeTeamScreen.js";
 import { MatchAwayTeamScreen } from "../matchAwayTeam/MatchAwayTeamScreen.js";
+import { MatchPreviewScreen } from "../matchPreview/MatchPreviewScreen.js";
 import { MatchRatingsScreen } from "../matchRatings/MatchRatingsScreen.js";
 import { MatchLatestScoresScreen } from "../matchLatestScores/MatchLatestScoresScreen.js";
 import { MatchLiveTableScreen } from "../matchLiveTable/MatchLiveTableScreen.js";
@@ -616,6 +617,7 @@ const matchOppositionInstructionsRoute = defineCareerChild("match-opposition-ins
 const matchCommentaryRoute = defineCareerChild("match-commentary", "matchCommentary", MatchCommentaryScreen);
 const matchReplaysRoute = defineCareerChild("match-replays", "matchReplays", MatchReplaysScreen);
 const matchReportRoute = defineCareerChild("match-report", "matchReport", MatchReportScreen);
+const matchPreviewRoute = defineCareerChild("match-preview", "matchPreview", MatchPreviewScreen);
 
 // ---------------------------------------------------------------------------
 // Creation branch
@@ -756,6 +758,7 @@ const routeTree = rootRoute.addChildren([
       matchCommentaryRoute,
       matchReplaysRoute,
       matchReportRoute,
+      matchPreviewRoute,
     ]),
   ]),
 ]);

@@ -4,10 +4,10 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Match Preview shows fixture context (competition, venue, date)
-- [ ] Match Preview shows recent form for both teams
-- [ ] Match Preview shows head-to-head record
-- [ ] Screen is accessible via the pre-match tab navigation
-- [ ] Loading and error states are handled
+- [x] Match Preview shows fixture context (competition, venue, date)
+- [x] Match Preview shows recent form for both teams
+- [x] Match Preview shows head-to-head record
+- [x] Screen is accessible via the pre-match tab navigation
+- [x] Loading and error states are handled

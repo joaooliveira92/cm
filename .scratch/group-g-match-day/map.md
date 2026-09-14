@@ -18,6 +18,7 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
 - [02 — Scope decision for absent screens](issues/02-scope-absent-screens.md): 104 out of scope (cut from v1); 98/102 out of scope for Group G (deferred — require new domain model)
 - [03 — Build sequence for 8 partial screens](issues/03-partial-screen-build-sequence.md): Priority order set; shared component pairs identified
 - [04 — Team Sheet screen](issues/04-team-sheet-screen.md): Implemented. New `getTeamSheet` RPC + screens for both team lineups with formation and substitutes.
+- [05 — Match Preview screen](issues/05-match-preview-screen.md): Implemented. Fixture context, recent form, head-to-head from existing fixture data.
 - [Spec published](spec.md): Reconciled spec marking handoff from charting to slicing.
 - [Implementation tickets](issues/): 8 vertical slices (04–11), all unblocked.
 
