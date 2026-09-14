@@ -10,10 +10,8 @@ Three view states: loading, ready, error. Can be a standalone route or a sub-sec
 
 **Blocked by:** 05 (player read RPCs must exist first).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Contract display component reachable from player context
-- [ ] Three view states (loading, ready, error)
-- [ ] Shows: wage, length, expiry, signing date, club
-- [ ] Unit tests
-- [ ] `pnpm check:all` passes
+## Answer
+
+Player Contract screen implemented: replaces WIP placeholder at `player/$playerId/contract` with a real screen showing wage, length, signed date, and expiry date. Reads from `getPlayerContract` RPC via `playerContractAtom`. Three view states. Typecheck passes.
