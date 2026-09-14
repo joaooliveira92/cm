@@ -10,12 +10,12 @@ The slice's edge promise: match day is a career tab inside the career chrome, so
 
 **Blocked by:** 08 — Token foundation, alias-first repaint, and the slate guard (match day consumes the shared token system); 09 — Career chrome, season readout, and Continue (the temporal cluster this ticket toggles between match readout and season readout + Continue is built there).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Match day renders inside the career chrome on the shared token system — no breakout shell, no sidebar, no chrome change; the only match-only elements are the scoreboard surface tokens.
-- [ ] The stadium is a CSS-only wash from existing tokens (gradient wash under the panel-dark overlay) with no image dependency; the image seam (inject *under* the overlay) is documented for when an asset exists.
-- [ ] The scoreboard is the neutral chrome-band, white-score-box pattern rendering from club name and score alone.
-- [ ] During a live match the chrome's temporal cluster shows the match readout and career Continue is unavailable; at full time it returns to the season readout + Continue.
-- [ ] The commentary feed has a minute gutter and incident colours from the shared danger/warning/success status tokens.
-- [ ] Possession, incidents, and fixture panels remain unbuilt; no prototype component code is salvaged.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] Match day renders inside the career chrome on the shared token system — no breakout shell, no sidebar, no chrome change; the only match-only elements are the scoreboard surface tokens.
+- [x] The stadium is a CSS-only wash from existing tokens (gradient wash under the panel-dark overlay) with no image dependency; the image seam (inject *under* the overlay) is documented for when an asset exists.
+- [x] The scoreboard is the neutral chrome-band, white-score-box pattern rendering from club name and score alone.
+- [x] During a live match the chrome's temporal cluster shows the match readout and career Continue is unavailable; at full time it returns to the season readout + Continue.
+- [x] The commentary feed has a minute gutter and incident colours from the shared danger/warning/success status tokens.
+- [x] Possession, incidents, and fixture panels remain unbuilt; no prototype component code is salvaged.
+- [x] `pnpm check:all` is green at this commit.
