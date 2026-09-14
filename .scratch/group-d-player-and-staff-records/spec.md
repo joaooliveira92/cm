@@ -1,8 +1,9 @@
 # Group D: Player and Staff Records — Implementation Spec
 
-Status: ready-for-slicing
+## Status
 
-## Scope
+**Effort complete** — 2026-09-14. All 19 screens charted and disposed.
+11 out-of-scope, 3 satisfied-inline, 2 deferred, 3 screens implemented.
 
 This spec covers Group D (Player and Staff Records) from the import at
 [../../docs/specs/group_d_player_and_staff_records/](../../docs/specs/group_d_player_and_staff_records/).
