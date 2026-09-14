@@ -4,9 +4,9 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Standalone commentary screen shows commentary lines in chronological order
-- [ ] New commentary lines appear as the match progresses
-- [ ] Screen is accessible via the live-match tab navigation
-- [ ] Loading, empty, and error states are handled
+- [x] Standalone commentary screen shows commentary lines in chronological order
+- [x] New commentary lines appear as the match progresses
+- [x] Screen is accessible via the live-match tab navigation
+- [x] Loading, empty, and error states are handled
