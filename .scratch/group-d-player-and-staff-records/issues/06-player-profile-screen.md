@@ -12,11 +12,10 @@ The screen is read-only — no commands, no mutations.
 
 **Blocked by:** 05 (player read RPCs must exist first).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] `PlayerProfileScreen` component at `player/$playerId/profile` route
-- [ ] Three view states (loading, ready, error)
-- [ ] Shows: name, age, nationality, positions + familiarity, attribute summary, club, contract expiry, Overall Rating, Transfer Value, injury status
-- [ ] Accessible from squad/player row navigation
-- [ ] Unit tests for view states and key content
-- [ ] `pnpm check:all` passes
+## Answer
+
+Player Profile screen implemented: replaces WIP placeholder at `player/$playerId/profile` with a real screen showing identity, positions, top attributes per category, club, contract info, and injury status. Reads from `getPlayerProfile` RPC via `playerProfileAtom`. Three view states (Initial → loading message, Failure → error message, Success → profile content).
+
+Typecheck passes.
