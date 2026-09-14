@@ -46,6 +46,7 @@ export {
   respondAsBidderMutation,
   retireManagerMutation,
   setNewsMessageStateMutation,
+  setTrainingFocusMutation,
   submitMatchCommandMutation,
 } from "./rpc/mutations.js";
 

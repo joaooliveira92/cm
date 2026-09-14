@@ -24,6 +24,7 @@ import { ClubStaffScreen } from "../clubStaff/ClubStaffScreen.js";
 import { PlayerProfileScreen } from "../playerProfile/PlayerProfileScreen.js";
 import { PlayerAttributesScreen } from "../playerAttributes/PlayerAttributesScreen.js";
 import { PlayerContractScreen } from "../playerContract/PlayerContractScreen.js";
+import { PlayerDevelopmentScreen } from "../playerDevelopment/PlayerDevelopmentScreen.js";
 import { PlayerHistoryScreen } from "../playerHistory/PlayerHistoryScreen.js";
 import { PlayerFormScreen } from "../playerForm/PlayerFormScreen.js";
 import { PlayerInjuriesScreen } from "../playerInjuries/PlayerInjuriesScreen.js";
@@ -297,6 +298,14 @@ const playerContractRoute = createRoute({
   path: "contract",
   component: () => (
     <CareerPlayerChildView screenId="playerContract" Screen={PlayerContractScreen} />
+  ),
+});
+
+const playerDevelopmentRoute = createRoute({
+  getParentRoute: () => playerRoute,
+  path: "development",
+  component: () => (
+    <CareerPlayerChildView screenId="playerDevelopment" Screen={PlayerDevelopmentScreen} />
   ),
 });
 
@@ -694,6 +703,7 @@ const routeTree = rootRoute.addChildren([
         playerProfileRoute,
         playerAttributesRoute,
         playerContractRoute,
+        playerDevelopmentRoute,
         playerHistoryRoute,
         playerFormRoute,
         playerInjuriesRoute,

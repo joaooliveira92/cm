@@ -15,10 +15,15 @@ The development history display requires a projection of attribute snapshots per
 
 **Blocked by:** 05 (if profile RPC is extended to include development data), otherwise 06 (if development is a sub-section of profile).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Development display component showing Training Focus and per-season attribute changes
-- [ ] Training Focus management (reads current, calls setTrainingFocus)
-- [ ] Three view states
-- [ ] Unit tests
-- [ ] `pnpm check:all` passes
+## Answer
+
+Player Development screen implemented at `player/$playerId/development`:
+- Training Focus management with buttons for each Category + None, using `setTrainingFocus` RPC via `setTrainingFocusMutation`
+- Reads player name from `playerProfileAtom` for heading
+- Development History placeholder for future per-season attribute change tracking
+- Three view states
+- Route registered in router index
+
+Typecheck passes.

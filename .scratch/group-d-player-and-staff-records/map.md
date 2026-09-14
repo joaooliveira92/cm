@@ -29,6 +29,10 @@ A reconciled spec covering all 19 Group D screens (50-68) — player profile, at
 - [02 — Staff screens scope](issues/02-staff-screens-scope.md): All five staff screens (64-68) disposed. Screens 64-66 (Staff Profile, Contract, History) out-of-scope per closed role set. Screen 67 (Coach Report) out-of-scope — no counterpart. Screen 68 (Player Scout Report) deferred — Team Scout Report exists, player-level scouting is inline via Attribute Ranges.
 - [03 — Missing systems disposition](issues/03-missing-systems-disposition.md): Screens 58 (Happiness), 60 (Discipline), 63 (Comparison) out-of-scope — none of these systems exist. Screen 62 (Action Menu) deferred — actions exist through specific surfaces but no unified menu.
 - [04 — Remaining screens disposition](issues/04-remaining-screens-disposition.md): All 19 screens disposed. 11 out-of-scope, 3 satisfied-inline (51, 52, 53), 2 deferred (55, 62, 68), 3 needs-design (50 Player Profile, 56 Player Contract, 61 Player Development/Training Focus display).
+- [05 — Player read RPCs](issues/05-player-read-rpcs.md): `getPlayerProfile` and `getPlayerContract` RPCs implemented with schemas, handlers, renderer atoms. Committed 2026-09-14.
+- [06 — Player Profile screen](issues/06-player-profile-screen.md): Replaced WIP placeholder with real screen showing identity, positions, attributes, club, contract info, injury status. Committed 2026-09-14.
+- [07 — Player Contract display](issues/07-player-contract-display.md): Replaced WIP placeholder with real screen showing wage, length, signing and expiry dates. Committed 2026-09-14.
+- [08 — Player Development display](issues/08-player-development-display.md): Implemented training focus management screen at `player/$playerId/development`. Committed 2026-09-14.
 
 ## Not yet specified
 

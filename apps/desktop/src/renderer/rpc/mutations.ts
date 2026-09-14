@@ -144,6 +144,19 @@ export const assignScoutToClubMutation = rpcRuntime.fn(
   (input: RpcPayload<"assignScoutToClub">) => assignScoutToClubEffect(input),
 );
 
+/** `setTrainingFocus` effect — invalidates squad + training keys. */
+export const setTrainingFocusEffect = (
+  input: RpcPayload<"setTrainingFocus">,
+): MutationEffect<"setTrainingFocus"> =>
+  call("setTrainingFocus", input).pipe(
+    Reactivity.mutation(INVALIDATION_RULES.setTrainingFocus(input.saveId)),
+  );
+
+/** `setTrainingFocus` mutation atom. */
+export const setTrainingFocusMutation = rpcRuntime.fn(
+  (input: RpcPayload<"setTrainingFocus">) => setTrainingFocusEffect(input),
+);
+
 /** `advanceCalendar` — mutation atom for registry-scoped invalidation. */
 export const advanceCalendarMutation = rpcRuntime.fn((input: RpcPayload<"advanceCalendar">) =>
   advanceCalendarEffect(input.saveId),
