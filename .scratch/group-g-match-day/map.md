@@ -14,11 +14,19 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
 
 ## Decisions so far
 
-<!-- one line per closed ticket -->
+- [01 — Group G screen inventory survey](issues/01-screen-inventory.md): 1 built, 8 partial, 3 absent (98/102 need morale model; 104 cut from v1)
+- [02 — Scope decision for absent screens](issues/02-scope-absent-screens.md): 104 out of scope (cut from v1); 98/102 out of scope for Group G (deferred — require new domain model)
+- [03 — Build sequence for 8 partial screens](issues/03-partial-screen-build-sequence.md): Priority order set; shared component pairs identified
+- [04 — Team Sheet screen](issues/04-team-sheet-screen.md): Implemented. New `getTeamSheet` RPC + screens for both team lineups with formation and substitutes.
+- [Spec published](spec.md): Reconciled spec marking handoff from charting to slicing.
+- [Implementation tickets](issues/): 8 vertical slices (04–11), all unblocked.
 
 ## Not yet specified
 
-- Which live match screens are satisfied by existing match day experience.
-- Half-time team talk (98) and post-match team talk (102) — no team talk system.
-- Match report and disciplinary review (103-104) — no report or disciplinary model.
-- Post-match flow — integration with Season Summary and Continue.
+None — all known decisions resolved, spec written, tickets sliced.
+
+## Out of scope
+
+- Screen 104 (Match Incidents and Disciplinary Review) — cut from v1 per CONTEXT.md.
+- Screens 98/102 (Half-Time and Post-Match Team Talk) — require new morale/team-talk domain model; deferred to a future effort.
+- Post-match flow — integration with Season Summary and Continue (Group H scope).
