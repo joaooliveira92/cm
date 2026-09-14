@@ -2,7 +2,7 @@
 
 ## Immediate next action
 
-Group D complete. Next unmatched spec: **group E (Squad Management)**.
+Group G (Match Day and Match Review) ingested — charting in progress.
 
 ## Gate state (2026-09-14)
 
@@ -37,6 +37,7 @@ Shipped and closed:
 - **group-b-reconciliation**: all 7 tickets resolved.
 - **group-c-club-information**: complete 2026-09-14.
 - **group-d-player-and-staff-records**: complete 2026-09-14.
+- **group-e-squad-management**: complete 2026-09-14. 11 screens charted, all disposed.
 
 ## Loose instructions
 
