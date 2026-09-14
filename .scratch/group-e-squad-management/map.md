@@ -20,13 +20,13 @@ Inherited from Group A: multiplayer axis out of scope, worker pools out of scope
 
 ## Decisions so far
 
-<!-- one line per closed ticket -->
+## Decisions so far
+
+- [01 — Screen inventory](issues/01-screen-inventory.md): All 11 screens surveyed. 4 satisfied (69, 70, 72, partially 71), 2 partial (71, 77), 6 out-of-scope (73-76, 78-79).
 
 ## Not yet specified
 
-- Which screens are satisfied by existing Squad screen (selection, filters, sorting views).
-- Which screens are out of scope (captain, set-pieces, grievances, discipline, meetings, shirt numbers, registration, eligibility).
-- Whether any screens need new surfaces beyond the existing Squad screen.
+Extension ticket needed for Screen 71 (position-only filter — could extend to attribute/status filters). Existing squad features are otherwise shipping.
 
 ## Out of scope
 

@@ -13,7 +13,24 @@ Key questions:
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] All 11 screens surveyed against the codebase.
-- [ ] Per-screen status table produced.
+## Answer
+
+Per-screen survey of 11 Group E screens:
+
+| Screen | Name | Status | Detail |
+|--------|------|--------|--------|
+| 69 | Squad selection | **satisfied** | Single-selection model via `selectedId`/`setSelection`. Space toggles, Enter sets primary. |
+| 70 | Squad view selector | **satisfied** | `SQUAD_VIEWS` with position list and all column presets. `<Select>` picker in toolbar. View persisted to localStorage. |
+| 71 | Selection filters | **partial** | Position filter dropdown exists. `FilterClause` union supports more kinds but no UI for attribute/status filters. "Clear filters" button. |
+| 72 | Player sorting | **satisfied** | TanStack sorting on all columns. Sort state persisted. |
+| 73 | Shirt numbers | **out-of-scope** | No `shirtNumber` field in schema, model, or UI. |
+| 74 | Captain | **out-of-scope** | Navigation stub in spec-nav-config.ts but no data model, no route, no component. |
+| 75 | Set-piece takers | **out-of-scope** | `SetPieceStatusView` hardcoded to `status: "none"`. Tactic carries no set-piece fields. |
+| 76 | Squad registration | **out-of-scope** | Reserved status `Ine` exists but no registration model. |
+| 77 | Availability/eligibility | **partial** | Condition/Tired is live. Injury drill-down route exists. No standing injury durations, suspensions, card accumulation, or eligibility model. |
+| 78 | Player interaction | **out-of-scope** | Reserved status `Unh` exists but no morale/happiness state. |
+| 79 | Team meeting/discipline | **out-of-scope** | No evidence of any meeting or discipline system. |
+
+**Summary**: 4 satisfied (69, 70, 72, partially 71), 2 partial (71 filters could be extended, 77 eligibility), 6 out-of-scope (73-76, 78-79). The Squad screen's core functionality is shipping.
