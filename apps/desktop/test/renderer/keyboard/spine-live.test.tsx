@@ -298,12 +298,16 @@ describe("AC-19 — Space→Continue honours the safety guard through the live s
     resetScopeState();
   });
 
-  it("does NOT fire when the season is complete", async () => {
+  it("fires on the season-complete phase, whose conclusion the rollover owns", async () => {
+    // The season-rollover decision removed the dead season_complete disable:
+    // advancing concludes and rolls over in one step, so the phase never
+    // reaches the renderer and blocking Continue for it was unreachable dead
+    // code. Space keeps firing; the outstanding band reports the conclusion.
     await mountLeagueWithSpine("season_complete");
     const button = screen.getByRole("button", { name: /Continue/ }) as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
+    expect(button.disabled).toBe(false);
     act(() => fireEvent.keyDown(document, { key: " " }));
-    expect(advanceCalls).toBe(0);
+    expect(advanceCalls).toBe(1);
   });
 
   it("does fire exactly once when the safety contract permits", async () => {

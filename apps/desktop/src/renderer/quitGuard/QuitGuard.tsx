@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../components/ui/button.js";
-import { FOCUS_RING } from "../focus.js";
 import { useDialogKeyboard } from "../transfers/dialogKeyboard.js";
 import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "../theme.js";
 

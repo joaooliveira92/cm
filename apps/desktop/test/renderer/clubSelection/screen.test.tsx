@@ -8,7 +8,6 @@ import { afterEach, beforeAll, afterAll, describe, expect, it } from "vitest";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import type { ClubId } from "@cm-clone/contracts";
-import { BASE_CONTENT_PACK, displayName } from "@cm-clone/shared";
 import { getClubSelection } from "../../../src/main/career/index.js";
 import { createSave } from "../../../src/main/world/index.js";
 import { ClubSelectionScreen } from "../../../src/renderer/clubSelection/ClubSelectionScreen.js";
@@ -24,6 +23,7 @@ import { ClubSelectionScreen } from "../../../src/renderer/clubSelection/ClubSel
 
 let savesDir = "";
 let saveId = "";
+let payload: unknown;
 const calls: Array<string> = [];
 
 const wire = (value: unknown): unknown => JSON.parse(JSON.stringify(value)) as unknown;
@@ -42,13 +42,14 @@ beforeAll(async () => {
       Effect.scoped,
     ),
   );
-  const payload = wire(view);
+  const payloadValue = wire(view);
+  payload = payloadValue;
 
   (window as unknown as { cmClone: { call: (m: string, p: unknown) => Promise<unknown> } }).cmClone = {
     call: async (method) => {
       calls.push(method);
       return method === "getClubSelection"
-        ? { _tag: "Success", value: payload }
+        ? { _tag: "Success", value: payloadValue }
         : { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: saveId } };
     },
   };
@@ -131,17 +132,18 @@ describe("the rail reads comparatively and the panel carries the detail", () => 
     expect(calls.filter((method) => method === "getClubSelection").length).toBe(before);
   });
 
-  it("names the one generated League on a disabled selector with a stated reason", async () => {
+  it("names the one generated League on the live selector, from the pack", async () => {
     renderScreen();
     await waitFor(() => expect(rows().length).toBe(20));
 
-    const selector = screen.getByLabelText("League") as HTMLButtonElement;
-    expect(selector.disabled).toBe(true);
-    // The pack's name for the League, not a constant the renderer holds: the screen shows what
-    // the save's content pack says `comp_eng_1` is called.
-    expect(selector.textContent).toBe(displayName(BASE_CONTENT_PACK, "comp_eng_1"));
-    const hint = document.getElementById(selector.getAttribute("aria-describedby")!);
-    expect(hint?.textContent).toMatch(/one League/);
+    const selector = await screen.findByLabelText("League");
+    // The pack's name for the generated League, not a constant the renderer holds: the screen
+    // shows what the save's content pack says the League is called.
+    const leagueName = (payload as { leagues: Array<{ leagueName: string }> }).leagues[0]!.leagueName;
+    expect(selector.textContent).toBe(leagueName);
+    // The selector is live, not an inert single-option trap: league switching is how a career
+    // with more than one League scopes the club list.
+    expect((selector as HTMLButtonElement).disabled).toBe(false);
   });
 });
 
@@ -236,7 +238,7 @@ describe("the club table's roving selection", () => {
     expect(selectedRow.className).toContain("bg-row-selected");
   });
 
-  it("puts the assist after the table and skips the disabled selector in the tab order", async () => {
+  it("puts the assist after the table, behind the league selector in the tab order", async () => {
     renderScreen();
     await waitFor(() => expect(rows().length).toBe(20));
 
@@ -247,7 +249,10 @@ describe("the club table's roving selection", () => {
       (node) => !(node.tagName === "SELECT" && (node as HTMLSelectElement).disabled),
     );
 
+    // The enabled league selector leads (it scopes the list), then the roving
+    // rail, then the assist.
     expect(reachable.map((node) => node.getAttribute("role") ?? node.tagName)).toEqual([
+      "combobox",
       "row",
       "BUTTON",
     ]);
@@ -268,13 +273,13 @@ describe("the rail loads and fails independently of the panel", () => {
     const rail = await screen.findByText("Loading clubs…");
     expect(rail.parentElement?.getAttribute("aria-busy")).toBe("true");
     expect(rail.parentElement?.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
-    // A slow read does not blank the screen: the selector, the assist and the panel are all there.
-    expect(screen.getByLabelText("League")).toBeTruthy();
+    // A slow read does not blank the screen: the assist and the panel are all there.
+    // (The league selector must wait for the read — it cannot name a league before one is known.)
     expect(screen.getByRole("button", { name: "Pick a team for me" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "Club detail" })).toBeTruthy();
   });
 
-  it("renders a load failure inline in the rail, leaving the selector and assist in place", async () => {
+  it("renders a load failure inline in the rail, leaving the assist in place", async () => {
     installTransport(async () => ({
       _tag: "Failure",
       error: { _tag: "SaveNotFoundError", id: saveId },
@@ -282,7 +287,8 @@ describe("the rail loads and fails independently of the panel", () => {
     renderScreen();
 
     await screen.findByText(/Failed to load clubs/);
-    expect(screen.getByLabelText("League")).toBeTruthy();
+    // No league was read, so there is no league selector to mount.
+    expect(screen.queryByLabelText("League")).toBeNull();
     const assist = screen.getByRole("button", { name: "Pick a team for me" }) as HTMLButtonElement;
     // Disabled over zero rows: a pick that can roll nothing is meaningless.
     expect(assist.disabled).toBe(true);

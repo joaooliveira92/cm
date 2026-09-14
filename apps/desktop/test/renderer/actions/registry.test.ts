@@ -143,8 +143,13 @@ describe("AC-19 — the Continue safety contract is a registry predicate, not a 
       .map((a) => a.id)
       .filter((id) => id === "continue");
 
-  it("at season completion Continue is unavailable", () => {
-    expect(leagueIds({ ready: true, phase: "season_complete", advancing: false })).toEqual([]);
+  it("does not special-case the season-complete phase — the rollover owns the conclusion", () => {
+    // The season-rollover decision removed the dead season_complete disable:
+    // advancing concludes and rolls over in one step, so the phase never
+    // reaches the renderer and gating Continue on it was unreachable dead code.
+    expect(leagueIds({ ready: true, phase: "season_complete", advancing: false })).toEqual([
+      "continue",
+    ]);
   });
 
   it("mid-season with no advance running Continue is available", () => {

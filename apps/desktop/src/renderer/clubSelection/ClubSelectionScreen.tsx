@@ -50,8 +50,6 @@ export const ClubSelectionScreen = ({ saveId, selectedClubId, onSelect }: ClubSe
     [clubs, selectedLeagueId],
   );
 
-  const currentLeague = leagues.find((l) => l.leagueId === selectedLeagueId);
-
   const summary = useMemo(() => leagueSummaryOf(filteredClubs), [filteredClubs]);
   const selectedClub = filteredClubs.find((club) => club.clubId === selectedClubId) ?? null;
 

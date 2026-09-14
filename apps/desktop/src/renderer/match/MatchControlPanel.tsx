@@ -355,7 +355,7 @@ const MatchControlProvider = (input: MatchControlInput) => {
                   type="checkbox"
                   checked={isHalftime}
                   onChange={(event) => value.actions.setIsHalftime(event.target.checked)}
-                  className={`accent-text-highlight ${FOCUS_RING.join(" ")}`}
+                  className={`accent-text-success ${FOCUS_RING.join(" ")}`}
                 />
                 Apply as a halftime instruction (doesn&apos;t consume a substitution window)
               </label>

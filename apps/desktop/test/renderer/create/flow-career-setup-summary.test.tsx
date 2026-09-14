@@ -174,6 +174,14 @@ const CLUBS = [
   {
     clubId: "club-a",
     clubName: "Castlemere United",
+    leagueId: "comp_eng_1",
+    badgeKey: null,
+    clubColours: {
+      primary: { foreground: "#ffffff", background: "#1a2a6c" },
+      secondary: { foreground: "#ffffff", background: "#b91c1c" },
+      tertiary: null,
+      quaternary: null,
+    },
     statureTier: "big",
     boardObjectiveMin: 1,
     boardObjectiveMax: 6,
@@ -196,7 +204,13 @@ const flowResponses =
       case "beginCareer":
         return { _tag: "Success", value: { id: "provisional-1" } };
       case "getClubSelection":
-        return { _tag: "Success", value: { clubs: CLUBS, leagueName: "English First Division" } };
+        return {
+          _tag: "Success",
+          value: {
+            clubs: CLUBS,
+            leagues: [{ leagueId: "comp_eng_1", leagueName: "English First Division" }],
+          },
+        };
       case "getCareerSetupSummary":
         return { _tag: "Success", value: SUMMARY };
       case "commitCareer":

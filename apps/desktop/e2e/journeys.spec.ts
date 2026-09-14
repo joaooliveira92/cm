@@ -46,7 +46,8 @@ test("a career is created end to end at the club the player picked", async ({ wi
   await firstRow.focus();
   await page.keyboard.press("Enter");
   await expect(firstRow).toHaveAttribute("aria-selected", "true");
-  const clubName = (await firstRow.locator("span").first().textContent())!.trim();
+  // The club name, not the badge's initials span that now leads the row.
+  const clubName = (await firstRow.locator("span.block").first().textContent())!.trim();
 
   await page.getByRole("button", { name: "Next: Review" }).click();
   await expect(page.getByRole("heading", { name: "Review Career" })).toBeVisible();

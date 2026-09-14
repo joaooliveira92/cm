@@ -96,7 +96,7 @@ const ColumnControls = ({
               type="checkbox"
               checked={preferences.visibleColumnIds.includes(columnId)}
               onChange={() => onToggleColumn(columnId)}
-              className={`accent-text-highlight ${FOCUS_RING.join(" ")}`}
+              className={`accent-text-success ${FOCUS_RING.join(" ")}`}
             />
             {SQUAD_COLUMN_LABELS[columnId] ?? columnId}
           </label>

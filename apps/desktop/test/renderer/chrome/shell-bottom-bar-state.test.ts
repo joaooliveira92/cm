@@ -59,6 +59,7 @@ describe("describeCreationBottomBar", () => {
     ]);
     expect(zones(describeCreationBottomBar(creationInput({ step: "2" }))).leading).toEqual([
       "cancel",
+      "back-to-leagues",
     ]);
     expect(zones(describeCreationBottomBar(creationInput({ step: "3" }))).leading).toEqual([
       "cancel",

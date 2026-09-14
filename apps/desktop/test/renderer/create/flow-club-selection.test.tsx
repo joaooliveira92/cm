@@ -185,6 +185,14 @@ const CLUBS = [
   {
     clubId: "club-a",
     clubName: "Castlemere United",
+    leagueId: "comp_eng_1",
+    badgeKey: null,
+    clubColours: {
+      primary: { foreground: "#ffffff", background: "#1a2a6c" },
+      secondary: { foreground: "#ffffff", background: "#b91c1c" },
+      tertiary: null,
+      quaternary: null,
+    },
     statureTier: "big",
     boardObjectiveMin: 1,
     boardObjectiveMax: 6,
@@ -200,6 +208,14 @@ const CLUBS = [
   {
     clubId: "club-b",
     clubName: "Millbrook Town",
+    leagueId: "comp_eng_1",
+    badgeKey: null,
+    clubColours: {
+      primary: { foreground: "#ffffff", background: "#14532d" },
+      secondary: { foreground: "#ffffff", background: "#78350f" },
+      tertiary: null,
+      quaternary: null,
+    },
     statureTier: "small",
     boardObjectiveMin: 15,
     boardObjectiveMax: 20,
@@ -225,7 +241,13 @@ const flowResponses =
       case "beginCareer":
         return { _tag: "Success", value: { id: "provisional-1" } };
       case "getClubSelection":
-        return { _tag: "Success", value: { clubs: CLUBS, leagueName: "English First Division" } };
+        return {
+          _tag: "Success",
+          value: {
+            clubs: CLUBS,
+            leagues: [{ leagueId: "comp_eng_1", leagueName: "English First Division" }],
+          },
+        };
       case "commitCareer":
         return {
           _tag: "Success",
@@ -289,10 +311,10 @@ describe("Step 3 — the club step collects the decision it exists to collect", 
     fireEvent.click(clubRow("Millbrook Town"));
     await waitFor(() => expect(clubRow("Millbrook Town").getAttribute("aria-selected")).toBe("true"));
 
-    // The club step ships no Back control, so the round trip is driven through the app's own
-    // navigation adapter — the same call the shell makes — rather than through a button that
-    // does not exist. The Manager step's sub-panel is preserved, so the identity panel the flow
-    // reached on the way out is what shows on the way back in.
+    // The club step's Back lives in the band and says what it does ("Back: Leagues").
+    // The round trip here is driven through the app's own navigation adapter — the same call the
+    // shell's button makes — so the identity panel the flow reached on the way out is what shows
+    // on the way back in (the Manager step's sub-panel is preserved).
     act(() => navigate({ type: "createStep1" }));
     await screen.findByRole("heading", { name: "Manager identity" });
     act(() => navigate({ type: "createStep2" }));
@@ -306,7 +328,7 @@ describe("Step 3 — the club step collects the decision it exists to collect", 
     ).toBe(false);
   });
 
-  it("runs the tab order club list → Pick a team for me → Cancel → Next: Review", async () => {
+  it("runs the tab order band escape → league → rail → assist → primary", async () => {
     installPreload(flowResponses());
     mountCreateFlow();
     await reachClubStep();
@@ -315,12 +337,16 @@ describe("Step 3 — the club step collects the decision it exists to collect", 
       .filter((node) => !(node instanceof HTMLSelectElement && node.disabled))
       .filter((node) => !(node instanceof HTMLButtonElement && node.disabled));
 
-    expect(stops).toHaveLength(3);
-    expect(stops[0]!.getAttribute("role")).toBe("row");
-    expect(stops[0]!.textContent).toContain("Castlemere United");
-    expect(stops[1]!.textContent?.trim()).toBe("Pick a team for me");
-    expect(stops[2]!.textContent?.trim()).toBe("Cancel");
-    // `Next: Review` is the fourth stop and is deliberately disabled until a club is picked.
+    // The band owns escape (Back then Cancel), then the workspace: the league
+    // selector, the roving club rail, and the assist. The commit verb sits last.
+    expect(stops).toHaveLength(5);
+    expect(stops[0]!.textContent?.trim()).toBe("Back: Leagues");
+    expect(stops[1]!.textContent?.trim()).toBe("Cancel");
+    expect(stops[2]!.textContent).toContain("English First Division");
+    expect(stops[3]!.getAttribute("role")).toBe("row");
+    expect(stops[3]!.textContent).toContain("Castlemere United");
+    expect(stops[4]!.textContent?.trim()).toBe("Pick a team for me");
+    // `Next: Review` is the next stop and is deliberately disabled until a club is picked.
     expect(screen.getByRole("button", { name: "Next: Review" })).toBeTruthy();
   });
 

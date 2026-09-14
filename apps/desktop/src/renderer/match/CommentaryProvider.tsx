@@ -2,12 +2,10 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useRef,
   useState,
   type ReactNode,
 } from "react";
-import { Effect, Result } from "effect";
 import type {
   CommentaryLineView,
   InjuryView,
@@ -17,7 +15,6 @@ import type {
 import type { RpcClientError } from "../rpc/errors.js";
 import { submitMatchCommandMutation, useAtomSet } from "../rpc.js";
 import { useMatchContext, type MatchCommand } from "./MatchProvider.js";
-import { getActiveMatch } from "./session.js";
 
 export interface CommentaryState {
   readonly revealed: ReadonlyArray<CommentaryLineView>;

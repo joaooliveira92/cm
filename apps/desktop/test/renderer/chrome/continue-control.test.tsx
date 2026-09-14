@@ -48,17 +48,19 @@ describe("Continue in the chrome", () => {
     expect(counters.advanceCalls).toBe(1);
   });
 
-  it("disables with the action's reason when the season is complete", async () => {
+  it("does not special-case the season-complete phase — the rollover owns the conclusion", async () => {
     await mountCareer("season_complete", "fixtures");
     const button = (await screen.findByRole("button", {
       name: /Continue/,
     })) as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
-    const reason = ALL_ACTIONS.find((a) => a.id === "continue")?.unavailableReason;
-    expect(reason).toBeDefined();
-    expect(screen.getByText(reason!)).toBeTruthy();
+    // The season-rollover decision removed the dead season_complete disable
+    // (`.scratch/season-rollover-skips-conclusion/`): advancing concludes and
+    // rolls over in one step, so the phase never reaches the renderer and a
+    // disabled Continue for it was unreachable dead code. Continue stays live;
+    // the outstanding band reports a concluded season as a blocker instead.
+    expect(button.disabled).toBe(false);
     act(() => button.click());
-    expect(counters.advanceCalls).toBe(0);
+    expect(counters.advanceCalls).toBe(1);
   });
 
   it("renders no key badge on the Continue control", async () => {

@@ -1,5 +1,6 @@
 import { Select as SelectPrimitive } from "@base-ui/react/select";
 import type { CompetitionId } from "@cm-clone/contracts";
+import { FIELD_LABEL, FIELD_SELECT } from "../theme.js";
 
 export interface LeagueOption {
   readonly leagueId: CompetitionId;
@@ -14,16 +15,13 @@ export interface LeagueSelectorProps {
 
 export const LeagueSelector = ({ leagues, selectedLeagueId, onLeagueChange }: LeagueSelectorProps) => (
   <div className="flex flex-col gap-1">
-    <label
-      htmlFor="club-selection-league"
-      className="text-2xs font-semibold tracking-wide text-text-muted uppercase"
-    >
+    <label htmlFor="club-selection-league" className={FIELD_LABEL}>
       League
     </label>
     <SelectPrimitive.Root value={selectedLeagueId} onValueChange={(value) => { if (value !== null) onLeagueChange(value); }}>
       <SelectPrimitive.Trigger
         id="club-selection-league"
-        className="flex h-8 w-full items-center justify-between gap-2 rounded-control border border-border-subtle bg-field-bg px-2 text-xs text-text-primary outline-none transition-colors hover:border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 data-[placeholder]:text-text-muted"
+        className={FIELD_SELECT}
       >
         <SelectPrimitive.Value>
           {leagues.find((l) => l.leagueId === selectedLeagueId)?.leagueName ?? selectedLeagueId}

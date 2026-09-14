@@ -1,5 +1,4 @@
 import type { SaveId } from "@cm-clone/contracts";
-import type { ContinueDestination } from "@cm-clone/shared";
 import { canNavigateBack, navigateBack, navigateForward } from "../navigation/adapter.js";
 import { Navbar } from "../navigation/components/Navbar.js";
 import { Button } from "../components/ui/button.js";

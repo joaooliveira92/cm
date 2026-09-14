@@ -20,10 +20,12 @@ describe("Continue button", () => {
     expect(await screen.findByRole("button", { name: /Continue/i })).toBeTruthy();
   });
 
-  it("is disabled when the season is complete", async () => {
+  it("is not dead-disabled when the season is complete", async () => {
     await mountCareer("season_complete", "league");
     const btn = await screen.findByRole("button", { name: /Continue/i });
-    expect(btn.hasAttribute("disabled")).toBeTruthy();
+    // The season-rollover decision removed the dead season_complete disable: the
+    // phase never reaches the renderer under normal play.
+    expect(btn.hasAttribute("disabled")).toBeFalsy();
   });
 
   it("has an unavailable reason via the action registry", () => {

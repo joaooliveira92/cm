@@ -28,6 +28,11 @@ export interface AppTitleBarProps {
   readonly identity?: ReactNode;
   /** False when the shell owns its own page heading. See `HeaderTitle`. */
   readonly titleAsHeading?: boolean;
+  /** Paint the band as the pre-career chrome gradient instead of the neutral
+   *  header surface. Used by the creation flow, which mirrors the career
+   *  chrome's top row (identity left, context/escape cluster right) before any
+   *  club exists to colour it. */
+  readonly chrome?: boolean;
 }
 
 export const AppTitleBar = ({
@@ -36,9 +41,14 @@ export const AppTitleBar = ({
   actions,
   identity,
   titleAsHeading = true,
+  chrome = false,
 }: AppTitleBarProps) => (
   <div
-    className={`relative flex h-11 w-full shrink-0 items-center justify-between gap-3 border-b border-header-border bg-header-bg pr-3 text-header-fg select-none ${trafficLightInset()}`}
+    className={`relative flex h-11 w-full shrink-0 items-center justify-between gap-3 border-b pr-3 select-none ${trafficLightInset()} ${
+      chrome
+        ? "chrome-gradient border-panel-border-dark text-text-primary"
+        : "border-header-border bg-header-bg text-header-fg"
+    }`}
     style={DRAG}
   >
     <div className="flex min-w-0 items-center gap-2" style={NO_DRAG}>
