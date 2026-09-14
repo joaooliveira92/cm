@@ -11,6 +11,7 @@
  */
 
 export { submitMatchCommand } from "./commands.js";
+export { getTeamSheet } from "./teamSheet.js";
 export { resumeSimulation } from "./queries.js";
 export { MatchSeedSource, deriveFixtureMatchSeed, startMatch } from "./start.js";
 export {

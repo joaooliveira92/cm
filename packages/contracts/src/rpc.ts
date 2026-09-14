@@ -75,6 +75,7 @@ import {
   TacticsOverviewView,
   TacticsScreenView,
   TacticRevisionConflictError,
+  TeamSheetView,
   TrainingFocusView,
   TransferWindowClosedError,
   TransfersScreenView,
@@ -275,6 +276,11 @@ commitCareer: {
   resumeSimulation: {
     payload: Schema.Struct({ saveId: SaveId, matchId: MatchId, cursor: Schema.Finite }),
     success: ResumeSimulationView,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  getTeamSheet: {
+    payload: Schema.Struct({ saveId: SaveId, matchId: MatchId }),
+    success: TeamSheetView,
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },
   /** Ticket 14: appends a mid-match `ChangeTactics`/`MakeSubstitution` command to the Match

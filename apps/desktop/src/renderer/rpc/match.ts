@@ -18,3 +18,6 @@ export const resumeSimulation = (input: RpcPayload<"resumeSimulation">): RpcRead
  *  and must never be what commits a Matchday. */
 export const commitMatchday = (input: RpcPayload<"commitMatchday">): RpcRead<"commitMatchday"> =>
   call("commitMatchday", input);
+
+export const getTeamSheet = (input: RpcPayload<"getTeamSheet">): RpcRead<"getTeamSheet"> =>
+  call("getTeamSheet", input);

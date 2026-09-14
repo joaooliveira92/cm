@@ -391,6 +391,8 @@ const FILE_LENGTH_EXEMPTIONS: Readonly<Record<string, string>> = {
   // across files, making it harder to see the navigation structure at a glance.
   "apps/desktop/src/renderer/router/index.tsx":
     "route registry; grows linearly with screen count; structural value in a single tree",
+  "packages/contracts/src/rpc.ts":
+    "RPC method registry; grows linearly with endpoints; structural value as the single wire contract",
 }
 
 /** The line count as `wc -l` reports it: newline-terminated files do not gain a phantom last line. */

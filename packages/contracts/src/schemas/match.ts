@@ -119,6 +119,31 @@ export const MatchCommandPayload = Schema.Union([
 ]);
 
 // ---------------------------------------------------------------------------
+// Team Sheet view: squad + formation for both clubs
+// ---------------------------------------------------------------------------
+
+export class TeamSheetPlayerView extends Schema.Class<TeamSheetPlayerView>("TeamSheetPlayerView")({
+  playerId: PlayerId,
+  firstName: Schema.String,
+  lastName: Schema.String,
+  position: Schema.String,
+  role: Schema.String,
+}) {}
+
+export class TeamSheetClubView extends Schema.Class<TeamSheetClubView>("TeamSheetClubView")({
+  clubId: ClubId,
+  clubName: Schema.String,
+  formation: Schema.String,
+  starters: Schema.Array(TeamSheetPlayerView),
+  bench: Schema.Array(Schema.NullOr(Schema.String)),
+}) {}
+
+export class TeamSheetView extends Schema.Class<TeamSheetView>("TeamSheetView")({
+  home: TeamSheetClubView,
+  away: TeamSheetClubView,
+}) {}
+
+// ---------------------------------------------------------------------------
 // The pre-match boundary: starting the scheduled Fixture, and committing it
 // ---------------------------------------------------------------------------
 
