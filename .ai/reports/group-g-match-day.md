@@ -190,3 +190,26 @@ Pass 1 APPROVE. In-scope lows repaired: route test added, "available" copy, half
 direct, a substitution driven so the substitution checks cannot pass without testing anything, primary-key
 fixture lookup, heading levels. The ambiguous stoppage-minute display is filed as
 [ticket 17](../../.scratch/group-g-match-day/issues/17-stoppage-minutes-read-as-second-half.md).
+
+## Gate (ticket 13 — match tab bar)
+
+| Gate | Command | Result |
+|---|---|---|
+| typecheck | `pnpm -r typecheck` | 0 errors across all packages |
+| lint | `pnpm oxlint .` | no new errors |
+| effect-lint | `pnpm tsx scripts/effect-lint.ts` | no violations found (766 files) |
+| verify-md-links | `pnpm tsx scripts/verify-md-links.ts` | pre-existing broken links only |
+| tests (navigation) | `npx vitest run test/renderer/navigation/` | 292 passed, 2 failed (pre-existing) |
+| determinism / save compatibility | — | not applicable: renderer-only navigation change |
+
+## Behavior changes (ticket 13)
+
+- `SecondaryNav` mounted in `CareerShell`, auto-parses route context
+- Flat `match-*` routes now detected by `nav-route-parser` as `matchContext: "live-match"`
+- New destination types: `matchCommentary`, `matchLatestScores`, `matchLiveTable`
+- "Substitutions" tab added to live-match config
+- Manual nav buttons removed from `MatchDayScreen` (replaced by tab bar)
+
+## Commit
+
+`f52c2c6` feat(match): mount match tab bar and wire flat match-* routes (ticket 13)

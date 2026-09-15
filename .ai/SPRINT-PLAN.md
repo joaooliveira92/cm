@@ -2,9 +2,9 @@
 
 ## Immediate next action
 
-**group-g-match-day** ticket 12 (live panel controlled club). Tickets 04–09 and 11 shipped; 10 is
-parked on decision request 03 (match rating formula); 14, 15 and 16 are ready-for-agent after 12; 13
-and 17 need triage; decision requests 01 (live Change Tactics scope), 02 (unsimulated match
+**group-g-match-day** ticket 17 (stoppage minutes read as second-half minutes). Tickets 04–09 and 11–13
+shipped; 10 is parked on decision request 03 (match rating formula); 14 is claimed; 15, 16 resolved;
+17 ready-for-agent; decision requests 01 (live Change Tactics scope), 02 (unsimulated match
 statistics) and 03 await a human.
 
 ## Gate state (2026-09-14)
@@ -16,7 +16,8 @@ statistics) and 03 await a human.
   Details in [reports/group-g-match-day.md](reports/group-g-match-day.md).
 
 - **`pnpm check:all`**: pre-existing failures only — no regression from today's work (commits
-  `b0b8f33`, `d6b44a4`, `ac553d6`, `6a07401`, `6a830f3`, `908fd0f`, `e6f0c6f`, `dd46e8d`):
+  `b0b8f33`, `d6b44a4`, `ac553d6`, `6a07401`, `6a830f3`, `908fd0f`, `e6f0c6f`, `dd46e8d`,
+  `f52c2c6`):
   - `test/renderer/managerProfile/screen.test.tsx` — mock RPC returns "unexpected response"
   - `test/renderer/chrome/shell-bottom-bar-state.test.ts` — expected `zones` mismatch
   - `test/renderer/navigation/navbar.test.tsx` and `route-index.test.ts` — route content mismatch
@@ -39,7 +40,7 @@ statistics) and 03 await a human.
 8. **group-e-squad-management**: pending — next unmatched spec group.
 9. **group-g-match-day**: 01–09 resolved (07 Screen 97 live tactics/substitutions, 08 Screen 99
     Post-Match Summary, 09 Screens 95/100 Match Statistics, 11 Screen 103 Match Report, 2026-09-14);
-    10 needs-info on decision request 03; 12, 14, 15, 16 resolved; 13 and 17 ready-for-agent;
+    10 needs-info on decision request 03; 12, 13, 15, 16 resolved; 14 claimed; 17 ready-for-agent;
     decision requests 01, 02 and 03 open.
 
 Shipped and closed:

@@ -25,6 +25,7 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
 - [09 — Match Statistics](issues/09-match-statistics-component.md): Implemented. `getMatchStatistics` projection; live totals cut by revealed-event count; possession/corners/fouls/offsides unavailable pending [decision request 02](decision-request-02-unsimulated-match-statistics.md). Follow-up: [16](issues/16-live-commands-stamped-by-revealed-minute.md).
 - [10 — Match Player Ratings](issues/10-match-player-ratings-component.md): Parked, not built. No rating formula exists and the Match Events name no goalkeeper or defender contribution; inputs and weights await [decision request 03](decision-request-03-match-player-rating-formula.md).
 - [11 — Match Report](issues/11-match-report-screen.md): Implemented. `getMatchReport` read, refused until the result is committed; route carries `matchId`; embeds full-match statistics. Follow-up: [17](issues/17-stoppage-minutes-read-as-second-half.md).
+- [13 — Mount live-match tab bar](issues/13-mount-live-match-tab-bar.md): Implemented. `SecondaryNav` mounted in `CareerShell`; flat `match-*` routes detected by parser; tab-to-destination mapping covers all match contexts. Follow-up: none.
 - [Spec published](spec.md): Reconciled spec marking handoff from charting to slicing.
 - [Implementation tickets](issues/): 8 vertical slices (04–11), all unblocked.
 
