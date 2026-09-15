@@ -2,10 +2,9 @@
 
 ## Immediate next action
 
-No open, unblocked, unclaimed build ticket remains in any effort (group-h 07 needs-info, 11 claimed;
-group-g 10 needs-info, 14 claimed). Next: the spec-group fallback, **group I**
-(`docs/specs/group_i_*`), the first spec group with no `.scratch/` effort. Chart it with
-`cm-wayfinder`.
+**group-i-scouting-and-recruitment** ticket 04 (Scouting Assignment screen, Screen 121). Charted,
+specced and sliced 2026-09-15: 3 screens in v1 (121, 126, 118), 11 deferred. 05 is also unblocked;
+06 waits on 04 and 05. Decision request 01 (knowledge-limited Player reads) blocks deferred 119/129.
 
 ## Gate state (2026-09-14)
 
@@ -54,6 +53,8 @@ group-g 10 needs-info, 14 claimed). Next: the spec-group fallback, **group I**
     needs-info on decision requests 01 (coach rating) and 02 (development baseline). 08 completed
     (player development centre, 2026-09-15). 09 completed (training overview, 2026-09-15). 10 completed
     (Goalkeeping Training Focus rule enforced in main, 2026-09-15). 11 claimed.
+11. **group-i-scouting-and-recruitment**: 01-03 resolved, spec published, tickets 04-06 ready
+    (2026-09-15). Decision request 01 open.
 
 Shipped and closed:
 
