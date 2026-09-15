@@ -8,7 +8,7 @@ import { sectionIdForDestination } from "./nav-route-index.js";
 import { useNavState } from "./use-nav-state.js";
 import { useHoverIntent } from "./useHoverIntent.js";
 import { NavContext, type NavContextValue } from "./navContext.js";
-import type { SaveScopedCareerDestinationType } from "./destinations.js";
+import type { CareerDestination, SaveScopedCareerDestinationType } from "./destinations.js";
 
 const destinationToRouteChild: Readonly<Record<SaveScopedCareerDestinationType, string>> = {
   squad: "squad",
@@ -23,6 +23,7 @@ const destinationToRouteChild: Readonly<Record<SaveScopedCareerDestinationType, 
   tacticsEditor: "editor",
   training: "training",
   trainingWorkload: "workload",
+  trainingCoaching: "coaching",
   trainingDevelopment: "development-centre",
   clubInfo: "club-info",
   boardConfidence: "board-confidence",
@@ -47,6 +48,7 @@ const routeChildToDestination: Readonly<Record<string, SaveScopedCareerDestinati
   ),
   editor: "tactics",
   workload: "training",
+  coaching: "training",
   "development-centre": "training",
 };
 
@@ -81,7 +83,7 @@ export const NavProvider = ({
   const goTo = useCallback(
     (destination: SaveScopedCareerDestinationType, intent: NavigationIntent) => {
       clearTransient();
-      navigateCareer({ type: destination, saveId }, intent);
+      navigateCareer({ type: destination as CareerDestination["type"], saveId } as CareerDestination, intent);
     },
     [saveId, clearTransient],
   );

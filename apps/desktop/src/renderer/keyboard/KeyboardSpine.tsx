@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { useLocation, useParams } from "@tanstack/react-router";
 import { type SaveId } from "@cm-clone/contracts";
 import { navigateBack, navigateCareer } from "../navigation/adapter.js";
-import { type SaveScopedCareerDestinationType } from "../navigation/destinations.js";
+import { type CareerDestination, type SaveScopedCareerDestinationType } from "../navigation/destinations.js";
 import { decodeSaveId } from "../navigation/params.js";
 import { isInsideCareer } from "../actions/registry.js";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
@@ -105,6 +105,7 @@ const SpineOrchestrator = ({
         news: () => navigateCareer({ type: "news", saveId }, "keyboard"),
         training: () => navigateCareer({ type: "training", saveId }, "keyboard"),
         trainingWorkload: () => navigateCareer({ type: "trainingWorkload", saveId }, "keyboard"),
+        trainingCoaching: () => navigateCareer({ type: "trainingCoaching", saveId }, "keyboard"),
         trainingDevelopment: () => navigateCareer({ type: "trainingDevelopment", saveId }, "keyboard"),
         clubInfo: () => navigateCareer({ type: "clubInfo", saveId }, "keyboard"),
         boardConfidence: () => navigateCareer({ type: "boardConfidence", saveId }, "keyboard"),
@@ -179,7 +180,7 @@ const SpineOrchestrator = ({
           } else if (prefix.kind === "level1") {
             const destination = resolveItemDestination(prefix.sectionKey, completion);
             if (destination !== null && saveId !== undefined) {
-              navigateCareer({ type: destination, saveId }, "keyboard");
+              navigateCareer({ type: destination as CareerDestination["type"], saveId } as CareerDestination, "keyboard");
             }
             setPrefix(IDLE_PREFIX);
           }

@@ -79,7 +79,7 @@ export const LEAGUE_SETUP_INDEX: LeagueSetupIndex = {
   // pack and every id to the underscore convention changed every key in here, so persisted presets
   // and setup drafts from the old catalogue must be refused rather than half-restored against ids
   // that no longer mean the same thing (§29, §6.3).
-  fingerprint: "real-geography@2.0.0",
+  fingerprint: "real-geography@2.1.0",
   databaseName: "World Football",
   databaseVersion: "1.0.0",
   regions: [

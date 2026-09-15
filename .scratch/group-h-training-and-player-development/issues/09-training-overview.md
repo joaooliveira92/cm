@@ -8,8 +8,8 @@
 
 **Blocked by:** 04 (Coaching Assignments), 05 (Workload and Recovery), 06 (Individual Training Plan), 07 (Performance Report), 08 (Player Development Centre)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Training overview renders all sub-screen summary cards
-- [ ] Reuses coach assignment card, workload gauge, plan summary, dev centre card components
-- [ ] Links to each sub-screen for detail
+- [x] Training overview renders all sub-screen summary cards
+- [x] Reuses coach assignment card, workload gauge, plan summary, dev centre card components
+- [x] Links to each sub-screen for detail

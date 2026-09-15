@@ -148,12 +148,18 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
     icon: Dumbbell,
     defaultDestination: "training",
     items: [
-      {
-        id: "training-overview",
-        label: "Overview",
-        destination: "training",
-        icon: ClipboardList,
-      },
+{
+      id: "training-overview",
+      label: "Overview",
+      destination: "training",
+      icon: ClipboardList,
+    },
+    {
+      id: "training-coaching",
+      label: "Coaching",
+      destination: "trainingCoaching",
+      icon: BriefcaseBusiness,
+    },
     ],
   },
   {

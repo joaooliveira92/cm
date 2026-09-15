@@ -447,7 +447,7 @@ const IssuesCard = ({
                       type="button"
                       aria-describedby={issueId}
                       className={`text-sm underline underline-offset-2 hover:text-text-primary ${FOCUS_RING.join(" ")}`}
-                      onClick={(event) => onOpen({ type: route, saveId }, event)}
+                      onClick={(event) => onOpen({ type: route as CareerDestination["type"], saveId } as CareerDestination, event)}
                     >
                       {ISSUE_DESTINATION_LABELS[issue.destination ?? ""] ?? "Fix"}
                     </button>

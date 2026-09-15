@@ -72,6 +72,7 @@ export const navigate = (destination: NavigationDestination): void => {
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     case "/career/$saveId/training/workload":
+    case "/career/$saveId/training/coaching":
     case "/career/$saveId/training/development-centre":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;

@@ -31,6 +31,7 @@ import { PlayerInjuriesScreen } from "../playerInjuries/PlayerInjuriesScreen.js"
 import { PlayerScoutReportScreen } from "../playerScoutReport/PlayerScoutReportScreen.js";
 import { PlayerCoachReportScreen } from "../playerCoachReport/PlayerCoachReportScreen.js";
 import { TrainingScreen } from "../training/TrainingScreen.js";
+import { CoachingAssignmentsScreen } from "../training/CoachingAssignmentsScreen.js";
 import { WorkloadScreen } from "../training/WorkloadScreen.js";
 import { TrainingPlanScreen } from "../training/TrainingPlanScreen.js";
 import { DevelopmentCentreScreen } from "../training/DevelopmentCentreScreen.js";
@@ -238,10 +239,9 @@ const tacticsEditorRoute = createRoute({
 });
 
 /**
- * The Training area follows the Tactics shape: `/training` lands on Coaching Assignments (Screen
- * 111), and Workload and Recovery (Screen 112) sits beneath it at `/training/workload`. Both share
- * the `training` screen scope, so the workload view is a sub-surface of the area rather than
- * another career screen.
+ * The Training area follows the Tactics shape: `/training` lands on the Training Overview (Screen
+ * 105), and the sub-screens (Coaching Assignments, Workload and Recovery, etc.) sit beneath it.
+ * All share the `training` screen scope.
  */
 const trainingRoute = createRoute({
   getParentRoute: () => saveRoute,
@@ -253,6 +253,14 @@ const trainingIndexRoute = createRoute({
   getParentRoute: () => trainingRoute,
   path: "/",
   component: () => <CareerChildView screenId="training" Screen={TrainingScreen} />,
+});
+
+/** Coaching Assignments (Screen 111) — the full coaching staff list, reached from the Training
+ *  Overview. Shares the `training` screen scope. */
+const trainingCoachingRoute = createRoute({
+  getParentRoute: () => trainingRoute,
+  path: "coaching",
+  component: () => <CareerChildView screenId="training" Screen={CoachingAssignmentsScreen} />,
 });
 
 const trainingWorkloadRoute = createRoute({
@@ -725,6 +733,7 @@ const routeTree = rootRoute.addChildren([
       newsRoute,
       trainingRoute.addChildren([
         trainingIndexRoute,
+        trainingCoachingRoute,
         trainingWorkloadRoute,
         trainingPlanRoute,
         trainingDevelopmentRoute,
