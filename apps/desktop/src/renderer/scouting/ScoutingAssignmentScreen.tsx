@@ -67,7 +67,7 @@ export const ScoutingAssignmentScreen = ({ saveId }: { readonly saveId: SaveId }
     );
   }
   if (board._tag === "Initial") {
-    return <AssignmentMessage message="Loading your scouts..." />;
+    return <AssignmentMessage message="Loading your Scouts..." />;
   }
 
   const readOnly = profile._tag === "Success" && profile.value.archived;

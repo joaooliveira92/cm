@@ -74,7 +74,7 @@ export const AssignScoutPanel = ({
     );
   }
   if (board._tag === "Initial") {
-    return <p className="text-sm text-text-secondary">Loading your scouts...</p>;
+    return <p className="text-sm text-text-secondary">Loading your Scouts...</p>;
   }
 
   const unscouted = report.freshness === null;

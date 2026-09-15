@@ -4,7 +4,7 @@
 
 **Decisions:**
 
-- Group I v1 scope: 3 screens in scope, 11 deferred. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-15-group-i-v1-scope.md).
+- Group I v1 scope: 3 screens in scope, 11 deferred. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-15-group-i-v1-scope.md).
 
 **Blocked by:** None (can start immediately)
 

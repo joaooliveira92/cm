@@ -12,5 +12,5 @@ missing, and where a screen belongs to Group J instead.
 
 ## Answer
 
-**Three screens in scope for v1 (118, 121, 126), eleven deferred.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-15-group-i-v1-scope.md).
+**Three screens in scope for v1 (118, 121, 126), eleven deferred.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-15-group-i-v1-scope.md).
 

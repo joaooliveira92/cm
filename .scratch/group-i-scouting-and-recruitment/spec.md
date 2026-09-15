@@ -14,7 +14,7 @@ a Team Scout Report, and cannot see what the club already knows.
 Build the three screens the existing Scouting model supports, in dependency order: Scouting Assignment
 (121), Scouting Knowledge (126), then the Scouting Centre (118) as their landing page. Eleven screens
 are deferred because each needs a model that does not exist. See
-[Agent Note: Group I v1 scope](../../.agents/notes/proposed/architecture/2026-09-15-group-i-v1-scope.md).
+[Agent Note: Group I v1 scope](../../.agents/notes/implemented/architecture/2026-09-15-group-i-v1-scope.md).
 
 ## User Stories
 
@@ -44,7 +44,8 @@ are deferred because each needs a model that does not exist. See
   `getScoutingKnowledge` at `/career/$saveId/scouting-knowledge`; it also returns squad size and the
   Fully Scouted count, lists a scouted Free Agent with no Club, and excludes a Player by current club.
 - **Screen 118 aggregates.** Scout roster from `getScouting`, a coverage summary from 126's read, links
-  to 121 and 126. No reports feed, shortlist, recruitment focus or transfer-window panel.
+  to 121 and 126. No reports feed, shortlist, recruitment focus or transfer-window panel. Shipped in ticket 06
+  on the `scouting` route; each read has its own loading, failure and empty state.
 - **Shared components**: Scout roster row (121, 118) and coverage summary (126, 118).
 
 ## Testing Decisions

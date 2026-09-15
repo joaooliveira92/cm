@@ -20,7 +20,7 @@ exact figures or show ranges that the market contradicts for the same player.
 - CONTEXT.md § Scouting: Scouting Progress, Attribute Range, Fully Scouted; own-squad players are
   always full information.
 - `attributeRange` in `packages/shared/src/rules/scouting.ts` already computes the range.
-- [Group I v1 scope](../../.agents/notes/proposed/architecture/2026-09-15-group-i-v1-scope.md) defers 119 and 129 on this question.
+- [Group I v1 scope](../../.agents/notes/implemented/architecture/2026-09-15-group-i-v1-scope.md) defers 119 and 129 on this question.
 
 ## Options
 

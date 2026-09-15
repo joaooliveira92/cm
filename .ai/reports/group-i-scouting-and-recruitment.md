@@ -104,3 +104,41 @@ Declined or deferred:
   and squad size (low).
 - Count fields use `Schema.Finite` without range checks, matching sibling schemas (low).
 - `seedScouted` in `e2e/seedSaves.ts` stops silently with fewer than two rival Clubs (low).
+
+# Ticket 06: Scouting Centre screen (Screen 118)
+
+## Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Scouting Centre renders the Scout roster and the coverage summary from existing reads | `test/renderer/scouting/scouting-centre-screen.test.tsx` (rows carry no actions), `e2e/scouting-centre.spec.ts` | pass |
+| 2 | Links to Scouting Assignment and Scouting Knowledge | `scouting-centre-screen.test.tsx` (routes navigated), `e2e/scouting-centre.spec.ts` (both sub-screen headings) | pass |
+| 3 | Empty states for a club with no Scouts and for no scouting yet | `scouting-centre-screen.test.tsx`, a test per state plus both reads failing | pass |
+
+## Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1; typecheck, effect-lint, verify-db-schema pass; lint errors only outside this diff; verify-md-links 18, the baseline; shared 461/461, contracts 128/128, game-engine 50/50; desktop 71 failed / 1750 passed |
+| desktop failures | failing test names compared with the ticket 05 run | identical, 71 tests |
+| e2e | `pnpm build`, then `npx playwright test e2e/scouting-centre.spec.ts e2e/scouting-assignment.spec.ts e2e/scouting-knowledge.spec.ts` | 3 passed |
+| determinism, save compatibility | — | not applicable: renderer only |
+
+## Behavior changes
+
+- The `scouting` route shows the Scouting Centre instead of a placeholder.
+- "Loading your scouts..." reads "Loading your Scouts..." on the Centre, Scouting Assignment and the Team Scout Report's panel.
+
+## Decision records
+
+- Agent Note promoted to `implemented/`: `2026-09-15-group-i-v1-scope.md`, all three v1 screens shipped.
+
+## Review
+
+Reviewer verdict: APPROVE on both axes, no blocker or high. Addressed: lowercase "scouts" in loading copy (low).
+
+Declined or deferred:
+
+- The loading/failure/message code is now repeated in five places (medium): filed as ticket 08.
+- Section headings sit in plain `div`s beside an `aria-label`ed summary (low).
+- No test fails one read while the other succeeds; the e2e count check does not retry (low).

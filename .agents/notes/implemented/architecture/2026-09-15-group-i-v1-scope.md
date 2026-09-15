@@ -1,6 +1,6 @@
 # Agent Note: Group I v1 scope — scouting screens on the existing Scouting model only
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -12,17 +12,17 @@ recruitment focuses, scouting priorities, meetings, squad plans, agents, trials,
 assignment targets wider than a Player or a Club. Several screens also depend on Group J (transfers,
 contracts and negotiations), which has no effort yet.
 
-## Proposal
+## Decision
 
-Group I v1 will build three screens, all on the existing Scouting model with no new table:
+Group I v1 builds three screens, all on the existing Scouting model with no new table:
 
-- **121 Scouting Assignment** as a standalone screen over `getScouting`, `assignScout`,
+- **121 Scouting Assignment** as a standalone screen (`/career/$saveId/scouting-assignment`) over `getScouting`, `assignScout`,
   `assignScoutToClub` and `unassignScout`. Targets stay a Player or a Club. Duration, cadence,
   travel, priority, and competition, nation or region targets are not built.
-- **126 Scouting Knowledge**, the club and Player views only: how far the club's Scouting Progress
+- **126 Scouting Knowledge** (`/career/$saveId/scouting-knowledge`, read `getScoutingKnowledge`), the club and Player views only: how far the club's Scouting Progress
   reaches, read from `scouting_progress`. Geographic, competition and tactical knowledge views are not
   built, because no model records knowledge at those levels.
-- **118 Scouting Centre** as the landing page: Scouts and what each observes, plus a knowledge summary,
+- **118 Scouting Centre** on the `scouting` route as the landing page: Scouts and what each observes, plus a knowledge summary,
   linking to 121 and 126. Its report, shortlist, focus and transfer-window panels are not built.
 
 The eleven deferred screens and what each lacks:
@@ -49,15 +49,14 @@ The eleven deferred screens and what each lacks:
 - **Defer all of Group I.** Rejected: the Scouting model already has three commands with no screen of
   their own, and assignments can only be made from inside a Team Scout Report today.
 
-## Acceptance criteria
+## Consequences
 
-- The Group I spec covers only 118, 121 and 126 for v1.
-- The deferred screens are listed in the map's Out of scope section with what each lacks.
-- Implementation tickets exist only for 118, 121 and 126, and none adds a table.
-
-## Risks
-
-- The Scouting Centre will be thin, with no reports feed, shortlist or recruitment focus. It reads as a
+- Only 118, 121 and 126 have shipped, and none added a table. The deferred screens are listed in the
+  effort map's Out of scope section.
+- The Scouting Centre is thin, with no reports feed, shortlist or recruitment focus. It reads as a
   roster-and-coverage page, not the recruitment dashboard its spec describes.
-- Scouting Knowledge without geography cannot show where the club has no coverage, only which clubs
+- Scouting Knowledge without geography cannot show where the club has no coverage, only which Clubs
   and Players it has.
+- Knowledge Confidence now also reads live per Club, outside a Team Scout Report; CONTEXT.md records it.
+- Building 121 exposed that typed RPC errors lost their fields over Electron IPC; fixed in the same
+  effort (ticket 07).
