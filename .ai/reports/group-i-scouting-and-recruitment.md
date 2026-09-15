@@ -59,3 +59,48 @@ Declined or deferred:
   `OwnClubNotScoutableError`, shown inline (low).
 - Mixed alert styles, Club casing in copy, the `Roster` prop combination, and missing tests for the
   League Table failure branch (low).
+
+# Ticket 05: Scouting Knowledge screen (Screen 126)
+
+- Commit: `aa1ac8a`; spec, plan and this section in the follow-up docs commit.
+
+## Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | New read returns per-Club coverage and Knowledge Confidence and per-Player Scouting Progress, with an RPC roundtrip test | `packages/contracts/test/scouting-knowledge.test.ts` (incl. figure fields dropped on encode), `apps/desktop/test/main/club/scouting-knowledge.test.ts` (whole-squad coverage, counts, confidence), `test/renderer/scouting/scouting-knowledge-screen.test.tsx`, `e2e/scouting-knowledge.spec.ts` | pass |
+| 2 | A save with no scouting reads as empty, not an error; own-squad Players never appear | `scouting-knowledge.test.ts` (empty save, own-squad Player with a progress row excluded, unscouted Club absent, encoded keys carry no figure), renderer empty state | pass |
+| 3 | Coverage summary reusable on Screen 118 | `test/renderer/scouting/scouting-coverage-summary.test.tsx` mounts it with no router or atoms | pass |
+
+## Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1; typecheck, effect-lint, verify-db-schema pass; lint errors only outside this diff; verify-md-links 18, the baseline; shared 461/461, contracts 128/128, game-engine 50/50; desktop 71 failed / 1745 passed |
+| desktop failures | failing test names compared with the tickets 04 and 07 run | identical, 71 tests |
+| after review fixes | `vitest run test/renderer/scouting`; `pnpm --filter @cm-clone/desktop typecheck` | 44 passed; 0 errors |
+| e2e | `pnpm build`, then `npx playwright test e2e/scouting-knowledge.spec.ts e2e/scouting-assignment.spec.ts` | 2 passed |
+| determinism | — | not applicable: read-only |
+| save compatibility | — | not applicable: no schema, event or persistence change |
+
+## Behavior changes
+
+- New screen at `/career/$saveId/scouting-knowledge` with a "Scouting Knowledge" item under Recruitment,
+  and new read-only RPC `getScoutingKnowledge` (`SaveNotFoundError`).
+- `squadCoverage` in `packages/shared` accepts any list of `{ progress }`; behaviour unchanged.
+- CONTEXT.md, Knowledge Confidence: it also reads live per Club on the Scouting Knowledge screen.
+- `ScoutRosterRow` uses the shared `scoutingProgressLabel`.
+
+## Review
+
+Reviewer verdict: APPROVE on both axes, no blocker or high. Addressed: Knowledge Confidence used per
+Club beyond its glossary entry (medium), recorded in CONTEXT.md; `scoutingProgressLabel` duplicated in
+`ScoutRosterRow` (medium); literal `100` for `FULLY_SCOUTED` (low); "Clubs scouted" copy against "what a
+Scout observes is always Players" (low), now "Clubs with scouted Players".
+
+Declined or deferred:
+
+- Zero-padding in main to feed `squadCoverage` could become a shared coverage helper taking progresses
+  and squad size (low).
+- Count fields use `Schema.Finite` without range checks, matching sibling schemas (low).
+- `seedScouted` in `e2e/seedSaves.ts` stops silently with fewer than two rival Clubs (low).

@@ -40,7 +40,9 @@ are deferred because each needs a model that does not exist. See
 - **Screen 126 shows coverage, never figures.** A new read-only RPC returns, per Club with scouted
   Players, the count scouted, `squadCoverage` and Knowledge Confidence from `rules/teamScoutReport.ts`;
   and per scouted Player, name, Club and Scouting Progress. It returns no Attribute, Attribute Range or
-  Transfer Value. Own-squad Players never appear: they carry no Scouting Progress.
+  Transfer Value. Own-squad Players never appear: they carry no Scouting Progress. Shipped in ticket 05 as
+  `getScoutingKnowledge` at `/career/$saveId/scouting-knowledge`; it also returns squad size and the
+  Fully Scouted count, lists a scouted Free Agent with no Club, and excludes a Player by current club.
 - **Screen 118 aggregates.** Scout roster from `getScouting`, a coverage summary from 126's read, links
   to 121 and 126. No reports feed, shortlist, recruitment focus or transfer-window panel.
 - **Shared components**: Scout roster row (121, 118) and coverage summary (126, 118).
