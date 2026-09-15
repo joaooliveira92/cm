@@ -5,9 +5,9 @@
 - A shared React component that renders per-player ratings
 - RPC endpoint or view model for the renderer to consume
 
-**Blocked by:** None (can start immediately)
+**Blocked by:** [decision request 03](../decision-request-03-match-player-rating-formula.md) (the rating formula)
 
-**Status:** ready-for-agent
+**Status:** needs-info
 
 - [ ] Player ratings projection computes a rating (1-10) per player based on match events
 - [ ] Ratings are available via a view or RPC endpoint
@@ -30,3 +30,11 @@ result (`season.awaitingFixture.matchId`) — in full only when `reachedFullTime
 it finish, otherwise cut at zero, since that id is set from kickoff and survives a restart; else `matchId: null`, which the main process resolves to the
 controlled club's latest played match. A ratings or report screen that follows it inherits the same
 limitation when reached from history after later matches.
+
+**Parked (2026-09-14).** No rating formula exists in CONTEXT.md, the Agent Notes or the engine, and
+choosing inputs and weights is a balance decision. The Match Events name only shooters, card and
+injury recipients and substituted players, so an event-only formula would give goalkeepers and most
+defenders the same rating every match. Options and a recommendation are in
+[decision request 03](../decision-request-03-match-player-rating-formula.md). Every criterion here
+serves or renders the rating, so no part ships until that is answered. The ticket 08 note above about
+adding `matchId` to the destination still applies.

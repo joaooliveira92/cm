@@ -2,9 +2,10 @@
 
 ## Immediate next action
 
-**group-g-match-day** ticket 10 (match player ratings component). Tickets 04–09 shipped; 12, 14, 15
-and 16 are ready-for-agent after 10–11; 13 needs triage; decision requests 01 (live Change Tactics
-scope) and 02 (unsimulated match statistics) await a human.
+**group-g-match-day** ticket 11 (Match Report screen). Tickets 04–09 shipped; 10 is parked on
+decision request 03 (match rating formula); 12, 14, 15 and 16 are ready-for-agent after 11; 13 needs
+triage; decision requests 01 (live Change Tactics scope), 02 (unsimulated match statistics) and 03
+await a human.
 
 ## Gate state (2026-09-14)
 
@@ -37,8 +38,8 @@ scope) and 02 (unsimulated match statistics) await a human.
 7. **team-scout-report**: complete 2026-09-13.
 8. **group-e-squad-management**: pending — next unmatched spec group.
 9. **group-g-match-day**: 01–09 resolved (07 Screen 97 live tactics/substitutions, 08 Screen 99
-   Post-Match Summary, 09 Screens 95/100 Match Statistics, 2026-09-14); 10–12, 14–16 open;
-   13 needs-triage; decision requests 01 and 02 open.
+   Post-Match Summary, 09 Screens 95/100 Match Statistics, 2026-09-14); 10 needs-info on decision
+   request 03; 11–12, 14–16 open; 13 needs-triage; decision requests 01, 02 and 03 open.
 
 Shipped and closed:
 
