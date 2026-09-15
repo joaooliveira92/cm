@@ -1,4 +1,5 @@
 import { type PlayerId, type SaveId } from "@cm-clone/contracts";
+import { offeredTrainingFocuses } from "@cm-clone/shared";
 import { FOCUS_RING } from "../focus.js";
 import {
   describeRpcError,
@@ -8,7 +9,6 @@ import {
   useAtomValue,
 } from "../rpc.js";
 import { TrainingFocusControl } from "../training/TrainingFocusControl.js";
-import { offeredTrainingFocuses } from "../training/trainingFocusOptions.js";
 
 const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 

@@ -195,6 +195,20 @@ describe("ticket 06 — Individual Training Plan sets and clears Training Focus 
     );
   });
 
+  it("says a refused Category is not one the player can take", async () => {
+    fakeMain(undefined, async (payload) => ({
+      _tag: "Failure",
+      error: { _tag: "TrainingFocusNotOfferedError", playerId: payload.playerId, focus: "mental" },
+    }));
+    renderScreen();
+    await screen.findByRole("group", { name: "Rui Costa Training Focus" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Mental" }));
+
+    expect((await screen.findByRole("alert")).textContent).toBe("That player cannot take this Training Focus.");
+    expect(pressedIn("Rui Costa")).toEqual(["Technical"]);
+  });
+
   it("does not carry one player's failed command onto another player's plan", async () => {
     fakeMain(undefined, async (payload) => ({
       _tag: "Failure",

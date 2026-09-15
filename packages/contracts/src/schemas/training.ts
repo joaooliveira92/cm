@@ -2,7 +2,7 @@ import { Schema } from "effect";
 import { ALL_ATTRIBUTES } from "@cm-clone/shared";
 
 import { ClubId, PlayerId } from "./ids.js";
-import { AttributesSchema, NullableTrainingFocusSchema } from "./squad.js";
+import { AttributesSchema, NullableTrainingFocusSchema, TrainingFocusSchema } from "./squad.js";
 import { StaffDepartmentSchema } from "./clubs.js";
 
 /** The `PlayerDeveloped` event the Club Decider emits once per `SeasonConcluded` (per club),
@@ -38,6 +38,16 @@ export class TrainingFocusView extends Schema.Class<TrainingFocusView>("Training
 export class NotYourPlayerError extends Schema.TaggedError<NotYourPlayerError>()("NotYourPlayerError", {
   playerId: PlayerId,
 }) {}
+
+/** Raised when `SetTrainingFocus` names a Category the player may not take: one whose Attributes the
+ * player does not have, such as Goalkeeping for an outfield player. */
+export class TrainingFocusNotOfferedError extends Schema.TaggedError<TrainingFocusNotOfferedError>()(
+  "TrainingFocusNotOfferedError",
+  {
+    playerId: PlayerId,
+    focus: TrainingFocusSchema,
+  },
+) {}
 
 /**
  * One coach on the Coaching Assignments screen (Screen 111): id, name, quality rating (1-20), and

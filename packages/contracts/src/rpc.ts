@@ -84,6 +84,7 @@ import {
   PostMatchSummaryView,
   MatchStatisticsView,
   MatchReportView,
+  TrainingFocusNotOfferedError,
   TrainingFocusView,
   TransferWindowClosedError,
   TransfersScreenView,
@@ -415,7 +416,7 @@ commitCareer: {
   },
   /** Training Focus (spec: `.scratch/training/spec.md`): set (or clear, with `focus: null`) a
    * player's focused Category on the user's own club. Changeable at any point — no window or
-   * season-boundary restriction. */
+   * season-boundary restriction. A Category the player may not take is `TrainingFocusNotOfferedError`. */
   setTrainingFocus: {
     payload: Schema.Struct({
       saveId: SaveId,
@@ -423,7 +424,13 @@ commitCareer: {
       focus: NullableTrainingFocusSchema,
     }),
     success: TrainingFocusView,
-    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError, SaveArchivedError]),
+    error: Schema.Union([
+      SaveNotFoundError,
+      PlayerNotFoundError,
+      NotYourPlayerError,
+      TrainingFocusNotOfferedError,
+      SaveArchivedError,
+    ]),
   },
 /** Club Staff (Screen 38): who works at any club in the save. A pure read — every person derived
  *  on demand, so a `results-only` club answers like any other; only the save or the club id can fail. */

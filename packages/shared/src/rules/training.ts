@@ -1,6 +1,7 @@
 import { attributeCeilingOn20Scale } from "./generation.js";
 import {
   ALL_ATTRIBUTES,
+  CATEGORIES,
   CATEGORY_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   type Attribute,
@@ -18,6 +19,25 @@ export { attributeCeilingOn20Scale };
  * a focused Category multiplies that step. No RNG, no seed — a pure function of (attributes, age,
  * Potential Ability, focus), trivially replayable from event history.
  */
+
+/**
+ * The Categories a player may be given as a Training Focus, in `CATEGORIES` order: only those whose
+ * Attributes the player actually has. An outfield player carries no goalkeeping Attributes (absent,
+ * not zero), so Goalkeeping is not offered to them. The one rule both the picker and the
+ * `SetTrainingFocus` command apply.
+ */
+export const offeredTrainingFocuses = (
+  attributes: Readonly<Partial<Record<Attribute, number | undefined>>>,
+): ReadonlyArray<Category> =>
+  CATEGORIES.filter((category) =>
+    CATEGORY_ATTRIBUTES[category].some((attribute) => attributes[attribute] !== undefined),
+  );
+
+/** Whether `focus` is a Training Focus this player may take. None is always allowed. */
+export const isTrainingFocusOffered = (
+  attributes: Readonly<Partial<Record<Attribute, number | undefined>>>,
+  focus: Category | null,
+): boolean => focus === null || offeredTrainingFocuses(attributes).includes(focus);
 
 /** How much of the remaining gap each Attribute closes toward its age-ceiling per season (~65%). */
 export const PLAYER_DEVELOPMENT_FRACTION = 0.65;

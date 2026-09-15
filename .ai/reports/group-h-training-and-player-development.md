@@ -257,3 +257,50 @@ Declined or deferred:
   `club/developmentHistory.ts`.
 - `getSquadDevelopment` filters outcomes per player (players × outcomes); harmless at squad scale.
 - No loading-state test on the screen; the row markup is inline and ticket 09 may want it extracted.
+
+# Ticket 10: Enforce the Goalkeeping Training Focus rule in main
+
+## Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | One shared predicate decides which Categories a player may take as Training Focus | `packages/shared/test/rules/trainingFocus.test.ts` (outfield: three Categories, keeper: four, None always allowed) | pass |
+| 2 | `setTrainingFocus` rejects an off-rule Category with a tagged error, with an RPC roundtrip test | `apps/desktop/test/main/club/training-focus-rule.test.ts` (Goalkeeping on an outfield player is `TrainingFocusNotOfferedError`, no row and no event written; keeper and outfield Categories accepted), `packages/contracts/test/training-focus-rule.test.ts` (error round-trips through `setTrainingFocus.error`; a `null` focus in the error is rejected) | pass |
+| 3 | Renderer uses the shared predicate; existing off-rule rows have a stated, tested behaviour | Both screens import `offeredTrainingFocuses` from `@cm-clone/shared`; `training-plan-screen.test.tsx` shows the new error's sentence. Rows are left as-is: `trainingFocus.test.ts` shows an off-rule Goalkeeping focus develops an outfield player exactly as None, and `training-focus-rule.test.ts` shows the older row loads, cannot be re-set, and is replaced by Mental or None | pass |
+
+## Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| focused | `vitest run` on the three new test files, `development.test.ts`, `test/renderer/training`, `test/renderer/playerDevelopment`, `test/renderer/rpc` | shared 13, contracts 56, desktop 127 passed |
+| check:all | `pnpm check:all` | exit 1; typecheck, effect-lint (814 files), verify-db-schema pass; lint errors only in files outside this diff; verify-md-links 18, the recorded baseline; shared 461/461, contracts 113/113, game-engine 50/50; desktop 71 failed / 1713 passed across 19 files, none a training test |
+| desktop failures | the 7 failing files that import the RPC error module, run on clean HEAD via `git stash -u` | 42 failed / 25 passed, failing test names identical to the working tree |
+| e2e | — | not run: no reachable screen behaviour changed. The picker never offers the refused Category, so the new error sentence is reachable only through a stale client |
+| determinism | shared unit test | an off-rule focus and no focus give identical `developPlayer` output; no change to development itself |
+| save compatibility | — | no schema, event or migration change; older off-rule rows load and stay replaceable (main test) |
+
+## Behavior changes
+
+- `setTrainingFocus` refuses a Category the player has no Attributes in, with `TrainingFocusNotOfferedError`
+  (`playerId`, `focus`), before writing. The renderer says "That player cannot take this Training Focus."
+- `offeredTrainingFocuses` moved from `renderer/training/trainingFocusOptions.ts` to
+  `packages/shared/src/rules/training.ts`, alongside the new `isTrainingFocusOffered`.
+
+## Decision records
+
+- Agent Notes: none written or promoted. The off-rule-row position is recorded in the ticket's Answer and the map.
+
+## Review
+
+Reviewer verdict: APPROVE on both axes, no blocker or high. Addressed: the Attribute read is skipped for
+a None focus (low); import order in `rpc.ts` (low).
+
+Declined or deferred:
+
+- The camelCase-to-column mapping in the new `loadVisibleAttributes` is its fourth copy (`squad.ts`,
+  `development.ts`, `career/player.ts`, `transfers/economics.ts`). A shared `main/db` helper is a
+  follow-up; not folded into this ticket.
+- The rule is checked in the command handler rather than a decider, matching the handler's existing
+  own-club check.
+- No test sends the error through the live RPC transport; the schema round-trip plus the renderer's
+  faked-main test follow this repo's convention.

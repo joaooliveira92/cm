@@ -10,8 +10,25 @@ Found in ticket 06 review. Saves written before this fix can already hold an off
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] One shared predicate decides which Categories a player may take as Training Focus
-- [ ] `setTrainingFocus` rejects an off-rule Category with a tagged error, with an RPC roundtrip test
-- [ ] Renderer uses the shared predicate; existing off-rule rows have a stated, tested behaviour
+- [x] One shared predicate decides which Categories a player may take as Training Focus
+- [x] `setTrainingFocus` rejects an off-rule Category with a tagged error, with an RPC roundtrip test
+- [x] Renderer uses the shared predicate; existing off-rule rows have a stated, tested behaviour
+
+## Answer
+
+`offeredTrainingFocuses` and `isTrainingFocusOffered` now live in `packages/shared/src/rules/training.ts`.
+Both screens import them from `@cm-clone/shared`, and the renderer copy is gone. `setTrainingFocus`
+loads the player's visible Attributes and refuses a Category they do not have with
+`TrainingFocusNotOfferedError` (`packages/contracts`), before any row or event is written. None is
+always allowed.
+
+**Existing off-rule rows: left as-is, no migration.** A Goalkeeping focus on an outfield player
+develops them exactly as None does, because `developPlayer` skips Attributes the player lacks. The
+picker shows the stored value pressed and disabled, and the command accepts any offered value or None
+in its place. Clearing the rows would change no outcome and would need data-migration machinery the
+repo does not have. Tests: `packages/shared/test/rules/trainingFocus.test.ts` (development is
+identical) and `apps/desktop/test/main/club/training-focus-rule.test.ts` (an older row loads, cannot
+be re-set, and is replaced by Mental or None).
+

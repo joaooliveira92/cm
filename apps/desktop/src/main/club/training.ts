@@ -13,13 +13,14 @@ import {
   SeasonDevelopmentView,
   SquadDevelopmentPlayerView,
   SquadDevelopmentView,
+  TrainingFocusNotOfferedError,
   TrainingFocusView,
   WorkloadPlayerView,
   WorkloadView,
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { ALL_ATTRIBUTES, type Category } from "@cm-clone/shared";
+import { ALL_ATTRIBUTES, isTrainingFocusOffered, type Category } from "@cm-clone/shared";
 import { NON_CONTACT_CONDITION_THRESHOLD } from "@cm-clone/game-engine";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -30,9 +31,23 @@ import { CURRENT_SEASON_NUMBER_SQL, loadSeasonRow } from "../season/currentSeaso
 
 const CLUB_STREAM = "club";
 
+/** The player's visible Attributes, a goalkeeping one absent (not zero) for an outfield player — the
+ *  input `isTrainingFocusOffered` decides on. */
+const loadVisibleAttributes = (playerId: PlayerId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const columns = ALL_ATTRIBUTES.map(
+      (attribute) => `${attribute.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)} as "${attribute}"`,
+    ).join(", ");
+    const rows = yield* sql.unsafe<Record<string, number | null>>(`SELECT ${columns} FROM players WHERE id = ?`, [playerId]);
+    const row = rows[0] ?? {};
+    return Object.fromEntries(ALL_ATTRIBUTES.map((attribute) => [attribute, row[attribute] ?? undefined]));
+  });
+
 /** `SetTrainingFocus` command handler (spec: `.scratch/training/spec.md`): a manager sets (or
  * clears, with `focus: null`) the one focused Category for a player on their own club. Changeable
- * at any point — no Transfer Window or season-boundary restriction. Persists the focus (upsert —
+ * at any point — no Transfer Window or season-boundary restriction. A Category the player may not
+ * take (Goalkeeping for an outfield player) is refused with `TrainingFocusNotOfferedError`. Persists the focus (upsert —
  * a missing row and a `NULL` row both mean no-focus) and appends a `TrainingFocusSet` event to the
  * club's stream in the same SQL transaction. */
 export const setTrainingFocus = (savesDir: string, saveId: SaveId, playerId: PlayerId, focus: Category | null) =>
@@ -49,6 +64,9 @@ export const setTrainingFocus = (savesDir: string, saveId: SaveId, playerId: Pla
       const ownPlayerRows = yield* sql<{ id: PlayerId }>`SELECT id FROM players WHERE id = ${playerId} AND club_id = ${club.id}`;
       if (ownPlayerRows.length === 0) {
         return yield* new NotYourPlayerError({ playerId });
+      }
+      if (focus !== null && !isTrainingFocusOffered(yield* loadVisibleAttributes(playerId), focus)) {
+        return yield* new TrainingFocusNotOfferedError({ playerId, focus });
       }
 
       yield* sql`INSERT INTO training_focus (player_id, focus) VALUES (${playerId}, ${focus})

@@ -18,6 +18,7 @@
  * `/career/$saveId/training/plan/$playerId`; it registers under the `training` screen scope.
  */
 import type { PlayerId, SaveId } from "@cm-clone/contracts";
+import { offeredTrainingFocuses } from "@cm-clone/shared";
 import { FOCUS_RING } from "../focus.js";
 import {
   describeRpcError,
@@ -28,7 +29,6 @@ import {
 } from "../rpc.js";
 import { TrainingFocusControl } from "./TrainingFocusControl.js";
 import { TrainingPlanSummaryCard } from "./TrainingPlanSummaryCard.js";
-import { offeredTrainingFocuses } from "./trainingFocusOptions.js";
 import { trainingViewState } from "./trainingViewState.js";
 
 const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;

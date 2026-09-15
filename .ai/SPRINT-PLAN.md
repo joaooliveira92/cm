@@ -2,9 +2,10 @@
 
 ## Immediate next action
 
-**group-h-training-and-player-development** ticket 10 (enforce the Goalkeeping Training Focus rule
-in main). Tickets 04-06 and 08 shipped; 07 partly shipped and needs-info on decision requests 01-02;
-09 blocked on 07 until decision request 01 is answered.
+No open, unblocked, unclaimed build ticket remains in any effort (group-h 07 needs-info, 11 claimed;
+group-g 10 needs-info, 14 claimed). Next: the spec-group fallback, **group I**
+(`docs/specs/group_i_*`), the first spec group with no `.scratch/` effort. Chart it with
+`cm-wayfinder`.
 
 ## Gate state (2026-09-14)
 
@@ -51,7 +52,8 @@ in main). Tickets 04-06 and 08 shipped; 07 partly shipped and needs-info on deci
     (coaching assignments, 2026-09-15). 05 completed (workload and recovery, 2026-09-15). 06 completed
     (individual training plan, 2026-09-15). 07 partly shipped (performance report, 2026-09-15),
     needs-info on decision requests 01 (coach rating) and 02 (development baseline). 08 completed
-    (player development centre, 2026-09-15). 10 ready-for-agent; 09 blocked by 07's open decision.
+    (player development centre, 2026-09-15). 09 completed (training overview, 2026-09-15). 10 completed
+    (Goalkeeping Training Focus rule enforced in main, 2026-09-15). 11 claimed.
 
 Shipped and closed:
 
