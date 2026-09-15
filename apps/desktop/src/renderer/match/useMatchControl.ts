@@ -159,7 +159,11 @@ export const useMatchControl = ({
   };
 
   const onMakeSubstitution = async (): Promise<void> => {
-    if (!tactic || !subsKnown) return;
+    if (!tactic) return;
+    if (!subsKnown) {
+      setSubAlert("Waiting for the match to report substitutions.");
+      return;
+    }
     // Validate the draft against the server-reported caps and the no-subs /
     // same-player rules before submitting — the disabled guard on the button is
     // the primary gate; this rejects with a visible reason instead of a silent

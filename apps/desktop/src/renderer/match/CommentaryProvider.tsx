@@ -99,8 +99,10 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     setAwayScore(view.awayScore);
     // Substitution counts cover the whole match, so a poll is as good a source as a command response
     // (the standalone screens read them the same way).
+    // A poll sent before a command can land after it: the count only rises, so never lower it.
     if (matchState.match !== null) {
-      setClubSubs(controlledSubs(matchState.match, view));
+      const polled = controlledSubs(matchState.match, view);
+      setClubSubs((current) => (polled.used >= current.used ? polled : current));
       setClubSubsKnown(true);
     }
     recordRevealedScore(matchState.saveId, { homeScore: view.homeScore, awayScore: view.awayScore });
