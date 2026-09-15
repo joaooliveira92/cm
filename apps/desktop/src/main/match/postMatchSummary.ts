@@ -83,6 +83,7 @@ export const getPostMatchSummary = (savesDir: string, saveId: SaveId, matchId: M
           (event) =>
             new PostMatchEventView({
               minute: event.minute,
+              half: event.half,
               kind: event._tag,
               clubId: event.teamClubId,
               playerId: event.playerId,

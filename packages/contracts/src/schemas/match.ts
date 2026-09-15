@@ -147,9 +147,10 @@ export class TeamSheetView extends Schema.Class<TeamSheetView>("TeamSheetView")(
 // Post-Match Summary (Screen 99): the settled result and its key events
 // ---------------------------------------------------------------------------
 
-/** One key event of a finished match as the Post-Match Summary lists it: who, for which side, when. */
+/** One key event of a finished match as the Post-Match Summary lists it: who, for which side, when, and in which half. */
 export class PostMatchEventView extends Schema.Class<PostMatchEventView>("PostMatchEventView")({
   minute: Schema.Finite,
+  half: Schema.Literals([1, 2]),
   kind: Schema.Literals(["Goal", "YellowCard", "RedCard", "Injury"]),
   clubId: ClubId,
   playerId: PlayerId,

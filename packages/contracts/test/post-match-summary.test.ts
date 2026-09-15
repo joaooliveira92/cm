@@ -23,8 +23,8 @@ describe("Post-Match Summary (Screen 99)", () => {
       awayPenalties: null,
       isCup: false,
       events: [
-        { minute: 23, kind: "Goal", clubId: "c1", playerId: "p1", playerName: "Alex Brown" },
-        { minute: 61, kind: "RedCard", clubId: "c2", playerId: "p2", playerName: "Sam Reed" },
+        { minute: 23, half: 1, kind: "Goal", clubId: "c1", playerId: "p1", playerName: "Alex Brown" },
+        { minute: 61, half: 2, kind: "RedCard", clubId: "c2", playerId: "p2", playerName: "Sam Reed" },
       ],
     });
   });
@@ -42,8 +42,8 @@ describe("Post-Match Summary (Screen 99)", () => {
       awayPenalties: 2,
       isCup: true,
       events: [
-        { minute: 23, kind: "Goal", clubId: "c1", playerId: "p1", playerName: "Alex Brown" },
-        { minute: 67, kind: "Goal", clubId: "c2", playerId: "p2", playerName: "Sam Reed" },
+        { minute: 23, half: 1, kind: "Goal", clubId: "c1", playerId: "p1", playerName: "Alex Brown" },
+        { minute: 67, half: 2, kind: "Goal", clubId: "c2", playerId: "p2", playerName: "Sam Reed" },
       ],
     });
   });
@@ -61,7 +61,7 @@ describe("Post-Match Summary (Screen 99)", () => {
         homePenalties: null,
         awayPenalties: null,
         isCup: false,
-        events: [{ minute: 5, kind: "ShotMissed", clubId: "c1", playerId: "p1", playerName: "X" }],
+        events: [{ minute: 5, half: 1, kind: "ShotMissed", clubId: "c1", playerId: "p1", playerName: "X" }],
       }),
     ).toThrow();
     expect(AppRpcs.getPostMatchSummary.success).toBe(PostMatchSummaryView);

@@ -4,6 +4,7 @@ import type { ClubId, MatchId, MatchReportEventView, MatchReportView, SaveId } f
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import { FOCUS_RING } from "../focus.js";
+import { formatMinute } from "../format.js";
 import { MatchStatsView } from "../match/MatchStatsView.js";
 import { getMatchReport } from "../rpc.js";
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
@@ -120,7 +121,7 @@ const Report = ({ report }: { readonly report: MatchReportView }) => {
                 <ul aria-label={label} className="mt-1 space-y-1">
                   {own.map((goal, index) => (
                     <li key={`${goal.playerId}-${index}`}>
-                      {goal.playerName} <span className="tabular-nums text-text-muted">{goal.minute}&apos;</span>
+                      {goal.playerName} <span className="tabular-nums text-text-muted">{formatMinute(goal.minute, goal.half)}</span>
                     </li>
                   ))}
                 </ul>
@@ -138,7 +139,7 @@ const Report = ({ report }: { readonly report: MatchReportView }) => {
           <ol aria-label="Match timeline" className="mt-1 space-y-1">
             {report.events.map((event, index) => (
               <li key={`${event.kind}-${event.playerId}-${index}`}>
-                <span className="mr-2 tabular-nums text-text-muted">{event.minute}&apos;</span>
+                <span className="mr-2 tabular-nums text-text-muted">{formatMinute(event.minute, event.half)}</span>
                 {eventText(event, clubName(event.clubId))}
               </li>
             ))}

@@ -3,6 +3,7 @@ import { Effect, Result } from "effect";
 import type { ClubId, MatchId, PostMatchEventView, PostMatchSummaryView, SaveId } from "@cm-clone/contracts";
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
+import { formatMinute } from "../format.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import type { CareerDestination } from "../navigation/destinations.js";
 import { getPostMatchSummary } from "../rpc.js";
@@ -105,7 +106,7 @@ export const PostMatchSummary = ({ saveId, matchId }: { readonly saveId: SaveId;
           <ul aria-label="Cards and injuries" className="mt-1 space-y-1">
             {incidents.map((event, index) => (
               <li key={`${event.kind}-${event.playerId}-${index}`}>
-                <span className="mr-2 tabular-nums text-text-muted">{event.minute}&apos;</span>
+                <span className="mr-2 tabular-nums text-text-muted">{formatMinute(event.minute, event.half)}</span>
                 {EVENT_LABEL[event.kind]}: {event.playerName} (
                 {event.clubId === summary.homeClubId ? summary.homeClubName : summary.awayClubName})
               </li>
@@ -150,7 +151,7 @@ const Scorers = ({
         <ul aria-label={label} className="mt-1 space-y-1">
           {own.map((goal, index) => (
             <li key={`${goal.playerId}-${index}`}>
-              {goal.playerName} <span className="tabular-nums text-text-muted">{goal.minute}&apos;</span>
+              {goal.playerName} <span className="tabular-nums text-text-muted">{formatMinute(goal.minute, goal.half)}</span>
             </li>
           ))}
         </ul>

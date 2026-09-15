@@ -2,10 +2,10 @@
 
 ## Immediate next action
 
-**group-g-match-day** ticket 17 (stoppage minutes read as second-half minutes). Tickets 04–09 and 11–13
-shipped; 10 is parked on decision request 03 (match rating formula); 14 is claimed; 15, 16 resolved;
-17 ready-for-agent; decision requests 01 (live Change Tactics scope), 02 (unsimulated match
-statistics) and 03 await a human.
+**group-g-match-day** no open, unblocked, unclaimed tickets remain. Tickets 04–09 and 11–13, 15–17
+shipped; 10 is parked on decision request 03 (match rating formula); 14 is claimed;
+decision requests 01 (live Change Tactics scope), 02 (unsimulated match statistics) and 03 await a
+human.
 
 ## Gate state (2026-09-14)
 
@@ -40,8 +40,8 @@ statistics) and 03 await a human.
 8. **group-e-squad-management**: pending — next unmatched spec group.
 9. **group-g-match-day**: 01–09 resolved (07 Screen 97 live tactics/substitutions, 08 Screen 99
     Post-Match Summary, 09 Screens 95/100 Match Statistics, 11 Screen 103 Match Report, 2026-09-14);
-    10 needs-info on decision request 03; 12, 13, 15, 16 resolved; 14 claimed; 17 ready-for-agent;
-    decision requests 01, 02 and 03 open.
+    10 needs-info on decision request 03; 12, 13, 15, 16, 17 resolved; 14 claimed; 13 mounted tab bar,
+    17 stoppage minute formatting shipped 2026-09-15; decision requests 01, 02, 03 open.
 
 Shipped and closed:
 
