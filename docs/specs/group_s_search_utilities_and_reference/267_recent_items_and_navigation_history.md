@@ -30,11 +30,11 @@ The screen preserves the active manager, viewer permissions, source context, uti
 
 ```text
 +------------------------------------------------------------------------------+
-| Recent Items and Navigation History                                          |
+| Recent Items and Navigation History                                            |
 |------------------------------------------------------------------------------|
-| Query or reference context, content, validation, status, and actions          |
+| Query or reference context, content, validation, status, and actions           |
 |                                                                              |
-| [Search or Filter] [Open] [Save or Export] [Back]                             |
+| [Search or Filter] [Open] [Save or Export] [Back]                              |
 +------------------------------------------------------------------------------+
 ```
 

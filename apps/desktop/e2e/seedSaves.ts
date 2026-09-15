@@ -1,15 +1,24 @@
 import path from "node:path";
-import { Effect } from "effect";
-import { advanceCalendar } from "../src/main/season.js";
-import { createSave } from "../src/main/saves.js";
+import { Effect, Schema } from "effect";
+import { createSave } from "../src/main/world/index.js";
+import { advanceThroughBoundary } from "../test/main/boundary-helpers.js";
 
-const run = <A>(effect: Effect.Effect<A>): Promise<A> => Effect.runPromise(effect);
+const run = <A, E>(effect: Effect.Effect<A, E>): Promise<A> => Effect.runPromise(effect);
 
 /** The app stores saves under `<userDataDir>/saves` (src/main/index.ts). */
 export const savesDir = (userDataDir: string) => path.join(userDataDir, "saves");
 
-const TOTAL_MATCHDAYS = 38;
+/** A seed helper that advanced the calendar to its bound without the Season concluding: the
+ *  fixture list, not the test, is wrong. Tagged so it stays distinguishable in the failure
+ *  channel rather than merging with every other untagged `Error`. */
+export class SeasonNeverConcludedError extends Schema.TaggedError<SeasonNeverConcludedError>()(
+  "SeasonNeverConcludedError",
+  { advances: Schema.Finite },
+) {}
+
 const MAX_ADVANCES = 200;
+/** Deep enough into the season for a league table to have shape, short of its conclusion. */
+const ADVANCES_BEFORE_SEASON_END = 30;
 
 const createSeedSave = (savesDir: string, name: string) =>
   Effect.gen(function* () {
@@ -24,22 +33,22 @@ export const seedFresh = (savesDir: string) => run(createSeedSave(savesDir, "See
  *  (duplicate names, the rebind journey's relaunch target). */
 export const seedNamed = (savesDir: string, name: string) => run(createSeedSave(savesDir, name));
 
-/** A save right at Season start, before Matchday 1 has been played — the same state as `seedFresh`
- *  (both are Matchday 0), named for the journeys that lean on the pre-first-match state. */
+/** A save right at Season start, before the first fixture has been played — the same state as
+ *  `seedFresh` (both stand in the pre-season), named for the journeys that lean on it. */
 export const seedBeforeMatchday = (savesDir: string) =>
   run(createSeedSave(savesDir, "Seed: before-matchday"));
 
-/** A save advanced to just before the final Matchday (Matchday 38). */
+/** A save advanced deep into the season but not to its end — enough football played for a table
+ *  to mean something, with the conclusion still ahead. */
 export const seedBeforeSeasonEnd = (savesDir: string) =>
   run(
     Effect.gen(function* () {
       const id = yield* createSeedSave(savesDir, "Seed: before-season-end");
       let guard = 0;
-      let matchday = 0;
-      while (matchday < TOTAL_MATCHDAYS - 1 && guard < MAX_ADVANCES) {
+      while (guard < ADVANCES_BEFORE_SEASON_END) {
         guard += 1;
-        const result = yield* advanceCalendar(savesDir, id);
-        matchday = result.season.currentMatchday;
+        const stepped = yield* advanceThroughBoundary(savesDir, id);
+        if (stepped.seasonConcluded) break;
       }
       return id;
     }),
@@ -54,11 +63,10 @@ export const seedConcluded = (savesDir: string) =>
       let concluded = false;
       while (!concluded && guard < MAX_ADVANCES) {
         guard += 1;
-        const result = yield* advanceCalendar(savesDir, id);
-        concluded = result.seasonConcluded;
+        concluded = (yield* advanceThroughBoundary(savesDir, id)).seasonConcluded;
       }
       if (!concluded) {
-        return yield* Effect.fail(new Error("season did not conclude within bounded advances"));
+        return yield* new SeasonNeverConcludedError({ advances: guard });
       }
       return id;
     }),

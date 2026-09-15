@@ -217,12 +217,3 @@ route parameters, and renderer commands as untrusted. Do not copy proprietary
 artwork, exact wording, source code, logos, or databases.
 ```
 
-## 23. Next planned item
-
-**Screen 27: Background Processing and Updating Game**
-
-## Suggested Git commit
-
-```text
-docs(game-ui): specify news filters screen
-```

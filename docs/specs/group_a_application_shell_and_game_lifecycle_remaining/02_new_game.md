@@ -52,34 +52,34 @@ The user should be able to return to the Main Menu until final world generation 
 ## 3. Conceptual screen layout
 
 ```text
-+----------------------------------------------------------------+
-| NEW CAREER                                                     |
-|----------------------------------------------------------------|
-|                                                                |
-|  Preparing football database                                   |
-|                                                                |
-|  Database:         Fictional World 2003/04                     |
-|  Database version: 1.0.0                                       |
-|                                                                |
-|  [==============================----------------]  64%         |
-|                                                                |
-|  Building club and competition indexes...                      |
-|                                                                |
-|  Completed                                                     |
-|    [x] Reading database manifest                               |
-|    [x] Validating database files                               |
-|    [x] Loading nations and regions                             |
-|    [x] Loading competition definitions                         |
-|    [ ] Building club indexes                                   |
-|    [ ] Checking optional data packs                            |
-|    [ ] Estimating system requirements                          |
-|                                                                |
-|  Details                                                       |
-|  > 42 nations discovered                                       |
-|  > 97 playable competition definitions                         |
-|                                                                |
-|                                      [Cancel]                  |
-+----------------------------------------------------------------+
++--------------------------------------------------------------------------------+
+| NEW CAREER                                                                     |
+|--------------------------------------------------------------------------------|
+|                                                                                |
+|  Preparing football database                                                   | 
+|                                                                                |
+|  Database:         Fictional World 2003/04                                     |
+|  Database version: 1.0.0                                                       |
+|                                                                                |
+|  [==============================----------------]  64%                         |
+|                                                                                |
+|  Building club and competition indexes...                                      |
+|                                                                                |
+|  Completed                                                                     |
+|    [x] Reading database manifest                                               |
+|    [x] Validating database files                                               |
+|    [x] Loading nations and regions                                             |
+|    [x] Loading competition definitions                                         |
+|    [ ] Building club indexes                                                   |
+|    [ ] Checking optional data packs                                            |
+|    [ ] Estimating system requirements                                          |
+|                                                                                |
+|  Details                                                                       |
+|  > 42 nations discovered                                                       |
+|  > 97 playable competition definitions                                         |
+|                                                                                |
+|                                                               [Cancel]         |
++--------------------------------------------------------------------------------+
 ```
 
 The diagram describes information hierarchy rather than exact visual placement.

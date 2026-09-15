@@ -1,48 +1,64 @@
 import type { Page } from "@playwright/test";
-import { assignFullTactic, dismissTeachingSplash, expect, test } from "./launchApp.js";
+import {
+  assignFullTactic,
+  chooseOption,
+  continueSeededCareer,
+  expect,
+  goto,
+  matchScore,
+  openTacticsEditor,
+  test,
+} from "./launchApp.js";
 import { savesDir, seedConcluded, seedFresh } from "./seedSaves.js";
 
-/** Seed a save into the app's saves dir, then reload so the app's save list picks it up, and
- *  continue that career by its fixed seed name (dismissing the first-run teaching splash). */
+/** Seed a save into the app's saves dir, then continue that career by its fixed seed name. */
 const seedAndContinue = async (window: Page, userDataDir: string, name: string, seed: (dir: string) => Promise<string>) => {
   await seed(savesDir(userDataDir));
-  await window.reload();
-  const button = window.getByRole("button", { name, exact: true });
-  await expect(button).toBeVisible();
-  await button.click();
-  await dismissTeachingSplash(window);
+  await continueSeededCareer(window, name);
 };
 
-const goto = async (window: Page, tab: string) => {
-  await window.getByRole("button", { name: tab, exact: true }).click();
-};
-
-test("Squad screen renders the club heading and the full starting squad table", async ({ userDataDir, window }) => {
+test("Squad opens on the position list and the View selector swaps it for a table of the same squad", async ({ userDataDir, window }) => {
   await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
 
   await expect(window.locator("h1")).toBeVisible();
   const playersCount = Number(
     (await window.getByText(/players$/).innerText()).match(/(\d+) players/)![1],
   );
+
+  // The career opens on the two-column position list: every player, no table.
+
+  await expect(window.locator("tbody")).toHaveCount(0);
+  await expect(window.locator("li:has(button[data-focus-id])")).toHaveCount(playersCount);
+
+  // A view change alters presentation only — the same squad, drawn as a table.
+  await chooseOption(window, "Squad view", "Personal details");
+  await expect(window.getByRole("heading", { name: "Players (Personal details)" })).toBeVisible();
   await expect(window.locator("tbody tr")).toHaveCount(playersCount);
+  await expect(window.getByRole("columnheader", { name: "Nationality" })).toBeVisible();
 });
 
-test("Tactics screen shows 11 slot rows and persists a saved tactic across a reload", async ({ userDataDir, window }) => {
+test("Tactics opens on the read-only overview; the editor is one step away and the save persists", async ({ userDataDir, window }) => {
   await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
   await goto(window, "tactics");
 
-  await expect(window.getByRole("heading", { name: /Tactics/ })).toBeVisible();
-  const rows = window.locator("tbody tr");
-  await expect(rows).toHaveCount(11);
+  // Opening Tactics shows the overview, not the editor (ticket 03) — a fresh career has no
+  // Tactic, so the overview says so instead of presenting eleven slots to edit.
+  await expect(window.getByRole("heading", { name: "Tactics Overview" })).toBeVisible();
+  await expect(window.locator("tbody")).toHaveCount(0);
+  await expect(window.getByText("No tactic saved — set one to prepare.")).toBeVisible();
 
-  await assignFullTactic(rows);
+  // The editor is one step from the overview; the assignment round-trips through the save.
+  await openTacticsEditor(window);
+  await expect(window.locator("tbody tr")).toHaveCount(11);
+  await assignFullTactic(window);
 
+  // Returning to the overview reads the saved snapshot: the formation is named, the starters are
+  // a real selection, and the no-tactic issue cleared.
   await goto(window, "squad");
   await goto(window, "tactics");
-
-  const reloadedRows = window.locator("tbody tr");
-  await expect(reloadedRows).toHaveCount(11);
-  await expect(reloadedRows.first().locator("select")).not.toHaveValue("");
+  await expect(window.getByRole("heading", { name: "Tactics Overview" })).toBeVisible();
+  await expect(window.getByText(/starters · \d+ substitutes/)).toBeVisible();
+  await expect(window.getByText("No Tactic set.")).toHaveCount(0);
 });
 
 test("Transfers screen renders the budget line and the Market and Free Agents sections", async ({ userDataDir, window }) => {
@@ -67,7 +83,8 @@ test("Fixtures screen renders the fixture list", async ({ userDataDir, window })
   await goto(window, "fixtures");
 
   await expect(window.getByRole("heading", { name: "Fixtures" })).toBeVisible();
-  await expect(window.getByText(/Matchday/).first()).toBeVisible();
+  // The list groups by round with a date header ("1 Aug 2026 · Round 1").
+  await expect(window.getByText(/· Round \d+/).first()).toBeVisible();
 });
 
 test("Match Day starts a match, reveals a feed, and applies a live control command", async ({ userDataDir, window }) => {
@@ -75,14 +92,15 @@ test("Match Day starts a match, reveals a feed, and applies a live control comma
 
   // The control panel only renders once the club has a persisted Tactic; set one first.
   await goto(window, "tactics");
-  await assignFullTactic(window.locator("tbody tr"));
+  await openTacticsEditor(window);
+  await assignFullTactic(window);
 
   await goto(window, "match day");
   const start = window.getByRole("button", { name: "Start match" });
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
 
-  await expect(window.getByRole("heading", { name: / - / })).toBeVisible();
+  await expect(matchScore(window)).toBeVisible();
   await expect(window.locator("ul").first()).toBeVisible();
 
   const panelToggle = window.getByRole("button", { name: /Tactics & substitutions/ });
@@ -97,8 +115,8 @@ test("Match Day starts a match, reveals a feed, and applies a live control comma
 
   // Structural substitution panel assertions
   await expect(window.getByText("Make a substitution")).toBeVisible();
-  await expect(window.getByText("Off", { exact: true })).toBeVisible();
-  await expect(window.getByText("On", { exact: true })).toBeVisible();
+  await expect(window.getByRole("combobox", { name: "Player to bring off" })).toBeVisible();
+  await expect(window.getByRole("combobox", { name: "Player to bring on" })).toBeVisible();
   await expect(window.getByRole("button", { name: "Make substitution" })).toBeVisible();
   await expect(window.getByText(/Substitutions used:/)).toBeVisible();
 
@@ -114,9 +132,9 @@ test("Season Summary screen shows a verdict for a concluded, seeded save", async
   await expect(window.getByText(/Verdict: (Exceeded|Met|Missed)/)).toBeVisible();
 });
 
-// Force-off (orange injury / shorthanded) is skipped at the e2e level: the orange injury prompt
-// and "Bring off" button depend on non-deterministic match events from the sim engine, which are
-// unreachable from a seeded save without a deterministic match seed. Unit tests in
-// matchCommands.test.ts cover ForceOff command-level correctness. See Agent Note:
-// .agents/notes/implemented/testing/2026-08-28-match-day-structural-extension.md
-test.skip("match day force-off and shorthanded UI states", () => {});
+// Not covered here, deliberately: match day force-off and the shorthanded UI states. The orange
+// injury prompt and "Bring off" button depend on non-deterministic match events from the sim
+// engine, unreachable from a seeded save without a deterministic match seed, so there is no e2e
+// path to assert. `matchCommands.test.ts` covers ForceOff at the command level. The empty
+// `test.skip` that used to stand here reported as a skipped test forever without ever being a
+// test. See .agents/notes/implemented/testing/2026-08-28-match-day-structural-extension.md

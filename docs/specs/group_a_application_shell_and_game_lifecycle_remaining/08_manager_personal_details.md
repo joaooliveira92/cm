@@ -173,26 +173,26 @@ Before rendering editable data, the application must verify:
 
 ```text
 +--------------------------------------------------------------------------------+
-| CREATE MANAGER                              Step 1 of 5: Personal Details       |
+| CREATE MANAGER                              Step 1 of 5: Personal Details      |
 |--------------------------------------------------------------------------------|
 | IDENTITY                                                                       |
 |                                                                                |
-| Given name *       [João____________________________________]                   |
-| Family name *      [Monteiro________________________________]                   |
-| Familiar name      [________________________________________]                   |
+| Given name *       [João____________________________________]                  |
+| Family name *      [Monteiro________________________________]                  |
+| Familiar name      [________________________________________]                  |
 |                                                                                |
-| Display as *       [João Monteiro___________________________]                   |
+| Display as *       [João Monteiro___________________________]                  |
 | Name format        [Given name + family name v]                                |
 |                                                                                |
 | Date of birth *    [12] [March v] [1975]                                       |
-| Age at career start: 28                                                         |
+| Age at career start: 28                                                        |
 |                                                                                |
-| Place of birth     [Search city or nation...________________] [Select]          |
+| Place of birth     [Search city or nation...________________] [Select]         |
 |                    Brasília, Example Federation                                |
 |                                                                                |
 | PORTRAIT                                                                       |
 | +--------------+  [Use Initials] [Choose Built-in Avatar] [Upload Image]       |
-| |      JM      |                                                             |
+| |      JM      |                                                               |
 | +--------------+  [Remove Portrait]                                            |
 |                                                                                |
 | LOCAL PRIVACY                                                                  |
@@ -200,7 +200,7 @@ Before rendering editable data, the application must verify:
 |                                                                                |
 | Draft saved 16:41                                                              |
 |--------------------------------------------------------------------------------|
-| [Back]                                      [Save Draft]             [Continue]|
+| [Back]                                      [Save Draft]            [Continue] |
 +--------------------------------------------------------------------------------+
 ```
 

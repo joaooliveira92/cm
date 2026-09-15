@@ -1,7 +1,7 @@
 # E2E suite
 
-Playwright + Electron tests for the desktop app. Two suites, canonical spec at
-`.scratch/e2e-coverage/spec.md`.
+Playwright + Electron tests for the desktop app. Two suites. The canonical spec came from the
+`e2e-coverage` effort, since archived out of the working tree; it is recoverable from git history.
 
 ## Smoke — `e2e/app.spec.ts`
 
@@ -15,7 +15,7 @@ Season Summary asserts its verdict, but only against a seeded save.
 | Tactics | `getTactics` | "Tactics" heading + 11 slot rows |
 | League Table | `getLeagueTable` | "League Table" heading + 20-row table |
 | Fixtures | `getFixtures` | "Fixtures" heading + fixture list |
-| Match Day | `listOpponentClubs` + `startMatch` + `resumeSimulation` | match header + feed; toggle control panel, submit a command, assert status text (never commentary/scores) |
+| Match Day | `startMatch` + `resumeSimulation` + `commitMatchday` | match header + feed; toggle control panel, submit a command, assert status text (never commentary/scores) |
 | Transfers | `getTransfersScreen` | budget line + Market & Free Agents sections |
 | Season Summary | `getSeasonSummary` | verdict against a seeded save |
 

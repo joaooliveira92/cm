@@ -38,7 +38,7 @@ overturns them — and the disagreement gets written into the register rather th
 - The twelve numbered ADRs were deliberately deleted and are not coming back. Agent Notes under
   `.agents/notes/` are the repo's sole decision record from here.
 
-**The import duplicates Screen 2.** `01_app_sheell.md` contains Screen 1, a screen-inventory preamble,
+**The import duplicates Screen 2.** `01_app_shell.md` contains Screen 1, a screen-inventory preamble,
 *and* a full copy of Screen 2 with the same 29 sections as `02_new_game.md`. `02_new_game.md` is
 canonical; file 01's copy is not audited separately, and `## N.` numbering is not unique inside file 01.
 
@@ -65,15 +65,87 @@ repair, because `pnpm check:all` is red until it lands and every later session i
   sixteen screens, so the audit does not merge. Two new axes found (off-device telemetry, non-normative
   import scaffolding); recorded as `out-of-scope` rows on every screen in the ledger.
 
-## Not yet specified
+- [05 — Screen 18: what a local Game Status screen contains](issues/05-screen-18-game-status.md):
+  removed; survivors (season/save-name orientation, sacked badge, app version) redistribute into
+  CareerChrome, Save List, and a new About dialog.
 
-**Whether any Group A screen needs a new keyboard tier.** The tiering rule in the screen-keyboard-tiers
-note covers nine existing screens. Screens 18–21 will need assignments, but the rule's inputs
-(interactive control count) aren't known until those screens are designed.
+- [04 — Audit: application shell (spec 01)](issues/04-audit-application-shell.md): Screen 1 audited
+  against the shell; 28 ledger rows, no code changed. The entry point is the Save List, not a Main
+  Menu; the shell has no way to quit, open settings, or read credits; the Save List declares no
+  Actions and has no keyboard tier; a failing save repository is swallowed silently. Two new
+  out-of-scope rulings (mod indicator, online update check).
 
-**What the 151 dangling `ADR-000x` citations in source comments should say instead.** Ticket 01 decides
-the mechanism; whether each citation is rewritten to a note, reworded, or dropped is a per-site judgment
-that may deserve its own pass once the count of genuinely load-bearing ones is known.
+- [06 — Screen 19: Manager Status redefined, and the name collision](issues/06-screen-19-manager-status-redefinition.md):
+  Screen is "Manager Profile", showing profile identity (name, archetype, pillars, club, tenure) with
+  a passive Active/Archived badge; all sacking/outcome detail stays exclusive to Season Summary;
+  "Manager Status" retired as domain term; CONTEXT.md and reconciliation ledger updated.
+
+- [07 — Screen 20: Retire Manager](issues/07-screen-20-retire-manager.md): retirement is the second cause
+  of an **Archived Save**; a `ManagerRetired` event and a nullable `archived_cause` column replace the
+  `sacked` boolean, `assertSaveNotSacked` becomes `assertSaveNotArchived`, and the action is a dialog on
+  Manager Profile confirmed by an Irreversibility Disclosure. Breaks the save format with no migration path.
+
+- [08 — Screen 21: Quit confirmation as an accident guard](issues/08-screen-21-quit-confirmation.md):
+  one intent (close_application), one provisional-career exception, before-quit guard with renderer IPC,
+  dialog-only (no keyboard shortcut). Durable-at-commit note written and re-anchors the reconciliation
+  ledger's contradicted rows.
+
+- [09 — Navigation surface for the new shell screens](issues/09-navigation-surface-for-new-screens.md):
+  Save List tiered at level 2; app-chrome bar (Preferences, Credits, Quit) on the Save List as
+  lightweight dialogs; no command-palette entries for boot-screen destinations.
+
+- [10 — Assemble the Group A spec and deviation register](issues/10-assemble-spec-and-register.md):
+  Spec assembled at `.scratch/group-a-reconciliation/spec.md`; deviation register remains at `docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md`; all out-of-scope axes recorded; ready for `/to-spec` → `/to-tickets`.
+
+- [10 — Assemble the Group A spec and deviation register](issues/10-assemble-spec-and-register.md):
+  Spec assembled at `.scratch/group-a-reconciliation/spec.md`; deviation register remains at `docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md`; all out-of-scope axes recorded; ready for `/to-spec` → `/to-tickets`.
+- [11 — Slice the screen 2–17 audit into tickets](issues/11-slice-the-screen-2-17-audit.md):
+  Nine absent screens grouped into three cheap "confirm absence" tickets; six with implementation
+  audited as individual, flow, or complement tickets; Screen 13 as a thin complement to the shell
+  audit. Eight tickets sized to one session each, all blocked against ticket 10.
+
+- [12 — Absence: Screens 3, 4, 5 (creation-form screens)](issues/12-absence-creation-screens.md):
+  Three creation-form screens (league/nation selection, competition detail, database size/performance)
+  have no routes, components, or screens. All surviving sections classified `contradicted` — the
+  fixed single 20-club league (CONTEXT.md) and three-step Manager→Club→Review creation flow leave
+  no room for any of them.
+
+- [13 — Absence: Screens 9, 10 (identity screens)](issues/13-absence-identity-screens.md):
+  Two identity screens (nationality/languages, background) have no routes or components — no
+  nationality/languages or background concept exists in the codebase. All 91 surviving sections
+  classified `contradicted` against the three-step creation flow and the Archetype/Pillar identity
+  model (CONTEXT.md).
+- [14 — Absence: Screens 14, 15, 16, 17 (management screens)](issues/14-absence-management-screens.md):
+  Four management screens (Save/Save As, Delete Saved Game, Game Preferences, Display/Sound Options)
+  have no routes, components, or UI of any kind. All surviving sections of all four screens classified
+  `contradicted` — the codebase has no user-invoked save, no delete-save path, no preferences surface,
+  and no display/audio configuration UI.
+
+- [15 — Screen 2: New Game, Database Initialization](issues/15-screen-2-new-game.md):
+  Screen 2 audited and reconciled; all 28 content sections `contradicted` by the three-step creation
+  flow with invisible world generation. No cache, progress UI, or validation stages exist.
+
+- [16 — Screen 6: Game Loading and World Generation](issues/16-screen-6-world-gen.md):
+  Screen 6 audited against the creation flow implementation. All 40 surviving sections `contradicted`:
+  generation is a masked wait with no progress bar, no task checklist, no cancellation, no retry, no
+  validation, no checkpoint, no completion summary. Transitions to Club Selection, not Add Manager.
+
+- [17 — Screen 8: Manager Personal Details](issues/17-screen-8-personal-details.md):
+  Screen 8 `Reviewed` against the implementation (CreationStep1.tsx): only a single Manager name `<input>`
+  exists; date of birth, place of birth, portrait, hot-seat privacy, name normalization, structured name
+  components, and all form behaviors are absent. Reconciliation ledger updated with `contradicted` rows
+  covering 9 audit categories. Status changed from `Not yet audited` to `Reviewed` (ticket 17, 2026-08-31).
+- [19 — Screen 13: Load Saved Game (complement)](issues/19-screen-13-load-game-complement.md):
+  Screen 13 `Reviewed` against the implementation (`saveList.tsx` 79 lines + `loadSave` in `main/saves.ts`).
+  The shell audit (ticket 04) already covered entry point, Actions, keyboard tier, repository failure
+  swallowing, and stale-entry contract; the complement adds `contradicted` rows for the absent save-library
+  surface (search, filter, sort, details panel, save-type presentation, footer actions, load pipeline,
+  corrupt-save behavior, initial destination), and `deferred` rows for keyboard interaction, accessibility,
+  responsive, localization, save read lease, compatibility/integrity models, state machine, import/duplicate/
+  delete, loading progress, and cancellation. 40 ledger rows added; no code changed; status changed from
+  `Not yet audited` to `Reviewed` (ticket 19, 2026-08-31).## Not yet specified
+
+<!-- none — every question resolved, fog cleared, map complete. -->
 
 ## Out of scope
 
@@ -105,5 +177,18 @@ that may deserve its own pass once the count of genuinely load-bearing ones is k
   21 broken links they leave behind are in scope (ticket 01); reversing the deletion is not.
 - **Introducing genuine unsaved career state** so that spec 21's `UnsavedCareerState` model becomes
   true. That is an architectural regression against durable-at-commit persistence.
+- **Game Status screen (Screen 18).** Decided via ticket 05. The survivors (career/season orientation,
+  sacked badge, app version) redistribute into existing real estate; no route, component, or
+  `GameStatusSnapshot` type is built.
+- **Save-format migration machinery.** Ticket 07's `archived_cause` column is the second Group A decision
+  to break existing saves, and the repo has no migration layer to carry them across. Building one is a
+  project-wide architectural effort with its own versioning and upgrade-path questions; it sits past this
+  map's destination. Recorded here so the need is visible rather than lost — see the risk in
+  [Retire Manager](../../.agents/notes/implemented/feature/2026-08-30-retire-manager.md).
 - **The other eighteen spec groups.** Group A is the pilot. If a reusable trimming method falls out, it
   is captured as a `process` Agent Note — widening this map to 19 groups is a different effort.
+- **An enabled-mods indicator.** Ruled by ticket 04 while auditing spec 1 §4.2 and §8. Nothing in the
+  app loads third-party content, so there is nothing to enable, list, or indicate.
+- **The main menu's online update check** (spec 1 §8 `updateStatus`). Ruled by ticket 04. A sharpening
+  of the off-device-telemetry axis above: the app has no backend to query and no update channel.
+- **ADR-000x citation rewrites in source comments.** Ticket 01 provided the mechanism (rewrite to note path, reword, or drop); the 151 mentions are a source-comment hygiene pass that sits past this map's destination (a Group A spec and deviation register). No screen's reconciliation depends on the outcome.

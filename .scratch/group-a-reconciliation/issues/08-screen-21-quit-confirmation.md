@@ -1,7 +1,7 @@
 # 08 — Screen 21: Quit confirmation as an accident guard
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 03
 
 ## Question
@@ -26,12 +26,9 @@ design.
 The whole `UnsavedCareerState` model, the save-and-quit flow, and the loss-summary dialog are register
 entries explaining why durable-at-commit persistence makes them unnecessary.
 
-## Done when
+## Answer
 
-The guarded intent set, the provisional-career decision, and the dialog behaviour are specified.
+**One intent guarded (close_application); one exception (provisional career warns of lost creation state); before-quit guard with renderer IPC; dialog-only (no keyboard shortcut for quit).** The owed durable-at-commit note is written. See:
 
-**Owed by ticket 02.** Screen 21's `contradicted` ledger rows currently anchor to the domain-bounded
-deciders note, which establishes the single-writer local SQLite premise but never states "there is no
-unsaved progress". This ticket owes that explicit Agent Note, and the reanchoring of those rows in
-`docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md`. The out-of-scope
-and renamed rows for this screen are already written there; this ticket adds the design rows.
+- [Durable-at-commit persistence eliminates unsaved-progress model](../../../.agents/notes/proposed/architecture/2026-08-30-durable-at-commit-persistence.md) — the designed premise for the reconciliation ledger.
+- [Quit confirmation design](../../../.agents/notes/proposed/feature/2026-08-30-quit-confirmation-design.md) — intent set, platform behaviour, dialog, provisional-career exception.

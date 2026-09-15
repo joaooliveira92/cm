@@ -100,11 +100,11 @@ cannot adapt a fixed map.
 - **Prefix rebound to a non-prefix shape.** A `g s` binding replaced by something arbitrary could
   produce an entry the prefix layer cannot express; validation rejects unexpressible shapes.
 - **Config file corruption.** Decode tolerantly in main, fall back to defaults, fix on next write.
-- **Inline key badges lag overrides (shipped limitation).** The palette, help overlay, and key
-  dispatch reflect effective bindings, but the inline `ActionKeyBadge` on screen buttons still
-  renders the registry default, so a badge can advertise a key that no longer fires after a rebind.
-  Stage 6 targets the overlay/palette/dispatch; the badge (a Stage-4 surface) must be reconciled, or
-  dropped, before Stage 7 calls a screen "no-mouse driveable".
+- **Inline key badges lag overrides (reconciled 2026-09-10).** Shipped with the inline
+  `ActionKeyBadge` rendering the registry default, so a badge could advertise a key that no longer
+  fired after a rebind. `actionBadgeBinding` now takes the override map and returns the effective
+  binding, and screens read it through `useActionBadgeBinding`, which subscribes to the published
+  override store.
 - **Cross-tier shadowing is a decision request.** Validation rejects same-scope collisions and
   inexpressible shapes, but a rebind that a higher-priority tier silently owns (a career-global
   Action reclaiming a screen key; a screen Action bound to `Space` under Continue) currently passes.

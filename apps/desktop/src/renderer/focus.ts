@@ -13,13 +13,21 @@
  * roving-focus primitives for composite widgets. Resolution never lands on
  * `document.body` — the fallback chain ends at the region empty-state target,
  * then the screen primary, then the heading.
+ *
+ * A bare `{ screen }` target (no region, no item) resolves to the screen's
+ * labelled `<main>` region: each screen's main carries `data-focus-id={screenId}`
+ * and a `tabIndex={-1}` alongside its accessible name, so keyboard arrival and
+ * back-restoration both land on the element that announces where the user is.
+ * The former RouteView wrapper is a plain layout container and is never a focus
+ * target (ticket 06).
  */
 
 export type NavigationIntent = "keyboard" | "pointer";
 
 /** A focus target by semantic identity, not DOM position (note AC-14). */
 export interface SemanticTarget {
-  /** The screen id the RouteView wrapper is keyed on (`data-focus-id`). */
+  /** The screen id every navigable surface keys its labelled `<main>` region on
+   *  (`data-focus-id`), which is the arrival/restoration focus target. */
   readonly screen: string;
   /** Region within the screen. */
   readonly region?: string;
@@ -161,11 +169,16 @@ export const setBusy = (node: HTMLElement | null, busy: boolean): void => {
   if (node) node.setAttribute("aria-busy", busy ? "true" : "false");
 };
 
-/** The single `:focus-visible` ring treatment (intra-screen focus model). */
+/**
+ * The single `:focus-visible` ring treatment (intra-screen focus model), tuned
+ * to the design tokens: the highlight yellow on the page base. It carries no
+ * `slate-*` class, so the `no-slate-class-name` guard does not fire on the ~90
+ * call sites that interpolate it.
+ */
 export const FOCUS_RING = [
   "outline-none",
   "focus-visible:ring-2",
-  "focus-visible:ring-amber-300",
+  "focus-visible:ring-focus-ring",
   "focus-visible:ring-offset-2",
-  "focus-visible:ring-offset-slate-950",
+  "focus-visible:ring-offset-bg-base",
 ];

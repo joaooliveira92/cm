@@ -4,14 +4,14 @@
  * filters, focus, scroll, selection and the bid draft are session-only (they
  * live in `tableState.ts`). Restart persistence is `localStorage`, and every
  * read is reconciled: unknown column ids are dropped, mandatory columns are
- * restored, and Name is always visible and pinned. The reconciliation runs on
+ * restored, and Name and Status are always visible and pinned. The reconciliation runs on
  * every load so an old or foreign blob can never corrupt the view.
  */
 import {
   isSquadPresetId,
   presetById,
   SQUAD_ALL_COLUMN_IDS,
-  SQUAD_IDENTITY_COLUMN_ID,
+  SQUAD_PROTECTED_COLUMN_IDS,
   type SquadPresetId,
 } from "./features/visibility.js";
 
@@ -26,7 +26,7 @@ const overview = presetById("overview")!;
 
 export const DEFAULT_SQUAD_COLUMN_PREFERENCES: SquadColumnPreferences = {
   visibleColumnIds: [...overview.visibleColumnIds],
-  pinnedColumnIds: [SQUAD_IDENTITY_COLUMN_ID],
+  pinnedColumnIds: [...SQUAD_PROTECTED_COLUMN_IDS],
   activePresetId: "overview",
 };
 
@@ -56,8 +56,9 @@ export type { SquadPresetId };
 /**
  * Reconcile a stored preference blob against the shipped column universe.
  * Order: drop unknown ids → fall back to the full set when NOTHING known
- * survived → restore Name (always visible) → pin implies visibility → Name
- * always pinned. Pure and unit-tested.
+ * survived → restore the protected columns (always visible) → pin implies
+ * visibility → the protected columns are always pinned, leftmost and in order.
+ * Pure and unit-tested.
  */
 export const reconcileColumnPreferences = (
   stored: unknown,
@@ -73,25 +74,30 @@ export const reconcileColumnPreferences = (
   // valid partial view. Name is present in the full set either way.
   if (visible.length === 0) visible = [...allColumnIds];
 
-  // Mandatory: the identity column can never be hidden.
-  if (!visible.includes(SQUAD_IDENTITY_COLUMN_ID)) {
-    visible = [SQUAD_IDENTITY_COLUMN_ID, ...visible];
-  }
+  // Mandatory: the protected columns (Name, Status) can never be hidden, and
+  // lead the visible set in their pinned order. A blob written before Status
+  // existed reconciles into one that carries it.
+  visible = [
+    ...SQUAD_PROTECTED_COLUMN_IDS,
+    ...visible.filter((id) => !(SQUAD_PROTECTED_COLUMN_IDS as readonly string[]).includes(id)),
+  ];
   // A pinned column that is not visible is a contradiction — pin implies visibility.
   for (const columnId of pinned) {
     if (!visible.includes(columnId)) visible = [...visible, columnId];
   }
 
-  // Name is always pinned by construction.
-  const pinnedWithName = pinned.includes(SQUAD_IDENTITY_COLUMN_ID)
-    ? pinned
-    : [SQUAD_IDENTITY_COLUMN_ID, ...pinned];
+  // Name and Status are always pinned, in that order, by construction: the
+  // sticky offsets are summed left to right, so the order is load-bearing.
+  const pinnedWithProtected = [
+    ...SQUAD_PROTECTED_COLUMN_IDS,
+    ...pinned.filter((id) => !(SQUAD_PROTECTED_COLUMN_IDS as readonly string[]).includes(id)),
+  ];
 
   const activePresetId = isSquadPresetId(shape.activePresetId)
     ? shape.activePresetId
     : null;
 
-  return { visibleColumnIds: visible, pinnedColumnIds: pinnedWithName, activePresetId };
+  return { visibleColumnIds: visible, pinnedColumnIds: pinnedWithProtected, activePresetId };
 };
 
 export const SQUAD_PREFERENCES_STORAGE_KEY = "@cm-clone/desktop:squad.column-preferences";

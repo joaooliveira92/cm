@@ -18,7 +18,12 @@
     "no-new-wrappers": "error",
     "no-param-reassign": "error",
     "no-console": "warn",
-    "typescript/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "typescript/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_"
+      }
+    ],
     "typescript/no-explicit-any": "error",
     "typescript/consistent-type-imports": "error",
     "typescript/prefer-as-const": "error",
@@ -34,8 +39,27 @@
     "builtin": true
   },
   "ignorePatterns": [
-    "reference-project/**",
+    "external-reference/**",
     "**/dist/**",
     "**/node_modules/**"
-  ]
+  ],
+  "overrides": [
+    {
+      "files": [
+        "scripts/**"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/desktop/src/renderer/**",
+        "packages/*/src/**"
+      ],
+      "rules": {
+        "no-console": "error"
+      }
+    }
+  ],
 }
