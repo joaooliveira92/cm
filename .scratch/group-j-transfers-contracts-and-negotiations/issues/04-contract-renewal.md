@@ -6,10 +6,15 @@
 
 - Group J v1 scope: 4 own-club screens, 11 deferred. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-15-group-j-v1-scope.md).
 
-**Blocked by:** None (can start immediately)
+**Blocked by:** [decision request 01](../decision-request-01-when-a-contract-can-be-renewed.md) (whether a Contract can be renewed mid-term)
 
-**Status:** ready-for-agent
+**Status:** needs-info
 
 - [ ] Renew action with a length choice on the Player Contract screen for an own-club Player, through `renewContract`
 - [ ] The contract shown refreshes after success; each typed refusal shows its sentence inline
 - [ ] No renew action for a Player outside the manager's club
+
+## Comments
+
+- 2026-09-15: Implemented and reviewed (standards APPROVE). Spec review raised that `renewContract` renews any Contract mid-term, against CONTEXT.md's "Never renegotiated mid-term", while an existing main test encodes that behaviour. Not committed; the work is kept as [ticket-04-contract-renewal.patch](../ticket-04-contract-renewal.patch). Also found, pre-existing: the Player Contract screen labels the wage "Credits/season" while `weeklyWage` computes a weekly figure, and `getPlayerContract` returns an exact wage for another club's Player.
+

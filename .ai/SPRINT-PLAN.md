@@ -2,9 +2,9 @@
 
 ## Immediate next action
 
-**group-j-transfers-contracts-and-negotiations** ticket 04 (Contract Renewal, Screen 140). Charted,
-specced and sliced 2026-09-15: 4 own-club screens in v1 (140, 141, 145, 146), 11 deferred. 05-07 are
-also unblocked. Group I decision request 01 now also blocks Group J Screens 132, 134 and 137.
+**group-j-transfers-contracts-and-negotiations** ticket 05 (Contract Expiry, Screen 141). Ticket 04
+(Contract Renewal) is needs-info on group-j decision request 01 (renewal mid-term), its work kept as a
+patch. 06-07 unblocked. Group I decision request 01 also blocks Group J Screens 132, 134 and 137.
 
 ## Gate state (2026-09-14)
 
@@ -57,8 +57,8 @@ also unblocked. Group I decision request 01 now also blocks Group J Screens 132,
     errors survive IPC), 04 completed (Scouting Assignment screen) and 05 completed (Scouting
     Knowledge screen), 06 completed (Scouting Centre), 2026-09-15. 08 completed (read-state
     helper), 2026-09-15. Scope note promoted. Effort complete for v1; decision request 01 open. Decision request 01 open.
-12. **group-j-transfers-contracts-and-negotiations**: 01-03 resolved, spec published, tickets 04-07
-    ready (2026-09-15).
+12. **group-j-transfers-contracts-and-negotiations**: 01-03 resolved, spec published (2026-09-15). 04
+    needs-info on decision request 01; 05-07 ready.
 
 Shipped and closed:
 
