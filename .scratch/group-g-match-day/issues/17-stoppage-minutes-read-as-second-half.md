@@ -10,7 +10,7 @@ for first-half stoppage) and apply that rule on every match screen that shows mi
 
 **Blocked by:** None
 
-**Status:** needs-triage
+**Status:** ready-for-agent
 
 - [ ] One display rule for minutes, covering first-half stoppage, half-time changes and second-half stoppage
 - [ ] Match Report and Post-Match Summary follow it

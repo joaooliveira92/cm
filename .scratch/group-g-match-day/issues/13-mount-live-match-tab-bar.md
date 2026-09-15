@@ -10,7 +10,7 @@ Found in review of [ticket 07](07-tactics-substitutions-ui.md).
 
 **Blocked by:** None (can start immediately)
 
-**Status:** needs-triage
+**Status:** ready-for-agent
 
 - [ ] The match tab bar renders on Match day and the match sub-screens
 - [ ] Each live-match tab navigates to its screen, including Tactics and Substitutions

@@ -38,9 +38,9 @@ statistics) and 03 await a human.
 7. **team-scout-report**: complete 2026-09-13.
 8. **group-e-squad-management**: pending — next unmatched spec group.
 9. **group-g-match-day**: 01–09 resolved (07 Screen 97 live tactics/substitutions, 08 Screen 99
-   Post-Match Summary, 09 Screens 95/100 Match Statistics, 11 Screen 103 Match Report, 2026-09-14);
-   10 needs-info on decision request 03; 12, 14–16 open; 13 and 17 needs-triage; decision requests
-   01, 02 and 03 open.
+    Post-Match Summary, 09 Screens 95/100 Match Statistics, 11 Screen 103 Match Report, 2026-09-14);
+    10 needs-info on decision request 03; 12, 14, 15, 16 resolved; 13 and 17 ready-for-agent;
+    decision requests 01, 02 and 03 open.
 
 Shipped and closed:
 
