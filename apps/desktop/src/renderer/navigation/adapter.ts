@@ -103,6 +103,8 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/competitions":
     case "/career/$saveId/nations":
     case "/career/$saveId/clubs":
+    case "/career/$saveId/match-match-tactics":
+    case "/career/$saveId/match-substitutions":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     // The one two-parameter route: the club segment carries the target club as well as the save.

@@ -154,6 +154,41 @@ test("a substitution is driven by keyboard through the match day live control pa
   await expect(page.getByText(/Substitutions used:/)).toBeVisible({ timeout: 15_000 });
 });
 
+test("a live substitution is made from the standalone Match Substitutions screen (Screen 97)", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedBeforeMatchday(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: before-matchday");
+
+  await pressPrefix(page, "a");
+  await openTacticsEditor(page);
+  await assignFullTactic(page);
+
+  await pressPrefix(page, "d");
+  const start = page.getByRole("button", { name: "Start match" });
+  await expect(start).toBeEnabled({ timeout: 15_000 });
+  await start.click();
+
+  await page.getByRole("navigation", { name: "Live match screens" }).getByRole("button", { name: "Substitutions" }).click();
+  await expect(page.getByRole("heading", { name: "Match Substitutions" })).toBeVisible();
+  await expect(page.getByText(/Substitutions used: 0\//)).toBeVisible({ timeout: 15_000 });
+
+  const off = page.getByLabel("Player coming off");
+  const on = page.getByLabel("Player coming on");
+  // Option 0 is the "Select player" placeholder.
+  await off.selectOption({ index: 1 });
+  await on.selectOption({ index: 1 });
+  await page.getByRole("button", { name: "Make substitution" }).click();
+
+  // A first substitution well inside the cap: the match response must count it.
+  await expect(page.getByRole("status")).toHaveText(/^Applied —/, { timeout: 15_000 });
+  await expect(page.getByText(/Substitutions used: 1\//)).toBeVisible();
+
+  await page.getByRole("button", { name: "Back to Match day" }).click();
+  await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
+});
+
 // Not covered here: "advancing the calendar through the UI reaches a Season Summary verdict".
 // Measured 2026-09-05 — a single advance steps straight from "Season 1 · 22 May 2027" to
 // "Season 2 · Pre-season". The `season_complete` phase is never rendered, and Continue (which the

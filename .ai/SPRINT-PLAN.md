@@ -2,9 +2,17 @@
 
 ## Immediate next action
 
-Group G (Match Day and Match Review) ingested — charting in progress.
+**group-g-match-day** ticket 08 (Post-Match Summary enhancement). Tickets 04–07 shipped; 12 is
+ready-for-agent after 08–11; 13 needs triage; decision request 01 (live Change Tactics scope) awaits a
+human.
 
 ## Gate state (2026-09-14)
+
+- **Ticket 07 (group-g) gate**: `pnpm check:all` exits 1 on pre-existing failures only. Desktop unit
+  tests 65 failed / 1516 passed across 20 files; the same 20 files on clean HEAD fail the same 65.
+  `verify-md-links` fails on 18 links in `.scratch/group-c-club-information/RECONCILIATION.md` and
+  `.scratch/group-d-player-and-staff-records/issues/02-staff-screens-scope.md`, both committed earlier.
+  Details in [reports/group-g-match-day.md](reports/group-g-match-day.md).
 
 - **`pnpm check:all`**: pre-existing failures only — no regression from today's work (commits
   `b0b8f33`, `d6b44a4`, `ac553d6`, `6a07401`, `6a830f3`, `908fd0f`, `e6f0c6f`, `dd46e8d`):
@@ -28,6 +36,8 @@ Group G (Match Day and Match Review) ingested — charting in progress.
 6. **group-a-reconciliation**: 03-04 resolved.
 7. **team-scout-report**: complete 2026-09-13.
 8. **group-e-squad-management**: pending — next unmatched spec group.
+9. **group-g-match-day**: 01–07 resolved (07 Screen 97 live tactics/substitutions, 2026-09-14);
+   08–12 open; 13 needs-triage; `decision-request-01-live-change-tactics-scope.md` open.
 
 Shipped and closed:
 

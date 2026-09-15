@@ -22,7 +22,12 @@ import {
 import { MatchDayScreen } from "../../../src/renderer/match/MatchDayScreen.js";
 import { KeyboardSpine } from "../../../src/renderer/keyboard/KeyboardSpine.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
-import { setActiveMatch, clearActiveMatch } from "../../../src/renderer/match/session.js";
+import {
+  clearActiveMatch,
+  getLiveTactic,
+  recordLiveTactic,
+  setActiveMatch,
+} from "../../../src/renderer/match/session.js";
 import { resetActionHandlers, dispatchAction } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { teachingSplashStorageKey } from "../../../src/renderer/discoverability/TeachingSplash.js";
@@ -511,5 +516,32 @@ describe("AC-33 — the panel layer composes with splash/palette/help Escape sta
     await waitFor(() => expect(panelContent()).toBeNull());
     keyDown("g", {}, "KeyG");
     expect(screen.getByText("Go to:")).toBeTruthy();
+  });
+});
+describe("Screen 97 — the panel and the standalone screens share one live line-up", () => {
+  it("drafts a tactics change from the line-up a standalone substitution left, not the pre-match one", async () => {
+    const substituted = fullTactic();
+    const slots = substituted.slots.map((slot, index) => (index === 3 ? { ...slot, playerId: rid("bench-1") } : slot));
+    recordLiveTactic(rid("s1"), { ...substituted, slots } as never);
+
+    const submissions = await mountMatchDayWithSpine(session());
+    openPanel();
+    fireEvent.click(screen.getByRole("button", { name: "Apply tactics change" }));
+
+    await waitFor(() => expect(submissions.calls).toHaveLength(1));
+    const command = submissions.calls[0]!.payload.command as { tactic: { slots: Array<{ playerId: string }> } };
+    expect(command.tactic.slots[3]!.playerId).toBe("bench-1");
+    expect(command.tactic.slots.some((slot) => slot.playerId === "on-3")).toBe(false);
+  });
+
+  it("records a panel substitution so the standalone screens start from it", async () => {
+    const submissions = await mountMatchDayWithSpine(session());
+    openPanel();
+    act(() => void dispatchAction("set-live-substitute-off", { playerId: rid("on-2") }));
+    act(() => void dispatchAction("set-live-substitute-in", { playerId: rid("bench-2") }));
+    act(() => void dispatchAction("make-substitution"));
+
+    await waitFor(() => expect(submissions.calls).toHaveLength(1));
+    await waitFor(() => expect(getLiveTactic(rid("s1"))?.slots[2]?.playerId).toBe("bench-2"));
   });
 });

@@ -26,6 +26,7 @@ import { substitutionErrorLabel, validateLiveSubstitution } from "./substitution
 import { useMatchContext, type MatchCommand } from "./MatchProvider.js";
 import { useCommentaryContext } from "./CommentaryProvider.js";
 import { tacticsAtom, useAtomValue } from "../rpc.js";
+import { getLiveTactic, recordLiveTactic } from "./session.js";
 import type { MatchControlContextValue, PanelMode } from "./matchControlContext.js";
 
 export interface MatchControlInput {
@@ -102,11 +103,14 @@ export const useMatchControl = ({
     if (tacticsResult._tag === "Success") {
       const view = tacticsResult.value;
       setSquad(view.squad);
-      if (view.tactic) setTactic(view.tactic);
+      // The tactic last sent to the match wins over the pre-match one: a substitution made on the
+      // standalone screens must not come back undone by this panel's next tactics change.
+      const shared = getLiveTactic(saveId) ?? view.tactic;
+      if (shared) setTactic(shared);
     } else if (tacticsResult._tag === "Failure") {
       setStatus("Failed to load squad/tactic for live control");
     }
-  }, [tacticsResult]);
+  }, [tacticsResult, saveId]);
 
   // The shared submission path: run the command through the provider's mutation seam and render
   // the same status sentences a remote refusal maps to ("applied", silently rejected).
@@ -122,6 +126,7 @@ export const useMatchControl = ({
 
   const onApplyTactics = (): void => {
     if (!tactic) return;
+    recordLiveTactic(saveId, tactic);
     void runSubmission({ _tag: "ChangeTactics", clubId: homeClubId, tactic });
   };
 
@@ -151,14 +156,14 @@ export const useMatchControl = ({
     });
     // Optimistic local update so the on-pitch/bench split is right for the *next* substitution even
     // before the next poll's homeSubs confirms the server accepted it.
-    setTactic(
-      new Tactic({
-        ...tactic,
-        slots: tactic.slots.map((slot: TacticSlot) =>
-          slot.playerId === outPlayerId ? { ...slot, playerId: inPlayerId } : slot,
-        ),
-      }),
-    );
+    const substituted = new Tactic({
+      ...tactic,
+      slots: tactic.slots.map((slot: TacticSlot) =>
+        slot.playerId === outPlayerId ? { ...slot, playerId: inPlayerId } : slot,
+      ),
+    });
+    setTactic(substituted);
+    recordLiveTactic(saveId, substituted);
     setOutPlayerId(PlayerId.make(""));
     setInPlayerId(PlayerId.make(""));
   };

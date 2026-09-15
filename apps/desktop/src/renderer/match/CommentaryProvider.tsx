@@ -15,6 +15,7 @@ import type {
 import type { RpcClientError } from "../rpc/errors.js";
 import { submitMatchCommandMutation, useAtomSet } from "../rpc.js";
 import { useMatchContext, type MatchCommand } from "./MatchProvider.js";
+import { recordRevealedMinute, recordRevealedScore } from "./session.js";
 
 export interface CommentaryState {
   readonly revealed: ReadonlyArray<CommentaryLineView>;
@@ -87,12 +88,14 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     if (view.isComplete) streamCompleteRef.current = true;
     setHomeScore(view.homeScore);
     setAwayScore(view.awayScore);
-  }, []);
+    recordRevealedScore(matchState.saveId, { homeScore: view.homeScore, awayScore: view.awayScore });
+  }, [matchState.saveId]);
 
   const revealLine = useCallback((line: CommentaryLineView): void => {
     setRevealed((lines) => [...lines, line]);
     setCurrentMinute(line.minute);
-  }, []);
+    recordRevealedMinute(matchState.saveId, line.minute);
+  }, [matchState.saveId]);
 
   const setPaused = useCallback(
     (paused: boolean) => matchActions.setPhasePaused(paused),

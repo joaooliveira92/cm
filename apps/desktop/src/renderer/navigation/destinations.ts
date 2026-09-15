@@ -58,7 +58,14 @@ export type CareerDestination =
    * Player detail — a drill-down to a specific player's profile. Needs both save and player
    * identity, so excluded from save-scoped nav like the club drill-downs.
    */
-  | { readonly type: "playerDetail"; readonly saveId: SaveId; readonly playerId: PlayerId };
+  | { readonly type: "playerDetail"; readonly saveId: SaveId; readonly playerId: PlayerId }
+  /**
+   * The live-match command screens (Screen 97) — reached from the live Match day section, never
+   * from the navbar: a save alone is not enough, they need a match in play, so they are excluded
+   * from save-scoped nav like the drill-downs above.
+   */
+  | { readonly type: "matchMatchTactics"; readonly saveId: SaveId }
+  | { readonly type: "matchSubstitutions"; readonly saveId: SaveId };
 
 export type CreationStepDestination =
   | { readonly type: "createLeagues" }
@@ -110,7 +117,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "playerDetail"
+  "teamScoutReport" | "clubStaff" | "playerDetail" | "matchMatchTactics" | "matchSubstitutions"
 >;
 
 /**
@@ -181,6 +188,8 @@ export type ResolvedDestination =
   | { readonly to: "/career/$saveId/competitions"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/nations"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/clubs"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/match-match-tactics"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/match-substitutions"; readonly params: { readonly saveId: SaveId } }
   | {
       readonly to: "/career/$saveId/club/$clubId/scout-report";
       readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
@@ -235,6 +244,8 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "teamScoutReport":
     case "clubStaff":
     case "playerDetail":
+    case "matchMatchTactics":
+    case "matchSubstitutions":
       return careerRoute(destination);
   }
 };
@@ -310,5 +321,9 @@ const careerRoute = (
         to: "/career/$saveId/player/$playerId/profile",
         params: { saveId: destination.saveId, playerId: destination.playerId },
       };
+    case "matchMatchTactics":
+      return { to: "/career/$saveId/match-match-tactics", params: { saveId: destination.saveId } };
+    case "matchSubstitutions":
+      return { to: "/career/$saveId/match-substitutions", params: { saveId: destination.saveId } };
   }
 };

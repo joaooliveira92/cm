@@ -20,6 +20,7 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
 - [04 — Team Sheet screen](issues/04-team-sheet-screen.md): Implemented. New `getTeamSheet` RPC + screens for both team lineups with formation and substitutes.
 - [05 — Match Preview screen](issues/05-match-preview-screen.md): Implemented. Fixture context, recent form, head-to-head from existing fixture data.
 - [06 — Standalone Commentary screen](issues/06-standalone-commentary-screen.md): Implemented. Commentary lines with polling for live updates.
+- [07 — Tactics/Substitutions UI](issues/07-tactics-substitutions-ui.md): Implemented. Standalone live screens share one live tactic with the Match day panel; tab-bar reachability deferred to 13. Follow-ups: [12](issues/12-live-panel-controlled-club.md), [13](issues/13-mount-live-match-tab-bar.md), [decision request 01](decision-request-01-live-change-tactics-scope.md) (live Change Tactics scope).
 - [Spec published](spec.md): Reconciled spec marking handoff from charting to slicing.
 - [Implementation tickets](issues/): 8 vertical slices (04–11), all unblocked.
 
