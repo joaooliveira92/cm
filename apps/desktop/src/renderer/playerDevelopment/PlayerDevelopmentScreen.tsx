@@ -1,23 +1,16 @@
 import { type PlayerId, type SaveId } from "@cm-clone/contracts";
-import { CATEGORIES } from "@cm-clone/shared";
 import { FOCUS_RING } from "../focus.js";
 import {
   describeRpcError,
   playerProfileAtom,
-  setTrainingFocusMutation,
+  squadAtom,
   typedError,
-  useAtom,
   useAtomValue,
 } from "../rpc.js";
+import { TrainingFocusControl } from "../training/TrainingFocusControl.js";
+import { offeredTrainingFocuses } from "../training/trainingFocusOptions.js";
 
 const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
-
-const CATEGORY_LABELS: Record<string, string> = {
-  goalkeeping: "Goalkeeping",
-  mental: "Mental",
-  physical: "Physical",
-  technical: "Technical",
-};
 
 export const PlayerDevelopmentScreen = ({
   saveId,
@@ -27,7 +20,6 @@ export const PlayerDevelopmentScreen = ({
   readonly playerId: PlayerId;
 }) => {
   const profileResult = useAtomValue(playerProfileAtom(saveId, playerId));
-  const [_, setFocus] = useAtom(setTrainingFocusMutation);
 
   if (profileResult._tag === "Initial") {
     return (
@@ -67,22 +59,8 @@ export const PlayerDevelopmentScreen = ({
         <p className="mt-2 text-sm text-text-secondary">
           Set a training focus to bias Player Development for one Category this season.
         </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            className="rounded border px-3 py-1 text-sm hover:bg-active"
-            onClick={() => setFocus({ saveId, playerId, focus: null })}
-          >
-            None
-          </button>
-          {CATEGORIES.map((category) => (
-            <button
-              key={category}
-              className="rounded border px-3 py-1 text-sm hover:bg-active"
-              onClick={() => setFocus({ saveId, playerId, focus: category })}
-            >
-              {CATEGORY_LABELS[category]}
-            </button>
-          ))}
+        <div className="mt-3">
+          <TrainingFocusSection saveId={saveId} playerId={playerId} />
         </div>
       </section>
 
@@ -94,5 +72,48 @@ export const PlayerDevelopmentScreen = ({
         </p>
       </section>
     </main>
+  );
+};
+
+/**
+ * The Training Focus section's body. The player profile read carries no Training Focus, so the
+ * current value comes from the own-club squad read — the same one the Individual Training Plan
+ * (Screen 108) uses. A player outside that squad is not the manager's to focus.
+ */
+const TrainingFocusSection = ({
+  saveId,
+  playerId,
+}: {
+  readonly saveId: SaveId;
+  readonly playerId: PlayerId;
+}) => {
+  const squadResult = useAtomValue(squadAtom(saveId));
+  if (squadResult._tag === "Initial") {
+    return <p className="text-sm text-text-secondary">Loading Training Focus...</p>;
+  }
+  if (squadResult._tag === "Failure") {
+    const error = typedError(squadResult);
+    return (
+      <p className="text-sm text-text-secondary">
+        {error === null ? "Training Focus could not be loaded." : describeRpcError(error)}
+      </p>
+    );
+  }
+  const player = squadResult.value.players.find((candidate) => candidate.id === playerId);
+  if (player === undefined) {
+    return (
+      <p className="text-sm text-text-secondary">
+        Training Focus can only be set for players on your club.
+      </p>
+    );
+  }
+  return (
+    <TrainingFocusControl
+      saveId={saveId}
+      playerId={player.id}
+      playerName={`${player.firstName} ${player.lastName}`}
+      current={player.trainingFocus}
+      offered={offeredTrainingFocuses(player.attributes)}
+    />
   );
 };

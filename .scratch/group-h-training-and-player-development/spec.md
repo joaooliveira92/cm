@@ -29,7 +29,7 @@ Produce a reconciled spec that states per screen what is already built and what 
 
 - **Screen 105 (Training Overview) is the landing page** — Aggregates data from the other 5 screens. Built last when all sub-screens exist.
 
-- **Screen 108 stays as a single-Category Training Focus toggle** — No richer UI for v1. The existing `setTrainingFocus` RPC supports one `Technical | Mental | Physical | Goalkeeping | null` toggle per player. Enhancing this to a multi-week schedule planner is deferred.
+- **Screen 108 stays as a single-Category Training Focus toggle** — No richer UI for v1. The existing `setTrainingFocus` RPC supports one `Technical | Mental | Physical | Goalkeeping | null` toggle per player. Enhancing this to a multi-week schedule planner is deferred. Screen 108 lives at `/career/$saveId/training/plan/$playerId`, reached from each Workload and Recovery row; current focus is read from `getSquad`. Goalkeeping is offered only to players carrying goalkeeping Attributes (CONTEXT.md, Training Focus); that rule is applied in the renderer only until [ticket 10](issues/10-enforce-goalkeeping-focus-rule.md) moves it into main. An off-rule focus already saved shows pressed and disabled. (Ticket 06.)
 
 - **Screen 111 uses existing coach data** — The coach model (`coachModifier`, `staff.ts`) attaches one coach per club. UI lists assigned coach with their quality rating and specialty. No new coaching hierarchy or assignment editing in v1.
 

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkloadScreen } from "../../../src/renderer/training/WorkloadScreen.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
@@ -11,9 +11,12 @@ import {
   rid,
 } from "./fixtures.js";
 
+let navigateSpy = vi.fn();
+
 beforeEach(() => {
+  navigateSpy = vi.fn();
   bindRouter({
-    navigate: vi.fn(),
+    navigate: navigateSpy,
     history: { back: vi.fn(), forward: vi.fn(), canGoBack: () => false },
   } as never);
 });
@@ -96,5 +99,21 @@ describe("ticket 05 — Workload and Recovery screen shows Condition and recover
     expect(await within(main).findByText("That save could not be found.")).toBeTruthy();
     expect(screen.queryByRole("list")).toBeNull();
     expect(screen.queryByRole("meter")).toBeNull();
+  });
+});
+
+describe("ticket 06 — each Workload and Recovery row opens that player's Individual Training Plan", () => {
+  it("the row's Training plan button navigates to the player's training plan route", async () => {
+    respondWithWorkload(mixedWorkloadView());
+    renderScreen();
+
+    const list = await screen.findByRole("list", { name: "Player workload" });
+    const row = within(list).getByRole("listitem", { name: "Ana Reis" });
+    fireEvent.click(within(row).getByRole("button", { name: "Ana Reis training plan" }), { detail: 1 });
+
+    expect(navigateSpy).toHaveBeenCalledWith({
+      to: "/career/$saveId/training/plan/$playerId",
+      params: { saveId: rid("s1"), playerId: "p2" },
+    });
   });
 });

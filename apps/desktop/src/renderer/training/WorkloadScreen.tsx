@@ -11,12 +11,15 @@
  * - `ready` — one row per player; an empty club shows a single line instead.
  * - `error` — the read failed (save not found, transport error).
  *
- * A terminal reading surface: no actions, no row focus. Reached from the Coaching Assignments
+ * Each row's one action is a "Training plan" button opening that player's Individual Training Plan
+ * (Screen 108); rows themselves take no focus. Reached from the Coaching Assignments
  * screen's "Workload and recovery" button at `/career/$saveId/training/workload`; it registers under
  * the `training` screen scope, as the tactics editor does under `tactics`.
  */
 import { type SaveId } from "@cm-clone/contracts";
+import { Button } from "../components/ui/button.js";
 import { FOCUS_RING } from "../focus.js";
+import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import {
   describeRpcError,
   typedError,
@@ -69,7 +72,7 @@ export const WorkloadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             <li
               key={player.id}
               aria-label={name}
-              className="grid grid-cols-[minmax(10rem,16rem)_1fr] items-center gap-6 rounded-panel border border-panel-border bg-card p-4 text-card-foreground shadow-panel"
+              className="grid grid-cols-[minmax(10rem,16rem)_1fr_auto] items-center gap-6 rounded-panel border border-panel-border bg-card p-4 text-card-foreground shadow-panel"
             >
               <span className="truncate font-semibold text-text-primary">{name}</span>
               <WorkloadGauge
@@ -78,6 +81,19 @@ export const WorkloadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                 recovery={player.recovery}
                 lastInjurySeverity={player.lastInjurySeverity}
               />
+              <Button
+                type="button"
+                variant="secondary"
+                aria-label={`${name} training plan`}
+                onClick={(event) =>
+                  navigateCareer(
+                    { type: "trainingPlan", saveId, playerId: player.id },
+                    intentOfClick(event),
+                  )
+                }
+              >
+                Training plan
+              </Button>
             </li>
           );
         })}

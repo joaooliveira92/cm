@@ -2,8 +2,8 @@
 
 ## Immediate next action
 
-**group-h-training-and-player-development** ticket 06 (individual training plan). Tickets 04-05
-shipped; 06-08 ready-for-agent; 09 blocked on 04-08.
+**group-h-training-and-player-development** ticket 07 (performance report). Tickets 04-06
+shipped; 07, 08 and follow-up 10 ready-for-agent; 09 blocked on 04-08.
 
 ## Gate state (2026-09-14)
 
@@ -47,8 +47,8 @@ shipped; 06-08 ready-for-agent; 09 blocked on 04-08.
     10 needs-info on decision request 03; 12, 13, 15, 16, 17 resolved; 14 claimed; 13 mounted tab bar,
     17 stoppage minute formatting shipped 2026-09-15; decision requests 01, 02, 03 open.
 10. **group-h-training-and-player-development**: 01-03 resolved. Spec published. 04 completed
-    (coaching assignments, 2026-09-15). 05 completed (workload and recovery, 2026-09-15). 06-08
-    ready-for-agent; 09 blocked on 04-08.
+    (coaching assignments, 2026-09-15). 05 completed (workload and recovery, 2026-09-15). 06 completed
+    (individual training plan, 2026-09-15). 07, 08, 10 ready-for-agent; 09 blocked on 04-08.
 
 Shipped and closed:
 

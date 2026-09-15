@@ -32,6 +32,7 @@ import { PlayerScoutReportScreen } from "../playerScoutReport/PlayerScoutReportS
 import { PlayerCoachReportScreen } from "../playerCoachReport/PlayerCoachReportScreen.js";
 import { TrainingScreen } from "../training/TrainingScreen.js";
 import { WorkloadScreen } from "../training/WorkloadScreen.js";
+import { TrainingPlanScreen } from "../training/TrainingPlanScreen.js";
 import { ClubInfoScreen } from "../clubInfo/ClubInfoScreen.js";
 import { BoardConfidenceScreen } from "../boardConfidence/BoardConfidenceScreen.js";
 import { ClubHistoryScreen } from "../clubHistory/ClubHistoryScreen.js";
@@ -257,6 +258,15 @@ const trainingWorkloadRoute = createRoute({
   getParentRoute: () => trainingRoute,
   path: "workload",
   component: () => <CareerChildView screenId="training" Screen={WorkloadScreen} />,
+});
+
+/** Individual Training Plan (Screen 108): one own-club player's Training Focus, beneath the Training
+ *  area and in its `training` screen scope. The player segment decodes through the same boundary as
+ *  the `player/$playerId` surfaces. */
+const trainingPlanRoute = createRoute({
+  getParentRoute: () => trainingRoute,
+  path: "plan/$playerId",
+  component: () => <CareerPlayerChildView screenId="training" Screen={TrainingPlanScreen} />,
 });
 
 /**
@@ -704,7 +714,7 @@ const routeTree = rootRoute.addChildren([
       seasonSummaryRoute,
       managerRoute,
       newsRoute,
-      trainingRoute.addChildren([trainingIndexRoute, trainingWorkloadRoute]),
+      trainingRoute.addChildren([trainingIndexRoute, trainingWorkloadRoute, trainingPlanRoute]),
       clubInfoRoute,
       boardConfidenceRoute,
       clubHistoryRoute,

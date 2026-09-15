@@ -124,6 +124,7 @@ export const navigate = (destination: NavigationDestination): void => {
       });
       break;
     case "/career/$saveId/player/$playerId/profile":
+    case "/career/$saveId/training/plan/$playerId":
       getRouter().navigate({
         to: resolved.to,
         params: { saveId: resolved.params.saveId, playerId: resolved.params.playerId },

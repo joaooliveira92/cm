@@ -8,8 +8,8 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Per-player training plan shows current focus with a clear picker
-- [ ] Set or clear training focus via existing `setTrainingFocus` RPC
-- [ ] Plan summary card component is extractable for reuse in Screens 105 and 114
+- [x] Per-player training plan shows current focus with a clear picker
+- [x] Set or clear training focus via existing `setTrainingFocus` RPC
+- [x] Plan summary card component is extractable for reuse in Screens 105 and 114

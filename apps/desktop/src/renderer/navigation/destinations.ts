@@ -29,6 +29,10 @@ export type CareerDestination =
   /** Workload and Recovery (Screen 112) — a sub-surface of the Training area reached from Coaching
    *  Assignments, shaped like `tacticsEditor`: no `g` binding, not in `CAREER_SCREEN_TYPES`. */
   | { readonly type: "trainingWorkload"; readonly saveId: SaveId }
+  /** Individual Training Plan (Screen 108) — one own-club player's Training Focus, a sub-surface of
+   *  the Training area reached from a Workload and Recovery row. It names its player, so it is
+   *  excluded from save-scoped nav like `playerDetail`. */
+  | { readonly type: "trainingPlan"; readonly saveId: SaveId; readonly playerId: PlayerId }
   | { readonly type: "clubInfo"; readonly saveId: SaveId }
   | { readonly type: "boardConfidence"; readonly saveId: SaveId }
   | { readonly type: "clubHistory"; readonly saveId: SaveId }
@@ -141,7 +145,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "playerDetail" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
+  "teamScoutReport" | "clubStaff" | "playerDetail" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
 >;
 
 /**
@@ -203,6 +207,10 @@ export type ResolvedDestination =
   | {
       readonly to: "/career/$saveId/training/workload";
       readonly params: { readonly saveId: SaveId };
+    }
+  | {
+      readonly to: "/career/$saveId/training/plan/$playerId";
+      readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
     }
   | { readonly to: "/career/$saveId/club-info"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/board-confidence"; readonly params: { readonly saveId: SaveId } }
@@ -267,6 +275,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "news":
     case "training":
     case "trainingWorkload":
+    case "trainingPlan":
     case "clubInfo":
     case "boardConfidence":
     case "clubHistory":
@@ -330,6 +339,11 @@ const careerRoute = (
       return {
         to: "/career/$saveId/training/workload",
         params: { saveId: destination.saveId },
+      };
+    case "trainingPlan":
+      return {
+        to: "/career/$saveId/training/plan/$playerId",
+        params: { saveId: destination.saveId, playerId: destination.playerId },
       };
     case "clubInfo":
       return { to: "/career/$saveId/club-info", params: { saveId: destination.saveId } };

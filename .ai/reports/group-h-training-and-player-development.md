@@ -3,9 +3,9 @@
 ## Sprint
 
 - Effort: `.scratch/group-h-training-and-player-development/`
-- Tickets closed: `05-workload-and-recovery` (Screen 112)
+- Tickets closed: `05-workload-and-recovery` (Screen 112, `8ec0c94`), `06-individual-training-plan` (Screen 108)
 - Branch: `dev`
-- Commits: see the commit that adds this report
+- Commits: `8ec0c94` (ticket 05); ticket 06 in the commit that adds its section below
 
 ## Acceptance criteria → evidence
 
@@ -98,3 +98,57 @@ Reviewer verdict: APPROVE (no blocker or high). Findings addressed before the ga
 - T3 (low): renderer Severity and indicator types now derive from `WorkloadPlayerView`.
 
 Push and PR: not done. Commit is local on `dev`.
+
+---
+
+# Ticket 06: Individual Training Plan (Screen 108)
+
+## Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Per-player training plan shows current focus with a clear picker | `test/renderer/training/training-plan-screen.test.tsx` (focus read from `getSquad`, Goalkeeping offered only with goalkeeping Attributes, loading, error, not-your-player), `training-focus-picker.test.tsx` (incl. off-rule current focus pressed and disabled) | pass |
+| 2 | Set or clear training focus via existing `setTrainingFocus` RPC | `training-plan-screen.test.tsx` (set payload and re-read, clear sends `focus: null`, pending, error, cross-player error isolation), `test/renderer/playerDevelopment/player-development-screen.test.tsx` | pass |
+| 3 | Plan summary card component is extractable for reuse in Screens 105 and 114 | `training-plan-summary-card.test.tsx` renders it with no provider | pass |
+| — | Reachable path | `workload-screen.test.tsx`, `adapter-coverage.test.ts`, `e2e/training-plan.spec.ts` | pass |
+
+## Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` (before review repairs) | exit 1; typecheck, effect-lint, verify-db-schema pass; lint and verify-md-links pre-existing only; shared 457/457, contracts 97/97, game-engine 50/50; desktop 70 failed / 1650 passed. The 70 failing tests are identical by name to the ticket 05 run above (69 on clean HEAD plus the other session's badge-library failure) |
+| focused, after repairs | `vitest run test/renderer/training test/renderer/playerDevelopment` (desktop) | 11 files, 71 tests passed |
+| typecheck, after repairs | `pnpm --filter @cm-clone/desktop typecheck` | 0 errors |
+| verify-md-links, after repairs | `tsx scripts/verify-md-links.ts` | 18 broken links, the recorded baseline |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | after repairs: 10 failed / 26 passed; `training-plan.spec.ts` and `training-workload.spec.ts` pass; failing specs identical to clean HEAD `349bafc` |
+| determinism | — | not applicable: no simulation or Player Development rule change |
+| save compatibility | — | not applicable: no schema change; no new RPC |
+
+## Behavior changes
+
+- New screen at `/career/$saveId/training/plan/$playerId`, reached from a "Training plan" button on
+  each Workload and Recovery row.
+- Player Development's Training Focus buttons are replaced by the shared picker: it now shows the
+  current focus, hides Goalkeeping for players without goalkeeping Attributes, and shows a message
+  instead of always-failing buttons for another club's player.
+- The lint error at `test/renderer/training/fixtures.ts:2` (ticket 04) is fixed.
+
+## Review
+
+Reviewer verdict: APPROVE. Addressed:
+
+- Finding 2 (medium): an off-rule saved focus (Goalkeeping on an outfield player, possible through
+  the old picker) left nothing pressed. It now shows pressed and disabled; tested.
+- Finding 4 (low): None copy said Player Development "runs unmodified", which ignores the coach
+  modifier. Now "No Category receives a larger share of Player Development".
+- Finding 5 (low): Screen 108 decisions recorded in `spec.md` and the map.
+
+Deferred:
+
+- Finding 1 (medium): `setTrainingFocus` in main does not enforce the Goalkeeping rule. Filed as
+  [ticket 10](../../.scratch/group-h-training-and-player-development/issues/10-enforce-goalkeeping-focus-rule.md).
+- Finding 3 (low): the Training nav item does not highlight on the plan route, matching other
+  player drill-downs.
+- Outside this effort: `apps/desktop/src/renderer/table/squad/playerStatus.tsx:22` imports
+  `@cm-clone/game-engine`, which the engineering contract forbids (from `ce7f3db`). Not filed as a
+  group-h ticket because it belongs to no charted effort; a human should decide where it goes.

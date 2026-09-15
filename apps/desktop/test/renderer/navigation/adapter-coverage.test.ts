@@ -21,6 +21,7 @@ vi.stubGlobal("window", {
 import {
   ClubId as ClubIdSchema,
   MatchId,
+  PlayerId,
   SaveId as SaveIdSchema,
   type ClubId,
   type SaveId,
@@ -61,6 +62,7 @@ const ALL_DESTINATIONS: ReadonlyArray<NavigationDestination> = [
   ...CAREER_SCREEN_TYPES.map((type) => careerDestination(type, save("save-1"))),
   careerDestination("tacticsEditor", save("save-1")),
   careerDestination("trainingWorkload", save("save-1")),
+  { type: "trainingPlan", saveId: save("save-1"), playerId: PlayerId.make("player-3") },
   { type: "teamScoutReport", saveId: save("save-1"), clubId: club("club-7") },
   { type: "clubStaff", saveId: save("save-1"), clubId: club("club-7") },
   { type: "matchMatchTactics", saveId: save("save-1") },
@@ -94,6 +96,15 @@ describe("the navigation adapter reaches the router for every destination", () =
     expect(navigateSpy).toHaveBeenCalledWith({
       to: "/career/$saveId/training/workload",
       params: { saveId: save("save-1") },
+    });
+  });
+
+  it("navigates to a player's Individual Training Plan beneath the Training area (Screen 108)", () => {
+    const navigateSpy = spyRouter();
+    navigate({ type: "trainingPlan", saveId: save("save-1"), playerId: PlayerId.make("player-3") });
+    expect(navigateSpy).toHaveBeenCalledWith({
+      to: "/career/$saveId/training/plan/$playerId",
+      params: { saveId: save("save-1"), playerId: PlayerId.make("player-3") },
     });
   });
 

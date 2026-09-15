@@ -1,5 +1,13 @@
 import { SaveId } from "@cm-clone/contracts";
-import { STAFF_DEPARTMENTS } from "@cm-clone/shared";
+import {
+  FAMILIARITY_TIERS,
+  GOALKEEPING_ATTRIBUTES,
+  HIDDEN_ATTRIBUTES,
+  OUTFIELD_ATTRIBUTES,
+  type STAFF_DEPARTMENTS,
+  STATURE_TIERS,
+  type Category,
+} from "@cm-clone/shared";
 
 /**
  * Training / Coaching Assignments fixtures.
@@ -115,3 +123,63 @@ export const respondWithWorkload = (view: WorkloadViewWire): void => {
     } as never;
   });
 };
+
+/** One player row of the `getSquad` wire view, as the Individual Training Plan (Screen 108) reads it. */
+export interface SquadPlayerWire {
+  readonly id: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly dateOfBirth: string;
+  readonly age: number;
+  readonly attributes: Record<string, number>;
+  readonly positions: ReadonlyArray<{ readonly position: string; readonly familiarity: string }>;
+  readonly overallRating: number;
+  readonly positionRatings: Record<string, number>;
+  readonly condition: number;
+  readonly trainingFocus: Category | null;
+  readonly nationality: string;
+  readonly birthplace: string | null;
+}
+
+export interface SquadViewWire {
+  readonly club: { readonly id: string; readonly name: string; readonly statureTier: string };
+  readonly players: readonly SquadPlayerWire[];
+}
+
+/** A squad player. `goalkeeper` decides whether goalkeeping Attributes are present at all. */
+export const squadPlayer = (
+  id: string,
+  firstName: string,
+  lastName: string,
+  trainingFocus: Category | null,
+  goalkeeper = false,
+): SquadPlayerWire => ({
+  id,
+  firstName,
+  lastName,
+  dateOfBirth: "2000-01-01",
+  age: 25,
+  attributes: {
+    ...Object.fromEntries(OUTFIELD_ATTRIBUTES.map((attribute) => [attribute, 12])),
+    ...(goalkeeper ? Object.fromEntries(GOALKEEPING_ATTRIBUTES.map((attribute) => [attribute, 14])) : {}),
+    ...Object.fromEntries(HIDDEN_ATTRIBUTES.map((attribute) => [attribute, 10])),
+  },
+  positions: [{ position: goalkeeper ? "GK" : "DC", familiarity: FAMILIARITY_TIERS[0] }],
+  overallRating: 70,
+  positionRatings: goalkeeper ? { GK: 70 } : { DC: 70 },
+  condition: 100,
+  trainingFocus,
+  nationality: "Portugal",
+  birthplace: null,
+});
+
+/** An own-club squad with an outfield player on a Technical focus and a goalkeeper on None. */
+export const trainingPlanSquad = (
+  players: readonly SquadPlayerWire[] = [
+    squadPlayer("p1", "Rui", "Costa", "technical"),
+    squadPlayer("p2", "Vitor", "Baia", null, true),
+  ],
+): SquadViewWire => ({
+  club: { id: "me", name: "Test FC", statureTier: STATURE_TIERS[0] },
+  players,
+});
