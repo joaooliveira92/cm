@@ -46,7 +46,13 @@ import {
   getWorkload,
   setTrainingFocus,
 } from "../club/training.js";
-import { assignScout, assignScoutToClub, getScouting, unassignScout } from "../club/scouting.js";
+import {
+  assignScout,
+  assignScoutToClub,
+  getScouting,
+  getScoutingKnowledge,
+  unassignScout,
+} from "../club/scouting.js";
 import { getClubStaff } from "../career/staff.js";
 import { getPlayerContract, getPlayerProfile } from "../career/player.js";
 import { getTeamScoutReadings, getTeamScoutReport } from "../club/teamScoutReport.js";
@@ -339,6 +345,11 @@ const handlers: Record<AppRpcMethod, Handler> = {
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getScouting.payload)(payload);
       return yield* getScouting(ctx.savesDir, saveId);
+    }),
+  getScoutingKnowledge: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getScoutingKnowledge.payload)(payload);
+      return yield* getScoutingKnowledge(ctx.savesDir, saveId);
     }),
   getTeamScoutReport: (payload, ctx) =>
     Effect.gen(function* () {

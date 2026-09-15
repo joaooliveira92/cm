@@ -1,6 +1,7 @@
 import type { ScoutingTargetView } from "@cm-clone/contracts";
 import type { ReactNode } from "react";
 import { Progress } from "../components/ui/progress.js";
+import { scoutingProgressLabel } from "./ScoutingCoverageSummary.js";
 
 /** What a Scout is observing, in words: a Club, a Player, or nothing. */
 export const targetOf = (scout: ScoutingTargetView): string => {
@@ -18,8 +19,7 @@ export const progressOf = (scout: ScoutingTargetView): string => {
   if (scout.targetClubId !== null) return "Tracked per Player";
   if (scout.playerId === null) return "Not observing";
   if (scout.progress === null) return "Unscouted";
-  if (scout.progress >= 100) return "Fully Scouted";
-  return `${Math.floor(scout.progress)}%`;
+  return scoutingProgressLabel(scout.progress);
 };
 
 /**

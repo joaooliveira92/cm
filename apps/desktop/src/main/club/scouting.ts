@@ -1,14 +1,17 @@
 import { type ClubId, type PlayerId, type SaveId } from "@cm-clone/contracts";
 import {
   ClubNotFoundError,
+  KnowledgeClubView,
+  KnowledgePlayerView,
   OwnClubNotScoutableError,
   PlayerNotFoundError,
+  ScoutingKnowledgeView,
   ScoutingView,
   ScoutingTargetView,
   StaleReportError,
   UnknownScoutError,
 } from "@cm-clone/contracts";
-import { FULLY_SCOUTED, nextProgress } from "@cm-clone/shared";
+import { FULLY_SCOUTED, knowledgeConfidenceFor, nextProgress, squadCoverage } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -212,6 +215,93 @@ const readScouting = Effect.gen(function* () {
           targetClubName: row.targetClubId === null ? null : nameOf(row.targetClubId),
           // Absence of a progress row means Unscouted, which is what a null reports.
           progress: row.progress,
+        }),
+    ),
+  });
+});
+
+/**
+ * Scouting Knowledge (Screen 126): what the human's club has scouted, as a Club view and a Player view.
+ *
+ * Read from `scouting_progress`, which is sparse, so the Player view is exactly the Players with a
+ * row and the Club view is exactly the Clubs holding one of them. A Club's coverage is `squadCoverage`
+ * over its **whole** current squad, the same measure the Team Scout Report's Knowledge Confidence
+ * rests on, so Unscouted Players are padded in at zero rather than left out.
+ *
+ * Own-squad Players are filtered on the Player's current club, not only on who scouted them: a
+ * Player the club scouted and then signed keeps their old row until something discards it, and must
+ * not appear. Nothing here reads an Attribute or a rating. No human club, or no rows, is the empty
+ * result rather than an error.
+ */
+export const getScoutingKnowledge = (savesDir: string, saveId: SaveId) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    readScoutingKnowledge.pipe(
+      Effect.provide(SqliteClient.layer({ filename, readonly: true })),
+      Effect.scoped,
+    ),
+  );
+
+const EMPTY_KNOWLEDGE = new ScoutingKnowledgeView({ clubs: [], players: [] });
+
+const readScoutingKnowledge = Effect.gen(function* () {
+  const sql = yield* SqlClient;
+  const clubId = yield* loadHumanClubId;
+  if (clubId === null) return EMPTY_KNOWLEDGE;
+
+  const scouted = yield* sql<{
+    playerId: PlayerId;
+    firstName: string;
+    lastName: string;
+    clubId: ClubId | null;
+    progress: number;
+  }>`SELECT p.id as "playerId", p.first_name as "firstName", p.last_name as "lastName",
+            p.club_id as "clubId", sp.progress
+     FROM scouting_progress sp
+     JOIN players p ON p.id = sp.player_id
+     WHERE sp.club_id = ${clubId} AND sp.progress > 0
+       AND (p.club_id IS NULL OR p.club_id <> ${clubId})
+     ORDER BY p.last_name ASC, p.first_name ASC, p.id ASC`;
+  if (scouted.length === 0) return EMPTY_KNOWLEDGE;
+
+  const clubIds = [...new Set(scouted.flatMap((row) => (row.clubId === null ? [] : [row.clubId])))];
+  const squadSizes =
+    clubIds.length === 0
+      ? []
+      : yield* sql<{ clubId: ClubId; squadSize: number }>`
+          SELECT club_id as "clubId", COUNT(*) as "squadSize" FROM players
+          WHERE ${sql.in("club_id", clubIds)} GROUP BY club_id`;
+  const sizeOf = new Map(squadSizes.map((row) => [row.clubId, row.squadSize]));
+
+  const nameOf = yield* displayNames;
+  const clubs = clubIds
+    .map((id) => {
+      const progresses = scouted.filter((row) => row.clubId === id).map((row) => row.progress);
+      const squadSize = sizeOf.get(id) ?? progresses.length;
+      // Unscouted squad members hold no row; they enter the coverage as zero.
+      const squad = [
+        ...progresses.map((progress) => ({ progress })),
+        ...Array.from({ length: Math.max(0, squadSize - progresses.length) }, () => ({ progress: 0 })),
+      ];
+      const coverage = squadCoverage(squad);
+      return new KnowledgeClubView({
+        clubId: id,
+        clubName: nameOf(id),
+        squadSize,
+        scoutedCount: progresses.length,
+        fullyScoutedCount: progresses.filter((progress) => progress >= FULLY_SCOUTED).length,
+        coverage,
+        knowledgeConfidence: knowledgeConfidenceFor(coverage),
+      });
+    })
+    .sort((a, b) => a.clubName.localeCompare(b.clubName) || a.clubId.localeCompare(b.clubId));
+
+  return new ScoutingKnowledgeView({
+    clubs,
+    players: scouted.map(
+      (row) =>
+        new KnowledgePlayerView({
+          ...row,
+          clubName: row.clubId === null ? null : nameOf(row.clubId),
         }),
     ),
   });

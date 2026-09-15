@@ -104,6 +104,7 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/shortlist":
     case "/career/$saveId/scouting":
     case "/career/$saveId/scouting-assignment":
+    case "/career/$saveId/scouting-knowledge":
     case "/career/$saveId/player-search":
     case "/career/$saveId/staff-search":
     case "/career/$saveId/competitions":

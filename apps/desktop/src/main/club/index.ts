@@ -28,6 +28,7 @@ export {
   discardScoutingForClubs,
   discardScoutingForPlayers,
   getScouting,
+  getScoutingKnowledge,
   unassignScout,
 } from "./scouting.js";
 export { getSquad, loadSquadPlayers, loadUserClub } from "./squad.js";

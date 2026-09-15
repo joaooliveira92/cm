@@ -39,6 +39,7 @@ describe("nav route index (spec §6 rule 1 & §8)", () => {
         "manager",
         "news",
         "scoutingAssignment",
+        "scoutingKnowledge",
       ]),
     );
   });

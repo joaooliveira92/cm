@@ -29,6 +29,7 @@ scope for v1, and in what order the in-scope screens get built.
 - [Implementation tickets](issues/): 3 vertical slices (04-06); 06 blocked on 04 and 05. 07 added during 04.
 - [04 — Scouting Assignment screen](issues/04-scouting-assignment-screen.md): shipped at `/scouting-assignment`. Club assignments take `expectedReportId` from the Club's `getTeamScoutReport`; a Club target reads "Tracked per Player".
 - [07 — Typed RPC errors survive the IPC boundary](issues/07-typed-rpc-errors-survive-ipc.md): shipped. Found in 04: every typed error reached the renderer as `{ name: "Error" }`. `handleRpc` now encodes failures with the method's error schema.
+- [05 — Scouting Knowledge screen](issues/05-scouting-knowledge-screen.md): shipped at `/scouting-knowledge`. One read, `getScoutingKnowledge`, gives per-Club coverage and Knowledge Confidence over the whole squad and per-Player Scouting Progress, with no figure. Knowledge Confidence now also reads live per Club (CONTEXT.md).
 
 ## Not yet specified
 

@@ -10,6 +10,7 @@ import {
   SaveArchivedError,
   SaveId,
   SaveNotFoundError,
+  ScoutingKnowledgeView,
   ScoutingView,
   StaleReportError,
   TeamScoutReadingsView,
@@ -85,6 +86,15 @@ export const ScoutingRpcs = {
   getScouting: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: ScoutingView,
+    error: Schema.Union([SaveNotFoundError]),
+  },
+  /** Scouting Knowledge (Screen 126): per Club with a scouted Player, the count scouted, coverage and
+   * Knowledge Confidence; per scouted Player, name, Club and Scouting Progress. A save with no
+   * scouting answers with two empty lists rather than an error, and own-squad Players never appear.
+   * A pure read, so an Archived Save still answers it. */
+  getScoutingKnowledge: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: ScoutingKnowledgeView,
     error: Schema.Union([SaveNotFoundError]),
   },
 } as const;

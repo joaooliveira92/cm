@@ -1,5 +1,7 @@
 import path from "node:path";
+import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect, Schema } from "effect";
+import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { createSave } from "../src/main/world/index.js";
 import { advanceThroughBoundary } from "../test/main/boundary-helpers.js";
 
@@ -32,6 +34,43 @@ export const seedFresh = (savesDir: string) => run(createSeedSave(savesDir, "See
 /** A save with an arbitrary name — used where a test needs a specific continue-list label
  *  (duplicate names, the rebind journey's relaunch target). */
 export const seedNamed = (savesDir: string, name: string) => run(createSeedSave(savesDir, name));
+
+/**
+ * A fresh save whose club has already scouted two rival Clubs: the first Club's first two Players at
+ * 40 and 100 (Fully Scouted), and one Player of the second at 15. Progress rows are written directly,
+ * as the main-process tests do, so the seed costs no played Matchday.
+ */
+export const seedScouted = (savesDir: string) =>
+  run(
+    Effect.gen(function* () {
+      const id = yield* createSeedSave(savesDir, "Seed: scouted");
+      yield* Effect.gen(function* () {
+        const sql = yield* SqlClient;
+        const user = yield* sql<{ id: string }>`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`;
+        const rivals = yield* sql<{ id: string }>`
+          SELECT DISTINCT c.id FROM clubs c JOIN players p ON p.club_id = c.id
+          WHERE c.is_user_club = 0 ORDER BY c.id LIMIT 2`;
+        const seeded: Array<readonly [string, number]> = [];
+        for (const [index, rival] of rivals.entries()) {
+          const players = yield* sql<{ id: string }>`
+            SELECT id FROM players WHERE club_id = ${rival.id} ORDER BY id LIMIT 2`;
+          const progress = index === 0 ? [40, 100] : [15];
+          for (const [at, value] of progress.entries()) {
+            const player = players[at];
+            if (player !== undefined) seeded.push([player.id, value]);
+          }
+        }
+        for (const [playerId, progress] of seeded) {
+          yield* sql`INSERT INTO scouting_progress (club_id, player_id, progress)
+                     VALUES (${user[0]!.id}, ${playerId}, ${progress})`;
+        }
+      }).pipe(
+        Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${id}.sqlite`) })),
+        Effect.scoped,
+      );
+      return id;
+    }),
+  );
 
 /** A save right at Season start, before the first fixture has been played — the same state as
  *  `seedFresh` (both stand in the pre-season), named for the journeys that lean on it. */

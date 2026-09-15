@@ -153,6 +153,21 @@ export const scoutingAtom = Atom.family((saveId: SaveId) =>
 );
 
 /**
+ * getScoutingKnowledge — `["save", saveId]`, `["scouting", saveId]`.
+ *
+ * Scouting Knowledge (Screen 126): the Clubs and Players the club has scouted. Progress only moves on
+ * an advance, which invalidates the save-wide key; the scouting key is listed too so an assignment
+ * change refreshes it alongside the board.
+ */
+export const scoutingKnowledgeAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getScoutingKnowledge", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), scoutingKey(saveId)]),
+    ),
+  ),
+);
+
+/**
  * getTeamScoutReadings — `["save", saveId]`, `["scouting", saveId]`.
  *
  * Previous Reports. Readings are filed by the scouting commands, which invalidate the scouting key,

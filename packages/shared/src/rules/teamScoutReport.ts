@@ -107,13 +107,16 @@ const estimatedAbility = (member: TargetSquadMember): number => {
 
 /**
  * How much of the target squad the report rests on: total progress over the whole squad, so both
- * scouting one more player and scouting an already-known player further raise it.
+ * scouting one more player and scouting an already-known player further raise it. Only `progress`
+ * is read, so a caller that has no use for positions or ratings (Scouting Knowledge) passes just that.
  *
  * Dividing by the **whole** squad rather than by the scouted subset is what makes the number mean
  * coverage. Averaging over the scouted subset alone would score one exhaustively-known player as
  * complete knowledge of the club, which is exactly backwards.
  */
-export const squadCoverage = (squad: ReadonlyArray<TargetSquadMember>): number => {
+export const squadCoverage = (
+  squad: ReadonlyArray<Pick<TargetSquadMember, "progress">>,
+): number => {
   if (squad.length === 0) return 0;
   const total = squad.reduce((sum, m) => sum + Math.min(FULLY_SCOUTED, Math.max(0, m.progress)), 0);
   return total / (FULLY_SCOUTED * squad.length);

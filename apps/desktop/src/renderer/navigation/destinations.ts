@@ -49,6 +49,9 @@ export type CareerDestination =
   /** Scouting Assignment (Screen 121) — every Scout and what each observes, where assignments are
    *  started and ended. A sub-surface of Scouting: no `g` binding, not in `CAREER_SCREEN_TYPES`. */
   | { readonly type: "scoutingAssignment"; readonly saveId: SaveId }
+  /** Scouting Knowledge (Screen 126) — which Clubs and Players the club has scouted and how far.
+   *  A sub-surface of Scouting: no `g` binding, not in `CAREER_SCREEN_TYPES`. */
+  | { readonly type: "scoutingKnowledge"; readonly saveId: SaveId }
   | { readonly type: "playerSearch"; readonly saveId: SaveId }
   | { readonly type: "staffSearch"; readonly saveId: SaveId }
   | { readonly type: "competitions"; readonly saveId: SaveId }
@@ -243,6 +246,10 @@ export type ResolvedDestination =
       readonly to: "/career/$saveId/scouting-assignment";
       readonly params: { readonly saveId: SaveId };
     }
+  | {
+      readonly to: "/career/$saveId/scouting-knowledge";
+      readonly params: { readonly saveId: SaveId };
+    }
   | { readonly to: "/career/$saveId/player-search"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/staff-search"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/competitions"; readonly params: { readonly saveId: SaveId } }
@@ -314,6 +321,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "shortlist":
     case "scouting":
     case "scoutingAssignment":
+    case "scoutingKnowledge":
     case "playerSearch":
     case "staffSearch":
     case "competitions":
@@ -404,6 +412,11 @@ const careerRoute = (
     case "scoutingAssignment":
       return {
         to: "/career/$saveId/scouting-assignment",
+        params: { saveId: destination.saveId },
+      };
+    case "scoutingKnowledge":
+      return {
+        to: "/career/$saveId/scouting-knowledge",
         params: { saveId: destination.saveId },
       };
     case "playerSearch":

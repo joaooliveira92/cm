@@ -43,6 +43,7 @@ import { StaffOverviewScreen } from "../staffOverview/StaffOverviewScreen.js";
 import { ShortlistScreen } from "../shortlist/ShortlistScreen.js";
 import { ScoutingScreen } from "../scouting/ScoutingScreen.js";
 import { ScoutingAssignmentScreen } from "../scouting/ScoutingAssignmentScreen.js";
+import { ScoutingKnowledgeScreen } from "../scouting/ScoutingKnowledgeScreen.js";
 import { PlayerSearchScreen } from "../playerSearch/PlayerSearchScreen.js";
 import { StaffSearchScreen } from "../staffSearch/StaffSearchScreen.js";
 import { CompetitionsScreen } from "../competitions/CompetitionsScreen.js";
@@ -215,6 +216,12 @@ const scoutingAssignmentRoute = defineCareerChild(
   "scouting-assignment",
   "scouting",
   ScoutingAssignmentScreen,
+);
+/** Scouting Knowledge (Screen 126): a sibling sub-surface of Scouting, in the same `scouting` scope. */
+const scoutingKnowledgeRoute = defineCareerChild(
+  "scouting-knowledge",
+  "scouting",
+  ScoutingKnowledgeScreen,
 );
 const playerSearchRoute = defineCareerChild("player-search", "playerSearch", PlayerSearchScreen);
 const staffSearchRoute = defineCareerChild("staff-search", "staffSearch", StaffSearchScreen);
@@ -754,6 +761,7 @@ const routeTree = rootRoute.addChildren([
       shortlistRoute,
       scoutingRoute,
       scoutingAssignmentRoute,
+      scoutingKnowledgeRoute,
       playerSearchRoute,
       staffSearchRoute,
       competitionsRoute,

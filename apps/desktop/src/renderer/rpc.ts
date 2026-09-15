@@ -20,6 +20,7 @@ export {
   saveSummaryAtom,
   newsInboxAtom,
   scoutingAtom,
+  scoutingKnowledgeAtom,
   teamScoutReportAtom,
   teamScoutReadingsAtom,
   clubStaffAtom,

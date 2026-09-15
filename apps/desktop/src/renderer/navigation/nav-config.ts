@@ -15,6 +15,7 @@ import {
   Globe,
   Info,
   LayoutGrid,
+  Library,
   Newspaper,
   Play,
   ScrollText,
@@ -192,6 +193,12 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
         label: "Scouting Assignment",
         destination: "scoutingAssignment",
         icon: Binoculars,
+      },
+      {
+        id: "recruitment-scouting-knowledge",
+        label: "Scouting Knowledge",
+        destination: "scoutingKnowledge",
+        icon: Library,
       },
       {
         id: "recruitment-player-search",

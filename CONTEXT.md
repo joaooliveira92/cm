@@ -676,6 +676,8 @@ fallen behind, not how much of the squad it covers. Unknown information stays Un
 licenses estimating a value from a hidden one. It qualifies what a report *observed*, which is never
 wrong, only partial — it does not qualify what a report *predicts*, and a predicted shape may simply
 be wrong however high the confidence behind it.
+The Scouting Knowledge screen also reads it live for any Club with scouted Players: the confidence a
+report on that Club would carry if taken now, from the same whole-squad coverage.
 _Avoid_: accuracy (it reads as "how often the report is right", which conflates the observed half
 with the predicted half)
 

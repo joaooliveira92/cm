@@ -65,6 +65,7 @@ const ALL_DESTINATIONS: ReadonlyArray<NavigationDestination> = [
   { type: "trainingPlan", saveId: save("save-1"), playerId: PlayerId.make("player-3") },
   careerDestination("trainingDevelopment", save("save-1")),
   careerDestination("scoutingAssignment", save("save-1")),
+  careerDestination("scoutingKnowledge", save("save-1")),
   { type: "playerDevelopment", saveId: save("save-1"), playerId: PlayerId.make("player-3") },
   { type: "teamScoutReport", saveId: save("save-1"), clubId: club("club-7") },
   { type: "clubStaff", saveId: save("save-1"), clubId: club("club-7") },
@@ -116,6 +117,15 @@ describe("the navigation adapter reaches the router for every destination", () =
     navigate({ type: "scoutingAssignment", saveId: save("save-1") });
     expect(navigateSpy).toHaveBeenCalledWith({
       to: "/career/$saveId/scouting-assignment",
+      params: { saveId: save("save-1") },
+    });
+  });
+
+  it("navigates to Scouting Knowledge beside the Scouting Centre (Screen 126)", () => {
+    const navigateSpy = spyRouter();
+    navigate({ type: "scoutingKnowledge", saveId: save("save-1") });
+    expect(navigateSpy).toHaveBeenCalledWith({
+      to: "/career/$saveId/scouting-knowledge",
       params: { saveId: save("save-1") },
     });
   });
