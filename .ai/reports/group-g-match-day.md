@@ -112,3 +112,35 @@ Tickets 04–06 were committed before this report existed and are not covered he
 Pass 1 NEEDS_REWORK (high: review links before commit strand the Matchday). Pass 2 NEEDS_REWORK
 (high: Continue stayed suspended once `committed` held). Pass 3 APPROVE; its low finding (stale
 Kick off after returning post-commit) is on ticket 15.
+
+---
+
+# Ticket 09 — Match Statistics (Screens 95/100)
+
+Committed as `447b49c` (commit made from the shared worktree while this report was pending; its
+contents are the reviewed diff — 25 files, tree clean afterwards).
+
+## Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Aggregation computes shots, shots on target, possession, corners, fouls, cards, offsides | `apps/desktop/test/main/match/statistics.test.ts` (table, reconciliation); `commands.test.ts` "getMatchStatistics reconciles…" (goals = final score, substitutions by side = `homeSubs`/`awaySubs.used`, cards/injuries = commentary tags) | partial: possession, corners, fouls, offsides not simulated — decision request 02 |
+| 2 | Aggregated stats via RPC | `packages/contracts/test/match-statistics.test.ts`; integration test incl. `MatchNotFoundError` | pass |
+| 3 | `MatchStatsView` renders both teams | `test/renderer/match/match-stats-screen.test.tsx` (table cells per side, unavailable line) | pass |
+| 4 | Live and post-match contexts | screen tests: live payload `revealedEvents`, full time before Accept, restart mid-match (cut at 0 — fails without the guard), last played; unit test for stoppage time and shared minutes (fails without the cut) | pass |
+| 5 | Loading and error states | screen tests: loading text, failed read with Retry, "No match played yet" | pass |
+
+## Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1. typecheck ✓, effect-lint ✓ (757 files), verify-db-schema ✓; lint ✗ and verify-md-links ✗ only in files this ticket did not touch. Tests: shared 451/451, contracts 68/68, game-engine 50/50, desktop 61 failed / 1544 passed across 16 files |
+| failures vs baseline | failing files diffed against the ticket 07 clean-HEAD baseline list | 16 files, all in the baseline; the four `main/season` rollover/retention files pass in this run — no new failure |
+| e2e | not run | helpers drifted (ticket 07 section); no signal for this screen |
+| determinism / save compatibility | — | not applicable: pure read over the existing stream, no schema change |
+
+## Review
+
+Pass 1 NEEDS_REWORK (high: live cut by minute wrong around stoppage and half time). Pass 2
+NEEDS_REWORK (medium: restart mid-match leaked full totals). Both repaired with tests; the reviewer's
+approval conditions (fix the leak, record the route deviation on the ticket) are met.
