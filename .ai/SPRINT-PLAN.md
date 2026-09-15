@@ -2,9 +2,8 @@
 
 ## Immediate next action
 
-**group-h-training-and-player-development** ticket 01 (screen inventory survey). Effort freshly
-seeded from `docs/specs/group_h_*` — chart the map, resolve decision tickets 01-03, then spec and
-slice.
+**group-h-training-and-player-development** ticket 04 (coaching assignments). Six implementation
+tickets sliced (04-09); 04-08 unblocked, 09 blocked on 04-08. Spec published.
 
 ## Gate state (2026-09-14)
 
@@ -41,8 +40,8 @@ slice.
     Post-Match Summary, 09 Screens 95/100 Match Statistics, 11 Screen 103 Match Report, 2026-09-14);
     10 needs-info on decision request 03; 12, 13, 15, 16, 17 resolved; 14 claimed; 13 mounted tab bar,
     17 stoppage minute formatting shipped 2026-09-15; decision requests 01, 02, 03 open.
-10. **group-h-training-and-player-development**: charting. 01 (screen inventory) unclaimed; 02 (scope),
-    03 (build sequence) blocked on 01. Created 2026-09-15.
+10. **group-h-training-and-player-development**: 01-03 resolved. Spec published. 04-08
+    ready-for-agent; 09 blocked on 04-08. Created 2026-09-15.
 
 Shipped and closed:
 
