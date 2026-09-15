@@ -71,7 +71,22 @@ export type CareerDestination =
   | { readonly type: "matchRatings"; readonly saveId: SaveId }
   /** The Match Report names its match: the match session is cleared once the result is committed,
    *  so the screen cannot learn which match to report from anywhere else. */
-  | { readonly type: "matchReport"; readonly saveId: SaveId; readonly matchId: MatchId };
+  | { readonly type: "matchReport"; readonly saveId: SaveId; readonly matchId: MatchId }
+  /**
+   * The match commentary sub-screen — a dedicated full-screen view of the
+   * match commentary stream, separate from the main match day view.
+   */
+  | { readonly type: "matchCommentary"; readonly saveId: SaveId }
+  /**
+   * The latest scores / other results sub-screen — shows live scores from
+   * other matches in the same competition on match day.
+   */
+  | { readonly type: "matchLatestScores"; readonly saveId: SaveId }
+  /**
+   * The live league table sub-screen — shows the competition table
+   * during match day or after the match.
+   */
+  | { readonly type: "matchLiveTable"; readonly saveId: SaveId };
 
 export type CreationStepDestination =
   | { readonly type: "createLeagues" }
@@ -123,7 +138,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "playerDetail" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport"
+  "teamScoutReport" | "clubStaff" | "playerDetail" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
 >;
 
 /**
@@ -198,6 +213,9 @@ export type ResolvedDestination =
   | { readonly to: "/career/$saveId/match-substitutions"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/match-stats"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/match-ratings"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/match-commentary"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/match-latest-scores"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/match-live-table"; readonly params: { readonly saveId: SaveId } }
   | {
       readonly to: "/career/$saveId/match-report/$matchId";
       readonly params: { readonly saveId: SaveId; readonly matchId: MatchId };
@@ -261,6 +279,9 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "matchStats":
     case "matchRatings":
     case "matchReport":
+    case "matchCommentary":
+    case "matchLatestScores":
+    case "matchLiveTable":
       return careerRoute(destination);
   }
 };
@@ -349,5 +370,11 @@ const careerRoute = (
         to: "/career/$saveId/match-report/$matchId",
         params: { saveId: destination.saveId, matchId: destination.matchId },
       };
+    case "matchCommentary":
+      return { to: "/career/$saveId/match-commentary", params: { saveId: destination.saveId } };
+    case "matchLatestScores":
+      return { to: "/career/$saveId/match-latest-scores", params: { saveId: destination.saveId } };
+    case "matchLiveTable":
+      return { to: "/career/$saveId/match-live-table", params: { saveId: destination.saveId } };
   }
 };

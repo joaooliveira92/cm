@@ -113,6 +113,23 @@ export const parseNavState = (
     };
   }
 
+  // Flat match-* routes (match-stats, match-commentary, etc.) — the
+  // `match-` prefix distinguishes them from section routes like `squad`,
+  // `tactics`, etc. The match context defaults to live-match since the
+  // route alone cannot determine phase; the active tab id is derived
+  // from the route suffix.
+  if (firstChild === "match" || firstChild.startsWith("match-")) {
+    const section = sectionById("squad") ?? null;
+    return {
+      primarySection: section,
+      activeTabId: matchRouteToTabId(firstChild),
+      entityType: null,
+      entityId: null,
+      originSectionId: null,
+      matchContext: "live-match",
+    };
+  }
+
   const sectionId = routeSegmentToSectionId[firstChild] ?? null;
   const section = sectionId !== null ? sectionById(sectionId) ?? null : null;
 
@@ -164,6 +181,25 @@ const matchContextForRouteSegment = (segment: string): MatchContext | null => {
     default:
       return null;
   }
+};
+
+const matchRouteToTabId = (routeSegment: string): string => {
+  const MAP: Record<string, string> = {
+    "match": "match",
+    "match-stats": "statistics",
+    "match-commentary": "commentary",
+    "match-ratings": "player-ratings",
+    "match-match-tactics": "tactics",
+    "match-substitutions": "substitutions",
+    "match-latest-scores": "other-results",
+    "match-live-table": "live-table",
+    "match-preview": "overview",
+    "match-home-team": "opposition",
+    "match-away-team": "opposition",
+    "match-opposition-instructions": "opposition",
+    "match-replays": "match",
+  };
+  return MAP[routeSegment] ?? "match";
 };
 
 const emptyState = (): ParsedNavState => ({

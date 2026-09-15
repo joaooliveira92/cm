@@ -3,7 +3,6 @@ import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import { dispatchAction } from "../actions/dispatch.js";
 import { FOCUS_RING } from "../focus.js";
-import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import { MatchProvider, useMatchContext } from "./MatchProvider.js";
 import { CommentaryProvider, useCommentaryContext } from "./CommentaryProvider.js";
 import { KickoffPanel } from "./KickoffPanel.js";
@@ -17,34 +16,6 @@ const MatchOngoing = () => {
     <>
       <MatchCommentaryStream />
       <MatchControlPanel />
-      <nav aria-label="Live match screens" className="mt-4 flex gap-2">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={(event) => navigateCareer({ type: "matchMatchTactics", saveId: state.saveId }, intentOfClick(event))}
-        >
-          Match tactics
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={(event) =>
-            navigateCareer({ type: "matchSubstitutions", saveId: state.saveId }, intentOfClick(event))
-          }
-        >
-          Substitutions
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={(event) => navigateCareer({ type: "matchStats", saveId: state.saveId }, intentOfClick(event))}
-        >
-          Statistics
-        </Button>
-      </nav>
     </>
   );
 };

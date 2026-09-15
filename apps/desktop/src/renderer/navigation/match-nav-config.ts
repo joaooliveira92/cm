@@ -36,6 +36,7 @@ export const MATCH_TAB_CONFIGS: Record<MatchContext, MatchTabConfig> = {
       { id: "statistics", label: "Statistics" },
       { id: "player-ratings", label: "Player Ratings" },
       { id: "tactics", label: "Tactics" },
+      { id: "substitutions", label: "Substitutions" },
       { id: "opposition", label: "Opposition" },
       {
         id: "live-table",

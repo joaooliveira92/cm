@@ -1,9 +1,14 @@
 import type { ClubId, CompetitionId, MatchId, NationId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { Outlet, useLocation, useParams } from "@tanstack/react-router";
-import { type ComponentType, useEffect, useLayoutEffect, useRef } from "react";
+import { type ComponentType, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import {
   navigateCareer,
 } from "../navigation/adapter.js";
+import type { CareerDestination } from "../navigation/destinations.js";
+import type { EntityType } from "../navigation/entity-nav-config.js";
+import type { MatchContext } from "../navigation/match-nav-config.js";
+import { SecondaryNav } from "../navigation/components/SecondaryNav.js";
+import type { SpecSectionId } from "../navigation/spec-nav-config.js";
 import { decodeClubId, decodeCompetitionId, decodeMatchId, decodeNationId, decodePlayerId, decodeSaveId } from "../navigation/params.js";
 import { CareerChrome } from "../chrome/CareerChrome.js";
 import { Alert } from "../components/ui/alert.js";
@@ -64,6 +69,22 @@ export const CareerShell = () => {
     resetTableSessions();
   }
 
+  /**
+   * Map a tab selection to a career navigation destination. The
+   * `onChangeTab` contract from SecondaryNav passes a nav id (section,
+   * entity type, or match context) and a tab id; this resolves both to a
+   * typed CareerDestination and navigates there.
+   */
+  const handleTabChange = useCallback(
+    (navId: SpecSectionId | EntityType | MatchContext, tabId: string) => {
+      const dest = tabToDestination(navId, tabId, saveId);
+      if (dest !== null) {
+        navigateCareer(dest, "pointer");
+      }
+    },
+    [saveId],
+  );
+
   // The career shell owns its scroll region: the shell is viewport-fixed and
   // only the outlet scrolls, so the navbar is a stationary band that scrolling
   // can never hide. A route change starts the new screen at the top of that
@@ -79,6 +100,7 @@ export const CareerShell = () => {
     <RegistryProvider key={saveId}>
       <div className="flex h-screen flex-col overflow-hidden bg-background">
         <CareerChrome saveId={saveId} />
+        <SecondaryNav onChangeTab={handleTabChange} />
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
           <Outlet />
         </div>
@@ -277,6 +299,81 @@ export const CareerCompetitionChildView = ({
       <Screen saveId={save.success} competitionId={competition.success} />
     </RouteView>
   );
+};
+
+/**
+ * Map a nav id + tab id pair to a CareerDestination.
+ *
+ * For match contexts (live-match / post-match / pre-match), each tab id
+ * resolves to the appropriate sub-screen or the main match screen. For
+ * standard sections, the tab id maps to a section destination (or falls
+ * back to the section default). Returns null when no mapping exists.
+ */
+const tabToDestination = (
+  navId: SpecSectionId | EntityType | MatchContext,
+  tabId: string,
+  saveId: SaveId,
+): CareerDestination | null => {
+  // Match context tab routing
+  const matchTabMap: Record<string, CareerDestination> = {
+    // Shared across all match contexts
+    "match": { type: "match", saveId },
+    "commentary": { type: "matchCommentary", saveId },
+    "statistics": { type: "matchStats", saveId },
+    "player-ratings": { type: "matchRatings", saveId },
+    "tactics": { type: "matchMatchTactics", saveId },
+    // Live-match specific
+    "substitutions": { type: "matchSubstitutions", saveId },
+    "opposition": { type: "match", saveId },
+    "live-table": { type: "matchLiveTable", saveId },
+    // Post-match specific
+    "summary": { type: "match", saveId },
+    "other-results": { type: "matchLatestScores", saveId },
+    "table": { type: "matchLiveTable", saveId },
+    // Pre-match specific
+    "overview": { type: "match", saveId },
+    "team-selection": { type: "match", saveId },
+    "past-meetings": { type: "match", saveId },
+    "conditions": { type: "match", saveId },
+  };
+
+  if (navId === "live-match" || navId === "post-match" || navId === "pre-match") {
+    return matchTabMap[tabId] ?? null;
+  }
+
+  // Section tab routing — map section tab ids to their CareerDestination
+  const sectionTabMap: Record<string, CareerDestination> = {
+    "squad": { type: "squad", saveId },
+    "tactics": { type: "tactics", saveId },
+    "training": { type: "training", saveId },
+    "transfers": { type: "transfers", saveId },
+    "league": { type: "league", saveId },
+    "fixtures": { type: "fixtures", saveId },
+    "match": { type: "match", saveId },
+    "seasonSummary": { type: "seasonSummary", saveId },
+    "manager": { type: "manager", saveId },
+    "news": { type: "news", saveId },
+    "clubInfo": { type: "clubInfo", saveId },
+    "boardConfidence": { type: "boardConfidence", saveId },
+    "clubHistory": { type: "clubHistory", saveId },
+    "finances": { type: "finances", saveId },
+    "staffOverview": { type: "staffOverview", saveId },
+    "shortlist": { type: "shortlist", saveId },
+    "scouting": { type: "scouting", saveId },
+    "playerSearch": { type: "playerSearch", saveId },
+    "staffSearch": { type: "staffSearch", saveId },
+    "competitions": { type: "competitions", saveId },
+    "nations": { type: "nations", saveId },
+    "clubs": { type: "clubs", saveId },
+  };
+
+  // For sections, the tab id often matches the destination type directly
+  if (sectionTabMap[tabId] !== undefined) return sectionTabMap[tabId];
+
+  // For entity tabs, try the navId as a destination too
+  if (sectionTabMap[navId] !== undefined) return sectionTabMap[navId];
+
+  return null;
 };
 
 /** The index of `/career/$saveId`: no child route → redirect to Squad. */

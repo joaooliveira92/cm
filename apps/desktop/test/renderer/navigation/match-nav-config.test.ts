@@ -31,13 +31,14 @@ describe("match nav config — pre-match tabs (§7)", () => {
 describe("match nav config — live-match tabs (§8)", () => {
   const config = MATCH_TAB_CONFIGS["live-match"];
 
-  it("has 7 tabs in spec order", () => {
+  it("has 8 tabs in spec order", () => {
     expect(config.tabs.map((t) => t.label)).toEqual([
       "Match",
       "Commentary",
       "Statistics",
       "Player Ratings",
       "Tactics",
+      "Substitutions",
       "Opposition",
       "Live Table",
     ]);

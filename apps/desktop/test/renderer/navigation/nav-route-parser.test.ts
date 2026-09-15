@@ -178,6 +178,69 @@ describe("nav route parser — new match route patterns", () => {
   });
 });
 
+describe("nav route parser — flat match-* route patterns (§13)", () => {
+  it("detects live-match context for /career/:saveId/match", () => {
+    const result = parseNavState("/career/s1/match", new URLSearchParams());
+    expect(result.matchContext).toBe("live-match");
+    expect(result.entityType).toBeNull();
+    expect(result.primarySection?.id).toBe("squad");
+  });
+
+  it("parses /career/:saveId/match-stats correctly", () => {
+    const result = parseNavState("/career/s1/match-stats", new URLSearchParams());
+    expect(result.matchContext).toBe("live-match");
+    expect(result.activeTabId).toBe("statistics");
+  });
+
+  it("parses /career/:saveId/match-commentary correctly", () => {
+    const result = parseNavState("/career/s1/match-commentary", new URLSearchParams());
+    expect(result.matchContext).toBe("live-match");
+    expect(result.activeTabId).toBe("commentary");
+  });
+
+  it("parses /career/:saveId/match-ratings correctly", () => {
+    const result = parseNavState("/career/s1/match-ratings", new URLSearchParams());
+    expect(result.matchContext).toBe("live-match");
+    expect(result.activeTabId).toBe("player-ratings");
+  });
+
+  it("parses /career/:saveId/match-match-tactics correctly", () => {
+    const result = parseNavState("/career/s1/match-match-tactics", new URLSearchParams());
+    expect(result.matchContext).toBe("live-match");
+    expect(result.activeTabId).toBe("tactics");
+  });
+
+  it("parses /career/:saveId/match-substitutions correctly", () => {
+    const result = parseNavState("/career/s1/match-substitutions", new URLSearchParams());
+    expect(result.matchContext).toBe("live-match");
+    expect(result.activeTabId).toBe("substitutions");
+  });
+
+  it("parses /career/:saveId/match-latest-scores correctly", () => {
+    const result = parseNavState("/career/s1/match-latest-scores", new URLSearchParams());
+    expect(result.matchContext).toBe("live-match");
+    expect(result.activeTabId).toBe("other-results");
+  });
+
+  it("parses /career/:saveId/match-live-table correctly", () => {
+    const result = parseNavState("/career/s1/match-live-table", new URLSearchParams());
+    expect(result.matchContext).toBe("live-match");
+    expect(result.activeTabId).toBe("live-table");
+  });
+
+  it("parses /career/:saveId/match-preview correctly", () => {
+    const result = parseNavState("/career/s1/match-preview", new URLSearchParams());
+    expect(result.matchContext).toBe("live-match");
+    expect(result.activeTabId).toBe("overview");
+  });
+
+  it("returns activeTabId = match for unknown match-* route", () => {
+    const result = parseNavState("/career/s1/match-unknown", new URLSearchParams());
+    expect(result.matchContext).toBe("live-match");
+    expect(result.activeTabId).toBe("match");
+  });
+});
+
 describe("resolveMatchTabId", () => {
   it("returns pre-match default tab when no tab specified", () => {
     expect(resolveMatchTabId("pre-match", null)).toBe("overview");
