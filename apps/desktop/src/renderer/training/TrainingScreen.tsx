@@ -12,13 +12,17 @@
  * - `error` — the RPC failed (save not found, transport error).
  * - `empty` — no coaches returned (club has not materialised staff yet).
  *
- * The screen is a terminal list: no drill-downs, no actions, no keyboard focus on rows.
- * Navigation is through the shell's usual `g b`/escape.
+ * The coach list is terminal: no drill-downs and no keyboard focus on rows. The screen's one
+ * action is the "Workload and recovery" button, which opens the Training area's Workload and
+ * Recovery sub-surface (Screen 112). Navigation is otherwise the shell's usual `g b`/escape.
  *
  * Reached from the career chrome's Training tab (`g 3`).
  */
 import { type SaveId } from "@cm-clone/contracts";
+import type { ReactNode } from "react";
+import { Button } from "../components/ui/button.js";
 import { FOCUS_RING } from "../focus.js";
+import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import {
   coachingAssignmentsAtom,
   describeRpcError,
@@ -48,7 +52,9 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     return (
       <TrainingMessage
         message="No coaching staff assigned yet. Staff will appear once you join a club."
-      />
+      >
+        <WorkloadLink saveId={saveId} />
+      </TrainingMessage>
     );
   }
 
@@ -67,6 +73,7 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         <p className="mt-1 text-sm text-text-secondary">
           Your club's coaching staff and their quality ratings
         </p>
+        <WorkloadLink saveId={saveId} />
       </header>
 
       <ul className="mt-6 space-y-3" aria-label="Coaching staff">
@@ -90,8 +97,27 @@ const messageOf = (error: RpcClientError<"getCoachingAssignments"> | null): stri
     ? "Coaching assignments could not be loaded."
     : describeRpcError(error);
 
-/** The non-`ready` states, rendered as a labelled `<main>` region carrying one line. */
-const TrainingMessage = ({ message }: { readonly message: string }) => (
+/** Opens Workload and Recovery (Screen 112), the Training area's sub-surface. */
+const WorkloadLink = ({ saveId }: { readonly saveId: SaveId }) => (
+  <Button
+    type="button"
+    variant="secondary"
+    className={`mt-4 ${FOCUS_RING.join(" ")}`}
+    onClick={(event) => navigateCareer({ type: "trainingWorkload", saveId }, intentOfClick(event))}
+  >
+    Workload and recovery
+  </Button>
+);
+
+/** The non-`ready` states, rendered as a labelled `<main>` region carrying one line, plus any
+ *  action that stays available in that state. */
+const TrainingMessage = ({
+  message,
+  children,
+}: {
+  readonly message: string;
+  readonly children?: ReactNode;
+}) => (
   <main
     className={PAGE_CLASS}
     tabIndex={-1}
@@ -100,5 +126,6 @@ const TrainingMessage = ({ message }: { readonly message: string }) => (
   >
     <h1 className="text-2xl font-bold">Coaching Assignments</h1>
     <p className="mt-4 text-text-secondary italic">{message}</p>
+    {children}
   </main>
 );

@@ -20,10 +20,11 @@ A reconciled spec covering all 13 Group H screens (105-117) — training overvie
 ## Decisions so far
 
 - [01 — Group H screen inventory survey](issues/01-screen-inventory.md): 0 built, 7 partial, 6 absent. Backend models for Training Focus and Player Development are fully implemented; calendar/units/position-training/traits/mentoring/youth-intake/training-camp have no code.
-- [02 — Scope decision for absent screens](issues/02-scope-absent-screens.md): 6 screens in scope for v1 (105, 108, 111, 112, 113, 114); 7 deferred (106, 107, 109, 110, 115, 116, 117). See [Agent Note: Group H v1 scope](../../../.agents/notes/proposed/architecture/2026-09-15-group-h-v1-scope.md).
+- [02 — Scope decision for absent screens](issues/02-scope-absent-screens.md): 6 screens in scope for v1 (105, 108, 111, 112, 113, 114); 7 deferred (106, 107, 109, 110, 115, 116, 117). See [Agent Note: Group H v1 scope](../../.agents/notes/proposed/architecture/2026-09-15-group-h-v1-scope.md).
 - [03 — Build sequence](issues/03-partial-screen-build-sequence.md): Priority 1=Coaching Assignments, 2=Workload/Recovery, 3=Individual Training Plan, 4=Performance Report, 5=Player Dev Centre, 6=Training Overview.
 - [Spec published](spec.md): Reconciled spec marking handoff from charting to slicing.
 - [Implementation tickets](issues/): 6 vertical slices (04-09), all unblocked except 09 (blocked on 04-08).
+- [05 — Workload and Recovery](issues/05-workload-and-recovery.md): shipped. The Rest/Active indicator is derived in main from stored Condition against the engine's non-contact threshold (75), so the renderer never imports the engine; v1 shows stored Condition, not a projection to the next kickoff. The detail line states the last injury's Severity this Season, since the ledger keeps it until Season start. Recorded in [spec.md](spec.md).
 
 ## Not yet specified
 

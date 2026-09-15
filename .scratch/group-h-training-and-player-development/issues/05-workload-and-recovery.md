@@ -8,8 +8,8 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Workload screen shows player condition and recovery status per player
-- [ ] Workload gauge component is extractable for reuse in Screens 105 and 114
-- [ ] Reads from existing player fitness data
+- [x] Workload screen shows player condition and recovery status per player
+- [x] Workload gauge component is extractable for reuse in Screens 105 and 114
+- [x] Reads from existing player fitness data

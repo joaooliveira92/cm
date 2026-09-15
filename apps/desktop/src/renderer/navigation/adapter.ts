@@ -71,6 +71,9 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/tactics/editor":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
+    case "/career/$saveId/training/workload":
+      getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
+      break;
     case "/career/$saveId/transfers":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;

@@ -58,3 +58,31 @@ export class CoachAssignmentView extends Schema.Class<CoachAssignmentView>("Coac
 export class CoachingAssignmentsView extends Schema.Class<CoachingAssignmentsView>("CoachingAssignmentsView")({
   coaches: Schema.Array(CoachAssignmentView),
 }) {}
+
+/** The most recent injury's Severity on a player's fitness ledger row, or `"none"` when the player
+ * has not been injured this Season. The same four values the `player_fitness` table admits. */
+export const LastInjurySeveritySchema = Schema.Literals(["none", "light", "medium", "severe"]);
+
+/** A player's Rest/Active recovery indicator: `rest` when Condition is below the engine's
+ * non-contact injury threshold, `active` otherwise. */
+export const RecoveryIndicatorSchema = Schema.Literals(["rest", "active"]);
+
+/**
+ * One player on the Workload and Recovery screen (Screen 112): identity, the two fitness-ledger
+ * fields recovery is keyed to — the current Condition (%) and the last injury's Severity — and the
+ * Rest/Active indicator main derives from Condition at read time. Nothing here is persisted.
+ */
+export class WorkloadPlayerView extends Schema.Class<WorkloadPlayerView>("WorkloadPlayerView")({
+  id: PlayerId,
+  firstName: Schema.String,
+  lastName: Schema.String,
+  condition: Schema.Finite,
+  lastInjurySeverity: LastInjurySeveritySchema,
+  recovery: RecoveryIndicatorSchema,
+}) {}
+
+/** The Workload and Recovery screen's whole view: every player on the manager's own club, in a
+ * stable name order. An empty list is valid for a club with no players. */
+export class WorkloadView extends Schema.Class<WorkloadView>("WorkloadView")({
+  players: Schema.Array(WorkloadPlayerView),
+}) {}

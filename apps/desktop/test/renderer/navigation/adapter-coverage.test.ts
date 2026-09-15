@@ -60,6 +60,7 @@ const ALL_DESTINATIONS: ReadonlyArray<NavigationDestination> = [
   { type: "createStep3" },
   ...CAREER_SCREEN_TYPES.map((type) => careerDestination(type, save("save-1"))),
   careerDestination("tacticsEditor", save("save-1")),
+  careerDestination("trainingWorkload", save("save-1")),
   { type: "teamScoutReport", saveId: save("save-1"), clubId: club("club-7") },
   { type: "clubStaff", saveId: save("save-1"), clubId: club("club-7") },
   { type: "matchMatchTactics", saveId: save("save-1") },
@@ -83,6 +84,15 @@ describe("the navigation adapter reaches the router for every destination", () =
     navigate({ type: "news", saveId: save("save-1") });
     expect(navigateSpy).toHaveBeenCalledWith({
       to: "/career/$saveId/news",
+      params: { saveId: save("save-1") },
+    });
+  });
+
+  it("navigates to Workload and Recovery beneath the Training area (Screen 112)", () => {
+    const navigateSpy = spyRouter();
+    navigate({ type: "trainingWorkload", saveId: save("save-1") });
+    expect(navigateSpy).toHaveBeenCalledWith({
+      to: "/career/$saveId/training/workload",
       params: { saveId: save("save-1") },
     });
   });

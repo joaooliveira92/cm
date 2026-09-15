@@ -34,6 +34,7 @@ import {
   ClubStaffView,
   CoachAssignmentView,
   CoachingAssignmentsView,
+  WorkloadView,
   CollidingOverrideError,
   FixturesView,
   InsufficientTransferBudgetError,
@@ -436,6 +437,15 @@ commitCareer: {
   getCoachingAssignments: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: CoachingAssignmentsView,
+    error: SaveNotFoundError,
+  },
+  /** Workload and Recovery (Screen 112): every player on the manager's own club with their current
+   *  Condition and last injury Severity, read from the Season's fitness ledger (`player_fitness`).
+   *  A pure read — recovery status is derived from these fields on the renderer, never stored.
+   *  Only the save can fail. */
+  getWorkload: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: WorkloadView,
     error: SaveNotFoundError,
   },
   /** Player Profile (Screen 50): identity, positions, attributes, club, contract expiry, transfer

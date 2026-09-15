@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TrainingScreen } from "../../../src/renderer/training/TrainingScreen.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
@@ -103,5 +103,25 @@ describe("ticket 04 — Coaching Assignments screen renders coach data", () => {
       const main = screen.getByRole("main", { name: /Coaching Assignments/ });
       expect(main.getAttribute("data-focus-id")).toBe("training");
     });
+  });
+});
+
+describe("ticket 05 — Workload and Recovery is reachable from the Training screen", () => {
+  it("the Workload and recovery button navigates to the training workload route", async () => {
+    mount(singleCoachView());
+
+    const button = await screen.findByRole("button", { name: "Workload and recovery" });
+    fireEvent.click(button, { detail: 1 });
+
+    expect(navigateSpy).toHaveBeenCalledWith({
+      to: "/career/$saveId/training/workload",
+      params: { saveId: rid("s1") },
+    });
+  });
+
+  it("offers the button even when no coaching staff exist", async () => {
+    mount(emptyCoachView());
+
+    expect(await screen.findByRole("button", { name: "Workload and recovery" })).toBeTruthy();
   });
 });

@@ -39,7 +39,7 @@ import {
   respondToBid,
   signFreeAgent,
 } from "../transfers/index.js";
-import { getCoachingAssignments, setTrainingFocus } from "../club/training.js";
+import { getCoachingAssignments, getWorkload, setTrainingFocus } from "../club/training.js";
 import { assignScout, assignScoutToClub, getScouting, unassignScout } from "../club/scouting.js";
 import { getClubStaff } from "../career/staff.js";
 import { getPlayerContract, getPlayerProfile } from "../career/player.js";
@@ -361,6 +361,11 @@ const handlers: Record<AppRpcMethod, Handler> = {
         payload,
       );
       return yield* getCoachingAssignments(ctx.savesDir, saveId);
+    }),
+  getWorkload: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getWorkload.payload)(payload);
+      return yield* getWorkload(ctx.savesDir, saveId);
     }),
   getPlayerProfile: (payload, ctx) =>
     Effect.gen(function* () {

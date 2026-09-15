@@ -213,6 +213,21 @@ export const coachingAssignmentsAtom = Atom.family((saveId: SaveId) =>
   ),
 );
 
+/**
+ * getWorkload — `["save", saveId]`, `["squad", saveId]`.
+ *
+ * Workload and Recovery (Screen 112): every own-club player's Condition and last injury Severity
+ * from the fitness ledger. Reactive on the same keys as `squadAtom`, because the ledger it reads is
+ * the one the squad read carries Condition from.
+ */
+export const workloadAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getWorkload", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), squadKey(saveId)]),
+    ),
+  ),
+);
+
 const playerProfileForSave = Atom.family((saveId: SaveId) =>
   Atom.family((playerId: PlayerId) =>
     managementReadPolicy(

@@ -169,6 +169,7 @@ export const dismissTeachingSplash = async (page: Page): Promise<void> => {
 const NAV_PATH = {
   squad: ["Squad"],
   tactics: ["Tactics"],
+  training: ["Training"],
   transfers: ["Recruitment"],
   "league table": ["Analysis"],
   fixtures: ["Analysis", "Fixtures"],

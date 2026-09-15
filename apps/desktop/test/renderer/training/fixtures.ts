@@ -66,3 +66,52 @@ export const respondWithCoaching = (view: CoachingAssignmentsViewWire): void => 
     } as never;
   });
 };
+
+/** One player row of the Workload and Recovery wire view (Screen 112). */
+export interface WorkloadPlayerWire {
+  readonly id: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly condition: number;
+  readonly lastInjurySeverity: "none" | "light" | "medium" | "severe";
+  readonly recovery: "rest" | "active";
+}
+
+export interface WorkloadViewWire {
+  readonly players: readonly WorkloadPlayerWire[];
+}
+
+export const workloadPlayer = (
+  id: string,
+  firstName: string,
+  lastName: string,
+  condition: number,
+  lastInjurySeverity: WorkloadPlayerWire["lastInjurySeverity"] = "none",
+): WorkloadPlayerWire => ({
+  id,
+  firstName,
+  lastName,
+  condition,
+  lastInjurySeverity,
+  // Mirrors main's rule so fixtures stay consistent; the rule itself is tested in main.
+  recovery: condition < 75 ? "rest" : "active",
+});
+
+/** A squad with one player needing rest after a severe injury and one at full Condition. */
+export const mixedWorkloadView = (): WorkloadViewWire => ({
+  players: [
+    workloadPlayer("p1", "Rui", "Costa", 40, "severe"),
+    workloadPlayer("p2", "Ana", "Reis", 100),
+  ],
+});
+
+/** Answer `getWorkload` with a view, and fail anything else. */
+export const respondWithWorkload = (view: WorkloadViewWire): void => {
+  mockPreload(async (method) => {
+    if (method === "getWorkload") return { _tag: "Success", value: view } as never;
+    return {
+      _tag: "Failure",
+      error: { _tag: "SaveNotFoundError", id: rid("s1") },
+    } as never;
+  });
+};

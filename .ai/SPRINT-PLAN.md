@@ -2,10 +2,16 @@
 
 ## Immediate next action
 
-**group-h-training-and-player-development** ticket 05 (workload and recovery). Ticket 04 shipped;
-05-08 ready-for-agent; 09 blocked on 04-08.
+**group-h-training-and-player-development** ticket 06 (individual training plan). Tickets 04-05
+shipped; 06-08 ready-for-agent; 09 blocked on 04-08.
 
 ## Gate state (2026-09-14)
+
+- **Ticket 05 (group-h) gate, 2026-09-15**: `pnpm check:all` exits 1 on pre-existing failures only.
+  The same failing files on clean HEAD `349bafc` give 69 failures, identical to the working tree's
+  apart from one caused by another session's uncommitted content pack. e2e on clean HEAD is
+  10 failed / 24 passed, so the 5-failure e2e baseline below is out of date. Details in
+  [reports/group-h-training-and-player-development.md](reports/group-h-training-and-player-development.md).
 
 - **Ticket 07 (group-g) gate**: `pnpm check:all` exits 1 on pre-existing failures only. Desktop unit
   tests 65 failed / 1516 passed across 20 files; the same 20 files on clean HEAD fail the same 65.
@@ -41,7 +47,8 @@
     10 needs-info on decision request 03; 12, 13, 15, 16, 17 resolved; 14 claimed; 13 mounted tab bar,
     17 stoppage minute formatting shipped 2026-09-15; decision requests 01, 02, 03 open.
 10. **group-h-training-and-player-development**: 01-03 resolved. Spec published. 04 completed
-    (coaching assignments, 2026-09-15). 05-08 ready-for-agent; 09 blocked on 04-08.
+    (coaching assignments, 2026-09-15). 05 completed (workload and recovery, 2026-09-15). 06-08
+    ready-for-agent; 09 blocked on 04-08.
 
 Shipped and closed:
 

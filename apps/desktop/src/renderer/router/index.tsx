@@ -31,6 +31,7 @@ import { PlayerInjuriesScreen } from "../playerInjuries/PlayerInjuriesScreen.js"
 import { PlayerScoutReportScreen } from "../playerScoutReport/PlayerScoutReportScreen.js";
 import { PlayerCoachReportScreen } from "../playerCoachReport/PlayerCoachReportScreen.js";
 import { TrainingScreen } from "../training/TrainingScreen.js";
+import { WorkloadScreen } from "../training/WorkloadScreen.js";
 import { ClubInfoScreen } from "../clubInfo/ClubInfoScreen.js";
 import { BoardConfidenceScreen } from "../boardConfidence/BoardConfidenceScreen.js";
 import { ClubHistoryScreen } from "../clubHistory/ClubHistoryScreen.js";
@@ -197,7 +198,6 @@ const seasonSummaryRoute = defineCareerChild(
 const managerRoute = defineCareerChild("manager", "manager", ManagerProfileScreen);
 const newsRoute = defineCareerChild("news", "news", NewsInboxScreen);
 
-const trainingRoute = defineCareerChild("training", "training", TrainingScreen);
 const clubInfoRoute = defineCareerChild("club-info", "clubInfo", ClubInfoScreen);
 const boardConfidenceRoute = defineCareerChild("board-confidence", "boardConfidence", BoardConfidenceScreen);
 const clubHistoryRoute = defineCareerChild("club-history", "clubHistory", ClubHistoryScreen);
@@ -233,6 +233,30 @@ const tacticsEditorRoute = createRoute({
   getParentRoute: () => tacticsRoute,
   path: "editor",
   component: () => <CareerChildView screenId="tactics" Screen={TacticsScreen} />,
+});
+
+/**
+ * The Training area follows the Tactics shape: `/training` lands on Coaching Assignments (Screen
+ * 111), and Workload and Recovery (Screen 112) sits beneath it at `/training/workload`. Both share
+ * the `training` screen scope, so the workload view is a sub-surface of the area rather than
+ * another career screen.
+ */
+const trainingRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "training",
+  component: () => <Outlet />,
+});
+
+const trainingIndexRoute = createRoute({
+  getParentRoute: () => trainingRoute,
+  path: "/",
+  component: () => <CareerChildView screenId="training" Screen={TrainingScreen} />,
+});
+
+const trainingWorkloadRoute = createRoute({
+  getParentRoute: () => trainingRoute,
+  path: "workload",
+  component: () => <CareerChildView screenId="training" Screen={WorkloadScreen} />,
 });
 
 /**
@@ -680,7 +704,7 @@ const routeTree = rootRoute.addChildren([
       seasonSummaryRoute,
       managerRoute,
       newsRoute,
-      trainingRoute,
+      trainingRoute.addChildren([trainingIndexRoute, trainingWorkloadRoute]),
       clubInfoRoute,
       boardConfidenceRoute,
       clubHistoryRoute,

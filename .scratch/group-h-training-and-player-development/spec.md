@@ -33,7 +33,7 @@ Produce a reconciled spec that states per screen what is already built and what 
 
 - **Screen 111 uses existing coach data** — The coach model (`coachModifier`, `staff.ts`) attaches one coach per club. UI lists assigned coach with their quality rating and specialty. No new coaching hierarchy or assignment editing in v1.
 
-- **Screen 112 uses existing condition/recovery data** — Player fitness (`player_fitness` table) has `condition` and `last_injury_severity`. No training-specific workload model exists; v1 shows a simple rest/active indicator.
+- **Screen 112 uses existing condition/recovery data** — Player fitness (`player_fitness` table) has `condition` and `last_injury_severity`. No training-specific workload model exists; v1 shows a simple rest/active indicator. The indicator is **Rest** when the stored Condition is below the engine's `NON_CONTACT_CONDITION_THRESHOLD` (75, the line the Squad screen's "Tired" status uses) and **Active** otherwise, derived in main on every read. v1 shows the stored Condition, not a projection to the next kickoff via `conditionAfterDays`. The detail line states the last injury's Severity this Season and does not claim a recovery is under way, because the ledger keeps that Severity until the next Season starts. (Ticket 05.)
 
 - **Screen 113 (Performance Report) populates the existing coach report stub** — Shows player's Training Focus, development progress (attribute changes), coach rating, and training compliance.
 
@@ -42,7 +42,7 @@ Produce a reconciled spec that states per screen what is already built and what 
 ## Testing Decisions
 
 - Screen-level tests follow the existing pattern: Playwright e2e specs in `apps/desktop/e2e/` for reachable UI paths, and focused unit tests in the owning package for any new domain logic.
-- RPC roundtrip tests in `packages/contracts/test/` for any new RPC endpoints. (No new RPCs expected for v1.)
+- RPC roundtrip tests in `packages/contracts/test/` for any new RPC endpoints. v1 adds read-only RPCs per screen where no existing read fits (`getCoachingAssignments` in ticket 04, `getWorkload` in ticket 05).
 - Prior art: `test/renderer/playerDevelopment/` for per-player development screens, `test/renderer/squad/` for list views.
 
 ## Out of Scope

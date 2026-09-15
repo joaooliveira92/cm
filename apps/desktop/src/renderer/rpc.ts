@@ -24,6 +24,7 @@ export {
   teamScoutReadingsAtom,
   clubStaffAtom,
   coachingAssignmentsAtom,
+  workloadAtom,
   playerProfileAtom,
   playerContractAtom,
   saveKey,

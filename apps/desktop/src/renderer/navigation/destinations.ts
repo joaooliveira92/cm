@@ -26,6 +26,9 @@ export type CareerDestination =
   | { readonly type: "manager"; readonly saveId: SaveId }
   | { readonly type: "news"; readonly saveId: SaveId }
   | { readonly type: "training"; readonly saveId: SaveId }
+  /** Workload and Recovery (Screen 112) — a sub-surface of the Training area reached from Coaching
+   *  Assignments, shaped like `tacticsEditor`: no `g` binding, not in `CAREER_SCREEN_TYPES`. */
+  | { readonly type: "trainingWorkload"; readonly saveId: SaveId }
   | { readonly type: "clubInfo"; readonly saveId: SaveId }
   | { readonly type: "boardConfidence"; readonly saveId: SaveId }
   | { readonly type: "clubHistory"; readonly saveId: SaveId }
@@ -197,6 +200,10 @@ export type ResolvedDestination =
   | { readonly to: "/career/$saveId/manager"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/news"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/training"; readonly params: { readonly saveId: SaveId } }
+  | {
+      readonly to: "/career/$saveId/training/workload";
+      readonly params: { readonly saveId: SaveId };
+    }
   | { readonly to: "/career/$saveId/club-info"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/board-confidence"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/club-history"; readonly params: { readonly saveId: SaveId } }
@@ -259,6 +266,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "manager":
     case "news":
     case "training":
+    case "trainingWorkload":
     case "clubInfo":
     case "boardConfidence":
     case "clubHistory":
@@ -318,6 +326,11 @@ const careerRoute = (
       return { to: "/career/$saveId/news", params: { saveId: destination.saveId } };
     case "training":
       return { to: "/career/$saveId/training", params: { saveId: destination.saveId } };
+    case "trainingWorkload":
+      return {
+        to: "/career/$saveId/training/workload",
+        params: { saveId: destination.saveId },
+      };
     case "clubInfo":
       return { to: "/career/$saveId/club-info", params: { saveId: destination.saveId } };
     case "boardConfidence":
