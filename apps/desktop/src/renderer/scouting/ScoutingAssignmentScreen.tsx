@@ -19,6 +19,7 @@
 import type { ClubId, SaveId, ScoutingTargetView } from "@cm-clone/contracts";
 import { useState } from "react";
 import { Alert } from "../components/ui/alert.js";
+import { ReadStateMessage } from "../components/shared/ReadStateMessage.js";
 import { Button } from "../components/ui/button.js";
 import {
   Select,
@@ -33,6 +34,7 @@ import {
   describeRpcError,
   leagueTableAtom,
   managerProfileAtom,
+  readState,
   scoutingAtom,
   squadAtom,
   teamScoutReportAtom,
@@ -52,22 +54,24 @@ interface ClubOption {
 }
 
 export const ScoutingAssignmentScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const board = useAtomValue(scoutingAtom(saveId));
+  const board = readState(useAtomValue(scoutingAtom(saveId)), {
+    loading: "Loading your Scouts...",
+    failed: "The scouting board could not be loaded.",
+  });
   const table = useAtomValue(leagueTableAtom(saveId));
   const profile = useAtomValue(managerProfileAtom(saveId));
   const squad = useAtomValue(squadAtom(saveId));
   const [clubId, setClubId] = useState<ClubId | null>(null);
 
-  const boardError = typedError(board);
-  if (boardError !== null || board._tag === "Failure") {
+  if (board._tag !== "Ready") {
     return (
-      <AssignmentMessage
-        message={boardError === null ? "The scouting board could not be loaded." : describeRpcError(boardError)}
+      <ReadStateMessage
+        title="Scouting Assignment"
+        label="Scouting Assignment"
+        focusId="scouting"
+        message={board.message}
       />
     );
-  }
-  if (board._tag === "Initial") {
-    return <AssignmentMessage message="Loading your Scouts..." />;
   }
 
   const readOnly = profile._tag === "Success" && profile.value.archived;
@@ -284,11 +288,3 @@ const Roster = ({
     </>
   );
 };
-
-/** The non-`ready` states, rendered as a labelled `<main>` region carrying one line. */
-const AssignmentMessage = ({ message }: { readonly message: string }) => (
-  <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="scouting" aria-label="Scouting Assignment">
-    <h1 className="text-2xl font-bold">Scouting Assignment</h1>
-    <p className="mt-4 text-text-secondary italic">{message}</p>
-  </main>
-);

@@ -7,6 +7,7 @@
  */
 export type { RpcClientError } from "./rpc/errors.js";
 export { describeRpcError, typedError } from "./rpc/errors.js";
+export { readState, type ReadState } from "./rpc/readState.js";
 
 export {
   squadAtom,

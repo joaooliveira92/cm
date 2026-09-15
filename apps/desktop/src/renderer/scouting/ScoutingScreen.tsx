@@ -16,7 +16,7 @@ import type { SaveId } from "@cm-clone/contracts";
 import { Button } from "../components/ui/button.js";
 import { FOCUS_RING } from "../focus.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
-import { describeRpcError, scoutingAtom, scoutingKnowledgeAtom, typedError, useAtomValue } from "../rpc.js";
+import { readState, scoutingAtom, scoutingKnowledgeAtom, useAtomValue } from "../rpc.js";
 import { ScoutRosterRow } from "./ScoutRosterRow.js";
 import { ScoutingCoverageSummary } from "./ScoutingCoverageSummary.js";
 
@@ -73,17 +73,11 @@ const ScoutingLinks = ({ saveId }: { readonly saveId: SaveId }) => (
 
 /** The club's Scouts, each row as Scouting Assignment renders it but without actions. */
 const ScoutRoster = ({ saveId }: { readonly saveId: SaveId }) => {
-  const board = useAtomValue(scoutingAtom(saveId));
-  const error = typedError(board);
-  if (error !== null || board._tag === "Failure") {
-    return (
-      <SectionMessage
-        failed
-        message={error === null ? "The scouting board could not be loaded." : describeRpcError(error)}
-      />
-    );
-  }
-  if (board._tag === "Initial") return <SectionMessage message="Loading your Scouts..." />;
+  const board = readState(useAtomValue(scoutingAtom(saveId)), {
+    loading: "Loading your Scouts...",
+    failed: "The scouting board could not be loaded.",
+  });
+  if (board._tag !== "Ready") return <SectionMessage failed={board._tag === "Failed"} message={board.message} />;
   const { scouts } = board.value;
   if (scouts.length === 0) return <SectionMessage message="Your club has no Scouts." />;
   return (
@@ -97,17 +91,13 @@ const ScoutRoster = ({ saveId }: { readonly saveId: SaveId }) => {
 
 /** The coverage summary; its own empty state covers a club with nothing scouted yet. */
 const Coverage = ({ saveId }: { readonly saveId: SaveId }) => {
-  const knowledge = useAtomValue(scoutingKnowledgeAtom(saveId));
-  const error = typedError(knowledge);
-  if (error !== null || knowledge._tag === "Failure") {
-    return (
-      <SectionMessage
-        failed
-        message={error === null ? "Scouting knowledge could not be loaded." : describeRpcError(error)}
-      />
-    );
+  const knowledge = readState(useAtomValue(scoutingKnowledgeAtom(saveId)), {
+    loading: "Loading scouting knowledge...",
+    failed: "Scouting knowledge could not be loaded.",
+  });
+  if (knowledge._tag !== "Ready") {
+    return <SectionMessage failed={knowledge._tag === "Failed"} message={knowledge.message} />;
   }
-  if (knowledge._tag === "Initial") return <SectionMessage message="Loading scouting knowledge..." />;
   return <ScoutingCoverageSummary knowledge={knowledge.value} />;
 };
 

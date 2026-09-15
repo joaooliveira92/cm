@@ -31,6 +31,7 @@ scope for v1, and in what order the in-scope screens get built.
 - [07 — Typed RPC errors survive the IPC boundary](issues/07-typed-rpc-errors-survive-ipc.md): shipped. Found in 04: every typed error reached the renderer as `{ name: "Error" }`. `handleRpc` now encodes failures with the method's error schema.
 - [05 — Scouting Knowledge screen](issues/05-scouting-knowledge-screen.md): shipped at `/scouting-knowledge`. One read, `getScoutingKnowledge`, gives per-Club coverage and Knowledge Confidence over the whole squad and per-Player Scouting Progress, with no figure. Knowledge Confidence now also reads live per Club (CONTEXT.md).
 - [06 — Scouting Centre screen](issues/06-scouting-centre-screen.md): shipped on the `scouting` route, aggregating the Scout roster and coverage summary with links to 121 and 126. All three v1 screens shipped; follow-up [08](issues/08-shared-read-state-helper.md) extracts the read-state code repeated across five screens.
+- [08 — One read-state helper for the scouting and training screens](issues/08-shared-read-state-helper.md): shipped. `readState` serves all five sites; `ReadStateMessage` serves three, since the Scouting Centre's section lines are not page messages.
 
 ## Not yet specified
 

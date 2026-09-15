@@ -19,40 +19,34 @@
  * Reached from the career chrome's Training tab (`g 3`) or from the Training Overview's link.
  */
 import { type SaveId } from "@cm-clone/contracts";
-import type { ReactNode } from "react";
+import { ReadStateMessage } from "../components/shared/ReadStateMessage.js";
 import { Button } from "../components/ui/button.js";
 import { FOCUS_RING } from "../focus.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
-import {
-  coachingAssignmentsAtom,
-  describeRpcError,
-  typedError,
-  useAtomValue,
-  type RpcClientError,
-} from "../rpc.js";
-import { trainingViewState } from "./trainingViewState.js";
+import { coachingAssignmentsAtom, readState, useAtomValue } from "../rpc.js";
 import { CoachCard } from "./CoachCard.js";
 
 const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
-export const CoachingAssignmentsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const result = useAtomValue(coachingAssignmentsAtom(saveId));
-  const state = trainingViewState(result);
+/** The loading, failed and empty states share one shell; only the empty one keeps the links. */
+const MESSAGE_SHELL = { title: "Coaching Assignments", label: "Coaching assignments", focusId: "training" } as const;
 
-  if (state === "error") {
-    return <CoachingMessage message={messageOf(typedError(result))} />;
-  }
-  if (state === "loading" || result._tag !== "Success") {
-    return <CoachingMessage message="Loading coaching assignments..." />;
+export const CoachingAssignmentsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
+  const result = readState(useAtomValue(coachingAssignmentsAtom(saveId)), {
+    loading: "Loading coaching assignments...",
+    failed: "Coaching assignments could not be loaded.",
+  });
+  if (result._tag !== "Ready") {
+    return <ReadStateMessage {...MESSAGE_SHELL} message={result.message} />;
   }
 
   const view = result.value;
 
   if (view.coaches.length === 0) {
     return (
-      <CoachingMessage message="No coaching staff assigned yet. Staff will appear once you join a club.">
+      <ReadStateMessage {...MESSAGE_SHELL} message="No coaching staff assigned yet. Staff will appear once you join a club.">
         <CoachingLinks saveId={saveId} />
-      </CoachingMessage>
+      </ReadStateMessage>
     );
   }
 
@@ -88,13 +82,6 @@ export const CoachingAssignmentsScreen = ({ saveId }: { readonly saveId: SaveId 
   );
 };
 
-/** The sentence a failed read shows. A defect-only cause carries no typed error, so it falls back
- *  to the generic line; a missing save always carries its own sentence. */
-const messageOf = (error: RpcClientError<"getCoachingAssignments"> | null): string =>
-  error === null
-    ? "Coaching assignments could not be loaded."
-    : describeRpcError(error);
-
 /** Opens the Training area's squad-wide sub-surfaces: Workload and Recovery (Screen 112) and the
  *  Player Development Centre (Screen 114). */
 const CoachingLinks = ({ saveId }: { readonly saveId: SaveId }) => (
@@ -116,25 +103,4 @@ const CoachingLinks = ({ saveId }: { readonly saveId: SaveId }) => (
       Player development
     </Button>
   </div>
-);
-
-/** The non-`ready` states, rendered as a labelled `<main>` region carrying one line, plus any
- *  action that stays available in that state. */
-const CoachingMessage = ({
-  message,
-  children,
-}: {
-  readonly message: string;
-  readonly children?: ReactNode;
-}) => (
-  <main
-    className={PAGE_CLASS}
-    tabIndex={-1}
-    data-focus-id="training"
-    aria-label="Coaching assignments"
-  >
-    <h1 className="text-2xl font-bold">Coaching Assignments</h1>
-    <p className="mt-4 text-text-secondary italic">{message}</p>
-    {children}
-  </main>
 );

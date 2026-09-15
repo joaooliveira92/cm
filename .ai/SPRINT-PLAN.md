@@ -2,9 +2,10 @@
 
 ## Immediate next action
 
-**group-i-scouting-and-recruitment** ticket 08 (one read-state helper for five screens), a refactor
-follow-up. All three v1 screens (121, 126, 118) shipped 2026-09-15. Decision request 01
-(knowledge-limited Player reads) blocks deferred 119/129.
+No open, unblocked, unclaimed build ticket remains in any effort (group-i 01-08 resolved; group-h 07
+and group-g 10 needs-info; the rest claimed). Next: the spec-group fallback, **group J**
+(`docs/specs/group_j_*`). Decision request 01 in group-i (knowledge-limited Player reads) bears on
+Group J's transfer market and should be answered before its market screens are specced.
 
 ## Gate state (2026-09-14)
 
@@ -55,8 +56,8 @@ follow-up. All three v1 screens (121, 126, 118) shipped 2026-09-15. Decision req
     (Goalkeeping Training Focus rule enforced in main, 2026-09-15). 11 claimed.
 11. **group-i-scouting-and-recruitment**: 01-03 resolved, spec published. 07 completed (typed RPC
     errors survive IPC), 04 completed (Scouting Assignment screen) and 05 completed (Scouting
-    Knowledge screen), 06 completed (Scouting Centre), 2026-09-15. 08 ready (read-state
-    helper follow-up). Scope note promoted. Decision request 01 open.
+    Knowledge screen), 06 completed (Scouting Centre), 2026-09-15. 08 completed (read-state
+    helper), 2026-09-15. Scope note promoted. Effort complete for v1; decision request 01 open. Decision request 01 open.
 
 Shipped and closed:
 

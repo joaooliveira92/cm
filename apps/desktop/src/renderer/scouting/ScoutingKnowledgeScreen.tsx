@@ -13,6 +13,7 @@
  * screen scope.
  */
 import type { KnowledgeClubView, KnowledgePlayerView, SaveId } from "@cm-clone/contracts";
+import { ReadStateMessage } from "../components/shared/ReadStateMessage.js";
 import {
   Table,
   TableBody,
@@ -23,7 +24,7 @@ import {
 } from "../components/ui/table.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs.js";
 import { FOCUS_RING } from "../focus.js";
-import { describeRpcError, scoutingKnowledgeAtom, typedError, useAtomValue } from "../rpc.js";
+import { readState, scoutingKnowledgeAtom, useAtomValue } from "../rpc.js";
 import { confidenceLabel } from "./reportSections.js";
 import {
   ScoutingCoverageSummary,
@@ -34,18 +35,19 @@ import {
 const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 export const ScoutingKnowledgeScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const result = useAtomValue(scoutingKnowledgeAtom(saveId));
-
-  const error = typedError(result);
-  if (error !== null || result._tag === "Failure") {
+  const result = readState(useAtomValue(scoutingKnowledgeAtom(saveId)), {
+    loading: "Loading scouting knowledge...",
+    failed: "Scouting knowledge could not be loaded.",
+  });
+  if (result._tag !== "Ready") {
     return (
-      <KnowledgeMessage
-        message={error === null ? "Scouting knowledge could not be loaded." : describeRpcError(error)}
+      <ReadStateMessage
+        title="Scouting Knowledge"
+        label="Scouting Knowledge"
+        focusId="scouting"
+        message={result.message}
       />
     );
-  }
-  if (result._tag === "Initial") {
-    return <KnowledgeMessage message="Loading scouting knowledge..." />;
   }
 
   const knowledge = result.value;
@@ -143,11 +145,3 @@ const PlayerKnowledge = ({ players }: { readonly players: ReadonlyArray<Knowledg
     </Table>
   );
 };
-
-/** The non-`ready` states, rendered as a labelled `<main>` region carrying one line. */
-const KnowledgeMessage = ({ message }: { readonly message: string }) => (
-  <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="scouting" aria-label="Scouting Knowledge">
-    <h1 className="text-2xl font-bold">Scouting Knowledge</h1>
-    <p className="mt-4 text-text-secondary italic">{message}</p>
-  </main>
-);

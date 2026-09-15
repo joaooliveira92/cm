@@ -10,7 +10,12 @@ Found in ticket 06 review, the fourth and fifth copies.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] One helper maps a read to loading, failure message or value, and the five sites use it
-- [ ] Every screen's existing renderer tests pass unchanged
+- [x] One helper maps a read to loading, failure message or value, and the five sites use it
+- [x] Every screen's existing renderer tests pass unchanged
+
+## Answer
+
+`readState(result, { loading, failed })` in `apps/desktop/src/renderer/rpc/readState.ts` returns `Loading`, `Failed` (the error's own sentence or the fallback) or `Ready` with the value, and all five sites use it. `ReadStateMessage` (`components/shared/`) replaces `AssignmentMessage`, `KnowledgeMessage` and `CoachingMessage`. The Scouting Centre's two sections keep their own `SectionMessage`: they render a line inside the page with `role="alert"` on failure, not a page `<main>`, so the shared shell would change what they show.
+

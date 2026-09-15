@@ -142,3 +142,36 @@ Declined or deferred:
 - The loading/failure/message code is now repeated in five places (medium): filed as ticket 08.
 - Section headings sit in plain `div`s beside an `aria-label`ed summary (low).
 - No test fails one read while the other succeeds; the e2e count check does not retry (low).
+
+# Ticket 08: One read-state helper for the scouting and training screens
+
+## Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | One helper maps a read to loading, failure message or value, and the five sites use it | `apps/desktop/test/renderer/rpc/read-state.test.ts` (Initial, Success while waiting, typed remote failure, transport failure, defect-only fallback), `test/renderer/components/read-state-message.test.tsx` | pass |
+| 2 | Every screen's existing renderer tests pass unchanged | `git diff HEAD --stat -- apps/desktop/test` empty; `vitest run test/renderer/scouting test/renderer/training` 155 passed | pass |
+
+## Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1; typecheck, effect-lint, verify-db-schema pass; lint errors only outside this diff; verify-md-links 18; shared 461/461, contracts 128/128, game-engine 50/50; desktop 71 failed / 1757 passed |
+| desktop failures | failing test names compared with the ticket 06 run | identical, 71 tests |
+| e2e | `pnpm build`, then the three scouting specs | 3 passed |
+| e2e | `npx playwright test e2e/training-workload.spec.ts` | 1 failed, pre-existing drift: it expects `goto training` to land on a "Coaching Assignments" heading, but since `5e77770` the Training route is the Training Overview. Ticket 08 kept the ready-state heading and every message line |
+
+## Behavior changes
+
+None intended: every screen renders the same text, roles and classes.
+
+## Review
+
+Reviewer verdict: APPROVE on both axes, no blocker or high.
+
+Declined or deferred:
+
+- `trainingViewState` and `clubStaffViewState` still serve five other screens (TrainingPlan, Workload,
+  DevelopmentCentre, PlayerCoachReport, ClubStaff), beside `readState` (medium). Those screens belong to
+  other efforts; not filed here.
+- `label` repeats `title` at most call sites; no test for a refreshing Failure (low).
