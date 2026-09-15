@@ -10,21 +10,24 @@ A reconciled spec covering all 13 Group H screens (105-117) — training overvie
 
 - Training screen (`apps/desktop/src/renderer/training/TrainingScreen.tsx`) is a placeholder stub.
 - `SetTrainingFocus` command and `TrainingFocusSetEvent` exist; `PlayerDevelopedEvent` drives per-season attribute changes.
-- No training calendar, unit, coaching, workload, mentoring, or youth academy domain model exists.
+- Training Focus (single-category toggle) is the only training-plan concept; fully implemented with RPC, DB, domain logic.
+- Player Development (`developPlayer`, `developPlayersForSeason`) is fully implemented including coach modifier.
+- Coach model exists (`coachModifier` in `staff.ts`, `Technical Coaching` manager pillar) but no assignments UI.
+- Match-driven condition/recovery engine exists; no training-specific workload model.
+- No training calendar, unit, position-training, traits, mentoring, youth-academy-generation, or training-camp code exists.
 - The `packages/game-engine` and `packages/shared` are pure — any new training simulation logic goes there.
-- Training Focus is set per-player-per-season via the Squad screen; the training screens will need new UIs and potentially new RPCs.
-- Player Development Centre (Screen 114) and Youth Intake (Screen 116) are large features that may need their own substructures.
 
 ## Decisions so far
 
-*None yet — this map is being chartered.*
+- [01 — Group H screen inventory survey](issues/01-screen-inventory.md): 0 built, 7 partial, 6 absent. Backend models for Training Focus and Player Development are fully implemented; calendar/units/position-training/traits/mentoring/youth-intake/training-camp have no code.
+- [02 — Scope decision for absent screens](issues/02-scope-absent-screens.md): 6 screens in scope for v1 (105, 108, 111, 112, 113, 114); 7 deferred (106, 107, 109, 110, 115, 116, 117). See [Agent Note: Group H v1 scope](../../../.agents/notes/proposed/architecture/2026-09-15-group-h-v1-scope.md).
+- [03 — Build sequence](issues/03-partial-screen-build-sequence.md): Priority 1=Coaching Assignments, 2=Workload/Recovery, 3=Individual Training Plan, 4=Performance Report, 5=Player Dev Centre, 6=Training Overview.
 
 ## Not yet specified
 
-- Which screens already have backend domain models vs. need new ones (coaching assignments, workload, mentoring, youth intake)
-- Whether Screens 114-117 (development centre, mentoring, youth intake, training camp) are in scope for v1 or deferred
-- Build sequence and shared components
+None — all known decisions resolved. Proceeding to spec.
 
 ## Out of scope
 
-- Game-engine simulation logic for training outcomes (the domain model for *how* training affects attributes is speculative — chart the UI surfaces first)
+- Screens 106 (Training Calendar), 107 (Training Unit Assignment), 109 (Position/Role Training), 110 (Additional Focus/Traits), 115 (Mentoring Groups), 116 (Youth Intake), 117 (Training Camp/Pre-Season Plan) — deferred to post-v1; each requires a new domain model.
+- Game-engine simulation logic for training outcomes — chart UI surfaces first.
