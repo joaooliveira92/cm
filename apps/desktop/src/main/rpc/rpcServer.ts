@@ -439,7 +439,20 @@ export const handleRpc = (
     { method, saveId: saveIdOf(method, payload) },
   ).pipe(
     Effect.map((value) => ({ _tag: "Success", value }) as RpcResult<AppRpcMethod>),
+    // Electron copies the reply with the structured clone algorithm, which keeps only the name and
+    // message of an `Error`, and every tagged error is one. Encoding it with the method's error
+    // schema turns it into plain data the renderer can decode. An error outside that union (a
+    // payload that failed to decode) is sent as it is, and the renderer reports a contract decode
+    // failure, as before.
     Effect.catch((error) =>
-      Effect.succeed<RpcResult<AppRpcMethod>>({ _tag: "Failure", error }),
+      Schema.encodeUnknownEffect(AppRpcs[method].error)(error).pipe(
+        Effect.catch((encodeError) =>
+          Effect.logWarning("RPC error did not encode with the method's error schema", {
+            method,
+            encodeError: String(encodeError),
+          }).pipe(Effect.as(error)),
+        ),
+        Effect.map((encoded): RpcResult<AppRpcMethod> => ({ _tag: "Failure", error: encoded })),
+      ),
     ),
   );
