@@ -8,13 +8,14 @@ import {
   resumeSimulation,
 } from "../rpc.js";
 import { useMatchContext } from "./MatchProvider.js";
+import { controlledClubId } from "./controlledClub.js";
 import { useCommentaryContext } from "./CommentaryProvider.js";
 
 export const shouldPauseMatch = (
   injuries: ReadonlyArray<InjuryView>,
-  homeClubId: ClubId,
+  clubId: ClubId,
   capReached: boolean,
-): boolean => injuries.some((injury) => injury.teamClubId === homeClubId) && capReached;
+): boolean => injuries.some((injury) => injury.teamClubId === clubId) && capReached;
 
 export interface PollReadiness {
   readonly fetching: boolean;
@@ -63,12 +64,12 @@ export const useMatchStreaming = (): void => {
     }
     const needsDecision = shouldPauseMatch(
       commState.chunkInjuries,
-      match.homeClubId,
-      commState.homeSubs.capReached,
+      controlledClubId(match),
+      commState.clubSubs.capReached,
     );
     commMeta.pausedRef.current = needsDecision;
     commMeta.setPaused(needsDecision);
-  }, [match, phase, commState.homeSubs.capReached, commState.chunkInjuries, commMeta.setPaused, hydrated]);
+  }, [match, phase, commState.clubSubs.capReached, commState.chunkInjuries, commMeta.setPaused, hydrated]);
 
   useEffect(() => {
     if (!hydrated) return;

@@ -26,19 +26,23 @@ import { substitutionErrorLabel, validateLiveSubstitution } from "./substitution
 import { useMatchContext, type MatchCommand } from "./MatchProvider.js";
 import { useCommentaryContext } from "./CommentaryProvider.js";
 import { tacticsAtom, useAtomValue } from "../rpc.js";
+import { commandStatusLabel, type CommandStatus } from "./commandStatus.js";
 import { getLiveTactic, recordLiveTactic } from "./session.js";
 import type { MatchControlContextValue, PanelMode } from "./matchControlContext.js";
 
 export interface MatchControlInput {
-  readonly homeClubId: ClubId;
+  /** The controlled club: every command carries it, and injuries are read for its side. */
+  readonly clubId: ClubId;
   readonly subsStatus: SubstitutionStatusView;
+  readonly subsKnown: boolean;
   readonly onPitchCount: number;
   readonly injuries: ReadonlyArray<InjuryView>;
 }
 
 export const useMatchControl = ({
-  homeClubId,
+  clubId,
   subsStatus,
+  subsKnown,
   onPitchCount,
   injuries,
 }: MatchControlInput): MatchControlContextValue | null => {
@@ -56,15 +60,20 @@ export const useMatchControl = ({
   /** Inline substitution-draft rejection (the validator's reason), never a silent no-op. */
   const [subAlert, setSubAlert] = useState<string | null>(null);
   const toggleRef = useRef<HTMLButtonElement | null>(null);
+  /** The tactic the match last took. The draft in `tactic` may carry instruction edits not yet
+   *  applied; a substitution must not send those to the shared live tactic. */
+  const appliedTacticRef = useRef<Tactic | null>(null);
+  /** One command at a time: each outcome is read against the counts from before it was sent. */
+  const inFlightRef = useRef(false);
 
   const tacticsResult = useAtomValue(tacticsAtom(saveId));
 
-  const injuryPrompt = injuries.some((injury) => injury.teamClubId === homeClubId);
+  const injuryPrompt = injuries.some((injury) => injury.teamClubId === clubId);
   const hasRedInjury = injuries.some(
-    (injury) => injury.teamClubId === homeClubId && injury.tier === "red",
+    (injury) => injury.teamClubId === clubId && injury.tier === "red",
   );
   const orangeInjury = injuries.find(
-    (injury) => injury.teamClubId === homeClubId && injury.tier === "orange",
+    (injury) => injury.teamClubId === clubId && injury.tier === "orange",
   );
   const isShorthanded = onPitchCount < 11;
 
@@ -106,38 +115,51 @@ export const useMatchControl = ({
       // The tactic last sent to the match wins over the pre-match one: a substitution made on the
       // standalone screens must not come back undone by this panel's next tactics change.
       const shared = getLiveTactic(saveId) ?? view.tactic;
-      if (shared) setTactic(shared);
+      if (shared) {
+        setTactic(shared);
+        appliedTacticRef.current = shared;
+      }
     } else if (tacticsResult._tag === "Failure") {
       setStatus("Failed to load squad/tactic for live control");
     }
   }, [tacticsResult, saveId]);
 
-  // The shared submission path: run the command through the provider's mutation seam and render
-  // the same status sentences a remote refusal maps to ("applied", silently rejected).
-  const runSubmission = async (command: MatchCommand): Promise<void> => {
-    setStatus("Submitting...");
+  // The shared submission path: run the command through the provider's mutation seam and show its
+  // status in the same words the standalone screens use. A transport failure is a rejection too.
+  const runSubmission = async (command: MatchCommand): Promise<CommandStatus | null> => {
+    if (inFlightRef.current) return null;
+    inFlightRef.current = true;
+    setStatus(commandStatusLabel({ _tag: "pending" }));
     try {
-      await commentaryActions.submitCommand(command, isHalftime);
-      setStatus("Applied — the engine may still reject an invalid/over-cap command silently.");
-    } catch {
-      setStatus("Failed to submit command");
+      const outcome: CommandStatus = await commentaryActions
+        .submitCommand(command, isHalftime)
+        .catch(() => ({ _tag: "rejected", reason: "Unable to reach the game. Please try again." }) as const);
+      setStatus(commandStatusLabel(outcome));
+      return outcome;
+    } finally {
+      inFlightRef.current = false;
     }
   };
 
-  const onApplyTactics = (): void => {
+  const recordApplied = (applied: Tactic): void => {
+    appliedTacticRef.current = applied;
+    recordLiveTactic(saveId, applied);
+  };
+
+  const onApplyTactics = async (): Promise<void> => {
     if (!tactic) return;
-    recordLiveTactic(saveId, tactic);
-    void runSubmission({ _tag: "ChangeTactics", clubId: homeClubId, tactic });
+    const outcome = await runSubmission({ _tag: "ChangeTactics", clubId, tactic });
+    if (outcome !== null && outcome._tag !== "rejected") recordApplied(tactic);
   };
 
   // Ticket 11 orange no-subs bring-off: the manager drags the injured player off to 10 men.
   const onBringOff = (): void => {
     if (!orangeInjury) return;
-    void runSubmission({ _tag: "ForceOff", clubId: homeClubId, playerId: orangeInjury.playerId });
+    void runSubmission({ _tag: "ForceOff", clubId, playerId: orangeInjury.playerId });
   };
 
   const onMakeSubstitution = async (): Promise<void> => {
-    if (!tactic) return;
+    if (!tactic || !subsKnown) return;
     // Validate the draft against the server-reported caps and the no-subs /
     // same-player rules before submitting — the disabled guard on the button is
     // the primary gate; this rejects with a visible reason instead of a silent
@@ -148,22 +170,19 @@ export const useMatchControl = ({
       return;
     }
     setSubAlert(null);
-    await runSubmission({
-      _tag: "MakeSubstitution",
-      clubId: homeClubId,
-      outPlayerId,
-      inPlayerId,
-    });
-    // Optimistic local update so the on-pitch/bench split is right for the *next* substitution even
-    // before the next poll's homeSubs confirms the server accepted it.
-    const substituted = new Tactic({
-      ...tactic,
-      slots: tactic.slots.map((slot: TacticSlot) =>
-        slot.playerId === outPlayerId ? { ...slot, playerId: inPlayerId } : slot,
-      ),
-    });
-    setTactic(substituted);
-    recordLiveTactic(saveId, substituted);
+    const outcome = await runSubmission({ _tag: "MakeSubstitution", clubId, outPlayerId, inPlayerId });
+    if (outcome === null || outcome._tag !== "applied") return;
+    // The match took it: swap the player in both the draft (keeping its unapplied instruction edits)
+    // and the applied tactic, and record only the applied one for the standalone screens.
+    const swap = (from: Tactic): Tactic =>
+      new Tactic({
+        ...from,
+        slots: from.slots.map((slot: TacticSlot) =>
+          slot.playerId === outPlayerId ? { ...slot, playerId: inPlayerId } : slot,
+        ),
+      });
+    setTactic((current) => (current === null ? current : swap(current)));
+    recordApplied(swap(appliedTacticRef.current ?? tactic));
     setOutPlayerId(PlayerId.make(""));
     setInPlayerId(PlayerId.make(""));
   };
@@ -313,6 +332,7 @@ export const useMatchControl = ({
       subAlert,
       mode,
       subsStatus,
+      subsKnown,
       onPitchCount,
       injuryPrompt,
       hasRedInjury,

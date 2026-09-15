@@ -31,6 +31,7 @@ import {
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 import type { MatchCommand } from "./MatchProvider.js";
 import { resolveCommandStatus, type ClubCommandSnapshot, type CommandStatus } from "./commandStatus.js";
+import { controlledClubId, controlledSubs } from "./controlledClub.js";
 import {
   getActiveMatch,
   getLiveTactic,
@@ -64,7 +65,7 @@ export type LiveMatchView =
   | LiveMatchReady;
 
 const snapshotFor = (match: MatchSummary, view: RpcSuccess<"resumeSimulation">): ClubCommandSnapshot => ({
-  subs: match.isHome ? view.homeSubs : view.awaySubs,
+  subs: controlledSubs(match, view),
 });
 
 export interface LiveMatchCommands {
@@ -133,7 +134,7 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
     return {
       _tag: "ready",
       match,
-      clubId: match.isHome ? match.homeClubId : match.awayClubId,
+      clubId: controlledClubId(match),
       squad: tacticsResult.value.squad,
       tactic,
       snapshot,

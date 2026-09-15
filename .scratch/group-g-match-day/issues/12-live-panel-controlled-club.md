@@ -10,7 +10,7 @@ Found in review of [ticket 07](07-tactics-substitutions-ui.md).
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Panel commands carry the controlled club's id when it plays away
 - [ ] Substitution counts, head-count and injury prompts read the controlled club's side

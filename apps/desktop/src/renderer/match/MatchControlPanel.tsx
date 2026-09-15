@@ -25,6 +25,7 @@ import { SELECT_CLASS } from "./controls.js";
 import { useMatchContext } from "./MatchProvider.js";
 import { useCommentaryContext } from "./CommentaryProvider.js";
 import { MatchControlContext, useMatchControlContext } from "./matchControlContext.js";
+import { controlledClubId } from "./controlledClub.js";
 import { useMatchControl, type MatchControlInput } from "./useMatchControl.js";
 
 /* ---------------------------------------------------------------------------
@@ -247,7 +248,7 @@ const SubstitutionControl = () => {
             type="button"
             variant="secondary"
             data-action-id="make-substitution"
-            disabled={state.subsStatus.capReached || !state.outPlayerId || !state.inPlayerId}
+            disabled={!state.subsKnown || state.subsStatus.capReached || !state.outPlayerId || !state.inPlayerId}
             onClick={() => void dispatchAction("make-substitution")}
           >
             Make substitution
@@ -381,9 +382,10 @@ export const MatchControlPanel = () => {
   if (match === null) return null;
   return (
     <MatchControlProvider
-      homeClubId={match.homeClubId}
-      subsStatus={comm.homeSubs}
-      onPitchCount={comm.homeOnPitchCount}
+      clubId={controlledClubId(match)}
+      subsStatus={comm.clubSubs}
+      subsKnown={comm.clubSubsKnown}
+      onPitchCount={comm.clubOnPitchCount}
       injuries={comm.chunkInjuries}
     />
   );

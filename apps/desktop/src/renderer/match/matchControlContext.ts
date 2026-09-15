@@ -35,6 +35,8 @@ export interface MatchControlState {
   /** Live match facts mirrored from the parent MatchProvider (Phase 1) so sub-components
    *  derive their variants locally instead of receiving boolean props. */
   readonly subsStatus: SubstitutionStatusView;
+  /** Whether a match response has reported `subsStatus` yet; a substitution waits for it. */
+  readonly subsKnown: boolean;
   readonly onPitchCount: number;
   readonly injuryPrompt: boolean;
   readonly hasRedInjury: boolean;
