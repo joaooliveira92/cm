@@ -23,6 +23,7 @@ export {
   teamScoutReportAtom,
   teamScoutReadingsAtom,
   clubStaffAtom,
+  coachingAssignmentsAtom,
   playerProfileAtom,
   playerContractAtom,
   saveKey,

@@ -1,7 +1,12 @@
+import { access } from "node:fs/promises";
+import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
+  CoachAssignmentView,
+  CoachingAssignmentsView,
   NotYourPlayerError,
   PlayerNotFoundError,
+  SaveNotFoundError,
   TrainingFocusView,
   type PlayerId,
   type SaveId,
@@ -50,3 +55,51 @@ export const setTrainingFocus = (savesDir: string, saveId: SaveId, playerId: Pla
       return new TrainingFocusView({ playerId, focus });
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );
+
+/**
+ * The manager's own club's coaching staff, read from the `staff` DB table.
+ *
+ * Returns a `CoachingAssignmentsView` with the club's coaches and their quality ratings (1-20).
+ * The department is always `"coaching"` for a coach (from `ROLE_DEPARTMENT` in `@cm-clone/shared`).
+ * An empty list is valid — it means the save has no materialised staff for the user's club (e.g. a
+ * fresh `results-only` save before `commitCareer`).
+ *
+ * Pure read: follows `getSquad`'s pattern of checking file existence and providing a readonly
+ * `SqlClient`, rather than `withExistingSave`, because no transaction context is needed.
+ */
+export const getCoachingAssignments = (savesDir: string, saveId: SaveId) =>
+  Effect.gen(function* () {
+    const filename = path.join(savesDir, `${saveId}.sqlite`);
+    const exists = yield* Effect.promise(() =>
+      access(filename).then(
+        () => true,
+        () => false,
+      ),
+    );
+    if (!exists) {
+      return yield* new SaveNotFoundError({ id: saveId });
+    }
+
+    return yield* Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const coachRows = yield* sql<{
+        id: string;
+        name: string;
+        quality: number;
+      }>`SELECT id, name, quality FROM staff
+         WHERE club_id = (SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1)
+           AND role = 'coach'`;
+
+      return new CoachingAssignmentsView({
+        coaches: coachRows.map(
+          (row) =>
+            new CoachAssignmentView({
+              id: row.id,
+              name: row.name,
+              quality: row.quality,
+              department: "coaching",
+            }),
+        ),
+      });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped);
+  });

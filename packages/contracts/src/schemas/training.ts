@@ -2,6 +2,7 @@ import { Schema } from "effect";
 
 import { ClubId, PlayerId } from "./ids.js";
 import { AttributesSchema, NullableTrainingFocusSchema } from "./squad.js";
+import { StaffDepartmentSchema } from "./clubs.js";
 
 /** The `PlayerDeveloped` event the Club Decider emits once per `SeasonConcluded` (per club),
  * carrying every player's resulting Attribute set — a development *outcome*, distinct from the
@@ -35,4 +36,25 @@ export class TrainingFocusView extends Schema.Class<TrainingFocusView>("Training
  * Focus is a manager's own-squad lever, never a cross-club command. */
 export class NotYourPlayerError extends Schema.TaggedError<NotYourPlayerError>()("NotYourPlayerError", {
   playerId: PlayerId,
+}) {}
+
+/**
+ * One coach on the Coaching Assignments screen (Screen 111): id, name, quality rating (1-20), and
+ * the department/specialty they serve. Uses existing coach data from the `staff` DB table, where
+ * `name` is stored as a single `"firstName lastName"` string matching the generated fiction, and
+ * `quality` is the 1-20 rating from the same row. The department is derived from the role via
+ * `StaffDepartmentSchema` (always "coaching" for a coach).
+ */
+export class CoachAssignmentView extends Schema.Class<CoachAssignmentView>("CoachAssignmentView")({
+  id: Schema.String,
+  name: Schema.String,
+  quality: Schema.Finite,
+  department: StaffDepartmentSchema,
+}) {}
+
+/** The Coaching Assignments screen's whole view: a (possibly empty) list of coaches on the
+ * manager's own club. No club summary is needed because the screen lives under the save-scoped
+ * Training area and the club is always the user's own. */
+export class CoachingAssignmentsView extends Schema.Class<CoachingAssignmentsView>("CoachingAssignmentsView")({
+  coaches: Schema.Array(CoachAssignmentView),
 }) {}

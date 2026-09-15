@@ -8,8 +8,10 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Coaching assignments screen renders with coach name, quality rating, and department
-- [ ] Uses existing coach data from the staff/coach DB model
-- [ ] Coach assignment card component is extractable for reuse in Screen 105
+<!-- Implementation started by implementator on 2026-09-15 -->
+
+- [x] Coaching assignments screen renders with coach name, quality rating, and department
+- [x] Uses existing coach data from the staff/coach DB model
+- [x] Coach assignment card component is extractable for reuse in Screen 105

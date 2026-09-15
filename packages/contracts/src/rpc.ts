@@ -32,6 +32,8 @@ import {
   ClubNotFoundError,
   ClubSelectionView,
   ClubStaffView,
+  CoachAssignmentView,
+  CoachingAssignmentsView,
   CollidingOverrideError,
   FixturesView,
   InsufficientTransferBudgetError,
@@ -421,11 +423,20 @@ commitCareer: {
     error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError, SaveArchivedError]),
   },
 /** Club Staff (Screen 38): who works at any club in the save. A pure read — every person derived
-   *  on demand, so a `results-only` club answers like any other; only the save or the club id can fail. */
+ *  on demand, so a `results-only` club answers like any other; only the save or the club id can fail. */
   getClubStaff: {
     payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
     success: ClubStaffView,
     error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+  },
+  /** Coaching Assignments (Screen 111): the manager's own club's coaching staff with quality ratings
+   *  and assigned departments. A pure read from the `staff` table — no command, no world derivation.
+   *  Only the save can fail (a missing save is `SaveNotFoundError`); an empty coach list is a valid
+   *  value for a club whose staff has not been materialised. */
+  getCoachingAssignments: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: CoachingAssignmentsView,
+    error: SaveNotFoundError,
   },
   /** Player Profile (Screen 50): identity, positions, attributes, club, contract expiry, transfer
    *  value, and injury status for one player. */

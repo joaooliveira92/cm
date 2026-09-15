@@ -198,6 +198,21 @@ const clubStaffForSave = Atom.family((saveId: SaveId) =>
 export const clubStaffAtom = (saveId: SaveId, clubId: ClubId) =>
   clubStaffForSave(saveId)(clubId);
 
+/**
+ * getCoachingAssignments — `["save", saveId]`, `["training", saveId]`.
+ *
+ * Coaching Assignments (Screen 111): the manager's own club's coaches with quality ratings.
+ * Reactive on the save-wide key and the training key (which `setTrainingFocusMutation` and future
+ * coach-related mutations will invalidate).
+ */
+export const coachingAssignmentsAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getCoachingAssignments", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), trainingKey(saveId)]),
+    ),
+  ),
+);
+
 const playerProfileForSave = Atom.family((saveId: SaveId) =>
   Atom.family((playerId: PlayerId) =>
     managementReadPolicy(
