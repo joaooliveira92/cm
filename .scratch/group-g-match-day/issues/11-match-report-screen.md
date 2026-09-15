@@ -7,13 +7,13 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Match report generation produces a structured summary of all key events
-- [ ] Report includes goalscorers, cards, substitutions, injuries, and final score
-- [ ] Report screen renders the narrative summary
-- [ ] Screen is accessible via the post-match tab navigation
-- [ ] Loading and error states are handled
+- [x] Match report generation produces a structured summary of all key events
+- [x] Report includes goalscorers, cards, substitutions, injuries, and final score
+- [x] Report screen renders the narrative summary
+- [x] Screen is accessible via the post-match tab navigation
+- [x] Loading and error states are handled
 
 ## Comments
 
@@ -30,3 +30,21 @@ result (`season.awaitingFixture.matchId`) — in full only when `reachedFullTime
 it finish, otherwise cut at zero, since that id is set from kickoff and survives a restart; else `matchId: null`, which the main process resolves to the
 controlled club's latest played match. A ratings or report screen that follows it inherits the same
 limitation when reached from history after later matches.
+
+## Answer
+
+Implemented. `getMatchReport` (`apps/desktop/src/main/match/report.ts`) re-derives the match stream
+and returns the final and half-time score, every Goal, card, Injury and Substitution in match order
+with names, and the full-match statistics from ticket 09. It refuses with `MatchNotCompleteError`
+until the Fixture's result is committed. Otherwise the report would be reachable by address and could
+show a timeline ahead of Match day. The screen writes the result as one sentence and lists
+goalscorers per side, the timeline and the statistics table.
+
+The destination and route now carry `matchId` (`/career/$saveId/match-report/$matchId`), as the
+ticket 08 review asked. The Post-Match Summary's link passes it.
+
+Also fixed: a whole-match statistics read returned `throughMinute: 0` instead of `null`, so full-match
+statistics showed "Up to 0'".
+
+Not in scope: Screen 103's lineups, formations, officials, attendance and match-revision binding.
+Follow-up: [17](17-stoppage-minutes-read-as-second-half.md) (how stoppage-time minutes are shown).

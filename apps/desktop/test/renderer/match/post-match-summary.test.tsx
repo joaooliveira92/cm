@@ -83,13 +83,13 @@ describe("Post-Match Summary (Screen 99)", () => {
     bindRouter({ navigate, history: { back: () => undefined, forward: () => undefined, canGoBack: () => false } } as never);
     mount(() => ({ _tag: "Success", value: summary(EVENTS) }));
     const review = await screen.findByRole("navigation", { name: "Post-match review" });
-    for (const [label, to] of [
-      ["Statistics", "/career/$saveId/match-stats"],
-      ["Player ratings", "/career/$saveId/match-ratings"],
-      ["Match report", "/career/$saveId/match-report"],
+    for (const [label, to, params] of [
+      ["Statistics", "/career/$saveId/match-stats", { saveId: "s1" }],
+      ["Player ratings", "/career/$saveId/match-ratings", { saveId: "s1" }],
+      ["Match report", "/career/$saveId/match-report/$matchId", { saveId: "s1", matchId: "m1" }],
     ] as const) {
       fireEvent.click(within(review).getByRole("button", { name: label }));
-      expect(navigate).toHaveBeenLastCalledWith({ to, params: { saveId: "s1" } });
+      expect(navigate).toHaveBeenLastCalledWith({ to, params });
     }
   });
 });

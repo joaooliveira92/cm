@@ -107,7 +107,6 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/match-substitutions":
     case "/career/$saveId/match-stats":
     case "/career/$saveId/match-ratings":
-    case "/career/$saveId/match-report":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     // The one two-parameter route: the club segment carries the target club as well as the save.
@@ -122,6 +121,12 @@ export const navigate = (destination: NavigationDestination): void => {
       getRouter().navigate({
         to: resolved.to,
         params: { saveId: resolved.params.saveId, playerId: resolved.params.playerId },
+      });
+      break;
+    case "/career/$saveId/match-report/$matchId":
+      getRouter().navigate({
+        to: resolved.to,
+        params: { saveId: resolved.params.saveId, matchId: resolved.params.matchId },
       });
       break;
     default:

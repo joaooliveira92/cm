@@ -1,10 +1,10 @@
-import type { ClubId, CompetitionId, NationId, PlayerId, SaveId } from "@cm-clone/contracts";
+import type { ClubId, CompetitionId, MatchId, NationId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { Outlet, useLocation, useParams } from "@tanstack/react-router";
 import { type ComponentType, useEffect, useLayoutEffect, useRef } from "react";
 import {
   navigateCareer,
 } from "../navigation/adapter.js";
-import { decodeClubId, decodeCompetitionId, decodeNationId, decodePlayerId, decodeSaveId } from "../navigation/params.js";
+import { decodeClubId, decodeCompetitionId, decodeMatchId, decodeNationId, decodePlayerId, decodeSaveId } from "../navigation/params.js";
 import { CareerChrome } from "../chrome/CareerChrome.js";
 import { Alert } from "../components/ui/alert.js";
 import { RegistryProvider } from "../rpc.js";
@@ -177,6 +177,32 @@ export const CareerPlayerChildView = ({
   return (
     <RouteView screenId={screenId}>
       <Screen saveId={save.success} playerId={player.success} />
+    </RouteView>
+  );
+};
+
+interface MatchScreenProps {
+  readonly saveId: SaveId;
+  readonly matchId: MatchId;
+}
+
+/** One match-scoped child route surface (`/career/$saveId/match-report/$matchId`). Same boundary
+ *  decode as the club and player surfaces; the `screenId` stays fixed per surface. */
+export const CareerMatchChildView = ({
+  screenId,
+  Screen,
+}: {
+  readonly screenId: string;
+  readonly Screen: ComponentType<MatchScreenProps>;
+}) => {
+  const params = useParams({ strict: false });
+  const save = decodeSaveId(params.saveId ?? "");
+  const match = decodeMatchId(params.matchId ?? "");
+  if (save._tag === "Malformed") return <RouteParamErrorScreen reason={save.reason} />;
+  if (match._tag === "Malformed") return <RouteParamErrorScreen reason={match.reason} />;
+  return (
+    <RouteView screenId={screenId}>
+      <Screen saveId={save.success} matchId={match.success} />
     </RouteView>
   );
 };

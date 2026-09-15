@@ -102,6 +102,7 @@ import {
   CareerChildView,
   CareerClubChildView,
   CareerIndexRedirect,
+  CareerMatchChildView,
   CareerPlayerChildView,
   CareerStaffChildView,
   CareerNationChildView,
@@ -616,7 +617,11 @@ const matchSubstitutionsRoute = defineCareerChild("match-substitutions", "matchS
 const matchOppositionInstructionsRoute = defineCareerChild("match-opposition-instructions", "matchOppositionInstructions", MatchOppositionInstructionsScreen);
 const matchCommentaryRoute = defineCareerChild("match-commentary", "matchCommentary", MatchCommentaryScreen);
 const matchReplaysRoute = defineCareerChild("match-replays", "matchReplays", MatchReplaysScreen);
-const matchReportRoute = defineCareerChild("match-report", "matchReport", MatchReportScreen);
+const matchReportRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "match-report/$matchId",
+  component: () => <CareerMatchChildView screenId="matchReport" Screen={MatchReportScreen} />,
+});
 const matchPreviewRoute = defineCareerChild("match-preview", "matchPreview", MatchPreviewScreen);
 
 // ---------------------------------------------------------------------------

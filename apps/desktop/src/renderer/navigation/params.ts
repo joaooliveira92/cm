@@ -1,11 +1,13 @@
 import {
   ClubId as ClubIdSchema,
   CompetitionId as CompetitionIdSchema,
+  MatchId as MatchIdSchema,
   NationId as NationIdSchema,
   PlayerId as PlayerIdSchema,
   SaveId as SaveIdSchema,
   type ClubId,
   type CompetitionId,
+  type MatchId,
   type NationId,
   type PlayerId,
   type SaveId,
@@ -82,5 +84,16 @@ export const decodeCompetitionId = (raw: string): RouteParamDecode<CompetitionId
     return { _tag: "Success", success: Schema.decodeUnknownSync(CompetitionIdSchema)(raw) };
   } catch {
     return malformed("competitionId parameter is not a string");
+  }
+};
+
+/** Decode the `:matchId` path parameter into the contract's branded `MatchId`. A well-formed id
+ *  naming no match is the report RPC's `MatchNotFoundError`, not an address error. */
+export const decodeMatchId = (raw: string): RouteParamDecode<MatchId> => {
+  if (raw === "") return malformed("matchId parameter is empty");
+  try {
+    return { _tag: "Success", success: Schema.decodeUnknownSync(MatchIdSchema)(raw) };
+  } catch {
+    return malformed("matchId parameter is not a string");
   }
 };

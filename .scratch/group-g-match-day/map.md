@@ -24,6 +24,7 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
 - [08 — Post-Match Summary](issues/08-post-match-summary-enhancement.md): Implemented. `getPostMatchSummary` read RPC; summary shown only after the result is committed; fixed accepted results reverting to Accept result. Follow-ups: [14](issues/14-post-match-summary-penalties.md), [15](issues/15-full-time-session-lost-before-accept.md).
 - [09 — Match Statistics](issues/09-match-statistics-component.md): Implemented. `getMatchStatistics` projection; live totals cut by revealed-event count; possession/corners/fouls/offsides unavailable pending [decision request 02](decision-request-02-unsimulated-match-statistics.md). Follow-up: [16](issues/16-live-commands-stamped-by-revealed-minute.md).
 - [10 — Match Player Ratings](issues/10-match-player-ratings-component.md): Parked, not built. No rating formula exists and the Match Events name no goalkeeper or defender contribution; inputs and weights await [decision request 03](decision-request-03-match-player-rating-formula.md).
+- [11 — Match Report](issues/11-match-report-screen.md): Implemented. `getMatchReport` read, refused until the result is committed; route carries `matchId`; embeds full-match statistics. Follow-up: [17](issues/17-stoppage-minutes-read-as-second-half.md).
 - [Spec published](spec.md): Reconciled spec marking handoff from charting to slicing.
 - [Implementation tickets](issues/): 8 vertical slices (04–11), all unblocked.
 

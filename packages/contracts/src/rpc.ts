@@ -78,6 +78,7 @@ import {
   TeamSheetView,
   PostMatchSummaryView,
   MatchStatisticsView,
+  MatchReportView,
   TrainingFocusView,
   TransferWindowClosedError,
   TransfersScreenView,
@@ -303,6 +304,14 @@ commitCareer: {
     }),
     success: Schema.NullOr(MatchStatisticsView),
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  /** Screen 103: the Match Report of a Fixture whose result has been committed. A read over the
+   *  persisted stream; a match still awaiting its result fails with `MatchNotCompleteError`, so an
+   *  addressable report can never show a timeline ahead of Match day. */
+  getMatchReport: {
+    payload: Schema.Struct({ saveId: SaveId, matchId: MatchId }),
+    success: MatchReportView,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError, MatchNotCompleteError]),
   },
   /** Ticket 14: appends a mid-match `ChangeTactics`/`MakeSubstitution` command to the Match
    * Decider's stream and returns the chunk of Commentary Lines from `cursor` on, resimulated with

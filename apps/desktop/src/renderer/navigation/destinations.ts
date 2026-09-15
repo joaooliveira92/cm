@@ -1,4 +1,4 @@
-import type { ClubId, PlayerId, SaveId } from "@cm-clone/contracts";
+import type { ClubId, MatchId, PlayerId, SaveId } from "@cm-clone/contracts";
 
 /**
  * Typed navigation destinations. The keyboard spine (ticket 17), the command
@@ -69,7 +69,9 @@ export type CareerDestination =
   /** The post-match review screens (Screens 100, 101, 103), reached from the Post-Match Summary. */
   | { readonly type: "matchStats"; readonly saveId: SaveId }
   | { readonly type: "matchRatings"; readonly saveId: SaveId }
-  | { readonly type: "matchReport"; readonly saveId: SaveId };
+  /** The Match Report names its match: the match session is cleared once the result is committed,
+   *  so the screen cannot learn which match to report from anywhere else. */
+  | { readonly type: "matchReport"; readonly saveId: SaveId; readonly matchId: MatchId };
 
 export type CreationStepDestination =
   | { readonly type: "createLeagues" }
@@ -196,7 +198,10 @@ export type ResolvedDestination =
   | { readonly to: "/career/$saveId/match-substitutions"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/match-stats"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/match-ratings"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/match-report"; readonly params: { readonly saveId: SaveId } }
+  | {
+      readonly to: "/career/$saveId/match-report/$matchId";
+      readonly params: { readonly saveId: SaveId; readonly matchId: MatchId };
+    }
   | {
       readonly to: "/career/$saveId/club/$clubId/scout-report";
       readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
@@ -340,6 +345,9 @@ const careerRoute = (
     case "matchRatings":
       return { to: "/career/$saveId/match-ratings", params: { saveId: destination.saveId } };
     case "matchReport":
-      return { to: "/career/$saveId/match-report", params: { saveId: destination.saveId } };
+      return {
+        to: "/career/$saveId/match-report/$matchId",
+        params: { saveId: destination.saveId, matchId: destination.matchId },
+      };
   }
 };

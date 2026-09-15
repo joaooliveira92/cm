@@ -14,6 +14,7 @@ import { beginCareer, commitCareer } from "../../../src/main/world/index.js";
 import { getTactics } from "../../../src/main/club/index.js";
 import {
   MatchSeedSource,
+  getMatchReport,
   getMatchStatistics,
   getPostMatchSummary,
   resumeSimulation,
@@ -485,6 +486,7 @@ it.effect("getMatchStatistics reconciles with the timeline, cuts at a minute, an
     const lines = chunks.flatMap((chunk) => chunk.lines);
 
     const full = (yield* getMatchStatistics(savesDir, save.id, match.matchId, null))!;
+    strictEqual(full.throughMinute, null, "a whole-match read is not a cut");
     const row = (key: string) => full.rows.find((r) => r.key === key)!;
     deepStrictEqual([row("goals").home, row("goals").away], [final.homeScore, final.awayScore]);
     strictEqual(row("injuries").home + row("injuries").away, lines.filter((line) => line.tag === "Injury").length);
@@ -525,3 +527,57 @@ it.effect("getMatchStatistics reconciles with the timeline, cuts at a minute, an
   }),
 );
 
+
+it.effect("getMatchReport records every goal, card, injury and substitution once the result is committed", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture;
+    const match = yield* startSeededMatch(savesDir, save.id, fixtureId, INJURY_SEED);
+    // A manager substitution, so the report's substitution entries are exercised whatever the seed rolls.
+    const tactic = buildKnownTactic((yield* getTactics(savesDir, save.id)).squad);
+    yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, 1, false, { _tag: "ChangeTactics", clubId: humanClubOf(match), tactic });
+    yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, 2, false, {
+      _tag: "MakeSubstitution",
+      clubId: humanClubOf(match),
+      outPlayerId: tactic.slots[1]!.playerId,
+      inPlayerId: (yield* getTactics(savesDir, save.id)).squad[11]!.id,
+    });
+    const chunks = yield* drain(savesDir, save.id, match.matchId);
+    const final = chunks[chunks.length - 1]!;
+    const lines = chunks.flatMap((chunk) => chunk.lines);
+
+    const early = yield* Effect.flip(getMatchReport(savesDir, save.id, match.matchId));
+    strictEqual(early._tag, "MatchNotCompleteError", "no report before the result is accepted");
+
+    yield* commitMatchday(savesDir, save.id, fixtureId);
+    const report = yield* getMatchReport(savesDir, save.id, match.matchId);
+
+    deepStrictEqual([report.homeScore, report.awayScore], [final.homeScore, final.awayScore]);
+    const firstHalfGoals = (clubId: ClubId) =>
+      report.events.filter((event) => event.kind === "Goal" && event.half === 1 && event.clubId === clubId).length;
+    deepStrictEqual(
+      [report.halfTimeHomeScore, report.halfTimeAwayScore],
+      [firstHalfGoals(match.homeClubId), firstHalfGoals(match.awayClubId)],
+      "the half-time score is each side's first-half goals, stoppage time included",
+    );
+    for (const kind of ["Goal", "YellowCard", "RedCard", "Injury", "Substitution"] as const) {
+      strictEqual(
+        report.events.filter((event) => event.kind === kind).length,
+        lines.filter((line) => line.tag === kind).length,
+        `${kind} events match the commentary timeline`,
+      );
+    }
+    const subs = report.events.filter((event) => event.kind === "Substitution");
+    ok(subs.some((sub) => !sub.replaced!.forcedByInjury), "the manager substitution is reported");
+    deepStrictEqual(
+      [subs.filter((sub) => sub.clubId === match.homeClubId).length, subs.filter((sub) => sub.clubId === match.awayClubId).length],
+      [final.homeSubs.used, final.awaySubs.used],
+    );
+    ok(subs.every((sub) => sub.replaced !== null && sub.replaced.playerId !== sub.playerId));
+    ok(report.events.filter((event) => event.kind !== "Substitution").every((event) => event.replaced === null));
+    ok(report.events.every((event) => event.playerName !== "Unknown player"));
+    deepStrictEqual(report.statistics, yield* getMatchStatistics(savesDir, save.id, match.matchId, null));
+
+    const missing = yield* Effect.flip(getMatchReport(savesDir, save.id, "no-such-match" as MatchId));
+    strictEqual(missing._tag, "MatchNotFoundError");
+  }),
+);

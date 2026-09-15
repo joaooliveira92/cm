@@ -90,6 +90,27 @@ export const aggregateMatchStatistics = (
   return MATCH_STATISTIC_KEYS.map((key) => new MatchStatisticRow({ key, ...totals.get(key)! }));
 };
 
+/** The view over a derived timeline, shared by the Match Statistics read and the Match Report. */
+export const matchStatisticsView = (
+  matchId: MatchId,
+  events: ReadonlyArray<MatchEvent>,
+  nameOf: (id: string) => string,
+  revealedEvents: number | null,
+): MatchStatisticsView => {
+  const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
+  const included = includedEvents(events, revealedEvents);
+  const last = included[included.length - 1];
+  return new MatchStatisticsView({
+    matchId,
+    homeClubName: nameOf(started.homeClubId),
+    awayClubName: nameOf(started.awayClubId),
+    throughMinute:
+      revealedEvents === null ? null : last === undefined || last._tag === "MatchStarted" ? 0 : last.minute,
+    rows: aggregateMatchStatistics(events, started.homeClubId, revealedEvents),
+    unavailable: UNAVAILABLE_MATCH_STATISTICS,
+  });
+};
+
 /** The controlled club's most recent played Fixture that has a match stream, if any. */
 const lastPlayedMatchId = Effect.gen(function* () {
   const sql = yield* SqlClient;
@@ -118,18 +139,7 @@ export const getMatchStatistics = (
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
       const { events } = yield* Effect.sync(() => deriveMatchEvents(stream));
-      const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
       const nameOf = yield* displayNames;
-      const included = includedEvents(events, revealedEvents);
-      const last = included[included.length - 1];
-
-      return new MatchStatisticsView({
-        matchId,
-        homeClubName: nameOf(started.homeClubId),
-        awayClubName: nameOf(started.awayClubId),
-        throughMinute: revealedEvents === null || last === undefined || last._tag === "MatchStarted" ? 0 : last.minute,
-        rows: aggregateMatchStatistics(events, started.homeClubId, revealedEvents),
-        unavailable: UNAVAILABLE_MATCH_STATISTICS,
-      });
+      return matchStatisticsView(matchId, events, nameOf, revealedEvents);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

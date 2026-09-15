@@ -213,6 +213,46 @@ export class MatchStatisticsView extends Schema.Class<MatchStatisticsView>("Matc
 }) {}
 
 // ---------------------------------------------------------------------------
+// Match Report (Screen 103): the committed match's record
+// ---------------------------------------------------------------------------
+
+/** A Substitution's other half: who came off, and whether an Injury forced the change. */
+export class MatchReportReplacedView extends Schema.Class<MatchReportReplacedView>("MatchReportReplacedView")({
+  playerId: PlayerId,
+  playerName: Schema.String,
+  forcedByInjury: Schema.Boolean,
+}) {}
+
+/** One key event of the report's timeline. For a Substitution the player is the one who came on and
+ *  `replaced` names the one who went off; every other kind has `replaced: null`. */
+export class MatchReportEventView extends Schema.Class<MatchReportEventView>("MatchReportEventView")({
+  minute: Schema.Finite,
+  half: Schema.Literals([1, 2]),
+  kind: Schema.Literals(["Goal", "YellowCard", "RedCard", "Injury", "Substitution"]),
+  clubId: ClubId,
+  playerId: PlayerId,
+  playerName: Schema.String,
+  replaced: Schema.NullOr(MatchReportReplacedView),
+}) {}
+
+/** The Match Report of a Fixture whose result has been committed: final and half-time score, every
+ *  goal, card, injury and substitution in match order, and the full-match team statistics. Derived
+ *  from the persisted match stream on every call, never stored. */
+export class MatchReportView extends Schema.Class<MatchReportView>("MatchReportView")({
+  matchId: MatchId,
+  homeClubId: ClubId,
+  homeClubName: Schema.String,
+  awayClubId: ClubId,
+  awayClubName: Schema.String,
+  homeScore: Schema.Finite,
+  awayScore: Schema.Finite,
+  halfTimeHomeScore: Schema.Finite,
+  halfTimeAwayScore: Schema.Finite,
+  events: Schema.Array(MatchReportEventView),
+  statistics: MatchStatisticsView,
+}) {}
+
+// ---------------------------------------------------------------------------
 // The pre-match boundary: starting the scheduled Fixture, and committing it
 // ---------------------------------------------------------------------------
 

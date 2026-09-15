@@ -20,6 +20,7 @@ vi.stubGlobal("window", {
 
 import {
   ClubId as ClubIdSchema,
+  MatchId,
   SaveId as SaveIdSchema,
   type ClubId,
   type SaveId,
@@ -65,7 +66,7 @@ const ALL_DESTINATIONS: ReadonlyArray<NavigationDestination> = [
   { type: "matchSubstitutions", saveId: save("save-1") },
   { type: "matchStats", saveId: save("save-1") },
   { type: "matchRatings", saveId: save("save-1") },
-  { type: "matchReport", saveId: save("save-1") },
+  { type: "matchReport", saveId: save("save-1"), matchId: MatchId.make("m1") },
 ];
 
 describe("the navigation adapter reaches the router for every destination", () => {

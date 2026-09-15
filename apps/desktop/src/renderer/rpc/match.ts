@@ -25,5 +25,8 @@ export const getTeamSheet = (input: RpcPayload<"getTeamSheet">): RpcRead<"getTea
 export const getPostMatchSummary = (input: RpcPayload<"getPostMatchSummary">): RpcRead<"getPostMatchSummary"> =>
   call("getPostMatchSummary", input);
 
+export const getMatchReport = (input: RpcPayload<"getMatchReport">): RpcRead<"getMatchReport"> =>
+  call("getMatchReport", input);
+
 export const getMatchStatistics = (input: RpcPayload<"getMatchStatistics">): RpcRead<"getMatchStatistics"> =>
   call("getMatchStatistics", input);

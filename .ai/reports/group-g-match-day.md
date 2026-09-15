@@ -144,3 +144,49 @@ contents are the reviewed diff — 25 files, tree clean afterwards).
 Pass 1 NEEDS_REWORK (high: live cut by minute wrong around stoppage and half time). Pass 2
 NEEDS_REWORK (medium: restart mid-match leaked full totals). Both repaired with tests; the reviewer's
 approval conditions (fix the leak, record the route deviation on the ticket) are met.
+
+---
+
+# Ticket 10 — Match Player Ratings (Screens 96/101): parked
+
+Not built. No rating formula exists in CONTEXT.md, the Agent Notes or the engine, and the Match Events
+name no goalkeeper or defender contribution. Options and a recommendation are in
+[decision request 03](../../.scratch/group-g-match-day/decision-request-03-match-player-rating-formula.md).
+Ticket set to `needs-info`, committed as `6287ffa`.
+
+---
+
+# Ticket 11 — Match Report (Screen 103)
+
+## Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Structured summary of all key events | `apps/desktop/test/main/match/commands.test.ts` "getMatchReport records…": for each kind (Goal, cards, Injury, Substitution), the count matches the commentary timeline; a manager substitution is driven through `submitMatchCommand` | pass |
+| 2 | Goalscorers, cards, substitutions, injuries, final score | same test: final score = last chunk, half-time score = first-half goals per side, substitutions per side = `homeSubs`/`awaySubs.used`, every name resolved; `packages/contracts/test/match-report.test.ts` round-trip | pass |
+| 3 | Screen renders the narrative summary | `test/renderer/match/match-report-screen.test.tsx`: result sentence for home win, away win and draw; goalscorers; ordered timeline; statistics shown as "Full match" | pass |
+| 4 | Reachable from post-match navigation | `post-match-summary.test.tsx` (link resolves to `/career/$saveId/match-report/$matchId` with the match id); `match-report-route.test.tsx` (app router registers the path; screen reads the match named in the URL) | pass |
+| 5 | Loading and error states | screen test: loading text; `MatchNotCompleteError` shows its own message without Retry; failed read with Retry | pass |
+
+## Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1. typecheck ✓, effect-lint ✓ (762 files), verify-db-schema ✓. lint ✗: 6 errors, all in files this ticket did not touch (`PlayerDevelopmentScreen`, `PlayerContractScreen`, `MatchHomeTeamScreen`, `PlayerProfileScreen`, `MatchPreviewScreen`). verify-md-links ✗: the same 18 pre-existing links. Tests: shared 451/451, contracts 71/71, game-engine 50/50, desktop 62 failed / 1550 passed across 17 files |
+| failures vs baseline | the 16 files failing in the first gate run were rerun on clean HEAD (`git stash -u`) and with the change applied | identical 61 failing test names; no new failure |
+| extra file in the final run | `npx vitest run test/main/transfers/incoming-bids.test.ts` | 19/19 pass alone; failed in the full run only (load-sensitive, outside this change) |
+| e2e | not run | helpers drifted (ticket 07 section); no signal for this screen |
+| determinism / save compatibility | — | not applicable: a read over the existing stream; no schema change |
+
+## Behavior changes
+
+- The Match Report screen replaces the placeholder. It is refused until the result is committed.
+- The `matchReport` destination and route carry `matchId`.
+- Fix: whole-match statistics show "Full match" rather than "Up to 0'" (`throughMinute` is `null`).
+
+## Review
+
+Pass 1 APPROVE. In-scope lows repaired: route test added, "available" copy, half-time assertion made
+direct, a substitution driven so the substitution checks cannot pass without testing anything, primary-key
+fixture lookup, heading levels. The ambiguous stoppage-minute display is filed as
+[ticket 17](../../.scratch/group-g-match-day/issues/17-stoppage-minutes-read-as-second-half.md).

@@ -4,6 +4,7 @@ import type { ClubId, MatchId, PostMatchEventView, PostMatchSummaryView, SaveId 
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
+import type { CareerDestination } from "../navigation/destinations.js";
 import { getPostMatchSummary } from "../rpc.js";
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 
@@ -20,11 +21,13 @@ const EVENT_LABEL: Readonly<Record<PostMatchEventView["kind"], string>> = {
   Injury: "Injury",
 };
 
-const REVIEW_LINKS = [
-  { type: "matchStats", label: "Statistics" },
-  { type: "matchRatings", label: "Player ratings" },
-  { type: "matchReport", label: "Match report" },
-] as const;
+/** The review screens this match leads to. The Match Report names the match; the other two still
+ *  bind to one on their own (tickets 09 and 10). */
+const reviewLinks = (saveId: SaveId, matchId: MatchId): ReadonlyArray<{ readonly label: string; readonly destination: CareerDestination }> => [
+  { label: "Statistics", destination: { type: "matchStats", saveId } },
+  { label: "Player ratings", destination: { type: "matchRatings", saveId } },
+  { label: "Match report", destination: { type: "matchReport", saveId, matchId } },
+];
 
 /**
  * The Post-Match Summary (Screen 99), shown on Match day once the match reaches full time: the final
@@ -95,13 +98,13 @@ export const PostMatchSummary = ({ saveId, matchId }: { readonly saveId: SaveId;
       </div>
 
       <nav aria-label="Post-match review" className="flex gap-2">
-        {REVIEW_LINKS.map((link) => (
+        {reviewLinks(saveId, matchId).map((link) => (
           <Button
-            key={link.type}
+            key={link.destination.type}
             type="button"
             variant="secondary"
             size="sm"
-            onClick={(event) => navigateCareer({ type: link.type, saveId }, intentOfClick(event))}
+            onClick={(event) => navigateCareer(link.destination, intentOfClick(event))}
           >
             {link.label}
           </Button>

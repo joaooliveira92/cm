@@ -13,9 +13,9 @@ import {
 } from "@cm-clone/contracts";
 import type { MatchEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
-import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadStreamEvents, withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
+import { playerNames } from "./playerNames.js";
 import { MATCH_STREAM_TYPE, deriveMatchEvents } from "./stream.js";
 
 type KeyEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "YellowCard" | "RedCard" | "Injury" }>;
@@ -33,17 +33,8 @@ export const getPostMatchSummary = (savesDir: string, saveId: SaveId, matchId: M
       const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
       const keyEvents = events.filter(isKeyEvent);
 
-      const sql = yield* SqlClient;
       const nameOf = yield* displayNames;
-      const playerIds = [...new Set(keyEvents.map((event) => event.playerId))];
-      const rows =
-        playerIds.length === 0
-          ? []
-          : yield* sql.unsafe<{ id: string; firstName: string; lastName: string }>(
-              `SELECT id, first_name as "firstName", last_name as "lastName" FROM players WHERE id IN (${playerIds.map(() => "?").join(",")})`,
-              playerIds,
-            );
-      const playerName = new Map(rows.map((row) => [row.id, `${row.firstName} ${row.lastName}`]));
+      const playerName = yield* playerNames(keyEvents.map((event) => event.playerId));
 
       let homeScore = 0;
       let awayScore = 0;
@@ -69,7 +60,7 @@ export const getPostMatchSummary = (savesDir: string, saveId: SaveId, matchId: M
               kind: event._tag,
               clubId: event.teamClubId,
               playerId: event.playerId,
-              playerName: playerName.get(event.playerId) ?? "Unknown player",
+              playerName: playerName(event.playerId),
             }),
         ),
       });
