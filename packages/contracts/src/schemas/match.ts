@@ -170,6 +170,49 @@ export class PostMatchSummaryView extends Schema.Class<PostMatchSummaryView>("Po
 }) {}
 
 // ---------------------------------------------------------------------------
+// Match Statistics (Screens 95/100): team totals aggregated from the Match Events
+// ---------------------------------------------------------------------------
+
+/** The team totals the match model can back. Every attack ends in exactly one of Goal, BigChance,
+ *  ShotOnTarget or ShotMissed, so `attempts` is their sum, `shotsOnTarget` counts Goal + ShotOnTarget,
+ *  `shotsOffTarget` counts ShotMissed and `bigChances` counts BigChance (a clear chance not converted
+ *  into a recorded shot). */
+export const MatchStatisticKey = Schema.Literals([
+  "goals",
+  "attempts",
+  "shotsOnTarget",
+  "shotsOffTarget",
+  "bigChances",
+  "yellowCards",
+  "redCards",
+  "injuries",
+  "substitutions",
+]);
+export type MatchStatisticKey = Schema.Schema.Type<typeof MatchStatisticKey>;
+
+/** Statistics a football reader expects that the match model does not simulate. Listed so the
+ *  screen says they are unavailable rather than showing a zero (Screen 95 §17). */
+export const UnavailableMatchStatistic = Schema.Literals(["possession", "corners", "fouls", "offsides"]);
+export type UnavailableMatchStatistic = Schema.Schema.Type<typeof UnavailableMatchStatistic>;
+
+export class MatchStatisticRow extends Schema.Class<MatchStatisticRow>("MatchStatisticRow")({
+  key: MatchStatisticKey,
+  home: Schema.Finite,
+  away: Schema.Finite,
+}) {}
+
+export class MatchStatisticsView extends Schema.Class<MatchStatisticsView>("MatchStatisticsView")({
+  matchId: MatchId,
+  homeClubName: Schema.String,
+  awayClubName: Schema.String,
+  /** The minute of the last Match Event the totals include, for display; null for the whole match.
+   *  Never a cut-off: minutes repeat across stoppage time and half time. */
+  throughMinute: Schema.NullOr(Schema.Finite),
+  rows: Schema.Array(MatchStatisticRow),
+  unavailable: Schema.Array(UnavailableMatchStatistic),
+}) {}
+
+// ---------------------------------------------------------------------------
 // The pre-match boundary: starting the scheduled Fixture, and committing it
 // ---------------------------------------------------------------------------
 

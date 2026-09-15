@@ -25,7 +25,7 @@ import {
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 import { registerActionHandler } from "../actions/dispatch.js";
 import { clearScopeState, setScopeState } from "../actions/scopeState.js";
-import { clearActiveMatch, getActiveMatch, setActiveMatch } from "./session.js";
+import { clearActiveMatch, getActiveMatch, recordFullTime, setActiveMatch } from "./session.js";
 
 export type MatchPhase =
   | "awaiting-kickoff"
@@ -161,8 +161,9 @@ export const MatchProvider = ({
   }, [saveId, match, phase]);
 
   useEffect(() => {
+    if (phase === "complete" && match !== null) recordFullTime(saveId, match.matchId);
     if (phase === "complete" || phase === "committed") clearActiveMatch(saveId);
-  }, [phase, saveId]);
+  }, [phase, saveId, match]);
 
   // Publish the live-match readout so the chrome shows it and suspends Continue.
   useEffect(() => {

@@ -77,6 +77,7 @@ import {
   TacticRevisionConflictError,
   TeamSheetView,
   PostMatchSummaryView,
+  MatchStatisticsView,
   TrainingFocusView,
   TransferWindowClosedError,
   TransfersScreenView,
@@ -288,6 +289,19 @@ commitCareer: {
   getPostMatchSummary: {
     payload: Schema.Struct({ saveId: SaveId, matchId: MatchId }),
     success: PostMatchSummaryView,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  /** Screens 95/100: team totals for `matchId`, or for the controlled club's most recent played
+   *  match when null (null success when it has played none). `revealedEvents` cuts a live match after
+   *  that many Match Events — one per Commentary Line revealed — since minutes are not monotonic;
+   *  null covers the whole match. */
+  getMatchStatistics: {
+    payload: Schema.Struct({
+      saveId: SaveId,
+      matchId: Schema.NullOr(MatchId),
+      revealedEvents: Schema.NullOr(Schema.Finite),
+    }),
+    success: Schema.NullOr(MatchStatisticsView),
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },
   /** Ticket 14: appends a mid-match `ChangeTactics`/`MakeSubstitution` command to the Match

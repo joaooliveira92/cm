@@ -36,6 +36,14 @@ const MatchOngoing = () => {
         >
           Substitutions
         </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={(event) => navigateCareer({ type: "matchStats", saveId: state.saveId }, intentOfClick(event))}
+        >
+          Statistics
+        </Button>
       </nav>
     </>
   );

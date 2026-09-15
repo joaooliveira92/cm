@@ -14,6 +14,7 @@ import { beginCareer, commitCareer } from "../../../src/main/world/index.js";
 import { getTactics } from "../../../src/main/club/index.js";
 import {
   MatchSeedSource,
+  getMatchStatistics,
   getPostMatchSummary,
   resumeSimulation,
   startMatch,
@@ -470,6 +471,57 @@ it.effect("getPostMatchSummary fails with MatchNotFoundError for a match with no
     const { save } = yield* atFirstFixture;
     const error = yield* Effect.flip(getPostMatchSummary(savesDir, save.id, "no-such-match" as MatchId));
     strictEqual(error._tag, "MatchNotFoundError");
+  }),
+);
+
+it.effect("getMatchStatistics reconciles with the timeline, cuts at a minute, and finds the last played match", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture;
+    strictEqual(yield* getMatchStatistics(savesDir, save.id, null, null), null, "no match played yet");
+
+    const match = yield* startSeededMatch(savesDir, save.id, fixtureId, INJURY_SEED);
+    const chunks = yield* drain(savesDir, save.id, match.matchId);
+    const final = chunks[chunks.length - 1]!;
+    const lines = chunks.flatMap((chunk) => chunk.lines);
+
+    const full = (yield* getMatchStatistics(savesDir, save.id, match.matchId, null))!;
+    const row = (key: string) => full.rows.find((r) => r.key === key)!;
+    deepStrictEqual([row("goals").home, row("goals").away], [final.homeScore, final.awayScore]);
+    strictEqual(row("injuries").home + row("injuries").away, lines.filter((line) => line.tag === "Injury").length);
+    strictEqual(
+      row("yellowCards").home + row("yellowCards").away,
+      lines.filter((line) => line.tag === "YellowCard").length,
+    );
+    deepStrictEqual([...full.unavailable], ["possession", "corners", "fouls", "offsides"]);
+    strictEqual(row("redCards").home + row("redCards").away, lines.filter((line) => line.tag === "RedCard").length);
+    deepStrictEqual(
+      [row("substitutions").home, row("substitutions").away],
+      [final.homeSubs.used, final.awaySubs.used],
+      "substitutions are credited to the side that made them",
+    );
+
+    // Cut at the first chunk's end — a position in the timeline — never exceeds full time.
+    const firstChunkEnd = chunks[0]!.cursor;
+    const firstHalf = (yield* getMatchStatistics(savesDir, save.id, match.matchId, firstChunkEnd))!;
+    strictEqual(firstHalf.throughMinute, chunks[0]!.lines[chunks[0]!.lines.length - 1]!.minute);
+    deepStrictEqual(
+      [firstHalf.rows.find((r) => r.key === "goals")!.home, firstHalf.rows.find((r) => r.key === "goals")!.away],
+      [chunks[0]!.homeScore, chunks[0]!.awayScore],
+      "the cut's goals equal the score at that point of the timeline",
+    );
+    for (const [index, cut] of firstHalf.rows.entries()) {
+      ok(cut.home <= full.rows[index]!.home && cut.away <= full.rows[index]!.away, `${cut.key} never exceeds full time`);
+    }
+
+    // An uncommitted match is not yet "played"; once committed it is the last match.
+    strictEqual(yield* getMatchStatistics(savesDir, save.id, null, null), null);
+    yield* commitMatchday(savesDir, save.id, fixtureId);
+    const last = (yield* getMatchStatistics(savesDir, save.id, null, null))!;
+    strictEqual(last.matchId, match.matchId);
+    deepStrictEqual(last.rows, full.rows);
+
+    const missing = yield* Effect.flip(getMatchStatistics(savesDir, save.id, "no-such-match" as MatchId, null));
+    strictEqual(missing._tag, "MatchNotFoundError");
   }),
 );
 

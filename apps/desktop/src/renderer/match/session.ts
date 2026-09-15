@@ -1,4 +1,4 @@
-import type { MatchSummary, SaveId, Tactic } from "@cm-clone/contracts";
+import type { MatchId, MatchSummary, SaveId, Tactic } from "@cm-clone/contracts";
 import type { MatchPhase } from "./MatchProvider.js";
 
 export interface ActiveMatchSession {
@@ -31,11 +31,29 @@ export interface RevealedScore {
 interface LiveCommandContext {
   readonly saveId: SaveId;
   readonly revealedMinute: number;
+  /** How many Commentary Lines Match day has revealed — one per Match Event, so a position in the
+   *  timeline. Minutes are not one: they repeat across stoppage time and half time. */
+  readonly revealedEvents: number;
   readonly revealedScore: RevealedScore | null;
   readonly liveTactic: Tactic | null;
 }
 
 let live: LiveCommandContext | null = null;
+
+/**
+ * The match this renderer watched reach full time. It outlives `clearActiveMatch` on purpose: between
+ * full time and Accept result there is no session, and a surface must still tell "every event has been
+ * revealed" apart from "the app restarted mid-match", when the awaiting match is set but nothing has
+ * been revealed in this process.
+ */
+let fullTime: { readonly saveId: SaveId; readonly matchId: MatchId } | null = null;
+
+export const recordFullTime = (saveId: SaveId, matchId: MatchId): void => {
+  fullTime = { saveId, matchId };
+};
+
+export const reachedFullTime = (saveId: SaveId, matchId: MatchId): boolean =>
+  fullTime !== null && fullTime.saveId === saveId && fullTime.matchId === matchId;
 
 export const setActiveMatch = (session: ActiveMatchSession): void => {
   active = session;
@@ -50,13 +68,19 @@ export const clearActiveMatch = (saveId: SaveId): void => {
 };
 
 const liveFor = (saveId: SaveId): LiveCommandContext =>
-  live !== null && live.saveId === saveId ? live : { saveId, revealedMinute: 0, revealedScore: null, liveTactic: null };
+  live !== null && live.saveId === saveId ? live : { saveId, revealedMinute: 0, revealedEvents: 0, revealedScore: null, liveTactic: null };
 
 export const recordRevealedMinute = (saveId: SaveId, minute: number): void => {
   live = { ...liveFor(saveId), revealedMinute: minute };
 };
 
 export const getRevealedMinute = (saveId: SaveId): number => liveFor(saveId).revealedMinute;
+
+export const recordRevealedEvents = (saveId: SaveId, count: number): void => {
+  live = { ...liveFor(saveId), revealedEvents: count };
+};
+
+export const getRevealedEvents = (saveId: SaveId): number => liveFor(saveId).revealedEvents;
 
 export const recordRevealedScore = (saveId: SaveId, score: RevealedScore): void => {
   live = { ...liveFor(saveId), revealedScore: score };

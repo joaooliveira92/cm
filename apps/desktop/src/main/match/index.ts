@@ -12,6 +12,7 @@
 
 export { submitMatchCommand } from "./commands.js";
 export { getPostMatchSummary } from "./postMatchSummary.js";
+export { aggregateMatchStatistics, getMatchStatistics } from "./statistics.js";
 export { getTeamSheet } from "./teamSheet.js";
 export { resumeSimulation } from "./queries.js";
 export { MatchSeedSource, deriveFixtureMatchSeed, startMatch } from "./start.js";
