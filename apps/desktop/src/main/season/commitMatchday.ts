@@ -24,9 +24,18 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { withinMidSeasonWindow, seasonStartYear, seasonWindows } from "@cm-clone/shared";
+import {
+  collapseSquadStrength,
+  computeSquadQuality,
+  deriveSeed,
+  resolveShootout,
+  withinMidSeasonWindow,
+  seasonStartYear,
+  seasonWindows,
+} from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { loadSquadPlayers } from "../club/squad.js";
 import { accrueScoutingProgress } from "../club/scouting.js";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
 import { MATCH_STREAM_TYPE, deriveMatchEvents } from "../match/stream.js";
@@ -48,16 +57,22 @@ interface PendingFixtureRow {
   readonly played: number;
   readonly homeGoals: number | null;
   readonly awayGoals: number | null;
+  readonly competitionId: string;
+  readonly round: number;
+  readonly competitionKind: string;
 }
 
 const loadFixtureRow = (fixtureId: FixtureId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql<PendingFixtureRow>`
-      SELECT id, scheduled_date as "date", home_club_id as "homeClubId",
-             away_club_id as "awayClubId", season_number as "seasonNumber", played,
-             home_goals as "homeGoals", away_goals as "awayGoals"
-      FROM fixtures WHERE id = ${fixtureId}`;
+      SELECT f.id, f.scheduled_date as "date", f.home_club_id as "homeClubId",
+             f.away_club_id as "awayClubId", f.season_number as "seasonNumber", f.played,
+             f.home_goals as "homeGoals", f.away_goals as "awayGoals",
+             f.competition_id as "competitionId", f.round,
+             c.kind as "competitionKind"
+      FROM fixtures f JOIN competitions c ON c.id = f.competition_id
+      WHERE f.id = ${fixtureId}`;
     return rows[0];
   });
 
@@ -128,8 +143,31 @@ const runCommit = (saveId: SaveId, fixtureId: FixtureId) =>
       if (event._tag === "Injury") injuries.set(event.playerId, event.severity);
     }
 
+    const isCup = fixture.competitionKind === "cup";
+
+    const manifest = yield* readGenerationManifest;
+
+    let homePenalties: number | null = null;
+    let awayPenalties: number | null = null;
+    if (isCup && fullTime.homeScore === fullTime.awayScore) {
+      // A drawn cup tie goes to a shootout, resolved outside the minute loop just like the AI path.
+      // The match seed is derived from the same deterministic chain resolveFixtureScore uses.
+      const drawSeed = deriveSeed(manifest.worldSeed, "draw", fixture.competitionId, fixture.seasonNumber, fixture.round);
+      const matchSeed = deriveSeed(drawSeed, "match", fixture.homeClubId, fixture.awayClubId);
+
+      // Both sides have squads (the match was watched), so strength is collapsed from squad quality.
+      const homeSquad = yield* loadSquadPlayers(fixture.homeClubId);
+      const awaySquad = yield* loadSquadPlayers(fixture.awayClubId);
+      const homeStrength = collapseSquadStrength(computeSquadQuality(homeSquad)?.meanPositionRating ?? 50);
+      const awayStrength = collapseSquadStrength(computeSquadQuality(awaySquad)?.meanPositionRating ?? 50);
+
+      const shootout = resolveShootout(homeStrength, awayStrength, matchSeed);
+      homePenalties = shootout.homePenalties;
+      awayPenalties = shootout.awayPenalties;
+    }
+
     yield* sql`UPDATE fixtures SET home_goals = ${fullTime.homeScore}, away_goals = ${fullTime.awayScore},
-        home_penalties = NULL, away_penalties = NULL, played = 1
+        home_penalties = ${homePenalties}, away_penalties = ${awayPenalties}, played = 1
       WHERE id = ${fixtureId}`;
     yield* recordMatchdayConditions(fixture.seasonNumber, derived.conditions, injuries);
 
@@ -138,8 +176,6 @@ const runCommit = (saveId: SaveId, fixtureId: FixtureId) =>
     // reverse — `computeStandings` would faithfully report either as an inconsistent `played`
     // column.
     const others = yield* resolveOtherFixturesOn(fixture.date, fixtureId);
-
-    const manifest = yield* readGenerationManifest;
     const windows = seasonWindows(seasonStartYear(manifest.referenceYear, season.seasonNumber));
     const phaseAt = (date: string): SeasonPhase =>
       withinMidSeasonWindow(windows, date) ? "mid_window_open" : "in_season";

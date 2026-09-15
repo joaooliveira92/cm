@@ -1,10 +1,6 @@
-/**
- * The Post-Match Summary read (Screen 99): the finished match's final score and its goals, cards and
- * injuries, with names resolved. Re-derived from the persisted seed and command journal on every
- * call, like `resumeSimulation`, so it can never disagree with the timeline the manager watched.
- */
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
+  FixtureId,
   MatchNotFoundError,
   PostMatchEventView,
   PostMatchSummaryView,
@@ -13,6 +9,7 @@ import {
 } from "@cm-clone/contracts";
 import type { MatchEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
+import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadStreamEvents, withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
 import { playerNames } from "./playerNames.js";
@@ -22,6 +19,24 @@ type KeyEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "YellowCard" | "Re
 
 const isKeyEvent = (event: MatchEvent): event is KeyEvent =>
   event._tag === "Goal" || event._tag === "YellowCard" || event._tag === "RedCard" || event._tag === "Injury";
+
+/** The fixture-level data the summary reads: penalty scores and competition kind. */
+interface FixtureSummaryRow {
+  readonly homePenalties: number | null;
+  readonly awayPenalties: number | null;
+  readonly competitionKind: string;
+}
+
+const loadFixtureSummaryRow = (fixtureId: FixtureId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<FixtureSummaryRow>`
+      SELECT f.home_penalties as "homePenalties", f.away_penalties as "awayPenalties",
+             c.kind as "competitionKind"
+      FROM fixtures f JOIN competitions c ON c.id = f.competition_id
+      WHERE f.id = ${fixtureId}`;
+    return rows[0];
+  });
 
 export const getPostMatchSummary = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
   withExistingSave(savesDir, saveId, (filename) =>
@@ -45,6 +60,14 @@ export const getPostMatchSummary = (savesDir: string, saveId: SaveId, matchId: M
         }
       }
 
+      // The matchId is String(fixtureId) — see startMatch in Main. This is the one link
+      // between the match stream and the fixture row, and it never goes stale.
+      const fixtureId = FixtureId.make(Number(matchId));
+      const fixtureRow = yield* loadFixtureSummaryRow(fixtureId);
+      const isCup = fixtureRow?.competitionKind === "cup";
+      const homePenalties = fixtureRow?.homePenalties ?? null;
+      const awayPenalties = fixtureRow?.awayPenalties ?? null;
+
       return new PostMatchSummaryView({
         matchId,
         homeClubId: started.homeClubId,
@@ -53,6 +76,9 @@ export const getPostMatchSummary = (savesDir: string, saveId: SaveId, matchId: M
         awayClubName: nameOf(started.awayClubId),
         homeScore,
         awayScore,
+        homePenalties,
+        awayPenalties,
+        isCup,
         events: keyEvents.map(
           (event) =>
             new PostMatchEventView({

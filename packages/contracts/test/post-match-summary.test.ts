@@ -10,7 +10,7 @@ const roundTrip = <A, I>(schema: Schema.ConstraintCodec<A, I>, wire: unknown): v
 };
 
 describe("Post-Match Summary (Screen 99)", () => {
-  it("PostMatchSummaryView round-trips goals, cards and injuries", () => {
+  it("PostMatchSummaryView round-trips a league fixture with no penalties", () => {
     roundTrip(PostMatchSummaryView, {
       matchId: "m1",
       homeClubId: "c1",
@@ -19,9 +19,31 @@ describe("Post-Match Summary (Screen 99)", () => {
       awayClubName: "Northgate Athletic",
       homeScore: 1,
       awayScore: 0,
+      homePenalties: null,
+      awayPenalties: null,
+      isCup: false,
       events: [
         { minute: 23, kind: "Goal", clubId: "c1", playerId: "p1", playerName: "Alex Brown" },
         { minute: 61, kind: "RedCard", clubId: "c2", playerId: "p2", playerName: "Sam Reed" },
+      ],
+    });
+  });
+
+  it("PostMatchSummaryView round-trips a cup tie decided on penalties", () => {
+    roundTrip(PostMatchSummaryView, {
+      matchId: "m2",
+      homeClubId: "c1",
+      homeClubName: "Castlemere United",
+      awayClubId: "c2",
+      awayClubName: "Northgate Athletic",
+      homeScore: 1,
+      awayScore: 1,
+      homePenalties: 4,
+      awayPenalties: 2,
+      isCup: true,
+      events: [
+        { minute: 23, kind: "Goal", clubId: "c1", playerId: "p1", playerName: "Alex Brown" },
+        { minute: 67, kind: "Goal", clubId: "c2", playerId: "p2", playerName: "Sam Reed" },
       ],
     });
   });
@@ -36,10 +58,12 @@ describe("Post-Match Summary (Screen 99)", () => {
         awayClubName: "B",
         homeScore: 0,
         awayScore: 0,
+        homePenalties: null,
+        awayPenalties: null,
+        isCup: false,
         events: [{ minute: 5, kind: "ShotMissed", clubId: "c1", playerId: "p1", playerName: "X" }],
       }),
     ).toThrow();
     expect(AppRpcs.getPostMatchSummary.success).toBe(PostMatchSummaryView);
   });
 });
-

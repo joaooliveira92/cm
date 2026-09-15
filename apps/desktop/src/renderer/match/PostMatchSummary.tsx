@@ -31,8 +31,9 @@ const reviewLinks = (saveId: SaveId, matchId: MatchId): ReadonlyArray<{ readonly
 
 /**
  * The Post-Match Summary (Screen 99), shown on Match day once the match reaches full time: the final
- * score with each side's goalscorers, the cards and injuries in match order, and the ways into the
- * deeper post-match review. Everything is read from `getPostMatchSummary`, never from the revealed feed.
+ * score with each side's goalscorers, the cards and injuries in match order, the shootout outcome for
+ * cup ties, and the ways into the deeper post-match review. Everything is read from
+ * `getPostMatchSummary`, never from the revealed feed.
  */
 export const PostMatchSummary = ({ saveId, matchId }: { readonly saveId: SaveId; readonly matchId: MatchId }) => {
   const [state, setState] = useState<SummaryState>({ _tag: "loading" });
@@ -68,12 +69,28 @@ export const PostMatchSummary = ({ saveId, matchId }: { readonly saveId: SaveId;
   const { summary } = state;
   const goals = summary.events.filter((event) => event.kind === "Goal");
   const incidents = summary.events.filter((event) => event.kind !== "Goal");
+  const wentToPenalties = summary.isCup && summary.homePenalties !== null && summary.awayPenalties !== null;
+  const homeWonOnPenalties = wentToPenalties && (summary.homePenalties ?? 0) > (summary.awayPenalties ?? 0);
+  const awayWonOnPenalties = wentToPenalties && !homeWonOnPenalties;
 
   return (
     <section aria-label="Post-match summary" className="mt-4 space-y-4 rounded-panel border border-panel-border bg-panel-bg p-4 text-sm">
       <h2 className="text-lg font-semibold">
         {summary.homeClubName} {summary.homeScore} - {summary.awayScore} {summary.awayClubName}
       </h2>
+
+      {wentToPenalties && (
+        <div className="rounded border border-border-subtle bg-bg-subtle p-3 text-xs">
+          <p className="font-semibold text-text-body">Penalty shootout</p>
+          <p className="mt-1 text-text-secondary">
+            {summary.homeClubName} {summary.homePenalties} - {summary.awayPenalties} {summary.awayClubName}
+          </p>
+          <p className="mt-1 text-text-success">
+            {homeWonOnPenalties ? summary.homeClubName : summary.awayClubName} progresses
+            {homeWonOnPenalties ? " (h)" : " (a)"}
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <Scorers label={`${summary.homeClubName} goalscorers`} goals={goals} clubId={summary.homeClubId} />

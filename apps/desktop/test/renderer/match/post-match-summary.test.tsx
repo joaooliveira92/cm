@@ -9,7 +9,7 @@ import { clearActiveMatch, getActiveMatch, setActiveMatch } from "../../../src/r
 import { getScopeState, resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 
-const summary = (events: ReadonlyArray<Record<string, unknown>>) => ({
+const summary = (events: ReadonlyArray<Record<string, unknown>>, overrides?: Record<string, unknown>) => ({
   matchId: "m1",
   homeClubId: "home",
   homeClubName: "Home FC",
@@ -17,7 +17,11 @@ const summary = (events: ReadonlyArray<Record<string, unknown>>) => ({
   awayClubName: "Away FC",
   homeScore: 2,
   awayScore: 1,
+  homePenalties: null,
+  awayPenalties: null,
+  isCup: false,
   events,
+  ...overrides,
 });
 
 const EVENTS = [
@@ -91,6 +95,37 @@ describe("Post-Match Summary (Screen 99)", () => {
       fireEvent.click(within(review).getByRole("button", { name: label }));
       expect(navigate).toHaveBeenLastCalledWith({ to, params });
     }
+  });
+
+  it("shows the penalty shootout outcome for a drawn cup tie", async () => {
+    mount(() => ({
+      _tag: "Success",
+      value: summary(EVENTS, {
+        homeScore: 1,
+        awayScore: 1,
+        homePenalties: 4,
+        awayPenalties: 2,
+        isCup: true,
+      }),
+    }));
+    expect(await screen.findByText("Penalty shootout")).toBeTruthy();
+    expect(screen.getByText("Home FC 4 - 2 Away FC")).toBeTruthy();
+    expect(screen.getByText("Home FC progresses (h)")).toBeTruthy();
+  });
+
+  it("shows the away side progressing on penalties", async () => {
+    mount(() => ({
+      _tag: "Success",
+      value: summary(EVENTS, {
+        homeScore: 2,
+        awayScore: 2,
+        homePenalties: 3,
+        awayPenalties: 5,
+        isCup: true,
+      }),
+    }));
+    expect(await screen.findByText("Penalty shootout")).toBeTruthy();
+    expect(screen.getByText("Away FC progresses (a)")).toBeTruthy();
   });
 });
 

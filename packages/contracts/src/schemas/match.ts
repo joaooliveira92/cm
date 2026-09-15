@@ -157,7 +157,8 @@ export class PostMatchEventView extends Schema.Class<PostMatchEventView>("PostMa
 }) {}
 
 /** The whole-match read the Post-Match Summary renders: final score and the goals, cards and
- *  injuries in match order. Derived from the persisted match stream on every call, never stored. */
+ *  injuries in match order, plus shootout outcome for cup ties. Derived from the persisted match
+ *  stream and fixture row on every call, never stored. */
 export class PostMatchSummaryView extends Schema.Class<PostMatchSummaryView>("PostMatchSummaryView")({
   matchId: MatchId,
   homeClubId: ClubId,
@@ -166,6 +167,12 @@ export class PostMatchSummaryView extends Schema.Class<PostMatchSummaryView>("Po
   awayClubName: Schema.String,
   homeScore: Schema.Finite,
   awayScore: Schema.Finite,
+  /** The home side's penalty shootout score, null when the tie did not go to penalties. */
+  homePenalties: Schema.NullOr(Schema.Finite),
+  /** The away side's penalty shootout score, null when the tie did not go to penalties. */
+  awayPenalties: Schema.NullOr(Schema.Finite),
+  /** Whether this Fixture belongs to a knockout Competition (cup) that must produce a winner. */
+  isCup: Schema.Boolean,
   events: Schema.Array(PostMatchEventView),
 }) {}
 

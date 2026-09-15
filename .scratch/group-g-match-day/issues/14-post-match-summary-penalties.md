@@ -8,7 +8,7 @@ Screen 99 spec §1/§17 lists competition consequences.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A Cup Tie decided on penalties shows the shoot-out score and the side that progresses
 - [ ] A league Fixture's summary is unchanged
