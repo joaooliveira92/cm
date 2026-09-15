@@ -26,6 +26,7 @@ export {
   coachingAssignmentsAtom,
   workloadAtom,
   playerDevelopmentHistoryAtom,
+  squadDevelopmentAtom,
   playerProfileAtom,
   playerContractAtom,
   saveKey,

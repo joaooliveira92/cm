@@ -63,6 +63,8 @@ const ALL_DESTINATIONS: ReadonlyArray<NavigationDestination> = [
   careerDestination("tacticsEditor", save("save-1")),
   careerDestination("trainingWorkload", save("save-1")),
   { type: "trainingPlan", saveId: save("save-1"), playerId: PlayerId.make("player-3") },
+  careerDestination("trainingDevelopment", save("save-1")),
+  { type: "playerDevelopment", saveId: save("save-1"), playerId: PlayerId.make("player-3") },
   { type: "teamScoutReport", saveId: save("save-1"), clubId: club("club-7") },
   { type: "clubStaff", saveId: save("save-1"), clubId: club("club-7") },
   { type: "matchMatchTactics", saveId: save("save-1") },
@@ -104,6 +106,24 @@ describe("the navigation adapter reaches the router for every destination", () =
     navigate({ type: "trainingPlan", saveId: save("save-1"), playerId: PlayerId.make("player-3") });
     expect(navigateSpy).toHaveBeenCalledWith({
       to: "/career/$saveId/training/plan/$playerId",
+      params: { saveId: save("save-1"), playerId: PlayerId.make("player-3") },
+    });
+  });
+
+  it("navigates to the Player Development Centre beneath the Training area (Screen 114)", () => {
+    const navigateSpy = spyRouter();
+    navigate({ type: "trainingDevelopment", saveId: save("save-1") });
+    expect(navigateSpy).toHaveBeenCalledWith({
+      to: "/career/$saveId/training/development-centre",
+      params: { saveId: save("save-1") },
+    });
+  });
+
+  it("navigates to a player's Player Development screen (Screen 114's per-player link)", () => {
+    const navigateSpy = spyRouter();
+    navigate({ type: "playerDevelopment", saveId: save("save-1"), playerId: PlayerId.make("player-3") });
+    expect(navigateSpy).toHaveBeenCalledWith({
+      to: "/career/$saveId/player/$playerId/development",
       params: { saveId: save("save-1"), playerId: PlayerId.make("player-3") },
     });
   });

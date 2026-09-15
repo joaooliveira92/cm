@@ -249,14 +249,12 @@ export const LEAGUE_SETUP_INDEX: LeagueSetupIndex = {
       code: "PRT",
       confederationId: "UEFA",
       regionId: "region_southern_europe",
-      name: "Portugal",
+name: "Portugal",
       alternativeNames: [],
       available: true,
       playableSupported: true,
-      recommendedScopeOptionId: null,
+      recommendedScopeOptionId: "scope_prt_top",
       competitions: [
-        // Portugal's cost figures are extrapolated rather than measured, so any scope that
-        // selects it reports reduced confidence (§11.1).
         league("nation_prt", "comp_prt_1", 1, [], 18, {
           estimatesVerified: false,
         }),

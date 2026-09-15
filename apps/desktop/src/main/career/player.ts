@@ -14,6 +14,7 @@ import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
+import { CURRENT_SEASON_NUMBER_SQL } from "../season/currentSeason.js";
 
 const ageFromDateOfBirth = (dateOfBirth: string): number => {
   const dob = new Date(dateOfBirth);
@@ -74,8 +75,10 @@ const readPlayerProfile = (playerId: PlayerId) =>
        LEFT JOIN cities bc ON bc.id = p.birth_city_id
        LEFT JOIN clubs c ON c.id = p.club_id
        LEFT JOIN player_fitness pf ON pf.player_id = p.id
+         AND pf.season_number = ${CURRENT_SEASON_NUMBER_SQL}
        LEFT JOIN contracts ct ON ct.player_id = p.id
-       WHERE p.id = ${playerId}`,
+       WHERE p.id = ?`,
+      [playerId],
     );
 
     const player = rows[0];
@@ -86,7 +89,7 @@ const readPlayerProfile = (playerId: PlayerId) =>
     const positionRows = yield* sql.unsafe<{
       position: string;
       familiarity: string;
-    }>(`SELECT position, familiarity FROM player_positions WHERE player_id = ${playerId}`);
+    }>(`SELECT position, familiarity FROM player_positions WHERE player_id = ?`, [playerId]);
 
     const attributes = Object.fromEntries(
       [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map((attribute) => [attribute, player[attribute] ?? undefined]),
@@ -101,7 +104,7 @@ const readPlayerProfile = (playerId: PlayerId) =>
     for (const pos of POSITIONS) {
       posRatings[pos] = positionRating(attributes, pos);
     }
-    const ovr = computeOverallRating(attributes, positions.map((p) => p.position as any));
+    const ovr = computeOverallRating(attributes, positions);
 
     const injuryStatus = player.condition < 75
       ? "knock"
@@ -154,7 +157,7 @@ const readPlayerContract = (playerId: PlayerId) =>
     }>(`SELECT ct.wage, ct.years_remaining as "yearsRemaining", ct.signed_season as "signedSeason", p.club_id as "playerClubId"
          FROM contracts ct
          JOIN players p ON p.id = ct.player_id
-         WHERE ct.player_id = ${playerId}`);
+         WHERE ct.player_id = ?`, [playerId]);
 
     const contract = rows[0];
     if (!contract) {

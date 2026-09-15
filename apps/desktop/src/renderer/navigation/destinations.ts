@@ -33,6 +33,9 @@ export type CareerDestination =
    *  the Training area reached from a Workload and Recovery row. It names its player, so it is
    *  excluded from save-scoped nav like `playerDetail`. */
   | { readonly type: "trainingPlan"; readonly saveId: SaveId; readonly playerId: PlayerId }
+  /** Player Development Centre (Screen 114) — the squad-wide development view, a sub-surface of the
+   *  Training area reached from Coaching Assignments, shaped like `trainingWorkload`. */
+  | { readonly type: "trainingDevelopment"; readonly saveId: SaveId }
   | { readonly type: "clubInfo"; readonly saveId: SaveId }
   | { readonly type: "boardConfidence"; readonly saveId: SaveId }
   | { readonly type: "clubHistory"; readonly saveId: SaveId }
@@ -66,6 +69,9 @@ export type CareerDestination =
    * identity, so excluded from save-scoped nav like the club drill-downs.
    */
   | { readonly type: "playerDetail"; readonly saveId: SaveId; readonly playerId: PlayerId }
+  /** A player's Player Development screen, reached from a Player Development Centre row. Needs the
+   *  player too, so it is excluded from save-scoped nav like `playerDetail`. */
+  | { readonly type: "playerDevelopment"; readonly saveId: SaveId; readonly playerId: PlayerId }
   /**
    * The live-match command screens (Screen 97) — reached from the live Match day section, never
    * from the navbar: a save alone is not enough, they need a match in play, so they are excluded
@@ -145,7 +151,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "playerDetail" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
+  "teamScoutReport" | "clubStaff" | "playerDetail" | "playerDevelopment" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
 >;
 
 /**
@@ -212,6 +218,10 @@ export type ResolvedDestination =
       readonly to: "/career/$saveId/training/plan/$playerId";
       readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
     }
+  | {
+      readonly to: "/career/$saveId/training/development-centre";
+      readonly params: { readonly saveId: SaveId };
+    }
   | { readonly to: "/career/$saveId/club-info"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/board-confidence"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/club-history"; readonly params: { readonly saveId: SaveId } }
@@ -246,6 +256,10 @@ export type ResolvedDestination =
   | {
       readonly to: "/career/$saveId/player/$playerId/profile";
       readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
+    }
+  | {
+      readonly to: "/career/$saveId/player/$playerId/development";
+      readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
     };
 
 /** Pure mapping from a typed destination to its route; unit-tested (AC-14). */
@@ -276,6 +290,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "training":
     case "trainingWorkload":
     case "trainingPlan":
+    case "trainingDevelopment":
     case "clubInfo":
     case "boardConfidence":
     case "clubHistory":
@@ -291,6 +306,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "teamScoutReport":
     case "clubStaff":
     case "playerDetail":
+    case "playerDevelopment":
     case "matchMatchTactics":
     case "matchSubstitutions":
     case "matchStats":
@@ -345,6 +361,11 @@ const careerRoute = (
         to: "/career/$saveId/training/plan/$playerId",
         params: { saveId: destination.saveId, playerId: destination.playerId },
       };
+    case "trainingDevelopment":
+      return {
+        to: "/career/$saveId/training/development-centre",
+        params: { saveId: destination.saveId },
+      };
     case "clubInfo":
       return { to: "/career/$saveId/club-info", params: { saveId: destination.saveId } };
     case "boardConfidence":
@@ -382,6 +403,11 @@ const careerRoute = (
     case "playerDetail":
       return {
         to: "/career/$saveId/player/$playerId/profile",
+        params: { saveId: destination.saveId, playerId: destination.playerId },
+      };
+    case "playerDevelopment":
+      return {
+        to: "/career/$saveId/player/$playerId/development",
         params: { saveId: destination.saveId, playerId: destination.playerId },
       };
     case "matchMatchTactics":

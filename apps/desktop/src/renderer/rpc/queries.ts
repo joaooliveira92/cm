@@ -248,6 +248,21 @@ const playerDevelopmentHistoryForSave = Atom.family((saveId: SaveId) =>
 export const playerDevelopmentHistoryAtom = (saveId: SaveId, playerId: PlayerId) =>
   playerDevelopmentHistoryForSave(saveId)(playerId);
 
+/**
+ * getSquadDevelopment — `["save", saveId]`, `["squad", saveId]`.
+ *
+ * Player Development Centre (Screen 114): every own-club player's Training Focus and newest recorded
+ * Season of Player Development. Reactive on the squad key, like `playerDevelopmentHistoryAtom`: the
+ * Season conclusion that records development and a Training Focus change both invalidate it.
+ */
+export const squadDevelopmentAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getSquadDevelopment", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), squadKey(saveId)]),
+    ),
+  ),
+);
+
 const playerProfileForSave = Atom.family((saveId: SaveId) =>
   Atom.family((playerId: PlayerId) =>
     managementReadPolicy(

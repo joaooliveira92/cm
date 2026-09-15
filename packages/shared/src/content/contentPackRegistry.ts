@@ -2,6 +2,7 @@ import { BRAZIL_SERIES_A_PACK } from "./brazilSeriesA.js";
 import { BRAZIL_SERIES_B_PACK } from "./brazilSeriesB.js";
 import { BASE_CONTENT_PACK, type ContentPack } from "./contentPack.js";
 import { ENGLISH_PREMIER_LEAGUE_PACK } from "./englishPremierLeague.js";
+import { PORTUGUESE_PRIMEIRA_LIGA_PACK } from "./portuguesePrimeiraLiga.js";
 import { SPANISH_LA_LIGA_PACK } from "./spanishLaLiga.js";
 
 /**
@@ -17,5 +18,6 @@ export const CONTENT_PACKS: ReadonlyArray<ContentPack> = [
   BRAZIL_SERIES_A_PACK,
   BRAZIL_SERIES_B_PACK,
   ENGLISH_PREMIER_LEAGUE_PACK,
+  PORTUGUESE_PRIMEIRA_LIGA_PACK,
   SPANISH_LA_LIGA_PACK,
 ];

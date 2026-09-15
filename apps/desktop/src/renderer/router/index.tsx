@@ -33,6 +33,7 @@ import { PlayerCoachReportScreen } from "../playerCoachReport/PlayerCoachReportS
 import { TrainingScreen } from "../training/TrainingScreen.js";
 import { WorkloadScreen } from "../training/WorkloadScreen.js";
 import { TrainingPlanScreen } from "../training/TrainingPlanScreen.js";
+import { DevelopmentCentreScreen } from "../training/DevelopmentCentreScreen.js";
 import { ClubInfoScreen } from "../clubInfo/ClubInfoScreen.js";
 import { BoardConfidenceScreen } from "../boardConfidence/BoardConfidenceScreen.js";
 import { ClubHistoryScreen } from "../clubHistory/ClubHistoryScreen.js";
@@ -267,6 +268,14 @@ const trainingPlanRoute = createRoute({
   getParentRoute: () => trainingRoute,
   path: "plan/$playerId",
   component: () => <CareerPlayerChildView screenId="training" Screen={TrainingPlanScreen} />,
+});
+
+/** Player Development Centre (Screen 114): the squad-wide development view, beneath the Training
+ *  area and in its `training` screen scope like Workload and Recovery. */
+const trainingDevelopmentRoute = createRoute({
+  getParentRoute: () => trainingRoute,
+  path: "development-centre",
+  component: () => <CareerChildView screenId="training" Screen={DevelopmentCentreScreen} />,
 });
 
 /**
@@ -714,7 +723,12 @@ const routeTree = rootRoute.addChildren([
       seasonSummaryRoute,
       managerRoute,
       newsRoute,
-      trainingRoute.addChildren([trainingIndexRoute, trainingWorkloadRoute, trainingPlanRoute]),
+      trainingRoute.addChildren([
+        trainingIndexRoute,
+        trainingWorkloadRoute,
+        trainingPlanRoute,
+        trainingDevelopmentRoute,
+      ]),
       clubInfoRoute,
       boardConfidenceRoute,
       clubHistoryRoute,

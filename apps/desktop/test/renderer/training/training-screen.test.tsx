@@ -125,3 +125,23 @@ describe("ticket 05 — Workload and Recovery is reachable from the Training scr
     expect(await screen.findByRole("button", { name: "Workload and recovery" })).toBeTruthy();
   });
 });
+
+describe("ticket 08 — the Player Development Centre is reachable from the Training screen", () => {
+  it("the Player development button navigates to the development centre route", async () => {
+    mount(singleCoachView());
+
+    const button = await screen.findByRole("button", { name: "Player development" });
+    fireEvent.click(button, { detail: 1 });
+
+    expect(navigateSpy).toHaveBeenCalledWith({
+      to: "/career/$saveId/training/development-centre",
+      params: { saveId: rid("s1") },
+    });
+  });
+
+  it("offers the button even when no coaching staff exist", async () => {
+    mount(emptyCoachView());
+
+    expect(await screen.findByRole("button", { name: "Player development" })).toBeTruthy();
+  });
+});

@@ -2,9 +2,9 @@
 
 ## Immediate next action
 
-**group-h-training-and-player-development** ticket 08 (player development centre). Tickets 04-06
-shipped; 07 partly shipped and needs-info on decision requests 01-02; 08 and follow-up 10
-ready-for-agent; 09 blocked on 04-08.
+**group-h-training-and-player-development** ticket 10 (enforce the Goalkeeping Training Focus rule
+in main). Tickets 04-06 and 08 shipped; 07 partly shipped and needs-info on decision requests 01-02;
+09 blocked on 07 until decision request 01 is answered.
 
 ## Gate state (2026-09-14)
 
@@ -50,8 +50,8 @@ ready-for-agent; 09 blocked on 04-08.
 10. **group-h-training-and-player-development**: 01-03 resolved. Spec published. 04 completed
     (coaching assignments, 2026-09-15). 05 completed (workload and recovery, 2026-09-15). 06 completed
     (individual training plan, 2026-09-15). 07 partly shipped (performance report, 2026-09-15),
-    needs-info on decision requests 01 (coach rating) and 02 (development baseline). 08, 10
-    ready-for-agent; 09 blocked on 04-08.
+    needs-info on decision requests 01 (coach rating) and 02 (development baseline). 08 completed
+    (player development centre, 2026-09-15). 10 ready-for-agent; 09 blocked by 07's open decision.
 
 Shipped and closed:
 

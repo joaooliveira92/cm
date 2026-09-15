@@ -36,6 +36,7 @@ import {
   CoachingAssignmentsView,
   WorkloadView,
   PlayerDevelopmentHistoryView,
+  SquadDevelopmentView,
   CollidingOverrideError,
   FixturesView,
   InsufficientTransferBudgetError,
@@ -456,6 +457,15 @@ commitCareer: {
     payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId }),
     success: PlayerDevelopmentHistoryView,
     error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError]),
+  },
+  /** Player Development Centre (Screen 114): every own-club player's Training Focus and newest
+   *  recorded Season of Player Development, from the same `PlayerDeveloped` events and derivation as
+   *  `getPlayerDevelopmentHistory`, in one read for the whole squad. A pure read; only the save can
+   *  fail. */
+  getSquadDevelopment: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: SquadDevelopmentView,
+    error: SaveNotFoundError,
   },
   /** Player Profile (Screen 50): identity, positions, attributes, club, contract expiry, transfer
    *  value, and injury status for one player. */

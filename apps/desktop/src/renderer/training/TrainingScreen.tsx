@@ -12,9 +12,9 @@
  * - `error` — the RPC failed (save not found, transport error).
  * - `empty` — no coaches returned (club has not materialised staff yet).
  *
- * The coach list is terminal: no drill-downs and no keyboard focus on rows. The screen's one
- * action is the "Workload and recovery" button, which opens the Training area's Workload and
- * Recovery sub-surface (Screen 112). Navigation is otherwise the shell's usual `g b`/escape.
+ * The coach list is terminal: no drill-downs and no keyboard focus on rows. The screen's two
+ * actions are the "Workload and recovery" and "Player development" buttons, which open the Training
+ * area's Workload and Recovery (Screen 112) and Player Development Centre (Screen 114) sub-surfaces. Navigation is otherwise the shell's usual `g b`/escape.
  *
  * Reached from the career chrome's Training tab (`g 3`).
  */
@@ -53,7 +53,7 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       <TrainingMessage
         message="No coaching staff assigned yet. Staff will appear once you join a club."
       >
-        <WorkloadLink saveId={saveId} />
+        <TrainingLinks saveId={saveId} />
       </TrainingMessage>
     );
   }
@@ -73,7 +73,7 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         <p className="mt-1 text-sm text-text-secondary">
           Your club's coaching staff and their quality ratings
         </p>
-        <WorkloadLink saveId={saveId} />
+        <TrainingLinks saveId={saveId} />
       </header>
 
       <ul className="mt-6 space-y-3" aria-label="Coaching staff">
@@ -97,16 +97,27 @@ const messageOf = (error: RpcClientError<"getCoachingAssignments"> | null): stri
     ? "Coaching assignments could not be loaded."
     : describeRpcError(error);
 
-/** Opens Workload and Recovery (Screen 112), the Training area's sub-surface. */
-const WorkloadLink = ({ saveId }: { readonly saveId: SaveId }) => (
-  <Button
-    type="button"
-    variant="secondary"
-    className={`mt-4 ${FOCUS_RING.join(" ")}`}
-    onClick={(event) => navigateCareer({ type: "trainingWorkload", saveId }, intentOfClick(event))}
-  >
-    Workload and recovery
-  </Button>
+/** Opens the Training area's squad-wide sub-surfaces: Workload and Recovery (Screen 112) and the
+ *  Player Development Centre (Screen 114). */
+const TrainingLinks = ({ saveId }: { readonly saveId: SaveId }) => (
+  <div className="mt-4 flex gap-2">
+    <Button
+      type="button"
+      variant="secondary"
+      className={FOCUS_RING.join(" ")}
+      onClick={(event) => navigateCareer({ type: "trainingWorkload", saveId }, intentOfClick(event))}
+    >
+      Workload and recovery
+    </Button>
+    <Button
+      type="button"
+      variant="secondary"
+      className={FOCUS_RING.join(" ")}
+      onClick={(event) => navigateCareer({ type: "trainingDevelopment", saveId }, intentOfClick(event))}
+    >
+      Player development
+    </Button>
+  </div>
 );
 
 /** The non-`ready` states, rendered as a labelled `<main>` region carrying one line, plus any

@@ -1,5 +1,6 @@
 import { SaveId } from "@cm-clone/contracts";
 import {
+  type ALL_ATTRIBUTES,
   FAMILIARITY_TIERS,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
@@ -183,3 +184,70 @@ export const trainingPlanSquad = (
   club: { id: "me", name: "Test FC", statureTier: STATURE_TIERS[0] },
   players,
 });
+
+/** One Season of recorded development on the Player Development Centre wire view (Screen 114). */
+export interface LatestSeasonWire {
+  readonly seasonNumber: number;
+  readonly comparedWithSeason: number | null;
+  readonly changes: ReadonlyArray<{
+    readonly attribute: (typeof ALL_ATTRIBUTES)[number];
+    readonly from: number;
+    readonly to: number;
+  }>;
+}
+
+/** One player row of the `getSquadDevelopment` wire view. */
+export interface SquadDevelopmentPlayerWire {
+  readonly id: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly trainingFocus: Category | null;
+  readonly latestSeason: LatestSeasonWire | null;
+}
+
+export interface SquadDevelopmentViewWire {
+  readonly players: readonly SquadDevelopmentPlayerWire[];
+}
+
+/**
+ * A squad covering each state the indicator words: a compared Season with rises and a fall, the
+ * first recorded Season (no comparison), and a player with nothing recorded yet.
+ */
+export const mixedSquadDevelopmentView = (): SquadDevelopmentViewWire => ({
+  players: [
+    {
+      id: "p1",
+      firstName: "Rui",
+      lastName: "Costa",
+      trainingFocus: "technical",
+      latestSeason: {
+        seasonNumber: 3,
+        comparedWithSeason: 2,
+        changes: [
+          { attribute: "passing", from: 11, to: 13 },
+          { attribute: "composure", from: 12, to: 13 },
+          { attribute: "pace", from: 15, to: 14 },
+        ],
+      },
+    },
+    {
+      id: "p2",
+      firstName: "Ana",
+      lastName: "Reis",
+      trainingFocus: null,
+      latestSeason: { seasonNumber: 3, comparedWithSeason: null, changes: [] },
+    },
+    { id: "p3", firstName: "Vitor", lastName: "Baia", trainingFocus: "goalkeeping", latestSeason: null },
+  ],
+});
+
+/** Answer `getSquadDevelopment` with a view, and fail anything else. */
+export const respondWithSquadDevelopment = (view: SquadDevelopmentViewWire): void => {
+  mockPreload(async (method) => {
+    if (method === "getSquadDevelopment") return { _tag: "Success", value: view } as never;
+    return {
+      _tag: "Failure",
+      error: { _tag: "SaveNotFoundError", id: rid("s1") },
+    } as never;
+  });
+};

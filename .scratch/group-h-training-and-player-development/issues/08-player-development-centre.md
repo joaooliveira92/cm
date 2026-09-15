@@ -8,8 +8,8 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Squad-wide dev centre renders all players with training focus and development indicators
-- [ ] Links to per-player development screen
-- [ ] Reads from existing player roster and development data
+- [x] Squad-wide dev centre renders all players with training focus and development indicators
+- [x] Links to per-player development screen
+- [x] Reads from existing player roster and development data

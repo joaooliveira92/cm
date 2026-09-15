@@ -23,6 +23,7 @@ const destinationToRouteChild: Readonly<Record<SaveScopedCareerDestinationType, 
   tacticsEditor: "editor",
   training: "training",
   trainingWorkload: "workload",
+  trainingDevelopment: "development-centre",
   clubInfo: "club-info",
   boardConfidence: "board-confidence",
   clubHistory: "club-history",
@@ -46,6 +47,7 @@ const routeChildToDestination: Readonly<Record<string, SaveScopedCareerDestinati
   ),
   editor: "tactics",
   workload: "training",
+  "development-centre": "training",
 };
 
 const findActiveItemId = (

@@ -25,7 +25,7 @@ Produce a reconciled spec that states per screen what is already built and what 
 
 - **Build sequence follows dependency order** — Coaching Assignments (111) first, then Workload/Recovery (112), Individual Training Plan (108), Performance Report (113), Player Dev Centre (114), then Training Overview (105) last. (Ticket 03 — Build sequence.)
 
-- **Shared components across screens** — Workload gauge (112, 105, 114), coach assignment card (111, 105), training plan summary card (108, 105, 114).
+- **Shared components across screens** — Workload gauge (112, 105; not on 114 in v1, whose ticket 08 criteria do not ask for it), coach assignment card (111, 105), training plan summary card (108, 105, 114).
 
 - **Screen 105 (Training Overview) is the landing page** — Aggregates data from the other 5 screens. Built last when all sub-screens exist.
 
@@ -37,12 +37,12 @@ Produce a reconciled spec that states per screen what is already built and what 
 
 - **Screen 113 (Performance Report) populates the existing coach report stub** — Shows player's Training Focus, development progress (attribute changes), coach rating, and training compliance. Ticket 07 ships Training Focus and development progress as season-over-season Attribute diffs read from `PlayerDeveloped` events (new read `getPlayerDevelopmentHistory`, own-club players only). Coach rating is open in [decision request 01](decision-request-01-performance-report-coach-rating.md); training compliance is omitted because no data model exists; first-Season progress is open in [decision request 02](decision-request-02-development-baseline-in-events.md).
 
-- **Screen 114 (Player Dev Centre) is a squad-wide view** — Lists all players with training focus, development trajectory indicators, and quick-link to the per-player development screen.
+- **Screen 114 (Player Dev Centre) is a squad-wide view** — Lists all players with training focus, development trajectory indicators, and quick-link to the per-player development screen. Ticket 08 ships it at `/career/$saveId/training/development-centre` (the last segment avoids colliding with the per-player `/development` page in the navbar's active-section lookup). The development indicator counts the visible Attributes that rose and fell in the latest recorded Season against the previous one, read through `getSquadDevelopment`; with no earlier Season it says so rather than showing zero. Rows link to the per-player Player Development screen and Training Plan.
 
 ## Testing Decisions
 
 - Screen-level tests follow the existing pattern: Playwright e2e specs in `apps/desktop/e2e/` for reachable UI paths, and focused unit tests in the owning package for any new domain logic.
-- RPC roundtrip tests in `packages/contracts/test/` for any new RPC endpoints. v1 adds read-only RPCs per screen where no existing read fits (`getCoachingAssignments` in ticket 04, `getWorkload` in ticket 05).
+- RPC roundtrip tests in `packages/contracts/test/` for any new RPC endpoints. v1 adds read-only RPCs per screen where no existing read fits (`getCoachingAssignments` in ticket 04, `getWorkload` in ticket 05, `getPlayerDevelopmentHistory` in ticket 07, `getSquadDevelopment` in ticket 08).
 - Prior art: `test/renderer/playerDevelopment/` for per-player development screens, `test/renderer/squad/` for list views.
 
 ## Out of Scope

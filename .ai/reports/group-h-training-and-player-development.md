@@ -3,9 +3,9 @@
 ## Sprint
 
 - Effort: `.scratch/group-h-training-and-player-development/`
-- Tickets closed: `05-workload-and-recovery` (Screen 112, `8ec0c94`), `06-individual-training-plan` (Screen 108, `adb1107`); `07-performance-report` (Screen 113) partly shipped, left needs-info
+- Tickets closed: `05-workload-and-recovery` (Screen 112, `8ec0c94`), `06-individual-training-plan` (Screen 108, `adb1107`); `07-performance-report` (Screen 113, `c240b84`) partly shipped, left needs-info; `08-player-development-centre` (Screen 114)
 - Branch: `dev`
-- Commits: `8ec0c94` (ticket 05), `adb1107` (ticket 06); ticket 07 in the commit that adds its section below
+- Commits: `8ec0c94` (ticket 05), `adb1107` (ticket 06), `c240b84` (ticket 07); ticket 08 in the commit that adds its section below
 
 ## Acceptance criteria → evidence
 
@@ -209,3 +209,51 @@ Deferred:
   `AttributesSchema` in `packages/contracts/src/schemas/squad.ts` carries it. CONTEXT.md says Injury
   Proneness is never surfaced to any UI. Not filed under group-h because it belongs to no charted
   effort.
+
+---
+
+# Ticket 08: Player Development Centre (Screen 114)
+
+## Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Squad-wide dev centre renders all players with training focus and development indicators | `test/renderer/training/development-centre-screen.test.tsx` (one read, per-row focus and indicator, empty, error), `development-indicator.test.ts`, `test/main/club/squad-development.test.ts` (own squad only, focus shown, null before any Season, no comparison in Season 1, Season 2 rows equal the per-player history, read-only, name order) | pass |
+| 2 | Links to per-player development screen | `development-centre-screen.test.tsx`, `test/renderer/navigation/adapter-coverage.test.ts` (`playerDevelopment`, `trainingDevelopment`), `training-screen.test.tsx`, `e2e/development-centre.spec.ts` | E2E_ROW8 |
+| 3 | Reads from existing player roster and development data | `squad-development.test.ts`, `packages/contracts/test/squad-development.test.ts` | pass |
+
+## Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1; typecheck, effect-lint, verify-db-schema pass; lint and verify-md-links (18) pre-existing only; shared 457/457, contracts 111/111, game-engine 50/50; desktop 72 failed / 1692 passed |
+| desktop failures | compared by name with the ticket 07 run | 70 identical; 2 extra were 5000 ms timeouts under load (`test/main/world/world-determinism.test.ts` scope widening, `test/renderer/activeLeagues/screen.test.tsx` Continue blocking). Re-run alone: 2 files, 32 tests passed |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | E2E_GATE8 |
+| determinism | — | not applicable: read-only diff of recorded events |
+| save compatibility | — | not applicable: no schema, event or persistence change |
+
+## Behavior changes
+
+- New screen at `/career/$saveId/training/development-centre`, reached from a "Player development"
+  button on Coaching Assignments. Its last segment is not `development`, because the navbar picks its
+  active section from the last URL segment and the per-player Player Development page already ends in
+  `/development`.
+- New read-only RPC `getSquadDevelopment` (`SaveNotFoundError`).
+- The per-player Player Development route now has a navigation destination (`playerDevelopment`);
+  before this ticket nothing could navigate to it.
+
+## Review
+
+Reviewer verdict: APPROVE. Addressed: spec still listed a Workload gauge on 114 (medium), spec RPC
+list missing tickets 07 and 08 reads (low); Screen 114 decisions recorded in spec and map.
+
+Declined or deferred:
+
+- `developmentIndicator.ts` declares a narrow `LatestDevelopment` rather than importing
+  `SeasonDevelopmentView`. Kept: it names only the fields the wording reads, and the contract type
+  satisfies it structurally.
+- `apps/desktop/src/main/club/training.ts` (347 lines) now holds the focus command, coaching, workload
+  and both development reads, with the save-exists preamble repeated four times. Candidate split:
+  `club/developmentHistory.ts`.
+- `getSquadDevelopment` filters outcomes per player (players × outcomes); harmless at squad scale.
+- No loading-state test on the screen; the row markup is inline and ticket 09 may want it extracted.

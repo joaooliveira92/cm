@@ -42,6 +42,7 @@ import {
 import {
   getCoachingAssignments,
   getPlayerDevelopmentHistory,
+  getSquadDevelopment,
   getWorkload,
   setTrainingFocus,
 } from "../club/training.js";
@@ -378,6 +379,11 @@ const handlers: Record<AppRpcMethod, Handler> = {
         AppRpcs.getPlayerDevelopmentHistory.payload,
       )(payload);
       return yield* getPlayerDevelopmentHistory(ctx.savesDir, saveId, playerId);
+    }),
+  getSquadDevelopment: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getSquadDevelopment.payload)(payload);
+      return yield* getSquadDevelopment(ctx.savesDir, saveId);
     }),
   getPlayerProfile: (payload, ctx) =>
     Effect.gen(function* () {

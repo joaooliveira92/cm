@@ -119,3 +119,25 @@ export class PlayerDevelopmentHistoryView extends Schema.Class<PlayerDevelopment
   playerId: PlayerId,
   seasons: Schema.Array(SeasonDevelopmentView),
 }) {}
+
+/**
+ * One player on the Player Development Centre (Screen 114): identity, standing Training Focus, and
+ * the newest Season of their recorded Player Development. `latestSeason` is exactly the first entry
+ * `getPlayerDevelopmentHistory` would return for the player, or `null` when no Season has concluded
+ * with them at the manager's club. Visible Attributes only; nothing here is a rating or persisted.
+ */
+export class SquadDevelopmentPlayerView extends Schema.Class<SquadDevelopmentPlayerView>(
+  "SquadDevelopmentPlayerView",
+)({
+  id: PlayerId,
+  firstName: Schema.String,
+  lastName: Schema.String,
+  trainingFocus: NullableTrainingFocusSchema,
+  latestSeason: Schema.NullOr(SeasonDevelopmentView),
+}) {}
+
+/** The Player Development Centre's whole view: every player on the manager's own club, in a stable
+ *  name order. An empty list is valid for a club with no players. */
+export class SquadDevelopmentView extends Schema.Class<SquadDevelopmentView>("SquadDevelopmentView")({
+  players: Schema.Array(SquadDevelopmentPlayerView),
+}) {}

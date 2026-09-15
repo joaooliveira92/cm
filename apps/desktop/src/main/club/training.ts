@@ -11,6 +11,8 @@ import {
   PlayerNotFoundError,
   SaveNotFoundError,
   SeasonDevelopmentView,
+  SquadDevelopmentPlayerView,
+  SquadDevelopmentView,
   TrainingFocusView,
   WorkloadPlayerView,
   WorkloadView,
@@ -207,6 +209,11 @@ export const seasonDevelopments = (
     .reverse();
 };
 
+/** Decodes one recorded `PlayerDeveloped` entry's Attributes. The payload is this app's own write,
+ *  so one that no longer decodes is a defect rather than a typed failure. */
+const decodeRecordedAttributes = (attributes: string) =>
+  Schema.decodeEffect(Schema.fromJsonString(AttributesSchema))(attributes).pipe(Effect.orDie);
+
 /**
  * Performance Report (Screen 113): one own-club player's recorded Player Development.
  *
@@ -258,13 +265,83 @@ export const getPlayerDevelopmentHistory = (savesDir: string, saveId: SaveId, pl
       const outcomes = yield* Effect.forEach(
         rows,
         (row) =>
-          Schema.decodeEffect(Schema.fromJsonString(AttributesSchema))(row.attributes).pipe(
+          decodeRecordedAttributes(row.attributes).pipe(
             Effect.map((attributes): RecordedDevelopmentOutcome => ({ seasonNumber: row.seasonNumber, attributes })),
-            Effect.orDie,
           ),
         { concurrency: 1 },
       );
 
       return new PlayerDevelopmentHistoryView({ playerId, seasons: seasonDevelopments(outcomes) });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped);
+  });
+
+/**
+ * Player Development Centre (Screen 114): every own-club player's standing Training Focus and the
+ * newest Season of their recorded Player Development, in one read for the whole squad.
+ *
+ * The same source and derivation as `getPlayerDevelopmentHistory` — the `PlayerDeveloped` events on
+ * every club stream, turned into Season-over-Season changes by `seasonDevelopments` — restricted to
+ * players currently on the manager's club, so a player's `latestSeason` is exactly the first Season
+ * that per-player read would return. Players are listed in the Workload screen's name order. Nothing
+ * is written, and a stored payload that no longer decodes is a defect, as in the per-player read.
+ */
+export const getSquadDevelopment = (savesDir: string, saveId: SaveId) =>
+  Effect.gen(function* () {
+    const filename = path.join(savesDir, `${saveId}.sqlite`);
+    const exists = yield* Effect.promise(() =>
+      access(filename).then(
+        () => true,
+        () => false,
+      ),
+    );
+    if (!exists) {
+      return yield* new SaveNotFoundError({ id: saveId });
+    }
+
+    return yield* Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const playerRows = yield* sql<{
+        id: PlayerId;
+        firstName: string;
+        lastName: string;
+        trainingFocus: Category | null;
+      }>`
+        SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", tf.focus as "trainingFocus"
+        FROM players p
+        LEFT JOIN training_focus tf ON tf.player_id = p.id
+        WHERE p.club_id = (SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1)
+        ORDER BY p.last_name, p.first_name, p.id`;
+
+      const outcomeRows = yield* sql<{ playerId: PlayerId; seasonNumber: number; attributes: string }>`
+        SELECT json_extract(entry.value, '$.playerId') as "playerId",
+               json_extract(e.payload, '$.seasonNumber') as "seasonNumber",
+               json_extract(entry.value, '$.attributes') as "attributes"
+        FROM events e, json_each(e.payload, '$.players') entry
+        WHERE e.stream_type = ${CLUB_STREAM}
+          AND e.tag = 'PlayerDeveloped'
+          AND json_extract(entry.value, '$.playerId') IN (
+            SELECT id FROM players WHERE club_id = (SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1)
+          )`;
+
+      const outcomes = yield* Effect.forEach(
+        outcomeRows,
+        (row) =>
+          decodeRecordedAttributes(row.attributes).pipe(
+            Effect.map((attributes) => ({ playerId: row.playerId, seasonNumber: row.seasonNumber, attributes })),
+          ),
+        { concurrency: 1 },
+      );
+      const outcomesOf = (playerId: PlayerId): ReadonlyArray<RecordedDevelopmentOutcome> =>
+        outcomes.filter((outcome) => outcome.playerId === playerId);
+
+      return new SquadDevelopmentView({
+        players: playerRows.map(
+          (row) =>
+            new SquadDevelopmentPlayerView({
+              ...row,
+              latestSeason: seasonDevelopments(outcomesOf(row.id))[0] ?? null,
+            }),
+        ),
+      });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped);
   });

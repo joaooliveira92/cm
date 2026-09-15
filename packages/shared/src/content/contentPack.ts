@@ -3,6 +3,7 @@ import type { ClubColours } from "./clubColours.js";
 import type { NationCode } from "./nations.js";
 import { BRAZIL_SERIES_A_PACK } from "./brazilSeriesA.js";
 import { ENGLISH_PREMIER_LEAGUE_PACK } from "./englishPremierLeague.js";
+import { PORTUGUESE_PRIMEIRA_LIGA_PACK } from "./portuguesePrimeiraLiga.js";
 import { SPANISH_LA_LIGA_PACK } from "./spanishLaLiga.js";
 
 /**
@@ -446,6 +447,7 @@ const LEAGUE_PACKS: Readonly<Record<CanonicalId, ContentPack>> = {
   comp_bra_1: BRAZIL_SERIES_A_PACK,
   comp_eng_1: ENGLISH_PREMIER_LEAGUE_PACK,
   comp_esp_1: SPANISH_LA_LIGA_PACK,
+  comp_prt_1: PORTUGUESE_PRIMEIRA_LIGA_PACK,
 };
 
 /**

@@ -33,4 +33,10 @@ export {
 export { getSquad, loadSquadPlayers, loadUserClub } from "./squad.js";
 export { changeTactics, getTactics, loadPersistedTactic, persistTactic, validateTactic } from "./tactics.js";
 export { getTacticsOverview } from "./tacticsOverview.js";
-export { getCoachingAssignments, getPlayerDevelopmentHistory, getWorkload, setTrainingFocus } from "./training.js";
+export {
+  getCoachingAssignments,
+  getPlayerDevelopmentHistory,
+  getSquadDevelopment,
+  getWorkload,
+  setTrainingFocus,
+} from "./training.js";
