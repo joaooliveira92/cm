@@ -35,6 +35,7 @@ import {
   CoachAssignmentView,
   CoachingAssignmentsView,
   WorkloadView,
+  PlayerDevelopmentHistoryView,
   CollidingOverrideError,
   FixturesView,
   InsufficientTransferBudgetError,
@@ -447,6 +448,14 @@ commitCareer: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: WorkloadView,
     error: SaveNotFoundError,
+  },
+  /** Performance Report (Screen 113): one own-club player's Attribute changes per concluded Season,
+   *  read from the human club's `PlayerDeveloped` events. A pure read; the changes are derived on
+   *  each read and never stored. A player off the manager's club is `NotYourPlayerError`. */
+  getPlayerDevelopmentHistory: {
+    payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId }),
+    success: PlayerDevelopmentHistoryView,
+    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError]),
   },
   /** Player Profile (Screen 50): identity, positions, attributes, club, contract expiry, transfer
    *  value, and injury status for one player. */

@@ -8,8 +8,10 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** needs-info
+
+Training Focus and development progress shipped. Coach rating waits on [decision request 01](../decision-request-01-performance-report-coach-rating.md); first-Season progress waits on [decision request 02](../decision-request-02-development-baseline-in-events.md). Training compliance is omitted: no data model exists in v1.
 
 - [ ] Performance report shows training focus, development progress, and coach rating
-- [ ] Reads from existing player state and development data
-- [ ] Stub content replaced with real data
+- [x] Reads from existing player state and development data
+- [x] Stub content replaced with real data

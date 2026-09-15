@@ -67,7 +67,7 @@ export const PlayerDevelopmentScreen = ({
       <section className="mt-8">
         <h2 className="text-lg font-semibold">Development History</h2>
         <p className="mt-2 text-sm text-text-secondary italic">
-          Development tracking (per-season attribute changes) will be available in a future update.
+          Per-season Attribute changes are on this player's Performance Report.
           Player Development runs once per Season Concluded, independently per player, deterministically.
         </p>
       </section>

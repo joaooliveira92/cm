@@ -114,7 +114,7 @@ describe("ticket 06 — Individual Training Plan shows a player's current Traini
     renderScreen("someone-else");
     expect(
       await screen.findByText(
-        "That player is not on your club. Training Focus can only be set for your own players.",
+        "That player does not belong to your club. Training Focus can only be set for your own players.",
       ),
     ).toBeTruthy();
     expect(screen.queryByRole("group")).toBeNull();

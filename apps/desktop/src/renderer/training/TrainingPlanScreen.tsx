@@ -53,7 +53,7 @@ export const TrainingPlanScreen = ({
   const player = result.value.players.find((candidate) => candidate.id === playerId);
   if (player === undefined) {
     return (
-      <TrainingPlanMessage message="That player is not on your club. Training Focus can only be set for your own players." />
+      <TrainingPlanMessage message="That player does not belong to your club. Training Focus can only be set for your own players." />
     );
   }
 

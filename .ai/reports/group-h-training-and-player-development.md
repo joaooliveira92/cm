@@ -3,9 +3,9 @@
 ## Sprint
 
 - Effort: `.scratch/group-h-training-and-player-development/`
-- Tickets closed: `05-workload-and-recovery` (Screen 112, `8ec0c94`), `06-individual-training-plan` (Screen 108)
+- Tickets closed: `05-workload-and-recovery` (Screen 112, `8ec0c94`), `06-individual-training-plan` (Screen 108, `adb1107`); `07-performance-report` (Screen 113) partly shipped, left needs-info
 - Branch: `dev`
-- Commits: `8ec0c94` (ticket 05); ticket 06 in the commit that adds its section below
+- Commits: `8ec0c94` (ticket 05), `adb1107` (ticket 06); ticket 07 in the commit that adds its section below
 
 ## Acceptance criteria → evidence
 
@@ -152,3 +152,60 @@ Deferred:
 - Outside this effort: `apps/desktop/src/renderer/table/squad/playerStatus.tsx:22` imports
   `@cm-clone/game-engine`, which the engineering contract forbids (from `ce7f3db`). Not filed as a
   group-h ticket because it belongs to no charted effort; a human should decide where it goes.
+
+---
+
+# Ticket 07: Performance Report (Screen 113), partly shipped
+
+Ticket status: **needs-info**. Two of three acceptance criteria met; the first is open on
+[decision request 01](../../.scratch/group-h-training-and-player-development/decision-request-01-performance-report-coach-rating.md).
+
+## Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Performance report shows training focus, development progress, and coach rating | `test/renderer/playerCoachReport/player-coach-report-screen.test.tsx` (focus, progress, empty, loading, error, not-own) | Training Focus and progress pass; coach rating not built, pending decision request 01 |
+| 2 | Reads from existing player state and development data | `test/main/club/development-history.test.ts` (real `developPlayersForSeason` twice, read matches the squad's Attribute change, no events appended, three typed errors, table tests), `packages/contracts/test/player-development-history.test.ts` (roundtrips, Injury Proneness rejected) | pass |
+| 3 | Stub content replaced with real data | renderer test above, `e2e/performance-report.spec.ts` | pass |
+
+## Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` (before low-severity repairs) | exit 1; typecheck, effect-lint, verify-db-schema pass; lint and verify-md-links (18) pre-existing only; shared 457/457, contracts 106/106, game-engine 50/50; desktop 70 failed / 1673 passed, failing tests identical by name to the ticket 06 run |
+| focused, after repairs | `vitest run test/renderer/training test/renderer/playerDevelopment test/renderer/playerCoachReport test/main/club/development-history.test.ts` (desktop); `vitest run` (contracts) | 13 files, 92 passed; contracts 106 passed |
+| typecheck, after repairs | `pnpm --filter @cm-clone/desktop typecheck` | 0 errors |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | after repairs: 10 failed / 27 passed; `performance-report.spec.ts` passes; failing specs identical to clean HEAD `349bafc` |
+| determinism | — | not applicable: read-only diff of recorded events; no simulation or Player Development rule change |
+| save compatibility | — | not applicable: no schema, event or persistence change |
+
+## Behavior changes
+
+- `/career/$saveId/player/$playerId/coach-report` now shows the player's Training Focus (through
+  `TrainingPlanSummaryCard`) and per-Season Attribute changes. The route still has no in-app link, as
+  before this ticket; the e2e spec opens it by URL.
+- New read-only RPC `getPlayerDevelopmentHistory` (`SaveNotFoundError`, `PlayerNotFoundError`,
+  `NotYourPlayerError`). Only visible Attributes are representable on the wire.
+- Refusal copy on Training Plan and Performance Report now matches the shared error text, "That player
+  does not belong to your club."
+- Player Development's "available in a future update" line now points to the Performance Report.
+
+## Review
+
+Reviewer verdict: APPROVE. Addressed: stale `NotYourPlayerError` doc comment (L3), two wordings for
+one refusal (L4), stale Player Development copy (L6).
+
+Deferred:
+
+- M1 (medium): the first recorded Season always shows no changes, because `PlayerDeveloped` stores only
+  outcome Attributes. Filed as
+  [decision request 02](../../.scratch/group-h-training-and-player-development/decision-request-02-development-baseline-in-events.md).
+- L1 (low): an undecodable `PlayerDeveloped` payload is a defect (`Effect.orDie`), failing the whole
+  history read; other reads skip or type such rows. Kept; `seasonNumber` from `json_extract` is not
+  schema-decoded.
+- L5 (low): the save-exists preamble is repeated three times in `club/training.ts`.
+- **Outside this effort, for a human:** `getPlayerProfile` (`apps/desktop/src/main/career/player.ts`)
+  and `getSquad` (`apps/desktop/src/main/club/squad.ts`) send `injuryProneness` to the renderer, and
+  `AttributesSchema` in `packages/contracts/src/schemas/squad.ts` carries it. CONTEXT.md says Injury
+  Proneness is never surfaced to any UI. Not filed under group-h because it belongs to no charted
+  effort.

@@ -2,20 +2,24 @@ import { access } from "node:fs/promises";
 import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
+  AttributeChangeView,
+  AttributesSchema,
   CoachAssignmentView,
   CoachingAssignmentsView,
   NotYourPlayerError,
+  PlayerDevelopmentHistoryView,
   PlayerNotFoundError,
   SaveNotFoundError,
+  SeasonDevelopmentView,
   TrainingFocusView,
   WorkloadPlayerView,
   WorkloadView,
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import type { Category } from "@cm-clone/shared";
+import { ALL_ATTRIBUTES, type Category } from "@cm-clone/shared";
 import { NON_CONTACT_CONDITION_THRESHOLD } from "@cm-clone/game-engine";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "../season/decider.js";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
@@ -158,5 +162,109 @@ export const getWorkload = (savesDir: string, saveId: SaveId) =>
             }),
         ),
       });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped);
+  });
+
+/** One recorded `PlayerDeveloped` outcome for one player: the Season it concluded and the full
+ *  Attribute set the player ended it with. */
+export interface RecordedDevelopmentOutcome {
+  readonly seasonNumber: number;
+  readonly attributes: Readonly<Partial<Record<string, number>>>;
+}
+
+/**
+ * Turns a player's recorded development outcomes into per-Season Attribute changes, newest Season
+ * first. Each Season is compared with the player's previous recorded outcome, which is the previous
+ * Season unless the player was away from the manager's club in between. The earliest outcome has
+ * no recorded starting point, so it carries no comparison rather than an invented one.
+ *
+ * Only visible Attributes are compared (`ALL_ATTRIBUTES`, never Injury Proneness), in that list's
+ * fixed order, and only those present on both sides and different. Pure and derived on every read.
+ */
+export const seasonDevelopments = (
+  outcomes: ReadonlyArray<RecordedDevelopmentOutcome>,
+): ReadonlyArray<SeasonDevelopmentView> => {
+  const ascending = [...outcomes].sort((a, b) => a.seasonNumber - b.seasonNumber);
+  return ascending
+    .map((outcome, index) => {
+      const previous = ascending[index - 1];
+      if (previous === undefined) {
+        return new SeasonDevelopmentView({ seasonNumber: outcome.seasonNumber, comparedWithSeason: null, changes: [] });
+      }
+      const changes = ALL_ATTRIBUTES.flatMap((attribute) => {
+        const from = previous.attributes[attribute];
+        const to = outcome.attributes[attribute];
+        return from === undefined || to === undefined || from === to
+          ? []
+          : [new AttributeChangeView({ attribute, from, to })];
+      });
+      return new SeasonDevelopmentView({
+        seasonNumber: outcome.seasonNumber,
+        comparedWithSeason: previous.seasonNumber,
+        changes,
+      });
+    })
+    .reverse();
+};
+
+/**
+ * Performance Report (Screen 113): one own-club player's recorded Player Development.
+ *
+ * The source is the `PlayerDeveloped` events on the club streams, which `developPlayersForSeason`
+ * appends only for the human club, so every outcome found was recorded while the player was the
+ * manager's. All club streams are read rather than the current club's alone, so a manager who has
+ * changed clubs keeps the history they recorded. Nothing is written; the changes are derived by
+ * `seasonDevelopments` on every read.
+ *
+ * A player off the manager's club is refused (`NotYourPlayerError`), as `setTrainingFocus` refuses
+ * one: their recorded values would be exact readings of a player the manager now sees through
+ * Scouting. A stored payload that no longer decodes is this app's own corrupt write, so it is a
+ * defect rather than a typed failure.
+ */
+export const getPlayerDevelopmentHistory = (savesDir: string, saveId: SaveId, playerId: PlayerId) =>
+  Effect.gen(function* () {
+    const filename = path.join(savesDir, `${saveId}.sqlite`);
+    const exists = yield* Effect.promise(() =>
+      access(filename).then(
+        () => true,
+        () => false,
+      ),
+    );
+    if (!exists) {
+      return yield* new SaveNotFoundError({ id: saveId });
+    }
+
+    return yield* Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const playerRows = yield* sql<{ isOwn: number }>`
+        SELECT (club_id = (SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1)) as "isOwn"
+        FROM players WHERE id = ${playerId}`;
+      const player = playerRows[0];
+      if (player === undefined) {
+        return yield* new PlayerNotFoundError({ playerId });
+      }
+      if (player.isOwn !== 1) {
+        return yield* new NotYourPlayerError({ playerId });
+      }
+
+      const rows = yield* sql<{ seasonNumber: number; attributes: string }>`
+        SELECT json_extract(e.payload, '$.seasonNumber') as "seasonNumber",
+               json_extract(entry.value, '$.attributes') as "attributes"
+        FROM events e, json_each(e.payload, '$.players') entry
+        WHERE e.stream_type = ${CLUB_STREAM}
+          AND e.tag = 'PlayerDeveloped'
+          AND json_extract(entry.value, '$.playerId') = ${playerId}`;
+
+      const outcomes = yield* Effect.forEach(
+        rows,
+        (row) =>
+          Schema.decodeEffect(Schema.fromJsonString(AttributesSchema))(row.attributes).pipe(
+            Effect.map((attributes): RecordedDevelopmentOutcome => ({ seasonNumber: row.seasonNumber, attributes })),
+            Effect.orDie,
+          ),
+        { concurrency: 1 },
+      );
+
+      return new PlayerDevelopmentHistoryView({ playerId, seasons: seasonDevelopments(outcomes) });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped);
   });

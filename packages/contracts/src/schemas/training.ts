@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+import { ALL_ATTRIBUTES } from "@cm-clone/shared";
 
 import { ClubId, PlayerId } from "./ids.js";
 import { AttributesSchema, NullableTrainingFocusSchema } from "./squad.js";
@@ -32,8 +33,8 @@ export class TrainingFocusView extends Schema.Class<TrainingFocusView>("Training
   focus: NullableTrainingFocusSchema,
 }) {}
 
-/** Raised when `SetTrainingFocus` targets a player who isn't on the user's own club — Training
- * Focus is a manager's own-squad lever, never a cross-club command. */
+/** Raised when `SetTrainingFocus` or `getPlayerDevelopmentHistory` targets a player who isn't on the
+ * user's own club — Training Focus and development history cover the manager's own squad only. */
 export class NotYourPlayerError extends Schema.TaggedError<NotYourPlayerError>()("NotYourPlayerError", {
   playerId: PlayerId,
 }) {}
@@ -85,4 +86,36 @@ export class WorkloadPlayerView extends Schema.Class<WorkloadPlayerView>("Worklo
  * stable name order. An empty list is valid for a club with no players. */
 export class WorkloadView extends Schema.Class<WorkloadView>("WorkloadView")({
   players: Schema.Array(WorkloadPlayerView),
+}) {}
+
+/** A visible Attribute's name. Hidden Attributes (Injury Proneness) are not in this list, so no
+ *  development read can carry one to the renderer. */
+export const VisibleAttributeSchema = Schema.Literals(ALL_ATTRIBUTES);
+
+/** One visible Attribute that moved between two recorded `PlayerDeveloped` outcomes. */
+export class AttributeChangeView extends Schema.Class<AttributeChangeView>("AttributeChangeView")({
+  attribute: VisibleAttributeSchema,
+  from: Schema.Finite,
+  to: Schema.Finite,
+}) {}
+
+/**
+ * One concluded Season of a player's recorded Player Development. `changes` compares that Season's
+ * `PlayerDeveloped` outcome with the player's previous recorded outcome, in `comparedWithSeason`.
+ * The log records outcomes only, never the Attributes a player started from, so the earliest
+ * recorded Season has nothing to compare with: `comparedWithSeason` is `null` and `changes` empty.
+ */
+export class SeasonDevelopmentView extends Schema.Class<SeasonDevelopmentView>("SeasonDevelopmentView")({
+  seasonNumber: Schema.Finite,
+  comparedWithSeason: Schema.NullOr(Schema.Finite),
+  changes: Schema.Array(AttributeChangeView),
+}) {}
+
+/** Performance Report (Screen 113): one own-club player's recorded Player Development, newest
+ *  Season first. Empty until a Season has concluded with the player on the manager's club. */
+export class PlayerDevelopmentHistoryView extends Schema.Class<PlayerDevelopmentHistoryView>(
+  "PlayerDevelopmentHistoryView",
+)({
+  playerId: PlayerId,
+  seasons: Schema.Array(SeasonDevelopmentView),
 }) {}

@@ -228,6 +228,26 @@ export const workloadAtom = Atom.family((saveId: SaveId) =>
   ),
 );
 
+/**
+ * getPlayerDevelopmentHistory — `["save", saveId]`, `["squad", saveId]`.
+ *
+ * Performance Report (Screen 113): one own-club player's recorded Attribute changes per concluded
+ * Season. Reactive on the squad key too, because the Season conclusion that appends a
+ * `PlayerDeveloped` event is the same write that changes the squad's Attributes.
+ */
+const playerDevelopmentHistoryForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((playerId: PlayerId) =>
+    managementReadPolicy(
+      Atom.make(call("getPlayerDevelopmentHistory", { saveId, playerId })).pipe(
+        Atom.withReactivity([saveKey(saveId), squadKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const playerDevelopmentHistoryAtom = (saveId: SaveId, playerId: PlayerId) =>
+  playerDevelopmentHistoryForSave(saveId)(playerId);
+
 const playerProfileForSave = Atom.family((saveId: SaveId) =>
   Atom.family((playerId: PlayerId) =>
     managementReadPolicy(
