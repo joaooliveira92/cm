@@ -162,7 +162,7 @@ export const MatchProvider = ({
 
   useEffect(() => {
     if (phase === "complete" && match !== null) recordFullTime(saveId, match.matchId);
-    if (phase === "complete" || phase === "committed") clearActiveMatch(saveId);
+    if (phase === "committed") clearActiveMatch(saveId);
   }, [phase, saveId, match]);
 
   // Publish the live-match readout so the chrome shows it and suspends Continue.
