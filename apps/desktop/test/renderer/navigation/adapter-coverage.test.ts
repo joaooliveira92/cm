@@ -63,6 +63,9 @@ const ALL_DESTINATIONS: ReadonlyArray<NavigationDestination> = [
   { type: "clubStaff", saveId: save("save-1"), clubId: club("club-7") },
   { type: "matchMatchTactics", saveId: save("save-1") },
   { type: "matchSubstitutions", saveId: save("save-1") },
+  { type: "matchStats", saveId: save("save-1") },
+  { type: "matchRatings", saveId: save("save-1") },
+  { type: "matchReport", saveId: save("save-1") },
 ];
 
 describe("the navigation adapter reaches the router for every destination", () => {

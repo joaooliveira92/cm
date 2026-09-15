@@ -14,3 +14,10 @@
 - [ ] `MatchRatingsView` component renders per-player ratings in a list/table
 - [ ] Component works in both live-match and post-match contexts
 - [ ] Loading and error states are handled
+
+## Comments
+
+**From ticket 08 review.** The Post-Match Summary links here through a destination that carries only
+`saveId` (`navigation/destinations.ts`). The match session is cleared at full time, so this screen
+cannot learn which match to show from the session: add `matchId` to its destination (and route) when
+building it, and update the summary's link in `match/PostMatchSummary.tsx`.

@@ -123,8 +123,15 @@ export const MatchProvider = ({
     setPhase("committed");
   }, [saveId, match]);
 
-  const setPhaseComplete = useCallback(() => setPhase("complete"), []);
-  const setPhasePaused = useCallback((paused: boolean) => setPhase(paused ? "paused" : "live"), []);
+  // The streaming hook's pace ticker and pause effect keep running after full time, so these two
+  // may only move a match that is still in play. Unguarded, they flipped an accepted result
+  // ("committed") back to "complete" on the next tick and offered Accept result again.
+  const inPlay = (current: MatchPhase): boolean => current === "live" || current === "paused";
+  const setPhaseComplete = useCallback(() => setPhase((current) => (inPlay(current) ? "complete" : current)), []);
+  const setPhasePaused = useCallback(
+    (paused: boolean) => setPhase((current) => (inPlay(current) ? (paused ? "paused" : "live") : current)),
+    [],
+  );
   const reportError = useCallback((message: string) => setError(message), []);
 
   // Session restore: when a session was recorded for this save, resume it.
@@ -140,9 +147,10 @@ export const MatchProvider = ({
     setHydrated(true);
   }, [saveId]);
 
-  // Record the in-flight match for session restore.
+  // Record the in-flight match for session restore. A result being or already accepted is no
+  // longer in flight: recording it would restore a stale Match day and keep Continue suspended.
   useEffect(() => {
-    if (match === null) return;
+    if (match === null || phase === "committing" || phase === "committed") return;
     setActiveMatch({
       saveId,
       match,
@@ -153,12 +161,12 @@ export const MatchProvider = ({
   }, [saveId, match, phase]);
 
   useEffect(() => {
-    if (phase === "complete") clearActiveMatch(saveId);
+    if (phase === "complete" || phase === "committed") clearActiveMatch(saveId);
   }, [phase, saveId]);
 
   // Publish the live-match readout so the chrome shows it and suspends Continue.
   useEffect(() => {
-    if (match === null || phase === "complete") {
+    if (match === null || phase === "complete" || phase === "committed") {
       clearScopeState("match");
       return;
     }

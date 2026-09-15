@@ -21,3 +21,6 @@ export const commitMatchday = (input: RpcPayload<"commitMatchday">): RpcRead<"co
 
 export const getTeamSheet = (input: RpcPayload<"getTeamSheet">): RpcRead<"getTeamSheet"> =>
   call("getTeamSheet", input);
+
+export const getPostMatchSummary = (input: RpcPayload<"getPostMatchSummary">): RpcRead<"getPostMatchSummary"> =>
+  call("getPostMatchSummary", input);

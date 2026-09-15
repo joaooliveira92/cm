@@ -144,6 +144,32 @@ export class TeamSheetView extends Schema.Class<TeamSheetView>("TeamSheetView")(
 }) {}
 
 // ---------------------------------------------------------------------------
+// Post-Match Summary (Screen 99): the settled result and its key events
+// ---------------------------------------------------------------------------
+
+/** One key event of a finished match as the Post-Match Summary lists it: who, for which side, when. */
+export class PostMatchEventView extends Schema.Class<PostMatchEventView>("PostMatchEventView")({
+  minute: Schema.Finite,
+  kind: Schema.Literals(["Goal", "YellowCard", "RedCard", "Injury"]),
+  clubId: ClubId,
+  playerId: PlayerId,
+  playerName: Schema.String,
+}) {}
+
+/** The whole-match read the Post-Match Summary renders: final score and the goals, cards and
+ *  injuries in match order. Derived from the persisted match stream on every call, never stored. */
+export class PostMatchSummaryView extends Schema.Class<PostMatchSummaryView>("PostMatchSummaryView")({
+  matchId: MatchId,
+  homeClubId: ClubId,
+  homeClubName: Schema.String,
+  awayClubId: ClubId,
+  awayClubName: Schema.String,
+  homeScore: Schema.Finite,
+  awayScore: Schema.Finite,
+  events: Schema.Array(PostMatchEventView),
+}) {}
+
+// ---------------------------------------------------------------------------
 // The pre-match boundary: starting the scheduled Fixture, and committing it
 // ---------------------------------------------------------------------------
 

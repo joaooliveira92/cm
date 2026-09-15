@@ -14,3 +14,10 @@
 - [ ] Report screen renders the narrative summary
 - [ ] Screen is accessible via the post-match tab navigation
 - [ ] Loading and error states are handled
+
+## Comments
+
+**From ticket 08 review.** The Post-Match Summary links here through a destination that carries only
+`saveId` (`navigation/destinations.ts`). The match session is cleared at full time, so this screen
+cannot learn which match to show from the session: add `matchId` to its destination (and route) when
+building it, and update the summary's link in `match/PostMatchSummary.tsx`.

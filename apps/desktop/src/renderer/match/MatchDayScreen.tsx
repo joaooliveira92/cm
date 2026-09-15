@@ -9,6 +9,7 @@ import { CommentaryProvider, useCommentaryContext } from "./CommentaryProvider.j
 import { KickoffPanel } from "./KickoffPanel.js";
 import { MatchCommentaryStream } from "./MatchCommentaryStream.js";
 import { MatchControlPanel } from "./MatchControlPanel.js";
+import { PostMatchSummary } from "./PostMatchSummary.js";
 
 const MatchOngoing = () => {
   const { state } = useMatchContext();
@@ -47,6 +48,9 @@ const MatchComplete = ({ match }: { readonly match: MatchSummary }) => {
   return (
     <>
       <MatchCommentaryStream />
+      {/* Only once the result is accepted (Screen 99 §17): leaving Match day before then would drop
+          the uncommitted session, and the summary's review links lead off it. */}
+      {committed && <PostMatchSummary saveId={state.saveId} matchId={match.matchId} />}
       <div className="mt-4 flex items-center gap-3">
         <p className="font-semibold">
           Final score: {match.homeClubName} {comm.homeScore} - {comm.awayScore} {match.awayClubName}

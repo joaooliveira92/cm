@@ -14,11 +14,13 @@ import { beginCareer, commitCareer } from "../../../src/main/world/index.js";
 import { getTactics } from "../../../src/main/club/index.js";
 import {
   MatchSeedSource,
+  getPostMatchSummary,
   resumeSimulation,
   startMatch,
   submitMatchCommand,
 } from "../../../src/main/match/index.js";
 import { advanceCalendar } from "../../../src/main/season/index.js";
+import { commitMatchday } from "../../../src/main/season/commitMatchday.js";
 import { ensureHumanTactic, pendingFixtureId } from "../boundary-helpers.js";
 import { createDefaultSnapshot } from "../snapshot-helpers.js";
 
@@ -422,3 +424,52 @@ it.effect("an Injury event's chunk lists the injured club in injuredClubIds", ()
     }
   }),
 );
+
+it.effect("getPostMatchSummary lists every goal, card and injury of the finished timeline with names", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture;
+    const match = yield* startSeededMatch(savesDir, save.id, fixtureId, INJURY_SEED);
+    const chunks = yield* drain(savesDir, save.id, match.matchId);
+    const final = chunks[chunks.length - 1]!;
+    const lines = chunks.flatMap((chunk) => chunk.lines);
+
+    const summary = yield* getPostMatchSummary(savesDir, save.id, match.matchId);
+
+    strictEqual(summary.homeClubId, match.homeClubId);
+    strictEqual(summary.awayClubId, match.awayClubId);
+    deepStrictEqual([summary.homeScore, summary.awayScore], [final.homeScore, final.awayScore]);
+
+    const goals = summary.events.filter((event) => event.kind === "Goal");
+    strictEqual(goals.length, final.homeScore + final.awayScore);
+    strictEqual(
+      goals.filter((goal) => goal.clubId === match.homeClubId).length,
+      final.homeScore,
+      "each goal is credited to the side whose score it moved",
+    );
+    for (const kind of ["Goal", "YellowCard", "RedCard", "Injury"] as const) {
+      strictEqual(
+        summary.events.filter((event) => event.kind === kind).length,
+        lines.filter((line) => line.tag === kind).length,
+        `${kind} events match the commentary timeline`,
+      );
+    }
+    ok(summary.events.some((event) => event.kind === "Injury"), "INJURY_SEED should produce an Injury");
+    ok(summary.events.every((event) => event.playerName !== "Unknown player"));
+    const minutes = summary.events.map((event) => event.minute);
+    deepStrictEqual(minutes, [...minutes].sort((a, b) => a - b), "events stay in match order");
+
+    // A read: asking twice gives the same summary, and committing the result does not change it.
+    deepStrictEqual(yield* getPostMatchSummary(savesDir, save.id, match.matchId), summary);
+    yield* commitMatchday(savesDir, save.id, fixtureId);
+    deepStrictEqual(yield* getPostMatchSummary(savesDir, save.id, match.matchId), summary);
+  }),
+);
+
+it.effect("getPostMatchSummary fails with MatchNotFoundError for a match with no stream", () =>
+  Effect.gen(function* () {
+    const { save } = yield* atFirstFixture;
+    const error = yield* Effect.flip(getPostMatchSummary(savesDir, save.id, "no-such-match" as MatchId));
+    strictEqual(error._tag, "MatchNotFoundError");
+  }),
+);
+

@@ -76,6 +76,7 @@ import {
   TacticsScreenView,
   TacticRevisionConflictError,
   TeamSheetView,
+  PostMatchSummaryView,
   TrainingFocusView,
   TransferWindowClosedError,
   TransfersScreenView,
@@ -281,6 +282,12 @@ commitCareer: {
   getTeamSheet: {
     payload: Schema.Struct({ saveId: SaveId, matchId: MatchId }),
     success: TeamSheetView,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  /** Screen 99: the finished match's final score and key events. A read over the persisted stream. */
+  getPostMatchSummary: {
+    payload: Schema.Struct({ saveId: SaveId, matchId: MatchId }),
+    success: PostMatchSummaryView,
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },
   /** Ticket 14: appends a mid-match `ChangeTactics`/`MakeSubstitution` command to the Match

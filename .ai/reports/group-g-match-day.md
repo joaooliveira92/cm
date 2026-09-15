@@ -72,3 +72,43 @@ Tickets 04–06 were committed before this report existed and are not covered he
   separate tactics; H3 engine resurrects dismissed players (pre-existing → decision request 01);
   M1 halftime toggle usable at any minute; M2 missing e2e; lows L1–L5. All in-scope items repaired.
 - Pass 2: APPROVE. Two new lows on the panel's early/optimistic shared-tactic writes, filed on ticket 12.
+
+---
+
+# Ticket 08 — Post-Match Summary (Screen 99)
+
+## Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Final score with goalscorers | `apps/desktop/test/main/match/commands.test.ts` "getPostMatchSummary lists every goal…" (goal count = final score, credited to the scoring side — fails when every goal is credited home); `test/renderer/match/post-match-summary.test.tsx` per-side scorer lists | pass |
+| 2 | Key match events (cards, injuries) | same main test (per-kind counts equal the commentary timeline, match order); renderer test lists cards and injuries in words | pass |
+| 3 | Navigation to statistics, ratings, report | renderer test "links to statistics, player ratings and the match report"; `adapter-coverage.test.ts` for the three destinations | pass (shown only after commit) |
+| 4 | Accessible via post-match tab navigation | not met: tab bar unmounted — ticket 13 | deviation |
+| 5 | Loading and error states | renderer test loading text, failed read with Retry | pass |
+| — | Summary and links withheld until the result is accepted | renderer tests at `complete` (fails with the gate removed) and after Accept | pass |
+| — | An accepted result stays accepted, Continue unlocks, no stale session | renderer test "keeps an accepted result accepted…" (fails with the phase guard or the committed cleanup removed) | pass |
+| — | Summary readable after `commitMatchday` | main test re-reads after commit | pass |
+| — | Contract | `packages/contracts/test/post-match-summary.test.ts` roundtrip + rejects an unlisted event kind | pass |
+
+## Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1. typecheck ✓, verify-db-schema ✓; lint ✗ (errors only in untouched files, also failing at ticket 07); verify-md-links ✗ (same pre-existing links); effect-lint ✗ **caused by this ticket** — `packages/contracts/test/roundtrip.test.ts` reached 635 lines. Tests: shared 451/451, contracts 65/65, game-engine 50/50, desktop 62 failed / 1531 passed across 17 files |
+| repair | tests moved to `packages/contracts/test/post-match-summary.test.ts`; `tsx scripts/effect-lint.ts` → no violations (752 files); `pnpm exec vitest run` in contracts → 65 passed; `vitest run test/shared/max-file-length-lint.test.ts` → 7 passed | pass. Full `check:all` not re-run after this test-file move |
+| failures vs baseline | the 17 failing files = the ticket 07 baseline list, minus the four `test/main/season/rollover-*`/`retention-*` files (passing in this run), plus `max-file-length-lint.test.ts` (the effect-lint regression above, now passing) | no product regression |
+| e2e | not re-run | the ticket 07 run showed every match journey stopping at drifted `g <letter>` helpers before Match day; no signal available for this screen until those are fixed |
+| determinism / save compatibility | — | not applicable: a read over the existing stream; no schema change |
+
+## Behavior changes
+
+- Match day shows the Post-Match Summary after Accept result.
+- Fix: an accepted result no longer flips back to Accept result; Continue unlocks after Accept, and no
+  match session survives the commit.
+
+## Review
+
+Pass 1 NEEDS_REWORK (high: review links before commit strand the Matchday). Pass 2 NEEDS_REWORK
+(high: Continue stayed suspended once `committed` held). Pass 3 APPROVE; its low finding (stale
+Kick off after returning post-commit) is on ticket 15.

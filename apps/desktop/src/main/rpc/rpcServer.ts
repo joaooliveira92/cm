@@ -22,7 +22,7 @@ import {
   resetKeyBinding,
   setKeyBindingOverride,
 } from "./keybindings.js";
-import { getTeamSheet, resumeSimulation, startMatch, submitMatchCommand } from "../match/index.js";
+import { getPostMatchSummary, getTeamSheet, resumeSimulation, startMatch, submitMatchCommand } from "../match/index.js";
 import { commitMatchday } from "../season/commitMatchday.js";
 import { getManagerProfile, getManagerProfileScreen } from "../career/managerProfile.js";
 import { getNewsInbox, setNewsMessageState } from "../career/news.js";
@@ -236,6 +236,11 @@ const handlers: Record<AppRpcMethod, Handler> = {
     Effect.gen(function* () {
       const { saveId, matchId } = yield* Schema.decodeUnknownEffect(AppRpcs.getTeamSheet.payload)(payload);
       return yield* getTeamSheet(ctx.savesDir, saveId, matchId);
+    }),
+  getPostMatchSummary: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, matchId } = yield* Schema.decodeUnknownEffect(AppRpcs.getPostMatchSummary.payload)(payload);
+      return yield* getPostMatchSummary(ctx.savesDir, saveId, matchId);
     }),
   submitMatchCommand: (payload, ctx) =>
     Effect.gen(function* () {

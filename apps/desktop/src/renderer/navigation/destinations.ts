@@ -65,7 +65,11 @@ export type CareerDestination =
    * from save-scoped nav like the drill-downs above.
    */
   | { readonly type: "matchMatchTactics"; readonly saveId: SaveId }
-  | { readonly type: "matchSubstitutions"; readonly saveId: SaveId };
+  | { readonly type: "matchSubstitutions"; readonly saveId: SaveId }
+  /** The post-match review screens (Screens 100, 101, 103), reached from the Post-Match Summary. */
+  | { readonly type: "matchStats"; readonly saveId: SaveId }
+  | { readonly type: "matchRatings"; readonly saveId: SaveId }
+  | { readonly type: "matchReport"; readonly saveId: SaveId };
 
 export type CreationStepDestination =
   | { readonly type: "createLeagues" }
@@ -117,7 +121,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "playerDetail" | "matchMatchTactics" | "matchSubstitutions"
+  "teamScoutReport" | "clubStaff" | "playerDetail" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport"
 >;
 
 /**
@@ -190,6 +194,9 @@ export type ResolvedDestination =
   | { readonly to: "/career/$saveId/clubs"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/match-match-tactics"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/match-substitutions"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/match-stats"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/match-ratings"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/match-report"; readonly params: { readonly saveId: SaveId } }
   | {
       readonly to: "/career/$saveId/club/$clubId/scout-report";
       readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
@@ -246,6 +253,9 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "playerDetail":
     case "matchMatchTactics":
     case "matchSubstitutions":
+    case "matchStats":
+    case "matchRatings":
+    case "matchReport":
       return careerRoute(destination);
   }
 };
@@ -325,5 +335,11 @@ const careerRoute = (
       return { to: "/career/$saveId/match-match-tactics", params: { saveId: destination.saveId } };
     case "matchSubstitutions":
       return { to: "/career/$saveId/match-substitutions", params: { saveId: destination.saveId } };
+    case "matchStats":
+      return { to: "/career/$saveId/match-stats", params: { saveId: destination.saveId } };
+    case "matchRatings":
+      return { to: "/career/$saveId/match-ratings", params: { saveId: destination.saveId } };
+    case "matchReport":
+      return { to: "/career/$saveId/match-report", params: { saveId: destination.saveId } };
   }
 };
