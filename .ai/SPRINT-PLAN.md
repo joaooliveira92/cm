@@ -2,10 +2,9 @@
 
 ## Immediate next action
 
-**group-g-match-day** no open, unblocked, unclaimed tickets remain. Tickets 04–09 and 11–13, 15–17
-shipped; 10 is parked on decision request 03 (match rating formula); 14 is claimed;
-decision requests 01 (live Change Tactics scope), 02 (unsimulated match statistics) and 03 await a
-human.
+**group-h-training-and-player-development** ticket 01 (screen inventory survey). Effort freshly
+seeded from `docs/specs/group_h_*` — chart the map, resolve decision tickets 01-03, then spec and
+slice.
 
 ## Gate state (2026-09-14)
 
@@ -42,6 +41,8 @@ human.
     Post-Match Summary, 09 Screens 95/100 Match Statistics, 11 Screen 103 Match Report, 2026-09-14);
     10 needs-info on decision request 03; 12, 13, 15, 16, 17 resolved; 14 claimed; 13 mounted tab bar,
     17 stoppage minute formatting shipped 2026-09-15; decision requests 01, 02, 03 open.
+10. **group-h-training-and-player-development**: charting. 01 (screen inventory) unclaimed; 02 (scope),
+    03 (build sequence) blocked on 01. Created 2026-09-15.
 
 Shipped and closed:
 
