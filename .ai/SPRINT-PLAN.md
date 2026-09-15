@@ -2,8 +2,8 @@
 
 ## Immediate next action
 
-**group-h-training-and-player-development** ticket 04 (coaching assignments). Six implementation
-tickets sliced (04-09); 04-08 unblocked, 09 blocked on 04-08. Spec published.
+**group-h-training-and-player-development** ticket 05 (workload and recovery). Ticket 04 shipped;
+05-08 ready-for-agent; 09 blocked on 04-08.
 
 ## Gate state (2026-09-14)
 
@@ -40,8 +40,8 @@ tickets sliced (04-09); 04-08 unblocked, 09 blocked on 04-08. Spec published.
     Post-Match Summary, 09 Screens 95/100 Match Statistics, 11 Screen 103 Match Report, 2026-09-14);
     10 needs-info on decision request 03; 12, 13, 15, 16, 17 resolved; 14 claimed; 13 mounted tab bar,
     17 stoppage minute formatting shipped 2026-09-15; decision requests 01, 02, 03 open.
-10. **group-h-training-and-player-development**: 01-03 resolved. Spec published. 04-08
-    ready-for-agent; 09 blocked on 04-08. Created 2026-09-15.
+10. **group-h-training-and-player-development**: 01-03 resolved. Spec published. 04 completed
+    (coaching assignments, 2026-09-15). 05-08 ready-for-agent; 09 blocked on 04-08.
 
 Shipped and closed:
 

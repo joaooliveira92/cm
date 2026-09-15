@@ -8,7 +8,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Workload screen shows player condition and recovery status per player
 - [ ] Workload gauge component is extractable for reuse in Screens 105 and 114
