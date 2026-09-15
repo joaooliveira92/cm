@@ -9,8 +9,18 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Screen lists every Scout with quality, target (Club, Player or none) and Scouting Progress
-- [ ] Assigning a Scout to a Club and ending an assignment go through the existing commands and refresh the list
-- [ ] Scout roster row is a component reusable on Screen 118
+- [x] Screen lists every Scout with quality, target (Club, Player or none) and Scouting Progress
+- [x] Assigning a Scout to a Club and ending an assignment go through the existing commands and refresh the list
+- [x] Scout roster row is a component reusable on Screen 118
+
+## Answer
+
+Shipped at `/career/$saveId/scouting-assignment` (`ScoutingAssignmentScreen`), reached from a Recruitment nav item until the Scouting Centre (06) links to it. `ScoutRosterRow` takes props only, with actions passed as children. Two things the ticket did not say:
+
+- `assignScoutToClub` needs an `expectedReportId`. The screen reads the chosen Club's `getTeamScoutReport` and takes `reportId` from a delivered report or `currentReportId` from `ClubNotScoutedError`, as the Team Scout Report does. The renderer never builds the id.
+- Assigning to an unscouted Club never worked in the real app: typed errors lost their fields crossing IPC. Fixed first as [07](07-typed-rpc-errors-survive-ipc.md).
+
+A Club target shows "Tracked per Player" rather than a percentage, because a Club carries no Scouting Progress of its own (CONTEXT.md, Scouting Assignment).
+

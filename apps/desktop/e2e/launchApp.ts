@@ -171,6 +171,7 @@ const NAV_PATH = {
   tactics: ["Tactics"],
   training: ["Training"],
   transfers: ["Recruitment"],
+  "scouting assignment": ["Recruitment", "Scouting Assignment"],
   "league table": ["Analysis"],
   fixtures: ["Analysis", "Fixtures"],
   "match day": ["Analysis", "Match Day"],

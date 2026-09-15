@@ -52,6 +52,7 @@ export {
   setNewsMessageStateMutation,
   setTrainingFocusMutation,
   submitMatchCommandMutation,
+  unassignScoutMutation,
 } from "./rpc/mutations.js";
 
 export {

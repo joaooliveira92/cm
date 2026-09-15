@@ -38,6 +38,7 @@ describe("nav route index (spec §6 rule 1 & §8)", () => {
         "seasonSummary",
         "manager",
         "news",
+        "scoutingAssignment",
       ]),
     );
   });

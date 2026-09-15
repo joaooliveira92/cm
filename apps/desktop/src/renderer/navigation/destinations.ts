@@ -46,6 +46,9 @@ export type CareerDestination =
   | { readonly type: "staffOverview"; readonly saveId: SaveId }
   | { readonly type: "shortlist"; readonly saveId: SaveId }
   | { readonly type: "scouting"; readonly saveId: SaveId }
+  /** Scouting Assignment (Screen 121) — every Scout and what each observes, where assignments are
+   *  started and ended. A sub-surface of Scouting: no `g` binding, not in `CAREER_SCREEN_TYPES`. */
+  | { readonly type: "scoutingAssignment"; readonly saveId: SaveId }
   | { readonly type: "playerSearch"; readonly saveId: SaveId }
   | { readonly type: "staffSearch"; readonly saveId: SaveId }
   | { readonly type: "competitions"; readonly saveId: SaveId }
@@ -236,6 +239,10 @@ export type ResolvedDestination =
   | { readonly to: "/career/$saveId/staff-overview"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/shortlist"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/scouting"; readonly params: { readonly saveId: SaveId } }
+  | {
+      readonly to: "/career/$saveId/scouting-assignment";
+      readonly params: { readonly saveId: SaveId };
+    }
   | { readonly to: "/career/$saveId/player-search"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/staff-search"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/competitions"; readonly params: { readonly saveId: SaveId } }
@@ -306,6 +313,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "staffOverview":
     case "shortlist":
     case "scouting":
+    case "scoutingAssignment":
     case "playerSearch":
     case "staffSearch":
     case "competitions":
@@ -393,6 +401,11 @@ const careerRoute = (
       return { to: "/career/$saveId/shortlist", params: { saveId: destination.saveId } };
     case "scouting":
       return { to: "/career/$saveId/scouting", params: { saveId: destination.saveId } };
+    case "scoutingAssignment":
+      return {
+        to: "/career/$saveId/scouting-assignment",
+        params: { saveId: destination.saveId },
+      };
     case "playerSearch":
       return { to: "/career/$saveId/player-search", params: { saveId: destination.saveId } };
     case "staffSearch":

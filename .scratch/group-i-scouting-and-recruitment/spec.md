@@ -34,7 +34,9 @@ are deferred because each needs a model that does not exist. See
   read. A new Player target is not offered in v1: no list of other clubs' Players is knowledge-limited
   yet ([decision request 01](decision-request-01-knowledge-limited-player-reads.md)). A Scout already
   observing a Player shows that target and can be unassigned. Duration, cadence, travel, priority and
-  wider targets are not built.
+  wider targets are not built. Shipped in ticket 04 at `/career/$saveId/scouting-assignment`: a Club
+  assignment takes `expectedReportId` from that Club's `getTeamScoutReport` (a delivered report's id, or
+  `currentReportId` from `ClubNotScoutedError`), and a Club target reads "Tracked per Player".
 - **Screen 126 shows coverage, never figures.** A new read-only RPC returns, per Club with scouted
   Players, the count scouted, `squadCoverage` and Knowledge Confidence from `rules/teamScoutReport.ts`;
   and per scouted Player, name, Club and Scouting Progress. It returns no Attribute, Attribute Range or

@@ -114,6 +114,7 @@ const SpineOrchestrator = ({
         staffOverview: () => navigateCareer({ type: "staffOverview", saveId }, "keyboard"),
         shortlist: () => navigateCareer({ type: "shortlist", saveId }, "keyboard"),
         scouting: () => navigateCareer({ type: "scouting", saveId }, "keyboard"),
+        scoutingAssignment: () => navigateCareer({ type: "scoutingAssignment", saveId }, "keyboard"),
         playerSearch: () => navigateCareer({ type: "playerSearch", saveId }, "keyboard"),
         staffSearch: () => navigateCareer({ type: "staffSearch", saveId }, "keyboard"),
         competitions: () => navigateCareer({ type: "competitions", saveId }, "keyboard"),

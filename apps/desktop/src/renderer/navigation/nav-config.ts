@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   BarChart3,
+  Binoculars,
   Bookmark,
   BriefcaseBusiness,
   Building2,
@@ -185,6 +186,12 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
         label: "Scouting",
         destination: "scouting",
         icon: Crosshair,
+      },
+      {
+        id: "recruitment-scouting-assignment",
+        label: "Scouting Assignment",
+        destination: "scoutingAssignment",
+        icon: Binoculars,
       },
       {
         id: "recruitment-player-search",

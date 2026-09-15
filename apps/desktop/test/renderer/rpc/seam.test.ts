@@ -225,6 +225,8 @@ describe("renderer RPC seam — invalidation rules (AC-05)", () => {
     ]);
     expect(INVALIDATION_RULES.submitMatchCommand(save, "m1")).toEqual([["match", save, "m1"]]);
     expect(INVALIDATION_RULES.commitCareer(save)).toEqual([]);
+    expect(INVALIDATION_RULES.assignScoutToClub(save)).toEqual([["scouting", save]]);
+    expect(INVALIDATION_RULES.unassignScout(save)).toEqual([["scouting", save]]);
   });
 
   it("placeBid never invalidates squad — a pending bid does not change squad state", () => {

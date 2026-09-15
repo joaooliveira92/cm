@@ -26,7 +26,9 @@ scope for v1, and in what order the in-scope screens get built.
 - [02 — Scope decision for missing systems](issues/02-scope-absent-screens.md): 3 screens in scope for v1 (118, 121, 126), 11 deferred. See [Agent Note: Group I v1 scope](../../.agents/notes/proposed/architecture/2026-09-15-group-i-v1-scope.md).
 - [03 — Build sequence](issues/03-partial-screen-build-sequence.md): 1=Scouting Assignment, 2=Scouting Knowledge, 3=Scouting Centre. New Player targets wait for [decision request 01](decision-request-01-knowledge-limited-player-reads.md).
 - [Spec published](spec.md): reconciled spec, handoff from charting to slicing.
-- [Implementation tickets](issues/): 3 vertical slices (04-06); 06 blocked on 04 and 05.
+- [Implementation tickets](issues/): 3 vertical slices (04-06); 06 blocked on 04 and 05. 07 added during 04.
+- [04 — Scouting Assignment screen](issues/04-scouting-assignment-screen.md): shipped at `/scouting-assignment`. Club assignments take `expectedReportId` from the Club's `getTeamScoutReport`; a Club target reads "Tracked per Player".
+- [07 — Typed RPC errors survive the IPC boundary](issues/07-typed-rpc-errors-survive-ipc.md): shipped. Found in 04: every typed error reached the renderer as `{ name: "Error" }`. `handleRpc` now encodes failures with the method's error schema.
 
 ## Not yet specified
 

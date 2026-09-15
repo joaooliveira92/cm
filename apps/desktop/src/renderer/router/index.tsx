@@ -42,6 +42,7 @@ import { FinancesScreen } from "../finances/FinancesScreen.js";
 import { StaffOverviewScreen } from "../staffOverview/StaffOverviewScreen.js";
 import { ShortlistScreen } from "../shortlist/ShortlistScreen.js";
 import { ScoutingScreen } from "../scouting/ScoutingScreen.js";
+import { ScoutingAssignmentScreen } from "../scouting/ScoutingAssignmentScreen.js";
 import { PlayerSearchScreen } from "../playerSearch/PlayerSearchScreen.js";
 import { StaffSearchScreen } from "../staffSearch/StaffSearchScreen.js";
 import { CompetitionsScreen } from "../competitions/CompetitionsScreen.js";
@@ -208,6 +209,13 @@ const financesRoute = defineCareerChild("finances", "finances", FinancesScreen);
 const staffOverviewRoute = defineCareerChild("staff-overview", "staffOverview", StaffOverviewScreen);
 const shortlistRoute = defineCareerChild("shortlist", "shortlist", ShortlistScreen);
 const scoutingRoute = defineCareerChild("scouting", "scouting", ScoutingScreen);
+/** Scouting Assignment (Screen 121): a sub-surface of Scouting in its `scouting` screen scope, kept
+ *  beside the Scouting Centre rather than beneath it so that route stays a single leaf. */
+const scoutingAssignmentRoute = defineCareerChild(
+  "scouting-assignment",
+  "scouting",
+  ScoutingAssignmentScreen,
+);
 const playerSearchRoute = defineCareerChild("player-search", "playerSearch", PlayerSearchScreen);
 const staffSearchRoute = defineCareerChild("staff-search", "staffSearch", StaffSearchScreen);
 const competitionsRoute = defineCareerChild("competitions", "competitions", CompetitionsScreen);
@@ -745,6 +753,7 @@ const routeTree = rootRoute.addChildren([
       staffOverviewRoute,
       shortlistRoute,
       scoutingRoute,
+      scoutingAssignmentRoute,
       playerSearchRoute,
       staffSearchRoute,
       competitionsRoute,
