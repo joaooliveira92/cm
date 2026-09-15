@@ -34,6 +34,7 @@ import { resolveCommandStatus, type ClubCommandSnapshot, type CommandStatus } fr
 import { controlledClubId, controlledSubs } from "./controlledClub.js";
 import {
   getActiveMatch,
+  getHalfTimeRevealed,
   getLiveTactic,
   getRevealedMinute,
   getRevealedScore,
@@ -43,6 +44,16 @@ import {
 
 /** `simulateMatch`'s half length: a halftime command is stamped at this minute. */
 export const HALFTIME_MINUTE = 45;
+
+/**
+ * The minute to stamp a non-halftime command with. During the first half (before HalfTimeReached
+ * has been revealed), the engine runs minutes 1-45 then first-half stoppage at 46-50. A command
+ * during stoppage stamped at 46+ would be applied at that minute of the second half instead.
+ * Clamping to HALFTIME_MINUTE during the first half places the command at the last normal minute
+ * before stoppage, which is what the manager intended: an instant instruction, not a wait-til-46.
+ */
+const stampMinute = (revealedMinute: number, halfTimeRevealed: boolean): number =>
+  Math.max(1, halfTimeRevealed ? revealedMinute : Math.min(revealedMinute, HALFTIME_MINUTE));
 
 export interface LiveMatchReady {
   readonly _tag: "ready";
@@ -96,7 +107,10 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
   const runCommand = useAtomSet(submitMatchCommandMutation, { mode: "promise" });
 
   const matchId = match?.matchId ?? null;
-  const atHalftime = getRevealedMinute(saveId) === HALFTIME_MINUTE;
+  // Half-time is the window after HalfTimeReached has been revealed but before any second-half
+  // event — the one moment a halftime instruction cannot rewrite second-half events. During first-
+  // half stoppage the revealed minute is 46+, so the raw minute check alone would miss the window.
+  const atHalftime = getHalfTimeRevealed(saveId) && getRevealedMinute(saveId) === HALFTIME_MINUTE;
   const isHalftime = halftimeChecked && atHalftime;
 
   useEffect(() => {
@@ -154,7 +168,7 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
           saveId,
           matchId: view.match.matchId,
           cursor: 0,
-          minute: isHalftime ? HALFTIME_MINUTE : Math.max(1, getRevealedMinute(saveId)),
+          minute: isHalftime ? HALFTIME_MINUTE : stampMinute(getRevealedMinute(saveId), getHalfTimeRevealed(saveId)),
           isHalftime,
           command,
         });

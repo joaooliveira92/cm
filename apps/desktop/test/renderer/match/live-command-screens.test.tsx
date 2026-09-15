@@ -14,6 +14,7 @@ import { MatchMatchTacticsScreen } from "../../../src/renderer/matchMatchTactics
 import {
   clearActiveMatch,
   getLiveTactic,
+  recordHalfTimeRevealed,
   recordLiveTactic,
   recordRevealedMinute,
   recordRevealedScore,
@@ -163,6 +164,7 @@ describe("Match Substitutions — the live substitution screen", () => {
     cleanup();
 
     recordRevealedMinute(rid("s1"), 45);
+    recordHalfTimeRevealed(rid("s1"));
     mount(MatchSubstitutionsScreen, (method) => (method === "getTactics" ? ok(tacticsView()) : ok(resumeView())));
     expect(((await screen.findByLabelText(/Apply as a halftime instruction/)) as HTMLInputElement).disabled).toBe(false);
   });
@@ -219,6 +221,7 @@ describe("Match Substitutions — the live substitution screen", () => {
   it("submits the substitution for the controlled club at the revealed minute and shows it applied", async () => {
     setActiveMatch(liveSession() as never);
     recordRevealedMinute(rid("s1"), 63);
+    recordHalfTimeRevealed(rid("s1"));
     const calls = mount(MatchSubstitutionsScreen, (method) => {
       if (method === "getTactics") return ok(tacticsView());
       if (method === "submitMatchCommand") {

@@ -17,7 +17,13 @@ import { submitMatchCommandMutation, useAtomSet } from "../rpc.js";
 import { resolveCommandStatus, type CommandStatus } from "./commandStatus.js";
 import { controlledOnPitchCount, controlledSubs } from "./controlledClub.js";
 import { useMatchContext, type MatchCommand } from "./MatchProvider.js";
-import { recordRevealedEvents, recordRevealedMinute, recordRevealedScore } from "./session.js";
+import { getHalfTimeRevealed, recordHalfTimeRevealed, recordRevealedEvents, recordRevealedMinute, recordRevealedScore } from "./session.js";
+
+/** `simulateMatch`'s half length — halftime commands are stamped at this minute. */
+const HALFTIME_MINUTE = 45;
+
+const stampMinute = (revealedMinute: number, halfTimeRevealed: boolean): number =>
+  Math.max(1, halfTimeRevealed ? revealedMinute : Math.min(revealedMinute, HALFTIME_MINUTE));
 
 export interface CommentaryState {
   readonly revealed: ReadonlyArray<CommentaryLineView>;
@@ -116,6 +122,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     });
     setCurrentMinute(line.minute);
     recordRevealedMinute(matchState.saveId, line.minute);
+    if (line.tag === "HalfTimeReached") recordHalfTimeRevealed(matchState.saveId);
   }, [matchState.saveId]);
 
   const setPaused = useCallback(
@@ -149,7 +156,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
           saveId: matchState.saveId,
           matchId: matchState.match.matchId,
           cursor: 0,
-          minute: isHalftime ? 45 : Math.max(1, currentMinute),
+          minute: isHalftime ? HALFTIME_MINUTE : stampMinute(currentMinute, getHalfTimeRevealed(matchState.saveId)),
           isHalftime,
           command,
         });

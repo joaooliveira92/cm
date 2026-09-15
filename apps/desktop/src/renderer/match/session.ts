@@ -31,6 +31,7 @@ export interface RevealedScore {
 interface LiveCommandContext {
   readonly saveId: SaveId;
   readonly revealedMinute: number;
+  readonly halfTimeRevealed: boolean;
   /** How many Commentary Lines Match day has revealed — one per Match Event, so a position in the
    *  timeline. Minutes are not one: they repeat across stoppage time and half time. */
   readonly revealedEvents: number;
@@ -68,11 +69,20 @@ export const clearActiveMatch = (saveId: SaveId): void => {
 };
 
 const liveFor = (saveId: SaveId): LiveCommandContext =>
-  live !== null && live.saveId === saveId ? live : { saveId, revealedMinute: 0, revealedEvents: 0, revealedScore: null, liveTactic: null };
+  live !== null && live.saveId === saveId
+    ? live
+    : { saveId, revealedMinute: 0, halfTimeRevealed: false, revealedEvents: 0, revealedScore: null, liveTactic: null };
 
 export const recordRevealedMinute = (saveId: SaveId, minute: number): void => {
   live = { ...liveFor(saveId), revealedMinute: minute };
 };
+
+/** Record that the `HalfTimeReached` boundary has been revealed. */
+export const recordHalfTimeRevealed = (saveId: SaveId): void => {
+  live = { ...liveFor(saveId), halfTimeRevealed: true };
+};
+
+export const getHalfTimeRevealed = (saveId: SaveId): boolean => liveFor(saveId).halfTimeRevealed;
 
 export const getRevealedMinute = (saveId: SaveId): number => liveFor(saveId).revealedMinute;
 

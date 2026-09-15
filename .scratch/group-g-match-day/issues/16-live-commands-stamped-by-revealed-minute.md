@@ -14,9 +14,9 @@ revealed-event count for the same reason.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A command raised during first-half stoppage time applies in the first half
-- [ ] The halftime instruction is offered only once `HalfTimeReached` has been revealed and before the
+- [x] A command raised during first-half stoppage time applies in the first half
+- [x] The halftime instruction is offered only once `HalfTimeReached` has been revealed and before the
       second half's first event
-- [ ] Tests cover a stoppage-time command and the halftime window
+- [x] Tests cover a stoppage-time command and the halftime window
