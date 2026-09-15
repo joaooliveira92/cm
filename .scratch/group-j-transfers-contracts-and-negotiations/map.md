@@ -24,8 +24,18 @@ screen what is already built, what is in scope for v1, and in what order the in-
 
 ## Decisions so far
 
+- [01 — Group J screen inventory survey](issues/01-screen-inventory.md): 0 built, 6 partial, 9 absent, all working UI on one Transfers screen. Six screens contradict CONTEXT.md's single-round Bid and never-renegotiated Contract, and the market shows exact figures for other clubs' Players.
+- [02 — Scope decision for missing systems](issues/02-scope-absent-screens.md): 4 own-club screens in v1 (140, 141 without Bosman, 145, 146), 11 deferred. See [Agent Note: Group J v1 scope](../../.agents/notes/proposed/architecture/2026-09-15-group-j-v1-scope.md).
+- [03 — Build sequence](issues/03-partial-screen-build-sequence.md): 1=Contract Renewal, 2=Contract Expiry, 3=Budget Review, 4=Transfer History.
+- [Spec published](spec.md): reconciled spec, handoff from charting to slicing.
+- [Implementation tickets](issues/): 4 vertical slices (04-07), all unblocked.
+
 ## Not yet specified
 
-- Which in-scope screens show other clubs' Players, and so wait on Group I's decision request 01.
+None for v1.
 
 ## Out of scope
+
+- Screens 132 (Transfer Centre), 134 (Make Transfer Offer), 137 (Player Contract Offer): show other clubs' Players; wait for Group I's decision request 01.
+- Screens 135 (Transfer Negotiation), 136 (Loan Offer), 138 (Player Contract Negotiation), 139 (Staff Contract Offer), 144 (Clauses and Installments), and 141's Bosman and pre-contract part: contradict CONTEXT.md (single-round Bid, no loans, never-renegotiated Contract, no Staff wages). Need a domain change a human makes.
+- Screens 133 (Incoming Transfer Offer), 142 (Completion and Registration), 143 (Cancellation and Withdrawal): already served by the Transfers screen's Bid tables; a dedicated screen needs clause, registration or cancellation models.

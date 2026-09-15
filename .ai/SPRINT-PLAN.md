@@ -2,10 +2,9 @@
 
 ## Immediate next action
 
-No open, unblocked, unclaimed build ticket remains in any effort (group-i 01-08 resolved; group-h 07
-and group-g 10 needs-info; the rest claimed). Next: the spec-group fallback, **group J**
-(`docs/specs/group_j_*`). Decision request 01 in group-i (knowledge-limited Player reads) bears on
-Group J's transfer market and should be answered before its market screens are specced.
+**group-j-transfers-contracts-and-negotiations** ticket 04 (Contract Renewal, Screen 140). Charted,
+specced and sliced 2026-09-15: 4 own-club screens in v1 (140, 141, 145, 146), 11 deferred. 05-07 are
+also unblocked. Group I decision request 01 now also blocks Group J Screens 132, 134 and 137.
 
 ## Gate state (2026-09-14)
 
@@ -58,6 +57,8 @@ Group J's transfer market and should be answered before its market screens are s
     errors survive IPC), 04 completed (Scouting Assignment screen) and 05 completed (Scouting
     Knowledge screen), 06 completed (Scouting Centre), 2026-09-15. 08 completed (read-state
     helper), 2026-09-15. Scope note promoted. Effort complete for v1; decision request 01 open. Decision request 01 open.
+12. **group-j-transfers-contracts-and-negotiations**: 01-03 resolved, spec published, tickets 04-07
+    ready (2026-09-15).
 
 Shipped and closed:
 

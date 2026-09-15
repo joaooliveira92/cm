@@ -15,6 +15,11 @@ outside the manager's club starts Unscouted. `MarketPlayerView` in
 `main/transfers` never reads `scouting_progress`. A Player Search built now would either repeat the
 exact figures or show ranges that the market contradicts for the same player.
 
+CONTEXT.md also disagrees with itself. Listed says a Bid needs no "for sale" signal because of
+"full-information Transfer Value", written before Scouting existed; Attribute Range makes Transfer Value a
+range below Fully Scouted. Group J found the same exact figures in `BidComposer` and on the market table
+([inventory](../group-j-transfers-contracts-and-negotiations/issues/01-screen-inventory.md)).
+
 ## What is already settled
 
 - CONTEXT.md § Scouting: Scouting Progress, Attribute Range, Fully Scouted; own-squad players are
@@ -49,6 +54,6 @@ surfaces to fix later.
 
 ## What is blocked, and what is not
 
-- Blocked: Screens 119 and 129; any Group J market work that shows other clubs' Players.
+- Blocked: Screens 119 and 129; Group J Screens 132, 134 and 137.
 - Proceeding meanwhile: Group I v1 screens 121, 126 and 118, which show Scouting Progress and never an
   exact figure for an unscouted Player.
