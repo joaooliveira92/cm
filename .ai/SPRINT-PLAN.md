@@ -2,8 +2,15 @@
 
 ## Immediate next action
 
-**desktop-suite-red** ticket 06 (`CAREER_SCREEN_TYPES` is swept by three tests and enforced by
-none). Then **group-j** ticket 08 (navbar entries for Screens 141 and 145).
+**group-j** ticket 08 (navbar entries for Screens 141 and 145) — desktop-suite-red now has no ready
+ticket, so the queue moves on.
+
+desktop-suite-red ticket 06 resolved 2026-09-16 (`d0fab20`): the career-screen classification is now
+enforced by `typecheck` rather than by diligence, and the adapter sweep covers five destinations it
+had been silently missing. It raised
+[decision request 01](../.scratch/desktop-suite-red/decision-request-01-what-makes-a-career-destination-top-level.md)
+— nothing written down says what makes a `CareerDestination` top-level, so the new guard forces a
+classification without being able to check it. Blocks nothing.
 
 Ticket 05 resolved 2026-09-16 (`0d0b60c`). Its premise was half wrong: `navbar.test.tsx`'s literal
 was correct, not stale, and red because the navbar advertises a `g 8` the keyboard spine rejects.
@@ -45,7 +52,9 @@ parallel sessions and were left alone.
   - `test/renderer/router/stage2.test.ts`, `team-scout-report-route.test.ts` — `window` not defined
     (jsdom env)
   - `test/renderer/match/screen-fulltime.test.tsx` — passes.
-- **Nav guard baseline, 2026-09-16 (`0d0b60c`)**: `test/renderer/navigation` is 1 failed / 307
+- **Nav guard baseline, 2026-09-16 (`d0fab20`)**: `test/renderer/navigation` + `test/renderer/actions`
+  is 1 failed / 355 passed across 14 files — the one failure still the intentional `navbar.test.tsx`
+  badge case. Earlier the same day at `0d0b60c`: `test/renderer/navigation` is 1 failed / 307
   passed across 11 files. The one failure is intentional — `navbar.test.tsx`'s badge case is red
   until navbar-keyboard-intent 02 resolves the `g 8` gap. Before this ticket the same two files
   failed 2. Details in [reports/desktop-suite-red.md](reports/desktop-suite-red.md).
@@ -57,9 +66,9 @@ parallel sessions and were left alone.
 
 1. ~~**group-c-club-information**: complete 2026-09-14. Screen 38 already shipped.~~
 2. ~~**group-d-player-and-staff-records**: complete 2026-09-14. 19 screens charted, 3 implemented.~~
-3. **desktop-suite-red**: 01, 02, 04, 05 resolved (05 derived the nav guards, 2026-09-16). 03
-    claimed-and-abandoned (needs a human to unclaim or close). 06 ready — the hand-kept
-    `CAREER_SCREEN_TYPES` sweeps, filed from the ticket 05 review.
+3. **desktop-suite-red**: 01, 02, 04, 05, 06 resolved (05 derived the nav guards, 06 made the
+    classification a typecheck gate, 2026-09-16). 03 claimed-and-abandoned (needs a human to
+    unclaim or close). Decision request 01 open.
 4. **season-rollover-skips-conclusion**: 01 resolved.
 5. **match-composition**: 01-02 resolved.
 6. **group-a-reconciliation**: 03-04 resolved.

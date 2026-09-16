@@ -95,3 +95,76 @@ files.
   the fall-through bug it exists to prevent is unguarded for the three newest screens. Also covers
   the contradiction between `stage2.test.ts`'s equality assertion and `route-index.test.ts`'s
   containment one.
+
+## Ticket 06 — the career-screen classification was swept but not enforced, 2026-09-16
+
+### The problem
+
+`CAREER_SCREEN_TYPES` is a hand-kept array naming the top-level career screens. Three tests swept it
+and none enforced it, so adding a screen to the navbar and router while forgetting that array left
+`route-index.test.ts` passing vacuously, `registry.test.ts` passing on a stale pinned count, and
+`adapter-coverage.test.ts` quietly less-covering. One omission weakened four guards at once.
+
+### What shipped
+
+The classification moved to `test/renderer/career-destination-classification.ts`, where
+`CareerSubSurfaceType = Exclude<CareerDestination["type"], (typeof CAREER_SCREEN_TYPES)[number]>`
+and an exhaustive `Record` over it make **the compiler the guard**. `adapter-coverage.test.ts` gets
+the same treatment through a `SamplesOf<T>` mapped type, so both a missing key and a sample filed
+under the wrong discriminant are compile errors. `apps/desktop`'s tsconfig covers `test/`, so this
+is enforced by the `typecheck` gate rather than by a test anyone can forget to run.
+
+Verified by probe rather than by assertion — adding a `probeOmitted` member to `CareerDestination`
+without classifying it:
+
+```console
+registry.test.ts(198,7): error TS2741: Property 'probeOmitted' is missing ... required in type
+  'Readonly<Record<CareerSubSurfaceType, string>>'
+adapter-coverage.test.ts(74,7): error TS2741: Property 'probeOmitted' is missing ... required in
+  type 'SamplesOf<CareerDestination>'
+```
+
+The adapter sweep had been missing **five** destinations, not the three the ticket named:
+`contractExpiry`, `budgetReview`, `transferHistory`, `playerDetail` and `trainingCoaching`.
+
+### The two things review caught
+
+**The recorded rationale was false.** The justification for classing four navbar items as
+sub-surfaces was "they carry no `g` binding". There are 7 `g` nav actions resolving to 6 distinct
+destinations, so 16 of the 22 top-level screens have no binding either — the criterion does not
+separate the list from its complement. `transferHistory`, `scoutingAssignment`, `scoutingKnowledge`
+and `trainingCoaching` are first-class `NavItem`s sitting beside top-level siblings. Reason strings
+corrected; the real question routed to
+[decision request 01](../../.scratch/desktop-suite-red/decision-request-01-what-makes-a-career-destination-top-level.md),
+since the new guard forces a classification without being able to check it.
+
+**A deleted assertion covered something.** `stage2.test.ts`'s equality was removed as false — and it
+is false — but it carried a real direction: the navbar links nothing unexpected. That is restored in
+`route-index.test.ts` as "top-level screens plus exactly these four", naming the exceptions so a
+fifth requires a deliberate edit.
+
+The first attempt at restoring it asserted only "every navbar destination is classified somewhere".
+That is **vacuous** — the classification is total by construction, so no destination can fail it.
+Caught before commit, during my own verification rather than by review, and replaced with the named
+form. Probed: dropping `trainingCoaching` from the sanctioned set fails with
+`expected [ 'trainingCoaching' ] to deeply equal []`.
+
+A third fix: the `g`-binding assertion now iterates `ACTION_REGISTRY.all` rather than
+`navKeyByDestinationOf`, whose `Map` keys by destination and so collapsed `g 1` (Squad) into `g 3`
+(labelled Training, pointing at `squad` — the live defect in navbar-keyboard-intent 02). Seven
+bindings in, seven checked, where before six were.
+
+### Validation — exact commands and observed results
+
+```console
+# pnpm -r typecheck                     → 0 errors, all four packages Done
+# vitest run test/renderer/navigation test/renderer/actions
+#                                       → Test Files 1 failed | 13 passed (14)
+#                                         Tests      1 failed | 355 passed (356)
+# npx oxlint <touched files>            → clean
+# npx tsx scripts/effect-lint.ts        → no violations (849 files)
+# npx tsx scripts/verify-md-links.ts    → 18 broken, the known baseline, none new
+```
+
+The single failure is the intentional `navbar.test.tsx` badge case from ticket 05, unchanged.
+Production code was not touched; the diff is four test files plus one new test helper.
