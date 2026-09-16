@@ -238,3 +238,31 @@ reaches a human Fixture for any world seed. M1 (missing seed unit test) is done.
 observed, not inferred) is done in the ticket Answer. L1: the `not.toBeVisible("Play match")` half of
 the resume check would pass vacuously after another rename, but `matchScore` still guards the test.
 That half was left as is.
+
+## Ticket 09 — the e2e harness kills every app after 5s, 2026-09-16
+
+- Ticket closed: [09](../../.scratch/desktop-suite-red/issues/09-e2e-harness-kills-every-app-after-five-seconds.md)
+
+### Acceptance criteria → evidence
+
+| # | Criterion | Evidence | Result |
+|---|---|---|---|
+| 1 | A normal teardown quits gracefully, well under `CLOSE_TIMEOUT_MS` | temporary timing in `closeOrKill` over keybindings and router: 10 of 10 closes in 138–155ms, `exitCode=0`, no signal | pass |
+| 2 | The kill fallback still bounds a wedged app | throwaway probe busy-looping main: `closed=false after 5003ms`, killed, returned in 5055ms, process gone (probe deleted) | pass |
+| 3 | Comments name the quit guard | `launchApp.ts` (`CLOSE_TIMEOUT_MS`, `closeOrKill`, `launchExtraApp`), `keybindings.spec.ts`, `journeys.spec.ts`, `playwright.config.ts` | done |
+
+### Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Desktop 68 failed / 1794 passed, the same failing cases as ticket 08's run (+1 pass: ticket 08's seed test). Lint and md-link counts unchanged. |
+| e2e | `pnpm test:e2e e2e/keybindings.spec.ts e2e/router.spec.ts e2e/journeys.spec.ts` | 11 passed / 3 failed in 1.3m wall time. Per-test times are now 0.9–2.5s where nothing is played live, against 6–12s before. The failures are `journeys:96` and `:162` (ticket 10), and `journeys:206`, a strict-mode violation on two Market rows named "Thomas Bell" (ticket 13, now observed in a snapshot). |
+| determinism / save compatibility | — | not applicable; harness only |
+
+### Review
+
+Reviewed inline by the orchestrator, not by a reviewer subagent. The diff is four e2e harness files,
+and the handler analysis it rests on was already checked by ticket 07's reviewer. The checks: the
+`quit-guard-confirmed` listener takes no arguments and does no cleanup, so a bare `emit` matches the
+Quit button; the `evaluate` shares the timeout, so a wedged main is still bounded; and the fallback's
+kill and `waitForExit` are unchanged.

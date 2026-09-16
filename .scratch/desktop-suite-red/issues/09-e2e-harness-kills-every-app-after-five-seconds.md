@@ -18,8 +18,26 @@ comments. Confirming through the renderer's dialog is blocked while a router ove
 
 **Blocked by:** None
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] A normal e2e teardown quits gracefully, well under `CLOSE_TIMEOUT_MS`
-- [ ] The kill fallback still bounds a wedged app
-- [ ] The comments name the quit guard
+- [x] A normal e2e teardown quits gracefully, well under `CLOSE_TIMEOUT_MS`
+- [x] The kill fallback still bounds a wedged app
+- [x] The comments name the quit guard
+
+## Answer
+
+Resolved 2026-09-16. `closeOrKill` now confirms the quit guard from main with
+`app.evaluate(({ ipcMain }) => ipcMain.emit("quit-guard-confirmed"))` and then calls `app.close()`.
+The listener takes no arguments, and it only sets `quitGuardConfirmed` and quits, which is exactly
+what the dialog's Quit button sends. The `evaluate` and the close share the `CLOSE_TIMEOUT_MS`
+ceiling, and SIGKILL remains the fallback. No product code changed.
+
+Evidence, gathered by the implementator with temporary timing logs (since removed):
+
+- All 10 closes in a keybindings and router run returned in 138–155ms with `exitCode=0`, and none
+  took the kill path.
+- A throwaway probe that busy-looped main showed `closeOrKill` killing it and returning in 5055ms.
+- `keybindings.spec.ts` plus `router.spec.ts` went from 1.1m to 15.6s.
+
+The comments in `launchApp.ts`, `keybindings.spec.ts`, `journeys.spec.ts` and `playwright.config.ts`
+now name the quit guard.

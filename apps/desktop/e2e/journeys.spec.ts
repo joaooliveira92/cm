@@ -84,8 +84,8 @@ test("a save persists across app restarts", async ({ userDataDir, launchExtraApp
     await entry.click();
     await expect(window.getByText(/players$/)).toBeVisible();
     // Not `app.close()`: Playwright closes through `app.quit()`, which the quit guard holds
-    // open waiting for the player to confirm. The save was committed by the seed before
-    // launch, so stopping the process cannot lose it, and the second pass proves that.
+    // open waiting for the player to confirm. `closeOrKill` confirms the guard first. The save
+    // was committed by the seed before launch, and the second pass proves it survived the restart.
     await closeOrKill(app);
   };
 

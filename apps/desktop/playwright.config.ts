@@ -17,8 +17,8 @@ import { defineConfig } from "@playwright/test";
  * which is a local, readable exception rather than a raised global floor.
  *
  * The teardown ceiling lives in `e2e/launchApp.ts`: Playwright's worker teardown
- * has no timeout of its own, so a wedged renderer stalls the worker for a further
- * 30s after the test has already failed.
+ * has no timeout of its own, so an app that will not quit stalls the worker for a
+ * further 30s after the test has already failed.
  */
 export default defineConfig({
   testDir: "e2e",

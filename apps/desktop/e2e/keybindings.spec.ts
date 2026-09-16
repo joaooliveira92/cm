@@ -55,7 +55,8 @@ test("a rebind applied in the help overlay survives an app restart (AC-34)", asy
   // The override was persisted under userData, sibling of saves/ (never in the
   // save or the event stream). Main writes the file on the rebind RPC itself, not
   // at shutdown, so it is polled for here, while the first app is still running:
-  // the relaunch below then proves the binding survived a hard stop, not a flush.
+  // the file is proven written before shutdown starts, so the relaunch below reads
+  // what the rebind wrote rather than anything a clean quit might flush.
   const storedBinding = (): string | undefined => {
     try {
       const stored = JSON.parse(
@@ -68,9 +69,9 @@ test("a rebind applied in the help overlay survives an app restart (AC-34)", asy
   };
   await expect.poll(storedBinding).toBe("n");
 
-  // `firstApp.close()` never resolves: Playwright closes by calling `app.quit()`, which
-  // the quit guard's `before-quit` handler cancels to ask the player to confirm, and
-  // nobody answers. `closeOrKill` bounds that and stops the process.
+  // Not `firstApp.close()`, which never resolves: Playwright closes by calling `app.quit()`,
+  // which the quit guard's `before-quit` handler cancels to ask the player to confirm, and
+  // nobody answers. `closeOrKill` confirms the guard first, so the app quits cleanly.
   await closeOrKill(firstApp);
   expect(storedBinding()).toBe("n");
 

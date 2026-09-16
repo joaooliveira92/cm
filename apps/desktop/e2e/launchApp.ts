@@ -15,18 +15,29 @@ export const launchApp = (userDataDir: string) =>
   });
 
 /**
- * How long a well-behaved app gets to shut itself down before it is killed.
+ * How long an app gets to shut itself down before it is killed.
  *
- * `app.close()` waits on the renderer, so a wedged one never resolves and
- * Playwright's worker teardown — which has no timeout of its own — stalls for a
- * further 30s per test and then fails the *worker*, burying the real failure
- * under "Worker teardown timeout". A test that already failed must not also cost
- * the run half a minute of silence.
+ * A normal close takes well under a second (see `closeOrKill`), so this only bounds an app whose
+ * main process is genuinely wedged. Without it the close never resolves, and Playwright's worker
+ * teardown, which has no timeout of its own, stalls for a further 30s per test and then fails the
+ * *worker*, burying the real failure under "Worker teardown timeout". A test that already failed
+ * must not also cost the run half a minute of silence.
  */
 const CLOSE_TIMEOUT_MS = 5_000;
 
 /**
- * Close the app, or kill it if it will not go.
+ * Quit the app through its quit guard, or kill it if it will not go.
+ *
+ * A bare `app.close()` never finishes on its own. Playwright closes by calling `app.quit()`, and the
+ * main process's `before-quit` guard (`src/main/index.ts`) cancels that quit and asks the renderer
+ * to show the Quit dialog, which nobody in a test answers. So this first confirms the guard the way
+ * the dialog's Quit button does, by delivering `quit-guard-confirmed` to main's `ipcMain` listener.
+ * That listener takes no arguments, only marks the quit confirmed and quits, so a bare `emit` is
+ * the same thing the button sends. It goes through main rather than the dialog because a router
+ * overlay can cover the dialog (group-a-reconciliation ticket 20).
+ *
+ * Both steps share one `CLOSE_TIMEOUT_MS` ceiling, `app.evaluate` included, since a wedged main
+ * process never answers that either. Past the ceiling the process is killed.
  *
  * Safe to call on an app a test already closed: `app.process()` throws once the connection is gone,
  * and a teardown that throws is reported as a fixture error stacked on top of the real result.
@@ -38,12 +49,22 @@ export const closeOrKill = async (app: ElectronApplication): Promise<void> => {
   } catch {
     return; // Already closed and detached.
   }
-  let timer: NodeJS.Timeout | undefined;
-  const closed = await Promise.race([
-    app.close().then(
+  const quitGracefully = async (): Promise<boolean> => {
+    // The confirmed quit can end the process before `evaluate` replies. That rejection is expected,
+    // and `app.close()` below still resolves, because it treats a closed target as closed.
+    await app
+      .evaluate(({ ipcMain }) => {
+        ipcMain.emit("quit-guard-confirmed");
+      })
+      .catch(() => undefined);
+    return app.close().then(
       () => true,
       () => false,
-    ),
+    );
+  };
+  let timer: NodeJS.Timeout | undefined;
+  const closed = await Promise.race([
+    quitGracefully(),
     new Promise<boolean>((resolve) => {
       timer = setTimeout(() => resolve(false), CLOSE_TIMEOUT_MS);
     }),
@@ -108,10 +129,11 @@ export interface LaunchFixtures {
   /**
    * Launch an *additional* app against the same `userDataDir`, for the restart journeys.
    *
-   * Those specs used to call `launchApp` directly and close with a bare `app.close()`, which is the
-   * exact hang the config's timeout budget warns about: a wedged renderer never resolves `close()`,
-   * and Playwright's worker teardown has no ceiling of its own. Everything launched through this
-   * fixture is torn down with `closeOrKill`, so a wedged app costs 5s rather than the worker.
+   * Those specs used to call `launchApp` directly and close with a bare `app.close()`, which never
+   * resolves: the quit guard cancels Playwright's `app.quit()` and waits for a confirmation nobody
+   * gives, and Playwright's worker teardown has no ceiling of its own. Everything launched through
+   * this fixture is torn down with `closeOrKill`, which confirms the guard, and a genuinely wedged
+   * app costs 5s rather than the worker.
    */
   launchExtraApp: (options?: { readonly userDataDir?: string }) => Promise<ElectronApplication>;
 }
