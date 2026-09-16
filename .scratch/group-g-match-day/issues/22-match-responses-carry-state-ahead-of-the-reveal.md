@@ -20,7 +20,7 @@ Found in the review of ticket 18.
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Score, on-pitch count, injuries and Condition in a match response reflect only revealed events
 - [ ] The live Commentary screen shows no line or result beyond Match day's revealed position
