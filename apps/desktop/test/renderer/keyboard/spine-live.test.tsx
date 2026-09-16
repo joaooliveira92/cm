@@ -176,6 +176,26 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
     expect(screen.queryByText("Go to:")).toBeNull();
   });
 
+  /**
+   * navbar-keyboard-intent ticket 02: every section the navbar badges during the level-0 prefix has a
+   * key that dispatches. World is the eighth section and was badged `8` while the spine capped level
+   * 0 at `1`-`7`; `g 3` was labelled Training but navigated to Squad.
+   */
+  it.each([
+    ["training", "/career/$saveId/training"],
+    ["world", "/career/$saveId/competitions"],
+  ])("g <%s section key> reaches that section's default destination", async (sectionId, route) => {
+    const sectionIndex = NAV_SECTIONS.findIndex((section) => section.id === sectionId);
+    expect(sectionIndex).toBeGreaterThanOrEqual(0);
+
+    await mountTransfersWithSpine();
+    act(() => fireEvent.keyDown(document, { key: "g" }));
+    act(() => fireEvent.keyDown(document, { key: String(sectionIndex + 1) }));
+    expect(navCalls.map((call) => call.to)).toEqual([route]);
+    // Level 0 accepted the key and moved to the section's deep prefix, rather than cancelling.
+    expect(screen.getByText("Go to:").parentElement?.textContent).toContain(NAV_SECTIONS[sectionIndex]!.items[0]!.label);
+  });
+
   it("an invalid key cancels without navigating and without firing a bare action", async () => {
     await mountTransfersWithSpine();
     act(() => fireEvent.keyDown(document, { key: "g" }));
@@ -347,6 +367,6 @@ describe("AC-17 — the registry's coded bindings are exactly what the live spin
   // The spine derives ALL key handling from the registry (via resolveDispatch);
   // a binding a screen advertises is reachable, and nothing else is hard-wired.
   it("the live prefix completion set is registry-derived and covers g b", () => {
-    expect(new Set(["1", "2", "3", "4", "5", "6", "7", "b"])).toEqual(G_PREFIX_COMPLETIONS);
+    expect(new Set(["1", "2", "3", "4", "5", "6", "7", "8", "b"])).toEqual(G_PREFIX_COMPLETIONS);
   });
 });

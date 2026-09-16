@@ -1,7 +1,7 @@
 # 02: The World section badges `g 8`, which the keyboard spine cannot receive
 
 Type: bug
-Status: claimed
+Status: resolved
 
 ## What was measured
 
@@ -50,9 +50,34 @@ is pending" derives its expectation from the binding registry and is **red on pu
 is fixed. It goes green on its own under either answer. Do not make it pass by re-freezing the
 expected list.
 
-- [ ] The decision above is recorded
-- [ ] The navbar advertises a key if and only if that key dispatches
-- [ ] `g 3` reaches Training, or its label and section key are corrected to match where it goes
-- [ ] `CAREER_G_BINDINGS` is either wired up as the single source or removed
-- [ ] `nav-config.ts`'s 1-8 and 1-7 comments agree with the code
-- [ ] `navbar.test.tsx`'s badge case passes without its expectation being re-frozen
+- [x] The decision above is recorded
+- [x] The navbar advertises a key if and only if that key dispatches
+- [x] `g 3` reaches Training, or its label and section key are corrected to match where it goes
+- [x] `CAREER_G_BINDINGS` is either wired up as the single source or removed
+- [x] `nav-config.ts`'s 1-8 and 1-7 comments agree with the code
+- [x] `navbar.test.tsx`'s badge case passes without its expectation being re-frozen
+
+## Answer
+
+**The World section gains a working key, `g 8`.** Its badge stays.
+
+Why: `.agents/notes/implemented/architecture/2026-08-31-career-chrome-and-date-continue-bar.md`
+records that every tab stays "reachable by focus and `g <key>` regardless of visibility", and
+`.scratch/two-row-nav/spec.md` user story 13 asks for keyboard navigation for every nav item.
+Dropping the badge would leave World as the only section with no key, which contradicts a recorded
+decision.
+
+What changed:
+
+- The section nav actions in `ALL_ACTIONS` (`allActions.ts`, `sectionNavActions`) are now built
+  from `NAV_SECTIONS`: `go-to-<section.id>`, `Go to <label>`, `g <position>`, with
+  `destination: defaultDestination`. The action ids for sections 1-7 stay the same, so saved
+  binding overrides still apply. This adds `go-to-world` (`g 8` → `competitions`) and fixes
+  `go-to-training` (`g 3` → `training`).
+- `KeyboardSpine.tsx` used to keep its own copy of the id → destination table, and that copy also
+  sent `go-to-training` to `squad`. It now registers handlers from each action's
+  `metadata.destination`.
+- `KeyboardStateProvider.tsx`: level 0 of the prefix accepts `sectionKeyToEntry.has(k)` instead of
+  `/^[1-7]$/`, so the valid section keys come from `NAV_SECTIONS`. A ninth section gets its key
+  without another edit.
+- `CAREER_G_BINDINGS` is deleted. Its test consumers now read `ALL_ACTIONS`.

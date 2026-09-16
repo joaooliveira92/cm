@@ -7,11 +7,11 @@ import {
 } from "@cm-clone/contracts";
 import { bindRouter, navigate } from "../../../src/renderer/navigation/adapter.js";
 import {
-  CAREER_G_BINDINGS,
   CAREER_SCREEN_TYPES,
   resolveDestination,
 } from "../../../src/renderer/navigation/destinations.js";
 import { NAV_SECTIONS } from "../../../src/renderer/navigation/nav-config.js";
+import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";
 import { decodeClubId } from "../../../src/renderer/navigation/params.js";
 
 const save = (id: string): SaveId => SaveIdSchema.make(id);
@@ -56,7 +56,9 @@ describe("ticket 03 — the club-scoped club staff route", () => {
 
 describe("ticket 03 — club staff is a drill-down, not a career screen", () => {
   it("has no `g` binding", () => {
-    const bound = Object.values(CAREER_G_BINDINGS).map((build) => build(save("x")).type);
+    const bound = ALL_ACTIONS.flatMap((action) =>
+      action.binding?.startsWith("g ") === true ? [action.metadata?.destination] : [],
+    );
     expect(bound).not.toContain("clubStaff");
   });
 

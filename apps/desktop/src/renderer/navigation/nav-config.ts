@@ -64,8 +64,10 @@ export interface NavSection {
  * Section IDs are stable identifiers — they appear in telemetry, last-route
  * storage, and focus bookmarks. Labels are display copy, not keys.
  *
- * The keyboard prefix system maps positions 1-8 to these sections in display
- * order, and the `g <key>` bindings in destinations.ts mirror that mapping.
+ * The keyboard prefix system maps each section's 1-based display position to
+ * it: `g 1` is the first section, and so on through the last. The `g <n>` nav
+ * actions in `actions/allActions.ts` are derived from this array, so adding a
+ * section adds its key.
  * Sections without existing routes carry placeholder items that fall back to
  * the closest existing destination so the navbar never offers a dead link.
  */
@@ -357,7 +359,7 @@ export type NavItemId = (typeof NAV_SECTIONS)[number]["items"][number]["id"];
 
 /**
  * Position-based key mappings for the two-level prefix system.
- * Level 0: `1`-`7` selects a section (by position in NAV_SECTIONS).
+ * Level 0: `1`-`N` selects a section (by 1-based position in NAV_SECTIONS; eight sections today, so `1`-`8`).
  * Level 1: `q w e r t y u i o p` selects a sub-item (by position in the section's items array).
  *
  * A section item past the last key has no deep-prefix binding and is reachable by pointer only, so
@@ -365,7 +367,7 @@ export type NavItemId = (typeof NAV_SECTIONS)[number]["items"][number]["id"];
  */
 export const POSITION_KEYS = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"] as const;
 
-/** Maps section position keys (1-7) to the section id and its default destination. */
+/** Maps section position keys (`1`-`N`, one per NAV_SECTIONS entry) to the section id and its default destination. */
 export const sectionKeyToEntry: ReadonlyMap<string, { sectionId: NavSectionId; defaultDestination: SaveScopedCareerDestinationType }> = new Map(
   NAV_SECTIONS.map((s, i) => [String(i + 1), { sectionId: s.id, defaultDestination: s.defaultDestination }]),
 );

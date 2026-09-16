@@ -1,12 +1,26 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { SaveId as SaveIdSchema, type SaveId } from "@cm-clone/contracts";
 import { bindRouter, navigateBack } from "../../../src/renderer/navigation/adapter.js";
-import { CAREER_G_BINDINGS, CAREER_SCREEN_TYPES, resolveDestination } from "../../../src/renderer/navigation/destinations.js";
+import { careerDestination, CAREER_SCREEN_TYPES, resolveDestination, type SaveScopedCareerDestinationType } from "../../../src/renderer/navigation/destinations.js";
+import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";
 import { decodeSaveId } from "../../../src/renderer/navigation/params.js";
 import { CAREER_SECTIONS } from "../../../src/renderer/router/career.js";
 import { consumePendingFocus, BACK_RESTORE_MARKER } from "../../../src/renderer/focus.js";
 
 const save = (id: string): SaveId => SaveIdSchema.make(id);
+
+/** The live section-level `g <n>` bindings: `n` → the career destination it navigates to. */
+const sectionGBindings: Readonly<Record<string, (saveId: SaveId) => ReturnType<typeof careerDestination>>> =
+  Object.fromEntries(
+    ALL_ACTIONS.flatMap((action) =>
+      action.scope === "career-global" && typeof action.metadata?.sectionKey === "string"
+        ? [[
+            action.binding!.slice(2),
+            (saveId: SaveId) => careerDestination(action.metadata!.destination as SaveScopedCareerDestinationType, saveId),
+          ]]
+        : [],
+    ),
+  );
 
 describe("AC-14 — typed destination resolver", () => {
   it("resolves every destination to its route, never a raw caller-built path", () => {
@@ -56,7 +70,7 @@ describe("AC-14 — typed destination resolver", () => {
 describe("AC-14 — career g bindings never point at creation steps", () => {
   it("every g binding resolves to a persistent career screen", () => {
     const id = save("save-1");
-    for (const [key, build] of Object.entries(CAREER_G_BINDINGS)) {
+    for (const [key, build] of Object.entries(sectionGBindings)) {
       const destination = build(id);
       expect(CAREER_SCREEN_TYPES as readonly string[]).toContain(destination.type);
       expect(destination.type).not.toMatch(/^createStep/);
@@ -67,7 +81,7 @@ describe("AC-14 — career g bindings never point at creation steps", () => {
   });
 
   it("the section-level g bindings cover the eight section defaults", () => {
-    expect(Object.keys(CAREER_G_BINDINGS).sort()).toEqual([
+    expect(Object.keys(sectionGBindings).sort()).toEqual([
       "1",
       "2",
       "3",
@@ -77,7 +91,7 @@ describe("AC-14 — career g bindings never point at creation steps", () => {
       "7",
       "8",
     ]);
-    const types = Object.values(CAREER_G_BINDINGS).map((build) => build(save("x")).type);
+    const types = Object.values(sectionGBindings).map((build) => build(save("x")).type);
     expect(new Set(types)).toEqual(new Set(["squad", "tactics", "training", "transfers", "league", "news", "manager", "competitions"]));
   });
 });
@@ -116,11 +130,13 @@ describe("AC-11 — the redesigned navbar reaches every career screen", () => {
 });
 
 describe("g <key> navigation uses position-based number keys", () => {
-  it("g 1 resolves to Squad, g 2 to Tactics, g 7 to Manager", () => {
+  it("g 1 resolves to Squad, g 2 to Tactics, g 3 to Training, g 7 to Manager, g 8 to Competitions", () => {
     const id = save("save-1");
-    expect(CAREER_G_BINDINGS["1"]!(id)).toEqual({ type: "squad", saveId: id });
-    expect(CAREER_G_BINDINGS["2"]!(id)).toEqual({ type: "tactics", saveId: id });
-    expect(CAREER_G_BINDINGS["7"]!(id)).toEqual({ type: "manager", saveId: id });
+    expect(sectionGBindings["1"]!(id)).toEqual({ type: "squad", saveId: id });
+    expect(sectionGBindings["2"]!(id)).toEqual({ type: "tactics", saveId: id });
+    expect(sectionGBindings["7"]!(id)).toEqual({ type: "manager", saveId: id });
+    expect(sectionGBindings["3"]!(id)).toEqual({ type: "training", saveId: id });
+    expect(sectionGBindings["8"]!(id)).toEqual({ type: "competitions", saveId: id });
   });
 });
 

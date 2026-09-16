@@ -2,8 +2,14 @@
 
 ## Immediate next action
 
-**navbar-keyboard-intent** ticket 02 (the World section advertises a dead `g 8`) — the only open,
-unblocked, unclaimed ticket left in `.scratch/`.
+**navbar-keyboard-intent** ticket 03 (e2e specs and the global-key-map note still use the retired
+letter `g` keys) — filed by ticket 02's review, and the only open, unblocked, unclaimed ticket in
+`.scratch/`.
+
+navbar-keyboard-intent ticket 02 resolved 2026-09-16: World gains `g 8`, `g 3` now reaches Training
+rather than Squad, and the section nav actions derive from `NAV_SECTIONS`, with `CAREER_G_BINDINGS`
+deleted. `navbar.test.tsx`'s intentional red badge case is green. Report:
+[reports/navbar-keyboard-intent.md](reports/navbar-keyboard-intent.md).
 
 Group J ticket 08 resolved 2026-09-16: Contract Expiry and Budget Review are in the Recruitment
 submenu (`g 4 o`, `g 4 p`), and the submenu strip now scrolls, since ten entries overflow the
@@ -56,6 +62,9 @@ parallel sessions and were left alone.
   - `test/renderer/router/stage2.test.ts`, `team-scout-report-route.test.ts` — `window` not defined
     (jsdom env)
   - `test/renderer/match/screen-fulltime.test.tsx` — passes.
+- **Desktop unit tests, 2026-09-16 (navbar-keyboard-intent 02)**: 68 failed / 1792 passed across 17
+  files. `navbar.test.tsx` no longer fails. The e2e keyboard specs fail on the retired letter keys
+  (ticket 03), and `router.spec.ts:184` (Match Day resume) fails on a missing `Start match` button.
 - **Nav guard baseline, 2026-09-16 (`d0fab20`)**: `test/renderer/navigation` + `test/renderer/actions`
   is 1 failed / 355 passed across 14 files — the one failure still the intentional `navbar.test.tsx`
   badge case. Earlier the same day at `0d0b60c`: `test/renderer/navigation` is 1 failed / 307
@@ -95,6 +104,8 @@ parallel sessions and were left alone.
 12. **group-j-transfers-contracts-and-negotiations**: 01-03 resolved, spec published (2026-09-15). 04
     needs-info on decision request 01; 05-07 resolved (07 Screen 146 Transfer History, 2026-09-15);
     08 resolved (navbar entries for 141/145, 2026-09-16). Decision requests 01 and 02 open.
+13. **navbar-keyboard-intent**: 01 resolved; 02 resolved 2026-09-16 (World `g 8`, `g 3` → Training);
+    03 ready (e2e and key-map note on the retired letter keys).
 
 Shipped and closed:
 

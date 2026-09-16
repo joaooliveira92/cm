@@ -15,7 +15,7 @@ Create a set of 15 new career-scoped routes, each with a skeleton placeholder sc
 - **One `defineCareerChild` route** registered in `router/index.tsx`, with a unique `screenId` and path segment.
 - **A skeleton component** in `src/renderer/<feature-name>/<FeatureName>Screen.tsx` — a `<main>` element with `tabIndex={-1}`, `data-focus-id`, and `aria-label`, a title heading, and an italic "WIP — Placeholder screen" subtitle.
 - **No RPC calls, no provider pattern, no action handlers.** The skeleton renders unconditionally with no data dependencies.
-- **A destination type** in the `CareerDestination` discriminated union in `destinations.ts`, with entries in `resolveDestination`, `careerRoute`, `CAREER_G_BINDINGS`, `CAREER_SCREEN_TYPES`, and `SaveScopedCareerDestinationType`.
+- **A destination type** in the `CareerDestination` discriminated union in `destinations.ts`, with entries in `resolveDestination`, `careerRoute`, `CAREER_SCREEN_TYPES`, and `SaveScopedCareerDestinationType`. (A new section gets its `g <n>` key automatically: the section nav actions in `ALL_ACTIONS` derive from `NAV_SECTIONS`.)
 - **A nav-config entry** — either as a new section (World) or as a sub-item under an existing section (Club, Recruitment).
 - **An adapter switch arm** in `adapter.ts` for the new route path.
 - **A `destinationToRouteChild` entry** in `NavProvider.tsx`.

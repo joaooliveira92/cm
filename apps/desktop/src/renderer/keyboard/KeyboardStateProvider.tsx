@@ -104,11 +104,11 @@ export const KeyboardStateProvider = ({
 
   const { prefix, setPrefix } = usePrefixState();
 
-  // Level 0 completions: section keys (1-7) plus back (b). Filter by the
-  // registry's actual g-bindings so rebinding "g 1" to something else removes
-  // "1" from the valid set.
+  // Level 0 completions: section keys (one per NAV_SECTIONS entry, via
+  // `sectionKeyToEntry`) plus back (b). Filter by the registry's actual
+  // g-bindings so rebinding "g 1" to something else removes "1" from the valid set.
   const level0Completions = useMemo(
-    () => new Set([...effectiveCompletions].filter((k) => k === "b" || /^[1-7]$/.test(k))),
+    () => new Set([...effectiveCompletions].filter((k) => k === "b" || sectionKeyToEntry.has(k))),
     [effectiveCompletions],
   );
 

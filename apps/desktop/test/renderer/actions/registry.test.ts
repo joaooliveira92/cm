@@ -183,9 +183,8 @@ describe("AC-16/AC-14 — the g-navigation bindings resolve a stable career dest
   it("every g binding targets a top-level career screen, never a sub-surface", () => {
     const topLevel: ReadonlyArray<string> = CAREER_SCREEN_TYPES;
     // Iterated per action rather than through `navKeyByDestinationOf`, which keys its Map by
-    // destination and so collapses two bindings onto one target: today `g 1` (Squad) and `g 3`
-    // (labelled Training but pointing at `squad`) leave a single entry, and the map form would
-    // never inspect `g 1` at all. Seven bindings in, seven checked.
+    // destination and so would collapse two bindings onto one target — as `g 1` and `g 3` once did,
+    // when `g 3` (labelled Training) pointed at `squad`. Every binding in, every binding checked.
     const bound = ACTION_REGISTRY.all.flatMap((action) =>
       action.scope === "career-global" &&
       action.binding?.startsWith("g ") &&

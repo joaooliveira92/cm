@@ -9,8 +9,9 @@ import type { ClubId, MatchId, PlayerId, SaveId } from "@cm-clone/contracts";
  * The set is deliberately closed: `mainMenu`, the four creation steps
  * (league selection, then manager, club, and review), and the nine
  * persistent career screens. Career `g <key>` bindings draw from
- * `CareerDestination` only, which excludes the creation steps, the main menu,
- * and the load screen by construction (see `CAREER_G_BINDINGS`).
+ * `SaveScopedCareerDestinationType` only (each section's `defaultDestination`
+ * in `NAV_SECTIONS`, bound in `ALL_ACTIONS`), which excludes the creation steps,
+ * the main menu, and the load screen by construction.
  */
 export type CareerDestination =
   | { readonly type: "squad"; readonly saveId: SaveId }
@@ -177,24 +178,6 @@ export const careerDestination = (
   type: SaveScopedCareerDestinationType,
   saveId: SaveId,
 ): CareerDestination => ({ type, saveId }) as CareerDestination;
-
-/**
- * The coded `g <key>` default bindings for career screens (level 0).
- * Number keys navigate to each section's default destination by display position.
- * `b` remains for go-back.
- */
-export const CAREER_G_BINDINGS: Readonly<
-  Record<string, (saveId: SaveId) => CareerDestination>
-> = {
-  "1": (saveId) => careerDestination("squad", saveId),
-  "2": (saveId) => careerDestination("tactics", saveId),
-  "3": (saveId) => careerDestination("training", saveId),
-  "4": (saveId) => careerDestination("transfers", saveId),
-  "5": (saveId) => careerDestination("league", saveId),
-  "6": (saveId) => careerDestination("news", saveId),
-  "7": (saveId) => careerDestination("manager", saveId),
-  "8": (saveId) => careerDestination("competitions", saveId),
-} as const;
 
 /**
  * A resolved destination: the router `to`/`params` the adapter passes to

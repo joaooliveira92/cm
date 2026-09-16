@@ -62,14 +62,16 @@ export const sectionIdForDestination = (
 
 /**
  * Whether a section's own button carries the `g <key>` hint for its default destination.
- * Always true — the ShortcutHint component gracefully handles destinations that have no
- * registered `g` binding (renders no badge), and this keeps the hint plan predictable:
- * every section and every item shows its shortcut when a binding exists.
+ * Always true. `ShortcutHint` does not consult the binding set — it renders whatever key it is
+ * handed — so this holds only because every section has a `g <n>` binding: the section nav actions
+ * in `ALL_ACTIONS` are derived from `NAV_SECTIONS`, one per section (guarded by navbar.test.tsx's
+ * level-0 badge case).
  */
 export const sectionCarriesHint = (_section: NavSection): boolean => true;
 
 /**
  * Whether a strip item carries its destination's `g <key>` hint.
- * Always true — same rationale as `sectionCarriesHint`.
+ * Always true: an item's key is its section's `g <n>` followed by its position key from
+ * `POSITION_KEYS`, which is sized to the longest section.
  */
 export const itemCarriesHint = (_section: NavSection, _item: NavItem): boolean => true;

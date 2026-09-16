@@ -1,6 +1,7 @@
 import { createRegistry } from "./registry.js";
 import type { Action, ScopeState, ScreenName } from "./types.js";
 import { gPrefixCompletionsOf } from "./overrides.js";
+import { NAV_SECTIONS } from "../navigation/nav-config.js";
 import {
   FREE_AGENT_PALETTE_OPTIONS,
   MARKET_PALETTE_OPTIONS,
@@ -46,6 +47,18 @@ const navAction = (
   metadata,
 });
 
+/**
+ * The section-level `g <n>` navigation actions: `g 1` reaches the first section's default
+ * destination, and so on for every section. `sectionKey` is the same position key
+ * `sectionKeyToEntry` uses, so level 0 of the prefix and level 1's sub-item lookup agree.
+ */
+const sectionNavActions: ReadonlyArray<Action> = NAV_SECTIONS.map((section, index) =>
+  navAction(`go-to-${section.id}`, `Go to ${section.label}`, `g ${index + 1}`, {
+    destination: section.defaultDestination,
+    sectionKey: String(index + 1),
+  }),
+);
+
 /** All coded default bindings (global-key-map note). No single-key `g` binding. */
 export const ALL_ACTIONS: ReadonlyArray<Action> = [
   // app-global — active on every screen (palette/help are discoverable from the
@@ -59,13 +72,9 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   // `primary: true` is consumed by the career chrome for the gradient treatment —
   // presentation only, never automatic Enter dispatch (global-key-map note AC-11).
   { id: "continue", label: "Continue", scope: "career-global", available: continueAvailable, unavailableReason: "The Calendar cannot advance right now.", handler: () => undefined, binding: "Space", primary: true },
-  navAction("go-to-squad", "Go to Squad", "g 1", { destination: "squad", sectionKey: "1" }),
-  navAction("go-to-tactics", "Go to Tactics", "g 2", { destination: "tactics", sectionKey: "2" }),
-  navAction("go-to-training", "Go to Training", "g 3", { destination: "squad", sectionKey: "3" }),
-  navAction("go-to-recruitment", "Go to Recruitment", "g 4", { destination: "transfers", sectionKey: "4" }),
-  navAction("go-to-analysis", "Go to Analysis", "g 5", { destination: "league", sectionKey: "5" }),
-  navAction("go-to-news", "Go to News", "g 6", { destination: "news", sectionKey: "6" }),
-  navAction("go-to-club", "Go to Club", "g 7", { destination: "manager", sectionKey: "7" }),
+  // One `g <n>` nav action per primary section, derived from `NAV_SECTIONS` so a section cannot be
+  // badged in the navbar without a key that dispatches (navbar-keyboard-intent ticket 02).
+  ...sectionNavActions,
   { id: "go-to-transfers", label: "Go to Transfer Market", scope: "squad", available: ready, handler: () => undefined },
   navAction("go-back", "Go to previous screen", "g b"),
   // transfers

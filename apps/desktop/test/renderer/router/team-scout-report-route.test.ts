@@ -7,11 +7,11 @@ import {
 } from "@cm-clone/contracts";
 import { bindRouter, navigate } from "../../../src/renderer/navigation/adapter.js";
 import {
-  CAREER_G_BINDINGS,
   CAREER_SCREEN_TYPES,
   resolveDestination,
 } from "../../../src/renderer/navigation/destinations.js";
 import { NAV_SECTIONS } from "../../../src/renderer/navigation/nav-config.js";
+import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";
 import { decodeClubId } from "../../../src/renderer/navigation/params.js";
 
 const save = (id: string): SaveId => SaveIdSchema.make(id);
@@ -58,7 +58,9 @@ describe("ticket 05 — the report is a drill-down, not a career screen", () => 
   // A standing entry point would have to invent a club to point at. The three registries below are
   // the ones that would give it one, so the report must be absent from all three.
   it("has no `g` binding", () => {
-    const bound = Object.values(CAREER_G_BINDINGS).map((build) => build(save("x")).type);
+    const bound = ALL_ACTIONS.flatMap((action) =>
+      action.binding?.startsWith("g ") === true ? [action.metadata?.destination] : [],
+    );
     expect(bound).not.toContain("teamScoutReport");
   });
 

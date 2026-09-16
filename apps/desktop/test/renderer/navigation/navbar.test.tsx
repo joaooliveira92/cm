@@ -168,11 +168,8 @@ describe("leader-key hints on the navbar (global-key-map note, g <key> prefix)",
     // would compare `String(index + 1)` against the identical expression in `PrimaryNav`, which
     // cannot fail and would assert nothing about whether the advertised key works.
     //
-    // This is RED on purpose while the navbar advertises a key the keyboard spine rejects: there
-    // are 8 sections, but `KeyboardStateProvider` caps level-0 keys at `/^[1-7]$/`, so the World
-    // section shows an `8` badge that does nothing. See
+    // This was red while World showed an `8` badge that level 0 of the prefix rejected. See
     // `.scratch/navbar-keyboard-intent/issues/02-world-section-advertises-a-dead-g-key.md`.
-    // It goes green on its own when that ticket is fixed either way.
     expect(hintsIn("Primary navigation")).toEqual(
       NAV_SECTIONS.map((_, index) => String(index + 1)).filter((key) => boundSectionKeys.has(key)),
     );

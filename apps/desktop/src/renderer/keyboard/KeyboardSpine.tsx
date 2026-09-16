@@ -5,6 +5,7 @@ import { navigateBack, navigateCareer } from "../navigation/adapter.js";
 import { type CareerDestination, type SaveScopedCareerDestinationType } from "../navigation/destinations.js";
 import { decodeSaveId } from "../navigation/params.js";
 import { isInsideCareer } from "../actions/registry.js";
+import { ALL_ACTIONS } from "../actions/allActions.js";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
 import { getScopeState, subscribeScopeState } from "../actions/scopeState.js";
 import { type ScopeState } from "../actions/types.js";
@@ -125,16 +126,12 @@ const SpineOrchestrator = ({
         nations: () => navigateCareer({ type: "nations", saveId }, "keyboard"),
         clubs: () => navigateCareer({ type: "clubs", saveId }, "keyboard"),
       };
-      for (const [id, type] of Object.entries({
-        "go-to-squad": "squad",
-        "go-to-tactics": "tactics",
-        "go-to-training": "squad",
-        "go-to-recruitment": "transfers",
-        "go-to-analysis": "league",
-        "go-to-news": "news",
-        "go-to-club": "manager",
-      }) as ReadonlyArray<[string, SaveScopedCareerDestinationType]>) {
-        unregisters.push(registerActionHandler(id, target[type]));
+      // Every section nav action carries its destination in metadata, so the handler set is read
+      // off the registry rather than restated here (a restated copy once sent `g 3` to Squad).
+      for (const action of ALL_ACTIONS) {
+        const destination = action.metadata?.destination;
+        if (action.scope !== "career-global" || typeof destination !== "string") continue;
+        unregisters.push(registerActionHandler(action.id, target[destination as SaveScopedCareerDestinationType]));
       }
       unregisters.push(registerActionHandler("go-back", () => navigateBack()));
     }
