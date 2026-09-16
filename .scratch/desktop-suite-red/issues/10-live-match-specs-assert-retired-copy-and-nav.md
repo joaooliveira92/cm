@@ -17,7 +17,7 @@ substitution steps.
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Each assertion checks the copy or tab the screen actually shows for the same outcome as before
 - [ ] No assertion is dropped. Where a test asserted "Applied or Failed", it still distinguishes success from failure
