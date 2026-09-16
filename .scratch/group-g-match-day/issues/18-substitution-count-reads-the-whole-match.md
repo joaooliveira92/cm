@@ -31,7 +31,7 @@ the command's own `Substitution` event, not from a count difference.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Substitutions used and windows used count only events at or before the revealed position
 - [ ] An accepted manager substitution reads as applied even when re-simulation removes a later forced substitution
