@@ -15,6 +15,15 @@ namesakes too.
 
 **Blocked by:** None
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] The spec selects the Player it bid on even when another Player in the world shares the name
+- [x] The spec selects the Player it bid on even when another Player in the world shares the name
+
+## Answer
+
+Resolved 2026-09-16. The row button is now located inside `firstRow`, the row the test read the name
+from, so a namesake elsewhere in the Market cannot match it. The later `Outgoing Bids` lookup by name
+is unaffected, because that section holds only the one bid the test places.
+`pnpm test:e2e e2e/journeys.spec.ts --grep "transfer bid" --repeat-each=10` gave 10 passed. Before
+the fix, three of the last five runs had failed on a namesake. Namesakes are therefore likely among
+these ten random worlds, though no run was checked for one.

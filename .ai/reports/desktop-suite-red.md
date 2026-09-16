@@ -336,3 +336,15 @@ the command, with an explicit failure if N is already at the cap.
 Reviewed inline by the orchestrator. The change is one test's count assertion. The product findings
 were checked against `view.ts` (`computeSubstitutionStatus(clubId, events)` over all events) before
 filing.
+
+## Ticket 13 — the transfer bid spec collides on duplicate player names, 2026-09-16
+
+- Ticket closed: [13](../../.scratch/desktop-suite-red/issues/13-transfer-bid-spec-collides-on-duplicate-player-names.md)
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Desktop 68 failed / 1794 passed, the same failing cases as ticket 11's run. Lint and md-link counts unchanged. |
+| e2e | `pnpm test:e2e e2e/journeys.spec.ts --grep "transfer bid" --repeat-each=10` | 10 passed (25.8s). Before the fix, 3 of the last 5 runs had failed on namesakes ("Thomas Bell", "Ethan Hall", "Diego Navarro"). |
+
+The change is one locator, scoped from the Market to the selected row. The orchestrator made it and
+reviewed it inline: `firstRow` is the row the name was read from, and no assertion changed.

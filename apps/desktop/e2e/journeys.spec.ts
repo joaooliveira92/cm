@@ -241,7 +241,8 @@ test("a transfer bid settles and the budget reflects the spend (keyboard)", asyn
   // Keyboard through the level-3 grid: rove to the first Market row, select it
   // with Space (AC-28 style roving + selection), type the bid amount (AC-29's
   // contextual region), and submit with Enter on the Bid control.
-  const rowButton = market.getByRole("button", { name: playerName, exact: true });
+  // Scoped to the row, not the Market: a random world can hold two Players with the same name.
+  const rowButton = firstRow.getByRole("button", { name: playerName, exact: true });
   await rowButton.focus();
   await expect(rowButton).toBeFocused();
   await page.keyboard.press("Space");
