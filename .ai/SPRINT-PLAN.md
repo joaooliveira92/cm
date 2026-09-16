@@ -2,8 +2,12 @@
 
 ## Immediate next action
 
-**desktop-suite-red** ticket 07 (two e2e specs hang on a bare `app.close()`), then 08 (the
-before-matchday seed offers no fixture), then navbar-keyboard-intent 04 (a decision first).
+**desktop-suite-red** ticket 08 (the before-matchday seed offers no fixture), then 09 (the e2e
+harness kills every app after 5s), then navbar-keyboard-intent 04 (a decision first), then
+group-a-reconciliation 20 (the Quit dialog is hidden under router overlays).
+
+desktop-suite-red ticket 07 resolved 2026-09-16: the close hang was the quit-confirmation guard that
+no test answered, not an app defect. `keybindings.spec.ts` and the journeys save-restart test pass.
 
 navbar-keyboard-intent ticket 03 resolved 2026-09-16: the keyboard, keybindings and journeys e2e
 specs press position keys, and navbar badges follow user overrides. The keyboard e2e trio went from
@@ -84,11 +88,11 @@ parallel sessions and were left alone.
 2. ~~**group-d-player-and-staff-records**: complete 2026-09-14. 19 screens charted, 3 implemented.~~
 3. **desktop-suite-red**: 01, 02, 04, 05, 06 resolved (05 derived the nav guards, 06 made the
     classification a typecheck gate, 2026-09-16). 03 claimed-and-abandoned (needs a human to
-    unclaim or close). Decision request 01 open. 07 (bare `app.close()` hang) and 08 (before-matchday
-    seed has no fixture) ready, filed 2026-09-16.
+    unclaim or close). Decision request 01 open. 07 resolved 2026-09-16 (quit guard, not a hang). 08
+    (before-matchday seed has no fixture) and 09 (harness close pays 5s and SIGKILL) ready.
 4. **season-rollover-skips-conclusion**: 01 resolved.
 5. **match-composition**: 01-02 resolved.
-6. **group-a-reconciliation**: 03-04 resolved.
+6. **group-a-reconciliation**: 03-04 resolved. 20 ready (Quit dialog hidden under router overlays, filed 2026-09-16).
 7. **team-scout-report**: complete 2026-09-13.
 8. **group-e-squad-management**: pending — next unmatched spec group.
 9. **group-g-match-day**: 01–09 resolved (07 Screen 97 live tactics/substitutions, 08 Screen 99

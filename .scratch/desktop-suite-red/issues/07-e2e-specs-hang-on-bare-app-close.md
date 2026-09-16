@@ -15,8 +15,26 @@ flush, so confirm the binding is written before close, or wait for it, instead o
 
 **Blocked by:** None
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Neither spec hangs on close
-- [ ] `keybindings.spec.ts`'s stored-binding and relaunch assertions execute and pass
-- [ ] `journeys.spec.ts`'s save-restart journey executes past the close
+- [x] Neither spec hangs on close
+- [x] `keybindings.spec.ts`'s stored-binding and relaunch assertions execute and pass
+- [x] `journeys.spec.ts`'s save-restart journey executes past the close
+
+## Answer
+
+Resolved 2026-09-16. The hang comes from the test harness. The app has no defect here, and it does
+not depend on a loaded career. Playwright's `close()` runs `app.quit()`, and the `before-quit` guard
+in `src/main/index.ts` cancels the quit to show the Quit dialog, which no test answers. A real player
+who confirms quits in about 1s.
+
+Both specs now stop the app with `closeOrKill`. `keybindings.spec.ts` first polls `keybindings.json`
+until the rebind is on disk, while the app is still running. `setKeyBindingOverride` awaits its
+write, so the old comment "only flushed on shutdown" was wrong. The relaunch assertion now proves the
+binding survives a hard stop. `journeys.spec.ts` loses nothing to the kill: `seedFresh` writes the
+save before launch, and opening it reads through `readonly` clients.
+
+Follow-ups: [09](09-e2e-harness-kills-every-app-after-five-seconds.md) (every harness close pays 5s
+and SIGKILL) and
+[group-a-reconciliation 20](../../group-a-reconciliation/issues/20-quit-dialog-hidden-under-router-overlays.md)
+(the Quit dialog paints under router overlays).

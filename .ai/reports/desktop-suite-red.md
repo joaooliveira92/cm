@@ -168,3 +168,41 @@ bindings in, seven checked, where before six were.
 
 The single failure is the intentional `navbar.test.tsx` badge case from ticket 05, unchanged.
 Production code was not touched; the diff is four test files plus one new test helper.
+
+## Ticket 07 — two e2e specs hang on a bare `app.close()`, 2026-09-16
+
+- Ticket closed: [07](../../.scratch/desktop-suite-red/issues/07-e2e-specs-hang-on-bare-app-close.md)
+- Follow-ups filed: [09](../../.scratch/desktop-suite-red/issues/09-e2e-harness-kills-every-app-after-five-seconds.md),
+  [group-a-reconciliation 20](../../.scratch/group-a-reconciliation/issues/20-quit-dialog-hidden-under-router-overlays.md)
+
+### Root cause
+
+Playwright's `ElectronApplication.close()` evaluates `app.quit()` and waits for exit with no
+timeout. The `before-quit` guard (`src/main/index.ts`) calls `preventDefault()` and asks the renderer
+for the Quit dialog, and nothing answers it. Observed with `DEBUG=pw:api`: `electronApplication.close
+started` was the last call, followed by the 45s timeout. A probe confirmed that clicking Quit ends the
+process in about 1s, so there is no product hang.
+
+### Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Neither spec hangs on close | both tests below, about 12s each, previously 45s timeouts | pass |
+| 2 | Stored-binding and relaunch assertions execute and pass | `keybindings.spec.ts:19` "a rebind applied in the help overlay survives an app restart" | pass (11.8s) |
+| 3 | Save-restart journey executes past the close | `journeys.spec.ts:70` "a save persists across app restarts" | pass (11.7s) |
+
+### Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only; typecheck, effect-lint and verify-db-schema ✓. Desktop 68 failed / 1793 passed, the same failing cases as navbar-keyboard-intent 03's run. Lint and md-link counts unchanged. Only e2e files changed. |
+| e2e | `pnpm test:e2e e2e/keybindings.spec.ts e2e/journeys.spec.ts` | 3 passed / 3 failed. `journeys:96` and `:162` are ticket 08 (`Start match`). `journeys:206` failed at `rowButton.focus()` in a run started straight after the gate. Re-run alone with `--grep "transfer bid"`, it passed (7.2s), so the failure was a throttling artifact. |
+| determinism / save compatibility | — | not applicable; no source change |
+
+### Review
+
+Reviewer **APPROVE**, read-only. Confirmed that the rebind write is awaited before the RPC resolves,
+and that the journey's open path does not write to the save. Lows: the post-stop `storedBinding`
+check is redundant after the poll (kept), and `launchApp.ts` comments blame a wedged renderer (ticket
+09). The reviewer confirmed, by reading the code, that the stacking of the Quit dialog is a real
+player-facing defect of low severity (group-a-reconciliation 20).

@@ -1,5 +1,6 @@
 import {
   assignFullTactic,
+  closeOrKill,
   continueSeededCareer,
   expect,
   openTacticsEditor,
@@ -82,7 +83,10 @@ test("a save persists across app restarts", async ({ userDataDir, launchExtraApp
     await expect(entry).toBeVisible();
     await entry.click();
     await expect(window.getByText(/players$/)).toBeVisible();
-    await app.close();
+    // Not `app.close()`: Playwright closes through `app.quit()`, which the quit guard holds
+    // open waiting for the player to confirm. The save was committed by the seed before
+    // launch, so stopping the process cannot lose it, and the second pass proves that.
+    await closeOrKill(app);
   };
 
   await openTheCareer();

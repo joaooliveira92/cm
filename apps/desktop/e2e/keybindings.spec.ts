@@ -7,6 +7,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import {
+  closeOrKill,
   dismissTeachingSplash,
   expect,
   pressPrimary,
@@ -51,16 +52,27 @@ test("a rebind applied in the help overlay survives an app restart (AC-34)", asy
   await firstWindow.keyboard.press("n");
   await expect(firstWindow.getByRole("heading", { name: /Transfers/ })).toBeVisible();
 
-  // Closed explicitly rather than left to the fixture: the assertion below reads
-  // `keybindings.json`, which is only flushed on shutdown.
-  await firstApp.close();
-
   // The override was persisted under userData, sibling of saves/ (never in the
-  // save or the event stream).
-  const stored = JSON.parse(
-    readFileSync(path.join(userDataDir, "keybindings.json"), "utf8"),
-  ) as Record<string, string>;
-  expect(stored["go-to-recruitment"]).toBe("n");
+  // save or the event stream). Main writes the file on the rebind RPC itself, not
+  // at shutdown, so it is polled for here, while the first app is still running:
+  // the relaunch below then proves the binding survived a hard stop, not a flush.
+  const storedBinding = (): string | undefined => {
+    try {
+      const stored = JSON.parse(
+        readFileSync(path.join(userDataDir, "keybindings.json"), "utf8"),
+      ) as Record<string, string>;
+      return stored["go-to-recruitment"];
+    } catch {
+      return undefined; // Not written yet.
+    }
+  };
+  await expect.poll(storedBinding).toBe("n");
+
+  // `firstApp.close()` never resolves: Playwright closes by calling `app.quit()`, which
+  // the quit guard's `before-quit` handler cancels to ask the player to confirm, and
+  // nobody answers. `closeOrKill` bounds that and stops the process.
+  await closeOrKill(firstApp);
+  expect(storedBinding()).toBe("n");
 
   // Relaunch against the same userDataDir: the binding still applies.
   const relaunched = await launchExtraApp();
