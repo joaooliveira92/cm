@@ -553,3 +553,21 @@ describe("SecondaryNav — keyboard navigation", () => {
     expect(document.activeElement).toBe(lastTab);
   });
 });
+
+describe("SecondaryNav — the tablist is named for its context", () => {
+  it("names a section's tablist after the section", async () => {
+    mountAtPath(["squad"]);
+    expect((await screen.findByRole("tablist")).getAttribute("aria-label")).toBe("Squad");
+  });
+
+  it("names the live-match tablist after the match context, not the section the route falls under", async () => {
+    mountAtPath(["match"]);
+    await screen.findByRole("navigation", { name: "Live Match tabs" });
+    expect(screen.getByRole("tablist").getAttribute("aria-label")).toBe("Live Match");
+  });
+
+  it("names an entity's tablist after the entity", async () => {
+    mountAtPath(["players", "p1"]);
+    expect((await screen.findByRole("tablist")).getAttribute("aria-label")).toBe("Player");
+  });
+});

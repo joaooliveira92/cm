@@ -19,7 +19,16 @@ Match ticket 05 (match-context navigation) is resolved. This is a labelling defe
 
 **Blocked by:** None
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] In match and entity contexts the tablist's accessible name describes that context, not the primary section
-- [ ] A unit test on `SecondaryNav` asserts the tablist name in a match context
+- [x] In match and entity contexts the tablist's accessible name describes that context, not the primary section
+- [x] A unit test on `SecondaryNav` asserts the tablist name in a match context
+
+## Answer
+
+Resolved 2026-09-16. `SecondaryNav` derives one `contextName`: the entity type, the match context,
+or the section. That name gives both the navigation label (`<context> tabs`) and the tablist label.
+Entity contexts had the same fault (a player profile's tablist read as its inferred section), and it
+is fixed the same way. `secondary-nav.test.tsx` "the tablist is named for its context" covers a
+section, the live match and a player. The match and entity cases fail with the old
+`section?.label ?? label`.

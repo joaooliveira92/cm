@@ -127,13 +127,14 @@ export const SecondaryNav = ({
     return exists ? candidate : section.defaultTab;
   }, [entityConfig, matchConfig, section, rawTabId, tabs]);
 
-  const label = entityConfig !== null
-    ? `${entityConfig.entityType.charAt(0).toUpperCase()}${entityConfig.entityType.slice(1)} tabs`
+  // The context the tabs belong to. In an entity or match context `section` is only the primary
+  // section the route falls under, so it must not name the tablist.
+  const contextName = entityConfig !== null
+    ? `${entityConfig.entityType.charAt(0).toUpperCase()}${entityConfig.entityType.slice(1)}`
     : matchConfig !== null
-      ? `${matchContextLabel(matchConfig.matchContext)} tabs`
-      : section !== null
-        ? `${section.label} tabs`
-        : null;
+      ? matchContextLabel(matchConfig.matchContext)
+      : section?.label ?? null;
+  const label = contextName !== null ? `${contextName} tabs` : null;
 
   const tabListRef = useRef<HTMLDivElement | null>(null);
 
@@ -220,7 +221,7 @@ export const SecondaryNav = ({
       <div
         ref={tabListRef}
         role="tablist"
-        aria-label={section?.label ?? label}
+        aria-label={contextName ?? undefined}
         className={`flex min-w-0 flex-1 items-center gap-0.5 px-2.5 ${
           hasOverflow ? "" : "overflow-x-auto"
         }`}
