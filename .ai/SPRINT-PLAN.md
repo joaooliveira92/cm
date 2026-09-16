@@ -2,12 +2,21 @@
 
 ## Immediate next action
 
-**group-j-transfers-contracts-and-negotiations** ticket 08 (navbar entries for Screens 141 and 145).
-Ticket 07 (Transfer History, Screen 146) resolved 2026-09-15; it shipped a navbar entry, which
-exposed that tickets 05 and 06 shipped their screens URL-only. Ticket 04 (Contract Renewal) is
-needs-info on group-j decision request 01 (renewal mid-term), its work kept as a patch. Group J
-decision request 02 (club-scoped transfer indexes) is open and blocks nothing. Group I decision
-request 01 also blocks Group J Screens 132, 134 and 137.
+**desktop-suite-red** ticket 05 (`route-index.test.ts` asserts a frozen screen list) — earliest live
+effort in queue order with a ready ticket. Then **group-j** ticket 08 (navbar entries for Screens
+141 and 145).
+
+Group J ticket 07 (Transfer History, Screen 146) resolved 2026-09-15 (`c7ad6bd`); it shipped a
+navbar entry, which exposed that tickets 05 and 06 shipped their screens URL-only. Ticket 04
+(Contract Renewal) is needs-info on group-j decision request 01 (renewal mid-term), its work kept as
+a patch. Group J decision request 02 (club-scoped transfer indexes) is open and blocks nothing.
+Group I decision request 01 also blocks Group J Screens 132, 134 and 137.
+
+**For a human**: `desktop-suite-red` ticket 03 is claimed-and-abandoned. Per
+[AGENTS.md](../AGENTS.md), `claimed` is a lock the frontier scan skips, so it is invisible to every
+future agent and will never be picked up. It needs unclaiming or closing by someone who knows why it
+stopped. Tickets currently `claimed` elsewhere (group-a 03, group-g 14, group-h 11) may be live
+parallel sessions and were left alone.
 
 ## Gate state (2026-09-14)
 
@@ -40,7 +49,7 @@ request 01 also blocks Group J Screens 132, 134 and 137.
 
 1. ~~**group-c-club-information**: complete 2026-09-14. Screen 38 already shipped.~~
 2. ~~**group-d-player-and-staff-records**: complete 2026-09-14. 19 screens charted, 3 implemented.~~
-3. **desktop-suite-red**: 01, 02, 04 resolved. 03 claimed-and-abandoned.
+3. **desktop-suite-red**: 01, 02, 04 resolved. 03 claimed-and-abandoned (needs a human to unclaim or close). 05 ready — `route-index.test.ts` asserts a frozen screen list, filed from the group-j ticket 07 review.
 4. **season-rollover-skips-conclusion**: 01 resolved.
 5. **match-composition**: 01-02 resolved.
 6. **group-a-reconciliation**: 03-04 resolved.

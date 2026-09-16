@@ -26,7 +26,7 @@ section is worth keeping; it is the frozen literal that is worthless.
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] The career-screen expectation is derived from the router, not a frozen literal
 - [ ] Adding a new career destination does not require editing this test
