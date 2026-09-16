@@ -17,7 +17,7 @@ current, those failures hide this one.
 
 **Blocked by:** 10
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] The decision on how a test holds a match live is recorded
 - [ ] Both journeys live-match tests pass reliably under that decision, with no added retry loop
