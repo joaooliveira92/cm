@@ -72,6 +72,46 @@ export const seedScouted = (savesDir: string) =>
     }),
   );
 
+/**
+ * A fresh save whose club has already completed three transfers: one Player bought in from a rival,
+ * one sold out to a rival, and one **Free Agent** signed for a Credits 0 fee with no Club to leave.
+ * A fourth row moves a Player between two rivals, so the screen has something it must exclude.
+ *
+ * `player_transfers` rows are written directly, as the main-process tests do, so the seed costs no
+ * played Matchday: driving real Bids to completion would need an open Transfer Window and several
+ * advances, and this screen is a pure read over rows that already exist.
+ */
+export const seedTransferred = (savesDir: string) =>
+  run(
+    Effect.gen(function* () {
+      const id = yield* createSeedSave(savesDir, "Seed: transferred");
+      yield* Effect.gen(function* () {
+        const sql = yield* SqlClient;
+        const user = yield* sql<{ id: string }>`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`;
+        const rivals = yield* sql<{ id: string }>`
+          SELECT DISTINCT c.id FROM clubs c JOIN players p ON p.club_id = c.id
+          WHERE c.is_user_club = 0 ORDER BY c.id LIMIT 2`;
+        const ours = yield* sql<{ id: string }>`
+          SELECT id FROM players WHERE club_id = ${user[0]!.id} ORDER BY id LIMIT 3`;
+        const userId = user[0]!.id;
+        const [rivalA, rivalB] = [rivals[0]!.id, rivals[1]!.id];
+
+        yield* sql`INSERT INTO player_transfers (player_id, from_club_id, to_club_id, transferred_on, fee)
+                   VALUES (${ours[0]!.id}, ${rivalA}, ${userId}, '2026-08-20', 3000000)`;
+        yield* sql`INSERT INTO player_transfers (player_id, from_club_id, to_club_id, transferred_on, fee)
+                   VALUES (${ours[1]!.id}, ${userId}, ${rivalB}, '2026-07-02', 1500000)`;
+        yield* sql`INSERT INTO player_transfers (player_id, from_club_id, to_club_id, transferred_on, fee)
+                   VALUES (${ours[2]!.id}, NULL, ${userId}, '2026-07-01', 0)`;
+        yield* sql`INSERT INTO player_transfers (player_id, from_club_id, to_club_id, transferred_on, fee)
+                   VALUES (${ours[0]!.id}, ${rivalA}, ${rivalB}, '2026-09-09', 900000)`;
+      }).pipe(
+        Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${id}.sqlite`) })),
+        Effect.scoped,
+      );
+      return id;
+    }),
+  );
+
 /** A save right at Season start, before the first fixture has been played — the same state as
  *  `seedFresh` (both stand in the pre-season), named for the journeys that lean on it. */
 export const seedBeforeMatchday = (savesDir: string) =>

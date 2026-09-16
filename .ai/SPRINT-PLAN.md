@@ -2,10 +2,12 @@
 
 ## Immediate next action
 
-**group-j-transfers-contracts-and-negotiations** ticket 07 (Transfer History, Screen 146). Ticket 04
-(Contract Renewal) is needs-info on group-j decision request 01 (renewal mid-term), its work kept as a
-patch. Tickets 05-06 resolved 2026-09-15. Group I decision request 01 also blocks Group J Screens
-132, 134 and 137.
+**group-j-transfers-contracts-and-negotiations** ticket 08 (navbar entries for Screens 141 and 145).
+Ticket 07 (Transfer History, Screen 146) resolved 2026-09-15; it shipped a navbar entry, which
+exposed that tickets 05 and 06 shipped their screens URL-only. Ticket 04 (Contract Renewal) is
+needs-info on group-j decision request 01 (renewal mid-term), its work kept as a patch. Group J
+decision request 02 (club-scoped transfer indexes) is open and blocks nothing. Group I decision
+request 01 also blocks Group J Screens 132, 134 and 137.
 
 ## Gate state (2026-09-14)
 
@@ -59,7 +61,8 @@ patch. Tickets 05-06 resolved 2026-09-15. Group I decision request 01 also block
     Knowledge screen), 06 completed (Scouting Centre), 2026-09-15. 08 completed (read-state
     helper), 2026-09-15. Scope note promoted. Effort complete for v1; decision request 01 open. Decision request 01 open.
 12. **group-j-transfers-contracts-and-negotiations**: 01-03 resolved, spec published (2026-09-15). 04
-    needs-info on decision request 01; 05-06 resolved; 07 ready.
+    needs-info on decision request 01; 05-07 resolved (07 Screen 146 Transfer History, 2026-09-15);
+    08 ready (navbar entries for 141/145). Decision requests 01 and 02 open.
 
 Shipped and closed:
 

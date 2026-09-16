@@ -20,6 +20,9 @@ export {
   getContractExpiryScreen,
 } from "./contractExpiry.js";
 export {
+  getTransferHistoryScreen,
+} from "./transferHistory.js";
+export {
   getTransfersScreen,
   placeBid,
   renewContract,

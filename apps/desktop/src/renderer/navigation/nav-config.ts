@@ -177,6 +177,12 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
         icon: ArrowLeftRight,
       },
       {
+        id: "recruitment-transfer-history",
+        label: "Transfer History",
+        destination: "transferHistory",
+        icon: ScrollText,
+      },
+      {
         id: "recruitment-shortlist",
         label: "Shortlist",
         destination: "shortlist",

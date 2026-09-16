@@ -333,3 +333,18 @@ export const budgetReviewAtom = Atom.family((saveId: SaveId) =>
     ),
   ),
 );
+
+export const transferHistoryKey = (saveId: SaveId): readonly ["transferHistory", SaveId] => [
+  "transferHistory",
+  saveId,
+];
+
+/** Transfer History (Screen 146): every completed transfer into or out of the manager's Club,
+ *  newest first. A pure read, reactive on the save-wide key. */
+export const transferHistoryAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getTransferHistoryScreen", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), transferHistoryKey(saveId)]),
+    ),
+  ),
+);

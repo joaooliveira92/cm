@@ -99,6 +99,7 @@ const SpineOrchestrator = ({
         transfers: () => navigateCareer({ type: "transfers", saveId }, "keyboard"),
         contractExpiry: () => navigateCareer({ type: "contractExpiry", saveId }, "keyboard"),
         budgetReview: () => navigateCareer({ type: "budgetReview", saveId }, "keyboard"),
+        transferHistory: () => navigateCareer({ type: "transferHistory", saveId }, "keyboard"),
         league: () => navigateCareer({ type: "league", saveId }, "keyboard"),
         fixtures: () => navigateCareer({ type: "fixtures", saveId }, "keyboard"),
         match: () => navigateCareer({ type: "match", saveId }, "keyboard"),

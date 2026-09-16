@@ -79,6 +79,7 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/transfers":
     case "/career/$saveId/contract-expiry":
     case "/career/$saveId/budget-review":
+    case "/career/$saveId/transfer-history":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     case "/career/$saveId/league":

@@ -91,6 +91,7 @@ import {
   WageBudgetExceededError,
   ContractExpiryScreenView,
   BudgetReviewView,
+  TransferHistoryView,
 } from "./schemas/index.js";
 import { ScoutingRpcs } from "./rpc-scouting.js";
 
@@ -357,6 +358,13 @@ commitCareer: {
   getBudgetReviewScreen: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: BudgetReviewView,
+    error: Schema.Union([SaveNotFoundError]),
+  },
+  /** Transfer History (Screen 146): every completed transfer into or out of the manager's Club,
+   *  newest first, from `player_transfers`. A pure read — no command side. */
+  getTransferHistoryScreen: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: TransferHistoryView,
     error: Schema.Union([SaveNotFoundError]),
   },
   placeBid: {

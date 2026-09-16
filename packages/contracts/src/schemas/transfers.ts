@@ -154,3 +154,26 @@ export class BudgetReviewView extends Schema.Class<BudgetReviewView>("BudgetRevi
   committedWages: Schema.Finite,
   headroom: Schema.Finite,
 }) {}
+
+/** One row of the Transfer History screen: a completed transfer into or out of a club. `fromClubName`
+ *  is `null` when there was no selling club — a **Free Agent** signing, which CONTEXT.md defines as a
+ *  Credits 0 move through the same signing flow. */
+export class TransferHistoryEntryView extends Schema.Class<TransferHistoryEntryView>("TransferHistoryEntryView")({
+  /** The `player_transfers` row id, used as a stable list key and as the newest-first tie-break. */
+  id: Schema.Finite,
+  /** ISO `YYYY-MM-DD`, the in-world date the transfer completed — never the wall clock. */
+  transferredOn: Schema.String,
+  playerFirstName: Schema.String,
+  playerLastName: Schema.String,
+  /** `null` for a Free Agent signing: there was no Club to leave. */
+  fromClubName: Schema.NullOr(Schema.String),
+  toClubName: Schema.String,
+  /** The fee in Credits. Credits 0 for a Free Agent signing. */
+  fee: Schema.Finite,
+}) {}
+
+/** The Transfer History screen (Screen 146): every completed transfer into or out of the manager's
+ *  Club, newest first. A pure read — no command side on this screen. */
+export class TransferHistoryView extends Schema.Class<TransferHistoryView>("TransferHistoryView")({
+  entries: Schema.Array(TransferHistoryEntryView),
+}) {}

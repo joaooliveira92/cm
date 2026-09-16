@@ -19,6 +19,7 @@ import { TacticsScreen } from "../tactics/TacticsScreen.js";
 import { TransfersScreen } from "../transfers/TransfersScreen.js";
 import { ContractExpiryScreen } from "../contractExpiry/ContractExpiryScreen.js";
 import { BudgetReviewScreen } from "../budgetReview/BudgetReviewScreen.js";
+import { TransferHistoryScreen } from "../transferHistory/TransferHistoryScreen.js";
 import { MainMenuScreen } from "./mainMenu.js";
 import { LoadCareerScreen } from "./loadCareer.js";
 import { TeamScoutReportScreen } from "../scouting/TeamScoutReportScreen.js";
@@ -196,6 +197,7 @@ const squadRoute = defineCareerChild("squad", "squad", SquadScreen, { fullHeight
 const transfersRoute = defineCareerChild("transfers", "transfers", TransfersScreen);
 const contractExpiryRoute = defineCareerChild("contract-expiry", "contractExpiry", ContractExpiryScreen);
 const budgetReviewRoute = defineCareerChild("budget-review", "budgetReview", BudgetReviewScreen);
+const transferHistoryRoute = defineCareerChild("transfer-history", "transferHistory", TransferHistoryScreen);
 const leagueRoute = defineCareerChild("league", "league", LeagueTableScreen);
 const fixturesRoute = defineCareerChild("fixtures", "fixtures", FixturesScreen);
 const matchRoute = defineCareerChild("match", "match", MatchDayScreen);
@@ -746,6 +748,7 @@ const routeTree = rootRoute.addChildren([
       transfersRoute,
       contractExpiryRoute,
       budgetReviewRoute,
+      transferHistoryRoute,
       leagueRoute,
       fixturesRoute,
       matchRoute,
