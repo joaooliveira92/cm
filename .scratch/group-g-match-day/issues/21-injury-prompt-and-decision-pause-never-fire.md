@@ -16,7 +16,7 @@ Found in the review of [ticket 18](18-substitution-count-reads-the-whole-match.m
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A revealed Injury on the controlled club pauses the match and opens the prompt
 - [ ] An Injury still in the unrevealed buffer does neither
