@@ -35,9 +35,9 @@ screen what is already built, what is in scope for v1, and in what order the in-
 - [07 — Transfer History](issues/07-transfer-history.md): resolved. Screen 146 shipped 2026-09-15 on
   its own route `career/$saveId/transfer-history`, leaving the club-scoped stub alone. See
   [Agent Note](../../.agents/notes/implemented/architecture/2026-09-15-transfer-history-takes-its-own-career-route.md).
-- [08 — Navbar entries for 141 and 145](issues/08-navbar-entries-for-141-and-145.md): ready. Tickets
-  05 and 06 shipped screens with no navigation to them; 07 added one, so the three v1 screens are
-  inconsistent.
+- [08 — Navbar entries for 141 and 145](issues/08-navbar-entries-for-141-and-145.md): resolved
+  2026-09-16. All three v1 screens are in the Recruitment submenu with `g 4 <key>` bindings; the
+  submenu strip now scrolls, since ten entries overflow the default window.
 - [Decision request 02](decision-request-02-club-scoped-transfer-history-index.md): open. Whether the
   save takes two more indexes for the club-scoped `player_transfers` read. Raised by 07, which ships
   without them.

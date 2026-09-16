@@ -28,7 +28,7 @@ export const ContextNav = () => {
     <nav
       id={`submenu-${stripSection.id}`}
       aria-label={`${stripSection.label} submenu`}
-      className="flex h-11 items-center gap-1 border-b border-border-subtle bg-bg-raised px-2 text-sm"
+      className="flex h-11 min-w-0 items-center gap-1 overflow-x-auto border-b border-border-subtle bg-bg-raised px-2 text-sm"
       onMouseEnter={() => handleSectionEnter(stripSection.id)}
       onMouseLeave={handleSectionLeave}
     >

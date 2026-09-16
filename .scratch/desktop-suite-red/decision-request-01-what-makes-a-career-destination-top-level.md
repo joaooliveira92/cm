@@ -33,34 +33,33 @@ persistent career screens a `g <key>` binding *may* target". There are 7 `g` nav
 to 6 distinct destinations (`squad`, `tactics`, `transfers`, `league`, `news`, `manager`). So 16 of
 the 22 have no binding, and the criterion does not separate the list from its complement.
 
-**"It is a navbar item."** Four sub-surfaces are first-class `NavItem`s in `nav-config.ts`, siblings
+**"It is a navbar item."** Six sub-surfaces are first-class `NavItem`s in `nav-config.ts`, siblings
 of entries that *are* top-level:
 
 | Sub-surface | Navbar item | Sits beside |
 |---|---|---|
 | `transferHistory` | `recruitment-transfer-history` | `recruitment-shortlist` → `shortlist` (top-level) |
+| `contractExpiry` | `recruitment-contract-expiry` | same |
+| `budgetReview` | `recruitment-budget-review` | same |
 | `scoutingAssignment` | `recruitment-scouting-assignment` | `recruitment-scouting` → `scouting` (top-level) |
 | `scoutingKnowledge` | `recruitment-scouting-knowledge` | same |
 | `trainingCoaching` | `training-coaching` | `training-overview` → `training` (top-level) |
 
 Each is one navbar action away from anywhere in a career, exactly like its top-level sibling.
 
-Meanwhile `contractExpiry` and `budgetReview` are classed the same way but are *not* navbar items —
-they are URL-only (see group-j ticket 08). So the sub-surface record currently groups two genuinely
-different situations under one label.
-
 ## Options
 
 ### Option A — top-level means "the navbar can reach it from anywhere with a save"
 
-- **What it changes**: `transferHistory`, `scoutingAssignment`, `scoutingKnowledge` and
-  `trainingCoaching` move into `CAREER_SCREEN_TYPES` (22 → 26). Sub-surfaces become exactly the
-  things that need a second entity, plus the URL-only and match-context screens.
+- **What it changes**: `transferHistory`, `contractExpiry`, `budgetReview`, `scoutingAssignment`,
+  `scoutingKnowledge` and `trainingCoaching` move into `CAREER_SCREEN_TYPES` (22 → 28). Sub-surfaces
+  become exactly the things that need a second entity, plus the match-context screens and the ones
+  reached only from another screen.
 - **What it buys**: the criterion becomes *checkable*, not just recorded — a test can derive the
   list from `nav-config.ts` and the guard stops depending on judgement.
 - **What it costs**: the two lists stop matching the `g`-binding story in the doc comment, which
   would need rewriting. If a `g` binding is later meant to exist for every top-level screen, that is
-  26 bindings against 7 today.
+  28 bindings against 7 today.
 
 ### Option B — top-level means "has, or is eligible for, a `g <key>` binding"
 
@@ -86,7 +85,7 @@ different situations under one label.
 
 **Option A**, then revisit C if the keyboard story grows.
 
-The four contested screens behave identically to their top-level siblings from a manager's point of
+The six contested screens behave identically to their top-level siblings from a manager's point of
 view — same navbar, same one action, same persistence across a career. Classing them as
 sub-surfaces is a statement about how they were *built* (added later, off an existing hub) rather
 than about what they *are*, and that is exactly the kind of distinction that decays once the person

@@ -1,5 +1,61 @@
 # Validation Report: group-j-transfers-contracts-and-negotiations
 
+## Ticket 08 — Navbar entries for Screens 141 and 145, 2026-09-16
+
+### What shipped
+
+Contract Expiry and Budget Review are in the Recruitment submenu, reachable by pointer and by
+`g 4 o` / `g 4 p`, the same way Transfer History is. `POSITION_KEYS` gained `p` for the tenth
+Recruitment item. The submenu strip (`ContextNav`) now scrolls horizontally: ten entries are wider
+than the 1200px window, and the strip previously clipped them with no way to scroll.
+
+### Acceptance criteria → tests
+
+| Criterion | Test |
+|---|---|
+| Each reachable from the Recruitment submenu | `e2e/contract-expiry-and-budget-review.spec.ts` — "Recruitment opens Contract Expiry", "Recruitment opens Budget Review" (navbar clicks via `goto`, `aria-current="page"` on the entry); "the Recruitment submenu scrolls to its last entry at the default window width" (fails with the old CSS: viewport ratio 0); `route-index.test.ts` — six sanctioned navbar sub-surfaces |
+| A Playwright spec navigates through the navbar | the two `goto` tests above |
+| Keyboard access matches Transfer History's | `test/renderer/keyboard/spine-live.test.tsx` — "g <Recruitment> <position key> reaches {Transfer History, Contract Expiry, Budget Review}"; fails for Budget Review with `p` removed |
+
+### Review
+
+First review **NEEDS_REWORK**: one high (the entries were clipped at the default window width, and
+the e2e passed anyway because Playwright scrolls targets programmatically), one medium (desktop-suite-red
+decision request 01 still called both screens URL-only). Both repaired, plus a dated update line on the
+Transfer History Agent Note. The orchestrator re-checked the rework diff rather than running a second
+full review, since the repairs were one className, one spec, and doc lines.
+
+### Gate
+
+- `pnpm check:all` — exit 1, pre-existing failures only:
+  - typecheck ✓, effect-lint ✓ ("no violations found (850 files)"), verify-db-schema ✓
+  - lint ✗ — pre-existing `MatchDayScreen.tsx` unused `state`
+  - verify-md-links ✗ — pre-existing links in `.scratch/group-c-club-information/RECONCILIATION.md` and
+    group-d `issues/02`; none new
+  - tests: shared 461/461, contracts 149/149, game-engine 50/50; desktop **69 failed | 1789 passed
+    (1858)** across 18 files. No failure mentions the submenu, Recruitment, or either screen. Touched
+    files that fail do so on the same cases as before editing: `navbar.test.tsx` (intentional `g 8`
+    badge) and `stage2.test.ts` (3× `window is not defined`). Focused baseline over the seven
+    navigation/keyboard files: 4 failed | 134 passed before, 4 failed | 137 passed after.
+- `pnpm test:e2e e2e/contract-expiry-and-budget-review.spec.ts e2e/transfer-history.spec.ts` — 4 passed (25.0s).
+- Determinism and save compatibility: not touched (no engine, shared, or persistence change).
+
+### Changed files
+
+Created: `apps/desktop/e2e/contract-expiry-and-budget-review.spec.ts`.
+
+Modified: `src/renderer/navigation/{nav-config.ts,components/ContextNav.tsx}`, `e2e/launchApp.ts`,
+`test/renderer/{career-destination-classification.ts,keyboard/spine-live.test.tsx,navigation/route-index.test.ts,router/stage2.test.ts}`,
+desktop-suite-red decision request 01, the Transfer History Agent Note, the ticket, the map, and the
+sprint plan.
+
+### Known limitations
+
+- The scroll e2e asserts Budget Review starts outside the viewport, so it needs revisiting if the
+  default window grows wider than the ten-entry strip.
+- Budget Review's navbar label is shorter than its h1 ("Transfer & Wage Budget Review"); it matches
+  the screen's `aria-label`.
+
 ## Ticket 07 — Transfer History (Screen 146), 2026-09-15
 
 ### What shipped

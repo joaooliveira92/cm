@@ -87,15 +87,16 @@ describe("AC-11 — the redesigned navbar reaches every career screen", () => {
    * Containment, not equality. This block used to open with a second case asserting that the
    * reached set *equals* `CAREER_SCREEN_TYPES`, which contradicted the case below it and
    * contradicted `test/renderer/navigation/route-index.test.ts`, which asserts containment. The
-   * equality was false: the navbar deliberately lists four sub-surfaces as items —
-   * `trainingCoaching`, `transferHistory`, `scoutingAssignment` and `scoutingKnowledge`.
+   * equality was false: the navbar deliberately lists six sub-surfaces as items —
+   * `trainingCoaching`, `transferHistory`, `contractExpiry`, `budgetReview`, `scoutingAssignment`
+   * and `scoutingKnowledge`.
    * Only this file dying at import in the jsdom `window` family kept that red.
    *
    * Containment is the rule AC-11 actually states: no career screen is keyboard-only. The reverse
    * direction the equality also carried — that the navbar links nothing unrecognised — was real,
    * and was not dropped with it: it lives in route-index.test.ts as "every navbar destination is a
    * classified career destination", stated against both halves of the classification so that the
-   * four sanctioned sub-surfaces pass and an unclassified one does not.
+   * six sanctioned sub-surfaces pass and an unclassified one does not.
    *
    * `CAREER_SECTIONS` is a re-export of `NAV_SECTIONS`, so the surviving case here duplicates a
    * route-index one; it is kept because AC-11 is this file's subject. What stops a screen being

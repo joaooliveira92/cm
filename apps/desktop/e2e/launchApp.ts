@@ -172,6 +172,8 @@ const NAV_PATH = {
   training: ["Training"],
   transfers: ["Recruitment"],
   "transfer history": ["Recruitment", "Transfer History"],
+  "contract expiry": ["Recruitment", "Contract Expiry"],
+  "budget review": ["Recruitment", "Budget Review"],
   scouting: ["Recruitment", "Scouting"],
   "scouting assignment": ["Recruitment", "Scouting Assignment"],
   "scouting knowledge": ["Recruitment", "Scouting Knowledge"],

@@ -21,7 +21,7 @@ import type {
  * **What separates the two is not written down anywhere, and it is not what the obvious guesses
  * say.** It is not "has a `g <key>` binding": there are seven `g` nav actions resolving to six
  * distinct destinations, so sixteen of the twenty-two top-level screens have no binding either. It
- * is not "is a navbar item": four members of this record are first-class `NavItem`s in
+ * is not "is a navbar item": six members of this record are first-class `NavItem`s in
  * `nav-config.ts`, siblings of top-level screens. Several entries below are therefore a recorded
  * judgement rather than a derivation, and this record makes the classification compulsory without
  * making it *checkable*. See
@@ -44,8 +44,8 @@ export type CareerSubSurfaceType = Exclude<
 
 export const CAREER_SUB_SURFACES: Readonly<Record<CareerSubSurfaceType, string>> = {
   tacticsEditor: "edits the tactic reached from the read-only Tactics overview",
-  contractExpiry: "a Recruitment-area list, reached from the transfer hub; not a navbar item",
-  budgetReview: "a Recruitment-area list, reached from the transfer hub; not a navbar item",
+  contractExpiry: "a Recruitment navbar item, but classed under the Transfers area, not a screen of its own",
+  budgetReview: "a Recruitment navbar item, but classed under the Transfers area, not a screen of its own",
   transferHistory: "a Recruitment navbar item, but classed under the Transfers area, not a screen of its own",
   trainingWorkload: "Workload and Recovery (Screen 112), reached from Coaching Assignments",
   trainingCoaching: "Coaching Assignments (Screen 111); a Training navbar item, classed under the Training area",

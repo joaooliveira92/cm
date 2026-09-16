@@ -2,8 +2,12 @@
 
 ## Immediate next action
 
-**group-j** ticket 08 (navbar entries for Screens 141 and 145) — desktop-suite-red now has no ready
-ticket, so the queue moves on.
+**navbar-keyboard-intent** ticket 02 (the World section advertises a dead `g 8`) — the only open,
+unblocked, unclaimed ticket left in `.scratch/`.
+
+Group J ticket 08 resolved 2026-09-16: Contract Expiry and Budget Review are in the Recruitment
+submenu (`g 4 o`, `g 4 p`), and the submenu strip now scrolls, since ten entries overflow the
+default window. Group J has no ready ticket left; 04 is needs-info on decision request 01.
 
 desktop-suite-red ticket 06 resolved 2026-09-16 (`d0fab20`): the career-screen classification is now
 enforced by `typecheck` rather than by diligence, and the adapter sweep covers five destinations it
@@ -90,7 +94,7 @@ parallel sessions and were left alone.
     helper), 2026-09-15. Scope note promoted. Effort complete for v1; decision request 01 open. Decision request 01 open.
 12. **group-j-transfers-contracts-and-negotiations**: 01-03 resolved, spec published (2026-09-15). 04
     needs-info on decision request 01; 05-07 resolved (07 Screen 146 Transfer History, 2026-09-15);
-    08 ready (navbar entries for 141/145). Decision requests 01 and 02 open.
+    08 resolved (navbar entries for 141/145, 2026-09-16). Decision requests 01 and 02 open.
 
 Shipped and closed:
 

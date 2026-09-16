@@ -5,6 +5,7 @@ import {
   Bookmark,
   BriefcaseBusiness,
   Building2,
+  CalendarClock,
   CalendarDays,
   ClipboardList,
   Coins,
@@ -24,6 +25,7 @@ import {
   Tv,
   UserRound,
   Users,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type { SaveScopedCareerDestinationType } from "./destinations.js";
@@ -218,6 +220,18 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
         destination: "staffSearch",
         icon: BriefcaseBusiness,
       },
+      {
+        id: "recruitment-contract-expiry",
+        label: "Contract Expiry",
+        destination: "contractExpiry",
+        icon: CalendarClock,
+      },
+      {
+        id: "recruitment-budget-review",
+        label: "Budget Review",
+        destination: "budgetReview",
+        icon: Wallet,
+      },
     ],
   },
   {
@@ -344,9 +358,12 @@ export type NavItemId = (typeof NAV_SECTIONS)[number]["items"][number]["id"];
 /**
  * Position-based key mappings for the two-level prefix system.
  * Level 0: `1`-`7` selects a section (by position in NAV_SECTIONS).
- * Level 1: `q w e r t y u i o` selects a sub-item (by position in the section's items array).
+ * Level 1: `q w e r t y u i o p` selects a sub-item (by position in the section's items array).
+ *
+ * A section item past the last key has no deep-prefix binding and is reachable by pointer only, so
+ * the longest section's item count bounds this list. Recruitment is that section, at ten items.
  */
-export const POSITION_KEYS = ["q", "w", "e", "r", "t", "y", "u", "i", "o"] as const;
+export const POSITION_KEYS = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"] as const;
 
 /** Maps section position keys (1-7) to the section id and its default destination. */
 export const sectionKeyToEntry: ReadonlyMap<string, { sectionId: NavSectionId; defaultDestination: SaveScopedCareerDestinationType }> = new Map(

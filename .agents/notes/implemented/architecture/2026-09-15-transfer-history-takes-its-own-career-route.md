@@ -37,6 +37,8 @@ Expiry (141) and Budget Review (145), both of which are own-club reads on `caree
 
 Unlike 141 and 145, 146 is also added to the navbar (`nav-config.ts`, Recruitment section), so a
 player can reach it by clicking rather than by typing a URL.
+Update 2026-09-16: group-j ticket 08 added 141 and 145 to the same Recruitment section, so all
+three are now navbar items.
 
 ## Alternatives considered
 

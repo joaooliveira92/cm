@@ -57,11 +57,11 @@ describe("nav route index (spec §6 rule 1 & §8)", () => {
    * listed there as a sub-surface or in `CAREER_SCREEN_TYPES`, or `pnpm -r typecheck` fails.
    *
    * The reverse direction — every registered career route appears in the navbar — is false by
-   * design and deliberately absent: the save route registers sub-surfaces (`contract-expiry`,
-   * `budget-review`, the `match-*` screens) at the same depth as top-level screens, so router
+   * design and deliberately absent: the save route registers sub-surfaces (the `match-*`
+   * screens) at the same depth as top-level screens, so router
    * shape cannot tell them apart. Containment is the whole rule, and
    * `test/renderer/router/stage2.test.ts` now agrees; it used to assert the stronger equality,
-   * which the navbar's four sub-surface items make false.
+   * which the navbar's six sub-surface items make false.
    */
   it("every persistent career screen has a home in some navbar section", () => {
     const reached = reachableFromNavbar();
@@ -72,27 +72,30 @@ describe("nav route index (spec §6 rule 1 & §8)", () => {
   /**
    * The direction `stage2.test.ts` used to carry as an equality against `CAREER_SCREEN_TYPES`:
    * the navbar links nothing unexpected. The equality itself was false — the navbar deliberately
-   * lists four sub-surfaces as items — so it is restated here as "top-level screens, plus exactly
-   * these four, and nothing else".
+   * lists six sub-surfaces as items — so it is restated here as "top-level screens, plus exactly
+   * these six, and nothing else".
    *
-   * The four are named rather than derived on purpose. Asserting only "is classified somewhere"
+   * The six are named rather than derived on purpose. Asserting only "is classified somewhere"
    * would be vacuous: the classification is total by construction, so every destination satisfies
-   * it and the case could never fail. Naming them means a *fifth* navbar sub-surface has to be
-   * added here deliberately, which is the edit that should be hard.
+   * it and the case could never fail. Naming them means a *seventh* navbar sub-surface has to be
+   * added here deliberately, which is the edit that should be hard. `contractExpiry` and
+   * `budgetReview` were that edit, made by group-j ticket 08 to match `transferHistory`.
    *
-   * This list is expected to empty out rather than grow. Whether these four are really sub-surfaces
+   * This list is expected to empty out rather than grow. Whether these six are really sub-surfaces
    * at all is
    * `.scratch/desktop-suite-red/decision-request-01-what-makes-a-career-destination-top-level.md`;
    * under its recommended answer they become top-level and this exception set goes away.
    */
   const NAVBAR_SUB_SURFACES: ReadonlySet<string> = new Set([
     "transferHistory",
+    "contractExpiry",
+    "budgetReview",
     "scoutingAssignment",
     "scoutingKnowledge",
     "trainingCoaching",
   ]);
 
-  it("the navbar links top-level screens, plus only the four sanctioned sub-surfaces", () => {
+  it("the navbar links top-level screens, plus only the six sanctioned sub-surfaces", () => {
     const topLevel: ReadonlyArray<string> = CAREER_SCREEN_TYPES;
     const unexpected = [...reachableFromNavbar()].filter(
       (type) => !topLevel.includes(type) && !NAVBAR_SUB_SURFACES.has(type),

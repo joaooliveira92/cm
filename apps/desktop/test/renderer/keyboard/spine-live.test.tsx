@@ -12,6 +12,7 @@ import {
 import { SaveId } from "@cm-clone/contracts";
 import { STATURE_TIERS } from "@cm-clone/shared";
 import { KeyboardSpine, PrefixIndicator, PREFIX_INDICATOR_ENTRIES } from "../../../src/renderer/keyboard/KeyboardSpine.js";
+import { NAV_SECTIONS, POSITION_KEYS } from "../../../src/renderer/navigation/nav-config.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
@@ -148,6 +149,31 @@ describe("AC-18 — the live prefix indicator and lifecycle run through the spin
     // Deep prefix is active — the indicator now shows Squad's sub-items.
     expect(screen.getByText("Go to:").parentElement?.textContent).toContain("Squad");
     expect(screen.getByText("Go to:").parentElement?.textContent).toContain("Q");
+  });
+
+  /**
+   * Group-j ticket 08: Contract Expiry and Budget Review get the same keyboard access Transfer
+   * History has — `g <Recruitment's section key> <the item's position key>` lands on the screen.
+   * Recruitment is the longest section, so this also guards `POSITION_KEYS` against running out:
+   * an item past the last key would be pointer-only and fail here with an undefined key.
+   */
+  it.each([
+    ["Transfer History", "/career/$saveId/transfer-history"],
+    ["Contract Expiry", "/career/$saveId/contract-expiry"],
+    ["Budget Review", "/career/$saveId/budget-review"],
+  ])("g <Recruitment> <position key> reaches %s", async (label, route) => {
+    const sectionIndex = NAV_SECTIONS.findIndex((section) => section.id === "recruitment");
+    const itemIndex = NAV_SECTIONS[sectionIndex]!.items.findIndex((item) => item.label === label);
+    expect(itemIndex).toBeGreaterThanOrEqual(0);
+    const positionKey = POSITION_KEYS[itemIndex];
+    expect(positionKey).toBeDefined();
+
+    await mountTransfersWithSpine();
+    act(() => fireEvent.keyDown(document, { key: "g" }));
+    act(() => fireEvent.keyDown(document, { key: String(sectionIndex + 1) }));
+    act(() => fireEvent.keyDown(document, { key: positionKey! }));
+    expect(navCalls.map((call) => call.to)).toEqual(["/career/$saveId/transfers", route]);
+    expect(screen.queryByText("Go to:")).toBeNull();
   });
 
   it("an invalid key cancels without navigating and without firing a bare action", async () => {

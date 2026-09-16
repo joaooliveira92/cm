@@ -22,8 +22,29 @@ Follow ticket 07's wiring, which is the complete set of touch points:
 
 **Blocked by:** None
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Contract Expiry and Budget Review each reachable from the Recruitment submenu
-- [ ] A Playwright spec navigates to each through the navbar rather than by URL
-- [ ] Keyboard access matches Transfer History's
+- [x] Contract Expiry and Budget Review each reachable from the Recruitment submenu
+- [x] A Playwright spec navigates to each through the navbar rather than by URL
+- [x] Keyboard access matches Transfer History's
+
+## Answer
+
+Resolved 2026-09-16. Recruitment's submenu now lists Contract Expiry (`g 4 o`) and Budget Review
+(`g 4 p`) after Transfer History and the existing entries.
+
+What the ticket's touch-point list got wrong: `destinations.ts`, `adapter.ts`, `NavProvider.tsx` and
+`KeyboardSpine.tsx` were already wired by tickets 05 and 06. The missing pieces were `nav-config.ts`,
+`NAV_PATH`, and the test-side sub-surface lists. Two more things the list missed:
+
+- **Tenth position key.** `POSITION_KEYS` had nine keys and Recruitment reached ten items, so `p` was
+  appended. Level-1 keys are only matched against the chosen section's items, so `p` cannot collide.
+- **Submenu overflow.** Ten items are wider than the 1200px window, and the submenu strip could not
+  scroll, so the last two entries were unreachable by mouse. `ContextNav` now scrolls horizontally,
+  like the primary nav.
+
+Tests: `e2e/contract-expiry-and-budget-review.spec.ts` (navbar navigation to each, plus a wheel-scroll
+check that fails without the overflow fix); `test/renderer/keyboard/spine-live.test.tsx` (the
+`g <section> <position>` path for all three Group J screens); `route-index.test.ts` (six sanctioned
+navbar sub-surfaces). Gate evidence in
+[the report](../../../.ai/reports/group-j-transfers-contracts-and-negotiations.md).
