@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
-import {
-  CAREER_SCREEN_TYPES,
-} from "../../../src/renderer/navigation/destinations.js";
+import { CAREER_SCREEN_TYPES } from "../../../src/renderer/navigation/destinations.js";
 import {
   ACTION_REGISTRY,
 } from "../../../src/renderer/actions/allActions.js";
+import { CAREER_SUB_SURFACES } from "../career-destination-classification.js";
 import {
   checkCollisions,
   createRegistry,
@@ -172,33 +171,29 @@ describe("AC-19 — the Continue safety contract is a registry predicate, not a 
 });
 
 describe("AC-16/AC-14 — the g-navigation bindings resolve a stable career destination", () => {
-  it("every career screen in the tier table has a g binding and nothing extra", () => {
-    expect(CAREER_SCREEN_TYPES.length).toBe(22);
-    expect(CAREER_SCREEN_TYPES).toEqual(
-      expect.arrayContaining([
-        "squad",
-        "tactics",
-        "training",
-        "transfers",
-        "league",
-        "fixtures",
-        "match",
-        "seasonSummary",
-        "manager",
-        "news",
-        "clubInfo",
-        "boardConfidence",
-        "clubHistory",
-        "finances",
-        "staffOverview",
-        "shortlist",
-        "scouting",
-        "playerSearch",
-        "staffSearch",
-        "competitions",
-        "nations",
-        "clubs",
-      ]),
+  it("classifies every career destination as a top-level screen or a named sub-surface", () => {
+    // The compiler already proved the two lists cover the union; this proves they do not overlap,
+    // and that the top-level list has no duplicates hiding a typo.
+    expect(new Set(CAREER_SCREEN_TYPES).size).toBe(CAREER_SCREEN_TYPES.length);
+    expect(
+      CAREER_SCREEN_TYPES.filter((type) => Object.hasOwn(CAREER_SUB_SURFACES, type)),
+    ).toEqual([]);
+  });
+
+  it("every g binding targets a top-level career screen, never a sub-surface", () => {
+    const topLevel: ReadonlyArray<string> = CAREER_SCREEN_TYPES;
+    // Iterated per action rather than through `navKeyByDestinationOf`, which keys its Map by
+    // destination and so collapses two bindings onto one target: today `g 1` (Squad) and `g 3`
+    // (labelled Training but pointing at `squad`) leave a single entry, and the map form would
+    // never inspect `g 1` at all. Seven bindings in, seven checked.
+    const bound = ACTION_REGISTRY.all.flatMap((action) =>
+      action.scope === "career-global" &&
+      action.binding?.startsWith("g ") &&
+      typeof action.metadata?.destination === "string"
+        ? [{ binding: action.binding, destination: action.metadata.destination }]
+        : [],
     );
+    expect(bound.length).toBeGreaterThan(0);
+    expect(bound.filter(({ destination }) => !topLevel.includes(destination))).toEqual([]);
   });
 });

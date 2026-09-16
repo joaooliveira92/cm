@@ -50,22 +50,58 @@ describe("nav route index (spec §6 rule 1 & §8)", () => {
    * and a navbar entry must resolve to a path the router registers. Adding a destination needs no
    * edit here.
    *
-   * What is **not** enforced: that a new top-level screen was added to `CAREER_SCREEN_TYPES` at
-   * all. Omit it and this case passes vacuously. Nothing else catches that today either — see
-   * `.scratch/desktop-suite-red/issues/06-career-screen-list-is-unenforced.md`.
+   * What is **not** enforced here: that a new top-level screen was added to `CAREER_SCREEN_TYPES`
+   * at all. Omit it and this case passes vacuously, because the array it filters is the thing that
+   * shrank. That gap is closed one layer up, at the type level, by the exhaustive classification in
+   * `test/renderer/career-destination-classification.ts` — a new `CareerDestination` member must be
+   * listed there as a sub-surface or in `CAREER_SCREEN_TYPES`, or `pnpm -r typecheck` fails.
    *
    * The reverse direction — every registered career route appears in the navbar — is false by
    * design and deliberately absent: the save route registers sub-surfaces (`contract-expiry`,
    * `budget-review`, the `match-*` screens) at the same depth as top-level screens, so router
-   * shape cannot tell them apart. `test/renderer/router/stage2.test.ts:85-104` asserts the
-   * stronger *equality* against `CAREER_SCREEN_TYPES`, which is false today (the navbar reaches
-   * four sub-surfaces the list excludes); it is masked only because that file dies at import in
-   * the known jsdom `window` family. Ticket 06 covers reconciling the two.
+   * shape cannot tell them apart. Containment is the whole rule, and
+   * `test/renderer/router/stage2.test.ts` now agrees; it used to assert the stronger equality,
+   * which the navbar's four sub-surface items make false.
    */
   it("every persistent career screen has a home in some navbar section", () => {
     const reached = reachableFromNavbar();
     const unreachable = CAREER_SCREEN_TYPES.filter((type) => !reached.has(type));
     expect(unreachable).toEqual([]);
+  });
+
+  /**
+   * The direction `stage2.test.ts` used to carry as an equality against `CAREER_SCREEN_TYPES`:
+   * the navbar links nothing unexpected. The equality itself was false — the navbar deliberately
+   * lists four sub-surfaces as items — so it is restated here as "top-level screens, plus exactly
+   * these four, and nothing else".
+   *
+   * The four are named rather than derived on purpose. Asserting only "is classified somewhere"
+   * would be vacuous: the classification is total by construction, so every destination satisfies
+   * it and the case could never fail. Naming them means a *fifth* navbar sub-surface has to be
+   * added here deliberately, which is the edit that should be hard.
+   *
+   * This list is expected to empty out rather than grow. Whether these four are really sub-surfaces
+   * at all is
+   * `.scratch/desktop-suite-red/decision-request-01-what-makes-a-career-destination-top-level.md`;
+   * under its recommended answer they become top-level and this exception set goes away.
+   */
+  const NAVBAR_SUB_SURFACES: ReadonlySet<string> = new Set([
+    "transferHistory",
+    "scoutingAssignment",
+    "scoutingKnowledge",
+    "trainingCoaching",
+  ]);
+
+  it("the navbar links top-level screens, plus only the four sanctioned sub-surfaces", () => {
+    const topLevel: ReadonlyArray<string> = CAREER_SCREEN_TYPES;
+    const unexpected = [...reachableFromNavbar()].filter(
+      (type) => !topLevel.includes(type) && !NAVBAR_SUB_SURFACES.has(type),
+    );
+    expect(unexpected).toEqual([]);
+    // Every exception is real: an entry here that the navbar stopped linking is dead weight.
+    expect(
+      [...NAVBAR_SUB_SURFACES].filter((type) => !reachableFromNavbar().has(type as never)),
+    ).toEqual([]);
   });
 
   it("every navbar destination points at a route the app router registers", () => {

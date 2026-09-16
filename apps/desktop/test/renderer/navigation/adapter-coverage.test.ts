@@ -28,9 +28,8 @@ import {
 } from "@cm-clone/contracts";
 import { bindRouter, navigate } from "../../../src/renderer/navigation/adapter.js";
 import {
-  CAREER_SCREEN_TYPES,
-  careerDestination,
   resolveDestination,
+  type CareerDestination,
   type NavigationDestination,
 } from "../../../src/renderer/navigation/destinations.js";
 
@@ -47,37 +46,93 @@ const spyRouter = () => {
   return navigateSpy;
 };
 
+const saveId = save("save-1");
+const clubId = club("club-7");
+const playerId = PlayerId.make("player-3");
+const matchId = MatchId.make("m1");
+
 /**
- * Every destination the app can build, so the sweep below is over the real set rather than a
- * hand-kept copy of it. The two club-scoped drill-downs need a target club; everything else is
- * reachable from a bare type plus the save.
+ * One sample destination per union member, keyed by its own discriminant. Both a missing key and a
+ * sample filed under the wrong key are compile errors, and `apps/desktop`'s tsconfig includes
+ * `test/`, so `pnpm -r typecheck` is what enforces it.
  */
+type SamplesOf<T extends NavigationDestination> = {
+  readonly [K in T["type"]]: Extract<T, { readonly type: K }>;
+};
+
+/**
+ * Every destination the app can build, exhaustive over `CareerDestination` by construction rather
+ * than by diligence.
+ *
+ * The previous version spread `CAREER_SCREEN_TYPES` and hand-listed the sub-surfaces beside it,
+ * which made the sweep only as complete as the last person to remember this file. It was not
+ * complete: `contractExpiry`, `budgetReview`, `transferHistory`, `playerDetail` and
+ * `trainingCoaching` — five, counted against the union rather than estimated — were all missing,
+ * so the adapter fall-through this file exists to prevent was unguarded for every one of them
+ * while the doc comment claimed the sweep ran "over the real set". Add a member to
+ * `CareerDestination` now and the build stops here with `Property '<name>' is missing`.
+ */
+const CAREER_DESTINATIONS: SamplesOf<CareerDestination> = {
+  squad: { type: "squad", saveId },
+  tactics: { type: "tactics", saveId },
+  tacticsEditor: { type: "tacticsEditor", saveId },
+  transfers: { type: "transfers", saveId },
+  contractExpiry: { type: "contractExpiry", saveId },
+  budgetReview: { type: "budgetReview", saveId },
+  transferHistory: { type: "transferHistory", saveId },
+  league: { type: "league", saveId },
+  fixtures: { type: "fixtures", saveId },
+  match: { type: "match", saveId },
+  seasonSummary: { type: "seasonSummary", saveId },
+  manager: { type: "manager", saveId },
+  news: { type: "news", saveId },
+  training: { type: "training", saveId },
+  trainingWorkload: { type: "trainingWorkload", saveId },
+  trainingCoaching: { type: "trainingCoaching", saveId },
+  trainingPlan: { type: "trainingPlan", saveId, playerId },
+  trainingDevelopment: { type: "trainingDevelopment", saveId },
+  clubInfo: { type: "clubInfo", saveId },
+  boardConfidence: { type: "boardConfidence", saveId },
+  clubHistory: { type: "clubHistory", saveId },
+  finances: { type: "finances", saveId },
+  staffOverview: { type: "staffOverview", saveId },
+  shortlist: { type: "shortlist", saveId },
+  scouting: { type: "scouting", saveId },
+  scoutingAssignment: { type: "scoutingAssignment", saveId },
+  scoutingKnowledge: { type: "scoutingKnowledge", saveId },
+  playerSearch: { type: "playerSearch", saveId },
+  staffSearch: { type: "staffSearch", saveId },
+  competitions: { type: "competitions", saveId },
+  nations: { type: "nations", saveId },
+  clubs: { type: "clubs", saveId },
+  teamScoutReport: { type: "teamScoutReport", saveId, clubId },
+  clubStaff: { type: "clubStaff", saveId, clubId },
+  playerDetail: { type: "playerDetail", saveId, playerId },
+  playerDevelopment: { type: "playerDevelopment", saveId, playerId },
+  playerContract: { type: "playerContract", saveId, playerId },
+  matchMatchTactics: { type: "matchMatchTactics", saveId },
+  matchSubstitutions: { type: "matchSubstitutions", saveId },
+  matchStats: { type: "matchStats", saveId },
+  matchRatings: { type: "matchRatings", saveId },
+  matchReport: { type: "matchReport", saveId, matchId },
+  matchCommentary: { type: "matchCommentary", saveId },
+  matchLatestScores: { type: "matchLatestScores", saveId },
+  matchLiveTable: { type: "matchLiveTable", saveId },
+};
+
+/** The main menu, the load screen, and the four creation steps — everything outside a save. */
+const PRE_CAREER_DESTINATIONS: SamplesOf<Exclude<NavigationDestination, CareerDestination>> = {
+  mainMenu: { type: "mainMenu" },
+  loadCareer: { type: "loadCareer" },
+  createLeagues: { type: "createLeagues" },
+  createStep1: { type: "createStep1" },
+  createStep2: { type: "createStep2" },
+  createStep3: { type: "createStep3" },
+};
+
 const ALL_DESTINATIONS: ReadonlyArray<NavigationDestination> = [
-  { type: "mainMenu" },
-  { type: "loadCareer" },
-  { type: "createLeagues" },
-  { type: "createStep1" },
-  { type: "createStep2" },
-  { type: "createStep3" },
-  ...CAREER_SCREEN_TYPES.map((type) => careerDestination(type, save("save-1"))),
-  careerDestination("tacticsEditor", save("save-1")),
-  careerDestination("trainingWorkload", save("save-1")),
-  { type: "trainingPlan", saveId: save("save-1"), playerId: PlayerId.make("player-3") },
-  careerDestination("trainingDevelopment", save("save-1")),
-  careerDestination("scoutingAssignment", save("save-1")),
-  careerDestination("scoutingKnowledge", save("save-1")),
-  { type: "playerDevelopment", saveId: save("save-1"), playerId: PlayerId.make("player-3") },
-  { type: "playerContract", saveId: save("save-1"), playerId: PlayerId.make("player-3") },
-  { type: "teamScoutReport", saveId: save("save-1"), clubId: club("club-7") },
-  { type: "clubStaff", saveId: save("save-1"), clubId: club("club-7") },
-  { type: "matchMatchTactics", saveId: save("save-1") },
-  { type: "matchSubstitutions", saveId: save("save-1") },
-  { type: "matchStats", saveId: save("save-1") },
-  { type: "matchRatings", saveId: save("save-1") },
-  { type: "matchReport", saveId: save("save-1"), matchId: MatchId.make("m1") },
-  { type: "matchCommentary", saveId: save("save-1") },
-  { type: "matchLatestScores", saveId: save("save-1") },
-  { type: "matchLiveTable", saveId: save("save-1") },
+  ...Object.values(PRE_CAREER_DESTINATIONS),
+  ...Object.values(CAREER_DESTINATIONS),
 ];
 
 describe("the navigation adapter reaches the router for every destination", () => {

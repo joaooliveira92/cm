@@ -40,10 +40,34 @@ is intended and leave one.
 
 **Blocked by:** None
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Adding a top-level career screen without updating `CAREER_SCREEN_TYPES` fails some test
-- [ ] `registry.test.ts` no longer pins a hard-coded count and name list
-- [ ] `adapter-coverage.test.ts` sweeps the `CareerDestination` union exhaustively, covering the
-      three missing screens
-- [ ] `stage2.test.ts`'s equality and `route-index.test.ts`'s containment no longer contradict
+- [x] Adding a top-level career screen without updating `CAREER_SCREEN_TYPES` fails some test
+- [x] `registry.test.ts` no longer pins a hard-coded count and name list
+- [x] `adapter-coverage.test.ts` sweeps the `CareerDestination` union exhaustively, covering the
+      missing screens — five of them, not the three this ticket named
+- [x] `stage2.test.ts`'s equality and `route-index.test.ts`'s containment no longer contradict
+
+## Outcome, 2026-09-16
+
+The classification moved to `test/renderer/career-destination-classification.ts`, where
+`CareerSubSurfaceType = Exclude<CareerDestination["type"], (typeof CAREER_SCREEN_TYPES)[number]>`
+and an exhaustive `Record` over it make the compiler the guard. Verified by probe: adding a
+`probeOmitted` union member without classifying it fails `typecheck` at both the classification
+record and `adapter-coverage.test.ts`'s `SamplesOf<CareerDestination>`.
+
+The adapter sweep was missing **five** destinations, not three: `contractExpiry`, `budgetReview`,
+`transferHistory`, `playerDetail` and `trainingCoaching`.
+
+`stage2.test.ts`'s equality was removed rather than kept — it was false, because the navbar
+deliberately lists four sub-surfaces. The direction it genuinely covered ("the navbar links nothing
+unexpected") was restored in `route-index.test.ts` as "top-level screens plus exactly these four",
+naming the exceptions. An earlier attempt asserted only "is classified somewhere", which is vacuous
+given the classification is total; that was caught and replaced before commit.
+
+The review also found the recorded rationale was wrong on its facts: "these are sub-surfaces because
+they carry no `g` binding" is false, since 16 of the 22 top-level screens have no binding either.
+The reason strings were corrected and the real question routed to
+[decision request 01](../decision-request-01-what-makes-a-career-destination-top-level.md) — nothing
+written down distinguishes a top-level screen from a sub-surface, so the guard forces a choice
+without being able to check it.
