@@ -6,7 +6,7 @@ import { it } from "@effect/vitest";
 import { notStrictEqual, ok, strictEqual } from "node:assert";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
-import { seedBeforeSeasonEnd, seedConcluded, seedFresh } from "../../../e2e/seedSaves.js";
+import { seedBeforeMatchday, seedBeforeSeasonEnd, seedConcluded, seedFresh } from "../../../e2e/seedSaves.js";
 import { getSeasonSummary } from "../../../src/main/season/index.js";
 
 let savesDir: string;
@@ -54,4 +54,17 @@ it.effect("fresh seed produces a pre-season save", () =>
     // A fresh save stands in the pre-season, before the first fixture is played.
     ok(summary.season.currentDate.length === 10);
   }),
+);
+it.effect("before-matchday seed stands at the human club's first Fixture with nothing played", () =>
+  Effect.gen(function* () {
+    const saveId = yield* Effect.promise(() => seedBeforeMatchday(savesDir));
+    const summary = yield* getSeasonSummary(savesDir, saveId);
+
+    // The e2e specs that start a match need Match Day to offer one, which it only does at the
+    // pre-match boundary: a Fixture waiting and no match started on it yet.
+    strictEqual(summary.season.phase, "in_season");
+    ok(summary.season.awaitingFixture !== null, "a Fixture should be waiting");
+    strictEqual(summary.season.awaitingFixture.matchId, null, "no match is started by the seed");
+  }),
+  30_000,
 );

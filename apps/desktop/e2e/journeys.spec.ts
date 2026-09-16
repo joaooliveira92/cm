@@ -112,7 +112,7 @@ test("a substitution is driven by keyboard through the match day live control pa
   await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
   await expect(page.locator('[data-focus-id="match"]')).toBeFocused();
 
-  const start = page.getByRole("button", { name: "Start match" });
+  const start = page.getByRole("button", { name: "Play match" });
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.focus();
   await expect(start).toBeFocused();
@@ -171,7 +171,7 @@ test("a live substitution is made from the standalone Match Substitutions screen
   await assignFullTactic(page);
 
   await pressItemKey(page, "analysis", "analysis-match");
-  const start = page.getByRole("button", { name: "Start match" });
+  const start = page.getByRole("button", { name: "Play match" });
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
 

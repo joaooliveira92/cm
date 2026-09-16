@@ -9,7 +9,7 @@ import {
   openTacticsEditor,
   test,
 } from "./launchApp.js";
-import { savesDir, seedConcluded, seedFresh } from "./seedSaves.js";
+import { savesDir, seedBeforeMatchday, seedConcluded, seedFresh } from "./seedSaves.js";
 
 /** Seed a save into the app's saves dir, then continue that career by its fixed seed name. */
 const seedAndContinue = async (window: Page, userDataDir: string, name: string, seed: (dir: string) => Promise<string>) => {
@@ -88,7 +88,8 @@ test("Fixtures screen renders the fixture list", async ({ userDataDir, window })
 });
 
 test("Match Day starts a match, reveals a feed, and applies a live control command", async ({ userDataDir, window }) => {
-  await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
+  // A match is only startable at the pre-match boundary: a pre-season save has no Fixture waiting.
+  await seedAndContinue(window, userDataDir, "Seed: before-matchday", seedBeforeMatchday);
 
   // The control panel only renders once the club has a persisted Tactic; set one first.
   await goto(window, "tactics");
@@ -96,7 +97,7 @@ test("Match Day starts a match, reveals a feed, and applies a live control comma
   await assignFullTactic(window);
 
   await goto(window, "match day");
-  const start = window.getByRole("button", { name: "Start match" });
+  const start = window.getByRole("button", { name: "Play match" });
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
 

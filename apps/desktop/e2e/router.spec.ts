@@ -1,6 +1,17 @@
 import type { Page } from "@playwright/test";
-import { enterCareer, expect, goto, matchScore, saveEntry, test, type Screen } from "./launchApp.js";
-import { savesDir, seedFresh } from "./seedSaves.js";
+import {
+  assignFullTactic,
+  continueSeededCareer,
+  enterCareer,
+  expect,
+  goto,
+  matchScore,
+  openTacticsEditor,
+  saveEntry,
+  test,
+  type Screen,
+} from "./launchApp.js";
+import { savesDir, seedBeforeMatchday, seedFresh } from "./seedSaves.js";
 
 /** Leave creation once a world exists: the Cancel control raises the discard confirmation
  *  (Screen 7 §21), and the destructive choice inside it is what actually leaves. */
@@ -182,11 +193,16 @@ test("pointer nav does not force focus; keyboard nav focuses the destination (AC
 });
 
 test("Match Day arrival resumes a pending match instead of starting one (AC-15)", async ({ window: page, userDataDir }) => {
-  await enterCareer(page, userDataDir);
+  // A match is only startable at the pre-match boundary, and only with a saved Tactic.
+  await seedBeforeMatchday(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: before-matchday");
+  await goto(page, "tactics");
+  await openTacticsEditor(page);
+  await assignFullTactic(page);
 
   await goto(page, "match day");
   await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
-  const start = page.getByRole("button", { name: "Start match" });
+  const start = page.getByRole("button", { name: "Play match" });
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
   await expect(matchScore(page)).toBeVisible();
@@ -197,5 +213,5 @@ test("Match Day arrival resumes a pending match instead of starting one (AC-15)"
   await goto(page, "match day");
   // Resumed: the same live scoreboard, and no fresh match picker on arrival.
   await expect(matchScore(page)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Start match" })).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Play match" })).not.toBeVisible();
 });

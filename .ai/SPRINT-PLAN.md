@@ -2,9 +2,14 @@
 
 ## Immediate next action
 
-**desktop-suite-red** ticket 08 (the before-matchday seed offers no fixture), then 09 (the e2e
-harness kills every app after 5s), then navbar-keyboard-intent 04 (a decision first), then
-group-a-reconciliation 20 (the Quit dialog is hidden under router overlays).
+**desktop-suite-red** ticket 09 (the e2e harness kills every app after 5s), then 10 (live-match specs
+assert retired copy and nav), 11 (live match reaches full time mid-test, needs a decision, blocked by
+10), 12 (Squad `h1`, needs triage), 13 (duplicate player names); then navbar-keyboard-intent 04 (a
+decision first), then group-a-reconciliation 20 (the Quit dialog is hidden under router overlays).
+
+desktop-suite-red ticket 08 resolved 2026-09-16: the before-matchday seed now stands at the first
+pre-match boundary, and the kickoff locators say "Play match". Router AC-15 and keyboard AC-20 pass.
+The match-starting journeys now get past kickoff and fail on tickets 10 and 11.
 
 desktop-suite-red ticket 07 resolved 2026-09-16: the close hang was the quit-confirmation guard that
 no test answered, not an app defect. `keybindings.spec.ts` and the journeys save-restart test pass.
@@ -88,8 +93,8 @@ parallel sessions and were left alone.
 2. ~~**group-d-player-and-staff-records**: complete 2026-09-14. 19 screens charted, 3 implemented.~~
 3. **desktop-suite-red**: 01, 02, 04, 05, 06 resolved (05 derived the nav guards, 06 made the
     classification a typecheck gate, 2026-09-16). 03 claimed-and-abandoned (needs a human to
-    unclaim or close). Decision request 01 open. 07 resolved 2026-09-16 (quit guard, not a hang). 08
-    (before-matchday seed has no fixture) and 09 (harness close pays 5s and SIGKILL) ready.
+    unclaim or close). Decision request 01 open. 07, 08 resolved 2026-09-16 (quit guard; seed at the
+    pre-match boundary). 09-11, 13 ready; 12 needs-triage; 11 blocked by 10.
 4. **season-rollover-skips-conclusion**: 01 resolved.
 5. **match-composition**: 01-02 resolved.
 6. **group-a-reconciliation**: 03-04 resolved. 20 ready (Quit dialog hidden under router overlays, filed 2026-09-16).

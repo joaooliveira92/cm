@@ -206,3 +206,35 @@ and that the journey's open path does not write to the save. Lows: the post-stop
 check is redundant after the poll (kept), and `launchApp.ts` comments blame a wedged renderer (ticket
 09). The reviewer confirmed, by reading the code, that the stacking of the Quit dialog is a real
 player-facing defect of low severity (group-a-reconciliation 20).
+
+## Ticket 08 — the before-matchday seed offers no fixture, 2026-09-16
+
+- Ticket closed: [08](../../.scratch/desktop-suite-red/issues/08-before-matchday-seed-offers-no-fixture.md)
+- Follow-ups filed: [10](../../.scratch/desktop-suite-red/issues/10-live-match-specs-assert-retired-copy-and-nav.md),
+  [11](../../.scratch/desktop-suite-red/issues/11-live-match-reaches-full-time-mid-test.md),
+  [12](../../.scratch/desktop-suite-red/issues/12-squad-screen-has-no-h1.md),
+  [13](../../.scratch/desktop-suite-red/issues/13-transfer-bid-spec-collides-on-duplicate-player-names.md)
+
+### Acceptance criteria → evidence
+
+| # | Criterion | Evidence | Result |
+|---|---|---|---|
+| 1 | Cause observed in a page snapshot | baseline `error-context.md`: "Season 1 · Pre-season", "No Fixture is waiting…", matching `KickoffPanel.tsx`'s copy | pass |
+| 2 | The tests reach a startable match without loosening later assertions | `router.spec.ts:195` and `keyboard.spec.ts:158` pass; `journeys.spec.ts:96`/`:162` and `app.spec.ts:90` click Play match and fail later on retired copy and nav (10, 11). The reviewer confirmed that every assertion after the start is byte-identical. | pass |
+| — | Seed invariant | `test/main/season/seed-saves.test.ts` "before-matchday seed stands at the human club's first Fixture with nothing played" | 4/4 in file |
+
+### Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Desktop 68 failed / 1793 passed, the same failing cases as ticket 07's run. Lint and md-link counts unchanged. The run did not include the seed unit test, which was added from the review's finding M1 during the run. It was run afterwards: `pnpm exec vitest run test/main/season/seed-saves.test.ts` gave 4 passed, and `pnpm typecheck` found 0 `error TS`. |
+| e2e | `pnpm test:e2e e2e/router.spec.ts e2e/keyboard.spec.ts e2e/app.spec.ts e2e/journeys.spec.ts` | 20 passed / 4 failed. The failures are `app:20` (h1, ticket 12), `app:90` at :115 (Applied copy, 10), `journeys:96` at :132 (Applied copy, 10) and `journeys:162` at :178 ("Live match screens" nav, 10). The implementator's baseline over router/journeys/keyboard was 12 passed / 5 failed. |
+| determinism / save compatibility | — | not applicable; no source change. The seed goes through the real `advanceCalendar` RPC path. |
+
+### Review
+
+Reviewer **APPROVE**, read-only. It confirmed the cause against `f1c5681`, and that the first Continue
+reaches a human Fixture for any world seed. M1 (missing seed unit test) is done. M2 (say the cause was
+observed, not inferred) is done in the ticket Answer. L1: the `not.toBeVisible("Play match")` half of
+the resume check would pass vacuously after another rename, but `matchScore` still guards the test.
+That half was left as is.

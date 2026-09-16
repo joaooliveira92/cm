@@ -180,7 +180,7 @@ test("Escape closes only the topmost transient layer (AC-20)", async ({
   await assignFullTactic(page);
 
   await pressItemKey(page, "analysis", "analysis-match");
-  const start = page.getByRole("button", { name: "Start match" });
+  const start = page.getByRole("button", { name: "Play match" });
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.focus();
   await page.keyboard.press("Enter");

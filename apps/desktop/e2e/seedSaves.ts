@@ -2,8 +2,9 @@ import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { advanceCalendar } from "../src/main/season/index.js";
 import { createSave } from "../src/main/world/index.js";
-import { advanceThroughBoundary } from "../test/main/boundary-helpers.js";
+import { advanceThroughBoundary, pendingFixtureId } from "../test/main/boundary-helpers.js";
 
 const run = <A, E>(effect: Effect.Effect<A, E>): Promise<A> => Effect.runPromise(effect);
 
@@ -16,6 +17,13 @@ export const savesDir = (userDataDir: string) => path.join(userDataDir, "saves")
 export class SeasonNeverConcludedError extends Schema.TaggedError<SeasonNeverConcludedError>()(
   "SeasonNeverConcludedError",
   { advances: Schema.Finite },
+) {}
+
+/** The seed's first Continue did not stop at the human club's Fixture. The first Continue of a career
+ *  is meant to reach Matchday 1 in one press, so this is the Calendar, not the spec, being wrong. */
+export class NoPendingFixtureError extends Schema.TaggedError<NoPendingFixtureError>()(
+  "NoPendingFixtureError",
+  {},
 ) {}
 
 const MAX_ADVANCES = 200;
@@ -112,10 +120,25 @@ export const seedTransferred = (savesDir: string) =>
     }),
   );
 
-/** A save right at Season start, before the first fixture has been played — the same state as
- *  `seedFresh` (both stand in the pre-season), named for the journeys that lean on it. */
+/**
+ * A save standing at the pre-match boundary of Matchday 1: one Continue pressed, the Calendar stopped
+ * before the human club's Fixture, nothing of that Matchday resolved and no match started.
+ *
+ * Match day only offers a match for the Fixture the Calendar is holding, so a pre-season save shows
+ * "No Fixture is waiting". The seed presses Continue through the real `advanceCalendar` rather than
+ * writing the boundary columns, and leaves the Tactic unset: the journeys set it through the editor.
+ */
 export const seedBeforeMatchday = (savesDir: string) =>
-  run(createSeedSave(savesDir, "Seed: before-matchday"));
+  run(
+    Effect.gen(function* () {
+      const id = yield* createSeedSave(savesDir, "Seed: before-matchday");
+      yield* advanceCalendar(savesDir, id);
+      if ((yield* pendingFixtureId(savesDir, id)) === null) {
+        return yield* new NoPendingFixtureError();
+      }
+      return id;
+    }),
+  );
 
 /** A save advanced deep into the season but not to its end — enough football played for a table
  *  to mean something, with the conclusion still ahead. */
