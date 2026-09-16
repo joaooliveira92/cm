@@ -69,6 +69,7 @@ import {
   PlayerProfileView,
   PlayerNotFreeAgentError,
   ResumeSimulationView,
+  SubmitMatchCommandView,
   SaveArchivedError,
   SaveId,
   SaveNotFoundError,
@@ -286,7 +287,14 @@ commitCareer: {
     ]),
   },
   resumeSimulation: {
-    payload: Schema.Struct({ saveId: SaveId, matchId: MatchId, cursor: Schema.Finite }),
+    /** `revealedEvents` cuts the substitution counts after that many Match Events — one per
+     *  Commentary Line revealed, as `getMatchStatistics` cuts — and null counts the whole match. */
+    payload: Schema.Struct({
+      saveId: SaveId,
+      matchId: MatchId,
+      cursor: Schema.Finite,
+      revealedEvents: Schema.NullOr(Schema.Finite),
+    }),
     success: ResumeSimulationView,
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },
@@ -333,11 +341,12 @@ commitCareer: {
       saveId: SaveId,
       matchId: MatchId,
       cursor: Schema.Finite,
+      revealedEvents: Schema.NullOr(Schema.Finite),
       minute: Schema.Finite,
       isHalftime: Schema.Boolean,
       command: MatchCommandPayload,
     }),
-    success: ResumeSimulationView,
+    success: SubmitMatchCommandView,
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError, SaveArchivedError]),
   },
   getTransfersScreen: {

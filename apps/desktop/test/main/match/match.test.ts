@@ -66,7 +66,7 @@ it.effect("resumeSimulation drives a fresh match to completion via successive ch
     while (!isComplete) {
       calls += 1;
       ok(calls < 10_000, "resumeSimulation should reach FullTimeWhistle in a bounded number of calls");
-      const chunk = yield* resumeSimulation(savesDir, save.id, summary.matchId, cursor);
+      const chunk = yield* resumeSimulation(savesDir, save.id, summary.matchId, cursor, null);
       ok(chunk.cursor >= cursor);
       cursor = chunk.cursor;
       isComplete = chunk.isComplete;
@@ -79,7 +79,7 @@ it.effect("resumeSimulation drives a fresh match to completion via successive ch
     ok(lastHomeScore >= 0 && lastAwayScore >= 0);
 
     // Once complete, resuming again from the same cursor stays complete and returns no new lines.
-    const after = yield* resumeSimulation(savesDir, save.id, summary.matchId, cursor);
+    const after = yield* resumeSimulation(savesDir, save.id, summary.matchId, cursor, null);
     strictEqual(after.isComplete, true);
     strictEqual(after.lines.length, 0);
   }),
@@ -96,7 +96,7 @@ it.effect("resumeSimulation is deterministic — replaying from cursor 0 reprodu
         let isComplete = false;
         const lines: Array<{ minute: number; tag: string; text: string }> = [];
         while (!isComplete) {
-          const chunk = yield* resumeSimulation(savesDir, save.id, summary.matchId, cursor);
+          const chunk = yield* resumeSimulation(savesDir, save.id, summary.matchId, cursor, null);
           cursor = chunk.cursor;
           isComplete = chunk.isComplete;
           lines.push(...chunk.lines);
@@ -122,7 +122,7 @@ it.effect("commentary lines never fire for a Minute-Slice with no Match Event an
     let isComplete = false;
     const lines: Array<{ minute: number; tag: string; text: string }> = [];
     while (!isComplete) {
-      const chunk = yield* resumeSimulation(savesDir, save.id, summary.matchId, cursor);
+      const chunk = yield* resumeSimulation(savesDir, save.id, summary.matchId, cursor, null);
       cursor = chunk.cursor;
       isComplete = chunk.isComplete;
       lines.push(...chunk.lines);

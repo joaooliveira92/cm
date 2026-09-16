@@ -17,7 +17,14 @@ import { submitMatchCommandMutation, useAtomSet } from "../rpc.js";
 import { resolveCommandStatus, type CommandStatus } from "./commandStatus.js";
 import { controlledOnPitchCount, controlledSubs } from "./controlledClub.js";
 import { useMatchContext, type MatchCommand } from "./MatchProvider.js";
-import { getHalfTimeRevealed, recordHalfTimeRevealed, recordRevealedEvents, recordRevealedMinute, recordRevealedScore } from "./session.js";
+import {
+  getHalfTimeRevealed,
+  getRevealedEvents,
+  recordHalfTimeRevealed,
+  recordRevealedEvents,
+  recordRevealedMinute,
+  recordRevealedScore,
+} from "./session.js";
 
 /** `simulateMatch`'s half length — halftime commands are stamped at this minute. */
 const HALFTIME_MINUTE = 45;
@@ -103,8 +110,8 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     if (view.isComplete) streamCompleteRef.current = true;
     setHomeScore(view.homeScore);
     setAwayScore(view.awayScore);
-    // Substitution counts cover the whole match, so a poll is as good a source as a command response
-    // (the standalone screens read them the same way).
+    // Substitution counts cover the Match Events revealed when the poll was sent, so a poll is as good
+    // a source as a command response (the standalone screens read them the same way).
     // A poll sent before a command can land after it: the count only rises, so never lower it.
     if (matchState.match !== null) {
       const polled = controlledSubs(matchState.match, view);
@@ -135,17 +142,15 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     [matchActions],
   );
 
-  const applyCommandResult = useCallback((response: RpcSuccess<"submitMatchCommand">): SubstitutionStatusView | null => {
+  const applyCommandResult = useCallback((response: RpcSuccess<"submitMatchCommand">): void => {
     const match = matchState.match;
     setHomeScore(response.homeScore);
     setAwayScore(response.awayScore);
     setChunkInjuries([]);
-    if (match === null) return null;
-    const subs = controlledSubs(match, response);
-    setClubSubs(subs);
+    if (match === null) return;
+    setClubSubs(controlledSubs(match, response));
     setClubSubsKnown(true);
     setClubOnPitchCount(controlledOnPitchCount(match, response));
-    return subs;
   }, [matchState.match]);
 
   const submitCommand = useCallback(
@@ -156,20 +161,20 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
           saveId: matchState.saveId,
           matchId: matchState.match.matchId,
           cursor: 0,
+          revealedEvents: getRevealedEvents(matchState.saveId),
           minute: isHalftime ? HALFTIME_MINUTE : stampMinute(currentMinute, getHalfTimeRevealed(matchState.saveId)),
           isHalftime,
           command,
         });
-        const after = applyCommandResult(result);
-        if (after === null) return { _tag: "rejected", reason: "No match is in play." };
-        return resolveCommandStatus(command, { subs: clubSubs }, { subs: after });
+        applyCommandResult(result);
+        return resolveCommandStatus(command, result);
       } catch (error) {
         const typed = error as RpcClientError<"submitMatchCommand"> | undefined;
         if (typed?._tag === "RemoteFailure") return { _tag: "rejected", reason: describeRpcError(typed) };
         throw error;
       }
     },
-    [matchState.match, matchState.saveId, currentMinute, runCommand, applyCommandResult, clubSubs],
+    [matchState.match, matchState.saveId, currentMinute, runCommand, applyCommandResult],
   );
 
   const resume = useCallback(() => setChunkInjuries([]), []);

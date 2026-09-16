@@ -5,9 +5,9 @@ import { clearActiveMatch, getLiveTactic } from "../../../src/renderer/match/ses
 import { dispatchAction, resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import {
+  commandView,
   noSubs,
   rid,
-  resumeView,
   session,
   type CommandResponder,
   mountMatchDayWithSpine,
@@ -46,7 +46,7 @@ describe("ticket 12 — the panel commands the controlled club, and records only
   });
 
   it("a substitution the match did not take leaves the shared line-up alone", async () => {
-    const refuses: CommandResponder = () => ({ _tag: "Success", value: resumeView() });
+    const refuses: CommandResponder = () => ({ _tag: "Success", value: commandView(false) });
     const submissions = await mountMatchDayWithSpine(session(), undefined, refuses);
     openPanel();
     act(() => void dispatchAction("set-live-substitute-off", { playerId: rid("on-2") }));
@@ -84,7 +84,7 @@ describe("ticket 12 — the panel commands the controlled club, and records only
   it("a refused substitution after earlier ones is not read as applied", async () => {
     // Two substitutions were made before Match day mounted; the match refuses the panel's third.
     const earlier = { homeSubs: noSubs({ used: 2, windowsUsed: 2 }) };
-    const refuses: CommandResponder = () => ({ _tag: "Success", value: resumeView(earlier) });
+    const refuses: CommandResponder = () => ({ _tag: "Success", value: commandView(false, earlier) });
     const submissions = await mountMatchDayWithSpine(session(), undefined, refuses, earlier);
     openPanel();
     act(() => void dispatchAction("set-live-substitute-off", { playerId: rid("on-2") }));
@@ -97,8 +97,24 @@ describe("ticket 12 — the panel commands the controlled club, and records only
     expect(getLiveTactic(rid("s1"))).toBeNull();
   });
 
+  it("a substitution the match took reads applied though re-simulation holds the count level", async () => {
+    // A forced substitution counted before the command is re-simulated away by it: the count stays 1.
+    const level = { homeSubs: noSubs({ used: 1, windowsUsed: 1 }) };
+    const takesAndDropsForced: CommandResponder = () => ({ _tag: "Success", value: commandView(true, level) });
+    const submissions = await mountMatchDayWithSpine(session(), undefined, takesAndDropsForced, level);
+    openPanel();
+    act(() => void dispatchAction("set-live-substitute-off", { playerId: rid("on-2") }));
+    act(() => void dispatchAction("set-live-substitute-in", { playerId: rid("bench-2") }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Make substitution" }).hasAttribute("disabled")).toBe(false));
+    act(() => void dispatchAction("make-substitution"));
+
+    await waitFor(() => expect(submissions.calls).toHaveLength(1));
+    expect(submissions.calls[0]!.payload).toMatchObject({ revealedEvents: 0 });
+    await waitFor(() => expect(getLiveTactic(rid("s1"))?.slots[2]?.playerId).toBe("bench-2"));
+  });
+
   it("an away match reads the away head-count", async () => {
-    const tenMen: CommandResponder = () => ({ _tag: "Success", value: resumeView({ homeOnPitchCount: 11, awayOnPitchCount: 10 }) });
+    const tenMen: CommandResponder = () => ({ _tag: "Success", value: commandView(null, { homeOnPitchCount: 11, awayOnPitchCount: 10 }) });
     const submissions = await mountMatchDayWithSpine(session({ isHome: false }), undefined, tenMen);
     openPanel();
     fireEvent.click(screen.getByRole("button", { name: "Apply tactics change" }));

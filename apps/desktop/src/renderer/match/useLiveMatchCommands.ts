@@ -6,8 +6,9 @@
  * store; the controlled club's substitution counts from one `resumeSimulation` read; and the squad
  * and pre-match tactic from `getTactics`.
  *
- * Only the substitution counts are taken from match responses: they are computed over the whole
- * match, where the score and head-count in a response describe the end of whichever chunk was read.
+ * Only the substitution counts are taken from match responses: they are cut at the Match Events
+ * Match day has revealed, where the score and head-count in a response describe the end of
+ * whichever chunk was read.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Effect, Result } from "effect";
@@ -36,6 +37,7 @@ import {
   getActiveMatch,
   getHalfTimeRevealed,
   getLiveTactic,
+  getRevealedEvents,
   getRevealedMinute,
   getRevealedScore,
   recordLiveTactic,
@@ -117,7 +119,8 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
     if (match === null) return;
     let cancelled = false;
     setLoadError(null);
-    Effect.runPromise(resumeSimulation({ saveId, matchId: match.matchId, cursor: 0 }).pipe(Effect.result)).then(
+    const read = resumeSimulation({ saveId, matchId: match.matchId, cursor: 0, revealedEvents: getRevealedEvents(saveId) });
+    Effect.runPromise(read.pipe(Effect.result)).then(
       (outcome) => {
         if (cancelled) return;
         if (Result.isFailure(outcome)) {
@@ -162,19 +165,19 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
       if (view._tag !== "ready" || inFlight.current) return;
       inFlight.current = true;
       setStatus({ _tag: "pending" });
-      const before = view.snapshot;
       try {
         const response = await runCommand({
           saveId,
           matchId: view.match.matchId,
           cursor: 0,
+          revealedEvents: getRevealedEvents(saveId),
           minute: isHalftime ? HALFTIME_MINUTE : stampMinute(getRevealedMinute(saveId), getHalfTimeRevealed(saveId)),
           isHalftime,
           command,
         });
         const next = snapshotFor(view.match, response);
         setSnapshot(next);
-        const outcome = resolveCommandStatus(command, before, next);
+        const outcome = resolveCommandStatus(command, response);
         setStatus(outcome);
         const tactic =
           command._tag === "ChangeTactics"

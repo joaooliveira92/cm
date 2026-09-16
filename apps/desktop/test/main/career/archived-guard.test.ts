@@ -83,7 +83,7 @@ const everyMutatingCommandRejects = (cause: ArchivedCause) =>
     ok(
       rejectsAsArchived(
         yield* Effect.flip(
-          submitMatchCommand(savesDir, save.id, MatchId.make("irrelevant-match-id"), 0, 1, false, {
+          submitMatchCommand(savesDir, save.id, MatchId.make("irrelevant-match-id"), 0, null, 1, false, {
             _tag: "MakeSubstitution",
             clubId: squad.club.id,
             outPlayerId: PlayerId.make("irrelevant"),

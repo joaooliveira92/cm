@@ -18,7 +18,13 @@ export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) =
   const load = useCallback(async () => {
     if (matchId === null) return;
     const outcome = await Effect.runPromise(
-      resumeSimulation({ saveId, matchId: matchId as never, cursor: cursorRef.current }).pipe(Effect.result),
+      resumeSimulation({
+        saveId,
+        matchId: matchId as never,
+        cursor: cursorRef.current,
+        // This screen reads only the lines, never the substitution counts.
+        revealedEvents: null,
+      }).pipe(Effect.result),
     );
     if (Result.isFailure(outcome)) {
       setError(describeRpcError(outcome.failure as RpcClientError<"resumeSimulation">));

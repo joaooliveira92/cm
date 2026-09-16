@@ -60,6 +60,8 @@ export class InjuryView extends Schema.Class<InjuryView>("InjuryView")({
 /** `ResumeSimulation`'s response (ADR-0007 chunked resimulation, no RPC streaming): the next chunk
  * of already-rendered Commentary Lines after `cursor`, the new cursor, and whether the match has
  * reached `FullTimeWhistle`. `homeSubs`/`awaySubs` and `injuredClubIds` are ticket 14 additions —
+ * the substitution counts cover the Match Events the request says are revealed (plus the manager's
+ * own substitutions, which are never ahead of the reveal), so they never show a future forced one;
  * `injuredClubIds` lists the clubs (deduplicated) that had an `Injury` Match Event land in *this*
  * chunk, so the renderer can prompt an immediate substitution. `injuries` (ticket 08) carries the
  * full typed detail of each `Injury` in this chunk for severity-scaled indicators/prompts. */
@@ -80,6 +82,15 @@ export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("Re
   awayOnPitchCount: Schema.Finite,
   /** Per-player Condition (%) at full time, keyed by playerId across both teams (ticket 02). */
   conditions: Schema.Record(Schema.String, Schema.Finite),
+}) {}
+
+/** `SubmitMatchCommand`'s response: the same chunk `ResumeSimulation` returns, plus the command's
+ * own outcome. `substitutionApplied` is true when the re-derived timeline holds the Substitution
+ * Match Event this `MakeSubstitution` produced, false when the engine refused it, and null for
+ * any other command. A count difference cannot stand in for it: re-simulating the rest of the
+ * match can remove a later forced substitution in the same call that adds this one. */
+export class SubmitMatchCommandView extends ResumeSimulationView.extend<SubmitMatchCommandView>("SubmitMatchCommandView")({
+  substitutionApplied: Schema.NullOr(Schema.Boolean),
 }) {}
 
 /** `SubmitMatchCommand` (ticket 14) payload shapes — structurally identical to game-engine's

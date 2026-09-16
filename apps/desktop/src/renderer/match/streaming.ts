@@ -10,6 +10,7 @@ import {
 import { useMatchContext } from "./MatchProvider.js";
 import { controlledClubId } from "./controlledClub.js";
 import { useCommentaryContext } from "./CommentaryProvider.js";
+import { getRevealedEvents } from "./session.js";
 
 export const shouldPauseMatch = (
   injuries: ReadonlyArray<InjuryView>,
@@ -93,6 +94,7 @@ export const useMatchStreaming = (): void => {
             saveId: matchState.saveId,
             matchId: match.matchId,
             cursor: commMeta.cursorRef.current,
+            revealedEvents: getRevealedEvents(matchState.saveId),
           }).pipe(Effect.result),
         );
         if (Result.isFailure(outcome)) {

@@ -159,15 +159,25 @@ export interface Submissions {
   readonly calls: Array<{ method: string; payload: Record<string, unknown> }>;
 }
 
-/** How the mocked match answers a command: by default it takes every substitution, counting it for
- *  the side that made it, as the engine's whole-match counts do. */
+/** A `submitMatchCommand` response: the chunk plus the command's own outcome (null for a command
+ *  that is not a substitution). */
+export const commandView = (substitutionApplied: boolean | null, overrides: Record<string, unknown> = {}) => ({
+  ...resumeView(overrides),
+  substitutionApplied,
+});
+
+/** How the mocked match answers a command: by default it takes every substitution, confirming it and
+ *  counting it for the side that made it. */
 export type CommandResponder = (command: { _tag: string; clubId: string }, taken: { home: number; away: number }) => unknown;
 
 export const takesSubstitutions: CommandResponder = (command, taken) => {
   if (command._tag === "MakeSubstitution") taken[command.clubId === "home" ? "home" : "away"] += 1;
   return {
     _tag: "Success",
-    value: resumeView({ homeSubs: noSubs({ used: taken.home }), awaySubs: noSubs({ used: taken.away }) }),
+    value: commandView(command._tag === "MakeSubstitution" ? true : null, {
+      homeSubs: noSubs({ used: taken.home }),
+      awaySubs: noSubs({ used: taken.away }),
+    }),
   };
 };
 

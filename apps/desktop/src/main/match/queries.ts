@@ -15,16 +15,30 @@ import { buildResumeSimulationView } from "./view.js";
 /**
  * `ResumeSimulation` (ticket 13, extended by ticket 14): re-derives the full event timeline from
  * the persisted seed + command journal on every call (`deriveMatchEvents`) and slices off the next
- * chunk after `cursor`. Since `simulateMatch` is pure, this reproduces the exact same events for
- * any minute range no `SubmitMatchCommand` has touched yet — determinism holds by construction.
+ * chunk after `cursor`, its substitution counts cut after `revealedEvents` Match Events. Since
+ * `simulateMatch` is pure, this reproduces the exact same events for any minute range no
+ * `SubmitMatchCommand` has touched yet — determinism holds by construction.
  */
-export const resumeSimulation = (savesDir: string, saveId: SaveId, matchId: MatchId, cursor: number) =>
+export const resumeSimulation = (
+  savesDir: string,
+  saveId: SaveId,
+  matchId: MatchId,
+  cursor: number,
+  revealedEvents: number | null,
+) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
       const derived = yield* Effect.sync(() => deriveMatchEvents(stream));
-      return yield* buildResumeSimulationView(matchId, derived.events, derived.conditions, derived.counts, cursor);
+      return yield* buildResumeSimulationView(
+        matchId,
+        derived.events,
+        derived.conditions,
+        derived.counts,
+        cursor,
+        revealedEvents,
+      );
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

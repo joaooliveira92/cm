@@ -242,10 +242,10 @@ const handlers: Record<AppRpcMethod, Handler> = {
     }),
   resumeSimulation: (payload, ctx) =>
     Effect.gen(function* () {
-      const { saveId, matchId, cursor } = yield* Schema.decodeUnknownEffect(
+      const { saveId, matchId, cursor, revealedEvents } = yield* Schema.decodeUnknownEffect(
         AppRpcs.resumeSimulation.payload,
       )(payload);
-      return yield* resumeSimulation(ctx.savesDir, saveId, matchId, cursor);
+      return yield* resumeSimulation(ctx.savesDir, saveId, matchId, cursor, revealedEvents);
     }),
   getTeamSheet: (payload, ctx) =>
     Effect.gen(function* () {
@@ -271,10 +271,10 @@ const handlers: Record<AppRpcMethod, Handler> = {
     }),
   submitMatchCommand: (payload, ctx) =>
     Effect.gen(function* () {
-      const { saveId, matchId, cursor, minute, isHalftime, command } = yield* Schema.decodeUnknownEffect(
+      const { saveId, matchId, cursor, revealedEvents, minute, isHalftime, command } = yield* Schema.decodeUnknownEffect(
         AppRpcs.submitMatchCommand.payload,
       )(payload);
-      return yield* submitMatchCommand(ctx.savesDir, saveId, matchId, cursor, minute, isHalftime, command);
+      return yield* submitMatchCommand(ctx.savesDir, saveId, matchId, cursor, revealedEvents, minute, isHalftime, command);
     }),
   getTransfersScreen: (payload, ctx) =>
     Effect.gen(function* () {

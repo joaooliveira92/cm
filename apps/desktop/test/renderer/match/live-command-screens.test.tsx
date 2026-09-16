@@ -16,6 +16,7 @@ import {
   getLiveTactic,
   recordHalfTimeRevealed,
   recordLiveTactic,
+  recordRevealedEvents,
   recordRevealedMinute,
   recordRevealedScore,
   setActiveMatch,
@@ -87,6 +88,12 @@ const resumeView = (overrides: Record<string, unknown> = {}) => ({
   awayOnPitchCount: 11,
   conditions: {},
   ...overrides,
+});
+
+/** A `submitMatchCommand` response: the chunk plus the command's own outcome. */
+const commandView = (substitutionApplied: boolean | null, overrides: Record<string, unknown> = {}) => ({
+  ...resumeView(overrides),
+  substitutionApplied,
 });
 
 /** The human club is the away side, so every read and command must use the away facts. */
@@ -178,7 +185,7 @@ describe("Match Substitutions — the live substitution screen", () => {
     } as never);
     mount(MatchSubstitutionsScreen, (method) => {
       if (method === "getTactics") return ok(tacticsView());
-      if (method === "submitMatchCommand") return ok(resumeView({ awaySubs: subs({ used: 1, remaining: 4 }) }));
+      if (method === "submitMatchCommand") return ok(commandView(true, { awaySubs: subs({ used: 1, remaining: 4 }) }));
       return ok(resumeView());
     });
     const off = (await screen.findByLabelText("Player coming off")) as HTMLSelectElement;
@@ -225,7 +232,7 @@ describe("Match Substitutions — the live substitution screen", () => {
     const calls = mount(MatchSubstitutionsScreen, (method) => {
       if (method === "getTactics") return ok(tacticsView());
       if (method === "submitMatchCommand") {
-        return ok(resumeView({ awaySubs: subs({ used: 1, remaining: 4, windowsUsed: 1, windowsRemaining: 2 }) }));
+        return ok(commandView(true, { awaySubs: subs({ used: 1, remaining: 4, windowsUsed: 1, windowsRemaining: 2 }) }));
       }
       return ok(resumeView());
     });
@@ -244,9 +251,46 @@ describe("Match Substitutions — the live substitution screen", () => {
     expect(screen.getByText(/Substitutions used: 1\/5/)).toBeTruthy();
   });
 
-  it("shows the substitution rejected when the match does not count it", async () => {
+  it("reads the counts and sends the command at the position Match day has revealed", async () => {
     setActiveMatch(liveSession() as never);
-    mount(MatchSubstitutionsScreen, (method) => (method === "getTactics" ? ok(tacticsView()) : ok(resumeView())));
+    recordRevealedEvents(rid("s1"), 12);
+    const calls = mount(MatchSubstitutionsScreen, (method) => {
+      if (method === "getTactics") return ok(tacticsView());
+      if (method === "submitMatchCommand") return ok(commandView(true));
+      return ok(resumeView());
+    });
+    fireEvent.change(await screen.findByLabelText("Player coming off"), { target: { value: "on-3" } });
+    fireEvent.change(screen.getByLabelText("Player coming on"), { target: { value: "bench-1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Make substitution" }));
+
+    await waitFor(() => expect(calls.some((c) => c.method === "submitMatchCommand")).toBe(true));
+    expect(calls.find((c) => c.method === "resumeSimulation")!.payload).toMatchObject({ revealedEvents: 12 });
+    expect(calls.find((c) => c.method === "submitMatchCommand")!.payload).toMatchObject({ revealedEvents: 12 });
+  });
+
+  it("shows a substitution applied from its own event though re-simulation holds the count level", async () => {
+    setActiveMatch(liveSession() as never);
+    // One forced substitution was counted; the command re-simulates it away, so the count stays 1.
+    const level = { awaySubs: subs({ used: 1, remaining: 4, windowsUsed: 1, windowsRemaining: 2 }) };
+    mount(MatchSubstitutionsScreen, (method) => {
+      if (method === "getTactics") return ok(tacticsView());
+      if (method === "submitMatchCommand") return ok(commandView(true, level));
+      return ok(resumeView(level));
+    });
+    fireEvent.change(await screen.findByLabelText("Player coming off"), { target: { value: "on-3" } });
+    fireEvent.change(screen.getByLabelText("Player coming on"), { target: { value: "bench-1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Make substitution" }));
+
+    await waitFor(() => expect(screen.getByRole("status").getAttribute("data-command-status")).toBe("applied"));
+  });
+
+  it("shows the substitution rejected when the match does not take it", async () => {
+    setActiveMatch(liveSession() as never);
+    mount(MatchSubstitutionsScreen, (method) => {
+      if (method === "getTactics") return ok(tacticsView());
+      if (method === "submitMatchCommand") return ok(commandView(false));
+      return ok(resumeView());
+    });
     fireEvent.change(await screen.findByLabelText("Player coming off"), { target: { value: "on-3" } });
     fireEvent.change(screen.getByLabelText("Player coming on"), { target: { value: "bench-1" } });
     fireEvent.click(screen.getByRole("button", { name: "Make substitution" }));
@@ -259,9 +303,11 @@ describe("Match Substitutions — the live substitution screen", () => {
 describe("Match Tactics — the live tactics screen", () => {
   it("shows the formation in play and submits a changed instruction as ChangeTactics", async () => {
     setActiveMatch(liveSession() as never);
-    const calls = mount(MatchMatchTacticsScreen, (method) =>
-      method === "getTactics" ? ok(tacticsView()) : ok(resumeView()),
-    );
+    const calls = mount(MatchMatchTacticsScreen, (method) => {
+      if (method === "getTactics") return ok(tacticsView());
+      if (method === "submitMatchCommand") return ok(commandView(null));
+      return ok(resumeView());
+    });
     expect(await screen.findByText(`Formation: ${FORMATIONS[0]}`)).toBeTruthy();
     const apply = screen.getByRole("button", { name: "Apply tactics change" }) as HTMLButtonElement;
     expect(apply.disabled).toBe(true);

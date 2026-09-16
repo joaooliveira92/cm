@@ -93,15 +93,33 @@ const onPitchCountsFor = (
   return match ? { homeCount: match.homeCount, awayCount: match.awayCount } : { homeCount: 11, awayCount: 11 };
 };
 
-/** Per-club substitution cap status (ticket 14) computed straight from the derived `MatchEvent`
- * timeline's accepted `Substitution` events — authoritative for "used" (the engine only ever emits
- * a `Substitution` event when it actually accepted the command), an approximation for "windows
- * used" (see `HALFTIME_MINUTE`'s doc comment above). */
-const computeSubstitutionStatus = (clubId: ClubId, events: ReadonlyArray<MatchEvent>): SubstitutionStatusView => {
-  const subs = events.filter(
-    (event): event is Extract<MatchEvent, { readonly _tag: "Substitution" }> =>
-      event._tag === "Substitution" && event.teamClubId === clubId,
+type SubstitutionEvent = Extract<MatchEvent, { readonly _tag: "Substitution" }>;
+
+/**
+ * The Substitution Match Events a read may count: those among the first `revealedEvents` of the
+ * timeline, or all of them when null (the whole match).
+ *
+ * Cut by position, as `getMatchStatistics` cuts, not by minute: minutes repeat across first-half
+ * stoppage, half time and the second half. The manager's own substitutions (`forcedByInjury: false`)
+ * count wherever they sit. Only a journaled command produces one, stamped at the revealed minute,
+ * so none lies ahead of the reveal. It can still land past `revealedEvents`, because a command
+ * adds an event before the reveal that the renderer's line count does not include.
+ */
+const revealedSubstitutions = (
+  events: ReadonlyArray<MatchEvent>,
+  revealedEvents: number | null,
+): ReadonlyArray<SubstitutionEvent> =>
+  events.filter(
+    (event, index): event is SubstitutionEvent =>
+      event._tag === "Substitution" && (revealedEvents === null || index < revealedEvents || !event.forcedByInjury),
   );
+
+/** Per-club substitution cap status (ticket 14) computed from the revealed `Substitution` events —
+ * authoritative for "used" (the engine only ever emits a `Substitution` event when it actually
+ * accepted the change), an approximation for "windows used" (see `HALFTIME_MINUTE`'s doc comment
+ * above). */
+const computeSubstitutionStatus = (clubId: ClubId, substitutions: ReadonlyArray<SubstitutionEvent>): SubstitutionStatusView => {
+  const subs = substitutions.filter((event) => event.teamClubId === clubId);
   const used = subs.length;
   const windowsUsed = new Set(subs.filter((sub) => sub.minute !== HALFTIME_MINUTE).map((sub) => sub.minute)).size;
 
@@ -114,15 +132,40 @@ const computeSubstitutionStatus = (clubId: ClubId, events: ReadonlyArray<MatchEv
   });
 };
 
+/**
+ * Whether a submitted `MakeSubstitution` took effect: the re-derived timeline holds the
+ * Substitution Match Event it produced (same club, same pair, not forced by an Injury) at the
+ * minute it was applied. A halftime instruction is applied at `HALFTIME_MINUTE`.
+ */
+export const substitutionApplied = (
+  events: ReadonlyArray<MatchEvent>,
+  command: { readonly clubId: ClubId; readonly outPlayerId: PlayerId; readonly inPlayerId: PlayerId },
+  minute: number,
+  isHalftime: boolean,
+): boolean => {
+  const appliedAt = isHalftime ? HALFTIME_MINUTE : minute;
+  return events.some(
+    (event) =>
+      event._tag === "Substitution" &&
+      !event.forcedByInjury &&
+      event.teamClubId === command.clubId &&
+      event.outPlayerId === command.outPlayerId &&
+      event.inPlayerId === command.inPlayerId &&
+      event.minute === appliedAt,
+  );
+};
+
 /** Shared tail of `resumeSimulation`/`submitMatchCommand`: given the full (re)derived `MatchEvent`
  * timeline, resolves names, renders Commentary Lines, slices off the chunk after `cursor`, and
- * attaches the ticket 14 substitution-cap/injury-prompt fields. Assumes a `SqlClient` in context. */
+ * attaches the ticket 14 substitution-cap/injury-prompt fields, the counts cut at `revealedEvents`
+ * (null: the whole match). Assumes a `SqlClient` in context. */
 export const buildResumeSimulationView = (
   matchId: MatchId,
   events: ReadonlyArray<MatchEvent>,
   conditions: ReadonlyMap<PlayerId, number>,
   counts: ReadonlyArray<MatchPlayerCountEntry>,
   cursor: number,
+  revealedEvents: number | null,
 ) =>
   Effect.gen(function* () {
     const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
@@ -188,6 +231,7 @@ export const buildResumeSimulationView = (
 
     const lastEvent = chunkEvents[chunkEvents.length - 1] ?? events[events.length - 1]!;
     const { homeCount, awayCount } = onPitchCountsFor(counts, lastEvent);
+    const substitutions = revealedSubstitutions(events, revealedEvents);
 
     return new ResumeSimulationView({
       matchId,
@@ -196,8 +240,8 @@ export const buildResumeSimulationView = (
       homeScore,
       awayScore,
       lines,
-      homeSubs: computeSubstitutionStatus(started.homeClubId, events),
-      awaySubs: computeSubstitutionStatus(started.awayClubId, events),
+      homeSubs: computeSubstitutionStatus(started.homeClubId, substitutions),
+      awaySubs: computeSubstitutionStatus(started.awayClubId, substitutions),
       injuredClubIds,
       injuries,
       homeOnPitchCount: homeCount,

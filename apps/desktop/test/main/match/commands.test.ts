@@ -8,27 +8,16 @@ import { Tactic, type ClubId, type FixtureId, type MatchId, type MatchSummary, t
 import { FORMATION_SLOTS, POSITION_ROLES, emptyBench } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
-import { SqliteClient } from "@effect/sql-sqlite-node";
-import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { beginCareer, commitCareer } from "../../../src/main/world/index.js";
 import { getTactics } from "../../../src/main/club/index.js";
 import {
-  MatchSeedSource,
   getMatchReport,
   getMatchStatistics,
   getPostMatchSummary,
   resumeSimulation,
-  startMatch,
   submitMatchCommand,
 } from "../../../src/main/match/index.js";
-import { advanceCalendar } from "../../../src/main/season/index.js";
 import { commitMatchday } from "../../../src/main/season/commitMatchday.js";
-import { ensureHumanTactic, pendingFixtureId } from "../boundary-helpers.js";
-import { createDefaultSnapshot } from "../snapshot-helpers.js";
-
-/** The world every test in this file plays its matches in. Pinned so the match seeds below name a
- *  fixed pair of squads rather than whatever `createSave` happened to draw. */
-const WORLD_SEED = 20260906;
+import { atFirstFixture, humanClubOf, humanSubs, startSeededMatch } from "./seededMatch.js";
 
 let savesDir: string;
 
@@ -63,69 +52,13 @@ const drain = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
     let isComplete = false;
     const chunks: Array<ResumeSimulationView> = [];
     while (!isComplete) {
-      const chunk = yield* resumeSimulation(savesDir, saveId, matchId, cursor);
+      const chunk = yield* resumeSimulation(savesDir, saveId, matchId, cursor, null);
       chunks.push(chunk);
       cursor = chunk.cursor;
       isComplete = chunk.isComplete;
     }
     return chunks;
   });
-
-/**
- * A career generated from a pinned world seed rather than `createSave`'s fresh draw.
- *
- * Pinning the match seed alone would not make this file deterministic: an Injury roll is a
- * function of the match seed *and* the squads it plays out between, and `createSave` draws a
- * fresh world seed on every call. Both ends have to be pinned for a seed constant below to mean
- * the same match tomorrow. Mirrors `test/main/season/helpers.ts`'s `createCareerFromWorldSeed`.
- */
-const createSeededCareer = Effect.gen(function* () {
-  const snapshotId = yield* createDefaultSnapshot(savesDir);
-  const { id } = yield* beginCareer(savesDir, {
-    worldSeed: WORLD_SEED,
-    referenceYear: 2026,
-    userDataDir: savesDir,
-    snapshotId,
-  });
-  const clubs = yield* Effect.gen(function* () {
-    const sql = yield* SqlClient;
-    return yield* sql<{ id: ClubId }>`SELECT id FROM clubs ORDER BY rowid LIMIT 1`;
-  }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${id}.sqlite`) })),
-    Effect.scoped,
-  );
-  return yield* commitCareer(savesDir, id, "Test Career", clubs[0]!.id, {
-    managerName: "Test Career",
-    archetypeOrigin: "custom",
-    pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
-  });
-});
-
-/**
- * `startMatch` under a pinned seed. `MatchSeedSource` is a `Context.Reference`, so this overrides
- * the clock-derived default without `startMatch` carrying a requirement in production — the whole
- * point of the seam. Every match below is started through here: a match started on the clock is a
- * different match on every run, which is what made this file's assertions probabilistic.
- */
-const startSeededMatch = (savesDir: string, saveId: SaveId, fixtureId: FixtureId, seed: number) =>
-  startMatch(savesDir, saveId, fixtureId, "play").pipe(
-    Effect.provideService(MatchSeedSource, () => seed),
-  );
-
-/**
- * A career standing at its first Fixture, with a Tactic set.
- *
- * Both are now preconditions of a match existing at all, so every test below goes through them
- * rather than starting a detached exhibition against a club of its choosing.
- */
-const atFirstFixture = Effect.gen(function* () {
-  const save = yield* createSeededCareer;
-  yield* ensureHumanTactic(savesDir, save.id);
-  yield* advanceCalendar(savesDir, save.id);
-  const fixtureId = yield* pendingFixtureId(savesDir, save.id);
-  ok(fixtureId !== null, "the first Continue should stop at the human club's Fixture");
-  return { save, fixtureId };
-});
 
 /**
  * The match seeds this file plays, all on the first scheduled Fixture of the `WORLD_SEED` world.
@@ -143,19 +76,6 @@ const CLEAN_LINEUP_SEED = 3;
 /** For the tests that hold whatever the match happens to produce — they assert on replay equality
  *  or on reaching full time, not on a particular event — but still want the same match each run. */
 const ANY_MATCH_SEED = 7;
-
-/**
- * The human club, and the half of a chunk that describes it.
- *
- * A scheduled Fixture decides which side the player is on, so these tests can no longer assume
- * "home". That assumption was free under the exhibition path, which always seated the player at
- * home — and being unable to express an away Fixture is exactly why that path is gone.
- */
-const humanClubOf = (summary: MatchSummary): ClubId =>
-  summary.isHome ? summary.homeClubId : summary.awayClubId;
-
-const humanSubs = (view: ResumeSimulationView, summary: MatchSummary) =>
-  summary.isHome ? view.homeSubs : view.awaySubs;
 
 const humanOnPitch = (view: ResumeSimulationView, summary: MatchSummary): number =>
   summary.isHome ? view.homeOnPitchCount : view.awayOnPitchCount;
@@ -198,7 +118,7 @@ const startMatchWithCleanLineup = (savesDir: string, saveId: SaveId, fixtureId: 
 
 it.effect("submitMatchCommand applies a mid-match substitution and reflects it in homeSubs", () =>
   Effect.gen(function* () {
-    const { save, fixtureId } = yield* atFirstFixture;
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
     const summary = yield* startMatchWithNoInjuries(savesDir, save.id, fixtureId);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
@@ -206,7 +126,7 @@ it.effect("submitMatchCommand applies a mid-match substitution and reflects it i
 
     // Pin the starting XI at minute 1 so subsequent substitutions have a known on-pitch roster to
     // target — without this we'd have to guess the server's synthesized default lineup.
-    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 1, false, {
+    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 1, false, {
       _tag: "ChangeTactics",
       clubId: humanClubOf(summary),
       tactic,
@@ -215,13 +135,14 @@ it.effect("submitMatchCommand applies a mid-match substitution and reflects it i
     const outPlayerId = tactic.slots[0]!.playerId;
     const inPlayerId = tacticsView.squad[11]!.id;
 
-    const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 2, false, {
+    const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 2, false, {
       _tag: "MakeSubstitution",
       clubId: humanClubOf(summary),
       outPlayerId,
       inPlayerId,
     });
 
+    strictEqual(response.substitutionApplied, true);
     strictEqual(humanSubs(response, summary).used, 1);
     strictEqual(humanSubs(response, summary).remaining, 4);
     strictEqual(humanSubs(response, summary).windowsUsed, 1);
@@ -239,12 +160,12 @@ it.effect("submitMatchCommand applies a mid-match substitution and reflects it i
 
 it.effect("substitutions are capped at 5 per team across 3 windows, enforced silently by the engine", () =>
   Effect.gen(function* () {
-    const { save, fixtureId } = yield* atFirstFixture;
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
     const summary = yield* startMatchWithNoInjuries(savesDir, save.id, fixtureId);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
-    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 1, false, {
+    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 1, false, {
       _tag: "ChangeTactics",
       clubId: humanClubOf(summary),
       tactic,
@@ -262,7 +183,7 @@ it.effect("substitutions are capped at 5 per team across 3 windows, enforced sil
 
     let last: ResumeSimulationView | undefined;
     for (const step of plan) {
-      last = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, step.minute, false, {
+      last = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, step.minute, false, {
         _tag: "MakeSubstitution",
         clubId: humanClubOf(summary),
         outPlayerId: tacticsView.squad[step.outIndex]!.id,
@@ -276,13 +197,14 @@ it.effect("substitutions are capped at 5 per team across 3 windows, enforced sil
 
     // A 6th substitution, even at a brand-new window minute, is silently rejected by the engine —
     // `used` must not budge past the cap.
-    const rejected = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 70, false, {
+    const rejected = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 70, false, {
       _tag: "MakeSubstitution",
       clubId: humanClubOf(summary),
       outPlayerId: tacticsView.squad[5]!.id,
       inPlayerId: tacticsView.squad[16]!.id,
     });
 
+    strictEqual(rejected.substitutionApplied, false);
     strictEqual(humanSubs(rejected, summary).used, 5);
     strictEqual(humanSubs(rejected, summary).capReached, true);
   }),
@@ -290,13 +212,13 @@ it.effect("substitutions are capped at 5 per team across 3 windows, enforced sil
 
 it.effect("a mid-match ChangeTactics command is accepted and the match still resolves to FullTimeWhistle", () =>
   Effect.gen(function* () {
-    const { save, fixtureId } = yield* atFirstFixture;
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
     const summary = yield* startSeededMatch(savesDir, save.id, fixtureId, ANY_MATCH_SEED);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = new Tactic({ ...buildKnownTactic(tacticsView.squad), mentality: "attacking", pressing: "high" });
 
-    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 20, false, {
+    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 20, false, {
       _tag: "ChangeTactics",
       clubId: humanClubOf(summary),
       tactic,
@@ -313,17 +235,17 @@ it.effect(
   "determinism: replaying the same match+command sequence from cursor 0 twice reproduces the same timeline",
   () =>
     Effect.gen(function* () {
-      const { save, fixtureId } = yield* atFirstFixture;
+      const { save, fixtureId } = yield* atFirstFixture(savesDir);
       const summary = yield* startSeededMatch(savesDir, save.id, fixtureId, ANY_MATCH_SEED);
 
       const tacticsView = yield* getTactics(savesDir, save.id);
       const tactic = buildKnownTactic(tacticsView.squad);
-      yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 1, false, {
+      yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 1, false, {
         _tag: "ChangeTactics",
         clubId: humanClubOf(summary),
         tactic,
       });
-      yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 15, false, {
+      yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 15, false, {
         _tag: "MakeSubstitution",
         clubId: humanClubOf(summary),
         outPlayerId: tacticsView.squad[0]!.id,
@@ -348,19 +270,19 @@ it.effect(
 
 it.effect("ForceOff brings a player off to 10 men without consuming a substitution (ticket 11)", () =>
   Effect.gen(function* () {
-    const { save, fixtureId } = yield* atFirstFixture;
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
     const summary = yield* startMatchWithCleanLineup(savesDir, save.id, fixtureId);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
-    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 1, false, {
+    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 1, false, {
       _tag: "ChangeTactics",
       clubId: humanClubOf(summary),
       tactic,
     });
 
     const onPitchPlayerId = tactic.slots[3]!.playerId;
-    const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 60, false, {
+    const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 60, false, {
       _tag: "ForceOff",
       clubId: humanClubOf(summary),
       playerId: onPitchPlayerId,
@@ -379,12 +301,12 @@ it.effect("ForceOff brings a player off to 10 men without consuming a substituti
 
 it.effect("a ForceOff for a player not on the pitch is a silent no-op (count unchanged)", () =>
   Effect.gen(function* () {
-    const { save, fixtureId } = yield* atFirstFixture;
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
     const summary = yield* startMatchWithCleanLineup(savesDir, save.id, fixtureId);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
     const tactic = buildKnownTactic(tacticsView.squad);
-    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 1, false, {
+    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 1, false, {
       _tag: "ChangeTactics",
       clubId: humanClubOf(summary),
       tactic,
@@ -392,7 +314,7 @@ it.effect("a ForceOff for a player not on the pitch is a silent no-op (count unc
 
     // A bench player isn't on the pitch — forcing them off changes nothing.
     const benchPlayerId = tacticsView.squad[12]!.id;
-    const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, 60, false, {
+    const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 60, false, {
       _tag: "ForceOff",
       clubId: humanClubOf(summary),
       playerId: benchPlayerId,
@@ -403,7 +325,7 @@ it.effect("a ForceOff for a player not on the pitch is a silent no-op (count unc
 
 it.effect("an Injury event's chunk lists the injured club in injuredClubIds", () =>
   Effect.gen(function* () {
-    const { save, fixtureId } = yield* atFirstFixture;
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
     // `INJURY_SEED` is a seed known to produce an Injury in this world. This test used to start up
     // to 40 clock-seeded matches and assert that one of them happened to injure somebody — a
     // probabilistic assertion, so it had a real failure rate rather than an outcome.
@@ -429,7 +351,7 @@ it.effect("an Injury event's chunk lists the injured club in injuredClubIds", ()
 
 it.effect("getPostMatchSummary lists every goal, card and injury of the finished timeline with names", () =>
   Effect.gen(function* () {
-    const { save, fixtureId } = yield* atFirstFixture;
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
     const match = yield* startSeededMatch(savesDir, save.id, fixtureId, INJURY_SEED);
     const chunks = yield* drain(savesDir, save.id, match.matchId);
     const final = chunks[chunks.length - 1]!;
@@ -469,7 +391,7 @@ it.effect("getPostMatchSummary lists every goal, card and injury of the finished
 
 it.effect("getPostMatchSummary fails with MatchNotFoundError for a match with no stream", () =>
   Effect.gen(function* () {
-    const { save } = yield* atFirstFixture;
+    const { save } = yield* atFirstFixture(savesDir);
     const error = yield* Effect.flip(getPostMatchSummary(savesDir, save.id, "no-such-match" as MatchId));
     strictEqual(error._tag, "MatchNotFoundError");
   }),
@@ -477,7 +399,7 @@ it.effect("getPostMatchSummary fails with MatchNotFoundError for a match with no
 
 it.effect("getMatchStatistics reconciles with the timeline, cuts at a minute, and finds the last played match", () =>
   Effect.gen(function* () {
-    const { save, fixtureId } = yield* atFirstFixture;
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
     strictEqual(yield* getMatchStatistics(savesDir, save.id, null, null), null, "no match played yet");
 
     const match = yield* startSeededMatch(savesDir, save.id, fixtureId, INJURY_SEED);
@@ -530,12 +452,12 @@ it.effect("getMatchStatistics reconciles with the timeline, cuts at a minute, an
 
 it.effect("getMatchReport records every goal, card, injury and substitution once the result is committed", () =>
   Effect.gen(function* () {
-    const { save, fixtureId } = yield* atFirstFixture;
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
     const match = yield* startSeededMatch(savesDir, save.id, fixtureId, INJURY_SEED);
     // A manager substitution, so the report's substitution entries are exercised whatever the seed rolls.
     const tactic = buildKnownTactic((yield* getTactics(savesDir, save.id)).squad);
-    yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, 1, false, { _tag: "ChangeTactics", clubId: humanClubOf(match), tactic });
-    yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, 2, false, {
+    yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, null, 1, false, { _tag: "ChangeTactics", clubId: humanClubOf(match), tactic });
+    yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, null, 2, false, {
       _tag: "MakeSubstitution",
       clubId: humanClubOf(match),
       outPlayerId: tactic.slots[1]!.playerId,

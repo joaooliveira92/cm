@@ -11,6 +11,7 @@ import {
   type MakeSubstitutionCommandPayload,
   type MatchId,
   type SaveId,
+  SubmitMatchCommandView,
 } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
@@ -22,7 +23,7 @@ import {
   type PersistedSubstitutionMade,
   type PersistedTacticsChanged,
 } from "./stream.js";
-import { buildResumeSimulationView } from "./view.js";
+import { buildResumeSimulationView, substitutionApplied } from "./view.js";
 
 type MatchCommandPayloadInput = ChangeTacticsCommandPayload | MakeSubstitutionCommandPayload | ForceOffCommandPayload;
 
@@ -32,14 +33,16 @@ type MatchCommandPayloadInput = ChangeTacticsCommandPayload | MakeSubstitutionCo
  * including the new command) and returns the chunk from `cursor` — the same shape
  * `resumeSimulation` returns, so the renderer's polling loop can treat this call as just another
  * `resumeSimulation` response. The engine caps/rejects invalid commands silently (no error, no
- * `Substitution`/tactic-affecting change in the output) — callers should check `homeSubs`/
- * `awaySubs` rather than assume the command took effect.
+ * `Substitution`/tactic-affecting change in the output), so the response says whether a
+ * `MakeSubstitution` took effect in `substitutionApplied` — read off the command's own Substitution
+ * Match Event, since re-simulation can drop a later forced substitution and hold the counts level.
  */
 export const submitMatchCommand = (
   savesDir: string,
   saveId: SaveId,
   matchId: MatchId,
   cursor: number,
+  revealedEvents: number | null,
   minute: number,
   isHalftime: boolean,
   command: MatchCommandPayloadInput,
@@ -68,6 +71,18 @@ export const submitMatchCommand = (
       yield* appendStreamEvents(MATCH_STREAM_TYPE, matchId, seq, [{ tag, payload }]);
 
       const derived = yield* Effect.sync(() => deriveMatchEvents([...stream, { seq, tag, payload }]));
-      return yield* buildResumeSimulationView(matchId, derived.events, derived.conditions, derived.counts, cursor);
+      const view = yield* buildResumeSimulationView(
+        matchId,
+        derived.events,
+        derived.conditions,
+        derived.counts,
+        cursor,
+        revealedEvents,
+      );
+      return new SubmitMatchCommandView({
+        ...view,
+        substitutionApplied:
+          command._tag === "MakeSubstitution" ? substitutionApplied(derived.events, command, minute, isHalftime) : null,
+      });
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );
