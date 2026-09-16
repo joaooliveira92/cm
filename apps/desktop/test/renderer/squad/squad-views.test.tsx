@@ -187,6 +187,14 @@ describe("choosing a view", () => {
     expect(nameButtons.filter((b) => b.getAttribute("tabindex") === "0").length).toBe(1);
   });
 
+  it("names the screen with a level-one Squad heading in either layout", async () => {
+    await mountSquad([player("p1", "Alan", "Shearer")]);
+    expect(screen.getByRole("heading", { level: 1, name: "Squad" })).toBeTruthy();
+
+    await chooseOptionByLabel("Squad view", "Personal details");
+    expect(screen.getByRole("heading", { level: 1, name: "Squad" })).toBeTruthy();
+  });
+
   it("swaps the layout and the information set, names it in the heading, and remembers it", async () => {
     await mountSquad([player("p1", "Alan", "Shearer")]);
 

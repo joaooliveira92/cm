@@ -348,3 +348,18 @@ filing.
 
 The change is one locator, scoped from the Market to the selected row. The orchestrator made it and
 reviewed it inline: `firstRow` is the row the name was read from, and no assertion changed.
+
+## Ticket 12 — the Squad screen has no `h1`, 2026-09-16
+
+- Ticket closed: [12](../../.scratch/desktop-suite-red/issues/12-squad-screen-has-no-h1.md)
+- Triage: an accessibility defect, not a stale assertion. The career chrome note has every screen keep
+  its `<h1>`, while `.scratch/squad-instructions.md` rules out a visible standalone heading. A
+  visually hidden `h1` satisfies both.
+
+| Gate | Command | Result |
+|---|---|---|
+| unit | `pnpm exec vitest run test/renderer/squad` | 35 passed. The new test fails with the `h1` removed (1 failed, 9 skipped under `-t "level-one"`). |
+| check:all | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Desktop 68 failed / 1795 passed, the same failing cases as ticket 13's run (+1 pass: the new test). Lint and md-link counts unchanged. |
+| e2e | `pnpm test:e2e e2e/app.spec.ts` | 7 passed (11.8s), including `app:20`, which was red before. |
+
+Implemented and reviewed inline by the orchestrator: one hidden heading and one unit test.

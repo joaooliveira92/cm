@@ -326,6 +326,9 @@ export const SquadTable = () => {
         aria-label="Squad"
         className={`flex-1 px-4 pt-3 ${FOCUS_RING.join(" ")}`}
       >
+        {/* Every career screen owns its section <h1> (career chrome note); Squad's layout carries no
+            standalone title, so the heading is for assistive technology only. */}
+        <h1 className="sr-only">Squad</h1>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <SquadToolbar
             filters={filters}
