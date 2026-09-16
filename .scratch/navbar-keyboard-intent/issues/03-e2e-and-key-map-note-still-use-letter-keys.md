@@ -1,7 +1,7 @@
 # 03: e2e specs and the global-key-map note still use the retired letter `g` keys
 
 Type: bug
-Status: ready-for-agent
+Status: claimed
 
 ## What was measured
 
