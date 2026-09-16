@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ClubId, SaveId, type CommentaryLineView, type SubstitutionStatusView } from "@cm-clone/contracts";
+import { ClubId, SaveId, type CommentaryLineView } from "@cm-clone/contracts";
 import { MatchDayScreen } from "../../../src/renderer/match/MatchDayScreen.js";
 import { clearActiveMatch, setActiveMatch } from "../../../src/renderer/match/session.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
@@ -11,15 +11,6 @@ const rid = (id: string) => SaveId.make(id);
 const cid = (id: string) => ClubId.make(id);
 
 const NOT_FOUND = { _tag: "SaveNotFoundError", id: rid("s1") };
-
-const noSubs = (overrides: Partial<SubstitutionStatusView> = {}): SubstitutionStatusView => ({
-  used: 0,
-  remaining: 5,
-  windowsUsed: 0,
-  windowsRemaining: 3,
-  capReached: false,
-  ...overrides,
-});
 
 const line = (minute: number, text: string): CommentaryLineView => ({
   minute,
@@ -42,11 +33,6 @@ const fullTimeSession = () => ({
   homeScore: 2,
   awayScore: 1,
   phase: "complete" as const,
-  homeSubs: noSubs(),
-  awaySubs: noSubs(),
-  homeOnPitchCount: 11,
-  chunkInjuries: [],
-  currentMinute: 90,
   streamComplete: true,
 });
 

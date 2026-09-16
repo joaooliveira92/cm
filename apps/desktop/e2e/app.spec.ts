@@ -6,6 +6,7 @@ import {
   expect,
   goto,
   matchScore,
+  openLivePanel,
   openTacticsEditor,
   test,
 } from "./launchApp.js";
@@ -104,9 +105,7 @@ test("Match Day starts a match, reveals a feed, and applies a live control comma
   await expect(matchScore(window)).toBeVisible();
   await expect(window.locator("ul").first()).toBeVisible();
 
-  const panelToggle = window.getByRole("button", { name: /Tactics & substitutions/ });
-  await expect(panelToggle).toBeVisible({ timeout: 15_000 });
-  await panelToggle.click();
+  await openLivePanel(window);
   await expect(window.getByText("Team instructions")).toBeVisible();
 
   await window.getByRole("button", { name: "Apply tactics change" }).click();
@@ -123,7 +122,7 @@ test("Match Day starts a match, reveals a feed, and applies a live control comma
   await expect(window.getByRole("button", { name: "Make substitution" })).toBeVisible();
   await expect(window.getByText(/Substitutions used:/)).toBeVisible();
 
-  await panelToggle.click();
+  await window.getByRole("button", { name: /Tactics & substitutions/ }).click();
   await expect(window.getByText("Show")).toBeVisible();
 });
 

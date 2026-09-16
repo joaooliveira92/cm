@@ -35,6 +35,15 @@ const HALFTIME_MINUTE = 45;
 const stampMinute = (revealedMinute: number, halfTimeRevealed: boolean): number =>
   Math.max(1, halfTimeRevealed ? revealedMinute : Math.min(revealedMinute, HALFTIME_MINUTE));
 
+/** An Injury whose Commentary Line has been revealed. The object is the injury's identity while it
+ *  stays revealed: a command removes exactly the ones that were revealed when it was sent. */
+export interface RevealedInjury {
+  readonly injury: InjuryView;
+  /** The controlled club's cap as known when the line was revealed. Whether the injury asks for a
+   *  decision is settled then: a cap reached later belongs to other substitutions, not to it. */
+  readonly capReachedWhenRevealed: boolean;
+}
+
 export interface CommentaryState {
   readonly revealed: ReadonlyArray<CommentaryLineView>;
   readonly homeScore: number;
@@ -48,7 +57,11 @@ export interface CommentaryState {
   /** The controlled club's pitch as of the latest revealed position a match response was read at,
    *  or null before any response. The substitution pickers list it. */
   readonly clubPitch: MatchPitchView | null;
-  readonly chunkInjuries: ReadonlyArray<InjuryView>;
+  /** Injuries whose Commentary Line has been revealed and that are neither acted on nor resolved.
+   *  Play on acts on all of them; a command the match answers acts on those revealed when it was sent.
+   *  The forced Substitution the engine emits right after an Injury resolves it. A chunk's injuries
+   *  stay out of here until their line is revealed, because chunks are fetched ahead of the reveal. */
+  readonly revealedInjuries: ReadonlyArray<RevealedInjury>;
   readonly currentMinute: number;
 }
 
@@ -110,7 +123,14 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
    *  and answered after it, must not replace it, even when both were read at the same position. */
   const pitchSentRef = useRef(0);
   const pitchAppliedRef = useRef(0);
-  const [chunkInjuries, setChunkInjuries] = useState<ReadonlyArray<InjuryView>>([]);
+  const [revealedInjuries, setRevealedInjuries] = useState<ReadonlyArray<RevealedInjury>>([]);
+  /** `revealedInjuries` as of the last change, for a command to snapshot when it is sent. */
+  const revealedInjuriesRef = useRef<ReadonlyArray<RevealedInjury>>([]);
+  /** Each buffered Injury line's typed Injury, keyed by the line object the buffer holds. */
+  const injuryByLineRef = useRef(new WeakMap<CommentaryLineView, InjuryView>());
+  /** The injury the last revealed line brought, or null when that line was not an Injury. */
+  const lastRevealedInjuryRef = useRef<{ readonly revealed: RevealedInjury; readonly minute: number } | null>(null);
+  const capReachedRef = useRef(false);
   const [currentMinute, setCurrentMinute] = useState(0);
 
   const cursorRef = useRef(0);
@@ -139,6 +159,12 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
 
   const applyPollView = useCallback((view: RpcSuccess<"resumeSimulation">, request: number): void => {
     cursorRef.current = view.cursor;
+    // One Commentary Line per Match Event, in order, so a chunk's Nth Injury line is its Nth injury.
+    const injuryLines = view.lines.filter((line) => line.tag === "Injury");
+    for (const [index, line] of injuryLines.entries()) {
+      const injury = view.injuries[index];
+      if (injury !== undefined) injuryByLineRef.current.set(line, injury);
+    }
     pendingRef.current.push(...view.lines);
     if (view.isComplete) streamCompleteRef.current = true;
     setHomeScore(view.homeScore);
@@ -172,16 +198,42 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     );
   }, [revealed.length, lastRevealedTag, matchState.match, matchState.saveId, applyPitch, nextPitchRequest]);
 
+  useEffect(() => {
+    capReachedRef.current = clubSubs.capReached;
+  }, [clubSubs.capReached]);
+
+  const updateInjuries = useCallback(
+    (update: (current: ReadonlyArray<RevealedInjury>) => ReadonlyArray<RevealedInjury>): void => {
+      revealedInjuriesRef.current = update(revealedInjuriesRef.current);
+      setRevealedInjuries(revealedInjuriesRef.current);
+    },
+    [],
+  );
+
   const revealLine = useCallback((line: CommentaryLineView): void => {
     setRevealed((lines) => {
       const next = [...lines, line];
       recordRevealedEvents(matchState.saveId, next.length);
       return next;
     });
+    // The engine emits an Injury's forced Substitution as the very next Match Event, at the same
+    // minute; a manager's substitution is applied before a minute's play, so it never lands there.
+    const previous = lastRevealedInjuryRef.current;
+    if (line.tag === "Substitution" && previous !== null && previous.minute === line.minute) {
+      updateInjuries((current) => current.filter((revealed) => revealed !== previous.revealed));
+    }
+    const injury = injuryByLineRef.current.get(line);
+    if (injury === undefined) {
+      lastRevealedInjuryRef.current = null;
+    } else {
+      const revealed: RevealedInjury = { injury, capReachedWhenRevealed: capReachedRef.current };
+      lastRevealedInjuryRef.current = { revealed, minute: line.minute };
+      updateInjuries((current) => [...current, revealed]);
+    }
     setCurrentMinute(line.minute);
     recordRevealedMinute(matchState.saveId, line.minute);
     if (line.tag === "HalfTimeReached") recordHalfTimeRevealed(matchState.saveId);
-  }, [matchState.saveId]);
+  }, [matchState.saveId, updateInjuries]);
 
   const setPaused = useCallback(
     (paused: boolean) => matchActions.setPhasePaused(paused),
@@ -193,22 +245,30 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     [matchActions],
   );
 
-  const applyCommandResult = useCallback((response: RpcSuccess<"submitMatchCommand">): void => {
-    const match = matchState.match;
-    setHomeScore(response.homeScore);
-    setAwayScore(response.awayScore);
-    setChunkInjuries([]);
-    if (match === null) return;
-    setClubSubs(controlledSubs(match, response));
-    setClubSubsKnown(true);
-    setClubOnPitchCount(controlledOnPitchCount(match, response));
-  }, [matchState.match]);
+  // The pause follows from what is left: `useMatchStreaming`'s pause effect lifts it once no revealed
+  // injury asks for a decision.
+  const applyCommandResult = useCallback(
+    (response: RpcSuccess<"submitMatchCommand">, actedOn: ReadonlyArray<RevealedInjury>): void => {
+      const match = matchState.match;
+      setHomeScore(response.homeScore);
+      setAwayScore(response.awayScore);
+      updateInjuries((current) => current.filter((revealed) => !actedOn.includes(revealed)));
+      if (match === null) return;
+      setClubSubs(controlledSubs(match, response));
+      setClubSubsKnown(true);
+      setClubOnPitchCount(controlledOnPitchCount(match, response));
+    },
+    [matchState.match, updateInjuries],
+  );
 
   const submitCommand = useCallback(
     async (command: MatchCommand, isHalftime: boolean): Promise<CommandStatus> => {
       if (matchState.match === null) return { _tag: "rejected", reason: "No match is in play." };
       const revealedEvents = getRevealedEvents(matchState.saveId);
       const request = nextPitchRequest();
+      // Lines keep revealing while the command is in flight; an Injury revealed meanwhile was not
+      // in front of the manager when they sent it.
+      const actedOn = revealedInjuriesRef.current;
       try {
         const result = await runCommand({
           saveId: matchState.saveId,
@@ -219,7 +279,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
           isHalftime,
           command,
         });
-        applyCommandResult(result);
+        applyCommandResult(result, actedOn);
         applyPitch(result, request);
         return resolveCommandStatus(command, result);
       } catch (error) {
@@ -231,7 +291,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     [matchState.match, matchState.saveId, currentMinute, runCommand, applyCommandResult, applyPitch, nextPitchRequest],
   );
 
-  const resume = useCallback(() => setChunkInjuries([]), []);
+  const resume = useCallback((): void => updateInjuries(() => []), [updateInjuries]);
 
   const value: CommentaryContextValue = {
     state: {
@@ -242,7 +302,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
       clubSubsKnown,
       clubOnPitchCount,
       clubPitch,
-      chunkInjuries,
+      revealedInjuries,
       currentMinute,
     },
     actions: { submitCommand, resume },

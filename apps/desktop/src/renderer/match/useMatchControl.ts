@@ -107,9 +107,14 @@ export const useMatchControl = ({
     subDraftStarted: outPlayerId !== "" || inPlayerId !== "",
   };
 
+  // Each new injury to the controlled club opens the panel, even one the manager closed on an
+  // earlier injury that is still pending.
+  const clubInjuryCount = injuries.filter((injury) => injury.teamClubId === clubId).length;
+  const clubInjuryCountRef = useRef(0);
   useEffect(() => {
-    if (injuryPrompt) setOpen(true);
-  }, [injuryPrompt]);
+    if (clubInjuryCount > clubInjuryCountRef.current) setOpen(true);
+    clubInjuryCountRef.current = clubInjuryCount;
+  }, [clubInjuryCount]);
 
   useEffect(() => {
     if (tacticsResult._tag === "Success") {
@@ -266,7 +271,7 @@ export const useMatchControl = ({
 
   // Panel-scoped Escape (AC-33): open → close the panel (and the injury modal
   // inside it); paused → the match STAYS paused (the pause is owned by the
-  // screen's chunkInjuries, untouched here); closed → no-op. A palette/help/
+  // provider's revealedInjuries, untouched here); closed → no-op. A palette/help/
   // splash above the panel owns Escape instead.
   useSeamHotkeys(
     "Escape",

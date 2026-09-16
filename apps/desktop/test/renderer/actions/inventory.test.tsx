@@ -129,19 +129,9 @@ const resumedMatch = () => ({
     isHome: true,
   },
   cursor: 0,
-  revealed: [],
-  homeScore: 0,
-  awayScore: 0,
-  isComplete: false,
   // The session is mid-stream: `resumedMatch` stands in for a live resume, which is the
   // phase the control panel stays mounted in.
   phase: "live" as const,
-  homeSubs: noSubs(),
-  awaySubs: noSubs(),
-  homeOnPitchCount: 11,
-  awayOnPitchCount: 11,
-  chunkInjuries: [],
-  currentMinute: 1,
   streamComplete: false,
 });
 

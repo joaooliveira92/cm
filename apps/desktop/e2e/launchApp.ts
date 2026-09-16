@@ -365,6 +365,32 @@ export const openTacticsEditor = async (page: Page): Promise<void> => {
 };
 
 /**
+ * Open the Match day live control panel, unless it is already open.
+ *
+ * The panel opens itself when an Injury to the controlled club is revealed, so a spec that presses
+ * the toggle unconditionally closes the panel whenever the seeded match reveals one first. The
+ * toggle's "Show"/"Hide" label is the open state; the check repeats until the panel is open, so
+ * an auto-open landing between the read and the press is undone on the next pass.
+ * `via: "keyboard"` focuses the toggle and presses Enter instead of clicking it.
+ */
+export const openLivePanel = async (page: Page, via: "click" | "keyboard" = "click"): Promise<void> => {
+  const toggle = page.getByRole("button", { name: /Tactics & substitutions/ });
+  await expect(toggle).toBeVisible({ timeout: 15_000 });
+  await expect(async () => {
+    const isOpen = (await toggle.textContent())?.trimEnd().endsWith("Hide") === true;
+    if (!isOpen) {
+      if (via === "keyboard") {
+        await toggle.focus();
+        await page.keyboard.press("Enter");
+      } else {
+        await toggle.click();
+      }
+    }
+    await expect(page.getByText("Team instructions")).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
+};
+
+/**
  * Assign a distinct real player to each of the 11 tactic slots and save — the minimum valid Tactic
  * (11 unique players), required before the Match Day control panel will render.
  *

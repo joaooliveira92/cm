@@ -174,9 +174,11 @@ const SubstitutionControl = () => {
       {state.mode._tag === "injury-prompt" && state.mode.severity === "red" && !state.isShorthanded && (
         <Alert variant="destructive">
           <p className="font-semibold">A severe injury has forced a player off.</p>
-          <p className="mt-1">
-            No subs left — rearrange the remaining players in the tactics panel below.
-          </p>
+          {state.subsStatus.capReached && (
+            <p className="mt-1">
+              No subs left — rearrange the remaining players in the tactics panel below.
+            </p>
+          )}
         </Alert>
       )}
 
@@ -386,7 +388,7 @@ export const MatchControlPanel = () => {
       subsKnown={comm.clubSubsKnown}
       onPitchCount={comm.clubOnPitchCount}
       pitch={comm.clubPitch}
-      injuries={comm.chunkInjuries}
+      injuries={comm.revealedInjuries.map((revealed) => revealed.injury)}
     />
   );
 };

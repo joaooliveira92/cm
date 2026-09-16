@@ -15,6 +15,9 @@
 - **False "applied".** `substitutionApplied` uses `events.some(...)`. Submitting the same pair twice
   in one minute is refused the second time, yet it still reads applied because the first event
   matches. Compare the number of matching events with the number of matching journaled `SubstitutionMade` entries.
+- **Severe goalkeeper injury at the cap.** The renderer resolves a revealed Injury when a
+  Substitution line follows it at the same minute (ticket 21). The goalkeeper stand-in emits one, so
+  no "rearrange" pause fires, although the team is down to ten.
 - **ForceOff outcome.** It is never confirmed, although `applyForcedOff` returns a boolean.
 
 **Blocked by:** None

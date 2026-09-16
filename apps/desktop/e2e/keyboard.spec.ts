@@ -20,6 +20,7 @@ import {
   chooseOption,
   enterCareer,
   expect,
+  openLivePanel,
   openTacticsEditor,
   pressItemKey,
   pressPrefix,
@@ -185,10 +186,7 @@ test("Escape closes only the topmost transient layer (AC-20)", async ({
   await start.focus();
   await page.keyboard.press("Enter");
 
-  const panelToggle = page.getByRole("button", { name: /Tactics & substitutions/ });
-  await expect(panelToggle).toBeVisible();
-  await panelToggle.focus();
-  await page.keyboard.press("Enter");
+  await openLivePanel(page, "keyboard");
   await expect(page.getByText("Team instructions")).toBeVisible();
 
   // Palette over the open panel…

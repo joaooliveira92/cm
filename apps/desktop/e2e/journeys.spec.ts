@@ -3,6 +3,7 @@ import {
   closeOrKill,
   continueSeededCareer,
   expect,
+  openLivePanel,
   openTacticsEditor,
   pressItemKey,
   pressSectionKey,
@@ -118,10 +119,7 @@ test("a substitution is driven by keyboard through the match day live control pa
   await expect(start).toBeFocused();
   await page.keyboard.press("Enter");
 
-  const panelToggle = page.getByRole("button", { name: /Tactics & substitutions/ });
-  await expect(panelToggle).toBeVisible();
-  await panelToggle.focus();
-  await page.keyboard.press("Enter");
+  await openLivePanel(page, "keyboard");
   await expect(page.getByText("Team instructions")).toBeVisible();
 
   // The tactics command first — the carried tactic is what the engine is being asked to change.

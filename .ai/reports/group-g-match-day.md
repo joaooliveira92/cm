@@ -289,3 +289,39 @@ Reviewer **APPROVE**. It checked the fold by hand against `teamState.ts`, `loop.
 - **Lows.** Accepted: L1, the two severe-injury branches take effect one line apart; L3, the re-read
   swallows failures, with renderer precedent. Covered by ticket 24: L2, goalkeeper position after an
   early halftime bring-off.
+
+## Ticket 21 — the injury prompt and decision pause never fire, 2026-09-16
+
+- Ticket closed: [21](../../.scratch/group-g-match-day/issues/21-injury-prompt-and-decision-pause-never-fire.md)
+
+### Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | A revealed controlled-club Injury opens the prompt, and pauses when the cap was reached as it was revealed | `streaming-integration.test.tsx` buffered-vs-revealed, subs-left, later-cap; `live-keyboard.test.tsx` AC-33 cases | pass |
+| 2 | An Injury in the unrevealed buffer does neither | the same buffered cases | pass |
+| 3 | `live-keyboard.test.tsx` pause cases pass on the real provider path | the 6 cases that were failing at HEAD, now passing, assertions unchanged (the reviewer diffed them) | pass |
+
+### Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all (first pass) | `pnpm check:all` | exit 1. Desktop 67 failed. 5 new failures in world and league-selection tests, in a run whose test phase took 908s against about 700s; alone, `competition-participants`, `world-determinism`, `activeLeagues/screen` and `leagueSelection/screen` gave 58 passed. Throttling artifacts. |
+| check:all (after rework) | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Desktop **62 failed / 1827 passed**: ticket 19's 68 failing cases minus exactly the 6 `live-keyboard` cases. Lint and md-link counts unchanged. |
+| focused | `npx vitest run test/renderer/match test/main/match` | 8 failed / 138 passed. The 8 were already failing: post-match-summary 7 ("unexpected response") and screen-fulltime 1 (score not restored, ticket 23). |
+| e2e | `pnpm test:e2e e2e/journeys.spec.ts e2e/app.spec.ts e2e/keyboard.spec.ts` | 16 passed (52.7s). No spec reaches an injury; an injury from a seeded save cannot be reached, per the structural-extension note. |
+| determinism / save compatibility | — | renderer only; not applicable |
+
+### Review
+
+Reviewer **APPROVE**, with mediums the diff caused or made reachable, all repaired test-first:
+
+- **M1.** A command response wiped injuries revealed while it was in flight.
+- **M2.** Persisting injuries caused stale badges and late, spurious pauses. The pause is now decided
+  on reveal, a forced substitution resolves the injury, and the red alert text is gated on the cap.
+- **M3.** A match restored as paused was stuck.
+- **M4.** An auto-open could make the e2e panel toggle flaky.
+- **L2.** A second injury did not reopen a panel the manager had closed.
+
+Resolving by the adjacent Substitution line was accepted instead of changing the contract. Its
+goalkeeper edge case was added to ticket 25.

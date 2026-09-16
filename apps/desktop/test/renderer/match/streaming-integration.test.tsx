@@ -108,6 +108,9 @@ const Probe = () => {
       <output data-testid="probe">
         {comm.revealed.length}|{state.phase === "complete" ? "complete" : "live"}|{state.phase === "paused" ? "paused" : "running"}|{comm.homeScore}-{comm.awayScore}
       </output>
+      <output data-testid="injuries">
+        {comm.revealedInjuries.map((revealed) => revealed.injury.playerId).join(",")}
+      </output>
       <output data-testid="pitch">
         {comm.clubPitch === null ? "unknown" : `${comm.clubPitch.onPitch.map((slot) => slot.playerId).join(",")}|${comm.clubPitch.substitutes.join(",")}`}
       </output>
@@ -119,12 +122,18 @@ interface MountedProbe {
   readonly calls: () => number;
   readonly text: () => string;
   readonly pitch: () => string;
+  /** The playerIds of the revealed injuries not yet acted on or resolved, in reveal order. */
+  readonly injuries: () => string;
   readonly payloads: ReadonlyArray<Record<string, unknown>>;
+  /** Queues a view for a later poll, after the chunks given at mount. */
+  readonly enqueue: (view: Record<string, unknown>) => void;
 }
 
 const mountProbe = async (
   sess: Record<string, unknown>,
   chunks: ReadonlyArray<Record<string, unknown>>,
+  /** What `submitMatchCommand` answers; a failure when omitted. */
+  onCommand?: () => Promise<unknown>,
 ): Promise<MountedProbe> => {
   setActiveMatch(session(sess) as never);
   let calls = 0;
@@ -137,6 +146,7 @@ const mountProbe = async (
       const next = queue.shift() ?? resumeView();
       return { _tag: "Success", value: next } as never;
     }
+    if (method === "submitMatchCommand" && onCommand !== undefined) return onCommand() as never;
     return { _tag: "Failure", error: NOT_FOUND } as never;
   });
   render(
@@ -155,7 +165,9 @@ const mountProbe = async (
     calls: () => calls,
     text: () => screen.getByTestId("probe").textContent ?? "",
     pitch: () => screen.getByTestId("pitch").textContent ?? "",
+    injuries: () => screen.getByTestId("injuries").textContent ?? "",
     payloads,
+    enqueue: (view) => queue.push(view),
   };
 };
 
@@ -287,23 +299,160 @@ describe("useMatchStreaming — poll ahead, buffer, reveal one line per tick (AD
     expect(screen.getByTestId("pitch").textContent).toBe("|bench-1");
   });
 
-  it("holds the feed while a no-subs decision is pending — no poll reaches the wire", async () => {
-    const sess = {
-      phase: "paused" as const,
-      homeSubs: noSubs({ used: 5, remaining: 0, capReached: true }),
-      chunkInjuries: [knock()],
-    };
-    const probe = await mountProbe(sess, [resumeView()]);
+  it("a match restored paused with no decision pending returns to live and polls", async () => {
+    // A session carries the phase but not the injuries: with nothing to decide, nothing would ever
+    // lift a restored pause, so the feed must not stay held on it.
+    const probe = await mountProbe({ phase: "paused" as const }, [resumeView({ cursor: 1, lines: [line(1, "Kick-off.")] })]);
 
-    // The pause gate arms during mount narration, before the streaming hook's first poll, so the
-    // decision-pause holds every fetch: not one resumeSimulation call, no reveal, not complete.
-    expect(probe.calls()).toBe(0);
-    expect(probe.text()).toBe("0|live|paused|0-0");
+    expect(probe.text()).toBe("0|live|running|0-0");
+    expect(probe.calls()).toBe(1);
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(5000);
+      await vi.advanceTimersByTimeAsync(REVEAL_INTERVAL_MS);
     });
-    expect(probe.calls()).toBe(0);
-    expect(probe.text()).toBe("0|live|paused|0-0");
+    expect(probe.text()).toBe("1|live|running|0-0");
+  });
+});
+
+describe("the injury decision pause fires when the Injury line is revealed (group-g-match-day 21)", () => {
+  const injuryLine = (minute: number): CommentaryLineView => ({ minute, tag: "Injury", text: "He is down." });
+  const capReached = noSubs({ used: 5, remaining: 0, capReached: true });
+  const home = { ...session().match, isHome: true };
+  const withInjury = (injury: InjuryView) =>
+    resumeView({
+      cursor: 3,
+      homeSubs: capReached,
+      lines: [line(1, "Kick-off."), injuryLine(23), line(24, "Play on.")],
+      injuries: [injury],
+    });
+
+  it("an Injury to the controlled club still in the buffer does not pause; revealing it does", async () => {
+    const probe = await mountProbe({ match: home }, [withInjury(knock()), resumeView({ homeSubs: capReached })]);
+
+    // The chunk carrying the Injury has arrived, but none of it is revealed.
+    expect(probe.calls()).toBe(1);
+    expect(probe.text()).toBe("0|live|running|0-0");
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(REVEAL_INTERVAL_MS);
+    });
+    expect(probe.text()).toBe("1|live|running|0-0");
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(REVEAL_INTERVAL_MS);
+    });
+    expect(probe.text()).toBe("2|live|paused|0-0");
+
+    // Paused: nothing further is revealed.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(REVEAL_INTERVAL_MS * 5);
+    });
+    expect(probe.text()).toBe("2|live|paused|0-0");
+  });
+
+  it("does not pause for a revealed Injury to the opponent, even at the cap", async () => {
+    const opponentKnock: InjuryView = { ...knock(), teamClubId: cid("away"), playerId: pid("away-1") };
+    const probe = await mountProbe({ match: home }, [withInjury(opponentKnock), resumeView({ homeSubs: capReached })]);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(REVEAL_INTERVAL_MS * 3);
+    });
+    expect(probe.text()).toBe("3|live|running|0-0");
+  });
+
+  it("does not pause for a revealed Injury to the controlled club while it has substitutions left", async () => {
+    const withSubs = resumeView({ ...withInjury(knock()), homeSubs: noSubs() });
+    const probe = await mountProbe({ match: home }, [withSubs, resumeView()]);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(REVEAL_INTERVAL_MS * 3);
+    });
+    expect(probe.text()).toBe("3|live|running|0-0");
+  });
+});
+
+describe("revealed injuries: acted on, resolved, and the cap they were revealed at (group-g-match-day 21)", () => {
+  const injuryLine = (minute: number): CommentaryLineView => ({ minute, tag: "Injury", text: "He is down." });
+  const substitutionLine = (minute: number): CommentaryLineView => ({ minute, tag: "Substitution", text: "A change." });
+  const capReached = noSubs({ used: 5, remaining: 0, capReached: true });
+  const home = { ...session().match, isHome: true };
+  const severe = (): InjuryView => ({ ...knock(), severity: "severe", tier: "red" });
+  const tick = async (times = 1) => {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(REVEAL_INTERVAL_MS * times);
+    });
+  };
+
+  it("an Injury revealed while a command is in flight survives that command's response", async () => {
+    let answerCommand: (() => void) | undefined;
+    const held = () =>
+      new Promise((resolve) => {
+        answerCommand = () => resolve({ _tag: "Success", value: { ...resumeView({ homeSubs: capReached }), substitutionApplied: null } });
+      });
+    const chunk = resumeView({ cursor: 2, homeSubs: capReached, lines: [line(1, "Kick-off."), injuryLine(23)], injuries: [knock()] });
+    const probe = await mountProbe({ match: home }, [chunk], held);
+
+    // The command is sent before the Injury line is revealed, so it cannot have acted on it.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Bring off" }));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await tick(2);
+    expect(probe.injuries()).toBe("on-5");
+    expect(probe.text()).toBe("2|live|paused|0-0");
+
+    await act(async () => {
+      answerCommand?.();
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(probe.injuries()).toBe("on-5");
+    expect(probe.text()).toBe("2|live|paused|0-0");
+  });
+
+  it("a severe Injury is resolved by the forced Substitution revealed right after it", async () => {
+    const chunk = resumeView({
+      cursor: 4,
+      homeSubs: noSubs({ used: 4, remaining: 1 }),
+      lines: [line(1, "Kick-off."), injuryLine(23), substitutionLine(23), line(24, "Play on.")],
+      injuries: [severe()],
+    });
+    const probe = await mountProbe({ match: home }, [chunk]);
+
+    await tick(2);
+    expect(probe.injuries()).toBe("on-5");
+    await tick();
+    expect(probe.injuries()).toBe("");
+    await tick();
+    expect(probe.text()).toBe("4|live|running|0-0");
+  });
+
+  it("a Substitution at a later minute does not resolve an earlier Injury", async () => {
+    const chunk = resumeView({
+      cursor: 3,
+      lines: [line(1, "Kick-off."), injuryLine(23), substitutionLine(24)],
+      injuries: [knock()],
+    });
+    const probe = await mountProbe({ match: home }, [chunk]);
+
+    await tick(3);
+    expect(probe.text()).toBe("3|live|running|0-0");
+    expect(probe.injuries()).toBe("on-5");
+  });
+
+  it("an Injury revealed while substitutions remain never pauses once the cap is reached later", async () => {
+    const chunk = resumeView({ cursor: 3, lines: [line(1, "Kick-off."), injuryLine(23), line(24, "Play on.")], injuries: [knock()] });
+    const probe = await mountProbe({ match: home }, [chunk]);
+
+    await tick(3);
+    expect(probe.text()).toBe("3|live|running|0-0");
+    expect(probe.injuries()).toBe("on-5");
+
+    // A later read reports the cap reached: the decision the Injury was revealed at does not change.
+    probe.enqueue(resumeView({ cursor: 3, homeSubs: capReached }));
+    probe.enqueue(resumeView({ cursor: 3, homeSubs: capReached }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 3);
+    });
+    expect(probe.text()).toBe("3|live|running|0-0");
   });
 });

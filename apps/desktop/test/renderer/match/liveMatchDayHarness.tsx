@@ -136,10 +136,10 @@ export const resumeView = (overrides: Record<string, unknown> = {}) => ({
 
 export interface SessionOverrides {
   readonly isHome?: boolean;
-  readonly homeSubs?: SubstitutionStatusView;
-  readonly chunkInjuries?: ReadonlyArray<ReturnType<typeof orangeInjury>>;
 }
 
+/** A restored live session carries only what `ActiveMatchSession` does: substitution counts, pitch
+ *  and injuries reach the providers through a match response, so seed them in `polled`. */
 export const session = (overrides: SessionOverrides = {}) => ({
   saveId: rid("s1"),
   match: {
@@ -151,16 +151,7 @@ export const session = (overrides: SessionOverrides = {}) => ({
     isHome: overrides.isHome ?? true,
   },
   cursor: 0,
-  revealed: [],
-  homeScore: 0,
-  awayScore: 0,
-  isComplete: false,
-  homeSubs: overrides.homeSubs ?? noSubs(),
-  awaySubs: noSubs(),
-  homeOnPitchCount: 11,
-  awayOnPitchCount: 11,
-  chunkInjuries: overrides.chunkInjuries ?? [],
-  currentMinute: 1,
+  phase: "live" as const,
   streamComplete: false,
 });
 
@@ -190,20 +181,28 @@ export const takesSubstitutions: CommandResponder = (command, taken) => {
   };
 };
 
+/** What `resumeSimulation` answers: the same view every call, or one per call (numbered from 0). */
+export type Polled = Record<string, unknown> | ((call: number) => Record<string, unknown>);
+
 export const mountMatchDayWithSpine = async (
   sess: ReturnType<typeof session>,
   onCall?: (method: string, payload: unknown) => Promise<unknown> | undefined,
   respond: CommandResponder = takesSubstitutions,
-  polled: Record<string, unknown> = {},
+  polled: Polled = {},
 ): Promise<Submissions> => {
   const submissions: Submissions = { calls: [] };
+  let polls = 0;
   const taken = { home: 0, away: 0 };
   window.localStorage.clear();
   window.localStorage.setItem(teachingSplashStorageKey, "1");
   setActiveMatch(sess as never);
   mockPreload(async (method, payload) => {
     if (method === "getTactics") return { _tag: "Success", value: tacticView() } as never;
-    if (method === "resumeSimulation") return { _tag: "Success", value: resumeView(polled) } as never;
+    if (method === "resumeSimulation") {
+      const overrides = typeof polled === "function" ? polled(polls) : polled;
+      polls += 1;
+      return { _tag: "Success", value: resumeView(overrides) } as never;
+    }
     if (method === "submitMatchCommand") {
       submissions.calls.push({ method, payload: payload as Record<string, unknown> });
       return respond((payload as { command: { _tag: string; clubId: string } }).command, taken) as never;

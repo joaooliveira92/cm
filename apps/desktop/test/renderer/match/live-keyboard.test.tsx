@@ -61,21 +61,42 @@ describe("AC-33 — panel Escape semantics (open/closed/paused)", () => {
 });
 
 describe("AC-33 — injury decision flow: Play On (Enter) / Bring Off (B), Escape keeps the pause", () => {
-  const pausedSession = () =>
-    session({
-      homeSubs: noSubs({ used: 5, remaining: 0, capReached: true }),
-      chunkInjuries: [orangeInjury()],
-    });
+  const capReached = noSubs({ used: 5, remaining: 0, capReached: true });
+  const injuryLine = { minute: 23, tag: "Injury", text: "He is down." };
+  const filler = (minute: number) => ({ minute, tag: "MatchStarted", text: "Play goes on." });
+  /** The first poll brings an orange Injury to the controlled club, `before` lines ahead of its
+   *  line, with no substitutions left; every later poll brings nothing new. */
+  const injuryAfter = (before: number) => (call: number) =>
+    call === 0
+      ? {
+          cursor: before + 1,
+          homeSubs: capReached,
+          lines: [...Array.from({ length: before }, (_, index) => filler(index + 1)), injuryLine],
+          injuries: [orangeInjury()],
+        }
+      : { cursor: before + 1, homeSubs: capReached };
+  const mountPaused = () => mountMatchDayWithSpine(session(), undefined, undefined, injuryAfter(0));
+
+  it("an Injury still in the buffer neither pauses nor prompts; its reveal does both", async () => {
+    await mountMatchDayWithSpine(session(), undefined, undefined, injuryAfter(4));
+    expect(screen.getByText("Live")).toBeTruthy();
+    expect(screen.queryByText("Knock — sub or play on")).toBeNull();
+    expect(panelContent()).toBeNull();
+
+    await screen.findByText("Paused — awaiting decision", {}, { timeout: 4000 });
+    expect(screen.getByText("Knock — sub or play on")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Play on" })).toBeTruthy();
+  }, 10_000);
 
   it("an orange no-subs injury pauses the feed and auto-opens the panel with the decision modal", async () => {
-    await mountMatchDayWithSpine(pausedSession());
+    await mountPaused();
     await screen.findByText("Paused — awaiting decision");
     expect(screen.getByRole("button", { name: "Play on" })).toBeTruthy();
     expect(screen.getByRole("button", { name: /Bring off/ })).toBeTruthy();
   });
 
   it("Enter triggers Play On — the pause clears, the match resumes", async () => {
-    const submissions = await mountMatchDayWithSpine(pausedSession());
+    const submissions = await mountPaused();
     await screen.findByText("Paused — awaiting decision");
     keyDown("Enter", {}, "Enter");
 
@@ -89,7 +110,7 @@ describe("AC-33 — injury decision flow: Play On (Enter) / Bring Off (B), Escap
   });
 
   it("B triggers Bring Off — a ForceOff command is submitted and the pause clears", async () => {
-    const submissions = await mountMatchDayWithSpine(pausedSession());
+    const submissions = await mountPaused();
     await screen.findByText("Paused — awaiting decision");
     keyDown("b", {}, "KeyB");
 
@@ -102,24 +123,55 @@ describe("AC-33 — injury decision flow: Play On (Enter) / Bring Off (B), Escap
   });
 
   it("Escape closes the panel and the injury modal but the match STAYS paused (deliberation)", async () => {
-    await mountMatchDayWithSpine(pausedSession());
+    await mountPaused();
     await screen.findByText("Paused — awaiting decision");
     keyDown("Escape", {}, "Escape");
 
     await waitFor(() => expect(panelContent()).toBeNull());
     expect(screen.queryByRole("button", { name: "Play on" })).toBeNull();
-    // Not resumed: the paused badge persists (chunkInjuries untouched).
+    // Not resumed: the paused badge persists (the revealed injury is untouched).
     expect(screen.getByText("Paused — awaiting decision")).toBeTruthy();
   });
 
   it("B with the panel closed does nothing (panel-scoped bindings are open-only)", async () => {
-    const submissions = await mountMatchDayWithSpine(pausedSession());
+    const submissions = await mountPaused();
     await screen.findByText("Paused — awaiting decision");
     keyDown("Escape", {}, "Escape"); // close panel, match stays paused
     await waitFor(() => expect(panelContent()).toBeNull());
     keyDown("b", {}, "KeyB"); // panel is closed → no bring-off
     expect(submissions.calls.length).toBe(0);
     expect(screen.getByText("Paused — awaiting decision")).toBeTruthy();
+  });
+  it("a second Injury re-opens the panel the manager closed after the first", async () => {
+    const second = { ...orangeInjury(), minute: 30, playerId: rid("on-6") };
+    const lines = [injuryLine, ...Array.from({ length: 6 }, (_, index) => filler(24 + index)), { ...injuryLine, minute: 30 }];
+    await mountMatchDayWithSpine(session(), undefined, undefined, (call) =>
+      call === 0 ? { cursor: lines.length, lines, injuries: [orangeInjury(), second] } : { cursor: lines.length },
+    );
+    await waitFor(() => expect(panelContent()).toBeTruthy(), { timeout: 2000 });
+    keyDown("Escape", {}, "Escape");
+    await waitFor(() => expect(panelContent()).toBeNull());
+
+    await waitFor(() => expect(panelContent()).toBeTruthy(), { timeout: 4000 });
+  }, 10_000);
+
+  it("a severe Injury with substitutions left does not tell the manager there are none", async () => {
+    const severe = { ...orangeInjury(), severity: "severe", tier: "red" };
+    await mountMatchDayWithSpine(session(), undefined, undefined, (call) =>
+      call === 0 ? { cursor: 1, lines: [injuryLine], injuries: [severe] } : { cursor: 1 },
+    );
+    await screen.findByText("A severe injury has forced a player off.", {}, { timeout: 2000 });
+    expect(screen.queryByText(/No subs left/)).toBeNull();
+  });
+
+  it("a severe Injury at the cap tells the manager to rearrange", async () => {
+    const severe = { ...orangeInjury(), severity: "severe", tier: "red" };
+    await mountMatchDayWithSpine(session(), undefined, undefined, (call) =>
+      call === 0
+        ? { cursor: 1, homeSubs: capReached, lines: [injuryLine], injuries: [severe] }
+        : { cursor: 1, homeSubs: capReached },
+    );
+    await screen.findByText(/No subs left/, {}, { timeout: 2000 });
   });
 });
 
@@ -221,18 +273,15 @@ describe("AC-33 — two-step substitution by keyboard (Enter confirms, Escape ab
   });
 
   it("the substitution controls are disabled when the server reports the cap reached", async () => {
-    await mountMatchDayWithSpine(
-      session({ homeSubs: noSubs({ used: 5, remaining: 0, capReached: true }) }),
-    );
+    await mountMatchDayWithSpine(session(), undefined, undefined, {
+      homeSubs: noSubs({ used: 5, remaining: 0, capReached: true }),
+    });
     openPanel();
-    const outSelect = document.querySelector<HTMLSelectElement>(
-      '[data-action-id="set-live-substitute-off"]',
-    )!;
-    const inSelect = document.querySelector<HTMLSelectElement>(
-      '[data-action-id="set-live-substitute-in"]',
-    )!;
-    expect(outSelect.disabled).toBe(true);
-    expect(inSelect.disabled).toBe(true);
+    const select = (actionId: string) =>
+      document.querySelector<HTMLSelectElement>(`[data-action-id="${actionId}"]`)!;
+    // The counts arrive with the first poll, not with the restored session.
+    await waitFor(() => expect(select("set-live-substitute-off").disabled).toBe(true));
+    expect(select("set-live-substitute-in").disabled).toBe(true);
   });
 });
 

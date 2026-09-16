@@ -59,18 +59,15 @@ export const useMatchStreaming = (): void => {
     if (!hydrated) return;
     if (match === null) return;
     if (phase === "complete") return;
-    if (phase === "paused") {
-      commMeta.pausedRef.current = true;
-      return;
-    }
-    const needsDecision = shouldPauseMatch(
-      commState.chunkInjuries,
-      controlledClubId(match),
-      commState.clubSubs.capReached,
+    // Derived afresh, a restored paused phase included: a session does not carry injuries, so a
+    // match restored paused with none to decide on returns to live instead of waiting on nothing.
+    const clubId = controlledClubId(match);
+    const needsDecision = commState.revealedInjuries.some(({ injury, capReachedWhenRevealed }) =>
+      shouldPauseMatch([injury], clubId, capReachedWhenRevealed),
     );
     commMeta.pausedRef.current = needsDecision;
     commMeta.setPaused(needsDecision);
-  }, [match, phase, commState.clubSubs.capReached, commState.chunkInjuries, commMeta.setPaused, hydrated]);
+  }, [match, phase, commState.revealedInjuries, commMeta.setPaused, hydrated]);
 
   useEffect(() => {
     if (!hydrated) return;
