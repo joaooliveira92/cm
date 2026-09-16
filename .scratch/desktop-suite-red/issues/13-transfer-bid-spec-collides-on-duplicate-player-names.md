@@ -15,6 +15,6 @@ namesakes too.
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] The spec selects the Player it bid on even when another Player in the world shares the name
