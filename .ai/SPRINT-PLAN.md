@@ -2,10 +2,16 @@
 
 ## Immediate next action
 
-**desktop-suite-red** ticket 11 (live match reaches full time mid-test, needs a decision), 13
-(duplicate player names), 12 (Squad `h1`, needs triage); then two-row-nav 08 (tablist named after
-the section in match context); then navbar-keyboard-intent 04 (a
+**desktop-suite-red** ticket 13 (duplicate player names), then 12 (Squad `h1`, needs triage); then
+two-row-nav 08 (tablist named after the section in match context); then group-g-match-day 18 (the
+live substitution count reads the whole re-simulated match; it unblocks desktop-suite-red 11) and 19;
+then navbar-keyboard-intent 04 (a
 decision first), then group-a-reconciliation 20 (the Quit dialog is hidden under router overlays).
+
+desktop-suite-red ticket 11 parked 2026-09-16: no pacing seam, since the full-time race did not
+reproduce in 30 runs. The remaining 1-in-30 failure is a product defect: live substitution counts
+include substitutions the re-simulated match has not reached yet, so an accepted substitution can
+read as Rejected. Filed as group-g 18 and 19. 11 is blocked on 18.
 
 desktop-suite-red ticket 10 resolved 2026-09-16: the live-match specs assert today's command-status
 copy and tabs. The app and journeys e2e specs are at 10 passed / 2 failed (tickets 12, 13).
@@ -100,7 +106,8 @@ parallel sessions and were left alone.
 3. **desktop-suite-red**: 01, 02, 04, 05, 06 resolved (05 derived the nav guards, 06 made the
     classification a typecheck gate, 2026-09-16). 03 claimed-and-abandoned (needs a human to
     unclaim or close). Decision request 01 open. 07-10 resolved 2026-09-16 (quit guard; seed at the
-    pre-match boundary; graceful harness close; live-match copy). 11, 13 ready; 12 needs-triage.
+    pre-match boundary; graceful harness close; live-match copy). 11 blocked by group-g 18; 13 ready;
+    12 needs-triage.
 4. **season-rollover-skips-conclusion**: 01 resolved.
 5. **match-composition**: 01-02 resolved.
 6. **group-a-reconciliation**: 03-04 resolved. 20 ready (Quit dialog hidden under router overlays, filed 2026-09-16).

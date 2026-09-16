@@ -178,7 +178,18 @@ test("a live substitution is made from the standalone Match Substitutions screen
 
   await page.getByRole("navigation", { name: "Live Match tabs" }).getByRole("tab", { name: "Substitutions" }).click();
   await expect(page.getByRole("heading", { name: "Match Substitutions" })).toBeVisible();
-  await expect(page.getByText(/Substitutions used: 0\//)).toBeVisible({ timeout: 15_000 });
+  // The match can already have counted substitutions of its own: a severe injury substitutes from
+  // the bench (`forcePlayerOff` in the engine) and the e2e match seed is not pinned. So read the
+  // count the screen shows now rather than assuming a fresh 0.
+  const subsLine = page.getByText(/Substitutions used: \d+\/\d+/);
+  await expect(subsLine).toBeVisible({ timeout: 15_000 });
+  const [, usedText, capText] = /Substitutions used: (\d+)\/(\d+)/.exec((await subsLine.textContent()) ?? "") ?? [];
+  const usedBefore = Number(usedText);
+  const cap = Number(capText);
+  expect(
+    usedBefore,
+    `the match had already used ${usedBefore}/${cap} substitutions before the test acted, so none is left to make`,
+  ).toBeLessThan(cap);
 
   const off = page.getByLabel("Player coming off");
   const on = page.getByLabel("Player coming on");
@@ -187,9 +198,9 @@ test("a live substitution is made from the standalone Match Substitutions screen
   await on.selectOption({ index: 1 });
   await page.getByRole("button", { name: "Make substitution" }).click();
 
-  // A first substitution well inside the cap: the match response must count it.
+  // A substitution inside the cap: the match response must count it.
   await expect(page.getByRole("status")).toHaveText(/^Applied —/, { timeout: 15_000 });
-  await expect(page.getByText(/Substitutions used: 1\//)).toBeVisible();
+  await expect(page.getByText(`Substitutions used: ${usedBefore + 1}/${cap}`)).toBeVisible();
 
   await page.getByRole("button", { name: "Back to Match day" }).click();
   await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();

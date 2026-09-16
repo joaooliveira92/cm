@@ -292,3 +292,47 @@ kill and `waitForExit` are unchanged.
 Reviewed inline by the orchestrator. The diff is two regexes and one locator. The checks: each new
 label exists in `commandStatus.ts` for the command type the test sends; the either-outcome assertion
 is no wider than before; and the tab names match the snapshot.
+
+## Ticket 11 — live match reaches full time mid-test, 2026-09-16 (not resolved; blocked)
+
+- Ticket: [11](../../.scratch/desktop-suite-red/issues/11-live-match-reaches-full-time-mid-test.md), claim released, blocked by group-g-match-day 18
+- Follow-ups filed: [group-g-match-day 18](../../.scratch/group-g-match-day/issues/18-substitution-count-reads-the-whole-match.md),
+  [19](../../.scratch/group-g-match-day/issues/19-substitution-picker-lists-the-tactic-not-the-pitch.md)
+
+### Decision
+
+No pacing seam, pause or half-time scheme. With ticket 10's copy fixes in place,
+`pnpm test:e2e e2e/journeys.spec.ts:96 e2e/journeys.spec.ts:163 e2e/app.spec.ts:90 --repeat-each=10`
+gave 29 passed / 1 failed, and no run reached Full time. The race had come from tests waiting 15s on
+text that never appeared.
+
+### What the measurement found instead
+
+- **Run 1.** The Screen 97 snapshot showed a live 1-1 match at "Substitutions used: 1/5" before the
+  test substituted. A Severe injury had forced a substitution (`forcePlayerOff`).
+- **Run 2,** after making the assertion relative (read N, expect N+1): 29 passed / 1 failed on
+  "Rejected — The match did not take the substitution."
+- **Cause, in product code.** `buildResumeSimulationView` counts substitutions over the whole
+  re-simulated timeline, and `resolveCommandStatus` infers "applied" from a count difference. The
+  implementator's engine probe over 1,500 seeds found 23 accepted substitutions that would read as
+  Rejected, and 0 engine rejections. Filed as group-g 18.
+- **Picker.** It is built from the Tactic, not the pitch. Found by reading the code, it was not the
+  cause of this failure. Filed as group-g 19.
+
+### Change committed
+
+`journeys.spec.ts` Screen 97 asserts `Substitutions used: N+1/M` relative to the count shown before
+the command, with an explicit failure if N is already at the cap.
+
+### Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Desktop 68 failed / 1794 passed, the same failing cases as ticket 10's run. Lint and md-link counts unchanged. |
+| e2e | repeat run above, after the change | 29 passed / 1 failed. The failure is group-g 18. |
+
+### Review
+
+Reviewed inline by the orchestrator. The change is one test's count assertion. The product findings
+were checked against `view.ts` (`computeSubstitutionStatus(clubId, events)` over all events) before
+filing.
