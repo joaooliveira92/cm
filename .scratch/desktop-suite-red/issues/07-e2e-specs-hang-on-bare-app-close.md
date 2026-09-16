@@ -15,7 +15,7 @@ flush, so confirm the binding is written before close, or wait for it, instead o
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Neither spec hangs on close
 - [ ] `keybindings.spec.ts`'s stored-binding and relaunch assertions execute and pass
