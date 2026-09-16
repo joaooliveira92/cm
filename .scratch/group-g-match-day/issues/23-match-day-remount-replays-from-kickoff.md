@@ -14,7 +14,7 @@ Found in the review of [ticket 18](18-substitution-count-reads-the-whole-match.m
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Leaving and returning to Match day continues from the revealed position, not kickoff
 - [ ] A command raised after returning is stamped at the true revealed minute
