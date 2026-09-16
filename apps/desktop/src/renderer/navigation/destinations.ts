@@ -20,6 +20,7 @@ export type CareerDestination =
   | { readonly type: "tacticsEditor"; readonly saveId: SaveId }
   | { readonly type: "transfers"; readonly saveId: SaveId }
   | { readonly type: "contractExpiry"; readonly saveId: SaveId }
+  | { readonly type: "budgetReview"; readonly saveId: SaveId }
   | { readonly type: "league"; readonly saveId: SaveId }
   | { readonly type: "fixtures"; readonly saveId: SaveId }
   | { readonly type: "match"; readonly saveId: SaveId }
@@ -214,6 +215,7 @@ export type ResolvedDestination =
     }
   | { readonly to: "/career/$saveId/transfers"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/contract-expiry"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/budget-review"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/league"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/fixtures"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/match"; readonly params: { readonly saveId: SaveId } }
@@ -312,6 +314,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "tacticsEditor":
     case "transfers":
     case "contractExpiry":
+    case "budgetReview":
     case "league":
     case "fixtures":
     case "match":
@@ -371,6 +374,8 @@ const careerRoute = (
       return { to: "/career/$saveId/transfers", params: { saveId: destination.saveId } };
     case "contractExpiry":
       return { to: "/career/$saveId/contract-expiry", params: { saveId: destination.saveId } };
+    case "budgetReview":
+      return { to: "/career/$saveId/budget-review", params: { saveId: destination.saveId } };
     case "league":
       return { to: "/career/$saveId/league", params: { saveId: destination.saveId } };
     case "fixtures":

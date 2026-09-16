@@ -19,6 +19,7 @@ export {
   managerProfileAtom,
   transfersAtom,
   contractExpiryAtom,
+  budgetReviewAtom,
   saveSummaryAtom,
   newsInboxAtom,
   scoutingAtom,

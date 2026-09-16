@@ -31,6 +31,7 @@ screen what is already built, what is in scope for v1, and in what order the in-
 - [Implementation tickets](issues/): 4 vertical slices (04-07), all unblocked.
 - [04 — Contract Renewal](issues/04-contract-renewal.md): needs-info. Built and kept as a patch; blocked on [decision request 01](decision-request-01-when-a-contract-can-be-renewed.md), whether a Contract can be renewed while it still has years to run.
 - [05 — Contract Expiry](issues/05-contract-expiry.md): resolved. Screen 141 shipped 2026-09-15.
+- [06 — Budget Review](issues/06-budget-review.md): resolved. Screen 145 shipped 2026-09-15.
 
 ## Not yet specified
 

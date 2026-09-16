@@ -8,8 +8,8 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] New read returns Transfer Budget remaining, Wage Budget and committed wages, with an RPC roundtrip test
-- [ ] Committed wages equal the sum the wage-budget check in `renewContract` and `completeTransfer` uses, proven by a test
-- [ ] Screen shows the three figures and the headroom
+- [x] New read returns Transfer Budget remaining, Wage Budget and committed wages, with an RPC roundtrip test
+- [x] Committed wages equal the sum the wage-budget check in `renewContract` and `completeTransfer` uses, proven by a test
+- [x] Screen shows the three figures and the headroom

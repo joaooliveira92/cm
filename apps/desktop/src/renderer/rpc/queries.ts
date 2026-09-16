@@ -318,3 +318,18 @@ export const contractExpiryAtom = Atom.family((saveId: SaveId) =>
     ),
   ),
 );
+
+export const budgetReviewKey = (saveId: SaveId): readonly ["budgetReview", SaveId] => [
+  "budgetReview",
+  saveId,
+];
+
+/** Budget Review (Screen 145): the manager's club's Transfer Budget remaining, Wage Budget,
+ *  committed wages, and headroom. A pure read, reactive on the save-wide key. */
+export const budgetReviewAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getBudgetReviewScreen", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), budgetReviewKey(saveId)]),
+    ),
+  ),
+);

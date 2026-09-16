@@ -90,6 +90,7 @@ import {
   TransfersScreenView,
   WageBudgetExceededError,
   ContractExpiryScreenView,
+  BudgetReviewView,
 } from "./schemas/index.js";
 import { ScoutingRpcs } from "./rpc-scouting.js";
 
@@ -348,6 +349,14 @@ commitCareer: {
   getContractExpiryScreen: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: ContractExpiryScreenView,
+    error: Schema.Union([SaveNotFoundError]),
+  },
+  /** Transfer and Wage Budget Review (Screen 145): the manager's club's Transfer Budget remaining,
+   *  Wage Budget, total wages committed by active Contracts, and headroom under the Wage Budget.
+   *  A pure read — no command side. */
+  getBudgetReviewScreen: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: BudgetReviewView,
     error: Schema.Union([SaveNotFoundError]),
   },
   placeBid: {

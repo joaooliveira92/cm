@@ -144,3 +144,13 @@ export class ContractExpiryPlayerView extends Schema.Class<ContractExpiryPlayerV
 export class ContractExpiryScreenView extends Schema.Class<ContractExpiryScreenView>("ContractExpiryScreenView")({
   players: Schema.Array(ContractExpiryPlayerView),
 }) {}
+
+/** The Transfer and Wage Budget Review screen (Screen 145): the manager's club's Transfer Budget
+ *  remaining, Wage Budget, total wages committed by active Contracts, and the headroom left under
+ *  the Wage Budget. A pure read — no command side. */
+export class BudgetReviewView extends Schema.Class<BudgetReviewView>("BudgetReviewView")({
+  transferBudgetRemaining: Schema.Finite,
+  wageBudget: Schema.Finite,
+  committedWages: Schema.Finite,
+  headroom: Schema.Finite,
+}) {}

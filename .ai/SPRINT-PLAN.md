@@ -2,10 +2,10 @@
 
 ## Immediate next action
 
-**group-j-transfers-contracts-and-negotiations** ticket 06 (Budget Review, Screen 145). Ticket 04
+**group-j-transfers-contracts-and-negotiations** ticket 07 (Transfer History, Screen 146). Ticket 04
 (Contract Renewal) is needs-info on group-j decision request 01 (renewal mid-term), its work kept as a
-patch. Ticket 05 (Contract Expiry) resolved 2026-09-15. 07 unblocked. Group I decision request 01 also
-blocks Group J Screens 132, 134 and 137.
+patch. Tickets 05-06 resolved 2026-09-15. Group I decision request 01 also blocks Group J Screens
+132, 134 and 137.
 
 ## Gate state (2026-09-14)
 
@@ -59,7 +59,7 @@ blocks Group J Screens 132, 134 and 137.
     Knowledge screen), 06 completed (Scouting Centre), 2026-09-15. 08 completed (read-state
     helper), 2026-09-15. Scope note promoted. Effort complete for v1; decision request 01 open. Decision request 01 open.
 12. **group-j-transfers-contracts-and-negotiations**: 01-03 resolved, spec published (2026-09-15). 04
-    needs-info on decision request 01; 05 resolved; 06-07 ready.
+    needs-info on decision request 01; 05-06 resolved; 07 ready.
 
 Shipped and closed:
 
