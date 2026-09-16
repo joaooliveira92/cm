@@ -2,10 +2,14 @@
 
 ## Immediate next action
 
-**two-row-nav** ticket 08 (tablist named after the section in match context); then group-g-match-day 18 (the
+**group-g-match-day** ticket 18 (the
 live substitution count reads the whole re-simulated match; it unblocks desktop-suite-red 11) and 19;
 then navbar-keyboard-intent 04 (a
-decision first), then group-a-reconciliation 20 (the Quit dialog is hidden under router overlays).
+decision first), then group-a-reconciliation 20 (the Quit dialog is hidden under router overlays),
+then desktop-suite-red 14 (a flaky incoming-bids unit test).
+
+two-row-nav ticket 08 resolved 2026-09-16 (`d0e5f75`): secondary tablists are named for their match
+or entity context, not the primary section. Its gate run exposed desktop-suite-red 14.
 
 desktop-suite-red ticket 12 resolved 2026-09-16: Squad has a visually hidden `h1`, and `app.spec.ts`
 is fully green. desktop-suite-red now has no ready ticket: 11 is blocked on group-g 18, and 03 is
