@@ -40,7 +40,7 @@ is intended and leave one.
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Adding a top-level career screen without updating `CAREER_SCREEN_TYPES` fails some test
 - [ ] `registry.test.ts` no longer pins a hard-coded count and name list
