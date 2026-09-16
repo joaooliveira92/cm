@@ -18,7 +18,7 @@ comments. Confirming through the renderer's dialog is blocked while a router ove
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A normal e2e teardown quits gracefully, well under `CLOSE_TIMEOUT_MS`
 - [ ] The kill fallback still bounds a wedged app
