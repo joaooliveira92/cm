@@ -1,7 +1,7 @@
 # 02: The World section badges `g 8`, which the keyboard spine cannot receive
 
 Type: bug
-Status: ready-for-agent
+Status: claimed
 
 ## What was measured
 
