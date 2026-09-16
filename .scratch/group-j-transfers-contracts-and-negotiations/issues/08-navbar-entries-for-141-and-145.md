@@ -22,7 +22,7 @@ Follow ticket 07's wiring, which is the complete set of touch points:
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Contract Expiry and Budget Review each reachable from the Recruitment submenu
 - [ ] A Playwright spec navigates to each through the navbar rather than by URL
