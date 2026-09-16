@@ -2,9 +2,13 @@
 
 ## Immediate next action
 
-**desktop-suite-red** ticket 05 (`route-index.test.ts` asserts a frozen screen list) — earliest live
-effort in queue order with a ready ticket. Then **group-j** ticket 08 (navbar entries for Screens
-141 and 145).
+**desktop-suite-red** ticket 06 (`CAREER_SCREEN_TYPES` is swept by three tests and enforced by
+none). Then **group-j** ticket 08 (navbar entries for Screens 141 and 145).
+
+Ticket 05 resolved 2026-09-16 (`0d0b60c`). Its premise was half wrong: `navbar.test.tsx`'s literal
+was correct, not stale, and red because the navbar advertises a `g 8` the keyboard spine rejects.
+That test is now derived from the binding registry and deliberately red against
+[navbar-keyboard-intent 02](../.scratch/navbar-keyboard-intent/issues/02-world-section-advertises-a-dead-g-key.md).
 
 Group J ticket 07 (Transfer History, Screen 146) resolved 2026-09-15 (`c7ad6bd`); it shipped a
 navbar entry, which exposed that tickets 05 and 06 shipped their screens URL-only. Ticket 04
@@ -41,6 +45,10 @@ parallel sessions and were left alone.
   - `test/renderer/router/stage2.test.ts`, `team-scout-report-route.test.ts` — `window` not defined
     (jsdom env)
   - `test/renderer/match/screen-fulltime.test.tsx` — passes.
+- **Nav guard baseline, 2026-09-16 (`0d0b60c`)**: `test/renderer/navigation` is 1 failed / 307
+  passed across 11 files. The one failure is intentional — `navbar.test.tsx`'s badge case is red
+  until navbar-keyboard-intent 02 resolves the `g 8` gap. Before this ticket the same two files
+  failed 2. Details in [reports/desktop-suite-red.md](reports/desktop-suite-red.md).
 - **e2e**: still 5 failed / 28 passed at `8f95c8f` — no e2e change this sprint.
 - **typecheck**: 0 errors across all packages.
 - **lint/oxlint**: pre-existing warnings only.
@@ -49,7 +57,9 @@ parallel sessions and were left alone.
 
 1. ~~**group-c-club-information**: complete 2026-09-14. Screen 38 already shipped.~~
 2. ~~**group-d-player-and-staff-records**: complete 2026-09-14. 19 screens charted, 3 implemented.~~
-3. **desktop-suite-red**: 01, 02, 04 resolved. 03 claimed-and-abandoned (needs a human to unclaim or close). 05 ready — `route-index.test.ts` asserts a frozen screen list, filed from the group-j ticket 07 review.
+3. **desktop-suite-red**: 01, 02, 04, 05 resolved (05 derived the nav guards, 2026-09-16). 03
+    claimed-and-abandoned (needs a human to unclaim or close). 06 ready — the hand-kept
+    `CAREER_SCREEN_TYPES` sweeps, filed from the ticket 05 review.
 4. **season-rollover-skips-conclusion**: 01 resolved.
 5. **match-composition**: 01-02 resolved.
 6. **group-a-reconciliation**: 03-04 resolved.

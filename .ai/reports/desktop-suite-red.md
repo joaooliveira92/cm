@@ -1,91 +1,97 @@
-# Validation Report: desktop-suite-red, ticket 01
+# Validation Report: desktop-suite-red
 
-Written by the orchestrator after the gate, before the commit. It records what was **observed**.
+## Ticket 05 — the navigation tests asserted frozen literals, 2026-09-16
 
-## Sprint
+### The problem
 
-- Effort: `.scratch/desktop-suite-red/`
-- Tickets closed: `01-select-primitive-breaks-filter-tests`
-- Branch: `dev` (per `.ai/AUTONOMOUS-AGENT.md` § Git policy, no feature branches)
-- Commit: `fix(table): drop unused bindings left by the DataTable and TablePanel splits`
+`route-index.test.ts`'s "union of section defaults and items covers exactly the career screens" and
+`navbar.test.tsx`'s "badges each section's number key" both compared live navigation state against
+hard-coded arrays. Both had been red for several efforts, and three separate changes shipped past
+them — most recently `c7ad6bd`. A test that is red whether the code is right or wrong carries no
+signal.
 
-## Acceptance criteria → evidence
+### What shipped
 
-| # | Criterion | Evidence | Result |
-|---|---|---|---|
-| 1 | Root cause of the `ui-select` open timeout named | 2026-09-05 comment in the ticket: the suites drove the vendored Base UI `Select` wrongly; the select migration fixed it | pass (already shipped) |
-| 2 | Full suite re-counted after that fix | 2026-09-05 comment: 25 → 1 failure on `1e4816a` | pass (already shipped) |
-| 3 | Remaining failures triaged, `season.test.ts` separated | the last survivor, "a background competition's fixtures resolve…", now lives in `test/main/season/advance.test.ts` and passes in the full suite below | pass |
-| 4 | `pnpm check:all` is green | second full run below: exit 0 | pass |
+**`route-index.test.ts` — fixed, green, self-maintaining.** The union case became two cases, each
+derived from the code that defines its side:
 
-## Baseline (at `ee1b029`, clean tree, before any change)
+- every type in `CAREER_SCREEN_TYPES` is reachable from some navbar section;
+- every navbar destination resolves, through `resolveDestination`, to a key of
+  `appRouter.routesByPath`.
 
-`pnpm check:all` → exit 1. Only `lint` failed, on five `eslint(no-unused-vars)` errors:
+Verified by probe rather than by assertion: adding `tacticsEditor` (a documented sub-surface with no
+navbar entry) to `CAREER_SCREEN_TYPES` fails the first case with
+`expected [ 'tacticsEditor' ] to deeply equal []`, naming the offender — which the old frozen
+literal could not do.
 
+The reverse direction ("every registered career route appears in the navbar") is deliberately
+absent: it is false by design, since the save route registers `contract-expiry`, `budget-review` and
+the nine `match-*` sub-surfaces at the same depth as top-level screens, so router shape cannot
+separate them. Expressing it would require a hard-coded exclusion list — the same frozen literal in
+a new costume.
+
+**`navbar.test.tsx` — the ticket's premise was wrong, and the first attempt made it worse.**
+
+`["1".."7"]` was not a stale literal. It was *correct*, and red for a real reason:
+`PrimaryNav.tsx:110` badges all 8 sections with `String(index + 1)` unconditionally, while
+`KeyboardStateProvider.tsx:111` filters level-0 keys through `/^[1-7]$/` and `allActions.ts` binds
+only `g 1`-`g 7`. The World section advertises a `g 8` that does nothing.
+
+The first attempt derived the expectation from `NAV_SECTIONS`, which compared `String(index + 1)`
+against the identical expression in the component — an assertion that cannot fail, and which turned
+a live defect green. The reviewer caught this as a HIGH finding and the ticket was reworked.
+
+It now derives from the **binding registry** (`ALL_ACTIONS` entries carrying a `sectionKey`) and is
+**red on purpose**, with the reason and the owning ticket in a comment beside it. It will go green
+on its own under either resolution of that ticket. Making it pass here would have required choosing
+whether the eighth section gains a keyboard shortcut or loses its badge — a design decision, not a
+test repair.
+
+### Definition of done
+
+| Criterion | Outcome |
+|---|---|
+| Expectation derived, not frozen | Met for both files |
+| Adding a destination needs no edit to this test | Met for `route-index.test.ts`; see ticket 06 for the repo-wide gap |
+| Both cases pass, or are removed with a reason | **Met in substance, not literally** — one passes, one is deliberately red against a filed ticket |
+
+### Validation — exact commands and observed results
+
+```console
+$ pnpm --filter @cm-clone/desktop exec vitest run test/renderer/navigation
+  # before
+  Test Files  2 failed (2)        Tests  2 failed | 15 passed (17)   [the two files alone]
+  # after
+  Test Files  1 failed | 10 passed (11)      Tests  1 failed | 307 passed (308)
 ```
-apps/desktop/src/renderer/table/TablePanelContent.tsx:22:3: error eslint(no-unused-vars): Parameter 'filters' is declared but never used.
-apps/desktop/src/renderer/table/useTableKeyboard.ts:4:10: error eslint(no-unused-vars): Identifier 'cycleSort' is imported but never used.
-apps/desktop/src/renderer/table/useTableKeyboard.ts:42:5: error eslint(no-unused-vars): Variable 'onSortChange' is declared but never used.
-apps/desktop/src/renderer/table/useTableKeyboard.ts:43:5: error eslint(no-unused-vars): Variable 'table' is declared but never used.
-apps/desktop/src/renderer/table/DataTable.tsx:3:28: error eslint(no-unused-vars): Identifier 'effectiveActiveId' is imported but never used.
+
+The single remaining failure is the intended one:
+
+```console
+FAIL navbar.test.tsx > badges each section's number key while the level0 prefix is pending
+AssertionError: expected [ '1', '2', '3', '4', '5', '6', …(2) ] to deeply equal [ '1','2','3','4','5','6','7' ]
 ```
 
-The other gates passed: typecheck, effect-lint, verify-md-links, verify-db-schema, and test (shared
-446, contracts 63, game-engine 50, desktop 134 files / 1222 tests). The 2026-09-09 red baseline
-recorded in `SPRINT-PLAN.md` had already cleared.
+```console
+# pnpm -r typecheck            # all four packages Done, 0 errors
+# npx oxlint apps/desktop/test/renderer/navigation/    # exit 0
+# npx tsx scripts/effect-lint.ts                       # no violations (848 files)
+# npx tsx scripts/verify-md-links.ts                   # 18 broken, the known baseline, none new
+```
 
-## Gate (run by the orchestrator, 2026-09-10)
+Net suite effect: **one fewer failing test than at clean HEAD**, and the failure that remains names
+a real defect instead of being unexplained. Production code was not touched; the diff is two test
+files.
 
-Run in a detached git worktree at `5d58f7c` with only this ticket's four-file diff applied, because
-the shared worktree held another session's uncommitted edits.
+### Findings routed rather than fixed
 
-| Gate | Command | Result |
-|---|---|---|
-| check:all (run 1) | `pnpm check:all` | ✗: typecheck ✓, lint ✓, effect-lint ✓ (613 files), verify-md-links ✓, verify-db-schema ✓, test ✗ with desktop `9 failed \| 1213 passed (1222)`, all `Test timed out` in `test/main/` (see below) |
-| isolation re-run | `npx vitest run` on the 9 files | `Test Files 9 passed (9)`, `Tests 69 passed (69)` |
-| check:all (run 2, quiet machine) | `pnpm check:all` | **✓ exit 0**: typecheck ✓, lint ✓, effect-lint ✓, verify-md-links ✓, verify-db-schema ✓, test ✓ (shared 37 files / 446 tests, contracts 2 / 63, game-engine 5 / 50, desktop 134 / 1222) |
-| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | not run: the diff only removes props and inputs that nothing read, so no rendered output or handler changed. Typecheck proves no caller depends on them. |
-| determinism | | not applicable: renderer-only change |
-| save compatibility | | not applicable: no persistence or schema change |
-
-Run 1's timed-out tests: `season/advance` (background competition fixtures),
-`season/cups` (tie across the depth boundary), `season/retention-match-streams`,
-`season/retention-participation`, `season/rollover-closed-world`, `season/rollover-exchange`,
-`transfers/incoming-bids` (fresh bid in a later window), `world/competition-participants`, and
-`world/world-determinism` (broader selection extends a world). That run overlapped another
-session's vitest process: desktop took 1046s against 694s in run 2. None of the nine files
-import renderer code.
-
-## Behavior changes
-
-None. The removed values were never read. Header click sorting still reaches `onSortChange` through
-the table context in `DataTableHeader.tsx`.
-
-## Decision records
-
-- ADRs added: none
-- Agent Notes written (`proposed/`): none
-- Agent Notes promoted (`implemented/`): none
-
-## Pre-existing failures
-
-None at the baseline beyond the five lint errors this ticket repaired. The 67 oxlint warnings do not
-fail the gate and were left alone.
-
-## Deferred and known limitations
-
-- **Edge-fade regression from `f464885`** (found in review, out of scope): `useScrollEdges` lost its
-  re-sync on scroll, on row/column changes and after Shift+Arrow. Filed as
-  [react-composition-audit 17](../../.scratch/react-composition-audit/issues/17-data-table-edge-fade-resync.md).
-  `DataTableRootProps.table` is now unread, but was kept on purpose because that fix needs it.
-
-## Review
-
-Reviewer verdict: **APPROVE**, with no blocker, high or medium findings.
-
-- **Low:** the `table` prop is now unread; kept for ticket 17.
-- **Low:** ticket bookkeeping. The checkboxes and the stale `season.test.ts:285` note were resolved
-  in the Answer.
-
-The edge-fade regression was confirmed with before/after evidence and routed to ticket 17. No
-decision request was needed.
+- [navbar-keyboard-intent 02](../../.scratch/navbar-keyboard-intent/issues/02-world-section-advertises-a-dead-g-key.md)
+  — the `g 8` gap; `g 3` labelled "Go to Training" navigating to Squad (`allActions.ts:64`); and
+  `CAREER_G_BINDINGS` as a dead second source of truth with no importer in `src`.
+- [desktop-suite-red 06](../../.scratch/desktop-suite-red/issues/06-career-screen-list-is-unenforced.md)
+  — `CAREER_SCREEN_TYPES` is swept by three tests and enforced by none; `registry.test.ts:176` still
+  pins its length to 22, which is the frozen literal surviving at another address; and
+  `adapter-coverage.test.ts` is missing `contractExpiry`, `budgetReview` and `transferHistory`, so
+  the fall-through bug it exists to prevent is unguarded for the three newest screens. Also covers
+  the contradiction between `stage2.test.ts`'s equality assertion and `route-index.test.ts`'s
+  containment one.
