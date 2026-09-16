@@ -14,7 +14,7 @@ the lists must reflect the pitch as of the revealed minute, not the end of the r
 
 **Blocked by:** 18
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] After a revealed forced substitution, red card or bring-off, the picker offers only players on the pitch and unused substitutes
 - [ ] A test covers the forced-injury case
