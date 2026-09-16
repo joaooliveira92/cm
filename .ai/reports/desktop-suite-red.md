@@ -266,3 +266,29 @@ and the handler analysis it rests on was already checked by ticket 07's reviewer
 `quit-guard-confirmed` listener takes no arguments and does no cleanup, so a bare `emit` matches the
 Quit button; the `evaluate` shares the timeout, so a wedged main is still bounded; and the fallback's
 kill and `waitForExit` are unchanged.
+
+## Ticket 10 — live-match specs assert retired copy and nav, 2026-09-16
+
+- Ticket closed: [10](../../.scratch/desktop-suite-red/issues/10-live-match-specs-assert-retired-copy-and-nav.md)
+- Follow-up filed: [two-row-nav 08](../../.scratch/two-row-nav/issues/08-match-context-tablist-named-after-the-section.md) (tablist named "Squad" in the live-match context)
+
+### Acceptance criteria → evidence
+
+| # | Criterion | Evidence | Result |
+|---|---|---|---|
+| 1 | Each assertion checks the copy or tab the screen shows for the same outcome | `app.spec.ts:90`, `journeys.spec.ts:96`, `journeys.spec.ts:163` pass; labels taken from `commandStatus.ts`, nav names from a page snapshot | pass |
+| 2 | No assertion dropped; success and failure still distinguished where they were | diff: one regex per test and one locator; the "either definitive outcome" regex keeps its two alternatives (Accepted, Rejected) | pass |
+
+### Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Desktop 68 failed / 1794 passed, the same failing cases as ticket 09's run. Lint and md-link counts unchanged. |
+| e2e | `pnpm test:e2e e2e/app.spec.ts e2e/journeys.spec.ts` | 10 passed / 2 failed (30.8s). Before the ticket: 8 passed / 4 failed. The remaining failures are `app:20`, no `h1` (ticket 12), and `journeys:207`, a strict-mode violation on two "Ethan Hall" Market rows (ticket 13). |
+| determinism / save compatibility | — | not applicable; e2e only |
+
+### Review
+
+Reviewed inline by the orchestrator. The diff is two regexes and one locator. The checks: each new
+label exists in `commandStatus.ts` for the command type the test sends; the either-outcome assertion
+is no wider than before; and the tab names match the snapshot.

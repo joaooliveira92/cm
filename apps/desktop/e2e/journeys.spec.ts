@@ -129,7 +129,8 @@ test("a substitution is driven by keyboard through the match day live control pa
   await apply.focus();
   await expect(apply).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(page.getByText(/Applied — the engine may still reject/)).toBeVisible({
+  // A tactics change has no count to confirm it, so success reads "Accepted", not "Applied".
+  await expect(page.getByText(/Accepted — the change takes effect from the current minute\./)).toBeVisible({
     timeout: 15_000,
   });
 
@@ -175,7 +176,7 @@ test("a live substitution is made from the standalone Match Substitutions screen
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
 
-  await page.getByRole("navigation", { name: "Live match screens" }).getByRole("button", { name: "Substitutions" }).click();
+  await page.getByRole("navigation", { name: "Live Match tabs" }).getByRole("tab", { name: "Substitutions" }).click();
   await expect(page.getByRole("heading", { name: "Match Substitutions" })).toBeVisible();
   await expect(page.getByText(/Substitutions used: 0\//)).toBeVisible({ timeout: 15_000 });
 

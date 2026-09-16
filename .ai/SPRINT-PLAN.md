@@ -2,10 +2,13 @@
 
 ## Immediate next action
 
-**desktop-suite-red** ticket 10 (live-match specs
-assert retired copy and nav), 11 (live match reaches full time mid-test, needs a decision, blocked by
-10), 12 (Squad `h1`, needs triage), 13 (duplicate player names); then navbar-keyboard-intent 04 (a
+**desktop-suite-red** ticket 11 (live match reaches full time mid-test, needs a decision), 13
+(duplicate player names), 12 (Squad `h1`, needs triage); then two-row-nav 08 (tablist named after
+the section in match context); then navbar-keyboard-intent 04 (a
 decision first), then group-a-reconciliation 20 (the Quit dialog is hidden under router overlays).
+
+desktop-suite-red ticket 10 resolved 2026-09-16: the live-match specs assert today's command-status
+copy and tabs. The app and journeys e2e specs are at 10 passed / 2 failed (tickets 12, 13).
 
 desktop-suite-red ticket 09 resolved 2026-09-16: `closeOrKill` confirms the quit guard through main,
 so an e2e app quits in about 150ms instead of being killed after 5s.
@@ -96,8 +99,8 @@ parallel sessions and were left alone.
 2. ~~**group-d-player-and-staff-records**: complete 2026-09-14. 19 screens charted, 3 implemented.~~
 3. **desktop-suite-red**: 01, 02, 04, 05, 06 resolved (05 derived the nav guards, 06 made the
     classification a typecheck gate, 2026-09-16). 03 claimed-and-abandoned (needs a human to
-    unclaim or close). Decision request 01 open. 07-09 resolved 2026-09-16 (quit guard; seed at the
-    pre-match boundary; graceful harness close). 10, 13 ready; 11 blocked by 10; 12 needs-triage.
+    unclaim or close). Decision request 01 open. 07-10 resolved 2026-09-16 (quit guard; seed at the
+    pre-match boundary; graceful harness close; live-match copy). 11, 13 ready; 12 needs-triage.
 4. **season-rollover-skips-conclusion**: 01 resolved.
 5. **match-composition**: 01-02 resolved.
 6. **group-a-reconciliation**: 03-04 resolved. 20 ready (Quit dialog hidden under router overlays, filed 2026-09-16).

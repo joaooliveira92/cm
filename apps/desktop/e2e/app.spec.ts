@@ -110,8 +110,10 @@ test("Match Day starts a match, reveals a feed, and applies a live control comma
   await expect(window.getByText("Team instructions")).toBeVisible();
 
   await window.getByRole("button", { name: "Apply tactics change" }).click();
+  // Either definitive outcome, never the pending line: a tactics change journals as "Accepted" (no
+  // count can confirm it) and a failed call reads "Rejected — <reason>" (commandStatus.ts).
   await expect(
-    window.getByText(/Applied — the engine may still reject an invalid\/over-cap command silently|Failed to submit command/),
+    window.getByText(/Accepted — the change takes effect from the current minute\.|Rejected — /),
   ).toBeVisible({ timeout: 15_000 });
 
   // Structural substitution panel assertions

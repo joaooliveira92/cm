@@ -21,3 +21,11 @@ current, those failures hide this one.
 
 - [ ] The decision on how a test holds a match live is recorded
 - [ ] Both journeys live-match tests pass reliably under that decision, with no added retry loop
+
+## Comments
+
+2026-09-16, after ticket 10: with the locators current, all three live-match tests passed in three
+runs, each in 2.4–3.7s. The race did not occur in those runs. The baseline snapshots from before
+ticket 10 still show the match reaching "Full time" while a test waited, which it did then for 15s
+on text that never appeared. Consider that before deciding how much this needs: a test that no
+longer waits on dead copy spends far less of the match's reveal budget.
