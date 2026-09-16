@@ -444,6 +444,8 @@ render(
             lines: [],
             homeSubs: noSubs(),
             awaySubs: noSubs(),
+            homePitch: { onPitch: [], substitutes: [] },
+            awayPitch: { onPitch: [], substitutes: [] },
             injuredClubIds: [],
             injuries: [],
             homeOnPitchCount: 11,

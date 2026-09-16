@@ -2,6 +2,7 @@ import { Schema } from "effect";
 
 import { ClubId, FixtureId, MatchId, PlayerId } from "./ids.js";
 import { ReadinessBlockerView } from "./season.js";
+import { PositionSchema } from "./squad.js";
 import { Tactic } from "./tactics.js";
 
 export class MatchNotFoundError extends Schema.TaggedError<MatchNotFoundError>()("MatchNotFoundError", {
@@ -45,6 +46,23 @@ export class SubstitutionStatusView extends Schema.Class<SubstitutionStatusView>
   capReached: Schema.Boolean,
 }) {}
 
+/** One occupied slot of a club's shape on the pitch: the player in it and the Position the slot
+ * was drawn at in the kickoff Tactic. A substitute takes the slot of the player they replace. */
+export class PitchSlotView extends Schema.Class<PitchSlotView>("PitchSlotView")({
+  playerId: PlayerId,
+  position: PositionSchema,
+}) {}
+
+/** A club's side of the pitch as of the revealed position (group-g-match-day ticket 19): who is on
+ * the pitch now, and the squad players who have not been on it, so may still come on. A red card or
+ * a bring-off leaves an empty slot, so `onPitch` can hold fewer than 11. Derived by the main
+ * process from the re-derived timeline under the same cut as the substitution counts, so the
+ * substitution picker never offers a player the match has already taken off. */
+export class MatchPitchView extends Schema.Class<MatchPitchView>("MatchPitchView")({
+  onPitch: Schema.Array(PitchSlotView),
+  substitutes: Schema.Array(PlayerId),
+}) {}
+
 /** A typed `Injury` Match Event, so the renderer's commentary/indicators and the no-subs prompts
  * consume the same typed data the engine emits (ticket 08/07) — no separate representation. */
 export class InjuryView extends Schema.Class<InjuryView>("InjuryView")({
@@ -74,6 +92,9 @@ export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("Re
   lines: Schema.Array(CommentaryLineView),
   homeSubs: SubstitutionStatusView,
   awaySubs: SubstitutionStatusView,
+  /** Each club's pitch as of the revealed position, cut the way `homeSubs`/`awaySubs` are. */
+  homePitch: MatchPitchView,
+  awayPitch: MatchPitchView,
   injuredClubIds: Schema.Array(Schema.String),
   injuries: Schema.Array(InjuryView),
   /** On-pitch head-counts for both clubs as of this chunk (ticket 11) — a value below 11 means

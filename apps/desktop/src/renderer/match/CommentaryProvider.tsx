@@ -2,20 +2,23 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
 } from "react";
+import { Effect, Result } from "effect";
 import type {
   CommentaryLineView,
   InjuryView,
+  MatchPitchView,
   RpcSuccess,
   SubstitutionStatusView,
 } from "@cm-clone/contracts";
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
-import { submitMatchCommandMutation, useAtomSet } from "../rpc.js";
+import { resumeSimulation, submitMatchCommandMutation, useAtomSet } from "../rpc.js";
 import { resolveCommandStatus, type CommandStatus } from "./commandStatus.js";
-import { controlledOnPitchCount, controlledSubs } from "./controlledClub.js";
+import { controlledOnPitchCount, controlledPitch, controlledSubs } from "./controlledClub.js";
 import { useMatchContext, type MatchCommand } from "./MatchProvider.js";
 import {
   getHalfTimeRevealed,
@@ -42,6 +45,9 @@ export interface CommentaryState {
    *  not be shown as the club's counts. */
   readonly clubSubsKnown: boolean;
   readonly clubOnPitchCount: number;
+  /** The controlled club's pitch as of the latest revealed position a match response was read at,
+   *  or null before any response. The substitution pickers list it. */
+  readonly clubPitch: MatchPitchView | null;
   readonly chunkInjuries: ReadonlyArray<InjuryView>;
   readonly currentMinute: number;
 }
@@ -59,7 +65,10 @@ export interface CommentaryMeta {
   readonly fetchingRef: { current: boolean };
   readonly streamCompleteRef: { current: boolean };
   readonly pausedRef: { current: boolean };
-  readonly applyPollView: (view: RpcSuccess<"resumeSimulation">) => void;
+  /** Numbers a request that carries a pitch, in send order; call it just before sending. */
+  readonly nextPitchRequest: () => number;
+  /** `request` is the number `nextPitchRequest` gave the poll when it was sent. */
+  readonly applyPollView: (view: RpcSuccess<"resumeSimulation">, request: number) => void;
   readonly revealLine: (line: CommentaryLineView) => void;
   readonly setPaused: (paused: boolean) => void;
   readonly reportError: (message: string) => void;
@@ -79,6 +88,10 @@ const NO_SUBS: SubstitutionStatusView = {
   capReached: false,
 };
 
+/** Revealed lines after which the pitch can differ from the last read: a player sent off, forced off
+ *  by a severe Injury, or substituted. */
+const PITCH_CHANGING_TAGS: ReadonlySet<string> = new Set(["RedCard", "Injury", "Substitution"]);
+
 export const CommentaryContext = createContext<CommentaryContextValue | null>(null);
 
 export const CommentaryProvider = ({ children }: { readonly children: ReactNode }) => {
@@ -91,6 +104,12 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
   const [clubSubs, setClubSubs] = useState<SubstitutionStatusView>(NO_SUBS);
   const [clubSubsKnown, setClubSubsKnown] = useState(false);
   const [clubOnPitchCount, setClubOnPitchCount] = useState(11);
+  const [clubPitch, setClubPitch] = useState<MatchPitchView | null>(null);
+  /** Polls, pitch re-reads and commands are numbered in send order; `clubPitch` came from request
+   *  `pitchAppliedRef`. A response to an earlier-sent request, such as a poll sent before a command
+   *  and answered after it, must not replace it, even when both were read at the same position. */
+  const pitchSentRef = useRef(0);
+  const pitchAppliedRef = useRef(0);
   const [chunkInjuries, setChunkInjuries] = useState<ReadonlyArray<InjuryView>>([]);
   const [currentMinute, setCurrentMinute] = useState(0);
 
@@ -104,7 +123,21 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
 
   const runCommand = useAtomSet(submitMatchCommandMutation, { mode: "promise" });
 
-  const applyPollView = useCallback((view: RpcSuccess<"resumeSimulation">): void => {
+  const nextPitchRequest = useCallback((): number => {
+    pitchSentRef.current += 1;
+    return pitchSentRef.current;
+  }, []);
+
+  const applyPitch = useCallback(
+    (view: RpcSuccess<"resumeSimulation">, request: number): void => {
+      if (matchState.match === null || request < pitchAppliedRef.current) return;
+      pitchAppliedRef.current = request;
+      setClubPitch(controlledPitch(matchState.match, view));
+    },
+    [matchState.match],
+  );
+
+  const applyPollView = useCallback((view: RpcSuccess<"resumeSimulation">, request: number): void => {
     cursorRef.current = view.cursor;
     pendingRef.current.push(...view.lines);
     if (view.isComplete) streamCompleteRef.current = true;
@@ -118,8 +151,26 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
       setClubSubs((current) => (polled.used >= current.used ? polled : current));
       setClubSubsKnown(true);
     }
+    applyPitch(view, request);
     recordRevealedScore(matchState.saveId, { homeScore: view.homeScore, awayScore: view.awayScore });
-  }, [matchState.saveId, matchState.match]);
+  }, [matchState.saveId, matchState.match, applyPitch]);
+
+  // A poll is read ahead of the reveal, so a red card or substitution revealed from its buffer is
+  // not in the pitch it carried. Re-read the pitch at the new position; the chunk itself is dropped.
+  const lastRevealedTag = revealed.at(-1)?.tag;
+  useEffect(() => {
+    const match = matchState.match;
+    if (match === null || lastRevealedTag === undefined || !PITCH_CHANGING_TAGS.has(lastRevealedTag)) return;
+    const revealedEvents = getRevealedEvents(matchState.saveId);
+    const request = nextPitchRequest();
+    const read = resumeSimulation({ saveId: matchState.saveId, matchId: match.matchId, cursor: cursorRef.current, revealedEvents });
+    Effect.runPromise(read.pipe(Effect.result)).then(
+      (outcome) => {
+        if (Result.isSuccess(outcome)) applyPitch(outcome.success, request);
+      },
+      () => undefined,
+    );
+  }, [revealed.length, lastRevealedTag, matchState.match, matchState.saveId, applyPitch, nextPitchRequest]);
 
   const revealLine = useCallback((line: CommentaryLineView): void => {
     setRevealed((lines) => {
@@ -156,17 +207,20 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
   const submitCommand = useCallback(
     async (command: MatchCommand, isHalftime: boolean): Promise<CommandStatus> => {
       if (matchState.match === null) return { _tag: "rejected", reason: "No match is in play." };
+      const revealedEvents = getRevealedEvents(matchState.saveId);
+      const request = nextPitchRequest();
       try {
         const result = await runCommand({
           saveId: matchState.saveId,
           matchId: matchState.match.matchId,
           cursor: 0,
-          revealedEvents: getRevealedEvents(matchState.saveId),
+          revealedEvents,
           minute: isHalftime ? HALFTIME_MINUTE : stampMinute(currentMinute, getHalfTimeRevealed(matchState.saveId)),
           isHalftime,
           command,
         });
         applyCommandResult(result);
+        applyPitch(result, request);
         return resolveCommandStatus(command, result);
       } catch (error) {
         const typed = error as RpcClientError<"submitMatchCommand"> | undefined;
@@ -174,7 +228,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
         throw error;
       }
     },
-    [matchState.match, matchState.saveId, currentMinute, runCommand, applyCommandResult],
+    [matchState.match, matchState.saveId, currentMinute, runCommand, applyCommandResult, applyPitch, nextPitchRequest],
   );
 
   const resume = useCallback(() => setChunkInjuries([]), []);
@@ -187,6 +241,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
       clubSubs,
       clubSubsKnown,
       clubOnPitchCount,
+      clubPitch,
       chunkInjuries,
       currentMinute,
     },
@@ -197,6 +252,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
       fetchingRef,
       streamCompleteRef,
       pausedRef,
+      nextPitchRequest,
       applyPollView,
       revealLine,
       setPaused,

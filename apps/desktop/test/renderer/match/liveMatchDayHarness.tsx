@@ -108,6 +108,13 @@ export const orangeInjury = () => ({
   type: "twistedAnkle" as const,
 });
 
+/** A club's pitch as the match reports it: the kickoff XI of `fullTactic`, with `swaps` applied slot
+ *  for slot, and the squad players who have not played. */
+export const pitchView = (swaps: Record<string, string> = {}, substitutes: ReadonlyArray<string> = ["bench-1", "bench-2"]) => ({
+  onPitch: fullTactic().slots.map((slot) => ({ playerId: swaps[slot.playerId] ?? slot.playerId, position: slot.position })),
+  substitutes,
+});
+
 export const resumeView = (overrides: Record<string, unknown> = {}) => ({
   matchId: rid("m1"),
   cursor: 0,
@@ -117,6 +124,8 @@ export const resumeView = (overrides: Record<string, unknown> = {}) => ({
   lines: [],
   homeSubs: noSubs(),
   awaySubs: noSubs(),
+  homePitch: pitchView(),
+  awayPitch: pitchView(),
   injuredClubIds: [],
   injuries: [],
   homeOnPitchCount: 11,

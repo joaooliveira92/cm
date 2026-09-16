@@ -12,6 +12,7 @@ import {
   type CommandResponder,
   mountMatchDayWithSpine,
   openPanel,
+  pitchView,
 } from "./liveMatchDayHarness.js";
 
 beforeEach(() => {
@@ -111,6 +112,31 @@ describe("ticket 12 — the panel commands the controlled club, and records only
     await waitFor(() => expect(submissions.calls).toHaveLength(1));
     expect(submissions.calls[0]!.payload).toMatchObject({ revealedEvents: 0 });
     await waitFor(() => expect(getLiveTactic(rid("s1"))?.slots[2]?.playerId).toBe("bench-2"));
+  });
+
+  it("the substitution draft lists the pitch the match reports, not the tactic", async () => {
+    // on-2 was substituted for bench-1 and on-4 sent off; the tactic still names both.
+    const reported = pitchView({ "on-2": "bench-1" }, ["bench-2"]);
+    const polled = {
+      homePitch: { ...reported, onPitch: reported.onPitch.filter((slot) => slot.playerId !== "on-4") },
+      awayPitch: pitchView(),
+    };
+    await mountMatchDayWithSpine(session(), undefined, undefined, polled);
+    openPanel();
+
+    const optionsOf = async (name: string): Promise<ReadonlyArray<string>> => {
+      fireEvent.click(screen.getByRole("combobox", { name }));
+      const options = await screen.findAllByRole("option");
+      const labels = options.map((option) => option.textContent ?? "").filter((label) => label !== "Select player");
+      fireEvent.keyDown(screen.getByRole("listbox"), { key: "Escape" });
+      await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+      return labels;
+    };
+    const off = await optionsOf("Player to bring off");
+    expect(off).toHaveLength(10);
+    expect(off.some((label) => label.startsWith("Bench1 Player"))).toBe(true);
+    expect(off.some((label) => label.startsWith("On2 Player") || label.startsWith("On4 Player"))).toBe(false);
+    expect(await optionsOf("Player to bring on")).toEqual(["Bench2 Player"]);
   });
 
   it("an away match reads the away head-count", async () => {

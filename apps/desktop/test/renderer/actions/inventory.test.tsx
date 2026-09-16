@@ -294,6 +294,8 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
             lines: [],
             homeSubs: noSubs(),
             awaySubs: noSubs(),
+            homePitch: { onPitch: [], substitutes: [] },
+            awayPitch: { onPitch: [], substitutes: [] },
             injuredClubIds: [],
             injuries: [],
             homeOnPitchCount: 11,

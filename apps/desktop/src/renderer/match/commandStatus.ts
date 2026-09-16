@@ -1,4 +1,4 @@
-import type { RpcSuccess, SubstitutionStatusView } from "@cm-clone/contracts";
+import type { MatchPitchView, RpcSuccess, SubstitutionStatusView } from "@cm-clone/contracts";
 import type { MatchCommand } from "./MatchProvider.js";
 
 /**
@@ -22,6 +22,7 @@ export type CommandStatus =
 /** The controlled club's side of a match response, before or after a command. */
 export interface ClubCommandSnapshot {
   readonly subs: SubstitutionStatusView;
+  readonly pitch: MatchPitchView;
 }
 
 /**

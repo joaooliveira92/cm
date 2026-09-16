@@ -73,6 +73,12 @@ const tacticsView = () => ({
   revision: 0,
 });
 
+/** A club's pitch as the match reports it: the kickoff XI, with `swaps` applied slot for slot. */
+const pitch = (swaps: Record<string, string> = {}, substitutes: ReadonlyArray<string> = ["bench-1"]) => ({
+  onPitch: tactic().slots.map((slot) => ({ playerId: swaps[slot.playerId] ?? slot.playerId, position: slot.position })),
+  substitutes,
+});
+
 const resumeView = (overrides: Record<string, unknown> = {}) => ({
   matchId: rid("m1"),
   cursor: 0,
@@ -82,6 +88,8 @@ const resumeView = (overrides: Record<string, unknown> = {}) => ({
   lines: [],
   homeSubs: subs(),
   awaySubs: subs(),
+  homePitch: pitch(),
+  awayPitch: pitch(),
   injuredClubIds: [],
   injuries: [],
   homeOnPitchCount: 11,
@@ -176,27 +184,43 @@ describe("Match Substitutions — the live substitution screen", () => {
     expect(((await screen.findByLabelText(/Apply as a halftime instruction/)) as HTMLInputElement).disabled).toBe(false);
   });
 
-  it("starts from the line-up the Match day panel last sent, and records its own applied substitution", async () => {
+  it("lists who the match has on the pitch and who is unused, not the tactic, and follows a command's response", async () => {
     setActiveMatch(liveSession() as never);
-    const base = tactic();
-    recordLiveTactic(rid("s1"), {
-      ...base,
-      slots: base.slots.map((slot, i) => (i === 0 ? { ...slot, playerId: rid("bench-1") } : slot)),
-    } as never);
+    // The tactic still names on-0 and on-3, but the match took on-0 off for bench-1 and sent on-3 off.
+    recordLiveTactic(rid("s1"), tactic() as never);
+    const swapped = pitch({ "on-0": "bench-1" }, ["bench-2"]);
+    const afterRed = { ...swapped, onPitch: swapped.onPitch.filter((slot) => slot.playerId !== "on-3") };
+    const afterCommand = { ...afterRed, onPitch: afterRed.onPitch.map((slot) => (slot.playerId === "on-1" ? { ...slot, playerId: "bench-2" } : slot)), substitutes: [] };
     mount(MatchSubstitutionsScreen, (method) => {
-      if (method === "getTactics") return ok(tacticsView());
-      if (method === "submitMatchCommand") return ok(commandView(true, { awaySubs: subs({ used: 1, remaining: 4 }) }));
-      return ok(resumeView());
+      if (method === "getTactics") {
+        const view = tacticsView();
+        return ok({ ...view, squad: [...view.squad, player("bench-2", "Second")] });
+      }
+      if (method === "submitMatchCommand") return ok(commandView(true, { awayPitch: afterCommand }));
+      // The home side's pitch is the kickoff XI: it must not leak into the controlled away club's lists.
+      return ok(resumeView({ homePitch: pitch(), awayPitch: afterRed }));
     });
     const off = (await screen.findByLabelText("Player coming off")) as HTMLSelectElement;
-    const offIds = [...off.options].map((o) => o.value);
-    expect(offIds).toContain("bench-1");
-    expect(offIds).not.toContain("on-0");
+    const on = screen.getByLabelText("Player coming on") as HTMLSelectElement;
+    const values = (select: HTMLSelectElement) => [...select.options].map((o) => o.value).filter((id) => id !== "");
 
-    fireEvent.change(off, { target: { value: "bench-1" } });
-    fireEvent.change(screen.getByLabelText("Player coming on"), { target: { value: "on-0" } });
+    expect(values(off)).toHaveLength(10);
+    expect(values(off)).toContain("bench-1");
+    expect(values(off)).not.toContain("on-0");
+    expect(values(off)).not.toContain("on-3");
+    expect([...off.options].find((o) => o.value === "bench-1")?.textContent).toBe(`Bench Player (${tactic().slots[0]!.position})`);
+    expect(values(on)).toEqual(["bench-2"]);
+
+    fireEvent.change(off, { target: { value: "on-1" } });
+    fireEvent.change(on, { target: { value: "bench-2" } });
     fireEvent.click(screen.getByRole("button", { name: "Make substitution" }));
-    await waitFor(() => expect(getLiveTactic(rid("s1"))?.slots[0]?.playerId).toBe("on-0"));
+
+    await waitFor(() => expect(screen.getByRole("status").getAttribute("data-command-status")).toBe("applied"));
+    expect(values(off)).toContain("bench-2");
+    expect(values(off)).not.toContain("on-1");
+    expect(values(on)).toEqual([]);
+    // The applied substitution is still recorded for a later tactics change to carry.
+    expect(getLiveTactic(rid("s1"))?.slots[1]?.playerId).toBe("bench-2");
   });
 
   it("surfaces a failed load with Retry, and Retry reads again", async () => {

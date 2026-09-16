@@ -70,9 +70,11 @@ export const submitMatchCommand = (
             : { _tag: "ForceOffMade", minute, isHalftime, clubId: command.clubId, playerId: command.playerId };
       yield* appendStreamEvents(MATCH_STREAM_TYPE, matchId, seq, [{ tag, payload }]);
 
-      const derived = yield* Effect.sync(() => deriveMatchEvents([...stream, { seq, tag, payload }]));
+      const journaled = [...stream, { seq, tag, payload }];
+      const derived = yield* Effect.sync(() => deriveMatchEvents(journaled));
       const view = yield* buildResumeSimulationView(
         matchId,
+        journaled,
         derived.events,
         derived.conditions,
         derived.counts,

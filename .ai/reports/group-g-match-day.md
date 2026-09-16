@@ -249,3 +249,43 @@ false) is fixed by correcting the doc comments in `view.ts` and in the contract,
 in `controlledClub.ts` and `CommentaryProvider.tsx`) is fixed; L4 (non-conventional commit message)
 is recorded here. Larger defects that predate this ticket are filed: 20 (a command rewrites seen play,
 needs triage), 21 (injury prompt dead since `eb3786e`), 22 (state ahead of the reveal).
+
+## Ticket 19 — the substitution picker lists the Tactic, not the pitch, 2026-09-16
+
+- Ticket closed: [19](../../.scratch/group-g-match-day/issues/19-substitution-picker-lists-the-tactic-not-the-pitch.md)
+- Filed: [decision request 04](../../.scratch/group-g-match-day/decision-request-04-who-may-come-on-as-a-substitute.md), [26](../../.scratch/group-g-match-day/issues/26-forced-substitution-picks-any-squad-player.md)
+
+### Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | After a revealed forced substitution, red card or bring-off, the picker offers only players on the pitch and unused substitutes | `revealed-pitch.test.ts` (seeds 550 and 17, manager substitution, bring-off, goalkeeper bring-off, same-minute substitution then bring-off); `live-command-screens.test.tsx` and `live-panel-controlled-club.test.tsx` read the pitch, not the Tactic | pass |
+| 2 | A test covers the forced-injury case | seed 550: injured player still on at position 17, off at 18, replacement on | pass |
+
+### Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all (first pass) | `pnpm check:all` | exit 1, pre-existing only; desktop 68 failed / 1808 passed |
+| check:all (after rework) | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Contracts 153, game-engine 50, shared 461. Desktop 68 failed / 1810 passed, the same failing cases as ticket 18's run. Lint and md-link counts unchanged. |
+| focused | `npx vitest run test/main/match test/renderer/match` | 14 failed / 121 passed; the 14 were already failing (live-keyboard 6, post-match-summary 7, screen-fulltime 1; see ticket 21) |
+| e2e | `pnpm test:e2e e2e/journeys.spec.ts:163 e2e/journeys.spec.ts:96 e2e/app.spec.ts:90 --repeat-each=5` | 15 passed (53.6s) |
+| determinism | — | engine and seeding unchanged; the fold is pure main-process read code |
+| save compatibility | — | no persistence change |
+
+### Review
+
+Reviewer **APPROVE**. It checked the fold by hand against `teamState.ts`, `loop.ts` and `resolvers.ts`.
+
+- **Fixed test-first.**
+  - M1: a bring-off was placed before a same-minute substitution journaled earlier.
+  - M2: a stale poll could overwrite the pitch a command returned. The guard is now a send-order
+    counter.
+- **Recorded, not fixed.**
+  - M3: a live tactics change resets the line-up in the engine. That is decision request 01; the fold
+    documents its assumption.
+  - M4: a forced substitution picks any squad player, including dismissed ones. Ticket 26.
+  - M5: what counts as a substitute. Decision request 04.
+- **Lows.** Accepted: L1, the two severe-injury branches take effect one line apart; L3, the re-read
+  swallows failures, with renderer precedent. Covered by ticket 24: L2, goalkeeper position after an
+  early halftime bring-off.

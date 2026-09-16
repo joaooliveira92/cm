@@ -3,12 +3,12 @@
  * share. Unlike the Match day panel it cannot lean on `CommentaryProvider` — that provider and its
  * polling unmount the moment the manager leaves the Match day route — so it reads the active match,
  * the minute and score Match day has shown, and the tactic last sent to the match from the session
- * store; the controlled club's substitution counts from one `resumeSimulation` read; and the squad
- * and pre-match tactic from `getTactics`.
+ * store; the controlled club's substitution counts and pitch from one `resumeSimulation` read; and
+ * the squad and pre-match tactic from `getTactics`.
  *
- * Only the substitution counts are taken from match responses: they are cut at the Match Events
- * Match day has revealed, where the score and head-count in a response describe the end of
- * whichever chunk was read.
+ * Only the substitution counts and the pitch are taken from match responses: they are cut at the
+ * Match Events Match day has revealed, where the score and head-count in a response describe the
+ * end of whichever chunk was read.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Effect, Result } from "effect";
@@ -32,7 +32,7 @@ import {
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 import type { MatchCommand } from "./MatchProvider.js";
 import { resolveCommandStatus, type ClubCommandSnapshot, type CommandStatus } from "./commandStatus.js";
-import { controlledClubId, controlledSubs } from "./controlledClub.js";
+import { controlledClubId, controlledPitch, controlledSubs } from "./controlledClub.js";
 import {
   getActiveMatch,
   getHalfTimeRevealed,
@@ -79,6 +79,7 @@ export type LiveMatchView =
 
 const snapshotFor = (match: MatchSummary, view: RpcSuccess<"resumeSimulation">): ClubCommandSnapshot => ({
   subs: controlledSubs(match, view),
+  pitch: controlledPitch(match, view),
 });
 
 export interface LiveMatchCommands {

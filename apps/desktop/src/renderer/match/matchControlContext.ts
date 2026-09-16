@@ -9,6 +9,7 @@
 import { createContext, useContext, type RefObject } from "react";
 import type {
   InjuryView,
+  MatchPitchView,
   PlayerId,
   SquadPlayerView,
   SubstitutionStatusView,
@@ -38,6 +39,9 @@ export interface MatchControlState {
   /** Whether a match response has reported `subsStatus` yet; a substitution waits for it. */
   readonly subsKnown: boolean;
   readonly onPitchCount: number;
+  /** Who the match has on the pitch and who may still come on, or null until a response reports it.
+   *  The substitution draft lists these; `tactic` carries only the instructions being edited. */
+  readonly pitch: MatchPitchView | null;
   readonly injuryPrompt: boolean;
   readonly hasRedInjury: boolean;
   readonly orangeInjury: InjuryView | undefined;

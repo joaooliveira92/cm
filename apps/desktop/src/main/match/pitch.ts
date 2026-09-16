@@ -1,0 +1,164 @@
+/**
+ * Who is on the pitch, and who may still come on, as of the revealed position — the source the
+ * substitution pickers read (group-g-match-day ticket 19). Pure: a fold of the kickoff setup over
+ * the re-derived `MatchEvent` timeline and the journaled bring-offs.
+ */
+import { MatchPitchView, PitchSlotView, type ClubId, type PlayerId } from "@cm-clone/contracts";
+import type { MatchEvent, MatchTeamSetup } from "@cm-clone/game-engine";
+import type { PersistedForcedOff, PersistedSubstitutionMade } from "./stream.js";
+
+/** `simulateMatch`'s half length: halftime commands and first-half minutes end here. */
+const HALFTIME_MINUTE = 45;
+
+type SubstitutionEvent = Extract<MatchEvent, { readonly _tag: "Substitution" }>;
+
+type LineupCommand = PersistedSubstitutionMade | PersistedForcedOff;
+
+/** Whether `event` is the Substitution a journaled command emitted: a manager substitution's own,
+ *  or the goalkeeper stand-in a bring-off of the last goalkeeper drags in. */
+const emittedBy = (event: SubstitutionEvent, command: LineupCommand): boolean =>
+  event.teamClubId === command.clubId &&
+  (command._tag === "SubstitutionMade"
+    ? !event.forcedByInjury && event.outPlayerId === command.outPlayerId && event.inPlayerId === command.inPlayerId
+    : event.forcedByInjury && event.outPlayerId === command.playerId);
+
+/**
+ * The first event at or past the start of a command's minute — before that minute's events — or,
+ * for a halftime command, `HalfTimeReached`; the timeline's length if none is.
+ */
+const minuteStart = (events: ReadonlyArray<MatchEvent>, command: PersistedForcedOff): number => {
+  const index = events.findIndex((event) => {
+    switch (event._tag) {
+      case "MatchStarted":
+        return false;
+      case "HalfTimeReached":
+        return command.isHalftime || command.minute <= HALFTIME_MINUTE;
+      case "FullTimeWhistle":
+        return true;
+      case "Goal":
+      case "ShotOnTarget":
+      case "ShotMissed":
+      case "BigChance":
+      case "YellowCard":
+      case "RedCard":
+      case "Injury":
+      case "Substitution":
+        if (command.isHalftime) return false;
+        return command.minute <= HALFTIME_MINUTE
+          ? event.half === 2 || event.minute >= command.minute
+          : event.half === 2 && event.minute >= command.minute;
+    }
+  });
+  return index === -1 ? events.length : index;
+};
+
+/**
+ * The timeline position the bring-off at `commands[position]` is applied at. The engine applies a
+ * minute's commands in journal order, each emitting its Substitution as it goes, so a bring-off
+ * lands after the Substitutions of the same minute's commands journaled before it: bringing off a
+ * player brought on earlier that minute must follow their substitution. A halftime bring-off sits
+ * at `HalfTimeReached`, after every halftime Substitution, which no halftime order contradicts.
+ */
+const appliedAt = (events: ReadonlyArray<MatchEvent>, commands: ReadonlyArray<LineupCommand>, position: number): number => {
+  const command = commands[position] as PersistedForcedOff;
+  let index = minuteStart(events, command);
+  if (command.isHalftime) return index;
+  const earlier = commands.slice(0, position).filter((other) => !other.isHalftime && other.minute === command.minute);
+  while (index < events.length) {
+    const event = events[index]!;
+    if (event._tag !== "Substitution" || event.minute !== command.minute) break;
+    const source = earlier.findIndex((other) => emittedBy(event, other));
+    if (source === -1) break;
+    earlier.splice(source, 1);
+    index++;
+  }
+  return index;
+};
+
+/**
+ * One club's pitch after the first `revealedEvents` Match Events (null: the whole match).
+ *
+ * The cut is the substitution counts' rule (`revealedSubstitutions` in `view.ts`): a red card, a
+ * severe Injury or a forced substitution counts only once revealed, while the manager's own substitutions and
+ * bring-offs count once journaled, because the engine applies a command at the start of its minute
+ * and a position cut would drop one given in a minute already partly shown. A bring-off of the last
+ * goalkeeper also emits a forced Substitution moving an outfield player in goal; that event belongs
+ * to the command, so it counts with it.
+ *
+ * `substitutes` is the squad minus everyone who has been on the pitch: a player sent off, injured
+ * off or brought off does not come back on.
+ *
+ * The fold assumes a live `ChangeTactics` does not change who is on the pitch; see
+ * `.scratch/group-g-match-day/decision-request-01-live-change-tactics-scope.md`.
+ */
+export const pitchAsOf = (
+  setup: MatchTeamSetup,
+  events: ReadonlyArray<MatchEvent>,
+  lineupCommands: ReadonlyArray<LineupCommand>,
+  revealedEvents: number | null,
+): MatchPitchView => {
+  const clubId: ClubId = setup.clubId;
+  let slots = setup.tactic.slots.map((slot) => ({ playerId: slot.playerId, position: slot.position }));
+  const beenOn = new Set<PlayerId>(slots.map((slot) => slot.playerId));
+  const standInsOfCommands = new Set<SubstitutionEvent>();
+
+  const pendingForceOffs = lineupCommands.flatMap((command, position) =>
+    command._tag === "ForceOffMade" && command.clubId === clubId
+      ? [{ command, at: appliedAt(events, lineupCommands, position) }]
+      : [],
+  );
+
+  const takeOff = (playerId: PlayerId): void => {
+    slots = slots.filter((slot) => slot.playerId !== playerId);
+  };
+
+  const substitute = (event: SubstitutionEvent): void => {
+    const outIndex = slots.findIndex((slot) => slot.playerId === event.outPlayerId);
+    if (outIndex === -1) return;
+    // A goalkeeper stand-in is already on the pitch: they move into the vacated slot, leaving their own empty.
+    slots = slots
+      .map((slot, index) => (index === outIndex ? { ...slot, playerId: event.inPlayerId } : slot))
+      .filter((slot, index) => index === outIndex || slot.playerId !== event.inPlayerId);
+    beenOn.add(event.inPlayerId);
+  };
+
+  for (let index = 0; index <= events.length; index++) {
+    for (const { command, at } of pendingForceOffs) {
+      if (at !== index) continue;
+      const standIn = events
+        .slice(index)
+        .find(
+          (event): event is SubstitutionEvent =>
+            event._tag === "Substitution" && event.teamClubId === clubId && event.outPlayerId === command.playerId,
+        );
+      if (standIn !== undefined && standIn.forcedByInjury && standIn.minute === (command.isHalftime ? HALFTIME_MINUTE : command.minute)) {
+        standInsOfCommands.add(standIn);
+      } else {
+        takeOff(command.playerId);
+      }
+    }
+    const event = events[index];
+    if (event === undefined) break;
+    const revealed = revealedEvents === null || index < revealedEvents;
+    if (event._tag === "RedCard" && event.teamClubId === clubId && revealed) takeOff(event.playerId);
+    if (event._tag === "Injury" && event.tier === "red" && event.teamClubId === clubId && revealed) {
+      // A severe Injury forces the player off. The engine records the forced Substitution as the very
+      // next event, which moves them off once revealed; with none left, they leave to ten men here.
+      const next = events[index + 1];
+      const replaced = next?._tag === "Substitution" && next.teamClubId === clubId && next.outPlayerId === event.playerId;
+      if (!replaced) takeOff(event.playerId);
+    }
+    if (
+      event._tag === "Substitution" &&
+      event.teamClubId === clubId &&
+      (revealed || !event.forcedByInjury || standInsOfCommands.has(event))
+    ) {
+      substitute(event);
+    }
+  }
+
+  return new MatchPitchView({
+    onPitch: slots.map((slot) => new PitchSlotView(slot)),
+    substitutes: setup.squad.map((player) => player.id).filter((id) => !beenOn.has(id)),
+  });
+};

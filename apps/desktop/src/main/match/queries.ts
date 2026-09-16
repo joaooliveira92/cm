@@ -34,6 +34,7 @@ export const resumeSimulation = (
       const derived = yield* Effect.sync(() => deriveMatchEvents(stream));
       return yield* buildResumeSimulationView(
         matchId,
+        stream,
         derived.events,
         derived.conditions,
         derived.counts,

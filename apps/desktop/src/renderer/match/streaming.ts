@@ -88,13 +88,15 @@ export const useMatchStreaming = (): void => {
         return;
       }
       commMeta.fetchingRef.current = true;
+      const revealedEvents = getRevealedEvents(matchState.saveId);
+      const request = commMeta.nextPitchRequest();
       try {
         const outcome = await Effect.runPromise(
           resumeSimulation({
             saveId: matchState.saveId,
             matchId: match.matchId,
             cursor: commMeta.cursorRef.current,
-            revealedEvents: getRevealedEvents(matchState.saveId),
+            revealedEvents,
           }).pipe(Effect.result),
         );
         if (Result.isFailure(outcome)) {
@@ -102,7 +104,7 @@ export const useMatchStreaming = (): void => {
           commMeta.streamCompleteRef.current = true;
           return;
         }
-        commMeta.applyPollView(outcome.success);
+        commMeta.applyPollView(outcome.success, request);
       } catch {
         commMeta.reportError("Failed to resume match simulation");
         commMeta.streamCompleteRef.current = true;
@@ -114,7 +116,7 @@ export const useMatchStreaming = (): void => {
     poll();
     const interval = setInterval(poll, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [match, matchState.saveId, commMeta.applyPollView, commMeta.reportError, hydrated]);
+  }, [match, matchState.saveId, commMeta.nextPitchRequest, commMeta.applyPollView, commMeta.reportError, hydrated]);
 
   useEffect(() => {
     if (match === null) return;

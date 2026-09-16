@@ -80,6 +80,23 @@ export const hashString = (value: string): number => {
   return hash >>> 0;
 };
 
+/** The kickoff snapshot at seq 1 of a "match" stream. */
+export const matchStartedOf = (stream: ReadonlyArray<StreamEvent>): PersistedMatchStarted =>
+  stream[0]!.payload as PersistedMatchStarted;
+
+/** The manager's journaled substitutions and bring-offs, in journal order — the order the engine
+ * applies a minute's commands in. A bring-off leaves no Match Event of its own. */
+export const journaledLineupCommands = (
+  stream: ReadonlyArray<StreamEvent>,
+): ReadonlyArray<PersistedSubstitutionMade | PersistedForcedOff> =>
+  stream
+    .slice(1)
+    .flatMap((row) =>
+      row.tag === "SubstitutionMade" || row.tag === "ForceOffMade"
+        ? [row.payload as PersistedSubstitutionMade | PersistedForcedOff]
+        : [],
+    );
+
 /**
  * Rebuilds the full `MatchEvent` timeline from a raw "match" stream: seq 1 is always the
  * `PersistedMatchStarted` snapshot, every later row is a ticket 14 `TacticsChanged`/
@@ -92,7 +109,7 @@ export const deriveMatchEvents = (stream: ReadonlyArray<StreamEvent>): {
   readonly conditions: ReadonlyMap<PlayerId, number>;
   readonly counts: ReadonlyArray<MatchPlayerCountEntry>;
 } => {
-  const started = stream[0]!.payload as PersistedMatchStarted;
+  const started = matchStartedOf(stream);
 
   const commandsByMinute = new Map<number, Array<MatchCommand>>();
   const halftimeCommands: Array<MatchCommand> = [];

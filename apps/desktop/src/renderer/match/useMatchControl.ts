@@ -13,6 +13,7 @@ import {
   Tactic,
   type ClubId,
   type InjuryView,
+  type MatchPitchView,
   type SquadPlayerView,
   type SubstitutionStatusView,
   type TacticSlot,
@@ -36,6 +37,7 @@ export interface MatchControlInput {
   readonly subsStatus: SubstitutionStatusView;
   readonly subsKnown: boolean;
   readonly onPitchCount: number;
+  readonly pitch: MatchPitchView | null;
   readonly injuries: ReadonlyArray<InjuryView>;
 }
 
@@ -44,6 +46,7 @@ export const useMatchControl = ({
   subsStatus,
   subsKnown,
   onPitchCount,
+  pitch,
   injuries,
 }: MatchControlInput): MatchControlContextValue | null => {
   const { state: matchState } = useMatchContext();
@@ -338,6 +341,7 @@ export const useMatchControl = ({
       subsStatus,
       subsKnown,
       onPitchCount,
+      pitch,
       injuryPrompt,
       hasRedInjury,
       orangeInjury,

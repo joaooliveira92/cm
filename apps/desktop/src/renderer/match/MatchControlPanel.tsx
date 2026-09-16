@@ -1,4 +1,4 @@
-import { PlayerId, type TacticSlot } from "@cm-clone/contracts";
+import { PlayerId } from "@cm-clone/contracts";
 import {
   MENTALITY_OPTIONS,
   PRESSING_OPTIONS,
@@ -148,14 +148,13 @@ const TeamInstructionSliders = () => {
 };
 
 /** Compound sub-component (Phase 2): the capped two-step off/on substitution draft plus the
- *  shorthanded and forced-off alerts that explain how to fill the gap. Reads on-pitch state and
- *  the draft from the panel context; submits through the registered `make-substitution` Action. */
+ *  shorthanded and forced-off alerts that explain how to fill the gap. Lists the pitch the match
+ *  reported, not the tactic, and reads the draft from the panel context; submits through the
+ *  registered `make-substitution` Action. */
 const SubstitutionControl = () => {
   const { state } = useMatchControlContext();
-  const tactic = state.tactic;
-  if (!tactic) return null;
-  const onPitchIds = new Set(tactic.slots.map((slot: TacticSlot) => slot.playerId));
-  const bench = state.squad.filter((player) => !onPitchIds.has(player.id));
+  const onPitch = state.pitch?.onPitch ?? [];
+  const substitutes = state.pitch?.substitutes ?? [];
   const fullNameOf = (id: string) => {
     const player = state.squad.find((p) => p.id === id);
     return player ? `${player.firstName} ${player.lastName}` : id;
@@ -206,7 +205,7 @@ const SubstitutionControl = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Select player</SelectItem>
-                {tactic.slots.map((slot: TacticSlot) => (
+                {onPitch.map((slot) => (
                   <SelectItem key={slot.playerId} value={slot.playerId}>
                     {fullNameOf(slot.playerId)} ({slot.position})
                   </SelectItem>
@@ -236,9 +235,9 @@ const SubstitutionControl = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Select player</SelectItem>
-                {bench.map((player) => (
-                  <SelectItem key={player.id} value={player.id}>
-                    {player.firstName} {player.lastName}
+                {substitutes.map((playerId) => (
+                  <SelectItem key={playerId} value={playerId}>
+                    {fullNameOf(playerId)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -386,6 +385,7 @@ export const MatchControlPanel = () => {
       subsStatus={comm.clubSubs}
       subsKnown={comm.clubSubsKnown}
       onPitchCount={comm.clubOnPitchCount}
+      pitch={comm.clubPitch}
       injuries={comm.chunkInjuries}
     />
   );

@@ -23,8 +23,10 @@ import {
 } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
+import type { StreamEvent } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
-import { hashString } from "./stream.js";
+import { pitchAsOf } from "./pitch.js";
+import { hashString, journaledLineupCommands, matchStartedOf } from "./stream.js";
 
 /** Chunk size cap for a single `ResumeSimulation` response when no boundary event is hit first
  * (ADR-0007: chunked resimulation, no RPC streaming) — the renderer paces reveal client-side. */
@@ -158,12 +160,13 @@ export const substitutionApplied = (
   );
 };
 
-/** Shared tail of `resumeSimulation`/`submitMatchCommand`: given the full (re)derived `MatchEvent`
- * timeline, resolves names, renders Commentary Lines, slices off the chunk after `cursor`, and
- * attaches the ticket 14 substitution-cap/injury-prompt fields, the counts cut at `revealedEvents`
- * (null: the whole match). Assumes a `SqlClient` in context. */
+/** Shared tail of `resumeSimulation`/`submitMatchCommand`: given the match stream and the full
+ * (re)derived `MatchEvent` timeline, resolves names, renders Commentary Lines, slices off the chunk
+ * after `cursor`, and attaches the ticket 14 substitution-cap/injury-prompt fields and each club's
+ * pitch, both cut at `revealedEvents` (null: the whole match). Assumes a `SqlClient` in context. */
 export const buildResumeSimulationView = (
   matchId: MatchId,
+  stream: ReadonlyArray<StreamEvent>,
   events: ReadonlyArray<MatchEvent>,
   conditions: ReadonlyMap<PlayerId, number>,
   counts: ReadonlyArray<MatchPlayerCountEntry>,
@@ -235,6 +238,8 @@ export const buildResumeSimulationView = (
     const lastEvent = chunkEvents[chunkEvents.length - 1] ?? events[events.length - 1]!;
     const { homeCount, awayCount } = onPitchCountsFor(counts, lastEvent);
     const substitutions = revealedSubstitutions(events, revealedEvents);
+    const kickoff = matchStartedOf(stream);
+    const lineupCommands = journaledLineupCommands(stream);
 
     return new ResumeSimulationView({
       matchId,
@@ -245,6 +250,8 @@ export const buildResumeSimulationView = (
       lines,
       homeSubs: computeSubstitutionStatus(started.homeClubId, substitutions),
       awaySubs: computeSubstitutionStatus(started.awayClubId, substitutions),
+      homePitch: pitchAsOf(kickoff.homeSetup, events, lineupCommands, revealedEvents),
+      awayPitch: pitchAsOf(kickoff.awaySetup, events, lineupCommands, revealedEvents),
       injuredClubIds,
       injuries,
       homeOnPitchCount: homeCount,

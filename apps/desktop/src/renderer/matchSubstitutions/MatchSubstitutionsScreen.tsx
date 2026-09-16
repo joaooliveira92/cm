@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PlayerId, type SaveId, type TacticSlot } from "@cm-clone/contracts";
+import { PlayerId, type SaveId } from "@cm-clone/contracts";
 import { Button } from "../components/ui/button.js";
 import { SELECT_CLASS } from "../match/controls.js";
 import { LiveCommandFrame } from "../match/LiveCommandFrame.js";
@@ -7,7 +7,8 @@ import { substitutionErrorLabel, validateLiveSubstitution } from "../match/subst
 import { useLiveMatchCommands, type LiveMatchReady } from "../match/useLiveMatchCommands.js";
 
 /** Screen 97, substitutions half: pick who comes off and who comes on, then submit a
- *  `MakeSubstitution` to the live match. The caps shown and enforced come from the match. */
+ *  `MakeSubstitution` to the live match. The caps shown and enforced, and the players offered, come
+ *  from the match: who is on the pitch and who has not played as of what Match day has revealed. */
 export const MatchSubstitutionsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const commands = useLiveMatchCommands(saveId);
   return (
@@ -38,9 +39,7 @@ const SubstitutionForm = ({
   const [inPlayerId, setInPlayerId] = useState("");
   const [alert, setAlert] = useState<string | null>(null);
 
-  const { tactic, squad, snapshot } = ready;
-  const onPitchIds = new Set(tactic.slots.map((slot: TacticSlot) => slot.playerId));
-  const bench = squad.filter((player) => !onPitchIds.has(player.id));
+  const { squad, snapshot } = ready;
   const nameOf = (id: string) => {
     const player = squad.find((p) => p.id === id);
     return player ? `${player.firstName} ${player.lastName}` : id;
@@ -71,7 +70,7 @@ const SubstitutionForm = ({
             className={SELECT_CLASS}
           >
             <option value="">Select player</option>
-            {tactic.slots.map((slot: TacticSlot) => (
+            {snapshot.pitch.onPitch.map((slot) => (
               <option key={slot.playerId} value={slot.playerId}>
                 {nameOf(slot.playerId)} ({slot.position})
               </option>
@@ -87,9 +86,9 @@ const SubstitutionForm = ({
             className={SELECT_CLASS}
           >
             <option value="">Select player</option>
-            {bench.map((player) => (
-              <option key={player.id} value={player.id}>
-                {player.firstName} {player.lastName}
+            {snapshot.pitch.substitutes.map((playerId) => (
+              <option key={playerId} value={playerId}>
+                {nameOf(playerId)}
               </option>
             ))}
           </select>
