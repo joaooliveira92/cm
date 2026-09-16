@@ -26,8 +26,30 @@ section is worth keeping; it is the frozen literal that is worthless.
 
 **Blocked by:** None
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] The career-screen expectation is derived from the router, not a frozen literal
-- [ ] Adding a new career destination does not require editing this test
-- [ ] Both this case and `navbar.test.tsx`'s section-count case pass, or are removed with a reason
+- [x] The career-screen expectation is derived from the router, not a frozen literal
+- [x] Adding a new career destination does not require editing this test
+- [~] Both this case and `navbar.test.tsx`'s section-count case pass, or are removed with a reason
+
+## Outcome, 2026-09-16
+
+`route-index.test.ts` is green and self-maintaining: its union case became two derived cases, one
+over `CAREER_SCREEN_TYPES` and one resolving every navbar destination against the router's
+registered paths. Verified by probe — adding `tacticsEditor` (a sub-surface with no navbar entry) to
+`CAREER_SCREEN_TYPES` fails it with `expected [ 'tacticsEditor' ] to deeply equal []`.
+
+**The third criterion was met in substance, not literally, and the ticket's premise was wrong.**
+`navbar.test.tsx`'s `["1".."7"]` was not a stale frozen literal — it was *correct*. It was red
+because the navbar renders 8 section badges while `KeyboardStateProvider` caps level-0 keys at
+`/^[1-7]$/`, so the World section advertises a `g 8` that does nothing. The first attempt derived
+the expectation from `NAV_SECTIONS`, which compared `String(index + 1)` against the identical
+expression in `PrimaryNav` — tautological, and it turned a real defect green.
+
+It now derives from the binding registry instead and is **red on purpose**, naming the defect, with
+[navbar-keyboard-intent ticket 02](../../navbar-keyboard-intent/issues/02-world-section-advertises-a-dead-g-key.md)
+to fix it. Making it pass requires deciding whether the eighth section gains a key or loses its
+badge — a design call, not a test repair. Net suite effect: one fewer failure, and the one that
+remains carries a reason.
+
+Remaining hand-kept-list debt is [ticket 06](06-career-screen-list-is-unenforced.md).

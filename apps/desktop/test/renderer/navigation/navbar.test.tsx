@@ -11,11 +11,20 @@ import {
 } from "@tanstack/react-router";
 import { SaveId, type ClubColoursView } from "@cm-clone/contracts";
 import { Navbar } from "../../../src/renderer/navigation/components/Navbar.js";
+import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";
+import { NAV_SECTIONS } from "../../../src/renderer/navigation/nav-config.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { resetScopeState, setScopeState, clearScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetBindingOverrides } from "../../../src/renderer/actions/bindingState.js";
 
 const saveId = SaveId.make("s1");
+
+/** The section position keys the action registry actually binds a `g <key>` to. */
+const boundSectionKeys: ReadonlySet<string> = new Set(
+  ALL_ACTIONS.flatMap((action) =>
+    typeof action.metadata?.sectionKey === "string" ? [action.metadata.sectionKey] : [],
+  ),
+);
 
 const mountNavbar = async (
   initialChild: string,
@@ -154,8 +163,19 @@ describe("leader-key hints on the navbar (global-key-map note, g <key> prefix)",
   it("badges each section's number key while the level0 prefix is pending", async () => {
     await mountNavbar("league");
     act(() => setScopeState({ prefixActive: true, prefixKind: "level0" }));
-    // Sections show their position number key.
-    expect(hintsIn("Primary navigation")).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
+    // A section is badged with its position key only if that key actually dispatches. Derived from
+    // the binding registry rather than from `NAV_SECTIONS`, because deriving from the section array
+    // would compare `String(index + 1)` against the identical expression in `PrimaryNav`, which
+    // cannot fail and would assert nothing about whether the advertised key works.
+    //
+    // This is RED on purpose while the navbar advertises a key the keyboard spine rejects: there
+    // are 8 sections, but `KeyboardStateProvider` caps level-0 keys at `/^[1-7]$/`, so the World
+    // section shows an `8` badge that does nothing. See
+    // `.scratch/navbar-keyboard-intent/issues/02-world-section-advertises-a-dead-g-key.md`.
+    // It goes green on its own when that ticket is fixed either way.
+    expect(hintsIn("Primary navigation")).toEqual(
+      NAV_SECTIONS.map((_, index) => String(index + 1)).filter((key) => boundSectionKeys.has(key)),
+    );
     // Submenu items don't show hints during level0 prefix.
     expect(hintsIn("Analysis submenu")).toEqual([]);
 

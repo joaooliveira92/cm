@@ -1,12 +1,31 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
+import { SaveId } from "@cm-clone/contracts";
 import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";
 import { navKeyByDestinationOf } from "../../../src/renderer/actions/overrides.js";
+import {
+  CAREER_SCREEN_TYPES,
+  careerDestination,
+  resolveDestination,
+  type SaveScopedCareerDestinationType,
+} from "../../../src/renderer/navigation/destinations.js";
 import { NAV_SECTIONS } from "../../../src/renderer/navigation/nav-config.js";
 import {
   itemCarriesHint,
   sectionCarriesHint,
   sectionIdForDestination,
 } from "../../../src/renderer/navigation/nav-route-index.js";
+import { router as appRouter } from "../../../src/renderer/router/index.js";
+
+/** Every destination the navbar can reach: each section's default plus every item it lists. */
+const reachableFromNavbar = (): ReadonlySet<SaveScopedCareerDestinationType> => {
+  const reached = new Set<SaveScopedCareerDestinationType>();
+  for (const section of NAV_SECTIONS) {
+    reached.add(section.defaultDestination);
+    for (const item of section.items) reached.add(item.destination);
+  }
+  return reached;
+};
 
 describe("nav route index (spec §6 rule 1 & §8)", () => {
   it("maps every career destination to its owning section", () => {
@@ -21,27 +40,41 @@ describe("nav route index (spec §6 rule 1 & §8)", () => {
     expect(sectionIdForDestination("news")).toBe("news");
   });
 
-  it("the union of section defaults and items covers exactly the career screens", () => {
-    const reached = new Set<string>();
-    for (const section of NAV_SECTIONS) {
-      reached.add(section.defaultDestination);
-      for (const item of section.items) reached.add(item.destination);
-    }
-    expect(reached).toEqual(
-      new Set([
-        "squad",
-        "tactics",
-        "transfers",
-        "league",
-        "fixtures",
-        "match",
-        "seasonSummary",
-        "manager",
-        "news",
-        "scoutingAssignment",
-        "scoutingKnowledge",
-      ]),
+  /**
+   * Two directions of "the navbar covers the career screens", each derived from the code that
+   * defines its side. This case used to compare the reached set against a frozen literal, which
+   * meant every new screen turned it red whether it had been wired correctly or not — three
+   * changes in a row shipped past it.
+   *
+   * What is enforced, precisely: a screen listed in `CAREER_SCREEN_TYPES` must have a navbar home,
+   * and a navbar entry must resolve to a path the router registers. Adding a destination needs no
+   * edit here.
+   *
+   * What is **not** enforced: that a new top-level screen was added to `CAREER_SCREEN_TYPES` at
+   * all. Omit it and this case passes vacuously. Nothing else catches that today either — see
+   * `.scratch/desktop-suite-red/issues/06-career-screen-list-is-unenforced.md`.
+   *
+   * The reverse direction — every registered career route appears in the navbar — is false by
+   * design and deliberately absent: the save route registers sub-surfaces (`contract-expiry`,
+   * `budget-review`, the `match-*` screens) at the same depth as top-level screens, so router
+   * shape cannot tell them apart. `test/renderer/router/stage2.test.ts:85-104` asserts the
+   * stronger *equality* against `CAREER_SCREEN_TYPES`, which is false today (the navbar reaches
+   * four sub-surfaces the list excludes); it is masked only because that file dies at import in
+   * the known jsdom `window` family. Ticket 06 covers reconciling the two.
+   */
+  it("every persistent career screen has a home in some navbar section", () => {
+    const reached = reachableFromNavbar();
+    const unreachable = CAREER_SCREEN_TYPES.filter((type) => !reached.has(type));
+    expect(unreachable).toEqual([]);
+  });
+
+  it("every navbar destination points at a route the app router registers", () => {
+    const registered = new Set(Object.keys(appRouter.routesByPath));
+    const saveId = SaveId.make("s1");
+    const dead = [...reachableFromNavbar()].filter(
+      (type) => !registered.has(resolveDestination(careerDestination(type, saveId)).to),
     );
+    expect(dead).toEqual([]);
   });
 
   it("every section has a stable unique id", () => {
