@@ -2,9 +2,12 @@
 
 ## Immediate next action
 
-**navbar-keyboard-intent** ticket 03 (e2e specs and the global-key-map note still use the retired
-letter `g` keys) — filed by ticket 02's review, and the only open, unblocked, unclaimed ticket in
-`.scratch/`.
+**desktop-suite-red** ticket 07 (two e2e specs hang on a bare `app.close()`), then 08 (the
+before-matchday seed offers no fixture), then navbar-keyboard-intent 04 (a decision first).
+
+navbar-keyboard-intent ticket 03 resolved 2026-09-16: the keyboard, keybindings and journeys e2e
+specs press position keys, and navbar badges follow user overrides. The keyboard e2e trio went from
+3 passed / 7 failed to 5 / 5. The five left are desktop-suite-red 07 and 08, filed by its review.
 
 navbar-keyboard-intent ticket 02 resolved 2026-09-16: World gains `g 8`, `g 3` now reaches Training
 rather than Squad, and the section nav actions derive from `NAV_SECTIONS`, with `CAREER_G_BINDINGS`
@@ -81,7 +84,8 @@ parallel sessions and were left alone.
 2. ~~**group-d-player-and-staff-records**: complete 2026-09-14. 19 screens charted, 3 implemented.~~
 3. **desktop-suite-red**: 01, 02, 04, 05, 06 resolved (05 derived the nav guards, 06 made the
     classification a typecheck gate, 2026-09-16). 03 claimed-and-abandoned (needs a human to
-    unclaim or close). Decision request 01 open.
+    unclaim or close). Decision request 01 open. 07 (bare `app.close()` hang) and 08 (before-matchday
+    seed has no fixture) ready, filed 2026-09-16.
 4. **season-rollover-skips-conclusion**: 01 resolved.
 5. **match-composition**: 01-02 resolved.
 6. **group-a-reconciliation**: 03-04 resolved.
@@ -104,8 +108,8 @@ parallel sessions and were left alone.
 12. **group-j-transfers-contracts-and-negotiations**: 01-03 resolved, spec published (2026-09-15). 04
     needs-info on decision request 01; 05-07 resolved (07 Screen 146 Transfer History, 2026-09-15);
     08 resolved (navbar entries for 141/145, 2026-09-16). Decision requests 01 and 02 open.
-13. **navbar-keyboard-intent**: 01 resolved; 02 resolved 2026-09-16 (World `g 8`, `g 3` → Training);
-    03 ready (e2e and key-map note on the retired letter keys).
+13. **navbar-keyboard-intent**: 01-03 resolved (02 World `g 8`; 03 e2e on position keys, override-aware
+    badges, 2026-09-16); 04 ready (decision: item level vs hand-edited section overrides).
 
 Shipped and closed:
 

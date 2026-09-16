@@ -34,18 +34,18 @@ test("a rebind applied in the help overlay survives an app restart (AC-34)", asy
   const help = firstWindow.getByRole("dialog", { name: "Keyboard shortcuts" });
   await expect(help).toBeVisible();
 
-  // Rebind "Go to Transfers" (coded default `g t`) to the free bare key `n`:
+  // Rebind "Go to Recruitment" (coded default `g 4`) to the free bare key `n`:
   // the two-step prefix rebinds as one entry, per the binding-overrides note.
-  const rebind = help.getByRole("button", { name: "Rebind Go to Transfers" });
+  const rebind = help.getByRole("button", { name: "Rebind Go to Recruitment" });
   await rebind.focus();
   await expect(rebind).toBeFocused();
   await firstWindow.keyboard.press("Enter");
   await expect(help.getByText("Press a key… (Escape cancels)")).toBeVisible();
   await firstWindow.keyboard.press("n");
-  await expect(help.getByText("Go to Transfers is now bound to n.")).toBeVisible();
+  await expect(help.getByText("Go to Recruitment is now bound to n.")).toBeVisible();
 
   // Close the overlay and confirm the override is live this session: `n`
-  // navigates to Transfers from any career screen.
+  // navigates to Transfers, Recruitment's default destination, from any career screen.
   await firstWindow.keyboard.press("Escape");
   await expect(help).not.toBeVisible();
   await firstWindow.keyboard.press("n");
@@ -60,7 +60,7 @@ test("a rebind applied in the help overlay survives an app restart (AC-34)", asy
   const stored = JSON.parse(
     readFileSync(path.join(userDataDir, "keybindings.json"), "utf8"),
   ) as Record<string, string>;
-  expect(stored["go-to-transfers"]).toBe("n");
+  expect(stored["go-to-recruitment"]).toBe("n");
 
   // Relaunch against the same userDataDir: the binding still applies.
   const relaunched = await launchExtraApp();

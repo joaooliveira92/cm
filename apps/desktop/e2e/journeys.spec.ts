@@ -3,7 +3,8 @@ import {
   continueSeededCareer,
   expect,
   openTacticsEditor,
-  pressPrefix,
+  pressItemKey,
+  pressSectionKey,
   saveEntry,
   test,
 } from "./launchApp.js";
@@ -97,13 +98,13 @@ test("a substitution is driven by keyboard through the match day live control pa
   await seedBeforeMatchday(savesDir(userDataDir));
   await continueSeededCareer(page, "Seed: before-matchday");
 
-  await pressPrefix(page, "a");
+  await pressSectionKey(page, "tactics");
   await expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible();
   await expect(page.locator('[data-focus-id="tactics"]')).toBeFocused();
   await openTacticsEditor(page);
   await assignFullTactic(page);
 
-  await pressPrefix(page, "d");
+  await pressItemKey(page, "analysis", "analysis-match");
   await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
   await expect(page.locator('[data-focus-id="match"]')).toBeFocused();
 
@@ -161,11 +162,11 @@ test("a live substitution is made from the standalone Match Substitutions screen
   await seedBeforeMatchday(savesDir(userDataDir));
   await continueSeededCareer(page, "Seed: before-matchday");
 
-  await pressPrefix(page, "a");
+  await pressSectionKey(page, "tactics");
   await openTacticsEditor(page);
   await assignFullTactic(page);
 
-  await pressPrefix(page, "d");
+  await pressItemKey(page, "analysis", "analysis-match");
   const start = page.getByRole("button", { name: "Start match" });
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
@@ -205,8 +206,8 @@ test("a transfer bid settles and the budget reflects the spend (keyboard)", asyn
   await seedFresh(savesDir(userDataDir));
   await continueSeededCareer(page, "Seed: fresh");
 
-  // g t → Transfers, with semantic focus landing on the screen region.
-  await pressPrefix(page, "t");
+  // g 4 → Transfers (Recruitment's default), with semantic focus landing on the screen region.
+  await pressSectionKey(page, "recruitment");
   await expect(page.getByRole("heading", { name: /Transfers/ })).toBeVisible();
   await expect(page.locator('[data-focus-id="transfers"]')).toBeFocused();
 

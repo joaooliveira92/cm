@@ -73,3 +73,45 @@ of `g 8` made before this change now losing to `go-to-world` (that override neve
 `keyboard/spine-live.test.tsx`, `navigation/navbar.test.tsx` (comment only),
 `router/{stage2.test.ts,team-scout-report-route.test.ts}`. Ticket 02, new ticket 03, this report, the
 sprint plan, and the placeholder-screens note.
+
+## Ticket 03 — e2e specs and the global-key-map note on the retired letter keys, 2026-09-16
+
+- Ticket closed: [03](../../.scratch/navbar-keyboard-intent/issues/03-e2e-and-key-map-note-still-use-letter-keys.md)
+- Follow-ups filed: [navbar-keyboard-intent 04](../../.scratch/navbar-keyboard-intent/issues/04-level-one-follows-key-position-not-the-dispatched-section.md),
+  [desktop-suite-red 07](../../.scratch/desktop-suite-red/issues/07-e2e-specs-hang-on-bare-app-close.md),
+  [desktop-suite-red 08](../../.scratch/desktop-suite-red/issues/08-before-matchday-seed-offers-no-fixture.md)
+
+### What shipped
+
+- `keyboard.spec.ts`, `journeys.spec.ts` and `keybindings.spec.ts` press position keys through new
+  `launchApp.ts` helpers `pressSectionKey` / `pressItemKey`, which derive the keys from `NAV_SECTIONS`
+  and `POSITION_KEYS`: `g a` → `g 2`, `g t` → `g 4`, `g d` → `g 5 e`, `g s` → `g 1`. The rebind test
+  targets "Go to Recruitment".
+- The global-key-map note marks its letter rows superseded and points to the live definitions.
+- Navbar section badges follow user overrides (`PrimaryNavItem.tsx`), so a rebound section action
+  loses its badge. The decision extends ticket 02's rule that a key is advertised only if it dispatches.
+  `PrimaryNav.tsx` is unmounted and was left alone.
+
+### Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Specs use position keys, same destinations, nothing weakened | `keyboard.spec.ts:32`, `journeys.spec.ts:202`; `journeys.spec.ts:92` up to Match day | pass, **qualified**: keybindings persistence/relaunch and the post-Match-Day steps have not executed (desktop-suite-red 07, 08) |
+| 2 | Note records the supersession | note edit | done |
+| 3 | Override-aware badges answered | `navbar.test.tsx` "drops a section's number badge once the user rebinds its go-to action away from it" | pass |
+
+### Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only. typecheck ✓, effect-lint ✓, verify-db-schema ✓; lint ✗ and verify-md-links ✗ with the same counts as ticket 02's run. Desktop **68 failed / 1793 passed (1861)**. The failing-case list is identical to ticket 02's run; the extra pass is the new badge test. |
+| e2e | `pnpm test:e2e e2e/keyboard.spec.ts e2e/keybindings.spec.ts e2e/journeys.spec.ts` | 5 passed / 5 failed. Before the ticket (implementator's baseline): 3 passed / 7 failed. Remaining: `journeys:69`, `keybindings:18` hit the 45s timeout on bare `app.close()` (07); `journeys:92` at line 112, `journeys:158` at 171, `keyboard:158` at 184 find no enabled `Start match` (08). |
+| determinism | — | not applicable |
+| save compatibility | — | not applicable; no persistence change |
+
+### Review
+
+Reviewer **APPROVE**. Medium: criterion 1 needed the qualification above. Lows: a hand-edited override
+can move a freed `g <n>` to another section's action (ticket 04, and the Answer's wording narrowed);
+a small timing window in `pressSectionKey` if the machine stalls past the 800ms prefix timeout
+(accepted); the note hard-coded `g 1` to `g 8` (fixed).

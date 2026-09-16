@@ -6,6 +6,9 @@ import { useNavContext } from "../navContext.js";
 import type { NavItem, NavSection } from "../nav-config.js";
 import { NAV_SECTIONS } from "../nav-config.js";
 import { getScopeState, subscribeScopeState } from "../../actions/scopeState.js";
+import { ACTION_REGISTRY } from "../../actions/allActions.js";
+import { getBindingOverrides, subscribeBindingOverrides } from "../../actions/bindingState.js";
+import { effectiveBinding } from "../../actions/overrides.js";
 
 export const PrimaryNavItem = ({
   section,
@@ -25,8 +28,14 @@ export const PrimaryNavItem = ({
   const hasChildren = children.length > 0;
 
   const scope = useSyncExternalStore(subscribeScopeState, getScopeState, getScopeState);
-  const hintKey = scope.prefixActive === true && scope.prefixKind === "level0"
-    ? String(NAV_SECTIONS.indexOf(section) + 1)
+  const overrides = useSyncExternalStore(subscribeBindingOverrides, getBindingOverrides, getBindingOverrides);
+  // The badge advertises `g <position>` only while the section's go-to action is still bound to it.
+  // A user override that moves the action elsewhere takes the key out of level 0, so the badge goes.
+  const positionKey = String(NAV_SECTIONS.indexOf(section) + 1);
+  const goTo = ACTION_REGISTRY.get(`go-to-${section.id}`);
+  const keyDispatches = goTo !== undefined && effectiveBinding(goTo, overrides) === `g ${positionKey}`;
+  const hintKey = scope.prefixActive === true && scope.prefixKind === "level0" && keyDispatches
+    ? positionKey
     : undefined;
 
   return (

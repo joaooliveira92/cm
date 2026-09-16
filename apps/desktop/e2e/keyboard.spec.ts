@@ -1,7 +1,7 @@
 /**
  * The five mandated keyboard coverages — stage 7 (e2e conversion):
  *
- *  1. `g <key>` screen navigation (with `g b` back)
+ *  1. `g <position>` screen navigation, section and item keys (with `g b` back)
  *  2. the command palette (Primary+K; filter; Enter dispatches; Escape closes)
  *  3. the Squad grid (row-oriented roving, Space selection, sortable headers)
  *  4. the Match Day two-step substitution — lives in `journeys.spec.ts`
@@ -21,41 +21,43 @@ import {
   enterCareer,
   expect,
   openTacticsEditor,
+  pressItemKey,
   pressPrefix,
   pressPrimary,
+  pressSectionKey,
   test,
 } from "./launchApp.js";
 import { savesDir, seedBeforeMatchday } from "./seedSaves.js";
 
-test("g <key> navigation reaches the career screens and g b goes back (AC-18)", async ({
+test("g <position> navigation reaches the career screens and g b goes back (AC-18)", async ({
   window: page,
   userDataDir,
 }) => {
   await enterCareer(page, userDataDir); // lands on Squad with semantic focus
 
-  // g a → Tactics
-  await pressPrefix(page, "a");
+  // g 2 → Tactics (the Tactics section's default destination)
+  await pressSectionKey(page, "tactics");
   await expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible();
   await expect(page.locator('[data-focus-id="tactics"]')).toBeFocused();
 
-  // g t → Transfers
-  await pressPrefix(page, "t");
+  // g 4 → Transfers (the Recruitment section's default destination)
+  await pressSectionKey(page, "recruitment");
   await expect(page.getByRole("heading", { name: /Transfers/ })).toBeVisible();
   await expect(page.locator('[data-focus-id="transfers"]')).toBeFocused();
 
-  // g d → Match Day (no match pending on a fresh seed — the picker, not a resume).
-  // `g m` is Manager Profile; the Match Day binding is `d` (actions/allActions.ts).
-  await pressPrefix(page, "d");
+  // g 5 e → Match Day (no match pending on a fresh seed, so the picker, not a resume). Match Day is
+  // not a section default, so it takes the item key under Analysis.
+  await pressItemKey(page, "analysis", "analysis-match");
   await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
   await expect(page.locator('[data-focus-id="match"]')).toBeFocused();
 
-  // g s → Squad
-  await pressPrefix(page, "s");
+  // g 1 → Squad
+  await pressSectionKey(page, "squad");
   await expect(page.getByText(/players$/)).toBeVisible();
   await expect(page.locator('[data-focus-id="squad"]')).toBeFocused();
 
   // g b → the previous screen through real history (Transfers → back → Squad)
-  await pressPrefix(page, "t");
+  await pressSectionKey(page, "recruitment");
   await expect(page.getByRole("heading", { name: /Transfers/ })).toBeVisible();
   await pressPrefix(page, "b");
   await expect(page.getByText(/players$/)).toBeVisible();
@@ -172,12 +174,12 @@ test("Escape closes only the topmost transient layer (AC-20)", async ({
   await seedBeforeMatchday(savesDir(userDataDir));
   await continueSeededCareer(page, "Seed: before-matchday");
 
-  await pressPrefix(page, "a");
+  await pressSectionKey(page, "tactics");
   await expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible();
   await openTacticsEditor(page);
   await assignFullTactic(page);
 
-  await pressPrefix(page, "d");
+  await pressItemKey(page, "analysis", "analysis-match");
   const start = page.getByRole("button", { name: "Start match" });
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.focus();

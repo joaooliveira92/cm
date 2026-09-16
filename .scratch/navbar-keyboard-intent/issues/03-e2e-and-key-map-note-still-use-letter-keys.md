@@ -1,7 +1,7 @@
 # 03: e2e specs and the global-key-map note still use the retired letter `g` keys
 
 Type: bug
-Status: claimed
+Status: resolved
 
 ## What was measured
 
@@ -26,8 +26,44 @@ though level 0 no longer accepts `1`. The default bindings are consistent since 
 badges should follow user overrides is a design call. If this ticket does not settle it, raise a
 decision request.
 
-- [ ] The three specs drive navigation with the position keys, and their assertions still check the
+- [x] The three specs drive navigation with the position keys, and their assertions still check the
       same destinations, with no assertion weakened
-- [ ] The global-key-map note records that the position-based scheme superseded its table and points
+- [x] The global-key-map note records that the position-based scheme superseded its table and points
       to where the live scheme is defined
-- [ ] The override-aware badge question is answered or raised as a decision request
+- [x] The override-aware badge question is answered or raised as a decision request
+
+## Answer
+
+Badges follow user overrides. Ticket 02 set the rule that the navbar shows a key only if that key
+dispatches, and an override is exactly the case where the coded key stops dispatching. Level 0 of
+the prefix builds its accepted keys from the effective bindings (`level0Completions` in
+`KeyboardStateProvider.tsx`). So once `go-to-tactics` is rebound off `g 2`, pressing `2` after `g`
+cancels the prefix, and a `2` badge on Tactics would be advertising a dead key.
+
+The live navbar badge is drawn by `PrimaryNavItem.tsx`, not `PrimaryNav.tsx`. `PrimaryNav.tsx` is
+not mounted by the app. It renders the older `SPEC_SECTIONS` list and only
+`test/renderer/navigation/primary-nav.test.tsx` imports it, so it was left alone. `PrimaryNavItem`
+now reads the published override map (`actions/bindingState.ts`, the same store
+`ActionKeyBadge` reads) and shows the section's number only while the effective binding of
+`go-to-<section id>` is `g <position>`. `test/renderer/navigation/navbar.test.tsx` rebinds
+`go-to-tactics`, checks that the Tactics badge is gone while the others stay, and checks that it
+comes back after a reset.
+
+The submenu item hints in `ContextNav.tsx` needed no change. They only render while the prefix is
+at the item level for that same section, and `KeyboardSpine` only enters that level after level 0
+accepted the section key. If the key was overridden away through the help overlay, that level is
+never entered, so the item hints never show. A hand-edited `keybindings.json` can move a freed
+`g <n>` onto another section's action, which enters the level without a badge; that gap predates this
+ticket and is [ticket 04](04-level-one-follows-key-position-not-the-dispatched-section.md).
+
+### Criterion 1, qualified
+
+The keys and destinations are migrated in all three specs, and no assertion was removed or weakened.
+The migrated destinations are proven green by `keyboard.spec.ts:32`, `journeys.spec.ts:92` (up to
+its Match day heading and focus) and `journeys.spec.ts:202`. Two groups of assertions have not
+executed, because other bugs stop the tests first:
+
+- `keybindings.spec.ts:18`'s `keybindings.json` and relaunch checks, and `journeys.spec.ts:69`: the
+  specs call `app.close()` directly, which hangs. [desktop-suite-red 07](../../desktop-suite-red/issues/07-e2e-specs-hang-on-bare-app-close.md).
+- `journeys.spec.ts:92` and `:158` and `keyboard.spec.ts:158` after Match Day: no `Start match`
+  button. [desktop-suite-red 08](../../desktop-suite-red/issues/08-before-matchday-seed-offers-no-fixture.md).

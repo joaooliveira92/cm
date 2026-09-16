@@ -59,7 +59,9 @@ const sectionNavActions: ReadonlyArray<Action> = NAV_SECTIONS.map((section, inde
   }),
 );
 
-/** All coded default bindings (global-key-map note). No single-key `g` binding. */
+/** All coded default bindings. No single-key `g` binding. The global-key-map note records the
+ *  dispatch rules, but its `g <letter>` table is retired. The section keys come from
+ *  `sectionNavActions` above, and the item keys from `POSITION_KEYS` in `nav-config.ts`. */
 export const ALL_ACTIONS: ReadonlyArray<Action> = [
   // app-global — active on every screen (palette/help are discoverable from the
   // save list and creation flow too; only the g-prefix/Space are career-scoped).

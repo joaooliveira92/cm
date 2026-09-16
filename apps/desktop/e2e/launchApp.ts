@@ -4,6 +4,7 @@ import path from "node:path";
 import { _electron as electron, expect, test as base } from "@playwright/test";
 import type { ElectronApplication, Locator, Page } from "@playwright/test";
 import { savesDir, seedFresh } from "./seedSaves.js";
+import { NAV_SECTIONS, POSITION_KEYS, type NavSection } from "../src/renderer/navigation/nav-config.js";
 
 const mainPath = path.join(import.meta.dirname, "../dist/main/index.js");
 
@@ -128,10 +129,53 @@ export const pressPrimary = async (page: Page, key: string): Promise<void> => {
   await page.keyboard.press(`${PRIMARY_KEY}+${key}`);
 };
 
-/** Press the `g <key>` navigation prefix sequence as two keystrokes. */
+/**
+ * Press the `g <key>` navigation prefix sequence as two keystrokes.
+ *
+ * Only for completions that end the prefix, which today means `g b`. A section key leaves a second
+ * prefix level pending, so use `pressSectionKey` for those.
+ */
 export const pressPrefix = async (page: Page, key: string): Promise<void> => {
   await page.keyboard.press("g");
   await page.keyboard.press(key);
+};
+
+/** A section's 1-based navbar position as its `g` key, read from the same array the app binds from. */
+const sectionKeyOf = (sectionId: string): { readonly key: string; readonly section: NavSection } => {
+  const index = NAV_SECTIONS.findIndex((section) => section.id === sectionId);
+  if (index < 0) throw new Error(`No navbar section with id "${sectionId}"`);
+  return { key: String(index + 1), section: NAV_SECTIONS[index]! };
+};
+
+/**
+ * Press `g <section position>`, which navigates to the section's default destination.
+ *
+ * The key does not end the prefix. It opens the item level (`g <section> <item key>`), which stays
+ * pending until its ~800ms timeout. A `g` pressed inside that window cancels the pending level
+ * instead of starting a new prefix, and the key after it then lands as a bare keystroke. So this
+ * waits for the prefix indicator to appear and then clear before returning.
+ */
+export const pressSectionKey = async (page: Page, sectionId: string): Promise<void> => {
+  const { key } = sectionKeyOf(sectionId);
+  await page.keyboard.press("g");
+  await page.keyboard.press(key);
+  const indicator = page.getByRole("status").filter({ hasText: /^Go to:/ });
+  await expect(indicator).toBeVisible();
+  await expect(indicator).toHaveCount(0);
+};
+
+/**
+ * Press `g <section position> <item key>`, which navigates to that item's destination. The item key
+ * completes the prefix, so nothing is left pending afterwards.
+ */
+export const pressItemKey = async (page: Page, sectionId: string, itemId: string): Promise<void> => {
+  const { key, section } = sectionKeyOf(sectionId);
+  const itemIndex = section.items.findIndex((item) => item.id === itemId);
+  const itemKey = POSITION_KEYS[itemIndex];
+  if (itemKey === undefined) throw new Error(`No item key reaches "${itemId}" in section "${sectionId}"`);
+  await page.keyboard.press("g");
+  await page.keyboard.press(key);
+  await page.keyboard.press(itemKey);
 };
 
 /**

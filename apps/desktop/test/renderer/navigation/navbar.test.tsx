@@ -15,7 +15,7 @@ import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";
 import { NAV_SECTIONS } from "../../../src/renderer/navigation/nav-config.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { resetScopeState, setScopeState, clearScopeState } from "../../../src/renderer/actions/scopeState.js";
-import { resetBindingOverrides } from "../../../src/renderer/actions/bindingState.js";
+import { publishBindingOverrides, resetBindingOverrides } from "../../../src/renderer/actions/bindingState.js";
 
 const saveId = SaveId.make("s1");
 
@@ -165,7 +165,7 @@ describe("leader-key hints on the navbar (global-key-map note, g <key> prefix)",
     act(() => setScopeState({ prefixActive: true, prefixKind: "level0" }));
     // A section is badged with its position key only if that key actually dispatches. Derived from
     // the binding registry rather than from `NAV_SECTIONS`, because deriving from the section array
-    // would compare `String(index + 1)` against the identical expression in `PrimaryNav`, which
+    // would compare `String(index + 1)` against the identical expression in `PrimaryNavItem`, which
     // cannot fail and would assert nothing about whether the advertised key works.
     //
     // This was red while World showed an `8` badge that level 0 of the prefix rejected. See
@@ -179,6 +179,27 @@ describe("leader-key hints on the navbar (global-key-map note, g <key> prefix)",
     act(() => setScopeState({ prefixActive: false }));
     clearScopeState("prefixKind");
     expect(hintsIn("Primary navigation")).toEqual([]);
+  });
+
+  // Ticket 02 settled that the navbar advertises a key only if that key dispatches. A user override
+  // that moves a section's go-to action off `g <position>` takes that key out of level 0 of the
+  // prefix, so the section's badge has to go with it. The other sections keep theirs.
+  it("drops a section's number badge once the user rebinds its go-to action away from it", async () => {
+    await mountNavbar("league");
+    const tacticsIndex = NAV_SECTIONS.findIndex((section) => section.id === "tactics");
+    const tacticsKey = String(tacticsIndex + 1);
+    act(() => publishBindingOverrides({ "go-to-tactics": "n" }));
+    act(() => setScopeState({ prefixActive: true, prefixKind: "level0" }));
+
+    const expected = NAV_SECTIONS.map((_, index) => String(index + 1)).filter(
+      (key) => boundSectionKeys.has(key) && key !== tacticsKey,
+    );
+    expect(hintsIn("Primary navigation")).toEqual(expected);
+    expect(hintsIn("Primary navigation")).not.toContain(tacticsKey);
+
+    // Resetting the override brings the badge back, so the badge follows the live binding both ways.
+    act(() => resetBindingOverrides());
+    expect(hintsIn("Primary navigation")).toContain(tacticsKey);
   });
 
   it("keeps the hint out of the control's accessible name", async () => {
