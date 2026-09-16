@@ -19,7 +19,7 @@ Match ticket 05 (match-context navigation) is resolved. This is a labelling defe
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] In match and entity contexts the tablist's accessible name describes that context, not the primary section
 - [ ] A unit test on `SecondaryNav` asserts the tablist name in a match context
