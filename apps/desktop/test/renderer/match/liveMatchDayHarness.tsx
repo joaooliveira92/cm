@@ -130,7 +130,6 @@ export const resumeView = (overrides: Record<string, unknown> = {}) => ({
   injuries: [],
   homeOnPitchCount: 11,
   awayOnPitchCount: 11,
-  conditions: {},
   ...overrides,
 });
 

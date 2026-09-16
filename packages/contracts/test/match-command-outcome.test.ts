@@ -28,7 +28,6 @@ const chunk = {
   injuries: [],
   homeOnPitchCount: 11,
   awayOnPitchCount: 11,
-  conditions: { p1: 97 },
 };
 
 describe("live match commands: the command's own outcome and the revealed cut", () => {
@@ -50,6 +49,11 @@ describe("live match commands: the command's own outcome and the revealed cut", 
         homePitch: { ...pitch, onPitch: [{ playerId: "p2", position: "Keeper" }] },
       }),
     ).toThrow();
+  });
+
+  it("a match read no longer carries full-time Condition, which no revealed position can cut", () => {
+    const decoded = Schema.decodeUnknownSync(ResumeSimulationView)({ ...chunk, conditions: { p1: 97 } });
+    expect(Schema.encodeSync(ResumeSimulationView)(decoded)).toEqual(chunk);
   });
 
   it("a command response without its outcome does not decode", () => {

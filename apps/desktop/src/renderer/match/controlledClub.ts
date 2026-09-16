@@ -16,6 +16,6 @@ export const controlledPitch = (
   view: RpcSuccess<"resumeSimulation"> | RpcSuccess<"submitMatchCommand">,
 ): MatchPitchView => (match.isHome ? view.homePitch : view.awayPitch);
 
-/** The controlled club's head-count at the end of the chunk a response describes. */
-export const controlledOnPitchCount = (match: MatchSummary, view: RpcSuccess<"submitMatchCommand">): number =>
+/** The controlled club's head-count from a match response: the size of its pitch, as of the revealed position the request sent. */
+export const controlledOnPitchCount = (match: MatchSummary, view: RpcSuccess<"resumeSimulation">): number =>
   match.isHome ? view.homeOnPitchCount : view.awayOnPitchCount;

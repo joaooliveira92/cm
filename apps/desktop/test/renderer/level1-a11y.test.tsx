@@ -440,7 +440,6 @@ render(
             injuries: [],
             homeOnPitchCount: 11,
             awayOnPitchCount: 11,
-            conditions: {},
           },
         } as never;
       }

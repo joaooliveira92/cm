@@ -46,6 +46,9 @@ export interface RevealedInjury {
 
 export interface CommentaryState {
   readonly revealed: ReadonlyArray<CommentaryLineView>;
+  /** The score as of the latest revealed position a match response was read at. A response carries
+   *  the score at the request's revealed position, and a revealed Goal line re-reads it, so a goal
+   *  never shows before its line. */
   readonly homeScore: number;
   readonly awayScore: number;
   /** The controlled club's substitution counts and head-count, whichever side it plays. */
@@ -101,9 +104,9 @@ const NO_SUBS: SubstitutionStatusView = {
   capReached: false,
 };
 
-/** Revealed lines after which the pitch can differ from the last read: a player sent off, forced off
- *  by a severe Injury, or substituted. */
-const PITCH_CHANGING_TAGS: ReadonlySet<string> = new Set(["RedCard", "Injury", "Substitution"]);
+/** Revealed lines after which the match state can differ from the last read: a goal, or a player sent
+ *  off, forced off by a severe Injury, or substituted. */
+const STATE_CHANGING_TAGS: ReadonlySet<string> = new Set(["Goal", "RedCard", "Injury", "Substitution", "FullTimeWhistle"]);
 
 export const CommentaryContext = createContext<CommentaryContextValue | null>(null);
 
@@ -118,9 +121,10 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
   const [clubSubsKnown, setClubSubsKnown] = useState(false);
   const [clubOnPitchCount, setClubOnPitchCount] = useState(11);
   const [clubPitch, setClubPitch] = useState<MatchPitchView | null>(null);
-  /** Polls, pitch re-reads and commands are numbered in send order; `clubPitch` came from request
-   *  `pitchAppliedRef`. A response to an earlier-sent request, such as a poll sent before a command
-   *  and answered after it, must not replace it, even when both were read at the same position. */
+  /** Polls, re-reads and commands are numbered in send order; the score, head-count and `clubPitch`
+   *  came from request `pitchAppliedRef`. A response to an earlier-sent request, such as a poll sent
+   *  before a command and answered after it, must not replace them, even when both were read at the
+   *  same position. */
   const pitchSentRef = useRef(0);
   const pitchAppliedRef = useRef(0);
   const [revealedInjuries, setRevealedInjuries] = useState<ReadonlyArray<RevealedInjury>>([]);
@@ -148,13 +152,19 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     return pitchSentRef.current;
   }, []);
 
-  const applyPitch = useCallback(
+  /** Applies the match state a response read at its request's revealed position: score, head-count
+   *  and pitch. The standalone command screens read the score recorded here. */
+  const applyRevealedState = useCallback(
     (view: RpcSuccess<"resumeSimulation">, request: number): void => {
       if (matchState.match === null || request < pitchAppliedRef.current) return;
       pitchAppliedRef.current = request;
+      setHomeScore(view.homeScore);
+      setAwayScore(view.awayScore);
+      recordRevealedScore(matchState.saveId, { homeScore: view.homeScore, awayScore: view.awayScore });
+      setClubOnPitchCount(controlledOnPitchCount(matchState.match, view));
       setClubPitch(controlledPitch(matchState.match, view));
     },
-    [matchState.match],
+    [matchState.match, matchState.saveId],
   );
 
   const applyPollView = useCallback((view: RpcSuccess<"resumeSimulation">, request: number): void => {
@@ -167,8 +177,6 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     }
     pendingRef.current.push(...view.lines);
     if (view.isComplete) streamCompleteRef.current = true;
-    setHomeScore(view.homeScore);
-    setAwayScore(view.awayScore);
     // Substitution counts cover the Match Events revealed when the poll was sent, so a poll is as good
     // a source as a command response (the standalone screens read them the same way).
     // A poll sent before a command can land after it: the count only rises, so never lower it.
@@ -177,26 +185,26 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
       setClubSubs((current) => (polled.used >= current.used ? polled : current));
       setClubSubsKnown(true);
     }
-    applyPitch(view, request);
-    recordRevealedScore(matchState.saveId, { homeScore: view.homeScore, awayScore: view.awayScore });
-  }, [matchState.saveId, matchState.match, applyPitch]);
+    applyRevealedState(view, request);
+  }, [matchState.match, applyRevealedState]);
 
-  // A poll is read ahead of the reveal, so a red card or substitution revealed from its buffer is
-  // not in the pitch it carried. Re-read the pitch at the new position; the chunk itself is dropped.
+  // A poll is read ahead of the reveal, but its state is cut at the position it was sent at, so a goal,
+  // red card or substitution revealed from its buffer is not in it. Re-read the state at the new
+  // position; the chunk itself is dropped.
   const lastRevealedTag = revealed.at(-1)?.tag;
   useEffect(() => {
     const match = matchState.match;
-    if (match === null || lastRevealedTag === undefined || !PITCH_CHANGING_TAGS.has(lastRevealedTag)) return;
+    if (match === null || lastRevealedTag === undefined || !STATE_CHANGING_TAGS.has(lastRevealedTag)) return;
     const revealedEvents = getRevealedEvents(matchState.saveId);
     const request = nextPitchRequest();
     const read = resumeSimulation({ saveId: matchState.saveId, matchId: match.matchId, cursor: cursorRef.current, revealedEvents });
     Effect.runPromise(read.pipe(Effect.result)).then(
       (outcome) => {
-        if (Result.isSuccess(outcome)) applyPitch(outcome.success, request);
+        if (Result.isSuccess(outcome)) applyRevealedState(outcome.success, request);
       },
       () => undefined,
     );
-  }, [revealed.length, lastRevealedTag, matchState.match, matchState.saveId, applyPitch, nextPitchRequest]);
+  }, [revealed.length, lastRevealedTag, matchState.match, matchState.saveId, applyRevealedState, nextPitchRequest]);
 
   useEffect(() => {
     capReachedRef.current = clubSubs.capReached;
@@ -250,13 +258,10 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
   const applyCommandResult = useCallback(
     (response: RpcSuccess<"submitMatchCommand">, actedOn: ReadonlyArray<RevealedInjury>): void => {
       const match = matchState.match;
-      setHomeScore(response.homeScore);
-      setAwayScore(response.awayScore);
       updateInjuries((current) => current.filter((revealed) => !actedOn.includes(revealed)));
       if (match === null) return;
       setClubSubs(controlledSubs(match, response));
       setClubSubsKnown(true);
-      setClubOnPitchCount(controlledOnPitchCount(match, response));
     },
     [matchState.match, updateInjuries],
   );
@@ -280,7 +285,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
           command,
         });
         applyCommandResult(result, actedOn);
-        applyPitch(result, request);
+        applyRevealedState(result, request);
         return resolveCommandStatus(command, result);
       } catch (error) {
         const typed = error as RpcClientError<"submitMatchCommand"> | undefined;
@@ -288,7 +293,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
         throw error;
       }
     },
-    [matchState.match, matchState.saveId, currentMinute, runCommand, applyCommandResult, applyPitch, nextPitchRequest],
+    [matchState.match, matchState.saveId, currentMinute, runCommand, applyCommandResult, applyRevealedState, nextPitchRequest],
   );
 
   const resume = useCallback((): void => updateInjuries(() => []), [updateInjuries]);

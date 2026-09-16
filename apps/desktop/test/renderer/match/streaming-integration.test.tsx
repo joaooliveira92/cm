@@ -13,7 +13,7 @@ import { POLL_INTERVAL_MS, REVEAL_INTERVAL_MS, RegistryProvider } from "../../..
 import { MatchProvider, useMatchContext } from "../../../src/renderer/match/MatchProvider.js";
 import { CommentaryProvider, useCommentaryContext } from "../../../src/renderer/match/CommentaryProvider.js";
 import { useMatchStreaming } from "../../../src/renderer/match/streaming.js";
-import { clearActiveMatch, setActiveMatch } from "../../../src/renderer/match/session.js";
+import { clearActiveMatch, getRevealedScore, setActiveMatch } from "../../../src/renderer/match/session.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 
 const rid = (id: string) => SaveId.make(id);
@@ -68,7 +68,6 @@ const resumeView = (overrides: Record<string, unknown> = {}) => ({
   injuries: [] as InjuryView[],
   homeOnPitchCount: 11,
   awayOnPitchCount: 11,
-  conditions: {},
   ...overrides,
 });
 
@@ -186,36 +185,37 @@ afterEach(() => {
 
 describe("useMatchStreaming — poll ahead, buffer, reveal one line per tick (ADR-0007)", () => {
   it("consumes a successful poll chunk and reveals its lines at the reveal pace, then completes", async () => {
+    // A response's score is as of the position its request was sent at: none revealed for the first.
     const chunk1 = resumeView({
       cursor: 2,
       lines: [line(10, "Kick-off."), line(20, "A chance!")],
-      homeScore: 2,
-      awayScore: 1,
     });
     const chunk2 = resumeView({ cursor: 2, isComplete: true, homeScore: 2, awayScore: 1 });
     const probe = await mountProbe({}, [chunk1, chunk2]);
 
     // First poll answered immediately: lines buffered (not yet revealed), scores synced.
     expect(probe.calls()).toBe(1);
-    expect(probe.text()).toBe("0|live|running|2-1");
+    expect(probe.text()).toBe("0|live|running|0-0");
 
     // One line per REVEAL_INTERVAL_MS, in order.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(REVEAL_INTERVAL_MS);
     });
-    expect(probe.text()).toBe("1|live|running|2-1");
+    expect(probe.text()).toBe("1|live|running|0-0");
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(REVEAL_INTERVAL_MS);
     });
-    expect(probe.text()).toBe("2|live|running|2-1");
+    expect(probe.text()).toBe("2|live|running|0-0");
 
     // The 800ms poll tick runs once more (buffer drained below the refetch threshold), marking
-    // the stream complete; the reveal pacer then flips the match to full time.
+    // the stream complete and syncing the score at the new revealed position; the reveal pacer then
+    // flips the match to full time.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
     });
     expect(probe.calls()).toBe(2);
+    expect(probe.payloads[1]).toMatchObject({ revealedEvents: 2 });
     expect(probe.text()).toBe("2|complete|running|2-1");
 
     // A finished match stops polling: further ticks leave the call count untouched.
@@ -454,5 +454,95 @@ describe("revealed injuries: acted on, resolved, and the cap they were revealed 
       await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 3);
     });
     expect(probe.text()).toBe("3|live|running|0-0");
+  });
+});
+
+describe("the scoreboard and head-count follow the reveal, not the fetched chunk (group-g-match-day 22)", () => {
+  const goalLine: CommentaryLineView = { minute: 30, tag: "Goal", text: "Home FC score! 1-0." };
+  const redCardLine: CommentaryLineView = { minute: 50, tag: "RedCard", text: "Sent off!" };
+  const home = { ...session().match, isHome: true };
+
+  /** Answers every read the way the main process does: score and head-count as of the request's
+   *  revealed position, whatever chunk is returned. */
+  const mountCutAtReveal = async (lines: ReadonlyArray<CommentaryLineView>) => {
+    setActiveMatch(session({ match: home }) as never);
+    const payloads: Array<Record<string, unknown>> = [];
+    mockPreload(async (method, payload) => {
+      if (method !== "resumeSimulation") return { _tag: "Failure", error: NOT_FOUND } as never;
+      const request = payload as { cursor: number; revealedEvents: number };
+      payloads.push(request);
+      const revealed = lines.slice(0, request.revealedEvents);
+      const homeScore = revealed.filter((revealedLine) => revealedLine.tag === "Goal").length;
+      const sentOff = revealed.filter((revealedLine) => revealedLine.tag === "RedCard").length;
+      return {
+        _tag: "Success",
+        value: resumeView({
+          cursor: lines.length,
+          isComplete: true,
+          lines: lines.slice(request.cursor),
+          homeScore,
+          homeOnPitchCount: 11 - sentOff,
+        }),
+      } as never;
+    });
+    const Host = () => {
+      useMatchStreaming();
+      const { state: comm } = useCommentaryContext();
+      return (
+        <output data-testid="board">
+          {comm.revealed.length}|{comm.homeScore}-{comm.awayScore}|{comm.clubOnPitchCount}
+        </output>
+      );
+    };
+    render(
+      <RegistryProvider>
+        <MatchProvider saveId={rid("s1")}>
+          <CommentaryProvider>
+            <Host />
+          </CommentaryProvider>
+        </MatchProvider>
+      </RegistryProvider>,
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    return {
+      payloads,
+      board: () => screen.getByTestId("board").textContent ?? "",
+      tick: async () => {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(REVEAL_INTERVAL_MS);
+        });
+      },
+    };
+  };
+
+  it("shows a goal once its line is revealed, never while it waits in the buffer", async () => {
+    const view = await mountCutAtReveal([line(1, "Kick-off."), line(10, "A chance."), goalLine, line(40, "Play on.")]);
+
+    // The whole match is fetched, goal included; nothing is revealed.
+    expect(view.board()).toBe("0|0-0|11");
+    expect(getRevealedScore(rid("s1"))).toEqual({ homeScore: 0, awayScore: 0 });
+
+    await view.tick();
+    await view.tick();
+    expect(view.board()).toBe("2|0-0|11");
+    expect(getRevealedScore(rid("s1"))).toEqual({ homeScore: 0, awayScore: 0 });
+
+    await view.tick();
+    expect(view.payloads.at(-1)).toMatchObject({ revealedEvents: 3 });
+    expect(view.board()).toBe("3|1-0|11");
+    expect(getRevealedScore(rid("s1"))).toEqual({ homeScore: 1, awayScore: 0 });
+  });
+
+  it("shows the club a player short once the red card is revealed, not when it is fetched", async () => {
+    const view = await mountCutAtReveal([line(1, "Kick-off."), redCardLine, line(60, "Play on.")]);
+    expect(view.board()).toBe("0|0-0|11");
+
+    await view.tick();
+    expect(view.board()).toBe("1|0-0|11");
+
+    await view.tick();
+    expect(view.board()).toBe("2|0-0|10");
   });
 });

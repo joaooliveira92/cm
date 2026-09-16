@@ -6,9 +6,9 @@
  * store; the controlled club's substitution counts and pitch from one `resumeSimulation` read; and
  * the squad and pre-match tactic from `getTactics`.
  *
- * Only the substitution counts and the pitch are taken from match responses: they are cut at the
- * Match Events Match day has revealed, where the score and head-count in a response describe the
- * end of whichever chunk was read.
+ * The substitution counts and the pitch are taken from a match response, cut at the Match Events
+ * Match day has revealed. The score comes from the session store instead: it is the one Match day
+ * has shown, which a revealed Goal line updates.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Effect, Result } from "effect";

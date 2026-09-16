@@ -325,3 +325,31 @@ Reviewer **APPROVE**, with mediums the diff caused or made reachable, all repair
 
 Resolving by the adjacent Substitution line was accepted instead of changing the contract. Its
 goalkeeper edge case was added to ticket 25.
+
+## Ticket 22 — match responses carry state ahead of the reveal, 2026-09-16
+
+- Ticket closed: [22](../../.scratch/group-g-match-day/issues/22-match-responses-carry-state-ahead-of-the-reveal.md)
+
+### Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Score, on-pitch count, injuries and Condition reflect only revealed events | `revealed-state.test.ts` (score 0 at revealed 1 though the goal line is in the chunk; count 11 at 9 and 10 at 10; chunk injuries paired with chunk lines; count equals the engine's over seeds 1–400); `streaming-integration.test.tsx`; `conditions` removed | pass |
+| 2 | The Commentary screen shows nothing beyond the revealed position | `match-commentary-screen.test.tsx` | pass |
+| 3 | Seeded tests where state changes after the revealed position | seed 550, properties re-verified | pass |
+
+### Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Contracts 154. Desktop 62 failed / 1836 passed, the same failing cases as ticket 21's run. Lint and md-link counts unchanged. |
+| close-out (L1, L3) | `npx vitest run test/renderer/match test/main/match test/renderer/matchCommentary`; `pnpm typecheck` | 8 failed / 147 passed. The 8 were already failing (post-match-summary 7, screen-fulltime 1). 0 `error TS`. |
+| e2e | `pnpm test:e2e e2e/journeys.spec.ts e2e/app.spec.ts e2e/keyboard.spec.ts e2e/router.spec.ts` | 24 passed (1.1m), run after the close-out edits |
+| determinism / save compatibility | — | the engine and persistence are unchanged; `conditions` is dropped from an RPC response only |
+
+### Review
+
+Reviewer **APPROVE**, with one medium: the head-count follows the fold after `ChangeTactics`, so the
+"10 men" alert stays while the engine plays 11. The root cause is the engine's line-up reset, so this
+was added as evidence to decision request 01 rather than reverted. L1 (re-read the score at
+FullTimeWhistle) and L3 (a stale test comment) were fixed by the orchestrator at close-out.

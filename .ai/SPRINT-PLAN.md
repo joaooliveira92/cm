@@ -2,13 +2,17 @@
 
 ## Immediate next action
 
-**group-g-match-day** ticket 22 (state ahead of the reveal), 23 (remount replays from kickoff),
+**group-g-match-day** ticket 23 (remount replays from kickoff),
 24 (ungated halftime toggle), 25 (count edge cases), 26 (forced substitution brings back used
 players); 20 needs triage (a command rewrites seen play); decision requests 01 (live tactics resets
 the line-up) and 04 (who may come on) need a human;
 then navbar-keyboard-intent 04 (a
 decision first), then group-a-reconciliation 20 (the Quit dialog is hidden under router overlays),
 then desktop-suite-red 14 (a flaky incoming-bids unit test).
+
+group-g-match-day ticket 22 resolved 2026-09-16: score, head-count and the Commentary screen stop at
+the revealed position, and `conditions` has left the match response. The head-count now visibly
+disagrees with the engine after a live tactics change, which makes decision request 01 more urgent.
 
 group-g-match-day ticket 21 resolved 2026-09-16: the injury prompt and no-subs pause work again,
 triggered when the Injury line is revealed, decided on the cap state at that moment, and cleared by

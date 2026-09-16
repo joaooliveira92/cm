@@ -19,7 +19,6 @@ import {
   renderCommentary,
   type CommentaryNameResolver,
   type MatchEvent,
-  type MatchPlayerCountEntry,
 } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -66,33 +65,21 @@ const collectPlayerIds = (event: MatchEvent): ReadonlyArray<string> => {
   }
 };
 
-const scoreAsOf = (events: ReadonlyArray<MatchEvent>): { readonly homeScore: number; readonly awayScore: number } => {
+/** The score after the first `revealedEvents` Match Events (null: the whole match). A goal's
+ * `homeScore`/`awayScore` is the running score, so the last goal or boundary before the cut is it. */
+const scoreAsOf = (
+  events: ReadonlyArray<MatchEvent>,
+  revealedEvents: number | null,
+): { readonly homeScore: number; readonly awayScore: number } => {
   let homeScore = 0;
   let awayScore = 0;
-  for (const event of events) {
+  for (const event of revealedEvents === null ? events : events.slice(0, revealedEvents)) {
     if (event._tag === "Goal" || event._tag === "HalfTimeReached" || event._tag === "FullTimeWhistle") {
       homeScore = event.homeScore;
       awayScore = event.awayScore;
     }
   }
   return { homeScore, awayScore };
-};
-
-/** Reads the on-pitch head-counts for both clubs as of the given event (ticket 11): the latest
- * `MatchPlayerCountEntry` at or before the event's `(half, minute)` in simulation order. Falls back
- * to 11-on-11 if no snapshot precedes it (e.g. the `MatchStarted` first event). */
-const onPitchCountsFor = (
-  counts: ReadonlyArray<MatchPlayerCountEntry>,
-  event: MatchEvent,
-): { readonly homeCount: number; readonly awayCount: number } => {
-  if (event._tag === "MatchStarted") return { homeCount: 11, awayCount: 11 };
-  const minute = event.minute;
-  const half = (event as { readonly half?: 1 | 2 }).half ?? (minute <= HALFTIME_MINUTE ? 1 : 2);
-  let match: MatchPlayerCountEntry | undefined;
-  for (const entry of counts) {
-    if (entry.half === half && entry.minute <= minute) match = entry;
-  }
-  return match ? { homeCount: match.homeCount, awayCount: match.awayCount } : { homeCount: 11, awayCount: 11 };
 };
 
 type SubstitutionEvent = Extract<MatchEvent, { readonly _tag: "Substitution" }>;
@@ -160,16 +147,26 @@ export const substitutionApplied = (
   );
 };
 
-/** Shared tail of `resumeSimulation`/`submitMatchCommand`: given the match stream and the full
+/**
+ * Shared tail of `resumeSimulation`/`submitMatchCommand`: given the match stream and the full
  * (re)derived `MatchEvent` timeline, resolves names, renders Commentary Lines, slices off the chunk
- * after `cursor`, and attaches the ticket 14 substitution-cap/injury-prompt fields and each club's
- * pitch, both cut at `revealedEvents` (null: the whole match). Assumes a `SqlClient` in context. */
+ * after `cursor`, and attaches the match state. Assumes a `SqlClient` in context.
+ *
+ * Two kinds of field, cut differently (group-g-match-day ticket 22):
+ *
+ * - **State** — score, substitution counts, pitch and on-pitch head-count — is cut at
+ *   `revealedEvents` (null: the whole match), never at the chunk's end. The renderer shows it as soon
+ *   as a response lands, and a chunk is fetched up to `MAX_CHUNK_SIZE` lines ahead of the reveal.
+ *   The head-count is the pitch's size, so the two cannot disagree.
+ * - **Chunk payload** — `lines`, `injuries`, `injuredClubIds` — covers exactly the chunk. Like the
+ *   lines, the injuries are buffered and revealed client-side: the renderer pairs a chunk's Nth
+ *   `Injury` line with `injuries[N]` and acts on the injury only when that line is revealed. Cutting
+ *   them at `revealedEvents` would break that pairing and drop injuries whose line is still buffered.
+ */
 export const buildResumeSimulationView = (
   matchId: MatchId,
   stream: ReadonlyArray<StreamEvent>,
   events: ReadonlyArray<MatchEvent>,
-  conditions: ReadonlyMap<PlayerId, number>,
-  counts: ReadonlyArray<MatchPlayerCountEntry>,
   cursor: number,
   revealedEvents: number | null,
 ) =>
@@ -210,7 +207,7 @@ export const buildResumeSimulationView = (
 
     const newCursor = cursor + chunkLength;
     const isComplete = newCursor >= events.length;
-    const { homeScore, awayScore } = scoreAsOf(events.slice(0, newCursor));
+    const { homeScore, awayScore } = scoreAsOf(events, revealedEvents);
     const lines = allLines
       .slice(cursor, newCursor)
       .map((line) => new CommentaryLineView({ minute: line.minute, tag: line.tag, text: line.text }));
@@ -235,11 +232,11 @@ export const buildResumeSimulationView = (
         type: event.type,
       }));
 
-    const lastEvent = chunkEvents[chunkEvents.length - 1] ?? events[events.length - 1]!;
-    const { homeCount, awayCount } = onPitchCountsFor(counts, lastEvent);
     const substitutions = revealedSubstitutions(events, revealedEvents);
     const kickoff = matchStartedOf(stream);
     const lineupCommands = journaledLineupCommands(stream);
+    const homePitch = pitchAsOf(kickoff.homeSetup, events, lineupCommands, revealedEvents);
+    const awayPitch = pitchAsOf(kickoff.awaySetup, events, lineupCommands, revealedEvents);
 
     return new ResumeSimulationView({
       matchId,
@@ -250,12 +247,11 @@ export const buildResumeSimulationView = (
       lines,
       homeSubs: computeSubstitutionStatus(started.homeClubId, substitutions),
       awaySubs: computeSubstitutionStatus(started.awayClubId, substitutions),
-      homePitch: pitchAsOf(kickoff.homeSetup, events, lineupCommands, revealedEvents),
-      awayPitch: pitchAsOf(kickoff.awaySetup, events, lineupCommands, revealedEvents),
+      homePitch,
+      awayPitch,
       injuredClubIds,
       injuries,
-      homeOnPitchCount: homeCount,
-      awayOnPitchCount: awayCount,
-      conditions: Object.fromEntries(conditions),
+      homeOnPitchCount: homePitch.onPitch.length,
+      awayOnPitchCount: awayPitch.onPitch.length,
     });
   });

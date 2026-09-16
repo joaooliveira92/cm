@@ -77,16 +77,21 @@ export class InjuryView extends Schema.Class<InjuryView>("InjuryView")({
 
 /** `ResumeSimulation`'s response (ADR-0007 chunked resimulation, no RPC streaming): the next chunk
  * of already-rendered Commentary Lines after `cursor`, the new cursor, and whether the match has
- * reached `FullTimeWhistle`. `homeSubs`/`awaySubs` and `injuredClubIds` are ticket 14 additions —
- * the substitution counts cover the Match Events the request says are revealed, plus every
- * substitution the manager has journaled, so they never show a future forced one;
- * `injuredClubIds` lists the clubs (deduplicated) that had an `Injury` Match Event land in *this*
- * chunk, so the renderer can prompt an immediate substitution. `injuries` (ticket 08) carries the
- * full typed detail of each `Injury` in this chunk for severity-scaled indicators/prompts. */
+ * reached `FullTimeWhistle`.
+ *
+ * Chunks are fetched ahead of the reveal, so the response carries two kinds of field
+ * (group-g-match-day ticket 22). The match state — score, substitution counts, pitch and on-pitch
+ * head-counts — is as of the Match Events the request says are revealed, never the chunk's end, so a
+ * surface may show it as soon as it lands. The chunk payload — `lines`, `injuries`, `injuredClubIds`
+ * — covers exactly this chunk and is buffered with it: `injuries` holds one typed entry per `Injury`
+ * line of the chunk, in order (ticket 08), and the renderer acts on each only when its line is
+ * revealed. Substitution counts and pitch also include every lineup command the manager has
+ * journaled (ticket 18/19). */
 export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("ResumeSimulationView")({
   matchId: MatchId,
   cursor: Schema.Finite,
   isComplete: Schema.Boolean,
+  /** The score as of the revealed position. */
   homeScore: Schema.Finite,
   awayScore: Schema.Finite,
   lines: Schema.Array(CommentaryLineView),
@@ -95,14 +100,13 @@ export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("Re
   /** Each club's pitch as of the revealed position, cut the way `homeSubs`/`awaySubs` are. */
   homePitch: MatchPitchView,
   awayPitch: MatchPitchView,
+  /** The clubs (deduplicated) with an `Injury` in this chunk. */
   injuredClubIds: Schema.Array(Schema.String),
   injuries: Schema.Array(InjuryView),
-  /** On-pitch head-counts for both clubs as of this chunk (ticket 11) — a value below 11 means
-   * the team is playing with 10 (an empty slot / forced-off), surfacing the no-subs fallback. */
+  /** On-pitch head-counts as of the revealed position: the size of `homePitch`/`awayPitch`'s
+   * `onPitch` (ticket 11). Below 11, the team is playing a player short. */
   homeOnPitchCount: Schema.Finite,
   awayOnPitchCount: Schema.Finite,
-  /** Per-player Condition (%) at full time, keyed by playerId across both teams (ticket 02). */
-  conditions: Schema.Record(Schema.String, Schema.Finite),
 }) {}
 
 /** `SubmitMatchCommand`'s response: the same chunk `ResumeSimulation` returns, plus the command's

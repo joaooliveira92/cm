@@ -76,8 +76,6 @@ export const submitMatchCommand = (
         matchId,
         journaled,
         derived.events,
-        derived.conditions,
-        derived.counts,
         cursor,
         revealedEvents,
       );

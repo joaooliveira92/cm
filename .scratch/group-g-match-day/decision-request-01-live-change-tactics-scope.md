@@ -53,3 +53,13 @@ and their caps, and it removes the whole class of resurrected-player bugs rather
 
 - Blocked: any claim that live tactics respect dismissals; spec §17's dismissed-player acceptance.
 - Proceeding meanwhile: ticket 07 ships the screens with today's engine behaviour, and tickets 08–11.
+
+## Evidence added 2026-09-16 (tickets 19 and 22)
+
+The live head-count and both substitution pickers now come from a main-process fold (`pitch.ts`).
+It assumes a live `ChangeTactics` does not change who is on the pitch, which is this request's Option
+A. The engine still rebuilds all 11 slots. The disagreement is now visible to the player: after a red
+card, the "Playing with 10 men — rearrange the remaining players in the tactics panel" alert stays
+when the manager follows its advice, while the simulation is back to 11. Before ticket 22 the count
+followed the engine, so the alert cleared, because the dismissed player had been put back on.
+Answering this request settles both.

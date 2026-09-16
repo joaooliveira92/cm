@@ -288,8 +288,8 @@ it.effect("ForceOff brings a player off to 10 men without consuming a substituti
       playerId: onPitchPlayerId,
     });
 
-    // The bring-off consumes no substitution budget (the response's chunk predates minute 60, so
-    // its on-pitch count is still 11-on-11 — the drained final state below proves the 10-men drop).
+    // The bring-off consumes no substitution budget. The opponent is unaffected; the human side's
+    // count already drops on this response, since a journaled bring-off counts once journaled.
     strictEqual(humanSubs(response, summary).used, 0);
     strictEqual(opponentOnPitch(response, summary), 11);
 
@@ -312,8 +312,12 @@ it.effect("a ForceOff for a player not on the pitch is a silent no-op (count unc
       tactic,
     });
 
-    // A bench player isn't on the pitch — forcing them off changes nothing.
-    const benchPlayerId = tacticsView.squad[12]!.id;
+    // A bench player isn't on the pitch — forcing them off changes nothing. The head-count is the
+    // pitch's size, and the pitch fold keeps the kickoff line-up through a live ChangeTactics
+    // (decision request 01), so the player is on neither the kickoff nor the pinned XI.
+    const inXi = (id: string) =>
+      tactic.slots.some((slot) => slot.playerId === id) || tacticsView.tactic?.slots.some((slot) => slot.playerId === id) === true;
+    const benchPlayerId = tacticsView.squad.find((player) => !inXi(player.id))!.id;
     const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 60, false, {
       _tag: "ForceOff",
       clubId: humanClubOf(summary),

@@ -290,7 +290,6 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
             injuries: [],
             homeOnPitchCount: 11,
             awayOnPitchCount: 11,
-            conditions: {},
           },
         } as never;
       }

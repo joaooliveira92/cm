@@ -36,8 +36,6 @@ export const resumeSimulation = (
         matchId,
         stream,
         derived.events,
-        derived.conditions,
-        derived.counts,
         cursor,
         revealedEvents,
       );
