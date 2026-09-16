@@ -13,7 +13,7 @@ that Continue now costs a played Matchday and that advance loops in tests must g
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] The cause is observed in a page snapshot, not inferred
 - [ ] The four tests reach a startable match again, without loosening what they assert afterwards
