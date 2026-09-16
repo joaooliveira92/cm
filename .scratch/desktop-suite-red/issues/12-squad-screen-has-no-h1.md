@@ -10,6 +10,16 @@ screen owns its section `<h1>`, per the career chrome note), or the assertion is
 
 **Blocked by:** None
 
-**Status:** needs-triage
+**Status:** claimed
 
 - [ ] Decided whether Squad should render an `h1`, and the screen or the spec is changed to match
+
+## Comments
+
+2026-09-16, triage, by the orchestrator: **an accessibility defect, not a stale assertion.** The
+implemented [career chrome note](../../../.agents/notes/implemented/architecture/2026-08-31-career-chrome-and-date-continue-bar.md)
+says each screen keeps its `<h1>`. About 40 screens do, and Squad does in its load-error state
+(`SquadTable.tsx`). `4470e3e` removed it from the normal view on purpose, following
+`.scratch/squad-instructions.md`, which says "Do not use a large standalone heading". A visually
+hidden `<h1>Squad</h1>` satisfies both: screen readers get the section heading, and the layout gets
+no standalone title.
