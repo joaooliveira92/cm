@@ -126,3 +126,21 @@ export class TransfersScreenView extends Schema.Class<TransfersScreenView>("Tran
   freeAgents: Schema.Array(MarketPlayerView),
   marketPlayers: Schema.Array(MarketPlayerView),
 }) {}
+
+/** One player on the Contract Expiry screen — a manager's own-club player whose Contract is in
+ *  its last year (`years_remaining === 1`), before the season-end expiry sweep releases them
+ *  as a Free Agent. */
+export class ContractExpiryPlayerView extends Schema.Class<ContractExpiryPlayerView>("ContractExpiryPlayerView")({
+  playerId: PlayerId,
+  firstName: Schema.String,
+  lastName: Schema.String,
+  wage: Schema.Finite,
+  yearsRemaining: Schema.Finite,
+}) {}
+
+/** The Contract Expiry screen (Screen 141, without Bosman): the manager's own-club Players who
+ *  are in their last contracted year, with wage and years remaining. A pure read — no command
+ *  side on this screen. */
+export class ContractExpiryScreenView extends Schema.Class<ContractExpiryScreenView>("ContractExpiryScreenView")({
+  players: Schema.Array(ContractExpiryPlayerView),
+}) {}

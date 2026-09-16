@@ -303,3 +303,18 @@ const playerContractForSave = Atom.family((saveId: SaveId) =>
 
 export const playerContractAtom = (saveId: SaveId, playerId: PlayerId) =>
   playerContractForSave(saveId)(playerId);
+
+export const contractExpiryKey = (saveId: SaveId): readonly ["contractExpiry", SaveId] => [
+  "contractExpiry",
+  saveId,
+];
+
+/** Contract Expiry (Screen 141, without Bosman): the manager's own-club Players in their last
+ *  contracted year. A pure read, reactive on the save-wide key. */
+export const contractExpiryAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getContractExpiryScreen", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), contractExpiryKey(saveId)]),
+    ),
+  ),
+);

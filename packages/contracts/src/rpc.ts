@@ -89,6 +89,7 @@ import {
   TransferWindowClosedError,
   TransfersScreenView,
   WageBudgetExceededError,
+  ContractExpiryScreenView,
 } from "./schemas/index.js";
 import { ScoutingRpcs } from "./rpc-scouting.js";
 
@@ -341,6 +342,13 @@ commitCareer: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: TransfersScreenView,
     error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
+  },
+  /** Contract Expiry (Screen 141, without Bosman): the manager's own-club Players who are in their
+   *  last contracted year (`contracts.years_remaining === 0`). A pure read — no command side. */
+  getContractExpiryScreen: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: ContractExpiryScreenView,
+    error: Schema.Union([SaveNotFoundError]),
   },
   placeBid: {
     payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId, amount: Schema.Finite }),

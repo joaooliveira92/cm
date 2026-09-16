@@ -17,6 +17,7 @@ import { SquadScreen } from "../squad/SquadScreen.js";
 import { TacticsOverviewScreen } from "../tactics/TacticsOverviewScreen.js";
 import { TacticsScreen } from "../tactics/TacticsScreen.js";
 import { TransfersScreen } from "../transfers/TransfersScreen.js";
+import { ContractExpiryScreen } from "../contractExpiry/ContractExpiryScreen.js";
 import { MainMenuScreen } from "./mainMenu.js";
 import { LoadCareerScreen } from "./loadCareer.js";
 import { TeamScoutReportScreen } from "../scouting/TeamScoutReportScreen.js";
@@ -192,6 +193,7 @@ const defineCareerChild = <const P extends string>(
 // Full height so the lineup bar sits on the bottom edge of the window, not under a short list.
 const squadRoute = defineCareerChild("squad", "squad", SquadScreen, { fullHeight: true });
 const transfersRoute = defineCareerChild("transfers", "transfers", TransfersScreen);
+const contractExpiryRoute = defineCareerChild("contract-expiry", "contractExpiry", ContractExpiryScreen);
 const leagueRoute = defineCareerChild("league", "league", LeagueTableScreen);
 const fixturesRoute = defineCareerChild("fixtures", "fixtures", FixturesScreen);
 const matchRoute = defineCareerChild("match", "match", MatchDayScreen);
@@ -740,6 +742,7 @@ const routeTree = rootRoute.addChildren([
       squadRoute,
       tacticsRoute.addChildren([tacticsIndexRoute, tacticsEditorRoute]),
       transfersRoute,
+      contractExpiryRoute,
       leagueRoute,
       fixturesRoute,
       matchRoute,

@@ -19,6 +19,7 @@ export type CareerDestination =
    *  not a top-level career screen (no `g` binding, not in `CAREER_SCREEN_TYPES`). */
   | { readonly type: "tacticsEditor"; readonly saveId: SaveId }
   | { readonly type: "transfers"; readonly saveId: SaveId }
+  | { readonly type: "contractExpiry"; readonly saveId: SaveId }
   | { readonly type: "league"; readonly saveId: SaveId }
   | { readonly type: "fixtures"; readonly saveId: SaveId }
   | { readonly type: "match"; readonly saveId: SaveId }
@@ -81,6 +82,9 @@ export type CareerDestination =
   /** A player's Player Development screen, reached from a Player Development Centre row. Needs the
    *  player too, so it is excluded from save-scoped nav like `playerDetail`. */
   | { readonly type: "playerDevelopment"; readonly saveId: SaveId; readonly playerId: PlayerId }
+  /** A player's Contract screen (Screen 56) — reached from the Contract Expiry screen. Needs the
+   *  player too, so it is excluded from save-scoped nav like `playerDetail`. */
+  | { readonly type: "playerContract"; readonly saveId: SaveId; readonly playerId: PlayerId }
   /**
    * The live-match command screens (Screen 97) — reached from the live Match day section, never
    * from the navbar: a save alone is not enough, they need a match in play, so they are excluded
@@ -160,7 +164,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "playerDetail" | "playerDevelopment" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
+  "teamScoutReport" | "clubStaff" | "playerDetail" | "playerDevelopment" | "playerContract" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
 >;
 
 /**
@@ -209,6 +213,7 @@ export type ResolvedDestination =
       readonly params: { readonly saveId: SaveId };
     }
   | { readonly to: "/career/$saveId/transfers"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/contract-expiry"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/league"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/fixtures"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/match"; readonly params: { readonly saveId: SaveId } }
@@ -281,6 +286,10 @@ export type ResolvedDestination =
   | {
       readonly to: "/career/$saveId/player/$playerId/development";
       readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
+    }
+  | {
+      readonly to: "/career/$saveId/player/$playerId/contract";
+      readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
     };
 
 /** Pure mapping from a typed destination to its route; unit-tested (AC-14). */
@@ -302,6 +311,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "tactics":
     case "tacticsEditor":
     case "transfers":
+    case "contractExpiry":
     case "league":
     case "fixtures":
     case "match":
@@ -331,6 +341,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "clubStaff":
     case "playerDetail":
     case "playerDevelopment":
+    case "playerContract":
     case "matchMatchTactics":
     case "matchSubstitutions":
     case "matchStats":
@@ -358,6 +369,8 @@ const careerRoute = (
       };
     case "transfers":
       return { to: "/career/$saveId/transfers", params: { saveId: destination.saveId } };
+    case "contractExpiry":
+      return { to: "/career/$saveId/contract-expiry", params: { saveId: destination.saveId } };
     case "league":
       return { to: "/career/$saveId/league", params: { saveId: destination.saveId } };
     case "fixtures":
@@ -447,6 +460,11 @@ const careerRoute = (
     case "playerDevelopment":
       return {
         to: "/career/$saveId/player/$playerId/development",
+        params: { saveId: destination.saveId, playerId: destination.playerId },
+      };
+    case "playerContract":
+      return {
+        to: "/career/$saveId/player/$playerId/contract",
         params: { saveId: destination.saveId, playerId: destination.playerId },
       };
     case "matchMatchTactics":

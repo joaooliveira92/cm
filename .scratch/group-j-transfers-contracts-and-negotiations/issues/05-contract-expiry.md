@@ -8,8 +8,8 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] New read returns the manager's Players in their last contracted year, with an RPC roundtrip test and an empty case
-- [ ] Screen lists them with wage and years remaining and links to each Player's Contract screen
-- [ ] The "last contracted year" rule is the one `expireContractsForSeason` uses, proven by a test
+- [x] New read returns the manager's Players in their last contracted year, with an RPC roundtrip test and an empty case
+- [x] Screen lists them with wage and years remaining and links to each Player's Contract screen
+- [x] The "last contracted year" rule is the one `expireContractsForSeason` uses, proven by a test

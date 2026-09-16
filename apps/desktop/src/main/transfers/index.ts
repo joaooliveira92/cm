@@ -14,6 +14,9 @@
 export { aiPlaceBid, aiSignFreeAgent, decideAiSellerResponse, resolveAiCounterOffer } from "./ai.js";
 export { expireContractsForSeason, initializeSeasonEconomy, loadClubBudgetRow, loadWageBudgetUsed } from "./budgets.js";
 export {
+  getContractExpiryScreen,
+} from "./contractExpiry.js";
+export {
   getTransfersScreen,
   placeBid,
   renewContract,

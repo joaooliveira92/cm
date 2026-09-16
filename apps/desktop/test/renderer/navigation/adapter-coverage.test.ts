@@ -67,6 +67,7 @@ const ALL_DESTINATIONS: ReadonlyArray<NavigationDestination> = [
   careerDestination("scoutingAssignment", save("save-1")),
   careerDestination("scoutingKnowledge", save("save-1")),
   { type: "playerDevelopment", saveId: save("save-1"), playerId: PlayerId.make("player-3") },
+  { type: "playerContract", saveId: save("save-1"), playerId: PlayerId.make("player-3") },
   { type: "teamScoutReport", saveId: save("save-1"), clubId: club("club-7") },
   { type: "clubStaff", saveId: save("save-1"), clubId: club("club-7") },
   { type: "matchMatchTactics", saveId: save("save-1") },

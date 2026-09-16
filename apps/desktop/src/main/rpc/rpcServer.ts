@@ -32,6 +32,7 @@ import { getSquad } from "../club/squad.js";
 import { changeTactics, getTactics } from "../club/tactics.js";
 import { getTacticsOverview } from "../club/tacticsOverview.js";
 import {
+  getContractExpiryScreen,
   getTransfersScreen,
   placeBid,
   renewContract,
@@ -277,6 +278,11 @@ const handlers: Record<AppRpcMethod, Handler> = {
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getTransfersScreen.payload)(payload);
       return yield* getTransfersScreen(ctx.savesDir, saveId);
+    }),
+  getContractExpiryScreen: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getContractExpiryScreen.payload)(payload);
+      return yield* getContractExpiryScreen(ctx.savesDir, saveId);
     }),
   placeBid: (payload, ctx) =>
     Effect.gen(function* () {
