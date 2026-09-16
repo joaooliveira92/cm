@@ -38,8 +38,8 @@ export interface CommentaryState {
   readonly awayScore: number;
   /** The controlled club's substitution counts and head-count, whichever side it plays. */
   readonly clubSubs: SubstitutionStatusView;
-  /** False until a match response has reported `clubSubs`: before that it is a placeholder, and a
-   *  command's outcome cannot be read against it. */
+  /** False until a match response has reported `clubSubs`: before that it is a placeholder and must
+   *  not be shown as the club's counts. */
   readonly clubSubsKnown: boolean;
   readonly clubOnPitchCount: number;
   readonly chunkInjuries: ReadonlyArray<InjuryView>;

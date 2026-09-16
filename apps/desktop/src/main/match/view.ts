@@ -101,9 +101,12 @@ type SubstitutionEvent = Extract<MatchEvent, { readonly _tag: "Substitution" }>;
  *
  * Cut by position, as `getMatchStatistics` cuts, not by minute: minutes repeat across first-half
  * stoppage, half time and the second half. The manager's own substitutions (`forcedByInjury: false`)
- * count wherever they sit. Only a journaled command produces one, stamped at the revealed minute,
- * so none lies ahead of the reveal. It can still land past `revealedEvents`, because a command
- * adds an event before the reveal that the renderer's line count does not include.
+ * count once journaled, wherever they sit. The engine applies a command at the start of its minute,
+ * so a second command in the same minute, or one stamped minute 1 before anything is revealed,
+ * lands at or past `revealedEvents` and a position cut would drop it. This is not a guarantee that
+ * none lies ahead of the reveal: a halftime instruction counts from when it was given, and a Match
+ * day remount replays the feed from kickoff while earlier commands still count (group-g-match-day
+ * tickets 24 and 23).
  */
 const revealedSubstitutions = (
   events: ReadonlyArray<MatchEvent>,

@@ -2,11 +2,17 @@
 
 ## Immediate next action
 
-**group-g-match-day** ticket 18 (the
-live substitution count reads the whole re-simulated match; it unblocks desktop-suite-red 11) and 19;
+**group-g-match-day** ticket 19 (the substitution picker lists the Tactic, not the pitch), then 21
+(the injury prompt never fires), 22 (state ahead of the reveal), 23 (remount replays from kickoff),
+24 (ungated halftime toggle), 25 (count edge cases); 20 needs triage (a command rewrites seen play);
 then navbar-keyboard-intent 04 (a
 decision first), then group-a-reconciliation 20 (the Quit dialog is hidden under router overlays),
 then desktop-suite-red 14 (a flaky incoming-bids unit test).
+
+group-g-match-day ticket 18 resolved 2026-09-16 (code in `d8170df`, committed outside the pipeline
+and reviewed afterwards): live substitution counts stop at the revealed position, and "applied" comes
+from the substitution's own event. desktop-suite-red 11 closed with it (live-match e2e 30/30). The
+review found six more live-match defects, filed as group-g 20–25.
 
 two-row-nav ticket 08 resolved 2026-09-16 (`d0e5f75`): secondary tablists are named for their match
 or entity context, not the primary section. Its gate run exposed desktop-suite-red 14.

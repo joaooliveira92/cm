@@ -60,8 +60,8 @@ export class InjuryView extends Schema.Class<InjuryView>("InjuryView")({
 /** `ResumeSimulation`'s response (ADR-0007 chunked resimulation, no RPC streaming): the next chunk
  * of already-rendered Commentary Lines after `cursor`, the new cursor, and whether the match has
  * reached `FullTimeWhistle`. `homeSubs`/`awaySubs` and `injuredClubIds` are ticket 14 additions —
- * the substitution counts cover the Match Events the request says are revealed (plus the manager's
- * own substitutions, which are never ahead of the reveal), so they never show a future forced one;
+ * the substitution counts cover the Match Events the request says are revealed, plus every
+ * substitution the manager has journaled, so they never show a future forced one;
  * `injuredClubIds` lists the clubs (deduplicated) that had an `Injury` Match Event land in *this*
  * chunk, so the renderer can prompt an immediate substitution. `injuries` (ticket 08) carries the
  * full typed detail of each `Injury` in this chunk for severity-scaled indicators/prompts. */

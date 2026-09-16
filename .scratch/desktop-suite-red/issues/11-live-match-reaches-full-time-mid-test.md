@@ -17,10 +17,10 @@ current, those failures hide this one.
 
 **Blocked by:** [group-g-match-day 18](../../group-g-match-day/issues/18-substitution-count-reads-the-whole-match.md)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] The decision on how a test holds a match live is recorded
-- [ ] Both journeys live-match tests pass reliably under that decision, with no added retry loop
+- [x] Both journeys live-match tests pass reliably under that decision, with no added retry loop
 
 ## Comments
 
@@ -74,3 +74,7 @@ is not met. The remaining failures come from product defects, filed as
 [19](../../group-g-match-day/issues/19-substitution-picker-lists-the-tactic-not-the-pitch.md)
 (picker built from the Tactic). The claim is released and the ticket is blocked on 18. Once 18 lands,
 re-run `--repeat-each=10` and close this.
+
+2026-09-16, closed: group-g-match-day 18 landed (`d8170df`).
+`pnpm test:e2e e2e/journeys.spec.ts:163 e2e/journeys.spec.ts:96 e2e/app.spec.ts:90 --repeat-each=10`
+gave 30 passed (1.8m), against 29/30 before it.

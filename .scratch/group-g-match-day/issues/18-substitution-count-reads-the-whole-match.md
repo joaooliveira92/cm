@@ -31,8 +31,36 @@ the command's own `Substitution` event, not from a count difference.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Substitutions used and windows used count only events at or before the revealed position
-- [ ] An accepted manager substitution reads as applied even when re-simulation removes a later forced substitution
-- [ ] A test pins both with a seed where a forced injury substitution happens after the manager's command
+- [x] Substitutions used and windows used count only events at or before the revealed position
+- [x] An accepted manager substitution reads as applied even when re-simulation removes a later forced substitution
+- [x] A test pins both with a seed where a forced injury substitution happens after the manager's command
+
+## Answer
+
+Resolved 2026-09-16. Code landed in `d8170df`. The review and close-out follow in the next commit.
+
+- **Revealed position.** `resumeSimulation` and `submitMatchCommand` payloads carry
+  `revealedEvents: NullOr(Finite)`, the number of revealed Commentary Lines (null means the whole
+  match), reusing ticket 09's mechanism.
+- **Counts.** `buildResumeSimulationView` counts forced substitutions only below that position.
+  Manager substitutions count once journaled: the engine applies a command at the start of its
+  minute, so a position cut would drop a second command in the same minute. The exemption can run
+  ahead of the reveal on two paths filed as [23](23-match-day-remount-replays-from-kickoff.md) and
+  [24](24-match-day-panel-halftime-toggle-is-ungated.md).
+- **Applied.** `submitMatchCommand` returns `SubmitMatchCommandView` with
+  `substitutionApplied: NullOr(Boolean)`. It is read from the re-derived timeline's own non-forced
+  Substitution event for that pair and minute, not from a count difference.
+  `resolveCommandStatus` uses it.
+- **Tests.** `test/main/match/revealed-substitutions.test.ts` uses
+  `FORCED_SUB_AFTER_COMMAND_SEED = 550` on world 20260906. The human club's only substitution is
+  forced at minute 84, and a minute-3 manager substitution re-simulates it away. The test re-checks
+  that property, so seed drift fails loudly. `packages/contracts/test/match-command-outcome.test.ts`
+  covers the round trips.
+
+Review: APPROVE. The doc comments that claimed manager substitutions are never ahead of the reveal
+are corrected. Follow-ups filed: [20](20-a-command-rewrites-play-already-seen.md),
+[21](21-injury-prompt-and-decision-pause-never-fire.md),
+[22](22-match-responses-carry-state-ahead-of-the-reveal.md), 23, 24,
+[25](25-substitution-count-and-outcome-accuracy.md).

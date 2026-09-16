@@ -3,7 +3,7 @@ import type { ClubId, MatchSummary, RpcSuccess, SubstitutionStatusView } from "@
 /** The club the manager controls in this match, whichever side it plays. */
 export const controlledClubId = (match: MatchSummary): ClubId => (match.isHome ? match.homeClubId : match.awayClubId);
 
-/** The controlled club's whole-match substitution counts from a match response. */
+/** The controlled club's substitution counts from a match response, as of the revealed position the request sent. */
 export const controlledSubs = (
   match: MatchSummary,
   view: RpcSuccess<"resumeSimulation"> | RpcSuccess<"submitMatchCommand">,

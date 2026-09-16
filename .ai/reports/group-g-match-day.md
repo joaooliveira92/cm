@@ -213,3 +213,39 @@ fixture lookup, heading levels. The ambiguous stoppage-minute display is filed a
 ## Commit
 
 `f52c2c6` feat(match): mount match tab bar and wire flat match-* routes (ticket 13)
+
+## Ticket 18 — live substitution count reads the whole re-simulated match, 2026-09-16
+
+- Ticket closed: [18](../../.scratch/group-g-match-day/issues/18-substitution-count-reads-the-whole-match.md).
+  The code is in `d8170df`, committed outside this orchestrator's pipeline as "chore: commit pending
+  match engine work…". It was reviewed afterwards, and it is left as is rather than rewritten.
+- Also closed: [desktop-suite-red 11](../../.scratch/desktop-suite-red/issues/11-live-match-reaches-full-time-mid-test.md), which was blocked on this ticket.
+- Follow-ups filed: group-g-match-day 20–25.
+
+### Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Counts stop at the revealed position | `revealed-substitutions.test.ts` (a): `used 0` at minute 3 while the whole match counts 1 | pass. Manager substitutions are exempt from the cut, which can run ahead of the reveal (tickets 23, 24). |
+| 2 | An accepted substitution reads as applied though re-simulation removes a later forced one | `revealed-substitutions.test.ts` (b); `live-command-screens.test.tsx`, `live-panel-controlled-club.test.tsx` | pass |
+| 3 | Seeded test | seed 550, property re-verified in the test | pass |
+| — | RPC contract | `packages/contracts/test/match-command-outcome.test.ts` | 3/3 (reviewer run) |
+
+### Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all`, run on the working tree that became `d8170df` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Contracts 152/152, game-engine 50/50, shared 461/461. Desktop 68 failed / 1803 passed: the 68 failing cases from the two-row-nav 08 baseline, minus the flaky `incoming-bids` case (desktop-suite-red 14), which passed this time. Lint and md-link counts unchanged. |
+| close-out edits | `pnpm -r typecheck`; `oxlint .` | 0 `error TS`. Lint shows only the pre-existing errors (`MatchDayScreen.tsx` `state`, `PostMatchSummary.tsx` `awayWonOnPenalties`, both in the gate log). The close-out changes only doc comments. |
+| e2e | `pnpm test:e2e e2e/journeys.spec.ts:163 e2e/journeys.spec.ts:96 e2e/app.spec.ts:90 --repeat-each=10` | 30 passed (1.8m). Before this fix: 29/30. |
+| determinism | — | the engine, seeding and simulation are unchanged (confirmed by the reviewer) |
+| save compatibility | — | no persistence change; the journal payloads are unchanged |
+
+### Review
+
+Reviewer **APPROVE**, 39/39 across six focused files. Medium M1 (the exemption's stated invariant was
+false) is fixed by correcting the doc comments in `view.ts` and in the contract, and by filing tickets
+23 and 24. Low findings: L1 (false "applied" on a duplicate pair) is in ticket 25; L3 (stale comments
+in `controlledClub.ts` and `CommentaryProvider.tsx`) is fixed; L4 (non-conventional commit message)
+is recorded here. Larger defects that predate this ticket are filed: 20 (a command rewrites seen play,
+needs triage), 21 (injury prompt dead since `eb3786e`), 22 (state ahead of the reveal).
