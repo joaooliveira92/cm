@@ -1,6 +1,7 @@
 # 05: Club-scoped route and shell entry for the team scout report
 
 Type: task
+Status: resolved
 
 **What to build:** Navigation to the Team Scout Report as a club-scoped destination, reusing the established reusable club segment. A closed destination union member `teamScoutReport` carries `saveId` and `clubId`, resolved to the club route segment, registered in the navigation adapter, the career shell's route index, and the focus coordinator. The screen is reached from the target club's context (a league table row, which already names a club and is the established entry point for club surfaces); Back is the shell's existing history navigation. The report is a drill-down sub-surface, so it gets no `g` binding and appears in no screen registry that would give it a top-level binding; everything a route needs is the fixed screen id, never the club id, so focus restoration works unchanged.
 

@@ -1,6 +1,7 @@
 # 01 — Screen inventory: which screens are already satisfied
 
 Type: task
+Status: resolved
 
 ## Question
 

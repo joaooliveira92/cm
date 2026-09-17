@@ -1,6 +1,7 @@
 # 06: Team Scout Report screen — core view
 
 Type: task
+Status: resolved
 
 **What to build:** The Team Scout Report screen (screen 49), the first pass showing everything a report contains. The user lands on it aimed at a target club and sees: a header naming the scout, the report's updated date, and its knowledge confidence; the predicted formation and the target's recent form; the strengths and weaknesses findings; the key players (the scouted members, each opening a visible player profile); and the set-piece findings. A tab shell is present — Squad, Tactical View, Previous Reports, Assign Scout — with the non-first-pass tabs present but disabled and labelled as not yet available. An action opens the upcoming fixture against the target club.
 

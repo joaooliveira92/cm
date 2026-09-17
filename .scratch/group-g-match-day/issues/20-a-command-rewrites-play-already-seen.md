@@ -13,12 +13,13 @@
   chunk, and the scoreboard falls back until the next poll.
 
 This needs a decision before a fix, because it changes when a command takes effect. One option is to
-stamp at M+1, after the last revealed event, with ticket 16's stoppage rules. Raise a decision request
-if the choice has player-visible consequences beyond "the change applies from the next minute".
+stamp at M+1, after the last revealed event, with ticket 16's stoppage rules. 
+
+Raised as [decision request 08](../decision-request-08-live-command-timing-relative-to-revealed-play.md).
 
 **Blocked by:** None
 
-**Status:** needs-triage
+**Status:** needs-info
 
 - [ ] The decision on when a live command takes effect relative to revealed play is recorded
 - [ ] After an accepted command, no revealed line is contradicted or repeated, and the scoreboard does not regress

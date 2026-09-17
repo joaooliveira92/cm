@@ -1,6 +1,7 @@
 # 04 — Remaining screens disposition
 
 Type: grilling
+Status: resolved
 
 ## Question
 

@@ -1,6 +1,7 @@
 # 07: Assign or renew a scouting assignment from the report
 
 Type: task
+Status: resolved
 
 **Follow-on (parked for a later session):** beyond the first tracer-bullet pass (tickets 01-06).
 

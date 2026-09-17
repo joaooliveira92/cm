@@ -1,6 +1,7 @@
 # 02 — Staff screens scope
 
 Type: grilling
+Status: resolved
 
 ## Question
 

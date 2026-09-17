@@ -1,6 +1,7 @@
 # 03: Team Scout Report derivation logic
 
 Type: task
+Status: resolved
 
 **What to build:** The pure, DB-free functions that turn a target club's scouting knowledge into a Team Scout Report's content, so the meaning of the report lives somewhere unit-testable rather than in the query that builds it. Given the target squad's members with their per-player scouting progress, the club's recent form, and the club's tactics, it computes: `knowledgeConfidence` and `freshness` from how scouted the squad is and how old the observations are; `keyPlayers` from the scouted members' attribute confidence; and `predictedFormation`, `strengths`, `weaknesses`, and `setPieceFindings` from the tactics and form through the established Attribute Range knowledge rules.
 

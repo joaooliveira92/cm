@@ -1,6 +1,7 @@
 # 04: Team Scout Report read and RPC
 
 Type: task
+Status: resolved
 
 **What to build:** The main-process read that serves a Team Scout Report for a target club, and its RPC surface. The query compacts only the *scouted* members of the target club — their assignments, progress, and attribute knowledge — together with the club's recent form and tactics, and the save's calendar, into the report, then runs it through the derivation. It respects viewer permissions: the active manager sees the human club's knowledge of a non-controlled target, and public club data only; nothing private to the target club is exposed, and a target with no scouted knowledge returns the not-scouted failure rather than an inferred report.
 

@@ -1,6 +1,7 @@
 # 02: Team Scout Report wire shape
 
 Type: task
+Status: resolved
 
 **What to build:** The validated, serializable, per-revision wire shape for a Team Scout Report, plus its failure channel. A renderer caller can decode a report across the process boundary and observe a closed set of failures — the report itself is immutable per revision and validated at the boundary, never trusted from the renderer. This ticket defines the `Effect<TeamScoutReport, E>` edge every later ticket inherits: which failures a caller can observe and what the success payload carries. No services are in `R` yet; the shape is pure data.
 

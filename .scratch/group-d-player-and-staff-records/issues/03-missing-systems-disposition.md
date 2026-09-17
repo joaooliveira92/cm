@@ -1,6 +1,7 @@
 # 03 — Missing systems disposition
 
 Type: grilling
+Status: resolved
 
 ## Question
 

@@ -1,7 +1,7 @@
 # 03: Let the e2e suite pin a match seed
 
 Type: task
-Status: claimed
+Status: resolved
 
 **What to build:** two small bridges so Playwright can drive a match with a known seed.
 

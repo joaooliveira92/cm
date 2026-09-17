@@ -1,6 +1,7 @@
 # 01: Enable team scout reports in the domain vocabulary
 
 Type: task
+Status: resolved
 
 **What to build:** The domain decision that opponent analysis is cut from v1 is superseded, so the Team Scout Report (screen 49) is in scope. CONTEXT.md's Scouting section is revised: a Scout may be assigned to watch a Club as well as a Player, the `_Avoid_: Scouting Report` term is restored as a real vocabulary entry, and the clause "Opponent analysis is cut from v1: no opponent-scouting or pre-match report system exists" is removed. The supersession is recorded as an Agent Note, written `proposed` and promoted to `implemented/` in the same commit. No runtime code changes.
 
