@@ -14,7 +14,7 @@ Found in review of [ticket 25](25-substitution-count-and-outcome-accuracy.md).
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A goalkeeper stand-in reads as a move into goal, not a substitution
 - [ ] The incident list and the substitutions statistic agree, with a test
