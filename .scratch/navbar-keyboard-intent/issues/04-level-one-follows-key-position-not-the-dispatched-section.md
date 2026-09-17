@@ -1,7 +1,7 @@
 # 04: The item level follows the key's position, not the section the key dispatched
 
 Type: bug
-Status: ready-for-agent
+Status: claimed
 
 ## What was measured
 
