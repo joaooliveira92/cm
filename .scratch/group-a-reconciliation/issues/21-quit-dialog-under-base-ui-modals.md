@@ -24,8 +24,8 @@ request before implementing.
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The decision is recorded: Quit either outranks an open Base UI modal or defers to it
-- [ ] With `HeaderActionsMenu`'s confirm dialog open, Cmd+Q behaves as that decision says
-- [ ] A test covers it on the `HeaderActionsMenu` path
+- [x] The decision is recorded: Quit either outranks an open Base UI modal or defers to it
+- [x] With `HeaderActionsMenu`'s confirm dialog open, Cmd+Q behaves as that decision says
+- [x] A test covers it on the `HeaderActionsMenu` path

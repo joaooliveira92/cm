@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "../components/ui/button.js";
 import { useDialogKeyboard } from "../transfers/dialogKeyboard.js";
 import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM_TOP, MODAL_TITLE_BAND } from "../theme.js";
@@ -31,7 +32,7 @@ export const QuitGuard = () => {
 
   if (!open) return null;
 
-  return (
+  const dialog = (
     <div
       className={MODAL_SCRIM_TOP}
       onMouseDown={(event) => {
@@ -63,4 +64,6 @@ export const QuitGuard = () => {
       </div>
     </div>
   );
+
+  return createPortal(dialog, document.body);
 };

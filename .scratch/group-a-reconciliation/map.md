@@ -197,6 +197,14 @@ repair, because `pnpm check:all` is red until it lands and every later session i
   hand-rolled ones tie at `z-40` and are broken by DOM order, vendored Base UI surfaces portal out
   at `z-50` — so reordering wins only the first tier and would have left the bug half-fixed. The
   z-index is independent of mount position, which keeps `QuitGuard` free to sit outside the router.
-  Adopting the vendored portal `Dialog` was rejected: it renders at `z-50` too, so it would still
-  tie, and it would mean replacing `useDialogKeyboard`'s focus trap. Raising the z-index does not
-  beat a Base UI *modal*, which inerts everything outside its portal — split out as ticket 21.
+Adopting the vendored portal `Dialog` was rejected: it renders at `z-50` too, so it would still
+   tie, and it would mean replacing `useDialogKeyboard`'s focus trap. Raising the z-index does not
+   beat a Base UI *modal*, which inerts everything outside its portal — split out as ticket 21.
+
+- [21 — The Quit dialog takes no clicks while a Base UI modal is open](issues/21-quit-dialog-under-base-ui-modals.md):
+  The Quit dialog outranks any open Base UI modal. `QuitGuard` portals to `document.body` via
+  `createPortal`, placing itself outside the `#root` subtree that Base UI marks as inert. Combined
+  with `MODAL_SCRIM_TOP` (`z-[60]`) from ticket 20, it now paints on top of and receives clicks
+  through every overlay tier. A unit test proves the portal lands in `document.body`, not in the
+  mount container. Decision recorded in
+  `.agents/notes/proposed/architecture/2026-09-17-quitguard-outranks-base-ui-modals.md`.

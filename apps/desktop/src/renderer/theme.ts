@@ -103,9 +103,11 @@ export const MODAL_SCRIM =
  * independent of where `QuitGuard` is mounted. Tailwind's default z scale
  * stops at 50, hence the arbitrary value — grep for `z-[60]`, not `z-60`.
  *
- * This does not beat a Base UI *modal* surface, which marks everything outside
- * its portal `inert` and `aria-hidden`; against one of those the quit dialog
- * paints on top but takes no clicks. See ticket 21.
+ * This alone does not beat a Base UI *modal* surface, which marks everything
+ * outside its portal `inert` and `aria-hidden`; against one of those the quit
+ * dialog would paint on top but take no clicks. `QuitGuard` therefore also
+ * portals to `document.body` via `createPortal`, placing itself outside the
+ * `#root` subtree that Base UI marks as inert (ticket 21).
  *
  * Nothing else takes this constant. A second user is a sign two overlays are
  * competing for "topmost", which is a design question, not a styling one.
