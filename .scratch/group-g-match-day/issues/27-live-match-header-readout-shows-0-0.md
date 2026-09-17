@@ -9,7 +9,7 @@ Found in review of [ticket 23](23-match-day-remount-replays-from-kickoff.md).
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] The header readout shows the revealed score and minute during a live match and after returning to Match day
 - [ ] A test pins it
