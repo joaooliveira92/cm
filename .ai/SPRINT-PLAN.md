@@ -2,13 +2,16 @@
 
 ## Immediate next action
 
-**navbar-keyboard-intent** ticket 04 (a decision first), then group-a-reconciliation 20 (the Quit
+**group-a-reconciliation** ticket 20 (the Quit
 dialog is hidden under router overlays), then desktop-suite-red 14 (a flaky incoming-bids unit test).
 group-g-match-day has no ready build ticket left; 26 (forced substitution
 brings back used players, patch kept) and 29 (windows across halves) are blocked on decision request
 07; 20 needs triage (a command rewrites seen play); decision requests 01 (live tactics resets
 the line-up), 04 (who may come on), 05 (revealed position across a restart), 06 (red-carded keeper)
 and 07 (engine rule changes vs saved matches) need a human.
+
+navbar-keyboard-intent ticket 04 resolved 2026-09-17: a section's `g <n>` key may only sit on that
+section's own action; a hand-edited override moving it elsewhere is rejected and dropped on load.
 
 group-g-match-day ticket 30 resolved 2026-09-17: the Match Report lists goalkeeper stand-ins as moves
 into goal, and its incident list agrees with its substitutions statistic.
@@ -186,7 +189,7 @@ parallel sessions and were left alone.
 12. **group-j-transfers-contracts-and-negotiations**: 01-03 resolved, spec published (2026-09-15). 04
     needs-info on decision request 01; 05-07 resolved (07 Screen 146 Transfer History, 2026-09-15);
     08 resolved (navbar entries for 141/145, 2026-09-16). Decision requests 01 and 02 open.
-13. **navbar-keyboard-intent**: 01-03 resolved (02 World `g 8`; 03 e2e on position keys, override-aware
+13. **navbar-keyboard-intent**: 01-04 resolved (02 World `g 8`; 03 e2e on position keys, override-aware
     badges, 2026-09-16); 04 ready (decision: item level vs hand-edited section overrides).
 
 Shipped and closed:

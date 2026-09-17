@@ -96,7 +96,9 @@ export interface OverrideRejection {
  *   3. the *new* binding may not itself be a locked infra key (nothing else may
  *      claim the architectural keys) and must be a shape the framework can
  *      express (this also keeps the bare-`g` prefix initiator reserved);
- *   4. the new binding must not collide with the *effective* binding of a
+ *   4. a section's `g <position>` key may only be bound to that section's own action (see
+ *      `misplacedSectionKey`);
+ *   5. the new binding must not collide with the *effective* binding of a
  *      different Action live in the same scope tier — dispatch priority
  *      disambiguates across tiers, so only same-tier collisions are rejections,
  *      and the conflicting Action is named.
@@ -184,6 +186,16 @@ export const validateOverride = (
     };
   }
 
+  const owner = misplacedSectionKey(actions, target, binding);
+  if (owner !== undefined) {
+    return {
+      code: "shape",
+      actionId,
+      binding,
+      message: `"${binding}" is the key for "${owner.label}": a section's number always opens that section.`,
+    };
+  }
+
   for (const other of withEffectiveBindings(actions, overrides)) {
     if (other.id === actionId) continue;
     if (other.scope !== target.scope) continue;
@@ -199,6 +211,45 @@ export const validateOverride = (
   }
 
   return null;
+};
+
+/**
+ * The section action that owns `binding`, when `binding` is a section's `g <position>` key and
+ * `target` is not that section's action; otherwise `undefined`.
+ *
+ * "Section n is `g n`" is a fixed rule (navbar-keyboard-intent ticket 04): the navbar badge, level 0
+ * of the prefix and the item level all find a section by its position, so the key may leave its
+ * section's action but never move onto another action. The section keys are read from the
+ * actions' `metadata.sectionKey`, which `allActions.ts` derives from `NAV_SECTIONS`.
+ */
+const misplacedSectionKey = (
+  actions: ReadonlyArray<Action>,
+  target: Action,
+  binding: string,
+): Action | undefined => {
+  if (!binding.startsWith("g ")) return undefined;
+  const key = binding.slice(2);
+  if (target.metadata?.sectionKey === key) return undefined;
+  return actions.find((action) => action.metadata?.sectionKey === key);
+};
+
+/**
+ * The loaded override map without entries that put a section's `g <position>` key on another
+ * action. The rebinding surface cannot produce one, but a hand-edited `keybindings.json` can, and
+ * main cannot reject it: main never sees the section order (`NAV_SECTIONS` is renderer config).
+ * The keyboard state applies this to every map it adopts, so the dropped entry falls back to the
+ * action's coded default everywhere. Returns `overrides` itself when nothing is dropped.
+ */
+export const withoutMisplacedSectionKeys = (
+  actions: ReadonlyArray<Action>,
+  overrides: KeyBindingOverrides,
+): KeyBindingOverrides => {
+  const byId = new Map(actions.map((action) => [action.id, action]));
+  const kept = Object.entries(overrides).filter(([id, binding]) => {
+    const target = byId.get(id);
+    return target === undefined || misplacedSectionKey(actions, target, binding) === undefined;
+  });
+  return kept.length === Object.keys(overrides).length ? overrides : Object.fromEntries(kept);
 };
 
 /** One entry in the nonmodal prefix indicator ("Go to: Squad [S] · …"). */

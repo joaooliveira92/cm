@@ -22,6 +22,12 @@ import { Effect } from "effect";
  * locked-key value, both free of the registry) as defense-in-depth so a misbehaving client can
  * never persist a garbage binding; the tagged errors they raise are the same contract errors the
  * renderer's own validation produces.
+ *
+ * One renderer rule has no guard here: a section's `g <position>` key may only be bound to that
+ * section's action (navbar-keyboard-intent ticket 04). Checking it needs the section order, which
+ * is `NAV_SECTIONS` in renderer config and not visible to main. The renderer enforces it twice:
+ * `validateOverride` on every rebind, and `withoutMisplacedSectionKeys` on every map it adopts, so
+ * a hand-edited file with such an entry is still read here but never reaches the keyboard.
  */
 
 export const KEYBINDINGS_FILE = "keybindings.json";

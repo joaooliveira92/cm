@@ -114,3 +114,9 @@ cannot adapt a fixed map.
   producer emits it (the renderer short-circuits collisions before the wire; main cannot know
   registry defaults). It stays as the forward-compatible error surface for a future unbounded write
   path.
+**Update 2026-09-17 (navbar-keyboard-intent 04).** A `g <n>` binding where `n` is a section's
+position key is valid only on that section's own `go-to-<section>` action. `validateOverride` rejects
+it on any other action, and `withoutMisplacedSectionKeys` drops such an entry from a loaded or adopted
+map, because a hand-edited `keybindings.json` never passes validation. That keeps "section n is `g n`"
+true for the navbar badge, level 0 and the item level. A section action may still be rebound away
+from its key. Main has no guard for this rule because the section order lives in renderer config.

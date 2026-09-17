@@ -9,6 +9,7 @@ import {
   prefixIndicatorEntriesOf,
   validateOverride,
   withEffectiveBindings,
+  withoutMisplacedSectionKeys,
 } from "../../../src/renderer/actions/overrides.js";
 import { ALL_ACTIONS, G_PREFIX_COMPLETIONS } from "../../../src/renderer/actions/allActions.js";
 import { LOCKED_INFRA_BINDINGS } from "../../../src/renderer/actions/registry.js";
@@ -181,6 +182,46 @@ describe("AC-35 — override validation: unsupported shapes are rejected", () =>
     // app-global-only), and a `g <key>` two-step only resolves career navigation.
     expect(validateOverride(careerAndScreen(), {}, "focus-bid", "Primary+V")?.code).toBe("shape");
     expect(validateOverride(careerAndScreen(), {}, "focus-bid", "g b")?.code).toBe("shape");
+  });
+});
+
+/**
+ * navbar-keyboard-intent ticket 04: "section n is `g n`" is a fixed rule. The navbar badge, level 0
+ * of the prefix and the item level all key a section by its position, so a `g <section digit>`
+ * binding on any action other than that position's section action would split them.
+ */
+describe("ticket 04 — a section's `g <position>` key belongs to that section's action only", () => {
+  const tacticsKey = (): string => {
+    const tactics = ALL_ACTIONS.find((a) => a.id === "go-to-tactics");
+    return tactics!.metadata!.sectionKey as string;
+  };
+
+  it("rejects another section's action taking a freed section key", () => {
+    // Tactics is rebound away first, so this is not the ordinary collision rejection.
+    const rejection = validateOverride(ALL_ACTIONS, { "go-to-tactics": "n" }, "go-to-squad", `g ${tacticsKey()}`);
+    expect(rejection?.code).toBe("shape");
+    expect(rejection?.message).toContain("Tactics");
+  });
+
+  it("rejects a non-section action bound to a freed section key", () => {
+    const training = ALL_ACTIONS.find((a) => a.id === "go-to-training")!;
+    const trainingKey = training.metadata!.sectionKey as string;
+    const rejection = validateOverride(ALL_ACTIONS, { "go-to-training": "n" }, "go-back", `g ${trainingKey}`);
+    expect(rejection?.code).toBe("shape");
+  });
+
+  it("accepts rebinding a section action away from its key, and back to its own key", () => {
+    expect(validateOverride(ALL_ACTIONS, {}, "go-to-tactics", "n")).toBeNull();
+    expect(validateOverride(ALL_ACTIONS, {}, "go-to-tactics", `g ${tacticsKey()}`)).toBeNull();
+    expect(validateOverride(ALL_ACTIONS, { "go-to-tactics": "n" }, "go-to-tactics", `g ${tacticsKey()}`)).toBeNull();
+  });
+
+  it("a loaded map drops only the entries that put a section key on the wrong action", () => {
+    const loaded = { "go-to-tactics": "n", "go-to-squad": `g ${tacticsKey()}`, "focus-bid": "v", "go-back": "g 3" };
+    expect(withoutMisplacedSectionKeys(ALL_ACTIONS, loaded)).toEqual({ "go-to-tactics": "n", "focus-bid": "v" });
+    // A clean map is returned as-is, so adopting it does not churn identity.
+    const clean = { "go-to-tactics": "n" };
+    expect(withoutMisplacedSectionKeys(ALL_ACTIONS, clean)).toBe(clean);
   });
 });
 

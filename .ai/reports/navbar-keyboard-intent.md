@@ -115,3 +115,25 @@ Reviewer **APPROVE**. Medium: criterion 1 needed the qualification above. Lows: 
 can move a freed `g <n>` to another section's action (ticket 04, and the Answer's wording narrowed);
 a small timing window in `pressSectionKey` if the machine stalls past the 800ms prefix timeout
 (accepted); the note hard-coded `g 1` to `g 8` (fixed).
+
+## Ticket 04 — the item level follows key position, not the dispatched section, 2026-09-17
+
+- Ticket closed: [04](../../.scratch/navbar-keyboard-intent/issues/04-level-one-follows-key-position-not-the-dispatched-section.md)
+
+**Decision (orchestrator).** A section's `g <position>` key may only be bound to that section's own
+action. Override validation rejects it elsewhere, and a loaded or adopted map drops such an entry.
+This keeps "section n is `g n`" fixed for the badge, level 0 and the item level, with less code than
+re-keying the item level. The rule is recorded as a dated update on the
+[user key binding overrides note](../../.agents/notes/implemented/feature/2026-08-30-user-key-binding-overrides.md).
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Desktop 61 failed / 1884 passed, the same failing cases as group-g 30's run. Lint 19, md-links 18. |
+| focused | `npx vitest run test/renderer/actions test/renderer/keyboard test/renderer/navigation test/renderer/keymap test/main/rpc test/renderer/discoverability` | 512 passed, 4 failed. The 4 are the discoverability tests that were already failing; they fail identically with this ticket's source reverted. |
+| e2e | `pnpm test:e2e e2e/keybindings.spec.ts e2e/keyboard.spec.ts` | 5 passed |
+
+**Tests.** `override-validation.test.ts`: rejects another section's action on a freed key, rejects a
+non-section action on it, accepts rebinding away and back, and the load filter drops only the bad
+entries. `spine-rebinding.test.tsx` loads a hand-edited file through the real spine: no stray badge,
+`g 2` does not navigate, the item keys and the rebind-away still work. All failed first. Reviewed
+inline by the orchestrator.

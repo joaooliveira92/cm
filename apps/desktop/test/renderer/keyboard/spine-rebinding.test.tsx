@@ -15,6 +15,8 @@ import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { HotkeysBoundaryProvider } from "../../../src/renderer/hotkeys.js";
 import { teachingSplashStorageKey } from "../../../src/renderer/discoverability/TeachingSplash.js";
+import { getBindingOverrides, resetBindingOverrides } from "../../../src/renderer/actions/bindingState.js";
+import { NAV_SECTIONS } from "../../../src/renderer/navigation/nav-config.js";
 
 /**
  * Spine-level wiring tests for the Stage 6 rebinding surface (ticket 21) — reviewer findings
@@ -85,6 +87,7 @@ afterEach(() => {
   cleanup();
   window.localStorage.clear();
   resetScopeState();
+  resetBindingOverrides();
 });
 
 describe("F4 — a late-resolving mount fetch never clobbers a just-adopted override", () => {
@@ -148,5 +151,71 @@ describe("F7 — the palette's Rebind… entry opens the help overlay through th
     // The help overlay (the rebinding surface) is now open; the palette closed first.
     expect(screen.getByRole("dialog", { name: "Keyboard shortcuts" })).toBeTruthy();
     expect(screen.queryByRole("dialog", { name: "Command palette" })).toBeNull();
+  });
+});
+/**
+ * navbar-keyboard-intent ticket 04: a hand-edited `keybindings.json` that frees a section key and
+ * gives it to another section's action. The badge, level 0 and the item level all key a section by
+ * its position, so the forbidden entry is dropped when the overrides are loaded and none of the
+ * three ever sees it.
+ */
+describe("ticket 04 — a loaded override that moves a section key onto another action is dropped", () => {
+  const sectionKeyOf = (id: string): string =>
+    String(NAV_SECTIONS.findIndex((section) => section.id === id) + 1);
+
+  const mountWithLoadedOverrides = async (
+    loaded: Record<string, string>,
+  ): Promise<Array<string>> => {
+    const navCalls: Array<string> = [];
+    await mountWithSpine(async (method) => {
+      if (method === "getKeyBindingOverrides") return { _tag: "Success", value: loaded };
+      return { _tag: "Failure", error: NOT_FOUND };
+    });
+    bindRouter({
+      navigate: (opts: { to: string }) => navCalls.push(opts.to),
+      history: { back: () => undefined, forward: () => undefined, canGoBack: () => false },
+    } as never);
+    return navCalls;
+  };
+
+  it("keeps the rebind-away, drops the moved key, and badge, level 0 and item level agree", async () => {
+    const squadKey = sectionKeyOf("squad");
+    const tacticsKey = sectionKeyOf("tactics");
+    const navCalls = await mountWithLoadedOverrides({
+      "go-to-tactics": "n",
+      "go-to-squad": `g ${tacticsKey}`,
+    });
+
+    // The published map is what the navbar badge reads: Squad is back on its own key (badge
+    // `1`), and Tactics is off `g 2` (no badge), so no section advertises the moved key.
+    await waitFor(() => expect(getBindingOverrides()).toEqual({ "go-to-tactics": "n" }));
+
+    // Level 0 no longer accepts Tactics' key: it cancels without dispatching Squad.
+    keyDown({ key: "g", code: "g" });
+    keyDown({ key: tacticsKey, code: tacticsKey });
+    expect(navCalls).toEqual([]);
+
+    // Squad's own key dispatches Squad, and its item level is Squad's items, not Tactics'.
+    keyDown({ key: "g", code: "g" });
+    keyDown({ key: squadKey, code: squadKey });
+    keyDown({ key: "w", code: "w" });
+    expect(navCalls).toEqual(["/career/$saveId/squad", "/career/$saveId/squad"]);
+
+    // The rebind away from `g 2` still works.
+    keyDown({ key: "n", code: "n" });
+    expect(navCalls.at(-1)).toBe("/career/$saveId/tactics");
+  });
+
+  it("with only the moved key in the file, every section keeps its default", async () => {
+    const tacticsKey = sectionKeyOf("tactics");
+    const navCalls = await mountWithLoadedOverrides({ "go-to-squad": `g ${tacticsKey}` });
+    await waitFor(() => expect(navCalls).toEqual([]));
+    await act(async () => undefined);
+    expect(getBindingOverrides()).toEqual({});
+
+    keyDown({ key: "g", code: "g" });
+    keyDown({ key: tacticsKey, code: tacticsKey });
+    keyDown({ key: "q", code: "q" });
+    expect(navCalls).toEqual(["/career/$saveId/tactics", "/career/$saveId/tactics"]);
   });
 });

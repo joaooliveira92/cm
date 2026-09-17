@@ -19,6 +19,7 @@ import {
   gPrefixCompletionsOf,
   prefixIndicatorEntriesOf,
   withEffectiveBindings,
+  withoutMisplacedSectionKeys,
   type KeyBindingOverrides,
   type PrefixIndicatorEntry,
 } from "../actions/overrides.js";
@@ -62,14 +63,19 @@ export const KeyboardStateProvider = ({
     EMPTY_KEY_BINDING_OVERRIDES,
   );
   const mutatedRef = useRef(false);
+  // Both entry points take main's whole map, which is the file as it stands and can carry a
+  // hand-edited entry the validator would reject. A section key moved onto another action is
+  // dropped here, before the badge, level 0 or the item level read it (ticket 04).
   const adoptOverrides = useCallback((next: KeyBindingOverrides) => {
     mutatedRef.current = true;
-    setBindingOverrides(next);
+    setBindingOverrides(withoutMisplacedSectionKeys(ALL_ACTIONS, next));
   }, []);
   useEffect(() => {
     let alive = true;
     Effect.runPromise(Effect.option(getKeyBindingOverrides())).then((option) => {
-      if (alive && !mutatedRef.current && option._tag === "Some") setBindingOverrides(option.value);
+      if (alive && !mutatedRef.current && option._tag === "Some") {
+        setBindingOverrides(withoutMisplacedSectionKeys(ALL_ACTIONS, option.value));
+      }
     });
     return () => {
       alive = false;
