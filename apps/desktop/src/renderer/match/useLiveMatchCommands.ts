@@ -33,7 +33,9 @@ import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 import type { MatchCommand } from "./MatchProvider.js";
 import { resolveCommandStatus, type ClubCommandSnapshot, type CommandStatus } from "./commandStatus.js";
 import { controlledClubId, controlledPitch, controlledSubs } from "./controlledClub.js";
+import { useHalftimeInstruction } from "./useHalftimeInstruction.js";
 import {
+  HALFTIME_MINUTE,
   getActiveMatch,
   getHalfTimeRevealed,
   getLiveTactic,
@@ -43,9 +45,6 @@ import {
   recordLiveTactic,
   type RevealedScore,
 } from "./session.js";
-
-/** `simulateMatch`'s half length: a halftime command is stamped at this minute. */
-export const HALFTIME_MINUTE = 45;
 
 /**
  * The minute to stamp a non-halftime command with. During the first half (before HalfTimeReached
@@ -102,7 +101,6 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
   const [attempt, setAttempt] = useState(0);
   const [liveTactic, setLiveTactic] = useState<Tactic | null>(() => getLiveTactic(saveId));
   const [status, setStatus] = useState<CommandStatus | null>(null);
-  const [halftimeChecked, setIsHalftime] = useState(false);
   const inFlight = useRef(false);
 
   const tacticsResult = useAtomValue(tacticsAtom(saveId));
@@ -110,11 +108,7 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
   const runCommand = useAtomSet(submitMatchCommandMutation, { mode: "promise" });
 
   const matchId = match?.matchId ?? null;
-  // Half-time is the window after HalfTimeReached has been revealed but before any second-half
-  // event — the one moment a halftime instruction cannot rewrite second-half events. During first-
-  // half stoppage the revealed minute is 46+, so the raw minute check alone would miss the window.
-  const atHalftime = getHalfTimeRevealed(saveId) && getRevealedMinute(saveId) === HALFTIME_MINUTE;
-  const isHalftime = halftimeChecked && atHalftime;
+  const { atHalftime, isHalftime, setIsHalftime } = useHalftimeInstruction(saveId);
 
   useEffect(() => {
     if (match === null) return;

@@ -2,12 +2,15 @@
 
 ## Immediate next action
 
-**group-g-match-day** ticket 24 (ungated halftime toggle), 25 (count edge cases), 26 (forced substitution brings back used
+**group-g-match-day** ticket 25 (count edge cases), 26 (forced substitution brings back used
 players), 27 (header readout stuck at 0-0), 28 (session residue across matches); 20 needs triage (a command rewrites seen play); decision requests 01 (live tactics resets
 the line-up), 04 (who may come on) and 05 (revealed position across a restart) need a human;
 then navbar-keyboard-intent 04 (a
 decision first), then group-a-reconciliation 20 (the Quit dialog is hidden under router overlays),
 then desktop-suite-red 14 (a flaky incoming-bids unit test).
+
+group-g-match-day ticket 24 resolved 2026-09-16: the Match day panel's halftime instruction shares the
+standalone screens' half-time window.
 
 group-g-match-day ticket 23 resolved 2026-09-16: leaving and returning to Match day continues from the
 revealed position, including a pending injury decision. A restart still replays from kickoff

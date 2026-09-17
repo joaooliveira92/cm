@@ -131,6 +131,9 @@ export const recordRevealedMinute = (saveId: SaveId, minute: number): void => {
   live = { ...liveFor(saveId), revealedMinute: minute };
 };
 
+/** `simulateMatch`'s half length. `HalfTimeReached` and every halftime instruction are stamped at it. */
+export const HALFTIME_MINUTE = 45;
+
 /** Record that the `HalfTimeReached` boundary has been revealed. */
 export const recordHalfTimeRevealed = (saveId: SaveId): void => {
   live = { ...liveFor(saveId), halfTimeRevealed: true };
@@ -139,6 +142,20 @@ export const recordHalfTimeRevealed = (saveId: SaveId): void => {
 export const getHalfTimeRevealed = (saveId: SaveId): boolean => liveFor(saveId).halfTimeRevealed;
 
 export const getRevealedMinute = (saveId: SaveId): number => liveFor(saveId).revealedMinute;
+
+/**
+ * Whether the reveal stands at half time: `HalfTimeReached` has been revealed and no second-half line
+ * after it. This is the one moment a halftime instruction cannot rewrite second-half events the manager
+ * has already seen, and every live command surface offers it only then.
+ *
+ * The engine applies halftime instructions before `HalfTimeReached` and stamps it 45; the second half
+ * starts at 46. A first-half stoppage line carries 46 or more but comes before `HalfTimeReached`, so the
+ * minute alone cannot tell the window (group-g-match-day 16).
+ */
+export const getAtHalfTime = (saveId: SaveId): boolean => {
+  const context = liveFor(saveId);
+  return context.halfTimeRevealed && context.revealedMinute === HALFTIME_MINUTE;
+};
 
 export const recordRevealedLines = (saveId: SaveId, matchId: MatchId, lines: ReadonlyArray<CommentaryLineView>): void => {
   live = { ...liveFor(saveId, matchId), revealedLines: lines };

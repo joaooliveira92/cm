@@ -29,6 +29,9 @@ export interface MatchControlState {
   readonly tactic: Tactic | null;
   readonly outPlayerId: PlayerId;
   readonly inPlayerId: PlayerId;
+  /** True only while the reveal stands at half time: the halftime instruction is offered then. */
+  readonly atHalftime: boolean;
+  /** Whether the next command is a halftime instruction; never true outside `atHalftime`. */
   readonly isHalftime: boolean;
   readonly status: string | null;
   readonly subAlert: string | null;

@@ -29,6 +29,7 @@ import { useCommentaryContext } from "./CommentaryProvider.js";
 import { tacticsAtom, useAtomValue } from "../rpc.js";
 import { commandStatusLabel, type CommandStatus } from "./commandStatus.js";
 import { getLiveTactic, recordLiveTactic } from "./session.js";
+import { useHalftimeInstruction } from "./useHalftimeInstruction.js";
 import type { MatchControlContextValue, PanelMode } from "./matchControlContext.js";
 
 export interface MatchControlInput {
@@ -58,7 +59,7 @@ export const useMatchControl = ({
   const [tactic, setTactic] = useState<Tactic | null>(null);
   const [outPlayerId, setOutPlayerId] = useState(PlayerId.make(""));
   const [inPlayerId, setInPlayerId] = useState(PlayerId.make(""));
-  const [isHalftime, setIsHalftime] = useState(false);
+  const { atHalftime, isHalftime, setIsHalftime } = useHalftimeInstruction(saveId);
   const [status, setStatus] = useState<string | null>(null);
   /** Inline substitution-draft rejection (the validator's reason), never a silent no-op. */
   const [subAlert, setSubAlert] = useState<string | null>(null);
@@ -339,6 +340,7 @@ export const useMatchControl = ({
       tactic,
       outPlayerId,
       inPlayerId,
+      atHalftime,
       isHalftime,
       status,
       subAlert,

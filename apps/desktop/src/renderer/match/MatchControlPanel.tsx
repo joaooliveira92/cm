@@ -333,7 +333,7 @@ const MatchControlProvider = (input: MatchControlInput) => {
   const value = useMatchControl(input);
   if (value === null) return null;
   const { state } = value;
-  const { open, isHalftime, status, subsStatus } = state;
+  const { open, atHalftime, isHalftime, status, subsStatus } = state;
 
   return (
     <MatchControlContext.Provider value={value}>
@@ -356,10 +356,12 @@ const MatchControlProvider = (input: MatchControlInput) => {
                 <input
                   type="checkbox"
                   checked={isHalftime}
+                  disabled={!atHalftime}
                   onChange={(event) => value.actions.setIsHalftime(event.target.checked)}
                   className={`accent-text-success ${FOCUS_RING.join(" ")}`}
                 />
                 Apply as a halftime instruction (doesn&apos;t consume a substitution window)
+                {!atHalftime && " — available at half time"}
               </label>
             </div>
 

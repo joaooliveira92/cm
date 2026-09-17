@@ -383,3 +383,21 @@ FullTimeWhistle) and L3 (a stale test comment) were fixed by the orchestrator at
 - **Rework.** Counts stored in the session and restored on the first render; one server read on a
   paused return; unmount guard; non-retrying e2e check; context keyed by match.
 - **Re-review: APPROVE.** Every finding resolved. Two new lows filed as ticket 28.
+
+## Ticket 24 — the Match day panel's halftime toggle is ungated, 2026-09-16
+
+- Ticket closed: [24](../../.scratch/group-g-match-day/issues/24-match-day-panel-halftime-toggle-is-ungated.md)
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Desktop 61 failed / 1851 passed, the same failing cases as ticket 23's run. Lint 19 and md-links 18, the long-standing counts. |
+| close-out | `npx vitest run test/renderer/match`; `pnpm typecheck` | 7 failed (post-match-summary, pre-existing) / 116 passed; 0 `error TS` |
+| e2e | `pnpm test:e2e e2e/journeys.spec.ts e2e/app.spec.ts` | 12 passed (27.9s), after the close-out edits |
+
+Criteria: the panel offers the halftime instruction only while half time is revealed and not yet
+passed, and a panel test covers it. Both are proven by `panel-halftime-window.test.tsx`, which failed
+first against the ungated panel.
+
+Review: APPROVE. The orchestrator added the half-time submission assertion (L2). It kept the
+render-time clear the reviewer called redundant (L1): removing it failed the window test, because
+state set while the box was disabled showed ticked at half time.

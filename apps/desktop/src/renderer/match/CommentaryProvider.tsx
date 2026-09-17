@@ -22,6 +22,7 @@ import { resolveCommandStatus, type CommandStatus } from "./commandStatus.js";
 import { controlledOnPitchCount, controlledPitch, controlledSubs } from "./controlledClub.js";
 import { useMatchContext, type MatchCommand } from "./MatchProvider.js";
 import {
+  HALFTIME_MINUTE,
   getActiveMatch,
   getHalfTimeRevealed,
   getRevealedEvents,
@@ -37,9 +38,6 @@ import {
 } from "./session.js";
 
 export type { RevealedInjury } from "./session.js";
-
-/** `simulateMatch`'s half length — halftime commands are stamped at this minute. */
-const HALFTIME_MINUTE = 45;
 
 const stampMinute = (revealedMinute: number, halfTimeRevealed: boolean): number =>
   Math.max(1, halfTimeRevealed ? revealedMinute : Math.min(revealedMinute, HALFTIME_MINUTE));
