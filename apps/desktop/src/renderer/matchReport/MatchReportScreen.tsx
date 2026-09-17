@@ -22,6 +22,7 @@ const EVENT_LABEL: Readonly<Record<MatchReportEventView["kind"], string>> = {
   RedCard: "Red card",
   Injury: "Injury",
   Substitution: "Substitution",
+  GoalkeeperStandIn: "Goalkeeper stand-in",
 };
 
 /** The result as one complete sentence, never assembled from fragments (Screen 103 §13). */
@@ -32,12 +33,16 @@ const resultSentence = (report: MatchReportView): string =>
       ? `${report.awayClubName} won ${report.awayScore}-${report.homeScore} away at ${report.homeClubName}.`
       : `${report.homeClubName} and ${report.awayClubName} drew ${report.homeScore}-${report.awayScore}.`;
 
-const eventText = (event: MatchReportEventView, clubName: string): string =>
-  event.replaced === null
-    ? `${EVENT_LABEL[event.kind]}: ${event.playerName} (${clubName})`
-    : event.replaced.forcedByInjury
-      ? `${EVENT_LABEL[event.kind]}: ${event.playerName} on for the injured ${event.replaced.playerName} (${clubName})`
-      : `${EVENT_LABEL[event.kind]}: ${event.playerName} on for ${event.replaced.playerName} (${clubName})`;
+/** A goalkeeper stand-in was already on the pitch, so it reads as a move into goal. The keeper it
+ *  replaces may have been brought off rather than injured, so only `forcedByInjury` says "injured". */
+const eventText = (event: MatchReportEventView, clubName: string): string => {
+  const label = EVENT_LABEL[event.kind];
+  if (event.replaced === null) return `${label}: ${event.playerName} (${clubName})`;
+  const replaced = event.replaced.forcedByInjury ? `the injured ${event.replaced.playerName}` : event.replaced.playerName;
+  return event.kind === "GoalkeeperStandIn"
+    ? `${label}: ${event.playerName} moves into goal for ${replaced} (${clubName})`
+    : `${label}: ${event.playerName} on for ${replaced} (${clubName})`;
+};
 
 /**
  * The Match Report (Screen 103) for one committed match: the result and half-time score, each side's

@@ -269,7 +269,8 @@ export class MatchStatisticsView extends Schema.Class<MatchStatisticsView>("Matc
 // Match Report (Screen 103): the committed match's record
 // ---------------------------------------------------------------------------
 
-/** A Substitution's other half: who came off, and whether an Injury forced the change. */
+/** The other half of a Substitution or a goalkeeper stand-in: who left, and whether an Injury forced
+ *  the change. */
 export class MatchReportReplacedView extends Schema.Class<MatchReportReplacedView>("MatchReportReplacedView")({
   playerId: PlayerId,
   playerName: Schema.String,
@@ -277,11 +278,14 @@ export class MatchReportReplacedView extends Schema.Class<MatchReportReplacedVie
 }) {}
 
 /** One key event of the report's timeline. For a Substitution the player is the one who came on and
- *  `replaced` names the one who went off; every other kind has `replaced: null`. */
+ *  `replaced` names the one who went off. A `GoalkeeperStandIn` is the forced Substitution that moves
+ *  a player already on the pitch into goal when the last goalkeeper leaves with no substitute to
+ *  replace them: the player is the one moving into goal, `replaced` the one who left it, and it is not
+ *  a substitution. Every other kind has `replaced: null`. */
 export class MatchReportEventView extends Schema.Class<MatchReportEventView>("MatchReportEventView")({
   minute: Schema.Finite,
   half: Schema.Literals([1, 2]),
-  kind: Schema.Literals(["Goal", "YellowCard", "RedCard", "Injury", "Substitution"]),
+  kind: Schema.Literals(["Goal", "YellowCard", "RedCard", "Injury", "Substitution", "GoalkeeperStandIn"]),
   clubId: ClubId,
   playerId: PlayerId,
   playerName: Schema.String,

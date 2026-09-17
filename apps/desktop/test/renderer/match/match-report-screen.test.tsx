@@ -28,6 +28,24 @@ const report = (overrides: Record<string, unknown> = {}) => ({
       playerName: "Eli Park",
       replaced: { playerId: "p4", playerName: "Dee Hart", forcedByInjury: true },
     },
+    {
+      minute: 80,
+      half: 2,
+      kind: "GoalkeeperStandIn",
+      clubId: "away",
+      playerId: "p6",
+      playerName: "Fay Lund",
+      replaced: { playerId: "p7", playerName: "Gus Ward", forcedByInjury: false },
+    },
+    {
+      minute: 85,
+      half: 2,
+      kind: "GoalkeeperStandIn",
+      clubId: "away",
+      playerId: "p2",
+      playerName: "Ben Cole",
+      replaced: { playerId: "p6", playerName: "Fay Lund", forcedByInjury: true },
+    },
     { minute: 88, half: 2, kind: "Goal", clubId: "home", playerId: "p1", playerName: "Ada Stone", replaced: null },
   ],
   statistics: {
@@ -76,6 +94,8 @@ describe("Match Report (Screen 103)", () => {
       "44'Goal: Cy Moss (Away FC)",
       "70'Injury: Dee Hart (Home FC)",
       "71'Substitution: Eli Park on for the injured Dee Hart (Home FC)",
+      "80'Goalkeeper stand-in: Fay Lund moves into goal for Gus Ward (Away FC)",
+      "85'Goalkeeper stand-in: Ben Cole moves into goal for the injured Fay Lund (Away FC)",
       "88'Goal: Ada Stone (Home FC)",
     ]);
 

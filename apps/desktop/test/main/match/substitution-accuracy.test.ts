@@ -9,7 +9,7 @@ import { rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
-import { ok, strictEqual } from "node:assert";
+import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import type {
   CommentaryLineView,
   InjuryView,
@@ -23,7 +23,8 @@ import type {
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { getTactics } from "../../../src/main/club/index.js";
-import { getMatchStatistics, resumeSimulation, submitMatchCommand } from "../../../src/main/match/index.js";
+import { getMatchReport, getMatchStatistics, resumeSimulation, submitMatchCommand } from "../../../src/main/match/index.js";
+import { commitMatchday } from "../../../src/main/season/commitMatchday.js";
 import { atFirstFixture, humanClubOf, humanSubs, startSeededMatch } from "./seededMatch.js";
 
 let savesDir: string;
@@ -63,7 +64,7 @@ const seeded = (seed: number) =>
     const command = (minute: number, isHalftime: boolean, body: SubmitBody, revealedEvents: number | null = 0) =>
       submitMatchCommand(savesDir, save.id, match.matchId, 0, revealedEvents, minute, isHalftime, { clubId, ...body } as never);
     const sub = (outPlayerId: PlayerId, inPlayerId: PlayerId): SubmitBody => ({ _tag: "MakeSubstitution", outPlayerId, inPlayerId });
-    return { save, match, squad, tactic, clubId, outsideXi, goalkeeper, command, sub };
+    return { save, fixtureId, match, squad, tactic, clubId, outsideXi, goalkeeper, command, sub };
   });
 
 type SubmitBody =
@@ -128,6 +129,52 @@ it.effect(
       strictEqual(injury.replaced, false, "an outfield player moving into goal replaces no one: the team is down a player");
       strictEqual(yield* humanStatistic(s.save.id, s.match.matchId, s.match, null), 3, "the statistics count agrees with the panel");
     }),
+);
+
+it.effect("the Match Report lists goalkeeper stand-ins as moves into goal, and its substitutions agree with the statistic", () =>
+  Effect.gen(function* () {
+    const s = yield* seeded(GOALKEEPER_STAND_IN_SEED);
+    const repin = `repin GOALKEEPER_STAND_IN_SEED (${GOALKEEPER_STAND_IN_SEED})`;
+    for (const minute of [1, 2, 3]) {
+      const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.outsideXi[minute - 1]!.id));
+      strictEqual(response.substitutionApplied, true, repin);
+    }
+    strictEqual((yield* s.command(3, false, { _tag: "ForceOff", playerId: s.goalkeeper })).forceOffApplied, true, repin);
+    const { lines, injuries } = yield* drain(s.save.id, s.match.matchId);
+    const injuryLine = lines[STAND_IN_INJURY_LINE];
+    strictEqual(injuryLine?.tag, "Injury", repin);
+    const injury = injuries[lines.slice(0, STAND_IN_INJURY_LINE).filter((line) => line.tag === "Injury").length]!;
+    ok(injury.tier === "red" && injury.teamClubId === s.clubId, `the human club's severe Injury — ${repin}`);
+    strictEqual(lines[STAND_IN_INJURY_LINE + 1]?.tag, "Substitution", repin);
+    strictEqual(lines[STAND_IN_INJURY_LINE + 1]?.minute, injuryLine.minute, repin);
+
+    yield* commitMatchday(savesDir, s.save.id, s.fixtureId);
+    const report = yield* getMatchReport(savesDir, s.save.id, s.match.matchId);
+
+    const standIns = report.events.filter((event) => event.kind === "GoalkeeperStandIn");
+    deepStrictEqual(
+      standIns.map((event) => [event.clubId, event.minute, event.replaced?.playerId, event.replaced?.forcedByInjury]),
+      [
+        [s.clubId, 3, s.goalkeeper, false],
+        [s.clubId, injuryLine.minute, injury.playerId, true],
+      ],
+      "the bring-off's drag and the injured stand-in's drag are moves into goal; only the second follows an Injury",
+    );
+    strictEqual(standIns[0]!.playerId, injury.playerId, `the injured player is the one the bring-off dragged into goal — ${repin}`);
+    strictEqual(
+      report.events.filter((event) => event.kind === "Substitution" || event.kind === "GoalkeeperStandIn").length,
+      lines.filter((line) => line.tag === "Substitution").length,
+      "every Substitution Match Event is listed once",
+    );
+    const statistic = report.statistics.rows.find((row) => row.key === "substitutions")!;
+    const listed = (clubId: string) => report.events.filter((event) => event.kind === "Substitution" && event.clubId === clubId).length;
+    deepStrictEqual(
+      [listed(s.match.homeClubId), listed(s.match.awayClubId)],
+      [statistic.home, statistic.away],
+      "the incident list's substitutions agree with the substitutions statistic",
+    );
+    strictEqual(listed(s.clubId), 3);
+  }),
 );
 
 /**

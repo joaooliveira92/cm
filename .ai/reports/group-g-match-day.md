@@ -456,3 +456,17 @@ Reviewed inline by the orchestrator. The publish moved from `MatchProvider` (zer
 Review: APPROVE. The key risk was a session write landing before `setActiveMatch`, which would now
 be silently dropped. The reviewer traced every path and found none. Three lows are recorded in the
 ticket Answer.
+
+## Ticket 30 — the Match Report lists goalkeeper stand-ins as substitutions, 2026-09-17
+
+- Ticket closed: [30](../../.scratch/group-g-match-day/issues/30-match-report-lists-goalkeeper-stand-ins-as-substitutions.md)
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Contracts 156. Desktop 61 failed / 1878 passed, the same failing cases as ticket 28's run. Lint 19, md-links 18. |
+| focused | `npx vitest run test/main/match test/renderer/match` | 7 failed (post-match-summary, pre-existing) / 189 passed |
+| e2e | `pnpm test:e2e e2e/journeys.spec.ts e2e/app.spec.ts` | 12 passed (no spec covers the Match Report) |
+
+Reviewed inline by the orchestrator. Stand-ins reuse ticket 25's classification, the "injured" wording
+requires a preceding severe Injury, and regular substitutions keep the engine's flag. There is no
+engine or persistence change.

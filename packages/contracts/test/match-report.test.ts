@@ -24,6 +24,15 @@ const wire = {
       playerName: "Cy Moss",
       replaced: { playerId: "p4", playerName: "Dee Hart", forcedByInjury: true },
     },
+    {
+      minute: 70,
+      half: 2,
+      kind: "GoalkeeperStandIn",
+      clubId: "home",
+      playerId: "p6",
+      playerName: "Fay Lund",
+      replaced: { playerId: "p7", playerName: "Gus Ward", forcedByInjury: false },
+    },
   ],
   statistics: {
     matchId: "m1",
@@ -36,7 +45,7 @@ const wire = {
 };
 
 describe("Match Report (Screen 103)", () => {
-  it("MatchReportView round-trips goals, a substitution and the embedded statistics", () => {
+  it("MatchReportView round-trips goals, a substitution, a goalkeeper stand-in and the embedded statistics", () => {
     expect(Schema.encodeSync(MatchReportView)(Schema.decodeUnknownSync(MatchReportView)(wire))).toEqual(wire);
   });
 
