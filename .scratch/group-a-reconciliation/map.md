@@ -192,3 +192,11 @@ repair, because `pnpm check:all` is red until it lands and every later session i
 - **The main menu's online update check** (spec 1 §8 `updateStatus`). Ruled by ticket 04. A sharpening
   of the off-device-telemetry axis above: the app has no backend to query and no update channel.
 - **ADR-000x citation rewrites in source comments.** Ticket 01 provided the mechanism (rewrite to note path, reword, or drop); the 151 mentions are a source-comment hygiene pass that sits past this map's destination (a Group A spec and deviation register). No screen's reconciliation depends on the outcome.
+- **How the Quit dialog stays on top.** Ticket 20. A dedicated `MODAL_SCRIM_TOP` (`z-[60]`) in
+  `theme.ts`, not a mount reorder in `main.tsx`. The renderer stacks overlays at two levels —
+  hand-rolled ones tie at `z-40` and are broken by DOM order, vendored Base UI surfaces portal out
+  at `z-50` — so reordering wins only the first tier and would have left the bug half-fixed. The
+  z-index is independent of mount position, which keeps `QuitGuard` free to sit outside the router.
+  Adopting the vendored portal `Dialog` was rejected: it renders at `z-50` too, so it would still
+  tie, and it would mean replacing `useDialogKeyboard`'s focus trap. Raising the z-index does not
+  beat a Base UI *modal*, which inerts everything outside its portal — split out as ticket 21.

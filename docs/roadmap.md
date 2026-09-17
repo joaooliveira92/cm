@@ -56,8 +56,9 @@ referenced throughout.
   work under different names — `TransfersScreen.tsx` is 103 lines and `SquadScreen.tsx` is 14 —
   so what survives is the boolean-prop half, which may or may not still be worth a ticket.
   Ticket 05 was additionally retargeted; it named `CreationStep1.tsx`, renamed long ago.
-- **[.scratch/group-a-reconciliation/](../.scratch/group-a-reconciliation/)** — 21/23. Open:
-  03 (quit confirmation) and 04 (save-list chrome).
+- **[.scratch/group-a-reconciliation/](../.scratch/group-a-reconciliation/)** — 23/25. Open:
+  03 (quit confirmation) and 21 (the Quit dialog takes no clicks under a Base UI modal, opened by
+  the review of ticket 20).
 - **[.scratch/main-process-decomposition/](../.scratch/main-process-decomposition/)** — 3/5. Opened
   by the 2026-09-05 folder-organization audit. Tickets 01–03 are done: the six duplicate
   current-season queries collapsed into `main/season/currentSeason.ts`, `main/season.ts` (1885

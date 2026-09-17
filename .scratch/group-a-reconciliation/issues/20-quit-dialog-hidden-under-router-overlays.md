@@ -23,8 +23,8 @@ splash.
 
 **Blocked by:** None
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] With the teaching splash, help overlay or command palette open, the Quit dialog is visible,
+- [x] With the teaching splash, help overlay or command palette open, the Quit dialog is visible,
       topmost, and its buttons receive clicks
-- [ ] A test proves it for at least the splash
+- [x] A test proves it for at least the splash

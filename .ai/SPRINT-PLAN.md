@@ -2,13 +2,31 @@
 
 ## Immediate next action
 
-**group-a-reconciliation** ticket 20 (the Quit
-dialog is hidden under router overlays), then desktop-suite-red 14 (a flaky incoming-bids unit test).
-group-g-match-day has no ready build ticket left; 26 (forced substitution
-brings back used players, patch kept) and 29 (windows across halves) are blocked on decision request
-07; 20 needs triage (a command rewrites seen play); decision requests 01 (live tactics resets
-the line-up), 04 (who may come on), 05 (revealed position across a restart), 06 (red-carded keeper)
-and 07 (engine rule changes vs saved matches) need a human.
+**Re-derive the frontier from `.scratch/` before starting** — two rows below this one decayed in
+the 2026-09-17 sprints. `desktop-suite-red` is now fully resolved, so the "then desktop-suite-red 14"
+pointer is spent.
+
+group-a-reconciliation's own frontier is ticket 21 (the Quit dialog takes no clicks under a Base UI
+modal). It is `ready-for-agent` but **carries a decision**: does Quit outrank an open Base UI modal,
+or defer to it? Write the decision request before implementing. Ticket 03 (quit confirmation) sits
+below it at `claimed` with AC-4 open — an old claim with nothing landed behind it, so treat it as
+resumable rather than as another session's live work.
+
+group-g-match-day has no ready build ticket left; 26 (forced substitution brings back used players,
+patch kept) and 29 (windows across halves) are blocked on decision request 07; 20 needs triage (a
+command rewrites seen play); decision requests 01 (live tactics resets the line-up), 04 (who may come
+on), 05 (revealed position across a restart), 06 (red-carded keeper) and 07 (engine rule changes vs
+saved matches) need a human.
+
+**The gate is red on `dev` independently of any sprint**, and has been for at least these three
+clusters: 61 unit tests failing `ReferenceError: window is not defined` at
+`src/renderer/navigation/scroll-state.ts:21`; 12 `oxlint` errors; 18 broken markdown links under
+group-c/group-d. None has a ticket. Until they do, every sprint delivers against a red gate and
+"pre-existing" has to be re-proved by hand each time.
+
+group-a-reconciliation ticket 20 resolved 2026-09-17: the Quit dialog renders above both overlay
+tiers via `MODAL_SCRIM_TOP` (`z-[60]`), proved by an e2e spec whose mutant was observed to fail on
+pointer interception. Review split out ticket 21.
 
 navbar-keyboard-intent ticket 04 resolved 2026-09-17: a section's `g <n>` key may only sit on that
 section's own action; a hand-edited override moving it elsewhere is rejected and dropped on load.

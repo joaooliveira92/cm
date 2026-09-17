@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../components/ui/button.js";
 import { useDialogKeyboard } from "../transfers/dialogKeyboard.js";
-import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "../theme.js";
+import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM_TOP, MODAL_TITLE_BAND } from "../theme.js";
 
 const QUIT_BODY = "Are you sure you want to close cm-clone?";
 
@@ -33,7 +33,7 @@ export const QuitGuard = () => {
 
   return (
     <div
-      className={MODAL_SCRIM}
+      className={MODAL_SCRIM_TOP}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onCancel();
       }}

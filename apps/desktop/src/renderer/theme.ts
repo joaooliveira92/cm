@@ -87,6 +87,32 @@ export const CHROME_BAND =
 export const MODAL_SCRIM =
   "fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4";
 
+/**
+ * The same scrim, raised above both overlay tiers — for the quit guard alone.
+ *
+ * This renderer stacks overlays at two levels. The hand-rolled ones share
+ * `MODAL_SCRIM` at `z-40`, where DOM order breaks the tie; the vendored
+ * shadcn/Base UI surfaces portal to `document.body` at `z-50` and outrank all
+ * of them outright. `QuitGuard` renders before `<RouterProvider>` and used to
+ * sit on `MODAL_SCRIM`, so it lost the `z-40` tie to every router-rendered
+ * overlay: pressing Cmd+Q during the teaching splash showed nothing but a
+ * darker scrim, and clicks aimed at the dialog landed on the splash card
+ * behind it (group-a-reconciliation ticket 20).
+ *
+ * `z-[60]` clears both tiers without reordering the tree, which keeps the fix
+ * independent of where `QuitGuard` is mounted. Tailwind's default z scale
+ * stops at 50, hence the arbitrary value — grep for `z-[60]`, not `z-60`.
+ *
+ * This does not beat a Base UI *modal* surface, which marks everything outside
+ * its portal `inert` and `aria-hidden`; against one of those the quit dialog
+ * paints on top but takes no clicks. See ticket 21.
+ *
+ * Nothing else takes this constant. A second user is a sign two overlays are
+ * competing for "topmost", which is a design question, not a styling one.
+ */
+export const MODAL_SCRIM_TOP =
+  "fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4";
+
 /** Compact centered shell for confirmations and short forms (counter-offer). */
 export const MODAL_COMPACT =
   "w-full max-w-sm rounded-panel border border-panel-border bg-panel-bg-strong text-text-primary shadow-2xl";
