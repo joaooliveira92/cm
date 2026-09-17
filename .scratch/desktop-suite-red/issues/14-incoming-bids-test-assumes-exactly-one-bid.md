@@ -14,7 +14,7 @@ assertions in the test do not make the same assumption.
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] The test does not depend on the world producing no organic bid
 - [ ] It still fails if the guarantee stops firing in a later window

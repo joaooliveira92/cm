@@ -474,7 +474,7 @@ it.effect("guarantees a fresh bid in a later window, not just the first one", ()
 
     // The pre-season window closes on the first advance.
     yield* advanceThroughBoundary(savesDir, save.id);
-    strictEqual(yield* pendingCount, 1, "the first window should leave a bid to answer");
+    ok((yield* pendingCount) >= 1, "the first window should leave a bid to answer");
 
     // Walk to the mid-season window. The next advance lapses the first bid; somewhere further on the
     // mid-season window opens and must produce another.
