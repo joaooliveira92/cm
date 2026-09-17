@@ -80,9 +80,7 @@ const session = (overrides: Record<string, unknown> = {}) => ({
     awayClubId: cid("away"),
     awayClubName: "Away FC",
   },
-  cursor: 0,
   phase: "live" as const,
-  streamComplete: false,
   ...overrides,
 });
 
@@ -300,8 +298,8 @@ describe("useMatchStreaming — poll ahead, buffer, reveal one line per tick (AD
   });
 
   it("a match restored paused with no decision pending returns to live and polls", async () => {
-    // A session carries the phase but not the injuries: with nothing to decide, nothing would ever
-    // lift a restored pause, so the feed must not stay held on it.
+    // A session restored paused with no revealed injury: with nothing to decide, nothing would ever
+    // lift the pause, so the feed must not stay held on it.
     const probe = await mountProbe({ phase: "paused" as const }, [resumeView({ cursor: 1, lines: [line(1, "Kick-off.")] })]);
 
     expect(probe.text()).toBe("0|live|running|0-0");

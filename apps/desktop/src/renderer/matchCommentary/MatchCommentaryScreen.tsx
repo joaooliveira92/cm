@@ -33,6 +33,8 @@ export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) =
   const tableResult = useAtomValue(leagueTableAtom(saveId));
   const pending = tableResult._tag === "Success" ? tableResult.value.season.awaitingFixture : null;
   const matchId = pending?.matchId ?? null;
+  // With no match started there is nothing to read, so only the season read is awaited.
+  const waiting = tableResult._tag !== "Success" || (matchId !== null && loading);
 
   const load = useCallback(async () => {
     if (matchId === null) return;
@@ -87,9 +89,15 @@ export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) =
     >
       <h1 className="text-2xl font-bold mb-6">Match Commentary</h1>
       {error && <p className="text-destructive mb-4">{error}</p>}
-      {loading && !error && <p className="text-text-secondary italic">Loading commentary...</p>}
-      {!loading && !error && visible.length === 0 && (
-        <p className="text-text-secondary italic">No commentary available. Start the match first.</p>
+      {waiting && !error && <p className="text-text-secondary italic">Loading commentary...</p>}
+      {/* Empty for one of two reasons: no match has started, or Match day has revealed none of it
+          in this renderer (it has only just kicked off, or the app restarted mid-match). */}
+      {!waiting && !error && visible.length === 0 && (
+        <p className="text-text-secondary italic">
+          {matchId === null
+            ? "No match in play. Commentary appears here once one kicks off on Match day."
+            : "No Commentary Lines revealed yet. They appear here as Match day reveals them."}
+        </p>
       )}
       {visible.length > 0 && (
         <div className="space-y-2">

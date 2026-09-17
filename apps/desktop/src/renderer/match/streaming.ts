@@ -59,8 +59,9 @@ export const useMatchStreaming = (): void => {
     if (!hydrated) return;
     if (match === null) return;
     if (phase === "complete") return;
-    // Derived afresh, a restored paused phase included: a session does not carry injuries, so a
-    // match restored paused with none to decide on returns to live instead of waiting on nothing.
+    // Derived afresh, a restored paused phase included: the pause follows the revealed injuries the
+    // session restored, so a match restored paused with none to decide on returns to live instead of
+    // waiting on nothing.
     const clubId = controlledClubId(match);
     const needsDecision = commState.revealedInjuries.some(({ injury, capReachedWhenRevealed }) =>
       shouldPauseMatch([injury], clubId, capReachedWhenRevealed),

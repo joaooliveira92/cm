@@ -353,3 +353,33 @@ Reviewer **APPROVE**, with one medium: the head-count follows the fold after `Ch
 "10 men" alert stays while the engine plays 11. The root cause is the engine's line-up reset, so this
 was added as evidence to decision request 01 rather than reverted. L1 (re-read the score at
 FullTimeWhistle) and L3 (a stale test comment) were fixed by the orchestrator at close-out.
+
+## Ticket 23 — returning to Match day replays from kickoff, 2026-09-16
+
+- Ticket closed: [23](../../.scratch/group-g-match-day/issues/23-match-day-remount-replays-from-kickoff.md)
+- Filed: [decision request 05](../../.scratch/group-g-match-day/decision-request-05-revealed-position-across-restart.md), [27](../../.scratch/group-g-match-day/issues/27-live-match-header-readout-shows-0-0.md), [28](../../.scratch/group-g-match-day/issues/28-match-session-save-keyed-residue.md)
+
+### Acceptance criteria → evidence
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Leaving and returning continues from the revealed position | `remount-continues-reveal.test.tsx` (first read at cursor 3 with `revealedEvents` 3; no rewind); `remount-injury-decision.test.tsx`; e2e `router.spec.ts` AC-15 (feed identical on return, read once) | pass |
+| 2 | A command raised after returning is stamped at the true revealed minute | `remount-continues-reveal.test.tsx`, reads held: `minute: 30, revealedEvents: 3` | pass |
+
+### Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all (first pass) | `pnpm check:all` | exit 1, pre-existing only. Desktop 61 failed: ticket 22's 62 minus `screen-fulltime`. |
+| check:all (after rework) | `pnpm check:all` | exit 1. Typecheck, effect-lint and verify-db-schema ✓. Desktop **61 failed / 1849 passed**, the same failing cases as the first pass. Lint rose from 19 to 43 error lines because another session's uncommitted `.oxlintrc.json` adds the React plugin (React Compiler adoption, `.scratch/react-compiler-adoption/`). The new errors are `react-hooks(exhaustive-deps)` on existing code; this ticket is not committing that config. md-links unchanged. |
+| focused | `npx vitest run test/renderer/match test/main/match test/renderer/matchCommentary` | 7 failed / 160 passed (implementator). The 7 are post-match-summary, already failing. |
+| e2e | `pnpm test:e2e e2e/router.spec.ts e2e/journeys.spec.ts e2e/app.spec.ts e2e/keyboard.spec.ts` | 24 passed (1.2m) |
+| determinism / save compatibility | — | renderer only; no contract, schema or migration change |
+
+### Review
+
+- **First review: NEEDS_REWORK.** H1 (high): returning during a no-subs injury decision never offered
+  Play on or Bring off, because the substitution counts were not restored. Lows L1–L4.
+- **Rework.** Counts stored in the session and restored on the first render; one server read on a
+  paused return; unmount guard; non-retrying e2e check; context keyed by match.
+- **Re-review: APPROVE.** Every finding resolved. Two new lows filed as ticket 28.

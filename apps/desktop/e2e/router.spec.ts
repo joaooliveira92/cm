@@ -206,6 +206,10 @@ test("Match Day arrival resumes a pending match instead of starting one (AC-15)"
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.click();
   await expect(matchScore(page)).toBeVisible();
+  // The revealed Commentary Lines, each led by its minute.
+  const feedLines = page.getByRole("main", { name: "Match day" }).locator("li:has(> span.tabular-nums)");
+  await expect(feedLines.nth(2)).toBeVisible({ timeout: 15_000 });
+  const revealedBeforeLeaving = await feedLines.allInnerTexts();
 
   await goto(page, "transfers");
   await expect(page.getByRole("heading", { name: /Transfers/ })).toBeVisible();
@@ -214,4 +218,10 @@ test("Match Day arrival resumes a pending match instead of starting one (AC-15)"
   // Resumed: the same live scoreboard, and no fresh match picker on arrival.
   await expect(matchScore(page)).toBeVisible();
   await expect(page.getByRole("button", { name: "Play match" })).not.toBeVisible();
+  // Continued from the revealed position, not replayed from kickoff (group-g-match-day 23): the feed
+  // is back at once, with every line revealed before leaving. Read once, without retrying, the moment
+  // the scoreboard is back: a replay reveals one line per pacing tick, so it cannot pass a retry here.
+  expect(await page.getByText("Kick-off is coming up...").isVisible()).toBe(false);
+  const revealedOnReturn = await feedLines.allInnerTexts();
+  expect(revealedOnReturn.slice(0, revealedBeforeLeaving.length)).toEqual(revealedBeforeLeaving);
 });

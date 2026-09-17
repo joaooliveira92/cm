@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { SaveId, type SubstitutionStatusView } from "@cm-clone/contracts";
+import { MatchId, SaveId, type SubstitutionStatusView } from "@cm-clone/contracts";
 import {
   FORMATION_SLOTS,
   FORMATIONS,
@@ -16,7 +16,7 @@ import {
   getLiveTactic,
   recordHalfTimeRevealed,
   recordLiveTactic,
-  recordRevealedEvents,
+  recordRevealedLines,
   recordRevealedMinute,
   recordRevealedScore,
   setActiveMatch,
@@ -115,9 +115,7 @@ const liveSession = (phase: "live" | "complete" = "live") => ({
     awayClubName: "Away FC",
     isHome: false,
   },
-  cursor: 0,
   phase,
-  streamComplete: false,
 });
 
 type Handler = (method: string, payload: Record<string, unknown>) => unknown;
@@ -276,7 +274,7 @@ describe("Match Substitutions — the live substitution screen", () => {
 
   it("reads the counts and sends the command at the position Match day has revealed", async () => {
     setActiveMatch(liveSession() as never);
-    recordRevealedEvents(rid("s1"), 12);
+    recordRevealedLines(rid("s1"), MatchId.make("m1"), Array.from({ length: 12 }, (_, minute) => ({ minute, tag: "ShotMissed", text: "Wide." })));
     const calls = mount(MatchSubstitutionsScreen, (method) => {
       if (method === "getTactics") return ok(tacticsView());
       if (method === "submitMatchCommand") return ok(commandView(true));

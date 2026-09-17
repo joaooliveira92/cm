@@ -147,9 +147,7 @@ describe("Match day holds the Post-Match Summary back until the result is accept
         awayClubName: "Away FC",
         isHome: true,
       },
-      cursor: 12,
       phase,
-      streamComplete: true,
     } as never);
     const calls: Array<string> = [];
     (window as unknown as { cmClone: { call: unknown } }).cmClone = {

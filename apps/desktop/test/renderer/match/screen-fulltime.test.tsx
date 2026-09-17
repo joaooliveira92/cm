@@ -1,9 +1,15 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ClubId, SaveId, type CommentaryLineView } from "@cm-clone/contracts";
+import { ClubId, MatchId, SaveId, type CommentaryLineView } from "@cm-clone/contracts";
 import { MatchDayScreen } from "../../../src/renderer/match/MatchDayScreen.js";
-import { clearActiveMatch, setActiveMatch } from "../../../src/renderer/match/session.js";
+import {
+  clearActiveMatch,
+  recordRevealedLines,
+  recordRevealedMinute,
+  recordRevealedScore,
+  setActiveMatch,
+} from "../../../src/renderer/match/session.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 
@@ -18,23 +24,24 @@ const line = (minute: number, text: string): CommentaryLineView => ({
   text,
 });
 
-/** A finished match session: stream complete, feed already revealed. */
-const fullTimeSession = () => ({
-  saveId: rid("s1"),
-  match: {
-    matchId: rid("m1"),
-    homeClubId: cid("home"),
-    homeClubName: "Home FC",
-    awayClubId: cid("away"),
-    awayClubName: "Away FC",
-  },
-  cursor: 12,
-  revealed: [line(23, "Goal!"), line(67, "Second!")],
-  homeScore: 2,
-  awayScore: 1,
-  phase: "complete" as const,
-  streamComplete: true,
-});
+/** A finished match session, the feed revealed to the end and its score recorded, as Match day
+ *  leaves it when the manager navigates away at full time. */
+const fullTimeSession = () => {
+  setActiveMatch({
+    saveId: rid("s1"),
+    match: {
+      matchId: rid("m1"),
+      homeClubId: cid("home"),
+      homeClubName: "Home FC",
+      awayClubId: cid("away"),
+      awayClubName: "Away FC",
+    },
+    phase: "complete",
+  } as never);
+  recordRevealedLines(rid("s1"), MatchId.make("m1"), [line(23, "Goal!"), line(67, "Second!")]);
+  recordRevealedMinute(rid("s1"), 67);
+  recordRevealedScore(rid("s1"), { homeScore: 2, awayScore: 1 });
+};
 
 const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown>) => {
   (window as unknown as { cmClone: { call: unknown } }).cmClone = { call: impl };
@@ -53,7 +60,7 @@ afterEach(() => {
 
 describe("MatchDayScreen at full time — the settled feed stays on screen (no lost commentary)", () => {
   it("keeps the scoreboard, the Full time status, the revealed feed and the final score row", async () => {
-    setActiveMatch(fullTimeSession() as never);
+    fullTimeSession();
     mockPreload(async () => ({ _tag: "Failure", error: NOT_FOUND } as never));
     render(
       <RegistryProvider>

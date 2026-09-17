@@ -6,7 +6,7 @@ import { MatchStatsScreen } from "../../../src/renderer/matchStats/MatchStatsScr
 import {
   clearActiveMatch,
   recordFullTime,
-  recordRevealedEvents,
+  recordRevealedLines,
   setActiveMatch,
 } from "../../../src/renderer/match/session.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
@@ -76,9 +76,7 @@ const liveSession = () =>
       awayClubName: "Away FC",
       isHome: true,
     },
-    cursor: 0,
     phase: "live",
-    streamComplete: false,
   } as never);
 
 afterEach(() => {
@@ -104,7 +102,7 @@ describe("Match Statistics screen (Screens 95/100)", () => {
 
   it("during a live match, asks for the match in play cut after the revealed events", async () => {
     liveSession();
-    recordRevealedEvents(s1, 37);
+    recordRevealedLines(s1, MatchId.make("m1"), Array.from({ length: 37 }, (_, minute) => ({ minute, tag: "ShotMissed", text: "Wide." })));
     const calls = mount((method) =>
       method === "getLeagueTable" ? { _tag: "Success", value: leagueTable("m1") } : { _tag: "Success", value: view(63) },
     );

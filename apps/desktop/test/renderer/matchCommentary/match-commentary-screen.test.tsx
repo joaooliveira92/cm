@@ -6,14 +6,14 @@ import { MatchCommentaryScreen } from "../../../src/renderer/matchCommentary/Mat
 import {
   clearActiveMatch,
   recordFullTime,
-  recordRevealedEvents,
+  recordRevealedLines,
   setActiveMatch,
 } from "../../../src/renderer/match/session.js";
 import { POLL_INTERVAL_MS, RegistryProvider } from "../../../src/renderer/rpc.js";
 
 const s1 = SaveId.make("s1");
 
-const leagueTable = (matchId: string) => ({
+const leagueTable = (matchId: string | null) => ({
   season: {
     seasonNumber: 1,
     currentDate: "2026-08-01",
@@ -58,7 +58,7 @@ const chunkAfter = (cursor: number) => ({
   awayOnPitchCount: 11,
 });
 
-const mount = async (matchId = "m1") => {
+const mount = async (matchId: string | null = "m1") => {
   const reads: Array<Record<string, unknown>> = [];
   (window as unknown as { cmClone: { call: unknown } }).cmClone = {
     call: async (method: string, payload: Record<string, unknown>) => {
@@ -93,9 +93,7 @@ const liveSession = () =>
       awayClubName: "Away FC",
       isHome: true,
     },
-    cursor: 0,
     phase: "live",
-    streamComplete: false,
   } as never);
 
 const shown = () => screen.queryAllByText(/./, { selector: "p > span:last-child" }).map((node) => node.textContent);
@@ -113,7 +111,7 @@ afterEach(() => {
 describe("Match Commentary screen shows no more than Match day has revealed (group-g-match-day 22)", () => {
   it("during a live match, lists only the revealed lines, not a later goal or the result", async () => {
     liveSession();
-    recordRevealedEvents(s1, 2);
+    recordRevealedLines(s1, MatchId.make("m1"), LINES.slice(0, 2));
     const reads = await mount();
 
     expect(shown()).toEqual(["And we're off.", "Wide from distance."]);
@@ -122,7 +120,7 @@ describe("Match Commentary screen shows no more than Match day has revealed (gro
     expect(reads[0]).toMatchObject({ matchId: "m1", cursor: 0, revealedEvents: 2 });
 
     // Match day reveals the goal: the screen follows on its next tick, and no further.
-    recordRevealedEvents(s1, 3);
+    recordRevealedLines(s1, MatchId.make("m1"), LINES.slice(0, 3));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
     });
@@ -147,5 +145,30 @@ describe("Match Commentary screen shows no more than Match day has revealed (gro
 
     expect(shown()).toEqual([]);
     expect(screen.queryByText(/final whistle/)).toBeNull();
+  });
+});
+
+describe("Match Commentary screen says why the feed is empty (group-g-match-day 23)", () => {
+  it("with a match in play and nothing revealed yet, says the lines follow Match day", async () => {
+    liveSession();
+    await mount();
+
+    expect(shown()).toEqual([]);
+    expect(screen.getByText("No Commentary Lines revealed yet. They appear here as Match day reveals them.")).toBeTruthy();
+    expect(screen.queryByText(/Start the match/)).toBeNull();
+  });
+
+  it("with a started match this renderer has revealed nothing of, says the same, not that no match started", async () => {
+    await mount("m7");
+
+    expect(screen.getByText("No Commentary Lines revealed yet. They appear here as Match day reveals them.")).toBeTruthy();
+    expect(screen.queryByText(/Start the match/)).toBeNull();
+  });
+
+  it("with no match started, says so instead of loading forever", async () => {
+    await mount(null);
+
+    expect(screen.queryByText(/Loading commentary/)).toBeNull();
+    expect(screen.getByText("No match in play. Commentary appears here once one kicks off on Match day.")).toBeTruthy();
   });
 });

@@ -3,13 +3,11 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { Effect, Result } from "effect";
 import type {
-  CommentaryLineView,
   MatchMode,
   MatchSummary,
   PendingFixtureView,
@@ -72,15 +70,6 @@ export const MatchProvider = ({
   const [phase, setPhase] = useState<MatchPhase>("awaiting-kickoff");
   const [hydrated, setHydrated] = useState(false);
 
-  // Mutable pacing state that lives here so session restore and the streaming
-  // hook can share it through the context. The hook reads the refs; only the
-  // provider writes them on restore.
-  const cursorRef = useRef(0);
-  const streamCompleteRef = useRef(false);
-  // Client-side only: revealed lines, scores and sub state are synced every
-  // session-restore or poll, so they never survive a restart in these refs.
-  const pendingRef = useRef<Array<CommentaryLineView>>([]);
-
   const tableResult = useAtomValue(leagueTableAtom(saveId));
   const pending = tableResult._tag === "Success" ? tableResult.value.season.awaitingFixture : null;
 
@@ -91,9 +80,6 @@ export const MatchProvider = ({
       if (pending === null) return;
       setError(null);
       setPhase("starting");
-      pendingRef.current = [];
-      streamCompleteRef.current = false;
-      cursorRef.current = 0;
       const outcome = await Effect.runPromise(
         startMatchRpc({ saveId, fixtureId: pending.fixtureId, mode }).pipe(Effect.result),
       );
@@ -134,15 +120,13 @@ export const MatchProvider = ({
   );
   const reportError = useCallback((message: string) => setError(message), []);
 
-  // Session restore: when a session was recorded for this save, resume it.
+  // Session restore: when a session was recorded for this save, resume it. `CommentaryProvider`
+  // restores what had been revealed of it.
   useEffect(() => {
     const resumed = getActiveMatch(saveId);
     if (resumed !== null) {
       setMatch(resumed.match);
       setPhase(resumed.phase);
-      cursorRef.current = resumed.cursor;
-      pendingRef.current = [];
-      streamCompleteRef.current = resumed.streamComplete;
     }
     setHydrated(true);
   }, [saveId]);
@@ -151,13 +135,7 @@ export const MatchProvider = ({
   // longer in flight: recording it would restore a stale Match day and keep Continue suspended.
   useEffect(() => {
     if (match === null || phase === "committing" || phase === "committed") return;
-    setActiveMatch({
-      saveId,
-      match,
-      cursor: cursorRef.current,
-      phase,
-      streamComplete: streamCompleteRef.current,
-    });
+    setActiveMatch({ saveId, match, phase });
   }, [saveId, match, phase]);
 
   useEffect(() => {

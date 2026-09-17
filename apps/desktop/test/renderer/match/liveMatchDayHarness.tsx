@@ -149,9 +149,7 @@ export const session = (overrides: SessionOverrides = {}) => ({
     awayClubName: "Away FC",
     isHome: overrides.isHome ?? true,
   },
-  cursor: 0,
   phase: "live" as const,
-  streamComplete: false,
 });
 
 export interface Submissions {
@@ -183,8 +181,9 @@ export const takesSubstitutions: CommandResponder = (command, taken) => {
 /** What `resumeSimulation` answers: the same view every call, or one per call (numbered from 0). */
 export type Polled = Record<string, unknown> | ((call: number) => Record<string, unknown>);
 
+/** `sess` is the session to resume, or null to return to the one a previous mount left behind. */
 export const mountMatchDayWithSpine = async (
-  sess: ReturnType<typeof session>,
+  sess: ReturnType<typeof session> | null,
   onCall?: (method: string, payload: unknown) => Promise<unknown> | undefined,
   respond: CommandResponder = takesSubstitutions,
   polled: Polled = {},
@@ -194,7 +193,7 @@ export const mountMatchDayWithSpine = async (
   const taken = { home: 0, away: 0 };
   window.localStorage.clear();
   window.localStorage.setItem(teachingSplashStorageKey, "1");
-  setActiveMatch(sess as never);
+  if (sess !== null) setActiveMatch(sess as never);
   mockPreload(async (method, payload) => {
     if (method === "getTactics") return { _tag: "Success", value: tacticView() } as never;
     if (method === "resumeSimulation") {

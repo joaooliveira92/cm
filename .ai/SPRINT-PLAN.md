@@ -2,13 +2,17 @@
 
 ## Immediate next action
 
-**group-g-match-day** ticket 23 (remount replays from kickoff),
-24 (ungated halftime toggle), 25 (count edge cases), 26 (forced substitution brings back used
-players); 20 needs triage (a command rewrites seen play); decision requests 01 (live tactics resets
-the line-up) and 04 (who may come on) need a human;
+**group-g-match-day** ticket 24 (ungated halftime toggle), 25 (count edge cases), 26 (forced substitution brings back used
+players), 27 (header readout stuck at 0-0), 28 (session residue across matches); 20 needs triage (a command rewrites seen play); decision requests 01 (live tactics resets
+the line-up), 04 (who may come on) and 05 (revealed position across a restart) need a human;
 then navbar-keyboard-intent 04 (a
 decision first), then group-a-reconciliation 20 (the Quit dialog is hidden under router overlays),
 then desktop-suite-red 14 (a flaky incoming-bids unit test).
+
+group-g-match-day ticket 23 resolved 2026-09-16: leaving and returning to Match day continues from the
+revealed position, including a pending injury decision. A restart still replays from kickoff
+(decision request 05). Another session's uncommitted React Compiler lint config is in the shared
+worktree and raises lint errors from 19 to 43; it was not staged.
 
 group-g-match-day ticket 22 resolved 2026-09-16: score, head-count and the Commentary screen stop at
 the revealed position, and `conditions` has left the match response. The head-count now visibly

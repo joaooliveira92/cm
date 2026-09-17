@@ -128,11 +128,9 @@ const resumedMatch = () => ({
     awayClubName: "Away FC",
     isHome: true,
   },
-  cursor: 0,
   // The session is mid-stream: `resumedMatch` stands in for a live resume, which is the
   // phase the control panel stays mounted in.
   phase: "live" as const,
-  streamComplete: false,
 });
 
 beforeEach(() => {

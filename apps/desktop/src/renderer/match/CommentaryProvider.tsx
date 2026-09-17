@@ -13,6 +13,7 @@ import type {
   InjuryView,
   MatchPitchView,
   RpcSuccess,
+  SaveId,
   SubstitutionStatusView,
 } from "@cm-clone/contracts";
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
@@ -21,28 +22,27 @@ import { resolveCommandStatus, type CommandStatus } from "./commandStatus.js";
 import { controlledOnPitchCount, controlledPitch, controlledSubs } from "./controlledClub.js";
 import { useMatchContext, type MatchCommand } from "./MatchProvider.js";
 import {
+  getActiveMatch,
   getHalfTimeRevealed,
   getRevealedEvents,
+  getRevealedFeed,
+  recordClubSubs,
   recordHalfTimeRevealed,
-  recordRevealedEvents,
+  recordRevealedInjuries,
+  recordRevealedLines,
   recordRevealedMinute,
   recordRevealedScore,
+  type LastRevealedInjury,
+  type RevealedInjury,
 } from "./session.js";
+
+export type { RevealedInjury } from "./session.js";
 
 /** `simulateMatch`'s half length — halftime commands are stamped at this minute. */
 const HALFTIME_MINUTE = 45;
 
 const stampMinute = (revealedMinute: number, halfTimeRevealed: boolean): number =>
   Math.max(1, halfTimeRevealed ? revealedMinute : Math.min(revealedMinute, HALFTIME_MINUTE));
-
-/** An Injury whose Commentary Line has been revealed. The object is the injury's identity while it
- *  stays revealed: a command removes exactly the ones that were revealed when it was sent. */
-export interface RevealedInjury {
-  readonly injury: InjuryView;
-  /** The controlled club's cap as known when the line was revealed. Whether the injury asks for a
-   *  decision is settled then: a cap reached later belongs to other substitutions, not to it. */
-  readonly capReachedWhenRevealed: boolean;
-}
 
 export interface CommentaryState {
   readonly revealed: ReadonlyArray<CommentaryLineView>;
@@ -110,15 +110,30 @@ const STATE_CHANGING_TAGS: ReadonlySet<string> = new Set(["Goal", "RedCard", "In
 
 export const CommentaryContext = createContext<CommentaryContextValue | null>(null);
 
+/**
+ * Where Match day's feed starts on mount: where it had got to when the manager left Match day, or
+ * kickoff when no match is in play. The pacing continues from the revealed position, so the feed does
+ * not replay and the recorded position, minute and score never rewind (group-g-match-day 23). The
+ * lines fetched ahead of the reveal were dropped with the old mount and are read again from there.
+ */
+const restoreFeed = (saveId: SaveId) => {
+  const session = getActiveMatch(saveId);
+  if (session === null) return null;
+  return { phase: session.phase, ...getRevealedFeed(saveId, session.match.matchId) };
+};
+
 export const CommentaryProvider = ({ children }: { readonly children: ReactNode }) => {
   const { state: matchState, actions: matchActions } = useMatchContext();
-  const phaseOnMount = matchState.phase;
+  const [restored] = useState(() => restoreFeed(matchState.saveId));
 
-  const [revealed, setRevealed] = useState<ReadonlyArray<CommentaryLineView>>([]);
-  const [homeScore, setHomeScore] = useState(0);
-  const [awayScore, setAwayScore] = useState(0);
-  const [clubSubs, setClubSubs] = useState<SubstitutionStatusView>(NO_SUBS);
-  const [clubSubsKnown, setClubSubsKnown] = useState(false);
+  const [revealed, setRevealed] = useState<ReadonlyArray<CommentaryLineView>>(restored?.lines ?? []);
+  const [homeScore, setHomeScore] = useState(restored?.score.homeScore ?? 0);
+  const [awayScore, setAwayScore] = useState(restored?.score.awayScore ?? 0);
+  // Counts restored with a paused decision are shown at once; the restore read below refreshes them.
+  const [clubSubs, setClubSubs] = useState<SubstitutionStatusView>(restored?.clubSubs ?? NO_SUBS);
+  const [clubSubsKnown, setClubSubsKnown] = useState((restored?.clubSubs ?? null) !== null);
+  /** `clubSubs` as of the last change, so a response can compare against it when it lands. */
+  const clubSubsRef = useRef<SubstitutionStatusView>(restored?.clubSubs ?? NO_SUBS);
   const [clubOnPitchCount, setClubOnPitchCount] = useState(11);
   const [clubPitch, setClubPitch] = useState<MatchPitchView | null>(null);
   /** Polls, re-reads and commands are numbered in send order; the score, head-count and `clubPitch`
@@ -127,26 +142,42 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
    *  same position. */
   const pitchSentRef = useRef(0);
   const pitchAppliedRef = useRef(0);
-  const [revealedInjuries, setRevealedInjuries] = useState<ReadonlyArray<RevealedInjury>>([]);
+  const [revealedInjuries, setRevealedInjuries] = useState<ReadonlyArray<RevealedInjury>>(restored?.revealedInjuries ?? []);
   /** `revealedInjuries` as of the last change, for a command to snapshot when it is sent. */
-  const revealedInjuriesRef = useRef<ReadonlyArray<RevealedInjury>>([]);
+  const revealedInjuriesRef = useRef<ReadonlyArray<RevealedInjury>>(restored?.revealedInjuries ?? []);
   /** Each buffered Injury line's typed Injury, keyed by the line object the buffer holds. */
   const injuryByLineRef = useRef(new WeakMap<CommentaryLineView, InjuryView>());
   /** The injury the last revealed line brought, or null when that line was not an Injury. */
-  const lastRevealedInjuryRef = useRef<{ readonly revealed: RevealedInjury; readonly minute: number } | null>(null);
-  const capReachedRef = useRef(false);
-  const [currentMinute, setCurrentMinute] = useState(0);
+  const lastRevealedInjuryRef = useRef<LastRevealedInjury | null>(restored?.lastRevealedInjury ?? null);
+  const capReachedRef = useRef(restored?.clubSubs?.capReached ?? false);
+  const [currentMinute, setCurrentMinute] = useState(restored?.minute ?? 0);
 
-  const cursorRef = useRef(0);
+  // One Commentary Line per Match Event, so the revealed count is the cursor to read on from.
+  const cursorRef = useRef(restored?.lines.length ?? 0);
   const pendingRef = useRef<Array<CommentaryLineView>>([]);
   const fetchingRef = useRef(false);
-  const streamCompleteRef = useRef(false);
+  // At full time every line was revealed before the session recorded it; in play, a poll reports it.
+  const streamCompleteRef = useRef(restored?.phase === "complete");
   /** Sync with the restored match phase so the streaming hook's poll gate
    *  sees the correct pause state on the first render cycle. */
-  const pausedRef = useRef(phaseOnMount === "paused");
+  const pausedRef = useRef(restored?.phase === "paused");
 
   const runCommand = useAtomSet(submitMatchCommandMutation, { mode: "promise" });
 
+  /** False once Match day has unmounted. A response that lands after that must not write the session:
+   *  a return may already have restored from it and moved on. */
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  /** A read issued once on a mount that restored a match paused on a revealed injury, whatever the
+   *  last revealed line: a paused match is not polled, so nothing else refreshes the counts and pitch
+   *  it restored with. Any other restored match polls straight away. */
+  const restoreReadRef = useRef(restored?.phase === "paused" && restored.revealedInjuries.length > 0);
   const nextPitchRequest = useCallback((): number => {
     pitchSentRef.current += 1;
     return pitchSentRef.current;
@@ -160,9 +191,26 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
       pitchAppliedRef.current = request;
       setHomeScore(view.homeScore);
       setAwayScore(view.awayScore);
-      recordRevealedScore(matchState.saveId, { homeScore: view.homeScore, awayScore: view.awayScore });
+      if (mountedRef.current) {
+        recordRevealedScore(matchState.saveId, { homeScore: view.homeScore, awayScore: view.awayScore });
+      }
       setClubOnPitchCount(controlledOnPitchCount(matchState.match, view));
       setClubPitch(controlledPitch(matchState.match, view));
+    },
+    [matchState.match, matchState.saveId],
+  );
+
+  /** Takes the controlled club's counts from a match response. Counts only rise, so a read sent before
+   *  a command and answered after it passes `neverLower` and cannot undo the command's. */
+  const applyClubSubs = useCallback(
+    (view: RpcSuccess<"resumeSimulation">, neverLower: boolean): void => {
+      if (matchState.match === null) return;
+      const reported = controlledSubs(matchState.match, view);
+      const next = neverLower && reported.used < clubSubsRef.current.used ? clubSubsRef.current : reported;
+      clubSubsRef.current = next;
+      setClubSubs(next);
+      setClubSubsKnown(true);
+      if (mountedRef.current) recordClubSubs(matchState.saveId, matchState.match.matchId, next);
     },
     [matchState.match, matchState.saveId],
   );
@@ -179,49 +227,55 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     if (view.isComplete) streamCompleteRef.current = true;
     // Substitution counts cover the Match Events revealed when the poll was sent, so a poll is as good
     // a source as a command response (the standalone screens read them the same way).
-    // A poll sent before a command can land after it: the count only rises, so never lower it.
-    if (matchState.match !== null) {
-      const polled = controlledSubs(matchState.match, view);
-      setClubSubs((current) => (polled.used >= current.used ? polled : current));
-      setClubSubsKnown(true);
-    }
+    applyClubSubs(view, true);
     applyRevealedState(view, request);
-  }, [matchState.match, applyRevealedState]);
+  }, [applyClubSubs, applyRevealedState]);
 
   // A poll is read ahead of the reveal, but its state is cut at the position it was sent at, so a goal,
   // red card or substitution revealed from its buffer is not in it. Re-read the state at the new
-  // position; the chunk itself is dropped.
+  // position, and once on a restored mount; the chunk itself is dropped.
   const lastRevealedTag = revealed.at(-1)?.tag;
   useEffect(() => {
     const match = matchState.match;
-    if (match === null || lastRevealedTag === undefined || !STATE_CHANGING_TAGS.has(lastRevealedTag)) return;
+    if (match === null) return;
+    const restoring = restoreReadRef.current;
+    restoreReadRef.current = false;
+    if (!restoring && (lastRevealedTag === undefined || !STATE_CHANGING_TAGS.has(lastRevealedTag))) return;
     const revealedEvents = getRevealedEvents(matchState.saveId);
     const request = nextPitchRequest();
     const read = resumeSimulation({ saveId: matchState.saveId, matchId: match.matchId, cursor: cursorRef.current, revealedEvents });
     Effect.runPromise(read.pipe(Effect.result)).then(
       (outcome) => {
-        if (Result.isSuccess(outcome)) applyRevealedState(outcome.success, request);
+        if (Result.isFailure(outcome)) return;
+        applyClubSubs(outcome.success, true);
+        applyRevealedState(outcome.success, request);
       },
       () => undefined,
     );
-  }, [revealed.length, lastRevealedTag, matchState.match, matchState.saveId, applyRevealedState, nextPitchRequest]);
+  }, [revealed.length, lastRevealedTag, matchState.match, matchState.saveId, applyClubSubs, applyRevealedState, nextPitchRequest]);
 
   useEffect(() => {
     capReachedRef.current = clubSubs.capReached;
   }, [clubSubs.capReached]);
 
+  /** Every change to the revealed injuries goes through here, so the session a remount restores
+   *  from always holds the latest. */
   const updateInjuries = useCallback(
     (update: (current: ReadonlyArray<RevealedInjury>) => ReadonlyArray<RevealedInjury>): void => {
       revealedInjuriesRef.current = update(revealedInjuriesRef.current);
       setRevealedInjuries(revealedInjuriesRef.current);
+      if (mountedRef.current && matchState.match !== null) {
+        recordRevealedInjuries(matchState.saveId, matchState.match.matchId, revealedInjuriesRef.current, lastRevealedInjuryRef.current);
+      }
     },
-    [],
+    [matchState.match, matchState.saveId],
   );
 
   const revealLine = useCallback((line: CommentaryLineView): void => {
+    const matchId = matchState.match?.matchId;
     setRevealed((lines) => {
       const next = [...lines, line];
-      recordRevealedEvents(matchState.saveId, next.length);
+      if (matchId !== undefined) recordRevealedLines(matchState.saveId, matchId, next);
       return next;
     });
     // The engine emits an Injury's forced Substitution as the very next Match Event, at the same
@@ -233,6 +287,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     const injury = injuryByLineRef.current.get(line);
     if (injury === undefined) {
       lastRevealedInjuryRef.current = null;
+      if (matchId !== undefined) recordRevealedInjuries(matchState.saveId, matchId, revealedInjuriesRef.current, null);
     } else {
       const revealed: RevealedInjury = { injury, capReachedWhenRevealed: capReachedRef.current };
       lastRevealedInjuryRef.current = { revealed, minute: line.minute };
@@ -241,7 +296,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     setCurrentMinute(line.minute);
     recordRevealedMinute(matchState.saveId, line.minute);
     if (line.tag === "HalfTimeReached") recordHalfTimeRevealed(matchState.saveId);
-  }, [matchState.saveId, updateInjuries]);
+  }, [matchState.match, matchState.saveId, updateInjuries]);
 
   const setPaused = useCallback(
     (paused: boolean) => matchActions.setPhasePaused(paused),
@@ -260,10 +315,9 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
       const match = matchState.match;
       updateInjuries((current) => current.filter((revealed) => !actedOn.includes(revealed)));
       if (match === null) return;
-      setClubSubs(controlledSubs(match, response));
-      setClubSubsKnown(true);
+      applyClubSubs(response, false);
     },
-    [matchState.match, updateInjuries],
+    [matchState.match, updateInjuries, applyClubSubs],
   );
 
   const submitCommand = useCallback(
