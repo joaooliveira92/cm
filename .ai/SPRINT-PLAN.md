@@ -2,13 +2,19 @@
 
 ## Immediate next action
 
-**group-g-match-day** ticket 26 (forced substitution brings back used
-players), 27 (header readout stuck at 0-0), 28 (session residue across matches), 29 (windows share a minute across halves), 30 (report lists
-goalkeeper stand-ins); 20 needs triage (a command rewrites seen play); decision requests 01 (live tactics resets
-the line-up), 04 (who may come on) and 05 (revealed position across a restart) need a human;
+**group-g-match-day** ticket 27 (header readout stuck at 0-0), 28 (session residue across matches), 30 (report lists goalkeeper stand-ins); 26 (forced substitution
+brings back used players, patch kept) and 29 (windows across halves) are blocked on decision request
+07; 20 needs triage (a command rewrites seen play); decision requests 01 (live tactics resets
+the line-up), 04 (who may come on), 05 (revealed position across a restart), 06 (red-carded keeper)
+and 07 (engine rule changes vs saved matches) need a human;
 then navbar-keyboard-intent 04 (a
 decision first), then group-a-reconciliation 20 (the Quit dialog is hidden under router overlays),
 then desktop-suite-red 14 (a flaky incoming-bids unit test).
+
+group-g-match-day ticket 26 parked 2026-09-17: the fix changes engine results, and match history
+re-derives from seed and journal on every read, so it would make saved Match Reports contradict
+their stored results. Kept as a patch; decision request 07 asks how engine rules may change without
+rewriting saved matches, which gates every engine-rule fix in this effort.
 
 group-g-match-day ticket 25 resolved 2026-09-17: substitution counts, windows, statistics and command
 outcomes (including bring-offs) follow the engine's own rules, and a severe goalkeeper injury at the

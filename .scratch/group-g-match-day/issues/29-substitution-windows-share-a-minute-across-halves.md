@@ -16,7 +16,7 @@ A cheaper long-term route is also open: have the engine mark each Substitution e
 changes the event model and needs an architecture-class Agent Note. Found in review of
 [ticket 25](25-substitution-count-and-outcome-accuracy.md).
 
-**Blocked by:** None
+**Blocked by:** [decision request 07](../decision-request-07-engine-rule-changes-and-saved-matches.md) (engine rule changes rewrite saved matches)
 
 **Status:** ready-for-agent
 
