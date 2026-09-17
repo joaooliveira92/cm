@@ -152,7 +152,7 @@ export const useMatchControl = ({
 
   const recordApplied = (applied: Tactic): void => {
     appliedTacticRef.current = applied;
-    recordLiveTactic(saveId, applied);
+    if (matchState.match !== null) recordLiveTactic(saveId, matchState.match.matchId, applied);
   };
 
   const onApplyTactics = async (): Promise<void> => {

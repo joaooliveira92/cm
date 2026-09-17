@@ -39,8 +39,8 @@ const fullTimeSession = () => {
     phase: "complete",
   } as never);
   recordRevealedLines(rid("s1"), MatchId.make("m1"), [line(23, "Goal!"), line(67, "Second!")]);
-  recordRevealedMinute(rid("s1"), 67);
-  recordRevealedScore(rid("s1"), { homeScore: 2, awayScore: 1 });
+  recordRevealedMinute(rid("s1"), MatchId.make("m1"), 67);
+  recordRevealedScore(rid("s1"), MatchId.make("m1"), { homeScore: 2, awayScore: 1 });
 };
 
 const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown>) => {

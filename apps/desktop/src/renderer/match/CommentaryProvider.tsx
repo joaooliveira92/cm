@@ -192,7 +192,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
       setHomeScore(view.homeScore);
       setAwayScore(view.awayScore);
       if (mountedRef.current) {
-        recordRevealedScore(matchState.saveId, { homeScore: view.homeScore, awayScore: view.awayScore });
+        recordRevealedScore(matchState.saveId, matchState.match.matchId, { homeScore: view.homeScore, awayScore: view.awayScore });
       }
       setClubOnPitchCount(controlledOnPitchCount(matchState.match, view));
       setClubPitch(controlledPitch(matchState.match, view));
@@ -259,13 +259,23 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
   }, [clubSubs.capReached]);
 
   /** Every change to the revealed injuries goes through here, so the session a remount restores
-   *  from always holds the latest. */
+   *  from always holds the latest.
+   *
+   *  Unmounted, it still records against the session while the match is paused: a paused match
+   *  reveals nothing, so a return is still on the same decision, and a late response that resolved it
+   *  must not leave it to be offered again (group-g-match-day 28). The update then applies to what the
+   *  session holds, not to this mount's copy. */
   const updateInjuries = useCallback(
     (update: (current: ReadonlyArray<RevealedInjury>) => ReadonlyArray<RevealedInjury>): void => {
       revealedInjuriesRef.current = update(revealedInjuriesRef.current);
       setRevealedInjuries(revealedInjuriesRef.current);
-      if (mountedRef.current && matchState.match !== null) {
-        recordRevealedInjuries(matchState.saveId, matchState.match.matchId, revealedInjuriesRef.current, lastRevealedInjuryRef.current);
+      const match = matchState.match;
+      if (match === null) return;
+      if (mountedRef.current) {
+        recordRevealedInjuries(matchState.saveId, match.matchId, revealedInjuriesRef.current, lastRevealedInjuryRef.current);
+      } else if (getActiveMatch(matchState.saveId)?.phase === "paused") {
+        const recorded = getRevealedFeed(matchState.saveId, match.matchId);
+        recordRevealedInjuries(matchState.saveId, match.matchId, update(recorded.revealedInjuries), recorded.lastRevealedInjury);
       }
     },
     [matchState.match, matchState.saveId],
@@ -295,8 +305,10 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
       updateInjuries((current) => [...current, revealed]);
     }
     setCurrentMinute(line.minute);
-    recordRevealedMinute(matchState.saveId, line.minute);
-    if (line.tag === "HalfTimeReached") recordHalfTimeRevealed(matchState.saveId);
+    if (matchId !== undefined) {
+      recordRevealedMinute(matchState.saveId, matchId, line.minute);
+      if (line.tag === "HalfTimeReached") recordHalfTimeRevealed(matchState.saveId, matchId);
+    }
   }, [matchState.match, matchState.saveId, updateInjuries]);
 
   // Publish the live-match readout so the chrome shows it and suspends Continue: present while the

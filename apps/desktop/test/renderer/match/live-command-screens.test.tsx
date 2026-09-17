@@ -155,7 +155,7 @@ describe("Match Substitutions — the live substitution screen", () => {
 
   it("shows a loading state, then the controlled club's allowance and the score Match day has shown", async () => {
     setActiveMatch(liveSession() as never);
-    recordRevealedScore(rid("s1"), { homeScore: 0, awayScore: 1 });
+    recordRevealedScore(rid("s1"), MatchId.make("m1"), { homeScore: 0, awayScore: 1 });
     mount(MatchSubstitutionsScreen, (method) =>
       method === "getTactics"
         ? ok(tacticsView())
@@ -170,14 +170,14 @@ describe("Match Substitutions — the live substitution screen", () => {
 
   it("offers the halftime instruction only while the reveal stands at half time", async () => {
     setActiveMatch(liveSession() as never);
-    recordRevealedMinute(rid("s1"), 70);
+    recordRevealedMinute(rid("s1"), MatchId.make("m1"), 70);
     mount(MatchSubstitutionsScreen, (method) => (method === "getTactics" ? ok(tacticsView()) : ok(resumeView())));
     const toggle = (await screen.findByLabelText(/Apply as a halftime instruction/)) as HTMLInputElement;
     expect(toggle.disabled).toBe(true);
     cleanup();
 
-    recordRevealedMinute(rid("s1"), 45);
-    recordHalfTimeRevealed(rid("s1"));
+    recordRevealedMinute(rid("s1"), MatchId.make("m1"), 45);
+    recordHalfTimeRevealed(rid("s1"), MatchId.make("m1"));
     mount(MatchSubstitutionsScreen, (method) => (method === "getTactics" ? ok(tacticsView()) : ok(resumeView())));
     expect(((await screen.findByLabelText(/Apply as a halftime instruction/)) as HTMLInputElement).disabled).toBe(false);
   });
@@ -185,7 +185,7 @@ describe("Match Substitutions — the live substitution screen", () => {
   it("lists who the match has on the pitch and who is unused, not the tactic, and follows a command's response", async () => {
     setActiveMatch(liveSession() as never);
     // The tactic still names on-0 and on-3, but the match took on-0 off for bench-1 and sent on-3 off.
-    recordLiveTactic(rid("s1"), tactic() as never);
+    recordLiveTactic(rid("s1"), MatchId.make("m1"), tactic() as never);
     const swapped = pitch({ "on-0": "bench-1" }, ["bench-2"]);
     const afterRed = { ...swapped, onPitch: swapped.onPitch.filter((slot) => slot.playerId !== "on-3") };
     const afterCommand = { ...afterRed, onPitch: afterRed.onPitch.map((slot) => (slot.playerId === "on-1" ? { ...slot, playerId: "bench-2" } : slot)), substitutes: [] };
@@ -249,8 +249,8 @@ describe("Match Substitutions — the live substitution screen", () => {
 
   it("submits the substitution for the controlled club at the revealed minute and shows it applied", async () => {
     setActiveMatch(liveSession() as never);
-    recordRevealedMinute(rid("s1"), 63);
-    recordHalfTimeRevealed(rid("s1"));
+    recordRevealedMinute(rid("s1"), MatchId.make("m1"), 63);
+    recordHalfTimeRevealed(rid("s1"), MatchId.make("m1"));
     const calls = mount(MatchSubstitutionsScreen, (method) => {
       if (method === "getTactics") return ok(tacticsView());
       if (method === "submitMatchCommand") {

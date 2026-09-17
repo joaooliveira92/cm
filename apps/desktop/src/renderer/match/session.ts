@@ -50,12 +50,8 @@ export interface RevealedInjury {
   readonly capReachedWhenRevealed: boolean;
 }
 
-interface LiveCommandContext {
-  readonly saveId: SaveId;
-  /** The match Match day revealed this of, or null before it recorded any line, injury or
-   *  substitution count. A write for another match starts the context afresh, and a read for another
-   *  match finds nothing, so a late write for a finished match never seeds the next one. */
-  readonly matchId: MatchId | null;
+/** What Match day revealed of one match. */
+interface LiveValues {
   readonly revealedMinute: number;
   readonly halfTimeRevealed: boolean;
   /** The Commentary Lines Match day has revealed. One per Match Event, so their count is a position
@@ -70,6 +66,17 @@ interface LiveCommandContext {
   /** The controlled club's substitution counts as a match response last reported them, or null
    *  before one did. A match paused on a decision is not polled, so a return reads them from here. */
   readonly clubSubs: SubstitutionStatusView | null;
+}
+
+/**
+ * The live context belongs to one match. Every write names its match and lands only while that match
+ * is the save's active match; every read is of the active match. A write from a read in flight across
+ * Accept result, or one for the previous match that lands after the next one started, therefore
+ * reaches no match's readers (group-g-match-day 28).
+ */
+interface LiveCommandContext extends LiveValues {
+  readonly saveId: SaveId;
+  readonly matchId: MatchId;
 }
 
 export interface LastRevealedInjury {
@@ -106,9 +113,7 @@ export const clearActiveMatch = (saveId: SaveId): void => {
   if (live !== null && live.saveId === saveId) live = null;
 };
 
-const freshLive = (saveId: SaveId, matchId: MatchId | null): LiveCommandContext => ({
-  saveId,
-  matchId,
+const NOTHING_REVEALED: LiveValues = {
   revealedMinute: 0,
   halfTimeRevealed: false,
   revealedLines: [],
@@ -117,31 +122,34 @@ const freshLive = (saveId: SaveId, matchId: MatchId | null): LiveCommandContext 
   revealedInjuries: [],
   lastRevealedInjury: null,
   clubSubs: null,
-});
-
-/** The context to write to. Without `matchId` it is the save's, whichever match it holds; with one,
- *  a context for another match is replaced. */
-const liveFor = (saveId: SaveId, matchId: MatchId | null = null): LiveCommandContext => {
-  if (live === null || live.saveId !== saveId) return freshLive(saveId, matchId);
-  if (matchId === null || live.matchId === matchId) return live;
-  return live.matchId === null ? { ...live, matchId } : freshLive(saveId, matchId);
 };
 
-export const recordRevealedMinute = (saveId: SaveId, minute: number): void => {
-  live = { ...liveFor(saveId), revealedMinute: minute };
+/** What was revealed of `matchId`, or nothing when the context holds another match. */
+const liveOf = (saveId: SaveId, matchId: MatchId | undefined): LiveValues =>
+  live !== null && live.saveId === saveId && live.matchId === matchId ? live : NOTHING_REVEALED;
+
+/** What was revealed of the save's active match. */
+const liveOfActive = (saveId: SaveId): LiveValues => liveOf(saveId, getActiveMatch(saveId)?.match.matchId);
+
+/** Writes to `matchId`'s context, replacing another match's; a no-op unless `matchId` is in play. */
+const record = (saveId: SaveId, matchId: MatchId, values: Partial<LiveValues>): void => {
+  if (getActiveMatch(saveId)?.match.matchId !== matchId) return;
+  live = { ...liveOf(saveId, matchId), ...values, saveId, matchId };
 };
+
+export const recordRevealedMinute = (saveId: SaveId, matchId: MatchId, minute: number): void =>
+  record(saveId, matchId, { revealedMinute: minute });
 
 /** `simulateMatch`'s half length. `HalfTimeReached` and every halftime instruction are stamped at it. */
 export const HALFTIME_MINUTE = 45;
 
 /** Record that the `HalfTimeReached` boundary has been revealed. */
-export const recordHalfTimeRevealed = (saveId: SaveId): void => {
-  live = { ...liveFor(saveId), halfTimeRevealed: true };
-};
+export const recordHalfTimeRevealed = (saveId: SaveId, matchId: MatchId): void =>
+  record(saveId, matchId, { halfTimeRevealed: true });
 
-export const getHalfTimeRevealed = (saveId: SaveId): boolean => liveFor(saveId).halfTimeRevealed;
+export const getHalfTimeRevealed = (saveId: SaveId): boolean => liveOfActive(saveId).halfTimeRevealed;
 
-export const getRevealedMinute = (saveId: SaveId): number => liveFor(saveId).revealedMinute;
+export const getRevealedMinute = (saveId: SaveId): number => liveOfActive(saveId).revealedMinute;
 
 /**
  * Whether the reveal stands at half time: `HalfTimeReached` has been revealed and no second-half line
@@ -153,41 +161,35 @@ export const getRevealedMinute = (saveId: SaveId): number => liveFor(saveId).rev
  * minute alone cannot tell the window (group-g-match-day 16).
  */
 export const getAtHalfTime = (saveId: SaveId): boolean => {
-  const context = liveFor(saveId);
+  const context = liveOfActive(saveId);
   return context.halfTimeRevealed && context.revealedMinute === HALFTIME_MINUTE;
 };
 
-export const recordRevealedLines = (saveId: SaveId, matchId: MatchId, lines: ReadonlyArray<CommentaryLineView>): void => {
-  live = { ...liveFor(saveId, matchId), revealedLines: lines };
-};
+export const recordRevealedLines = (saveId: SaveId, matchId: MatchId, lines: ReadonlyArray<CommentaryLineView>): void =>
+  record(saveId, matchId, { revealedLines: lines });
 
-/** How many Commentary Lines Match day has revealed: the revealed position. */
-export const getRevealedEvents = (saveId: SaveId): number => liveFor(saveId).revealedLines.length;
+/** How many Commentary Lines Match day has revealed of the active match: the revealed position. */
+export const getRevealedEvents = (saveId: SaveId): number => liveOfActive(saveId).revealedLines.length;
 
-export const recordRevealedScore = (saveId: SaveId, score: RevealedScore): void => {
-  live = { ...liveFor(saveId), revealedScore: score };
-};
+export const recordRevealedScore = (saveId: SaveId, matchId: MatchId, score: RevealedScore): void =>
+  record(saveId, matchId, { revealedScore: score });
 
-export const getRevealedScore = (saveId: SaveId): RevealedScore | null => liveFor(saveId).revealedScore;
+export const getRevealedScore = (saveId: SaveId): RevealedScore | null => liveOfActive(saveId).revealedScore;
 
-export const recordLiveTactic = (saveId: SaveId, tactic: Tactic): void => {
-  live = { ...liveFor(saveId), liveTactic: tactic };
-};
+export const recordLiveTactic = (saveId: SaveId, matchId: MatchId, tactic: Tactic): void =>
+  record(saveId, matchId, { liveTactic: tactic });
 
-export const getLiveTactic = (saveId: SaveId): Tactic | null => liveFor(saveId).liveTactic;
+export const getLiveTactic = (saveId: SaveId): Tactic | null => liveOfActive(saveId).liveTactic;
 
 export const recordRevealedInjuries = (
   saveId: SaveId,
   matchId: MatchId,
   revealedInjuries: ReadonlyArray<RevealedInjury>,
   lastRevealedInjury: LastRevealedInjury | null,
-): void => {
-  live = { ...liveFor(saveId, matchId), revealedInjuries, lastRevealedInjury };
-};
+): void => record(saveId, matchId, { revealedInjuries, lastRevealedInjury });
 
-export const recordClubSubs = (saveId: SaveId, matchId: MatchId, clubSubs: SubstitutionStatusView): void => {
-  live = { ...liveFor(saveId, matchId), clubSubs };
-};
+export const recordClubSubs = (saveId: SaveId, matchId: MatchId, clubSubs: SubstitutionStatusView): void =>
+  record(saveId, matchId, { clubSubs });
 
 /** What Match day had revealed of `matchId` when it was last mounted: where a return continues from. */
 export interface RevealedFeed {
@@ -200,7 +202,7 @@ export interface RevealedFeed {
 }
 
 export const getRevealedFeed = (saveId: SaveId, matchId: MatchId): RevealedFeed => {
-  const context = live !== null && live.saveId === saveId && live.matchId === matchId ? live : freshLive(saveId, matchId);
+  const context = liveOf(saveId, matchId);
   return {
     lines: context.revealedLines,
     minute: context.revealedMinute,

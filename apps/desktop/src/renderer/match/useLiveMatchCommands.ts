@@ -186,7 +186,7 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
                 })
               : null;
         if (tactic !== null) {
-          recordLiveTactic(saveId, tactic);
+          recordLiveTactic(saveId, view.match.matchId, tactic);
           setLiveTactic(tactic);
         }
       } catch (error) {

@@ -442,3 +442,17 @@ Each of the six cases is pinned by a seeded or table test that failed first; see
 Reviewed inline by the orchestrator. The publish moved from `MatchProvider` (zeros) to
 `CommentaryProvider` (revealed values). Checked that both providers mount only together, in
 `MatchDayScreen`, so the readout's presence and Continue's suspension are unchanged.
+
+## Ticket 28 — match session residue across matches, 2026-09-17
+
+- Ticket closed: [28](../../.scratch/group-g-match-day/issues/28-match-session-save-keyed-residue.md)
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Desktop 61 failed / 1877 passed, the same failing cases as ticket 27's run. Lint 19, md-links 18. |
+| focused | `npx vitest run test/renderer/match test/renderer/matchCommentary test/renderer/matchStats test/renderer/chrome` | 7 failed (post-match-summary, pre-existing) / 191 passed |
+| e2e | `pnpm test:e2e e2e/journeys.spec.ts e2e/app.spec.ts e2e/router.spec.ts` | 20 passed (42.3s) |
+
+Review: APPROVE. The key risk was a session write landing before `setActiveMatch`, which would now
+be silently dropped. The reviewer traced every path and found none. Three lows are recorded in the
+ticket Answer.

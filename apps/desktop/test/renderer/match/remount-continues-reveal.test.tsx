@@ -169,14 +169,17 @@ const headerReadout = (): string | null => {
 };
 
 /** Watches the first `revealed` lines of `lines` on Match day, then leaves it. */
-const watchThenLeave = async (revealed: number) => {
+const watchThenLeave = (revealed: number) => watchThenLeaveWith(() => tick(revealed));
+
+/** Starts the match on Match day, does `watch` there, then leaves it. */
+const watchThenLeaveWith = async (watch: () => Promise<void>) => {
   setActiveMatch({
     saveId: s1,
     match: { matchId: "m1", fixtureId: 1, homeClubId: home, homeClubName: "Home FC", awayClubId: "away", awayClubName: "Away FC", isHome: true },
     phase: "live",
   } as never);
   await mountMatchDay();
-  await tick(revealed);
+  await watch();
   cleanup();
 };
 
@@ -295,7 +298,7 @@ describe("returning to Match day continues from the revealed position (group-g-m
     // A session that recorded no substitution counts.
     const m1 = MatchId.make("m1");
     recordRevealedLines(s1, m1, lines);
-    recordRevealedMinute(s1, 23);
+    recordRevealedMinute(s1, m1, 23);
     recordRevealedInjuries(s1, m1, [{ injury: knock(), capReachedWhenRevealed: true }], null);
 
     const returned = mockMatch(lines, { capReached: true });
@@ -332,5 +335,31 @@ describe("returning to Match day continues from the revealed position (group-g-m
     expect(first.commands).toHaveLength(1);
     expect(getRevealedScore(s1)).toEqual({ homeScore: 0, awayScore: 0 });
     expect(screen.queryByTestId("probe")).toBeNull();
+  });
+
+  it("does not offer again a decision a response that landed after leaving resolved (group-g-match-day 28)", async () => {
+    const lines = [at(1, "MatchStarted", "Kick-off."), at(23, "Injury", "He is down."), at(24, "ShotMissed", "Play on.")];
+    const first = mockMatch(lines, { capReached: true, injuries: [knock()], commandScore: 7, holdCommands: true });
+    await watchThenLeaveWith(async () => {
+      await tick(2);
+      expect(probe()).toBe("Kick-off. / He is down.|0-0|23|paused");
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Bring off" }));
+        await vi.advanceTimersByTimeAsync(0);
+      });
+    });
+
+    // Bring off is answered while Match day is away, and the match is still paused on it.
+    await act(async () => {
+      first.answerCommands();
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    mockMatch(lines, { capReached: true, holdReads: true });
+    await mountMatchDay();
+
+    expect(screen.getByTestId("injuries").textContent).toBe("");
+    // The score the late response carried still stays out of the session (ticket 23).
+    expect(getRevealedScore(s1)).toEqual({ homeScore: 0, awayScore: 0 });
   });
 });

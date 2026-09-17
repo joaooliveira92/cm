@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, afterEach, describe, expect, it } from "vitest";
-import { clearActiveMatch, getLiveTactic, recordLiveTactic } from "../../../src/renderer/match/session.js";
+import { MatchId } from "@cm-clone/contracts";
+import { clearActiveMatch, getLiveTactic, recordLiveTactic, setActiveMatch } from "../../../src/renderer/match/session.js";
 import { dispatchAction, resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import {
@@ -362,7 +363,8 @@ describe("Screen 97 — the panel and the standalone screens share one live line
   it("drafts a tactics change from the line-up a standalone substitution left, not the pre-match one", async () => {
     const substituted = fullTactic();
     const slots = substituted.slots.map((slot, index) => (index === 3 ? { ...slot, playerId: rid("bench-1") } : slot));
-    recordLiveTactic(rid("s1"), { ...substituted, slots } as never);
+    setActiveMatch(session() as never);
+    recordLiveTactic(rid("s1"), MatchId.make("m1"), { ...substituted, slots } as never);
 
     const submissions = await mountMatchDayWithSpine(session());
     openPanel();
