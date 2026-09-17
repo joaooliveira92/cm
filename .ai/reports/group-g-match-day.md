@@ -401,3 +401,30 @@ first against the ungated panel.
 Review: APPROVE. The orchestrator added the half-time submission assertion (L2). It kept the
 render-time clear the reviewer called redundant (L1): removing it failed the window test, because
 state set while the box was disabled showed ticked at half time.
+
+## Ticket 25 — substitution count and outcome accuracy, 2026-09-17
+
+- Ticket closed: [25](../../.scratch/group-g-match-day/issues/25-substitution-count-and-outcome-accuracy.md)
+- Filed: [29](../../.scratch/group-g-match-day/issues/29-substitution-windows-share-a-minute-across-halves.md), [30](../../.scratch/group-g-match-day/issues/30-match-report-lists-goalkeeper-stand-ins-as-substitutions.md); evidence added to decision request 01
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all (first pass) | `pnpm check:all` | exit 1, pre-existing only; desktop 61 failed / 1862 passed |
+| check:all (after rework) | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Contracts 156, game-engine 50, shared 461. Desktop 61 failed / 1873 passed, the same failing cases as ticket 24's run. Lint 19, md-links 18. |
+| focused | `npx vitest run test/renderer/match test/main/match test/renderer/matchCommentary test/renderer/matchStats` | 7 failed (post-match-summary, pre-existing) / 184 passed |
+| e2e | `pnpm test:e2e e2e/journeys.spec.ts e2e/app.spec.ts` | 12 passed (27.8s) |
+| determinism / save compatibility | — | the engine, seeding and persistence are unchanged; the response gains `forceOffApplied` and `InjuryView.replaced` |
+
+Each of the six cases is pinned by a seeded or table test that failed first; see the ticket Answer.
+
+**Review.**
+
+- **First review: NEEDS_REWORK.** M1 (medium): stand-in detection used the pitch fold, which drifts
+  after a live tactics change and undercounts. Lows L1–L5 and nits.
+- **Rework.** Stand-ins are classified by the engine's cap rules, with a pure table test. `replaced`
+  is red-only. The contracts test file is back under the ceiling without merging lines. The duplicated
+  constants and types are gone, `forceOffApplied` is keyed by journal position, and the null outcome
+  has neutral copy.
+- **After the rework.** M1 was medium, not blocker or high, so no full second review. The orchestrator
+  checked `classifySubstitutions` against `teamState.ts` `applyCommand`: the substitution cap, a window
+  on a new minute, and halftime not spending a window.

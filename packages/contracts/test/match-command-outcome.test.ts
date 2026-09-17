@@ -1,7 +1,7 @@
 import { Schema } from "effect";
 import { describe, expect, it } from "vitest";
 import { AppRpcs } from "../src/rpc.js";
-import { ResumeSimulationView, SubmitMatchCommandView } from "../src/index.js";
+import { InjuryView, ResumeSimulationView, SubmitMatchCommandView } from "../src/index.js";
 
 const subs = { used: 1, remaining: 4, windowsUsed: 1, windowsRemaining: 2, capReached: false };
 
@@ -33,11 +33,53 @@ const chunk = {
 describe("live match commands: the command's own outcome and the revealed cut", () => {
   it("SubmitMatchCommandView round-trips an applied, a refused and a non-substitution outcome", () => {
     for (const substitutionApplied of [true, false, null]) {
-      const wire = { ...chunk, substitutionApplied };
+      const wire = { ...chunk, substitutionApplied, forceOffApplied: null };
       expect(
         Schema.encodeSync(SubmitMatchCommandView)(Schema.decodeUnknownSync(SubmitMatchCommandView)(wire)),
       ).toEqual(wire);
     }
+  });
+
+  it("SubmitMatchCommandView round-trips a bring-off's outcome, and a response without it does not decode", () => {
+    for (const forceOffApplied of [true, false, null]) {
+      const wire = { ...chunk, substitutionApplied: null, forceOffApplied };
+      expect(
+        Schema.encodeSync(SubmitMatchCommandView)(Schema.decodeUnknownSync(SubmitMatchCommandView)(wire)),
+      ).toEqual(wire);
+    }
+    expect(() => Schema.decodeUnknownSync(AppRpcs.submitMatchCommand.success)({ ...chunk, substitutionApplied: null })).toThrow();
+  });
+
+  it("an Injury says whether a substitute came on for the player, and one without it does not decode", () => {
+    const injury = {
+      minute: 88,
+      teamClubId: "c1",
+      playerId: "p1",
+      trigger: "non-contact",
+      severity: "severe",
+      tier: "red",
+      type: "hamstring",
+    };
+    for (const replaced of [true, false]) {
+      const wire = { ...chunk, injuredClubIds: ["c1"], injuries: [{ ...injury, replaced }] };
+      expect(Schema.encodeSync(ResumeSimulationView)(Schema.decodeUnknownSync(ResumeSimulationView)(wire))).toEqual(wire);
+    }
+    expect(() => Schema.decodeUnknownSync(InjuryView)(injury)).toThrow();
+  });
+
+  it("InjuryView rejects an unknown trigger", () => {
+    expect(() =>
+      Schema.decodeUnknownSync(InjuryView)({
+        minute: 30,
+        teamClubId: "c1",
+        playerId: "p1",
+        trigger: "slide",
+        severity: "light",
+        tier: "orange",
+        type: "strain",
+        replaced: false,
+      }),
+    ).toThrow();
   });
 
   it("both match reads round-trip each club's pitch, and a response without it does not decode", () => {

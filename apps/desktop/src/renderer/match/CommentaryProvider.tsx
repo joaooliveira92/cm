@@ -60,7 +60,8 @@ export interface CommentaryState {
   readonly clubPitch: MatchPitchView | null;
   /** Injuries whose Commentary Line has been revealed and that are neither acted on nor resolved.
    *  Play on acts on all of them; a command the match answers acts on those revealed when it was sent.
-   *  The forced Substitution the engine emits right after an Injury resolves it. A chunk's injuries
+   *  The forced Substitution the engine emits right after an Injury resolves it, when the Injury says a
+   *  substitute came on (`replaced`). A chunk's injuries
    *  stay out of here until their line is revealed, because chunks are fetched ahead of the reveal. */
   readonly revealedInjuries: ReadonlyArray<RevealedInjury>;
   readonly currentMinute: number;
@@ -278,8 +279,9 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     });
     // The engine emits an Injury's forced Substitution as the very next Match Event, at the same
     // minute; a manager's substitution is applied before a minute's play, so it never lands there.
+    // A goalkeeper stand-in is also a Substitution there, but it replaces no one: the injury stands.
     const previous = lastRevealedInjuryRef.current;
-    if (line.tag === "Substitution" && previous !== null && previous.minute === line.minute) {
+    if (line.tag === "Substitution" && previous !== null && previous.minute === line.minute && previous.revealed.injury.replaced) {
       updateInjuries((current) => current.filter((revealed) => revealed !== previous.revealed));
     }
     const injury = injuryByLineRef.current.get(line);

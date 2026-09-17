@@ -10,7 +10,8 @@ import type { MatchCommand } from "./MatchProvider.js";
  * - `pending` — the request is in flight;
  * - `accepted` — journaled, but the command has no effect the response can confirm (a tactics
  *   change alters play, not an event);
- * - `applied` — the response confirms the effect (the substitution's own Substitution Match Event);
+ * - `applied` — the response confirms the effect (the substitution's own Substitution Match Event, or
+ *   the brought-off player having been on the pitch);
  * - `rejected` — the call failed, or it was journaled and the response shows no effect.
  */
 export type CommandStatus =
@@ -34,13 +35,16 @@ export interface ClubCommandSnapshot {
  */
 export const resolveCommandStatus = (
   command: MatchCommand,
-  response: Pick<RpcSuccess<"submitMatchCommand">, "substitutionApplied">,
+  response: Pick<RpcSuccess<"submitMatchCommand">, "substitutionApplied" | "forceOffApplied">,
 ): CommandStatus => {
   switch (command._tag) {
     case "ChangeTactics":
-    // No event confirms a player taken off: the head-count is per chunk.
-    case "ForceOff":
       return { _tag: "accepted" };
+    case "ForceOff":
+      if (response.forceOffApplied === null) return { _tag: "rejected", reason: "The match did not confirm the bring-off." };
+      return response.forceOffApplied
+        ? { _tag: "applied" }
+        : { _tag: "rejected", reason: "The player was not on the pitch." };
     case "MakeSubstitution":
       return response.substitutionApplied === true
         ? { _tag: "applied" }

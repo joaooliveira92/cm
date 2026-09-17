@@ -14,12 +14,13 @@ import {
   type SaveId,
   type UnavailableMatchStatistic,
 } from "@cm-clone/contracts";
-import type { MatchEvent } from "@cm-clone/game-engine";
+import type { MatchEvent, SubstitutionEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { loadStreamEvents, withExistingSave } from "../season/decider.js";
+import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
 import { MATCH_STREAM_TYPE, deriveMatchEvents } from "./stream.js";
+import { countedSubstitutions, substitutionLedger } from "./substitutions.js";
 
 export const MATCH_STATISTIC_KEYS: ReadonlyArray<MatchStatisticKey> = [
   "goals",
@@ -60,8 +61,8 @@ const countedFor = (
       return { clubId: event.teamClubId, keys: ["redCards"] };
     case "Injury":
       return { clubId: event.teamClubId, keys: ["injuries"] };
+    // Counted from `countedSubstitutions`, as the substitution panel counts them.
     case "Substitution":
-      return { clubId: event.teamClubId, keys: ["substitutions"] };
     case "MatchStarted":
     case "HalfTimeReached":
     case "FullTimeWhistle":
@@ -74,25 +75,34 @@ const countedFor = (
 const includedEvents = (events: ReadonlyArray<MatchEvent>, revealedEvents: number | null) =>
   revealedEvents === null ? events : events.slice(0, Math.max(0, revealedEvents));
 
-/** Pure: fold the timeline into per-side totals, counting only the included events. */
+/**
+ * Pure: fold the timeline into per-side totals, counting only the included events. Substitutions are
+ * `countedSubstitutions` at the same cut, so the total agrees with the substitution panel's `used`:
+ * no goalkeeper stand-ins, and the manager's own counted once journaled.
+ */
 export const aggregateMatchStatistics = (
   events: ReadonlyArray<MatchEvent>,
   homeClubId: ClubId,
   revealedEvents: number | null,
+  substitutions: ReadonlyArray<SubstitutionEvent>,
 ): ReadonlyArray<MatchStatisticRow> => {
   const totals = new Map(MATCH_STATISTIC_KEYS.map((key) => [key, { home: 0, away: 0 }]));
+  const credit = (clubId: ClubId, keys: ReadonlyArray<MatchStatisticKey>): void => {
+    const side = clubId === homeClubId ? "home" : "away";
+    for (const key of keys) totals.get(key)![side] += 1;
+  };
   for (const event of includedEvents(events, revealedEvents)) {
     const counted = countedFor(event);
-    if (counted === null) continue;
-    const side = counted.clubId === homeClubId ? "home" : "away";
-    for (const key of counted.keys) totals.get(key)![side] += 1;
+    if (counted !== null) credit(counted.clubId, counted.keys);
   }
+  for (const substitution of substitutions) credit(substitution.teamClubId, ["substitutions"]);
   return MATCH_STATISTIC_KEYS.map((key) => new MatchStatisticRow({ key, ...totals.get(key)! }));
 };
 
-/** The view over a derived timeline, shared by the Match Statistics read and the Match Report. */
+/** The view over a match stream's derived timeline, shared by the Match Statistics read and the Match Report. */
 export const matchStatisticsView = (
   matchId: MatchId,
+  stream: ReadonlyArray<StreamEvent>,
   events: ReadonlyArray<MatchEvent>,
   nameOf: (id: string) => string,
   revealedEvents: number | null,
@@ -106,7 +116,12 @@ export const matchStatisticsView = (
     awayClubName: nameOf(started.awayClubId),
     throughMinute:
       revealedEvents === null ? null : last === undefined || last._tag === "MatchStarted" ? 0 : last.minute,
-    rows: aggregateMatchStatistics(events, started.homeClubId, revealedEvents),
+    rows: aggregateMatchStatistics(
+      events,
+      started.homeClubId,
+      revealedEvents,
+      countedSubstitutions(events, substitutionLedger(stream, events).standIns, revealedEvents),
+    ),
     unavailable: UNAVAILABLE_MATCH_STATISTICS,
   });
 };
@@ -140,6 +155,6 @@ export const getMatchStatistics = (
 
       const { events } = yield* Effect.sync(() => deriveMatchEvents(stream));
       const nameOf = yield* displayNames;
-      return matchStatisticsView(matchId, events, nameOf, revealedEvents);
+      return matchStatisticsView(matchId, stream, events, nameOf, revealedEvents);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

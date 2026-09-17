@@ -19,6 +19,7 @@ const knock = (teamClubId: string): InjuryView => ({
   severity: "medium",
   tier: "orange",
   type: "twistedAnkle",
+  replaced: false,
 });
 
 describe("shouldPauseMatch — the no-subs injury decision holds the feed (ticket 11)", () => {

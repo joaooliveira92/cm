@@ -35,7 +35,7 @@ export class CommentaryLineView extends Schema.Class<CommentaryLineView>("Commen
 }) {}
 
 /** Per-club substitution cap status (ticket 14: 5 subs / 3 windows, halftime doesn't count as a
- * window — see `computeSubstitutionStatus` in `apps/desktop/src/main/match/view.ts`) — lets the UI
+ * window — see `substitutionStatus` in `apps/desktop/src/main/match/substitutions.ts`) — lets the UI
  * disable the substitution control and show subs used/remaining without guessing at the engine's
  * cap enforcement (which otherwise just silently no-ops an over-cap `MakeSubstitution`). */
 export class SubstitutionStatusView extends Schema.Class<SubstitutionStatusView>("SubstitutionStatusView")({
@@ -73,6 +73,11 @@ export class InjuryView extends Schema.Class<InjuryView>("InjuryView")({
   severity: Schema.Literals(["light", "medium", "severe"]),
   tier: Schema.Literals(["orange", "red"]),
   type: Schema.Literals(["brokenToe", "twistedAnkle", "deadLeg", "hamstring", "calf", "strain"]),
+  /** True when a substitute came on for the injured player: the forced Substitution the engine records
+   *  right after a severe Injury. False for a knock, and for a severe Injury that leaves the team a
+   *  player short, including when an outfield player already on the pitch moves into goal. That move
+   *  is also a Substitution line, so the line alone cannot say the player was replaced. */
+  replaced: Schema.Boolean,
 }) {}
 
 /** `ResumeSimulation`'s response (ADR-0007 chunked resimulation, no RPC streaming): the next chunk
@@ -110,12 +115,16 @@ export class ResumeSimulationView extends Schema.Class<ResumeSimulationView>("Re
 }) {}
 
 /** `SubmitMatchCommand`'s response: the same chunk `ResumeSimulation` returns, plus the command's
- * own outcome. `substitutionApplied` is true when the re-derived timeline holds the Substitution
- * Match Event this `MakeSubstitution` produced, false when the engine refused it, and null for
- * any other command. A count difference cannot stand in for it: re-simulating the rest of the
- * match can remove a later forced substitution in the same call that adds this one. */
+ * own outcome. `substitutionApplied` is true when the re-derived timeline holds a Substitution Match
+ * Event for this `MakeSubstitution` and for every earlier journaled one of the same pair at the same
+ * point, false when the engine refused it, and null for any other command. A count difference cannot
+ * stand in for it: re-simulating the rest of the match can remove a later forced substitution in the
+ * same call that adds this one. `forceOffApplied` is true when this `ForceOff`'s player was on the
+ * pitch when the engine applied it, false when they were not (the engine records nothing), and null
+ * for any other command. */
 export class SubmitMatchCommandView extends ResumeSimulationView.extend<SubmitMatchCommandView>("SubmitMatchCommandView")({
   substitutionApplied: Schema.NullOr(Schema.Boolean),
+  forceOffApplied: Schema.NullOr(Schema.Boolean),
 }) {}
 
 /** `SubmitMatchCommand` (ticket 14) payload shapes — structurally identical to game-engine's

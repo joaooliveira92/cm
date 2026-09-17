@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { ClubId, PlayerId } from "@cm-clone/contracts";
 import type { MatchEvent } from "@cm-clone/game-engine";
-import { aggregateMatchStatistics } from "../../../src/main/match/statistics.js";
+import { aggregateMatchStatistics as aggregateWith } from "../../../src/main/match/statistics.js";
+import { countedSubstitutions } from "../../../src/main/match/substitutions.js";
+
+/** The fold with the substitution count every read uses; this timeline has no goalkeeper stand-in. */
+const aggregateMatchStatistics = (events: ReadonlyArray<MatchEvent>, homeClubId: ClubId, revealedEvents: number | null) =>
+  aggregateWith(events, homeClubId, revealedEvents, countedSubstitutions(events, new Set(), revealedEvents));
 
 const home = ClubId.make("home");
 const away = ClubId.make("away");

@@ -16,7 +16,6 @@ import {
   ChangeTacticsPayload,
   ClubStaffView,
   ClubSummary,
-  InjuryView,
   InvalidTacticError,
   InsufficientTransferBudgetError,
   MarketPlayerView,
@@ -170,20 +169,6 @@ describe("literals and enums", () => {
         mentality: "balanced",
         tempo: "normal",
         pressing: "medium",
-      }),
-    ).toThrow();
-  });
-
-  it("InjuryView rejects an unknown trigger", () => {
-    expect(() =>
-      Schema.decodeUnknownSync(InjuryView)({
-        minute: 30,
-        teamClubId: "c1",
-        playerId: "p1",
-        trigger: "slide",
-        severity: "light",
-        tier: "orange",
-        type: "strain",
       }),
     ).toThrow();
   });

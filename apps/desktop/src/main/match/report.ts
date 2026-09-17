@@ -104,7 +104,7 @@ export const getMatchReport = (savesDir: string, saveId: SaveId, matchId: MatchI
         halfTimeHomeScore: halfTime.home,
         halfTimeAwayScore: halfTime.away,
         events: reportEvents(events, playerName),
-        statistics: matchStatisticsView(matchId, events, clubName, null),
+        statistics: matchStatisticsView(matchId, stream, events, clubName, null),
       });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

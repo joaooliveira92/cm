@@ -45,6 +45,7 @@ const knock = (): InjuryView => ({
   severity: "medium",
   tier: "orange",
   type: "twistedAnkle",
+  replaced: false,
 });
 
 /** A club's pitch: `onPitch` players, each at a DC slot (positions play no part here). */
@@ -257,7 +258,7 @@ describe("useMatchStreaming — poll ahead, buffer, reveal one line per tick (AD
     let answerHeldPoll: (() => void) | undefined;
     mockPreload((method) => {
       if (method === "submitMatchCommand") {
-        return Promise.resolve({ _tag: "Success", value: { ...resumeView({ homePitch: pitch([], ["bench-1"]) }), substitutionApplied: null } } as never);
+        return Promise.resolve({ _tag: "Success", value: { ...resumeView({ homePitch: pitch([], ["bench-1"]) }), substitutionApplied: null, forceOffApplied: true } } as never);
       }
       if (method !== "resumeSimulation") return Promise.resolve({ _tag: "Failure", error: NOT_FOUND } as never);
       polls += 1;
@@ -374,7 +375,7 @@ describe("revealed injuries: acted on, resolved, and the cap they were revealed 
   const substitutionLine = (minute: number): CommentaryLineView => ({ minute, tag: "Substitution", text: "A change." });
   const capReached = noSubs({ used: 5, remaining: 0, capReached: true });
   const home = { ...session().match, isHome: true };
-  const severe = (): InjuryView => ({ ...knock(), severity: "severe", tier: "red" });
+  const severe = (): InjuryView => ({ ...knock(), severity: "severe", tier: "red", replaced: true });
   const tick = async (times = 1) => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(REVEAL_INTERVAL_MS * times);
@@ -385,7 +386,7 @@ describe("revealed injuries: acted on, resolved, and the cap they were revealed 
     let answerCommand: (() => void) | undefined;
     const held = () =>
       new Promise((resolve) => {
-        answerCommand = () => resolve({ _tag: "Success", value: { ...resumeView({ homeSubs: capReached }), substitutionApplied: null } });
+        answerCommand = () => resolve({ _tag: "Success", value: { ...resumeView({ homeSubs: capReached }), substitutionApplied: null, forceOffApplied: true } });
       });
     const chunk = resumeView({ cursor: 2, homeSubs: capReached, lines: [line(1, "Kick-off."), injuryLine(23)], injuries: [knock()] });
     const probe = await mountProbe({ match: home }, [chunk], held);
@@ -422,6 +423,23 @@ describe("revealed injuries: acted on, resolved, and the cap they were revealed 
     expect(probe.injuries()).toBe("");
     await tick();
     expect(probe.text()).toBe("4|live|running|0-0");
+  });
+
+  it("a goalkeeper stand-in's Substitution line does not resolve a severe Injury at the cap, so the match pauses", async () => {
+    // At the cap the engine cannot replace an injured goalkeeper: it moves an outfield player into goal,
+    // which is also a Substitution line at the same minute, and the team is down to ten.
+    const unreplaced: InjuryView = { ...severe(), replaced: false };
+    const chunk = resumeView({
+      cursor: 4,
+      homeSubs: capReached,
+      lines: [line(1, "Kick-off."), injuryLine(23), substitutionLine(23), line(24, "Play on.")],
+      injuries: [unreplaced],
+    });
+    const probe = await mountProbe({ match: home }, [chunk, resumeView({ cursor: 4, homeSubs: capReached })]);
+
+    await tick(3);
+    expect(probe.injuries()).toBe("on-5");
+    expect(probe.text()).toBe("3|live|paused|0-0");
   });
 
   it("a Substitution at a later minute does not resolve an earlier Injury", async () => {

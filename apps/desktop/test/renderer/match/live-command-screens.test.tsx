@@ -99,6 +99,7 @@ const resumeView = (overrides: Record<string, unknown> = {}) => ({
 
 /** A `submitMatchCommand` response: the chunk plus the command's own outcome. */
 const commandView = (substitutionApplied: boolean | null, overrides: Record<string, unknown> = {}) => ({
+  forceOffApplied: null,
   ...resumeView(overrides),
   substitutionApplied,
 });

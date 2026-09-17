@@ -54,6 +54,7 @@ const knock = (): InjuryView => ({
   severity: "medium",
   tier: "orange",
   type: "twistedAnkle",
+  replaced: false,
 });
 
 interface Mocked {
@@ -108,7 +109,7 @@ const mockMatch = (
         mocked.commands.push(payload as never);
         const answer = {
           _tag: "Success",
-          value: { ...view(payload), homeScore: options.commandScore ?? view(payload).homeScore, substitutionApplied: null },
+          value: { ...view(payload), homeScore: options.commandScore ?? view(payload).homeScore, substitutionApplied: null, forceOffApplied: null },
         };
         if (options.holdCommands !== true) return answer;
         return new Promise((resolve) => held.push(() => resolve(answer)));

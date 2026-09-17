@@ -4,15 +4,14 @@
  * the re-derived `MatchEvent` timeline and the journaled bring-offs.
  */
 import { MatchPitchView, PitchSlotView, type ClubId, type PlayerId } from "@cm-clone/contracts";
-import type { MatchEvent, MatchTeamSetup } from "@cm-clone/game-engine";
+import type { MatchEvent, MatchTeamSetup, SubstitutionEvent } from "@cm-clone/game-engine";
 import type { PersistedForcedOff, PersistedSubstitutionMade } from "./stream.js";
 
-/** `simulateMatch`'s half length: halftime commands and first-half minutes end here. */
-const HALFTIME_MINUTE = 45;
+/** `simulateMatch`'s half length: halftime commands are applied at this minute, and first-half
+ *  minutes end here. */
+export const HALFTIME_MINUTE = 45;
 
-type SubstitutionEvent = Extract<MatchEvent, { readonly _tag: "Substitution" }>;
-
-type LineupCommand = PersistedSubstitutionMade | PersistedForcedOff;
+export type LineupCommand = PersistedSubstitutionMade | PersistedForcedOff;
 
 /** Whether `event` is the Substitution a journaled command emitted: a manager substitution's own,
  *  or the goalkeeper stand-in a bring-off of the last goalkeeper drags in. */
@@ -75,38 +74,38 @@ const appliedAt = (events: ReadonlyArray<MatchEvent>, commands: ReadonlyArray<Li
   return index;
 };
 
-/**
- * One club's pitch after the first `revealedEvents` Match Events (null: the whole match).
- *
- * The cut is the substitution counts' rule (`revealedSubstitutions` in `view.ts`): a red card, a
- * severe Injury or a forced substitution counts only once revealed, while the manager's own substitutions and
- * bring-offs count once journaled, because the engine applies a command at the start of its minute
- * and a position cut would drop one given in a minute already partly shown. A bring-off of the last
- * goalkeeper also emits a forced Substitution moving an outfield player in goal; that event belongs
- * to the command, so it counts with it.
- *
- * `substitutes` is the squad minus everyone who has been on the pitch: a player sent off, injured
- * off or brought off does not come back on.
- *
- * The fold assumes a live `ChangeTactics` does not change who is on the pitch; see
- * `.scratch/group-g-match-day/decision-request-01-live-change-tactics-scope.md`.
- */
-export const pitchAsOf = (
+/** What a fold of one club's pitch learns on the way: who is on and who has been on, and two facts
+ *  about the manager's commands that no Match Event states outright. */
+interface PitchFold {
+  readonly slots: ReadonlyArray<{ readonly playerId: PlayerId; readonly position: PitchSlotView["position"] }>;
+  readonly beenOn: ReadonlySet<PlayerId>;
+  /** The forced Substitutions after a severe Injury when no one but the injured player was off the pitch. */
+  readonly benchless: ReadonlySet<SubstitutionEvent>;
+  /** Each of the club's bring-offs, by position in the journaled lineup commands, and whether the
+   *  player was on the pitch when it was applied. */
+  readonly forceOffApplied: ReadonlyMap<number, boolean>;
+}
+
+const foldPitch = (
   setup: MatchTeamSetup,
   events: ReadonlyArray<MatchEvent>,
   lineupCommands: ReadonlyArray<LineupCommand>,
   revealedEvents: number | null,
-): MatchPitchView => {
+): PitchFold => {
   const clubId: ClubId = setup.clubId;
   let slots = setup.tactic.slots.map((slot) => ({ playerId: slot.playerId, position: slot.position }));
   const beenOn = new Set<PlayerId>(slots.map((slot) => slot.playerId));
   const standInsOfCommands = new Set<SubstitutionEvent>();
+  const benchless = new Set<SubstitutionEvent>();
+  const forceOffApplied = new Map<number, boolean>();
 
   const pendingForceOffs = lineupCommands.flatMap((command, position) =>
     command._tag === "ForceOffMade" && command.clubId === clubId
-      ? [{ command, at: appliedAt(events, lineupCommands, position) }]
+      ? [{ command, position, at: appliedAt(events, lineupCommands, position) }]
       : [],
   );
+
+  const isOn = (playerId: PlayerId): boolean => slots.some((slot) => slot.playerId === playerId);
 
   const takeOff = (playerId: PlayerId): void => {
     slots = slots.filter((slot) => slot.playerId !== playerId);
@@ -123,8 +122,10 @@ export const pitchAsOf = (
   };
 
   for (let index = 0; index <= events.length; index++) {
-    for (const { command, at } of pendingForceOffs) {
+    for (const { command, position, at } of pendingForceOffs) {
       if (at !== index) continue;
+      // The engine refuses a bring-off of a player who is not on the pitch, and records nothing.
+      forceOffApplied.set(position, isOn(command.playerId));
       const standIn = events
         .slice(index)
         .find(
@@ -150,6 +151,15 @@ export const pitchAsOf = (
     }
     if (
       event._tag === "Substitution" &&
+      event.forcedByInjury &&
+      event.teamClubId === clubId &&
+      setup.squad.every((player) => player.id === event.outPlayerId || isOn(player.id))
+    ) {
+      // `forcePlayerOff` looks for a bench player before trying a substitution.
+      benchless.add(event);
+    }
+    if (
+      event._tag === "Substitution" &&
       event.teamClubId === clubId &&
       (revealed || !event.forcedByInjury || standInsOfCommands.has(event))
     ) {
@@ -157,8 +167,64 @@ export const pitchAsOf = (
     }
   }
 
+  return { slots, beenOn, benchless, forceOffApplied };
+};
+
+/**
+ * One club's pitch after the first `revealedEvents` Match Events (null: the whole match).
+ *
+ * The cut is the substitution counts' rule (`countedSubstitutions` in `substitutions.ts`): a red card, a
+ * severe Injury or a forced substitution counts only once revealed, while the manager's own substitutions and
+ * bring-offs count once journaled, because the engine applies a command at the start of its minute
+ * and a position cut would drop one given in a minute already partly shown. A bring-off of the last
+ * goalkeeper also emits a forced Substitution moving an outfield player in goal; that event belongs
+ * to the command, so it counts with it.
+ *
+ * `substitutes` is the squad minus everyone who has been on the pitch: a player sent off, injured
+ * off or brought off does not come back on.
+ *
+ * The fold assumes a live `ChangeTactics` does not change who is on the pitch; see
+ * `.scratch/group-g-match-day/decision-request-01-live-change-tactics-scope.md`.
+ */
+export const pitchAsOf = (
+  setup: MatchTeamSetup,
+  events: ReadonlyArray<MatchEvent>,
+  lineupCommands: ReadonlyArray<LineupCommand>,
+  revealedEvents: number | null,
+): MatchPitchView => {
+  const { slots, beenOn } = foldPitch(setup, events, lineupCommands, revealedEvents);
   return new MatchPitchView({
     onPitch: slots.map((slot) => new PitchSlotView(slot)),
     substitutes: setup.squad.map((player) => player.id).filter((id) => !beenOn.has(id)),
   });
+};
+
+/** Facts about the whole match's lineup changes, for both clubs. */
+export interface LineupFacts {
+  /**
+   * The forced Substitutions with no one left on the bench: the one input to telling a goalkeeper
+   * stand-in apart (`classifySubstitutions` in `substitutions.ts`) the engine's counters cannot give.
+   * A squad of more than twelve always has someone on the bench in both the engine and the fold, so
+   * there it cannot drift from the engine after a live tactics change.
+   */
+  readonly benchless: ReadonlySet<SubstitutionEvent>;
+  /** Whether each journaled bring-off took its player off the pitch, by position in the lineup commands. */
+  readonly forceOffApplied: ReadonlyMap<number, boolean>;
+}
+
+/** Folds both clubs' pitches over the whole match. An empty bench, or an applied bring-off, does not
+ *  depend on how much of the match is revealed. */
+export const lineupFacts = (
+  setups: ReadonlyArray<MatchTeamSetup>,
+  events: ReadonlyArray<MatchEvent>,
+  lineupCommands: ReadonlyArray<LineupCommand>,
+): LineupFacts => {
+  const benchless = new Set<SubstitutionEvent>();
+  const forceOffApplied = new Map<number, boolean>();
+  for (const setup of setups) {
+    const fold = foldPitch(setup, events, lineupCommands, null);
+    for (const event of fold.benchless) benchless.add(event);
+    for (const [position, applied] of fold.forceOffApplied) forceOffApplied.set(position, applied);
+  }
+  return { benchless, forceOffApplied };
 };

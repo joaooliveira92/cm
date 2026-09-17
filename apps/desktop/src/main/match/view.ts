@@ -8,14 +8,10 @@ import {
   CommentaryLineView,
   InjuryView,
   ResumeSimulationView,
-  SubstitutionStatusView,
-  type ClubId,
   type MatchId,
   type PlayerId,
 } from "@cm-clone/contracts";
 import {
-  MAX_SUBSTITUTIONS_PER_TEAM,
-  MAX_SUBSTITUTION_WINDOWS_PER_TEAM,
   renderCommentary,
   type CommentaryNameResolver,
   type MatchEvent,
@@ -25,20 +21,12 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import type { StreamEvent } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
 import { pitchAsOf } from "./pitch.js";
-import { hashString, journaledLineupCommands, matchStartedOf } from "./stream.js";
+import { hashString, matchStartedOf } from "./stream.js";
+import { countedSubstitutions, substitutionStatus, type SubstitutionLedger } from "./substitutions.js";
 
 /** Chunk size cap for a single `ResumeSimulation` response when no boundary event is hit first
  * (ADR-0007: chunked resimulation, no RPC streaming) — the renderer paces reveal client-side. */
 const MAX_CHUNK_SIZE = 40;
-
-/** `simulateMatch`'s half length (`packages/game-engine/src/match/simulate.ts`) — halftime
- * commands and any live command targeting exactly this minute both surface as a `Substitution`/
- * tactics-adjacent event at `minute: 45`, so `computeSubstitutionStatus` below treats minute 45 as
- * the halftime window (never counted against the 3-window cap) rather than trying to disambiguate
- * the rare case of a live command also landing on minute 45 — a deliberate, documented UI-display
- * approximation; the engine's own cap enforcement (`packages/game-engine/src/match/simulate.ts`)
- * remains authoritative and unaffected by this. */
-const HALFTIME_MINUTE = 45;
 
 const BOUNDARY_TAGS: ReadonlySet<MatchEvent["_tag"]> = new Set(["HalfTimeReached", "FullTimeWhistle"]);
 
@@ -82,71 +70,6 @@ const scoreAsOf = (
   return { homeScore, awayScore };
 };
 
-type SubstitutionEvent = Extract<MatchEvent, { readonly _tag: "Substitution" }>;
-
-/**
- * The Substitution Match Events a read may count: those among the first `revealedEvents` of the
- * timeline, or all of them when null (the whole match).
- *
- * Cut by position, as `getMatchStatistics` cuts, not by minute: minutes repeat across first-half
- * stoppage, half time and the second half. The manager's own substitutions (`forcedByInjury: false`)
- * count once journaled, wherever they sit. The engine applies a command at the start of its minute,
- * so a second command in the same minute, or one stamped minute 1 before anything is revealed,
- * lands at or past `revealedEvents` and a position cut would drop it. This is not a guarantee that
- * none lies ahead of the reveal: a halftime instruction counts from when it was given, and a Match
- * day remount replays the feed from kickoff while earlier commands still count (group-g-match-day
- * tickets 24 and 23).
- */
-const revealedSubstitutions = (
-  events: ReadonlyArray<MatchEvent>,
-  revealedEvents: number | null,
-): ReadonlyArray<SubstitutionEvent> =>
-  events.filter(
-    (event, index): event is SubstitutionEvent =>
-      event._tag === "Substitution" && (revealedEvents === null || index < revealedEvents || !event.forcedByInjury),
-  );
-
-/** Per-club substitution cap status (ticket 14) computed from the revealed `Substitution` events —
- * authoritative for "used" (the engine only ever emits a `Substitution` event when it actually
- * accepted the change), an approximation for "windows used" (see `HALFTIME_MINUTE`'s doc comment
- * above). */
-const computeSubstitutionStatus = (clubId: ClubId, substitutions: ReadonlyArray<SubstitutionEvent>): SubstitutionStatusView => {
-  const subs = substitutions.filter((event) => event.teamClubId === clubId);
-  const used = subs.length;
-  const windowsUsed = new Set(subs.filter((sub) => sub.minute !== HALFTIME_MINUTE).map((sub) => sub.minute)).size;
-
-  return new SubstitutionStatusView({
-    used,
-    remaining: Math.max(0, MAX_SUBSTITUTIONS_PER_TEAM - used),
-    windowsUsed,
-    windowsRemaining: Math.max(0, MAX_SUBSTITUTION_WINDOWS_PER_TEAM - windowsUsed),
-    capReached: used >= MAX_SUBSTITUTIONS_PER_TEAM || windowsUsed >= MAX_SUBSTITUTION_WINDOWS_PER_TEAM,
-  });
-};
-
-/**
- * Whether a submitted `MakeSubstitution` took effect: the re-derived timeline holds the
- * Substitution Match Event it produced (same club, same pair, not forced by an Injury) at the
- * minute it was applied. A halftime instruction is applied at `HALFTIME_MINUTE`.
- */
-export const substitutionApplied = (
-  events: ReadonlyArray<MatchEvent>,
-  command: { readonly clubId: ClubId; readonly outPlayerId: PlayerId; readonly inPlayerId: PlayerId },
-  minute: number,
-  isHalftime: boolean,
-): boolean => {
-  const appliedAt = isHalftime ? HALFTIME_MINUTE : minute;
-  return events.some(
-    (event) =>
-      event._tag === "Substitution" &&
-      !event.forcedByInjury &&
-      event.teamClubId === command.clubId &&
-      event.outPlayerId === command.outPlayerId &&
-      event.inPlayerId === command.inPlayerId &&
-      event.minute === appliedAt,
-  );
-};
-
 /**
  * Shared tail of `resumeSimulation`/`submitMatchCommand`: given the match stream and the full
  * (re)derived `MatchEvent` timeline, resolves names, renders Commentary Lines, slices off the chunk
@@ -169,6 +92,7 @@ export const buildResumeSimulationView = (
   events: ReadonlyArray<MatchEvent>,
   cursor: number,
   revealedEvents: number | null,
+  ledger: SubstitutionLedger,
 ) =>
   Effect.gen(function* () {
     const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
@@ -220,23 +144,37 @@ export const buildResumeSimulationView = (
           .map((event) => event.teamClubId),
       ),
     ];
-    const injuries = chunkEvents
-      .filter((event): event is Extract<MatchEvent, { readonly _tag: "Injury" }> => event._tag === "Injury")
-      .map((event) => new InjuryView({
-        minute: event.minute,
-        teamClubId: event.teamClubId,
-        playerId: event.playerId,
-        trigger: event.trigger,
-        severity: event.severity,
-        tier: event.tier,
-        type: event.type,
-      }));
+    const injuries = chunkEvents.flatMap((event, offset) => {
+      if (event._tag !== "Injury") return [];
+      // The engine records a severe Injury's forced Substitution as the very next Match Event, in its
+      // minute. A knock forces no one off, so a manager substitution after it replaces no injury.
+      const next = events[cursor + offset + 1];
+      const replaced =
+        event.tier === "red" &&
+        next?._tag === "Substitution" &&
+        next.forcedByInjury &&
+        next.minute === event.minute &&
+        next.teamClubId === event.teamClubId &&
+        next.outPlayerId === event.playerId &&
+        !ledger.standIns.has(next);
+      return [
+        new InjuryView({
+          minute: event.minute,
+          teamClubId: event.teamClubId,
+          playerId: event.playerId,
+          trigger: event.trigger,
+          severity: event.severity,
+          tier: event.tier,
+          type: event.type,
+          replaced,
+        }),
+      ];
+    });
 
-    const substitutions = revealedSubstitutions(events, revealedEvents);
+    const substitutions = countedSubstitutions(events, ledger.standIns, revealedEvents);
     const kickoff = matchStartedOf(stream);
-    const lineupCommands = journaledLineupCommands(stream);
-    const homePitch = pitchAsOf(kickoff.homeSetup, events, lineupCommands, revealedEvents);
-    const awayPitch = pitchAsOf(kickoff.awaySetup, events, lineupCommands, revealedEvents);
+    const homePitch = pitchAsOf(kickoff.homeSetup, events, ledger.lineupCommands, revealedEvents);
+    const awayPitch = pitchAsOf(kickoff.awaySetup, events, ledger.lineupCommands, revealedEvents);
 
     return new ResumeSimulationView({
       matchId,
@@ -245,8 +183,8 @@ export const buildResumeSimulationView = (
       homeScore,
       awayScore,
       lines,
-      homeSubs: computeSubstitutionStatus(started.homeClubId, substitutions),
-      awaySubs: computeSubstitutionStatus(started.awayClubId, substitutions),
+      homeSubs: substitutionStatus(started.homeClubId, substitutions, ledger.halftime),
+      awaySubs: substitutionStatus(started.awayClubId, substitutions, ledger.halftime),
       homePitch,
       awayPitch,
       injuredClubIds,

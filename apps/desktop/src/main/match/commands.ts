@@ -23,7 +23,8 @@ import {
   type PersistedSubstitutionMade,
   type PersistedTacticsChanged,
 } from "./stream.js";
-import { buildResumeSimulationView, substitutionApplied } from "./view.js";
+import { substitutionApplied, substitutionLedger } from "./substitutions.js";
+import { buildResumeSimulationView } from "./view.js";
 
 type MatchCommandPayloadInput = ChangeTacticsCommandPayload | MakeSubstitutionCommandPayload | ForceOffCommandPayload;
 
@@ -35,7 +36,8 @@ type MatchCommandPayloadInput = ChangeTacticsCommandPayload | MakeSubstitutionCo
  * `resumeSimulation` response. The engine caps/rejects invalid commands silently (no error, no
  * `Substitution`/tactic-affecting change in the output), so the response says whether a
  * `MakeSubstitution` took effect in `substitutionApplied` — read off the command's own Substitution
- * Match Event, since re-simulation can drop a later forced substitution and hold the counts level.
+ * Match Event, since re-simulation can drop a later forced substitution and hold the counts level —
+ * and whether a `ForceOff` did in `forceOffApplied`, from whether its player was on the pitch.
  */
 export const submitMatchCommand = (
   savesDir: string,
@@ -72,17 +74,22 @@ export const submitMatchCommand = (
 
       const journaled = [...stream, { seq, tag, payload }];
       const derived = yield* Effect.sync(() => deriveMatchEvents(journaled));
+      const ledger = substitutionLedger(journaled, derived.events);
       const view = yield* buildResumeSimulationView(
         matchId,
         journaled,
         derived.events,
         cursor,
         revealedEvents,
+        ledger,
       );
       return new SubmitMatchCommandView({
         ...view,
         substitutionApplied:
-          command._tag === "MakeSubstitution" ? substitutionApplied(derived.events, command, minute, isHalftime) : null,
+          command._tag === "MakeSubstitution" ? substitutionApplied(derived.events, ledger, command, minute, isHalftime) : null,
+        // The command just journaled is the last lineup command.
+        forceOffApplied:
+          payload._tag === "ForceOffMade" ? (ledger.forceOffApplied.get(ledger.lineupCommands.length - 1) ?? false) : null,
       });
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );

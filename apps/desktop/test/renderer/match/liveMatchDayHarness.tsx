@@ -106,6 +106,7 @@ export const orangeInjury = () => ({
   severity: "medium" as const,
   tier: "orange" as const,
   type: "twistedAnkle" as const,
+  replaced: false,
 });
 
 /** A club's pitch as the match reports it: the kickoff XI of `fullTactic`, with `swaps` applied slot
@@ -157,8 +158,9 @@ export interface Submissions {
 }
 
 /** A `submitMatchCommand` response: the chunk plus the command's own outcome (null for a command
- *  that is not a substitution). */
+ *  that is not a substitution). A bring-off's outcome is null unless `overrides` gives one. */
 export const commandView = (substitutionApplied: boolean | null, overrides: Record<string, unknown> = {}) => ({
+  forceOffApplied: null,
   ...resumeView(overrides),
   substitutionApplied,
 });
@@ -172,6 +174,7 @@ export const takesSubstitutions: CommandResponder = (command, taken) => {
   return {
     _tag: "Success",
     value: commandView(command._tag === "MakeSubstitution" ? true : null, {
+      forceOffApplied: command._tag === "ForceOff" ? true : null,
       homeSubs: noSubs({ used: taken.home }),
       awaySubs: noSubs({ used: taken.away }),
     }),

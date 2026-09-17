@@ -10,6 +10,7 @@ import { MatchNotFoundError, type MatchId, type SaveId } from "@cm-clone/contrac
 import { Effect } from "effect";
 import { loadStreamEvents, withExistingSave } from "../season/decider.js";
 import { MATCH_STREAM_TYPE, deriveMatchEvents } from "./stream.js";
+import { substitutionLedger } from "./substitutions.js";
 import { buildResumeSimulationView } from "./view.js";
 
 /**
@@ -38,6 +39,7 @@ export const resumeSimulation = (
         derived.events,
         cursor,
         revealedEvents,
+        substitutionLedger(stream, derived.events),
       );
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

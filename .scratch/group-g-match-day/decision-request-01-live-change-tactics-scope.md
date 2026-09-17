@@ -63,3 +63,14 @@ card, the "Playing with 10 men — rearrange the remaining players in the tactic
 when the manager follows its advice, while the simulation is back to 11. Before ticket 22 the count
 followed the engine, so the alert cleared, because the dismissed player had been put back on.
 Answering this request settles both.
+
+## Evidence added 2026-09-16 (ticket 25)
+
+- **Stand-in detection.** Ticket 25 first detected goalkeeper stand-ins from the pitch fold. After a
+  live tactics change brought a forced-off player back, a later forced substitution was misread as a
+  stand-in and the count ran one short. The rework classifies stand-ins by the engine's own cap rules
+  instead, so the counts no longer depend on this decision.
+- **Bring-off outcome.** `forceOffApplied` still comes from the fold. A knocked player put back on by
+  a live tactics change is off in the fold, so bringing him off reads "The player was not on the
+  pitch." even though the engine applies it. Today's UI cannot reach this. Answering this request
+  settles it.

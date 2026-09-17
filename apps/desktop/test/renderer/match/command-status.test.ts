@@ -18,12 +18,24 @@ const changeTactics = { _tag: "ChangeTactics", clubId: club, tactic: {} } as unk
 
 describe("resolveCommandStatus — a journaled command's outcome read off the command response", () => {
   it.each([
-    ["a substitution whose own event the match holds", substitution, true, "applied"],
-    ["a substitution the match silently refused", substitution, false, "rejected"],
-    ["a force-off, which no event confirms", forceOff, null, "accepted"],
-    ["a tactics change, which no event confirms", changeTactics, null, "accepted"],
-  ] as const)("%s → %s", (_name, command, substitutionApplied, expected) => {
-    expect(resolveCommandStatus(command, { substitutionApplied })._tag).toBe(expected);
+    ["a substitution whose own event the match holds", substitution, true, null, "applied"],
+    ["a substitution the match silently refused", substitution, false, null, "rejected"],
+    ["a bring-off that took the player off", forceOff, null, true, "applied"],
+    ["a bring-off of a player not on the pitch", forceOff, null, false, "rejected"],
+    ["a tactics change, which no event confirms", changeTactics, null, null, "accepted"],
+  ] as const)("%s → %s", (_name, command, substitutionApplied, forceOffApplied, expected) => {
+    expect(resolveCommandStatus(command, { substitutionApplied, forceOffApplied })._tag).toBe(expected);
+  });
+
+  it("a bring-off the response gives no outcome for is refused without blaming the player's whereabouts", () => {
+    expect(resolveCommandStatus(forceOff, { substitutionApplied: null, forceOffApplied: false })).toEqual({
+      _tag: "rejected",
+      reason: "The player was not on the pitch.",
+    });
+    expect(resolveCommandStatus(forceOff, { substitutionApplied: null, forceOffApplied: null })).toEqual({
+      _tag: "rejected",
+      reason: "The match did not confirm the bring-off.",
+    });
   });
 
   it("labels every status in words, including the rejection reason", () => {
