@@ -19,7 +19,7 @@ match; key the readers by match; let `updateInjuries` record while the session i
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] No value from a committed match is visible to the next match's session readers
 - [ ] A decision resolved by a response that lands after leaving Match day is not re-offered on return
