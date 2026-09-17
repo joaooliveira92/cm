@@ -16,7 +16,8 @@ import {
   recordRevealedMinute,
   setActiveMatch,
 } from "../../../src/renderer/match/session.js";
-import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
+import { getScopeState, resetScopeState } from "../../../src/renderer/actions/scopeState.js";
+import { matchReadout } from "../../../src/renderer/chrome/header/career-header-state.js";
 
 /**
  * group-g-match-day 23: leaving Match day and coming back continues from the revealed position. The
@@ -161,6 +162,12 @@ const tick = async (times = 1) => {
 
 const probe = () => screen.getByTestId("probe").textContent ?? "";
 
+/** The header's live-match readout as the chrome would render it from the published scope state. */
+const headerReadout = (): string | null => {
+  const match = getScopeState().match;
+  return match === undefined ? null : matchReadout(match);
+};
+
 /** Watches the first `revealed` lines of `lines` on Match day, then leaves it. */
 const watchThenLeave = async (revealed: number) => {
   setActiveMatch({
@@ -205,6 +212,29 @@ describe("returning to Match day continues from the revealed position (group-g-m
     expect(getRevealedEvents(s1)).toBe(4);
     expect(getRevealedMinute(s1)).toBe(38);
     expect(getRevealedScore(s1)).toEqual({ homeScore: 1, awayScore: 0 });
+  });
+
+  it("publishes the revealed score and minute to the header readout, and restores them on return (group-g-match-day 27)", async () => {
+    mockMatch(MATCH);
+    setActiveMatch({
+      saveId: s1,
+      match: { matchId: "m1", fixtureId: 1, homeClubId: home, homeClubName: "Home FC", awayClubId: "away", awayClubName: "Away FC", isHome: true },
+      phase: "live",
+    } as never);
+    await mountMatchDay();
+    await tick(2);
+    expect(headerReadout()).toBe("12' · Home FC 0–0 Away FC");
+    await tick();
+    expect(headerReadout()).toBe("30' · Home FC 1–0 Away FC");
+
+    // Leaving Match day takes the readout with it: only a mounted Match day publishes it.
+    cleanup();
+    expect(headerReadout()).toBeNull();
+
+    // No read is answered after the return, so the readout comes from what was revealed before.
+    mockMatch(MATCH, { holdReads: true });
+    await mountMatchDay();
+    expect(headerReadout()).toBe("30' · Home FC 1–0 Away FC");
   });
 
   it("restores the score and stamps a command raised straight after returning at the revealed minute", async () => {

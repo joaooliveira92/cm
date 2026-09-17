@@ -22,7 +22,6 @@ import {
 } from "../rpc.js";
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 import { registerActionHandler } from "../actions/dispatch.js";
-import { clearScopeState, setScopeState } from "../actions/scopeState.js";
 import { clearActiveMatch, getActiveMatch, recordFullTime, setActiveMatch } from "./session.js";
 
 export type MatchPhase =
@@ -143,23 +142,8 @@ export const MatchProvider = ({
     if (phase === "committed") clearActiveMatch(saveId);
   }, [phase, saveId, match]);
 
-  // Publish the live-match readout so the chrome shows it and suspends Continue.
-  useEffect(() => {
-    if (match === null || phase === "complete" || phase === "committed") {
-      clearScopeState("match");
-      return;
-    }
-    setScopeState({
-      match: {
-        homeClubName: match.homeClubName,
-        awayClubName: match.awayClubName,
-        homeScore: 0,
-        awayScore: 0,
-        currentMinute: 0,
-      },
-    });
-    return () => clearScopeState("match");
-  }, [match, phase, saveId]);
+  // The live-match readout the chrome shows, and that suspends Continue, is published by
+  // `CommentaryProvider`: it holds the revealed score and minute the readout carries.
 
   // Register match-day action handlers.
   useEffect(() => {

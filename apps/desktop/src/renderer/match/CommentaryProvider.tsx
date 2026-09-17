@@ -16,6 +16,7 @@ import type {
   SaveId,
   SubstitutionStatusView,
 } from "@cm-clone/contracts";
+import { clearScopeState, setScopeState } from "../actions/scopeState.js";
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 import { resumeSimulation, submitMatchCommandMutation, useAtomSet } from "../rpc.js";
 import { resolveCommandStatus, type CommandStatus } from "./commandStatus.js";
@@ -297,6 +298,21 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
     recordRevealedMinute(matchState.saveId, line.minute);
     if (line.tag === "HalfTimeReached") recordHalfTimeRevealed(matchState.saveId);
   }, [matchState.match, matchState.saveId, updateInjuries]);
+
+  // Publish the live-match readout so the chrome shows it and suspends Continue: present while the
+  // match is in play, carrying the score and minute revealed so far (group-g-match-day 27).
+  const liveMatch = matchState.match;
+  const inPlay = liveMatch !== null && matchState.phase !== "complete" && matchState.phase !== "committed";
+  const homeClubName = liveMatch?.homeClubName;
+  const awayClubName = liveMatch?.awayClubName;
+  useEffect(() => {
+    if (!inPlay || homeClubName === undefined || awayClubName === undefined) {
+      clearScopeState("match");
+      return;
+    }
+    setScopeState({ match: { homeClubName, awayClubName, homeScore, awayScore, currentMinute } });
+  }, [inPlay, homeClubName, awayClubName, homeScore, awayScore, currentMinute]);
+  useEffect(() => () => clearScopeState("match"), []);
 
   const setPaused = useCallback(
     (paused: boolean) => matchActions.setPhasePaused(paused),

@@ -428,3 +428,17 @@ Each of the six cases is pinned by a seeded or table test that failed first; see
 - **After the rework.** M1 was medium, not blocker or high, so no full second review. The orchestrator
   checked `classifySubstitutions` against `teamState.ts` `applyCommand`: the substitution cap, a window
   on a new minute, and halftime not spending a window.
+
+## Ticket 27 — the live-match header readout shows 0-0, 2026-09-17
+
+- Ticket closed: [27](../../.scratch/group-g-match-day/issues/27-live-match-header-readout-shows-0-0.md)
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1, pre-existing only. Typecheck, effect-lint and verify-db-schema ✓. Desktop 61 failed / 1874 passed, the same failing cases as ticket 25's run. Lint 19, md-links 18. |
+| focused | `npx vitest run test/renderer/match test/renderer/chrome` | 7 failed (post-match-summary, pre-existing) / 188 passed |
+| e2e | `pnpm test:e2e e2e/journeys.spec.ts e2e/app.spec.ts` | 12 passed |
+
+Reviewed inline by the orchestrator. The publish moved from `MatchProvider` (zeros) to
+`CommentaryProvider` (revealed values). Checked that both providers mount only together, in
+`MatchDayScreen`, so the readout's presence and Continue's suspension are unchanged.
