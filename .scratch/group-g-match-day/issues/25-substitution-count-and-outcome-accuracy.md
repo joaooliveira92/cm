@@ -22,6 +22,6 @@
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Each case above has a test, and the count or outcome it pins is correct
