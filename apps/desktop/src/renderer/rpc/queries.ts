@@ -1,4 +1,4 @@
-import type { ClubId, PlayerId, SaveId } from "@cm-clone/contracts";
+import type { ClubId, CompetitionId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { Atom } from "effect/unstable/reactivity";
 import { call } from "./call.js";
 import { managementReadPolicy } from "./policy.js";
@@ -57,6 +57,26 @@ export const leagueTableAtom = Atom.family((saveId: SaveId) =>
     Atom.make(call("getLeagueTable", { saveId })).pipe(Atom.withReactivity([saveKey(saveId)])),
   ),
 );
+
+/**
+ * getCompetitionTable — `["save", saveId]`.
+ *
+ * Competition Table for any competition by id. Nested families (same pattern as the scout report and
+ * club staff) because `Atom.family` memoises through `MutableHashMap`, which compares plain objects
+ * by reference — a `{ saveId, competitionId }` key would miss on every render.
+ */
+const competitionTableForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((competitionId: CompetitionId) =>
+    managementReadPolicy(
+      Atom.make(call("getCompetitionTable", { saveId, competitionId })).pipe(
+        Atom.withReactivity([saveKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const competitionTableAtom = (saveId: SaveId, competitionId: CompetitionId) =>
+  competitionTableForSave(saveId)(competitionId);
 
 /** getFixtures — `["save", saveId]`. */
 export const fixturesAtom = Atom.family((saveId: SaveId) =>

@@ -1,6 +1,7 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   BoardObjectiveView,
+  CompetitionId,
   FixtureView,
   FixturesView,
   LeagueTableView,
@@ -80,6 +81,15 @@ export const getLeagueTable = (savesDir: string, saveId: SaveId) =>
       const seasonRow = yield* loadSeasonRow;
       const competitionId = yield* loadHumanCompetitionId(seasonRow.seasonNumber);
       const standings = yield* computeStandings(competitionId ?? "", seasonRow.seasonNumber);
+      return new LeagueTableView({ season: yield* toSeasonView(seasonRow), standings });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
+  );
+
+export const getCompetitionTable = (savesDir: string, saveId: SaveId, competitionId: CompetitionId) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      const seasonRow = yield* loadSeasonRow;
+      const standings = yield* computeStandings(competitionId, seasonRow.seasonNumber);
       return new LeagueTableView({ season: yield* toSeasonView(seasonRow), standings });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

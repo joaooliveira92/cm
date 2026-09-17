@@ -14,6 +14,7 @@ export {
   tacticsAtom,
   tacticsOverviewAtom,
   leagueTableAtom,
+  competitionTableAtom,
   fixturesAtom,
   seasonSummaryAtom,
   managerProfileAtom,

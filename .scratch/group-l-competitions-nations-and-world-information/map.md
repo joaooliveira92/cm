@@ -41,6 +41,13 @@ national team screens (176–178) depend on national team modelling which does n
   screens (179–180) are out of scope for v1. The remaining 11 screens are deferred — routes exist
   but data models need building later. Priority: 162 → 163/164 → 161.
 
+- [03 — Competition Table screen](issues/03-competition-table-screen.md): WIP stub replaced with
+  real screen. New `getCompetitionTable` RPC (`packages/contracts`), backend handler (`season/`),
+  atom (`queries.ts`), and screen component. Standings rendered from existing `computeStandings`
+  function via `competitionTableAtom(saveId, competitionId)`. 5 tests cover heading, rows, errors,
+  and navigation. New RPC needed a nested `Atom.family` pattern to avoid `MutableHashMap`
+  reference-identity issue.
+
 ## Not yet specified
 
 - Screen inventory completed (ticket 01). All 18 screens are effectively absent. Next steps:
