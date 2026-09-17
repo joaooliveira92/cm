@@ -23,7 +23,7 @@ splash.
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] With the teaching splash, help overlay or command palette open, the Quit dialog is visible,
       topmost, and its buttons receive clicks
