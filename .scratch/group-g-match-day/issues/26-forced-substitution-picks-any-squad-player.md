@@ -14,17 +14,18 @@ replacement consistently with its answer, and never from players who have alread
 
 A related engine gap: a red card to the only goalkeeper leaves no goalkeeper (`resolveCards` removes
 the slot without `emptySlot`'s stand-in). The `applyForcedOff` doc comment wrongly says it "reuses the
-red path's `emptySlot`". Decide whether a red-carded goalkeeper drags an outfield stand-in the way a
-severe injury does, and fix the comment either way.
+red path's `emptySlot`". Fix the comment here. Whether a red-carded goalkeeper should drag a stand-in
+changes game behaviour, so it moved to
+[decision request 06](../decision-request-06-red-carded-goalkeeper-stand-in.md) (2026-09-17, orchestrator).
 
 Fixing this changes seeded match results for existing saves that hit the branch. State that in the
 change. Found in review of [ticket 19](19-substitution-picker-lists-the-tactic-not-the-pitch.md).
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A forced substitution never brings on a player who has already been on the pitch
 - [ ] The replacement's selection is deterministic and independent of squad row order
-- [ ] The red-carded goalkeeper case is decided, and the `applyForcedOff` comment matches the code
+- [ ] The `applyForcedOff` comment matches the code; the red-carded goalkeeper rule itself is [decision request 06](../decision-request-06-red-carded-goalkeeper-stand-in.md)
 - [ ] A seeded test pins each, and the change note says which saved matches replay differently
