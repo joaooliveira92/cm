@@ -14,7 +14,7 @@ Found in the review of [ticket 18](18-substitution-count-reads-the-whole-match.m
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] The panel offers the halftime instruction only while half time is revealed and not yet passed
 - [ ] A panel test covers it
