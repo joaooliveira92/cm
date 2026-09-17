@@ -2,15 +2,17 @@
 
 ## Immediate next action
 
-**Re-derive the frontier from `.scratch/` before starting** — two rows below this one decayed in
-the 2026-09-17 sprints. `desktop-suite-red` is now fully resolved, so the "then desktop-suite-red 14"
-pointer is spent.
+**group-l-competitions-nations-and-world-information ticket 03** — Competition Table screen (Screen
+162). Replace the WIP stub with a real standings view using the existing `getLeagueTable` RPC.
+The work is a renderer-only change: wire the existing data to the existing route.
 
-group-a-reconciliation's own frontier is ticket 21 (the Quit dialog takes no clicks under a Base UI
-modal). It is `ready-for-agent` but **carries a decision**: does Quit outrank an open Base UI modal,
-or defer to it? Write the decision request before implementing. Ticket 03 (quit confirmation) sits
-below it at `claimed` with AC-4 open — an old claim with nothing landed behind it, so treat it as
-resumable rather than as another session's live work.
+group-a-reconciliation ticket 21 resolved 2026-09-17: `QuitGuard` portals to `document.body` via
+`createPortal`, placing itself outside `#root` where Base UI's `inert` does not reach it. Decision
+recorded in `.agents/notes/implemented/architecture/2026-09-17-quitguard-outranks-base-ui-modals.md`.
+
+group-l-competitions-nations-and-world-information charted 2026-09-17: screen inventory (ticket 01)
+classified all 18 screens; v1 scope (ticket 02) selected Competition Table, Fixtures, Results, and
+Overview for v1. Ticket 03 (Competition Table) is ready-for-agent.
 
 group-g-match-day has no ready build ticket left; 26 (forced substitution brings back used players,
 patch kept) and 29 (windows across halves) are blocked on decision request 07; 20 needs triage (a
@@ -187,7 +189,7 @@ parallel sessions and were left alone.
     (hidden Squad `h1`; namesake-safe bid locator).
 4. **season-rollover-skips-conclusion**: 01 resolved.
 5. **match-composition**: 01-02 resolved.
-6. **group-a-reconciliation**: 03-04 resolved. 20 ready (Quit dialog hidden under router overlays, filed 2026-09-16).
+6. **group-a-reconciliation**: 03-04 resolved. 20 resolved (Quit dialog rendered above both overlay tiers via `MODAL_SCRIM_TOP`). 21 resolved (QuitGuard portals to `document.body` to escape Base UI inert).
 7. **team-scout-report**: complete 2026-09-13.
 8. **group-e-squad-management**: pending — next unmatched spec group.
 9. **group-g-match-day**: 01–09 resolved (07 Screen 97 live tactics/substitutions, 08 Screen 99
@@ -208,7 +210,10 @@ parallel sessions and were left alone.
     needs-info on decision request 01; 05-07 resolved (07 Screen 146 Transfer History, 2026-09-15);
     08 resolved (navbar entries for 141/145, 2026-09-16). Decision requests 01 and 02 open.
 13. **navbar-keyboard-intent**: 01-04 resolved (02 World `g 8`; 03 e2e on position keys, override-aware
-    badges, 2026-09-16); 04 ready (decision: item level vs hand-edited section overrides).
+     badges, 2026-09-16); 04 ready (decision: item level vs hand-edited section overrides).
+14. **group-l-competitions-nations-and-world-information**: charted 2026-09-17. 01 (inventory), 02
+    (v1 scope) resolved. 03 (Competition Table) ready-for-agent. In v1: screens 161–164
+    (Competition Table, Fixtures, Results, Overview). 176–180 out of scope.
 
 Shipped and closed:
 
