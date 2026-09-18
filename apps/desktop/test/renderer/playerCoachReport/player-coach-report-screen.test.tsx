@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { PlayerId } from "@cm-clone/contracts";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";

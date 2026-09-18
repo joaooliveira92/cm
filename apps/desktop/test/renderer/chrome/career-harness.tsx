@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 /**
  * The career shell, mounted through the real router, plus the wire responses its
  * queries need. Shared by the chrome's own suite and the Continue bands' suite:

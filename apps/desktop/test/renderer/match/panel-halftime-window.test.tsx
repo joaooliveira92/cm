@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { CommentaryLineView } from "@cm-clone/contracts";

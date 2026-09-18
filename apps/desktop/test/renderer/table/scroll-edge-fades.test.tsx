@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { ColumnDef } from "@tanstack/react-table";

@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";

@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { PlayerId, Tactic } from "@cm-clone/contracts";
 import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";

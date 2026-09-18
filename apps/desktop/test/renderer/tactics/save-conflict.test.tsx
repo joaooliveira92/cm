@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";

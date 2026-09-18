@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";

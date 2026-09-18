@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";

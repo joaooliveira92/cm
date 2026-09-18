@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ClubId, MatchId, PlayerId, SaveId, type CommentaryLineView, type InjuryView } from "@cm-clone/contracts";

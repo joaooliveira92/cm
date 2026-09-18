@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, afterEach, describe, expect, it } from "vitest";
 import { clearActiveMatch, getLiveTactic } from "../../../src/renderer/match/session.js";

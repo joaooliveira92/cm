@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { deriveContinueLabel, type ContinueLabelSeason } from "../../../src/renderer/chrome/header/continue-label.js";
 

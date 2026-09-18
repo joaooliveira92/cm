@@ -302,8 +302,10 @@ describe("renderer RPC seam — staleness policy (AC-06)", () => {
   it("the seam never opts into refreshOnWindowFocus in a single-window app", async () => {
     const { readFile } = await import("node:fs/promises");
     const { join } = await import("node:path");
-    const { fileURLToPath } = await import("node:url");
-    const seamRoot = fileURLToPath(new URL("../../../src/renderer/rpc", import.meta.url));
+    // Resolved from `import.meta.dirname`, not `new URL(..., import.meta.url)`:
+    // Vite rewrites that second pattern into an `http://localhost/@fs/...` asset
+    // URL under the jsdom environment, which `fileURLToPath` then rejects.
+    const seamRoot = join(import.meta.dirname, "../../../src/renderer/rpc");
     const files = [
       "policy.ts",
       "queries.ts",

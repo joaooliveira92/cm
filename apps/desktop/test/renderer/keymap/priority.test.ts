@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { resolveDispatch, IDLE_PREFIX, type ResolveContext } from "../../../src/renderer/keymap/priority.js";
 import { controlOwnsSpace, shouldSuppressForTextEntry, keyOf } from "../../../src/renderer/keymap/keystroke.js";

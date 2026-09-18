@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { StrictMode } from "react";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import {

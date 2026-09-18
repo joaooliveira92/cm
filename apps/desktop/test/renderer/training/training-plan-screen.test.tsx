@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { PlayerId } from "@cm-clone/contracts";
 import type { Category } from "@cm-clone/shared";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
