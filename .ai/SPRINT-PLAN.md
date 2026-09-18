@@ -6,7 +6,34 @@ has already charted. Scope, non-goals and exit criteria in [MILESTONES.md](MILES
 bound on what a sprint may start, and the frontier below is checked against it by
 [/milestone](../.opencode/command/milestone.md).
 
-**M1 step 1 — ledger durability sweep, 1 of 10 done (2026-09-18).** Group D transcribed to
+**M1 step 1 — ledger durability sweep, 4 of 10 done (2026-09-18).** Group L transcribed to
+[`docs/specs/group_l_competitions_nations_and_world_information/RECONCILIATION.md`](../docs/specs/group_l_competitions_nations_and_world_information/RECONCILIATION.md),
+with two corrections. Its `map.md` says "all 18 screens (161–180)" twice and there are twenty. More
+seriously, the map files national team management under § Out of scope, four days after a standing
+note ruled Group L 176–178 `deferred` and **never** `out-of-scope`; the ledger follows the note. The
+same slip runs through ticket 02, whose "out of scope for v1" is `deferred` in ledger vocabulary —
+so no screen in Group L is `out-of-scope` at all.
+
+It also surfaced a disagreement between two ledgers: per-player statistics aggregation does not
+exist, and Group D Screen 54 is `out-of-scope` for lacking it while Group L Screen 166 is `deferred`
+for lacking it. `out-of-scope` is the one that does not come back. Worth settling when Group P is
+charted.
+
+Group F was the one group with
+nothing to transcribe: its effort shipped Screen 80 with no map and no spec, and screens 81–90 have
+never been read. Its ledger says so — one `Reviewed` screen, ten `Not yet audited` — because a group
+whose gap is invisible is the thing M1 step 1 is for. Charting Group F's remainder needs decision
+request 01 answered and an effort chartered from scratch; both are human calls.
+
+Group E transcribed to
+[`docs/specs/group_e_squad_management/RECONCILIATION.md`](../docs/specs/group_e_squad_management/RECONCILIATION.md).
+It found a contradiction in shipped code: Group E ruled Screen 75 Set Piece Takers `out-of-scope`,
+while `contracts/src/schemas/tactics.ts:204` and the shipped Tactics Overview both say set pieces
+arrive with Group F Screen 86. Raised as **group-f decision request 01**, which blocks Group F's
+remainder and nothing else. Also corrected: this plan recorded group-e as "11 screens charted, all
+disposed" — three are satisfied by the shipped Squad screen, two are partial, six are disposed.
+
+Group D transcribed to
 [`docs/specs/group_d_player_and_staff_records/RECONCILIATION.md`](../docs/specs/group_d_player_and_staff_records/RECONCILIATION.md).
 Remaining: E, F, G, H, I, J, K, L, M. Transcription caught two miscounts in group-d's `map.md`
 summary (53 is `out-of-scope`, not satisfied-inline; three screens are deferred, not two) and one

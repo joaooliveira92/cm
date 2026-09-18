@@ -50,10 +50,12 @@ logic. A placeholder is a slot waiting for a screen, not evidence that the scree
 | A Application shell and lifecycle | 1–21 | Reconciled. 18 removed; 19–21 redesigned (group-a-reconciliation). | Yes |
 | B Global navigation and inbox | 22–32 | Reconciled. 27 Audited, 29 and 32 Disposed in full, the rest Reviewed. | Yes |
 | C Club information | 33–49 | 38 Audited (club-staff-presence). 49 shipped in full (`team-scout-report`, 8/8). The other 15 are unreconciled. | 38 only |
-| F Tactics and match preparation | 80–90 | 80 shipped (`group-f-tactics-and-match-preparation`, 3/3; no map or spec). 81–90 unreconciled. | No |
+| F Tactics and match preparation | 80–90 | 80 shipped (`group-f-tactics-and-match-preparation`, 3/3; no map or spec) and now `Reviewed`. 81–90 unreconciled, and 86 is blocked on decision request 01. Ledger created 2026-09-18 (M1 step 1) to make that gap visible. | Yes |
 | R Multiplayer administration | 250–262 | Disposed in full under the multiplayer axis, 2026-09-13. | Yes |
 | D Player and staff records | 50–68 | Reconciled. 11 disposed, 2 `renamed` onto the Squad table, 3 deferred, 3 shipped. Ledger transcribed from `.scratch/` 2026-09-18 (M1 step 1). | Yes |
-| E, G–M | 69–79, 91–193 | Charted as `.scratch/` efforts, several with shipped screens, but the rulings live only in `.scratch/` and are lost when an effort is archived. Giving them durable ledgers is [M1](MILESTONES.md) step 1. | No |
+| E Squad management | 69–79 | Reconciled. Screens 69–72 satisfied by the shipped Squad screen, 71 and 77 partial, six disposed. Screen 75 contested — decision request open. Ledger transcribed 2026-09-18 (M1 step 1). | Yes |
+| L Competitions, nations and world | 161–180 | Reconciled. 162 and 163 shipped, 161 and 164 in v1 with no ticket, the other sixteen `deferred`. **Nothing in the group is `out-of-scope`.** Ledger transcribed 2026-09-18 (M1 step 1). | Yes |
+| G–K, M | 91–160, 181–193 | Charted as `.scratch/` efforts, several with shipped screens, but the rulings live only in `.scratch/` and are lost when an effort is archived. Giving them durable ledgers is [M1](MILESTONES.md) step 1. | No |
 | N–Q, S | 194–249, 264–277 | Unreconciled, and no effort exists. | No |
 
 ## Sequence
@@ -77,7 +79,7 @@ The core loop runs from player to squad to tactic to match. Most later groups li
 |---|---|---|---|
 | **D** Player and staff records (50–68) | — | **Attribute**, **Position Rating**, **Contract**, **Injury**, **Condition**, **Knowledge Confidence**, **Staff**. Placeholders exist for profile, attributes, form, history, contract, injuries, coach and scout report, and five staff screens. | 58 Happiness and 60 Discipline: morale and dressing-room relationships do not ship in v1 (**Influence**). 57 Transfer Status maps onto **Listed**. |
 | **E** Squad management (69–79) | D | Squad screen and lineup edits (uncommitted work under `renderer/squad/` in the worktree). | 69, 82, 89 and 92 follow [the team sheet is the Tactic](../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md): Squad's match-day bar and the tactics editor both edit it, and 89 and 92 are views. 76 Registration and 77 Eligibility have no domain term. 78 Grievance and 79 Team Meeting look out-of-scope for the same reason as 58. |
-| **F** remainder (81–90) | E (selection) | **Formation**, **Role**, **Team Instructions**, **Tactic**, **Expected Revision**, **Match Readiness**, **Readiness Blocker**. | 86 Set Pieces: the Screen 80 snapshot reports "no set pieces configured until Screen 86 lands." 88 Import touches Group S's 276. 90 Opposition Scout Report likely reuses **Team Scout Report**. |
+| **F** remainder (81–90) | E (selection), **decision request 01** | **Formation**, **Role**, **Team Instructions**, **Tactic**, **Expected Revision**, **Match Readiness**, **Readiness Blocker**. | 86 Set Pieces: the Screen 80 snapshot reports "no set pieces configured until Screen 86 lands." 88 Import touches Group S's 276. 90 Opposition Scout Report likely reuses **Team Scout Report**. |
 
 ### Tier 3 — match and world
 
