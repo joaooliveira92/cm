@@ -60,6 +60,7 @@ import { getClubStaff } from "../career/staff.js";
 import { getPlayerContract, getPlayerProfile } from "../career/player.js";
 import { getTeamScoutReadings, getTeamScoutReport } from "../club/teamScoutReport.js";
 import { withWideEvent } from "./logging.js";
+import type { SqlError } from "effect/unstable/sql/SqlError";
 
 export interface RpcContext {
   readonly savesDir: string;
@@ -67,7 +68,43 @@ export interface RpcContext {
   readonly userDataDir: string;
 }
 
-type Handler = (payload: unknown, ctx: RpcContext) => Effect.Effect<unknown, unknown>;
+/**
+ * The four methods whose handlers reach engine invariant errors that have no contract schema:
+ * `CalendarSlotsExhaustedError`, `FixtureGenerationError`, `SquadTooSmallError`,
+ * `FullTimeWhistleMissingError`. Declaring them means first deciding whether an invariant violation
+ * belongs in `E` or in the `Cause`, which is an open question —
+ * `.scratch/group-l-competitions-nations-and-world-information/decision-request-01-rpc-error-channel.md`.
+ *
+ * They are listed by name rather than left implicit so the exception is visible and finite. Shrinking
+ * this list is the point; adding to it needs the same decision taken first.
+ */
+type UngatedMethod = "createSave" | "commitCareer" | "advanceCalendar" | "commitMatchday";
+
+/**
+ * A handler may fail only with the errors its own RPC declares, plus two infrastructure failures
+ * every handler shares: a payload that fails to decode, and a SQLite failure.
+ *
+ * Typing it per-method is the gate. `Effect<unknown, unknown>` accepted anything, so an RPC whose
+ * declared `error:` union was narrower than what its handler could raise compiled clean and only
+ * showed at runtime — the encode against the method's schema fails, the raw error is re-raised, and
+ * the renderer gets name/message instead of a typed error it could describe. That shipped twice in
+ * consecutive tickets before an audit found eleven instances. Now `tsc` names them at the definition
+ * site, and the Effect language service reports the missing member directly (TS377003).
+ *
+ * `SqlError` is an escape hatch, not an endorsement: it sits in roughly every save-scoped handler's
+ * error channel and is declared by none of them. Whether a failed query on a local save file is a
+ * domain error or a defect is the same open decision linked above; admitting it here is what lets
+ * the rest of this type be exact in the meantime.
+ */
+type Handler<M extends AppRpcMethod> = M extends UngatedMethod
+  ? (payload: unknown, ctx: RpcContext) => Effect.Effect<unknown, unknown>
+  : (
+      payload: unknown,
+      ctx: RpcContext,
+    ) => Effect.Effect<
+      unknown,
+      Schema.Schema.Type<(typeof AppRpcs)[M]["error"]> | Schema.SchemaError | SqlError
+    >;
 
 /** Extract a save-scoped id from a payload when the method carries one, so the
  *  wide event can attribute the request to a save without decoding it. */
@@ -77,7 +114,7 @@ const saveIdOf = (method: AppRpcMethod, payload: unknown): string | null => {
   return typeof record["saveId"] === "string" ? record["saveId"] : null;
 };
 
-const handlers: Record<AppRpcMethod, Handler> = {
+const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
   ping: () => Effect.succeed("pong"),
 
   // League and Nation Selection (Screen 3). Every one of these re-validates against the catalogue
@@ -480,7 +517,13 @@ export const handleRpc = (
   ctx: RpcContext,
 ): Effect.Effect<RpcResult<AppRpcMethod>> =>
   withWideEvent(
-    handlers[method](payload, ctx),
+    // The dispatch is inherently dynamic: indexing by a union of methods yields a union of
+    // handler types that cannot be called directly. The enforcement this type exists for happens at
+    // each handler's definition site above, not here.
+    (handlers[method] as (payload: unknown, ctx: RpcContext) => Effect.Effect<unknown, unknown>)(
+      payload,
+      ctx,
+    ),
     { method, saveId: saveIdOf(method, payload) },
   ).pipe(
     Effect.map((value) => ({ _tag: "Success", value }) as RpcResult<AppRpcMethod>),

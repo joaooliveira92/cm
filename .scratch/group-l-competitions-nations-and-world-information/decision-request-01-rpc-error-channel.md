@@ -91,4 +91,64 @@ question governs them.
 **Suggested map**: an `rpc-error-channel` effort covering the handler-type gate, the `SqlError`
 decision, and the four engine-error unions.
 
-**Status:** needs-info
+**Status:** partially-resolved
+
+## Answer (2026-09-18) — Option B adopted, scoped; the `SqlError` half still needs a human
+
+The human directed this to be worked. **Option B is implemented**: `rpcServer.ts`'s handler type is
+now per-method,
+
+```ts
+type Handler<M extends AppRpcMethod> = M extends UngatedMethod
+  ? (payload: unknown, ctx: RpcContext) => Effect.Effect<unknown, unknown>
+  : (payload: unknown, ctx: RpcContext) => Effect.Effect<
+      unknown,
+      Schema.Schema.Type<(typeof AppRpcs)[M]["error"]> | Schema.SchemaError | SqlError
+    >;
+```
+
+so an RPC declaring a narrower `error:` union than its handler can raise is now a **compile error**
+rather than a runtime surprise. Proved rather than assumed: narrowing `getCompetitionFixtures` back
+to `SaveNotFoundError` alone reproduces
+
+```
+error TS2322: Type 'Effect<FixturesView, PendingFixtureIntegrityError | ...>' is not assignable ...
+error TS377003: Missing errors PendingFixtureIntegrityError in the expected Effect type.
+```
+
+and restoring the union returns typecheck to zero errors. The defect class that shipped twice in
+consecutive tickets, and needed two manual review passes to find, now costs zero review attention.
+
+### What implementing it corrected in this document's own analysis
+
+This request claimed Option B was "small and reliable" and blocked only by `SqlError`. **That was
+wrong, and adopting it is what showed the error.** With `SqlError` admitted, `tsc` still rejected
+four methods — `createSave`, `commitCareer`, `advanceCalendar`, `commitMatchday` — exactly the four
+whose engine invariant errors this request listed *separately*. So Option B as originally scoped does
+not compile: the engine-error question blocks the gate just as `SqlError` does.
+
+Rather than abandon the gate or take the engine decision unilaterally, those four are named in an
+explicit `UngatedMethod` list and typed loosely, with the exception documented at the type. **58 of
+62 methods are gated; 4 are not.** The list is finite and by name, so shrinking it is a visible act
+and growing it requires taking the decision first.
+
+A second thing implementation revealed: the dispatch site needs a cast, because indexing `handlers`
+by a union of methods yields a union of function types that cannot be called. That is inherent to
+dynamic dispatch and does not weaken the gate — enforcement happens at each handler's definition
+site, which is where an author writes the mistake.
+
+### Still open, still a human's call
+
+1. **`SqlError`** — declared by none of ~62 methods, admitted here as an escape hatch. Option A
+   (`Effect.orDie` at the `withExistingSave` seam, on the grounds that an unreadable local save is a
+   defect rather than a domain outcome) remains the recommendation and would let the escape hatch be
+   deleted.
+2. **The four engine errors** — `CalendarSlotsExhaustedError`, `FixtureGenerationError`,
+   `SquadTooSmallError`, `FullTimeWhistleMissingError` have no contract schema. Declaring them means
+   deciding whether an invariant violation belongs in `E` or the `Cause`. Answering this empties
+   `UngatedMethod`.
+3. A `SqlError`'s `message` can carry the save's filesystem path across the boundary, which
+   ENGINEERING-CONTRACT § Boundaries covers. Pre-existing; resolved by (1) either way.
+
+Both remaining questions are narrower than when this was filed, and neither now blocks a gate — they
+only determine how much of the escape hatch survives.
