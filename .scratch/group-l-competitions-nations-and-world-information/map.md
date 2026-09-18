@@ -71,6 +71,12 @@ national team screens (176–178) depend on national team modelling which does n
   wrong tool (the needed fact is a type, not a syntax pattern); the permanent gate is the probe
   itself as a type alias, blocked only by `SqlError`. Both fixture lists now read `Unplayed`.
 
+- [06 — Deferred Competition Fixtures surface](issues/06-competition-fixtures-deferred-surface.md):
+  none of the deferred controls (filters, round/stage and calendar navigation, export, coverage
+  states) enter v1 — each needs data the game does not model, and the imported spec's coverage tiers
+  are not this game's Simulation Depth. Screen 164 is next and should reuse
+  `getCompetitionFixtures` rather than add a third fixture read, then 161.
+
 ## Not yet specified
 
 - Screen inventory completed (ticket 01). All 18 screens are effectively absent. Next steps:

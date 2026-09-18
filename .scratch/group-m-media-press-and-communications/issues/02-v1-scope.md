@@ -1,7 +1,7 @@
 # 02: Does CONTEXT.md's v1 exclusion of media handling get overturned?
 
 Type: grilling
-Status: needs-info
+Status: resolved
 
 ## Question
 
@@ -76,3 +76,22 @@ content as load-bearing for how time works. Reversing that is a product decision
 behind it, and it should be taken deliberately by a human, not absorbed into a screen-reconciliation
 effort because 13 spec files happened to be next in the queue.
 
+
+## Answer
+
+**Option A: the exclusion stands. Group M is out of v1.** Decided by the human on 2026-09-18, in
+line with this ticket's recommendation.
+
+Nothing is overturned, so CONTEXT.md needs no change — its two statements (751-753, 445-447) remain
+accurate and are now the cited authority for this group's absence rather than an inconvenience to it.
+All 13 screens (181-193) stay unbuilt and unrouted. The deviation register in
+[spec.md](../spec.md) records this per screen.
+
+This is a scoping call, not a design choice, so no Agent Note is warranted: nothing new was decided,
+an existing decision was confirmed against evidence that it still holds.
+
+**What would reopen it.** A human deciding the game wants a media system. That is a programme, not a
+group: it needs a manager reputation model, a morale or opinion model, a consequence decider,
+persistence and migration, balance numbers, and a Calendar that stops on non-Fixture dates. Each is
+its own effort. Reopening means amending CONTEXT.md in the same commit as the first code, per
+ENGINEERING-CONTRACT — a recorded decision is overturned by a new decision record, never by drift.

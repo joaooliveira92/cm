@@ -41,4 +41,31 @@ no ticket. Whoever answers this should say whether they are next, since 164 is t
 
 **Blocked by:** None
 
-**Status:** needs-info
+**Status:** resolved
+
+## Answer
+
+**None of the deferred controls enter v1 now. Screen 164 (Competition Results) is next, then 161
+(Competition Overview).** Decided by the human on 2026-09-18.
+
+Reasoning, so this is not re-litigated:
+
+- **Filters, round/stage navigation, calendar-period navigation, export** — all deferred. Each drags
+  in data the game does not model. Venues do not exist. Stage membership does not exist as a
+  distinct identifier. Historical editions bound to their original rules do not exist. Export has no
+  consumer. Building the control before the data is building a control over nothing.
+- **Historical editions, partial-coverage and permission-limited view states** — deferred for the
+  same reason. Coverage tiers are a real concept in the imported spec; this game has Simulation
+  Depth, which is not the same thing, and conflating them would put a second name on one idea.
+- **Screen 164 is next** because it is the closest sibling of 163 and reuses the same read: a
+  Competition's Fixtures, filtered to those already played, with scores. It should reuse
+  `getCompetitionFixtures` rather than adding a third fixture read — the `played` flag already
+  distinguishes them, so this is a renderer-side concern plus whatever ordering Results wants
+  (most recent first, against Fixtures' calendar order).
+- **Screen 161 after it**, as the overview that links the two.
+
+This closes out the "deferred, not dropped" note on ticket 04: the deferral is now a decision with a
+reason, not an open question.
+
+Follow-on tickets are not filed here — 164 and 161 need their own tickets when someone picks up the
+effort, and filing them now would be pre-slicing work nobody has scheduled.

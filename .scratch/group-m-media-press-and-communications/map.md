@@ -53,23 +53,19 @@ overturns the exclusion.
   of "press content" is the stated reason the Calendar needs no finer clock. That reframes ticket 02
   from a scope question into a question about overturning a recorded decision.
 
+- [02 — Does CONTEXT.md's v1 exclusion get overturned?](issues/02-v1-scope.md): **no.** Option A —
+  the exclusion stands, all 13 screens stay out of v1, CONTEXT.md is unchanged because it was
+  already right. Reopening would be a programme (reputation, morale, consequence decider,
+  persistence, balance, a finer Calendar), not a group, and would require amending CONTEXT.md in the
+  same commit as the first code.
+
 ## Not yet specified
 
-- **Data and simulation model.** Only reachable if ticket 02 overturns the exclusion. Ticket 01
-  confirmed that none of the candidate consequences — morale, squad harmony, board opinion, manager
-  reputation, relationships — exists in any form, so each would be its own modelling effort rather
-  than a ticket here.
-- **Where media sits in the event model.** A statement or answer is a player command; its
-  consequence is an event. Whether that goes through an existing decider or needs a new bounded
-  decider is a structural question, and it depends on which consequences are modelled.
-- **Determinism.** Rumours (189) and public reaction (192) imply generated content. Anything
-  generated must be a pure function of (seed, position) per ENGINEERING-CONTRACT § Determinism.
-  What seeds it, and whether opening a screen can consume randomness, is unspecified.
-- **Relationship to the Inbox.** Beyond naming: whether media output lands as News Messages in the
-  existing inbox, or in a parallel surface, and what that does to the "career record, never a queue"
-  property.
-- **Deviation register.** Cannot be written until the scope decision (ticket 02) fixes what is being
-  deviated from.
+Nothing. Ticket 02 closed the map: with Group M out of v1 there is no further fog *toward* this
+destination. The modelling questions the fog used to hold — consequence model, where media sits in
+the event model, determinism of generated content, the Inbox relationship — all moved to
+**Out of scope**, since they are only reachable by reopening the scope decision, which would be a
+fresh effort rather than a resumption of this one.
 
 ## Out of scope
 
@@ -79,3 +75,9 @@ overturns the exclusion.
   implies a shared or hosted context.
 - **National team media.** Group O owns national team management; media attached to it follows that
   effort, not this one.
+- **The whole of screens 181-193**, per ticket 02. Out of v1, not deferred within it.
+- **A media consequence model** — manager reputation, morale, board opinion, relationships. None
+  exists; each would be its own effort, and only if the scope decision is reopened.
+- **A finer-grained Calendar.** Screens 184/185 assume a clock that stops on non-Fixture dates.
+  CONTEXT.md:445-447 makes the absence of press content the reason no such clock exists, so this
+  cannot change without the scope decision changing first.
