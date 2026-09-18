@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import { NON_CONTACT_CONDITION_THRESHOLD } from "@cm-clone/game-engine";
@@ -29,6 +29,7 @@ import {
   SQUAD_TOGGLEABLE_COLUMN_IDS,
   toggleColumn,
 } from "../../../src/renderer/table/features/visibility.js";
+import { renderInRouter } from "../../setup/renderInRouter.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -71,7 +72,7 @@ const mountSquad = async (view: unknown): Promise<void> => {
       ? ({ _tag: "Success", value: view } as never)
       : ({ _tag: "Failure", error: NOT_FOUND } as never),
   );
-  render(
+  renderInRouter(
     <RegistryProvider>
       <SquadScreen saveId={rid("s1")} />
     </RegistryProvider>,

@@ -28,11 +28,11 @@ If any turns out to be a real product defect too large to fix here, file it as i
 leave this one's checkbox unticked rather than papering over it.
 
 Acceptance:
-- [ ] Every one of the 7 diagnosed, with root cause stated
-- [ ] For each, an explicit code-vs-expectation call with reasoning
-- [ ] `test/renderer/level1-a11y.test.tsx`'s 3 `isServer` failures resolved or ticketed
-- [ ] No test skipped, loosened or deleted
+- [x] Every one of the 7 diagnosed, with root cause stated
+- [x] For each, an explicit code-vs-expectation call with reasoning
+- [x] `test/renderer/level1-a11y.test.tsx`'s 3 `isServer` failures resolved or ticketed
+- [x] No test skipped, loosened or deleted
 
 **Blocked by:** [02 — DOM environment](02-dom-environment.md)
 
-**Status:** ready-for-agent
+**Status:** resolved

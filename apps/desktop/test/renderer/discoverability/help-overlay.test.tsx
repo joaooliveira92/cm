@@ -35,7 +35,11 @@ const rowIds = (): string[] =>
   [...document.querySelectorAll("[data-action-id]")].map((el) => el.getAttribute("data-action-id")!);
 
 const transfersState = () => ({ ready: true });
-const seasonCompleteState = () => ({ ready: true, phase: "season_complete", advancing: false });
+/** A state in which Continue is genuinely unavailable, so the disabled-with-reason affordance has
+ *  something live to render. `advancing` rather than `phase: "season_complete"`: the season-rollover
+ *  decision (`.scratch/season-rollover-skips-conclusion/`) removed the dead season_complete disable,
+ *  because advancing concludes and rolls over in one step and the phase never reaches the renderer. */
+const continueBlockedState = () => ({ ready: true, advancing: true });
 
 beforeEach(() => {
   cleanup();
@@ -91,8 +95,8 @@ describe("AC-09/AC-24 — the help overlay enumerates live registrations, tabs i
   });
 
   it("availability-afforded rows carry a check; unavailable rows show none", () => {
-    mount("league", seasonCompleteState(), () => undefined);
-    // On a complete season both Calendar rows are unavailable -> no check.
+    mount("league", continueBlockedState(), () => undefined);
+    // While an advance is already running Continue is unavailable -> no check.
     const advanceRow = (action: Action) =>
       [...document.querySelectorAll("[data-action-id]")]
         .map((el) => el as HTMLElement)

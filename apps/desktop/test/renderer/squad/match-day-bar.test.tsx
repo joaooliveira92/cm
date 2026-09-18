@@ -17,7 +17,7 @@ import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
-import { renderInRouter } from "./renderInRouter.js";
+import { renderInRouter } from "../../setup/renderInRouter.js";
 
 const rid = (s: string) => SaveId.make(s);
 

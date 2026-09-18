@@ -2,14 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
-import {
-  FAMILIARITY_TIERS,
-  GOALKEEPING_ATTRIBUTES,
-  HIDDEN_ATTRIBUTES,
-  OUTFIELD_ATTRIBUTES,
-  POSITIONS,
-  STATURE_TIERS,
-} from "@cm-clone/shared";
+import { FAMILIARITY_TIERS, POSITIONS, STATURE_TIERS } from "@cm-clone/shared";
 import { SquadScreen } from "../../../src/renderer/squad/SquadScreen.js";
 import { TransfersScreen } from "../../../src/renderer/transfers/TransfersScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
@@ -24,6 +17,12 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { chooseOptionByLabel, selectValueOf } from "../../setup/baseUiSelect.js";
+import { renderInRouter } from "../../setup/renderInRouter.js";
+import {
+  squadPlayer as player,
+  squadView as squad,
+  tacticsView,
+} from "../../setup/squadFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -33,32 +32,10 @@ const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown
 
 const NOT_FOUND = { _tag: "SaveNotFoundError", id: rid("s1") };
 
-const attributes = (value: number): Record<string, number> => ({
-  ...Object.fromEntries(OUTFIELD_ATTRIBUTES.map((a) => [a, value])),
-  ...Object.fromEntries(GOALKEEPING_ATTRIBUTES.map((a) => [a, value])),
-  ...Object.fromEntries(HIDDEN_ATTRIBUTES.map((a) => [a, value])),
-});
+const squadPlayer = (id: string, name: string, position: string) =>
+  player(rid(id), name, position);
 
-const squadPlayer = (id: string, name: string, position: string) => ({
-  id: rid(id),
-  firstName: name,
-  lastName: "Player",
-  dateOfBirth: "1990-01-01",
-  age: 25,
-  attributes: attributes(12),
-  positions: [{ position, familiarity: FAMILIARITY_TIERS[0] }],
-  overallRating: 80,
-  positionRatings: { ST: 12 },
-  condition: 100,
-  trainingFocus: null,
-  nationality: "England",
-  birthplace: "London",
-});
-
-const squadView = (players: ReturnType<typeof squadPlayer>[]) => ({
-  club: { id: rid("me"), name: "Test FC", statureTier: STATURE_TIERS[0] },
-  players,
-});
+const squadView = (players: ReadonlyArray<unknown>) => squad(rid("me"), "Test FC", players);
 
 const marketPlayer = (
   id: string,
@@ -79,10 +56,7 @@ const marketPlayer = (
   positions: [{ position, familiarity: FAMILIARITY_TIERS[0] }],
 });
 
-const transfersView = (overrides: Partial<Parameters<typeof transfersFixture>[0]> = {}) =>
-  transfersFixture(overrides);
-
-const transfersFixture = (overrides: {
+const transfersView = (overrides: {
   windowOpen?: boolean;
   marketPlayers?: ReturnType<typeof marketPlayer>[];
   freeAgents?: ReturnType<typeof marketPlayer>[];
@@ -108,7 +82,7 @@ const mountSquad = async (view: unknown): Promise<void> => {
       ? ({ _tag: "Success", value: view } as never)
       : ({ _tag: "Failure", error: NOT_FOUND } as never),
   );
-  render(
+  renderInRouter(
     <RegistryProvider>
       <SquadScreen saveId={rid("s1")} />
     </RegistryProvider>,
@@ -385,13 +359,15 @@ describe("AC-32 — explicit result/refresh states, polite status announcer, rol
         ? ({ _tag: "Success", value: squadView([squadPlayer("p1", "Alan", POSITIONS[2])]) } as never)
         : ({ _tag: "Failure", error: NOT_FOUND } as never),
     );
-    render(
+    renderInRouter(
       <RegistryProvider>
         <SquadScreen saveId={rid("s1")} />
       </RegistryProvider>,
     );
-    // The atom's initial value renders the loading state synchronously.
-    const loading = screen.getByText("Loading squad…");
+    // The atom's initial value renders the loading state on mount, before the
+    // seam answers. `findBy` rather than `getBy` because the screen mounts
+    // under a router, whose first synchronous pass renders nothing.
+    const loading = await screen.findByText("Loading squad…");
     expect(loading.closest("[aria-busy='true']")).toBeTruthy();
 
     await screen.findByRole("button", { name: /Alan Player/ });
@@ -404,7 +380,7 @@ describe("AC-32 — explicit result/refresh states, polite status announcer, rol
         ? ({ _tag: "Failure", error: NOT_FOUND } as never)
         : ({ _tag: "Failure", error: NOT_FOUND } as never),
     );
-    render(
+    renderInRouter(
       <RegistryProvider>
         <SquadScreen saveId={rid("s1")} />
       </RegistryProvider>,
@@ -474,18 +450,24 @@ describe("AC-32 — explicit result/refresh states, polite status announcer, rol
 describe("review repairs (stage-5 review) — F1 refresh keeps rows, F2 retry, F3 announcer, F8 NaN bid", () => {
   it("F1: a failed Squad refresh keeps the rows and shows a non-blocking refresh error with Retry", async () => {
     let squadCalls = 0;
+    const players = [squadPlayer("p1", "Alan", POSITIONS[2])];
     mockPreload(async (method) => {
       if (method === "getSquad") {
         squadCalls += 1;
         if (squadCalls === 1) {
-          return { _tag: "Success", value: squadView([squadPlayer("p1", "Alan", POSITIONS[2])]) } as never;
+          return { _tag: "Success", value: squadView(players) } as never;
         }
         // The revalidation fails while the previous Success stayed put.
         return { _tag: "Failure", error: NOT_FOUND } as never;
       }
+      // The lineup bar keeps working, so the only alert the assertion below can
+      // see would be one the Squad table raised.
+      if (method === "getTactics") {
+        return { _tag: "Success", value: tacticsView(rid("me"), "Test FC", players) } as never;
+      }
       return { _tag: "Failure", error: NOT_FOUND } as never;
     });
-    render(
+    renderInRouter(
       <RegistryProvider>
         <SquadScreen saveId={rid("s1")} />
       </RegistryProvider>,

@@ -26,6 +26,7 @@ import { MatchDayScreen } from "../../src/renderer/match/MatchDayScreen.js";
 import { setActiveMatch, clearActiveMatch } from "../../src/renderer/match/session.js";
 import { saveSquadViewId } from "../../src/renderer/squad/squadViews.js";
 import { RegistryProvider } from "../../src/renderer/rpc.js";
+import { renderInRouter } from "../setup/renderInRouter.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -194,7 +195,7 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
         ? ({ _tag: "Success", value: squadView([playerRow("p1", "Alan"), playerRow("p2", "Bob"), playerRow("p3", "Cal")]) } as never)
         : ({ _tag: "Failure", error: NOT_FOUND } as never),
     );
-    render(
+    renderInRouter(
       <RegistryProvider>
         <SquadScreen saveId={rid("s1")} />
       </RegistryProvider>,
@@ -215,7 +216,7 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
         ? ({ _tag: "Success", value: squadView([playerRow("p1", "Alan"), playerRow("p2", "Bob"), playerRow("p3", "Cal")]) } as never)
         : ({ _tag: "Failure", error: NOT_FOUND } as never),
     );
-    render(
+    renderInRouter(
       <RegistryProvider>
         <SquadScreen saveId={rid("s1")} />
       </RegistryProvider>,
@@ -242,7 +243,7 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
         ? ({ _tag: "Success", value: squadView([playerRow("p1", "Alan")]) } as never)
         : ({ _tag: "Failure", error: NOT_FOUND } as never),
     );
-    render(
+    renderInRouter(
       <RegistryProvider>
         <SquadScreen saveId={rid("s1")} />
       </RegistryProvider>,

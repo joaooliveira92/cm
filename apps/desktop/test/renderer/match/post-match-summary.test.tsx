@@ -25,11 +25,11 @@ const summary = (events: ReadonlyArray<Record<string, unknown>>, overrides?: Rec
 });
 
 const EVENTS = [
-  { minute: 12, kind: "Goal", clubId: "home", playerId: "p1", playerName: "Ada Stone" },
-  { minute: 30, kind: "YellowCard", clubId: "away", playerId: "p2", playerName: "Ben Cole" },
-  { minute: 44, kind: "Goal", clubId: "away", playerId: "p3", playerName: "Cy Moss" },
-  { minute: 70, kind: "Injury", clubId: "home", playerId: "p4", playerName: "Dee Hart" },
-  { minute: 88, kind: "Goal", clubId: "home", playerId: "p1", playerName: "Ada Stone" },
+  { minute: 12, half: 1, kind: "Goal", clubId: "home", playerId: "p1", playerName: "Ada Stone" },
+  { minute: 30, half: 1, kind: "YellowCard", clubId: "away", playerId: "p2", playerName: "Ben Cole" },
+  { minute: 44, half: 1, kind: "Goal", clubId: "away", playerId: "p3", playerName: "Cy Moss" },
+  { minute: 70, half: 2, kind: "Injury", clubId: "home", playerId: "p4", playerName: "Dee Hart" },
+  { minute: 88, half: 2, kind: "Goal", clubId: "home", playerId: "p1", playerName: "Ada Stone" },
 ];
 
 const mount = (impl: (method: string) => unknown) => {

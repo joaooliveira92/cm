@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@cm-clone/shared";
 import { SquadScreen } from "../../src/renderer/squad/SquadScreen.js";
 import { RegistryProvider } from "../../src/renderer/rpc.js";
+import { renderInRouter } from "../setup/renderInRouter.js";
 
 const relaxedSaveId = (id: string) => SaveId.make(id);
 
@@ -64,7 +65,7 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
       if (method === "getSquad") return { _tag: "Failure", error: saveNotFound };
       return { _tag: "Failure", error: saveNotFound };
     });
-    render(
+    renderInRouter(
       <RegistryProvider>
         <SquadScreen saveId={relaxedSaveId("s1")} />
       </RegistryProvider>,
@@ -76,7 +77,7 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
     mockPreload(async () => {
       throw new Error("ipc down");
     });
-    render(
+    renderInRouter(
       <RegistryProvider>
         <SquadScreen saveId={relaxedSaveId("s1")} />
       </RegistryProvider>,
@@ -110,7 +111,7 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
         };
       return { _tag: "Failure", error: saveNotFound };
     });
-    render(
+    renderInRouter(
       <RegistryProvider>
         <SquadScreen saveId={relaxedSaveId("s1")} />
       </RegistryProvider>,

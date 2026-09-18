@@ -22,6 +22,7 @@ const profileView = (overrides: Record<string, unknown> = {}) => ({
     tertiary: null,
     quaternary: null,
   },
+  badgeKey: null,
   seasonNumber: 3, awaitingFixture: null,
   tenureSeasons: 3,
   archived: false,

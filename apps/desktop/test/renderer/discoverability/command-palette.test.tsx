@@ -20,7 +20,11 @@ const optionFor = (label: RegExp): HTMLElement => screen.getByRole("option", { n
 
 const transfersState = () => ({ ready: true });
 
-const seasonCompleteState = () => ({ ready: true, phase: "season_complete", advancing: false });
+/** A state in which Continue is genuinely unavailable, so the disabled-with-reason affordance has
+ *  something live to render. `advancing` rather than `phase: "season_complete"`: the season-rollover
+ *  decision (`.scratch/season-rollover-skips-conclusion/`) removed the dead season_complete disable,
+ *  because advancing concludes and rolls over in one step and the phase never reaches the renderer. */
+const continueBlockedState = () => ({ ready: true, advancing: true });
 
 beforeEach(() => {
   cleanup();
@@ -52,7 +56,7 @@ describe("AC-23 — the palette lists global + current-screen Actions, available
   });
 
   it("ranks available above unavailable and shows unavailable entries disabled-with-reason, never hidden", () => {
-    render(<CommandPalette screen="league" state={seasonCompleteState()} overrides={{}} onClose={() => undefined} />);
+    render(<CommandPalette screen="league" state={continueBlockedState()} overrides={{}} onClose={() => undefined} />);
     const continueOption = optionFor(/Continue/);
     // Present (never hidden), disabled, with the per-predicate plain-language reason.
     expect(continueOption.getAttribute("aria-disabled")).toBe("true");
@@ -110,7 +114,7 @@ describe("AC-23 — palette keyboard operation", () => {
     const dispatch = vi.fn();
     const close = vi.fn();
     registerActionHandler("continue", dispatch);
-    render(<CommandPalette screen="league" state={seasonCompleteState()} overrides={{}} onClose={close} />);
+    render(<CommandPalette screen="league" state={continueBlockedState()} overrides={{}} onClose={close} />);
     const input = screen.getByRole("combobox") as HTMLInputElement;
     input.focus();
     // Bring the list down to the disabled Continue entry.

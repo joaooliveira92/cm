@@ -58,6 +58,20 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+/** A preload double matching the shipped `window.electronAPI` (see `src/renderer/window.d.ts`).
+ *  The Exit dialog's confirm path branches on `platform`: darwin asks the main process to quit
+ *  (`quitApplication`), everything else closes the window so main's `before-quit` guard fires. */
+const stubElectronAPI = (platform: NodeJS.Platform) => {
+  const quitApplication = vi.fn();
+  window.electronAPI = {
+    platform,
+    confirmQuit: vi.fn(),
+    cancelQuit: vi.fn(),
+    quitApplication,
+  } as never;
+  return quitApplication;
+};
+
 describe("Main Menu — structure", () => {
   it("renders the product identity and all menu items in spec order", async () => {
     mount();
@@ -130,7 +144,7 @@ describe("Main Menu — command emission", () => {
 
   it("Exit opens the confirmation dialog instead of quitting directly", async () => {
     mount();
-    window.electronAPI = { showQuitGuard: vi.fn() } as never;
+    stubElectronAPI("linux");
     fireEvent.click(screen.getByRole("button", { name: "Exit" }));
     expect(screen.getByRole("dialog", { name: "Exit application?" })).toBeTruthy();
   });
@@ -139,7 +153,7 @@ describe("Main Menu — command emission", () => {
 describe("Main Menu — exit confirmation dialog", () => {
   it("default focus is Cancel and the destructive action is distinct", async () => {
     mount();
-    window.electronAPI = { showQuitGuard: vi.fn() } as never;
+    stubElectronAPI("linux");
     fireEvent.click(screen.getByRole("button", { name: "Exit" }));
 
     const dialog = screen.getByRole("dialog", { name: "Exit application?" });
@@ -151,7 +165,7 @@ describe("Main Menu — exit confirmation dialog", () => {
 
   it("does not warn about losing career progress — no career is loaded", async () => {
     mount();
-    window.electronAPI = { showQuitGuard: vi.fn() } as never;
+    stubElectronAPI("linux");
     fireEvent.click(screen.getByRole("button", { name: "Exit" }));
 
     const dialog = screen.getByRole("dialog", { name: "Exit application?" });
@@ -161,30 +175,42 @@ describe("Main Menu — exit confirmation dialog", () => {
 
   it("Cancel closes the dialog and does not quit", async () => {
     mount();
-    const quitGuard = vi.fn();
-    window.electronAPI = { showQuitGuard: quitGuard } as never;
+    const quitApplication = stubElectronAPI("darwin");
     fireEvent.click(screen.getByRole("button", { name: "Exit" }));
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(quitGuard).not.toHaveBeenCalled();
+    expect(quitApplication).not.toHaveBeenCalled();
+    expect(window.close).not.toHaveBeenCalled();
   });
 
-  it("confirming Exit triggers the quit guard", async () => {
+  it("confirming Exit asks the main process to quit on macOS", async () => {
     mount();
-    const quitGuard = vi.fn();
-    window.electronAPI = { showQuitGuard: quitGuard } as never;
+    // The last window closing does not quit a Cocoa app, so darwin goes through
+    // `quitApplication` rather than `window.close()`.
+    const quitApplication = stubElectronAPI("darwin");
     fireEvent.click(screen.getByRole("button", { name: "Exit" }));
 
     const dialog = screen.getByRole("dialog", { name: "Exit application?" });
-    const confirm = within(dialog).getByRole("button", { name: "Exit" });
-    fireEvent.click(confirm);
-    expect(quitGuard).toHaveBeenCalledTimes(1);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Exit" }));
+    expect(quitApplication).toHaveBeenCalledTimes(1);
+    expect(window.close).not.toHaveBeenCalled();
+  });
+
+  it("confirming Exit closes the window elsewhere, so main's before-quit guard fires", async () => {
+    mount();
+    const quitApplication = stubElectronAPI("linux");
+    fireEvent.click(screen.getByRole("button", { name: "Exit" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Exit application?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Exit" }));
+    expect(window.close).toHaveBeenCalledTimes(1);
+    expect(quitApplication).not.toHaveBeenCalled();
   });
 
   it("Escape cancels the dialog", async () => {
     mount();
-    window.electronAPI = { showQuitGuard: vi.fn() } as never;
+    stubElectronAPI("linux");
     fireEvent.click(screen.getByRole("button", { name: "Exit" }));
 
     fireEvent.keyDown(screen.getByRole("dialog", { name: "Exit application?" }), {
@@ -241,7 +267,7 @@ describe("Main Menu — keyboard navigation", () => {
 
   it("activating the focused item emits its command (Exit opens its dialog)", async () => {
     mount();
-    window.electronAPI = { showQuitGuard: vi.fn() } as never;
+    stubElectronAPI("linux");
     const list = screen.getByRole("navigation", { name: "Main menu" });
     const buttons = MENU_BUTTONS();
 

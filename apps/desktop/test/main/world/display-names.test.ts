@@ -387,14 +387,34 @@ describe("no read path outside the seam takes a club name from a column", () => 
       return entry.name.endsWith(".ts") ? [full] : [];
     });
 
+  /** Every shape a club-name read takes in this codebase's raw SQL: the bare column in a
+   *  clubs-only select, and an aliased one from a join.
+   *
+   *  The select-list pattern refuses to cross a `FROM` or a nested `SELECT`, so it reads the
+   *  clubs query's own columns rather than any `name` that happens to precede a `(SELECT id FROM
+   *  clubs …)` subquery elsewhere in the same template literal. */
+  const SELECTS_CLUBS_NAME =
+    /SELECT(?:(?!\bFROM\b|\bSELECT\b)[^`])*\bname\b(?:(?!\bFROM\b|\bSELECT\b)[^`])*FROM\s+clubs\b/is;
+  const SELECTS_ALIASED_NAME = /\w+\.name as "\w*[Cc]lubName"/;
+
+  it("still recognises both shapes of a club-name read", () => {
+    // The guard is a regex over source text, so it is only worth its green when it is shown to
+    // fail on the thing it exists to catch.
+    expect(SELECTS_CLUBS_NAME.test("sql`SELECT id, name FROM clubs WHERE is_user_club = 1`")).toBe(true);
+    expect(SELECTS_CLUBS_NAME.test('sql`SELECT c.id,\n c.name\n FROM clubs c`')).toBe(true);
+    expect(SELECTS_ALIASED_NAME.test('c.name as "clubName"')).toBe(true);
+    // And is not tripped by a select whose `name` belongs to another table.
+    expect(
+      SELECTS_CLUBS_NAME.test(
+        "sql`SELECT id, name FROM staff WHERE club_id = (SELECT id FROM clubs WHERE is_user_club = 1)`",
+      ),
+    ).toBe(false);
+  });
+
   it("selects no club name anywhere in the main process", () => {
-    // Every shape a club-name read takes in this codebase's raw SQL: the bare column in a
-    // clubs-only select, and an aliased one from a join.
     const offenders = sourceFiles(mainDir).filter((file) => {
       const source = readFileSync(file, "utf8");
-      const selectsClubsName = /SELECT[^`]*\bname\b[^`]*FROM clubs/is.test(source);
-      const selectsAliasedName = /\w+\.name as "\w*[Cc]lubName"/.test(source);
-      return selectsClubsName || selectsAliasedName;
+      return SELECTS_CLUBS_NAME.test(source) || SELECTS_ALIASED_NAME.test(source);
     });
     expect(offenders.map((file) => path.relative(mainDir, file))).toEqual([]);
   });

@@ -123,12 +123,13 @@ describe("AC-23 — the palette over the real registry is a strict command surfa
     }
   });
 
-  it("the real Continue row surfaces disabled-with-reason on a complete season", () => {
-    const rows = rankPaletteActions(
-      ACTION_REGISTRY.all,
-      "",
-      ready({ phase: "season_complete", advancing: false }),
-    );
+  it("the real Continue row surfaces disabled-with-reason while an advance is running", () => {
+    // `advancing` rather than `phase: "season_complete"`: the season-rollover decision
+    // (`.scratch/season-rollover-skips-conclusion/`) removed the dead season_complete disable,
+    // because advancing concludes and rolls over in one step and the phase never reaches the
+    // renderer. What this test is for — an unavailable Continue stays listed, disabled, with its
+    // reason — needs a predicate that can still say no.
+    const rows = rankPaletteActions(ACTION_REGISTRY.all, "", ready({ advancing: true }));
     const row = rows.find((entry) => entry.action.id === "continue");
     expect(row, "continue must remain listed (never hidden)").toBeDefined();
     expect(row!.available).toBe(false);
