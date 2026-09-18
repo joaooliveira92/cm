@@ -13,7 +13,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** claimed
+**Status:** resolved
 
 - [x] Acceptance criterion 1: Closing the last window on macOS does not prompt (app stays alive, standard Cocoa behaviour)
 - [x] Acceptance criterion 2: Closing the window on non-macOS prompts (goes through `before-quit`)
@@ -22,3 +22,14 @@
 - [x] Acceptance criterion 5: Cancel or Escape returns to the app without quitting
 - [x] Acceptance criterion 6: Quit closes the app (or discards the provisional career and closes)
 - [x] Acceptance criterion 7: On renderer crash or timeout, the guard does not block termination — `before-quit` falls through
+## Resolved 2026-09-18 — six of seven criteria, the seventh split out
+
+A stale-lock audit confirmed this shipped and was only left `claimed`: the `before-quit` handler
+prevents default, sends `show-quit-guard`, handles confirm/cancel with a re-entrancy flag, and falls
+through when the window is gone (`apps/desktop/src/main/index.ts:89-118`), with `QuitGuard.tsx` and
+open/cancel/confirm/portal tests behind it.
+
+**AC 4 was genuinely unimplemented** and is not being quietly ticked. The provisional-career variant
+of the dialog does not exist — one unconditional body string, no discard path. It is now
+[22 — Quit guard provisional-career variant](22-quit-guard-provisional-career-variant.md), so the
+gap stays visible instead of closing with this ticket.

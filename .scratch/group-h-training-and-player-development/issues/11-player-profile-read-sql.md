@@ -10,7 +10,7 @@ Found by ticket 08's e2e: the Player Development Centre's "Development" link ope
 
 **Blocked by:** None (can start immediately)
 
-**Status:** claimed
+**Status:** resolved
 
 - [ ] `getPlayerProfile` and `getPlayerContract` bind `playerId` as a parameter
 - [ ] The profile's Condition and injury status come from the current Season's fitness row

@@ -14,7 +14,7 @@ The slice's edge promise: fields are class-string constants, not a component lib
 
 **Blocked by:** 08 — Token foundation, alias-first repaint, and the slate guard (the `FIELD_*` constants, the `--color-field-bg` token, and the band's tokens all come from the token system shipped there).
 
-**Status:** claimed
+**Status:** resolved
 
 - [x] The creation flow renders inside a light gradient pre-career chrome band carrying identity, with Cancel/Back and an in-band "Step N of 4" indicator; the floating step badge is gone and the Save List boot screen is unchanged.
 - [x] Every field in the flow shares one look: opaque field surface, thin rim, single focus ring on `:focus-visible`, 12px labels.

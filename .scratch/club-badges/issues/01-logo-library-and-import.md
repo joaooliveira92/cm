@@ -37,7 +37,7 @@ renderer, and no app-facing Effect gains a failure.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** claimed
+**Status:** resolved
 
 - [ ] `football-logos-master/` is listed in `.gitignore` before the first import runs, so the dump can't be committed.
 - [ ] The library holds one PNG per club under a folder per nation, and no path contains a league or a season. The current dump yields 572 keys. Its 697 distinct file names include 125 other spellings of a club already counted, which the adapter's override table maps onto one key.

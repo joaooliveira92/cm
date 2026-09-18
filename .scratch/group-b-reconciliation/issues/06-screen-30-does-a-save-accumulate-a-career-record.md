@@ -4,8 +4,6 @@ Type: grilling
 
 Blocked by: 03
 
-Status: claimed
-
 Status: resolved
 
 ## Answer

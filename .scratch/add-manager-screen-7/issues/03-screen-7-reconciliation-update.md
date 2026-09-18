@@ -27,7 +27,7 @@ so the divergence from its own convention is visible to the next reader.
 (The Review step becomes the Career Setup Summary) — the rows describe what those tickets build, so
 writing them first would describe an unbuilt screen as shipped.
 
-**Status:** claimed
+**Status:** ready-for-agent
 
 - [ ] Screen 7's ledger section carries a status block naming this effort and the re-audit date, and
       no longer claims that nothing of the screen survives.
@@ -38,3 +38,13 @@ writing them first would describe an unbuilt screen as shipped.
 - [ ] The rows for the sections tickets 01 and 02 implement describe the shipped behaviour.
 - [ ] The edit to the import file is recorded in the section, with its date and what it removed.
 - [ ] `pnpm check:all` is green, including the markdown link check.
+
+## Lock released 2026-09-18
+
+Claimed and abandoned. A stale-lock audit found no trace of the work: the Screen 7 section of the
+Group A ledger is still the original four-sentence prose reading "Nothing of Screen 7 survives", with
+no row table, no new status block, and no mention of this effort or the §6.4 import edit.
+
+Both blockers (01, 02) shipped — `fdb9230` landed ticket 01's discard confirmation — so this is
+unblocked, real work. It also matters more than a docs chore: the published ledger now asserts a
+state the code has left, which is exactly what this ticket was written to prevent.

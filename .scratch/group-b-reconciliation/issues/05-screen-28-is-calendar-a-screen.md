@@ -2,8 +2,6 @@
 
 Type: grilling
 
-Status: claimed
-
 Status: resolved
 
 ## Answer
