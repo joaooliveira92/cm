@@ -84,15 +84,28 @@ an audit will find bugs in it. Findings become ledger rows and spec statements; 
   Message taxonomy hole was found. See
   [issues/02-screens-24-26-news.md](issues/02-screens-24-26-news.md).
 
+- **Tickets 03–07 closed; the effort is complete.** Recorded late, during the 2026-09-18 stale-lock
+  sweep — 05, 06 and 07 had shipped but were held open by a `claimed` line left above their
+  `resolved` line. The load-bearing answers: **Screen 28 (Calendar) is not a new screen** — Fixtures
+  already *is* the Calendar surface under another name, and the import's extra controls are
+  `deferred`/`unscheduled` with no CONTEXT.md change needed
+  ([issues/05](issues/05-screen-28-is-calendar-a-screen.md)). **Screen 30 (Manager History): a career
+  record partially exists** — per-season `board_objective` rows and a single-row `manager_status`, no
+  honours or aggregate totals, and its home is Season Summary rather than Manager Profile
+  ([issues/06](issues/06-screen-30-does-a-save-accumulate-a-career-record.md)). Ticket 07 assembled
+  [spec.md](spec.md) and the ledger at
+  [docs/specs/group_b_global_navigation_and_inbox/RECONCILIATION.md](../../docs/specs/group_b_global_navigation_and_inbox/RECONCILIATION.md).
+
 The charting-time rulings above are written up as a spec at [charting-spec.md](charting-spec.md). It covers this effort's method and scope only; the Group B
 screens spec is `spec.md`, produced by ticket 07.
 
 ## Not yet specified
 
-- **Where new Group B surfaces land in the navigation model.** If the Calendar question (ticket 05) or
-  the career-record question (ticket 06) produces a new screen, it needs a navbar slot, a keyboard
-  tier, and a command-palette decision — the shape Group A's ticket 09 took. Can't be phrased sharply
-  until it's known whether either screen exists.
+Nothing. The one open patch — where new Group B surfaces land in the navigation model — was answered
+by tickets 05 and 06 and is resolved rather than pending: **no new screen is warranted**, so there is
+no navbar slot, keyboard tier or command-palette decision to make. Fixtures already carries the
+Calendar, and the career record lives on Season Summary. It stayed listed here only because the map
+was never updated when those tickets closed.
 
 - **The News Message taxonomy.** Which simulated events produce a News Message, and who decides. The
   news audit (ticket 02) will either find this already settled by the implementation or expose it as
