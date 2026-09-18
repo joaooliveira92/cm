@@ -33,4 +33,4 @@ All five staff screens (64-68) are covered by existing decisions. Dispositions:
 
 The staff routes stubs (staff/$staffId/profile, /contract, /history) and player coach/scout report stubs currently render WIP placeholders. They should be removed or marked as dead ends to avoid player confusion.
 
-See [01 — Screen inventory](issues/01-screen-inventory.md) for full survey evidence.
+See [01 — Screen inventory](01-screen-inventory.md) for full survey evidence.

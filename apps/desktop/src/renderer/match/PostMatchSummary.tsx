@@ -72,7 +72,6 @@ export const PostMatchSummary = ({ saveId, matchId }: { readonly saveId: SaveId;
   const incidents = summary.events.filter((event) => event.kind !== "Goal");
   const wentToPenalties = summary.isCup && summary.homePenalties !== null && summary.awayPenalties !== null;
   const homeWonOnPenalties = wentToPenalties && (summary.homePenalties ?? 0) > (summary.awayPenalties ?? 0);
-  const awayWonOnPenalties = wentToPenalties && !homeWonOnPenalties;
 
   return (
     <section aria-label="Post-match summary" className="mt-4 space-y-4 rounded-panel border border-panel-border bg-panel-bg p-4 text-sm">

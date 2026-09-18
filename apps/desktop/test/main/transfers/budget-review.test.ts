@@ -37,7 +37,7 @@ it.effect("returns Transfer Budget remaining, Wage Budget, committed wages and h
     const saveId = save.id;
 
     // Find the user's club and get the raw budget/committed values directly
-    const { clubId, rawBudget, rawCommitted } = yield* withSave(saveId, Effect.gen(function* () {
+    const { rawBudget, rawCommitted } = yield* withSave(saveId, Effect.gen(function* () {
       const sql = yield* SqlClient;
       const clubRows = yield* sql<{ id: string }>`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`;
       const clubId = clubRows[0]!.id as ClubId;

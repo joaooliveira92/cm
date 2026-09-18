@@ -33,7 +33,6 @@ import {
   ClubNotFoundError,
   ClubSelectionView,
   ClubStaffView,
-  CoachAssignmentView,
   CoachingAssignmentsView,
   WorkloadView,
   PlayerDevelopmentHistoryView,

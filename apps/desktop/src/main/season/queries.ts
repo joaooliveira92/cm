@@ -1,7 +1,7 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   BoardObjectiveView,
-  CompetitionId,
+  type CompetitionId,
   FixtureView,
   FixturesView,
   LeagueTableView,

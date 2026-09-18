@@ -1,13 +1,12 @@
 import { type PlayerId, type SaveId } from "@cm-clone/contracts";
 import { FOCUS_RING } from "../focus.js";
-import { describeRpcError, playerContractAtom, typedError, useAtomValue, type RpcClientError } from "../rpc.js";
+import { describeRpcError, playerContractAtom, typedError, useAtomValue } from "../rpc.js";
 
 const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 export const PlayerContractScreen = ({
   saveId,
-  playerId,
-}: {
+  playerId }: {
   readonly saveId: SaveId;
   readonly playerId: PlayerId;
 }) => {

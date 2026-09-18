@@ -19,7 +19,7 @@ const SlotRow = ({
   </tr>
 );
 
-const TeamClubPanel = ({ club, side }: { readonly club: TeamSheetClubView; readonly side: string }) => (
+const TeamClubPanel = ({ club }: { readonly club: TeamSheetClubView }) => (
   <section className="rounded-panel border border-panel-border-dark bg-panel-bg p-4 shadow-panel">
     <h2 className="text-xl font-bold mb-1">{club.clubName}</h2>
     <p className="text-sm text-text-secondary mb-3">Formation: {club.formation}</p>
@@ -83,8 +83,8 @@ export const MatchHomeTeamScreen = ({ saveId }: { readonly saveId: SaveId }) => 
       {!teamSheet && !error && <p className="text-text-secondary italic">Loading team sheet...</p>}
       {teamSheet && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <TeamClubPanel club={teamSheet.home} side="home" />
-          <TeamClubPanel club={teamSheet.away} side="away" />
+          <TeamClubPanel club={teamSheet.home} />
+          <TeamClubPanel club={teamSheet.away} />
         </div>
       )}
     </main>

@@ -1,7 +1,7 @@
-import { type PlayerId, type SaveId, type PlayerProfileView } from "@cm-clone/contracts";
+import { type PlayerId, type SaveId } from "@cm-clone/contracts";
 import { CATEGORIES, type Category } from "@cm-clone/shared";
 import { FOCUS_RING } from "../focus.js";
-import { describeRpcError, playerProfileAtom, typedError, useAtomValue, type RpcClientError } from "../rpc.js";
+import { describeRpcError, playerProfileAtom, typedError, useAtomValue } from "../rpc.js";
 
 const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
@@ -9,21 +9,18 @@ const CATEGORY_LABELS: Record<Category, string> = {
   goalkeeping: "Goalkeeping",
   mental: "Mental",
   physical: "Physical",
-  technical: "Technical",
-};
+  technical: "Technical" };
 
 const INJURY_LABELS: Record<string, string> = {
   fit: "Fit",
   knock: "Knock",
   light: "Injured (Light)",
   medium: "Injured (Medium)",
-  severe: "Injured (Severe)",
-};
+  severe: "Injured (Severe)" };
 
 export const PlayerProfileScreen = ({
   saveId,
-  playerId,
-}: {
+  playerId }: {
   readonly saveId: SaveId;
   readonly playerId: PlayerId;
 }) => {
@@ -56,7 +53,7 @@ export const PlayerProfileScreen = ({
     const categoryAttrs = Object.keys(attributes)
       .filter((attr) => typeof attributes[attr] === "number")
       .slice(0, 3);
-    return { category, attributes: categoryAttrs.map((attr) => ({ name: attr, value: attributes[attr] })), };
+    return { category, attributes: categoryAttrs.map((attr) => ({ name: attr, value: attributes[attr] })) };
   });
 
   return (

@@ -11,7 +11,6 @@ import { MatchControlPanel } from "./MatchControlPanel.js";
 import { PostMatchSummary } from "./PostMatchSummary.js";
 
 const MatchOngoing = () => {
-  const { state } = useMatchContext();
   return (
     <>
       <MatchCommentaryStream />

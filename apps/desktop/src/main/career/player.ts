@@ -4,6 +4,8 @@ import {
   PlayerNotFoundError,
   PlayerProfileView,
   PlayerPositionView,
+  type PositionSchema,
+  type FamiliarityTierSchema,
   type ClubId,
   type PlayerId,
   type SaveId,
@@ -86,9 +88,12 @@ const readPlayerProfile = (playerId: PlayerId) =>
       return yield* new PlayerNotFoundError({ playerId });
     }
 
+    // Typed as the domain literals rather than bare strings: `player_positions` is our own schema
+    // with constrained values, and naming them here keeps the assertion at the row boundary instead
+    // of casting it away at each use.
     const positionRows = yield* sql.unsafe<{
-      position: string;
-      familiarity: string;
+      position: Schema.Schema.Type<typeof PositionSchema>;
+      familiarity: Schema.Schema.Type<typeof FamiliarityTierSchema>;
     }>(`SELECT position, familiarity FROM player_positions WHERE player_id = ?`, [playerId]);
 
     const attributes = Object.fromEntries(
@@ -96,7 +101,7 @@ const readPlayerProfile = (playerId: PlayerId) =>
     ) as PlayerAttributes;
 
     const positions = positionRows.map(
-      (r) => new PlayerPositionView({ position: r.position as any, familiarity: r.familiarity as any }),
+      (r) => new PlayerPositionView({ position: r.position, familiarity: r.familiarity }),
     );
 
     const playerAge = ageFromDateOfBirth(player.dateOfBirth);
@@ -117,7 +122,7 @@ const readPlayerProfile = (playerId: PlayerId) =>
     }
 
     const clubSummary = yield* Schema.decodeUnknownEffect(ClubSummary)(
-      { id: player.clubId, name: nameOf(player.clubId), statureTier: (player.statureTier ?? "mid") as any },
+      { id: player.clubId, name: nameOf(player.clubId), statureTier: player.statureTier ?? "mid" },
     );
 
     return new PlayerProfileView({

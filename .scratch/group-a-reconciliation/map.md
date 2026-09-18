@@ -207,4 +207,4 @@ Adopting the vendored portal `Dialog` was rejected: it renders at `z-50` too, so
   with `MODAL_SCRIM_TOP` (`z-[60]`) from ticket 20, it now paints on top of and receives clicks
   through every overlay tier. A unit test proves the portal lands in `document.body`, not in the
   mount container. Decision recorded in
-  `.agents/notes/proposed/architecture/2026-09-17-quitguard-outranks-base-ui-modals.md`.
+  `.agents/notes/implemented/architecture/2026-09-17-quitguard-outranks-base-ui-modals.md`.
