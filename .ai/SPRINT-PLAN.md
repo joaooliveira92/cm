@@ -2,46 +2,30 @@
 
 ## Immediate next action
 
-**Stop: the queue holds no agent-takeable work.** Every remaining ticket is `needs-info` or blocked,
-and the three open questions are all human decisions. Nothing should be chartered around them — the
-open-maps gate is shut by group M, which is correct, and spec groups N-S wait behind it.
+**gate-red-on-dev ticket 04** — the vitest projects split, now unblocked by ticket 03. 100 of 144
+renderer test files carry a `@vitest-environment jsdom` pragma and 0 of 63 main tests do, so the
+renderer/main split already exists and is merely hand-written 100 times, silently absent on the
+101st. Deliberately sequenced after 03 so it moves against a green baseline. Also ready:
+**gate-red-on-dev 05** (a `MatchNotReadyError` flake), **add-manager-screen-7 03** (released lock;
+the Group A ledger asserts a state the code has left), **group-a-reconciliation 22** (the Quit dialog
+has no provisional-career variant).
 
-group-m ticket 01 resolved 2026-09-17: all 13 screens (181-193) are Absent — not one is even a WIP
-stub, though ~30 other screens use that idiom. No supporting data exists: no manager reputation, no
-morale, no board opinion (one annual verdict from league position plus a consecutive-miss counter, and
-nothing else moves it), no relationship model, and no command in the game produces text. The decisive
-finding is that **CONTEXT.md already excludes this group from v1** — at 751-753 ("media handling ...
-none of those systems ship in v1") and at 445-447, where the absence of "press content" is the stated
-reason the Calendar needs no finer clock. Both verified verbatim.
+**`pnpm check:all` is GREEN on `dev`** as of 2026-09-18, for the first time in this plan's memory —
+typecheck, lint, effect-lint, verify-md-links, verify-db-schema and test, 2651 tests passing. The
+standing caveat that every sprint delivers against a red gate and must re-prove "pre-existing" by
+hand is **retired**. One caveat replaces it: ticket 05's flake failed one test in two separate full
+runs, in a different file each time while passing in isolation, so treat a single red test as
+suspect until that is fixed.
 
-That reframes group-m ticket 02: it is not "which screens are in v1" but **"do you want to overturn a
-recorded decision?"** — a higher bar, and per ENGINEERING-CONTRACT one that may not happen by drift
-("overturned by a new ADR, not by an implementation that quietly diverges"). The ticket now carries
-three costed options and recommends **A: keep the exclusion**, since nothing in the repo supports
-media and CONTEXT.md excludes it deliberately rather than by omission.
-
-A caution for whoever runs the next fallback: the spec corpus and CONTEXT.md disagree about what v1
-is. The imported specs describe a finished commercial product; CONTEXT.md describes this game.
-Group M is the first place the fallback walked into that gap, and it will not be the last — Group O
-(national teams) and Group R (multiplayer) are named as out of scope in existing maps. Ingesting a
-spec group is not evidence that its contents are wanted.
-
-**Two group-l questions now need a human**, neither of which an agent should answer:
-[decision-request-01](../.scratch/group-l-competitions-nations-and-world-information/decision-request-01-rpc-error-channel.md)
-(does a failed SQLite query cross the RPC boundary typed, or die as a defect? — recommends an
-`rpc-error-channel` map) and
-[group-l ticket 06](../.scratch/group-l-competitions-nations-and-world-information/issues/06-competition-fixtures-deferred-surface.md)
-(which deferred Competition Fixtures controls belong in v1; also whether screens 164 and 161 are
-next, since both are v1 scope with no ticket).
-
-group-l ticket 05 resolved 2026-09-17: the narrow-error-union defect was systemic, not local. An
-audit of every method in `AppRpcs` — by typing the handler map against each declared error schema and
-reading what `tsc` rejected — found 11 mismatches; 8 are fixed. Seven RPC paths that produced "The
-game returned an unexpected response." now produce the sentence `describeRpcError` already held.
-`SqlError` is undeclared on roughly every save-scoped handler and is the largest remaining instance;
-it is a design question, not an omission. A permanent typecheck-level gate for this whole class is
-one type alias away and blocked only on that decision. An `effect-lint` rule would be the wrong
-tool — the needed fact is a type, not a syntax pattern.
+What the red gate turned out to be, after several sprints of being summarised as "61 unit tests
+failing `window is not defined`": only **5** were that error. 9 were a cascade from one test calling
+`window.close()` under jsdom and tearing the fixture down for eight others. 13 were a fixture missing
+a schema field added on 09-11. 21 were four test files that never adopted `renderInRouter` after
+`useListState` made `SquadScreen` require router context on 09-11. The inaccurate summary is how the
+real failures stayed hidden. Two guard tests disagreed and both were right to: `display-names` was a
+false positive (regex spanning a template literal) and was tightened with a self-test;
+`club-badge-library` was correct and had caught a real defect — 10 Portuguese clubs mapped to badge
+keys the library never held.
 
 **Six `claimed` tickets may be abandoned locks.** `claimed` makes a ticket invisible to the frontier
 scan, so an abandoned one hides real work and makes the queue look emptier than it is — this plan
