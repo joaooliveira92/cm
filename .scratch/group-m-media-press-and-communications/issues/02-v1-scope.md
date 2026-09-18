@@ -1,6 +1,7 @@
 # 02: v1 scope for Group M — is a media system in this game at all?
 
 Type: grilling
+Status: needs-info
 
 ## Question
 
@@ -37,4 +38,3 @@ screen if the systemic answer is "none" or "flavour only".
 
 **Blocked by:** [01 — Screen inventory](01-screen-inventory.md)
 
-**Status:** needs-info

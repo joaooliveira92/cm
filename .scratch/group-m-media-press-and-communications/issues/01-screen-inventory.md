@@ -1,6 +1,7 @@
 # 01: Screen inventory — what of screens 181–193 exists, and what the data layer already supports
 
 Type: task
+Status: claimed
 
 ## Question
 
@@ -30,4 +31,3 @@ against what is actually there, not against an assumption. Do not propose scope 
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
