@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it, beforeEach } from "vitest";
 import { SaveId as SaveIdSchema, type SaveId } from "@cm-clone/contracts";
 import { bindRouter, navigateBack } from "../../../src/renderer/navigation/adapter.js";

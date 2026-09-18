@@ -45,8 +45,18 @@ const MENU_BUTTONS = () =>
 beforeEach(() => {
   mountedNavigate.mockClear();
   resetActionHandlers();
+  // The non-macOS quit path calls `window.close()`. Under jsdom that tears the
+  // whole window down -- `document` goes undefined -- so one test reaching the
+  // quit path would take every later test in this file with it, each reported
+  // as `Cannot read properties of undefined (reading 'body')`. The environment
+  // is the fixture, not the subject: neutralise the teardown so a failure is
+  // attributable to the test that caused it.
+  vi.spyOn(window, "close").mockImplementation(() => undefined);
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 describe("Main Menu — structure", () => {
   it("renders the product identity and all menu items in spec order", async () => {

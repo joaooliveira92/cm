@@ -28,12 +28,46 @@ is the smaller change; the projects split stops this recurring. Recommend one, w
 config change has blast radius across ~200 test files, so do not make it unilaterally if the pragma
 clears the gate.
 
+## What the fix actually was
+
+Two distinct causes hid behind the two signatures, and only one was the missing pragma.
+
+**`window is not defined` (5 failures) — missing pragma, as diagnosed.** Added
+`// @vitest-environment jsdom` to `club-staff-route.test.ts`, `stage2.test.ts` and
+`team-scout-report-route.test.ts`. `adapter-coverage.test.ts` was not failing: it carried a
+hand-rolled `vi.stubGlobal("window", { … history, document })` polyfill. That was replaced with the
+pragma too — a fake `window` that has to be extended every time the adapter touches a new DOM API is
+the same defect one refactor from recurring.
+
+**`undefined (reading 'body')` (9 failures) — not a pragma problem.** All nine were in
+`router/main-menu.test.tsx`, which *already had* the jsdom pragma. `mainMenu.tsx`'s
+`handleQuitConfirmed` calls `window.close()` on non-macOS; jsdom honours that by tearing the window
+down, so `document` goes undefined and every *later* test in the file dies in `render`/`cleanup`.
+One test reaching the quit path destroyed the fixture for eight others. Neutralising
+`window.close` in `beforeEach` (`vi.spyOn(window, "close")`) confines the blast to the one test that
+causes it. That one still fails, on its own assertion — it stubs `electronAPI.showQuitGuard`, an API
+`window.d.ts` does not declare and `mainMenu.tsx` does not call — which is ticket 03's business.
+
+## Recommendation: pragma now, projects split as its own ticket
+
+Keep the pragma for this gate; it clears it. But 100 of 144 renderer test files already carry the
+pragma and 0 of 63 main tests do, so the config is documenting the wrong default: the split already
+exists, it is just spelled out 100 times by hand and silently absent on the 101st. That absence is
+not detectable until a renderer helper happens to touch the DOM, which is exactly how this ticket
+was born.
+
+The projects split (renderer → jsdom, main → node) is the right end state, but not as a side effect
+of a red-gate fix: it flips 44 renderer files from node to jsdom in one move, and at least one of
+them (`level1-a11y.test.tsx`, with its `isServer` failures) is sensitive to which environment it
+runs in. It needs its own ticket and its own full-suite run.
+
 Acceptance:
-- [ ] Every failure with signature `window is not defined` or `undefined (reading 'body')` is gone
-- [ ] No production source file gained an environment guard to satisfy a test
-- [ ] No test was skipped, loosened or deleted
-- [ ] A recommendation on pragma-vs-projects, with reasoning
+
+- [x] Every failure with signature `window is not defined` or `undefined (reading 'body')` is gone
+- [x] No production source file gained an environment guard to satisfy a test
+- [x] No test was skipped, loosened or deleted
+- [x] A recommendation on pragma-vs-projects, with reasoning
 
 **Blocked by:** None
 
-**Status:** claimed
+**Status:** resolved

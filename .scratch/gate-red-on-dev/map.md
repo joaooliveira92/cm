@@ -30,13 +30,24 @@ cluster was hidden behind it.
 
 ## Decisions so far
 
-<!-- charting session -->
+- [01 — lint and links](issues/01-lint-and-links.md): both mechanical gates clean. oxlint 0 errors
+  (the three `no-explicit-any` removed without a replacement cast), verify-md-links 1207 files. All
+  18 link failures were wrong relative depth, not missing targets.
+- [02 — DOM environment](issues/02-dom-environment.md): 61 → 48 failures, 13 fixed, 0 new. **The
+  charted diagnosis was half wrong.** The 5 `window is not defined` were a missing pragma as
+  described. The 9 `reading 'body'` were not: all nine were in `main-menu.test.tsx`, which *already*
+  had the pragma. `handleQuitConfirmed` calls `window.close()` on non-macOS, jsdom honours it and
+  tears the window down, so one test destroyed the fixture for eight others. Neutralising the
+  teardown in `beforeEach` made failures attributable and exposed a real one underneath — a test
+  stubbing `showQuitGuard`, an API that does not exist (ticket 03). No production source touched, no
+  test skipped or loosened.
 
 ## Not yet specified
 
-- Whether the DOM-environment cluster is one fix (a per-file pragma) or wants a vitest project split
-  (renderer → jsdom by default, main → node). The latter is the real fix if renderer tests keep
-  acquiring the pragma by hand, but it is a config change with blast radius across 200 files.
+Nothing. The pragma-vs-projects question graduated into [04](issues/04-vitest-projects-split.md):
+100 of 144 renderer test files already carry the pragma and 0 of 63 main tests do, so the split
+exists and is merely hand-written. It is sequenced after ticket 03 so it moves against a baseline
+with no outstanding assertion failures.
 
 ## Out of scope
 
