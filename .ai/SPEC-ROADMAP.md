@@ -52,7 +52,8 @@ logic. A placeholder is a slot waiting for a screen, not evidence that the scree
 | C Club information | 33–49 | 38 Audited (club-staff-presence). 49 shipped in full (`team-scout-report`, 8/8). The other 15 are unreconciled. | 38 only |
 | F Tactics and match preparation | 80–90 | 80 shipped (`group-f-tactics-and-match-preparation`, 3/3; no map or spec). 81–90 unreconciled. | No |
 | R Multiplayer administration | 250–262 | Disposed in full under the multiplayer axis, 2026-09-13. | Yes |
-| D–E, G–M | 50–79, 91–193 | Charted as `.scratch/` efforts, several with shipped screens, but the rulings live only in `.scratch/` and are lost when an effort is archived. Giving them durable ledgers is [M1](MILESTONES.md). | No |
+| D Player and staff records | 50–68 | Reconciled. 11 disposed, 2 `renamed` onto the Squad table, 3 deferred, 3 shipped. Ledger transcribed from `.scratch/` 2026-09-18 (M1 step 1). | Yes |
+| E, G–M | 69–79, 91–193 | Charted as `.scratch/` efforts, several with shipped screens, but the rulings live only in `.scratch/` and are lost when an effort is archived. Giving them durable ledgers is [M1](MILESTONES.md) step 1. | No |
 | N–Q, S | 194–249, 264–277 | Unreconciled, and no effort exists. | No |
 
 ## Sequence

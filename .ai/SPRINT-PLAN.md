@@ -6,6 +6,14 @@ has already charted. Scope, non-goals and exit criteria in [MILESTONES.md](MILES
 bound on what a sprint may start, and the frontier below is checked against it by
 [/milestone](../.opencode/command/milestone.md).
 
+**M1 step 1 — ledger durability sweep, 1 of 10 done (2026-09-18).** Group D transcribed to
+[`docs/specs/group_d_player_and_staff_records/RECONCILIATION.md`](../docs/specs/group_d_player_and_staff_records/RECONCILIATION.md).
+Remaining: E, F, G, H, I, J, K, L, M. Transcription caught two miscounts in group-d's `map.md`
+summary (53 is `out-of-scope`, not satisfied-inline; three screens are deferred, not two) and one
+unfiled obligation: eleven disposed Group D screens still carry routed WIP placeholders, which
+ticket 04 said to ticket and nobody did. That is M1 step 5, and the ledger records it so it cannot be
+lost twice. The three `staff*` folders answering to no import screen need a ruling, not a deletion.
+
 ## Immediate next action
 
 **gate-red-on-dev ticket 04** — the vitest projects split, now unblocked by ticket 03. 100 of 144
