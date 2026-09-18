@@ -2,22 +2,32 @@
 
 ## Immediate next action
 
-**group-l-competitions-nations-and-world-information ticket 05** — Competition read follow-ups,
-filed from the ticket 04 review and now the lowest-numbered open, unblocked, unclaimed ticket
-anywhere. Items 1 and 2 are mechanical: `getCompetitionTable` is missing
-`PendingFixtureIntegrityError` from its error union (the same defect ticket 04 fixed in
-`getCompetitionFixtures`, shipped one commit earlier and invisible to typecheck), and the two fixture
-lists render an unplayed Fixture two different ways. Item 3 is a scope question for a human or
-`cm-wayfinder`, not a build step — do not let it hold up items 1 and 2.
-
-**After that the build queue is genuinely empty and the spec-group fallback fires.** Nothing else is
-open, unblocked and unclaimed: 1 `ready-for-agent` (group-g 29, blocked on decision request 07), 5
-`needs-info` (need a human), 6 `claimed`. The fallback target is
-`docs/specs/group_m_media_press_and_communications/` — the first group letter A–S with no
-`.scratch/group-X-*/` effort (A–L all have one; M–S do not). Create
+**The build queue is empty; the next sprint ingests spec group M.** No open, unblocked, unclaimed
+build ticket remains anywhere: 1 `ready-for-agent` (group-g 29, blocked on decision request 07),
+`needs-info` tickets awaiting a human, and 6 `claimed`. Per the spec-group fallback the target is
+`docs/specs/group_m_media_press_and_communications/` — the first group letter A-S with no
+`.scratch/group-X-*/` effort (A-L all have one; M-S do not). It is 13 screens (181-193, Media Centre
+through Communication History), ~3,100 lines of spec. Create
 `.scratch/group-m-media-press-and-communications/`, seed it with the spec files, and route to
 `cm-wayfinder`. The open-maps gate is **open**: every decision ticket carrying a `Type:` line is
 resolved.
+
+**Two group-l questions now need a human**, neither of which an agent should answer:
+[decision-request-01](../.scratch/group-l-competitions-nations-and-world-information/decision-request-01-rpc-error-channel.md)
+(does a failed SQLite query cross the RPC boundary typed, or die as a defect? — recommends an
+`rpc-error-channel` map) and
+[group-l ticket 06](../.scratch/group-l-competitions-nations-and-world-information/issues/06-competition-fixtures-deferred-surface.md)
+(which deferred Competition Fixtures controls belong in v1; also whether screens 164 and 161 are
+next, since both are v1 scope with no ticket).
+
+group-l ticket 05 resolved 2026-09-17: the narrow-error-union defect was systemic, not local. An
+audit of every method in `AppRpcs` — by typing the handler map against each declared error schema and
+reading what `tsc` rejected — found 11 mismatches; 8 are fixed. Seven RPC paths that produced "The
+game returned an unexpected response." now produce the sentence `describeRpcError` already held.
+`SqlError` is undeclared on roughly every save-scoped handler and is the largest remaining instance;
+it is a design question, not an omission. A permanent typecheck-level gate for this whole class is
+one type alias away and blocked only on that decision. An `effect-lint` rule would be the wrong
+tool — the needed fact is a type, not a syntax pattern.
 
 **Six `claimed` tickets may be abandoned locks.** `claimed` makes a ticket invisible to the frontier
 scan, so an abandoned one hides real work and makes the queue look emptier than it is — this plan

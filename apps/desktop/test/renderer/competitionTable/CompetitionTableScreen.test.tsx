@@ -97,6 +97,51 @@ describe("CompetitionTableScreen", () => {
     expect(await screen.findByText("That save could not be found.")).toBeDefined();
   });
 
+  // `getCompetitionTable` folds `toSeasonView`, which raises this. Until its error union declared
+  // it, the failure did not decode at the client and the screen fell back to the generic
+  // "unexpected response" line instead of the sentence describeRpcError already had for it.
+  it("describes a pending-fixture integrity failure in its own words", async () => {
+    mount([
+      {
+        method: "getCompetitionTable",
+        result: {
+          _tag: "Failure" as const,
+          error: {
+            _tag: "PendingFixtureIntegrityError",
+            fixtureId: 1,
+            reason: "awaiting fixture is not in the current season",
+          },
+        },
+      },
+    ]);
+    expect(
+      await screen.findByText("This career's next fixture is inconsistent and cannot be opened."),
+    ).toBeDefined();
+  });
+
+  // The branch for a failure that carries no typed error at all — a preload answer the client
+  // cannot read as either wire branch. Reachable only as a defect, which is why it says nothing
+  // specific; it exists so the screen never renders a blank region.
+  // Coupled to `call.ts` having no envelope-shape guard: `raw._tag` throws inside its `Effect.gen`,
+  // which is what makes this a defect. Add such a guard and this test reaches the contract-decode
+  // copy instead, for a reason unrelated to the branch under test.
+  it("falls back to a generic message when the failure carries no typed error", async () => {
+    mockPreload((method) =>
+      method === "getCompetitionTable"
+        ? Promise.resolve(undefined)
+        : Promise.resolve({ _tag: "Success", value: null }),
+    );
+    render(
+      <RegistryProvider>
+        <CompetitionTableScreen
+          saveId={SaveId.make("s1")}
+          competitionId={CompetitionId.make("league-1")}
+        />
+      </RegistryProvider>,
+    );
+    expect(await screen.findByText("Failed to load competition table")).toBeDefined();
+  });
+
   it("each club's row navigates to club staff", async () => {
     mount();
     fireEvent.click(await screen.findByRole("button", { name: "Ashford Athletic — club staff" }));

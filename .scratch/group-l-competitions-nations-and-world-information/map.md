@@ -59,6 +59,18 @@ national team screens (176–178) depend on national team modelling which does n
   `Effect<unknown, unknown>`; fixed before commit. Ticket 03 shipped the same omission in
   `getCompetitionTable` — filed as [05](issues/05-competition-read-followups.md).
 
+- [05 — Competition read follow-ups](issues/05-competition-read-followups.md): the narrow-error-union
+  defect ticket 04 found turned out to be systemic. Audited every method in `AppRpcs` by typing the
+  handler map against each declared error schema and reading what `tsc` rejected — 11 mismatches,
+  8 fixed (`getCompetitionTable`, both Manager Profile reads, `respondToBid`, `respondAsBidder`,
+  `signFreeAgent`, `renewContract`, `createSave`). `ManagerProfileNotFoundError` was schema'd and
+  raisable but named by no union at all. Three classes stay open as design questions —
+  `SqlError` across roughly every save-scoped handler, engine invariant errors, and payload
+  `SchemaError` — carried by
+  [decision-request-01](decision-request-01-rpc-error-channel.md). An `effect-lint` rule is the
+  wrong tool (the needed fact is a type, not a syntax pattern); the permanent gate is the probe
+  itself as a type alias, blocked only by `SqlError`. Both fixture lists now read `Unplayed`.
+
 ## Not yet specified
 
 - Screen inventory completed (ticket 01). All 18 screens are effectively absent. Next steps:

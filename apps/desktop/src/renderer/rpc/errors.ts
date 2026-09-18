@@ -66,6 +66,10 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
             : "You have been sacked — this save is archived.";
         case "PlayerNotFoundError":
           return "That player could not be found.";
+        // A save whose `manager_profile` row is missing: nothing the player can act on beyond
+        // going back to the Save List, so the sentence states the fact and stops.
+        case "ManagerProfileNotFoundError":
+          return "This save has no Manager Profile.";
         case "BidNotFoundError":
           return "That bid could not be found.";
         case "ClubNotFoundError":

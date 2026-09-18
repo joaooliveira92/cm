@@ -93,8 +93,12 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                       <TableCell>
                         {fixture.homeClubName} vs {fixture.awayClubName}
                       </TableCell>
-                      <TableCell className="w-16 text-right tabular-nums text-text-strong">
-                        {fixture.played ? `${fixture.homeGoals} - ${fixture.awayGoals}` : "-"}
+                      {/* One wording for "not played yet" across every Fixture list: a bare `-`
+                          reads as a missing value rather than a state, and a screen reader
+                          announces it as nothing at all. The word is the whole signal here —
+                          no colour or styling carries it. */}
+                      <TableCell className="w-24 text-right tabular-nums text-text-strong whitespace-nowrap">
+                        {fixture.played ? `${fixture.homeGoals} - ${fixture.awayGoals}` : "Unplayed"}
                       </TableCell>
                     </TableRow>
                   ))}

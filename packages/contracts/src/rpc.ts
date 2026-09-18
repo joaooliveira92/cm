@@ -47,6 +47,7 @@ import {
   InvalidTacticError,
   LeagueTableView,
   LockedKeyOverrideError,
+  ManagerProfileNotFoundError,
   ManagerProfileScreenView,
   ManagerProfileView,
   ManagerArchetypeSchema,
@@ -119,10 +120,21 @@ export const AppRpcs = {
     success: Schema.Array(SaveSummary),
     error: Schema.Never,
   },
+  /** Seeds a default career end to end (selection -> begin -> commit), so it inherits the failures
+   *  of all three. The four declared here are contract-schema'd and already rendered by
+   *  `describeRpcError`. Its engine-invariant failures — `CalendarSlotsExhaustedError`,
+   *  `FixtureGenerationError`, `SquadTooSmallError`, `InvalidTacticError` — are main-process
+   *  `Data.TaggedError`s with no schema, and stay undeclared pending
+   *  `decision-request-01-rpc-error-channel`. */
   createSave: {
     payload: Schema.Struct({ name: Schema.String }),
     success: SaveSummary,
-    error: Schema.Never,
+    error: Schema.Union([
+      InvalidLeagueSelectionError,
+      PresetFingerprintMismatchError,
+      InvalidPillarDistributionError,
+      ClubNotFoundError,
+    ]),
   },
   /** Generate a provisional world from the League Selection Snapshot the player submitted. The
    *  snapshot is loaded by id in main and refused — before any save file exists — when its
@@ -148,13 +160,13 @@ commitCareer: {
   getManagerProfile: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: ManagerProfileView,
-    error: SaveNotFoundError,
+    error: Schema.Union([SaveNotFoundError, ManagerProfileNotFoundError]),
   },
   /** Manager Profile screen (Screen 19) — identity plus club/season/tenure and the Archived flag. */
   getManagerProfileScreen: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: ManagerProfileScreenView,
-    error: SaveNotFoundError,
+    error: Schema.Union([SaveNotFoundError, ManagerProfileNotFoundError]),
   },
   /** `RetireManager` (ticket 02 / Screen 20): the player ends their own career from the Manager
    * Profile screen. Appends `ManagerRetired` and archives the save with cause `"retired"`; the
@@ -223,10 +235,13 @@ commitCareer: {
     success: LeagueTableView,
     error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
+  /** Any Competition's table. Folds `toSeasonView` exactly as `getLeagueTable` does, so it carries
+   *  the same `PendingFixtureIntegrityError`: an error the handler can raise but the union omits
+   *  arrives at the renderer raw, which § Boundaries forbids. */
   getCompetitionTable: {
     payload: Schema.Struct({ saveId: SaveId, competitionId: CompetitionId }),
     success: LeagueTableView,
-    error: Schema.Union([SaveNotFoundError]),
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
   getFixtures: {
     payload: Schema.Struct({ saveId: SaveId }),
@@ -413,6 +428,8 @@ commitCareer: {
     error: Schema.Union([
       SaveNotFoundError,
       BidNotFoundError,
+      PlayerNotFoundError,
+      PendingFixtureIntegrityError,
       TransferWindowClosedError,
       InvalidBidActionError,
       InsufficientTransferBudgetError,
@@ -430,6 +447,8 @@ commitCareer: {
     error: Schema.Union([
       SaveNotFoundError,
       BidNotFoundError,
+      PlayerNotFoundError,
+      PendingFixtureIntegrityError,
       TransferWindowClosedError,
       InvalidBidActionError,
       InsufficientTransferBudgetError,
@@ -444,6 +463,7 @@ commitCareer: {
       SaveNotFoundError,
       PlayerNotFoundError,
       PlayerNotFreeAgentError,
+      PendingFixtureIntegrityError,
       TransferWindowClosedError,
       WageBudgetExceededError,
       SaveArchivedError,
@@ -456,6 +476,7 @@ commitCareer: {
       SaveNotFoundError,
       PlayerNotFoundError,
       InvalidBidActionError,
+      PendingFixtureIntegrityError,
       TransferWindowClosedError,
       WageBudgetExceededError,
       SaveArchivedError,

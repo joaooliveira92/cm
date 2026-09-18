@@ -143,6 +143,29 @@ describe("CompetitionFixturesDetailScreen", () => {
     ]);
     expect(await screen.findByText("That save could not be found.")).toBeDefined();
   });
+
+  // The branch for a failure that carries no typed error at all — a preload answer the client
+  // cannot read as either wire branch. Reachable only as a defect, which is why it says nothing
+  // specific; it exists so the screen never renders a blank region.
+  // Coupled to `call.ts` having no envelope-shape guard: `raw._tag` throws inside its `Effect.gen`,
+  // which is what makes this a defect. Add such a guard and this test reaches the contract-decode
+  // copy instead, for a reason unrelated to the branch under test.
+  it("falls back to a generic message when the failure carries no typed error", async () => {
+    mockPreload((method) =>
+      method === "getCompetitionFixtures"
+        ? Promise.resolve(undefined)
+        : Promise.resolve({ _tag: "Success", value: null }),
+    );
+    render(
+      <RegistryProvider>
+        <CompetitionFixturesDetailScreen
+          saveId={SaveId.make("s1")}
+          competitionId={CompetitionId.make("league-1")}
+        />
+      </RegistryProvider>,
+    );
+    expect(await screen.findByText("Failed to load competition fixtures")).toBeDefined();
+  });
 });
 
 it("scopes the read to the competition in the route, not to the save alone", async () => {
