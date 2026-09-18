@@ -2,15 +2,24 @@
 
 ## Immediate next action
 
-**The build queue is empty; the next sprint ingests spec group M.** No open, unblocked, unclaimed
-build ticket remains anywhere: 1 `ready-for-agent` (group-g 29, blocked on decision request 07),
-`needs-info` tickets awaiting a human, and 6 `claimed`. Per the spec-group fallback the target is
-`docs/specs/group_m_media_press_and_communications/` — the first group letter A-S with no
-`.scratch/group-X-*/` effort (A-L all have one; M-S do not). It is 13 screens (181-193, Media Centre
-through Communication History), ~3,100 lines of spec. Create
-`.scratch/group-m-media-press-and-communications/`, seed it with the spec files, and route to
-`cm-wayfinder`. The open-maps gate is **open**: every decision ticket carrying a `Type:` line is
-resolved.
+**group-m-media-press-and-communications ticket 01** — screen inventory for Group M (screens
+181-193, Media Centre through Communication History). An AFK fact-finding ticket: classify each
+screen as exists / WIP stub / absent, then establish what the data layer actually supports, since
+this group is a game *system* rather than views over existing data. It decides nothing; it exists so
+ticket 02's scope decision is made against observed fact.
+
+**The open-maps gate is now SHUT**, correctly: group M has two unresolved decision tickets, so no new
+effort may be chartered until it closes. The remaining spec groups N-S wait behind it.
+
+group-m charted 2026-09-17 (spec-group fallback; the build queue was empty). Destination is a
+reconciliation spec and deviation register, per the Group A and L precedent. Two things make it
+unlike L and are recorded on its map: Group M is a system, not a set of views — a Press Conference is
+only worth building if its consequences (morale, reputation, relationships) are modelled, and none of
+them exist — and Screen 181 "Media Centre" collides with the shipped **News Inbox**, which CONTEXT.md
+defines as "a career record and never a queue of work" with News feed / Message centre /
+Notification centre as _Avoid_ terms. Ticket 02 therefore asks the systemic question (none /
+flavour-only / interactive) rather than going screen by screen, and is `needs-info`: whether this
+game wants a media system in v1 is a human's call.
 
 **Two group-l questions now need a human**, neither of which an agent should answer:
 [decision-request-01](../.scratch/group-l-competitions-nations-and-world-information/decision-request-01-rpc-error-channel.md)
