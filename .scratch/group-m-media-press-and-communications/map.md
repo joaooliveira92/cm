@@ -35,22 +35,30 @@ centre. Screen 181 "Media Centre" is the obvious collision: if it becomes a seco
 surface, the domain grows two names for one idea. Whether Media Centre is a distinct concept, a
 facet of the News Inbox, or a renaming, is the first vocabulary question this map owes an answer to.
 
-**Grounding observed while charting** (not yet a full inventory — that is ticket 01): CONTEXT.md has
-essentially no media vocabulary (two matches for media/press conference/journalist across the whole
-file), and no route under `apps/desktop/src/renderer/routes/` mentions media or press. The
-expectation is that all 13 screens are absent, but that is a hypothesis for ticket 01 to confirm, not
-a finding.
+**Grounding** — ticket 01 confirmed the charting hypothesis and went further: not only are all 13
+screens absent, CONTEXT.md affirmatively excludes media handling from v1 rather than merely omitting
+it. The Calendar's design depends on that absence. This map's likely destination is therefore a
+deviation register recording that Group M is out of v1, not a spec to build from — unless a human
+overturns the exclusion.
 
 ## Decisions so far
 
-<!-- empty: charting session only; nothing resolved yet -->
+- [01 — Screen inventory](issues/01-screen-inventory.md): all 13 screens are Absent — not even
+  stubbed, though the repo has a stub idiom ~30 screens use. No supporting data exists either: no
+  manager reputation, no morale, no board opinion (one annual verdict from league position plus a
+  consecutive-miss counter), no relationship model, and no command that produces text. The game does
+  generate prose — Commentary Templates and the News copy table — both deterministic, neither a
+  generator. **The decisive finding is that CONTEXT.md already excludes this group from v1**, at
+  751-753 ("media handling ... none of those systems ship in v1") and at 445-447, where the absence
+  of "press content" is the stated reason the Calendar needs no finer clock. That reframes ticket 02
+  from a scope question into a question about overturning a recorded decision.
 
 ## Not yet specified
 
-- **Data and simulation model.** If any of this group is in v1, what does a Press Conference
-  *produce*? Candidate consequences — player morale, squad harmony, board confidence, manager
-  reputation, media relationships — are each their own modelling decision, and several may not exist
-  in the codebase at all. Cannot be ticketed until ticket 02 says which screens survive.
+- **Data and simulation model.** Only reachable if ticket 02 overturns the exclusion. Ticket 01
+  confirmed that none of the candidate consequences — morale, squad harmony, board opinion, manager
+  reputation, relationships — exists in any form, so each would be its own modelling effort rather
+  than a ticket here.
 - **Where media sits in the event model.** A statement or answer is a player command; its
   consequence is an event. Whether that goes through an existing decider or needs a new bounded
   decider is a structural question, and it depends on which consequences are modelled.

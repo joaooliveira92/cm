@@ -2,24 +2,29 @@
 
 ## Immediate next action
 
-**group-m-media-press-and-communications ticket 01** — screen inventory for Group M (screens
-181-193, Media Centre through Communication History). An AFK fact-finding ticket: classify each
-screen as exists / WIP stub / absent, then establish what the data layer actually supports, since
-this group is a game *system* rather than views over existing data. It decides nothing; it exists so
-ticket 02's scope decision is made against observed fact.
+**Stop: the queue holds no agent-takeable work.** Every remaining ticket is `needs-info` or blocked,
+and the three open questions are all human decisions. Nothing should be chartered around them — the
+open-maps gate is shut by group M, which is correct, and spec groups N-S wait behind it.
 
-**The open-maps gate is now SHUT**, correctly: group M has two unresolved decision tickets, so no new
-effort may be chartered until it closes. The remaining spec groups N-S wait behind it.
+group-m ticket 01 resolved 2026-09-17: all 13 screens (181-193) are Absent — not one is even a WIP
+stub, though ~30 other screens use that idiom. No supporting data exists: no manager reputation, no
+morale, no board opinion (one annual verdict from league position plus a consecutive-miss counter, and
+nothing else moves it), no relationship model, and no command in the game produces text. The decisive
+finding is that **CONTEXT.md already excludes this group from v1** — at 751-753 ("media handling ...
+none of those systems ship in v1") and at 445-447, where the absence of "press content" is the stated
+reason the Calendar needs no finer clock. Both verified verbatim.
 
-group-m charted 2026-09-17 (spec-group fallback; the build queue was empty). Destination is a
-reconciliation spec and deviation register, per the Group A and L precedent. Two things make it
-unlike L and are recorded on its map: Group M is a system, not a set of views — a Press Conference is
-only worth building if its consequences (morale, reputation, relationships) are modelled, and none of
-them exist — and Screen 181 "Media Centre" collides with the shipped **News Inbox**, which CONTEXT.md
-defines as "a career record and never a queue of work" with News feed / Message centre /
-Notification centre as _Avoid_ terms. Ticket 02 therefore asks the systemic question (none /
-flavour-only / interactive) rather than going screen by screen, and is `needs-info`: whether this
-game wants a media system in v1 is a human's call.
+That reframes group-m ticket 02: it is not "which screens are in v1" but **"do you want to overturn a
+recorded decision?"** — a higher bar, and per ENGINEERING-CONTRACT one that may not happen by drift
+("overturned by a new ADR, not by an implementation that quietly diverges"). The ticket now carries
+three costed options and recommends **A: keep the exclusion**, since nothing in the repo supports
+media and CONTEXT.md excludes it deliberately rather than by omission.
+
+A caution for whoever runs the next fallback: the spec corpus and CONTEXT.md disagree about what v1
+is. The imported specs describe a finished commercial product; CONTEXT.md describes this game.
+Group M is the first place the fallback walked into that gap, and it will not be the last — Group O
+(national teams) and Group R (multiplayer) are named as out of scope in existing maps. Ingesting a
+spec group is not evidence that its contents are wanted.
 
 **Two group-l questions now need a human**, neither of which an agent should answer:
 [decision-request-01](../.scratch/group-l-competitions-nations-and-world-information/decision-request-01-rpc-error-channel.md)
