@@ -13,6 +13,9 @@ The ticket queue itself stays in [SPRINT-PLAN.md](SPRINT-PLAN.md).
 - **The specs are an import, not requirements.** Each group's `RECONCILIATION.md` says so, and this
   file follows it. A group's first effort reconciles the group. It does not implement the import as
   written.
+- **A milestone bounds which of these rows are live.** This file is the full order; only the groups
+  named by the current milestone in [MILESTONES.md](MILESTONES.md) may be started. A tier row this
+  milestone excludes is sequencing, not permission.
 - **One ruling already cuts across every group.** Apply it before anyone reads a screen.
   *The multiplayer axis*: there is one human manager per **Save**, so active-manager scoping, career
   revisions, permission contexts, hosts and hot-seat are all `out-of-scope`. The disposal lives under
@@ -49,7 +52,8 @@ logic. A placeholder is a slot waiting for a screen, not evidence that the scree
 | C Club information | 33–49 | 38 Audited (club-staff-presence). 49 shipped in full (`team-scout-report`, 8/8). The other 15 are unreconciled. | 38 only |
 | F Tactics and match preparation | 80–90 | 80 shipped (`group-f-tactics-and-match-preparation`, 3/3; no map or spec). 81–90 unreconciled. | No |
 | R Multiplayer administration | 250–262 | Disposed in full under the multiplayer axis, 2026-09-13. | Yes |
-| D–E, G–Q, S | 50–79, 91–249, 264–277 | Unreconciled. | No |
+| D–E, G–M | 50–79, 91–193 | Charted as `.scratch/` efforts, several with shipped screens, but the rulings live only in `.scratch/` and are lost when an effort is archived. Giving them durable ledgers is [M1](MILESTONES.md). | No |
+| N–Q, S | 194–249, 264–277 | Unreconciled, and no effort exists. | No |
 
 ## Sequence
 

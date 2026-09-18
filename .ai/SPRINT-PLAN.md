@@ -1,5 +1,11 @@
 # Sprint Plan
 
+**Milestone: M1 — the world is readable.** Every routed screen shows real data or is deliberately
+gone: Groups C, D and L remainder, plus a durable `docs/specs/` ledger for every group the pipeline
+has already charted. Scope, non-goals and exit criteria in [MILESTONES.md](MILESTONES.md); it is the
+bound on what a sprint may start, and the frontier below is checked against it by
+[/milestone](../.opencode/command/milestone.md).
+
 ## Immediate next action
 
 **gate-red-on-dev ticket 04** — the vitest projects split, now unblocked by ticket 03. 100 of 144

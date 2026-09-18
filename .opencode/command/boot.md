@@ -31,6 +31,11 @@ lowest-numbered file that is open, unblocked, and unclaimed (see
 When no ticket exists anywhere in `.scratch/`, pick the next spec group from `docs/specs/` that has
 no corresponding effort yet. This is how the pipeline ingests the 19 spec groups (A–S):
 
+0. **Check the milestone first.** [.ai/MILESTONES.md](../../.ai/MILESTONES.md) names the groups the
+   current milestone is taking and, under § Non-goals, the ones it is not. If the current milestone
+   still has an unstarted group, take that one — its order wins over the alphabet below. Only fall
+   through to the alphabetical scan when the milestone's groups are all ingested, and never ingest a
+   group the milestone lists as a non-goal.
 1. List `docs/specs/` directories in alphabetical order (they are `group_a_*` through `group_s_*`).
 2. For each, extract the group letter from the directory name (`group_a_*` → `a`).
 3. Check whether `.scratch/group-X-*/` exists for that letter (glob).
@@ -39,6 +44,8 @@ no corresponding effort yet. This is how the pipeline ingests the 19 spec groups
    to `cm-wayfinder` to chart the effort (see sprint.md §2 — route by phase).
 6. If every spec group A–S already has a `.scratch/` effort, stop — the entire spec corpus has been
    ingested and the queue is genuinely empty.
+7. If the milestone's groups are all ingested but the alphabetical scan would take one it excludes,
+   stop and say the milestone is out of work. Opening the next milestone is a human's call.
 
 Derive the spec slug from the directory name: replace underscores with hyphens and keep the full
 name. Example: `group_a_application_shell_and_game_lifecycle_remaining` →
@@ -80,6 +87,7 @@ Read, in this order, before editing anything:
 | [.ai/AUTONOMOUS-AGENT.md](../../.ai/AUTONOMOUS-AGENT.md) | Authority, autonomy, stop conditions. |
 | [.ai/ENGINEERING-CONTRACT.md](../../.ai/ENGINEERING-CONTRACT.md) | The binding contract. |
 | [.ai/ORCHESTRATION.md](../../.ai/ORCHESTRATION.md) | The pipeline, roles, and validation gate. |
+| [.ai/MILESTONES.md](../../.ai/MILESTONES.md) | The outcome in play, and what is out of bounds. |
 | [.ai/SPRINT-PLAN.md](../../.ai/SPRINT-PLAN.md) | The queue and **Immediate next action**. |
 | [CONTEXT.md](../../CONTEXT.md) | The domain language for the effort you are about to touch. |
 | The effort's `map.md` / `spec.md` / `issues/` | The actual work. |

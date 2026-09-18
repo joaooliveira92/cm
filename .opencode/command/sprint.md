@@ -19,9 +19,11 @@ orchestrator-owned validation gate before every commit. See
 3. [.ai/ENGINEERING-CONTRACT.md](../../.ai/ENGINEERING-CONTRACT.md) — the binding contract.
 4. [.ai/IMPLEMENTATION-PROMPT.md](../../.ai/IMPLEMENTATION-PROMPT.md) — the per-sprint procedure §1–8.
 5. [.ai/ORCHESTRATION.md](../../.ai/ORCHESTRATION.md) — roles, handoff, validation gate.
-6. [.ai/SPRINT-PLAN.md](../../.ai/SPRINT-PLAN.md) — the queue and the frontier pointer.
-7. [CONTEXT.md](../../CONTEXT.md) — the domain language for the effort you are about to work.
-8. The effort itself: `.scratch/<effort>/map.md`, `spec.md`, `issues/`.
+6. [.ai/MILESTONES.md](../../.ai/MILESTONES.md) — the current milestone: what it is for, and what it
+   forbids. A ticket outside it is not yours to run.
+7. [.ai/SPRINT-PLAN.md](../../.ai/SPRINT-PLAN.md) — the queue and the frontier pointer.
+8. [CONTEXT.md](../../CONTEXT.md) — the domain language for the effort you are about to work.
+9. The effort itself: `.scratch/<effort>/map.md`, `spec.md`, `issues/`.
 
 Re-read files before editing them. A subagent report is a spec for your next step, not the truth.
 
@@ -52,12 +54,18 @@ gate is still shut, stop and say so; do not charter something new to stay busy.
   directly from `.scratch/`: take the lowest-numbered open, unblocked, unclaimed build ticket of the
   first live effort with open tickets in plan order, else the oldest live effort with an open
   decision ticket. Start there.
+- **Stay inside the milestone.** [.ai/MILESTONES.md](../../.ai/MILESTONES.md) bounds what you may
+  start. A frontier ticket belonging to an effort the current milestone lists under § Non-goals is
+  skipped, not run: say so and take the next in-scope ticket. If the plan's **Immediate next action**
+  names one, report the divergence rather than editing the plan to agree with you.
 - **Spec-group fallback** — if no open, unblocked, unclaimed ticket exists anywhere in `.scratch/`,
-  follow the same spec-group fallback defined in [boot.md §0a](boot.md): iterate `docs/specs/`
+  follow the same spec-group fallback defined in [boot.md §0a](boot.md), whose step 0 gives the
+  milestone's group order precedence over the alphabet: iterate `docs/specs/`
   groups A–S in order, find the first whose group letter has no matching `.scratch/group-X-*/`
   directory, create the effort directory and seed it with the spec files, then route to
   `cm-wayfinder` to chart it. If every spec group already has a scratch effort, the queue is
-  genuinely empty — stop.
+  genuinely empty — stop. If only groups the milestone excludes remain, the milestone is out of
+  work — stop and say so; you may not open the next one.
 - Do not audit the tracker before starting. Ticket-status/history reconciliation is not a sprint:
   claim the frontier, route by phase, and let the ticket's own acceptance criteria drive the work.
 

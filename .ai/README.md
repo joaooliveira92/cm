@@ -16,6 +16,7 @@ via [/sprint](../.opencode/command/sprint.md) or [/boot](../.opencode/command/bo
 | [ORCHESTRATION.md](ORCHESTRATION.md) | The pipeline: four roles, which skill each runs, the handoff contract, the validation gate. |
 | [IMPLEMENTATION-PROMPT.md](IMPLEMENTATION-PROMPT.md) | The eight-step procedure a sprint follows. |
 | [REVIEW-PROMPT.md](REVIEW-PROMPT.md) | The adversarial review checklist and required finding format. |
+| [MILESTONES.md](MILESTONES.md) | The current milestone: the outcome several efforts add up to, and the exit criteria that end it. One is current at a time. |
 | [SPEC-ROADMAP.md](SPEC-ROADMAP.md) | The order to take the `docs/specs/` groups from import to shipped screens, and what blocks each. |
 | [SPRINT-PLAN.md](SPRINT-PLAN.md) | The queue and the **Immediate next action** pointer. |
 | [TRACEABILITY.md](TRACEABILITY.md) | Shipped capability → domain term → decision record → proving test. |
@@ -33,11 +34,14 @@ via [/sprint](../.opencode/command/sprint.md) or [/boot](../.opencode/command/bo
 - **Research** → `docs/research/<effort>-<topic>.md`.
 - **Narrative status** → [docs/roadmap.md](../docs/roadmap.md). SPRINT-PLAN.md is the machine-facing
   queue; roadmap.md is the human-facing snapshot.
+- **Progress against the milestone** → measured by [/milestone](../.opencode/command/milestone.md),
+  never stored in MILESTONES.md, which holds the target and nothing else.
 
 ## Reading order for a cold agent
 
 Follow [AUTONOMOUS-AGENT.md](AUTONOMOUS-AGENT.md) § Mandatory reading order, then
 [ORCHESTRATION.md](ORCHESTRATION.md) for the pipeline and roles, then
+[MILESTONES.md](MILESTONES.md) for the outcome in play and what is out of bounds, then
 [SPRINT-PLAN.md](SPRINT-PLAN.md) for what to do first.
 
 [CONTEXT.md](../CONTEXT.md) is read alongside all of them: it defines the words, and using the wrong
