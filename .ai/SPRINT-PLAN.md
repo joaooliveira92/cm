@@ -2,10 +2,36 @@
 
 ## Immediate next action
 
-**group-l-competitions-nations-and-world-information ticket 04** — Competition Fixtures screen
-(Screen 163). After ticket 03 (Competition Table) is resolved, the next priority is Competition
-Fixtures/Results. The pattern from ticket 03 applies: new `getCompetitionFixtures` RPC, backend
-handler, atom, screen component.
+**group-l-competitions-nations-and-world-information ticket 05** — Competition read follow-ups,
+filed from the ticket 04 review and now the lowest-numbered open, unblocked, unclaimed ticket
+anywhere. Items 1 and 2 are mechanical: `getCompetitionTable` is missing
+`PendingFixtureIntegrityError` from its error union (the same defect ticket 04 fixed in
+`getCompetitionFixtures`, shipped one commit earlier and invisible to typecheck), and the two fixture
+lists render an unplayed Fixture two different ways. Item 3 is a scope question for a human or
+`cm-wayfinder`, not a build step — do not let it hold up items 1 and 2.
+
+**After that the build queue is genuinely empty and the spec-group fallback fires.** Nothing else is
+open, unblocked and unclaimed: 1 `ready-for-agent` (group-g 29, blocked on decision request 07), 5
+`needs-info` (need a human), 6 `claimed`. The fallback target is
+`docs/specs/group_m_media_press_and_communications/` — the first group letter A–S with no
+`.scratch/group-X-*/` effort (A–L all have one; M–S do not). Create
+`.scratch/group-m-media-press-and-communications/`, seed it with the spec files, and route to
+`cm-wayfinder`. The open-maps gate is **open**: every decision ticket carrying a `Type:` line is
+resolved.
+
+**Six `claimed` tickets may be abandoned locks.** `claimed` makes a ticket invisible to the frontier
+scan, so an abandoned one hides real work and makes the queue look emptier than it is — this plan
+already records desktop-suite-red 03 as "claimed but abandoned". Nothing here re-opens them
+unilaterally; a human should sweep them, since releasing a lock someone else holds is not the
+orchestrator's call.
+
+group-l-competitions-nations-and-world-information ticket 04 resolved 2026-09-17: the Competition
+Fixtures screen (Screen 163) lists any Competition's Fixtures via a new `getCompetitionFixtures` RPC,
+with unplayed Fixtures marked and never given a fabricated score. Review caught the RPC omitting
+`PendingFixtureIntegrityError` from its error union — invisible to typecheck because the handler is
+typed `Effect<unknown, unknown>` — fixed before commit. Ticket 03 shipped the same omission in
+`getCompetitionTable`; filed with two other follow-ups as group-l ticket 05. group-l is otherwise
+4/4 resolved, and Screens 164 and 161 remain v1 scope with no ticket.
 
 group-g-match-day has no ready build ticket left; 26 (forced substitution brings back used players,
 patch kept) and 29 (windows across halves) are blocked on decision request 07; 20 needs triage (a

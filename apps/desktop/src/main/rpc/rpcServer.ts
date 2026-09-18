@@ -26,7 +26,7 @@ import { getMatchReport, getMatchStatistics, getPostMatchSummary, getTeamSheet, 
 import { commitMatchday } from "../season/commitMatchday.js";
 import { getManagerProfile, getManagerProfileScreen } from "../career/managerProfile.js";
 import { getNewsInbox, setNewsMessageState } from "../career/news.js";
-import { advanceCalendar, getCompetitionTable, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "../season/index.js";
+import { advanceCalendar, getCompetitionFixtures, getCompetitionTable, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "../season/index.js";
 import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave } from "../world/saves.js";
 import { getSquad } from "../club/squad.js";
 import { changeTactics, getTactics } from "../club/tactics.js";
@@ -212,6 +212,13 @@ const handlers: Record<AppRpcMethod, Handler> = {
         AppRpcs.getCompetitionTable.payload,
       )(payload);
       return yield* getCompetitionTable(ctx.savesDir, saveId, competitionId);
+    }),
+  getCompetitionFixtures: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, competitionId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.getCompetitionFixtures.payload,
+      )(payload);
+      return yield* getCompetitionFixtures(ctx.savesDir, saveId, competitionId);
     }),
   getFixtures: (payload, ctx) =>
     Effect.gen(function* () {

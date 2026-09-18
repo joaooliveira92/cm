@@ -48,6 +48,17 @@ national team screens (176–178) depend on national team modelling which does n
   and navigation. New RPC needed a nested `Atom.family` pattern to avoid `MutableHashMap`
   reference-identity issue.
 
+- [04 — Competition Fixtures screen](issues/04-competition-fixtures-screen.md): WIP stub replaced
+  with a real Fixture list. New `getCompetitionFixtures` RPC scoped by `competitionId` rather than
+  widening `getFixtures`, which stays the human's own calendar. The shared SQL was extracted into
+  `fixturesForCompetition` so the two reads cannot drift; the helper keeps `competitionId` nullable
+  so the human read's "no club chosen yet" case still binds SQL `NULL`. An unplayed Fixture reads
+  **Unplayed**, never a fabricated `0 - 0` — CONTEXT.md lists *Schedule* as an _Avoid_ term, so
+  "scheduled" was rejected. Review caught the new RPC omitting `PendingFixtureIntegrityError` from
+  its error union, which typecheck cannot see because the handler is typed
+  `Effect<unknown, unknown>`; fixed before commit. Ticket 03 shipped the same omission in
+  `getCompetitionTable` — filed as [05](issues/05-competition-read-followups.md).
+
 ## Not yet specified
 
 - Screen inventory completed (ticket 01). All 18 screens are effectively absent. Next steps:

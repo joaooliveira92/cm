@@ -78,6 +78,26 @@ const competitionTableForSave = Atom.family((saveId: SaveId) =>
 export const competitionTableAtom = (saveId: SaveId, competitionId: CompetitionId) =>
   competitionTableForSave(saveId)(competitionId);
 
+/**
+ * getCompetitionFixtures — `["save", saveId]`.
+ *
+ * Any Competition's Fixture list by id. Nested families for the same reason as
+ * `competitionTableAtom`: `Atom.family` memoises through `MutableHashMap`, which compares plain
+ * objects by reference, so a `{ saveId, competitionId }` key would miss on every render.
+ */
+const competitionFixturesForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((competitionId: CompetitionId) =>
+    managementReadPolicy(
+      Atom.make(call("getCompetitionFixtures", { saveId, competitionId })).pipe(
+        Atom.withReactivity([saveKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const competitionFixturesAtom = (saveId: SaveId, competitionId: CompetitionId) =>
+  competitionFixturesForSave(saveId)(competitionId);
+
 /** getFixtures — `["save", saveId]`. */
 export const fixturesAtom = Atom.family((saveId: SaveId) =>
   managementReadPolicy(

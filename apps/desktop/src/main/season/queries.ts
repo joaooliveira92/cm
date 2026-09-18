@@ -25,6 +25,46 @@ import { loadHumanCompetitionId } from "./start.js";
 // Read-side queries
 // ---------------------------------------------------------------------------
 
+/** Shared body of both Fixture-list reads: every Fixture of one Competition in one Season, in
+ *  calendar order. Takes the Competition as an argument so the human's own list and an arbitrary
+ *  Competition's list cannot drift apart. */
+const fixturesForCompetition = (competitionId: string | null, seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const nameOf = yield* displayNames;
+    const rows = yield* sql<{
+      id: FixtureId;
+      round: number;
+      scheduledDate: string;
+      homeClubId: ClubId;
+      awayClubId: ClubId;
+      homeGoals: number | null;
+      awayGoals: number | null;
+      played: number;
+    }>`SELECT f.id, f.round, f.scheduled_date as "scheduledDate",
+              f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
+              f.home_goals as "homeGoals", f.away_goals as "awayGoals", f.played
+       FROM fixtures f
+       WHERE f.season_number = ${seasonNumber} AND f.competition_id = ${competitionId}
+       ORDER BY f.scheduled_date ASC, f.id ASC`;
+
+    return rows.map(
+      (row) =>
+        new FixtureView({
+          id: row.id,
+          round: row.round,
+          date: row.scheduledDate,
+          homeClubId: row.homeClubId,
+          homeClubName: nameOf(row.homeClubId),
+          awayClubId: row.awayClubId,
+          awayClubName: nameOf(row.awayClubId),
+          homeGoals: row.homeGoals,
+          awayGoals: row.awayGoals,
+          played: row.played === 1,
+        }),
+    );
+  });
+
 /**
  * The human's own fixture list: every fixture of the competition their club plays in this season.
  *
@@ -35,42 +75,24 @@ import { loadHumanCompetitionId } from "./start.js";
 export const getFixtures = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const sql = yield* SqlClient;
-      const nameOf = yield* displayNames;
       const seasonRow = yield* loadSeasonRow;
       const competitionId = yield* loadHumanCompetitionId(seasonRow.seasonNumber);
-      const rows = yield* sql<{
-        id: FixtureId;
-        round: number;
-        scheduledDate: string;
-        homeClubId: ClubId;
-        awayClubId: ClubId;
-        homeGoals: number | null;
-        awayGoals: number | null;
-        played: number;
-      }>`SELECT f.id, f.round, f.scheduled_date as "scheduledDate",
-                f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
-                f.home_goals as "homeGoals", f.away_goals as "awayGoals", f.played
-         FROM fixtures f
-         WHERE f.season_number = ${seasonRow.seasonNumber} AND f.competition_id = ${competitionId}
-         ORDER BY f.scheduled_date ASC, f.id ASC`;
+      const fixtures = yield* fixturesForCompetition(competitionId, seasonRow.seasonNumber);
+      return new FixturesView({ season: yield* toSeasonView(seasonRow), fixtures });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
+  );
 
-      const fixtures = rows.map(
-        (row) =>
-          new FixtureView({
-            id: row.id,
-            round: row.round,
-            date: row.scheduledDate,
-            homeClubId: row.homeClubId,
-            homeClubName: nameOf(row.homeClubId),
-            awayClubId: row.awayClubId,
-            awayClubName: nameOf(row.awayClubId),
-            homeGoals: row.homeGoals,
-            awayGoals: row.awayGoals,
-            played: row.played === 1,
-          }),
-      );
-
+/** Competition Fixtures screen (Screen 163): the named Competition's Fixture list for the current
+ *  Season, whoever the human manages. */
+export const getCompetitionFixtures = (
+  savesDir: string,
+  saveId: SaveId,
+  competitionId: CompetitionId,
+) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      const seasonRow = yield* loadSeasonRow;
+      const fixtures = yield* fixturesForCompetition(competitionId, seasonRow.seasonNumber);
       return new FixturesView({ season: yield* toSeasonView(seasonRow), fixtures });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

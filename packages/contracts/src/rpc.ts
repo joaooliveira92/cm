@@ -233,6 +233,13 @@ commitCareer: {
     success: FixturesView,
     error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
+  /** Any Competition's Fixture list, not just the human club's. Scoped by `competitionId` rather
+   *  than widening `getFixtures`, which is deliberately the human's own calendar. */
+  getCompetitionFixtures: {
+    payload: Schema.Struct({ saveId: SaveId, competitionId: CompetitionId }),
+    success: FixturesView,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
+  },
   advanceCalendar: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: AdvanceCalendarResult,

@@ -14,9 +14,10 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { leagueRoundDates } from "@cm-clone/shared";
+import { CompetitionId } from "@cm-clone/contracts";
 import { createSave } from "../../../src/main/world/index.js";
 import { createPyramidSnapshot } from "../snapshot-helpers.js";
-import { getFixtures } from "../../../src/main/season/index.js";
+import { getCompetitionFixtures, getFixtures } from "../../../src/main/season/index.js";
 import { seasonHelpers } from "./helpers.js";
 
 let savesDir: string;
@@ -126,4 +127,40 @@ it.effect("the fixture list read path carries the date and the round", () =>
       ok(view.fixtures[i]!.date >= view.fixtures[i - 1]!.date);
     }
   }),
+);
+
+it.effect("the competition-scoped read returns that competition's fixtures, not the human's", () =>
+  Effect.gen(function* () {
+    const snapshotId = yield* createPyramidSnapshot(savesDir);
+    const save = yield* createCareerFrom(snapshotId, 5150, "Pyramid");
+
+    const human = yield* getFixtures(savesDir, save.id);
+    const humanCompetitionIds = new Set(
+      (yield* loadAllFixtures(save.id))
+        .filter((row) => human.fixtures.some((fixture) => fixture.date === row.scheduledDate
+          && fixture.homeClubId === row.homeClubId && fixture.awayClubId === row.awayClubId))
+        .map((row) => row.competitionId),
+    );
+    // The scoping is only meaningful against a competition the human does not play in.
+    ok(!humanCompetitionIds.has("comp_eng_4"), "comp_eng_4 must not be the human's own competition");
+
+    const scoped = yield* getCompetitionFixtures(savesDir, save.id, CompetitionId.make("comp_eng_4"));
+    const expected = (yield* loadAllFixtures(save.id)).filter(
+      (row) => row.competitionId === "comp_eng_4",
+    );
+
+    ok(scoped.fixtures.length > 0);
+    strictEqual(scoped.fixtures.length, expected.length);
+    // A different list from the human's, which is the whole point of the new read.
+    ok(scoped.fixtures.length !== human.fixtures.length
+      || scoped.fixtures[0]!.homeClubId !== human.fixtures[0]!.homeClubId);
+    for (const fixture of scoped.fixtures) {
+      ok(
+        expected.some((row) => row.homeClubId === fixture.homeClubId
+          && row.awayClubId === fixture.awayClubId && row.scheduledDate === fixture.date),
+        `${fixture.homeClubName} v ${fixture.awayClubName} is not a comp_eng_4 fixture`,
+      );
+    }
+  }),
+  30_000,
 );
