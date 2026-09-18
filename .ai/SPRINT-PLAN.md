@@ -33,11 +33,17 @@ false positive (regex spanning a template literal) and was tightened with a self
 `club-badge-library` was correct and had caught a real defect — 10 Portuguese clubs mapped to badge
 keys the library never held.
 
-**Six `claimed` tickets may be abandoned locks.** `claimed` makes a ticket invisible to the frontier
-scan, so an abandoned one hides real work and makes the queue look emptier than it is — this plan
-already records desktop-suite-red 03 as "claimed but abandoned". Nothing here re-opens them
-unilaterally; a human should sweep them, since releasing a lock someone else holds is not the
-orchestrator's call.
+**The claimed-lock sweep ran 2026-09-18, and the standing "six abandoned locks" caveat is retired.**
+There were two, not six. The four this plan named — group-a 03, group-g 14, group-h 11 and
+desktop-suite-red 03 — are all `resolved`; the react-composition-audit locks were relabelled on
+09-06 and the group-b ones swept earlier. The two real ones were `club-staff-presence` 03 and 05,
+both stale locks over work that had shipped, in an effort listed as complete since 2026-09-09. Each
+was resolved against the tree rather than a commit message, with the audit and its file-and-line
+evidence appended to the ticket.
+
+No live lock was touched. The lesson stands and belongs to [AGENTS.md](../AGENTS.md): both tickets
+were `claimed` at filing, so the frontier scan skipped them and the effort read as in-progress while
+nothing could pick it up. Set `claimed` immediately before starting work, never when filing.
 
 group-l-competitions-nations-and-world-information ticket 04 resolved 2026-09-17: the Competition
 Fixtures screen (Screen 163) lists any Competition's Fixtures via a new `getCompetitionFixtures` RPC,

@@ -126,9 +126,9 @@ These need a human, and are the known ways M1 can stall. Raise each as a decisio
 - **Group I decision request 01 — knowledge-limited player reads** gates D 68 Scout Report, and
   SPRINT-PLAN records it gating Group J 132, 134 and 137 too. D 68 is in scope and blocked until it
   resolves.
-- **Six tickets are `claimed` and may be abandoned locks** (SPRINT-PLAN § For a human). The frontier
-  scan skips claimed tickets, so until someone sweeps them, M1's queue reads emptier than it is.
-  Releasing another session's lock is not the orchestrator's call.
+- ~~**Claimed tickets may be abandoned locks**, hiding work from the frontier scan.~~ **Closed
+  2026-09-18.** The sweep found two, not the six the plan carried: `club-staff-presence` 03 and 05,
+  both stale locks over shipped work, resolved against the tree. M1's queue is trustworthy.
 
 ---
 

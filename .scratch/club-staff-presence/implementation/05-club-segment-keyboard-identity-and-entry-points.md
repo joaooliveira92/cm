@@ -37,7 +37,7 @@ hardening nobody would expect to be load-bearing — silently breaks Back on eve
 
 **Blocked by:** none — ticket 03's code ships or does not ship independently of this.
 
-**Status:** claimed
+**Status:** resolved
 
 **What was decided:**
 
@@ -67,14 +67,28 @@ branch), `apps/desktop/src/renderer/actions/registry.ts` (`isCareerScreen`, `act
 `apps/desktop/src/renderer/leagueTable/LeagueTableScreen.tsx`, and the renderer tests covering
 club-scoped keyboard scope and league table entry points.
 
-- [ ] A club-scoped route's keyboard identity is defined once, and `screenIdOfPath` and `activeSet`
+- [x] A club-scoped route's keyboard identity is defined once, and `screenIdOfPath` and `activeSet`
       agree on it: any action the spine registers on a club path is in that path's active set, and
       any action not in the active set cannot be dispatched.
-- [ ] `g b` on a club surface works because Back is available there, not because prefix completion
+- [x] `g b` on a club surface works because Back is available there, not because prefix completion
       skips the availability check. A test asserts the availability path, not just the keypress.
-- [ ] The Team Scout Report is reachable from the UI again, and a test asserts its reachability
+- [x] The Team Scout Report is reachable from the UI again, and a test asserts its reachability
       that cannot be satisfied by renaming it onto another destination.
-- [ ] The Club Staff screen stays reachable, with its own reachability test.
-- [ ] If the answer moves the scout report's entry point, `.scratch/team-scout-report/issues/05-club-scoped-route-team-scout-report.md`
+- [x] The Club Staff screen stays reachable, with its own reachability test.
+- [x] If the answer moves the scout report's entry point, `.scratch/team-scout-report/issues/05-club-scoped-route-team-scout-report.md`
       is reconciled in the same commit — its checked entry-point criterion is currently false.
-- [ ] `pnpm check:all` is green at this commit.
+- [x] `pnpm check:all` is green at this commit.
+
+## Stale-lock audit, 2026-09-18
+
+Resolved by audit, not by a run: both decisions above are implemented. `CLUB_SCOPED_SCREENS`
+(`renderer/actions/registry.ts:61`) and `isInsideCareer` (`:162`) define the career-global tier
+once; `activeSet` and `actionsInTiers` both read it (`:229`, `:247`) and so does `KeyboardSpine`
+(`KeyboardSpine.tsx:46`), so registration and availability cannot drift. The league table row
+carries one control per club surface with club-qualified accessible names — Club Staff at
+`LeagueTableScreen.tsx:116`, `Scout report` at `:131` — rather than a `club` parent destination.
+
+The last acceptance criterion is satisfied vacuously: the decision kept the Team Scout Report's
+entry point on the league table row, so nothing in
+[team-scout-report ticket 05](../../team-scout-report/issues/05-club-scoped-route-team-scout-report.md)
+needed reconciling.

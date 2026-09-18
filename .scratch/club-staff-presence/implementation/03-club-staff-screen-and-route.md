@@ -49,36 +49,36 @@ drill-down sub-surface like the tactics editor, not a tenth career screen.
 
 **Blocked by:** 02 — the `getClubStaff` read the screen renders.
 
-**Status:** claimed
+**Status:** resolved
 
 **Files:** `apps/desktop/src/renderer/navigation/destinations.ts`,
 `apps/desktop/src/renderer/router/`, `apps/desktop/src/renderer/leagueTable/LeagueTableScreen.tsx`,
 a new `apps/desktop/src/renderer/clubStaff/` feature folder (the screen, its RPC atom wiring via
 `renderer/rpc`), and the renderer tests under `apps/desktop/test/renderer/clubStaff/`.
 
-- [ ] `CareerDestination` gains `{ type: "clubStaff", saveId, clubId }`, resolving to
+- [x] `CareerDestination` gains `{ type: "clubStaff", saveId, clubId }`, resolving to
       `/career/$saveId/club/$clubId/staff`; the `club/$clubId` segment is reserved for future club
       screens.
-- [ ] The route registry gains one route under the save parent with `screenId` of `clubStaff`,
+- [x] The route registry gains one route under the save parent with `screenId` of `clubStaff`,
       absent from `CAREER_SCREEN_TYPES` and the keymap (no `g` binding), matching the `tactics`
       editor's sub-surface treatment.
-- [ ] League table rows are clickable — keyboard and pointer — and navigate to that club's staff
+- [x] League table rows are clickable — keyboard and pointer — and navigate to that club's staff
       page; fixture and transfer rows stay unclickable.
-- [ ] `g b` returns to the page the entry point came from.
-- [ ] An unknown `$clubId` renders the screen's `error` state with a clear message, never a
+- [x] `g b` returns to the page the entry point came from.
+- [x] An unknown `$clubId` renders the screen's `error` state with a clear message, never a
       redirect — navigation never validates the club id itself.
-- [ ] The screen renders four departments in fixed order Executive → Coaching → Recruitment →
+- [x] The screen renders four departments in fixed order Executive → Coaching → Recruitment →
       Medical, each an `<h2>`-labelled list, with each row showing the name and its role title as
       accessible text; no row shows a quality.
-- [ ] Exactly three states exist: `loading`, `ready`, `error`. No other view state ships or is
+- [x] Exactly three states exist: `loading`, `ready`, `error`. No other view state ships or is
       left as a hook.
-- [ ] The club header names the club through the `displayNames` seam and shows `[Not your club]`
+- [x] The club header names the club through the `displayNames` seam and shows `[Not your club]`
       when the club is not the user's, absent for the user's own club; the header labels the
       `<main>` region.
-- [ ] Rows are not focusable, so the page is the terminal list it promises to be. (Amended: see
+- [x] Rows are not focusable, so the page is the terminal list it promises to be. (Amended: see
       "Arrival focus" below — the second half of this criterion described behaviour the app does
       not have on any screen.)
-- [ ] `pnpm check:all` is green at this commit, and the desktop e2e suite passes where a screen
+- [x] `pnpm check:all` is green at this commit, and the desktop e2e suite passes where a screen
       changed.
 
 ---
@@ -104,3 +104,17 @@ shared focus model.
 become "the single entry point". They did, by taking over the Team Scout Report's only entry point
 and orphaning it for three commits. The row now carries one control per club surface; see
 [ticket 05](05-club-segment-keyboard-identity-and-entry-points.md).
+
+## Stale-lock audit, 2026-09-18
+
+Resolved by audit, not by a run: this ticket shipped and was only ever left `claimed`. Verified
+against the tree rather than against a commit message — `CareerDestination` carries
+`{ type: "clubStaff", saveId, clubId }` (`renderer/navigation/destinations.ts:79`) with its route
+and drill-down classification (`:170`, `:330`, `:443`); the feature folder
+`renderer/clubStaff/` holds the screen and its view state; `LeagueTableScreen.tsx:116` navigates a
+row to the destination; and seven specs sit under `test/renderer/clubStaff/`, covering the route,
+the screen, the keyboard scope and the view state.
+
+The lock mattered: `claimed` is skipped by the frontier scan, so this ticket and 05 made
+`club-staff-presence` read as in-progress while nothing could pick it up, and the effort has been
+listed as complete since 2026-09-09.
