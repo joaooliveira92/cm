@@ -48,13 +48,64 @@ same shape) and by whoever finally builds these.
 
 ## Acceptance
 
-- [ ] A stated rule covering all twelve, with its exceptions named and reasoned
-- [ ] Each exception says what the manager may *not* see of another club, and what decides that
-- [ ] The rule is written as an Agent Note, not only as a ticket answer
-- [ ] It says explicitly whether `clubInfo`/`clubInformation` and `finances`/`clubFinancesDetail` are
+- [x] A stated rule covering all twelve, with its exceptions named and reasoned
+- [x] Each exception says what the manager may *not* see of another club, and what decides that
+- [x] The rule is written as an Agent Note, not only as a ticket answer
+- [x] It says explicitly whether `clubInfo`/`clubInformation` and `finances`/`clubFinancesDetail` are
       one screen or two, since those are the two live duplications
 
 **Blocked by:** [03](03-screen-inventory-and-the-stale-49-row.md) — the exceptions turn on which
 screens have a model at all, and the survey is what says so.
 
-Status: ready-for-agent
+Status: resolved
+
+## Answer
+
+**A Group C screen is club-scoped and exists once. A nav entry for it is a thin own-club resolver
+over that one screen. The exception is subject existence, not visibility.**
+
+Note: [a club screen is club-scoped unless only your club has one](../../../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md).
+
+### The ticket's framing was wrong, and usefully so
+
+It asked what the manager *may not see* of another club, expecting the exceptions to be about
+information. `CONTEXT.md` closes that off: **"A Club never carries a hidden value of its own for an
+Attribute Range to narrow"** — uncertainty in this game lives at the Player level, through Scouting
+Progress, and there is no club-level fog mechanism at all. Screen 38 already shows any club's staff
+to anyone who navigates to it.
+
+So "one screen with hidden fields" is a design this game has no machinery for, and the whole
+information axis the ticket worried about is empty.
+
+### What the exception actually is
+
+Whether the subject exists for a rival club at all — and that is a schema question with a crisp
+answer rather than a judgement call:
+
+- `club_budgets` is keyed on `club_id`, **one row per club**. Every club has budgets → Screen 39 is
+  club-scoped.
+- `board_objective` is keyed on `season_number`, **one row per season**, carrying the human club's
+  id. A rival club has no Board Objective *at all* → Screen 47 is save-scoped and should never
+  acquire a `club/$clubId/board-confidence` route.
+
+A primary key decides it. That is why the rule can settle twelve screens without twelve arguments.
+
+### The two live duplications
+
+- **Screen 34** — one screen. `clubInformation/` stays, `clubInfo/` goes, nav entry resolves the own
+  club. Both currently carry `aria-label="Club Information"`, which is the duplication announcing
+  itself.
+- **Screen 39** — one screen. `clubFinancesDetail/` stays, `finances/` goes, same resolver.
+
+### The trap the rule avoids
+
+An interactive own-club screen is **not** a second screen. The shipped `squad/` sorts, selects and
+drills down; an any-club squad is a read. That is a difference in *capability*, and the resolver
+handles it — same screen, affordances gated on whose club it is, exactly as `ClubStaffScreen`
+already marks a club that is not the user's. Two screens for that reason would be two
+implementations of one list, which is how the pair for Screen 34 came to exist.
+
+### Wider than this group
+
+Group L has the same shape for nations and competitions. The discriminator generalises: ask whether
+the subject has a row for the thing you are looking at. Quote the note rather than re-deriving it.

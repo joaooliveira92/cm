@@ -147,6 +147,26 @@ one. The map flagged 36 and 37 as shaped to attract this error; the evidence say
 
 46 and 48 are the absence-of-a-model case and take `deferred` too, but ticket 05 owns their anchors.
 
+### The own-club rule ([ticket 04](issues/04-one-screen-per-subject-or-two.md), 2026-09-19)
+
+**A Group C screen is club-scoped and exists once; a nav entry is a thin own-club resolver over it.
+The exception is subject existence, not visibility.**
+[Note](../../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md).
+
+The information axis the fog worried about turned out to be empty. `CONTEXT.md`: *a Club never
+carries a hidden value of its own for an Attribute Range to narrow* — uncertainty lives at the
+Player level, and there is no club-level fog mechanism, so visibility can never be the
+discriminator.
+
+What decides it is whether a rival club has a row. `club_budgets` is keyed on `club_id`, so Screen
+39 is club-scoped; `board_objective` is keyed on `season_number` and names the human's club, so a
+rival has no Board Objective at all and Screen 47 is save-scoped. **Screens 34 and 39 collapse to
+one screen each** — `clubInfo/` and `finances/` go, `clubInformation/` and `clubFinancesDetail/`
+stay.
+
+An interactive own-club screen is not a second screen: that is a capability difference the resolver
+handles, and building two is how Screen 34's pair came to exist.
+
 ## Not yet specified
 
 Everything below screen level. The three decision tickets are 03, 04 and 05; 05 is blocked on both of
