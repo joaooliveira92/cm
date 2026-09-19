@@ -240,9 +240,28 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**The ticket queue is empty again.** Recompute the frontier from `.scratch/` rather than this
-section. What remains of M1 is its own sequence — steps 3 and 4, the Group C and Group L remainders
-— and neither has tickets yet. Slicing them is in-effort work on charted maps, not a new effort.
+**group-c-club-information ticket 03** — the screen inventory. Twelve screens (33–37, 39–42, 46–48),
+and for each one what exists in the renderer and what model, if any, backs it. Then **04**, the
+own-club/any-club rule, and **05**, the disposition table. 04 and 05 are blocked on 03 by design.
+
+**Group C's remainder is charted** (M1 step 3). The map is
+[`.scratch/group-c-club-information/map.md`](../.scratch/group-c-club-information/map.md), and it
+settles three things before any screen is ruled on. Screen 38 is shipped. **Screen 49 Team Scout
+Report is also shipped and its coverage row still says `Not yet audited`** — a stale row, not
+unaudited work. And 43–45 follow Group Q, so seventeen unaudited rows are really twelve screens.
+
+**The question the group turns on is the own-club/any-club split.** The renderer carries two parallel
+families — save-scoped nav destinations about *my* club (`clubInfo`, `finances`, `boardConfidence`,
+`clubHistory`) and club-scoped drill-downs about *any* club (`clubInformation`,
+`clubFinancesDetail`, `clubSquadDetail`, and six more). Several import screens therefore have **two**
+placeholders. Ticket 02 set a precedent — Screen 38 exists once, club-scoped, with a thin own-club
+resolver for the nav entry — but ticket 04 is told to test it rather than inherit it, because Staff
+is the easiest possible case: a staff list reads the same whoever is looking, and Finances and Board
+Confidence plausibly do not.
+
+The map also flags the trap this group is shaped to attract: **absence of a model is `deferred`, not
+`out-of-scope`.** Screens 36, 37, 46 and 48 are all positioned to repeat the error M1 step 1 found
+three times in four.
 
 **The Club → Staff nav entry now reaches the roster** (group-c ticket 02). `StaffOverviewScreen` is a
 resolver rather than a screen: it reads the own club from `getSquad` and hands off to
