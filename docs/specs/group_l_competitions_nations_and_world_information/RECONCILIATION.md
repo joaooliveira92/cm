@@ -166,9 +166,17 @@ model differs; all are ticket 02, and each Anchor is `unscheduled` unless stated
   unresolved error classes from ticket 05's audit: `SqlError` across save-scoped handlers, engine
   invariant errors, and payload `SchemaError`. The permanent gate ticket 05 wanted — the audit probe
   as a type alias — is blocked only by `SqlError`.
-- **Screens 161 and 164 are in v1 with no ticket.** Ticket 06 named the order and the effort closed
-  without filing them.
+- ~~**Screens 161 and 164 are in v1 with no ticket.**~~ **Filed 2026-09-19** as
+  [ticket 07](../../../.scratch/group-l-competitions-nations-and-world-information/issues/07-competition-results.md)
+  and [ticket 08](../../../.scratch/group-l-competitions-nations-and-world-information/issues/08-competition-overview.md),
+  in ticket 06's order — 164 first, then 161, which composes it.
 - **Eleven screens are deferred and keep their WIP placeholders**, plus seven that never had a route.
   The competition and nation shells are the largest single block M1 step 5 has to rule on — and
   unlike Group D's, these are placeholders for screens that are wanted, so the cull must distinguish
-  a deferred screen's placeholder from a disposed screen's.
+  a deferred screen's placeholder from a disposed screen's. **Filed 2026-09-19** as
+  [ticket 09](../../../.scratch/group-l-competitions-nations-and-world-information/issues/09-cull-the-group-l-placeholders.md),
+  which carries the discriminator Group C arrived at by answering the same question twice in
+  opposite directions: a `deferred` screen keeps its stub when it is **waiting on a live piece of
+  work** (`clubSquadDetail`, blocked on a decision request) and loses it when it is merely wanted
+  some day (`clubReservesDetail`, whose model is excluded from v1). Ticket 09 also inherits
+  `clubs/`, which group-c ticket 09 ruled to be this group's.

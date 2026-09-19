@@ -240,10 +240,26 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**The Group C queue is empty and the milestone's remaining work is Group L** (M1 step 4, screens 161,
-164–175, 179–180). It has no tickets yet; slicing them is in-effort work on a charted map. Its
-ledger should quote [the club-scoped rule](../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md)
-rather than re-derive it — nations and competitions have the same shape.
+**group-l ticket 07 — Screen 164 Competition Results.** Then **08** (Screen 161 Competition
+Overview, which composes it) and **09** (the cull, blocked on both).
+
+**M1 step 4 is smaller than it looks and is now ticketed.** Group L's ledger has no `Not yet
+audited` row and no open decision ticket: of its twenty screens, 162 and 163 shipped on 2026-09-17,
+eleven are `deferred in full`, and **only 161 and 164 are "in v1, not built"**. Ticket 06 named the
+order and the effort closed without filing them; they are tickets 07 and 08 now.
+
+**Ticket 09 is the interesting one.** Group L's eleven deferred screens keep WIP placeholders, and
+the ledger warned that *the cull must distinguish a deferred screen's placeholder from a disposed
+screen's*. Group C answered that question twice in opposite directions and the discriminator is now
+written down: a `deferred` screen keeps its stub when it is **waiting on a live piece of work**
+(`clubSquadDetail`, blocked on a decision request) and loses it when it is merely wanted some day
+(`clubReservesDetail`, whose model is excluded from v1). Ticket 09 also inherits `clubs/`, which
+group-c ticket 09 ruled to be Group L's.
+
+Ticket 07 carries one standing instruction worth honouring: **reuse `getCompetitionFixtures`, do not
+add a fourth fixture read.** There are three now — the human's calendar, a Competition's card, and a
+club's matches — and each answers a question the others cannot. "The played subset of a card" is not
+one of those.
 
 **Group C is built out except Screen 35, which is blocked on a human.** Tickets 06, 07, 08 and 09
 all shipped. **e2e 53 passed**, 2058 desktop tests.
