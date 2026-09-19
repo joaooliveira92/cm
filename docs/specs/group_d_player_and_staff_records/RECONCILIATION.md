@@ -203,11 +203,47 @@ reader will make the same guess.
 Two `player*` WIP screens remain in the renderer and neither is this group's: `playerSearch/` is
 Group I's Screen 120, and `competitionPlayerStats/` and `nationPlayers/` are Group L's.
 
-The staff placeholders need a decision rather than a deletion, because they **do not map one-to-one**
-onto screens 64–68. The renderer carries `staffProfile/`, `staffContract/`, `staffHistory/`,
-`staffJobInfo/`, `staffOverview/` and `staffAttributes/`; only the first three correspond to a Group D
-screen. The other three answer to no screen in this import at all, and the cull ticket must rule on
-each rather than assume. (`staffSearch/` is Group I's Screen 120 and is not this group's to remove.)
+**~~The staff placeholders need a decision rather than a deletion.~~ Ruled 2026-09-19**
+([ticket 10](../../../.scratch/group-d-player-and-staff-records/issues/10-rule-on-the-staff-placeholders.md)).
+They did not map one-to-one onto screens 64–68: the renderer carried `staffProfile/`,
+`staffContract/`, `staffHistory/`, `staffJobInfo/`, `staffOverview/` and `staffAttributes/`, and only
+the first three corresponded to a Group D screen. (`staffSearch/` is Group I's Screen 120 and was not
+this group's to touch.)
+
+Five are deleted and one is not. The whole `staff/$staffId` route branch went with them — no
+per-staff surface survives, so its parent route, its URL-segment map and its entry in
+`screenIdOfPath` are gone too.
+
+| Folder | Screen | Ruling |
+|---|---|---|
+| `staffProfile/` | 64 | `out-of-scope` — the closed role set. Deleted. |
+| `staffContract/` | 65 | `out-of-scope` — **Staff never touch Contract or Wage Budget** ([CONTEXT.md](../../../CONTEXT.md)). Deleted. |
+| `staffHistory/` | 66 | `out-of-scope` — Staff are *fixed for the life of a career*: they neither develop, age, nor turn over, so there is no history to show. Deleted. |
+| `staffAttributes/` | none | `out-of-scope`, first ruled here. A Coach carries a single quality number, not an Attribute sheet, and cannot develop — so the screen has no subject rather than a missing model. Deleted. |
+| `staffJobInfo/` | none | `out-of-scope`, first ruled here. "Job information" means employment terms, and there are no Staff wages, no hiring and no firing. Deleted. |
+| `staffOverview/` | none | `deferred` — **kept**. See below. |
+
+The two unmapped deletions are not the cull overreaching. Both are *more* detailed per-staff surfaces
+than 64–66, which are already `out-of-scope` under a ruling about what Staff **are**; a screen that
+needs Staff to be a developing entity with a contract is disposed by the same sentence that disposed
+the profile.
+
+### `staffOverview` is `deferred`, and is the one real finding here
+
+It answers to no import screen, but unlike the other five it is **a live navbar destination**: the
+Club section's *Staff* entry points at it. So the nav offers the player a screen called Staff and
+delivers a WIP placeholder — while the real club staff roster **already exists**, shipped as
+`clubStaff` at `club/$clubId/staff`.
+
+Deleting it would remove a nav entry the game wants; leaving it silent would leave the nav lying.
+It is `deferred` with an owner: making it real means resolving the *own* club and rendering the
+roster `clubStaff` already renders, and `destinations.ts` records that `clubStaff` is club-scoped and
+so cannot itself be a nav destination. Its three Club-section siblings — `clubInfo`, `finances`,
+`boardConfidence` — are placeholders for the same reason, and that whole section is Group C's
+remainder, milestone [M1](../../../.ai/MILESTONES.md) step 3.
+
+**Anchor:** Group C's club-information remainder (M1 step 3), which owns the Club section.
 
 A disposed screen that keeps its placeholder is indistinguishable, in a route list, from one that is
-merely unbuilt — which is the confusion M1 exists to end.
+merely unbuilt — which is the confusion M1 exists to end. `staffOverview` is the second kind, and is
+now labelled as such.

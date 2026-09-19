@@ -48,11 +48,6 @@ import { CompetitionsScreen } from "../competitions/CompetitionsScreen.js";
 import { NationsScreen } from "../nations/NationsScreen.js";
 import { ClubsScreen } from "../clubs/ClubsScreen.js";
 // Ticket 03 — Staff drill-downs
-import { StaffProfileScreen } from "../staffProfile/StaffProfileScreen.js";
-import { StaffAttributesScreen } from "../staffAttributes/StaffAttributesScreen.js";
-import { StaffContractScreen } from "../staffContract/StaffContractScreen.js";
-import { StaffHistoryScreen } from "../staffHistory/StaffHistoryScreen.js";
-import { StaffJobInfoScreen } from "../staffJobInfo/StaffJobInfoScreen.js";
 // Ticket 04 — Club drill-downs (other club views)
 import { ClubSquadDetailScreen } from "../clubSquadDetail/ClubSquadDetailScreen.js";
 import { ClubReservesDetailScreen } from "../clubReservesDetail/ClubReservesDetailScreen.js";
@@ -108,7 +103,6 @@ import {
   CareerIndexRedirect,
   CareerMatchChildView,
   CareerPlayerChildView,
-  CareerStaffChildView,
   CareerNationChildView,
   CareerCompetitionChildView,
   CareerShell,
@@ -376,46 +370,6 @@ const playerCoachReportRoute = createRoute({
   component: () => (
     <CareerPlayerChildView screenId="playerCoachReport" Screen={PlayerCoachReportScreen} />
   ),
-});
-
-// ---------------------------------------------------------------------------
-// Staff branch — `/career/$saveId/staff/$staffId/...`
-// ---------------------------------------------------------------------------
-
-const staffRoute = createRoute({
-  getParentRoute: () => saveRoute,
-  path: "staff/$staffId",
-  component: () => <Outlet />,
-});
-
-const staffProfileRoute = createRoute({
-  getParentRoute: () => staffRoute,
-  path: "profile",
-  component: () => <CareerStaffChildView screenId="staffProfile" Screen={StaffProfileScreen} />,
-});
-
-const staffAttributesRoute = createRoute({
-  getParentRoute: () => staffRoute,
-  path: "attributes",
-  component: () => <CareerStaffChildView screenId="staffAttributes" Screen={StaffAttributesScreen} />,
-});
-
-const staffContractRoute = createRoute({
-  getParentRoute: () => staffRoute,
-  path: "contract",
-  component: () => <CareerStaffChildView screenId="staffContract" Screen={StaffContractScreen} />,
-});
-
-const staffHistoryRoute = createRoute({
-  getParentRoute: () => staffRoute,
-  path: "history",
-  component: () => <CareerStaffChildView screenId="staffHistory" Screen={StaffHistoryScreen} />,
-});
-
-const staffJobInfoRoute = createRoute({
-  getParentRoute: () => staffRoute,
-  path: "job-info",
-  component: () => <CareerStaffChildView screenId="staffJobInfo" Screen={StaffJobInfoScreen} />,
 });
 
 // ---------------------------------------------------------------------------
@@ -749,13 +703,6 @@ const routeTree = rootRoute.addChildren([
         playerContractRoute,
         playerDevelopmentRoute,
         playerCoachReportRoute,
-      ]),
-      staffRoute.addChildren([
-        staffProfileRoute,
-        staffAttributesRoute,
-        staffContractRoute,
-        staffHistoryRoute,
-        staffJobInfoRoute,
       ]),
       nationRoute.addChildren([
         nationOverviewRoute,

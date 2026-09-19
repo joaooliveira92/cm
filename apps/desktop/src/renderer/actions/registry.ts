@@ -74,11 +74,6 @@ export const PLAYER_SCOPED_SCREENS = [
  * The staff-scoped drill-downs: `/career/$saveId/staff/$staffId/...`. Same rationale.
  */
 export const STAFF_SCOPED_SCREENS = [
-  "staffProfile",
-  "staffAttributes",
-  "staffContract",
-  "staffHistory",
-  "staffJobInfo",
 ] as const;
 
 /**

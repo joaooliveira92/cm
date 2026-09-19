@@ -229,30 +229,6 @@ export const CareerMatchChildView = ({
   );
 };
 
-interface StaffScreenProps {
-  readonly saveId: SaveId;
-  readonly staffId: string;
-}
-
-export const CareerStaffChildView = ({
-  screenId,
-  Screen,
-}: {
-  readonly screenId: string;
-  readonly Screen: ComponentType<StaffScreenProps>;
-}) => {
-  const params = useParams({ strict: false });
-  const save = decodeSaveId(params.saveId ?? "");
-  const staffId = params.staffId ?? "";
-  if (save._tag === "Malformed") return <RouteParamErrorScreen reason={save.reason} />;
-  if (staffId === "") return <RouteParamErrorScreen reason="staffId parameter is empty" />;
-  return (
-    <RouteView screenId={screenId}>
-      <Screen saveId={save.success} staffId={staffId} />
-    </RouteView>
-  );
-};
-
 interface NationScreenProps {
   readonly saveId: SaveId;
   readonly nationId: NationId;

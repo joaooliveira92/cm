@@ -43,11 +43,6 @@ export type ScreenName =
   | "playerContract"
   | "playerCoachReport"
   // The staff-scoped drill-downs.
-  | "staffProfile"
-  | "staffAttributes"
-  | "staffContract"
-  | "staffHistory"
-  | "staffJobInfo"
   // The club sub-surface drill-downs (other club views).
   | "clubSquadDetail"
   | "clubReservesDetail"

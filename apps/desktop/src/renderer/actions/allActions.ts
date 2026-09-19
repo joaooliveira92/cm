@@ -215,12 +215,6 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   playerProfile: { showKeyBadges: false },
   playerContract: { showKeyBadges: false },
   playerCoachReport: { showKeyBadges: false },
-  // The staff-scoped drill-downs.
-  staffProfile: { showKeyBadges: false },
-  staffAttributes: { showKeyBadges: false },
-  staffContract: { showKeyBadges: false },
-  staffHistory: { showKeyBadges: false },
-  staffJobInfo: { showKeyBadges: false },
   // The club sub-surface drill-downs.
   clubSquadDetail: { showKeyBadges: false },
   clubReservesDetail: { showKeyBadges: false },

@@ -45,7 +45,10 @@ A reconciled spec covering all 19 Group D screens (50-68) — player profile, at
 
 None. All 19 screens disposed. Three needs-design surfaces identified, all three shipped.
 
-The placeholder cull is specified in tickets 09 and 10.
+The placeholder cull shipped in tickets 09 and 10 (2026-09-19). Ten placeholders and the whole
+`staff/$staffId` route branch are gone. One survivor is deliberate: `staffOverview` is `deferred`,
+not disposed — it is a live navbar destination whose roster already ships as `clubStaff`, and
+connecting them is [group-c ticket 02](../group-c-club-information/issues/02-the-club-staff-nav-entry-lands-on-a-placeholder.md).
 
 ## Out of scope
 

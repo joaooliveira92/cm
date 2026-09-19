@@ -240,10 +240,22 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-d-player-and-staff-records ticket 10** — the harder half of the placeholder cull. Three
-`staff*` folders (`staffJobInfo`, `staffOverview`, `staffAttributes`) answer to no screen in the
-Group D import, so removing them is a first-time disposition on a surface nobody specified, not a
-cull finishing its list. The ticket requires a ruling and a ledger row per folder.
+**group-c-club-information ticket 02** — the Club → Staff nav entry lands on a WIP placeholder while
+the real roster sits one route away, shipped as `clubStaff` at `club/$clubId/staff`. Connecting them
+means resolving the *own* club, which `destinations.ts` says a club-scoped drill-down cannot do as a
+nav destination. Its three Club-section siblings (`clubInfo`, `finances`, `boardConfidence`) are
+placeholders for the same reason, so prefer a seam over a special case.
+
+**M1 step 5's player and staff share is done.** group-d tickets 09 and 10 deleted ten placeholders
+and the whole `staff/$staffId` route branch. Ticket 10 was the one that needed judgement: five of the
+six staff folders went, but `staffOverview` is `deferred` rather than disposed, because it is a live
+navbar destination whose screen already exists elsewhere. `staffAttributes` and `staffJobInfo` answer
+to no import screen and were ruled `out-of-scope` for the first time — not for a missing model, but
+because `CONTEXT.md` says Staff carry no Contract, no wages and no development, so the screens have
+no subject.
+
+Remaining WIP under `renderer/`: 47 screens. `staffSearch` is Group I's; the `club*`,
+`competition*` and `nation*` share is M1 steps 3 and 4.
 
 **e2e is GREEN — 46 passed, 2026-09-19.** group-h ticket 12 fixed the four training specs, and with
 `pnpm check:all` also green, **M1 exit criterion 4 is met.** The four had drifted against ticket 09's
