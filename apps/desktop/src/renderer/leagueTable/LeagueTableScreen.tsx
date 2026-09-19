@@ -180,6 +180,19 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   >
                     Transfers
                   </button>
+                  <button
+                    type="button"
+                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    aria-label={`${row.clubName} — club finances`}
+                    onClick={(event) =>
+                      navigateCareer(
+                        { type: "clubFinancesDetail", saveId, clubId: row.clubId },
+                        intentOfClick(event),
+                      )
+                    }
+                  >
+                    Finances
+                  </button>
                 </TableCell>
                 <TableCell className="pr-2 text-center tabular-nums">{row.played}</TableCell>
                 <TableCell className="pr-2 text-center tabular-nums">{row.won}</TableCell>

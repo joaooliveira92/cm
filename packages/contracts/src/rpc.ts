@@ -32,6 +32,8 @@ import {
   ClubId,
   ClubNotFoundError,
   ClubSelectionView,
+  BoardConfidenceView,
+  ClubFinancesView,
   ClubFixturesView,
   ClubInformationView,
   ClubStaffView,
@@ -535,6 +537,25 @@ commitCareer: {
     payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
     success: ClubFixturesView,
     error: Schema.Union([SaveNotFoundError, ClubNotFoundError, PendingFixtureIntegrityError]),
+  },
+  /** Club Finances (Screen 39): **any** club's Transfer and Wage Budgets. A club-scoped sibling of
+   *  `getBudgetReviewScreen`, which is the manager's own. `club_budgets` is keyed on `club_id`, so
+   *  every club has budgets and there is nothing own-club about the subject. */
+  getClubFinances: {
+    payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
+    success: ClubFinancesView,
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+  },
+  /** Supporter and Board Confidence (Screen 47), board half. **Save-scoped**: `board_objective` is
+   *  keyed on `season_number` and names the human's club, so a rival has no objective to read.
+   *
+   *  Folds `toSeasonView`, so it carries `PendingFixtureIntegrityError` for the reason
+   *  `getCompetitionTable` spells out above — an error the handler can raise but the union omits
+   *  arrives at the renderer raw, which § Boundaries forbids. */
+  getBoardConfidence: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: BoardConfidenceView,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
   /** Coaching Assignments (Screen 111): the manager's own club's coaching staff with quality ratings
    *  and assigned departments. A pure read from the `staff` table — no command, no world derivation.

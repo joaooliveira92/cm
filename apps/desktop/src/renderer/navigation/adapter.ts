@@ -128,6 +128,7 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/club/$clubId/information":
     case "/career/$saveId/club/$clubId/fixtures":
     case "/career/$saveId/club/$clubId/transfers":
+    case "/career/$saveId/club/$clubId/finances":
       getRouter().navigate({
         to: resolved.to,
         params: { saveId: resolved.params.saveId, clubId: resolved.params.clubId },

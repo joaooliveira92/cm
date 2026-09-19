@@ -1,5 +1,6 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
+  BoardConfidenceView,
   BoardObjectiveView,
   ClubFixturesView,
   ClubNotFoundError,
@@ -185,6 +186,56 @@ const fixturesForClub = (clubId: ClubId, seasonNumber: number) =>
         }),
     );
   });
+
+/**
+ * Supporter and Board Confidence (Screen 47), board half — the manager's own club only.
+ *
+ * Save-scoped rather than club-scoped, and that is not an oversight: `board_objective` is keyed on
+ * `season_number` and names the human's club, so a rival has no Board Objective for a club-scoped
+ * read to return. It is the one exception to the club-scoped rule, and the reason is that the
+ * subject does not exist elsewhere rather than that it is withheld.
+ *
+ * A null `objective` is a real state — a career before its first objective is set — not an error.
+ * Supporter confidence has no model and is simply not here.
+ */
+export const getBoardConfidence = (savesDir: string, saveId: SaveId) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const seasonRow = yield* loadSeasonRow;
+      const club = yield* loadUserClub;
+
+      // Newest first, and an unjudged objective ahead of a judged one, so the row this returns is
+      // the objective the manager is currently playing for rather than the last one settled.
+      const rows = yield* sql<{
+        seasonNumber: number;
+        minPosition: number;
+        maxPosition: number;
+        finalPosition: number | null;
+        verdict: Verdict | null;
+      }>`SELECT season_number as "seasonNumber", min_position as "minPosition",
+                max_position as "maxPosition", final_position as "finalPosition", verdict
+         FROM board_objective WHERE club_id = ${club.id}
+         ORDER BY verdict IS NULL DESC, season_number DESC LIMIT 1`;
+      const row = rows[0];
+
+      return new BoardConfidenceView({
+        season: yield* toSeasonView(seasonRow),
+        clubName: club.name,
+        objective:
+          row === undefined
+            ? null
+            : new BoardObjectiveView({
+                seasonNumber: row.seasonNumber,
+                clubId: club.id,
+                minPosition: row.minPosition,
+                maxPosition: row.maxPosition,
+                finalPosition: row.finalPosition,
+                verdict: row.verdict,
+              }),
+      });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
+  );
 
 export const getLeagueTable = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>

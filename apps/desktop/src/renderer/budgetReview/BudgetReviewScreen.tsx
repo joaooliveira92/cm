@@ -1,7 +1,7 @@
 import { type SaveId } from "@cm-clone/contracts";
 import { FOCUS_RING } from "../focus.js";
 import { budgetReviewAtom, describeRpcError, typedError, useAtomValue } from "../rpc.js";
-import { PANEL } from "../theme.js";
+import { BudgetFigures } from "./BudgetFigures.js";
 
 const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
@@ -52,26 +52,12 @@ export const BudgetReviewScreen = ({
       <p className="mt-1 mb-6 text-text-secondary text-sm">
         Your club's current Transfer Budget, Wage Budget, and committed wages.
       </p>
-      <div className="grid grid-cols-2 gap-4">
-        <div className={`rounded-md border p-4 ${PANEL}`}>
-          <p className="text-sm text-text-secondary">Transfer Budget Remaining</p>
-          <p className="text-xl font-semibold mt-1">{transferBudgetRemaining.toLocaleString()} Credits</p>
-        </div>
-        <div className={`rounded-md border p-4 ${PANEL}`}>
-          <p className="text-sm text-text-secondary">Wage Budget</p>
-          <p className="text-xl font-semibold mt-1">{wageBudget.toLocaleString()} Credits/season</p>
-        </div>
-        <div className={`rounded-md border p-4 ${PANEL}`}>
-          <p className="text-sm text-text-secondary">Committed Wages</p>
-          <p className="text-xl font-semibold mt-1">{committedWages.toLocaleString()} Credits/season</p>
-        </div>
-        <div className={`rounded-md border p-4 ${PANEL}`}>
-          <p className="text-sm text-text-secondary">Headroom</p>
-          <p className={`text-xl font-semibold mt-1 ${headroom < 0 ? "text-red-500" : ""}`}>
-            {headroom.toLocaleString()} Credits/season
-          </p>
-        </div>
-      </div>
+      <BudgetFigures
+        transferBudgetRemaining={transferBudgetRemaining}
+        wageBudget={wageBudget}
+        committedWages={committedWages}
+        headroom={headroom}
+      />
     </main>
   );
 };

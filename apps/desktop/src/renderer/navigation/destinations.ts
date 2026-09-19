@@ -85,6 +85,9 @@ export type CareerDestination =
    *  save-scoped nav destinations and render the same lists. */
   | { readonly type: "clubFixturesDetail"; readonly saveId: SaveId; readonly clubId: ClubId }
   | { readonly type: "clubTransfersDetail"; readonly saveId: SaveId; readonly clubId: ClubId }
+  /** Club Finances (Screen 39) — any club's budgets, club-scoped because `club_budgets` is keyed
+   *  on `club_id`. Its own-club sibling is the `finances` nav destination, a resolver over this. */
+  | { readonly type: "clubFinancesDetail"; readonly saveId: SaveId; readonly clubId: ClubId }
   /**
    * Player detail — a drill-down to a specific player's profile. Needs both save and player
    * identity, so excluded from save-scoped nav like the club drill-downs.
@@ -176,7 +179,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "clubInformation" | "clubFixturesDetail" | "clubTransfersDetail" | "playerDetail" | "playerDevelopment" | "playerContract" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
+  "teamScoutReport" | "clubStaff" | "clubInformation" | "clubFixturesDetail" | "clubTransfersDetail" | "clubFinancesDetail" | "playerDetail" | "playerDevelopment" | "playerContract" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
 >;
 
 /**
@@ -298,6 +301,10 @@ export type ResolvedDestination =
   | {
       readonly to: "/career/$saveId/club/$clubId/transfers";
       readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
+    }
+  | {
+      readonly to: "/career/$saveId/club/$clubId/finances";
+      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
     };
 
 /** Pure mapping from a typed destination to its route; unit-tested (AC-14). */
@@ -352,6 +359,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "clubInformation":
     case "clubFixturesDetail":
     case "clubTransfersDetail":
+    case "clubFinancesDetail":
     case "playerDetail":
     case "playerDevelopment":
     case "playerContract":
@@ -482,6 +490,11 @@ const careerRoute = (
     case "clubTransfersDetail":
       return {
         to: "/career/$saveId/club/$clubId/transfers",
+        params: { saveId: destination.saveId, clubId: destination.clubId },
+      };
+    case "clubFinancesDetail":
+      return {
+        to: "/career/$saveId/club/$clubId/finances",
         params: { saveId: destination.saveId, clubId: destination.clubId },
       };
     case "playerDetail":

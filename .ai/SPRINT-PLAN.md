@@ -240,8 +240,22 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-c-club-information ticket 08** — the modelled halves of Screens 39 and 47. Then **10** (the
-any-club Squad) and **09** (the cull, blocked on both).
+**group-c-club-information ticket 10** — the any-club Squad, the one screen the club-scoped rule
+cannot settle. Then **09**, the cull, which is blocked on it.
+
+**Screens 39 and 47 ship** (ticket 08). `ClubFinancesDetailScreen` club-scoped with `finances/` as
+its own-club resolver, and `BoardConfidenceScreen` save-scoped and staying that way. **e2e 53
+passed**, 2059 desktop tests.
+
+**The scoping decision for 47 is now proven, not just argued.** A test asserts directly against the
+schema that **no club but the manager's has a board objective row**. If a future change gives rival
+clubs objectives, that test fails — which is exactly when someone should be told the rule's
+exception needs revisiting.
+
+Also settled: Club Finances is **not** a different screen from Budget Review. Both show the same
+four figures and both now render a shared `BudgetFigures`; they differ only in where they sit.
+Income, expenditure and projections are absent rather than zeroed, with a test asserting none of
+those words appears.
 
 **Screens 40 and 42 ship** (ticket 07). `ClubFixturesDetailScreen` and `ClubTransfersDetailScreen`,
 each titled with the club and marking one that is not the manager's. **e2e 50 passed**, 2040 tests.

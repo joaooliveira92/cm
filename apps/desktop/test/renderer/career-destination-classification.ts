@@ -58,6 +58,7 @@ export const CAREER_SUB_SURFACES: Readonly<Record<CareerSubSurfaceType, string>>
   clubInformation: "names a club, so it cannot be built from a save alone",
   clubFixturesDetail: "names a club, so it cannot be built from a save alone",
   clubTransfersDetail: "names a club, so it cannot be built from a save alone",
+  clubFinancesDetail: "names a club, so it cannot be built from a save alone",
   playerDetail: "names a player, so it cannot be built from a save alone",
   playerDevelopment: "names a player, so it cannot be built from a save alone",
   playerContract: "names a player, so it cannot be built from a save alone",

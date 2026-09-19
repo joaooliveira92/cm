@@ -186,3 +186,20 @@ export class ClubTransfersView extends Schema.Class<ClubTransfersView>("ClubTran
   isUserClub: Schema.Boolean,
   entries: Schema.Array(TransferHistoryEntryView),
 }) {}
+
+/**
+ * Club Finances (Screen 39): one club's budgets, for **any** club in the save.
+ *
+ * The same four figures `BudgetReviewView` carries, plus the club they belong to — so one read
+ * answers the whole page, as `ClubStaffView`'s comment argues. Income, expenditure and projections
+ * are absent because they have no model; the Group C ledger `deferred`s them rather than this view
+ * carrying a zero that reads like a fact.
+ */
+export class ClubFinancesView extends Schema.Class<ClubFinancesView>("ClubFinancesView")({
+  club: ClubSummary,
+  isUserClub: Schema.Boolean,
+  transferBudgetRemaining: Schema.Finite,
+  wageBudget: Schema.Finite,
+  committedWages: Schema.Finite,
+  headroom: Schema.Finite,
+}) {}

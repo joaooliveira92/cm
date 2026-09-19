@@ -218,3 +218,24 @@ export class ClubFixturesView extends Schema.Class<ClubFixturesView>("ClubFixtur
   season: SeasonView,
   fixtures: Schema.Array(FixtureView),
 }) {}
+
+/**
+ * Supporter and Board Confidence (Screen 47) — the board half only.
+ *
+ * **Save-scoped, and deliberately so.** `board_objective` is keyed on `season_number` and names the
+ * human's club, so a rival club has no Board Objective at all. That is the one exception to
+ * [the club-scoped rule](../../../../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md),
+ * and it is subject existence rather than secrecy: there is nothing to withhold because there is
+ * nothing there.
+ *
+ * Supporter confidence is not modelled and is absent rather than zeroed — the Group C ledger
+ * `deferred`s it.
+ *
+ * `objective` is null before the first Season's objective is set, which is a real state and not an
+ * error.
+ */
+export class BoardConfidenceView extends Schema.Class<BoardConfidenceView>("BoardConfidenceView")({
+  season: SeasonView,
+  clubName: Schema.String,
+  objective: Schema.NullOr(BoardObjectiveView),
+}) {}

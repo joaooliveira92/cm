@@ -29,6 +29,8 @@ export {
   scoutingKnowledgeAtom,
   teamScoutReportAtom,
   teamScoutReadingsAtom,
+  boardConfidenceAtom,
+  clubFinancesAtom,
   clubFixturesAtom,
   clubInformationAtom,
   clubTransfersAtom,

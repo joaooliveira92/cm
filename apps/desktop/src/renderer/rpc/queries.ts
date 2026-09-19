@@ -317,6 +317,39 @@ export const clubTransfersAtom = (saveId: SaveId, clubId: ClubId) =>
   clubTransfersForSave(saveId)(clubId);
 
 /**
+ * getClubFinances — `["save", saveId]`, `["transfers", saveId]`, `["economy", saveId]`.
+ *
+ * Club Finances (Screen 39): any club's budgets. Same reactivity as `budgetReviewAtom`, which is
+ * the own-club sibling — a settled bid or a renewed contract moves these numbers.
+ */
+const clubFinancesForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((clubId: ClubId) =>
+    managementReadPolicy(
+      Atom.make(call("getClubFinances", { saveId, clubId })).pipe(
+        Atom.withReactivity([saveKey(saveId), transfersKey(saveId), economyKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const clubFinancesAtom = (saveId: SaveId, clubId: ClubId) =>
+  clubFinancesForSave(saveId)(clubId);
+
+/**
+ * getBoardConfidence — `["save", saveId]`.
+ *
+ * Supporter and Board Confidence (Screen 47), board half. Save-scoped, because a rival club has no
+ * Board Objective at all — see the club-scoped rule's one exception.
+ */
+export const boardConfidenceAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getBoardConfidence", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId)]),
+    ),
+  ),
+);
+
+/**
  * getCoachingAssignments — `["save", saveId]`, `["training", saveId]`.
  *
  * Coaching Assignments (Screen 111): the manager's own club's coaches with quality ratings.
