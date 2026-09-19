@@ -40,12 +40,7 @@ export type ScreenName =
   | "clubStaff"
   // The player-scoped drill-downs — same rationale as the club-scoped ones.
   | "playerProfile"
-  | "playerAttributes"
   | "playerContract"
-  | "playerHistory"
-  | "playerForm"
-  | "playerInjuries"
-  | "playerScoutReport"
   | "playerCoachReport"
   // The staff-scoped drill-downs.
   | "staffProfile"

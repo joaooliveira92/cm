@@ -25,13 +25,8 @@ import { LoadCareerScreen } from "./loadCareer.js";
 import { TeamScoutReportScreen } from "../scouting/TeamScoutReportScreen.js";
 import { ClubStaffScreen } from "../clubStaff/ClubStaffScreen.js";
 import { PlayerProfileScreen } from "../playerProfile/PlayerProfileScreen.js";
-import { PlayerAttributesScreen } from "../playerAttributes/PlayerAttributesScreen.js";
 import { PlayerContractScreen } from "../playerContract/PlayerContractScreen.js";
 import { PlayerDevelopmentScreen } from "../playerDevelopment/PlayerDevelopmentScreen.js";
-import { PlayerHistoryScreen } from "../playerHistory/PlayerHistoryScreen.js";
-import { PlayerFormScreen } from "../playerForm/PlayerFormScreen.js";
-import { PlayerInjuriesScreen } from "../playerInjuries/PlayerInjuriesScreen.js";
-import { PlayerScoutReportScreen } from "../playerScoutReport/PlayerScoutReportScreen.js";
 import { PlayerCoachReportScreen } from "../playerCoachReport/PlayerCoachReportScreen.js";
 import { TrainingScreen } from "../training/TrainingScreen.js";
 import { CoachingAssignmentsScreen } from "../training/CoachingAssignmentsScreen.js";
@@ -359,14 +354,6 @@ const playerProfileRoute = createRoute({
   ),
 });
 
-const playerAttributesRoute = createRoute({
-  getParentRoute: () => playerRoute,
-  path: "attributes",
-  component: () => (
-    <CareerPlayerChildView screenId="playerAttributes" Screen={PlayerAttributesScreen} />
-  ),
-});
-
 const playerContractRoute = createRoute({
   getParentRoute: () => playerRoute,
   path: "contract",
@@ -380,38 +367,6 @@ const playerDevelopmentRoute = createRoute({
   path: "development",
   component: () => (
     <CareerPlayerChildView screenId="playerDevelopment" Screen={PlayerDevelopmentScreen} />
-  ),
-});
-
-const playerHistoryRoute = createRoute({
-  getParentRoute: () => playerRoute,
-  path: "history",
-  component: () => (
-    <CareerPlayerChildView screenId="playerHistory" Screen={PlayerHistoryScreen} />
-  ),
-});
-
-const playerFormRoute = createRoute({
-  getParentRoute: () => playerRoute,
-  path: "form",
-  component: () => (
-    <CareerPlayerChildView screenId="playerForm" Screen={PlayerFormScreen} />
-  ),
-});
-
-const playerInjuriesRoute = createRoute({
-  getParentRoute: () => playerRoute,
-  path: "injuries",
-  component: () => (
-    <CareerPlayerChildView screenId="playerInjuries" Screen={PlayerInjuriesScreen} />
-  ),
-});
-
-const playerScoutReportRoute = createRoute({
-  getParentRoute: () => playerRoute,
-  path: "scout-report",
-  component: () => (
-    <CareerPlayerChildView screenId="playerScoutReport" Screen={PlayerScoutReportScreen} />
   ),
 });
 
@@ -791,13 +746,8 @@ const routeTree = rootRoute.addChildren([
       ]),
       playerRoute.addChildren([
         playerProfileRoute,
-        playerAttributesRoute,
         playerContractRoute,
         playerDevelopmentRoute,
-        playerHistoryRoute,
-        playerFormRoute,
-        playerInjuriesRoute,
-        playerScoutReportRoute,
         playerCoachReportRoute,
       ]),
       staffRoute.addChildren([

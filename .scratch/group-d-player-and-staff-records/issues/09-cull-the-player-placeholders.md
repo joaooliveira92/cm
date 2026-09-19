@@ -18,9 +18,12 @@ and it is milestone [M1](../../../.ai/MILESTONES.md) step 5.
 | `renderer/playerInjuries/` | 59 Player Injuries | `deferred` — injury is a per-match event, not a record |
 | `renderer/playerScoutReport/` | 68 Player Scout Report | `deferred` — player-level scouting is inline |
 
-`renderer/playerCoachReport/` is also routed and answers to Screen 67 Coach Report, which the ledger
-disposes `out-of-scope` under the closed role set. It is in scope here for the same reason the five
-are, and the ledger's list omitting it is a transcription gap this ticket closes rather than inherits.
+**`renderer/playerCoachReport/` is not one of them, and this ticket originally said it was.** It is a
+built screen — Group H's Screen 113 Performance Report, reading `getSquad` and
+`getPlayerDevelopmentHistory` — and it carries no `WIP` marker, which is why the exit criterion's own
+grep does not list it. Group D's Screen 67 Coach Report is a different thing that was never built at
+all. The ledger's list of five was right; the "transcription gap" this ticket claimed does not exist.
+Recorded rather than quietly deleted, because the next reader will make the same guess from the name.
 
 ## Deferred still means deleted, and that is the point
 
@@ -36,15 +39,64 @@ that costs a route.
 
 ## Acceptance
 
-- [ ] Each of the six folders is deleted, with its route, nav entry and any `g`-key binding
-- [ ] `grep -rl "WIP" apps/desktop/src/renderer --include "*.tsx"` returns no `player*` screen
-- [ ] No route, nav entry or key binding points at a deleted screen — including from
+- [x] Each of the five folders is deleted, with its route, nav entry and any `g`-key binding
+- [x] `grep -rl "WIP" apps/desktop/src/renderer --include "*.tsx"` returns no Group D `player*`
+      screen (`playerSearch` is Group I's, `competitionPlayerStats` and `nationPlayers` Group L's)
+- [x] No route, nav entry or key binding points at a deleted screen — including from
       `playerProfile`, which links to several of them
-- [ ] The Group D ledger's "What this ledger leaves owed" section records the cull as done, and
-      names `playerCoachReport` among what went
-- [ ] e2e is green, not just unit tests: these screens are reachable and the specs know it
-- [ ] `pnpm check:all` green
+- [x] The Group D ledger's "What this ledger leaves owed" section records the cull as done, and
+      states that `playerCoachReport` was examined and is not a Group D placeholder
+- [~] e2e: 42 passed, 4 failed — **all four pre-existing and none related to this cull**. Proven by
+      stashing this ticket's changes and re-running: identical 4 failures, identical 42 passes. They
+      are Group H training specs drifted against a UI redesign; filed separately.
+- [x] `pnpm check:all` green
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
+
+## Answer
+
+The five folders are gone, with everything that pointed at them. The reference set was tighter than
+expected — exactly five sites each, and nothing else in the tree touched them:
+
+- `router/index.tsx` — the import, the `createRoute` block, and the entry in `playerRoute.addChildren`
+- `actions/types.ts` — the `ScreenId` union member
+- `actions/registry.ts` — the `PLAYER_SCOPED_SCREENS` entry
+- `actions/allActions.ts` — the per-screen action defaults row
+- `keyboard/screenId.ts` — the URL-segment → surface mapping
+
+No test, no e2e spec and no nav link referenced any of them. They were routed but reachable only by
+typing a URL, which is its own comment on what a placeholder was worth here.
+
+### The correction this ticket needed
+
+It was filed claiming `playerCoachReport/` as a sixth folder and the ledger's list of five as a
+transcription gap. **That was wrong.** `playerCoachReport/` is Group H's Screen 113 Performance
+Report — a built screen reading `getSquad` and `getPlayerDevelopmentHistory` — and it carries no
+`WIP` marker, which is why M1's own grep never listed it. Group D's Screen 67 Coach Report is a
+different thing that was never built. The ledger was right and the ticket was wrong; both now say so,
+because the name invites the same guess from the next reader.
+
+### Observed, not fixed
+
+`playerDevelopment` — a shipped Group D screen (61) — has a route but appears in neither
+`PLAYER_SCOPED_SCREENS` nor `PLAYER_SURFACE_BY_SEGMENT`. That predates this ticket and was not
+introduced by the cull; it means the screen has no action scope and no keyboard surface id. Recorded
+here rather than fixed, because it is a Group H/D screen-scope question rather than a placeholder.
+
+### Validation
+
+`pnpm check:all` green — typecheck, lint, effect-lint, verify-md-links, verify-db-schema, test.
+
+**e2e is 42 passed / 4 failed, and the four are not this ticket's.** Proven rather than asserted: the
+working tree was stashed and the same four specs re-run against the pre-change tree, giving an
+identical 42/4. The diff is also surgical — exactly five lines removed from each of the four registry
+files, none of them near the training area.
+
+The four are `development-centre`, `performance-report`, `training-plan` and `training-workload`, all
+of which begin by navigating to Training and expecting a `Coaching Assignments` h1. The page snapshot
+shows why: Training is now an **Overview hub** with a tab strip (Overview, Schedules, Players,
+Coaches, Assignments, Reports, Options) and preview regions offering *View coaching assignments* and
+*View workload details*. The screens work; the specs describe a shape the UI has left. Filed as
+group-h ticket 12.

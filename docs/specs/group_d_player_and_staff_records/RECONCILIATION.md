@@ -180,11 +180,28 @@ Screen 61's underlying model is recorded in
 Transcription surfaced work that the effort identified and never ticketed. It is recorded here so it
 is not lost a second time, and it is owed to milestone [M1](../../../.ai/MILESTONES.md) step 5:
 
-**Screens this ledger disposes still have routed WIP placeholders.** Ticket 04 says the
-satisfied-inline and deferred screens "can be ticketed as instructions to remove their WIP route
-stubs", and no such ticket was ever filed. Five player folders map one-to-one onto disposed screens
-and are owed deletion: `renderer/playerAttributes/` (51), `playerForm/` (53), `playerHistory/` (55),
-`playerInjuries/` (59), `playerScoutReport/` (68).
+**~~Screens this ledger disposes still have routed WIP placeholders.~~ The player half is done,
+2026-09-19** ([ticket 09](../../../.scratch/group-d-player-and-staff-records/issues/09-cull-the-player-placeholders.md)).
+Ticket 04 said the satisfied-inline and deferred screens "can be ticketed as instructions to remove
+their WIP route stubs", and no such ticket was ever filed. The five player folders that map
+one-to-one onto disposed screens are now deleted with their routes, their `PLAYER_SCOPED_SCREENS`
+entries, their action-registry rows and their URL-segment mappings: `renderer/playerAttributes/` (51),
+`playerForm/` (53), `playerHistory/` (55), `playerInjuries/` (59), `playerScoutReport/` (68).
+
+Four of the five were `deferred` rather than `out-of-scope`, and deleting them is not a re-ruling.
+A `deferred` screen returns as a *real* screen once its model exists; what a placeholder does
+meanwhile is assert in the nav and the route list that the screen is merely unfinished, which is
+indistinguishable from nearly-done. This ledger is the durable record of "wanted later" — that is
+what makes the stub redundant rather than load-bearing.
+
+**`renderer/playerCoachReport/` was examined and is not one of them.** The name invites the guess —
+Group D Screen 67 is Coach Report — but that folder is Group H's Screen 113 Performance Report, a
+built screen reading `getSquad` and `getPlayerDevelopmentHistory`. It carries no `WIP` marker, which
+is why M1's own grep never listed it. Screen 67 was never built at all. Noted here because the next
+reader will make the same guess.
+
+Two `player*` WIP screens remain in the renderer and neither is this group's: `playerSearch/` is
+Group I's Screen 120, and `competitionPlayerStats/` and `nationPlayers/` are Group L's.
 
 The staff placeholders need a decision rather than a deletion, because they **do not map one-to-one**
 onto screens 64–68. The renderer carries `staffProfile/`, `staffContract/`, `staffHistory/`,

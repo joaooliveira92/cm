@@ -66,12 +66,7 @@ export const CLUB_SCOPED_SCREENS = ["teamScoutReport", "clubStaff"] as const;
  */
 export const PLAYER_SCOPED_SCREENS = [
   "playerProfile",
-  "playerAttributes",
   "playerContract",
-  "playerHistory",
-  "playerForm",
-  "playerInjuries",
-  "playerScoutReport",
   "playerCoachReport",
 ] as const;
 
