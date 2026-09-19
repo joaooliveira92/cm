@@ -72,20 +72,37 @@ rescue rulings trapped in `.scratch/`, and there are none to rescue. Their gap i
 build; G's records what building it revealed — nine screens shipped, nineteen follow-up tickets, eight
 decision requests. Its centre of gravity is the engine questions, not the disposal table.
 
-**The most consequential finding of the whole sweep is group-g decision request 07.** Match history
-re-derives from seed and journal on every read, so an engine rule change retroactively alters every
-saved match that rule touches. Ticket 26 hit it head-on: the engine lets a forced substitution bring
-back a dismissed player, the fix is known, and shipping it would make saved Match Reports contradict
-their stored results. The ticket is parked and the fix held as a patch; 29 is blocked the same way.
-**Until 07 is answered, every engine-rule fix in this codebase is blocked** — not only Group G's.
+**The most consequential finding of the whole sweep was group-g decision request 07, and it is now
+answered.** Match history re-derives from seed and journal on every read, so an engine rule change
+retroactively altered every saved match that rule touched — which blocked every engine-rule fix in the
+codebase, not only Group G's. Ticket 26 hit it head-on: the engine lets a forced substitution bring
+back a dismissed player, the fix is written, and shipping it would make saved Match Reports contradict
+their stored results.
+
+**Answered 2026-09-19, Option B: a committed match stores its derived timeline.** Committed matches are
+frozen; live matches still re-derive, so chunked resimulation and seed determinism are untouched.
+Recorded as
+[a committed match stores its timeline](../.agents/notes/proposed/architecture/2026-09-19-committed-matches-store-their-timeline.md)
+and filed as **group-g ticket 31, `ready-for-agent`**.
+
+**Ticket 31 is the most time-sensitive ticket in the repo.** Its backfill has to run under the *current*
+engine: every engine-rule fix that lands first destroys the original timeline of every saved match it
+touches, recoverable only by checking out the old engine and replaying. Three written fixes are waiting
+behind it. **No engine-rule fix may land before 31** — ticket 26's patch included. Tickets 26 and 29 are
+re-pointed at 31: blocked on a ticket now, not on a question.
+
+Decision requests 01, 04 and 06 are unblocked in the same sense — each still needs its own answer about
+what the engine rule should *be*, but an answer can now be acted on.
 
 Also found: Screens 96 and 101 are `Parked`, not `deferred` — they wait on a *formula nobody has
 chosen*, and the real blocker is a data-model gap, since the Match Event stream names no goalkeeper or
 defender contribution, so an event-derived rating would systematically under-rate half the team.
 
-**A tracker defect worth fixing at the source**: group-g ticket 29 is `ready-for-agent` *and*
-`Blocked by: decision request 07`. The frontier scan reads the status, so it would claim a blocked
-ticket. The two fields disagree and nothing today stops the pair recurring.
+**A tracker defect, fixed in the ticket but not at the source**: group-g ticket 29 read
+`ready-for-agent` while carrying a `Blocked by:` line. The frontier scan reads the status, so it would
+have claimed a blocked ticket. 29 is corrected to `blocked`. Nothing in the tracker's own rules stops
+the pair recurring, which is what is still owed — either the two fields should be one, or something
+should check them against each other.
 
 Groups H, I and J were added earlier the same day, and
 they were the easy three: each had already written its scope ruling as an **Agent Note** rather than

@@ -16,9 +16,15 @@ A cheaper long-term route is also open: have the engine mark each Substitution e
 changes the event model and needs an architecture-class Agent Note. Found in review of
 [ticket 25](25-substitution-count-and-outcome-accuracy.md).
 
-**Blocked by:** [decision request 07](../decision-request-07-engine-rule-changes-and-saved-matches.md) (engine rule changes rewrite saved matches)
+**Blocked by:** [31](31-committed-matches-store-their-timeline.md) — committed matches store their
+timeline. Decision request 07 is **answered** (2026-09-19, Option B); this is now blocked on the
+backfill rather than on a question.
 
-**Status:** ready-for-agent
+**Status:** blocked
+
+<!-- Corrected 2026-09-19: this read `ready-for-agent` while carrying a `Blocked by:` line. The
+frontier scan reads the status, so it would have claimed a ticket that cannot proceed. Recorded as a
+finding in the Group G ledger — nothing in the tracker's rules stops the pair recurring. -->
 
 - [ ] A substitution in first-half stoppage minute N and one in second-half minute N spend two windows
 - [ ] The view's counts agree, with a table test

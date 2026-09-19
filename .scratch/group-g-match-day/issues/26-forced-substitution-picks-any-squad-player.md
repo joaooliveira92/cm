@@ -21,7 +21,11 @@ changes game behaviour, so it moved to
 Fixing this changes seeded match results for existing saves that hit the branch. State that in the
 change. Found in review of [ticket 19](19-substitution-picker-lists-the-tactic-not-the-pitch.md).
 
-**Blocked by:** [decision request 07](../decision-request-07-engine-rule-changes-and-saved-matches.md)
+**Blocked by:** [31](31-committed-matches-store-their-timeline.md) — committed matches store their
+timeline. Decision request 07 is **answered** (2026-09-19, Option B), so this is no longer blocked on a
+question. It is blocked on the backfill: this fix makes almost every saved match with a severe-injury
+substitution replay differently, and landing it before 31 destroys those matches' original timelines.
+The patch stays held until 31 ships.
 
 **Status:** needs-info
 

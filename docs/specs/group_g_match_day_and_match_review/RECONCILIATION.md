@@ -96,33 +96,44 @@ decision request 07 in particular governs how *any* engine rule may ever change.
 | 04 | Who may come on as a substitute? | Open | Opened by ticket 19's review, which found the engine lets a forced substitution bring back a dismissed player. |
 | 05 | What survives a restart of the revealed position? | Open | Leaving and returning continues from the revealed position (ticket 23); a *restart* still replays from kickoff. |
 | 06 | What happens to a red-carded goalkeeper? | Answered in part | Produced ticket 30, shipped. |
-| 07 | **How may engine rules change without rewriting saved matches?** | Open | The load-bearing one. See below. |
+| 07 | **How may engine rules change without rewriting saved matches?** | **Answered 2026-09-19** | A committed match stores its timeline. See below. |
 | 08 | When does a live command take effect relative to revealed play? | Open | Ticket 20 (`needs-info`): a command can rewrite play the viewer has already seen. |
 
-### Decision request 07 is the one that matters
+### Decision request 07 was the one that mattered, and it is answered
 
 Match history **re-derives from seed and journal on every read**. That is what makes the simulation
-deterministic and saves small — and it means an engine rule change retroactively alters every saved
-match that rule touches. A fix to a rule is therefore a rewrite of history.
+deterministic and saves small — and it meant an engine rule change retroactively altered every saved
+match that rule touched. A fix to a rule was therefore a rewrite of history.
 
 Ticket 26 hit this directly: the engine lets a forced substitution bring back a dismissed player, the
-fix is known, and shipping it would make saved Match Reports contradict their stored results. **The
-ticket was parked and the fix kept as a patch.** Ticket 29 is blocked the same way.
+fix is known, and shipping it would make saved Match Reports contradict their stored results. The
+ticket was parked and the fix kept as a patch; ticket 29 was blocked the same way. Until 07 was
+answered, **every engine-rule fix in this codebase was blocked**, not only Group G's.
 
-Until 07 is answered, **every engine-rule fix in this codebase is blocked**, not only Group G's. That
-is the single most consequential open question the M1 sweep has surfaced.
+**Answered 2026-09-19: a committed match stores its derived timeline.** Committed matches are frozen;
+live matches still re-derive, so chunked resimulation and seed determinism are untouched. Recorded as
+[a committed match stores its timeline](../../../.agents/notes/proposed/architecture/2026-09-19-committed-matches-store-their-timeline.md) and filed as group-g ticket 31.
+
+The part of the answer that is easy to miss: **the backfill is time-critical.** Existing committed
+matches must be backfilled under the *current* engine, so no engine-rule fix may land before ticket 31
+— including the patch already written for ticket 26. Ship a rule change first and those timelines are
+gone in practice. Tickets 26 and 29 are re-pointed at 31: blocked on a ticket now, not on a question.
 
 ## What this ledger leaves owed
 
-- **Five open decision requests** (01, 02, 03, 04, 05, 08 in part), and 07 above gating every
-  engine-rule fix in the repo.
-- **Three tickets are not resolved**: 20 (`needs-info`, a command rewrites seen play), 26
-  (`needs-info`, blocked on 07, fix held as a patch), 29 (blocked on 07).
-- **A tracker defect: ticket 29 is `ready-for-agent` *and* `Blocked by: decision request 07`.** The
-  frontier scan takes the lowest-numbered open, unblocked, unclaimed ticket — it reads the status, so
-  it would claim 29 and an agent would then discover it cannot proceed. The two fields disagree and
-  the status is the wrong one. Worth fixing wherever the tracker's own rules are recorded, since
-  nothing today stops the same pair recurring.
+- **Five open decision requests** — 01, 02, 03, 04, 05 and 08 in part. Each still needs its own answer
+  about what the engine rule should *be*; what 07 removed was the constraint that no such answer could
+  be acted on.
+- **Ticket 31 is the gate on all engine-rule work** and is `ready-for-agent`. It is the most
+  time-sensitive ticket in the repo: the backfill it carries has to run under the current engine.
+- **Three tickets are not resolved**: 20 (`needs-info`, a command rewrites seen play), 26 (fix held as
+  a patch, blocked on 31), 29 (blocked on 31).
+- **A tracker defect, now fixed in the ticket but not at the source.** Ticket 29 read
+  `ready-for-agent` while carrying a `Blocked by:` line. The frontier scan takes the lowest-numbered
+  open, unblocked, unclaimed ticket — it reads the *status*, so it would have claimed 29 and an agent
+  would then have discovered it could not proceed. 29's status is corrected to `blocked`. **Nothing in
+  the tracker's own rules stops the pair recurring**, which is the part still owed: either the two
+  fields should be one, or something should check them against each other.
 - **Six match placeholders remain routed** — `matchRatings`, `matchPlayerStats`, `matchReplays`,
   `matchLatestScores`, `matchLiveTable`, `matchOppositionInstructions`. Screens 96 and 101 are `Parked`
   rather than disposed, so their placeholders should stay; the others need a ruling under M1 step 5.

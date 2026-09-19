@@ -70,3 +70,34 @@ The same question blocks every engine-rule fix in this effort:
 
 **Option B.** It removes the constraint from every future engine fix at a one-time cost, and it
 matches the rule that committed results are authoritative. Ship the backfill before ticket 26's patch.
+
+---
+
+## Answer — Option B, 2026-09-19
+
+**A committed match stores its derived timeline.** Committed matches are frozen; live matches still
+re-derive, so chunked resimulation and seed determinism are untouched.
+
+Decided under the human's standing delegation ("approve your recommendations on the blocking
+decisions"), adopting this request's own recommendation. Recorded as
+[a committed match stores its timeline](../../.agents/notes/proposed/architecture/2026-09-19-committed-matches-store-their-timeline.md).
+
+Four things this fixes that the options left open:
+
+1. **The backfill is a hard gate, and it is time-critical.** Existing committed matches must be
+   backfilled under the *current* engine before any engine-rule change ships — ship a rule change first
+   and those timelines are gone in practice. **No engine-rule fix may land before the backfill, ticket
+   26's patch included.**
+2. **Store events, not a rendered report.** Report, summary and statistics all derive from the event
+   stream; one source of truth, presentation stays free.
+3. **A live match interrupted by an upgrade restarts from kickoff, with the manager told.** Already the
+   restart behaviour under decision request 05, and the session is save-keyed (ticket 28), so this is a
+   notice rather than a mechanism.
+4. **The guarantee needs its own proving test.** The two-advances and two-saves tests cover seed
+   determinism and say nothing about this. One test must show a stored timeline surviving a deliberate
+   engine-rule change.
+
+Filed as [ticket 31](issues/31-committed-matches-store-their-timeline.md). Tickets 26 and 29 are
+re-pointed at it: they are no longer blocked on a question, they are blocked on a ticket. Decision
+requests 01, 04 and 06 are likewise unblocked as *questions about engine rules* — each still needs its
+own answer about what the rule should be.
