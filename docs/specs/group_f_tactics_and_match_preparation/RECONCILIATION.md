@@ -44,7 +44,7 @@ Group F has made none.
 | 83 Team Instructions | [83_team_instructions.md](83_team_instructions.md) | Not yet audited |
 | 84 Individual Player Instructions | [84_individual_player_instructions.md](84_individual_player_instructions.md) | Not yet audited |
 | 85 Player Position Assignment | [85_player_position_assignment.md](85_player_position_assignment.md) | Not yet audited |
-| 86 Set Pieces | [86_set_pieces.md](86_set_pieces.md) | Not yet audited — **blocked, see below** |
+| 86 Set Pieces | [86_set_pieces.md](86_set_pieces.md) | Not yet audited — in scope, decision settled |
 | 87 Saved Tactics | [87_saved_tactics.md](87_saved_tactics.md) | Not yet audited |
 | 88 Load and Import Tactic | [88_load_and_import_tactic.md](88_load_and_import_tactic.md) | Not yet audited |
 | 89 Pre-Match Team Selection | [89_pre_match_team_selection.md](89_pre_match_team_selection.md) | Not yet audited |
@@ -72,7 +72,7 @@ building to several named sections is not the same as having checked them all.
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
-| Set-piece status | `deferred` | The overview summarises the club's configured set pieces. | The panel ships and can only read *"No set pieces configured"*. `SetPieceStatusView` is hard-coded to `status: "none"`, and the **Tactic** carries no set-piece fields. `packages/contracts/src/schemas/tactics.ts:204` records the intent as "until Screen 86 lands". | Screen 86, below — and **contested**: Group E ruled the other half of this feature `out-of-scope`. See group-f decision request 01. |
+| Set-piece status | `deferred` | The overview summarises the club's configured set pieces. | The panel ships and can only read *"No set pieces configured"*. `SetPieceStatusView` is hard-coded to `status: "none"`, and the **Tactic** carries no set-piece fields. `packages/contracts/src/schemas/tactics.ts:204` records the intent as "until Screen 86 lands". | Screen 86. Settled 2026-09-19 — [set pieces ship, as a Tactic field](../../../.agents/notes/proposed/feature/2026-09-19-set-pieces-ship-as-a-tactic-field.md). The panel is waiting on a value, not on a ruling. |
 | Selection summary | `renamed` | An explicit starters-and-bench selection model the screen reads. | Starters are exactly the players named in the active tactic's slots; substitutes are the registered players not named. Selection stays distinct from squad membership rather than being modelled separately. | [Human fixture pre-match boundary](../../../.agents/notes/implemented/architecture/2026-08-29-human-fixture-pre-match-boundary.md). An explicit model is Screen 89's, and ticket 02 records the mapping rather than inventing one. |
 | Familiarity summary | `deferred` | Familiarity across formation, instructions and position. | Derived, never assigned: the v1 summary reads each named starter's position-familiarity tier plus the tactic's own usage. Formation- and instruction-level familiarity are not computed. | The training domain — [training focus squad column](../../../.agents/notes/proposed/feature/2026-08-29-training-focus-squad-column.md). Group H owns the deferral. |
 | Permission-limited state | `renamed` | A permission context that limits what the screen may show. | The archived-presentation refusal mapped onto the existing saved-state guard. No permission system was added, because there is one human manager per **Save**. | The multiplayer axis, disposed in the [Group B ledger](../group_b_global_navigation_and_inbox/RECONCILIATION.md). Ticket 03. |
@@ -94,11 +94,13 @@ None of these has been audited. What follows is **not** a set of rulings — it 
 already known from elsewhere, recorded so that whoever charts this group does not start from nothing.
 Every line below is a question to settle, not an answer.
 
-- **86 Set Pieces is blocked before it is read.** Group E ruled Screen 75 Set Piece Takers
-  `out-of-scope` while the shipped contract and Tactics Overview both promise set pieces arrive here.
-  Raised as **group-f decision request 01** (are set pieces in scope), which must be answered before
-  this group is charted. See the
-  [Group E ledger](../group_e_squad_management/RECONCILIATION.md) § Screen 75 is contested.
+- **86 Set Pieces is in scope, and the question it raised is answered.** Group E had ruled Screen 75
+  Set Piece Takers `out-of-scope` while the shipped contract and Tactics Overview both promised set
+  pieces arrive here. Settled 2026-09-19 by group-f decision request 01: set pieces ship as **Tactic**
+  fields, Screen 75 is `deferred` to this screen, and nomination inherits ticket 01's revision-bound
+  idempotent save rather than adding a write path. Whether the match engine *uses* a nomination is
+  deliberately still open. See
+  [set pieces ship, as a Tactic field](../../../.agents/notes/proposed/feature/2026-09-19-set-pieces-ship-as-a-tactic-field.md).
 - **82 and 89 are the same object as Screen 69.** Under
   [the team sheet is the Tactic](../../../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md),
   Squad's match-day bar and the tactics editor are two editors of one thing, and 89 and 92 are views
@@ -116,8 +118,8 @@ Every line below is a question to settle, not an answer.
 
 ## What this ledger leaves owed
 
-- **Group F's remainder is unreconciled and blocked.** Charting it needs decision request 01 answered
-  first; everything else in the group can proceed once it is.
+- **Group F's remainder is unreconciled, and no longer blocked.** Decision request 01 was answered on
+  2026-09-19, so charting may proceed.
 - **No effort exists to chart it.** `group-f-tactics-and-match-preparation` shipped Screen 80 with no
   map and no spec, against the path [SPEC-ROADMAP](../../../.ai/SPEC-ROADMAP.md) § Starting a group
   lays out. A group-F reconciliation effort has to be chartered from scratch, and that is a human's

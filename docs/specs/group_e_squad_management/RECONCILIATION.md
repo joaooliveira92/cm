@@ -53,7 +53,7 @@ of them. A `Reviewed` screen can hide a followed-or-not question that an `Audite
 | 72 Player Sorting | [72_player_sorting.md](72_player_sorting.md) | Reviewed — satisfied by the shipped Squad screen |
 | 73 Shirt Number Assignment | [73_shirt_number_assignment.md](73_shirt_number_assignment.md) | Disposed in full |
 | 74 Captain Selection | [74_captain_selection.md](74_captain_selection.md) | Disposed in full |
-| 75 Set Piece Takers | [75_set_piece_takers.md](75_set_piece_takers.md) | Disposed in full — **contested, see below** |
+| 75 Set Piece Takers | [75_set_piece_takers.md](75_set_piece_takers.md) | Deferred in full — to Group F Screen 86 |
 | 76 Squad Registration | [76_squad_registration.md](76_squad_registration.md) | Disposed in full |
 | 77 Availability and Eligibility | [77_availability_and_eligibility.md](77_availability_and_eligibility.md) | Reviewed — partial |
 | 78 Player Interaction and Grievance | [78_player_interaction_and_grievance.md](78_player_interaction_and_grievance.md) | Disposed in full |
@@ -112,15 +112,21 @@ This is the one screen in the group whose two halves were ruled differently, whi
 `Reviewed — partial` rather than disposed: availability is wanted and half-built, eligibility is not
 coming.
 
-## Screen 75 is contested, and the conflict is in shipped code
+## Screen 75 was contested, and the conflict is settled
 
-**The ruling and the codebase disagree, and this needs a decision rather than a transcription.**
+**Resolved 2026-09-19: this screen is `deferred`, not `out-of-scope`.** The row below is not the one
+group-e ticket 01 wrote.
 
-| Sections | Kind | What the spec asks | Disposition as ruled | Anchor |
+| Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
-| [75_set_piece_takers.md](75_set_piece_takers.md), whole file | `out-of-scope` | Nominating takers for corners, free kicks and penalties. | `SetPieceStatusView` is hard-coded to `status: "none"` and the **Tactic** carries no set-piece fields. | No set-piece model. Ticket 01. |
+| [75_set_piece_takers.md](75_set_piece_takers.md), whole file | `deferred` | Nominating takers for corners, free kicks and penalties. | Not built. `SetPieceStatusView` is hard-coded to `status: "none"` and the **Tactic** carries no set-piece fields yet. Takers become Tactic fields, so nomination is an edit to the object Squad's match-day bar and the tactics editor already edit. | [Group F Screen 86](../group_f_tactics_and_match_preparation/86_set_pieces.md), via [set pieces ship, as a Tactic field](../../../.agents/notes/proposed/feature/2026-09-19-set-pieces-ship-as-a-tactic-field.md). |
 
-That ruling cannot stand beside two things that shipped:
+**What group-e ticket 01 originally ruled**, kept because a ledger records what was decided as well as
+what holds: `out-of-scope`, on the correct finding that no set-piece model exists. The finding was right
+and the kind was wrong — absence of a model is `deferred` unless something says the model should never
+exist.
+
+That ruling could not stand beside two things that shipped:
 
 - `packages/contracts/src/schemas/tactics.ts:204` carries the comment **"No set pieces configured
   until Screen 86 lands."**
@@ -132,19 +138,17 @@ Both say set pieces are coming with **Group F Screen 86**, which
 Screen 75 is genuinely `out-of-scope`, then Screen 80 has a permanently empty panel promising a
 screen that will never land, and the contract comment names a dead ticket.
 
-The likely resolution is that Screen 75 is **`deferred` to Group F Screen 86** rather than
-`out-of-scope` — the takers UI is the Group E half of the same feature the Tactic owns. This ledger
-does not make that call: the transcription pass records rulings, and overturning one is a decision
-this group's effort never took. Raised as group-f decision request 01 (are set pieces in scope),
-2026-09-18, which recommends `deferred` and names what changes here if that is accepted.
+Both said set pieces arrive with **Group F Screen 86**. Raised as group-f decision request 01 and
+answered on 2026-09-19: set pieces ship, and Screen 75 is the Group E half of the same feature the
+Tactic owns. Screen 80's panel is no longer promising a screen that will never land.
 
 ## What this ledger leaves owed
 
 Surfaced by transcription, recorded so it is not lost again:
 
-- **Screen 75's contradiction**, above — now group-f decision request 01, awaiting a human. It blocks
-  nothing today and blocks Group F 86 the moment that group is charted. Until it is answered, the
-  Screen 75 row is provisional.
+- ~~**Screen 75's contradiction.**~~ **Settled 2026-09-19** — `deferred` to Group F Screen 86. What
+  remains is build work owed to that screen, not a question: a schema addition and migration, with
+  existing Saves reading `"none"`.
 - **A dangling nav stub for Screen 74.** `renderer/navigation/spec-nav-config.ts:92` carries a
   `Captains` entry pointing at no route and no component, for a screen this ledger disposes. It is owed removal under milestone
   [M1](../../../.ai/MILESTONES.md) step 5.

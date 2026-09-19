@@ -135,7 +135,7 @@ model differs; all are ticket 02, and each Anchor is `unscheduled` unless stated
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
 | [165_competition_statistics.md](165_competition_statistics.md), whole file | `deferred` | Aggregate statistics across a competition. | Nothing aggregates. Not needed for league simulation to be playable. | `unscheduled`. Group P owns the statistics axis. |
-| [166_competition_player_statistics.md](166_competition_player_statistics.md), whole file | `deferred` | Per-player statistics aggregated across a competition. | Needs per-player aggregation that does not exist — the same absent model as [Group D Screen 54](../group_d_player_and_staff_records/54_player_statistics.md), which was ruled `out-of-scope` for lacking it. | `unscheduled`. **The two groups disagree on kind for the same missing model**; see § What this ledger leaves owed. |
+| [166_competition_player_statistics.md](166_competition_player_statistics.md), whole file | `deferred` | Per-player statistics aggregated across a competition. | Needs per-player aggregation that does not exist — the same absent model as [Group D Screen 54](../group_d_player_and_staff_records/54_player_statistics.md). | `unscheduled`, Group P owns the store — [per-player statistics are deferred, not ruled out](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md). This row's kind was confirmed and Group D's was corrected to match. |
 | [167_competition_team_statistics.md](167_competition_team_statistics.md), whole file | `deferred` | Team-level statistics across a competition. | Same absent aggregation. | `unscheduled`. |
 | [168_competition_rules.md](168_competition_rules.md), whole file | `deferred` | A competition's rules, presented as reference. | Needs a rules data model. Competitions carry their format implicitly in the fixture generator, not as stated rules. | `unscheduled`. Overlaps Group S Screen 274. |
 | [169_competition_stages_and_qualification.md](169_competition_stages_and_qualification.md), whole file | `deferred` | Multi-stage competitions, group phases, and qualification paths. | Only relevant once competitions exist beyond single round-robin plus cup. | `unscheduled`. |
@@ -158,11 +158,10 @@ model differs; all are ticket 02, and each Anchor is `unscheduled` unless stated
 
 ## What this ledger leaves owed
 
-- **Group D and Group L disagree about the same missing model.** Per-player statistics aggregation
-  does not exist. [Group D Screen 54](../group_d_player_and_staff_records/54_player_statistics.md) is
-  `out-of-scope` for lacking it; Screen 166 here is `deferred` for lacking it. One of the two is
-  wrong, and `out-of-scope` is the one that does not come back. Worth settling when Group P is
-  charted, since Group P is the group that would build the model.
+- ~~**Group D and Group L disagree about the same missing model.**~~ **Settled 2026-09-19**: this
+  ledger's `deferred` was right and Group D Screen 54 was corrected to match. Recorded as
+  [per-player statistics are deferred, not ruled out](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md).
+  Group P owns the store, and these rows are its dependents rather than its contradictions.
 - **group-l decision request 01 (RPC error channel) is open** and blocks nothing. It carries the three
   unresolved error classes from ticket 05's audit: `SqlError` across save-scoped handlers, engine
   invariant errors, and payload `SchemaError`. The permanent gate ticket 05 wanted — the audit probe

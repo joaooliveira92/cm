@@ -19,7 +19,7 @@ here.
 [M1](../../../.ai/MILESTONES.md) step 1. The `group-d-player-and-staff-records` effort charted and
 disposed all 19 screens on 2026-09-14 and shipped three of them, but recorded every ruling inside
 `.scratch/`, which is cleared when an effort is archived. Nothing outside that directory said that
-eleven Group D screens are out of scope. This file is where those rulings now live.
+eleven Group D screens had been disposed. This file is where those rulings now live.
 
 Two consequences follow, and both matter when reading a row:
 
@@ -34,7 +34,10 @@ Two consequences follow, and both matter when reading a row:
 satisfied-inline (51, 52, 53)" and "2 deferred (55, 62, 68)". Ticket 04's own disposition table says
 53 Player Form is `out-of-scope`, and lists three deferred screens, not two. The ticket's table is
 authoritative and the summary miscounts; the rows below follow the ticket. The arithmetic now closes:
-11 out-of-scope + 2 renamed + 3 deferred + 3 implemented = 19.
+10 out-of-scope + 2 renamed + 4 deferred + 3 implemented = 19.
+
+**One row was re-kinded after transcription.** Screen 54 Player Statistics moved from `out-of-scope`
+to `deferred` on 2026-09-19, which is why the counts above are not ticket 04's. See § Screen 54.
 
 ## How to read a row
 
@@ -64,7 +67,7 @@ section-by-section pass, and marking one `Audited` would assert a pass nobody ma
 | 51 Player Attributes | [51_player_attributes.md](51_player_attributes.md) | Disposed in full |
 | 52 Player Positions | [52_player_positions.md](52_player_positions.md) | Disposed in full |
 | 53 Player Form | [53_player_form.md](53_player_form.md) | Disposed in full |
-| 54 Player Statistics | [54_player_statistics.md](54_player_statistics.md) | Disposed in full |
+| 54 Player Statistics | [54_player_statistics.md](54_player_statistics.md) | Deferred in full — to Group P |
 | 55 Player History | [55_player_history.md](55_player_history.md) | Disposed in full |
 | 56 Player Contract | [56_player_contract.md](56_player_contract.md) | Reviewed — implemented 2026-09-14 |
 | 57 Player Transfer Status | [57_player_transfer_status.md](57_player_transfer_status.md) | Disposed in full |
@@ -103,7 +106,7 @@ contract to show, and no staff career to list.
 
 ## Screens resting on systems this game does not have
 
-Six screens are disposed because the system they display was never built and is not planned. Grouped
+Five screens are disposed because the system they display was never built and is not planned. Grouped
 because the ruling is the same shape each time: there is no model, so there is nothing to render.
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
@@ -111,14 +114,28 @@ because the ruling is the same shape each time: there is no model, so there is n
 | [58_player_happiness.md](58_player_happiness.md), whole file | `out-of-scope` | Player morale, mood, and dressing-room relationships, with the manager acting on them. | No morale model. Nothing computes, stores or displays how a Player feels. | Morale and dressing-room relationships do not ship in v1 — the **Influence** pillar in [CONTEXT.md](../../../CONTEXT.md). Ticket 03. |
 | [60_player_discipline.md](60_player_discipline.md), whole file | `out-of-scope` | Card accumulation, suspensions, bans and disciplinary history. | Cards are **Match Event**s within a match. Nothing accumulates them across matches, and no Player is ever suspended. | No card-accumulation or ban model. Ticket 03. Group G's Screen 104 Disciplinary Review rests on the same absent model. |
 | [63_player_comparison.md](63_player_comparison.md), whole file | `out-of-scope` | Side-by-side comparison of two or more players across attributes. | No comparison mechanism exists on any surface. | Ticket 03. |
-| [54_player_statistics.md](54_player_statistics.md), whole file | `out-of-scope` | Per-player aggregated statistics: appearances, goals, assists, averages, by season and competition. | Nothing aggregates per-Player match output. Match statistics exist per match and are not rolled up. | No aggregated per-Player model. Tickets 01 and 03. Group P is the group that would need one. |
 | [53_player_form.md](53_player_form.md), whole file | `out-of-scope` | Recent form: a rolling window of the last N matches, with ratings and a trend. | Requires a per-Player match-rating history that is not modelled, and no shipped feature depends on it. | Ticket 04 — "a dedicated effort if needed". |
 | [59_player_injuries.md](59_player_injuries.md), whole file | `out-of-scope` | A Player's injury history: past injuries, durations, recurrence and proneness over time. | **Injury** is a per-match event with no durable per-Player record. **Injury Proneness** exists as an Attribute, but nothing accumulates what happened to a Player. | Ticket 04 — building the record is a data-modelling effort not justified by current needs. |
 
-`out-of-scope` means these cannot return without overturning the ruling. Screens 53, 54 and 59 are
-the weakest three: each was ruled out for the absence of a model rather than on principle, and each
-names the model that would bring it back. If **Influence** or a statistics store ever enters scope,
-re-read these four rows before assuming the screens stay out.
+`out-of-scope` means these cannot return without overturning the ruling. **Screens 53 and 59 are the
+weakest two**: each was ruled out for the absence of a model rather than on principle, and each names
+the model that would bring it back. Screen 54 was the third and has since been re-kinded to `deferred`
+— see below — which is the precedent for re-reading these two. 53 needs a per-Player match *rating*
+history and 59 a durable injury record; if either model arrives, or if **Influence** enters scope,
+re-read these rows before assuming the screens stay out.
+
+## Screen 54: deferred, and re-kinded
+
+**Changed 2026-09-19.** Group D ticket 01/03 ruled this `out-of-scope`; it is now `deferred`.
+
+| Sections | Kind | What the spec asks | Disposition | Anchor |
+|---|---|---|---|---|
+| [54_player_statistics.md](54_player_statistics.md), whole file | `deferred` | Per-player aggregated statistics: appearances, goals, assists, averages, by season and competition. | Nothing aggregates per-Player match output. Match statistics exist per match and are never rolled up. | `unscheduled`, Group P owns the store — [per-player statistics are deferred, not ruled out](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md). |
+
+The reason for the change: [Group L Screen 166](../group_l_competitions_nations_and_world_information/166_competition_player_statistics.md)
+was `deferred` for lacking the *same* model this screen was `out-of-scope` for lacking, and both
+ledgers cannot be right. `out-of-scope` is the ruling that is never revisited, and neither effort gave
+a reason the model should never exist — only that it does not. Absence of a model is `deferred`.
 
 ## Screens whose surface exists elsewhere
 

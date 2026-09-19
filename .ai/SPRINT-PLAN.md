@@ -41,6 +41,25 @@ unfiled obligation: eleven disposed Group D screens still carry routed WIP place
 ticket 04 said to ticket and nobody did. That is M1 step 5, and the ledger records it so it cannot be
 lost twice. The three `staff*` folders answering to no import screen need a ruling, not a deletion.
 
+**Two blocking decisions were approved 2026-09-19**, and both were the same mistake — a missing model
+recorded as a permanent ruling.
+
+- **Set pieces ship, as Tactic fields.** group-f decision request 01 answered: Group E Screen 75 moves
+  from `out-of-scope` to `deferred`, anchored to Group F Screen 86, and Group F's remainder is
+  unblocked. Nomination inherits group-f ticket 01's revision-bound idempotent save rather than adding
+  a write path. Whether the match engine *uses* a nomination is deliberately still open. Note:
+  [set pieces ship, as a Tactic field](../.agents/notes/proposed/feature/2026-09-19-set-pieces-ship-as-a-tactic-field.md).
+  Owed before Screen 86 builds: a schema addition and migration, with existing Saves reading `"none"`.
+- **Per-player statistics are deferred, not ruled out.** Group D Screen 54 moves from `out-of-scope` to
+  `deferred`; Group L Screen 166 was already right. Group P owns the store, and Screens 54, 166, 167
+  and most of 222–235 are its dependents rather than its contradictions. Note:
+  [per-player statistics are deferred, not ruled out](../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md).
+
+**The generalisable rule both produced**, now in both notes: when reconciling a screen, absence of a
+model is `deferred` unless something states the model should never exist. `out-of-scope` needs a reason
+the thing should not be in the game, not merely the observation that it is not there yet. Three of the
+four corrections M1 step 1 has found so far are this error.
+
 ## Immediate next action
 
 **gate-red-on-dev ticket 04** — the vitest projects split, now unblocked by ticket 03. 100 of 144

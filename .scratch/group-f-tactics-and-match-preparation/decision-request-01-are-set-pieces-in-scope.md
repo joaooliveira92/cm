@@ -94,3 +94,23 @@ anchored to Group F Screen 86, in the same commit.
   Screen 75 row is provisional until this is answered.
 - **Proceeding meanwhile**: everything else. Group E's other ten screens are settled, M1 step 1
   continues with the remaining eight groups, and the Tactics Overview works as shipped.
+
+---
+
+## Answer — Option A, 2026-09-19
+
+**Set pieces are in scope. Screen 75 is `deferred` to Group F Screen 86, not `out-of-scope`.**
+
+Approved by the human ("approve your recommendations on the blocking decisions"). Recorded as
+[set pieces ship, as a Tactic field](../../.agents/notes/proposed/feature/2026-09-19-set-pieces-ship-as-a-tactic-field.md).
+
+Set-piece takers become fields on the **Tactic**, so nomination inherits the revision-bound idempotent
+save from ticket 01 rather than adding a write path, and the takers UI is another editor of the object
+the team-sheet note already governs. Screen 80's panel stops being dead — it reads the same snapshot,
+with a value other than a hard-coded `"none"`.
+
+**Left open deliberately:** whether the match engine *uses* a nomination. The display half stands on
+its own; the engine half is a smaller decision that can be taken later without revisiting this one.
+
+Unblocked: Group F's remainder may be charted. Still needed before Screen 86 builds: a schema addition
+and migration, with existing Saves reading `"none"` — the state they already render.
