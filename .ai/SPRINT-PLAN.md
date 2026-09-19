@@ -240,11 +240,20 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-c-club-information ticket 02** — the Club → Staff nav entry lands on a WIP placeholder while
-the real roster sits one route away, shipped as `clubStaff` at `club/$clubId/staff`. Connecting them
-means resolving the *own* club, which `destinations.ts` says a club-scoped drill-down cannot do as a
-nav destination. Its three Club-section siblings (`clubInfo`, `finances`, `boardConfidence`) are
-placeholders for the same reason, so prefer a seam over a special case.
+**The ticket queue is empty again.** Recompute the frontier from `.scratch/` rather than this
+section. What remains of M1 is its own sequence — steps 3 and 4, the Group C and Group L remainders
+— and neither has tickets yet. Slicing them is in-effort work on charted maps, not a new effort.
+
+**The Club → Staff nav entry now reaches the roster** (group-c ticket 02). `StaffOverviewScreen` is a
+resolver rather than a screen: it reads the own club from `getSquad` and hands off to
+`ClubStaffScreen`, which stays the only roster implementation. The missing piece really was just the
+club id — a drill-down takes a `clubId`, a navbar entry has only a `saveId`, and that is why
+`destinations.ts` excludes club-scoped drill-downs from save-scoped nav. **e2e is 47 passed**, and
+the new spec goes through the navbar because the navbar was the defect; the roster was never broken.
+
+Its three Club-section siblings — `clubInfo`, `finances`, `boardConfidence` — are still placeholders
+and are step 3's. They are **not** the same shape: this was a built screen waiting on an id, and
+those three have no implementation anywhere.
 
 **M1 step 5's player and staff share is done.** group-d tickets 09 and 10 deleted ten placeholders
 and the whole `staff/$staffId` route branch. Ticket 10 was the one that needed judgement: five of the

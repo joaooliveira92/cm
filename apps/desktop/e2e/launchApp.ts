@@ -248,6 +248,7 @@ const NAV_PATH = {
   "match day": ["Analysis", "Match Day"],
   "season summary": ["Analysis", "Season Summary"],
   manager: ["Club"],
+  "club staff": ["Club", "Staff"],
 } as const satisfies Record<string, ReadonlyArray<string>>;
 
 export type Screen = keyof typeof NAV_PATH;

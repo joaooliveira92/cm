@@ -221,7 +221,7 @@ per-staff surface survives, so its parent route, its URL-segment map and its ent
 | `staffHistory/` | 66 | `out-of-scope` — Staff are *fixed for the life of a career*: they neither develop, age, nor turn over, so there is no history to show. Deleted. |
 | `staffAttributes/` | none | `out-of-scope`, first ruled here. A Coach carries a single quality number, not an Attribute sheet, and cannot develop — so the screen has no subject rather than a missing model. Deleted. |
 | `staffJobInfo/` | none | `out-of-scope`, first ruled here. "Job information" means employment terms, and there are no Staff wages, no hiring and no firing. Deleted. |
-| `staffOverview/` | none | `deferred` — **kept**. See below. |
+| `staffOverview/` | none | ~~`deferred`~~ **built 2026-09-19**. See below. |
 
 The two unmapped deletions are not the cull overreaching. Both are *more* detailed per-staff surfaces
 than 64–66, which are already `out-of-scope` under a ruling about what Staff **are**; a screen that
@@ -242,7 +242,11 @@ so cannot itself be a nav destination. Its three Club-section siblings — `club
 `boardConfidence` — are placeholders for the same reason, and that whole section is Group C's
 remainder, milestone [M1](../../../.ai/MILESTONES.md) step 3.
 
-**Anchor:** Group C's club-information remainder (M1 step 3), which owns the Club section.
+**Anchor:** ~~Group C's club-information remainder (M1 step 3)~~ — **shipped**
+([group-c ticket 02](../../../.scratch/group-c-club-information/issues/02-the-club-staff-nav-entry-lands-on-a-placeholder.md),
+2026-09-19). `StaffOverviewScreen` is now a resolver: it reads the own club from `getSquad` and hands
+off to `ClubStaffScreen`, so there is one roster implementation and the nav entry reaches it. The
+three Club-section siblings remain placeholders and are still step 3's.
 
 A disposed screen that keeps its placeholder is indistinguishable, in a route list, from one that is
 merely unbuilt — which is the confusion M1 exists to end. `staffOverview` is the second kind, and is
