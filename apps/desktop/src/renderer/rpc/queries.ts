@@ -278,6 +278,45 @@ export const clubInformationAtom = (saveId: SaveId, clubId: ClubId) =>
   clubInformationForSave(saveId)(clubId);
 
 /**
+ * getClubFixtures — `["save", saveId]`.
+ *
+ * Club Fixtures (Screen 40): any club's matches this Season. Reactive on the save key alone,
+ * matching `fixturesAtom` — a played Matchday changes a result here, and the save-wide
+ * invalidation after Continue is what both reads rely on to see it.
+ */
+const clubFixturesForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((clubId: ClubId) =>
+    managementReadPolicy(
+      Atom.make(call("getClubFixtures", { saveId, clubId })).pipe(
+        Atom.withReactivity([saveKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const clubFixturesAtom = (saveId: SaveId, clubId: ClubId) =>
+  clubFixturesForSave(saveId)(clubId);
+
+/**
+ * getClubTransfers — `["save", saveId]`, `["transfers", saveId]`.
+ *
+ * Club Transfers (Screen 42): any club's completed transfers. Reactive on the transfers key for the
+ * same reason `transferHistoryAtom` is — a settled bid adds a row.
+ */
+const clubTransfersForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((clubId: ClubId) =>
+    managementReadPolicy(
+      Atom.make(call("getClubTransfers", { saveId, clubId })).pipe(
+        Atom.withReactivity([saveKey(saveId), transfersKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const clubTransfersAtom = (saveId: SaveId, clubId: ClubId) =>
+  clubTransfersForSave(saveId)(clubId);
+
+/**
  * getCoachingAssignments — `["save", saveId]`, `["training", saveId]`.
  *
  * Coaching Assignments (Screen 111): the manager's own club's coaches with quality ratings.

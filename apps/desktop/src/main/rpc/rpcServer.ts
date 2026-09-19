@@ -29,6 +29,8 @@ import { getNewsInbox, setNewsMessageState } from "../career/news.js";
 import { advanceCalendar, getCompetitionFixtures, getCompetitionTable, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "../season/index.js";
 import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave } from "../world/saves.js";
 import { getClubInformation } from "../club/clubInformation.js";
+import { getClubFixtures } from "../season/queries.js";
+import { getClubTransfers } from "../transfers/transferHistory.js";
 import { getSquad } from "../club/squad.js";
 import { changeTactics, getTactics } from "../club/tactics.js";
 import { getTacticsOverview } from "../club/tacticsOverview.js";
@@ -436,6 +438,20 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
         AppRpcs.getTeamScoutReadings.payload,
       )(payload);
       return yield* getTeamScoutReadings(ctx.savesDir, saveId, clubId);
+    }),
+  getClubTransfers: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, clubId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.getClubTransfers.payload,
+      )(payload);
+      return yield* getClubTransfers(ctx.savesDir, saveId, clubId);
+    }),
+  getClubFixtures: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, clubId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.getClubFixtures.payload,
+      )(payload);
+      return yield* getClubFixtures(ctx.savesDir, saveId, clubId);
     }),
   getClubInformation: (payload, ctx) =>
     Effect.gen(function* () {

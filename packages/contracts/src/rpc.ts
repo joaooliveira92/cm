@@ -32,8 +32,10 @@ import {
   ClubId,
   ClubNotFoundError,
   ClubSelectionView,
+  ClubFixturesView,
   ClubInformationView,
   ClubStaffView,
+  ClubTransfersView,
   CoachingAssignmentsView,
   WorkloadView,
   PlayerDevelopmentHistoryView,
@@ -514,6 +516,25 @@ commitCareer: {
     payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
     success: ClubInformationView,
     error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+  },
+  /** Club Transfers (Screen 42): every completed transfer into or out of **any** club, newest
+   *  first. A club-scoped sibling of `getTransferHistoryScreen`, which is deliberately the
+   *  manager's own; both read `player_transfers` and only the club differs. The club rides with
+   *  the rows so one read answers the whole page. */
+  getClubTransfers: {
+    payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
+    success: ClubTransfersView,
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+  },
+  /** Club Fixtures (Screen 40): **any** club's fixtures for the current Season, in date order.
+   *
+   *  A third fixture read, not a widening of either existing one. `getFixtures` is deliberately
+   *  the human's own calendar and `getCompetitionFixtures` is scoped to a Competition; this is one
+   *  club's matches wherever they fall, so a club in a league and a cup sees both. */
+  getClubFixtures: {
+    payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
+    success: ClubFixturesView,
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError, PendingFixtureIntegrityError]),
   },
   /** Coaching Assignments (Screen 111): the manager's own club's coaching staff with quality ratings
    *  and assigned departments. A pure read from the `staff` table — no command, no world derivation.

@@ -20,6 +20,7 @@ export {
   getContractExpiryScreen,
 } from "./contractExpiry.js";
 export {
+  getClubTransfers,
   getTransferHistoryScreen,
 } from "./transferHistory.js";
 export {

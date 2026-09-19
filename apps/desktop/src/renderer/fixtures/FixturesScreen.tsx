@@ -1,10 +1,8 @@
-import { formatCalendarDate } from "@cm-clone/shared";
 import { type SaveId } from "@cm-clone/contracts";
 import { Alert } from "../components/ui/alert.js";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card.js";
 import { Spinner } from "../components/ui/spinner.js";
-import { Table, TableBody, TableCell, TableRow } from "../components/ui/table.js";
 import { FOCUS_RING } from "../focus.js";
+import { FixtureDayList } from "./FixtureDayList.js";
 import { describeRpcError, fixturesAtom, typedError, useAtomValue } from "../rpc.js";
 
 export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
@@ -53,13 +51,6 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   const fixtures = fixturesResult.value;
 
-  // Grouped by the date they are played on, which is what the fixture list is: a calendar. The
-  // round is a label inside the day rather than the thing days are counted in.
-  const byDate = new Map<string, typeof fixtures.fixtures>();
-  for (const fixture of fixtures.fixtures) {
-    byDate.set(fixture.date, [...(byDate.get(fixture.date) ?? []), fixture]);
-  }
-
   return (
     <main
       tabIndex={-1}
@@ -77,37 +68,7 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         )}
       </p>
 
-      <div className="mt-6 space-y-3">
-        {[...byDate.entries()].map(([date, dayFixtures]) => (
-          <Card key={date}>
-            <CardHeader>
-              <CardTitle className="text-2xs uppercase tracking-wide text-text-secondary">
-                {formatCalendarDate(date)} &middot; Round {dayFixtures[0]?.round}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableBody>
-                  {dayFixtures.map((fixture) => (
-                    <TableRow key={fixture.id}>
-                      <TableCell>
-                        {fixture.homeClubName} vs {fixture.awayClubName}
-                      </TableCell>
-                      {/* One wording for "not played yet" across every Fixture list: a bare `-`
-                          reads as a missing value rather than a state, and a screen reader
-                          announces it as nothing at all. The word is the whole signal here —
-                          no colour or styling carries it. */}
-                      <TableCell className="w-24 text-right tabular-nums text-text-strong whitespace-nowrap">
-                        {fixture.played ? `${fixture.homeGoals} - ${fixture.awayGoals}` : "Unplayed"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <FixtureDayList fixtures={fixtures.fixtures} />
     </main>
   );
 };

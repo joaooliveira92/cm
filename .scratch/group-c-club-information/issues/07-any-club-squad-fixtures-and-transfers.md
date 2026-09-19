@@ -1,39 +1,61 @@
-# 07: Screens 35, 40, 42 — the any-club views of three screens that already ship
+# 07: Screens 40 and 42 — the any-club views of two read-only screens
 
-**What to build:** nothing new, three times over. Squad, Fixtures and Transfer History all ship for
-the manager's own club. Each import screen is `renamed` in the ledger because the concept exists;
-what is missing is the **any-club** view, and under
+**What to build:** nothing new, twice over. Fixtures and Transfer History both ship for the
+manager's own club and are genuinely read-only — zero `onClick`, zero `button` in either. Each
+import screen is `renamed` in the ledger because the concept exists; what is missing is the
+**any-club** view, which under
 [the club-scoped rule](../../../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md)
-that is the same screen with its affordances gated, not a second implementation.
+is the same screen reached with a club in hand, plus an own-club resolver for the nav entry.
 
 | Screen | Ships as | Placeholder to absorb |
 |---|---|---|
-| 35 Club Squad | `squad/` | `clubSquadDetail/` at `club/$clubId/squad` |
-| 40 Club Fixtures | `fixtures/` | `clubFixturesDetail/` at `club/$clubId/fixtures` |
-| 42 Club Transfers | `transferHistory/` | `clubTransfersDetail/` at `club/$clubId/transfers` |
+| 40 Club Fixtures | `fixtures/` (113 lines, read-only) | `clubFixturesDetail/` at `club/$clubId/fixtures` |
+| 42 Club Transfers | `transferHistory/` (108 lines, read-only) | `clubTransfersDetail/` at `club/$clubId/transfers` |
 
-**The trap is building three read-only twins.** The shipped Squad sorts, selects and drills down; an
-any-club squad is a read. That is a capability difference, and two implementations of one list is
-exactly how Screen 34 ended up with two placeholders carrying the same `aria-label`. Gate the
-affordances on whether the club is the manager's — `ClubStaffScreen` already marks that case.
+**Screen 35 Squad was removed from this ticket** on 2026-09-19 and is
+[ticket 10](10-the-any-club-squad.md). It is not the same kind of thing: `renderer/squad/` is 2044
+lines of lineup *manager*, and gating that by whose club it is means one boolean threaded through
+thirteen files. See this ticket's Findings below.
 
-Take them one at a time. Squad is the hard one because it is the most interactive; doing it first
-sets the pattern the other two follow, and if it turns out the gating is genuinely unworkable for
-Squad, that is worth knowing before Fixtures and Transfers copy it.
+## What the earlier attempt learned, and what to start from
+
+**Each needs a club-scoped view carrying the club's identity.** `TransferHistoryView` is
+`{ entries }` and `FixturesView` is `{ season, fixtures }` — neither can title itself with the
+club's name or mark a club that is not the manager's. Reaching for a second read to get the name is
+the trap `ClubStaffView`'s own comment names: *one read, one failure to render, and no state where
+the page knows the staff but not whose they are.* Model the new views on `ClubStaffView` and
+`ClubInformationView`, both of which carry `club` and `isUserClub`.
+
+**A club-scoped fixtures read is a *third* fixture read, not a widening.** `getCompetitionFixtures`
+carries the comment *"Any Competition's Fixture list, not just the human club's. Scoped by
+`competitionId` rather than widening `getFixtures`, which is deliberately the human's own
+calendar."* One club's matches fall across a league and a cup, so filter on
+`home_club_id`/`away_club_id` rather than on a competition. Widening `getFixtures` breaks the thing
+that comment protects.
+
+**`readTransferHistory` is already club-parameterised** — only `getTransferHistoryScreen` hardcodes
+`loadUserClub`, so Screen 42's read is a sibling entry point rather than a second query.
+
+**An unknown club is `ClubNotFoundError`, never an empty list.** A club with no completed transfers
+and a `results-only` club with no fixtures are both real answers, so a missing club must not be able
+to impersonate one.
 
 ## Acceptance
 
-- [ ] Each of the three renders for any club, reached from a surface that names one
-- [ ] One implementation per subject — no read-only twin of a screen that already exists
-- [ ] Own-club affordances are gated, not duplicated, and a club that is not the manager's is marked
-- [ ] The three `*Detail/` placeholders are gone, with their routes and screen-scope entries
-- [ ] An e2e spec reaches at least one of them from a league-table row, the way a player would
-- [ ] `pnpm check:all` green and e2e green
+- [x] Both render for any club, reached from a surface that names one
+- [x] One implementation per subject — no read-only twin of a screen that already exists
+- [x] Each club-scoped view carries `club` and `isUserClub`, so one read answers the whole page
+- [x] A club that is not the manager's is marked, as `ClubStaffScreen` marks it
+- [x] The Recruitment and Analysis nav entries still reach the manager's own, through a resolver
+- [x] Both `*Detail/` placeholders are gone, with their routes and screen-scope entries
+- [x] An unknown club fails with `ClubNotFoundError` rather than rendering an empty list
+- [x] An e2e spec reaches at least one of them from a league-table row, the way a player would
+- [x] `pnpm check:all` green and e2e green
 
-**Blocked by:** None. Prefer after [06](06-club-general-information.md), which establishes the
-resolver pattern on a simpler screen.
+**Blocked by:** None. [06](06-club-general-information.md) has already established the resolver
+pattern and the club-scoped view shape; follow it rather than reinventing either.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Findings from an abandoned attempt, 2026-09-19
 
@@ -82,8 +104,66 @@ and a club-scoped one is a **third** — one club's matches wherever they fall, 
 `home_club_id`/`away_club_id` rather than on a competition, so a club in a league and a cup sees
 both. Widening `getFixtures` would break the thing that comment is protecting.
 
-### Recommended re-slice
+### Re-sliced, 2026-09-19
 
-- **This ticket** keeps 40 and 42 only, and gains the club-scoped-view requirement above.
-- **A new ticket** takes 35, starting from the question the rule cannot currently answer: is an
-  any-club squad a second screen, or a read-only mode of a 2044-line lineup manager?
+Done. This ticket is 40 and 42; Screen 35 is [ticket 10](10-the-any-club-squad.md).
+
+## Answer
+
+Both ship. `ClubFixturesDetailScreen` at `club/$clubId/fixtures` and `ClubTransfersDetailScreen` at
+`club/$clubId/transfers`, each titled with the club and marking one that is not the manager's.
+`pnpm check:all` green (2040 tests), **e2e 50 passed**.
+
+### One implementation per subject, enforced by extraction
+
+The own-club screens were not wrappers waiting to happen — their list bodies were inline. So both
+were extracted rather than copied:
+
+- `fixtures/FixtureDayList.tsx` — the day-grouped fixture list, now rendered by `FixturesScreen`
+  and the club-scoped screen.
+- `transferHistory/TransferEntriesTable.tsx` — the transfer table, likewise, carrying the Free Agent
+  wording for a null selling club with it.
+
+That is what keeps this honest. Two screens rendering two copies of the same list is how Screen 34
+ended up with two placeholders sharing an `aria-label`.
+
+### The nav entries did not need resolvers after all
+
+`fixtures` and `transferHistory` are already save-scoped destinations with working own-club screens.
+The club-scoped rule asks for one screen per subject and a resolver *for the nav entry* — here the
+nav entry already had a screen, and it is the same list. Adding a resolver would have replaced a
+working screen with a wrapper around a screen that renders the same component. So: two screens, one
+list, no resolver. Screens 38 and 34 needed resolvers because their nav entries pointed at
+placeholders; these did not.
+
+### A circular import, caught by a schema that never initialised
+
+The first attempt declared both views in `schemas/clubs.ts`, which meant importing `FixtureView`
+from `season.ts` and `TransferHistoryEntryView` from `transfers.ts`. But `transfers.ts` **already
+imports `ClubSummary` from `clubs.ts`** — so that closed a cycle, and the failure surfaced as
+`Cannot read properties of undefined (reading 'ast')` from an unrelated schema in `squad.ts` at
+module-init time.
+
+Fixed by declaring each view where the dependency already flows: `ClubFixturesView` in `season.ts`
+(a fresh one-way season→clubs edge) and `ClubTransfersView` in `transfers.ts` (which already
+depends on clubs). Both carry a comment saying why they live there, because the obvious home is
+`clubs.ts` and the next person will try it.
+
+### Guards that fired, and one self-inflicted bug
+
+`club-surface-entries.test.tsx` broke again, as designed — the row carries five controls now.
+`adapter-coverage` and the destination classification map both demanded entries, each a compile
+error rather than a dead button.
+
+The self-inflicted one: an earlier rewrite of `season/index.ts` had collapsed its export list, and
+my patch targeted the multi-line form that no longer existed — so `getClubFixtures` was silently
+never exported. The tests failed with `not iterable`, which is what a missing export looks like
+through `yield*`. Worth remembering: a `sed` that rewrites a line range makes later structural
+patches miss quietly.
+
+### Screen 35 is elsewhere
+
+Split to [ticket 10](10-the-any-club-squad.md), and the club-scoped rule now carries
+[an amendment](../../../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md)
+for the discriminator this ticket found: whether the manager's own surface *acts* on the data or
+only reads it.

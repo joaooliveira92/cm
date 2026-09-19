@@ -68,6 +68,8 @@ describe("the league table row is the entry point to every club-scoped surface",
     { label: "club staff", to: "/career/$saveId/club/$clubId/staff" },
     { label: "scout report", to: "/career/$saveId/club/$clubId/scout-report" },
     { label: "club information", to: "/career/$saveId/club/$clubId/information" },
+    { label: "club fixtures", to: "/career/$saveId/club/$clubId/fixtures" },
+    { label: "club transfers", to: "/career/$saveId/club/$clubId/transfers" },
   ] as const;
 
   it.each(SURFACES)("each club's row reaches its own $label page", async ({ label, to }) => {
@@ -103,9 +105,13 @@ describe("the league table row is the entry point to every club-scoped surface",
       "Northport Rovers — club staff",
       "Northport Rovers — scout report",
       "Northport Rovers — club information",
+      "Northport Rovers — club fixtures",
+      "Northport Rovers — club transfers",
       "Eastvale United — club staff",
       "Eastvale United — scout report",
       "Eastvale United — club information",
+      "Eastvale United — club fixtures",
+      "Eastvale United — club transfers",
     ]);
   });
 });

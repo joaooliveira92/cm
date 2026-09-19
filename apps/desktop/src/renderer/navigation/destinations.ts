@@ -80,6 +80,11 @@ export type CareerDestination =
   /** Club General Information (Screen 34) — a club's identity, town, nation and ground. Club-scoped
    *  for the same reason as the two above: it describes a club, so it needs one named. */
   | { readonly type: "clubInformation"; readonly saveId: SaveId; readonly clubId: ClubId }
+  /** Club Fixtures (Screen 40) and Club Transfers (Screen 42) — any club's, club-scoped for the
+   *  same reason as the three above. Their own-club siblings (`fixtures`, `transferHistory`) stay
+   *  save-scoped nav destinations and render the same lists. */
+  | { readonly type: "clubFixturesDetail"; readonly saveId: SaveId; readonly clubId: ClubId }
+  | { readonly type: "clubTransfersDetail"; readonly saveId: SaveId; readonly clubId: ClubId }
   /**
    * Player detail — a drill-down to a specific player's profile. Needs both save and player
    * identity, so excluded from save-scoped nav like the club drill-downs.
@@ -171,7 +176,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "clubInformation" | "playerDetail" | "playerDevelopment" | "playerContract" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
+  "teamScoutReport" | "clubStaff" | "clubInformation" | "clubFixturesDetail" | "clubTransfersDetail" | "playerDetail" | "playerDevelopment" | "playerContract" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
 >;
 
 /**
@@ -285,6 +290,14 @@ export type ResolvedDestination =
   | {
       readonly to: "/career/$saveId/club/$clubId/information";
       readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
+    }
+  | {
+      readonly to: "/career/$saveId/club/$clubId/fixtures";
+      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
+    }
+  | {
+      readonly to: "/career/$saveId/club/$clubId/transfers";
+      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
     };
 
 /** Pure mapping from a typed destination to its route; unit-tested (AC-14). */
@@ -337,6 +350,8 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "teamScoutReport":
     case "clubStaff":
     case "clubInformation":
+    case "clubFixturesDetail":
+    case "clubTransfersDetail":
     case "playerDetail":
     case "playerDevelopment":
     case "playerContract":
@@ -457,6 +472,16 @@ const careerRoute = (
     case "clubInformation":
       return {
         to: "/career/$saveId/club/$clubId/information",
+        params: { saveId: destination.saveId, clubId: destination.clubId },
+      };
+    case "clubFixturesDetail":
+      return {
+        to: "/career/$saveId/club/$clubId/fixtures",
+        params: { saveId: destination.saveId, clubId: destination.clubId },
+      };
+    case "clubTransfersDetail":
+      return {
+        to: "/career/$saveId/club/$clubId/transfers",
         params: { saveId: destination.saveId, clubId: destination.clubId },
       };
     case "playerDetail":

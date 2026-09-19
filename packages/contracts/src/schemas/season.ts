@@ -1,6 +1,7 @@
 import { Schema } from "effect";
 import { MANAGER_OUTCOMES, VERDICTS } from "@cm-clone/shared";
 
+import { ClubSummary } from "./clubs.js";
 import { ClubId, FixtureId, MatchId, SaveId } from "./ids.js";
 import { ArchivedCauseSchema } from "./saves.js";
 
@@ -198,4 +199,22 @@ export class SeasonSummaryView extends Schema.Class<SeasonSummaryView>("SeasonSu
    * message from the cause rather than inferring one from `managerOutcome`, which is a board
    * judgment and says nothing about a retirement. */
   archivedCause: Schema.NullOr(ArchivedCauseSchema),
+}) {}
+
+/**
+ * Club Fixtures (Screen 40): one club's fixtures this Season, across every Competition it plays in.
+ *
+ * Carries the club and `isUserClub` alongside the fixtures for the reason `ClubStaffView` does:
+ * one read answers the whole page, so there is no state where the screen knows the fixtures but
+ * not whose they are, and no second failure to reconcile.
+ *
+ * Declared here rather than in `clubs.ts` because `transfers.ts` already imports `ClubSummary`
+ * from there, so a club→season edge would close a cycle and leave a schema undefined at module
+ * init. The dependency runs season→clubs, one way.
+ */
+export class ClubFixturesView extends Schema.Class<ClubFixturesView>("ClubFixturesView")({
+  club: ClubSummary,
+  isUserClub: Schema.Boolean,
+  season: SeasonView,
+  fixtures: Schema.Array(FixtureView),
 }) {}

@@ -53,6 +53,32 @@ The test is a schema question with a crisp answer: **does a rival club have a ro
 That is the whole rule. It decides all twelve without a judgement call per screen, and where it
 needs an input, the input is a primary key rather than an opinion.
 
+## Amendment, 2026-09-19: a second exception, found the same day
+
+The rule above settled Screens 38 and 34 cleanly and then met a case it does not cover.
+
+**Screen 35 Squad fits the rule and should not.** Every club has a squad, so subject existence says
+one screen. But `renderer/squad/` is 2044 lines across thirteen files — a provider, drag handling,
+lineup edits, selection, a match-day bar — against 113 for `renderer/fixtures/`. It is a lineup
+*manager*, and an any-club squad is a roster. "Gating the affordances" there means one boolean
+threaded through thirteen files.
+
+The reason the rule worked twice is visible only in hindsight: **Staff and Club Information are
+read-only whoever is looking.** So the missing discriminator is not about the data at all —
+
+> Does the manager's own surface **act** on the data, or only read it? A read generalises to any
+> club with a resolver. A surface the manager acts *through* is a different artefact, and the
+> club-scoped view of the same data is its own read-only screen.
+
+Both exceptions are now about the *surface*, not the viewer: the subject may not exist for a rival
+(Screen 47), or the own-club surface may not be a read (Screen 35). Neither is ever about what the
+player is permitted to see, which remains empty in this game.
+
+Whether Screen 35 resolves by extracting a shared roster or by a second screen is
+[group-c ticket 10](../../../../.scratch/group-c-club-information/issues/10-the-any-club-squad.md); this
+amendment records the discriminator, not the implementation. Group L will need it — a competition's
+table is a read, and the own-club equivalents may not be.
+
 ## Consequences
 
 - **Two duplications collapse.** Screens 34 and 39 become one screen each, club-scoped, with the nav

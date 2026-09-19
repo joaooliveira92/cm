@@ -103,3 +103,4 @@ export class ClubInformationView extends Schema.Class<ClubInformationView>("Club
   /** Display only: nothing in the game reads capacity as a constraint. */
   stadiumCapacity: Schema.Number,
 }) {}
+

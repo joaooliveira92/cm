@@ -240,9 +240,20 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-c-club-information ticket 07**, re-sliced — Screens 40 and 42 only, and read its Findings
-section first. Then **08** (the modelled halves of 39 and 47) and **09** (the cull, blocked on both).
-**Screen 35 Squad needs its own ticket**, which is not yet filed.
+**group-c-club-information ticket 08** — the modelled halves of Screens 39 and 47. Then **10** (the
+any-club Squad) and **09** (the cull, blocked on both).
+
+**Screens 40 and 42 ship** (ticket 07). `ClubFixturesDetailScreen` and `ClubTransfersDetailScreen`,
+each titled with the club and marking one that is not the manager's. **e2e 50 passed**, 2040 tests.
+
+Three things worth carrying forward. The own-club list bodies were **extracted, not copied** —
+`FixtureDayList` and `TransferEntriesTable` are now rendered by both screens, which is what stops a
+pair drifting the way Screen 34's did. The nav entries needed **no resolver**: unlike Screens 38 and
+34, `fixtures` and `transferHistory` already had working own-club screens, so a resolver would have
+wrapped a screen that renders the same component. And declaring the new views in `schemas/clubs.ts`
+**closed an import cycle** — `transfers.ts` already imports `ClubSummary` from there — which
+surfaced as an unrelated schema failing to initialise in `squad.ts`. Each view now lives where the
+dependency already flows, with a comment saying why.
 
 **Ticket 07 was started and reverted, and the finding is the deliverable.** The code was
 backend-only — two RPCs and handlers, typechecking green — and reads with no screen behind them are

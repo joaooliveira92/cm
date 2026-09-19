@@ -126,6 +126,8 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/club/$clubId/scout-report":
     case "/career/$saveId/club/$clubId/staff":
     case "/career/$saveId/club/$clubId/information":
+    case "/career/$saveId/club/$clubId/fixtures":
+    case "/career/$saveId/club/$clubId/transfers":
       getRouter().navigate({
         to: resolved.to,
         params: { saveId: resolved.params.saveId, clubId: resolved.params.clubId },

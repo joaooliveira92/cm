@@ -154,6 +154,32 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   >
                     Information
                   </button>
+                  <button
+                    type="button"
+                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    aria-label={`${row.clubName} — club fixtures`}
+                    onClick={(event) =>
+                      navigateCareer(
+                        { type: "clubFixturesDetail", saveId, clubId: row.clubId },
+                        intentOfClick(event),
+                      )
+                    }
+                  >
+                    Fixtures
+                  </button>
+                  <button
+                    type="button"
+                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    aria-label={`${row.clubName} — club transfers`}
+                    onClick={(event) =>
+                      navigateCareer(
+                        { type: "clubTransfersDetail", saveId, clubId: row.clubId },
+                        intentOfClick(event),
+                      )
+                    }
+                  >
+                    Transfers
+                  </button>
                 </TableCell>
                 <TableCell className="pr-2 text-center tabular-nums">{row.played}</TableCell>
                 <TableCell className="pr-2 text-center tabular-nums">{row.won}</TableCell>

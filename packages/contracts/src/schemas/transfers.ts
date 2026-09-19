@@ -177,3 +177,12 @@ export class TransferHistoryEntryView extends Schema.Class<TransferHistoryEntryV
 export class TransferHistoryView extends Schema.Class<TransferHistoryView>("TransferHistoryView")({
   entries: Schema.Array(TransferHistoryEntryView),
 }) {}
+
+/** Club Transfers (Screen 42): one club's completed transfers, newest first. Same shape and same
+ *  reasoning as `ClubFixturesView` — the club rides with the rows so one read answers the page.
+ *  Declared here because this module already depends on `clubs.ts`. */
+export class ClubTransfersView extends Schema.Class<ClubTransfersView>("ClubTransfersView")({
+  club: ClubSummary,
+  isUserClub: Schema.Boolean,
+  entries: Schema.Array(TransferHistoryEntryView),
+}) {}

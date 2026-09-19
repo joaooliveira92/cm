@@ -90,6 +90,8 @@ const CAREER_DESTINATIONS: SamplesOf<CareerDestination> = {
   teamScoutReport: { type: "teamScoutReport", saveId, clubId },
   clubStaff: { type: "clubStaff", saveId, clubId },
   clubInformation: { type: "clubInformation", saveId, clubId },
+  clubFixturesDetail: { type: "clubFixturesDetail", saveId, clubId },
+  clubTransfersDetail: { type: "clubTransfersDetail", saveId, clubId },
   playerDetail: { type: "playerDetail", saveId, playerId },
   playerDevelopment: { type: "playerDevelopment", saveId, playerId },
   playerContract: { type: "playerContract", saveId, playerId },

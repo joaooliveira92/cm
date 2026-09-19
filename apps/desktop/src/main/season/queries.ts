@@ -1,6 +1,9 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   BoardObjectiveView,
+  ClubFixturesView,
+  ClubNotFoundError,
+  ClubSummary,
   type CompetitionId,
   FixtureView,
   FixturesView,
@@ -10,7 +13,7 @@ import {
   type FixtureId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { type Verdict } from "@cm-clone/shared";
+import { type StatureTier, type Verdict } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "./decider.js";
@@ -96,6 +99,92 @@ export const getCompetitionFixtures = (
       return new FixturesView({ season: yield* toSeasonView(seasonRow), fixtures });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
+
+/**
+ * Club Fixtures (Screen 40): **any** club's fixtures this Season, across every Competition it plays
+ * in, in date order.
+ *
+ * A third fixture read rather than a widening of either existing one, because all three answer
+ * different questions. `getFixtures` is the human's own calendar, scoped to their competition.
+ * `getCompetitionFixtures` is one Competition's full card, whoever plays in it. This is one club's
+ * matches wherever they fall — so it filters on the club's two sides rather than on a competition,
+ * and a club in a league and a cup sees both.
+ *
+ * An unknown club is `ClubNotFoundError`, never an empty list: a `results-only` club with no
+ * fixtures is a real answer, so a club that does not exist must not be able to impersonate one.
+ */
+export const getClubFixtures = (savesDir: string, saveId: SaveId, clubId: ClubId) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const clubRows = yield* sql<{ statureTier: StatureTier; isUserClub: number }>`
+        SELECT stature_tier as "statureTier", is_user_club as "isUserClub"
+        FROM clubs WHERE id = ${clubId}`;
+      const club = clubRows[0];
+      if (club === undefined) {
+        return yield* new ClubNotFoundError({ id: clubId });
+      }
+
+      const nameOf = yield* displayNames;
+      const seasonRow = yield* loadSeasonRow;
+      return new ClubFixturesView({
+        club: new ClubSummary({
+          id: clubId,
+          name: nameOf(clubId),
+          statureTier: club.statureTier,
+        }),
+        // SQLite has no boolean: the column is the integer flag world generation writes.
+        isUserClub: club.isUserClub === 1,
+        season: yield* toSeasonView(seasonRow),
+        fixtures: yield* fixturesForClub(clubId, seasonRow.seasonNumber),
+      });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
+  );
+
+/**
+ * One club's fixtures across every Competition it plays in.
+ *
+ * The competition read filters on `competition_id`; this filters on the club's two sides, which is
+ * what makes a league fixture and a cup tie land in the same list. Ordered the same way, so the two
+ * reads agree about what "in date order" means.
+ */
+const fixturesForClub = (clubId: ClubId, seasonNumber: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const nameOf = yield* displayNames;
+    const rows = yield* sql<{
+      id: FixtureId;
+      round: number;
+      scheduledDate: string;
+      homeClubId: ClubId;
+      awayClubId: ClubId;
+      homeGoals: number | null;
+      awayGoals: number | null;
+      played: number;
+    }>`SELECT f.id, f.round, f.scheduled_date as "scheduledDate",
+              f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
+              f.home_goals as "homeGoals", f.away_goals as "awayGoals", f.played
+       FROM fixtures f
+       WHERE f.season_number = ${seasonNumber}
+         AND (f.home_club_id = ${clubId} OR f.away_club_id = ${clubId})
+       ORDER BY f.scheduled_date ASC, f.id ASC`;
+
+    return rows.map(
+      (row) =>
+        new FixtureView({
+          id: row.id,
+          round: row.round,
+          date: row.scheduledDate,
+          homeClubId: row.homeClubId,
+          homeClubName: nameOf(row.homeClubId),
+          awayClubId: row.awayClubId,
+          awayClubName: nameOf(row.awayClubId),
+          homeGoals: row.homeGoals,
+          awayGoals: row.awayGoals,
+          played: row.played === 1,
+        }),
+    );
+  });
 
 export const getLeagueTable = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>

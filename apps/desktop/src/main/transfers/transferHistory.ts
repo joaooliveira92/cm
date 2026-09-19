@@ -1,4 +1,13 @@
-import { TransferHistoryEntryView, TransferHistoryView, type SaveId } from "@cm-clone/contracts";
+import {
+  ClubNotFoundError,
+  ClubSummary,
+  ClubTransfersView,
+  TransferHistoryEntryView,
+  TransferHistoryView,
+  type ClubId,
+  type SaveId,
+} from "@cm-clone/contracts";
+import type { StatureTier } from "@cm-clone/shared";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -23,6 +32,44 @@ export const getTransferHistoryScreen = (savesDir: string, saveId: SaveId) =>
     Effect.gen(function* () {
       const club = yield* loadUserClub;
       return yield* readTransferHistory(club.id);
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
+  );
+
+/**
+ * Club Transfers (Screen 42): the same history for **any** club.
+ *
+ * `readTransferHistory` was already club-parameterised; only the entry point above hardcoded the
+ * user's club. So this is a sibling entry point rather than a second query — one read of
+ * `player_transfers`, two ways in, which is what the club-scoped rule asks for.
+ *
+ * The club rides with the rows so one read answers the whole page, and an unknown club is
+ * `ClubNotFoundError`: a club that has completed no transfer is a real answer, so a club that does
+ * not exist must not be able to look like one.
+ */
+export const getClubTransfers = (savesDir: string, saveId: SaveId, clubId: ClubId) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const clubRows = yield* sql<{ statureTier: StatureTier; isUserClub: number }>`
+        SELECT stature_tier as "statureTier", is_user_club as "isUserClub"
+        FROM clubs WHERE id = ${clubId}`;
+      const club = clubRows[0];
+      if (club === undefined) {
+        return yield* new ClubNotFoundError({ id: clubId });
+      }
+
+      const nameOf = yield* displayNames;
+      const history = yield* readTransferHistory(clubId);
+      return new ClubTransfersView({
+        club: new ClubSummary({
+          id: clubId,
+          name: nameOf(clubId),
+          statureTier: club.statureTier,
+        }),
+        // SQLite has no boolean: the column is the integer flag world generation writes.
+        isUserClub: club.isUserClub === 1,
+        entries: history.entries,
+      });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
 
