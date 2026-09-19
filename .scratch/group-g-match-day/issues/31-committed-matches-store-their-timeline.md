@@ -27,7 +27,11 @@ calling `deriveMatchEvents(stream)`; committed reads load.
 - A live match interrupted by an upgrade **restarts from kickoff with the manager told** — already the
   restart behaviour under decision request 05, and the session is save-keyed by ticket 28.
 
-**Blocked by:** None.
+**Blocked by:** [32](32-saves-need-a-migration-path.md) — saves have no migration path. Discovered
+2026-09-19 on starting this ticket: `createSchema` runs once at career creation, `loadSave` does no DDL,
+there are zero `ALTER TABLE` statements in the repo and no `schema_version` anywhere. The backfill below
+exists *for matches that already exist*, so this cannot be narrowed to new saves without defeating its
+own purpose.
 
 **Blocks:** 26, 29, and any engine-rule fix arising from decision requests 01, 04 and 06.
 
@@ -40,7 +44,8 @@ migration, plus tests under `apps/desktop/test/main/match/`.
 - [ ] The Match Report, post-match summary and match statistics read the stored events for a committed
       match, and `deriveMatchEvents` is still the path for a match in progress.
 - [ ] A migration adds the storage, and a backfill writes a timeline for every already-committed match
-      under the current engine. The backfill is idempotent and safe to re-run.
+      under the current engine. The backfill is idempotent and safe to re-run. **Depends on ticket 32:
+      there is no mechanism today that reaches an existing save file.**
 - [ ] A test proves the property the determinism tests do not express: a committed match's stored
       timeline is **unchanged by a deliberate engine-rule change**. Mutating an engine rule must not
       alter a stored report, and must still alter a fresh match's.

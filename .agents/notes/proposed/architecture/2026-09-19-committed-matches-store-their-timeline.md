@@ -76,6 +76,9 @@ the rule change waiting on it.
 - **Unblocks group-g tickets 26 and 29 and decision requests 01, 04 and 06** — once the backfill lands,
   not before. They move from blocked-on-a-question to blocked-on-a-ticket.
 - **A schema addition, a migration and a backfill** are owed, and must precede any engine-rule fix.
+  **Provisional as of 2026-09-19**: there is no mechanism that reaches an existing save file — see
+  [saves have no migration path](2026-09-19-saves-have-no-migration-path.md). The *rule* here stands;
+  how it is persisted to careers already in progress waits on that. Ticket 31 is blocked on ticket 32.
 - **Saves grow by one timeline per human match.** Background matches are results-only and unaffected.
   For a ten-season career this is on the order of a few hundred timelines — small against a football
   database, and the request's own assessment was that nothing important is foreclosed.

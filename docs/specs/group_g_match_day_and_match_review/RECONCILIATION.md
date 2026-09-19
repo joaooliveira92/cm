@@ -138,8 +138,14 @@ gone in practice. Tickets 26 and 29 are re-pointed at 31: blocked on a ticket no
 
 - ~~**Five open decision requests.**~~ **All eight are answered as of 2026-09-19.** Group G has no open
   decision request, having had the largest cluster in the corpus.
-- **Ticket 31 is the gate on all engine-rule work** and is `ready-for-agent`. It is the most
-  time-sensitive ticket in the repo: the backfill it carries has to run under the current engine.
+- **Ticket 31 is the gate on all engine-rule work, and is itself now blocked.** Starting it on
+  2026-09-19 found that **saves have no migration path at all** — `createSchema` runs once at career
+  creation, `loadSave` does no DDL, and the repo contains zero `ALTER TABLE` statements and no
+  `schema_version`. Every schema change so far has been an implicit "new saves only" that nothing makes
+  visible, and the gate's "name the migration" step has been satisfiable by silence. Filed as ticket 32
+  and written up in
+  [saves have no migration path](../../../.agents/notes/proposed/architecture/2026-09-19-saves-have-no-migration-path.md).
+  It needs a human call on whether a save survives a schema change.
 - **Three tickets are not resolved**: 20 (`needs-info`, a command rewrites seen play), 26 (fix held as
   a patch, blocked on 31), 29 (blocked on 31).
 - **A tracker defect, now fixed in the ticket but not at the source.** Ticket 29 read

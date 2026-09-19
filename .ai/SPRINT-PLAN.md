@@ -203,6 +203,41 @@ for the keyboard spine, so half of C's work is done.
 **Ticket 31 is the gate on most of it.** Requests 01, 03, 04, 06 and 08 either change what a seed produces
 or need a stored timeline to read. Nothing in Group G's engine work can land before the backfill.
 
+**STOPPED ON A FINDING, 2026-09-19: saves have no migration path.** Found while starting ticket 31.
+
+`createSchema` runs once, at career creation — one call site, `beginCareer`. `loadSave` performs no DDL.
+The repo contains **zero `ALTER TABLE` statements** and **no `schema_version`** anywhere. A save file's
+schema is written once and never changed again, so every schema change to date has been an implicit
+"new saves only" that nothing makes visible.
+
+**Why it went unseen**: a save-compatibility test creates its save under the *current* schema, so no
+test can fail on this — catching it needs a fixture holding an older save file, and none exists. And
+[/gate](../.opencode/command/gate.md) step 4 asks the gate to "name the migration", which has been
+satisfiable by silence because there is nothing to name.
+
+**Ticket 31 is blocked on it**, and was not quietly narrowed to new-saves-only: its backfill exists *for
+matches that already exist*, so scoping it down would leave exactly the matches it protects unprotected.
+Filed as **ticket 32, `ready-for-human`**, since the question is what a save *is*:
+
+- **Durable** — `schema_version`, ordered upgrade steps on open, and a fixture holding an old save so the
+  path is proved. The only answer under which 31's backfill means anything.
+- **Disposable during development** — refuse a save written under an older schema, with a message. The
+  smallest honest answer; it makes today's behaviour explicit instead of silent. Forecloses shipping to
+  anyone with a career in progress, which is a product call.
+- **Status quo** — recorded only to be rejected: it is what everyone has been doing and nobody chose.
+
+Written up as
+[saves have no migration path](../.agents/notes/proposed/architecture/2026-09-19-saves-have-no-migration-path.md).
+
+**Two of 2026-09-19's decisions are marked provisional** on their persistence clauses — the committed-match
+timeline, and the persisted revealed position. Their *rules* stand; only how they reach an existing career
+is in question. The `PlayerDeveloped` baseline is unaffected: additive JSON in an existing column is the
+one schema change this codebase can currently make to a live save.
+
+**Still unblocked and needing no migration**: group-j ticket 04 (contract renewal — code written, needs a
+guard and a test), Screen 113's two rows, and the group-i knowledge-limit read, which is the largest
+single unblock and touches no schema.
+
 ## Immediate next action
 
 **gate-red-on-dev ticket 04** — the vitest projects split, now unblocked by ticket 03. 100 of 144

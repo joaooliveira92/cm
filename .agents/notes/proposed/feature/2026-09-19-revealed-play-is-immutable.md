@@ -89,7 +89,10 @@ what they remember.
 - **`Tactic.bench` gains its first engine reader**, which means a Tactic saved with an empty or stale
   bench must be handled — a team sheet with no bench can make no substitution, and that has to be a
   readable state rather than a crash.
-- **A migration** for the persisted revealed position (point 3).
+- **A migration** for the persisted revealed position (point 3) — **provisional**: no migration
+  mechanism exists, per
+  [saves have no migration path](../architecture/2026-09-19-saves-have-no-migration-path.md). Points 1,
+  2 and 4 are unaffected; they are engine rules, not persistence.
 - **Screen 97 spec §17 becomes satisfiable.** "Dismissed and injured-player constraints are explicit"
   could not be honoured while the engine reversed dismissals.
 - **Four decision requests close**, and the nineteen-ticket pattern behind them should stop: a defect
