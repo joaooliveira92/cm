@@ -208,3 +208,13 @@ Adopting the vendored portal `Dialog` was rejected: it renders at `z-50` too, so
   through every overlay tier. A unit test proves the portal lands in `document.body`, not in the
   mount container. Decision recorded in
   `.agents/notes/implemented/architecture/2026-09-17-quitguard-outranks-base-ui-modals.md`.
+
+- [22 — the Quit dialog's provisional variant](issues/22-quit-guard-provisional-career-variant.md):
+  built, and the ticket's two hard parts were both unnamed. `QuitGuard` is mounted outside the
+  router and cannot read `CreateSessionContext`, so the flow publishes `{ present, id }` through
+  `create/provisionalCareer.ts`. And a renderer-side discard would race `app.quit()` and lose
+  silently, so the id travels with the confirmation and `main/quit.ts` deletes before quitting.
+  Surfaced a pre-existing bug on the way: the quit dialog never took initial focus in *either*
+  variant, because `useDialogKeyboard` ran its mount effect at app startup.
+  [Note](../../.agents/notes/proposed/feature/2026-09-19-quitting-mid-creation-discards-in-main.md).
+

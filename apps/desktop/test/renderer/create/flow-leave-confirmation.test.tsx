@@ -19,6 +19,10 @@ import {
   StepTwoRouteContent,
 } from "../../../src/renderer/router/createFlow.js";
 import { LEAGUE_SETUP_INDEX } from "@cm-clone/shared";
+import {
+  getProvisionalCareer,
+  resetProvisionalCareer,
+} from "../../../src/renderer/create/provisionalCareer.js";
 
 interface RpcCall {
   readonly method: string;
@@ -229,7 +233,10 @@ beforeEach(() => {
   window.scrollTo = () => {};
   cleanup();
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  resetProvisionalCareer();
+});
 
 describe("§21 — leaving a built world is confirmed, not assumed", () => {
   it("names what will be discarded, and discards it only once the player says so", async () => {
@@ -376,5 +383,49 @@ describe("§21 — leaving a built world is confirmed, not assumed", () => {
     // save the player can open. Nothing committed it on the way out.
     expect(methodsCalled("commitCareer")).toHaveLength(0);
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+/**
+ * The same loss, reached by quitting instead of navigating (ticket 22).
+ *
+ * `QuitGuard` is mounted outside the router and cannot read this session, so the flow publishes
+ * what leaving would cost. These tests own the publishing end; the guard's own spec owns the two
+ * dialog variants, and `confirm-quit.test.ts` owns the deleting.
+ */
+describe("§21 — what the quit guard is told about a provisional career", () => {
+  it("publishes nothing before a world exists", async () => {
+    installPreload(flowResponses());
+    mountCreateFlow();
+    await screen.findByRole("button", { name: /^Continue/ }, { timeout: 3000 });
+
+    expect(getProvisionalCareer().present).toBe(false);
+    expect(getProvisionalCareer().id).toBe(null);
+  });
+
+  it("publishes the world and its id once one has been built", async () => {
+    installPreload(flowResponses());
+    mountCreateFlow();
+    await reachClubStep();
+
+    await waitFor(() => expect(getProvisionalCareer().present).toBe(true));
+    expect(getProvisionalCareer().id).toBe("provisional-1");
+  });
+
+  /**
+   * Leaving is the flow's own discard path; by the time it has run there is nothing left for a
+   * quit to delete, and a stale id published here would ask main to delete a save twice.
+   */
+  it("clears on the way out, so a later quit has nothing to discard", async () => {
+    installPreload(flowResponses());
+    mountCreateFlow();
+    await reachClubStep();
+    await waitFor(() => expect(getProvisionalCareer().id).toBe("provisional-1"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(within(confirmation()).getByRole("button", { name: "Discard" }));
+
+    await waitFor(() => expect(getProvisionalCareer().present).toBe(false));
+    expect(getProvisionalCareer().id).toBe(null);
   });
 });

@@ -240,7 +240,17 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-a-reconciliation ticket 22** — the Quit dialog has no provisional-career variant.
+**The named queue is empty.** gate-red-on-dev, add-manager-screen-7 and group-a-reconciliation all
+closed in this sprint run. Recompute the frontier from `.scratch/` rather than from this section.
+
+**group-a-reconciliation is complete.** Ticket 22 built the Quit dialog's provisional variant, and
+both of its hard parts were unnamed in the ticket. `QuitGuard` is mounted outside the router and
+cannot read `CreateSessionContext`, so the creation flow publishes `{ present, id }` through
+`create/provisionalCareer.ts`. And a renderer-side discard would race `app.quit()` and lose
+*silently*, so the id travels with the confirmation and `main/quit.ts` deletes before quitting.
+It also surfaced a pre-existing bug: the quit dialog never took initial focus in either variant,
+because `useDialogKeyboard` ran its mount effect at app startup with no dialog on screen.
+[Note](../.agents/notes/proposed/feature/2026-09-19-quitting-mid-creation-discards-in-main.md).
 
 **add-manager-screen-7 is complete.** Ticket 03 rewrote the Group A ledger's Screen 7 section, which
 had been asserting "Nothing of Screen 7 survives" since 2026-08-31 — true when written, false once

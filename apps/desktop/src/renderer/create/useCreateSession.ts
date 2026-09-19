@@ -34,6 +34,7 @@ import {
   type GenerationTransition,
 } from "./generation.js";
 import { selectedClubOf } from "./clubSelection.js";
+import { setProvisionalCareer } from "./provisionalCareer.js";
 import type { CreateSessionApi, CreationSession, ManagerSubStep } from "../router/createSessionContext.js";
 
 const DEFAULT_PILLARS: PillarDistribution = {
@@ -406,9 +407,26 @@ export const useCreateSession = (): CreateFlowSession => {
     setRegisteredBar(null);
   }, [step]);
 
+  /**
+   * Tell the quit guard what leaving would cost, since it sits outside the router and cannot read
+   * this session. The two facts it needs are the two `requestLeave` uses: whether anything
+   * provisional exists, and — separately — which save id to delete, which is absent while
+   * `beginCareer` is still in flight.
+   */
+  useEffect(() => {
+    setProvisionalCareer({
+      present: leavingDiscardsWorld(session.generation),
+      id: provisionalIdOf(session.generation),
+    });
+  }, [session.generation]);
+
   useEffect(
     () => () => {
       applyGeneration(abandon);
+      // The flow is gone, so there is nothing left for a quit to discard — whatever `abandon` had
+      // to delete, it has already asked for. Clearing here rather than in the effect above keeps
+      // the published value tied to the flow's lifetime instead of to a render.
+      setProvisionalCareer(null);
     },
     [applyGeneration],
   );

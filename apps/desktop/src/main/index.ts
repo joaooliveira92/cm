@@ -5,6 +5,7 @@ import { Effect, Layer } from "effect";
 import electron from "electron";
 import { MATCH_SEED_ENV, pinnedMatchSeedLayer, resolveMatchSeedOverride } from "./match/index.js";
 import { handleRpc } from "./rpc/rpcServer.js";
+import { confirmQuit } from "./quit.js";
 import { LoggerLayer } from "./rpc/logging.js";
 
 const { app, BrowserWindow, ipcMain } = electron;
@@ -104,9 +105,14 @@ app.on("before-quit", (event) => {
   mainWindow.webContents.send("show-quit-guard");
 });
 
-ipcMain.on("quit-guard-confirmed", () => {
+/**
+ * The renderer names a provisional career when the player confirmed losing one; `confirmQuit` does
+ * the deleting and then quits, so the delete cannot race the exit. See `quit.ts` for why it lives
+ * there and why a failed delete still quits.
+ */
+ipcMain.on("quit-guard-confirmed", (_event, discardSaveId: string | null) => {
   quitGuardConfirmed = true;
-  app.quit();
+  void confirmQuit(app.getPath("userData"), discardSaveId, () => app.quit());
 });
 
 ipcMain.on("quit-guard-cancelled", () => {
