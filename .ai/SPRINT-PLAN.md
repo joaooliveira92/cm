@@ -240,18 +240,20 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-h-training-and-player-development ticket 12** — four training e2e specs describe a Training
-screen that no longer exists. Then **group-d ticket 10**, the harder half of the placeholder cull:
-three `staff*` folders answer to no screen in the Group D import and need a first-time disposition
-rather than a deletion.
+**group-d-player-and-staff-records ticket 10** — the harder half of the placeholder cull. Three
+`staff*` folders (`staffJobInfo`, `staffOverview`, `staffAttributes`) answer to no screen in the
+Group D import, so removing them is a first-time disposition on a surface nobody specified, not a
+cull finishing its list. The ticket requires a ruling and a ledger row per folder.
 
-**e2e is red on `dev`, and it is not new.** 42 passed / 4 failed. All four — `development-centre`,
-`performance-report`, `training-plan`, `training-workload` — open by navigating to Training and
-asserting a `Coaching Assignments` h1. Group H ticket 09 turned Training into an Overview hub with a
-tab strip and preview regions, so that heading is now one click further in behind *View coaching
-assignments*. The screens work; the specs describe a shape the UI has left. Proven pre-existing by
-stashing group-d ticket 09's changes and re-running to an identical 42/4. **M1 exit criterion 4
-cannot be met until this is fixed.**
+**e2e is GREEN — 46 passed, 2026-09-19.** group-h ticket 12 fixed the four training specs, and with
+`pnpm check:all` also green, **M1 exit criterion 4 is met.** The four had drifted against ticket 09's
+Training Overview hub: they opened by asserting a `Coaching Assignments` h1, which is now one click
+further in behind *View workload details*. Nothing was skipped or deep-linked past — three of the
+four exist to prove a journey, and the journey is what moved.
+
+Worth keeping from it: the diagnosis cost minutes because the Playwright page snapshot was read
+first, and it showed a working hub rather than a broken app. Also worth noting how long this hid —
+`check:all` does not include e2e, so a green gate was being reported while four specs were red.
 
 **group-d ticket 09 shipped the player half of M1 step 5.** Five disposed player placeholders deleted
 with their routes, scope entries, action rows and URL mappings. The ticket as filed was wrong about a

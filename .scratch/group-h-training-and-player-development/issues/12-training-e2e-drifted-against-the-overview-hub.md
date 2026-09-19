@@ -54,12 +54,45 @@ it is why the ticket carries the snapshot rather than a stack trace.
 
 ## Acceptance
 
-- [ ] All four specs pass against the Training Overview hub as it exists
-- [ ] Each still traverses the hub rather than deep-linking past it, and the ones that prove a
+- [x] All four specs pass against the Training Overview hub as it exists
+- [x] Each still traverses the hub rather than deep-linking past it, and the ones that prove a
       journey still prove it
-- [ ] `pnpm --filter @cm-clone/desktop test:e2e` is green — all 46
-- [ ] `pnpm check:all` green
+- [x] `pnpm --filter @cm-clone/desktop test:e2e` is green — all 46
+- [x] `pnpm check:all` green
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
+
+## Answer
+
+**e2e is green — 46 passed, 1.6m.** No test was skipped, deep-linked past, or loosened.
+
+The fix was one line of entry per spec, plus the doc comments that described the old shape. The
+labels had moved, not the behaviour:
+
+| Spec | Was | Now |
+|---|---|---|
+| `training-workload` | land on `Coaching Assignments` h1, click "Workload and recovery" | land on `Training Overview` h1, click "View workload and recovery details" |
+| `training-plan` | click "Workload and recovery" | click "View workload and recovery details" |
+| `development-centre` | click "Player development" | click "View full development centre" |
+| `performance-report` | click "Workload and recovery" | click "View workload and recovery details" |
+
+`training-workload`'s closing `g b` also had to move. It asserted a return to `Coaching Assignments`,
+because that is what Training used to land on; `g b` is history-back, so it now returns to the hub.
+That assertion was the only one that was *wrong* rather than merely stale — the other three failed
+at the entry and never reached their real subject.
+
+Each spec still enters through the hub. Addressing the workload or development routes directly would
+have been a shorter diff and would have made these specs blind to exactly the kind of change that
+broke them: three of the four exist to prove a journey, and the journey is what moved.
+
+### Worth keeping
+
+The diagnosis cost minutes because the Playwright page snapshot was read before anything else. The
+snapshot showed a working Training Overview with a tab strip and three preview regions — an app that
+had moved on, not an app that was broken. A bisect would have found the same commit an hour later.
+
+These four had been red long enough that `pnpm check:all` being green was being reported as the gate
+passing. It was: `check:all` does not include e2e. M1 exit criterion 4 asks for both, which is what
+makes this a milestone blocker rather than a maintenance chore.

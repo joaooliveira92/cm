@@ -2,8 +2,8 @@ import { continueSeededCareer, expect, goto, pressPrefix, test } from "./launchA
 import { savesDir, seedConcluded } from "./seedSaves.js";
 
 /**
- * Player Development Centre's reachable path (Screen 114, ticket 08): Training lands on Coaching
- * Assignments, and "Player development" opens the squad-wide list. A concluded seed has run Player
+ * Player Development Centre's reachable path (Screen 114, ticket 08): Training lands on the Training
+ * Overview hub, whose Development preview offers "View development centre" into the squad-wide list. A concluded seed has run Player
  * Development once, so every row's newest recorded Season is the first one and reads as having no
  * comparison yet, and every player carries the None default. A row's "Development" button opens that
  * player's Player Development screen; `g b` returns to the list.
@@ -16,7 +16,7 @@ test("the Player Development Centre lists the squad with Training Focus and deve
   await continueSeededCareer(page, "Seed: concluded");
 
   await goto(page, "training");
-  await page.getByRole("button", { name: "Player development", exact: true }).click();
+  await page.getByRole("button", { name: "View full development centre" }).click();
   await expect(page.getByRole("heading", { name: "Player Development Centre", level: 1 })).toBeVisible();
 
   const rows = page.getByRole("list", { name: "Squad development" }).getByRole("listitem");

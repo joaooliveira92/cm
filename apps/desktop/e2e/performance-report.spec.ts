@@ -3,7 +3,8 @@ import { savesDir, seedConcluded } from "./seedSaves.js";
 
 /**
  * Performance Report's path (Screen 113, ticket 07). No in-app control links to the player coach
- * report route yet, so the spec reaches a real own-club player through Workload and Recovery and
+ * report route yet, so the spec reaches a real own-club player through the Training Overview hub,
+ * Workload and Recovery, and
  * the Individual Training Plan (whose URL carries the player id) and then opens
  * `/player/$playerId/coach-report` by address, the way `router.spec.ts` opens a route directly.
  *
@@ -18,7 +19,7 @@ test("the Performance Report shows an own player's Training Focus and recorded d
   await continueSeededCareer(page, "Seed: concluded");
 
   await goto(page, "training");
-  await page.getByRole("button", { name: "Workload and recovery", exact: true }).click();
+  await page.getByRole("button", { name: "View workload and recovery details" }).click();
   const firstRow = page.getByRole("list", { name: "Player workload" }).getByRole("listitem").first();
   const playerName = await firstRow.getAttribute("aria-label");
   expect(playerName).not.toBeNull();
