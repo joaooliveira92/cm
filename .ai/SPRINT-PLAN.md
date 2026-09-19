@@ -240,8 +240,31 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-c-club-information ticket 10** — the any-club Squad, the one screen the club-scoped rule
-cannot settle. Then **09**, the cull, which is blocked on it.
+**The Group C queue is empty and the milestone's remaining work is Group L** (M1 step 4, screens 161,
+164–175, 179–180). It has no tickets yet; slicing them is in-effort work on a charted map. Its
+ledger should quote [the club-scoped rule](../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md)
+rather than re-derive it — nations and competitions have the same shape.
+
+**Group C is built out except Screen 35, which is blocked on a human.** Tickets 06, 07, 08 and 09
+all shipped. **e2e 53 passed**, 2058 desktop tests.
+
+**Screen 35 revealed a limit of the club-scoped rule that matters beyond this group.** An any-club
+squad is the first Group C screen that lists **players** rather than facts about a club — and
+`CONTEXT.md` § Scouting Progress says every player outside the manager's club starts Unscouted. So
+the rule's premise, *a Club carries no hidden value of its own*, holds for the club and **not** for
+the players in it. Screens 34, 38, 39, 40 and 42 were safe precisely because none of them lists
+players.
+
+That makes Screen 35 a knowledge-limited player read, and
+[group-i decision request 01](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md)
+already owns that question — it records that `MarketPlayerView` carries exact figures while
+`CONTEXT.md` says they should be ranges, and that *"CONTEXT.md also disagrees with itself."* C 35 is
+now its **fifth** dependent alongside D 68 and J 132, 134, 137, and MILESTONES records it.
+
+**M1 exit criterion 1 is now a precise statement rather than a backlog** for `club*`: three WIP
+screens remain and each has a named owner — `clubs/` and `nationClubs/` are Group L's,
+`clubSquadDetail/` is ticket 10's. A placeholder for a screen that is *arriving* is the one case
+where the stub is not a lie.
 
 **Screens 39 and 47 ship** (ticket 08). `ClubFinancesDetailScreen` club-scoped with `finances/` as
 its own-club resolver, and `BoardConfidenceScreen` save-scoped and staying that way. **e2e 53

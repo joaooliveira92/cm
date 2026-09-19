@@ -35,7 +35,6 @@ import { TrainingPlanScreen } from "../training/TrainingPlanScreen.js";
 import { DevelopmentCentreScreen } from "../training/DevelopmentCentreScreen.js";
 import { ClubInfoScreen } from "../clubInfo/ClubInfoScreen.js";
 import { BoardConfidenceScreen } from "../boardConfidence/BoardConfidenceScreen.js";
-import { ClubHistoryScreen } from "../clubHistory/ClubHistoryScreen.js";
 import { FinancesScreen } from "../finances/FinancesScreen.js";
 import { StaffOverviewScreen } from "../staffOverview/StaffOverviewScreen.js";
 import { ShortlistScreen } from "../shortlist/ShortlistScreen.js";
@@ -50,13 +49,9 @@ import { ClubsScreen } from "../clubs/ClubsScreen.js";
 // Ticket 03 — Staff drill-downs
 // Ticket 04 — Club drill-downs (other club views)
 import { ClubSquadDetailScreen } from "../clubSquadDetail/ClubSquadDetailScreen.js";
-import { ClubReservesDetailScreen } from "../clubReservesDetail/ClubReservesDetailScreen.js";
-import { ClubYouthDetailScreen } from "../clubYouthDetail/ClubYouthDetailScreen.js";
 import { ClubFixturesDetailScreen } from "../clubFixturesDetail/ClubFixturesDetailScreen.js";
 import { ClubTransfersDetailScreen } from "../clubTransfersDetail/ClubTransfersDetailScreen.js";
 import { ClubFinancesDetailScreen } from "../clubFinancesDetail/ClubFinancesDetailScreen.js";
-import { ClubHistoryDetailScreen } from "../clubHistoryDetail/ClubHistoryDetailScreen.js";
-import { ClubCompetitionsDetailScreen } from "../clubCompetitionsDetail/ClubCompetitionsDetailScreen.js";
 import { ClubInformationScreen } from "../clubInformation/ClubInformationScreen.js";
 // Ticket 05 — Nation drill-downs
 import { NationOverviewScreen } from "../nationOverview/NationOverviewScreen.js";
@@ -200,7 +195,6 @@ const newsRoute = defineCareerChild("news", "news", NewsInboxScreen);
 
 const clubInfoRoute = defineCareerChild("club-info", "clubInfo", ClubInfoScreen);
 const boardConfidenceRoute = defineCareerChild("board-confidence", "boardConfidence", BoardConfidenceScreen);
-const clubHistoryRoute = defineCareerChild("club-history", "clubHistory", ClubHistoryScreen);
 const financesRoute = defineCareerChild("finances", "finances", FinancesScreen);
 const staffOverviewRoute = defineCareerChild("staff-overview", "staffOverview", StaffOverviewScreen);
 const shortlistRoute = defineCareerChild("shortlist", "shortlist", ShortlistScreen);
@@ -382,18 +376,6 @@ const clubSquadDetailRoute = createRoute({
   component: () => <CareerClubChildView screenId="clubSquadDetail" Screen={ClubSquadDetailScreen} />,
 });
 
-const clubReservesDetailRoute = createRoute({
-  getParentRoute: () => clubRoute,
-  path: "reserves",
-  component: () => <CareerClubChildView screenId="clubReservesDetail" Screen={ClubReservesDetailScreen} />,
-});
-
-const clubYouthDetailRoute = createRoute({
-  getParentRoute: () => clubRoute,
-  path: "youth",
-  component: () => <CareerClubChildView screenId="clubYouthDetail" Screen={ClubYouthDetailScreen} />,
-});
-
 const clubFixturesDetailRoute = createRoute({
   getParentRoute: () => clubRoute,
   path: "fixtures",
@@ -410,18 +392,6 @@ const clubFinancesDetailRoute = createRoute({
   getParentRoute: () => clubRoute,
   path: "finances",
   component: () => <CareerClubChildView screenId="clubFinancesDetail" Screen={ClubFinancesDetailScreen} />,
-});
-
-const clubHistoryDetailRoute = createRoute({
-  getParentRoute: () => clubRoute,
-  path: "history",
-  component: () => <CareerClubChildView screenId="clubHistoryDetail" Screen={ClubHistoryDetailScreen} />,
-});
-
-const clubCompetitionsDetailRoute = createRoute({
-  getParentRoute: () => clubRoute,
-  path: "competitions",
-  component: () => <CareerClubChildView screenId="clubCompetitionsDetail" Screen={ClubCompetitionsDetailScreen} />,
 });
 
 const clubInformationRoute = createRoute({
@@ -673,7 +643,6 @@ const routeTree = rootRoute.addChildren([
       ]),
       clubInfoRoute,
       boardConfidenceRoute,
-      clubHistoryRoute,
       financesRoute,
       staffOverviewRoute,
       shortlistRoute,
@@ -689,13 +658,9 @@ const routeTree = rootRoute.addChildren([
         clubScoutReportRoute,
         clubStaffRoute,
         clubSquadDetailRoute,
-        clubReservesDetailRoute,
-        clubYouthDetailRoute,
         clubFixturesDetailRoute,
         clubTransfersDetailRoute,
         clubFinancesDetailRoute,
-        clubHistoryDetailRoute,
-        clubCompetitionsDetailRoute,
         clubInformationRoute,
       ]),
       playerRoute.addChildren([

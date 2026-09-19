@@ -45,7 +45,6 @@ export type CareerDestination =
   | { readonly type: "trainingDevelopment"; readonly saveId: SaveId }
   | { readonly type: "clubInfo"; readonly saveId: SaveId }
   | { readonly type: "boardConfidence"; readonly saveId: SaveId }
-  | { readonly type: "clubHistory"; readonly saveId: SaveId }
   | { readonly type: "finances"; readonly saveId: SaveId }
   | { readonly type: "staffOverview"; readonly saveId: SaveId }
   | { readonly type: "shortlist"; readonly saveId: SaveId }
@@ -154,7 +153,6 @@ export const CAREER_SCREEN_TYPES = [
   "news",
   "clubInfo",
   "boardConfidence",
-  "clubHistory",
   "finances",
   "staffOverview",
   "shortlist",
@@ -241,7 +239,6 @@ export type ResolvedDestination =
     }
   | { readonly to: "/career/$saveId/club-info"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/board-confidence"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/club-history"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/finances"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/staff-overview"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/shortlist"; readonly params: { readonly saveId: SaveId } }
@@ -342,7 +339,6 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "trainingDevelopment":
     case "clubInfo":
     case "boardConfidence":
-    case "clubHistory":
     case "finances":
     case "staffOverview":
     case "shortlist":
@@ -437,8 +433,6 @@ const careerRoute = (
       return { to: "/career/$saveId/club-info", params: { saveId: destination.saveId } };
     case "boardConfidence":
       return { to: "/career/$saveId/board-confidence", params: { saveId: destination.saveId } };
-    case "clubHistory":
-      return { to: "/career/$saveId/club-history", params: { saveId: destination.saveId } };
     case "finances":
       return { to: "/career/$saveId/finances", params: { saveId: destination.saveId } };
     case "staffOverview":

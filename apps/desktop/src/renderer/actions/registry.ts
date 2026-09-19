@@ -43,7 +43,6 @@ export const isCareerScreen = (screen: ScreenName): boolean =>
   screen === "news" ||
   screen === "clubInfo" ||
   screen === "boardConfidence" ||
-  screen === "clubHistory" ||
   screen === "finances" ||
   screen === "staffOverview" ||
   screen === "shortlist" ||
@@ -81,13 +80,9 @@ export const STAFF_SCOPED_SCREENS = [
  */
 export const CLUB_SUB_SURFACE_SCREENS = [
   "clubSquadDetail",
-  "clubReservesDetail",
-  "clubYouthDetail",
   "clubFixturesDetail",
   "clubTransfersDetail",
   "clubFinancesDetail",
-  "clubHistoryDetail",
-  "clubCompetitionsDetail",
   "clubInformation",
 ] as const;
 

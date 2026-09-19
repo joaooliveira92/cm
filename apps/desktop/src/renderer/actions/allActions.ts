@@ -197,7 +197,6 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   training: { showKeyBadges: false },
   clubInfo: { showKeyBadges: false },
   boardConfidence: { showKeyBadges: false },
-  clubHistory: { showKeyBadges: false },
   finances: { showKeyBadges: true },
   staffOverview: { showKeyBadges: false },
   shortlist: { showKeyBadges: false },
@@ -217,13 +216,9 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   playerCoachReport: { showKeyBadges: false },
   // The club sub-surface drill-downs.
   clubSquadDetail: { showKeyBadges: false },
-  clubReservesDetail: { showKeyBadges: false },
-  clubYouthDetail: { showKeyBadges: false },
   clubFixturesDetail: { showKeyBadges: false },
   clubTransfersDetail: { showKeyBadges: false },
   clubFinancesDetail: { showKeyBadges: false },
-  clubHistoryDetail: { showKeyBadges: false },
-  clubCompetitionsDetail: { showKeyBadges: false },
   clubInformation: { showKeyBadges: false },
   // The nation-scoped drill-downs.
   nationOverview: { showKeyBadges: false },

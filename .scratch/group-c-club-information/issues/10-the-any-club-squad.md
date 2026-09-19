@@ -61,4 +61,46 @@ honest that a lineup manager and a roster are different surfaces over it. Read
 **Blocked by:** None. Prefer after [07](07-any-club-squad-fixtures-and-transfers.md), which settles
 the club-scoped view shape on two simpler screens.
 
-**Status:** ready-for-agent
+**Status:** claimed
+
+## Why this is blocked, found 2026-09-19
+
+The ticket above frames Screen 35 as a *rendering* problem — a 2044-line lineup manager against a
+roster. That part is true and still stands. But attempting it surfaced a prior question that has to
+be answered first, and it is not this effort's to answer.
+
+**An any-club squad is a knowledge-limited player read.** `CONTEXT.md` § Scouting Progress:
+
+> A per-(Player, human club) percentage, starting at 0 (Unscouted) for **every player outside the
+> manager's own club**, that narrows Attribute uncertainty as it rises toward Fully Scouted.
+> Own-squad players are always full-info and never carry Scouting Progress.
+
+So the club-scoped rule's premise — *a Club carries no hidden value of its own* — holds for the
+**club** and not for the **players in it**. Screens 34, 38, 39, 40 and 42 were safe precisely
+because none of them lists players. Screen 35 is the first Group C screen that does.
+
+That means the screen cannot be built without deciding what an unscouted rival's player shows:
+exact figures, or Attribute Ranges by Scouting Progress. And that decision is already open as
+[group-i decision request 01](../../group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md),
+which records that `MarketPlayerView` currently carries exact `overallRating` and `transferValue`
+while `CONTEXT.md` says both should be ranges below Fully Scouted — *"CONTEXT.md also disagrees with
+itself."*
+
+Building Screen 35 now would mean either repeating the market's exact figures, which `CONTEXT.md`
+contradicts, or inventing a fogging policy that pre-empts the human's answer. Neither is this
+ticket's to choose.
+
+**This adds a fifth dependent to that request.** [MILESTONES](../../../.ai/MILESTONES.md) records it
+gating Group D 68 and Group J 132, 134 and 137; Group C 35 belongs on the same list.
+
+### What is still true and worth keeping
+
+Everything in the sections above. When the decision lands, Screen 35 is still a roster rather than a
+gated lineup manager, and the club-scoped rule still needs the act-versus-read amendment it already
+carries. The *shape* question is settled; only the *contents* question is blocked.
+
+### What is not blocked
+
+Screen 35's placeholder, `clubSquadDetail/`, stays until this resolves — it is the one Group C
+placeholder [ticket 09](09-cull-the-group-c-placeholders.md) must not remove, because the screen is
+coming rather than disposed.

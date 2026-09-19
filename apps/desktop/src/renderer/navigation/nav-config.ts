@@ -318,12 +318,6 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
         destination: "boardConfidence",
         icon: BarChart3,
       },
-      {
-        id: "club-history",
-        label: "History",
-        destination: "clubHistory",
-        icon: ScrollText,
-      },
     ],
   },
   {

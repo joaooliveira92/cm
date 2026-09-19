@@ -101,7 +101,6 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/training":
     case "/career/$saveId/club-info":
     case "/career/$saveId/board-confidence":
-    case "/career/$saveId/club-history":
     case "/career/$saveId/finances":
     case "/career/$saveId/staff-overview":
     case "/career/$saveId/shortlist":

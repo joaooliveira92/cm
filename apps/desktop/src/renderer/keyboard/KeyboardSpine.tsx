@@ -113,7 +113,6 @@ const SpineOrchestrator = ({
         trainingDevelopment: () => navigateCareer({ type: "trainingDevelopment", saveId }, "keyboard"),
         clubInfo: () => navigateCareer({ type: "clubInfo", saveId }, "keyboard"),
         boardConfidence: () => navigateCareer({ type: "boardConfidence", saveId }, "keyboard"),
-        clubHistory: () => navigateCareer({ type: "clubHistory", saveId }, "keyboard"),
         finances: () => navigateCareer({ type: "finances", saveId }, "keyboard"),
         staffOverview: () => navigateCareer({ type: "staffOverview", saveId }, "keyboard"),
         shortlist: () => navigateCareer({ type: "shortlist", saveId }, "keyboard"),

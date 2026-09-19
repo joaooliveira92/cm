@@ -132,7 +132,9 @@ These need a human, and are the known ways M1 can stall. Raise each as a decisio
   [Group L 172 and 173](../docs/specs/group_l_competitions_nations_and_world_information/RECONCILIATION.md)
   — which strengthens the call: the store is one piece of work serving six screens across three
   groups, and it belongs to whoever builds it, not to a club-information sprint.
-- **Group I decision request 01 — knowledge-limited player reads** gates D 68 Scout Report, and
+- **Group I decision request 01 — knowledge-limited player reads** gates D 68 Scout Report, **C 35
+  the any-club squad** (found 2026-09-19: the first Group C screen that lists players rather than
+  facts about a club), and
   SPRINT-PLAN records it gating Group J 132, 134 and 137 too. D 68 is in scope and blocked until it
   resolves.
 - ~~**Claimed tickets may be abandoned locks**, hiding work from the frontier scan.~~ **Closed

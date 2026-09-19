@@ -113,6 +113,38 @@ Two decisions carry every row below, and neither is re-argued per screen:
 | [47_supporter_and_board_confidence.md](47_supporter_and_board_confidence.md), whole file | `deferred` | Supporter sentiment and board confidence, with their drivers and trends. | Half has a model and half has none. **Board Objective** is modelled — `board_objective`, `board_objective_verdict` — but **supporter confidence is not**; `supporter` and `attendance` appear nowhere. **This screen stays save-scoped and must never acquire a `club/$clubId/` route**: `board_objective` is keyed on `season_number` and names the human's club, so a rival club has no Board Objective at all. That is ticket 04's one exception, and it is subject existence rather than secrecy. | M1 step 3 for the board half; `unscheduled` for supporters. [The club-scoped rule](../../../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md) for why it is save-scoped. |
 | [48_club_comparison.md](48_club_comparison.md), whole file | `deferred` | Two or more clubs compared across competition level, reputation, finances, squad profile, facilities, supporters and honours, on normalised measures. | No comparison mechanism exists, and several of the axes it would compare (facilities, supporters, honours) have no model either. It has never had a placeholder. Matches **Group D Screen 63 Player Comparison**, re-kinded `deferred` on the same reasoning 2026-09-19. | `unscheduled`. Same kind and same reason as Group D 63. |
 
+### The placeholder cull, done 2026-09-19
+
+[Ticket 09](../../../.scratch/group-c-club-information/issues/09-cull-the-group-c-placeholders.md).
+Five folders deleted with their routes, screen-scope entries and — for `clubHistory` — its Club
+section nav entry and its `CareerDestination` type:
+
+| Folder | Screen | Why |
+|---|---|---|
+| `clubReservesDetail/` | 36 | `deferred` — `CONTEXT.md:774`, no reserve squad in v1 |
+| `clubYouthDetail/` | 37 | `deferred` — same sentence |
+| `clubHistory/`, `clubHistoryDetail/` | 43–45 | Follow **Group Q**; out of M1 |
+| `clubCompetitionsDetail/` | none | Ruled here for the first time — see below |
+
+**Two folders answered to no Group C screen, and they go different ways.**
+
+- **`clubCompetitionsDetail/`** — a club's competitions, at `club/$clubId/competitions`. No import
+  screen asks for it, no nav entry reached it, and its content is a line on Screen 34 or a panel on
+  Screen 33 rather than a screen of its own. `deferred` into those, and the placeholder goes: a
+  route nobody specified and nobody can point at a spec for is the clearest case there is.
+- **`clubs/` is not this group's and stays.** It is the **World** section's Clubs browse entry,
+  sibling to `nations` and `competitions`, both of which are Group L's. Recorded here so the next
+  cull does not re-derive it.
+
+**`clubSquadDetail/` also stays**, and for a different reason:
+[ticket 10](../../../.scratch/group-c-club-information/issues/10-the-any-club-squad.md) is blocked
+on [group-i decision request 01](../../../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md).
+Screen 35 is coming rather than disposed, so its placeholder is the one that is not a lie.
+
+Deleting `clubHistory`'s nav entry removes the Club section's History item until Group Q builds it.
+That is the milestone's own instruction — a disposed screen keeps no placeholder — and the entry
+pointing at a WIP page was worth less than its absence.
+
 ### What these rows owe
 
 - **Build tickets** for the screens M1 step 3 can actually reach — 34, 35, 39 (budget half), 40, 42,

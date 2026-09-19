@@ -22,7 +22,6 @@ export type ScreenName =
   | "training"
   | "clubInfo"
   | "boardConfidence"
-  | "clubHistory"
   | "finances"
   | "staffOverview"
   | "shortlist"
@@ -45,13 +44,9 @@ export type ScreenName =
   // The staff-scoped drill-downs.
   // The club sub-surface drill-downs (other club views).
   | "clubSquadDetail"
-  | "clubReservesDetail"
-  | "clubYouthDetail"
   | "clubFixturesDetail"
   | "clubTransfersDetail"
   | "clubFinancesDetail"
-  | "clubHistoryDetail"
-  | "clubCompetitionsDetail"
   | "clubInformation"
   // The nation-scoped drill-downs.
   | "nationOverview"
@@ -112,7 +107,6 @@ export type CareerScreenName =
   | "news"
   | "clubInfo"
   | "boardConfidence"
-  | "clubHistory"
   | "finances"
   | "staffOverview"
   | "shortlist"

@@ -20,6 +20,13 @@ CONTEXT.md also disagrees with itself. Listed says a Bid needs no "for sale" sig
 range below Fully Scouted. Group J found the same exact figures in `BidComposer` and on the market table
 ([inventory](../group-j-transfers-contracts-and-negotiations/issues/01-screen-inventory.md)).
 
+## Dependents found since filing
+
+- **Group C Screen 35 — the any-club squad** (2026-09-19). The first Group C screen that lists
+  *players* rather than facts about a club, so it is the first to meet this question. Blocked as
+  [group-c ticket 10](../group-c-club-information/issues/10-the-any-club-squad.md); its placeholder
+  stays until this resolves.
+
 ## What is already settled
 
 - CONTEXT.md § Scouting: Scouting Progress, Attribute Range, Fully Scouted; own-squad players are

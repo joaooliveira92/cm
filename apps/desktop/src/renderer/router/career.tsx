@@ -331,7 +331,6 @@ const tabToDestination = (
     "news": { type: "news", saveId },
     "clubInfo": { type: "clubInfo", saveId },
     "boardConfidence": { type: "boardConfidence", saveId },
-    "clubHistory": { type: "clubHistory", saveId },
     "finances": { type: "finances", saveId },
     "staffOverview": { type: "staffOverview", saveId },
     "shortlist": { type: "shortlist", saveId },
