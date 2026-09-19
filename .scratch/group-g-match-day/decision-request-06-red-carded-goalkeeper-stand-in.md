@@ -47,3 +47,28 @@ matches that hit the case, so an engineer should not pick one inside a bug fix.
 
 **Option A**, for consistency with the rule the engine already applies to the other two ways a
 goalkeeper leaves.
+
+---
+
+## Answer — Option A, 2026-09-19
+
+**A red-carded goalkeeper drags an outfield stand-in into goal, exactly as an injury or a bring-off
+does.** One rule for all three ways a keeper leaves the pitch.
+
+The give-away that the current behaviour is an oversight rather than a decision: `applyForcedOff`'s doc
+comment already claims it "reuses the red path's `emptySlot`", which is false. The code believes the rule
+it does not implement.
+
+Option B — no automatic stand-in — was rejected on two counts. It applies a different rule to the same
+situation depending on *why* the keeper left, which nothing justifies; and it makes the outcome depend on
+whether the manager is watching, since a quick-result match has nobody to intervene.
+
+This changes what a seed produces, so it is **gated on
+[ticket 31](issues/31-committed-matches-store-their-timeline.md)** with the rest of the engine-rule work.
+
+Ticket 30 already shipped the reporting half — the Match Report lists a stand-in as a **move into goal**
+rather than a substitution — and that work was done under this reading and is now backed by it.
+
+Recorded as
+[a keeper leaving always drags a stand-in](../../.agents/notes/proposed/feature/2026-09-19-a-keeper-leaving-always-drags-a-stand-in.md).
+Decided under the human's standing delegation ("i need you to solve the decisions").

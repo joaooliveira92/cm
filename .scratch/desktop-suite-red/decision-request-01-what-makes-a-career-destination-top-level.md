@@ -95,3 +95,27 @@ A is also the only option that turns the ticket-06 guard from "forces a choice" 
 choice", which is what would stop this list drifting again. C is strictly better and strictly more
 expensive; it is worth doing when someone is already in `nav-config.ts` for the
 [`g 8` work](../navbar-keyboard-intent/issues/02-world-section-advertises-a-dead-g-key.md).
+
+---
+
+## Answer — Option A, 2026-09-19
+
+**A career destination is top-level when the navbar can reach it from anywhere with a save loaded.** The
+six contested screens — `transferHistory`, `contractExpiry`, `budgetReview`, `scoutingAssignment`,
+`scoutingKnowledge`, `trainingCoaching` — move into `CAREER_SCREEN_TYPES`, 22 → 28.
+
+They behave identically to their top-level siblings from a manager's point of view. Classing them as
+sub-surfaces described how they were *built*, not what they *are*, and that kind of distinction decays.
+
+**The part that makes this durable** is the second half: a test derives the expected set from
+`nav-config.ts`, so ticket 06's guard goes from *forcing* a choice to *checking* it. Without that, this
+answer is just another hand-kept list with a nicer rationale.
+
+**One fact has changed since this was filed, in Option C's favour.** `navbar-keyboard-intent` tickets
+02–04 have since made section `g <n>` keys derive from `NAV_SECTIONS` and deleted `CAREER_G_BINDINGS`, so
+`nav-config.ts` is already the derivation source for the keyboard spine. Half of C's work is done, and C
+remains the end state — worth taking the next time someone is in `nav-config.ts` anyway.
+
+Recorded as
+[a career destination is top-level when the navbar reaches it](../../.agents/notes/proposed/architecture/2026-09-19-top-level-means-the-navbar-reaches-it.md).
+Decided under the human's standing delegation ("i need you to solve the decisions").

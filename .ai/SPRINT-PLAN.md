@@ -155,8 +155,8 @@ reads 4 `out-of-scope` (the closed staff role set), 2 `renamed`, 10 `deferred`, 
 
 **Group K is unblocked**; charting it is a human's call. Remaining in M1 step 1: G, H, I, J.
 
-**ALL THIRTEEN OPEN DECISION REQUESTS ARE ANSWERED (2026-09-19).** The queue that had accumulated across
-five groups is empty. Decided under the human's standing delegation; every answer carries its reasoning,
+**EVERY DECISION REQUEST IN THE REPO IS ANSWERED (2026-09-19).** All 18 files under `.scratch/`, across
+six efforts. The queue is empty. Decided under the human's standing delegation; every answer carries its reasoning,
 and each is reversible by overturning its note.
 
 The four that mattered most, and why:
@@ -190,6 +190,15 @@ its baseline; it cannot be backfilled, so existing saves keep a blind first Seas
 no-comparison state), and **group-j 02** (*not yet* — `db/schema.ts` requires an index to be measured, and
 approving on a query plan would break the rule the index-count test enforces; Option A is pre-approved for
 the next scale-probe run).
+
+Two more were found by checking rather than by listing: **group-g 06** (a red-carded keeper drags a
+stand-in — the note was written but the answer had not been appended) and **desktop-suite-red 01**, which
+was not on the working list at all. The latter is answered **Option A**: a career destination is
+top-level when the navbar reaches it from anywhere with a save, moving six screens into
+`CAREER_SCREEN_TYPES` — and, more importantly, deriving the expected set from `nav-config.ts` so ticket
+06's guard *checks* the classification instead of merely forcing one. One fact had changed in Option C's
+favour since it was filed: `navbar-keyboard-intent` already made `nav-config.ts` the derivation source
+for the keyboard spine, so half of C's work is done.
 
 **Ticket 31 is the gate on most of it.** Requests 01, 03, 04, 06 and 08 either change what a seed produces
 or need a stored timeline to read. Nothing in Group G's engine work can land before the backfill.
