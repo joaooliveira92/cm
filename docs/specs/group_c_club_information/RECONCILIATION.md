@@ -61,23 +61,67 @@ line:
 
 | Screen | Import file | Status |
 |---|---|---|
-| 33 Club Overview | [33_club_overview.md](33_club_overview.md) | Not yet audited |
-| 34 Club General Information | [34_club_general_information.md](34_club_general_information.md) | Not yet audited |
-| 35 Club Squad | [35_club_squad.md](35_club_squad.md) | Not yet audited |
-| 36 Reserve Squad | [36_reserve_squad.md](36_reserve_squad.md) | Not yet audited |
-| 37 Youth Squad | [37_youth_squad.md](37_youth_squad.md) | Not yet audited |
+| 33 Club Overview | [33_club_overview.md](33_club_overview.md) | Reviewed — disposed, group-c ticket 05, 2026-09-19 |
+| 34 Club General Information | [34_club_general_information.md](34_club_general_information.md) | Reviewed — disposed, group-c ticket 05, 2026-09-19 |
+| 35 Club Squad | [35_club_squad.md](35_club_squad.md) | Reviewed — disposed, group-c ticket 05, 2026-09-19 |
+| 36 Reserve Squad | [36_reserve_squad.md](36_reserve_squad.md) | Reviewed — disposed, group-c ticket 05, 2026-09-19 |
+| 37 Youth Squad | [37_youth_squad.md](37_youth_squad.md) | Reviewed — disposed, group-c ticket 05, 2026-09-19 |
 | 38 Club Staff | [38_club_staff.md](38_club_staff.md) | Audited — club-staff-presence design, 2026-09-07 |
-| 39 Club Finances | [39_club_finances.md](39_club_finances.md) | Not yet audited |
-| 40 Club Fixtures | [40_club_fixtures.md](40_club_fixtures.md) | Not yet audited |
-| 41 Club Results | [41_club_results.md](41_club_results.md) | Not yet audited |
-| 42 Club Transfers | [42_club_transfers.md](42_club_transfers.md) | Not yet audited |
+| 39 Club Finances | [39_club_finances.md](39_club_finances.md) | Reviewed — disposed, group-c ticket 05, 2026-09-19 |
+| 40 Club Fixtures | [40_club_fixtures.md](40_club_fixtures.md) | Reviewed — disposed, group-c ticket 05, 2026-09-19 |
+| 41 Club Results | [41_club_results.md](41_club_results.md) | Reviewed — disposed, group-c ticket 05, 2026-09-19 |
+| 42 Club Transfers | [42_club_transfers.md](42_club_transfers.md) | Reviewed — disposed, group-c ticket 05, 2026-09-19 |
 | 43 Club History | [43_club_history.md](43_club_history.md) | Follows **Group Q** — needs persisted season history; out of M1, confirmed 2026-09-19 |
 | 44 Club Records | [44_club_records.md](44_club_records.md) | Follows **Group Q** — needs persisted season history; out of M1, confirmed 2026-09-19 |
 | 45 Club Honours | [45_club_honours.md](45_club_honours.md) | Follows **Group Q** — needs persisted season history; out of M1, confirmed 2026-09-19 |
-| 46 Club Information and Facilities | [46_club_information_and_facilities.md](46_club_information_and_facilities.md) | Not yet audited |
-| 47 Supporter and Board Confidence | [47_supporter_and_board_confidence.md](47_supporter_and_board_confidence.md) | Not yet audited |
-| 48 Club Comparison | [48_club_comparison.md](48_club_comparison.md) | Not yet audited |
+| 46 Club Information and Facilities | [46_club_information_and_facilities.md](46_club_information_and_facilities.md) | Reviewed — disposed, group-c ticket 05, 2026-09-19 |
+| 47 Supporter and Board Confidence | [47_supporter_and_board_confidence.md](47_supporter_and_board_confidence.md) | Reviewed — disposed, group-c ticket 05, 2026-09-19 |
+| 48 Club Comparison | [48_club_comparison.md](48_club_comparison.md) | Reviewed — disposed, group-c ticket 05, 2026-09-19 |
 | 49 Team Scout Report | [49_team_scout_report.md](49_team_scout_report.md) | **Shipped** — `team-scout-report` effort, closed 2026-09-09; row corrected 2026-09-19 |
+
+## Screens 33–37, 39–42, 46–48: the remainder
+
+Status: **Reviewed** (group-c ticket 05, 2026-09-19). These are **whole-screen dispositions, not
+section-by-section audits**: the effort ruled on files, so each row cites a whole file and the
+`Reviewed` status means what the table above says it means — unlisted sections were not individually
+checked.
+
+Two decisions carry every row below, and neither is re-argued per screen:
+
+- **[A club screen is club-scoped unless only your club has one](../../../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md)**
+  (ticket 04). One screen per subject, club-scoped; a nav entry is a thin own-club resolver. The
+  exception is subject existence, not visibility — `CONTEXT.md` states that a Club carries no hidden
+  value of its own, so there is no club-level fog for a second screen to model.
+- **[A v1 exclusion is `deferred`](../../../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md)**
+  and [absence of a model is `deferred`](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md).
+  **No row here is `out-of-scope`**, and that is a finding rather than an oversight: not one of the
+  twelve is ruled out by a statement that the thing should not exist in this game. They are missing
+  models and a version boundary, and both of those come back.
+
+| Sections | Kind | What the spec asks | Disposition | Anchor |
+|---|---|---|---|---|
+| [33_club_overview.md](33_club_overview.md), whole file | `deferred` | A club's landing dashboard: competitive position, next fixture, recent form, squad availability, finances, board objectives, facilities and alerts in one permission-aware page. | Not built, and it cannot precede its parts — it composes 34–48 and has no model of its own. It has never had a placeholder. Worth building **after** the screens it summarises, not before. | `unscheduled`, gated on the rest of this group. The permission-aware half is empty: one manager, no viewer-knowledge model at club level. |
+| [34_club_general_information.md](34_club_general_information.md), whole file | `deferred` | A club's identity and standing: name, nation, ground, reputation, ownership and the rest of its descriptive record. | Not built. The model is partly there — **Stature Tier**, and `stadium_name` / `stadium_capacity` on `clubs` — so this is buildable now, and is M1 step 3's. **It has two placeholders, `clubInfo/` and `clubInformation/`, both labelled "Club Information".** Ticket 04 collapses them to one club-scoped screen. | M1 step 3; [the club-scoped rule](../../../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md). |
+| [35_club_squad.md](35_club_squad.md), whole file | `renamed` | A club's playing squad with per-player detail. | The concept exists and ships: `squad/` for the manager's own club, interactive. What is missing is the **any-club** view, which is the same screen with its affordances gated — a capability difference, not a second screen. | **Squad** in [CONTEXT.md](../../../CONTEXT.md); the club-scoped rule. |
+| [36_reserve_squad.md](36_reserve_squad.md), whole file | `deferred` | A reserve squad, its fixtures and player promotion between it and the first team. | Does not exist. **`CONTEXT.md:774`: "Youth integration and youth promotion are cut from v1: no youth or reserve squad exists."** A note for the unwary — `competitions.kind` admits `"reserve"`, so reserve *Competitions* exist while reserve *squads* do not, and a grep finds the wrong one first. | `v1 exclusion — CONTEXT.md:774`. |
+| [37_youth_squad.md](37_youth_squad.md), whole file | `deferred` | A youth squad, youth intake and promotion to the senior squad. | Does not exist, by the same sentence. | `v1 exclusion — CONTEXT.md:774`. |
+| [39_club_finances.md](39_club_finances.md), whole file | `deferred` | A club's financial position: balance, income and expenditure, wage bill, transfer spend and projections. | Not built as a club screen. **Transfer Budget** and **Wage Budget** are modelled — `club_budgets`, one row per club — and `budgetReview/` ships for the own club. Income, expenditure and projections have no model. **Two placeholders, `finances/` and `clubFinancesDetail/`**, collapsed by ticket 04 to one club-scoped screen. | M1 step 3 for the budget half; `unscheduled` for income and expenditure, which have no model at all. |
+| [40_club_fixtures.md](40_club_fixtures.md), whole file | `renamed` | A club's forthcoming fixtures by competition. | The concept exists and ships as `fixtures/` for the own club. The any-club view is the same screen under the club-scoped rule. | **Fixture** in [CONTEXT.md](../../../CONTEXT.md); the club-scoped rule. |
+| [41_club_results.md](41_club_results.md), whole file | `deferred` | Completed matches with score, venue, competition, **attendance**, **player of the match**, tactical summary, and links to reports and statistics. | Partly satisfiable: a Fixture carries its result, and `fixtures/` and `seasonSummary/` show played matches. **Attendance and player-of-the-match have no model** — neither word appears in `schema.ts` or `CONTEXT.md`. It has never had a placeholder. | `unscheduled` for the two missing fields; the played-match half follows Screen 40's treatment. |
+| [42_club_transfers.md](42_club_transfers.md), whole file | `renamed` | A club's transfer activity, in and out. | The concept exists and ships as `transferHistory/` for the own club. The any-club view is the same screen under the club-scoped rule. | **Transfer**, **Bid** in [CONTEXT.md](../../../CONTEXT.md); the club-scoped rule. |
+| [46_club_information_and_facilities.md](46_club_information_and_facilities.md), whole file | `deferred` | Stadium, training ground, youth development, recruitment reach, medical infrastructure, facility ownership, expansions, relocations and planned improvements. | Almost none of it exists. A club has `stadium_name` and `stadium_capacity` and **deliberately no stadium entity** — the schema says a table "would buy ground-sharing and" more than this game wants. `facilit` appears nowhere in `schema.ts` or `CONTEXT.md`; training ground, medical and recruitment infrastructure are unmodelled. The ground half folds into Screen 34. | `unscheduled`. Not `out-of-scope`: nothing states facilities should never exist, and the stadium comment rules out a *table*, not the concept. |
+| [47_supporter_and_board_confidence.md](47_supporter_and_board_confidence.md), whole file | `deferred` | Supporter sentiment and board confidence, with their drivers and trends. | Half has a model and half has none. **Board Objective** is modelled — `board_objective`, `board_objective_verdict` — but **supporter confidence is not**; `supporter` and `attendance` appear nowhere. **This screen stays save-scoped and must never acquire a `club/$clubId/` route**: `board_objective` is keyed on `season_number` and names the human's club, so a rival club has no Board Objective at all. That is ticket 04's one exception, and it is subject existence rather than secrecy. | M1 step 3 for the board half; `unscheduled` for supporters. [The club-scoped rule](../../../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md) for why it is save-scoped. |
+| [48_club_comparison.md](48_club_comparison.md), whole file | `deferred` | Two or more clubs compared across competition level, reputation, finances, squad profile, facilities, supporters and honours, on normalised measures. | No comparison mechanism exists, and several of the axes it would compare (facilities, supporters, honours) have no model either. It has never had a placeholder. Matches **Group D Screen 63 Player Comparison**, re-kinded `deferred` on the same reasoning 2026-09-19. | `unscheduled`. Same kind and same reason as Group D 63. |
+
+### What these rows owe
+
+- **Build tickets** for the screens M1 step 3 can actually reach — 34, 35, 39 (budget half), 40, 42,
+  and 47's board half. Filed as group-c tickets 06–08.
+- **The placeholder cull** for `clubInfo/` and `finances/`, which ticket 04 collapses away, and for
+  `clubReservesDetail/` and `clubYouthDetail/`, whose screens are `deferred` behind a version
+  boundary. That is M1 step 5; filed as group-c ticket 09. Group D owed exactly this ticket and never
+  filed it, and the debt sat in its ledger for five days — hence filing it with the dispositions
+  rather than after them.
 
 ## Screen 38: Club Staff
 

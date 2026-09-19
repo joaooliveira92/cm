@@ -167,8 +167,16 @@ stay.
 An interactive own-club screen is not a second screen: that is a capability difference the resolver
 handles, and building two is how Screen 34's pair came to exist.
 
+### The dispositions ([ticket 05](issues/05-dispose-the-twelve.md), 2026-09-19)
+
+All twelve disposed. **No coverage row reads `Not yet audited`** — M1 exit criterion 2 met for
+Group C. Nine `deferred`, three `renamed`, and **none `out-of-scope`**: not one of the twelve is
+ruled out by a statement that the thing should not exist, which is the opposite of Group D's staff
+screens. Two screens are half-modelled (39, 47) and their halves are named separately, or the build
+ticket would invent the missing one.
+
 ## Not yet specified
 
-Everything below screen level. The three decision tickets are 03, 04 and 05; 05 is blocked on both of
-the others, because a disposition table written before the survey and the own-club ruling would be
-rewritten by each of them.
+The chart is complete; what remains is building. Tickets 06, 07 and 08 are the buildable screens —
+34, then 35/40/42, then the modelled halves of 39 and 47 — and 09 is the placeholder cull, blocked on
+all three because each absorbs placeholders 09 would otherwise delete out from under them.

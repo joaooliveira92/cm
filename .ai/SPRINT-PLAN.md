@@ -240,9 +240,28 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-c-club-information ticket 03** — the screen inventory. Twelve screens (33–37, 39–42, 46–48),
-and for each one what exists in the renderer and what model, if any, backs it. Then **04**, the
-own-club/any-club rule, and **05**, the disposition table. 04 and 05 are blocked on 03 by design.
+**group-c-club-information ticket 06** — Screen 34 as one club-scoped screen, collapsing `clubInfo/`
+and `clubInformation/`. Then **07** (the any-club views of 35, 40, 42), **08** (the modelled halves
+of 39 and 47), and **09** (the cull, blocked on all three).
+
+**M1 exit criterion 2 is met.** Group C's coverage table has no row reading `Not yet audited`, and
+every other group's ledger already had one. Criterion 4 is met too — `check:all` and 47 e2e both
+green. What remains of M1 is criteria 1, 3 and 5: the placeholder cull and the Group L remainder.
+
+**Group C is charted and disposed** (tickets 03–05). Seventeen unaudited rows turned out to be
+twelve screens: 38 and **49** are shipped — 49's row had been lying since its effort closed — and
+43–45 follow Group Q. Of the twelve, nine are `deferred`, three are `renamed`, and **none is
+`out-of-scope`**. That is the finding, not an oversight: not one is ruled out by a statement that the
+thing should not exist, which is exactly the shape Group D's staff screens have and Group C's have
+not.
+
+**The rule that settled it** is [a club screen is club-scoped unless only your club
+has one](../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md).
+The information axis everyone expected to matter is empty — `CONTEXT.md` says a Club carries no
+hidden value of its own, so there is no club-level fog for a second screen to model. What decides it
+is whether a rival club has a **row**: `club_budgets` is keyed on `club_id` so Screen 39 is
+club-scoped; `board_objective` is keyed on `season_number` so a rival has no Board Objective at all
+and Screen 47 stays save-scoped. Group L should quote this rather than re-derive it.
 
 **Group C's remainder is charted** (M1 step 3). The map is
 [`.scratch/group-c-club-information/map.md`](../.scratch/group-c-club-information/map.md), and it

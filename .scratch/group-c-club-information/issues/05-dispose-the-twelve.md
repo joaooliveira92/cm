@@ -39,15 +39,61 @@ Two things fall out and belong in their own tickets, filed from here:
 
 ## Acceptance
 
-- [ ] Twelve rows, one per screen, each with Kind, what the spec asks, disposition and Anchor
-- [ ] No row is `out-of-scope` for a reason that is really a missing model
-- [ ] Every Anchor resolves to something that exists — checked, not assumed
-- [ ] No row in Group C's coverage table reads `Not yet audited`
-- [ ] The follow-on build tickets and the placeholder-cull ticket are filed, not merely mentioned
-- [ ] `pnpm check:all` green, including the markdown link check
+- [x] Twelve rows, one per screen, each with Kind, what the spec asks, disposition and Anchor
+- [x] No row is `out-of-scope` for a reason that is really a missing model
+- [x] Every Anchor resolves to something that exists — checked, not assumed
+- [x] No row in Group C's coverage table reads `Not yet audited`
+- [x] The follow-on build tickets and the placeholder-cull ticket are filed, not merely mentioned
+- [x] `pnpm check:all` green, including the markdown link check
 
 **Blocked by:** [03](03-screen-inventory-and-the-stale-49-row.md) and
 [04](04-one-screen-per-subject-or-two.md) — a disposition table written before the survey and the
 own-club ruling gets rewritten by both.
 
-Status: ready-for-agent
+Status: resolved
+
+## Answer
+
+Twelve rows in [RECONCILIATION.md](../../../docs/specs/group_c_club_information/RECONCILIATION.md).
+**No coverage row reads `Not yet audited`, which is M1 exit criterion 2 met for Group C.**
+
+### Not one row is `out-of-scope`, and that is the finding
+
+The ticket warned about mis-kinding a missing model. The result went further than expected: **none**
+of the twelve is ruled out by a statement that the thing should not exist in this game. Nine are
+`deferred` — a version boundary for 36 and 37, a missing model for the rest — and three are
+`renamed`, because Squad, Fixtures and Transfers already ship for the own club.
+
+That is worth saying plainly, because Group C is the group where `out-of-scope` would have been
+easiest to reach for. Compare Group D's staff screens, which *are* `out-of-scope`: `CONTEXT.md` says
+what Staff **are**, and the screens ask for something else. Nothing in Group C has that shape.
+
+### Two halves, and why the halving matters
+
+- **39 Club Finances** — Transfer Budget and Wage Budget are modelled; income, expenditure and
+  projections are not. A single `deferred` would have hidden a buildable screen.
+- **47 Supporter and Board Confidence** — Board Objective is modelled; supporter confidence is not.
+  And 47 is ticket 04's one exception: `board_objective` is keyed on `season_number`, so a rival has
+  none at all and the screen stays save-scoped.
+
+A screen that is half-modelled needs its halves named, or the build ticket invents the missing one.
+
+### Three screens never had a placeholder
+
+33, 41 and 48. Their absence is a finding: M1 step 5 has nothing to cull for them, and 33 is not a
+screen with a missing model but a *composition* of the other eleven — so it is the last to build,
+not the first.
+
+### Filed, not merely mentioned
+
+- **[06](06-club-general-information.md)** — Screen 34 as one club-scoped screen, collapsing
+  `clubInfo/` and `clubInformation/`.
+- **[07](07-any-club-squad-fixtures-and-transfers.md)** — the any-club views of 35, 40 and 42, with
+  an explicit warning against building three read-only twins.
+- **[08](08-club-finances-and-the-board-half-of-47.md)** — the modelled halves of 39 and 47.
+- **[09](09-cull-the-group-c-placeholders.md)** — M1 step 5 for Group C, blocked on 06–08 because
+  each absorbs placeholders 09 would otherwise delete out from under them.
+
+09 was filed **with** the dispositions rather than after, which is the one process lesson Group D
+paid for: ticket 04 there said to file the cull, nobody did, and the debt sat in the ledger for five
+days.
