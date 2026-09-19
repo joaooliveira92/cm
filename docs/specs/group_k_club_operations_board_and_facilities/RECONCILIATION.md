@@ -78,20 +78,30 @@ The five axes above have no model, and by the rule that milestone M1 step 1 has 
 would reconcile as `deferred`. See
 [per-player statistics are deferred, not ruled out](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md).
 
-The board-relations screens are different, and harder: they are excluded by an explicit `CONTEXT.md`
-decision rather than by mere absence — but that decision says **"do not ship in v1"**, not "never".
-Whether a recorded v1 exclusion is `out-of-scope` or `deferred` is unsettled across the whole corpus,
-and it governs roughly twenty screens in five groups. Raised 2026-09-19 as
-[spec-ledger-kinds decision request 01](../../../.scratch/spec-ledger-kinds/decision-request-01-is-a-v1-exclusion-out-of-scope-or-deferred.md),
-which recommends `deferred`. Charting Group K needs the answer; nothing else does.
+The board-relations screens rest on an explicit `CONTEXT.md` decision rather than on mere absence —
+and **that question is now answered too**: a recorded v1 exclusion is `deferred`, per
+[a v1 exclusion is `deferred`, not `out-of-scope`](../../../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md), settled 2026-09-19.
+
+So every screen in this group has a kind waiting for it before anyone reads a line:
+
+> Absence of a model is `deferred`. A version boundary is `deferred`. Only a design statement that the
+> thing should not exist is `out-of-scope`.
+
+Screens 149, 150 and 160 take `deferred` with the Anchor `v1 exclusion — CONTEXT.md:753`. The five
+modelless axes take `deferred` with `unscheduled`. The candidate for `out-of-scope` is Screen 152 Staff
+Responsibilities, if the closed role set turns out to rule it out the way it ruled out
+[Group D 64–66](../group_d_player_and_staff_records/RECONCILIATION.md) — that is a reading of the
+screen, not a kind question.
+
+**Group K is unblocked.**
 
 ## What this ledger leaves owed
 
 - **The entire group.** Fourteen screens, unread. An effort exists in name with a `map.md` and no
   decisions; charting it is a human's call under
   [SPEC-ROADMAP](../../../.ai/SPEC-ROADMAP.md) § Starting a group.
-- **The v1-exclusion kind question**, above, which Group K cannot be charted without —
-  [spec-ledger-kinds decision request 01](../../../.scratch/spec-ledger-kinds/decision-request-01-is-a-v1-exclusion-out-of-scope-or-deferred.md).
+- ~~**The v1-exclusion kind question**, which Group K could not be charted without.~~ **Settled
+  2026-09-19: `deferred`.** Charting is now only a matter of doing it.
 - **One stale placeholder to rule on.** `renderer/boardConfidence/` is a routed WIP screen for a
   surface this group has not decided to build, and `renderer/finances/` sits in the same position
   between Groups C and K. Both are M1 step 5's to resolve once the rulings exist.

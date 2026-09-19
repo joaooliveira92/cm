@@ -29,14 +29,19 @@ one.
 
 **One correction was made in transcription.** [SPRINT-PLAN.md](../../../.ai/SPRINT-PLAN.md) records
 this effort as "11 screens charted, all disposed". That is not what the survey says. Three screens are
-**satisfied by shipped code**, two are **partial**, and six are `out-of-scope`. Nothing was disposed
+**satisfied by shipped code**, two are **partial**, and six were `out-of-scope`. Nothing was disposed
 about 69, 70 and 72 — they are built and working, which is the opposite of disposed.
+
+**A second correction followed on 2026-09-19**: every one of those six is now `deferred`. Screens 78
+and 79 under [a v1 exclusion is `deferred`](../../../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md), and 73, 74, 76 and Screen 77's eligibility half
+under the absence-of-a-model rule. **No screen in Group E is `out-of-scope`** — each was ruled out for
+a model this game lacks, not for a reason the thing should not exist.
 
 ## What each status asserts
 
 | Status | What silence about a section asserts |
 |---|---|
-| `Disposed in full` | Nothing is owed. The screen was ruled out as a whole file and its one row disposes of every section. |
+| `Deferred in full` | The screen is wanted and not built. Its one row covers every section. |
 | `Reviewed` | Nothing. The rows are what a whole-file survey found; no section was individually checked. |
 
 `Audited` is unused in this group, and the distinction matters more here than in Group D: three
@@ -51,13 +56,13 @@ of them. A `Reviewed` screen can hide a followed-or-not question that an `Audite
 | 70 Squad View Selector | [70_squad_view_selector.md](70_squad_view_selector.md) | Reviewed — satisfied by the shipped Squad screen |
 | 71 Selection Filters | [71_selection_filters.md](71_selection_filters.md) | Reviewed — partial |
 | 72 Player Sorting | [72_player_sorting.md](72_player_sorting.md) | Reviewed — satisfied by the shipped Squad screen |
-| 73 Shirt Number Assignment | [73_shirt_number_assignment.md](73_shirt_number_assignment.md) | Disposed in full |
-| 74 Captain Selection | [74_captain_selection.md](74_captain_selection.md) | Disposed in full |
+| 73 Shirt Number Assignment | [73_shirt_number_assignment.md](73_shirt_number_assignment.md) | Deferred in full |
+| 74 Captain Selection | [74_captain_selection.md](74_captain_selection.md) | Deferred in full |
 | 75 Set Piece Takers | [75_set_piece_takers.md](75_set_piece_takers.md) | Deferred in full — to Group F Screen 86 |
-| 76 Squad Registration | [76_squad_registration.md](76_squad_registration.md) | Disposed in full |
+| 76 Squad Registration | [76_squad_registration.md](76_squad_registration.md) | Deferred in full |
 | 77 Availability and Eligibility | [77_availability_and_eligibility.md](77_availability_and_eligibility.md) | Reviewed — partial |
-| 78 Player Interaction and Grievance | [78_player_interaction_and_grievance.md](78_player_interaction_and_grievance.md) | Disposed in full |
-| 79 Team Meeting and Discipline Decision | [79_team_meeting_and_discipline_decision.md](79_team_meeting_and_discipline_decision.md) | Disposed in full |
+| 78 Player Interaction and Grievance | [78_player_interaction_and_grievance.md](78_player_interaction_and_grievance.md) | Deferred in full — v1 exclusion |
+| 79 Team Meeting and Discipline Decision | [79_team_meeting_and_discipline_decision.md](79_team_meeting_and_discipline_decision.md) | Deferred in full — v1 exclusion |
 
 Ticket references below are deliberately unlinked: they live under `.scratch/`, which is cleared when
 an effort is archived, and this ledger outlives the effort that produced it.
@@ -87,26 +92,28 @@ from the import on that basis; it is flagged because a future audit of Screen 69
 |---|---|---|---|---|
 | [71_selection_filters.md](71_selection_filters.md), whole file | `deferred` | Filtering the squad list by attribute values and player status, not only by position. | A position filter dropdown ships, with a Clear filters control. The `FilterClause` union already models the other filter kinds; no UI reaches them, so they are unreachable rather than unmodelled. | `unscheduled`. The effort's own `map.md` § Not yet specified calls for an extension ticket here and none was filed. Ticket 01. |
 
-## Screens resting on systems this game does not have
+## Screens resting on systems this game does not have yet
+
+**All five rows below were re-kinded from `out-of-scope` to `deferred` on 2026-09-19.**
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
-| [73_shirt_number_assignment.md](73_shirt_number_assignment.md), whole file | `out-of-scope` | Assigning and displaying squad shirt numbers. | No `shirtNumber` exists in the schema, the model, or any surface. A Player is identified by name and **Position**. | No squad-number model. Ticket 01. |
-| [74_captain_selection.md](74_captain_selection.md), whole file | `out-of-scope` | Naming a captain and vice-captain, with leadership affecting the team. | No data model, no route, no component. A navigation stub survives — `{ id: "captains", label: "Captains" }` at `renderer/navigation/spec-nav-config.ts:92` — and points at nothing. | No captaincy model. Ticket 01. The dangling nav stub is owed removal — see § What this ledger leaves owed. |
-| [76_squad_registration.md](76_squad_registration.md), whole file | `out-of-scope` | Registering a squad per competition, with registration windows and squad-size limits. | No registration model. A reserved status abbreviation `Ine` exists in `renderer/table/squad/playerStatus.tsx:133` and nothing sets it. | No competition-registration concept. Ticket 01. |
-| [78_player_interaction_and_grievance.md](78_player_interaction_and_grievance.md), whole file | `out-of-scope` | Conversations with a Player, grievances raised, and the manager's handling of them. | No morale or happiness state. A reserved status abbreviation `Unh` exists in `renderer/table/squad/playerStatus.tsx:169` and nothing sets it. | Morale and dressing-room relationships do not ship in v1 — the **Influence** pillar in [CONTEXT.md](../../../CONTEXT.md). Same ruling as [Group D Screen 58](../group_d_player_and_staff_records/58_player_happiness.md). Ticket 01. |
-| [79_team_meeting_and_discipline_decision.md](79_team_meeting_and_discipline_decision.md), whole file | `out-of-scope` | Team meetings, and disciplinary decisions taken against a Player. | Neither system exists in any form. | **Influence** for the meeting half; for the discipline half, the same absent card-accumulation model as [Group D Screen 60](../group_d_player_and_staff_records/60_player_discipline.md). Ticket 01. |
+| [73_shirt_number_assignment.md](73_shirt_number_assignment.md), whole file | `deferred` | Assigning and displaying squad shirt numbers. | No `shirtNumber` exists in the schema, the model, or any surface. A Player is identified by name and **Position**. | `unscheduled` — no squad-number model. Re-kinded 2026-09-19 under [absence of a model is `deferred`](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md); ticket 01 ruled it `out-of-scope`. |
+| [74_captain_selection.md](74_captain_selection.md), whole file | `deferred` | Naming a captain and vice-captain, with leadership affecting the team. | No data model, no route, no component. A navigation stub survives — `{ id: "captains", label: "Captains" }` at `renderer/navigation/spec-nav-config.ts:92` — and points at nothing. | `unscheduled` — no captaincy model. Re-kinded 2026-09-19 under [absence of a model is `deferred`](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md); ticket 01 ruled it `out-of-scope`. The dangling nav stub is owed removal either way — see § What this ledger leaves owed. |
+| [76_squad_registration.md](76_squad_registration.md), whole file | `deferred` | Registering a squad per competition, with registration windows and squad-size limits. | No registration model. A reserved status abbreviation `Ine` exists in `renderer/table/squad/playerStatus.tsx:133` and nothing sets it. | `unscheduled` — no competition-registration concept. Re-kinded 2026-09-19 under [absence of a model is `deferred`](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md); ticket 01 ruled it `out-of-scope`. |
+| [78_player_interaction_and_grievance.md](78_player_interaction_and_grievance.md), whole file | `deferred` | Conversations with a Player, grievances raised, and the manager's handling of them. | No morale or happiness state. A reserved status abbreviation `Unh` exists in `renderer/table/squad/playerStatus.tsx:169` and nothing sets it. | `v1 exclusion — CONTEXT.md:753`, the **Influence** pillar. [A v1 exclusion is `deferred`](../../../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md), 2026-09-19. Same kind as [Group D Screen 58](../group_d_player_and_staff_records/58_player_happiness.md). Ticket 01 ruled this `out-of-scope`. |
+| [79_team_meeting_and_discipline_decision.md](79_team_meeting_and_discipline_decision.md), whole file | `deferred` | Team meetings, and disciplinary decisions taken against a Player. | Neither system exists in any form. | Both halves `deferred`, 2026-09-19: `v1 exclusion — CONTEXT.md:753` for the meeting half ([note](../../../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md)), and the absent card-accumulation model for the discipline half, as [Group D Screen 60](../group_d_player_and_staff_records/60_player_discipline.md). Ticket 01 ruled it `out-of-scope`. |
 
 The two reserved status values are worth noting together: `Ine` and `Unh` are vocabulary this codebase
-carries for systems it then declined to build. Neither is ever set. They are not evidence that the
-screens are coming.
+carries for systems it has not built. Neither is ever set. They are not evidence that the screens are
+coming — a `deferred` row is not a commitment — but they do record that someone once expected them.
 
 ## Screen 77: partly live, partly resting on an absent model
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
 | [77_availability_and_eligibility.md](77_availability_and_eligibility.md), availability | `deferred` | Whether a Player is available: fitness, standing injuries and their durations. | **Condition** and the Tired state are live and shown on the Squad table, and an injury drill-down route exists. There are no standing injury durations — **Injury** is a per-match event, so nothing says a Player is out for three weeks. | `unscheduled`. The durable injury record this needs is the same one [Group D Screen 59](../group_d_player_and_staff_records/59_player_injuries.md) was ruled `out-of-scope` for lacking. Ticket 01. |
-| [77_availability_and_eligibility.md](77_availability_and_eligibility.md), eligibility | `out-of-scope` | Whether a Player is eligible: suspensions, card accumulation, competition registration. | None of the three exists. Cards do not accumulate, no Player is suspended, and nothing registers a squad. | The same absent models as Screens 76 and 79 and [Group D Screen 60](../group_d_player_and_staff_records/60_player_discipline.md). Ticket 01. |
+| [77_availability_and_eligibility.md](77_availability_and_eligibility.md), eligibility | `deferred` | Whether a Player is eligible: suspensions, card accumulation, competition registration. | None of the three exists. Cards do not accumulate, no Player is suspended, and nothing registers a squad. | `unscheduled` — the same absent models as Screens 76 and 79 and [Group D Screen 60](../group_d_player_and_staff_records/60_player_discipline.md). Re-kinded 2026-09-19 under [absence of a model is `deferred`](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md); ticket 01 ruled it `out-of-scope`. |
 
 This is the one screen in the group whose two halves were ruled differently, which is why it is
 `Reviewed — partial` rather than disposed: availability is wanted and half-built, eligibility is not

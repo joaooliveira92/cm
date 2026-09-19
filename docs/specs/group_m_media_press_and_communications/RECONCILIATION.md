@@ -32,8 +32,9 @@ and `CONTEXT.md` is unchanged because it was already right.
 Ticket 02 chose "out of v1". It did not say whether that means `out-of-scope` or `deferred` in this
 ledger's vocabulary, and those mean opposite things — `out-of-scope` is never revisited, `deferred` is.
 
-**This ledger records the rows as `deferred`, provisionally, and flags the question rather than settling
-it.** The reasoning:
+**Settled 2026-09-19: the rows are `deferred`.** They were provisional when this ledger was written;
+[a v1 exclusion is `deferred`](../../../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md) confirms them and applies the same kind across the corpus.
+The reasoning that made it a question:
 
 - The effort's ruling rests on a **v1 exclusion**, and `CONTEXT.md` says "do not ship in v1", not
   "never". On its face that is `deferred`.
@@ -45,16 +46,17 @@ it.** The reasoning:
   58 and 60, Group E 78 and 79, Group J 137–140, and Group K's board-relations screens all rest on the
   same `CONTEXT.md` sentence.
 
-Deciding it for twenty screens is not a transcription pass's call. Raised as a decision request; see
-§ What this ledger leaves owed. `deferred` is the provisional kind because it is the reversible one —
-if the answer is `out-of-scope`, changing these rows costs nothing, whereas an `out-of-scope` row that
-should have been `deferred` is one nobody re-reads.
+Deciding it for twenty screens was not a transcription pass's call, so it was raised as
+[spec-ledger-kinds decision request 01](../../../.scratch/spec-ledger-kinds/decision-request-01-is-a-v1-exclusion-out-of-scope-or-deferred.md)
+and answered `deferred` the same day. The asymmetry that made `deferred` the safe provisional kind is
+also why it is the right permanent one: an `out-of-scope` row that should have been `deferred` is one
+nobody re-reads.
 
 ## What each status asserts
 
 | Status | What silence about a section asserts |
 |---|---|
-| `Deferred in full` | Nothing is owed. The screen was excluded as a whole file and its one row covers every section. The kind is provisional; see above. |
+| `Deferred in full` | Nothing is owed. The screen was excluded as a whole file and its one row covers every section. |
 
 No screen here is `Audited` or `Reviewed`. A section-by-section pass is not owed on a group excluded as
 a whole, which is the same treatment the
@@ -107,10 +109,10 @@ group:
 
 ## What this ledger leaves owed
 
-- **The kind question, for roughly twenty screens in five groups.** Is a recorded `CONTEXT.md` v1
-  exclusion `out-of-scope` or `deferred`? It governs this group's thirteen screens plus Group D 58 and
-  60, Group E 78 and 79, Group J 137–140, and Group K's board-relations screens — and Group K cannot be
-  charted without it. Raised 2026-09-19 as [spec-ledger-kinds decision request 01](../../../.scratch/spec-ledger-kinds/decision-request-01-is-a-v1-exclusion-out-of-scope-or-deferred.md), which recommends `deferred`.
+- ~~**The kind question, for roughly twenty screens in five groups.**~~ **Settled 2026-09-19:
+  `deferred`.** It governed this group's thirteen screens plus Group D 58 and 60, Group E 78 and 79,
+  Group J 137–140, and Group K's board-relations screens, and it was what blocked charting Group K.
+  Recorded as [a v1 exclusion is `deferred`, not `out-of-scope`](../../../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md).
 - **Nothing else.** This group has no unfiled ticket, no stale placeholder and no open modelling
   question that is reachable without reopening the scope decision. Its effort closed cleanly, which
   makes it the one group in the M1 sweep that transcription did not have to correct.

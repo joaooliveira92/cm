@@ -34,10 +34,14 @@ Two consequences follow, and both matter when reading a row:
 satisfied-inline (51, 52, 53)" and "2 deferred (55, 62, 68)". Ticket 04's own disposition table says
 53 Player Form is `out-of-scope`, and lists three deferred screens, not two. The ticket's table is
 authoritative and the summary miscounts; the rows below follow the ticket. The arithmetic now closes:
-10 out-of-scope + 2 renamed + 4 deferred + 3 implemented = 19.
+4 out-of-scope + 2 renamed + 10 deferred + 3 implemented = 19.
 
-**One row was re-kinded after transcription.** Screen 54 Player Statistics moved from `out-of-scope`
-to `deferred` on 2026-09-19, which is why the counts above are not ticket 04's. See § Screen 54.
+**Six rows were re-kinded after transcription**, which is why the counts above are not ticket 04's:
+Screens 53, 54, 58, 59, 60 and 63 moved from `out-of-scope` to `deferred` on 2026-09-19. Screen 58 under
+[a v1 exclusion is `deferred`](../../../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md); the other five under the absence-of-a-model rule. Every one
+of the six was ruled out for lacking a model rather than on principle — none of them for a stated
+reason the thing should not exist. What survives as `out-of-scope` is Screens 64–67, where the closed
+role set says what Staff *are*.
 
 ## How to read a row
 
@@ -66,17 +70,17 @@ section-by-section pass, and marking one `Audited` would assert a pass nobody ma
 | 50 Player Profile | [50_player_profile.md](50_player_profile.md) | Reviewed — implemented 2026-09-14 |
 | 51 Player Attributes | [51_player_attributes.md](51_player_attributes.md) | Disposed in full |
 | 52 Player Positions | [52_player_positions.md](52_player_positions.md) | Disposed in full |
-| 53 Player Form | [53_player_form.md](53_player_form.md) | Disposed in full |
+| 53 Player Form | [53_player_form.md](53_player_form.md) | Deferred in full |
 | 54 Player Statistics | [54_player_statistics.md](54_player_statistics.md) | Deferred in full — to Group P |
 | 55 Player History | [55_player_history.md](55_player_history.md) | Disposed in full |
 | 56 Player Contract | [56_player_contract.md](56_player_contract.md) | Reviewed — implemented 2026-09-14 |
 | 57 Player Transfer Status | [57_player_transfer_status.md](57_player_transfer_status.md) | Disposed in full |
-| 58 Player Happiness | [58_player_happiness.md](58_player_happiness.md) | Disposed in full |
-| 59 Player Injuries | [59_player_injuries.md](59_player_injuries.md) | Disposed in full |
-| 60 Player Discipline | [60_player_discipline.md](60_player_discipline.md) | Disposed in full |
+| 58 Player Happiness | [58_player_happiness.md](58_player_happiness.md) | Deferred in full — v1 exclusion |
+| 59 Player Injuries | [59_player_injuries.md](59_player_injuries.md) | Deferred in full |
+| 60 Player Discipline | [60_player_discipline.md](60_player_discipline.md) | Deferred in full |
 | 61 Player Development and Training Effects | [61_player_development_and_training_effects.md](61_player_development_and_training_effects.md) | Reviewed — implemented 2026-09-14 |
 | 62 Player Action Menu | [62_player_action_menu.md](62_player_action_menu.md) | Disposed in full |
-| 63 Player Comparison | [63_player_comparison.md](63_player_comparison.md) | Disposed in full |
+| 63 Player Comparison | [63_player_comparison.md](63_player_comparison.md) | Deferred in full |
 | 64 Staff Profile | [64_staff_profile.md](64_staff_profile.md) | Disposed in full |
 | 65 Staff Contract | [65_staff_contract.md](65_staff_contract.md) | Disposed in full |
 | 66 Staff History | [66_staff_history.md](66_staff_history.md) | Disposed in full |
@@ -104,25 +108,26 @@ contract to show, and no staff career to list.
 | [67_coach_report.md](67_coach_report.md), whole file | `out-of-scope` | A Coach's written assessment of a player's ability and potential. | No counterpart exists, and none is planned. The **Coach** affects **Technical Coaching** and Regimen; it produces no report. | Ticket 02 — "no counterpart". Note that `PlayerCoachReportScreen.tsx` exists in the renderer and belongs to Group H's training work, not to this screen. |
 | [68_scout_report.md](68_scout_report.md), whole file | `deferred` | A per-player scout report: scouted knowledge, ability and potential estimates, recommendation. | No dedicated screen. A Player's scouted knowledge already surfaces as **Attribute Range** values inline wherever that Player is shown, so the information is reachable and only the report surface is missing. | `unscheduled`, and blocked on Group I decision request 01 (knowledge-limited player reads). The club-level equivalent shipped as **Team Scout Report** (Screen 49). Ticket 02. |
 
-## Screens resting on systems this game does not have
+## Screens resting on systems this game does not have yet
 
-Five screens are disposed because the system they display was never built and is not planned. Grouped
-because the ruling is the same shape each time: there is no model, so there is nothing to render.
+Five screens are **deferred** because the system they display has never been built. Grouped because
+the ruling is the same shape each time: there is no model, so there is nothing to render.
+
+**All five were re-kinded from `out-of-scope` on 2026-09-19.** Group D's effort ruled them out for the
+absence of a model, which is a statement about today rather than about the game. Each names the model
+that would bring it back.
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
-| [58_player_happiness.md](58_player_happiness.md), whole file | `out-of-scope` | Player morale, mood, and dressing-room relationships, with the manager acting on them. | No morale model. Nothing computes, stores or displays how a Player feels. | Morale and dressing-room relationships do not ship in v1 — the **Influence** pillar in [CONTEXT.md](../../../CONTEXT.md). Ticket 03. |
-| [60_player_discipline.md](60_player_discipline.md), whole file | `out-of-scope` | Card accumulation, suspensions, bans and disciplinary history. | Cards are **Match Event**s within a match. Nothing accumulates them across matches, and no Player is ever suspended. | No card-accumulation or ban model. Ticket 03. Group G's Screen 104 Disciplinary Review rests on the same absent model. |
-| [63_player_comparison.md](63_player_comparison.md), whole file | `out-of-scope` | Side-by-side comparison of two or more players across attributes. | No comparison mechanism exists on any surface. | Ticket 03. |
-| [53_player_form.md](53_player_form.md), whole file | `out-of-scope` | Recent form: a rolling window of the last N matches, with ratings and a trend. | Requires a per-Player match-rating history that is not modelled, and no shipped feature depends on it. | Ticket 04 — "a dedicated effort if needed". |
-| [59_player_injuries.md](59_player_injuries.md), whole file | `out-of-scope` | A Player's injury history: past injuries, durations, recurrence and proneness over time. | **Injury** is a per-match event with no durable per-Player record. **Injury Proneness** exists as an Attribute, but nothing accumulates what happened to a Player. | Ticket 04 — building the record is a data-modelling effort not justified by current needs. |
+| [58_player_happiness.md](58_player_happiness.md), whole file | `deferred` | Player morale, mood, and dressing-room relationships, with the manager acting on them. | No morale model. Nothing computes, stores or displays how a Player feels. | `v1 exclusion — CONTEXT.md:753`, the **Influence** pillar. [A v1 exclusion is `deferred`](../../../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md), 2026-09-19. Ticket 03 ruled this `out-of-scope`. |
+| [60_player_discipline.md](60_player_discipline.md), whole file | `deferred` | Card accumulation, suspensions, bans and disciplinary history. | Cards are **Match Event**s within a match. Nothing accumulates them across matches, and no Player is ever suspended. | `unscheduled` — no card-accumulation or ban model. Re-kinded 2026-09-19 under [absence of a model is `deferred`](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md); ticket 03 ruled it `out-of-scope`. Group G's Screen 104 rests on the same absent model. |
+| [63_player_comparison.md](63_player_comparison.md), whole file | `deferred` | Side-by-side comparison of two or more players across attributes. | No comparison mechanism exists on any surface. | `unscheduled`. Re-kinded 2026-09-19 under [absence of a model is `deferred`](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md); ticket 03 ruled it `out-of-scope`. |
+| [53_player_form.md](53_player_form.md), whole file | `deferred` | Recent form: a rolling window of the last N matches, with ratings and a trend. | Requires a per-Player match-rating history that is not modelled, and no shipped feature depends on it. | `unscheduled` — ticket 04, "a dedicated effort if needed". Re-kinded 2026-09-19 under [absence of a model is `deferred`](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md). Needs a per-Player match *rating* history, which Group P's store may or may not supply. |
+| [59_player_injuries.md](59_player_injuries.md), whole file | `deferred` | A Player's injury history: past injuries, durations, recurrence and proneness over time. | **Injury** is a per-match event with no durable per-Player record. **Injury Proneness** exists as an Attribute, but nothing accumulates what happened to a Player. | `unscheduled` — ticket 04: building the record is a data-modelling effort not justified by current needs. Re-kinded 2026-09-19 under [absence of a model is `deferred`](../../../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md). Group E Screen 77's availability half needs the same record. |
 
-`out-of-scope` means these cannot return without overturning the ruling. **Screens 53 and 59 are the
-weakest two**: each was ruled out for the absence of a model rather than on principle, and each names
-the model that would bring it back. Screen 54 was the third and has since been re-kinded to `deferred`
-— see below — which is the precedent for re-reading these two. 53 needs a per-Player match *rating*
-history and 59 a durable injury record; if either model arrives, or if **Influence** enters scope,
-re-read these rows before assuming the screens stay out.
+All five are revisitable, and two have a named dependency worth watching: Screen 53 needs a per-Player
+match *rating* history and Screen 59 a durable injury record, which Group E Screen 77's availability
+half also waits on. Screens 58 and 60 return if **Influence** or a discipline model enters scope.
 
 ## Screen 54: deferred, and re-kinded
 

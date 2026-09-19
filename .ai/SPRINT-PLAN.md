@@ -65,14 +65,25 @@ opposites: Group M's effort closed cleanly and is the one group transcription di
 while **Group K has no rulings at all** — a `map.md` whose Decisions section reads `<!-- none yet -->`,
 no tickets, no spec, fourteen screens unread. Its ledger records that gap.
 
-**A third decision request is open, and it is the largest so far.** Is a recorded `CONTEXT.md` v1
-exclusion `out-of-scope` or `deferred`? It governs ~20 screens in five groups — all of Group M, Group D
-58 and 60, Group E 78 and 79, Group J 137–140, and Group K's board screens — and the ledgers are
-currently inconsistent about it: Group M's thirteen are provisionally `deferred` while Group D's and
-Group E's four are `out-of-scope`, for exclusions in the same sentence of the same file.
-[spec-ledger-kinds decision request 01](../.scratch/spec-ledger-kinds/decision-request-01-is-a-v1-exclusion-out-of-scope-or-deferred.md)
-recommends `deferred`. **It blocks charting Group K and nothing else.** Remaining in step 1: G, H, I, J,
-none of which needs the answer.
+**The third and largest decision request was answered 2026-09-19: `deferred`.** A recorded
+`CONTEXT.md` v1 exclusion is `deferred`, not `out-of-scope`, with the exclusion named in the Anchor
+rather than a fifth kind being added. Recorded as
+[a v1 exclusion is `deferred`, not `out-of-scope`](../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md),
+which amends the ledger-format note: the four kinds were defined without saying how to choose between
+two of them in the commonest case.
+
+**The rule is now complete, and it is the main durable output of M1 step 1 so far:**
+
+> Absence of a model is `deferred`. A version boundary is `deferred`. Only a design statement that the
+> thing should not exist is `out-of-scope`.
+
+Applied the same day across two groups, in two passes with different authority — this decision moved
+Group D 58 and Group E 78 and 79 and confirmed Group M's thirteen; the already-approved absence rule
+moved Group D 53, 59, 60 and 63 and Group E 73, 74, 76 and Screen 77's eligibility half. Group D now
+reads 4 `out-of-scope` (the closed staff role set), 2 `renamed`, 10 `deferred`, 3 implemented, and
+**no screen in Group E is `out-of-scope` at all**.
+
+**Group K is unblocked**; charting it is a human's call. Remaining in M1 step 1: G, H, I, J.
 
 ## Immediate next action
 

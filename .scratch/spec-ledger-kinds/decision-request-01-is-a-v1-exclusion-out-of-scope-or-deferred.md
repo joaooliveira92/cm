@@ -108,3 +108,34 @@ worth stating in `CONTEXT.md` directly rather than leaving twenty ledger rows to
   hit this when that group is next touched.
 - **Proceeding meanwhile**: everything else. M1 step 1 has four groups left (G, H, I, J), none of which
   needs this answer to be transcribed.
+
+---
+
+## Answer — Option A, 2026-09-19
+
+**`deferred`.** Approved by the human in one word, which is the whole answer.
+
+Recorded as [a v1 exclusion is `deferred`, not `out-of-scope`](../../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md),
+which amends the ledger-format note rather than sitting beside it: the four kinds were defined without
+saying how to choose between two of them in the commonest case, and now they say.
+
+The Anchor names the exclusion — `v1 exclusion — CONTEXT.md:753` — rather than a bare `unscheduled`,
+so no fifth kind was added. `out-of-scope` is now reserved for a positive statement that the thing
+should not exist in this game, with the closed **Bound Staff** / **Presence Staff** role set as the
+model case.
+
+**The completed rule**, across all three decisions this class produced:
+
+> Absence of a model is `deferred`. A version boundary is `deferred`. Only a design statement that the
+> thing should not exist is `out-of-scope`.
+
+**Applied the same day**, in two passes with different authority:
+
+- *This decision* — Group D 58, Group E 78 and 79 re-kinded; Group M's thirteen confirmed.
+- *The already-approved absence rule* — Group D 53, 59, 60, 63 and Group E 73, 74, 76 and Screen 77's
+  eligibility half, listed in the note so the sweep is traceable to one place.
+
+Group D now reads 4 `out-of-scope`, 2 `renamed`, 10 `deferred`, 3 implemented. **No screen in Group E
+is `out-of-scope` at all.**
+
+Unblocked: charting Group K.

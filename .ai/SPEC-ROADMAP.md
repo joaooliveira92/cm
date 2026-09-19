@@ -52,11 +52,11 @@ logic. A placeholder is a slot waiting for a screen, not evidence that the scree
 | C Club information | 33–49 | 38 Audited (club-staff-presence). 49 shipped in full (`team-scout-report`, 8/8). The other 15 are unreconciled. | 38 only |
 | F Tactics and match preparation | 80–90 | 80 shipped (`group-f-tactics-and-match-preparation`, 3/3; no map or spec) and now `Reviewed`. 81–90 unreconciled, and 86 is blocked on decision request 01. Ledger created 2026-09-18 (M1 step 1) to make that gap visible. | Yes |
 | R Multiplayer administration | 250–262 | Disposed in full under the multiplayer axis, 2026-09-13. | Yes |
-| D Player and staff records | 50–68 | Reconciled. 10 disposed, 2 `renamed` onto the Squad table, 4 deferred, 3 shipped. Ledger transcribed from `.scratch/` 2026-09-18 (M1 step 1). | Yes |
-| E Squad management | 69–79 | Reconciled. Screens 69–72 satisfied by the shipped Squad screen, 71 and 77 partial, five disposed, 75 `deferred` to Group F 86. Ledger transcribed 2026-09-18 (M1 step 1). | Yes |
+| D Player and staff records | 50–68 | Reconciled. 4 `out-of-scope` (the closed staff role set), 2 `renamed` onto the Squad table, 10 `deferred`, 3 shipped. Ledger transcribed from `.scratch/` 2026-09-18 (M1 step 1). | Yes |
+| E Squad management | 69–79 | Reconciled. Screens 69–72 satisfied by the shipped Squad screen, 71 and 77 partial, the rest `deferred` — **no screen in the group is `out-of-scope`**. 75 is `deferred` to Group F 86. Ledger transcribed 2026-09-18 (M1 step 1). | Yes |
 | L Competitions, nations and world | 161–180 | Reconciled. 162 and 163 shipped, 161 and 164 in v1 with no ticket, the other sixteen `deferred`. **Nothing in the group is `out-of-scope`.** Ledger transcribed 2026-09-18 (M1 step 1). | Yes |
-| K Board and facilities | 147–160 | **Unreconciled — no rulings exist.** Its effort has a `map.md` with `<!-- none yet -->` under Decisions, no tickets and no spec. Ledger created 2026-09-18 (M1 step 1) to record the gap. Blocked on decision request 01. | Yes |
-| M Media and press | 181–193 | Reconciled. All thirteen screens out of v1 on `CONTEXT.md`'s own exclusion, which predates the import. Kind provisionally `deferred` pending decision request 01. Ledger transcribed 2026-09-18. | Yes |
+| K Board and facilities | 147–160 | **Unreconciled — no rulings exist.** Its effort has a `map.md` with `<!-- none yet -->` under Decisions, no tickets and no spec. Ledger created 2026-09-18 (M1 step 1) to record the gap. Unblocked 2026-09-19; charting it is a human's call. | Yes |
+| M Media and press | 181–193 | Reconciled. All thirteen screens `deferred` on `CONTEXT.md`'s own v1 exclusion, which predates the import. Ledger transcribed 2026-09-18. | Yes |
 | G–J | 91–146 | Charted as `.scratch/` efforts, several with shipped screens, but the rulings live only in `.scratch/` and are lost when an effort is archived. Giving them durable ledgers is [M1](MILESTONES.md) step 1. | No |
 | N–Q, S | 194–249, 264–277 | Unreconciled, and no effort exists. | No |
 
