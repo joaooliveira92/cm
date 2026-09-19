@@ -119,10 +119,13 @@ Each is checkable, and the first is a command:
 These need a human, and are the known ways M1 can stall. Raise each as a decision request
 (`templates/decision-request.md`) rather than deciding it in a sprint:
 
-- **C 43–45 — History, Records and Honours need persisted season history.** SPEC-ROADMAP flags this
-  as either "take them after Q" or "carve out a history store here". M1 assumes the former and drops
-  43–45 from scope unless the answer says otherwise. It is the one scope line in this milestone that
-  is not yet settled.
+- ~~**C 43–45 — History, Records and Honours need persisted season history.**~~ **Confirmed
+  2026-09-19**: they follow Group Q rather than carving a history store inside M1, and are out of this
+  milestone's scope. The M1 sweep since found three more screens waiting on the same persisted-history
+  gap — [Group D 55](../docs/specs/group_d_player_and_staff_records/55_player_history.md) and
+  [Group L 172 and 173](../docs/specs/group_l_competitions_nations_and_world_information/RECONCILIATION.md)
+  — which strengthens the call: the store is one piece of work serving six screens across three
+  groups, and it belongs to whoever builds it, not to a club-information sprint.
 - **Group I decision request 01 — knowledge-limited player reads** gates D 68 Scout Report, and
   SPRINT-PLAN records it gating Group J 132, 134 and 137 too. D 68 is in scope and blocked until it
   resolves.

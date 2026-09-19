@@ -60,7 +60,33 @@ model is `deferred` unless something states the model should never exist. `out-o
 the thing should not be in the game, not merely the observation that it is not there yet. Three of the
 four corrections M1 step 1 has found so far are this error.
 
-**M1 step 1 — ledger durability sweep, 6 of 10 done (2026-09-19).** Groups K and M added. They are
+**M1 step 1 — ledger durability sweep, 9 of 10 done (2026-09-19).** Groups H, I and J added, and
+they were the easy three: each had already written its scope ruling as an **Agent Note** rather than
+leaving it in `.scratch/`, so the decision behind every row already outlived its effort. All three used
+`deferred` correctly, before the rule existed to require it. What they lacked was only a per-screen
+coverage table.
+
+Three findings from them are worth carrying:
+
+- **Group I's survey recorded a live contradiction in shipped code**: the transfer market shows exact
+  figures for unscouted Players, while the Scouting Knowledge screen withholds them. group-i decision
+  request 01 is the most far-reaching open question in the sweep — it gates Group D 68, Group I 119 and
+  129, and Group J 132, 134 and 137.
+- **Group J's import assumes a different game.** Six screens rest on multi-round negotiation that this
+  game's single-round **Bid** and never-renegotiated **Contract** do not have. Not gaps — different
+  rules.
+- **Group J Screen 140 is built and withheld**, held as a patch pending group-j decision request 01
+  (can a Contract be renewed while it still has years to run). The cheapest unblock in the sweep: one
+  rule question between a finished patch and a shipped screen.
+
+**One correction to my own earlier work**: spec-ledger-kinds decision request 01 listed "137–140" as
+resting on the `CONTEXT.md` v1 exclusion. Screen 140 Contract Renewal is in v1 and `renewContract`
+ships — the exclusion covers *negotiation*, so it reaches 137–139 and stops.
+
+**Only Group G is left in step 1.** It is the heaviest: 14 screens, ~30 tickets, eight decision
+requests.
+
+Groups K and M added earlier the same day. They are
 opposites: Group M's effort closed cleanly and is the one group transcription did not have to correct,
 while **Group K has no rulings at all** — a `map.md` whose Decisions section reads `<!-- none yet -->`,
 no tickets, no spec, fourteen screens unread. Its ledger records that gap.
