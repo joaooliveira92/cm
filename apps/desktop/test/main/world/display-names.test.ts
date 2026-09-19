@@ -392,29 +392,63 @@ describe("no read path outside the seam takes a club name from a column", () => 
    *
    *  The select-list pattern refuses to cross a `FROM` or a nested `SELECT`, so it reads the
    *  clubs query's own columns rather than any `name` that happens to precede a `(SELECT id FROM
-   *  clubs …)` subquery elsewhere in the same template literal. */
-  const SELECTS_CLUBS_NAME =
-    /SELECT(?:(?!\bFROM\b|\bSELECT\b)[^`])*\bname\b(?:(?!\bFROM\b|\bSELECT\b)[^`])*FROM\s+clubs\b/is;
+   *  clubs …)` subquery elsewhere in the same template literal.
+   *
+   *  **A qualified `name` must belong to the clubs alias.** A select rooted at `clubs` may join
+   *  another table and take *its* name — `getClubInformation` joins `cities` for the club's home
+   *  town — and reading `ct.name` is not reading a club's name. Matching any qualified `name` in a
+   *  clubs-rooted select made this guard fire on a file that does exactly what the seam asks.
+   *  Qualifier-less `name` still matches: in a clubs-rooted select it can only be the club's. */
+  const clubsSelectListOf = (source: string): readonly string[] =>
+    [...source.matchAll(/SELECT((?:(?!\bFROM\b|\bSELECT\b)[^`])*)FROM\s+clubs\b\s*(\w+)?/gis)].map(
+      (match) => {
+        const [, selectList = "", clubsAlias] = match;
+        // Strip every `<other>.name`, keeping `<clubsAlias>.name` and the unqualified form.
+        return clubsAlias === undefined
+          ? selectList.replaceAll(/\w+\.name\b/gi, "")
+          : selectList.replaceAll(
+              new RegExp(`(?!\\b${clubsAlias}\\.)\\w+\\.name\\b`, "gi"),
+              "",
+            );
+      },
+    );
+
+  const selectsClubsName = (source: string): boolean =>
+    clubsSelectListOf(source).some((selectList) => /\bname\b/i.test(selectList));
+
   const SELECTS_ALIASED_NAME = /\w+\.name as "\w*[Cc]lubName"/;
 
   it("still recognises both shapes of a club-name read", () => {
     // The guard is a regex over source text, so it is only worth its green when it is shown to
     // fail on the thing it exists to catch.
-    expect(SELECTS_CLUBS_NAME.test("sql`SELECT id, name FROM clubs WHERE is_user_club = 1`")).toBe(true);
-    expect(SELECTS_CLUBS_NAME.test('sql`SELECT c.id,\n c.name\n FROM clubs c`')).toBe(true);
+    expect(selectsClubsName("sql`SELECT id, name FROM clubs WHERE is_user_club = 1`")).toBe(true);
+    expect(selectsClubsName('sql`SELECT c.id,\n c.name\n FROM clubs c`')).toBe(true);
     expect(SELECTS_ALIASED_NAME.test('c.name as "clubName"')).toBe(true);
     // And is not tripped by a select whose `name` belongs to another table.
     expect(
-      SELECTS_CLUBS_NAME.test(
+      selectsClubsName(
         "sql`SELECT id, name FROM staff WHERE club_id = (SELECT id FROM clubs WHERE is_user_club = 1)`",
       ),
     ).toBe(false);
+    // Nor by a clubs-rooted select that joins another table and takes *its* name — the shape
+    // `getClubInformation` uses for the club's home town.
+    expect(
+      selectsClubsName(
+        'sql`SELECT c.stature_tier, ct.name as "cityName" FROM clubs c JOIN cities ct ON ct.id = c.city_id`',
+      ),
+    ).toBe(false);
+    // But the clubs alias's own name still trips it, even beside a joined table's.
+    expect(
+      selectsClubsName(
+        'sql`SELECT c.name, ct.name as "cityName" FROM clubs c JOIN cities ct ON ct.id = c.city_id`',
+      ),
+    ).toBe(true);
   });
 
   it("selects no club name anywhere in the main process", () => {
     const offenders = sourceFiles(mainDir).filter((file) => {
       const source = readFileSync(file, "utf8");
-      return SELECTS_CLUBS_NAME.test(source) || SELECTS_ALIASED_NAME.test(source);
+      return selectsClubsName(source) || SELECTS_ALIASED_NAME.test(source);
     });
     expect(offenders.map((file) => path.relative(mainDir, file))).toEqual([]);
   });

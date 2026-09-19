@@ -28,6 +28,7 @@ import { getManagerProfile, getManagerProfileScreen } from "../career/managerPro
 import { getNewsInbox, setNewsMessageState } from "../career/news.js";
 import { advanceCalendar, getCompetitionFixtures, getCompetitionTable, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "../season/index.js";
 import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave } from "../world/saves.js";
+import { getClubInformation } from "../club/clubInformation.js";
 import { getSquad } from "../club/squad.js";
 import { changeTactics, getTactics } from "../club/tactics.js";
 import { getTacticsOverview } from "../club/tacticsOverview.js";
@@ -435,6 +436,13 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
         AppRpcs.getTeamScoutReadings.payload,
       )(payload);
       return yield* getTeamScoutReadings(ctx.savesDir, saveId, clubId);
+    }),
+  getClubInformation: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, clubId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.getClubInformation.payload,
+      )(payload);
+      return yield* getClubInformation(ctx.savesDir, saveId, clubId);
     }),
   getClubStaff: (payload, ctx) =>
     Effect.gen(function* () {

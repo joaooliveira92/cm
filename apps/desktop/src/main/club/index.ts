@@ -18,6 +18,7 @@ export {
   pickBestFormationTactic,
   runAiTransferWindow,
 } from "./aiClubs.js";
+export { getClubInformation } from "./clubInformation.js";
 export { developPlayersForSeason } from "./development.js";
 export { getTeamScoutReadings, getTeamScoutReport } from "./teamScoutReport.js";
 export {

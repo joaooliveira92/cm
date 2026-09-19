@@ -254,6 +254,30 @@ export const clubStaffAtom = (saveId: SaveId, clubId: ClubId) =>
   clubStaffForSave(saveId)(clubId);
 
 /**
+ * getClubInformation — `["save", saveId]`.
+ *
+ * Club General Information (Screen 34): a club's identity, home town, nation and ground, for any
+ * club in the save. Same two-level nested family as the staff read, for the same reason — a
+ * `{ saveId, clubId }` object key would miss on `MutableHashMap`'s reference comparison and refetch
+ * forever.
+ *
+ * Reactive on the save-wide key only: every field is fixed at world generation and no command
+ * changes any of them, so the read never goes stale between save-level invalidations.
+ */
+const clubInformationForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((clubId: ClubId) =>
+    managementReadPolicy(
+      Atom.make(call("getClubInformation", { saveId, clubId })).pipe(
+        Atom.withReactivity([saveKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const clubInformationAtom = (saveId: SaveId, clubId: ClubId) =>
+  clubInformationForSave(saveId)(clubId);
+
+/**
  * getCoachingAssignments — `["save", saveId]`, `["training", saveId]`.
  *
  * Coaching Assignments (Screen 111): the manager's own club's coaches with quality ratings.

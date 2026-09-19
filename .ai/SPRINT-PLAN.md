@@ -240,9 +240,22 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-c-club-information ticket 06** — Screen 34 as one club-scoped screen, collapsing `clubInfo/`
-and `clubInformation/`. Then **07** (the any-club views of 35, 40, 42), **08** (the modelled halves
-of 39 and 47), and **09** (the cull, blocked on all three).
+**group-c-club-information ticket 07** — the any-club views of Screens 35, 40 and 42, which already
+ship for the own club. The ticket's warning is the important part: do not build three read-only
+twins. Then **08** (the modelled halves of 39 and 47) and **09** (the cull, blocked on both).
+
+**Screen 34 ships** (ticket 06). One screen, club-scoped, reached two ways: `clubInformation/` is
+the screen and `clubInfo/` is now the own-club resolver over it, the Staff pattern applied a second
+time. It shows name, standing, town, nation, ground and capacity — and a test asserts it shows none
+of the things the ledger `deferred`s, because an invented figure cannot be told from a right one.
+**e2e 49 passed.**
+
+Two things worth carrying forward. A test caught a real bug before it shipped: **the content pack
+resolves club and competition identities only**, so a nation id passed to `displayNames` comes back
+as `nation_eng` — `packages/shared` exports `nationName` for exactly this. And the
+`display-names` guard was a false positive for the second time, fired on a clubs-rooted select that
+joins `cities` and takes *its* name; tightened with self-tests in both directions rather than
+loosened.
 
 **M1 exit criterion 2 is met.** Group C's coverage table has no row reading `Not yet audited`, and
 every other group's ledger already had one. Criterion 4 is met too — `check:all` and 47 e2e both

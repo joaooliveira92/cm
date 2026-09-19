@@ -58,7 +58,7 @@ afterEach(() => cleanup());
 
 describe("the league table row is the entry point to every club-scoped surface", () => {
   /**
-   * Both club surfaces hang off the league table row, and this spec exists because the entry point
+   * Every club surface hangs off the league table row, and this spec exists because the entry point
    * to one of them was once silently repointed at the other: the row stopped reaching the scout
    * report, the file guarding it was renamed onto the new behaviour, and the suite stayed green
    * while the report became reachable only by typing a URL. Asserting the destinations by name
@@ -67,6 +67,7 @@ describe("the league table row is the entry point to every club-scoped surface",
   const SURFACES = [
     { label: "club staff", to: "/career/$saveId/club/$clubId/staff" },
     { label: "scout report", to: "/career/$saveId/club/$clubId/scout-report" },
+    { label: "club information", to: "/career/$saveId/club/$clubId/information" },
   ] as const;
 
   it.each(SURFACES)("each club's row reaches its own $label page", async ({ label, to }) => {
@@ -101,8 +102,10 @@ describe("the league table row is the entry point to every club-scoped surface",
     expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
       "Northport Rovers — club staff",
       "Northport Rovers — scout report",
+      "Northport Rovers — club information",
       "Eastvale United — club staff",
       "Eastvale United — scout report",
+      "Eastvale United — club information",
     ]);
   });
 });

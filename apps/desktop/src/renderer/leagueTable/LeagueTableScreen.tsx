@@ -135,6 +135,25 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   >
                     Scout report
                   </button>
+                  {/* Screen 34, group-c ticket 06. A third club surface, so a third control, per
+                      the one-control-per-surface rule above. Note the row's *name* button still
+                      opens Staff rather than Information — a pre-existing choice from when Staff
+                      was the only club surface, and arguably backwards now that a club has a
+                      general page. Left alone deliberately: changing it is a navigation decision,
+                      not this ticket's. */}
+                  <button
+                    type="button"
+                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    aria-label={`${row.clubName} — club information`}
+                    onClick={(event) =>
+                      navigateCareer(
+                        { type: "clubInformation", saveId, clubId: row.clubId },
+                        intentOfClick(event),
+                      )
+                    }
+                  >
+                    Information
+                  </button>
                 </TableCell>
                 <TableCell className="pr-2 text-center tabular-nums">{row.played}</TableCell>
                 <TableCell className="pr-2 text-center tabular-nums">{row.won}</TableCell>

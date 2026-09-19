@@ -80,3 +80,26 @@ export class ClubStaffView extends Schema.Class<ClubStaffView>("ClubStaffView")(
   isUserClub: Schema.Boolean,
   groups: Schema.Array(ClubStaffDepartmentGroupView),
 }) {}
+
+/**
+ * Club General Information (Screen 34): a club's identity and standing, for any club in the save.
+ *
+ * Deliberately short. The import asks for ownership, reputation, finances, facilities and history;
+ * of those, only the ground and the club's standing have a model here, and a view that carried the
+ * rest would be a screen inventing numbers. What is absent is recorded in the Group C ledger rather
+ * than stubbed on the wire.
+ *
+ * `isUserClub` rides along for the same reason it does on `ClubStaffView`: one read, one failure to
+ * render, and no state where the page knows the club but not whose it is.
+ */
+export class ClubInformationView extends Schema.Class<ClubInformationView>("ClubInformationView")({
+  club: ClubSummary,
+  isUserClub: Schema.Boolean,
+  /** The club's home town, and the nation that town sits in — the club's nationality is its city's. */
+  cityName: Schema.String,
+  nationName: Schema.String,
+  /** The ground. There is no stadium entity, so these are columns on the club, not a joined row. */
+  stadiumName: Schema.String,
+  /** Display only: nothing in the game reads capacity as a constraint. */
+  stadiumCapacity: Schema.Number,
+}) {}

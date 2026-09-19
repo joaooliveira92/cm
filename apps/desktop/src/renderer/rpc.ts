@@ -29,6 +29,7 @@ export {
   scoutingKnowledgeAtom,
   teamScoutReportAtom,
   teamScoutReadingsAtom,
+  clubInformationAtom,
   clubStaffAtom,
   coachingAssignmentsAtom,
   workloadAtom,

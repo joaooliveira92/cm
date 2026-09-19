@@ -32,6 +32,7 @@ import {
   ClubId,
   ClubNotFoundError,
   ClubSelectionView,
+  ClubInformationView,
   ClubStaffView,
   CoachingAssignmentsView,
   WorkloadView,
@@ -504,6 +505,14 @@ commitCareer: {
   getClubStaff: {
     payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
     success: ClubStaffView,
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+  },
+  /** Club General Information (Screen 34): a club's identity, home town, nation and ground, for any
+   *  club in the save. A pure read over `clubs` and its city — only the save or the club id can
+   *  fail. Carries nothing the import asks for that has no model; see the Group C ledger. */
+  getClubInformation: {
+    payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
+    success: ClubInformationView,
     error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
   },
   /** Coaching Assignments (Screen 111): the manager's own club's coaching staff with quality ratings
