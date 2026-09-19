@@ -7,31 +7,61 @@
  */
 export type { RpcClientError } from "./rpc/errors.js";
 export { describeRpcError, typedError } from "./rpc/errors.js";
+export { readState, type ReadState } from "./rpc/readState.js";
 
 export {
   squadAtom,
   tacticsAtom,
+  tacticsOverviewAtom,
   leagueTableAtom,
+  competitionTableAtom,
+  competitionFixturesAtom,
   fixturesAtom,
   seasonSummaryAtom,
+  managerProfileAtom,
   transfersAtom,
+  contractExpiryAtom,
+  budgetReviewAtom,
+  transferHistoryAtom,
+  saveSummaryAtom,
+  newsInboxAtom,
+  scoutingAtom,
+  scoutingKnowledgeAtom,
+  teamScoutReportAtom,
+  teamScoutReadingsAtom,
+  clubStaffAtom,
+  coachingAssignmentsAtom,
+  workloadAtom,
+  playerDevelopmentHistoryAtom,
+  squadDevelopmentAtom,
+  playerProfileAtom,
+  playerContractAtom,
   saveKey,
   squadKey,
   transfersKey,
+  contractExpiryKey,
+  transferHistoryKey,
   economyKey,
   tacticsKey,
   matchKey,
+  newsKey,
+  scoutingKey,
 } from "./rpc/queries.js";
 
 export {
   INVALIDATION_RULES,
   advanceCalendarMutation,
+  assignScoutToClubMutation,
   changeTacticsMutation,
   placeBidMutation,
   signFreeAgentMutation,
   respondToBidMutation,
   respondAsBidderMutation,
+  retireManagerMutation,
+  setNewsMessageStateMutation,
+  setTrainingFocusMutation,
   submitMatchCommandMutation,
+  unassignScoutMutation,
 } from "./rpc/mutations.js";
 
 export {
@@ -40,13 +70,23 @@ export {
   loadSave,
   beginCareer,
   discardCareer,
+  getCareerSetupSummary,
   getClubSelection,
   createSave,
   getManagerProfile,
   commitCareer,
+  getLeagueSetupIndex,
+  resolveLeagueSelection,
+  submitLeagueSelection,
+  saveSetupDraft,
+  loadSetupDraft,
+  buildLeaguePreset,
+  listLeaguePresets,
+  saveLeaguePreset,
+  applyLeaguePreset,
 } from "./rpc/precareer.js";
 
-export { listOpponentClubs, startMatch, resumeSimulation } from "./rpc/match.js";
+export { commitMatchday, startMatch, resumeSimulation, getTeamSheet, getPostMatchSummary, getMatchStatistics, getMatchReport } from "./rpc/match.js";
 
 export {
   REVEAL_INTERVAL_MS,
@@ -71,3 +111,4 @@ export {
   useAtomRefresh,
 } from "@effect/atom-react";
 export { AsyncResult } from "effect/unstable/reactivity";
+export { Atom } from "effect/unstable/reactivity";

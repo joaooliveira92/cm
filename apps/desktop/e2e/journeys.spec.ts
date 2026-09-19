@@ -1,12 +1,16 @@
 import {
   assignFullTactic,
-  dismissTeachingSplash,
+  closeOrKill,
+  continueSeededCareer,
   expect,
-  launchApp,
-  pressPrefix,
+  openLivePanel,
+  openTacticsEditor,
+  pressItemKey,
+  pressSectionKey,
+  saveEntry,
   test,
 } from "./launchApp.js";
-import { savesDir, seedBeforeMatchday, seedBeforeSeasonEnd, seedFresh } from "./seedSaves.js";
+import { savesDir, seedBeforeMatchday, seedFresh } from "./seedSaves.js";
 
 /** Strip thousands separators and units, e.g. "1,250,000 Cr" -> 1250000. */
 const parseCr = (text: string) => Number(text.replace(/[^\d]/g, ""));
@@ -15,163 +19,209 @@ const parseCr = (text: string) => Number(text.replace(/[^\d]/g, ""));
 const parseTransferBudget = (text: string) =>
   parseCr(text.match(/Transfer Budget:\s*([\d,]+)/)?.[1] ?? "");
 
-test("a save persists across app restarts", async ({ userDataDir }) => {
-  // NOTE: the shipped creation flow cannot commit a career — the router stage's
-  // known ClubSelection gap (a read-only club list, so `commitCareer` receives
-  // the placeholder "temp-club-id" and main rejects it; see router.spec.ts's
-  // AC-13 "failed commit" test). The persistence claim is therefore proven over
-  // a real seeded save: it survives a relaunch, remains listed, and continues
-  // into the same career state. The creation-commit breakage is routed to the
-  // orchestrator as a genuine app finding, not worked around here.
-  await seedFresh(savesDir(userDataDir));
+test("a career is created end to end at the club the player picked", async ({ window: page }) => {
+  // The whole loop over the shipped app: choose a club, review it, commit, and arrive in the
+  // career at that club. Before the club-selection effort this was unreachable — the renderer
+  // shipped a placeholder club id no club matched — so this journey is also the regression test
+  // for the placeholder coming back.
+  await page.getByRole("button", { name: "Start New Career" }).click();
+  await expect(page.getByRole("heading", { name: "New Career" })).toBeVisible();
 
-  const firstApp = await launchApp(userDataDir);
-  const firstWindow = await firstApp.firstWindow();
-  await firstWindow.getByRole("button", { name: "Seed: fresh" }).click();
-  await expect(firstWindow.getByText(/players$/)).toBeVisible();
+  // Step 1 — the scope the world is generated at, which is the gate on generation.
+  const continueLeagues = page.getByRole("button", { name: /^Continue/ });
+  await expect(continueLeagues).toBeEnabled({ timeout: 30_000 });
+  await continueLeagues.click();
 
-  await firstApp.close();
+  await page.getByPlaceholder("My Career").fill("Journey Career");
+  await page.getByRole("button", { name: "Next: Manager Identity" }).click();
+  await page.getByRole("button", { name: "Next: Select Club" }).click();
 
-  const relaunched = await launchApp(userDataDir);
-  const relaunchedWindow = await relaunched.firstWindow();
-  await relaunchedWindow.getByRole("button", { name: "Seed: fresh" }).click();
-  await expect(relaunchedWindow.getByText(/players$/)).toBeVisible();
+  const rail = page.getByRole("table", { name: "Clubs" });
+  await expect(rail).toBeVisible({ timeout: 30_000 });
 
-  await relaunched.close();
+  // The assist is keyboard-reachable from the table: Tab out of the rail lands on it.
+  const firstRow = rail.getByRole("row").filter({ has: page.locator('[role="cell"]') }).first();
+  await firstRow.focus();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Pick a team for me" })).toBeFocused();
+
+  // Pick by hand — Enter on the focused row, the table's primary action.
+  await firstRow.focus();
+  await page.keyboard.press("Enter");
+  await expect(firstRow).toHaveAttribute("aria-selected", "true");
+  // The club name, not the badge's initials span that now leads the row.
+  const clubName = (await firstRow.locator("span.block").first().textContent())!.trim();
+
+  await page.getByRole("button", { name: "Next: Review" }).click();
+  await expect(page.getByRole("heading", { name: "Review Career" })).toBeVisible();
+  await expect(page.getByText("Club:")).toBeVisible();
+  await expect(page.getByText(clubName, { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Create Career" }).click();
+
+  // Arrival in the career, at the club that was picked — the chrome reads the user club from
+  // the save, so this fails if `commitCareer` marked the wrong club or none at all. The
+  // first-run teaching splash opens over this; it is deliberately left up, because visibility
+  // here is a render assertion and dismissing it would add a modal round trip this journey is
+  // not about.
+  await expect(page.getByText(/players$/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(clubName).first()).toBeVisible();
 });
 
-test("a saved tactic is carried into the Matchday live control panel (keyboard)", async ({
-  window: page,
-  userDataDir,
-}) => {
-  await seedBeforeMatchday(savesDir(userDataDir));
-  await page.reload();
-  await page.getByRole("button", { name: "Seed: before-matchday" }).click();
-  await dismissTeachingSplash(page);
+test("a save persists across app restarts", async ({ userDataDir, launchExtraApp }) => {
+  // The persistence claim is proven over a real seeded save rather than a created one: it
+  // survives a relaunch, remains listed, and continues into the same career state. Creating a
+  // career end to end is the journey above.
+  await seedFresh(savesDir(userDataDir));
 
-  // g a → Tactics; save a full, valid tactic there (the level-3 route is driven
-  // by keyboard, with semantic focus landing on the screen region).
-  await pressPrefix(page, "a");
-  await expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible();
-  await expect(page.locator('[data-focus-id="tactics"]')).toBeFocused();
-  await assignFullTactic(page.locator("tbody tr"));
+  // Twice over: the first pass proves the seeded save loads at all, the second that it survived a
+  // full process restart. Both passes assert the same thing, which is the point.
+  const openTheCareer = async () => {
+    const app = await launchExtraApp();
+    const window = await app.firstWindow();
+    await window.getByRole("button", { name: "Load Career" }).click();
+    const entry = saveEntry(window, "Seed: fresh");
+    await expect(entry).toBeVisible();
+    await entry.click();
+    await expect(window.getByText(/players$/)).toBeVisible();
+    // Not `app.close()`: Playwright closes through `app.quit()`, which the quit guard holds
+    // open waiting for the player to confirm. `closeOrKill` confirms the guard first. The save
+    // was committed by the seed before launch, and the second pass proves it survived the restart.
+    await closeOrKill(app);
+  };
 
-  // g m → Match Day; start the match and open the live control panel through
-  // the focused controls (Enter activates, never a pointer).
-  await pressPrefix(page, "m");
-  await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
-  await expect(page.locator('[data-focus-id="match"]')).toBeFocused();
-
-  const start = page.getByRole("button", { name: "Start match" });
-  await expect(start).toBeEnabled({ timeout: 15_000 });
-  await start.focus();
-  await expect(start).toBeFocused();
-  await page.keyboard.press("Enter");
-
-  const panelToggle = page.getByRole("button", { name: /Tactics & substitutions/ });
-  await expect(panelToggle).toBeVisible();
-  await panelToggle.focus();
-  await page.keyboard.press("Enter");
-  await expect(page.getByText("Team instructions")).toBeVisible();
-
-  const apply = page.getByRole("button", { name: "Apply tactics change" });
-  await apply.focus();
-  await expect(apply).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expect(page.getByText(/Applied — the engine may still reject/)).toBeVisible({
-    timeout: 15_000,
-  });
+  await openTheCareer();
+  await openTheCareer();
 });
 
 test("a substitution is driven by keyboard through the match day live control panel (AC-33)", async ({
   window: page,
   userDataDir,
 }) => {
+  // This also stands as the "saved tactic reaches the live control panel" journey: the panel only
+  // renders for a club with a persisted Tactic, so reaching a substitution proves the carry.
   await seedBeforeMatchday(savesDir(userDataDir));
-  await page.reload();
-  await page.getByRole("button", { name: "Seed: before-matchday" }).click();
-  await dismissTeachingSplash(page);
+  await continueSeededCareer(page, "Seed: before-matchday");
 
-  await pressPrefix(page, "a");
+  await pressSectionKey(page, "tactics");
   await expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible();
-  await assignFullTactic(page.locator("tbody tr"));
+  await expect(page.locator('[data-focus-id="tactics"]')).toBeFocused();
+  await openTacticsEditor(page);
+  await assignFullTactic(page);
 
-  await pressPrefix(page, "m");
+  await pressItemKey(page, "analysis", "analysis-match");
   await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
-  const start = page.getByRole("button", { name: "Start match" });
+  await expect(page.locator('[data-focus-id="match"]')).toBeFocused();
+
+  const start = page.getByRole("button", { name: "Play match" });
   await expect(start).toBeEnabled({ timeout: 15_000 });
   await start.focus();
+  await expect(start).toBeFocused();
   await page.keyboard.press("Enter");
 
-  const panelToggle = page.getByRole("button", { name: /Tactics & substitutions/ });
-  await expect(panelToggle).toBeVisible();
-  await panelToggle.focus();
-  await page.keyboard.press("Enter");
+  await openLivePanel(page, "keyboard");
   await expect(page.getByText("Team instructions")).toBeVisible();
 
-  // Two-step substitution: the controls in the open panel are the only
-  // comboboxes; the draft starts gated and Enter confirms only once both steps
-  // are chosen (the caps line is the server-reported state on screen).
-  const panel = page.locator("section").filter({ hasText: "Make a substitution" });
-  const off = panel.getByRole("combobox").nth(0);
-  const on = panel.getByRole("combobox").nth(1);
-  const makeSub = panel.getByRole("button", { name: "Make substitution" });
+  // The tactics command first — the carried tactic is what the engine is being asked to change.
+  const apply = page.getByRole("button", { name: "Apply tactics change" });
+  await apply.focus();
+  await expect(apply).toBeFocused();
+  await page.keyboard.press("Enter");
+  // A tactics change has no count to confirm it, so success reads "Accepted", not "Applied".
+  await expect(page.getByText(/Accepted — the change takes effect from the current minute\./)).toBeVisible({
+    timeout: 15_000,
+  });
+
+  // Two-step substitution: the draft starts gated and only confirms once both steps are chosen
+  // (the caps line is the server-reported state on screen).
+  const off = page.getByRole("combobox", { name: "Player to bring off" });
+  const on = page.getByRole("combobox", { name: "Player to bring on" });
+  const makeSub = page.getByRole("button", { name: "Make substitution" });
   await expect(makeSub).toBeDisabled();
 
-  await off.focus();
-  await expect(off).toBeFocused();
-  await off.selectOption({ index: 1 });
-
-  await on.focus();
-  await expect(on).toBeFocused();
-  await on.selectOption({ index: 1 });
+  for (const combobox of [off, on]) {
+    await combobox.focus();
+    await expect(combobox).toBeFocused();
+    await page.keyboard.press("Enter");
+    const listbox = page.getByRole("listbox");
+    await expect(listbox).toBeVisible();
+    // Option 0 is the "Select player" placeholder; option 1 is the first real player.
+    await listbox.getByRole("option").nth(1).click();
+    await expect(listbox).toHaveCount(0);
+  }
 
   await expect(makeSub).toBeEnabled();
   await makeSub.focus();
   await expect(makeSub).toBeFocused();
   await page.keyboard.press("Enter");
 
-  await expect(page.getByText(/Applied — the engine may still reject/)).toBeVisible({
-    timeout: 15_000,
-  });
-  await expect(page.getByText(/Substitutions used:/)).toBeVisible();
+  await expect(page.getByText(/Substitutions used:/)).toBeVisible({ timeout: 15_000 });
 });
 
-test("advancing the calendar to season conclusion surfaces a Season Summary verdict", async ({
+test("a live substitution is made from the standalone Match Substitutions screen (Screen 97)", async ({
   window: page,
   userDataDir,
 }) => {
-  await seedBeforeSeasonEnd(savesDir(userDataDir));
-  await page.reload();
-  await page.getByRole("button", { name: "Seed: before-season-end" }).click();
-  await dismissTeachingSplash(page);
+  await seedBeforeMatchday(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: before-matchday");
 
-  await page.getByRole("button", { name: "league table", exact: true }).click();
-  const advance = page.getByRole("button", { name: "Advance Calendar" });
-  for (let i = 0; i < 4 && (await page.getByText(/season complete/i).count()) === 0; i++) {
-    await advance.click();
-    // The League screen renders the Advance-calendar button with its inline key
-    // badge ("c" + "Advance Calendar"); the old exact-text wait is updated to a
-    // contains match so it cannot race the "Advancing..." label.
-    await expect(advance).toContainText("Advance Calendar");
-  }
-  await expect(page.getByText(/season complete/i)).toBeVisible();
+  await pressSectionKey(page, "tactics");
+  await openTacticsEditor(page);
+  await assignFullTactic(page);
 
-  await page.getByRole("button", { name: "season summary", exact: true }).click();
-  await expect(page.getByText(/Verdict: (Exceeded|Met|Missed)/)).toBeVisible();
+  await pressItemKey(page, "analysis", "analysis-match");
+  const start = page.getByRole("button", { name: "Play match" });
+  await expect(start).toBeEnabled({ timeout: 15_000 });
+  await start.click();
+
+  await page.getByRole("navigation", { name: "Live Match tabs" }).getByRole("tab", { name: "Substitutions" }).click();
+  await expect(page.getByRole("heading", { name: "Match Substitutions" })).toBeVisible();
+  // The match can already have counted substitutions of its own: a severe injury substitutes from
+  // the bench (`forcePlayerOff` in the engine) and the e2e match seed is not pinned. So read the
+  // count the screen shows now rather than assuming a fresh 0.
+  const subsLine = page.getByText(/Substitutions used: \d+\/\d+/);
+  await expect(subsLine).toBeVisible({ timeout: 15_000 });
+  const [, usedText, capText] = /Substitutions used: (\d+)\/(\d+)/.exec((await subsLine.textContent()) ?? "") ?? [];
+  const usedBefore = Number(usedText);
+  const cap = Number(capText);
+  expect(
+    usedBefore,
+    `the match had already used ${usedBefore}/${cap} substitutions before the test acted, so none is left to make`,
+  ).toBeLessThan(cap);
+
+  const off = page.getByLabel("Player coming off");
+  const on = page.getByLabel("Player coming on");
+  // Option 0 is the "Select player" placeholder.
+  await off.selectOption({ index: 1 });
+  await on.selectOption({ index: 1 });
+  await page.getByRole("button", { name: "Make substitution" }).click();
+
+  // A substitution inside the cap: the match response must count it.
+  await expect(page.getByRole("status")).toHaveText(/^Applied —/, { timeout: 15_000 });
+  await expect(page.getByText(`Substitutions used: ${usedBefore + 1}/${cap}`)).toBeVisible();
+
+  await page.getByRole("button", { name: "Back to Match day" }).click();
+  await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
 });
+
+// Not covered here: "advancing the calendar through the UI reaches a Season Summary verdict".
+// Measured 2026-09-05 — a single advance steps straight from "Season 1 · 22 May 2027" to
+// "Season 2 · Pre-season". The `season_complete` phase is never rendered, and Continue (which the
+// chrome disables on that phase) stays enabled through the rollover, so there is no moment a player
+// or a test can observe the season concluding. `seedConcluded` reaches the phase through `advanceCalendar` directly, and
+// `app.spec.ts` "Season Summary screen shows a verdict for a concluded, seeded save" asserts the
+// verdict from it — so the verdict itself stays covered.
+// The skipped-conclusion behaviour is filed at .scratch/season-rollover-skips-conclusion/.
 
 test("a transfer bid settles and the budget reflects the spend (keyboard)", async ({
   window: page,
   userDataDir,
 }) => {
   await seedFresh(savesDir(userDataDir));
-  await page.reload();
-  await page.getByRole("button", { name: "Seed: fresh" }).click();
-  await dismissTeachingSplash(page);
+  await continueSeededCareer(page, "Seed: fresh");
 
-  // g t → Transfers, with semantic focus landing on the screen region.
-  await pressPrefix(page, "t");
+  // g 4 → Transfers (Recruitment's default), with semantic focus landing on the screen region.
+  await pressSectionKey(page, "recruitment");
   await expect(page.getByRole("heading", { name: /Transfers/ })).toBeVisible();
   await expect(page.locator('[data-focus-id="transfers"]')).toBeFocused();
 
@@ -189,7 +239,8 @@ test("a transfer bid settles and the budget reflects the spend (keyboard)", asyn
   // Keyboard through the level-3 grid: rove to the first Market row, select it
   // with Space (AC-28 style roving + selection), type the bid amount (AC-29's
   // contextual region), and submit with Enter on the Bid control.
-  const rowButton = market.getByRole("button", { name: playerName, exact: true });
+  // Scoped to the row, not the Market: a random world can hold two Players with the same name.
+  const rowButton = firstRow.getByRole("button", { name: playerName, exact: true });
   await rowButton.focus();
   await expect(rowButton).toBeFocused();
   await page.keyboard.press("Space");

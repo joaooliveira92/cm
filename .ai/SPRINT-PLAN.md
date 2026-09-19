@@ -1,115 +1,502 @@
 # Sprint Plan
 
-The orchestrator's queue. Derived from `.scratch/` on 2026-08-29 by reading every ticket's `Type:`,
-`Status:`, and `Blocked by:` lines.
+**Milestone: M1 — the world is readable.** Every routed screen shows real data or is deliberately
+gone: Groups C, D and L remainder, plus a durable `docs/specs/` ledger for every group the pipeline
+has already charted. Scope, non-goals and exit criteria in [MILESTONES.md](MILESTONES.md); it is the
+bound on what a sprint may start, and the frontier below is checked against it by
+[/milestone](../.opencode/command/milestone.md).
 
-This file answers **"what next"**. It is not the tracker — ticket truth lives in
-`.scratch/<effort>/issues/`, and [docs/roadmap.md](../docs/roadmap.md) is the human-facing narrative
-snapshot. When a row and the tracker disagree, the tracker is right and the row is stale: fix the row.
+**M1 step 1 — ledger durability sweep, 4 of 10 done (2026-09-18).** Group L transcribed to
+[`docs/specs/group_l_competitions_nations_and_world_information/RECONCILIATION.md`](../docs/specs/group_l_competitions_nations_and_world_information/RECONCILIATION.md),
+with two corrections. Its `map.md` says "all 18 screens (161–180)" twice and there are twenty. More
+seriously, the map files national team management under § Out of scope, four days after a standing
+note ruled Group L 176–178 `deferred` and **never** `out-of-scope`; the ledger follows the note. The
+same slip runs through ticket 02, whose "out of scope for v1" is `deferred` in ledger vocabulary —
+so no screen in Group L is `out-of-scope` at all.
 
-**Re-derive rather than trust.** A frontier is computed, not remembered: the lowest-numbered ticket
-in an effort that is open, unblocked, and unclaimed. Every "next move" below is a claim about the
-tracker at a moment in time, and each one decays.
+It also surfaced a disagreement between two ledgers: per-player statistics aggregation does not
+exist, and Group D Screen 54 is `out-of-scope` for lacking it while Group L Screen 166 is `deferred`
+for lacking it. `out-of-scope` is the one that does not come back. Worth settling when Group P is
+charted.
 
-## The queue is closed
+Group F was the one group with
+nothing to transcribe: its effort shipped Screen 80 with no map and no spec, and screens 81–90 have
+never been read. Its ledger says so — one `Reviewed` screen, ten `Not yet audited` — because a group
+whose gap is invisible is the thing M1 step 1 is for. Charting Group F's remainder needs decision
+request 01 answered and an effort chartered from scratch; both are human calls.
 
-**No new effort may be added while any map in `.scratch/` is open.** The full rule — what counts as a
-complete map, and the command that checks it — is in
-[AUTONOMOUS-AGENT.md § Sprint creation is gated on open maps](AUTONOMOUS-AGENT.md). Finish what is
-charted before charting more. A new effort is a human's call or a decision request, never something
-the orchestrator starts for itself.
+Group E transcribed to
+[`docs/specs/group_e_squad_management/RECONCILIATION.md`](../docs/specs/group_e_squad_management/RECONCILIATION.md).
+It found a contradiction in shipped code: Group E ruled Screen 75 Set Piece Takers `out-of-scope`,
+while `contracts/src/schemas/tactics.ts:204` and the shipped Tactics Overview both say set pieces
+arrive with Group F Screen 86. Raised as **group-f decision request 01**, which blocks Group F's
+remainder and nothing else. Also corrected: this plan recorded group-e as "11 screens charted, all
+disposed" — three are satisfied by the shipped Squad screen, two are partial, six are disposed.
 
-**21 decision tickets across 6 efforts are unresolved.** The gate is shut.
+Group D transcribed to
+[`docs/specs/group_d_player_and_staff_records/RECONCILIATION.md`](../docs/specs/group_d_player_and_staff_records/RECONCILIATION.md).
+Remaining: E, F, G, H, I, J, K, L, M. Transcription caught two miscounts in group-d's `map.md`
+summary (53 is `out-of-scope`, not satisfied-inline; three screens are deferred, not two) and one
+unfiled obligation: eleven disposed Group D screens still carry routed WIP placeholders, which
+ticket 04 said to ticket and nobody did. That is M1 step 5, and the ledger records it so it cannot be
+lost twice. The three `staff*` folders answering to no import screen need a ruling, not a deletion.
 
-It does not block **implementation** of efforts that are already charted — working an existing
-ticket is not inventing work. Both lanes below are legal; only Lane A can open the gate.
+**Two blocking decisions were approved 2026-09-19**, and both were the same mistake — a missing model
+recorded as a permanent ruling.
 
-## Lane A — close the open maps
+- **Set pieces ship, as Tactic fields.** group-f decision request 01 answered: Group E Screen 75 moves
+  from `out-of-scope` to `deferred`, anchored to Group F Screen 86, and Group F's remainder is
+  unblocked. Nomination inherits group-f ticket 01's revision-bound idempotent save rather than adding
+  a write path. Whether the match engine *uses* a nomination is deliberately still open. Note:
+  [set pieces ship, as a Tactic field](../.agents/notes/proposed/feature/2026-09-19-set-pieces-ship-as-a-tactic-field.md).
+  Owed before Screen 86 builds: a schema addition and migration, with existing Saves reading `"none"`.
+- **Per-player statistics are deferred, not ruled out.** Group D Screen 54 moves from `out-of-scope` to
+  `deferred`; Group L Screen 166 was already right. Group P owns the store, and Screens 54, 166, 167
+  and most of 222–235 are its dependents rather than its contradictions. Note:
+  [per-player statistics are deferred, not ruled out](../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md).
 
-Decision work. One ticket per session; resolving one writes its Agent Note.
+**The generalisable rule both produced**, now in both notes: when reconciling a screen, absence of a
+model is `deferred` unless something states the model should never exist. `out-of-scope` needs a reason
+the thing should not be in the game, not merely the observation that it is not there yet. Three of the
+four corrections M1 step 1 has found so far are this error.
 
-| # | Effort | Frontier | Then | Blocked until |
-|---|---|---|---|---|
-| A1 | `keyboard-first-renderer/` | **done — all 14 decisions resolved; map retired** | spec-creator (`/cm-to-spec`) | — |
-| A2 | `scouting/` | **04** (screen prototype) — `claimed` but unanswered; reclaim it | — | nothing; 04 is the last ticket |
-| A3 | `retro-match-screen/` | **01** (scaffold disposition) — unblocked now that 02 resolved | 04 (fidelity references, unblocked) | 03 (matchday mount) waits on 01 |
-| A4 | `e2e-coverage-wave-2/` | **07** (seed scenarios spec section) | 08, 09, 10 — all unblocked | 11 waits on 07; 12 waits on 07–11 |
-| A5 | `effort-archival/` | **01** (completion predicate) | 02, 03 — both unblocked | 04/05 wait on 01–03; 06 waits on 04/05 |
-| A6 | `visual-design-language/` | **03** (dense table and abbreviations) — unblocked now that 02 resolved; then **04** (navigation frame) — also unblocked | Spec handoff | Human-chartered effort from `docs/ui-elements.md` reference. Tickets 01 (audit) and 02 (visual frame tokens) resolved. Agent Note at `.agents/notes/proposed/architecture/2026-08-29-visual-design-tokens.md`.
+**M1 step 1 is COMPLETE — 10 of 10 (2026-09-19).** Every group that had rulings to make durable now
+has a `RECONCILIATION.md`: **14 of the 19 groups carry one, against four when the milestone opened.**
 
-10 of A's remaining 16 tickets are unblocked right now (one of them, `scouting/04`, only nominally
-claimed), so nothing in this lane is waiting on anything but attention.
+The five without — N, O, P, Q and S — have no ledger because they have **no effort and were never
+ingested**: nobody has read a screen in any of them. That was never step 1's scope, which was to
+rescue rulings trapped in `.scratch/`, and there are none to rescue. Their gap is visible in
+[SPEC-ROADMAP](SPEC-ROADMAP.md) § Where each group stands, which is the right place for it.
 
-`injury-system/` has **no `map.md`** — it went straight to a spec. That is not the same as a closed
-map. Before treating its 9 build tickets as settled design, confirm its decisions actually were made
-somewhere; if they were not, it needs charting, and that is a human's call under the gate.
+**Group G was last and least typical.** Every other group's ledger records what was decided not to
+build; G's records what building it revealed — nine screens shipped, nineteen follow-up tickets, eight
+decision requests. Its centre of gravity is the engine questions, not the disposal table.
 
-## Lane B — implementation, on efforts whose maps are closed
+**The most consequential finding of the whole sweep was group-g decision request 07, and it is now
+answered.** Match history re-derives from seed and journal on every read, so an engine rule change
+retroactively altered every saved match that rule touched — which blocked every engine-rule fix in the
+codebase, not only Group G's. Ticket 26 hit it head-on: the engine lets a forced substitution bring
+back a dismissed player, the fix is written, and shipping it would make saved Match Reports contradict
+their stored results.
 
-Build tickets. Every decision behind these is resolved.
+**Answered 2026-09-19, Option B: a committed match stores its derived timeline.** Committed matches are
+frozen; live matches still re-derive, so chunked resimulation and seed determinism are untouched.
+Recorded as
+[a committed match stores its timeline](../.agents/notes/proposed/architecture/2026-09-19-committed-matches-store-their-timeline.md)
+and filed as **group-g ticket 31, `ready-for-agent`**.
 
-| # | Effort | State | Next move |
-|---|---|---|---|
-| B0 | `keyboard-first-renderer/` | Spec `ready-for-agent`; 8 build tickets (15–22); tickets 15, 16, 17, 18, 19, 20, 21 shipped | **Frontier: ticket 22 (keyboard e2e conversion), the final stage.** Two routed-out decision requests block the typed-error and creation-happy-path ACs (see `.scratch/keyboard-first-renderer/decision-request-*.md`); a third (binding-collision tiers) tunes Stage-6 validation strictness. Stages 5–6 shipped: tables/grid, match-day live keyboard control, and user key binding overrides; all nine screens level-1, Match Day/Transfers/Tactics/Squad no-mouse driveable. |
-| B1 | `training/` | Spec `ready-for-agent`; all 5 decisions resolved; build tickets 03/04/05 unimplemented | The most implementation-ready work in the repo — no design debt in front of it. Player Development math is shipped ([deterministic fractional Player Development](../.agents/notes/implemented/feature/2026-08-28-deterministic-fractional-player-development.md)); **Training Focus** is not. |
-| B2 | `onboarding/` | Spec `ready-for-agent`; all 11 decisions resolved; 11 build tickets still marked `ready-for-agent` | **Statuses are stale** — recent commits landed wave 1 (01a, 01b, 02) and part of 03/04/05. Re-derive what is actually done from the code before picking up a ticket, and fix the statuses as you go. Likely frontier: 06 (Continue as global career loop). |
-| B3 | `injury-system/` | Spec `ready-for-agent`; 9 build tickets; [contact duel modeling](../.agents/notes/implemented/feature/2026-08-27-contact-duel-modeling.md) settles duel modeling | Frontier 01 (injury/fitness attributes) — but see the no-map caveat above first. |
-| B4 | `player-ratings-derived/` | 4 build tickets against already-shipped behavior | Test and documentation hardening for [player ratings are derived projections](../.agents/notes/proposed/architecture/2026-08-29-player-ratings-are-derived-projections.md). Good filler between feature sprints; low risk, real value. |
+**Ticket 31 is the most time-sensitive ticket in the repo.** Its backfill has to run under the *current*
+engine: every engine-rule fix that lands first destroys the original timeline of every saved match it
+touches, recoverable only by checking out the old engine and replaying. Three written fixes are waiting
+behind it. **No engine-rule fix may land before 31** — ticket 26's patch included. Tickets 26 and 29 are
+re-pointed at 31: blocked on a ticket now, not on a question.
+
+Decision requests 01, 04 and 06 are unblocked in the same sense — each still needs its own answer about
+what the engine rule should *be*, but an answer can now be acted on.
+
+Also found: Screens 96 and 101 are `Parked`, not `deferred` — they wait on a *formula nobody has
+chosen*, and the real blocker is a data-model gap, since the Match Event stream names no goalkeeper or
+defender contribution, so an event-derived rating would systematically under-rate half the team.
+
+**A tracker defect, fixed in the ticket but not at the source**: group-g ticket 29 read
+`ready-for-agent` while carrying a `Blocked by:` line. The frontier scan reads the status, so it would
+have claimed a blocked ticket. 29 is corrected to `blocked`. Nothing in the tracker's own rules stops
+the pair recurring, which is what is still owed — either the two fields should be one, or something
+should check them against each other.
+
+Groups H, I and J were added earlier the same day, and
+they were the easy three: each had already written its scope ruling as an **Agent Note** rather than
+leaving it in `.scratch/`, so the decision behind every row already outlived its effort. All three used
+`deferred` correctly, before the rule existed to require it. What they lacked was only a per-screen
+coverage table.
+
+Three findings from them are worth carrying:
+
+- **Group I's survey recorded a live contradiction in shipped code**: the transfer market shows exact
+  figures for unscouted Players, while the Scouting Knowledge screen withholds them. group-i decision
+  request 01 is the most far-reaching open question in the sweep — it gates Group D 68, Group I 119 and
+  129, and Group J 132, 134 and 137.
+- **Group J's import assumes a different game.** Six screens rest on multi-round negotiation that this
+  game's single-round **Bid** and never-renegotiated **Contract** do not have. Not gaps — different
+  rules.
+- **Group J Screen 140 is built and withheld**, held as a patch pending group-j decision request 01
+  (can a Contract be renewed while it still has years to run). The cheapest unblock in the sweep: one
+  rule question between a finished patch and a shipped screen.
+
+**One correction to my own earlier work**: spec-ledger-kinds decision request 01 listed "137–140" as
+resting on the `CONTEXT.md` v1 exclusion. Screen 140 Contract Renewal is in v1 and `renewContract`
+ships — the exclusion covers *negotiation*, so it reaches 137–139 and stops.
+
+**Only Group G is left in step 1.** It is the heaviest: 14 screens, ~30 tickets, eight decision
+requests.
+
+Groups K and M added earlier the same day. They are
+opposites: Group M's effort closed cleanly and is the one group transcription did not have to correct,
+while **Group K has no rulings at all** — a `map.md` whose Decisions section reads `<!-- none yet -->`,
+no tickets, no spec, fourteen screens unread. Its ledger records that gap.
+
+**The third and largest decision request was answered 2026-09-19: `deferred`.** A recorded
+`CONTEXT.md` v1 exclusion is `deferred`, not `out-of-scope`, with the exclusion named in the Anchor
+rather than a fifth kind being added. Recorded as
+[a v1 exclusion is `deferred`, not `out-of-scope`](../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md),
+which amends the ledger-format note: the four kinds were defined without saying how to choose between
+two of them in the commonest case.
+
+**The rule is now complete, and it is the main durable output of M1 step 1 so far:**
+
+> Absence of a model is `deferred`. A version boundary is `deferred`. Only a design statement that the
+> thing should not exist is `out-of-scope`.
+
+Applied the same day across two groups, in two passes with different authority — this decision moved
+Group D 58 and Group E 78 and 79 and confirmed Group M's thirteen; the already-approved absence rule
+moved Group D 53, 59, 60 and 63 and Group E 73, 74, 76 and Screen 77's eligibility half. Group D now
+reads 4 `out-of-scope` (the closed staff role set), 2 `renamed`, 10 `deferred`, 3 implemented, and
+**no screen in Group E is `out-of-scope` at all**.
+
+**Group K is unblocked**; charting it is a human's call. Remaining in M1 step 1: G, H, I, J.
+
+**EVERY DECISION REQUEST IN THE REPO IS ANSWERED (2026-09-19).** All 18 files under `.scratch/`, across
+six efforts. The queue is empty. Decided under the human's standing delegation; every answer carries its reasoning,
+and each is reversible by overturning its note.
+
+The four that mattered most, and why:
+
+- **group-g 01, 04, 05, 08 were one question.** Settled as
+  [revealed play is immutable](../.agents/notes/proposed/feature/2026-09-19-revealed-play-is-immutable.md):
+  what the manager has been shown is a fact about the match and nothing may change it. A live
+  `ChangeTactics` touches only Team Instructions; a substitution may bring on only an unused bench player;
+  the revealed position is durable across a restart; a command takes effect at M+1, never at a revealed
+  minute. **This is why nineteen tickets patched the same family of defect without the pattern closing** —
+  the rule had never been written down.
+- **group-i 01 was the widest.** Knowledge-limits move into the shared Player read, so the market,
+  `BidComposer`, Player Search and Target Comparison cannot disagree. `CONTEXT.md`'s **Listed** loses its
+  pre-Scouting "full-information Transfer Value" clause in the same commit. Unblocks five screens across
+  three groups, and comes with a real design consequence: a manager bids against an estimate that narrows
+  by scouting.
+- **group-j 01 unblocks a finished screen.** A Contract renews only in its last contracted year. Ticket
+  04's implementation is written and reviewed — it needs the guard, a typed refusal, and one test inverted.
+  The cheapest screen in the backlog.
+- **group-l 01 turns a thrice-shipped defect into a compile error.** `SqlError` gets one escape hatch in
+  the handler type rather than 50 contract unions, which unblocks ticket 05's type-alias gate. The four
+  engine errors are split on **agency, not severity**: `SquadTooSmallError` is a domain error a manager can
+  act on; the other three are defects and get `orDie`.
+
+Also answered: **group-g 02** (unsimulated statistics stay named as unavailable — zero is a claim, and
+this is the same ruling as Group L's `Unplayed`), **group-g 03** (a **Match Rating** is an event rating
+plus phase share, read from the stored timeline; Option C is now safe after ticket 31 and is the end
+state), **group-g 06** (a red-carded keeper drags a stand-in, like an injury), **group-h 01** (Coach
+*quality*, relabelled — the relabel is the load-bearing half), **group-h 02** (`PlayerDeveloped` carries
+its baseline; it cannot be backfilled, so existing saves keep a blind first Season and need an explicit
+no-comparison state), and **group-j 02** (*not yet* — `db/schema.ts` requires an index to be measured, and
+approving on a query plan would break the rule the index-count test enforces; Option A is pre-approved for
+the next scale-probe run).
+
+Two more were found by checking rather than by listing: **group-g 06** (a red-carded keeper drags a
+stand-in — the note was written but the answer had not been appended) and **desktop-suite-red 01**, which
+was not on the working list at all. The latter is answered **Option A**: a career destination is
+top-level when the navbar reaches it from anywhere with a save, moving six screens into
+`CAREER_SCREEN_TYPES` — and, more importantly, deriving the expected set from `nav-config.ts` so ticket
+06's guard *checks* the classification instead of merely forcing one. One fact had changed in Option C's
+favour since it was filed: `navbar-keyboard-intent` already made `nav-config.ts` the derivation source
+for the keyboard spine, so half of C's work is done.
+
+**Ticket 31 is the gate on most of it.** Requests 01, 03, 04, 06 and 08 either change what a seed produces
+or need a stored timeline to read. Nothing in Group G's engine work can land before the backfill.
+
+**STOPPED ON A FINDING, 2026-09-19: saves have no migration path.** Found while starting ticket 31.
+
+`createSchema` runs once, at career creation — one call site, `beginCareer`. `loadSave` performs no DDL.
+The repo contains **zero `ALTER TABLE` statements** and **no `schema_version`** anywhere. A save file's
+schema is written once and never changed again, so every schema change to date has been an implicit
+"new saves only" that nothing makes visible.
+
+**Why it went unseen**: a save-compatibility test creates its save under the *current* schema, so no
+test can fail on this — catching it needs a fixture holding an older save file, and none exists. And
+[/gate](../.opencode/command/gate.md) step 4 asks the gate to "name the migration", which has been
+satisfiable by silence because there is nothing to name.
+
+**Ticket 31 is blocked on it**, and was not quietly narrowed to new-saves-only: its backfill exists *for
+matches that already exist*, so scoping it down would leave exactly the matches it protects unprotected.
+Filed as **ticket 32, `ready-for-human`**, since the question is what a save *is*:
+
+- **Durable** — `schema_version`, ordered upgrade steps on open, and a fixture holding an old save so the
+  path is proved. The only answer under which 31's backfill means anything.
+- **Disposable during development** — refuse a save written under an older schema, with a message. The
+  smallest honest answer; it makes today's behaviour explicit instead of silent. Forecloses shipping to
+  anyone with a career in progress, which is a product call.
+- **Status quo** — recorded only to be rejected: it is what everyone has been doing and nobody chose.
+
+Written up as
+[saves have no migration path](../.agents/notes/proposed/architecture/2026-09-19-saves-have-no-migration-path.md).
+
+**Two of 2026-09-19's decisions are marked provisional** on their persistence clauses — the committed-match
+timeline, and the persisted revealed position. Their *rules* stand; only how they reach an existing career
+is in question. The `PlayerDeveloped` baseline is unaffected: additive JSON in an existing column is the
+one schema change this codebase can currently make to a live save.
+
+**Still unblocked and needing no migration**: group-j ticket 04 (contract renewal — code written, needs a
+guard and a test), Screen 113's two rows, and the group-i knowledge-limit read, which is the largest
+single unblock and touches no schema.
 
 ## Immediate next action
 
-**Lane B0 — `keyboard-first-renderer/`: implement ticket 22 (keyboard e2e conversion), the last stage.**
-Stages 1 (15), 2 (16), 3 (17), 4 (18), 5 (19 — tables/grid; 20 — match-day live control), and 6 (21 —
-user key binding overrides) shipped; gate green throughout, all unit tests green. The pipe's final
-ticket is 22: convert the level-3 journeys (Match Day, Transfers, Tactics, Squad) to keyboard-driven
-e2e with `toBeFocused` + ARIA assertions, keep creation/save-management/error-paths as clicks, cover
-the five mandated coverages, and record the existing click suite's result before and after. Stage 6
-delivered the four rebinding RPC methods (main owns `keybindings.json` under `userData`; renderer
-never touches the filesystem), the help-overlay rebinding surface, per-Action/reset-all, and
-lock/collision/shape validation. Notes promoted this run: `user-key-binding-overrides` proposed →
-implemented (`intra-screen-focus-model` stays proposed until Stage 7's tier-3 e2e widgets ship).
-Three decision requests open: typed-error wire loss and club-selection commit blocker (routed out of
-this effort), and binding-collision-tiers (tunes Stage-6 validation strictness).
+**gate-red-on-dev ticket 04** — the vitest projects split, now unblocked by ticket 03. 100 of 144
+renderer test files carry a `@vitest-environment jsdom` pragma and 0 of 63 main tests do, so the
+renderer/main split already exists and is merely hand-written 100 times, silently absent on the
+101st. Deliberately sequenced after 03 so it moves against a green baseline. Also ready:
+**gate-red-on-dev 05** (a `MatchNotReadyError` flake), **add-manager-screen-7 03** (released lock;
+the Group A ledger asserts a state the code has left), **group-a-reconciliation 22** (the Quit dialog
+has no provisional-career variant).
 
-**Lane B1 — `training/`:** fallback if the renderer pipe stalls; the most implementation-ready work
-with no design debt.
+**`pnpm check:all` is GREEN on `dev`** as of 2026-09-18, for the first time in this plan's memory —
+typecheck, lint, effect-lint, verify-md-links, verify-db-schema and test, 2651 tests passing. The
+standing caveat that every sprint delivers against a red gate and must re-prove "pre-existing" by
+hand is **retired**. One caveat replaces it: ticket 05's flake failed one test in two separate full
+runs, in a different file each time while passing in isolation, so treat a single red test as
+suspect until that is fixed.
 
-**Lane A (decisions):** A2 (`scouting/04`) and A3 (`retro-match-screen/01`) are the next open
-decision frontiers. Only closing maps opens the chartering gate.
+What the red gate turned out to be, after several sprints of being summarised as "61 unit tests
+failing `window is not defined`": only **5** were that error. 9 were a cascade from one test calling
+`window.close()` under jsdom and tearing the fixture down for eight others. 13 were a fixture missing
+a schema field added on 09-11. 21 were four test files that never adopted `renderInRouter` after
+`useListState` made `SquadScreen` require router context on 09-11. The inaccurate summary is how the
+real failures stayed hidden. Two guard tests disagreed and both were right to: `display-names` was a
+false positive (regex spanning a template literal) and was tightened with a self-test;
+`club-badge-library` was correct and had caught a real defect — 10 Portuguese clubs mapped to badge
+keys the library never held.
 
-## Closed — not in the queue
+**The claimed-lock sweep ran 2026-09-18, and the standing "six abandoned locks" caveat is retired.**
+There were two, not six. The four this plan named — group-a 03, group-g 14, group-h 11 and
+desktop-suite-red 03 — are all `resolved`; the react-composition-audit locks were relabelled on
+09-06 and the group-b ones swept earlier. The two real ones were `club-staff-presence` 03 and 05,
+both stale locks over work that had shipped, in an effort listed as complete since 2026-09-09. Each
+was resolved against the tree rather than a commit message, with the audit and its file-and-line
+evidence appended to the ticket.
 
-| Effort | Why |
-|---|---|
-| `cm-clone/` | The v1 game. Decisions 01–08 and 19–20 resolved, build tickets 09–18 shipped into `apps/desktop` and `packages/`. Historical. |
-| `e2e-coverage/` | All 6 tickets resolved; wave 1 Playwright coverage shipped. |
-| `effect-migration/` | All 6 tickets resolved. Open questions noted in roadmap.md (`saves.ts` consistency, remaining async/await files) are **not tickets** — raising them means a decision request, not a self-started map. |
-| `effect-lint-hardening/` | Both tickets resolved, including the rule-adoption list. Repeat review findings route here per AGENTS.md. |
-| `effect-v4-migration/` | All 7 tickets resolved. Superseded by `effect-migration/`; do not start work from it. |
-| `skill-suite-merge/` | All 8 tickets resolved. The spec still reads `ready-for-agent`, but the `cm-*` skills and `.agents/notes/` layer it describes are already in use. Stale status; do not re-drive. |
+No live lock was touched. The lesson stands and belongs to [AGENTS.md](../AGENTS.md): both tickets
+were `claimed` at filing, so the frontier scan skipped them and the effort read as in-progress while
+nothing could pick it up. Set `claimed` immediately before starting work, never when filing.
 
-## Known tracker debt
+group-l-competitions-nations-and-world-information ticket 04 resolved 2026-09-17: the Competition
+Fixtures screen (Screen 163) lists any Competition's Fixtures via a new `getCompetitionFixtures` RPC,
+with unplayed Fixtures marked and never given a fabricated score. Review caught the RPC omitting
+`PendingFixtureIntegrityError` from its error union — invisible to typecheck because the handler is
+typed `Effect<unknown, unknown>` — fixed before commit. Ticket 03 shipped the same omission in
+`getCompetitionTable`; filed with two other follow-ups as group-l ticket 05. group-l is otherwise
+4/4 resolved, and Screens 164 and 161 remain v1 scope with no ticket.
 
-Do not "fix" these mid-sprint — they are recorded so you read the tracker correctly, and each is its
-own decision.
+group-g-match-day has no ready build ticket left; 26 (forced substitution brings back used players,
+patch kept) and 29 (windows across halves) are blocked on decision request 07; 20 needs triage (a
+command rewrites seen play); decision requests 01 (live tactics resets the line-up), 04 (who may come
+on), 05 (revealed position across a restart), 06 (red-carded keeper) and 07 (engine rule changes vs
+saved matches) need a human.
 
-- **Two status vocabularies.** Wayfinder decision tickets use a bare `Status: resolved` header; build
-  tickets from `cm-to-tickets` use a `**Status:** ready-for-agent` line in the body. Three
-  `training/` tickets carry **both**, saying `resolved` in the header and `ready-for-agent` in the
-  body — the decision is settled, the code is not. Read both before concluding anything.
-- **Mixed numbering.** `cm-clone/` and `onboarding/` interleave decision tickets, build tickets, and
-  follow-on decisions in one number space (`onboarding/` also has duplicate numbers: two `02`s, two
-  `03`s). [classifying post-handoff decisions](../.agents/notes/implemented/process/2026-08-27-classifying-post-handoff-decisions.md) accepts this
-  as process debt.
-- **Absence of a `Type:` line is a fragile discriminator** for "this is a build ticket" — it may just
-  be missing. ADR-0010 says so explicitly.
+**The gate is red on `dev` independently of any sprint**, and has been for at least these three
+clusters: 61 unit tests failing `ReferenceError: window is not defined` at
+`src/renderer/navigation/scroll-state.ts:21`; 12 `oxlint` errors; 18 broken markdown links under
+group-c/group-d. None has a ticket. Until they do, every sprint delivers against a red gate and
+"pre-existing" has to be re-proved by hand each time.
 
-## Row hygiene
+group-a-reconciliation ticket 20 resolved 2026-09-17: the Quit dialog renders above both overlay
+tiers via `MODAL_SCRIM_TOP` (`z-[60]`), proved by an e2e spec whose mutant was observed to fail on
+pointer interception. Review split out ticket 21.
 
-When a sprint closes, in the same commit: mark the ticket resolved, append the decision pointer to
-the effort's `map.md`, promote any shipped Agent Note to `implemented/`, update this file's row and
-**Immediate next action**, add the [TRACEABILITY.md](TRACEABILITY.md) entry if a durable capability
-shipped, and write `.ai/reports/<effort>.md`.
+navbar-keyboard-intent ticket 04 resolved 2026-09-17: a section's `g <n>` key may only sit on that
+section's own action; a hand-edited override moving it elsewhere is rejected and dropped on load.
 
-When Lane A empties, say so rather than refilling it: an empty Lane A is the signal that chartering
-is unlocked, and that is a conversation with a human.
+group-g-match-day ticket 30 resolved 2026-09-17: the Match Report lists goalkeeper stand-ins as moves
+into goal, and its incident list agrees with its substitutions statistic.
+
+group-g-match-day ticket 28 resolved 2026-09-17: the renderer match session accepts writes only for
+the active match, so nothing crosses into the next match.
+
+group-g-match-day ticket 27 resolved 2026-09-17: the career header's live-match readout shows the
+revealed score and minute.
+
+group-g-match-day ticket 26 parked 2026-09-17: the fix changes engine results, and match history
+re-derives from seed and journal on every read, so it would make saved Match Reports contradict
+their stored results. Kept as a patch; decision request 07 asks how engine rules may change without
+rewriting saved matches, which gates every engine-rule fix in this effort.
+
+group-g-match-day ticket 25 resolved 2026-09-17: substitution counts, windows, statistics and command
+outcomes (including bring-offs) follow the engine's own rules, and a severe goalkeeper injury at the
+cap pauses.
+
+group-g-match-day ticket 24 resolved 2026-09-16: the Match day panel's halftime instruction shares the
+standalone screens' half-time window.
+
+group-g-match-day ticket 23 resolved 2026-09-16: leaving and returning to Match day continues from the
+revealed position, including a pending injury decision. A restart still replays from kickoff
+(decision request 05). Another session's uncommitted React Compiler lint config is in the shared
+worktree and raises lint errors from 19 to 43; it was not staged.
+
+group-g-match-day ticket 22 resolved 2026-09-16: score, head-count and the Commentary screen stop at
+the revealed position, and `conditions` has left the match response. The head-count now visibly
+disagrees with the engine after a live tactics change, which makes decision request 01 more urgent.
+
+group-g-match-day ticket 21 resolved 2026-09-16: the injury prompt and no-subs pause work again,
+triggered when the Injury line is revealed, decided on the cap state at that moment, and cleared by
+the forced substitution, Play on, or a command. Desktop unit failures dropped from 68 to 62.
+
+group-g-match-day ticket 19 resolved 2026-09-16: both substitution pickers list who is on the pitch
+as of the revealed position, from a main-process fold (`pitch.ts`). Review found that the engine lets
+a forced substitution bring back a dismissed player (26), and asked who may come on (decision
+request 04).
+
+group-g-match-day ticket 18 resolved 2026-09-16 (code in `d8170df`, committed outside the pipeline
+and reviewed afterwards): live substitution counts stop at the revealed position, and "applied" comes
+from the substitution's own event. desktop-suite-red 11 closed with it (live-match e2e 30/30). The
+review found six more live-match defects, filed as group-g 20–25.
+
+two-row-nav ticket 08 resolved 2026-09-16 (`d0e5f75`): secondary tablists are named for their match
+or entity context, not the primary section. Its gate run exposed desktop-suite-red 14.
+
+desktop-suite-red ticket 12 resolved 2026-09-16: Squad has a visually hidden `h1`, and `app.spec.ts`
+is fully green. desktop-suite-red now has no ready ticket: 11 is blocked on group-g 18, and 03 is
+claimed but abandoned.
+
+desktop-suite-red ticket 13 resolved 2026-09-16: the transfer bid journey scopes its row locator, so a
+namesake in a random world no longer breaks it (10/10 repeats).
+
+desktop-suite-red ticket 11 parked 2026-09-16: no pacing seam, since the full-time race did not
+reproduce in 30 runs. The remaining 1-in-30 failure is a product defect: live substitution counts
+include substitutions the re-simulated match has not reached yet, so an accepted substitution can
+read as Rejected. Filed as group-g 18 and 19. 11 is blocked on 18.
+
+desktop-suite-red ticket 10 resolved 2026-09-16: the live-match specs assert today's command-status
+copy and tabs. The app and journeys e2e specs are at 10 passed / 2 failed (tickets 12, 13).
+
+desktop-suite-red ticket 09 resolved 2026-09-16: `closeOrKill` confirms the quit guard through main,
+so an e2e app quits in about 150ms instead of being killed after 5s.
+
+desktop-suite-red ticket 08 resolved 2026-09-16: the before-matchday seed now stands at the first
+pre-match boundary, and the kickoff locators say "Play match". Router AC-15 and keyboard AC-20 pass.
+The match-starting journeys now get past kickoff and fail on tickets 10 and 11.
+
+desktop-suite-red ticket 07 resolved 2026-09-16: the close hang was the quit-confirmation guard that
+no test answered, not an app defect. `keybindings.spec.ts` and the journeys save-restart test pass.
+
+navbar-keyboard-intent ticket 03 resolved 2026-09-16: the keyboard, keybindings and journeys e2e
+specs press position keys, and navbar badges follow user overrides. The keyboard e2e trio went from
+3 passed / 7 failed to 5 / 5. The five left are desktop-suite-red 07 and 08, filed by its review.
+
+navbar-keyboard-intent ticket 02 resolved 2026-09-16: World gains `g 8`, `g 3` now reaches Training
+rather than Squad, and the section nav actions derive from `NAV_SECTIONS`, with `CAREER_G_BINDINGS`
+deleted. `navbar.test.tsx`'s intentional red badge case is green. Report:
+[reports/navbar-keyboard-intent.md](reports/navbar-keyboard-intent.md).
+
+Group J ticket 08 resolved 2026-09-16: Contract Expiry and Budget Review are in the Recruitment
+submenu (`g 4 o`, `g 4 p`), and the submenu strip now scrolls, since ten entries overflow the
+default window. Group J has no ready ticket left; 04 is needs-info on decision request 01.
+
+desktop-suite-red ticket 06 resolved 2026-09-16 (`d0fab20`): the career-screen classification is now
+enforced by `typecheck` rather than by diligence, and the adapter sweep covers five destinations it
+had been silently missing. It raised
+[decision request 01](../.scratch/desktop-suite-red/decision-request-01-what-makes-a-career-destination-top-level.md)
+— nothing written down says what makes a `CareerDestination` top-level, so the new guard forces a
+classification without being able to check it. Blocks nothing.
+
+Ticket 05 resolved 2026-09-16 (`0d0b60c`). Its premise was half wrong: `navbar.test.tsx`'s literal
+was correct, not stale, and red because the navbar advertises a `g 8` the keyboard spine rejects.
+That test is now derived from the binding registry and deliberately red against
+[navbar-keyboard-intent 02](../.scratch/navbar-keyboard-intent/issues/02-world-section-advertises-a-dead-g-key.md).
+
+Group J ticket 07 (Transfer History, Screen 146) resolved 2026-09-15 (`c7ad6bd`); it shipped a
+navbar entry, which exposed that tickets 05 and 06 shipped their screens URL-only. Ticket 04
+(Contract Renewal) is needs-info on group-j decision request 01 (renewal mid-term), its work kept as
+a patch. Group J decision request 02 (club-scoped transfer indexes) is open and blocks nothing.
+Group I decision request 01 also blocks Group J Screens 132, 134 and 137.
+
+**For a human**: `desktop-suite-red` ticket 03 is claimed-and-abandoned. Per
+[AGENTS.md](../AGENTS.md), `claimed` is a lock the frontier scan skips, so it is invisible to every
+future agent and will never be picked up. It needs unclaiming or closing by someone who knows why it
+stopped. Tickets currently `claimed` elsewhere (group-a 03, group-g 14, group-h 11) may be live
+parallel sessions and were left alone.
+
+## Gate state (2026-09-14)
+
+- **Ticket 05 (group-h) gate, 2026-09-15**: `pnpm check:all` exits 1 on pre-existing failures only.
+  The same failing files on clean HEAD `349bafc` give 69 failures, identical to the working tree's
+  apart from one caused by another session's uncommitted content pack. e2e on clean HEAD is
+  10 failed / 24 passed, so the 5-failure e2e baseline below is out of date. Details in
+  [reports/group-h-training-and-player-development.md](reports/group-h-training-and-player-development.md).
+
+- **Ticket 07 (group-g) gate**: `pnpm check:all` exits 1 on pre-existing failures only. Desktop unit
+  tests 65 failed / 1516 passed across 20 files; the same 20 files on clean HEAD fail the same 65.
+  `verify-md-links` fails on 18 links in `.scratch/group-c-club-information/RECONCILIATION.md` and
+  `.scratch/group-d-player-and-staff-records/issues/02-staff-screens-scope.md`, both committed earlier.
+  Details in [reports/group-g-match-day.md](reports/group-g-match-day.md).
+
+- **`pnpm check:all`**: pre-existing failures only — no regression from today's work (commits
+  `b0b8f33`, `d6b44a4`, `ac553d6`, `6a07401`, `6a830f3`, `908fd0f`, `e6f0c6f`, `dd46e8d`,
+  `f52c2c6`):
+  - `test/renderer/managerProfile/screen.test.tsx` — mock RPC returns "unexpected response"
+  - `test/renderer/chrome/shell-bottom-bar-state.test.ts` — expected `zones` mismatch
+  - `test/renderer/navigation/navbar.test.tsx` and `route-index.test.ts` — route content mismatch
+  - `test/renderer/router/stage2.test.ts`, `team-scout-report-route.test.ts` — `window` not defined
+    (jsdom env)
+  - `test/renderer/match/screen-fulltime.test.tsx` — passes.
+- **Desktop unit tests, 2026-09-16 (navbar-keyboard-intent 02)**: 68 failed / 1792 passed across 17
+  files. `navbar.test.tsx` no longer fails. The e2e keyboard specs fail on the retired letter keys
+  (ticket 03), and `router.spec.ts:184` (Match Day resume) fails on a missing `Start match` button.
+- **Nav guard baseline, 2026-09-16 (`d0fab20`)**: `test/renderer/navigation` + `test/renderer/actions`
+  is 1 failed / 355 passed across 14 files — the one failure still the intentional `navbar.test.tsx`
+  badge case. Earlier the same day at `0d0b60c`: `test/renderer/navigation` is 1 failed / 307
+  passed across 11 files. The one failure is intentional — `navbar.test.tsx`'s badge case is red
+  until navbar-keyboard-intent 02 resolves the `g 8` gap. Before this ticket the same two files
+  failed 2. Details in [reports/desktop-suite-red.md](reports/desktop-suite-red.md).
+- **e2e**: still 5 failed / 28 passed at `8f95c8f` — no e2e change this sprint.
+- **typecheck**: 0 errors across all packages.
+- **lint/oxlint**: pre-existing warnings only.
+
+## Queue
+
+1. ~~**group-c-club-information**: complete 2026-09-14. Screen 38 already shipped.~~
+2. ~~**group-d-player-and-staff-records**: complete 2026-09-14. 19 screens charted, 3 implemented.~~
+3. **desktop-suite-red**: 01, 02, 04, 05, 06 resolved (05 derived the nav guards, 06 made the
+    classification a typecheck gate, 2026-09-16). 03 claimed-and-abandoned (needs a human to
+    unclaim or close). Decision request 01 open. 07-10 resolved 2026-09-16 (quit guard; seed at the
+    pre-match boundary; graceful harness close; live-match copy). 11 blocked by group-g 18; 12, 13 resolved
+    (hidden Squad `h1`; namesake-safe bid locator).
+4. **season-rollover-skips-conclusion**: 01 resolved.
+5. **match-composition**: 01-02 resolved.
+6. **group-a-reconciliation**: 03-04 resolved. 20 resolved (Quit dialog rendered above both overlay tiers via `MODAL_SCRIM_TOP`). 21 resolved (QuitGuard portals to `document.body` to escape Base UI inert).
+7. **team-scout-report**: complete 2026-09-13.
+8. **group-e-squad-management**: pending — next unmatched spec group.
+9. **group-g-match-day**: 01–09 resolved (07 Screen 97 live tactics/substitutions, 08 Screen 99
+    Post-Match Summary, 09 Screens 95/100 Match Statistics, 11 Screen 103 Match Report, 2026-09-14);
+    10 needs-info on decision request 03; 12, 13, 15, 16, 17 resolved; 14 claimed; 13 mounted tab bar,
+    17 stoppage minute formatting shipped 2026-09-15; decision requests 01, 02, 03 open.
+10. **group-h-training-and-player-development**: 01-03 resolved. Spec published. 04 completed
+    (coaching assignments, 2026-09-15). 05 completed (workload and recovery, 2026-09-15). 06 completed
+    (individual training plan, 2026-09-15). 07 partly shipped (performance report, 2026-09-15),
+    needs-info on decision requests 01 (coach rating) and 02 (development baseline). 08 completed
+    (player development centre, 2026-09-15). 09 completed (training overview, 2026-09-15). 10 completed
+    (Goalkeeping Training Focus rule enforced in main, 2026-09-15). 11 claimed.
+11. **group-i-scouting-and-recruitment**: 01-03 resolved, spec published. 07 completed (typed RPC
+    errors survive IPC), 04 completed (Scouting Assignment screen) and 05 completed (Scouting
+    Knowledge screen), 06 completed (Scouting Centre), 2026-09-15. 08 completed (read-state
+    helper), 2026-09-15. Scope note promoted. Effort complete for v1; decision request 01 open. Decision request 01 open.
+12. **group-j-transfers-contracts-and-negotiations**: 01-03 resolved, spec published (2026-09-15). 04
+    needs-info on decision request 01; 05-07 resolved (07 Screen 146 Transfer History, 2026-09-15);
+    08 resolved (navbar entries for 141/145, 2026-09-16). Decision requests 01 and 02 open.
+13. **navbar-keyboard-intent**: 01-04 resolved (02 World `g 8`; 03 e2e on position keys, override-aware
+     badges, 2026-09-16); 04 ready (decision: item level vs hand-edited section overrides).
+14. **group-l-competitions-nations-and-world-information**: charted 2026-09-17. 01 (inventory), 02
+    (v1 scope) resolved. 03 (Competition Table) resolved (new `getCompetitionTable` RPC + screen).
+    In v1: screens 161–164 (Competition Table, Fixtures, Results, Overview). 176–180 out of scope.
+
+Shipped and closed:
+
+- **club-staff-presence**: complete 2026-09-09.
+- **save-list-error-handling**: complete 2026-09-09.
+- **world-data-model**: shipped.
+- **group-b-reconciliation**: all 7 tickets resolved.
+- **group-c-club-information**: complete 2026-09-14.
+- **group-d-player-and-staff-records**: complete 2026-09-14.
+- **group-e-squad-management**: complete 2026-09-14. 11 screens charted, all disposed.
+
+## Loose instructions
+
+Squad work committed from `.scratch/squad-instructions.md` (`6a04f33`…`5663faf`) is not a
+`.scratch/<effort>/` and has no tracker entry. Whether to charter it is a human call.

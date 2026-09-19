@@ -1,1 +1,284 @@
 @import "tailwindcss";
+
+/*
+ * The renderer's bundled font. Vendored under src/assets/fonts/ (Outside the
+ * Vite renderer root, but url() resolves fine relative to this stylesheet).
+ */
+@font-face {
+  font-family: "Jakarta Sans";
+  src: url("../assets/fonts/JakartaSans/JakartaSans.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Jakarta Sans";
+  src: url("../assets/fonts/JakartaSans/JakartaSans-Italic.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("../assets/fonts/Inter/inter.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+ * The renderer's design tokens — the retro chrome-blue visual frame.
+ *
+ * One `@theme` block, deliberately NOT `@theme inline`: in the default mode
+ * Tailwind emits every token as a real custom property on `:root` *and*
+ * generates utilities that reference it through `var()`. That keeps both
+ * consumption idioms alive at once — screens keep composing utility classes,
+ * and a future skin re-declares these properties under a scope to repaint the
+ * whole renderer without touching a single class. `@theme inline` would bake
+ * the values into the utilities and cost us that.
+ *
+ * Token names state the ROLE, never the hue. A name that asserts today's
+ * colour is a lie after the first palette change.
+ *
+ * The `--color-slate-*` migration alias layer that carried the repaint is gone:
+ * the backlog reached zero (`scripts/slate-baseline.json` is `{}`) and every
+ * call site now names a role. The guard stays on to keep it that way.
+ */
+@theme {
+  /* --- Typography ------------------------------------------------------- */
+  --font-sans: "Inter", "Jakarta Sans", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+
+  /* The 11px status tier. 12px/14px/18px are Tailwind's own xs/sm/lg. */
+  --text-2xs: 12px;
+  --text-2xs--line-height: 1.3;
+
+  /* --- Page and surface ramp -------------------------------------------- */
+  --color-bg-base: #0a0e14;
+  --color-bg-raised: #121820;
+  --color-surface: #18202b;
+  --color-surface-raised: #212b39;
+  --color-border-subtle: #2f3d4e;
+
+  /* --- Panels ----------------------------------------------------------- */
+  --color-panel-bg: rgb(5 12 13 / 0.72);
+  --color-panel-bg-strong: rgb(6 10 12 / 0.86);
+  --color-panel-border: rgb(255 255 255 / 0.3);
+  --color-panel-border-dark: rgb(0 0 0 / 0.4);
+
+  /* --- Chrome (the gradient treatment: title bars, panel headers, primary
+         buttons). "chrome" names the treatment, not the blue. ------------- */
+  --color-chrome-top: #416a9f;
+  --color-chrome-mid: #214d84;
+  --color-chrome-bottom: #153963;
+
+  /* --- Text ------------------------------------------------------------- */
+  --color-text-primary: #e8edf3;
+  --color-text-bright: #f4f7fa;
+  --color-text-strong: #cdd5df;
+  --color-text-body: #a9b3c1;
+  --color-text-secondary: #8892a0;
+  --color-text-muted: #6b7686;
+
+  /* --- Dense-table row states -------------------------------------------
+     Four states must stay separable: neutral (no fill), hover, selection, and
+     the keyboard focus ring (which lives on the row's name button, not here).
+     Both fills are OPAQUE rather than translucent chrome-blue, because the
+     pinned identity columns sit on their own stacking context and have to
+     paint an opaque background to hide the columns scrolling beneath them;
+     a translucent fill would compose differently there than on the rest of the
+     row. `row-selected` is that low-opacity chrome-blue flattened over
+     `bg-base`, so it reads as the intended tint and composes deterministically. */
+  --color-row-hover: #141b25;
+  --color-row-selected: #102033;
+
+  /* --- Semantic status -------------------------------------------------- */
+  --color-text-highlight: #fff400;
+  --color-text-warning: #ff7200;
+  --color-text-danger: #ff4444;
+  --color-text-success: #8ae860;
+
+  /* --- Controls --------------------------------------------------------- */
+  /* `accent` is claimed by the shadcn role bridge below (a hover surface, not
+     a hue). The former green pair lived here and had no consumers. */
+  /* Fields are opaque on purpose: typed characters must read against an
+     unwashed surface, not through a semi-transparent panel. */
+  --color-field-bg: #0f151d;
+  --color-focus-ring: var(--color-text-highlight);
+
+  /* --- Career header (club-coloured) ------------------------------------
+     The top band paints itself in the user club's PRIMARY pair. These are
+     declared as roles with the existing neutral chrome as their default, so
+     every shell that has no club — the main menu, the save list, the creation
+     flow — renders exactly as before and nothing about them changes.
+
+     Only the two base roles live here. The derived ones (border, muted text,
+     hover) are declared by the `club-header` utility instead, NOT in this
+     block: a custom property's `var()` references are substituted at
+     computed-value time on the element that declares it, so a derivation
+     written here would resolve against `:root`'s neutral values once and stay
+     resolved no matter what a descendant overrides. Declaring them on the same
+     element that carries the club override is what makes them track it. */
+  --color-header-bg: var(--color-bg-raised);
+  --color-header-fg: var(--color-text-primary);
+  /* The derived three are declared here too, at their neutral values, purely so
+     Tailwind generates `border-header-border` / `text-header-muted` /
+     `bg-header-hover`. `club-header` re-declares them as club-tracking mixes on
+     the element that carries the override; these are what every shell without
+     a club resolves to. */
+  --color-header-border: var(--color-border-subtle);
+  --color-header-muted: var(--color-text-secondary);
+  --color-header-hover: var(--color-surface-raised);
+
+  /* --- Scoreboard (match-day only) ---------------------------------------
+     The one match-only token family. The neutral chrome-band + white-score-box
+     pattern is the archetypal match-day picture and needs no club data; a
+     future club-colour upgrade is a token change, not a redesign. The band
+     reuses the shared chrome gradient, so only the score box is match-only. */
+  --color-scoreboard-box: #f4f7fa;
+  --color-scoreboard-box-text: #0a0e14;
+
+  /* --- Shape and depth -------------------------------------------------- */
+  --radius-panel: 6px;
+  --radius-control: 4px;
+  --shadow-panel:
+    inset 0 1px 0 rgb(255 255 255 / 0.08), 0 2px 4px rgb(0 0 0 / 0.3);
+  --shadow-chrome:
+    inset 0 1px 0 rgb(255 255 255 / 0.15), 0 1px 3px rgb(0 0 0 / 0.4);
+
+  /* --- shadcn/Base UI role bridge ---------------------------------------
+     The vendored components in `components/ui/` are written against
+     shadcn's role names (`bg-background`, `text-muted-foreground`,
+     `ring-ring`, ...). Rather than rewrite ~35 upstream files — which would
+     forfeit every future `shadcn add` and re-diff — each role name is
+     declared here as an alias onto the chrome tokens above. The components
+     stay upstream-shaped and inherit the retro frame for free; a skin
+     override still repaints them, because these resolve through the same
+     variables. Same tactic as the `--color-slate-*` layer that carried the
+     original repaint, except this one is permanent rather than a backlog. */
+  --color-background: var(--color-bg-base);
+  --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-panel-bg);
+  --color-card-foreground: var(--color-text-primary);
+  /* Popovers and menus float over content: opaque, never washed. */
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-primary: var(--color-chrome-mid);
+  --color-primary-foreground: var(--color-text-bright);
+  --color-secondary: var(--color-surface-raised);
+  --color-secondary-foreground: var(--color-text-primary);
+  --color-muted: var(--color-surface);
+  --color-muted-foreground: var(--color-text-muted);
+  --color-accent: var(--color-surface-raised);
+  --color-accent-foreground: var(--color-text-bright);
+  --color-destructive: var(--color-text-danger);
+  --color-destructive-foreground: var(--color-text-bright);
+  --color-border: var(--color-border-subtle);
+  --color-input: var(--color-border-subtle);
+  --color-ring: var(--color-focus-ring);
+
+  /* Sidebar family. `sidebar.tsx` reads some of these as bare `var(--sidebar-*)`
+     in inline styles, so the un-prefixed names are declared on `:root` below. */
+  --color-sidebar: var(--color-bg-raised);
+  --color-sidebar-foreground: var(--color-text-primary);
+  --color-sidebar-accent: var(--color-surface-raised);
+  --color-sidebar-accent-foreground: var(--color-text-bright);
+  --color-sidebar-border: var(--color-border-subtle);
+  --color-sidebar-ring: var(--color-focus-ring);
+
+}
+
+/*
+ * The page background. A single dark gradient, never per-screen photography —
+ * content panels are semi-transparent and need a predictably dark backdrop.
+ * `--page-image` is the reserved seam for a context-sensitive background (and,
+ * on match day, a stadium photograph): it layers *under* the gradient wash, so
+ * an asset can be injected later without restyling anything.
+ */
+@layer base {
+  :root {
+    --page-image: none;
+
+    /* Bare aliases for `sidebar.tsx`'s inline `var(--sidebar-*)` reads. */
+    --sidebar-accent: var(--color-surface-raised);
+    --sidebar-border: var(--color-border-subtle);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg-base);
+    background-image:
+      linear-gradient(180deg, var(--color-bg-base) 0%, var(--color-bg-raised) 100%),
+      var(--page-image);
+    background-size: cover;
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+  }
+}
+
+/*
+ * The chrome gradient. A utility rather than a token because it is a
+ * three-stop gradient, not a colour — but it reads the same tokens, so a skin
+ * override repaints it too. `chrome-gradient-inverted` is the active/pressed
+ * state of a primary button and the framed-locus treatment of the active tab.
+ */
+@utility chrome-gradient {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-chrome-top),
+    var(--color-chrome-mid),
+    var(--color-chrome-bottom)
+  );
+}
+
+@utility chrome-gradient-inverted {
+  background-image: linear-gradient(
+    0deg,
+    var(--color-chrome-top),
+    var(--color-chrome-mid),
+    var(--color-chrome-bottom)
+  );
+}
+
+/*
+ * The match-day stadium wash — a CSS-only grandstand glow, no image dependency.
+ * A radial "pitch light" rises from the centre while the panel-dark overlay
+ * keeps the surface readable (match-day note AC-3). It inherits the palette, so
+ * a skin override repaints it too; the real stadium photograph, when one lands,
+ * goes in the `--page-image` seam instead.
+ */
+@utility stadium-wash {
+  background-image: radial-gradient(
+    ellipse 120% 80% at 50% 0%,
+    var(--color-chrome-bottom) 0%,
+    color-mix(in oklab, var(--color-chrome-bottom) 45%, var(--color-panel-bg) 55%) 55%,
+    var(--color-panel-bg) 100%
+  );
+}
+
+/*
+ * The career header's club paint.
+ *
+ * The element carrying this also carries the club's primary pair as two inline
+ * custom properties (see `Navbar`), which is the whole override: everything
+ * below resolves through `--color-header-*`, so one scope repaints the band and
+ * no descendant names a colour. Without the club override it renders in the
+ * neutral defaults from `@theme`, which is what the pre-career shells get.
+ *
+ * The three derived roles are declared HERE rather than in `@theme` so they
+ * recompute against whatever pair this element was given — see the note there.
+ * They are mixes toward the club's own foreground rather than fixed greys,
+ * because a fixed border is invisible on half the palette and a fixed muted
+ * grey is illegible on the other half.
+ */
+@utility club-header {
+  --color-header-border: color-mix(in oklab, var(--color-header-fg) 26%, var(--color-header-bg));
+  --color-header-muted: color-mix(in oklab, var(--color-header-fg) 70%, var(--color-header-bg));
+  --color-header-hover: color-mix(in oklab, var(--color-header-fg) 14%, var(--color-header-bg));
+}

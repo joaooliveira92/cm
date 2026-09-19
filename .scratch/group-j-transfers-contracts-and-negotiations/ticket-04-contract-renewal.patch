@@ -1,0 +1,489 @@
+diff --git a/apps/desktop/e2e/contract-renewal.spec.ts b/apps/desktop/e2e/contract-renewal.spec.ts
+new file mode 100644
+index 0000000..83ddc65
+--- /dev/null
++++ b/apps/desktop/e2e/contract-renewal.spec.ts
+@@ -0,0 +1,48 @@
++import { continueSeededCareer, expect, goto, test } from "./launchApp.js";
++import { savesDir, seedFresh } from "./seedSaves.js";
++
++/**
++ * Contract Renewal's path (Screen 140, group-j ticket 04). A fresh save stands in the pre-season, so
++ * its Transfer Window is open and a renewal is legal with no played Matchday. No in-app control links
++ * to the Player Contract route yet, so the spec reaches a real own-club Player through the Training
++ * Overview's plan preview and the Individual Training Plan (whose URL carries the player id) and then opens
++ * `/player/$playerId/contract` by address, as `performance-report.spec.ts` does.
++ *
++ * The spec picks a length other than the current one, renews, and sees the contract re-read with it.
++ * That no action shows for another club's Player is proven in `player-contract-screen.test.tsx`.
++ */
++test("the Player Contract screen renews an own-club Player's Contract for a chosen length", async ({
++  window: page,
++  userDataDir,
++}) => {
++  await seedFresh(savesDir(userDataDir));
++  await continueSeededCareer(page, "Seed: fresh");
++
++  await goto(page, "training");
++  const firstRow = page.getByRole("list", { name: "Training plan preview" }).getByRole("listitem").first();
++  const playerName = await firstRow.getByRole("heading", { level: 3 }).innerText();
++  expect(playerName.length).toBeGreaterThan(0);
++  await firstRow.getByRole("button", { name: `${playerName} training plan`, exact: true }).click();
++  await expect(page.getByRole("heading", { name: `${playerName} — Training Plan`, level: 1 })).toBeVisible();
++
++  await page.evaluate(() => {
++    location.hash = location.hash.replace(/\/training\/plan\/([^/?]+)/, "/player/$1/contract");
++  });
++
++  const main = page.getByRole("main", { name: "Player Contract" });
++  const length = main.getByText(/^Length: \d+ years?$/);
++  await expect(length).toBeVisible();
++  const current = Number((await length.innerText()).match(/(\d+)/)![1]);
++  const chosen = current === 5 ? 4 : 5;
++
++  const renewal = main.getByRole("region", { name: "Renew contract" });
++  await expect(renewal).toBeVisible();
++  await renewal.getByRole("combobox", { name: "Contract length" }).click();
++  await page.getByRole("listbox").getByRole("option", { name: `${chosen} years`, exact: true }).click();
++  await expect(page.getByRole("listbox")).toHaveCount(0);
++  await renewal.getByRole("button", { name: "Renew", exact: true }).click();
++
++  await expect(main.getByText(`Length: ${chosen} years`, { exact: true })).toBeVisible();
++  await expect(main.getByText(/^Expires: Season \d+$/)).toBeVisible();
++  await expect(renewal.getByRole("alert")).toHaveCount(0);
++});
+diff --git a/apps/desktop/src/renderer/playerContract/PlayerContractScreen.tsx b/apps/desktop/src/renderer/playerContract/PlayerContractScreen.tsx
+index 9fb4d3c..2eba818 100644
+--- a/apps/desktop/src/renderer/playerContract/PlayerContractScreen.tsx
++++ b/apps/desktop/src/renderer/playerContract/PlayerContractScreen.tsx
+@@ -1,6 +1,7 @@
+ import { type PlayerId, type SaveId } from "@cm-clone/contracts";
+ import { FOCUS_RING } from "../focus.js";
+-import { describeRpcError, playerContractAtom, typedError, useAtomValue, type RpcClientError } from "../rpc.js";
++import { describeRpcError, playerContractAtom, squadAtom, typedError, useAtomValue } from "../rpc.js";
++import { RenewContractPanel } from "./RenewContractPanel.js";
+ 
+ const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+ 
+@@ -12,6 +13,7 @@ export const PlayerContractScreen = ({
+   readonly playerId: PlayerId;
+ }) => {
+   const contractResult = useAtomValue(playerContractAtom(saveId, playerId));
++  const squad = useAtomValue(squadAtom(saveId));
+ 
+   if (contractResult._tag === "Initial") {
+     return (
+@@ -34,6 +36,8 @@ export const PlayerContractScreen = ({
+   }
+ 
+   const contract = contractResult.value;
++  // Renewal is for the manager's own club only; until the squad read names that club, no action shows.
++  const ownClub = squad._tag === "Success" && squad.value.club.id === contract.clubId;
+ 
+   return (
+     <main
+@@ -49,6 +53,7 @@ export const PlayerContractScreen = ({
+         <p>Signed: {contract.startDate}</p>
+         <p>Expires: {contract.expiryDate}</p>
+       </div>
++      {ownClub && <RenewContractPanel saveId={saveId} playerId={playerId} />}
+     </main>
+   );
+ };
+\ No newline at end of file
+diff --git a/apps/desktop/src/renderer/playerContract/RenewContractPanel.tsx b/apps/desktop/src/renderer/playerContract/RenewContractPanel.tsx
+new file mode 100644
+index 0000000..49557b9
+--- /dev/null
++++ b/apps/desktop/src/renderer/playerContract/RenewContractPanel.tsx
+@@ -0,0 +1,110 @@
++import type { PlayerId, SaveId } from "@cm-clone/contracts";
++import { DEFAULT_CONTRACT_YEARS, MAX_CONTRACT_YEARS, MIN_CONTRACT_YEARS } from "@cm-clone/shared";
++import { useState } from "react";
++import { Button } from "../components/ui/button.js";
++import {
++  Select,
++  SelectContent,
++  SelectItem,
++  SelectTrigger,
++  SelectValue,
++} from "../components/ui/select.js";
++import { FOCUS_RING } from "../focus.js";
++import { describeRpcError, renewContractMutation, useAtomSet, type RpcClientError } from "../rpc.js";
++
++const yearsLabel = (years: number): string => `${years} year${years === 1 ? "" : "s"}`;
++
++const LENGTHS = Array.from(
++  { length: MAX_CONTRACT_YEARS - MIN_CONTRACT_YEARS + 1 },
++  (_, index) => MIN_CONTRACT_YEARS + index,
++).map((years) => ({ label: yearsLabel(years), value: String(years) }));
++
++/** The sentence a refused renewal shows. `InvalidBidActionError` is the command's "not contracted to
++ *  your club" refusal, which the shared bid sentence would misname. */
++const refusalOf = (error: RpcClientError<"renewContract"> | undefined): string => {
++  if (error?._tag === undefined) return "The contract could not be renewed.";
++  if (error._tag === "RemoteFailure" && error.error._tag === "InvalidBidActionError") {
++    return "That player is not contracted to your club.";
++  }
++  return describeRpcError(error);
++};
++
++/**
++ * Contract Renewal (Screen 140): renew an own-club Player's Contract for a chosen length through
++ * `renewContract`. The wage is the formula wage, with no negotiation (CONTEXT.md, Contract).
++ *
++ * The command invalidates the squad key, which the contract read reacts to, so the host screen shows
++ * the new length and wage on its own. A refusal is shown inline as its own sentence.
++ */
++export const RenewContractPanel = ({
++  saveId,
++  playerId,
++}: {
++  readonly saveId: SaveId;
++  readonly playerId: PlayerId;
++}) => {
++  const renew = useAtomSet(renewContractMutation, { mode: "promise" });
++  const [years, setYears] = useState<number>(DEFAULT_CONTRACT_YEARS);
++  const [pending, setPending] = useState(false);
++  const [failure, setFailure] = useState<string | null>(null);
++
++  const onRenew = async () => {
++    setPending(true);
++    setFailure(null);
++    try {
++      await renew({ saveId, playerId, years });
++    } catch (error) {
++      setFailure(refusalOf(error as RpcClientError<"renewContract"> | undefined));
++    } finally {
++      setPending(false);
++    }
++  };
++
++  return (
++    <section aria-labelledby="renew-contract-heading" className="mt-6">
++      <h2 id="renew-contract-heading" className="text-lg font-semibold">
++        Renew contract
++      </h2>
++      <p className="mt-1 text-sm text-text-secondary">
++        A renewal pays the Player's current formula wage for the length you choose.
++      </p>
++      <div className="mt-3 flex items-center gap-3 text-sm text-text-body">
++        <span>Length</span>
++        <Select
++          value={String(years)}
++          items={LENGTHS}
++          onValueChange={(value) => {
++            const next = Number(value);
++            if (Number.isInteger(next)) setYears(next);
++          }}
++        >
++          <SelectTrigger aria-label="Contract length" className={`min-w-32 ${FOCUS_RING.join(" ")}`}>
++            <SelectValue />
++          </SelectTrigger>
++          <SelectContent>
++            {LENGTHS.map((item) => (
++              <SelectItem key={item.value} value={item.value}>
++                {item.label}
++              </SelectItem>
++            ))}
++          </SelectContent>
++        </Select>
++        <Button
++          type="button"
++          variant="secondary"
++          size="sm"
++          className={FOCUS_RING.join(" ")}
++          disabled={pending}
++          onClick={() => onRenew()}
++        >
++          {pending ? "Renewing…" : "Renew"}
++        </Button>
++      </div>
++      {failure !== null && (
++        <p role="alert" className="mt-2 text-sm text-text-danger">
++          {failure}
++        </p>
++      )}
++    </section>
++  );
++};
+diff --git a/apps/desktop/src/renderer/rpc.ts b/apps/desktop/src/renderer/rpc.ts
+index 3ca4921..19858c4 100644
+--- a/apps/desktop/src/renderer/rpc.ts
++++ b/apps/desktop/src/renderer/rpc.ts
+@@ -50,6 +50,7 @@ export {
+   signFreeAgentMutation,
+   respondToBidMutation,
+   respondAsBidderMutation,
++  renewContractMutation,
+   retireManagerMutation,
+   setNewsMessageStateMutation,
+   setTrainingFocusMutation,
+diff --git a/apps/desktop/src/renderer/rpc/mutations.ts b/apps/desktop/src/renderer/rpc/mutations.ts
+index 80d3db0..4f6786c 100644
+--- a/apps/desktop/src/renderer/rpc/mutations.ts
++++ b/apps/desktop/src/renderer/rpc/mutations.ts
+@@ -56,6 +56,13 @@ export const INVALIDATION_RULES = {
+   /** Ending an assignment frees a scout and files the reading a Club watch leaves behind, both of
+    * which the scouting key covers, so it invalidates exactly what assigning does. */
+   unassignScout: (saveId: SaveId): ReadonlyArray<unknown> => [scoutingKey(saveId)],
++  /** A renewal rewrites one own-club Contract's wage and length. The squad key covers the Player's
++   * contract and profile reads; transfers and economy cover the Wage Budget used. */
++  renewContract: (saveId: SaveId): ReadonlyArray<unknown> => [
++    squadKey(saveId),
++    transfersKey(saveId),
++    economyKey(saveId),
++  ],
+ } as const;
+ 
+ export type MutationName = keyof typeof INVALIDATION_RULES;
+@@ -122,7 +129,13 @@ export const respondAsBidderEffect = (
+ ): MutationEffect<"respondAsBidder"> =>
+   call("respondAsBidder", input).pipe(Reactivity.mutation(INVALIDATION_RULES.placeBid(input.saveId)));
+ 
+-/** `renewContract` has no shipped consumer in this stage; its invalidation is covered by `INVALIDATION_RULES` when a screen exists. */
++/** `renewContract` — invalidates squad + transfers + economy. */
++export const renewContractEffect = (
++  input: RpcPayload<"renewContract">,
++): MutationEffect<"renewContract"> =>
++  call("renewContract", input).pipe(
++    Reactivity.mutation(INVALIDATION_RULES.renewContract(input.saveId)),
++  );
+ 
+ /** `submitMatchCommand` — invalidates `["match", saveId, matchId]` only.
+  * A command is the only mutation that must never touch calendar/transfers data.
+@@ -208,6 +221,11 @@ export const respondToBidMutation = rpcRuntime.fn((input: RpcPayload<"respondToB
+   respondToBidEffect(input),
+ );
+ 
++/** `renewContract` — mutation atom. */
++export const renewContractMutation = rpcRuntime.fn((input: RpcPayload<"renewContract">) =>
++  renewContractEffect(input),
++);
++
+ /** `respondAsBidder` — mutation atom. */
+ export const respondAsBidderMutation = rpcRuntime.fn((input: RpcPayload<"respondAsBidder">) =>
+   respondAsBidderEffect(input),
+diff --git a/apps/desktop/src/renderer/rpc/queries.ts b/apps/desktop/src/renderer/rpc/queries.ts
+index d72048e..dee7c3a 100644
+--- a/apps/desktop/src/renderer/rpc/queries.ts
++++ b/apps/desktop/src/renderer/rpc/queries.ts
+@@ -282,7 +282,7 @@ const playerProfileForSave = Atom.family((saveId: SaveId) =>
+   Atom.family((playerId: PlayerId) =>
+     managementReadPolicy(
+       Atom.make(call("getPlayerProfile", { saveId, playerId })).pipe(
+-        Atom.withReactivity([saveKey(saveId)]),
++        Atom.withReactivity([saveKey(saveId), squadKey(saveId)]),
+       ),
+     ),
+   ),
+@@ -295,7 +295,7 @@ const playerContractForSave = Atom.family((saveId: SaveId) =>
+   Atom.family((playerId: PlayerId) =>
+     managementReadPolicy(
+       Atom.make(call("getPlayerContract", { saveId, playerId })).pipe(
+-        Atom.withReactivity([saveKey(saveId)]),
++        Atom.withReactivity([saveKey(saveId), squadKey(saveId)]),
+       ),
+     ),
+   ),
+diff --git a/apps/desktop/test/renderer/playerContract/player-contract-screen.test.tsx b/apps/desktop/test/renderer/playerContract/player-contract-screen.test.tsx
+new file mode 100644
+index 0000000..e8b7041
+--- /dev/null
++++ b/apps/desktop/test/renderer/playerContract/player-contract-screen.test.tsx
+@@ -0,0 +1,171 @@
++// @vitest-environment jsdom
++import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
++import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
++import { ClubId, PlayerId, SaveId } from "@cm-clone/contracts";
++import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
++import { PlayerContractScreen } from "../../../src/renderer/playerContract/PlayerContractScreen.js";
++import { RegistryProvider } from "../../../src/renderer/rpc.js";
++import { chooseOptionByLabel, comboboxByLabel, openSelect, selectValueOf } from "../../setup/baseUiSelect.js";
++
++/**
++ * Contract Renewal on the Player Contract screen (Screen 140, group-j ticket 04): the renew action
++ * shows for an own-club Player only, sends `renewContract` with the chosen length, refreshes the
++ * contract through invalidation alone, and shows each typed refusal inline.
++ */
++
++const saveId = SaveId.make("s1");
++const playerId = PlayerId.make("p-1");
++const me = ClubId.make("me");
++
++interface World {
++  clubId: ClubId;
++  wage: number;
++  lengthYears: number;
++  refusal: Record<string, unknown> | null;
++  squadReads: number;
++  readonly commands: Array<Record<string, unknown>>;
++}
++
++let world: World;
++
++const install = () => {
++  (window as unknown as { cmClone: { call: unknown } }).cmClone = {
++    call: async (method: string, payload: Record<string, unknown>) => {
++      switch (method) {
++        case "getPlayerContract":
++          return {
++            _tag: "Success",
++            value: {
++              playerId,
++              clubId: world.clubId,
++              wage: world.wage,
++              lengthYears: world.lengthYears,
++              startDate: "Season 1",
++              expiryDate: `Season ${1 + world.lengthYears}`,
++            },
++          };
++        case "getSquad":
++          world.squadReads += 1;
++          return { _tag: "Success", value: { club: { id: me, name: "My Club", statureTier: "big" }, players: [] } };
++        case "renewContract": {
++          world.commands.push(payload);
++          if (world.refusal !== null) return { _tag: "Failure", error: world.refusal };
++          world.lengthYears = payload["years"] as number;
++          world.wage = 1_250;
++          // The success value is never read by the screen; a non-decoding one would surface as a failure.
++          return {
++            _tag: "Success",
++            value: {
++              club: { id: me, name: "My Club", statureTier: "big" },
++              season: { seasonNumber: 1, currentDate: "2024-08-01", phase: "pre_season", awaitingFixture: null },
++              windowOpen: true,
++              transferBudgetRemaining: 0,
++              wageBudget: 10_000,
++              wageBudgetUsed: 1_250,
++              incomingBids: [],
++              outgoingBids: [],
++              freeAgents: [],
++              marketPlayers: [],
++            },
++          };
++        }
++        default:
++          return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: saveId } };
++      }
++    },
++  };
++};
++
++const mount = () =>
++  render(
++    <RegistryProvider>
++      <PlayerContractScreen saveId={saveId} playerId={playerId} />
++    </RegistryProvider>,
++  );
++
++const renewSection = () => screen.findByRole("region", { name: "Renew contract" });
++
++beforeEach(() => {
++  vi.stubGlobal(
++    "ResizeObserver",
++    class {
++      observe() {}
++      unobserve() {}
++      disconnect() {}
++    },
++  );
++  world = { clubId: me, wage: 900, lengthYears: 1, refusal: null, squadReads: 0, commands: [] };
++  install();
++  bindRouter({
++    navigate: () => {},
++    history: { back: () => {}, forward: () => {}, canGoBack: () => false },
++  } as never);
++});
++
++afterEach(() => {
++  cleanup();
++  vi.unstubAllGlobals();
++});
++
++describe("group-j ticket 04 — renewing an own-club Player's Contract", () => {
++  it("offers every length from 1 to 5 years", async () => {
++    mount();
++    await renewSection();
++    await openSelect(comboboxByLabel("Contract length"));
++    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
++      "1 year",
++      "2 years",
++      "3 years",
++      "4 years",
++      "5 years",
++    ]);
++  });
++
++  it("sends renewContract with the chosen length, and the contract refreshes to the new length and wage", async () => {
++    mount();
++    expect(await screen.findByText("Length: 1 year")).toBeTruthy();
++    await renewSection();
++    await chooseOptionByLabel("Contract length", "5 years");
++    expect(selectValueOf(comboboxByLabel("Contract length"))).toContain("5");
++    fireEvent.click(screen.getByRole("button", { name: "Renew" }));
++
++    await waitFor(() => expect(world.commands).toEqual([{ saveId, playerId, years: 5 }]));
++    expect(await screen.findByText("Length: 5 years")).toBeTruthy();
++    expect(screen.getByText("Expires: Season 6")).toBeTruthy();
++    expect(screen.getByText(`Wage: ${(1_250).toLocaleString()} Credits/season`)).toBeTruthy();
++    expect(screen.queryByRole("alert")).toBeNull();
++  });
++
++  it.each([
++    [{ _tag: "TransferWindowClosedError", saveId }, "The transfer window is closed."],
++    [
++      { _tag: "WageBudgetExceededError", clubId: me, wage: 5_000, wageBudgetUsed: 9_000, wageBudget: 10_000 },
++      "The club would exceed its wage budget.",
++    ],
++    [
++      { _tag: "InvalidBidActionError", reason: "player is not contracted to your club" },
++      "That player is not contracted to your club.",
++    ],
++  ])("shows the %o refusal inline and keeps the contract as it was", async (refusal, sentence) => {
++    world.refusal = refusal;
++    mount();
++    const section = await renewSection();
++    fireEvent.click(within(section).getByRole("button", { name: "Renew" }));
++
++    expect((await within(section).findByRole("alert")).textContent).toBe(sentence);
++    expect(world.commands).toHaveLength(1);
++    expect(screen.getByText("Length: 1 year")).toBeTruthy();
++  });
++});
++
++describe("group-j ticket 04 — no renewal outside the manager's club", () => {
++  it("shows the contract without a renew action for another club's Player", async () => {
++    world.clubId = ClubId.make("club-7");
++    mount();
++    expect(await screen.findByText("Length: 1 year")).toBeTruthy();
++    await waitFor(() => expect(world.squadReads).toBeGreaterThan(0));
++    await new Promise((resolve) => setTimeout(resolve, 50));
++    expect(screen.queryByRole("region", { name: "Renew contract" })).toBeNull();
++    expect(screen.queryByRole("button", { name: "Renew" })).toBeNull();
++  });
++});
+diff --git a/apps/desktop/test/renderer/rpc/seam.test.ts b/apps/desktop/test/renderer/rpc/seam.test.ts
+index ec779bd..930b5cd 100644
+--- a/apps/desktop/test/renderer/rpc/seam.test.ts
++++ b/apps/desktop/test/renderer/rpc/seam.test.ts
+@@ -227,6 +227,11 @@ describe("renderer RPC seam — invalidation rules (AC-05)", () => {
+     expect(INVALIDATION_RULES.commitCareer(save)).toEqual([]);
+     expect(INVALIDATION_RULES.assignScoutToClub(save)).toEqual([["scouting", save]]);
+     expect(INVALIDATION_RULES.unassignScout(save)).toEqual([["scouting", save]]);
++    expect(INVALIDATION_RULES.renewContract(save)).toEqual([
++      ["squad", save],
++      ["transfers", save],
++      ["economy", save],
++    ]);
+   });
+ 
+   it("placeBid never invalidates squad — a pending bid does not change squad state", () => {
+@@ -245,6 +250,7 @@ describe("renderer RPC seam — invalidation rules (AC-05)", () => {
+       ...INVALIDATION_RULES.placeBid(save),
+       ...INVALIDATION_RULES.submitMatchCommand(save, "m1"),
+       ...INVALIDATION_RULES.commitCareer(save),
++      ...INVALIDATION_RULES.renewContract(save),
+     ];
+     for (const key of all) {
+       expect(JSON.stringify(key)).not.toContain("*");

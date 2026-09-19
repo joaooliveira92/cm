@@ -9,4 +9,22 @@ const call = async <M extends AppRpcMethod>(
   return result as RpcResult<M>;
 };
 
+ipcRenderer.on("show-quit-guard", () => {
+  const event = new CustomEvent("show-quit-guard");
+  window.dispatchEvent(event);
+});
+
+contextBridge.exposeInMainWorld("electronAPI", {
+  platform: process.platform,
+  confirmQuit: () => {
+    ipcRenderer.send("quit-guard-confirmed");
+  },
+  cancelQuit: () => {
+    ipcRenderer.send("quit-guard-cancelled");
+  },
+  quitApplication: () => {
+    ipcRenderer.send("request-quit");
+  },
+});
+
 contextBridge.exposeInMainWorld("cmClone", { call });

@@ -7,7 +7,9 @@ import type { RpcClientError } from "./errors.js";
 import {
   economyKey,
   matchKey,
+  newsKey,
   saveKey,
+  scoutingKey,
   squadKey,
   tacticsKey,
   trainingKey,
@@ -41,7 +43,19 @@ export const INVALIDATION_RULES = {
   submitMatchCommand: (saveId: SaveId, matchId: string): ReadonlyArray<unknown> => [
     matchKey(saveId, matchId),
   ],
+  /** Retiring archives the save, which changes every save-scoped read (the badge, every guard's
+   * answer), so it invalidates the save-wide key and nothing narrower. */
+  retireManager: (saveId: SaveId): ReadonlyArray<unknown> => [saveKey(saveId)],
   commitCareer: (_saveId: SaveId): ReadonlyArray<unknown> => [],
+  /** Read/flagged/archived is inbox-local user state: it changes no simulation state, so it
+   * invalidates the inbox key and nothing wider. */
+  setNewsMessageState: (saveId: SaveId): ReadonlyArray<unknown> => [newsKey(saveId)],
+  /** A scouting assignment changes who is watching whom and nothing else, so it invalidates the
+   * scouting key — which the scouting board and every Team Scout Report read — and nothing wider. */
+  assignScoutToClub: (saveId: SaveId): ReadonlyArray<unknown> => [scoutingKey(saveId)],
+  /** Ending an assignment frees a scout and files the reading a Club watch leaves behind, both of
+   * which the scouting key covers, so it invalidates exactly what assigning does. */
+  unassignScout: (saveId: SaveId): ReadonlyArray<unknown> => [scoutingKey(saveId)],
 } as const;
 
 export type MutationName = keyof typeof INVALIDATION_RULES;
@@ -58,6 +72,20 @@ export const advanceCalendarEffect = (
 ): MutationEffect<"advanceCalendar"> =>
   call("advanceCalendar", { saveId }).pipe(
     Reactivity.mutation(INVALIDATION_RULES.advanceCalendar(saveId)),
+  );
+
+/** `retireManager` — after success only, invalidates `["save", saveId]`. */
+export const retireManagerEffect = (saveId: SaveId): MutationEffect<"retireManager"> =>
+  call("retireManager", { saveId }).pipe(
+    Reactivity.mutation(INVALIDATION_RULES.retireManager(saveId)),
+  );
+
+/** `setNewsMessageState` — invalidates `["news", saveId]` only. */
+export const setNewsMessageStateEffect = (
+  input: RpcPayload<"setNewsMessageState">,
+): MutationEffect<"setNewsMessageState"> =>
+  call("setNewsMessageState", input).pipe(
+    Reactivity.mutation(INVALIDATION_RULES.setNewsMessageState(input.saveId)),
   );
 
 /** `changeTactics` — invalidates `["tactics", saveId]` and the save-wide key. */
@@ -106,9 +134,58 @@ export const submitMatchCommandEffect = (
     Reactivity.mutation(INVALIDATION_RULES.submitMatchCommand(input.saveId, input.matchId)),
   );
 
+/** `assignScoutToClub` — invalidates `["scouting", saveId]` only. */
+export const assignScoutToClubEffect = (
+  input: RpcPayload<"assignScoutToClub">,
+): MutationEffect<"assignScoutToClub"> =>
+  call("assignScoutToClub", input).pipe(
+    Reactivity.mutation(INVALIDATION_RULES.assignScoutToClub(input.saveId)),
+  );
+
+/** `assignScoutToClub` — mutation atom. */
+export const assignScoutToClubMutation = rpcRuntime.fn(
+  (input: RpcPayload<"assignScoutToClub">) => assignScoutToClubEffect(input),
+);
+
+/** `unassignScout` — invalidates `["scouting", saveId]` only. */
+export const unassignScoutEffect = (
+  input: RpcPayload<"unassignScout">,
+): MutationEffect<"unassignScout"> =>
+  call("unassignScout", input).pipe(
+    Reactivity.mutation(INVALIDATION_RULES.unassignScout(input.saveId)),
+  );
+
+/** `unassignScout` — mutation atom. */
+export const unassignScoutMutation = rpcRuntime.fn(
+  (input: RpcPayload<"unassignScout">) => unassignScoutEffect(input),
+);
+
+/** `setTrainingFocus` effect — invalidates squad + training keys. */
+export const setTrainingFocusEffect = (
+  input: RpcPayload<"setTrainingFocus">,
+): MutationEffect<"setTrainingFocus"> =>
+  call("setTrainingFocus", input).pipe(
+    Reactivity.mutation(INVALIDATION_RULES.setTrainingFocus(input.saveId)),
+  );
+
+/** `setTrainingFocus` mutation atom. */
+export const setTrainingFocusMutation = rpcRuntime.fn(
+  (input: RpcPayload<"setTrainingFocus">) => setTrainingFocusEffect(input),
+);
+
 /** `advanceCalendar` — mutation atom for registry-scoped invalidation. */
 export const advanceCalendarMutation = rpcRuntime.fn((input: RpcPayload<"advanceCalendar">) =>
   advanceCalendarEffect(input.saveId),
+);
+
+/** `retireManager` — mutation atom. */
+export const retireManagerMutation = rpcRuntime.fn((input: RpcPayload<"retireManager">) =>
+  retireManagerEffect(input.saveId),
+);
+
+/** `setNewsMessageState` — mutation atom. */
+export const setNewsMessageStateMutation = rpcRuntime.fn(
+  (input: RpcPayload<"setNewsMessageState">) => setNewsMessageStateEffect(input),
 );
 
 /** `changeTactics` — mutation atom. */

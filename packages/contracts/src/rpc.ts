@@ -1,14 +1,42 @@
 import { Schema } from "effect";
 import {
   AdvanceCalendarResult,
+  AdvanceInProgressError,
+  CommitMatchdayResult,
+  FixtureNotPendingError,
+  MatchAlreadyStartedError,
+  MatchModeSchema,
+  MatchNotCompleteError,
+  MatchNotReadyError,
+  MatchNotStartedError,
+  PendingFixtureIntegrityError,
+  TacticMissingError,
+  AdvancedOptionsPayload,
   BidderBidActionSchema,
   BidId,
   BidNotFoundError,
+  CareerScopeEstimateView,
+  CareerSetupSummaryView,
+  CompetitionId,
+  InvalidLeagueSelectionError,
+  LeaguePreset,
+  LeagueSelectionSnapshot,
+  LeagueSetupIndexView,
+  NationSelectionIntentPayload,
+  PresetFingerprintMismatchError,
+  ResolvedSelectionView,
+  SetupDraft,
+  SetupDraftWriteError,
+  SnapshotId,
   BidView,
   ClubId,
   ClubNotFoundError,
   ClubSelectionView,
-  ClubSummary,
+  ClubStaffView,
+  CoachingAssignmentsView,
+  WorkloadView,
+  PlayerDevelopmentHistoryView,
+  SquadDevelopmentView,
   CollidingOverrideError,
   FixturesView,
   InsufficientTransferBudgetError,
@@ -18,34 +46,56 @@ import {
   InvalidTacticError,
   LeagueTableView,
   LockedKeyOverrideError,
+  ManagerProfileNotFoundError,
+  ManagerProfileScreenView,
   ManagerProfileView,
   ManagerArchetypeSchema,
   MatchCommandPayload,
+  ChangeTacticsPayload,
+  FixtureId,
   MatchId,
+  MalformedNewsMessageIdError,
   MatchNotFoundError,
   MatchSummary,
+  NewsInboxView,
+  NewsMessageId,
+  NewsMessageNotFoundError,
+  NewsMessageStatePatch,
   NotYourPlayerError,
   NullableTrainingFocusSchema,
   PillarDistribution,
+  PlayerContractView,
   PlayerId,
   PlayerNotFoundError,
   PlayerNotFreeAgentError,
+  PlayerProfileView,
   ResumeSimulationView,
+  SubmitMatchCommandView,
+  SaveArchivedError,
   SaveId,
   SaveNotFoundError,
-  SaveSackedError,
   SaveSummary,
   SeasonCompleteError,
   SeasonSummaryView,
   SellerBidActionSchema,
   SquadView,
-  Tactic,
+  TacticsOverviewView,
   TacticsScreenView,
+  TacticRevisionConflictError,
+  TeamSheetView,
+  PostMatchSummaryView,
+  MatchStatisticsView,
+  MatchReportView,
+  TrainingFocusNotOfferedError,
   TrainingFocusView,
   TransferWindowClosedError,
   TransfersScreenView,
   WageBudgetExceededError,
-} from "./schemas.js";
+  ContractExpiryScreenView,
+  BudgetReviewView,
+  TransferHistoryView,
+} from "./schemas/index.js";
+import { ScoutingRpcs } from "./rpc-scouting.js";
 
 /**
  * Hand-rolled stand-in for `@effect/rpc`'s RpcGroup: as of this writing
@@ -58,6 +108,7 @@ import {
  * release.
  */
 export const AppRpcs = {
+  ...ScoutingRpcs,
   ping: {
     payload: Schema.Void,
     success: Schema.String,
@@ -68,17 +119,32 @@ export const AppRpcs = {
     success: Schema.Array(SaveSummary),
     error: Schema.Never,
   },
+  /** Seeds a default career end to end (selection -> begin -> commit), so it inherits the failures
+   *  of all three. The four declared here are contract-schema'd and already rendered by
+   *  `describeRpcError`. Its engine-invariant failures — `CalendarSlotsExhaustedError`,
+   *  `FixtureGenerationError`, `SquadTooSmallError`, `InvalidTacticError` — are main-process
+   *  `Data.TaggedError`s with no schema, and stay undeclared pending
+   *  `decision-request-01-rpc-error-channel`. */
   createSave: {
     payload: Schema.Struct({ name: Schema.String }),
     success: SaveSummary,
-    error: Schema.Never,
+    error: Schema.Union([
+      InvalidLeagueSelectionError,
+      PresetFingerprintMismatchError,
+      InvalidPillarDistributionError,
+      ClubNotFoundError,
+    ]),
   },
+  /** Generate a provisional world from the League Selection Snapshot the player submitted. The
+   *  snapshot is loaded by id in main and refused — before any save file exists — when its
+   *  catalogue fingerprint no longer matches the live Setup Catalogue, or when the id names no
+   *  snapshot at all (the caller's recovery is to re-run selection). */
   beginCareer: {
-    payload: Schema.Void,
+    payload: Schema.Struct({ snapshotId: SnapshotId }),
     success: Schema.Struct({ id: SaveId }),
-    error: Schema.Never,
+    error: PresetFingerprintMismatchError,
   },
-  commitCareer: {
+commitCareer: {
     payload: Schema.Struct({
       id: SaveId,
       name: Schema.String,
@@ -88,16 +154,40 @@ export const AppRpcs = {
       pillars: PillarDistribution,
     }),
     success: SaveSummary,
-    error: Schema.Union([InvalidPillarDistributionError]),
+    error: Schema.Union([InvalidPillarDistributionError, ClubNotFoundError]),
   },
   getManagerProfile: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: ManagerProfileView,
-    error: SaveNotFoundError,
+    error: Schema.Union([SaveNotFoundError, ManagerProfileNotFoundError]),
+  },
+  /** Manager Profile screen (Screen 19) — identity plus club/season/tenure and the Archived flag. */
+  getManagerProfileScreen: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: ManagerProfileScreenView,
+    error: Schema.Union([SaveNotFoundError, ManagerProfileNotFoundError]),
+  },
+  /** `RetireManager` (ticket 02 / Screen 20): the player ends their own career from the Manager
+   * Profile screen. Appends `ManagerRetired` and archives the save with cause `"retired"`; the
+   * same `SaveArchivedError` guard every mutating command carries makes retiring twice impossible.
+   * Returns nothing — the renderer navigates back to the Save List. */
+  retireManager: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: Schema.Void,
+    error: Schema.Union([SaveNotFoundError, SaveArchivedError]),
   },
   getClubSelection: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: ClubSelectionView,
+    error: Schema.Never,
+  },
+  /** §22's Career Setup Summary: what the provisional world on disk contains, read at the Review
+   *  step. A pure read of a world that cannot change while the panel is open, and one the flow can
+   *  do without — the caller renders the configuration it already holds and an explicit
+   *  "unavailable" line when this fails, rather than blocking the commit. */
+  getCareerSetupSummary: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: CareerSetupSummaryView,
     error: Schema.Never,
   },
   discardCareer: {
@@ -120,45 +210,152 @@ export const AppRpcs = {
     success: TacticsScreenView,
     error: SaveNotFoundError,
   },
+  /** Tactics Overview (Screen 80): one immutable snapshot of the active club's tactical
+   *  preparation, every value bound to the club tactic revision it was read at. Consumed by the
+   *  Tactics Overview and nothing else to begin with. Pure read — safe on an archived save, where
+   *  the overview's presentation maps the saved-state guard to its permission-limited view. */
+  getTacticsOverview: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: TacticsOverviewView,
+    error: SaveNotFoundError,
+  },
   changeTactics: {
-    payload: Schema.Struct({ saveId: SaveId, tactic: Tactic }),
+    payload: ChangeTacticsPayload,
     success: TacticsScreenView,
-    error: Schema.Union([SaveNotFoundError, InvalidTacticError, SaveSackedError]),
+    error: Schema.Union([
+      SaveNotFoundError,
+      InvalidTacticError,
+      SaveArchivedError,
+      TacticRevisionConflictError,
+    ]),
   },
   getLeagueTable: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: LeagueTableView,
-    error: SaveNotFoundError,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
+  },
+  /** Any Competition's table. Folds `toSeasonView` exactly as `getLeagueTable` does, so it carries
+   *  the same `PendingFixtureIntegrityError`: an error the handler can raise but the union omits
+   *  arrives at the renderer raw, which § Boundaries forbids. */
+  getCompetitionTable: {
+    payload: Schema.Struct({ saveId: SaveId, competitionId: CompetitionId }),
+    success: LeagueTableView,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
   getFixtures: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: FixturesView,
-    error: SaveNotFoundError,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
+  },
+  /** Any Competition's Fixture list, not just the human club's. Scoped by `competitionId` rather
+   *  than widening `getFixtures`, which is deliberately the human's own calendar. */
+  getCompetitionFixtures: {
+    payload: Schema.Struct({ saveId: SaveId, competitionId: CompetitionId }),
+    success: FixturesView,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
   advanceCalendar: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: AdvanceCalendarResult,
-    error: Schema.Union([SaveNotFoundError, SeasonCompleteError, SaveSackedError]),
+    error: Schema.Union([
+      SaveNotFoundError,
+      SeasonCompleteError,
+      SaveArchivedError,
+      AdvanceInProgressError,
+      PendingFixtureIntegrityError,
+    ]),
   },
   getSeasonSummary: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: SeasonSummaryView,
-    error: SaveNotFoundError,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
-  listOpponentClubs: {
-    payload: Schema.Struct({ saveId: SaveId }),
-    success: Schema.Array(ClubSummary),
-    error: SaveNotFoundError,
-  },
+  /**
+   * Starts the Fixture the Calendar is standing at. Fixture-bound: there is no opponent to choose
+   * and no automatic seating at home, both of which the free-opponent exhibition path supplied and
+   * neither of which a scheduled Fixture tolerates.
+   * `mode` is presentation only. Both modes persist the same `MatchStarted` and the same stream;
+   * `quick` runs straight to full time without a live reveal.
+   */
   startMatch: {
-    payload: Schema.Struct({ saveId: SaveId, opponentClubId: ClubId }),
+    payload: Schema.Struct({ saveId: SaveId, fixtureId: FixtureId, mode: MatchModeSchema }),
     success: MatchSummary,
-    error: Schema.Union([SaveNotFoundError, ClubNotFoundError, SaveSackedError]),
+    error: Schema.Union([
+      SaveNotFoundError,
+      SaveArchivedError,
+      FixtureNotPendingError,
+      MatchAlreadyStartedError,
+      MatchNotReadyError,
+      TacticMissingError,
+      PendingFixtureIntegrityError,
+    ]),
+  },
+  /**
+   * Commits the Matchday: the human's result derived from its persisted stream, the rest of that
+   * Matchday's Fixtures, every Condition write-back, the resolution event and the Calendar's step,
+   * in one transaction. Explicit rather than a side effect of `resumeSimulation` observing full
+   * time — polling is read-shaped, and durable career state must not depend on polling cadence,
+   * component lifecycle or whether the player is still looking at the screen. Idempotent on the
+   * Fixture already being played, so a retry after a rollback is safe.
+   */
+  commitMatchday: {
+    payload: Schema.Struct({ saveId: SaveId, fixtureId: FixtureId }),
+    success: CommitMatchdayResult,
+    error: Schema.Union([
+      SaveNotFoundError,
+      SaveArchivedError,
+      FixtureNotPendingError,
+      MatchNotFoundError,
+      MatchNotStartedError,
+      MatchNotCompleteError,
+      TacticMissingError,
+      AdvanceInProgressError,
+      PendingFixtureIntegrityError,
+    ]),
   },
   resumeSimulation: {
-    payload: Schema.Struct({ saveId: SaveId, matchId: MatchId, cursor: Schema.Finite }),
+    /** `revealedEvents` cuts the substitution counts after that many Match Events — one per
+     *  Commentary Line revealed, as `getMatchStatistics` cuts — and null counts the whole match. */
+    payload: Schema.Struct({
+      saveId: SaveId,
+      matchId: MatchId,
+      cursor: Schema.Finite,
+      revealedEvents: Schema.NullOr(Schema.Finite),
+    }),
     success: ResumeSimulationView,
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  getTeamSheet: {
+    payload: Schema.Struct({ saveId: SaveId, matchId: MatchId }),
+    success: TeamSheetView,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  /** Screen 99: the finished match's final score and key events. A read over the persisted stream. */
+  getPostMatchSummary: {
+    payload: Schema.Struct({ saveId: SaveId, matchId: MatchId }),
+    success: PostMatchSummaryView,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  /** Screens 95/100: team totals for `matchId`, or for the controlled club's most recent played
+   *  match when null (null success when it has played none). `revealedEvents` cuts a live match after
+   *  that many Match Events — one per Commentary Line revealed — since minutes are not monotonic;
+   *  null covers the whole match. */
+  getMatchStatistics: {
+    payload: Schema.Struct({
+      saveId: SaveId,
+      matchId: Schema.NullOr(MatchId),
+      revealedEvents: Schema.NullOr(Schema.Finite),
+    }),
+    success: Schema.NullOr(MatchStatisticsView),
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  /** Screen 103: the Match Report of a Fixture whose result has been committed. A read over the
+   *  persisted stream; a match still awaiting its result fails with `MatchNotCompleteError`, so an
+   *  addressable report can never show a timeline ahead of Match day. */
+  getMatchReport: {
+    payload: Schema.Struct({ saveId: SaveId, matchId: MatchId }),
+    success: MatchReportView,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError, MatchNotCompleteError]),
   },
   /** Ticket 14: appends a mid-match `ChangeTactics`/`MakeSubstitution` command to the Match
    * Decider's stream and returns the chunk of Commentary Lines from `cursor` on, resimulated with
@@ -171,17 +368,40 @@ export const AppRpcs = {
       saveId: SaveId,
       matchId: MatchId,
       cursor: Schema.Finite,
+      revealedEvents: Schema.NullOr(Schema.Finite),
       minute: Schema.Finite,
       isHalftime: Schema.Boolean,
       command: MatchCommandPayload,
     }),
-    success: ResumeSimulationView,
-    error: Schema.Union([SaveNotFoundError, MatchNotFoundError, SaveSackedError]),
+    success: SubmitMatchCommandView,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError, SaveArchivedError]),
   },
   getTransfersScreen: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: TransfersScreenView,
-    error: SaveNotFoundError,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
+  },
+  /** Contract Expiry (Screen 141, without Bosman): the manager's own-club Players who are in their
+   *  last contracted year (`contracts.years_remaining === 0`). A pure read — no command side. */
+  getContractExpiryScreen: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: ContractExpiryScreenView,
+    error: Schema.Union([SaveNotFoundError]),
+  },
+  /** Transfer and Wage Budget Review (Screen 145): the manager's club's Transfer Budget remaining,
+   *  Wage Budget, total wages committed by active Contracts, and headroom under the Wage Budget.
+   *  A pure read — no command side. */
+  getBudgetReviewScreen: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: BudgetReviewView,
+    error: Schema.Union([SaveNotFoundError]),
+  },
+  /** Transfer History (Screen 146): every completed transfer into or out of the manager's Club,
+   *  newest first, from `player_transfers`. A pure read — no command side. */
+  getTransferHistoryScreen: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: TransferHistoryView,
+    error: Schema.Union([SaveNotFoundError]),
   },
   placeBid: {
     payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId, amount: Schema.Finite }),
@@ -193,7 +413,7 @@ export const AppRpcs = {
       InsufficientTransferBudgetError,
       WageBudgetExceededError,
       InvalidBidActionError,
-      SaveSackedError,
+      SaveArchivedError,
     ]),
   },
   respondToBid: {
@@ -207,11 +427,13 @@ export const AppRpcs = {
     error: Schema.Union([
       SaveNotFoundError,
       BidNotFoundError,
+      PlayerNotFoundError,
+      PendingFixtureIntegrityError,
       TransferWindowClosedError,
       InvalidBidActionError,
       InsufficientTransferBudgetError,
       WageBudgetExceededError,
-      SaveSackedError,
+      SaveArchivedError,
     ]),
   },
   respondAsBidder: {
@@ -224,11 +446,13 @@ export const AppRpcs = {
     error: Schema.Union([
       SaveNotFoundError,
       BidNotFoundError,
+      PlayerNotFoundError,
+      PendingFixtureIntegrityError,
       TransferWindowClosedError,
       InvalidBidActionError,
       InsufficientTransferBudgetError,
       WageBudgetExceededError,
-      SaveSackedError,
+      SaveArchivedError,
     ]),
   },
   signFreeAgent: {
@@ -238,9 +462,10 @@ export const AppRpcs = {
       SaveNotFoundError,
       PlayerNotFoundError,
       PlayerNotFreeAgentError,
+      PendingFixtureIntegrityError,
       TransferWindowClosedError,
       WageBudgetExceededError,
-      SaveSackedError,
+      SaveArchivedError,
     ]),
   },
   renewContract: {
@@ -250,14 +475,15 @@ export const AppRpcs = {
       SaveNotFoundError,
       PlayerNotFoundError,
       InvalidBidActionError,
+      PendingFixtureIntegrityError,
       TransferWindowClosedError,
       WageBudgetExceededError,
-      SaveSackedError,
+      SaveArchivedError,
     ]),
   },
   /** Training Focus (spec: `.scratch/training/spec.md`): set (or clear, with `focus: null`) a
    * player's focused Category on the user's own club. Changeable at any point — no window or
-   * season-boundary restriction. */
+   * season-boundary restriction. A Category the player may not take is `TrainingFocusNotOfferedError`. */
   setTrainingFocus: {
     payload: Schema.Struct({
       saveId: SaveId,
@@ -265,7 +491,68 @@ export const AppRpcs = {
       focus: NullableTrainingFocusSchema,
     }),
     success: TrainingFocusView,
-    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError, SaveSackedError]),
+    error: Schema.Union([
+      SaveNotFoundError,
+      PlayerNotFoundError,
+      NotYourPlayerError,
+      TrainingFocusNotOfferedError,
+      SaveArchivedError,
+    ]),
+  },
+/** Club Staff (Screen 38): who works at any club in the save. A pure read — every person derived
+ *  on demand, so a `results-only` club answers like any other; only the save or the club id can fail. */
+  getClubStaff: {
+    payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
+    success: ClubStaffView,
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+  },
+  /** Coaching Assignments (Screen 111): the manager's own club's coaching staff with quality ratings
+   *  and assigned departments. A pure read from the `staff` table — no command, no world derivation.
+   *  Only the save can fail (a missing save is `SaveNotFoundError`); an empty coach list is a valid
+   *  value for a club whose staff has not been materialised. */
+  getCoachingAssignments: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: CoachingAssignmentsView,
+    error: SaveNotFoundError,
+  },
+  /** Workload and Recovery (Screen 112): every player on the manager's own club with their current
+   *  Condition and last injury Severity, read from the Season's fitness ledger (`player_fitness`).
+   *  A pure read — recovery status is derived from these fields on the renderer, never stored.
+   *  Only the save can fail. */
+  getWorkload: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: WorkloadView,
+    error: SaveNotFoundError,
+  },
+  /** Performance Report (Screen 113): one own-club player's Attribute changes per concluded Season,
+   *  read from the human club's `PlayerDeveloped` events. A pure read; the changes are derived on
+   *  each read and never stored. A player off the manager's club is `NotYourPlayerError`. */
+  getPlayerDevelopmentHistory: {
+    payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId }),
+    success: PlayerDevelopmentHistoryView,
+    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError]),
+  },
+  /** Player Development Centre (Screen 114): every own-club player's Training Focus and newest
+   *  recorded Season of Player Development, from the same `PlayerDeveloped` events and derivation as
+   *  `getPlayerDevelopmentHistory`, in one read for the whole squad. A pure read; only the save can
+   *  fail. */
+  getSquadDevelopment: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: SquadDevelopmentView,
+    error: SaveNotFoundError,
+  },
+  /** Player Profile (Screen 50): identity, positions, attributes, club, contract expiry, transfer
+   *  value, and injury status for one player. */
+  getPlayerProfile: {
+    payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId }),
+    success: PlayerProfileView,
+    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError]),
+  },
+  /** Player Contract (Screen 56): wage, length, start date, expiry date for one player. */
+  getPlayerContract: {
+    payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId }),
+    success: PlayerContractView,
+    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError]),
   },
   /** Key binding overrides (ticket 14 / Stage 6): a machine-local `record<ActionId, binding>`
    * layered over — never replacing — the coded defaults. The file lives in Electron `userData`
@@ -299,6 +586,138 @@ export const AppRpcs = {
     payload: Schema.Void,
     success: Schema.Record(Schema.String, Schema.String),
     error: Schema.Never,
+  },
+  // -------------------------------------------------------------------------
+  // League and Nation Selection (Screen 3)
+  // -------------------------------------------------------------------------
+
+  /** The validated setup catalogue: regions, Nations, League Scope Options, and the dependency
+   * edges between Competitions. Read once when the screen mounts — it does not change while the
+   * screen is open, so nothing re-fetches it on selection changes. Labels arrive sanitized. */
+  getLeagueSetupIndex: {
+    payload: Schema.Void,
+    success: LeagueSetupIndexView,
+    error: Schema.Never,
+  },
+  /** Resolve a set of intents into the effective selection, its dependencies, its issues, and its
+   * cost estimate. The renderer calls this on every (debounced) selection change and discards any
+   * answer whose echoed `selectionRevision` is not the current one (§11.5).
+   *
+   * This is the *trusted* resolver: it validates every id against the catalogue, so a forged or
+   * stale payload produces issues rather than a selection. It never fails — an invalid selection
+   * is a value with blocking issues, because the screen has to render exactly that. */
+  resolveLeagueSelection: {
+    payload: Schema.Struct({
+      selectionRevision: Schema.Finite,
+      intents: Schema.Array(NationSelectionIntentPayload),
+    }),
+    success: ResolvedSelectionView,
+    error: Schema.Never,
+  },
+  /** `Continue`. Revalidates from the intents rather than trusting anything the renderer resolved,
+   * then creates one immutable `LeagueSelectionSnapshot` and saves the setup draft alongside it.
+   * Idempotent per identical intent set: a double activation returns the snapshot the first one
+   * created rather than minting a second (§17.2). */
+  submitLeagueSelection: {
+    payload: Schema.Struct({
+      intents: Schema.Array(NationSelectionIntentPayload),
+    }),
+    success: LeagueSelectionSnapshot,
+    error: InvalidLeagueSelectionError,
+  },
+  /** The snapshot a previous `submitLeagueSelection` produced, or `null`. Read by the later setup
+   * stages so they never re-resolve the scope for themselves. */
+  getLeagueSelectionSnapshot: {
+    payload: Schema.Struct({ id: SnapshotId }),
+    success: Schema.NullOr(LeagueSelectionSnapshot),
+    error: Schema.Never,
+  },
+  /** §18, §29. Persist the resumable setup draft. Called on Back and before navigating forward. */
+  saveSetupDraft: {
+    payload: Schema.Struct({
+      intents: Schema.Array(NationSelectionIntentPayload),
+      searchQuery: Schema.String,
+      regionFilterId: Schema.NullOr(Schema.String),
+      statusFilter: Schema.String,
+      /** The Active Leagues setup's advanced options. Absent from a draft the League & Nation
+       *  browser writes, which has no advanced options to carry. */
+      advancedOptions: Schema.optional(AdvancedOptionsPayload),
+    }),
+    success: Schema.Void,
+    error: SetupDraftWriteError,
+  },
+  /** The stored draft, or `null` when there is none or it was captured against a different
+   * database. A stale draft is discarded here rather than surfaced for the renderer to judge. */
+  loadSetupDraft: {
+    payload: Schema.Void,
+    success: Schema.NullOr(SetupDraft),
+    error: Schema.Never,
+  },
+  /** §6.1, §13. Intents for a built-in configuration, computed against the catalogue and this
+   * machine's capability — never a hardcoded id list. */
+  buildLeaguePreset: {
+    payload: Schema.Struct({ preset: Schema.Literals(["recommended", "minimal", "broad_world"]) }),
+    success: Schema.Struct({
+      intents: Schema.Array(NationSelectionIntentPayload),
+      estimate: CareerScopeEstimateView,
+    }),
+    error: Schema.Never,
+  },
+  /** The user's saved presets for this database (a different database's are omitted, not rejected). */
+  listLeaguePresets: {
+    payload: Schema.Void,
+    success: Schema.Array(LeaguePreset),
+    error: Schema.Never,
+  },
+  saveLeaguePreset: {
+    payload: Schema.Struct({
+      name: Schema.String,
+      intents: Schema.Array(NationSelectionIntentPayload),
+    }),
+    success: LeaguePreset,
+    error: SetupDraftWriteError,
+  },
+  /** Apply a stored preset. Fails rather than partially applying when the fingerprint does not
+   * match; drops individual entries the catalogue no longer contains and reports them (§31.4). */
+  applyLeaguePreset: {
+    payload: Schema.Struct({ id: Schema.String }),
+    success: Schema.Struct({
+      intents: Schema.Array(NationSelectionIntentPayload),
+      droppedNationIds: Schema.Array(Schema.String),
+      droppedScopeOptionIds: Schema.Array(Schema.String),
+    }),
+    error: PresetFingerprintMismatchError,
+  },
+  /** News Inbox (Screen 24) — the career's event streams read as messages, newest first, with the
+   * whole-inbox counts the header shows. Returns every message including archived ones: a career's
+   * narrative is a few hundred rows over twenty seasons, so the renderer filters what it already
+   * holds rather than paying a round trip per view change. Pure read; safe on an archived save. */
+  getNewsInbox: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: NewsInboxView,
+    error: SaveNotFoundError,
+  },
+  /** Mark, flag, or archive one or more messages (Screen 24 §7 bulk actions, Screen 25's
+   * open-marks-read). Idempotent: applying the same patch twice is a no-op, so a double submit is
+   * harmless. Every id is validated before anything is written, so a bulk action either applies to
+   * all of its messages or to none of them — a partial apply would report success over work it did
+   * not do.
+   *
+   * Deliberately **not** guarded by `assertSaveNotArchived`. That guard protects simulation state,
+   * and read/flagged/archived is user state on a projection; blocking it would leave the message
+   * announcing a dismissal permanently unread on the save that dismissal archived. */
+  setNewsMessageState: {
+    payload: Schema.Struct({
+      saveId: SaveId,
+      messageIds: Schema.Array(NewsMessageId),
+      patch: NewsMessageStatePatch,
+    }),
+    success: Schema.Void,
+    error: Schema.Union([
+      SaveNotFoundError,
+      NewsMessageNotFoundError,
+      MalformedNewsMessageIdError,
+    ]),
   },
 } as const;
 

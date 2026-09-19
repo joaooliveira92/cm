@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSeededRng } from "../../src/rng.js";
+import { createSeededRng } from "@cm-clone/shared";
 import {
   START_CONDITION,
   conditionAfterDays,

@@ -1,20 +1,45 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { RPC_CHANNEL, type AppRpcMethod } from "@cm-clone/contracts";
-import { Effect } from "effect";
+import { Effect, Layer } from "effect";
 import electron from "electron";
-import { handleRpc } from "./rpcServer.js";
+import { MATCH_SEED_ENV, pinnedMatchSeedLayer, resolveMatchSeedOverride } from "./match/index.js";
+import { handleRpc } from "./rpc/rpcServer.js";
+import { LoggerLayer } from "./rpc/logging.js";
 
 const { app, BrowserWindow, ipcMain } = electron;
 
 app.setName("cm-clone-desktop");
 
+const matchSeedOverride = resolveMatchSeedOverride(process.env[MATCH_SEED_ENV], app.isPackaged);
+if (matchSeedOverride._tag === "Malformed") {
+  console.error(
+    `${MATCH_SEED_ENV}=${JSON.stringify(matchSeedOverride.raw)} is not a match seed ` +
+      "(expected a decimal integer from 0 to 4294967295). Refusing to start.",
+  );
+  app.exit(1);
+} else if (matchSeedOverride._tag === "IgnoredInPackagedBuild") {
+  console.warn(`${MATCH_SEED_ENV} is ignored in a packaged build; matches play under their derived seeds.`);
+}
+
+const rpcLayer =
+  matchSeedOverride._tag === "Pinned"
+    ? Layer.merge(LoggerLayer, pinnedMatchSeedLayer(matchSeedOverride.seed))
+    : LoggerLayer;
+
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** The one window the app owns. Set once at `createWindow`, read by the
+ *  quit guard to send show/hide messages to the renderer. */
+let mainWindow: electron.BrowserWindow | null = null;
 
 const createWindow = () => {
   const window = new BrowserWindow({
     width: 1200,
     height: 800,
+    ...(process.platform === "darwin"
+      ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 12, y: 14 } }
+      : {}),
     webPreferences: {
       preload: path.join(dirname, "../preload/index.cjs"),
       contextIsolation: true,
@@ -35,13 +60,23 @@ const createWindow = () => {
   } else {
     window.loadFile(path.join(dirname, "../renderer/index.html"));
   }
+
+  mainWindow = window;
 };
+
+// Only mac OS quits the app when all windows close — on Linux/Windows we go through `before-quit`.
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
+});
 
 app.whenReady().then(() => {
   const savesDir = path.join(app.getPath("userData"), "saves");
 
   ipcMain.handle(RPC_CHANNEL, (_event, method: AppRpcMethod, payload: unknown) =>
-    Effect.runPromise(handleRpc(method, payload, { savesDir, userDataDir: app.getPath("userData") })),
+    Effect.provide(
+      handleRpc(method, payload, { savesDir, userDataDir: app.getPath("userData") }),
+      rpcLayer,
+    ).pipe(Effect.runPromise),
   );
 
   createWindow();
@@ -51,6 +86,33 @@ app.whenReady().then(() => {
   });
 });
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+// Quit guard (ticket 03 / group-a-reconciliation): prevent shutdown until the
+// renderer confirms. The `before-quit` handler fires once for every quit path on
+// every platform. We prevent default and ask the renderer via IPC; the renderer
+// either confirms (quit-guard-confirmed) or cancels (quit-guard-cancelled).
+//
+// The flag prevents a second `before-quit` from blocking the `app.quit()` call
+// that `quit-guard-confirmed` triggers — without it the second `before-quit`
+// would prevent default again and start a new dialog request.
+let quitGuardConfirmed = false;
+
+app.on("before-quit", (event) => {
+  if (quitGuardConfirmed) return;
+
+  if (mainWindow === null || mainWindow.isDestroyed()) return;
+  event.preventDefault();
+  mainWindow.webContents.send("show-quit-guard");
+});
+
+ipcMain.on("quit-guard-confirmed", () => {
+  quitGuardConfirmed = true;
+  app.quit();
+});
+
+ipcMain.on("quit-guard-cancelled", () => {
+  quitGuardConfirmed = false;
+});
+
+ipcMain.on("request-quit", () => {
+  app.quit();
 });

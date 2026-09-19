@@ -1,6 +1,7 @@
 import { createRegistry } from "./registry.js";
 import type { Action, ScopeState, ScreenName } from "./types.js";
 import { gPrefixCompletionsOf } from "./overrides.js";
+import { NAV_SECTIONS } from "../navigation/nav-config.js";
 import {
   FREE_AGENT_PALETTE_OPTIONS,
   MARKET_PALETTE_OPTIONS,
@@ -22,9 +23,14 @@ import {
 
 const ready = (state: ScopeState): boolean => state.ready === true;
 
-/** Career-global availability: a career is shown and the season can advance. */
+/** Career-global availability: a career is shown and the season can advance.
+ *  A live match suspends the season (match-day note AC-4): `state.match` being
+ *  present marks "in flight", so Continue (button, Space, palette) is uniformly
+ *  unavailable until the match reaches full time. */
 const continueAvailable = (state: ScopeState): boolean =>
-  ready(state) && state.phase !== "season_complete" && state.advancing !== true;
+  ready(state) &&
+  state.advancing !== true &&
+  state.match === undefined;
 
 const navAction = (
   id: string,
@@ -41,7 +47,21 @@ const navAction = (
   metadata,
 });
 
-/** All coded default bindings (global-key-map note). No single-key `g` binding. */
+/**
+ * The section-level `g <n>` navigation actions: `g 1` reaches the first section's default
+ * destination, and so on for every section. `sectionKey` is the same position key
+ * `sectionKeyToEntry` uses, so level 0 of the prefix and level 1's sub-item lookup agree.
+ */
+const sectionNavActions: ReadonlyArray<Action> = NAV_SECTIONS.map((section, index) =>
+  navAction(`go-to-${section.id}`, `Go to ${section.label}`, `g ${index + 1}`, {
+    destination: section.defaultDestination,
+    sectionKey: String(index + 1),
+  }),
+);
+
+/** All coded default bindings. No single-key `g` binding. The global-key-map note records the
+ *  dispatch rules, but its `g <letter>` table is retired. The section keys come from
+ *  `sectionNavActions` above, and the item keys from `POSITION_KEYS` in `nav-config.ts`. */
 export const ALL_ACTIONS: ReadonlyArray<Action> = [
   // app-global — active on every screen (palette/help are discoverable from the
   // save list and creation flow too; only the g-prefix/Space are career-scoped).
@@ -51,17 +71,14 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   // opens it the same way Primary+/ does, giving rebinding a second, discoverable entry point.
   { id: "open-rebind", label: "Rebind…", scope: "app-global", available: () => true, handler: () => undefined },
   // career-global — active only while a career screen is shown.
-  { id: "continue", label: "Continue", scope: "career-global", available: continueAvailable, unavailableReason: "The Calendar cannot advance right now.", handler: () => undefined, binding: "Space" },
-  navAction("go-to-squad", "Go to Squad", "g s", { destination: "squad" }),
-  navAction("go-to-tactics", "Go to Tactics", "g a", { destination: "tactics" }),
-  navAction("go-to-transfers", "Go to Transfers", "g t", { destination: "transfers" }),
-  navAction("go-to-league", "Go to League Table", "g l", { destination: "league" }),
-  navAction("go-to-fixtures", "Go to Fixtures", "g f", { destination: "fixtures" }),
-  navAction("go-to-match", "Go to Match Day", "g m", { destination: "match" }),
-  navAction("go-to-season-summary", "Go to Season Summary", "g y", { destination: "seasonSummary" }),
+  // `primary: true` is consumed by the career chrome for the gradient treatment —
+  // presentation only, never automatic Enter dispatch (global-key-map note AC-11).
+  { id: "continue", label: "Continue", scope: "career-global", available: continueAvailable, unavailableReason: "The Calendar cannot advance right now.", handler: () => undefined, binding: "Space", primary: true },
+  // One `g <n>` nav action per primary section, derived from `NAV_SECTIONS` so a section cannot be
+  // badged in the navbar without a key that dispatches (navbar-keyboard-intent ticket 02).
+  ...sectionNavActions,
+  { id: "go-to-transfers", label: "Go to Transfer Market", scope: "squad", available: ready, handler: () => undefined },
   navAction("go-back", "Go to previous screen", "g b"),
-  // league
-  { id: "advance-calendar", label: "Advance the Calendar", scope: "league", available: continueAvailable, unavailableReason: "The Calendar cannot advance right now.", handler: () => undefined, binding: "c", primary: true },
   // transfers
   { id: "focus-bid", label: "Focus the bid workflow", scope: "transfers", available: ready, handler: () => undefined, binding: "b" },
   { id: "place-bid", label: "Place a bid", scope: "transfers", available: ready, handler: () => undefined },
@@ -106,6 +123,25 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
     available: ready,
     handler: () => undefined,
   },
+  // main menu + load career — the one pre-career action: re-reading the Save
+  // repository after a failure (save-list-error-handling ticket 01). One id
+  // across two scopes is legal — same-id Actions in different scopes are
+  // distinct records (registry note) — and exactly one screen is mounted at a
+  // time, so the live handler map never serves a stale screen.
+  {
+    id: "retry-save-list",
+    label: "Retry loading saves",
+    scope: "mainMenu",
+    available: () => true,
+    handler: () => undefined,
+  },
+  {
+    id: "retry-save-list",
+    label: "Retry loading saves",
+    scope: "loadCareer",
+    available: () => true,
+    handler: () => undefined,
+  },
   // tactics
   { id: "save-tactic", label: "Save the tactic", scope: "tactics", available: ready, handler: () => undefined, primary: true },
   { id: "set-formation", label: "Choose a formation", scope: "tactics", available: ready, handler: () => undefined },
@@ -114,7 +150,8 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   { id: "set-pressing", label: "Set pressing", scope: "tactics", available: ready, handler: () => undefined },
   { id: "assign-slot-player", label: "Assign a player to a tactics slot", scope: "tactics", available: ready, handler: () => undefined },
   // match day
-  { id: "start-match", label: "Start the match", scope: "match", available: ready, handler: () => undefined },
+  { id: "start-match", label: "Play the match", scope: "match", available: ready, handler: () => undefined },
+  { id: "quick-result", label: "Quick result", scope: "match", available: ready, handler: () => undefined },
   { id: "toggle-control-panel", label: "Toggle the live control panel", scope: "match", available: ready, handler: () => undefined },
   { id: "apply-live-tactics", label: "Apply live tactics change", scope: "match", available: ready, handler: () => undefined },
   { id: "set-live-mentality", label: "Set live mentality", scope: "match", available: ready, handler: () => undefined },
@@ -125,7 +162,7 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   { id: "make-substitution", label: "Make a substitution", scope: "match", available: ready, handler: () => undefined },
   { id: "play-on", label: "Play on (crippled)", scope: "match", available: ready, handler: () => undefined },
   { id: "bring-off", label: "Bring off (10 men)", scope: "match", available: ready, handler: () => undefined },
-  { id: "reset-match", label: "Back to the opponent picker", scope: "match", available: ready, handler: () => undefined },
+  { id: "commit-matchday", label: "Accept the result", scope: "match", available: ready, handler: () => undefined },
 ];
 
 /** The compiled registry. Build-time collision/locked-key checks run here (AC-17). */
@@ -155,10 +192,94 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   fixtures: { showKeyBadges: false },
   match: { showKeyBadges: false },
   seasonSummary: { showKeyBadges: false },
+  manager: { showKeyBadges: false },
+  news: { showKeyBadges: false },
+  training: { showKeyBadges: false },
+  clubInfo: { showKeyBadges: false },
+  boardConfidence: { showKeyBadges: false },
+  clubHistory: { showKeyBadges: false },
+  finances: { showKeyBadges: true },
+  staffOverview: { showKeyBadges: false },
+  shortlist: { showKeyBadges: false },
+  scouting: { showKeyBadges: false },
+  playerSearch: { showKeyBadges: true },
+  staffSearch: { showKeyBadges: true },
+  competitions: { showKeyBadges: true },
+  nations: { showKeyBadges: false },
+  clubs: { showKeyBadges: false },
+  // The club-scoped drill-downs are terminal reading surfaces owning no screen-scoped action, so
+  // there is nothing on either page a badge could sit on.
+  clubStaff: { showKeyBadges: false },
+  teamScoutReport: { showKeyBadges: false },
+  // The player-scoped drill-down — same rationale.
+  playerProfile: { showKeyBadges: false },
+  playerAttributes: { showKeyBadges: false },
+  playerContract: { showKeyBadges: false },
+  playerHistory: { showKeyBadges: false },
+  playerForm: { showKeyBadges: false },
+  playerInjuries: { showKeyBadges: false },
+  playerScoutReport: { showKeyBadges: false },
+  playerCoachReport: { showKeyBadges: false },
+  // The staff-scoped drill-downs.
+  staffProfile: { showKeyBadges: false },
+  staffAttributes: { showKeyBadges: false },
+  staffContract: { showKeyBadges: false },
+  staffHistory: { showKeyBadges: false },
+  staffJobInfo: { showKeyBadges: false },
+  // The club sub-surface drill-downs.
+  clubSquadDetail: { showKeyBadges: false },
+  clubReservesDetail: { showKeyBadges: false },
+  clubYouthDetail: { showKeyBadges: false },
+  clubFixturesDetail: { showKeyBadges: false },
+  clubTransfersDetail: { showKeyBadges: false },
+  clubFinancesDetail: { showKeyBadges: false },
+  clubHistoryDetail: { showKeyBadges: false },
+  clubCompetitionsDetail: { showKeyBadges: false },
+  clubInformation: { showKeyBadges: false },
+  // The nation-scoped drill-downs.
+  nationOverview: { showKeyBadges: false },
+  nationSeniorSquad: { showKeyBadges: false },
+  nationYouthSquads: { showKeyBadges: false },
+  nationFixtures: { showKeyBadges: false },
+  nationCompetitions: { showKeyBadges: false },
+  nationClubs: { showKeyBadges: false },
+  nationPlayers: { showKeyBadges: false },
+  nationStaff: { showKeyBadges: false },
+  nationHistory: { showKeyBadges: false },
+  nationInformation: { showKeyBadges: false },
+  // The competition-scoped drill-downs.
+  competitionOverview: { showKeyBadges: false },
+  competitionTable: { showKeyBadges: true },
+  competitionFixturesDetail: { showKeyBadges: false },
+  competitionResults: { showKeyBadges: false },
+  competitionStages: { showKeyBadges: false },
+  competitionRules: { showKeyBadges: false },
+  competitionStatistics: { showKeyBadges: true },
+  competitionPastWinners: { showKeyBadges: false },
+  competitionRecords: { showKeyBadges: false },
+  competitionNews: { showKeyBadges: false },
+  competitionTeams: { showKeyBadges: false },
+  competitionPlayerStats: { showKeyBadges: true },
+  // The match sub-screen placeholders.
+  matchStats: { showKeyBadges: false },
+  matchPlayerStats: { showKeyBadges: false },
+  matchHomeTeam: { showKeyBadges: false },
+  matchAwayTeam: { showKeyBadges: false },
+  matchRatings: { showKeyBadges: false },
+  matchLatestScores: { showKeyBadges: false },
+  matchLiveTable: { showKeyBadges: true },
+  matchMatchTactics: { showKeyBadges: false },
+  matchSubstitutions: { showKeyBadges: false },
+  matchOppositionInstructions: { showKeyBadges: false },
+  matchCommentary: { showKeyBadges: false },
+  matchReplays: { showKeyBadges: false },
+  matchReport: { showKeyBadges: false },
+  createLeagues: { showKeyBadges: false },
   createStep1: { showKeyBadges: false },
   createStep2: { showKeyBadges: false },
   createStep3: { showKeyBadges: false },
-  saveList: { showKeyBadges: false },
+  mainMenu: { showKeyBadges: false },
+  loadCareer: { showKeyBadges: false },
 };
 
 /** Honored by the badge renderer: a screen opts into inline key badges here. */

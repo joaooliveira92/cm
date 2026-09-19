@@ -15,7 +15,6 @@
 - [Screen 260: Host Transfer and Migration](260_host_transfer_and_migration.md)
 - [Screen 261: Multiplayer Save and Checkpoint Management](261_multiplayer_save_and_checkpoint_management.md)
 - [Screen 262: Participant Removal and Session Moderation](262_participant_removal_and_session_moderation.md)
-- [Screen 263: Multiplayer Session History and Audit](263_multiplayer_session_history_and_audit.md)
 
 ## Functional flow
 
