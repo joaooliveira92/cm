@@ -67,7 +67,7 @@ they are not waiting on a model the game lacks, they are waiting on **a formula 
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
-| [096_live_match_player_ratings.md](096_live_match_player_ratings.md), [101_post_match_player_ratings.md](101_post_match_player_ratings.md), whole files | `deferred` | A per-player rating for the match, live and final. | **Not built.** Ticket 10 was parked rather than attempted: no rating formula exists, and the **Match Event** stream names no goalkeeper or defender contribution — so a rating derived from events would systematically under-rate half the team. Inputs and weights both need choosing. | group-g decision request 03 (match player rating formula), **open**. |
+| [096_live_match_player_ratings.md](096_live_match_player_ratings.md), [101_post_match_player_ratings.md](101_post_match_player_ratings.md), whole files | `deferred` | A per-player rating for the match, live and final. | **Not built**, and now buildable. Ticket 10 was parked rather than attempted: no rating formula existed, and the **Match Event** stream names no goalkeeper or defender contribution, so an event-only rating would systematically under-rate half the team. | **Answered 2026-09-19** — [the match model shows only what it produces](../../../.agents/notes/proposed/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md). A **Match Rating** is an event rating plus a share of the phase result, read from the stored timeline, so it depends on ticket 31. |
 
 The event-stream gap is the substantive finding: this is a data-model question wearing a formula's
 clothes. A rating cannot be fair until the engine records what defenders and goalkeepers did.
@@ -90,14 +90,29 @@ decision request 07 in particular governs how *any* engine rule may ever change.
 
 | # | Question | State | What it holds |
 |---|---|---|---|
-| 01 | What may a live Change Tactics alter? | Open | Screen 97's scope. Made urgent by ticket 22: the head-count now visibly disagrees with the engine after a live change. |
-| 02 | Should unsimulated statistics be shown, and how? | Open | Possession, corners, fouls and offsides on Screens 95 and 100. |
-| 03 | What is the match player rating formula? | Open | Screens 96 and 101 entirely. Needs an engine change first — the event stream names no goalkeeper or defender contribution. |
-| 04 | Who may come on as a substitute? | Open | Opened by ticket 19's review, which found the engine lets a forced substitution bring back a dismissed player. |
-| 05 | What survives a restart of the revealed position? | Open | Leaving and returning continues from the revealed position (ticket 23); a *restart* still replays from kickoff. |
-| 06 | What happens to a red-carded goalkeeper? | Answered in part | Produced ticket 30, shipped. |
-| 07 | **How may engine rules change without rewriting saved matches?** | **Answered 2026-09-19** | A committed match stores its timeline. See below. |
-| 08 | When does a live command take effect relative to revealed play? | Open | Ticket 20 (`needs-info`): a command can rewrite play the viewer has already seen. |
+| 01 | What may a live Change Tactics alter? | **Answered** | Team Instructions only. Never the line-up. |
+| 02 | Should unsimulated statistics be shown, and how? | **Answered** | No. The four stay named as unavailable. |
+| 03 | What is the match player rating formula? | **Answered** | Event rating plus phase share, from the stored timeline. |
+| 04 | Who may come on as a substitute? | **Answered** | Only a bench player who has not yet played. |
+| 05 | What survives a restart of the revealed position? | **Answered** | The revealed position is durable. |
+| 06 | What happens to a red-carded goalkeeper? | **Answered** | An outfield stand-in, as with an injury. |
+| 07 | **How may engine rules change without rewriting saved matches?** | **Answered** | A committed match stores its timeline. See below. |
+| 08 | When does a live command take effect relative to revealed play? | **Answered** | At M+1. Never at a revealed minute. |
+
+**All eight were answered on 2026-09-19.** Four of them — 01, 04, 05 and 08 — turned out to be one
+question, and are settled together as
+[revealed play is immutable](../../../.agents/notes/proposed/feature/2026-09-19-revealed-play-is-immutable.md): what the manager has
+been shown is a fact about the match and nothing may change it. That is why nineteen tickets patched the
+same family of defect without the pattern closing — the rule had never been stated.
+
+The others: 02 and 03 by
+[the match model shows only what it produces](../../../.agents/notes/proposed/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md)
+— a screen may derive from the stream, never invent what the stream lacks; 06 by
+[a keeper leaving always drags a stand-in](../../../.agents/notes/proposed/feature/2026-09-19-a-keeper-leaving-always-drags-a-stand-in.md);
+07 below.
+
+**Almost all of it is gated on ticket 31.** Requests 01, 03, 04, 06 and 08 change what a seed produces or
+need a stored timeline to read. The backfill is the gate on the whole group's remaining work.
 
 ### Decision request 07 was the one that mattered, and it is answered
 
@@ -121,9 +136,8 @@ gone in practice. Tickets 26 and 29 are re-pointed at 31: blocked on a ticket no
 
 ## What this ledger leaves owed
 
-- **Five open decision requests** — 01, 02, 03, 04, 05 and 08 in part. Each still needs its own answer
-  about what the engine rule should *be*; what 07 removed was the constraint that no such answer could
-  be acted on.
+- ~~**Five open decision requests.**~~ **All eight are answered as of 2026-09-19.** Group G has no open
+  decision request, having had the largest cluster in the corpus.
 - **Ticket 31 is the gate on all engine-rule work** and is `ready-for-agent`. It is the most
   time-sensitive ticket in the repo: the backfill it carries has to run under the current engine.
 - **Three tickets are not resolved**: 20 (`needs-info`, a command rewrites seen play), 26 (fix held as

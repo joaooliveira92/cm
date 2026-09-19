@@ -155,6 +155,45 @@ reads 4 `out-of-scope` (the closed staff role set), 2 `renamed`, 10 `deferred`, 
 
 **Group K is unblocked**; charting it is a human's call. Remaining in M1 step 1: G, H, I, J.
 
+**ALL THIRTEEN OPEN DECISION REQUESTS ARE ANSWERED (2026-09-19).** The queue that had accumulated across
+five groups is empty. Decided under the human's standing delegation; every answer carries its reasoning,
+and each is reversible by overturning its note.
+
+The four that mattered most, and why:
+
+- **group-g 01, 04, 05, 08 were one question.** Settled as
+  [revealed play is immutable](../.agents/notes/proposed/feature/2026-09-19-revealed-play-is-immutable.md):
+  what the manager has been shown is a fact about the match and nothing may change it. A live
+  `ChangeTactics` touches only Team Instructions; a substitution may bring on only an unused bench player;
+  the revealed position is durable across a restart; a command takes effect at M+1, never at a revealed
+  minute. **This is why nineteen tickets patched the same family of defect without the pattern closing** —
+  the rule had never been written down.
+- **group-i 01 was the widest.** Knowledge-limits move into the shared Player read, so the market,
+  `BidComposer`, Player Search and Target Comparison cannot disagree. `CONTEXT.md`'s **Listed** loses its
+  pre-Scouting "full-information Transfer Value" clause in the same commit. Unblocks five screens across
+  three groups, and comes with a real design consequence: a manager bids against an estimate that narrows
+  by scouting.
+- **group-j 01 unblocks a finished screen.** A Contract renews only in its last contracted year. Ticket
+  04's implementation is written and reviewed — it needs the guard, a typed refusal, and one test inverted.
+  The cheapest screen in the backlog.
+- **group-l 01 turns a thrice-shipped defect into a compile error.** `SqlError` gets one escape hatch in
+  the handler type rather than 50 contract unions, which unblocks ticket 05's type-alias gate. The four
+  engine errors are split on **agency, not severity**: `SquadTooSmallError` is a domain error a manager can
+  act on; the other three are defects and get `orDie`.
+
+Also answered: **group-g 02** (unsimulated statistics stay named as unavailable — zero is a claim, and
+this is the same ruling as Group L's `Unplayed`), **group-g 03** (a **Match Rating** is an event rating
+plus phase share, read from the stored timeline; Option C is now safe after ticket 31 and is the end
+state), **group-g 06** (a red-carded keeper drags a stand-in, like an injury), **group-h 01** (Coach
+*quality*, relabelled — the relabel is the load-bearing half), **group-h 02** (`PlayerDeveloped` carries
+its baseline; it cannot be backfilled, so existing saves keep a blind first Season and need an explicit
+no-comparison state), and **group-j 02** (*not yet* — `db/schema.ts` requires an index to be measured, and
+approving on a query plan would break the rule the index-count test enforces; Option A is pre-approved for
+the next scale-probe run).
+
+**Ticket 31 is the gate on most of it.** Requests 01, 03, 04, 06 and 08 either change what a seed produces
+or need a stored timeline to read. Nothing in Group G's engine work can land before the backfill.
+
 ## Immediate next action
 
 **gate-red-on-dev ticket 04** — the vitest projects split, now unblocked by ticket 03. 100 of 144

@@ -152,3 +152,34 @@ site, which is where an author writes the mistake.
 
 Both remaining questions are narrower than when this was filed, and neither now blocks a gate — they
 only determine how much of the escape hatch survives.
+
+---
+
+## Answer — Option B now, Option A as the follow-up, 2026-09-19
+
+**`SqlError` gets an infrastructure escape hatch in the handler type** — declared once, not spread across
+50 domain contracts. It makes the compiler enforce what two consecutive reviews caught by hand, which is
+what AGENTS.md asks for when a finding recurs, and it **unblocks ticket 05's permanent gate**: the audit
+probe becomes a type alias, so a narrow error union becomes a compile error.
+
+**Option A's premise is settled here rather than left open: an unreadable save is a defect.** There is no
+recovery action, nothing to present, and no branch a caller could usefully write. So `Effect.orDie` at the
+`withExistingSave` seam is the intended end state, filed as its own follow-up. The sequencing this request
+asked for is right; the answer did not need to wait, and leaving it open is how B becomes permanent by
+accident.
+
+**The four engine errors, settled in the same place, on agency rather than severity:**
+
+| Error | Ruling |
+|---|---|
+| `SquadTooSmallError` | **Domain error** — schema it, join the unions. A manager hits this and can act: sign a player, promote from the reserves. |
+| `CalendarSlotsExhaustedError` | **Defect** — `orDie`. |
+| `FixtureGenerationError` | **Defect** — `orDie`. |
+| `FullTimeWhistleMissingError` | **Defect** — `orDie`. An engine invariant violation: a match that ended without ending. |
+
+An error the player can respond to belongs in the contract so a screen can present it. An error meaning
+the program is wrong belongs nowhere near a union.
+
+Recorded as
+[infrastructure failures are defects; domain failures are typed](../../.agents/notes/proposed/architecture/2026-09-19-infrastructure-failures-are-defects-domain-failures-are-typed.md).
+Decided under the human's standing delegation ("i need you to solve the decisions").

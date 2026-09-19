@@ -50,3 +50,22 @@ different things in one contract.
 
 **Option A.** It is how the Screen 97 spec and the team-sheet note already describe substitutes, and
 it gives the bench on the team sheet a reason to exist.
+
+---
+
+## Answer — Option A, 2026-09-19
+
+Settled together with group-g requests 01, 04, 05 and 08 as one rule: **revealed play is immutable.**
+What the manager has been shown is a fact about the match, and nothing may change it. Recorded as
+[revealed play is immutable](../../.agents/notes/proposed/feature/2026-09-19-revealed-play-is-immutable.md).
+
+These four were four symptoms of one missing rule, which is why nineteen tickets patched them
+individually without the pattern closing. A defect of this family is now a violation of a stated rule
+rather than a fresh discovery.
+
+**Gated on [ticket 31](issues/31-committed-matches-store-their-timeline.md)** where the change alters what
+a seed produces — requests 01, 04 and 08 all do. The backfill must land first or saved matches rewrite
+themselves.
+
+Decided under the human's standing delegation ("i need you to solve the decisions"), adopting this
+request's own recommendation.

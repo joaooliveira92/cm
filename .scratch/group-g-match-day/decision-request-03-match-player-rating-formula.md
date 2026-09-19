@@ -75,3 +75,24 @@ rating and the weights, and name the term in CONTEXT.md.
 
 - Blocked: all of ticket 10. Every one of its criteria renders or serves the rating.
 - Proceeding meanwhile: ticket 11 (Match Report) and the other ready tickets in this effort.
+
+---
+
+## Answer — 2026-09-19
+
+Settled with group-g request 02 under one rule: **a screen may derive from the stream; it may
+not invent what the stream does not contain.** Recorded as
+[the match model shows only what it produces](../../.agents/notes/proposed/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md).
+
+**Option B**, with Option C sequenced behind it. A **Match Rating** is an event-derived rating plus a
+share of the phase result, so a player who appears in no event still has a rating that means something.
+Three things this fixes beyond the option text: it is a pure function of the **stored** timeline, so a
+rating cannot drift between two reads; base and weights are named constants in one module rather than
+scattered through a formula; and **Match Rating** is named in `CONTEXT.md`. Base is set at **6.0** and the
+weights are documented tunables — they are balance numbers, and balance numbers get tuned by playing.
+
+**Option C — the engine records per-player involvement — is the right end state and is newly safe.**
+Before request 07 was answered it would have rewritten every saved match's ratings; after ticket 31 it
+only affects new matches. The rating module is the seam that makes the swap invisible to the screens.
+
+Decided under the human's standing delegation ("i need you to solve the decisions").

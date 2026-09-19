@@ -54,3 +54,25 @@ for a whole Season in every new career.
 - Blocked: first-Season progress on the Performance Report (ticket 07) and anything in ticket 08 or 09
   that shows it.
 - Proceeding meanwhile: ticket 07 ships season-over-season diffs; tickets 08 and 10 are unaffected.
+
+---
+
+## Answer — Option A, 2026-09-19
+
+**New `PlayerDeveloped` events carry the pre-development Attributes.** A small, backward-compatible
+payload addition, and without it every new career's report looks broken for a full Season.
+
+Two consequences the option text left implicit, both of which must be visible rather than assumed:
+
+- **It cannot be backfilled.** The pre-development Attributes of an already-recorded Season are genuinely
+  absent, not merely expensive to recover. Existing saves keep their blind first Season.
+- **So the report needs an explicit no-comparison state** for any Season whose event predates this change
+  — not an empty table. Ticket 08 already established that pattern for the Development Centre; Screen 113
+  reuses it.
+
+The fix also gets no cheaper by waiting: every Season that concludes before it lands is another Season
+that can never show its changes.
+
+Settled with request 01 as
+[the Performance Report shows what it can prove](../../.agents/notes/proposed/feature/2026-09-19-the-performance-report-shows-what-it-can-prove.md).
+Decided under the human's standing delegation ("i need you to solve the decisions").

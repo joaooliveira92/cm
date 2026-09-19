@@ -96,3 +96,35 @@ justification is exactly what the index-count test is there to prevent.
 The deferred club-scoped screens (132, 142, 143) will ask this question again with more at stake.
 Answering it once, then, with a probe number in hand, is better than answering it twice on a query
 plan.
+
+---
+
+## Answer — Option C, and the trigger for Option A, 2026-09-19
+
+**Not yet — and that is a decision, not a deferral of one.**
+
+`db/schema.ts` states the save carries "exactly three" indexes, "every one measured against the scale
+probe rather than assumed", and records that the third "was added by open question 22 rather than by
+whoever happened to be writing the migration, which is what the index-count test exists to force".
+`test/main/season/query-plans.test.ts:96` asserts the exact three by name.
+
+**Adding an index on a query plan rather than a measurement is precisely what that test exists to
+prevent.** Approving Option A now would satisfy this request by breaking the rule it invokes. This request
+was right to refuse to complete itself.
+
+So: **Option C holds, and Option A is pre-approved on one condition** — the next scale-probe run includes
+the club-scoped `player_transfers` read, and if it measures badly, both indexes ship with that measurement
+behind them and the index-count test's expected set grows to five by the same process that took it to
+three.
+
+The reasoning that makes waiting safe: this is a screen-open cost, paid once when a manager opens one
+screen, not a per-frame or per-Matchday cost. At v1 save sizes a full scan of `player_transfers` is cheap,
+and the table's unbounded growth is the thing to watch rather than the thing to pre-empt.
+
+**What this needs from whoever runs the probe next** — live probe code already exists under
+`apps/desktop/src/main/db/prototype-scale-probe/`, and the `world-data-model` effort's open questions 20
+and 21 are also waiting on a probe run. Adding this read to that run costs almost nothing; running a probe
+for this alone is not worth it.
+
+Decided under the human's standing delegation ("i need you to solve the decisions"). No Agent Note: this
+reaffirms a rule `db/schema.ts` already records rather than establishing a new one.

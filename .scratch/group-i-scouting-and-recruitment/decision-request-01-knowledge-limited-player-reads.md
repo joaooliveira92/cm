@@ -57,3 +57,34 @@ surfaces to fix later.
 - Blocked: Screens 119 and 129; Group J Screens 132, 134 and 137.
 - Proceeding meanwhile: Group I v1 screens 121, 126 and 118, which show Scouting Progress and never an
   exact figure for an unscouted Player.
+
+---
+
+## Answer — Option A, 2026-09-19
+
+**Knowledge-limit the market, and every Player read outside the manager's club, on one shared read.** A
+Player outside the manager's club shows **Attribute Range** values by **Scouting Progress** — Transfer
+Value and Overall Rating included — never an exact figure, until **Fully Scouted**. The manager's own
+Players are unaffected.
+
+The fix goes in the **read**, not the screens, so the market, `BidComposer`, Player Search (119) and
+Transfer Target Comparison (129) cannot disagree.
+
+**`CONTEXT.md` is amended in the same commit.** **Listed**'s "full-information Transfer Value" clause is
+struck — a pre-Scouting statement that **Attribute Range** already overrode in practice. A Bid still needs
+no "for sale" signal; that part of Listed stands on its own. Leaving the contradiction in place is what
+let two surfaces ship in opposite directions.
+
+Option B was rejected for the reason it cannot answer: if a manager can read any player's exact value and
+rating, a **Scout** buys nothing, and Group I shipped three screens whose whole subject is that
+consequence.
+
+**A real design consequence, stated plainly**: a bid can now be placed on a Player whose value is a
+range. The manager bids against an estimate, and the estimate narrows by scouting. That is the intended
+shape.
+
+Recorded as
+[knowledge limits every Player read](../../.agents/notes/proposed/architecture/2026-09-19-knowledge-limits-every-player-read.md).
+Unblocks Screens 119 and 129 here, Group J 132, 134 and 137, and removes one of the two reasons Group D
+Screen 68 was deferred. Decided under the human's standing delegation ("i need you to solve the
+decisions").

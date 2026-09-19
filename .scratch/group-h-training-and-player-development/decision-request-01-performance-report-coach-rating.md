@@ -72,3 +72,21 @@ it cannot be mistaken for a judgment of the player. Option B is a post-v1 featur
   aggregation in ticket 09.
 - Proceeding meanwhile: ticket 07's Training Focus and development progress (shipped), ticket 08
   (Player Development Centre), ticket 10.
+
+---
+
+## Answer — Option A, 2026-09-19
+
+**Coach quality, and labelled "Coach quality".** The field shows the club **Coach**'s 1–20 value — the
+same one Coaching Assignments shows — because that value drives this player's baseline development, so it
+is a true statement about the player's training.
+
+**The relabel is the load-bearing half.** "Coach rating" beside a player's name reads as a judgment of the
+player, and the whole reason this request existed is that two readers of the same spec read it two ways.
+Use "Coach quality" on Screen 111 too, so one value has one name.
+
+A rating the Coach gives the player is post-v1 and needs a model before it needs a screen.
+
+Settled with request 02 as
+[the Performance Report shows what it can prove](../../.agents/notes/proposed/feature/2026-09-19-the-performance-report-shows-what-it-can-prove.md).
+Decided under the human's standing delegation ("i need you to solve the decisions").

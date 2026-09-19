@@ -68,8 +68,8 @@ training, traits, mentoring, youth intake and training camps have no code at all
 | [112_training_workload_and_recovery.md](112_training_workload_and_recovery.md), injury history | `renamed` | An injury history informing the workload decision. | The detail line states the **last injury's Severity this Season**, because the ledger keeps it only until Season start. A durable per-Player injury record does not exist — the same gap that defers [Group D Screen 59](../group_d_player_and_staff_records/59_player_injuries.md) and Group E Screen 77's availability half. | Ticket 05. |
 | [108_individual_training_plan.md](108_individual_training_plan.md), focus eligibility | `contradicted` | Any focus is offered for any player. | Goalkeeping is offered only to players with goalkeeping Attributes, and `setTrainingFocus` **refuses** the rest with `TrainingFocusNotOfferedError` — one shared predicate decides, so the renderer and main cannot disagree. Off-rule rows in older Saves are left alone: they develop the player exactly as `None`, and any offered choice replaces them. | Tickets 06 and 10. |
 | [114_player_development_centre.md](114_player_development_centre.md), workload gauge | `deferred` | A workload gauge on the development centre. | Not in v1. Workload has its own screen (112) and was not duplicated here. | `unscheduled`. Ticket 08. |
-| [113_training_performance_report.md](113_training_performance_report.md), coach rating | `deferred` | A coach's rating of the player's progress. | **Not shipped.** What a coach rating would show is unsettled — group-h decision request 01. | Open decision request; see below. |
-| [113_training_performance_report.md](113_training_performance_report.md), first-season changes | `deferred` | Attribute change shown from the first Season onward. | Season-over-season change is read from `PlayerDeveloped` events, which do not record pre-development Attributes, so the **first Season shows no changes**. Whether events should record a baseline is group-h decision request 02. | Open decision request; see below. |
+| [113_training_performance_report.md](113_training_performance_report.md), coach rating | `contradicted` | A coach's rating of the player's progress. | The field shows the **Coach's quality** — the 1–20 value that drives this player's baseline development — and is **labelled "Coach quality"**, not "coach rating". A rating the Coach gives the player does not exist in any model and is post-v1. | **Answered 2026-09-19** — [the Performance Report shows what it can prove](../../../.agents/notes/proposed/feature/2026-09-19-the-performance-report-shows-what-it-can-prove.md). |
+| [113_training_performance_report.md](113_training_performance_report.md), first-season changes | `deferred` | Attribute change shown from the first Season onward. | New `PlayerDeveloped` events will carry the pre-development Attributes. It **cannot be backfilled** — those values are genuinely absent from recorded Seasons — so existing saves keep a blind first Season and the report shows an explicit no-comparison state for it. | **Answered 2026-09-19** — same note. |
 
 Screen 113 is the only screen in this group that is not wholly done. It ships Training Focus and
 season-over-season Attribute changes through a new own-club-only read,
@@ -93,10 +93,11 @@ Seven screens, one ruling, anchored to
 
 ## What this ledger leaves owed
 
-- **Two open decision requests, both on Screen 113.** Group-h decision request 01 (what a coach rating
-  shows) and 02 (whether `PlayerDeveloped` events should record pre-development Attributes so the
-  first Season shows changes). 02 is the more consequential: it is a question about what to write into
-  the event log, so answering it late means existing Saves keep the gap.
+- ~~**Two open decision requests, both on Screen 113.**~~ **Both answered 2026-09-19.** Screen 113's
+  `needs-info` clears. What remains is build work: relabel the field to "Coach quality" on Screens 111
+  and 113, add the baseline to `PlayerDeveloped`, and give the report a no-comparison state for Seasons
+  recorded before that. The warning in the original ticket held — answering late means existing saves keep
+  the gap, and they do.
 - **Screen 116's real blocker is player generation**, not the screen. Whoever charters it inherits a
   determinism question, not a UI one.
 - **No placeholder cull is owed.** Group H's deferred screens were never routed, and its six v1

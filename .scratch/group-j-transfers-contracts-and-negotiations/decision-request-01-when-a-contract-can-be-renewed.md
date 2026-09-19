@@ -58,3 +58,29 @@ its purpose, and it closes the wage-cutting loophole Option B opens.
   as [ticket-04-contract-renewal.patch](ticket-04-contract-renewal.patch) and applies cleanly to
   `8a7c38e`; under Option A it needs the years-remaining check added.
 - Proceeding meanwhile: tickets 05 (Contract Expiry), 06 (Budget Review), 07 (Transfer History).
+
+---
+
+## Answer — Option A, 2026-09-19
+
+**A Contract may be renewed only in its last contracted year.** The plain reading of "never renegotiated
+mid-term", and two consequences matter as much as the rule: it gives the Contract Expiry screen (141) its
+purpose, and it closes the wage-cutting loophole — a mid-term renewal at today's formula figure is a wage
+renegotiation by another name, and it runs one way, since a manager only takes it when the number has
+fallen.
+
+**The existing test inverts with the rule.** `renewContract reuses the signing flow against the player's
+current club` currently encodes the permissive reading against a freshly generated Contract; it must
+assert the refusal, and a new test must cover the permitted last-year case. A tested rule is still a rule.
+
+Option B was rejected because it requires striking "never renegotiated mid-term" from `CONTEXT.md`, and
+that sentence is load-bearing — it is why there is no contract-negotiation subsystem in v1 and why Screens
+137–139 are deferred on the same clause.
+
+**Ticket 04 unblocks and is the cheapest screen in the backlog**: the implementation is written, reviewed
+and held as a patch. It needs the last-year guard, a typed refusal on `renewContract`'s declared union,
+and the test change.
+
+Recorded as
+[a Contract renews only in its last contracted year](../../.agents/notes/proposed/feature/2026-09-19-a-contract-renews-in-its-last-year.md).
+Decided under the human's standing delegation ("i need you to solve the decisions").

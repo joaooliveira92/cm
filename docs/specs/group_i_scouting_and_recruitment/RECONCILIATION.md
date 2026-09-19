@@ -61,7 +61,7 @@ coverage and **Knowledge Confidence** with no figure. The transfer market does n
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
-| Knowledge-limited reads, across the group | `contradicted` | Recruitment surfaces present a Player's ability as known fact. | The knowledge model says otherwise, and one surface already contradicts the other: 126 withholds figures the transfer market discloses. | group-i decision request 01 (knowledge-limited player reads), **open**. It blocks [Group D Screen 68](../group_d_player_and_staff_records/68_scout_report.md) and Group J Screens 132, 134 and 137. |
+| Knowledge-limited reads, across the group | `contradicted` | Recruitment surfaces present a Player's ability as known fact. | A Player outside the manager's club shows **Attribute Range** values by **Scouting Progress** — Transfer Value and Overall Rating included — never an exact figure until **Fully Scouted**. The fix goes in the shared read, not the screens, so the market, `BidComposer`, 119 and 129 cannot disagree. | **Answered 2026-09-19** — [knowledge limits every Player read](../../../.agents/notes/proposed/architecture/2026-09-19-knowledge-limits-every-player-read.md). `CONTEXT.md`'s **Listed** loses its pre-Scouting "full-information Transfer Value" clause in the same commit. |
 
 It is the one open question in this group and the only one in the M1 sweep that blocks screens in two
 other groups. Ticket 03 held new Player targets back pending the answer.
@@ -104,10 +104,12 @@ meetings, planner, agents, trials and staff hiring do not*.
 
 ## What this ledger leaves owed
 
-- **group-i decision request 01 is the most far-reaching open question in the sweep.** Knowledge-limited
-  player reads gate Group D Screen 68, Group J Screens 132, 134 and 137, and Screens 119 and 129 here.
-  It is also a live inconsistency in shipped code, not only a scoping question: Screen 126 withholds
-  what the transfer market discloses.
+- ~~**group-i decision request 01 is the most far-reaching open question in the sweep.**~~ **Answered
+  2026-09-19**, and it was: it unblocks Screens 119 and 129 here, Group J 132, 134 and 137, and removes
+  one of the two reasons Group D Screen 68 was deferred. A real design consequence comes with it — a bid
+  can be placed on a Player whose value is a range, so the manager bids against an estimate that narrows
+  by scouting. That makes Scouting Assignment a precondition for good recruitment rather than a
+  curiosity.
 - **Screen 120's kind is arguably wrong**, and it is the mirror of the corrections M1 step 1 has been
   making all week — here a screen may be *too generously* `deferred` rather than too harshly
   `out-of-scope`. The closed role set that made [Group D 64–66](../group_d_player_and_staff_records/RECONCILIATION.md)

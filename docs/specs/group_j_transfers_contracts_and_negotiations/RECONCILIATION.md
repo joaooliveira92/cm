@@ -88,12 +88,19 @@ The one screen in the M1 sweep in this state. Ticket 04 **built Contract Renewal
 patch** rather than shipping it, because the screen cannot be specified without answering a rule
 question: *can a Contract be renewed while it still has years to run?*
 
-That is group-j decision request 01, open. `CONTEXT.md`'s **Contract** is never renegotiated — so a
-renewal that replaces a running Contract is either a permitted exception or a contradiction, and the
-screen means different things under each reading.
+That was group-j decision request 01, and it is **answered 2026-09-19: a Contract may be renewed only in
+its last contracted year** —
+[a Contract renews only in its last contracted year](../../../.agents/notes/proposed/feature/2026-09-19-a-contract-renews-in-its-last-year.md).
+The plain reading of "never renegotiated mid-term"; it gives the Contract Expiry screen its purpose, and
+it closes a one-way loophole, since a mid-term renewal at today's formula figure only appeals when the
+number has fallen.
 
-The patch is held in the effort directory. This is the right handling and worth naming as precedent:
-the work is not lost, and it is not shipped under a guess.
+**Ticket 04 is now the cheapest screen in the backlog.** The implementation is written and reviewed; it
+needs the last-year guard, a typed refusal on `renewContract`'s declared union, and one existing test
+inverted — that test currently encodes the permissive reading against a freshly generated Contract.
+
+Holding the patch rather than shipping under a guess was the right call, and is worth naming as
+precedent: the work was not lost and the rule was not invented.
 
 ## Deferred in full
 
@@ -109,14 +116,15 @@ Beyond the six contradicted-model screens above, five more, anchored to
 
 ## What this ledger leaves owed
 
-- **group-j decision request 01 (when a Contract can be renewed)** blocks Screen 140, which is built.
-  It is the cheapest unblock in the sweep: one rule question standing between a finished patch and a
-  shipped screen.
-- **group-j decision request 02 (club-scoped transfer history indexes)** is open and blocks nothing —
-  whether the Save takes two more indexes for the club-scoped `player_transfers` read. Ticket 07
-  shipped without them.
-- **group-i decision request 01** gates Screens 132, 134 and 137 here, on top of what it gates in
-  Groups D and I.
+- ~~**group-j decision request 01**~~ **answered 2026-09-19.** Ticket 04 unblocks — the cheapest screen
+  in the backlog, since the work is already written.
+- **group-j decision request 02 (club-scoped transfer history indexes)** — answered **Option C, not
+  yet**, with Option A pre-approved on one condition: the next scale-probe run includes this read, and
+  the indexes ship with that measurement behind them. `db/schema.ts` requires an index to be measured
+  rather than assumed, and approving on a query plan would break the rule the index-count test exists to
+  enforce.
+- ~~**group-i decision request 01** gates Screens 132, 134 and 137 here.~~ **Answered 2026-09-19** —
+  those three unblock, and the market's exact figures for unscouted Players are the defect being fixed.
 - **One stale stub.** Ticket 07 deliberately left the club-scoped transfer-history stub alone when it
   shipped Screen 146 on its own route. `renderer/clubTransfersDetail/` is a routed WIP placeholder
   that now has a shipped sibling; M1 step 5 owes it a ruling.

@@ -50,3 +50,20 @@ Option B is a match-engine effort of its own rather than a statistics ticket.
 
 - Blocked: ticket 09's criterion listing possession, corners, fouls and offsides.
 - Proceeding meanwhile: ticket 09 ships every statistic the model backs; tickets 10–11.
+
+---
+
+## Answer — 2026-09-19
+
+Settled with group-g request 03 under one rule: **a screen may derive from the stream; it may
+not invent what the stream does not contain.** Recorded as
+[the match model shows only what it produces](../../.agents/notes/proposed/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md).
+
+**Option A.** Possession, corners, fouls and offsides stay **unavailable** and are named as such — not
+computed, not estimated, not blank. Zero is a claim. This is the same ruling as Group L's **Unplayed**
+fixture: an unsimulated value gets no fabricated figure. Ticket 09's criterion naming the four is
+**withdrawn**, not deferred.
+
+Extending the engine is a match-engine effort of its own, and safe only after ticket 31.
+
+Decided under the human's standing delegation ("i need you to solve the decisions").
