@@ -240,10 +240,23 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-d-player-and-staff-records ticket 09** — cull the five disposed player placeholders plus
-`playerCoachReport`, which the ledger's own list omitted. Then **ticket 10**, which is the harder
-half: three `staff*` folders answer to no screen in the Group D import and need a first-time
-disposition rather than a deletion.
+**group-h-training-and-player-development ticket 12** — four training e2e specs describe a Training
+screen that no longer exists. Then **group-d ticket 10**, the harder half of the placeholder cull:
+three `staff*` folders answer to no screen in the Group D import and need a first-time disposition
+rather than a deletion.
+
+**e2e is red on `dev`, and it is not new.** 42 passed / 4 failed. All four — `development-centre`,
+`performance-report`, `training-plan`, `training-workload` — open by navigating to Training and
+asserting a `Coaching Assignments` h1. Group H ticket 09 turned Training into an Overview hub with a
+tab strip and preview regions, so that heading is now one click further in behind *View coaching
+assignments*. The screens work; the specs describe a shape the UI has left. Proven pre-existing by
+stashing group-d ticket 09's changes and re-running to an identical 42/4. **M1 exit criterion 4
+cannot be met until this is fixed.**
+
+**group-d ticket 09 shipped the player half of M1 step 5.** Five disposed player placeholders deleted
+with their routes, scope entries, action rows and URL mappings. The ticket as filed was wrong about a
+sixth: `playerCoachReport` is Group H's built Screen 113, not Group D's never-built Screen 67, and
+both ticket and ledger now say so.
 
 **The ticket queue was empty before these were filed, and that is worth reading carefully.** Every
 effort in `.scratch/` is closed except group-g-match-day, whose only `ready-for-agent` ticket (31,
