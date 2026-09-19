@@ -16,7 +16,7 @@ import {
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import {
   changeTactics,
   getSquad,

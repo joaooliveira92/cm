@@ -9,7 +9,7 @@ import { TrainingFocusNotOfferedError, type SaveId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getSquad, setTrainingFocus } from "../../../src/main/club/index.js";
 
 // Ticket 10 (group-h): `setTrainingFocus` enforces the Training Focus rule — a Category is only a

@@ -3,13 +3,14 @@ import { rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
-import { ok, strictEqual } from "node:assert";
+import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getContractExpiryScreen } from "../../../src/main/transfers/contractExpiry.js";
+import { advanceThroughBoundary } from "../boundary-helpers.js";
 
 let savesDir: string;
 
@@ -136,4 +137,51 @@ it.effect("returns empty list when no players have expiring contracts", () =>
     const screen = yield* getContractExpiryScreen(savesDir, saveId);
     strictEqual(screen.players.length, 0, "no expiring players");
   }),
+);
+// ---------------------------------------------------------------------------
+// The human club left short by a season of expiries (ticket 05)
+// ---------------------------------------------------------------------------
+
+/**
+ * World seed 46 is one of the three worlds in four hundred where a single season of contract
+ * expiries leaves the human club holding ten players. It is a real game state — `matchday.ts`
+ * already resolves AI fixtures that way — but the human's own Fixture is a boundary, and nothing in
+ * the game refills the squad. Whether it should is
+ * [decision request 01](../../../../../.scratch/gate-red-on-dev/decision-request-01-squad-decay-has-no-floor.md).
+ *
+ * This is the world that made ticket 05 look like a flake. Every spec drew its world at random, so
+ * roughly one run in a hundred landed here and `startMatch` rejected the boundary with a
+ * `MatchNotReadyError` raised in `match/start.ts` — a different spec each time, green again on
+ * re-run. The seed is pinned here so the state has one owner and one name.
+ *
+ * Seeds 48 and 381 reproduce it identically at season 2; 46 is simply the first.
+ */
+const SEED_WHERE_THE_HUMAN_CLUB_FALLS_BELOW_ELEVEN = 46;
+
+it.effect(
+  "a human club short of eleven after expiries is named by the helper, not by startMatch",
+  () =>
+    Effect.gen(function* () {
+      const save = yield* createSave(savesDir, "Short Squad", undefined, {
+        worldSeed: SEED_WHERE_THE_HUMAN_CLUB_FALLS_BELOW_ELEVEN,
+      });
+
+      const outcome = yield* Effect.gen(function* () {
+        for (let advance = 0; advance < 200; advance += 1) {
+          const stepped = yield* advanceThroughBoundary(savesDir, save.id);
+          if (stepped.advance.season.seasonNumber >= 2) return "played-clean" as const;
+        }
+        return "played-clean" as const;
+      }).pipe(
+        Effect.catchTag("HumanClubCannotFieldElevenError", (error) => Effect.succeed(error)),
+      );
+
+      ok(
+        outcome !== "played-clean",
+        `seed ${SEED_WHERE_THE_HUMAN_CLUB_FALLS_BELOW_ELEVEN} must leave the human club short`,
+      );
+      strictEqual(outcome.squadSize, 10);
+      deepStrictEqual([...outcome.blockers], ["tactic-names-departed-players"]);
+    }),
+  { timeout: 60_000 },
 );

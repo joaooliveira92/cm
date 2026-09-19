@@ -8,7 +8,7 @@ import { Tactic, WriteRequestId, type PlayerId } from "@cm-clone/contracts";
 import { FORMATION_SLOTS, POSITION_ROLES, emptyBench } from "@cm-clone/shared";
 import { Effect, Result } from "effect";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getTactics, changeTactics } from "../../../src/main/club/index.js";
 
 let savesDir: string;

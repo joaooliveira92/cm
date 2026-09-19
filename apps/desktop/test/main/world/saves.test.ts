@@ -16,14 +16,8 @@ import { PresetFingerprintMismatchError, SnapshotId } from "@cm-clone/contracts"
 import type { SqlError } from "effect/unstable/sql/SqlError";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import {
-  LEAGUE_SNAPSHOTS_FILE,
-  getLeagueSelectionSnapshot,
-  toDomainIntents,
-  beginCareer,
-  createSave,
-  listSaves,
-} from "../../../src/main/world/index.js";
+import { LEAGUE_SNAPSHOTS_FILE, getLeagueSelectionSnapshot, toDomainIntents, beginCareer, listSaves } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getSquad } from "../../../src/main/club/index.js";
 import { createDefaultSnapshot } from "../snapshot-helpers.js";
 

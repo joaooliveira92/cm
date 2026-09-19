@@ -12,7 +12,7 @@
 import path from "node:path";
 import type { SaveId } from "@cm-clone/contracts";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { Effect } from "effect";
+import { Data, Effect } from "effect";
 import type { SqlClient } from "effect/unstable/sql/SqlClient";
 import { ELEVEN, pickBestFormationTactic } from "../../src/main/club/aiClubs.js";
 import { loadSquadPlayers, loadUserClub } from "../../src/main/club/squad.js";
@@ -32,6 +32,20 @@ const inSave = <A, E>(savesDir: string, saveId: SaveId, body: Effect.Effect<A, E
   );
 
 /**
+ * The human club reached its own Fixture unable to field eleven, so no Tactic could clear the
+ * boundary's blockers. Raised by the helper rather than left to `startMatch`, so a spec that hits
+ * this reports the squad size that caused it instead of a readiness failure three modules away.
+ */
+export class HumanClubCannotFieldElevenError extends Data.TaggedError(
+  "HumanClubCannotFieldElevenError",
+)<{
+  readonly clubId: string;
+  readonly squadSize: number;
+  readonly fixtureId: string;
+  readonly blockers: ReadonlyArray<string>;
+}> {}
+
+/**
  * The Fixture the Calendar is standing at, having first made the human club ready to play it.
  *
  * Both halves in one connection because this runs once per Matchday in loops that play whole
@@ -41,8 +55,15 @@ const inSave = <A, E>(savesDir: string, saveId: SaveId, body: Effect.Effect<A, E
  * "Ready" is rebuilt rather than merely filled: a career that rolls into a second season carries a
  * Tactic whose slots may name players since sold, released or expired, which is a blocker in its own
  * right — so a helper that only handled the empty case would fail on exactly the multi-season tests
- * that need it most. `pickBestFormationTactic` stands in for the player's choice; a club too small to
- * field eleven is left alone, because no Tactic could be built for it.
+ * that need it most. `pickBestFormationTactic` stands in for the player's choice.
+ *
+ * A club too small to field eleven fails here, loudly. It used to be left alone — no Tactic could be
+ * built for it, so the helper returned the Fixture anyway and `startMatch` rejected it a moment later
+ * with a `MatchNotReadyError` pointing at `match/start.ts`, which is the integrity boundary doing its
+ * job and says nothing about why the squad shrank. Ticket 05 spent a sprint on that error. The state
+ * is real — a season of contract expiries can leave the human club on ten — and the game has no
+ * recovery path for it yet; see this effort's decision request. What a test helper must not do is let
+ * it surface as somebody else's error.
  */
 const readyPendingFixture = (savesDir: string, saveId: SaveId) =>
   inSave(
@@ -55,9 +76,15 @@ const readyPendingFixture = (savesDir: string, saveId: SaveId) =>
       const blockers = yield* loadMatchBlockers(club.id);
       if (blockers.length > 0) {
         const squad = yield* loadSquadPlayers(club.id);
-        if (squad.length >= ELEVEN) {
-          yield* persistTactic(club.id, yield* pickBestFormationTactic(squad), 0);
+        if (squad.length < ELEVEN) {
+          return yield* new HumanClubCannotFieldElevenError({
+            clubId: club.id,
+            squadSize: squad.length,
+            fixtureId: String(row.awaitingFixtureId),
+            blockers: blockers.map((blocker) => blocker.id),
+          });
         }
+        yield* persistTactic(club.id, yield* pickBestFormationTactic(squad), 0);
       }
       return row.awaitingFixtureId;
     }),

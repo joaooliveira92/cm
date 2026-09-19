@@ -10,7 +10,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 import { PlayerId } from "@cm-clone/contracts";
 import { FULLY_SCOUTED, attributeRange, nextProgress, scoutingAccrual } from "@cm-clone/shared";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { discardSquadsForClubs } from "../../../src/main/season/index.js";
 import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { assignScout, getScouting, unassignScout, getSquad } from "../../../src/main/club/index.js";

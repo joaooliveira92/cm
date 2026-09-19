@@ -8,7 +8,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getSquad } from "../../../src/main/club/squad.js";
 import { getTransferHistoryScreen } from "../../../src/main/transfers/transferHistory.js";
 import { displayNames } from "../../../src/main/world/displayNames.js";

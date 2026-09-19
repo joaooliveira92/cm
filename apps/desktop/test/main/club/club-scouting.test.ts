@@ -10,7 +10,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe } from "vitest";
 import type { ClubId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { nextProgress } from "@cm-clone/shared";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import {
   assignScout,
   assignScoutToClub,

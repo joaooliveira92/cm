@@ -24,7 +24,8 @@ import {
   type StaffDepartment,
   type StatureTier,
 } from "@cm-clone/shared";
-import { beginCareer, commitCareer, createSave } from "../../../src/main/world/index.js";
+import { beginCareer, commitCareer } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getClubStaff, materialiseStaff } from "../../../src/main/career/index.js";
 import { getScouting } from "../../../src/main/club/index.js";
 import { createDefaultSnapshot, createSnapshotFor } from "../snapshot-helpers.js";

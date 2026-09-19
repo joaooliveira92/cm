@@ -20,7 +20,7 @@ import {
   validateTactic,
 } from "../../../src/main/club/index.js";
 import { advanceCalendar } from "../../../src/main/season/index.js";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { aiPlaceBid, loadAllPlayersEcon, respondToBid } from "../../../src/main/transfers/index.js";
 
 let savesDir: string;

@@ -10,7 +10,7 @@ import { ALL_ATTRIBUTES } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe, expect } from "vitest";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import {
   developPlayersForSeason,
   getPlayerDevelopmentHistory,

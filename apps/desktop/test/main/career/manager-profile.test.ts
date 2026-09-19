@@ -9,7 +9,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { getManagerProfileScreen } from "../../../src/main/career/index.js";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getSquad } from "../../../src/main/club/index.js";
 
 let savesDir: string;

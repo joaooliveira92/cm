@@ -15,7 +15,7 @@ import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { createRegionalSnapshot } from "../snapshot-helpers.js";
 import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { seasonHelpers } from "./helpers.js";

@@ -15,7 +15,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { leagueRoundDates } from "@cm-clone/shared";
 import { CompetitionId } from "@cm-clone/contracts";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { createPyramidSnapshot } from "../snapshot-helpers.js";
 import { getCompetitionFixtures, getFixtures } from "../../../src/main/season/index.js";
 import { seasonHelpers } from "./helpers.js";

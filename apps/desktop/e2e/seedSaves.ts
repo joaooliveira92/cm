@@ -3,7 +3,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { advanceCalendar } from "../src/main/season/index.js";
-import { createSave } from "../src/main/world/index.js";
+import { createSave } from "../test/seeded-save.js";
 import { advanceThroughBoundary, pendingFixtureId } from "../test/main/boundary-helpers.js";
 
 const run = <A, E>(effect: Effect.Effect<A, E>): Promise<A> => Effect.runPromise(effect);

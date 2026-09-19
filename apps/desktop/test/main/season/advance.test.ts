@@ -14,7 +14,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { createSnapshotFor } from "../snapshot-helpers.js";
 import { getSquad } from "../../../src/main/club/index.js";
 import { advanceCalendar, getFixtures, getLeagueTable } from "../../../src/main/season/index.js";

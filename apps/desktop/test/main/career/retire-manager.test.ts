@@ -10,7 +10,8 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { loadStreamEvents } from "../../../src/main/season/decider.js";
 import { getManagerProfileScreen } from "../../../src/main/career/index.js";
-import { createSave, listSaves } from "../../../src/main/world/index.js";
+import { listSaves } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getSeasonSummary, retireManager } from "../../../src/main/season/index.js";
 
 let savesDir: string;

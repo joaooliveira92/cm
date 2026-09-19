@@ -11,7 +11,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { advanceThroughBoundary } from "../boundary-helpers.js";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getSquad } from "../../../src/main/club/index.js";
 import { loadStreamEvents } from "../../../src/main/season/decider.js";
 import {

@@ -9,7 +9,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 import { ClubId, SaveId } from "@cm-clone/contracts";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getTeamScoutReport } from "../../../src/main/club/index.js";
 
 let savesDir: string;

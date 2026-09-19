@@ -9,7 +9,7 @@ import { Effect, Exit } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import type { NewsMessageId, SaveId } from "@cm-clone/contracts";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { getClubStaff, getNewsInbox, parseNewsMessageId, setNewsMessageState } from "../../../src/main/career/index.js";
 import { getSquad } from "../../../src/main/club/index.js";

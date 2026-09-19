@@ -9,7 +9,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { type ClubId } from "@cm-clone/contracts";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getBudgetReviewScreen } from "../../../src/main/transfers/budgetReview.js";
 import { loadClubBudgetRow, loadWageBudgetUsed } from "../../../src/main/transfers/budgets.js";
 

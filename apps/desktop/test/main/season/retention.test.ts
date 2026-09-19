@@ -15,7 +15,7 @@ import { ok, strictEqual } from "node:assert";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getSeasonSummary } from "../../../src/main/season/index.js";
 import { seasonHelpers } from "./helpers.js";
 

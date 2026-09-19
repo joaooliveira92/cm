@@ -42,6 +42,17 @@ cluster was hidden behind it.
   stubbing `showQuitGuard`, an API that does not exist (ticket 03). No production source touched, no
   test skipped or loosened.
 
+- [05 — `MatchNotReadyError` flake](issues/05-match-not-ready-flake.md): **the premise was wrong.**
+  Nothing leaked between specs. `createSave` forwarded neither of `beginCareer`'s deterministic
+  inputs, so every spec played a different world on every run; 3 worlds in 400 leave the human club
+  on ten players after a season of contract expiries, and `readyPendingFixture` handed that club's
+  Fixture to `startMatch` anyway. Test worlds are now seeded
+  ([note](../../.agents/notes/implemented/testing/2026-09-19-every-test-world-is-seeded.md)) and the
+  helper raises `HumanClubCannotFieldElevenError` instead of letting `match/start.ts` take the blame.
+  Proved by a mutant that reproduces the original error at `start.ts:161` on demand. Squad decay past
+  season 2 is a game-design gap, filed as
+  [decision request 01](decision-request-01-squad-decay-has-no-floor.md).
+
 ## Not yet specified
 
 Nothing. The pragma-vs-projects question graduated into [04](issues/04-vitest-projects-split.md):

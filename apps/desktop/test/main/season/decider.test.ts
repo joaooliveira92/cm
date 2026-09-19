@@ -8,7 +8,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import type { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { appendStreamEvents, loadStreamEvents, nextStreamSeq } from "../../../src/main/season/decider.js";
 
 let savesDir: string;

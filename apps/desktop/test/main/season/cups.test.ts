@@ -15,7 +15,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { cupRoundDate, tieWinner } from "@cm-clone/shared";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { createPyramidSnapshot } from "../snapshot-helpers.js";
 import { discardSquadsForClubs, getFixtures } from "../../../src/main/season/index.js";
 import { advanceThroughBoundary } from "../boundary-helpers.js";

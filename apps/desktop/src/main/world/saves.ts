@@ -268,12 +268,29 @@ export const discardCareer = (savesDir: string, id: SaveId) =>
  * passes the real Electron `userData`; test and e2e seeding callers pass only `savesDir` (a
  * throwaway temp directory), and the shim then stages the snapshot in a sibling `.user-data`
  * directory that dies with it.
+ *
+ * `generation` forwards `beginCareer`'s two unseeded inputs — the world seed and the reference
+ * year. Omitting it is the career the player gets: a seed drawn at random and the current year,
+ * which is what a new career should be. A caller that needs the same world twice passes both, and
+ * every test does: a save created without them plays a world nobody chose and nobody can replay,
+ * which is how a defect reachable on 1% of worlds reads as a flake moving between test files.
+ * See `.scratch/gate-red-on-dev/issues/05-match-not-ready-flake.md`.
  */
-export const createSave = (savesDir: string, name: string, userDataDir?: string) =>
+export const createSave = (
+  savesDir: string,
+  name: string,
+  userDataDir?: string,
+  generation?: Pick<BeginCareerOptions, "worldSeed" | "referenceYear">,
+) =>
   Effect.gen(function* () {
     const setupDir = userDataDir ?? path.join(savesDir, ".user-data");
     const snapshot = yield* submitLeagueSelection(setupDir, DEFAULT_CAREER_INTENTS);
-    const { id } = yield* beginCareer(savesDir, { userDataDir: setupDir, snapshotId: snapshot.id });
+    const { id } = yield* beginCareer(savesDir, {
+      userDataDir: setupDir,
+      snapshotId: snapshot.id,
+      worldSeed: generation?.worldSeed,
+      referenceYear: generation?.referenceYear,
+    });
     const clubs = yield* loadDefaultUserClub.pipe(
       Effect.provide(SqliteClient.layer({ filename: dbPath(savesDir, id) })),
       Effect.scoped,

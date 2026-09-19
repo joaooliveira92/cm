@@ -10,7 +10,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 import { ScoutingKnowledgeView, SaveId, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import { knowledgeConfidenceFor } from "@cm-clone/shared";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getScoutingKnowledge } from "../../../src/main/club/index.js";
 
 /**

@@ -13,7 +13,8 @@ import { MIGRATION_STATEMENTS } from "../../../src/main/db/migrations.generated.
 import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { getSquad } from "../../../src/main/club/index.js";
 import { createPyramidSnapshot } from "../snapshot-helpers.js";
-import { beginCareer, commitCareer, createSave } from "../../../src/main/world/index.js";
+import { beginCareer, commitCareer } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 
 /**
  * The log records only facts no table holds.

@@ -7,7 +7,7 @@ import { it } from "@effect/vitest";
 import { AppRpcs, PlayerId } from "@cm-clone/contracts";
 import { Effect, Schema } from "effect";
 import { afterEach, beforeEach } from "vitest";
-import { createSave } from "../../../src/main/world/index.js";
+import { createSave } from "../../seeded-save.js";
 import { getSquad } from "../../../src/main/club/index.js";
 import { getPlayerContract, getPlayerProfile } from "../../../src/main/career/player.js";
 

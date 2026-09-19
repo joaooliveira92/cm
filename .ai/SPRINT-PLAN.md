@@ -240,20 +240,34 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**gate-red-on-dev ticket 04** — the vitest projects split, now unblocked by ticket 03. 100 of 144
-renderer test files carry a `@vitest-environment jsdom` pragma and 0 of 63 main tests do, so the
-renderer/main split already exists and is merely hand-written 100 times, silently absent on the
-101st. Deliberately sequenced after 03 so it moves against a green baseline. Also ready:
-**gate-red-on-dev 05** (a `MatchNotReadyError` flake), **add-manager-screen-7 03** (released lock;
-the Group A ledger asserts a state the code has left), **group-a-reconciliation 22** (the Quit dialog
-has no provisional-career variant).
+**gate-red-on-dev ticket 06** — the per-file environment pragma that silently overrides the projects
+split ticket 04 just built. Also ready: **add-manager-screen-7 03** (released lock; the Group A
+ledger asserts a state the code has left) and **group-a-reconciliation 22** (the Quit dialog has no
+provisional-career variant).
+
+**Ticket 05 is resolved, and it was not a flake.** The `MatchNotReadyError` that failed one test per
+full suite run, in a different file each time, was never shared state. `createSave` forwarded neither
+of `beginCareer`'s deterministic inputs, so **every spec played a different world on every run** —
+the world seed drawn from `Random`, the reference year from the system clock. Measured over 400
+explicit worlds, 3 leave the human club holding ten players after one season of contract expiries,
+and `test/main/boundary-helpers.ts` handed that club's Fixture to `startMatch` regardless, which
+rejected it at `match/start.ts:161` exactly as it should. Test worlds are now pinned via
+`test/seeded-save.ts` (36 import lines, no call site changed); production careers still draw a random
+world. Proved with a mutant that reproduces the original error on demand.
+[Note](../.agents/notes/implemented/testing/2026-09-19-every-test-world-is-seeded.md).
+
+**The larger finding is filed, not fixed.** Played to season 3, the *majority* of worlds leave the
+human club unable to field eleven: contract expiry removes players every season and nothing puts any
+back, so a career ends to attrition the player was never shown. The suite only ever plays into
+season 2, which is why this read as a 1% flake rather than a wall.
+[Decision request 01](../.scratch/gate-red-on-dev/decision-request-01-squad-decay-has-no-floor.md)
+recommends youth intake as the floor, then the human's own transfer activity.
 
 **`pnpm check:all` is GREEN on `dev`** as of 2026-09-18, for the first time in this plan's memory —
 typecheck, lint, effect-lint, verify-md-links, verify-db-schema and test, 2651 tests passing. The
 standing caveat that every sprint delivers against a red gate and must re-prove "pre-existing" by
-hand is **retired**. One caveat replaces it: ticket 05's flake failed one test in two separate full
-runs, in a different file each time while passing in isolation, so treat a single red test as
-suspect until that is fixed.
+hand is **retired**. That caveat's successor — ticket 05's flake — is also retired: it is
+fixed, and it was never timing. A single red test is now worth believing.
 
 What the red gate turned out to be, after several sprints of being summarised as "61 unit tests
 failing `window is not defined`": only **5** were that error. 9 were a cascade from one test calling
