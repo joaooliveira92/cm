@@ -240,9 +240,28 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-c-club-information ticket 07** — the any-club views of Screens 35, 40 and 42, which already
-ship for the own club. The ticket's warning is the important part: do not build three read-only
-twins. Then **08** (the modelled halves of 39 and 47) and **09** (the cull, blocked on both).
+**group-c-club-information ticket 07**, re-sliced — Screens 40 and 42 only, and read its Findings
+section first. Then **08** (the modelled halves of 39 and 47) and **09** (the cull, blocked on both).
+**Screen 35 Squad needs its own ticket**, which is not yet filed.
+
+**Ticket 07 was started and reverted, and the finding is the deliverable.** The code was
+backend-only — two RPCs and handlers, typechecking green — and reads with no screen behind them are
+dead code, so it went back rather than being committed half-built.
+
+**Screen 35 Squad is not "the same screen with gated affordances".** `renderer/squad/` is 2044 lines
+across thirteen files: a provider, drag handling, lineup edits, selection, announcements, a session
+hook. It is a lineup *manager*; an any-club squad is a roster, and `fixtures/` (113 lines) is what a
+read-only club surface actually costs. **This needs an amendment to
+[the club-scoped rule](../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md):**
+its stated exception is subject existence, and Squad does not fit it — every club has a squad. The
+discriminator the rule is missing is whether the manager's own surface *acts* on the data or only
+reads it. Staff and Club Information are read-only both ways, which is exactly why the resolver
+worked twice.
+
+**40 and 42 do fit the rule**, but need something the ticket did not anticipate: a club-scoped view
+carrying `club` and `isUserClub`, because `TransferHistoryView` is `{ entries }` and `FixturesView`
+is `{ season, fixtures }` — neither can name the club it is about. Fetching the name separately is
+the trap `ClubStaffView`'s comment names.
 
 **Screen 34 ships** (ticket 06). One screen, club-scoped, reached two ways: `clubInformation/` is
 the screen and `clubInfo/` is now the own-club resolver over it, the Staff pattern applied a second
