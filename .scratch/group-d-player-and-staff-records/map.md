@@ -34,9 +34,18 @@ A reconciled spec covering all 19 Group D screens (50-68) — player profile, at
 - [07 — Player Contract display](issues/07-player-contract-display.md): Replaced WIP placeholder with real screen showing wage, length, signing and expiry dates. Committed 2026-09-14.
 - [08 — Player Development display](issues/08-player-development-display.md): Implemented training focus management screen at `player/$playerId/development`. Committed 2026-09-14.
 
+- [09 — cull the player placeholders](issues/09-cull-the-player-placeholders.md) and
+  [10 — rule on the staff placeholders](issues/10-rule-on-the-staff-placeholders.md): filed
+  2026-09-19, closing the obligation ticket 04 named and never ticketed. 09 is mechanical: five
+  disposed player screens plus `playerCoachReport`, which the ledger's list omitted. 10 is not,
+  because three `staff*` folders answer to no screen in this import and need a first-time
+  disposition rather than a deletion. Both are milestone M1 step 5.
+
 ## Not yet specified
 
-None. All 19 screens disposed. Three needs-design surfaces identified.
+None. All 19 screens disposed. Three needs-design surfaces identified, all three shipped.
+
+The placeholder cull is specified in tickets 09 and 10.
 
 ## Out of scope
 

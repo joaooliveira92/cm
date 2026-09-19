@@ -240,8 +240,22 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**The named queue is empty.** gate-red-on-dev, add-manager-screen-7 and group-a-reconciliation all
-closed in this sprint run. Recompute the frontier from `.scratch/` rather than from this section.
+**group-d-player-and-staff-records ticket 09** — cull the five disposed player placeholders plus
+`playerCoachReport`, which the ledger's own list omitted. Then **ticket 10**, which is the harder
+half: three `staff*` folders answer to no screen in the Group D import and need a first-time
+disposition rather than a deletion.
+
+**The ticket queue was empty before these were filed, and that is worth reading carefully.** Every
+effort in `.scratch/` is closed except group-g-match-day, whose only `ready-for-agent` ticket (31,
+committed matches store their timeline) is **blocked by ticket 32 — a human call on save migration**.
+Group G's live-match remainder is an M1 non-goal in any case. So M1's remaining work is its own
+sequence, not a ticket someone left open: step 2 Group D is done bar the cull, steps 3 and 4 are the
+Group C and L remainders, and step 5 is the cull itself — 57 WIP screens today, of which tickets 09
+and 10 take the `player*` and `staff*` share.
+
+Filing 09 and 10 is in-effort work on a charted map, not a new sprint invented to stay busy: ticket
+04 said to file them and nobody did, and the Group D ledger has been carrying the debt under *What
+this ledger leaves owed* since 2026-09-18.
 
 **group-a-reconciliation is complete.** Ticket 22 built the Quit dialog's provisional variant, and
 both of its hard parts were unnamed in the ticket. `QuitGuard` is mounted outside the router and
