@@ -60,6 +60,20 @@ model is `deferred` unless something states the model should never exist. `out-o
 the thing should not be in the game, not merely the observation that it is not there yet. Three of the
 four corrections M1 step 1 has found so far are this error.
 
+**M1 step 1 — ledger durability sweep, 6 of 10 done (2026-09-19).** Groups K and M added. They are
+opposites: Group M's effort closed cleanly and is the one group transcription did not have to correct,
+while **Group K has no rulings at all** — a `map.md` whose Decisions section reads `<!-- none yet -->`,
+no tickets, no spec, fourteen screens unread. Its ledger records that gap.
+
+**A third decision request is open, and it is the largest so far.** Is a recorded `CONTEXT.md` v1
+exclusion `out-of-scope` or `deferred`? It governs ~20 screens in five groups — all of Group M, Group D
+58 and 60, Group E 78 and 79, Group J 137–140, and Group K's board screens — and the ledgers are
+currently inconsistent about it: Group M's thirteen are provisionally `deferred` while Group D's and
+Group E's four are `out-of-scope`, for exclusions in the same sentence of the same file.
+[spec-ledger-kinds decision request 01](../.scratch/spec-ledger-kinds/decision-request-01-is-a-v1-exclusion-out-of-scope-or-deferred.md)
+recommends `deferred`. **It blocks charting Group K and nothing else.** Remaining in step 1: G, H, I, J,
+none of which needs the answer.
+
 ## Immediate next action
 
 **gate-red-on-dev ticket 04** — the vitest projects split, now unblocked by ticket 03. 100 of 144
