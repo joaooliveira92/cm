@@ -91,10 +91,15 @@ Named so a sprint cannot drift into them:
 
 Ledgers first, because they are the part at risk; then the player, which everything else links into.
 
-1. **Ledger durability sweep.** Lift the charted rulings for D, E, F, G, H, I, J, K, L and M out of
-   `.scratch/` into `docs/specs/group_<x>/RECONCILIATION.md`, in the Group A ledger's format. This is
-   transcription, not re-adjudication: a ruling already made is copied with its anchor, and a screen
-   nobody ruled on is written as `Not yet audited` rather than guessed at.
+1. ~~**Ledger durability sweep.**~~ **Done 2026-09-19.** All ten groups transcribed. 14 of the 19
+   groups now carry a durable `RECONCILIATION.md`, against four when the milestone opened; the five
+   without (N, O, P, Q, S) have no effort and no rulings to rescue, which was never this step's
+   scope. It was
+   transcription, not re-adjudication — but it found more than it expected to, because a summary that
+   disagrees with the ticket beneath it is invisible until both are written down. See
+   [SPRINT-PLAN](SPRINT-PLAN.md) for the findings; the durable rules it produced are
+   [absence of a model is `deferred`](../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md)
+   and [a v1 exclusion is `deferred`](../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md).
 2. **Group D remainder** — 50–57, 59, 61–68. Every other group in this milestone links into a player.
 3. **Group C remainder** — 33–37, 39–42, 46–48. Club read models over D and the existing world data.
 4. **Group L remainder** — 161, 164–175, 179–180. Competition and nation read models.
@@ -109,7 +114,8 @@ Each is checkable, and the first is a command:
 1. `grep -rl "WIP" apps/desktop/src/renderer --include "*.tsx"` returns **no** `club*`, `player*`,
    `staff*`, `competition*` or `nation*` screen. Each is either real or deleted.
 2. `docs/specs/group_<x>/RECONCILIATION.md` exists and has a complete coverage table for x in
-   c, d, e, f, g, h, i, j, k, l, m. No row in group C's table reads `Not yet audited`.
+   c, d, e, f, g, h, i, j, k, l, m. **Met for d–m 2026-09-19.** Outstanding: no row in group C's table
+   may read `Not yet audited`, which is step 3's work rather than step 1's.
 3. No route, nav entry or `g`-key binding points at a screen ruled out in those ledgers.
 4. `pnpm check:all` green, and `pnpm --filter @cm-clone/desktop test:e2e` green.
 5. [TRACEABILITY.md](TRACEABILITY.md) has a row for each read model shipped, with its proving test.

@@ -60,7 +60,34 @@ model is `deferred` unless something states the model should never exist. `out-o
 the thing should not be in the game, not merely the observation that it is not there yet. Three of the
 four corrections M1 step 1 has found so far are this error.
 
-**M1 step 1 — ledger durability sweep, 9 of 10 done (2026-09-19).** Groups H, I and J added, and
+**M1 step 1 is COMPLETE — 10 of 10 (2026-09-19).** Every group that had rulings to make durable now
+has a `RECONCILIATION.md`: **14 of the 19 groups carry one, against four when the milestone opened.**
+
+The five without — N, O, P, Q and S — have no ledger because they have **no effort and were never
+ingested**: nobody has read a screen in any of them. That was never step 1's scope, which was to
+rescue rulings trapped in `.scratch/`, and there are none to rescue. Their gap is visible in
+[SPEC-ROADMAP](SPEC-ROADMAP.md) § Where each group stands, which is the right place for it.
+
+**Group G was last and least typical.** Every other group's ledger records what was decided not to
+build; G's records what building it revealed — nine screens shipped, nineteen follow-up tickets, eight
+decision requests. Its centre of gravity is the engine questions, not the disposal table.
+
+**The most consequential finding of the whole sweep is group-g decision request 07.** Match history
+re-derives from seed and journal on every read, so an engine rule change retroactively alters every
+saved match that rule touches. Ticket 26 hit it head-on: the engine lets a forced substitution bring
+back a dismissed player, the fix is known, and shipping it would make saved Match Reports contradict
+their stored results. The ticket is parked and the fix held as a patch; 29 is blocked the same way.
+**Until 07 is answered, every engine-rule fix in this codebase is blocked** — not only Group G's.
+
+Also found: Screens 96 and 101 are `Parked`, not `deferred` — they wait on a *formula nobody has
+chosen*, and the real blocker is a data-model gap, since the Match Event stream names no goalkeeper or
+defender contribution, so an event-derived rating would systematically under-rate half the team.
+
+**A tracker defect worth fixing at the source**: group-g ticket 29 is `ready-for-agent` *and*
+`Blocked by: decision request 07`. The frontier scan reads the status, so it would claim a blocked
+ticket. The two fields disagree and nothing today stops the pair recurring.
+
+Groups H, I and J were added earlier the same day, and
 they were the easy three: each had already written its scope ruling as an **Agent Note** rather than
 leaving it in `.scratch/`, so the decision behind every row already outlived its effort. All three used
 `deferred` correctly, before the rule existed to require it. What they lacked was only a per-screen

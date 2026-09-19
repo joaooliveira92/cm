@@ -3,7 +3,9 @@
 The order in which to take the 19 imported spec groups under [docs/specs/](../docs/specs/manifest.md)
 from import to shipped screens, and what already stands in the way of each one.
 
-Snapshot date 2026-09-13. It is derived from the group indexes, the three reconciliation ledgers,
+Snapshot date 2026-09-13, with the *Where each group stands* table refreshed 2026-09-19 when
+[M1](MILESTONES.md) step 1 completed: **14 of the 19 groups now carry a durable ledger**, against four
+before. The five without — N, O, P, Q, S — have never been ingested at all. It is derived from the group indexes, the reconciliation ledgers,
 [CONTEXT.md](../CONTEXT.md), and the `.scratch/` efforts that cite a screen number. Group and ticket
 status moves on without this file. Before acting on a row, check the ledger and the effort named in it.
 The ticket queue itself stays in [SPRINT-PLAN.md](SPRINT-PLAN.md).
@@ -60,7 +62,8 @@ logic. A placeholder is a slot waiting for a screen, not evidence that the scree
 | H Training and development | 105–117 | Reconciled. Six v1 screens shipped, seven `deferred`. Scope in an Agent Note since 2026-09-15; ledger 2026-09-19. Two decision requests open on Screen 113. | Yes |
 | I Scouting and recruitment | 118–131 | Reconciled. Three v1 screens shipped, eleven `deferred`. Decision request 01 (knowledge-limited reads) open and blocking screens in D and J. | Yes |
 | J Transfers and contracts | 132–146 | Reconciled. Three v1 screens shipped, 140 built and withheld on decision request 01, eleven `deferred`. Six screens contradict the single-round **Bid**. | Yes |
-| G | 91–104 | Charted as `.scratch/` efforts, several with shipped screens, but the rulings live only in `.scratch/` and are lost when an effort is archived. Giving them durable ledgers is [M1](MILESTONES.md) step 1. | No |
+| G Match day and review | 91–104 | Reconciled. Nine screens shipped, two `Parked` on the rating formula, three `deferred`. **Five open decision requests**, including 07, which gates every engine-rule fix in the repo. Ledger 2026-09-19. | Yes |
+| — | — | Charted as `.scratch/` efforts, several with shipped screens, but the rulings live only in `.scratch/` and are lost when an effort is archived. Giving them durable ledgers is [M1](MILESTONES.md) step 1. | No |
 | N–Q, S | 194–249, 264–277 | Unreconciled, and no effort exists. | No |
 
 ## Sequence
