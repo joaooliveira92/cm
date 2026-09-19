@@ -53,6 +53,14 @@ cluster was hidden behind it.
   season 2 is a game-design gap, filed as
   [decision request 01](decision-request-01-squad-decay-has-no-floor.md).
 
+- [06 — the environment pragma](issues/06-pragma-lint-rule.md): `vitest-environment-pragma` added to
+  `scripts/effect-lint.ts`, non-AST like the line ceiling. It fires on a *mention* as well as a use,
+  because that is the actual bug — ticket 04's guard was disabled by prose explaining the pragma, and
+  vitest cannot tell the two apart. Proved twice: an 8-case spec covering both firing and silence,
+  and a demonstrated red run on a real test file. `career-harness.tsx` aligned on
+  `import.meta.dirname`, its comment corrected — jsdom rewrites the `new URL(...)` pattern, not
+  `import.meta.url`.
+
 ## Not yet specified
 
 Nothing. The pragma-vs-projects question graduated into [04](issues/04-vitest-projects-split.md):

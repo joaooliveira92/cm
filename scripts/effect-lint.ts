@@ -430,6 +430,63 @@ export function lintFileLength(
   ]
 }
 
+// ---------------------------------------------------------------------------
+// The `@vitest-environment` pragma rule (gate-red-on-dev ticket 06).
+//
+// Ticket 04 moved the renderer/main environment split into
+// `apps/desktop/vitest.config.ts` and deleted all 105 per-file pragmas. Nothing stopped the 106th,
+// and the trap is sharper than a stray pragma: vitest scans a test file's leading comment block for
+// the string and matches it *wherever* it appears there — including inside prose explaining why the
+// file deliberately has none. Ticket 04's own regression guard was written that way, vitest matched
+// the quoted text, applied jsdom regardless of config, and the guard silently stopped guarding.
+//
+// So the rule forbids the literal anywhere in the file rather than only in the leading block: a
+// comment *about* the pragma is exactly the failure mode, and "is this comment leading?" is a
+// distinction the next reader should not have to make.
+//
+// Non-AST, like the file-length ceiling above. The pragma is comment trivia, so an AST rule would
+// have to reach into the same raw text anyway. `sourceDirs` is `["packages", "apps"]` and excludes
+// `scripts/`, so this file's own mentions of the string cannot self-trip.
+// ---------------------------------------------------------------------------
+
+/** `apps/<pkg>/test/...` — where the projects split in `vitest.config.ts` is authoritative. */
+const APP_TEST_PATH = /^apps\/[^/]+\/test\//
+
+/** Assembled rather than written out, so this module stays greppable for the literal it bans. */
+const VITEST_ENVIRONMENT_PRAGMA = `@vitest${"-"}environment`
+
+/**
+ * One violation per line mentioning the pragma, in any test file under an app.
+ *
+ * Every occurrence is reported, not just the first: a file that quotes it twice has two lines to
+ * fix, and a rule that stops at the first sends the author back around the loop.
+ */
+export function lintVitestEnvironmentPragma(
+  sourceFile: SourceFile,
+  filePath: string,
+  cwd: string,
+): LintViolation[] {
+  const rel = relative(cwd, filePath).replaceAll("\\", "/")
+  if (!APP_TEST_PATH.test(rel)) return []
+  const violations: LintViolation[] = []
+  const lines = sourceFile.text.split("\n")
+  for (const [index, line] of lines.entries()) {
+    if (!line.includes(VITEST_ENVIRONMENT_PRAGMA)) continue
+    violations.push({
+      file: filePath,
+      line: index + 1,
+      rule: "vitest-environment-pragma",
+      message:
+        `${VITEST_ENVIRONMENT_PRAGMA} does not belong in a test file. The renderer/main split lives ` +
+        "in apps/desktop/vitest.config.ts: a test gets a DOM because of where it sits on disk, not " +
+        "because of a pragma. This fires on a mention as well as a use, because vitest matches the " +
+        "string anywhere in the leading comment block — so a comment explaining the pragma silently " +
+        "re-applies it. Name it indirectly, or move the file.",
+    })
+  }
+  return violations
+}
+
 const sourceDirs = ["packages", "apps"]
 
 /**
@@ -578,14 +635,18 @@ export function lintFileSet(
       const boundary = isBoundaryEnforced(file) ? lintBoundary(sourceFile, file) : []
       const slate = isSlateGuarded(file) ? lintSlateClassNames(sourceFile, file) : []
       const length = lintFileLength(sourceFile, file, cwd, options.maxFileLines)
+      const pragma = lintVitestEnvironmentPragma(sourceFile, file, cwd)
       if (fixtureFiles.includes(file)) {
-        fixtureBoundaries.push({ file, violations: [...standard, ...boundary, ...slate, ...length] })
+        fixtureBoundaries.push({
+          file,
+          violations: [...standard, ...boundary, ...slate, ...length, ...pragma],
+        })
       } else {
         // Slate sites are counted, not reported here: the backlog ratchet in
         // `main` decides which of them are a regression and which are the
         // recorded migration debt. Reporting each one would drown the gate in
         // 391 known violations.
-        treeViolations.push(...standard, ...boundary, ...length)
+        treeViolations.push(...standard, ...boundary, ...length, ...pragma)
         if (slate.length > 0) {
           slateCounts.set(relative(cwd, file).replaceAll("\\", "/"), slate.length)
         }

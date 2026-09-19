@@ -27,12 +27,18 @@ import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 
 export const rid = (s: string) => SaveId.make(s);
 
-// The jsdom environment rewrites `import.meta.url` to a non-file scheme, so
-// resolve the source path from the vitest cwd (the desktop package root)
-// instead of the module URL.
+// Not `new URL("...", import.meta.url)`: under the jsdom environment Vite's `assetImportMetaUrl`
+// transform rewrites that *pattern* into an `http://localhost/@fs/...` asset URL, which
+// `fileURLToPath` then rejects. `import.meta.url` itself is fine — it is the static `new URL`
+// construction around it that gets transformed, which is where the next reader will look if the
+// comment says otherwise.
+//
+// `import.meta.dirname` is the one idiom for this, matching `test/renderer/rpc/seam.test.ts`.
+// `process.cwd()` also works today but only while vitest's cwd is the desktop package root, which
+// is a condition nothing states or enforces.
 export const leagueTableSourcePath = path.join(
-  process.cwd(),
-  "src/renderer/leagueTable/LeagueTableScreen.tsx",
+  import.meta.dirname,
+  "../../../src/renderer/leagueTable/LeagueTableScreen.tsx",
 );
 
 export const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown>) => {

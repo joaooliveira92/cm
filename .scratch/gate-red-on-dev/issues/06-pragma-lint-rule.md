@@ -54,9 +54,56 @@ flipped from node to jsdom, and resolved it with `join(import.meta.dirname, ...)
   `import.meta.dirname` is not, so align it and leave one precedent instead of two.
 
 Acceptance:
-- [ ] `scripts/effect-lint.ts` fails on a test file containing `@vitest-environment` under `apps/*/test/**`
-- [ ] The rule has a self-test or a demonstrated red run — a lint rule that never fired is not known to work
-- [ ] `career-harness.tsx` resolves via `import.meta.dirname`, comment corrected
-- [ ] `pnpm check:all` green
+- [x] `scripts/effect-lint.ts` fails on a test file containing `@vitest-environment` under `apps/*/test/**`
+- [x] The rule has a self-test or a demonstrated red run — a lint rule that never fired is not known to work
+- [x] `career-harness.tsx` resolves via `import.meta.dirname`, comment corrected
+- [x] `pnpm check:all` green
 
-**Status:** ready-for-agent
+**Status:** resolved
+
+## Answer
+
+### The rule
+
+`lintVitestEnvironmentPragma` in `scripts/effect-lint.ts`, reported as `vitest-environment-pragma`.
+Non-AST, like the line ceiling, and for the reason the ticket gave: the pragma is comment trivia, so
+an AST rule would reach into the same raw text anyway.
+
+Two decisions worth recording:
+
+- **It fires on a mention, not only on a use, and the message says so.** The ticket's own evidence is
+  that ticket 04's guard was disabled by prose *explaining* the pragma. A rule that distinguished
+  the two would have let exactly that through. There is no "leading comment block" test either —
+  vitest's own matching is loose enough that asking the next author to reason about whether their
+  comment counts as leading is asking them to re-derive the bug.
+- **Every occurrence is reported, not just the first.** A file quoting it twice has two lines to fix.
+
+Scope is `apps/*/test/**` via a path predicate, which the ticket asked for and the spec exercises in
+both directions: `apps/desktop/src/**` and `packages/*/test/**` are silent, because neither is
+governed by the desktop projects split.
+
+The self-trip concern in the ticket holds. `sourceDirs` is `["packages", "apps"]` and excludes
+`scripts/`, so the rule's own text is out of the linted set. The **spec** is not — it sits under
+`apps/desktop/test/shared/` — so it assembles the literal from two halves, as the rule does, with the
+reason written at both sites.
+
+### Proof, both kinds
+
+- **Self-test**: `apps/desktop/test/shared/vitest-environment-pragma-lint.test.ts`, 8 cases —
+  applies it, merely mentions it, two occurrences, the message names the config, and three silence
+  cases (`src/`, `packages/*/test/`, a clean file) so the rule cannot be passing by always firing.
+- **Demonstrated red run**: pragma temporarily added to `test/main/season/retention.test.ts`,
+  `effect-lint` reported `retention.test.ts:2 vitest-environment-pragma` and exited 1; removed, back
+  to `no violations found (877 files)`.
+
+### The jsdom path idiom
+
+`career-harness.tsx` now resolves via `import.meta.dirname`, matching `test/renderer/rpc/seam.test.ts`
+— one precedent, not two. Its comment is corrected: `import.meta.url` is not what jsdom rewrites;
+Vite's `assetImportMetaUrl` transform rewrites the static `new URL(...)` *pattern* around it into an
+`http://localhost/@fs/...` URL that `fileURLToPath` rejects. The old comment sent the reader to the
+wrong place, and `process.cwd()` was correct only while vitest's cwd is the desktop package root,
+which nothing states or enforces. `continue-control.test.tsx`, its only consumer, is green.
+
+`AGENTS.md`'s effect-lint row is updated, since it enumerates the rules and is required to stay in
+step with the script.

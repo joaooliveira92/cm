@@ -240,10 +240,14 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**gate-red-on-dev ticket 06** — the per-file environment pragma that silently overrides the projects
-split ticket 04 just built. Also ready: **add-manager-screen-7 03** (released lock; the Group A
-ledger asserts a state the code has left) and **group-a-reconciliation 22** (the Quit dialog has no
-provisional-career variant).
+**add-manager-screen-7 ticket 03** — a released lock; the Group A ledger asserts a state the code has
+left. Also ready: **group-a-reconciliation 22** (the Quit dialog has no provisional-career variant).
+
+**gate-red-on-dev is complete.** All six tickets resolved. Ticket 06 closed the loop ticket 04 opened:
+`vitest-environment-pragma` now lives in `scripts/effect-lint.ts`, and it fires on a *mention* as well
+as a use, because that is the real failure — ticket 04's own guard was disabled by a comment
+explaining the pragma, which vitest matched and applied. Proved by an 8-case spec and a demonstrated
+red run.
 
 **Ticket 05 is resolved, and it was not a flake.** The `MatchNotReadyError` that failed one test per
 full suite run, in a different file each time, was never shared state. `createSave` forwarded neither
