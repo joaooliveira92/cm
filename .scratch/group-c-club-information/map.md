@@ -103,7 +103,49 @@ and a ledger row that lies, which is the thing M1 exists to end.
 
 ## Decisions so far
 
-Nothing beyond *What is already settled* above. This map is the chart, not the answers.
+### Screen inventory ([ticket 03](issues/03-screen-inventory-and-the-stale-49-row.md), 2026-09-19)
+
+Every "none found" below names the search behind it. A model missing from `schema.ts` *and* from
+`CONTEXT.md` is recorded as not found; a model that exists under another word is named.
+
+| Screen | Placeholder(s) in `renderer/` | Route(s) | Model behind it | Shipped screen that may satisfy it |
+|---|---|---|---|---|
+| 33 Club Overview | none | — | A dashboard over every other Group C subject. Has no model of its own; it is a composition of theirs. | None. Its content is whatever 34–48 resolve to. |
+| 34 Club General Information | **`clubInfo/` and `clubInformation/`** — both carry `aria-label="Club Information"` | `club-info` (save-scoped) and `club/$clubId/information` | Club, **Stature Tier**, `stadium_name`, `stadium_capacity` on `clubs` | None |
+| 35 Club Squad | `clubSquadDetail/` | `club/$clubId/squad` | Squad, Player, Position Rating — fully modelled | **`squad/`**, shipped and interactive, for the own club |
+| 36 Reserve Squad | `clubReservesDetail/` | `club/$clubId/reserves` | **None — and ruled.** `CONTEXT.md:774` "no youth or reserve squad exists", cut from v1. Note `competitions.kind` admits `"reserve"`, so reserve *Competitions* exist while reserve *squads* do not. | None |
+| 37 Youth Squad | `clubYouthDetail/` | `club/$clubId/youth` | **None — and ruled.** Same sentence, `CONTEXT.md:774`. | None |
+| 39 Club Finances | **`finances/` and `clubFinancesDetail/`** | `finances` (save-scoped) and `club/$clubId/finances` | **Transfer Budget**, **Wage Budget** — `club_budgets` carries `transfer_budget_remaining` and `wage_budget` | **`budgetReview/`**, shipped, for the own club |
+| 40 Club Fixtures | `clubFixturesDetail/` | `club/$clubId/fixtures` | Fixture, Competition — fully modelled | **`fixtures/`**, shipped, for the own club |
+| 41 Club Results | none | — | Fixture carries its result. **Attendance and player-of-the-match: none found** (absent from `schema.ts` and `CONTEXT.md`). | `fixtures/` and `seasonSummary/` may cover the played half |
+| 42 Club Transfers | `clubTransfersDetail/` | `club/$clubId/transfers` | Transfer, Bid — modelled | **`transferHistory/`**, shipped, for the own club |
+| 46 Information and Facilities | none of its own | — | `stadium_name` and `stadium_capacity` exist on `clubs`, deliberately without a stadium entity. **Training ground, medical, recruitment reach, expansions: none found** (`facilit` appears nowhere in `schema.ts` or `CONTEXT.md`). | None |
+| 47 Supporter and Board Confidence | `boardConfidence/` | `board-confidence` (save-scoped) | **Board Objective** is modelled — `board_objective`, `board_objective_verdict`. **Supporter confidence: none found** (`supporter`, `attendance` appear nowhere). | None |
+| 48 Club Comparison | none | — | **None found.** No comparison mechanism, matching Group D 63 Player Comparison. | None |
+
+**Two screens have two placeholders each** — 34 and 39 — which is ticket 04's subject, now with
+names rather than a suspicion. Three screens (33, 41, 48) have **no** placeholder and never did;
+their absence is itself a finding, since M1 step 5 has nothing to cull for them.
+
+### Corrections to the coverage table
+
+- **Screen 49 Team Scout Report is shipped, and its row said `Not yet audited`.** Verified against
+  the tree, not the ticket: `renderer/scouting/TeamScoutReportScreen.tsx` exists and is routed
+  club-scoped as `teamScoutReport` in `router/index.tsx`. The `team-scout-report` effort closed with
+  all eight tickets `resolved`.
+- **Screens 43–45 follow Group Q**, confirmed 2026-09-19. Their rows say so rather than leaving a
+  reader to re-derive it.
+
+### The kind 36 and 37 take, decided here because the evidence is unambiguous
+
+`CONTEXT.md:774` — "Youth integration and youth promotion are cut from v1: no youth or reserve squad
+exists" — is a **version boundary**, and
+[a v1 exclusion is `deferred`](../../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md)
+rules that those are `deferred`, anchored `v1 exclusion — CONTEXT.md:774`. Not `out-of-scope`: that
+kind is reserved for a positive statement that the thing should not exist, and "cut from v1" is not
+one. The map flagged 36 and 37 as shaped to attract this error; the evidence says the flag was right.
+
+46 and 48 are the absence-of-a-model case and take `deferred` too, but ticket 05 owns their anchors.
 
 ## Not yet specified
 

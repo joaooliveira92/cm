@@ -71,13 +71,13 @@ line:
 | 40 Club Fixtures | [40_club_fixtures.md](40_club_fixtures.md) | Not yet audited |
 | 41 Club Results | [41_club_results.md](41_club_results.md) | Not yet audited |
 | 42 Club Transfers | [42_club_transfers.md](42_club_transfers.md) | Not yet audited |
-| 43 Club History | [43_club_history.md](43_club_history.md) | Not yet audited |
-| 44 Club Records | [44_club_records.md](44_club_records.md) | Not yet audited |
-| 45 Club Honours | [45_club_honours.md](45_club_honours.md) | Not yet audited |
+| 43 Club History | [43_club_history.md](43_club_history.md) | Follows **Group Q** — needs persisted season history; out of M1, confirmed 2026-09-19 |
+| 44 Club Records | [44_club_records.md](44_club_records.md) | Follows **Group Q** — needs persisted season history; out of M1, confirmed 2026-09-19 |
+| 45 Club Honours | [45_club_honours.md](45_club_honours.md) | Follows **Group Q** — needs persisted season history; out of M1, confirmed 2026-09-19 |
 | 46 Club Information and Facilities | [46_club_information_and_facilities.md](46_club_information_and_facilities.md) | Not yet audited |
 | 47 Supporter and Board Confidence | [47_supporter_and_board_confidence.md](47_supporter_and_board_confidence.md) | Not yet audited |
 | 48 Club Comparison | [48_club_comparison.md](48_club_comparison.md) | Not yet audited |
-| 49 Team Scout Report | [49_team_scout_report.md](49_team_scout_report.md) | Not yet audited |
+| 49 Team Scout Report | [49_team_scout_report.md](49_team_scout_report.md) | **Shipped** — `team-scout-report` effort, closed 2026-09-09; row corrected 2026-09-19 |
 
 ## Screen 38: Club Staff
 
