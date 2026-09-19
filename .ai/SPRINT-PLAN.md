@@ -240,8 +240,16 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**add-manager-screen-7 ticket 03** — a released lock; the Group A ledger asserts a state the code has
-left. Also ready: **group-a-reconciliation 22** (the Quit dialog has no provisional-career variant).
+**group-a-reconciliation ticket 22** — the Quit dialog has no provisional-career variant.
+
+**add-manager-screen-7 is complete.** Ticket 03 rewrote the Group A ledger's Screen 7 section, which
+had been asserting "Nothing of Screen 7 survives" since 2026-08-31 — true when written, false once
+tickets 01 and 02 shipped. Status **Reviewed → Audited**: all 41 import sections plus the commit
+stanza carry a row, so nothing rests on the silence rule. §21 Back behavior and §22 Career Setup
+Summary are `renamed` — relocated into the four-stage creation flow rather than dropped. Two
+conventions are bent and recorded in the ledger itself: `renamed`'s Anchor holds an effort ticket
+rather than a `CONTEXT.md` term, and §6.4's undocumented import edit is written down rather than
+reverted.
 
 **gate-red-on-dev is complete.** All six tickets resolved. Ticket 06 closed the loop ticket 04 opened:
 `vitest-environment-pragma` now lives in `scripts/effect-lint.ts`, and it fires on a *mention* as well
