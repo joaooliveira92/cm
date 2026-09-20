@@ -256,13 +256,16 @@ Also human-owned: **group-g ticket 32** (saves need a migration path), which blo
 therefore every engine-rule fix; **group-f decision request 01**, which blocks charting Group F's
 remainder; and four `needs-info` tickets across Groups G, H and J.
 
-**Where M1's exit criteria stand.** Criterion 2 is met for Group C — all twelve disposed — and F and
-K are the only ledgers still carrying `Not yet audited` rows; F is human-blocked and **K has not
-been examined, which is the one genuinely open question**. Criterion 4 is met (`check:all` green,
-2090 desktop tests; e2e green, 55). Criterion 5 is met as of 2026-09-20 — six traceability rows were
-owed for this milestone's read models and had been accumulating unwritten. Criterion 1 is met for
-`competition*` and `nation*`; the rest is blocked per above, and six `match*` screens are an explicit
-non-goal.
+**Where M1's exit criteria stand.** Criterion 2 is met: Group C's twelve are disposed, and F and K —
+the two ledgers still carrying `Not yet audited` rows — are not gaps in it. The criterion asks for a
+ledger that *exists with a complete coverage table*, and both have one; a `Not yet audited` row is
+those two files doing the job their preambles describe, which is to record a gap rather than a
+decision. **Group K was checked on 2026-09-20 and is wholly unstarted** — `map.md` with
+`<!-- none yet -->`, no spec, no tickets, no screen read — and charting it belongs to a different
+milestone. Criterion 4 is met (`check:all` green, 2090 desktop tests; e2e green, 55). Criterion 5 is
+met as of 2026-09-20 — six traceability rows were owed for this milestone's read models and had been
+accumulating unwritten. Criterion 1 is met for `competition*` and `nation*`; the rest is blocked per
+above, and six `match*` screens are an explicit non-goal.
 
 **WIP placeholders: 57 → 10**, and every one of the ten has a named owner.
 

@@ -126,10 +126,19 @@ Each is checkable, and the first is a command:
    c, d, e, f, g, h, i, j, k, l, m. **Met for d–m 2026-09-19.** ~~Outstanding: no row in group C's
    table may read `Not yet audited`~~ — **met 2026-09-19**, group-c ticket 05 disposed all twelve.
 
-   **Two ledgers still carry `Not yet audited` rows: F and K.** Group F's remainder needs its
-   decision request 01 answered and an effort chartered from scratch, both human calls, and the
-   milestone records that. Group K has not been examined; whether its rows are in this milestone's
-   scope is the one open question on this criterion.
+   **Two ledgers still carry `Not yet audited` rows: F and K, and neither is a gap in this
+   criterion.** The criterion asks that the ledger *exist with a complete coverage table*, and both
+   do — every screen has a row. A row reading `Not yet audited` is the ledger doing its job, which
+   for these two groups is to record a gap rather than a decision; both files say so in their own
+   preamble.
+
+   Neither group is in M1's sequence. Group F's remainder needs its decision request 01 answered and
+   an effort chartered from scratch, both human calls. **Group K is wholly unstarted** — checked
+   2026-09-20: its effort has a `map.md` whose Decisions-so-far is `<!-- none yet -->`, no spec, no
+   tickets, and no screen in 147–160 has been read. Charting it is a different milestone's work, and
+   starting it here would be exactly the drift
+   [AUTONOMOUS-AGENT](AUTONOMOUS-AGENT.md) § Sprint creation warns about: preferring a clean new
+   effort to the fog already owned.
 3. No route, nav entry or `g`-key binding points at a screen ruled out in those ledgers.
 4. `pnpm check:all` green, and `pnpm --filter @cm-clone/desktop test:e2e` green.
 5. [TRACEABILITY.md](TRACEABILITY.md) has a row for each read model shipped, with its proving test.
