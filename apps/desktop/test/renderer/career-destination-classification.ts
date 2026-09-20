@@ -74,5 +74,9 @@ export const CAREER_SUB_SURFACES: Readonly<Record<CareerSubSurfaceType, string>>
   matchCommentary: "a match-day sub-screen of the main match view",
   matchLatestScores: "a match-day sub-screen of the main match view",
   matchLiveTable: "a match-day sub-screen of the main match view",
+  squadStaff: "a Squad section sub-item, work in progress placeholder",
+  squadInformation: "a Squad section sub-item, work in progress placeholder",
+  squadFinances: "a Squad section sub-item, work in progress placeholder",
+  squadHistory: "a Squad section sub-item, work in progress placeholder",
 };
 

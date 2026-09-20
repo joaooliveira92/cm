@@ -92,6 +92,10 @@ describe("nav route index (spec §6 rule 1 & §8)", () => {
     "scoutingAssignment",
     "scoutingKnowledge",
     "trainingCoaching",
+    "squadStaff",
+    "squadInformation",
+    "squadFinances",
+    "squadHistory",
   ]);
 
   it("the navbar links top-level screens, plus only the six sanctioned sub-surfaces", () => {

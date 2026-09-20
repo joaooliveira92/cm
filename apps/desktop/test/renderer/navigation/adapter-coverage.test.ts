@@ -106,6 +106,10 @@ const CAREER_DESTINATIONS: SamplesOf<CareerDestination> = {
   matchCommentary: { type: "matchCommentary", saveId },
   matchLatestScores: { type: "matchLatestScores", saveId },
   matchLiveTable: { type: "matchLiveTable", saveId },
+  squadStaff: { type: "squadStaff", saveId },
+  squadInformation: { type: "squadInformation", saveId },
+  squadFinances: { type: "squadFinances", saveId },
+  squadHistory: { type: "squadHistory", saveId },
 };
 
 /** The main menu, the load screen, and the four creation steps — everything outside a save. */

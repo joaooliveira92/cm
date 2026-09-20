@@ -14,6 +14,10 @@ import { MatchDayScreen } from "../match/MatchDayScreen.js";
 import { NewsInboxScreen } from "../news/NewsInboxScreen.js";
 import { SeasonSummaryScreen } from "../seasonSummary/SeasonSummaryScreen.js";
 import { SquadScreen } from "../squad/SquadScreen.js";
+import { SquadStaffScreen } from "../squadStaff/SquadStaffScreen.js";
+import { SquadInformationScreen } from "../squadInformation/SquadInformationScreen.js";
+import { SquadFinancesScreen } from "../squadFinances/SquadFinancesScreen.js";
+import { SquadHistoryScreen } from "../squadHistory/SquadHistoryScreen.js";
 import { TacticsOverviewScreen } from "../tactics/TacticsOverviewScreen.js";
 import { TacticsScreen } from "../tactics/TacticsScreen.js";
 import { TransfersScreen } from "../transfers/TransfersScreen.js";
@@ -156,6 +160,10 @@ const defineCareerChild = <const P extends string>(
 
 // Full height so the lineup bar sits on the bottom edge of the window, not under a short list.
 const squadRoute = defineCareerChild("squad", "squad", SquadScreen, { fullHeight: true });
+const squadStaffRoute = defineCareerChild("squad-staff", "squadStaff", SquadStaffScreen);
+const squadInformationRoute = defineCareerChild("squad-information", "squadInformation", SquadInformationScreen);
+const squadFinancesRoute = defineCareerChild("squad-finances", "squadFinances", SquadFinancesScreen);
+const squadHistoryRoute = defineCareerChild("squad-history", "squadHistory", SquadHistoryScreen);
 const transfersRoute = defineCareerChild("transfers", "transfers", TransfersScreen);
 const contractExpiryRoute = defineCareerChild("contract-expiry", "contractExpiry", ContractExpiryScreen);
 const budgetReviewRoute = defineCareerChild("budget-review", "budgetReview", BudgetReviewScreen);
@@ -485,6 +493,10 @@ const routeTree = rootRoute.addChildren([
     saveRoute.addChildren([
       careerIndexRoute,
       squadRoute,
+      squadStaffRoute,
+      squadInformationRoute,
+      squadFinancesRoute,
+      squadHistoryRoute,
       tacticsRoute.addChildren([tacticsIndexRoute, tacticsEditorRoute]),
       transfersRoute,
       contractExpiryRoute,

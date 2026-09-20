@@ -95,6 +95,10 @@ const SpineOrchestrator = ({
     if (nav && saveId !== undefined) {
       const target: Record<SaveScopedCareerDestinationType, () => void> = {
         squad: () => navigateCareer({ type: "squad", saveId }, "keyboard"),
+        squadStaff: () => navigateCareer({ type: "squadStaff", saveId }, "keyboard"),
+        squadInformation: () => navigateCareer({ type: "squadInformation", saveId }, "keyboard"),
+        squadFinances: () => navigateCareer({ type: "squadFinances", saveId }, "keyboard"),
+        squadHistory: () => navigateCareer({ type: "squadHistory", saveId }, "keyboard"),
         tactics: () => navigateCareer({ type: "tactics", saveId }, "keyboard"),
         tacticsEditor: () => navigateCareer({ type: "tacticsEditor", saveId }, "keyboard"),
         transfers: () => navigateCareer({ type: "transfers", saveId }, "keyboard"),

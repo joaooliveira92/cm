@@ -87,19 +87,19 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
       {
         id: "squad-staff",
         label: "Staff",
-        destination: "squad",
+        destination: "squadStaff",
         icon: BriefcaseBusiness,
       },
       {
         id: "squad-information",
         label: "Information",
-        destination: "squad",
+        destination: "squadInformation",
         icon: Info,
       },
       {
         id: "squad-finances",
         label: "Finances",
-        destination: "squad",
+        destination: "squadFinances",
         icon: Coins,
       },
       {
@@ -129,7 +129,7 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
       {
         id: "squad-history",
         label: "History",
-        destination: "squad",
+        destination: "squadHistory",
         icon: ScrollText,
       },
     ],

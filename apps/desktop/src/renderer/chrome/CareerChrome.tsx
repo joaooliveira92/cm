@@ -1,3 +1,4 @@
+import { useMemo, useSyncExternalStore } from "react";
 import type { SaveId } from "@cm-clone/contracts";
 import { canNavigateBack, navigateBack, navigateForward } from "../navigation/adapter.js";
 import { Navbar } from "../navigation/components/Navbar.js";
@@ -14,9 +15,21 @@ import {
   seasonReadout,
   type SeasonReadoutInput,
 } from "./header/career-header-state.js";
+import {
+  getToolbarControls,
+  getToolbarVersion,
+  subscribeToolbarVersion,
+} from "../screenToolbarControls.js";
 
 export { NAV_SECTIONS as CAREER_SECTIONS } from "../navigation/nav-config.js";
 export { matchReadout, seasonReadout, type SeasonReadoutInput, continueUnavailableReason };
+
+/** Renders screen-specific toolbar controls (e.g. View/Position selects) in the
+ *  actions band between the context nav and the secondary nav tabs. */
+const ScreenToolbarSlot = () => {
+  useSyncExternalStore(subscribeToolbarVersion, getToolbarVersion, getToolbarVersion);
+  return getToolbarControls();
+};
 
 const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
   const {
@@ -72,7 +85,10 @@ const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
         }
       />
       <div className="flex items-center justify-between border-b border-border-subtle bg-bg px-3 py-1">
-        <HeaderActionsMenu />
+        <span className="flex items-center gap-2">
+          <ScreenToolbarSlot />
+          <HeaderActionsMenu />
+        </span>
         <div className="flex-1" />
       </div>
       <ContinueOutstandingBand items={filteredOutstanding} onOpen={openDestination} onDismiss={acknowledgeReadinessItem} />

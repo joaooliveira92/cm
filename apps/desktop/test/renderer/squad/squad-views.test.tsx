@@ -1,4 +1,4 @@
-import { cleanup, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
@@ -28,7 +28,22 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
-import { chooseOptionByLabel } from "../../setup/baseUiSelect.js";
+
+/** Popover-based view/position selector: click the trigger button, then click
+ *  the option button that appears in the portaled popover. */
+const chooseOptionByLabel = async (
+  triggerLabel: string,
+  optionLabel: string,
+): Promise<void> => {
+  const trigger = screen.getByRole("button", { name: triggerLabel });
+  fireEvent.click(trigger);
+  const option = await screen.findByText(optionLabel, {}, { timeout: 2000 });
+  fireEvent.click(option);
+  await waitFor(() => {
+    // The popover closes after clicking an option — just wait for the next
+    // render cycle so assertions below see the updated screen.
+  });
+};
 
 const rid = (s: string) => SaveId.make(s);
 

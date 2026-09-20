@@ -238,6 +238,11 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   matchCommentary: { showKeyBadges: false },
   matchReplays: { showKeyBadges: false },
   matchReport: { showKeyBadges: false },
+  // The squad sub-screen placeholders.
+  squadStaff: { showKeyBadges: false },
+  squadInformation: { showKeyBadges: false },
+  squadFinances: { showKeyBadges: false },
+  squadHistory: { showKeyBadges: false },
   createLeagues: { showKeyBadges: false },
   createStep1: { showKeyBadges: false },
   createStep2: { showKeyBadges: false },

@@ -1,20 +1,20 @@
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { POSITIONS } from "@cm-clone/shared";
 import { dispatchAction } from "../actions/dispatch.js";
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select.js";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../components/ui/popover.js";
 import { FOCUS_RING } from "../focus.js";
 import { useSquad } from "./SquadProvider.js";
 import { DataTable } from "../table/DataTable.js";
 import { Table } from "../components/ui/table.js";
 import { SQUAD_TOGGLEABLE_COLUMN_IDS } from "../table/features/visibility.js";
-import { isSquadViewId, SQUAD_VIEWS, squadViewById, type SquadViewId } from "./squadViews.js";
+import { SQUAD_VIEWS, squadViewById } from "./squadViews.js";
 import { SquadPositionList } from "./SquadPositionList.js";
 import { MatchDayBar } from "./MatchDayBar.js";
 import { writeLineupDrag } from "./lineupDrag.js";
@@ -24,12 +24,16 @@ import { activeFilterCount } from "../table/viewState.js";
 import type { TableStateCopy } from "../table/viewState.js";
 import type { SquadColumnPreferences } from "../table/columnPreferences.js";
 import type { FilterClause, RefreshState, TableViewState } from "../table/types.js";
+import {
+  clearToolbarControls,
+  setToolbarControls,
+} from "../screenToolbarControls.js";
 
 const REGION = "squadTable";
 
-/** CM 03/04's toolbar dropdowns: short chrome buttons named for what they open ("View ▾"), not
- *  labelled form fields. */
-const TOOLBAR_TRIGGER_CLASS = `chrome-gradient h-7 w-auto min-w-20 border-panel-border-dark px-3 font-semibold text-text-bright shadow-chrome hover:brightness-110 data-[placeholder]:text-text-bright ${FOCUS_RING.join(" ")}`;
+const ACTIONS_ROW_BUTTON_CLASS = `flex items-center gap-1.5 whitespace-nowrap rounded-control px-3 py-1 text-sm text-text-secondary transition-colors hover:bg-surface-raised hover:text-text-primary ${FOCUS_RING.join(" ")}`;
+
+const ACTIONS_ROW_ITEM_CLASS = `flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-text-secondary hover:bg-surface-raised hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING.join(" ")}`;
 
 /**
  * The players count line, with the non-blocking background refresh marker.
@@ -106,15 +110,11 @@ const ColumnControls = ({
   </>
 );
 
-/** The filter toolbar's controls: the View select, the Position select, and — when the
- *  filters are active — the clear-filters action. Whether the column controls
- *  render is decided by the caller from the chosen view's layout. */
+/** The filter toolbar's controls: the clear-filters action and — for table
+ *  layouts — the column controls. View and Position selects are rendered in
+ *  the career chrome's actions row via the screen toolbar store. */
 const SquadToolbar = ({
   filters,
-  activePosition,
-  viewId,
-  onPositionChange,
-  onViewChange,
   onClearFilters,
   showColumnControls,
   preferences,
@@ -122,10 +122,6 @@ const SquadToolbar = ({
   copy,
 }: {
   readonly filters: readonly FilterClause[];
-  readonly activePosition: Extract<FilterClause, { readonly _tag: "position" }> | undefined;
-  readonly viewId: SquadViewId;
-  readonly onPositionChange: (position: string) => void;
-  readonly onViewChange: (viewId: SquadViewId) => void;
   readonly onClearFilters: () => void;
   readonly showColumnControls: boolean;
   readonly preferences: SquadColumnPreferences;
@@ -133,44 +129,6 @@ const SquadToolbar = ({
   readonly copy: TableStateCopy;
 }) => (
   <>
-    <Select
-      value={viewId}
-      onValueChange={(value) => {
-        if (value !== null && isSquadViewId(value)) onViewChange(value);
-      }}
-    >
-      <SelectTrigger aria-label="Squad view" className={TOOLBAR_TRIGGER_CLASS}>
-        {/* The panel title already names the chosen view, so the trigger
-            only names the control, as CM's did. */}
-        <SelectValue>{() => "View"}</SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {SQUAD_VIEWS.map((option) => (
-          <SelectItem key={option.id} value={option.id}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-    <Select
-      value={activePosition?.position ?? ""}
-      onValueChange={(value) => {
-        if (value !== null) onPositionChange(value);
-      }}
-    >
-      <SelectTrigger aria-label="Filter squad by position" className={TOOLBAR_TRIGGER_CLASS}>
-        {/* The trigger names the control; the filter, once set, rides beside it. */}
-        <SelectValue>{() => (activePosition === undefined ? "Position" : `Position: ${activePosition.position}`)}</SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="">All positions</SelectItem>
-        {POSITIONS.map((position) => (
-          <SelectItem key={position} value={position}>
-            {position}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
     {activeFilterCount(filters) > 0 && (
       <Button
         type="button"
@@ -318,6 +276,89 @@ export const SquadTable = () => {
     (f): f is Extract<FilterClause, { readonly _tag: "position" }> => f._tag === "position",
   );
 
+  const [viewOpen, setViewOpen] = useState(false);
+  const [positionOpen, setPositionOpen] = useState(false);
+
+  /* Register the View and Position selectors in the career chrome's
+   *  actions row. These use the same Popover + button pattern as the
+   *  Actions menu so they look identical. */
+  const toolbarControls = useMemo(
+    () => (
+      <>
+        <Popover open={viewOpen} onOpenChange={setViewOpen}>
+          <PopoverTrigger
+            render={
+              <button type="button" className={ACTIONS_ROW_BUTTON_CLASS} aria-label="Squad view">
+                <span>View</span>
+                <ChevronDown aria-hidden="true" className="size-4" />
+              </button>
+            }
+          />
+          <PopoverContent align="start" sideOffset={4} className="w-56 p-1">
+            <div className="flex flex-col gap-0.5">
+              {SQUAD_VIEWS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={ACTIONS_ROW_ITEM_CLASS}
+                  onClick={() => {
+                    setView(option.id);
+                    setViewOpen(false);
+                  }}
+                >
+                  <span>{option.label}</span>
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+        <Popover open={positionOpen} onOpenChange={setPositionOpen}>
+          <PopoverTrigger
+            render={
+              <button type="button" className={ACTIONS_ROW_BUTTON_CLASS} aria-label="Filter squad by position">
+                <span>{activePosition === undefined ? "Position" : `Position: ${activePosition.position}`}</span>
+                <ChevronDown aria-hidden="true" className="size-4" />
+              </button>
+            }
+          />
+          <PopoverContent align="start" sideOffset={4} className="w-56 p-1">
+            <div className="flex flex-col gap-0.5">
+              <button
+                type="button"
+                className={ACTIONS_ROW_ITEM_CLASS}
+                onClick={() => {
+                  setPositionFilter("");
+                  setPositionOpen(false);
+                }}
+              >
+                <span>All positions</span>
+              </button>
+              {POSITIONS.map((position) => (
+                <button
+                  key={position}
+                  type="button"
+                  className={ACTIONS_ROW_ITEM_CLASS}
+                  onClick={() => {
+                    setPositionFilter(position);
+                    setPositionOpen(false);
+                  }}
+                >
+                  <span>{position}</span>
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </>
+    ),
+    [viewId, activePosition, setView, setPositionFilter, viewOpen, positionOpen],
+  );
+
+  useEffect(() => {
+    setToolbarControls(toolbarControls);
+    return () => clearToolbarControls();
+  }, [toolbarControls]);
+
   return (
     <div className="flex flex-1 flex-col bg-background text-foreground">
       <main
@@ -332,10 +373,6 @@ export const SquadTable = () => {
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <SquadToolbar
             filters={filters}
-            activePosition={activePosition}
-            viewId={viewId}
-            onPositionChange={setPositionFilter}
-            onViewChange={setView}
             onClearFilters={clearFilterCommand}
             showColumnControls={view.layout === "table"}
             preferences={preferences}

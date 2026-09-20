@@ -63,6 +63,10 @@ export const navigate = (destination: NavigationDestination): void => {
       getRouter().navigate({ to: "/create/step-3" });
       break;
     case "/career/$saveId/squad":
+    case "/career/$saveId/squad-staff":
+    case "/career/$saveId/squad-information":
+    case "/career/$saveId/squad-finances":
+    case "/career/$saveId/squad-history":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     case "/career/$saveId/tactics":

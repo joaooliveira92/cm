@@ -66,6 +66,11 @@ export type ScreenName =
   | "matchCommentary"
   | "matchReplays"
   | "matchReport"
+  // The squad sub-screen placeholders.
+  | "squadStaff"
+  | "squadInformation"
+  | "squadFinances"
+  | "squadHistory"
   | "createLeagues"
   | "createStep1"
   | "createStep2"

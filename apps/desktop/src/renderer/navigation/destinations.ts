@@ -15,6 +15,13 @@ import type { ClubId, CompetitionId, MatchId, PlayerId, SaveId } from "@cm-clone
  */
 export type CareerDestination =
   | { readonly type: "squad"; readonly saveId: SaveId }
+  | { readonly type: "squadStaff"; readonly saveId: SaveId }
+  /** Squad History — work in progress placeholder, save-scoped like squad itself. */
+  | { readonly type: "squadHistory"; readonly saveId: SaveId }
+  /** Squad Information — work in progress placeholder, save-scoped like squad itself. */
+  | { readonly type: "squadInformation"; readonly saveId: SaveId }
+  /** Squad Finances — work in progress placeholder, save-scoped like squad itself. */
+  | { readonly type: "squadFinances"; readonly saveId: SaveId }
   | { readonly type: "tactics"; readonly saveId: SaveId }
   /** The tactics editor — a sub-surface of the Tactics area reached from the read-only overview,
    *  not a top-level career screen (no `g` binding, not in `CAREER_SCREEN_TYPES`). */
@@ -211,6 +218,10 @@ export type ResolvedDestination =
   | { readonly to: "/create/step-2" }
   | { readonly to: "/create/step-3" }
   | { readonly to: "/career/$saveId/squad"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/squad-staff"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/squad-information"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/squad-finances"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/squad-history"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/tactics"; readonly params: { readonly saveId: SaveId } }
   | {
       readonly to: "/career/$saveId/tactics/editor";
@@ -335,6 +346,10 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "createStep3":
       return { to: "/create/step-3" };
     case "squad":
+    case "squadStaff":
+    case "squadInformation":
+    case "squadFinances":
+    case "squadHistory":
     case "tactics":
     case "tacticsEditor":
     case "transfers":
@@ -394,6 +409,14 @@ const careerRoute = (
   switch (destination.type) {
     case "squad":
       return { to: "/career/$saveId/squad", params: { saveId: destination.saveId } };
+    case "squadStaff":
+      return { to: "/career/$saveId/squad-staff", params: { saveId: destination.saveId } };
+    case "squadInformation":
+      return { to: "/career/$saveId/squad-information", params: { saveId: destination.saveId } };
+    case "squadFinances":
+      return { to: "/career/$saveId/squad-finances", params: { saveId: destination.saveId } };
+    case "squadHistory":
+      return { to: "/career/$saveId/squad-history", params: { saveId: destination.saveId } };
     case "tactics":
       return { to: "/career/$saveId/tactics", params: { saveId: destination.saveId } };
     case "tacticsEditor":
