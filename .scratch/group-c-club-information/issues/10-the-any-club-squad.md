@@ -58,10 +58,11 @@ honest that a lineup manager and a roster are different surfaces over it. Read
       this goes
 - [ ] `pnpm check:all` green and e2e green
 
-**Blocked by:** None. Prefer after [07](07-any-club-squad-fixtures-and-transfers.md), which settles
-the club-scoped view shape on two simpler screens.
+**Blocked by:**
+[group-i decision request 01 — knowledge-limited player reads](../../group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md).
+See "Why this is blocked" below; it is a human call and the screen cannot be specified without it.
 
-**Status:** claimed
+**Status:** blocked
 
 ## Why this is blocked, found 2026-09-19
 
