@@ -189,10 +189,30 @@ model differs; all are ticket 02, and each Anchor is `unscheduled` unless stated
   [ticket 07](../../../.scratch/group-l-competitions-nations-and-world-information/issues/07-competition-results.md)
   and [ticket 08](../../../.scratch/group-l-competitions-nations-and-world-information/issues/08-competition-overview.md),
   in ticket 06's order — 164 first, then 161, which composes it.
-- **Eleven screens are deferred and keep their WIP placeholders**, plus seven that never had a route.
-  The competition and nation shells are the largest single block M1 step 5 has to rule on — and
-  unlike Group D's, these are placeholders for screens that are wanted, so the cull must distinguish
-  a deferred screen's placeholder from a disposed screen's. **Filed 2026-09-19** as
+- ~~**Eleven screens are deferred and keep their WIP placeholders**, plus seven that never had a route.~~
+  **Culled 2026-09-20** ([ticket 09](../../../.scratch/group-l-competitions-nations-and-world-information/issues/09-cull-the-group-l-placeholders.md)).
+  **Eighteen** placeholders deleted with their routes, screen-scope entries and action rows — eight
+  competition drill-downs and the whole ten-screen nation branch, whose parent route,
+  `CareerNationChildView` and URL-segment map went with it, since nothing was left to route to.
+
+  **The discriminator, stated once and applied to all of them:** a `deferred` screen keeps its stub
+  when it is *waiting on a live piece of work*, and loses it when it is merely wanted some day. Not
+  one of the eighteen was waiting on anything in progress — statistics wait on Group P, history on
+  Group Q, national teams on Group O, and none of those is started. Group C set the precedent both
+  ways: `clubSquadDetail` kept its stub because a decision request is live; `clubReservesDetail`
+  lost its because a v1 exclusion is not work in progress.
+
+  **Three survived, and for a different reason.** `competitions/`, `nations/` and `clubs/` are the
+  World section's **live nav destinations**, not URL-only stubs, so deleting them would take three
+  entries out of the navbar. They are
+  [ticket 10](../../../.scratch/group-l-competitions-nations-and-world-information/issues/10-the-world-section-lands-on-three-placeholders.md) —
+  the same shape as the Club → Staff defect, three times over, and the reason Screen 161 is still
+  reachable only by address.
+
+  The seven screens that never had a route still have none, and now that is the only thing true of
+  them: nothing was culled for 165, 169–171, 176–178 because there was nothing there.
+
+  Filed 2026-09-19 as
   [ticket 09](../../../.scratch/group-l-competitions-nations-and-world-information/issues/09-cull-the-group-l-placeholders.md),
   which carries the discriminator Group C arrived at by answering the same question twice in
   opposite directions: a `deferred` screen keeps its stub when it is **waiting on a live piece of

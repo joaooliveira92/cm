@@ -90,16 +90,6 @@ export const CLUB_SUB_SURFACE_SCREENS = [
  * The nation-scoped drill-downs: `/career/$saveId/nation/$nationId/...`.
  */
 export const NATION_SCOPED_SCREENS = [
-  "nationOverview",
-  "nationSeniorSquad",
-  "nationYouthSquads",
-  "nationFixtures",
-  "nationCompetitions",
-  "nationClubs",
-  "nationPlayers",
-  "nationStaff",
-  "nationHistory",
-  "nationInformation",
 ] as const;
 
 /**
@@ -110,14 +100,6 @@ export const COMPETITION_SCOPED_SCREENS = [
   "competitionTable",
   "competitionFixturesDetail",
   "competitionResults",
-  "competitionStages",
-  "competitionRules",
-  "competitionStatistics",
-  "competitionPastWinners",
-  "competitionRecords",
-  "competitionNews",
-  "competitionTeams",
-  "competitionPlayerStats",
 ] as const;
 
 /**

@@ -240,9 +240,26 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-l ticket 09 — the cull**, which also owes the competition branch its way in: `competitions/`
-is the World section's entry and is still a placeholder, so nothing reaches Screen 161. After that,
-M1's remaining exit criteria are the `club*`/`competition*`/`nation*` placeholder sweep.
+**group-l ticket 10 — the World section's three entries all land on placeholders.** Competitions is
+the urgent one: [ticket 08](../.scratch/group-l-competitions-nations-and-world-information/issues/08-competition-overview.md)
+built Screen 161 as the competition branch's landing page and **nothing links to it**, so four
+screens — three shipped weeks ago — are reachable only by typing a URL. Same defect as Club → Staff,
+three times over.
+
+**The Group L cull is done** (ticket 09): eighteen placeholders deleted, three kept. **WIP
+placeholders across the renderer are down from 33 to 13**, and every one of the thirteen now has a
+named owner — `clubSquadDetail` (blocked on a decision request), the three World entries (ticket
+10), six `match*` screens (an explicit M1 non-goal), and three Group I screens.
+
+**The discriminator is now written down and has been applied twice**, which is what makes it a rule
+rather than a judgement: *a `deferred` screen keeps its stub when it is waiting on a live piece of
+work, and loses it when it is merely wanted some day.* None of the eighteen was waiting on anything
+in progress.
+
+The whole ten-screen nation branch went, and its parent route, `CareerNationChildView` and
+URL-segment map with it. One thing worth carrying forward: `nationCompetitions` was imported under
+an **alias**, so a name-based regex sweep skipped it and the typechecker caught it. An aliased
+import survives that kind of sweep.
 
 **Screen 161 ships** (ticket 08), and with it the competition branch has internal navigation for the
 first time: three buttons reaching Screens 162, 163 and 164, none of which was reachable from

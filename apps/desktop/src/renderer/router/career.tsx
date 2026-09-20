@@ -1,4 +1,4 @@
-import type { ClubId, CompetitionId, MatchId, NationId, PlayerId, SaveId } from "@cm-clone/contracts";
+import type { ClubId, CompetitionId, MatchId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { Outlet, useLocation, useParams } from "@tanstack/react-router";
 import { type ComponentType, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import {
@@ -9,7 +9,7 @@ import type { EntityType } from "../navigation/entity-nav-config.js";
 import type { MatchContext } from "../navigation/match-nav-config.js";
 import { SecondaryNav } from "../navigation/components/SecondaryNav.js";
 import type { SpecSectionId } from "../navigation/spec-nav-config.js";
-import { decodeClubId, decodeCompetitionId, decodeMatchId, decodeNationId, decodePlayerId, decodeSaveId } from "../navigation/params.js";
+import { decodeClubId, decodeCompetitionId, decodeMatchId, decodePlayerId, decodeSaveId } from "../navigation/params.js";
 import { CareerChrome } from "../chrome/CareerChrome.js";
 import { Alert } from "../components/ui/alert.js";
 import { RegistryProvider } from "../rpc.js";
@@ -225,30 +225,6 @@ export const CareerMatchChildView = ({
   return (
     <RouteView screenId={screenId}>
       <Screen saveId={save.success} matchId={match.success} />
-    </RouteView>
-  );
-};
-
-interface NationScreenProps {
-  readonly saveId: SaveId;
-  readonly nationId: NationId;
-}
-
-export const CareerNationChildView = ({
-  screenId,
-  Screen,
-}: {
-  readonly screenId: string;
-  readonly Screen: ComponentType<NationScreenProps>;
-}) => {
-  const params = useParams({ strict: false });
-  const save = decodeSaveId(params.saveId ?? "");
-  const nation = decodeNationId(params.nationId ?? "");
-  if (save._tag === "Malformed") return <RouteParamErrorScreen reason={save.reason} />;
-  if (nation._tag === "Malformed") return <RouteParamErrorScreen reason={nation.reason} />;
-  return (
-    <RouteView screenId={screenId}>
-      <Screen saveId={save.success} nationId={nation.success} />
     </RouteView>
   );
 };

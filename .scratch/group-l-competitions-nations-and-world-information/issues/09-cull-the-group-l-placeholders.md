@@ -35,18 +35,65 @@ four should be ruled together here.
 
 ## Acceptance
 
-- [ ] Every Group L placeholder has an explicit ruling: kept because its screen is arriving, or
+- [x] Every Group L placeholder has an explicit ruling: kept because its screen is arriving, or
       removed with its route, nav entry and screen-scope entries
-- [ ] The kept/removed discriminator is stated once and applied consistently, not decided per screen
+- [x] The kept/removed discriminator is stated once and applied consistently, not decided per screen
       by feel
-- [ ] The seven screens that never had a route carry a row saying so
-- [ ] `clubs/`, `competitions/`, `nations/` and `nationClubs/` are ruled together
-- [ ] The Group L ledger records the cull
-- [ ] `grep -rl "WIP" apps/desktop/src/renderer --include "*.tsx"` returns no `competition*` or
+- [x] The seven screens that never had a route carry a row saying so
+- [x] `clubs/`, `competitions/`, `nations/` and `nationClubs/` are ruled together
+- [x] The Group L ledger records the cull
+- [x] `grep -rl "WIP" apps/desktop/src/renderer --include "*.tsx"` returns no `competition*` or
       `nation*` screen this ticket removed
-- [ ] `pnpm check:all` green and e2e green
+- [x] `pnpm check:all` green and e2e green
 
 **Blocked by:** [07](07-competition-results.md) and [08](08-competition-overview.md) — both replace
 placeholders this ticket would otherwise delete out from under them.
 
-**Status:** ready-for-agent
+**Status:** resolved
+
+## Answer
+
+**Eighteen deleted, three kept.** `pnpm check:all` green (2081 desktop tests), **e2e 55 passed**.
+WIP placeholders across the renderer are down from 33 to 13.
+
+### The discriminator, stated once
+
+> A `deferred` screen keeps its stub when it is **waiting on a live piece of work**, and loses it
+> when it is merely wanted some day.
+
+Not one of the eighteen was waiting on anything in progress: statistics wait on Group P, history on
+Group Q, national teams on Group O, and none of those is started. Group C had already set the rule
+in both directions — `clubSquadDetail` kept its stub because a decision request is live,
+`clubReservesDetail` lost its because a v1 exclusion is not work in progress.
+
+Eight competition drill-downs went, and **the whole ten-screen nation branch**. Nothing was left to
+route to there, so `nationRoute`, `CareerNationChildView` and the nation URL-segment map went with
+it — the same one-level-further finish the staff branch needed in group-d ticket 10.
+
+One thing the pattern missed and the typechecker caught: `nationCompetitions` was imported under an
+*alias* (`NationCompetitionsScreen as NationCompetitionsDetailScreen`), so a regex keyed on the
+component name skipped it. Worth remembering for the next cull — an aliased import survives a
+name-based sweep.
+
+### Three kept, for a reason the other eighteen did not have
+
+`competitions/`, `nations/` and `clubs/` are the World section's **live nav destinations**, not
+URL-only stubs. Deleting them would take three entries out of the navbar and leave the section
+empty. Filed as [ticket 10](10-the-world-section-lands-on-three-placeholders.md).
+
+That ticket matters more than its size suggests. [Ticket 08](08-competition-overview.md) built
+Screen 161 as the competition branch's landing page — and **nothing links to it**, because
+`competitions/` is the entry that should. Four competition screens, three of them shipped weeks ago,
+remain reachable only by typing a URL until it is built.
+
+The ticket also says Nations may be worth *removing* rather than building: every nation screen Group
+L charted is `deferred`, so the list would link to nothing but dead ends.
+
+### Where the remaining thirteen live
+
+Every one now has a named owner, which is the point of a cull:
+
+- `clubSquadDetail/` — [group-c ticket 10](../../group-c-club-information/issues/10-the-any-club-squad.md), blocked on a decision request
+- `clubs/`, `competitions/`, `nations/` — [ticket 10](10-the-world-section-lands-on-three-placeholders.md)
+- six `match*` screens — Group G's live-match remainder, an explicit **M1 non-goal**
+- `playerSearch/`, `shortlist/`, `staffSearch/` — Group I's

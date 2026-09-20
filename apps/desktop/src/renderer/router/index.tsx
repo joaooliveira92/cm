@@ -53,30 +53,11 @@ import { ClubFixturesDetailScreen } from "../clubFixturesDetail/ClubFixturesDeta
 import { ClubTransfersDetailScreen } from "../clubTransfersDetail/ClubTransfersDetailScreen.js";
 import { ClubFinancesDetailScreen } from "../clubFinancesDetail/ClubFinancesDetailScreen.js";
 import { ClubInformationScreen } from "../clubInformation/ClubInformationScreen.js";
-// Ticket 05 — Nation drill-downs
-import { NationOverviewScreen } from "../nationOverview/NationOverviewScreen.js";
-import { NationSeniorSquadScreen } from "../nationSeniorSquad/NationSeniorSquadScreen.js";
-import { NationYouthSquadsScreen } from "../nationYouthSquads/NationYouthSquadsScreen.js";
-import { NationFixturesScreen } from "../nationFixtures/NationFixturesScreen.js";
-import { NationCompetitionsScreen as NationCompetitionsDetailScreen } from "../nationCompetitions/NationCompetitionsScreen.js";
-import { NationClubsScreen } from "../nationClubs/NationClubsScreen.js";
-import { NationPlayersScreen } from "../nationPlayers/NationPlayersScreen.js";
-import { NationStaffScreen } from "../nationStaff/NationStaffScreen.js";
-import { NationHistoryScreen } from "../nationHistory/NationHistoryScreen.js";
-import { NationInformationScreen } from "../nationInformation/NationInformationScreen.js";
 // Ticket 06 — Competition drill-downs
 import { CompetitionOverviewScreen } from "../competitionOverview/CompetitionOverviewScreen.js";
 import { CompetitionTableScreen } from "../competitionTable/CompetitionTableScreen.js";
 import { CompetitionFixturesDetailScreen } from "../competitionFixturesDetail/CompetitionFixturesDetailScreen.js";
 import { CompetitionResultsScreen } from "../competitionResults/CompetitionResultsScreen.js";
-import { CompetitionStagesScreen } from "../competitionStages/CompetitionStagesScreen.js";
-import { CompetitionRulesScreen } from "../competitionRules/CompetitionRulesScreen.js";
-import { CompetitionStatisticsScreen } from "../competitionStatistics/CompetitionStatisticsScreen.js";
-import { CompetitionPastWinnersScreen } from "../competitionPastWinners/CompetitionPastWinnersScreen.js";
-import { CompetitionRecordsScreen } from "../competitionRecords/CompetitionRecordsScreen.js";
-import { CompetitionNewsScreen } from "../competitionNews/CompetitionNewsScreen.js";
-import { CompetitionTeamsScreen } from "../competitionTeams/CompetitionTeamsScreen.js";
-import { CompetitionPlayerStatsScreen } from "../competitionPlayerStats/CompetitionPlayerStatsScreen.js";
 // Ticket 07 — Match sub-screen placeholders
 import { MatchStatsScreen } from "../matchStats/MatchStatsScreen.js";
 import { MatchPlayerStatsScreen } from "../matchPlayerStats/MatchPlayerStatsScreen.js";
@@ -98,7 +79,6 @@ import {
   CareerIndexRedirect,
   CareerMatchChildView,
   CareerPlayerChildView,
-  CareerNationChildView,
   CareerCompetitionChildView,
   CareerShell,
 } from "./career.js";
@@ -404,72 +384,6 @@ const clubInformationRoute = createRoute({
 // Nation branch — `/career/$saveId/nation/$nationId/...`
 // ---------------------------------------------------------------------------
 
-const nationRoute = createRoute({
-  getParentRoute: () => saveRoute,
-  path: "nation/$nationId",
-  component: () => <Outlet />,
-});
-
-const nationOverviewRoute = createRoute({
-  getParentRoute: () => nationRoute,
-  path: "overview",
-  component: () => <CareerNationChildView screenId="nationOverview" Screen={NationOverviewScreen} />,
-});
-
-const nationSeniorSquadRoute = createRoute({
-  getParentRoute: () => nationRoute,
-  path: "senior-squad",
-  component: () => <CareerNationChildView screenId="nationSeniorSquad" Screen={NationSeniorSquadScreen} />,
-});
-
-const nationYouthSquadsRoute = createRoute({
-  getParentRoute: () => nationRoute,
-  path: "youth-squads",
-  component: () => <CareerNationChildView screenId="nationYouthSquads" Screen={NationYouthSquadsScreen} />,
-});
-
-const nationFixturesRoute = createRoute({
-  getParentRoute: () => nationRoute,
-  path: "fixtures",
-  component: () => <CareerNationChildView screenId="nationFixtures" Screen={NationFixturesScreen} />,
-});
-
-const nationCompetitionsDetailRoute = createRoute({
-  getParentRoute: () => nationRoute,
-  path: "competitions",
-  component: () => <CareerNationChildView screenId="nationCompetitions" Screen={NationCompetitionsDetailScreen} />,
-});
-
-const nationClubsRoute = createRoute({
-  getParentRoute: () => nationRoute,
-  path: "clubs",
-  component: () => <CareerNationChildView screenId="nationClubs" Screen={NationClubsScreen} />,
-});
-
-const nationPlayersRoute = createRoute({
-  getParentRoute: () => nationRoute,
-  path: "players",
-  component: () => <CareerNationChildView screenId="nationPlayers" Screen={NationPlayersScreen} />,
-});
-
-const nationStaffRoute = createRoute({
-  getParentRoute: () => nationRoute,
-  path: "staff",
-  component: () => <CareerNationChildView screenId="nationStaff" Screen={NationStaffScreen} />,
-});
-
-const nationHistoryRoute = createRoute({
-  getParentRoute: () => nationRoute,
-  path: "history",
-  component: () => <CareerNationChildView screenId="nationHistory" Screen={NationHistoryScreen} />,
-});
-
-const nationInformationRoute = createRoute({
-  getParentRoute: () => nationRoute,
-  path: "information",
-  component: () => <CareerNationChildView screenId="nationInformation" Screen={NationInformationScreen} />,
-});
-
 // ---------------------------------------------------------------------------
 // Competition branch — `/career/$saveId/competition/$competitionId/...`
 // ---------------------------------------------------------------------------
@@ -502,54 +416,6 @@ const competitionResultsRoute = createRoute({
   getParentRoute: () => competitionRoute,
   path: "results",
   component: () => <CareerCompetitionChildView screenId="competitionResults" Screen={CompetitionResultsScreen} />,
-});
-
-const competitionStagesRoute = createRoute({
-  getParentRoute: () => competitionRoute,
-  path: "stages",
-  component: () => <CareerCompetitionChildView screenId="competitionStages" Screen={CompetitionStagesScreen} />,
-});
-
-const competitionRulesRoute = createRoute({
-  getParentRoute: () => competitionRoute,
-  path: "rules",
-  component: () => <CareerCompetitionChildView screenId="competitionRules" Screen={CompetitionRulesScreen} />,
-});
-
-const competitionStatisticsRoute = createRoute({
-  getParentRoute: () => competitionRoute,
-  path: "statistics",
-  component: () => <CareerCompetitionChildView screenId="competitionStatistics" Screen={CompetitionStatisticsScreen} />,
-});
-
-const competitionPastWinnersRoute = createRoute({
-  getParentRoute: () => competitionRoute,
-  path: "past-winners",
-  component: () => <CareerCompetitionChildView screenId="competitionPastWinners" Screen={CompetitionPastWinnersScreen} />,
-});
-
-const competitionRecordsRoute = createRoute({
-  getParentRoute: () => competitionRoute,
-  path: "records",
-  component: () => <CareerCompetitionChildView screenId="competitionRecords" Screen={CompetitionRecordsScreen} />,
-});
-
-const competitionNewsRoute = createRoute({
-  getParentRoute: () => competitionRoute,
-  path: "news",
-  component: () => <CareerCompetitionChildView screenId="competitionNews" Screen={CompetitionNewsScreen} />,
-});
-
-const competitionTeamsRoute = createRoute({
-  getParentRoute: () => competitionRoute,
-  path: "teams",
-  component: () => <CareerCompetitionChildView screenId="competitionTeams" Screen={CompetitionTeamsScreen} />,
-});
-
-const competitionPlayerStatsRoute = createRoute({
-  getParentRoute: () => competitionRoute,
-  path: "player-stats",
-  component: () => <CareerCompetitionChildView screenId="competitionPlayerStats" Screen={CompetitionPlayerStatsScreen} />,
 });
 
 // ---------------------------------------------------------------------------
@@ -669,31 +535,11 @@ const routeTree = rootRoute.addChildren([
         playerDevelopmentRoute,
         playerCoachReportRoute,
       ]),
-      nationRoute.addChildren([
-        nationOverviewRoute,
-        nationSeniorSquadRoute,
-        nationYouthSquadsRoute,
-        nationFixturesRoute,
-        nationCompetitionsDetailRoute,
-        nationClubsRoute,
-        nationPlayersRoute,
-        nationStaffRoute,
-        nationHistoryRoute,
-        nationInformationRoute,
-      ]),
       competitionRoute.addChildren([
         competitionOverviewRoute,
         competitionTableRoute,
         competitionFixturesDetailRoute,
         competitionResultsRoute,
-        competitionStagesRoute,
-        competitionRulesRoute,
-        competitionStatisticsRoute,
-        competitionPastWinnersRoute,
-        competitionRecordsRoute,
-        competitionNewsRoute,
-        competitionTeamsRoute,
-        competitionPlayerStatsRoute,
       ]),
       matchStatsRoute,
       matchPlayerStatsRoute,

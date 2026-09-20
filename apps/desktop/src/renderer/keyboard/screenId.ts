@@ -18,32 +18,11 @@ const PLAYER_SURFACE_BY_SEGMENT: Readonly<Record<string, string>> = {
   "coach-report": "playerCoachReport",
 };
 
-const NATION_SURFACE_BY_SEGMENT: Readonly<Record<string, string>> = {
-  overview: "nationOverview",
-  "senior-squad": "nationSeniorSquad",
-  "youth-squads": "nationYouthSquads",
-  fixtures: "nationFixtures",
-  competitions: "nationCompetitions",
-  clubs: "nationClubs",
-  players: "nationPlayers",
-  staff: "nationStaff",
-  history: "nationHistory",
-  information: "nationInformation",
-};
-
 const COMPETITION_SURFACE_BY_SEGMENT: Readonly<Record<string, string>> = {
   overview: "competitionOverview",
   table: "competitionTable",
   fixtures: "competitionFixturesDetail",
   results: "competitionResults",
-  stages: "competitionStages",
-  rules: "competitionRules",
-  statistics: "competitionStatistics",
-  "past-winners": "competitionPastWinners",
-  records: "competitionRecords",
-  news: "competitionNews",
-  teams: "competitionTeams",
-  "player-stats": "competitionPlayerStats",
 };
 
 export const screenIdOfPath = (pathname: string): string => {
@@ -52,7 +31,6 @@ export const screenIdOfPath = (pathname: string): string => {
   if (segs[0] === "career") {
     if (segs[2] === "club") return CLUB_SURFACE_BY_SEGMENT[segs[4] ?? ""] ?? "";
     if (segs[2] === "player") return PLAYER_SURFACE_BY_SEGMENT[segs[4] ?? ""] ?? "playerProfile";
-    if (segs[2] === "nation") return NATION_SURFACE_BY_SEGMENT[segs[4] ?? ""] ?? "nationOverview";
     if (segs[2] === "competition") return COMPETITION_SURFACE_BY_SEGMENT[segs[4] ?? ""] ?? "competitionOverview";
     return segs[2] ?? "";
   }
