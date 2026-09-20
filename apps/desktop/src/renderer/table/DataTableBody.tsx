@@ -33,7 +33,7 @@ export const DataTableBody = <TRow extends TableRowShape>(props: DataTableBodyPr
                       onDragStart={(event) => { if (ctx.onRowDragStart !== undefined) ctx.onRowDragStart(event, id); }}
                       onFocus={() => { if (ctx.activeId !== id) ctx.onActiveChange(id); }}
                       onClick={() => { ctx.onToggleSelection(id); }}
-                      className={`whitespace-nowrap font-semibold text-text-primary ${FOCUS_RING.join(" ")}`}
+                      className={`truncate font-semibold text-text-bright ${FOCUS_RING.join(" ")}`}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </button>

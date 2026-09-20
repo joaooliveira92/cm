@@ -7,6 +7,7 @@ import {
 } from "@cm-clone/shared";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -63,6 +64,7 @@ interface CareerState {
   readonly report: ContinueReport | null;
   readonly setReport: (report: ContinueReport | null) => void;
   readonly openDestination: (destination: ContinueDestination) => void;
+  readonly acknowledgeReadinessItem: (id: string) => void;
   readonly onBackToSaves: (intent: NavigationIntent) => void;
   readonly runAdvance: ReturnType<typeof useAtom>[1];
 }
@@ -166,6 +168,21 @@ export const CareerStateProvider = ({
     }
   }, [advance, advanceError]);
 
+  // Tracks advisories the player has acknowledged (clicked through to the fix).
+  // Once acknowledged, the item stays hidden until its condition resolves naturally
+  // (the item leaves the readiness assessment), at which point the acknowledgment is
+  // cleared so it can reappear on a future occurrence.
+  const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set());
+
+  const acknowledgeReadinessItem = useCallback((id: string) => {
+    setAcknowledgedIds((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
+
   const openDestination = (destination: ContinueDestination): void => {
     navigate({ type: destination, saveId });
     setReport(null);
@@ -184,17 +201,29 @@ export const CareerStateProvider = ({
       ? standingFor(tableResult.value.standings, clubName)
       : null;
 
-  const outstanding: readonly ReadinessItem[] =
-    season === null
-      ? []
-      : assessContinueReadiness({
-        phase: season.phase,
-        hasTactic:
-          tacticsResult._tag === "Success" ? tacticsResult.value.tactic !== null : true,
-        matchInProgress: liveMatch !== undefined,
-        advancing,
-        pendingIncomingBids: newsCounts?.actionRequired ?? 0,
-      }).items;
+  const rawItems = useMemo(() => {
+    if (season === null) return [];
+    return assessContinueReadiness({
+      phase: season.phase,
+      hasTactic:
+        tacticsResult._tag === "Success" ? tacticsResult.value.tactic !== null : true,
+      matchInProgress: liveMatch !== undefined,
+      advancing,
+      pendingIncomingBids: newsCounts?.actionRequired ?? 0,
+    }).items;
+  }, [season, tacticsResult, liveMatch, advancing, newsCounts]);
+
+  const outstanding: readonly ReadinessItem[] = useMemo(() => {
+    // Clear acknowledgements for conditions that have resolved (no longer in the assessment)
+    const currentIds = new Set(rawItems.map((i) => i.id));
+    const filtered = new Set<string>();
+    for (const id of acknowledgedIds) {
+      if (currentIds.has(id)) {
+        filtered.add(id);
+      }
+    }
+    return rawItems.filter((item) => !filtered.has(item.id));
+  }, [rawItems, acknowledgedIds]);
 
   const reason = continueUnavailableReason();
   const career: HeaderCareer = {
@@ -226,13 +255,14 @@ export const CareerStateProvider = ({
       report,
       setReport,
       openDestination,
+      acknowledgeReadinessItem,
       onBackToSaves,
       runAdvance,
     }),
     [
       saveId, badgeKey, clubName, clubColours, season, saveName, advancing,
       continueDisabled, continueLabel, liveMatch, newsCounts, screenId,
-      standing, outstanding, career, report,
+      standing, outstanding, career, report, acknowledgeReadinessItem,
     ],
   );
 

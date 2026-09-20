@@ -21,7 +21,7 @@ export { matchReadout, seasonReadout, type SeasonReadoutInput, continueUnavailab
 const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
   const {
     clubName, clubColours, badgeKey, newsCounts, career, outstanding, screenId,
-    report, setReport, openDestination, onBackToSaves,
+    report, setReport, openDestination, acknowledgeReadinessItem, onBackToSaves,
   } = useCareerState();
 
   // Don't show outstanding items whose destination is the current screen —
@@ -75,7 +75,7 @@ const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
         <HeaderActionsMenu />
         <div className="flex-1" />
       </div>
-      <ContinueOutstandingBand items={filteredOutstanding} onOpen={openDestination} />
+      <ContinueOutstandingBand items={filteredOutstanding} onOpen={openDestination} onDismiss={acknowledgeReadinessItem} />
       {report !== null && (
         <ContinueResultBand
           report={report}

@@ -34,15 +34,61 @@ placeholder it replaces.
 
 ## Acceptance
 
-- [ ] Any Competition's played fixtures render, newest first, with scores
-- [ ] No fourth fixture read — or an explicit, reasoned answer for why ticket 06's instruction is
+- [x] Any Competition's played fixtures render, newest first, with scores
+- [x] No fourth fixture read — or an explicit, reasoned answer for why ticket 06's instruction is
       wrong
-- [ ] A Competition with nothing played yet shows an empty state that is a sentence
-- [ ] Nothing on the screen is sourced from a model the ledger says does not exist
-- [ ] `competitionResults/` carries no `WIP` marker
-- [ ] An e2e spec reaches it the way a player would
-- [ ] `pnpm check:all` green and `pnpm --filter @cm-clone/desktop test:e2e` green
+- [x] A Competition with nothing played yet shows an empty state that is a sentence
+- [x] Nothing on the screen is sourced from a model the ledger says does not exist
+- [x] `competitionResults/` carries no `WIP` marker
+- [~] An e2e spec reaches it **by address**, because nothing in the app links to it — and
+      nothing links to Screens 162 or 163 either. See below.
+- [x] `pnpm check:all` green and `pnpm --filter @cm-clone/desktop test:e2e` green
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
+
+## Answer
+
+`CompetitionResultsScreen` reads `getCompetitionFixtures` — **no fourth fixture read** — and filters
+to `played`, reversed. Ticket 06's instruction held: a `FixtureView` already carries `played`,
+`homeGoals` and `awayGoals`, so the results list is the card's played subset and nothing more.
+`pnpm check:all` green, **e2e 54 passed**.
+
+Screens 163 and 164 now share `CompetitionFixtureTable`, extracted rather than copied. They differ
+in which fixtures they pass and in what order, not in how a fixture reads.
+
+### Two findings, neither of which is this screen's fault
+
+**The whole competition branch is unreachable.** Screen 164 has no entry point — and neither do
+Screens 162 and 163, which shipped on 2026-09-17 in the same condition. The World section's
+Competitions entry is itself still a WIP placeholder, so there is no route into the branch at all.
+This is the same shape as the Club → Staff defect group-c ticket 02 fixed: a real screen one route
+away from a nav entry showing a stub. It belongs to [ticket 08](08-competition-overview.md), which
+builds the competition's landing page, and to [ticket 09](09-cull-the-group-l-placeholders.md),
+which rules on `competitions/`.
+
+The e2e spec therefore addresses the route directly, the precedent `performance-report.spec.ts` and
+`router.spec.ts` both set. It says so in its own docblock, and it is a weaker spec for it: it cannot
+notice an entry point breaking, because there is none.
+
+**Competition Results shows the current Season only.** It inherits `getCompetitionFixtures`' season
+scope, so the moment a save rolls over, a full season of results vanishes from it. Found the hard
+way: `seedConcluded` looked like the obvious fixture and is worse than useless here, because it
+lands in **Season 2 pre-season** where the card is unplayed and the screen correctly shows nothing.
+
+Whether that is right is a real question — Screen 172 Competition History is `deferred`, so there is
+currently *nowhere* to see a past season's results — but it is not this ticket's to answer, and
+Screen 163 has had the same property since it shipped. Recorded rather than fixed.
+
+### On the e2e seed
+
+`seedBeforeSeasonEnd`, deliberately. Pressing Continue repeatedly does not work: the Calendar stops
+*before* the human's own Fixture and the control is **replaced** there rather than disabled, so the
+loop times out on a button that no longer exists. That is the pre-match boundary working as
+designed, and it is worth knowing before writing the next e2e that wants played football.
+
+### Not built, and deliberately
+
+Attendance, player-of-the-match and tactical summary. The import asks for all three; none has a
+model, and they are the same three the Group C ledger `deferred`s for Screen 41 Club Results.

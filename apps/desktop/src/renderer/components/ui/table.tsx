@@ -44,14 +44,7 @@ const TableRow = ({ className, ref, ...props }: TableRowProps) => (
   <tr
     ref={ref}
     className={cn(
-      // Hover, selection and focus must stay separable (the dense-table
-      // contract): hover is a neutral lift, selection is the chrome-blue fill,
-      // focus is the ring on the row's own name button. `aria-selected` is the
-      // renderer's selection channel; `data-state` is upstream's, kept so a
-      // pasted component still reads as selected. Selection is marked important
-      // so it beats hover on a selected row the pointer happens to be over —
-      // the two variants otherwise tie on specificity.
-      "border-b border-border-subtle transition-colors hover:bg-row-hover",
+      "transition-colors hover:bg-row-hover odd:bg-surface/50",
       "aria-selected:bg-row-selected! data-[state=selected]:bg-row-selected!",
       className,
     )}
@@ -68,7 +61,7 @@ const TableHead = ({ className, ref, ...props }: TableHeadProps) => (
   <th
     ref={ref}
     className={cn(
-      "h-6 px-2 text-left align-middle text-2xs font-semibold uppercase tracking-wide text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+      "h-6 px-2 text-left align-middle text-xs font-semibold text-text-secondary [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
       className,
     )}
     {...props}
@@ -84,7 +77,7 @@ const TableCell = ({ className, ref, ...props }: TableTdProps) => (
   <td
     ref={ref}
     className={cn(
-      "px-2 py-0.5 align-middle text-xs [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+      "px-1.5 py-0.5 align-middle text-sm font-semibold [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
       className,
     )}
     {...props}

@@ -240,8 +240,29 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-l ticket 07 — Screen 164 Competition Results.** Then **08** (Screen 161 Competition
-Overview, which composes it) and **09** (the cull, blocked on both).
+**group-l ticket 08 — Screen 161 Competition Overview.** It is the competition's landing page, and
+it now carries a second job: **the whole competition branch has no entry point.** Then **09**.
+
+**Screen 164 ships** (ticket 07). `CompetitionResultsScreen` reads `getCompetitionFixtures` and
+filters to played, reversed — no fourth fixture read, as ticket 06 instructed. 163 and 164 share an
+extracted `CompetitionFixtureTable`. **e2e 54 passed**, 2063 desktop tests.
+
+**Two findings from building it, neither the screen's fault.**
+
+*The competition branch is unreachable.* 164 has no entry point, and neither do 162 and 163, which
+shipped on 2026-09-17 in the same condition — the World section's Competitions entry is itself a WIP
+placeholder. Same shape as the Club → Staff defect group-c ticket 02 fixed. Ticket 08 builds the
+landing page and ticket 09 rules on `competitions/`; between them they owe the way in.
+
+*Competition Results shows the current Season only*, inheriting `getCompetitionFixtures`' season
+scope — so a rollover empties it, and there is currently nowhere to see a past season's results
+(Screen 172 Competition History is `deferred`). Screen 163 has had the same property since it
+shipped. Recorded, not fixed.
+
+One practical note for the next e2e that wants played football: **pressing Continue does not work.**
+The Calendar stops before the human's own Fixture and the control is *replaced* there rather than
+disabled, so a press loop times out on a button that no longer exists. Use `seedBeforeSeasonEnd`;
+`seedConcluded` lands in Season 2 pre-season, where the current card is unplayed.
 
 **M1 step 4 is smaller than it looks and is now ticketed.** Group L's ledger has no `Not yet
 audited` row and no open decision ticket: of its twenty screens, 162 and 163 shipped on 2026-09-17,

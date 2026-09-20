@@ -121,11 +121,26 @@ invariant errors, and payload `SchemaError` — carried by group-l decision requ
 `effect-lint` rule was rejected as the wrong tool, because the needed fact is a type rather than a
 syntax pattern.
 
-## Screens 161 and 164: in v1, not built
+## Screens 161 and 164: 164 shipped, 161 owed
 
 Both are `Reviewed` and carry no divergence row. Ticket 02 put them in v1 scope and ticket 06 set the
 order — 164 next, reusing `getCompetitionFixtures` rather than adding a third fixture read, then 161.
-Neither has a ticket. Their `Reviewed` silence asserts nothing about what the import asks of them.
+Their `Reviewed` silence asserts nothing about what the import asks of them.
+
+**164 shipped 2026-09-20** ([ticket 07](../../../.scratch/group-l-competitions-nations-and-world-information/issues/07-competition-results.md)),
+reusing the read as instructed. Attendance, player-of-the-match and tactical summary are not built
+and have no model — the same three the [Group C ledger](../group_c_club_information/RECONCILIATION.md)
+`deferred`s for Screen 41.
+
+**Two properties of the branch, found building it and true of 162 and 163 as well:**
+
+- **Nothing in the app reaches any of them.** All three are URL-only, and the World section's
+  Competitions entry is a WIP placeholder, so there is no route into the branch at all. Owed to
+  [ticket 08](../../../.scratch/group-l-competitions-nations-and-world-information/issues/08-competition-overview.md)
+  and [ticket 09](../../../.scratch/group-l-competitions-nations-and-world-information/issues/09-cull-the-group-l-placeholders.md).
+- **They show the current Season only**, inheriting `getCompetitionFixtures`' season scope. A
+  rollover empties Competition Results, and Screen 172 Competition History is `deferred`, so a past
+  season's results are currently visible nowhere.
 
 ## Deferred in full
 

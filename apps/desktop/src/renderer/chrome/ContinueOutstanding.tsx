@@ -28,9 +28,11 @@ import { PANEL } from "../theme.js";
 const OutstandingRow = ({
   item,
   onOpen,
+  onDismiss,
 }: {
   readonly item: ReadinessItem;
   readonly onOpen: (destination: ContinueDestination) => void;
+  readonly onDismiss: (id: string) => void;
 }) => {
   const { destination } = item;
   return (
@@ -40,11 +42,15 @@ const OutstandingRow = ({
         role={destination !== null ? "button" : undefined}
         tabIndex={destination !== null ? 0 : undefined}
         onClick={() => {
-          if (destination !== null) onOpen(destination);
+          if (destination !== null) {
+            onDismiss(item.id);
+            onOpen(destination);
+          }
         }}
         onKeyDown={(e) => {
           if (destination !== null && (e.key === "Enter" || e.key === " ")) {
             e.preventDefault();
+            onDismiss(item.id);
             onOpen(destination);
           }
         }}
@@ -64,7 +70,10 @@ const OutstandingRow = ({
         <button
           type="button"
           className={`shrink-0 text-sm underline underline-offset-2 hover:text-text-primary ${FOCUS_RING.join(" ")}`}
-          onClick={() => onOpen(destination)}
+          onClick={() => {
+            onDismiss(item.id);
+            onOpen(destination);
+          }}
         >
           {CONTINUE_DESTINATION_LABELS[destination]}
         </button>
@@ -76,9 +85,11 @@ const OutstandingRow = ({
 export const ContinueOutstandingBand = ({
   items,
   onOpen,
+  onDismiss,
 }: {
   readonly items: readonly ReadinessItem[];
   readonly onOpen: (destination: ContinueDestination) => void;
+  readonly onDismiss: (id: string) => void;
 }) => {
   if (items.length === 0) return null;
 
@@ -86,7 +97,7 @@ export const ContinueOutstandingBand = ({
     <section aria-label="Outstanding before you continue" className={`${PANEL} mx-2 mt-2`}>
       <ul className="space-y-1 text-sm">
         {items.map((item) => (
-          <OutstandingRow key={item.id} item={item} onOpen={onOpen} />
+          <OutstandingRow key={item.id} item={item} onOpen={onOpen} onDismiss={onDismiss} />
         ))}
       </ul>
     </section>
