@@ -113,12 +113,29 @@ Each is checkable, and the first is a command:
 
 1. `grep -rl "WIP" apps/desktop/src/renderer --include "*.tsx"` returns **no** `club*`, `player*`,
    `staff*`, `competition*` or `nation*` screen. Each is either real or deleted.
+
+   **Status 2026-09-20: `competition*` and `nation*` are met; the rest is blocked on a human.** Ten
+   WIP screens remain, down from 57, and every one has a named owner. Six are `match*` — Group G's
+   live-match remainder, this milestone's own **non-goal**, so they are out of scope for the
+   criterion as written. The other four — `clubSquadDetail`, `playerSearch`, `staffSearch`,
+   `shortlist` — all wait on
+   [Group I decision request 01](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md):
+   each lists **players**, and every player outside the manager's club starts Unscouted, so none can
+   be specified until that is answered. **This criterion cannot be met without that decision.**
 2. `docs/specs/group_<x>/RECONCILIATION.md` exists and has a complete coverage table for x in
-   c, d, e, f, g, h, i, j, k, l, m. **Met for d–m 2026-09-19.** Outstanding: no row in group C's table
-   may read `Not yet audited`, which is step 3's work rather than step 1's.
+   c, d, e, f, g, h, i, j, k, l, m. **Met for d–m 2026-09-19.** ~~Outstanding: no row in group C's
+   table may read `Not yet audited`~~ — **met 2026-09-19**, group-c ticket 05 disposed all twelve.
+
+   **Two ledgers still carry `Not yet audited` rows: F and K.** Group F's remainder needs its
+   decision request 01 answered and an effort chartered from scratch, both human calls, and the
+   milestone records that. Group K has not been examined; whether its rows are in this milestone's
+   scope is the one open question on this criterion.
 3. No route, nav entry or `g`-key binding points at a screen ruled out in those ledgers.
 4. `pnpm check:all` green, and `pnpm --filter @cm-clone/desktop test:e2e` green.
 5. [TRACEABILITY.md](TRACEABILITY.md) has a row for each read model shipped, with its proving test.
+   **Met 2026-09-20** for everything this milestone shipped: six rows added covering the club-scoped
+   screens, their own-club resolvers, the Board Objective read and its subject-existence exception,
+   the competition surfaces, seeded test worlds, and the mid-creation quit discard.
 
 ### Open questions
 

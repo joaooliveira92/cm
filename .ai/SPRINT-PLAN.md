@@ -240,9 +240,31 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**The M1 queue is empty.** Every ticket in `.scratch/` is resolved except two that are blocked on a
-human: group-c 10 (the any-club squad) and group-g 31 (committed matches store their timeline).
-Recompute the frontier from `.scratch/` before starting anything.
+**Nothing, without a human.** The queue is empty of work an agent may start, and M1 cannot close on
+its own. Two decisions are waiting, and between them they gate everything left:
+
+1. **[Group I decision request 01 — knowledge-limited player reads](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md).**
+   Four of the ten remaining WIP screens — `clubSquadDetail`, `playerSearch`, `staffSearch`,
+   `shortlist` — each list **players**, and every player outside the manager's club starts
+   Unscouted. None can be specified until this is answered, so **M1 exit criterion 1 cannot be met
+   without it.** It has five dependents now: C 35, D 68, J 132, 134, 137.
+2. **[gate-red-on-dev decision request 01 — squad decay has no floor](../.scratch/gate-red-on-dev/decision-request-01-squad-decay-has-no-floor.md).**
+   Played to season 3, most worlds leave the human club unable to field eleven. Nothing gates on it
+   today, but it changes what the game is.
+
+Also human-owned: **group-g ticket 32** (saves need a migration path), which blocks ticket 31 and
+therefore every engine-rule fix; **group-f decision request 01**, which blocks charting Group F's
+remainder; and four `needs-info` tickets across Groups G, H and J.
+
+**Where M1's exit criteria stand.** Criterion 2 is met for Group C — all twelve disposed — and F and
+K are the only ledgers still carrying `Not yet audited` rows; F is human-blocked and **K has not
+been examined, which is the one genuinely open question**. Criterion 4 is met (`check:all` green,
+2090 desktop tests; e2e green, 55). Criterion 5 is met as of 2026-09-20 — six traceability rows were
+owed for this milestone's read models and had been accumulating unwritten. Criterion 1 is met for
+`competition*` and `nation*`; the rest is blocked per above, and six `match*` screens are an explicit
+non-goal.
+
+**WIP placeholders: 57 → 10**, and every one of the ten has a named owner.
 
 **The competition branch is complete and reachable** (group-l ticket 10). World → Competitions lists
 every competition in the save, each row opening its Overview, which links to Table, Fixtures and
