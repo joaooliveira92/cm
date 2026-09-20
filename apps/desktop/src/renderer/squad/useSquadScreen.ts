@@ -17,7 +17,7 @@
  * `SquadProvider`; the shared shapes live in `squadScreenTypes.ts`.
  */
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import type { SaveId } from "@cm-clone/contracts";
+import type { PlayerId, SaveId } from "@cm-clone/contracts";
 import { Option } from "effect";
 import {
   AsyncResult,
@@ -28,6 +28,7 @@ import {
   useAtomValue,
 } from "../rpc.js";
 import { registerActionHandler } from "../actions/dispatch.js";
+import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import { focusIdOf } from "../focus.js";
 import { SQUAD_PALETTE_OPTIONS, tableSortAndFilterActions } from "../table/paletteActions.js";
 import {
@@ -126,6 +127,9 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     activeId,
     bookmark,
     players: [] as ReadonlyArray<SquadRow>,
+    /** The same players as the wire carries them, so a row id can be turned back into the branded
+     *  `PlayerId` a player-scoped route needs. The `SquadRow` above has flattened it to a string. */
+    playerIds: [] as ReadonlyArray<PlayerId>,
   });
   latest.current.sort = sort;
   latest.current.filters = filters;
@@ -139,6 +143,7 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     [view],
   );
   latest.current.players = allPlayers;
+  latest.current.playerIds = view !== undefined ? view.players.map((player) => player.id) : [];
 
   const blockingFailure = error !== null && view === undefined;
   const filtered = applyFilters(allPlayers, filters);
@@ -300,11 +305,28 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     [orderedIds, setActiveAndBookmark, speak],
   );
 
+  /**
+   * Open a player's player screen. CM 03/04's squad list made the name the way in, and this is
+   * that: the name button's click and the row's primary action (Enter) both land here, so the
+   * pointer and the keyboard open the same thing. Selection stays on Space, where it has always
+   * been, rather than sharing the click.
+   */
+  const openPlayer = useCallback(
+    (id: string, event: React.MouseEvent) => {
+      const playerId = latest.current.playerIds.find((candidate) => candidate === id);
+      if (playerId === undefined) return;
+      navigateCareer({ type: "playerDetail", saveId, playerId }, intentOfClick(event));
+    },
+    [saveId],
+  );
+
   const onRowPrimary = useCallback(
     (id: string) => {
-      if (selectedId !== id) setSelection(id);
+      const playerId = latest.current.playerIds.find((candidate) => candidate === id);
+      if (playerId === undefined) return;
+      navigateCareer({ type: "playerDetail", saveId, playerId }, "keyboard");
     },
-    [selectedId, setSelection],
+    [saveId],
   );
 
   const setPositionFilter = useCallback(
@@ -414,6 +436,7 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       onToggleSelection,
       onActiveChange,
       onRowPrimary,
+      openPlayer,
       setPositionFilter,
       setPreset,
       setView,

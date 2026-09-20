@@ -1,4 +1,4 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import type { SaveId } from "@cm-clone/contracts";
 import { canNavigateBack, navigateBack, navigateForward } from "../navigation/adapter.js";
 import { Navbar } from "../navigation/components/Navbar.js";
@@ -20,6 +20,7 @@ import {
   getToolbarVersion,
   subscribeToolbarVersion,
 } from "../screenToolbarControls.js";
+import { getScreenIdentity, subscribeScreenIdentity } from "../screenIdentity.js";
 
 export { NAV_SECTIONS as CAREER_SECTIONS } from "../navigation/nav-config.js";
 export { matchReadout, seasonReadout, type SeasonReadoutInput, continueUnavailableReason };
@@ -36,6 +37,8 @@ const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
     clubName, clubColours, badgeKey, newsCounts, career, outstanding, screenId,
     report, setReport, openDestination, acknowledgeReadinessItem, onBackToSaves,
   } = useCareerState();
+
+  const identity = useSyncExternalStore(subscribeScreenIdentity, getScreenIdentity, getScreenIdentity);
 
   // Don't show outstanding items whose destination is the current screen —
   // the player is already where the fix lives.
@@ -61,6 +64,7 @@ const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
         }
         saveId={saveId}
         clubName={clubName}
+        identity={identity}
         clubColours={clubColours}
         badgeKey={badgeKey}
         leading={
@@ -69,7 +73,7 @@ const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
             forward={{ disabled: false, onTrigger: navigateForward }}
           />
         }
-        secondary={<Header.SecondaryRow state={{ view: "career", career }} />}
+        secondary={<Header.SecondaryRow state={{ view: "career", career, player: identity?.player ?? null }} />}
         actions={
           <>
             <Header.Search />

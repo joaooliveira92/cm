@@ -3,7 +3,17 @@
  * it is decorating. It renders a `SecondaryRow` and nothing else — every
  * decision about what a value means lives in `career-header-state.ts`.
  */
-import { CalendarDays, ClipboardList, ListOrdered, Trophy } from "lucide-react";
+import {
+  CalendarDays,
+  ClipboardList,
+  Coins,
+  FileText,
+  HeartPulse,
+  ListOrdered,
+  Star,
+  Trophy,
+  Wallet,
+} from "lucide-react";
 import { Separator } from "../../components/ui/separator.js";
 import { cn } from "../../lib/utils.js";
 import {
@@ -19,6 +29,11 @@ const METRIC_ICONS: Record<MetricIcon, typeof CalendarDays> = {
   position: ListOrdered,
   points: Trophy,
   played: ClipboardList,
+  rating: Star,
+  value: Coins,
+  wage: Wallet,
+  contract: FileText,
+  injury: HeartPulse,
 };
 
 export interface HeaderSecondaryRowProps {

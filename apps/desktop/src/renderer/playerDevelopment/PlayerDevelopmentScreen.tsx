@@ -1,16 +1,16 @@
+/**
+ * Player Development (Screen 61) — the third player tab: the player's standing Training Focus and
+ * where their recorded per-season Attribute changes are read.
+ *
+ * Shares the player header and tab strip with Profile and Information so the three read as one
+ * screen switching bodies, the way CM's player screen did.
+ */
 import { type PlayerId, type SaveId } from "@cm-clone/contracts";
 import { offeredTrainingFocuses } from "@cm-clone/shared";
-import { FOCUS_RING } from "../focus.js";
-import {
-  describeRpcError,
-  playerProfileAtom,
-  squadAtom,
-  typedError,
-  useAtomValue,
-} from "../rpc.js";
+import { PlayerNotePanel } from "../player/panels.js";
+import { PlayerScreenFrame } from "../player/PlayerScreenFrame.js";
+import { describeRpcError, squadAtom, typedError, useAtomValue } from "../rpc.js";
 import { TrainingFocusControl } from "../training/TrainingFocusControl.js";
-
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 export const PlayerDevelopmentScreen = ({
   saveId,
@@ -18,62 +18,28 @@ export const PlayerDevelopmentScreen = ({
 }: {
   readonly saveId: SaveId;
   readonly playerId: PlayerId;
-}) => {
-  const profileResult = useAtomValue(playerProfileAtom(saveId, playerId));
-
-  if (profileResult._tag === "Initial") {
-    return (
-      <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="playerDevelopment" aria-label="Player Development">
-        <h1 className="text-2xl font-bold">Player Development</h1>
-        <p className="mt-4 text-text-secondary">Loading player data...</p>
-      </main>
-    );
-  }
-
-  if (profileResult._tag === "Failure") {
-    const error = typedError(profileResult);
-    const message = error === null ? "Player data could not be loaded." : describeRpcError(error);
-    return (
-      <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="playerDevelopment" aria-label="Player Development">
-        <h1 className="text-2xl font-bold">Player Development</h1>
-        <p className="mt-4 text-text-secondary">{message}</p>
-      </main>
-    );
-  }
-
-  const profile = profileResult.value;
-
-  return (
-    <main
-      className={PAGE_CLASS}
-      tabIndex={-1}
-      data-focus-id="playerDevelopment"
-      aria-label={`${profile.firstName} ${profile.lastName} - Development`}
-    >
-      <h1 className="text-2xl font-bold">
-        {profile.firstName} {profile.lastName} — Development
-      </h1>
-
-      <section className="mt-6">
-        <h2 className="text-lg font-semibold">Training Focus</h2>
-        <p className="mt-2 text-sm text-text-secondary">
-          Set a training focus to bias Player Development for one Category this season.
-        </p>
-        <div className="mt-3">
-          <TrainingFocusSection saveId={saveId} playerId={playerId} />
-        </div>
-      </section>
-
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold">Development History</h2>
-        <p className="mt-2 text-sm text-text-secondary italic">
-          Per-season Attribute changes are on this player's Performance Report.
-          Player Development runs once per Season Concluded, independently per player, deterministically.
-        </p>
-      </section>
-    </main>
-  );
-};
+}) => (
+  <PlayerScreenFrame saveId={saveId} playerId={playerId} tab="playerDevelopment">
+    {() => (
+      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+        <PlayerNotePanel title="Training Focus">
+          <p className="text-sm text-text-body">
+            Set a training focus to bias Player Development for one Category this season.
+          </p>
+          <div className="mt-3">
+            <TrainingFocusSection saveId={saveId} playerId={playerId} />
+          </div>
+        </PlayerNotePanel>
+        <PlayerNotePanel title="Development History">
+          <p className="text-sm text-text-body">
+            Per-season Attribute changes are on this player&apos;s Performance Report. Player
+            Development runs once per Season Concluded, independently per player, deterministically.
+          </p>
+        </PlayerNotePanel>
+      </div>
+    )}
+  </PlayerScreenFrame>
+);
 
 /**
  * The Training Focus section's body. The player profile read carries no Training Focus, so the

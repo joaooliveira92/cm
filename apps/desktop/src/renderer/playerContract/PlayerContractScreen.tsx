@@ -1,12 +1,27 @@
+/**
+ * Player Information (Screen 56) — the second player tab.
+ *
+ * CM 03/04's Information tab stacked three panels: Overview (the biographical facts), Happiness,
+ * and Contract Details. Happiness has no counterpart here — no morale system is modelled (Group D
+ * ticket 03) — so this screen is Overview over the profile read and Contract Details over the
+ * contract read.
+ *
+ * The two reads are deliberately separate atoms rather than one merged view: the profile is the
+ * header every player tab already needs, and the contract is the only thing this tab adds. A
+ * player whose contract cannot be read still gets their Overview.
+ */
 import { type PlayerId, type SaveId } from "@cm-clone/contracts";
-import { FOCUS_RING } from "../focus.js";
+import { formatCredits } from "../format.js";
+import { PlayerPanel, PlayerRow } from "../player/panels.js";
+import { PlayerScreenFrame } from "../player/PlayerScreenFrame.js";
 import { describeRpcError, playerContractAtom, typedError, useAtomValue } from "../rpc.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
-
-export const PlayerContractScreen = ({
+/** The Contract Details panel, with its own three view states so a failed contract read costs the
+ *  panel and not the page. */
+const ContractPanel = ({
   saveId,
-  playerId }: {
+  playerId,
+}: {
   readonly saveId: SaveId;
   readonly playerId: PlayerId;
 }) => {
@@ -14,40 +29,57 @@ export const PlayerContractScreen = ({
 
   if (contractResult._tag === "Initial") {
     return (
-      <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="playerContract" aria-label="Player Contract">
-        <h1 className="text-2xl font-bold">Player Contract</h1>
-        <p className="mt-4 text-text-secondary">Loading contract data...</p>
-      </main>
+      <PlayerPanel title="Contract Details">
+        <PlayerRow label="Contract" value="Loading..." />
+      </PlayerPanel>
     );
   }
 
   if (contractResult._tag === "Failure") {
     const error = typedError(contractResult);
-    const message = error === null ? "Contract could not be loaded." : describeRpcError(error);
     return (
-      <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="playerContract" aria-label="Player Contract">
-        <h1 className="text-2xl font-bold">Player Contract</h1>
-        <p className="mt-4 text-text-secondary">{message}</p>
-      </main>
+      <PlayerPanel title="Contract Details">
+        <PlayerRow
+          label="Contract"
+          value={error === null ? "Could not be loaded." : describeRpcError(error)}
+        />
+      </PlayerPanel>
     );
   }
 
   const contract = contractResult.value;
+  const years = contract.lengthYears;
 
   return (
-    <main
-      className={PAGE_CLASS}
-      tabIndex={-1}
-      data-focus-id="playerContract"
-      aria-label="Player Contract"
-    >
-      <h1 className="text-2xl font-bold">Player Contract</h1>
-      <div className="mt-4 text-sm">
-        <p>Wage: {contract.wage.toLocaleString()} Credits/season</p>
-        <p>Length: {contract.lengthYears} year{contract.lengthYears !== 1 ? "s" : ""}</p>
-        <p>Signed: {contract.startDate}</p>
-        <p>Expires: {contract.expiryDate}</p>
-      </div>
-    </main>
+    <PlayerPanel title="Contract Details">
+      <PlayerRow label="Wages" value={`${formatCredits(contract.wage)} per season`} />
+      <PlayerRow label="Length" value={`${years} year${years === 1 ? "" : "s"}`} />
+      <PlayerRow label="Started" value={contract.startDate} />
+      <PlayerRow label="Expires" value={contract.expiryDate} />
+    </PlayerPanel>
   );
 };
+
+export const PlayerContractScreen = ({
+  saveId,
+  playerId,
+}: {
+  readonly saveId: SaveId;
+  readonly playerId: PlayerId;
+}) => (
+  <PlayerScreenFrame saveId={saveId} playerId={playerId} tab="playerContract">
+    {(profile) => (
+      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+        <PlayerPanel title="Overview">
+          <PlayerRow label="Age" value={profile.age} />
+          <PlayerRow label="Place Of Birth" value={profile.birthplace ?? "Unknown"} />
+          <PlayerRow label="Nationality" value={profile.nationality} />
+          <PlayerRow label="Club" value={profile.club.name} />
+          <PlayerRow label="Value" value={formatCredits(profile.transferValue)} />
+          <PlayerRow label="Overall Rating" value={profile.overallRating} />
+        </PlayerPanel>
+        <ContractPanel saveId={saveId} playerId={playerId} />
+      </div>
+    )}
+  </PlayerScreenFrame>
+);

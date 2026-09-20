@@ -17,7 +17,8 @@
  * `data-focus-id` the table gives it, so a focus bookmark survives a view
  * change. ArrowUp/Down rove down a column, ArrowLeft/Right cross between the
  * two columns at the same offset, Home/End jump to the ends, Space toggles
- * selection, Enter runs the row's primary action.
+ * selection, Enter runs the row's primary action — opening that player's
+ * player screen, which is what clicking the name does too.
  */
 import type { FamiliarityTier } from "@cm-clone/shared";
 import { Button } from "../components/ui/button.js";
@@ -135,7 +136,7 @@ const PositionRunner = ({ row }: { readonly row: SquadRow }) => (
 export const SquadPositionList = () => {
   const { state, actions, lineup } = useSquad();
   const { orderedIds, activeId, selectedId, announcement, refreshState, table } = state;
-  const { onActiveChange, onToggleSelection, onRowPrimary, setBookmark } = actions;
+  const { onActiveChange, onToggleSelection, onRowPrimary, openPlayer, setBookmark } = actions;
 
   const rows = table.getRowModel().rows.map((row) => row.original);
   const effectiveActive = activeId ?? orderedIds[0] ?? null;
@@ -209,7 +210,7 @@ export const SquadPositionList = () => {
             onFocus={() => {
               if (activeId !== row.id) onActiveChange(row.id);
             }}
-            onClick={() => onToggleSelection(row.id)}
+            onClick={(event) => openPlayer(row.id, event)}
             className={`truncate text-left text-sm font-semibold text-text-bright ${FOCUS_RING.join(" ")}`}
           >
             {row.lastName}, {row.firstName}

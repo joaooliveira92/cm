@@ -17,6 +17,7 @@ import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { chooseOptionByLabel, selectValueOf } from "../../setup/baseUiSelect.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
+import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import {
   squadPlayer as player,
   squadView as squad,
@@ -101,8 +102,15 @@ const mountTransfers = async (view: unknown): Promise<void> => {
   );
 };
 
+let navigateSpy: ReturnType<typeof vi.fn>;
+
 beforeEach(() => {
   cleanup();
+  navigateSpy = vi.fn();
+  bindRouter({
+    navigate: navigateSpy,
+    history: { back: vi.fn(), forward: vi.fn(), canGoBack: () => false },
+  } as never);
   resetActionHandlers();
   resetScopeState();
   resetTableSessions();
@@ -165,13 +173,19 @@ describe("AC-28 — row-oriented roving on a semantic <table>, no ARIA grid", ()
     expect(document.querySelector('tr[aria-selected="true"]')?.textContent).toContain("Alan Player");
   });
 
-  it("clicking a name button (pointer) commits selection and marks that row aria-selected", async () => {
+  // Selection and opening are on separate inputs: the name button's click opens the player (CM
+  // 03/04's way in), Space selects. Clicking used to select, and the two cannot share one click.
+  it("clicking a name button (pointer) opens that player's player screen, leaving selection alone", async () => {
     await mountSquad(
       squadView([squadPlayer("p1", "Alan", POSITIONS[2]), squadPlayer("p2", "Bob", POSITIONS[2])]),
     );
     await screen.findByText(/Alan Player/);
     fireEvent.click(document.querySelector('[data-focus-id="squad.squadTable.p2"]')!);
-    expect(document.querySelector('tr[aria-selected="true"]')?.textContent).toContain("Bob Player");
+    expect(navigateSpy).toHaveBeenCalledWith(expect.objectContaining({
+      to: "/career/$saveId/player/$playerId/profile",
+      params: expect.objectContaining({ playerId: "p2" }),
+    }));
+    expect(document.querySelector('tr[aria-selected="true"]')).toBeNull();
   });
 });
 
@@ -326,7 +340,9 @@ describe("AC-31 — selection cleared when the selected row is filtered out (exp
       squadView([squadPlayer("gk", "Garek", "GK"), squadPlayer("dc", "Dorso", "DC")]),
     );
     await screen.findByText(/Garek Player/);
-    fireEvent.click(document.querySelector('[data-focus-id="squad.squadTable.gk"]')!);
+    // Space is what selects a squad row; the name button's click opens the player.
+    (document.querySelector('[data-focus-id="squad.squadTable.gk"]') as HTMLElement).focus();
+    fireEvent.keyDown(document.querySelector("tbody")!, { key: " " });
     expect(document.querySelector('tr[aria-selected="true"]')).toBeTruthy();
 
     await chooseOptionByLabel(/Filter squad by position/, "DC");
@@ -544,7 +560,8 @@ describe("review repairs (stage-5 review) — F1 refresh keeps rows, F2 retry, F
       squadView([squadPlayer("gk", "Garek", "GK"), squadPlayer("dc", "Dorso", "DC")]),
     );
     await screen.findByText(/Garek Player/);
-    fireEvent.click(document.querySelector('[data-focus-id="squad.squadTable.gk"]')!);
+    (document.querySelector('[data-focus-id="squad.squadTable.gk"]') as HTMLElement).focus();
+    fireEvent.keyDown(document.querySelector("tbody")!, { key: " " });
     expect(screen.getByRole("status").textContent).toContain("Selected Garek Player.");
 
     // A filter with no matching rows flips the screen to NoFilterResults in the

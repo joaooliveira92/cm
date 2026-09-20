@@ -10,6 +10,16 @@ export interface TableContextValue {
   readonly onSortChange: (sort: SortState | null) => void;
   readonly selectedId: string | null;
   readonly onToggleSelection: (id: string) => void;
+  /**
+   * What a pointer press on the identity cell does, where that cell names something with a screen
+   * of its own — a player's name opening their player screen, in CM's model where the name is the
+   * way in. Supplying it replaces selection as the identity button's click action; Space still
+   * selects, so the two stay on separate keys rather than one click meaning both.
+   *
+   * Optional, and absent for a table whose identity column names nothing to open (the transfer
+   * market's rows, whose selection is what the bid form reads).
+   */
+  readonly onIdentityOpen?: (id: string, event: React.MouseEvent) => void;
   readonly onRowPrimary?: (id: string) => void;
   readonly onRowDragStart?: (
     event: React.DragEvent<HTMLButtonElement>,

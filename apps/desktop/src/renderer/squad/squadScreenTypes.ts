@@ -53,6 +53,9 @@ export interface SquadScreenActions {
   readonly onToggleSelection: (id: string) => void;
   readonly onActiveChange: (id: string) => void;
   readonly onRowPrimary: (id: string) => void;
+  /** Open one player's player screen. The row's way in — the name button's click and the row's
+   *  primary action both land here, so pointer and keyboard open the same thing. */
+  readonly openPlayer: (id: string, event: React.MouseEvent) => void;
   readonly setPositionFilter: (position: string) => void;
   readonly setPreset: (presetId: SquadPresetId) => void;
   readonly setView: (viewId: SquadViewId) => void;

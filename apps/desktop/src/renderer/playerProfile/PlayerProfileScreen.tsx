@@ -1,105 +1,130 @@
-import { type PlayerId, type SaveId } from "@cm-clone/contracts";
-import { CATEGORIES, type Category } from "@cm-clone/shared";
-import { FOCUS_RING } from "../focus.js";
-import { describeRpcError, playerProfileAtom, typedError, useAtomValue } from "../rpc.js";
-
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+/**
+ * Player Profile (Screen 50) — the tab a player's name opens on.
+ *
+ * CM 03/04 drew it as three side-by-side Attribute columns (Technical, Mental, Physical) with the
+ * derived, non-1-to-20 readings tinted at the foot of the last one, then the Selection Details
+ * strip beneath. This is that layout over the data this game actually models: every Attribute in
+ * its Category, Overall Rating and Transfer Value as the derived pair, and Positions with their
+ * Familiarity Tier in place of CM's per-position grid.
+ *
+ * Read-only. Every command that acts on a player lives on the surface that owns it (Training Focus
+ * on Development, bids on Transfers); this screen only reports.
+ */
+import { type PlayerId, type PlayerProfileView, type SaveId } from "@cm-clone/contracts";
+import {
+  CATEGORY_ATTRIBUTES,
+  type Attribute,
+  type Category,
+  type FamiliarityTier,
+} from "@cm-clone/shared";
+import { formatCredits } from "../format.js";
+import { attributeLabel } from "../playerCoachReport/developmentProgress.js";
+import { injuryLabel } from "../player/injury.js";
+import { PlayerPanel, PlayerRow } from "../player/panels.js";
+import { PlayerScreenFrame } from "../player/PlayerScreenFrame.js";
 
 const CATEGORY_LABELS: Record<Category, string> = {
   goalkeeping: "Goalkeeping",
   mental: "Mental",
   physical: "Physical",
-  technical: "Technical" };
+  technical: "Technical",
+};
 
-const INJURY_LABELS: Record<string, string> = {
-  fit: "Fit",
-  knock: "Knock",
-  light: "Injured (Light)",
-  medium: "Injured (Medium)",
-  severe: "Injured (Severe)" };
+/** The tone a Familiarity Tier reads in, matching the Squad screen's position list so a Natural
+ *  position looks the same wherever it is drawn. */
+const FAMILIARITY_TONE: Readonly<Record<FamiliarityTier, string>> = {
+  natural: "text-text-highlight",
+  competent: "text-text-body",
+  unfamiliar: "text-text-muted",
+};
+
+const tierLabel = (tier: string): string => tier.charAt(0).toUpperCase() + tier.slice(1);
+
+/**
+ * One Category's column. Goalkeeping Attributes are absent — not zero — for an outfield player
+ * (CONTEXT.md), so a Category whose Attributes the profile does not carry draws no panel at all
+ * rather than a column of blanks.
+ */
+const AttributeColumn = ({
+  category,
+  attributes,
+  children,
+}: {
+  readonly category: Category;
+  readonly attributes: PlayerProfileView["attributes"];
+  readonly children?: React.ReactNode;
+}) => {
+  const present = CATEGORY_ATTRIBUTES[category].filter(
+    (attribute) => typeof attributes[attribute] === "number",
+  );
+  if (present.length === 0) return null;
+  return (
+    <PlayerPanel title={CATEGORY_LABELS[category]}>
+      {present.map((attribute: Attribute) => (
+        <PlayerRow
+          key={attribute}
+          label={attributeLabel(attribute)}
+          value={attributes[attribute]}
+        />
+      ))}
+      {children}
+    </PlayerPanel>
+  );
+};
+
+/** The positions strip: every Position the player can fill, toned by Familiarity Tier, with the
+ *  tier spelled out in text beside it — never colour alone. */
+const PositionsPanel = ({ profile }: { readonly profile: PlayerProfileView }) => (
+  <PlayerPanel title="Positions">
+    {profile.positions.length === 0 ? (
+      <PlayerRow label="Positions" value="None recorded" />
+    ) : (
+      profile.positions.map((entry) => (
+        <div
+          key={entry.position}
+          className="flex items-baseline justify-between gap-4 py-0.5 text-sm"
+        >
+          <dt className={FAMILIARITY_TONE[entry.familiarity]}>{entry.position}</dt>
+          <dd className="font-semibold text-text-highlight">{tierLabel(entry.familiarity)}</dd>
+        </div>
+      ))
+    )}
+  </PlayerPanel>
+);
 
 export const PlayerProfileScreen = ({
   saveId,
-  playerId }: {
+  playerId,
+}: {
   readonly saveId: SaveId;
   readonly playerId: PlayerId;
-}) => {
-  const profileResult = useAtomValue(playerProfileAtom(saveId, playerId));
+}) => (
+  <PlayerScreenFrame saveId={saveId} playerId={playerId} tab="playerProfile">
+    {(profile) => (
+      <>
+        <div className="mt-3 grid gap-3 lg:grid-cols-3">
+          <AttributeColumn category="technical" attributes={profile.attributes} />
+          <AttributeColumn category="mental" attributes={profile.attributes} />
+          <AttributeColumn category="physical" attributes={profile.attributes}>
+            {/* CM's tinted tail: the readings that are not 1-20 Attributes, kept in the last
+                column so the three Attribute lists stay the same kind of thing throughout. */}
+            <PlayerRow label="Overall Rating" value={profile.overallRating} emphasis />
+            <PlayerRow label="Transfer Value" value={formatCredits(profile.transferValue)} emphasis />
+          </AttributeColumn>
+          <AttributeColumn category="goalkeeping" attributes={profile.attributes} />
+        </div>
 
-  if (profileResult._tag === "Initial") {
-    return (
-      <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="playerProfile" aria-label="Player Profile">
-        <h1 className="text-2xl font-bold">Player Profile</h1>
-        <p className="mt-4 text-text-secondary">Loading player data...</p>
-      </main>
-    );
-  }
-
-  if (profileResult._tag === "Failure") {
-    const error = typedError(profileResult);
-    const message = error === null ? "Player could not be loaded." : describeRpcError(error);
-    return (
-      <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="playerProfile" aria-label="Player Profile">
-        <h1 className="text-2xl font-bold">Player Profile</h1>
-        <p className="mt-4 text-text-secondary">{message}</p>
-      </main>
-    );
-  }
-
-  const profile = profileResult.value;
-
-  const topAttributes = CATEGORIES.map((category) => {
-    const attributes = profile.attributes;
-    const categoryAttrs = Object.keys(attributes)
-      .filter((attr) => typeof attributes[attr] === "number")
-      .slice(0, 3);
-    return { category, attributes: categoryAttrs.map((attr) => ({ name: attr, value: attributes[attr] })) };
-  });
-
-  return (
-    <main
-      className={PAGE_CLASS}
-      tabIndex={-1}
-      data-focus-id="playerProfile"
-      aria-label={`${profile.firstName} ${profile.lastName}`}
-    >
-      <h1 className="text-2xl font-bold">
-        {profile.firstName} {profile.lastName}
-      </h1>
-
-      <div className="mt-2 text-sm text-text-secondary">
-        <p>Age: {profile.age}</p>
-        <p>Nationality: {profile.nationality}</p>
-        {profile.birthplace && <p>Born: {profile.birthplace}</p>}
-        <p>Club: {profile.club.name}</p>
-        <p>Overall: {profile.overallRating}</p>
-        <p>Contract: {profile.contractExpiry}</p>
-        <p>Status: {INJURY_LABELS[profile.injuryStatus] ?? profile.injuryStatus}</p>
-      </div>
-
-      <section className="mt-6">
-        <h2 className="text-lg font-semibold">Positions</h2>
-        <ul className="mt-1 list-inside">
-          {profile.positions.map((pos) => (
-            <li key={pos.position}>
-              {pos.position} — {pos.familiarity}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {topAttributes.map(({ category, attributes }) => (
-        <section key={category} className="mt-4">
-          <h2 className="text-lg font-semibold">{CATEGORY_LABELS[category]}</h2>
-          <ul className="mt-1 list-inside">
-            {attributes.map((attr) => (
-              <li key={attr.name}>
-                {attr.name}: {attr.value}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
-    </main>
-  );
-};
+        <div className="mt-3 grid gap-3 lg:grid-cols-2">
+          <PositionsPanel profile={profile} />
+          <PlayerPanel title="Selection Details">
+            <PlayerRow
+              label="Injuries"
+              value={injuryLabel(profile.injuryStatus)}
+            />
+            <PlayerRow label="Contract Expires" value={profile.contractExpiry} />
+          </PlayerPanel>
+        </div>
+      </>
+    )}
+  </PlayerScreenFrame>
+);

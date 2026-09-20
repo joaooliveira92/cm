@@ -238,6 +238,7 @@ export const SquadTable = () => {
     onToggleSelection,
     onActiveChange,
     onRowPrimary,
+    openPlayer,
     setPositionFilter,
     setView,
     toggleOneColumn,
@@ -416,6 +417,7 @@ export const SquadTable = () => {
               onSortChange={onSortCycle}
               ariaBusy={refreshState._tag === "Refreshing"}
               onRowPrimary={onRowPrimary}
+              onIdentityOpen={openPlayer}
               onRowDragStart={(event: React.DragEvent<HTMLButtonElement>, id: string) => writeLineupDrag(event, "roster", id)}
               ariaLabel="Squad"
               announcement={announcement?.message ?? ""}

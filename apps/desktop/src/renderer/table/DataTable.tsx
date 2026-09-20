@@ -28,6 +28,9 @@ export interface DataTableRootProps<Row extends TableRowShape> {
   readonly selectedId: string | null;
   readonly onToggleSelection: (id: string) => void;
   readonly onSortChange: (sort: SortState | null) => void;
+  /** See `TableContextValue.onIdentityOpen` — a pointer press on the identity cell opens the thing
+   *  it names, in place of toggling selection. */
+  readonly onIdentityOpen?: (id: string, event: React.MouseEvent) => void;
   readonly onRowPrimary?: (id: string) => void;
   readonly onRowDragStart?: (event: React.DragEvent<HTMLButtonElement>, rowId: string) => void;
   readonly ariaLabel: string;
@@ -42,7 +45,7 @@ export const DataTableRoot = <Row extends TableRowShape>(props: DataTableRootPro
   const {
     tableId, screen, region, table, orderedIds, identityColumnId,
     activeId, onActiveChange, onBookmarkChange, selectedId, onToggleSelection,
-    onSortChange, onRowPrimary, onRowDragStart, ariaLabel, announcement,
+    onSortChange, onIdentityOpen, onRowPrimary, onRowDragStart, ariaLabel, announcement,
     ariaBusy, initialScrollLeft, onScrollCommit, children,
   } = props;
 
@@ -72,7 +75,7 @@ export const DataTableRoot = <Row extends TableRowShape>(props: DataTableRootPro
   return (
     <TableCtx.Provider value={{
       screen, region, identityColumnId, activeId, onActiveChange, onSortChange,
-      selectedId, onToggleSelection, onRowPrimary, onRowDragStart,
+      selectedId, onToggleSelection, onIdentityOpen, onRowPrimary, onRowDragStart,
       effectiveActive, onBodyKeyDown,
     }}>
       <div className="relative">

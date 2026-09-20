@@ -14,6 +14,7 @@ import { formatCalendarDate } from "@cm-clone/shared";
  * admits it.
  */
 import type { MatchReadout } from "../../actions/types.js";
+import { formatCredits } from "../../format.js";
 
 /** Which shell the header is decorating. Drives the adaptive second row. */
 export type HeaderView = "menu" | "load" | "create" | "career";
@@ -28,7 +29,12 @@ export type HeaderState =
   | { readonly view: "menu" }
   | { readonly view: "load" }
   | { readonly view: "create"; readonly step: string; readonly hint: string }
-  | { readonly view: "career"; readonly career: HeaderCareer };
+  | {
+      readonly view: "career";
+      readonly career: HeaderCareer;
+      /** Set while a player screen is open; its facts replace the calendar and standing. */
+      readonly player?: HeaderPlayer | null;
+    };
 
 /**
  * The phase word that replaces the date segment outside the in-season phase.
@@ -83,7 +89,26 @@ export interface HeaderCareer {
   readonly blockedReason: string | null;
 }
 
-export type MetricIcon = "season" | "position" | "points" | "played";
+/** The player a player screen is showing, as the band reports them. `wage` is null until the
+ *  contract read resolves; `injury` arrives already worded. */
+export interface HeaderPlayer {
+  readonly overallRating: number;
+  readonly transferValue: number;
+  readonly wage: number | null;
+  readonly contractExpiry: string;
+  readonly injury: string;
+}
+
+export type MetricIcon =
+  | "season"
+  | "position"
+  | "points"
+  | "played"
+  | "rating"
+  | "value"
+  | "wage"
+  | "contract"
+  | "injury";
 
 export interface HeaderMetric {
   readonly icon: MetricIcon;
@@ -121,10 +146,10 @@ export const formatPosition = (position: number): string => {
 export function describeSecondaryRow(state: HeaderState): SecondaryRow {
   switch (state.view) {
     case "career": {
-      const { career } = state;
+      const { career, player = null } = state;
       return {
         kind: "career",
-        metrics: careerMetrics(career),
+        metrics: player === null ? careerMetrics(career) : playerMetrics(player),
         status:
           career.liveMatch === null ? (career.saveName ?? NO_VALUE) : matchReadout(career.liveMatch),
         warning: career.blockedReason,
@@ -184,5 +209,21 @@ function careerMetrics(career: HeaderCareer): readonly HeaderMetric[] {
       value: standing === null ? NO_VALUE : String(standing.played),
       placeholder: standing === null,
     },
+  ];
+}
+
+/** The player screen's band: what CM kept in view about a player whichever tab was open. */
+function playerMetrics(player: HeaderPlayer): readonly HeaderMetric[] {
+  return [
+    { icon: "rating", label: "Rating", value: String(player.overallRating), placeholder: false },
+    { icon: "value", label: "Value", value: formatCredits(player.transferValue), placeholder: false },
+    {
+      icon: "wage",
+      label: "Wage",
+      value: player.wage === null ? NO_VALUE : `${formatCredits(player.wage)} per season`,
+      placeholder: player.wage === null,
+    },
+    { icon: "contract", label: "Contract", value: player.contractExpiry, placeholder: false },
+    { icon: "injury", label: "Injury", value: player.injury, placeholder: false },
   ];
 }

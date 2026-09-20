@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
   FAMILIARITY_TIERS,
@@ -28,6 +28,7 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
+import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 
 /** Popover-based view/position selector: click the trigger button, then click
  *  the option button that appears in the portaled popover. Waits for the
@@ -126,8 +127,15 @@ const mountSquad = async (
   await screen.findByRole("heading", { name: /^Players/ });
 };
 
+let navigateSpy: ReturnType<typeof vi.fn>;
+
 const reset = () => {
   cleanup();
+  navigateSpy = vi.fn();
+  bindRouter({
+    navigate: navigateSpy,
+    history: { back: vi.fn(), forward: vi.fn(), canGoBack: () => false },
+  } as never);
   resetActionHandlers();
   resetScopeState();
   resetTableSessions();
@@ -275,5 +283,20 @@ describe("the leading match-day indicator", () => {
     expect(screen.getByRole("button", { name: "Playing (GK)" }).textContent).toBe("GK");
     expect(screen.getByRole("button", { name: "On the bench" }).textContent).toBe("SB1");
     expect(screen.getByRole("button", { name: "Not selected" }).textContent).toBe("");
+  });
+});
+
+describe("the position list's player names are the way into the player screen", () => {
+  /** The list is the layout the Squad screen opens on, so this is the click the game is most
+   *  often asked for: CM 03/04 put the player screen behind the name, and so does this. */
+  it("clicking a name opens that player's Profile", async () => {
+    await mountSquad([player("p1", "Alan", "Shearer"), player("p2", "Bobby", "Moore")]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Moore, Bobby" }));
+
+    expect(navigateSpy).toHaveBeenCalledWith(expect.objectContaining({
+      to: "/career/$saveId/player/$playerId/profile",
+      params: expect.objectContaining({ playerId: "p2" }),
+    }));
   });
 });

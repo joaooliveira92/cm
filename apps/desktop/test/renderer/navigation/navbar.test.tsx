@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { SaveId, type ClubColoursView } from "@cm-clone/contracts";
 import { Navbar } from "../../../src/renderer/navigation/components/Navbar.js";
+import type { ScreenIdentity } from "../../../src/renderer/screenIdentity.js";
 import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";
 import { NAV_SECTIONS } from "../../../src/renderer/navigation/nav-config.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
@@ -27,7 +28,11 @@ const boundSectionKeys: ReadonlySet<string> = new Set(
 
 const mountNavbar = async (
   initialChild: string,
-  overrides?: { readonly clubColours?: ClubColoursView | null; readonly badgeKey?: string | null },
+  overrides?: {
+    readonly clubColours?: ClubColoursView | null;
+    readonly badgeKey?: string | null;
+    readonly identity?: ScreenIdentity | null;
+  },
 ) => {
   const rootRoute = createRootRoute({ component: () => <Outlet /> });
   const careerRoute = createRoute({ getParentRoute: () => rootRoute, path: "career" });
@@ -40,6 +45,7 @@ const mountNavbar = async (
         clubName="Northport Rovers"
         clubColours={overrides?.clubColours}
         badgeKey={overrides?.badgeKey}
+        identity={overrides?.identity}
         actions={<button type="button">Back to saves</button>}
       />
     ),
@@ -239,5 +245,22 @@ describe("club badge in the header identity zone", () => {
     await mountNavbar("league");
     expect(screen.queryByRole("img")).toBeNull();
     expect(screen.getByText("Northport Rovers")).toBeTruthy();
+  });
+});
+
+describe("a screen's identity in place of the club name", () => {
+  it("names the player and their club, with the facts line beneath", async () => {
+    await mountNavbar("league", {
+      identity: {
+        name: "Florian David",
+        qualifier: "Benfica",
+        facts: "GK, France, Age 22",
+        player: { overallRating: 60, transferValue: 0, wage: null, contractExpiry: "2 years", injury: "None" },
+      },
+    });
+    expect(screen.getByText("Florian David", { exact: false })).toBeTruthy();
+    expect(screen.getByText("(Benfica)")).toBeTruthy();
+    expect(screen.getByText("GK, France, Age 22")).toBeTruthy();
+    expect(screen.queryByText("Northport Rovers")).toBeNull();
   });
 });

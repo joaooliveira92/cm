@@ -6,9 +6,9 @@
 
 - Group J v1 scope: 4 own-club screens, 11 deferred. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-15-group-j-v1-scope.md).
 
-**Blocked by:** [decision request 01](../decision-request-01-when-a-contract-can-be-renewed.md) (whether a Contract can be renewed mid-term)
+**Blocked by:** 
 
-**Status:** needs-info
+**Status:** ready-for-agent
 
 - [ ] Renew action with a length choice on the Player Contract screen for an own-club Player, through `renewContract`
 - [ ] The contract shown refreshes after success; each typed refusal shows its sentence inline

@@ -81,6 +81,27 @@ describe("describeSecondaryRow", () => {
     expect(metricValue(row, "Points")?.placeholder).toBe(false);
   });
 
+  it("reports the open player's facts in place of the calendar and standing", () => {
+    const player = {
+      overallRating: 60,
+      transferValue: 250_000,
+      wage: null,
+      contractExpiry: "2 years",
+      injury: "None",
+    };
+    const row = describeSecondaryRow({ view: "career", career: career(), player });
+
+    if (row.kind !== "career") throw new Error("expected a career row");
+    expect(row.metrics.map((metric) => metric.label)).toEqual(["Rating", "Value", "Wage", "Contract", "Injury"]);
+    expect(metricValue(row, "Value")?.value).toBe(`${(250_000).toLocaleString()} Cr`);
+    // The wage waits on the contract read, and says so rather than printing 0.
+    expect(metricValue(row, "Wage")?.placeholder).toBe(true);
+    expect(row.status).toBe("My Save");
+
+    const paid = describeSecondaryRow({ view: "career", career: career(), player: { ...player, wage: 7000 } });
+    expect(metricValue(paid, "Wage")?.value).toBe(`${(7000).toLocaleString()} Cr per season`);
+  });
+
   it("shows the save name as the status when the loop is free to advance", () => {
     const row = describeSecondaryRow({ view: "career", career: career() });
     if (row.kind !== "career") throw new Error("expected a career row");

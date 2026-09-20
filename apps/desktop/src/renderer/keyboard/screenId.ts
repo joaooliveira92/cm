@@ -15,6 +15,7 @@ const CLUB_SURFACE_BY_SEGMENT: Readonly<Record<string, string>> = {
 const PLAYER_SURFACE_BY_SEGMENT: Readonly<Record<string, string>> = {
   profile: "playerProfile",
   contract: "playerContract",
+  development: "playerDevelopment",
   "coach-report": "playerCoachReport",
 };
 

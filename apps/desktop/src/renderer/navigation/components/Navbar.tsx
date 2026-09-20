@@ -6,12 +6,14 @@ import { clubHeaderStyle } from "../../chrome/header/club-scheme.js";
 import { ClubBadge } from "../../components/shared/ClubBadge.js";
 import { NO_DRAG } from "../../chrome/header/drag-region.js";
 import { NavProvider } from "../../navigation/NavProvider.js";
+import type { ScreenIdentity } from "../../screenIdentity.js";
 import { ContextNav } from "./ContextNav.js";
 import { PrimaryNavItem } from "./PrimaryNavItem.js";
 
 export const Navbar = ({
   saveId,
   clubName,
+  identity = null,
   clubColours = null,
   badgeKey,
   badges,
@@ -21,6 +23,8 @@ export const Navbar = ({
 }: {
   readonly saveId: SaveId;
   readonly clubName: string | null;
+  /** Replaces the club name in the identity slot while a screen names something else. */
+  readonly identity?: ScreenIdentity | null;
   readonly clubColours?: ClubColoursView | null;
   readonly badgeKey?: string | null;
   readonly badges?: Readonly<Record<string, { readonly count: number; readonly label: string }>>;
@@ -32,14 +36,24 @@ export const Navbar = ({
     <NavProvider saveId={saveId}>
       <header className="club-header text-header-fg" style={clubHeaderStyle(clubColours)}>
         <AppTitleBar
-          title={clubName ?? ""}
+          title={identity?.name ?? clubName ?? ""}
           leading={leading}
           identity={
             <span className="flex min-w-0 items-center gap-2 truncate text-lg font-bold">
               {clubName !== null && clubColours !== null && (
                 <ClubBadge badgeKey={badgeKey ?? null} colours={clubColours} clubName={clubName} size={24} />
               )}
-              <span className="truncate">{clubName ?? "\u00a0"}</span>
+              {identity === null ? (
+                <span className="truncate">{clubName ?? "\u00a0"}</span>
+              ) : (
+                <span className="flex min-w-0 flex-col leading-tight">
+                  <span className="truncate">
+                    {identity.name}{" "}
+                    <span className="font-semibold opacity-80">({identity.qualifier})</span>
+                  </span>
+                  <span className="truncate text-xs font-semibold opacity-80">{identity.facts}</span>
+                </span>
+              )}
             </span>
           }
           actions={actions}
