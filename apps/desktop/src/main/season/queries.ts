@@ -4,6 +4,8 @@ import {
   BoardObjectiveView,
   ClubFixturesView,
   ClubNotFoundError,
+  CompetitionNotFoundError,
+  CompetitionOverviewView,
   ClubSummary,
   type CompetitionId,
   FixtureView,
@@ -14,7 +16,7 @@ import {
   type FixtureId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { type StatureTier, type Verdict } from "@cm-clone/shared";
+import { nationName, type StatureTier, type Verdict } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "./decider.js";
@@ -233,6 +235,65 @@ export const getBoardConfidence = (savesDir: string, saveId: SaveId) =>
                 finalPosition: row.finalPosition,
                 verdict: row.verdict,
               }),
+      });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
+  );
+
+/**
+ * Competition Overview (Screen 161): a Competition's landing page.
+ *
+ * One read rather than a composition of the three sibling screens' reads, because none of them
+ * names a competition — so a hub built by composing them could not title itself — and because
+ * three independent reads on one page is three independent failure states.
+ *
+ * It returns **no rows**. Standings, fixtures and results belong to Screens 162, 163 and 164, and
+ * the page links to them; the counts here are what a landing page owes, which is enough to know
+ * whether there is anything to look at.
+ *
+ * `club_count` is read from the column rather than counted from `competition_participants`: the
+ * schema calls it authoritative and says counting participants against participants would only
+ * prove last season equalled last season.
+ */
+export const getCompetitionOverview = (
+  savesDir: string,
+  saveId: SaveId,
+  competitionId: CompetitionId,
+) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const rows = yield* sql<{
+        kind: string;
+        nationId: string | null;
+        clubCount: number | null;
+      }>`SELECT kind, nation_id as "nationId", club_count as "clubCount"
+         FROM competitions WHERE id = ${competitionId}`;
+      const row = rows[0];
+      if (row === undefined) {
+        return yield* new CompetitionNotFoundError({ id: competitionId });
+      }
+
+      const seasonRow = yield* loadSeasonRow;
+      const counts = yield* sql<{ played: number; total: number }>`
+        SELECT SUM(played) as "played", COUNT(*) as "total"
+        FROM fixtures
+        WHERE competition_id = ${competitionId} AND season_number = ${seasonRow.seasonNumber}`;
+      // `SUM` over no rows is NULL, which is a count of zero rather than missing data.
+      const played = counts[0]?.played ?? 0;
+      const total = counts[0]?.total ?? 0;
+
+      const nameOf = yield* displayNames;
+      return new CompetitionOverviewView({
+        competitionId,
+        competitionName: nameOf(competitionId),
+        // Nations are named from code, never the content pack — the pack resolves club and
+        // competition identities only, so a nation id passed to `nameOf` comes back unchanged.
+        nationName: row.nationId === null ? null : nationName(row.nationId),
+        kind: row.kind,
+        season: yield* toSeasonView(seasonRow),
+        clubCount: row.clubCount,
+        playedCount: played,
+        remainingCount: total - played,
       });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

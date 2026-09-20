@@ -1,4 +1,4 @@
-import type { ClubId, MatchId, PlayerId, SaveId } from "@cm-clone/contracts";
+import type { ClubId, CompetitionId, MatchId, PlayerId, SaveId } from "@cm-clone/contracts";
 
 /**
  * Typed navigation destinations. The keyboard spine (ticket 17), the command
@@ -87,6 +87,19 @@ export type CareerDestination =
   /** Club Finances (Screen 39) — any club's budgets, club-scoped because `club_budgets` is keyed
    *  on `club_id`. Its own-club sibling is the `finances` nav destination, a resolver over this. */
   | { readonly type: "clubFinancesDetail"; readonly saveId: SaveId; readonly clubId: ClubId }
+  /**
+   * The competition-scoped surfaces — Overview (161), Table (162), Fixtures (163) and Results
+   * (164). Club-scoped in the same sense the club drill-downs are: each needs a target competition,
+   * so none can be built from a save alone and none is a navbar destination.
+   *
+   * Screens 162, 163 and 164 shipped before these existed and were reachable only by typing a URL.
+   * The Overview is the page that links them together; what links to *it* is the World section's
+   * Competitions entry, which is still a placeholder.
+   */
+  | { readonly type: "competitionOverview"; readonly saveId: SaveId; readonly competitionId: CompetitionId }
+  | { readonly type: "competitionTable"; readonly saveId: SaveId; readonly competitionId: CompetitionId }
+  | { readonly type: "competitionFixturesDetail"; readonly saveId: SaveId; readonly competitionId: CompetitionId }
+  | { readonly type: "competitionResults"; readonly saveId: SaveId; readonly competitionId: CompetitionId }
   /**
    * Player detail — a drill-down to a specific player's profile. Needs both save and player
    * identity, so excluded from save-scoped nav like the club drill-downs.
@@ -177,7 +190,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "clubInformation" | "clubFixturesDetail" | "clubTransfersDetail" | "clubFinancesDetail" | "playerDetail" | "playerDevelopment" | "playerContract" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
+  "teamScoutReport" | "clubStaff" | "clubInformation" | "clubFixturesDetail" | "clubTransfersDetail" | "clubFinancesDetail" | "competitionOverview" | "competitionTable" | "competitionFixturesDetail" | "competitionResults" | "playerDetail" | "playerDevelopment" | "playerContract" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
 >;
 
 /**
@@ -302,6 +315,14 @@ export type ResolvedDestination =
   | {
       readonly to: "/career/$saveId/club/$clubId/finances";
       readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
+    }
+  | {
+      readonly to:
+        | "/career/$saveId/competition/$competitionId/overview"
+        | "/career/$saveId/competition/$competitionId/table"
+        | "/career/$saveId/competition/$competitionId/fixtures"
+        | "/career/$saveId/competition/$competitionId/results";
+      readonly params: { readonly saveId: SaveId; readonly competitionId: CompetitionId };
     };
 
 /** Pure mapping from a typed destination to its route; unit-tested (AC-14). */
@@ -356,6 +377,10 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "clubFixturesDetail":
     case "clubTransfersDetail":
     case "clubFinancesDetail":
+    case "competitionOverview":
+    case "competitionTable":
+    case "competitionFixturesDetail":
+    case "competitionResults":
     case "playerDetail":
     case "playerDevelopment":
     case "playerContract":
@@ -490,6 +515,26 @@ const careerRoute = (
       return {
         to: "/career/$saveId/club/$clubId/finances",
         params: { saveId: destination.saveId, clubId: destination.clubId },
+      };
+    case "competitionOverview":
+      return {
+        to: "/career/$saveId/competition/$competitionId/overview",
+        params: { saveId: destination.saveId, competitionId: destination.competitionId },
+      };
+    case "competitionTable":
+      return {
+        to: "/career/$saveId/competition/$competitionId/table",
+        params: { saveId: destination.saveId, competitionId: destination.competitionId },
+      };
+    case "competitionFixturesDetail":
+      return {
+        to: "/career/$saveId/competition/$competitionId/fixtures",
+        params: { saveId: destination.saveId, competitionId: destination.competitionId },
+      };
+    case "competitionResults":
+      return {
+        to: "/career/$saveId/competition/$competitionId/results",
+        params: { saveId: destination.saveId, competitionId: destination.competitionId },
       };
     case "playerDetail":
       return {

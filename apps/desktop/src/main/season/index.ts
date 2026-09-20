@@ -21,6 +21,7 @@ export {
   getBoardConfidence,
   getClubFixtures,
   getCompetitionFixtures,
+  getCompetitionOverview,
   getFixtures,
   getLeagueTable,
   getCompetitionTable,

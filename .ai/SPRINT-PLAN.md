@@ -240,8 +240,27 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-l ticket 08 — Screen 161 Competition Overview.** It is the competition's landing page, and
-it now carries a second job: **the whole competition branch has no entry point.** Then **09**.
+**group-l ticket 09 — the cull**, which also owes the competition branch its way in: `competitions/`
+is the World section's entry and is still a placeholder, so nothing reaches Screen 161. After that,
+M1's remaining exit criteria are the `club*`/`competition*`/`nation*` placeholder sweep.
+
+**Screen 161 ships** (ticket 08), and with it the competition branch has internal navigation for the
+first time: three buttons reaching Screens 162, 163 and 164, none of which was reachable from
+anywhere before. **e2e 55 passed**, 2081 desktop tests.
+
+**It needed a read, and the reason is worth keeping.** No existing view names a competition —
+`LeagueTableView` is `{ season, standings }`, `FixturesView` is `{ season, fixtures }` — so a hub
+composed purely of its siblings could not title itself. `getCompetitionOverview` returns identity,
+season and three counts and **no rows**: the standings, the card and the results stay on the screens
+that own them. That honours what "compose, don't reimplement" was protecting.
+
+`CompetitionNotFoundError` is new, because this is the first competition-scoped read that needs the
+distinction — `getCompetitionFixtures` answering an unknown competition with an empty list is right
+for a card and wrong for a landing page.
+
+One practical note: **an unscoped `getByText` competes with the persistent shell.** The first e2e
+failed because `Played` matched both the screen's figure label and the chrome's identity band.
+Scope to the screen's `<main>`.
 
 **Screen 164 ships** (ticket 07). `CompetitionResultsScreen` reads `getCompetitionFixtures` and
 filters to played, reversed — no fourth fixture read, as ticket 06 instructed. 163 and 164 share an

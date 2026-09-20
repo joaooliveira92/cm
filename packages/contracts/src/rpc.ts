@@ -33,6 +33,8 @@ import {
   ClubNotFoundError,
   ClubSelectionView,
   BoardConfidenceView,
+  CompetitionNotFoundError,
+  CompetitionOverviewView,
   ClubFinancesView,
   ClubFixturesView,
   ClubInformationView,
@@ -556,6 +558,15 @@ commitCareer: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: BoardConfidenceView,
     error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
+  },
+  /** Competition Overview (Screen 161): a Competition's landing page — its identity, its season,
+   *  and how much of its card is played. Carries no rows: Screens 162, 163 and 164 own those, and
+   *  this page links to them. One read rather than a composition because no other view names a
+   *  competition, so a composed hub could not title itself. */
+  getCompetitionOverview: {
+    payload: Schema.Struct({ saveId: SaveId, competitionId: CompetitionId }),
+    success: CompetitionOverviewView,
+    error: Schema.Union([SaveNotFoundError, CompetitionNotFoundError, PendingFixtureIntegrityError]),
   },
   /** Coaching Assignments (Screen 111): the manager's own club's coaching staff with quality ratings
    *  and assigned departments. A pure read from the `staff` table — no command, no world derivation.

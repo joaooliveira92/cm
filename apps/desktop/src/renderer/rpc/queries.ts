@@ -317,6 +317,26 @@ export const clubTransfersAtom = (saveId: SaveId, clubId: ClubId) =>
   clubTransfersForSave(saveId)(clubId);
 
 /**
+ * getCompetitionOverview — `["save", saveId]`.
+ *
+ * Competition Overview (Screen 161): a Competition's identity, season and card counts. Reactive on
+ * the save key alone, matching `competitionFixturesAtom` — the counts move when football is played,
+ * and the save-wide invalidation after Continue is what both reads rely on to see it.
+ */
+const competitionOverviewForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((competitionId: CompetitionId) =>
+    managementReadPolicy(
+      Atom.make(call("getCompetitionOverview", { saveId, competitionId })).pipe(
+        Atom.withReactivity([saveKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const competitionOverviewAtom = (saveId: SaveId, competitionId: CompetitionId) =>
+  competitionOverviewForSave(saveId)(competitionId);
+
+/**
  * getClubFinances — `["save", saveId]`, `["transfers", saveId]`, `["economy", saveId]`.
  *
  * Club Finances (Screen 39): any club's budgets. Same reactivity as `budgetReviewAtom`, which is

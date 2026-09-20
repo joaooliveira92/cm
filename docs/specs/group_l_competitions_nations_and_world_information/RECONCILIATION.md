@@ -121,23 +121,27 @@ invariant errors, and payload `SchemaError` — carried by group-l decision requ
 `effect-lint` rule was rejected as the wrong tool, because the needed fact is a type rather than a
 syntax pattern.
 
-## Screens 161 and 164: 164 shipped, 161 owed
+## Screens 161 and 164: both shipped
 
 Both are `Reviewed` and carry no divergence row. Ticket 02 put them in v1 scope and ticket 06 set the
 order — 164 next, reusing `getCompetitionFixtures` rather than adding a third fixture read, then 161.
 Their `Reviewed` silence asserts nothing about what the import asks of them.
 
-**164 shipped 2026-09-20** ([ticket 07](../../../.scratch/group-l-competitions-nations-and-world-information/issues/07-competition-results.md)),
+**Both shipped 2026-09-20.** 164 ([ticket 07](../../../.scratch/group-l-competitions-nations-and-world-information/issues/07-competition-results.md)),
 reusing the read as instructed. Attendance, player-of-the-match and tactical summary are not built
 and have no model — the same three the [Group C ledger](../group_c_club_information/RECONCILIATION.md)
 `deferred`s for Screen 41.
 
 **Two properties of the branch, found building it and true of 162 and 163 as well:**
 
-- **Nothing in the app reaches any of them.** All three are URL-only, and the World section's
-  Competitions entry is a WIP placeholder, so there is no route into the branch at all. Owed to
-  [ticket 08](../../../.scratch/group-l-competitions-nations-and-world-information/issues/08-competition-overview.md)
-  and [ticket 09](../../../.scratch/group-l-competitions-nations-and-world-information/issues/09-cull-the-group-l-placeholders.md).
+- **~~Nothing in the app reaches any of them.~~ Half-fixed.** Screen 161 shipped as the branch's
+  landing page and links to 162, 163 and 164, so those three are now reachable. What reaches **161**
+  is the World section's Competitions entry, which is still a WIP placeholder — owed to
+  [ticket 09](../../../.scratch/group-l-competitions-nations-and-world-information/issues/09-cull-the-group-l-placeholders.md).
+
+  161 carries a read of its own, `getCompetitionOverview`, because no other view names a
+  competition and a hub composed from its siblings could not title itself. It returns identity,
+  season and card counts and **no rows**, so the three screens that own those keep owning them.
 - **They show the current Season only**, inheriting `getCompetitionFixtures`' season scope. A
   rollover empties Competition Results, and Screen 172 Competition History is `deferred`, so a past
   season's results are currently visible nowhere.

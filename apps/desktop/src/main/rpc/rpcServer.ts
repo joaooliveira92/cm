@@ -29,7 +29,11 @@ import { getNewsInbox, setNewsMessageState } from "../career/news.js";
 import { advanceCalendar, getCompetitionFixtures, getCompetitionTable, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "../season/index.js";
 import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave } from "../world/saves.js";
 import { getClubInformation } from "../club/clubInformation.js";
-import { getBoardConfidence, getClubFixtures } from "../season/queries.js";
+import {
+  getBoardConfidence,
+  getClubFixtures,
+  getCompetitionOverview,
+} from "../season/queries.js";
 import { getClubFinances } from "../transfers/budgetReview.js";
 import { getClubTransfers } from "../transfers/transferHistory.js";
 import { getSquad } from "../club/squad.js";
@@ -439,6 +443,13 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
         AppRpcs.getTeamScoutReadings.payload,
       )(payload);
       return yield* getTeamScoutReadings(ctx.savesDir, saveId, clubId);
+    }),
+  getCompetitionOverview: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, competitionId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.getCompetitionOverview.payload,
+      )(payload);
+      return yield* getCompetitionOverview(ctx.savesDir, saveId, competitionId);
     }),
   getClubFinances: (payload, ctx) =>
     Effect.gen(function* () {

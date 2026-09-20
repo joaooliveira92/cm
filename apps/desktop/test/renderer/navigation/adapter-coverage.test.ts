@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   ClubId as ClubIdSchema,
-  MatchId,
+  CompetitionId, MatchId,
   PlayerId,
   SaveId as SaveIdSchema,
   type ClubId,
@@ -30,6 +30,7 @@ const spyRouter = () => {
 
 const saveId = save("save-1");
 const clubId = club("club-7");
+const competitionId = CompetitionId.make("comp_eng_1");
 const playerId = PlayerId.make("player-3");
 const matchId = MatchId.make("m1");
 
@@ -92,6 +93,10 @@ const CAREER_DESTINATIONS: SamplesOf<CareerDestination> = {
   clubFixturesDetail: { type: "clubFixturesDetail", saveId, clubId },
   clubTransfersDetail: { type: "clubTransfersDetail", saveId, clubId },
   clubFinancesDetail: { type: "clubFinancesDetail", saveId, clubId },
+  competitionOverview: { type: "competitionOverview", saveId, competitionId },
+  competitionTable: { type: "competitionTable", saveId, competitionId },
+  competitionFixturesDetail: { type: "competitionFixturesDetail", saveId, competitionId },
+  competitionResults: { type: "competitionResults", saveId, competitionId },
   playerDetail: { type: "playerDetail", saveId, playerId },
   playerDevelopment: { type: "playerDevelopment", saveId, playerId },
   playerContract: { type: "playerContract", saveId, playerId },

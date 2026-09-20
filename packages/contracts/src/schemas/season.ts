@@ -2,7 +2,7 @@ import { Schema } from "effect";
 import { MANAGER_OUTCOMES, VERDICTS } from "@cm-clone/shared";
 
 import { ClubSummary } from "./clubs.js";
-import { ClubId, FixtureId, MatchId, SaveId } from "./ids.js";
+import { ClubId, CompetitionId, FixtureId, MatchId, SaveId } from "./ids.js";
 import { ArchivedCauseSchema } from "./saves.js";
 
 /** Season/Calendar vocabulary: the Calendar advances only by jumping to the next dated boundary — a
@@ -238,4 +238,48 @@ export class BoardConfidenceView extends Schema.Class<BoardConfidenceView>("Boar
   season: SeasonView,
   clubName: Schema.String,
   objective: Schema.NullOr(BoardObjectiveView),
+}) {}
+
+/**
+ * No such Competition in this save.
+ *
+ * Mirrors `ClubNotFoundError`, and exists because Screen 161 is the first competition-scoped read
+ * that needs the distinction. `getCompetitionFixtures` and `getCompetitionTable` answer an unknown
+ * competition with an empty list, which is fine for them — an empty card and an empty table are
+ * real answers. A landing page is different: a blank name is not a competition with nothing in it.
+ */
+export class CompetitionNotFoundError extends Schema.TaggedError<CompetitionNotFoundError>()(
+  "CompetitionNotFoundError",
+  { id: CompetitionId },
+) {}
+
+/**
+ * Competition Overview (Screen 161) — a Competition's landing page.
+ *
+ * **One small read rather than a composition, and the reason is the title.** No existing view names
+ * a competition: `LeagueTableView` is `{ season, standings }` and `FixturesView` is
+ * `{ season, fixtures }`, so a hub built purely by composing its siblings could not say which
+ * competition it was about. Composing three reads would also put three independent failure states
+ * on one page, which is what `ClubStaffView`'s comment argues against.
+ *
+ * What it deliberately does **not** carry is rows. No standings, no fixtures, no results — those
+ * live on Screens 162, 163 and 164, and this page links to them rather than reimplementing them.
+ * The counts are what a landing page owes: enough to know whether there is anything to look at.
+ */
+export class CompetitionOverviewView extends Schema.Class<CompetitionOverviewView>(
+  "CompetitionOverviewView",
+)({
+  competitionId: CompetitionId,
+  competitionName: Schema.String,
+  /** The nation this competition belongs to, or `null` for a cross-border tournament — the schema
+   *  models confederations as containers with no `nations` row to point at. */
+  nationName: Schema.NullOr(Schema.String),
+  /** `league`, `cup`, `reserve` or `continental`, as the schema's own check constraint allows. */
+  kind: Schema.String,
+  season: SeasonView,
+  /** Authoritative from `competitions.club_count`, not counted from participants — `null` for a
+   *  competition whose field is a function of its sources. */
+  clubCount: Schema.NullOr(Schema.Finite),
+  playedCount: Schema.Finite,
+  remainingCount: Schema.Finite,
 }) {}
