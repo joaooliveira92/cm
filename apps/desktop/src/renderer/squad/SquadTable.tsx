@@ -285,33 +285,6 @@ export const SquadTable = () => {
   const toolbarControls = useMemo(
     () => (
       <>
-        <Popover open={viewOpen} onOpenChange={setViewOpen}>
-          <PopoverTrigger
-            render={
-              <button type="button" className={ACTIONS_ROW_BUTTON_CLASS} aria-label="Squad view">
-                <span>View</span>
-                <ChevronDown aria-hidden="true" className="size-4" />
-              </button>
-            }
-          />
-          <PopoverContent align="start" sideOffset={4} className="w-56 p-1">
-            <div className="flex flex-col gap-0.5">
-              {SQUAD_VIEWS.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  className={ACTIONS_ROW_ITEM_CLASS}
-                  onClick={() => {
-                    setView(option.id);
-                    setViewOpen(false);
-                  }}
-                >
-                  <span>{option.label}</span>
-                </button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
         <Popover open={positionOpen} onOpenChange={setPositionOpen}>
           <PopoverTrigger
             render={
@@ -344,6 +317,33 @@ export const SquadTable = () => {
                   }}
                 >
                   <span>{position}</span>
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+        <Popover open={viewOpen} onOpenChange={setViewOpen}>
+          <PopoverTrigger
+            render={
+              <button type="button" className={ACTIONS_ROW_BUTTON_CLASS} aria-label="Squad view">
+                <span>View</span>
+                <ChevronDown aria-hidden="true" className="size-4" />
+              </button>
+            }
+          />
+          <PopoverContent align="start" sideOffset={4} className="w-56 p-1">
+            <div className="flex flex-col gap-0.5">
+              {SQUAD_VIEWS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={ACTIONS_ROW_ITEM_CLASS}
+                  onClick={() => {
+                    setView(option.id);
+                    setViewOpen(false);
+                  }}
+                >
+                  <span>{option.label}</span>
                 </button>
               ))}
             </div>

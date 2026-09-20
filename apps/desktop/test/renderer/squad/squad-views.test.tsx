@@ -30,7 +30,8 @@ import { resetAnnouncements } from "../../../src/renderer/table/announcement.js"
 import { renderInRouter } from "../../setup/renderInRouter.js";
 
 /** Popover-based view/position selector: click the trigger button, then click
- *  the option button that appears in the portaled popover. */
+ *  the option button that appears in the portaled popover. Waits for the
+ *  popover to close (the dialog is unmounted) before returning. */
 const chooseOptionByLabel = async (
   triggerLabel: string,
   optionLabel: string,
@@ -40,8 +41,7 @@ const chooseOptionByLabel = async (
   const option = await screen.findByText(optionLabel, {}, { timeout: 2000 });
   fireEvent.click(option);
   await waitFor(() => {
-    // The popover closes after clicking an option — just wait for the next
-    // render cycle so assertions below see the updated screen.
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 };
 

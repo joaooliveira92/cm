@@ -51,11 +51,11 @@ function SelectContent({
 }) {
   return (
     <SelectPrimitive.Portal>
-      <SelectPrimitive.Positioner side={side} align={align} sideOffset={sideOffset}>
+      <SelectPrimitive.Positioner className="z-50" side={side} align={align} sideOffset={sideOffset}>
         <SelectPrimitive.Popup
           data-slot="select-content"
           className={cn(
-            "z-50 max-h-60 min-w-[8rem] overflow-y-auto rounded-md border border-border-subtle bg-surface p-1 text-text-primary shadow-panel",
+            "max-h-60 min-w-[8rem] overflow-y-auto rounded-md border border-border-subtle bg-surface p-1 text-text-primary shadow-panel",
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
             className,
           )}
