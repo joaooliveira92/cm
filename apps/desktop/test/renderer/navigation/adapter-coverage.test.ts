@@ -85,8 +85,6 @@ const CAREER_DESTINATIONS: SamplesOf<CareerDestination> = {
   playerSearch: { type: "playerSearch", saveId },
   staffSearch: { type: "staffSearch", saveId },
   competitions: { type: "competitions", saveId },
-  nations: { type: "nations", saveId },
-  clubs: { type: "clubs", saveId },
   teamScoutReport: { type: "teamScoutReport", saveId, clubId },
   clubStaff: { type: "clubStaff", saveId, clubId },
   clubInformation: { type: "clubInformation", saveId, clubId },

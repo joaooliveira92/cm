@@ -317,6 +317,18 @@ export const clubTransfersAtom = (saveId: SaveId, clubId: ClubId) =>
   clubTransfersForSave(saveId)(clubId);
 
 /**
+ * getCompetitions — `["save", saveId]`.
+ *
+ * The World section's browse list. Every field is fixed at world generation, so the save key alone
+ * is enough — nothing a command does changes which competitions exist.
+ */
+export const competitionsAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getCompetitions", { saveId })).pipe(Atom.withReactivity([saveKey(saveId)])),
+  ),
+);
+
+/**
  * getCompetitionOverview — `["save", saveId]`.
  *
  * Competition Overview (Screen 161): a Competition's identity, season and card counts. Reactive on

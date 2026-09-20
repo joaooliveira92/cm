@@ -58,8 +58,6 @@ export type CareerDestination =
   | { readonly type: "playerSearch"; readonly saveId: SaveId }
   | { readonly type: "staffSearch"; readonly saveId: SaveId }
   | { readonly type: "competitions"; readonly saveId: SaveId }
-  | { readonly type: "nations"; readonly saveId: SaveId }
-  | { readonly type: "clubs"; readonly saveId: SaveId }
   /**
    * The Team Scout Report on another club — a drill-down reached from a surface that already
    * names a club (a league-table row), not a top-level screen. It is the first destination to
@@ -173,8 +171,6 @@ export const CAREER_SCREEN_TYPES = [
   "playerSearch",
   "staffSearch",
   "competitions",
-  "nations",
-  "clubs",
 ] as const;
 
 /**
@@ -267,8 +263,6 @@ export type ResolvedDestination =
   | { readonly to: "/career/$saveId/player-search"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/staff-search"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/competitions"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/nations"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/clubs"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/match-match-tactics"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/match-substitutions"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/match-stats"; readonly params: { readonly saveId: SaveId } }
@@ -369,8 +363,6 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "playerSearch":
     case "staffSearch":
     case "competitions":
-    case "nations":
-    case "clubs":
     case "teamScoutReport":
     case "clubStaff":
     case "clubInformation":
@@ -482,10 +474,6 @@ const careerRoute = (
       return { to: "/career/$saveId/staff-search", params: { saveId: destination.saveId } };
     case "competitions":
       return { to: "/career/$saveId/competitions", params: { saveId: destination.saveId } };
-    case "nations":
-      return { to: "/career/$saveId/nations", params: { saveId: destination.saveId } };
-    case "clubs":
-      return { to: "/career/$saveId/clubs", params: { saveId: destination.saveId } };
     case "teamScoutReport":
       return {
         to: "/career/$saveId/club/$clubId/scout-report",

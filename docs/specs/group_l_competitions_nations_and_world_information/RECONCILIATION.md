@@ -202,12 +202,24 @@ model differs; all are ticket 02, and each Anchor is `unscheduled` unless stated
   ways: `clubSquadDetail` kept its stub because a decision request is live; `clubReservesDetail`
   lost its because a v1 exclusion is not work in progress.
 
-  **Three survived, and for a different reason.** `competitions/`, `nations/` and `clubs/` are the
-  World section's **live nav destinations**, not URL-only stubs, so deleting them would take three
-  entries out of the navbar. They are
-  [ticket 10](../../../.scratch/group-l-competitions-nations-and-world-information/issues/10-the-world-section-lands-on-three-placeholders.md) —
-  the same shape as the Club → Staff defect, three times over, and the reason Screen 161 is still
-  reachable only by address.
+  **Three survived the cull and were settled separately**
+  ([ticket 10](../../../.scratch/group-l-competitions-nations-and-world-information/issues/10-the-world-section-lands-on-three-placeholders.md),
+  2026-09-20): one built, two removed.
+
+  - **`competitions/` is built.** It lists every competition in the save, each row opening its
+    Overview — which is what finally makes Screens 161–164 reachable. They had shipped with no entry
+    point at all.
+  - **`clubs/` is removed, with its nav entry** — a first-time ruling. No import screen asks for an
+    all-clubs browse; the default scope is twenty clubs and a full pyramid is sixteen thousand, so a
+    flat list needs search, filter and pagination that do not exist, and Player Search (119) — the
+    screen that would establish that machinery — is itself `deferred` behind a decision request. A
+    club is reached through a competition's table, which is bounded at every step. It returns if a
+    Club Search is ever specified.
+  - **`nations/` is removed, with its nav entry.** Every nation screen this group charted is
+    `deferred`, so the list would have linked to nothing but dead ends.
+
+  The World section has one entry now. That is the honest shape, and it grows back when Groups O, P
+  and Q build what they own.
 
   The seven screens that never had a route still have none, and now that is the only thing true of
   them: nothing was culled for 165, 169–171, 176–178 because there was nothing there.

@@ -49,9 +49,7 @@ export const isCareerScreen = (screen: ScreenName): boolean =>
   screen === "scouting" ||
   screen === "playerSearch" ||
   screen === "staffSearch" ||
-  screen === "competitions" ||
-  screen === "nations" ||
-  screen === "clubs";
+  screen === "competitions";
 
 /**
  * The club-scoped drill-downs: `/career/$saveId/club/$clubId/...`. Inside a career, but not one of

@@ -110,8 +110,6 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/player-search":
     case "/career/$saveId/staff-search":
     case "/career/$saveId/competitions":
-    case "/career/$saveId/nations":
-    case "/career/$saveId/clubs":
     case "/career/$saveId/match-match-tactics":
     case "/career/$saveId/match-substitutions":
     case "/career/$saveId/match-stats":

@@ -5,7 +5,9 @@ import {
   ClubFixturesView,
   ClubNotFoundError,
   CompetitionNotFoundError,
+  CompetitionListItemView,
   CompetitionOverviewView,
+  CompetitionsListView,
   ClubSummary,
   type CompetitionId,
   FixtureView,
@@ -235,6 +237,49 @@ export const getBoardConfidence = (savesDir: string, saveId: SaveId) =>
                 finalPosition: row.finalPosition,
                 verdict: row.verdict,
               }),
+      });
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
+  );
+
+/**
+ * Competitions (World section): every competition in the save.
+ *
+ * Ordered so the list reads as the world is shaped — nation first, then the pyramid from the top
+ * down, then by id so two divisions at one tier come back the same way every run. A cup has no
+ * tier, so `tier IS NULL` sorts it after the ladder rather than above it.
+ *
+ * Carries no standings and no honours. Every screen that would source such a column — statistics,
+ * records, history, awards — is `deferred`, and a browse list is exactly where one would look
+ * harmless.
+ */
+export const getCompetitions = (savesDir: string, saveId: SaveId) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const rows = yield* sql<{
+        id: CompetitionId;
+        kind: string;
+        nationId: string | null;
+        tier: number | null;
+        clubCount: number | null;
+      }>`SELECT id, kind, nation_id as "nationId", tier, club_count as "clubCount"
+         FROM competitions
+         ORDER BY nation_id IS NULL ASC, nation_id ASC, tier IS NULL ASC, tier ASC, id ASC`;
+
+      const nameOf = yield* displayNames;
+      return new CompetitionsListView({
+        competitions: rows.map(
+          (row) =>
+            new CompetitionListItemView({
+              competitionId: row.id,
+              competitionName: nameOf(row.id),
+              kind: row.kind,
+              // Nations are named from code, never the content pack.
+              nationName: row.nationId === null ? null : nationName(row.nationId),
+              tier: row.tier,
+              clubCount: row.clubCount,
+            }),
+        ),
       });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

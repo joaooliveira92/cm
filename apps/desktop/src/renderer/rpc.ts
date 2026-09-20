@@ -32,6 +32,7 @@ export {
   boardConfidenceAtom,
   clubFinancesAtom,
   competitionOverviewAtom,
+  competitionsAtom,
   clubFixturesAtom,
   clubInformationAtom,
   clubTransfersAtom,

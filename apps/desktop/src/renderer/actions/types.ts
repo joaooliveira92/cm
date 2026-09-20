@@ -29,8 +29,6 @@ export type ScreenName =
   | "playerSearch"
   | "staffSearch"
   | "competitions"
-  | "nations"
-  | "clubs"
   // The club-scoped drill-downs. They are route screen-ids like any other — the spine derives
   // them from the path and the focus coordinator keys on them — but they carry no `g` binding and
   // own no screen-scoped Action, so they appear here and in neither `CareerScreenName` nor
@@ -95,9 +93,7 @@ export type CareerScreenName =
   | "scouting"
   | "playerSearch"
   | "staffSearch"
-  | "competitions"
-  | "nations"
-  | "clubs";
+  | "competitions";
 
 /**
  * The scope an Action lives in. `screen`/`career-global`/`app-global` spans the

@@ -204,8 +204,6 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   playerSearch: { showKeyBadges: true },
   staffSearch: { showKeyBadges: true },
   competitions: { showKeyBadges: true },
-  nations: { showKeyBadges: false },
-  clubs: { showKeyBadges: false },
   // The club-scoped drill-downs are terminal reading surfaces owning no screen-scoped action, so
   // there is nothing on either page a badge could sit on.
   clubStaff: { showKeyBadges: false },

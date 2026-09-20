@@ -332,18 +332,6 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
         destination: "competitions",
         icon: Trophy,
       },
-      {
-        id: "world-nations",
-        label: "Nations",
-        destination: "nations",
-        icon: Flag,
-      },
-      {
-        id: "world-clubs",
-        label: "Clubs",
-        destination: "clubs",
-        icon: Building2,
-      },
     ],
   },
 ] as const;

@@ -28,14 +28,7 @@ import { getManagerProfile, getManagerProfileScreen } from "../career/managerPro
 import { getNewsInbox, setNewsMessageState } from "../career/news.js";
 import { advanceCalendar, getCompetitionFixtures, getCompetitionTable, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "../season/index.js";
 import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave } from "../world/saves.js";
-import { getClubInformation } from "../club/clubInformation.js";
-import {
-  getBoardConfidence,
-  getClubFixtures,
-  getCompetitionOverview,
-} from "../season/queries.js";
-import { getClubFinances } from "../transfers/budgetReview.js";
-import { getClubTransfers } from "../transfers/transferHistory.js";
+import { browseHandlers } from "./browseHandlers.js";
 import { getSquad } from "../club/squad.js";
 import { changeTactics, getTactics } from "../club/tactics.js";
 import { getTacticsOverview } from "../club/tacticsOverview.js";
@@ -104,7 +97,7 @@ type UngatedMethod = "createSave" | "commitCareer" | "advanceCalendar" | "commit
  * domain error or a defect is the same open decision linked above; admitting it here is what lets
  * the rest of this type be exact in the meantime.
  */
-type Handler<M extends AppRpcMethod> = M extends UngatedMethod
+export type Handler<M extends AppRpcMethod> = M extends UngatedMethod
   ? (payload: unknown, ctx: RpcContext) => Effect.Effect<unknown, unknown>
   : (
       payload: unknown,
@@ -123,6 +116,7 @@ const saveIdOf = (method: AppRpcMethod, payload: unknown): string | null => {
 };
 
 const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
+  ...browseHandlers,
   ping: () => Effect.succeed("pong"),
 
   // League and Nation Selection (Screen 3). Every one of these re-validates against the catalogue
@@ -443,48 +437,6 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
         AppRpcs.getTeamScoutReadings.payload,
       )(payload);
       return yield* getTeamScoutReadings(ctx.savesDir, saveId, clubId);
-    }),
-  getCompetitionOverview: (payload, ctx) =>
-    Effect.gen(function* () {
-      const { saveId, competitionId } = yield* Schema.decodeUnknownEffect(
-        AppRpcs.getCompetitionOverview.payload,
-      )(payload);
-      return yield* getCompetitionOverview(ctx.savesDir, saveId, competitionId);
-    }),
-  getClubFinances: (payload, ctx) =>
-    Effect.gen(function* () {
-      const { saveId, clubId } = yield* Schema.decodeUnknownEffect(
-        AppRpcs.getClubFinances.payload,
-      )(payload);
-      return yield* getClubFinances(ctx.savesDir, saveId, clubId);
-    }),
-  getBoardConfidence: (payload, ctx) =>
-    Effect.gen(function* () {
-      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getBoardConfidence.payload)(
-        payload,
-      );
-      return yield* getBoardConfidence(ctx.savesDir, saveId);
-    }),
-  getClubTransfers: (payload, ctx) =>
-    Effect.gen(function* () {
-      const { saveId, clubId } = yield* Schema.decodeUnknownEffect(
-        AppRpcs.getClubTransfers.payload,
-      )(payload);
-      return yield* getClubTransfers(ctx.savesDir, saveId, clubId);
-    }),
-  getClubFixtures: (payload, ctx) =>
-    Effect.gen(function* () {
-      const { saveId, clubId } = yield* Schema.decodeUnknownEffect(
-        AppRpcs.getClubFixtures.payload,
-      )(payload);
-      return yield* getClubFixtures(ctx.savesDir, saveId, clubId);
-    }),
-  getClubInformation: (payload, ctx) =>
-    Effect.gen(function* () {
-      const { saveId, clubId } = yield* Schema.decodeUnknownEffect(
-        AppRpcs.getClubInformation.payload,
-      )(payload);
-      return yield* getClubInformation(ctx.savesDir, saveId, clubId);
     }),
   getClubStaff: (payload, ctx) =>
     Effect.gen(function* () {

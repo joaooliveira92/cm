@@ -283,3 +283,35 @@ export class CompetitionOverviewView extends Schema.Class<CompetitionOverviewVie
   playedCount: Schema.Finite,
   remainingCount: Schema.Finite,
 }) {}
+
+/** One row of the Competitions browse list: enough to recognise a competition and open it. */
+export class CompetitionListItemView extends Schema.Class<CompetitionListItemView>(
+  "CompetitionListItemView",
+)({
+  competitionId: CompetitionId,
+  competitionName: Schema.String,
+  /** `league`, `cup`, `reserve` or `continental`, as the schema's check constraint allows. */
+  kind: Schema.String,
+  /** `null` for a cross-border tournament, which has no `nations` row to point at. */
+  nationName: Schema.NullOr(Schema.String),
+  /** Pyramid tier, 1 = highest. `null` for a kind that does not sit on the ladder. */
+  tier: Schema.NullOr(Schema.Finite),
+  clubCount: Schema.NullOr(Schema.Finite),
+}) {}
+
+/**
+ * Competitions (the World section's browse entry) — every competition in the save.
+ *
+ * A browse list and nothing more: each row opens that competition's Overview (Screen 161), which is
+ * where its table, card and results hang. It carries no standings, no form and no honours, because
+ * a browse list is exactly where a stray "titles won" column would look harmless and every one of
+ * those screens is `deferred`.
+ *
+ * This is what makes the competition branch reachable at all: Screens 161–164 shipped with no entry
+ * point and were addressable only by typing a URL.
+ */
+export class CompetitionsListView extends Schema.Class<CompetitionsListView>(
+  "CompetitionsListView",
+)({
+  competitions: Schema.Array(CompetitionListItemView),
+}) {}

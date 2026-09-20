@@ -314,8 +314,6 @@ const tabToDestination = (
     "playerSearch": { type: "playerSearch", saveId },
     "staffSearch": { type: "staffSearch", saveId },
     "competitions": { type: "competitions", saveId },
-    "nations": { type: "nations", saveId },
-    "clubs": { type: "clubs", saveId },
   };
 
   // For sections, the tab id often matches the destination type directly

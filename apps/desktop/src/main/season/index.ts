@@ -22,6 +22,7 @@ export {
   getClubFixtures,
   getCompetitionFixtures,
   getCompetitionOverview,
+  getCompetitions,
   getFixtures,
   getLeagueTable,
   getCompetitionTable,

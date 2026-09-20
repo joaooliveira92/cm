@@ -35,6 +35,7 @@ import {
   BoardConfidenceView,
   CompetitionNotFoundError,
   CompetitionOverviewView,
+  CompetitionsListView,
   ClubFinancesView,
   ClubFixturesView,
   ClubInformationView,
@@ -558,6 +559,13 @@ commitCareer: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: BoardConfidenceView,
     error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
+  },
+  /** Competitions (World section): every competition in the save, for the browse list that opens
+   *  each one's Overview. A pure read over `competitions` and its nation; only the save can fail. */
+  getCompetitions: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: CompetitionsListView,
+    error: SaveNotFoundError,
   },
   /** Competition Overview (Screen 161): a Competition's landing page — its identity, its season,
    *  and how much of its card is played. Carries no rows: Screens 162, 163 and 164 own those, and

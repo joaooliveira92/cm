@@ -240,11 +240,27 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**group-l ticket 10 — the World section's three entries all land on placeholders.** Competitions is
-the urgent one: [ticket 08](../.scratch/group-l-competitions-nations-and-world-information/issues/08-competition-overview.md)
-built Screen 161 as the competition branch's landing page and **nothing links to it**, so four
-screens — three shipped weeks ago — are reachable only by typing a URL. Same defect as Club → Staff,
-three times over.
+**The M1 queue is empty.** Every ticket in `.scratch/` is resolved except two that are blocked on a
+human: group-c 10 (the any-club squad) and group-g 31 (committed matches store their timeline).
+Recompute the frontier from `.scratch/` before starting anything.
+
+**The competition branch is complete and reachable** (group-l ticket 10). World → Competitions lists
+every competition in the save, each row opening its Overview, which links to Table, Fixtures and
+Results. The e2e spec walks that whole journey with **nothing addressed by URL**, which retires the
+by-address entries the earlier competition specs used. **e2e 55 passed**, 2090 desktop tests.
+
+**Two screens were removed rather than built, and the reasoning is in the ledger.** *Clubs* — no
+import screen asks for an all-clubs browse, a full pyramid is sixteen thousand clubs, and a flat
+list needs search machinery that does not exist (Player Search is itself deferred behind a decision
+request). A club is reached through a competition's table, which now has a way in. *Nations* — every
+nation screen Group L charted is `deferred`, so the list would link to nothing but dead ends. The
+World section has one entry now, which is the honest shape.
+
+**The 600-line ceiling fired on `rpcServer.ts` and splitting beat exempting.** `contracts/rpc.ts`
+has an exemption reading "RPC method registry; grows linearly with endpoints", and this is that
+registry's other half — but it is 440 lines of *implementation*, and implementations group. Now
+`rpc/browseHandlers.ts` holds the eight surfaces reached with a target in hand; the map stays
+exhaustive because `rpcServer.ts` spreads it in before typing the whole.
 
 **The Group L cull is done** (ticket 09): eighteen placeholders deleted, three kept. **WIP
 placeholders across the renderer are down from 33 to 13**, and every one of the thirteen now has a

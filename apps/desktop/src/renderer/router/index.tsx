@@ -44,8 +44,6 @@ import { ScoutingKnowledgeScreen } from "../scouting/ScoutingKnowledgeScreen.js"
 import { PlayerSearchScreen } from "../playerSearch/PlayerSearchScreen.js";
 import { StaffSearchScreen } from "../staffSearch/StaffSearchScreen.js";
 import { CompetitionsScreen } from "../competitions/CompetitionsScreen.js";
-import { NationsScreen } from "../nations/NationsScreen.js";
-import { ClubsScreen } from "../clubs/ClubsScreen.js";
 // Ticket 03 — Staff drill-downs
 // Ticket 04 — Club drill-downs (other club views)
 import { ClubSquadDetailScreen } from "../clubSquadDetail/ClubSquadDetailScreen.js";
@@ -195,8 +193,6 @@ const scoutingKnowledgeRoute = defineCareerChild(
 const playerSearchRoute = defineCareerChild("player-search", "playerSearch", PlayerSearchScreen);
 const staffSearchRoute = defineCareerChild("staff-search", "staffSearch", StaffSearchScreen);
 const competitionsRoute = defineCareerChild("competitions", "competitions", CompetitionsScreen);
-const nationsRoute = defineCareerChild("nations", "nations", NationsScreen);
-const clubsRoute = defineCareerChild("clubs", "clubs", ClubsScreen);
 
 /**
  * The Tactics area is the one career surface with its own read-only home: `/tactics` lands on the
@@ -518,8 +514,6 @@ const routeTree = rootRoute.addChildren([
       playerSearchRoute,
       staffSearchRoute,
       competitionsRoute,
-      nationsRoute,
-      clubsRoute,
       clubRoute.addChildren([
         clubScoutReportRoute,
         clubStaffRoute,

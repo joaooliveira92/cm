@@ -252,6 +252,7 @@ const NAV_PATH = {
   "club information": ["Club", "Information"],
   "club finances": ["Club", "Finances"],
   "board confidence": ["Club", "Board Confidence"],
+  competitions: ["World"],
 } as const satisfies Record<string, ReadonlyArray<string>>;
 
 export type Screen = keyof typeof NAV_PATH;

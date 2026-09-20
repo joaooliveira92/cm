@@ -122,8 +122,6 @@ const SpineOrchestrator = ({
         playerSearch: () => navigateCareer({ type: "playerSearch", saveId }, "keyboard"),
         staffSearch: () => navigateCareer({ type: "staffSearch", saveId }, "keyboard"),
         competitions: () => navigateCareer({ type: "competitions", saveId }, "keyboard"),
-        nations: () => navigateCareer({ type: "nations", saveId }, "keyboard"),
-        clubs: () => navigateCareer({ type: "clubs", saveId }, "keyboard"),
       };
       // Every section nav action carries its destination in metadata, so the handler set is read
       // off the registry rather than restated here (a restated copy once sent `g 3` to Squad).
