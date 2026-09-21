@@ -39,6 +39,7 @@ import { loadSquadPlayers } from "../club/squad.js";
 import { accrueScoutingProgress } from "../club/scouting.js";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
 import { MATCH_STREAM_TYPE, deriveMatchEvents } from "../match/stream.js";
+import { timelineRecorded } from "../match/timeline.js";
 import { readGenerationManifest } from "../world/worldGeneration.js";
 import { withAdvanceLock } from "./advanceLock.js";
 import { loadSeasonRow, type SeasonPhase } from "./currentSeason.js";
@@ -170,6 +171,12 @@ const runCommit = (saveId: SaveId, fixtureId: FixtureId) =>
         home_penalties = ${homePenalties}, away_penalties = ${awayPenalties}, played = 1
       WHERE id = ${fixtureId}`;
     yield* recordMatchdayConditions(fixture.seasonNumber, derived.conditions, injuries);
+
+    // The timeline becomes a fact with the result, in the same transaction, so a committed match can
+    // never exist without it: later reads load these events rather than re-deriving them under
+    // whatever engine is current then.
+    const timelineSeq = yield* nextStreamSeq(MATCH_STREAM_TYPE, matchId);
+    yield* appendStreamEvents(MATCH_STREAM_TYPE, matchId, timelineSeq, [timelineRecorded(derived.events)]);
 
     // The rest of the Matchday, in the same transaction as the human's own result. The League table
     // is never allowed to show a Matchday the player has played and the division has not, or the

@@ -32,6 +32,11 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
   Saves are disposable during development: a save is stamped with a DDL-derived `SAVE_SCHEMA_VERSION`
   and `loadSave` refuses any other with `SaveSchemaMismatchError`, proved against a real 2026-09-02
   save. [31](issues/31-committed-matches-store-their-timeline.md) is unblocked and needs no backfill.
+- [31 — A committed match stores its timeline](issues/31-committed-matches-store-their-timeline.md):
+  resolved 2026-09-21. One `MatchTimelineRecorded` event on the match stream, appended in the commit
+  transaction; report, summary and statistics load it, a live match re-derives. Proved by flipping a
+  mocked engine rule after commit. Unblocks 26 and 29; the restart message split out as
+  [33](issues/33-a-restarted-live-match-says-so.md).
 
 ## Not yet specified
 

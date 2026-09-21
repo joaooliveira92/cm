@@ -28,7 +28,7 @@ laws of the game and every manager's expectation produce.
 
 This changes what a seed produces for any saved match where the last keeper was sent off, so it is an
 **engine-rule change and gated on
-[ticket 31](../architecture/2026-09-19-committed-matches-store-their-timeline.md)**.
+[ticket 31](../../implemented/architecture/2026-09-19-committed-matches-store-their-timeline.md)**.
 
 Decided by the agent on 2026-09-19 under the human's standing delegation ("i need you to solve the
 decisions"), adopting the request's recommendation.

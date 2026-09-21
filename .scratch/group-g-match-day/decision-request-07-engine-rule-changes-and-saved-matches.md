@@ -80,7 +80,7 @@ re-derive, so chunked resimulation and seed determinism are untouched.
 
 Decided under the human's standing delegation ("approve your recommendations on the blocking
 decisions"), adopting this request's own recommendation. Recorded as
-[a committed match stores its timeline](../../.agents/notes/proposed/architecture/2026-09-19-committed-matches-store-their-timeline.md).
+[a committed match stores its timeline](../../.agents/notes/implemented/architecture/2026-09-19-committed-matches-store-their-timeline.md).
 
 Four things this fixes that the options left open:
 

@@ -22,7 +22,8 @@ import { loadStreamEvents, withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
 import { playerNames } from "./playerNames.js";
 import { matchStatisticsView } from "./statistics.js";
-import { MATCH_STREAM_TYPE, deriveMatchEvents } from "./stream.js";
+import { MATCH_STREAM_TYPE } from "./stream.js";
+import { matchEventsOf } from "./timeline.js";
 import { substitutionLedger } from "./substitutions.js";
 
 type ReportedEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "YellowCard" | "RedCard" | "Injury" | "Substitution" }>;
@@ -102,7 +103,7 @@ export const getMatchReport = (savesDir: string, saveId: SaveId, matchId: MatchI
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
       if (!(yield* isCommitted(matchId))) return yield* new MatchNotCompleteError({ matchId });
 
-      const { events } = yield* Effect.sync(() => deriveMatchEvents(stream));
+      const events = yield* matchEventsOf(stream);
       const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
       const reported = events.filter(isReported);
       const clubName = yield* displayNames;

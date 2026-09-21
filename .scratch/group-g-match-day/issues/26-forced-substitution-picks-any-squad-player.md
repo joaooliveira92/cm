@@ -27,7 +27,7 @@ question. It is blocked on the backfill: this fix makes almost every saved match
 substitution replay differently, and landing it before 31 destroys those matches' original timelines.
 The patch stays held until 31 ships.
 
-**Status:** needs-info
+**Status:** ready-for-agent
 
 - [ ] A forced substitution never brings on a player who has already been on the pitch
 - [ ] The replacement's selection is deterministic and independent of squad row order
@@ -53,3 +53,5 @@ Blocked because nearly every saved match with a severe-injury substitution re-de
 timeline, and Match Report and statistics re-derive on every read, so they would contradict persisted
 results. See [decision request 07](../decision-request-07-engine-rule-changes-and-saved-matches.md).
 The replacement rule (never-on, lowest id first) should also be re-checked against decision request 04's answer.
+
+- 2026-09-21: unblocked. [31](31-committed-matches-store-their-timeline.md) shipped: committed matches keep their stored timeline, so an engine-rule change no longer rewrites them. No backfill exists or is needed (saves are disposable during development). The change note still says which *live* and pre-31 matches replay differently.

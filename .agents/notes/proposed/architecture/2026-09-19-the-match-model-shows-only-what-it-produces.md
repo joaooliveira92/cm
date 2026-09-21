@@ -45,7 +45,7 @@ appears in no event still has a rating that means something. *(Request 03, Optio
 The shape, which is the part a note can fix:
 
 - It is a **pure function of the stored timeline** — the committed match's persisted events
-  ([note](2026-09-19-committed-matches-store-their-timeline.md)), not of a live re-derivation. A rating
+  ([note](../../implemented/architecture/2026-09-19-committed-matches-store-their-timeline.md)), not of a live re-derivation. A rating
   that drifts between two reads of the same match is worse than no rating.
 - A player's rating is a documented **base** adjusted by their own events and by the phase outcomes
   their unit was on the pitch for. A goalkeeper's rating therefore moves with goals conceded while he
@@ -57,7 +57,7 @@ The shape, which is the part a note can fix:
   not by deciding once.
 
 **Option C — have the engine record per-player involvement — is the right end state, and it is newly
-safe.** Before [ticket 31](2026-09-19-committed-matches-store-their-timeline.md), adding involvement
+safe.** Before [ticket 31](../../implemented/architecture/2026-09-19-committed-matches-store-their-timeline.md), adding involvement
 events would have rewritten every saved match's ratings. Once committed matches store their timelines it
 only affects new matches. So: Option B now, Option C when the engine is next opened, and the rating
 module is the seam that makes the swap invisible to the screens.
@@ -88,7 +88,7 @@ one, not smuggled in behind two screens.
 - Screens 95 and 100 ship as they are. Ticket 09's criterion naming the four statistics is **withdrawn**,
   not deferred.
 - Screens 96 and 101 become buildable — they were the corpus's only `Parked` rows. The ticket depends on
-  [ticket 31](2026-09-19-committed-matches-store-their-timeline.md), since the rating must read a stored
+  [ticket 31](../../implemented/architecture/2026-09-19-committed-matches-store-their-timeline.md), since the rating must read a stored
   timeline.
 - `CONTEXT.md` gains **Match Rating**.
 - A follow-up is owed on the engine: per-player involvement events (Option C), plus possession and

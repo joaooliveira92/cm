@@ -127,7 +127,7 @@ answered, **every engine-rule fix in this codebase was blocked**, not only Group
 
 **Answered 2026-09-19: a committed match stores its derived timeline.** Committed matches are frozen;
 live matches still re-derive, so chunked resimulation and seed determinism are untouched. Recorded as
-[a committed match stores its timeline](../../../.agents/notes/proposed/architecture/2026-09-19-committed-matches-store-their-timeline.md) and filed as group-g ticket 31.
+[a committed match stores its timeline](../../../.agents/notes/implemented/architecture/2026-09-19-committed-matches-store-their-timeline.md) and filed as group-g ticket 31.
 
 The part of the answer that is easy to miss: **the backfill is time-critical.** Existing committed
 matches must be backfilled under the *current* engine, so no engine-rule fix may land before ticket 31

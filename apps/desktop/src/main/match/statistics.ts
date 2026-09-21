@@ -19,7 +19,8 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
-import { MATCH_STREAM_TYPE, deriveMatchEvents } from "./stream.js";
+import { MATCH_STREAM_TYPE } from "./stream.js";
+import { matchEventsOf } from "./timeline.js";
 import { countedSubstitutions, substitutionLedger } from "./substitutions.js";
 
 export const MATCH_STATISTIC_KEYS: ReadonlyArray<MatchStatisticKey> = [
@@ -153,7 +154,7 @@ export const getMatchStatistics = (
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
-      const { events } = yield* Effect.sync(() => deriveMatchEvents(stream));
+      const events = yield* matchEventsOf(stream);
       const nameOf = yield* displayNames;
       return matchStatisticsView(matchId, stream, events, nameOf, revealedEvents);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),

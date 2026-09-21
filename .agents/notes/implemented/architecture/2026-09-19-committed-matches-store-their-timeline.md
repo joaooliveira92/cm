@@ -1,6 +1,6 @@
 # Agent Note: A committed match stores its timeline
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -76,12 +76,14 @@ the rule change waiting on it.
 
 - **Unblocks group-g tickets 26 and 29 and decision requests 01, 04 and 06** — once ticket 31 lands,
   not before. They move from blocked-on-a-question to blocked-on-a-ticket.
-- **A schema addition** is owed, and must precede any engine-rule fix. (First written as "a schema
-  addition, a migration and a backfill"; see the settled clause below.)
+- **Storage** must precede any engine-rule fix. (First written as "a schema addition, a migration and
+  a backfill"; see the settled clause below.) **Shipped 2026-09-21** as one `MatchTimelineRecorded`
+  event on the match's own stream, appended in the commit transaction (`main/match/timeline.ts`):
+  additive JSON in an existing column, so no DDL. Committed reads load it; a live match re-derives.
   **Provisional as of 2026-09-19**: there is no mechanism that reaches an existing save file — see
-  [saves have no migration path](2026-09-19-saves-have-no-migration-path.md). The *rule* here stands;
+  [saves have no migration path](../../proposed/architecture/2026-09-19-saves-have-no-migration-path.md). The *rule* here stands;
   how it is persisted to careers already in progress waits on that. Ticket 31 is blocked on ticket 32.
-  **Settled 2026-09-21:** [saves are disposable during development](../../implemented/architecture/2026-09-21-saves-are-disposable-during-development.md).
+  **Settled 2026-09-21:** [saves are disposable during development](2026-09-21-saves-are-disposable-during-development.md).
   No migration or backfill: a save made before the storage exists is refused on open, so point 1's
   backfill gate no longer applies. Engine-rule fixes still wait for ticket 31 itself.
 - **Saves grow by one timeline per human match.** Background matches are results-only and unaffected.

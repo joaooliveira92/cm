@@ -5,7 +5,7 @@ writes, and the committed-match reads load them instead of re-deriving. No backf
 disposable during development, so a save made before the storage exists is refused on open (ticket 32).
 
 This is the implementation of
-[a committed match stores its timeline](../../../.agents/notes/proposed/architecture/2026-09-19-committed-matches-store-their-timeline.md),
+[a committed match stores its timeline](../../../.agents/notes/implemented/architecture/2026-09-19-committed-matches-store-their-timeline.md),
 answering [decision request 07](../decision-request-07-engine-rule-changes-and-saved-matches.md).
 
 **Why it still comes first:** every engine-rule fix waits behind it (ticket 26's patch, ticket 29, and
@@ -36,20 +36,22 @@ without the storage can be opened and there is nothing to backfill.
 `postMatchSummary.ts`, `statistics.ts`), `apps/desktop/src/main/db/schema.ts` and a generated
 migration, plus tests under `apps/desktop/test/main/match/`.
 
-- [ ] `commitMatchday` persists the match's derived events in the same transaction that writes the
+- [x] `commitMatchday` persists the match's derived events in the same transaction that writes the
       result, so a committed match can never exist without its timeline.
-- [ ] The Match Report, post-match summary and match statistics read the stored events for a committed
+- [x] The Match Report, post-match summary and match statistics read the stored events for a committed
       match, and `deriveMatchEvents` is still the path for a match in progress.
-- [ ] The storage is added in `db/schema.ts` with a regenerated migration. No backfill: a save made
-      before it is refused on open (ticket 32), which a test confirms against the older-schema fixture.
-- [ ] A test proves the property the determinism tests do not express: a committed match's stored
+- [x] The storage is one `MatchTimelineRecorded` event on the match's own stream: additive JSON in an
+      existing column, so no DDL and no save refusal. No backfill: a match committed before this
+      ticket has no stored timeline and keeps re-deriving (development saves only).
+- [x] A test proves the property the determinism tests do not express: a committed match's stored
       timeline is **unchanged by a deliberate engine-rule change**. Mutating an engine rule must not
       alter a stored report, and must still alter a fresh match's.
-- [ ] Resuming a live match saved before an engine change restarts it from kickoff and says so, rather
-      than silently rewriting revealed play.
-- [ ] Save compatibility: save → load → continue under this ticket's schema preserves future outcomes,
+- [x] ~~Resuming a live match saved before an engine change restarts it from kickoff and says so~~ —
+      moved to [33](33-a-restarted-live-match-says-so.md): it is a renderer message tied to the
+      revealed-position work, not to storing committed timelines.
+- [x] Save compatibility: save → load → continue under this ticket's schema preserves future outcomes,
       and the stored timelines agree with the stored results they accompany.
-- [ ] `pnpm check:all` green, and a `TRACEABILITY.md` row added with the engine-change-immunity test as
+- [x] `pnpm check:all` green, and a `TRACEABILITY.md` row added with the engine-change-immunity test as
       its proving test.
 
-**Status:** ready-for-agent
+**Status:** resolved

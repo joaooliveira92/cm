@@ -20,7 +20,7 @@ changes the event model and needs an architecture-class Agent Note. Found in rev
 timeline. Decision request 07 is **answered** (2026-09-19, Option B); this is now blocked on the
 backfill rather than on a question.
 
-**Status:** blocked
+**Status:** ready-for-agent
 
 <!-- Corrected 2026-09-19: this read `ready-for-agent` while carrying a `Blocked by:` line. The
 frontier scan reads the status, so it would have claimed a ticket that cannot proceed. Recorded as a
@@ -29,3 +29,5 @@ finding in the Group G ledger — nothing in the tracker's rules stops the pair 
 - [ ] A substitution in first-half stoppage minute N and one in second-half minute N spend two windows
 - [ ] The view's counts agree, with a table test
 - [ ] The change states which saved matches replay differently
+
+- 2026-09-21: unblocked. [31](31-committed-matches-store-their-timeline.md) shipped: committed matches keep their stored timeline, so an engine-rule change no longer rewrites them. No backfill exists or is needed (saves are disposable during development). The change note still says which *live* and pre-31 matches replay differently.

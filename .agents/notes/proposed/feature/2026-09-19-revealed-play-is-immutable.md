@@ -59,7 +59,7 @@ The cost is that an instruction is felt a minute later than the manager might ex
 smaller price than a feed that cannot be trusted, and is arguably truer to a touchline anyway.
 
 Points 1, 2 and 4 change what a seed produces, so they are **engine-rule changes and gated on
-[ticket 31](../architecture/2026-09-19-committed-matches-store-their-timeline.md)** — a committed match must store its
+[ticket 31](../../implemented/architecture/2026-09-19-committed-matches-store-their-timeline.md)** — a committed match must store its
 timeline before any of them lands, or every saved match holding a `TacticsChanged` after a dismissal
 silently rewrites itself.
 

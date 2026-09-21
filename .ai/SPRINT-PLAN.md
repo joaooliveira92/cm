@@ -82,7 +82,7 @@ their stored results.
 **Answered 2026-09-19, Option B: a committed match stores its derived timeline.** Committed matches are
 frozen; live matches still re-derive, so chunked resimulation and seed determinism are untouched.
 Recorded as
-[a committed match stores its timeline](../.agents/notes/proposed/architecture/2026-09-19-committed-matches-store-their-timeline.md)
+[a committed match stores its timeline](../.agents/notes/implemented/architecture/2026-09-19-committed-matches-store-their-timeline.md)
 and filed as **group-g ticket 31, `ready-for-agent`**.
 
 **Ticket 31 is the most time-sensitive ticket in the repo.** Its backfill has to run under the *current*
@@ -244,9 +244,11 @@ single unblock and touches no schema.
 answer, and the four `ready-for-human` tickets were decided under the human's standing delegation.
 Agent-startable work, in order:
 
-1. **[group-g 31 — a committed match stores its timeline](../.scratch/group-g-match-day/issues/31-committed-matches-store-their-timeline.md).**
-   Unblocked by 32 (saves are disposable during development: older saves are refused on open), so it
-   needs no backfill. Every engine-rule fix (group-g 26, 29, decision requests 01, 04, 06) waits on it.
+1. **The Group G engine-rule fixes, now unblocked** by [31](../.scratch/group-g-match-day/issues/31-committed-matches-store-their-timeline.md)
+   (committed matches keep their stored timeline, 2026-09-21):
+   [26](../.scratch/group-g-match-day/issues/26-forced-substitution-picks-any-squad-player.md) (a held
+   patch), then [29](../.scratch/group-g-match-day/issues/29-substitution-windows-share-a-minute-across-halves.md),
+   then [33](../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md).
 2. **[gate-red-on-dev 07](../.scratch/gate-red-on-dev/issues/07-youth-intake-at-rollover.md) then
    [08](../.scratch/gate-red-on-dev/issues/08-short-squad-advisory.md)**: the Youth Intake squad floor
    and its readiness advisory ([note](../.agents/notes/proposed/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md)).
