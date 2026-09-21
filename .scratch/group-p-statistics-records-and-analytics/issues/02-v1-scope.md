@@ -1,7 +1,7 @@
 # 02: Which screens of Group P are in v1 scope?
 
 Type: grilling
-Status: ready-for-human
+Status: resolved
 
 Blocked by: 01
 
@@ -101,3 +101,10 @@ the reconciliation, recorded only in the schema rather than in a deviation regis
 **Option A:** it aligns with the roadmap's Tier 5 placement and acknowledges that the heavy screens
 do not fit a local single-player game — `out-of-scope` reserves the right not to build them, while
 `deferred` preserves a path for the infrastructure-dependent screens.
+
+## Answer
+
+**Option A.** Bands 1, 2 and 4 (222–227, 229–233) are deferred; Band 3 (228) and Band 5 (234, 235)
+are out of scope. Group P builds nothing in v1. Decided under the human's standing delegation
+(2026-09-21). Recorded as [Group P v1 scope](../../../.agents/notes/proposed/architecture/2026-09-21-group-p-v1-scope.md);
+the per-screen register is in [spec.md](../spec.md).

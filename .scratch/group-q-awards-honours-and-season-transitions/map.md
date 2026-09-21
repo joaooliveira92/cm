@@ -34,5 +34,4 @@ wait until Group Q is reconciled, because a job market depends on season transit
 - [01 — Screen inventory](issues/01-screen-inventory.md): zero Group Q screens have a dedicated
   route or component. Six screens have partial data-layer overlap (season_summary, rollover,
   budgets); the rest are entirely absent.
-- [02 — v1 scope](issues/02-v1-scope.md): **Awaiting human.** Recommended: Band 1 (overlapping
-  infrastructure) and Band 2 (awards/honours) all deferred. See full analysis in the ticket.
+- [02 — v1 scope](issues/02-v1-scope.md): 243 renamed (ships as Season Summary, which ticket 01 missed); every other screen deferred; nothing built in v1. [Agent Note](../../.agents/notes/proposed/architecture/2026-09-21-group-q-v1-scope.md).

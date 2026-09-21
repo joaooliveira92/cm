@@ -81,3 +81,7 @@ to anyone who has a career in progress, which is a product call rather than an e
   their persistence plans are in question.
 - The `/gate` "name the migration" step should say what to do when there is no mechanism — today it can
   be read as satisfied by silence.
+
+## Decided
+
+2026-09-21: [saves are disposable during development](2026-09-21-saves-are-disposable-during-development.md).

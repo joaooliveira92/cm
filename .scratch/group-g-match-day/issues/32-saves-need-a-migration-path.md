@@ -18,12 +18,12 @@ disposable during development, or is the status quo accepted? The note recommend
 the three. The second is the smallest honest answer and forecloses shipping to anyone with a career in
 progress, which is a product call.
 
-**Blocked by:** a human decision on the above.
+**Blocked by:** 
 
 **Blocks:** 31, and therefore 26, 29, and the engine-rule work behind decision requests 01, 03, 04, 06
 and 08.
 
-- [ ] The durability question is answered and recorded as an Agent Note.
+- [x] The durability question is answered and recorded as an Agent Note.
 - [ ] If saves are durable: `save_meta` carries a `schema_version`, ordered upgrade steps run on open
       inside one transaction, and a **test fixture holds a save file written by an older schema** so the
       path is proved rather than assumed. A test that creates its own save under the current schema
@@ -34,4 +34,11 @@ and 08.
       applies — today "name the migration" can be satisfied by silence.
 - [ ] `pnpm check:all` green.
 
-**Status:** ready-for-human
+**Status:** ready-for-agent
+
+## Comments
+
+- 2026-09-21: **Saves are disposable during development**, decided under the human's standing
+  delegation. Recorded as [saves are disposable during development](../../../.agents/notes/proposed/architecture/2026-09-21-saves-are-disposable-during-development.md).
+  The "if saves are disposable" criterion applies, and the "if saves are durable" one falls away. 31's
+  backfill becomes unnecessary: 31 is rescoped to new saves only.

@@ -1,7 +1,7 @@
 # 02: Which screens of Group Q are in v1 scope?
 
 Type: grilling
-Status: ready-for-human
+Status: resolved
 
 Blocked by: 01
 
@@ -67,3 +67,12 @@ the screens with existing infrastructure, since no route or component exists.
 now without a full picture of what a season-transition flow should feel like. Band 2 needs a design
 decision about awards — entirely absent from the shipped game, and adding them is a product call
 about what kind of feedback loop the game offers.
+
+## Answer
+
+**Option A, with one correction to ticket 01.** Screen 243 End of Season Review already ships as the
+Season Summary screen (`renderer/seasonSummary/SeasonSummaryScreen.tsx`, destination `seasonSummary`),
+which the inventory missed; it is recorded as renamed. Every other screen is deferred. Option B was
+considered and dropped: 243 exists, and 246 on its own has no design to build from. Decided under the
+human's standing delegation (2026-09-21). Recorded as [Group Q v1 scope](../../../.agents/notes/proposed/architecture/2026-09-21-group-q-v1-scope.md);
+the per-screen register is in [spec.md](../spec.md).

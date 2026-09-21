@@ -1,7 +1,7 @@
 # 02: Which screens of Group S are in v1 scope?
 
 Type: grilling
-Status: ready-for-human
+Status: resolved
 
 Blocked by: 01
 
@@ -77,3 +77,11 @@ marked renamed. All absent screens deferred. Group F owns 276's reconciliation.
 **Option C.** The shipped modals adequately serve their purpose. Promoting them to full screens is a
 cosmetic change with no mechanical difference. The absent screens depend on other groups or new
 models and should not be chartered before those dependencies resolve.
+
+## Answer
+
+**Option C.** The shipped modals stand in for 270, 271 and 272 (renamed), and 277 is renamed to the
+version footer and Credits dialog. 264–269 and 273–275 are deferred; 276 is deferred to Group F's
+reconciliation of Screen 88. Decided under the human's standing delegation (2026-09-21). Recorded as
+[Group S v1 scope](../../../.agents/notes/proposed/architecture/2026-09-21-group-s-v1-scope.md);
+the per-screen register is in [spec.md](../spec.md).

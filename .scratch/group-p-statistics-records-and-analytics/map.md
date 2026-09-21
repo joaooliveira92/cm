@@ -34,5 +34,4 @@ SPEC-ROADMAP places Group P in Tier 5: last among gameplay groups.
   countable statistics; four are Unavailable. No charting library exists. No season-level or
   player-level stats exist.
 
-- [02 — v1 scope](issues/02-v1-scope.md): **Awaiting human.** Recommended split: Band 1, 2, 4 →
-  deferred; Band 3, 5 → out of scope. See full analysis in the ticket.
+- [02 — v1 scope](issues/02-v1-scope.md): Option A. 222–227, 229–233 deferred; 228, 234, 235 out of scope; nothing built in v1. [Agent Note](../../.agents/notes/proposed/architecture/2026-09-21-group-p-v1-scope.md).

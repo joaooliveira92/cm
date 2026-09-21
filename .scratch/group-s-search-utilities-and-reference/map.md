@@ -35,5 +35,4 @@ layer.
 - [01 — Screen inventory](issues/01-screen-inventory.md): three screens shipped as modals (270, 271,
   272), one partial (277), ten absent (264–269, 273–276). Shipped forms are modal/overlay, not
   route-addressable screens.
-- [02 — v1 scope](issues/02-v1-scope.md): **Awaiting human.** Recommended: shipped modals stay as
-  renamed; absent screens deferred; 276 blocked on Group F reconciliation.
+- [02 — v1 scope](issues/02-v1-scope.md): Option C. 270–272 and 277 renamed to their shipped forms; 264–269, 273–275 deferred; 276 goes to Group F. [Agent Note](../../.agents/notes/proposed/architecture/2026-09-21-group-s-v1-scope.md).
