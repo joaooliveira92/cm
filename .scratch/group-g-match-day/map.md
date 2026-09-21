@@ -37,6 +37,13 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
   transaction; report, summary and statistics load it, a live match re-derives. Proved by flipping a
   mocked engine rule after commit. Unblocks 26 and 29; the restart message split out as
   [33](issues/33-a-restarted-live-match-says-so.md).
+- [29 — Substitution windows are keyed by half and minute](issues/29-substitution-windows-share-a-minute-across-halves.md):
+  resolved 2026-09-21. A first-half stoppage forced Substitution and a second-half one at the same
+  minute now spend two windows; engine and view agree. Only re-derived (live) matches replay differently.
+- 2026-09-21, orchestrator: [26](issues/26-forced-substitution-picks-any-squad-player.md) re-blocked on
+  [34](issues/34-ai-clubs-name-a-bench.md). Decision request 04 makes the named bench the only source of
+  substitutes and no AI club names one. [35](issues/35-manager-substitutions-come-from-the-bench.md) and
+  [36](issues/36-a-red-carded-keeper-drags-a-stand-in.md) slice decision requests 04 and 06.
 
 ## Not yet specified
 

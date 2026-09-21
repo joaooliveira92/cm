@@ -28,7 +28,9 @@ export interface TeamRuntimeState {
   resolved: ResolvedTeamTactics;
   substitutionsUsed: number;
   windowsUsed: number;
-  lastWindowMinute: number | null;
+  /** Where the last substitution window opened. Keyed by half as well as minute: first-half stoppage
+   *  runs past minute 45, so a raw minute alone would let it share a window with the second half. */
+  lastWindow: SubstitutionWindowKey | null;
   /** Per-player live Condition % (ticket 02) — keyed by playerId, decayed each minute. */
   readonly conds: Map<PlayerId, number>;
   /** Players carrying an in-match Pace/Acceleration/Agility slash from an orange knock (ticket 03). */
@@ -37,13 +39,19 @@ export interface TeamRuntimeState {
   readonly gkStandIns: Set<PlayerId>;
 }
 
+/** The point a substitution window opens at: a half and a minute within it. */
+export interface SubstitutionWindowKey {
+  readonly half: MatchHalf;
+  readonly minute: number;
+}
+
 export const initTeamState = (setup: MatchTeamSetup): TeamRuntimeState => ({
   clubId: setup.clubId,
   playersById: new Map(setup.squad.map((player) => [player.id, player])),
   resolved: resolveTeamTactics(setup.tactic),
   substitutionsUsed: 0,
   windowsUsed: 0,
-  lastWindowMinute: null,
+  lastWindow: null,
   conds: newConditionLedger(setup.squad.map((player) => player.id), setup.squad),
   penalties: new Set(),
   gkStandIns: new Set(),
@@ -54,6 +62,7 @@ export const applyCommand = (
   team: TeamRuntimeState,
   command: Extract<MatchCommand, { readonly _tag: "ChangeTactics" | "MakeSubstitution" }>,
   minute: number,
+  half: MatchHalf,
   isHalftime: boolean,
 ): { readonly accepted: boolean; readonly reason?: string } => {
   if (command._tag === "ChangeTactics") {
@@ -70,12 +79,12 @@ export const applyCommand = (
   if (team.substitutionsUsed >= MAX_SUBSTITUTIONS_PER_TEAM) {
     return { accepted: false, reason: "substitution cap (5) already reached" };
   }
-  if (!isHalftime && minute !== team.lastWindowMinute) {
+  if (!isHalftime && (team.lastWindow?.half !== half || team.lastWindow.minute !== minute)) {
     if (team.windowsUsed >= MAX_SUBSTITUTION_WINDOWS_PER_TEAM) {
       return { accepted: false, reason: "substitution window cap (3) already reached" };
     }
     team.windowsUsed += 1;
-    team.lastWindowMinute = minute;
+    team.lastWindow = { half, minute };
   }
 
   const index = team.resolved.slots.findIndex((slot) => slot.playerId === command.outPlayerId);
@@ -182,6 +191,7 @@ export const forcePlayerOff = (
       team,
       { _tag: "MakeSubstitution", clubId: team.clubId, outPlayerId: playerId, inPlayerId: benchId },
       minute,
+      half,
       false,
     );
     if (result.accepted) {

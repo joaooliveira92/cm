@@ -5,8 +5,9 @@
  *
  * - a goalkeeper stand-in spends nothing;
  * - every other Substitution spends one substitution;
- * - a Substitution opens a window when its minute differs from the minute of the last window opened,
- *   except a halftime instruction, which neither opens a window nor moves that minute.
+ * - a Substitution opens a window when its half and minute differ from those of the last window
+ *   opened (first-half stoppage runs past minute 45, so the minute alone would not do), except a
+ *   halftime instruction, which neither opens a window nor moves that point.
  */
 import { SubstitutionStatusView, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import {
@@ -43,14 +44,18 @@ export const countedSubstitutions = (
 
 interface WindowLedger {
   windowsUsed: number;
-  lastWindowMinute: number | null;
+  lastWindow: SubstitutionEvent | null;
 }
 
+/** Whether `event` falls in the last window opened: the same half and minute. */
+const inLastWindow = (ledger: WindowLedger, event: SubstitutionEvent): boolean =>
+  ledger.lastWindow !== null && ledger.lastWindow.half === event.half && ledger.lastWindow.minute === event.minute;
+
 /** The engine's window step for a non-halftime substitution it accepted. */
-const spendWindow = (ledger: WindowLedger, minute: number): void => {
-  if (minute === ledger.lastWindowMinute) return;
+const spendWindow = (ledger: WindowLedger, event: SubstitutionEvent): void => {
+  if (inLastWindow(ledger, event)) return;
   ledger.windowsUsed += 1;
-  ledger.lastWindowMinute = minute;
+  ledger.lastWindow = event;
 };
 
 interface SubstitutionPair {
@@ -67,10 +72,10 @@ interface ClubLedger extends WindowLedger {
   substitutionsUsed: number;
 }
 
-/** Whether `applyCommand` would refuse a live substitution at `minute` for its caps alone. */
-const capRefuses = (ledger: ClubLedger, minute: number): boolean =>
+/** Whether `applyCommand` would refuse a live substitution at `event`'s half and minute for its caps alone. */
+const capRefuses = (ledger: ClubLedger, event: SubstitutionEvent): boolean =>
   ledger.substitutionsUsed >= MAX_SUBSTITUTIONS_PER_TEAM ||
-  (minute !== ledger.lastWindowMinute && ledger.windowsUsed >= MAX_SUBSTITUTION_WINDOWS_PER_TEAM);
+  (!inLastWindow(ledger, event) && ledger.windowsUsed >= MAX_SUBSTITUTION_WINDOWS_PER_TEAM);
 
 /** Which of a match's Substitutions are goalkeeper stand-ins, and which are halftime instructions. */
 export interface SubstitutionRoles {
@@ -121,7 +126,7 @@ export const classifySubstitutions = (
   for (const [index, event] of events.entries()) {
     if (event._tag === "HalfTimeReached") firstHalf = false;
     if (event._tag !== "Substitution") continue;
-    const ledger = ledgers.get(event.teamClubId) ?? { substitutionsUsed: 0, windowsUsed: 0, lastWindowMinute: null };
+    const ledger = ledgers.get(event.teamClubId) ?? { substitutionsUsed: 0, windowsUsed: 0, lastWindow: null };
     ledgers.set(event.teamClubId, ledger);
 
     if (event.forcedByInjury) {
@@ -132,13 +137,13 @@ export const classifySubstitutions = (
         previous.teamClubId === event.teamClubId &&
         previous.playerId === event.outPlayerId &&
         previous.minute === event.minute;
-      if (!afterSevereInjury || capRefuses(ledger, event.minute) || benchless.has(event)) {
+      if (!afterSevereInjury || capRefuses(ledger, event) || benchless.has(event)) {
         standIns.add(event);
         continue;
       }
     } else if (firstHalf && event.minute === HALFTIME_MINUTE) {
       const live = liveAt45.findIndex((command) => command._tag === "SubstitutionMade" && samePair(event, command));
-      if (live === -1 || capRefuses(ledger, event.minute)) {
+      if (live === -1 || capRefuses(ledger, event)) {
         halftime.add(event);
         ledger.substitutionsUsed += 1;
         continue;
@@ -146,7 +151,7 @@ export const classifySubstitutions = (
       liveAt45.splice(live, 1);
     }
     ledger.substitutionsUsed += 1;
-    spendWindow(ledger, event.minute);
+    spendWindow(ledger, event);
   }
   return { standIns, halftime };
 };
@@ -159,8 +164,8 @@ export const substitutionStatus = (
 ): SubstitutionStatusView => {
   const subs = counted.filter((event) => event.teamClubId === clubId);
   const used = subs.length;
-  const ledger: WindowLedger = { windowsUsed: 0, lastWindowMinute: null };
-  for (const sub of subs) if (!halftime.has(sub)) spendWindow(ledger, sub.minute);
+  const ledger: WindowLedger = { windowsUsed: 0, lastWindow: null };
+  for (const sub of subs) if (!halftime.has(sub)) spendWindow(ledger, sub);
   const { windowsUsed } = ledger;
 
   return new SubstitutionStatusView({

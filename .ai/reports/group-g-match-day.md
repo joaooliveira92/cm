@@ -470,3 +470,26 @@ ticket Answer.
 Reviewed inline by the orchestrator. Stand-ins reuse ticket 25's classification, the "injured" wording
 requires a preceding severe Injury, and regular substitutions keep the engine's flag. There is no
 engine or persistence change.
+
+## Ticket 29 — substitution windows keyed by half and minute, 2026-09-21
+
+- Ticket closed: [29](../../.scratch/group-g-match-day/issues/29-substitution-windows-share-a-minute-across-halves.md)
+- Re-sliced the same session: [26](../../.scratch/group-g-match-day/issues/26-forced-substitution-picks-any-squad-player.md)
+  re-blocked on new ticket [34](../../.scratch/group-g-match-day/issues/34-ai-clubs-name-a-bench.md) (no AI
+  club names a bench, and decision request 04 makes the bench the only source of substitutes); 35 and 36
+  filed for decision requests 04 and 06.
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 0. Typecheck, lint, effect-lint, verify-md-links, verify-db-schema ✓. Shared 461, contracts 174, game-engine 55, desktop 2129 passed (235 files). |
+| determinism | `pnpm --filter @cm-clone/game-engine exec vitest run test/match/simulate.test.ts test/match/substitution-windows.test.ts`, twice | 25 passed both runs (same-seed identical-timeline tests plus the seed-300 window pin) |
+| chunked resimulation | `pnpm --filter @cm-clone/desktop exec vitest run test/main/match/match.test.ts test/main/match/commands.test.ts test/main/match/committed-timeline.test.ts` | 16 passed |
+| e2e | not run | no screen changed |
+
+Review: APPROVE, no blocker or high. One medium (state which matches replay differently) closed in the
+ticket Answer. One low left as is: `substitutionApplied` keys on minute alone, which is correct while
+no non-forced first-half Substitution can pass minute 45.
+
+Replays differently: only re-derived (live, uncommitted) matches in which one club's first-half stoppage
+forced Substitution at minute N (46–50) is followed by its next window-opening Substitution at
+second-half minute N. Committed matches keep their stored timeline.

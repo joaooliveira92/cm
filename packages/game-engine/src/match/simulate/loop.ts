@@ -104,7 +104,7 @@ const applyScheduledCommands = (
       applyForcedOff(team, command.playerId, minute, half, events);
       continue;
     }
-    const result = applyCommand(team, command, minute, isHalftime);
+    const result = applyCommand(team, command, minute, half, isHalftime);
     if (result.accepted && command._tag === "MakeSubstitution") {
       events.push({
         _tag: "Substitution",

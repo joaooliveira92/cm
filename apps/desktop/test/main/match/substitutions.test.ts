@@ -142,19 +142,45 @@ describe("classifySubstitutions — halftime instructions and windows", () => {
     expect(status).toMatchObject({ used: 4, windowsUsed: 3 });
   });
 
-  it("windows follow the last window's raw minute across halves: stoppage 48, then 47 and 48 is three", () => {
-    const { status } = read(
-      [started, severe(48, "p", 1), sub(48, "p", "b", true, 1), halfTime, sub(47, "a", "x1", false), sub(48, "c", "x2", false), fullTime],
-      [command(47, "a", "x1"), command(48, "c", "x2")],
-    );
-    expect(status).toMatchObject({ used: 3, windowsUsed: 3, capReached: true });
+  // The engine keys a window by half and minute (ticket 29): first-half stoppage runs past 45, so its
+  // minute 48 and the second half's 48 are two windows. Each row is a timeline the engine emits.
+  const stoppage48 = [severe(48, "p", 1), sub(48, "p", "b", true, 1)];
+  it.each([
+    {
+      name: "stoppage 48, then second-half 48 alone: two windows",
+      events: [started, ...stoppage48, halfTime, sub(48, "c", "x2", false), fullTime],
+      commands: [command(48, "c", "x2")],
+      expected: { used: 2, windowsUsed: 2, capReached: false },
+    },
+    {
+      name: "stoppage 48, then second-half 47 and 48: three windows",
+      events: [started, ...stoppage48, halfTime, sub(47, "a", "x1", false), sub(48, "c", "x2", false), fullTime],
+      commands: [command(47, "a", "x1"), command(48, "c", "x2")],
+      expected: { used: 3, windowsUsed: 3, capReached: true },
+    },
+    {
+      name: "two second-half substitutions at 48: one window",
+      events: [started, halfTime, sub(48, "a", "x1", false), sub(48, "c", "x2", false), fullTime],
+      commands: [command(48, "a", "x1"), command(48, "c", "x2")],
+      expected: { used: 2, windowsUsed: 1, capReached: false },
+    },
+    {
+      name: "a first-half stoppage injury and its replacement at 48: one window",
+      events: [started, severe(48, "p", 1), sub(48, "p", "b", true, 1), severe(48, "q", 1), sub(48, "q", "b2", true, 1), halfTime, fullTime],
+      commands: [],
+      expected: { used: 2, windowsUsed: 1, capReached: false },
+    },
+  ])("$name", ({ events, commands, expected }) => {
+    expect(read(events, commands).status).toMatchObject(expected);
   });
 
-  it("stoppage 48, then second-half 48 alone, shares the window", () => {
-    const { status } = read(
-      [started, severe(48, "p", 1), sub(48, "p", "b", true, 1), halfTime, sub(48, "c", "x2", false), fullTime],
-      [command(48, "c", "x2")],
+  it("stoppage 48, second-half 48 and 60 spend every window, so a severe Injury at 70 drags a player into goal", () => {
+    const drag = sub(70, "gk", "f", true);
+    const { standIns, status } = read(
+      [started, ...stoppage48, halfTime, sub(48, "c", "x2", false), sub(60, "d", "x3", false), severe(70, "gk"), drag, fullTime],
+      [command(48, "c", "x2"), command(60, "d", "x3")],
     );
-    expect(status).toMatchObject({ used: 2, windowsUsed: 1 });
+    expect([...standIns]).toEqual([drag]);
+    expect(status).toMatchObject({ used: 3, windowsUsed: 3, capReached: true });
   });
 });

@@ -246,8 +246,8 @@ Agent-startable work, in order:
 
 1. **The Group G engine-rule fixes, now unblocked** by [31](../.scratch/group-g-match-day/issues/31-committed-matches-store-their-timeline.md)
    (committed matches keep their stored timeline, 2026-09-21):
-   [29](../.scratch/group-g-match-day/issues/29-substitution-windows-share-a-minute-across-halves.md),
-   [33](../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md),
+   [29](../.scratch/group-g-match-day/issues/29-substitution-windows-share-a-minute-across-halves.md)
+   shipped 2026-09-21; next [33](../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md),
    [34](../.scratch/group-g-match-day/issues/34-ai-clubs-name-a-bench.md) (AI clubs name a bench), then
    [26](../.scratch/group-g-match-day/issues/26-forced-substitution-picks-any-squad-player.md) (a held
    patch; blocked on 34 because decision request 04 makes the bench the only source of substitutes and
