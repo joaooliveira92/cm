@@ -55,3 +55,8 @@ migration, plus tests under `apps/desktop/test/main/match/`.
       its proving test.
 
 **Status:** resolved
+
+- 2026-09-21, orchestrator (correction): the restart behaviour this ticket describes ("a live match
+  re-derives" after a restart) does not happen. A started, uncommitted match cannot be reopened after an app
+  restart at all. Filed as [37](37-match-day-resumes-a-started-match-after-a-restart.md). The committed-timeline
+  work here is unaffected.

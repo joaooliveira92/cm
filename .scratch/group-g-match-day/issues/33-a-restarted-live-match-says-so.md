@@ -12,7 +12,7 @@ point 3 (the revealed position is persisted), and decision request 05. If point 
 restart resumes at the revealed position under the same engine, and the message is only owed when the
 engine has changed.
 
-**Blocked by:** 31
+**Blocked by:** [37](37-match-day-resumes-a-started-match-after-a-restart.md) — Match day resumes a started match after a restart (31 resolved)
 
 **Status:** ready-for-agent
 
@@ -20,3 +20,12 @@ engine has changed.
       from kickoff
 - [ ] A match opened in the same session it was started in shows no such sentence
 - [ ] `pnpm check:all` green, and e2e if the match screen changed
+
+## Comments
+
+- 2026-09-21, orchestrator: re-blocked on [37](37-match-day-resumes-a-started-match-after-a-restart.md).
+  The premise was wrong: a restarted match does not replay from kickoff, it cannot be reopened at all
+  (`MatchProvider` never reads `pending.matchId`; `startMatch` refuses while `awaitingMatchId` is set). Once
+  37 hydrates the match from `pending.matchId` with no in-process session, that hydration is exactly the
+  "restarted" signal, and the ticket-23 remount path (through `getActiveMatch`) stays silent. Both criteria
+  can then be tested with `liveMatchDayHarness.tsx`.

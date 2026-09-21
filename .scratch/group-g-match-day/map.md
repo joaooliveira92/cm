@@ -44,6 +44,10 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
   [34](issues/34-ai-clubs-name-a-bench.md). Decision request 04 makes the named bench the only source of
   substitutes and no AI club names one. [35](issues/35-manager-substitutions-come-from-the-bench.md) and
   [36](issues/36-a-red-carded-keeper-drags-a-stand-in.md) slice decision requests 04 and 06.
+- 2026-09-21, orchestrator: [33](issues/33-a-restarted-live-match-says-so.md) re-blocked on
+  [37](issues/37-match-day-resumes-a-started-match-after-a-restart.md). A started, uncommitted match cannot
+  be reopened after an app restart: Match day never reads `pending.matchId` and `startMatch` refuses, so
+  the career is stranded rather than replaying from kickoff as 31 and decision request 05 assumed.
 
 ## Not yet specified
 
