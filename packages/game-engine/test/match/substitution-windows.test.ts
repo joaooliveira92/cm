@@ -8,14 +8,14 @@ import type { MatchCommand } from "../../src/match/commands.js";
 import type { MatchEvent, SubstitutionEvent } from "../../src/match/events.js";
 import { simulateMatch } from "../../src/match/simulate/index.js";
 import { applyCommand, forcePlayerOff, initTeamState } from "../../src/match/simulate/teamState.js";
-import { buildTeam, clubId } from "./fixtures.js";
+import { buildTeam, clubId, withNamedBench } from "./fixtures.js";
 
 const home = clubId("home-club");
 
 const teamWithBench = (seed: number) => {
-  const { setup, squad } = buildTeam(home, seed);
+  const setup = withNamedBench(buildTeam(home, seed).setup);
   const starters = setup.tactic.slots.map((slot) => slot.playerId);
-  const bench = squad.filter((player) => !starters.includes(player.id)).map((player) => player.id);
+  const bench = setup.tactic.bench.filter((id) => id !== null);
   return { team: initTeamState(setup), starters, bench };
 };
 
@@ -54,8 +54,9 @@ describe("simulateMatch — a severe Injury in first-half stoppage opens its own
   // Seed 300: the home side's only Substitution of the unscheduled match is forced by a severe Injury
   // in first-half stoppage minute 48.
   const seed = 300;
-  const homeTeam = buildTeam(home, seed);
-  const awayTeam = buildTeam(clubId("away-club"), seed + 1000);
+  // Both sides name a bench: a forced substitution only ever brings on a named bench player (ticket 26).
+  const homeTeam = { setup: withNamedBench(buildTeam(home, seed).setup) };
+  const awayTeam = { setup: withNamedBench(buildTeam(clubId("away-club"), seed + 1000).setup) };
 
   it("the fixture holds: the forced Substitution sits at first-half minute 48", () => {
     const events = simulateMatch({ seed, home: homeTeam.setup, away: awayTeam.setup });
@@ -71,7 +72,7 @@ describe("simulateMatch — a severe Injury in first-half stoppage opens its own
     const takenOff = new Set(unscheduledHomeSubs.map((event) => event.outPlayerId));
     const takenOn = new Set(unscheduledHomeSubs.map((event) => event.inPlayerId));
     const outs = starters.filter((id) => !takenOff.has(id) && homeTeam.setup.tactic.slots[0]!.playerId !== id);
-    const ins = homeTeam.squad.map((player) => player.id).filter((id) => !starters.includes(id) && !takenOn.has(id));
+    const ins = homeTeam.setup.tactic.bench.filter((id) => id !== null && !takenOn.has(id));
     const make = (index: number): MatchCommand => ({ _tag: "MakeSubstitution", clubId: home, outPlayerId: outs[index]!, inPlayerId: ins[index]! });
     const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
       [48, [make(0)]],

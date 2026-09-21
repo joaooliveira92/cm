@@ -153,7 +153,8 @@ from — not a separate commentary-only representation.
 A Match Event carrying a trigger (`contact` | `non-contact`), a Severity (`light` | `medium` |
 `severe`), a No-Subs Tier (`orange` | `red`), and a body-part Type. Light/Medium are Orange
 (manager may leave the player on, crippled and at risk of escalation, or drag them off); Severe is
-Red (forced off — substituted, or the team plays with 10 if no subs remain). Distinct from the
+Red (forced off — replaced from the named bench, or the team plays with 10 if no bench player who
+has not yet been on remains; see Tactic). Distinct from the
 season-long fitness layer below.
 
 **Condition**:
@@ -234,8 +235,10 @@ Modifiers.
 
 **Tactic**:
 The full value a manager sets for a team: a Formation, a Role and player assigned to each of its 11
-slots, and the three Team Instructions. The payload of the `ChangeTactics` command, both pre-match and
-mid-match.
+slots, the three Team Instructions, and the named **bench**. The payload of the `ChangeTactics`
+command, both pre-match and mid-match. The bench is the only source of substitutes: a player comes on
+from it once and never re-enters, and a forced substitution takes like for like (a goalkeeper for a
+goalkeeper) before bench order.
 
 **Expected Revision**:
 The monotonic Tactic version a save submit claims it was read at. The club's Tactic revision starts

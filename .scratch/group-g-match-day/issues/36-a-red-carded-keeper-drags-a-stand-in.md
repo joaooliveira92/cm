@@ -19,3 +19,10 @@ stored timeline ([31](31-committed-matches-store-their-timeline.md)).
 - [ ] A red card to the last goalkeeper leaves an outfield stand-in in goal, and the Match Report lists it as a move into goal
 - [ ] A red card to an outfield player, or to a keeper with another on the pitch, is unchanged
 - [ ] A seeded test pins each; `pnpm check:all` green
+
+## Comments
+
+- 2026-09-21, orchestrator: while here, `forcePlayerOff` calls `normalizeGoalkeeper` whatever the slot, so
+  an outfielder replacing an outfielder joins `gkStandIns` (found in 26's rework). Only Goalkeeping
+  attributes are penalised, so it should not move a result; restrict it to goalkeeper slots if a seeded
+  test confirms that.

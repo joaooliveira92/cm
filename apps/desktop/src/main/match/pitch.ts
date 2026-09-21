@@ -79,7 +79,9 @@ const appliedAt = (events: ReadonlyArray<MatchEvent>, commands: ReadonlyArray<Li
 interface PitchFold {
   readonly slots: ReadonlyArray<{ readonly playerId: PlayerId; readonly position: PitchSlotView["position"] }>;
   readonly beenOn: ReadonlySet<PlayerId>;
-  /** The forced Substitutions after a severe Injury when no one but the injured player was off the pitch. */
+  /** The forced Substitutions that bring on a player who had already been on the pitch: a goalkeeper
+   *  stand-in, never a bench substitute, since `forcePlayerOff` only brings on a named bench player
+   *  who has never been on (group-g-match-day ticket 26). */
   readonly benchless: ReadonlySet<SubstitutionEvent>;
   /** Each of the club's bring-offs, by position in the journaled lineup commands, and whether the
    *  player was on the pitch when it was applied. */
@@ -112,13 +114,14 @@ const foldPitch = (
   };
 
   const substitute = (event: SubstitutionEvent): void => {
+    // The engine emitted it, so the player has been on even where the fold lost track of the slot.
+    beenOn.add(event.inPlayerId);
     const outIndex = slots.findIndex((slot) => slot.playerId === event.outPlayerId);
     if (outIndex === -1) return;
     // A goalkeeper stand-in is already on the pitch: they move into the vacated slot, leaving their own empty.
     slots = slots
       .map((slot, index) => (index === outIndex ? { ...slot, playerId: event.inPlayerId } : slot))
       .filter((slot, index) => index === outIndex || slot.playerId !== event.inPlayerId);
-    beenOn.add(event.inPlayerId);
   };
 
   for (let index = 0; index <= events.length; index++) {
@@ -153,9 +156,10 @@ const foldPitch = (
       event._tag === "Substitution" &&
       event.forcedByInjury &&
       event.teamClubId === clubId &&
-      setup.squad.every((player) => player.id === event.outPlayerId || isOn(player.id))
+      beenOn.has(event.inPlayerId)
     ) {
-      // `forcePlayerOff` looks for a bench player before trying a substitution.
+      // `forcePlayerOff` brings on only a named bench player who has never been on, so a forced
+      // Substitution bringing on someone who has is the stand-in `emptySlot` drags into goal.
       benchless.add(event);
     }
     if (
@@ -202,10 +206,14 @@ export const pitchAsOf = (
 /** Facts about the whole match's lineup changes, for both clubs. */
 export interface LineupFacts {
   /**
-   * The forced Substitutions with no one left on the bench: the one input to telling a goalkeeper
-   * stand-in apart (`classifySubstitutions` in `substitutions.ts`) the engine's counters cannot give.
-   * A squad of more than twelve always has someone on the bench in both the engine and the fold, so
-   * there it cannot drift from the engine after a live tactics change.
+   * The forced Substitutions that bring on someone who has already been on the pitch (a stand-in
+   * dragged into goal, including after a cap-refused substitution or a bring-off): the one input to
+   * telling a goalkeeper stand-in apart (`classifySubstitutions` in `substitutions.ts`) the engine's
+   * counters cannot give.
+   * Read off who comes on rather than off the bench: the engine brings on only a named bench player
+   * who has never been on the pitch (`forcePlayerOff`, ticket 26), while a stand-in is already on it.
+   * The fold does not follow a live tactics change (decision request 01), so a stand-in whom one put
+   * on the pitch reads as a substitution.
    */
   readonly benchless: ReadonlySet<SubstitutionEvent>;
   /** Whether each journaled bring-off took its player off the pitch, by position in the lineup commands. */

@@ -51,6 +51,9 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
 - [34 — AI clubs name a bench](issues/34-ai-clubs-name-a-bench.md): resolved 2026-09-21. A spare
   Natural-tier goalkeeper first, then by Position Rating. Unblocks [26](issues/26-forced-substitution-picks-any-squad-player.md).
   Review split out [38](issues/38-pure-packages-sort-without-locale.md) (locale-free sorting in the pure packages).
+- [26 — A forced substitution comes from the named bench](issues/26-forced-substitution-picks-any-squad-player.md):
+  resolved 2026-09-21. Never-on bench players only, like for like first, then bench order; none left →
+  10 men. Review split out [39](issues/39-an-empty-bench-is-flagged-before-kickoff.md) (empty-bench advisory).
 
 ## Not yet specified
 

@@ -37,6 +37,14 @@ export interface TeamRuntimeState {
   readonly penalties: Set<PlayerId>;
   /** Players currently standing in as goalkeeper (shot-stopping treated as 1) after a red GK is off (ticket 07). */
   readonly gkStandIns: Set<PlayerId>;
+  /** The current Tactic's named bench, in bench order: where a forced substitution draws its
+   *  replacement from (decision request 04). Set at kickoff and by each `ChangeTactics`, which
+   *  replaces `resolved` and so would otherwise lose it. */
+  bench: ReadonlyArray<PlayerId | null>;
+  /** Everyone who has been on the pitch this match: the starters, anyone a `ChangeTactics` or a
+   *  substitution puts in a slot, and goalkeeper stand-ins. A forced substitution never brings one of
+   *  them back on (group-g-match-day ticket 26). */
+  readonly beenOn: Set<PlayerId>;
 }
 
 /** The point a substitution window opens at: a half and a minute within it. */
@@ -55,6 +63,8 @@ export const initTeamState = (setup: MatchTeamSetup): TeamRuntimeState => ({
   conds: newConditionLedger(setup.squad.map((player) => player.id), setup.squad),
   penalties: new Set(),
   gkStandIns: new Set(),
+  bench: setup.tactic.bench,
+  beenOn: new Set(setup.tactic.slots.map((slot) => slot.playerId)),
 });
 
 /** Applies one `MatchCommand` to team state. Rejects (no-op on runtime state) on roster/cap/window violations. */
@@ -67,6 +77,8 @@ export const applyCommand = (
 ): { readonly accepted: boolean; readonly reason?: string } => {
   if (command._tag === "ChangeTactics") {
     team.resolved = resolveTeamTactics(command.tactic);
+    team.bench = command.tactic.bench;
+    for (const slot of team.resolved.slots) team.beenOn.add(slot.playerId);
     return { accepted: true };
   }
 
@@ -91,6 +103,7 @@ export const applyCommand = (
   const slot = team.resolved.slots[index]!;
   team.resolved.slots[index] = { ...slot, playerId: command.inPlayerId };
   team.substitutionsUsed += 1;
+  team.beenOn.add(command.inPlayerId);
   // A substitute comes on fresh.
   team.conds.set(command.inPlayerId, START_CONDITION);
   return { accepted: true };
@@ -171,7 +184,15 @@ export const pickPlayerId = (team: TeamRuntimeState, random: RandomSource, prefe
 };
 
 /** Red (Severe) forced-off semantics (ticket 07): substitute from the bench if any, otherwise empty
- *  the slot (team plays with 10); a red GK with no sub forces an outfield into the goal at gk=1. */
+ *  the slot (team plays with 10); a red GK with no sub forces an outfield into the goal at gk=1.
+ *
+ *  An eligible replacement is an entry of the current Tactic's named bench that is in the match squad
+ *  and has never been on the pitch (decision request 04, ticket 26); everyone on the pitch has been on,
+ *  so that also rules them out. Among those, like for like comes first: a goalkeeper slot takes the
+ *  first eligible player in bench order who has goalkeeping (`hasGoalkeeping`), an outfield slot the
+ *  first who has not. With no like-for-like player, the first eligible player in bench order comes on
+ *  (an outfielder in goal is a stand-in, `normalizeGoalkeeper`). Squad order plays no part. With no
+ *  eligible player, or when the substitution caps refuse, the slot empties. */
 export const forcePlayerOff = (
   team: TeamRuntimeState,
   playerId: PlayerId,
@@ -183,9 +204,11 @@ export const forcePlayerOff = (
   if (slotIndex === -1) return;
   const slot = team.resolved.slots[slotIndex]!;
 
-  const benchId = [...team.playersById.keys()].find(
-    (id) => !team.resolved.slots.some((s) => s.playerId === id) && id !== playerId,
+  const eligible = team.bench.filter(
+    (id): id is PlayerId => id !== null && team.playersById.has(id) && !team.beenOn.has(id),
   );
+  const likeForLike = eligible.find((id) => hasGoalkeeping(team.playersById.get(id)!) === slot.isGoalkeeper);
+  const benchId = likeForLike ?? eligible[0];
   if (benchId) {
     const result = applyCommand(
       team,
@@ -235,6 +258,7 @@ const emptySlot = (
       const gkSlot = { ...slot, playerId: outfieldSlot.playerId };
       team.resolved.slots.push(gkSlot);
       team.gkStandIns.add(outfieldSlot.playerId);
+      team.beenOn.add(outfieldSlot.playerId);
       events.push({
         _tag: "Substitution",
         minute,
@@ -248,17 +272,21 @@ const emptySlot = (
   }
 };
 
+/** Whether a player is a goalkeeper to the engine: they carry Goalkeeping attributes. */
+const hasGoalkeeping = (player: MatchPlayerInput): boolean => player.attributes.gkHandling != null;
+
 /** Marks a player standing in for a GK as gk=1 unless they're genuinely GK-capable. */
 const normalizeGoalkeeper = (team: TeamRuntimeState, playerId: PlayerId): void => {
   const player = team.playersById.get(playerId);
   if (!player) return;
-  const hasGoalkeeping = player.attributes.gkHandling != null;
-  if (!hasGoalkeeping) team.gkStandIns.add(playerId);
+  if (!hasGoalkeeping(player)) team.gkStandIns.add(playerId);
 };
 
 /** A manager `ForceOff` (ticket 11's bring-off) drains an on-pitch player's slot so the team plays
- *  with 10 — reuses the red path's `emptySlot` (including the last-GK outfield stand-in fallback)
- *  and consumes no substitution/window. Returns false if the player isn't on the pitch. */
+ *  with 10 through `emptySlot` — the fallback a severe Injury takes when `forcePlayerOff` finds no
+ *  substitute — including its last-GK outfield stand-in, and consumes no substitution/window.
+ *  Returns false if the player isn't on the pitch. A red card does not come through here:
+ *  `resolveCards` removes the slot itself, with no stand-in (decision request 06). */
 export const applyForcedOff = (
   team: TeamRuntimeState,
   playerId: PlayerId,

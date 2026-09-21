@@ -97,11 +97,11 @@ export interface SubstitutionRoles {
  * A forced Substitution comes from one of two places. A severe Injury calls `forcePlayerOff`, which
  * records the Injury and then, as the very next event, either the bench substitution or, when that is
  * refused, the stand-in `emptySlot` drags into goal. So one right after its player's severe Injury is
- * a stand-in when the caps refuse the bench path, or when no one was left on the bench — the one fact
- * the counters cannot give, taken from the pitch fold (`benchless`). Any other forced Substitution is
- * a bring-off's stand-in: `applyForcedOff` never tries the bench. Reading this off the counters
- * rather than off who the fold has on the pitch keeps it right after a live tactics change moves
- * players the fold does not follow.
+ * a stand-in when the caps refuse the bench path, or when no named bench player who had never been on
+ * was left — the one fact the counters cannot give, taken from the pitch fold (`benchless`). Any other
+ * forced Substitution is a bring-off's stand-in: `applyForcedOff` never tries the bench. Reading this
+ * off the counters rather than off who the fold has on the pitch keeps it right after a live tactics
+ * change moves players the fold does not follow.
  *
  * A halftime instruction and a live command stamped minute 45 (one given in first-half stoppage) both
  * emit a Substitution at minute 45 of the first half, and when minute 45 and stoppage bring no other

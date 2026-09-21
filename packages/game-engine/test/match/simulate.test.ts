@@ -9,7 +9,7 @@ import {
   type SimulateMatchInput,
 } from "../../src/match/simulate/index.js";
 import type { MatchPlayerInput, MatchTeamSetup } from "../../src/match/types.js";
-import { buildTeam, clubId as makeClubId, playerId as makePlayerId } from "./fixtures.js";
+import { buildTeam, clubId as makeClubId, playerId as makePlayerId, withNamedBench } from "./fixtures.js";
 
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
 const baseInput = (seed: number): SimulateMatchInput => ({
@@ -168,13 +168,14 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
       let redCount = 0;
       let forcedSubs = 0;
       for (let seed = 1; seed < 800; seed++) {
-        const events = simulateMatch(baseInput(seed));
+        const { home, away } = baseInput(seed);
+        const events = simulateMatch({ seed, home: withNamedBench(home), away: withNamedBench(away) });
         for (const event of events) {
           if (event._tag === "Injury" && event.tier === "red") redCount++;
           if (event._tag === "Substitution" && event.forcedByInjury) forcedSubs++;
         }
       }
-      // Red injuries always force the player off; a bench player fills the slot when one exists.
+      // Red injuries always force the player off; a named bench player fills the slot when one exists.
       expect(redCount).toBeGreaterThan(0);
       expect(forcedSubs).toBeGreaterThanOrEqual(redCount * 0.9);
     }, 20000);

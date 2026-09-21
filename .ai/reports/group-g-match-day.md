@@ -515,3 +515,23 @@ the old code.
 
 Determinism: `selectBench` is pure and ends every ordering in an id comparison; the row-order test feeds
 reversed and interleaved squads. No seeded match moved (the engine does not read the bench before 26).
+
+## Ticket 26 — a forced substitution comes from the named bench, 2026-09-21
+
+- Ticket closed: [26](../../.scratch/group-g-match-day/issues/26-forced-substitution-picks-any-squad-player.md)
+- Filed from review: [39](../../.scratch/group-g-match-day/issues/39-an-empty-bench-is-flagged-before-kickoff.md)
+- `CONTEXT.md`: Tactic now names the bench and its rule; Injury's "no subs remain" sharpened.
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 0. Shared 470, contracts 174, game-engine 71, desktop 2132 passed. |
+| determinism | `pnpm --filter @cm-clone/game-engine exec vitest run test/match/simulate.test.ts test/match/forced-substitution.test.ts`, twice | 36 passed both runs, including a seed-210 whole-match test that replays identically with the squads reversed |
+| chunked resimulation | `pnpm --filter @cm-clone/desktop exec vitest run test/main/match/match.test.ts test/main/match/commands.test.ts test/main/match/committed-timeline.test.ts` | 16 passed |
+| e2e | not run | no screen changed |
+
+The held patch no longer applied after 29 and was ported by hand, with its lowest-id rule replaced by the
+bench rule. Review: APPROVE, no blocker or high. M1 (the first-in-bench-order pick put AI reserve keepers
+on outfield) was settled by an orchestrator ruling, like for like first, and reworked before commit so
+seeds move once. M2 (change note incomplete) was closed in the ticket Answer. L2 closed in `CONTEXT.md`,
+L3 (the `benchless` doc) fixed. L1 (a fold test for a lost out-player) left. Seed re-pinned:
+`MINUTE_45_FORCED_SUB_SEED` 1292 → 2023.

@@ -226,10 +226,12 @@ it.effect("a knock replaces no one, even when the manager substitutes the player
   }),
 );
 
-/** Seed 1292: the human club's only substitution is forced by an Injury in regular minute 45 (the
- *  11th Match Event), before half time. */
-const MINUTE_45_FORCED_SUB_SEED = 1292;
-const MINUTE_45_FORCED_SUB_LINE = 10;
+/** Seed 2023: the human club's only substitution is forced by an Injury in regular minute 45 (the
+ *  9th Match Event), before half time. Re-pinned for group-g-match-day ticket 26: seed 1292 held
+ *  this until a forced substitution started drawing on the named bench, so the AI club's minute-24
+ *  forced substitution brought on someone else and the later rolls changed. */
+const MINUTE_45_FORCED_SUB_SEED = 2023;
+const MINUTE_45_FORCED_SUB_LINE = 8;
 
 it.effect("a forced substitution in regular minute 45 spends a window", () =>
   Effect.gen(function* () {

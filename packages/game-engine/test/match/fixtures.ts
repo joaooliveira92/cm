@@ -59,3 +59,21 @@ export const buildTeam = (clubId: ClubId, seed: number, formation: keyof typeof 
     squad,
   };
 };
+
+/** The Tactic's bench size (`Tactic.bench` is fixed-size). */
+const BENCH_SIZE = 7;
+
+/**
+ * `setup` with a named bench: the first seven squad players not in the XI, in squad order. `buildTeam`
+ * leaves the bench empty, and a forced substitution only ever brings on a named bench player
+ * (group-g-match-day ticket 26), so a test that needs one to happen names a bench with this.
+ */
+export const withNamedBench = (setup: MatchTeamSetup): MatchTeamSetup => {
+  const starters = new Set(setup.tactic.slots.map((slot) => slot.playerId));
+  const bench: Array<PlayerId | null> = setup.squad
+    .map((player) => player.id)
+    .filter((id) => !starters.has(id))
+    .slice(0, BENCH_SIZE);
+  while (bench.length < BENCH_SIZE) bench.push(null);
+  return { ...setup, tactic: { ...setup.tactic, bench } };
+};

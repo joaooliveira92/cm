@@ -4,9 +4,10 @@
  * one the engine can emit (`packages/game-engine/src/match/simulate/teamState.ts`, `loop.ts`).
  */
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
-import type { MatchEvent, MatchHalf, SubstitutionEvent } from "@cm-clone/game-engine";
+import type { MatchEvent, MatchHalf, MatchTeamSetup, SubstitutionEvent } from "@cm-clone/game-engine";
+import { FORMATION_SLOTS, POSITION_ROLES, type PlayerAttributes } from "@cm-clone/shared";
 import { describe, expect, it } from "vitest";
-import type { LineupCommand } from "../../../src/main/match/pitch.js";
+import { lineupFacts, type LineupCommand } from "../../../src/main/match/pitch.js";
 import {
   classifySubstitutions,
   countedSubstitutions,
@@ -71,10 +72,11 @@ const read = (
 };
 
 describe("classifySubstitutions — goalkeeper stand-ins by the engine's rule, not the pitch fold", () => {
-  it("a bench player forced on twice is a substitution both times (a live tactics change put the first off again)", () => {
+  it("a bench player forced on and then severely injured himself is replaced by another: both are substitutions", () => {
+    // The engine never forces the same player on twice (ticket 26), so the second brings on someone new.
     const first = sub(70, "p", "b", true);
-    const second = sub(80, "q", "b", true);
-    const { standIns, status } = read([started, halfTime, severe(70, "p"), first, severe(80, "q"), second, fullTime]);
+    const second = sub(80, "b", "c", true);
+    const { standIns, status } = read([started, halfTime, severe(70, "p"), first, severe(80, "b"), second, fullTime]);
     expect(standIns.size).toBe(0);
     expect(status).toMatchObject({ used: 2, windowsUsed: 2, capReached: false });
   });
@@ -182,5 +184,52 @@ describe("classifySubstitutions — halftime instructions and windows", () => {
     );
     expect([...standIns]).toEqual([drag]);
     expect(status).toMatchObject({ used: 3, windowsUsed: 3, capReached: true });
+  });
+});
+
+/** Eleven starters, `gk` in goal, a named bench of one, `b`, and `r`, a squad player off the bench. */
+const thirteen: MatchTeamSetup = {
+  clubId: club,
+  squad: ["gk", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "b", "r"].map((id) => ({
+    id: player(id),
+    attributes: {} as PlayerAttributes,
+  })),
+  tactic: {
+    formation: "4-4-2",
+    slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
+      position,
+      role: POSITION_ROLES[position],
+      playerId: player(index === 0 ? "gk" : `s${index}`),
+    })),
+    bench: [player("b"), null, null, null, null, null, null],
+    mentality: "balanced",
+    tempo: "normal",
+    pressing: "medium",
+  },
+};
+
+describe("lineupFacts — a forced Substitution bringing on someone who has been on is a stand-in (`forcePlayerOff`, ticket 26)", () => {
+  it("a bench player who has never been on is a substitution, not benchless", () => {
+    const replaced = sub(80, "s5", "b", true);
+    const { benchless } = lineupFacts([thirteen], [started, halfTime, severe(80, "s5"), replaced, fullTime], []);
+    expect(benchless.size).toBe(0);
+  });
+
+  it("a squad player off the named bench does not stop the last goalkeeper's severe Injury dragging a stand-in", () => {
+    // `b` came on and went off again, and `r` is not on the bench, so the engine drags `s1` into goal.
+    const drag = sub(80, "gk", "s1", true);
+    const commands = [command(60, "s5", "b"), command(60, "b", "s5")];
+    const events = [started, halfTime, sub(60, "s5", "b", false), sub(60, "b", "s5", false), severe(80, "gk"), drag, fullTime];
+    const { benchless } = lineupFacts([thirteen], events, commands);
+    expect([...benchless]).toEqual([drag]);
+    expect(read(events, commands, benchless).status).toMatchObject({ used: 2, windowsUsed: 1 });
+  });
+
+  it("a bench player sent off is not a bench either", () => {
+    const drag = sub(80, "gk", "s1", true);
+    const sentOff: MatchEvent = { _tag: "RedCard", minute: 30, half: 1, teamClubId: club, playerId: player("b") };
+    const events = [started, severe(20, "s5"), sub(20, "s5", "b", true), sentOff, halfTime, severe(80, "gk"), drag, fullTime];
+    const { benchless } = lineupFacts([thirteen], events, []);
+    expect([...benchless]).toEqual([drag]);
   });
 });
