@@ -98,28 +98,6 @@ const usePlayerIdentity = (profile: PlayerProfileView | null, wage: number | nul
   }, [profile, wage]);
 };
 
-/** A page state with no player to name yet: the same shell, a message in place of the panels. */
-const PlayerMessageScreen = ({
-  screenId,
-  message,
-  busy,
-}: {
-  readonly screenId: string;
-  readonly message: string;
-  readonly busy?: boolean;
-}) => (
-  <main
-    className={PAGE_CLASS}
-    tabIndex={-1}
-    data-focus-id={screenId}
-    aria-label="Player"
-    aria-busy={busy === true ? true : undefined}
-  >
-    <h1 className="text-xl font-bold">Player</h1>
-    <p className="mt-4 text-text-secondary">{message}</p>
-  </main>
-);
-
 /**
  * Wrap one player-scoped screen in the shared header and tab strip.
  *
@@ -144,31 +122,42 @@ export const PlayerScreenFrame = ({
     contractResult._tag === "Success" ? contractResult.value.wage : null,
   );
 
-  if (profileResult._tag === "Initial") {
-    return <PlayerMessageScreen screenId={tab} message="Loading player data..." busy />;
-  }
-
-  if (profileResult._tag === "Failure") {
-    const error = typedError(profileResult);
-    return (
-      <PlayerMessageScreen
-        screenId={tab}
-        message={error === null ? "Player could not be loaded." : describeRpcError(error)}
-      />
-    );
-  }
-
-  const profile = profileResult.value;
+  // One <main> for every state, so the element the focus coordinator focused on arrival is still the
+  // one on screen once the profile loads; swapping in a new element dropped focus to <body>, and the
+  // keyboard spine with it.
+  const profile = profileResult._tag === "Success" ? profileResult.value : null;
+  const error = typedError(profileResult);
+  const message =
+    profileResult._tag === "Initial"
+      ? "Loading player data..."
+      : error === null
+        ? "Player could not be loaded."
+        : describeRpcError(error);
+  const name = profile === null ? "Player" : `${profile.firstName} ${profile.lastName}`;
+  const tabLabel = TABS.find((entry) => entry.id === tab)?.label ?? "";
 
   return (
     <main
       className={PAGE_CLASS}
       tabIndex={-1}
       data-focus-id={tab}
-      aria-label={`${profile.firstName} ${profile.lastName}`}
+      aria-label={name}
+      aria-busy={profileResult._tag === "Initial" ? true : undefined}
     >
-      <PlayerTabStrip saveId={saveId} playerId={playerId} active={tab} />
-      {children(profile)}
+      {profile === null ? (
+        <>
+          <h1 className="text-xl font-bold">Player</h1>
+          <p className="mt-4 text-text-secondary">{message}</p>
+        </>
+      ) : (
+        <>
+          {/* Every career screen owns its section <h1> (career chrome note). The player's name is
+              shown in the navbar, so the heading is for assistive technology only, as on Squad. */}
+          <h1 className="sr-only">{`${name} — ${tabLabel}`}</h1>
+          <PlayerTabStrip saveId={saveId} playerId={playerId} active={tab} />
+          {children(profile)}
+        </>
+      )}
     </main>
   );
 };

@@ -91,6 +91,21 @@ describe("the player screen every player tab shares", () => {
     expect(getScreenIdentity()).toBeNull();
   });
 
+  it("keeps the focused page when the player finishes loading, and names it with a level-one heading", async () => {
+    fakeMain();
+    renderProfile();
+
+    // The focus coordinator focuses the page on arrival, before the profile read resolves.
+    const loading = screen.getByRole("main");
+    loading.focus();
+
+    await screen.findByRole("navigation", { name: "Player sections" });
+    // The same element, still focused: a swapped-in page drops focus to <body>, and `g b` with it.
+    expect(screen.getByRole("main")).toBe(loading);
+    expect(document.activeElement).toBe(loading);
+    expect(screen.getByRole("heading", { level: 1, name: "Rui Costa — Profile" })).toBeTruthy();
+  });
+
   it("moves between the player's tabs from the strip", async () => {
     fakeMain();
     renderProfile();

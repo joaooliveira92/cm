@@ -301,6 +301,20 @@ export const saveEntry = (page: Page, name: string): Locator =>
   page.getByRole("button", { name: `Save ${name}`, exact: true });
 
 /**
+ * Choose an option from a screen toolbar popover (Squad's View and Position selectors): a trigger
+ * button in the career chrome's actions band, and a portaled dialog of option buttons.
+ */
+export const chooseToolbarOption = async (
+  page: Page,
+  triggerName: string | RegExp,
+  optionName: string | RegExp,
+): Promise<void> => {
+  await page.getByRole("button", { name: triggerName }).click();
+  await page.getByRole("dialog").getByRole("button", { name: optionName, exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+};
+
+/**
  * Choose an option from a Base UI `Select` by its visible label.
  *
  * The renderer has no native `<select>` left (`components/ui/select.tsx` is the vendored Base UI

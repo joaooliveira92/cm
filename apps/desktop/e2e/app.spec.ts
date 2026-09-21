@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import {
   assignFullTactic,
-  chooseOption,
+  chooseToolbarOption,
   continueSeededCareer,
   expect,
   goto,
@@ -32,7 +32,7 @@ test("Squad opens on the position list and the View selector swaps it for a tabl
   await expect(window.locator("li:has(button[data-focus-id])")).toHaveCount(playersCount);
 
   // A view change alters presentation only — the same squad, drawn as a table.
-  await chooseOption(window, "Squad view", "Personal details");
+  await chooseToolbarOption(window, "Squad view", "Personal details");
   await expect(window.getByRole("heading", { name: "Players (Personal details)" })).toBeVisible();
   await expect(window.locator("tbody tr")).toHaveCount(playersCount);
   await expect(window.getByRole("columnheader", { name: "Nationality" })).toBeVisible();

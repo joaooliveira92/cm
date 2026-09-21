@@ -17,7 +17,7 @@
 import {
   assignFullTactic,
   continueSeededCareer,
-  chooseOption,
+  chooseToolbarOption,
   enterCareer,
   expect,
   openLivePanel,
@@ -111,7 +111,7 @@ test("the Squad grid roves by row, toggles selection with Space, and sorts by Ta
   await enterCareer(page, userDataDir);
   // Squad opens on the position list; this test is about the table layout's
   // grid behaviour, so it picks a view that draws one.
-  await chooseOption(page, "Squad view", "Overview");
+  await chooseToolbarOption(page, "Squad view", "Overview");
   const table = page.getByRole("table");
   const rows = table.locator("tbody tr");
   await expect(rows.first()).toBeVisible();
