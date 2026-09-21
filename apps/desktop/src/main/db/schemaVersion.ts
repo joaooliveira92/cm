@@ -14,7 +14,8 @@ const fnv1a = (text: string): number => {
 
 /**
  * The save schema version: a hash of the DDL a fresh save runs, folded into SQLite's signed 32-bit
- * `user_version`. Saves are disposable during development (Agent Note), so there is no upgrade path
+ * `user_version`. Saves are disposable during development
+ * (`.agents/notes/implemented/architecture/2026-09-21-saves-are-disposable-during-development.md`), so there is no upgrade path
  * to number steps for — the version only has to differ whenever the DDL does, and deriving it from
  * the DDL means no change to `db/schema.ts` can forget to bump it. Never `0`, which is what every
  * save made before the version existed reads.

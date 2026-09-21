@@ -34,6 +34,11 @@ const TABS = [
 
 export type PlayerTabId = (typeof TABS)[number]["id"];
 
+/** Each tab's label by id: a total record, so a tab id can never name a heading with no label. */
+const TAB_LABELS: Readonly<Record<PlayerTabId, string>> = Object.fromEntries(
+  TABS.map((entry) => [entry.id, entry.label]),
+) as Record<PlayerTabId, string>;
+
 const TAB_BASE_CLASS = `flex-1 rounded-control px-3 py-1.5 text-center text-sm font-semibold transition-colors ${FOCUS_RING.join(" ")}`;
 
 const PlayerTabStrip = ({
@@ -126,6 +131,7 @@ export const PlayerScreenFrame = ({
   // one on screen once the profile loads; swapping in a new element dropped focus to <body>, and the
   // keyboard spine with it.
   const profile = profileResult._tag === "Success" ? profileResult.value : null;
+  const name = profile === null ? "Player" : `${profile.firstName} ${profile.lastName}`;
   const error = typedError(profileResult);
   const message =
     profileResult._tag === "Initial"
@@ -133,8 +139,6 @@ export const PlayerScreenFrame = ({
       : error === null
         ? "Player could not be loaded."
         : describeRpcError(error);
-  const name = profile === null ? "Player" : `${profile.firstName} ${profile.lastName}`;
-  const tabLabel = TABS.find((entry) => entry.id === tab)?.label ?? "";
 
   return (
     <main
@@ -153,7 +157,7 @@ export const PlayerScreenFrame = ({
         <>
           {/* Every career screen owns its section <h1> (career chrome note). The player's name is
               shown in the navbar, so the heading is for assistive technology only, as on Squad. */}
-          <h1 className="sr-only">{`${name} — ${tabLabel}`}</h1>
+          <h1 className="sr-only">{`${name} — ${TAB_LABELS[tab]}`}</h1>
           <PlayerTabStrip saveId={saveId} playerId={playerId} active={tab} />
           {children(profile)}
         </>

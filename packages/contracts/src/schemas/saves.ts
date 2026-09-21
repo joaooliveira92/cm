@@ -25,7 +25,7 @@ export class SaveNotFoundError extends Schema.TaggedError<SaveNotFoundError>()(
 ) {}
 
 /** Raised by `loadSave` for a save made under another save schema. Saves are disposable during
- *  development (Agent Note): nothing upgrades an older file, so opening one is refused here rather
+ *  development (Agent Note `2026-09-21-saves-are-disposable-during-development.md`): nothing upgrades an older file, so opening one is refused here rather
  *  than failing later at the first read of a table or column it lacks. */
 export class SaveSchemaMismatchError extends Schema.TaggedError<SaveSchemaMismatchError>()(
   "SaveSchemaMismatchError",

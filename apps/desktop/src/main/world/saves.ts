@@ -317,20 +317,17 @@ export const loadSave = (savesDir: string, id: SaveId) =>
       return yield* new SaveNotFoundError({ id });
     }
     // Before anything reads a table: a save made under another schema may lack the tables and
-    // columns every later read assumes, and nothing upgrades it (saves are disposable during
-    // development), so it is refused here with a sentence rather than failing at the first read.
-    const version = yield* readSchemaVersion.pipe(
-      Effect.provide(SqliteClient.layer({ filename, readonly: true })),
-      Effect.scoped,
-    );
-    if (version !== SAVE_SCHEMA_VERSION) {
-      return yield* new SaveSchemaMismatchError({ id });
-    }
-    // Opening a save under a pack that cannot name its ids is a reported condition, not a screen
-    // full of raw identifiers nobody was told about. It never blocks the open.
-    yield* reportPackCoverage.pipe(
-      Effect.provide(SqliteClient.layer({ filename, readonly: true })),
-      Effect.scoped,
-    );
+    // columns every later read assumes, and nothing upgrades it (Agent Note:
+    // .agents/notes/implemented/architecture/2026-09-21-saves-are-disposable-during-development.md),
+    // so it is refused here with a sentence rather than failing at the first read. Opening a save
+    // under a pack that cannot name its ids is a reported condition, not a screen full of raw
+    // identifiers nobody was told about; it never blocks the open.
+    yield* Effect.gen(function* () {
+      const version = yield* readSchemaVersion;
+      if (version !== SAVE_SCHEMA_VERSION) {
+        return yield* new SaveSchemaMismatchError({ id });
+      }
+      yield* reportPackCoverage;
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped);
     return yield* readSaveSummary(filename);
   });

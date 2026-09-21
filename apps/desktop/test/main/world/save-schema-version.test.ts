@@ -8,6 +8,7 @@ import { ok, strictEqual } from "node:assert";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { SqliteClient } from "@effect/sql-sqlite-node";
+import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { SaveId, SaveSchemaMismatchError } from "@cm-clone/contracts";
 import { listSaves, loadSave } from "../../../src/main/world/index.js";
 import { readSchemaVersion, SAVE_SCHEMA_VERSION } from "../../../src/main/db/schemaVersion.js";
@@ -44,6 +45,22 @@ it.effect("a save made under an older schema is listed, and refused on open with
     const error = yield* Effect.flip(loadSave(savesDir, FIXTURE_ID));
     ok(error instanceof SaveSchemaMismatchError, `expected SaveSchemaMismatchError, got ${String(error)}`);
     strictEqual(error.id, FIXTURE_ID);
+  }),
+);
+
+it.effect("a save stamped with another, non-zero schema version is refused too", () =>
+  Effect.gen(function* () {
+    const filename = path.join(savesDir, `${FIXTURE_ID}.sqlite`);
+    copyFileSync(FIXTURE, filename);
+    // A save from a later or earlier stamped build, not only one from before the stamp existed.
+    const other = SAVE_SCHEMA_VERSION === 1 ? 2 : SAVE_SCHEMA_VERSION - 1;
+    yield* Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      yield* sql.unsafe(`PRAGMA user_version = ${other}`);
+    }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped);
+
+    const error = yield* Effect.flip(loadSave(savesDir, FIXTURE_ID));
+    ok(error instanceof SaveSchemaMismatchError, `expected SaveSchemaMismatchError, got ${String(error)}`);
   }),
 );
 

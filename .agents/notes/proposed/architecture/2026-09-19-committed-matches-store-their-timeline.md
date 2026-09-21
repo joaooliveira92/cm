@@ -38,10 +38,11 @@ becomes one too.
 
 Four things this decision fixes that the request left open:
 
-1. **The backfill is a hard gate, and it is time-critical.** Existing committed matches must be
-   backfilled under the *current* engine before any engine-rule change ships. Ship a rule change first
-   and those timelines are gone — recoverable only by checking out the old engine and replaying, which
-   nobody will do. **No engine-rule fix may land before the backfill**, including ticket 26's patch.
+1. **Storage lands before any engine-rule change.** A rule change that ships first rewrites every
+   committed match's timeline. **No engine-rule fix may land before ticket 31**, including ticket 26's
+   patch. *(As first written, this point required a backfill of existing matches under the current
+   engine. Superseded 2026-09-21: saves are disposable during development, so a save made before the
+   storage is refused on open and there is nothing to backfill.)*
 2. **Store events, not a rendered report.** Report, summary and statistics all derive from the event
    stream, so storing events keeps one source of truth and leaves presentation free to change.
 3. **A live match interrupted by an upgrade restarts from kickoff, with the manager told.** This is
@@ -73,9 +74,10 @@ the rule change waiting on it.
 
 ## Consequences
 
-- **Unblocks group-g tickets 26 and 29 and decision requests 01, 04 and 06** — once the backfill lands,
+- **Unblocks group-g tickets 26 and 29 and decision requests 01, 04 and 06** — once ticket 31 lands,
   not before. They move from blocked-on-a-question to blocked-on-a-ticket.
-- **A schema addition, a migration and a backfill** are owed, and must precede any engine-rule fix.
+- **A schema addition** is owed, and must precede any engine-rule fix. (First written as "a schema
+  addition, a migration and a backfill"; see the settled clause below.)
   **Provisional as of 2026-09-19**: there is no mechanism that reaches an existing save file — see
   [saves have no migration path](2026-09-19-saves-have-no-migration-path.md). The *rule* here stands;
   how it is persisted to careers already in progress waits on that. Ticket 31 is blocked on ticket 32.
