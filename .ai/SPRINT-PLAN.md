@@ -246,9 +246,14 @@ Agent-startable work, in order:
 
 1. **The Group G engine-rule fixes, now unblocked** by [31](../.scratch/group-g-match-day/issues/31-committed-matches-store-their-timeline.md)
    (committed matches keep their stored timeline, 2026-09-21):
+   [29](../.scratch/group-g-match-day/issues/29-substitution-windows-share-a-minute-across-halves.md),
+   [33](../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md),
+   [34](../.scratch/group-g-match-day/issues/34-ai-clubs-name-a-bench.md) (AI clubs name a bench), then
    [26](../.scratch/group-g-match-day/issues/26-forced-substitution-picks-any-squad-player.md) (a held
-   patch), then [29](../.scratch/group-g-match-day/issues/29-substitution-windows-share-a-minute-across-halves.md),
-   then [33](../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md).
+   patch; blocked on 34 because decision request 04 makes the bench the only source of substitutes and
+   no AI club has one), [35](../.scratch/group-g-match-day/issues/35-manager-substitutions-come-from-the-bench.md)
+   (decision request 04's manager half) and [36](../.scratch/group-g-match-day/issues/36-a-red-carded-keeper-drags-a-stand-in.md)
+   (decision request 06).
 2. **[gate-red-on-dev 07](../.scratch/gate-red-on-dev/issues/07-youth-intake-at-rollover.md) then
    [08](../.scratch/gate-red-on-dev/issues/08-short-squad-advisory.md)**: the Youth Intake squad floor
    and its readiness advisory ([note](../.agents/notes/proposed/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md)).
