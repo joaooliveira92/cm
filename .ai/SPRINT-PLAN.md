@@ -240,21 +240,25 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**Nothing, without a human.** The queue is empty of work an agent may start, and M1 cannot close on
-its own. Two decisions are waiting, and between them they gate everything left:
+**No human decision is outstanding** (2026-09-21). Every decision request in `.scratch/` has an
+answer, and the four `ready-for-human` tickets were decided under the human's standing delegation.
+Agent-startable work, in order:
 
-1. **[Group I decision request 01 — knowledge-limited player reads](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md).**
-   Four of the ten remaining WIP screens — `clubSquadDetail`, `playerSearch`, `staffSearch`,
-   `shortlist` — each list **players**, and every player outside the manager's club starts
-   Unscouted. None can be specified until this is answered, so **M1 exit criterion 1 cannot be met
-   without it.** It has five dependents now: C 35, D 68, J 132, 134, 137.
-2. **[gate-red-on-dev decision request 01 — squad decay has no floor](../.scratch/gate-red-on-dev/decision-request-01-squad-decay-has-no-floor.md).**
-   Played to season 3, most worlds leave the human club unable to field eleven. Nothing gates on it
-   today, but it changes what the game is.
+1. **[group-g 31 — a committed match stores its timeline](../.scratch/group-g-match-day/issues/31-committed-matches-store-their-timeline.md).**
+   Unblocked by 32 (saves are disposable during development: older saves are refused on open), so it
+   needs no backfill. Every engine-rule fix (group-g 26, 29, decision requests 01, 04, 06) waits on it.
+2. **[gate-red-on-dev 07](../.scratch/gate-red-on-dev/issues/07-youth-intake-at-rollover.md) then
+   [08](../.scratch/gate-red-on-dev/issues/08-short-squad-advisory.md)**: the Youth Intake squad floor
+   and its readiness advisory ([note](../.agents/notes/proposed/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md)).
+3. **Knowledge-limited Player reads have a decision and no ticket.** [Group I decision request 01](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md)
+   was answered on 2026-09-19 (Option A, [note](../.agents/notes/proposed/architecture/2026-09-19-knowledge-limits-every-player-read.md)),
+   but nothing slices it. Run `cm-to-tickets` on that note: it unblocks group-c 10 (Screen 35), D 68,
+   J 132/134/137 and I 119/129, which is **M1 exit criterion 1**.
+4. **Triage the stale `needs-info` tickets** (group-g 10, 20; group-h 07): the decision requests they
+   waited on are answered.
 
-Also human-owned: **group-g ticket 32** (saves need a migration path), which blocks ticket 31 and
-therefore every engine-rule fix; **group-f decision request 01**, which blocks charting Group F's
-remainder; and four `needs-info` tickets across Groups G, H and J.
+Groups P, Q and S were scoped on 2026-09-21 and build nothing for v1; Group Q's 243 already ships as
+Season Summary.
 
 **Where M1's exit criteria stand.** Criterion 2 is met: Group C's twelve are disposed, and F and K —
 the two ledgers still carrying `Not yet audited` rows — are not gaps in it. The criterion asks for a
@@ -262,7 +266,7 @@ ledger that *exists with a complete coverage table*, and both have one; a `Not y
 those two files doing the job their preambles describe, which is to record a gap rather than a
 decision. **Group K was checked on 2026-09-20 and is wholly unstarted** — `map.md` with
 `<!-- none yet -->`, no spec, no tickets, no screen read — and charting it belongs to a different
-milestone. Criterion 4 is met (`check:all` green, 2090 desktop tests; e2e green, 55). Criterion 5 is
+milestone. Criterion 4 is met (`check:all` green; e2e green, 56 on 2026-09-21). Criterion 5 is
 met as of 2026-09-20 — six traceability rows were owed for this milestone's read models and had been
 accumulating unwritten. Criterion 1 is met for `competition*` and `nation*`; the rest is blocked per
 above, and six `match*` screens are an explicit non-goal.
