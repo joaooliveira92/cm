@@ -29,7 +29,7 @@ screen what is already built, what is in scope for v1, and in what order the in-
 - [03 — Build sequence](issues/03-partial-screen-build-sequence.md): 1=Contract Renewal, 2=Contract Expiry, 3=Budget Review, 4=Transfer History.
 - [Spec published](spec.md): reconciled spec, handoff from charting to slicing.
 - [Implementation tickets](issues/): 4 vertical slices (04-07), all unblocked.
-- [04 — Contract Renewal](issues/04-contract-renewal.md): needs-info. Built and kept as a patch; blocked on [decision request 01](decision-request-01-when-a-contract-can-be-renewed.md), whether a Contract can be renewed while it still has years to run.
+- [04 — Contract Renewal](issues/04-contract-renewal.md): resolved 2026-09-21 (`f60a3093`). The Player Contract screen renews an own-club Player's Contract for a chosen length; a Contract renews only in its last contracted year, per [decision request 01](decision-request-01-when-a-contract-can-be-renewed.md), and a mid-term press gets `ContractRenewalNotDueError`'s sentence.
 - [05 — Contract Expiry](issues/05-contract-expiry.md): resolved. Screen 141 shipped 2026-09-15.
 - [06 — Budget Review](issues/06-budget-review.md): resolved. Screen 145 shipped 2026-09-15.
 - [07 — Transfer History](issues/07-transfer-history.md): resolved. Screen 146 shipped 2026-09-15 on

@@ -8,11 +8,11 @@
 
 **Blocked by:** 
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Renew action with a length choice on the Player Contract screen for an own-club Player, through `renewContract`
-- [ ] The contract shown refreshes after success; each typed refusal shows its sentence inline
-- [ ] No renew action for a Player outside the manager's club
+- [x] Renew action with a length choice on the Player Contract screen for an own-club Player, through `renewContract`
+- [x] The contract shown refreshes after success; each typed refusal shows its sentence inline
+- [x] No renew action for a Player outside the manager's club
 
 ## Comments
 
