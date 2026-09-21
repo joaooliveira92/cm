@@ -52,6 +52,10 @@ cluster was hidden behind it.
   Proved by a mutant that reproduces the original error at `start.ts:161` on demand. Squad decay past
   season 2 is a game-design gap, filed as
   [decision request 01](decision-request-01-squad-decay-has-no-floor.md).
+- [Decision request 01](decision-request-01-squad-decay-has-no-floor.md): answered 2026-09-21, Option B
+  then A. A Youth Intake at each rollover brings every club back to 16, and a readiness advisory warns
+  before the human club's squad runs short. Tickets [07](issues/07-youth-intake-at-rollover.md) and
+  [08](issues/08-short-squad-advisory.md).
 
 - [06 — the environment pragma](issues/06-pragma-lint-rule.md): `vitest-environment-pragma` added to
   `scripts/effect-lint.ts`, non-AST like the line ceiling. It fires on a *mention* as well as a use,

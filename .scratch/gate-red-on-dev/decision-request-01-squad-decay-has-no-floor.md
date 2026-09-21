@@ -90,3 +90,31 @@ eleven is exactly what the Continue readiness advisories are for.
 - **Proceeding meanwhile**: everything. Ticket 05 shipped. `boundary-helpers.ts` now raises
   `HumanClubCannotFieldElevenError` naming the squad size, so a spec that wanders into this state
   says so instead of failing three modules away in `match/start.ts`.
+
+---
+
+## Answer — Option B, then A, 2026-09-21
+
+**A Youth Intake at every Season rollover is the floor, and the Continue readiness advisories make a
+short squad visible before it is fatal.** Every club, the human's included, receives generated young
+players at rollover: a small intake each season, plus as many more as it takes to bring the squad back
+to the floor of 16 (eleven and a full bench). Expiry stays a mechanic the manager manages; it just can
+no longer end a career on its own.
+
+**The warning is part of the answer, not a nicety.** When the human club's squad would fall below the
+floor at the coming rollover, which the Continue readiness advisories can read from
+`contracts.years_remaining`, the manager is told while renewal (group-j ticket 04, shipped 2026-09-21)
+can still act on it.
+
+**CONTEXT.md is amended in the same change.** It cuts "youth integration and youth promotion" from v1
+because no youth or reserve squad exists. That cut stands: an intake player joins the senior squad
+directly, and there is still no youth squad to promote from. **Youth Intake** is added as a term so the
+two are not confused.
+
+**A stays the follow-up.** A Free Agent pool worth signing from is the interesting half, and renewal
+already gives the manager one lever. C is rejected for the reason the request gives: it deletes the
+mechanic ticket 16 built.
+
+Recorded as [a Youth Intake is the squad floor](../../.agents/notes/proposed/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md).
+Tickets: [07](issues/07-youth-intake-at-rollover.md) and [08](issues/08-short-squad-advisory.md).
+Decided under the human's standing delegation (2026-09-21, "solve all the ready-for-human tasks").

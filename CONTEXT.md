@@ -537,6 +537,13 @@ A player whose Contract has expired (start of the Season following its last cont
 by any club for a Credits 0 fee via the same signing flow as a normal transfer, with no Bid or
 negotiation step.
 
+**Youth Intake**:
+Generated players aged 16–18 who join every club's senior squad at each Season rollover, after
+Contract expiry: a small intake each Season, plus as many as it takes to bring the squad back to 16.
+It is the squad floor, so expiry cannot leave a club unable to field eleven. Not youth promotion:
+there is no youth squad (see Technical Coaching).
+_Avoid_: Regen (informal), Youth promotion (the cut feature)
+
 **Listed**:
 A cosmetic flag a club may set on one of its players to signal willingness to sell. Any player can
 receive a Bid regardless of this flag — Listed does not gate bid legality, a direct consequence of
@@ -772,7 +779,7 @@ The Manager Pillar governing the manager's contribution to player development. I
 effectiveness of the manager's own Training Focus decision - it scales the focused Category's
 development, never the passive baseline every player receives (which the club's Coach owns instead) -
 so a manager who sets no Training Focus draws no benefit from it. Youth integration and youth promotion are cut from v1: no youth or
-reserve squad exists. Always qualified as a Manager Pillar to keep it distinct from Technical, the
+reserve squad exists (a Youth Intake joins the senior squad directly). Always qualified as a Manager Pillar to keep it distinct from Technical, the
 Attribute Category.
 
 ### Board & objectives
