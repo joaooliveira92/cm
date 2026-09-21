@@ -90,7 +90,7 @@ question: *can a Contract be renewed while it still has years to run?*
 
 That was group-j decision request 01, and it is **answered 2026-09-19: a Contract may be renewed only in
 its last contracted year** —
-[a Contract renews only in its last contracted year](../../../.agents/notes/proposed/feature/2026-09-19-a-contract-renews-in-its-last-year.md).
+[a Contract renews only in its last contracted year](../../../.agents/notes/implemented/feature/2026-09-19-a-contract-renews-in-its-last-year.md).
 The plain reading of "never renegotiated mid-term"; it gives the Contract Expiry screen its purpose, and
 it closes a one-way loophole, since a mid-term renewal at today's formula figure only appeals when the
 number has fallen.

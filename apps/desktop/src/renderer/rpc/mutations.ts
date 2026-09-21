@@ -56,6 +56,13 @@ export const INVALIDATION_RULES = {
   /** Ending an assignment frees a scout and files the reading a Club watch leaves behind, both of
    * which the scouting key covers, so it invalidates exactly what assigning does. */
   unassignScout: (saveId: SaveId): ReadonlyArray<unknown> => [scoutingKey(saveId)],
+  /** A renewal rewrites one own-club Contract's wage and length. The squad key covers the Player's
+   * contract and profile reads; transfers and economy cover the Wage Budget used. */
+  renewContract: (saveId: SaveId): ReadonlyArray<unknown> => [
+    squadKey(saveId),
+    transfersKey(saveId),
+    economyKey(saveId),
+  ],
 } as const;
 
 export type MutationName = keyof typeof INVALIDATION_RULES;
@@ -122,7 +129,13 @@ export const respondAsBidderEffect = (
 ): MutationEffect<"respondAsBidder"> =>
   call("respondAsBidder", input).pipe(Reactivity.mutation(INVALIDATION_RULES.placeBid(input.saveId)));
 
-/** `renewContract` has no shipped consumer in this stage; its invalidation is covered by `INVALIDATION_RULES` when a screen exists. */
+/** `renewContract` — invalidates squad + transfers + economy. */
+export const renewContractEffect = (
+  input: RpcPayload<"renewContract">,
+): MutationEffect<"renewContract"> =>
+  call("renewContract", input).pipe(
+    Reactivity.mutation(INVALIDATION_RULES.renewContract(input.saveId)),
+  );
 
 /** `submitMatchCommand` — invalidates `["match", saveId, matchId]` only.
  * A command is the only mutation that must never touch calendar/transfers data.
@@ -211,6 +224,11 @@ export const respondToBidMutation = rpcRuntime.fn((input: RpcPayload<"respondToB
 /** `respondAsBidder` — mutation atom. */
 export const respondAsBidderMutation = rpcRuntime.fn((input: RpcPayload<"respondAsBidder">) =>
   respondAsBidderEffect(input),
+);
+
+/** `renewContract` — mutation atom. */
+export const renewContractMutation = rpcRuntime.fn((input: RpcPayload<"renewContract">) =>
+  renewContractEffect(input),
 );
 
 /** `submitMatchCommand` — mutation atom. */

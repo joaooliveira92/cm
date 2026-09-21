@@ -446,11 +446,17 @@ export const squadDevelopmentAtom = Atom.family((saveId: SaveId) =>
   ),
 );
 
+/**
+ * getPlayerProfile — `["save", saveId]`, `["squad", saveId]`.
+ *
+ * Reactive on the squad key as well as the save-wide one: a contract renewal rewrites the wage and
+ * length the profile's contract-expiry line and the navbar band read, so the read must follow it.
+ */
 const playerProfileForSave = Atom.family((saveId: SaveId) =>
   Atom.family((playerId: PlayerId) =>
     managementReadPolicy(
       Atom.make(call("getPlayerProfile", { saveId, playerId })).pipe(
-        Atom.withReactivity([saveKey(saveId)]),
+        Atom.withReactivity([saveKey(saveId), squadKey(saveId)]),
       ),
     ),
   ),
@@ -459,11 +465,18 @@ const playerProfileForSave = Atom.family((saveId: SaveId) =>
 export const playerProfileAtom = (saveId: SaveId, playerId: PlayerId) =>
   playerProfileForSave(saveId)(playerId);
 
+/**
+ * getPlayerContract — `["save", saveId]`, `["squad", saveId]`.
+ *
+ * Reactive on the squad key as well as the save-wide one: `renewContract` invalidates the squad key
+ * (the renewal rewrites one own-club contract), which is what makes the Player Contract screen's
+ * shown contract refresh to its new length and wage after a successful renewal.
+ */
 const playerContractForSave = Atom.family((saveId: SaveId) =>
   Atom.family((playerId: PlayerId) =>
     managementReadPolicy(
       Atom.make(call("getPlayerContract", { saveId, playerId })).pipe(
-        Atom.withReactivity([saveKey(saveId)]),
+        Atom.withReactivity([saveKey(saveId), squadKey(saveId)]),
       ),
     ),
   ),

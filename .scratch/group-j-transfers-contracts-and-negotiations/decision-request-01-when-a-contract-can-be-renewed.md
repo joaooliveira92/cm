@@ -82,5 +82,5 @@ and held as a patch. It needs the last-year guard, a typed refusal on `renewCont
 and the test change.
 
 Recorded as
-[a Contract renews only in its last contracted year](../../.agents/notes/proposed/feature/2026-09-19-a-contract-renews-in-its-last-year.md).
+[a Contract renews only in its last contracted year](../../.agents/notes/implemented/feature/2026-09-19-a-contract-renews-in-its-last-year.md).
 Decided under the human's standing delegation ("i need you to solve the decisions").

@@ -83,6 +83,18 @@ export class PlayerNotFreeAgentError extends Schema.TaggedError<PlayerNotFreeAge
   },
 ) {}
 
+/** Raised when `renewContract` is asked to renew a Contract that is not in its last contracted
+ *  year (`years_remaining > 1`). A Contract's terms are never renegotiated mid-term (CONTEXT.md,
+ *  Contract); renewal is the one exception and it is available only in the final year (Agent Note:
+ *  a Contract renews only in its last contracted year). */
+export class ContractRenewalNotDueError extends Schema.TaggedError<ContractRenewalNotDueError>()(
+  "ContractRenewalNotDueError",
+  {
+    playerId: PlayerId,
+    yearsRemaining: Schema.Finite,
+  },
+) {}
+
 /** One in-flight or resolved Bid, from the user club's point of view — `sellingClubId`/
  * `biddingClubId` disambiguate incoming vs. outgoing without a separate "direction" field. */
 export class BidView extends Schema.Class<BidView>("BidView")({

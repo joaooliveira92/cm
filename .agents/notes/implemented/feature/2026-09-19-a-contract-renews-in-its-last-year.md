@@ -1,6 +1,6 @@
 # Agent Note: A Contract renews only in its last contracted year
 
-Status: proposed
+Status: implemented
 
 Settles group-j decision request 01, which blocks a screen that is already built.
 
@@ -60,7 +60,7 @@ the only thing renewal would change is length.
   as a patch; it needs the last-year guard added and the test changed, then it ships. This is the
   cheapest screen in the backlog — the work is done.
 - `renewContract` gains a refusal, which needs a typed error on its declared union rather than a bare
-  failure — see [infrastructure failures are defects](../architecture/2026-09-19-infrastructure-failures-are-defects-domain-failures-are-typed.md)
+  failure — see [infrastructure failures are defects](../../proposed/architecture/2026-09-19-infrastructure-failures-are-defects-domain-failures-are-typed.md)
   for why the union matters.
 - One existing test inverts; one is added.
 - The **Contract** entry in `CONTEXT.md` needs no change, which is the point: the code was wrong, not the

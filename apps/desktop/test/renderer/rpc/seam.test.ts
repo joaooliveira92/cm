@@ -227,6 +227,11 @@ describe("renderer RPC seam — invalidation rules (AC-05)", () => {
     expect(INVALIDATION_RULES.commitCareer(save)).toEqual([]);
     expect(INVALIDATION_RULES.assignScoutToClub(save)).toEqual([["scouting", save]]);
     expect(INVALIDATION_RULES.unassignScout(save)).toEqual([["scouting", save]]);
+    expect(INVALIDATION_RULES.renewContract(save)).toEqual([
+      ["squad", save],
+      ["transfers", save],
+      ["economy", save],
+    ]);
   });
 
   it("placeBid never invalidates squad — a pending bid does not change squad state", () => {
@@ -245,6 +250,7 @@ describe("renderer RPC seam — invalidation rules (AC-05)", () => {
       ...INVALIDATION_RULES.placeBid(save),
       ...INVALIDATION_RULES.submitMatchCommand(save, "m1"),
       ...INVALIDATION_RULES.commitCareer(save),
+      ...INVALIDATION_RULES.renewContract(save),
     ];
     for (const key of all) {
       expect(JSON.stringify(key)).not.toContain("*");

@@ -79,5 +79,13 @@ describe("RPC error unions declare what their handler can raise", () => {
     it("renewContract round-trips a pending-fixture integrity failure", () => {
       roundTrip(AppRpcs.renewContract.error, pendingFixtureIntegrity);
     });
+
+    it("renewContract round-trips a renewal-not-due failure", () => {
+      roundTrip(AppRpcs.renewContract.error, {
+        _tag: "ContractRenewalNotDueError",
+        playerId: "p1",
+        yearsRemaining: 3,
+      });
+    });
   });
 });

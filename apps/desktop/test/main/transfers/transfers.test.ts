@@ -7,12 +7,13 @@ import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { TRANSFER_BUDGET_BY_TIER, WAGE_BUDGET_BY_TIER } from "@cm-clone/shared";
 import { BidId, PlayerId } from "@cm-clone/contracts";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { createSave } from "../../seeded-save.js";
 import { getSquad } from "../../../src/main/club/index.js";
+import { getPlayerContract } from "../../../src/main/career/player.js";
 import { loadStreamEvents } from "../../../src/main/season/decider.js";
 import {
   decideAiSellerResponse,
@@ -318,17 +319,50 @@ it.effect("signing/renewing is rejected once it would exceed the club's Wage Bud
   }),
 );
 
-it.effect("renewContract reuses the signing flow against the player's current club", () =>
+it.effect("renewContract refuses a mid-term Contract — a Contract renews only in its last year", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const squad = yield* getSquad(savesDir, save.id);
     const playerId = squad.players[0]!.id;
 
+    // A freshly generated Contract stands mid-term, so renewal must be refused under the
+    // last-year rule (Agent Note 2026-09-19, decision request 01).
+    const result = yield* Effect.result(renewContract(savesDir, save.id, playerId, 5));
+    ok(Result.isFailure(result));
+    if (Result.isFailure(result)) {
+      strictEqual(result.failure._tag, "ContractRenewalNotDueError");
+      strictEqual(
+        (result.failure as { readonly yearsRemaining: number }).yearsRemaining > 1,
+        true,
+      );
+    }
+
+    // The refusal changed nothing: the squad still holds the player at the same wage.
+    const stillInSquad = yield* getSquad(savesDir, save.id);
+    ok(stillInSquad.players.some((p) => p.id === playerId));
+  }),
+);
+
+it.effect("renewContract renews a last-year Contract at the formula wage for the chosen length", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const squad = yield* getSquad(savesDir, save.id);
+    const playerId = squad.players[0]!.id;
+
+    yield* withSave(
+      save.id,
+      Effect.gen(function* () {
+        const sql = yield* SqlClient;
+        yield* sql`UPDATE contracts SET years_remaining = 1 WHERE player_id = ${playerId}`;
+      }),
+    );
+
     const renewed = yield* renewContract(savesDir, save.id, playerId, 5);
     ok(renewed.wageBudgetUsed > 0);
 
-    const stillInSquad = yield* getSquad(savesDir, save.id);
-    ok(stillInSquad.players.some((p) => p.id === playerId));
+    const contract = yield* getPlayerContract(savesDir, save.id, playerId);
+    strictEqual(contract.lengthYears, 5);
+    strictEqual(contract.expiryDate, `Season ${1 + contract.lengthYears}`);
   }),
 );
 

@@ -3,6 +3,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   BidNotFoundError,
   BidView,
+  ContractRenewalNotDueError,
   InsufficientTransferBudgetError,
   InvalidBidActionError,
   PlayerNotFoundError,
@@ -315,7 +316,9 @@ export const signFreeAgent = (savesDir: string, saveId: SaveId, playerId: Player
   );
 
 /** Renewal reuses the signing flow against the player's current club during an open Transfer
- * Window (ticket 05/16) — same formula wage, a fresh 1-5 year length. */
+ *  Window (ticket 05/16) — same formula wage, a fresh 1-5 year length. A Contract is renewed only
+ *  in its last contracted year (`years_remaining === 1`): its terms are never renegotiated
+ *  mid-term (CONTEXT.md, Contract), which is what the last-year guard below enforces. */
 export const renewContract = (savesDir: string, saveId: SaveId, playerId: PlayerId, years: number | undefined) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
@@ -333,6 +336,15 @@ export const renewContract = (savesDir: string, saveId: SaveId, playerId: Player
       }
       if (player.clubId !== club.id) {
         return yield* new InvalidBidActionError({ reason: "player is not contracted to your club" });
+      }
+      const yearsRemaining = yield* yearsRemainingOf(playerId);
+      if (yearsRemaining === null) {
+        // A player at a club always has a contract row; a missing one means the squad read this
+        // player from is stale in the same way a missing player is.
+        return yield* new PlayerNotFoundError({ playerId });
+      }
+      if (yearsRemaining > 1) {
+        return yield* new ContractRenewalNotDueError({ playerId, yearsRemaining });
       }
 
       const wage = weeklyWage(player.overallRating, player.age, player.potentialAbility);
@@ -364,4 +376,15 @@ const currentWage = (playerId: PlayerId) =>
     const sql = yield* SqlClient;
     const rows = yield* sql<{ wage: number }>`SELECT wage FROM contracts WHERE player_id = ${playerId}`;
     return rows[0]?.wage ?? 0;
+  });
+
+/** The Contract's remaining length, or `null` when there is no contract row — what the last-year
+ *  guard reads. `1` is "the last contracted year": the season-end expiry sweep decrements every
+ *  row and frees players who hit zero, so a player at `1` now will be freed unless renewed. */
+const yearsRemainingOf = (playerId: PlayerId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ yearsRemaining: number }>`
+      SELECT years_remaining as "yearsRemaining" FROM contracts WHERE player_id = ${playerId}`;
+    return rows[0]?.yearsRemaining ?? null;
   });

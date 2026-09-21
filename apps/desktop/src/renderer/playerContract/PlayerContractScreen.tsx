@@ -14,10 +14,13 @@ import { type PlayerId, type SaveId } from "@cm-clone/contracts";
 import { formatCredits } from "../format.js";
 import { PlayerPanel, PlayerRow } from "../player/panels.js";
 import { PlayerScreenFrame } from "../player/PlayerScreenFrame.js";
-import { describeRpcError, playerContractAtom, typedError, useAtomValue } from "../rpc.js";
+import { describeRpcError, playerContractAtom, squadAtom, typedError, useAtomValue } from "../rpc.js";
+import { RenewContractPanel } from "./RenewContractPanel.js";
 
 /** The Contract Details panel, with its own three view states so a failed contract read costs the
- *  panel and not the page. */
+ *  panel and not the page. When the squad read names the manager's club as the contract's club, the
+ *  renew action (Screen 140) sits below the rows, in the same grid cell so the page it acts on and
+ *  the action stay together. */
 const ContractPanel = ({
   saveId,
   playerId,
@@ -26,6 +29,7 @@ const ContractPanel = ({
   readonly playerId: PlayerId;
 }) => {
   const contractResult = useAtomValue(playerContractAtom(saveId, playerId));
+  const squadResult = useAtomValue(squadAtom(saveId));
 
   if (contractResult._tag === "Initial") {
     return (
@@ -49,14 +53,19 @@ const ContractPanel = ({
 
   const contract = contractResult.value;
   const years = contract.lengthYears;
+  // Renewal is for the manager's own club only; until the squad read names that club, no action shows.
+  const ownClub = squadResult._tag === "Success" && squadResult.value.club.id === contract.clubId;
 
   return (
-    <PlayerPanel title="Contract Details">
-      <PlayerRow label="Wages" value={`${formatCredits(contract.wage)} per season`} />
-      <PlayerRow label="Length" value={`${years} year${years === 1 ? "" : "s"}`} />
-      <PlayerRow label="Started" value={contract.startDate} />
-      <PlayerRow label="Expires" value={contract.expiryDate} />
-    </PlayerPanel>
+    <>
+      <PlayerPanel title="Contract Details">
+        <PlayerRow label="Wages" value={`${formatCredits(contract.wage)} per season`} />
+        <PlayerRow label="Length" value={`${years} year${years === 1 ? "" : "s"}`} />
+        <PlayerRow label="Started" value={contract.startDate} />
+        <PlayerRow label="Expires" value={contract.expiryDate} />
+      </PlayerPanel>
+      {ownClub && <RenewContractPanel saveId={saveId} playerId={playerId} />}
+    </>
   );
 };
 

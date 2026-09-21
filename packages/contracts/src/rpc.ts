@@ -102,6 +102,7 @@ import {
   ContractExpiryScreenView,
   BudgetReviewView,
   TransferHistoryView,
+  ContractRenewalNotDueError,
 } from "./schemas/index.js";
 import { ScoutingRpcs } from "./rpc-scouting.js";
 
@@ -483,6 +484,7 @@ commitCareer: {
       SaveNotFoundError,
       PlayerNotFoundError,
       InvalidBidActionError,
+      ContractRenewalNotDueError,
       PendingFixtureIntegrityError,
       TransferWindowClosedError,
       WageBudgetExceededError,

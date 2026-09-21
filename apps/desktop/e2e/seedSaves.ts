@@ -39,6 +39,28 @@ const createSeedSave = (savesDir: string, name: string) =>
 /** A fresh save: just `createSave`, no calendar advances. The season sits at Matchday 0. */
 export const seedFresh = (savesDir: string) => run(createSeedSave(savesDir, "Seed: fresh"));
 
+/** A fresh save whose every own-club Contract stands in its last contracted year
+ *  (`years_remaining = 1`), so any squad player can be renewed through the Player Contract screen
+ *  (Screen 140) without playing a Matchday. The fresh save is pre-season, so the Transfer Window
+ *  is open; the update is written directly, as the main-process tests do, so the seed costs no
+ *  calendar advance and no one gets expired (no season conclusion runs in a fresh save). */
+export const seedRenewable = (savesDir: string) =>
+  run(
+    Effect.gen(function* () {
+      const id = yield* createSeedSave(savesDir, "Seed: renewable");
+      yield* Effect.gen(function* () {
+        const sql = yield* SqlClient;
+        const user = yield* sql<{ id: string }>`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`;
+        yield* sql`UPDATE contracts SET years_remaining = 1
+                   WHERE player_id IN (SELECT id FROM players WHERE club_id = ${user[0]!.id})`;
+      }).pipe(
+        Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${id}.sqlite`) })),
+        Effect.scoped,
+      );
+      return id;
+    }),
+  );
+
 /** A save with an arbitrary name — used where a test needs a specific continue-list label
  *  (duplicate names, the rebind journey's relaunch target). */
 export const seedNamed = (savesDir: string, name: string) => run(createSeedSave(savesDir, name));

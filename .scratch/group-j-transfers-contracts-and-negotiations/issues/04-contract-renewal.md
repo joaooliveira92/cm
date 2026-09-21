@@ -8,7 +8,7 @@
 
 **Blocked by:** 
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Renew action with a length choice on the Player Contract screen for an own-club Player, through `renewContract`
 - [ ] The contract shown refreshes after success; each typed refusal shows its sentence inline
