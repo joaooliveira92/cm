@@ -2,15 +2,15 @@
 
 The specs in this directory are an **import**, not a set of requirements. This ledger records every
 place the import is knowingly not followed, and why. Its format is the one the
-[Group A ledger](../group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md) pilots and
-the [Group B ledger](../group_b_global_navigation_and_inbox/RECONCILIATION.md) extends. The import files
+[Group A ledger](../../docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md) pilots and
+the [Group B ledger](../../docs/specs/group_b_global_navigation_and_inbox/RECONCILIATION.md) extends. The import files
 are never edited.
 
 **The whole group is disposed in full, and it is one ruling applied thirteen times.** Every screen
 administers a multiplayer session: participants, hosts, lobbies, roles, readiness, synchronization,
 reconnects, host migration, shared checkpoints and moderation. The multiplayer, network and
 multi-manager axis was removed wholesale from this project at Group A, and
-[`CONTEXT.md`](../../../CONTEXT.md)'s **Save** entry fixes exactly one human manager per Save. The
+[`CONTEXT.md`](../../CONTEXT.md)'s **Save** entry fixes exactly one human manager per Save. The
 Group B ledger's section *The multiplayer axis* sets out that ruling and it is not re-argued here. No
 screen has residue on another axis, so no section-by-section pass is owed.
 

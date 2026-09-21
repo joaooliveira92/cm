@@ -69,4 +69,4 @@ If sacked, rollover does NOT run and save becomes read-only (`Archived Save`).
 *Pre-season* exists as the first phase (`pre_season` → `in_season`/`mid_window_open` →
 `season_complete`). No pre-season friendlies or training camps exist.
 
-See [Research note](../../../../docs/research/group-q-season-transitions.md).
+See [Research note](../../../docs/research/group-q-season-transitions.md).

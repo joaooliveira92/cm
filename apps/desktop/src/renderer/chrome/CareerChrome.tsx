@@ -15,22 +15,11 @@ import {
   seasonReadout,
   type SeasonReadoutInput,
 } from "./header/career-header-state.js";
-import {
-  getToolbarControls,
-  getToolbarVersion,
-  subscribeToolbarVersion,
-} from "../screenToolbarControls.js";
+import { ScreenToolbarSlot } from "./ScreenToolbarSlot.js";
 import { getScreenIdentity, subscribeScreenIdentity } from "../screenIdentity.js";
 
 export { NAV_SECTIONS as CAREER_SECTIONS } from "../navigation/nav-config.js";
 export { matchReadout, seasonReadout, type SeasonReadoutInput, continueUnavailableReason };
-
-/** Renders screen-specific toolbar controls (e.g. View/Position selects) in the
- *  actions band between the context nav and the secondary nav tabs. */
-const ScreenToolbarSlot = () => {
-  useSyncExternalStore(subscribeToolbarVersion, getToolbarVersion, getToolbarVersion);
-  return getToolbarControls();
-};
 
 const CareerChromeInner = ({ saveId }: { readonly saveId: SaveId }) => {
   const {

@@ -16,6 +16,8 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { chooseOptionByLabel, selectValueOf } from "../../setup/baseUiSelect.js";
+import { ScreenToolbarSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
+import { chooseToolbarOption } from "../../setup/toolbarPopover.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import {
@@ -76,17 +78,22 @@ const transfersView = (overrides: {
     [marketPlayer("mp1", "Alan", "GK", true), marketPlayer("mp2", "Bob", "DC", true)],
 });
 
+/** The Squad screen with the chrome's toolbar slot, where its View and Position selectors render. */
+const renderSquad = (): void =>
+  renderInRouter(
+    <RegistryProvider>
+      <ScreenToolbarSlot />
+      <SquadScreen saveId={rid("s1")} />
+    </RegistryProvider>,
+  );
+
 const mountSquad = async (view: unknown): Promise<void> => {
   mockPreload(async (method) =>
     method === "getSquad"
       ? ({ _tag: "Success", value: view } as never)
       : ({ _tag: "Failure", error: NOT_FOUND } as never),
   );
-  renderInRouter(
-    <RegistryProvider>
-      <SquadScreen saveId={rid("s1")} />
-    </RegistryProvider>,
-  );
+  renderSquad();
 };
 
 const mountTransfers = async (view: unknown): Promise<void> => {
@@ -345,7 +352,7 @@ describe("AC-31 — selection cleared when the selected row is filtered out (exp
     fireEvent.keyDown(document.querySelector("tbody")!, { key: " " });
     expect(document.querySelector('tr[aria-selected="true"]')).toBeTruthy();
 
-    await chooseOptionByLabel(/Filter squad by position/, "DC");
+    await chooseToolbarOption(/Filter squad by position/, "DC");
     await screen.findByText(/Dorso Player/);
     expect(document.querySelector('tr[aria-selected="true"]')).toBeNull();
     expect(screen.queryByRole("button", { name: /Garek Player/ })).toBeNull();
@@ -374,11 +381,7 @@ describe("AC-32 — explicit result/refresh states, polite status announcer, rol
         ? ({ _tag: "Success", value: squadView([squadPlayer("p1", "Alan", POSITIONS[2])]) } as never)
         : ({ _tag: "Failure", error: NOT_FOUND } as never),
     );
-    renderInRouter(
-      <RegistryProvider>
-        <SquadScreen saveId={rid("s1")} />
-      </RegistryProvider>,
-    );
+    renderSquad();
     // The atom's initial value renders the loading state on mount, before the
     // seam answers. `findBy` rather than `getBy` because the screen mounts
     // under a router, whose first synchronous pass renders nothing.
@@ -395,11 +398,7 @@ describe("AC-32 — explicit result/refresh states, polite status announcer, rol
         ? ({ _tag: "Failure", error: NOT_FOUND } as never)
         : ({ _tag: "Failure", error: NOT_FOUND } as never),
     );
-    renderInRouter(
-      <RegistryProvider>
-        <SquadScreen saveId={rid("s1")} />
-      </RegistryProvider>,
-    );
+    renderSquad();
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("That save could not be found.");
     expect(within(alert).getByRole("button", { name: "Retry" })).toBeTruthy();
@@ -482,11 +481,7 @@ describe("review repairs (stage-5 review) — F1 refresh keeps rows, F2 retry, F
       }
       return { _tag: "Failure", error: NOT_FOUND } as never;
     });
-    renderInRouter(
-      <RegistryProvider>
-        <SquadScreen saveId={rid("s1")} />
-      </RegistryProvider>,
-    );
+    renderSquad();
     await screen.findByRole("button", { name: /Alan Player/ });
 
     // A manual retry (the exact Action the Retry button dispatches) revalidates.
@@ -567,7 +562,7 @@ describe("review repairs (stage-5 review) — F1 refresh keeps rows, F2 retry, F
     // A filter with no matching rows flips the screen to NoFilterResults in the
     // same render the old announcer would unmount; the one status region must
     // persist and keep the latest line.
-    await chooseOptionByLabel(/Filter squad by position/, "ST");
+    await chooseToolbarOption(/Filter squad by position/, "ST");
     expect(screen.getByText("No players match the current filters.")).toBeTruthy();
     const status = screen.getByRole("status");
     expect(status.textContent).toContain("hidden by the current filters");

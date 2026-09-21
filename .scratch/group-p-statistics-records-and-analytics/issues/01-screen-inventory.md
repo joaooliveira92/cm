@@ -48,4 +48,4 @@ lockfile or codebase. All statistics render as plain HTML tables.
 Summary, League Table, Competition Table, Competition Results. All are match-level or
 competition-table-level — none is a season-wide analytics surface.
 
-See [Research note](../../../../docs/research/group-p-statistics-records-analytics.md).
+See [Research note](../../../docs/research/group-p-statistics-records-analytics.md).

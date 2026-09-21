@@ -79,8 +79,11 @@ describe("renderer dependency-boundary lint (AC-09)", () => {
       files.map((f) => readFile(join(rendererDir, f), "utf8")),
     );
     for (const name of ["setLoadedSave", "setCreating", "setCreationState", "setScreen"]) {
+      // Whole-word match: `setScreenIdentity` (the navbar identity publisher) is not the removed
+      // `setScreen` setter.
+      const word = new RegExp(`\\b${name}\\b`);
       for (const source of sources) {
-        expect(source).not.toContain(name);
+        expect(source).not.toMatch(word);
       }
     }
   });

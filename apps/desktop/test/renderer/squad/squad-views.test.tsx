@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
@@ -28,23 +28,9 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
+import { ScreenToolbarSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
+import { chooseToolbarOption } from "../../setup/toolbarPopover.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
-
-/** Popover-based view/position selector: click the trigger button, then click
- *  the option button that appears in the portaled popover. Waits for the
- *  popover to close (the dialog is unmounted) before returning. */
-const chooseOptionByLabel = async (
-  triggerLabel: string,
-  optionLabel: string,
-): Promise<void> => {
-  const trigger = screen.getByRole("button", { name: triggerLabel });
-  fireEvent.click(trigger);
-  const option = await screen.findByText(optionLabel, {}, { timeout: 2000 });
-  fireEvent.click(option);
-  await waitFor(() => {
-    expect(screen.queryByRole("dialog")).toBeNull();
-  });
-};
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -121,6 +107,7 @@ const mountSquad = async (
   );
   renderInRouter(
     <RegistryProvider>
+      <ScreenToolbarSlot />
       <SquadScreen saveId={rid("s1")} />
     </RegistryProvider>,
   );
@@ -213,14 +200,14 @@ describe("choosing a view", () => {
     await mountSquad([player("p1", "Alan", "Shearer")]);
     expect(screen.getByRole("heading", { level: 1, name: "Squad" })).toBeTruthy();
 
-    await chooseOptionByLabel("Squad view", "Personal details");
+    await chooseToolbarOption("Squad view", "Personal details");
     expect(screen.getByRole("heading", { level: 1, name: "Squad" })).toBeTruthy();
   });
 
   it("swaps the layout and the information set, names it in the heading, and remembers it", async () => {
     await mountSquad([player("p1", "Alan", "Shearer")]);
 
-    await chooseOptionByLabel("Squad view", "Personal details");
+    await chooseToolbarOption("Squad view", "Personal details");
 
     expect(screen.getByRole("heading", { name: "Players (Personal details)" })).toBeTruthy();
     expect(document.querySelector("table")).not.toBeNull();

@@ -24,4 +24,4 @@ Group S has three shipped/contracted screens, one partial, and ten absent.
 | 276 Import / Export Utilities | **Absent** | Overlaps Group F Screen 88 per SPEC-ROADMAP. Needs reconciliation. |
 | 277 Application Information | **Partial** — version footer + Credits dialog in `mainMenu.tsx`. No full information screen. |
 
-See [Research note](../../../../docs/research/group-s-screen-inventory.md).
+See [Research note](../../../docs/research/group-s-screen-inventory.md).

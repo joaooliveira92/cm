@@ -12,6 +12,8 @@ import {
 } from "@cm-clone/shared";
 import { SquadScreen } from "../../../src/renderer/squad/SquadScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
+import { ScreenToolbarSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
+import { chooseToolbarOption } from "../../setup/toolbarPopover.js";
 import { saveSquadViewId } from "../../../src/renderer/squad/squadViews.js";
 import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
@@ -73,6 +75,7 @@ const mountSquad = async (view: unknown): Promise<void> => {
   );
   renderInRouter(
     <RegistryProvider>
+      <ScreenToolbarSlot />
       <SquadScreen saveId={rid("s1")} />
     </RegistryProvider>,
   );
@@ -162,7 +165,7 @@ describe("the Status column in the Squad table", () => {
 
     // Overview hides most columns; Goalkeeping swaps the attribute set. The
     // protected pair rides through both.
-    fireEvent.change(screen.getByLabelText("Squad view"), { target: { value: "goalkeeping" } });
+    await chooseToolbarOption("Squad view", "Goalkeeping");
     expect(header()).toBeTruthy();
     expect(screen.getByText(/Alan Player/)).toBeTruthy();
 

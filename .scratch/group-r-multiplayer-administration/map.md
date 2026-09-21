@@ -13,7 +13,7 @@ Participant Removal and Session Moderation), stating per screen that the group i
 layer.
 
 **Existing reconciliation ledger**: A durable
-[RECONCILIATION.md](../../../docs/specs/group_r_multiplayer_administration/RECONCILIATION.md) already
+[RECONCILIATION.md](../../docs/specs/group_r_multiplayer_administration/RECONCILIATION.md) already
 exists at the spec source, ruling every screen `out-of-scope` / `Disposed in full`. The multiplayer
 axis was removed wholesale at Group A. CONTEXT.md's **Save** entry fixes exactly one human manager
 per Save. This effort is a confirmation pass — no new analysis is owed.

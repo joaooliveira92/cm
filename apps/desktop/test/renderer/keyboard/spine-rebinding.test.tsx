@@ -194,11 +194,12 @@ describe("ticket 04 — a loaded override that moves a section key onto another 
     keyDown({ key: tacticsKey, code: tacticsKey });
     expect(navCalls).toEqual([]);
 
-    // Squad's own key dispatches Squad, and its item level is Squad's items, not Tactics'.
+    // Squad's own key dispatches Squad, and its item level is Squad's items, not Tactics': `w`, the
+    // second item, is Squad's Staff rather than any Tactics item.
     keyDown({ key: "g", code: "g" });
     keyDown({ key: squadKey, code: squadKey });
     keyDown({ key: "w", code: "w" });
-    expect(navCalls).toEqual(["/career/$saveId/squad", "/career/$saveId/squad"]);
+    expect(navCalls).toEqual(["/career/$saveId/squad", "/career/$saveId/squad-staff"]);
 
     // The rebind away from `g 2` still works.
     keyDown({ key: "n", code: "n" });
