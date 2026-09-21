@@ -1,6 +1,6 @@
 /**
  * Who a forced substitution brings on (group-g-match-day ticket 26, decision request 04 Option A):
- * an entry of the current Tactic's named bench that is in the match squad and has never been on the
+ * an entry of the kickoff Tactic's named bench that is in the match squad and has never been on the
  * pitch this match. Like for like first (a goalkeeper for a goalkeeper, an outfielder for an
  * outfielder), in bench order; with no like-for-like entry, the first in bench order. With none, the
  * team plays with 10. Squad order plays no part.
@@ -70,15 +70,16 @@ describe("forcePlayerOff's replacement", () => {
   });
 
   it("skips a bench player who has already been on and gone off again", () => {
-    const setup = setupWithBench([reserves[0]!, reserves[1]!]);
+    // The starter cannot come back on for reserves[0] (ticket 35), so a third bench player replaces him.
+    const setup = setupWithBench([benchOutfielders[0]!, benchOutfielders[1]!, benchOutfielders[2]!]);
     const team = initTeamState(setup);
-    expect(substitute(team, starter(setup, 5), reserves[0]!, 20).accepted).toBe(true);
-    expect(substitute(team, reserves[0]!, starter(setup, 5), 20).accepted).toBe(true);
+    expect(substitute(team, starter(setup, 5), benchOutfielders[0]!, 20).accepted).toBe(true);
+    expect(substitute(team, benchOutfielders[0]!, benchOutfielders[2]!, 20).accepted).toBe(true);
     const events: Array<MatchEvent> = [];
 
     forcePlayerOff(team, starter(setup, 6), 30, 1, events);
 
-    expect(forcedIns(events)).toEqual([reserves[1]]);
+    expect(forcedIns(events)).toEqual([benchOutfielders[1]]);
   });
 
   it("never brings back a player who was sent off or injured off, even when the bench names him", () => {
@@ -151,7 +152,7 @@ describe("forcePlayerOff's replacement", () => {
     ]);
   });
 
-  it("follows the bench of a mid-match ChangeTactics", () => {
+  it("keeps the kickoff bench through a mid-match ChangeTactics that names another", () => {
     const setup = setupWithBench([reserves[0]!, reserves[1]!]);
     const team = initTeamState(setup);
     const newBench = [reserves[5]!, reserves[6]!, null, null, null, null, null];
@@ -160,7 +161,7 @@ describe("forcePlayerOff's replacement", () => {
 
     forcePlayerOff(team, starter(setup, 5), 30, 1, events);
 
-    expect(forcedIns(events)).toEqual([reserves[5]]);
+    expect(forcedIns(events)).toEqual([reserves[0]]);
   });
 
   it("skips a bench player a ChangeTactics put on the pitch and later benched again", () => {

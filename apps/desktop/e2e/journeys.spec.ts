@@ -1,5 +1,6 @@
 import {
   assignFullTactic,
+  nameBench,
   closeOrKill,
   continueSeededCareer,
   expect,
@@ -108,6 +109,8 @@ test("a substitution is driven by keyboard through the match day live control pa
   await expect(page.locator('[data-focus-id="tactics"]')).toBeFocused();
   await openTacticsEditor(page);
   await assignFullTactic(page);
+  // A substitute comes off the named bench (ticket 35), and the Tactics editor names starters only.
+  await nameBench(page);
 
   await pressItemKey(page, "analysis", "analysis-match");
   await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
@@ -168,6 +171,8 @@ test("a live substitution is made from the standalone Match Substitutions screen
   await pressSectionKey(page, "tactics");
   await openTacticsEditor(page);
   await assignFullTactic(page);
+  // A substitute comes off the named bench (ticket 35), and the Tactics editor names starters only.
+  await nameBench(page);
 
   await pressItemKey(page, "analysis", "analysis-match");
   const start = page.getByRole("button", { name: "Play match" });

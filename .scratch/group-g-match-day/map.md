@@ -54,6 +54,10 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
 - [26 — A forced substitution comes from the named bench](issues/26-forced-substitution-picks-any-squad-player.md):
   resolved 2026-09-21. Never-on bench players only, like for like first, then bench order; none left →
   10 men. Review split out [39](issues/39-an-empty-bench-is-flagged-before-kickoff.md) (empty-bench advisory).
+- [35 — A manager's substitution comes from the bench](issues/35-manager-substitutions-come-from-the-bench.md):
+  resolved 2026-09-21. Off-bench and re-entry refused; the picker lists the kickoff bench minus been-on. The
+  bench is fixed at kickoff. Decision request 01's line-up half filed as
+  [40](issues/40-a-live-change-tactics-changes-only-instructions.md).
 
 ## Not yet specified
 

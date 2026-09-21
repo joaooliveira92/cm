@@ -236,9 +236,9 @@ Modifiers.
 **Tactic**:
 The full value a manager sets for a team: a Formation, a Role and player assigned to each of its 11
 slots, the three Team Instructions, and the named **bench**. The payload of the `ChangeTactics`
-command, both pre-match and mid-match. The bench is the only source of substitutes: a player comes on
-from it once and never re-enters, and a forced substitution takes like for like (a goalkeeper for a
-goalkeeper) before bench order.
+command, both pre-match and mid-match. The bench is the only source of substitutes and is fixed at
+kickoff: a live `ChangeTactics` does not rename it. A player comes on from it once and never re-enters,
+and a forced substitution takes like for like (a goalkeeper for a goalkeeper) before bench order.
 
 **Expected Revision**:
 The monotonic Tactic version a save submit claims it was read at. The club's Tactic revision starts

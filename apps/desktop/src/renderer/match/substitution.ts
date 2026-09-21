@@ -55,3 +55,7 @@ export const substitutionErrorLabel = (error: SubstitutionError): string => {
       return "All three substitution windows have been used.";
   }
 };
+
+/** What a substitution picker says when no one may come on: the Tactic named no bench, or every
+ *  named substitute has already been on the pitch (decision request 04, ticket 35). */
+export const NO_SUBSTITUTES_LEFT = "No substitutes named or left on the bench.";

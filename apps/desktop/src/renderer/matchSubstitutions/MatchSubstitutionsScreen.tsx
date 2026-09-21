@@ -3,12 +3,13 @@ import { PlayerId, type SaveId } from "@cm-clone/contracts";
 import { Button } from "../components/ui/button.js";
 import { SELECT_CLASS } from "../match/controls.js";
 import { LiveCommandFrame } from "../match/LiveCommandFrame.js";
-import { substitutionErrorLabel, validateLiveSubstitution } from "../match/substitution.js";
+import { NO_SUBSTITUTES_LEFT, substitutionErrorLabel, validateLiveSubstitution } from "../match/substitution.js";
 import { useLiveMatchCommands, type LiveMatchReady } from "../match/useLiveMatchCommands.js";
 
 /** Screen 97, substitutions half: pick who comes off and who comes on, then submit a
  *  `MakeSubstitution` to the live match. The caps shown and enforced, and the players offered, come
- *  from the match: who is on the pitch and who has not played as of what Match day has revealed. */
+ *  from the match: who is on the pitch, and which named bench players have not been on, as of what
+ *  Match day has revealed. */
 export const MatchSubstitutionsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const commands = useLiveMatchCommands(saveId);
   return (
@@ -103,6 +104,9 @@ const SubstitutionForm = ({
       </div>
       {capReached && (
         <p className="text-xs text-text-warning">{substitutionErrorLabel("cap-reached")}</p>
+      )}
+      {!capReached && snapshot.pitch.substitutes.length === 0 && (
+        <p className="text-xs text-text-secondary">{NO_SUBSTITUTES_LEFT}</p>
       )}
       {alert && (
         <p role="alert" className="text-xs text-text-warning">

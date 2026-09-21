@@ -535,3 +535,26 @@ on outfield) was settled by an orchestrator ruling, like for like first, and rew
 seeds move once. M2 (change note incomplete) was closed in the ticket Answer. L2 closed in `CONTEXT.md`,
 L3 (the `benchless` doc) fixed. L1 (a fold test for a lost out-player) left. Seed re-pinned:
 `MINUTE_45_FORCED_SUB_SEED` 1292 → 2023.
+
+## Ticket 35 — a manager's substitution comes from the kickoff bench, 2026-09-21
+
+- Ticket closed: [35](../../.scratch/group-g-match-day/issues/35-manager-substitutions-come-from-the-bench.md)
+- Filed: [40](../../.scratch/group-g-match-day/issues/40-a-live-change-tactics-changes-only-instructions.md)
+  (decision request 01 had no build ticket)
+- `CONTEXT.md`: the bench is fixed at kickoff.
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 0. Shared 470, contracts 174, game-engine 82, desktop 2134 passed. |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | 56 passed (1.8m). The two substitution journeys now name a bench first. |
+| determinism | `pnpm --filter @cm-clone/game-engine exec vitest run test/match/simulate.test.ts test/match/manager-substitution-bench.test.ts test/match/forced-substitution.test.ts`, twice | 47 passed both runs |
+| chunked resimulation | `pnpm --filter @cm-clone/desktop exec vitest run test/main/match/match.test.ts test/main/match/commands.test.ts test/main/match/committed-timeline.test.ts` | 16 passed |
+
+Review: NEEDS_REWORK, then repaired. High: the engine followed a live `ChangeTactics`'s bench while the
+picker read the kickoff bench, reachable through the Squad screen's autosave; now the bench is fixed at
+kickoff (orchestrator ruling, decision requests 01 and 04). Low: the empty-bench copy now says "named or
+left". Low: a non-squad bench id filter left untested (`validateTactic` already refuses one). The
+implementator's first e2e run failed the two substitution journeys; the page snapshot showed an empty
+bench, which is the new rule, so the journeys name one. Re-reviewed inline: the `commands.test.ts`
+change moves its known Tactic onto the kickoff bench and XI, with no assertion loosened. Seeds
+re-pinned: `GOALKEEPER_STAND_IN_SEED` 26 → 455, `STAND_IN_INJURY_LINE` 23 → 20.

@@ -4,8 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
-import { Tactic, type ClubId, type FixtureId, type MatchId, type MatchSummary, type ResumeSimulationView, type SaveId, type SquadPlayerView } from "@cm-clone/contracts";
-import { FORMATION_SLOTS, POSITION_ROLES, emptyBench } from "@cm-clone/shared";
+import { Tactic, type ClubId, type FixtureId, type MatchId, type MatchSummary, type ResumeSimulationView, type SaveId } from "@cm-clone/contracts";
+import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { getTactics } from "../../../src/main/club/index.js";
@@ -27,24 +27,31 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-/** Builds a valid, fully-assigned 4-4-2 out of the first 11 squad players (starters) — doesn't try
- * to match Position/Familiarity (the engine doesn't require it for `simulateMatch` to run), just
- * gives every test a known, deterministic starting XI + bench to target `MakeSubstitution`
- * commands against. Squads are generated with 25 players (`SQUAD_COMPOSITION` in
- * `@cm-clone/shared`), so index 11+ is always a valid bench player. */
-const buildKnownTactic = (squad: ReadonlyArray<SquadPlayerView>): Tactic =>
-  new Tactic({
+/** Builds a valid, fully-assigned 4-4-2 — doesn't try to match Position/Familiarity (the engine
+ * doesn't require it for `simulateMatch` to run), just gives every test a known, deterministic
+ * starting XI + bench to target `MakeSubstitution` commands against.
+ *
+ * A substitute must be named on the kickoff bench and never yet on the pitch (decision request 04,
+ * ticket 35), and a live `ChangeTactics` does not rename the bench, so the Tactic carries the kickoff
+ * bench unchanged. Its XI is the kickoff XI's players, in kickoff slot order, laid into a 4-4-2: the
+ * pitch fold keeps the kickoff line-up through a live ChangeTactics (decision request 01), so this
+ * keeps the engine and the fold on the same eleven, and puts no bench player on the pitch. */
+const buildKnownTactic = (view: { readonly tactic: Tactic | null }): Tactic => {
+  ok(view.tactic !== null, "a seeded match starts with a Tactic set (`atFirstFixture`)");
+  const { bench, slots: kickoffSlots } = view.tactic;
+  return new Tactic({
     formation: "4-4-2",
     slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
       position,
       role: POSITION_ROLES[position],
-      playerId: squad[index]!.id,
+      playerId: kickoffSlots[index]!.playerId,
     })),
-    bench: emptyBench(),
+    bench,
     mentality: "balanced",
     tempo: "normal",
     pressing: "medium",
   });
+};
 
 const drain = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
   Effect.gen(function* () {
@@ -122,7 +129,7 @@ it.effect("submitMatchCommand applies a mid-match substitution and reflects it i
     const summary = yield* startMatchWithNoInjuries(savesDir, save.id, fixtureId);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
-    const tactic = buildKnownTactic(tacticsView.squad);
+    const tactic = buildKnownTactic(tacticsView);
 
     // Pin the starting XI at minute 1 so subsequent substitutions have a known on-pitch roster to
     // target — without this we'd have to guess the server's synthesized default lineup.
@@ -133,7 +140,7 @@ it.effect("submitMatchCommand applies a mid-match substitution and reflects it i
     });
 
     const outPlayerId = tactic.slots[0]!.playerId;
-    const inPlayerId = tacticsView.squad[11]!.id;
+    const inPlayerId = tactic.bench[0]!;
 
     const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 2, false, {
       _tag: "MakeSubstitution",
@@ -164,21 +171,23 @@ it.effect("substitutions are capped at 5 per team across 3 windows, enforced sil
     const summary = yield* startMatchWithNoInjuries(savesDir, save.id, fixtureId);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
-    const tactic = buildKnownTactic(tacticsView.squad);
+    const tactic = buildKnownTactic(tacticsView);
     yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 1, false, {
       _tag: "ChangeTactics",
       clubId: humanClubOf(summary),
       tactic,
     });
 
+    ok(tactic.bench.slice(0, 6).every((id) => id !== null), "the known Tactic names six bench players, five to use and one refused at the cap");
+
     // 5 substitutions batched into 3 windows (two subs each in the first two windows, one in the
     // third) — all should be accepted since neither the 5-sub nor 3-window cap is exceeded yet.
-    const plan: ReadonlyArray<{ readonly minute: number; readonly outIndex: number; readonly inIndex: number }> = [
-      { minute: 10, outIndex: 0, inIndex: 11 },
-      { minute: 10, outIndex: 1, inIndex: 12 },
-      { minute: 30, outIndex: 2, inIndex: 13 },
-      { minute: 30, outIndex: 3, inIndex: 14 },
-      { minute: 60, outIndex: 4, inIndex: 15 },
+    const plan: ReadonlyArray<{ readonly minute: number; readonly outIndex: number; readonly benchIndex: number }> = [
+      { minute: 10, outIndex: 0, benchIndex: 0 },
+      { minute: 10, outIndex: 1, benchIndex: 1 },
+      { minute: 30, outIndex: 2, benchIndex: 2 },
+      { minute: 30, outIndex: 3, benchIndex: 3 },
+      { minute: 60, outIndex: 4, benchIndex: 4 },
     ];
 
     let last: ResumeSimulationView | undefined;
@@ -186,8 +195,8 @@ it.effect("substitutions are capped at 5 per team across 3 windows, enforced sil
       last = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, step.minute, false, {
         _tag: "MakeSubstitution",
         clubId: humanClubOf(summary),
-        outPlayerId: tacticsView.squad[step.outIndex]!.id,
-        inPlayerId: tacticsView.squad[step.inIndex]!.id,
+        outPlayerId: tactic.slots[step.outIndex]!.playerId,
+        inPlayerId: tactic.bench[step.benchIndex]!,
       });
     }
 
@@ -200,8 +209,8 @@ it.effect("substitutions are capped at 5 per team across 3 windows, enforced sil
     const rejected = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 70, false, {
       _tag: "MakeSubstitution",
       clubId: humanClubOf(summary),
-      outPlayerId: tacticsView.squad[5]!.id,
-      inPlayerId: tacticsView.squad[16]!.id,
+      outPlayerId: tactic.slots[5]!.playerId,
+      inPlayerId: tactic.bench[5]!,
     });
 
     strictEqual(rejected.substitutionApplied, false);
@@ -216,7 +225,7 @@ it.effect("a mid-match ChangeTactics command is accepted and the match still res
     const summary = yield* startSeededMatch(savesDir, save.id, fixtureId, ANY_MATCH_SEED);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
-    const tactic = new Tactic({ ...buildKnownTactic(tacticsView.squad), mentality: "attacking", pressing: "high" });
+    const tactic = new Tactic({ ...buildKnownTactic(tacticsView), mentality: "attacking", pressing: "high" });
 
     yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 20, false, {
       _tag: "ChangeTactics",
@@ -239,7 +248,7 @@ it.effect(
       const summary = yield* startSeededMatch(savesDir, save.id, fixtureId, ANY_MATCH_SEED);
 
       const tacticsView = yield* getTactics(savesDir, save.id);
-      const tactic = buildKnownTactic(tacticsView.squad);
+      const tactic = buildKnownTactic(tacticsView);
       yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 1, false, {
         _tag: "ChangeTactics",
         clubId: humanClubOf(summary),
@@ -248,8 +257,8 @@ it.effect(
       yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 15, false, {
         _tag: "MakeSubstitution",
         clubId: humanClubOf(summary),
-        outPlayerId: tacticsView.squad[0]!.id,
-        inPlayerId: tacticsView.squad[11]!.id,
+        outPlayerId: tactic.slots[0]!.playerId,
+        inPlayerId: tactic.bench[0]!,
       });
       // The same seed + the exact same submitted command sequence must resimulate identically no
       // matter how many times `resumeSimulation` re-derives the timeline — this is what makes
@@ -274,7 +283,7 @@ it.effect("ForceOff brings a player off to 10 men without consuming a substituti
     const summary = yield* startMatchWithCleanLineup(savesDir, save.id, fixtureId);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
-    const tactic = buildKnownTactic(tacticsView.squad);
+    const tactic = buildKnownTactic(tacticsView);
     yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 1, false, {
       _tag: "ChangeTactics",
       clubId: humanClubOf(summary),
@@ -305,7 +314,7 @@ it.effect("a ForceOff for a player not on the pitch is a silent no-op (count unc
     const summary = yield* startMatchWithCleanLineup(savesDir, save.id, fixtureId);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
-    const tactic = buildKnownTactic(tacticsView.squad);
+    const tactic = buildKnownTactic(tacticsView);
     yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 1, false, {
       _tag: "ChangeTactics",
       clubId: humanClubOf(summary),
@@ -459,13 +468,13 @@ it.effect("getMatchReport records every goal, card, injury and substitution once
     const { save, fixtureId } = yield* atFirstFixture(savesDir);
     const match = yield* startSeededMatch(savesDir, save.id, fixtureId, INJURY_SEED);
     // A manager substitution, so the report's substitution entries are exercised whatever the seed rolls.
-    const tactic = buildKnownTactic((yield* getTactics(savesDir, save.id)).squad);
+    const tactic = buildKnownTactic(yield* getTactics(savesDir, save.id));
     yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, null, 1, false, { _tag: "ChangeTactics", clubId: humanClubOf(match), tactic });
     yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, null, 2, false, {
       _tag: "MakeSubstitution",
       clubId: humanClubOf(match),
       outPlayerId: tactic.slots[1]!.playerId,
-      inPlayerId: (yield* getTactics(savesDir, save.id)).squad[11]!.id,
+      inPlayerId: tactic.bench[0]!,
     });
     const chunks = yield* drain(savesDir, save.id, match.matchId);
     const final = chunks[chunks.length - 1]!;

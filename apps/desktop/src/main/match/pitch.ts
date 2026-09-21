@@ -184,8 +184,10 @@ const foldPitch = (
  * goalkeeper also emits a forced Substitution moving an outfield player in goal; that event belongs
  * to the command, so it counts with it.
  *
- * `substitutes` is the squad minus everyone who has been on the pitch: a player sent off, injured
- * off or brought off does not come back on.
+ * `substitutes` is the kickoff Tactic's named bench, in bench order, minus anyone not in the match
+ * squad and everyone who has been on the pitch: the players the engine would accept coming on
+ * (`applyCommand`, decision request 04, ticket 35). A player substituted off, sent off, injured off
+ * or brought off does not come back on.
  *
  * The fold assumes a live `ChangeTactics` does not change who is on the pitch; see
  * `.scratch/group-g-match-day/decision-request-01-live-change-tactics-scope.md`.
@@ -199,7 +201,9 @@ export const pitchAsOf = (
   const { slots, beenOn } = foldPitch(setup, events, lineupCommands, revealedEvents);
   return new MatchPitchView({
     onPitch: slots.map((slot) => new PitchSlotView(slot)),
-    substitutes: setup.squad.map((player) => player.id).filter((id) => !beenOn.has(id)),
+    substitutes: setup.tactic.bench.filter(
+      (id): id is PlayerId => id !== null && !beenOn.has(id) && setup.squad.some((player) => player.id === id),
+    ),
   });
 };
 

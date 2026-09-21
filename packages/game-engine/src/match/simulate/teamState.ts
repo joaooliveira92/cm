@@ -37,13 +37,13 @@ export interface TeamRuntimeState {
   readonly penalties: Set<PlayerId>;
   /** Players currently standing in as goalkeeper (shot-stopping treated as 1) after a red GK is off (ticket 07). */
   readonly gkStandIns: Set<PlayerId>;
-  /** The current Tactic's named bench, in bench order: where a forced substitution draws its
-   *  replacement from (decision request 04). Set at kickoff and by each `ChangeTactics`, which
-   *  replaces `resolved` and so would otherwise lose it. */
-  bench: ReadonlyArray<PlayerId | null>;
+  /** The kickoff Tactic's named bench, in bench order: the only source of substitutes, the manager's
+   *  and a forced one alike (decision request 04). Fixed at kickoff: a live `ChangeTactics` carries
+   *  Team Instructions (decision request 01) and never changes who may come on. */
+  readonly bench: ReadonlyArray<PlayerId | null>;
   /** Everyone who has been on the pitch this match: the starters, anyone a `ChangeTactics` or a
-   *  substitution puts in a slot, and goalkeeper stand-ins. A forced substitution never brings one of
-   *  them back on (group-g-match-day ticket 26). */
+   *  substitution puts in a slot, and goalkeeper stand-ins. No substitution, forced or the manager's,
+   *  brings one of them back on (group-g-match-day tickets 26 and 35). */
   readonly beenOn: Set<PlayerId>;
 }
 
@@ -67,7 +67,11 @@ export const initTeamState = (setup: MatchTeamSetup): TeamRuntimeState => ({
   beenOn: new Set(setup.tactic.slots.map((slot) => slot.playerId)),
 });
 
-/** Applies one `MatchCommand` to team state. Rejects (no-op on runtime state) on roster/cap/window violations. */
+/** Applies one `MatchCommand` to team state. Rejects (no-op on runtime state) on roster/cap/window
+ *  violations. A substitute must be in the match squad, named on the kickoff bench (`bench`, which no
+ *  `ChangeTactics` changes), and never yet on the pitch (`beenOn`): no re-entry after a
+ *  substitution, a red card or an injury (decision request 04, ticket 35). Every refusal returns
+ *  before a window or a substitution is spent. */
 export const applyCommand = (
   team: TeamRuntimeState,
   command: Extract<MatchCommand, { readonly _tag: "ChangeTactics" | "MakeSubstitution" }>,
@@ -77,7 +81,6 @@ export const applyCommand = (
 ): { readonly accepted: boolean; readonly reason?: string } => {
   if (command._tag === "ChangeTactics") {
     team.resolved = resolveTeamTactics(command.tactic);
-    team.bench = command.tactic.bench;
     for (const slot of team.resolved.slots) team.beenOn.add(slot.playerId);
     return { accepted: true };
   }
@@ -87,6 +90,13 @@ export const applyCommand = (
   }
   if (team.resolved.slots.some((slot) => slot.playerId === command.inPlayerId) || !team.playersById.has(command.inPlayerId)) {
     return { accepted: false, reason: `${command.inPlayerId} is not an available substitute` };
+  }
+  // Decision request 04: only a player named on the kickoff bench comes on, and only once.
+  if (!team.bench.includes(command.inPlayerId)) {
+    return { accepted: false, reason: `${command.inPlayerId} is not named on the bench` };
+  }
+  if (team.beenOn.has(command.inPlayerId)) {
+    return { accepted: false, reason: `${command.inPlayerId} has already been on the pitch` };
   }
   if (team.substitutionsUsed >= MAX_SUBSTITUTIONS_PER_TEAM) {
     return { accepted: false, reason: "substitution cap (5) already reached" };
@@ -186,7 +196,7 @@ export const pickPlayerId = (team: TeamRuntimeState, random: RandomSource, prefe
 /** Red (Severe) forced-off semantics (ticket 07): substitute from the bench if any, otherwise empty
  *  the slot (team plays with 10); a red GK with no sub forces an outfield into the goal at gk=1.
  *
- *  An eligible replacement is an entry of the current Tactic's named bench that is in the match squad
+ *  An eligible replacement is an entry of the kickoff Tactic's named bench that is in the match squad
  *  and has never been on the pitch (decision request 04, ticket 26); everyone on the pitch has been on,
  *  so that also rules them out. Among those, like for like comes first: a goalkeeper slot takes the
  *  first eligible player in bench order who has goalkeeping (`hasGoalkeeping`), an outfield slot the

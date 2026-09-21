@@ -100,3 +100,6 @@ replacement joins `gkStandIns`; only Goalkeeping attributes are penalised, which
 read. Noted on 36, which touches the same code. The manager's substitution is still unvalidated against
 the bench until [35](35-manager-substitutions-come-from-the-bench.md).
 Report: [group-g-match-day](../../../.ai/reports/group-g-match-day.md).
+
+- 2026-09-21, orchestrator: superseded in one respect by [35](35-manager-substitutions-come-from-the-bench.md).
+  The bench is fixed at kickoff; a live `ChangeTactics` no longer renames it, for the forced path too.

@@ -3,7 +3,7 @@ import { rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
-import { deepStrictEqual, ok, strictEqual } from "node:assert";
+import { deepStrictEqual, notDeepStrictEqual, ok, strictEqual } from "node:assert";
 import type {
   CommentaryLineView,
   MatchId,
@@ -74,6 +74,10 @@ it.effect("the pitch reflects a revealed red card and forced injury substitution
     ok(tactic !== null);
     const startingXi = new Set(tactic.slots.map((slot) => slot.playerId));
     const outsideXi = squad.map((player) => player.id).filter((id) => !startingXi.has(id));
+    const bench = tactic.bench.filter((id): id is PlayerId => id !== null);
+    ok(bench.length > 0, "the human Tactic names a bench");
+    // Bench order is not squad order here, so the order assertions below tell the two apart.
+    notDeepStrictEqual(bench, outsideXi.filter((id) => bench.includes(id)));
 
     // One Commentary Line per Match Event, so a line's index is its event's timeline position.
     const lines = yield* drainLines(save.id, match.matchId);
@@ -91,13 +95,13 @@ it.effect("the pitch reflects a revealed red card and forced injury substitution
 
     const at = (revealedEvents: number) => resumeSimulation(savesDir, save.id, match.matchId, 0, revealedEvents);
 
-    // Before the red card: the kickoff XI, and every other squad player may come on.
+    // Before the red card: the kickoff XI, and the named bench, in bench order, may come on (ticket 35).
     const kickoff = yield* at(RED_CARD_LINE);
     deepStrictEqual(
       humanPitch(kickoff, match).onPitch.map(({ playerId, position }) => ({ playerId, position })),
       tactic.slots.map(({ playerId, position }) => ({ playerId, position })),
     );
-    deepStrictEqual(humanPitch(kickoff, match).substitutes, outsideXi);
+    deepStrictEqual(humanPitch(kickoff, match).substitutes, bench);
 
     // The red card revealed: ten on the pitch, and the sent-off player cannot come back on.
     const afterRed = yield* at(RED_CARD_LINE + 1);
@@ -109,6 +113,12 @@ it.effect("the pitch reflects a revealed red card and forced injury substitution
     const injuredOnly = yield* at(FORCED_SUB_LINE);
     ok(onPitchIds(injuredOnly, match).includes(injured.id), "an unrevealed forced substitution has not happened");
     ok(humanPitch(injuredOnly, match).substitutes.includes(replacement.id));
+
+    // Once the replacement is on: exactly the bench players who have not been on, in bench order.
+    deepStrictEqual(
+      humanPitch(yield* at(FORCED_SUB_LINE + 1), match).substitutes,
+      bench.filter((id) => id !== replacement.id),
+    );
 
     // The forced substitution revealed: the injured player is off, the replacement in their slot.
     const afterSub = yield* at(FORCED_SUB_LINE + 1);
@@ -142,13 +152,14 @@ it.effect("a severe Injury with no substitution left takes the player off from t
     const { squad, tactic } = yield* getTactics(savesDir, save.id);
     ok(tactic !== null);
     const clubId = humanClubOf(match);
-    const outsideXi = squad.filter((player) => !tactic.slots.some((slot) => slot.playerId === player.id));
+    // Substitutes come off the named bench (ticket 35).
+    const bench = tactic.bench.filter((id): id is PlayerId => id !== null);
     for (const minute of [1, 2, 3]) {
       const response: SubmitMatchCommandView = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, 0, minute, false, {
         _tag: "MakeSubstitution",
         clubId,
         outPlayerId: tactic.slots[minute]!.playerId,
-        inPlayerId: outsideXi[minute - 1]!.id,
+        inPlayerId: bench[minute - 1]!,
       });
       strictEqual(response.substitutionApplied, true);
     }

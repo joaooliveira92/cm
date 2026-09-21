@@ -54,7 +54,8 @@ export class PitchSlotView extends Schema.Class<PitchSlotView>("PitchSlotView")(
 }) {}
 
 /** A club's side of the pitch as of the revealed position (group-g-match-day ticket 19): who is on
- * the pitch now, and the squad players who have not been on it, so may still come on. A red card or
+ * the pitch now, and `substitutes`, the players named on the Tactic's bench who have not been on it,
+ * in bench order, so may still come on (decision request 04, ticket 35). A red card or
  * a bring-off leaves an empty slot, so `onPitch` can hold fewer than 11. Derived by the main
  * process from the re-derived timeline under the same cut as the substitution counts, so the
  * substitution picker never offers a player the match has already taken off. */

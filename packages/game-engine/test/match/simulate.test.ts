@@ -207,10 +207,11 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
     });
 
     it("accepts a valid mid-match MakeSubstitution and emits a Substitution event", () => {
-      const home = buildTeam(makeClubId("home-club"), 30);
+      // A substitute comes off the named bench (decision request 04, ticket 35).
+      const home = { setup: withNamedBench(buildTeam(makeClubId("home-club"), 30).setup) };
       const away = buildTeam(makeClubId("away-club"), 31);
       const outPlayerId = home.setup.tactic.slots[0]!.playerId;
-      const inPlayerId = home.squad.find((p) => !home.setup.tactic.slots.some((s) => s.playerId === p.id))!.id;
+      const inPlayerId = home.setup.tactic.bench[0]!;
       const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
         [10, [{ _tag: "MakeSubstitution", clubId: makeClubId("home-club"), outPlayerId, inPlayerId }]],
       ]);
@@ -223,9 +224,10 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
     });
 
     it("rejects (silently drops) a substitution once the 5-sub cap is reached", () => {
-      const home = buildTeam(makeClubId("home-club"), 40);
+      // Substitutes come off the named bench (decision request 04, ticket 35).
+      const home = { setup: withNamedBench(buildTeam(makeClubId("home-club"), 40).setup) };
       const away = buildTeam(makeClubId("away-club"), 41);
-      const bench = home.squad.filter((p) => !home.setup.tactic.slots.some((s) => s.playerId === p.id));
+      const bench = home.setup.tactic.bench.flatMap((id) => (id === null ? [] : [{ id }]));
       const starters = home.setup.tactic.slots.map((s) => s.playerId);
 
       const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>();
@@ -241,9 +243,10 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
     });
 
     it("rejects a 4th substitution window (halftime doesn't count as a window)", () => {
-      const home = buildTeam(makeClubId("home-club"), 50);
+      // Substitutes come off the named bench (decision request 04, ticket 35).
+      const home = { setup: withNamedBench(buildTeam(makeClubId("home-club"), 50).setup) };
       const away = buildTeam(makeClubId("away-club"), 51);
-      const bench = home.squad.filter((p) => !home.setup.tactic.slots.some((s) => s.playerId === p.id));
+      const bench = home.setup.tactic.bench.flatMap((id) => (id === null ? [] : [{ id }]));
       const starters = home.setup.tactic.slots.map((s) => s.playerId);
 
       // 3 distinct-minute windows mid-match, plus a halftime window (free), plus a 4th mid-match window.

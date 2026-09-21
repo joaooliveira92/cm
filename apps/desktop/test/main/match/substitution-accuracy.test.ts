@@ -51,7 +51,7 @@ const drain = (saveId: SaveId, matchId: MatchId) =>
     return { lines, injuries };
   });
 
-/** A seeded match on the first Fixture, with the human club's kickoff XI and the squad outside it. */
+/** A seeded match on the first Fixture, with the human club's kickoff XI, and its named bench. */
 const seeded = (seed: number) =>
   Effect.gen(function* () {
     const { save, fixtureId } = yield* atFirstFixture(savesDir);
@@ -59,12 +59,13 @@ const seeded = (seed: number) =>
     const { squad, tactic } = yield* getTactics(savesDir, save.id);
     ok(tactic !== null);
     const clubId = humanClubOf(match);
-    const outsideXi = squad.filter((player) => !tactic.slots.some((slot) => slot.playerId === player.id));
+    // A substitute must be named on the bench (decision request 04, ticket 35).
+    const bench = tactic.bench.filter((id): id is PlayerId => id !== null);
     const goalkeeper = tactic.slots.find((slot) => slot.position === "GK")!.playerId;
     const command = (minute: number, isHalftime: boolean, body: SubmitBody, revealedEvents: number | null = 0) =>
       submitMatchCommand(savesDir, save.id, match.matchId, 0, revealedEvents, minute, isHalftime, { clubId, ...body } as never);
     const sub = (outPlayerId: PlayerId, inPlayerId: PlayerId): SubmitBody => ({ _tag: "MakeSubstitution", outPlayerId, inPlayerId });
-    return { save, fixtureId, match, squad, tactic, clubId, outsideXi, goalkeeper, command, sub };
+    return { save, fixtureId, match, squad, tactic, clubId, bench, goalkeeper, command, sub };
   });
 
 type SubmitBody =
@@ -84,13 +85,15 @@ const named = (squad: ReadonlyArray<SquadPlayerView>, line: CommentaryLineView |
 };
 
 /**
- * Seed 26: after the manager's substitutions at minutes 1-3 (every window used) and a minute-3
+ * Seed 455: after the manager's substitutions at minutes 1-3 (every window used) and a minute-3
  * bring-off of the only goalkeeper, which drags an outfield player into goal, that stand-in suffers
- * a severe Injury at minute 88 (the 24th Match Event). No substitution is left, so a second outfield
+ * a severe Injury at minute 89 (the 21st Match Event). No substitution is left, so a second outfield
  * player is dragged into goal. Found by enumerating seeds 1-20000 over `deriveMatchEvents`.
+ * Re-pinned for group-g-match-day ticket 35: seed 26 held this while the three substitutions brought
+ * on the first squad players outside the XI; they now come off the named bench, which moves the rolls.
  */
-const GOALKEEPER_STAND_IN_SEED = 26;
-const STAND_IN_INJURY_LINE = 23;
+const GOALKEEPER_STAND_IN_SEED = 455;
+const STAND_IN_INJURY_LINE = 20;
 
 it.effect(
   "goalkeeper stand-ins spend no substitution, and a severe goalkeeper Injury at the cap reads unreplaced",
@@ -99,7 +102,7 @@ it.effect(
       const s = yield* seeded(GOALKEEPER_STAND_IN_SEED);
       const repin = `repin GOALKEEPER_STAND_IN_SEED (${GOALKEEPER_STAND_IN_SEED})`;
       for (const minute of [1, 2, 3]) {
-        const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.outsideXi[minute - 1]!.id));
+        const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.bench[minute - 1]!));
         strictEqual(response.substitutionApplied, true, repin);
       }
       const keeperOff = yield* s.command(3, false, { _tag: "ForceOff", playerId: s.goalkeeper });
@@ -136,7 +139,7 @@ it.effect("the Match Report lists goalkeeper stand-ins as moves into goal, and i
     const s = yield* seeded(GOALKEEPER_STAND_IN_SEED);
     const repin = `repin GOALKEEPER_STAND_IN_SEED (${GOALKEEPER_STAND_IN_SEED})`;
     for (const minute of [1, 2, 3]) {
-      const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.outsideXi[minute - 1]!.id));
+      const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.bench[minute - 1]!));
       strictEqual(response.substitutionApplied, true, repin);
     }
     strictEqual((yield* s.command(3, false, { _tag: "ForceOff", playerId: s.goalkeeper })).forceOffApplied, true, repin);
@@ -217,7 +220,7 @@ it.effect("a knock replaces no one, even when the manager substitutes the player
     const knockIndex = before.lines.slice(0, knockLine).filter((line) => line.tag === "Injury").length;
     const knocked = before.injuries[knockIndex]!;
 
-    const response = yield* s.command(knocked.minute + 1, false, s.sub(knocked.playerId, s.outsideXi[0]!.id));
+    const response = yield* s.command(knocked.minute + 1, false, s.sub(knocked.playerId, s.bench[0]!));
     strictEqual(response.substitutionApplied, true, repin);
     const { lines, injuries } = yield* drain(s.save.id, s.match.matchId);
     strictEqual(lines[knockLine + 1]?.tag, "Substitution", `the substitution is the next Match Event — ${repin}`);
@@ -253,11 +256,11 @@ it.effect("a forced substitution in regular minute 45 spends a window", () =>
 it.effect("a command clamped to minute 45 spends a window; a halftime instruction does not", () =>
   Effect.gen(function* () {
     const s = yield* seeded(FORCED_SUB_SEED);
-    const clamped = yield* s.command(45, false, s.sub(s.tactic.slots[1]!.playerId, s.outsideXi[0]!.id));
+    const clamped = yield* s.command(45, false, s.sub(s.tactic.slots[1]!.playerId, s.bench[0]!));
     strictEqual(clamped.substitutionApplied, true);
     strictEqual(humanSubs(clamped, s.match).windowsUsed, 1, "a first-half stoppage command applies in minute 45 and opens a window");
 
-    const halftime = yield* s.command(45, true, s.sub(s.tactic.slots[2]!.playerId, s.outsideXi[1]!.id));
+    const halftime = yield* s.command(45, true, s.sub(s.tactic.slots[2]!.playerId, s.bench[1]!));
     strictEqual(halftime.substitutionApplied, true);
     strictEqual(humanSubs(halftime, s.match).used, 2);
     strictEqual(humanSubs(halftime, s.match).windowsUsed, 1, "a halftime instruction opens no window");
@@ -268,10 +271,10 @@ it.effect("a minute-45 command the window cap refuses leaves a halftime instruct
   Effect.gen(function* () {
     const s = yield* seeded(FORCED_SUB_SEED);
     for (const minute of [1, 2, 3]) {
-      const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.outsideXi[minute - 1]!.id));
+      const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.bench[minute - 1]!));
       strictEqual(response.substitutionApplied, true);
     }
-    const pair = s.sub(s.tactic.slots[4]!.playerId, s.outsideXi[3]!.id);
+    const pair = s.sub(s.tactic.slots[4]!.playerId, s.bench[3]!);
     const clamped = yield* s.command(45, false, pair);
     strictEqual(clamped.substitutionApplied, false, "no window is left");
     const halftime = yield* s.command(45, true, pair);
@@ -304,12 +307,14 @@ it.effect("windows follow the engine's last-window minute, not the set of distin
     strictEqual(before.lines[STOPPAGE_FORCED_SUB_LINE]?.tag, "Substitution", repin);
     strictEqual(before.lines[STOPPAGE_FORCED_SUB_LINE]?.minute, 48, repin);
     ok(before.lines.findIndex((line) => line.tag === "HalfTimeReached") > STOPPAGE_FORCED_SUB_LINE, `first-half stoppage — ${repin}`);
+    // The forced substitution takes an early bench entry, so the manager's come from the end of it.
+    strictEqual(s.bench.length, 7, "the bench is full");
 
     for (const [minute, index] of [[47, 0], [48, 1]] as const) {
-      const response = yield* s.command(minute, false, s.sub(s.tactic.slots[index + 1]!.playerId, s.outsideXi[index + 5]!.id));
+      const response = yield* s.command(minute, false, s.sub(s.tactic.slots[index + 1]!.playerId, s.bench[index + 4]!));
       strictEqual(response.substitutionApplied, true, repin);
     }
-    const refused = yield* s.command(60, false, s.sub(s.tactic.slots[3]!.playerId, s.outsideXi[7]!.id));
+    const refused = yield* s.command(60, false, s.sub(s.tactic.slots[3]!.playerId, s.bench[6]!));
     strictEqual(refused.substitutionApplied, false, `the engine has used three windows — ${repin}`);
     const whole = yield* resumeSimulation(savesDir, s.save.id, s.match.matchId, 0, null);
     strictEqual(humanSubs(whole, s.match).used, 3, repin);
@@ -321,7 +326,7 @@ it.effect("windows follow the engine's last-window minute, not the set of distin
 it.effect("the statistics count manager substitutions as the panel does: once journaled", () =>
   Effect.gen(function* () {
     const s = yield* seeded(FORCED_SUB_SEED);
-    const response = yield* s.command(3, false, s.sub(s.tactic.slots[1]!.playerId, s.outsideXi[0]!.id));
+    const response = yield* s.command(3, false, s.sub(s.tactic.slots[1]!.playerId, s.bench[0]!));
     strictEqual(humanSubs(response, s.match).used, 1);
     strictEqual(yield* humanStatistic(s.save.id, s.match.matchId, s.match, 0), 1);
   }),
@@ -330,7 +335,7 @@ it.effect("the statistics count manager substitutions as the panel does: once jo
 it.effect("the same substitution submitted twice in one minute is applied once and refused once", () =>
   Effect.gen(function* () {
     const s = yield* seeded(FORCED_SUB_SEED);
-    const pair = s.sub(s.tactic.slots[1]!.playerId, s.outsideXi[0]!.id);
+    const pair = s.sub(s.tactic.slots[1]!.playerId, s.bench[0]!);
     strictEqual((yield* s.command(3, false, pair)).substitutionApplied, true);
     const again: SubmitMatchCommandView = yield* s.command(3, false, pair);
     strictEqual(again.substitutionApplied, false, "the player has already come off");
@@ -347,11 +352,11 @@ it.effect("a bring-off reports whether the player left the pitch", () =>
     strictEqual(off.substitutionApplied, null);
     strictEqual((yield* s.command(3, false, { _tag: "ForceOff", playerId: starter })).forceOffApplied, false, "already off");
     strictEqual(
-      (yield* s.command(4, false, { _tag: "ForceOff", playerId: s.outsideXi[0]!.id })).forceOffApplied,
+      (yield* s.command(4, false, { _tag: "ForceOff", playerId: s.bench[0]! })).forceOffApplied,
       false,
       "never on",
     );
-    const sub = yield* s.command(5, false, s.sub(s.tactic.slots[2]!.playerId, s.outsideXi[0]!.id));
+    const sub = yield* s.command(5, false, s.sub(s.tactic.slots[2]!.playerId, s.bench[0]!));
     strictEqual(sub.forceOffApplied, null);
   }),
 );

@@ -138,6 +138,25 @@ describe("ticket 12 — the panel commands the controlled club, and records only
     expect(await optionsOf("Player to bring on")).toEqual(["Bench2 Player"]);
   });
 
+  it("says the bench is empty when the match reports no substitute left, and offers no one on", async () => {
+    // Ticket 35: bench-1 came on for on-2 and bench-2 was never named, so no one may come on.
+    const polled = { homePitch: pitchView({ "on-2": "bench-1" }, []), awayPitch: pitchView() };
+    await mountMatchDayWithSpine(session(), undefined, undefined, polled);
+    openPanel();
+
+    expect(await screen.findByText("No substitutes named or left on the bench.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("combobox", { name: "Player to bring on" }));
+    const labels = (await screen.findAllByRole("option")).map((option) => option.textContent);
+    expect(labels).toEqual(["Select player"]);
+  });
+
+  it("does not say the bench is empty while a substitute is left", async () => {
+    await mountMatchDayWithSpine(session());
+    openPanel();
+    expect(await screen.findByRole("combobox", { name: "Player to bring on" })).toBeTruthy();
+    expect(screen.queryByText("No substitutes named or left on the bench.")).toBeNull();
+  });
+
   it("an away match reads the away head-count", async () => {
     const tenMen: CommandResponder = () => ({ _tag: "Success", value: commandView(null, { homeOnPitchCount: 11, awayOnPitchCount: 10 }) });
     const submissions = await mountMatchDayWithSpine(session({ isHome: false }), undefined, tenMen);

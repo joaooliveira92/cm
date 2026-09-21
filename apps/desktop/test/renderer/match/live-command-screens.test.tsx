@@ -207,6 +207,7 @@ describe("Match Substitutions — the live substitution screen", () => {
     expect(values(off)).not.toContain("on-3");
     expect([...off.options].find((o) => o.value === "bench-1")?.textContent).toBe(`Bench Player (${tactic().slots[0]!.position})`);
     expect(values(on)).toEqual(["bench-2"]);
+    expect(screen.queryByText("No substitutes named or left on the bench.")).toBeNull();
 
     fireEvent.change(off, { target: { value: "on-1" } });
     fireEvent.change(on, { target: { value: "bench-2" } });
@@ -216,6 +217,8 @@ describe("Match Substitutions — the live substitution screen", () => {
     expect(values(off)).toContain("bench-2");
     expect(values(off)).not.toContain("on-1");
     expect(values(on)).toEqual([]);
+    // Ticket 35: the last named substitute is on, so the picker says the bench is empty.
+    expect(screen.getByText("No substitutes named or left on the bench.")).toBeTruthy();
     // The applied substitution is still recorded for a later tactics change to carry.
     expect(getLiveTactic(rid("s1"))?.slots[1]?.playerId).toBe("bench-2");
   });

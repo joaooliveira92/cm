@@ -433,6 +433,31 @@ export const assignFullTactic = async (page: Page) => {
   await expect(page.getByText("Saved.")).toBeVisible();
 };
 
+/**
+ * Name `count` substitutes on the Tactic's bench from the Squad screen's lineup bar, which autosaves
+ * each drop. A live substitution only brings on a player named on the bench (decision request 04,
+ * group-g-match-day ticket 35), and the Tactics editor names starters only, so a journey that makes
+ * a substitution names a bench first. Drags the first "Not selected" players of the position list
+ * onto the bench slots in order.
+ */
+export const nameBench = async (page: Page, count = 3) => {
+  await pressSectionKey(page, "squad");
+  const benchSlots = page.getByTestId("lineup-bar").locator('[data-action-id="lineup-bench-slot"]');
+  await expect(benchSlots).toHaveCount(7);
+  const notSelected = page
+    .getByRole("group", { name: "Squad" })
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("button", { name: "Not selected", exact: true }) });
+  for (let benchIndex = 0; benchIndex < count; benchIndex++) {
+    // Each drop takes the player off the "Not selected" list, so the first row is always the next one.
+    const player = notSelected.first().locator('button[draggable="true"]');
+    const [lastName, firstName] = ((await player.textContent()) ?? "").split(", ");
+    await player.dragTo(benchSlots.nth(benchIndex));
+    await expect(benchSlots.nth(benchIndex)).toHaveAccessibleName(`SB${benchIndex + 1} slot, ${firstName} ${lastName}`);
+    await expect(page.getByTestId("lineup-save-state")).toHaveText("Saved.");
+  }
+};
+
 export const test = base.extend<LaunchFixtures>({
   // Playwright 1.62 requires the fixture arg to be a destructuring pattern, even when empty.
   // oxlint-disable-next-line no-empty-pattern

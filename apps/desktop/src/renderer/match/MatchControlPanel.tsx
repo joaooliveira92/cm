@@ -22,6 +22,7 @@ import {
 } from "../components/ui/select.js";
 import { FOCUS_RING } from "../focus.js";
 import { SELECT_CLASS } from "./controls.js";
+import { NO_SUBSTITUTES_LEFT } from "./substitution.js";
 import { useMatchContext } from "./MatchProvider.js";
 import { useCommentaryContext } from "./CommentaryProvider.js";
 import { MatchControlContext, useMatchControlContext } from "./matchControlContext.js";
@@ -244,6 +245,9 @@ const SubstitutionControl = () => {
                 ))}
               </SelectContent>
             </Select>
+            {state.pitch !== null && substitutes.length === 0 && !state.subsStatus.capReached && (
+              <p className="mt-1 text-xs text-text-secondary">{NO_SUBSTITUTES_LEFT}</p>
+            )}
           </div>
           <Button
             type="button"
