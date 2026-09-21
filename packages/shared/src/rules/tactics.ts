@@ -9,7 +9,7 @@ export type Formation = (typeof FORMATIONS)[number];
 export const BENCH_SIZE = 7;
 export const MATCH_DAY_SQUAD_SIZE = 11 + BENCH_SIZE;
 
-/** A bench with every slot empty — the default fresh Tactic starts with, and AI clubs get. */
+/** A bench with every slot empty — the default a fresh Tactic starts with. */
 export const emptyBench = (): ReadonlyArray<null> => Array<null>(BENCH_SIZE).fill(null);
 
 /**

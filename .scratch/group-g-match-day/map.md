@@ -48,6 +48,9 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
   [37](issues/37-match-day-resumes-a-started-match-after-a-restart.md). A started, uncommitted match cannot
   be reopened after an app restart: Match day never reads `pending.matchId` and `startMatch` refuses, so
   the career is stranded rather than replaying from kickoff as 31 and decision request 05 assumed.
+- [34 — AI clubs name a bench](issues/34-ai-clubs-name-a-bench.md): resolved 2026-09-21. A spare
+  Natural-tier goalkeeper first, then by Position Rating. Unblocks [26](issues/26-forced-substitution-picks-any-squad-player.md).
+  Review split out [38](issues/38-pure-packages-sort-without-locale.md) (locale-free sorting in the pure packages).
 
 ## Not yet specified
 

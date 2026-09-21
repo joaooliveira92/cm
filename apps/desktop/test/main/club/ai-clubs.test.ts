@@ -5,7 +5,7 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { FORMATIONS, selectBestFormationXI, transferValue, type BestXiSlot } from "@cm-clone/shared";
+import { BENCH_SIZE, FORMATIONS, selectBench, selectBestFormationXI, transferValue, type BestXiSlot } from "@cm-clone/shared";
 import { BidId, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -59,6 +59,7 @@ it.effect("every AI club gets a valid, fixed Tactic at Season start; the user's 
     const save = yield* createSave(savesDir, "Test Career");
     const clubs = yield* allClubs(save.id);
     ok(clubs.length === 20);
+    let clubsWithSpareKeeper = 0;
 
     for (const club of clubs) {
       const tactic = yield* withSave(save.id, loadPersistedTactic(club.id));
@@ -78,7 +79,26 @@ it.effect("every AI club gets a valid, fixed Tactic at Season start; the user's 
       const squadIds = new Set(squad.map((player) => player.id));
       const validation = yield* Effect.exit(validateTactic(tactic!, squadIds));
       ok(validation._tag === "Success", `AI club ${club.id}'s Tactic should pass the same validateTactic rules the human Tactics screen enforces`);
+
+      // Group-g 34: the persisted Tactic names a bench — the shared selection, off this squad's XI.
+      const xi = tactic!.slots.map((slot) => slot.playerId);
+      deepStrictEqual(tactic!.bench, selectBench(squad, xi), `AI club ${club.id}'s bench should be the shared bench selection`);
+      const named = tactic!.bench.filter((id): id is PlayerId => id !== null);
+      strictEqual(named.length, Math.min(BENCH_SIZE, squad.length - xi.length), `AI club ${club.id} should name a full bench when the squad allows`);
+      ok(named.every((id) => !xi.includes(id)), `AI club ${club.id}'s bench must not name a starter`);
+      const spareKeeper = squad.some(
+        (player) => !xi.includes(player.id) && player.positions.some((p) => p.position === "GK" && p.familiarity === "natural"),
+      );
+      if (spareKeeper) {
+        clubsWithSpareKeeper += 1;
+        const firstOnBench = squad.find((player) => player.id === named[0])!;
+        ok(
+          firstOnBench.positions.some((p) => p.position === "GK" && p.familiarity === "natural"),
+          `AI club ${club.id} has a spare goalkeeper, so the bench should lead with one`,
+        );
+      }
     }
+    ok(clubsWithSpareKeeper > 0, "the seeded world should exercise the spare-goalkeeper rule at least once");
   }),
 );
 

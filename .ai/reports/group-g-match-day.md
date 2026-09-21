@@ -493,3 +493,25 @@ no non-forced first-half Substitution can pass minute 45.
 Replays differently: only re-derived (live, uncommitted) matches in which one club's first-half stoppage
 forced Substitution at minute N (46–50) is followed by its next window-opening Substitution at
 second-half minute N. Committed matches keep their stored timeline.
+
+## Ticket 34 — AI clubs name a match-day bench, 2026-09-21
+
+- Ticket closed: [34](../../.scratch/group-g-match-day/issues/34-ai-clubs-name-a-bench.md)
+- Filed from review: [38](../../.scratch/group-g-match-day/issues/38-pure-packages-sort-without-locale.md)
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all (first) | `pnpm check:all` | exit 1: 5 desktop timeouts (four season-rollover tests at 900 s, `competition-participants` at 5 s), no assertion failures. Started right after the rework agent's own cut-off run. |
+| isolation | the 5 files alone via `vitest run` | 8 passed |
+| timing vs HEAD | `competition-participants.test.ts`; `rollover-exchange.test.ts`, working tree then a clean `HEAD` worktree | 2.43 s vs 2.39 s; 288 s vs 317 s: no slowdown |
+| check:all (re-run, nothing concurrent) | `pnpm check:all` | exit 0. Shared 470, contracts 174, game-engine 55, desktop 2129 passed. |
+| e2e | not run | no screen changed |
+
+Review: NEEDS_REWORK, then repaired. High: the first cut called a player a goalkeeper when GK was his
+highest rating, which missed a Natural-tier keeper in about 2% of generated squads; now decided by
+Familiarity Tier. Low: a code-unit versus locale tie-break test added. Low: the XI's own `localeCompare`
+tie-break, filed as 38. Re-reviewed inline by the orchestrator: both new tests were shown to fail against
+the old code.
+
+Determinism: `selectBench` is pure and ends every ordering in an id comparison; the row-order test feeds
+reversed and interleaved squads. No seeded match moved (the engine does not read the bench before 26).

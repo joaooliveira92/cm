@@ -20,9 +20,26 @@ empty AI benches until the next Season. Saves are disposable during development;
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Every AI Tactic assigned at Season start names up to `BENCH_SIZE` substitutes, none of them in the XI
-- [ ] The bench carries a spare goalkeeper whenever the squad has one
-- [ ] The selection is deterministic and independent of squad row order; a seeded test pins it
-- [ ] `pnpm check:all` green
+- [x] Every AI Tactic assigned at Season start names up to `BENCH_SIZE` substitutes, none of them in the XI
+- [x] The bench carries a spare goalkeeper whenever the squad has one
+- [x] The selection is deterministic and independent of squad row order; a seeded test pins it
+- [x] `pnpm check:all` green
+
+## Answer
+
+Resolved 2026-09-21. `selectBench(squad, xi)` in `packages/shared/src/rules/bestXi.ts` names the AI bench;
+`pickBestFormationTactic` (`aiClubs.ts`) calls it, and `validateTactic` still runs before persist. A spare
+goalkeeper is a player **Natural at GK** (Familiarity Tier), not whoever's GK rating is highest: the
+first cut used ratings and missed a real keeper in about 2% of generated squads, caught in review. The
+rest rank by highest Position Rating, ties by code-unit id order.
+
+Eligibility is the XI's: any player on the club's books. Nothing models injury or suspension between
+matches yet, so a bench of unavailable players cannot occur today.
+
+Test side effect: `boundary-helpers.ts` builds the human club's Tactic with `pickBestFormationTactic`, so
+human test clubs now name a bench too. Nothing reads the bench in the engine until
+[26](26-forced-substitution-picks-any-squad-player.md), so no seeded match moved. The review's locale
+finding on the XI's own tie-break is [38](38-pure-packages-sort-without-locale.md).
+Report: [group-g-match-day](../../../.ai/reports/group-g-match-day.md).

@@ -1,5 +1,6 @@
-import { FORMATIONS, FORMATION_SLOTS, type Formation } from "./tactics.js";
+import { BENCH_SIZE, FORMATIONS, FORMATION_SLOTS, type Formation } from "./tactics.js";
 import type { Position } from "./positions.js";
+import type { PlayerPosition } from "./ratings.js";
 
 // ---------------------------------------------------------------------------
 // Shared best-XI algorithm
@@ -104,4 +105,44 @@ export const bestXiForFormation = <Id extends string>(
     0,
   );
   return { filled, outfieldSum };
+};
+
+/** Code-unit id order: the same answer on every machine, unlike `localeCompare`. */
+const byId = (a: { readonly id: string }, b: { readonly id: string }): number => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+
+/** A player's highest Position Rating at any Position — the reading the bench ranks by. */
+const bestPositionRating = (player: PositionRatingsLike): number => Math.max(0, ...Object.values(player.positionRatings));
+
+/** A bench candidate: the ratings the best-XI fill reads, plus the Familiarity Tiers that say who
+ * is a goalkeeper. `loadSquadPlayers` rows satisfy it as they stand. */
+export interface BenchCandidate<Id extends string = string> extends PositionRatingsLike<Id> {
+  readonly positions: ReadonlyArray<PlayerPosition>;
+}
+
+/**
+ * The AI match-day bench for an already-chosen XI (group-g 34): the players outside `xi`, one spare
+ * goalkeeper first if the squad has one — a player Natural at GK, whatever his outfield ratings; the
+ * highest GK Position Rating among them — then the rest
+ * by their highest Position Rating, ties broken by player id, up to `BENCH_SIZE`. A squad too small
+ * to fill it leaves the trailing entries `null`, so the result is always `BENCH_SIZE` long.
+ *
+ * Pure and independent of squad row order: every ordering decision ends in an id comparison.
+ */
+export const selectBench = <Id extends string>(
+  squad: ReadonlyArray<BenchCandidate<Id>>,
+  xi: ReadonlyArray<Id>,
+): ReadonlyArray<Id | null> => {
+  const starters = new Set<Id>(xi);
+  const spare = squad.filter((player) => !starters.has(player.id));
+
+  const keeper = spare
+    .filter((player) => player.positions.some((p) => p.position === "GK" && p.familiarity === "natural"))
+    .sort((a, b) => (b.positionRatings.GK ?? 0) - (a.positionRatings.GK ?? 0) || byId(a, b))[0];
+
+  const rest = spare
+    .filter((player) => player.id !== keeper?.id)
+    .sort((a, b) => bestPositionRating(b) - bestPositionRating(a) || byId(a, b));
+
+  const named = [...(keeper === undefined ? [] : [keeper]), ...rest].slice(0, BENCH_SIZE).map((player) => player.id);
+  return [...named, ...Array<null>(BENCH_SIZE - named.length).fill(null)];
 };

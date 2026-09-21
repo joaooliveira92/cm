@@ -4,13 +4,13 @@ import {
   FORMATION_SLOTS,
   POSITIONS,
   POSITION_ROLES,
-  emptyBench,
+  selectBench,
   selectBestFormationXI,
   transferValue,
   weeklyWage,
   type Formation,
   type Position,
-  type PositionRatingsLike,
+  type BenchCandidate,
 } from "@cm-clone/shared";
 import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -42,11 +42,12 @@ export class SquadTooSmallError extends Data.TaggedError("SquadTooSmallError")<{
 /**
  * Best-fit Tactic for one club's squad: the Formation (among the 5 v1 Formations) maximizing
  * mean Position Rating across its 11 slots, filled greedily; roles defaulted to each slot's v1
- * Role (`POSITION_ROLES`); instructions fixed at balanced/normal/medium. Wraps the shared
+ * Role (`POSITION_ROLES`); instructions fixed at balanced/normal/medium; the bench from the shared
+ * `selectBench` (spare goalkeeper first, then by rating — group-g 34). Wraps the shared
  * `selectBestFormationXI` with the Effect-level `SquadTooSmallError`.
  */
 export const pickBestFormationTactic = (
-  squad: ReadonlyArray<PositionRatingsLike<PlayerId>>,
+  squad: ReadonlyArray<BenchCandidate<PlayerId>>,
 ): Effect.Effect<Tactic, SquadTooSmallError> =>
   Effect.gen(function* () {
     const result = selectBestFormationXI(squad);
@@ -61,7 +62,10 @@ export const pickBestFormationTactic = (
         role: POSITION_ROLES[slot.position],
         playerId: slot.playerId,
       })),
-      bench: emptyBench(),
+      bench: selectBench(
+        squad,
+        result.slots.map((slot) => slot.playerId),
+      ),
       mentality: "balanced",
       tempo: "normal",
       pressing: "medium",
