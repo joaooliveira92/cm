@@ -26,6 +26,17 @@ const pendingFixtureIntegrity = {
 const saveNotFound = { _tag: "SaveNotFoundError", id: "s1" };
 
 describe("RPC error unions declare what their handler can raise", () => {
+  // `loadSave` refuses a save made under another save schema before it reads anything.
+  describe("loadSave", () => {
+    it("round-trips a missing save", () => {
+      roundTrip(AppRpcs.loadSave.error, saveNotFound);
+    });
+
+    it("round-trips a save made under another schema", () => {
+      roundTrip(AppRpcs.loadSave.error, { _tag: "SaveSchemaMismatchError", id: "s1" });
+    });
+  });
+
   // `getCompetitionTable` folds `toSeasonView` exactly as its sibling `getLeagueTable` does.
   describe("getCompetitionTable", () => {
     it("round-trips a missing save", () => {

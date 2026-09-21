@@ -137,3 +137,23 @@ describe("Load Career — empty state and navigation", () => {
     expect(mountedNavigate).toHaveBeenCalledWith({ type: "mainMenu" });
   });
 });
+
+describe("Load Career — a save that will not open", () => {
+  it("says why when a save was made under another schema, instead of doing nothing", async () => {
+    (window as unknown as { cmClone: { call: unknown } }).cmClone = {
+      call: async (method: string) =>
+        method === "listSaves"
+          ? { _tag: "Success", value: [save("Old Career", null)] }
+          : method === "loadSave"
+            ? { _tag: "Failure", error: { _tag: "SaveSchemaMismatchError", id: "id-Old Career" } }
+            : { _tag: "Success", value: "pong" },
+    };
+    render(<LoadCareerScreen />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Save Old Career" }));
+
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "This save was made by a different version of the game and can no longer be opened.",
+    );
+  });
+});

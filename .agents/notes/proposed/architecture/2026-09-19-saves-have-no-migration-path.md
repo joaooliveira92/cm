@@ -84,4 +84,4 @@ to anyone who has a career in progress, which is a product call rather than an e
 
 ## Decided
 
-2026-09-21: [saves are disposable during development](2026-09-21-saves-are-disposable-during-development.md).
+2026-09-21: [saves are disposable during development](../../implemented/architecture/2026-09-21-saves-are-disposable-during-development.md).

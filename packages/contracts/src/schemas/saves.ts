@@ -24,6 +24,16 @@ export class SaveNotFoundError extends Schema.TaggedError<SaveNotFoundError>()(
   },
 ) {}
 
+/** Raised by `loadSave` for a save made under another save schema. Saves are disposable during
+ *  development (Agent Note): nothing upgrades an older file, so opening one is refused here rather
+ *  than failing later at the first read of a table or column it lacks. */
+export class SaveSchemaMismatchError extends Schema.TaggedError<SaveSchemaMismatchError>()(
+  "SaveSchemaMismatchError",
+  {
+    id: SaveId,
+  },
+) {}
+
 /** Raised by any mutating command once the save is an Archived Save — `ManagerSacked` (ADR-0006 /
  * ticket 18) or `ManagerRetired` (ticket 02). Read-only from that point on, no re-hire flow. Carries
  * the cause because the renderer turns this error into player-facing copy, and "you have been

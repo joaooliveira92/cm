@@ -58,6 +58,10 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
       switch (error.error._tag) {
         case "SaveNotFoundError":
           return "That save could not be found.";
+        // Saves are disposable during development: nothing upgrades an older save, so the sentence
+        // says why it will not open rather than promising a fix.
+        case "SaveSchemaMismatchError":
+          return "This save was made by a different version of the game and can no longer be opened.";
         // The cause picks the sentence: "you have been sacked" is wrong for a save the player
         // chose to retire from, and this string is the only place the two differ to the player.
         case "SaveArchivedError":

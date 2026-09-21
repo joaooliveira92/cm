@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { SaveId, SaveSummary } from "@cm-clone/contracts";
 import { Effect, Result } from "effect";
-import { listSaves, loadSave } from "../rpc.js";
+import { describeRpcError, listSaves, loadSave } from "../rpc.js";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
 import type { RpcClientError } from "../rpc/errors.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
@@ -18,6 +18,8 @@ export const LoadCareerScreen = () => {
   const [listSavesError, setListSavesError] = useState<RpcClientError<"listSaves"> | null>(null);
   const [openPreferences, setOpenPreferences] = useState(false);
   const [openCredits, setOpenCredits] = useState(false);
+  // A save that exists but will not open (e.g. made under another save schema) says so here.
+  const [openFailure, setOpenFailure] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setListSavesError(null);
@@ -36,8 +38,12 @@ export const LoadCareerScreen = () => {
   useEffect(() => registerActionHandler("retry-save-list", () => void refresh()), [refresh]);
 
   const handleContinue = async (id: SaveId): Promise<void> => {
+    setOpenFailure(null);
     const outcome = await Effect.runPromise(loadSave(id).pipe(Effect.result));
-    if (Result.isFailure(outcome)) return;
+    if (Result.isFailure(outcome)) {
+      setOpenFailure(describeRpcError(outcome.failure));
+      return;
+    }
     navigateCareer({ type: "squad", saveId: id }, "pointer");
   };
 
@@ -139,6 +145,11 @@ export const LoadCareerScreen = () => {
                 </div>
               )}
             </ul>
+            {openFailure !== null && (
+              <p role="alert" className="mt-2 text-sm text-destructive">
+                {openFailure}
+              </p>
+            )}
           </section>
 
           {saves.length === 0 && !listSavesError && (

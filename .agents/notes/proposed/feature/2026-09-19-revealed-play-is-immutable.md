@@ -92,7 +92,9 @@ what they remember.
 - **A migration** for the persisted revealed position (point 3) — **provisional**: no migration
   mechanism exists, per
   [saves have no migration path](../architecture/2026-09-19-saves-have-no-migration-path.md). Points 1,
-  2 and 4 are unaffected; they are engine rules, not persistence.
+  2 and 4 are unaffected; they are engine rules, not persistence. **Settled 2026-09-21:**
+  [saves are disposable during development](../../implemented/architecture/2026-09-21-saves-are-disposable-during-development.md),
+  so the persisted position needs a schema change and no migration; older saves are refused on open.
 - **Screen 97 spec §17 becomes satisfiable.** "Dismissed and injured-player constraints are explicit"
   could not be honoured while the engine reversed dismissals.
 - **Four decision requests close**, and the nineteen-ticket pattern behind them should stop: a defect

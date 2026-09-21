@@ -79,6 +79,9 @@ the rule change waiting on it.
   **Provisional as of 2026-09-19**: there is no mechanism that reaches an existing save file — see
   [saves have no migration path](2026-09-19-saves-have-no-migration-path.md). The *rule* here stands;
   how it is persisted to careers already in progress waits on that. Ticket 31 is blocked on ticket 32.
+  **Settled 2026-09-21:** [saves are disposable during development](../../implemented/architecture/2026-09-21-saves-are-disposable-during-development.md).
+  No migration or backfill: a save made before the storage exists is refused on open, so point 1's
+  backfill gate no longer applies. Engine-rule fixes still wait for ticket 31 itself.
 - **Saves grow by one timeline per human match.** Background matches are results-only and unaffected.
   For a ten-season career this is on the order of a few hundred timelines — small against a football
   database, and the request's own assessment was that nothing important is foreclosed.

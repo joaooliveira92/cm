@@ -17,7 +17,11 @@ Record the exact command and its actual output for each. Never infer a result yo
 3. **Determinism** — when the change touches match simulation, seeding, or Player Development: same
    seed twice → identical result, and a chunked match resimulated → identical result.
 4. **Save compatibility** — when the change touches persistence or a schema: save → load → continue
-   preserves future outcomes; name the migration.
+   preserves future outcomes. There are no migrations: saves are disposable during development
+   ([Agent Note](../../.agents/notes/implemented/architecture/2026-09-21-saves-are-disposable-during-development.md)).
+   A DDL change moves `SAVE_SCHEMA_VERSION` by itself and older saves are refused on open, so name that
+   consequence in the commit. Additive JSON inside an existing column changes no DDL and keeps old saves
+   open; say which of the two the change is.
 5. **Tree state** — `git status` clean, branch is a feature branch off `latest_branch`, no stray
    files (SQLite saves, build output, `.DS_Store`).
 6. **Traceability** — every ticket closed this sprint has its `Status:` updated, every shipped Agent

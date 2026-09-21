@@ -82,6 +82,7 @@ import {
   SaveArchivedError,
   SaveId,
   SaveNotFoundError,
+  SaveSchemaMismatchError,
   SaveSummary,
   SeasonCompleteError,
   SeasonSummaryView,
@@ -207,7 +208,7 @@ commitCareer: {
   loadSave: {
     payload: Schema.Struct({ id: SaveId }),
     success: SaveSummary,
-    error: SaveNotFoundError,
+    error: Schema.Union([SaveNotFoundError, SaveSchemaMismatchError]),
   },
   getSquad: {
     payload: Schema.Struct({ saveId: SaveId }),

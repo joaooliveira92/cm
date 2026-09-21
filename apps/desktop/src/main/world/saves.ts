@@ -10,6 +10,7 @@ import {
   PresetFingerprintMismatchError,
   SaveId,
   SaveNotFoundError,
+  SaveSchemaMismatchError,
   SaveSummary,
   ScopeOptionId,
   type ClubId,
@@ -29,6 +30,7 @@ import {
 import { reportPackCoverage } from "./displayNames.js";
 import { materialiseStaff } from "../career/staff.js";
 import { createSchema } from "../db/createSaveSchema.js";
+import { readSchemaVersion, SAVE_SCHEMA_VERSION } from "../db/schemaVersion.js";
 import { startSeason } from "../season/index.js";
 import { generateWorld } from "./worldGeneration.js";
 import { initializeSeasonEconomy } from "../transfers/index.js";
@@ -313,6 +315,16 @@ export const loadSave = (savesDir: string, id: SaveId) =>
     const exists = entries.includes(`${id}.sqlite`);
     if (!exists) {
       return yield* new SaveNotFoundError({ id });
+    }
+    // Before anything reads a table: a save made under another schema may lack the tables and
+    // columns every later read assumes, and nothing upgrades it (saves are disposable during
+    // development), so it is refused here with a sentence rather than failing at the first read.
+    const version = yield* readSchemaVersion.pipe(
+      Effect.provide(SqliteClient.layer({ filename, readonly: true })),
+      Effect.scoped,
+    );
+    if (version !== SAVE_SCHEMA_VERSION) {
+      return yield* new SaveSchemaMismatchError({ id });
     }
     // Opening a save under a pack that cannot name its ids is a reported condition, not a screen
     // full of raw identifiers nobody was told about. It never blocks the open.

@@ -15,6 +15,8 @@ release/
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
+# Save files made by an older schema, kept on purpose so the refusal path is proved.
+!apps/desktop/test/fixtures/saves/*.sqlite
 
 # Playwright
 test-results/

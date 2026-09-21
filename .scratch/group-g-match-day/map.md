@@ -28,6 +28,10 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
 - [13 — Mount live-match tab bar](issues/13-mount-live-match-tab-bar.md): Implemented. `SecondaryNav` mounted in `CareerShell`; flat `match-*` routes detected by parser; tab-to-destination mapping covers all match contexts. Follow-up: none.
 - [Spec published](spec.md): Reconciled spec marking handoff from charting to slicing.
 - [Implementation tickets](issues/): 8 vertical slices (04–11), all unblocked.
+- [32 — Saves need a migration path](issues/32-saves-need-a-migration-path.md): resolved 2026-09-21.
+  Saves are disposable during development: a save is stamped with a DDL-derived `SAVE_SCHEMA_VERSION`
+  and `loadSave` refuses any other with `SaveSchemaMismatchError`, proved against a real 2026-09-02
+  save. [31](issues/31-committed-matches-store-their-timeline.md) is unblocked and needs no backfill.
 
 ## Not yet specified
 

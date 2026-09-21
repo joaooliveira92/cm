@@ -24,21 +24,21 @@ progress, which is a product call.
 and 08.
 
 - [x] The durability question is answered and recorded as an Agent Note.
-- [ ] If saves are durable: `save_meta` carries a `schema_version`, ordered upgrade steps run on open
+- [x] ~~If saves are durable~~ — not applicable, saves are disposable (see Comments). Was: `save_meta` carries a `schema_version`, ordered upgrade steps run on open
       inside one transaction, and a **test fixture holds a save file written by an older schema** so the
       path is proved rather than assumed. A test that creates its own save under the current schema
       cannot catch this class of defect and does not count.
-- [ ] If saves are disposable: opening a save whose version predates the current schema is refused with
+- [x] If saves are disposable: opening a save whose version predates the current schema is refused with
       a message naming what happened, rather than failing later at the first read of a missing table.
-- [ ] `/gate` step 4 says what to do when a change touches persistence and no migration mechanism
+- [x] `/gate` step 4 says what to do when a change touches persistence and no migration mechanism
       applies — today "name the migration" can be satisfied by silence.
-- [ ] `pnpm check:all` green.
+- [x] `pnpm check:all` green.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Comments
 
 - 2026-09-21: **Saves are disposable during development**, decided under the human's standing
-  delegation. Recorded as [saves are disposable during development](../../../.agents/notes/proposed/architecture/2026-09-21-saves-are-disposable-during-development.md).
+  delegation. Recorded as [saves are disposable during development](../../../.agents/notes/implemented/architecture/2026-09-21-saves-are-disposable-during-development.md).
   The "if saves are disposable" criterion applies, and the "if saves are durable" one falls away. 31's
   backfill becomes unnecessary: 31 is rescoped to new saves only.
