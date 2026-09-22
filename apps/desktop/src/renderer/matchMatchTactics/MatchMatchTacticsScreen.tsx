@@ -79,7 +79,7 @@ const TacticsForm = ({
       <section aria-label="Formation in play" className="rounded-panel border border-panel-border bg-panel-bg p-4">
         <p className="font-semibold">Formation: {draft.formation}</p>
         <p className="mt-1 text-xs text-text-muted">
-          The formation stays fixed while the match is live — use the pre-match Tactics screen to redraft slots.
+          The formation stays fixed while the match is live; only Mentality, Tempo and Pressing change.
         </p>
         <ul className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1">
           {draft.slots.map((slot: TacticSlot) => (

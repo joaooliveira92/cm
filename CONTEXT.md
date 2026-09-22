@@ -236,8 +236,10 @@ Modifiers.
 **Tactic**:
 The full value a manager sets for a team: a Formation, a Role and player assigned to each of its 11
 slots, the three Team Instructions, and the named **bench**. The payload of the `ChangeTactics`
-command, both pre-match and mid-match. The bench is the only source of substitutes and is fixed at
-kickoff: a live `ChangeTactics` does not rename it. A player comes on from it once and never re-enters,
+command, both pre-match and mid-match. Mid-match only its Team Instructions take effect: a live
+`ChangeTactics` changes no slot, formation, role or bench, and who is on the pitch changes only
+through substitutions, red cards, injuries and bring-offs. The bench is the only source of
+substitutes and is fixed at kickoff. A player comes on from it once and never re-enters,
 and a forced substitution takes like for like (a goalkeeper for a goalkeeper) before bench order.
 
 **Expected Revision**:

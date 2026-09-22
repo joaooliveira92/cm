@@ -164,7 +164,7 @@ describe("AC-33 — injury decision flow: Play On (Enter) / Bring Off (B), Escap
     expect(screen.queryByText(/No subs left/)).toBeNull();
   });
 
-  it("a severe Injury at the cap tells the manager to rearrange", async () => {
+  it("a severe Injury at the cap says the team plays on a man down", async () => {
     const severe = { ...orangeInjury(), severity: "severe", tier: "red" };
     await mountMatchDayWithSpine(session(), undefined, undefined, (call) =>
       call === 0

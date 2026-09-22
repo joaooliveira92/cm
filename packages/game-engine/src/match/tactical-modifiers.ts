@@ -70,14 +70,33 @@ export interface ResolvedTeamTactics {
 }
 
 /**
- * Resolves a Tactic (formation/roles/instructions) into the flat engine-owned shape (ADR-0002/0003).
- * Called once for each tactic entering the engine: at match setup, and again per mid-match
- * `ChangeTactics`. From here the engine consumes only `slots` + `instructions`.
+ * Resolves the three Team Instructions (Mentality, Tempo, Pressing) into the flat instruction
+ * multipliers (ADR-0003). Reads nothing about slots or roles: role bumps are folded in afresh per
+ * phase from whoever occupies the slots (`applyRoleBumps`). A live `ChangeTactics` resolves only this
+ * (decision request 01).
  */
-export const resolveTeamTactics = (tactic: MatchTactic): ResolvedTeamTactics => {
+export const resolveTeamInstructions = (
+  tactic: Pick<MatchTactic, "mentality" | "tempo" | "pressing">,
+): ResolvedInstructions => {
   const mentality = MENTALITY_MULTIPLIERS[tactic.mentality];
   const pressing = PRESSING_MULTIPLIERS[tactic.pressing];
+  return {
+    attack: mentality.attack,
+    midfield: 1,
+    defense: mentality.defense,
+    tempo: TEMPO_MULTIPLIERS[tactic.tempo],
+    pressingAggression: pressing.pressingAggression,
+    fatigueDecayMultiplier: pressing.fatigueDecayMultiplier,
+  };
+};
 
+/**
+ * Resolves a Tactic (formation/roles/instructions) into the flat engine-owned shape (ADR-0002/0003).
+ * Called once per team, for the kickoff Tactic at match setup; a mid-match `ChangeTactics` resolves
+ * only its Team Instructions (`resolveTeamInstructions`). From here the engine consumes only
+ * `slots` + `instructions`.
+ */
+export const resolveTeamTactics = (tactic: MatchTactic): ResolvedTeamTactics => {
   const slots = tactic.slots.map((slot) => {
     const position = slot.position;
     const role = slot.role;
@@ -95,17 +114,7 @@ export const resolveTeamTactics = (tactic: MatchTactic): ResolvedTeamTactics => 
     };
   });
 
-  return {
-    slots,
-    instructions: {
-      attack: mentality.attack,
-      midfield: 1,
-      defense: mentality.defense,
-      tempo: TEMPO_MULTIPLIERS[tactic.tempo],
-      pressingAggression: pressing.pressingAggression,
-      fatigueDecayMultiplier: pressing.fatigueDecayMultiplier,
-    },
-  };
+  return { slots, instructions: resolveTeamInstructions(tactic) };
 };
 
 /** Standalone-entry helper: resolve a Tactic, narrowed to the on-pitch slots a caller filters on. */

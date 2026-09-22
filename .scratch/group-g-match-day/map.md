@@ -70,6 +70,9 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
   2026-09-21. `compareCodeUnits` everywhere, and an `effect-lint` rule so it stays that way.
 - [39 — An empty bench is flagged before kickoff](issues/39-an-empty-bench-is-flagged-before-kickoff.md):
   resolved 2026-09-21. A match-readiness advisory on the Kickoff panel and the Tactics Overview.
+- [40 — A live Change Tactics changes only the Team Instructions](issues/40-a-live-change-tactics-changes-only-instructions.md):
+  resolved 2026-09-22. A dismissal sticks; decision request 01 is built. Review split out
+  [43](issues/43-formation-in-play-reads-the-pitch.md).
 
 ## Not yet specified
 

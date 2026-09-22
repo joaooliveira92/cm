@@ -164,7 +164,7 @@ describe("forcePlayerOff's replacement", () => {
     expect(forcedIns(events)).toEqual([reserves[0]]);
   });
 
-  it("skips a bench player a ChangeTactics put on the pitch and later benched again", () => {
+  it("still brings on a bench player a live ChangeTactics named in its XI: the command put no one on (ticket 40)", () => {
     const setup = setupWithBench([reserves[0]!, reserves[1]!]);
     const team = initTeamState(setup);
     const withReserveOn = {
@@ -173,12 +173,12 @@ describe("forcePlayerOff's replacement", () => {
       bench: [starter(setup, 5), reserves[1]!, null, null, null, null, null],
     };
     applyCommand(team, { _tag: "ChangeTactics", clubId: HOME, tactic: withReserveOn }, 20, 1, false);
-    applyCommand(team, { _tag: "ChangeTactics", clubId: HOME, tactic: setup.tactic }, 25, 1, false);
+    expect(onPitch(team)).toEqual(setup.tactic.slots.map((slot) => slot.playerId));
     const events: Array<MatchEvent> = [];
 
     forcePlayerOff(team, starter(setup, 6), 30, 1, events);
 
-    expect(forcedIns(events)).toEqual([reserves[1]]);
+    expect(forcedIns(events)).toEqual([reserves[0]]);
   });
 });
 

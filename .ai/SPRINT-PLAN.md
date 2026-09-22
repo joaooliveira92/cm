@@ -253,12 +253,13 @@ Agent-startable work, in order:
    drags a stand-in), [37](../.scratch/group-g-match-day/issues/37-match-day-resumes-a-started-match-after-a-restart.md) (a started match
    resumes after a restart), [33](../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md) (a restarted match says so),
    [38](../.scratch/group-g-match-day/issues/38-pure-packages-sort-without-locale.md) (no `localeCompare` in the pure packages),
-   [39](../.scratch/group-g-match-day/issues/39-an-empty-bench-is-flagged-before-kickoff.md) (an empty bench is flagged before kickoff). Next:
-   - [40](../.scratch/group-g-match-day/issues/40-a-live-change-tactics-changes-only-instructions.md): a live Change Tactics changes only the
-     Team Instructions (decision request 01).
+   [39](../.scratch/group-g-match-day/issues/39-an-empty-bench-is-flagged-before-kickoff.md) (an empty bench is flagged before kickoff),
+   [40](../.scratch/group-g-match-day/issues/40-a-live-change-tactics-changes-only-instructions.md) (a live Change Tactics changes only the Team
+   Instructions; 2026-09-22). Next:
    - [41](../.scratch/group-g-match-day/issues/41-accepting-a-result-refreshes-the-season-read.md): the season read refreshes after Accept result.
    - [42](../.scratch/group-g-match-day/issues/42-quick-result-skips-the-live-reveal.md): Quick result skips the live reveal (`needs-triage`: an
      open question on restored quick matches).
+   - [43](../.scratch/group-g-match-day/issues/43-formation-in-play-reads-the-pitch.md): "Formation in play" lists the pitch, not the tactic.
 2. **[gate-red-on-dev 07](../.scratch/gate-red-on-dev/issues/07-youth-intake-at-rollover.md) then
    [08](../.scratch/gate-red-on-dev/issues/08-short-squad-advisory.md)**: the Youth Intake squad floor
    and its readiness advisory ([note](../.agents/notes/proposed/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md)).

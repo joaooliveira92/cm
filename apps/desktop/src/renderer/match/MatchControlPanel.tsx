@@ -131,8 +131,8 @@ const TeamInstructionSliders = () => {
         />
       </div>
       <p className="mt-1 text-xs text-text-muted">
-        Formation stays {tactic.formation as Formation} live — use the pre-match Tactics screen to
-        redraft slots.
+        Formation stays {tactic.formation as Formation} while the match is live; only Mentality,
+        Tempo and Pressing change.
       </p>
       <Button
         type="button"
@@ -166,8 +166,8 @@ const SubstitutionControl = () => {
         <Alert variant="destructive">
           <p className="font-semibold">Playing with {state.onPitchCount} men</p>
           <p className="mt-1">
-            A player is off with no substitute left. Rearrange the remaining players in the
-            tactics panel below to fill the formation before resuming.
+            A player is off with no substitute left, so the team plays on a man down.
+            Mentality, Tempo and Pressing below can still change.
           </p>
         </Alert>
       )}
@@ -177,7 +177,7 @@ const SubstitutionControl = () => {
           <p className="font-semibold">A severe injury has forced a player off.</p>
           {state.subsStatus.capReached && (
             <p className="mt-1">
-              No subs left — rearrange the remaining players in the tactics panel below.
+              No subs left — the team plays on a man down.
             </p>
           )}
         </Alert>

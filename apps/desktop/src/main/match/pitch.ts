@@ -195,8 +195,8 @@ const foldPitch = (
  * (`applyCommand`, decision request 04, ticket 35). A player substituted off, sent off, injured off
  * or brought off does not come back on.
  *
- * The fold assumes a live `ChangeTactics` does not change who is on the pitch; see
- * `.scratch/group-g-match-day/decision-request-01-live-change-tactics-scope.md`.
+ * A live `ChangeTactics` does not appear here: it changes only the Team Instructions, never who is on
+ * the pitch or who has been on (`applyCommand`, decision request 01, ticket 40).
  */
 export const pitchAsOf = (
   setup: MatchTeamSetup,
@@ -222,8 +222,6 @@ export interface LineupFacts {
    * counters cannot give.
    * Read off who comes on rather than off the bench: the engine brings on only a named bench player
    * who has never been on the pitch (`forcePlayerOff`, ticket 26), while a stand-in is already on it.
-   * The fold does not follow a live tactics change (decision request 01), so a stand-in whom one put
-   * on the pitch reads as a substitution.
    */
   readonly benchless: ReadonlySet<SubstitutionEvent>;
   /** Whether each journaled bring-off took its player off the pitch, by position in the lineup commands. */

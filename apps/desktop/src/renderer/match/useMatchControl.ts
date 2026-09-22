@@ -121,8 +121,8 @@ export const useMatchControl = ({
     if (tacticsResult._tag === "Success") {
       const view = tacticsResult.value;
       setSquad(view.squad);
-      // The tactic last sent to the match wins over the pre-match one: a substitution made on the
-      // standalone screens must not come back undone by this panel's next tactics change.
+      // The tactic last sent to the match wins over the pre-match one, so this panel drafts from the
+      // Team Instructions in play and shows a substitution made on the standalone screens.
       const shared = getLiveTactic(saveId) ?? view.tactic;
       if (shared) {
         setTactic(shared);

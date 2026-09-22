@@ -28,9 +28,10 @@ let active: ActiveMatchSession | null = null;
  *
  * - the minute and score the manager has seen, so a command raised off the Match day screen lands
  *   at the same minute one raised on it would, and no surface shows a score Match day has not;
- * - the tactic last sent to the match. A `ChangeTactics` replaces the whole on-pitch line-up, so a
- *   surface that drafted from the pre-match tactic after a substitution elsewhere would undo it.
- *   One shared value, written by every surface, keeps them on the same line-up.
+ * - the tactic last sent to the match: the Team Instructions in play, and the line-up with the
+ *   manager's substitutions applied. A live `ChangeTactics` changes only the Team Instructions (the
+ *   engine ignores its slots, decision request 01), so this value is what every surface drafts
+ *   instructions from and shows as the line-up; one shared value keeps them showing the same.
  *
  * It is also where Match day continues from when it mounts again after the manager left it: the
  * revealed lines, the revealed injuries not yet acted on, and the controlled club's substitution

@@ -645,3 +645,23 @@ Reviewed inline by the orchestrator. The seed-safety claim rests on sorting all 
 Review: APPROVE, no blocker or high. M1 (the Tactics Overview dropped the new advisories, against its own
 contract comment) fixed by the orchestrator, with a test. M2 (the surface differs from the pattern the
 ticket pointed to) accepted and recorded in the ticket. Four lows left, listed in the ticket Answer.
+
+## Ticket 40 — a live Change Tactics changes only the Team Instructions, 2026-09-22
+
+- Ticket closed: [40](../../.scratch/group-g-match-day/issues/40-a-live-change-tactics-changes-only-instructions.md)
+- Filed from review: [43](../../.scratch/group-g-match-day/issues/43-formation-in-play-reads-the-pitch.md)
+- `CONTEXT.md` Tactic entry and the Group G ledger's 097 row record the rule.
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 0. Shared 477, contracts 180, game-engine 95, desktop 2164 passed. |
+| e2e (first) | `pnpm --filter @cm-clone/desktop test:e2e` | 3 failed / 54 passed: the orchestrator's new live copy contained "Team Instructions", which the specs' case-insensitive `getByText('Team instructions')` then matched twice |
+| e2e (after rewording the copy to name Mentality, Tempo and Pressing) | same | 57 passed (2.3m); renderer match tests 141 passed, desktop typecheck and oxlint clean on the two changed files |
+| determinism | `pnpm --filter @cm-clone/game-engine exec vitest run test/match/simulate.test.ts test/match/live-change-tactics.test.ts`, twice | 25 passed both runs |
+| chunked resimulation | `pnpm --filter @cm-clone/desktop exec vitest run test/main/match/match.test.ts test/main/match/commands.test.ts test/main/match/committed-timeline.test.ts` | 16 passed |
+
+Review: APPROVE, no blocker or high. M1 (the "Playing with 10 men" alert and two hints told the manager to
+rearrange players, which the engine now ignores) reworded by the orchestrator. M2 (Formation in play lists
+the tactic) filed as 43. L1 (the 097 row lacked a durable anchor) and L2 (the change note understated the
+affected matches) fixed. The full `check:all` ran before the final copy rewording, which touched only
+strings in two renderer files.

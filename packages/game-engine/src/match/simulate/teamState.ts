@@ -7,6 +7,7 @@ import { PENALTY_SLASH_FACTOR } from "../injury.js";
 import {
   aggregatePhaseSlots,
   applyRoleBumps,
+  resolveTeamInstructions,
   resolveTeamTactics,
   type ResolvedTeamTactics,
   type ResolvedSlot,
@@ -42,8 +43,8 @@ export interface TeamRuntimeState {
    *  and a forced one alike (decision request 04). Fixed at kickoff: a live `ChangeTactics` carries
    *  Team Instructions (decision request 01) and never changes who may come on. */
   readonly bench: ReadonlyArray<PlayerId | null>;
-  /** Everyone who has been on the pitch this match: the starters, anyone a `ChangeTactics` or a
-   *  substitution puts in a slot, and goalkeeper stand-ins. No substitution, forced or the manager's,
+  /** Everyone who has been on the pitch this match: the starters, anyone a substitution puts in a
+   *  slot, and goalkeeper stand-ins. No substitution, forced or the manager's,
    *  brings one of them back on (group-g-match-day tickets 26 and 35). */
   readonly beenOn: Set<PlayerId>;
 }
@@ -68,8 +69,11 @@ export const initTeamState = (setup: MatchTeamSetup): TeamRuntimeState => ({
   beenOn: new Set(setup.tactic.slots.map((slot) => slot.playerId)),
 });
 
-/** Applies one `MatchCommand` to team state. Rejects (no-op on runtime state) on roster/cap/window
- *  violations. A substitute must be in the match squad, named on the kickoff bench (`bench`, which no
+/** Applies one `MatchCommand` to team state. A `ChangeTactics` is always live (the kickoff Tactic
+ *  comes from `MatchTeamSetup.tactic`), so it changes only the three Team Instructions: no slot,
+ *  formation, role or bench. Who is on the pitch is owned by substitutions, red cards, injuries and
+ *  bring-offs (decision request 01). A `MakeSubstitution` is rejected (no-op on runtime state) on
+ *  roster/cap/window violations. A substitute must be in the match squad, named on the kickoff bench (`bench`, which no
  *  `ChangeTactics` changes), and never yet on the pitch (`beenOn`): no re-entry after a
  *  substitution, a red card or an injury (decision request 04, ticket 35). Every refusal returns
  *  before a window or a substitution is spent. */
@@ -81,8 +85,7 @@ export const applyCommand = (
   isHalftime: boolean,
 ): { readonly accepted: boolean; readonly reason?: string } => {
   if (command._tag === "ChangeTactics") {
-    team.resolved = resolveTeamTactics(command.tactic);
-    for (const slot of team.resolved.slots) team.beenOn.add(slot.playerId);
+    team.resolved = { slots: team.resolved.slots, instructions: resolveTeamInstructions(command.tactic) };
     return { accepted: true };
   }
 

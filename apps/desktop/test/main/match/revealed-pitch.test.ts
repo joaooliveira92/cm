@@ -4,15 +4,16 @@ import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, notDeepStrictEqual, ok, strictEqual } from "node:assert";
-import type {
-  CommentaryLineView,
-  MatchId,
-  MatchSummary,
-  PlayerId,
-  ResumeSimulationView,
-  SaveId,
-  SquadPlayerView,
-  SubmitMatchCommandView,
+import {
+  Tactic,
+  type CommentaryLineView,
+  type MatchId,
+  type MatchSummary,
+  type PlayerId,
+  type ResumeSimulationView,
+  type SaveId,
+  type SquadPlayerView,
+  type SubmitMatchCommandView,
 } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
@@ -132,6 +133,66 @@ it.effect("the pitch reflects a revealed red card and forced injury substitution
     ok(!humanPitch(afterSub, match).substitutes.includes(replacement.id), "the replacement is no longer offered on");
     ok(!humanPitch(afterSub, match).substitutes.includes(injured.id));
     strictEqual(onPitchIds(afterSub, match).length, 10);
+  }),
+);
+
+it.effect("a live ChangeTactics after a red card naming a different XI changes no one on the pitch (ticket 40)", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    const match = yield* startSeededMatch(savesDir, save.id, fixtureId, RED_CARD_THEN_FORCED_SUB_SEED);
+    const { squad, tactic } = yield* getTactics(savesDir, save.id);
+    ok(tactic !== null);
+    const clubId = humanClubOf(match);
+    const lines = yield* drainLines(save.id, match.matchId);
+    strictEqual(lines[RED_CARD_LINE]?.tag, "RedCard", repin);
+    const sentOff = playerNamedIn(squad, lines[RED_CARD_LINE]);
+    ok(sentOff && tactic.slots.some((slot) => slot.playerId === sentOff.id), `a human starter is sent off — ${repin}`);
+    const redMinute = lines[RED_CARD_LINE]!.minute;
+
+    // The redraft names the kickoff eleven, the sent-off player included, with a bench player in
+    // place of another starter, and changes the Mentality.
+    const benched = tactic.slots.find((slot) => slot.playerId !== sentOff.id && slot.position !== "GK")!.playerId;
+    const benchPlayer = tactic.bench.find((id): id is PlayerId => id !== null)!;
+    const redrafted = new Tactic({
+      ...tactic,
+      slots: tactic.slots.map((slot) => (slot.playerId === benched ? { ...slot, playerId: benchPlayer } : slot)),
+      bench: tactic.bench.map((id) => (id === benchPlayer ? benched : id)),
+      mentality: tactic.mentality === "attacking" ? "defensive" : "attacking",
+    });
+    const changed = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, RED_CARD_LINE + 1, redMinute + 1, false, {
+      _tag: "ChangeTactics",
+      clubId,
+      tactic: redrafted,
+    });
+
+    // The pitch the pickers read: ten, the kickoff XI less the sent-off player, and the bench
+    // player still offered on.
+    deepStrictEqual(
+      [...onPitchIds(changed, match)].sort(),
+      tactic.slots.map((slot) => slot.playerId).filter((id) => id !== sentOff.id).sort(),
+    );
+    ok(humanPitch(changed, match).substitutes.includes(benchPlayer));
+
+    // The engine accepts the substitution the picker offers: the bench player on for the starter
+    // the redraft had benched.
+    const subbed = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, RED_CARD_LINE + 1, redMinute + 2, false, {
+      _tag: "MakeSubstitution",
+      clubId,
+      outPlayerId: benched,
+      inPlayerId: benchPlayer,
+    });
+    strictEqual(subbed.substitutionApplied, true);
+    ok(onPitchIds(subbed, match).includes(benchPlayer));
+    ok(!onPitchIds(subbed, match).includes(benched));
+    strictEqual(onPitchIds(subbed, match).length, 10);
+
+    // The engine agrees: the sent-off player takes no further part in the re-derived match.
+    const replayed = yield* drainLines(save.id, match.matchId);
+    deepStrictEqual(replayed.slice(0, RED_CARD_LINE + 1), lines.slice(0, RED_CARD_LINE + 1), "revealed play is unchanged");
+    ok(
+      replayed.slice(RED_CARD_LINE + 1).every((line) => !line.text.includes(`${sentOff.firstName} ${sentOff.lastName}`)),
+      "the sent-off player is not put back on",
+    );
   }),
 );
 

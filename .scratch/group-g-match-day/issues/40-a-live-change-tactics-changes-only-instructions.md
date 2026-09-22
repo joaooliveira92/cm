@@ -20,8 +20,33 @@ differently.
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A live `ChangeTactics` after a red card leaves the team with 10, and changes its Team Instructions
-- [ ] A live `ChangeTactics` naming a different XI changes no slot; the substitution picker and the engine still agree
-- [ ] A seeded test pins each; `pnpm check:all` green
+- [x] A live `ChangeTactics` after a red card leaves the team with 10, and changes its Team Instructions
+- [x] A live `ChangeTactics` naming a different XI changes no slot; the substitution picker and the engine still agree
+- [x] A seeded test pins each; `pnpm check:all` green
+
+## Answer
+
+Resolved 2026-09-22. `applyCommand`'s `ChangeTactics` branch keeps the slots and recomputes only the Team
+Instructions (`resolveTeamInstructions` in `tactical-modifiers.ts`); it no longer adds anyone to `beenOn`.
+Role bumps still come each minute from the players actually on the pitch. There is no pre-kickoff engine
+path: the kickoff Tactic is the setup snapshot, and the club-level `changeTactics` never reaches the
+engine. The fold in `pitch.ts` and the engine now agree exactly on who is on and who has been on.
+
+Tests that pinned a line-up with a minute-1 `ChangeTactics` (`commands.test.ts`) now use the persisted
+kickoff Tactic; the pins named the same players, and removing them makes the seeded preconditions match
+what the tests run. The live copy that told the manager to rearrange players after a red card (the alert
+this ticket's symptom came from) now says the team plays on a man down and only the Team Instructions
+change. CONTEXT.md's Tactic entry and the Group G ledger's 097 row record the rule.
+
+**Change note.** Committed matches keep their stored timeline (31). A live, uncommitted match replays
+differently from a live tactics change's minute if the change came after a red card, a forced
+substitution or a bring-off, or named a different line-up, formation or roles. The live UI always sent
+the whole slot list and its tactic never reflected dismissals, so in practice that is almost any live
+tactics change after such an event, even one that touched only the instructions. Dismissed players no
+longer come back, and a player a change named no longer counts as having been on. Play already watched
+past the command's minute in such a match can change on replay.
+
+Split out: [43](43-formation-in-play-reads-the-pitch.md) ("Formation in play" lists the tactic, not the pitch).
+Report: [group-g-match-day](../../../.ai/reports/group-g-match-day.md).
