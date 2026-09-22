@@ -15,6 +15,9 @@ export interface ActiveMatchSession {
   readonly saveId: SaveId;
   readonly match: MatchSummary;
   readonly phase: MatchPhase;
+  /** Read back after an app restart (group-g-match-day 33), so a same-session return still says the
+   *  match restarted from kickoff. Absent means started in this process. */
+  readonly restoredAfterRestart?: boolean;
 }
 
 let active: ActiveMatchSession | null = null;

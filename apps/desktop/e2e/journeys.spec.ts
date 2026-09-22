@@ -16,6 +16,9 @@ import {
 import type { Page } from "@playwright/test";
 import { savesDir, seedBeforeMatchday, seedFresh } from "./seedSaves.js";
 
+/** Match day's copy for a match read back after a restart (`RESTARTED_FROM_KICKOFF`, group-g 33). */
+const RESTARTED_FROM_KICKOFF = "The app was closed mid-match, so this match has restarted from kickoff.";
+
 /** Strip thousands separators and units, e.g. "1,250,000 Cr" -> 1250000. */
 const parseCr = (text: string) => Number(text.replace(/[^\d]/g, ""));
 
@@ -98,7 +101,7 @@ test("a save persists across app restarts", async ({ userDataDir, launchExtraApp
   await openTheCareer();
 });
 
-test("a match started before an app restart resumes live on Match day and plays to an accepted result (group-g 37)", async ({
+test("a match started before an app restart resumes live on Match day, says it restarted from kickoff, and plays to an accepted result (group-g 37, 33)", async ({
   userDataDir,
   launchExtraApp,
 }) => {
@@ -122,6 +125,8 @@ test("a match started before an app restart resumes live on Match day and plays 
   await expect(play).toBeEnabled({ timeout: 15_000 });
   await play.click();
   await expect(matchScore(page)).toBeVisible({ timeout: 15_000 });
+  // Started in this process, so nothing to say about a restart.
+  await expect(page.getByText(RESTARTED_FROM_KICKOFF)).toHaveCount(0);
   // Mid-match: the match is started and its result not accepted, which is what the save keeps.
   await closeOrKill(first);
 
@@ -137,6 +142,8 @@ test("a match started before an app restart resumes live on Match day and plays 
   await expect(matchScore(relaunched)).toBeVisible({ timeout: 15_000 });
   await expect(relaunched.getByRole("button", { name: "Play match" })).toHaveCount(0);
   await expect(relaunched.getByRole("button", { name: "Quick result" })).toHaveCount(0);
+  // The replay may differ from what the first launch revealed, so Match day says it started over (33).
+  await expect(relaunched.getByRole("status").filter({ hasText: RESTARTED_FROM_KICKOFF })).toBeVisible();
 
   const accept = relaunched.getByRole("button", { name: "Accept result" });
   await expect(accept).toBeVisible({ timeout: 90_000 });

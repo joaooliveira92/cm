@@ -10,6 +10,8 @@ import { MatchCommentaryStream } from "./MatchCommentaryStream.js";
 import { MatchControlPanel } from "./MatchControlPanel.js";
 import { PostMatchSummary } from "./PostMatchSummary.js";
 
+export const RESTARTED_FROM_KICKOFF = "The app was closed mid-match, so this match has restarted from kickoff.";
+
 const MatchOngoing = () => {
   return (
     <>
@@ -71,6 +73,15 @@ const MatchDayLayout = () => {
       {state.error && <Alert variant="destructive" className="mt-2"><p>{state.error}</p></Alert>}
 
       {!state.match && <KickoffPanel />}
+
+      {/* Shown for the rest of the match: the replay may differ from what was revealed before the
+          app closed, and dismissing that would hide it (group-g-match-day 33). A notice, not an
+          alert: it asks nothing of the manager and play carries on. */}
+      {state.match && state.restoredAfterRestart && state.phase !== "committed" && (
+        <Alert role="status" className="mt-2">
+          <p>{RESTARTED_FROM_KICKOFF}</p>
+        </Alert>
+      )}
 
       {state.match && (
         <section className="stadium-wash mt-6 rounded-panel border border-panel-border-dark p-4 shadow-panel">

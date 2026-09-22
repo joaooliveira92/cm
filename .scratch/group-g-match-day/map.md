@@ -64,6 +64,8 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
   resolved 2026-09-21. `getAwaitingMatch` reads the started match back; the feed replays from kickoff.
   Unblocks 33. Review split out [41](issues/41-accepting-a-result-refreshes-the-season-read.md) and
   [42](issues/42-quick-result-skips-the-live-reveal.md).
+- [33 — A restarted live match says so](issues/33-a-restarted-live-match-says-so.md): resolved 2026-09-21.
+  A restart-restored match shows a standing notice that it replays from kickoff.
 
 ## Not yet specified
 

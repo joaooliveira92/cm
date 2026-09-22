@@ -41,6 +41,9 @@ export interface MatchState {
   readonly phase: MatchPhase;
   readonly hydrated: boolean;
   readonly saveId: SaveId;
+  /** The match was read back after an app restart rather than started or resumed in this process, so
+   *  its feed replays from kickoff (group-g-match-day 33). */
+  readonly restoredAfterRestart: boolean;
 }
 
 export interface MatchActions {
@@ -69,6 +72,7 @@ export const MatchProvider = ({
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<MatchPhase>("awaiting-kickoff");
   const [hydrated, setHydrated] = useState(false);
+  const [restoredAfterRestart, setRestoredAfterRestart] = useState(false);
 
   const tableResult = useAtomValue(leagueTableAtom(saveId));
   const pending = tableResult._tag === "Success" ? tableResult.value.season.awaitingFixture : null;
@@ -89,6 +93,7 @@ export const MatchProvider = ({
         return;
       }
       setMatch(outcome.success);
+      setRestoredAfterRestart(false);
       setPhase("live");
     },
     [saveId, pending],
@@ -127,6 +132,7 @@ export const MatchProvider = ({
     if (resumed !== null) {
       setMatch(resumed.match);
       setPhase(resumed.phase);
+      setRestoredAfterRestart(resumed.restoredAfterRestart === true);
     }
     setHydrated(true);
   }, [saveId]);
@@ -157,6 +163,7 @@ export const MatchProvider = ({
       // A key press during the read can dispatch Play and leave its refusal behind; the match is live now.
       setError(null);
       setMatch(outcome.success);
+      setRestoredAfterRestart(true);
       setPhase("live");
     };
     resume();
@@ -171,8 +178,8 @@ export const MatchProvider = ({
   // longer in flight: recording it would restore a stale Match day and keep Continue suspended.
   useEffect(() => {
     if (match === null || phase === "committing" || phase === "committed") return;
-    setActiveMatch({ saveId, match, phase });
-  }, [saveId, match, phase]);
+    setActiveMatch({ saveId, match, phase, restoredAfterRestart });
+  }, [saveId, match, phase, restoredAfterRestart]);
 
   useEffect(() => {
     if (phase === "complete" && match !== null) recordFullTime(saveId, match.matchId);
@@ -191,7 +198,7 @@ export const MatchProvider = ({
   }, [saveId, startMatch, commitResult]);
 
   const value: MatchContextValue = {
-    state: { pending, match, error, phase, hydrated, saveId },
+    state: { pending, match, error, phase, hydrated, saveId, restoredAfterRestart },
     actions: { startMatch, commitResult, setPhaseComplete, setPhasePaused, reportError },
   };
 

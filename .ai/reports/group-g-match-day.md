@@ -602,3 +602,16 @@ Review: APPROVE, no blocker or high. The orchestrator fixed its three lows in pl
 phase on an abandoned read, a stale error after a key press during the read, the Fixture id taken from the
 season's link) and re-ran the gate above on the result. M1 (the `reachedFullTime` guard works around a
 stale season read) and the implementator's Quick-mode finding are 41 and 42.
+
+## Ticket 33 — a restarted live match says so, 2026-09-21
+
+- Ticket closed: [33](../../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md)
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 0. Shared 470, contracts 177, game-engine 90, desktop 2149 passed. |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | 57 passed (2.4m); the restart journey asserts the notice is absent before the restart and present after it |
+
+Reviewed inline by the orchestrator: a boolean on the match context and on `ActiveMatchSession`, set only
+by the restart restore and cleared by a fresh start, shown as a `role="status"` notice. The implementator
+checked the tests bite by forcing the flag both ways.
