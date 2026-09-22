@@ -205,6 +205,12 @@ commitCareer: {
     success: Schema.Void,
     error: Schema.Never,
   },
+  /** Permanently delete a committed save file. Idempotent — missing file is not an error. */
+  deleteSave: {
+    payload: Schema.Struct({ id: SaveId }),
+    success: Schema.Void,
+    error: Schema.Never,
+  },
   loadSave: {
     payload: Schema.Struct({ id: SaveId }),
     success: SaveSummary,

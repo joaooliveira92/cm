@@ -183,6 +183,11 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
       const { id } = yield* Schema.decodeUnknownEffect(AppRpcs.discardCareer.payload)(payload);
       return yield* discardCareer(ctx.savesDir, id);
     }),
+  deleteSave: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { id } = yield* Schema.decodeUnknownEffect(AppRpcs.deleteSave.payload)(payload);
+      return yield* discardCareer(ctx.savesDir, id);
+    }),
   getManagerProfile: (payload, ctx) =>
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getManagerProfile.payload)(payload);

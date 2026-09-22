@@ -99,6 +99,12 @@ export const navigate = (destination: NavigationDestination): void => {
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     case "/career/$saveId/manager":
+    case "/career/$saveId/manager/inbox":
+    case "/career/$saveId/manager/confidence":
+    case "/career/$saveId/manager/notes":
+    case "/career/$saveId/manager/jobs":
+    case "/career/$saveId/manager/responsibilities":
+    case "/career/$saveId/manager/career":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     case "/career/$saveId/news":

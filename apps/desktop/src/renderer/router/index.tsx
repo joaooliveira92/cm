@@ -48,6 +48,15 @@ import { ScoutingKnowledgeScreen } from "../scouting/ScoutingKnowledgeScreen.js"
 import { PlayerSearchScreen } from "../playerSearch/PlayerSearchScreen.js";
 import { StaffSearchScreen } from "../staffSearch/StaffSearchScreen.js";
 import { CompetitionsScreen } from "../competitions/CompetitionsScreen.js";
+import {
+  ManagerOverviewScreen,
+  ManagerInboxScreen,
+  ManagerConfidenceScreen,
+  ManagerNotesScreen,
+  ManagerJobsScreen,
+  ManagerResponsibilitiesScreen,
+  ManagerCareerScreen,
+} from "../managerProfile/index.js";
 // Ticket 03 — Staff drill-downs
 // Ticket 04 — Club drill-downs (other club views)
 import { ClubSquadDetailScreen } from "../clubSquadDetail/ClubSquadDetailScreen.js";
@@ -176,7 +185,59 @@ const seasonSummaryRoute = defineCareerChild(
   "seasonSummary",
   SeasonSummaryScreen,
 );
-const managerRoute = defineCareerChild("manager", "manager", ManagerProfileScreen);
+/**
+ * The Manager area follows the Training shape: `/manager` lands on the Overview tab, and sub-tabs
+ * (Inbox, Confidence, Notes, etc.) sit beneath it at `/manager/<tab>`. All share the `manager`
+ * screen scope so the navbar keeps the Club/Manager section highlighted.
+ */
+const managerRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "manager",
+  component: () => <Outlet />,
+});
+
+const managerIndexRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "/",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerOverviewScreen} />,
+});
+
+const managerInboxRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "inbox",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerInboxScreen} />,
+});
+
+const managerConfidenceRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "confidence",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerConfidenceScreen} />,
+});
+
+const managerNotesRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "notes",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerNotesScreen} />,
+});
+
+const managerJobsRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "jobs",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerJobsScreen} />,
+});
+
+const managerResponsibilitiesRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "responsibilities",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerResponsibilitiesScreen} />,
+});
+
+const managerCareerRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "career",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerCareerScreen} />,
+});
+
 const newsRoute = defineCareerChild("news", "news", NewsInboxScreen);
 
 const clubInfoRoute = defineCareerChild("club-info", "clubInfo", ClubInfoScreen);
@@ -506,7 +567,15 @@ const routeTree = rootRoute.addChildren([
       fixturesRoute,
       matchRoute,
       seasonSummaryRoute,
-      managerRoute,
+managerRoute.addChildren([
+        managerIndexRoute,
+        managerInboxRoute,
+        managerConfidenceRoute,
+        managerNotesRoute,
+        managerJobsRoute,
+        managerResponsibilitiesRoute,
+        managerCareerRoute,
+      ]),
       newsRoute,
       trainingRoute.addChildren([
         trainingIndexRoute,

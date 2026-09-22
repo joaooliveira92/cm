@@ -22,6 +22,8 @@ export const beginCareer = (snapshotId: SnapshotId): RpcRead<"beginCareer"> =>
 
 export const discardCareer = (id: SaveId): RpcRead<"discardCareer"> => call("discardCareer", { id });
 
+export const deleteSave = (id: SaveId): RpcRead<"deleteSave"> => call("deleteSave", { id });
+
 export const getClubSelection = (saveId: SaveId): RpcRead<"getClubSelection"> =>
   call("getClubSelection", { saveId });
 

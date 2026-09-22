@@ -126,6 +126,13 @@ const SpineOrchestrator = ({
         playerSearch: () => navigateCareer({ type: "playerSearch", saveId }, "keyboard"),
         staffSearch: () => navigateCareer({ type: "staffSearch", saveId }, "keyboard"),
         competitions: () => navigateCareer({ type: "competitions", saveId }, "keyboard"),
+        // Manager sub-tabs — not keyboard-spine targets, navigate to the overview
+        managerCareer: () => navigateCareer({ type: "managerCareer", saveId }, "keyboard"),
+        managerConfidence: () => navigateCareer({ type: "managerConfidence", saveId }, "keyboard"),
+        managerInbox: () => navigateCareer({ type: "managerInbox", saveId }, "keyboard"),
+        managerJobs: () => navigateCareer({ type: "managerJobs", saveId }, "keyboard"),
+        managerNotes: () => navigateCareer({ type: "managerNotes", saveId }, "keyboard"),
+        managerResponsibilities: () => navigateCareer({ type: "managerResponsibilities", saveId }, "keyboard"),
       };
       // Every section nav action carries its destination in metadata, so the handler set is read
       // off the registry rather than restated here (a restated copy once sent `g 3` to Squad).

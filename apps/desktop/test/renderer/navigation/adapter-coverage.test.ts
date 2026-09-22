@@ -110,6 +110,12 @@ const CAREER_DESTINATIONS: SamplesOf<CareerDestination> = {
   squadInformation: { type: "squadInformation", saveId },
   squadFinances: { type: "squadFinances", saveId },
   squadHistory: { type: "squadHistory", saveId },
+  managerInbox: { type: "managerInbox", saveId },
+  managerConfidence: { type: "managerConfidence", saveId },
+  managerNotes: { type: "managerNotes", saveId },
+  managerJobs: { type: "managerJobs", saveId },
+  managerResponsibilities: { type: "managerResponsibilities", saveId },
+  managerCareer: { type: "managerCareer", saveId },
 };
 
 /** The main menu, the load screen, and the four creation steps — everything outside a save. */

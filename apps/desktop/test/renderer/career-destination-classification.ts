@@ -78,5 +78,11 @@ export const CAREER_SUB_SURFACES: Readonly<Record<CareerSubSurfaceType, string>>
   squadInformation: "a Squad section sub-item, work in progress placeholder",
   squadFinances: "a Squad section sub-item, work in progress placeholder",
   squadHistory: "a Squad section sub-item, work in progress placeholder",
+  managerInbox: "a Manager section sub-tab",
+  managerConfidence: "a Manager section sub-tab",
+  managerNotes: "a Manager section sub-tab",
+  managerJobs: "a Manager section sub-tab",
+  managerResponsibilities: "a Manager section sub-tab",
+  managerCareer: "a Manager section sub-tab",
 };
 

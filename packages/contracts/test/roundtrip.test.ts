@@ -69,12 +69,20 @@ const player = {
 
 describe("simple view classes", () => {
   it("SaveSummary round-trips", () => {
-    roundTrip(SaveSummary, { id: "s1", name: "Test", createdAt: "2026-01-01", archivedCause: null });
+    roundTrip(SaveSummary, {
+      id: "s1", name: "Test", createdAt: "2026-01-01T00:00:00.000Z",
+      archivedCause: null, managerName: "Joe", userClubName: "FC",
+      seasonNumber: 1, gameDate: "2026-08-15", lastModifiedAt: "2026-01-10T12:00:00.000Z",
+    });
   });
 
   it("SaveSummary round-trips each cause that archives a save", () => {
     for (const archivedCause of ["sacked", "retired"] as const) {
-      roundTrip(SaveSummary, { id: "s1", name: "Test", createdAt: "2026-01-01", archivedCause });
+      roundTrip(SaveSummary, {
+        id: "s1", name: "Test", createdAt: "2026-01-01T00:00:00.000Z",
+        archivedCause, managerName: "Joe", userClubName: "FC",
+        seasonNumber: 1, gameDate: "2026-08-15", lastModifiedAt: "2026-01-10T12:00:00.000Z",
+      });
     }
   });
 

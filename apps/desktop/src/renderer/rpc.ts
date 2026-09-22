@@ -80,6 +80,7 @@ export {
   loadSave,
   beginCareer,
   discardCareer,
+  deleteSave,
   getCareerSetupSummary,
   getClubSelection,
   createSave,

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readdir, rm } from "node:fs/promises";
+import { mkdir, readdir, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
@@ -17,7 +17,7 @@ import {
   type SnapshotId,
 } from "@cm-clone/contracts";
 import type { PillarDistribution } from "@cm-clone/shared";
-import { Effect, Random, Schema } from "effect";
+import { Effect, Random } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import {
   blockingIssues,
@@ -28,7 +28,7 @@ import {
   seasonStartDate,
   validatePillarDistribution,
 } from "@cm-clone/shared";
-import { reportPackCoverage } from "./displayNames.js";
+import { displayNames, reportPackCoverage } from "./displayNames.js";
 import { materialiseStaff } from "../career/staff.js";
 import { createSchema } from "../db/createSaveSchema.js";
 import { readSchemaVersion, SAVE_SCHEMA_VERSION } from "../db/schemaVersion.js";
@@ -93,14 +93,69 @@ const loadDefaultUserClub = Effect.gen(function* () {
 /** The Save List's row for one save file. `archivedCause` comes from `manager_status` rather than
  * `save_meta` because archiving is career state, not file metadata; the cross join is safe because
  * both tables hold exactly one row per save. It is read here so the Save List can mark an archived
- * save without opening the career (ticket 02). */
+ * save without opening the career (ticket 02). The extra fields (manager name, club name, season
+ * info, last modified time) enrich the card the player sees on the Load Career screen. Queries for
+ * tables that may not exist in older schema versions are wrapped in `Effect.option` so the save
+ * list never fails for a schema-mismatched fixture. */
 const readSaveSummary = (filename: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const rows = yield* sql`SELECT save_meta.id, save_meta.name, save_meta.created_at as "createdAt",
-             manager_status.archived_cause as "archivedCause"
-      FROM save_meta LEFT JOIN manager_status ON manager_status.id = 1 LIMIT 1`;
-    return yield* Schema.decodeUnknownEffect(SaveSummary)(rows[0]);
+    const rows = yield* sql`
+      SELECT
+        save_meta.id,
+        save_meta.name,
+        save_meta.created_at as "createdAt",
+        manager_status.archived_cause as "archivedCause"
+      FROM save_meta
+      LEFT JOIN manager_status ON manager_status.id = 1
+      LIMIT 1`;
+    const base = rows[0] as {
+      id: string;
+      name: string;
+      createdAt: string;
+      archivedCause: string | null;
+    } | undefined;
+    if (!base) {
+      return yield* Effect.die(new Error("readSaveSummary: save_meta row missing"));
+    }
+
+    const managerProfileRows = yield* sql`SELECT manager_name as "managerName" FROM manager_profile WHERE id = 1`.pipe(Effect.option);
+    const managerName = managerProfileRows._tag === "Some" && managerProfileRows.value.length > 0
+      ? (managerProfileRows.value[0] as { managerName: string }).managerName
+      : base.name;
+
+    const clubRows = yield* sql`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`.pipe(Effect.option);
+    const userClubId = clubRows._tag === "Some" && clubRows.value.length > 0
+      ? (clubRows.value[0] as { id: string }).id
+      : null;
+
+    const seasonRows = yield* sql`SELECT season_number as "seasonNumber", game_date as "gameDate" FROM season ORDER BY season_number DESC LIMIT 1`.pipe(Effect.option);
+
+    const seasonNumber = seasonRows._tag === "Some" && seasonRows.value.length > 0
+      ? (seasonRows.value[0] as { seasonNumber: number; gameDate: string }).seasonNumber
+      : 1;
+    const gameDate = seasonRows._tag === "Some" && seasonRows.value.length > 0
+      ? (seasonRows.value[0] as { seasonNumber: number; gameDate: string }).gameDate
+      : base.createdAt.slice(0, 10);
+
+    const userClubName = yield* (userClubId
+      ? displayNames.pipe(
+        Effect.map((resolveName) => resolveName(userClubId)),
+        Effect.catchDefect(() => Effect.succeed("—")),
+      )
+      : Effect.succeed("—"));
+    const mtime = yield* Effect.promise(() => stat(filename).then((s) => s.mtime.toISOString()));
+    return new SaveSummary({
+      id: SaveId.make(base.id),
+      name: base.name,
+      createdAt: base.createdAt,
+      archivedCause: base.archivedCause as "retired" | "sacked" | null,
+      managerName,
+      userClubName,
+      seasonNumber,
+      gameDate,
+      lastModifiedAt: mtime,
+    });
   }).pipe(
     Effect.provide(SqliteClient.layer({ filename, readonly: true })),
     Effect.scoped,
@@ -228,10 +283,6 @@ export const commitCareer = (
 
     yield* Effect.gen(function* () {
       const sql = yield* SqlClient;
-      // The selected club is checked before anything is written. `UPDATE ... WHERE id = ?` matches
-      // zero rows for an unknown id without complaint, which would commit a career with no user
-      // club — the first squad screen then finds nothing owned by the manager. Failing here leaves
-      // `save_meta` unwritten, so the save stays undiscoverable rather than half-committed.
       const selected = yield* sql<{
         id: ClubId;
       }>`SELECT id FROM clubs WHERE id = ${selectedClubId} LIMIT 1`;
@@ -247,8 +298,9 @@ export const commitCareer = (
       yield* sql`INSERT INTO save_meta (id, name, created_at) VALUES (${id}, ${name}, ${createdAt})`;
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped);
 
-    // A freshly committed career is never archived — `startSeason` writes `archived_cause` NULL.
-    return new SaveSummary({ id, name, createdAt, archivedCause: null });
+    // Resolve the club display name and read season info for the SaveSummary.
+    const summary = yield* readSaveSummary(filename);
+    return summary;
   });
 
 /**

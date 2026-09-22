@@ -15,6 +15,16 @@ export class SaveSummary extends Schema.Class<SaveSummary>("SaveSummary")({
   /** `null` while the career is live. Set once the save is an Archived Save, so the Save List can
    * mark it without opening the career. */
   archivedCause: Schema.NullOr(ArchivedCauseSchema),
+  /** The manager's name from `manager_profile`. */
+  managerName: Schema.String,
+  /** The resolved display name of the user's club. */
+  userClubName: Schema.String,
+  /** The current season number. */
+  seasonNumber: Schema.Number,
+  /** The current in-game date (ISO YYYY-MM-DD). */
+  gameDate: Schema.String,
+  /** The save's last modified time (ISO string, from file mtime). */
+  lastModifiedAt: Schema.String,
 }) {}
 
 export class SaveNotFoundError extends Schema.TaggedError<SaveNotFoundError>()(

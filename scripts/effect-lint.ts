@@ -394,6 +394,8 @@ const FILE_LENGTH_EXEMPTIONS: Readonly<Record<string, string>> = {
     "route registry; grows linearly with screen count; structural value in a single tree",
   "packages/contracts/src/rpc.ts":
     "RPC method registry; grows linearly with endpoints; structural value as the single wire contract",
+  "apps/desktop/src/renderer/navigation/destinations.ts":
+    "destination registry; grows linearly with screen count; structural value as the single mapping",
 }
 
 /** The line count as `wc -l` reports it: newline-terminated files do not gain a phantom last line. */

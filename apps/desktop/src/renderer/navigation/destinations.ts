@@ -35,6 +35,18 @@ export type CareerDestination =
   | { readonly type: "match"; readonly saveId: SaveId }
   | { readonly type: "seasonSummary"; readonly saveId: SaveId }
   | { readonly type: "manager"; readonly saveId: SaveId }
+  /** Manager Inbox (tab under Manager section) */
+  | { readonly type: "managerInbox"; readonly saveId: SaveId }
+  /** Manager Board Confidence (tab under Manager section) */
+  | { readonly type: "managerConfidence"; readonly saveId: SaveId }
+  /** Manager Notes (tab under Manager section) */
+  | { readonly type: "managerNotes"; readonly saveId: SaveId }
+  /** Manager Jobs (tab under Manager section) */
+  | { readonly type: "managerJobs"; readonly saveId: SaveId }
+  /** Manager Responsibilities (tab under Manager section) */
+  | { readonly type: "managerResponsibilities"; readonly saveId: SaveId }
+  /** Manager Career History (tab under Manager section) */
+  | { readonly type: "managerCareer"; readonly saveId: SaveId }
   | { readonly type: "news"; readonly saveId: SaveId }
   | { readonly type: "training"; readonly saveId: SaveId }
   /** Workload and Recovery (Screen 112) — a sub-surface of the Training area reached from Coaching
@@ -239,6 +251,12 @@ export type ResolvedDestination =
       readonly params: { readonly saveId: SaveId };
     }
   | { readonly to: "/career/$saveId/manager"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/manager/inbox"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/manager/confidence"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/manager/notes"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/manager/jobs"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/manager/responsibilities"; readonly params: { readonly saveId: SaveId } }
+  | { readonly to: "/career/$saveId/manager/career"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/news"; readonly params: { readonly saveId: SaveId } }
   | { readonly to: "/career/$saveId/training"; readonly params: { readonly saveId: SaveId } }
   | {
@@ -361,6 +379,12 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "match":
     case "seasonSummary":
     case "manager":
+    case "managerInbox":
+    case "managerConfidence":
+    case "managerNotes":
+    case "managerJobs":
+    case "managerResponsibilities":
+    case "managerCareer":
     case "news":
     case "training":
     case "trainingWorkload":
@@ -445,6 +469,18 @@ const careerRoute = (
       };
     case "manager":
       return { to: "/career/$saveId/manager", params: { saveId: destination.saveId } };
+    case "managerInbox":
+      return { to: "/career/$saveId/manager/inbox", params: { saveId: destination.saveId } };
+    case "managerConfidence":
+      return { to: "/career/$saveId/manager/confidence", params: { saveId: destination.saveId } };
+    case "managerNotes":
+      return { to: "/career/$saveId/manager/notes", params: { saveId: destination.saveId } };
+    case "managerJobs":
+      return { to: "/career/$saveId/manager/jobs", params: { saveId: destination.saveId } };
+    case "managerResponsibilities":
+      return { to: "/career/$saveId/manager/responsibilities", params: { saveId: destination.saveId } };
+    case "managerCareer":
+      return { to: "/career/$saveId/manager/career", params: { saveId: destination.saveId } };
     case "news":
       return { to: "/career/$saveId/news", params: { saveId: destination.saveId } };
     case "training":
