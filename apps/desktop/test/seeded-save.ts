@@ -8,8 +8,8 @@
  * files and passes on re-run: ticket 05 chased exactly that, and the answer was that nothing leaked
  * between tests at all. See `.scratch/gate-red-on-dev/issues/05-match-not-ready-flake.md`.
  *
- * A spec that needs a specific world passes its own seed — `contract-expiry.test.ts` pins the world
- * where the human club falls below eleven. A spec that only needs *a* world takes the default and
+ * A spec that needs a specific world passes its own seed — `youth-intake-sweep.test.ts` plays the
+ * worlds whose human club used to fall below eleven. A spec that only needs *a* world takes the default and
  * gets the same one every run, on every machine.
  */
 import { createSave as createUnseededSave } from "../src/main/world/index.js";

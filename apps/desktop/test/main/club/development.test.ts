@@ -112,10 +112,13 @@ it.effect("advancing to SeasonConcluded develops every user-club player determin
 
     yield* advanceToSeasonEnd(save.id);
 
-    const after = yield* withSave(save.id, loadSquadPlayers(clubId));
     // Contract expiry at SeasonConcluded can release some of the user's players to Free Agency, so
     // the squad may legitimately shrink — but every player who remains must have developed exactly
-    // as the deterministic `developPlayer` math predicts.
+    // as the deterministic `developPlayer` math predicts. The rollover's Youth Intake then adds
+    // players who did not exist when development ran (ticket 07), so they have nothing to compare.
+    const after = (yield* withSave(save.id, loadSquadPlayers(clubId))).filter((player) =>
+      expected.has(player.id),
+    );
     ok(after.length > 0, "the user's squad should not be empty after a Season");
     for (const player of after) {
       const expectedAttributes = expected.get(player.id);

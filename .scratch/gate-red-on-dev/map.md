@@ -77,3 +77,9 @@ with no outstanding assertion failures.
 - The `oxlint` **warnings** (~30, mostly `no-console` in `.scratch/vendor-quarantine/` and
   `tmp-probe/`). The gate fails on errors; warnings are noise to be triaged separately.
 - e2e. `check:all` does not include it.
+
+- [07 — a Youth Intake at every rollover](issues/07-youth-intake-at-rollover.md): resolved 2026-09-22. Every
+  club regains at least two players, and at least 16 in all, at each rollover, reproducibly. Review caught a
+  save-bricking id collision before commit. Split out [09](issues/09-player-ages-read-the-game-date.md) and
+  [10](issues/10-promoted-squads-sign-contracts.md).
+

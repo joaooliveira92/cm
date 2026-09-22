@@ -236,12 +236,18 @@ export const insertGeneratedSquad = (
    *  the rollover passes a seed that also keys on the season, so a club promoted twice does not get
    *  the same eleven back. */
   baseSeed: number,
+  /** Each player's id, by squad slot. Defaults to `deriveId(baseSeed, "player", slot)`, which world
+   *  generation and the promoted-squad path rely on. A caller whose `baseSeed` is itself a derived
+   *  32-bit seed passes ids derived from its full path instead: two equal 32-bit bases would
+   *  otherwise mint identical ids and fail the `players.id` primary key. */
+  idFor: (slotIndex: number) => PlayerId = (slotIndex) =>
+    PlayerId.make(deriveId(baseSeed, "player", slotIndex)),
 ) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     for (const generated of squad) {
       const playerSeed = deriveSeed(baseSeed, "player", generated.slot.index);
-      const playerId = PlayerId.make(deriveId(baseSeed, "player", generated.slot.index));
+      const playerId = idFor(generated.slot.index);
       const a = generated.attributes;
 
       yield* sql`INSERT INTO players (

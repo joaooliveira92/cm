@@ -260,9 +260,12 @@ Agent-startable work, in order:
    pitch). **No agent-startable Group G ticket remains**; what is left needs triage first:
    - [42](../.scratch/group-g-match-day/issues/42-quick-result-skips-the-live-reveal.md): Quick result skips the live reveal (`needs-triage`: an
      open question on restored quick matches).
-2. **[gate-red-on-dev 07](../.scratch/gate-red-on-dev/issues/07-youth-intake-at-rollover.md) then
-   [08](../.scratch/gate-red-on-dev/issues/08-short-squad-advisory.md)**: the Youth Intake squad floor
-   and its readiness advisory ([note](../.agents/notes/proposed/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md)).
+2. **gate-red-on-dev**: [07](../.scratch/gate-red-on-dev/issues/07-youth-intake-at-rollover.md) (the Youth
+   Intake squad floor) shipped 2026-09-22. Next [08](../.scratch/gate-red-on-dev/issues/08-short-squad-advisory.md)
+   (its readiness advisory, [note](../.agents/notes/proposed/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md)),
+   [09](../.scratch/gate-red-on-dev/issues/09-player-ages-read-the-game-date.md) (**ages read the wall clock**, so
+   the same seed can differ by machine date) and [10](../.scratch/gate-red-on-dev/issues/10-promoted-squads-sign-contracts.md)
+   (promoted squads sign no Contracts).
 3. **Knowledge-limited Player reads have a decision and no ticket.** [Group I decision request 01](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md)
    was answered on 2026-09-19 (Option A, [note](../.agents/notes/proposed/architecture/2026-09-19-knowledge-limits-every-player-read.md)),
    but nothing slices it. Run `cm-to-tickets` on that note: it unblocks group-c 10 (Screen 35), D 68,

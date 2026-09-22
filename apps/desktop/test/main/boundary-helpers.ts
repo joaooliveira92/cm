@@ -60,10 +60,11 @@ export class HumanClubCannotFieldElevenError extends Data.TaggedError(
  * A club too small to field eleven fails here, loudly. It used to be left alone — no Tactic could be
  * built for it, so the helper returned the Fixture anyway and `startMatch` rejected it a moment later
  * with a `MatchNotReadyError` pointing at `match/start.ts`, which is the integrity boundary doing its
- * job and says nothing about why the squad shrank. Ticket 05 spent a sprint on that error. The state
- * is real — a season of contract expiries can leave the human club on ten — and the game has no
- * recovery path for it yet; see this effort's decision request. What a test helper must not do is let
- * it surface as somebody else's error.
+ * job and says nothing about why the squad shrank. Ticket 05 spent a sprint on that error. A season
+ * of contract expiries used to leave the human club on ten; the Youth Intake now keeps every squad
+ * at 16 through the rollover, so natural play should never reach this. A spec that stages a squad
+ * down by hand still can, and what a test helper must not do is let it surface as somebody else's
+ * error.
  */
 const readyPendingFixture = (savesDir: string, saveId: SaveId) =>
   inSave(

@@ -16,7 +16,9 @@ AI clubs tolerate it only because their Fixtures resolve from strength numbers.
   gains generated players aged 16 to 18: two to four per club per season, plus as many more as it takes
   to reach a squad of **16** (eleven and a full bench). They are drawn with world generation's player
   draw, seeded from the world seed and the Season, so a world stays reproducible. Each gets an ordinary
-  Contract through the existing signing path. The human club's intake is reported in the News Inbox.
+  Contract on the signing terms (formula wage, default length), written directly rather than as a Free
+  Agent signing, so there is no transfer record and no per-player signing item. The human club's intake
+  is reported in the News Inbox, as one item.
 - **Short-squad advisory.** When the human club's squad would fall below 16 at the coming rollover
   (players with `years_remaining` of 1 are about to leave), a Continue readiness advisory says so and
   links to the players who can still be renewed. An advisory, not a Readiness Blocker.
@@ -40,6 +42,9 @@ Decided under the human's standing delegation (2026-09-21).
   player is young and raw.
 - No schema change: intake players are new rows in existing tables.
 - A spec may play a career past season 2 without meeting `HumanClubCannotFieldElevenError`.
+- Intake wages count against the Wage Budget with no gate: a floor a budget could refuse would not be a
+  floor. (Amended 2026-09-22 with ticket 07: the Free Agent signing path would have written a false
+  transfer record and one News Inbox item per player.)
 
 ## Acceptance criteria
 

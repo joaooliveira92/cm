@@ -98,6 +98,10 @@ const fixture = (value: unknown): Fixture | null => {
 const plural = (count: number, one: string, many: string): string =>
   `${count} ${count === 1 ? one : many}`;
 
+/** "A", "A and B", "A, B and C". */
+const listNames = (names: ReadonlyArray<string>): string =>
+  names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+
 // ---------------------------------------------------------------------------
 // Copy
 // ---------------------------------------------------------------------------
@@ -333,6 +337,21 @@ export const project = (
         priority: "normal",
         subject: `Squad development after season ${seasonNumber}`,
         body: `${plural(count, "player", "players")} at ${club.clubName} moved toward their ceiling over the close season.`,
+      }));
+    }
+
+    case "YouthIntakeJoined": {
+      const rawPlayers = payload["players"];
+      if (!Array.isArray(rawPlayers)) return null;
+      const names = rawPlayers
+        .map((entry) => (isRecord(entry) ? str(entry["name"]) : null))
+        .filter((name): name is string => name !== null);
+      if (names.length === 0) return null;
+      return seasonScoped(payload, (seasonNumber) => ({
+        category: "season",
+        priority: "normal",
+        subject: `Youth intake for season ${seasonNumber}`,
+        body: `${plural(names.length, "young player joins", "young players join")} ${club.clubName}'s squad: ${listNames(names)}.`,
       }));
     }
 

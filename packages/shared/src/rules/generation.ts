@@ -123,7 +123,19 @@ const drawBirthCity = (nationality: NationCode, random: RandomSource): City | nu
   return cities[Math.floor(random.next() * cities.length)] ?? null;
 };
 
-const randomAge = (random: RandomSource): number => 17 + Math.floor(random.next() * 18); // 17-34
+/** An inclusive range of ages, in whole years at the reference year. */
+export interface AgeRange {
+  readonly min: number;
+  readonly max: number;
+}
+
+/** Ages drawn for a senior squad at world generation. */
+const SENIOR_AGES: AgeRange = { min: 17, max: 34 };
+
+/** One draw from the stream whatever the range, so a caller that narrows the range moves no other
+ *  draw in the player's stream. */
+const randomAge = ({ min, max }: AgeRange, random: RandomSource): number =>
+  min + Math.floor(random.next() * (max - min + 1));
 
 /** Ages are measured against the world's reference year, never `new Date()` — a generator that
  *  reads the wall clock produces a different world every January from the same seed. */
@@ -149,6 +161,9 @@ export interface PlayerGenerationContext {
    *  attributes rather than identifiers and no `UNIQUE` constraint enforces this — avoiding a
    *  duplicate inside one squad is generation's job. */
   readonly taken?: ReadonlySet<string>;
+  /** The ages this player is drawn from. Omitted for a senior squad (17-34); a Youth Intake narrows
+   *  it. */
+  readonly ages?: AgeRange;
 }
 
 /** How many times a duplicate full name is redrawn before it is accepted. Bounded so a small pool
@@ -157,7 +172,7 @@ const NAME_REDRAW_LIMIT = 8;
 
 export const generatePlayer = (
   primaryPosition: Position,
-  { strength, clubNation, random, referenceYear, taken }: PlayerGenerationContext,
+  { strength, clubNation, random, referenceYear, taken, ages = SENIOR_AGES }: PlayerGenerationContext,
 ): GeneratedPlayer => {
   // Origin first: it decides the name pool and the birthplace, so it must be drawn before either.
   const nationality = drawNationality(clubNation, random);
@@ -173,7 +188,7 @@ export const generatePlayer = (
 
   const [paMin, paMax] = potentialAbilityRange(strength);
   const potentialAbility = rightSkewed(paMin, paMax, random);
-  const age = randomAge(random);
+  const age = randomAge(ages, random);
 
   const attributes = {} as Record<string, number>;
   for (const attribute of OUTFIELD_ATTRIBUTES) {
@@ -311,4 +326,62 @@ export const generateSquadAtStrength = (
   }
 
   return best;
+};
+
+// ---------------------------------------------------------------------------
+// Youth Intake
+// ---------------------------------------------------------------------------
+
+/** The squad size a Youth Intake brings every club back to: eleven and a full bench. */
+export const SQUAD_FLOOR = 16;
+
+/**
+ * A Youth Intake's ages at the year it joins in. A birth year of `year - 17` or `year - 18` makes a
+ * player 16, 17 or 18 on every date of that year, whichever side of the birthday the date falls, so
+ * "aged 16-18 at the rollover" holds without the generator knowing the rollover's exact date.
+ */
+const YOUTH_INTAKE_AGES: AgeRange = { min: 17, max: 18 };
+
+export interface YouthIntakeContext {
+  /** The calendar year the intake joins in — the year the Season rolls over in. */
+  readonly year: number;
+  readonly clubNation: NationCode;
+  /** The club's squad after Contract expiry, which is what the floor is measured against. */
+  readonly squadSize: number;
+  /** Full names already in the squad, so an intake player does not repeat one. */
+  readonly taken: ReadonlySet<string>;
+  /** The stream that decides how many players the intake brings. */
+  readonly sizeRandom: RandomSource;
+  /** The stream one intake player is drawn from, addressed by their place in the intake. */
+  readonly randomForSlot: (index: number) => RandomSource;
+}
+
+/**
+ * One club's Youth Intake: two to four players, or as many as it takes to reach `SQUAD_FLOOR` when
+ * that is more.
+ *
+ * Drawn with `generatePlayer`, so an intake player is the same kind of player world generation
+ * makes, only younger — and so rawer, since the attribute ceiling grows with age. A position is
+ * drawn from the player's own stream at the squad composition's weights before anything else.
+ */
+export const generateYouthIntake = (
+  strength: ClubStrength,
+  { year, clubNation, squadSize, taken, sizeRandom, randomForSlot }: YouthIntakeContext,
+): ReadonlyArray<GeneratedSquadPlayer> => {
+  const size = Math.max(2 + Math.floor(sizeRandom.next() * 3), SQUAD_FLOOR - squadSize);
+  const names = new Set(taken);
+  return Array.from({ length: size }, (_, index) => {
+    const random = randomForSlot(index);
+    const position = pick(SQUAD_SLOTS, random).position;
+    const player = generatePlayer(position, {
+      strength,
+      clubNation,
+      referenceYear: year,
+      random,
+      taken: names,
+      ages: YOUTH_INTAKE_AGES,
+    });
+    names.add(`${player.firstName} ${player.lastName}`);
+    return { ...player, slot: { index, position } };
+  });
 };

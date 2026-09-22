@@ -5,7 +5,8 @@
  * a `messages` table that a projector maintains. Its source is the append-only `events` log, whose
  * Season stream already carries the career's narrative (`SeasonStarted`, the transfer-window
  * boundaries, `MatchdayResolved`, `SeasonConcluded`, `BoardObjectiveJudged`, `ManagerWarned` /
- * `Sacked` / `Retired`) and whose human-club stream carries `PlayerDeveloped`. Nothing here
+ * `Sacked` / `Retired`) and whose human-club stream carries `PlayerDeveloped` and
+ * `YouthIntakeJoined`. Nothing here
  * persists a second copy of a fact the log already holds.
  *
  * The one thing the log cannot answer is whether the manager has *read* a message. Read, archived,

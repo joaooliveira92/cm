@@ -17,14 +17,16 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { insertGeneratedSquad } from "../world/worldGeneration.js";
 import { discardSquadsForClubs } from "./matchday.js";
+import { grantYouthIntake } from "./youthIntake.js";
 
 // ---------------------------------------------------------------------------
 // The season rollover: promotion, relegation, and the world one year on
 // ---------------------------------------------------------------------------
 
 /**
- * Moves the world into the next season: exchanges clubs along every link, rebuilds membership, and
- * reconciles each club's squad with the depth it now plays at.
+ * Moves the world into the next season: exchanges clubs along every link, rebuilds membership,
+ * reconciles each club's squad with the depth it now plays at, and gives every squad its Youth
+ * Intake.
  *
  * One effect inside the advance's existing transaction, so a world is never half-promoted — a save
  * with the champions moved up and the relegated clubs still in place is not a state any reader
@@ -113,6 +115,7 @@ export const rolloverToNextSeason = (concludedSeason: number, referenceYear: num
     }
 
     yield* reconcileSquadsWithDepth(nextSeason, concludedSeason, referenceYear, worldSeed);
+    yield* grantYouthIntake(nextSeason, referenceYear);
     yield* pruneConcludedSeason(concludedSeason);
   });
 
