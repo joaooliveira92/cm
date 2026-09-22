@@ -122,7 +122,7 @@ export const useMatchControl = ({
       const view = tacticsResult.value;
       setSquad(view.squad);
       // The tactic last sent to the match wins over the pre-match one, so this panel drafts from the
-      // Team Instructions in play and shows a substitution made on the standalone screens.
+      // Team Instructions in play. Its slots are not the line-up: the panel lists `pitch` for that.
       const shared = getLiveTactic(saveId) ?? view.tactic;
       if (shared) {
         setTactic(shared);

@@ -1,19 +1,19 @@
 import { useState } from "react";
-import { Tactic, type SaveId, type TacticSlot } from "@cm-clone/contracts";
+import { Tactic, type SaveId } from "@cm-clone/contracts";
 import { MENTALITY_OPTIONS, PRESSING_OPTIONS, TEMPO_OPTIONS } from "@cm-clone/shared";
 import { Button } from "../components/ui/button.js";
 import { LiveCommandFrame } from "../match/LiveCommandFrame.js";
 import { useLiveMatchCommands, type LiveMatchReady } from "../match/useLiveMatchCommands.js";
 
-/** Screen 97, tactics half: the formation and line-up in play, and the three live Team
- *  Instructions, submitted to the match as one `ChangeTactics`. */
+/** Screen 97, tactics half: the formation and the players the match has on the pitch, and the three
+ *  live Team Instructions, submitted to the match as one `ChangeTactics`. */
 export const MatchMatchTacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const commands = useLiveMatchCommands(saveId);
   return (
     <LiveCommandFrame saveId={saveId} focusId="matchMatchTactics" title="Match Tactics" commands={commands}>
       {(ready) => (
         <TacticsForm
-          // A new tactic in play (an applied substitution, an accepted change) resets the draft.
+          // A new tactic sent to the match (an accepted change) resets the draft.
           key={JSON.stringify(ready.tactic)}
           ready={ready}
           pending={commands.status?._tag === "pending"}
@@ -81,8 +81,11 @@ const TacticsForm = ({
         <p className="mt-1 text-xs text-text-muted">
           The formation stays fixed while the match is live; only Mentality, Tempo and Pressing change.
         </p>
+        {/* The players come from the match's pitch, never a Tactic: a live change moves no one, and
+            only the pitch reflects red cards, forced substitutions, bring-offs and a goalkeeper
+            stand-in (group-g-match-day 43). */}
         <ul className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1">
-          {draft.slots.map((slot: TacticSlot) => (
+          {ready.snapshot.pitch.onPitch.map((slot) => (
             <li key={`${slot.position}-${slot.playerId}`}>
               <span className="mr-2 font-mono text-xs text-text-tertiary">{slot.position}</span>
               {nameOf(slot.playerId)}

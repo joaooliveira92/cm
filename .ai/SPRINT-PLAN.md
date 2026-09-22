@@ -256,10 +256,10 @@ Agent-startable work, in order:
    [39](../.scratch/group-g-match-day/issues/39-an-empty-bench-is-flagged-before-kickoff.md) (an empty bench is flagged before kickoff),
    [40](../.scratch/group-g-match-day/issues/40-a-live-change-tactics-changes-only-instructions.md) (a live Change Tactics changes only the Team
    Instructions; 2026-09-22), [41](../.scratch/group-g-match-day/issues/41-accepting-a-result-refreshes-the-season-read.md) (the season read
-   refreshes after Accept result). Next:
+   refreshes after Accept result), [43](../.scratch/group-g-match-day/issues/43-formation-in-play-reads-the-pitch.md) ("Formation in play" lists the
+   pitch). **No agent-startable Group G ticket remains**; what is left needs triage first:
    - [42](../.scratch/group-g-match-day/issues/42-quick-result-skips-the-live-reveal.md): Quick result skips the live reveal (`needs-triage`: an
      open question on restored quick matches).
-   - [43](../.scratch/group-g-match-day/issues/43-formation-in-play-reads-the-pitch.md): "Formation in play" lists the pitch, not the tactic.
 2. **[gate-red-on-dev 07](../.scratch/gate-red-on-dev/issues/07-youth-intake-at-rollover.md) then
    [08](../.scratch/gate-red-on-dev/issues/08-short-squad-advisory.md)**: the Youth Intake squad floor
    and its readiness advisory ([note](../.agents/notes/proposed/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md)).

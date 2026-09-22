@@ -678,3 +678,16 @@ strings in two renderer files.
 Review: APPROVE, no blocker, high or medium. L2 (the team-sheet screens passed `undefined` as the match
 id once no match is awaited, now reached right after Accept result) fixed by the orchestrator before the
 gate. L1, L3 and L4 left, listed in the ticket Answer. Renderer-only: no engine, contract or schema change.
+
+## Ticket 43 — "Formation in play" lists the pitch, 2026-09-22
+
+- Ticket closed: [43](../../.scratch/group-g-match-day/issues/43-formation-in-play-reads-the-pitch.md)
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 0. Shared 477, contracts 180, game-engine 95, desktop 2174 passed. |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | 57 passed (2.3m) |
+
+Reviewed inline by the orchestrator: one list source swapped from the draft tactic to the match's pitch
+view, on the data path Match Substitutions already uses. The three new tests fail against the old screen.
+With this, Group G has no agent-startable ticket left: 10 and 20 are `needs-info`, 42 is `needs-triage`.

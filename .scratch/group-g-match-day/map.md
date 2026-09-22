@@ -75,6 +75,8 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
   [43](issues/43-formation-in-play-reads-the-pitch.md).
 - [41 — Starting a match and accepting its result refresh the season read](issues/41-accepting-a-result-refreshes-the-season-read.md):
   resolved 2026-09-22. `reachedFullTime` is gone; screens decide "accepted" from the season read.
+- [43 — "Formation in play" lists the pitch](issues/43-formation-in-play-reads-the-pitch.md): resolved
+  2026-09-22. Every live surface now reads who is on from the match, not a Tactic.
 
 ## Not yet specified
 

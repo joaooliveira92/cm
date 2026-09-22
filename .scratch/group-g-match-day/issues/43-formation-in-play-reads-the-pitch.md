@@ -12,8 +12,20 @@ so the list can show an XI the match does not have. Render the players from the 
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] After a red card, "Formation in play" no longer lists the sent-off player
-- [ ] Editing the club Tactic mid-match does not change the list
-- [ ] `pnpm check:all` green, and e2e
+- [x] After a red card, "Formation in play" no longer lists the sent-off player
+- [x] Editing the club Tactic mid-match does not change the list
+- [x] `pnpm check:all` green, and e2e
+
+## Answer
+
+Resolved 2026-09-22. "Formation in play" lists `snapshot.pitch.onPitch`, the match's `MatchPitchView`, by
+the same data path the Match Substitutions screen uses. A sent-off or forced-off player is absent and a
+goalkeeper stand-in shows in goal; editing the club Tactic mid-match changes nothing. No contract change.
+Nothing displays the live tactic's slots any more.
+
+Left (low): the "Formation: X" label still reads the draft tactic, so if the Squad screen changes the club's
+formation mid-match before any live change, the label names the edited formation above the kickoff shape.
+Fixing it means a kickoff formation on `MatchPitchView`. Reviewed inline by the orchestrator.
+Report: [group-g-match-day](../../../.ai/reports/group-g-match-day.md).

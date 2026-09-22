@@ -61,6 +61,8 @@ export interface LiveMatchReady {
   readonly match: MatchSummary;
   readonly clubId: ClubId;
   readonly squad: ReadonlyArray<SquadPlayerView>;
+  /** The tactic last sent to the match, else the club's Tactic: the source of the Team Instructions a
+   *  `ChangeTactics` drafts from. Its slots are not the line-up in play; `snapshot.pitch` is. */
   readonly tactic: Tactic;
   readonly snapshot: ClubCommandSnapshot;
   /** The score Match day has shown, or null before it has shown one. */

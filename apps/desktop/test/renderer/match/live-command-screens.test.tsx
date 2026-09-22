@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { MatchId, SaveId, type SubstitutionStatusView } from "@cm-clone/contracts";
 import {
@@ -342,6 +342,66 @@ describe("Match Tactics — the live tactics screen", () => {
     await waitFor(() => expect(screen.getByRole("status").getAttribute("data-command-status")).toBe("accepted"));
     const submitted = calls.find((c) => c.method === "submitMatchCommand")!.payload;
     expect(submitted.command).toMatchObject({ _tag: "ChangeTactics", clubId: "away", tactic: { mentality: "attacking" } });
+  });
+
+  /** "Formation in play"'s rows as `position name`, in the order listed. */
+  const formationRows = async (): Promise<ReadonlyArray<string>> => {
+    const section = await screen.findByRole("region", { name: "Formation in play" });
+    return within(section)
+      .getAllByRole("listitem")
+      .map((item) => {
+        const [position, ...name] = Array.from(item.childNodes);
+        return `${position!.textContent} ${name.map((node) => node.textContent).join("")}`;
+      });
+  };
+
+  it("lists the pitch the match reports: a revealed red card takes the sent-off player off, whatever the tactic names", async () => {
+    setActiveMatch(liveSession() as never);
+    // The tactic last sent still names on-3; the match sent him off, and took on-0 off for bench-1.
+    recordLiveTactic(rid("s1"), MatchId.make("m1"), tactic() as never);
+    const swapped = pitch({ "on-0": "bench-1" }, []);
+    const afterRed = { ...swapped, onPitch: swapped.onPitch.filter((slot) => slot.playerId !== "on-3") };
+    mount(MatchMatchTacticsScreen, (method) =>
+      method === "getTactics" ? ok(tacticsView()) : ok(resumeView({ homePitch: pitch(), awayPitch: afterRed })),
+    );
+    const rows = await formationRows();
+    expect(rows).toHaveLength(10);
+    expect(rows[0]).toBe("GK Bench Player");
+    expect(rows.some((row) => row.includes("On3 "))).toBe(false);
+    expect(rows.some((row) => row.includes("On0 "))).toBe(false);
+  });
+
+  it("shows a goalkeeper stand-in in goal and no longer in his own slot", async () => {
+    setActiveMatch(liveSession() as never);
+    // The goalkeeper on-0 went off with no bench left, and striker on-9 went in goal.
+    const kickoff = pitch({}, []);
+    const standIn = {
+      ...kickoff,
+      onPitch: kickoff.onPitch
+        .filter((slot) => slot.playerId !== "on-9")
+        .map((slot) => (slot.playerId === "on-0" ? { ...slot, playerId: "on-9" } : slot)),
+    };
+    mount(MatchMatchTacticsScreen, (method) => (method === "getTactics" ? ok(tacticsView()) : ok(resumeView({ awayPitch: standIn }))));
+    const rows = await formationRows();
+    expect(rows[0]).toBe("GK On9 Player");
+    expect(rows.filter((row) => row.includes("On9 "))).toHaveLength(1);
+    expect(rows.some((row) => row.includes("On0 "))).toBe(false);
+  });
+
+  it("ignores the club Tactic edited mid-match: with no live change recorded the list is still the pitch", async () => {
+    setActiveMatch(liveSession() as never);
+    // The Squad screen swapped bench-1 into on-5's slot after kickoff; the engine ignores that edit.
+    const edited = () => {
+      const view = tacticsView();
+      return {
+        ...view,
+        tactic: { ...view.tactic, slots: view.tactic.slots.map((slot) => (slot.playerId === "on-5" ? { ...slot, playerId: rid("bench-1") } : slot)) },
+      };
+    };
+    mount(MatchMatchTacticsScreen, (method) => (method === "getTactics" ? ok(edited()) : ok(resumeView())));
+    const rows = await formationRows();
+    expect(rows).toEqual(tactic().slots.map((slot, i) => `${slot.position} On${i} Player`));
+    expect(getLiveTactic(rid("s1"))).toBeNull();
   });
 
   it("shows a transport failure as a rejected command", async () => {
