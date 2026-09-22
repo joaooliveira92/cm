@@ -335,6 +335,16 @@ commitCareer: {
     success: ResumeSimulationView,
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },
+  /**
+   * The started match Match day resumes after an app restart: `matchId` is the pending Fixture's
+   * `PendingFixtureView.matchId`, and the success is the `MatchSummary` `startMatch` answered with.
+   * A match whose result has been accepted fails with `FixtureNotPendingError`.
+   */
+  getAwaitingMatch: {
+    payload: Schema.Struct({ saveId: SaveId, matchId: MatchId }),
+    success: MatchSummary,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError, FixtureNotPendingError]),
+  },
   getTeamSheet: {
     payload: Schema.Struct({ saveId: SaveId, matchId: MatchId }),
     success: TeamSheetView,

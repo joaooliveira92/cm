@@ -6,7 +6,7 @@
  * The modules behind it, in the order a match runs through them: `start` (the kickoff snapshot a
  * `StartMatch` freezes into the stream), `stream` (the persisted shapes and the pure re-derivation
  * over them), `view` (a derived timeline turned into the next chunk after a cursor), `queries`
- * (the opponent list and `ResumeSimulation`), and `commands` (the manager's mid-match commands).
+ * (the awaiting match Match day resumes, and `ResumeSimulation`), and `commands` (the manager's mid-match commands).
  * `seedOverride` sits beside them: the test-only boot-time override the entry module reads.
  */
 
@@ -15,7 +15,7 @@ export { getPostMatchSummary } from "./postMatchSummary.js";
 export { getMatchReport, reportEvents } from "./report.js";
 export { aggregateMatchStatistics, getMatchStatistics } from "./statistics.js";
 export { getTeamSheet } from "./teamSheet.js";
-export { resumeSimulation } from "./queries.js";
+export { getAwaitingMatch, resumeSimulation } from "./queries.js";
 export { MatchSeedSource, deriveFixtureMatchSeed, startMatch } from "./start.js";
 export {
   MATCH_SEED_ENV,

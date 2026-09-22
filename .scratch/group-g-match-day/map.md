@@ -60,6 +60,10 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
   [40](issues/40-a-live-change-tactics-changes-only-instructions.md).
 - [36 — A red-carded keeper drags a stand-in](issues/36-a-red-carded-keeper-drags-a-stand-in.md):
   resolved 2026-09-21. One rule for every way a keeper leaves; decision request 06's note is implemented.
+- [37 — Match day resumes a started match after a restart](issues/37-match-day-resumes-a-started-match-after-a-restart.md):
+  resolved 2026-09-21. `getAwaitingMatch` reads the started match back; the feed replays from kickoff.
+  Unblocks 33. Review split out [41](issues/41-accepting-a-result-refreshes-the-season-read.md) and
+  [42](issues/42-quick-result-skips-the-live-reveal.md).
 
 ## Not yet specified
 

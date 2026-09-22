@@ -584,3 +584,21 @@ from this shared worktree while the gate above ran on the same tree. Its message
 forces no bench substitution; there is no "4-window bench contract"). `e8717688` adds only this report
 and carries the accurate description. History was left as is.
 
+
+## Ticket 37 — Match day resumes a started match after a restart, 2026-09-21
+
+- Ticket closed: [37](../../.scratch/group-g-match-day/issues/37-match-day-resumes-a-started-match-after-a-restart.md)
+- Filed from review: [41](../../.scratch/group-g-match-day/issues/41-accepting-a-result-refreshes-the-season-read.md),
+  [42](../../.scratch/group-g-match-day/issues/42-quick-result-skips-the-live-reveal.md)
+- RPC surface: new read `getAwaitingMatch`, schema'd in `packages/contracts` with a roundtrip test.
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 0. Shared 470, contracts 177, game-engine 90, desktop 2146 passed. |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | 57 passed (2.3m), including the new two-launch restart journey |
+| save compatibility | `test/main/match/awaiting-match.test.ts`, the e2e restart journey | a started match survives an app restart and is played to full time and accepted; no schema change |
+
+Review: APPROVE, no blocker or high. The orchestrator fixed its three lows in place (a stuck "starting"
+phase on an abandoned read, a stale error after a key press during the read, the Fixture id taken from the
+season's link) and re-ran the gate above on the result. M1 (the `reachedFullTime` guard works around a
+stale season read) and the implementator's Quick-mode finding are 41 and 42.

@@ -94,7 +94,7 @@ export {
   applyLeaguePreset,
 } from "./rpc/precareer.js";
 
-export { commitMatchday, startMatch, resumeSimulation, getTeamSheet, getPostMatchSummary, getMatchStatistics, getMatchReport } from "./rpc/match.js";
+export { commitMatchday, startMatch, getAwaitingMatch, resumeSimulation, getTeamSheet, getPostMatchSummary, getMatchStatistics, getMatchReport } from "./rpc/match.js";
 
 export {
   REVEAL_INTERVAL_MS,

@@ -16,13 +16,14 @@ import type {
 } from "@cm-clone/contracts";
 import {
   commitMatchday as commitMatchdayRpc,
+  getAwaitingMatch,
   leagueTableAtom,
   startMatch as startMatchRpc,
   useAtomValue,
 } from "../rpc.js";
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 import { registerActionHandler } from "../actions/dispatch.js";
-import { clearActiveMatch, getActiveMatch, recordFullTime, setActiveMatch } from "./session.js";
+import { clearActiveMatch, getActiveMatch, reachedFullTime, recordFullTime, setActiveMatch } from "./session.js";
 
 export type MatchPhase =
   | "awaiting-kickoff"
@@ -129,6 +130,42 @@ export const MatchProvider = ({
     }
     setHydrated(true);
   }, [saveId]);
+
+  // Restart restore: the session above lives in renderer memory, so an app restart loses it while the
+  // save still awaits the started match (`pending.matchId`). Read that match back and play it live;
+  // with no session, `CommentaryProvider` starts the feed at kickoff, so it replays from there
+  // (group-g-match-day 37). Starting instead would only meet `MatchAlreadyStartedError`.
+  const awaitingMatchId = pending?.matchId ?? null;
+  useEffect(() => {
+    if (!hydrated || match !== null || awaitingMatchId === null) return;
+    // Watched to full time in this process and no session left: its result was accepted here, and
+    // the pending view still naming it is a cached read from before that.
+    if (reachedFullTime(saveId, awaitingMatchId)) return;
+    let current = true;
+    // "starting" keeps Play and Quick result disabled while the match is read.
+    setPhase("starting");
+    const resume = async (): Promise<void> => {
+      const outcome = await Effect.runPromise(
+        getAwaitingMatch({ saveId, matchId: awaitingMatchId }).pipe(Effect.result),
+      );
+      if (!current) return;
+      if (Result.isFailure(outcome)) {
+        setError(describeRpcError(outcome.failure as RpcClientError<"getAwaitingMatch">));
+        setPhase("awaiting-kickoff");
+        return;
+      }
+      // A key press during the read can dispatch Play and leave its refusal behind; the match is live now.
+      setError(null);
+      setMatch(outcome.success);
+      setPhase("live");
+    };
+    resume();
+    return () => {
+      current = false;
+      // Abandoned mid-read (the awaited match or the save changed): give Play and Quick result back.
+      setPhase((phase) => (phase === "starting" ? "awaiting-kickoff" : phase));
+    };
+  }, [hydrated, match, awaitingMatchId, saveId]);
 
   // Record the in-flight match for session restore. A result being or already accepted is no
   // longer in flight: recording it would restore a stale Match day and keep Continue suspended.

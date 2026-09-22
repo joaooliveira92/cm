@@ -102,19 +102,40 @@ export const MatchSeedSource = Context.Reference<(worldSeed: number, fixtureId: 
   { defaultValue: () => deriveFixtureMatchSeed },
 );
 
+/** A Fixture's two clubs, and whether the human club is the home one (1) or not (0). */
+interface FixtureSides {
+  readonly homeClubId: ClubId;
+  readonly awayClubId: ClubId;
+  readonly homeIsUser: number;
+}
+
 /** The pending fixture's two clubs and which side the human is on. Assumes a `SqlClient`. */
-const loadFixtureSides = (fixtureId: FixtureId) =>
+export const loadFixtureSides = (fixtureId: FixtureId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const rows = yield* sql<{
-      homeClubId: ClubId;
-      awayClubId: ClubId;
-      homeIsUser: number;
-    }>`SELECT f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
+    const rows = yield* sql<FixtureSides>`SELECT f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
               h.is_user_club as "homeIsUser"
        FROM fixtures f JOIN clubs h ON h.id = f.home_club_id
        WHERE f.id = ${fixtureId}`;
     return rows[0];
+  });
+
+/**
+ * The `MatchSummary` of `fixtureId`'s match: what `startMatch` answers with, and what Match day reads
+ * back for the save's awaiting match after an app restart (`getAwaitingMatch`), so the two agree.
+ */
+export const matchSummaryOf = (matchId: MatchId, fixtureId: FixtureId, sides: FixtureSides) =>
+  Effect.gen(function* () {
+    const nameOf = yield* displayNames;
+    return new MatchSummary({
+      matchId,
+      fixtureId,
+      homeClubId: sides.homeClubId,
+      homeClubName: nameOf(sides.homeClubId),
+      awayClubId: sides.awayClubId,
+      awayClubName: nameOf(sides.awayClubId),
+      isHome: sides.homeIsUser === 1,
+    });
   });
 
 /**
@@ -192,16 +213,7 @@ export const startMatch = (savesDir: string, saveId: SaveId, fixtureId: FixtureI
           yield* sql`UPDATE season SET awaiting_match_id = ${matchId}
             WHERE season_number = ${season.seasonNumber}`;
 
-          const nameOf = yield* displayNames;
-          return new MatchSummary({
-            matchId,
-            fixtureId,
-            homeClubId: sides.homeClubId,
-            homeClubName: nameOf(sides.homeClubId),
-            awayClubId: sides.awayClubId,
-            awayClubName: nameOf(sides.awayClubId),
-            isHome,
-          });
+          return yield* matchSummaryOf(matchId, fixtureId, sides);
         }),
       );
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),

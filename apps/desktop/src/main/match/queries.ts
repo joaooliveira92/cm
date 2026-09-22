@@ -1,14 +1,17 @@
 /**
- * The match read side: `ResumeSimulation`, which re-derives the whole timeline from the persisted
+ * The match read side: `getAwaitingMatch`, the started match Match day resumes after an app restart,
+ * and `ResumeSimulation`, which re-derives the whole timeline from the persisted
  * seed plus command journal on every call and hands back the next chunk after `cursor`.
  *
  * Read-shaped, and deliberately so. Observing `FullTimeWhistle` here commits nothing — the career
  * accepts a result through `commitMatchday`, so no durable state depends on polling cadence.
  */
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { MatchNotFoundError, type MatchId, type SaveId } from "@cm-clone/contracts";
+import { FixtureId, FixtureNotPendingError, MatchNotFoundError, type MatchId, type SaveId } from "@cm-clone/contracts";
 import { Effect } from "effect";
+import { loadSeasonRow } from "../season/currentSeason.js";
 import { loadStreamEvents, withExistingSave } from "../season/decider.js";
+import { loadFixtureSides, matchSummaryOf } from "./start.js";
 import { MATCH_STREAM_TYPE, deriveMatchEvents } from "./stream.js";
 import { substitutionLedger } from "./substitutions.js";
 import { buildResumeSimulationView } from "./view.js";
@@ -41,5 +44,34 @@ export const resumeSimulation = (
         revealedEvents,
         substitutionLedger(stream, derived.events),
       );
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
+  );
+
+/**
+ * The `MatchSummary` of `matchId` while it is the save's awaiting match: started and its result not
+ * yet accepted. Match day holds the match it is showing in renderer memory, which an app restart
+ * loses; `PendingFixtureView.matchId` survives it, and this turns that id back into the match
+ * `startMatch` answered with, so Match day resumes the stream instead of offering a start that
+ * `MatchAlreadyStartedError` refuses (group-g-match-day 37).
+ *
+ * An unknown match fails with `MatchNotFoundError`. A match the season no longer awaits — its result
+ * accepted — fails with `FixtureNotPendingError`: its Fixture is not the one the Calendar stands at.
+ */
+export const getAwaitingMatch = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
+      if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
+
+      // A match stream's id is its Fixture's id (`startMatch`).
+      const fixtureId = FixtureId.make(Number(matchId));
+      const season = yield* loadSeasonRow;
+      if (season.awaitingMatchId !== matchId) return yield* new FixtureNotPendingError({ fixtureId });
+
+      // The season's own link names the Fixture it awaits, so read that rather than the id convention.
+      const awaitingFixtureId = season.awaitingFixtureId ?? fixtureId;
+      const sides = yield* loadFixtureSides(awaitingFixtureId);
+      if (sides === undefined) return yield* new MatchNotFoundError({ matchId });
+      return yield* matchSummaryOf(matchId, awaitingFixtureId, sides);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

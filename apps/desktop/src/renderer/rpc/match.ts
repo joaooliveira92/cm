@@ -11,6 +11,11 @@ import type { RpcRead } from "./precareer.js";
 export const startMatch = (input: RpcPayload<"startMatch">): RpcRead<"startMatch"> =>
   call("startMatch", input);
 
+/** The save's awaiting match, for a Match day that mounts after an app restart with no match of its
+ *  own in memory. */
+export const getAwaitingMatch = (input: RpcPayload<"getAwaitingMatch">): RpcRead<"getAwaitingMatch"> =>
+  call("getAwaitingMatch", input);
+
 export const resumeSimulation = (input: RpcPayload<"resumeSimulation">): RpcRead<"resumeSimulation"> =>
   call("resumeSimulation", input);
 

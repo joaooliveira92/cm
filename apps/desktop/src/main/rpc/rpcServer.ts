@@ -22,7 +22,7 @@ import {
   resetKeyBinding,
   setKeyBindingOverride,
 } from "./keybindings.js";
-import { getMatchReport, getMatchStatistics, getPostMatchSummary, getTeamSheet, resumeSimulation, startMatch, submitMatchCommand } from "../match/index.js";
+import { getAwaitingMatch, getMatchReport, getMatchStatistics, getPostMatchSummary, getTeamSheet, resumeSimulation, startMatch, submitMatchCommand } from "../match/index.js";
 import { commitMatchday } from "../season/commitMatchday.js";
 import { getManagerProfile, getManagerProfileScreen } from "../career/managerProfile.js";
 import { getNewsInbox, setNewsMessageState } from "../career/news.js";
@@ -299,6 +299,11 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
         AppRpcs.resumeSimulation.payload,
       )(payload);
       return yield* resumeSimulation(ctx.savesDir, saveId, matchId, cursor, revealedEvents);
+    }),
+  getAwaitingMatch: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, matchId } = yield* Schema.decodeUnknownEffect(AppRpcs.getAwaitingMatch.payload)(payload);
+      return yield* getAwaitingMatch(ctx.savesDir, saveId, matchId);
     }),
   getTeamSheet: (payload, ctx) =>
     Effect.gen(function* () {

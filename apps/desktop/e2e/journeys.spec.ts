@@ -3,7 +3,9 @@ import {
   nameBench,
   closeOrKill,
   continueSeededCareer,
+  dismissTeachingSplash,
   expect,
+  matchScore,
   openLivePanel,
   openTacticsEditor,
   pressItemKey,
@@ -11,6 +13,7 @@ import {
   saveEntry,
   test,
 } from "./launchApp.js";
+import type { Page } from "@playwright/test";
 import { savesDir, seedBeforeMatchday, seedFresh } from "./seedSaves.js";
 
 /** Strip thousands separators and units, e.g. "1,250,000 Cr" -> 1250000. */
@@ -93,6 +96,53 @@ test("a save persists across app restarts", async ({ userDataDir, launchExtraApp
 
   await openTheCareer();
   await openTheCareer();
+});
+
+test("a match started before an app restart resumes live on Match day and plays to an accepted result (group-g 37)", async ({
+  userDataDir,
+  launchExtraApp,
+}) => {
+  // Two launches, a tactic, and a whole match at the live reveal pace.
+  test.setTimeout(150_000);
+  await seedBeforeMatchday(savesDir(userDataDir));
+
+  const openMatchDay = async (page: Page) => {
+    await pressItemKey(page, "analysis", "analysis-match");
+    await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
+  };
+
+  const first = await launchExtraApp();
+  const page = await first.firstWindow();
+  await continueSeededCareer(page, "Seed: before-matchday");
+  await pressSectionKey(page, "tactics");
+  await openTacticsEditor(page);
+  await assignFullTactic(page);
+  await openMatchDay(page);
+  const play = page.getByRole("button", { name: "Play match" });
+  await expect(play).toBeEnabled({ timeout: 15_000 });
+  await play.click();
+  await expect(matchScore(page)).toBeVisible({ timeout: 15_000 });
+  // Mid-match: the match is started and its result not accepted, which is what the save keeps.
+  await closeOrKill(first);
+
+  const second = await launchExtraApp();
+  const relaunched = await second.firstWindow();
+  await relaunched.getByRole("button", { name: "Load Career" }).click();
+  await saveEntry(relaunched, "Seed: before-matchday").click();
+  await expect(relaunched.getByText(/players$/)).toBeVisible();
+  await dismissTeachingSplash(relaunched);
+  await openMatchDay(relaunched);
+
+  // The live feed, not the Kickoff panel whose Play would only be refused as already started.
+  await expect(matchScore(relaunched)).toBeVisible({ timeout: 15_000 });
+  await expect(relaunched.getByRole("button", { name: "Play match" })).toHaveCount(0);
+  await expect(relaunched.getByRole("button", { name: "Quick result" })).toHaveCount(0);
+
+  const accept = relaunched.getByRole("button", { name: "Accept result" });
+  await expect(accept).toBeVisible({ timeout: 90_000 });
+  await accept.click();
+  await expect(relaunched.getByText("Result accepted. Continue to move on.")).toBeVisible({ timeout: 15_000 });
+  await expect(relaunched.getByRole("main", { name: "Match day" }).getByRole("alert")).toHaveCount(0);
 });
 
 test("a substitution is driven by keyboard through the match day live control panel (AC-33)", async ({
