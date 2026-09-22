@@ -578,3 +578,9 @@ Low: the note's "a stored timeline never holds" is true only of timelines stored
 reworded. Low: the moment between the RedCard and the stand-in lines is unpinned. Low: seed 506 pins
 only the score. The implementator's sweep of 5,998 seeded timelines found only the 34 with a sent-off
 last keeper changed.
+
+Commit note: ticket 36's code, docs and note promotion landed in `1b7400f4`, committed by a peer session
+from this shared worktree while the gate above ran on the same tree. Its message is inaccurate (the change
+forces no bench substitution; there is no "4-window bench contract"). `e8717688` adds only this report
+and carries the accurate description. History was left as is.
+
