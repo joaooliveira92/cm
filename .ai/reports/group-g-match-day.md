@@ -558,3 +558,23 @@ implementator's first e2e run failed the two substitution journeys; the page sna
 bench, which is the new rule, so the journeys name one. Re-reviewed inline: the `commands.test.ts`
 change moves its known Tactic onto the kickoff bench and XI, with no assertion loosened. Seeds
 re-pinned: `GOALKEEPER_STAND_IN_SEED` 26 → 455, `STAND_IN_INJURY_LINE` 23 → 20.
+
+## Ticket 36 — a red-carded goalkeeper drags a stand-in, 2026-09-21
+
+- Ticket closed: [36](../../.scratch/group-g-match-day/issues/36-a-red-carded-keeper-drags-a-stand-in.md)
+- Note promoted: `2026-09-19-a-keeper-leaving-always-drags-a-stand-in` → `implemented/feature/`
+- `.ai/TRACEABILITY.md`: rows for the named-bench rule (26, 34, 35) and the keeper stand-in (36).
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 0. Shared 470, contracts 174, game-engine 90, desktop 2139 passed. |
+| determinism | `pnpm --filter @cm-clone/game-engine exec vitest run test/match/simulate.test.ts test/match/red-card.test.ts`, twice | 27 passed both runs |
+| chunked resimulation | `pnpm --filter @cm-clone/desktop exec vitest run test/main/match/match.test.ts test/main/match/commands.test.ts test/main/match/committed-timeline.test.ts test/main/match/red-card-stand-in.test.ts` | 18 passed |
+| e2e | not run | no renderer file changed |
+
+Review: APPROVE, no blocker or high. The reviewer confirmed against `HEAD` that the RNG sequence is
+unchanged and that no stored timeline can hold a red card followed by a stand-in for the same player.
+Low: the note's "a stored timeline never holds" is true only of timelines stored before this change;
+reworded. Low: the moment between the RedCard and the stand-in lines is unpinned. Low: seed 506 pins
+only the score. The implementator's sweep of 5,998 seeded timelines found only the 34 with a sent-off
+last keeper changed.
