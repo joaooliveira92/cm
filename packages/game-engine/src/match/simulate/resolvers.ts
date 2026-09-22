@@ -19,7 +19,7 @@ import {
   SHOT_ON_TARGET_SHARE,
   clamp,
 } from "./constants.js";
-import { forcePlayerOff, pickPlayerId, type TeamRuntimeState } from "./teamState.js";
+import { applyForcedOff, forcePlayerOff, pickPlayerId, type TeamRuntimeState } from "./teamState.js";
 import type { PlayerId } from "@cm-clone/contracts";
 
 export const resolveAttackingEvent = (
@@ -68,7 +68,9 @@ export const resolveCards = (
       const base = { minute, half, playerId } as const;
       if (isRed) {
         events.push({ _tag: "RedCard", teamClubId: defender.clubId, ...base });
-        defender.resolved.slots = defender.resolved.slots.filter((slot) => slot.playerId !== playerId);
+        // The same exit a bring-off takes: 10 men, no substitution or window spent, and a sent-off last
+        // goalkeeper drags an outfield stand-in into goal (decision request 06).
+        applyForcedOff(defender, playerId, minute, half, events);
       } else {
         events.push({ _tag: "YellowCard", teamClubId: defender.clubId, ...base });
       }

@@ -249,8 +249,8 @@ Agent-startable work, in order:
    [34](../.scratch/group-g-match-day/issues/34-ai-clubs-name-a-bench.md) (AI clubs name a bench),
    [26](../.scratch/group-g-match-day/issues/26-forced-substitution-picks-any-squad-player.md) (forced substitutions from the named bench,
    like for like), [35](../.scratch/group-g-match-day/issues/35-manager-substitutions-come-from-the-bench.md) (a manager's substitution
-   comes from the kickoff bench). Next:
-   - [36](../.scratch/group-g-match-day/issues/36-a-red-carded-keeper-drags-a-stand-in.md): decision request 06.
+   comes from the kickoff bench), [36](../.scratch/group-g-match-day/issues/36-a-red-carded-keeper-drags-a-stand-in.md) (a red-carded keeper
+   drags a stand-in). Next:
    - [37](../.scratch/group-g-match-day/issues/37-match-day-resumes-a-started-match-after-a-restart.md): **a restart mid-match strands the
      career**; [33](../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md) (the restart message) is blocked on it.
    - [38](../.scratch/group-g-match-day/issues/38-pure-packages-sort-without-locale.md): no `localeCompare` in the pure packages.

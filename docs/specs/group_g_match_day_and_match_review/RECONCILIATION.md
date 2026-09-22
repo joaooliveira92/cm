@@ -108,7 +108,7 @@ same family of defect without the pattern closing — the rule had never been st
 The others: 02 and 03 by
 [the match model shows only what it produces](../../../.agents/notes/proposed/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md)
 — a screen may derive from the stream, never invent what the stream lacks; 06 by
-[a keeper leaving always drags a stand-in](../../../.agents/notes/proposed/feature/2026-09-19-a-keeper-leaving-always-drags-a-stand-in.md);
+[a keeper leaving always drags a stand-in](../../../.agents/notes/implemented/feature/2026-09-19-a-keeper-leaving-always-drags-a-stand-in.md);
 07 below.
 
 **Almost all of it is gated on ticket 31.** Requests 01, 03, 04, 06 and 08 change what a seed produces or

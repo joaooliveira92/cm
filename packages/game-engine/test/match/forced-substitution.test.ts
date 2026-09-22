@@ -9,7 +9,7 @@ import type { PlayerId } from "@cm-clone/contracts";
 import { describe, expect, it } from "vitest";
 import type { MatchEvent, SubstitutionEvent } from "../../src/match/events.js";
 import { simulateMatch, simulateMatchWithCounts } from "../../src/match/simulate/index.js";
-import { applyCommand, forcePlayerOff, initTeamState, type TeamRuntimeState } from "../../src/match/simulate/teamState.js";
+import { applyCommand, applyForcedOff, computeTeamStrengths, forcePlayerOff, initTeamState, type TeamRuntimeState } from "../../src/match/simulate/teamState.js";
 import type { MatchTeamSetup } from "../../src/match/types.js";
 import { buildTeam, clubId as makeClubId, playerId as makePlayerId, withNamedBench } from "./fixtures.js";
 
@@ -51,9 +51,9 @@ const OUTFIELD_SLOT = 5;
 const substitute = (team: TeamRuntimeState, outPlayerId: PlayerId, inPlayerId: PlayerId, minute: number) =>
   applyCommand(team, { _tag: "MakeSubstitution", clubId: HOME, outPlayerId, inPlayerId }, minute, 1, false);
 
-/** A red card removes the slot outright (`resolveCards`); model it the same way. */
+/** A red card leaves through `applyForcedOff` (`resolveCards`, ticket 36); model it the same way. */
 const sendOff = (team: TeamRuntimeState, playerId: PlayerId): void => {
-  team.resolved.slots = team.resolved.slots.filter((slot) => slot.playerId !== playerId);
+  applyForcedOff(team, playerId, 25, 1, []);
 };
 
 describe("forcePlayerOff's replacement", () => {
@@ -199,6 +199,19 @@ describe("forcePlayerOff's replacement, like for like", () => {
 
     expect(forcedIns(events)).toEqual([benchOutfielders[1]]);
     expect(onPitch(team)).not.toContain(benchKeepers[0]);
+    // An outfielder replacing an outfielder stands in for no keeper (ticket 36).
+    expect(team.gkStandIns.size).toBe(0);
+  });
+
+  it("flagging an outfielder as a stand-in moves no strength: a missing Goalkeeping attribute already rates 1", () => {
+    // Why restricting stand-ins to the goalkeeper slot (ticket 36) replays every seed unchanged.
+    const setup = setupWithBench([benchOutfielders[0]!]);
+    const team = initTeamState(setup);
+    forcePlayerOff(team, starter(setup, OUTFIELD_SLOT), 30, 1, []);
+    const unflagged = computeTeamStrengths(team);
+    team.gkStandIns.add(benchOutfielders[0]!);
+
+    expect(computeTeamStrengths(team)).toEqual(unflagged);
   });
 
   it("a keeper injury brings on the bench keeper even when he is listed after outfielders", () => {

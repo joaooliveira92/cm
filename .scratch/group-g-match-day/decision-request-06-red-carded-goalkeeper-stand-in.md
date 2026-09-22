@@ -70,5 +70,5 @@ Ticket 30 already shipped the reporting half — the Match Report lists a stand-
 rather than a substitution — and that work was done under this reading and is now backed by it.
 
 Recorded as
-[a keeper leaving always drags a stand-in](../../.agents/notes/proposed/feature/2026-09-19-a-keeper-leaving-always-drags-a-stand-in.md).
+[a keeper leaving always drags a stand-in](../../.agents/notes/implemented/feature/2026-09-19-a-keeper-leaving-always-drags-a-stand-in.md).
 Decided under the human's standing delegation ("i need you to solve the decisions").

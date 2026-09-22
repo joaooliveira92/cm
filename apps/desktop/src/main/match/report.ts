@@ -36,7 +36,8 @@ const playersOf = (event: ReportedEvent): ReadonlyArray<PlayerId> =>
   event._tag === "Substitution" ? [event.inPlayerId, event.outPlayerId] : [event.playerId];
 
 /** Whether a forced Substitution directly follows a same-minute severe Injury of the player it takes
- *  off. The engine marks a bring-off's stand-in forced too, though no Injury preceded it. */
+ *  off. The engine marks the stand-in after a bring-off or a red card (ticket 36) `forcedByInjury` too,
+ *  though no Injury preceded it, so the flag alone never says "injured". */
 const followsSevereInjury = (event: SubstitutionEvent, previous: MatchEvent | undefined): boolean =>
   event.forcedByInjury &&
   previous?._tag === "Injury" &&

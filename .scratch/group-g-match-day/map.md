@@ -58,6 +58,8 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
   resolved 2026-09-21. Off-bench and re-entry refused; the picker lists the kickoff bench minus been-on. The
   bench is fixed at kickoff. Decision request 01's line-up half filed as
   [40](issues/40-a-live-change-tactics-changes-only-instructions.md).
+- [36 — A red-carded keeper drags a stand-in](issues/36-a-red-carded-keeper-drags-a-stand-in.md):
+  resolved 2026-09-21. One rule for every way a keeper leaves; decision request 06's note is implemented.
 
 ## Not yet specified
 

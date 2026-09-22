@@ -7,7 +7,7 @@ import type { ClubId, PlayerId } from "@cm-clone/contracts";
 import type { MatchEvent, MatchHalf, MatchTeamSetup, SubstitutionEvent } from "@cm-clone/game-engine";
 import { FORMATION_SLOTS, POSITION_ROLES, type PlayerAttributes } from "@cm-clone/shared";
 import { describe, expect, it } from "vitest";
-import { lineupFacts, type LineupCommand } from "../../../src/main/match/pitch.js";
+import { lineupFacts, pitchAsOf, type LineupCommand } from "../../../src/main/match/pitch.js";
 import {
   classifySubstitutions,
   countedSubstitutions,
@@ -231,5 +231,43 @@ describe("lineupFacts — a forced Substitution bringing on someone who has been
     const events = [started, severe(20, "s5"), sub(20, "s5", "b", true), sentOff, halfTime, severe(80, "gk"), drag, fullTime];
     const { benchless } = lineupFacts([thirteen], events, []);
     expect([...benchless]).toEqual([drag]);
+  });
+});
+
+describe("a red card to the last goalkeeper (ticket 36): the stand-in `applyForcedOff` drags in", () => {
+  const sentOff = (minute: number, playerId: string): MatchEvent => ({
+    _tag: "RedCard",
+    minute,
+    half: half(minute),
+    teamClubId: club,
+    playerId: player(playerId),
+  });
+  const drag = sub(60, "gk", "s1", true);
+  const events = [started, halfTime, sentOff(60, "gk"), drag, fullTime];
+  const inGoal = (revealedEvents: number | null) =>
+    pitchAsOf(thirteen, events, [], revealedEvents).onPitch.find((slot) => slot.position === "GK")?.playerId;
+
+  it("is a stand-in, spending no substitution and no window, with a bench player still unused", () => {
+    const { benchless } = lineupFacts([thirteen], events, []);
+    const { standIns, status } = read(events, [], benchless);
+    expect([...standIns]).toEqual([drag]);
+    expect(status).toMatchObject({ used: 0, windowsUsed: 0 });
+  });
+
+  it("puts the stand-in in goal once revealed, leaving ten on the pitch and the bench untouched", () => {
+    const pitch = pitchAsOf(thirteen, events, [], null);
+    expect(inGoal(null)).toBe("s1");
+    expect(pitch.onPitch).toHaveLength(10);
+    expect(pitch.onPitch.map((slot) => slot.playerId)).not.toContain("gk");
+    expect(pitch.substitutes).toEqual(["b"]);
+    expect(inGoal(2)).toBe("gk");
+  });
+
+  it("an outfielder's red card only takes him off", () => {
+    const outfield = [started, halfTime, sentOff(60, "s5"), fullTime];
+    const pitch = pitchAsOf(thirteen, outfield, [], null);
+    expect(pitch.onPitch).toHaveLength(10);
+    expect(pitch.onPitch.map((slot) => slot.playerId)).not.toContain("s5");
+    expect(pitch.onPitch.find((slot) => slot.position === "GK")?.playerId).toBe("gk");
   });
 });

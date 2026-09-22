@@ -144,12 +144,18 @@ const foldPitch = (
     const event = events[index];
     if (event === undefined) break;
     const revealed = revealedEvents === null || index < revealedEvents;
-    if (event._tag === "RedCard" && event.teamClubId === clubId && revealed) takeOff(event.playerId);
-    if (event._tag === "Injury" && event.tier === "red" && event.teamClubId === clubId && revealed) {
-      // A severe Injury forces the player off. The engine records the forced Substitution as the very
-      // next event, which moves them off once revealed; with none left, they leave to ten men here.
+    if (
+      ((event._tag === "Injury" && event.tier === "red") || event._tag === "RedCard") &&
+      event.teamClubId === clubId &&
+      revealed
+    ) {
+      // A severe Injury or a red card forces the player off. The engine records the forced
+      // Substitution as the very next event, which moves them off once revealed: an Injury's bench
+      // substitute or stand-in, or the stand-in a sent-off last goalkeeper drags into goal (ticket
+      // 36). With none, they leave to ten men here.
       const next = events[index + 1];
-      const replaced = next?._tag === "Substitution" && next.teamClubId === clubId && next.outPlayerId === event.playerId;
+      const replaced =
+        next?._tag === "Substitution" && next.forcedByInjury && next.teamClubId === clubId && next.outPlayerId === event.playerId;
       if (!replaced) takeOff(event.playerId);
     }
     if (

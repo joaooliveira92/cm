@@ -35,7 +35,8 @@ export interface TeamRuntimeState {
   readonly conds: Map<PlayerId, number>;
   /** Players carrying an in-match Pace/Acceleration/Agility slash from an orange knock (ticket 03). */
   readonly penalties: Set<PlayerId>;
-  /** Players currently standing in as goalkeeper (shot-stopping treated as 1) after a red GK is off (ticket 07). */
+  /** Players standing in as goalkeeper (shot-stopping treated as 1) after the last goalkeeper left
+   *  through a severe Injury, a bring-off or a red card (ticket 07, decision request 06). */
   readonly gkStandIns: Set<PlayerId>;
   /** The kickoff Tactic's named bench, in bench order: the only source of substitutes, the manager's
    *  and a forced one alike (decision request 04). Fixed at kickoff: a live `ChangeTactics` carries
@@ -237,7 +238,7 @@ export const forcePlayerOff = (
         inPlayerId: benchId,
         forcedByInjury: true,
       });
-      normalizeGoalkeeper(team, benchId);
+      if (slot.isGoalkeeper) normalizeGoalkeeper(team, benchId);
     } else {
       // Substitution capped — empty the slot, play with 10.
       emptySlot(team, slot, minute, half, events);
@@ -285,18 +286,19 @@ const emptySlot = (
 /** Whether a player is a goalkeeper to the engine: they carry Goalkeeping attributes. */
 const hasGoalkeeping = (player: MatchPlayerInput): boolean => player.attributes.gkHandling != null;
 
-/** Marks a player standing in for a GK as gk=1 unless they're genuinely GK-capable. */
+/** Marks a player brought on into the goalkeeper slot as a stand-in (gk=1) unless they're genuinely
+ *  GK-capable. Only for a goalkeeper slot: an outfielder replacing an outfielder stands in for no one. */
 const normalizeGoalkeeper = (team: TeamRuntimeState, playerId: PlayerId): void => {
   const player = team.playersById.get(playerId);
   if (!player) return;
   if (!hasGoalkeeping(player)) team.gkStandIns.add(playerId);
 };
 
-/** A manager `ForceOff` (ticket 11's bring-off) drains an on-pitch player's slot so the team plays
- *  with 10 through `emptySlot` — the fallback a severe Injury takes when `forcePlayerOff` finds no
- *  substitute — including its last-GK outfield stand-in, and consumes no substitution/window.
- *  Returns false if the player isn't on the pitch. A red card does not come through here:
- *  `resolveCards` removes the slot itself, with no stand-in (decision request 06). */
+/** A player leaving the pitch with no replacement: a manager `ForceOff` (ticket 11's bring-off) and a
+ *  red card (`resolveCards`). Drains the slot so the team plays with 10 through `emptySlot` — the
+ *  fallback a severe Injury takes when `forcePlayerOff` finds no substitute — including its last-GK
+ *  outfield stand-in, and consumes no substitution/window. One rule for every way a keeper leaves
+ *  (decision request 06). Returns false if the player isn't on the pitch. */
 export const applyForcedOff = (
   team: TeamRuntimeState,
   playerId: PlayerId,

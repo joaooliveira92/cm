@@ -81,7 +81,8 @@ const capRefuses = (ledger: ClubLedger, event: SubstitutionEvent): boolean =>
 export interface SubstitutionRoles {
   /**
    * The goalkeeper stand-ins: forced Substitutions that move an outfield player already on the pitch
-   * into goal when the last goalkeeper leaves with no substitute to replace them. The engine spends no
+   * into goal when the last goalkeeper leaves with no substitute to replace them — injured, brought off
+   * or sent off. The engine spends no
    * substitution and no window on them, and the team is a player down.
    */
   readonly standIns: ReadonlySet<SubstitutionEvent>;
@@ -99,7 +100,10 @@ export interface SubstitutionRoles {
  * refused, the stand-in `emptySlot` drags into goal. So one right after its player's severe Injury is
  * a stand-in when the caps refuse the bench path, or when no named bench player who had never been on
  * was left — the one fact the counters cannot give, taken from the pitch fold (`benchless`). Any other
- * forced Substitution is a bring-off's stand-in: `applyForcedOff` never tries the bench. Reading this
+ * forced Substitution is the stand-in `applyForcedOff` drags into goal after a bring-off or a red card
+ * of the last goalkeeper (ticket 36): it never tries the bench. The event's `forcedByInjury` flag reads
+ * "forced", not "injured": the engine sets it on every forced Substitution, including those two, so a
+ * read that means an injury checks for the severe Injury before it. Reading this
  * off the counters rather than off who the fold has on the pitch keeps it right after a live tactics
  * change moves players the fold does not follow.
  *
