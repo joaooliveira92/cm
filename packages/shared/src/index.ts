@@ -2,6 +2,7 @@ export const APP_NAME = "cm-clone";
 
 export * from "./random.js";
 export * from "./seed.js";
+export * from "./order.js";
 export * from "./rules/positions.js";
 export * from "./rules/tactics.js";
 export * from "./rules/tacticsSummary.js";

@@ -66,6 +66,8 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
   [42](issues/42-quick-result-skips-the-live-reveal.md).
 - [33 — A restarted live match says so](issues/33-a-restarted-live-match-says-so.md): resolved 2026-09-21.
   A restart-restored match shows a standing notice that it replays from kickoff.
+- [38 — The pure packages sort without the locale](issues/38-pure-packages-sort-without-locale.md): resolved
+  2026-09-21. `compareCodeUnits` everywhere, and an `effect-lint` rule so it stays that way.
 
 ## Not yet specified
 

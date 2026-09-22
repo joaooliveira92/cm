@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "../order.js";
 import { PHASE_POSITIONS, type Position } from "./positions.js";
 import {
   attributeRange,
@@ -231,7 +232,7 @@ export const deriveKeyPlayers = (
         estimate: (abilityLow + abilityHigh) / 2,
       };
     })
-    .sort((a, b) => b.estimate - a.estimate || a.playerId.localeCompare(b.playerId))
+    .sort((a, b) => b.estimate - a.estimate || compareCodeUnits(a.playerId, b.playerId))
     .slice(0, KEY_PLAYER_COUNT)
     .map(({ estimate: _estimate, ...player }) => player);
 

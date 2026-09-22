@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "../order.js";
 import { BENCH_SIZE, FORMATIONS, FORMATION_SLOTS, type Formation } from "./tactics.js";
 import type { Position } from "./positions.js";
 import type { PlayerPosition } from "./ratings.js";
@@ -53,7 +54,7 @@ export const selectBestFormationXI = <Id extends string>(
         .filter((player) => !used.has(player.id))
         .sort(
           (a, b) =>
-            (b.positionRatings[position] ?? 0) - (a.positionRatings[position] ?? 0) || a.id.localeCompare(b.id),
+            (b.positionRatings[position] ?? 0) - (a.positionRatings[position] ?? 0) || byId(a, b),
         );
       const chosen = candidates[0]!;
       used.add(chosen.id);
@@ -93,7 +94,7 @@ export const bestXiForFormation = <Id extends string>(
       .filter((player) => !used.has(player.id))
       .sort(
         (a, b) =>
-          (b.positionRatings[position] ?? 0) - (a.positionRatings[position] ?? 0) || a.id.localeCompare(b.id),
+          (b.positionRatings[position] ?? 0) - (a.positionRatings[position] ?? 0) || byId(a, b),
       );
     const chosen = candidates[0]!;
     used.add(chosen.id);
@@ -108,7 +109,7 @@ export const bestXiForFormation = <Id extends string>(
 };
 
 /** Code-unit id order: the same answer on every machine, unlike `localeCompare`. */
-const byId = (a: { readonly id: string }, b: { readonly id: string }): number => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+const byId = (a: { readonly id: string }, b: { readonly id: string }): number => compareCodeUnits(a.id, b.id);
 
 /** A player's highest Position Rating at any Position — the reading the bench ranks by. */
 const bestPositionRating = (player: PositionRatingsLike): number => Math.max(0, ...Object.values(player.positionRatings));

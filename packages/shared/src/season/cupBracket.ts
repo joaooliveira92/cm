@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "../order.js";
 import { createSeededRng } from "../random.js";
 
 /**
@@ -69,7 +70,7 @@ export const byeHolders = (
   [...entrants]
     .sort((a, b) => {
       const tierDelta = (a.sourceTier ?? OFF_LADDER_ORDER) - (b.sourceTier ?? OFF_LADDER_ORDER);
-      return tierDelta === 0 ? a.clubId.localeCompare(b.clubId) : tierDelta;
+      return tierDelta === 0 ? compareCodeUnits(a.clubId, b.clubId) : tierDelta;
     })
     .slice(0, byes)
     .map((entrant) => entrant.clubId);
@@ -87,7 +88,7 @@ export interface CupTie {
  * draw follows.
  */
 export const drawRound = (participants: ReadonlyArray<string>, seed: number): ReadonlyArray<CupTie> => {
-  const pool = [...participants].sort((a, b) => a.localeCompare(b));
+  const pool = [...participants].sort(compareCodeUnits);
   const rng = createSeededRng(seed);
 
   // Fisher-Yates, drawing from the seeded stream in a fixed order.

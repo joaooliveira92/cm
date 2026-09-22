@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "../order.js";
 import { canonicalClubId } from "../content/contentPack.js";
 import { CUP_ENTRANTS, EXCHANGE_LINKS } from "../content/leagueSetupCatalogue.js";
 import {
@@ -117,7 +118,7 @@ export const resolveWorld = (
         },
       ];
     })
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodeUnits(a.id, b.id));
 
   const loaded = new Set(competitions.map((competition) => competition.id));
 
@@ -125,16 +126,16 @@ export const resolveWorld = (
     (link) => loaded.has(link.higherCompetitionId) && loaded.has(link.lowerCompetitionId),
   ).sort(
     (a, b) =>
-      a.higherCompetitionId.localeCompare(b.higherCompetitionId) ||
-      a.lowerCompetitionId.localeCompare(b.lowerCompetitionId),
+      compareCodeUnits(a.higherCompetitionId, b.higherCompetitionId) ||
+      compareCodeUnits(a.lowerCompetitionId, b.lowerCompetitionId),
   );
 
   const entrants = CUP_ENTRANTS.filter(
     (entrant) => loaded.has(entrant.cupCompetitionId) && loaded.has(entrant.sourceCompetitionId),
   ).sort(
     (a, b) =>
-      a.cupCompetitionId.localeCompare(b.cupCompetitionId) ||
-      a.sourceCompetitionId.localeCompare(b.sourceCompetitionId),
+      compareCodeUnits(a.cupCompetitionId, b.cupCompetitionId) ||
+      compareCodeUnits(a.sourceCompetitionId, b.sourceCompetitionId),
   );
 
   return { competitions, links, entrants };

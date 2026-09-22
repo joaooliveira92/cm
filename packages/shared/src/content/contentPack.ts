@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "../order.js";
 import type { CanonicalId } from "./canonicalId.js";
 import type { ClubColours } from "./clubColours.js";
 import type { NationCode } from "./nations.js";
@@ -434,7 +435,7 @@ export const contentPackForWorld = (
     .sort(
       (a, b) =>
         (a.tier ?? Number.MAX_SAFE_INTEGER) - (b.tier ?? Number.MAX_SAFE_INTEGER) ||
-        a.id.localeCompare(b.id),
+        compareCodeUnits(a.id, b.id),
     )[0];
   return (primary && LEAGUE_PACKS[primary.id]) ?? BASE_CONTENT_PACK;
 };
@@ -474,7 +475,7 @@ export const resolutionPackForWorld = (
     .sort(
       (a, b) =>
         (a.tier ?? Number.MAX_SAFE_INTEGER) - (b.tier ?? Number.MAX_SAFE_INTEGER) ||
-        a.id.localeCompare(b.id),
+        compareCodeUnits(a.id, b.id),
     )
     .flatMap((competition) => LEAGUE_PACKS[competition.id] ?? []);
   const layers = [...new Set([...leaguePacks, recorded, BASE_CONTENT_PACK])];

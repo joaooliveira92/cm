@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "../order.js";
 /**
  * The season's slot template: where a Round's date comes from.
  *
@@ -132,9 +133,7 @@ export const leagueRoundDates = (
 
   const overflow = rounds - slots.leagueWeekendDates.length;
   if (overflow > slots.midweekDates.length) return null;
-  return [...slots.leagueWeekendDates, ...spread(slots.midweekDates, overflow)].sort((a, b) =>
-    a.localeCompare(b),
-  );
+  return [...slots.leagueWeekendDates, ...spread(slots.midweekDates, overflow)].sort(compareCodeUnits);
 };
 
 /** The date a cup's round `round` is played on, or `null` past the reserved capacity. */

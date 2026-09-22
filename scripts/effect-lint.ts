@@ -487,6 +487,49 @@ export function lintVitestEnvironmentPragma(
   return violations
 }
 
+// ---------------------------------------------------------------------------
+// The locale-free-sort rule (group-g ticket 38).
+//
+// `localeCompare` with no locale argument reads the host's locale, and ICU collation disagrees with
+// code-unit order on case ("a" before "B") and on punctuation ("_" before digits). The engineering
+// contract keeps the system locale out of the pure packages, because a seeded tie-break that reads
+// it could pick a different XI or draw on another machine. The replacement is `compareCodeUnits`
+// from `@cm-clone/shared`. Display sorting, where the locale is wanted, belongs at the renderer
+// edge, so the rule is scoped to the two pure packages' sources and stays out of everything else.
+//
+// AST-based: any property access named `localeCompare` — a call or a bare reference passed to
+// `sort` — and not a mention in a comment or string. The fixture proves it on every gate run.
+// ---------------------------------------------------------------------------
+
+/** Repo-relative POSIX prefixes the rule polices: the pure packages' sources, not their tests. */
+const LOCALE_FREE_ROOTS = ["packages/shared/src/", "packages/game-engine/src/"]
+
+export function isLocaleFree(filePath: string, cwd: string): boolean {
+  if (filePath.includes(FIXTURE_ROOT)) return true
+  const rel = relative(cwd, filePath).replaceAll("\\", "/")
+  return LOCALE_FREE_ROOTS.some((root) => rel.startsWith(root))
+}
+
+export function lintLocaleCompare(sourceFile: SourceFile, filePath: string): LintViolation[] {
+  const out: LintViolation[] = []
+  const visit = (node: Node): void => {
+    if (isPropertyAccessExpression(node) && isIdentifier(node.name) && node.name.text === "localeCompare") {
+      const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
+      out.push({
+        file: filePath,
+        line: line + 1,
+        rule: "no-locale-compare",
+        message:
+          "localeCompare reads the host locale, which the pure packages must not (ENGINEERING-CONTRACT, " +
+          "Determinism). Use compareCodeUnits from @cm-clone/shared; sort display text at the renderer edge.",
+      })
+    }
+    node.forEachChild(visit)
+  }
+  visit(sourceFile)
+  return out
+}
+
 const sourceDirs = ["packages", "apps"]
 
 /**
@@ -636,17 +679,18 @@ export function lintFileSet(
       const slate = isSlateGuarded(file) ? lintSlateClassNames(sourceFile, file) : []
       const length = lintFileLength(sourceFile, file, cwd, options.maxFileLines)
       const pragma = lintVitestEnvironmentPragma(sourceFile, file, cwd)
+      const locale = isLocaleFree(file, cwd) ? lintLocaleCompare(sourceFile, file) : []
       if (fixtureFiles.includes(file)) {
         fixtureBoundaries.push({
           file,
-          violations: [...standard, ...boundary, ...slate, ...length, ...pragma],
+          violations: [...standard, ...boundary, ...slate, ...length, ...pragma, ...locale],
         })
       } else {
         // Slate sites are counted, not reported here: the backlog ratchet in
         // `main` decides which of them are a regression and which are the
         // recorded migration debt. Reporting each one would drown the gate in
         // 391 known violations.
-        treeViolations.push(...standard, ...boundary, ...length, ...pragma)
+        treeViolations.push(...standard, ...boundary, ...length, ...pragma, ...locale)
         if (slate.length > 0) {
           slateCounts.set(relative(cwd, file).replaceAll("\\", "/"), slate.length)
         }

@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "../../order.js";
 /**
  * Intent, dependency closure, and the effective selection (§12, §19, §34).
  *
@@ -313,7 +314,7 @@ export const resolveSelection = (
       dependencyCompetitionIds: dedupe(bucket.dependency).sort(),
     });
   }
-  selections.sort((a, b) => a.nationId.localeCompare(b.nationId));
+  selections.sort((a, b) => compareCodeUnits(a.nationId, b.nationId));
 
   const dependencies: DependencyRecord[] = [...active.entries()]
     .map(([competitionId, entry]) => ({
@@ -322,7 +323,7 @@ export const resolveSelection = (
       requiredBy: [...entry.requiredBy].sort(),
       chosenDirectly: entry.chosenDirectly,
     }))
-    .sort((a, b) => a.competitionId.localeCompare(b.competitionId));
+    .sort((a, b) => compareCodeUnits(a.competitionId, b.competitionId));
 
   const autoIncluded = dependencies.filter((record) => !record.chosenDirectly);
   if (autoIncluded.length > 0) {

@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "../order.js";
 import { CITIES_BY_NATION, type City, type PopulationBand } from "../content/cities.js";
 import type { StatureTier } from "../content/clubs.js";
 import type { RandomSource } from "../random.js";
@@ -119,7 +120,7 @@ const STATURE_SHARE: Readonly<Record<"big" | "mid", number>> = { big: 0.2, mid: 
 export const statureTiersFor = (
   clubs: ReadonlyArray<{ readonly clubId: string; readonly seed: number }>,
 ): ReadonlyMap<string, StatureTier> => {
-  const bySeed = [...clubs].sort((a, b) => a.seed - b.seed || a.clubId.localeCompare(b.clubId));
+  const bySeed = [...clubs].sort((a, b) => a.seed - b.seed || compareCodeUnits(a.clubId, b.clubId));
   const bigCount = Math.round(bySeed.length * STATURE_SHARE.big);
   const midCount = Math.round(bySeed.length * STATURE_SHARE.mid);
   return new Map(

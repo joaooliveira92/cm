@@ -16,8 +16,26 @@ the manager, it belongs at the renderer edge instead, and says so.
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] No `localeCompare` remains in `packages/shared/src` or `packages/game-engine/src`
-- [ ] `effect-lint` fails on a new one, with a test or a demonstrated failing run
-- [ ] Seeded results are unchanged for the generated world (all ids ASCII), shown by the existing seeded tests; `pnpm check:all` green
+- [x] No `localeCompare` remains in `packages/shared/src` or `packages/game-engine/src`
+- [x] `effect-lint` fails on a new one, with a test or a demonstrated failing run
+- [x] Seeded results are unchanged for the generated world (all ids ASCII), shown by the existing seeded tests; `pnpm check:all` green
+
+## Answer
+
+Resolved 2026-09-21. All 16 `localeCompare` calls were in `packages/shared/src` (none in the engine); each
+now uses `compareCodeUnits` (`packages/shared/src/order.ts`), including the best-XI tie-breaks. A new
+`effect-lint` rule, `no-locale-compare`, fails on any `localeCompare` under the two pure packages' sources,
+with a fixture that must trip it on every run. No call site sorts text shown to the manager.
+
+No seeded result moved, and that was checked rather than assumed: ICU collation also puts "_" before
+digits, so `club_eng_10_01` and `club_eng_1_07` would swap. Every catalogue id (5,455, including the club
+ids every competition can generate) and 90,000 sampled player ids sort identically both ways, because no
+competition has a tenth tier. If one ever does, its club ids take the code-unit order, which is the
+intended canonical one.
+
+Left: `Intl.Collator` and `toLocale*` are not banned (none exist in the pure packages), and
+`scripts/effect-lint.ts` was already past the 600-line ceiling (698 lines, now 742) that it enforces on
+`packages/` and `apps/` but not on `scripts/`. Reviewed inline by the orchestrator.
+Report: [group-g-match-day](../../../.ai/reports/group-g-match-day.md).

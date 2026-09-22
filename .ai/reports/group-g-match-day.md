@@ -615,3 +615,18 @@ stale season read) and the implementator's Quick-mode finding are 41 and 42.
 Reviewed inline by the orchestrator: a boolean on the match context and on `ActiveMatchSession`, set only
 by the restart restore and cleared by a fresh start, shown as a `role="status"` notice. The implementator
 checked the tests bite by forcing the flag both ways.
+
+## Ticket 38 — the pure packages sort without the locale, 2026-09-21
+
+- Ticket closed: [38](../../.scratch/group-g-match-day/issues/38-pure-packages-sort-without-locale.md)
+- New `effect-lint` rule `no-locale-compare`; `AGENTS.md` quality-gate row updated.
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 0. Shared 474, contracts 177, game-engine 90, desktop 2156 passed. |
+| determinism | `pnpm --filter @cm-clone/shared exec vitest run test/rules/bestXi.test.ts test/order.test.ts`, twice | 32 passed both runs; every existing seeded test passed unchanged in the gate |
+| lint proof | a temporary `localeCompare` in `packages/shared/src/order.ts`, then `tsx scripts/effect-lint.ts` | 1 violation, exit 1; removed, then "no violations found (901 files)" |
+| e2e | not run | no screen changed |
+
+Reviewed inline by the orchestrator. The seed-safety claim rests on sorting all 5,455 catalogue ids and
+90,000 sampled player ids both ways and finding the same order.
