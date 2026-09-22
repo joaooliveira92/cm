@@ -32,6 +32,11 @@ export const rpcRuntime = Atom.runtime(Layer.empty);
  */
 export const INVALIDATION_RULES = {
   advanceCalendar: (saveId: SaveId): ReadonlyArray<unknown> => [saveKey(saveId)],
+  /** Starting a match links the awaiting Fixture to it (`PendingFixtureView.matchId`), and accepting
+   *  its result clears that link and plays the Matchday, so both change the season read and invalidate
+   *  the save-wide key (group-g-match-day 41). */
+  startMatch: (saveId: SaveId): ReadonlyArray<unknown> => [saveKey(saveId)],
+  commitMatchday: (saveId: SaveId): ReadonlyArray<unknown> => [saveKey(saveId)],
   setTrainingFocus: (saveId: SaveId): ReadonlyArray<unknown> => [
     squadKey(saveId),
     trainingKey(saveId),
@@ -80,6 +85,16 @@ export const advanceCalendarEffect = (
   call("advanceCalendar", { saveId }).pipe(
     Reactivity.mutation(INVALIDATION_RULES.advanceCalendar(saveId)),
   );
+
+/** `startMatch` — after success only, invalidates `["save", saveId]`. */
+export const startMatchEffect = (input: RpcPayload<"startMatch">): MutationEffect<"startMatch"> =>
+  call("startMatch", input).pipe(Reactivity.mutation(INVALIDATION_RULES.startMatch(input.saveId)));
+
+/** `commitMatchday` — the career accepting the match's result; after success only, invalidates
+ *  `["save", saveId]`. Explicit, because `resumeSimulation` is a read and must never be what commits a
+ *  Matchday. */
+export const commitMatchdayEffect = (input: RpcPayload<"commitMatchday">): MutationEffect<"commitMatchday"> =>
+  call("commitMatchday", input).pipe(Reactivity.mutation(INVALIDATION_RULES.commitMatchday(input.saveId)));
 
 /** `retireManager` — after success only, invalidates `["save", saveId]`. */
 export const retireManagerEffect = (saveId: SaveId): MutationEffect<"retireManager"> =>
@@ -189,6 +204,14 @@ export const setTrainingFocusMutation = rpcRuntime.fn(
 /** `advanceCalendar` — mutation atom for registry-scoped invalidation. */
 export const advanceCalendarMutation = rpcRuntime.fn((input: RpcPayload<"advanceCalendar">) =>
   advanceCalendarEffect(input.saveId),
+);
+
+/** `startMatch` — mutation atom. */
+export const startMatchMutation = rpcRuntime.fn((input: RpcPayload<"startMatch">) => startMatchEffect(input));
+
+/** `commitMatchday` — mutation atom. */
+export const commitMatchdayMutation = rpcRuntime.fn((input: RpcPayload<"commitMatchday">) =>
+  commitMatchdayEffect(input),
 );
 
 /** `retireManager` — mutation atom. */

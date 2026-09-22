@@ -665,3 +665,16 @@ rearrange players, which the engine now ignores) reworded by the orchestrator. M
 the tactic) filed as 43. L1 (the 097 row lacked a durable anchor) and L2 (the change note understated the
 affected matches) fixed. The full `check:all` ran before the final copy rewording, which touched only
 strings in two renderer files.
+
+## Ticket 41 — starting a match and accepting its result refresh the season read, 2026-09-22
+
+- Ticket closed: [41](../../.scratch/group-g-match-day/issues/41-accepting-a-result-refreshes-the-season-read.md)
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 0. Shared 477, contracts 180, game-engine 95, desktop 2171 passed. |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | 57 passed (2.3m), including the 37/33 restart journey and AC-15 |
+
+Review: APPROVE, no blocker, high or medium. L2 (the team-sheet screens passed `undefined` as the match
+id once no match is awaited, now reached right after Accept result) fixed by the orchestrator before the
+gate. L1, L3 and L4 left, listed in the ticket Answer. Renderer-only: no engine, contract or schema change.

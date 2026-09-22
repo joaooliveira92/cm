@@ -5,11 +5,10 @@ import type { RpcRead } from "./precareer.js";
 /**
  * Match-day calls. Deliberately NOT SWR- or atom-backed: a running match must
  * never show stale progress, so `resumeSimulation` is polled by MatchDay's own
- * hand-rolled loop (its pacing constants live in `./pacing.ts`). The seam only
- * provides typed calls plus the start/command mutations.
+ * hand-rolled loop (its pacing constants live in `./pacing.ts`). Starting a match and
+ * accepting its result change the season read, so they are mutations in `./mutations.ts`
+ * (`startMatchMutation`, `commitMatchdayMutation`), not plain calls here.
  */
-export const startMatch = (input: RpcPayload<"startMatch">): RpcRead<"startMatch"> =>
-  call("startMatch", input);
 
 /** The save's awaiting match, for a Match day that mounts after an app restart with no match of its
  *  own in memory. */
@@ -18,11 +17,6 @@ export const getAwaitingMatch = (input: RpcPayload<"getAwaitingMatch">): RpcRead
 
 export const resumeSimulation = (input: RpcPayload<"resumeSimulation">): RpcRead<"resumeSimulation"> =>
   call("resumeSimulation", input);
-
-/** The career accepting the match's result. Explicit, because `resumeSimulation` above is a read
- *  and must never be what commits a Matchday. */
-export const commitMatchday = (input: RpcPayload<"commitMatchday">): RpcRead<"commitMatchday"> =>
-  call("commitMatchday", input);
 
 export const getTeamSheet = (input: RpcPayload<"getTeamSheet">): RpcRead<"getTeamSheet"> =>
   call("getTeamSheet", input);

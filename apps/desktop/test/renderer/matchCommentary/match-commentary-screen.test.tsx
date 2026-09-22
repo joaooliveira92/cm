@@ -4,7 +4,6 @@ import { MatchId, SaveId, type CommentaryLineView } from "@cm-clone/contracts";
 import { MatchCommentaryScreen } from "../../../src/renderer/matchCommentary/MatchCommentaryScreen.js";
 import {
   clearActiveMatch,
-  recordFullTime,
   recordRevealedLines,
   setActiveMatch,
 } from "../../../src/renderer/match/session.js";
@@ -81,11 +80,11 @@ const mount = async (matchId: string | null = "m1") => {
   return reads;
 };
 
-const liveSession = () =>
+const liveSession = (phase = "live", matchId = "m1", saveId = s1) =>
   setActiveMatch({
-    saveId: s1,
+    saveId,
     match: {
-      matchId: MatchId.make("m1"),
+      matchId: MatchId.make(matchId),
       fixtureId: 1,
       homeClubId: "home",
       homeClubName: "Home FC",
@@ -93,7 +92,7 @@ const liveSession = () =>
       awayClubName: "Away FC",
       isHome: true,
     },
-    phase: "live",
+    phase,
   } as never);
 
 const shown = () => screen.queryAllByText(/./, { selector: "p > span:last-child" }).map((node) => node.textContent);
@@ -105,6 +104,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   clearActiveMatch(s1);
+  clearActiveMatch(SaveId.make("s2"));
   vi.useRealTimers();
 });
 
@@ -129,11 +129,22 @@ describe("Match Commentary screen shows no more than Match day has revealed (gro
   });
 
   it("at full time watched in this renderer, lists the whole match", async () => {
-    recordFullTime(s1, MatchId.make("m1"));
+    liveSession("complete");
     const reads = await mount();
 
     expect(shown()).toHaveLength(LINES.length);
     expect(reads[0]).toMatchObject({ revealedEvents: null });
+  });
+
+  it("lists nothing of a full-time match whose session another save's match took over (group-g-match-day 41)", async () => {
+    // Watched to full time in s1, then a match started in another save: the session is single-slot, so
+    // Match day will replay this one from kickoff and the screen follows that reveal instead.
+    liveSession("live", "m9", SaveId.make("s2"));
+    const reads = await mount();
+
+    expect(shown()).toEqual([]);
+    // Nothing is revealed, so there is nothing to read.
+    expect(reads).toEqual([]);
   });
 
   it("after a restart mid-match, with nothing revealed here, lists nothing of the match", async () => {

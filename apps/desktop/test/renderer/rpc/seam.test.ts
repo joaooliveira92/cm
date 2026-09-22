@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { SaveId } from "@cm-clone/contracts";
 import {
   AdvanceInProgressError,
+  FixtureId,
   CollidingOverrideError,
   InvalidBindingShapeError,
   LockedKeyOverrideError,
@@ -24,6 +25,8 @@ import { squadAtom } from "../../../src/renderer/rpc/queries.js";
 import {
   INVALIDATION_RULES,
   advanceCalendarEffect,
+  commitMatchdayEffect,
+  startMatchEffect,
 } from "../../../src/renderer/rpc/mutations.js";
 import {
   MANAGEMENT_IDLE_TTL,
@@ -215,6 +218,8 @@ describe("renderer RPC seam — invalidation rules (AC-05)", () => {
   it("each save-scoped query subscribes to the save key; mutations declare their domains", () => {
     const save = relaxedSaveId("s1");
     expect(INVALIDATION_RULES.advanceCalendar(save)).toEqual([["save", save]]);
+    expect(INVALIDATION_RULES.startMatch(save)).toEqual([["save", save]]);
+    expect(INVALIDATION_RULES.commitMatchday(save)).toEqual([["save", save]]);
     expect(INVALIDATION_RULES.setTrainingFocus(save)).toEqual([
       ["squad", save],
       ["training", save],
@@ -246,6 +251,8 @@ describe("renderer RPC seam — invalidation rules (AC-05)", () => {
     const save = relaxedSaveId("s1");
     const all = [
       ...INVALIDATION_RULES.advanceCalendar(save),
+      ...INVALIDATION_RULES.startMatch(save),
+      ...INVALIDATION_RULES.commitMatchday(save),
       ...INVALIDATION_RULES.setTrainingFocus(save),
       ...INVALIDATION_RULES.placeBid(save),
       ...INVALIDATION_RULES.submitMatchCommand(save, "m1"),
@@ -289,6 +296,57 @@ describe("renderer RPC seam — invalidation rules (AC-05)", () => {
     expect(failureOutcome).toBe("Failure");
     expect(fired).toEqual([]);
   });
+
+  it("startMatch and commitMatchday invalidate the season read after success only (group-g-match-day 41)", async () => {
+    const save = relaxedSaveId("s1");
+    const fixtureId = FixtureId.make(1);
+    const summary = {
+      matchId: "m1",
+      fixtureId: 1,
+      homeClubId: "home",
+      homeClubName: "Home FC",
+      awayClubId: "away",
+      awayClubName: "Away FC",
+      isHome: true,
+    };
+    const committed = {
+      fixtureId: 1,
+      alreadyCommitted: false,
+      homeClubId: "home",
+      awayClubId: "away",
+      homeGoals: 1,
+      awayGoals: 0,
+      otherFixturesResolved: 0,
+      seasonConcluded: false,
+    };
+    const refused = { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: save } };
+
+    /** What the save key saw while `effect` ran against `reply`, and the effect's outcome. */
+    const invalidatedBy = async (
+      effect: () => Effect.Effect<unknown, unknown, Reactivity.Reactivity>,
+      reply: unknown,
+    ): Promise<{ readonly outcome: string; readonly fired: ReadonlyArray<string> }> => {
+      const restore = installPreload(async () => reply);
+      try {
+        const fired: Array<string> = [];
+        const reactivity = await Effect.runPromise(Reactivity.make);
+        reactivity.registerUnsafe([["save", save]], () => fired.push("invalidated"));
+        const outcome = await Effect.runPromise(
+          Effect.result(Effect.provideService(effect(), Reactivity.Reactivity, reactivity)),
+        );
+        return { outcome: outcome._tag, fired };
+      } finally {
+        restore();
+      }
+    };
+    const start = () => startMatchEffect({ saveId: save, fixtureId, mode: "play" });
+    const commit = () => commitMatchdayEffect({ saveId: save, fixtureId });
+
+    expect(await invalidatedBy(start, { _tag: "Success", value: summary })).toEqual({ outcome: "Success", fired: ["invalidated"] });
+    expect(await invalidatedBy(start, refused)).toEqual({ outcome: "Failure", fired: [] });
+    expect(await invalidatedBy(commit, { _tag: "Success", value: committed })).toEqual({ outcome: "Success", fired: ["invalidated"] });
+    expect(await invalidatedBy(commit, refused)).toEqual({ outcome: "Failure", fired: [] });
+  });
 });
 
 describe("renderer RPC seam — staleness policy (AC-06)", () => {
@@ -300,8 +358,10 @@ describe("renderer RPC seam — staleness policy (AC-06)", () => {
   it("match-day reads are plain typed calls, never SWR atoms (a running match must not go stale)", async () => {
     const match = await import("../../../src/renderer/rpc/match.js");
     expect(typeof match.resumeSimulation).toBe("function");
-    expect(typeof match.startMatch).toBe("function");
-    expect(typeof match.commitMatchday).toBe("function");
+    // Starting a match and accepting its result change the season read, so they are mutations, not
+    // plain calls (group-g-match-day 41).
+    expect(Object.keys(match)).not.toContain("startMatch");
+    expect(Object.keys(match)).not.toContain("commitMatchday");
     expect(Object.keys(match).some((k) => k.endsWith("Atom"))).toBe(false);
   });
 

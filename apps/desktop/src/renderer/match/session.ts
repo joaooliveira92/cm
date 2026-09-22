@@ -90,27 +90,24 @@ export interface LastRevealedInjury {
 
 let live: LiveCommandContext | null = null;
 
-/**
- * The match this renderer watched reach full time. It outlives `clearActiveMatch` on purpose: between
- * full time and Accept result there is no session, and a surface must still tell "every event has been
- * revealed" apart from "the app restarted mid-match", when the awaiting match is set but nothing has
- * been revealed in this process.
- */
-let fullTime: { readonly saveId: SaveId; readonly matchId: MatchId } | null = null;
-
-export const recordFullTime = (saveId: SaveId, matchId: MatchId): void => {
-  fullTime = { saveId, matchId };
-};
-
-export const reachedFullTime = (saveId: SaveId, matchId: MatchId): boolean =>
-  fullTime !== null && fullTime.saveId === saveId && fullTime.matchId === matchId;
-
 export const setActiveMatch = (session: ActiveMatchSession): void => {
   active = session;
 };
 
 export const getActiveMatch = (saveId: SaveId): ActiveMatchSession | null =>
   active !== null && active.saveId === saveId ? active : null;
+
+/**
+ * Whether this renderer revealed every event of `matchId` and its result is not yet accepted: the
+ * save's session holds that match at full time. A standalone screen shows such a match in full; an
+ * awaiting match with no session here (the app restarted, or another save's match took the session)
+ * is shown only as far as Match day reveals it again. Whether a result was accepted is the season
+ * read's to say, not this (group-g-match-day 41).
+ */
+export const revealedToFullTime = (saveId: SaveId, matchId: MatchId): boolean => {
+  const session = getActiveMatch(saveId);
+  return session !== null && session.match.matchId === matchId && session.phase === "complete";
+};
 
 export const clearActiveMatch = (saveId: SaveId): void => {
   if (active !== null && active.saveId === saveId) active = null;

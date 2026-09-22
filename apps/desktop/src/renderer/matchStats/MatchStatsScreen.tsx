@@ -5,7 +5,7 @@ import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import { FOCUS_RING } from "../focus.js";
 import { MatchStatsView } from "../match/MatchStatsView.js";
-import { getActiveMatch, getRevealedEvents, reachedFullTime } from "../match/session.js";
+import { getActiveMatch, getRevealedEvents, revealedToFullTime } from "../match/session.js";
 import { getMatchStatistics, leagueTableAtom, useAtomValue } from "../rpc.js";
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 
@@ -19,17 +19,20 @@ type StatsState =
  *
  * 1. a live match — cut after the Match Events Match day has revealed, so the totals never run ahead
  *    of the commentary;
- * 2. the started Fixture still awaiting its result — in full only if this renderer watched it reach
+ * 2. the started Fixture still awaiting its result — in full only while this renderer holds it at
  *    full time; otherwise (e.g. the app restarted mid-match) cut at nothing revealed;
- * 3. otherwise the controlled club's most recent played match, resolved by the main process.
+ * 3. otherwise the controlled club's most recent played match, resolved by the main process. A match
+ *    whose result was accepted lands here: Accept result refreshes the season read, which then no
+ *    longer awaits it (group-g-match-day 41).
  */
 export const MatchStatsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [state, setState] = useState<StatsState>({ _tag: "loading" });
   const tableResult = useAtomValue(leagueTableAtom(saveId));
   const awaitingMatchId = tableResult._tag === "Success" ? (tableResult.value.season.awaitingFixture?.matchId ?? null) : null;
   // Wait for the season read before binding: loading on a still-pending read would ask for the last
-  // played match, and that reply could land after the right one.
-  const seasonKnown = tableResult._tag === "Success" || tableResult._tag === "Failure";
+  // played match, and that reply could land after the right one. A read being refreshed (after Accept
+  // result, say) may still name a match no longer awaited, so it is waited for too.
+  const seasonKnown = (tableResult._tag === "Success" || tableResult._tag === "Failure") && !tableResult.waiting;
 
   const load = useCallback(async () => {
     const session = getActiveMatch(saveId);
@@ -41,7 +44,7 @@ export const MatchStatsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         matchId: live ? session.match.matchId : awaitingMatchId,
         revealedEvents: live
           ? getRevealedEvents(saveId)
-          : awaitingMatchId !== null && !reachedFullTime(saveId, awaitingMatchId)
+          : awaitingMatchId !== null && !revealedToFullTime(saveId, awaitingMatchId)
             ? 0
             : null,
       }).pipe(Effect.result),

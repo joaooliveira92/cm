@@ -1,8 +1,7 @@
 import { act, cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { MatchId, SaveId } from "@cm-clone/contracts";
 import { RESTARTED_FROM_KICKOFF } from "../../../src/renderer/match/MatchDayScreen.js";
-import { clearActiveMatch, getActiveMatch, recordFullTime } from "../../../src/renderer/match/session.js";
+import { clearActiveMatch, getActiveMatch } from "../../../src/renderer/match/session.js";
 import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { mountMatchDayWithSpine, rid, session } from "./liveMatchDayHarness.js";
@@ -60,8 +59,6 @@ const sentence = () => screen.queryByText(RESTARTED_FROM_KICKOFF);
 beforeEach(() => {
   cleanup();
   clearActiveMatch(rid("s1"));
-  // The full-time mark is module state nothing clears; moving it elsewhere forgets another spec's.
-  recordFullTime(SaveId.make("elsewhere"), MatchId.make("m1"));
   resetActionHandlers();
   resetScopeState();
   window.scrollTo = () => undefined;

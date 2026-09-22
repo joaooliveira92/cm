@@ -60,6 +60,7 @@ export {
   advanceCalendarMutation,
   assignScoutToClubMutation,
   changeTacticsMutation,
+  commitMatchdayMutation,
   placeBidMutation,
   signFreeAgentMutation,
   respondToBidMutation,
@@ -68,6 +69,7 @@ export {
   retireManagerMutation,
   setNewsMessageStateMutation,
   setTrainingFocusMutation,
+  startMatchMutation,
   submitMatchCommandMutation,
   unassignScoutMutation,
 } from "./rpc/mutations.js";
@@ -94,7 +96,7 @@ export {
   applyLeaguePreset,
 } from "./rpc/precareer.js";
 
-export { commitMatchday, startMatch, getAwaitingMatch, resumeSimulation, getTeamSheet, getPostMatchSummary, getMatchStatistics, getMatchReport } from "./rpc/match.js";
+export { getAwaitingMatch, resumeSimulation, getTeamSheet, getPostMatchSummary, getMatchStatistics, getMatchReport } from "./rpc/match.js";
 
 export {
   REVEAL_INTERVAL_MS,

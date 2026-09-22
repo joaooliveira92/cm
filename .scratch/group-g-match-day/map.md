@@ -73,6 +73,8 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
 - [40 — A live Change Tactics changes only the Team Instructions](issues/40-a-live-change-tactics-changes-only-instructions.md):
   resolved 2026-09-22. A dismissal sticks; decision request 01 is built. Review split out
   [43](issues/43-formation-in-play-reads-the-pitch.md).
+- [41 — Starting a match and accepting its result refresh the season read](issues/41-accepting-a-result-refreshes-the-season-read.md):
+  resolved 2026-09-22. `reachedFullTime` is gone; screens decide "accepted" from the season read.
 
 ## Not yet specified
 

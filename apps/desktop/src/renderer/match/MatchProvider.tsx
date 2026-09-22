@@ -3,10 +3,11 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import { Effect, Result } from "effect";
+import { Cause, Effect, Exit, Result } from "effect";
 import type {
   MatchMode,
   MatchSummary,
@@ -15,15 +16,16 @@ import type {
   SaveId,
 } from "@cm-clone/contracts";
 import {
-  commitMatchday as commitMatchdayRpc,
+  commitMatchdayMutation,
   getAwaitingMatch,
   leagueTableAtom,
-  startMatch as startMatchRpc,
+  startMatchMutation,
+  useAtomSet,
   useAtomValue,
 } from "../rpc.js";
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 import { registerActionHandler } from "../actions/dispatch.js";
-import { clearActiveMatch, getActiveMatch, reachedFullTime, recordFullTime, setActiveMatch } from "./session.js";
+import { clearActiveMatch, getActiveMatch, setActiveMatch } from "./session.js";
 
 export type MatchPhase =
   | "awaiting-kickoff"
@@ -76,6 +78,15 @@ export const MatchProvider = ({
 
   const tableResult = useAtomValue(leagueTableAtom(saveId));
   const pending = tableResult._tag === "Success" ? tableResult.value.season.awaitingFixture : null;
+  // Starting a match and accepting its result invalidate the season read (group-g-match-day 41); until
+  // the refetch lands, the pending view is the one from before the command.
+  const seasonRefreshing = tableResult.waiting;
+
+  // Both are mutations, so each refreshes the season read once it succeeds.
+  const runStartMatch = useAtomSet(startMatchMutation, { mode: "promiseExit" });
+  const runCommitMatchday = useAtomSet(commitMatchdayMutation, { mode: "promiseExit" });
+  /** A start in flight: its season refetch can land before the match it started is set. */
+  const startingRef = useRef(false);
 
   // --- Match lifecycle. ---
 
@@ -84,35 +95,35 @@ export const MatchProvider = ({
       if (pending === null) return;
       setError(null);
       setPhase("starting");
-      const outcome = await Effect.runPromise(
-        startMatchRpc({ saveId, fixtureId: pending.fixtureId, mode }).pipe(Effect.result),
-      );
-      if (Result.isFailure(outcome)) {
-        setError(describeRpcError(outcome.failure as RpcClientError<"startMatch">));
+      startingRef.current = true;
+      const exit = await runStartMatch({ saveId, fixtureId: pending.fixtureId, mode });
+      startingRef.current = false;
+      if (Exit.isFailure(exit)) {
+        setError(describeRpcError(Cause.squash(exit.cause) as RpcClientError<"startMatch">));
         setPhase("awaiting-kickoff");
         return;
       }
-      setMatch(outcome.success);
+      setMatch(exit.value);
       setRestoredAfterRestart(false);
       setPhase("live");
     },
-    [saveId, pending],
+    [saveId, pending, runStartMatch],
   );
 
+  // The match stays set after its result is accepted, which is what keeps the restart restore below
+  // from reading it back while the season read still names it.
   const commitResult = useCallback(async (): Promise<void> => {
     if (match === null) return;
     setError(null);
     setPhase("committing");
-    const outcome = await Effect.runPromise(
-      commitMatchdayRpc({ saveId, fixtureId: match.fixtureId }).pipe(Effect.result),
-    );
-    if (Result.isFailure(outcome)) {
-      setError(describeRpcError(outcome.failure as RpcClientError<"commitMatchday">));
+    const exit = await runCommitMatchday({ saveId, fixtureId: match.fixtureId });
+    if (Exit.isFailure(exit)) {
+      setError(describeRpcError(Cause.squash(exit.cause) as RpcClientError<"commitMatchday">));
       setPhase("complete");
       return;
     }
     setPhase("committed");
-  }, [saveId, match]);
+  }, [saveId, match, runCommitMatchday]);
 
   // The streaming hook's pace ticker and pause effect keep running after full time, so these two
   // may only move a match that is still in play. Unguarded, they flipped an accepted result
@@ -141,12 +152,13 @@ export const MatchProvider = ({
   // save still awaits the started match (`pending.matchId`). Read that match back and play it live;
   // with no session, `CommentaryProvider` starts the feed at kickoff, so it replays from there
   // (group-g-match-day 37). Starting instead would only meet `MatchAlreadyStartedError`.
+  //
+  // It decides from the season read alone. That read is refreshed by Accept result, so a match whose
+  // result was accepted is no longer awaited; while the refresh is in flight the read is stale and
+  // nothing is decided from it.
   const awaitingMatchId = pending?.matchId ?? null;
   useEffect(() => {
-    if (!hydrated || match !== null || awaitingMatchId === null) return;
-    // Watched to full time in this process and no session left: its result was accepted here, and
-    // the pending view still naming it is a cached read from before that.
-    if (reachedFullTime(saveId, awaitingMatchId)) return;
+    if (!hydrated || match !== null || awaitingMatchId === null || seasonRefreshing || startingRef.current) return;
     let current = true;
     // "starting" keeps Play and Quick result disabled while the match is read.
     setPhase("starting");
@@ -172,7 +184,7 @@ export const MatchProvider = ({
       // Abandoned mid-read (the awaited match or the save changed): give Play and Quick result back.
       setPhase((phase) => (phase === "starting" ? "awaiting-kickoff" : phase));
     };
-  }, [hydrated, match, awaitingMatchId, saveId]);
+  }, [hydrated, match, awaitingMatchId, seasonRefreshing, saveId]);
 
   // Record the in-flight match for session restore. A result being or already accepted is no
   // longer in flight: recording it would restore a stale Match day and keep Continue suspended.
@@ -182,9 +194,8 @@ export const MatchProvider = ({
   }, [saveId, match, phase, restoredAfterRestart]);
 
   useEffect(() => {
-    if (phase === "complete" && match !== null) recordFullTime(saveId, match.matchId);
     if (phase === "committed") clearActiveMatch(saveId);
-  }, [phase, saveId, match]);
+  }, [phase, saveId]);
 
   // The live-match readout the chrome shows, and that suspends Continue, is published by
   // `CommentaryProvider`: it holds the revealed score and minute the readout carries.

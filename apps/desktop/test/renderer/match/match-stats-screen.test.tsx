@@ -4,7 +4,6 @@ import { MatchId, SaveId } from "@cm-clone/contracts";
 import { MatchStatsScreen } from "../../../src/renderer/matchStats/MatchStatsScreen.js";
 import {
   clearActiveMatch,
-  recordFullTime,
   recordRevealedLines,
   setActiveMatch,
 } from "../../../src/renderer/match/session.js";
@@ -64,11 +63,11 @@ const mount = (impl: (method: string, payload: Record<string, unknown>) => unkno
   return calls;
 };
 
-const liveSession = () =>
+const liveSession = (phase = "live", matchId = "m1", saveId = s1) =>
   setActiveMatch({
-    saveId: s1,
+    saveId,
     match: {
-      matchId: MatchId.make("m1"),
+      matchId: MatchId.make(matchId),
       fixtureId: 1,
       homeClubId: "home",
       homeClubName: "Home FC",
@@ -76,12 +75,13 @@ const liveSession = () =>
       awayClubName: "Away FC",
       isHome: true,
     },
-    phase: "live",
+    phase,
   } as never);
 
 afterEach(() => {
   cleanup();
   clearActiveMatch(s1);
+  clearActiveMatch(SaveId.make("s2"));
 });
 
 describe("Match Statistics screen (Screens 95/100)", () => {
@@ -111,7 +111,7 @@ describe("Match Statistics screen (Screens 95/100)", () => {
   });
 
   it("at full time before the result is accepted, shows that match in full rather than an older one", async () => {
-    recordFullTime(s1, MatchId.make("m9"));
+    liveSession("complete", "m9");
     const calls = mount((method) =>
       method === "getLeagueTable" ? { _tag: "Success", value: leagueTable("m9") } : { _tag: "Success", value: view(null) },
     );
@@ -132,6 +132,16 @@ describe("Match Statistics screen (Screens 95/100)", () => {
     const requests = calls.filter((c) => c.method === "getMatchStatistics");
     expect(requests).toHaveLength(1);
     expect(requests[0]!.payload).toMatchObject({ matchId: "m7", revealedEvents: 0 });
+  });
+
+  it("a match another save's session took over is shown only as far as Match day reveals it again (group-g-match-day 41)", async () => {
+    // Watched to full time in s1, then a match started in another save: the session is single-slot.
+    liveSession("live", "m2", SaveId.make("s2"));
+    const calls = mount((method) =>
+      method === "getLeagueTable" ? { _tag: "Success", value: leagueTable("m9") } : { _tag: "Success", value: view(0) },
+    );
+    await screen.findByRole("table");
+    expect(calls.find((c) => c.method === "getMatchStatistics")!.payload).toMatchObject({ matchId: "m9", revealedEvents: 0 });
   });
 
   it("says no match has been played when there is none", async () => {

@@ -4,21 +4,21 @@ import type { CommentaryLineView, MatchId, SaveId } from "@cm-clone/contracts";
 import { leagueTableAtom, resumeSimulation, useAtomValue, POLL_INTERVAL_MS } from "../rpc.js";
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 import { FOCUS_RING } from "../focus.js";
-import { getActiveMatch, getRevealedEvents, reachedFullTime } from "../match/session.js";
+import { getActiveMatch, getRevealedEvents, revealedToFullTime } from "../match/session.js";
 
 /**
  * How many of the match's Commentary Lines this screen may show, or null for all of them. Bound the
  * way Match Statistics is: a live match up to the lines Match day has revealed; the awaiting match in
- * full only if this renderer watched it reach full time; otherwise (e.g. the app restarted mid-match)
+ * full only while this renderer holds it at full time; otherwise (e.g. the app restarted mid-match)
  * none. The screen never paces a reveal of its own, so it cannot show a line, a goal or the result
- * before Match day has.
+ * before Match day has. An accepted match is no longer awaited, so the season read never names it here.
  */
 const revealedLimit = (saveId: SaveId, matchId: string): number | null => {
   const session = getActiveMatch(saveId);
   if (session !== null && session.match.matchId === matchId && (session.phase === "live" || session.phase === "paused")) {
     return getRevealedEvents(saveId);
   }
-  return reachedFullTime(saveId, matchId as MatchId) ? null : 0;
+  return revealedToFullTime(saveId, matchId as MatchId) ? null : 0;
 };
 
 export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) => {
@@ -31,10 +31,13 @@ export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) =
   const fetchingRef = useRef(false);
 
   const tableResult = useAtomValue(leagueTableAtom(saveId));
-  const pending = tableResult._tag === "Success" ? tableResult.value.season.awaitingFixture : null;
+  // A season read being refreshed (after Accept result, say) may still name a match no longer
+  // awaited, so nothing is bound until it lands.
+  const seasonKnown = tableResult._tag === "Success" && !tableResult.waiting;
+  const pending = seasonKnown ? tableResult.value.season.awaitingFixture : null;
   const matchId = pending?.matchId ?? null;
   // With no match started there is nothing to read, so only the season read is awaited.
-  const waiting = tableResult._tag !== "Success" || (matchId !== null && loading);
+  const waiting = !seasonKnown || (matchId !== null && loading);
 
   const load = useCallback(async () => {
     if (matchId === null) return;

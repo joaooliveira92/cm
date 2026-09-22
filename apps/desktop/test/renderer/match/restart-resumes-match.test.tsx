@@ -8,7 +8,6 @@ import { useMatchStreaming } from "../../../src/renderer/match/streaming.js";
 import {
   clearActiveMatch,
   getActiveMatch,
-  recordFullTime,
   recordRevealedLines,
   recordRevealedMinute,
   setActiveMatch,
@@ -171,9 +170,6 @@ const probe = () => screen.getByTestId("probe").textContent ?? "";
 beforeEach(() => {
   cleanup();
   clearActiveMatch(s1);
-  // The full-time mark is module state nothing clears; moving it to another save forgets the last
-  // test's.
-  recordFullTime(SaveId.make("elsewhere"), m1);
   resetScopeState();
   vi.useFakeTimers();
 });
@@ -231,17 +227,6 @@ describe("Match day resumes a started match after an app restart (group-g-match-
     expect(probe()).toBe("none||0-0|awaiting-kickoff");
     expect(screen.getByTestId("error").textContent).not.toBe("");
     expect(reads(mocked)).toEqual([]);
-  });
-
-  it("does not read back a match this run already watched to full time and accepted", async () => {
-    // Accept result clears the session but leaves the full-time mark; a cached pending view may still
-    // name the match.
-    recordFullTime(s1, m1);
-    const mocked = mockSave();
-    await mountMatchDay();
-
-    expect(called(mocked, "getAwaitingMatch")).toEqual([]);
-    expect(probe()).toBe("none||0-0|awaiting-kickoff");
   });
 });
 

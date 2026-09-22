@@ -55,7 +55,7 @@ export const MatchAwayTeamScreen = ({ saveId }: { readonly saveId: SaveId }) => 
   const [error, setError] = useState<string | null>(null);
 
   const tableResult = useAtomValue(leagueTableAtom(saveId));
-  const matchId = tableResult._tag === "Success" ? tableResult.value.season.awaitingFixture?.matchId : null;
+  const matchId = tableResult._tag === "Success" ? tableResult.value.season.awaitingFixture?.matchId ?? null : null;
 
   const load = useCallback(async () => {
     if (matchId === null) return;
