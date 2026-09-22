@@ -44,8 +44,10 @@ export const loadWageBudgetUsed = (clubId: ClubId) =>
  * fixed Stature Tier and seeds one active Contract per generated player (ticket 16 / ADR-0005).
  * Called once from `startSeason` (ticket 15) for the save's first Season — assumes a `SqlClient`
  * for the save's SQLite file in context, in the same transaction as world/season generation.
+ * Each opening wage is priced at the player's age on `openingDate`, the date Season 1 opens on —
+ * no Season row exists yet to read it from.
  */
-export const initializeSeasonEconomy = (seasonNumber: number, seed: number) =>
+export const initializeSeasonEconomy = (seasonNumber: number, seed: number, openingDate: string) =>
   Effect.gen(function* () {
     // Derived from the world seed, not drawn: contract lengths are part of the generated world and
     // must come back identically when the same seed is regenerated.
@@ -60,7 +62,7 @@ export const initializeSeasonEconomy = (seasonNumber: number, seed: number) =>
         VALUES (${club.id}, ${seasonNumber}, ${TRANSFER_BUDGET_BY_TIER[club.statureTier]}, ${WAGE_BUDGET_BY_TIER[club.statureTier]})`;
     }
 
-    const players = yield* loadAllPlayersEcon;
+    const players = yield* loadAllPlayersEcon(openingDate);
     for (const player of players) {
       if (!player.clubId) continue; // no Free Agents at world-generation time
       const wage = weeklyWage(player.overallRating, player.age, player.potentialAbility);

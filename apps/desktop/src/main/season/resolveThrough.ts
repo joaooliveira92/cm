@@ -77,8 +77,8 @@ export const stepCalendarTo = (
     // Player Development (spec: `.scratch/training/spec.md`): every player on every club develops
     // toward their age-appropriate ceiling once per `SeasonConcluded`, appending one
     // `PlayerDeveloped` event per club to its own Club stream — same in-process synchronous reactor
-    // pattern as the reactions above (ADR-0007).
-    yield* developPlayersForSeason(seasonNumber);
+    // pattern as the reactions above (ADR-0007). Ages are measured on the date the Season concluded.
+    yield* developPlayersForSeason(seasonNumber, date);
 
     const judged = yield* judgeSeasonEnd(seasonNumber, streamEvents);
 

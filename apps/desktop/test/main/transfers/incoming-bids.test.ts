@@ -15,6 +15,7 @@ import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { aiPlaceBid, getTransfersScreen, respondToBid } from "../../../src/main/transfers/index.js";
 import { loadStreamEvents } from "../../../src/main/season/decider.js";
 import { getNewsInbox } from "../../../src/main/career/index.js";
+import { loadGameDate } from "../../../src/main/season/currentSeason.js";
 
 let savesDir: string;
 
@@ -96,7 +97,7 @@ const seedBidForUserPlayer = (saveId: SaveId, amount = 1_000_000) =>
         // transfer it is about to bid for. Funding it keeps these tests about the seller branch
         // rather than about budget arithmetic, which `transfers.test.ts` already covers.
         yield* sql`UPDATE club_budgets SET transfer_budget_remaining = 500000000, wage_budget = 5000000 WHERE club_id = ${buyer}`;
-        const result = yield* aiPlaceBid(buyer, player.id as PlayerId, amount, 1);
+        const result = yield* aiPlaceBid(buyer, player.id as PlayerId, amount, 1, yield* loadGameDate);
         return { buyer, bidId: result!.id as string };
       }),
     );
@@ -162,7 +163,7 @@ it.effect("a bid between two AI clubs still resolves inside the command that pla
       }),
     );
 
-    yield* withSave(save.id, aiPlaceBid(buyer, playerId, 1_000_000, 1));
+    yield* withSave(save.id, Effect.flatMap(loadGameDate, (on) => aiPlaceBid(buyer, playerId, 1_000_000, 1, on)));
 
     const bids = yield* allBids(save.id);
     const placed = bids.find((bid) => bid.sellingClubId === seller)!;
@@ -221,7 +222,7 @@ it.effect("writes no arrival event for a bid the human club is not selling into"
       }),
     );
 
-    yield* withSave(save.id, aiPlaceBid(buyer, playerId, 1_000_000, 1));
+    yield* withSave(save.id, Effect.flatMap(loadGameDate, (on) => aiPlaceBid(buyer, playerId, 1_000_000, 1, on)));
 
     const events = yield* clubStreamEvents(save.id, squad.club.id);
     strictEqual(events.filter((event) => event.tag === "BidReceived").length, 0);

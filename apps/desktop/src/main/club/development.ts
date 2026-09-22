@@ -3,6 +3,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import {
   ALL_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
+  ageOn,
   coachModifier,
   developPlayer,
   type Category,
@@ -19,17 +20,6 @@ const toSnakeCase = (attribute: string): string =>
 
 /** Every attribute column (including hidden) that Player Development writes back. */
 const ATTRIBUTE_COLUMNS = [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map(toSnakeCase);
-
-const ageFromDateOfBirth = (dateOfBirth: string): number => {
-  const dob = new Date(dateOfBirth);
-  const now = new Date();
-  let age = now.getFullYear() - dob.getFullYear();
-  const hasHadBirthdayThisYear =
-    now.getMonth() > dob.getMonth() ||
-    (now.getMonth() === dob.getMonth() && now.getDate() >= dob.getDate());
-  if (!hasHadBirthdayThisYear) age -= 1;
-  return age;
-};
 
 interface PlayerDevRow {
   readonly id: PlayerId;
@@ -48,7 +38,7 @@ const selectList = [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES]
  * `SeasonConcluded` (ADR-0007), like the other season-boundary reactions. Applies each player's
  * persisted Training Focus (a missing/`null` focus = the unmodified no-focus development); AI
  * clubs' players have no focus and so always develop unmodified. */
-const developClubPlayers = (clubId: ClubId, seasonNumber: number) =>
+const developClubPlayers = (clubId: ClubId, seasonNumber: number, concludedOn: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const rows = yield* sql.unsafe<PlayerDevRow>(
@@ -72,7 +62,7 @@ const developClubPlayers = (clubId: ClubId, seasonNumber: number) =>
       ) as PlayerAttributes;
       const next = developPlayer(
         attributes,
-        ageFromDateOfBirth(row.dateOfBirth),
+        ageOn(row.dateOfBirth, concludedOn),
         row.potentialAbility,
         row.focus ?? undefined,
         coachMultiplier,
@@ -114,12 +104,15 @@ const developClubPlayers = (clubId: ClubId, seasonNumber: number) =>
 /** Develops every player on every club once for the concluded Season (per-`SeasonConcluded` Player
  * Development). Called from `advanceCalendar`'s season-complete branch as an in-process
  * synchronous reactor to `SeasonConcluded` (ADR-0007) — same pattern as the other season-boundary
- * reactions, in the same request as the rest of the concluded-Season work. */
-export const developPlayersForSeason = (seasonNumber: number) =>
+ * reactions, in the same request as the rest of the concluded-Season work.
+ *
+ * `concludedOn` is the game date the Season concluded on, which every player's age is measured
+ * against — the caller already holds it, so development never reads a clock of its own. */
+export const developPlayersForSeason = (seasonNumber: number, concludedOn: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const clubs = yield* sql<{ id: ClubId }>`SELECT id FROM clubs`;
     for (const club of clubs) {
-      yield* developClubPlayers(club.id, seasonNumber);
+      yield* developClubPlayers(club.id, seasonNumber, concludedOn);
     }
   });

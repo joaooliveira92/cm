@@ -2,6 +2,7 @@ import { PlayerId, type ClubId } from "@cm-clone/contracts";
 import {
   DEFAULT_CONTRACT_YEARS,
   NATION_PROFILES,
+  ageOn,
   compareCodeUnits,
   createSeededRng,
   deriveId,
@@ -135,9 +136,3 @@ export const youthIntakePlayerId =
   (clubGenerationSeed: number, seasonNumber: number) =>
   (slotIndex: number): PlayerId =>
     PlayerId.make(deriveId(clubGenerationSeed, "youth-intake", seasonNumber, "player", slotIndex));
-
-/** Whole years between an ISO date of birth and an ISO date. */
-const ageOn = (dateOfBirth: string, date: string): number => {
-  const age = Number(date.slice(0, 4)) - Number(dateOfBirth.slice(0, 4));
-  return date.slice(5) >= dateOfBirth.slice(5) ? age : age - 1;
-};

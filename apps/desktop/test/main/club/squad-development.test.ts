@@ -17,6 +17,7 @@ import {
   getSquadDevelopment,
   setTrainingFocus,
 } from "../../../src/main/club/index.js";
+import { loadGameDate } from "../../../src/main/season/currentSeason.js";
 
 let savesDir: string;
 
@@ -74,7 +75,7 @@ it.effect(
       );
 
       // The first recorded Season has no starting point, so it carries no comparison.
-      yield* withSave(save.id, developPlayersForSeason(1));
+      yield* withSave(save.id, Effect.flatMap(loadGameDate, (on) => developPlayersForSeason(1, on)));
       const afterOne = yield* getSquadDevelopment(savesDir, save.id);
       ok(
         afterOne.players.every(
@@ -85,7 +86,7 @@ it.effect(
         ),
       );
 
-      yield* withSave(save.id, developPlayersForSeason(2));
+      yield* withSave(save.id, Effect.flatMap(loadGameDate, (on) => developPlayersForSeason(2, on)));
       const eventsBefore = yield* eventCount(save.id);
       const afterTwo = yield* getSquadDevelopment(savesDir, save.id);
       strictEqual(yield* eventCount(save.id), eventsBefore, "a read appends nothing");

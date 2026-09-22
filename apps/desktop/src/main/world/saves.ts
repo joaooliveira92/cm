@@ -25,6 +25,7 @@ import {
   LEAGUE_SETUP_INDEX,
   resolveSelection,
   resolveWorld,
+  seasonStartDate,
   validatePillarDistribution,
 } from "@cm-clone/shared";
 import { reportPackCoverage } from "./displayNames.js";
@@ -189,7 +190,7 @@ export const beginCareer = (savesDir: string, options: BeginCareerOptions) =>
         snapshotId: options.snapshotId,
         world: resolveWorld(LEAGUE_SETUP_INDEX, resolved),
       });
-      yield* initializeSeasonEconomy(1, deriveSeed(worldSeed, "economy", 1));
+      yield* initializeSeasonEconomy(1, deriveSeed(worldSeed, "economy", 1), seasonStartDate(referenceYear, 1));
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped);
 
     return { id };

@@ -17,6 +17,7 @@ import {
   getSquad,
 } from "../../../src/main/club/index.js";
 import { seasonDevelopments } from "../../../src/main/club/training.js";
+import { loadGameDate } from "../../../src/main/season/currentSeason.js";
 
 let savesDir: string;
 
@@ -107,9 +108,9 @@ it.effect(
       const before = yield* getPlayerDevelopmentHistory(savesDir, save.id, squad.players[0]!.id);
       deepStrictEqual(before.seasons, []);
 
-      yield* withSave(save.id, developPlayersForSeason(1));
+      yield* withSave(save.id, Effect.flatMap(loadGameDate, (on) => developPlayersForSeason(1, on)));
       const afterOne = yield* getSquad(savesDir, save.id);
-      yield* withSave(save.id, developPlayersForSeason(2));
+      yield* withSave(save.id, Effect.flatMap(loadGameDate, (on) => developPlayersForSeason(2, on)));
       const afterTwo = yield* getSquad(savesDir, save.id);
 
       // A player whose Attributes really moved in Season 2, so the assertion cannot pass vacuously.

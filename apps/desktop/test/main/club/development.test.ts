@@ -5,7 +5,7 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { coachModifier, developPlayer, type Category, type PlayerAttributes } from "@cm-clone/shared";
+import { ageOn, coachModifier, developPlayer, type Category, type PlayerAttributes } from "@cm-clone/shared";
 import type { ClubId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { loadCoachQuality } from "../../../src/main/career/index.js";
 import { Effect } from "effect";
@@ -73,6 +73,18 @@ const countEvents = (saveId: string, streamType: string, tag: string) =>
     }),
   );
 
+/** The game date Season `seasonNumber` concluded on — the date Player Development measures every
+ * player's age against, which is not the date the squad was read on before the Season. */
+const concludedOn = (saveId: SaveId, seasonNumber: number) =>
+  withSave(
+    saveId,
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const rows = yield* sql<{ gameDate: string }>`SELECT game_date as "gameDate" FROM season WHERE season_number = ${seasonNumber}`;
+      return rows[0]!.gameDate;
+    }),
+  );
+
 /** Advances the calendar until `SeasonConcluded` fires (the per-Season Player Development
  * boundary), bounded so a broken state machine can't hang the suite. */
 const advanceToSeasonEnd = (saveId: SaveId) =>
@@ -100,17 +112,20 @@ it.effect("advancing to SeasonConcluded develops every user-club player determin
     // world seed, so it differs per save.
     const coach = yield* withSave(save.id, loadCoachQuality(clubId));
     const coachMultiplier = coach === null ? 1 : coachModifier(coach);
+
+    yield* advanceToSeasonEnd(save.id);
+
+    // Development measures age on the date the Season concluded, not the date the squad was read.
+    const on = yield* concludedOn(save.id, 1);
     const expected = new Map(
       before.map((player) => {
         const m = meta.get(player.id)!;
         return [
           player.id,
-          developPlayer(player.attributes as PlayerAttributes, player.age, m.potentialAbility, m.focus ?? undefined, coachMultiplier),
+          developPlayer(player.attributes as PlayerAttributes, ageOn(m.dateOfBirth, on), m.potentialAbility, m.focus ?? undefined, coachMultiplier),
         ];
       }),
     );
-
-    yield* advanceToSeasonEnd(save.id);
 
     // Contract expiry at SeasonConcluded can release some of the user's players to Free Agency, so
     // the squad may legitimately shrink — but every player who remains must have developed exactly
@@ -221,11 +236,13 @@ it.effect("a focused Category's growth step is multiplied at SeasonConcluded whi
     // Focus Technical: the expected next-season set applies the multiplier only to Technical.
     const coach = yield* withSave(save.id, loadCoachQuality(clubId));
     const coachMultiplier = coach === null ? 1 : coachModifier(coach);
-    const expectedFocused = developPlayer(beforePlayer.attributes as PlayerAttributes, beforePlayer.age, m.potentialAbility, "technical", coachMultiplier);
-    const expectedUnmodified = developPlayer(beforePlayer.attributes as PlayerAttributes, beforePlayer.age, m.potentialAbility, undefined, coachMultiplier);
 
     yield* setTrainingFocus(savesDir, save.id, targetPlayerId, "technical");
     yield* advanceToSeasonEnd(save.id);
+
+    const age = ageOn(m.dateOfBirth, yield* concludedOn(save.id, 1));
+    const expectedFocused = developPlayer(beforePlayer.attributes as PlayerAttributes, age, m.potentialAbility, "technical", coachMultiplier);
+    const expectedUnmodified = developPlayer(beforePlayer.attributes as PlayerAttributes, age, m.potentialAbility, undefined, coachMultiplier);
 
     const after = yield* withSave(save.id, loadSquadPlayers(clubId));
     const afterPlayer = after.find((p) => p.id === targetPlayerId)!;

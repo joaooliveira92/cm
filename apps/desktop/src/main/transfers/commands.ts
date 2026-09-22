@@ -50,7 +50,7 @@ const buildTransfersScreenView = (club: ClubSummary) =>
     const budget = yield* loadClubBudgetRow(club.id);
     const wageBudgetUsed = yield* loadWageBudgetUsed(club.id);
     const { incoming, outgoing } = yield* loadBidsForClub(club.id);
-    const players = yield* loadAllPlayersEcon;
+    const players = yield* loadAllPlayersEcon(seasonRow.currentDate);
 
     const freeAgents = players.filter((player) => player.clubId === null).map(toMarketPlayerView);
     const marketPlayers = players
@@ -103,7 +103,7 @@ export const placeBid = (savesDir: string, saveId: SaveId, playerId: PlayerId, a
         return yield* new TransferWindowClosedError({ saveId });
       }
 
-      const player = yield* loadPlayerEcon(playerId);
+      const player = yield* loadPlayerEcon(playerId, seasonRow.currentDate);
       if (!player) {
         return yield* new PlayerNotFoundError({ playerId });
       }
@@ -136,6 +136,7 @@ export const placeBid = (savesDir: string, saveId: SaveId, playerId: PlayerId, a
           biddingClubId: club.id,
           amount,
           seasonNumber: seasonRow.seasonNumber,
+          gameDate: seasonRow.currentDate,
         });
       }
 
@@ -201,7 +202,7 @@ export const respondToBid = (
         // club.id` above already proves it) — resolve its reaction to the counter immediately via
         // the same 1.15x-or-withdraw threshold `aiClubs.ts`'s own bidding uses (ticket 17), rather
         // than leaving the Bid `countered` forever with no AI turn to act on it.
-        yield* resolveAiCounterOffer(bidId, bid.biddingClubId, seasonRow.seasonNumber);
+        yield* resolveAiCounterOffer(bidId, bid.biddingClubId, seasonRow.seasonNumber, seasonRow.currentDate);
       } else {
         yield* completeTransfer({
           playerId: bid.playerId,
@@ -209,6 +210,7 @@ export const respondToBid = (
           biddingClubId: bid.biddingClubId,
           amount: bid.amount,
           seasonNumber: seasonRow.seasonNumber,
+          gameDate: seasonRow.currentDate,
         });
         yield* sql`UPDATE bids SET status = 'accepted' WHERE id = ${bidId}`;
       }
@@ -261,6 +263,7 @@ export const respondAsBidder = (
         biddingClubId: bid.biddingClubId,
         amount: bid.counterAmount,
         seasonNumber: seasonRow.seasonNumber,
+        gameDate: seasonRow.currentDate,
       });
       yield* sql`UPDATE bids SET status = 'accepted' WHERE id = ${bidId}`;
 
@@ -281,7 +284,7 @@ export const signFreeAgent = (savesDir: string, saveId: SaveId, playerId: Player
         return yield* new TransferWindowClosedError({ saveId });
       }
 
-      const player = yield* loadPlayerEcon(playerId);
+      const player = yield* loadPlayerEcon(playerId, seasonRow.currentDate);
       if (!player) {
         return yield* new PlayerNotFoundError({ playerId });
       }
@@ -330,7 +333,7 @@ export const renewContract = (savesDir: string, saveId: SaveId, playerId: Player
         return yield* new TransferWindowClosedError({ saveId });
       }
 
-      const player = yield* loadPlayerEcon(playerId);
+      const player = yield* loadPlayerEcon(playerId, seasonRow.currentDate);
       if (!player) {
         return yield* new PlayerNotFoundError({ playerId });
       }

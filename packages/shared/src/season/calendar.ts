@@ -198,6 +198,34 @@ export const withinMidSeasonWindow = (windows: SeasonWindows, date: IsoDate): bo
   date >= windows.midSeasonOpen && date < windows.midSeasonClose;
 
 // ---------------------------------------------------------------------------
+// Age
+// ---------------------------------------------------------------------------
+
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const isoParts = (date: IsoDate): readonly [number, number, number] => {
+  const match = ISO_DATE.exec(date);
+  if (match === null) throw new Error(`not an ISO date: ${date}`);
+  return [Number(match[1]), Number(match[2]), Number(match[3])];
+};
+
+/**
+ * A player's age in whole years on `date`, the game date the caller stands on.
+ *
+ * Compared field by field rather than through `Date`, so the answer has no timezone, no locale and
+ * no wall clock in it: an age is world state, and the same save must price and develop a player
+ * identically on every machine and in every year it is played. A 29 February birthday counts as
+ * passed from 1 March in a non-leap year. A malformed date is a defect, not an age of `NaN` flowing
+ * into a wage.
+ */
+export const ageOn = (dateOfBirth: IsoDate, date: IsoDate): number => {
+  const [birthYear, birthMonth, birthDay] = isoParts(dateOfBirth);
+  const [year, month, day] = isoParts(date);
+  const hadBirthday = month > birthMonth || (month === birthMonth && day >= birthDay);
+  return year - birthYear - (hadBirthday ? 0 : 1);
+};
+
+// ---------------------------------------------------------------------------
 // Display
 // ---------------------------------------------------------------------------
 

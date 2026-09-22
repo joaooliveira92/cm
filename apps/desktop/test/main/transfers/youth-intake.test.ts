@@ -15,11 +15,12 @@ import { deepStrictEqual, notDeepStrictEqual, ok, strictEqual } from "node:asser
 import { it } from "@effect/vitest";
 import type { SaveId } from "@cm-clone/contracts";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { DEFAULT_CONTRACT_YEARS, deriveId, deriveSeed, seasonStartDate } from "@cm-clone/shared";
+import { DEFAULT_CONTRACT_YEARS, ageOn, deriveId, deriveSeed, seasonStartDate } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { getNewsInbox } from "../../../src/main/career/index.js";
+import { getSquad } from "../../../src/main/club/index.js";
 import { youthIntakePlayerId } from "../../../src/main/season/youthIntake.js";
 import { createSave, TEST_REFERENCE_YEAR } from "../../seeded-save.js";
 import { advanceThroughBoundary } from "../boundary-helpers.js";
@@ -127,11 +128,6 @@ const loadSquadSizes = (saveId: SaveId, seasonNumber: number) =>
     }),
   );
 
-const ageOn = (dateOfBirth: string, date: string): number => {
-  const age = Number(date.slice(0, 4)) - Number(dateOfBirth.slice(0, 4));
-  return date.slice(5) >= dateOfBirth.slice(5) ? age : age - 1;
-};
-
 const userClubId = (saveId: SaveId) =>
   withSave(
     saveId,
@@ -186,6 +182,17 @@ it.effect(
         strictEqual(player.yearsRemaining, DEFAULT_CONTRACT_YEARS);
         strictEqual(player.signedSeason, 2);
         strictEqual(player.id, youthIntakePlayerId(player.clubSeed, 2)(player.squadSlot));
+      }
+
+      // The Squad screen shows the human's intake at 16-18 in their first Season: its ages are read
+      // on the game date, not on the machine's clock, which put them at 15 or younger from Season 2.
+      const squad = yield* getSquad(savesDir, save.id);
+      const humanIntake = new Set(intake.filter((row) => row.clubId === human).map((row) => row.id));
+      const shown = squad.players.filter((player) => humanIntake.has(player.id));
+      strictEqual(shown.length, humanIntake.size, "every intake player is on the Squad screen");
+      for (const player of shown) {
+        ok(player.age >= 16 && player.age <= 18, `${player.id} shows as ${player.age}`);
+        strictEqual(player.age, ageOn(player.dateOfBirth, openedOn));
       }
     }),
   { timeout: 60_000 },

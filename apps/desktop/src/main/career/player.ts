@@ -10,24 +10,13 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { ALL_ATTRIBUTES, HIDDEN_ATTRIBUTES, POSITIONS, overallRating as computeOverallRating, positionRating, type PlayerAttributes } from "@cm-clone/shared";
+import { ALL_ATTRIBUTES, HIDDEN_ATTRIBUTES, POSITIONS, ageOn, overallRating as computeOverallRating, positionRating, type PlayerAttributes } from "@cm-clone/shared";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
-import { CURRENT_SEASON_NUMBER_SQL } from "../season/currentSeason.js";
-
-const ageFromDateOfBirth = (dateOfBirth: string): number => {
-  const dob = new Date(dateOfBirth);
-  const now = new Date();
-  let age = now.getFullYear() - dob.getFullYear();
-  const hasHadBirthdayThisYear =
-    now.getMonth() > dob.getMonth() ||
-    (now.getMonth() === dob.getMonth() && now.getDate() >= dob.getDate());
-  if (!hasHadBirthdayThisYear) age -= 1;
-  return age;
-};
+import { CURRENT_SEASON_NUMBER_SQL, loadGameDate } from "../season/currentSeason.js";
 
 const attributeSelectList = [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map(
   (attribute) => `${attribute.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)} as "${attribute}"`,
@@ -104,7 +93,7 @@ const readPlayerProfile = (playerId: PlayerId) =>
       (r) => new PlayerPositionView({ position: r.position, familiarity: r.familiarity }),
     );
 
-    const playerAge = ageFromDateOfBirth(player.dateOfBirth);
+    const playerAge = ageOn(player.dateOfBirth, yield* loadGameDate);
     const posRatings: Record<string, number> = {};
     for (const pos of POSITIONS) {
       posRatings[pos] = positionRating(attributes, pos);

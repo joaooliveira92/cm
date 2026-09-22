@@ -173,8 +173,10 @@ export const identifyWeakPositions = (
  * club's strongest affordable player is bid on by the AI club (of the affordable ones) with the most
  * Wage Budget headroom, leaving a pending `BidReceived` for the manager to answer. Self-issued
  * in-process — never through the RpcGroup.
+ *
+ * `gameDate` is the date the window acts on; every price and wage is computed at a player's age on it.
  */
-export const runAiTransferWindow = (seasonNumber: number) =>
+export const runAiTransferWindow = (seasonNumber: number, gameDate: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const clubRows = yield* sql<{
@@ -188,7 +190,7 @@ export const runAiTransferWindow = (seasonNumber: number) =>
     }
     const leagueAverages = computeLeagueAveragePositionRatings([...squadsByClub.values()]);
 
-    const allPlayers = yield* loadAllPlayersEcon;
+    const allPlayers = yield* loadAllPlayersEcon(gameDate);
     // Players already targeted by an earlier AI club this window — a later club skips them
     // (ticket 17's documented same-window-conflict simplification, see doc comment above).
     const targetedThisWindow = new Set<string>();
@@ -233,9 +235,9 @@ export const runAiTransferWindow = (seasonNumber: number) =>
 
         targetedThisWindow.add(target.player.id);
         if (target.player.clubId === null) {
-          yield* aiSignFreeAgent(club.id, target.player.id, seasonNumber);
+          yield* aiSignFreeAgent(club.id, target.player.id, seasonNumber, gameDate);
         } else {
-          yield* aiPlaceBid(club.id, target.player.id, target.value, seasonNumber);
+          yield* aiPlaceBid(club.id, target.player.id, target.value, seasonNumber, gameDate);
         }
       }
     }
@@ -283,7 +285,7 @@ export const runAiTransferWindow = (seasonNumber: number) =>
           affordableBuyers.sort((a, b) => b.headroom - a.headroom || a.club.localeCompare(b.club));
           const buyer = affordableBuyers[0];
           if (buyer) {
-            yield* aiPlaceBid(buyer.club, candidate.player.id, candidate.value, seasonNumber);
+            yield* aiPlaceBid(buyer.club, candidate.player.id, candidate.value, seasonNumber, gameDate);
             break loop;
           }
         }

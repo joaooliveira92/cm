@@ -18,6 +18,7 @@ import {
   isExpressionStatement,
   isIdentifier,
   isImportDeclaration,
+  isNewExpression,
   isObjectLiteralExpression,
   isPropertyAccessExpression,
   isPropertyAssignment,
@@ -530,6 +531,66 @@ export function lintLocaleCompare(sourceFile: SourceFile, filePath: string): Lin
   return out
 }
 
+// ---------------------------------------------------------------------------
+// The game-clock rule (gate-red-on-dev ticket 09).
+//
+// A player's age used to be computed from `new Date()` in four main-process modules, so in-game ages
+// never advanced with the Seasons and the same seed developed and paid its players differently
+// depending on the year the game was run. The world's time is the Season's `game_date`
+// (`loadGameDate`); the machine's clock is not a game input. The rule bans the two ways of reading
+// "now" — a zero-argument `new Date()` and `Date.now()` — in the modules that hold game rules, and
+// in the pure packages, whose determinism the engineering contract already demands.
+//
+// Scoped rather than tree-wide: `world/` stamps `savedAt`/`createdAt` metadata with real time, and
+// `rpc/` measures request durations, and both are right to. `new Date(isoString)` and
+// `new Date(millis)` convert a value the caller already has, so they are left alone.
+// ---------------------------------------------------------------------------
+
+/** Repo-relative POSIX prefixes where reading the machine's clock is a defect. */
+const GAME_CLOCK_ROOTS = [
+  "apps/desktop/src/main/club/",
+  "apps/desktop/src/main/career/",
+  "apps/desktop/src/main/transfers/",
+  "apps/desktop/src/main/season/",
+  "apps/desktop/src/main/match/",
+  "packages/shared/src/",
+  "packages/game-engine/src/",
+]
+
+export function isGameClockOnly(filePath: string, cwd: string): boolean {
+  if (filePath.includes(FIXTURE_ROOT)) return true
+  const rel = relative(cwd, filePath).replaceAll("\\", "/")
+  return GAME_CLOCK_ROOTS.some((root) => rel.startsWith(root))
+}
+
+const isDateIdentifier = (node: Node): boolean => isIdentifier(node) && node.text === "Date"
+
+export function lintWallClock(sourceFile: SourceFile, filePath: string): LintViolation[] {
+  const out: LintViolation[] = []
+  const visit = (node: Node): void => {
+    const readsNow =
+      (isNewExpression(node) && isDateIdentifier(node.expression) && (node.arguments?.length ?? 0) === 0) ||
+      (isCallExpression(node) &&
+        isPropertyAccessExpression(node.expression) &&
+        isDateIdentifier(node.expression.expression) &&
+        node.expression.name.text === "now")
+    if (readsNow) {
+      const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
+      out.push({
+        file: filePath,
+        line: line + 1,
+        rule: "no-wall-clock",
+        message:
+          "Game rules must not read the machine's clock. Use the Season's game date (loadGameDate, or " +
+          "the date the caller already holds) — ages, prices and development are world state.",
+      })
+    }
+    node.forEachChild(visit)
+  }
+  visit(sourceFile)
+  return out
+}
+
 const sourceDirs = ["packages", "apps"]
 
 /**
@@ -680,17 +741,18 @@ export function lintFileSet(
       const length = lintFileLength(sourceFile, file, cwd, options.maxFileLines)
       const pragma = lintVitestEnvironmentPragma(sourceFile, file, cwd)
       const locale = isLocaleFree(file, cwd) ? lintLocaleCompare(sourceFile, file) : []
+      const clock = isGameClockOnly(file, cwd) ? lintWallClock(sourceFile, file) : []
       if (fixtureFiles.includes(file)) {
         fixtureBoundaries.push({
           file,
-          violations: [...standard, ...boundary, ...slate, ...length, ...pragma, ...locale],
+          violations: [...standard, ...boundary, ...slate, ...length, ...pragma, ...locale, ...clock],
         })
       } else {
         // Slate sites are counted, not reported here: the backlog ratchet in
         // `main` decides which of them are a regression and which are the
         // recorded migration debt. Reporting each one would drown the gate in
         // 391 known violations.
-        treeViolations.push(...standard, ...boundary, ...length, ...pragma, ...locale)
+        treeViolations.push(...standard, ...boundary, ...length, ...pragma, ...locale, ...clock)
         if (slate.length > 0) {
           slateCounts.set(relative(cwd, file).replaceAll("\\", "/"), slate.length)
         }

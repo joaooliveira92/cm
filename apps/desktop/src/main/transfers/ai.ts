@@ -70,13 +70,13 @@ export const decideAiSellerResponse = (
  * unreachable, see the note there) and `respondToBid`'s counter branch, the realistic path where
  * the human-controlled club counters an incoming Bid from an AI club.
  */
-export const resolveAiCounterOffer = (bidId: BidId, biddingClubId: ClubId, seasonNumber: number) =>
+export const resolveAiCounterOffer = (bidId: BidId, biddingClubId: ClubId, seasonNumber: number, gameDate: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const bid = yield* loadBidRow(bidId);
     if (!bid || bid.counterAmount === null) return;
 
-    const player = yield* loadPlayerEcon(bid.playerId);
+    const player = yield* loadPlayerEcon(bid.playerId, gameDate);
     if (!player || player.clubId === null) {
       yield* sql`UPDATE bids SET status = 'withdrawn' WHERE id = ${bidId}`;
       return;
@@ -97,6 +97,7 @@ export const resolveAiCounterOffer = (bidId: BidId, biddingClubId: ClubId, seaso
         biddingClubId,
         amount: bid.counterAmount,
         seasonNumber,
+        gameDate,
       });
       yield* sql`UPDATE bids SET status = 'accepted' WHERE id = ${bidId}`;
     } else {
@@ -126,10 +127,16 @@ export const resolveAiCounterOffer = (bidId: BidId, biddingClubId: ClubId, seaso
  * checklist explicitly describes a "countered" reaction) and for any future caller that bids a
  * different amount.
  */
-export const aiPlaceBid = (buyingClubId: ClubId, playerId: PlayerId, amount: number, seasonNumber: number) =>
+export const aiPlaceBid = (
+  buyingClubId: ClubId,
+  playerId: PlayerId,
+  amount: number,
+  seasonNumber: number,
+  gameDate: string,
+) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const player = yield* loadPlayerEcon(playerId);
+    const player = yield* loadPlayerEcon(playerId, gameDate);
     if (!player || player.clubId === null || player.clubId === buyingClubId) {
       return null;
     }
@@ -174,6 +181,7 @@ export const aiPlaceBid = (buyingClubId: ClubId, playerId: PlayerId, amount: num
         biddingClubId: buyingClubId,
         amount,
         seasonNumber,
+        gameDate,
       });
     }
 
@@ -181,7 +189,7 @@ export const aiPlaceBid = (buyingClubId: ClubId, playerId: PlayerId, amount: num
       VALUES (${id}, ${playerId}, ${player.clubId}, ${buyingClubId}, ${amount}, ${decision.counterAmount}, ${status}, ${seasonNumber})`;
 
     if (decision.action === "counter") {
-      yield* resolveAiCounterOffer(id, buyingClubId, seasonNumber);
+      yield* resolveAiCounterOffer(id, buyingClubId, seasonNumber, gameDate);
     }
 
     return { id, status };
@@ -192,10 +200,10 @@ export const aiPlaceBid = (buyingClubId: ClubId, playerId: PlayerId, amount: num
  * Agent for Credits 0 — no Bid/negotiation step for Free Agents (ADR-0005), so unlike `aiPlaceBid`
  * this is the whole flow by itself. Self-issued in-process by `aiClubs.ts`.
  */
-export const aiSignFreeAgent = (clubId: ClubId, playerId: PlayerId, seasonNumber: number) =>
+export const aiSignFreeAgent = (clubId: ClubId, playerId: PlayerId, seasonNumber: number, gameDate: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const player = yield* loadPlayerEcon(playerId);
+    const player = yield* loadPlayerEcon(playerId, gameDate);
     if (!player || player.clubId !== null) return;
 
     const wage = weeklyWage(player.overallRating, player.age, player.potentialAbility);

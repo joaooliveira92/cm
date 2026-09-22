@@ -86,3 +86,6 @@ with no outstanding assertion failures.
 - [08 — warn before the rollover leaves the squad short](issues/08-short-squad-advisory.md): resolved
   2026-09-22. A Continue advisory linking to Contract Expiry. Decision request 01's note is implemented.
 
+- [09 — player ages read the game date](issues/09-player-ages-read-the-game-date.md): resolved 2026-09-22.
+  Ages, development and prices no longer depend on the machine's date; a lint rule keeps the clock out.
+

@@ -22,6 +22,7 @@ import {
 import { advanceCalendar } from "../../../src/main/season/index.js";
 import { createSave } from "../../seeded-save.js";
 import { aiPlaceBid, loadAllPlayersEcon, respondToBid } from "../../../src/main/transfers/index.js";
+import { loadGameDate } from "../../../src/main/season/currentSeason.js";
 
 let savesDir: string;
 
@@ -213,7 +214,7 @@ it.effect("aiPlaceBid resolves the seller's response automatically when one AI c
       save.id,
       Effect.gen(function* () {
         const sql = yield* SqlClient;
-        const players = yield* loadAllPlayersEcon;
+        const players = yield* loadAllPlayersEcon(yield* loadGameDate);
         const target = players.find((player) => player.clubId === sellerClub!.id)!;
         const value = transferValue(target.overallRating, target.age, target.potentialAbility);
         yield* sql`UPDATE club_budgets SET transfer_budget_remaining = 100000000, wage_budget = 1000000 WHERE club_id = ${buyerClub!.id}`;
@@ -221,7 +222,7 @@ it.effect("aiPlaceBid resolves the seller's response automatically when one AI c
       }),
     );
 
-    const result = yield* withSave(save.id, aiPlaceBid(buyerClub!.id, target.id, value, 1));
+    const result = yield* withSave(save.id, Effect.flatMap(loadGameDate, (gameDate) => aiPlaceBid(buyerClub!.id, target.id, value, 1, gameDate)));
     ok(result);
     // Bidding exactly Transfer Value always clears `decideAiSellerResponse`'s >=1.0x accept
     // threshold — the "outright accept" branch, resolved with no human ever in the loop.
@@ -245,7 +246,7 @@ it.effect("respondToBid's counter branch resolves the AI bidder immediately: acc
       save.id,
       Effect.gen(function* () {
         const sql = yield* SqlClient;
-        const players = yield* loadAllPlayersEcon;
+        const players = yield* loadAllPlayersEcon(yield* loadGameDate);
         const target = players.find((player) => player.id === targetPlayerId)!;
         const value = transferValue(target.overallRating, target.age, target.potentialAbility);
         // Insert the incoming Bid directly (ticket 16's pattern: there's no AI-bid-origination
@@ -290,7 +291,7 @@ it.effect("respondToBid's counter branch withdraws the AI bidder immediately whe
       save.id,
       Effect.gen(function* () {
         const sql = yield* SqlClient;
-        const players = yield* loadAllPlayersEcon;
+        const players = yield* loadAllPlayersEcon(yield* loadGameDate);
         const target = players.find((player) => player.id === targetPlayerId)!;
         const value = transferValue(target.overallRating, target.age, target.potentialAbility);
         yield* sql`INSERT INTO bids (id, player_id, selling_club_id, bidding_club_id, amount, counter_amount, status, season_number)

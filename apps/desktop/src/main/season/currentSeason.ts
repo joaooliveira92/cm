@@ -7,10 +7,12 @@ import {
   type MatchId,
   type SEASON_PHASES,
 } from "@cm-clone/contracts";
+import { seasonStartDate } from "@cm-clone/shared";
 import { loadMatchReadiness } from "../club/matchReadiness.js";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "../world/displayNames.js";
+import { readGenerationManifest } from "../world/worldGeneration.js";
 
 /**
  * "The save's current season" — one home for a row every command and read path needs.
@@ -57,6 +59,22 @@ export const loadCurrentSeasonRow = Effect.gen(function* () {
  * command handler behind `withExistingSave`. Use `loadCurrentSeasonRow` where the absence of a
  * season is a state the caller can actually reach. */
 export const loadSeasonRow = loadCurrentSeasonRow.pipe(Effect.map((row) => row!));
+
+/**
+ * The date the world stands on: the current Season's `game_date`, or — before the first Season row
+ * exists, while the human is still choosing a club — the date Season 1 will open on.
+ *
+ * Every age the main process shows or prices is measured on this, never on the machine's clock: an
+ * age read off the wall clock stops advancing with the Seasons and makes the same seed develop and
+ * pay its players differently depending on the year the game is run. Callers already holding the
+ * date (a command that loaded the season row, the conclusion step) pass it instead of re-reading.
+ */
+export const loadGameDate = Effect.gen(function* () {
+  const row = yield* loadCurrentSeasonRow;
+  if (row !== undefined) return row.currentDate;
+  const manifest = yield* readGenerationManifest;
+  return seasonStartDate(manifest.referenceYear, 1);
+});
 
 /** Every season number the save has recorded, newest first. The head is the current season; the
  * length is the manager's tenure, which is the one caller that needs more than the head row. */

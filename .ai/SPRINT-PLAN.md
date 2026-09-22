@@ -263,8 +263,8 @@ Agent-startable work, in order:
 2. **gate-red-on-dev**: [07](../.scratch/gate-red-on-dev/issues/07-youth-intake-at-rollover.md) (the Youth
    Intake squad floor) and [08](../.scratch/gate-red-on-dev/issues/08-short-squad-advisory.md) (its readiness
    advisory) shipped 2026-09-22, [note](../.agents/notes/implemented/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md)
-   implemented. Next [09](../.scratch/gate-red-on-dev/issues/09-player-ages-read-the-game-date.md) (**ages read the wall clock**, so
-   the same seed can differ by machine date) and [10](../.scratch/gate-red-on-dev/issues/10-promoted-squads-sign-contracts.md)
+   implemented, and [09](../.scratch/gate-red-on-dev/issues/09-player-ages-read-the-game-date.md) (ages read the game date, not the
+   wall clock). Next [10](../.scratch/gate-red-on-dev/issues/10-promoted-squads-sign-contracts.md)
    (promoted squads sign no Contracts).
 3. **Knowledge-limited Player reads have a decision and no ticket.** [Group I decision request 01](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md)
    was answered on 2026-09-19 (Option A, [note](../.agents/notes/proposed/architecture/2026-09-19-knowledge-limits-every-player-read.md)),

@@ -157,6 +157,8 @@ export const completeTransfer = (params: {
   readonly biddingClubId: ClubId;
   readonly amount: number;
   readonly seasonNumber: number;
+  /** The game date the transfer happens on; the buyer's wage for the player is priced at their age on it. */
+  readonly gameDate: string;
 }) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
@@ -165,7 +167,7 @@ export const completeTransfer = (params: {
     // had already been reassigned) would leave the two clubs' streams/read-model out of sync.
     return yield* sql.withTransaction(
       Effect.gen(function* () {
-        const player = yield* loadPlayerEcon(params.playerId);
+        const player = yield* loadPlayerEcon(params.playerId, params.gameDate);
         if (!player) {
           return yield* new PlayerNotFoundError({ playerId: params.playerId });
         }

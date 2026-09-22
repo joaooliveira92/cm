@@ -2,6 +2,7 @@ import { MarketPlayerView, type ClubId, type PlayerId } from "@cm-clone/contract
 import {
   ALL_ATTRIBUTES,
   type POSITIONS,
+  ageOn,
   overallRating,
   transferValue,
   type PlayerAttributes,
@@ -14,17 +15,6 @@ import { displayNames } from "../world/displayNames.js";
 // ---------------------------------------------------------------------------
 // Player economics: Overall Rating / age / Potential Ability -> Transfer Value / wage
 // ---------------------------------------------------------------------------
-
-const ageFromDateOfBirth = (dateOfBirth: string): number => {
-  const dob = new Date(dateOfBirth);
-  const now = new Date();
-  let age = now.getFullYear() - dob.getFullYear();
-  const hasHadBirthdayThisYear =
-    now.getMonth() > dob.getMonth() ||
-    (now.getMonth() === dob.getMonth() && now.getDate() >= dob.getDate());
-  if (!hasHadBirthdayThisYear) age -= 1;
-  return age;
-};
 
 const attributeSelectList = (prefix: string) =>
   ALL_ATTRIBUTES.map(
@@ -56,8 +46,11 @@ export interface PlayerEcon {
 /** Every player in the save, ratings included, club-agnostic (Free Agents have `clubId: null`) —
  * assumes a `SqlClient` for the save's SQLite file in context. Backs both the market screen and
  * the wage/Transfer Value formulas used by Bid/Sign/Renew commands. Exported for `aiClubs.ts`
- * (ticket 17), which needs the same league-wide player pool to scout weak-slot targets. */
-export const loadAllPlayersEcon = Effect.gen(function* () {
+ * (ticket 17), which needs the same league-wide player pool to scout weak-slot targets.
+ *
+ * Ages are measured on `on`, the game date the caller stands on (see `loadGameDate`), so a price
+ * never depends on the machine's clock. */
+export const loadAllPlayersEcon = (on: string) => Effect.gen(function* () {
   const sql = yield* SqlClient;
   const nameOf = yield* displayNames;
   const playerRows = yield* sql.unsafe<PlayerEconRow>(
@@ -86,7 +79,7 @@ export const loadAllPlayersEcon = Effect.gen(function* () {
       clubName: row.clubId === null ? null : nameOf(row.clubId),
       firstName: row.firstName,
       lastName: row.lastName,
-      age: ageFromDateOfBirth(row.dateOfBirth),
+      age: ageOn(row.dateOfBirth, on),
       overallRating: overallRating(attributes, positions),
       potentialAbility: row.potentialAbility,
       positions,
@@ -94,9 +87,9 @@ export const loadAllPlayersEcon = Effect.gen(function* () {
   });
 });
 
-export const loadPlayerEcon = (playerId: PlayerId) =>
+export const loadPlayerEcon = (playerId: PlayerId, on: string) =>
   Effect.gen(function* () {
-    const players = yield* loadAllPlayersEcon;
+    const players = yield* loadAllPlayersEcon(on);
     return players.find((player) => player.id === playerId) ?? null;
   });
 

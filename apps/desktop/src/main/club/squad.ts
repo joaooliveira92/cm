@@ -6,6 +6,7 @@ import {
   ALL_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   POSITIONS,
+  ageOn,
   nationName,
   overallRating,
   positionRating,
@@ -16,18 +17,7 @@ import {
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "../world/displayNames.js";
-import { CURRENT_SEASON_NUMBER_SQL } from "../season/currentSeason.js";
-
-const ageFromDateOfBirth = (dateOfBirth: string): number => {
-  const dob = new Date(dateOfBirth);
-  const now = new Date();
-  let age = now.getFullYear() - dob.getFullYear();
-  const hasHadBirthdayThisYear =
-    now.getMonth() > dob.getMonth() ||
-    (now.getMonth() === dob.getMonth() && now.getDate() >= dob.getDate());
-  if (!hasHadBirthdayThisYear) age -= 1;
-  return age;
-};
+import { CURRENT_SEASON_NUMBER_SQL, loadGameDate } from "../season/currentSeason.js";
 
 interface PlayerRow {
   readonly id: PlayerId;
@@ -64,10 +54,12 @@ export const loadUserClub = Effect.gen(function* () {
   );
 });
 
-/** A club's squad, ratings included — assumes the caller already has a `SqlClient` for the save's SQLite file in context. */
+/** A club's squad, ratings included — assumes the caller already has a `SqlClient` for the save's SQLite file in context.
+ *  Each age is measured on the game date (`loadGameDate`), never on the machine's clock. */
 export const loadSquadPlayers = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+    const gameDate = yield* loadGameDate;
 
     const playerRows = yield* sql.unsafe<PlayerRow>(
       `SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", p.date_of_birth as "dateOfBirth", ${attributeSelectList},
@@ -100,7 +92,7 @@ export const loadSquadPlayers = (clubId: ClubId) =>
       ) as PlayerAttributes;
 
       const overall = overallRating(attributes, positions);
-      const age = ageFromDateOfBirth(row.dateOfBirth);
+      const age = ageOn(row.dateOfBirth, gameDate);
       const positionRatings = Object.fromEntries(
         POSITIONS.map((position) => [position, positionRating(attributes, position)]),
       );

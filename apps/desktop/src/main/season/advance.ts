@@ -264,7 +264,7 @@ const runAdvance = (saveId: SaveId) =>
       // AI-club transfer activity (ticket 17 / ADR-0005) fires at the mid-season window's open —
       // this `windowOpen` boundary *is* that open. Self-issued in-process, never through the
       // RpcGroup.
-      yield* runAiTransferWindow(row.seasonNumber);
+      yield* runAiTransferWindow(row.seasonNumber, boundary.date);
     } else {
 
       // A window closes when the calendar moves out of it, which is a fact about the two dates
@@ -277,8 +277,9 @@ const runAdvance = (saveId: SaveId) =>
         });
         transferWindowClosed = "pre_season";
         // The pre-season window's open is the season's start rather than a boundary the advance
-        // stops at, so its close is the first moment AI transfer activity has to hook into.
-        yield* runAiTransferWindow(row.seasonNumber);
+        // stops at, so its close is the first moment AI transfer activity has to hook into. The
+        // calendar has not moved yet, so the window acts on the date it still stands on.
+        yield* runAiTransferWindow(row.seasonNumber, row.currentDate);
       } else if (
         row.phase === "mid_window_open" &&
         !withinMidSeasonWindow(horizon.windows, boundary.date)
