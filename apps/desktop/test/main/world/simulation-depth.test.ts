@@ -10,6 +10,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach, describe } from "vitest";
 import { NationId, NationSelectionIntentPayload, ScopeOptionId, type ClubId } from "@cm-clone/contracts";
 import {
+  ageOn,
   collapseSquadStrength,
   computeSquadQuality,
   createSeededRng,
@@ -17,6 +18,7 @@ import {
   generateSquadAtStrength,
   positionRating,
   POSITIONS,
+  seasonStartDate,
   SQUAD_SLOTS,
   type PlayerAttributes,
 } from "@cm-clone/shared";
@@ -272,6 +274,22 @@ describe("crossing the depth boundary at the rollover", () => {
         }),
       );
 
+      // Season 1's generated squads, aged on Season 1's opening date: the spread a conjured squad
+      // must match on its own opening date.
+      const generated = yield* withSave(
+        saveId,
+        Effect.gen(function* () {
+          const sql = yield* SqlClient;
+          const [manifest] = yield* sql<{ referenceYear: number }>`
+            SELECT reference_year as "referenceYear" FROM generation_manifest`;
+          const births = yield* sql<{ dateOfBirth: string }>`
+            SELECT date_of_birth as "dateOfBirth" FROM players`;
+          const referenceYear = manifest!.referenceYear;
+          const opening = seasonStartDate(referenceYear, 1);
+          return { referenceYear, ages: births.map((row) => ageOn(row.dateOfBirth, opening)) };
+        }),
+      );
+
       for (let advance = 0; advance < 200; advance += 1) {
         const result = yield* advanceThroughBoundary(savesDir, saveId);
         if (result.advance.season.seasonNumber >= 2) break;
@@ -322,8 +340,10 @@ describe("crossing the depth boundary at the rollover", () => {
             wage: number | null;
             yearsRemaining: number | null;
             signedSeason: number | null;
+            dateOfBirth: string;
           }>`SELECT p.id, p.club_id as "clubId", cl.generation_seed as "clubSeed", p.squad_slot as "squadSlot",
-                    ct.wage, ct.years_remaining as "yearsRemaining", ct.signed_season as "signedSeason"
+                    ct.wage, ct.years_remaining as "yearsRemaining", ct.signed_season as "signedSeason",
+                    p.date_of_birth as "dateOfBirth"
              FROM players p JOIN clubs cl ON cl.id = p.club_id
              LEFT JOIN contracts ct ON ct.player_id = p.id
              WHERE ${sql.in("p.club_id", promoted.map((club) => club.clubId))}`;
@@ -362,6 +382,17 @@ describe("crossing the depth boundary at the rollover", () => {
       ok(
         signed.conjured.some((row) => row.yearsRemaining === 1),
         "some conjured Contract should end at the next expiry",
+      );
+
+      // Born for the Season it joins: on Season 2's opening date the conjured squad spans the same
+      // ages a Season 1 squad spans on Season 1's. Birth dates drawn against Season 1's year would
+      // make every conjured player a year older than that.
+      const seasonTwoOpening = seasonStartDate(generated.referenceYear, 2);
+      const conjuredAges = signed.conjured.map((row) => ageOn(row.dateOfBirth, seasonTwoOpening));
+      deepStrictEqual(
+        [Math.min(...conjuredAges), Math.max(...conjuredAges)],
+        [Math.min(...generated.ages), Math.max(...generated.ages)],
+        "a conjured squad should be as old on its opening date as a Season 1 squad on its own",
       );
     }),
     900_000,

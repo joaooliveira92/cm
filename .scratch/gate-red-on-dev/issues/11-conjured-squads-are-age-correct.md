@@ -12,7 +12,17 @@ Season's year. This moves promoted squads' birth dates and possibly attributes i
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A squad conjured in Season N has the same age spread, on its opening date, as a Season 1 squad on its own
-- [ ] Seeded tests that move are re-pinned with the cause stated; `pnpm check:all` green
+- [x] A squad conjured in Season N has the same age spread, on its opening date, as a Season 1 squad on its own
+- [x] Seeded tests that move are re-pinned with the cause stated; `pnpm check:all` green
+
+## Answer
+
+Resolved 2026-09-22. `reconcileSquadsWithDepth` passes the joining Season's start year to the conjured squad's
+generation. That year feeds only `birthDateForAge`: ages and attributes come from each player's random draw,
+so only birth dates move, forward by N − 1 years; world generation is untouched. The seed-5150 promotion test
+now checks that a squad conjured in Season 2 spans the same ages on its opening date as Season 1's did on its
+own ([16, 34] both; [17, 35] before the fix). No seeded test moved. The Youth Intake was already right, and
+the simulation-depth note's "always age-correct" is now true. Reviewed inline by the orchestrator.
+Report: [gate-red-on-dev-ticket-11](../../../.ai/reports/gate-red-on-dev-ticket-11.md).

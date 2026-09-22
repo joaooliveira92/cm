@@ -92,3 +92,6 @@ with no outstanding assertion failures.
 - [10 — promoted squads sign Contracts](issues/10-promoted-squads-sign-contracts.md): resolved 2026-09-22.
   One Contract path for everything a rollover generates. Filed [11](issues/11-conjured-squads-are-age-correct.md).
 
+- [11 — conjured squads are born for the Season they join](issues/11-conjured-squads-are-age-correct.md):
+  resolved 2026-09-22. The effort's queue is empty again.
+

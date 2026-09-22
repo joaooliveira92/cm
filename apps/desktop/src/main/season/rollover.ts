@@ -12,6 +12,7 @@ import {
   positionRating,
   resultsStrength,
   seasonStartDate,
+  seasonStartYear,
   type PlayerAttributes,
   type StatureTier,
 } from "@cm-clone/shared";
@@ -229,7 +230,9 @@ const reconcileSquadsWithDepth = (
           statureTier: club.statureTier,
         },
         {
-          referenceYear,
+          // The year the club joins in, not Season 1's: ages are drawn against it, so a squad
+          // conjured in Season N is as old on its opening date as a Season 1 squad on its own.
+          referenceYear: seasonStartYear(referenceYear, nextSeason),
           clubNation: nationCode,
           randomForSlot: (slot) => createSeededRng(deriveSeed(promotedBase, "player", slot.index)),
         },

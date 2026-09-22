@@ -265,8 +265,8 @@ Agent-startable work, in order:
    advisory) shipped 2026-09-22, [note](../.agents/notes/implemented/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md)
    implemented, and [09](../.scratch/gate-red-on-dev/issues/09-player-ages-read-the-game-date.md) (ages read the game date, not the
    wall clock), [10](../.scratch/gate-red-on-dev/issues/10-promoted-squads-sign-contracts.md) (promoted squads
-   sign Contracts). Next [11](../.scratch/gate-red-on-dev/issues/11-conjured-squads-are-age-correct.md)
-   (conjured squads are aged as if every Season were Season 1).
+   sign Contracts) and [11](../.scratch/gate-red-on-dev/issues/11-conjured-squads-are-age-correct.md)
+   (conjured squads are born for the Season they join). **The effort's queue is empty.**
 3. **Knowledge-limited Player reads have a decision and no ticket.** [Group I decision request 01](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md)
    was answered on 2026-09-19 (Option A, [note](../.agents/notes/proposed/architecture/2026-09-19-knowledge-limits-every-player-read.md)),
    but nothing slices it. Run `cm-to-tickets` on that note: it unblocks group-c 10 (Screen 35), D 68,
