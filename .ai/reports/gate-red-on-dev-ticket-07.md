@@ -1,7 +1,7 @@
 # gate-red-on-dev ticket 07 — a Youth Intake at every Season rollover
 
 **Outcome:** resolved 2026-09-22. [Ticket](../../.scratch/gate-red-on-dev/issues/07-youth-intake-at-rollover.md).
-[Note](../../.agents/notes/proposed/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md) amended, and it
+[Note](../../.agents/notes/implemented/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md) amended, and it
 stays proposed until ticket 08 ships the short-squad advisory.
 
 ## What it was for

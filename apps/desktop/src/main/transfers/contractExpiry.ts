@@ -4,6 +4,7 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
+import type { SquadAtRollover } from "@cm-clone/shared";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -26,9 +27,29 @@ export const getContractExpiryScreen = (savesDir: string, saveId: SaveId) =>
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
 
+/**
+ * The squad the coming rollover will find: every player at the club, and how many of them are in
+ * their last contracted year. The same `years_remaining = 1` predicate as the screen's list, so the
+ * short-squad Continue advisory and the screen it links to can never disagree about who is leaving.
+ * Assumes a `SqlClient` in context.
+ */
+export const loadSquadAtRollover = (clubId: string) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ squadSize: number; leaving: number }>`
+      SELECT COUNT(*) as "squadSize",
+             COUNT(CASE WHEN ct.years_remaining = 1 THEN 1 END) as "leaving"
+      FROM players p
+      LEFT JOIN contracts ct ON ct.player_id = p.id
+      WHERE p.club_id = ${clubId}`;
+    const row = rows[0];
+    return { squadSize: row?.squadSize ?? 0, leaving: row?.leaving ?? 0 } satisfies SquadAtRollover;
+  });
+
 const readContractExpiryPlayers = (clubId: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+    const { squadSize } = yield* loadSquadAtRollover(clubId);
 
     const rows = yield* sql.unsafe<{
       playerId: PlayerId;
@@ -56,5 +77,6 @@ const readContractExpiryPlayers = (clubId: string) =>
             yearsRemaining: row.yearsRemaining,
           }),
       ),
+      squadSize,
     });
   });

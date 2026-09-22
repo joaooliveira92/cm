@@ -228,6 +228,11 @@ describe("renderer RPC seam — invalidation rules (AC-05)", () => {
       ["transfers", save],
       ["economy", save],
     ]);
+    expect(INVALIDATION_RULES.completeTransfer(save)).toEqual([
+      ["squad", save],
+      ["transfers", save],
+      ["economy", save],
+    ]);
     expect(INVALIDATION_RULES.submitMatchCommand(save, "m1")).toEqual([["match", save, "m1"]]);
     expect(INVALIDATION_RULES.commitCareer(save)).toEqual([]);
     expect(INVALIDATION_RULES.assignScoutToClub(save)).toEqual([["scouting", save]]);
@@ -255,6 +260,7 @@ describe("renderer RPC seam — invalidation rules (AC-05)", () => {
       ...INVALIDATION_RULES.commitMatchday(save),
       ...INVALIDATION_RULES.setTrainingFocus(save),
       ...INVALIDATION_RULES.placeBid(save),
+      ...INVALIDATION_RULES.completeTransfer(save),
       ...INVALIDATION_RULES.submitMatchCommand(save, "m1"),
       ...INVALIDATION_RULES.commitCareer(save),
       ...INVALIDATION_RULES.renewContract(save),

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { assessContinueReadiness, assessMatchReadiness, type ContinueReadinessFacts } from "../../src/index.js";
+import {
+  SQUAD_FLOOR,
+  assessContinueReadiness,
+  assessMatchReadiness,
+  type ContinueReadinessFacts,
+} from "../../src/index.js";
 
 /** A career that is free to advance: in season, nothing running, Tactic set. */
 const READY: ContinueReadinessFacts = {
@@ -8,6 +13,7 @@ const READY: ContinueReadinessFacts = {
   matchInProgress: false,
   advancing: false,
   pendingIncomingBids: 0,
+  squadAtRollover: null,
 };
 
 const idsOf = (facts: ContinueReadinessFacts) =>
@@ -95,6 +101,7 @@ describe("assessContinueReadiness", () => {
         matchInProgress: true,
         advancing: true,
         pendingIncomingBids: 0,
+        squadAtRollover: null,
       });
 
       expect(ids).toEqual(["match-in-progress", "advance-in-flight", "season-complete"]);
@@ -107,9 +114,10 @@ describe("assessContinueReadiness", () => {
         matchInProgress: true,
         advancing: true,
         pendingIncomingBids: 1,
+        squadAtRollover: { squadSize: 18, leaving: 5 },
       });
 
-      expect(items).toHaveLength(5);
+      expect(items).toHaveLength(6);
       for (const item of items) {
         expect(item.title.length).toBeGreaterThan(0);
         expect(item.detail.length).toBeGreaterThan(0);
@@ -206,6 +214,7 @@ describe("bids awaiting the manager", () => {
         matchInProgress: true,
         advancing: false,
         pendingIncomingBids: 1,
+        squadAtRollover: { squadSize: 18, leaving: 5 },
       }).items;
 
       expect(everything.length).toBeGreaterThan(3);
@@ -277,5 +286,62 @@ describe("assessMatchReadiness", () => {
       expect(readiness.blockers.map((blocker) => blocker.id)).toEqual(["no-tactic"]);
       expect(readiness.advisories).toEqual([]);
     });
+  });
+});
+
+describe("a squad the coming rollover leaves short", () => {
+  const withSquad = (squadSize: number, leaving: number): ContinueReadinessFacts => ({
+    ...READY,
+    squadAtRollover: { squadSize, leaving },
+  });
+
+  it("warns when the squad minus its last-year players is below the floor", () => {
+    const readiness = assessContinueReadiness(withSquad(SQUAD_FLOOR + 1, 2));
+
+    expect(readiness.items.map((item) => item.id)).toEqual(["squad-short-at-rollover"]);
+    expect(readiness.items[0]!.severity).toBe("advisory");
+  });
+
+  it("says nothing when the players who stay are exactly the floor", () => {
+    expect(idsOf(withSquad(SQUAD_FLOOR + 2, 2))).toEqual([]);
+  });
+
+  it("says nothing above the floor", () => {
+    expect(idsOf(withSquad(SQUAD_FLOOR + 5, 2))).toEqual([]);
+  });
+
+  /** Nobody leaving means nothing to renew; the Contract Expiry screen would be empty. */
+  it("says nothing when no Contract ends, whatever the squad size", () => {
+    expect(idsOf(withSquad(SQUAD_FLOOR - 3, 0))).toEqual([]);
+  });
+
+  it("says nothing while the squad read is unavailable", () => {
+    expect(idsOf({ ...READY, squadAtRollover: null })).toEqual([]);
+  });
+
+  it("never blocks the advance", () => {
+    expect(assessContinueReadiness(withSquad(12, 12)).canAdvance).toBe(true);
+  });
+
+  it("names how many are leaving and how many stay, and links to Contract Expiry", () => {
+    const [item] = assessContinueReadiness(withSquad(17, 3)).items;
+
+    expect(item!.detail).toBe(
+      `3 players' Contracts end this Season, leaving 14, below a squad of ${SQUAD_FLOOR}. Renew them through the Contract Expiry screen while a Transfer Window is open, or the Youth Intake makes up the numbers with raw players aged 16 to 18.`,
+    );
+    expect(item!.destination).toBe("contractExpiry");
+  });
+
+  it("reads naturally for a single player", () => {
+    const [item] = assessContinueReadiness(withSquad(16, 1)).items;
+
+    expect(item!.detail).toMatch(/^1 player's Contract ends this Season, leaving 15,/);
+    expect(item!.detail).toContain("Renew it through the Contract Expiry screen");
+  });
+
+  it("comes after the other advisories", () => {
+    const ids = idsOf({ ...withSquad(17, 3), hasTactic: false, pendingIncomingBids: 1 });
+
+    expect(ids).toEqual(["bids-awaiting-response", "no-tactic", "squad-short-at-rollover"]);
   });
 });

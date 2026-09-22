@@ -38,7 +38,7 @@ describe("ContractExpiryScreen", () => {
   it("shows empty message when no players are expiring", async () => {
     mockPreload(async (method) => {
       if (method === "getContractExpiryScreen") {
-        return success({ players: [] });
+        return success({ players: [], squadSize: 20 });
       }
       return failure({ _tag: "SaveNotFoundError", id: "s1" });
     });
@@ -71,6 +71,7 @@ describe("ContractExpiryScreen", () => {
               yearsRemaining: 1,
             },
           ],
+          squadSize: 20,
         });
       }
       return failure({ _tag: "SaveNotFoundError", id: "s1" });

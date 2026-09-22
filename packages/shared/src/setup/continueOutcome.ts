@@ -33,7 +33,8 @@ export type ContinueDestination =
   | "news"
   | "tactics"
   | "squad"
-  | "match";
+  | "match"
+  | "contractExpiry";
 
 /** What each destination is called where it is offered as a link. Lives beside the type it keys, so
  *  a new destination cannot be added without naming it, and the two bands that offer links cannot
@@ -47,6 +48,7 @@ export const CONTINUE_DESTINATION_LABELS: Readonly<Record<ContinueDestination, s
   tactics: "Tactics",
   squad: "Squad",
   match: "Match day",
+  contractExpiry: "Contract Expiry",
 };
 
 /** One thing an advance did. `id` is the stable handle; the copy is display text, never matched on. */

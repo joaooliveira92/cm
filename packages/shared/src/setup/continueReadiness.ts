@@ -10,6 +10,7 @@
  * It is pure and takes facts rather than fetching them, so the same rules can be unit-tested here
  * and evaluated in the renderer from atoms it already holds. No new RPC method exists for it.
  */
+import { SQUAD_FLOOR } from "../rules/generation.js";
 import type { ContinueDestination } from "./continueOutcome.js";
 
 /** The Calendar's phases. Mirrors `SEASON_PHASES` in `@cm-clone/contracts`, restated because this
@@ -57,7 +58,21 @@ export interface ContinueReadinessFacts {
    *  decision in the game that waits on the manager, and the only readiness fact whose condition
    *  the advance itself resolves — by lapsing them. */
   readonly pendingIncomingBids: number;
+  /** The human club's squad as the coming rollover will find it, or `null` while that read is
+   *  unavailable. `null` says nothing rather than guessing a squad of zero. */
+  readonly squadAtRollover: SquadAtRollover | null;
 }
+
+/** The human club's squad size today and how many of those players are in their last contracted
+ *  year (`contracts.years_remaining = 1`), so leave at this Season's rollover unless renewed. */
+export interface SquadAtRollover {
+  readonly squadSize: number;
+  readonly leaving: number;
+}
+
+/** Whether the coming rollover takes the human club below the squad floor. */
+const isSquadShortAtRollover = (squad: SquadAtRollover | null): squad is SquadAtRollover =>
+  squad !== null && squad.leaving > 0 && squad.squadSize - squad.leaving < SQUAD_FLOOR;
 
 export interface ContinueReadiness {
   readonly canAdvance: boolean;
@@ -136,6 +151,25 @@ const ADVISORY: ReadonlyArray<ReadinessRule> = [
     title: "No Tactic set",
     detail: () => "You will not be able to play your next Fixture until you set one.",
     destination: "tactics",
+  },
+  {
+    // Decision request 01: the Youth Intake tops every squad back up to SQUAD_FLOOR at the
+    // rollover, so this is about who the manager keeps rather than whether eleven can be fielded.
+    // Shown all Season: the leaving players are known from its first day, and the warning stays
+    // true after the last Transfer Window closes even though renewal (window-only) no longer can
+    // fix it. The copy names the window for that reason. Advisory: letting a Contract run out is a
+    // legitimate answer.
+    id: "squad-short-at-rollover",
+    applies: (facts) => isSquadShortAtRollover(facts.squadAtRollover),
+    title: "Squad short after this Season",
+    detail: (facts) => {
+      if (facts.squadAtRollover === null) return "";
+      const { squadSize, leaving } = facts.squadAtRollover;
+      const ending =
+        leaving === 1 ? "1 player's Contract ends" : `${leaving} players' Contracts end`;
+      return `${ending} this Season, leaving ${squadSize - leaving}, below a squad of ${SQUAD_FLOOR}. Renew ${leaving === 1 ? "it" : "them"} through the Contract Expiry screen while a Transfer Window is open, or the Youth Intake makes up the numbers with raw players aged 16 to 18.`;
+    },
+    destination: "contractExpiry",
   },
 ];
 

@@ -45,6 +45,15 @@ export const INVALIDATION_RULES = {
     transfersKey(saveId),
     economyKey(saveId),
   ],
+  /** Signing a Free Agent, or answering a bid either way, can complete a transfer on the spot: a
+   *  player joins or leaves the squad and a Contract is written or dropped. So beside transfers and
+   *  economy it invalidates the squad key, which the squad reads and the short-squad advisory's
+   *  Contract Expiry read follow (gate-red-on-dev 08). */
+  completeTransfer: (saveId: SaveId): ReadonlyArray<unknown> => [
+    squadKey(saveId),
+    transfersKey(saveId),
+    economyKey(saveId),
+  ],
   submitMatchCommand: (saveId: SaveId, matchId: string): ReadonlyArray<unknown> => [
     matchKey(saveId, matchId),
   ],
@@ -124,25 +133,25 @@ export const placeBidEffect = (
 ): MutationEffect<"placeBid"> =>
   call("placeBid", input).pipe(Reactivity.mutation(INVALIDATION_RULES.placeBid(input.saveId)));
 
-/** `signFreeAgent` — invalidates transfers + economy. */
+/** `signFreeAgent` — invalidates squad + transfers + economy (it completes a transfer). */
 export const signFreeAgentEffect = (
   input: RpcPayload<"signFreeAgent">,
 ): MutationEffect<"signFreeAgent"> =>
   call("signFreeAgent", input).pipe(
-    Reactivity.mutation(INVALIDATION_RULES.placeBid(input.saveId)),
+    Reactivity.mutation(INVALIDATION_RULES.completeTransfer(input.saveId)),
   );
 
-/** `respondToBid` — invalidates transfers + economy. */
+/** `respondToBid` — invalidates squad + transfers + economy (accepting completes a transfer). */
 export const respondToBidEffect = (
   input: RpcPayload<"respondToBid">,
 ): MutationEffect<"respondToBid"> =>
-  call("respondToBid", input).pipe(Reactivity.mutation(INVALIDATION_RULES.placeBid(input.saveId)));
+  call("respondToBid", input).pipe(Reactivity.mutation(INVALIDATION_RULES.completeTransfer(input.saveId)));
 
-/** `respondAsBidder` — invalidates transfers + economy. */
+/** `respondAsBidder` — invalidates squad + transfers + economy (accepting completes a transfer). */
 export const respondAsBidderEffect = (
   input: RpcPayload<"respondAsBidder">,
 ): MutationEffect<"respondAsBidder"> =>
-  call("respondAsBidder", input).pipe(Reactivity.mutation(INVALIDATION_RULES.placeBid(input.saveId)));
+  call("respondAsBidder", input).pipe(Reactivity.mutation(INVALIDATION_RULES.completeTransfer(input.saveId)));
 
 /** `renewContract` — invalidates squad + transfers + economy. */
 export const renewContractEffect = (

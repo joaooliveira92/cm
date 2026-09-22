@@ -155,6 +155,9 @@ export class ContractExpiryPlayerView extends Schema.Class<ContractExpiryPlayerV
  *  side on this screen. */
 export class ContractExpiryScreenView extends Schema.Class<ContractExpiryScreenView>("ContractExpiryScreenView")({
   players: Schema.Array(ContractExpiryPlayerView),
+  /** The whole own-club squad today, leaving players included. Beside `players` it is the squad the
+   *  coming rollover leaves behind, which the short-squad Continue advisory reads. */
+  squadSize: Schema.Natural,
 }) {}
 
 /** The Transfer and Wage Budget Review screen (Screen 145): the manager's club's Transfer Budget

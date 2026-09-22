@@ -261,9 +261,9 @@ Agent-startable work, in order:
    - [42](../.scratch/group-g-match-day/issues/42-quick-result-skips-the-live-reveal.md): Quick result skips the live reveal (`needs-triage`: an
      open question on restored quick matches).
 2. **gate-red-on-dev**: [07](../.scratch/gate-red-on-dev/issues/07-youth-intake-at-rollover.md) (the Youth
-   Intake squad floor) shipped 2026-09-22. Next [08](../.scratch/gate-red-on-dev/issues/08-short-squad-advisory.md)
-   (its readiness advisory, [note](../.agents/notes/proposed/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md)),
-   [09](../.scratch/gate-red-on-dev/issues/09-player-ages-read-the-game-date.md) (**ages read the wall clock**, so
+   Intake squad floor) and [08](../.scratch/gate-red-on-dev/issues/08-short-squad-advisory.md) (its readiness
+   advisory) shipped 2026-09-22, [note](../.agents/notes/implemented/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md)
+   implemented. Next [09](../.scratch/gate-red-on-dev/issues/09-player-ages-read-the-game-date.md) (**ages read the wall clock**, so
    the same seed can differ by machine date) and [10](../.scratch/gate-red-on-dev/issues/10-promoted-squads-sign-contracts.md)
    (promoted squads sign no Contracts).
 3. **Knowledge-limited Player reads have a decision and no ticket.** [Group I decision request 01](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md)

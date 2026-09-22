@@ -491,11 +491,13 @@ export const contractExpiryKey = (saveId: SaveId): readonly ["contractExpiry", S
 ];
 
 /** Contract Expiry (Screen 141, without Bosman): the manager's own-club Players in their last
- *  contracted year. A pure read, reactive on the save-wide key. */
+ *  contracted year, and the squad size beside them. Reactive on the squad key as well as the
+ *  save-wide one: `renewContract` invalidates the squad key, and a renewed player leaves this list,
+ *  which is what clears the short-squad Continue advisory the career chrome derives from it. */
 export const contractExpiryAtom = Atom.family((saveId: SaveId) =>
   managementReadPolicy(
     Atom.make(call("getContractExpiryScreen", { saveId })).pipe(
-      Atom.withReactivity([saveKey(saveId), contractExpiryKey(saveId)]),
+      Atom.withReactivity([saveKey(saveId), squadKey(saveId), contractExpiryKey(saveId)]),
     ),
   ),
 );

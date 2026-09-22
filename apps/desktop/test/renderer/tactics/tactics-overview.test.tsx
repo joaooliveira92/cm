@@ -428,6 +428,45 @@ describe("Tactics Overview workflows and navigation", () => {
   });
 });
 
+describe("Tactics Overview short-squad issue (gate-red-on-dev 08)", () => {
+  it("opens the Contract Expiry screen from the short-squad advisory", async () => {
+    const nav = vi.fn();
+    bindRouter({
+      navigate: nav,
+      history: { back: vi.fn(), forward: vi.fn(), canGoBack: () => false },
+    } as never);
+    mount(async (method) => {
+      if (method === "getTacticsOverview")
+        return {
+          _tag: "Success",
+          value: overviewView(1, {
+            issues: [
+              {
+                id: "squad-short-at-rollover",
+                severity: "advisory",
+                title: "Squad short after this Season",
+                detail: "3 players' Contracts end this Season, leaving 14, below a squad of 16.",
+                destination: "contractExpiry",
+              },
+            ],
+          }),
+        } as never;
+      if (method === "getManagerProfileScreen")
+        return { _tag: "Success", value: profileView() } as never;
+      if (method === "getLeagueTable") return { _tag: "Success", value: leagueView(false) } as never;
+      return { _tag: "Failure", error: NOT_FOUND } as never;
+    });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Contract Expiry" }));
+    await waitFor(() =>
+      expect(nav).toHaveBeenCalledWith({
+        to: "/career/$saveId/contract-expiry",
+        params: { saveId: rid("s1") },
+      }),
+    );
+  });
+});
+
 describe("Tactics Overview accessibility", () => {
   it("renders every interaction as a native keyboard-reachable control with the focus ring", async () => {
     mount(async (method) => {

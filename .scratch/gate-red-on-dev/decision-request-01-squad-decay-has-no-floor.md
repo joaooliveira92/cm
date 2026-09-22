@@ -115,6 +115,6 @@ two are not confused.
 already gives the manager one lever. C is rejected for the reason the request gives: it deletes the
 mechanic ticket 16 built.
 
-Recorded as [a Youth Intake is the squad floor](../../.agents/notes/proposed/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md).
+Recorded as [a Youth Intake is the squad floor](../../.agents/notes/implemented/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md).
 Tickets: [07](issues/07-youth-intake-at-rollover.md) and [08](issues/08-short-squad-advisory.md).
 Decided under the human's standing delegation (2026-09-21, "solve all the ready-for-human tasks").

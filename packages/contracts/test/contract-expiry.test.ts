@@ -49,11 +49,18 @@ describe("ContractExpiryScreenView", () => {
           yearsRemaining: 0,
         },
       ],
+      squadSize: 17,
     });
   });
 
   it("roundtrips with an empty list", () => {
-    roundTrip(ContractExpiryScreenView, { players: [] });
+    roundTrip(ContractExpiryScreenView, { players: [], squadSize: 16 });
+  });
+
+  it("rejects a negative or fractional squad size", () => {
+    const decode = Schema.decodeUnknownSync(ContractExpiryScreenView);
+    expect(() => decode({ players: [], squadSize: -1 })).toThrow();
+    expect(() => decode({ players: [], squadSize: 1.5 })).toThrow();
   });
 });
 
@@ -73,6 +80,7 @@ describe("getContractExpiryScreen RPC", () => {
           yearsRemaining: 0,
         },
       ],
+      squadSize: 16,
     });
   });
 

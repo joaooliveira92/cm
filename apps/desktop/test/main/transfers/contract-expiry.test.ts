@@ -8,8 +8,12 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
+import { PlayerId, type SaveId } from "@cm-clone/contracts";
+import { SQUAD_FLOOR } from "@cm-clone/shared";
 import { createSave } from "../../seeded-save.js";
+import { getTacticsOverview } from "../../../src/main/club/index.js";
 import { getContractExpiryScreen } from "../../../src/main/transfers/contractExpiry.js";
+import { renewContract } from "../../../src/main/transfers/index.js";
 
 let savesDir: string;
 
@@ -135,5 +139,85 @@ it.effect("returns empty list when no players have expiring contracts", () =>
 
     const screen = yield* getContractExpiryScreen(savesDir, saveId);
     strictEqual(screen.players.length, 0, "no expiring players");
+  }),
+);
+
+// ---------------------------------------------------------------------------
+// The squad the coming rollover leaves behind (gate-red-on-dev 08)
+// ---------------------------------------------------------------------------
+
+/** The human club's players, ids in a stable order, with every Contract reset mid-term. */
+const resetUserClubContracts = (saveId: SaveId) =>
+  withSave(saveId, Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const clubId = (yield* sql<{ id: string }>`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`)[0]!.id;
+    yield* sql`UPDATE contracts SET years_remaining = 3 WHERE player_id IN
+      (SELECT p.id FROM players p WHERE p.club_id = ${clubId})`;
+    const rows = yield* sql<{ id: string }>`
+      SELECT p.id FROM players p JOIN contracts ct ON ct.player_id = p.id
+      WHERE p.club_id = ${clubId} ORDER BY p.id`;
+    return rows.map((row) => row.id);
+  }));
+
+/** Puts the first `count` of `playerIds` into their last contracted year. */
+const markLeaving = (saveId: SaveId, playerIds: ReadonlyArray<string>, count: number) =>
+  withSave(saveId, Effect.forEach(playerIds.slice(0, count), (id) => setContractYearsRemaining(id, 1), {
+    concurrency: 1,
+    discard: true,
+  }));
+
+const shortSquadIssue = (saveId: SaveId) =>
+  getTacticsOverview(savesDir, saveId).pipe(
+    Effect.map((snapshot) => snapshot.issues.find((issue) => issue.id === "squad-short-at-rollover")),
+  );
+
+it.effect("carries the whole squad size beside the leaving players", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "test-save");
+    const playerIds = yield* resetUserClubContracts(save.id);
+    yield* markLeaving(save.id, playerIds, 2);
+
+    const screen = yield* getContractExpiryScreen(savesDir, save.id);
+    strictEqual(screen.squadSize, playerIds.length);
+    strictEqual(screen.players.length, 2);
+  }),
+);
+
+it.effect("the short-squad advisory appears below the floor, and not at it", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "test-save");
+    const playerIds = yield* resetUserClubContracts(save.id);
+    const atFloor = playerIds.length - SQUAD_FLOOR;
+    ok(atFloor > 0, "the seeded squad is above the floor, so leaving players can take it below");
+
+    yield* markLeaving(save.id, playerIds, atFloor);
+    strictEqual(yield* shortSquadIssue(save.id), undefined, "exactly the floor stays is no warning");
+
+    yield* markLeaving(save.id, playerIds, atFloor + 2);
+    const issue = yield* shortSquadIssue(save.id);
+    ok(issue, "two more leaving takes the squad below the floor");
+    strictEqual(issue.severity, "advisory");
+    strictEqual(issue.destination, "contractExpiry");
+    ok(
+      issue.detail.startsWith(`${atFloor + 2} players' Contracts end this Season, leaving ${SQUAD_FLOOR - 2},`),
+      issue.detail,
+    );
+  }),
+);
+
+it.effect("renewing enough of the leaving players clears the advisory on the next read", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "test-save");
+    const playerIds = yield* resetUserClubContracts(save.id);
+    const leaving = playerIds.length - SQUAD_FLOOR + 1;
+    yield* markLeaving(save.id, playerIds, leaving);
+    ok(yield* shortSquadIssue(save.id), "one short of the floor is warned about");
+
+    // The pre-season Transfer Window is open on a new save, so the ordinary renewal path is legal.
+    yield* renewContract(savesDir, save.id, PlayerId.make(playerIds[0]!), 3);
+
+    strictEqual(yield* shortSquadIssue(save.id), undefined);
+    const screen = yield* getContractExpiryScreen(savesDir, save.id);
+    strictEqual(screen.squadSize - screen.players.length, SQUAD_FLOOR);
   }),
 );

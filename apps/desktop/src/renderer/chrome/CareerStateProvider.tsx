@@ -27,6 +27,7 @@ import {
 } from "../navigation/adapter.js";
 import {
   advanceCalendarMutation,
+  contractExpiryAtom,
   describeRpcError,
   leagueTableAtom,
   managerProfileAtom,
@@ -103,6 +104,7 @@ export const CareerStateProvider = ({
   const [advance, runAdvance] = useAtom(advanceCalendarMutation);
   const tacticsResult = useAtomValue(tacticsAtom(saveId));
   const newsResult = useAtomValue(newsInboxAtom(saveId));
+  const contractExpiryResult = useAtomValue(contractExpiryAtom(saveId));
 
   const clubName = profileResult._tag === "Success" ? profileResult.value.clubName : null;
   const clubColours = profileResult._tag === "Success" ? profileResult.value.clubColours : null;
@@ -210,8 +212,15 @@ export const CareerStateProvider = ({
       matchInProgress: liveMatch !== undefined,
       advancing,
       pendingIncomingBids: newsCounts?.actionRequired ?? 0,
+      squadAtRollover:
+        contractExpiryResult._tag === "Success"
+          ? {
+              squadSize: contractExpiryResult.value.squadSize,
+              leaving: contractExpiryResult.value.players.length,
+            }
+          : null,
     }).items;
-  }, [season, tacticsResult, liveMatch, advancing, newsCounts]);
+  }, [season, tacticsResult, liveMatch, advancing, newsCounts, contractExpiryResult]);
 
   const outstanding: readonly ReadinessItem[] = useMemo(() => {
     // Clear acknowledgements for conditions that have resolved (no longer in the assessment)

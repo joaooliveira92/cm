@@ -83,3 +83,6 @@ with no outstanding assertion failures.
   save-bricking id collision before commit. Split out [09](issues/09-player-ages-read-the-game-date.md) and
   [10](issues/10-promoted-squads-sign-contracts.md).
 
+- [08 — warn before the rollover leaves the squad short](issues/08-short-squad-advisory.md): resolved
+  2026-09-22. A Continue advisory linking to Contract Expiry. Decision request 01's note is implemented.
+

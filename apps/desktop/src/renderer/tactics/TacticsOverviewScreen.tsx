@@ -384,6 +384,7 @@ const ISSUE_DESTINATION: Readonly<Record<string, SaveScopedCareerDestinationType
   news: "news",
   squad: "squad",
   fixtures: "fixtures",
+  contractExpiry: "contractExpiry",
 };
 
 const ISSUE_DESTINATION_LABELS: Readonly<Record<string, string>> = {
@@ -396,6 +397,7 @@ const ISSUE_DESTINATION_LABELS: Readonly<Record<string, string>> = {
   news: "News",
   squad: "Squad",
   fixtures: "Fixtures",
+  contractExpiry: "Contract Expiry",
 };
 
 const IssuesCard = ({

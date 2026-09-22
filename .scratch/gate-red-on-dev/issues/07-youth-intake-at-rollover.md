@@ -6,7 +6,7 @@ to reach a squad of 16. Seeded from the world seed and the Season. Each intake p
 Contract on the signing terms, written directly (amended 2026-09-22; see the note). The human club's intake is a News Inbox item naming the
 players.
 
-**Decision:** [a Youth Intake is the squad floor](../../../.agents/notes/proposed/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md),
+**Decision:** [a Youth Intake is the squad floor](../../../.agents/notes/implemented/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md),
 answering [decision request 01](../decision-request-01-squad-decay-has-no-floor.md).
 
 **Files:** the rollover transaction (`apps/desktop/src/main/season/`), world generation's player draw

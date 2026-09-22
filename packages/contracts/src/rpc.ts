@@ -402,7 +402,8 @@ commitCareer: {
     error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
   /** Contract Expiry (Screen 141, without Bosman): the manager's own-club Players who are in their
-   *  last contracted year (`contracts.years_remaining === 0`). A pure read — no command side. */
+   *  last contracted year (`contracts.years_remaining === 1`), and the squad size beside them. A pure
+   *  read — no command side. */
   getContractExpiryScreen: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: ContractExpiryScreenView,

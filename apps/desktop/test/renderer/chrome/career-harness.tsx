@@ -5,6 +5,7 @@
  * is how two suites start testing two different shells.
  */
 import path from "node:path";
+import type { ComponentType } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import {
   createMemoryHistory,
@@ -152,8 +153,10 @@ export const mountCareer = async (phase: Phase, child: "league" | "fixtures") =>
 };
 
 /** The router half of `mountCareer`, without the canned preload — for a test
- *  that needs its own wire responses (a payload that changes between calls). */
-export const mountRoutedCareer = async (child: "league" | "fixtures") => {
+ *  that needs its own wire responses (a payload that changes between calls).
+ *  `Probe`, when given, renders beside the league screen inside the career's own
+ *  atom registry, so a test can run a mutation the chrome's queries observe. */
+export const mountRoutedCareer = async (child: "league" | "fixtures", Probe?: ComponentType) => {
   const rootRoute = createRootRoute({ component: () => <Outlet /> });
   const careerRoute = createRoute({ getParentRoute: () => rootRoute, path: "career" });
   const saveRoute = createRoute({
@@ -164,7 +167,12 @@ export const mountRoutedCareer = async (child: "league" | "fixtures") => {
   const leagueRoute = createRoute({
     getParentRoute: () => saveRoute,
     path: "league",
-    component: () => <CareerChildView screenId="league" Screen={LeagueTableScreen} />,
+    component: () => (
+      <>
+        <CareerChildView screenId="league" Screen={LeagueTableScreen} />
+        {Probe !== undefined && <Probe />}
+      </>
+    ),
   });
   const fixturesRoute = createRoute({
     getParentRoute: () => saveRoute,

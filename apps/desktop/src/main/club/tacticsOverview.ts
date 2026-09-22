@@ -27,10 +27,12 @@ import {
   type PlayerAttributes,
   type ReadinessItem,
   type ReadinessSeasonPhase,
+  type SquadAtRollover,
 } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadCurrentSeasonRow } from "../season/currentSeason.js";
+import { loadSquadAtRollover } from "../transfers/contractExpiry.js";
 import { withExistingSave } from "../season/decider.js";
 import { loadMatchReadinessFacts } from "./matchReadiness.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
@@ -61,10 +63,12 @@ export const getTacticsOverview = (savesDir: string, saveId: SaveId) =>
         const matchFacts = yield* loadMatchReadinessFacts(club.id);
         const pendingBidRows = yield* sql<{ count: number }>`
           SELECT COUNT(*) as "count" FROM bids WHERE selling_club_id = ${club.id} AND status = 'pending'`;
+        const squadAtRollover = yield* loadSquadAtRollover(club.id);
         const issues = buildIssues(
           matchFacts,
           seasonRow?.phase ?? "pre_season",
           pendingBidRows[0]?.count ?? 0,
+          squadAtRollover,
         );
 
         const squadById = new Map(squad.map((player) => [player.id, player]));
@@ -157,16 +161,17 @@ export const getTacticsOverview = (savesDir: string, saveId: SaveId) =>
  *
  * Blockers come from the match-boundary rules (`no-tactic`, `tactic-names-departed-players`) — the
  * states that would stop the human's Fixture. Advisories come from the career readiness rules,
- * filtered to the advisory class: a pending bid is the standing condition the manager should know
- * about, while the career-loop-only blockers (a match in progress, an advance in flight, a
- * completed season) describe the calendar rather than what the manager can prepare, so a tactics
- * overview does not report them. The one finding both sides raise (`no-tactic`) is reported once,
+ * filtered to the advisory class: a pending bid, or a squad the coming rollover leaves short, is a
+ * standing condition the manager should know about, while the career-loop-only blockers (a match in
+ * progress, an advance in flight, a completed season) describe the calendar rather than what the
+ * manager can prepare, so a tactics overview does not report them. The one finding both sides raise (`no-tactic`) is reported once,
  * at the stricter blocking severity.
  */
 const buildIssues = (
   matchFacts: MatchReadinessFacts,
   phase: ReadinessSeasonPhase,
   pendingIncomingBids: number,
+  squadAtRollover: SquadAtRollover,
 ): ReadonlyArray<ReadinessIssueView> => {
   const matchReadiness = assessMatchReadiness(matchFacts);
   const advisories = assessContinueReadiness({
@@ -175,6 +180,7 @@ const buildIssues = (
     matchInProgress: false,
     advancing: false,
     pendingIncomingBids,
+    squadAtRollover,
   }).items.filter((item) => item.severity === "advisory");
 
   return mergeReadinessItems(matchReadiness.blockers, [...matchReadiness.advisories, ...advisories]).map(
