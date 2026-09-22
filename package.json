@@ -24,6 +24,7 @@
   "devDependencies": {
     "@effect/tsgo": "0.38.0",
     "@effect/tsgo-darwin-arm64": "0.38.0",
+    "@shadcn/lint": "^0.1.5",
     "@typescript/typescript-darwin-arm64": "7.0.2",
     "oxlint": "^1.80.0",
     "oxlint-tsgolint": "^7.0.2001",

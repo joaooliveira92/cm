@@ -6,6 +6,9 @@
     "oxc",
     "import"
   ],
+  "jsPlugins": [
+    "@shadcn/lint"
+  ],
   "categories": {
     "correctness": "error",
     "perf": "warn"
@@ -37,6 +40,13 @@
   },
   "env": {
     "builtin": true
+  },
+  "settings": {
+    "shadcn": {
+      "componentImports": [
+        "components/ui/"
+      ]
+    }
   },
   "ignorePatterns": [
     "external-reference/**",
