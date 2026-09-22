@@ -188,11 +188,17 @@ export interface MatchReadinessFacts {
   readonly hasTactic: boolean;
   /** Slots naming players who are no longer in the squad — a Tactic outlived by a transfer. */
   readonly missingSlotPlayers: number;
+  /** Bench slots naming a player still in the squad. The named bench is the only source of
+   *  substitutes, forced or manual, so zero means nobody can come on during the match. */
+  readonly namedSubstitutes: number;
 }
 
 export interface MatchReadiness {
   readonly canPlay: boolean;
   readonly blockers: ReadonlyArray<ReadinessItem>;
+  /** Conditions worth knowing before kickoff that leave the Fixture playable. Never affects
+   *  `canPlay`: an advisory the player ignores has to stay ignorable. */
+  readonly advisories: ReadonlyArray<ReadinessItem>;
 }
 
 /**
@@ -201,13 +207,15 @@ export interface MatchReadiness {
  * listed here — their consequences are the player's to own. Only structurally absent or invalid
  * required state blocks, because a match resolved on state the player never chose teaches nothing.
  */
-const MATCH_BLOCKING: ReadonlyArray<{
+interface MatchRule {
   readonly id: string;
   readonly applies: (facts: MatchReadinessFacts) => boolean;
   readonly title: string;
   readonly detail: (facts: MatchReadinessFacts) => string;
   readonly destination: ContinueDestination | null;
-}> = [
+}
+
+const MATCH_BLOCKING: ReadonlyArray<MatchRule> = [
   {
     id: "no-tactic",
     applies: (facts) => !facts.hasTactic,
@@ -229,14 +237,47 @@ const MATCH_BLOCKING: ReadonlyArray<{
   },
 ];
 
-/** Classifies whether the human's pending Fixture may be resolved, and why not when it may not. */
+/**
+ * Legal preparation the player may still regret. Kept apart from `MATCH_BLOCKING` because the line
+ * above holds: a benchless side is a valid choice, so it is said, not enforced.
+ */
+const MATCH_ADVISORY: ReadonlyArray<MatchRule> = [
+  {
+    // Decision request 04, option A: picking the bench before kickoff matters. A new Tactic starts
+    // with an empty bench, so without this a manager who never names substitutes plays with ten
+    // after every severe Injury and is never told why. Silent without a Tactic: the `no-tactic`
+    // blocker already owns that case, and a bench cannot be named before one exists.
+    id: "no-substitutes-named",
+    applies: (facts) => facts.hasTactic && facts.namedSubstitutes === 0,
+    title: "No substitutes named",
+    detail: () =>
+      "Name a bench on the Squad screen, or no one can come on during the match, not even to replace an injured player.",
+    destination: "squad",
+  },
+];
+
+const toItems = (
+  rules: ReadonlyArray<MatchRule>,
+  severity: ReadinessSeverity,
+  facts: MatchReadinessFacts,
+): ReadonlyArray<ReadinessItem> =>
+  rules
+    .filter((rule) => rule.applies(facts))
+    .map((rule) => ({
+      id: rule.id,
+      severity,
+      title: rule.title,
+      detail: rule.detail(facts),
+      destination: rule.destination,
+    }));
+
+/** Classifies whether the human's pending Fixture may be resolved, why not when it may not, and
+ *  what is worth knowing before kickoff either way. */
 export const assessMatchReadiness = (facts: MatchReadinessFacts): MatchReadiness => {
-  const blockers = MATCH_BLOCKING.filter((rule) => rule.applies(facts)).map((rule) => ({
-    id: rule.id,
-    severity: "blocking" as const,
-    title: rule.title,
-    detail: rule.detail(facts),
-    destination: rule.destination,
-  }));
-  return { canPlay: blockers.length === 0, blockers };
+  const blockers = toItems(MATCH_BLOCKING, "blocking", facts);
+  return {
+    canPlay: blockers.length === 0,
+    blockers,
+    advisories: toItems(MATCH_ADVISORY, "advisory", facts),
+  };
 };

@@ -16,8 +16,26 @@ a legal choice. Orchestrator call, recorded here.
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The advisory shows when the human club's Tactic names no substitute, and not when it names at least one
-- [ ] Play and Quick result stay available with it showing
-- [ ] `pnpm check:all` green, and e2e since a screen changes
+- [x] The advisory shows when the human club's Tactic names no substitute, and not when it names at least one
+- [x] Play and Quick result stay available with it showing
+- [x] `pnpm check:all` green, and e2e since a screen changes
+
+## Answer
+
+Resolved 2026-09-21. `assessMatchReadiness` returns `advisories` beside `blockers`; its one advisory,
+`no-substitutes-named`, fires when the human club's Tactic names no substitute still at the club, and never
+changes `canPlay`. `PendingFixtureView` carries the advisories (a new required field, never persisted),
+and Match day's Kickoff panel lists them under "Before kickoff": "No substitutes named. Name a bench on the
+Squad screen, or no one can come on during the match, not even to replace an injured player." Play and
+Quick result stay available. The Tactics Overview's issue list shows it too, with a Squad link.
+
+**Surface: the Kickoff panel, not Continue's outstanding list.** An orchestrator call from review: the
+bench freezes at kickoff, so that is when the manager needs to hear it, and on Continue it would repeat
+every day of the career.
+
+Left (lows): the advisory severity is stated in a doc comment rather than narrowed in the schema; the
+Kickoff panel lists the advisory as prose, not a link; a bench of unavailable players still counts as
+named, which matches "names no substitute"; CONTEXT.md has no term for a readiness advisory.
+Report: [group-g-match-day](../../../.ai/reports/group-g-match-day.md).

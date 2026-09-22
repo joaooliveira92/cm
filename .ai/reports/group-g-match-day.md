@@ -630,3 +630,18 @@ checked the tests bite by forcing the flag both ways.
 
 Reviewed inline by the orchestrator. The seed-safety claim rests on sorting all 5,455 catalogue ids and
 90,000 sampled player ids both ways and finding the same order.
+
+## Ticket 39 — an empty bench is flagged before kickoff, 2026-09-21
+
+- Ticket closed: [39](../../.scratch/group-g-match-day/issues/39-an-empty-bench-is-flagged-before-kickoff.md)
+- RPC surface: `PendingFixtureView.advisories` (required; the view is never persisted), roundtrip test in
+  `packages/contracts/test/pending-fixture.test.ts`.
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 0. Shared 477, contracts 180, game-engine 90, desktop 2163 passed. |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | 57 passed (2.3m); the AC-33 journey sees the advisory with Play enabled, then not after naming a bench |
+
+Review: APPROVE, no blocker or high. M1 (the Tactics Overview dropped the new advisories, against its own
+contract comment) fixed by the orchestrator, with a test. M2 (the surface differs from the pattern the
+ticket pointed to) accepted and recorded in the ticket. Four lows left, listed in the ticket Answer.

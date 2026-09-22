@@ -7,7 +7,7 @@ import {
   type MatchId,
   type SEASON_PHASES,
 } from "@cm-clone/contracts";
-import { loadMatchBlockers } from "../club/matchReadiness.js";
+import { loadMatchReadiness } from "../club/matchReadiness.js";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "../world/displayNames.js";
@@ -137,7 +137,7 @@ export const loadPendingFixture = (row: SeasonRow) =>
     // Advisory, and recomputed here on every read rather than stored: the player may set a Tactic a
     // second after seeing this, and a persisted readiness record would then be stale with nothing to
     // invalidate it. The authoritative evaluation happens inside `startMatch`.
-    const blockers = yield* loadMatchBlockers(humanClubId);
+    const { blockers, advisories } = yield* loadMatchReadiness(humanClubId);
     return new PendingFixtureView({
       fixtureId: fixture.id,
       date: fixture.date,
@@ -147,6 +147,7 @@ export const loadPendingFixture = (row: SeasonRow) =>
       isHome,
       matchId: row.awaitingMatchId,
       blockers,
+      advisories,
     });
   });
 

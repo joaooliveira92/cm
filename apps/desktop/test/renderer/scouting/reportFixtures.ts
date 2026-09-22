@@ -69,6 +69,7 @@ export const fixturesView = (atBoundary: boolean) => ({
           isHome: false,
           matchId: null,
           blockers: [],
+          advisories: [],
         }
       : null,
   },

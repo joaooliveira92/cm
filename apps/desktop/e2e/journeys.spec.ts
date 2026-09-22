@@ -166,12 +166,23 @@ test("a substitution is driven by keyboard through the match day live control pa
   await expect(page.locator('[data-focus-id="tactics"]')).toBeFocused();
   await openTacticsEditor(page);
   await assignFullTactic(page);
-  // A substitute comes off the named bench (ticket 35), and the Tactics editor names starters only.
+
+  // The editor names starters only, so Match day flags the empty bench, and the match stays
+  // playable beside it (group-g 39).
+  const noBench = page.getByRole("list", { name: "Before kickoff" }).getByText("No substitutes named");
+  await pressItemKey(page, "analysis", "analysis-match");
+  await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
+  await expect(noBench).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("button", { name: "Play match" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Quick result" })).toBeEnabled();
+
+  // A substitute comes off the named bench (ticket 35); naming one clears the advisory.
   await nameBench(page);
 
   await pressItemKey(page, "analysis", "analysis-match");
   await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
   await expect(page.locator('[data-focus-id="match"]')).toBeFocused();
+  await expect(noBench).toHaveCount(0);
 
   const start = page.getByRole("button", { name: "Play match" });
   await expect(start).toBeEnabled({ timeout: 15_000 });

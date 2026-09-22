@@ -228,3 +228,21 @@ it.effect("a pending incoming bid surfaces as an advisory with the Transfers des
     strictEqual(bidAdvisory!.destination, "transfers");
   }),
 );
+
+it.effect("a tactic naming no substitute surfaces the empty-bench advisory with the Squad destination", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const named = buildTactic(before.squad.map((player) => player.id));
+    const benchless = new Tactic({ ...named, bench: named.bench.map(() => null) });
+    yield* changeTactics(savesDir, save.id, benchless, before.revision, rid("benchless"));
+
+    const snapshot = yield* getTacticsOverview(savesDir, save.id);
+
+    const advisory = snapshot.issues.find((issue) => issue.id === "no-substitutes-named");
+    ok(advisory, "an empty bench is reported beside the other readiness findings");
+    strictEqual(advisory.severity, "advisory");
+    strictEqual(advisory.destination, "squad");
+  }),
+);
+

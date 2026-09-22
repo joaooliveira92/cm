@@ -32,6 +32,7 @@ export type ContinueDestination =
   | "manager"
   | "news"
   | "tactics"
+  | "squad"
   | "match";
 
 /** What each destination is called where it is offered as a link. Lives beside the type it keys, so
@@ -44,6 +45,7 @@ export const CONTINUE_DESTINATION_LABELS: Readonly<Record<ContinueDestination, s
   manager: "Manager profile",
   news: "News",
   tactics: "Tactics",
+  squad: "Squad",
   match: "Match day",
 };
 

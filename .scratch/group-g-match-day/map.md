@@ -68,6 +68,8 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
   A restart-restored match shows a standing notice that it replays from kickoff.
 - [38 — The pure packages sort without the locale](issues/38-pure-packages-sort-without-locale.md): resolved
   2026-09-21. `compareCodeUnits` everywhere, and an `effect-lint` rule so it stays that way.
+- [39 — An empty bench is flagged before kickoff](issues/39-an-empty-bench-is-flagged-before-kickoff.md):
+  resolved 2026-09-21. A match-readiness advisory on the Kickoff panel and the Tactics Overview.
 
 ## Not yet specified
 

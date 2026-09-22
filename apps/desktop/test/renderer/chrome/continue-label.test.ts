@@ -12,6 +12,7 @@ const pendingMatchSeason: ContinueLabelSeason = {
     isHome: true,
     matchId: null,
     blockers: [],
+    advisories: [],
   },
 };
 

@@ -252,8 +252,8 @@ Agent-startable work, in order:
    comes from the kickoff bench), [36](../.scratch/group-g-match-day/issues/36-a-red-carded-keeper-drags-a-stand-in.md) (a red-carded keeper
    drags a stand-in), [37](../.scratch/group-g-match-day/issues/37-match-day-resumes-a-started-match-after-a-restart.md) (a started match
    resumes after a restart), [33](../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md) (a restarted match says so),
-   [38](../.scratch/group-g-match-day/issues/38-pure-packages-sort-without-locale.md) (no `localeCompare` in the pure packages). Next:
-   - [39](../.scratch/group-g-match-day/issues/39-an-empty-bench-is-flagged-before-kickoff.md): an empty bench is flagged before kickoff.
+   [38](../.scratch/group-g-match-day/issues/38-pure-packages-sort-without-locale.md) (no `localeCompare` in the pure packages),
+   [39](../.scratch/group-g-match-day/issues/39-an-empty-bench-is-flagged-before-kickoff.md) (an empty bench is flagged before kickoff). Next:
    - [40](../.scratch/group-g-match-day/issues/40-a-live-change-tactics-changes-only-instructions.md): a live Change Tactics changes only the
      Team Instructions (decision request 01).
    - [41](../.scratch/group-g-match-day/issues/41-accepting-a-result-refreshes-the-season-read.md): the season read refreshes after Accept result.

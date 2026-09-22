@@ -4,7 +4,11 @@ import { useMatchContext } from "./MatchProvider.js";
 
 /**
  * The pre-match boundary as the player meets it: the Fixture the Calendar has stopped before, what
- * currently blocks it, and the two ways to resolve it.
+ * currently blocks it, what is worth knowing before kickoff, and the two ways to resolve it.
+ *
+ * Advisories (an empty bench, say) sit under the blockers and never touch the buttons: they name
+ * legal preparation the player may regret, and an advisory that disabled Play would be a blocker
+ * by another name.
  *
  * There is no opponent to choose. The Fixture supplies both clubs and which side the player is on,
  * which is the whole point of binding Match day to the schedule — the exhibition path this replaced
@@ -38,6 +42,17 @@ export const KickoffPanel = () => {
             <li key={blocker.id} className="rounded-panel border border-destructive/40 p-3">
               <p className="font-semibold text-destructive">{blocker.title}</p>
               <p className="text-sm text-text-secondary">{blocker.detail}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {pending.advisories.length > 0 && (
+        <ul aria-label="Before kickoff" className="mt-3 space-y-2">
+          {pending.advisories.map((advisory) => (
+            <li key={advisory.id} className="rounded-panel border border-border p-3">
+              <p className="font-semibold">{advisory.title}</p>
+              <p className="text-sm text-text-secondary">{advisory.detail}</p>
             </li>
           ))}
         </ul>

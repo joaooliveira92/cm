@@ -168,7 +168,7 @@ const buildIssues = (
   phase: ReadinessSeasonPhase,
   pendingIncomingBids: number,
 ): ReadonlyArray<ReadinessIssueView> => {
-  const matchBlockers = assessMatchReadiness(matchFacts).blockers;
+  const matchReadiness = assessMatchReadiness(matchFacts);
   const advisories = assessContinueReadiness({
     phase,
     hasTactic: matchFacts.hasTactic,
@@ -177,7 +177,7 @@ const buildIssues = (
     pendingIncomingBids,
   }).items.filter((item) => item.severity === "advisory");
 
-  return mergeReadinessItems(matchBlockers, advisories).map(
+  return mergeReadinessItems(matchReadiness.blockers, [...matchReadiness.advisories, ...advisories]).map(
     (item) =>
       new ReadinessIssueView({
         id: item.id,

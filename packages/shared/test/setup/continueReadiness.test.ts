@@ -215,7 +215,7 @@ describe("bids awaiting the manager", () => {
 });
 
 describe("assessMatchReadiness", () => {
-  const READY_TO_PLAY = { hasTactic: true, missingSlotPlayers: 0 };
+  const READY_TO_PLAY = { hasTactic: true, missingSlotPlayers: 0, namedSubstitutes: 3 };
 
   it("lets a prepared club play", () => {
     const readiness = assessMatchReadiness(READY_TO_PLAY);
@@ -235,19 +235,47 @@ describe("assessMatchReadiness", () => {
   it("blocks a Tactic whose slots name players who have left", () => {
     // A Tactic is eleven slots by construction, so a departed player is the only way the club can
     // arrive at kickoff unable to field a legal eleven.
-    const readiness = assessMatchReadiness({ hasTactic: true, missingSlotPlayers: 2 });
+    const readiness = assessMatchReadiness({ ...READY_TO_PLAY, missingSlotPlayers: 2 });
     expect(readiness.canPlay).toBe(false);
     expect(readiness.blockers.map((blocker) => blocker.id)).toEqual(["tactic-names-departed-players"]);
     expect(readiness.blockers[0]!.detail).toContain("2 slots");
   });
 
   it("carries a destination on every blocker, so resolving one is a step and not a hunt", () => {
-    const readiness = assessMatchReadiness({ hasTactic: false, missingSlotPlayers: 0 });
+    const readiness = assessMatchReadiness({ ...READY_TO_PLAY, hasTactic: false });
     expect(readiness.blockers.every((blocker) => blocker.destination !== null)).toBe(true);
   });
 
   it("says nothing about a weak but legal selection", () => {
     // Strategic failure is the player's to own; only structurally absent or invalid state blocks.
     expect(assessMatchReadiness(READY_TO_PLAY).blockers).toEqual([]);
+  });
+
+  describe("an empty bench is advisory, never a blocker", () => {
+    it("says nothing when the bench names at least one substitute", () => {
+      expect(assessMatchReadiness({ ...READY_TO_PLAY, namedSubstitutes: 1 }).advisories).toEqual([]);
+    });
+
+    it("flags a Tactic that names no substitute, and the Fixture stays playable", () => {
+      const readiness = assessMatchReadiness({ ...READY_TO_PLAY, namedSubstitutes: 0 });
+      expect(readiness.canPlay).toBe(true);
+      expect(readiness.blockers).toEqual([]);
+      expect(readiness.advisories).toEqual([
+        expect.objectContaining({
+          id: "no-substitutes-named",
+          severity: "advisory",
+          title: "No substitutes named",
+          destination: "squad",
+        }),
+      ]);
+      // The copy says what to do and where, not only that something is missing.
+      expect(readiness.advisories[0]!.detail).toContain("Squad screen");
+    });
+
+    it("leaves a missing Tactic to its blocker rather than adding a bench advisory", () => {
+      const readiness = assessMatchReadiness({ hasTactic: false, missingSlotPlayers: 0, namedSubstitutes: 0 });
+      expect(readiness.blockers.map((blocker) => blocker.id)).toEqual(["no-tactic"]);
+      expect(readiness.advisories).toEqual([]);
+    });
   });
 });

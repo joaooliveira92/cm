@@ -58,6 +58,7 @@ const seasonView = (awaitingFixture = false) => ({
       isHome: true,
       matchId: null,
       blockers: [],
+      advisories: [],
     }
     : null,
 });

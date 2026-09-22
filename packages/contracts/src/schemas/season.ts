@@ -4,6 +4,7 @@ import { MANAGER_OUTCOMES, VERDICTS } from "@cm-clone/shared";
 import { ClubSummary } from "./clubs.js";
 import { ClubId, CompetitionId, FixtureId, MatchId, SaveId } from "./ids.js";
 import { ArchivedCauseSchema } from "./saves.js";
+import { ReadinessIssueView } from "./tactics.js";
 
 /** Season/Calendar vocabulary: the Calendar advances only by jumping to the next dated boundary — a
  * date carrying a playable competition's fixture, or a Transfer Window's open — never a day-by-day
@@ -45,6 +46,9 @@ export class PendingFixtureView extends Schema.Class<PendingFixtureView>("Pendin
   /** What currently stops this Fixture being played. Advisory: recomputed authoritatively when
    *  Play or Quick result is actually requested, because the player may repair one in between. */
   blockers: Schema.Array(ReadinessBlockerView),
+  /** What is worth knowing before kickoff but leaves the Fixture playable — an empty bench, say.
+   *  Every entry has `advisory` severity; none of them ever disables Play or Quick result. */
+  advisories: Schema.Array(ReadinessIssueView),
 }) {}
 
 export class SeasonView extends Schema.Class<SeasonView>("SeasonView")({

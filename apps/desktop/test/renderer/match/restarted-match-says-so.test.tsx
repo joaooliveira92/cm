@@ -39,6 +39,7 @@ const leagueTable = (matchId: string | null) => ({
         isHome: true,
         matchId,
         blockers: [],
+        advisories: [],
       },
     },
     standings: [],
