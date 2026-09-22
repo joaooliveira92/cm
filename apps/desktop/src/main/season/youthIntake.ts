@@ -2,23 +2,21 @@ import { PlayerId, type ClubId } from "@cm-clone/contracts";
 import {
   DEFAULT_CONTRACT_YEARS,
   NATION_PROFILES,
-  ageOn,
   compareCodeUnits,
   createSeededRng,
   deriveId,
   deriveSeed,
   generateYouthIntake,
   nationCodeFromId,
-  overallRating,
   seasonStartDate,
   seasonStartYear,
-  weeklyWage,
   type StatureTier,
 } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { appendHumanClubEvents } from "../transfers/bids.js";
 import { insertGeneratedSquad } from "../world/worldGeneration.js";
+import { signGeneratedSquad } from "./signGeneratedSquad.js";
 
 /**
  * The Youth Intake: every club with a squad gains young players at the rollover, enough to keep it
@@ -106,20 +104,17 @@ export const grantYouthIntake = (nextSeason: number, referenceYear: number) =>
       yield* insertGeneratedSquad(club.clubId, intake, baseSeed, idFor);
 
       // An ordinary Contract on the terms every signing uses: the formula wage for the player's
-      // rating and age, and the default length. No Wage Budget gate, as with an AI club's signing:
-      // the intake is the floor, and a floor a budget could refuse would not be one.
-      const players: Array<{ playerId: PlayerId; name: string }> = [];
-      for (const generated of intake) {
-        const playerId = idFor(generated.slot.index);
-        const wage = weeklyWage(
-          overallRating(generated.attributes, generated.positions),
-          ageOn(generated.dateOfBirth, joinedOn),
-          generated.potentialAbility,
-        );
-        yield* sql`INSERT INTO contracts (player_id, wage, years_remaining, signed_season)
-          VALUES (${playerId}, ${wage}, ${DEFAULT_CONTRACT_YEARS}, ${nextSeason})`;
-        players.push({ playerId, name: `${generated.firstName} ${generated.lastName}` });
-      }
+      // rating and age, and the default length. No Wage Budget gate: the intake is the floor, and a
+      // floor a budget could refuse would not be one.
+      yield* signGeneratedSquad(intake, idFor, {
+        signedSeason: nextSeason,
+        signedOn: joinedOn,
+        yearsFor: () => DEFAULT_CONTRACT_YEARS,
+      });
+      const players = intake.map((generated) => ({
+        playerId: idFor(generated.slot.index),
+        name: `${generated.firstName} ${generated.lastName}`,
+      }));
 
       // The News Inbox item, for the human club only — `appendHumanClubEvents` drops the rest.
       yield* appendHumanClubEvents(club.clubId, [

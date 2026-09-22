@@ -118,7 +118,8 @@ untouched three-phase engine, so the lost texture only ever affects matches nobo
 tier has its player rows deleted. A club promoted into a `standard` tier has a squad generated from its
 `clubs.generation_seed` and the current season number, calibrated so the new squad's collapsed strength
 matches the Results Strength it carried the week before — otherwise its first fixture contradicts its
-last one.
+last one. Each conjured player signs a Contract on world generation's terms (formula wage, 1–3 years), so
+the squad expires and counts against the Wage Budget like any other.
 
 Player identity therefore does not survive a round trip: a club that spends a season in a results-only
 tier loses those players permanently and returns with different ones. This is acceptable because

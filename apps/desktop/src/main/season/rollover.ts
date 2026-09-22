@@ -1,15 +1,17 @@
-import { type ClubId, type FixtureId } from "@cm-clone/contracts";
+import { PlayerId, type ClubId, type FixtureId } from "@cm-clone/contracts";
 import {
   NATION_PROFILES,
   POSITIONS,
   collapseSquadStrength,
   createSeededRng,
+  deriveId,
   deriveSeed,
   generateSquadAtStrength,
   computeSquadQuality,
   nationCodeFromId,
   positionRating,
   resultsStrength,
+  seasonStartDate,
   type PlayerAttributes,
   type StatureTier,
 } from "@cm-clone/shared";
@@ -17,6 +19,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { insertGeneratedSquad } from "../world/worldGeneration.js";
 import { discardSquadsForClubs } from "./matchday.js";
+import { signGeneratedSquad } from "./signGeneratedSquad.js";
 import { grantYouthIntake } from "./youthIntake.js";
 
 // ---------------------------------------------------------------------------
@@ -205,6 +208,10 @@ const reconcileSquadsWithDepth = (
       const nationCode = club.nationId === null ? null : nationCodeFromId(club.nationId);
       if (nationCode === null) continue;
 
+      // Attribute seeds derive from this 32-bit base; a collision there only makes two players
+      // alike. Ids do not (see `promotedPlayerId`).
+      const promotedBase = deriveSeed(club.generationSeed, "promoted", nextSeason);
+
       // The strength it was performing at in the division it just left.
       const target = resultsStrength({
         worldSeed,
@@ -224,10 +231,7 @@ const reconcileSquadsWithDepth = (
         {
           referenceYear,
           clubNation: nationCode,
-          randomForSlot: (slot) =>
-            createSeededRng(
-              deriveSeed(deriveSeed(club.generationSeed, "promoted", nextSeason), "player", slot.index),
-            ),
+          randomForSlot: (slot) => createSeededRng(deriveSeed(promotedBase, "player", slot.index)),
         },
         target,
         (generated) =>
@@ -241,13 +245,39 @@ const reconcileSquadsWithDepth = (
           ),
       );
 
-      yield* insertGeneratedSquad(
-        club.clubId,
-        squad,
-        deriveSeed(club.generationSeed, "promoted", nextSeason),
-      );
+      const idFor = promotedPlayerId(club.generationSeed, nextSeason);
+      yield* insertGeneratedSquad(club.clubId, squad, promotedBase, idFor);
+
+      // Contracts on the terms world generation gives a freshly generated squad — the formula wage
+      // at the player's age on the day the Season opens, and 1–3 years so the squad does not all
+      // expire together — so a promoted club's players expire and count against its Wage Budget
+      // like everyone else's. Each length is drawn from its own full-path seed, never in sequence,
+      // so it does not depend on the order the squad is written in.
+      yield* signGeneratedSquad(squad, idFor, {
+        signedSeason: nextSeason,
+        signedOn: seasonStartDate(referenceYear, nextSeason),
+        yearsFor: (slotIndex) =>
+          1 +
+          Math.floor(
+            createSeededRng(
+              deriveSeed(club.generationSeed, "promoted", nextSeason, "contract", slotIndex),
+            ).next() * 3,
+          ),
+      });
     }
   });
+
+/**
+ * The id of the player in `slotIndex` of the squad conjured for a club promoted in `seasonNumber`,
+ * derived from the whole path — club generation seed, "promoted", Season, slot — rather than from
+ * the 32-bit promoted base seed. Two clubs or Seasons whose bases collide would otherwise mint the
+ * same ids and fail the `players.id` primary key on every retry of the deterministic rollover, the
+ * weakness `youthIntakePlayerId` fixed for the intake.
+ */
+export const promotedPlayerId =
+  (clubGenerationSeed: number, seasonNumber: number) =>
+  (slotIndex: number): PlayerId =>
+    PlayerId.make(deriveId(clubGenerationSeed, "promoted", seasonNumber, "player", slotIndex));
 
 /** Every position's rating for one player, which is what a squad collapses over. */
 const positionRatingsFor = (attributes: PlayerAttributes): Record<string, number> =>

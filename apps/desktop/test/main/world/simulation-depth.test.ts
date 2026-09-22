@@ -22,6 +22,9 @@ import {
 } from "@cm-clone/shared";
 import { beginCareer, commitCareer } from "../../../src/main/world/index.js";
 import { discardSquadsForClubs } from "../../../src/main/season/index.js";
+import { promotedPlayerId } from "../../../src/main/season/rollover.js";
+import { youthIntakePlayerId } from "../../../src/main/season/youthIntake.js";
+import { expireContractsForSeason } from "../../../src/main/transfers/index.js";
 import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { createPyramidSnapshot, createSnapshotFor } from "../snapshot-helpers.js";
 
@@ -304,9 +307,83 @@ describe("crossing the depth boundary at the rollover", () => {
       for (const club of relegated) {
         strictEqual(club.squadSize, 0, `${club.clubId} kept players it should have lost`);
       }
+
+      // The conjured squad signs Contracts on world generation's terms, under ids derived from the
+      // full path; then, at the next expiry, it loses players like any other squad.
+      const signed = yield* withSave(
+        saveId,
+        Effect.gen(function* () {
+          const sql = yield* SqlClient;
+          const rows = yield* sql<{
+            id: string;
+            clubId: string;
+            clubSeed: number;
+            squadSlot: number;
+            wage: number | null;
+            yearsRemaining: number | null;
+            signedSeason: number | null;
+          }>`SELECT p.id, p.club_id as "clubId", cl.generation_seed as "clubSeed", p.squad_slot as "squadSlot",
+                    ct.wage, ct.years_remaining as "yearsRemaining", ct.signed_season as "signedSeason"
+             FROM players p JOIN clubs cl ON cl.id = p.club_id
+             LEFT JOIN contracts ct ON ct.player_id = p.id
+             WHERE ${sql.in("p.club_id", promoted.map((club) => club.clubId))}`;
+          // The conjured players are the ones on promoted ids; the rest are the Youth Intake.
+          const conjured = rows.filter((row) => row.id === promotedPlayerId(row.clubSeed, 2)(row.squadSlot));
+          yield* expireContractsForSeason;
+          const kept = yield* sql<{ id: string; yearsRemaining: number }>`
+            SELECT p.id, ct.years_remaining as "yearsRemaining"
+            FROM players p JOIN contracts ct ON ct.player_id = p.id
+            WHERE ${sql.in("p.club_id", promoted.map((club) => club.clubId))}`;
+          return { conjured, kept: new Map(kept.map((row) => [row.id, row.yearsRemaining])) };
+        }),
+      );
+      for (const club of promoted) {
+        strictEqual(
+          signed.conjured.filter((row) => row.clubId === club.clubId).length,
+          SQUAD_SLOTS.length,
+          `${club.clubId}'s conjured squad is not on ids derived from the full path`,
+        );
+      }
+      for (const row of signed.conjured) {
+        ok(row.wage !== null && row.wage > 0, `${row.id} was conjured without a paid Contract`);
+        strictEqual(row.signedSeason, 2);
+        ok(row.yearsRemaining !== null && row.yearsRemaining >= 1 && row.yearsRemaining <= 3);
+        // Expiry: a one-year Contract ends and frees the player; a longer one runs down a year.
+        strictEqual(
+          signed.kept.get(row.id),
+          row.yearsRemaining === 1 ? undefined : row.yearsRemaining! - 1,
+          `${row.id} did not expire like any other Contract`,
+        );
+      }
+      ok(
+        new Set(signed.conjured.map((row) => row.yearsRemaining)).size > 1,
+        "lengths are spread over 1-3 years, as world generation's are",
+      );
+      ok(
+        signed.conjured.some((row) => row.yearsRemaining === 1),
+        "some conjured Contract should end at the next expiry",
+      );
     }),
     900_000,
   );
+
+  it("derives promoted-squad ids from the full path, so clubs whose 32-bit promoted seeds collide get distinct ids", () => {
+    // The same colliding pair the Youth Intake's test found: their Season 2 promoted base seeds are
+    // equal, so ids derived from that base, as this path first did, would be identical.
+    const [first, second] = [59_599, 813_120];
+    const base = deriveSeed(first, "promoted", 2);
+    strictEqual(deriveSeed(second, "promoted", 2), base);
+
+    const ids = new Set<string>();
+    for (const clubSeed of [first, second]) {
+      for (const season of [2, 3]) {
+        for (let slot = 0; slot < SQUAD_SLOTS.length; slot += 1) ids.add(promotedPlayerId(clubSeed, season)(slot));
+      }
+    }
+    strictEqual(ids.size, 2 * 2 * SQUAD_SLOTS.length);
+    // Nor does a promoted id coincide with the Youth Intake's for the same club, Season and slot.
+    ok(promotedPlayerId(first, 2)(0) !== youthIntakePlayerId(first, 2)(0));
+  });
 
   it("gives a promoted club a squad at the strength it was already performing at", () => {
       // Directly against the calibration, without a whole pyramid season: the search has to land on

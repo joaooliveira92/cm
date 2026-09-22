@@ -89,3 +89,6 @@ with no outstanding assertion failures.
 - [09 — player ages read the game date](issues/09-player-ages-read-the-game-date.md): resolved 2026-09-22.
   Ages, development and prices no longer depend on the machine's date; a lint rule keeps the clock out.
 
+- [10 — promoted squads sign Contracts](issues/10-promoted-squads-sign-contracts.md): resolved 2026-09-22.
+  One Contract path for everything a rollover generates. Filed [11](issues/11-conjured-squads-are-age-correct.md).
+

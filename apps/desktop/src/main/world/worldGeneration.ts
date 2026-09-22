@@ -237,9 +237,9 @@ export const insertGeneratedSquad = (
    *  the same eleven back. */
   baseSeed: number,
   /** Each player's id, by squad slot. Defaults to `deriveId(baseSeed, "player", slot)`, which world
-   *  generation and the promoted-squad path rely on. A caller whose `baseSeed` is itself a derived
-   *  32-bit seed passes ids derived from its full path instead: two equal 32-bit bases would
-   *  otherwise mint identical ids and fail the `players.id` primary key. */
+   *  generation relies on. A caller whose `baseSeed` is itself a derived 32-bit seed — the Youth
+   *  Intake and the promoted-squad path — passes ids derived from its full path instead: two equal
+   *  32-bit bases would otherwise mint identical ids and fail the `players.id` primary key. */
   idFor: (slotIndex: number) => PlayerId = (slotIndex) =>
     PlayerId.make(deriveId(baseSeed, "player", slotIndex)),
 ) =>
