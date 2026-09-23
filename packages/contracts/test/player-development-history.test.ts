@@ -40,7 +40,7 @@ describe("Performance Report development history (Screen 113)", () => {
   it("rejects an unknown Attribute name or a non-finite value", () => {
     expect(() => Schema.decodeUnknownSync(AttributeChangeView)({ attribute: "overallRating", from: 5, to: 6 })).toThrow();
     expect(() =>
-      Schema.decodeUnknownSync(AttributeChangeView)({ attribute: "pace", from: Number.NaN, to: 6 }),
+      Schema.decodeSync(AttributeChangeView)({ attribute: "pace", from: Number.NaN, to: 6 }),
     ).toThrow();
   });
 

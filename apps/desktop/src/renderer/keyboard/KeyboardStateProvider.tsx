@@ -72,7 +72,7 @@ export const KeyboardStateProvider = ({
   }, []);
   useEffect(() => {
     let alive = true;
-    Effect.runPromise(Effect.option(getKeyBindingOverrides())).then((option) => {
+    Effect.runPromise(Effect.option(getKeyBindingOverrides)).then((option) => {
       if (alive && !mutatedRef.current && option._tag === "Some") {
         setBindingOverrides(withoutMisplacedSectionKeys(ALL_ACTIONS, option.value));
       }

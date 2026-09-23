@@ -182,9 +182,7 @@ describe("beginCareer reads the League Selection Snapshot (ticket 03)", () => {
         stored.selections.map((row) => ({
           nationId: row.nationId,
           mode: row.mode,
-          ...(row.scopeOptionId === undefined
-            ? {}
-            : { scopeOptionId: row.scopeOptionId }),
+          scopeOptionId: row.scopeOptionId,
           playableCompetitionIds: row.playableCompetitionIds,
           backgroundCompetitionIds: row.backgroundCompetitionIds,
           viewOnlyCompetitionIds: row.viewOnlyCompetitionIds,

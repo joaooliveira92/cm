@@ -57,7 +57,7 @@ export const LoadCareerScreen = () => {
 
   const refresh = useCallback(async () => {
     setListSavesError(null);
-    const outcome = await Effect.runPromise(listSaves().pipe(Effect.result));
+    const outcome = await Effect.runPromise(listSaves.pipe(Effect.result));
     if (Result.isFailure(outcome)) {
       setListSavesError(outcome.failure);
       return;

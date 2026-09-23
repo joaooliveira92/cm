@@ -124,7 +124,7 @@ export const useLeagueSelection = ({
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const outcome = await runAtEdge(getLeagueSetupIndex());
+      const outcome = await runAtEdge(getLeagueSetupIndex);
       if (cancelled) return;
       if (Result.isFailure(outcome)) {
         setLoadError(describeRpcError(outcome.failure));
@@ -139,7 +139,7 @@ export const useLeagueSelection = ({
         return;
       }
 
-      const draft = await runAtEdge(loadSetupDraft());
+      const draft = await runAtEdge(loadSetupDraft);
       if (cancelled) return;
       if (Result.isSuccess(draft) && draft.success !== null) {
         dispatch({

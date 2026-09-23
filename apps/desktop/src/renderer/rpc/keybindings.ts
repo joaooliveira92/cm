@@ -17,10 +17,10 @@ export type KeyBindingOverrides = Readonly<Record<string, string>>;
 export const EMPTY_KEY_BINDING_OVERRIDES: KeyBindingOverrides = {};
 
 /** The current override map — empty until the player rebinds anything. */
-export const getKeyBindingOverrides = (): Effect.Effect<
+export const getKeyBindingOverrides: Effect.Effect<
   KeyBindingOverrides,
   RpcClientError<"getKeyBindingOverrides">
-> => call("getKeyBindingOverrides", undefined);
+> = call("getKeyBindingOverrides", undefined);
 
 /** Rebind one Action, returning the updated override map. */
 export const setKeyBindingOverride = (
@@ -36,7 +36,7 @@ export const resetKeyBinding = (
   call("resetKeyBinding", { actionId });
 
 /** Drop every override, returning the (empty) updated override map. */
-export const resetAllKeyBindings = (): Effect.Effect<
+export const resetAllKeyBindings: Effect.Effect<
   KeyBindingOverrides,
   RpcClientError<"resetAllKeyBindings">
-> => call("resetAllKeyBindings", undefined);
+> = call("resetAllKeyBindings", undefined);

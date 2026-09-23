@@ -61,10 +61,10 @@ describe("Stature Tier across a competition", () => {
 
   it("fills a fixed spread rather than rolling each club independently", () => {
     const tiers = statureTiersFor(clubsOf(20, (index) => index * 1000));
-    const counts = [...tiers.values()].reduce<Record<string, number>>(
-      (totals, tier) => ({ ...totals, [tier]: (totals[tier] ?? 0) + 1 }),
-      {},
-    );
+    const counts: Record<string, number> = {};
+    for (const tier of tiers.values()) {
+      counts[tier] = (counts[tier] ?? 0) + 1;
+    }
     // Twenty clubs always yield four strong sides and eight strugglers. Independent per-club draws
     // would sometimes produce a division with no `big` club at all.
     expect(counts).toEqual({ big: 4, mid: 8, small: 8 });

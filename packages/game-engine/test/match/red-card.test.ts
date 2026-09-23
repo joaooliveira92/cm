@@ -132,9 +132,9 @@ describe("a simulated match's red card", () => {
 
   it("seed 284: a keeper sent off with a second keeper on the pitch brings no one into goal", () => {
     const home = withSecondKeeper(buildTeam(HOME, 284).setup);
-    const keepers = home.tactic.slots.filter((slot) => slot.position === "GK").map((slot) => slot.playerId);
+    const keepers = new Set(home.tactic.slots.filter((slot) => slot.position === "GK").map((slot) => slot.playerId));
     const { events, counts } = seeded(284, home);
-    const red = events.findIndex((event) => event._tag === "RedCard" && keepers.includes(event.playerId));
+    const red = events.findIndex((event) => event._tag === "RedCard" && keepers.has(event.playerId));
 
     expect(events[red]).toMatchObject({ _tag: "RedCard", teamClubId: HOME, half: 1, minute: 39, playerId: "home-club-p0" });
     expect(events.slice(red + 1).some((event) => event._tag === "Substitution" && event.teamClubId === HOME)).toBe(false);

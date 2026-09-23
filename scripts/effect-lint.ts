@@ -696,7 +696,7 @@ export function lintFileSet(
   files: string[],
   options: LintFileSetOptions = {},
 ): LintFileSetResult {
-  const fixtureFiles = files.filter((f) => f.includes(FIXTURE_ROOT))
+  const fixtureFiles = new Set(files.filter((f) => f.includes(FIXTURE_ROOT)))
   const scratchDir = mkdtempSync(join(tmpdir(), "effect-lint-"))
   const configPath = join(scratchDir, "tsconfig.json")
   writeFileSync(
@@ -744,7 +744,7 @@ export function lintFileSet(
       const pragma = lintVitestEnvironmentPragma(sourceFile, file, cwd)
       const locale = isLocaleFree(file, cwd) ? lintLocaleCompare(sourceFile, file) : []
       const clock = isGameClockOnly(file, cwd) ? lintWallClock(sourceFile, file) : []
-      if (fixtureFiles.includes(file)) {
+      if (fixtureFiles.has(file)) {
         fixtureBoundaries.push({
           file,
           violations: [...standard, ...boundary, ...slate, ...length, ...pragma, ...locale, ...clock],

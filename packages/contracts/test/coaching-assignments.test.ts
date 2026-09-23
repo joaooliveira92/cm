@@ -27,7 +27,7 @@ describe("Coaching Assignments view (Screen 111)", () => {
 
   it("CoachAssignmentView accepts a quality value within Schema.Finite range", () => {
     expect(() =>
-      Schema.decodeUnknownSync(CoachAssignmentView)({
+      Schema.decodeSync(CoachAssignmentView)({
         id: "c1",
         name: "Beth Cross",
         quality: 100,

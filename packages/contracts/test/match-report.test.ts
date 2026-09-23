@@ -55,7 +55,7 @@ describe("Match Report (Screen 103)", () => {
   });
 
   it("the RPC names an uncommitted match as its own failure", () => {
-    expect(Schema.decodeUnknownSync(AppRpcs.getMatchReport.payload)({ saveId: "s1", matchId: "m1" })).toBeTruthy();
-    expect(Schema.decodeUnknownSync(AppRpcs.getMatchReport.error)({ _tag: "MatchNotCompleteError", matchId: "m1" })).toBeTruthy();
+    expect(Schema.decodeSync(AppRpcs.getMatchReport.payload)({ saveId: "s1", matchId: "m1" })).toBeTruthy();
+    expect(Schema.decodeSync(AppRpcs.getMatchReport.error)({ _tag: "MatchNotCompleteError", matchId: "m1" })).toBeTruthy();
   });
 });

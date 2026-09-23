@@ -50,6 +50,7 @@
   },
   "ignorePatterns": [
     "external-reference/**",
+    ".scratch/**",
     "**/dist/**",
     "**/node_modules/**"
   ],
@@ -57,6 +58,16 @@
     {
       "files": [
         "scripts/**"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/*/scripts/**",
+        "apps/**/prototype-scale-probe/**",
+        "apps/desktop/tmp-probe/**"
       ],
       "rules": {
         "no-console": "off"

@@ -101,6 +101,6 @@ export class ClubInformationView extends Schema.Class<ClubInformationView>("Club
   /** The ground. There is no stadium entity, so these are columns on the club, not a joined row. */
   stadiumName: Schema.String,
   /** Display only: nothing in the game reads capacity as a constraint. */
-  stadiumCapacity: Schema.Number,
+  stadiumCapacity: Schema.Finite,
 }) {}
 

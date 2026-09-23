@@ -375,12 +375,11 @@ describe("Match Tactics — the live tactics screen", () => {
     setActiveMatch(liveSession() as never);
     // The goalkeeper on-0 went off with no bench left, and striker on-9 went in goal.
     const kickoff = pitch({}, []);
-    const standIn = {
-      ...kickoff,
-      onPitch: kickoff.onPitch
-        .filter((slot) => slot.playerId !== "on-9")
-        .map((slot) => (slot.playerId === "on-0" ? { ...slot, playerId: "on-9" } : slot)),
-    };
+    const onPitch = kickoff.onPitch.filter((slot) => slot.playerId !== "on-9");
+    for (const slot of onPitch) {
+      if (slot.playerId === "on-0") slot.playerId = "on-9";
+    }
+    const standIn = { ...kickoff, onPitch };
     mount(MatchMatchTacticsScreen, (method) => (method === "getTactics" ? ok(tacticsView()) : ok(resumeView({ awayPitch: standIn }))));
     const rows = await formationRows();
     expect(rows[0]).toBe("GK On9 Player");
@@ -393,10 +392,10 @@ describe("Match Tactics — the live tactics screen", () => {
     // The Squad screen swapped bench-1 into on-5's slot after kickoff; the engine ignores that edit.
     const edited = () => {
       const view = tacticsView();
-      return {
-        ...view,
-        tactic: { ...view.tactic, slots: view.tactic.slots.map((slot) => (slot.playerId === "on-5" ? { ...slot, playerId: rid("bench-1") } : slot)) },
-      };
+      for (const slot of view.tactic.slots) {
+        if (slot.playerId === "on-5") slot.playerId = rid("bench-1");
+      }
+      return view;
     };
     mount(MatchMatchTacticsScreen, (method) => (method === "getTactics" ? ok(edited()) : ok(resumeView())));
     const rows = await formationRows();

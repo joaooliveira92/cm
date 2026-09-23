@@ -34,7 +34,7 @@ const malformed = (reason: string): RouteParamDecode<never> => ({ _tag: "Malform
 export const decodeSaveId = (raw: string): RouteParamDecode<SaveId> => {
   if (raw === "") return malformed("saveId parameter is empty");
   try {
-    return { _tag: "Success", success: Schema.decodeUnknownSync(SaveIdSchema)(raw) };
+    return { _tag: "Success", success: Schema.decodeSync(SaveIdSchema)(raw) };
   } catch {
     return malformed("saveId parameter is not a string");
   }
@@ -50,7 +50,7 @@ export const decodeSaveId = (raw: string): RouteParamDecode<SaveId> => {
 export const decodeClubId = (raw: string): RouteParamDecode<ClubId> => {
   if (raw === "") return malformed("clubId parameter is empty");
   try {
-    return { _tag: "Success", success: Schema.decodeUnknownSync(ClubIdSchema)(raw) };
+    return { _tag: "Success", success: Schema.decodeSync(ClubIdSchema)(raw) };
   } catch {
     return malformed("clubId parameter is not a string");
   }
@@ -61,7 +61,7 @@ export const decodeClubId = (raw: string): RouteParamDecode<ClubId> => {
 export const decodePlayerId = (raw: string): RouteParamDecode<PlayerId> => {
   if (raw === "") return malformed("playerId parameter is empty");
   try {
-    return { _tag: "Success", success: Schema.decodeUnknownSync(PlayerIdSchema)(raw) };
+    return { _tag: "Success", success: Schema.decodeSync(PlayerIdSchema)(raw) };
   } catch {
     return malformed("playerId parameter is not a string");
   }
@@ -71,7 +71,7 @@ export const decodePlayerId = (raw: string): RouteParamDecode<PlayerId> => {
 export const decodeNationId = (raw: string): RouteParamDecode<NationId> => {
   if (raw === "") return malformed("nationId parameter is empty");
   try {
-    return { _tag: "Success", success: Schema.decodeUnknownSync(NationIdSchema)(raw) };
+    return { _tag: "Success", success: Schema.decodeSync(NationIdSchema)(raw) };
   } catch {
     return malformed("nationId parameter is not a string");
   }
@@ -81,7 +81,7 @@ export const decodeNationId = (raw: string): RouteParamDecode<NationId> => {
 export const decodeCompetitionId = (raw: string): RouteParamDecode<CompetitionId> => {
   if (raw === "") return malformed("competitionId parameter is empty");
   try {
-    return { _tag: "Success", success: Schema.decodeUnknownSync(CompetitionIdSchema)(raw) };
+    return { _tag: "Success", success: Schema.decodeSync(CompetitionIdSchema)(raw) };
   } catch {
     return malformed("competitionId parameter is not a string");
   }
@@ -92,7 +92,7 @@ export const decodeCompetitionId = (raw: string): RouteParamDecode<CompetitionId
 export const decodeMatchId = (raw: string): RouteParamDecode<MatchId> => {
   if (raw === "") return malformed("matchId parameter is empty");
   try {
-    return { _tag: "Success", success: Schema.decodeUnknownSync(MatchIdSchema)(raw) };
+    return { _tag: "Success", success: Schema.decodeSync(MatchIdSchema)(raw) };
   } catch {
     return malformed("matchId parameter is not a string");
   }

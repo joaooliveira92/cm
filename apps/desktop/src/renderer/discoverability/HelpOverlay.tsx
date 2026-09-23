@@ -219,7 +219,7 @@ export const HelpOverlay = ({
   );
 
   const doResetAll = useCallback(() => {
-    Effect.runPromise(Effect.result(resetAllKeyBindings())).then((result) => {
+    Effect.runPromise(Effect.result(resetAllKeyBindings)).then((result) => {
       if (result._tag === "Success") {
         setStatus({ _tag: "saved", message: "All bindings are back to their defaults." });
         onOverridesChange(result.success);

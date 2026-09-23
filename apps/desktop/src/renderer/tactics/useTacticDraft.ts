@@ -152,6 +152,10 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
     if (autosaving.current) return;
     autosaving.current = true;
     try {
+      // Serial drain: each save must land before the next, and a failed save drops the whole queue.
+      // These cannot go parallel — later saves depend on the revision an earlier save just confirmed.
+      // oxlint-disable-next-line no-await-in-loop
+      /* oxlint-disable no-await-in-loop */
       while (queuedAutosave.current !== null) {
         const next = queuedAutosave.current;
         queuedAutosave.current = null;
@@ -159,6 +163,7 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
           queuedAutosave.current = null;
         }
       }
+      /* oxlint-enable no-await-in-loop */
     } finally {
       autosaving.current = false;
     }

@@ -29,7 +29,7 @@ describe("Match Statistics (Screens 95/100)", () => {
   });
 
   it("the RPC allows no match (none played yet) as a success", () => {
-    expect(Schema.decodeUnknownSync(AppRpcs.getMatchStatistics.success)(null)).toBeNull();
-    expect(Schema.decodeUnknownSync(AppRpcs.getMatchStatistics.payload)({ saveId: "s1", matchId: null, revealedEvents: null })).toBeTruthy();
+    expect(Schema.decodeSync(AppRpcs.getMatchStatistics.success)(null)).toBeNull();
+    expect(Schema.decodeSync(AppRpcs.getMatchStatistics.payload)({ saveId: "s1", matchId: null, revealedEvents: null })).toBeTruthy();
   });
 });

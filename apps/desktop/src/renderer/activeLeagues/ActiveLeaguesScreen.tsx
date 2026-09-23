@@ -88,7 +88,7 @@ export const ActiveLeaguesScreen = ({ onContinue, onCancel }: ActiveLeaguesScree
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const outcome = await runAtEdge(getLeagueSetupIndex());
+      const outcome = await runAtEdge(getLeagueSetupIndex);
       if (cancelled) return;
       if (Result.isFailure(outcome)) {
         setBoot({ _tag: "Failed", message: describeRpcError(outcome.failure) });
@@ -96,7 +96,7 @@ export const ActiveLeaguesScreen = ({ onContinue, onCancel }: ActiveLeaguesScree
       }
       const index = outcome.success;
 
-      const draft = await runAtEdge(loadSetupDraft());
+      const draft = await runAtEdge(loadSetupDraft);
       if (cancelled) return;
       if (Result.isSuccess(draft) && draft.success !== null) {
         setBoot({

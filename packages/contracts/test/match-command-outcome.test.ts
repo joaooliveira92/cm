@@ -104,8 +104,8 @@ describe("live match commands: the command's own outcome and the revealed cut", 
 
   it("both match reads carry the revealed position, null for the whole match", () => {
     const resume = { saveId: "s1", matchId: "m1", cursor: 0, revealedEvents: 7 };
-    expect(Schema.encodeSync(AppRpcs.resumeSimulation.payload)(Schema.decodeUnknownSync(AppRpcs.resumeSimulation.payload)(resume))).toEqual(resume);
-    expect(Schema.decodeUnknownSync(AppRpcs.resumeSimulation.payload)({ ...resume, revealedEvents: null })).toBeTruthy();
+    expect(Schema.encodeSync(AppRpcs.resumeSimulation.payload)(Schema.decodeSync(AppRpcs.resumeSimulation.payload)(resume))).toEqual(resume);
+    expect(Schema.decodeSync(AppRpcs.resumeSimulation.payload)({ ...resume, revealedEvents: null })).toBeTruthy();
     expect(() => Schema.decodeUnknownSync(AppRpcs.resumeSimulation.payload)({ saveId: "s1", matchId: "m1", cursor: 0 })).toThrow();
 
     const command = {

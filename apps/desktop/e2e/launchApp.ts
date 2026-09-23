@@ -93,6 +93,9 @@ export const closeOrKill = async (app: ElectronApplication): Promise<void> => {
  */
 const waitForExit = async (pid: number, timeoutMs = 2_000): Promise<void> => {
   const deadline = Date.now() + timeoutMs;
+  // A live process may take a while to actually die, and there is nothing cheaper to do meanwhile than
+  // to sleep. Polling is sequential by design — a single waiter, not a missed parallelisation.
+  /* oxlint-disable no-await-in-loop */
   while (Date.now() < deadline) {
     try {
       // Signal 0 checks for existence without delivering anything.
@@ -102,6 +105,7 @@ const waitForExit = async (pid: number, timeoutMs = 2_000): Promise<void> => {
     }
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
+  /* oxlint-enable no-await-in-loop */
 };
 
 /**
@@ -421,6 +425,7 @@ export const openLivePanel = async (page: Page, via: "click" | "keyboard" = "cli
 export const assignFullTactic = async (page: Page) => {
   const rows = page.locator("tbody tr");
   await expect(rows).toHaveCount(11);
+  /* oxlint-disable no-await-in-loop */
   for (let i = 0; i < 11; i++) {
     const combobox = page.getByRole("combobox", { name: `Slot ${i + 1} player`, exact: true });
     await combobox.click();
@@ -429,6 +434,7 @@ export const assignFullTactic = async (page: Page) => {
     await listbox.getByRole("option").nth(1).click();
     await expect(listbox).toHaveCount(0);
   }
+  /* oxlint-enable no-await-in-loop */
   await page.getByRole("button", { name: "Save Tactic" }).click();
   await expect(page.getByText("Saved.")).toBeVisible();
 };
@@ -448,6 +454,7 @@ export const nameBench = async (page: Page, count = 3) => {
     .getByRole("group", { name: "Squad" })
     .getByRole("listitem")
     .filter({ has: page.getByRole("button", { name: "Not selected", exact: true }) });
+  /* oxlint-disable no-await-in-loop */
   for (let benchIndex = 0; benchIndex < count; benchIndex++) {
     // Each drop takes the player off the "Not selected" list, so the first row is always the next one.
     const player = notSelected.first().locator('button[draggable="true"]');
@@ -456,6 +463,7 @@ export const nameBench = async (page: Page, count = 3) => {
     await expect(benchSlots.nth(benchIndex)).toHaveAccessibleName(`SB${benchIndex + 1} slot, ${firstName} ${lastName}`);
     await expect(page.getByTestId("lineup-save-state")).toHaveText("Saved.");
   }
+  /* oxlint-enable no-await-in-loop */
 };
 
 export const test = base.extend<LaunchFixtures>({
@@ -484,7 +492,9 @@ export const test = base.extend<LaunchFixtures>({
     });
     // Sequential, not concurrent: each `closeOrKill` is already bounded at 5s, and closing several
     // Electron apps at once on a loaded machine is what made teardown flaky in the first place.
+    /* oxlint-disable no-await-in-loop */
     for (const app of launched) await closeOrKill(app);
+    /* oxlint-enable no-await-in-loop */
   },
 });
 

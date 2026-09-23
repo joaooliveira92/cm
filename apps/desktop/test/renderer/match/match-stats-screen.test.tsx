@@ -91,7 +91,7 @@ describe("Match Statistics screen (Screens 95/100)", () => {
     );
     expect(screen.getByText("Loading statistics...")).toBeTruthy();
     const table = await screen.findByRole("table");
-    expect(calls.filter((c) => c.method === "getMatchStatistics").at(-1)).toMatchObject({
+    expect([...calls].reverse().find((c) => c.method === "getMatchStatistics")).toMatchObject({
       payload: { matchId: null, revealedEvents: null },
     });
     const goals = within(table).getByRole("rowheader", { name: /^Goals/ }).closest("tr")!;
@@ -117,7 +117,7 @@ describe("Match Statistics screen (Screens 95/100)", () => {
     );
     await screen.findByRole("table");
     await waitFor(() =>
-      expect(calls.filter((c) => c.method === "getMatchStatistics").at(-1)!.payload).toMatchObject({
+      expect([...calls].reverse().find((c) => c.method === "getMatchStatistics")!.payload).toMatchObject({
         matchId: "m9",
         revealedEvents: null,
       }),

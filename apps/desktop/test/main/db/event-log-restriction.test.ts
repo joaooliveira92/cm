@@ -200,15 +200,17 @@ describe("player_transfers is authoritative", () => {
 
 describe("no read model becomes a table", () => {
   it("names none of the five in the schema", () => {
-    const created = MIGRATION_STATEMENTS.flatMap((statement) => {
-      const match = /CREATE TABLE `([a-z_]+)`/.exec(statement);
-      return match ? [match[1]!] : [];
-    });
+    const created = new Set(
+      MIGRATION_STATEMENTS.flatMap((statement) => {
+        const match = /CREATE TABLE `([a-z_]+)`/.exec(statement);
+        return match ? [match[1]!] : [];
+      }),
+    );
 
     // The five named read models are projections, computed from authoritative rows on read. A
     // table for any of them would be a second source for something already held once.
     for (const forbidden of ["career_history", "match_timeline", "news_feed", "squad_view", "league_table"]) {
-      ok(!created.includes(forbidden), `${forbidden} became a table`);
+      ok(!created.has(forbidden), `${forbidden} became a table`);
     }
   });
 });

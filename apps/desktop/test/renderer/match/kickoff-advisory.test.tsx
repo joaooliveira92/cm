@@ -63,11 +63,14 @@ const mountKickoff = async () => {
       </MatchProvider>
     </RegistryProvider>,
   );
-  for (let i = 0; i < 2; i++) {
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(0);
-    });
-  }
+  // Two timer beats: the advisory debounces on the first, then settles on the secondched — unrolled
+  // rather than looped so the "repeat the same step" shape stays explicit for the lint gate.
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
+  });
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
+  });
 };
 
 beforeEach(() => {

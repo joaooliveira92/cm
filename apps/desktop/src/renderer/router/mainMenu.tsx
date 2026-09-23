@@ -82,7 +82,7 @@ export const MainMenuScreen = () => {
 
   const probeSaveRepository = useCallback(async () => {
     setRepository({ status: "probing" });
-    const outcome = await Effect.runPromise(listSaves().pipe(Effect.result));
+    const outcome = await Effect.runPromise(listSaves.pipe(Effect.result));
     setRepository(
       Result.isFailure(outcome)
         ? { status: "unavailable" }

@@ -53,8 +53,8 @@ describe("Scouting Knowledge view (Screen 126)", () => {
   });
 
   it("KnowledgePlayerView rejects a missing Scouting Progress", () => {
-    expect(() => Schema.decodeUnknownSync(KnowledgePlayerView)(player({ progress: undefined }))).toThrow();
-    expect(() => Schema.decodeUnknownSync(KnowledgePlayerView)(player({ progress: "35" }))).toThrow();
+    expect(() => Schema.decodeSync(KnowledgePlayerView)(player({ progress: undefined }))).toThrow();
+    expect(() => Schema.decodeSync(KnowledgePlayerView)(player({ progress: "35" }))).toThrow();
   });
 
   it("carries no Attribute, Attribute Range, Overall Rating or Transfer Value", () => {

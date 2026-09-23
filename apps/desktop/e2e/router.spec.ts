@@ -68,13 +68,20 @@ test("the career parent owns the persistent shell across every child route (AC-1
     { screen: "squad", assert: () => expect(page.getByText(/players$/)).toBeVisible() },
   ];
 
+/* oxlint-disable no-await-in-loop */
+  // One page, six destinations: each `goto` replaces the previous screen to drive a fixture-heavy
+  // career route, so the routes must be walked in order, one at a time, in sequence — never
+  // `Promise.all`. This is sequential by design, not a missed parallelisation.
+  /* oxlint-disable no-await-in-loop */
   for (const route of routes) {
+    // oxlint-disable-next-line no-await-in-loop
     await goto(page, route.screen);
     await route.assert();
     // Exactly one of each: a second would mean the child mounted its own shell.
     await expect(primaryNav).toHaveCount(1);
     await expect(backToSaves).toHaveCount(1);
   }
+  /* oxlint-enable no-await-in-loop */
 });
 
 test("a well-formed-but-missing save stays on the career route with an error — never a loader redirect (AC-12)", async ({ window: page, userDataDir }) => {

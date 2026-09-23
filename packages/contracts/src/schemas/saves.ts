@@ -20,7 +20,7 @@ export class SaveSummary extends Schema.Class<SaveSummary>("SaveSummary")({
   /** The resolved display name of the user's club. */
   userClubName: Schema.String,
   /** The current season number. */
-  seasonNumber: Schema.Number,
+  seasonNumber: Schema.Finite,
   /** The current in-game date (ISO YYYY-MM-DD). */
   gameDate: Schema.String,
   /** The save's last modified time (ISO string, from file mtime). */

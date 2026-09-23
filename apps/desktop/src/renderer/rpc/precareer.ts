@@ -11,9 +11,9 @@ export type RpcRead<M extends AppRpcMethod> = Effect.Effect<RpcSuccess<M>, RpcCl
  * event-handler edge and pattern-match the typed failure union the same way
  * career screens do.
  */
-export const ping = (): RpcRead<"ping"> => call("ping", undefined);
+export const ping: RpcRead<"ping"> = call("ping", undefined);
 
-export const listSaves = (): RpcRead<"listSaves"> => call("listSaves", undefined);
+export const listSaves: RpcRead<"listSaves"> = call("listSaves", undefined);
 
 export const loadSave = (id: SaveId): RpcRead<"loadSave"> => call("loadSave", { id });
 
@@ -47,7 +47,7 @@ export const commitCareer = (input: RpcPayload<"commitCareer">): RpcRead<"commit
 // ---------------------------------------------------------------------------
 
 /** The setup catalogue. Fetched once on mount — it cannot change while the screen is open. */
-export const getLeagueSetupIndex = (): RpcRead<"getLeagueSetupIndex"> =>
+export const getLeagueSetupIndex: RpcRead<"getLeagueSetupIndex"> =
   call("getLeagueSetupIndex", undefined);
 
 /**
@@ -67,13 +67,13 @@ export const submitLeagueSelection = (
 export const saveSetupDraft = (input: RpcPayload<"saveSetupDraft">): RpcRead<"saveSetupDraft"> =>
   call("saveSetupDraft", input);
 
-export const loadSetupDraft = (): RpcRead<"loadSetupDraft"> => call("loadSetupDraft", undefined);
+export const loadSetupDraft: RpcRead<"loadSetupDraft"> = call("loadSetupDraft", undefined);
 
 export const buildLeaguePreset = (
   input: RpcPayload<"buildLeaguePreset">,
 ): RpcRead<"buildLeaguePreset"> => call("buildLeaguePreset", input);
 
-export const listLeaguePresets = (): RpcRead<"listLeaguePresets"> =>
+export const listLeaguePresets: RpcRead<"listLeaguePresets"> =
   call("listLeaguePresets", undefined);
 
 export const saveLeaguePreset = (

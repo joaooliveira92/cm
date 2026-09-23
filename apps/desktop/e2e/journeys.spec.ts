@@ -210,7 +210,12 @@ test("a substitution is driven by keyboard through the match day live control pa
   const makeSub = page.getByRole("button", { name: "Make substitution" });
   await expect(makeSub).toBeDisabled();
 
+  // Each slot takes the same two-step UI ride, and every step mutates shared screen state, so the
+  // loop must stay sequential — the listbox options for slot *i* only exist once slot *i-1* has
+  // confirmed. Two Playwright actions can't share one renderer for the brief interval of a click.
+  /* oxlint-disable no-await-in-loop */
   for (const combobox of [off, on]) {
+    // oxlint-disable-next-line no-await-in-loop
     await combobox.focus();
     await expect(combobox).toBeFocused();
     await page.keyboard.press("Enter");
@@ -220,6 +225,7 @@ test("a substitution is driven by keyboard through the match day live control pa
     await listbox.getByRole("option").nth(1).click();
     await expect(listbox).toHaveCount(0);
   }
+  /* oxlint-enable no-await-in-loop */
 
   await expect(makeSub).toBeEnabled();
   await makeSub.focus();

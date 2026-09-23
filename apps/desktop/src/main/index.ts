@@ -14,12 +14,16 @@ app.setName("cm-clone-desktop");
 
 const matchSeedOverride = resolveMatchSeedOverride(process.env[MATCH_SEED_ENV], app.isPackaged);
 if (matchSeedOverride._tag === "Malformed") {
+  // Start-up gate before any window exists: the error must reach a terminal.
+  // oxlint-disable-next-line no-console
   console.error(
     `${MATCH_SEED_ENV}=${JSON.stringify(matchSeedOverride.raw)} is not a match seed ` +
       "(expected a decimal integer from 0 to 4294967295). Refusing to start.",
   );
   app.exit(1);
 } else if (matchSeedOverride._tag === "IgnoredInPackagedBuild") {
+  // Same gate: a seed that cannot take effect is worth one line in the terminal.
+  // oxlint-disable-next-line no-console
   console.warn(`${MATCH_SEED_ENV} is ignored in a packaged build; matches play under their derived seeds.`);
 }
 
@@ -50,9 +54,13 @@ const createWindow = () => {
   });
 
   window.webContents.on("console-message", (_event, _level, message) => {
+    // Main-process console is the only aggregator for renderer diagnostics in dev.
+    // oxlint-disable-next-line no-console
     console.log(`[renderer] ${message}`);
   });
   window.webContents.on("preload-error", (_event, preloadPath, error) => {
+    // A preload failure blanks the window; surface the cause rather than swallow it.
+    // oxlint-disable-next-line no-console
     console.error(`[preload:${preloadPath}]`, error);
   });
 

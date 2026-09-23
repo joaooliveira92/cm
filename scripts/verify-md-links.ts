@@ -211,7 +211,7 @@ function findViolations(absPath: string): Array<Violation> {
   const inlinePaths = checksInlinePaths(file, raw)
 
   const lines = source.split("\n")
-  lines.forEach((lineText, index) => {
+  for (const [index, lineText] of lines.entries()) {
     for (const match of lineText.matchAll(LINK_PATTERN)) {
       const rawUrl = match[1]?.trim()
       if (!rawUrl) continue
@@ -233,7 +233,7 @@ function findViolations(absPath: string): Array<Violation> {
       }
     }
 
-    if (!inlinePaths) return
+    if (!inlinePaths) continue
     for (const match of lineText.matchAll(CODE_SPAN_PATTERN)) {
       const span = match[1]!.trim()
       if (!CHECKED_ANCHORS.some((anchor) => span.startsWith(anchor))) continue
@@ -246,7 +246,7 @@ function findViolations(absPath: string): Array<Violation> {
         out.push({ file, line: index + 1, kind: "path", target })
       }
     }
-  })
+  }
   return out
 }
 

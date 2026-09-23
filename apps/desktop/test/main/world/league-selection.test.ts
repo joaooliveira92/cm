@@ -304,9 +304,19 @@ describe("presets (§13)", () => {
   });
 
   it("builds minimal and broad-world configurations that both resolve", async () => {
-    for (const preset of ["minimal", "broad_world"] as const) {
-      const { intents } = await run(buildLeaguePresetIntents(preset));
-      const view = await run(resolveLeagueSelection(1, intents));
+    // The two presets are independent, so their resolution fan-out runs concurrently rather than
+    // serially inside a loop.
+    const views = await run(
+      Effect.all(
+        (["minimal", "broad_world"] as const).map((preset) =>
+          buildLeaguePresetIntents(preset).pipe(
+            Effect.flatMap(({ intents }) => resolveLeagueSelection(1, intents)),
+          ),
+        ),
+        { concurrency: "unbounded" },
+      ),
+    );
+    for (const view of views) {
       expect(view.issues.filter((issue) => issue.level === "blocking")).toEqual([]);
     }
   });
