@@ -4,7 +4,7 @@
  * submit; accept/reject/counter dispatch correctly.
  */
 import { InlineModal } from "./InlineModal.js";
-import { formatCredits } from "../table/transfers/marketColumns.js";
+import { formatCredits } from "../format.js";
 import { useTransfers } from "./TransfersProvider.js";
 
 export const CounterOfferModal = () => {

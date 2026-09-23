@@ -14,7 +14,7 @@ import { Input } from "../components/ui/input.js";
 import { ActionKeyBadge, useActionBadgeBinding } from "../discoverability/ActionKeyBadge.js";
 import { restoreFocusAfterOverlay } from "../focus.js";
 import { useDialogKeyboard } from "./dialogKeyboard.js";
-import { formatFigureCredits } from "../table/transfers/marketColumns.js";
+import { formatFigureCredits } from "../format.js";
 import { useTransfers } from "./TransfersProvider.js";
 import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "../theme.js";
 

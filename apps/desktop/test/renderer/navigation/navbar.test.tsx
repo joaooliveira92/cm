@@ -255,7 +255,13 @@ describe("a screen's identity in place of the club name", () => {
         name: "Florian David",
         qualifier: "Benfica",
         facts: "GK, France, Age 22",
-        player: { overallRating: 60, transferValue: 0, wage: null, contractExpiry: "2 years", injury: "None" },
+        player: {
+          overallRating: { _tag: "exact", value: 60 },
+          transferValue: { _tag: "exact", value: 0 },
+          wage: null,
+          contractExpiry: "2 years",
+          injury: "None",
+        },
       },
     });
     expect(screen.getByText("Florian David", { exact: false })).toBeTruthy();

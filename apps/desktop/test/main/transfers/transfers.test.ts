@@ -63,17 +63,6 @@ const trueTransferValue = (playerId: PlayerId) =>
       : transferValue(player.overallRating, player.age, player.potentialAbility);
   });
 
-/** Sets the human club's Scouting Progress on a player to `progress`, so the market read narrows. */
-const setScoutingProgress = (saveId: string, clubId: string, playerId: PlayerId, progress: number) =>
-  withSave(
-    saveId,
-    Effect.gen(function* () {
-      const sql = yield* SqlClient;
-      yield* sql`DELETE FROM scouting_progress WHERE club_id = ${clubId} AND player_id = ${playerId}`;
-      yield* sql`INSERT INTO scouting_progress (club_id, player_id, progress) VALUES (${clubId}, ${playerId}, ${progress})`;
-    }),
-  );
-
 // ---------------------------------------------------------------------------
 // Pure AI-seller decision
 // ---------------------------------------------------------------------------

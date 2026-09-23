@@ -11,7 +11,7 @@
  * player whose contract cannot be read still gets their Overview.
  */
 import { type PlayerId, type SaveId } from "@cm-clone/contracts";
-import { formatCredits } from "../format.js";
+import { formatCredits, formatFigure, formatFigureCredits } from "../format.js";
 import { PlayerPanel, PlayerRow } from "../player/panels.js";
 import { PlayerScreenFrame } from "../player/PlayerScreenFrame.js";
 import { describeRpcError, playerContractAtom, squadAtom, typedError, useAtomValue } from "../rpc.js";
@@ -84,8 +84,8 @@ export const PlayerContractScreen = ({
           <PlayerRow label="Place Of Birth" value={profile.birthplace ?? "Unknown"} />
           <PlayerRow label="Nationality" value={profile.nationality} />
           <PlayerRow label="Club" value={profile.club.name} />
-          <PlayerRow label="Value" value={formatCredits(profile.transferValue)} />
-          <PlayerRow label="Overall Rating" value={profile.overallRating} />
+          <PlayerRow label="Value" value={formatFigureCredits(profile.transferValue)} />
+          <PlayerRow label="Overall Rating" value={formatFigure(profile.overallRating)} />
         </PlayerPanel>
         <ContractPanel saveId={saveId} playerId={playerId} />
       </div>

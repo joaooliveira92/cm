@@ -14,6 +14,7 @@
 import { type ColumnDef, type SortingFn } from "@tanstack/react-table";
 import type { MarketPlayerView } from "@cm-clone/contracts";
 import type { KnownFigure } from "@cm-clone/shared";
+import { figureMid, formatFigure, formatFigureCredits } from "../../format.js";
 import type { TableRowShape } from "../types.js";
 
 export interface MarketPlayerRow extends TableRowShape {
@@ -39,23 +40,6 @@ export const marketPlayerRowOf = (player: MarketPlayerView): MarketPlayerRow => 
   transferValue: player.transferValue,
   positions: player.positions.map((p) => ({ position: p.position })),
 });
-
-export const formatCredits = (amount: number): string => `${amount.toLocaleString()} Cr`;
-
-/** The number a ranged figure sorts by: its midpoint. An exact figure sorts by its value. */
-export const figureMid = (figure: KnownFigure): number =>
-  figure._tag === "exact" ? figure.value : (figure.low + figure.high) / 2;
-
-/** Renders a figure: the number when exact, the `low–high` band (en dash) when the market's read
- *  is ranged by Scouting Progress. */
-export const formatFigure = (figure: KnownFigure): string =>
-  figure._tag === "exact" ? String(figure.value) : `${figure.low}–${figure.high}`;
-
-/** Renders a Credits figure: `1,200,000 Cr` when exact, `500,000 Cr–750,000 Cr` when ranged. */
-export const formatFigureCredits = (figure: KnownFigure): string =>
-  figure._tag === "exact"
-    ? formatCredits(figure.value)
-    : `${formatCredits(figure.low)}–${formatCredits(figure.high)}`;
 
 /** Numeric sort over the accessed value — the default string sort would order 9 before 10. */
 const numericSortingFn: SortingFn<MarketPlayerRow> = (rowA, rowB, columnId) => {

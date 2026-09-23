@@ -75,7 +75,7 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
           onScrollCommit={onScrollCommit}
         >
           {tableRows.length > 0 && (
-            <Table className="min-w-full text-left">
+            <Table className="min-w-full text-left" aria-label={label}>
               <DataTable.Header table={table} />
               <DataTable.Body rows={tableRows} />
             </Table>

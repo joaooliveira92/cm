@@ -185,6 +185,15 @@ export const trainingPlanSquad = (
   players,
 });
 
+/** The Player Profile wire nests every Squad attribute as an exact figure — the shape the player
+ *  screens receive for an own-squad or Fully Scouted player (ticket 10). */
+export const profileFigures = (
+  attributes: Record<string, number>,
+): Record<string, { readonly _tag: "exact"; readonly value: number }> =>
+  Object.fromEntries(
+    Object.entries(attributes).map(([attribute, value]) => [attribute, { _tag: "exact", value }]),
+  );
+
 /** One Season of recorded development on the Player Development Centre wire view (Screen 114). */
 export interface LatestSeasonWire {
   readonly seasonNumber: number;

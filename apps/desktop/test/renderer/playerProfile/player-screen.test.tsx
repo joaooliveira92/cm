@@ -16,7 +16,7 @@ import { PlayerContractScreen } from "../../../src/renderer/playerContract/Playe
 import { PlayerProfileScreen } from "../../../src/renderer/playerProfile/PlayerProfileScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 import { getScreenIdentity } from "../../../src/renderer/screenIdentity.js";
-import { mockPreload, rid, squadPlayer, trainingPlanSquad } from "../training/fixtures.js";
+import { mockPreload, profileFigures, rid, squadPlayer, trainingPlanSquad } from "../training/fixtures.js";
 
 const profile = (goalkeeper = false) => {
   const player = squadPlayer("p1", "Rui", "Costa", null, goalkeeper);
@@ -28,9 +28,9 @@ const profile = (goalkeeper = false) => {
     nationality: player.nationality,
     birthplace: "Porto",
     positions: player.positions,
-    attributes: player.attributes,
-    overallRating: player.overallRating,
-    transferValue: 1_000_000,
+    attributes: profileFigures(player.attributes),
+    overallRating: { _tag: "exact", value: player.overallRating },
+    transferValue: { _tag: "exact", value: 1_000_000 },
     club: trainingPlanSquad().club,
     contractExpiry: "2030-06-30",
     injuryStatus: "fit",
@@ -82,7 +82,10 @@ describe("the player screen every player tab shares", () => {
     expect(getScreenIdentity()).toMatchObject({ name: "Rui Costa", qualifier: "Test FC", facts: "DC, Portugal, Age 25" });
     // The band's player facts, with the wage filled in from the contract read.
     await vi.waitFor(() => expect(getScreenIdentity()?.player.wage).toBe(7000));
-    expect(getScreenIdentity()?.player).toMatchObject({ transferValue: 1_000_000, injury: "None" });
+    expect(getScreenIdentity()?.player).toMatchObject({
+      transferValue: { _tag: "exact", value: 1_000_000 },
+      injury: "None",
+    });
     expect(within(strip).getByRole("button", { name: "Profile" }).getAttribute("aria-current")).toBe("page");
     expect(within(strip).getByRole("button", { name: "Information" }).getAttribute("aria-current")).toBeNull();
 
@@ -150,6 +153,50 @@ describe("the Profile tab", () => {
     const keeping = await screen.findByRole("region", { name: "Goalkeeping" });
     expect(within(keeping).getByText("GK Reflexes")).toBeTruthy();
     expect(GOALKEEPING_ATTRIBUTES.length).toBeGreaterThan(0);
+  });
+});
+
+describe("the Profile tab reads a rival by Scouting Progress", () => {
+  /** A rival below Fully Scouted: every figure is a Range, and the header band reports the same
+   *  figures the columns do. */
+  const rangedProfile = () => {
+    const player = squadPlayer("p1", "Rui", "Costa", null);
+    return {
+      ...profile(),
+      attributes: Object.fromEntries(
+        Object.entries(player.attributes).map(([attribute, value]) => [
+          attribute,
+          { _tag: "range", low: Math.max(1, value - 8), high: Math.min(20, value + 8) },
+        ]),
+      ),
+      overallRating: { _tag: "range", low: 62, high: 78 },
+      transferValue: { _tag: "range", low: 500_000, high: 750_000 },
+    };
+  };
+
+  it("renders Attribute Ranges for a player below Fully Scouted — never an exact figure", async () => {
+    mockPreload(async (method) => {
+      if (method === "getPlayerProfile") return { _tag: "Success", value: rangedProfile() };
+      if (method === "getPlayerContract") return { _tag: "Success", value: contract };
+      return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: rid("s1") } };
+    });
+    renderProfile();
+    const physical = await screen.findByRole("region", { name: "Physical" });
+
+    // The derived pair — Overall Rating and Transfer Value — render as `low–high` bands.
+    expect(within(physical).getByText("62–78")).toBeTruthy();
+    expect(within(physical).getByText("500,000 Cr–750,000 Cr")).toBeTruthy();
+    // Every Attribute in the column is a Range too, never an exact 1-20 number.
+    expect(within(physical).getAllByText("4–20").length).toBeGreaterThan(0);
+    expect(within(physical).queryByText("12")).toBeNull();
+
+    // The navbar band carries the same ranged figures for the open player.
+    expect(getScreenIdentity()?.player.overallRating).toEqual({ _tag: "range", low: 62, high: 78 });
+    expect(getScreenIdentity()?.player.transferValue).toEqual({
+      _tag: "range",
+      low: 500_000,
+      high: 750_000,
+    });
   });
 });
 

@@ -4,7 +4,7 @@ import { ClubId, PlayerId } from "@cm-clone/contracts";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { PlayerContractScreen } from "../../../src/renderer/playerContract/PlayerContractScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
-import { mockPreload, rid, squadPlayer, trainingPlanSquad } from "../training/fixtures.js";
+import { mockPreload, profileFigures, rid, squadPlayer, trainingPlanSquad } from "../training/fixtures.js";
 import { chooseOptionByLabel, comboboxByLabel, openSelect, selectValueOf } from "../../setup/baseUiSelect.js";
 
 /**
@@ -24,6 +24,7 @@ interface World {
   wage: number;
   lengthYears: number;
   refusal: Record<string, unknown> | null;
+  profileOverrides: Record<string, unknown> | null;
   squadReads: number;
   readonly commands: Array<Record<string, unknown>>;
 }
@@ -40,9 +41,9 @@ const profileOf = () => {
     nationality: player.nationality,
     birthplace: "Porto",
     positions: player.positions,
-    attributes: player.attributes,
-    overallRating: player.overallRating,
-    transferValue: 1_000_000,
+    attributes: profileFigures(player.attributes),
+    overallRating: { _tag: "exact", value: player.overallRating },
+    transferValue: { _tag: "exact", value: 1_000_000 },
     club: trainingPlanSquad().club,
     contractExpiry: "Season 2",
     injuryStatus: "fit",
@@ -53,7 +54,10 @@ const install = () => {
   mockPreload(async (method: string, payload: unknown) => {
     switch (method) {
       case "getPlayerProfile":
-        return { _tag: "Success", value: profileOf() };
+        return {
+          _tag: "Success",
+          value: world.profileOverrides === null ? profileOf() : { ...profileOf(), ...world.profileOverrides },
+        };
       case "getPlayerContract":
         return {
           _tag: "Success",
@@ -125,7 +129,7 @@ beforeEach(() => {
       disconnect() {}
     },
   );
-  world = { clubId: me, wage: 900, lengthYears: 1, refusal: null, squadReads: 0, commands: [] };
+  world = { clubId: me, wage: 900, lengthYears: 1, refusal: null, profileOverrides: null, squadReads: 0, commands: [] };
   install();
   bindRouter({
     navigate: () => {},
@@ -205,5 +209,20 @@ describe("group-j ticket 04 — no renewal outside the manager's club", () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(screen.queryByRole("region", { name: "Renew contract" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Renew" })).toBeNull();
+  });
+
+  it("reads a rival's Value and Overall Rating as the Attribute Ranges his profile carries (ticket 10)", async () => {
+    world.clubId = "club-7";
+    world.profileOverrides = {
+      overallRating: { _tag: "range", low: 62, high: 78 },
+      transferValue: { _tag: "range", low: 500_000, high: 750_000 },
+    };
+    mount();
+    const overview = await screen.findByRole("region", { name: "Overview" });
+    // The contract Overview shows the same banded figures the Profile tab does — never an exact
+    // number for a rival below Fully Scouted — while the Contract Details keep the real rows.
+    expect(within(overview).getByText("62–78")).toBeTruthy();
+    expect(within(overview).getByText("500,000 Cr–750,000 Cr")).toBeTruthy();
+    expect(within(await contractDetails()).getByText("1 year")).toBeTruthy();
   });
 });

@@ -10,13 +10,23 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { ALL_ATTRIBUTES, HIDDEN_ATTRIBUTES, POSITIONS, ageOn, overallRating as computeOverallRating, positionRating, type PlayerAttributes } from "@cm-clone/shared";
+import {
+  ALL_ATTRIBUTES,
+  FULLY_SCOUTED,
+  HIDDEN_ATTRIBUTES,
+  ageOn,
+  figureByProgress,
+  overallRating as computeOverallRating,
+  transferValueFigureByProgress,
+  type PlayerAttributes,
+} from "@cm-clone/shared";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
 import { CURRENT_SEASON_NUMBER_SQL, loadGameDate } from "../season/currentSeason.js";
+import { loadUserClub } from "../club/squad.js";
 
 const attributeSelectList = [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map(
   (attribute) => `${attribute.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)} as "${attribute}"`,
@@ -37,8 +47,20 @@ interface PlayerRow {
   readonly wage: number | null;
   readonly yearsRemaining: number | null;
   readonly signedSeason: number | null;
+  readonly potentialAbility: number;
   [attribute: string]: unknown;
 }
+
+/** How far the reader's scouts have got on one player: sparse, so a player nobody has ever looked
+ *  at is absent and reads at progress 0, the widest honest Range. Own-club players never carry a
+ *  row and never reach this lookup (Agent Note 2026-09-19 — knowledge limits every player read). */
+const scoutingProgressOf = (playerId: PlayerId, readerClubId: ClubId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ progress: number }>`
+      SELECT progress FROM scouting_progress WHERE club_id = ${readerClubId} AND player_id = ${playerId}`;
+    return rows[0]?.progress ?? 0;
+  });
 
 export const getPlayerProfile = (savesDir: string, saveId: SaveId, playerId: PlayerId) =>
   withExistingSave(savesDir, saveId, (filename) =>
@@ -61,7 +83,8 @@ const readPlayerProfile = (playerId: PlayerId) =>
               COALESCE(pf.condition, 100) as "condition",
               COALESCE(pf.last_injury_severity, 'none') as "injuryStatus",
               ct.wage as "wage", ct.years_remaining as "yearsRemaining",
-              ct.signed_season as "signedSeason"
+              ct.signed_season as "signedSeason",
+              p.potential_ability as "potentialAbility"
        FROM players p
        LEFT JOIN cities bc ON bc.id = p.birth_city_id
        LEFT JOIN clubs c ON c.id = p.club_id
@@ -85,7 +108,7 @@ const readPlayerProfile = (playerId: PlayerId) =>
       familiarity: Schema.Schema.Type<typeof FamiliarityTierSchema>;
     }>(`SELECT position, familiarity FROM player_positions WHERE player_id = ?`, [playerId]);
 
-    const attributes = Object.fromEntries(
+    const trueAttributes = Object.fromEntries(
       [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map((attribute) => [attribute, player[attribute] ?? undefined]),
     ) as PlayerAttributes;
 
@@ -93,22 +116,38 @@ const readPlayerProfile = (playerId: PlayerId) =>
       (r) => new PlayerPositionView({ position: r.position, familiarity: r.familiarity }),
     );
 
-    const playerAge = ageOn(player.dateOfBirth, yield* loadGameDate);
-    const posRatings: Record<string, number> = {};
-    for (const pos of POSITIONS) {
-      posRatings[pos] = positionRating(attributes, pos);
+    if (!player.clubId) {
+      return yield* new PlayerNotFoundError({ playerId });
     }
-    const ovr = computeOverallRating(attributes, positions);
+
+    // The one knowledge rule (Agent Note 2026-09-19, ticket 09/10): a player of the reader's own
+    // squad reads at full knowledge; any other player is gated on the human club's Scouting
+    // Progress — exact only at Fully Scouted, an Attribute Range (1-20 scale for Attributes, the
+    // wider bands for Overall Rating and Transfer Value) below it. Progress is part of the read,
+    // never stored. The human club for this read is `loadUserClub`, the same seam the market uses.
+    const humanClub = yield* loadUserClub;
+    const progress =
+      player.clubId === humanClub.id ? FULLY_SCOUTED : yield* scoutingProgressOf(playerId, humanClub.id);
+
+    // Goalkeeping Attributes are absent — not zero — for an outfield player (CONTEXT.md), so a
+    // null row entry is omitted from the wire rather than ranged from a value that is not there.
+    const attributes = Object.fromEntries(
+      [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].flatMap((attribute) => {
+        const trueValue = player[attribute];
+        return typeof trueValue === "number"
+          ? [[attribute, figureByProgress(trueValue, progress, [1, 20])]]
+          : [];
+      }),
+    );
+
+    const playerAge = ageOn(player.dateOfBirth, yield* loadGameDate);
+    const ovr = computeOverallRating(trueAttributes, positions);
 
     const injuryStatus = player.condition < 75
       ? "knock"
       : player.injuryStatus !== "none"
       ? player.injuryStatus
       : "fit";
-
-    if (!player.clubId) {
-      return yield* new PlayerNotFoundError({ playerId });
-    }
 
     const clubSummary = yield* Schema.decodeUnknownEffect(ClubSummary)(
       { id: player.clubId, name: nameOf(player.clubId), statureTier: player.statureTier ?? "mid" },
@@ -123,8 +162,8 @@ const readPlayerProfile = (playerId: PlayerId) =>
       birthplace: player.birthCityName,
       positions,
       attributes,
-      overallRating: ovr,
-      transferValue: 0,
+      overallRating: figureByProgress(ovr, progress),
+      transferValue: transferValueFigureByProgress(ovr, playerAge, player.potentialAbility, progress),
       club: clubSummary,
       contractExpiry: player.yearsRemaining != null ? `${player.yearsRemaining} years` : "Free Agent",
       injuryStatus,

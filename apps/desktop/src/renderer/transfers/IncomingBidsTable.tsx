@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "../components/ui/table.js";
 import { useTransfers } from "./TransfersProvider.js";
-import { formatCredits } from "../table/transfers/marketColumns.js";
+import { formatCredits } from "../format.js";
 
 /** The incoming-bids table leaf: hand-rendered rows driven by the shared
  *  transfers view, with the accept/reject/counter actions dispatching through

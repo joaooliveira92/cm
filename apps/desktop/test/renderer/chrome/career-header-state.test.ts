@@ -5,6 +5,7 @@ import {
   matchReadout,
   seasonReadout,
   type HeaderCareer,
+  type HeaderPlayer,
 } from "../../../src/renderer/chrome/header/career-header-state.js";
 
 const season = { seasonNumber: 3, awaitingFixture: null, currentDate: "2026-10-17", phase: "in_season" } as const;
@@ -82,9 +83,9 @@ describe("describeSecondaryRow", () => {
   });
 
   it("reports the open player's facts in place of the calendar and standing", () => {
-    const player = {
-      overallRating: 60,
-      transferValue: 250_000,
+    const player: HeaderPlayer = {
+      overallRating: { _tag: "exact", value: 60 },
+      transferValue: { _tag: "exact", value: 250_000 },
       wage: null,
       contractExpiry: "2 years",
       injury: "None",

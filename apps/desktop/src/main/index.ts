@@ -39,12 +39,18 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 let mainWindow: electron.BrowserWindow | null = null;
 
 const createWindow = () => {
+  const showInactive = process.env["CMC_HEADED_INACTIVE"] === "1";
   const window = new BrowserWindow({
     width: 1200,
     height: 800,
     ...(process.platform === "darwin"
       ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 12, y: 14 } }
       : {}),
+    // The e2e suite runs headed (an Electron window cannot be headless) and must not steal the
+    // player's OS focus. `show: false` defers the show so the window never grabs focus at
+    // construction; `showInactive` then makes it visible without activating the app (macOS), while
+    // Playwright still drives it through the debugging protocol, which needs no OS focus.
+    ...(showInactive ? { show: false } : {}),
     webPreferences: {
       preload: path.join(dirname, "../preload/index.cjs"),
       contextIsolation: true,
@@ -52,6 +58,8 @@ const createWindow = () => {
       sandbox: false,
     },
   });
+
+  if (showInactive) window.showInactive();
 
   window.webContents.on("console-message", (_event, _level, message) => {
     // Main-process console is the only aggregator for renderer diagnostics in dev.

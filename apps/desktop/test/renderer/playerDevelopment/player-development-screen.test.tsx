@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, describe, expect, it } from "vitest";
 import { PlayerDevelopmentScreen } from "../../../src/renderer/playerDevelopment/PlayerDevelopmentScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
-import { mockPreload, rid, squadPlayer, trainingPlanSquad } from "../training/fixtures.js";
+import { mockPreload, profileFigures, rid, squadPlayer, trainingPlanSquad } from "../training/fixtures.js";
 
 afterEach(() => cleanup());
 
@@ -17,9 +17,9 @@ const profile = (id: string, firstName: string, lastName: string) => {
     nationality: player.nationality,
     birthplace: null,
     positions: player.positions,
-    attributes: player.attributes,
-    overallRating: player.overallRating,
-    transferValue: 1_000_000,
+    attributes: profileFigures(player.attributes),
+    overallRating: { _tag: "exact", value: player.overallRating },
+    transferValue: { _tag: "exact", value: 1_000_000 },
     club: trainingPlanSquad().club,
     contractExpiry: "2030-06-30",
     injuryStatus: "fit",

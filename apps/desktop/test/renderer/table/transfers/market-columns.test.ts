@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
-  MARKET_COLUMN_LABELS,
   figureMid,
   formatCredits,
   formatFigure,
   formatFigureCredits,
+} from "../../../../src/renderer/format.js";
+import {
+  MARKET_COLUMN_LABELS,
   marketColumns,
   marketPlayerRowOf,
   type MarketPlayerRow,

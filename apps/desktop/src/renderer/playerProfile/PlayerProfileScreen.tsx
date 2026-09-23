@@ -7,6 +7,10 @@
  * its Category, Overall Rating and Transfer Value as the derived pair, and Positions with their
  * Familiarity Tier in place of CM's per-position grid.
  *
+ * Below Fully Scouted the profile reads by the manager's Scouting Progress on the player (Agent
+ * Note 2026-09-19, ticket 10): every Attribute, Overall Rating and Transfer Value renders as the
+ * `low–high` Attribute Range the market publishes, exact only at Fully Scouted.
+ *
  * Read-only. Every command that acts on a player lives on the surface that owns it (Training Focus
  * on Development, bids on Transfers); this screen only reports.
  */
@@ -17,7 +21,7 @@ import {
   type Category,
   type FamiliarityTier,
 } from "@cm-clone/shared";
-import { formatCredits } from "../format.js";
+import { formatFigure, formatFigureCredits } from "../format.js";
 import { attributeLabel } from "../playerCoachReport/developmentProgress.js";
 import { injuryLabel } from "../player/injury.js";
 import { PlayerPanel, PlayerRow } from "../player/panels.js";
@@ -55,18 +59,17 @@ const AttributeColumn = ({
   readonly children?: React.ReactNode;
 }) => {
   const present = CATEGORY_ATTRIBUTES[category].filter(
-    (attribute) => typeof attributes[attribute] === "number",
+    (attribute) => attributes[attribute] !== undefined,
   );
   if (present.length === 0) return null;
   return (
     <PlayerPanel title={CATEGORY_LABELS[category]}>
-      {present.map((attribute: Attribute) => (
-        <PlayerRow
-          key={attribute}
-          label={attributeLabel(attribute)}
-          value={attributes[attribute]}
-        />
-      ))}
+      {present.map((attribute: Attribute) => {
+        const figure = attributes[attribute];
+        return figure === undefined ? null : (
+          <PlayerRow key={attribute} label={attributeLabel(attribute)} value={formatFigure(figure)} />
+        );
+      })}
       {children}
     </PlayerPanel>
   );
@@ -108,8 +111,8 @@ export const PlayerProfileScreen = ({
           <AttributeColumn category="physical" attributes={profile.attributes}>
             {/* CM's tinted tail: the readings that are not 1-20 Attributes, kept in the last
                 column so the three Attribute lists stay the same kind of thing throughout. */}
-            <PlayerRow label="Overall Rating" value={profile.overallRating} emphasis />
-            <PlayerRow label="Transfer Value" value={formatCredits(profile.transferValue)} emphasis />
+            <PlayerRow label="Overall Rating" value={formatFigure(profile.overallRating)} emphasis />
+            <PlayerRow label="Transfer Value" value={formatFigureCredits(profile.transferValue)} emphasis />
           </AttributeColumn>
           <AttributeColumn category="goalkeeping" attributes={profile.attributes} />
         </div>

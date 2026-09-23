@@ -1,4 +1,4 @@
-import { formatCalendarDate } from "@cm-clone/shared";
+import { formatCalendarDate, type KnownFigure } from "@cm-clone/shared";
 /**
  * Presentation state for the header's secondary band.
  *
@@ -14,7 +14,7 @@ import { formatCalendarDate } from "@cm-clone/shared";
  * admits it.
  */
 import type { MatchReadout } from "../../actions/types.js";
-import { formatCredits } from "../../format.js";
+import { formatCredits, formatFigure, formatFigureCredits } from "../../format.js";
 
 /** Which shell the header is decorating. Drives the adaptive second row. */
 export type HeaderView = "menu" | "load" | "create" | "career";
@@ -89,11 +89,13 @@ export interface HeaderCareer {
   readonly blockedReason: string | null;
 }
 
-/** The player a player screen is showing, as the band reports them. `wage` is null until the
- *  contract read resolves; `injury` arrives already worded. */
+/** The player a player screen is showing, as the band reports them. Rating and Value are
+ *  `KnownFigure`s — exact for an own-squad or Fully Scouted player, the Attribute Range the
+ *  manager's Scouting Progress allows below it (ticket 10). `wage` is null until the contract read
+ *  resolves; `injury` arrives already worded. */
 export interface HeaderPlayer {
-  readonly overallRating: number;
-  readonly transferValue: number;
+  readonly overallRating: KnownFigure;
+  readonly transferValue: KnownFigure;
   readonly wage: number | null;
   readonly contractExpiry: string;
   readonly injury: string;
@@ -215,8 +217,8 @@ function careerMetrics(career: HeaderCareer): readonly HeaderMetric[] {
 /** The player screen's band: what CM kept in view about a player whichever tab was open. */
 function playerMetrics(player: HeaderPlayer): readonly HeaderMetric[] {
   return [
-    { icon: "rating", label: "Rating", value: String(player.overallRating), placeholder: false },
-    { icon: "value", label: "Value", value: formatCredits(player.transferValue), placeholder: false },
+    { icon: "rating", label: "Rating", value: formatFigure(player.overallRating), placeholder: false },
+    { icon: "value", label: "Value", value: formatFigureCredits(player.transferValue), placeholder: false },
     {
       icon: "wage",
       label: "Wage",

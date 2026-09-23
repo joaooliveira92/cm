@@ -16,7 +16,7 @@ import { IncomingBidsTable } from "./IncomingBidsTable.js";
 import { OutgoingBidsTable } from "./OutgoingBidsTable.js";
 import { BidComposer } from "./BidComposer.js";
 import { CounterOfferModal } from "./CounterOfferModal.js";
-import { formatCredits } from "../table/transfers/marketColumns.js";
+import { formatCredits } from "../format.js";
 import { TransfersProvider, useTransfers } from "./TransfersProvider.js";
 import { STATE_COPY } from "../table/viewState.js";
 

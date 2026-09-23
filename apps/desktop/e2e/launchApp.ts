@@ -11,7 +11,13 @@ const mainPath = path.join(import.meta.dirname, "../dist/main/index.js");
 export const launchApp = (userDataDir: string) =>
   electron.launch({
     args: [mainPath, `--user-data-dir=${userDataDir}`],
-    env: { ...process.env, ELECTRON_RUN_AS_NODE: "" },
+    env: {
+      ...process.env,
+      ELECTRON_RUN_AS_NODE: "",
+      // Headed mode without stealing OS focus: the app shows its window via `showInactive` instead
+      // of activating it, so the suite stays visible while the player keeps their keyboard/mouse.
+      CMC_HEADED_INACTIVE: "1",
+    },
   });
 
 /**
@@ -292,17 +298,22 @@ export const matchScore = (page: Page): Locator =>
   page.getByRole("region", { name: "Match score" });
 
 /**
- * A save entry in the Load Career list.
+ * The Continue button of a save entry in the Load Career list.
  *
- * The entry is not a `<button>` element: `router/loadCareer.tsx` renders an `<li>` carrying
- * `role="button"` and `aria-label={`Save ${name}`}`, so its accessible name is the seed name with a
- * `Save ` prefix — "Save Seed: fresh", not "Seed: fresh". Every spec routes through this helper so
- * the prefix is stated once; a bare `getByRole("button", { name })` only ever worked by accident,
- * through Playwright's default *substring* name matching, and broke outright wherever a spec
- * tightened up with `exact: true`.
+ * The entry is a rich card (`router/loadCareer.tsx`): an `<li>` carrying the save's name as its
+ * heading, with Continue/Delete as the actions inside it. The card itself is not clickable — it used
+ * to be an `<li role="button" aria-label="Save ${name}">`, and `saveEntry` addressed that label,
+ * but the rich-save-cards change (`d6bc3d32`) removed it without retargeting this helper, which
+ * failed every spec that loads a career. Scoping to the card by its exact heading and then to its
+ * Continue button keeps every caller's intent — count the cards, or click through into the career —
+ * while matching what a player actually clicks. `exact` on the heading disambiguates two saves that
+ * share a name prefix ("Duplicate Career" twice) from one whose name merely contains another's.
  */
 export const saveEntry = (page: Page, name: string): Locator =>
-  page.getByRole("button", { name: `Save ${name}`, exact: true });
+  page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name, exact: true }) })
+    .getByRole("button", { name: "Continue", exact: true });
 
 /**
  * Choose an option from a screen toolbar popover (Squad's View and Position selectors): a trigger
