@@ -1,5 +1,6 @@
 import {
   createContext,
+  startTransition,
   useCallback,
   useEffect,
   useMemo,
@@ -148,9 +149,15 @@ const ActiveLeaguesInner = ({
 
   const dispatch = useCallback(
     (intent: ActiveLeaguesIntent): void => {
-      // The setter accepts an updater, so a burst of dispatches folds over the *current* state
-      // rather than a render-captured one.
-      setState((current) => applyIntent(domainIndex, current, intent));
+      // Every user intent lands as a Transition, not an urgent update: React 19.3
+      // evaluates transitions independently, so a heavy setup change can never block
+      // the cheap reads behind it, and the grid's native View Transitions fire for
+      // the row additions/removals they animate (they only trigger inside one).
+      startTransition(() => {
+        // The setter accepts an updater, so a burst of dispatches folds over the *current*
+        // state rather than a render-captured one.
+        setState((current) => applyIntent(domainIndex, current, intent));
+      });
     },
     [setState, domainIndex],
   );

@@ -9,7 +9,6 @@ import { bindRouter } from "../navigation/adapter.js";
 import { KeyboardSpine } from "../keyboard/KeyboardSpine.js";
 import { FixturesScreen } from "../fixtures/FixturesScreen.js";
 import { LeagueTableScreen } from "../leagueTable/LeagueTableScreen.js";
-import { ManagerProfileScreen } from "../managerProfile/ManagerProfileScreen.js";
 import { MatchDayScreen } from "../match/MatchDayScreen.js";
 import { NewsInboxScreen } from "../news/NewsInboxScreen.js";
 import { SeasonSummaryScreen } from "../seasonSummary/SeasonSummaryScreen.js";

@@ -17,7 +17,7 @@ import {
   type SnapshotId,
 } from "@cm-clone/contracts";
 import type { PillarDistribution } from "@cm-clone/shared";
-import { Effect, Random } from "effect";
+import { Effect, Option, Random } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import {
   blockingIssues,
@@ -94,9 +94,12 @@ const loadDefaultUserClub = Effect.gen(function* () {
  * `save_meta` because archiving is career state, not file metadata; the cross join is safe because
  * both tables hold exactly one row per save. It is read here so the Save List can mark an archived
  * save without opening the career (ticket 02). The extra fields (manager name, club name, season
- * info, last modified time) enrich the card the player sees on the Load Career screen. Queries for
- * tables that may not exist in older schema versions are wrapped in `Effect.option` so the save
- * list never fails for a schema-mismatched fixture. */
+ * info, last modified time) enrich the card the player sees on the Load Career screen.
+ *
+ * Returns `None` when the file has no `save_meta` row — a provisional world or a schema-mismatched
+ * fixture — because `save_meta` is what makes a save discoverable: a file without it is not a save,
+ * not an error. Queries for tables that may not exist in older schema versions are wrapped in
+ * `Effect.option` so the save list never fails for a schema-mismatched fixture. */
 const readSaveSummary = (filename: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
@@ -116,7 +119,7 @@ const readSaveSummary = (filename: string) =>
       archivedCause: string | null;
     } | undefined;
     if (!base) {
-      return yield* Effect.die(new Error("readSaveSummary: save_meta row missing"));
+      return yield* Effect.succeed(Option.none<SaveSummary>());
     }
 
     const managerProfileRows = yield* sql`SELECT manager_name as "managerName" FROM manager_profile WHERE id = 1`.pipe(Effect.option);
@@ -145,20 +148,32 @@ const readSaveSummary = (filename: string) =>
       )
       : Effect.succeed("—"));
     const mtime = yield* Effect.promise(() => stat(filename).then((s) => s.mtime.toISOString()));
-    return new SaveSummary({
-      id: SaveId.make(base.id),
-      name: base.name,
-      createdAt: base.createdAt,
-      archivedCause: base.archivedCause as "retired" | "sacked" | null,
-      managerName,
-      userClubName,
-      seasonNumber,
-      gameDate,
-      lastModifiedAt: mtime,
-    });
+    return yield* Effect.succeed(
+      Option.some(
+        new SaveSummary({
+          id: SaveId.make(base.id),
+          name: base.name,
+          createdAt: base.createdAt,
+          archivedCause: base.archivedCause as "retired" | "sacked" | null,
+          managerName,
+          userClubName,
+          seasonNumber,
+          gameDate,
+          lastModifiedAt: mtime,
+        }),
+      ),
+    );
   }).pipe(
     Effect.provide(SqliteClient.layer({ filename, readonly: true })),
     Effect.scoped,
+  );
+
+/** `readSaveSummary` narrowed to callers that already know the file is a save: a `commitCareer`
+ * that just wrote its `save_meta` row, and a `loadSave` that passed the schema-version gate. A
+ * missing `save_meta` there is an invariant violation, so it dies rather than returning `None`. */
+const readSaveSummaryOrDie = (filename: string) =>
+  readSaveSummary(filename).pipe(
+    Effect.map(Option.getOrThrowWith(() => new Error("readSaveSummary: save_meta row missing"))),
   );
 
 export const listSaves = (savesDir: string) =>
@@ -171,7 +186,10 @@ export const listSaves = (savesDir: string) =>
     // user-controlled and unbounded fan-out would open one file descriptor per save at once.
     const summaries = yield* Effect.forEach(
       files,
-      (file) => readSaveSummary(path.join(savesDir, file)).pipe(Effect.option),
+      (file) => readSaveSummary(path.join(savesDir, file)).pipe(
+        Effect.option,
+        Effect.map(Option.flatten),
+      ),
       { concurrency: 4 },
     );
     return summaries.flatMap((summary) => (summary._tag === "Some" ? [summary.value] : []));
@@ -299,7 +317,7 @@ export const commitCareer = (
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped);
 
     // Resolve the club display name and read season info for the SaveSummary.
-    const summary = yield* readSaveSummary(filename);
+    const summary = yield* readSaveSummaryOrDie(filename);
     return summary;
   });
 
@@ -382,5 +400,5 @@ export const loadSave = (savesDir: string, id: SaveId) =>
       }
       yield* reportPackCoverage;
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped);
-    return yield* readSaveSummary(filename);
+    return yield* readSaveSummaryOrDie(filename);
   });

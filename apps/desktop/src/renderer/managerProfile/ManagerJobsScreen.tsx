@@ -1,7 +1,6 @@
-import type { SaveId } from "@cm-clone/contracts";
 import { FOCUS_RING } from "../focus.js";
 
-export const ManagerJobsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
+export const ManagerJobsScreen = () => {
   return (
     <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Jobs" className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
       <h1 className="text-2xl font-bold">Jobs</h1>

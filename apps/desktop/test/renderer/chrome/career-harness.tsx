@@ -114,6 +114,11 @@ export const preload = (phase: Phase) => {
           name: "My Save",
           createdAt: "2026-01-01T00:00:00.000Z",
           archivedCause: null,
+          managerName: "Boss",
+          userClubName: "Northport Rovers",
+          seasonNumber: 3,
+          gameDate: "2026-10-17",
+          lastModifiedAt: "2026-10-17T00:00:00.000Z",
         },
       } as never;
     }

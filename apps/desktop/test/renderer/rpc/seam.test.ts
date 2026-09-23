@@ -95,7 +95,17 @@ describe("renderer RPC seam — wire decode (AC-02)", () => {
   it("decodes the Success branch against the method's success schema", async () => {
     const restore = installPreload(async () => ({
       _tag: "Success",
-      value: [{ id: relaxedSaveId("s1"), name: "Career", createdAt: "2026-08-29T00:00:00.000Z", archivedCause: null }],
+      value: [{
+        id: relaxedSaveId("s1"),
+        name: "Career",
+        createdAt: "2026-08-29T00:00:00.000Z",
+        archivedCause: null,
+        managerName: "Manager",
+        userClubName: "Test FC",
+        seasonNumber: 1,
+        gameDate: "2026-08-29",
+        lastModifiedAt: "2026-08-29T00:00:00.000Z",
+      }],
     }));
     try {
       const result = await Effect.runPromise(Effect.result(call("listSaves", undefined)));

@@ -282,3 +282,19 @@
   --color-header-muted: color-mix(in oklab, var(--color-header-fg) 70%, var(--color-header-bg));
   --color-header-hover: color-mix(in oklab, var(--color-header-fg) 14%, var(--color-header-bg));
 }
+
+/*
+ * The renderer's one native View Transition integration (the Active Leagues
+ * grid's rows). It rides the browser's View Transitions API: a `::view-transition-*`
+ * snapshot animates while a transition is in flight and then goes away. Under
+ * `prefers-reduced-motion` every one of those snapshot animations is switched
+ * off rather than shortened — the same switch-off-wholesale policy the motion
+ * component this replaced applied per element.
+ */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

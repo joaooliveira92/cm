@@ -1,6 +1,5 @@
 import type { SaveId } from "@cm-clone/contracts";
-import { useAtomValue } from "../rpc.js";
-import { newsInboxAtom, describeRpcError, typedError } from "../rpc.js";
+import { useAtomValue, newsInboxAtom, describeRpcError, typedError } from "../rpc.js";
 import { FOCUS_RING } from "../focus.js";
 
 export const ManagerInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
