@@ -203,10 +203,14 @@ export const RESERVED_STATUSES: readonly ReservedStatus[] = [
 ];
 
 /** The engine-modeled state a squad row carries. Narrow on purpose: widening it
- *  is the signal that a reserved slot has become renderable. */
+ *  is the signal that a reserved slot has become renderable.
+ *
+ *  Condition is optional because the any-club squad read carries none for a rival's Players —
+ *  the Player read discloses no fitness state — and an absent Condition discloses nothing, so
+ *  `statusesOf` derives no status from it. The manager's own squad always supplies it. */
 export interface StatusSource {
   /** Current Condition (%), from the season's fitness ledger. */
-  readonly condition: number;
+  readonly condition?: number;
 }
 
 /**
@@ -215,7 +219,9 @@ export interface StatusSource {
  * nothing rather than as a guess.
  */
 export const statusesOf = (source: StatusSource): readonly ReservedStatus[] =>
-  source.condition < NON_CONTACT_CONDITION_THRESHOLD ? [TIRED] : [];
+  source.condition !== undefined && source.condition < NON_CONTACT_CONDITION_THRESHOLD
+    ? [TIRED]
+    : [];
 
 /** The full terms of a player's statuses, as the announcer speaks them. */
 export const statusTermsOf = (source: StatusSource): readonly string[] =>

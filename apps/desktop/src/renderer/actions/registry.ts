@@ -78,7 +78,7 @@ export const STAFF_SCOPED_SCREENS = [
  * The club sub-surface drill-downs: additional views at `/career/$saveId/club/$clubId/...`.
  */
 export const CLUB_SUB_SURFACE_SCREENS = [
-  "clubSquadDetail",
+  "clubSquad",
   "clubFixturesDetail",
   "clubTransfersDetail",
   "clubFinancesDetail",

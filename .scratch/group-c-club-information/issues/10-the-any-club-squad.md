@@ -65,7 +65,7 @@ Scouting Progress on the shared read) and shipped in group-i tickets 09/10, so t
 the block note below records is settled. This ticket's shape question was already settled; it is now
 fully specified and buildable against the shared rule.
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 ## Why this is blocked, found 2026-09-19
 

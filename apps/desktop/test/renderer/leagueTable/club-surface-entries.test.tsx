@@ -71,6 +71,9 @@ describe("the league table row is the entry point to every club-scoped surface",
     { label: "club fixtures", to: "/career/$saveId/club/$clubId/fixtures" },
     { label: "club transfers", to: "/career/$saveId/club/$clubId/transfers" },
     { label: "club finances", to: "/career/$saveId/club/$clubId/finances" },
+    // Screen 35 (group-c ticket 10): the any-club squad is a seventh club surface, so the row
+    // carries a seventh control, drawn rightmost after the money.
+    { label: "club squad", to: "/career/$saveId/club/$clubId/squad" },
   ] as const;
 
   it.each(SURFACES)("each club's row reaches its own $label page", async ({ label, to }) => {
@@ -109,12 +112,14 @@ describe("the league table row is the entry point to every club-scoped surface",
       "Northport Rovers — club fixtures",
       "Northport Rovers — club transfers",
       "Northport Rovers — club finances",
+      "Northport Rovers — club squad",
       "Eastvale United — club staff",
       "Eastvale United — scout report",
       "Eastvale United — club information",
       "Eastvale United — club fixtures",
       "Eastvale United — club transfers",
       "Eastvale United — club finances",
+      "Eastvale United — club squad",
     ]);
   });
 });

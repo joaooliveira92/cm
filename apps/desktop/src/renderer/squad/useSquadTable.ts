@@ -52,9 +52,13 @@ export const useSquadTable = ({
   const columns = useMemo(
     () =>
       squadColumns({
-        expanded: legendExpanded,
-        legendId: STATUS_LEGEND_ID,
-        onToggle: onToggleLegend,
+        ownClub: true,
+        sortable: true,
+        legend: {
+          expanded: legendExpanded,
+          legendId: STATUS_LEGEND_ID,
+          onToggle: onToggleLegend,
+        },
       }),
     [legendExpanded, onToggleLegend],
   );

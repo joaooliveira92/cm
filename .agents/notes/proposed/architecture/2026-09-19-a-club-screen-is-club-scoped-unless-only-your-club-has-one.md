@@ -74,10 +74,18 @@ Both exceptions are now about the *surface*, not the viewer: the subject may not
 (Screen 47), or the own-club surface may not be a read (Screen 35). Neither is ever about what the
 player is permitted to see, which remains empty in this game.
 
-Whether Screen 35 resolves by extracting a shared roster or by a second screen is
-[group-c ticket 10](../../../../.scratch/group-c-club-information/issues/10-the-any-club-squad.md); this
-amendment records the discriminator, not the implementation. Group L will need it — a competition's
-table is a read, and the own-club equivalents may not be.
+[group-c ticket 10](../../../../.scratch/group-c-club-information/issues/10-the-any-club-squad.md)
+settled the implementation on 2026-09-23, and the discriminator is now load-bearing there rather
+than illustrative: the roster is **extracted** as one shared table that both surfaces mount. The
+own-club Squad screen wraps it in the editing surface (toolbar, views, selection, drag, the
+match-day bar); the club-scoped Screen 35 renders the same table bare — the way `FixtureDayList`
+already served both fixture surfaces, and deliberately *not* one screen with a boolean threaded
+through the lineup manager, which would be two screens sharing a name. And because a read
+generalises, the Players it lists are knowledge-limited exactly like every other Player read
+outside the manager's club ([Agent Note 2026-09-19, knowledge limits every player
+read](2026-09-19-knowledge-limits-every-player-read.md)): exact for the manager's own club and at
+Fully Scouted, Attribute Ranges below it. Group L will need the same discriminator — a
+competition's table is a read, and the own-club equivalents may not be.
 
 ## Consequences
 
@@ -87,10 +95,12 @@ table is a read, and the own-club equivalents may not be.
 - **Screen 47 keeps its save-scoped screen and gains no drill-down.** Not because a rival's board
   confidence is secret, but because it does not exist.
 - **An interactive own-club screen is not a second screen.** The shipped `squad/` sorts, selects and
-  drills down; an any-club squad is a read. That is a difference in *capability*, and the resolver
-  pattern handles it — same screen, affordances gated on whether the club is the manager's, exactly
-  as `ClubStaffScreen` already marks a club that is not the user's. Two screens for this reason
-  would be two implementations of one list.
+  drills down; an any-club squad is a read. That is a difference in *capability*, and it is served by
+  extracting the read (the roster) as one shared table that the two surfaces mount differently —
+  resolved that way by group-c ticket 10 specifically because gating a 2044-line lineup manager on an
+  `isUserClub` boolean would have been two screens sharing a name. The club-scoped screen marks a club
+  that is not the user's exactly as `ClubStaffScreen` does. Two screens for this reason would be two
+  implementations of one list.
 - **The rule is not Group C's alone.** Group L has the same shape for nations and competitions, and
   should quote this rather than re-deriving it. The discriminator generalises: ask whether the
   subject has a row for the thing you are looking at.

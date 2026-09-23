@@ -58,7 +58,7 @@ import {
 } from "../managerProfile/index.js";
 // Ticket 03 — Staff drill-downs
 // Ticket 04 — Club drill-downs (other club views)
-import { ClubSquadDetailScreen } from "../clubSquadDetail/ClubSquadDetailScreen.js";
+import { ClubSquadScreen } from "../clubSquad/ClubSquadScreen.js";
 import { ClubFixturesDetailScreen } from "../clubFixturesDetail/ClubFixturesDetailScreen.js";
 import { ClubTransfersDetailScreen } from "../clubTransfersDetail/ClubTransfersDetailScreen.js";
 import { ClubFinancesDetailScreen } from "../clubFinancesDetail/ClubFinancesDetailScreen.js";
@@ -414,10 +414,10 @@ const playerCoachReportRoute = createRoute({
 // Club sub-surface routes — additional views at `/career/$saveId/club/$clubId/...`
 // ---------------------------------------------------------------------------
 
-const clubSquadDetailRoute = createRoute({
+const clubSquadRoute = createRoute({
   getParentRoute: () => clubRoute,
   path: "squad",
-  component: () => <CareerClubChildView screenId="clubSquadDetail" Screen={ClubSquadDetailScreen} />,
+  component: () => <CareerClubChildView screenId="clubSquad" Screen={ClubSquadScreen} />,
 });
 
 const clubFixturesDetailRoute = createRoute({
@@ -597,7 +597,7 @@ managerRoute.addChildren([
       clubRoute.addChildren([
         clubScoutReportRoute,
         clubStaffRoute,
-        clubSquadDetailRoute,
+        clubSquadRoute,
         clubFixturesDetailRoute,
         clubTransfersDetailRoute,
         clubFinancesDetailRoute,

@@ -132,6 +132,7 @@ export const navigate = (destination: NavigationDestination): void => {
     // The one two-parameter route: the club segment carries the target club as well as the save.
     case "/career/$saveId/club/$clubId/scout-report":
     case "/career/$saveId/club/$clubId/staff":
+    case "/career/$saveId/club/$clubId/squad":
     case "/career/$saveId/club/$clubId/information":
     case "/career/$saveId/club/$clubId/fixtures":
     case "/career/$saveId/club/$clubId/transfers":

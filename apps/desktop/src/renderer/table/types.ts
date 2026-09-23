@@ -13,6 +13,7 @@
  *  boundary). */
 export type TableId =
   | "squad"
+  | "club-squad"
   | "transfer-market"
   | "free-agents"
   | "incoming-bids"

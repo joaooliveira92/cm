@@ -5,7 +5,7 @@
 const CLUB_SURFACE_BY_SEGMENT: Readonly<Record<string, string>> = {
   "scout-report": "teamScoutReport",
   staff: "clubStaff",
-  squad: "clubSquadDetail",
+  squad: "clubSquad",
   fixtures: "clubFixturesDetail",
   transfers: "clubTransfersDetail",
   finances: "clubFinancesDetail",

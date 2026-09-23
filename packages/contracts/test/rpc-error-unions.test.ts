@@ -25,6 +25,8 @@ const pendingFixtureIntegrity = {
 
 const saveNotFound = { _tag: "SaveNotFoundError", id: "s1" };
 
+const clubNotFound = { _tag: "ClubNotFoundError", id: "c7" };
+
 describe("RPC error unions declare what their handler can raise", () => {
   // `loadSave` refuses a save made under another save schema before it reads anything.
   describe("loadSave", () => {
@@ -45,6 +47,18 @@ describe("RPC error unions declare what their handler can raise", () => {
 
     it("round-trips a pending-fixture integrity failure", () => {
       roundTrip(AppRpcs.getCompetitionTable.error, pendingFixtureIntegrity);
+    });
+  });
+
+  // The club-scoped reads share one error union: a missing save, or a club id that names nothing
+  // in that save. Only the save or the club id can fail, so those are the only two arms.
+  describe("getClubSquad (screen 35)", () => {
+    it("round-trips a missing save", () => {
+      roundTrip(AppRpcs.getClubSquad.error, saveNotFound);
+    });
+
+    it("round-trips a club the save does not hold", () => {
+      roundTrip(AppRpcs.getClubSquad.error, clubNotFound);
     });
   });
 

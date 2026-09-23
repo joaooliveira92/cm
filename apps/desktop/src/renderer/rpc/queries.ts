@@ -254,6 +254,30 @@ export const clubStaffAtom = (saveId: SaveId, clubId: ClubId) =>
   clubStaffForSave(saveId)(clubId);
 
 /**
+ * getClubSquad — `["save", saveId]`, `["squad", saveId]`.
+ *
+ * Club Squad (Screen 35): any club's squad, its Players read by the human club's Scouting
+ * Progress. Same two-level nested family as the staff read, for the same reason — a
+ * `{ saveId, clubId }` object key would miss on `MutableHashMap`'s reference comparison and
+ * refetch forever.
+ *
+ * Reactive on the squad key beside the save key, matching `squadAtom`: a completed transfer moves
+ * a player in or out of a squad, so the `completeTransfer` mutation's squad invalidation must
+ * reach this read too.
+ */
+const clubSquadForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((clubId: ClubId) =>
+    managementReadPolicy(
+      Atom.make(call("getClubSquad", { saveId, clubId })).pipe(
+        Atom.withReactivity([saveKey(saveId), squadKey(saveId)]),
+      ),
+    ),
+  ),
+);
+
+export const clubSquadAtom = (saveId: SaveId, clubId: ClubId) => clubSquadForSave(saveId)(clubId);
+
+/**
  * getClubInformation — `["save", saveId]`.
  *
  * Club General Information (Screen 34): a club's identity, home town, nation and ground, for any

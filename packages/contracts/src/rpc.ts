@@ -39,6 +39,7 @@ import {
   ClubFinancesView,
   ClubFixturesView,
   ClubInformationView,
+  ClubSquadView,
   ClubStaffView,
   ClubTransfersView,
   CoachingAssignmentsView,
@@ -528,10 +529,19 @@ commitCareer: {
     ]),
   },
 /** Club Staff (Screen 38): who works at any club in the save. A pure read — every person derived
- *  on demand, so a `results-only` club answers like any other; only the save or the club id can fail. */
+   *  on demand, so a `results-only` club answers like any other; only the save or the club id can fail. */
   getClubStaff: {
     payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
     success: ClubStaffView,
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
+  },
+  /** Club Squad (Screen 35): any club's squad, its Players read by the human club's Scouting
+   *  Progress (exact for the manager's own club and for rivals only once Fully Scouted; Attribute
+   *  Ranges below it — Agent Note 2026-09-19). A pure read over `players` and `scouting_progress`;
+   *  only the save or the club id can fail. */
+  getClubSquad: {
+    payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
+    success: ClubSquadView,
     error: Schema.Union([SaveNotFoundError, ClubNotFoundError]),
   },
   /** Club General Information (Screen 34): a club's identity, home town, nation and ground, for any

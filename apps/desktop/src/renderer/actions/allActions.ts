@@ -213,7 +213,7 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   playerContract: { showKeyBadges: false },
   playerCoachReport: { showKeyBadges: false },
   // The club sub-surface drill-downs.
-  clubSquadDetail: { showKeyBadges: false },
+  clubSquad: { showKeyBadges: false },
   clubFixturesDetail: { showKeyBadges: false },
   clubTransfersDetail: { showKeyBadges: false },
   clubFinancesDetail: { showKeyBadges: false },

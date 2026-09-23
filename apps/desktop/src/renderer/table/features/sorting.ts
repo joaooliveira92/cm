@@ -34,6 +34,7 @@ export const cycleSort = (current: SortState | null, columnId: ColumnId): SortSt
 
 const TABLE_LABELS: Readonly<Record<TableId, string>> = {
   squad: "Squad",
+  "club-squad": "Club Squad",
   "transfer-market": "Market",
   "free-agents": "Free Agents",
   "incoming-bids": "Incoming Bids",

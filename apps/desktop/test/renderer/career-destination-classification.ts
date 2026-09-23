@@ -55,6 +55,7 @@ export const CAREER_SUB_SURFACES: Readonly<Record<CareerSubSurfaceType, string>>
   scoutingKnowledge: "Scouting Knowledge (Screen 126); a Recruitment navbar item, classed under Scouting",
   teamScoutReport: "names a club, so it cannot be built from a save alone",
   clubStaff: "names a club, so it cannot be built from a save alone",
+  clubSquad: "names a club, so it cannot be built from a save alone",
   clubInformation: "names a club, so it cannot be built from a save alone",
   clubFixturesDetail: "names a club, so it cannot be built from a save alone",
   clubTransfersDetail: "names a club, so it cannot be built from a save alone",

@@ -58,6 +58,7 @@ import {
   unassignScout,
 } from "../club/scouting.js";
 import { getClubStaff } from "../career/staff.js";
+import { getClubSquad } from "../club/clubSquad.js";
 import { getPlayerContract, getPlayerProfile } from "../career/player.js";
 import { getTeamScoutReadings, getTeamScoutReport } from "../club/teamScoutReport.js";
 import { withWideEvent } from "./logging.js";
@@ -454,6 +455,13 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
         payload,
       );
       return yield* getClubStaff(ctx.savesDir, saveId, clubId);
+    }),
+  getClubSquad: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, clubId } = yield* Schema.decodeUnknownEffect(AppRpcs.getClubSquad.payload)(
+        payload,
+      );
+      return yield* getClubSquad(ctx.savesDir, saveId, clubId);
     }),
   getCoachingAssignments: (payload, ctx) =>
     Effect.gen(function* () {

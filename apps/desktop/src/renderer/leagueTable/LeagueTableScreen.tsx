@@ -193,6 +193,25 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   >
                     Finances
                   </button>
+                  {/* Screen 35, group-c ticket 10. A seventh club surface, so a seventh control,
+                      per the one-control-per-surface rule above. Opened last but drawn rightmost
+                      so the ledger's own reading order — identity, staff, report, information,
+                      fixtures, transfers, money — is the screen's. The any-club squad is the
+                      roster, read-only; the manager's own club reaches the lineup manager from the
+                      Squad section instead. */}
+                  <button
+                    type="button"
+                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    aria-label={`${row.clubName} — club squad`}
+                    onClick={(event) =>
+                      navigateCareer(
+                        { type: "clubSquad", saveId, clubId: row.clubId },
+                        intentOfClick(event),
+                      )
+                    }
+                  >
+                    Squad
+                  </button>
                 </TableCell>
                 <TableCell className="pr-2 text-center tabular-nums">{row.played}</TableCell>
                 <TableCell className="pr-2 text-center tabular-nums">{row.won}</TableCell>
