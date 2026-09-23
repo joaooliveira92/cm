@@ -38,8 +38,8 @@ const marketPlayer = (id: string) => ({
   age: 24,
   clubId: rid(`club-${id}`),
   clubName: `Club ${id}`,
-  overallRating: 78,
-  transferValue: 1200000,
+  overallRating: { _tag: "exact", value: 78 },
+  transferValue: { _tag: "exact", value: 1200000 },
   positions: [],
 });
 

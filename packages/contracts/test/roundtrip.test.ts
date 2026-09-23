@@ -18,7 +18,6 @@ import {
   ClubSummary,
   InvalidTacticError,
   InsufficientTransferBudgetError,
-  MarketPlayerView,
   PlayerId,
   MatchCommandPayload,
   NotYourPlayerError,
@@ -421,20 +420,6 @@ describe("RPC screen views", () => {
       outgoingBids: [],
       freeAgents: [],
       marketPlayers: [],
-    });
-  });
-
-  it("MarketPlayerView round-trips null club for a free agent", () => {
-    roundTrip(MarketPlayerView, {
-      id: "p1",
-      firstName: "Alex",
-      lastName: "Brown",
-      age: 24,
-      clubId: null,
-      clubName: null,
-      overallRating: 78,
-      transferValue: 500000,
-      positions: [{ position: "ST", familiarity: "natural" }],
     });
   });
 

@@ -1,3 +1,5 @@
+import { transferValue } from "./ratings.js";
+
 /**
  * Scouting: what a club knows about a player, and what that knowledge is worth.
  *
@@ -55,6 +57,59 @@ export const attributeRange = (
     Math.max(floor, Math.round(trueValue - band)),
     Math.min(ceiling, Math.round(trueValue + band)),
   ];
+};
+
+/**
+ * A figure the market publishes about a player the club has not fully scouted: the exact value, or
+ * the Attribute Range the manager's Scouting Progress narrows. Never both: a range and an exact
+ * number in the same cell would ask the reader to disbelieve one of them. The tag decides the shape
+ * — there is no `exact` boolean a caller could set to claim a range is really exact. See CONTEXT.md,
+ * Attribute Range / Fully Scouted, and the Agent Note 2026-09-19 (knowledge limits every player read).
+ */
+export type KnownFigure =
+  | { readonly _tag: "exact"; readonly value: number }
+  | { readonly _tag: "range"; readonly low: number; readonly high: number };
+
+/** Reached at the terminal state (Scouting Progress at 100): every figure collapses from a Range to
+ *  the exact value, identical to the manager's own-squad view (CONTEXT.md, Fully Scouted). */
+const isFullyScouted = (progress: number): boolean =>
+  Math.min(FULLY_SCOUTED, Math.max(0, progress)) >= FULLY_SCOUTED;
+
+/** The figure for one true value at one Scouting Progress: exact once Fully Scouted, otherwise the
+ *  most specific Range progress allows. Derived on every read and stored nowhere, exactly like
+ *  `attributeRange`. */
+export const figureByProgress = (
+  trueValue: number,
+  progress: number,
+  scale: readonly [number, number] = [1, 100],
+): KnownFigure => {
+  if (isFullyScouted(progress)) return { _tag: "exact", value: trueValue };
+  const [low, high] = attributeRange(trueValue, progress, scale);
+  return { _tag: "range", low, high };
+};
+
+/**
+ * The Transfer Value a below-Fully-Scouted market read shows: the Overall Rating's Attribute Range
+ * run through `transferValue`, not a percentage off the true value. `transferValue` is monotone
+ * non-decreasing in Overall Rating across the whole Rating / age / Potential-Ability domain, so the
+ * Rating band's low end prices the low end of the Value band and the width narrows with it. The
+ * value is derived on every read, never persisted.
+ */
+export const transferValueFigureByProgress = (
+  overall: number,
+  age: number,
+  potentialAbility: number,
+  progress: number,
+): KnownFigure => {
+  if (isFullyScouted(progress)) {
+    return { _tag: "exact", value: transferValue(overall, age, potentialAbility) };
+  }
+  const [lowRating, highRating] = attributeRange(overall, progress);
+  return {
+    _tag: "range",
+    low: transferValue(lowRating, age, potentialAbility),
+    high: transferValue(highRating, age, potentialAbility),
+  };
 };
 
 /**

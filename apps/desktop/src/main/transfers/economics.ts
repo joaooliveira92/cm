@@ -3,8 +3,9 @@ import {
   ALL_ATTRIBUTES,
   type POSITIONS,
   ageOn,
+  figureByProgress,
   overallRating,
-  transferValue,
+  transferValueFigureByProgress,
   type PlayerAttributes,
   type PlayerPosition,
 } from "@cm-clone/shared";
@@ -93,7 +94,12 @@ export const loadPlayerEcon = (playerId: PlayerId, on: string) =>
     return players.find((player) => player.id === playerId) ?? null;
   });
 
-export const toMarketPlayerView = (player: PlayerEcon) =>
+/** A player as seen on the transfer market — another club's player (biddable) or a Free Agent
+ * (`clubId`/`clubName` null, signable for Credits 0 via the normal signing flow, no Bid step). The
+ * figures are read by the human club's Scouting Progress on him: ranges until Fully Scouted, exact
+ * at it (ticket 09 / Agent Note 2026-09-19); an unscouted player reads at his widest. Own-squad
+ * players never appear here — `buildTransfersScreenView` filters them out. */
+export const toMarketPlayerView = (player: PlayerEcon, scoutingProgress: number): MarketPlayerView =>
   new MarketPlayerView({
     id: player.id,
     firstName: player.firstName,
@@ -101,7 +107,12 @@ export const toMarketPlayerView = (player: PlayerEcon) =>
     age: player.age,
     clubId: player.clubId,
     clubName: player.clubName,
-    overallRating: player.overallRating,
-    transferValue: transferValue(player.overallRating, player.age, player.potentialAbility),
+    overallRating: figureByProgress(player.overallRating, scoutingProgress),
+    transferValue: transferValueFigureByProgress(
+      player.overallRating,
+      player.age,
+      player.potentialAbility,
+      scoutingProgress,
+    ),
     positions: player.positions.map((p) => ({ position: p.position, familiarity: p.familiarity })),
   });

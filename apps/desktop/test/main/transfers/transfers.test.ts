@@ -5,7 +5,7 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { TRANSFER_BUDGET_BY_TIER, WAGE_BUDGET_BY_TIER } from "@cm-clone/shared";
+import { TRANSFER_BUDGET_BY_TIER, WAGE_BUDGET_BY_TIER, transferValue, type KnownFigure } from "@cm-clone/shared";
 import { BidId, PlayerId } from "@cm-clone/contracts";
 import { Effect, Result } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -15,9 +15,11 @@ import { createSave } from "../../seeded-save.js";
 import { getSquad } from "../../../src/main/club/index.js";
 import { getPlayerContract } from "../../../src/main/career/player.js";
 import { loadStreamEvents } from "../../../src/main/season/decider.js";
+import { loadGameDate } from "../../../src/main/season/currentSeason.js";
 import {
   decideAiSellerResponse,
   getTransfersScreen,
+  loadAllPlayersEcon,
   placeBid,
   renewContract,
   respondAsBidder,
@@ -37,6 +39,39 @@ const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E, SqlClient>) 
   effect.pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
     Effect.scoped,
+  );
+
+// ---------------------------------------------------------------------------
+// Ticket 09 helpers: the market publishes `KnownFigure`s, never exact values below Fully Scouted,
+// but the Bid threshold reads true values. Tests recompute the truth the way the command does
+// (`loadAllPlayersEcon` + shared `transferValue` — the ai-clubs spec's pattern) and seed the
+// scouting-progress rows the market read keys on.
+// ---------------------------------------------------------------------------
+
+/** The top of a published figure: the exact value, or the range's high bound. Bidding it is always
+ *  at/above the true Transfer Value, so it clears the seller's accept threshold every time. */
+const figureHigh = (figure: KnownFigure): number => (figure._tag === "exact" ? figure.value : figure.high);
+
+/** The true Transfer Value of a player, recomputed from stored truth — never readable off the
+ *  market response below Fully Scouted. */
+const trueTransferValue = (playerId: PlayerId) =>
+  Effect.gen(function* () {
+    const players = yield* loadAllPlayersEcon(yield* loadGameDate);
+    const player = players.find((p) => p.id === playerId);
+    return player === undefined
+      ? null
+      : transferValue(player.overallRating, player.age, player.potentialAbility);
+  });
+
+/** Sets the human club's Scouting Progress on a player to `progress`, so the market read narrows. */
+const setScoutingProgress = (saveId: string, clubId: string, playerId: PlayerId, progress: number) =>
+  withSave(
+    saveId,
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      yield* sql`DELETE FROM scouting_progress WHERE club_id = ${clubId} AND player_id = ${playerId}`;
+      yield* sql`INSERT INTO scouting_progress (club_id, player_id, progress) VALUES (${clubId}, ${playerId}, ${progress})`;
+    }),
   );
 
 // ---------------------------------------------------------------------------
@@ -97,7 +132,7 @@ it.effect("placeBid is rejected once the Transfer Window has closed", () =>
     const closedScreen = yield* getTransfersScreen(savesDir, save.id);
     strictEqual(closedScreen.windowOpen, false);
 
-    const result = yield* Effect.exit(placeBid(savesDir, save.id, target.id, target.transferValue));
+    const result = yield* Effect.exit(placeBid(savesDir, save.id, target.id, figureHigh(target.transferValue)));
     ok(result._tag === "Failure");
   }),
 );
@@ -129,13 +164,15 @@ it.effect("placeBid at/above Transfer Value completes the transfer immediately, 
     const target = before.marketPlayers[0];
     ok(target);
 
-    const bid = yield* placeBid(savesDir, save.id, target.id, target.transferValue);
+    // The top of the published range is at/above the true value, so it clears the accept branch.
+    const amount = figureHigh(target.transferValue);
+    const bid = yield* placeBid(savesDir, save.id, target.id, amount);
     strictEqual(bid.status, "accepted");
     strictEqual(bid.sellingClubId, target.clubId);
     strictEqual(bid.biddingClubId, before.club.id);
 
     const after = yield* getTransfersScreen(savesDir, save.id);
-    strictEqual(after.transferBudgetRemaining, before.transferBudgetRemaining - target.transferValue);
+    strictEqual(after.transferBudgetRemaining, before.transferBudgetRemaining - amount);
 
     const squadAfter = yield* getSquad(savesDir, save.id);
     ok(squadAfter.players.some((player) => player.id === target.id), "bought player should now be in the squad");
@@ -169,19 +206,23 @@ it.effect("a below-value placeBid comes back countered, and the bidder can accep
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const before = yield* getTransfersScreen(savesDir, save.id);
-    const target = before.marketPlayers.find((p) => p.transferValue > 0);
+    const target = before.marketPlayers.find((p) => p.transferValue._tag !== "exact");
     ok(target);
 
-    const lowAmount = Math.round(target.transferValue * 0.9);
+    // The true value (recomputed, never published below Fully Scouted) puts the bid in the
+    // 0.85x-1.0x counter band; the counter equals that true value.
+    const trueValue = yield* withSave(save.id, trueTransferValue(target.id));
+    ok(trueValue !== null);
+    const lowAmount = Math.round(trueValue * 0.9);
     const bid = yield* placeBid(savesDir, save.id, target.id, lowAmount);
     strictEqual(bid.status, "countered");
-    strictEqual(bid.counterAmount, target.transferValue);
+    strictEqual(bid.counterAmount, trueValue);
 
     const accepted = yield* respondAsBidder(savesDir, save.id, bid.id, "accept");
     ok(accepted.outgoingBids.some((b) => b.id === bid.id && b.status === "accepted"));
 
     const after = yield* getTransfersScreen(savesDir, save.id);
-    strictEqual(after.transferBudgetRemaining, before.transferBudgetRemaining - target.transferValue);
+    strictEqual(after.transferBudgetRemaining, before.transferBudgetRemaining - trueValue);
   }),
 );
 
@@ -189,10 +230,12 @@ it.effect("a below-value placeBid can instead be withdrawn by the bidder", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const before = yield* getTransfersScreen(savesDir, save.id);
-    const target = before.marketPlayers.find((p) => p.transferValue > 0);
+    const target = before.marketPlayers.find((p) => p.transferValue._tag !== "exact");
     ok(target);
 
-    const bid = yield* placeBid(savesDir, save.id, target.id, Math.round(target.transferValue * 0.9));
+    const trueValue = yield* withSave(save.id, trueTransferValue(target.id));
+    ok(trueValue !== null);
+    const bid = yield* placeBid(savesDir, save.id, target.id, Math.round(trueValue * 0.9));
     strictEqual(bid.status, "countered");
 
     const withdrawn = yield* respondAsBidder(savesDir, save.id, bid.id, "withdraw");
@@ -207,10 +250,12 @@ it.effect("a very low placeBid is rejected outright", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const before = yield* getTransfersScreen(savesDir, save.id);
-    const target = before.marketPlayers.find((p) => p.transferValue > 0);
+    const target = before.marketPlayers.find((p) => p.transferValue._tag !== "exact");
     ok(target);
 
-    const bid = yield* placeBid(savesDir, save.id, target.id, Math.round(target.transferValue * 0.5));
+    const trueValue = yield* withSave(save.id, trueTransferValue(target.id));
+    ok(trueValue !== null);
+    const bid = yield* placeBid(savesDir, save.id, target.id, Math.round(trueValue * 0.5));
     strictEqual(bid.status, "rejected");
   }),
 );

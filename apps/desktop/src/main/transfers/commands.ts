@@ -44,6 +44,19 @@ import { loadAllPlayersEcon, loadPlayerEcon, toMarketPlayerView } from "./econom
 // Read side: the Transfer market/inbox screen
 // ---------------------------------------------------------------------------
 
+/** How far the human club's scouts have got on each player: sparse, keyed on the club (the human
+ *  club is the only club that reads the market screen), so a player nobody has ever looked at is
+ *  simply absent. Absence means progress 0 — the widest Range the market can show. Returns a Map
+ *  for O(1) lookups over the whole market; a `players`-sized dictionary adds nothing for a one-screen
+ *  read (Agent Note 2026-09-19, ticket 09). */
+const loadScoutingProgress = (clubId: ClubSummary["id"]) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ playerId: PlayerId; progress: number }>`
+      SELECT player_id as "playerId", progress FROM scouting_progress WHERE club_id = ${clubId}`;
+    return new Map(rows.map((row) => [row.playerId, row.progress]));
+  });
+
 const buildTransfersScreenView = (club: ClubSummary) =>
   Effect.gen(function* () {
     const seasonRow = yield* loadSeasonRow;
@@ -51,11 +64,20 @@ const buildTransfersScreenView = (club: ClubSummary) =>
     const wageBudgetUsed = yield* loadWageBudgetUsed(club.id);
     const { incoming, outgoing } = yield* loadBidsForClub(club.id);
     const players = yield* loadAllPlayersEcon(seasonRow.currentDate);
+    const progressByPlayer = yield* loadScoutingProgress(club.id);
 
-    const freeAgents = players.filter((player) => player.clubId === null).map(toMarketPlayerView);
+    const toView = (player: (typeof players)[number]) => {
+      const progress = progressByPlayer.get(player.id) ?? 0;
+      return toMarketPlayerView(player, progress);
+    };
+
+    // Both lists read by this club's progress on each player — an unscouted Free Agent or rival
+    // reads at progress 0 (the widest honest Range), a scouted one narrows, a Fully Scouted one is
+    // exact. Progress is part of the read, never of what is stored (ticket 09).
+    const freeAgents = players.filter((player) => player.clubId === null).map(toView);
     const marketPlayers = players
       .filter((player) => player.clubId !== null && player.clubId !== club.id)
-      .map(toMarketPlayerView);
+      .map(toView);
 
     return new TransfersScreenView({
       club,

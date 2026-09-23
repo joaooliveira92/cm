@@ -40,8 +40,8 @@ const marketPlayer = (id: string, club: boolean) => ({
   age: 24,
   clubId: club ? rid(`club-${id}`) : null,
   clubName: club ? `Club ${id}` : null,
-  overallRating: 78,
-  transferValue: 1200000,
+  overallRating: { _tag: "exact", value: 78 },
+  transferValue: { _tag: "exact", value: 1200000 },
   positions: [],
 });
 

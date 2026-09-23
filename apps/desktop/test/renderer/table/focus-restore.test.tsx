@@ -33,8 +33,8 @@ const marketPlayer = (
   age: 24,
   clubId: club ? rid(`club-${id}`) : null,
   clubName: club ? `Club ${id}` : null,
-  overallRating,
-  transferValue,
+  overallRating: { _tag: "exact", value: overallRating },
+  transferValue: { _tag: "exact", value: transferValue },
   positions: [{ position, familiarity: FAMILIARITY_TIERS[0] }],
 });
 

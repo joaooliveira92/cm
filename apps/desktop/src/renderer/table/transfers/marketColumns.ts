@@ -4,9 +4,16 @@
  * Free Agent (`clubId` null, signable for Credits 0) share a shape; only the
  * Club cell text differs (the club name or "Free Agent"). Bid entry does NOT
  * live in these rows — the contextual Actions region owns it (AC-29).
+ *
+ * `overallRating` and `transferValue` are `KnownFigure`s: the exact figure for
+ * a Fully Scouted player, or the Attribute-Range band the market publishes at
+ * this club's Scouting Progress on him (ticket 09). The unions render as
+ * `low–high` (en dash, like the matchday readouts) and sort by the band's
+ * midpoint, never by a hidden exact value.
  */
-import type { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef, type SortingFn } from "@tanstack/react-table";
 import type { MarketPlayerView } from "@cm-clone/contracts";
+import type { KnownFigure } from "@cm-clone/shared";
 import type { TableRowShape } from "../types.js";
 
 export interface MarketPlayerRow extends TableRowShape {
@@ -16,8 +23,8 @@ export interface MarketPlayerRow extends TableRowShape {
   readonly age: number;
   readonly clubId: string | null;
   readonly clubName: string | null;
-  readonly overallRating: number;
-  readonly transferValue: number;
+  readonly overallRating: KnownFigure;
+  readonly transferValue: KnownFigure;
   readonly positions: ReadonlyArray<{ readonly position: string }>;
 }
 
@@ -34,6 +41,28 @@ export const marketPlayerRowOf = (player: MarketPlayerView): MarketPlayerRow => 
 });
 
 export const formatCredits = (amount: number): string => `${amount.toLocaleString()} Cr`;
+
+/** The number a ranged figure sorts by: its midpoint. An exact figure sorts by its value. */
+export const figureMid = (figure: KnownFigure): number =>
+  figure._tag === "exact" ? figure.value : (figure.low + figure.high) / 2;
+
+/** Renders a figure: the number when exact, the `low–high` band (en dash) when the market's read
+ *  is ranged by Scouting Progress. */
+export const formatFigure = (figure: KnownFigure): string =>
+  figure._tag === "exact" ? String(figure.value) : `${figure.low}–${figure.high}`;
+
+/** Renders a Credits figure: `1,200,000 Cr` when exact, `500,000 Cr–750,000 Cr` when ranged. */
+export const formatFigureCredits = (figure: KnownFigure): string =>
+  figure._tag === "exact"
+    ? formatCredits(figure.value)
+    : `${formatCredits(figure.low)}–${formatCredits(figure.high)}`;
+
+/** Numeric sort over the accessed value — the default string sort would order 9 before 10. */
+const numericSortingFn: SortingFn<MarketPlayerRow> = (rowA, rowB, columnId) => {
+  const a = rowA.getValue<number>(columnId);
+  const b = rowB.getValue<number>(columnId);
+  return a - b;
+};
 
 /** Header labels for the palette sort actions — mirror the table headers. */
 export const MARKET_COLUMN_LABELS: Readonly<Record<string, string>> = {
@@ -63,13 +92,21 @@ export const marketColumns = (
     enableSorting: false,
     cell: (info) => info.getValue<unknown>() as string,
   },
-  { id: "overall", accessorKey: "overallRating", header: "OVR", enableSorting: true },
+  {
+    id: "overall",
+    accessorFn: (row) => figureMid(row.overallRating),
+    header: "OVR",
+    enableSorting: true,
+    sortingFn: numericSortingFn,
+    cell: (info) => formatFigure(info.row.original.overallRating),
+  },
   {
     id: "value",
-    accessorKey: "transferValue",
+    accessorFn: (row) => figureMid(row.transferValue),
     header: "Value",
     enableSorting: true,
-    cell: (info) => formatCredits(info.getValue<number>()),
+    sortingFn: numericSortingFn,
+    cell: (info) => formatFigureCredits(info.row.original.transferValue),
   },
 ];
 

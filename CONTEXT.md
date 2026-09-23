@@ -551,8 +551,9 @@ _Avoid_: Regen (informal), Youth promotion (the cut feature)
 
 **Listed**:
 A cosmetic flag a club may set on one of its players to signal willingness to sell. Any player can
-receive a Bid regardless of this flag — Listed does not gate bid legality, a direct consequence of
-full-information Transfer Value making an explicit "for sale" signal largely decorative.
+receive a Bid regardless of this flag — Listed does not gate bid legality: the market reads every
+contracted player outside the manager's club by Scouting Progress (see Attribute Range), so there is
+no "for sale" signal a Bid needs and no gate to bypass.
 
 **Bid**:
 A transfer offer from one club to another for a player under Contract. Single-round: the receiving

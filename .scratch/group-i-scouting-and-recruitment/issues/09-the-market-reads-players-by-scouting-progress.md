@@ -25,7 +25,7 @@ a Bid still needs no "for sale" signal.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] An unscouted Player from another club, and an unscouted Free Agent, show Overall Rating and Transfer Value as ranges on the market; a Fully Scouted one shows exact figures
 - [ ] The range narrows as Scouting Progress rises and never widens, proved at three progress values

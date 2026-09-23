@@ -1,3 +1,4 @@
+import type { KnownFigure } from "@cm-clone/shared";
 import { Schema } from "effect";
 
 import { ClubSummary } from "./clubs.js";
@@ -110,8 +111,19 @@ export class BidView extends Schema.Class<BidView>("BidView")({
   status: BidStatusSchema,
 }) {}
 
+/** One figure the market shows about a player: the exact value, or the Attribute-Range band the
+ *  manager's Scouting Progress publishes (CONTEXT.md, Attribute Range / Fully Scouted). The `_tag`
+ *  decides the shape — a boolean `exact` flag that could claim a range is really exact has no place
+ *  here, and unknown keys are dropped, so a second figure can never ride along. */
+export const PlayerFigureSchema = Schema.Union([
+  Schema.Struct({ _tag: Schema.Literal("exact"), value: Schema.Finite }),
+  Schema.Struct({ _tag: Schema.Literal("range"), low: Schema.Finite, high: Schema.Finite }),
+]) satisfies Schema.Schema<KnownFigure>;
+
 /** A player as seen on the transfer market — another club's player (biddable) or a Free Agent
- * (`clubId`/`clubName` null, signable for Credits 0 via the normal signing flow, no Bid step). */
+ * (`clubId`/`clubName` null, signable for Credits 0 via the normal signing flow, no Bid step).
+ * `overallRating` and `transferValue` are read by the human club's Scouting Progress: ranges below
+ * Fully Scouted, exact figures at it (Agent Note 2026-09-19, ticket 09). */
 export class MarketPlayerView extends Schema.Class<MarketPlayerView>("MarketPlayerView")({
   id: PlayerId,
   firstName: Schema.String,
@@ -119,8 +131,8 @@ export class MarketPlayerView extends Schema.Class<MarketPlayerView>("MarketPlay
   age: Schema.Finite,
   clubId: Schema.NullOr(ClubId),
   clubName: Schema.NullOr(Schema.String),
-  overallRating: Schema.Finite,
-  transferValue: Schema.Finite,
+  overallRating: PlayerFigureSchema,
+  transferValue: PlayerFigureSchema,
   positions: Schema.Array(PlayerPositionView),
 }) {}
 
