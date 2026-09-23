@@ -56,6 +56,8 @@ export {
   scoutingKey,
 } from "./rpc/queries.js";
 
+export { playerSearchAtom } from "./rpc/playerSearchQueries.js";
+
 export {
   INVALIDATION_RULES,
   advanceCalendarMutation,

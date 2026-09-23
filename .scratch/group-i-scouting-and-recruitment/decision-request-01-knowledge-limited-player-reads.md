@@ -91,7 +91,7 @@ range. The manager bids against an estimate, and the estimate narrows by scoutin
 shape.
 
 Recorded as
-[knowledge limits every Player read](../../.agents/notes/proposed/architecture/2026-09-19-knowledge-limits-every-player-read.md).
+[knowledge limits every Player read](../../.agents/notes/implemented/architecture/2026-09-19-knowledge-limits-every-player-read.md).
 Unblocks Screens 119 and 129 here, Group J 132, 134 and 137, and removes one of the two reasons Group D
 Screen 68 was deferred. Decided under the human's standing delegation ("i need you to solve the
 decisions").

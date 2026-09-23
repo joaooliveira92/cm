@@ -83,7 +83,7 @@ already served both fixture surfaces, and deliberately *not* one screen with a b
 through the lineup manager, which would be two screens sharing a name. And because a read
 generalises, the Players it lists are knowledge-limited exactly like every other Player read
 outside the manager's club ([Agent Note 2026-09-19, knowledge limits every player
-read](2026-09-19-knowledge-limits-every-player-read.md)): exact for the manager's own club and at
+read](../implemented/architecture/2026-09-19-knowledge-limits-every-player-read.md)): exact for the manager's own club and at
 Fully Scouted, Attribute Ranges below it. Group L will need the same discriminator — a
 competition's table is a read, and the own-club equivalents may not be.
 

@@ -7,6 +7,8 @@ import {
   PlayerId,
   OwnClubNotScoutableError,
   PlayerNotFoundError,
+  PlayerSearchQuerySchema,
+  PlayerSearchResultsView,
   SaveArchivedError,
   SaveId,
   SaveNotFoundError,
@@ -19,8 +21,8 @@ import {
 } from "./schemas/index.js";
 
 /**
- * Scouting's whole RPC surface — the assignment board and the Team Scout Report — kept in its own
- * module and spread into `AppRpcs`.
+ * Scouting's whole RPC surface — the assignment board, the Team Scout Report, and the Player
+ * Search — kept in its own module and spread into `AppRpcs`.
  *
  * Split out because `rpc.ts` reached the 600-line ceiling `scripts/effect-lint.ts` enforces, and the
  * honest fix there is a seam rather than another round of comment-tightening. Scouting is a good one
@@ -95,6 +97,15 @@ export const ScoutingRpcs = {
   getScoutingKnowledge: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: ScoutingKnowledgeView,
+    error: Schema.Union([SaveNotFoundError]),
+  },
+  /** Player Search (Screen 119): every Player in the save that matches the query, figures read by
+   * the human club's Scouting Progress on each (ranges below Fully Scouted, exact at it and for the
+   * manager's own squad — ticket 11 / Agent Note 2026-09-19). A pure read, so an Archived Save
+   * still answers it: nothing here writes, so nothing about it is stale. */
+  getPlayerSearch: {
+    payload: Schema.Struct({ saveId: SaveId, query: PlayerSearchQuerySchema }),
+    success: PlayerSearchResultsView,
     error: Schema.Union([SaveNotFoundError]),
   },
 } as const;

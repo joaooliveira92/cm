@@ -17,3 +17,4 @@ export * from "./career-setup.js";
 export * from "./team-scout-report.js";
 export * from "./players.js";
 export * from "./clubSquad.js";
+export * from "./playerSearch.js";

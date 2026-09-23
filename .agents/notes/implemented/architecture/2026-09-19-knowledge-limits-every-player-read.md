@@ -1,6 +1,6 @@
 # Agent Note: Knowledge limits every Player read, not just the scouting screens
 
-Status: proposed
+Status: implemented
 
 Settles group-i decision request 01, the most far-reaching open question the M1 ledger sweep surfaced.
 

@@ -253,6 +253,7 @@ const NAV_PATH = {
   scouting: ["Recruitment", "Scouting"],
   "scouting assignment": ["Recruitment", "Scouting Assignment"],
   "scouting knowledge": ["Recruitment", "Scouting Knowledge"],
+  "player search": ["Recruitment", "Player Search"],
   "league table": ["Analysis"],
   fixtures: ["Analysis", "Fixtures"],
   "match day": ["Analysis", "Match Day"],

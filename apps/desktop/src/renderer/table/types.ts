@@ -18,7 +18,8 @@ export type TableId =
   | "free-agents"
   | "incoming-bids"
   | "outgoing-bids"
-  | "league-table";
+  | "league-table"
+  | "player-search";
 
 /** A column's stable id within its table (attribute keys double as column ids). */
 export type ColumnId = string;

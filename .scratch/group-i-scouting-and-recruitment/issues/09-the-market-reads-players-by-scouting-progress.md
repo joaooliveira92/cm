@@ -21,7 +21,7 @@ a Bid still needs no "for sale" signal.
 
 **Decisions:**
 
-- **Knowledge-limit the market, and every Player read outside the manager's club, on one shared read.** *(Option A.)* See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-19-knowledge-limits-every-player-read.md).
+- **Knowledge-limit the market, and every Player read outside the manager's club, on one shared read.** *(Option A.)* See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-19-knowledge-limits-every-player-read.md).
 
 **Blocked by:** None (can start immediately)
 

@@ -35,6 +35,7 @@ import { getTacticsOverview } from "../club/tacticsOverview.js";
 import {
   getContractExpiryScreen,
   getBudgetReviewScreen,
+  getPlayerSearch,
   getTransferHistoryScreen,
   getTransfersScreen,
   placeBid,
@@ -434,6 +435,13 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getScoutingKnowledge.payload)(payload);
       return yield* getScoutingKnowledge(ctx.savesDir, saveId);
+    }),
+  getPlayerSearch: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, query } = yield* Schema.decodeUnknownEffect(AppRpcs.getPlayerSearch.payload)(
+        payload,
+      );
+      return yield* getPlayerSearch(ctx.savesDir, saveId, query);
     }),
   getTeamScoutReport: (payload, ctx) =>
     Effect.gen(function* () {

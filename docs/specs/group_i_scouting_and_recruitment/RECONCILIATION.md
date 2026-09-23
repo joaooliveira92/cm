@@ -61,7 +61,7 @@ coverage and **Knowledge Confidence** with no figure. The transfer market does n
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
-| Knowledge-limited reads, across the group | `contradicted` | Recruitment surfaces present a Player's ability as known fact. | A Player outside the manager's club shows **Attribute Range** values by **Scouting Progress** — Transfer Value and Overall Rating included — never an exact figure until **Fully Scouted**. The fix goes in the shared read, not the screens, so the market, `BidComposer`, 119 and 129 cannot disagree. | **Answered 2026-09-19** — [knowledge limits every Player read](../../../.agents/notes/proposed/architecture/2026-09-19-knowledge-limits-every-player-read.md). `CONTEXT.md`'s **Listed** loses its pre-Scouting "full-information Transfer Value" clause in the same commit. |
+| Knowledge-limited reads, across the group | `contradicted` | Recruitment surfaces present a Player's ability as known fact. | A Player outside the manager's club shows **Attribute Range** values by **Scouting Progress** — Transfer Value and Overall Rating included — never an exact figure until **Fully Scouted**. The fix goes in the shared read, not the screens, so the market, `BidComposer`, 119 and 129 cannot disagree. | **Answered 2026-09-19** — [knowledge limits every Player read](../../../.agents/notes/implemented/architecture/2026-09-19-knowledge-limits-every-player-read.md). `CONTEXT.md`'s **Listed** loses its pre-Scouting "full-information Transfer Value" clause in the same commit. |
 
 It is the one open question in this group and the only one in the M1 sweep that blocks screens in two
 other groups. Ticket 03 held new Player targets back pending the answer.

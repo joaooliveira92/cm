@@ -12,7 +12,7 @@ disagree about the same Player.
 
 **Decisions:**
 
-- **Knowledge-limit the market, and every Player read outside the manager's club, on one shared read.** *(Option A.)* See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-19-knowledge-limits-every-player-read.md).
+- **Knowledge-limit the market, and every Player read outside the manager's club, on one shared read.** *(Option A.)* See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-19-knowledge-limits-every-player-read.md).
 
 **Blocked by:** [09](09-the-market-reads-players-by-scouting-progress.md)
 

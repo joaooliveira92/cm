@@ -33,3 +33,4 @@ export {
   signFreeAgent,
 } from "./commands.js";
 export { loadAllPlayersEcon } from "./economics.js";
+export { getPlayerSearch, PLAYER_SEARCH_MAX_RESULTS } from "./playerSearch.js";

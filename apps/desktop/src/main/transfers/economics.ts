@@ -29,6 +29,7 @@ interface PlayerEconRow {
   readonly lastName: string;
   readonly dateOfBirth: string;
   readonly potentialAbility: number;
+  readonly nationality: string;
   readonly [attribute: string]: unknown;
 }
 
@@ -41,6 +42,9 @@ export interface PlayerEcon {
   readonly age: number;
   readonly overallRating: number;
   readonly potentialAbility: number;
+  /** The canonical nation id (`nation_*`), as every wire name of a player's nation is — the
+   *  renderer resolves it through `nationName`. */
+  readonly nationality: string;
   readonly positions: ReadonlyArray<PlayerPosition>;
 }
 
@@ -56,7 +60,8 @@ export const loadAllPlayersEcon = (on: string) => Effect.gen(function* () {
   const nameOf = yield* displayNames;
   const playerRows = yield* sql.unsafe<PlayerEconRow>(
     `SELECT p.id, p.club_id as "clubId", p.first_name as "firstName", p.last_name as "lastName",
-            p.date_of_birth as "dateOfBirth", p.potential_ability as "potentialAbility", ${attributeSelectList("p.")}
+            p.date_of_birth as "dateOfBirth", p.potential_ability as "potentialAbility",
+            p.nationality as "nationality", ${attributeSelectList("p.")}
      FROM players p`,
     [],
   );
@@ -83,6 +88,7 @@ export const loadAllPlayersEcon = (on: string) => Effect.gen(function* () {
       age: ageOn(row.dateOfBirth, on),
       overallRating: overallRating(attributes, positions),
       potentialAbility: row.potentialAbility,
+      nationality: row.nationality,
       positions,
     };
   });
