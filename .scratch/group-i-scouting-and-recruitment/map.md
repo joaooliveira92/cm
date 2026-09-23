@@ -34,14 +34,15 @@ scope for v1, and in what order the in-scope screens get built.
 - [08 — One read-state helper for the scouting and training screens](issues/08-shared-read-state-helper.md): shipped. `readState` serves all five sites; `ReadStateMessage` serves three, since the Scouting Centre's section lines are not page messages.
 - [09 — The Transfer market reads by Scouting Progress](issues/09-the-market-reads-players-by-scouting-progress.md): resolved 2026-09-23 against the tree. Every rival and Free Agent on the market reads as a `KnownFigure` by the human club's progress on him — a Range until Fully Scouted (`packages/shared/src/rules/scouting.ts`), exact at it. The wire carries no exact figure below Fully Scouted; `CONTEXT.md` **Listed** lost its full-information Transfer Value clause in the same commit. See the ticket's Answer for per-criterion evidence.
 - [10 — The Player screens read by Scouting Progress](issues/10-player-screens-read-players-by-scouting-progress.md): resolved 2026-09-23. `getPlayerProfile` gates every figure by the human club's Scouting Progress through the ticket-09 shared rule — a Range below Fully Scouted, exact at it — for every player outside the manager's squad; own-squad players skip the lookup. The profile wire (same `PlayerFigureSchema`) and the market can no longer disagree about one Player, and Player screens, header band and market tables share one renderer. The same commit filed the four pre-existing e2e reds it surfaced as [desktop-suite-red 15/16](../desktop-suite-red/issues/15-empty-load-list-specs-assert-retired-copy.md). See the ticket's Answer for per-criterion evidence.
+- [11 — Player Search reads by Scouting Progress](issues/11-player-search-reads-by-scouting-progress.md): sliced 2026-09-23 from [decision request 01](decision-request-01-knowledge-limited-player-reads.md), now answered and shipped (09/10). The 119 dependency is gone; the search builds on the shared rule. See the ticket for the decisions and acceptance criteria.
+- [12 — Transfer Target Comparison reads by Scouting Progress](issues/12-transfer-target-comparison-reads-by-scouting-progress.md): sliced 2026-09-23 from the same decision request, blocked on 11. See the ticket.
 
 ## Not yet specified
 
-None for v1. Knowledge-limited Player reads are a [decision request](decision-request-01-knowledge-limited-player-reads.md), not fog.
+None for v1. Screens 119 and 129 are sliced ([11](issues/11-player-search-reads-by-scouting-progress.md), [12](issues/12-transfer-target-comparison-reads-by-scouting-progress.md)).
 
 ## Out of scope
 
-- Screens 119 (Player Search) and 129 (Transfer Target Comparison): wait for decision request 01.
 - Screens 120 (Staff Search) and 125 (Staff Shortlist): no staff hiring, and no roles beyond `coach` and `scout`.
 - Screens 122 (Scouting Priorities), 123 (Recruitment Focus), 124 (Player Shortlist): each needs a new model.
 - Screens 127 (Recruitment Meetings), 128 (Squad Planner), 130 (Agent and Intermediary Information), 131 (Trial and Assessment): each needs a new model and leans on Group J.

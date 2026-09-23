@@ -41,6 +41,7 @@ screen what is already built, what is in scope for v1, and in what order the in-
 - [Decision request 02](decision-request-02-club-scoped-transfer-history-index.md): open. Whether the
   save takes two more indexes for the club-scoped `player_transfers` read. Raised by 07, which ships
   without them.
+- [09 — The Player Contract Offer reads by Scouting Progress](issues/09-player-contract-offer-reads-by-scouting-progress.md): sliced 2026-09-23 from [Group I decision request 01](../group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md), now answered and shipped (group-i 09/10). 137 was out of scope only pending that decision; it is now buildable. See the ticket.
 
 ## Not yet specified
 
@@ -48,6 +49,6 @@ None for v1.
 
 ## Out of scope
 
-- Screens 132 (Transfer Centre), 134 (Make Transfer Offer), 137 (Player Contract Offer): show other clubs' Players; wait for Group I's decision request 01.
+- Screens 132 (Transfer Centre) and 134 (Make Transfer Offer): served by the shipped Transfers screen's market and Bid composer, which read by Scouting Progress since group-i ticket 09. Screen 137 is [ticket 09](issues/09-player-contract-offer-reads-by-scouting-progress.md), not out of scope.
 - Screens 135 (Transfer Negotiation), 136 (Loan Offer), 138 (Player Contract Negotiation), 139 (Staff Contract Offer), 144 (Clauses and Installments), and 141's Bosman and pre-contract part: contradict CONTEXT.md (single-round Bid, no loans, never-renegotiated Contract, no Staff wages). Need a domain change a human makes.
 - Screens 133 (Incoming Transfer Offer), 142 (Completion and Registration), 143 (Cancellation and Withdrawal): already served by the Transfers screen's Bid tables; a dedicated screen needs clause, registration or cancellation models.

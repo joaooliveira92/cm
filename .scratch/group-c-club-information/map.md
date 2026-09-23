@@ -177,6 +177,8 @@ ticket would invent the missing one.
 
 ## Not yet specified
 
-The chart is complete; what remains is building. Tickets 06, 07 and 08 are the buildable screens —
-34, then 35/40/42, then the modelled halves of 39 and 47 — and 09 is the placeholder cull, blocked on
-all three because each absorbs placeholders 09 would otherwise delete out from under them.
+The chart is complete; what remains is building. Tickets 06, 07 and 08 built 34, 40/42 and the modelled
+halves; 09 culled the placeholders those roads freed — all resolved. The one open build ticket is
+[10 — Screen 35, the any-club squad](issues/10-the-any-club-squad.md), unblocked 2026-09-23 now that
+[group-i decision request 01](../group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md)
+is answered and its shared read shipped.

@@ -267,10 +267,16 @@ Agent-startable work, in order:
    wall clock), [10](../.scratch/gate-red-on-dev/issues/10-promoted-squads-sign-contracts.md) (promoted squads
    sign Contracts) and [11](../.scratch/gate-red-on-dev/issues/11-conjured-squads-are-age-correct.md)
    (conjured squads are born for the Season they join). **The effort's queue is empty.**
-3. **Knowledge-limited Player reads have a decision and no ticket.** [Group I decision request 01](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md)
-   was answered on 2026-09-19 (Option A, [note](../.agents/notes/proposed/architecture/2026-09-19-knowledge-limits-every-player-read.md)),
-   but nothing slices it. Run `cm-to-tickets` on that note: it unblocks group-c 10 (Screen 35), D 68,
-   J 132/134/137 and I 119/129, which is **M1 exit criterion 1**.
+3. **Knowledge-limited Player reads are sliced.** The note ([2026-09-19](../.agents/notes/proposed/architecture/2026-09-19-knowledge-limits-every-player-read.md))
+   was run through `cm-to-tickets` on 2026-09-23: group-c 10 (Screen 35) is unblocked (its decision is
+   answered *and* shipped — group-i 09/10), I 119/129 are sliced as
+   [group-i 11](../.scratch/group-i-scouting-and-recruitment/issues/11-player-search-reads-by-scouting-progress.md)
+   and [12](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md),
+   and J 137 as [group-j 09](../.scratch/group-j-transfers-contracts-and-negotiations/issues/09-player-contract-offer-reads-by-scouting-progress.md)
+   (J 132/134 were already shipped as the market and Bid composer; D 68 stays `deferred` on scheduling,
+   per the note's own consequence). The frontier is now
+   [group-c 10 — Screen 35, the any-club squad](../.scratch/group-c-club-information/issues/10-the-any-club-squad.md),
+   the `clubSquadDetail` half of **M1 exit criterion 1**.
 4. **Triage the stale `needs-info` tickets** (group-g 10, 20; group-h 07): the decision requests they
    waited on are answered.
 

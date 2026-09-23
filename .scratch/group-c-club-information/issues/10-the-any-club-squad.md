@@ -59,10 +59,13 @@ honest that a lineup manager and a roster are different surfaces over it. Read
 - [ ] `pnpm check:all` green and e2e green
 
 **Blocked by:**
-[group-i decision request 01 — knowledge-limited player reads](../../group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md).
-See "Why this is blocked" below; it is a human call and the screen cannot be specified without it.
+None — [group-i decision request 01](../../group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md)
+was answered 2026-09-19 (Option A — a Player outside the manager's club reads as an Attribute Range by
+Scouting Progress on the shared read) and shipped in group-i tickets 09/10, so the "contents question"
+the block note below records is settled. This ticket's shape question was already settled; it is now
+fully specified and buildable against the shared rule.
 
-**Status:** blocked
+**Status:** ready-for-agent
 
 ## Why this is blocked, found 2026-09-19
 
