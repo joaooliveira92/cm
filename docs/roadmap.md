@@ -60,14 +60,18 @@ referenced throughout.
   and its context interfaces.
 - **[.scratch/save-list-error-handling/](../.scratch/save-list-error-handling/)** — 1/1. The save
   list no longer swallows repository failures.
+- **[.scratch/world-data-model/](../.scratch/world-data-model/)** — 13/13 decision tickets and 25/25
+  implementation items, completed 2026-09-24. The MVP world data model: the competition graph and
+  participant rows, dated competition-scoped fixtures, Simulation Depth on disk, staff, scouting, the
+  restricted event log and `player_transfers`, retention at the rollover, and a five-index list —
+  each index on a measured number, the last two (`fixtures(played, scheduled_date)` and
+  `competition_participants(club_id, season_number)`) added from the prototype scale probe's results.
 
 ## In flight
 
-- **[.scratch/world-data-model/](../.scratch/world-data-model/)** — 13/13 tickets, and 21/23
-  implementation items. The current frontier. Open: questions 20 and 21 (calendar-sweep and
-  membership-join index probes), both `ready-for-human` with the probe code and results already
-  recorded under `apps/desktop/src/main/db/prototype-scale-probe/`; what is left is the index
-  decision, not the measurement. Questions 22 and 23 are resolved.
+None of the efforts indexed here remains open. `gate-red-on-dev` and the `group-*` screen-import
+reconciliations also live under `.scratch/`, are not indexed on this page, and are not all resolved —
+derive their frontier from `.scratch/` directly.
 
 ## Needs a decision, not a ticket
 
@@ -81,10 +85,7 @@ referenced throughout.
 
 ## Suggested next step
 
-Decide `world-data-model` open questions 20 and 21 — the only measured frontiers left. Both have
-their results already recorded (the *calendar advance's date sweep* and *club-keyed membership join*
-sections of the probe's `RESULTS.md`): 20 measured `(played, scheduled_date)` beating every other
-fixture index and cutting the horizon read from 1,380 ms to 1 ms a season; 21 measured
-`(club_id, season_number)` taking a 141 s-per-Continue scan to 0.08 s. Each needs its decision
-recorded in the spec's form — the query it serves, its measured value, its cost — or a per-table
-line saying why the table stays unindexed.
+No indexed effort is open. The work left under `.scratch/` is the screen-import reconciliation groups
+(`group-c` onward, all partial) and `gate-red-on-dev` (11/13); neither is detailed on this page, so
+derive their frontier from `.scratch/` directly. The world-data-model index decisions are settled and
+shipped, and the desktop suite is green.
