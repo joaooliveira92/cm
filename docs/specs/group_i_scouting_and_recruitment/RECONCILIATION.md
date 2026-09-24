@@ -26,12 +26,13 @@ would give them anyway. **No screen in Group I is `out-of-scope`.**
 
 ## Coverage
 
-Three screens were in v1 and **all three shipped** on 2026-09-15.
+Three screens were in v1 and **all three shipped** on 2026-09-15. Screen 119 shipped later, under M1,
+on 2026-09-23.
 
 | Screen | Import file | Status |
 |---|---|---|
 | 118 Scouting Centre | [118_scouting_centre.md](118_scouting_centre.md) | Reviewed — implemented 2026-09-15 |
-| 119 Player Search | [119_player_search.md](119_player_search.md) | Deferred in full |
+| 119 Player Search | [119_player_search.md](119_player_search.md) | Reviewed — implemented 2026-09-23 |
 | 120 Staff Search | [120_staff_search.md](120_staff_search.md) | Deferred in full |
 | 121 Scouting Assignment | [121_scouting_assignment.md](121_scouting_assignment.md) | Reviewed — implemented 2026-09-15 |
 | 122 Scouting Priorities | [122_scouting_priorities.md](122_scouting_priorities.md) | Deferred in full |
@@ -82,15 +83,18 @@ found a fortnight later.
 
 ## Deferred in full
 
-Eleven screens, one ruling, anchored to
+Ten screens, one ruling, anchored to
 [Group I v1 scope](../../../.agents/notes/implemented/architecture/2026-09-15-group-i-v1-scope.md)
 (ticket 02). Each is `deferred` with `unscheduled` unless noted. The survey's finding behind all of
 them: the Scouting model that backs the Team Scout Report exists, and *shortlists, focuses, priorities,
-meetings, planner, agents, trials and staff hiring do not*.
+meetings, planner, agents, trials and staff hiring do not*. One of the eleven, Screen 119, shipped
+under M1 (ticket 06's knowledge reading governs it; ticket 11 built the search) and dropped out of
+this table; `129_transfer_target_comparison.md` lost its knowledge-gate but no comparison mechanism
+exists, so it stays.
+
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
-| [119_player_search.md](119_player_search.md), whole file | `deferred` | Searching the world's Players by attribute, position, value and status. | A routed WIP placeholder. Blocked on the knowledge question above — a search that returns exact figures for unscouted Players would widen the contradiction rather than a feature. | `unscheduled`, and gated by decision request 01. Overlaps Group S 264–266. |
 | [120_staff_search.md](120_staff_search.md), whole file | `deferred` | Searching for staff to hire. | No staff hiring exists. The role set is closed — **Bound Staff** and **Presence Staff**, one of each per club. | `unscheduled`. Note this is the one row in the group with a case for `out-of-scope`: [Group D 64–66](../group_d_player_and_staff_records/RECONCILIATION.md) are `out-of-scope` on exactly this closed role set. Left as the effort ruled it; worth settling if staff hiring is ever reconsidered. |
 | [122_scouting_priorities.md](122_scouting_priorities.md), whole file | `deferred` | Ranking what the scouting department works on. | No priority model. A **Scouting Assignment** is a direct instruction, not a ranked queue. | `unscheduled`. |
 | [123_recruitment_focus.md](123_recruitment_focus.md), whole file | `deferred` | A standing recruitment brief — positions, age, budget — that scouting works to. | No model. | `unscheduled`. |
@@ -98,7 +102,7 @@ meetings, planner, agents, trials and staff hiring do not*.
 | [125_staff_shortlist.md](125_staff_shortlist.md), whole file | `deferred` | A shortlist of tracked staff. | Same absent model, plus the closed role set. | `unscheduled`. |
 | [127_recruitment_meetings.md](127_recruitment_meetings.md), whole file | `deferred` | Meetings where the recruitment team discusses targets. | No meeting model, and the discussion half would need generated text the game does not produce. | `unscheduled`. Compare [Group M](../group_m_media_press_and_communications/RECONCILIATION.md) — the same absence of a generative content path. |
 | [128_squad_planner.md](128_squad_planner.md), whole file | `deferred` | Planning the squad forward: depth, ages, contract expiries, gaps. | No planner. Overlaps Group E (squad) and Group P (analytics), so ownership is unsettled as well as the model. | `unscheduled`. |
-| [129_transfer_target_comparison.md](129_transfer_target_comparison.md), whole file | `deferred` | Comparing transfer targets side by side. | No comparison mechanism — the same absent model as [Group D Screen 63](../group_d_player_and_staff_records/63_player_comparison.md), and additionally gated by the knowledge question. | `unscheduled`. |
+| [129_transfer_target_comparison.md](129_transfer_target_comparison.md), whole file | `deferred` | Comparing transfer targets side by side. | No comparison mechanism — the same absent model as [Group D Screen 63](../group_d_player_and_staff_records/63_player_comparison.md). Previously additionally gated by the knowledge question, now answered (decision request 01 → [knowledge limits every Player read](../../../.agents/notes/implemented/architecture/2026-09-19-knowledge-limits-every-player-read.md)). | `unscheduled`. |
 | [130_agent_and_intermediary_information.md](130_agent_and_intermediary_information.md), whole file | `deferred` | Agents and intermediaries, and their part in a deal. | No agent model. | `unscheduled`. |
 | [131_trial_and_assessment.md](131_trial_and_assessment.md), whole file | `deferred` | Trialling a player before signing. | No trial model. | `unscheduled`. |
 
@@ -114,5 +118,6 @@ meetings, planner, agents, trials and staff hiring do not*.
   making all week — here a screen may be *too generously* `deferred` rather than too harshly
   `out-of-scope`. The closed role set that made [Group D 64–66](../group_d_player_and_staff_records/RECONCILIATION.md)
   `out-of-scope` applies to it equally.
-- **Two placeholders are owed a ruling**: `renderer/shortlist/` (124) and `renderer/playerSearch/` (119),
-  both routed WIP screens for deferred surfaces. M1 step 5.
+- **One placeholder is owed a ruling**: `renderer/shortlist/` (124) — a routed WIP screen for a
+  deferred surface. (`renderer/playerSearch/` (119) was the other; ticket 11 built it out, so its
+  ruling is no longer owed.) M1 step 5.

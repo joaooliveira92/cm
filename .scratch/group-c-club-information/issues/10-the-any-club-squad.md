@@ -49,14 +49,14 @@ honest that a lineup manager and a roster are different surfaces over it. Read
 
 ## Acceptance
 
-- [ ] An any-club squad renders at `club/$clubId/squad`, reached from a surface that names a club
-- [ ] It is read-only: no selection, no drag, no lineup edit, no match-day bar
-- [ ] There is one row/table implementation, not two that will drift
-- [ ] A club that is not the manager's is marked, as `ClubStaffScreen` marks it
-- [ ] `clubSquadDetail/`'s placeholder is gone, with its route and screen-scope entries
-- [ ] The club-scoped rule's note is amended with the act-versus-read discriminator, whichever way
+- [x] An any-club squad renders at `club/$clubId/squad`, reached from a surface that names a club
+- [x] It is read-only: no selection, no drag, no lineup edit, no match-day bar
+- [x] There is one row/table implementation, not two that will drift
+- [x] A club that is not the manager's is marked, as `ClubStaffScreen` marks it
+- [x] `clubSquadDetail/`'s placeholder is gone, with its route and screen-scope entries
+- [x] The club-scoped rule's note is amended with the act-versus-read discriminator, whichever way
       this goes
-- [ ] `pnpm check:all` green and e2e green
+- [x] `pnpm check:all` green and e2e green
 
 **Blocked by:**
 None — [group-i decision request 01](../../group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md)
@@ -65,7 +65,7 @@ Scouting Progress on the shared read) and shipped in group-i tickets 09/10, so t
 the block note below records is settled. This ticket's shape question was already settled; it is now
 fully specified and buildable against the shared rule.
 
-**Status:** claimed
+**Status:** resolved
 
 ## Why this is blocked, found 2026-09-19
 
@@ -108,3 +108,17 @@ carries. The *shape* question is settled; only the *contents* question is blocke
 Screen 35's placeholder, `clubSquadDetail/`, stays until this resolves — it is the one Group C
 placeholder [ticket 09](09-cull-the-group-c-placeholders.md) must not remove, because the screen is
 coming rather than disposed.
+
+## Answer
+
+Shipped in `8dd9ad09` (`feat(club): any-club squad screen (Screen 35), players read by scouting
+progress`), committed 2026-09-23 but left at `claimed` — resolved against the tree, not the commit
+message.
+
+The act-versus-read discriminator was settled and the rule note amended in the same commit:
+`ClubSquadDetailScreen` is retired and replaced by `clubSquad/` (`ClubSquadScreen`,
+`useClubSquadRoster`, `getClubSquad` RPC), splitting a shared `SquadRoster` out of the manager's
+lineup screen. The read goes through the shared scouting-progress rule (Agent Note
+2026-09-19-knowledge-limits), so a rival club's squad reads as Attribute Ranges below Fully Scouted
+and the manager's own exact. `clubSquadDetail/`'s route and screen-scope entries are gone; the
+club-scoped rule note now records the act-versus-read discriminator.

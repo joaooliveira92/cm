@@ -175,3 +175,60 @@ Declined or deferred:
   DevelopmentCentre, PlayerCoachReport, ClubStaff), beside `readState` (medium). Those screens belong to
   other efforts; not filed here.
 - `label` repeats `title` at most call sites; no test for a refreshing Failure (low).
+
+## Ticket 11 — Player Search reads by Scouting Progress (Screen 119), 2026-09-23
+
+- Ticket closed: [11](../../.scratch/group-i-scouting-and-recruitment/issues/11-player-search-reads-by-scouting-progress.md)
+- Retires the `playerSearch` WIP placeholder, the last of the four **M1 exit criterion 1** names to
+  ship this sprint (with group-c 10's `clubSquadDetail`, `8dd9ad09`): `staffSearch` and `shortlist`
+  remain, both waiting on models rather than the now-answered knowledge decision.
+- Implemented in `58eab5d4` by the implementator; the orchestrator closed the review findings in a
+  follow-up commit: ledger rows 119/129 reconciled, a `getPlayerSearch` RPC-union roundtrip added to
+  the contracts test, both tickets resolved, map/SPRINT-PLAN/TRACEABILITY/report updated.
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Whole-save result pool, own squad + rivals/FA together | `apps/desktop/test/main/transfers/player-search.test.ts` | pass |
+| 2 | Ranges narrow with Scouting Progress, never widen; exact at Fully Scouted and for own squad | same file (progress 0/50/100); `packages/shared/test/rules/scouting.test.ts` monotonicity | pass |
+| 3 | No exact figure below Fully Scouted on the wire | `packages/contracts/test/player-search-figures.test.ts` (results schema + `AppRpcs.getPlayerSearch` union roundtrip, 9 tests) | pass |
+| 4 | Result opens the Player's Profile with the figures the result published | `apps/desktop/e2e/player-search-scouting.spec.ts` | pass |
+| 5 | `playerSearch` WIP placeholder gone, route and screen-scope entries retired | `git show --stat 58eab5d4` (real screen replaces it) | pass |
+| 6 | Gate green and e2e since the search entry point changes | see below | pass |
+
+## Gate
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 1 on the test leg only: typecheck, lint, effect-lint, verify-md-links, verify-db-schema pass; 8 desktop files timed out under full-machine parallel load (e.g. `rollover-exchange` at 900s, `incoming-bids` at 5000ms) |
+| isolated desktop | `pnpm --filter @cm-clone/desktop exec vitest run` | 255 passed / 255, identical suites — the timeouts are the known suite-under-load effect, not a regression (matches reviewer F5) |
+| contracts focused | `pnpm --filter @cm-clone/contracts exec vitest run test/player-search-figures.test.ts` | 9 passed |
+
+The 8 timeouts are the F5 pattern the review recorded (full suite at 640s wall under parallel load in
+two runs, passes in isolation); a solo desktop run confirms it. No ticket-11 file was among the
+timed-out set. e2e for the new spec runs under the desktop suite build; the four pre-existing e2e reds
+remain tracked as [desktop-suite-red 15/16](../../.scratch/desktop-suite-red/issues/).
+
+## Review
+
+Reviewer verdict: APPROVE on both axes, no blocker or high.
+
+Closed by the orchestrator, in the close commit:
+
+- F1 (medium): the group-i ledger contradicted itself — Screen 119's coverage row, deferred-row and
+  "Two placeholders" bullet all still called it a routed WIP placeholder after it shipped. The row
+  reads `Reviewed — implemented 2026-09-23`, 119's deferred row is cut (ten deferred remain), 129's
+  row notes its knowledge-gate is answered, and the owed-ruling bullet now names only `shortlist`.
+- F3 (low): `AppRpcs.getPlayerSearch` union roundtrip added (success view identity + roundtrip, payload,
+  failure).
+- F4 (low): the implementator's `tsconfig.e2e.json` typecheck-split was reverted; the committed
+  single-include config is green with the new e2e spec (typecheck passed on the gate), and the split
+  was outside the ticket.
+- group-c 10 resolved against `8dd9ad09` (the stale `claimed` lock over shipped work, same pattern as
+  ticket 09, on the plan's old frontier).
+
+Declined or deferred:
+
+- F2 (low): the search routes renderer rows through `main/transfers/economics.ts` `resolveClubName`
+  while the Player Profile resolves club names in the schema; accepted, with the shared resolver
+  option noted against a future profile-consolidation.
+- F5 (note): desktop suite timeouts under load — environmental, recorded above.

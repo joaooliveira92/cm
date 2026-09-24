@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 import { describe, expect, it } from "vitest";
+import { AppRpcs } from "../src/rpc.js";
 import {
   PlayerSearchQuerySchema,
   PlayerSearchResultsView,
@@ -109,5 +110,39 @@ describe("PlayerSearchResultsView (ticket 11 — one result pool, whole save)", 
         }),
       ).toThrow();
     }
+  });
+});
+
+describe("getPlayerSearch over the AppRpcs union (ticket 11 — the read in the RPC table)", () => {
+  it("answers with the PlayerSearchResultsView the query's result pool does", () => {
+    expect(AppRpcs.getPlayerSearch.success).toBe(PlayerSearchResultsView);
+    roundTrip(AppRpcs.getPlayerSearch.success, {
+      total: 1,
+      results: [
+        {
+          id: "p2",
+          firstName: "Chris",
+          lastName: "Carter",
+          age: 26,
+          clubId: null,
+          clubName: null,
+          nationality: "nation_fra",
+          overallRating: { _tag: "range", low: 58, high: 98 },
+          transferValue: { _tag: "range", low: 120000, high: 750000 },
+          positions: [{ position: "MC", familiarity: "natural" }],
+        },
+      ],
+    });
+  });
+
+  it("carries the save id and a full query together", () => {
+    roundTrip(AppRpcs.getPlayerSearch.payload, {
+      saveId: "s1",
+      query: { name: "son", position: "ST" },
+    });
+  });
+
+  it("names a missing save as its one typed failure", () => {
+    roundTrip(AppRpcs.getPlayerSearch.error, { _tag: "SaveNotFoundError", id: "s1" });
   });
 });

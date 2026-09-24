@@ -10,11 +10,31 @@ Sliced 2026-09-23 from [decision request 01](../decision-request-01-knowledge-li
 
 **Blocked by:** None (can start immediately).
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Searching returns Players from the whole save, with the manager's own squad and rivals/Free Agents the same result pool
-- [ ] An unscouted or mid-progress rival's result shows every figure as a range that narrows with Scouting Progress and never widens; a Fully Scouted rival and an own-squad Player show exact figures
-- [ ] The search response carries no exact figure for a Player below Fully Scouted (contract roundtrip, main test)
-- [ ] Opening a result navigates to that Player's Profile and reads the figures the result just published
-- [ ] The `playerSearch` WIP placeholder is gone, with its route and screen-scope entries
-- [ ] `pnpm check:all` green, and e2e since the search entry point changes
+- [x] Searching returns Players from the whole save, with the manager's own squad and rivals/Free Agents the same result pool
+- [x] An unscouted or mid-progress rival's result shows every figure as a range that narrows with Scouting Progress and never widens; a Fully Scouted rival and an own-squad Player show exact figures
+- [x] The search response carries no exact figure for a Player below Fully Scouted (contract roundtrip, main test)
+- [x] Opening a result navigates to that Player's Profile and reads the figures the result just published
+- [x] The `playerSearch` WIP placeholder is gone, with its route and screen-scope entries
+- [x] `pnpm check:all` green, and e2e since the search entry point changes
+## Answer
+
+Shipped in `58eab5d4` (`feat(scouting): implement knowledge-limited player search`).
+
+One read, `getPlayerSearch`, covers the whole save in one result pool (`main/transfers/playerSearch.ts`,
+`packages/contracts/src/rpc-scouting.ts`). The human club's `scouting_progress` rows load once and every
+rival/Free Agent maps through the shared `figureByProgress` rule — own squad exact, ranged below **Fully Scouted**, exact at it — so the wire cannot carry an exact figure for a Player below Fully Scouted.
+`PlayerSearchScreen` replaces the WIP `playerSearch` placeholder (its route, `rpc/playerSearchQueries.ts`
+and `table/playerSearch/` screen entries ship with it).
+
+Evidence per acceptance criterion, observed green on the tree 2026-09-23:
+
+| # | Criterion | Proof |
+|---|---|---|
+| 1 | Whole-save result pool, own squad + rivals/FA together | `apps/desktop/test/main/transfers/player-search.test.ts` (results span the save; own squad exact beside ranged rivals; Free Agents can come back unclubbed) |
+| 2 | Ranges narrow with Scouting Progress, never widen; exact at Fully Scouted | same file (progress 0/50/100) + `packages/shared/test/rules/scouting.test.ts` monotonicity |
+| 3 | No exact figure below Fully Scouted on the wire | `packages/contracts/test/player-search-figures.test.ts` (results schema + `AppRpcs.getPlayerSearch` union roundtrip: success `PlayerSearchResultsView`, failure `SaveNotFoundError`) |
+| 4 | Result opens the Player's Profile, figures agree | `apps/desktop/e2e/player-search-scouting.spec.ts` |
+| 5 | WIP placeholder gone | `main/renderer/playerSearch/PlayerSearchScreen.tsx` real screen replaces the placeholder |
+| 6 | `pnpm check:all` green + e2e | run at close 2026-09-23 |

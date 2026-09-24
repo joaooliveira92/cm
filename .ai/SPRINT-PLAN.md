@@ -268,15 +268,22 @@ Agent-startable work, in order:
    sign Contracts) and [11](../.scratch/gate-red-on-dev/issues/11-conjured-squads-are-age-correct.md)
    (conjured squads are born for the Season they join). **The effort's queue is empty.**
 3. **Knowledge-limited Player reads are sliced.** The note ([2026-09-19](../.agents/notes/implemented/architecture/2026-09-19-knowledge-limits-every-player-read.md))
-   was run through `cm-to-tickets` on 2026-09-23: group-c 10 (Screen 35) is unblocked (its decision is
-   answered *and* shipped — group-i 09/10), I 119/129 are sliced as
-   [group-i 11](../.scratch/group-i-scouting-and-recruitment/issues/11-player-search-reads-by-scouting-progress.md)
-   and [12](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md),
-   and J 137 as [group-j 09](../.scratch/group-j-transfers-contracts-and-negotiations/issues/09-player-contract-offer-reads-by-scouting-progress.md)
-   (J 132/134 were already shipped as the market and Bid composer; D 68 stays `deferred` on scheduling,
-   per the note's own consequence). The frontier is now
-   [group-c 10 — Screen 35, the any-club squad](../.scratch/group-c-club-information/issues/10-the-any-club-squad.md),
-   the `clubSquadDetail` half of **M1 exit criterion 1**.
+    was run through `cm-to-tickets` on 2026-09-23: group-c 10 (Screen 35) is unblocked (its decision is
+    answered *and* shipped — group-i 09/10), I 119/129 are sliced as
+    [group-i 11](../.scratch/group-i-scouting-and-recruitment/issues/11-player-search-reads-by-scouting-progress.md)
+    and [12](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md),
+    and J 137 as [group-j 09](../.scratch/group-j-transfers-contracts-and-negotiations/issues/09-player-contract-offer-reads-by-scouting-progress.md)
+    (J 132/134 were already shipped as the market and Bid composer; D 68 stays `deferred` on scheduling,
+    per the note's own consequence). [group-c 10 — Screen 35, the any-club squad](../.scratch/group-c-club-information/issues/10-the-any-club-squad.md)
+    (**M1 exit criterion 1** — `clubSquadDetail`) shipped 2026-09-23 (`8dd9ad09`), and
+    `playerSearch` (**M1 exit criterion 1** — [group-i 11](../.scratch/group-i-scouting-and-recruitment/issues/11-player-search-reads-by-scouting-progress.md))
+    shipped same day (`58eab5d4`). The frontier is now
+    [group-i 12 — Transfer Target Comparison](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md),
+    then [group-j 09 — Player Contract Offer](../.scratch/group-j-transfers-contracts-and-negotiations/issues/09-player-contract-offer-reads-by-scouting-progress.md).
+    Two of the four **M1 exit criterion 1** names are shipped (`clubSquadDetail`, `playerSearch`);
+    `staffSearch` and `shortlist` remain WIP placeholders, both still waiting on models (closed role
+    set, no shortlist model — see the [group-i ledger](../docs/specs/group_i_scouting_and_recruitment/RECONCILIATION.md)),
+    not on the knowledge decision.
 4. **Triage the stale `needs-info` tickets** (group-g 10, 20; group-h 07): the decision requests they
    waited on are answered.
 
@@ -289,10 +296,14 @@ ledger that *exists with a complete coverage table*, and both have one; a `Not y
 those two files doing the job their preambles describe, which is to record a gap rather than a
 decision. **Group K was checked on 2026-09-20 and is wholly unstarted** — `map.md` with
 `<!-- none yet -->`, no spec, no tickets, no screen read — and charting it belongs to a different
-milestone. Criterion 4 is met (`check:all` green; e2e green, 56 on 2026-09-21). Criterion 5 is
+milestone. Criterion 4 is met (`check:all` green; e2e green, 56 on 2026-09-21; the four
+[desktop-suite-red 15/16](../.scratch/desktop-suite-red/issues/) tickets are queued — see the
+[report](reports/group-i-scouting-and-recruitment.md)). Criterion 5 is
 met as of 2026-09-20 — six traceability rows were owed for this milestone's read models and had been
-accumulating unwritten. Criterion 1 is met for `competition*` and `nation*`; the rest is blocked per
-above, and six `match*` screens are an explicit non-goal.
+accumulating unwritten; `getPlayerSearch` and `getClubSquad` add their rows on 2026-09-23. Criterion 1
+is met for `competition*` and `nation*`; two of the other four named WIP names — `clubSquadDetail`,
+`playerSearch` — shipped 2026-09-23, leaving `staffSearch` and `shortlist` (both waiting on models,
+not the knowledge decision), and six `match*` screens are an explicit non-goal.
 
 **WIP placeholders: 57 → 10**, and every one of the ten has a named owner.
 
