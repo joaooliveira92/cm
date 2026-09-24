@@ -90,6 +90,7 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	CONSTRAINT "competition_participants_season_number" CHECK(season_number >= 1),
 	CONSTRAINT "competition_participants_final_position" CHECK(final_position IS NULL OR final_position >= 1)
 );`,
+  `CREATE INDEX \`competition_participants_club_season_idx\` ON \`competition_participants\` (\`club_id\`,\`season_number\`);`,
   `CREATE TABLE \`competitions\` (
 	\`id\` text PRIMARY KEY NOT NULL,
 	\`nation_id\` text,
@@ -142,6 +143,7 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	CONSTRAINT "fixtures_penalties_paired" CHECK((home_penalties IS NULL) = (away_penalties IS NULL))
 );`,
   `CREATE INDEX \`fixtures_competition_season_played_idx\` ON \`fixtures\` (\`competition_id\`,\`season_number\`,\`played\`);`,
+  `CREATE INDEX \`fixtures_played_scheduled_date_idx\` ON \`fixtures\` (\`played\`,\`scheduled_date\`);`,
   `CREATE TABLE \`generation_manifest\` (
 	\`id\` integer PRIMARY KEY NOT NULL,
 	\`world_seed\` integer NOT NULL,

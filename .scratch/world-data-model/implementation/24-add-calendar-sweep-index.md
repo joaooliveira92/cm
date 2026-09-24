@@ -18,12 +18,12 @@ but the query plan and the file size.
 
 **Blocked by:** — (the decision is resolved, and an index is additive).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/schema.ts` and the regenerated DDL,
 `apps/desktop/test/main/season/query-plans.test.ts` (the index-count list and a sweep plan check).
 
-- [ ] The index on `fixtures(played, scheduled_date)` ships through `pnpm db:generate`, and
+- [x] The index on `fixtures(played, scheduled_date)` ships through `pnpm db:generate`, and
       `verify-db-schema` is green.
-- [ ] A test asserts `EXPLAIN QUERY PLAN` on the date sweep uses the index rather than scanning.
-- [ ] The index-count test names this index, and still fails if a decisionless index appears.
+- [x] A test asserts `EXPLAIN QUERY PLAN` on the date sweep uses the index rather than scanning.
+- [x] The index-count test names this index, and still fails if a decisionless index appears.

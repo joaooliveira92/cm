@@ -93,6 +93,7 @@ CREATE TABLE `competition_participants` (
 	CONSTRAINT "competition_participants_final_position" CHECK(final_position IS NULL OR final_position >= 1)
 );
 --> statement-breakpoint
+CREATE INDEX `competition_participants_club_season_idx` ON `competition_participants` (`club_id`,`season_number`);--> statement-breakpoint
 CREATE TABLE `competitions` (
 	`id` text PRIMARY KEY NOT NULL,
 	`nation_id` text,
@@ -149,6 +150,7 @@ CREATE TABLE `fixtures` (
 );
 --> statement-breakpoint
 CREATE INDEX `fixtures_competition_season_played_idx` ON `fixtures` (`competition_id`,`season_number`,`played`);--> statement-breakpoint
+CREATE INDEX `fixtures_played_scheduled_date_idx` ON `fixtures` (`played`,`scheduled_date`);--> statement-breakpoint
 CREATE TABLE `generation_manifest` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`world_seed` integer NOT NULL,

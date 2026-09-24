@@ -1,6 +1,6 @@
 /**
- * The two indexes (ticket 19). An index has exactly one observable effect — the query plan
- * SQLite chooses — so these specs read that plan rather than timing anything.
+ * The save's indexes. An index has exactly one observable effect — the query plan SQLite chooses —
+ * so these specs read that plan rather than timing anything.
  */
 
 import { mkdtempSync } from "node:fs";
@@ -73,7 +73,7 @@ it.effect("a league table reads one competition's fixtures, through the index", 
   60_000,
 );
 
-it.effect("carries exactly three indexes, each one a recorded decision", () =>
+it.effect("carries exactly five indexes, each one a recorded decision", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Indexes");
 
@@ -81,7 +81,7 @@ it.effect("carries exactly three indexes, each one a recorded decision", () =>
       const sql = yield* SqlClient;
       // Two exclusions, both principled. `sql IS NULL` is the automatic index SQLite builds for a
       // primary key, which nobody chose. A `UNIQUE` index is a constraint — it is there to make a
-      // state unreachable, not to make a read fast — so it is not one of the two this counts.
+      // state unreachable, not to make a read fast — so it is not one of the five this counts.
       return yield* sql<{ name: string }>`
         SELECT name FROM sqlite_master
         WHERE type = 'index' AND sql IS NOT NULL AND sql NOT LIKE '%UNIQUE%'
@@ -91,16 +91,61 @@ it.effect("carries exactly three indexes, each one a recorded decision", () =>
       Effect.scoped,
     );
 
-    // The third was added by open question 22 rather than by whoever happened to be writing the
-    // migration, which is exactly what this assertion exists to force.
+    // A third was added by open question 22 and two more by open questions 20 and 21, rather than by
+    // whoever happened to be writing the migration — which is exactly what this assertion forces.
     deepStrictEqual(
       indexes.map((row) => row.name),
       [
+        "competition_participants_club_season_idx",
         "fixtures_competition_season_played_idx",
+        "fixtures_played_scheduled_date_idx",
         "player_transfers_player_date_idx",
         "players_club_id_idx",
       ],
     );
+  }),
+  60_000,
+);
+
+it.effect("the calendar advance's date sweep uses the played-then-date index", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Indexes");
+
+    const plan = yield* queryPlan(
+      save.id,
+      `SELECT f.id FROM fixtures f
+       JOIN competitions c ON c.id = f.competition_id
+       WHERE f.played = 0 AND f.scheduled_date <= ?
+       ORDER BY f.scheduled_date ASC, f.id ASC`,
+      ["2026-08-08"],
+    );
+
+    // The sweep runs on every Continue; leading on `played` keeps it off the temp B-tree and flat
+    // across the season. The scan this replaces reads every unplayed fixture in the save.
+    ok(plan.includes("fixtures_played_scheduled_date_idx"), plan);
+    ok(!plan.includes("SCAN fixtures"), plan);
+  }),
+  60_000,
+);
+
+it.effect("the club-keyed membership read uses the club-and-season index", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Indexes");
+    const squad = yield* getSquad(savesDir, save.id);
+
+    const plan = yield* queryPlan(
+      save.id,
+      `SELECT c.stature_tier FROM clubs c
+       JOIN competition_participants cp ON cp.club_id = c.id AND cp.season_number = ?
+       JOIN competitions comp ON comp.id = cp.competition_id
+       WHERE c.id = ?`,
+      [1, squad.club.id],
+    );
+
+    // Run ~16,000 times a Continue against a table nothing prunes; unindexed it scans every
+    // participant row in the save (141.67 s a Continue at season 20).
+    ok(plan.includes("competition_participants_club_season_idx"), plan);
+    ok(!plan.includes("SCAN cp"), plan);
   }),
   60_000,
 );

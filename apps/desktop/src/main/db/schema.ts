@@ -379,6 +379,16 @@ export const competitionParticipants = sqliteTable(
     primaryKey({
       columns: [table.competitionId, table.seasonNumber, table.clubId],
     }),
+    /**
+     * The club-keyed membership read (`clubStrength`): which competition is this club in this season.
+     * Called once per side of every results-only fixture — ~16,000 times a Continue — against a table
+     * ticket 18 never prunes, so unindexed it is quadratic in the world and linear in the age of the
+     * save. The composite, not `(club_id)` alone: the single column ties it in season 1 but its walk
+     * grows one row per season, while the pair seeks flat. Measured at 16,000 clubs:
+     * 8.87 ms → 0.0053 ms a call, 141.67 s → 0.08 s a Continue at season 20, for +8.0 MB
+     * (RESULTS.md, open question 21).
+     */
+    index("competition_participants_club_season_idx").on(table.clubId, table.seasonNumber),
     check("competition_participants_season_number", sql`season_number >= 1`),
     check(
       "competition_participants_final_position",
@@ -841,6 +851,15 @@ export const fixtures = sqliteTable(
       table.seasonNumber,
       table.played,
     ),
+    /**
+     * The date-bearing calendar's hot per-Continue query: the sweep `WHERE played = 0 AND
+     * scheduled_date <= ?`, plus `loadCalendarHorizon`'s unplayed `MIN`/`MAX`. Leading on `played` is
+     * the point — the sweep always asks for one value of it and range-scans the date inside the
+     * shrinking unplayed set, the only candidate with no temp B-tree for the `ORDER BY` and the only
+     * one whose per-advance cost is flat across the season. Measured at 16,000 clubs: sweep
+     * 636 ms → 208 ms a season, horizon 1,380 ms → 1 ms, for +5.9 MB (RESULTS.md, open question 20).
+     */
+    index("fixtures_played_scheduled_date_idx").on(table.played, table.scheduledDate),
     check("fixtures_round", sql`round >= 1`),
     check("fixtures_played", sql`played IN (0,1)`),
     check(

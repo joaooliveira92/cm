@@ -15,14 +15,14 @@ table. Open question 21 measured and decided this; this ticket is the execution 
 
 **Blocked by:** —
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/schema.ts` and the regenerated DDL,
 `apps/desktop/test/main/season/query-plans.test.ts` (the index-count list and a membership plan
 check).
 
-- [ ] The index on `competition_participants(club_id, season_number)` ships through `pnpm db:generate`,
+- [x] The index on `competition_participants(club_id, season_number)` ships through `pnpm db:generate`,
       and `verify-db-schema` is green.
-- [ ] A test asserts `EXPLAIN QUERY PLAN` on the club-keyed membership read uses the index rather than
+- [x] A test asserts `EXPLAIN QUERY PLAN` on the club-keyed membership read uses the index rather than
       scanning.
-- [ ] The index-count test names this index.
+- [x] The index-count test names this index.
