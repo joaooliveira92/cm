@@ -20,7 +20,15 @@ import { savesDir, seedBeforeMatchday, seedFresh } from "./seedSaves.js";
 const RESTARTED_FROM_KICKOFF = "The app was closed mid-match, so this match has restarted from kickoff.";
 
 /** Strip thousands separators and units, e.g. "1,250,000 Cr" -> 1250000. */
-const parseCr = (text: string) => Number(text.replace(/[^\d]/g, ""));
+/**
+ * Read a Value cell as the number to bid. An exact read renders `1,200,000 Cr`; a read left ranged
+ * by Scouting Progress renders `500,000 Cr–750,000 Cr`. A bid must clear the upper bound, so take
+ * the last amount in the cell — `500000750000` is what the old all-digits parse produced.
+ */
+const parseCr = (text: string) => {
+  const amounts = text.match(/[\d,]+/g) ?? [];
+  return Number((amounts.at(-1) ?? "").replace(/[^\d]/g, ""));
+};
 
 /** The budget line is one `<p>` holding several numbers; pull out only the Transfer Budget one. */
 const parseTransferBudget = (text: string) =>

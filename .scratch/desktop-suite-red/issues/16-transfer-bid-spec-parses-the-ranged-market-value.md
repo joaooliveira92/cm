@@ -14,7 +14,7 @@ with no scouting rows every rival is ranged, so there is no exact row to fall ba
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The keyboard transfer-bid journey passes against the ranged market column
-- [ ] It still fails if a bid does not settle, or the budget does not reflect the spend
+- [x] The keyboard transfer-bid journey passes against the ranged market column
+- [x] It still fails if a bid does not settle, or the budget does not reflect the spend
