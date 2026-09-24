@@ -16,5 +16,5 @@ assertions in the test do not make the same assumption.
 
 **Status:** resolved
 
-- [ ] The test does not depend on the world producing no organic bid
-- [ ] It still fails if the guarantee stops firing in a later window
+- [x] The test does not depend on the world producing no organic bid
+- [x] It still fails if the guarantee stops firing in a later window

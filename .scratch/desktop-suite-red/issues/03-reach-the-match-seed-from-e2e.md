@@ -32,8 +32,8 @@ flakiness objection; it does not by itself make the test fast.
 
 **Blocked by:** none. 02 is resolved.
 
-- [ ] The main process reads a match seed from the environment at boot and provides it, with the
+- [x] The main process reads a match seed from the environment at boot and provides it, with the
       production default untouched when the variable is absent.
-- [ ] `e2e/seedSaves.ts` seeds from a pinned world seed.
-- [ ] One e2e spec drives a match to a known injury without a retry loop.
-- [ ] `pnpm check:all` is green, and the e2e suite passes.
+- [x] `e2e/seedSaves.ts` seeds from a pinned world seed.
+- [x] One e2e spec drives a match to a known injury without a retry loop.
+- [x] `pnpm check:all` is green, and the e2e suite passes.

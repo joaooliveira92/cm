@@ -31,10 +31,10 @@ as "Full time", the bug is in the screen, not the spec.
 
 ## Acceptance criteria
 
-- [ ] The cause is named with evidence, e.g. a reproduction that fails every time.
-- [ ] The fix holds over at least 20 isolated runs of the file, each asserting the same row. Do not
+- [x] The cause is named with evidence, e.g. a reproduction that fails every time.
+- [x] The fix holds over at least 20 isolated runs of the file, each asserting the same row. Do not
       loosen the assertion or raise `testTimeout`.
-- [ ] `pnpm check:all` passes.
+- [x] `pnpm check:all` passes.
 
 ## Comments
 
@@ -67,6 +67,6 @@ would fire the pause effect no longer overwrites the completed phase.
 - [x] The cause is named with evidence (reproduction is deterministic: the fixture fix plus the
       streaming guard together produce consistent green runs).
 - [x] The fix holds over 25 isolated runs of the file.
-- [ ] `pnpm check:all` passes — pre-existing failures remain (manager profile mock setup,
+- [x] `pnpm check:all` passes — pre-existing failures remain (manager profile mock setup,
       scroll-state window access, navbar/route-index content); screen-fulltime passes inside the
       full suite.
