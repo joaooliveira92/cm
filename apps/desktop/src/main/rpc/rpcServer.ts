@@ -35,6 +35,7 @@ import { getTacticsOverview } from "../club/tacticsOverview.js";
 import {
   getContractExpiryScreen,
   getBudgetReviewScreen,
+  getPlayerComparison,
   getPlayerSearch,
   getTransferHistoryScreen,
   getTransfersScreen,
@@ -442,6 +443,13 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
         payload,
       );
       return yield* getPlayerSearch(ctx.savesDir, saveId, query);
+    }),
+  getPlayerComparison: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, playerIds } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.getPlayerComparison.payload,
+      )(payload);
+      return yield* getPlayerComparison(ctx.savesDir, saveId, playerIds);
     }),
   getTeamScoutReport: (payload, ctx) =>
     Effect.gen(function* () {

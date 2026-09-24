@@ -35,6 +35,7 @@ import {
   type RpcClientError,
 } from "../rpc.js";
 import { DataTable } from "../table/DataTable.js";
+import { CompareSelectionContext } from "../table/playerSearch/compareSelection.js";
 import { searchRowOf } from "../table/playerSearch/searchColumns.js";
 import { usePlayerSearchRoster } from "./usePlayerSearchRoster.js";
 
@@ -85,6 +86,21 @@ const SearchResults = ({
     navigateCareer({ type: "playerDetail", saveId, playerId }, "keyboard");
   };
 
+  /** The Compare button (Screen 129, ticket 12): the row ids the manager has ticked, re-filtered
+   *  against the committed result so a re-query that no longer contains an id cannot carry it into
+   *  the comparison (the roster keeps stale memberships rather than dropping them — the set is
+   *  selection, and a row's removal from the results is not an un-tick). */
+  const selectedPlayerIds = playerIds.filter(
+    (id) => roster.compareIds.has(String(id)),
+  );
+  const compareCount = selectedPlayerIds.length;
+  const openComparison = (event: React.MouseEvent) => {
+    navigateCareer(
+      { type: "playerComparison", saveId, playerIds: selectedPlayerIds },
+      intentOfClick(event),
+    );
+  };
+
   if (searchResult._tag === "Failure") {
     return <p className="mt-4 text-text-danger">{messageOf(typedError(searchResult))}</p>;
   }
@@ -106,8 +122,21 @@ const SearchResults = ({
         <p className="mt-8 text-text-secondary italic">No players match these filters.</p>
       ) : (
         <section className="mt-3 rounded-panel bg-panel-bg px-3 pt-2 pb-3">
-          <h2 className="text-base font-bold text-text-highlight">Results</h2>
-          <DataTable
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-base font-bold text-text-highlight">Results</h2>
+            <Button
+              type="button"
+              variant="default"
+              disabled={compareCount < 2}
+              onClick={openComparison}
+            >
+              {compareCount >= 2 ? `Compare ${compareCount} players` : "Compare"}
+            </Button>
+          </div>
+          <CompareSelectionContext.Provider
+            value={{ compareIds: roster.compareIds, onToggleCompare: roster.onToggleCompare }}
+          >
+            <DataTable
             tableId="player-search"
             screen="playerSearch"
             region="playerSearchTable"
@@ -132,6 +161,7 @@ const SearchResults = ({
               </Table>
             )}
           </DataTable>
+        </CompareSelectionContext.Provider>
         </section>
       )}
     </>

@@ -9,7 +9,7 @@ import type { EntityType } from "../navigation/entity-nav-config.js";
 import type { MatchContext } from "../navigation/match-nav-config.js";
 import { SecondaryNav } from "../navigation/components/SecondaryNav.js";
 import type { SpecSectionId } from "../navigation/spec-nav-config.js";
-import { decodeClubId, decodeCompetitionId, decodeMatchId, decodePlayerId, decodeSaveId } from "../navigation/params.js";
+import { decodeClubId, decodeCompetitionId, decodeMatchId, decodePlayerId, decodePlayerIds, decodeSaveId } from "../navigation/params.js";
 import { CareerChrome } from "../chrome/CareerChrome.js";
 import { Alert } from "../components/ui/alert.js";
 import { RegistryProvider } from "../rpc.js";
@@ -199,6 +199,37 @@ export const CareerPlayerChildView = ({
   return (
     <RouteView screenId={screenId}>
       <Screen saveId={save.success} playerId={player.success} />
+    </RouteView>
+  );
+};
+
+interface ComparisonScreenProps {
+  readonly saveId: SaveId;
+  readonly playerIds: ReadonlyArray<PlayerId>;
+}
+
+/**
+ * One comparison-scoped child route surface (`/career/$saveId/player-comparison/$playerIds`). The
+ * `:playerIds` segment is the comma-joined comparison key, decoded here into the branded list the
+ * screen compares. Same boundary decode pattern as the player surface: a well-formed list naming
+ * players the save does not have is the RPC's `PlayerNotFoundError`, rendered by the screen — only
+ * an undecodable segment is an address error.
+ */
+export const CareerPlayerComparisonChildView = ({
+  screenId,
+  Screen,
+}: {
+  readonly screenId: string;
+  readonly Screen: ComponentType<ComparisonScreenProps>;
+}) => {
+  const params = useParams({ strict: false });
+  const save = decodeSaveId(params.saveId ?? "");
+  const players = decodePlayerIds(params.playerIds ?? "");
+  if (save._tag === "Malformed") return <RouteParamErrorScreen reason={save.reason} />;
+  if (players._tag === "Malformed") return <RouteParamErrorScreen reason={players.reason} />;
+  return (
+    <RouteView screenId={screenId}>
+      <Screen saveId={save.success} playerIds={players.success} />
     </RouteView>
   );
 };

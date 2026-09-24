@@ -78,6 +78,7 @@ export const CAREER_SUB_SURFACES: Readonly<Record<CareerSubSurfaceType, string>>
   squadStaff: "a Squad section sub-item, work in progress placeholder",
   squadInformation: "a Squad section sub-item, work in progress placeholder",
   squadFinances: "a Squad section sub-item, work in progress placeholder",
+  playerComparison: "names multiple players, so it cannot be built from a save alone",
   squadHistory: "a Squad section sub-item, work in progress placeholder",
   managerInbox: "a Manager section sub-tab",
   managerConfidence: "a Manager section sub-tab",

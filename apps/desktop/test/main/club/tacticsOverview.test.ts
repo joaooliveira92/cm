@@ -51,7 +51,7 @@ const rid = (s: string) => WriteRequestId.make(s);
 /** Opens a read/write connection to the save's SQLite file, for seeding state the read observes. */
 const withSaveWrite = <A, E>(saveId: SaveId, effect: Effect.Effect<A, E, SqlClient>) =>
   effect.pipe(
-    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
+    Effect.provide(SqliteClient.layer({ filename: ':memory:' })),
     Effect.scoped,
   );
 

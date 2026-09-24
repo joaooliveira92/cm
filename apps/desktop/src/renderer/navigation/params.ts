@@ -67,6 +67,28 @@ export const decodePlayerId = (raw: string): RouteParamDecode<PlayerId> => {
   }
 };
 
+/** Decode the `:playerIds` path parameter — the comma-joined comparison list the route carries —
+ *  into the contract's branded `PlayerId`s. Each segment decodes through `decodePlayerId`; any
+ *  segment that cannot is a malformed address, not part of a comparison. A list naming players the
+ *  save does not have is the RPC's `PlayerNotFoundError`, not an address error (AC-12). The list may
+ *  repeat an id — the comparison key deduplicates — but may not be empty: comparing nothing is not
+ *  a route. */
+export const decodePlayerIds = (raw: string): RouteParamDecode<ReadonlyArray<PlayerId>> => {
+  const segments = raw.split(",");
+  if (segments.some((segment) => segment === "")) {
+    return malformed("playerIds parameter is empty");
+  }
+  const decoded: PlayerId[] = [];
+  for (const segment of segments) {
+    const single = decodePlayerId(segment);
+    if (single._tag === "Malformed") {
+      return malformed(`playerIds parameter holds an invalid player id: ${single.reason}`);
+    }
+    decoded.push(single.success);
+  }
+  return { _tag: "Success", success: decoded };
+};
+
 /** Decode the `:nationId` path parameter into the contract's branded `NationId`. */
 export const decodeNationId = (raw: string): RouteParamDecode<NationId> => {
   if (raw === "") return malformed("nationId parameter is empty");

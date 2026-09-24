@@ -4,8 +4,9 @@ import {
   ClubId,
   ClubNotFoundError,
   ClubNotScoutedError,
-  PlayerId,
   OwnClubNotScoutableError,
+  PlayerComparisonView,
+  PlayerId,
   PlayerNotFoundError,
   PlayerSearchQuerySchema,
   PlayerSearchResultsView,
@@ -107,5 +108,17 @@ export const ScoutingRpcs = {
     payload: Schema.Struct({ saveId: SaveId, query: PlayerSearchQuerySchema }),
     success: PlayerSearchResultsView,
     error: Schema.Union([SaveNotFoundError]),
+  },
+  /** Transfer Target Comparison (Screen 129): each player named in `playerIds`, read by the human
+   * club's Scouting Progress on him exactly as the search and profile do — exact figures for the
+   * manager's own squad and Fully Scouted players, Attribute Ranges below that (Agent Note
+   * 2026-09-19, ticket 12). `wage`, `contractExpiry` and `injuryStatus` are contract/fitness facts
+   * rather than market readings, so they are never ranged. Rows come back in the caller's order; a
+   * list naming a player the save does not hold is `PlayerNotFoundError`; an empty list answers
+   * with no rows. A pure read, so an Archived Save still answers it. */
+  getPlayerComparison: {
+    payload: Schema.Struct({ saveId: SaveId, playerIds: Schema.Array(PlayerId) }),
+    success: PlayerComparisonView,
+    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError]),
   },
 } as const;

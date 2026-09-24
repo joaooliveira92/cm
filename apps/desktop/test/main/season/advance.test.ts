@@ -50,7 +50,7 @@ const breakScoutingTable = (saveId: SaveId) =>
     const sql = yield* SqlClient;
     yield* sql`DROP TABLE scouting_assignments`;
   }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
+    Effect.provide(SqliteClient.layer({ filename: ':memory:' })),
     Effect.scoped,
   );
 
@@ -173,9 +173,9 @@ it.effect("committing twice commits once", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     yield* advanceCalendar(savesDir, save.id);
-    const fixtureId = yield* pendingFixtureId(savesDir, save.id);
+    const fixtureId = yield* pendingFixtureId(save.id);
     ok(fixtureId !== null);
-    yield* ensureHumanTactic(savesDir, save.id);
+    yield* ensureHumanTactic(save.id);
     yield* startMatch(savesDir, save.id, fixtureId, "quick");
 
     const first = yield* commitMatchday(savesDir, save.id, fixtureId);
@@ -222,9 +222,9 @@ it.effect("a started Fixture cannot be started again", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     yield* advanceCalendar(savesDir, save.id);
-    const fixtureId = yield* pendingFixtureId(savesDir, save.id);
+    const fixtureId = yield* pendingFixtureId(save.id);
     ok(fixtureId !== null);
-    yield* ensureHumanTactic(savesDir, save.id);
+    yield* ensureHumanTactic(save.id);
     const first = yield* startMatch(savesDir, save.id, fixtureId, "play");
 
     const failure = yield* Effect.flip(startMatch(savesDir, save.id, fixtureId, "play"));
@@ -504,9 +504,9 @@ it.effect("a second commit arriving while one is running is refused, not interle
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     yield* advanceCalendar(savesDir, save.id);
-    const fixtureId = yield* pendingFixtureId(savesDir, save.id);
+    const fixtureId = yield* pendingFixtureId(save.id);
     ok(fixtureId !== null);
-    yield* ensureHumanTactic(savesDir, save.id);
+    yield* ensureHumanTactic(save.id);
     yield* startMatch(savesDir, save.id, fixtureId, "quick");
 
     // The commit is the operation that now does the consequential work, so it takes the same lock
@@ -565,9 +565,9 @@ it.effect("a commit that fails partway commits nothing, and the boundary survive
     const save = yield* createSave(savesDir, "Test Career");
     const before = yield* getFixtures(savesDir, save.id);
     yield* advanceCalendar(savesDir, save.id);
-    const fixtureId = yield* pendingFixtureId(savesDir, save.id);
+    const fixtureId = yield* pendingFixtureId(save.id);
     ok(fixtureId !== null);
-    yield* ensureHumanTactic(savesDir, save.id);
+    yield* ensureHumanTactic(save.id);
     yield* startMatch(savesDir, save.id, fixtureId, "quick");
 
     // The commit is where the consequential writes live now: ten fixture results, ten Condition

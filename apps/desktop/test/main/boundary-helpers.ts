@@ -9,7 +9,6 @@
  * Quick result is used throughout: it runs the same authoritative simulation as Play and only skips
  * the live reveal, so a test that quick-results is exercising the real match path.
  */
-import path from "node:path";
 import type { SaveId } from "@cm-clone/contracts";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Data, Effect } from "effect";
@@ -23,11 +22,9 @@ import { advanceCalendar } from "../../src/main/season/index.js";
 import { commitMatchday } from "../../src/main/season/commitMatchday.js";
 import { loadSeasonRow } from "../../src/main/season/currentSeason.js";
 
-const saveFile = (savesDir: string, saveId: SaveId) => path.join(savesDir, `${saveId}.sqlite`);
-
-const inSave = <A, E>(savesDir: string, saveId: SaveId, body: Effect.Effect<A, E, SqlClient>) =>
+const inSave = <A, E>(saveId: SaveId, body: Effect.Effect<A, E, SqlClient>) =>
   body.pipe(
-    Effect.provide(SqliteClient.layer({ filename: saveFile(savesDir, saveId) })),
+    Effect.provide(SqliteClient.layer({ filename: ":memory:" })),
     Effect.scoped,
   );
 
@@ -66,9 +63,8 @@ export class HumanClubCannotFieldElevenError extends Data.TaggedError(
  * down by hand still can, and what a test helper must not do is let it surface as somebody else's
  * error.
  */
-const readyPendingFixture = (savesDir: string, saveId: SaveId) =>
+const readyPendingFixture = (saveId: SaveId) =>
   inSave(
-    savesDir,
     saveId,
     Effect.gen(function* () {
       const row = yield* loadSeasonRow;
@@ -92,9 +88,8 @@ const readyPendingFixture = (savesDir: string, saveId: SaveId) =>
   );
 
 /** Makes the human club match-ready, for a test that needs it before reaching a boundary. */
-export const ensureHumanTactic = (savesDir: string, saveId: SaveId) =>
+export const ensureHumanTactic = (saveId: SaveId) =>
   inSave(
-    savesDir,
     saveId,
     Effect.gen(function* () {
       const club = yield* loadUserClub;
@@ -107,9 +102,8 @@ export const ensureHumanTactic = (savesDir: string, saveId: SaveId) =>
   );
 
 /** The Fixture the Calendar is standing at, or `null`. */
-export const pendingFixtureId = (savesDir: string, saveId: SaveId) =>
+export const pendingFixtureId = (saveId: SaveId) =>
   inSave(
-    savesDir,
     saveId,
     Effect.gen(function* () {
       const row = yield* loadSeasonRow;
@@ -125,7 +119,7 @@ export const pendingFixtureId = (savesDir: string, saveId: SaveId) =>
  */
 export const playPendingFixture = (savesDir: string, saveId: SaveId) =>
   Effect.gen(function* () {
-    const fixtureId = yield* readyPendingFixture(savesDir, saveId);
+    const fixtureId = yield* readyPendingFixture(saveId);
     if (fixtureId === null) return null;
     yield* startMatch(savesDir, saveId, fixtureId, "quick");
     return yield* commitMatchday(savesDir, saveId, fixtureId);

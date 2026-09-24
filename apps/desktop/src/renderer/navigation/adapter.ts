@@ -165,6 +165,14 @@ export const navigate = (destination: NavigationDestination): void => {
         params: { saveId: resolved.params.saveId, playerId: resolved.params.playerId },
       });
       break;
+    // The comparison's second parameter is the comma-joined `:playerIds` slug, not one player id:
+    // a separate arm so the params stay string-typed (the destination decodes them at the route).
+    case "/career/$saveId/player-comparison/$playerIds":
+      getRouter().navigate({
+        to: resolved.to,
+        params: { saveId: resolved.params.saveId, playerIds: resolved.params.playerIds },
+      });
+      break;
     case "/career/$saveId/match-report/$matchId":
       getRouter().navigate({
         to: resolved.to,

@@ -155,7 +155,7 @@ export const seedBeforeMatchday = (savesDir: string) =>
     Effect.gen(function* () {
       const id = yield* createSeedSave(savesDir, "Seed: before-matchday");
       yield* advanceCalendar(savesDir, id);
-      if ((yield* pendingFixtureId(savesDir, id)) === null) {
+      if ((yield* pendingFixtureId(id)) === null) {
         return yield* new NoPendingFixtureError();
       }
       return id;
@@ -185,10 +185,10 @@ export const seedConcluded = (savesDir: string) =>
       const id = yield* createSeedSave(savesDir, "Seed: concluded");
       let guard = 0;
       let concluded = false;
-      while (!concluded && guard < MAX_ADVANCES) {
-        guard += 1;
-        concluded = (yield* advanceThroughBoundary(savesDir, id)).seasonConcluded;
-      }
+while (!concluded && guard < MAX_ADVANCES) {
+    guard += 1;
+    concluded = (yield* advanceThroughBoundary(savesDir, id)).seasonConcluded;
+  }
       if (!concluded) {
         return yield* new SeasonNeverConcludedError({ advances: guard });
       }

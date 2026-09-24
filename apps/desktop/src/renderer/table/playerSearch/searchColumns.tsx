@@ -16,6 +16,7 @@ import type { PlayerSearchResultView } from "@cm-clone/contracts";
 import { nationName, type KnownFigure } from "@cm-clone/shared";
 import { figureMid, formatFigure, formatFigureCredits } from "../../format.js";
 import type { TableRowShape } from "../types.js";
+import { CompareCheckbox } from "./CompareCheckbox.js";
 
 export interface SearchRow extends TableRowShape {
   readonly id: string;
@@ -74,6 +75,17 @@ export const searchColumns = (
     cell: (info) => info.getValue<unknown>() as string,
     enableSorting: sortable,
     enablePinning: true,
+  },
+  // The compare-membership column (Screen 129, ticket 12): a real checkbox per row, placed beside
+  // the pinned name column so it is in view without scrolling. Not sortable — membership is binary,
+  // and the shared columns stay memoised (`[]` deps) so TanStack never rebuilds the table (and
+  // never resets a sort) on a toggle: the cell reads the selection from context.
+  {
+    id: "compare",
+    accessorFn: (row) => row.id,
+    header: "Compare",
+    enableSorting: false,
+    cell: (info) => <CompareCheckbox row={info.row} />,
   },
   { id: "age", accessorKey: "age", header: "Age", enableSorting: sortable },
   {

@@ -40,7 +40,7 @@ afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
 const inSave = <A, E>(saveId: string, effect: Effect.Effect<A, E, SqlClient>, readonly = true) =>
   effect.pipe(
-    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly })),
+    Effect.provide(SqliteClient.layer({ filename: ':memory:', readonly })),
     Effect.scoped,
   );
 

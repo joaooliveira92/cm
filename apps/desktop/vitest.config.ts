@@ -29,9 +29,11 @@ export default defineConfig({
       {
         test: {
           name: "renderer",
-          environment: "jsdom",
+          environment: "happy-dom",
           include: ["test/renderer/**/*.test.{ts,tsx}"],
           setupFiles,
+          pool: "forks",
+          maxWorkers: process.env.CI ? 4 : undefined,
         },
       },
       {

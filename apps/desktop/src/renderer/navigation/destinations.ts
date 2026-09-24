@@ -135,6 +135,18 @@ export type CareerDestination =
    *  player too, so it is excluded from save-scoped nav like `playerDetail`. */
   | { readonly type: "playerContract"; readonly saveId: SaveId; readonly playerId: PlayerId }
   /**
+   * Transfer Target Comparison (Screen 129, ticket 12) — the Players the manager selected in
+   * Player Search, side by side, the figures read by the human club's Scouting Progress. It names
+   * every compared Player, so like `playerDetail` it is excluded from save-scoped nav: a bare save
+   * cannot say which Players are being compared. Comes from the search's Compare action, never from
+   * a `g <key>` binding.
+   */
+  | {
+      readonly type: "playerComparison";
+      readonly saveId: SaveId;
+      readonly playerIds: ReadonlyArray<PlayerId>;
+    }
+  /**
    * The live-match command screens (Screen 97) — reached from the live Match day section, never
    * from the navbar: a save alone is not enough, they need a match in play, so they are excluded
    * from save-scoped nav like the drill-downs above.
@@ -211,7 +223,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "clubSquad" | "clubInformation" | "clubFixturesDetail" | "clubTransfersDetail" | "clubFinancesDetail" | "competitionOverview" | "competitionTable" | "competitionFixturesDetail" | "competitionResults" | "playerDetail" | "playerDevelopment" | "playerContract" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
+  "teamScoutReport" | "clubStaff" | "clubSquad" | "clubInformation" | "clubFixturesDetail" | "clubTransfersDetail" | "clubFinancesDetail" | "competitionOverview" | "competitionTable" | "competitionFixturesDetail" | "competitionResults" | "playerDetail" | "playerDevelopment" | "playerContract" | "playerComparison" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
 >;
 
 /**
@@ -222,6 +234,18 @@ export const careerDestination = (
   type: SaveScopedCareerDestinationType,
   saveId: SaveId,
 ): CareerDestination => ({ type, saveId }) as CareerDestination;
+
+/**
+ * The canonical `:playerIds` route slug, and the comparison atom's key. Both the address and the
+ * atom must name the same comparison set the same way, no matter the order the manager selected
+ * the Players in, so one definition serves both: every id, de-duplicated and code-unit sorted,
+ * joined by commas. `careerRoute` builds the slug from it and
+ * `rpc/playerComparisonQueries.ts` keys its named-set atom on it, so a comparison set always
+ * resolves to one route and one atom — and re-selecting the same Players from a search cannot mint
+ * a second atom. `decodePlayerIds` in `params.ts` decodes it back.
+ */
+export const playerComparisonKey = (playerIds: ReadonlyArray<PlayerId>): string =>
+  [...new Set(playerIds.map(String))].sort().join(",");
 
 /**
  * A resolved destination: the router `to`/`params` the adapter passes to
@@ -334,6 +358,10 @@ export type ResolvedDestination =
       readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
     }
   | {
+      readonly to: "/career/$saveId/player-comparison/$playerIds";
+      readonly params: { readonly saveId: SaveId; readonly playerIds: string };
+    }
+  | {
       readonly to: "/career/$saveId/club/$clubId/information";
       readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
     }
@@ -426,6 +454,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "playerDetail":
     case "playerDevelopment":
     case "playerContract":
+    case "playerComparison":
     case "matchMatchTactics":
     case "matchSubstitutions":
     case "matchStats":
@@ -613,6 +642,14 @@ const careerRoute = (
       return {
         to: "/career/$saveId/player/$playerId/contract",
         params: { saveId: destination.saveId, playerId: destination.playerId },
+      };
+    case "playerComparison":
+      return {
+        to: "/career/$saveId/player-comparison/$playerIds",
+        params: {
+          saveId: destination.saveId,
+          playerIds: playerComparisonKey(destination.playerIds),
+        },
       };
     case "matchMatchTactics":
       return { to: "/career/$saveId/match-match-tactics", params: { saveId: destination.saveId } };

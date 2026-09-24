@@ -75,6 +75,14 @@ export const STAFF_SCOPED_SCREENS = [
 ] as const;
 
 /**
+ * The comparison-scoped drill-down: `/career/$saveId/player-comparison/$playerIds`. Inside a
+ * career, not a persistent screen — no `g` binding targets it and no screen-scoped Action belongs
+ * to it (it is reached from Player Search's Compare action, which is a `playerSearch`-scoped
+ * button, not a keyboard command).
+ */
+export const COMPARISON_SCOPED_SCREENS = ["playerComparison"] as const;
+
+/**
  * The club sub-surface drill-downs: additional views at `/career/$saveId/club/$clubId/...`.
  */
 export const CLUB_SUB_SURFACE_SCREENS = [
@@ -133,6 +141,7 @@ export const isInsideCareer = (screen: ScreenName): boolean =>
   (CLUB_SUB_SURFACE_SCREENS as readonly string[]).includes(screen) ||
   (NATION_SCOPED_SCREENS as readonly string[]).includes(screen) ||
   (COMPETITION_SCOPED_SCREENS as readonly string[]).includes(screen) ||
+  (COMPARISON_SCOPED_SCREENS as readonly string[]).includes(screen) ||
   (MATCH_SUB_SCREENS as readonly string[]).includes(screen);
 
 /** A scope-tier label helper for the key map (which scope a bound action lives in). */

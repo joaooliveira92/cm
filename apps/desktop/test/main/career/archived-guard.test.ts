@@ -37,7 +37,7 @@ const markArchived = (saveId: string, cause: ArchivedCause) =>
     const sql = yield* SqlClient;
     yield* sql`UPDATE manager_status SET archived_cause = ${cause} WHERE id = 1`;
   }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
+    Effect.provide(SqliteClient.layer({ filename: ':memory:' })),
     Effect.scoped,
   );
 

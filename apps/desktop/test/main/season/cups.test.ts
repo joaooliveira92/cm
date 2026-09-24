@@ -52,7 +52,7 @@ const loadCupFixtures = (saveId: string, cupId: string) =>
        FROM fixtures WHERE competition_id = ${cupId} AND season_number = 1
        ORDER BY round ASC, id ASC`;
   }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
+    Effect.provide(SqliteClient.layer({ filename: ':memory:', readonly: true })),
     Effect.scoped,
   );
 
@@ -65,7 +65,7 @@ const loadPenaltyBearingLeagueFixtures = (saveId: string) =>
       WHERE c.kind <> 'cup' AND (f.home_penalties IS NOT NULL OR f.away_penalties IS NOT NULL)`;
     return rows[0]?.count ?? 0;
   }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
+    Effect.provide(SqliteClient.layer({ filename: ':memory:', readonly: true })),
     Effect.scoped,
   );
 

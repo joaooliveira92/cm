@@ -212,6 +212,8 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   playerProfile: { showKeyBadges: false },
   playerContract: { showKeyBadges: false },
   playerCoachReport: { showKeyBadges: false },
+  // The comparison-scoped drill-down — same rationale.
+  playerComparison: { showKeyBadges: false },
   // The club sub-surface drill-downs.
   clubSquad: { showKeyBadges: false },
   clubFixturesDetail: { showKeyBadges: false },

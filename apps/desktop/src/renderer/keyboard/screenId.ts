@@ -33,6 +33,9 @@ export const screenIdOfPath = (pathname: string): string => {
     if (segs[2] === "club") return CLUB_SURFACE_BY_SEGMENT[segs[4] ?? ""] ?? "";
     if (segs[2] === "player") return PLAYER_SURFACE_BY_SEGMENT[segs[4] ?? ""] ?? "playerProfile";
     if (segs[2] === "competition") return COMPETITION_SURFACE_BY_SEGMENT[segs[4] ?? ""] ?? "competitionOverview";
+    // The comparison's flat segment: `/career/$saveId/player-comparison/$playerIds`. Its ids are
+    // route state, not focus identity — the screen id stays fixed across every comparison set.
+    if (segs[2] === "player-comparison") return "playerComparison";
     return segs[2] ?? "";
   }
   if (segs[0] === "load") return "loadCareer";

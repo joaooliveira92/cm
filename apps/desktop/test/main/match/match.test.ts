@@ -20,9 +20,9 @@ import { ensureHumanTactic, pendingFixtureId } from "../boundary-helpers.js";
 const atFirstFixture = (name: string) =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, name);
-    yield* ensureHumanTactic(savesDir, save.id);
+    yield* ensureHumanTactic(save.id);
     yield* advanceCalendar(savesDir, save.id);
-    const fixtureId = yield* pendingFixtureId(savesDir, save.id);
+    const fixtureId = yield* pendingFixtureId(save.id);
     ok(fixtureId !== null, "the first Continue should stop at the human club's Fixture");
     return { save, fixtureId };
   });

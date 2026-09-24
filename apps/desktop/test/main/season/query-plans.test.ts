@@ -31,7 +31,7 @@ const queryPlan = (saveId: string, query: string, params: ReadonlyArray<unknown>
     const rows = yield* sql.unsafe<{ detail: string }>(`EXPLAIN QUERY PLAN ${query}`, [...params] as never);
     return rows.map((row) => row.detail).join(" | ");
   }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
+    Effect.provide(SqliteClient.layer({ filename: ':memory:', readonly: true })),
     Effect.scoped,
   );
 

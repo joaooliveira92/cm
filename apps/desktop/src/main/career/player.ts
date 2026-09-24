@@ -70,6 +70,13 @@ export const getPlayerProfile = (savesDir: string, saveId: SaveId, playerId: Pla
     ),
   );
 
+/** A player's injury status label from the fitness ledger: a "knock" whenever their Condition sits
+ * below the recovery threshold regardless of the ledger, otherwise the ledger's last severity,
+ * "fit" when the ledger shows none. Shared by the Profile and the Transfer Target Comparison so the
+ * two reads of the same fact cannot disagree about what a player is carrying. */
+export const injuryStatusOf = (condition: number, severity: string): string =>
+  condition < 75 ? "knock" : severity !== "none" ? severity : "fit";
+
 const readPlayerProfile = (playerId: PlayerId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
@@ -143,12 +150,6 @@ const readPlayerProfile = (playerId: PlayerId) =>
     const playerAge = ageOn(player.dateOfBirth, yield* loadGameDate);
     const ovr = computeOverallRating(trueAttributes, positions);
 
-    const injuryStatus = player.condition < 75
-      ? "knock"
-      : player.injuryStatus !== "none"
-      ? player.injuryStatus
-      : "fit";
-
     const clubSummary = yield* Schema.decodeUnknownEffect(ClubSummary)(
       { id: player.clubId, name: nameOf(player.clubId), statureTier: player.statureTier ?? "mid" },
     );
@@ -166,7 +167,7 @@ const readPlayerProfile = (playerId: PlayerId) =>
       transferValue: transferValueFigureByProgress(ovr, playerAge, player.potentialAbility, progress),
       club: clubSummary,
       contractExpiry: player.yearsRemaining != null ? `${player.yearsRemaining} years` : "Free Agent",
-      injuryStatus,
+      injuryStatus: injuryStatusOf(player.condition, player.injuryStatus),
     });
   });
 

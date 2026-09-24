@@ -68,9 +68,9 @@ export const startSeededMatch = (savesDir: string, saveId: SaveId, fixtureId: Fi
 export const atFirstFixture = (savesDir: string) =>
   Effect.gen(function* () {
     const save = yield* createSeededCareer(savesDir);
-    yield* ensureHumanTactic(savesDir, save.id);
+    yield* ensureHumanTactic(save.id);
     yield* advanceCalendar(savesDir, save.id);
-    const fixtureId = yield* pendingFixtureId(savesDir, save.id);
+    const fixtureId = yield* pendingFixtureId(save.id);
     ok(fixtureId !== null, "the first Continue should stop at the human club's Fixture");
     return { save, fixtureId };
   });

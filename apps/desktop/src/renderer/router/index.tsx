@@ -45,6 +45,7 @@ import { ScoutingScreen } from "../scouting/ScoutingScreen.js";
 import { ScoutingAssignmentScreen } from "../scouting/ScoutingAssignmentScreen.js";
 import { ScoutingKnowledgeScreen } from "../scouting/ScoutingKnowledgeScreen.js";
 import { PlayerSearchScreen } from "../playerSearch/PlayerSearchScreen.js";
+import { PlayerComparisonScreen } from "../playerComparison/PlayerComparisonScreen.js";
 import { StaffSearchScreen } from "../staffSearch/StaffSearchScreen.js";
 import { CompetitionsScreen } from "../competitions/CompetitionsScreen.js";
 import {
@@ -89,6 +90,7 @@ import {
   CareerIndexRedirect,
   CareerMatchChildView,
   CareerPlayerChildView,
+  CareerPlayerComparisonChildView,
   CareerCompetitionChildView,
   CareerShell,
 } from "./career.js";
@@ -261,6 +263,20 @@ const scoutingKnowledgeRoute = defineCareerChild(
 const playerSearchRoute = defineCareerChild("player-search", "playerSearch", PlayerSearchScreen);
 const staffSearchRoute = defineCareerChild("staff-search", "staffSearch", StaffSearchScreen);
 const competitionsRoute = defineCareerChild("competitions", "competitions", CompetitionsScreen);
+
+/**
+ * Transfer Target Comparison (Screen 129, ticket 12): the `:playerIds` segment is the
+ * comparison's canonical slug, decoded at the child boundary into the branded list the screen
+ * compares. Same shape as the `player/$playerId` surfaces' route — a second-parameter child that
+ * the comparison screen renders.
+ */
+const playerComparisonRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "player-comparison/$playerIds",
+  component: () => (
+    <CareerPlayerComparisonChildView screenId="playerComparison" Screen={PlayerComparisonScreen} />
+  ),
+});
 
 /**
  * The Tactics area is the one career surface with its own read-only home: `/tactics` lands on the
@@ -594,6 +610,7 @@ managerRoute.addChildren([
       playerSearchRoute,
       staffSearchRoute,
       competitionsRoute,
+      playerComparisonRoute,
       clubRoute.addChildren([
         clubScoutReportRoute,
         clubStaffRoute,

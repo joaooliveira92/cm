@@ -39,6 +39,10 @@ export type ScreenName =
   | "playerProfile"
   | "playerContract"
   | "playerCoachReport"
+  // The comparison-scoped drill-down — `/career/$saveId/player-comparison/$playerIds`. It names
+  // every compared Player, so like the player-scoped drill-downs above it appears here but in
+  // neither `CareerScreenName` nor `CAREER_SCREEN_TYPES`, and owns no screen-scoped Action.
+  | "playerComparison"
   // The staff-scoped drill-downs.
   // The club sub-surface drill-downs (other club views).
   | "clubSquad"

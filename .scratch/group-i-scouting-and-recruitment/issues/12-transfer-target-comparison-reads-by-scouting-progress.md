@@ -8,9 +8,9 @@ Sliced 2026-09-23 from [decision request 01](../decision-request-01-knowledge-li
 
 - Knowledge-limit the market, and every Player read outside the manager's club, on one shared read. A Player outside the manager's club shows Attribute Range values by Scouting Progress — Transfer Value and Overall Rating included — never an exact figure, until Fully Scouted. The manager's own Players are unaffected. The fix goes in the **read**, not the screens, so the market, BidComposer, Player Search (119) and Transfer Target Comparison (129) cannot disagree. See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-19-knowledge-limits-every-player-read.md).
 
-**Blocked by:** [11](11-player-search-reads-by-scouting-progress.md) provides the shared search read and the result figures this screen composes; start comparison rows from that pool.
+**Blocked by:** [11](11-player-search-reads-by-scouting-progress.md) provides the shared search read and the result figures this screen composes; start comparison rows from that pool. **11 shipped 2026-09-23 (`58eab5d4`), so this ticket is unblocked.**
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Two or more Players compare side by side on position/role fit, Attributes, Overall Rating, Transfer Value, wage, contract and availability
 - [ ] Figures read by Scouting Progress: own-squad exact, rivals/Free Agents ranged below Fully Scouted, exact at it, matching the search results and Player Profile for the same Player

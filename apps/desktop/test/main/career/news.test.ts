@@ -26,7 +26,7 @@ afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
 const withSave = <A, E>(saveId: string, effect: Effect.Effect<A, E, SqlClient>) =>
   effect.pipe(
-    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
+    Effect.provide(SqliteClient.layer({ filename: ':memory:' })),
     Effect.scoped,
   );
 
@@ -359,7 +359,7 @@ const forceCurrentSeasonConcludingWith = (saveId: string, clubId: string, outcom
 const loadSeasonStreamEvents = (saveId: string) =>
   loadStreamEvents("season", saveId).pipe(
     Effect.provide(
-      SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true }),
+      SqliteClient.layer({ filename: ':memory:', readonly: true }),
     ),
     Effect.scoped,
   );

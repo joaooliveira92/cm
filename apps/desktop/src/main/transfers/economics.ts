@@ -42,6 +42,11 @@ export interface PlayerEcon {
   readonly age: number;
   readonly overallRating: number;
   readonly potentialAbility: number;
+  /** The player's true Attributes, as stored — every outfield Attribute, goalkeeping Attributes
+   *  only where the player has them (Goalkeeping Attributes are absent, not zero, for an outfield
+   *  player; CONTEXT.md). Not itself a published figure: reads gate it through the Scouting
+   *  Progress rule (Agent Note 2026-09-19). */
+  readonly attributes: PlayerAttributes;
   /** The canonical nation id (`nation_*`), as every wire name of a player's nation is — the
    *  renderer resolves it through `nationName`. */
   readonly nationality: string;
@@ -88,6 +93,7 @@ export const loadAllPlayersEcon = (on: string) => Effect.gen(function* () {
       age: ageOn(row.dateOfBirth, on),
       overallRating: overallRating(attributes, positions),
       potentialAbility: row.potentialAbility,
+      attributes,
       nationality: row.nationality,
       positions,
     };

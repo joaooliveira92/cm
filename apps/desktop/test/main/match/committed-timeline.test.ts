@@ -66,7 +66,7 @@ const drain = (saveId: SaveId, matchId: MatchId) =>
 
 const matchStream = (saveId: SaveId, matchId: MatchId) =>
   loadStreamEvents(MATCH_STREAM_TYPE, matchId).pipe(
-    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
+    Effect.provide(SqliteClient.layer({ filename: ':memory:', readonly: true })),
     Effect.scoped,
   );
 
