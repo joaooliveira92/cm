@@ -40,43 +40,34 @@ referenced throughout.
   injury spec and a full-time spec flaked, and the e2e quit-guard, seeds and stale empty-state and
   ranged-value assertions drifted. Closed with the save-path and animation-cancel fixes that put the
   unit suite back at 2261 passing with no unhandled errors, and the e2e suite back at 62 passing.
+- **[.scratch/main-process-decomposition/](../.scratch/main-process-decomposition/)** — 13/13,
+  completed 2026-09-24. The 2026-09-05 folder-organization audit's decomposition: the duplicate
+  current-season queries collapsed into `main/season/currentSeason.ts`, `main/season.ts` and
+  `main/transfers.ts` split into focused modules, the flat `main/` directory grouped into
+  subfolders, the test tree mirrored to `src/`, and `apps/desktop/test/` brought into typecheck
+  (ticket 05, the 281-error spike fixed).
+- **[.scratch/group-a-reconciliation/](../.scratch/group-a-reconciliation/)** — 26/26. The Group A
+  screen reconciliation, including the last two: quit confirmation, and the Quit dialog's clicks
+  under a Base UI modal.
+- **[.scratch/visual-design-language/](../.scratch/visual-design-language/)** — 15/15. Tokens, the
+  slate guard, dense-table and status vocabulary, the career chrome and Continue bar, modal
+  anatomy, the match-day language, and the residual migration/alias teardown.
+- **[.scratch/react-composition-audit/](../.scratch/react-composition-audit/)** — 17/17. The
+  compound-component, provider and hook splits across MatchDay, Transfers, Squad, Creation and
+  League Selection, plus the data-table and edge-fade work. This effort's tickets sat `claimed`
+  with untouched placeholders until the 2026-09-06 re-status; all are now resolved.
+- **[.scratch/match-composition/](../.scratch/match-composition/)** — 2/2. The match provider split
+  and its context interfaces.
+- **[.scratch/save-list-error-handling/](../.scratch/save-list-error-handling/)** — 1/1. The save
+  list no longer swallows repository failures.
 
 ## In flight
 
-- **[.scratch/world-data-model/](../.scratch/world-data-model/)** — 13/13 tickets, and 19/24
+- **[.scratch/world-data-model/](../.scratch/world-data-model/)** — 13/13 tickets, and 21/23
   implementation items. The current frontier. Open: questions 20 and 21 (calendar-sweep and
-  membership-join index probes, both `ready-for-human`, with live probe code under
-  `apps/desktop/src/main/db/prototype-scale-probe/`), plus 22 and 23.
-- **[.scratch/visual-design-language/](../.scratch/visual-design-language/)** — 10/15. Tickets
-  11–15 are `ready-for-agent`.
-- **[.scratch/react-composition-audit/](../.scratch/react-composition-audit/)** — 6/16. Re-statused
-  2026-09-06, and the answer was the opposite of what was assumed here: tickets 02–11 had **not**
-  been shipped by recent commits, they had never been started. All ten still held the untouched
-  `<!-- to be filled by implementation -->` placeholder, and not one of the 17 providers, hooks or
-  components in their Done-When lists exists in the tree. They were labelled `claimed` at filing
-  rather than at start, which is a lock nobody held — the frontier scan skips claimed tickets, so
-  the effort read as in-progress while nothing could pick it up.
-
-  Now: 7 `ready-for-agent` (04, 05, 06, 08, 09, 10, 11) and 3 `needs-triage` (02, 03, 07). The
-  three need a human call rather than an agent: their size targets were met incidentally by other
-  work under different names — `TransfersScreen.tsx` is 103 lines and `SquadScreen.tsx` is 14 —
-  so what survives is the boolean-prop half, which may or may not still be worth a ticket.
-  Ticket 05 was additionally retargeted; it named `CreationStep1.tsx`, renamed long ago.
-- **[.scratch/group-a-reconciliation/](../.scratch/group-a-reconciliation/)** — 23/25. Open:
-  03 (quit confirmation) and 21 (the Quit dialog takes no clicks under a Base UI modal, opened by
-  the review of ticket 20).
-- **[.scratch/main-process-decomposition/](../.scratch/main-process-decomposition/)** — 3/5. Opened
-  by the 2026-09-05 folder-organization audit. Tickets 01–03 are done: the six duplicate
-  current-season queries collapsed into `main/season/currentSeason.ts`, `main/season.ts` (1885
-  lines) became nine modules, and `main/transfers.ts` became five. Remaining: 04 (group the rest of
-  the flat `main/` directory into subfolders — optional, ~161 mechanical import edits) and 05
-  (bring `apps/desktop/test/` into typecheck; a spike measured 281 pre-existing errors in 33 files
-  and is written up in the ticket).
-- **[.scratch/match-composition/](../.scratch/match-composition/)** — 0/2, both `ready-for-agent`.
-  Note these two files sit at the effort root rather than under `issues/`, against the
-  issue-tracker convention.
-- **[.scratch/save-list-error-handling/](../.scratch/save-list-error-handling/)** — 0/1, a
-  `ready-for-agent` bug-fix.
+  membership-join index probes), both `ready-for-human` with the probe code and results already
+  recorded under `apps/desktop/src/main/db/prototype-scale-probe/`; what is left is the index
+  decision, not the measurement. Questions 22 and 23 are resolved.
 
 ## Needs a decision, not a ticket
 
@@ -90,6 +81,10 @@ referenced throughout.
 
 ## Suggested next step
 
-Finish `world-data-model`'s open questions 20–23 — it is the frontier and the probe code is already
-written. In parallel, `main-process-decomposition` ticket 05 (typecheck the desktop tests) is
-independent of everything else and closes a gate hole that silently hides broken test imports.
+Decide `world-data-model` open questions 20 and 21 — the only measured frontiers left. Both have
+their results already recorded (the *calendar advance's date sweep* and *club-keyed membership join*
+sections of the probe's `RESULTS.md`): 20 measured `(played, scheduled_date)` beating every other
+fixture index and cutting the horizon read from 1,380 ms to 1 ms a season; 21 measured
+`(club_id, season_number)` taking a 141 s-per-Continue scan to 0.08 s. Each needs its decision
+recorded in the spec's form — the query it serves, its measured value, its cost — or a per-table
+line saying why the table stays unindexed.
