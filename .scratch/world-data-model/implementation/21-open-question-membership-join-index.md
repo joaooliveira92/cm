@@ -30,16 +30,16 @@ a result.
 
 **Blocked by:** 07 (the participant rows must exist to be measured).
 
-**Status:** ready-for-human
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/prototype-scale-probe/membership-join-index-probe.ts` and its results document;
 `apps/desktop/src/main/db/schema.ts` only if the answer is an index.
 
 - [x] The club-keyed membership read's frequency and cost are measured at the probe's representative
       world, at season 1 and after twenty seasons of retained rows.
-- [ ] A decision is recorded with its measured value and its cost, or a stated reason the table stays
+- [x] A decision is recorded with its measured value and its cost, or a stated reason the table stays
       unindexed.
-- [ ] If the answer is an index, a follow-up implementation ticket exists for it.
+- [x] If the answer is an index, a follow-up implementation ticket exists for it.
 
 ## Measured, not answered
 
@@ -81,3 +81,15 @@ once per season. No index changes it and none is needed for it — that part is 
 line whichever way the main question goes.
 
 What is left is the call itself, and if it is an index, the follow-up implementation ticket for it.
+
+## Answer
+
+**`competition_participants(club_id, season_number)` ships**, and the composite rather than `(club_id)`
+alone. The read is not per-screen but per-Continue — `resolveFixtureScore` calls it once per side of
+every results-only fixture, 15,980 times a Continue — and against a table nothing prunes, so unindexed
+it is quadratic in the world and linear again in the age of the save: 5.7 s a Continue in season 1,
+141.67 s in season 20. The single column ties the composite in season 1 but its walk grows by one row
+per season; the composite's cost is flat in the age of the save (0.0048 ms at season 1, 0.0053 ms at
+season 20) for +0.6 MB more.
+
+Recorded in the spec's index list; execution is [ticket 25](25-add-membership-join-index.md).

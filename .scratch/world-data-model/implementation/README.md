@@ -55,25 +55,29 @@ Five tickets can start immediately: 01, 02, 03, 04, and 15. Ticket 01 is a defec
 first regardless of what else is running, because the determinism criteria in tickets 06, 11, 12, and
 13 are all false while it stands.
 
-## Open questions — decisions, not execution
+## Open questions — decided
 
-Four gaps the map did not reach. The spec records them unanswered, and so do these tickets: none of
-them may be settled by whoever happens to be writing the surrounding code. Each carries
-`Status: ready-for-human` for that reason, and each says what work would settle it — three of them a
-measurement against the prototype scale-probe harness at
-[prototype-scale-probe](../../../apps/desktop/src/main/db/prototype-scale-probe/RESULTS.md), the
-fourth a design call.
+The four gaps the map did not reach have all been decided, each in its own ticket after the
+measurement or reading it asked for:
 
-| # | Open question | Gates | Blocked by |
-|---|---|---|---|
-| 20 | [An index for the calendar advance's date sweep](20-open-question-calendar-sweep-index.md) | nothing — a possible follow-up index | 10 |
-| 21 | [An index for the club-keyed membership join](21-open-question-membership-join-index.md) | nothing — a possible follow-up index | 07 |
-| 22 | [`player_transfers`' primary key and player-keyed index](22-open-question-player-transfers-key.md) | 17 | — |
-| 23 | [Whether the paired-penalty invariant is a `CHECK`](23-open-question-paired-penalty-check.md) | 09 | — |
+- **20** [An index for the calendar advance's date sweep](20-open-question-calendar-sweep-index.md) —
+  `fixtures(played, scheduled_date)`, execution in ticket 24.
+- **21** [An index for the club-keyed membership join](21-open-question-membership-join-index.md) —
+  `competition_participants(club_id, season_number)`, execution in ticket 25.
+- **22** [`player_transfers`' primary key and player-keyed index](22-open-question-player-transfers-key.md) —
+  a surrogate `INTEGER PRIMARY KEY` plus `(player_id, transferred_on)`, shipped by ticket 17.
+- **23** [Whether the paired-penalty invariant is a `CHECK`](23-open-question-paired-penalty-check.md) —
+  a `CHECK`, written by ticket 09's table.
 
-Tickets 22 and 23 gate implementation work because each decides a shape that a ticket below would
-otherwise have to invent: a primary key for a new table, and whether two columns carry a constraint.
-Tickets 20 and 21 gate nothing — an index is additive, so measuring can follow the work it measures.
+The two execution tickets the newly decided indexes hand off:
+
+| # | Ticket | Blocked by |
+|---|---|---|
+| 24 | [Add the calendar-sweep index](24-add-calendar-sweep-index.md) | — |
+| 25 | [Add the club-keyed membership-join index](25-add-membership-join-index.md) | — |
+
+The measurements behind 20–23 are in
+[RESULTS.md](../../../apps/desktop/src/main/db/prototype-scale-probe/RESULTS.md).
 
 ## What is deliberately not here
 

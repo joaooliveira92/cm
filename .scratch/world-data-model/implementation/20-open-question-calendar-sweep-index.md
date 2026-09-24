@@ -31,16 +31,16 @@ index, adding it is a small follow-up ticket; the shape on disk does not otherwi
 
 **Blocked by:** 10 (the sweep query only exists once the advance is date-driven).
 
-**Status:** ready-for-human
+**Status:** resolved
 
 **Files:** `apps/desktop/src/main/db/prototype-scale-probe/calendar-sweep-index-probe.ts` and its results document;
 `apps/desktop/src/main/db/schema.ts` only if the answer is an index.
 
 - [x] The sweep is measured at the probe's representative world, unindexed and under each candidate
       index, with query plans recorded.
-- [ ] A decision is recorded with its measured value and its cost, in the same units as the two
+- [x] A decision is recorded with its measured value and its cost, in the same units as the two
       shipping indexes.
-- [ ] If the answer is an index, a follow-up implementation ticket exists for it; if it is not, the
+- [x] If the answer is an index, a follow-up implementation ticket exists for it; if it is not, the
       fixture table's unindexed-by-choice line says so and why.
 
 ## Measured, not answered
@@ -78,3 +78,17 @@ What is left is the call itself, and it is a real one: a two-value leading colum
 argument *against* an index, and adopting `(played, scheduled_date)` means saying why this query is
 the exception. Whoever takes it should record the answer in the spec's form — the query it serves,
 its measured value, its cost — or a per-table line saying the fixture table stays as it is and why.
+
+## Answer
+
+**`fixtures(played, scheduled_date)` ships.** It is the only candidate whose per-advance cost is flat
+across the season (5.6 ms at matchday 1, 5.2 ms at matchday 38) and the only plan without a temp
+B-tree for the `ORDER BY`, because the sweep always asks for one value of `played` and then
+range-scans the date inside the shrinking unplayed set — which is why the normally-decisive argument
+against a two-value leading column does not apply here. The date-alone index is worse than no index
+late in the season (39.6 ms against 14.8 ms). It also serves `loadCalendarHorizon`, which the question
+did not price and which costs more than the sweep unindexed (1,380 ms a season).
+
+The cost is real and stated: +5.9 MB on a 28.7 MB table, ~150 ms of index build, ~194 ms a season of
+extra write on marking fixtures played, against ~2,600 ms a season saved on the reads. Recorded in the
+spec's index list; execution is [ticket 24](24-add-calendar-sweep-index.md).

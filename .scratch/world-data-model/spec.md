@@ -38,7 +38,8 @@ and a ~1.2 MB `MatchdayResolved` row on every Continue.
 ## Solution
 
 One schema for the MVP world: **28 tables**, the eighteen that exist today (seven of them changed,
-none removed) plus ten new ones, with an index list of two.
+none removed) plus ten new ones, with an index list of five, each on a measured number (see
+*Index list*).
 
 The world catalogue splits on one rule. `nations` and `cities` are copied into every save
 **unconditionally**, because something outside the loaded world points at them — a player's
@@ -352,13 +353,15 @@ log stops recording. None of the five named read models becomes a table.
   matching `nations`.** See
   [Agent Note](../../.agents/notes/proposed/architecture/2026-09-02-results-only-geography-cost.md).
 
-- **The index list is two indexes, and every other table is unindexed as a stated choice.**
-  `players(club_id)` and `fixtures(competition_id, season_number, played)` ship; ticket 04's third
-  measured index, `contracts(player_id)`, does not, because `player_id` is already that table's
-  primary key and SQLite's automatic index over it serves the same lookups; ticket 09's claim that
-  scouting needs no index beyond its keys and ticket 11's claim that `events` needs none beyond its
-  primary key are both verified below rather than rediscovered. (Assembly and verification, no Agent
-  Note.)
+- **Every index ships on a measured number, and every other table is unindexed as a stated choice.**
+  `players(club_id)` and `fixtures(competition_id, season_number, played)` ship from ticket 19;
+  ticket 04's third measured index, `contracts(player_id)`, does not, because `player_id` is already
+  that table's primary key and SQLite's automatic index over it serves the same lookups. Three more
+  were measured and added after: `player_transfers(player_id, transferred_on)` (ticket 22),
+  `fixtures(played, scheduled_date)` (open question 20) and `competition_participants(club_id,
+  season_number)` (open question 21). Ticket 09's claim that scouting needs no index beyond its keys
+  and ticket 11's claim that `events` needs none beyond its primary key are both verified below
+  rather than rediscovered. (Assembly and verification, no Agent Note.)
 
 ## The table set
 
@@ -664,13 +667,17 @@ change less often than it is read.** None of the five satisfies both.
 
 ## Index list
 
-The save has zero indexes today. Two ship. Every other table is unindexed beyond the automatic index
-SQLite creates over its primary key, and that is a choice, stated here per table.
+The save had zero indexes; five ship now, each on a measured number. Every other table is unindexed
+beyond the automatic index SQLite creates over its primary key, and that is a choice, stated here per
+table.
 
 | index | query it serves | measured value | cost |
 |---|---|---|---|
 | `players(club_id)` | the squad view (`loadSquadPlayers`), and every per-club squad read the AI transfer window makes | 127 ms → **0.9 ms** at 400k players, faster than the *unindexed* 20k save | part of a measured three-index bundle at 45 MB (1.9% of the file) and 1.6 s of generation |
 | `fixtures(competition_id, season_number, played)` | `computeStandings` for one competition, once it gains the `competition_id` predicate it is missing | the unindexed scan is 302 ms at 400k because it reads every played fixture in the save; with the predicate and this index it reads one competition's ~380 rows | unmeasured separately; the same bundle's order of magnitude |
+| `player_transfers(player_id, transferred_on)` | the career-history read, `WHERE player_id = ? ORDER BY transferred_on` | 26.821 ms → **0.149 ms** at 640,000 transfers | +41.4 MB on an 82.5 MB table (ticket 22) |
+| `fixtures(played, scheduled_date)` | the calendar advance's date sweep and `loadCalendarHorizon`'s `MIN`/`MAX` over unplayed rows | sweep 636 ms → **208 ms** a season; horizon 1,380 ms → **1 ms** a season; the only plan with no temp B-tree | +5.9 MB on a 28.7 MB table, ~150 ms of index build, ~194 ms a season of extra write (open question 20) |
+| `competition_participants(club_id, season_number)` | the club-keyed membership read (`clubStrength`), run 15,980 times a Continue | 8.866 ms → **0.0053 ms** a call; 141.67 s → **0.08 s** a Continue at season 20 | +8.0 MB on a 28.5 MB table, 77 ms of index build (open question 21) |
 
 Ticket 04 measured a third index, `contracts(player_id)`. It does not ship: `player_id` is already
 that table's primary key, so SQLite's automatic index over it serves the same lookups, and a second
@@ -692,7 +699,7 @@ Unindexed by choice, with the reason:
   hundreds of rows, read by id or wholesale.
 - **`competition_participants`** — the key's `(competition_id, season_number)` prefix serves every
   competition-keyed read, which is the standings freeze, the rollover, and the league table. The
-  club-keyed read is an open question below.
+  club-keyed read is served by `(club_id, season_number)` in the index table above.
 - **`clubs`, `contracts`, `player_fitness`, `training_focus`, `tactics`, `tactic_slots`,
   `club_budgets`, `board_objective`** — keyed on a club or a player and read as point lookups, so the
   primary key's automatic index is the whole access path.
@@ -703,7 +710,6 @@ Unindexed by choice, with the reason:
 - **`save_meta`, `manager_profile`, `manager_status`, `generation_manifest`, `season`** — singletons
   or near-singletons.
 - **`staff`** — single-digit row count.
-- **`player_transfers`** — see the open questions.
 
 ## Row-count budget
 
@@ -761,7 +767,7 @@ the count below is against that.
 **Removed (0 tables, 1 column):** no table is dropped. `clubs.name` is the only column deleted, and
 deleting it breaks every main-process test asserting a club display name at once.
 
-**Indexes:** from zero to two.
+**Indexes:** from zero to five, each on a measured number.
 
 **Not in the delta, because they never existed:** `stadiums`, `competition_seasons`, `cup_ties`,
 `player_career_history`, and any of the five read-model tables.
@@ -835,7 +841,10 @@ The behaviours to observe:
   `competitions` holds exactly the Effective Selection; no table stores a dependency edge, a Nation
   Profile value, an activation flag, or the snapshot's intents.
 - **Indexes.** `EXPLAIN QUERY PLAN` on the squad view uses `players(club_id)` rather than scanning,
-  and on the league table uses `fixtures(competition_id, season_number, played)`.
+  on the league table uses `fixtures(competition_id, season_number, played)`, on the career history
+  uses `player_transfers(player_id, transferred_on)`, on the calendar sweep uses
+  `fixtures(played, scheduled_date)`, and on the club-keyed membership read uses
+  `competition_participants(club_id, season_number)`.
 
 ## Out of Scope
 
@@ -862,26 +871,17 @@ this spec's edge, because a reader will expect them in a schema document:
 
 ## Open questions
 
-Four gaps that no resolved decision covers. None is invented an answer here; each is a place the map
-did not reach, and each is small enough to settle in a ticket rather than by redrawing the map.
+The four gaps the map did not reach have all since been decided, each by the ticket that carried it:
 
-1. **The index for the calendar advance's date sweep.** Ticket 01 made
-   `WHERE scheduled_date <= D AND played = 0` the hot per-Continue query, replacing the
-   `(season_number, played)` scan ticket 04 measured. No decision prices an index for it, and the
-   shipping `fixtures(competition_id, season_number, played)` index does not serve it — its leading
-   column is the competition, and the sweep names none.
-2. **The index for the membership join.** Ticket 02 recorded, as a risk, that "membership through
-   participant rows costs a join on hot paths. No measurement backs the claim that this is
-   affordable." The `competition_participants` primary key serves competition-keyed reads; the
-   club-keyed read ("which competition is this club in this season") has no covering prefix, and no
-   decision measured it.
-3. **`player_transfers`' primary key and its player-keyed index.** Ticket 11 names five columns and
-   no key. A player may transfer to the same club twice, so the named columns are not a key. The
-   career-history read is player-keyed and ordered by date, against a table growing to ~640,000 rows
-   over twenty seasons — the one table here with unbounded growth and no stated access path.
-4. **Whether the paired-penalty invariant is a `CHECK`.** Ticket 06 states that NULL in both penalty
-   columns means no shootout, but names no constraint. Every other pairing invariant in this spec is
-   explicitly assigned to either a constraint or a writer; this one is assigned to neither.
+1. **The calendar advance's date sweep** — `fixtures(played, scheduled_date)` ships; see the index
+   list above. [Ticket 20](implementation/20-open-question-calendar-sweep-index.md).
+2. **The club-keyed membership join** — `competition_participants(club_id, season_number)` ships; see
+   the index list above. [Ticket 21](implementation/21-open-question-membership-join-index.md).
+3. **`player_transfers`' key and player-keyed index** — a surrogate `INTEGER PRIMARY KEY` plus an
+   index on `(player_id, transferred_on)`, shipped by
+   [ticket 22](implementation/22-open-question-player-transfers-key.md).
+4. **The paired-penalty invariant** — a `CHECK`, `fixtures_penalties_paired`, decided by
+   [ticket 23](implementation/23-open-question-paired-penalty-check.md).
 
 ## Further Notes
 
