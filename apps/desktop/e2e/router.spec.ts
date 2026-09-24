@@ -125,7 +125,10 @@ test("creation keeps beginCareer before Club Selection and returning discards it
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).toBeVisible();
   // Leaving creation never leaks a provisional save into the load list.
   await page.getByRole("button", { name: "Load Career" }).click();
-  await expect(page.getByText("No saves yet.", { exact: true })).toBeVisible();
+  // The list stayed empty: the discarded career leaked no save card.
+  const loadScreen = page.getByRole("main", { name: "Load Career" });
+  await expect(loadScreen.getByRole("button", { name: "Start New Career" })).toBeVisible();
+  await expect(loadScreen.getByRole("listitem")).toHaveCount(0);
 });
 
 test("reloading mid-creation redirects to step 1 (AC-13)", async ({ window: page }) => {
@@ -174,7 +177,10 @@ test("the flow never advances past the club decision (AC-13)", async ({ window: 
   await leaveCreationDiscarding(page);
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).toBeVisible();
   await page.getByRole("button", { name: "Load Career" }).click();
-  await expect(page.getByText("No saves yet.", { exact: true })).toBeVisible();
+  // The list stayed empty: the discarded career leaked no save card.
+  const loadScreen = page.getByRole("main", { name: "Load Career" });
+  await expect(loadScreen.getByRole("button", { name: "Start New Career" })).toBeVisible();
+  await expect(loadScreen.getByRole("listitem")).toHaveCount(0);
 });
 
 test("pointer nav does not force focus; keyboard nav focuses the destination (AC-15)", async ({ window: page, userDataDir }) => {

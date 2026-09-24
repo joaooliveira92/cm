@@ -38,9 +38,10 @@ test("creating a save with a whitespace name produces no save and no crash", asy
     .getByRole("button", { name: "Discard" })
     .click();
   await window.getByRole("button", { name: "Load Career" }).click();
-  // `exact` disambiguates the empty *list item* from the empty-state paragraph beneath it
-  // ("No saves yet. Start a new career…"); the claim here is that the list stayed empty.
-  await expect(window.getByText("No saves yet.", { exact: true })).toBeVisible();
+  // The claim is that the list stayed empty: the discarded career leaked no save card.
+  const loadScreen = window.getByRole("main", { name: "Load Career" });
+  await expect(loadScreen.getByRole("button", { name: "Start New Career" })).toBeVisible();
+  await expect(loadScreen.getByRole("listitem")).toHaveCount(0);
 });
 
 test("duplicate save names are allowed and both appear in the load list", async ({ userDataDir, window }) => {

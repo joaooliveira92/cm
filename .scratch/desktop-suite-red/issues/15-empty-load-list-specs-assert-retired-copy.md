@@ -17,7 +17,7 @@ assertions are stale.
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The three specs pass again against the rich-save-cards DOM
-- [ ] Each still fails if a save does leak into the list
+- [x] The three specs pass again against the rich-save-cards DOM
+- [x] Each still fails if a save does leak into the list
