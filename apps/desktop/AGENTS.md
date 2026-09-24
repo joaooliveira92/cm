@@ -83,9 +83,16 @@ onto one worker.
 
 Splitting `season.test.ts` (1200 lines, 37 world-generating tests) into eight files roughly halved
 the whole desktop suite: the two full runs before it took 992s and 1391s, the run after took 508s.
-It also cleared a spec that had been failing the 60s per-test timeout purely from sharing a worker
-with the other 36. If this suite feels slow, look for a fat spec file before assuming the tests
+It also cleared a spec that had been failing its per-test timeout purely from sharing a worker with
+the other 36. If this suite feels slow, look for a fat spec file before assuming the tests
 themselves are the cost.
+
+A spec's timeout is vitest's 5s default unless the call names one. The whole-season specs pass
+`900_000` (15 minutes) as the third argument to `it.effect` — `retention-participation.test.ts`,
+`retention-match-streams.test.ts`, `rollover.test.ts`, `rollover-closed-world.test.ts` and
+`rollover-exchange.test.ts` — and `seed-saves.test.ts` passes `30_000`. That budget is sized for a
+full worker pool, not a capped one: at `--maxWorkers=4`, `retention-participation.test.ts` starved
+past 900s and timed out, though it passes in ~290s run alone.
 
 ## Specs that read source files by path
 
