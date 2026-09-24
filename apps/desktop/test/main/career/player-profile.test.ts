@@ -36,7 +36,7 @@ const setScoutingProgress = (saveId: string, clubId: string, playerId: PlayerId,
     yield* sql`DELETE FROM scouting_progress WHERE club_id = ${clubId} AND player_id = ${playerId}`;
     yield* sql`INSERT INTO scouting_progress (club_id, player_id, progress) VALUES (${clubId}, ${playerId}, ${progress})`;
   }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: ':memory:' })),
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
     Effect.scoped,
   );
 

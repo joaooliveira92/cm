@@ -58,7 +58,7 @@ const squadSizes = (saveId: SaveId) =>
       WHERE cp.season_number = (SELECT MAX(season_number) FROM season)
         AND c.kind <> 'cup' AND c.depth <> 'results-only'`;
   }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: ':memory:' })),
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
     Effect.scoped,
   );
 
@@ -68,7 +68,7 @@ const keepTheJob = (saveId: SaveId) =>
     const sql = yield* SqlClient;
     yield* sql`UPDATE board_objective SET min_position = 1, max_position = 1000 WHERE verdict IS NULL`;
   }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: ':memory:' })),
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
     Effect.scoped,
   );
 
@@ -120,6 +120,6 @@ const humanPlayedInSeason = (saveId: SaveId, seasonNumber: number) =>
         AND (f.home_club_id = c.id OR f.away_club_id = c.id)`;
     return (rows[0]?.count ?? 0) > 0;
   }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: ':memory:' })),
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
     Effect.scoped,
   );

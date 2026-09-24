@@ -38,7 +38,7 @@ const clubIdsOf = (saveId: string) =>
     const sql = yield* SqlClient;
     return yield* sql<{ id: string }>`SELECT id FROM clubs ORDER BY rowid`;
   }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: ':memory:' })),
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
     Effect.scoped,
   );
 

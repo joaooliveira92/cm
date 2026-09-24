@@ -33,7 +33,7 @@ const generate = <E>(snapshot: Effect.Effect<SnapshotId, E>) =>
 
 const inSave = <A, E>(saveId: string, effect: Effect.Effect<A, E, SqlClient>, readonly = true) =>
   effect.pipe(
-    Effect.provide(SqliteClient.layer({ filename: ':memory:', readonly })),
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly })),
     Effect.scoped,
   );
 

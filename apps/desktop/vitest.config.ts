@@ -2,6 +2,9 @@ import { configDefaults, defineConfig } from "vitest/config";
 
 const setupFiles = ["./test/setup/nwsapi-recursion-guard.ts"];
 
+// The motion guard touches `window` at import, so it belongs to the renderer project only.
+const rendererSetupFiles = [...setupFiles, "./test/setup/animation-cancel-guard.ts"];
+
 /**
  * The renderer/main environment split lives here, not in 100-odd per-file
  * environment pragmas. A renderer test gets a DOM because of where it sits on
@@ -31,7 +34,7 @@ export default defineConfig({
           name: "renderer",
           environment: "happy-dom",
           include: ["test/renderer/**/*.test.{ts,tsx}"],
-          setupFiles,
+          setupFiles: rendererSetupFiles,
           pool: "forks",
           maxWorkers: process.env.CI ? 4 : undefined,
         },

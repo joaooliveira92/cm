@@ -9,6 +9,7 @@
  * Quick result is used throughout: it runs the same authoritative simulation as Play and only skips
  * the live reveal, so a test that quick-results is exercising the real match path.
  */
+import path from "node:path";
 import type { SaveId } from "@cm-clone/contracts";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Data, Effect } from "effect";
@@ -22,9 +23,11 @@ import { advanceCalendar } from "../../src/main/season/index.js";
 import { commitMatchday } from "../../src/main/season/commitMatchday.js";
 import { loadSeasonRow } from "../../src/main/season/currentSeason.js";
 
-const inSave = <A, E>(saveId: SaveId, body: Effect.Effect<A, E, SqlClient>) =>
+const saveFile = (savesDir: string, saveId: SaveId) => path.join(savesDir, `${saveId}.sqlite`);
+
+const inSave = <A, E>(savesDir: string, saveId: SaveId, body: Effect.Effect<A, E, SqlClient>) =>
   body.pipe(
-    Effect.provide(SqliteClient.layer({ filename: ":memory:" })),
+    Effect.provide(SqliteClient.layer({ filename: saveFile(savesDir, saveId) })),
     Effect.scoped,
   );
 
@@ -63,8 +66,9 @@ export class HumanClubCannotFieldElevenError extends Data.TaggedError(
  * down by hand still can, and what a test helper must not do is let it surface as somebody else's
  * error.
  */
-const readyPendingFixture = (saveId: SaveId) =>
+const readyPendingFixture = (savesDir: string, saveId: SaveId) =>
   inSave(
+    savesDir,
     saveId,
     Effect.gen(function* () {
       const row = yield* loadSeasonRow;
@@ -88,8 +92,9 @@ const readyPendingFixture = (saveId: SaveId) =>
   );
 
 /** Makes the human club match-ready, for a test that needs it before reaching a boundary. */
-export const ensureHumanTactic = (saveId: SaveId) =>
+export const ensureHumanTactic = (savesDir: string, saveId: SaveId) =>
   inSave(
+    savesDir,
     saveId,
     Effect.gen(function* () {
       const club = yield* loadUserClub;
@@ -102,8 +107,9 @@ export const ensureHumanTactic = (saveId: SaveId) =>
   );
 
 /** The Fixture the Calendar is standing at, or `null`. */
-export const pendingFixtureId = (saveId: SaveId) =>
+export const pendingFixtureId = (savesDir: string, saveId: SaveId) =>
   inSave(
+    savesDir,
     saveId,
     Effect.gen(function* () {
       const row = yield* loadSeasonRow;
@@ -119,7 +125,7 @@ export const pendingFixtureId = (saveId: SaveId) =>
  */
 export const playPendingFixture = (savesDir: string, saveId: SaveId) =>
   Effect.gen(function* () {
-    const fixtureId = yield* readyPendingFixture(saveId);
+    const fixtureId = yield* readyPendingFixture(savesDir, saveId);
     if (fixtureId === null) return null;
     yield* startMatch(savesDir, saveId, fixtureId, "quick");
     return yield* commitMatchday(savesDir, saveId, fixtureId);

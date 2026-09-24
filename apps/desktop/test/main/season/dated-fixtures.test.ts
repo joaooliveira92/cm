@@ -45,7 +45,7 @@ const loadAllFixtures = (saveId: string) =>
               home_club_id as "homeClubId", away_club_id as "awayClubId"
        FROM fixtures ORDER BY id ASC`;
   }).pipe(
-    Effect.provide(SqliteClient.layer({ filename: ':memory:', readonly: true })),
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
     Effect.scoped,
   );
 
