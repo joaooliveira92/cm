@@ -139,6 +139,16 @@
   --color-scoreboard-box: #f4f7fa;
   --color-scoreboard-box-text: #0a0e14;
 
+  /* --- Pitch (tactics diagram) ------------------------------------------
+     The formation pitch on the Tactics editor: two mown-stripe greens, white
+     markings, and the starter marker. The GK marker is the one position the
+     diagram singles out, so it gets its own fill. */
+  --color-pitch-grass: #3f7a2a;
+  --color-pitch-stripe: #478733;
+  --color-pitch-line: rgb(255 255 255 / 0.75);
+  --color-pitch-marker: #152a8a;
+  --color-pitch-marker-gk: #0f7a36;
+
   /* --- Shape and depth -------------------------------------------------- */
   --radius-panel: 6px;
   --radius-control: 4px;
@@ -259,6 +269,17 @@
     var(--color-chrome-bottom) 0%,
     color-mix(in oklab, var(--color-chrome-bottom) 45%, var(--color-panel-bg) 55%) 55%,
     var(--color-panel-bg) 100%
+  );
+}
+
+/*
+ * The Tactics editor's pitch: horizontal mown stripes, twelve bands goal to goal.
+ */
+@utility pitch-grass {
+  background-image: repeating-linear-gradient(
+    180deg,
+    var(--color-pitch-grass) 0 calc(100% / 12),
+    var(--color-pitch-stripe) calc(100% / 12) calc(100% / 6)
   );
 }
 

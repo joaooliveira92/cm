@@ -1,8 +1,15 @@
 import { useEffect } from "react";
-import { PlayerId, Tactic, type SaveId, type TacticSlot } from "@cm-clone/contracts";
+import {
+  PlayerId,
+  Tactic,
+  type SaveId,
+  type SquadPlayerView,
+  type TacticSlot,
+} from "@cm-clone/contracts";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
+import { Card } from "../components/ui/card.js";
 import {
   Select,
   SelectContent,
@@ -31,6 +38,7 @@ import {
   type Pressing,
   type Tempo,
 } from "@cm-clone/shared";
+import { FormationPitch } from "./FormationPitch.js";
 import { defaultTacticFor, useTacticDraft } from "./useTacticDraft.js";
 import { describeRpcError } from "../rpc.js";
 
@@ -167,35 +175,49 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const squadById = new Map(view.squad.map((player) => [player.id, player]));
   const assignedElsewhere = (slotIndex: number) =>
     new Set(tactic.slots.filter((_, index) => index !== slotIndex).map((slot) => slot.playerId));
+  const starters = new Set(tactic.slots.map((slot) => slot.playerId));
+  const reserves = reservesOf(view.squad, starters, tactic.bench);
+  // The trigger's label source: without `items`, Base UI's `SelectValue` renders the raw player id.
+  const pickerItems = [
+    { label: "Unassigned", value: "" },
+    ...view.squad.map((player) => ({
+      label: `${player.firstName} ${player.lastName}`,
+      value: player.id as string,
+    })),
+  ];
 
   return (
     <main
       tabIndex={-1}
       data-focus-id="tactics"
       aria-label="Tactics"
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`flex flex-col gap-4 bg-background p-6 text-foreground ${FOCUS_RING.join(" ")}`}
     >
-      <h1 className="text-2xl font-bold">Tactics</h1>
+      <header className="chrome-gradient rounded-panel border border-panel-border px-4 py-2 text-center shadow-chrome">
+        <h1 className="text-2xl font-bold text-text-highlight">{view.club.name} Tactics</h1>
+        <p className="text-sm font-semibold capitalize text-text-bright">
+          {tactic.formation} {tactic.mentality}
+        </p>
+      </header>
 
-      <section className="mt-6">
-        <p className="text-sm text-text-secondary">Formation</p>
-        <div className="mt-1 flex gap-1">
-          {FORMATIONS.map((formation) => (
-            <Button
-              key={formation}
-              type="button"
-              variant={formation === tactic.formation ? "default" : "secondary"}
-              aria-pressed={formation === tactic.formation}
-              data-action-id="set-formation"
-              onClick={() => void dispatchAction("set-formation", { formation })}
-            >
-              {formation}
-            </Button>
-          ))}
+      <section aria-label="Formation and team instructions" className="flex flex-wrap gap-x-8 gap-y-3">
+        <div>
+          <p className="text-sm text-text-secondary">Formation</p>
+          <div className="mt-1 flex gap-1">
+            {FORMATIONS.map((formation) => (
+              <Button
+                key={formation}
+                type="button"
+                variant={formation === tactic.formation ? "default" : "secondary"}
+                aria-pressed={formation === tactic.formation}
+                data-action-id="set-formation"
+                onClick={() => void dispatchAction("set-formation", { formation })}
+              >
+                {formation}
+              </Button>
+            ))}
+          </div>
         </div>
-      </section>
-
-      <section className="mt-6 flex gap-8">
         <InstructionSlider<Mentality>
           label="Mentality"
           options={MENTALITY_OPTIONS}
@@ -219,80 +241,108 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         />
       </section>
 
-      <section className="mt-6">
-        <Table className="min-w-full text-left">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="pr-4">Slot</TableHead>
-              <TableHead className="pr-4">Position</TableHead>
-              <TableHead className="pr-4">Role</TableHead>
-              <TableHead className="pr-4">Player</TableHead>
-              <TableHead className="pr-4">Role Rating</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tactic.slots.map((slot: TacticSlot, index) => {
-              const player = squadById.get(slot.playerId);
-              const taken = assignedElsewhere(index);
-              return (
-                <TableRow key={index}>
-                  <TableCell className="pr-4 tabular-nums">{index + 1}</TableCell>
-                  <TableCell className="pr-4">{slot.position}</TableCell>
-                  <TableCell className="pr-4">{slot.role}</TableCell>
-                  <TableCell className="pr-4">
-                    <Select
-                      value={slot.playerId}
-                      onValueChange={(value) => {
-                        if (value !== null) {
-                          void dispatchAction("assign-slot-player", {
-                            index,
-                            playerId: PlayerId.make(value),
-                          });
-                        }
-                      }}
-                    >
-                      <SelectTrigger
-                        data-action-id="assign-slot-player"
-                        aria-label={`Slot ${index + 1} player`}
-                        className={SELECT_CLASS}
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,440px)]">
+        <Card aria-labelledby="team-selection-heading" className="p-3">
+          <h2 id="team-selection-heading" className="text-base font-bold text-text-highlight">
+            Team Selection
+          </h2>
+          <Table className="mt-2 min-w-full text-left">
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-12 pr-2">No</TableHead>
+                <TableHead className="pr-4">Player</TableHead>
+                <TableHead className="pr-4">Pos</TableHead>
+                <TableHead className="pr-4">Role</TableHead>
+                <TableHead className="pr-2 text-right">Rating</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tactic.slots.map((slot: TacticSlot, index) => {
+                const player = squadById.get(slot.playerId);
+                const taken = assignedElsewhere(index);
+                return (
+                  <TableRow key={index}>
+                    <TableCell className="pr-2">
+                      <NumberChip label={String(index + 1)} starter />
+                    </TableCell>
+                    <TableCell className="pr-4">
+                      <Select
+                        value={slot.playerId}
+                        items={pickerItems}
+                        onValueChange={(value) => {
+                          if (value !== null) {
+                            void dispatchAction("assign-slot-player", {
+                              index,
+                              playerId: PlayerId.make(value),
+                            });
+                          }
+                        }}
                       >
-                        <SelectValue placeholder="Unassigned" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">Unassigned</SelectItem>
-                        {view.squad
-                          .filter(
-                            (candidate) =>
-                              !taken.has(candidate.id) || candidate.id === slot.playerId,
-                          )
-                          .map((candidate) => (
-                            <SelectItem key={candidate.id} value={candidate.id}>
-                              {candidate.firstName} {candidate.lastName}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell className="pr-4 font-semibold tabular-nums">
-                    {player
-                      ? roleRating(player.attributes as PlayerAttributes, slot.role)
-                      : "-"}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </section>
+                        <SelectTrigger
+                          data-action-id="assign-slot-player"
+                          aria-label={`Slot ${index + 1} player`}
+                          className={SELECT_CLASS}
+                        >
+                          <SelectValue placeholder="Unassigned" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Unassigned</SelectItem>
+                          {view.squad
+                            .filter(
+                              (candidate) =>
+                                !taken.has(candidate.id) || candidate.id === slot.playerId,
+                            )
+                            .map((candidate) => (
+                              <SelectItem key={candidate.id} value={candidate.id}>
+                                {candidate.firstName} {candidate.lastName}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="pr-4 font-semibold">{slot.position}</TableCell>
+                    <TableCell className="pr-4 text-text-body">{slot.role}</TableCell>
+                    <TableCell className="pr-2 text-right font-semibold tabular-nums">
+                      {player
+                        ? roleRating(player.attributes as PlayerAttributes, slot.role)
+                        : "-"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+          {/* Everyone the eleven leaves out, below the dashed line the way the pickers' own list
+              reads: the named bench first, in bench order, then the rest of the squad. A list, not
+              table rows — the eleven rows above are the only editable ones. */}
+          <ul
+            aria-label="Reserves"
+            className="mt-1 max-h-72 overflow-y-auto border-t border-dashed border-border-subtle pt-1"
+          >
+            {reserves.map(({ player, benchIndex }) => (
+              <li
+                key={player.id}
+                className="flex items-center gap-3 px-2 py-1 text-sm text-text-secondary"
+              >
+                <NumberChip
+                  label={benchIndex === null ? "-" : `SB${benchIndex + 1}`}
+                  starter={false}
+                />
+                <span className="flex-1 truncate">
+                  {player.firstName} {player.lastName}
+                </span>
+                <span className="font-semibold">{naturalPositions(player)}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
 
-      <section className="mt-6 flex items-center gap-3">
-        <Button
-          type="button"
-          data-action-id="save-tactic"
-          onClick={() => void dispatchAction("save-tactic")}
-        >
-          Save Tactic
-        </Button>
+        <div className="lg:sticky lg:top-0">
+          <FormationPitch formation={tactic.formation} slots={tactic.slots} squadById={squadById} />
+        </div>
+      </div>
+
+      <section className="chrome-gradient flex items-center gap-3 rounded-panel border border-panel-border px-3 py-2 shadow-chrome">
         {conflict !== null && (
           <>
             <span role="alert" className="text-sm text-text-danger" data-testid="tactic-conflict">
@@ -308,11 +358,56 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             </Button>
           </>
         )}
-        {status && <span className="ml-3 text-sm text-text-secondary">{status}</span>}
+        {status && <span className="text-sm text-text-bright">{status}</span>}
+        <Button
+          type="button"
+          className="ml-auto"
+          data-action-id="save-tactic"
+          onClick={() => void dispatchAction("save-tactic")}
+        >
+          Save Tactic
+        </Button>
       </section>
     </main>
   );
 };
+
+/** The shirt-number cell: a starter's slot number on the green chip, a reserve's bench slot (or a
+ *  dash) on the blue one. The colour repeats what the label already says, never replaces it. */
+const NumberChip = ({ label, starter }: { readonly label: string; readonly starter: boolean }) => (
+  <span
+    className={`inline-flex h-5 min-w-9 items-center justify-center rounded-control px-1 text-2xs font-bold tabular-nums text-text-bright ${
+      starter ? "bg-pitch-marker-gk" : "bg-chrome-mid"
+    }`}
+  >
+    {label}
+  </span>
+);
+
+/** Every squad player outside the eleven, named-bench first in bench order, then squad order. */
+const reservesOf = (
+  squad: ReadonlyArray<SquadPlayerView>,
+  starters: ReadonlySet<string>,
+  bench: ReadonlyArray<PlayerId | null>,
+): ReadonlyArray<{ readonly player: SquadPlayerView; readonly benchIndex: number | null }> => {
+  const benchIndexOf = new Map(
+    bench.flatMap((id, index) => (id === null ? [] : [[id as string, index] as const])),
+  );
+  return squad
+    .filter((player) => !starters.has(player.id))
+    .map((player) => ({ player, benchIndex: benchIndexOf.get(player.id) ?? null }))
+    .sort(
+      (a, b) =>
+        (a.benchIndex ?? Number.POSITIVE_INFINITY) - (b.benchIndex ?? Number.POSITIVE_INFINITY),
+    );
+};
+
+/** "D/DM" — the positions a player is natural in, the ones a manager picks a reserve by. */
+const naturalPositions = (player: SquadPlayerView): string =>
+  player.positions
+    .filter((position) => position.familiarity === "natural")
+    .map((position) => position.position)
+    .join("/");
 
 /** The slot-player picker's trigger paint. See the note in `table/TablePanel.tsx`. */
 const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;
