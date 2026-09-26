@@ -13,6 +13,7 @@ import { Button } from "../components/ui/button.js";
 import { Input } from "../components/ui/input.js";
 import { ActionKeyBadge, useActionBadgeBinding } from "../discoverability/ActionKeyBadge.js";
 import { restoreFocusAfterOverlay } from "../focus.js";
+import { ContractOfferTerms } from "./ContractOfferTerms.js";
 import { useDialogKeyboard } from "./dialogKeyboard.js";
 import { formatFigureCredits } from "../format.js";
 import { useTransfers } from "./TransfersProvider.js";
@@ -128,7 +129,7 @@ export const BidComposer = () => {
       <section
         className="mt-6 rounded-panel border border-panel-border bg-panel-bg p-3 shadow-panel"
         data-action-region="place-bid"
-        aria-label="Place bid"
+        aria-label={draftedPlayer.clubName === null ? "Sign free agent" : "Place bid"}
       >
         <h2 className="text-sm font-semibold uppercase tracking-wide text-text-secondary">
           {draftedPlayer.clubName === null ? "Sign free agent" : "Place bid"}
@@ -141,19 +142,13 @@ export const BidComposer = () => {
           Value: {formatFigureCredits(draftedPlayer.transferValue)}
         </p>
         {draftedPlayer.clubName === null ? (
-          <>
-            <p className="mt-1 text-sm text-text-secondary">
-              Free Agent &mdash; signable for Credits 0.
-            </p>
-            <Button
-              type="button"
-              className="mt-3"
-              data-action-id="sign-free-agent"
-              onClick={() => void dispatchAction("sign-free-agent", { playerId: draftedPlayer.id as PlayerId })}
-            >
-              Sign (0 Cr)
-            </Button>
-          </>
+          <ContractOfferTerms
+            saveId={meta.saveId}
+            playerId={draftedPlayer.id as PlayerId}
+            playerName={draftedPlayerName}
+            windowOpen={windowOpen}
+            termsRef={meta.offerTermsRef}
+          />
         ) : (
           <div className="mt-2 flex items-center gap-2">
             <label className="text-sm text-text-body" htmlFor="bid-amount">

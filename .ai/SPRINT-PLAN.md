@@ -240,52 +240,41 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**No human decision is outstanding** (2026-09-21). Every decision request in `.scratch/` has an
-answer, and the four `ready-for-human` tickets were decided under the human's standing delegation.
-Agent-startable work, in order:
+**One human decision is now outstanding** (2026-09-26). Every other decision request in `.scratch/`
+has an answer, and the four `ready-for-human` tickets were decided under the human's standing
+delegation. Agent-startable work, in order:
 
-1. **Group G's remaining match tickets**, in frontier order. Shipped 2026-09-21:
-   [29](../.scratch/group-g-match-day/issues/29-substitution-windows-share-a-minute-across-halves.md) (windows keyed by half and minute),
-   [34](../.scratch/group-g-match-day/issues/34-ai-clubs-name-a-bench.md) (AI clubs name a bench),
-   [26](../.scratch/group-g-match-day/issues/26-forced-substitution-picks-any-squad-player.md) (forced substitutions from the named bench,
-   like for like), [35](../.scratch/group-g-match-day/issues/35-manager-substitutions-come-from-the-bench.md) (a manager's substitution
-   comes from the kickoff bench), [36](../.scratch/group-g-match-day/issues/36-a-red-carded-keeper-drags-a-stand-in.md) (a red-carded keeper
-   drags a stand-in), [37](../.scratch/group-g-match-day/issues/37-match-day-resumes-a-started-match-after-a-restart.md) (a started match
-   resumes after a restart), [33](../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md) (a restarted match says so),
-   [38](../.scratch/group-g-match-day/issues/38-pure-packages-sort-without-locale.md) (no `localeCompare` in the pure packages),
-   [39](../.scratch/group-g-match-day/issues/39-an-empty-bench-is-flagged-before-kickoff.md) (an empty bench is flagged before kickoff),
-   [40](../.scratch/group-g-match-day/issues/40-a-live-change-tactics-changes-only-instructions.md) (a live Change Tactics changes only the Team
-   Instructions; 2026-09-22), [41](../.scratch/group-g-match-day/issues/41-accepting-a-result-refreshes-the-season-read.md) (the season read
-   refreshes after Accept result), [43](../.scratch/group-g-match-day/issues/43-formation-in-play-reads-the-pitch.md) ("Formation in play" lists the
-   pitch). **No agent-startable Group G ticket remains**; what is left needs triage first:
-   - [42](../.scratch/group-g-match-day/issues/42-quick-result-skips-the-live-reveal.md): Quick result skips the live reveal (`needs-triage`: an
-     open question on restored quick matches).
-2. **gate-red-on-dev**: [07](../.scratch/gate-red-on-dev/issues/07-youth-intake-at-rollover.md) (the Youth
+1. **[desktop-suite-red 17](../.scratch/desktop-suite-red/issues/17-desktop-e2e-fails-random-specs-in-full-runs.md)
+   — the e2e suite fails 4–5 specs at random on a clean tree** (`ready-for-agent`, filed
+   2026-09-26). This is the newest ticket and the one that most needs doing, because
+   **`pnpm check:all` excludes e2e**, so a red e2e suite is invisible to the gate and M1 exit
+   criterion 4 cannot be honestly claimed while it is red. It was found while closing group-j 09 and
+   reproduced on a clean `HEAD` worktree over four consecutive full runs. It also restores
+   `desktop-suite-red` to an open effort, which had read 16/16.
+2. **Group G's triage backlog**, which is all that is left there:
+   - [42](../.scratch/group-g-match-day/issues/42-quick-result-skips-the-live-reveal.md) (`needs-triage`),
+   - [10](../.scratch/group-g-match-day/issues/10-match-player-ratings-component.md) and
+     [20](../.scratch/group-g-match-day/issues/20-a-command-rewrites-play-already-seen.md) (`needs-info`).
+3. **Triage the stale `needs-info` tickets** (group-g 10, 20; group-h
+   [07](../.scratch/group-h-training-and-player-development/issues/07-performance-report.md)): the
+   decision requests they waited on are answered.
+4. **The knowledge-limited Player reads are all four shipped**, and **both efforts' queues are empty**
+   (group-i 12/12, group-j 9/9). [group-i 12 — Transfer Target Comparison](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md)
+   shipped in `eed6ce49` and had been sitting at `claimed` ever since — a stale lock over completed
+   work, resolved 2026-09-26 against the tree, not the commit message. [group-j 09 — Player Contract
+   Offer](../.scratch/group-j-transfers-contracts-and-negotiations/issues/09-player-contract-offer-reads-by-scouting-progress.md)
+   was the last of the four and shipped 2026-09-26; its review found that the ticket's wage band
+   contradicts ADR-0005's wage clause and `CONTEXT.md`, now
+   [decision request 03](../.scratch/group-j-transfers-contracts-and-negotiations/decision-request-03-is-a-wage-offered-inside-a-knowledge-band.md)
+   (recommends Option A). **M1 exit criterion 1's four named WIP screens are three now** —
+   `staffSearch` and `shortlist` remain, both waiting on models rather than on this decision.
+5. **gate-red-on-dev**: [07](../.scratch/gate-red-on-dev/issues/07-youth-intake-at-rollover.md) (the Youth
    Intake squad floor) and [08](../.scratch/gate-red-on-dev/issues/08-short-squad-advisory.md) (its readiness
    advisory) shipped 2026-09-22, [note](../.agents/notes/implemented/feature/2026-09-21-a-youth-intake-is-the-squad-floor.md)
    implemented, and [09](../.scratch/gate-red-on-dev/issues/09-player-ages-read-the-game-date.md) (ages read the game date, not the
    wall clock), [10](../.scratch/gate-red-on-dev/issues/10-promoted-squads-sign-contracts.md) (promoted squads
    sign Contracts) and [11](../.scratch/gate-red-on-dev/issues/11-conjured-squads-are-age-correct.md)
    (conjured squads are born for the Season they join). **The effort's queue is empty.**
-3. **Knowledge-limited Player reads are sliced.** The note ([2026-09-19](../.agents/notes/implemented/architecture/2026-09-19-knowledge-limits-every-player-read.md))
-    was run through `cm-to-tickets` on 2026-09-23: group-c 10 (Screen 35) is unblocked (its decision is
-    answered *and* shipped — group-i 09/10), I 119/129 are sliced as
-    [group-i 11](../.scratch/group-i-scouting-and-recruitment/issues/11-player-search-reads-by-scouting-progress.md)
-    and [12](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md),
-    and J 137 as [group-j 09](../.scratch/group-j-transfers-contracts-and-negotiations/issues/09-player-contract-offer-reads-by-scouting-progress.md)
-    (J 132/134 were already shipped as the market and Bid composer; D 68 stays `deferred` on scheduling,
-    per the note's own consequence). [group-c 10 — Screen 35, the any-club squad](../.scratch/group-c-club-information/issues/10-the-any-club-squad.md)
-    (**M1 exit criterion 1** — `clubSquadDetail`) shipped 2026-09-23 (`8dd9ad09`), and
-    `playerSearch` (**M1 exit criterion 1** — [group-i 11](../.scratch/group-i-scouting-and-recruitment/issues/11-player-search-reads-by-scouting-progress.md))
-    shipped same day (`58eab5d4`). The frontier is now
-    [group-i 12 — Transfer Target Comparison](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md),
-    then [group-j 09 — Player Contract Offer](../.scratch/group-j-transfers-contracts-and-negotiations/issues/09-player-contract-offer-reads-by-scouting-progress.md).
-    Two of the four **M1 exit criterion 1** names are shipped (`clubSquadDetail`, `playerSearch`);
-    `staffSearch` and `shortlist` remain WIP placeholders, both still waiting on models (closed role
-    set, no shortlist model — see the [group-i ledger](../docs/specs/group_i_scouting_and_recruitment/RECONCILIATION.md)),
-    not on the knowledge decision.
-4. **Triage the stale `needs-info` tickets** (group-g 10, 20; group-h 07): the decision requests they
-   waited on are answered.
 
 Groups P, Q and S were scoped on 2026-09-21 and build nothing for v1; Group Q's 243 already ships as
 Season Summary.

@@ -84,6 +84,19 @@ const transfersView = () => ({
   marketPlayers: [marketPlayer("mp", true)],
 });
 
+/** The read the Sign path waits on: the form renders no controls of its own until it lands, so a
+ *  Transfers screen that selected a Free Agent has to answer this call. */
+const contractOffer = () => ({
+  playerId: rid("fa"),
+  firstName: "Test",
+  lastName: "FA",
+  age: 24,
+  positions: [{ position: "ST" as const, familiarity: "natural" as const }],
+  overallRating: { _tag: "exact" as const, value: 78 },
+  transferValue: { _tag: "exact" as const, value: 1200000 },
+  wage: { _tag: "exact" as const, value: 5000 },
+});
+
 const tacticsView = (tactic?: unknown) => ({
   club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
   squad: [],
@@ -170,6 +183,7 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
   it("every rendered Transfers button maps to a registered action in the transfers scope", async () => {
     mockPreload(async (method) => {
       if (method === "getTransfersScreen") return { _tag: "Success", value: transfersView() } as never;
+      if (method === "getContractOffer") return { _tag: "Success", value: contractOffer() } as never;
       return { _tag: "Failure", error: NOT_FOUND } as never;
     });
     render(
@@ -197,8 +211,11 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
     expect(withMarketSelection).toContain("place-bid");
     expect(withMarketSelection).not.toContain("sign-free-agent");
 
-    // Deselect, select the Free Agent → the Sign path replaces the bid input.
+    // Deselect, select the Free Agent → the Sign path replaces the bid input. The form renders
+    // nothing but a "reading" line until the offer read lands, so the Sign button is awaited rather
+    // than read out of the DOM on the tick after the click.
     fireEvent.click(screen.getByRole("button", { name: /Test FA/ }));
+    await screen.findByRole("button", { name: "Sign (0 Cr)" });
     const withFreeAgentSelection = renderedActionIds();
     expect(withFreeAgentSelection).toContain("sign-free-agent");
     expect(withFreeAgentSelection).not.toContain("place-bid");

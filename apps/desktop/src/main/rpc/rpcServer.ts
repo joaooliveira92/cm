@@ -34,6 +34,7 @@ import { changeTactics, getTactics } from "../club/tactics.js";
 import { getTacticsOverview } from "../club/tacticsOverview.js";
 import {
   getContractExpiryScreen,
+  getContractOffer,
   getBudgetReviewScreen,
   getPlayerComparison,
   getPlayerSearch,
@@ -347,6 +348,13 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getTransfersScreen.payload)(payload);
       return yield* getTransfersScreen(ctx.savesDir, saveId);
     }),
+  getContractOffer: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, playerId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.getContractOffer.payload,
+      )(payload);
+      return yield* getContractOffer(ctx.savesDir, saveId, playerId);
+    }),
   getContractExpiryScreen: (payload, ctx) =>
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getContractExpiryScreen.payload)(payload);
@@ -387,10 +395,10 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
     }),
   signFreeAgent: (payload, ctx) =>
     Effect.gen(function* () {
-      const { saveId, playerId, years } = yield* Schema.decodeUnknownEffect(
+      const { saveId, playerId, role, years, wage } = yield* Schema.decodeUnknownEffect(
         AppRpcs.signFreeAgent.payload,
       )(payload);
-      return yield* signFreeAgent(ctx.savesDir, saveId, playerId, years);
+      return yield* signFreeAgent(ctx.savesDir, saveId, playerId, { role, years, wage });
     }),
   renewContract: (payload, ctx) =>
     Effect.gen(function* () {

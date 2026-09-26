@@ -20,6 +20,7 @@ export {
 export {
   getContractExpiryScreen,
 } from "./contractExpiry.js";
+export { getContractOffer } from "./contractOffer.js";
 export {
   getClubTransfers,
   getTransferHistoryScreen,
@@ -31,6 +32,7 @@ export {
   respondAsBidder,
   respondToBid,
   signFreeAgent,
+  type ContractOfferTerms,
 } from "./commands.js";
 export { loadAllPlayersEcon } from "./economics.js";
 export { getPlayerSearch, PLAYER_SEARCH_MAX_RESULTS } from "./playerSearch.js";

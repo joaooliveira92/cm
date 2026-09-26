@@ -101,6 +101,35 @@ describe("RPC error unions declare what their handler can raise", () => {
       roundTrip(AppRpcs.signFreeAgent.error, pendingFixtureIntegrity);
     });
 
+    // The Contract Offer terms a manager can get wrong are the command's own typed refusals, and
+    // they are the ones the terms form's own gate cannot pre-empt (a Role the player does not hold
+    // is offered by no version of the form; the wage gate shares its rule with the command).
+    it("signFreeAgent round-trips terms the offer does not support", () => {
+      roundTrip(AppRpcs.signFreeAgent.error, {
+        _tag: "InvalidContractOfferTermsError",
+        playerId: "p1",
+        reason: "3500 is not a wage inside 209–534",
+      });
+    });
+
+    it("signFreeAgent round-trips a player who is not a Free Agent", () => {
+      roundTrip(AppRpcs.signFreeAgent.error, { _tag: "PlayerNotFreeAgentError", playerId: "p1" });
+    });
+
+    // The offer read serves Free Agents, so a club Player is a typed refusal rather than an empty
+    // figure — the renderer has to be able to say which it is.
+    it("getContractOffer round-trips a player who is not a Free Agent", () => {
+      roundTrip(AppRpcs.getContractOffer.error, { _tag: "PlayerNotFreeAgentError", playerId: "p1" });
+    });
+
+    it("getContractOffer round-trips a missing player", () => {
+      roundTrip(AppRpcs.getContractOffer.error, { _tag: "PlayerNotFoundError", playerId: "p1" });
+    });
+
+    it("getContractOffer round-trips a missing save", () => {
+      roundTrip(AppRpcs.getContractOffer.error, saveNotFound);
+    });
+
     it("renewContract round-trips a pending-fixture integrity failure", () => {
       roundTrip(AppRpcs.renewContract.error, pendingFixtureIntegrity);
     });

@@ -19,13 +19,13 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { FULLY_SCOUTED, compareCodeUnits, figureByProgress, transferValueFigureByProgress } from "@cm-clone/shared";
+import { compareCodeUnits, figureByProgress, progressForReading, transferValueFigureByProgress } from "@cm-clone/shared";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
-import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
 import { loadSeasonRow } from "../season/currentSeason.js";
 import { loadUserClub } from "../club/squad.js";
+import { loadClubScoutingProgress } from "../club/scoutingProgress.js";
 import { loadAllPlayersEcon, type PlayerEcon } from "./economics.js";
 
 /** The most rows one Player Search publishes. A cap keeps a no-filter search — the whole save,
@@ -42,24 +42,20 @@ export const getPlayerSearch = (savesDir: string, saveId: SaveId, query: PlayerS
 
 const readPlayerSearch = (query: PlayerSearchQuery) =>
   Effect.gen(function* () {
-    const sql = yield* SqlClient;
     const seasonRow = yield* loadSeasonRow;
     const players = yield* loadAllPlayersEcon(seasonRow.currentDate);
 
-    // The progress rows are loaded once for the whole search — as in `readClubSquad` — rather
+    // The progress rows are loaded once for the whole search — through the shared loader, so this
+    // screen cannot resolve a player's knowledge differently from the market or the Profile — rather
     // than per player: thousands of rows on one query instead of thousands of queries.
     const humanClub = yield* loadUserClub;
-    const progressRows = yield* sql<{ playerId: PlayerId; progress: number }>`
-      SELECT sp.player_id as "playerId", sp.progress
-      FROM scouting_progress sp
-      WHERE sp.club_id = ${humanClub.id}`;
-    const progressOf = new Map(progressRows.map((row) => [String(row.playerId), row.progress]));
+    const progressByPlayer = yield* loadClubScoutingProgress(humanClub.id);
 
     const matched = players.filter((player) => matchesSearchQuery(player, query));
     const results = [...matched]
       .sort(byLastNameFirstNameId)
       .slice(0, PLAYER_SEARCH_MAX_RESULTS)
-      .map((player) => toPlayerSearchResultView(player, humanClub.id, progressOf));
+      .map((player) => toPlayerSearchResultView(player, humanClub.id, progressByPlayer));
 
     return new PlayerSearchResultsView({ total: matched.length, results });
   });
@@ -102,13 +98,18 @@ const byLastNameFirstNameId = (a: PlayerEcon, b: PlayerEcon): number =>
 
 /** One Player turned into a search result row. Same read as the market and the profile: exact at
  *  Fully Scouted, ranges below it. Own-squad Players are exact by rule and never read their
- *  (empty) Scouting Progress, exactly as `readClubSquad` decides. */
+ *  (empty) Scouting Progress, exactly as `readClubSquad` decides — that one rule is
+ *  `progressForReading`, so no two of these screens can resolve it differently. */
 const toPlayerSearchResultView = (
   player: PlayerEcon,
   humanClubId: string,
-  progressOf: Map<string, number>,
+  progressByPlayer: ReadonlyMap<PlayerId, number>,
 ): PlayerSearchResultView => {
-  const progress = player.clubId === humanClubId ? FULLY_SCOUTED : (progressOf.get(String(player.id)) ?? 0);
+  const progress = progressForReading(
+    player.clubId,
+    humanClubId,
+    progressByPlayer.get(player.id) ?? 0,
+  );
   return new PlayerSearchResultView({
     id: player.id,
     firstName: player.firstName,

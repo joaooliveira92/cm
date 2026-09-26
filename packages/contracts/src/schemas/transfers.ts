@@ -84,6 +84,19 @@ export class PlayerNotFreeAgentError extends Schema.TaggedError<PlayerNotFreeAge
   },
 ) {}
 
+/** Raised when a Contract Offer's terms are not ones the offer could carry: a Role the player does
+ *  not hold, a duration outside the 1-5 year Contract length, or a wage outside the wage the
+ *  club's knowledge published for that player. The wage bound is the Scouting Progress rule again
+ *  (Agent Note 2026-09-19) — an unscouted manager may not name a wage their own knowledge band does
+ *  not contain, and a Fully Scouted one may not move off the exact figure at all. */
+export class InvalidContractOfferTermsError extends Schema.TaggedError<InvalidContractOfferTermsError>()(
+  "InvalidContractOfferTermsError",
+  {
+    playerId: PlayerId,
+    reason: Schema.String,
+  },
+) {}
+
 /** Raised when `renewContract` is asked to renew a Contract that is not in its last contracted
  *  year (`years_remaining > 1`). A Contract's terms are never renegotiated mid-term (CONTEXT.md,
  *  Contract); renewal is the one exception and it is available only in the final year (Agent Note:
@@ -136,8 +149,39 @@ export class MarketPlayerView extends Schema.Class<MarketPlayerView>("MarketPlay
   positions: Schema.Array(PlayerPositionView),
 }) {}
 
+/**
+ * The Contract Offer a manager writes to one Free Agent (Screen 137) — the player's worth, and the
+ * terms the offer can carry.
+ *
+ * Every figure is a `PlayerFigureSchema`, gated on the same Scouting Progress the market and the
+ * Player Profile read that player by: a Range below Fully Scouted, exact at it. The wage is derived
+ * from the Rating band rather than banded off the true wage, so the offer cannot publish a price
+ * the club's knowledge of the Rating does not support. No field on this view is an exact number
+ * below Fully Scouted, which is the whole point of the read (Agent Note 2026-09-19, ticket 09).
+ *
+ * The Role an offer carries is not a field: `POSITION_ROLES` maps each Position to exactly one
+ * Role, so the offer names one of the player's Positions and the Role follows from it
+ * (CONTEXT.md, Role). The renderer reads the mapping off `@cm-clone/shared` and
+ * `signFreeAgent` re-checks the named Role against the player's own Positions, so a Role can never
+ * be attached to a player who does not hold it.
+ */
+export class ContractOfferView extends Schema.Class<ContractOfferView>("ContractOfferView")({
+  playerId: PlayerId,
+  firstName: Schema.String,
+  lastName: Schema.String,
+  age: Schema.Finite,
+  /** The Positions the offer may name, most familiar first — the role choice, in the vocabulary the
+   *  player actually plays. */
+  positions: Schema.Array(PlayerPositionView),
+  overallRating: PlayerFigureSchema,
+  transferValue: PlayerFigureSchema,
+  /** The wage band the club's knowledge supports (or the exact wage at Fully Scouted). The offer's
+   *  `wage` term must fall inside it. */
+  wage: PlayerFigureSchema,
+}) {}
+
 /** The Transfer market/inbox screen (ticket 16): budgets, incoming/outgoing Bids, Free Agents,
- * and other clubs' biddable players. */
+ *  and other clubs' biddable players. */
 export class TransfersScreenView extends Schema.Class<TransfersScreenView>("TransfersScreenView")({
   club: ClubSummary,
   season: SeasonView,

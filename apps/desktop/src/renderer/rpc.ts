@@ -58,6 +58,7 @@ export {
 
 export { playerSearchAtom } from "./rpc/playerSearchQueries.js";
 export { playerComparisonAtom } from "./rpc/playerComparisonQueries.js";
+export { contractOfferAtom } from "./rpc/contractOfferQueries.js";
 
 export {
   INVALIDATION_RULES,

@@ -6,6 +6,7 @@ import {
   ContractRenewalNotDueError,
   InsufficientTransferBudgetError,
   InvalidBidActionError,
+  InvalidContractOfferTermsError,
   PlayerNotFoundError,
   PlayerNotFreeAgentError,
   TransferWindowClosedError,
@@ -14,13 +15,18 @@ import {
   BidId,
   type ClubSummary,
   type PlayerId,
+  type Role,
   type SaveId,
 } from "@cm-clone/contracts";
 import {
   DEFAULT_CONTRACT_YEARS,
   MAX_CONTRACT_YEARS,
   MIN_CONTRACT_YEARS,
+  POSITION_ROLES,
+  progressForReading,
   transferValue,
+  wageFigureByProgress,
+  wageIsWithinFigure,
   weeklyWage,
 } from "@cm-clone/shared";
 import { Effect } from "effect";
@@ -28,6 +34,10 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
 import { loadUserClub } from "../club/squad.js";
+import {
+  loadClubScoutingProgress,
+  loadProgressOnPlayer,
+} from "../club/scoutingProgress.js";
 import { isWindowOpen, loadSeasonRow, toSeasonView } from "../season/currentSeason.js";
 import { decideAiSellerResponse, resolveAiCounterOffer } from "./ai.js";
 import {
@@ -35,6 +45,7 @@ import {
   completeTransfer,
   loadBidRow,
   loadBidsForClub,
+  playerSignedEvent,
   recordTransfer,
 } from "./bids.js";
 import { loadClubBudgetRow, loadWageBudgetUsed } from "./budgets.js";
@@ -44,19 +55,6 @@ import { loadAllPlayersEcon, loadPlayerEcon, toMarketPlayerView } from "./econom
 // Read side: the Transfer market/inbox screen
 // ---------------------------------------------------------------------------
 
-/** How far the human club's scouts have got on each player: sparse, keyed on the club (the human
- *  club is the only club that reads the market screen), so a player nobody has ever looked at is
- *  simply absent. Absence means progress 0 — the widest Range the market can show. Returns a Map
- *  for O(1) lookups over the whole market; a `players`-sized dictionary adds nothing for a one-screen
- *  read (Agent Note 2026-09-19, ticket 09). */
-const loadScoutingProgress = (clubId: ClubSummary["id"]) =>
-  Effect.gen(function* () {
-    const sql = yield* SqlClient;
-    const rows = yield* sql<{ playerId: PlayerId; progress: number }>`
-      SELECT player_id as "playerId", progress FROM scouting_progress WHERE club_id = ${clubId}`;
-    return new Map(rows.map((row) => [row.playerId, row.progress]));
-  });
-
 const buildTransfersScreenView = (club: ClubSummary) =>
   Effect.gen(function* () {
     const seasonRow = yield* loadSeasonRow;
@@ -64,7 +62,7 @@ const buildTransfersScreenView = (club: ClubSummary) =>
     const wageBudgetUsed = yield* loadWageBudgetUsed(club.id);
     const { incoming, outgoing } = yield* loadBidsForClub(club.id);
     const players = yield* loadAllPlayersEcon(seasonRow.currentDate);
-    const progressByPlayer = yield* loadScoutingProgress(club.id);
+    const progressByPlayer = yield* loadClubScoutingProgress(club.id);
 
     const toView = (player: (typeof players)[number]) => {
       const progress = progressByPlayer.get(player.id) ?? 0;
@@ -293,9 +291,39 @@ export const respondAsBidder = (
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );
 
-/** Signing a Free Agent: same Sign flow as any Contract, at Credits 0 and with no Bid step
- * (ticket 05/16 — expiry produces a Free Agent, signable by any club). */
-export const signFreeAgent = (savesDir: string, saveId: SaveId, playerId: PlayerId, years: number | undefined) =>
+/** The Contract length a manager may name: a whole number of years inside the 1-5 range
+ *  (CONTEXT.md, Contract). The bounds come from `@cm-clone/shared` so the offer and a renewal can
+ *  never disagree about which lengths exist — a *renewal* clamps (`clampYears`, unchanged
+ *  behaviour), an *offer* rejects, because a terms form that silently rewrote the length the
+ *  manager typed would be lying about what he agreed to. */
+const isContractLength = (years: number): boolean =>
+  Number.isInteger(years) && years >= MIN_CONTRACT_YEARS && years <= MAX_CONTRACT_YEARS;
+
+/** The terms one Contract Offer carries: the Role it names, its length, and the weekly wage offered.
+ *  `role` is `POSITION_ROLES` applied to one of the player's own Positions — a tactical choice, not a
+ *  property the offer writes onto the player. */
+export interface ContractOfferTerms {
+  readonly role: Role;
+  readonly years: number;
+  readonly wage: number;
+}
+
+/** Signing a Free Agent: the Contract Offer (Screen 137) made good — the Role it named, its length
+ *  and its wage, at Credits 0 and with no Bid step (ticket 05/16 — expiry produces a Free Agent,
+ *  signable by any club).
+ *
+ *  The offered wage is bounded by the club's *knowledge* of the player, never by what the player
+ *  would accept: `getContractOffer` published the wage band the Scouting Progress supports, and the
+ *  offer must fall inside it. A Fully Scouted manager therefore signs at the exact formula wage, and
+ *  an unscouted one names a figure from the band his own knowledge supports — the knowledge rule is
+ *  the only thing that moves the wage, which is what keeps ADR-0005's formula authoritative while the
+ *  terms form still takes a wage. */
+export const signFreeAgent = (
+  savesDir: string,
+  saveId: SaveId,
+  playerId: PlayerId,
+  terms: ContractOfferTerms,
+) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       yield* assertSaveNotArchived(saveId);
@@ -314,7 +342,47 @@ export const signFreeAgent = (savesDir: string, saveId: SaveId, playerId: Player
         return yield* new PlayerNotFreeAgentError({ playerId });
       }
 
-      const wage = weeklyWage(player.overallRating, player.age, player.potentialAbility);
+      // The Role is a choice among the Positions the Player holds, so the command resolves it back
+      // to one of them here: that is both the refusal below and the Position the `PlayerSigned`
+      // event names, so the logged Role cannot be one the player does not hold.
+      const offeredPosition = player.positions.find(
+        (entry) => POSITION_ROLES[entry.position] === terms.role,
+      );
+      if (offeredPosition === undefined) {
+        return yield* new InvalidContractOfferTermsError({
+          playerId,
+          reason: `${terms.role} is not a Role this player holds`,
+        });
+      }
+      if (!isContractLength(terms.years)) {
+        return yield* new InvalidContractOfferTermsError({
+          playerId,
+          reason: `a Contract runs ${MIN_CONTRACT_YEARS}-${MAX_CONTRACT_YEARS} years, not ${terms.years}`,
+        });
+      }
+
+      const progress = progressForReading(
+        player.clubId,
+        club.id,
+        yield* loadProgressOnPlayer(playerId, club.id),
+      );
+      const wageFigure = wageFigureByProgress(
+        player.overallRating,
+        player.age,
+        player.potentialAbility,
+        progress,
+      );
+      const wage = terms.wage;
+      if (!wageIsWithinFigure(wage, wageFigure)) {
+        return yield* new InvalidContractOfferTermsError({
+          playerId,
+          reason:
+            wageFigure._tag === "exact"
+              ? `the wage is Cr ${wageFigure.value}/week — what this player's knowledge supports exactly`
+              : `the wage must be Cr ${wageFigure.low}-${wageFigure.high}/week — what this player's knowledge supports`,
+        });
+      }
+
       const budget = yield* loadClubBudgetRow(club.id);
       const wageUsed = yield* loadWageBudgetUsed(club.id);
       if (wageUsed + wage > budget.wageBudget) {
@@ -326,14 +394,27 @@ export const signFreeAgent = (savesDir: string, saveId: SaveId, playerId: Player
         });
       }
 
-      const contractYears = clampYears(years);
+      const contractYears = terms.years;
       yield* sql`UPDATE players SET club_id = ${club.id} WHERE id = ${playerId}`;
       yield* recordTransfer({ playerId, fromClubId: null, toClubId: club.id, fee: 0 });
+      // Replace any Contract row rather than inserting beside it, as accepting a Bid does. A
+      // club-less Player normally has no row (`expireContractsForSeason` deletes it), but `players
+      // .club_id = NULL` is what marks the Free Agent and a row left behind by any path that did
+      // not clean up would fail the `contracts.player_id` unique index — as a raw SQLite error
+      // surfacing to the manager as "unexpected response", not as a typed refusal.
+      yield* sql`DELETE FROM contracts WHERE player_id = ${playerId}`;
       yield* sql`INSERT INTO contracts (player_id, wage, years_remaining, signed_season)
         VALUES (${playerId}, ${wage}, ${contractYears}, ${seasonRow.seasonNumber})`;
 
       yield* appendHumanClubEvents(club.id, [
-        { tag: "PlayerSigned", payload: { playerId, wage, years: contractYears } },
+        // The Position behind the Role the manager chose, so the event builder derives the same
+        // Role the terms carried.
+        playerSignedEvent({
+          playerId,
+          position: offeredPosition.position,
+          wage,
+          years: contractYears,
+        }),
       ]);
 
       return yield* buildTransfersScreenView(club);

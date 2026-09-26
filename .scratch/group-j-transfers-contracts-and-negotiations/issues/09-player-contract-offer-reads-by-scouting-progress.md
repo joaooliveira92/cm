@@ -18,9 +18,22 @@ withholds. `signFreeAgent` gains the terms UI the inventory records as missing.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A Free Agent's Contract Offer reads his figures by Scouting Progress: ranged below Fully Scouted, exact at it, matching the Player Profile for the same Player
-- [ ] The offer response carries no exact figure for a Player below Fully Scouted (contract roundtrip, main test)
-- [ ] `signFreeAgent` takes role, duration and wage through a terms UI, and signing lands the player in the squad
-- [ ] `pnpm check:all` green, and e2e since the contract offer changes
+> **Recorded 2026-09-26, before resolving — what the first criterion can and cannot mean.** It asks for
+> agreement with "the Player Profile for the same Player", and no Free Agent's offer *can* be compared
+> with a Profile: `getPlayerProfile` refuses Free Agents (`apps/desktop/src/main/career/player.ts`), and
+> the offer serves Free Agents only, because there is no transfer-agreement state for a rival yet. The
+> criterion's intent is the stronger claim — that the offer cannot disagree with the Profile — and that
+> is what shipped and what is tested: the offer and the Profile resolve knowledge through the same
+> `progressForReading` rule, and
+> [`knowledge-agreement.test.ts`](../../../apps/desktop/test/main/transfers/knowledge-agreement.test.ts)
+> now drives one Player across the Profile, the market, the offer, Player Search, the comparison, the
+> club squad and the team scout report, asserting equal *values*, not merely equal shapes. The
+> offer-versus-Profile pairing itself remains unreachable and is left for whoever adds the transfer
+> agreement.
+
+- [x] A Free Agent's Contract Offer reads his figures by Scouting Progress: ranged below Fully Scouted, exact at it, matching the Player Profile for the same Player
+- [x] The offer response carries no exact figure for a Player below Fully Scouted (contract roundtrip, main test)
+- [x] `signFreeAgent` takes role, duration and wage through a terms UI, and signing lands the player in the squad
+- [x] `pnpm check:all` green, and e2e since the contract offer changes

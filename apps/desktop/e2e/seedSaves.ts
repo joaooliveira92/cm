@@ -103,6 +103,45 @@ export const seedScouted = (savesDir: string) =>
   );
 
 /**
+ * A fresh save holding two **Free Agents** the human club's Scouting has already reached at 40 and
+ * 100 (Fully Scouted), so a Contract Offer has a ranged wage and an exact one to read.
+ *
+ * A generated world signs every Player to a Club, so the two are detached by writing `club_id = NULL`
+ * and dropping their Contract row — the same pair of writes `expireContractsForSeason` makes when a
+ * Contract runs out, which is how a Player becomes a Free Agent in the game. They come from the *last*
+ * rival by id, and from the bottom of that Club by `potential_ability`, so neither the Market table's
+ * first rows nor the Wage Budget is disturbed: a 25-player Club keeps 23, and the lowest ability in
+ * it asks for a wage the human club can afford.
+ */
+export const seedOfferedFreeAgents = (savesDir: string) =>
+  run(
+    Effect.gen(function* () {
+      const id = yield* createSeedSave(savesDir, "Seed: offered free agents");
+      yield* Effect.gen(function* () {
+        const sql = yield* SqlClient;
+        const user = yield* sql<{ id: string }>`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`;
+        const rival = yield* sql<{ id: string }>`
+          SELECT c.id FROM clubs c JOIN players p ON p.club_id = c.id
+          WHERE c.is_user_club = 0 ORDER BY c.id DESC LIMIT 1`;
+        const players = yield* sql<{ id: string }>`
+          SELECT id FROM players WHERE club_id = ${rival[0]!.id}
+          ORDER BY potential_ability, id LIMIT 2`;
+        for (const [at, player] of players.entries()) {
+          // 40 reads as a band, 100 collapses to the one wage the contract can name.
+          yield* sql`INSERT INTO scouting_progress (club_id, player_id, progress)
+                     VALUES (${user[0]!.id}, ${player.id}, ${at === 0 ? 40 : 100})`;
+          yield* sql`UPDATE players SET club_id = NULL WHERE id = ${player.id}`;
+          yield* sql`DELETE FROM contracts WHERE player_id = ${player.id}`;
+        }
+      }).pipe(
+        Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${id}.sqlite`) })),
+        Effect.scoped,
+      );
+      return id;
+    }),
+  );
+
+/**
  * A fresh save whose club has already completed three transfers: one Player bought in from a rival,
  * one sold out to a rival, and one **Free Agent** signed for a Credits 0 fee with no Club to leave.
  * A fourth row moves a Player between two rivals, so the screen has something it must exclude.

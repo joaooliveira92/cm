@@ -130,6 +130,11 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
           return "The club would exceed its wage budget.";
         case "PlayerNotFreeAgentError":
           return "That player is signed to another club.";
+        // The offered terms contradict what this player's own knowledge supports, so the manager
+        // is told which part — the Role, the length, or the wage band — rather than shown a
+        // generic refusal he cannot act on.
+        case "InvalidContractOfferTermsError":
+          return `Those contract terms are not available for this player: ${error.error.reason}.`;
         // A Contract's terms are never renegotiated mid-term, so the mid-year press can only be
         // told that the moment has not come. The Contract Expiry screen is where it comes.
         case "ContractRenewalNotDueError":

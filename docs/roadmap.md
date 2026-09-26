@@ -34,12 +34,14 @@ referenced throughout.
 - **[.scratch/team-scout-report/](../.scratch/team-scout-report/)** — 8/8, completed 2026-09-13. Screen 49,
   the Team Scout Report: the report view, pointing a scout at a whole club, and earlier readings
   kept whenever a club watch ends, with a comparison against the current report.
-- **[.scratch/desktop-suite-red/](../.scratch/desktop-suite-red/)** — 16/16, completed 2026-09-24. The
+- **[.scratch/desktop-suite-red/](../.scratch/desktop-suite-red/)** — 16/17, reopened 2026-09-26. The
   desktop suite's red baseline: a bulk test-edit replaced file-backed saves with in-memory ones, a
   happy-dom/motion animation leak flooded the run with unhandled rejections, a wall-clock-seeded
   injury spec and a full-time spec flaked, and the e2e quit-guard, seeds and stale empty-state and
   ranged-value assertions drifted. Closed with the save-path and animation-cancel fixes that put the
   unit suite back at 2261 passing with no unhandled errors, and the e2e suite back at 62 passing.
+  Ticket 17 reopens it: the e2e suite now fails 4–5 specs at random on a clean tree, verified over
+  four full runs on a clean `HEAD` worktree.
 - **[.scratch/main-process-decomposition/](../.scratch/main-process-decomposition/)** — 13/13,
   completed 2026-09-24. The 2026-09-05 folder-organization audit's decomposition: the duplicate
   current-season queries collapsed into `main/season/currentSeason.ts`, `main/season.ts` and

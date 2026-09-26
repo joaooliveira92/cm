@@ -12,11 +12,11 @@ import {
 } from "@cm-clone/contracts";
 import {
   ALL_ATTRIBUTES,
-  FULLY_SCOUTED,
   HIDDEN_ATTRIBUTES,
   ageOn,
   figureByProgress,
   overallRating as computeOverallRating,
+  progressForReading,
   transferValueFigureByProgress,
   type PlayerAttributes,
 } from "@cm-clone/shared";
@@ -27,6 +27,7 @@ import { withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
 import { CURRENT_SEASON_NUMBER_SQL, loadGameDate } from "../season/currentSeason.js";
 import { loadUserClub } from "../club/squad.js";
+import { loadProgressOnPlayer } from "../club/scoutingProgress.js";
 
 const attributeSelectList = [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map(
   (attribute) => `${attribute.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)} as "${attribute}"`,
@@ -51,16 +52,6 @@ interface PlayerRow {
   [attribute: string]: unknown;
 }
 
-/** How far the reader's scouts have got on one player: sparse, so a player nobody has ever looked
- *  at is absent and reads at progress 0, the widest honest Range. Own-club players never carry a
- *  row and never reach this lookup (Agent Note 2026-09-19 — knowledge limits every player read). */
-const scoutingProgressOf = (playerId: PlayerId, readerClubId: ClubId) =>
-  Effect.gen(function* () {
-    const sql = yield* SqlClient;
-    const rows = yield* sql<{ progress: number }>`
-      SELECT progress FROM scouting_progress WHERE club_id = ${readerClubId} AND player_id = ${playerId}`;
-    return rows[0]?.progress ?? 0;
-  });
 
 export const getPlayerProfile = (savesDir: string, saveId: SaveId, playerId: PlayerId) =>
   withExistingSave(savesDir, saveId, (filename) =>
@@ -131,10 +122,16 @@ const readPlayerProfile = (playerId: PlayerId) =>
     // squad reads at full knowledge; any other player is gated on the human club's Scouting
     // Progress — exact only at Fully Scouted, an Attribute Range (1-20 scale for Attributes, the
     // wider bands for Overall Rating and Transfer Value) below it. Progress is part of the read,
-    // never stored. The human club for this read is `loadUserClub`, the same seam the market uses.
+    // never stored. The human club for this read is `loadUserClub`, the same seam the market and the
+    // Contract Offer use, and the progress itself comes from `club/scoutingProgress` — one ledger,
+    // one loader, so the Profile, the market and the offer cannot read a player at three different
+    // depths.
     const humanClub = yield* loadUserClub;
-    const progress =
-      player.clubId === humanClub.id ? FULLY_SCOUTED : yield* scoutingProgressOf(playerId, humanClub.id);
+    const progress = progressForReading(
+      player.clubId,
+      humanClub.id,
+      yield* loadProgressOnPlayer(playerId, humanClub.id),
+    );
 
     // Goalkeeping Attributes are absent — not zero — for an outfield player (CONTEXT.md), so a
     // null row entry is omitted from the wire rather than ranged from a value that is not there.

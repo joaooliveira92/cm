@@ -23,6 +23,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
 import { loadSeasonRow } from "../season/currentSeason.js";
 import { displayNames } from "../world/displayNames.js";
+import { loadProgressOnClubPlayers } from "./scoutingProgress.js";
 import { loadSquadPlayers } from "./squad.js";
 
 /**
@@ -72,19 +73,6 @@ const clubExists = (clubId: ClubId) =>
     const sql = yield* SqlClient;
     const rows = yield* sql<{ id: ClubId }>`SELECT id FROM clubs WHERE id = ${clubId}`;
     return rows[0] !== undefined;
-  });
-
-/** What the reading club knows about each of the target's players, sparse: a row exists only for a
- *  player who has actually been scouted, so absence is Unscouted rather than a stored zero. */
-const loadProgressFor = (readerClubId: ClubId, targetClubId: ClubId) =>
-  Effect.gen(function* () {
-    const sql = yield* SqlClient;
-    const rows = yield* sql<{ playerId: PlayerId; progress: number }>`
-      SELECT sp.player_id as "playerId", sp.progress
-      FROM scouting_progress sp
-      JOIN players p ON p.id = sp.player_id
-      WHERE sp.club_id = ${readerClubId} AND p.club_id = ${targetClubId}`;
-    return new Map(rows.map((row) => [row.playerId, row.progress]));
   });
 
 /** The scout the reading club currently has watching the target, if any. A scout on the Club
@@ -162,7 +150,9 @@ export const readTeamScoutReport = (clubId: ClubId) =>
       return yield* new ClubNotScoutedError({ clubId, currentReportId });
     }
 
-    const progress = yield* loadProgressFor(readerClubId, clubId);
+    // The shared loader, so the progress this report publishes is the same one a rival's Players
+    // are read at on the Squad screen, the search, the comparison and the market.
+    const progress = yield* loadProgressOnClubPlayers(readerClubId, clubId);
     const players = yield* loadSquadPlayers(clubId);
 
     const squad = players.map((player): TargetSquadMember => {

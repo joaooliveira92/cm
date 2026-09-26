@@ -1,4 +1,5 @@
 import { transferValue } from "./ratings.js";
+import { weeklyWage } from "./transfers.js";
 
 /**
  * Scouting: what a club knows about a player, and what that knowledge is worth.
@@ -89,6 +90,21 @@ export const figureByProgress = (
 };
 
 /**
+ * The Scouting Progress one Player read should gate on: the manager's own club reads its Players at
+ * full knowledge whatever the ledger says, and every other Player reads by the progress recorded
+ * for him — 0 when there is no row, the widest honest Range.
+ *
+ * The one home for that question. `readPlayerProfile`, the transfer market and the Contract Offer
+ * each resolve it here, so no screen can widen a player's knowledge by picking its own branch
+ * (Agent Note 2026-09-19 — knowledge limits every player read).
+ */
+export const progressForReading = (
+  playerClubId: string | null,
+  readingClubId: string,
+  progress: number,
+): number => (playerClubId === readingClubId ? FULLY_SCOUTED : progress);
+
+/**
  * The Transfer Value a below-Fully-Scouted market read shows: the Overall Rating's Attribute Range
  * run through `transferValue`, not a percentage off the true value. `transferValue` is monotone
  * non-decreasing in Overall Rating across the whole Rating / age / Potential-Ability domain, so the
@@ -111,6 +127,51 @@ export const transferValueFigureByProgress = (
     high: transferValue(highRating, age, potentialAbility),
   };
 };
+
+/**
+ * The weekly wage a below-Fully-Scouted read shows, built exactly like
+ * `transferValueFigureByProgress` above and for the same reason: the wage is a *derived* price, so
+ * the Rating band's ends price the ends of the wage band. Running a fixed band off the true wage
+ * instead would publish a figure the Rating band does not support — an unscouted OVR of 50–90
+ * cannot justify quoting a wage to the Credit.
+ *
+ * Monotone in Overall Rating (`weeklyWage` rises across the Rating domain), so the low end of the
+ * Rating band prices the low end of the wage band and the width narrows as progress narrows it.
+ * Derived on every read, never persisted — the Contract the manager signs stores the wage they
+ * offered, not this band.
+ */
+export const wageFigureByProgress = (
+  overall: number,
+  age: number,
+  potentialAbility: number,
+  progress: number,
+): KnownFigure => {
+  if (isFullyScouted(progress)) {
+    return { _tag: "exact", value: weeklyWage(overall, age, potentialAbility) };
+  }
+  const [lowRating, highRating] = attributeRange(overall, progress);
+  return {
+    _tag: "range",
+    low: weeklyWage(lowRating, age, potentialAbility),
+    high: weeklyWage(highRating, age, potentialAbility),
+  };
+};
+
+/**
+ * Whether an offered weekly wage falls inside what this player's knowledge supports.
+ *
+ * The one home for the rule, read by both ends: the Command that signs a Free Agent refuses an
+ * offer outside it, and the terms form disables its submit while the typed wage sits outside it. A
+ * Fully Scouted player supports exactly one wage, so the offer must name it; below that the manager
+ * may name any whole number of Credits inside the band their own Scouting Progress published — the
+ * knowledge, never what the player would accept, is what bounds the term.
+ */
+export const wageIsWithinFigure = (wage: number, figure: KnownFigure): boolean =>
+  Number.isInteger(wage) &&
+  wage > 0 &&
+  (figure._tag === "exact"
+    ? wage === figure.value
+    : wage >= figure.low && wage <= figure.high);
 
 /**
  * Team Scout Report vocabulary.

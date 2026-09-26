@@ -101,7 +101,18 @@ const everyMutatingCommandRejects = (cause: ArchivedCause) =>
       ),
     );
     ok(rejectsAsArchived(yield* Effect.flip(respondAsBidder(savesDir, save.id, BidId.make("irrelevant-bid-id"), "accept")), cause));
-    ok(rejectsAsArchived(yield* Effect.flip(signFreeAgent(savesDir, save.id, PlayerId.make("irrelevant-player-id"), undefined)), cause));
+    ok(
+      rejectsAsArchived(
+        yield* Effect.flip(
+          signFreeAgent(savesDir, save.id, PlayerId.make("irrelevant-player-id"), {
+            role: "Playmaker",
+            years: 2,
+            wage: 1,
+          }),
+        ),
+        cause,
+      ),
+    );
     ok(rejectsAsArchived(yield* Effect.flip(renewContract(savesDir, save.id, PlayerId.make("irrelevant-player-id"), undefined)), cause));
   });
 

@@ -7,7 +7,7 @@ import {
   type ClubId,
   type PlayerId,
 } from "@cm-clone/contracts";
-import { DEFAULT_CONTRACT_YEARS, weeklyWage } from "@cm-clone/shared";
+import { DEFAULT_CONTRACT_YEARS, POSITION_ROLES, weeklyWage, type Position } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "../world/displayNames.js";
@@ -126,6 +126,37 @@ export const appendHumanClubEvents = (
     const seq = yield* nextStreamSeq("club", clubId);
     yield* appendStreamEvents("club", clubId, seq, events);
   });
+
+/**
+ * The `PlayerSigned` event a signing writes to the club stream, in one shape.
+ *
+ * Two producers sign Free Agents — the manager's own signing command, which takes the Role the
+ * manager picked, and the AI clubs' signing, which picks for itself — and before this both wrote
+ * the payload out by hand, so the AI's log lines said what the manager's said plus no Role. The
+ * Role costs nothing to store, which is what makes the disagreement worth closing: there is no
+ * column to migrate because `events.payload` is JSON (see `appendHumanClubEvents`), and a payload
+ * the two producers can disagree about is precisely what a single builder removes.
+ *
+ * The Role is the Player's own: `POSITION_ROLES` maps a Position to exactly one Role, so the AI's
+ * choice is read off their primary Position rather than invented. That is a fact about the Player,
+ * not an AI tactic, which is why it is derived here instead of being passed in.
+ */
+export const playerSignedEvent = (params: {
+  readonly playerId: PlayerId;
+  /** The Position the Player was signed for. The manager passes the one behind the Role they
+   *  chose; the AI passes the Player's primary Position. */
+  readonly position: Position;
+  readonly wage: number;
+  readonly years: number;
+}): { readonly tag: "PlayerSigned"; readonly payload: unknown } => ({
+  tag: "PlayerSigned",
+  payload: {
+    playerId: params.playerId,
+    role: POSITION_ROLES[params.position],
+    wage: params.wage,
+    years: params.years,
+  },
+});
 
 /**
  * Records a completed transfer, world-wide and permanently.

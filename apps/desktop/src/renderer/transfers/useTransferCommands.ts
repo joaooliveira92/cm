@@ -5,7 +5,7 @@
  * nothing else in the screen writes them.
  */
 import { useCallback, useEffect, useState } from "react";
-import type { BidId, PlayerId, RpcPayload, SaveId, TransfersScreenView } from "@cm-clone/contracts";
+import type { BidId, PlayerId, Role, RpcPayload, SaveId, TransfersScreenView } from "@cm-clone/contracts";
 import { Option } from "effect";
 import {
   AsyncResult,
@@ -24,6 +24,7 @@ import type { RpcClientError } from "../rpc/errors.js";
 import { registerActionHandler } from "../actions/dispatch.js";
 import { focusIdOf } from "../focus.js";
 import { FREE, MARKET } from "./tableIds.js";
+import type { ContractTerms } from "./ContractOfferTerms.js";
 import type { CounterState } from "./useBidDraft.js";
 
 /** The atom result the Transfers screen reads, named once for the two refs that carry it. */
@@ -54,7 +55,7 @@ export interface TransferCommandsValue {
   readonly findPlayer: (playerId: string) => MarketPlayerRow | null;
   readonly selectionChange: (tableId: TableId, playerId: string | null) => void;
   readonly onBid: (playerId: PlayerId, amount: number) => void;
-  readonly onSignFreeAgent: (playerId: PlayerId) => void;
+  readonly onSignFreeAgent: (playerId: PlayerId, terms: ContractTerms) => void;
   readonly onRespondToBid: (bidId: BidId, action: "accept" | "reject" | "counter") => void;
   readonly onRespondAsBidder: (bidId: BidId, action: "accept" | "withdraw") => Promise<void>;
 }
@@ -137,13 +138,13 @@ export const useTransferCommands = ({
   );
 
   const submitSign = useCallback(
-    async (playerId: PlayerId) => {
+    async (playerId: PlayerId, terms: ContractTerms) => {
       const player = findPlayer(String(playerId));
       const name = player !== null ? `${player.firstName} ${player.lastName}` : String(playerId);
       const targetTable = selectedRef.current?.tableId ?? FREE;
       setBidAlert(null);
       try {
-        await run("Sign", () => runSign({ saveId, playerId }));
+        await run("Sign", () => runSign({ saveId, playerId, ...terms }));
         setDraft(reduceBidDraft(draftRef.current, { _tag: "submitted" }));
         selectionChange(targetTable, null);
         speak(targetTable, "signed", `Signed ${name}.`);
@@ -163,7 +164,7 @@ export const useTransferCommands = ({
     [submitBid],
   );
   const onSignFreeAgent = useCallback(
-    (playerId: PlayerId) => void submitSign(playerId),
+    (playerId: PlayerId, terms: ContractTerms) => void submitSign(playerId, terms),
     [submitSign],
   );
 
@@ -218,19 +219,39 @@ export const useTransferCommands = ({
 export interface TransferCommandHandlersParams {
   readonly saveId: SaveId;
   readonly draftRef: React.MutableRefObject<BidDraftState>;
+  readonly offerTermsRef: React.MutableRefObject<ContractTerms | null>;
   readonly amountInputRef: React.MutableRefObject<HTMLInputElement | null>;
   readonly marketIdsRef: React.MutableRefObject<readonly string[]>;
   readonly refresh: () => void;
   readonly onBid: (playerId: PlayerId, amount: number) => void;
-  readonly onSignFreeAgent: (playerId: PlayerId) => void;
+  readonly onSignFreeAgent: (playerId: PlayerId, terms: ContractTerms) => void;
   readonly onRespondToBid: (bidId: BidId, action: "accept" | "reject" | "counter") => void;
   readonly onRespondAsBidder: (bidId: BidId, action: "accept" | "withdraw") => Promise<void>;
 }
+
+/**
+ * The terms a `sign-free-agent` dispatch names outright, or `null` when it does not name all of
+ * them.
+ *
+ * All four or nothing. A payload carrying a player but no complete set of terms is a shape this
+ * action does not accept — taking the terms from the form instead would sign one player on another
+ * player's numbers, which is the mistake this guard exists to make impossible.
+ */
+const dispatchedSigningTerms = (
+  params: unknown,
+): { readonly playerId: PlayerId; readonly terms: ContractTerms } | null => {
+  if (typeof params !== "object" || params === null) return null;
+  const { playerId, role, years, wage } = params as Record<string, unknown>;
+  if (typeof playerId !== "string") return null;
+  if (typeof role !== "string" || typeof years !== "number" || typeof wage !== "number") return null;
+  return { playerId: playerId as PlayerId, terms: { role: role as Role, years, wage } };
+};
 
 /** Binds the transfer commands to the Action registry for the life of a save. */
 export const useTransferCommandHandlers = ({
   saveId,
   draftRef,
+  offerTermsRef,
   amountInputRef,
   marketIdsRef,
   refresh,
@@ -262,9 +283,31 @@ export const useTransferCommandHandlers = ({
         const p = params as { playerId: PlayerId; amount: number };
         void onBid(p.playerId, p.amount);
       }),
+      // Three shapes, three answers, and the middle one is the reason this handler is not a cast.
+      //
+      // Bare (the command palette): sign the Free Agent currently drafted, on the terms the form is
+      // showing — the same three numbers the Sign button would send. A draft that is not a Free
+      // Agent, or terms that are not yet valid, is a no-op rather than a guess.
+      //
+      // Complete (the Sign button, and any caller naming a player outright): the dispatch *is* the
+      // terms. This is the only way to name a Player the form is not showing, so reading the player
+      // out of one payload and the terms out of the other — the original single cast — would sign
+      // whichever player happened to be on screen with that screen's terms whenever the two
+      // disagreed.
+      //
+      // Incomplete: a shape this action does not take. Nothing is signed. Doing less is the only
+      // safe answer to a half-written signing.
       registerActionHandler("sign-free-agent", (params) => {
-        const p = params as { playerId: PlayerId };
-        void onSignFreeAgent(p.playerId);
+        if (params !== undefined && params !== null) {
+          const dispatched = dispatchedSigningTerms(params);
+          if (dispatched === null) return;
+          void onSignFreeAgent(dispatched.playerId, dispatched.terms);
+          return;
+        }
+        const terms = offerTermsRef.current;
+        const playerId = draftRef.current.draft?.playerId as PlayerId | undefined;
+        if (terms === null || playerId === undefined) return;
+        void onSignFreeAgent(playerId, terms);
       }),
       registerActionHandler("respond-accept", (params) =>
         onRespondToBid((params as { bidId: BidId }).bidId, "accept"),

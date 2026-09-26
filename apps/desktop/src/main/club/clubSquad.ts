@@ -6,7 +6,9 @@
  * knowledge limit (Agent Note 2026-09-19, tickets 09/10): a Player outside the manager's own club
  * carries an Attribute Range for every figure below Fully Scouted, and exact figures at it; the
  * manager's own club — if this club-scoped route is reached for it — reads exact, because
- * own-squad Players are always full-info and never carry Scouting Progress (CONTEXT.md).
+ * own-squad Players are always full-info and never carry Scouting Progress (CONTEXT.md). Which
+ * progress a figure is read at comes from `scoutingProgress.ts`, the same module the market, the
+ * Profile, the offer, the search, the comparison and the scout report resolve it through.
  *
  * One read answers the whole page, including whose club it is, so the screen can mark a foreign
  * club [Not your club] without a second read. Same shape as `getClubStaff`, deliberately.
@@ -23,9 +25,9 @@ import {
 } from "@cm-clone/contracts";
 import {
   ALL_ATTRIBUTES,
-  FULLY_SCOUTED,
   HIDDEN_ATTRIBUTES,
   figureByProgress,
+  progressForReading,
   type StatureTier,
 } from "@cm-clone/shared";
 import { SqliteClient } from "@effect/sql-sqlite-node";
@@ -33,6 +35,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
+import { loadProgressOnClubPlayers } from "./scoutingProgress.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 
 export const getClubSquad = (savesDir: string, saveId: SaveId, clubId: ClubId) =>
@@ -58,24 +61,24 @@ const readClubSquad = (clubId: ClubId) =>
     const isUserClub = clubRow.isUserClub === 1;
 
     // The human club for this read is `loadUserClub`, the same seam the market and the Player
-    // screens use. The progress rows are loaded once for the whole squad rather than per player —
-    // a squad is a few dozen rows, and one query keeps the N+1 out of a pure read.
+    // screens use, and the progress comes from the shared loader, so a rival's Players are read at
+    // the same progress here as in the market, the Profile, the search and the comparison — the
+    // drift the Agent Note this ticket implements names. The manager's own club skips the query
+    // entirely: `progressForReading` resolves its Players to Fully Scouted without a row, and it
+    // never has one.
     const humanClub = yield* loadUserClub;
-    const progressRows = isUserClub
-      ? []
-      : yield* sql<{ playerId: PlayerId; progress: number }>`
-          SELECT sp.player_id as "playerId", sp.progress
-          FROM scouting_progress sp
-          WHERE sp.club_id = ${humanClub.id}
-            AND sp.player_id IN (SELECT id FROM players WHERE club_id = ${clubId})`;
-    const progressOf = new Map(progressRows.map((row) => [String(row.playerId), row.progress]));
+    const progressByPlayer = isUserClub
+      ? new Map<PlayerId, number>()
+      : yield* loadProgressOnClubPlayers(humanClub.id, clubId);
 
     const squad = yield* loadSquadPlayers(clubId);
 
     // Pure per-player mapping now that the progress rows are already loaded: every player's figure
     // set is a function of (true figures, progress), so there is no per-player IO to sequence.
     const players = squad.map((player) => {
-      const progress = isUserClub ? FULLY_SCOUTED : (progressOf.get(String(player.id)) ?? 0);
+      // Every player on this page is at `clubId` — `loadSquadPlayers` read them from there — so the
+      // reading club and the player's club are the same pair on every row of this screen.
+      const progress = progressForReading(clubId, humanClub.id, progressByPlayer.get(player.id) ?? 0);
       return clubSquadPlayerView(player, progress);
     });
 

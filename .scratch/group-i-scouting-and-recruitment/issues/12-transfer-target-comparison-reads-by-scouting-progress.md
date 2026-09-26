@@ -10,10 +10,10 @@ Sliced 2026-09-23 from [decision request 01](../decision-request-01-knowledge-li
 
 **Blocked by:** [11](11-player-search-reads-by-scouting-progress.md) provides the shared search read and the result figures this screen composes; start comparison rows from that pool. **11 shipped 2026-09-23 (`58eab5d4`), so this ticket is unblocked.**
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Two or more Players compare side by side on position/role fit, Attributes, Overall Rating, Transfer Value, wage, contract and availability
-- [ ] Figures read by Scouting Progress: own-squad exact, rivals/Free Agents ranged below Fully Scouted, exact at it, matching the search results and Player Profile for the same Player
-- [ ] The comparison response carries no exact figure for a Player below Fully Scouted (contract roundtrip, main test)
-- [ ] Opening a candidate navigates to that Player's Profile
-- [ ] `pnpm check:all` green, and e2e since the comparison entry point changes
+- [x] Two or more Players compare side by side on position/role fit, Attributes, Overall Rating, Transfer Value, wage, contract and availability
+- [x] Figures read by Scouting Progress: own-squad exact, rivals/Free Agents ranged below Fully Scouted, exact at it, matching the search results and Player Profile for the same Player
+- [x] The comparison response carries no exact figure for a Player below Fully Scouted (contract roundtrip, main test)
+- [x] Opening a candidate navigates to that Player's Profile
+- [x] `pnpm check:all` green, and e2e since the comparison entry point changes

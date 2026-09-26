@@ -22,12 +22,13 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { ALL_ATTRIBUTES, FULLY_SCOUTED, figureByProgress, transferValueFigureByProgress } from "@cm-clone/shared";
+import { ALL_ATTRIBUTES, figureByProgress, progressForReading, transferValueFigureByProgress } from "@cm-clone/shared";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { injuryStatusOf } from "../career/player.js";
 import { loadUserClub } from "../club/squad.js";
+import { loadClubScoutingProgress } from "../club/scoutingProgress.js";
 import { withExistingSave } from "../season/decider.js";
 import { CURRENT_SEASON_NUMBER_SQL, loadSeasonRow } from "../season/currentSeason.js";
 import { loadAllPlayersEcon, type PlayerEcon } from "./economics.js";
@@ -55,11 +56,9 @@ const readPlayerComparison = (playerIds: ReadonlyArray<PlayerId>) =>
     const playerById = new Map(players.map((player) => [String(player.id), player]));
 
     const humanClub = yield* loadUserClub;
-    const progressRows = yield* sql<{ playerId: PlayerId; progress: number }>`
-      SELECT sp.player_id as "playerId", sp.progress
-      FROM scouting_progress sp
-      WHERE sp.club_id = ${humanClub.id}`;
-    const progressOf = new Map(progressRows.map((row) => [String(row.playerId), row.progress]));
+    // The shared loader, so this screen resolves a player's knowledge exactly as the market, the
+    // search, the Profile and the Squad do — the drift the Agent Note this ticket implements names.
+    const progressByPlayer = yield* loadClubScoutingProgress(humanClub.id);
 
     // Contract and fitness are read once for the whole chosen set, not once per player: the set is
     // a handful of names but the queries must not multiply with it (the search loads the whole
@@ -95,7 +94,7 @@ const readPlayerComparison = (playerIds: ReadonlyArray<PlayerId>) =>
     return new PlayerComparisonView({
       rows: playerIds.map((playerId) => {
         const player = playerById.get(String(playerId))!;
-        return toComparisonRow(player, humanClub.id, progressOf, contractByPlayer, fitnessByPlayer);
+        return toComparisonRow(player, humanClub.id, progressByPlayer, contractByPlayer, fitnessByPlayer);
       }),
     });
   });
@@ -107,11 +106,14 @@ const readPlayerComparison = (playerIds: ReadonlyArray<PlayerId>) =>
 const toComparisonRow = (
   player: PlayerEcon,
   humanClubId: string,
-  progressOf: Map<string, number>,
+  progressByPlayer: ReadonlyMap<PlayerId, number>,
   contractByPlayer: Map<string, { readonly wage: number; readonly yearsRemaining: number }>,
   fitnessByPlayer: Map<string, { readonly condition: number; readonly severity: string }>,
 ): PlayerComparisonRowView => {
-  const progress = player.clubId === humanClubId ? FULLY_SCOUTED : (progressOf.get(String(player.id)) ?? 0);
+  // Own-squad Players are exact and never read their (empty) Scouting Progress; every other player
+  // is read at the progress the shared loaders resolved. One rule, `progressForReading`, so no two
+  // of these screens can resolve it differently.
+  const progress = progressForReading(player.clubId, humanClubId, progressByPlayer.get(player.id) ?? 0);
   const contract = contractByPlayer.get(String(player.id));
   const fitness = fitnessByPlayer.get(String(player.id));
   // No fitness row for the current season reads as a fully fit player, as the profile's join does.

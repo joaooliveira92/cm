@@ -13,6 +13,9 @@ import { PositionSchema, SquadPlayerView } from "./squad.js";
 
 export const FormationSchema = Schema.Literals(FORMATIONS);
 export const RoleSchema = Schema.Literals(ROLES);
+/** The Role union as a type, for callers that hold a Role rather than decode one — a Contract
+ *  Offer's terms name the Role a Position carries (`POSITION_ROLES` in `@cm-clone/shared`). */
+export type Role = typeof RoleSchema.Type;
 export const MentalitySchema = Schema.Literals(MENTALITY_OPTIONS);
 export const TempoSchema = Schema.Literals(TEMPO_OPTIONS);
 export const PressingSchema = Schema.Literals(PRESSING_OPTIONS);

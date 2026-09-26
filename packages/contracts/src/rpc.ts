@@ -78,6 +78,9 @@ import {
   PlayerNotFoundError,
   PlayerNotFreeAgentError,
   PlayerProfileView,
+  ContractOfferView,
+  InvalidContractOfferTermsError,
+  RoleSchema,
   ResumeSimulationView,
   SubmitMatchCommandView,
   SaveArchivedError,
@@ -408,6 +411,14 @@ commitCareer: {
     success: TransfersScreenView,
     error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
+  /** The Contract Offer for one Free Agent (Screen 137): his worth, and the terms the offer can
+   *  carry, read by the same Scouting Progress the market and the Player Profile read him by — a
+   *  Range on every figure below Fully Scouted, exact at it. */
+  getContractOffer: {
+    payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId }),
+    success: ContractOfferView,
+    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, PlayerNotFreeAgentError]),
+  },
   /** Contract Expiry (Screen 141, without Bosman): the manager's own-club Players who are in their
    *  last contracted year (`contracts.years_remaining === 1`), and the squad size beside them. A pure
    *  read — no command side. */
@@ -484,12 +495,25 @@ commitCareer: {
     ]),
   },
   signFreeAgent: {
-    payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId, years: Schema.optional(Schema.Finite) }),
+    payload: Schema.Struct({
+      saveId: SaveId,
+      playerId: PlayerId,
+      /** The Role the offer names. `POSITION_ROLES` pairs it with one of the player's own
+       *  Positions, and the command re-checks that pairing — a Role is tactical, never a free-text
+       *  field a caller could attach to any player. */
+      role: RoleSchema,
+      /** Contract length in years, 1-5 (CONTEXT.md, Contract). */
+      years: Schema.Finite,
+      /** The weekly wage offered, which must fall inside the wage band `getContractOffer`
+       *  published for this player. */
+      wage: Schema.Finite,
+    }),
     success: TransfersScreenView,
     error: Schema.Union([
       SaveNotFoundError,
       PlayerNotFoundError,
       PlayerNotFreeAgentError,
+      InvalidContractOfferTermsError,
       PendingFixtureIntegrityError,
       TransferWindowClosedError,
       WageBudgetExceededError,

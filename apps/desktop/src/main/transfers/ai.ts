@@ -15,6 +15,7 @@ import {
   appendHumanClubEvents,
   completeTransfer,
   loadBidRow,
+  playerSignedEvent,
   recordTransfer,
   type BidStatus,
 } from "./bids.js";
@@ -213,6 +214,11 @@ export const aiSignFreeAgent = (clubId: ClubId, playerId: PlayerId, seasonNumber
       VALUES (${playerId}, ${wage}, ${DEFAULT_CONTRACT_YEARS}, ${seasonNumber})`;
 
     yield* appendHumanClubEvents(clubId, [
-      { tag: "PlayerSigned", payload: { playerId, wage, years: DEFAULT_CONTRACT_YEARS } },
+      playerSignedEvent({
+        playerId,
+        position: player.positions[0]?.position ?? "MC",
+        wage,
+        years: DEFAULT_CONTRACT_YEARS,
+      }),
     ]);
   });

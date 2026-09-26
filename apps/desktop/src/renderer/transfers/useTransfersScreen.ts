@@ -50,6 +50,7 @@ import {
   type SelectedPlayer,
 } from "./useTransferTables.js";
 import { useTablePaletteHandlers } from "./useTransferPaletteActions.js";
+import type { ContractTerms } from "./ContractOfferTerms.js";
 
 export type { CounterState } from "./useBidDraft.js";
 export type { SelectedPlayer } from "./useTransferTables.js";
@@ -106,6 +107,10 @@ export interface TransfersScreenActions {
 export interface TransfersScreenMeta {
   readonly saveId: SaveId;
   readonly amountInputRef: React.MutableRefObject<HTMLInputElement | null>;
+  /** The terms the Contract Offer form is currently showing, written by the form and read by the
+   *  stable `sign-free-agent` Action handler — a palette dispatch signs the offer on screen rather
+   *  than a second copy of the numbers. */
+  readonly offerTermsRef: React.MutableRefObject<ContractTerms | null>;
   readonly speak: (key: TableId, kind: string, message: string) => void;
   readonly findPlayer: (playerId: string) => MarketPlayerRow | null;
 }
@@ -162,6 +167,10 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
   const [selected, setSelected] = useState<SelectedPlayer | null>(null);
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
+
+  /** The live terms of the Contract Offer on screen. The form writes it on every render, so the
+   *  once-per-save Action handler can read the current offer without re-registering. */
+  const offerTermsRef = useRef<ContractTerms | null>(null);
 
   const {
     draftState,
@@ -286,6 +295,7 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
   useTransferCommandHandlers({
     saveId,
     draftRef,
+    offerTermsRef,
     amountInputRef,
     marketIdsRef,
     refresh,
@@ -363,6 +373,7 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
     meta: {
       saveId,
       amountInputRef,
+      offerTermsRef,
       speak,
       findPlayer,
     },

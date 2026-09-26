@@ -26,6 +26,7 @@ import {
   respondToBid,
   signFreeAgent,
 } from "../../../src/main/transfers/index.js";
+import { offerTermsFor } from "./offerTerms.js";
 
 let savesDir: string;
 
@@ -132,7 +133,13 @@ it.effect("signFreeAgent and renewContract are rejected outside an open window",
     const squad = yield* getSquad(savesDir, save.id);
     yield* advanceThroughBoundary(savesDir, save.id); // closes the pre-season window
 
-    const signResult = yield* Effect.exit(signFreeAgent(savesDir, save.id, PlayerId.make("nonexistent-player"), undefined));
+    const signResult = yield* Effect.exit(
+      signFreeAgent(savesDir, save.id, PlayerId.make("nonexistent-player"), {
+        role: "Playmaker",
+        years: 2,
+        wage: 1,
+      }),
+    );
     ok(signResult._tag === "Failure");
 
     const renewResult = yield* Effect.exit(
@@ -321,7 +328,10 @@ it.effect("signFreeAgent signs a Free Agent for Credits 0, no Bid step, at a for
     const before = yield* getTransfersScreen(savesDir, save.id);
     ok(before.freeAgents.some((p) => p.id === otherPlayerId));
 
-    const after = yield* signFreeAgent(savesDir, save.id, otherPlayerId, 2);
+    const after = yield* Effect.flatMap(
+      offerTermsFor(savesDir, save.id, otherPlayerId, 2),
+      (terms) => signFreeAgent(savesDir, save.id, otherPlayerId, terms),
+    );
     ok(!after.freeAgents.some((p) => p.id === otherPlayerId));
     strictEqual(after.transferBudgetRemaining, before.transferBudgetRemaining); // Credits 0
     ok(after.wageBudgetUsed > before.wageBudgetUsed);
@@ -348,7 +358,11 @@ it.effect("signing/renewing is rejected once it would exceed the club's Wage Bud
       }),
     );
 
-    const result = yield* Effect.exit(signFreeAgent(savesDir, save.id, otherPlayerId, undefined));
+    const result = yield* Effect.exit(
+      Effect.flatMap(offerTermsFor(savesDir, save.id, otherPlayerId), (terms) =>
+        signFreeAgent(savesDir, save.id, otherPlayerId, terms),
+      ),
+    );
     ok(result._tag === "Failure");
   }),
 );
