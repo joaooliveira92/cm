@@ -249,6 +249,7 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
       "set-mentality",
       "set-pressing",
       "set-tempo",
+      "swap-slot-players",
     ];
     expect(new Set(ids)).toEqual(new Set(expected));
     for (const id of ids) {

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   PlayerId,
   Tactic,
@@ -38,6 +38,7 @@ import {
   type Pressing,
   type Tempo,
 } from "@cm-clone/shared";
+import { swapLineupSlots } from "../squad/lineupEdits.js";
 import { FormationPitch } from "./FormationPitch.js";
 import { defaultTacticFor, useTacticDraft } from "./useTacticDraft.js";
 import { describeRpcError } from "../rpc.js";
@@ -103,6 +104,8 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     useTacticDraft(saveId, {
       saveFailureMessage: "Failed to save tactic — check every slot has a unique player assigned.",
     });
+  // The slot whose picker is open, so a click on its pitch marker can open it too.
+  const [openSlot, setOpenSlot] = useState<number | null>(null);
 
   // Register the Tactics screen's operation handlers (save + the draft edits).
   // Decided before the error/loading returns so hook order is unconditional.
@@ -126,6 +129,11 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       registerActionHandler("assign-slot-player", (params) => {
         const p = params as { index: number; playerId: PlayerId };
         setTactic(changeSlotPlayer(tactic, p.index, p.playerId));
+      }),
+      // Starter slots are the lineup's first orders, so a slot index is its lineup order.
+      registerActionHandler("swap-slot-players", (params) => {
+        const p = params as { from: number; to: number };
+        setTactic(swapLineupSlots(tactic, p.from, p.to));
       }),
     ];
     return () => {
@@ -269,6 +277,8 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                       <Select
                         value={slot.playerId}
                         items={pickerItems}
+                        open={openSlot === index}
+                        onOpenChange={(open) => setOpenSlot(open ? index : null)}
                         onValueChange={(value) => {
                           if (value !== null) {
                             void dispatchAction("assign-slot-player", {
@@ -338,7 +348,13 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         </Card>
 
         <div className="lg:sticky lg:top-0">
-          <FormationPitch formation={tactic.formation} slots={tactic.slots} squadById={squadById} />
+          <FormationPitch
+            formation={tactic.formation}
+            slots={tactic.slots}
+            squadById={squadById}
+            onPick={setOpenSlot}
+            onSwap={(from, to) => void dispatchAction("swap-slot-players", { from, to })}
+          />
         </div>
       </div>
 

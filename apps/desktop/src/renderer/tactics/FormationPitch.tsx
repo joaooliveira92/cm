@@ -1,5 +1,15 @@
+import { useState, type DragEvent } from "react";
 import type { SquadPlayerView, TacticSlot } from "@cm-clone/contracts";
+import { FOCUS_RING } from "../focus.js";
 import { pitchLayout } from "./pitchLayout.js";
+
+/** The drag channel a marker's slot index rides in; nothing else is exchanged. */
+const SLOT_DRAG = "application/x-cm-tactic-slot";
+
+const draggedSlotOf = (event: DragEvent): number | null => {
+  const raw = event.dataTransfer.getData(SLOT_DRAG);
+  return raw === "" ? null : Number(raw);
+};
 
 /** "Gilardino, A" — the marker caption; the full name is in the Team Selection list beside it. */
 const markerName = (player: SquadPlayerView): string =>
@@ -29,20 +39,30 @@ const PitchMarkings = () => (
 );
 
 /**
- * The Tactic's starting eleven drawn on a pitch, attacking up the screen. Read-only: every edit
- * goes through the Team Selection pickers, so nothing here is pointer-only. The markers are an
+ * The Tactic's starting eleven drawn on a pitch, attacking up the screen. The markers are an
  * ordered list in slot order, so a screen reader hears the same eleven the pickers name.
+ *
+ * A marker is a pointer shortcut onto the Team Selection pickers, never the only path: clicking
+ * one opens that slot's picker (`onPick`), and dropping one marker on another swaps the two slots'
+ * players (`onSwap`), or moves the player when the target is empty. The markers stay out of the
+ * tab order, where the pickers already stand for each slot.
  */
 export const FormationPitch = ({
   formation,
   slots,
   squadById,
+  onPick,
+  onSwap,
 }: {
   readonly formation: string;
   readonly slots: ReadonlyArray<TacticSlot>;
   readonly squadById: ReadonlyMap<string, SquadPlayerView>;
+  readonly onPick: (slotIndex: number) => void;
+  readonly onSwap: (from: number, to: number) => void;
 }) => {
   const spots = pitchLayout(slots.map((slot) => slot.position));
+  // The slot a drag is hovering, so the target marker can show it will take the drop.
+  const [dropTarget, setDropTarget] = useState<number | null>(null);
   return (
     <div
       data-testid="formation-pitch"
@@ -57,26 +77,54 @@ export const FormationPitch = ({
           return (
             <li
               key={slotIndex}
-              className="absolute flex w-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center"
+              className="absolute w-24 -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${x}%`, top: `${y}%` }}
             >
-              <span
-                aria-hidden="true"
-                className={`flex size-7 items-center justify-center rounded-full border-2 text-2xs font-bold tabular-nums text-text-bright shadow-panel ${
-                  player === undefined
-                    ? "border-dashed border-text-bright/70 bg-transparent"
-                    : `border-text-highlight ${isKeeper ? "bg-pitch-marker-gk" : "bg-pitch-marker"}`
-                }`}
+              <button
+                type="button"
+                tabIndex={-1}
+                draggable={player !== undefined}
+                data-action-id="swap-slot-players"
+                data-slot-index={slotIndex}
+                aria-label={`Slot ${slotIndex + 1}, ${slot.position}: ${
+                  player === undefined ? "unassigned" : `${player.firstName} ${player.lastName}`
+                }. Choose a player`}
+                className={`flex w-full cursor-pointer flex-col items-center rounded-control ${FOCUS_RING.join(" ")}`}
+                onClick={() => onPick(slotIndex)}
+                onDragStart={(event) => {
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData(SLOT_DRAG, String(slotIndex));
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDropTarget(slotIndex);
+                }}
+                onDragLeave={() => setDropTarget(null)}
+                onDragEnd={() => setDropTarget(null)}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDropTarget(null);
+                  const from = draggedSlotOf(event);
+                  if (from !== null && from !== slotIndex) onSwap(from, slotIndex);
+                }}
               >
-                {slotIndex + 1}
-              </span>
-              <span className="mt-0.5 max-w-full truncate text-2xs font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
-                <span className="sr-only">
-                  {slotIndex + 1}. {slot.position}:{" "}
+                <span
+                  aria-hidden="true"
+                  className={`flex size-7 items-center justify-center rounded-full border-2 text-2xs font-bold tabular-nums text-text-bright shadow-panel ${
+                    player === undefined
+                      ? "border-dashed border-text-bright/70 bg-transparent"
+                      : `border-text-highlight ${isKeeper ? "bg-pitch-marker-gk" : "bg-pitch-marker"}`
+                  } ${dropTarget === slotIndex ? "scale-125 ring-2 ring-text-bright" : ""}`}
+                >
+                  {slotIndex + 1}
                 </span>
-                {player === undefined ? slot.position : markerName(player)}
-                {player === undefined && <span className="sr-only"> unassigned</span>}
-              </span>
+                <span
+                  aria-hidden="true"
+                  className="mt-0.5 max-w-full truncate text-2xs font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
+                >
+                  {player === undefined ? slot.position : markerName(player)}
+                </span>
+              </button>
             </li>
           );
         })}

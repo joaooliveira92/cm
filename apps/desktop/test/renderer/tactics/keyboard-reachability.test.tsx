@@ -54,7 +54,12 @@ describe("tier-3 remainder — Tactics is driveable with no mouse (Level 1 guara
     await mountTactics();
     await screen.findByRole("button", { name: "Save Tactic" });
 
-    const controls = [...document.querySelectorAll<HTMLElement>("main button, main select")];
+    // The pitch markers are pointer shortcuts onto the slot pickers, deliberately out of tab order.
+    const controls = [
+      ...document.querySelectorAll<HTMLElement>(
+        'main button:not([tabindex="-1"]), main select:not([tabindex="-1"])',
+      ),
+    ];
     const ids = controls.map((c) => c.dataset.actionId);
 
     // Native tab order: the five formation buttons come first, then the three
