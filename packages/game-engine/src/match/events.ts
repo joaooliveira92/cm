@@ -76,6 +76,9 @@ export interface SubstitutionEvent extends BaseMatchEvent {
   readonly teamClubId: ClubId;
   readonly outPlayerId: PlayerId;
   readonly inPlayerId: PlayerId;
+  /** Forced rather than the manager's: a severe Injury's replacement, or the goalkeeper stand-in
+   *  dragged in after the last keeper leaves — injured, brought off or sent off. Despite the name, it
+   *  does not by itself mean an Injury; the severe Injury event right before it does. */
   readonly forcedByInjury: boolean;
 }
 

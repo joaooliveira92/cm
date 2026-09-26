@@ -1,6 +1,7 @@
 import type { AnyRouter } from "@tanstack/react-router";
 import { requestBackFocus, requestFocus, type NavigationIntent } from "../focus.js";
 import { resolveDestination, type CareerDestination, type NavigationDestination } from "./destinations.js";
+import { captureScrollState } from "./scroll-state.js";
 
 /**
  * The navigation seam every navigation-action (career shell tabs, creation
@@ -28,14 +29,30 @@ const getRouter = (): AnyRouter => {
 
 const isPointerIntent = (intent: NavigationIntent): boolean => intent === "pointer";
 
+/** Capture scroll state into the current history entry before navigating away. */
+const enrichHistoryState = (): void => {
+  const scroll = captureScrollState();
+  window.history.replaceState(
+    { ...window.history.state, __scroll: scroll },
+    "",
+  );
+};
+
 /** Navigate to a typed destination. Focus policy delegated to the coordinator. */
 export const navigate = (destination: NavigationDestination): void => {
   const resolved = resolveDestination(destination);
+  enrichHistoryState();
   // The switch narrows `resolved` per literal `to` so each case keeps its params typing.
   switch (resolved.to) {
     case "/":
       getRouter().navigate({ to: "/" });
       break;
+    case "/load":
+      getRouter().navigate({ to: "/load" });
+      break;
+    case "/create/leagues":
+      getRouter().navigate({ to: "/create/leagues" });
+      return;
     case "/create/step-1":
       getRouter().navigate({ to: "/create/step-1" });
       break;
@@ -46,12 +63,27 @@ export const navigate = (destination: NavigationDestination): void => {
       getRouter().navigate({ to: "/create/step-3" });
       break;
     case "/career/$saveId/squad":
+    case "/career/$saveId/squad-staff":
+    case "/career/$saveId/squad-information":
+    case "/career/$saveId/squad-finances":
+    case "/career/$saveId/squad-history":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     case "/career/$saveId/tactics":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
+    case "/career/$saveId/tactics/editor":
+      getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
+      break;
+    case "/career/$saveId/training/workload":
+    case "/career/$saveId/training/coaching":
+    case "/career/$saveId/training/development-centre":
+      getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
+      break;
     case "/career/$saveId/transfers":
+    case "/career/$saveId/contract-expiry":
+    case "/career/$saveId/budget-review":
+    case "/career/$saveId/transfer-history":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
     case "/career/$saveId/league":
@@ -66,7 +98,98 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/season-summary":
       getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
       break;
+    case "/career/$saveId/manager":
+    case "/career/$saveId/manager/inbox":
+    case "/career/$saveId/manager/confidence":
+    case "/career/$saveId/manager/notes":
+    case "/career/$saveId/manager/jobs":
+    case "/career/$saveId/manager/responsibilities":
+    case "/career/$saveId/manager/career":
+      getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
+      break;
+    case "/career/$saveId/news":
+    case "/career/$saveId/training":
+    case "/career/$saveId/club-info":
+    case "/career/$saveId/board-confidence":
+    case "/career/$saveId/finances":
+    case "/career/$saveId/staff-overview":
+    case "/career/$saveId/shortlist":
+    case "/career/$saveId/scouting":
+    case "/career/$saveId/scouting-assignment":
+    case "/career/$saveId/scouting-knowledge":
+    case "/career/$saveId/player-search":
+    case "/career/$saveId/staff-search":
+    case "/career/$saveId/competitions":
+    case "/career/$saveId/match-match-tactics":
+    case "/career/$saveId/match-substitutions":
+    case "/career/$saveId/match-stats":
+    case "/career/$saveId/match-ratings":
+    case "/career/$saveId/match-commentary":
+    case "/career/$saveId/match-latest-scores":
+    case "/career/$saveId/match-live-table":
+      getRouter().navigate({ to: resolved.to, params: { saveId: resolved.params.saveId } });
+      break;
+    // The one two-parameter route: the club segment carries the target club as well as the save.
+    case "/career/$saveId/club/$clubId/scout-report":
+    case "/career/$saveId/club/$clubId/staff":
+    case "/career/$saveId/club/$clubId/squad":
+    case "/career/$saveId/club/$clubId/information":
+    case "/career/$saveId/club/$clubId/fixtures":
+    case "/career/$saveId/club/$clubId/transfers":
+    case "/career/$saveId/club/$clubId/finances":
+      getRouter().navigate({
+        to: resolved.to,
+        params: { saveId: resolved.params.saveId, clubId: resolved.params.clubId },
+      });
+      break;
+    // The competition segment, shaped like the club segment above: a target competition as well as
+    // the save.
+    case "/career/$saveId/competition/$competitionId/overview":
+    case "/career/$saveId/competition/$competitionId/table":
+    case "/career/$saveId/competition/$competitionId/fixtures":
+    case "/career/$saveId/competition/$competitionId/results":
+      getRouter().navigate({
+        to: resolved.to,
+        params: {
+          saveId: resolved.params.saveId,
+          competitionId: resolved.params.competitionId,
+        },
+      });
+      break;
+    case "/career/$saveId/player/$playerId/profile":
+    case "/career/$saveId/player/$playerId/development":
+    case "/career/$saveId/player/$playerId/contract":
+    case "/career/$saveId/training/plan/$playerId":
+      getRouter().navigate({
+        to: resolved.to,
+        params: { saveId: resolved.params.saveId, playerId: resolved.params.playerId },
+      });
+      break;
+    // The comparison's second parameter is the comma-joined `:playerIds` slug, not one player id:
+    // a separate arm so the params stay string-typed (the destination decodes them at the route).
+    case "/career/$saveId/player-comparison/$playerIds":
+      getRouter().navigate({
+        to: resolved.to,
+        params: { saveId: resolved.params.saveId, playerIds: resolved.params.playerIds },
+      });
+      break;
+    case "/career/$saveId/match-report/$matchId":
+      getRouter().navigate({
+        to: resolved.to,
+        params: { saveId: resolved.params.saveId, matchId: resolved.params.matchId },
+      });
+      break;
+    default:
+      // A resolved route with no arm here is a routing hole, not a no-op: the News Inbox spent a
+      // release silently ignoring every click because its arm was missing and the switch simply
+      // fell through. `never` makes the next omission a compile error rather than a dead button.
+      return assertNoUnhandledRoute(resolved);
   }
+};
+
+/** The exhaustiveness guard for the route switch above. */
+const assertNoUnhandledRoute = (resolved: never): never => {
+  throw new Error(`unhandled navigation route: ${JSON.stringify(resolved)}`);
 };
 
 /** Navigate to a career destination, requesting destination focus on keyboard/
@@ -87,6 +210,30 @@ export const navigateWithFocus = (
 
 /** `g b` — real app history back; the arriving screen restores its main region. */
 export const navigateBack = (): void => {
+  enrichHistoryState();
   requestBackFocus();
   getRouter().history.back();
 };
+
+/** Whether a back step exists, so a header control can disable rather than
+ *  pretend. There is no `canGoForward` counterpart in the router's history. */
+export const canNavigateBack = (): boolean => getRouter().history.canGoBack();
+
+/** The forward step. Focus is restored the same way a back step restores it:
+ *  the arriving screen takes its main region. */
+export const navigateForward = (): void => {
+  enrichHistoryState();
+  requestBackFocus();
+  getRouter().history.forward();
+};
+/**
+ * Which intent a click handler was actually invoked with.
+ *
+ * A `<button>` fires `onClick` for Enter and Space just as it does for a mouse press, so a handler
+ * that hardcodes one intent silently reports every keyboard activation as a pointer arrival — and
+ * `navigateCareer` then skips the destination focus request that AC-15 requires. `event.detail` is
+ * the click count, and it is `0` for a keyboard-synthesised click, which is the standard way to
+ * tell the two apart without wiring a parallel `onKeyDown`.
+ */
+export const intentOfClick = (event: { readonly detail: number }): NavigationIntent =>
+  event.detail === 0 ? "keyboard" : "pointer";

@@ -1,4 +1,17 @@
-import { SaveId as SaveIdSchema, type SaveId } from "@cm-clone/contracts";
+import {
+  ClubId as ClubIdSchema,
+  CompetitionId as CompetitionIdSchema,
+  MatchId as MatchIdSchema,
+  NationId as NationIdSchema,
+  PlayerId as PlayerIdSchema,
+  SaveId as SaveIdSchema,
+  type ClubId,
+  type CompetitionId,
+  type MatchId,
+  type NationId,
+  type PlayerId,
+  type SaveId,
+} from "@cm-clone/contracts";
 import { Schema } from "effect";
 
 /**
@@ -21,8 +34,88 @@ const malformed = (reason: string): RouteParamDecode<never> => ({ _tag: "Malform
 export const decodeSaveId = (raw: string): RouteParamDecode<SaveId> => {
   if (raw === "") return malformed("saveId parameter is empty");
   try {
-    return { _tag: "Success", success: Schema.decodeUnknownSync(SaveIdSchema)(raw) };
+    return { _tag: "Success", success: Schema.decodeSync(SaveIdSchema)(raw) };
   } catch {
     return malformed("saveId parameter is not a string");
+  }
+};
+
+/** Decode the `:clubId` path parameter into the contract's branded `ClubId`.
+ *  Same shape as `decodeSaveId` and for the same reason: the brand is nominal
+ *  only, so the empty string is the one structurally-wrong value worth
+ *  rejecting here. A well-formed id naming no club in the save is NOT a route
+ *  concern — it is the report RPC's `ClubNotFoundError`, rendered by the
+ *  screen. Conflating the two would turn a missing club into an "invalid
+ *  address" panel, which tells the manager nothing true. */
+export const decodeClubId = (raw: string): RouteParamDecode<ClubId> => {
+  if (raw === "") return malformed("clubId parameter is empty");
+  try {
+    return { _tag: "Success", success: Schema.decodeSync(ClubIdSchema)(raw) };
+  } catch {
+    return malformed("clubId parameter is not a string");
+  }
+};
+
+/** Decode the `:playerId` path parameter into the contract's branded `PlayerId`.
+ *  Same shape as the other param decoders. */
+export const decodePlayerId = (raw: string): RouteParamDecode<PlayerId> => {
+  if (raw === "") return malformed("playerId parameter is empty");
+  try {
+    return { _tag: "Success", success: Schema.decodeSync(PlayerIdSchema)(raw) };
+  } catch {
+    return malformed("playerId parameter is not a string");
+  }
+};
+
+/** Decode the `:playerIds` path parameter — the comma-joined comparison list the route carries —
+ *  into the contract's branded `PlayerId`s. Each segment decodes through `decodePlayerId`; any
+ *  segment that cannot is a malformed address, not part of a comparison. A list naming players the
+ *  save does not have is the RPC's `PlayerNotFoundError`, not an address error (AC-12). The list may
+ *  repeat an id — the comparison key deduplicates — but may not be empty: comparing nothing is not
+ *  a route. */
+export const decodePlayerIds = (raw: string): RouteParamDecode<ReadonlyArray<PlayerId>> => {
+  const segments = raw.split(",");
+  if (segments.some((segment) => segment === "")) {
+    return malformed("playerIds parameter is empty");
+  }
+  const decoded: PlayerId[] = [];
+  for (const segment of segments) {
+    const single = decodePlayerId(segment);
+    if (single._tag === "Malformed") {
+      return malformed(`playerIds parameter holds an invalid player id: ${single.reason}`);
+    }
+    decoded.push(single.success);
+  }
+  return { _tag: "Success", success: decoded };
+};
+
+/** Decode the `:nationId` path parameter into the contract's branded `NationId`. */
+export const decodeNationId = (raw: string): RouteParamDecode<NationId> => {
+  if (raw === "") return malformed("nationId parameter is empty");
+  try {
+    return { _tag: "Success", success: Schema.decodeSync(NationIdSchema)(raw) };
+  } catch {
+    return malformed("nationId parameter is not a string");
+  }
+};
+
+/** Decode the `:competitionId` path parameter into the contract's branded `CompetitionId`. */
+export const decodeCompetitionId = (raw: string): RouteParamDecode<CompetitionId> => {
+  if (raw === "") return malformed("competitionId parameter is empty");
+  try {
+    return { _tag: "Success", success: Schema.decodeSync(CompetitionIdSchema)(raw) };
+  } catch {
+    return malformed("competitionId parameter is not a string");
+  }
+};
+
+/** Decode the `:matchId` path parameter into the contract's branded `MatchId`. A well-formed id
+ *  naming no match is the report RPC's `MatchNotFoundError`, not an address error. */
+export const decodeMatchId = (raw: string): RouteParamDecode<MatchId> => {
+  if (raw === "") return malformed("matchId parameter is empty");
+  try {
+    return { _tag: "Success", success: Schema.decodeSync(MatchIdSchema)(raw) };
+  } catch {
+    return malformed("matchId parameter is not a string");
   }
 };

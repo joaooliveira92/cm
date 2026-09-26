@@ -15,12 +15,14 @@ application logic — it is only the instructions and permissions for agents edi
 | `command/boot.md` | `/boot` command | — | — |
 | `command/chart.md` | `/chart` command | — | — |
 | `command/gate.md` | `/gate` command | — | — |
+| `command/milestone.md` | `/milestone` command | — | — |
 | `command/sprint.md` | `/sprint` command | — | — |
 
 Each file is a Markdown document with YAML frontmatter (`description`, `mode`/`agent`, `permission`).
 The pipeline order is **spec-creator → research → implementator → reviewer**, run by the `build`
 orchestrator from `/sprint`; `/chart` handles one foggy decision per session; `/gate` observes and
-reports only.
+reports only; `/milestone` measures the current milestone from [.ai/MILESTONES.md](../.ai/MILESTONES.md)
+and bounds what the queue may ingest.
 
 ## Editing rules
 

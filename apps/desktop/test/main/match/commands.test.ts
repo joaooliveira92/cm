@@ -1,0 +1,468 @@
+import { mkdtempSync } from "node:fs";
+import { rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { it } from "@effect/vitest";
+import { deepStrictEqual, ok, strictEqual } from "node:assert";
+import { Tactic, type ClubId, type FixtureId, type MatchId, type MatchSummary, type ResumeSimulationView, type SaveId } from "@cm-clone/contracts";
+import { Effect } from "effect";
+import { afterEach, beforeEach } from "vitest";
+import { getTactics } from "../../../src/main/club/index.js";
+import {
+  getMatchReport,
+  getMatchStatistics,
+  getPostMatchSummary,
+  resumeSimulation,
+  submitMatchCommand,
+} from "../../../src/main/match/index.js";
+import { commitMatchday } from "../../../src/main/season/commitMatchday.js";
+import { atFirstFixture, humanClubOf, humanSubs, startSeededMatch } from "./seededMatch.js";
+
+let savesDir: string;
+
+beforeEach(() => {
+  savesDir = mkdtempSync(path.join(os.tmpdir(), "cm-clone-match-commands-test-"));
+});
+
+afterEach(() => rm(savesDir, { recursive: true, force: true }));
+
+/**
+ * The kickoff Tactic: the one `atFirstFixture` persisted before `startMatch` froze it into the match.
+ * Its XI and bench are what the engine plays from kickoff, so it is the known, deterministic
+ * line-up every test targets its `MakeSubstitution` and `ForceOff` commands against. A live
+ * `ChangeTactics` changes only the Team Instructions (decision request 01, ticket 40), so a test
+ * wanting another line-up would set it before kickoff, never with a command.
+ */
+const kickoffTactic = (view: { readonly tactic: Tactic | null }): Tactic => {
+  ok(view.tactic !== null, "a seeded match starts with a Tactic set (`atFirstFixture`)");
+  return view.tactic;
+};
+
+const drain = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
+  Effect.gen(function* () {
+    let cursor = 0;
+    let isComplete = false;
+    const chunks: Array<ResumeSimulationView> = [];
+    while (!isComplete) {
+      const chunk = yield* resumeSimulation(savesDir, saveId, matchId, cursor, null);
+      chunks.push(chunk);
+      cursor = chunk.cursor;
+      isComplete = chunk.isComplete;
+    }
+    return chunks;
+  });
+
+/**
+ * The match seeds this file plays, all on the first scheduled Fixture of the `WORLD_SEED` world.
+ * Found by enumerating seeds through the same public path the tests take (`startSeededMatch` +
+ * `drain`) and recording what each one produced.
+ *
+ * These are *not* interchangeable with any other seed: repin them by rerunning that enumeration if
+ * the engine's draw order or this world's squads ever change. The two helpers below re-check their
+ * seed's property on every run and fail with that instruction, rather than silently asserting
+ * against a match that no longer has the shape the test needs.
+ */
+const INJURY_SEED = 1;
+const INJURY_FREE_SEED = 3;
+const CLEAN_LINEUP_SEED = 3;
+/** For the tests that hold whatever the match happens to produce — they assert on replay equality
+ *  or on reaching full time, not on a particular event — but still want the same match each run. */
+const ANY_MATCH_SEED = 7;
+
+const humanOnPitch = (view: ResumeSimulationView, summary: MatchSummary): number =>
+  summary.isHome ? view.homeOnPitchCount : view.awayOnPitchCount;
+
+const opponentOnPitch = (view: ResumeSimulationView, summary: MatchSummary): number =>
+  summary.isHome ? view.awayOnPitchCount : view.homeOnPitchCount;
+
+/**
+ * Tests that need a known, uninterrupted substitution budget start from `INJURY_FREE_SEED`: an
+ * Injury can force its own substitution and throw off an exact sub-count expectation. The guard
+ * drains a full no-op simulation first (cheap — `simulateMatch` is pure and sub-millisecond,
+ * ADR-0007) and asserts the seed still has that property, so a drifted seed reports itself instead
+ * of surfacing as a confusing off-by-one further down the test.
+ */
+const startMatchWithNoInjuries = (savesDir: string, saveId: SaveId, fixtureId: FixtureId) =>
+  Effect.gen(function* () {
+    const summary = yield* startSeededMatch(savesDir, saveId, fixtureId, INJURY_FREE_SEED);
+    const chunks = yield* drain(savesDir, saveId, summary.matchId);
+    ok(
+      !chunks.some((chunk) => chunk.lines.some((line) => line.tag === "Injury")),
+      `seed ${INJURY_FREE_SEED} no longer produces an Injury-free match — repin INJURY_FREE_SEED`,
+    );
+    return summary;
+  });
+
+/** Twin of `startMatchWithNoInjuries` that also excludes red cards, so a deterministic 11-on-11
+ * on-pitch count holds — what ticket 11's no-subs tests need to assert a clean ForceOff to 10. */
+const startMatchWithCleanLineup = (savesDir: string, saveId: SaveId, fixtureId: FixtureId) =>
+  Effect.gen(function* () {
+    const summary = yield* startSeededMatch(savesDir, saveId, fixtureId, CLEAN_LINEUP_SEED);
+    const chunks = yield* drain(savesDir, saveId, summary.matchId);
+    ok(
+      !chunks.some((chunk) =>
+        chunk.lines.some((line) => line.tag === "Injury" || line.tag === "RedCard"),
+      ),
+      `seed ${CLEAN_LINEUP_SEED} no longer produces a clean match (no Injury/RedCard) — repin CLEAN_LINEUP_SEED`,
+    );
+    return summary;
+  });
+
+it.effect("submitMatchCommand applies a mid-match substitution and reflects it in homeSubs", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    const summary = yield* startMatchWithNoInjuries(savesDir, save.id, fixtureId);
+
+    const tactic = kickoffTactic(yield* getTactics(savesDir, save.id));
+
+    const outPlayerId = tactic.slots[0]!.playerId;
+    const inPlayerId = tactic.bench[0]!;
+
+    const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 2, false, {
+      _tag: "MakeSubstitution",
+      clubId: humanClubOf(summary),
+      outPlayerId,
+      inPlayerId,
+    });
+
+    strictEqual(response.substitutionApplied, true);
+    strictEqual(humanSubs(response, summary).used, 1);
+    strictEqual(humanSubs(response, summary).remaining, 4);
+    strictEqual(humanSubs(response, summary).windowsUsed, 1);
+    strictEqual(humanSubs(response, summary).windowsRemaining, 2);
+    strictEqual(humanSubs(response, summary).capReached, false);
+
+    const chunks = yield* drain(savesDir, save.id, summary.matchId);
+    const allLines = chunks.flatMap((chunk) => chunk.lines);
+    ok(
+      allLines.some((line) => line.tag === "Substitution"),
+      "the submitted substitution should surface as a Substitution commentary line",
+    );
+  }),
+);
+
+it.effect("substitutions are capped at 5 per team across 3 windows, enforced silently by the engine", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    const summary = yield* startMatchWithNoInjuries(savesDir, save.id, fixtureId);
+
+    const tactic = kickoffTactic(yield* getTactics(savesDir, save.id));
+
+    ok(tactic.bench.slice(0, 6).every((id) => id !== null), "the known Tactic names six bench players, five to use and one refused at the cap");
+
+    // 5 substitutions batched into 3 windows (two subs each in the first two windows, one in the
+    // third) — all should be accepted since neither the 5-sub nor 3-window cap is exceeded yet.
+    const plan: ReadonlyArray<{ readonly minute: number; readonly outIndex: number; readonly benchIndex: number }> = [
+      { minute: 10, outIndex: 0, benchIndex: 0 },
+      { minute: 10, outIndex: 1, benchIndex: 1 },
+      { minute: 30, outIndex: 2, benchIndex: 2 },
+      { minute: 30, outIndex: 3, benchIndex: 3 },
+      { minute: 60, outIndex: 4, benchIndex: 4 },
+    ];
+
+    let last: ResumeSimulationView | undefined;
+    for (const step of plan) {
+      last = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, step.minute, false, {
+        _tag: "MakeSubstitution",
+        clubId: humanClubOf(summary),
+        outPlayerId: tactic.slots[step.outIndex]!.playerId,
+        inPlayerId: tactic.bench[step.benchIndex]!,
+      });
+    }
+
+    strictEqual(humanSubs(last!, summary).used, 5);
+    strictEqual(humanSubs(last!, summary).windowsUsed, 3);
+    strictEqual(humanSubs(last!, summary).capReached, true);
+
+    // A 6th substitution, even at a brand-new window minute, is silently rejected by the engine —
+    // `used` must not budge past the cap.
+    const rejected = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 70, false, {
+      _tag: "MakeSubstitution",
+      clubId: humanClubOf(summary),
+      outPlayerId: tactic.slots[5]!.playerId,
+      inPlayerId: tactic.bench[5]!,
+    });
+
+    strictEqual(rejected.substitutionApplied, false);
+    strictEqual(humanSubs(rejected, summary).used, 5);
+    strictEqual(humanSubs(rejected, summary).capReached, true);
+  }),
+);
+
+it.effect("a mid-match ChangeTactics command is accepted and the match still resolves to FullTimeWhistle", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    const summary = yield* startSeededMatch(savesDir, save.id, fixtureId, ANY_MATCH_SEED);
+
+    const tacticsView = yield* getTactics(savesDir, save.id);
+    const tactic = new Tactic({ ...kickoffTactic(tacticsView), mentality: "attacking", pressing: "high" });
+
+    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 20, false, {
+      _tag: "ChangeTactics",
+      clubId: humanClubOf(summary),
+      tactic,
+    });
+
+    const chunks = yield* drain(savesDir, save.id, summary.matchId);
+    const last = chunks[chunks.length - 1]!;
+    strictEqual(last.isComplete, true);
+    ok(chunks.flatMap((c) => c.lines).some((line) => line.tag === "FullTimeWhistle"));
+  }),
+);
+
+it.effect(
+  "determinism: replaying the same match+command sequence from cursor 0 twice reproduces the same timeline",
+  () =>
+    Effect.gen(function* () {
+      const { save, fixtureId } = yield* atFirstFixture(savesDir);
+      const summary = yield* startSeededMatch(savesDir, save.id, fixtureId, ANY_MATCH_SEED);
+
+      const tactic = kickoffTactic(yield* getTactics(savesDir, save.id));
+      yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 15, false, {
+        _tag: "MakeSubstitution",
+        clubId: humanClubOf(summary),
+        outPlayerId: tactic.slots[0]!.playerId,
+        inPlayerId: tactic.bench[0]!,
+      });
+      // The same seed + the exact same submitted command sequence must resimulate identically no
+      // matter how many times `resumeSimulation` re-derives the timeline — this is what makes
+      // chunked resimulation (ADR-0007) safe to call repeatedly rather than caching the result.
+      const first = yield* drain(savesDir, save.id, summary.matchId);
+      const second = yield* drain(savesDir, save.id, summary.matchId);
+
+      deepStrictEqual(
+        first.flatMap((c) => c.lines),
+        second.flatMap((c) => c.lines),
+      );
+      deepStrictEqual(
+        first.map((c) => ({ homeSubs: c.homeSubs, awaySubs: c.awaySubs })),
+        second.map((c) => ({ homeSubs: c.homeSubs, awaySubs: c.awaySubs })),
+      );
+    }),
+);
+
+it.effect("ForceOff brings a player off to 10 men without consuming a substitution (ticket 11)", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    const summary = yield* startMatchWithCleanLineup(savesDir, save.id, fixtureId);
+
+    const tactic = kickoffTactic(yield* getTactics(savesDir, save.id));
+
+    const onPitchPlayerId = tactic.slots[3]!.playerId;
+    const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 60, false, {
+      _tag: "ForceOff",
+      clubId: humanClubOf(summary),
+      playerId: onPitchPlayerId,
+    });
+
+    // The bring-off consumes no substitution budget. The opponent is unaffected; the human side's
+    // count already drops on this response, since a journaled bring-off counts once journaled.
+    strictEqual(humanSubs(response, summary).used, 0);
+    strictEqual(opponentOnPitch(response, summary), 11);
+
+    // Deterministic: replaying the whole match reproduces the same 10-man surface.
+    const replay = yield* drain(savesDir, save.id, summary.matchId);
+    strictEqual(humanOnPitch(replay[replay.length - 1]!, summary), 10);
+  }),
+);
+
+it.effect("a ForceOff for a player not on the pitch is a silent no-op (count unchanged)", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    const summary = yield* startMatchWithCleanLineup(savesDir, save.id, fixtureId);
+
+    const tacticsView = yield* getTactics(savesDir, save.id);
+    const tactic = kickoffTactic(tacticsView);
+
+    // A bench player isn't on the pitch — forcing them off changes nothing. The head-count is the
+    // pitch's size, and the player is not in the kickoff XI.
+    const inXi = (id: string) => tactic.slots.some((slot) => slot.playerId === id);
+    const benchPlayerId = tacticsView.squad.find((player) => !inXi(player.id))!.id;
+    const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 60, false, {
+      _tag: "ForceOff",
+      clubId: humanClubOf(summary),
+      playerId: benchPlayerId,
+    });
+    strictEqual(humanOnPitch(response, summary), 11);
+  }),
+);
+
+it.effect("an Injury event's chunk lists the injured club in injuredClubIds", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    // `INJURY_SEED` is a seed known to produce an Injury in this world. This test used to start up
+    // to 40 clock-seeded matches and assert that one of them happened to injure somebody — a
+    // probabilistic assertion, so it had a real failure rate rather than an outcome.
+    const summary = yield* startSeededMatch(savesDir, save.id, fixtureId, INJURY_SEED);
+    const chunks = yield* drain(savesDir, save.id, summary.matchId);
+
+    const injuredChunks = chunks.filter((chunk) => chunk.lines.some((line) => line.tag === "Injury"));
+    ok(
+      injuredChunks.length > 0,
+      `seed ${INJURY_SEED} no longer produces an Injury — repin INJURY_SEED`,
+    );
+
+    for (const chunk of injuredChunks) {
+      ok(chunk.injuredClubIds.length > 0, "a chunk with an Injury line must list the injured club");
+      ok(
+        chunk.injuries.some((i) => i.trigger === "contact" || i.trigger === "non-contact") &&
+          chunk.injuries.every((i) => ["orange", "red"].includes(i.tier)),
+        "a chunk with an Injury line must carry its typed trigger and tier",
+      );
+    }
+  }),
+);
+
+it.effect("getPostMatchSummary lists every goal, card and injury of the finished timeline with names", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    const match = yield* startSeededMatch(savesDir, save.id, fixtureId, INJURY_SEED);
+    const chunks = yield* drain(savesDir, save.id, match.matchId);
+    const final = chunks[chunks.length - 1]!;
+    const lines = chunks.flatMap((chunk) => chunk.lines);
+
+    const summary = yield* getPostMatchSummary(savesDir, save.id, match.matchId);
+
+    strictEqual(summary.homeClubId, match.homeClubId);
+    strictEqual(summary.awayClubId, match.awayClubId);
+    deepStrictEqual([summary.homeScore, summary.awayScore], [final.homeScore, final.awayScore]);
+
+    const goals = summary.events.filter((event) => event.kind === "Goal");
+    strictEqual(goals.length, final.homeScore + final.awayScore);
+    strictEqual(
+      goals.filter((goal) => goal.clubId === match.homeClubId).length,
+      final.homeScore,
+      "each goal is credited to the side whose score it moved",
+    );
+    for (const kind of ["Goal", "YellowCard", "RedCard", "Injury"] as const) {
+      strictEqual(
+        summary.events.filter((event) => event.kind === kind).length,
+        lines.filter((line) => line.tag === kind).length,
+        `${kind} events match the commentary timeline`,
+      );
+    }
+    ok(summary.events.some((event) => event.kind === "Injury"), "INJURY_SEED should produce an Injury");
+    ok(summary.events.every((event) => event.playerName !== "Unknown player"));
+    const minutes = summary.events.map((event) => event.minute);
+    deepStrictEqual(minutes, [...minutes].sort((a, b) => a - b), "events stay in match order");
+
+    // A read: asking twice gives the same summary, and committing the result does not change it.
+    deepStrictEqual(yield* getPostMatchSummary(savesDir, save.id, match.matchId), summary);
+    yield* commitMatchday(savesDir, save.id, fixtureId);
+    deepStrictEqual(yield* getPostMatchSummary(savesDir, save.id, match.matchId), summary);
+  }),
+);
+
+it.effect("getPostMatchSummary fails with MatchNotFoundError for a match with no stream", () =>
+  Effect.gen(function* () {
+    const { save } = yield* atFirstFixture(savesDir);
+    const error = yield* Effect.flip(getPostMatchSummary(savesDir, save.id, "no-such-match" as MatchId));
+    strictEqual(error._tag, "MatchNotFoundError");
+  }),
+);
+
+it.effect("getMatchStatistics reconciles with the timeline, cuts at a minute, and finds the last played match", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    strictEqual(yield* getMatchStatistics(savesDir, save.id, null, null), null, "no match played yet");
+
+    const match = yield* startSeededMatch(savesDir, save.id, fixtureId, INJURY_SEED);
+    const chunks = yield* drain(savesDir, save.id, match.matchId);
+    const final = chunks[chunks.length - 1]!;
+    const lines = chunks.flatMap((chunk) => chunk.lines);
+
+    const full = (yield* getMatchStatistics(savesDir, save.id, match.matchId, null))!;
+    strictEqual(full.throughMinute, null, "a whole-match read is not a cut");
+    const row = (key: string) => full.rows.find((r) => r.key === key)!;
+    deepStrictEqual([row("goals").home, row("goals").away], [final.homeScore, final.awayScore]);
+    strictEqual(row("injuries").home + row("injuries").away, lines.filter((line) => line.tag === "Injury").length);
+    strictEqual(
+      row("yellowCards").home + row("yellowCards").away,
+      lines.filter((line) => line.tag === "YellowCard").length,
+    );
+    deepStrictEqual([...full.unavailable], ["possession", "corners", "fouls", "offsides"]);
+    strictEqual(row("redCards").home + row("redCards").away, lines.filter((line) => line.tag === "RedCard").length);
+    deepStrictEqual(
+      [row("substitutions").home, row("substitutions").away],
+      [final.homeSubs.used, final.awaySubs.used],
+      "substitutions are credited to the side that made them",
+    );
+
+    // Cut at the first chunk's end — a position in the timeline — never exceeds full time.
+    const firstChunkEnd = chunks[0]!.cursor;
+    const firstHalf = (yield* getMatchStatistics(savesDir, save.id, match.matchId, firstChunkEnd))!;
+    strictEqual(firstHalf.throughMinute, chunks[0]!.lines[chunks[0]!.lines.length - 1]!.minute);
+    deepStrictEqual(
+      [firstHalf.rows.find((r) => r.key === "goals")!.home, firstHalf.rows.find((r) => r.key === "goals")!.away],
+      [chunks[0]!.homeScore, chunks[0]!.awayScore],
+      "the cut's goals equal the score at that point of the timeline",
+    );
+    for (const [index, cut] of firstHalf.rows.entries()) {
+      ok(cut.home <= full.rows[index]!.home && cut.away <= full.rows[index]!.away, `${cut.key} never exceeds full time`);
+    }
+
+    // An uncommitted match is not yet "played"; once committed it is the last match.
+    strictEqual(yield* getMatchStatistics(savesDir, save.id, null, null), null);
+    yield* commitMatchday(savesDir, save.id, fixtureId);
+    const last = (yield* getMatchStatistics(savesDir, save.id, null, null))!;
+    strictEqual(last.matchId, match.matchId);
+    deepStrictEqual(last.rows, full.rows);
+
+    const missing = yield* Effect.flip(getMatchStatistics(savesDir, save.id, "no-such-match" as MatchId, null));
+    strictEqual(missing._tag, "MatchNotFoundError");
+  }),
+);
+
+
+it.effect("getMatchReport records every goal, card, injury and substitution once the result is committed", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    const match = yield* startSeededMatch(savesDir, save.id, fixtureId, INJURY_SEED);
+    // A manager substitution, so the report's substitution entries are exercised whatever the seed rolls.
+    const tactic = kickoffTactic(yield* getTactics(savesDir, save.id));
+    yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, null, 2, false, {
+      _tag: "MakeSubstitution",
+      clubId: humanClubOf(match),
+      outPlayerId: tactic.slots[1]!.playerId,
+      inPlayerId: tactic.bench[0]!,
+    });
+    const chunks = yield* drain(savesDir, save.id, match.matchId);
+    const final = chunks[chunks.length - 1]!;
+    const lines = chunks.flatMap((chunk) => chunk.lines);
+
+    const early = yield* Effect.flip(getMatchReport(savesDir, save.id, match.matchId));
+    strictEqual(early._tag, "MatchNotCompleteError", "no report before the result is accepted");
+
+    yield* commitMatchday(savesDir, save.id, fixtureId);
+    const report = yield* getMatchReport(savesDir, save.id, match.matchId);
+
+    deepStrictEqual([report.homeScore, report.awayScore], [final.homeScore, final.awayScore]);
+    const firstHalfGoals = (clubId: ClubId) =>
+      report.events.filter((event) => event.kind === "Goal" && event.half === 1 && event.clubId === clubId).length;
+    deepStrictEqual(
+      [report.halfTimeHomeScore, report.halfTimeAwayScore],
+      [firstHalfGoals(match.homeClubId), firstHalfGoals(match.awayClubId)],
+      "the half-time score is each side's first-half goals, stoppage time included",
+    );
+    for (const kind of ["Goal", "YellowCard", "RedCard", "Injury", "Substitution"] as const) {
+      strictEqual(
+        report.events.filter((event) => event.kind === kind).length,
+        lines.filter((line) => line.tag === kind).length,
+        `${kind} events match the commentary timeline`,
+      );
+    }
+    const subs = report.events.filter((event) => event.kind === "Substitution");
+    ok(subs.some((sub) => !sub.replaced!.forcedByInjury), "the manager substitution is reported");
+    deepStrictEqual(
+      [subs.filter((sub) => sub.clubId === match.homeClubId).length, subs.filter((sub) => sub.clubId === match.awayClubId).length],
+      [final.homeSubs.used, final.awaySubs.used],
+    );
+    ok(subs.every((sub) => sub.replaced !== null && sub.replaced.playerId !== sub.playerId));
+    ok(report.events.filter((event) => event.kind !== "Substitution").every((event) => event.replaced === null));
+    ok(report.events.every((event) => event.playerName !== "Unknown player"));
+    deepStrictEqual(report.statistics, yield* getMatchStatistics(savesDir, save.id, match.matchId, null));
+
+    const missing = yield* Effect.flip(getMatchReport(savesDir, save.id, "no-such-match" as MatchId));
+    strictEqual(missing._tag, "MatchNotFoundError");
+  }),
+);

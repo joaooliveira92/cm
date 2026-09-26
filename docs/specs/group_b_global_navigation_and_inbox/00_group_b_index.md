@@ -42,8 +42,4 @@ Global Application Shell
 - Deterministic canonical simulation and idempotent actions.
 - Full keyboard, screen-reader, localization, high-scaling, and RTL support.
 
-## Suggested Git commit
 
-```text
-docs(game-ui): add global navigation and inbox specifications
-```

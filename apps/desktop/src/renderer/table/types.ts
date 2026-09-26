@@ -13,11 +13,13 @@
  *  boundary). */
 export type TableId =
   | "squad"
+  | "club-squad"
   | "transfer-market"
   | "free-agents"
   | "incoming-bids"
   | "outgoing-bids"
-  | "league-table";
+  | "league-table"
+  | "player-search";
 
 /** A column's stable id within its table (attribute keys double as column ids). */
 export type ColumnId = string;

@@ -29,15 +29,120 @@ export interface CollisionViolation {
   readonly message: string;
 }
 
-/** True when `screen` is one of the seven persistent career screens. */
+/** True when `screen` is one of the persistent career screens. */
 export const isCareerScreen = (screen: ScreenName): boolean =>
   screen === "squad" ||
   screen === "tactics" ||
+  screen === "training" ||
   screen === "transfers" ||
   screen === "league" ||
   screen === "fixtures" ||
   screen === "match" ||
-  screen === "seasonSummary";
+  screen === "seasonSummary" ||
+  screen === "manager" ||
+  screen === "news" ||
+  screen === "clubInfo" ||
+  screen === "boardConfidence" ||
+  screen === "finances" ||
+  screen === "staffOverview" ||
+  screen === "shortlist" ||
+  screen === "scouting" ||
+  screen === "playerSearch" ||
+  screen === "staffSearch" ||
+  screen === "competitions";
+
+/**
+ * The club-scoped drill-downs: `/career/$saveId/club/$clubId/...`. Inside a career, but not one of
+ * the persistent screens — no `g` binding targets them and no screen-scoped Action belongs to them.
+ */
+export const CLUB_SCOPED_SCREENS = ["teamScoutReport", "clubStaff"] as const;
+
+/**
+ * The player-scoped drill-downs: `/career/$saveId/player/$playerId/...`. Same rationale as
+ * the club-scoped screens.
+ */
+export const PLAYER_SCOPED_SCREENS = [
+  "playerProfile",
+  "playerContract",
+  "playerDevelopment",
+  "playerCoachReport",
+] as const;
+
+/**
+ * The staff-scoped drill-downs: `/career/$saveId/staff/$staffId/...`. Same rationale.
+ */
+export const STAFF_SCOPED_SCREENS = [
+] as const;
+
+/**
+ * The comparison-scoped drill-down: `/career/$saveId/player-comparison/$playerIds`. Inside a
+ * career, not a persistent screen — no `g` binding targets it and no screen-scoped Action belongs
+ * to it (it is reached from Player Search's Compare action, which is a `playerSearch`-scoped
+ * button, not a keyboard command).
+ */
+export const COMPARISON_SCOPED_SCREENS = ["playerComparison"] as const;
+
+/**
+ * The club sub-surface drill-downs: additional views at `/career/$saveId/club/$clubId/...`.
+ */
+export const CLUB_SUB_SURFACE_SCREENS = [
+  "clubSquad",
+  "clubFixturesDetail",
+  "clubTransfersDetail",
+  "clubFinancesDetail",
+  "clubInformation",
+] as const;
+
+/**
+ * The nation-scoped drill-downs: `/career/$saveId/nation/$nationId/...`.
+ */
+export const NATION_SCOPED_SCREENS = [
+] as const;
+
+/**
+ * The competition-scoped drill-downs: `/career/$saveId/competition/$competitionId/...`.
+ */
+export const COMPETITION_SCOPED_SCREENS = [
+  "competitionOverview",
+  "competitionTable",
+  "competitionFixturesDetail",
+  "competitionResults",
+] as const;
+
+/**
+ * The match sub-screen placeholders — flat routes under `/career/$saveId/match-*`.
+ */
+export const MATCH_SUB_SCREENS = [
+  "matchStats",
+  "matchPlayerStats",
+  "matchHomeTeam",
+  "matchAwayTeam",
+  "matchRatings",
+  "matchLatestScores",
+  "matchLiveTable",
+  "matchMatchTactics",
+  "matchSubstitutions",
+  "matchOppositionInstructions",
+  "matchCommentary",
+  "matchReplays",
+  "matchReport",
+] as const;
+
+/**
+ * True when `screen` is shown *within* a career. This is a wider question than whether it is one
+ * of the persistent career screens — drill-downs (club, player, staff, nation, competition) and
+ * match sub-screens answer the same question.
+ */
+export const isInsideCareer = (screen: ScreenName): boolean =>
+  isCareerScreen(screen) ||
+  (CLUB_SCOPED_SCREENS as readonly string[]).includes(screen) ||
+  (PLAYER_SCOPED_SCREENS as readonly string[]).includes(screen) ||
+  (STAFF_SCOPED_SCREENS as readonly string[]).includes(screen) ||
+  (CLUB_SUB_SURFACE_SCREENS as readonly string[]).includes(screen) ||
+  (NATION_SCOPED_SCREENS as readonly string[]).includes(screen) ||
+  (COMPETITION_SCOPED_SCREENS as readonly string[]).includes(screen) ||
+  (COMPARISON_SCOPED_SCREENS as readonly string[]).includes(screen) ||
+  (MATCH_SUB_SCREENS as readonly string[]).includes(screen);
 
 /** A scope-tier label helper for the key map (which scope a bound action lives in). */
 export const scopeLabel = (scope: ActionScope): string => scope;
@@ -96,7 +201,7 @@ export const activeSet = (
   current: ScreenName,
   state: ScopeState,
 ): ReadonlyArray<Action> => {
-  const includeCareerGlobals = isCareerScreen(current);
+  const includeCareerGlobals = isInsideCareer(current);
   return actions.filter((action) => {
     if (action.scope === "app-global") {
       return action.available(state);
@@ -114,7 +219,7 @@ export const actionsInTiers = (
   actions: ReadonlyArray<Action>,
   current: ScreenName,
 ): ReadonlyArray<Action> => {
-  const includeCareerGlobals = isCareerScreen(current);
+  const includeCareerGlobals = isInsideCareer(current);
   return actions.filter((action) => {
     if (action.scope === "app-global") return true;
     if (action.scope === "career-global") return includeCareerGlobals;

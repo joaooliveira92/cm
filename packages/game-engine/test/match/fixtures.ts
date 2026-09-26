@@ -1,5 +1,4 @@
-import { FORMATION_SLOTS, POSITION_ROLES, generateSquad, type GeneratedPlayer, type Position } from "@cm-clone/shared";
-import { createSeededRng } from "../../src/rng.js";
+import { FORMATION_SLOTS, POSITION_ROLES, createSeededRng, deriveSeed, generateSquad, type ClubStrength, type GeneratedPlayer, type Position } from "@cm-clone/shared";
 import { ClubId, PlayerId } from "@cm-clone/contracts";
 import type { MatchPlayerInput, MatchTactic, MatchTeamSetup } from "../../src/match/types.js";
 
@@ -23,10 +22,21 @@ const withIds = (
     primaryPosition: player.positions[0]!.position,
   }));
 
+/** A mid-table first-division club in an average nation — the squad these match-sim fixtures were
+ *  written against, spelled out now that club strength reads its competition rather than a tier
+ *  enum alone. */
+const MID_TABLE: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" };
+
 /** Builds a full squad + a Tactic filling every Formation slot from a natural-fit player, for match-sim tests. */
 export const buildTeam = (clubId: ClubId, seed: number, formation: keyof typeof FORMATION_SLOTS = "4-4-2"): GeneratedTeam => {
-  const random = createSeededRng(seed);
-  const squad = withIds(clubId, generateSquad("mid", random));
+  const squad = withIds(
+    clubId,
+    generateSquad(MID_TABLE, {
+      referenceYear: 2026,
+      clubNation: "ENG",
+      randomForSlot: (slot) => createSeededRng(deriveSeed(seed, "player", slot.index)),
+    }),
+  );
 
   const usedIds = new Set<PlayerId>();
   const slots = FORMATION_SLOTS[formation].map((position) => {
@@ -38,6 +48,7 @@ export const buildTeam = (clubId: ClubId, seed: number, formation: keyof typeof 
   const tactic: MatchTactic = {
     formation,
     slots,
+    bench: [null, null, null, null, null, null, null],
     mentality: "balanced",
     tempo: "normal",
     pressing: "medium",
@@ -47,4 +58,22 @@ export const buildTeam = (clubId: ClubId, seed: number, formation: keyof typeof 
     setup: { clubId, squad, tactic },
     squad,
   };
+};
+
+/** The Tactic's bench size (`Tactic.bench` is fixed-size). */
+const BENCH_SIZE = 7;
+
+/**
+ * `setup` with a named bench: the first seven squad players not in the XI, in squad order. `buildTeam`
+ * leaves the bench empty, and a forced substitution only ever brings on a named bench player
+ * (group-g-match-day ticket 26), so a test that needs one to happen names a bench with this.
+ */
+export const withNamedBench = (setup: MatchTeamSetup): MatchTeamSetup => {
+  const starters = new Set(setup.tactic.slots.map((slot) => slot.playerId));
+  const bench: Array<PlayerId | null> = setup.squad
+    .map((player) => player.id)
+    .filter((id) => !starters.has(id))
+    .slice(0, BENCH_SIZE);
+  while (bench.length < BENCH_SIZE) bench.push(null);
+  return { ...setup, tactic: { ...setup.tactic, bench } };
 };

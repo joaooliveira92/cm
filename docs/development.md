@@ -108,3 +108,34 @@ a someday-maybe.
 This repo is developed with heavy agent involvement. See [AGENTS.md](../AGENTS.md) for the issue
 tracker (`.scratch/<feature>/`), triage labels, Agent Notes, and the `cm-*` skill suite used to
 plan and implement work.
+
+### Running more than one session at once
+
+**Give each concurrent session its own worktree.** Several sessions routinely run against this repo
+at the same time, and when they share one checkout the failure is not hypothetical: sessions have
+interleaved edits in the same files, and `git add`/`commit` from one has repeatedly swept in
+another's uncommitted work. Changes have shipped under the wrong commit message, unverified by
+their author, and a session has had to hand-separate a peer's files out of `git status` before
+every single commit.
+
+```sh
+scripts/session-worktree.sh <name>     # creates ../audit-<name> on branch session/<name>
+cd ../audit-<name>
+```
+
+The script branches from your current branch and runs `pnpm install`. That install takes about
+three seconds — pnpm hardlinks from its content-addressable store rather than fetching anything —
+so the isolation is effectively free. All six gates run normally inside a worktree.
+
+Clean up when the work is merged:
+
+```sh
+git worktree remove ../audit-<name>
+git branch -d session/<name>
+```
+
+**The consequence to know about:** git will not check out the same branch in two worktrees, so
+worktree-per-session means branch-per-session. That is a real change from committing straight onto
+`dev`, and it adds a merge step. It is the point rather than a side effect — the merge is where two
+sessions' work is reconciled deliberately, instead of by whoever happened to run `git add -A`
+first. For a single session working alone, committing directly on `dev` is still fine.

@@ -11,54 +11,83 @@ referenced throughout.
 
 ## Shipped
 
-- **cm-clone** (`.scratch/cm-clone/`) — the v1 game spec: squad selection, tactics, transfers,
-  season-long league play resolved through text commentary. Closed at handoff; built out into
-  `apps/desktop`, `packages/game-engine`, `packages/shared`, `packages/contracts`.
-- **e2e-coverage** (`.scratch/e2e-coverage/`) — wave 1 Playwright coverage spec for the desktop
-  app. Closed at handoff.
-- **Player Development** (part of the Training milestone, [deterministic fractional Player Development](../.agents/notes/implemented/feature/2026-08-28-deterministic-fractional-player-development.md)) —
-  deterministic, fraction-of-gap Attribute growth toward Potential Ability. Implemented.
-- **Training** (`.scratch/training/`) — Player Development (shipped, above) plus **Training Focus** (per-player, per-Category growth bias). Spec is `ready-for-agent`; both design tickets
-  resolved, nothing left unspecified. Next step is ticketing/implementation, not more design.
+- **[.scratch/active-leagues-setup/](../.scratch/active-leagues-setup/)** — 8/8. The reworked
+  League & Nation step: Simulation Depth as a domain term, the active-leagues projection, the
+  consequences estimate, and the setup workspace. Its implementation brief sits alongside as
+  `brief.md`.
+- **[.scratch/club-selection/](../.scratch/club-selection/)** — 17/17. Club selection rail,
+  detail panel and the generated-league selector.
+- **[.scratch/human-fixture-pre-match-boundary/](../.scratch/human-fixture-pre-match-boundary/)** —
+  3/3. The Calendar stops before the human club's Fixture and resolves none of that Matchday; Match
+  day is that Fixture rather than a free-opponent exhibition, refusing an unprepared start with typed
+  blockers; and an explicit `commitMatchday` writes the human result, the rest of the division, every
+  Condition write-back and the Calendar's step in one idempotent transaction. Landed as one change
+  rather than three: ticket 01 alone creates a boundary nothing can cross until ticket 03 exists, so
+  a career stalls at its first Fixture in between.
+- **[.scratch/continue-and-advance-time/](../.scratch/continue-and-advance-time/)** — 5/5. Screen 23
+  of the Group B import reconciled against the shipped Continue loop: Group B has a reconciliation
+  ledger with Screen 23 `Reviewed`, the League table's duplicate advance control is gone, one press
+  of Continue reports what it did and why it failed, everything outstanding is listed with the
+  screen that owns its fix, and the advance commits as one transaction and refuses a second
+  concurrent press.
+
+- **[.scratch/team-scout-report/](../.scratch/team-scout-report/)** — 8/8, completed 2026-09-13. Screen 49,
+  the Team Scout Report: the report view, pointing a scout at a whole club, and earlier readings
+  kept whenever a club watch ends, with a comparison against the current report.
+- **[.scratch/desktop-suite-red/](../.scratch/desktop-suite-red/)** — 16/17, reopened 2026-09-26. The
+  desktop suite's red baseline: a bulk test-edit replaced file-backed saves with in-memory ones, a
+  happy-dom/motion animation leak flooded the run with unhandled rejections, a wall-clock-seeded
+  injury spec and a full-time spec flaked, and the e2e quit-guard, seeds and stale empty-state and
+  ranged-value assertions drifted. Closed with the save-path and animation-cancel fixes that put the
+  unit suite back at 2261 passing with no unhandled errors, and the e2e suite back at 62 passing.
+  Ticket 17 reopens it: the e2e suite now fails 4–5 specs at random on a clean tree, verified over
+  four full runs on a clean `HEAD` worktree.
+- **[.scratch/main-process-decomposition/](../.scratch/main-process-decomposition/)** — 13/13,
+  completed 2026-09-24. The 2026-09-05 folder-organization audit's decomposition: the duplicate
+  current-season queries collapsed into `main/season/currentSeason.ts`, `main/season.ts` and
+  `main/transfers.ts` split into focused modules, the flat `main/` directory grouped into
+  subfolders, the test tree mirrored to `src/`, and `apps/desktop/test/` brought into typecheck
+  (ticket 05, the 281-error spike fixed).
+- **[.scratch/group-a-reconciliation/](../.scratch/group-a-reconciliation/)** — 26/26. The Group A
+  screen reconciliation, including the last two: quit confirmation, and the Quit dialog's clicks
+  under a Base UI modal.
+- **[.scratch/visual-design-language/](../.scratch/visual-design-language/)** — 15/15. Tokens, the
+  slate guard, dense-table and status vocabulary, the career chrome and Continue bar, modal
+  anatomy, the match-day language, and the residual migration/alias teardown.
+- **[.scratch/react-composition-audit/](../.scratch/react-composition-audit/)** — 17/17. The
+  compound-component, provider and hook splits across MatchDay, Transfers, Squad, Creation and
+  League Selection, plus the data-table and edge-fade work. This effort's tickets sat `claimed`
+  with untouched placeholders until the 2026-09-06 re-status; all are now resolved.
+- **[.scratch/match-composition/](../.scratch/match-composition/)** — 2/2. The match provider split
+  and its context interfaces.
+- **[.scratch/save-list-error-handling/](../.scratch/save-list-error-handling/)** — 1/1. The save
+  list no longer swallows repository failures.
+- **[.scratch/world-data-model/](../.scratch/world-data-model/)** — 13/13 decision tickets and 25/25
+  implementation items, completed 2026-09-24. The MVP world data model: the competition graph and
+  participant rows, dated competition-scoped fixtures, Simulation Depth on disk, staff, scouting, the
+  restricted event log and `player_transfers`, retention at the rollover, and a five-index list —
+  each index on a measured number, the last two (`fixtures(played, scheduled_date)` and
+  `competition_participants(club_id, season_number)`) added from the prototype scale probe's results.
 
 ## In flight
 
+None of the efforts indexed here remains open. `gate-red-on-dev` and the `group-*` screen-import
+reconciliations also live under `.scratch/`, are not indexed on this page, and are not all resolved —
+derive their frontier from `.scratch/` directly.
 
-- **Injury system** (`.scratch/injury-system/`) — spec is `ready-for-agent`. No map.md (took a
-  shorter path to spec); worth confirming its design tickets are actually settled before treating
-  it as implementation-ready.
-- **Scouting** (`.scratch/scouting/`) — fog-of-war for non-own-squad players, resolved via
-  assignable Scouts narrowing Attribute Range over time. Three of its design tickets are resolved
-  (resource/assignment model, [progress accrual & Attribute Range](../.agents/notes/proposed/feature/2026-08-28-progress-accrual-and-attribute-range.md),
-  technical contract). Still open: exact tuning constants (Scout count per Stature Tier,
-  noise-band width, per-Matchday accrual rate) and the new Scouting screen's UI layout — both
-  deferred to implementation, not separate design tickets. Map is still "charted, decisions in
-  progress," not yet closed to a spec.md.
-- **E2E coverage wave 2** (`.scratch/e2e-coverage-wave-2/`) — spec extension covering free agent
-  signing, bid response/counter-offer, match day subs, save management edge cases, and
-  UI-reachable error paths. Two tickets resolved (match day structural extension, error-path
-  catalog), two open (transfer features spec, error-path coverage spec), two claimed but
-  unanswered (seed scenarios, save management edge cases).
-- **Effect v4 migration** (`.scratch/effect-migration/`) — seam-by-seam move of desktop
-  main-process logic onto typed `Effect<A, E, R>` failures. Six tickets resolved (pure-packages
-  posture, throws→tagged errors, engine boundary lift convention, run* edge-only audit, renderer
-  boundary posture, preload bridge typed-error preservation). Not yet specified: whether the
-  already-Effect-shaped persistence layer (`saves.ts`) needs consistency tickets, and disposition
-  of the remaining 10 async/await files in `apps/desktop`.
-- **Effect lint hardening** (`.scratch/effect-lint-hardening/`) — deciding which additional
-  `mikearnaldi/accountability`-style lint rules/diagnostics to adopt. One ticket resolved (dual-lint
-  architecture: oxlint stays general-purpose, a new ESLint `local` plugin hosts AST-shape Effect
-  rules). Ticket 02 (rule and diagnostic adoption) is claimed but unanswered — the actual rule list
-  is still open.
-- **Skill suite merge** (`.scratch/skill-suite-merge/`) — the `cm-*` skill suite and
-  `.agents/notes/` decision-record layer itself. Spec is `ready-for-agent`, but the skills
-  (`.agents/skills/cm-*`) and note-promotion mechanics are already present and in active use
-  elsewhere in this repo — treat the spec's status as stale rather than re-driving this effort.
+## Needs a decision, not a ticket
+
+- **[.scratch/game-status-survivors/](../.scratch/game-status-survivors/)** — `map.md` only. Six
+  wayfinder decisions were recorded and no spec was ever written. Either write the spec or fold the
+  decisions into an Agent Note; do not delete it, the decisions exist nowhere else.
+- **[.scratch/vendor-quarantine/](../.scratch/vendor-quarantine/)** — not an effort at all: 19
+  `.ts`/`.tsx` files and no Markdown, so it has no spec, map or tickets. Two of its files are
+  byte-identical to copies under `external-reference/`. It needs a README stating its provenance
+  and exit criteria, or a home outside `.scratch/`.
 
 ## Suggested next step
 
-Of the in-flight efforts, **Training** and **Scouting** are furthest along on the design side but
-have no code yet — Training's spec has nothing left unspecified, making it the most
-implementation-ready. Scouting is one ticket-worth of tuning-constant/UI-layout decisions behind
-it. The Effect migration and lint-hardening efforts are architecture/tooling work that can proceed
-in parallel without blocking either feature milestone.
+No indexed effort is open. The work left under `.scratch/` is the screen-import reconciliation groups
+(`group-c` onward, all partial) and `gate-red-on-dev` (11/13); neither is detailed on this page, so
+derive their frontier from `.scratch/` directly. The world-data-model index decisions are settled and
+shipped, and the desktop suite is green.

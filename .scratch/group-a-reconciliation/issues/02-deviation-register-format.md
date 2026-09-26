@@ -31,4 +31,4 @@ A worked example exists: the register entries for one screen, written out in the
 
 ## Answer
 
-**Reconciliation ledger, one per spec group, four kinds each with a mandatory anchor.** See [Agent Note](../../../.agents/notes/proposed/process/2026-08-30-spec-reconciliation-ledger.md).
+**Reconciliation ledger, one per spec group, four kinds each with a mandatory anchor.** See [Agent Note](../../../.agents/notes/implemented/process/2026-08-30-spec-reconciliation-ledger.md).
