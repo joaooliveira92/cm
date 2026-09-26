@@ -77,6 +77,7 @@ const SearchResults = ({
    *  knowledge-limited Player read the results just published. */
   const openPlayer = (id: string, event: React.MouseEvent) => {
     const playerId = playerIds.find((candidate) => candidate === id);
+    console.log(`[probe17] openPlayer ${id} found=${playerId !== undefined} n=${playerIds.length}`);
     if (playerId === undefined) return;
     navigateCareer({ type: "playerDetail", saveId, playerId }, intentOfClick(event));
   };

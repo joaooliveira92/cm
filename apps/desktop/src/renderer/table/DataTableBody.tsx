@@ -33,6 +33,7 @@ export const DataTableBody = <TRow extends TableRowShape>(props: DataTableBodyPr
                       onDragStart={(event) => { if (ctx.onRowDragStart !== undefined) ctx.onRowDragStart(event, id); }}
                       onFocus={() => { if (ctx.activeId !== id) ctx.onActiveChange(id); }}
                       onClick={(event) => {
+                        console.log(`[probe17] identity click ${id} detail=${event.detail}`);
                         if (ctx.onIdentityOpen !== undefined) ctx.onIdentityOpen(id, event);
                         else ctx.onToggleSelection(id);
                       }}

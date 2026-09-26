@@ -1,7 +1,7 @@
 # 17: the desktop e2e suite fails 4–5 specs at random, including player-search-scouting
 
 Type: bug
-Status: ready-for-agent
+Status: claimed
 
 **Blocked by:** none.
 

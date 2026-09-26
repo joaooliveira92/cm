@@ -493,7 +493,10 @@ export const test = base.extend<LaunchFixtures>({
   },
   window: async ({ app }, use) => {
     const page = await app.firstWindow();
+    const lines: string[] = [];
+    page.on("console", (m) => { if (m.text().includes("probe17")) lines.push(`${Date.now()} ${m.text()}`); });
     await use(page);
+    (await import("node:fs")).appendFileSync("/tmp/e2e17/probe.log", `--- ${test.info().title} ${test.info().status}\n${lines.join("\n")}\n`);
   },
   launchExtraApp: async ({ userDataDir }, use) => {
     const launched: ElectronApplication[] = [];
