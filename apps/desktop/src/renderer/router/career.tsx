@@ -7,8 +7,7 @@ import {
 import type { CareerDestination } from "../navigation/destinations.js";
 import type { EntityType } from "../navigation/entity-nav-config.js";
 import type { MatchContext } from "../navigation/match-nav-config.js";
-import { SecondaryNav } from "../navigation/components/SecondaryNav.js";
-import type { SpecSectionId } from "../navigation/spec-nav-config.js";
+import { ContextTabs } from "../navigation/components/ContextTabs.js";
 import { decodeClubId, decodeCompetitionId, decodeMatchId, decodePlayerId, decodePlayerIds, decodeSaveId } from "../navigation/params.js";
 import { CareerChrome } from "../chrome/CareerChrome.js";
 import { Alert } from "../components/ui/alert.js";
@@ -70,13 +69,13 @@ export const CareerShell = () => {
   }
 
   /**
-   * Map a tab selection to a career navigation destination. The
-   * `onChangeTab` contract from SecondaryNav passes a nav id (section,
-   * entity type, or match context) and a tab id; this resolves both to a
-   * typed CareerDestination and navigates there.
+   * Map a tab selection to a career navigation destination. The `onChangeTab`
+   * contract from `ContextTabs` passes a nav id (an entity type or a match
+   * context) and a tab id; this resolves both to a typed CareerDestination and
+   * navigates there.
    */
   const handleTabChange = useCallback(
-    (navId: SpecSectionId | EntityType | MatchContext, tabId: string) => {
+    (navId: EntityType | MatchContext, tabId: string) => {
       const dest = tabToDestination(navId, tabId, saveId);
       if (dest !== null) {
         navigateCareer(dest, "pointer");
@@ -86,10 +85,10 @@ export const CareerShell = () => {
   );
 
   // The career shell owns its scroll region: the shell is viewport-fixed and
-  // only the outlet scrolls, so the navbar is a stationary band that scrolling
-  // can never hide. A route change starts the new screen at the top of that
-  // region (the router's page-level scroll reset no longer applies — the page
-  // itself does not scroll).
+  // only the outlet scrolls, so the header band and the sidebar are stationary
+  // and scrolling can never hide them. A route change starts the new screen at
+  // the top of that region (the router's page-level scroll reset no longer
+  // applies — the page itself does not scroll).
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const pathname = useLocation().pathname;
   useLayoutEffect(() => {
@@ -98,13 +97,11 @@ export const CareerShell = () => {
 
   return (
     <RegistryProvider key={saveId}>
-      <div className="flex h-screen flex-col overflow-hidden bg-background">
-        <CareerChrome saveId={saveId} />
-        <SecondaryNav onChangeTab={handleTabChange} />
+      <CareerChrome saveId={saveId} contextNav={<ContextTabs onChangeTab={handleTabChange} />}>
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
           <Outlet />
         </div>
-      </div>
+      </CareerChrome>
     </RegistryProvider>
   );
 };
@@ -293,7 +290,7 @@ export const CareerCompetitionChildView = ({
  * back to the section default). Returns null when no mapping exists.
  */
 const tabToDestination = (
-  navId: SpecSectionId | EntityType | MatchContext,
+  navId: EntityType | MatchContext,
   tabId: string,
   saveId: SaveId,
 ): CareerDestination | null => {

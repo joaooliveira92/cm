@@ -1,4 +1,4 @@
-import { useCallback, useRef, type ReactNode } from "react";
+import { useCallback, type ReactNode } from "react";
 import { useLocation } from "@tanstack/react-router";
 import type { SaveId } from "@cm-clone/contracts";
 import { navigateCareer } from "./adapter.js";
@@ -6,7 +6,6 @@ import type { NavigationIntent } from "../focus.js";
 import { NAV_SECTIONS, type NavSectionId } from "./nav-config.js";
 import { sectionIdForDestination } from "./nav-route-index.js";
 import { useNavState } from "./use-nav-state.js";
-import { useHoverIntent } from "./useHoverIntent.js";
 import { NavContext, type NavContextValue } from "./navContext.js";
 import type { CareerDestination, SaveScopedCareerDestinationType } from "./destinations.js";
 
@@ -98,7 +97,7 @@ export const NavProvider = ({
     : null;
   const activeItemId = findActiveItemId(activeDestination, activeSectionId);
 
-  const { setPreview, setOpen, clearTransient, isSubmenuVisible } = useNavState(activeSectionId);
+  const { isSectionExpanded, toggleSection, clearTransient } = useNavState(activeSectionId);
 
   const goTo = useCallback(
     (destination: SaveScopedCareerDestinationType, intent: NavigationIntent) => {
@@ -108,63 +107,19 @@ export const NavProvider = ({
     [saveId, clearTransient],
   );
 
-  const handleToggleSubmenu = useCallback(
-    (sectionId: NavSectionId) => {
-      setOpen((current) => (current === sectionId ? null : sectionId));
-    },
-    [setOpen],
-  );
-
-  const intentTargetRef = useRef<NavSectionId | null>(null);
-
-  const { handleEnter, handleLeave } = useHoverIntent(
-    () => {
-      if (intentTargetRef.current !== null) {
-        setPreview(intentTargetRef.current);
-      }
-    },
-    () => setPreview(null),
-  );
-
-  const handleSectionEnter = useCallback(
-    (sectionId: NavSectionId) => {
-      intentTargetRef.current = sectionId;
-      handleEnter(isSubmenuVisible(sectionId));
-    },
-    [isSubmenuVisible, handleEnter],
-  );
-
-  const handleSectionLeave = useCallback(() => {
-    intentTargetRef.current = null;
-    handleLeave();
-  }, [handleLeave]);
-
-  const previewedOrOpen = NAV_SECTIONS.find((s) => isSubmenuVisible(s.id)) ?? null;
-  const stripSection =
-    previewedOrOpen ??
-    (activeSectionId !== null
-      ? (NAV_SECTIONS.find((s) => s.id === activeSectionId) ?? null)
-      : null);
-
   const value: NavContextValue = {
     state: {
       activeSectionId,
       activeItemId,
-      stripSection,
-      isSubmenuVisible,
+      isSectionExpanded,
     },
     actions: {
-      setPreview,
-      setOpen,
       clearTransient,
       goTo,
-      handleSectionEnter,
-      handleSectionLeave,
-      handleToggleSubmenu,
+      toggleSection,
     },
     meta: {
       saveId,
-      stripItems: stripSection?.items ?? [],
     },
   };
 

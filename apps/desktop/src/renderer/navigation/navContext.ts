@@ -1,29 +1,26 @@
 import { createContext, useContext } from "react";
 import type { SaveId } from "@cm-clone/contracts";
 import type { NavigationIntent } from "../focus.js";
-import type { NavItem, NavItemId, NavSection, NavSectionId } from "./nav-config.js";
+import type { NavItemId, NavSectionId } from "./nav-config.js";
 import type { SaveScopedCareerDestinationType } from "./destinations.js";
 
 export interface NavState {
   readonly activeSectionId: NavSectionId | null;
   readonly activeItemId: NavItemId | null;
-  readonly stripSection: NavSection | null;
-  readonly isSubmenuVisible: (sectionId: NavSectionId) => boolean;
+  /** Whether a section's submenu is expanded in the sidebar. */
+  readonly isSectionExpanded: (sectionId: NavSectionId) => boolean;
 }
 
 export interface NavActions {
-  readonly setPreview: React.Dispatch<React.SetStateAction<NavSectionId | null>>;
-  readonly setOpen: React.Dispatch<React.SetStateAction<NavSectionId | null>>;
+  /** Drop the expansion override, so the sidebar follows the route again. */
   readonly clearTransient: () => void;
   readonly goTo: (destination: SaveScopedCareerDestinationType, intent: NavigationIntent) => void;
-  readonly handleSectionEnter: (sectionId: NavSectionId) => void;
-  readonly handleSectionLeave: () => void;
-  readonly handleToggleSubmenu: (sectionId: NavSectionId) => void;
+  /** Expand a section's submenu, or collapse it if it is the expanded one. */
+  readonly toggleSection: (sectionId: NavSectionId) => void;
 }
 
 export interface NavMeta {
   readonly saveId: SaveId;
-  readonly stripItems: ReadonlyArray<NavItem>;
 }
 
 export interface NavContextValue {

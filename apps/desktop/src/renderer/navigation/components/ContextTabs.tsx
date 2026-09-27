@@ -1,11 +1,6 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "@tanstack/react-router";
-import {
-  sectionById,
-  isTabVisible,
-  type SpecSectionId,
-  type SecondaryTab,
-} from "../spec-nav-config.js";
+import type { SecondaryTab } from "../spec-nav-config.js";
 import {
   entityTabConfigForType,
   type EntityType,
@@ -15,13 +10,27 @@ import {
   type MatchConditionalTab,
   type MatchContext,
 } from "../match-nav-config.js";
-import { parseNavState, resolveActiveTabId, resolveEntityTabId, resolveMatchTabId } from "../nav-route-parser.js";
+import { parseNavState, resolveEntityTabId, resolveMatchTabId } from "../nav-route-parser.js";
 import { FOCUS_RING } from "../../focus.js";
 import { NO_DRAG } from "../../chrome/header/drag-region.js";
 
-export interface SecondaryNavProps {
-  readonly competitionType?: string;
-  readonly onChangeTab?: (sectionId: SpecSectionId | EntityType | MatchContext, tabId: string) => void;
+/**
+ * The contextual tab row, for the two contexts the sidebar cannot express: an
+ * entity profile and a match.
+ *
+ * It used to render a third thing as well — a tab per primary section — which put
+ * two different vocabularies for the same idea on screen at once: the sidebar's
+ * Squad submenu (Squad, Staff, Information, Finances, …) above this row's Squad
+ * tabs (First Team, Reserves, Under-19s, …), most of which resolved to no
+ * destination at all. The sidebar owns section navigation now, so this row renders
+ * only where a section has nothing to say: inside a player or staff profile, and
+ * inside a match.
+ *
+ * Which is also why it is not called the secondary nav any more. In this game the
+ * secondary navigation is a section's own item list, and that lives in the sidebar.
+ */
+export interface ContextTabsProps {
+  readonly onChangeTab?: (navId: EntityType | MatchContext, tabId: string) => void;
   readonly matchTabVisibility?: Partial<Record<string, boolean>>;
 }
 
@@ -62,11 +71,7 @@ const TabButton = ({
   </button>
 );
 
-export const SecondaryNav = ({
-  competitionType,
-  onChangeTab,
-  matchTabVisibility,
-}: SecondaryNavProps) => {
+export const ContextTabs = ({ onChangeTab, matchTabVisibility }: ContextTabsProps) => {
   const location = useLocation();
   const searchParams = useMemo(
     () => new URLSearchParams(location.search),
@@ -78,13 +83,6 @@ export const SecondaryNav = ({
   );
 
   const { entityType, matchContext } = parsed;
-
-  const section = useMemo(() => {
-    if (parsed.primarySection !== null) return parsed.primarySection;
-    if (parsed.originSectionId !== null) return sectionById(parsed.originSectionId) ?? null;
-    return null;
-  }, [parsed.primarySection, parsed.originSectionId]);
-
   const rawTabId = parsed.activeTabId;
 
   const entityConfig = useMemo(
@@ -108,9 +106,8 @@ export const SecondaryNav = ({
         return true;
       });
     }
-    if (section === null) return [];
-    return section.tabs.filter((tab) => isTabVisible(tab, competitionType));
-  }, [entityConfig, matchConfig, matchTabVisibility, section, competitionType]);
+    return [];
+  }, [entityConfig, matchConfig, matchTabVisibility]);
 
   const resolvedTabId = useMemo(() => {
     if (entityConfig !== null) {
@@ -121,19 +118,16 @@ export const SecondaryNav = ({
       const exists = tabs.some((t) => t.id === candidate);
       return exists ? candidate : matchConfig.defaultTab;
     }
-    if (section === null) return null;
-    const candidate = resolveActiveTabId(section, rawTabId);
-    const exists = tabs.some((t) => t.id === candidate);
-    return exists ? candidate : section.defaultTab;
-  }, [entityConfig, matchConfig, section, rawTabId, tabs]);
+    return null;
+  }, [entityConfig, matchConfig, rawTabId, tabs]);
 
-  // The context the tabs belong to. In an entity or match context `section` is only the primary
-  // section the route falls under, so it must not name the tablist.
+  // The context the tabs belong to. It names the tablist, so it must be the entity
+  // or the match phase — never the primary section the route happens to fall under.
   const contextName = entityConfig !== null
     ? `${entityConfig.entityType.charAt(0).toUpperCase()}${entityConfig.entityType.slice(1)}`
     : matchConfig !== null
       ? matchContextLabel(matchConfig.matchContext)
-      : section?.label ?? null;
+      : null;
   const label = contextName !== null ? `${contextName} tabs` : null;
 
   const tabListRef = useRef<HTMLDivElement | null>(null);
@@ -190,16 +184,11 @@ export const SecondaryNav = ({
 
   const handleTabSelect = useCallback(
     (tabId: string) => {
-      if (onChangeTab !== undefined) {
-        const navId: SpecSectionId | EntityType | MatchContext = matchConfig !== null
-          ? matchConfig.matchContext
-          : entityConfig !== null
-            ? entityConfig.entityType
-            : (section?.id ?? "squad") as SpecSectionId;
-        onChangeTab(navId, tabId);
-      }
+      if (onChangeTab === undefined) return;
+      const navId = matchConfig !== null ? matchConfig.matchContext : entityConfig?.entityType;
+      if (navId !== undefined) onChangeTab(navId, tabId);
     },
-    [section, entityConfig, matchConfig, onChangeTab],
+    [entityConfig, matchConfig, onChangeTab],
   );
 
   if (label === null || tabs.length === 0) {
@@ -227,35 +216,14 @@ export const SecondaryNav = ({
         }`}
         onKeyDown={handleKeyDown}
       >
-        {entityConfig === null && section?.contextSelector !== undefined && (
-          <span className="mr-1 flex shrink-0 items-center gap-1 rounded-control border border-border-subtle px-2 py-1 text-xs text-text-secondary">
-            <span className="font-medium">{section.contextSelector.label}</span>
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-3.5"
-              aria-hidden="true"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </span>
-        )}
-
-        {tabs.map((tab) => {
-          const isActive = tab.id === resolvedTabId;
-          return (
-            <TabButton
-              key={tab.id}
-              tab={tab}
-              active={isActive}
-              onSelect={handleTabSelect}
-            />
-          );
-        })}
+        {tabs.map((tab) => (
+          <TabButton
+            key={tab.id}
+            tab={tab}
+            active={tab.id === resolvedTabId}
+            onSelect={handleTabSelect}
+          />
+        ))}
       </div>
     </nav>
   );

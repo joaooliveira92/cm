@@ -2,6 +2,12 @@
 
 Status: implemented
 
+> **Partially superseded, 2026-09-26**, by
+> [primary navigation is a sidebar](2026-09-26-primary-navigation-is-a-sidebar.md). Decisions 4, 7, 9
+> and 10 no longer hold: the primary and secondary navigation are a left sidebar, not two top rows.
+> Decisions 1, 2, 3, 5, 6 and 8 stand unchanged. That note's "What this supersedes" section is the
+> authoritative split.
+
 ## Problem
 
 The two-row navbar specification in `docs/menu.md` leaves ownership, routing, component boundaries, visibility logic, and responsive behavior as open implementation decisions. Without settling these, different implementers will make different choices, producing an inconsistent nav system.

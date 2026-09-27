@@ -4,7 +4,13 @@ import path from "node:path";
 import { _electron as electron, expect, test as base } from "@playwright/test";
 import type { ElectronApplication, Locator, Page } from "@playwright/test";
 import { savesDir, seedFresh } from "./seedSaves.js";
-import { NAV_SECTIONS, POSITION_KEYS, type NavSection } from "../src/renderer/navigation/nav-config.js";
+import {
+  NAV_SECTIONS,
+  POSITION_KEYS,
+  type NavItemId,
+  type NavSection,
+  type NavSectionId,
+} from "../src/renderer/navigation/nav-config.js";
 
 const mainPath = path.join(import.meta.dirname, "../dist/main/index.js");
 
@@ -232,60 +238,52 @@ export const dismissTeachingSplash = async (page: Page): Promise<void> => {
 };
 
 /**
- * Where each career screen now lives in the navbar, as the path a player clicks to reach it.
+ * Where each career screen lives in the sidebar, as the path a player clicks to reach it: a primary
+ * section, and where the screen is not that section's default destination, one of its items.
  *
- * The flat lowercase tab strip ("transfers", "league table", "match day", …) that this suite was
- * written against is gone; `navigation/nav-config.ts` replaced it with seven primary sections that
- * each own a submenu. Clicking a section's own label navigates to its `defaultDestination`, so the
- * screens that are some section's default are still one click — the rest are two.
+ * Addressed by `nav-config.ts` id rather than by visible label, because in a sidebar the two levels
+ * are on screen together and their labels collide — "Squad" is the Squad section *and* the first item
+ * inside it. Ids also make a renamed label a no-op here and a moved screen a single failing line.
  *
- * Keeping the map here rather than inline in seven specs means the next navigation change is one
- * edit, and a screen that moves sections shows up as a single failing line instead of a scatter.
+ * Keeping the map here rather than inline in seven specs means the next navigation change is one edit.
  */
 const NAV_PATH = {
-  squad: ["Squad"],
-  tactics: ["Tactics"],
-  training: ["Training"],
-  transfers: ["Recruitment"],
-  "transfer history": ["Recruitment", "Transfer History"],
-  "contract expiry": ["Recruitment", "Contract Expiry"],
-  "budget review": ["Recruitment", "Budget Review"],
-  scouting: ["Recruitment", "Scouting"],
-  "scouting assignment": ["Recruitment", "Scouting Assignment"],
-  "scouting knowledge": ["Recruitment", "Scouting Knowledge"],
-  "player search": ["Recruitment", "Player Search"],
-  "league table": ["Analysis"],
-  fixtures: ["Analysis", "Fixtures"],
-  "match day": ["Analysis", "Match Day"],
-  "season summary": ["Analysis", "Season Summary"],
-  manager: ["Club"],
-  "club staff": ["Club", "Staff"],
-  "club information": ["Club", "Information"],
-  "club finances": ["Club", "Finances"],
-  "board confidence": ["Club", "Board Confidence"],
-  competitions: ["World"],
-} as const satisfies Record<string, ReadonlyArray<string>>;
+  squad: ["squad"],
+  tactics: ["tactics"],
+  training: ["training"],
+  transfers: ["recruitment"],
+  "transfer history": ["recruitment", "recruitment-transfer-history"],
+  "contract expiry": ["recruitment", "recruitment-contract-expiry"],
+  "budget review": ["recruitment", "recruitment-budget-review"],
+  scouting: ["recruitment", "recruitment-scouting"],
+  "scouting assignment": ["recruitment", "recruitment-scouting-assignment"],
+  "scouting knowledge": ["recruitment", "recruitment-scouting-knowledge"],
+  "player search": ["recruitment", "recruitment-player-search"],
+  "league table": ["analysis"],
+  fixtures: ["analysis", "analysis-fixtures"],
+  "match day": ["analysis", "analysis-match"],
+  "season summary": ["analysis", "analysis-season"],
+  manager: ["club"],
+  "club staff": ["club", "club-staff"],
+  "club information": ["club", "club-information"],
+  "club finances": ["club", "club-finances"],
+  "board confidence": ["club", "club-board-confidence"],
+  competitions: ["world"],
+} as const satisfies Record<string, readonly [NavSectionId] | readonly [NavSectionId, NavItemId]>;
 
 export type Screen = keyof typeof NAV_PATH;
 
 /**
- * Navigate to a career screen through the navbar, the way a player does.
+ * Navigate to a career screen through the sidebar, the way a player does.
  *
- * Both clicks are scoped to their landmark (`Primary navigation`, `<Section> submenu`) because the
- * section labels are not unique on the page — "Squad" is also a heading and a table group, and
- * "Tactics" appears in the Match Day panel toggle.
+ * Clicking a section navigates to its default destination, which also expands that section — the
+ * sidebar follows the route — so the item click needs no separate disclosure step.
  */
 export const goto = async (page: Page, screen: Screen): Promise<void> => {
-  const [section, item] = NAV_PATH[screen];
-  await page
-    .getByRole("navigation", { name: "Primary navigation" })
-    .getByRole("button", { name: section, exact: true })
-    .click();
-  if (item === undefined) return;
-  await page
-    .getByRole("navigation", { name: `${section} submenu` })
-    .getByRole("button", { name: item, exact: true })
-    .click();
+  const [sectionId, itemId] = NAV_PATH[screen];
+  await page.locator(`[data-nav-section="${sectionId}"]`).click();
+  if (itemId === undefined) return;
+  await page.locator(`[data-nav-item="${itemId}"]`).click();
 };
 
 /**

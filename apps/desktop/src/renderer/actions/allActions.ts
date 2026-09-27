@@ -70,6 +70,12 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   // The help overlay is the rebinding surface (ticket 14): this unbounded palette command
   // opens it the same way Primary+/ does, giving rebinding a second, discoverable entry point.
   { id: "open-rebind", label: "Rebind…", scope: "app-global", available: () => true, handler: () => undefined },
+  // The navigation sidebar's collapse toggle. It belongs in the registry rather than in a window
+  // listener inside `sidebar.tsx`, because a binding the help overlay cannot see is a binding a
+  // player cannot find — and one a future rebind could silently collide with. App-global because a
+  // `Primary+` chord only dispatches at that scope; its handler is registered by the career shell,
+  // so outside a career it is simply not dispatchable.
+  { id: "toggle-sidebar", label: "Toggle the navigation sidebar", scope: "app-global", available: () => true, handler: () => undefined, binding: "Primary+B" },
   // career-global — active only while a career screen is shown.
   // `primary: true` is consumed by the career chrome for the gradient treatment —
   // presentation only, never automatic Enter dispatch (global-key-map note AC-11).

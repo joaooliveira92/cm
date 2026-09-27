@@ -23,7 +23,7 @@ onboarding reference that sits alongside it.
 | [design/ui-elements.md](design/ui-elements.md) | Catalogue of CM 03/04 interface elements. The reference the renderer is measured against. |
 | [design/game-onboarding.md](design/game-onboarding.md) | How the original onboarded players: configure the world, then straight into the job. |
 | [design/inbox-system.md](design/inbox-system.md) | The inbox and news system read as the game's real onboarding surface. |
-| [design/redesigned-navbar.md](design/redesigned-navbar.md) | Implementation guide for the redesigned global navigation. |
+| [design/redesigned-navbar.md](design/redesigned-navbar.md) | Implementation guide for the redesigned global navigation. Its horizontal shape is superseded by the sidebar; the keyboard and active-state rules still apply. |
 
 ## Specifications
 

@@ -1,6 +1,18 @@
 # Two-Row Top Navigation
 
-Status: ready-for-agent
+Status: wontfix
+
+> **Superseded, 2026-09-26.** This effort shipped, and reviewing the result replaced the two-row shape
+> with a left sidebar — see
+> [primary navigation is a sidebar](../../.agents/notes/implemented/architecture/2026-09-26-primary-navigation-is-a-sidebar.md).
+> The problem statement below is kept as written, including its "No sidebar" constraint and user story
+> 12, because the reversal is the point: that constraint came from fidelity to CM 03/04's menu model,
+> and it lost to the fact that two navigation levels in a horizontal navbar cost six stacked bands in
+> an 800px window.
+>
+> What survived from this effort: the entity and match contextual tab configs, `?origin=`, the
+> URL-derived nav state, and the back/forward list-state preservation. What did not: `PrimaryNav.tsx`
+> (which was never mounted), `SecondaryNav.tsx`'s section tabs, and `SPEC_SECTIONS` as a renderer input.
 
 ## Problem Statement
 

@@ -4,16 +4,20 @@ import { getScopeState, subscribeScopeState } from "../actions/scopeState.js";
 
 export const ShortcutHint = ({
   hintKey,
+  className = "relative inline-flex shrink-0",
   children,
 }: {
   readonly hintKey?: string | undefined;
+  /** The wrapper's layout. Overridden by the sidebar, whose rows are full-width blocks
+   *  rather than the inline controls the horizontal navbar wrapped. */
+  readonly className?: string;
   readonly children: ReactNode;
 }) => {
   const scope = useSyncExternalStore(subscribeScopeState, getScopeState, getScopeState);
   const show = hintKey !== undefined && scope.prefixActive === true;
 
   return (
-    <div className="relative inline-flex shrink-0">
+    <div className={className}>
       {children}
       {show && (
         <Kbd

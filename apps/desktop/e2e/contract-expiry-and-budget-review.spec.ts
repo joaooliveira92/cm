@@ -3,7 +3,7 @@ import { savesDir, seedFresh } from "./seedSaves.js";
 
 /**
  * Contract Expiry (Screen 141) and Budget Review (Screen 145) are reached through the Recruitment
- * submenu, the same way Transfer History is (group-j ticket 08). `goto` clicks the navbar rather
+ * submenu, the same way Transfer History is (group-j ticket 08). `goto` clicks the sidebar rather
  * than typing a URL, so these fail if either entry goes missing. What each screen lists is proven in
  * `contract-expiry-screen.test.tsx` and the main-process tests (`contract-expiry.test.ts`,
  * `budget-review.test.ts`); here it is enough that the screen arrives, loads without an error, and
@@ -38,28 +38,27 @@ test("Recruitment opens Budget Review", async ({ window: page, userDataDir }) =>
 });
 
 /**
- * Ten Recruitment entries are wider than the 1200px window the app opens at, so the last ones start
- * off-screen. A click from `goto` would pass either way, because Playwright scrolls the target into
- * view programmatically, and `overflow-hidden` on the career root still allows that. A user can
- * only reach them by scrolling the strip itself, so this test scrolls it with the wheel and checks
- * that Budget Review, the last entry, comes into view.
+ * Ten Recruitment entries were wider than the 1200px window the app opens at, so the last ones
+ * started off-screen and a player could only reach them by scrolling the submenu strip sideways.
+ * Stacking them vertically in the sidebar is what retired that gesture, so what is worth holding now
+ * is the outcome the gesture existed to reach: the last entry is on screen as soon as the section
+ * opens, at the size the app actually opens at.
+ *
+ * If a future section list outgrows the window this goes red. The sidebar scrolls, so nothing becomes
+ * unreachable — but "the longest section no longer fits" is worth being told about rather than
+ * discovering as a wheel gesture that quietly came back.
  */
-test("the Recruitment submenu scrolls to its last entry at the default window width", async ({
+test("the last Recruitment entry is on screen at the default window width", async ({
   window: page,
   userDataDir,
 }) => {
   await seedFresh(savesDir(userDataDir));
   await continueSeededCareer(page, "Seed: fresh");
 
-  await page
-    .getByRole("navigation", { name: "Primary navigation" })
-    .getByRole("button", { name: "Recruitment", exact: true })
-    .click();
-  const submenu = page.getByRole("navigation", { name: "Recruitment submenu" });
-  const budgetReview = submenu.getByRole("button", { name: "Budget Review", exact: true });
-  await expect(budgetReview).not.toBeInViewport();
-
-  await submenu.hover({ position: { x: 20, y: 20 } });
-  await page.mouse.wheel(2000, 0);
+  await page.locator('[data-nav-section="recruitment"]').click();
+  const budgetReview = page
+    .getByRole("navigation", { name: "Recruitment submenu" })
+    .getByRole("button", { name: "Budget Review", exact: true });
+  await expect(budgetReview).toBeVisible();
   await expect(budgetReview).toBeInViewport();
 });

@@ -14,7 +14,10 @@ import { cn } from "../../lib/utils.js";
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
-const SIDEBAR_KEYBOARD_SHORTCUT = "b";
+// Upstream's `Primary+B` window listener is deliberately absent: every keyboard binding in this app
+// is an Action-registry record, so the toggle ships as the `toggle-sidebar` Action and the career
+// shell registers its handler. A second listener here would be a shortcut the help overlay cannot
+// show and a rebind cannot move.
 
 interface SidebarContextValue {
   state: "expanded" | "collapsed";
@@ -68,18 +71,6 @@ const SidebarProvider = ({
     if (isMobile) setOpenMobile(!openMobile);
     else setOpen(!open);
   }, [isMobile, open, openMobile, setOpen]);
-
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        toggleSidebar();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSidebar]);
 
   const contextValue = React.useMemo<SidebarContextValue>(
     () => ({
@@ -525,6 +516,13 @@ const SidebarMenuSkeleton = ({
   </div>
 );
 SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton";
+
+export {
+  SidebarMenuAction,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+} from "./sidebar-menu-sub.js";
 
 export {
   Sidebar,

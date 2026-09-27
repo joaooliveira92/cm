@@ -1,5 +1,17 @@
 # Redesigned Navbar Implementation Guide
 
+> **The horizontal shape in this guide is superseded.** It described the single primary row plus
+> hover-intent submenu strip that shipped first, and that is retired: as of 2026-09-26 the primary
+> sections and their items are both in a left sidebar — see
+> [primary navigation is a sidebar](../../.agents/notes/implemented/architecture/2026-09-26-primary-navigation-is-a-sidebar.md).
+> Product goal 2 below ("without permanently displaying a large sidebar") and the hover-to-preview
+> model in §6 are the parts that were reversed; hover-intent is gone, because previewing a section
+> would reflow the sidebar under the pointer.
+>
+> What still applies: the keyboard model, the focus and reduced-motion requirements, the active-state
+> rules at section and subsection level, and the non-goals other than the sidebar one. `docs/menu.md`
+> is the source for navigation *content*.
+
 ## Purpose
 
 This document specifies how to design and implement a **redesigned navbar**.

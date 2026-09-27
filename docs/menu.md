@@ -1,15 +1,33 @@
-# Championship Manager 03/04: Two-Row Top Navbar Specification
+# Championship Manager 03/04: Navigation Specification
+
+> **The navigation *shape* in this document is superseded.** As of 2026-09-26 the primary and
+> secondary navigation are a left sidebar, not two top rows — see
+> [primary navigation is a sidebar](../.agents/notes/implemented/architecture/2026-09-26-primary-navigation-is-a-sidebar.md)
+> for why. Everything this document says about navigation *content* still holds and is still the
+> canonical source: the section labels and their order, each section's items, the entity and match
+> contexts, and the ambiguity-resolution rules in §17 other than rule 2. Read "row" as "level"
+> wherever the shape is incidental to the rule.
+>
+> The clauses that stated the opposite of what ships have been corrected in place (§1, §13.3, §17.2,
+> §19). The two-row layout diagrams have not been redrawn; they are a record of the shape that was
+> tried, and the sidebar refactor is the reason it was replaced.
 
 ## 1. Purpose
 
-This document defines how to adapt the navigation model of **Championship Manager: Season 03/04** from its original sidebar and menu-oriented interface into a modern, horizontal navbar with two rows:
+This document defines how to adapt the navigation model of **Championship Manager: Season 03/04**
+from its original sidebar and menu-oriented interface into a navigation system with two levels:
 
-1. a stable **primary navigation row** at the top; and
-2. a **secondary contextual navigation row** immediately below it.
+1. a stable **primary navigation** level, listing the game's domains; and
+2. a **secondary contextual navigation** level, listing what the current domain contains.
+
+Both levels live in a left sidebar: the primary sections stack vertically, and the active section
+expands to show its items beneath it. Contexts that are not a section — a player or staff profile, a
+match — keep a contextual tab row above the screen, because they are transient and do not belong in a
+standing sidebar.
 
 This specification is intentionally explicit so that an implementation LLM can generate the interface without having to infer navigation ownership, visibility rules, selection behavior, action placement, responsive behavior, or entity-specific contexts.
 
-The adaptation must preserve the information density and management workflow of the original game while avoiding a persistent left sidebar.
+The adaptation must preserve the information density and management workflow of the original game.
 
 ---
 
@@ -1499,7 +1517,9 @@ World and Search may become icon-supported items or move into overflow. More rem
 
 ## 13.3 Narrow layout
 
-A narrow layout may use a compact top bar plus a primary overflow control, but it must not introduce a permanent sidebar.
+A narrow layout collapses the sidebar to its icon rail, so every section stays one click away without
+claiming the width a table needs. Below the mobile breakpoint the sidebar becomes an off-canvas sheet
+reached from the header's toggle.
 
 Requirements:
 
@@ -1619,7 +1639,9 @@ Examples:
 An implementation LLM must follow these rules whenever the design leaves multiple possible choices:
 
 1. Preserve the ten primary navigation labels and their order unless a product requirement explicitly changes them.
-2. Never add a persistent sidebar.
+2. Keep the primary sections and their items in the sidebar; do not move a section's items into a
+   second horizontal row. (This rule read "never add a persistent sidebar" until 2026-09-26, when the
+   two-row layout was replaced — see the banner at the top of this document.)
 3. Never move Continue into an overflow menu.
 4. Treat the secondary row as contextual and replace its contents when an entity or match context is active.
 5. Keep the originating primary section active while showing entity-specific secondary tabs.
@@ -1771,19 +1793,19 @@ Items:
 
 The navbar adaptation is complete only if all of the following are true:
 
-- there is no persistent sidebar;
-- there are exactly two navbar rows in the standard desktop layout;
-- the primary row remains stable across standard screens;
-- the secondary row updates according to section, entity, and match context;
+- the primary sections and the active section's items are both in the sidebar;
+- exactly one section is expanded at a time, and by default it is the one the route belongs to;
+- the sidebar remains stable across standard screens;
+- a contextual tab row appears for an entity or match context, and only for those;
 - Continue or its contextual replacement remains visible and prominent;
-- entity-specific tabs do not replace the primary row;
+- entity-specific tabs do not replace the sidebar;
 - Back returns to the originating list with its previous state preserved;
 - page-level actions are not misrepresented as navigation tabs;
 - competition and squad selectors do not create redundant navigation items;
 - conditional tabs appear only when their content is valid;
 - destructive actions require confirmation;
 - keyboard navigation and accessible naming are implemented;
-- the layout does not wrap into a third navigation row;
+- the layout does not wrap into a second horizontal navigation row;
 - unknown or masked information is represented accurately;
 - unimplemented features do not produce dead tabs or placeholder routes.
 
