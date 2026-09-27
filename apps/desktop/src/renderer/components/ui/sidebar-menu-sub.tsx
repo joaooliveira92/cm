@@ -60,8 +60,19 @@ interface SidebarMenuSubItemProps extends React.ComponentProps<"li"> {
   ref?: React.Ref<HTMLLIElement> | undefined;
 }
 
-const SidebarMenuSubItem = ({ ref, ...props }: SidebarMenuSubItemProps) => (
-  <li ref={ref} {...props} />
+/** The active item lights its stretch of the submenu's guide line. The mark hangs off the item
+ *  rather than the button because the button clips its overflow; `-left-2.5` undoes the list's
+ *  padding so the mark sits on the border rather than beside it. */
+const SidebarMenuSubItem = ({ className, ref, ...props }: SidebarMenuSubItemProps) => (
+  <li
+    ref={ref}
+    data-sidebar="menu-sub-item"
+    className={cn(
+      "relative before:absolute before:inset-y-1 before:-left-2.5 before:w-0.5 before:rounded-full has-[[data-active=true]]:before:bg-chrome-top",
+      className,
+    )}
+    {...props}
+  />
 );
 SidebarMenuSubItem.displayName = "SidebarMenuSubItem";
 
@@ -84,11 +95,8 @@ const SidebarMenuSubButton = ({
     data-size={size}
     data-active={isActive}
     className={cn(
-      "relative flex h-7 w-full min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-left text-sidebar-foreground outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
+      "flex h-7 w-full min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-left text-sidebar-foreground outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
       "data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground",
-      // The active item lights its stretch of the submenu's guide line; `-left-2.5` undoes the
-      // list's padding so the mark sits on the border rather than beside it.
-      "before:absolute before:inset-y-1 before:-left-2.5 before:w-0.5 before:rounded-full before:bg-transparent before:transition-colors data-[active=true]:before:bg-chrome-top",
       "[&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-foreground/60 data-[active=true]:[&>svg]:text-sidebar-accent-foreground",
       size === "sm" && "text-xs",
       size === "md" && "text-sm",

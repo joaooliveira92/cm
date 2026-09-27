@@ -1,12 +1,13 @@
-import { Keyboard, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Keyboard, PanelLeftClose } from "lucide-react";
+import type { ReactNode } from "react";
 import { dispatchAction } from "../../actions/dispatch.js";
 import {
   SidebarFooter,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "../../components/ui/sidebar.js";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip.js";
 import { intentOfClick } from "../adapter.js";
 import { useNavContext } from "../navContext.js";
 
@@ -25,50 +26,60 @@ const initialsOf = (manager: SidebarManager): string =>
 const tenureOf = (seasons: number): string =>
   seasons <= 1 ? "First season" : `Season ${seasons} in charge`;
 
+/** A square icon control for the footer row. Hidden in the icon rail, which has room for one
+ *  column only; there the header trigger, the rail and the Actions' keys still reach both. */
+const FooterIconButton = ({
+  label,
+  onClick,
+  children,
+}: {
+  readonly label: string;
+  readonly onClick: () => void;
+  readonly children: ReactNode;
+}) => (
+  <Tooltip>
+    <TooltipTrigger
+      render={
+        <button
+          type="button"
+          aria-label={label}
+          onClick={onClick}
+          className="flex size-8 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 group-data-[collapsible=icon]:hidden [&>svg]:size-4"
+        >
+          {children}
+        </button>
+      }
+    />
+    <TooltipContent side="top">{label}</TooltipContent>
+  </Tooltip>
+);
+
 /**
- * The sidebar's foot: the two shell controls a manager reaches for without a destination in mind,
- * and the manager themself.
+ * The sidebar's foot: one row, the manager beside the two shell controls a manager reaches for
+ * without a destination in mind.
  *
- * The rows dispatch the `open-help` and `toggle-sidebar` Actions rather than calling the overlay or
- * the provider directly, so a pointer and the keyboard binding go through the one handler. The
+ * One row rather than a row each, because the sidebar shares an 800px window with an expanded
+ * section's submenu, and every footer row is a section row pushed out of view.
+ *
+ * The controls dispatch the `open-help` and `toggle-sidebar` Actions rather than calling the overlay
+ * or the provider directly, so a pointer and the keyboard binding go through the one handler. The
  * manager row is the shadcn block's user row, pointed at the Manager Profile — the club identity
  * already lives in the title band, so the sidebar carries the person rather than the team.
  */
 export const CareerSidebarFooter = ({ manager }: { readonly manager: SidebarManager | null }) => {
-  const { state } = useSidebar();
   const { actions } = useNavContext();
-  const collapsed = state === "collapsed";
 
   return (
     <SidebarFooter>
       <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            size="sm"
-            tooltip="Keyboard shortcuts"
-            className="text-sidebar-foreground/70"
-            onClick={() => dispatchAction("open-help")}
-          >
-            <Keyboard />
-            <span>Keyboard shortcuts</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            size="sm"
-            tooltip="Expand sidebar"
-            className="text-sidebar-foreground/70"
-            onClick={() => dispatchAction("toggle-sidebar")}
-          >
-            {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
-            <span>{collapsed ? "Expand sidebar" : "Collapse sidebar"}</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        {manager !== null && (
-          <SidebarMenuItem className="mt-1">
+        <SidebarMenuItem className="flex items-center gap-1">
+          {manager === null ? (
+            <span className="flex-1" />
+          ) : (
             <SidebarMenuButton
               size="lg"
               tooltip={`${manager.firstName} ${manager.lastName}`}
+              className="min-w-0 flex-1"
               onClick={(event) => actions.goTo("manager", intentOfClick(event))}
             >
               <span
@@ -87,8 +98,14 @@ export const CareerSidebarFooter = ({ manager }: { readonly manager: SidebarMana
                 </span>
               </span>
             </SidebarMenuButton>
-          </SidebarMenuItem>
-        )}
+          )}
+          <FooterIconButton label="Keyboard shortcuts" onClick={() => dispatchAction("open-help")}>
+            <Keyboard />
+          </FooterIconButton>
+          <FooterIconButton label="Collapse sidebar" onClick={() => dispatchAction("toggle-sidebar")}>
+            <PanelLeftClose />
+          </FooterIconButton>
+        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarFooter>
   );

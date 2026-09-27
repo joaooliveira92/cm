@@ -60,7 +60,7 @@ export const CareerSidebar = ({
     <SidebarContent>
       <nav aria-label="Primary navigation">
         {NAV_GROUPS.map((group) => (
-          <SidebarGroup key={group.label}>
+          <SidebarGroup key={group.label} className="py-1">
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             <SidebarMenu>
               {group.sectionIds.map((id) => {
