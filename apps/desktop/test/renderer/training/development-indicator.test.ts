@@ -16,6 +16,19 @@ describe("ticket 08 — the development indicator words the newest recorded Seas
     );
   });
 
+  it("words a baseline-bearing Season as within-Season growth, not a comparison", () => {
+    expect(
+      describeLatestDevelopment({
+        seasonNumber: 1,
+        comparedWithSeason: null,
+        changes: [change(10, 12), change(15, 14)],
+      }),
+    ).toBe("Season 1: 1 Attribute rose and 1 fell from the Season's starting point.");
+    expect(
+      describeLatestDevelopment({ seasonNumber: 2, comparedWithSeason: null, changes: [change(10, 13)] }),
+    ).toBe("Season 2: 1 Attribute rose from the Season's starting point.");
+  });
+
   it("distinguishes a compared Season with no change from one with no comparison", () => {
     expect(describeLatestDevelopment({ seasonNumber: 2, comparedWithSeason: 1, changes: [] })).toBe(
       "Season 2: no Attribute changed since Season 1.",
