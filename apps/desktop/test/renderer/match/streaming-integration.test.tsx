@@ -381,30 +381,37 @@ describe("revealed injuries: acted on, resolved, and the cap they were revealed 
     });
   };
 
-  it("an Injury revealed while a command is in flight survives that command's response", async () => {
+  it("holds the reveal while a command is in flight, then drops the lines read ahead and reads on from the revealed position (group-g-match-day 20)", async () => {
     let answerCommand: (() => void) | undefined;
     const held = () =>
       new Promise((resolve) => {
-        answerCommand = () => resolve({ _tag: "Success", value: { ...resumeView({ homeSubs: capReached }), substitutionApplied: null, forceOffApplied: true } });
+        answerCommand = () => resolve({ _tag: "Success", value: { ...resumeView(), substitutionApplied: null, forceOffApplied: true } });
       });
-    const chunk = resumeView({ cursor: 2, homeSubs: capReached, lines: [line(1, "Kick-off."), injuryLine(23)], injuries: [knock()] });
-    const probe = await mountProbe({ match: home }, [chunk], held);
+    // Read ahead from the timeline before the command: its line at 23 may not survive the command.
+    const beforeCommand = resumeView({ cursor: 3, lines: [line(1, "Kick-off."), line(23, "Old timeline."), line(30, "Old timeline.")] });
+    const probe = await mountProbe({ match: home }, [beforeCommand], held);
+    await tick();
+    expect(probe.text()).toBe("1|live|running|0-0");
 
-    // The command is sent before the Injury line is revealed, so it cannot have acted on it.
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Bring off" }));
       await vi.advanceTimersByTimeAsync(0);
     });
-    await tick(2);
-    expect(probe.injuries()).toBe("on-5");
-    expect(probe.text()).toBe("2|live|paused|0-0");
+    // Nothing is revealed, and nothing polled, until the command is answered.
+    const pollsBefore = probe.calls();
+    await tick(3);
+    expect(probe.text()).toBe("1|live|running|0-0");
+    expect(probe.calls()).toBe(pollsBefore);
 
+    probe.enqueue(resumeView({ cursor: 2, lines: [line(24, "New timeline.")] }));
     await act(async () => {
       answerCommand?.();
       await vi.advanceTimersByTimeAsync(0);
     });
-    expect(probe.injuries()).toBe("on-5");
-    expect(probe.text()).toBe("2|live|paused|0-0");
+    await tick(2);
+    // The next read starts where the reveal stood, and only the new timeline's line is shown.
+    expect(probe.payloads.at(-1)).toMatchObject({ cursor: 1, revealedEvents: 1 });
+    expect(probe.text()).toBe("2|live|running|0-0");
   });
 
   it("a severe Injury is resolved by the forced Substitution revealed right after it", async () => {

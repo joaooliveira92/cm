@@ -162,7 +162,7 @@ and each is reversible by overturning its note.
 The four that mattered most, and why:
 
 - **group-g 01, 04, 05, 08 were one question.** Settled as
-  [revealed play is immutable](../.agents/notes/proposed/feature/2026-09-19-revealed-play-is-immutable.md):
+  [revealed play is immutable](../.agents/notes/implemented/feature/2026-09-19-revealed-play-is-immutable.md):
   what the manager has been shown is a fact about the match and nothing may change it. A live
   `ChangeTactics` touches only Team Instructions; a substitution may bring on only an unused bench player;
   the revealed position is durable across a restart; a command takes effect at M+1, never at a revealed

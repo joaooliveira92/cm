@@ -56,12 +56,23 @@ const minuteStart = (events: ReadonlyArray<MatchEvent>, command: PersistedForced
  * minute's commands in journal order, each emitting its Substitution as it goes, so a bring-off
  * lands after the Substitutions of the same minute's commands journaled before it: bringing off a
  * player brought on earlier that minute must follow their substitution. A halftime bring-off sits
- * at `HalfTimeReached`, after every halftime Substitution, which no halftime order contradicts.
+ * after the break and every halftime Substitution, which no halftime order contradicts. Those follow
+ * `HalfTimeReached` (group-g-match-day ticket 20); in a timeline committed before that they precede
+ * it, and the position past the break is still after them.
  */
 const appliedAt = (events: ReadonlyArray<MatchEvent>, commands: ReadonlyArray<LineupCommand>, position: number): number => {
   const command = commands[position] as PersistedForcedOff;
   let index = minuteStart(events, command);
-  if (command.isHalftime) return index;
+  if (command.isHalftime) {
+    if (events[index]?._tag !== "HalfTimeReached") return index;
+    index++;
+    while (index < events.length) {
+      const event = events[index]!;
+      if (event._tag !== "Substitution" || event.half !== 1 || event.minute !== HALFTIME_MINUTE) break;
+      index++;
+    }
+    return index;
+  }
   const earlier = commands.slice(0, position).filter((other) => !other.isHalftime && other.minute === command.minute);
   while (index < events.length) {
     const event = events[index]!;

@@ -7,7 +7,7 @@ screen tells the manager it has restarted from kickoff, rather than replaying re
 A live match re-derives from its seed and command journal under the current engine, so after an
 upgrade the replay can differ from what the manager was shown; saying so is what keeps that honest.
 
-**Decisions:** [revealed play is immutable](../../../.agents/notes/proposed/feature/2026-09-19-revealed-play-is-immutable.md),
+**Decisions:** [revealed play is immutable](../../../.agents/notes/implemented/feature/2026-09-19-revealed-play-is-immutable.md),
 point 3 (the revealed position is persisted), and decision request 05. If point 3 lands first, the
 restart resumes at the revealed position under the same engine, and the message is only owed when the
 engine has changed.
@@ -39,7 +39,7 @@ rest of the match in this process and goes once the result is accepted, because 
 from what was shown before the app closed. The flag rides on `ActiveMatchSession`, so a same-session return
 to Match day keeps it. A match started in this process never shows it.
 
-Until the revealed position is persisted ([revealed play is immutable](../../../.agents/notes/proposed/feature/2026-09-19-revealed-play-is-immutable.md)
+Until the revealed position is persisted ([revealed play is immutable](../../../.agents/notes/implemented/feature/2026-09-19-revealed-play-is-immutable.md)
 point 3), every restart replays from kickoff, so the notice always shows after one. If point 3 lands, the
 notice should depend on whether the engine changed. Reviewed inline by the orchestrator.
 Report: [group-g-match-day](../../../.ai/reports/group-g-match-day.md).

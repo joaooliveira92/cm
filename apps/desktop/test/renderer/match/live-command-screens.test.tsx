@@ -249,7 +249,7 @@ describe("Match Substitutions — the live substitution screen", () => {
     expect(screen.getByText("Cap reached")).toBeTruthy();
   });
 
-  it("submits the substitution for the controlled club at the revealed minute and shows it applied", async () => {
+  it("submits the substitution for the controlled club at the minute after the revealed one and shows it applied", async () => {
     setActiveMatch(liveSession() as never);
     recordRevealedMinute(rid("s1"), MatchId.make("m1"), 63);
     recordHalfTimeRevealed(rid("s1"), MatchId.make("m1"));
@@ -268,7 +268,7 @@ describe("Match Substitutions — the live substitution screen", () => {
     const submitted = calls.find((c) => c.method === "submitMatchCommand")!.payload;
     expect(submitted).toMatchObject({
       matchId: "m1",
-      minute: 63,
+      minute: 64,
       isHalftime: false,
       command: { _tag: "MakeSubstitution", clubId: "away", outPlayerId: "on-3", inPlayerId: "bench-1" },
     });

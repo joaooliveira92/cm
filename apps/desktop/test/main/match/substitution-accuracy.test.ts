@@ -283,11 +283,13 @@ it.effect("a minute-45 command the window cap refuses leaves a halftime instruct
     strictEqual(humanSubs(halftime, s.match).windowsUsed, 3, "the minute-45 Substitution is the halftime instruction's");
 
     // Nothing happens in minute 45 or first-half stoppage, so only the journal and the windows can
-    // tell the halftime instruction from a live minute-45 command.
+    // tell the halftime instruction from a live minute-45 command. It lands after `HalfTimeReached`
+    // (group-g-match-day 20), which is what keeps it from re-simulating minute 45.
     const { lines } = yield* drain(s.save.id, s.match.matchId);
     const halfTime = lines.findIndex((line) => line.tag === "HalfTimeReached");
-    strictEqual(lines[halfTime - 1]?.tag, "Substitution", "repin FORCED_SUB_SEED");
-    ok(lines[halfTime - 2]!.minute < 45, "repin FORCED_SUB_SEED: minute 45 and stoppage are silent");
+    strictEqual(lines[halfTime + 1]?.tag, "Substitution", "repin FORCED_SUB_SEED");
+    strictEqual(lines[halfTime + 1]?.minute, 45, "repin FORCED_SUB_SEED: the halftime instruction keeps minute 45");
+    ok(lines[halfTime - 1]!.minute < 45, "repin FORCED_SUB_SEED: minute 45 and stoppage are silent");
   }),
 );
 

@@ -18,7 +18,7 @@ cannot build a `MatchSummary` from what it has today (`PendingFixtureView` carri
 `isHome`), so this needs a contract change: the human club's id and name on `PendingFixtureView`, or a read
 that returns the existing `MatchSummary`. Either is schema'd in `packages/contracts` with a roundtrip test.
 
-**Decisions:** [revealed play is immutable](../../../.agents/notes/proposed/feature/2026-09-19-revealed-play-is-immutable.md)
+**Decisions:** [revealed play is immutable](../../../.agents/notes/implemented/feature/2026-09-19-revealed-play-is-immutable.md)
 point 3 (persisting the revealed position) is a later step and not this ticket; this ticket restores the
 replay-from-kickoff behaviour that ticket 31 and decision request 05 assumed already existed.
 

@@ -159,9 +159,9 @@ export const getRevealedMinute = (saveId: SaveId): number => liveOfActive(saveId
  * after it. This is the one moment a halftime instruction cannot rewrite second-half events the manager
  * has already seen, and every live command surface offers it only then.
  *
- * The engine applies halftime instructions before `HalfTimeReached` and stamps it 45; the second half
- * starts at 46. A first-half stoppage line carries 46 or more but comes before `HalfTimeReached`, so the
- * minute alone cannot tell the window (group-g-match-day 16).
+ * The engine emits `HalfTimeReached`, then the commands the managers gave at the break, and stamps all
+ * of them 45; the second half starts at 46. A first-half stoppage line carries 46 or more but comes
+ * before `HalfTimeReached`, so the minute alone cannot tell the window (group-g-match-day 16, 20).
  */
 export const getAtHalfTime = (saveId: SaveId): boolean => {
   const context = liveOfActive(saveId);

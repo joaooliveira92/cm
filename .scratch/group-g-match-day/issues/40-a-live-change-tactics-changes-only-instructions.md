@@ -13,7 +13,7 @@ whole Tactic. The main-process fold `pitch.ts` already assumes this, and the ben
 kickoff (35).
 
 **Decisions:** [decision request 01](../decision-request-01-live-change-tactics-scope.md), Option A, recorded as
-[revealed play is immutable](../../../.agents/notes/proposed/feature/2026-09-19-revealed-play-is-immutable.md)
+[revealed play is immutable](../../../.agents/notes/implemented/feature/2026-09-19-revealed-play-is-immutable.md)
 point 1. It changes what a seed produces for any match with a live tactics change; committed matches keep
 their stored timeline ([31](31-committed-matches-store-their-timeline.md)). Say which live matches replay
 differently.

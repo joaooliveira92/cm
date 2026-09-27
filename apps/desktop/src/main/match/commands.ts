@@ -13,6 +13,7 @@ import {
   type SaveId,
   SubmitMatchCommandView,
 } from "@cm-clone/contracts";
+import { nextCommandMinute, type MatchEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
 import { appendStreamEvents, loadStreamEvents, nextStreamSeq, withExistingSave } from "../season/decider.js";
@@ -27,6 +28,25 @@ import { substitutionApplied, substitutionLedger } from "./substitutions.js";
 import { buildResumeSimulationView } from "./view.js";
 
 type MatchCommandPayloadInput = ChangeTacticsCommandPayload | MakeSubstitutionCommandPayload | ForceOffCommandPayload;
+
+/**
+ * The minute a non-halftime command is journaled at: the one asked for, but never earlier than the
+ * minute after the last revealed Match Event (`nextCommandMinute`). The renderer already stamps it
+ * that way; this makes revealed play immutable whatever a caller sends (group-g-match-day ticket 20,
+ * Agent Note: revealed play is immutable). With no revealed position given, the request stands.
+ */
+const effectiveMinute = (
+  timeline: ReadonlyArray<MatchEvent>,
+  revealedEvents: number | null,
+  requested: number,
+): number => {
+  if (revealedEvents === null) return requested;
+  const shown = timeline.slice(0, Math.max(0, revealedEvents));
+  const last = shown.at(-1);
+  const revealedMinute = last === undefined || last._tag === "MatchStarted" ? 0 : last.minute;
+  const halfTimeRevealed = shown.some((event) => event._tag === "HalfTimeReached");
+  return Math.max(requested, nextCommandMinute(revealedMinute, halfTimeRevealed));
+};
 
 /**
  * `SubmitMatchCommand` (ticket 14): appends the command to the match's stream as a minute-stamped
@@ -45,7 +65,7 @@ export const submitMatchCommand = (
   matchId: MatchId,
   cursor: number,
   revealedEvents: number | null,
-  minute: number,
+  requestedMinute: number,
   isHalftime: boolean,
   command: MatchCommandPayloadInput,
 ) =>
@@ -54,6 +74,12 @@ export const submitMatchCommand = (
       yield* assertSaveNotArchived(saveId);
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
+
+      // A halftime command is applied at the break itself, which is its own guarantee.
+      const minute =
+        isHalftime || revealedEvents === null
+          ? requestedMinute
+          : effectiveMinute(yield* Effect.sync(() => deriveMatchEvents(stream).events), revealedEvents, requestedMinute);
 
       const seq = yield* nextStreamSeq(MATCH_STREAM_TYPE, matchId);
       const tag = command._tag === "ChangeTactics" ? "TacticsChanged" : command._tag === "MakeSubstitution" ? "SubstitutionMade" : "ForceOffMade";

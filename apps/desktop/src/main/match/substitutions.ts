@@ -107,9 +107,9 @@ export interface SubstitutionRoles {
  * off the counters rather than off who the fold has on the pitch keeps it right after a live tactics
  * change moves players the fold does not follow.
  *
- * A halftime instruction and a live command stamped minute 45 (one given in first-half stoppage) both
- * emit a Substitution at minute 45 of the first half, and when minute 45 and stoppage bring no other
- * event the two sit side by side. The journal tells them apart: in timeline order, a minute-45
+ * A halftime instruction and a live command stamped minute 45 both emit a Substitution at minute 45 of
+ * the first half: the live command's before `HalfTimeReached`, the halftime instruction's after it (or
+ * before it, in a timeline committed before ticket 20 moved them). The journal tells them apart: in timeline order, a minute-45
  * Substitution is the live command's when a journaled minute-45 live command of the same pair is still
  * unmatched and the engine had a window for it; otherwise it is a halftime instruction. The engine
  * applies the live commands first, so matching in order is its order.
@@ -125,10 +125,7 @@ export const classifySubstitutions = (
   const liveAt45 = lineupCommands.filter(
     (command) => command._tag === "SubstitutionMade" && !command.isHalftime && command.minute === HALFTIME_MINUTE,
   );
-  let firstHalf = true;
-
   for (const [index, event] of events.entries()) {
-    if (event._tag === "HalfTimeReached") firstHalf = false;
     if (event._tag !== "Substitution") continue;
     const ledger = ledgers.get(event.teamClubId) ?? { substitutionsUsed: 0, windowsUsed: 0, lastWindow: null };
     ledgers.set(event.teamClubId, ledger);
@@ -145,7 +142,7 @@ export const classifySubstitutions = (
         standIns.add(event);
         continue;
       }
-    } else if (firstHalf && event.minute === HALFTIME_MINUTE) {
+    } else if (event.half === 1 && event.minute === HALFTIME_MINUTE) {
       const live = liveAt45.findIndex((command) => command._tag === "SubstitutionMade" && samePair(event, command));
       if (live === -1 || capRefuses(ledger, event)) {
         halftime.add(event);

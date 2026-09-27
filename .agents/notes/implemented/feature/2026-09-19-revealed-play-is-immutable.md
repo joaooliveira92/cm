@@ -1,6 +1,6 @@
 # Agent Note: Revealed play is immutable
 
-Status: proposed
+Status: implemented
 
 Settles four decision requests at once — group-g 01, 04, 05 and 08 — because they are four symptoms of
 one missing rule.
@@ -61,7 +61,8 @@ smaller price than a feed that cannot be trusted, and is arguably truer to a tou
 Points 1, 2 and 4 change what a seed produces, so they are **engine-rule changes and gated on
 [ticket 31](../../implemented/architecture/2026-09-19-committed-matches-store-their-timeline.md)** — a committed match must store its
 timeline before any of them lands, or every saved match holding a `TacticsChanged` after a dismissal
-silently rewrites itself.
+silently rewrites itself. **Gate cleared 2026-09-21** (ticket 31, resolved), and all four points
+shipped: 1 in ticket 40, 2 in tickets 26/34/35, 3 in tickets 23/37, 4 in ticket 20 on 2026-09-27.
 
 Decided by the agent on 2026-09-19 under the human's standing delegation ("i need you to solve the
 decisions"), adopting the recommendation each request carried.
@@ -85,17 +86,25 @@ what they remember.
 ## Consequences
 
 - **Blocked behind ticket 31**, along with tickets 26 and 29 and request 06's fix. The backfill is the
-  gate on all of it.
+  gate on all of it. **Cleared 2026-09-21**; ticket 31 shipped that day.
 - **`Tactic.bench` gains its first engine reader**, which means a Tactic saved with an empty or stale
   bench must be handled — a team sheet with no bench can make no substitution, and that has to be a
-  readable state rather than a crash.
+  readable state rather than a crash. **Shipped** as ticket 39 (an empty bench is flagged before
+  kickoff).
 - **A migration** for the persisted revealed position (point 3) — **provisional**: no migration
   mechanism exists, per
-  [saves have no migration path](../architecture/2026-09-19-saves-have-no-migration-path.md). Points 1,
+  [saves have no migration path](../../proposed/architecture/2026-09-19-saves-have-no-migration-path.md). Points 1,
   2 and 4 are unaffected; they are engine rules, not persistence. **Settled 2026-09-21:**
   [saves are disposable during development](../../implemented/architecture/2026-09-21-saves-are-disposable-during-development.md),
   so the persisted position needs a schema change and no migration; older saves are refused on open.
+  **Shipped 2026-09-27** as the persisted revealed position on the match session.
 - **Screen 97 spec §17 becomes satisfiable.** "Dismissed and injured-player constraints are explicit"
   could not be honoured while the engine reversed dismissals.
 - **Four decision requests close**, and the nineteen-ticket pattern behind them should stop: a defect
   of this family is now a violation of a stated rule rather than a fresh discovery.
+- **Point 4 costs a clamp in two places, and the main process is the one that must hold it.** The
+  renderer stamps a command at M+1 (`nextCommandMinute` in `packages/game-engine`), but a stamp is
+  only a request: `submitMatchCommand` re-derives the timeline and holds the command past the last
+  revealed Match Event, so no caller can reach a revealed minute. A halftime instruction is the
+  separate path, and the engine now emits `HalfTimeReached` *before* the halftime commands it applies,
+  which is what lets a halftime instruction land after the break without re-simulating minute 45.

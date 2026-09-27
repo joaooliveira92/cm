@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { Effect, Result } from "effect";
+import { nextCommandMinute } from "@cm-clone/game-engine";
 import type {
   CommentaryLineView,
   InjuryView,
@@ -39,9 +40,6 @@ import {
 } from "./session.js";
 
 export type { RevealedInjury } from "./session.js";
-
-const stampMinute = (revealedMinute: number, halfTimeRevealed: boolean): number =>
-  Math.max(1, halfTimeRevealed ? revealedMinute : Math.min(revealedMinute, HALFTIME_MINUTE));
 
 export interface CommentaryState {
   readonly revealed: ReadonlyArray<CommentaryLineView>;
@@ -81,6 +79,9 @@ export interface CommentaryMeta {
   readonly fetchingRef: { current: boolean };
   readonly streamCompleteRef: { current: boolean };
   readonly pausedRef: { current: boolean };
+  /** True while a live command is in flight: nothing is revealed or polled until its answer realigns
+   *  the feed, since the lines buffered so far may come from a timeline the command changes. */
+  readonly commandInFlightRef: { current: boolean };
   /** Numbers a request that carries a pitch, in send order; call it just before sending. */
   readonly nextPitchRequest: () => number;
   /** `request` is the number `nextPitchRequest` gave the poll when it was sent. */
@@ -161,6 +162,10 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
   /** Sync with the restored match phase so the streaming hook's poll gate
    *  sees the correct pause state on the first render cycle. */
   const pausedRef = useRef(restored?.phase === "paused");
+  const commandInFlightRef = useRef(false);
+  /** The request number of the last command sent. A poll sent before it read the old timeline, so its
+   *  answer is dropped whenever it lands. */
+  const commandRequestRef = useRef(0);
 
   const runCommand = useAtomSet(submitMatchCommandMutation, { mode: "promise" });
 
@@ -216,6 +221,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
   );
 
   const applyPollView = useCallback((view: RpcSuccess<"resumeSimulation">, request: number): void => {
+    if (request < commandRequestRef.current) return;
     cursorRef.current = view.cursor;
     // One Commentary Line per Match Event, in order, so a chunk's Nth Injury line is its Nth injury.
     const injuryLines = view.lines.filter((line) => line.tag === "Injury");
@@ -353,16 +359,20 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
       if (matchState.match === null) return { _tag: "rejected", reason: "No match is in play." };
       const revealedEvents = getRevealedEvents(matchState.saveId);
       const request = nextPitchRequest();
-      // Lines keep revealing while the command is in flight; an Injury revealed meanwhile was not
-      // in front of the manager when they sent it.
       const actedOn = revealedInjuriesRef.current;
+      // The command takes effect at the minute after the last revealed event (`nextCommandMinute`),
+      // so nothing already shown can change. What was fetched ahead of the reveal can: hold the reveal
+      // while the command is in flight, then drop the buffer and read on from the revealed position
+      // (group-g-match-day ticket 20).
+      commandRequestRef.current = request;
+      commandInFlightRef.current = true;
       try {
         const result = await runCommand({
           saveId: matchState.saveId,
           matchId: matchState.match.matchId,
           cursor: 0,
           revealedEvents,
-          minute: isHalftime ? HALFTIME_MINUTE : stampMinute(currentMinute, getHalfTimeRevealed(matchState.saveId)),
+          minute: isHalftime ? HALFTIME_MINUTE : nextCommandMinute(currentMinute, getHalfTimeRevealed(matchState.saveId)),
           isHalftime,
           command,
         });
@@ -373,6 +383,11 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
         const typed = error as RpcClientError<"submitMatchCommand"> | undefined;
         if (typed?._tag === "RemoteFailure") return { _tag: "rejected", reason: describeRpcError(typed) };
         throw error;
+      } finally {
+        pendingRef.current = [];
+        cursorRef.current = revealedEvents;
+        streamCompleteRef.current = false;
+        commandInFlightRef.current = false;
       }
     },
     [matchState.match, matchState.saveId, currentMinute, runCommand, applyCommandResult, applyRevealedState, nextPitchRequest],
@@ -399,6 +414,7 @@ export const CommentaryProvider = ({ children }: { readonly children: ReactNode 
       fetchingRef,
       streamCompleteRef,
       pausedRef,
+      commandInFlightRef,
       nextPitchRequest,
       applyPollView,
       revealLine,

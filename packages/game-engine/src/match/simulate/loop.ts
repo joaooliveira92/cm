@@ -173,8 +173,11 @@ const runSimulation = (
     snapshotCounts(stoppageMinute, half);
 
     if (half === 1) {
-      applyScheduledCommands(home, away, HALF_LENGTH_MINUTES, 1, input.halftimeCommands, true, events);
+      // The break comes first, then what the managers did at it: a halftime command's events land after
+      // `HalfTimeReached`, where the manager gave it, so they never move a line already shown
+      // (group-g-match-day ticket 20). They keep minute 45 of the first half.
       events.push({ _tag: "HalfTimeReached", minute: HALF_LENGTH_MINUTES, homeScore: score.home, awayScore: score.away });
+      applyScheduledCommands(home, away, HALF_LENGTH_MINUTES, 1, input.halftimeCommands, true, events);
       snapshotCounts(HALF_LENGTH_MINUTES, 1);
     } else {
       events.push({

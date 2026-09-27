@@ -84,6 +84,14 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
 - [42 — Quick result skips the live reveal](issues/42-quick-result-skips-the-live-reveal.md): resolved
   2026-09-27. The renderer reads and reveals a Quick result's feed at once, with no injury pause. The
   mode is not persisted, so after an app restart the match replays live from kickoff.
+- [20 — A command rewrites play already seen](issues/20-a-command-rewrites-play-already-seen.md): resolved
+  2026-09-27. A live command is stamped at M+1, the minute after the last revealed Match Event
+  ([decision request 08](decision-request-08-live-command-timing-relative-to-revealed-play.md), Option A);
+  the renderer reveals nothing and polls nothing while the command is in flight, then reads on from the
+  revealed position. The halftime path is its own guarantee: the engine now emits `HalfTimeReached`
+  before the commands it applies at the break, so a halftime instruction lands after the break without
+  re-simulating minute 45. Closes the last of the four points in
+  [revealed play is immutable](../../.agents/notes/implemented/feature/2026-09-19-revealed-play-is-immutable.md).
 
 ## Not yet specified
 

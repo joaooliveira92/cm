@@ -84,7 +84,7 @@ export const useMatchStreaming = (): void => {
         !shouldPollMatch({
           fetching: commMeta.fetchingRef.current,
           streamComplete: commMeta.streamCompleteRef.current,
-          paused: commMeta.pausedRef.current,
+          paused: commMeta.pausedRef.current || commMeta.commandInFlightRef.current,
           bufferLength: commMeta.pendingRef.current.length,
         })
       ) {
@@ -141,7 +141,7 @@ export const useMatchStreaming = (): void => {
 
     const interval = setInterval(() => {
       const decision = nextPaceDecision({
-        paused: commMeta.pausedRef.current,
+        paused: commMeta.pausedRef.current || commMeta.commandInFlightRef.current,
         bufferLength: commMeta.pendingRef.current.length,
         streamComplete: commMeta.streamCompleteRef.current,
       });

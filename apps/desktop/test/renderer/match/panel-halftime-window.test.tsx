@@ -67,7 +67,9 @@ describe("the Match day panel's halftime instruction is offered only at half tim
     fireEvent.click(halftimeToggle());
     substitute("on-1", "bench-1");
     await waitFor(() => expect(submissions.calls).toHaveLength(1));
-    expect(submissions.calls[0]!.payload).toMatchObject({ isHalftime: false, minute: 45 });
+    // Nothing of the first half is left unshown, so the command takes effect at the second half's first
+    // minute rather than re-simulating a shown one (group-g-match-day 20).
+    expect(submissions.calls[0]!.payload).toMatchObject({ isHalftime: false, minute: 46 });
 
     feed.push(at(45, "HalfTimeReached", "Half time."));
     await revealedCount(3);
@@ -85,7 +87,7 @@ describe("the Match day panel's halftime instruction is offered only at half tim
     expect(halftimeToggle().checked).toBe(false);
     substitute("on-3", "bench-3");
     await waitFor(() => expect(submissions.calls).toHaveLength(3));
-    expect(submissions.calls[2]!.payload).toMatchObject({ isHalftime: false, minute: 52 });
+    expect(submissions.calls[2]!.payload).toMatchObject({ isHalftime: false, minute: 53 });
   }, 15_000);
 
   it("is open on the first render after returning to Match day at half time", async () => {

@@ -239,7 +239,7 @@ describe("returning to Match day continues from the revealed position (group-g-m
     expect(headerReadout()).toBe("30' · Home FC 1–0 Away FC");
   });
 
-  it("restores the score and stamps a command raised straight after returning at the revealed minute", async () => {
+  it("restores the score and stamps a command raised straight after returning at the minute after the revealed one", async () => {
     mockMatch(MATCH);
     await watchThenLeave(3);
 
@@ -254,7 +254,7 @@ describe("returning to Match day continues from the revealed position (group-g-m
     });
 
     expect(returned.commands).toHaveLength(1);
-    expect(returned.commands[0]).toMatchObject({ minute: 30, revealedEvents: 3, isHalftime: false });
+    expect(returned.commands[0]).toMatchObject({ minute: 31, revealedEvents: 3, isHalftime: false });
   });
 
   it("keeps a revealed Injury's decision pause across the return", async () => {

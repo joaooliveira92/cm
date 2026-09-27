@@ -31,7 +31,7 @@ The choice has player-visible consequences for what the manager sees after a liv
 
 Settled together with group-g requests 01, 04, 05 and 08 as one rule: **revealed play is immutable.**
 What the manager has been shown is a fact about the match, and nothing may change it. Recorded as
-[revealed play is immutable](../../.agents/notes/proposed/feature/2026-09-19-revealed-play-is-immutable.md).
+[revealed play is immutable](../../.agents/notes/implemented/feature/2026-09-19-revealed-play-is-immutable.md).
 
 These four were four symptoms of one missing rule, which is why nineteen tickets patched them
 individually without the pattern closing. A defect of this family is now a violation of a stated rule

@@ -12,6 +12,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Effect, Result } from "effect";
+import { nextCommandMinute } from "@cm-clone/game-engine";
 import {
   Tactic,
   type ClubId,
@@ -45,16 +46,6 @@ import {
   recordLiveTactic,
   type RevealedScore,
 } from "./session.js";
-
-/**
- * The minute to stamp a non-halftime command with. During the first half (before HalfTimeReached
- * has been revealed), the engine runs minutes 1-45 then first-half stoppage at 46-50. A command
- * during stoppage stamped at 46+ would be applied at that minute of the second half instead.
- * Clamping to HALFTIME_MINUTE during the first half places the command at the last normal minute
- * before stoppage, which is what the manager intended: an instant instruction, not a wait-til-46.
- */
-const stampMinute = (revealedMinute: number, halfTimeRevealed: boolean): number =>
-  Math.max(1, halfTimeRevealed ? revealedMinute : Math.min(revealedMinute, HALFTIME_MINUTE));
 
 export interface LiveMatchReady {
   readonly _tag: "ready";
@@ -168,7 +159,7 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
           matchId: view.match.matchId,
           cursor: 0,
           revealedEvents: getRevealedEvents(saveId),
-          minute: isHalftime ? HALFTIME_MINUTE : stampMinute(getRevealedMinute(saveId), getHalfTimeRevealed(saveId)),
+          minute: isHalftime ? HALFTIME_MINUTE : nextCommandMinute(getRevealedMinute(saveId), getHalfTimeRevealed(saveId)),
           isHalftime,
           command,
         });
