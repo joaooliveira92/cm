@@ -1,6 +1,6 @@
 # 01: Step 2B — Manager Style & Appearance pane
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **What to build:** A second half to the Manager step that rounds out the profile: a visual avatar
 baseline (portrait plus accent colours) and an initial tactical identity (preferred formation and
@@ -74,18 +74,18 @@ Note that ships with the implementing commit.
 
 ## Acceptance criteria
 
-- [ ] `manager_profile` gains flat `preferred_formation`, `preferred_style_id`,
+- [x] `manager_profile` gains flat `preferred_formation`, `preferred_style_id`,
       `avatar_portrait_key` (nullable), `avatar_primary_color`, and `avatar_secondary_color`
       columns; `commitCareer` and `ManagerProfileView` carry them.
-- [ ] `preferred_formation` is one of `FORMATIONS`; `preferred_style_id` is one of the new shared
+- [x] `preferred_formation` is one of `FORMATIONS`; `preferred_style_id` is one of the new shared
       preset ids, each mapping to a `(mentality, tempo, pressing)` triple.
-- [ ] Step 2's sub-step 3 (`ManagerStyleAppearancePane`) offers the formation and style pickers and
+- [x] Step 2's sub-step 3 (`ManagerStyleAppearancePane`) offers the formation and style pickers and
       the colour/initials avatar controls; the bottom bar and in-panel stepper drive it.
-- [ ] Formation and style are required by the completeness predicate; the avatar is optional.
-- [ ] A career with no persisted Tactic opens the Tactics editor seeded from the manager's preferred
+- [x] Formation and style are required by the completeness predicate; the avatar is optional.
+- [x] A career with no persisted Tactic opens the Tactics editor seeded from the manager's preferred
       formation and style; a career with a Tactic is unaffected, and `commitCareer` writes no Tactic.
-- [ ] The `no-tactic` `MatchNotReadyError` blocker still fires for a new career.
-- [ ] Contract round-trip test added; `e2e/fillPersonalDetails.ts` extended; `pnpm check:all` green.
+- [x] The `no-tactic` `MatchNotReadyError` blocker still fires for a new career.
+- [x] Contract round-trip test added; `e2e/fillPersonalDetails.ts` extended; `pnpm check:all` green.
 
 ## Comments
 

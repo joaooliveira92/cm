@@ -11,6 +11,10 @@ referenced throughout.
 
 ## Shipped
 
+- **[.scratch/manager-style-and-appearance/](../.scratch/manager-style-and-appearance/)** — 1/1,
+  completed 2026-09-27. Step 2C of the New Career wizard: the manager's avatar accent scheme and
+  preferred formation/tactical style, stored flat on `manager_profile`, gating the Manager step, and
+  seeding the first Tactic in the editor rather than at commit.
 - **[.scratch/active-leagues-setup/](../.scratch/active-leagues-setup/)** — 8/8. The reworked
   League & Nation step: Simulation Depth as a domain term, the active-leagues projection, the
   consequences estimate, and the setup workspace. Its implementation brief sits alongside as
