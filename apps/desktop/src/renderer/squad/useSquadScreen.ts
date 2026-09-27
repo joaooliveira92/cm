@@ -42,6 +42,8 @@ import {
   applyFilters,
   clearFilters,
   positionClause,
+  removeFilter,
+  statusClause,
   upsertFilter,
 } from "../table/features/filtering.js";
 import {
@@ -329,11 +331,22 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     [saveId],
   );
 
+  /* Each dropdown edits only its own clause. "" clears that clause and nothing
+   * else — clearing Position must not discard an active Status, and vice versa. */
   const setPositionFilter = useCallback(
     (position: string) => {
-      const next =
-        position === "" ? clearFilters() : upsertFilter(latest.current.filters, positionClause(position));
-      applyFilter(next);
+      const clause = positionClause(position);
+      const current = latest.current.filters;
+      applyFilter(position === "" ? removeFilter(current, clause) : upsertFilter(current, clause));
+    },
+    [applyFilter],
+  );
+
+  const setStatusFilter = useCallback(
+    (status: string) => {
+      const clause = statusClause(status);
+      const current = latest.current.filters;
+      applyFilter(status === "" ? removeFilter(current, clause) : upsertFilter(current, clause));
     },
     [applyFilter],
   );
@@ -438,6 +451,7 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       onRowPrimary,
       openPlayer,
       setPositionFilter,
+      setStatusFilter,
       setPreset,
       setView,
       toggleOneColumn,

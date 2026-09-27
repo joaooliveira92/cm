@@ -57,6 +57,8 @@ export interface SquadScreenActions {
    *  primary action both land here, so pointer and keyboard open the same thing. */
   readonly openPlayer: (id: string, event: React.MouseEvent) => void;
   readonly setPositionFilter: (position: string) => void;
+  /** Set the status clause to a modeled abbreviation, or remove it with "". */
+  readonly setStatusFilter: (status: string) => void;
   readonly setPreset: (presetId: SquadPresetId) => void;
   readonly setView: (viewId: SquadViewId) => void;
   readonly toggleOneColumn: (columnId: string) => void;

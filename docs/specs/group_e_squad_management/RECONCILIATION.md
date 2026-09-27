@@ -81,6 +81,7 @@ matched features against the import's titles, not against its sections.
 | 69 Squad Selection | Single-selection model. `Space` toggles, `Enter` sets primary. | `selectedId` / `setSelection` |
 | 70 Squad View Selector | `SQUAD_VIEWS` with a position list and column presets, picked from the toolbar and persisted. | `SQUAD_VIEWS`, `useSquadColumns.ts` |
 | 72 Player Sorting | Sorting on every column, sort state persisted. | TanStack Table |
+| 71 Selection Filters, status half | A Status filter beside Position on the owned Squad, offering only engine-modelled statuses (Tired today) and matching through `statusesOf`. Each dropdown clears only its own clause; the clause round-trips through the URL as `status:<abbr>`. Rival rosters and transfer tables do not offer it. | [group-e issue 02](../../../.scratch/group-e-squad-management/issues/02-status-filter.md), `matchesStatus` in `table/features/filtering.ts` |
 
 **Screen 69 carries one standing design decision** worth reading before touching it: under
 [the team sheet is the Tactic](../../../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md),
@@ -90,7 +91,7 @@ from the import on that basis; it is flagged because a future audit of Screen 69
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
-| [71_selection_filters.md](71_selection_filters.md), whole file | `deferred` | Filtering the squad list by attribute values and player status, not only by position. | A position filter dropdown ships, with a Clear filters control. **Corrected 2026-09-27:** the `FilterClause` union models `nameSearch` and `position` only — the status and attribute clauses this screen wants do not exist, so they are unmodelled as well as unreachable (the earlier "already models the other filter kinds" claim was wrong). Status filtering is ticketed as [group-e issue 02](../../../.scratch/group-e-squad-management/issues/02-status-filter.md) (`ready-for-agent`); the attribute half is issue 03 (`needs-triage`). | `unscheduled`. The effort's own `map.md` § Not yet specified calls for an extension ticket here and none was filed. Ticket 01; extension filed 2026-09-27. |
+| [71_selection_filters.md](71_selection_filters.md), attribute half | `deferred` | Filtering the squad list by attribute values. | A position filter dropdown and a status filter ship, with a Clear filters control. `FilterClause` models `nameSearch`, `position` and `status`; no attribute clause exists, so attribute filtering is unmodelled as well as unreachable. The attribute half is [group-e issue 03](../../../.scratch/group-e-squad-management/issues/03-attribute-filters.md) (`needs-triage`): it carries the knowledge-boundary question. The status half shipped 2026-09-27; see the satisfied table above. | `unscheduled`. Ticket 01; extension filed 2026-09-27. |
 
 ## Screens resting on systems this game does not have yet
 
@@ -161,8 +162,8 @@ Surfaced by transcription, recorded so it is not lost again:
   [M1](../../../.ai/MILESTONES.md) step 5.
 - **The Screen 71 extension ticket** the effort's own map called for and nobody filed. Filed
   2026-09-27 as [group-e issue 02](../../../.scratch/group-e-squad-management/issues/02-status-filter.md)
-  (status filter, `ready-for-agent`) and issue 03 (attribute filters, `needs-triage`). The status
-  half is a cheap extension — it reuses the modelled status vocabulary and the shipped Popover; the
+  (status filter) and issue 03 (attribute filters, `needs-triage`). The status half shipped
+  2026-09-27 as a cheap extension, reusing the modelled status vocabulary and the shipped Popover. The
   attribute half carries the knowledge-boundary question and is not yet ruled.
 - **No placeholder cull is owed for this group.** Unlike Group D, Group E's disposed screens never got
   WIP placeholders — the Squad screen absorbed 69–72 and nothing was routed for 73–79. The one stale

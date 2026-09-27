@@ -20,13 +20,12 @@ Inherited from Group A: multiplayer axis out of scope, worker pools out of scope
 
 ## Decisions so far
 
-## Decisions so far
-
 - [01 — Screen inventory](issues/01-screen-inventory.md): All 11 screens surveyed. 4 satisfied (69, 70, 72, partially 71), 2 partial (71, 77), 6 out-of-scope (73-76, 78-79).
+- [02 — Status filter](issues/02-status-filter.md): Squad gets a Status filter beside Position, offering only modelled statuses (Tired) and matching via `statusesOf`. Each dropdown clears only its own clause; URL form `status:Tir`.
 
 ## Not yet specified
 
-Extension ticket needed for Screen 71 (position-only filter — could extend to attribute/status filters). Existing squad features are otherwise shipping.
+Screen 71's attribute half is [ticket 03](issues/03-attribute-filters.md) (`needs-triage`): it needs a knowledge-boundary ruling before it can be built. The status half shipped as ticket 02. Existing squad features are otherwise shipping.
 
 ## Out of scope
 

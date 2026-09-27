@@ -202,6 +202,17 @@ export const RESERVED_STATUSES: readonly ReservedStatus[] = [
   },
 ];
 
+/** The slots the engine models today — the only statuses a filter may offer,
+ *  since a clause on any other could only ever match nobody. */
+export const MODELED_STATUSES: readonly ReservedStatus[] = RESERVED_STATUSES.filter(
+  (status) => status.likelihood === "modeled",
+);
+
+/** The modeled status behind an abbreviation, matched case-insensitively so a
+ *  hand-typed `tir` still means Tired, or undefined for any other code. */
+export const modeledStatus = (abbreviation: string): ReservedStatus | undefined =>
+  MODELED_STATUSES.find((status) => status.abbreviation.toLowerCase() === abbreviation.toLowerCase());
+
 /** The engine-modeled state a squad row carries. Narrow on purpose: widening it
  *  is the signal that a reserved slot has become renderable.
  *

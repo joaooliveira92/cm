@@ -23,7 +23,7 @@ Per-screen survey of 11 Group E screens:
 |--------|------|--------|--------|
 | 69 | Squad selection | **satisfied** | Single-selection model via `selectedId`/`setSelection`. Space toggles, Enter sets primary. |
 | 70 | Squad view selector | **satisfied** | `SQUAD_VIEWS` with position list and all column presets. `<Select>` picker in toolbar. View persisted to localStorage. |
-| 71 | Selection filters | **partial** | Position filter dropdown exists. `FilterClause` models name search and position only — no attribute or status clause exists. Ticketed: [02](02-status-filter.md) status (ready-for-agent), [03](03-attribute-filters.md) attribute (needs-triage). "Clear filters" button. |
+| 71 | Selection filters | **partial** | Position filter dropdown exists. `FilterClause` models name search and position only — no attribute or status clause exists. Ticketed: [02](02-status-filter.md) status (resolved 2026-09-27), [03](03-attribute-filters.md) attribute (needs-triage). "Clear filters" button. |
 | 72 | Player sorting | **satisfied** | TanStack sorting on all columns. Sort state persisted. |
 | 73 | Shirt numbers | **out-of-scope** | No `shirtNumber` field in schema, model, or UI. |
 | 74 | Captain | **out-of-scope** | Navigation stub in spec-nav-config.ts but no data model, no route, no component. |

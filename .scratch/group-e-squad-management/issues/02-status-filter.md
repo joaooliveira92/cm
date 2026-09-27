@@ -29,7 +29,7 @@ as reserved slots become modelled, without a new filter kind.
 
 **Blocked by:** None.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Model
 
@@ -112,17 +112,45 @@ Mirror `apps/desktop/test/renderer/table/sort-filter.test.ts` and
 
 ## Acceptance criteria
 
-- [ ] Squad's toolbar offers a Status filter; choosing Tired shows only players whose Condition is
+- [x] Squad's toolbar offers a Status filter; choosing Tired shows only players whose Condition is
       below the fatigue threshold; "Any status" clears **only** the status clause.
-- [ ] Clearing or changing Position does not discard a Status filter, and vice versa.
-- [ ] The Status filter is offered on the owned Squad only; transfer tables and the any-club roster
+- [x] Clearing or changing Position does not discard a Status filter, and vice versa.
+- [x] The Status filter is offered on the owned Squad only; transfer tables and the any-club roster
       do not offer it.
-- [ ] A status clause round-trips through the URL (`status:Tir`).
-- [ ] Palette rows carry typed params and dispatch through `classifyTableParamAction`.
-- [ ] The pure tests above pass, and `pnpm check:all` is green.
+- [x] A status clause round-trips through the URL (`status:Tir`).
+- [x] Palette rows carry typed params and dispatch through `classifyTableParamAction`.
+- [x] The pure tests above pass, and `pnpm check:all` is green.
 
 ## Comments
 
 - Filed 2026-09-27. The Group E ledger records this ticket as owed; the effort's own `map.md` called
   for it and none was filed. The "cheap screen" claim in the ledger holds only for this status half
   — the attribute half is [ticket 03](03-attribute-filters.md), which needs a ruling first.
+
+## Answer
+
+Shipped as specified. `FilterClause` gains `{ _tag: "status"; status }`, carrying an abbreviation.
+`matchesStatus` narrows a row with an `"condition" in row` guard and defers to `statusesOf`, so the
+filter and the Status column share one rule. `applyFilters`, `clauseId` and `clauseLabel` became
+exhaustive switches. Before this, `applyFilters` had a bare `else`, which would have read a status
+clause as a position. The palette appends `filter-squad-tir` on the owned Squad only. The toolbar
+Status popover lists `MODELED_STATUSES` by term. `setPositionFilter("")` and `setStatusFilter("")` now
+each remove only their own clause.
+
+Two choices went beyond the ticket text:
+
+- **URL decoding validates the code.** `status:<abbr>` decodes only when it names a *modelled*
+  status (`modeledStatus` in `playerStatus.tsx`), and its case is canonicalised (`status:tir` becomes
+  `Tir`). A reserved-but-unmodelled code (`status:Lmp`) or garbage drops silently, like an unknown
+  tag. Otherwise a stale or hand-edited URL would silently empty the table. `pos:` stays unvalidated,
+  as before.
+- **`status-column.test.tsx` narrowed its header query** from `/status/i` to
+  `/abbreviation legend/i`. The new "Filter squad by status" trigger made the old query ambiguous.
+
+Tests: status cases in `test/renderer/table/sort-filter.test.ts`, covering the threshold boundary, a
+row with no Condition, an unmodelled code, position and status folded together, upsert and remove,
+the term label, Squad-only palette rows with typed params, and unique Squad palette ids. URL
+round-trip and canonicalisation cases are in `test/renderer/navigation/list-state-storage.test.ts`.
+`test/renderer/squad/status-filter.test.tsx` holds two mounted tests. One is the
+clear-one-keeps-the-other regression. The other opens Squad at `?filters=pos:DC,status:tir` and
+checks the real decode path. To support it, `renderInRouter` takes an optional initial URL.

@@ -7,11 +7,12 @@ import type { ReactNode } from "react";
  *  outside a router: `useLocation` throws `Cannot read properties of null (reading 'isServer')`.
  *
  *  Note that `RouterProvider`'s first synchronous pass renders nothing, so an assertion about the
- *  mount itself has to be `findBy`, not `getBy`. */
-export const renderInRouter = (node: ReactNode): void => {
+ *  mount itself has to be `findBy`, not `getBy`. `initialEntry` lets a test land on a URL that
+ *  already carries encoded list state, the way a back/forward restoration does. */
+export const renderInRouter = (node: ReactNode, initialEntry = "/"): void => {
   const router = createRouter({
     routeTree: createRootRoute({ component: () => node }),
-    history: createMemoryHistory({ initialEntries: ["/"] }),
+    history: createMemoryHistory({ initialEntries: [initialEntry] }),
   });
   render(<RouterProvider router={router} />);
 };

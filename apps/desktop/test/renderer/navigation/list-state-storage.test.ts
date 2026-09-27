@@ -60,6 +60,23 @@ describe("list-state-storage", () => {
       ]);
     });
 
+    it("round-trips a status clause beside a position clause", () => {
+      const filters = [
+        { _tag: "position", position: "DC" },
+        { _tag: "status", status: "Tir" },
+      ] as const;
+      const encoded = toEncodedListState({ filters });
+      expect(encoded.filters).toBe("pos:DC,status:Tir");
+      expect(decodeListState(encodeListState(encoded)).filters).toEqual(filters);
+    });
+
+    it("canonicalises a status abbreviation's case and drops one the engine does not model", () => {
+      // Hand-edited or stale URLs: a lower-cased code still means Tired; a reserved-but-unmodelled
+      // code (Lmp) or a made-up one would filter every row out, so it drops like an unknown tag.
+      const decoded = decodeListState(new URLSearchParams({ filters: "status:tir,status:Lmp,status:Zzz,wat:1" }));
+      expect(decoded.filters).toEqual([{ _tag: "status", status: "Tir" }]);
+    });
+
     it("skips empty name search parts", () => {
       const params = new URLSearchParams("filters=name:");
       const decoded = decodeListState(params);

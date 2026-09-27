@@ -1,15 +1,22 @@
 /**
  * Filtering feature (note: Sorting and filtering by keyboard, AC-30). Filter
- * semantics are OURS — TanStack never sees a filter clause. Two clause kinds:
- * name search (Market/Free Agents) and position (Squad, Market, Free Agents).
- * Visible compact controls and enumerated palette Actions back the same pure
- * `applyFilters`; the palette enumerates the position dimension only (name
- * search is free-form and lives in the visible control). Empty clauses are
- * inert, so clearing is just removing the clause.
+ * semantics are OURS — TanStack never sees a filter clause. Three clause kinds:
+ * name search (Market/Free Agents), position (Squad, Market, Free Agents), and
+ * status (the owned Squad only — rival rows disclose no Condition). Visible
+ * compact controls and enumerated palette Actions back the same pure
+ * `applyFilters`; the palette enumerates position and status (name search is
+ * free-form and lives in the visible control). Empty clauses are inert, so
+ * clearing is just removing the clause.
  */
 import { POSITIONS } from "@cm-clone/shared";
 import type { Action, ActionScope, ScopeState } from "../../actions/types.js";
 import type { FilterClause, TableId, TableRowShape } from "../types.js";
+import {
+  MODELED_STATUSES,
+  RESERVED_STATUSES,
+  statusesOf,
+  type StatusSource,
+} from "../squad/playerStatus.js";
 import { tableLabel } from "./sorting.js";
 
 export interface FilterTableActionInput {
@@ -33,11 +40,26 @@ export const positionClause = (position: string): FilterClause => ({
   position,
 });
 
+export const statusClause = (status: string): FilterClause => ({
+  _tag: "status",
+  status,
+});
+
 export const matchesNameSearch = (row: TableRowShape, query: string): boolean =>
   `${row.firstName} ${row.lastName}`.toLowerCase().includes(query.trim().toLowerCase());
 
 export const matchesPosition = (row: TableRowShape, position: string): boolean =>
   row.positions.some((p) => p.position === position);
+
+/** A row that carries a Condition field. `TableRowShape` deliberately has none —
+ *  the market and rival rosters disclose no fitness — so a status clause narrows
+ *  per row instead of widening the shared shape. */
+const bearsCondition = (row: TableRowShape): row is TableRowShape & StatusSource => "condition" in row;
+
+/** Defers to `statusesOf`, so the filter and the Status column cannot drift:
+ *  a row matches exactly when its cell would render that abbreviation. */
+export const matchesStatus = (row: TableRowShape, status: string): boolean =>
+  bearsCondition(row) && statusesOf(row).some((s) => s.abbreviation === status);
 
 /** Fold every clause over the row set. Inert clauses fall through untouched.
  *  Generic over the row subtype so a concrete table keeps its row type. */
@@ -47,10 +69,16 @@ export const applyFilters = <R extends TableRowShape>(
 ): readonly R[] => {
   let out = rows;
   for (const filter of filters) {
-    if (filter._tag === "nameSearch") {
-      if (filter.query.trim() !== "") out = out.filter((r) => matchesNameSearch(r, filter.query));
-    } else {
-      out = out.filter((r) => matchesPosition(r, filter.position));
+    switch (filter._tag) {
+      case "nameSearch":
+        if (filter.query.trim() !== "") out = out.filter((r) => matchesNameSearch(r, filter.query));
+        break;
+      case "position":
+        out = out.filter((r) => matchesPosition(r, filter.position));
+        break;
+      case "status":
+        out = out.filter((r) => matchesStatus(r, filter.status));
+        break;
     }
   }
   return out;
@@ -77,14 +105,33 @@ export const removeFilter = (
 ): readonly FilterClause[] => filters.filter((f) => f._tag !== filter._tag);
 
 /** UNUSED-SHAPE guard: the named filter id used by generated actions. Position
- *  clauses produce `<position>` ids; the free-form name clause is never a
- *  palette row, so it needs no stable id here. */
-export const clauseId = (filter: FilterClause): string =>
-  filter._tag === "position" ? filter.position.toLowerCase() : "name";
+ *  and status clauses produce `<position>` / `<abbreviation>` ids; the
+ *  free-form name clause is never a palette row, so it needs no stable id here. */
+export const clauseId = (filter: FilterClause): string => {
+  switch (filter._tag) {
+    case "position":
+      return filter.position.toLowerCase();
+    case "status":
+      return filter.status.toLowerCase();
+    case "nameSearch":
+      return "name";
+  }
+};
 
-/** The palette row label for an enumerable clause. */
-export const clauseLabel = (filter: FilterClause): string =>
-  filter._tag === "position" ? filter.position : "name search";
+/** The palette row label for an enumerable clause. A status reads as its full
+ *  term ("Tired"), never the three-letter code. */
+export const clauseLabel = (filter: FilterClause): string => {
+  switch (filter._tag) {
+    case "position":
+      return filter.position;
+    case "status": {
+      const status = RESERVED_STATUSES.find((s) => s.abbreviation === filter.status);
+      return status === undefined ? filter.status : status.term;
+    }
+    case "nameSearch":
+      return "name search";
+  }
+};
 
 const ready = (state: ScopeState): boolean => state.ready === true;
 
@@ -106,6 +153,24 @@ export const positionFilterActions = (
   scope: ActionScope,
   tableId: TableId,
 ): ReadonlyArray<Action> => POSITIONS.map((position) => positionFilterAction(scope, tableId, position));
+
+/** Enumerated status filters for one table: one palette row per status the
+ *  engine models (Tired today), so the palette cannot offer an invented state.
+ *  The caller decides which tables get them — only the owned Squad does. */
+export const statusFilterActions = (
+  scope: ActionScope,
+  tableId: TableId,
+): ReadonlyArray<Action> =>
+  MODELED_STATUSES.map((status) => ({
+    id: `filter-${tableId}-${status.abbreviation.toLowerCase()}`,
+    label: `Filter ${tableLabel(tableId)}: ${status.term}`,
+    scope,
+    available: ready,
+    handler: () => undefined,
+    metadata: {
+      params: { tableId, filter: statusClause(status.abbreviation) } satisfies FilterTableActionInput,
+    },
+  }));
 
 export const clearFilterTableAction = (
   scope: ActionScope,

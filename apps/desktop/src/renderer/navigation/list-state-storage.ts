@@ -11,6 +11,7 @@
  * URL instead.
  */
 import type { FilterClause, SortDirection, SortState } from "../table/types.js";
+import { modeledStatus } from "../table/squad/playerStatus.js";
 
 /** The shape of list state that travels via URL search params. */
 export interface EncodedListState {
@@ -71,6 +72,9 @@ const encodeFilters = (filters: readonly FilterClause[]): string | undefined => 
       case "position":
         parts.push(`pos:${f.position}`);
         break;
+      case "status":
+        parts.push(`status:${f.status}`);
+        break;
     }
   }
   return parts.join(",");
@@ -119,7 +123,16 @@ const decodeFilters = (raw: string | null): readonly FilterClause[] => {
       continue;
     }
     const posMatch = /^pos:(.+)$/.exec(part);
-    if (posMatch !== null) result.push({ _tag: "position", position: posMatch[1]! });
+    if (posMatch !== null) {
+      result.push({ _tag: "position", position: posMatch[1]! });
+      continue;
+    }
+    // A status must name one the engine models; a stale or hand-edited code
+    // (a reserved slot like `Lmp`, or garbage) would hide every row, so it
+    // drops like an unknown tag. Case is canonicalised to the catalogue's.
+    const statusMatch = /^status:(.+)$/.exec(part);
+    const status = statusMatch === null ? undefined : modeledStatus(statusMatch[1]!);
+    if (status !== undefined) result.push({ _tag: "status", status: status.abbreviation });
   }
   return result;
 };

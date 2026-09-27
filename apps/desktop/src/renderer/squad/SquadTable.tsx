@@ -18,7 +18,7 @@ import { SquadPositionList } from "./SquadPositionList.js";
 import { MatchDayBar } from "./MatchDayBar.js";
 import { writeLineupDrag } from "./lineupDrag.js";
 import { SQUAD_COLUMN_LABELS } from "../table/squad/squadColumns.js";
-import { StatusLegend } from "../table/squad/playerStatus.js";
+import { MODELED_STATUSES, StatusLegend } from "../table/squad/playerStatus.js";
 import { activeFilterCount } from "../table/viewState.js";
 import type { TableStateCopy } from "../table/viewState.js";
 import type { SquadColumnPreferences } from "../table/columnPreferences.js";
@@ -110,7 +110,7 @@ const ColumnControls = ({
 );
 
 /** The filter toolbar's controls: the clear-filters action and — for table
- *  layouts — the column controls. View and Position selects are rendered in
+ *  layouts — the column controls. View, Position and Status selects are rendered in
  *  the career chrome's actions row via the screen toolbar store. */
 const SquadToolbar = ({
   filters,
@@ -238,6 +238,7 @@ export const SquadTable = () => {
     onRowPrimary,
     openPlayer,
     setPositionFilter,
+    setStatusFilter,
     setView,
     toggleOneColumn,
     clearFilterCommand,
@@ -275,10 +276,15 @@ export const SquadTable = () => {
     (f): f is Extract<FilterClause, { readonly _tag: "position" }> => f._tag === "position",
   );
 
+  const activeStatus = MODELED_STATUSES.find((status) =>
+    filters.some((f) => f._tag === "status" && f.status === status.abbreviation),
+  );
+
   const [viewOpen, setViewOpen] = useState(false);
   const [positionOpen, setPositionOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
 
-  /* Register the View and Position selectors in the career chrome's
+  /* Register the Position, Status and View selectors in the career chrome's
    *  actions row. These use the same Popover + button pattern as the
    *  Actions menu so they look identical. */
   const toolbarControls = useMemo(
@@ -321,6 +327,45 @@ export const SquadTable = () => {
             </div>
           </PopoverContent>
         </Popover>
+        {/* Offers only what the engine models (Tired today), by full term; the
+            list grows as reserved slots become modeled. */}
+        <Popover open={statusOpen} onOpenChange={setStatusOpen}>
+          <PopoverTrigger
+            render={
+              <button type="button" className={ACTIONS_ROW_BUTTON_CLASS} aria-label="Filter squad by status">
+                <span>{activeStatus === undefined ? "Status" : `Status: ${activeStatus.term}`}</span>
+                <ChevronDown aria-hidden="true" className="size-4" />
+              </button>
+            }
+          />
+          <PopoverContent align="start" sideOffset={4} className="w-56 p-1">
+            <div className="flex flex-col gap-0.5">
+              <button
+                type="button"
+                className={ACTIONS_ROW_ITEM_CLASS}
+                onClick={() => {
+                  setStatusFilter("");
+                  setStatusOpen(false);
+                }}
+              >
+                <span>Any status</span>
+              </button>
+              {MODELED_STATUSES.map((status) => (
+                <button
+                  key={status.abbreviation}
+                  type="button"
+                  className={ACTIONS_ROW_ITEM_CLASS}
+                  onClick={() => {
+                    setStatusFilter(status.abbreviation);
+                    setStatusOpen(false);
+                  }}
+                >
+                  <span>{status.term}</span>
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
         <Popover open={viewOpen} onOpenChange={setViewOpen}>
           <PopoverTrigger
             render={
@@ -350,7 +395,7 @@ export const SquadTable = () => {
         </Popover>
       </>
     ),
-    [viewId, activePosition, setView, setPositionFilter, viewOpen, positionOpen],
+    [viewId, activePosition, activeStatus, setView, setPositionFilter, setStatusFilter, viewOpen, positionOpen, statusOpen],
   );
 
   useEffect(() => {

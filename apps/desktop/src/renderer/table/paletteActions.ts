@@ -2,8 +2,9 @@
  * Enumerated palette Actions for sorting and filtering (note: Sorting and
  * filtering by keyboard, AC-30). The header buttons cover every sortable column
  * for pointing users; the palette reaches the primary dimensions by keyword.
- * Position filters are enumerated per Position; the free-form name search has
- * no palette row (visible control only). Every row carries its typed parameters
+ * Position filters are enumerated per Position, and on the owned Squad status
+ * filters per modeled status; the free-form name search has no palette row
+ * (visible control only). Every row carries its typed parameters
  * in `metadata.params`; the palette dispatches them through `dispatchAction`.
  */
 import type { Action, ActionScope } from "../actions/types.js";
@@ -15,6 +16,7 @@ import {
 import {
   clearFilterTableAction,
   positionFilterActions,
+  statusFilterActions,
 } from "./features/filtering.js";
 import { SQUAD_COLUMN_LABELS } from "./squad/squadColumns.js";
 import { MARKET_COLUMN_LABELS } from "./transfers/marketColumns.js";
@@ -39,6 +41,9 @@ export const tableSortAndFilterActions = (
   }
   out.push(clearSortTableAction(options.scope, options.tableId));
   out.push(...positionFilterActions(options.scope, options.tableId));
+  // Status is owned-Squad only: the market and the any-club roster disclose no
+  // Condition, so a status row there would always filter to nobody.
+  if (options.tableId === "squad") out.push(...statusFilterActions(options.scope, options.tableId));
   out.push(clearFilterTableAction(options.scope, options.tableId));
   return out;
 };

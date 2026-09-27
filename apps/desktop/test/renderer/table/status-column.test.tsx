@@ -160,7 +160,7 @@ describe("the Status column in the Squad table", () => {
     await mountSquad(squadView([squadPlayer("p1", "Alan", TIRED)]));
     await screen.findByText(/Alan Player/);
 
-    const header = () => screen.getByRole("button", { name: /status/i });
+    const header = () => screen.getByRole("button", { name: /abbreviation legend/i });
     expect(header()).toBeTruthy();
 
     // Overview hides most columns; Goalkeeping swaps the attribute set. The
@@ -190,14 +190,14 @@ describe("the abbreviation legend (Term Disclosure)", () => {
     await mountSquad(squadView([squadPlayer("p1", "Alan", FRESH)]));
     await screen.findByText(/Alan Player/);
 
-    const header = screen.getByRole("button", { name: /status/i });
+    const header = screen.getByRole("button", { name: /abbreviation legend/i });
     expect(header.getAttribute("aria-expanded")).toBe("false");
     const legendId = header.getAttribute("aria-controls")!;
     expect(document.getElementById(legendId)).toBeNull();
 
     // A button, so Enter/Space activate it in the ordinary keyboard way.
     fireEvent.click(header);
-    expect(screen.getByRole("button", { name: /status/i }).getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: /abbreviation legend/i }).getAttribute("aria-expanded")).toBe("true");
 
     const legend = document.getElementById(legendId)!;
     for (const status of RESERVED_STATUSES) {
@@ -208,7 +208,7 @@ describe("the abbreviation legend (Term Disclosure)", () => {
     expect(legend.textContent).toContain("Reserved — unlikely");
     expect(legend.textContent).toContain("Shown today");
 
-    fireEvent.click(screen.getByRole("button", { name: /status/i }));
+    fireEvent.click(screen.getByRole("button", { name: /abbreviation legend/i }));
     expect(document.getElementById(legendId)).toBeNull();
   });
 });

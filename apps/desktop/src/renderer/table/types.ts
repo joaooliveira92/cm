@@ -33,10 +33,14 @@ export interface SortState {
 }
 
 /** A domain filter clause. Name search is a substring over the display name;
- *  position matches any position in the player's `positions` array. */
+ *  position matches any position in the player's `positions` array. Status
+ *  carries a reserved-status ABBREVIATION (`"Tir"`), matched through the status
+ *  vocabulary's `statusesOf` — never compared as display text, and never
+ *  against raw Condition. */
 export type FilterClause =
   | { readonly _tag: "nameSearch"; readonly query: string }
-  | { readonly _tag: "position"; readonly position: string };
+  | { readonly _tag: "position"; readonly position: string }
+  | { readonly _tag: "status"; readonly status: string };
 
 /** The row shape every TanStack table in this layer is built over. */
 export interface TableRowShape {
