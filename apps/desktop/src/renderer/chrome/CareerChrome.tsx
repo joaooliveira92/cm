@@ -23,6 +23,8 @@ import {
 } from "./header/career-header-state.js";
 import { ScreenToolbarSlot } from "./ScreenToolbarSlot.js";
 import { getScreenIdentity, subscribeScreenIdentity } from "../screenIdentity.js";
+import { Backdrop } from "../backdrop/Backdrop.js";
+import { backdropFor } from "../backdrop/backdrops.js";
 
 export { NAV_SECTIONS as CAREER_SECTIONS } from "../navigation/nav-config.js";
 export { matchReadout, seasonReadout, type SeasonReadoutInput, continueUnavailableReason };
@@ -131,7 +133,11 @@ const CareerChromeInner = ({
           <div className="flex min-h-0 flex-1">
             <CareerSidebar badges={badges} />
 
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            {/* The backdrop fills this column only: the club band and the
+                sidebar stay opaque, and the photo holds still while the screen
+                scrolls over it. */}
+            <div className="relative isolate flex min-h-0 min-w-0 flex-1 flex-col">
+              <Backdrop src={backdropFor(saveId)} />
               {contextNav}
               <div
                 className="flex shrink-0 items-center justify-between border-b border-border-subtle bg-bg px-3 py-1"

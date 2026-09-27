@@ -16,7 +16,7 @@ import { FOCUS_RING } from "../focus.js";
 import { readState, transferHistoryAtom, useAtomValue } from "../rpc.js";
 import { TransferEntriesTable } from "./TransferEntriesTable.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 export const TransferHistoryScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const result = readState(useAtomValue(transferHistoryAtom(saveId)), {

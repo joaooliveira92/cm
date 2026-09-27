@@ -139,6 +139,10 @@ Plan-only: the map is done when nothing is left to decide and the spec can be ha
   say where an image would even go. Match day's seam is now decided in advance: when assets
   exist, a stadium image injects under the match-day panel-dark overlay per the match-day
   decision — the remaining question stays fog until an actual asset exists to judge.
+  *2026-09-27:* screen background imagery landed as `renderer/backdrop/` over five sample photos
+  in `apps/desktop/assets/` (see the visual-design-tokens note). Sourcing and licensing are still fog.
+  The five files (`photo1.avif` to `photo5.avif`, about 3.3 MB) are placeholders. Source: Pending
+  Audit / Unverified Placeholders. A dedicated compliance pass will settle their provenance.
 
 ## Out of scope
 

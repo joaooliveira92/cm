@@ -27,7 +27,7 @@ import {
 } from "../rpc.js";
 import { PANEL } from "../theme.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /** The arrival target in every state, matching the sibling competition screens' shape. */
 const OverviewMain = ({ children }: { readonly children: ReactNode }) => (

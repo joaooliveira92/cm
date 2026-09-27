@@ -22,7 +22,7 @@ import {
   type RpcClientError,
 } from "../rpc.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /** A defect-only cause carries no typed error, so it falls back to the generic line. */
 const messageOf = (error: RpcClientError<"getClubFinances"> | null): string =>

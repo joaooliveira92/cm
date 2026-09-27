@@ -194,7 +194,7 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         tabIndex={-1}
         data-focus-id="news"
         aria-label="News Inbox"
-        className={`bg-background p-6 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-6 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <Alert variant="destructive">
           <p>{describeRpcError(loadError)}</p>
@@ -207,7 +207,7 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         tabIndex={-1}
         data-focus-id="news"
         aria-label="News Inbox"
-        className={`bg-background p-6 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-6 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <p className="p-8 text-text-secondary">Loading news...</p>
       </main>
@@ -218,7 +218,7 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         tabIndex={-1}
         data-focus-id="news"
         aria-label="News Inbox"
-        className={`bg-background p-6 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-6 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <Alert variant="destructive">
           <p>Failed to load news.</p>
@@ -269,7 +269,7 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       tabIndex={-1}
       data-focus-id="news"
       aria-label="News Inbox"
-      className={`bg-background p-6 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`p-6 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <header className="flex flex-wrap items-baseline justify-between gap-3">
         <h1 className="text-2xl font-bold">News</h1>

@@ -147,7 +147,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         tabIndex={-1}
         data-focus-id="tactics"
         aria-label="Tactics"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <Alert variant="destructive">
           <p>{describeRpcError(viewError)}</p>
@@ -160,7 +160,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         tabIndex={-1}
         data-focus-id="tactics"
         aria-label="Tactics"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <p className="p-8 text-text-secondary">Loading tactics...</p>
       </main>
@@ -171,7 +171,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         tabIndex={-1}
         data-focus-id="tactics"
         aria-label="Tactics"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <Alert variant="destructive">
           <p>Failed to load tactics</p>
@@ -199,7 +199,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       tabIndex={-1}
       data-focus-id="tactics"
       aria-label="Tactics"
-      className={`flex flex-col gap-4 bg-background p-6 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`flex flex-col gap-4 p-6 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <header className="chrome-gradient rounded-panel border border-panel-border px-4 py-2 text-center shadow-chrome">
         <h1 className="text-2xl font-bold text-text-highlight">{view.club.name} Tactics</h1>

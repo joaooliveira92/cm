@@ -24,7 +24,7 @@ export const MatchPreviewScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   if (pending === null) {
     return (
       <main tabIndex={-1} data-focus-id="matchPreview" aria-label="Match Preview"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
         <h1 className="text-2xl font-bold">Match Preview</h1>
         <p className="mt-4 text-text-secondary italic">No upcoming fixture</p>
       </main>
@@ -59,7 +59,7 @@ export const MatchPreviewScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
   return (
     <main tabIndex={-1} data-focus-id="matchPreview" aria-label="Match Preview"
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
       <h1 className="text-2xl font-bold mb-6">Match Preview</h1>
 
       <section className="rounded-panel border border-panel-border-dark bg-panel-bg p-6 shadow-panel mb-6">

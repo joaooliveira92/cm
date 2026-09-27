@@ -67,7 +67,7 @@ const MatchDayLayout = () => {
       tabIndex={-1}
       data-focus-id="match"
       aria-label="Match day"
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <h1 className="text-2xl font-bold">Match day</h1>
       {state.error && <Alert variant="destructive" className="mt-2"><p>{state.error}</p></Alert>}

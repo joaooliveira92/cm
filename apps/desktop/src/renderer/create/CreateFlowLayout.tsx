@@ -22,6 +22,8 @@ import { CreateSessionContext } from "../router/createSessionContext.js";
 import { DiscardCareerDialog } from "./DiscardCareerDialog.js";
 import { GenerationStatus } from "./GenerationStatus.js";
 import { useCreateSession, type CreationStep } from "./useCreateSession.js";
+import { Backdrop } from "../backdrop/Backdrop.js";
+import { MENU_BACKDROP } from "../backdrop/backdrops.js";
 
 const STEP_LABELS: Readonly<Record<CreationStep, string>> = {
   leagues: "Step 1 of 4 · League & Nation",
@@ -63,7 +65,8 @@ export const CreateFlowLayout = () => {
 
   return (
     <CreateSessionContext.Provider value={contextValue}>
-      <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+      <div className="relative isolate flex h-screen flex-col overflow-hidden text-foreground">
+        <Backdrop src={MENU_BACKDROP} />
         <header className="shrink-0 text-text-primary">
           {/* The whole band is one row: identity, escape, and progress read as
               one chrome surface — the same division the career chrome owns. */}

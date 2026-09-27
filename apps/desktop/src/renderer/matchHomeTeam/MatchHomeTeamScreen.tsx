@@ -76,7 +76,7 @@ export const MatchHomeTeamScreen = ({ saveId }: { readonly saveId: SaveId }) => 
       tabIndex={-1}
       data-focus-id="matchHomeTeam"
       aria-label="Match Home Team"
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <h1 className="text-2xl font-bold mb-6">Match Day</h1>
       {error && <p className="text-destructive mb-4">{error}</p>}

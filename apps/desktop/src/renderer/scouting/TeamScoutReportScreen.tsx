@@ -26,7 +26,7 @@ import {
   upcomingFixtureAgainst,
 } from "./reportSections.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /** The sentence each non-report state shows. `error` carries the RPC's own sentence when it has
  *  one; the other two are fixed because their cause is already known. */

@@ -30,7 +30,7 @@ import { SquadRoster } from "../squad/SquadRoster.js";
 import { clubSquadRowOf } from "../table/squad/squadColumns.js";
 import { useClubSquadRoster } from "./useClubSquadRoster.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /** The sentence a failed read shows. A defect-only cause carries no typed error, so it falls back
  *  to the generic line; an unknown club or missing save always carries its own sentence. */

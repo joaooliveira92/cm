@@ -30,7 +30,7 @@ import { describeLatestDevelopment } from "./developmentIndicator.js";
 import { displayCondition, recoveryStatus } from "./recoveryStatus.js";
 import type { TrainingFocusValue } from "./trainingFocusOptions.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 const MAX_COACH_PREVIEW = 3;
 const MAX_PLAYER_PREVIEW = 3;

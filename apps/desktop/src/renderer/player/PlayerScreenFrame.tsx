@@ -21,7 +21,7 @@ import { setScreenIdentity } from "../screenIdentity.js";
 import { injuryLabel } from "./injury.js";
 import { describeRpcError, playerContractAtom, playerProfileAtom, typedError, useAtomValue } from "../rpc.js";
 
-const PAGE_CLASS = `flex flex-1 flex-col bg-background px-4 pt-3 pb-6 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `flex flex-1 flex-col px-4 pt-3 pb-6 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /** The player-scoped routes, in the order the strip draws them. `Form` and `History` are absent
  *  rather than disabled: neither per-player match form nor career history is modelled (Group D

@@ -250,7 +250,7 @@ export const SquadTable = () => {
         tabIndex={-1}
         data-focus-id="squad"
         aria-label="Squad"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <h1 className="text-2xl font-bold">Squad</h1>
         <Alert variant="destructive" className="mt-6">
@@ -359,7 +359,7 @@ export const SquadTable = () => {
   }, [toolbarControls]);
 
   return (
-    <div className="flex flex-1 flex-col bg-background text-foreground">
+    <div className="flex flex-1 flex-col text-foreground">
       <main
         tabIndex={-1}
         data-focus-id="squad"

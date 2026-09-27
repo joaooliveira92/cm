@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { FOCUS_RING } from "../../focus.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /**
  * A screen's non-`ready` state: a labelled `<main>` region carrying its title and one line, plus any

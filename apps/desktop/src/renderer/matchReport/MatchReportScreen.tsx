@@ -77,7 +77,7 @@ export const MatchReportScreen = ({ saveId, matchId }: { readonly saveId: SaveId
       tabIndex={-1}
       data-focus-id="matchReport"
       aria-label="Match Report"
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <h1 className="mb-6 text-2xl font-bold">Match Report</h1>
       {state._tag === "loading" && <p className="text-text-secondary italic">Loading the match report...</p>}

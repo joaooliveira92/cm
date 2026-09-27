@@ -6,7 +6,7 @@ export const SquadInformationScreen = ({ saveId: _saveId }: { readonly saveId: S
     tabIndex={-1}
     data-focus-id="squadInformation"
     aria-label="Squad Information"
-    className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+    className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
   >
     <h1 className="text-2xl font-bold">Information</h1>
     <p className="mt-4 text-text-secondary italic">WIP — Placeholder screen</p>

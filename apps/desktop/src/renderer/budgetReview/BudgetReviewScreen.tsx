@@ -3,7 +3,7 @@ import { FOCUS_RING } from "../focus.js";
 import { budgetReviewAtom, describeRpcError, typedError, useAtomValue } from "../rpc.js";
 import { BudgetFigures } from "./BudgetFigures.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /**
  * Transfer and Wage Budget Review screen (Screen 145). Shows the manager's club's Transfer Budget

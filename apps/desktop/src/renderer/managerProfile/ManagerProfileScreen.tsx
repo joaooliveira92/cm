@@ -150,7 +150,7 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
         tabIndex={-1}
         data-focus-id="manager"
         aria-label="Manager Profile"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <Alert variant="destructive">
           <p>{describeRpcError(error)}</p>
@@ -163,7 +163,7 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
         tabIndex={-1}
         data-focus-id="manager"
         aria-label="Manager Profile"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <p className="p-8 text-text-secondary">Loading manager profile...</p>
       </main>
@@ -174,7 +174,7 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
         tabIndex={-1}
         data-focus-id="manager"
         aria-label="Manager Profile"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <Alert variant="destructive">
           <p>Failed to load manager profile</p>
@@ -206,7 +206,7 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
       tabIndex={-1}
       data-focus-id="manager"
       aria-label="Manager Profile"
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       {view.archived && (
         <Alert className="mb-4">[Archived] This career has ended. The save is read-only.</Alert>

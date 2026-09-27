@@ -4,7 +4,7 @@ import { contractExpiryAtom, describeRpcError, typedError, useAtomValue } from "
 import { PANEL } from "../theme.js";
 import { navigateCareer } from "../navigation/adapter.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /**
  * Contract Expiry screen (Screen 141, without Bosman). Lists the manager's own-club Players whose

@@ -5,7 +5,7 @@ import { competitionFixturesAtom, describeRpcError, typedError, useAtomValue } f
 import { FOCUS_RING } from "../focus.js";
 import { CompetitionFixtureTable } from "./CompetitionFixtureTable.js";
 
-const COMPETITION_FIXTURES_PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const COMPETITION_FIXTURES_PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /** The arrival target is the screen's labelled `<main>`, in every state (read-only screen: its
  *  loading and error branches render the same labelled region so keyboard arrival is announced

@@ -23,7 +23,7 @@ import {
 } from "../rpc.js";
 import { ClubStaffScreen } from "../clubStaff/ClubStaffScreen.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /**
  * The resolver's own two states, and only those. Once the club is known the roster owns every

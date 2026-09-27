@@ -200,16 +200,14 @@
 }
 
 /*
- * The page background. A single dark gradient, never per-screen photography —
- * content panels are semi-transparent and need a predictably dark backdrop.
- * `--page-image` is the reserved seam for a context-sensitive background (and,
- * on match day, a stadium photograph): it layers *under* the gradient wash, so
- * an asset can be injected later without restyling anything.
+ * The page background: a dark gradient, the base every shell falls back to.
+ * Photography does not go here — it is a `<Backdrop>` layer inside the shell
+ * (see `backdrop/Backdrop.tsx` and the `backdrop-*` utilities below), because
+ * CSS cannot filter a background-image and an unfiltered photo breaks the
+ * semi-transparent panels' contrast.
  */
 @layer base {
   :root {
-    --page-image: none;
-
     /* Bare aliases for `sidebar.tsx`'s inline `var(--sidebar-*)` reads. */
     --sidebar-accent: var(--color-surface-raised);
     --sidebar-border: var(--color-border-subtle);
@@ -223,10 +221,7 @@
 
   body {
     background-color: var(--color-bg-base);
-    background-image:
-      linear-gradient(180deg, var(--color-bg-base) 0%, var(--color-bg-raised) 100%),
-      var(--page-image);
-    background-size: cover;
+    background-image: linear-gradient(180deg, var(--color-bg-base) 0%, var(--color-bg-raised) 100%);
     color: var(--color-text-primary);
     font-family: var(--font-sans);
   }
@@ -260,8 +255,8 @@
  * The match-day stadium wash — a CSS-only grandstand glow, no image dependency.
  * A radial "pitch light" rises from the centre while the panel-dark overlay
  * keeps the surface readable (match-day note AC-3). It inherits the palette, so
- * a skin override repaints it too; the real stadium photograph, when one lands,
- * goes in the `--page-image` seam instead.
+ * a skin override repaints it too; a real stadium photograph, when one lands,
+ * goes in a `<Backdrop>` behind this section instead.
  */
 @utility stadium-wash {
   background-image: radial-gradient(
@@ -270,6 +265,43 @@
     color-mix(in oklab, var(--color-chrome-bottom) 45%, var(--color-panel-bg) 55%) 55%,
     var(--color-panel-bg) 100%
   );
+}
+
+/*
+ * The backdrop photograph's treatment (`backdrop/Backdrop.tsx`). A raw photo is
+ * never shown: text sits on it directly (screen titles) and through the 72%
+ * panels, so the image is pushed down to a dim, mostly grey plate first.
+ *
+ * - `backdrop-photo` desaturates (the retro duotone look starts from grey),
+ *   darkens to half brightness, and blurs just enough to kill fine detail that
+ *   competes with 12px table text. The blur samples transparency past the
+ *   image edge, so the photo is scaled up 4% to push that soft rim out of view.
+ * - `backdrop-wash` lays a chrome-blue tint under a dark vertical fade. The
+ *   fade is lighter at the top, where the photo reads, and near-opaque at the
+ *   bottom, where dense tables usually run. Both read palette tokens, so a
+ *   skin override repaints the wash with the rest of the chrome.
+ *
+ * Worst case, a pure-white source pixel at the top edge lands near #2f3944
+ * before any panel goes over it: about 10:1 for `text-primary` there, and
+ * darker everywhere below.
+ */
+@utility backdrop-photo {
+  filter: grayscale(0.65) brightness(0.5) contrast(1.05) blur(2px);
+  transform: scale(1.04);
+}
+
+@utility backdrop-wash {
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-bg-base) 50%, transparent) 0%,
+      color-mix(in oklab, var(--color-bg-base) 70%, transparent) 55%,
+      color-mix(in oklab, var(--color-bg-base) 88%, transparent) 100%
+    ),
+    linear-gradient(
+      color-mix(in oklab, var(--color-chrome-bottom) 40%, transparent),
+      color-mix(in oklab, var(--color-chrome-bottom) 40%, transparent)
+    );
 }
 
 /*

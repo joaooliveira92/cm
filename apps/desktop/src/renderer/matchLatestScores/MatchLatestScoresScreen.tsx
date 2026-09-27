@@ -6,7 +6,7 @@ export const MatchLatestScoresScreen = ({ saveId: _saveId }: { readonly saveId: 
     tabIndex={-1}
     data-focus-id="matchLatestScores"
     aria-label="Match Latest Scores"
-    className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+    className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
   >
     <h1 className="text-2xl font-bold">Match Latest Scores</h1>
     <p className="mt-4 text-text-secondary italic">WIP — Placeholder screen</p>

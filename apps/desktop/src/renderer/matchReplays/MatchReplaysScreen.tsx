@@ -6,7 +6,7 @@ export const MatchReplaysScreen = ({ saveId: _saveId }: { readonly saveId: SaveI
     tabIndex={-1}
     data-focus-id="matchReplays"
     aria-label="Match Replays"
-    className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+    className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
   >
     <h1 className="text-2xl font-bold">Match Replays</h1>
     <p className="mt-4 text-text-secondary italic">WIP — Placeholder screen</p>

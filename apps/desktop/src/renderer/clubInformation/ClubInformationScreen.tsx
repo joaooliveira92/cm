@@ -26,7 +26,7 @@ import {
   type RpcClientError,
 } from "../rpc.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /** The heading each Stature Tier reads as, so nobody infers standing from a raw enum value. */
 const STATURE_LABELS: Readonly<Record<"big" | "mid" | "small", string>> = {

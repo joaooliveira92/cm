@@ -32,7 +32,7 @@ import {
   scoutingProgressLabel,
 } from "./ScoutingCoverageSummary.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 export const ScoutingKnowledgeScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const result = readState(useAtomValue(scoutingKnowledgeAtom(saveId)), {

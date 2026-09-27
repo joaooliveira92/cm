@@ -25,7 +25,7 @@ import { FOCUS_RING } from "../focus.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import { competitionsAtom, describeRpcError, typedError, useAtomValue } from "../rpc.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /** The kind in the player's words; the wire carries the schema's check-constraint values. */
 const KIND_LABELS: Readonly<Record<string, string>> = {

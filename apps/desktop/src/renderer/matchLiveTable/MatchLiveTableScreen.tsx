@@ -6,7 +6,7 @@ export const MatchLiveTableScreen = ({ saveId: _saveId }: { readonly saveId: Sav
     tabIndex={-1}
     data-focus-id="matchLiveTable"
     aria-label="Match Live Table"
-    className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+    className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
   >
     <h1 className="text-2xl font-bold">Match Live Table</h1>
     <p className="mt-4 text-text-secondary italic">WIP — Placeholder screen</p>

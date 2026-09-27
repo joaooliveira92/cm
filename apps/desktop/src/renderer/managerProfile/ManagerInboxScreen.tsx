@@ -8,13 +8,13 @@ export const ManagerInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const error = typedError(result);
   if (error)
     return (
-      <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Inbox" className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+      <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Inbox" className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
         <p className="text-text-secondary">{describeRpcError(error)}</p>
       </main>
     );
   if (result._tag !== "Success")
     return (
-      <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Inbox" className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+      <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Inbox" className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
         <p className="text-text-secondary">Loading inbox...</p>
       </main>
     );
@@ -22,7 +22,7 @@ export const ManagerInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const { messages, counts } = result.value;
 
   return (
-    <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Inbox" className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+    <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Inbox" className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
       <h1 className="text-2xl font-bold">
         Inbox
         {counts.unread > 0 && (

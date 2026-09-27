@@ -105,7 +105,7 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
         tabIndex={-1}
         data-focus-id="tactics"
         aria-label="Tactics Overview"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <h1 className="text-2xl font-bold">Tactics Overview</h1>
         <p className="mt-2 text-text-secondary">Loading your tactical preparation...</p>
@@ -121,7 +121,7 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
         tabIndex={-1}
         data-focus-id="tactics"
         aria-label="Tactics Overview"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <h1 className="text-2xl font-bold">Tactics Overview</h1>
         <Alert variant="destructive" className="mt-2" data-testid="tactics-overview-failed">
@@ -149,7 +149,7 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
       tabIndex={-1}
       data-focus-id="tactics"
       aria-label="Tactics Overview"
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       aria-busy={result.waiting}
     >
       {announcement !== null && (

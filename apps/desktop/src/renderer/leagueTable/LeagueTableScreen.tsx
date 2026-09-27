@@ -19,7 +19,7 @@ import {
 } from "../rpc.js";
 import { FOCUS_RING } from "../focus.js";
 
-const LEAGUE_PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const LEAGUE_PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /** The arrival target is the screen's labelled `<main>`, in every state (read-only screen: its
  *  loading and error branches render the same labelled region so keyboard arrival is announced

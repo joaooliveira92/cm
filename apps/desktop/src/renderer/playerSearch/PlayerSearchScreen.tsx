@@ -39,7 +39,7 @@ import { CompareSelectionContext } from "../table/playerSearch/compareSelection.
 import { searchRowOf } from "../table/playerSearch/searchColumns.js";
 import { usePlayerSearchRoster } from "./usePlayerSearchRoster.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 const CONTROL_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;
 
 /** The number an age field holds, or `undefined` for an empty/invalid entry — an untidy field is

@@ -15,6 +15,8 @@ import {
   PANEL,
   PANEL_STRONG,
 } from "../theme.js";
+import { Backdrop } from "../backdrop/Backdrop.js";
+import { MENU_BACKDROP } from "../backdrop/backdrops.js";
 
 /** The product identity (spec §3.3) — the clone's own title, no licensed artwork. */
 const PRODUCT_TITLE = "Championship Manager Clone";
@@ -168,7 +170,8 @@ export const MainMenuScreen = () => {
 
   return (
     <RouteView screenId="mainMenu">
-      <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+      <div className="relative isolate flex h-screen flex-col overflow-hidden text-foreground">
+        <Backdrop src={MENU_BACKDROP} />
         {/* The menu's identity block below is the page heading; the band only
             names the window. */}
         <Header.Shell title={PRODUCT_TITLE} titleAsHeading={false} state={{ view: "menu" }} />

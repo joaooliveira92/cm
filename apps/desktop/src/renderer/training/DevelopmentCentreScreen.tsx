@@ -34,7 +34,7 @@ import { describeLatestDevelopment } from "./developmentIndicator.js";
 import { TrainingPlanSummaryCard } from "./TrainingPlanSummaryCard.js";
 import { trainingViewState } from "./trainingViewState.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 export const DevelopmentCentreScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const result = useAtomValue(squadDevelopmentAtom(saveId));

@@ -46,7 +46,7 @@ import {
 } from "../rpc.js";
 import { ScoutRosterRow } from "./ScoutRosterRow.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 interface ClubOption {
   readonly clubId: ClubId;

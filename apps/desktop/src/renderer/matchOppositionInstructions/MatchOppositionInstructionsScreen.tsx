@@ -6,7 +6,7 @@ export const MatchOppositionInstructionsScreen = ({ saveId: _saveId }: { readonl
     tabIndex={-1}
     data-focus-id="matchOppositionInstructions"
     aria-label="Match Opposition Instructions"
-    className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+    className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
   >
     <h1 className="text-2xl font-bold">Match Opposition Instructions</h1>
     <p className="mt-4 text-text-secondary italic">WIP — Placeholder screen</p>

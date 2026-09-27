@@ -13,6 +13,8 @@ import { Header } from "../chrome/header/index.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
 import { LightweightDialog } from "../dialog/LightweightDialog.js";
+import { Backdrop } from "../backdrop/Backdrop.js";
+import { MENU_BACKDROP } from "../backdrop/backdrops.js";
 
 const formatDate = (iso: string): string => {
   const d = new Date(iso);
@@ -98,7 +100,8 @@ export const LoadCareerScreen = () => {
 
   return (
     <RouteView screenId="loadCareer">
-      <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+      <div className="relative isolate flex h-screen flex-col overflow-hidden text-foreground">
+        <Backdrop src={MENU_BACKDROP} />
         <Header.Shell
           title="Load Career"
           state={{ view: "load" }}

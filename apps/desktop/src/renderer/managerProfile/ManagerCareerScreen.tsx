@@ -2,7 +2,7 @@ import { FOCUS_RING } from "../focus.js";
 
 export const ManagerCareerScreen = () => {
   return (
-    <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Career" className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+    <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Career" className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
       <h1 className="text-2xl font-bold">Career History</h1>
       <p className="mt-1 text-sm text-text-secondary">
         Your complete managerial career — all clubs, competitions, and achievements.

@@ -38,7 +38,7 @@ const TransfersScreenInner = () => {
         tabIndex={-1}
         data-focus-id="transfers"
         aria-label="Transfers"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <h1 className="text-2xl font-bold">Transfers</h1>
         <Alert variant="destructive" className="mt-6">
@@ -62,7 +62,7 @@ const TransfersScreenInner = () => {
         tabIndex={-1}
         data-focus-id="transfers"
         aria-label="Transfers"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <h1 className="text-2xl font-bold">Transfers</h1>
         <div aria-busy="true" className="py-8 text-text-secondary">
@@ -77,7 +77,7 @@ const TransfersScreenInner = () => {
       tabIndex={-1}
       data-focus-id="transfers"
       aria-label="Transfers"
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <h1 className="text-2xl font-bold">Transfers</h1>
       <p className="mt-1 text-sm text-text-secondary">

@@ -23,7 +23,7 @@ import { CompetitionFixtureTable } from "../competitionFixturesDetail/Competitio
 import { FOCUS_RING } from "../focus.js";
 import { competitionFixturesAtom, describeRpcError, typedError, useAtomValue } from "../rpc.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /** The arrival target in every state, matching Screen 163's shape: a read-only screen announces
  *  the same labelled region whether its read has settled or not. */

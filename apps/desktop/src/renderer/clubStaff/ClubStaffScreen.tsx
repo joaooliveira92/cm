@@ -31,7 +31,7 @@ const ROLE_TITLES: Readonly<Record<ClubPersonRole, string>> = {
   physio: "Physio",
 };
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /**
  * Club Staff (Screen 38): who works at any club in the save, grouped by department. Reached from

@@ -15,7 +15,7 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         tabIndex={-1}
         data-focus-id="fixtures"
         aria-label="Fixtures"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <Alert variant="destructive">
           <p>{describeRpcError(error)}</p>
@@ -28,7 +28,7 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         tabIndex={-1}
         data-focus-id="fixtures"
         aria-label="Fixtures"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <p className="flex items-center gap-2 p-8 text-text-secondary">
           <Spinner /> Loading fixtures...
@@ -41,7 +41,7 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         tabIndex={-1}
         data-focus-id="fixtures"
         aria-label="Fixtures"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <Alert variant="destructive">
           <p>Failed to load fixtures</p>
@@ -56,7 +56,7 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       tabIndex={-1}
       data-focus-id="fixtures"
       aria-label="Fixtures"
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <h1 className="text-2xl font-bold">Fixtures</h1>
       <p className="mt-1 text-sm text-text-secondary">

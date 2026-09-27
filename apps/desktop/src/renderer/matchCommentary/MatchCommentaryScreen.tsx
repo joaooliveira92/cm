@@ -88,7 +88,7 @@ export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) =
       tabIndex={-1}
       data-focus-id="matchCommentary"
       aria-label="Match Commentary"
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <h1 className="text-2xl font-bold mb-6">Match Commentary</h1>
       {error && <p className="text-destructive mb-4">{error}</p>}

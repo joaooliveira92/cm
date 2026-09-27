@@ -21,7 +21,7 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
         tabIndex={-1}
         data-focus-id="seasonSummary"
         aria-label="Season Summary"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <Alert variant="destructive">
           <p>{describeRpcError(error)}</p>
@@ -34,7 +34,7 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
         tabIndex={-1}
         data-focus-id="seasonSummary"
         aria-label="Season Summary"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <p className="p-8 text-text-secondary">Loading season summary...</p>
       </main>
@@ -45,7 +45,7 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
         tabIndex={-1}
         data-focus-id="seasonSummary"
         aria-label="Season Summary"
-        className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
         <Alert variant="destructive">
           <p>Failed to load season summary</p>
@@ -63,7 +63,7 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
       tabIndex={-1}
       data-focus-id="seasonSummary"
       aria-label="Season Summary"
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <h1 className="text-2xl font-bold">Season Summary</h1>
       <p className="mt-1 text-sm text-text-secondary">

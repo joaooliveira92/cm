@@ -31,7 +31,7 @@ export const LiveCommandFrame = ({
       tabIndex={-1}
       data-focus-id={focusId}
       aria-label={title}
-      className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">{title}</h1>

@@ -111,7 +111,7 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
   const error = typedError(profileResult);
   if (error)
     return (
-      <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Overview" className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+      <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Overview" className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
         <Alert variant="destructive">
           <p>{describeRpcError(error)}</p>
         </Alert>
@@ -119,13 +119,13 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
     );
   if (profileResult._tag === "Initial")
     return (
-      <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Overview" className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+      <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Overview" className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
         <p className="p-8 text-text-secondary">Loading manager profile...</p>
       </main>
     );
   if (profileResult._tag === "Failure")
     return (
-      <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Overview" className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+      <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Overview" className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
         <Alert variant="destructive">
           <p>Failed to load manager profile</p>
         </Alert>
@@ -148,7 +148,7 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
   };
 
   return (
-    <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Overview" className={`bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
+    <main tabIndex={-1} data-focus-id="manager" aria-label="Manager Overview" className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
       {view.archived && (
         <Alert className="mb-4">[Archived] This career has ended. The save is read-only.</Alert>
       )}

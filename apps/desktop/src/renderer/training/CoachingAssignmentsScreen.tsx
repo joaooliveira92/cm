@@ -26,7 +26,7 @@ import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import { coachingAssignmentsAtom, readState, useAtomValue } from "../rpc.js";
 import { CoachCard } from "./CoachCard.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /** The loading, failed and empty states share one shell; only the empty one keeps the links. */
 const MESSAGE_SHELL = { title: "Coaching Assignments", label: "Coaching assignments", focusId: "training" } as const;

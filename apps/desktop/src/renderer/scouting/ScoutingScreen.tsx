@@ -20,7 +20,7 @@ import { readState, scoutingAtom, scoutingKnowledgeAtom, useAtomValue } from "..
 import { ScoutRosterRow } from "./ScoutRosterRow.js";
 import { ScoutingCoverageSummary } from "./ScoutingCoverageSummary.js";
 
-const PAGE_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 export const ScoutingScreen = ({ saveId }: { readonly saveId: SaveId }) => (
   <main data-focus-id="scouting" aria-labelledby="scouting-centre-heading" className={PAGE_CLASS} tabIndex={-1}>

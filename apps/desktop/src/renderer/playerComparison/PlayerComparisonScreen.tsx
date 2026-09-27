@@ -6,7 +6,7 @@
 import type { PlayerId, SaveId } from "@cm-clone/contracts";
 import { FOCUS_RING } from "../focus.js";
 
-const STUB_CLASS = `bg-background p-8 text-foreground ${FOCUS_RING.join(" ")}`;
+const STUB_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 export const PlayerComparisonScreen = ({
   saveId,
