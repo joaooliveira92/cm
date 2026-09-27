@@ -4,7 +4,7 @@ Status: proposed
 
 ## Problem
 
-`cm-implement`'s promotion step (see [Agent Note](2026-08-27-cm-implement-promotion-step.md)) follows
+`cm-implement`'s promotion step (see [Agent Note](../../implemented/process/2026-08-27-cm-implement-promotion-step.md)) follows
 explicit forward-links from the spec/tickets it's building to each `proposed/{class}/` Agent Note the
 map's decisions produced, rather than searching `.agents/notes/proposed/` by keyword or date-range.
 Nothing yet specifies where those links appear in `cm-to-spec`'s generated spec or `cm-to-tickets`'
