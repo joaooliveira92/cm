@@ -1,8 +1,27 @@
 ## Agent skills
 
+### When to use the process
+
+Most work goes straight to code: bug fixes, UI work on an existing screen, refactors, tests, and
+features that fit in one session. No ticket, no Agent Note, no pipeline. Commit with a Conventional
+Commit, and when the change made a non-obvious choice, say why in the body in a sentence or two.
+
+Reach for the tracker and the planning chain only when the work does one of these:
+
+- Changes a rule or behaviour an existing Agent Note explains. Update or delete that note in the
+  same change so it doesn't go stale. Code that depends on a note links to it, so follow the links
+  in the files you touch.
+- Adds a domain concept, changes the save format, or changes a cross-process contract (IPC, the DB
+  schema).
+- Needs more than one session, or gets split across parallel sessions. That's where the `claimed`
+  lock earns its keep.
+
+That work runs through [.ai/ORCHESTRATION.md](.ai/ORCHESTRATION.md).
+
 ### Issue tracker
 
-Issues live as markdown files under `.scratch/<feature>/` in this repo. See [issue-tracker](docs/agents/issue-tracker.md).
+Issues live as markdown files under `.scratch/<feature>/` in this repo, for work that meets the
+threshold in *When to use the process*. See [issue-tracker](docs/agents/issue-tracker.md).
 
 ### Triage labels
 
@@ -25,6 +44,7 @@ decisions live in [.agents/notes/](.agents/notes/), and ADR identifiers map thro
 ### Agent Notes
 
 Default six classes: `feature`, `bug-fix`, `simplification`, `architecture`, `process`, `testing`. See [notes.md](docs/agents/notes.md).
+Write one only for a decision a future contributor would plausibly undo without it; routine rationale belongs in the commit body.
 
 ### CM skill suite
 

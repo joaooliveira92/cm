@@ -356,3 +356,16 @@ export const sectionKeyToEntry: ReadonlyMap<string, { sectionId: NavSectionId; d
 
 /** Gives the position key (q/w/e/...) for an item at a given index within its section. */
 export const positionKeyForIndex = (index: number): string | undefined => POSITION_KEYS[index];
+
+/**
+ * The sidebar's labelled groups: contiguous runs of `NAV_SECTIONS`, in the same order.
+ *
+ * Grouping is display only. The `g <n>` keys still count through `NAV_SECTIONS` as one list, so a
+ * group may never reorder sections, only put a heading over a run of them — the sidebar test holds
+ * the flattened groups equal to `NAV_SECTIONS`.
+ */
+export const NAV_GROUPS: ReadonlyArray<{ readonly label: string; readonly sectionIds: ReadonlyArray<NavSectionId> }> = [
+  { label: "Team", sectionIds: ["squad", "tactics", "training"] },
+  { label: "Operations", sectionIds: ["recruitment", "analysis"] },
+  { label: "Club & World", sectionIds: ["news", "club", "world"] },
+];

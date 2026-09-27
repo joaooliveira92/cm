@@ -1,6 +1,6 @@
 # 11: Create-career surface — fields and the pre-career chrome band
 
-**What to build:** a player creating a career runs through a flow that feels like the same product, with a clear sense of progress. The career-creation screens (league selection, club selection, manager form) render inside a light gradient pre-career chrome band that carries identity at the top, a Cancel/Back control, and an in-band "Step N of 4" indicator where the floating step badge used to be — so progress is read from the band, not from a detached chip on the page. The Save List stays a standalone boot screen, untouched by this band.
+**What to build:** a player creating a career runs through a flow that feels like the same product, with a clear sense of progress. The career-creation screens (league selection, club selection, manager form) render inside a pre-career band — the same header surface the main menu and save list paint — that carries identity at the top, a Cancel/Back control, and an in-band "Step N of 4" indicator where the floating step badge used to be — so progress is read from the band, not from a detached chip on the page. The Save List stays a standalone boot screen, untouched by this band.
 
 Every form field in the flow shares one pattern: an opaque field surface (a field must read typed characters against an unwashed background), a thin rim, a single focus ring on `:focus-visible`, and 12px labels — so league lists, text inputs, and the manager form look consistent. Checkbox accents align to the primary-action hue rather than introducing a competing accent colour.
 
@@ -16,8 +16,21 @@ The slice's edge promise: fields are class-string constants, not a component lib
 
 **Status:** resolved
 
-- [x] The creation flow renders inside a light gradient pre-career chrome band carrying identity, with Cancel/Back and an in-band "Step N of 4" indicator; the floating step badge is gone and the Save List boot screen is unchanged.
+- [x] The creation flow renders inside the pre-career band, sharing the header surface with the main menu, carrying identity, with Cancel/Back and an in-band "Step N of 4" indicator; the floating step badge is gone and the Save List boot screen is unchanged.
 - [x] Every field in the flow shares one look: opaque field surface, thin rim, single focus ring on `:focus-visible`, 12px labels.
 - [x] Checkbox accents use the primary-action hue, not a second accent colour.
 - [x] Fields are class-string constants composed with the same utilities as the rest of the renderer — no field component library is introduced.
 - [x] `pnpm check:all` is green at this commit.
+
+## Comments
+
+- **2026-09-27 — the band's gradient clause is reversed.** This ticket originally specified a
+  *light gradient* pre-career band, on the reasoning that it previewed the career chrome before a
+  club existed to colour it (`AppTitleBar`'s `chrome` prop). In play the result read as a bug: the
+  header background changed the moment the player pressed "Start New Career", so the flow looked
+  like a different application. The band now paints the shared `--color-header-*` surface, the same
+  one the main menu and save list use, and the `chrome` prop is gone from `AppTitleBar` rather than
+  defaulted off — a removed branch cannot drift back. Only the career shell repaints its band, in
+  club colours. What this ticket actually bought, the single-row band owning identity, escape and
+  progress, is unchanged; only its paint moved. Criteria and the linked Agent Note amended to
+  match.

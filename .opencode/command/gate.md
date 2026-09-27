@@ -24,8 +24,8 @@ Record the exact command and its actual output for each. Never infer a result yo
    open; say which of the two the change is.
 5. **Tree state** — `git status` clean, branch is a feature branch off `latest_branch`, no stray
    files (SQLite saves, build output, `.DS_Store`).
-6. **Traceability** — every ticket closed this sprint has its `Status:` updated, every shipped Agent
-   Note is promoted to `implemented/`, the SPRINT-PLAN row and **Immediate next action** are current.
+6. **Traceability** — every ticket closed this sprint has its `Status:` updated, any Agent Note the
+   sprint contradicted is updated, the SPRINT-PLAN row and **Immediate next action** are current.
 
 ## Report
 

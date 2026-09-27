@@ -13,7 +13,7 @@ import { CareerSidebar } from "../../../src/renderer/navigation/components/Caree
 import { NavProvider } from "../../../src/renderer/navigation/NavProvider.js";
 import { SidebarProvider } from "../../../src/renderer/components/ui/sidebar.js";
 import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";
-import { NAV_SECTIONS, POSITION_KEYS } from "../../../src/renderer/navigation/nav-config.js";
+import { NAV_GROUPS, NAV_SECTIONS, POSITION_KEYS } from "../../../src/renderer/navigation/nav-config.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { resetScopeState, setScopeState, clearScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { publishBindingOverrides, resetBindingOverrides } from "../../../src/renderer/actions/bindingState.js";
@@ -71,6 +71,22 @@ afterEach(() => {
 });
 
 describe("the career sidebar", () => {
+  // The groups are headings over runs of sections, never a reordering: `g <n>` counts through
+  // NAV_SECTIONS, so a group out of step would put key 4 on the fifth row.
+  it("groups every section exactly once, in NAV_SECTIONS order", () => {
+    expect(NAV_GROUPS.flatMap((group) => group.sectionIds)).toEqual(
+      NAV_SECTIONS.map((section) => section.id),
+    );
+  });
+
+  it("labels each group of sections", async () => {
+    await mountSidebar("league");
+    const nav = within(screen.getByRole("navigation", { name: "Primary navigation" }));
+    for (const group of NAV_GROUPS) {
+      expect(nav.getByText(group.label)).toBeTruthy();
+    }
+  });
+
   it("lists every primary section", async () => {
     await mountSidebar("league");
     const nav = within(screen.getByRole("navigation", { name: "Primary navigation" }));

@@ -8,12 +8,14 @@ import {
 } from "../../components/ui/collapsible.js";
 import {
   SidebarMenuAction,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "../../components/ui/sidebar.js";
+import { cn } from "../../lib/utils.js";
 import { intentOfClick } from "../adapter.js";
 import { useNavContext } from "../navContext.js";
 import type { NavSection } from "../nav-config.js";
@@ -54,6 +56,8 @@ export const SidebarNavSection = ({
   const expanded = state.isSectionExpanded(section.id);
   const Icon = section.icon;
   const hasChildren = section.items.length > 0;
+  const count = badgeCount ?? 0;
+  const hasBadge = count > 0;
 
   const scope = useSyncExternalStore(subscribeScopeState, getScopeState, getScopeState);
   const overrides = useSyncExternalStore(
@@ -89,16 +93,30 @@ export const SidebarNavSection = ({
           tooltip={section.label}
           aria-current={active ? "page" : undefined}
           onClick={(event) => actions.goTo(section.defaultDestination, intentOfClick(event))}
+          className={cn(
+            // The route's section keeps a mark on its leading edge, so it still reads as "here"
+            // once the pointer's hover wash sits on another row, and in the icon rail.
+            "relative before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full data-[active=true]:before:bg-chrome-top",
+            "[&>svg]:text-sidebar-foreground/70 data-[active=true]:[&>svg]:text-sidebar-accent-foreground",
+            hasBadge && "pr-14",
+          )}
         >
           {Icon !== undefined && <Icon />}
-          <span>{section.label}</span>
-          {badgeCount !== undefined && badgeCount > 0 && (
-            <span
-              aria-label={`${badgeCount} ${badgeLabel ?? "unread"}`}
-              className="ml-auto min-w-4 rounded-full bg-destructive px-1 text-center text-[0.625rem] font-semibold leading-4 text-white tabular-nums"
-            >
-              {badgeCount > 99 ? "99+" : badgeCount}
-            </span>
+          <span className="truncate">{section.label}</span>
+          {hasBadge && (
+            <>
+              <SidebarMenuBadge
+                aria-label={`${count} ${badgeLabel ?? "unread"}`}
+                className="bg-destructive text-white"
+              >
+                {count > 99 ? "99+" : count}
+              </SidebarMenuBadge>
+              {/* The rail has no room for a count; a dot on the icon says there is one. */}
+              <span
+                aria-hidden="true"
+                className="absolute top-1 right-1 hidden size-1.5 rounded-full bg-destructive ring-2 ring-sidebar group-data-[collapsible=icon]:block"
+              />
+            </>
           )}
         </SidebarMenuButton>
       </ShortcutHint>
@@ -109,7 +127,7 @@ export const SidebarNavSection = ({
             <SidebarMenuAction
               aria-label={`Toggle ${section.label} submenu`}
               aria-controls={`submenu-${section.id}`}
-              className="data-open:rotate-90"
+              className="text-sidebar-foreground/60 transition-transform duration-200 data-open:rotate-90"
             >
               <ChevronRight />
             </SidebarMenuAction>

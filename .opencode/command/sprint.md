@@ -89,8 +89,8 @@ gate is still shut, stop and say so; do not charter something new to stay busy.
 
 ### 4. Commit
 
-On close, in the same commit: ticket `Status:` updated, map Decisions-so-far appended, shipped
-Agent Notes promoted `proposed/` → `implemented/`, SPRINT-PLAN row and **Immediate next action**
+On close, in the same commit: ticket `Status:` updated, map Decisions-so-far appended, any
+Agent Note the work contradicted updated, SPRINT-PLAN row and **Immediate next action**
 refreshed, `.ai/TRACEABILITY.md` updated if a durable capability shipped, and
 `.ai/reports/<effort>.md` written.
 - Small Conventional Commits directly on `dev` per [.ai/AUTONOMOUS-AGENT.md § Git policy](../../.ai/AUTONOMOUS-AGENT.md) — no feature branches, no self-merge, no force-push.

@@ -371,12 +371,14 @@ const SidebarGroupLabel = ({
       ref={ref}
       data-sidebar="group-label"
       className={cn(
-        "flex h-8 shrink-0 items-center rounded-md px-2 text-xs text-sidebar-foreground/50 outline-none transition-[margin,opacity] duration-200 ease-linear",
+        "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none transition-[margin,opacity] duration-200 ease-linear",
         "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
 };
 SidebarGroupLabel.displayName = "SidebarGroupLabel";
@@ -519,6 +521,7 @@ SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton";
 
 export {
   SidebarMenuAction,
+  SidebarMenuBadge,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,

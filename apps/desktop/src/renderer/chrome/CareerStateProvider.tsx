@@ -41,12 +41,14 @@ import {
 import type { HeaderCareer, HeaderStanding, SeasonReadoutInput } from "./header/career-header-state.js";
 import { deriveContinueLabel } from "./header/continue-label.js";
 import type { ContinueReport } from "./ContinueResult.js";
+import type { SidebarManager } from "../navigation/components/CareerSidebarFooter.js";
 
 interface CareerState {
   readonly saveId: SaveId;
   readonly badgeKey: string | null;
   readonly clubName: string | null;
   readonly clubColours: ClubColoursView | null;
+  readonly manager: SidebarManager | null;
   readonly season: SeasonReadoutInput | null;
   readonly saveName: string | null;
   readonly advancing: boolean;
@@ -109,6 +111,17 @@ export const CareerStateProvider = ({
   const clubName = profileResult._tag === "Success" ? profileResult.value.clubName : null;
   const clubColours = profileResult._tag === "Success" ? profileResult.value.clubColours : null;
   const badgeKey = profileResult._tag === "Success" ? profileResult.value.badgeKey : null;
+  const manager: SidebarManager | null = useMemo(() => {
+    if (profileResult._tag !== "Success") return null;
+    const { profile, tenureSeasons } = profileResult.value;
+    return {
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      primaryColor: profile.avatarPrimaryColor,
+      secondaryColor: profile.avatarSecondaryColor,
+      tenureSeasons,
+    };
+  }, [profileResult]);
   const season = tableResult._tag === "Success" ? tableResult.value.season : null;
   const saveName = saveResult._tag === "Success" ? saveResult.value.name : null;
 
@@ -250,6 +263,7 @@ export const CareerStateProvider = ({
       badgeKey,
       clubName,
       clubColours,
+      manager,
       season,
       saveName,
       advancing,
@@ -269,7 +283,7 @@ export const CareerStateProvider = ({
       runAdvance,
     }),
     [
-      saveId, badgeKey, clubName, clubColours, season, saveName, advancing,
+      saveId, badgeKey, clubName, clubColours, manager, season, saveName, advancing,
       continueDisabled, continueLabel, liveMatch, newsCounts, screenId,
       standing, outstanding, career, report, acknowledgeReadinessItem,
     ],

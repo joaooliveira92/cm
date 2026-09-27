@@ -1,6 +1,6 @@
 ---
 name: implement
-description: "Implement a ticket or spec, promoting linked proposed Agent Notes to implemented in the same commit. Alias for the cm-implement skill."
+description: "Implement a ticket, a spec, or work described in conversation, updating any Agent Note the work contradicts. Alias for the cm-implement skill."
 ---
 
 # implement

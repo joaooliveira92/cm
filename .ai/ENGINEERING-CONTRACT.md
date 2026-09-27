@@ -129,17 +129,19 @@ e2e's OS setup. Run the gate — do not hand-run a subset and call it passed.
 
 ## Decision records
 
-Two homes, per [docs/agents/notes.md](../docs/agents/notes.md):
+Write an Agent Note only when a future contributor would plausibly undo the decision without it.
+Routine rationale goes in the commit body. When a note is warranted, it takes one of two shapes, per
+[docs/agents/notes.md](../docs/agents/notes.md):
 
 - **`architecture`-class Agent Note** ([.agents/notes/](../.agents/notes/)) — repo-wide, durable, structural. Package boundaries, the
   event model, determinism and seeding, persistence and migrations, the RPC/Electron boundary, a
   major dependency, or an approved deviation from this contract.
 - **Agent Note** (`.agents/notes/{lifecycle}/{class}/`) — a decision scoped to one effort: why this
-  design, what was given up. `cm-wayfinder` writes it `proposed/`; `cm-implement` promotes it to
-  `implemented/` in the commit that ships the code.
+  design, what was given up. `cm-wayfinder` writes it `proposed/`; it moves to `implemented/`
+  when someone touches it after the code ships, or in a `cm-archive-notes` pass.
 
 If you cannot tell which, ask whether a future contributor would need it *without* the effort's
-context. Yes → ADR.
+context. If yes, make it `architecture`-class.
 
 ## Documentation
 
@@ -152,7 +154,7 @@ the prose rules in [docs/agents/unslop.md](../docs/agents/unslop.md). Links must
 Every completed increment includes:
 
 - implementation plus the tests that prove each acceptance criterion;
-- ADRs or Agent Notes where the threshold above is met, and note promotion where code shipped;
+- an Agent Note where the threshold above is met;
 - the exact gate commands run and their observed results;
 - determinism or save-compatibility evidence where the change touches either;
 - known limitations and anything deliberately deferred;

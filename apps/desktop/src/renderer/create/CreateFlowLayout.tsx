@@ -1,16 +1,21 @@
 /**
- * The creation flow's shell: the single-row pre-career chrome band, the step's
- * own body through the router `Outlet`, and the one bottom bar. All session
- * state, the world generation lifecycle, and the career commit live in
+ * The creation flow's shell: the single-row pre-career band, the step's own
+ * body through the router `Outlet`, and the one bottom bar. All session state,
+ * the world generation lifecycle, and the career commit live in
  * `useCreateSession`.
  *
  * The band mirrors the career chrome's top row (note: "a lightweight pre-career
- * chrome band, mirroring the career chrome's top row"): a chrome-blue gradient
- * band carrying the product identity on the left, and an in-band escape cluster
- * plus the "Step N of 4" indicator on the right. Progress is read from the band,
- * not from a detached chip — the floating flow-level `StepBadge` is gone, and
- * the manager form keeps only its own sub-panel stepper. The Save List boot
- * screen is untouched: it keeps `Header.Shell`'s neutral band.
+ * chrome band, mirroring the career chrome's top row"): it carries the product
+ * identity on the left, and an in-band escape cluster plus the "Step N of 4"
+ * indicator on the right. Progress is read from the band, not from a detached
+ * chip — the floating flow-level `StepBadge` is gone, and the manager form
+ * keeps only its own sub-panel stepper.
+ *
+ * It is the same division the career chrome owns, and the same surface: the
+ * band paints the shared `--color-header-*` background, so the main menu, the
+ * Save List and this flow share one header background. Only the career shell
+ * repaints its band, in club colours. The Save List boot screen is untouched
+ * beyond that: it keeps `Header.Shell`'s own band.
  */
 import { Outlet } from "@tanstack/react-router";
 import { Alert } from "../components/ui/alert.js";
@@ -67,29 +72,22 @@ export const CreateFlowLayout = () => {
     <CreateSessionContext.Provider value={contextValue}>
       <div className="relative isolate flex h-screen flex-col overflow-hidden text-foreground">
         <Backdrop src={MENU_BACKDROP} />
-        <header className="shrink-0 text-text-primary">
-          {/* The whole band is one row: identity, escape, and progress read as
-              one chrome surface — the same division the career chrome owns. */}
-          <Header.TitleBar
-            title="New Career"
-            titleAsHeading={false}
-            chrome
-            identity={
-              <h1 className="truncate text-sm font-bold text-text-bright select-none">
-                New Career
-              </h1>
-            }
-            actions={
-              <div className="flex items-center gap-2">
-                {bottomBarPlan.back !== null && <BandButton button={bottomBarPlan.back} />}
-                {bottomBarPlan.cancel !== null && <BandButton button={bottomBarPlan.cancel} />}
-                <span className="shrink-0 text-2xs font-semibold tracking-wider text-text-bright uppercase select-none">
-                  {STEP_LABELS[step]}
-                </span>
-              </div>
-            }
-          />
-        </header>
+        <Header.Shell
+          title="New Career"
+          titleAsHeading={false}
+          state={{ view: "create", step: STEP_LABELS[step], hint: "" }}
+          identity={
+            <h1 className="truncate text-sm font-bold text-text-bright select-none">
+              New Career
+            </h1>
+          }
+          actions={
+            <div className="flex items-center gap-2">
+              {bottomBarPlan.back !== null && <BandButton button={bottomBarPlan.back} />}
+              {bottomBarPlan.cancel !== null && <BandButton button={bottomBarPlan.cancel} />}
+            </div>
+          }
+        />
 
         {/* The leagues and club steps are full-height, full-width bands: each is a workspace of
             columns that scroll independently, which a centred `max-w-5xl` `overflow-y-auto`

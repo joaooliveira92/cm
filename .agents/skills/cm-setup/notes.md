@@ -9,7 +9,7 @@ Every Agent Note's path encodes two axes: `.agents/notes/{lifecycle}/{class}/yyy
 **Lifecycle** (top-level folder):
 
 - `proposed/` — decided but not yet built. `cm-wayfinder` writes here when a resolved ticket asserts a choice, design, or convention.
-- `implemented/` — the decision shipped. `cm-implement` promotes a note here from `proposed/` in the same commit that ships the code.
+- `implemented/` — the decision shipped. A note moves here from `proposed/` when someone touches it after the code ships, or in a `cm-archive-notes` pass. Promotion is optional and need not share the commit that ships the code.
 - `rejected/` — considered and declined; kept only while its rationale prevents a plausible re-litigation, otherwise deleted.
 - `archived/` — a low-future-value `implemented/` note, frozen. See `cm-archive-notes`.
 

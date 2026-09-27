@@ -84,9 +84,10 @@ divergence (Keep/Discard lacks scrim-click-to-close). Unify into:
 
 ### Creation-flow chrome
 
-- **A lightweight pre-career chrome band**, mirroring the career chrome's top row: gradient
-  chrome band carrying product identity ("New Career"), the step indicator **folded into the
-  band** as "Step 2 of 4 · Club", and Cancel/Back in the band. Screens become panels beneath it.
+- **A lightweight pre-career band**, mirroring the career chrome's top row: the same
+  `--color-header-*` surface every other shell paints, carrying product identity ("New Career"),
+  the step indicator **folded into the band** as "Step 2 of 4 · Club", and Cancel/Back in the band.
+  Screens become panels beneath it. Only the career shell repaints its band, in club colours.
 - **Removes** the floating `StepBadge` pills and the screen-owned raw `min-h-screen p-8` +
   `<h1>` headline in `CreateFlowLayout`, replacing them with the band.
 - Mirrors ticket-04's division of labour: the chrome owns identity, step, and escape; the
@@ -146,7 +147,7 @@ patterns compose from existing tokens.
    documented anatomy (gradient band, strong-panel body, two sizes); scrim-click-to-close is
    uniform; the command palette keeps its combobox anatomy and top-anchored position.
 4. No `<Dialog>`/`<Field>` components are introduced, and no overlay's keyboard behavior changed.
-5. The creation flow renders through the gradient chrome band with an in-band "Step N of 4"
+5. The creation flow renders through the shared header band with an in-band "Step N of 4"
    indicator and Cancel/Back; the floating `StepBadge` is gone; the flow starts at
    `create/leagues` under the band, Save List stays a standalone boot screen.
 6. Empty states are text-led `text-secondary` centered lines with `Clear all filters` where
@@ -162,9 +163,10 @@ patterns compose from existing tokens.
   `no-slate-class-name` guard catches palette drift but not recipe drift; the spec is the only
   mitigation. Watch the first post-adoption screens for drift and route a third recurrence to a
   lint rule per the repository's routing discipline.
-- **Two chrome-band-like components.** Career chrome (login) and the creation band (pre-career)
-  are structurally different (tab strip vs step indicator) but visually siblings; a later pass
-  could lift a shared gradient-band primitive. That is implementation, not a re-decision.
+- **Two chrome-band-like components.** Career chrome and the creation band (pre-career) are
+  structurally different (tab strip vs step indicator) but paint the same surface: both compose
+  `AppTitleBar`, and what differs is the props a shell passes, not the paint. There is no
+  gradient-band primitive left to lift.
 - **Field-surface legibility.** `--color-field-bg` is opaque and darker than the panel, so it
   must stay that way: a future opacity nudge makes text-entry unreadable over the page background
   and contradicts the point of the token.

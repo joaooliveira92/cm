@@ -31,8 +31,8 @@ Read first: [AGENTS.md](../../AGENTS.md), [CONTEXT.md](../../CONTEXT.md),
    `Status: claimed`, and answer it. Use the ticket's own type: run `research` for a fact, the
    `prototype` skill for a feel-it question, `grilling` to stress-test a plan.
 3. **Resolve** — append the answer under `## Answer`, set `Status: resolved`, append the gist + link
-   to the map's Decisions-so-far, and — when the answer asserts a choice, design, or convention —
-   write the Agent Note into `.agents/notes/proposed/<class>/yyyy-mm-dd-topic.md` in the same commit,
+   to the map's Decisions-so-far, and — when the answer is a decision a future contributor would plausibly
+   undo without it — write the Agent Note into `.agents/notes/proposed/<class>/yyyy-mm-dd-topic.md` in the same commit,
    per [docs/agents/notes.md](../../docs/agents/notes.md). `## Alternatives considered` records what
    you genuinely weighed, never something reconstructed afterwards.
 

@@ -19,7 +19,8 @@ does not stop after one ticket — it auto-advances through the queue until a ha
 - **A ticket path** (`.scratch/<effort>/issues/<NN>-*.md`) → that ticket.
 - **Any other file path** → find the `.scratch/<effort>/` that owns that path and take that effort's
   frontier ticket. A path is advisory, not the work: the pipeline is ticket-driven, so you implement
-  the owning ticket, never the raw file. If no live effort owns the path, report that nothing
+  the owning ticket, never the raw file. Work below the threshold in `AGENTS.md` § When to use the
+  process doesn't belong in this pipeline at all; do it directly, outside a sprint. If no live effort owns the path, report that nothing
   ticket-backed covers it and stop — do not invent work.
 
 Compute the frontier the same way everywhere: scan `.scratch/<effort>/issues/` for the

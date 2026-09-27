@@ -21,6 +21,8 @@ export interface ShellHeaderProps {
   readonly state: HeaderState;
   readonly leading?: ReactNode;
   readonly actions?: ReactNode;
+  /** Rendered in place of the centred title — the creation flow's identity. */
+  readonly identity?: ReactNode;
 }
 
 export const ShellHeader = ({
@@ -29,6 +31,7 @@ export const ShellHeader = ({
   state,
   leading,
   actions,
+  identity,
 }: ShellHeaderProps) => (
   <header className="shrink-0 text-text-primary">
     <AppTitleBar
@@ -36,6 +39,7 @@ export const ShellHeader = ({
       titleAsHeading={titleAsHeading}
       leading={leading}
       actions={actions}
+      identity={identity}
     />
     <div
       className="flex h-7 w-full items-center border-b border-header-border bg-header-bg px-3 text-header-fg"

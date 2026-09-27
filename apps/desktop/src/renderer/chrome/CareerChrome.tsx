@@ -54,7 +54,7 @@ const CareerChromeInner = ({
   readonly children: ReactNode;
 }) => {
   const {
-    clubName, clubColours, badgeKey, newsCounts, career, outstanding, screenId,
+    clubName, clubColours, badgeKey, manager, newsCounts, career, outstanding, screenId,
     report, setReport, openDestination, acknowledgeReadinessItem, onBackToSaves,
   } = useCareerState();
 
@@ -131,7 +131,7 @@ const CareerChromeInner = ({
           </header>
 
           <div className="flex min-h-0 flex-1">
-            <CareerSidebar badges={badges} />
+            <CareerSidebar badges={badges} manager={manager} />
 
             {/* The backdrop fills this column only: the club band and the
                 sidebar stay opaque, and the photo holds still while the screen
