@@ -11,6 +11,7 @@ import {
   test,
   type Screen,
 } from "./launchApp.js";
+import { fillPersonalDetails } from "./fillPersonalDetails.js";
 import { savesDir, seedBeforeMatchday, seedFresh } from "./seedSaves.js";
 
 /** Leave creation once a world exists: the Cancel control raises the discard confirmation
@@ -113,7 +114,7 @@ test("creation keeps beginCareer before Club Selection and returning discards it
   await expect(page.getByRole("heading", { name: "New Career" })).toBeVisible();
 
   await advanceThroughLeagues(page);
-  await page.getByPlaceholder("My Career").fill("Keyboard Career");
+  await fillPersonalDetails(page, "Keyboard Career");
   await page.getByRole("button", { name: "Next: Manager Identity" }).click();
   await page.getByRole("button", { name: "Next: Select Club" }).click();
 
@@ -134,7 +135,7 @@ test("creation keeps beginCareer before Club Selection and returning discards it
 test("reloading mid-creation redirects to step 1 (AC-13)", async ({ window: page }) => {
   await page.getByRole("button", { name: "Start New Career" }).click();
   await advanceThroughLeagues(page);
-  await page.getByPlaceholder("My Career").fill("Reload Career");
+  await fillPersonalDetails(page, "Reload Career");
   await page.getByRole("button", { name: "Next: Manager Identity" }).click();
   await page.getByRole("button", { name: "Next: Select Club" }).click();
   await expect(page.getByRole("table", { name: "Clubs" })).toBeVisible();
@@ -153,7 +154,7 @@ test("the flow never advances past the club decision (AC-13)", async ({ window: 
   // (`test/create-flow-club-selection.test.tsx`).
   await page.getByRole("button", { name: "Start New Career" }).click();
   await advanceThroughLeagues(page);
-  await page.getByPlaceholder("My Career").fill("Gated Career");
+  await fillPersonalDetails(page, "Gated Career");
   await page.getByRole("button", { name: "Next: Manager Identity" }).click();
   await page.getByRole("button", { name: "Next: Select Club" }).click();
   await expect(page.getByRole("table", { name: "Clubs" })).toBeVisible();

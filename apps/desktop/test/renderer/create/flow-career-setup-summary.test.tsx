@@ -12,6 +12,7 @@ import { Effect } from "effect";
 import { bindRouter, navigate } from "../../../src/renderer/navigation/adapter.js";
 import { buildLeaguePresetIntents, getLeagueSetupIndex, resolveLeagueSelection } from "../../../src/main/world/index.js";
 import { CreateFlowLayout } from "../../../src/renderer/create/CreateFlowLayout.js";
+import { fillPersonalDetails } from "./personalDetails.js";
 import {
   LeagueSelectionRouteContent,
   StepOneRouteContent,
@@ -233,8 +234,7 @@ const reachReviewStep = async (): Promise<void> => {
   await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false), { timeout: 3000 });
   fireEvent.click(button);
 
-  const nameInput = await screen.findByPlaceholderText("My Career");
-  fireEvent.change(nameInput, { target: { value: "Test Career" } });
+  await fillPersonalDetails();
   fireEvent.click(await screen.findByRole("button", { name: "Next: Manager Identity" }));
 
   const next = await screen.findByRole("button", { name: "Next: Select Club" }, { timeout: 3000 });

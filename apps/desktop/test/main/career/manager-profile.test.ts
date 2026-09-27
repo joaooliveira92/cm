@@ -44,7 +44,13 @@ it.effect("serves creation-time identity alongside club, Season, and tenure", ()
 
     const view = yield* getManagerProfileScreen(savesDir, save.id);
 
-    strictEqual(view.profile.managerName, "Ada Lovelace");
+    strictEqual(view.profile.firstName, "Ada");
+    strictEqual(view.profile.lastName, "Lovelace");
+    strictEqual(view.profile.nationalityId, "nation_eng");
+    strictEqual(view.profile.nationalityName, "England");
+    strictEqual(view.profile.dateOfBirth, "1980-01-01");
+    strictEqual(view.profile.favoriteClubId, null);
+    strictEqual(view.profile.favoriteClubName, null);
     strictEqual(view.profile.archetypeOrigin, "custom");
     deepStrictEqual({ ...view.profile.pillars }, {
       tacticalAcumen: 3,

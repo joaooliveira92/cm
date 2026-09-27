@@ -1,26 +1,57 @@
 import { useCallback, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { NationId } from "@cm-clone/contracts";
+import { NATION_CODES, NATION_PROFILES, canonicalNationId } from "@cm-clone/shared";
 import { Input } from "../components/ui/input.js";
 import { Label } from "../components/ui/label.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select.js";
 import { useCreateSessionApi } from "../router/createSessionContext.js";
 import { CreationStepper } from "./CreationStepper.js";
+import { DateOfBirthField } from "./DateOfBirthField.js";
+import { FavoriteTeamField } from "./FavoriteTeamField.js";
 import { ManagerPillarsPane } from "./ManagerPillarsPane.js";
 import { panelVariants } from "./managerIdentityCopy.js";
+import { selectedFavoriteTeamOf } from "./favoriteTeam.js";
+import { provisionalIdOf } from "./generation.js";
+import { personalDetailsComplete } from "./personalDetails.js";
+
+/** The world's nations, which generation copies into every save, so the picker never has to wait
+ *  on the world to offer an answer. Names are factual geography read from code, not a content pack. */
+const NATIONALITIES = NATION_CODES.map((code) => ({
+  id: canonicalNationId(code),
+  name: NATION_PROFILES[code].displayName,
+}));
 
 export const ManagerIdentityStep = () => {
-  const { session, update, setManagerStep } = useCreateSessionApi();
+  const { session, update, setManagerStep, selectFavoriteTeam } = useCreateSessionApi();
   const [direction, setDirection] = useState(1);
-  const { saveName, managerName, pillars, managerStep: step } = session;
+  const {
+    saveName,
+    firstName,
+    lastName,
+    nationalityId,
+    dateOfBirth,
+    pillars,
+    managerStep: step,
+  } = session;
 
-  const personalDetailsComplete = saveName.trim().length > 0;
+  const detailsComplete = personalDetailsComplete(session);
+  const provisionalId = provisionalIdOf(session.generation);
+  const favoriteTeam = selectedFavoriteTeamOf(session);
 
   const goToStep = useCallback(
     (nextStep: 1 | 2) => {
-      if (nextStep === 2 && !personalDetailsComplete) return;
+      if (nextStep === 2 && !detailsComplete) return;
       setDirection(nextStep > step ? 1 : -1);
       setManagerStep(nextStep);
     },
-    [personalDetailsComplete, step, setManagerStep],
+    [detailsComplete, step, setManagerStep],
   );
 
   return (
@@ -56,6 +87,7 @@ export const ManagerIdentityStep = () => {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.08 }}
+                    className="md:col-span-2"
                   >
                     <Label className="block" htmlFor="saveName">
                       Save name
@@ -82,23 +114,98 @@ export const ManagerIdentityStep = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.14 }}
                   >
-                    <Label className="block" htmlFor="managerName">
-                      Manager name
+                    <Label className="block" htmlFor="firstName">
+                      First name
                     </Label>
                     <Input
-                      id="managerName"
+                      id="firstName"
                       type="text"
                       className="mt-2"
-                      value={managerName}
+                      value={firstName}
                       onChange={(event) =>
-                        update({ managerName: event.currentTarget.value })
+                        update({ firstName: event.currentTarget.value })
                       }
-                      placeholder="Your name"
-                      autoComplete="name"
+                      placeholder="Your first name"
+                      autoComplete="given-name"
                     />
-                    <p className="mt-2 text-xs text-text-muted">
-                      Leave blank to use the save name.
-                    </p>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.18 }}
+                  >
+                    <Label className="block" htmlFor="lastName">
+                      Last name
+                    </Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      className="mt-2"
+                      value={lastName}
+                      onChange={(event) =>
+                        update({ lastName: event.currentTarget.value })
+                      }
+                      placeholder="Your last name"
+                      autoComplete="family-name"
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.22 }}
+                  >
+                    <Label className="block">Nationality</Label>
+                    <Select
+                      value={nationalityId ?? ""}
+                      onValueChange={(value) =>
+                        update({
+                          nationalityId:
+                            value === "" || value === null ? null : NationId.make(value),
+                        })
+                      }
+                    >
+                      <SelectTrigger aria-label="Nationality" className="mt-2">
+                        <SelectValue>
+                          {(value: string | null) =>
+                            NATIONALITIES.find((nation) => nation.id === value)?.name ??
+                            "Select a nationality"
+                          }
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {NATIONALITIES.map((nation) => (
+                          <SelectItem key={nation.id} value={nation.id}>
+                            {nation.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.26 }}
+                  >
+                    <DateOfBirthField
+                      value={dateOfBirth}
+                      onChange={(isoDate) => update({ dateOfBirth: isoDate })}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="md:col-span-2"
+                  >
+                    <FavoriteTeamField
+                      saveId={provisionalId}
+                      value={favoriteTeam}
+                      onSelect={selectFavoriteTeam}
+                    />
                   </motion.div>
                 </div>
               </div>
@@ -130,7 +237,7 @@ export const ManagerIdentityStep = () => {
         <ol className="relative grid grid-cols-2">
           <CreationStepper.Root
             step={step}
-            canAdvance={personalDetailsComplete}
+            canAdvance={detailsComplete}
             goToStep={goToStep}
             direction={direction}
             setDirection={setDirection}

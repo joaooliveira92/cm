@@ -1,8 +1,9 @@
 import type { BottomBarPlan } from "../chrome/bottom-bar/index.js";
 import { createContext, use } from "react";
-import type { ClubId, LeagueSelectionSnapshot } from "@cm-clone/contracts";
+import type { ClubId, LeagueSelectionSnapshot, NationId } from "@cm-clone/contracts";
 import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
 import type { ClubSelectionRecord } from "../create/clubSelection.js";
+import type { FavoriteTeamRecord } from "../create/favoriteTeam.js";
 import type { GenerationState } from "../create/generation.js";
 
 export type CommitStatus = "idle" | "committing" | "committed";
@@ -19,7 +20,19 @@ export interface CreationSession {
    *  before the user has said how large the world should be. */
   readonly leagueSelection: LeagueSelectionSnapshot | null;
   readonly saveName: string;
-  readonly managerName: string;
+  /** The manager's personal details, collected in the Manager step's first sub-panel. The display
+   *  name is derived as `${firstName} ${lastName}`; nothing stores it as one field. */
+  readonly firstName: string;
+  readonly lastName: string;
+  /** The manager's nationality, or `null` until chosen. Always one of the world's nations, which
+   *  generation copies into every save. */
+  readonly nationalityId: NationId | null;
+  /** ISO `YYYY-MM-DD`, or `""` until chosen. */
+  readonly dateOfBirth: string;
+  /** The club the manager supports, bound to the world it was picked from. Never read directly —
+   *  `selectedFavoriteTeamOf` is the read path, because a record left over from a replaced world
+   *  is not a selection. Optional: not every manager supports a club. */
+  readonly favoriteTeam: FavoriteTeamRecord | null;
   readonly archetype: ManagerArchetype;
   readonly pillars: PillarDistribution;
   /** The Manager step's active sub-panel: 1 = personal details, 2 = manager identity. */
@@ -43,6 +56,9 @@ export interface CreateSessionApi {
    *  records both halves, so a club can never be recorded against a world that is not the current
    *  one; `null` clears the pick. Outside a ready generation it is a no-op. */
   readonly selectClub: (club: { readonly clubId: ClubId; readonly clubName: string } | null) => void;
+  /** The same binding rule for the manager's favorite team: both halves are recorded against the
+   *  current world's id, and outside a ready generation it is a no-op. */
+  readonly selectFavoriteTeam: (team: { readonly clubId: ClubId; readonly clubName: string } | null) => void;
   /**
    * The bar the current step wants, as a plan rather than as rendered markup:
    * the shell decides where a control sits, so a step cannot invent its own

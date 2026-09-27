@@ -1,16 +1,19 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
+  ClubId,
   ManagerArchetypeSchema,
   ManagerProfileNotFoundError,
   ManagerProfileScreenView,
   ManagerProfileView,
+  NationId,
   type SaveId,
 } from "@cm-clone/contracts";
+import { nationName } from "@cm-clone/shared";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
 import { loadManagerStatus } from "./managerStatus.js";
-import { clubBadgeResolver, clubColourResolver } from "../world/displayNames.js";
+import { clubBadgeResolver, clubColourResolver, displayNames } from "../world/displayNames.js";
 import { loadUserClub } from "../club/squad.js";
 import { loadSeasonNumbersDesc } from "../season/currentSeason.js";
 
@@ -18,19 +21,29 @@ import { loadSeasonNumbersDesc } from "../season/currentSeason.js";
 export const loadManagerProfile = Effect.gen(function* () {
   const sql = yield* SqlClient;
   const rows = yield* sql<{
-    managerName: string;
+    firstName: string;
+    lastName: string;
+    nationalityId: string;
+    dateOfBirth: string;
+    favoriteClubId: string | null;
     archetypeOrigin: string;
     tacticalAcumen: number;
     influence: number;
     regimen: number;
     technicalCoaching: number;
-  }>`SELECT manager_name as "managerName", archetype_origin as "archetypeOrigin",
+  }>`SELECT first_name as "firstName", last_name as "lastName",
+            nationality_id as "nationalityId", date_of_birth as "dateOfBirth",
+            favorite_club_id as "favoriteClubId", archetype_origin as "archetypeOrigin",
             tactical_acumen as "tacticalAcumen", influence,
             regimen, technical_coaching as "technicalCoaching"
      FROM manager_profile WHERE id = 1`;
   return rows[0]
     ? {
-        managerName: rows[0].managerName,
+        firstName: rows[0].firstName,
+        lastName: rows[0].lastName,
+        nationalityId: rows[0].nationalityId,
+        dateOfBirth: rows[0].dateOfBirth,
+        favoriteClubId: rows[0].favoriteClubId,
         archetypeOrigin: rows[0].archetypeOrigin,
         pillars: {
           tacticalAcumen: rows[0].tacticalAcumen,
@@ -48,8 +61,18 @@ const decodeProfile = Effect.gen(function* () {
   if (!profile) {
     return yield* new ManagerProfileNotFoundError();
   }
+  // The favorite club's name is resolved through the save's content pack, the same seam every other
+  // club name reads through; country names are factual geography read straight from code.
+  const resolveName = yield* displayNames;
   return new ManagerProfileView({
-    managerName: profile.managerName,
+    firstName: profile.firstName,
+    lastName: profile.lastName,
+    nationalityId: NationId.make(profile.nationalityId),
+    nationalityName: nationName(profile.nationalityId),
+    dateOfBirth: profile.dateOfBirth,
+    favoriteClubId: profile.favoriteClubId === null ? null : ClubId.make(profile.favoriteClubId),
+    favoriteClubName:
+      profile.favoriteClubId === null ? null : resolveName(profile.favoriteClubId),
     archetypeOrigin: yield* Schema.decodeUnknownEffect(ManagerArchetypeSchema)(profile.archetypeOrigin),
     pillars: profile.pillars,
   });

@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
+import { NationId } from "@cm-clone/contracts";
 import type { PillarDistribution } from "@cm-clone/shared";
 import { CreateSessionContext } from "../../../src/renderer/router/createSessionContext.js";
 import type { CreationSession, CreateSessionApi, ManagerSubStep } from "../../../src/renderer/router/createSessionContext.js";
@@ -9,7 +10,11 @@ import { ManagerIdentityStep } from "../../../src/renderer/create/ManagerIdentit
 const BASE_SESSION: CreationSession = {
   leagueSelection: null,
   saveName: "My Career",
-  managerName: "",
+  firstName: "Test",
+  lastName: "Manager",
+  nationalityId: NationId.make("nation_eng"),
+  dateOfBirth: "1980-01-01",
+  favoriteTeam: null,
   archetype: "professor",
   pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
   managerStep: 1,
@@ -52,6 +57,7 @@ const renderIdentityPanel = async (
       },
       retryGeneration: () => undefined,
       selectClub: () => undefined,
+      selectFavoriteTeam: () => undefined,
       registerBottomBar: () => undefined,
       requestLeave: () => undefined,
     };

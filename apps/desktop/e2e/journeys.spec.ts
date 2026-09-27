@@ -14,6 +14,7 @@ import {
   test,
 } from "./launchApp.js";
 import type { Page } from "@playwright/test";
+import { fillPersonalDetails } from "./fillPersonalDetails.js";
 import { savesDir, seedBeforeMatchday, seedFresh } from "./seedSaves.js";
 
 /** Match day's copy for a match read back after a restart (`RESTARTED_FROM_KICKOFF`, group-g 33). */
@@ -47,7 +48,7 @@ test("a career is created end to end at the club the player picked", async ({ wi
   await expect(continueLeagues).toBeEnabled({ timeout: 30_000 });
   await continueLeagues.click();
 
-  await page.getByPlaceholder("My Career").fill("Journey Career");
+  await fillPersonalDetails(page, "Journey Career");
   await page.getByRole("button", { name: "Next: Manager Identity" }).click();
   await page.getByRole("button", { name: "Next: Select Club" }).click();
 

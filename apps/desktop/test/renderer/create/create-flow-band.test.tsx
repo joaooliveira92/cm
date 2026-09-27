@@ -12,6 +12,7 @@ import { Effect } from "effect";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { buildLeaguePresetIntents, getLeagueSetupIndex, resolveLeagueSelection } from "../../../src/main/world/index.js";
 import { CreateFlowLayout } from "../../../src/renderer/create/CreateFlowLayout.js";
+import { fillPersonalDetails } from "./personalDetails.js";
 import {
   LeagueSelectionRouteContent,
   StepOneRouteContent,
@@ -209,10 +210,7 @@ const advanceThroughLeagues = async (): Promise<void> => {
   });
   fireEvent.click(button);
 
-  await screen.findByPlaceholderText("My Career");
-  fireEvent.change(screen.getByPlaceholderText("My Career"), {
-    target: { value: "Test Career" },
-  });
+  await fillPersonalDetails();
   fireEvent.click(screen.getByRole("button", { name: "Next: Manager Identity" }));
   await screen.findByRole("button", { name: "Next: Select Club" }, { timeout: 3000 });
 };

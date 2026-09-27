@@ -1,6 +1,7 @@
 import { rmSync } from "node:fs";
 import path from "node:path";
 import { expect, saveEntry, test } from "./launchApp.js";
+import { fillPersonalDetails } from "./fillPersonalDetails.js";
 import { savesDir, seedFresh, seedNamed } from "./seedSaves.js";
 
 // NOTE: these specs stay click-driven (creation/save-management are mouse-first
@@ -22,11 +23,14 @@ test("creating a save with a whitespace name produces no save and no crash", asy
   await expect(nameInput).toBeVisible();
   const next = window.getByRole("button", { name: "Next: Manager Identity" });
 
+  // The rest of the personal details, so the only thing the save-name probe varies is the name.
+  await fillPersonalDetails(window);
+
   // Whitespace-only name: the creation step cannot proceed — no save is produced.
   await nameInput.fill("   ");
   await expect(next).toBeDisabled();
 
-  // A real name unblocks the next step (the creation step validates before commit).
+  // A real name completes the panel and unblocks the next step (the creation step validates before commit).
   await nameInput.fill("Empty-name career");
   await expect(next).toBeEnabled();
 

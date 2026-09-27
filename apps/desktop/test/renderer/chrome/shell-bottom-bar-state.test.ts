@@ -147,7 +147,7 @@ describe("describeCreationBottomBar", () => {
 
     expect(plan.primary?.id).toBe("next-manager-identity");
     expect(plan.primary?.disabled).toBe(true);
-    expect(plan.reason).toBe("Name your career to continue.");
+    expect(plan.reason).toBe("Complete your personal details to continue.");
   });
 });
 

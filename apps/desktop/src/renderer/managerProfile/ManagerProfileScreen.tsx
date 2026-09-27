@@ -1,6 +1,7 @@
 import type { ManagerArchetype, ManagerPillar } from "@cm-clone/shared";
 import { MANAGER_PILLARS } from "@cm-clone/shared";
 import type { SaveId } from "@cm-clone/contracts";
+import { format, parseISO } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { Alert } from "../components/ui/alert.js";
 import { Badge } from "../components/ui/badge.js";
@@ -34,6 +35,12 @@ const PILLAR_LABELS: Record<ManagerPillar, string> = {
   influence: "Influence",
   regimen: "Regimen",
   technicalCoaching: "Technical Coaching",
+};
+
+/** The stored ISO date rendered for reading; a malformed value is shown as-is rather than blanked. */
+const formatDateOfBirth = (iso: string): string => {
+  const date = parseISO(iso);
+  return Number.isNaN(date.getTime()) ? iso : format(date, "d MMMM yyyy");
 };
 
 /**
@@ -204,7 +211,9 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
       )}
 
       <div className="flex items-baseline gap-3">
-        <h1 className="text-2xl font-bold">{profile.managerName}</h1>
+        <h1 className="text-2xl font-bold">
+          {profile.firstName} {profile.lastName}
+        </h1>
         <Badge variant={view.archived ? "secondary" : "success"}>
           {view.archived ? "Archived" : "Active"}
         </Badge>
@@ -213,6 +222,24 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
       <p className="mt-1 text-sm text-text-secondary">{ARCHETYPE_LABELS[profile.archetypeOrigin]}</p>
 
       <Card className="mt-6 px-3 py-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Personal</p>
+        <dl className="mt-1 grid grid-cols-2 gap-x-8 gap-y-0.5 text-base">
+          <div className="flex justify-between">
+            <dt className="text-text-secondary">Nationality</dt>
+            <dd className="font-semibold text-text-primary">{profile.nationalityName}</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-text-secondary">Date of birth</dt>
+            <dd className="font-semibold text-text-primary">{formatDateOfBirth(profile.dateOfBirth)}</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-text-secondary">Favorite team</dt>
+            <dd className="font-semibold text-text-primary">{profile.favoriteClubName ?? "None"}</dd>
+          </div>
+        </dl>
+      </Card>
+
+      <Card className="mt-3 px-3 py-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Club</p>
         <p className="mt-1 text-base text-text-body">{view.clubName}</p>
         <p className="mt-0.5 text-base text-text-secondary">Season {view.seasonNumber}</p>

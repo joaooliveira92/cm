@@ -122,9 +122,12 @@ const readSaveSummary = (filename: string) =>
       return yield* Effect.succeed(Option.none<SaveSummary>());
     }
 
-    const managerProfileRows = yield* sql`SELECT manager_name as "managerName" FROM manager_profile WHERE id = 1`.pipe(Effect.option);
+    const managerProfileRows = yield* sql`SELECT first_name as "firstName", last_name as "lastName" FROM manager_profile WHERE id = 1`.pipe(Effect.option);
     const managerName = managerProfileRows._tag === "Some" && managerProfileRows.value.length > 0
-      ? (managerProfileRows.value[0] as { managerName: string }).managerName
+      ? (() => {
+        const row = managerProfileRows.value[0] as { firstName: string; lastName: string };
+        return `${row.firstName} ${row.lastName}`.trim();
+      })()
       : base.name;
 
     const clubRows = yield* sql`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`.pipe(Effect.option);
@@ -270,7 +273,11 @@ export const beginCareer = (savesDir: string, options: BeginCareerOptions) =>
   });
 
 export interface ManagerProfileParams {
-  readonly managerName: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly nationalityId: string;
+  readonly dateOfBirth: string;
+  readonly favoriteClubId: ClubId | null;
   readonly archetypeOrigin: string;
   readonly pillars: PillarDistribution;
 }
@@ -309,8 +316,9 @@ export const commitCareer = (
       }
       yield* sql`UPDATE clubs SET is_user_club = 1 WHERE id = ${selectedClubId}`;
       yield* materialiseStaff(selectedClubId);
-      yield* sql`INSERT INTO manager_profile (id, manager_name, archetype_origin, tactical_acumen, influence, regimen, technical_coaching)
-        VALUES (1, ${managerProfile.managerName}, ${managerProfile.archetypeOrigin},
+      yield* sql`INSERT INTO manager_profile (id, first_name, last_name, nationality_id, date_of_birth, favorite_club_id, archetype_origin, tactical_acumen, influence, regimen, technical_coaching)
+        VALUES (1, ${managerProfile.firstName}, ${managerProfile.lastName}, ${managerProfile.nationalityId},
+          ${managerProfile.dateOfBirth}, ${managerProfile.favoriteClubId}, ${managerProfile.archetypeOrigin},
           ${managerProfile.pillars.tacticalAcumen}, ${managerProfile.pillars.influence}, ${managerProfile.pillars.regimen}, ${managerProfile.pillars.technicalCoaching})`;
       yield* startSeason(id);
       yield* sql`INSERT INTO save_meta (id, name, created_at) VALUES (${id}, ${name}, ${createdAt})`;
@@ -372,8 +380,17 @@ export const createSave = (
     if (!selectedClubId) {
       return yield* Effect.die(new Error("beginCareer produced no clubs — invariant violation"));
     }
+    // The shim's caller supplies one free-text save name, so it is split into a first and last
+    // name here; tests that care about the manager's identity pass their own profile to
+    // `commitCareer` directly rather than going through this backwards-compatible path.
+    const [firstName = "Manager", ...rest] = name.trim().split(/\s+/);
+    const lastName = rest.length > 0 ? rest.join(" ") : firstName;
     return yield* commitCareer(savesDir, id, name, selectedClubId, {
-      managerName: name,
+      firstName,
+      lastName,
+      nationalityId: "nation_eng",
+      dateOfBirth: "1980-01-01",
+      favoriteClubId: null,
       archetypeOrigin: "custom",
       pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
     });

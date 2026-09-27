@@ -10,7 +10,13 @@ const saveId = SaveId.make("s1");
 
 const profileView = (overrides: Record<string, unknown> = {}) => ({
   profile: {
-    managerName: "Ada Lovelace",
+    firstName: "Ada",
+    lastName: "Lovelace",
+    nationalityId: "nation_eng",
+    nationalityName: "England",
+    dateOfBirth: "1980-01-01",
+    favoriteClubId: null,
+    favoriteClubName: null,
     archetypeOrigin: "academy_head",
     pillars: { tacticalAcumen: 2, influence: 4, regimen: 1, technicalCoaching: 5 },
   },
@@ -89,12 +95,16 @@ describe("Manager Profile (Screen 19)", () => {
     expect(screen.getByText("Test FC")).toBeTruthy();
     expect(screen.getByText("Season 3")).toBeTruthy();
     expect(screen.getByText("Tenure: 3 seasons")).toBeTruthy();
+    expect(screen.getByText("England")).toBeTruthy();
+    expect(screen.getByText("1 January 1980")).toBeTruthy();
 
     for (const pillar of ["Tactical Acumen", "Influence", "Regimen", "Technical Coaching"]) {
       expect(screen.getByText(pillar)).toBeTruthy();
     }
-    // The values themselves, in the pillar order the domain fixes.
-    const values = screen.getAllByRole("definition").map((node) => node.textContent);
+    // The values themselves, in the pillar order the domain fixes — scoped to the philosophy
+    // card, since the Personal card above also renders definitions.
+    const philosophy = within(screen.getByText("Management Philosophy").closest("div")!);
+    const values = philosophy.getAllByRole("definition").map((node) => node.textContent);
     expect(values).toEqual(["2", "4", "1", "5"]);
   });
 

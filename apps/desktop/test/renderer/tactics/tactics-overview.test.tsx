@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PlayerId, SaveId } from "@cm-clone/contracts";
+import { NationId, PlayerId, SaveId } from "@cm-clone/contracts";
 import type {
   ManagerProfileScreenView,
   TacticsOverviewView,
@@ -27,7 +27,13 @@ const clubView = { id: rid("me"), name: "My Club", statureTier: "big" };
 
 const profileView = (archived = false): ManagerProfileScreenView => ({
   profile: {
-    managerName: "Test Manager",
+    firstName: "Test",
+    lastName: "Manager",
+    nationalityId: NationId.make("nation_eng"),
+    nationalityName: "England",
+    dateOfBirth: "1980-01-01",
+    favoriteClubId: null,
+    favoriteClubName: null,
     archetypeOrigin: "custom",
     pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
   },

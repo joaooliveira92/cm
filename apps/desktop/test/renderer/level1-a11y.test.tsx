@@ -299,7 +299,11 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
       session: {
         leagueSelection: null,
         saveName: "",
-        managerName: "",
+        firstName: "",
+        lastName: "",
+        nationalityId: null,
+        dateOfBirth: "",
+        favoriteTeam: null,
         archetype: "professor",
         pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
         managerStep: 1 as ManagerSubStep,
@@ -312,6 +316,7 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
       setManagerStep: () => undefined,
       retryGeneration: () => undefined,
       selectClub: () => undefined,
+      selectFavoriteTeam: () => undefined,
       registerBottomBar: () => undefined,
       requestLeave: () => undefined,
     };
@@ -320,13 +325,25 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
         <ManagerIdentityStep />
       </CreateSessionContext>,
     );
-    const controls = [...document.querySelectorAll("input, button")];
+    // Base UI Select renders a classless, aria-hidden hidden input beside its trigger; it is not a
+    // control a player reaches, so it is not part of the tab-order contract.
+    const controls = [...document.querySelectorAll('input:not([aria-hidden="true"]), button')];
     expect(controls.length).toBeGreaterThan(0);
     expect(controls[0]!.getAttribute("placeholder")).toBe("My Career");
     for (const control of controls) {
       expect(control.className).toContain("focus-visible:ring-2");
-      // Draft, empty props: no native tabindex override — all controls in tab order.
-      expect(control.getAttribute("tabindex")).toBeNull();
+      // Base UI puts an explicit `tabindex="0"` on its own triggers (the vendored Select's
+      // `select-trigger` button and any Popover trigger, which carries `aria-haspopup`); that is a
+      // legitimate tab stop rather than an override this contract forbids.
+      if (
+        control.getAttribute("data-slot") === "select-trigger" ||
+        control.hasAttribute("aria-haspopup")
+      ) {
+        expect(["0"]).toContain(control.getAttribute("tabindex"));
+      } else {
+        // Draft, empty props: no native tabindex override — all controls in tab order.
+        expect(control.getAttribute("tabindex")).toBeNull();
+      }
     }
   });
 

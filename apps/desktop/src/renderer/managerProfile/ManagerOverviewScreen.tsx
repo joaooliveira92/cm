@@ -152,7 +152,9 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
       )}
 
       <div className="flex items-baseline gap-3">
-        <h1 className="text-2xl font-bold">{profile.managerName}</h1>
+        <h1 className="text-2xl font-bold">
+          {profile.firstName} {profile.lastName}
+        </h1>
         <Badge variant={view.archived ? "secondary" : "success"}>
           {view.archived ? "Archived" : "Active"}
         </Badge>

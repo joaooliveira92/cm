@@ -34,6 +34,8 @@ import {
   type GenerationTransition,
 } from "./generation.js";
 import { selectedClubOf } from "./clubSelection.js";
+import { selectedFavoriteTeamOf } from "./favoriteTeam.js";
+import { personalDetailsComplete } from "./personalDetails.js";
 import { setProvisionalCareer } from "./provisionalCareer.js";
 import type { CreateSessionApi, CreationSession, ManagerSubStep } from "../router/createSessionContext.js";
 
@@ -47,7 +49,11 @@ const DEFAULT_PILLARS: PillarDistribution = {
 const createEmptySession = (): CreationSession => ({
   leagueSelection: null,
   saveName: "",
-  managerName: "",
+  firstName: "",
+  lastName: "",
+  nationalityId: null,
+  dateOfBirth: "",
+  favoriteTeam: null,
   managerStep: 1,
   // The archetype picker was deliberately retired from step 1; the field stays because the career
   // submission (`archetypeOrigin`) and the Review summary still read it, so every career now
@@ -219,6 +225,27 @@ export const useCreateSession = (): CreateFlowSession => {
     [update],
   );
 
+  /**
+   * The same binding rule for the favorite team. Kept separate from `selectClub` rather than
+   * generalised: the two records are written to different fields, and a shared writer taking the
+   * field name as an argument would be a rename away from writing the club pick into the favorite
+   * team slot.
+   */
+  const selectFavoriteTeam = useCallback(
+    (team: { readonly clubId: ClubId; readonly clubName: string } | null): void => {
+      const provisionalId = provisionalIdOf(sessionRef.current.generation);
+
+      if (provisionalId === null) {
+        return;
+      }
+
+      update({
+        favoriteTeam: team === null ? null : { ...team, provisionalId },
+      });
+    },
+    [update],
+  );
+
   const registerBottomBar = useCallback(
     (plan: BottomBarPlan | null): void => {
       setRegisteredBar(plan);
@@ -271,17 +298,17 @@ export const useCreateSession = (): CreateFlowSession => {
   }, []);
 
   /** Advance the Manager step from its personal-details sub-panel to the
-   *  manager-identity sub-panel. Gated on a save name, matching the in-panel
-   *  stepper's own guard, so the bottom bar cannot jump past an empty form. */
+   *  manager-identity sub-panel. Gated on the same completeness predicate the
+   *  in-panel stepper uses, so the bottom bar cannot jump past an incomplete form. */
   const handleNextManagerSubStep = useCallback((): void => {
-    if (sessionRef.current.saveName.trim().length === 0) return;
+    if (!personalDetailsComplete(sessionRef.current)) return;
     update({ managerStep: 2 as ManagerSubStep });
   }, [update]);
 
   /** Direct control of the Manager step's sub-panel, used by the in-panel stepper. */
   const setManagerStep = useCallback(
     (next: ManagerSubStep): void => {
-      if (next === 2 && sessionRef.current.saveName.trim().length === 0) return;
+      if (next === 2 && !personalDetailsComplete(sessionRef.current)) return;
       update({ managerStep: next });
     },
     [update],
@@ -291,9 +318,15 @@ export const useCreateSession = (): CreateFlowSession => {
     const currentSession = sessionRef.current;
     const provisionalId = provisionalIdOf(currentSession.generation);
     const saveName = currentSession.saveName.trim();
-    const managerName = currentSession.managerName.trim() || saveName;
+    const firstName = currentSession.firstName.trim();
+    const lastName = currentSession.lastName.trim();
+    const nationalityId = currentSession.nationalityId;
 
-    if (provisionalId === null || saveName.length === 0) {
+    if (
+      provisionalId === null ||
+      nationalityId === null ||
+      !personalDetailsComplete(currentSession)
+    ) {
       update({ error: "Please fill in all required fields" });
       return;
     }
@@ -318,7 +351,11 @@ export const useCreateSession = (): CreateFlowSession => {
         id: provisionalId,
         name: saveName,
         selectedClubId: selectedClub.clubId,
-        managerName,
+        firstName,
+        lastName,
+        nationalityId,
+        dateOfBirth: currentSession.dateOfBirth,
+        favoriteClubId: selectedFavoriteTeamOf(currentSession)?.clubId ?? null,
         archetypeOrigin: currentSession.archetype,
         pillars: currentSession.pillars,
       }),
@@ -432,7 +469,7 @@ export const useCreateSession = (): CreateFlowSession => {
   );
 
   const managerStepComplete =
-    session.saveName.trim().length > 0 && sumPillars(session.pillars) === 12;
+    personalDetailsComplete(session) && sumPillars(session.pillars) === 12;
   const selectionReady = isSelectionReady(session.generation);
   const blocked = blockedReason(session.generation);
   /** Continue past the club step is gated on the decision that step exists to collect. */
@@ -445,6 +482,7 @@ export const useCreateSession = (): CreateFlowSession => {
       setManagerStep,
       retryGeneration,
       selectClub,
+      selectFavoriteTeam,
       registerBottomBar,
       requestLeave,
     }),
@@ -453,6 +491,7 @@ export const useCreateSession = (): CreateFlowSession => {
       requestLeave,
       retryGeneration,
       selectClub,
+      selectFavoriteTeam,
       session,
       setManagerStep,
       update,
@@ -469,7 +508,7 @@ export const useCreateSession = (): CreateFlowSession => {
       ? describeCreationBottomBar({
         step,
         generationBlockedReason: blocked,
-        personalDetailsComplete: session.saveName.trim().length > 0,
+        personalDetailsComplete: personalDetailsComplete(session),
         managerStep: session.managerStep,
         managerStepComplete,
         selectionReady,

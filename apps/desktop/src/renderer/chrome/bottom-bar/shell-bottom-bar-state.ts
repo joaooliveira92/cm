@@ -128,7 +128,7 @@ export function describeCreationBottomBar(input: CreationBottomBarInput): Bottom
           },
           reason: input.personalDetailsComplete
             ? null
-            : "Name your career to continue.",
+            : "Complete your personal details to continue.",
         }
         : {
           cancel,
@@ -150,7 +150,7 @@ export function describeCreationBottomBar(input: CreationBottomBarInput): Bottom
           // once there is nothing else waiting.
           reason:
             input.generationBlockedReason ??
-            (input.managerStepComplete ? null : "Name your career and spend all 12 pillar points."),
+            (input.managerStepComplete ? null : "Complete your personal details and spend all 12 pillar points."),
         };
 
     case "2":

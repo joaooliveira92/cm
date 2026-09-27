@@ -2,6 +2,7 @@ import { Schema } from "effect";
 import { MANAGER_ARCHETYPES } from "@cm-clone/shared";
 
 import { ClubColoursView } from "./clubs.js";
+import { ClubId, NationId } from "./ids.js";
 
 export const ManagerArchetypeSchema = Schema.Literals(MANAGER_ARCHETYPES);
 
@@ -14,7 +15,19 @@ export class PillarDistribution extends Schema.Class<PillarDistribution>("Pillar
 
 /** Immutable creation-time manager identity, never modified after commitCareer. */
 export class ManagerProfileView extends Schema.Class<ManagerProfileView>("ManagerProfileView")({
-  managerName: Schema.String,
+  firstName: Schema.String,
+  lastName: Schema.String,
+  /** The manager's nationality, as a `nations` id, plus its resolved country name. The name is
+   *  resolved in main because country names are factual geography read from code, not from a
+   *  content pack. */
+  nationalityId: NationId,
+  nationalityName: Schema.String,
+  /** ISO `YYYY-MM-DD`, matching `players.date_of_birth`. */
+  dateOfBirth: Schema.String,
+  /** The club the manager supports, if any. Optional: not every manager supports a club. */
+  favoriteClubId: Schema.NullOr(ClubId),
+  /** The favorite club's resolved display name, or null when none was chosen. */
+  favoriteClubName: Schema.NullOr(Schema.String),
   archetypeOrigin: ManagerArchetypeSchema,
   pillars: PillarDistribution,
 }) {}

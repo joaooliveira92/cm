@@ -118,7 +118,11 @@ describe("a backroom is a property of the club, not of the visit", () => {
       });
       const clubId = "club_eng_1_04";
       yield* commitCareer(savesDir, id, "Career", clubId as never, {
-        managerName: "Manager",
+        firstName: "Test",
+        lastName: "Manager",
+        nationalityId: "nation_eng",
+        dateOfBirth: "1980-01-01",
+        favoriteClubId: null,
         archetypeOrigin: "custom",
         pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
       });

@@ -88,7 +88,13 @@ export const preload = (phase: Phase) => {
         _tag: "Success",
         value: {
           profile: {
-            managerName: "Boss",
+            firstName: "Boss",
+            lastName: "Manager",
+            nationalityId: "nation_eng",
+            nationalityName: "England",
+            dateOfBirth: "1980-01-01",
+            favoriteClubId: null,
+            favoriteClubName: null,
             archetypeOrigin: "custom",
             pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
           },

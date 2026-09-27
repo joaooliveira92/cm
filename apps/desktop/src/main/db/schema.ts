@@ -129,13 +129,24 @@ export const generationManifest = sqliteTable(
  * `commitCareer` and never modified. Four Manager Pillars on a 1-5 scale summing to exactly 12;
  * `archetype_origin` records which preset or Custom was chosen.
  *
+ * The manager is defined by their first and last name rather than one free-text name;
+ * `nationality_id` points at the `nations` referent (every nation is copied into every save), and
+ * `favorite_club_id` — optional, because not every manager supports a club — points at a club in
+ * this save.
+ *
  * No index: a single row.
  */
 export const managerProfile = sqliteTable(
   "manager_profile",
   {
     id: integer("id").primaryKey(),
-    managerName: text("manager_name").notNull(),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
+    nationalityId: text("nationality_id")
+      .notNull()
+      .references(() => nations.id),
+    dateOfBirth: text("date_of_birth").notNull(),
+    favoriteClubId: text("favorite_club_id").references(() => clubs.id),
     archetypeOrigin: text("archetype_origin").notNull(),
     tacticalAcumen: integer("tactical_acumen").notNull(),
     influence: integer("influence").notNull(),
@@ -144,7 +155,9 @@ export const managerProfile = sqliteTable(
   },
   () => [
     check("manager_profile_single_row", sql`id = 1`),
-    check("manager_profile_name_length", sql`length(trim(manager_name)) BETWEEN 1 AND 80`),
+    check("manager_profile_first_name_length", sql`length(trim(first_name)) BETWEEN 1 AND 40`),
+    check("manager_profile_last_name_length", sql`length(trim(last_name)) BETWEEN 1 AND 40`),
+    check("manager_profile_date_of_birth", sql`date_of_birth GLOB '????-??-??'`),
     check(
       "manager_profile_archetype_origin",
       oneOf("archetype_origin", ["professor", "motivator", "sergeant", "academy_head", "custom"]),

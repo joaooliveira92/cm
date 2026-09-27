@@ -90,7 +90,11 @@ const committedCareerWithGermanyAt = (mode: string, worldSeed: number) =>
       }),
     );
     yield* commitCareer(savesDir, saveId, "Depth Career", clubId, {
-      managerName: "Depth Career",
+      firstName: "Depth",
+      lastName: "Career",
+      nationalityId: "nation_eng",
+      dateOfBirth: "1980-01-01",
+      favoriteClubId: null,
       archetypeOrigin: "custom",
       pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
     });
@@ -163,7 +167,11 @@ const committedCareerFrom = (snapshotId: Parameters<typeof beginCareer>[1]["snap
       }),
     );
     yield* commitCareer(savesDir, id, "Depth Rollover", clubId, {
-      managerName: "Depth Rollover",
+      firstName: "Depth",
+      lastName: "Rollover",
+      nationalityId: "nation_eng",
+      dateOfBirth: "1980-01-01",
+      favoriteClubId: null,
       archetypeOrigin: "custom",
       pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
     });

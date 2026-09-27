@@ -478,7 +478,13 @@ describe("a player has an origin", () => {
             FROM sqlite_master AS m JOIN pragma_table_info(m.name) AS p
             WHERE p.name LIKE '%national%'
             ORDER BY m.name, p.name`;
-          expect(columns).toEqual([{ table: "players", column: "nationality" }]);
+          // Exactly one nationality column per entity that has one: a player's single
+          // `players.nationality`, and the manager's `manager_profile.nationality_id`. No join
+          // table models a second nationality for either.
+          expect(columns).toEqual([
+            { table: "manager_profile", column: "nationality_id" },
+            { table: "players", column: "nationality" },
+          ]);
 
           const tables = yield* sql<{ name: string }>`
             SELECT name FROM sqlite_master WHERE type = 'table'`;

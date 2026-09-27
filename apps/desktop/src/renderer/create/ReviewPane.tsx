@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import type { CareerSetupSummaryView } from "@cm-clone/contracts";
-import { formatCalendarDate } from "@cm-clone/shared";
+import { formatCalendarDate, nationName } from "@cm-clone/shared";
 import { Effect, Result } from "effect";
 import { getCareerSetupSummary } from "../rpc.js";
 import type { CreationSession } from "../router/createSessionContext.js";
 import { selectedClubOf } from "./clubSelection.js";
+import { selectedFavoriteTeamOf } from "./favoriteTeam.js";
 import { describeCompetitions, describeStaff } from "./careerSetupSummary.js";
 import { provisionalIdOf } from "./generation.js";
 
@@ -89,7 +90,10 @@ export const ReviewPane = ({
 
       <dl className="mt-4 space-y-2 text-sm">
         <Row label="Save name" value={session.saveName} />
-        <Row label="Manager name" value={session.managerName || session.saveName} />
+        <Row label="Manager" value={`${session.firstName} ${session.lastName}`.trim()} />
+        <Row label="Nationality" value={session.nationalityId === null ? "Not selected" : nationName(session.nationalityId)} />
+        <Row label="Date of birth" value={session.dateOfBirth || "Not selected"} />
+        <Row label="Favorite team" value={selectedFavoriteTeamOf(session)?.clubName ?? "None"} />
 
         <div className="flex gap-4">
           <dt className="text-text-muted">Archetype:</dt>
