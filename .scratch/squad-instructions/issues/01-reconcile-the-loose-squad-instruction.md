@@ -29,9 +29,12 @@ written: **satisfied-inline, or a defined remainder?**
 
 ## What is genuinely open
 
-1. **E 71 Selection Filters — the one concrete in-v1 gap.** Only the position filter is wired; the
-   `FilterClause` union already models attribute/status clauses that no UI reaches. The group-e
-   `map.md` called for an extension ticket and none was filed; the [Group E
+1. **E 71 Selection Filters — the one concrete in-v1 gap.** Only the position filter is wired.
+   `FilterClause` models `nameSearch` and `position` only; the status and attribute clauses Screen 71
+   wants do not exist (the earlier "already modelled" reading was wrong). Status filtering is now
+   ticketed as [group-e issue 02](../../group-e-squad-management/issues/02-status-filter.md)
+   (`ready-for-agent`); attribute filters as issue 03 (`needs-triage`). The group-e `map.md` called
+   for an extension ticket and none was filed until now; the [Group E
    ledger](../../../docs/specs/group_e_squad_management/RECONCILIATION.md) records 71 as
    `deferred`/partial.
 2. **Instruction-specific asks not yet checked against the shipped screen**: the eight-column
@@ -76,3 +79,8 @@ written: **satisfied-inline, or a defined remainder?**
 - Filed 2026-09-27 while picking the next effort after Group H. The finding that cleared the scope
   question: Group D owes no in-v1 screen, and Group E's only modelled-but-unwired remainder is
   Screen 71.
+- **2026-09-27:** the formal ruling this ticket asks for was skipped. The concrete E 71 remainder was
+  chartered directly instead: [group-e issue 02](../../group-e-squad-management/issues/02-status-filter.md)
+  (status filter, `ready-for-agent`) and issue 03 (attribute filters, `needs-triage`). This ticket
+  stays `needs-triage` for the remaining question — whether the instruction demands anything *beyond*
+  E 71 (contract columns, lineup-slot buttons, URL state) or closes as satisfied-inline.

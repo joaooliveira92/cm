@@ -90,7 +90,7 @@ from the import on that basis; it is flagged because a future audit of Screen 69
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
-| [71_selection_filters.md](71_selection_filters.md), whole file | `deferred` | Filtering the squad list by attribute values and player status, not only by position. | A position filter dropdown ships, with a Clear filters control. The `FilterClause` union already models the other filter kinds; no UI reaches them, so they are unreachable rather than unmodelled. | `unscheduled`. The effort's own `map.md` § Not yet specified calls for an extension ticket here and none was filed. Ticket 01. |
+| [71_selection_filters.md](71_selection_filters.md), whole file | `deferred` | Filtering the squad list by attribute values and player status, not only by position. | A position filter dropdown ships, with a Clear filters control. **Corrected 2026-09-27:** the `FilterClause` union models `nameSearch` and `position` only — the status and attribute clauses this screen wants do not exist, so they are unmodelled as well as unreachable (the earlier "already models the other filter kinds" claim was wrong). Status filtering is ticketed as [group-e issue 02](../../../.scratch/group-e-squad-management/issues/02-status-filter.md) (`ready-for-agent`); the attribute half is issue 03 (`needs-triage`). | `unscheduled`. The effort's own `map.md` § Not yet specified calls for an extension ticket here and none was filed. Ticket 01; extension filed 2026-09-27. |
 
 ## Screens resting on systems this game does not have yet
 
@@ -159,8 +159,11 @@ Surfaced by transcription, recorded so it is not lost again:
 - **A dangling nav stub for Screen 74.** `renderer/navigation/spec-nav-config.ts:92` carries a
   `Captains` entry pointing at no route and no component, for a screen this ledger disposes. It is owed removal under milestone
   [M1](../../../.ai/MILESTONES.md) step 5.
-- **The Screen 71 extension ticket** the effort's own map called for and nobody filed. The filter
-  kinds are modelled and unreachable, which is a cheap screen rather than a new system.
+- **The Screen 71 extension ticket** the effort's own map called for and nobody filed. Filed
+  2026-09-27 as [group-e issue 02](../../../.scratch/group-e-squad-management/issues/02-status-filter.md)
+  (status filter, `ready-for-agent`) and issue 03 (attribute filters, `needs-triage`). The status
+  half is a cheap extension — it reuses the modelled status vocabulary and the shipped Popover; the
+  attribute half carries the knowledge-boundary question and is not yet ruled.
 - **No placeholder cull is owed for this group.** Unlike Group D, Group E's disposed screens never got
   WIP placeholders — the Squad screen absorbed 69–72 and nothing was routed for 73–79. The one stale
   artefact is the Screen 74 nav stub.
