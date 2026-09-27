@@ -88,11 +88,16 @@ interface PitchFold {
   readonly forceOffApplied: ReadonlyMap<number, boolean>;
 }
 
+/** Who is on the pitch as the fold reaches `index`: after the bring-offs applied there, before the
+ *  event at `index` itself. */
+type PitchObserver = (index: number, slots: PitchFold["slots"]) => void;
+
 const foldPitch = (
   setup: MatchTeamSetup,
   events: ReadonlyArray<MatchEvent>,
   lineupCommands: ReadonlyArray<LineupCommand>,
   revealedEvents: number | null,
+  observe?: PitchObserver,
 ): PitchFold => {
   const clubId: ClubId = setup.clubId;
   let slots = setup.tactic.slots.map((slot) => ({ playerId: slot.playerId, position: slot.position }));
@@ -141,6 +146,7 @@ const foldPitch = (
         takeOff(command.playerId);
       }
     }
+    observe?.(index, slots);
     const event = events[index];
     if (event === undefined) break;
     const revealed = revealedEvents === null || index < revealedEvents;
@@ -211,6 +217,24 @@ export const pitchAsOf = (
       (id): id is PlayerId => id !== null && !beenOn.has(id) && setup.squad.some((player) => player.id === id),
     ),
   });
+};
+
+/**
+ * One club's pitch before each Match Event of the whole match, plus one entry past the last: entry `i`
+ * is who was on when event `i` happened, and the last is who was on at the end. The order is the
+ * timeline's, so, unlike `pitchAsOf` with a cut, a substitution made late in the match is not yet on
+ * the pitch for an early goal.
+ */
+export const pitchBeforeEachEvent = (
+  setup: MatchTeamSetup,
+  events: ReadonlyArray<MatchEvent>,
+  lineupCommands: ReadonlyArray<LineupCommand>,
+): ReadonlyArray<ReadonlyArray<PitchSlotView>> => {
+  const snapshots: Array<ReadonlyArray<PitchSlotView>> = [];
+  foldPitch(setup, events, lineupCommands, null, (_index, slots) => {
+    snapshots.push(slots.map((slot) => new PitchSlotView(slot)));
+  });
+  return snapshots;
 };
 
 /** Facts about the whole match's lineup changes, for both clubs. */

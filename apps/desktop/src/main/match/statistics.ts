@@ -128,7 +128,7 @@ export const matchStatisticsView = (
 };
 
 /** The controlled club's most recent played Fixture that has a match stream, if any. */
-const lastPlayedMatchId = Effect.gen(function* () {
+export const lastPlayedMatchId = Effect.gen(function* () {
   const sql = yield* SqlClient;
   const rows = yield* sql<{ id: number }>`
     SELECT f.id FROM fixtures f

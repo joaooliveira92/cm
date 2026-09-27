@@ -691,3 +691,21 @@ gate. L1, L3 and L4 left, listed in the ticket Answer. Renderer-only: no engine,
 Reviewed inline by the orchestrator: one list source swapped from the draft tactic to the match's pitch
 view, on the data path Match Substitutions already uses. The three new tests fail against the old screen.
 With this, Group G has no agent-startable ticket left: 10 and 20 are `needs-info`, 42 is `needs-triage`.
+
+## Ticket 10 — Match Player Ratings (Screens 96/101), 2026-09-27
+
+- Ticket closed: [10](../../.scratch/group-g-match-day/issues/10-match-player-ratings-component.md)
+- Decision: group-g decision request 03, Option B; note the-match-model-shows-only-what-it-produces promoted to `implemented/`
+- Review: a subagent reviewer, verdict APPROVE, no blocker or high. Fixed from its findings:
+  - a bring-off showed the previous event's minute; it now uses the journaled command's minute;
+  - fold tests now run through `pitchBeforeEachEvent`: an unused substitute, an injury with its forced substitution, a stand-in goalkeeper, and a bring-off;
+  - the name lookup reuses `playerNames`;
+  - three lint warnings are gone;
+  - a stale ledger bullet is corrected.
+  The missing `matchId` on the destination is recorded as a deviation, the same one ticket 09 made.
+
+| Gate | Command | Result |
+|---|---|---|
+| unit, focused | `vitest run` on `packages/shared/test/rules/matchRating.test.ts`, `test/main/match/ratings.test.ts`, `test/main/match/committed-timeline.test.ts`, `test/renderer/match/match-ratings-screen.test.tsx`, `test/renderer/match/match-stats-screen.test.tsx` | 7 + 10 + 1 + 3 + 7 passed |
+| e2e | `pnpm test:e2e journeys.spec.ts -g "Match Rating"` | 1 passed (6.0s) |
+| check:all | `pnpm check:all` | exit 0. Typecheck, lint, effect-lint, md links and db schema pass; tests 228 + 95 + 2272 passed. |

@@ -23,7 +23,11 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
 - [07 — Tactics/Substitutions UI](issues/07-tactics-substitutions-ui.md): Implemented. Standalone live screens share one live tactic with the Match day panel; tab-bar reachability deferred to 13. Follow-ups: [12](issues/12-live-panel-controlled-club.md), [13](issues/13-mount-live-match-tab-bar.md), [decision request 01](decision-request-01-live-change-tactics-scope.md) (live Change Tactics scope).
 - [08 — Post-Match Summary](issues/08-post-match-summary-enhancement.md): Implemented. `getPostMatchSummary` read RPC; summary shown only after the result is committed; fixed accepted results reverting to Accept result. Follow-ups: [14](issues/14-post-match-summary-penalties.md), [15](issues/15-full-time-session-lost-before-accept.md).
 - [09 — Match Statistics](issues/09-match-statistics-component.md): Implemented. `getMatchStatistics` projection; live totals cut by revealed-event count; possession/corners/fouls/offsides unavailable pending [decision request 02](decision-request-02-unsimulated-match-statistics.md). Follow-up: [16](issues/16-live-commands-stamped-by-revealed-minute.md).
-- [10 — Match Player Ratings](issues/10-match-player-ratings-component.md): Parked, not built. No rating formula exists and the Match Events name no goalkeeper or defender contribution; inputs and weights await [decision request 03](decision-request-03-match-player-rating-formula.md).
+- [10 — Match Player Ratings](issues/10-match-player-ratings-component.md): resolved 2026-09-27. A
+  **Match Rating** per participant: a base of 6.0, plus the player's own events and their phase's share
+  of the result while on the pitch, read from the stored timeline ([decision request 03](decision-request-03-match-player-rating-formula.md),
+  Option B). The clean sheet counts only at full time. `matchId` is not on the destination, the same
+  deviation as ticket 09.
 - [11 — Match Report](issues/11-match-report-screen.md): Implemented. `getMatchReport` read, refused until the result is committed; route carries `matchId`; embeds full-match statistics. Follow-up: [17](issues/17-stoppage-minutes-read-as-second-half.md).
 - [13 — Mount live-match tab bar](issues/13-mount-live-match-tab-bar.md): Implemented. `SecondaryNav` mounted in `CareerShell`; flat `match-*` routes detected by parser; tab-to-destination mapping covers all match contexts. Follow-up: none.
 - [Spec published](spec.md): Reconciled spec marking handoff from charting to slicing.

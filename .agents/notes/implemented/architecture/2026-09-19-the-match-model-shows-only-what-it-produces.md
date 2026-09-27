@@ -1,6 +1,6 @@
 # Agent Note: The match model shows only what it produces
 
-Status: proposed
+Status: implemented
 
 Settles group-g decision requests 02 and 03. Both ask what a screen may show when the engine does not
 produce it, and they get opposite answers for the same reason.

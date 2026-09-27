@@ -149,6 +149,15 @@ One entry in a match's emitted timeline: `MatchStarted`, `Goal`, `ShotOnTarget`,
 `FullTimeWhistle`. These are what the event-sourced game-engine persists and what commentary narrates
 from — not a separate commentary-only representation.
 
+**Match Rating**:
+A player's 1–10 rating for one match, to one decimal, derived from the match's stored timeline and
+never persisted. It is a base of 6.0, adjusted by the player's own Match Events (goals, shots, cards)
+and by a share of the result for the phase they played in: goals scored and conceded while they were
+on the pitch, a clean sheet at full time, and the score. A goalkeeper's rating therefore moves with
+the goals conceded while they played, though no event names a save. Only players who were on the
+pitch are rated. The base and weights are named constants in `packages/shared/src/rules/matchRating.ts`.
+_Avoid_: rating on its own (see Position Rating, Overall Rating), player rating, performance score
+
 **Injury** (match event):
 A Match Event carrying a trigger (`contact` | `non-contact`), a Severity (`light` | `medium` |
 `severe`), a No-Subs Tier (`orange` | `red`), and a body-part Type. Light/Medium are Orange

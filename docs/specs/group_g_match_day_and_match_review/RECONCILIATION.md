@@ -39,12 +39,12 @@ a v1 cut. A version cut is a version boundary, not a statement that the thing sh
 | 93 Live Match Overview | [093_live_match_overview.md](093_live_match_overview.md) | Reviewed — implemented |
 | 94 Live Match Commentary | [094_live_match_commentary.md](094_live_match_commentary.md) | Reviewed — implemented |
 | 95 Live Match Statistics | [095_live_match_statistics.md](095_live_match_statistics.md) | Reviewed — implemented, partial |
-| 96 Live Match Player Ratings | [096_live_match_player_ratings.md](096_live_match_player_ratings.md) | **Parked** — no rating formula |
+| 96 Live Match Player Ratings | [096_live_match_player_ratings.md](096_live_match_player_ratings.md) | Reviewed — implemented, partial |
 | 97 Live Match Tactics and Substitutions | [097_live_match_tactics_and_substitutions.md](097_live_match_tactics_and_substitutions.md) | Reviewed — implemented |
 | 98 Half-Time Team Talk | [098_half_time_team_talk.md](098_half_time_team_talk.md) | Deferred in full |
 | 99 Post-Match Summary | [099_post_match_summary.md](099_post_match_summary.md) | Reviewed — implemented |
 | 100 Post-Match Statistics | [100_post_match_statistics.md](100_post_match_statistics.md) | Reviewed — implemented, partial |
-| 101 Post-Match Player Ratings | [101_post_match_player_ratings.md](101_post_match_player_ratings.md) | **Parked** — no rating formula |
+| 101 Post-Match Player Ratings | [101_post_match_player_ratings.md](101_post_match_player_ratings.md) | Reviewed — implemented, partial |
 | 102 Post-Match Team Talk | [102_post_match_team_talk.md](102_post_match_team_talk.md) | Deferred in full |
 | 103 Match Report | [103_match_report.md](103_match_report.md) | Reviewed — implemented |
 | 104 Match Incidents and Disciplinary Review | [104_match_incidents_and_disciplinary_review.md](104_match_incidents_and_disciplinary_review.md) | Deferred in full |
@@ -60,22 +60,11 @@ an effort is archived, and this ledger outlives the effort that produced it.
 | [102_post_match_team_talk.md](102_post_match_team_talk.md), whole file | `deferred` | A post-match team talk responding to the result. | Same absent model. | `unscheduled`. Ticket 02. |
 | [104_match_incidents_and_disciplinary_review.md](104_match_incidents_and_disciplinary_review.md), whole file | `deferred` | Reviewing incidents and their disciplinary consequences: cards, bans, appeals. | Cut from v1. Cards are **Match Event**s inside one match; nothing accumulates them, nobody is suspended, and no appeal exists. | `unscheduled`. Ticket 02 ruled it "out of scope (cut from v1)"; re-kinded 2026-09-19. The same absent model defers [Group D 60](../group_d_player_and_staff_records/60_player_discipline.md) and Group E 77's eligibility half. |
 
-## Parked: the two player-ratings screens
-
-Screens 96 and 101 are the only `Parked` rows in the corpus, and the distinction is worth keeping:
-they are not waiting on a model the game lacks, they are waiting on **a formula nobody has chosen**.
-
-| Sections | Kind | What the spec asks | Disposition | Anchor |
-|---|---|---|---|---|
-| [096_live_match_player_ratings.md](096_live_match_player_ratings.md), [101_post_match_player_ratings.md](101_post_match_player_ratings.md), whole files | `deferred` | A per-player rating for the match, live and final. | **Not built**, and now buildable. Ticket 10 was parked rather than attempted: no rating formula existed, and the **Match Event** stream names no goalkeeper or defender contribution, so an event-only rating would systematically under-rate half the team. | **Answered 2026-09-19** — [the match model shows only what it produces](../../../.agents/notes/proposed/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md). A **Match Rating** is an event rating plus a share of the phase result, read from the stored timeline, so it depends on ticket 31. |
-
-The event-stream gap is the substantive finding: this is a data-model question wearing a formula's
-clothes. A rating cannot be fair until the engine records what defenders and goalkeepers did.
-
 ## Divergences in what shipped
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
+| [096_live_match_player_ratings.md](096_live_match_player_ratings.md), [101_post_match_player_ratings.md](101_post_match_player_ratings.md), per-player contribution | `deferred` | A rating that reflects each player's own contribution to the match. | A **Match Rating** is a base of 6.0, adjusted by the player's own Match Events and by a share of the result for their phase while they were on the pitch. It is derived from the stored timeline, cut at the revealed position live, and never persisted. Only players who were on the pitch get a row, and the weights are never shown. It is a proxy: the Match Event stream names no save, tackle or assist, so a goalkeeper's rating moves with goals conceded rather than saves made. Per-player involvement recorded by the engine is the end state. | [The match model shows only what it produces](../../../.agents/notes/implemented/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md), group-g decision request 03 (Option B, with Option C sequenced behind it). Ticket 10, shipped 2026-09-27. |
 | [095_live_match_statistics.md](095_live_match_statistics.md), [100_post_match_statistics.md](100_post_match_statistics.md), possession, corners, fouls, offsides | `deferred` | A full statistics panel. | Those four are **unavailable**, because the engine does not simulate them — it produces the events it produces, and a statistic it never generates cannot be shown without fabrication. The rest ships, with live totals cut by revealed-event count. | group-g decision request 02 (unsimulated match statistics), **open**. Ticket 09. |
 | [093_live_match_overview.md](093_live_match_overview.md) and all live screens, revealed position | `contradicted` | The screen shows the match state. | Every live surface shows **the revealed position**, never the engine's true position. Score, head-count, commentary, statistics and substitution counts all stop where the reveal has reached. A response carrying state ahead of the reveal is a defect, and was one (ticket 22). | The reveal is the game's contract with the viewer. Tickets 18, 21, 22, 25, 27. |
 | [097_live_match_tactics_and_substitutions.md](097_live_match_tactics_and_substitutions.md), scope of live change | `contradicted` | Tactics may be changed freely during the match. | A live Change Tactics changes **only the three Team Instructions**. The formation and line-up stay as they are; who is on the pitch changes only through substitutions, red cards, injuries and bring-offs, so a dismissal sticks. | [revealed play is immutable](../../../.agents/notes/proposed/feature/2026-09-19-revealed-play-is-immutable.md), point 1, and the CONTEXT.md **Tactic** term; group-g decision request 01, answered Option A. Tickets 07 and 40. |
@@ -106,7 +95,7 @@ been shown is a fact about the match and nothing may change it. That is why nine
 same family of defect without the pattern closing — the rule had never been stated.
 
 The others: 02 and 03 by
-[the match model shows only what it produces](../../../.agents/notes/proposed/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md)
+[the match model shows only what it produces](../../../.agents/notes/implemented/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md)
 — a screen may derive from the stream, never invent what the stream lacks; 06 by
 [a keeper leaving always drags a stand-in](../../../.agents/notes/implemented/feature/2026-09-19-a-keeper-leaving-always-drags-a-stand-in.md);
 07 below.
@@ -154,8 +143,9 @@ gone in practice. Tickets 26 and 29 are re-pointed at 31: blocked on a ticket no
   would then have discovered it could not proceed. 29's status is corrected to `blocked`. **Nothing in
   the tracker's own rules stops the pair recurring**, which is the part still owed: either the two
   fields should be one, or something should check them against each other.
-- **Six match placeholders remain routed** — `matchRatings`, `matchPlayerStats`, `matchReplays`,
-  `matchLatestScores`, `matchLiveTable`, `matchOppositionInstructions`. Screens 96 and 101 are `Parked`
-  rather than disposed, so their placeholders should stay; the others need a ruling under M1 step 5.
+- **Six match placeholders remained routed** at this review — `matchRatings`, `matchPlayerStats`, `matchReplays`,
+  `matchLatestScores`, `matchLiveTable`, `matchOppositionInstructions`. Screens 96 and 101 were
+  `Parked` rather than disposed, so their placeholder stayed; it became the Match Ratings screen on
+  2026-09-27 (ticket 10). The others need a ruling under M1 step 5.
   **Note that `matchReplays` and `matchOppositionInstructions` answer to no screen in this import**,
   the same mismatch Group D's `staff*` folders show.

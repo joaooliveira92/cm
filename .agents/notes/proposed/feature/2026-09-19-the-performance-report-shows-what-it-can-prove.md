@@ -52,7 +52,7 @@ decisions"), adopting both recommendations.
 
 **A coach's rating of the player (request 01 Option B).** Rejected for v1: nothing generates it, and
 inventing a number for a coach's opinion is the same error as inventing possession — see
-[the match model shows only what it produces](../architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md).
+[the match model shows only what it produces](../../implemented/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md).
 
 **Drop coach rating from Screen 113 entirely (Option C).** Reasonable, and rejected narrowly: Coach
 quality is genuinely relevant to a training report, and the confusion was in the label rather than the

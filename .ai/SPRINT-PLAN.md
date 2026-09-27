@@ -250,12 +250,14 @@ delegation. Agent-startable work, in order:
    to [desktop-suite-red 18](../.scratch/desktop-suite-red/issues/18-two-unreproduced-e2e-failure-shapes.md)
    (`needs-info`: waiting on a reproduction). Before calling a red e2e run a regression, check
    `pmset -g log` for a sleep inside its window.
-2. **Group G 42 resolved 2026-09-27** (`eeff2cd8`): Quick result skips the live reveal. Group G's
-   remaining tickets are [10](../.scratch/group-g-match-day/issues/10-match-player-ratings-component.md) and
-   [20](../.scratch/group-g-match-day/issues/20-a-command-rewrites-play-already-seen.md) (`needs-info`).
-3. **Triage the stale `needs-info` tickets** (group-g 10, 20; group-h
-   [07](../.scratch/group-h-training-and-player-development/issues/07-performance-report.md)): the
-   decision requests they waited on are answered.
+2. **Group G 42 resolved 2026-09-27** (`eeff2cd8`): Quick result skips the live reveal.
+3. **The stale `needs-info` tickets were triaged 2026-09-27** (`da3ba0ed`) to `ready-for-agent`.
+   [group-g 10](../.scratch/group-g-match-day/issues/10-match-player-ratings-component.md), Match
+   Ratings, shipped the same day. Next, in order:
+   [group-g 20](../.scratch/group-g-match-day/issues/20-a-command-rewrites-play-already-seen.md) (a live
+   command stamped at M+1, decision request 08) and
+   [group-h 07](../.scratch/group-h-training-and-player-development/issues/07-performance-report.md)
+   ("Coach quality", and the pre-development Attributes on `PlayerDeveloped`).
 4. **The knowledge-limited Player reads are all four shipped**, and **both efforts' queues are empty**
    (group-i 12/12, group-j 9/9). [group-i 12 — Transfer Target Comparison](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md)
    shipped in `eed6ce49` and had been sitting at `claimed` ever since — a stale lock over completed

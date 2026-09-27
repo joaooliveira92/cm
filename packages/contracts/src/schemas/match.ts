@@ -267,6 +267,38 @@ export class MatchStatisticsView extends Schema.Class<MatchStatisticsView>("Matc
 }) {}
 
 // ---------------------------------------------------------------------------
+// Match Ratings (Screens 96/101): a Match Rating per player who took part
+// ---------------------------------------------------------------------------
+
+/** One player's Match Rating and what happened to them, never the weights behind it (Screen 96 §17).
+ *  Only players who were on the pitch get a row: an unused substitute has no rating. */
+export class MatchRatingRow extends Schema.Class<MatchRatingRow>("MatchRatingRow")({
+  playerId: PlayerId,
+  playerName: Schema.String,
+  /** The position the player last held: their kickoff slot, or the one they came on into. */
+  position: PositionSchema,
+  /** 1–10, to one decimal. */
+  rating: Schema.Finite,
+  started: Schema.Boolean,
+  /** The minute they came on, or null for a starter. */
+  cameOnMinute: Schema.NullOr(Schema.Finite),
+  /** The minute they left the pitch for any reason, or null if still on at the end. */
+  wentOffMinute: Schema.NullOr(Schema.Finite),
+  sentOff: Schema.Boolean,
+  injured: Schema.Boolean,
+}) {}
+
+export class MatchRatingsView extends Schema.Class<MatchRatingsView>("MatchRatingsView")({
+  matchId: MatchId,
+  homeClubName: Schema.String,
+  awayClubName: Schema.String,
+  /** As `MatchStatisticsView.throughMinute`: for display only, null for the whole match. */
+  throughMinute: Schema.NullOr(Schema.Finite),
+  home: Schema.Array(MatchRatingRow),
+  away: Schema.Array(MatchRatingRow),
+}) {}
+
+// ---------------------------------------------------------------------------
 // Match Report (Screen 103): the committed match's record
 // ---------------------------------------------------------------------------
 

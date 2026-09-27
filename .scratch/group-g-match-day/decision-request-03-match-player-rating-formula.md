@@ -82,7 +82,7 @@ rating and the weights, and name the term in CONTEXT.md.
 
 Settled with group-g request 02 under one rule: **a screen may derive from the stream; it may
 not invent what the stream does not contain.** Recorded as
-[the match model shows only what it produces](../../.agents/notes/proposed/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md).
+[the match model shows only what it produces](../../.agents/notes/implemented/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md).
 
 **Option B**, with Option C sequenced behind it. A **Match Rating** is an event-derived rating plus a
 share of the phase result, so a player who appears in no event still has a rating that means something.

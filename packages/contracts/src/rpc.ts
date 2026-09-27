@@ -98,6 +98,7 @@ import {
   TeamSheetView,
   PostMatchSummaryView,
   MatchStatisticsView,
+  MatchRatingsView,
   MatchReportView,
   TrainingFocusNotOfferedError,
   TrainingFocusView,
@@ -377,6 +378,17 @@ commitCareer: {
       revealedEvents: Schema.NullOr(Schema.Finite),
     }),
     success: Schema.NullOr(MatchStatisticsView),
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  /** Screens 96/101: every participant's Match Rating, bound and cut exactly as
+   *  `getMatchStatistics` is (null success when the club has played no match). */
+  getMatchRatings: {
+    payload: Schema.Struct({
+      saveId: SaveId,
+      matchId: Schema.NullOr(MatchId),
+      revealedEvents: Schema.NullOr(Schema.Finite),
+    }),
+    success: Schema.NullOr(MatchRatingsView),
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },
   /** Screen 103: the Match Report of a Fixture whose result has been committed. A read over the

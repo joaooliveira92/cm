@@ -10,7 +10,7 @@ import type { MatchEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { afterEach, beforeEach, vi } from "vitest";
-import { getMatchReport, getMatchStatistics, getPostMatchSummary, resumeSimulation } from "../../../src/main/match/index.js";
+import { getMatchRatings, getMatchReport, getMatchStatistics, getPostMatchSummary, resumeSimulation } from "../../../src/main/match/index.js";
 import { MATCH_STREAM_TYPE, deriveMatchEvents } from "../../../src/main/match/stream.js";
 import { MATCH_TIMELINE_TAG } from "../../../src/main/match/timeline.js";
 import { commitMatchday } from "../../../src/main/season/commitMatchday.js";
@@ -88,6 +88,7 @@ it.effect("a committed match keeps its timeline through an engine-rule change; a
     const report = yield* getMatchReport(savesDir, save.id, match.matchId);
     const summary = yield* getPostMatchSummary(savesDir, save.id, match.matchId);
     const statistics = yield* getMatchStatistics(savesDir, save.id, match.matchId, null);
+    const ratings = yield* getMatchRatings(savesDir, save.id, match.matchId, null);
 
     rule.changed = true;
 
@@ -97,6 +98,7 @@ it.effect("a committed match keeps its timeline through an engine-rule change; a
     deepStrictEqual(yield* getMatchReport(savesDir, save.id, match.matchId), report);
     deepStrictEqual(yield* getPostMatchSummary(savesDir, save.id, match.matchId), summary);
     deepStrictEqual(yield* getMatchStatistics(savesDir, save.id, match.matchId, null), statistics);
+    deepStrictEqual(yield* getMatchRatings(savesDir, save.id, match.matchId, null), ratings);
 
     // A repeat commit is answered from the fixture row and records nothing further.
     yield* commitMatchday(savesDir, save.id, fixtureId);

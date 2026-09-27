@@ -183,6 +183,35 @@ test("a Quick result goes straight to full time, without the live reveal (group-
   await expect(page.getByText("Result accepted. Continue to move on.")).toBeVisible({ timeout: 15_000 });
 });
 
+test("the Post-Match Summary opens every participant's Match Rating for the whole match (group-g 10)", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedBeforeMatchday(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: before-matchday");
+  await pressSectionKey(page, "tactics");
+  await openTacticsEditor(page);
+  await assignFullTactic(page);
+  await pressItemKey(page, "analysis", "analysis-match");
+  const quick = page.getByRole("button", { name: "Quick result" });
+  await expect(quick).toBeEnabled({ timeout: 15_000 });
+  await quick.click();
+  // The Post-Match Summary, and its review links, follow an accepted result.
+  const accept = page.getByRole("button", { name: "Accept result" });
+  await expect(accept).toBeVisible({ timeout: 10_000 });
+  await accept.click();
+  await page.getByRole("button", { name: "Player ratings" }).click();
+  const ratings = page.getByRole("main", { name: "Match Ratings" });
+  await expect(ratings.getByText("Full match")).toBeVisible({ timeout: 15_000 });
+  // Each side: a header row plus at least the eleven who started, every rating to one decimal.
+  const sides = ratings.getByRole("table");
+  await expect(sides).toHaveCount(2);
+  const rowCounts = await Promise.all([sides.first(), sides.last()].map((side) => side.getByRole("row").count()));
+  for (const count of rowCounts) expect(count).toBeGreaterThanOrEqual(12);
+  await expect(sides.first().getByRole("cell", { name: /^\d{1,2}\.\d$/ }).first()).toBeVisible();
+  await expect(sides.last().getByRole("cell", { name: /^\d{1,2}\.\d$/ }).first()).toBeVisible();
+});
+
 test("a substitution is driven by keyboard through the match day live control panel (AC-33)", async ({
   window: page,
   userDataDir,
