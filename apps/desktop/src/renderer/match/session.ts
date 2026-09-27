@@ -18,6 +18,8 @@ export interface ActiveMatchSession {
   /** Read back after an app restart (group-g-match-day 33), so a same-session return still says the
    *  match restarted from kickoff. Absent means started in this process. */
   readonly restoredAfterRestart?: boolean;
+  /** Started with Quick result, so a return mid-read still reveals at once. Absent means Play. */
+  readonly quick?: boolean;
 }
 
 let active: ActiveMatchSession | null = null;

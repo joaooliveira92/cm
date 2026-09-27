@@ -160,6 +160,29 @@ test("a match started before an app restart resumes live on Match day, says it r
   await expect(relaunched.getByRole("main", { name: "Match day" }).getByRole("alert")).toHaveCount(0);
 });
 
+test("a Quick result goes straight to full time, without the live reveal (group-g 42)", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedBeforeMatchday(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: before-matchday");
+  await pressSectionKey(page, "tactics");
+  await openTacticsEditor(page);
+  await assignFullTactic(page);
+  await pressItemKey(page, "analysis", "analysis-match");
+  await expect(page.getByRole("heading", { name: "Match day" })).toBeVisible();
+
+  const quick = page.getByRole("button", { name: "Quick result" });
+  await expect(quick).toBeEnabled({ timeout: 15_000 });
+  await quick.click();
+
+  // At the live reveal pace a whole match takes well over a minute; a Quick result is read at once.
+  const accept = page.getByRole("button", { name: "Accept result" });
+  await expect(accept).toBeVisible({ timeout: 10_000 });
+  await accept.click();
+  await expect(page.getByText("Result accepted. Continue to move on.")).toBeVisible({ timeout: 15_000 });
+});
+
 test("a substitution is driven by keyboard through the match day live control panel (AC-33)", async ({
   window: page,
   userDataDir,

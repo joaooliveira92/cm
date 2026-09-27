@@ -46,6 +46,10 @@ export interface MatchState {
   /** The match was read back after an app restart rather than started or resumed in this process, so
    *  its feed replays from kickoff (group-g-match-day 33). */
   readonly restoredAfterRestart: boolean;
+  /** Started with Quick result: the feed is read and revealed at once, with no pacing and no pause
+   *  for a decision, since a quick-resulted match has an empty command journal (group-g-match-day 42).
+   *  A match read back after an app restart is never quick: the mode is not persisted with it. */
+  readonly quick: boolean;
 }
 
 export interface MatchActions {
@@ -75,6 +79,7 @@ export const MatchProvider = ({
   const [phase, setPhase] = useState<MatchPhase>("awaiting-kickoff");
   const [hydrated, setHydrated] = useState(false);
   const [restoredAfterRestart, setRestoredAfterRestart] = useState(false);
+  const [quick, setQuick] = useState(false);
 
   const tableResult = useAtomValue(leagueTableAtom(saveId));
   const pending = tableResult._tag === "Success" ? tableResult.value.season.awaitingFixture : null;
@@ -105,6 +110,7 @@ export const MatchProvider = ({
       }
       setMatch(exit.value);
       setRestoredAfterRestart(false);
+      setQuick(mode === "quick");
       setPhase("live");
     },
     [saveId, pending, runStartMatch],
@@ -144,6 +150,7 @@ export const MatchProvider = ({
       setMatch(resumed.match);
       setPhase(resumed.phase);
       setRestoredAfterRestart(resumed.restoredAfterRestart === true);
+      setQuick(resumed.quick === true);
     }
     setHydrated(true);
   }, [saveId]);
@@ -176,6 +183,7 @@ export const MatchProvider = ({
       setError(null);
       setMatch(outcome.success);
       setRestoredAfterRestart(true);
+      setQuick(false);
       setPhase("live");
     };
     resume();
@@ -190,8 +198,8 @@ export const MatchProvider = ({
   // longer in flight: recording it would restore a stale Match day and keep Continue suspended.
   useEffect(() => {
     if (match === null || phase === "committing" || phase === "committed") return;
-    setActiveMatch({ saveId, match, phase, restoredAfterRestart });
-  }, [saveId, match, phase, restoredAfterRestart]);
+    setActiveMatch({ saveId, match, phase, restoredAfterRestart, quick });
+  }, [saveId, match, phase, restoredAfterRestart, quick]);
 
   useEffect(() => {
     if (phase === "committed") clearActiveMatch(saveId);
@@ -209,7 +217,7 @@ export const MatchProvider = ({
   }, [saveId, startMatch, commitResult]);
 
   const value: MatchContextValue = {
-    state: { pending, match, error, phase, hydrated, saveId, restoredAfterRestart },
+    state: { pending, match, error, phase, hydrated, saveId, restoredAfterRestart, quick },
     actions: { startMatch, commitResult, setPhaseComplete, setPhasePaused, reportError },
   };
 

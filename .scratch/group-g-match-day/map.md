@@ -77,6 +77,9 @@ Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaf
   resolved 2026-09-22. `reachedFullTime` is gone; screens decide "accepted" from the season read.
 - [43 — "Formation in play" lists the pitch](issues/43-formation-in-play-reads-the-pitch.md): resolved
   2026-09-22. Every live surface now reads who is on from the match, not a Tactic.
+- [42 — Quick result skips the live reveal](issues/42-quick-result-skips-the-live-reveal.md): resolved
+  2026-09-27. The renderer reads and reveals a Quick result's feed at once, with no injury pause. The
+  mode is not persisted, so after an app restart the match replays live from kickoff.
 
 ## Not yet specified
 

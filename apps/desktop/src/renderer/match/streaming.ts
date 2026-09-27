@@ -53,7 +53,7 @@ export const useMatchStreaming = (): void => {
   const { state: commState, meta: commMeta } = useCommentaryContext();
   const setPhaseComplete = matchActions.setPhaseComplete;
 
-  const { match, hydrated, phase } = matchState;
+  const { match, hydrated, phase, quick } = matchState;
 
   useEffect(() => {
     if (!hydrated) return;
@@ -62,20 +62,25 @@ export const useMatchStreaming = (): void => {
     // Derived afresh, a restored paused phase included: the pause follows the revealed injuries the
     // session restored, so a match restored paused with none to decide on returns to live instead of
     // waiting on nothing.
+    // A Quick result has an empty command journal, so no revealed injury waits on the manager.
     const clubId = controlledClubId(match);
-    const needsDecision = commState.revealedInjuries.some(({ injury, capReachedWhenRevealed }) =>
-      shouldPauseMatch([injury], clubId, capReachedWhenRevealed),
-    );
+    const needsDecision =
+      !quick &&
+      commState.revealedInjuries.some(({ injury, capReachedWhenRevealed }) =>
+        shouldPauseMatch([injury], clubId, capReachedWhenRevealed),
+      );
     commMeta.pausedRef.current = needsDecision;
     commMeta.setPaused(needsDecision);
-  }, [match, phase, commState.revealedInjuries, commMeta.setPaused, hydrated]);
+  }, [match, phase, quick, commState.revealedInjuries, commMeta.setPaused, hydrated]);
 
   useEffect(() => {
     if (!hydrated) return;
     if (match === null) return;
 
+    let active = true;
     const poll = async (): Promise<void> => {
       if (
+        !active ||
         !shouldPollMatch({
           fetching: commMeta.fetchingRef.current,
           streamComplete: commMeta.streamCompleteRef.current,
@@ -103,18 +108,33 @@ export const useMatchStreaming = (): void => {
           return;
         }
         commMeta.applyPollView(outcome.success, request);
+        if (quick) revealBuffered();
       } catch {
         commMeta.reportError("Failed to resume match simulation");
         commMeta.streamCompleteRef.current = true;
       } finally {
         commMeta.fetchingRef.current = false;
       }
+      // Quick result reads the next chunk as soon as this one is revealed, not on the poll interval.
+      if (quick && active && !commMeta.streamCompleteRef.current) await poll();
+    };
+
+    /** Quick result skips the paced reveal: every buffered line is revealed as it lands, and full
+     *  time follows the last chunk directly (group-g-match-day 42). */
+    const revealBuffered = (): void => {
+      for (let next = commMeta.pendingRef.current.shift(); next !== undefined; next = commMeta.pendingRef.current.shift()) {
+        commMeta.revealLine(next);
+      }
+      if (commMeta.streamCompleteRef.current) setPhaseComplete();
     };
 
     poll();
     const interval = setInterval(poll, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [match, matchState.saveId, commMeta.nextPitchRequest, commMeta.applyPollView, commMeta.reportError, hydrated]);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [match, quick, matchState.saveId, commMeta.nextPitchRequest, commMeta.applyPollView, commMeta.revealLine, commMeta.reportError, setPhaseComplete, hydrated]);
 
   useEffect(() => {
     if (match === null) return;
