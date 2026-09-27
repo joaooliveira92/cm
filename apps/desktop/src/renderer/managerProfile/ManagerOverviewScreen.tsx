@@ -7,10 +7,12 @@ import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
 import { Card } from "../components/ui/card.js";
 import { FOCUS_RING } from "../focus.js";
+import { STYLE_LABELS } from "../create/managerStyleCopy.js";
 import { getActiveMatch } from "../match/session.js";
 import { navigate } from "../navigation/adapter.js";
 import { useDialogKeyboard } from "../transfers/dialogKeyboard.js";
 import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "../theme.js";
+import { ManagerAvatar } from "./ManagerAvatar.js";
 import {
   describeRpcError,
   managerProfileAtom,
@@ -151,7 +153,14 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
         <Alert className="mb-4">[Archived] This career has ended. The save is read-only.</Alert>
       )}
 
-      <div className="flex items-baseline gap-3">
+      <div className="flex items-center gap-3">
+        <ManagerAvatar
+          firstName={profile.firstName}
+          lastName={profile.lastName}
+          primary={profile.avatarPrimaryColor}
+          secondary={profile.avatarSecondaryColor}
+          size="lg"
+        />
         <h1 className="text-2xl font-bold">
           {profile.firstName} {profile.lastName}
         </h1>
@@ -190,7 +199,7 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
         <dl className="mt-1 grid grid-cols-2 gap-x-8 gap-y-1 text-base sm:grid-cols-3">
           <div className="flex justify-between">
             <dt className="text-text-secondary">Nationality</dt>
-            <dd className="font-semibold text-text-primary">—</dd>
+            <dd className="font-semibold text-text-primary">{profile.nationalityName}</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-text-secondary">Age</dt>
@@ -202,7 +211,11 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
           </div>
           <div className="flex justify-between">
             <dt className="text-text-secondary">Preferred Formation</dt>
-            <dd className="font-semibold text-text-primary">—</dd>
+            <dd className="font-semibold text-text-primary">{profile.preferredFormation}</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-text-secondary">Tactical Style</dt>
+            <dd className="font-semibold text-text-primary">{STYLE_LABELS[profile.preferredStyleId]}</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-text-secondary">Date Appointed</dt>
