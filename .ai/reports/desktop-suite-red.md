@@ -363,3 +363,20 @@ reviewed it inline: `firstRow` is the row the name was read from, and no asserti
 | e2e | `pnpm test:e2e e2e/app.spec.ts` | 7 passed (11.8s), including `app:20`, which was red before. |
 
 Implemented and reviewed inline by the orchestrator: one hidden heading and one unit test.
+
+## Ticket 17 — the e2e suite fails specs at random in full runs, 2026-09-27
+
+- Ticket closed: [17](../../.scratch/desktop-suite-red/issues/17-desktop-e2e-fails-random-specs-in-full-runs.md)
+- Split out: [18](../../.scratch/desktop-suite-red/issues/18-two-unreproduced-e2e-failure-shapes.md), two shapes that match no sleep and have not reproduced since 2026-09-26
+- Cause: idle system sleep on the Mac partway through a run, lined up run by run against `pmset -g log` in the ticket's Answer
+
+| Gate | Command | Result |
+|---|---|---|
+| baseline e2e, before the fix | `npx playwright test --reporter=line`, three consecutive runs from 09:11 | red three times: 2 failed; 1 failed + 31 not run (18.0m); 1 failed + 11 not run (23.3m). Each overlaps a sleep in `pmset -g log`. |
+| caffeinate held | `pmset -g assertions` during a run | `PreventUserIdleSystemSleep` and `PreventUserIdleDisplaySleep` held by `caffeinate` on behalf of the runner. Gone after it exits. |
+| e2e, after the fix | `pnpm --filter @cm-clone/desktop test:e2e`, five consecutive runs, 10:18:48–10:32:04 | 65 passed (2.6m), five times. No sleep or display-off in the power log for that window. |
+| Player Search stress | `player-search-scouting` copy with pointer/route logging, `--repeat-each=25`, four `yes` CPU hogs | 25 passed (52.7s). Not reproduced; recorded on ticket 18. |
+| check:all | `pnpm check:all` | exit 0. Typecheck, lint, effect-lint, md links, db schema and tests all green. |
+
+Implemented and reviewed inline by the orchestrator. The change is a Playwright `globalSetup` and a
+`docs/e2e.md` paragraph. No spec, assertion or timeout changed.

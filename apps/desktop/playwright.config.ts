@@ -22,6 +22,8 @@ import { defineConfig } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "e2e",
+  // Keeps a Mac from sleeping mid-run, which freezes the app under test (desktop-suite-red 17).
+  globalSetup: "./e2e/globalSetup.ts",
   fullyParallel: false,
   workers: 1,
   reporter: "list",

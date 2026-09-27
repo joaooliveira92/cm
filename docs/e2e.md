@@ -37,7 +37,14 @@ a `.sqlite` into the test's temp saves dir — no checked-in fixture binaries. F
 
 ## Reliability contract
 
-`retries: 2` (CI), `timeout: 30_000`, `workers: 1`, `fullyParallel: false`.
+`retries: 2` (CI), `timeout: 45_000`, `workers: 1`, `fullyParallel: false`.
+
+**The machine stays awake for the run.** On macOS, `e2e/globalSetup.ts` holds `caffeinate -d -i`
+for as long as the runner lives. An idle Mac otherwise turns its display off and then sleeps, which
+freezes the app under test. The spec in flight then fails on waking, as a closed page, a `g`-prefix
+indicator that never clears, or a fixture teardown past the test timeout. A long sleep can also
+leave the rest of the run to the global timeout. Before blaming a red run on the code, check
+`pmset -g log` for a sleep inside its time window (desktop-suite-red 17).
 
 **Why structural-only:** the app has no deterministic sim seed, so Match Day outcomes and any evolved
 table/budget value are non-deterministic. Smoke asserts the deterministic surface; seeded journeys

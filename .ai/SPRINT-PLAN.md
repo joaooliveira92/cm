@@ -244,17 +244,15 @@ single unblock and touches no schema.
 has an answer, and the four `ready-for-human` tickets were decided under the human's standing
 delegation. Agent-startable work, in order:
 
-1. **[desktop-suite-red 17](../.scratch/desktop-suite-red/issues/17-desktop-e2e-fails-random-specs-in-full-runs.md)
-   — the e2e suite fails 4–5 specs at random on a clean tree** (`ready-for-agent`, filed
-   2026-09-26). This is the newest ticket and the one that most needs doing, because
-   **`pnpm check:all` excludes e2e**, so a red e2e suite is invisible to the gate and M1 exit
-   criterion 4 cannot be honestly claimed while it is red. It was found while closing group-j 09 and
-   reproduced on a clean `HEAD` worktree over four consecutive full runs. It also restores
-   `desktop-suite-red` to an open effort, which had read 16/16.
-2. **Group G's triage backlog**, which is all that is left there:
-   - [42](../.scratch/group-g-match-day/issues/42-quick-result-skips-the-live-reveal.md) (`needs-triage`),
-   - [10](../.scratch/group-g-match-day/issues/10-match-player-ratings-component.md) and
-     [20](../.scratch/group-g-match-day/issues/20-a-command-rewrites-play-already-seen.md) (`needs-info`).
+1. **desktop-suite-red 17 resolved 2026-09-27**: the random e2e failures were the Mac entering idle
+   system sleep partway through a run. `e2e/globalSetup.ts` now holds `caffeinate -d -i` for the
+   run, and five consecutive full runs were green (65/65 each). Two shapes that match no sleep moved
+   to [desktop-suite-red 18](../.scratch/desktop-suite-red/issues/18-two-unreproduced-e2e-failure-shapes.md)
+   (`needs-info`: waiting on a reproduction). Before calling a red e2e run a regression, check
+   `pmset -g log` for a sleep inside its window.
+2. **Group G 42 resolved 2026-09-27** (`eeff2cd8`): Quick result skips the live reveal. Group G's
+   remaining tickets are [10](../.scratch/group-g-match-day/issues/10-match-player-ratings-component.md) and
+   [20](../.scratch/group-g-match-day/issues/20-a-command-rewrites-play-already-seen.md) (`needs-info`).
 3. **Triage the stale `needs-info` tickets** (group-g 10, 20; group-h
    [07](../.scratch/group-h-training-and-player-development/issues/07-performance-report.md)): the
    decision requests they waited on are answered.
