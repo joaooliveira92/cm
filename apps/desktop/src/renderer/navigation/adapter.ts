@@ -41,8 +41,6 @@ const enrichHistoryState = (): void => {
 /** Navigate to a typed destination. Focus policy delegated to the coordinator. */
 export const navigate = (destination: NavigationDestination): void => {
   const resolved = resolveDestination(destination);
-  console.log(`[probe17] navigate ${JSON.stringify(resolved)} from ${location.hash}`);
-  setTimeout(() => console.log(`[probe17] after navigate hash=${location.hash}`), 300);
   enrichHistoryState();
   // The switch narrows `resolved` per literal `to` so each case keeps its params typing.
   switch (resolved.to) {
