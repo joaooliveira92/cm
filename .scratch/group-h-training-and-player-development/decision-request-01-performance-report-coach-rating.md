@@ -88,5 +88,5 @@ Use "Coach quality" on Screen 111 too, so one value has one name.
 A rating the Coach gives the player is post-v1 and needs a model before it needs a screen.
 
 Settled with request 02 as
-[the Performance Report shows what it can prove](../../.agents/notes/proposed/feature/2026-09-19-the-performance-report-shows-what-it-can-prove.md).
+[the Performance Report shows what it can prove](../../.agents/notes/implemented/feature/2026-09-19-the-performance-report-shows-what-it-can-prove.md).
 Decided under the human's standing delegation ("i need you to solve the decisions").

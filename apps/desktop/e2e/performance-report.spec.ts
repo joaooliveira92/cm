@@ -8,8 +8,9 @@ import { savesDir, seedConcluded } from "./seedSaves.js";
  * the Individual Training Plan (whose URL carries the player id) and then opens
  * `/player/$playerId/coach-report` by address, the way `router.spec.ts` opens a route directly.
  *
- * A concluded seed has run Player Development once, so the report shows one recorded Season. It is
- * the earliest one, so it reads as having no earlier Attributes to compare with.
+ * A concluded seed has run Player Development once, so the report shows one recorded Season. Its
+ * event carries its own baseline, so it reads as within-Season growth ("Season baseline") — or as
+ * the earliest-recorded fallback if that Season happened to leave every Attribute unchanged.
  */
 test("the Performance Report shows an own player's Training Focus and recorded development", async ({
   window: page,
@@ -34,9 +35,11 @@ test("the Performance Report shows an own player's Training Focus and recorded d
   await expect(
     page.getByRole("region", { name: `${playerName} training plan` }).getByText("Training Focus: None"),
   ).toBeVisible();
+  // The coach quality the report is contextual to, real data rather than a placeholder.
+  await expect(page.getByRole("region", { name: "Club coach quality" })).toBeVisible();
 
   const seasons = page.getByRole("list", { name: "Development by Season" });
   await expect(seasons.getByRole("heading", { level: 3 })).toHaveCount(1);
-  await expect(seasons.getByText(/First recorded Season at your club/)).toBeVisible();
+  await expect(seasons.getByText(/Season baseline|First recorded Season at your club/)).toBeVisible();
   await expect(page.getByText(/Placeholder/)).toHaveCount(0);
 });

@@ -32,10 +32,12 @@ const fakeMain = ({
   seasons = [],
   history,
   squad,
+  coachQuality = 14,
 }: {
   readonly seasons?: readonly SeasonWire[];
   readonly history?: (playerId: string) => unknown;
   readonly squad?: () => unknown;
+  readonly coachQuality?: number | null;
 } = {}) => {
   const calls: Array<{ method: string; payload: unknown }> = [];
   mockPreload(async (method, payload) => {
@@ -43,7 +45,12 @@ const fakeMain = ({
     const input = payload as { playerId?: string };
     if (method === "getSquad") return squad?.() ?? { _tag: "Success", value: trainingPlanSquad() };
     if (method === "getPlayerDevelopmentHistory") {
-      return history?.(input.playerId ?? "") ?? { _tag: "Success", value: { playerId: input.playerId, seasons } };
+      return (
+        history?.(input.playerId ?? "") ?? {
+          _tag: "Success",
+          value: { playerId: input.playerId, seasons, coachQuality },
+        }
+      );
     }
     return failure({ _tag: "SaveNotFoundError", id: rid("s1") });
   });
@@ -105,6 +112,23 @@ describe("ticket 07 — Performance Report (Screen 113)", () => {
     });
   });
 
+  it("shows the club Coach's quality out of 20 beside the Training Focus", async () => {
+    fakeMain({ coachQuality: 17 });
+    renderScreen("p1");
+
+    const card = await screen.findByRole("region", { name: "Club coach quality" });
+    expect(within(card).getByText("17")).toBeTruthy();
+    expect(within(card).getByText("/ 20")).toBeTruthy();
+  });
+
+  it("says no coach is appointed rather than inventing a rating", async () => {
+    fakeMain({ coachQuality: null });
+    renderScreen("p1");
+
+    const card = await screen.findByRole("region", { name: "Club coach quality" });
+    expect(within(card).getByText(/No coach appointed/)).toBeTruthy();
+  });
+
   it("says no development is recorded before any Season has concluded", async () => {
     fakeMain({ seasons: [] });
     renderScreen("p1");
@@ -160,5 +184,7 @@ describe("development progress wording", () => {
     expect(describeComparison({ comparedWithSeason: 2, changes: [{}] })).toBe("Changes since Season 2:");
     expect(describeComparison({ comparedWithSeason: 2, changes: [] })).toBe("No Attribute changed since Season 2.");
     expect(describeComparison({ comparedWithSeason: null, changes: [] })).toMatch(/No earlier Attributes/);
+    // A baseline-bearing Season with changes is within-Season growth, not a comparison with another.
+    expect(describeComparison({ comparedWithSeason: null, changes: [{}] })).toMatch(/Season baseline/);
   });
 });

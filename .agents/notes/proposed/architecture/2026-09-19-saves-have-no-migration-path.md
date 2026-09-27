@@ -49,7 +49,7 @@ provisional until this is settled:
 |---|---|
 | [a committed match stores its timeline](../../implemented/architecture/2026-09-19-committed-matches-store-their-timeline.md) | A migration plus a backfill over existing committed matches. |
 | [revealed play is immutable](../../implemented/feature/2026-09-19-revealed-play-is-immutable.md), point 3 | "A migration for the persisted revealed position." |
-| [the Performance Report shows what it can prove](../feature/2026-09-19-the-performance-report-shows-what-it-can-prove.md) | Survives intact — a `PlayerDeveloped` payload addition is JSON inside an existing column, needs no DDL, and the note already says it cannot be backfilled. |
+| [the Performance Report shows what it can prove](../../implemented/feature/2026-09-19-the-performance-report-shows-what-it-can-prove.md) | Survives intact — a `PlayerDeveloped` payload addition is JSON inside an existing column, needs no DDL, and the note already says it cannot be backfilled. |
 
 The third is fine and is listed so the difference is visible: **additive JSON in an existing column is
 the only schema change this codebase can currently make to a live save.** That is a narrow escape hatch

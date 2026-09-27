@@ -11,6 +11,9 @@ referenced throughout.
 
 ## Shipped
 
+- **[.scratch/group-h-training-and-player-development/](../.scratch/group-h-training-and-player-development/)** —
+  12/12, completed 2026-09-27. Group H's training and player-development surfaces, closed out by the
+  Performance Report (Screen 113): baseline-aware Season deltas and the club Coach's 1-20 quality.
 - **[.scratch/manager-style-and-appearance/](../.scratch/manager-style-and-appearance/)** — 1/1,
   completed 2026-09-27. Step 2C of the New Career wizard: the manager's avatar accent scheme and
   preferred formation/tactical style, stored flat on `manager_profile`, gating the Manager step, and

@@ -67,7 +67,7 @@ const developClubPlayers = (clubId: ClubId, seasonNumber: number, concludedOn: s
         row.focus ?? undefined,
         coachMultiplier,
       );
-      return { playerId: row.id, attributes: next };
+      return { playerId: row.id, previousAttributes: attributes, attributes: next };
     });
 
     // Attribute-only UPDATE per player (raw column names via `sql.unsafe` — the dynamic list must

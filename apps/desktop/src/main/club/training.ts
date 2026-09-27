@@ -17,6 +17,7 @@ import {
   TrainingFocusView,
   WorkloadPlayerView,
   WorkloadView,
+  type ClubId,
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
@@ -26,6 +27,7 @@ import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "../season/decider.js";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
+import { loadCoachQuality } from "../career/staff.js";
 import { loadUserClub } from "./squad.js";
 import { CURRENT_SEASON_NUMBER_SQL, loadSeasonRow } from "../season/currentSeason.js";
 
@@ -185,18 +187,26 @@ export const getWorkload = (savesDir: string, saveId: SaveId) =>
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped);
   });
 
-/** One recorded `PlayerDeveloped` outcome for one player: the Season it concluded and the full
- *  Attribute set the player ended it with. */
+/** One recorded `PlayerDeveloped` outcome for one player: the Season it concluded, the Attribute set
+ *  the player ended it with, and — on events recorded since group-h 07 — the set the Season started
+ *  from. `previousAttributes` is absent on a legacy event, which is compared with the previous
+ *  recorded outcome instead. */
 export interface RecordedDevelopmentOutcome {
   readonly seasonNumber: number;
+  readonly previousAttributes?: Readonly<Partial<Record<string, number>>>;
   readonly attributes: Readonly<Partial<Record<string, number>>>;
 }
 
 /**
  * Turns a player's recorded development outcomes into per-Season Attribute changes, newest Season
- * first. Each Season is compared with the player's previous recorded outcome, which is the previous
- * Season unless the player was away from the manager's club in between. The earliest outcome has
- * no recorded starting point, so it carries no comparison rather than an invented one.
+ * first.
+ *
+ * A Season is compared against the baseline its own event carries (`previousAttributes`), so the
+ * delta is growth within that Season and does not depend on the previous outcome being present or
+ * correctly ordered; `comparedWithSeason` is `null` for such a Season — the UI reads that as "Season
+ * baseline". A legacy event with no baseline falls back to the previous recorded outcome and names
+ * it in `comparedWithSeason`; the earliest such outcome has no starting point and carries no
+ * comparison rather than an invented one.
  *
  * Only visible Attributes are compared (`ALL_ATTRIBUTES`, never Injury Proneness), in that list's
  * fixed order, and only those present on both sides and different. Pure and derived on every read.
@@ -207,20 +217,25 @@ export const seasonDevelopments = (
   const ascending = [...outcomes].sort((a, b) => a.seasonNumber - b.seasonNumber);
   return ascending
     .map((outcome, index) => {
-      const previous = ascending[index - 1];
-      if (previous === undefined) {
+      const previousOutcome = ascending[index - 1];
+      const baseline = outcome.previousAttributes ?? previousOutcome?.attributes;
+      if (baseline === undefined) {
         return new SeasonDevelopmentView({ seasonNumber: outcome.seasonNumber, comparedWithSeason: null, changes: [] });
       }
       const changes = ALL_ATTRIBUTES.flatMap((attribute) => {
-        const from = previous.attributes[attribute];
+        const from = baseline[attribute];
         const to = outcome.attributes[attribute];
         return from === undefined || to === undefined || from === to
           ? []
           : [new AttributeChangeView({ attribute, from, to })];
       });
+      // A baseline-bearing event is its own comparison (`null`); a legacy one names the previous
+      // outcome it was compared against.
+      const comparedWithSeason =
+        outcome.previousAttributes !== undefined ? null : previousOutcome?.seasonNumber ?? null;
       return new SeasonDevelopmentView({
         seasonNumber: outcome.seasonNumber,
-        comparedWithSeason: previous.seasonNumber,
+        comparedWithSeason,
         changes,
       });
     })
@@ -231,6 +246,23 @@ export const seasonDevelopments = (
  *  so one that no longer decodes is a defect rather than a typed failure. */
 const decodeRecordedAttributes = (attributes: string) =>
   Schema.decodeEffect(Schema.fromJsonString(AttributesSchema))(attributes).pipe(Effect.orDie);
+
+/** One recorded entry as an outcome. `json_extract` yields `null` for a baseline the event predates,
+ *  which is the legacy no-baseline case — not a defect, so it is left `undefined` rather than
+ *  decoded. */
+const toRecordedOutcome = (row: {
+  readonly seasonNumber: number;
+  readonly previousAttributes: string | null;
+  readonly attributes: string;
+}) =>
+  Effect.gen(function* () {
+    const attributes = yield* decodeRecordedAttributes(row.attributes);
+    const previousAttributes =
+      row.previousAttributes === null
+        ? undefined
+        : yield* decodeRecordedAttributes(row.previousAttributes);
+    return { seasonNumber: row.seasonNumber, previousAttributes, attributes };
+  });
 
 /**
  * Performance Report (Screen 113): one own-club player's recorded Player Development.
@@ -261,8 +293,9 @@ export const getPlayerDevelopmentHistory = (savesDir: string, saveId: SaveId, pl
 
     return yield* Effect.gen(function* () {
       const sql = yield* SqlClient;
-      const playerRows = yield* sql<{ isOwn: number }>`
-        SELECT (club_id = (SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1)) as "isOwn"
+      const playerRows = yield* sql<{ clubId: ClubId; isOwn: number }>`
+        SELECT club_id as "clubId",
+               (club_id = (SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1)) as "isOwn"
         FROM players WHERE id = ${playerId}`;
       const player = playerRows[0];
       if (player === undefined) {
@@ -272,24 +305,26 @@ export const getPlayerDevelopmentHistory = (savesDir: string, saveId: SaveId, pl
         return yield* new NotYourPlayerError({ playerId });
       }
 
-      const rows = yield* sql<{ seasonNumber: number; attributes: string }>`
+      const rows = yield* sql<{ seasonNumber: number; previousAttributes: string | null; attributes: string }>`
         SELECT json_extract(e.payload, '$.seasonNumber') as "seasonNumber",
+               json_extract(entry.value, '$.previousAttributes') as "previousAttributes",
                json_extract(entry.value, '$.attributes') as "attributes"
         FROM events e, json_each(e.payload, '$.players') entry
         WHERE e.stream_type = ${CLUB_STREAM}
           AND e.tag = 'PlayerDeveloped'
           AND json_extract(entry.value, '$.playerId') = ${playerId}`;
 
-      const outcomes = yield* Effect.forEach(
-        rows,
-        (row) =>
-          decodeRecordedAttributes(row.attributes).pipe(
-            Effect.map((attributes): RecordedDevelopmentOutcome => ({ seasonNumber: row.seasonNumber, attributes })),
-          ),
-        { concurrency: 1 },
-      );
+      const outcomes = yield* Effect.forEach(rows, toRecordedOutcome, { concurrency: 1 });
 
-      return new PlayerDevelopmentHistoryView({ playerId, seasons: seasonDevelopments(outcomes) });
+      // The same club Coach the report is contextual to, and the same read Player Development uses
+      // to scale the growth above. `null` when the club has no coach — the report says so.
+      const coachQuality = yield* loadCoachQuality(player.clubId);
+
+      return new PlayerDevelopmentHistoryView({
+        playerId,
+        seasons: seasonDevelopments(outcomes),
+        coachQuality,
+      });
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped);
   });
 
@@ -330,9 +365,15 @@ export const getSquadDevelopment = (savesDir: string, saveId: SaveId) =>
         WHERE p.club_id = (SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1)
         ORDER BY p.last_name, p.first_name, p.id`;
 
-      const outcomeRows = yield* sql<{ playerId: PlayerId; seasonNumber: number; attributes: string }>`
+      const outcomeRows = yield* sql<{
+        playerId: PlayerId;
+        seasonNumber: number;
+        previousAttributes: string | null;
+        attributes: string;
+      }>`
         SELECT json_extract(entry.value, '$.playerId') as "playerId",
                json_extract(e.payload, '$.seasonNumber') as "seasonNumber",
+               json_extract(entry.value, '$.previousAttributes') as "previousAttributes",
                json_extract(entry.value, '$.attributes') as "attributes"
         FROM events e, json_each(e.payload, '$.players') entry
         WHERE e.stream_type = ${CLUB_STREAM}
@@ -343,10 +384,7 @@ export const getSquadDevelopment = (savesDir: string, saveId: SaveId) =>
 
       const outcomes = yield* Effect.forEach(
         outcomeRows,
-        (row) =>
-          decodeRecordedAttributes(row.attributes).pipe(
-            Effect.map((attributes) => ({ playerId: row.playerId, seasonNumber: row.seasonNumber, attributes })),
-          ),
+        (row) => toRecordedOutcome(row).pipe(Effect.map((outcome) => ({ playerId: row.playerId, ...outcome }))),
         { concurrency: 1 },
       );
       const outcomesOf = (playerId: PlayerId): ReadonlyArray<RecordedDevelopmentOutcome> =>

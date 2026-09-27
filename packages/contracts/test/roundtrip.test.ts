@@ -456,11 +456,14 @@ describe("RPC screen views", () => {
 });
 
 describe("Player Development & Training Focus schemas", () => {
-  it("PlayerDevelopedEvent round-trips a club's player Attribute set", () => {
+  it("PlayerDevelopedEvent round-trips an outcome with and without a previous baseline", () => {
     roundTrip(PlayerDevelopedEvent, {
-      seasonNumber: 1,
-      clubId: "c1",
+      seasonNumber: 1, clubId: "c1",
       players: [{ playerId: "p1", attributes }],
+    });
+    roundTrip(PlayerDevelopedEvent, {
+      seasonNumber: 2, clubId: "c1",
+      players: [{ playerId: "p1", previousAttributes: attributes, attributes }],
     });
   });
 

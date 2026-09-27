@@ -74,15 +74,14 @@ it.effect(
         "every other player carries the None default",
       );
 
-      // The first recorded Season has no starting point, so it carries no comparison.
+      // The first recorded Season carries its own baseline, so it names no compared Season.
       yield* withSave(save.id, Effect.flatMap(loadGameDate, (on) => developPlayersForSeason(1, on)));
       const afterOne = yield* getSquadDevelopment(savesDir, save.id);
       ok(
         afterOne.players.every(
           (player) =>
             player.latestSeason?.seasonNumber === 1 &&
-            player.latestSeason.comparedWithSeason === null &&
-            player.latestSeason.changes.length === 0,
+            player.latestSeason.comparedWithSeason === null,
         ),
       );
 
@@ -100,7 +99,7 @@ it.effect(
         afterTwo.players.some((player) => (player.latestSeason?.changes.length ?? 0) > 0),
         "some own-club player developed in Season 2, so the comparison is not vacuous",
       );
-      ok(afterTwo.players.every((player) => player.latestSeason?.comparedWithSeason === 1));
+      ok(afterTwo.players.every((player) => player.latestSeason?.comparedWithSeason === null));
 
       // Stable name order (last name, first name, id), the same as the Workload screen's.
       const order = afterTwo.players.map((player) => [player.lastName, player.firstName, player.id] as const);

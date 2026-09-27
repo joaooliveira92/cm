@@ -66,6 +66,20 @@ describe("seasonDevelopments", () => {
     ]);
   });
 
+  it("measures a Season against the baseline its own event carries, naming no compared Season", () => {
+    const seasons = seasonDevelopments([
+      { seasonNumber: 1, attributes: { passing: 10 } },
+      // Season 2's event carries its own starting point, so its delta is within-Season growth and
+      // `comparedWithSeason` is null — the UI's "Season baseline" — even though it has changes.
+      { seasonNumber: 2, previousAttributes: { passing: 10 }, attributes: { passing: 12 } },
+    ]);
+    expect(seasons.map((season) => [season.seasonNumber, season.comparedWithSeason])).toEqual([
+      [2, null],
+      [1, null],
+    ]);
+    expect(seasons[0]!.changes).toEqual([{ attribute: "passing", from: 10, to: 12 }]);
+  });
+
   it("lists changes in the fixed Attribute order, whatever order the payload's keys are in", () => {
     const [latest] = seasonDevelopments([
       { seasonNumber: 1, attributes: { decisions: 5, crossing: 5, strength: 5 } },
@@ -127,10 +141,14 @@ it.effect(
       strictEqual(yield* eventCount(save.id), eventsBefore, "a read appends nothing");
 
       strictEqual(history.playerId, moved.id);
+      // The report carries the contextual club Coach quality the growth above is scaled by.
+      strictEqual(typeof history.coachQuality, "number");
+      // Both Seasons carry their own baseline now, so each names no compared Season ("Season
+      // baseline"), and the newest Season's changes are still that Season's within-Season growth.
       deepStrictEqual(
         history.seasons.map((season) => [season.seasonNumber, season.comparedWithSeason]),
         [
-          [2, 1],
+          [2, null],
           [1, null],
         ],
       );

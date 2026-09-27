@@ -29,7 +29,12 @@ export const describeComparison = (season: {
   readonly changes: ReadonlyArray<unknown>;
 }): string => {
   if (season.comparedWithSeason === null) {
-    return "First recorded Season at your club. No earlier Attributes were recorded to compare with.";
+    // A Season whose event carries its own baseline is measured from the Attributes it opened with,
+    // so its delta is within-Season growth rather than a comparison with another Season. A legacy
+    // event with no baseline and no changes has nothing to show at all.
+    return season.changes.length === 0
+      ? "First recorded Season at your club. No earlier Attributes were recorded to compare with."
+      : "Season baseline — growth from the Attributes this Season started with:";
   }
   return season.changes.length === 0
     ? `No Attribute changed since Season ${season.comparedWithSeason}.`

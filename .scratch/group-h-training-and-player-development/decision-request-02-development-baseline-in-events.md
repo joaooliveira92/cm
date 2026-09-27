@@ -74,5 +74,5 @@ The fix also gets no cheaper by waiting: every Season that concludes before it l
 that can never show its changes.
 
 Settled with request 01 as
-[the Performance Report shows what it can prove](../../.agents/notes/proposed/feature/2026-09-19-the-performance-report-shows-what-it-can-prove.md).
+[the Performance Report shows what it can prove](../../.agents/notes/implemented/feature/2026-09-19-the-performance-report-shows-what-it-can-prove.md).
 Decided under the human's standing delegation ("i need you to solve the decisions").

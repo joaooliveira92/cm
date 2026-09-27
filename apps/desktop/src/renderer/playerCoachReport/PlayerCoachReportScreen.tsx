@@ -18,6 +18,7 @@
  * Mounted at `/career/$saveId/player/$playerId/coach-report` under the `playerCoachReport` scope.
  */
 import type { PlayerDevelopmentHistoryView, PlayerId, SaveId } from "@cm-clone/contracts";
+import type { ReactNode } from "react";
 import { FOCUS_RING } from "../focus.js";
 import {
   describeRpcError,
@@ -70,14 +71,25 @@ export const PlayerCoachReportScreen = ({
         {name} — Performance Report
       </h1>
 
-      <section className="mt-6 max-w-2xl" aria-labelledby="report-focus-heading">
-        <h2 id="report-focus-heading" className="text-lg font-semibold">
-          Training Focus
-        </h2>
-        <div className="mt-3">
-          <TrainingPlanSummaryCard playerName={name} focus={player.trainingFocus} />
-        </div>
-      </section>
+      <div className="mt-6 grid max-w-4xl gap-6 sm:grid-cols-2">
+        <section aria-labelledby="report-focus-heading">
+          <h2 id="report-focus-heading" className="text-lg font-semibold">
+            Training Focus
+          </h2>
+          <div className="mt-3">
+            <TrainingPlanSummaryCard playerName={name} focus={player.trainingFocus} />
+          </div>
+        </section>
+
+        <section aria-labelledby="report-coach-heading">
+          <h2 id="report-coach-heading" className="text-lg font-semibold">
+            Coach quality
+          </h2>
+          <div className="mt-3">
+            <CoachQualityCard saveId={saveId} playerId={playerId} />
+          </div>
+        </section>
+      </div>
 
       <section className="mt-8 max-w-2xl" aria-labelledby="report-progress-heading">
         <h2 id="report-progress-heading" className="text-lg font-semibold">
@@ -93,6 +105,57 @@ export const PlayerCoachReportScreen = ({
     </main>
   );
 };
+
+/**
+ * Coach quality panel (Screen 113): the club Coach's 1-20 value — the same one Coaching Assignments
+ * shows, and the multiplier Player Development applies each Season — or an explicit notice when no
+ * coach is appointed. It reads its own subscription to the history atom, so it can sit beside
+ * Training Focus without waiting on the Seasons list's own load.
+ */
+const CoachQualityCard = ({ saveId, playerId }: { readonly saveId: SaveId; readonly playerId: PlayerId }) => {
+  const result = useAtomValue(playerDevelopmentHistoryAtom(saveId, playerId));
+
+  if (result._tag === "Initial") {
+    return <CoachQualityShell>Loading coach quality...</CoachQualityShell>;
+  }
+  if (result._tag === "Failure") {
+    return <CoachQualityShell>Coach quality could not be loaded.</CoachQualityShell>;
+  }
+
+  const quality = result.value.coachQuality;
+  if (quality === null) {
+    return (
+      <CoachQualityShell>
+        No coach appointed. Player Development runs on the unmodified baseline.
+      </CoachQualityShell>
+    );
+  }
+
+  return (
+    <CoachQualityShell>
+      <div className="flex items-baseline gap-1.5">
+        <span className="text-2xl font-bold tabular-nums text-text-primary">{quality}</span>
+        <span className="text-sm text-text-secondary">/ 20</span>
+      </div>
+      {/* Decorative: the value is already in text above, so the bar adds no second reading. */}
+      <div aria-hidden="true" className="mt-2 h-2 w-full overflow-hidden rounded-full bg-panel-bg">
+        <div className="h-full rounded-full bg-primary" style={{ width: `${(quality / 20) * 100}%` }} />
+      </div>
+      <p className="mt-2 text-xs text-text-secondary">
+        Scales the club's Player Development when each Season concludes.
+      </p>
+    </CoachQualityShell>
+  );
+};
+
+const CoachQualityShell = ({ children }: { readonly children: ReactNode }) => (
+  <section
+    aria-label="Club coach quality"
+    className="rounded-panel border border-panel-border bg-card p-4 text-card-foreground shadow-panel"
+  >
+    {children}
+  </section>
+);
 
 const DevelopmentProgress = ({ saveId, playerId }: { readonly saveId: SaveId; readonly playerId: PlayerId }) => {
   const result = useAtomValue(playerDevelopmentHistoryAtom(saveId, playerId));

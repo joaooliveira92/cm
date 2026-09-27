@@ -6,14 +6,20 @@ import { AttributesSchema, NullableTrainingFocusSchema, TrainingFocusSchema } fr
 import { StaffDepartmentSchema } from "./clubs.js";
 
 /** The `PlayerDeveloped` event the Club Decider emits once per `SeasonConcluded` (per club),
- * carrying every player's resulting Attribute set — a development *outcome*, distinct from the
- * between-season state change `TrainingFocusSet`. */
+ *  carrying every player's resulting Attribute set — a development *outcome*, distinct from the
+ *  between-season state change `TrainingFocusSet`.
+ *
+ *  Each entry also carries `previousAttributes`, the set the Season started from, so a Season can
+ *  be measured against its own baseline rather than only against the previous recorded outcome. It
+ *  is optional because events appended before the field existed do not carry it; an absent baseline
+ *  is the Performance Report's explicit no-comparison state. */
 export class PlayerDevelopedEvent extends Schema.Class<PlayerDevelopedEvent>("PlayerDevelopedEvent")({
   seasonNumber: Schema.Finite,
   clubId: ClubId,
   players: Schema.Array(
     Schema.Struct({
       playerId: PlayerId,
+      previousAttributes: Schema.optional(AttributesSchema),
       attributes: AttributesSchema,
     }),
   ),
@@ -122,12 +128,17 @@ export class SeasonDevelopmentView extends Schema.Class<SeasonDevelopmentView>("
 }) {}
 
 /** Performance Report (Screen 113): one own-club player's recorded Player Development, newest
- *  Season first. Empty until a Season has concluded with the player on the manager's club. */
+ *  Season first. Empty until a Season has concluded with the player on the manager's club.
+ *
+ *  `coachQuality` is the contextual club fact the report shows beside the development: the Coach's
+ *  1-20 quality, the same value Player Development is scaled by and the same one Coaching
+ *  Assignments (Screen 111) shows, or `null` when the club has no coach appointed. */
 export class PlayerDevelopmentHistoryView extends Schema.Class<PlayerDevelopmentHistoryView>(
   "PlayerDevelopmentHistoryView",
 )({
   playerId: PlayerId,
   seasons: Schema.Array(SeasonDevelopmentView),
+  coachQuality: Schema.NullOr(Schema.Finite),
 }) {}
 
 /**

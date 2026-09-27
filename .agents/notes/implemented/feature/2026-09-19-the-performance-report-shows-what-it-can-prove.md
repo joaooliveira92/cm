@@ -1,6 +1,6 @@
 # Agent Note: The Performance Report shows what it can prove
 
-Status: proposed
+Status: implemented
 
 Settles group-h decision requests 01 and 02. Both are about Screen 113, and both are cases of a screen
 promising more than the data behind it supports.

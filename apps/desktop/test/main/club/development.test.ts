@@ -7,8 +7,9 @@ import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { ageOn, coachModifier, developPlayer, type Category, type PlayerAttributes } from "@cm-clone/shared";
 import type { ClubId, PlayerId, SaveId } from "@cm-clone/contracts";
+import { PlayerDevelopedEvent } from "@cm-clone/contracts";
 import { loadCoachQuality } from "../../../src/main/career/index.js";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { advanceThroughBoundary } from "../boundary-helpers.js";
@@ -72,6 +73,24 @@ const countEvents = (saveId: string, streamType: string, tag: string) =>
       return rows[0]!.n;
     }),
   );
+
+/** The recorded `PlayerDeveloped` event, decoded — the writer's own payload read back, so a test can
+ *  prove it carries each player's pre-development baseline as well as the outcome (group-h 07). */
+const recordedPlayerDeveloped = (saveId: SaveId) =>
+  withSave(
+    saveId,
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      const rows = yield* sql<{ payload: string }>`
+        SELECT payload FROM events WHERE stream_type = 'club' AND tag = 'PlayerDeveloped' LIMIT 1`;
+      return Schema.decodeUnknownSync(PlayerDevelopedEvent)(JSON.parse(rows[0]!.payload));
+    }),
+  );
+
+/** Drop keys whose value is `undefined`, so a decoded event — which cannot carry `undefined` through
+ *  JSON — compares equal to an in-memory Attribute set that still has the optional keys present. */
+const definedOnly = (attributes: Record<string, unknown>): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(attributes).filter(([, value]) => value !== undefined));
 
 /** The game date Season `seasonNumber` concluded on — the date Player Development measures every
  * player's age against, which is not the date the squad was read on before the Season. */
@@ -148,6 +167,26 @@ it.effect("advancing to SeasonConcluded develops every user-club player determin
     // One PlayerDeveloped event, on the human club's stream and no other. Every club's players
     // still develop — `players` is authoritative for what their attributes became — but recording
     // that for clubs nobody manages cost a measured ~204 MB of payloads per season (ticket 17).
+    const event = yield* recordedPlayerDeveloped(save.id);
+    ok(
+      event.players.every((entry) => entry.previousAttributes !== undefined),
+      "every recorded player carries the Season's starting Attribute set",
+    );
+    for (const player of after) {
+      const entry = event.players.find((p) => p.playerId === player.id);
+      ok(entry, `event entry for ${player.id}`);
+      deepStrictEqual(
+        definedOnly(entry.previousAttributes ?? {}),
+        definedOnly(before.find((p) => p.id === player.id)!.attributes as Record<string, unknown>),
+        `the record's baseline must be the pre-development set for ${player.id}`,
+      );
+      deepStrictEqual(
+        definedOnly(entry.attributes as Record<string, unknown>),
+        definedOnly(expected.get(player.id) as Record<string, unknown>),
+        `the record's outcome for ${player.id}`,
+      );
+    }
+
     const clubCount = yield* withSave(
       save.id,
       Effect.gen(function* () {

@@ -59,8 +59,10 @@ describe("Performance Report development history (Screen 113)", () => {
     roundTrip(PlayerDevelopmentHistoryView, {
       playerId: "p1",
       seasons: [season(), season({ seasonNumber: 1, comparedWithSeason: null, changes: [] })],
+      coachQuality: 14,
     });
-    roundTrip(PlayerDevelopmentHistoryView, { playerId: "p1", seasons: [] });
+    // A club with no coach appointed carries the contextual null rather than a fabricated value.
+    roundTrip(PlayerDevelopmentHistoryView, { playerId: "p1", seasons: [], coachQuality: null });
   });
 
   it("is the getPlayerDevelopmentHistory success schema", () => {
