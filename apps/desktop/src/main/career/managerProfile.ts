@@ -1,11 +1,13 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   ClubId,
+  FormationSchema,
   ManagerArchetypeSchema,
   ManagerProfileNotFoundError,
   ManagerProfileScreenView,
   ManagerProfileView,
   NationId,
+  TacticalStylePresetSchema,
   type SaveId,
 } from "@cm-clone/contracts";
 import { nationName } from "@cm-clone/shared";
@@ -26,6 +28,11 @@ export const loadManagerProfile = Effect.gen(function* () {
     nationalityId: string;
     dateOfBirth: string;
     favoriteClubId: string | null;
+    preferredFormation: string;
+    preferredStyleId: string;
+    avatarPortraitKey: string | null;
+    avatarPrimaryColor: string;
+    avatarSecondaryColor: string;
     archetypeOrigin: string;
     tacticalAcumen: number;
     influence: number;
@@ -33,7 +40,10 @@ export const loadManagerProfile = Effect.gen(function* () {
     technicalCoaching: number;
   }>`SELECT first_name as "firstName", last_name as "lastName",
             nationality_id as "nationalityId", date_of_birth as "dateOfBirth",
-            favorite_club_id as "favoriteClubId", archetype_origin as "archetypeOrigin",
+            favorite_club_id as "favoriteClubId", preferred_formation as "preferredFormation",
+            preferred_style_id as "preferredStyleId", avatar_portrait_key as "avatarPortraitKey",
+            avatar_primary_color as "avatarPrimaryColor", avatar_secondary_color as "avatarSecondaryColor",
+            archetype_origin as "archetypeOrigin",
             tactical_acumen as "tacticalAcumen", influence,
             regimen, technical_coaching as "technicalCoaching"
      FROM manager_profile WHERE id = 1`;
@@ -44,6 +54,11 @@ export const loadManagerProfile = Effect.gen(function* () {
         nationalityId: rows[0].nationalityId,
         dateOfBirth: rows[0].dateOfBirth,
         favoriteClubId: rows[0].favoriteClubId,
+        preferredFormation: rows[0].preferredFormation,
+        preferredStyleId: rows[0].preferredStyleId,
+        avatarPortraitKey: rows[0].avatarPortraitKey,
+        avatarPrimaryColor: rows[0].avatarPrimaryColor,
+        avatarSecondaryColor: rows[0].avatarSecondaryColor,
         archetypeOrigin: rows[0].archetypeOrigin,
         pillars: {
           tacticalAcumen: rows[0].tacticalAcumen,
@@ -73,6 +88,11 @@ const decodeProfile = Effect.gen(function* () {
     favoriteClubId: profile.favoriteClubId === null ? null : ClubId.make(profile.favoriteClubId),
     favoriteClubName:
       profile.favoriteClubId === null ? null : resolveName(profile.favoriteClubId),
+    preferredFormation: yield* Schema.decodeUnknownEffect(FormationSchema)(profile.preferredFormation),
+    preferredStyleId: yield* Schema.decodeUnknownEffect(TacticalStylePresetSchema)(profile.preferredStyleId),
+    avatarPortraitKey: profile.avatarPortraitKey,
+    avatarPrimaryColor: profile.avatarPrimaryColor,
+    avatarSecondaryColor: profile.avatarSecondaryColor,
     archetypeOrigin: yield* Schema.decodeUnknownEffect(ManagerArchetypeSchema)(profile.archetypeOrigin),
     pillars: profile.pillars,
   });

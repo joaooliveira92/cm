@@ -278,6 +278,11 @@ export interface ManagerProfileParams {
   readonly nationalityId: string;
   readonly dateOfBirth: string;
   readonly favoriteClubId: ClubId | null;
+  readonly preferredFormation: string;
+  readonly preferredStyleId: string;
+  readonly avatarPortraitKey: string | null;
+  readonly avatarPrimaryColor: string;
+  readonly avatarSecondaryColor: string;
   readonly archetypeOrigin: string;
   readonly pillars: PillarDistribution;
 }
@@ -316,9 +321,11 @@ export const commitCareer = (
       }
       yield* sql`UPDATE clubs SET is_user_club = 1 WHERE id = ${selectedClubId}`;
       yield* materialiseStaff(selectedClubId);
-      yield* sql`INSERT INTO manager_profile (id, first_name, last_name, nationality_id, date_of_birth, favorite_club_id, archetype_origin, tactical_acumen, influence, regimen, technical_coaching)
+      yield* sql`INSERT INTO manager_profile (id, first_name, last_name, nationality_id, date_of_birth, favorite_club_id, preferred_formation, preferred_style_id, avatar_portrait_key, avatar_primary_color, avatar_secondary_color, archetype_origin, tactical_acumen, influence, regimen, technical_coaching)
         VALUES (1, ${managerProfile.firstName}, ${managerProfile.lastName}, ${managerProfile.nationalityId},
-          ${managerProfile.dateOfBirth}, ${managerProfile.favoriteClubId}, ${managerProfile.archetypeOrigin},
+          ${managerProfile.dateOfBirth}, ${managerProfile.favoriteClubId}, ${managerProfile.preferredFormation},
+          ${managerProfile.preferredStyleId}, ${managerProfile.avatarPortraitKey}, ${managerProfile.avatarPrimaryColor},
+          ${managerProfile.avatarSecondaryColor}, ${managerProfile.archetypeOrigin},
           ${managerProfile.pillars.tacticalAcumen}, ${managerProfile.pillars.influence}, ${managerProfile.pillars.regimen}, ${managerProfile.pillars.technicalCoaching})`;
       yield* startSeason(id);
       yield* sql`INSERT INTO save_meta (id, name, created_at) VALUES (${id}, ${name}, ${createdAt})`;
@@ -382,7 +389,9 @@ export const createSave = (
     }
     // The shim's caller supplies one free-text save name, so it is split into a first and last
     // name here; tests that care about the manager's identity pass their own profile to
-    // `commitCareer` directly rather than going through this backwards-compatible path.
+    // `commitCareer` directly rather than going through this backwards-compatible path. The
+    // tactical identity and appearance are fixed neutral defaults: the shim has no player to ask,
+    // and a complete `manager_profile` row is what the NOT NULL columns require.
     const [firstName = "Manager", ...rest] = name.trim().split(/\s+/);
     const lastName = rest.length > 0 ? rest.join(" ") : firstName;
     return yield* commitCareer(savesDir, id, name, selectedClubId, {
@@ -391,6 +400,11 @@ export const createSave = (
       nationalityId: "nation_eng",
       dateOfBirth: "1980-01-01",
       favoriteClubId: null,
+      preferredFormation: "4-4-2",
+      preferredStyleId: "balanced",
+      avatarPortraitKey: null,
+      avatarPrimaryColor: "#1f2937",
+      avatarSecondaryColor: "#f8fafc",
       archetypeOrigin: "custom",
       pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
     });

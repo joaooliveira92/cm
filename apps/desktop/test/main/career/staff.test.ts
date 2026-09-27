@@ -123,6 +123,11 @@ describe("a backroom is a property of the club, not of the visit", () => {
         nationalityId: "nation_eng",
         dateOfBirth: "1980-01-01",
         favoriteClubId: null,
+        preferredFormation: "4-4-2",
+        preferredStyleId: "balanced",
+        avatarPortraitKey: null,
+        avatarPrimaryColor: "#1f2937",
+        avatarSecondaryColor: "#f8fafc",
         archetypeOrigin: "custom",
         pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
       });

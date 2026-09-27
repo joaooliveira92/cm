@@ -30,6 +30,11 @@ export const STEPS: ReadonlyArray<{
       title: "Manager identity",
       description: "Allocate your manager's strengths",
     },
+    {
+      number: 3,
+      title: "Style & Appearance",
+      description: "Set your style and colours",
+    },
   ];
 
 export const PILLAR_DISPLAY_NAMES: Readonly<Record<Pillar, string>> = {

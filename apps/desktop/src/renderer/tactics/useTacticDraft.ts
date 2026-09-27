@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PlayerId, Tactic, WriteRequestId, type SaveId } from "@cm-clone/contracts";
-import { FORMATION_SLOTS, POSITION_ROLES, emptyBench, type Formation } from "@cm-clone/shared";
+import {
+  FORMATION_SLOTS,
+  POSITION_ROLES,
+  TACTICAL_STYLE_DEFAULTS,
+  emptyBench,
+  type Formation,
+  type TacticalStyleDefaults,
+} from "@cm-clone/shared";
 import {
   changeTacticsMutation,
+  managerProfileAtom,
   tacticsAtom,
   typedError,
   useAtomRefresh,
@@ -11,9 +19,10 @@ import {
   type RpcClientError,
 } from "../rpc.js";
 
-/** A screen-safe default Tactic (formation's slots empty, empty bench) so an editor that owns the
- *  same persist path never runs against a null Tactic while the first load is still in flight. */
-export const defaultTacticFor = (formation: Formation): Tactic =>
+/** A Tactic seeded from a Formation and a set of Team Instructions: the Formation's slots, none of
+ *  them named, an empty bench, and the given axes. The screen-safe default below and the manager's
+ *  preferred style both build on this, so neither can drift from the other. */
+export const tacticSeedFor = (formation: Formation, defaults: TacticalStyleDefaults): Tactic =>
   new Tactic({
     formation,
     slots: FORMATION_SLOTS[formation].map((position) => ({
@@ -22,10 +31,15 @@ export const defaultTacticFor = (formation: Formation): Tactic =>
       playerId: PlayerId.make(""),
     })),
     bench: emptyBench(),
-    mentality: "balanced",
-    tempo: "normal",
-    pressing: "medium",
+    mentality: defaults.mentality,
+    tempo: defaults.tempo,
+    pressing: defaults.pressing,
   });
+
+/** A screen-safe default Tactic (formation's slots empty, empty bench) so an editor that owns the
+ *  same persist path never runs against a null Tactic while the first load is still in flight. */
+export const defaultTacticFor = (formation: Formation): Tactic =>
+  tacticSeedFor(formation, { mentality: "balanced", tempo: "normal", pressing: "medium" });
 
 /** The server's current tactic revision, when a save failed because a newer one won the race.
  *  `null` for every other failure — a stale submit is the one case an editor offers Refresh for. */
@@ -57,6 +71,7 @@ export type TacticDraft = ReturnType<typeof useTacticDraft>;
  */
 export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) => {
   const viewResult = useAtomValue(tacticsAtom(saveId));
+  const profileResult = useAtomValue(managerProfileAtom(saveId));
   const refreshTactics = useAtomRefresh(tacticsAtom(saveId));
   const [draft, setDraft] = useState<Tactic | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -75,24 +90,40 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
 
   const saveTactic = useAtomSet(changeTacticsMutation, { mode: "promise" });
 
-  useEffect(() => {
-    if (draft === null && viewResult._tag === "Success") {
-      setDraft(viewResult.value.tactic ?? defaultTacticFor("4-4-2"));
-      setRevision(viewResult.value.revision);
+  /**
+   * The Tactic a career with none opens with: the manager's stated formation and Tactical Style,
+   * both chosen at career creation. This is the only place the preferences are read — the seed
+   * lives in the editor's initial state, so `commitCareer` writes no Tactic and the `no-tactic`
+   * onboarding blocker is preserved. A profile that fails to load falls back to the screen default.
+   */
+  const managerSeededTactic = useCallback((): Tactic => {
+    if (profileResult._tag === "Success") {
+      const { preferredFormation, preferredStyleId } = profileResult.value.profile;
+      return tacticSeedFor(preferredFormation, TACTICAL_STYLE_DEFAULTS[preferredStyleId]);
     }
-  }, [draft, viewResult]);
+    return defaultTacticFor("4-4-2");
+  }, [profileResult]);
+
+  useEffect(() => {
+    if (draft !== null || viewResult._tag !== "Success") return;
+    // Wait for the manager's preferences before seeding a career that has no Tactic; otherwise the
+    // first paint would seed 4-4-2 balanced and never re-seed once the profile arrived.
+    if (viewResult.value.tactic === null && profileResult._tag === "Initial") return;
+    setDraft(viewResult.value.tactic ?? managerSeededTactic());
+    setRevision(viewResult.value.revision);
+  }, [draft, viewResult, profileResult, managerSeededTactic]);
 
   // A refresh discards the draft and the conflict once the refetched view moves past the stale
   // revision — not before, when the view still carries the old value.
   useEffect(() => {
     if (viewResult._tag !== "Success" || refreshFrom.current === null) return;
     if (viewResult.value.revision === refreshFrom.current) return;
-    setDraft(viewResult.value.tactic ?? defaultTacticFor("4-4-2"));
+    setDraft(viewResult.value.tactic ?? managerSeededTactic());
     setRevision(viewResult.value.revision);
     refreshFrom.current = null;
     setConflict(null);
     setStatus(null);
-  }, [viewResult]);
+  }, [viewResult, managerSeededTactic]);
 
   const viewError = typedError(viewResult);
 

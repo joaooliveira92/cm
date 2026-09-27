@@ -3,6 +3,7 @@ import { MANAGER_ARCHETYPES } from "@cm-clone/shared";
 
 import { ClubColoursView } from "./clubs.js";
 import { ClubId, NationId } from "./ids.js";
+import { FormationSchema, TacticalStylePresetSchema } from "./tactics.js";
 
 export const ManagerArchetypeSchema = Schema.Literals(MANAGER_ARCHETYPES);
 
@@ -28,6 +29,15 @@ export class ManagerProfileView extends Schema.Class<ManagerProfileView>("Manage
   favoriteClubId: Schema.NullOr(ClubId),
   /** The favorite club's resolved display name, or null when none was chosen. */
   favoriteClubName: Schema.NullOr(Schema.String),
+  /** The formation and tactical style the manager starts from, chosen at creation. They seed the
+   *  first Tactic's instructions; neither is stored on the Tactic itself. */
+  preferredFormation: FormationSchema,
+  preferredStyleId: TacticalStylePresetSchema,
+  /** A code-resolvable portrait key, null until a portrait asset set exists. */
+  avatarPortraitKey: Schema.NullOr(Schema.String),
+  /** The accent scheme the colour/initials fallback renders, as hex strings. */
+  avatarPrimaryColor: Schema.String,
+  avatarSecondaryColor: Schema.String,
   archetypeOrigin: ManagerArchetypeSchema,
   pillars: PillarDistribution,
 }) {}

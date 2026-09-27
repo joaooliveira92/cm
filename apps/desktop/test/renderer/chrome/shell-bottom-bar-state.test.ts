@@ -14,7 +14,9 @@ const creationInput = (over: Partial<CreationBottomBarInput> = {}): CreationBott
   step: "1",
   generationBlockedReason: null,
   personalDetailsComplete: true,
-  managerStep: 2,
+  pillarsComplete: true,
+  managerStyleComplete: true,
+  managerStep: 3,
   managerStepComplete: true,
   selectionReady: true,
   clubPicked: false,
@@ -101,7 +103,7 @@ describe("describeCreationBottomBar", () => {
     const plan = describeCreationBottomBar(
       creationInput({
         step: "1",
-        managerStep: 2,
+        managerStep: 3,
         managerStepComplete: false,
         selectionReady: false,
         generationBlockedReason: "Building the league first…",
@@ -109,6 +111,41 @@ describe("describeCreationBottomBar", () => {
     );
 
     expect(plan.reason).toBe("Building the league first…");
+  });
+
+  it("advances to the style panel once the pillars are complete", () => {
+    const plan = describeCreationBottomBar(
+      creationInput({ managerStep: 2, pillarsComplete: true }),
+    );
+
+    expect(plan.primary?.id).toBe("next-manager-style");
+    expect(plan.primary?.label).toBe("Next: Style & Appearance");
+    expect(plan.primary?.disabled).toBe(false);
+    expect(plan.reason).toBeNull();
+  });
+
+  it("blocks the style panel until the pillar budget is spent", () => {
+    const plan = describeCreationBottomBar(
+      creationInput({ managerStep: 2, pillarsComplete: false }),
+    );
+
+    expect(plan.primary?.id).toBe("next-manager-style");
+    expect(plan.primary?.disabled).toBe(true);
+    expect(plan.reason).toBe("Spend all 12 pillar points to continue.");
+  });
+
+  it("blocks the club step until a formation and style are chosen", () => {
+    const plan = describeCreationBottomBar(
+      creationInput({
+        managerStep: 3,
+        managerStepComplete: false,
+        managerStyleComplete: false,
+      }),
+    );
+
+    expect(plan.primary?.id).toBe("next-club");
+    expect(plan.primary?.disabled).toBe(true);
+    expect(plan.reason).toBe("Choose a formation and a tactical style to continue.");
   });
 
   it("says nothing once the forward verb is pressable", () => {

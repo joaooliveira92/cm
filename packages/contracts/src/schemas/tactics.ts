@@ -4,6 +4,7 @@ import {
   MENTALITY_OPTIONS,
   PRESSING_OPTIONS,
   ROLES,
+  TACTICAL_STYLE_PRESETS,
   TEMPO_OPTIONS,
 } from "@cm-clone/shared";
 
@@ -19,6 +20,9 @@ export type Role = typeof RoleSchema.Type;
 export const MentalitySchema = Schema.Literals(MENTALITY_OPTIONS);
 export const TempoSchema = Schema.Literals(TEMPO_OPTIONS);
 export const PressingSchema = Schema.Literals(PRESSING_OPTIONS);
+/** The manager's preferred Tactical Style (`TACTICAL_STYLE_PRESETS`), chosen at career creation.
+ *  Not a Tactic field: it seeds a Tactic's three instructions but is never stored on one. */
+export const TacticalStylePresetSchema = Schema.Literals(TACTICAL_STYLE_PRESETS);
 
 export class TacticSlot extends Schema.Class<TacticSlot>("TacticSlot")({
   position: PositionSchema,

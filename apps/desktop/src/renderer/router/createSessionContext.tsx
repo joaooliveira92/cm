@@ -1,7 +1,7 @@
 import type { BottomBarPlan } from "../chrome/bottom-bar/index.js";
 import { createContext, use } from "react";
 import type { ClubId, LeagueSelectionSnapshot, NationId } from "@cm-clone/contracts";
-import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
+import type { Formation, ManagerArchetype, PillarDistribution, TacticalStylePreset } from "@cm-clone/shared";
 import type { ClubSelectionRecord } from "../create/clubSelection.js";
 import type { FavoriteTeamRecord } from "../create/favoriteTeam.js";
 import type { GenerationState } from "../create/generation.js";
@@ -9,10 +9,10 @@ import type { GenerationState } from "../create/generation.js";
 export type CommitStatus = "idle" | "committing" | "committed";
 
 /** Which sub-panel of the Manager step ("Step 2 of 4") is showing: the personal
- *  details form (1) or the pillar-allocation panel (2). Lives in the session so
- *  the shell's bottom bar can drive the same progression the in-panel stepper
- *  does; the Manager step's depends on it. */
-export type ManagerSubStep = 1 | 2;
+ *  details form (1), the pillar-allocation panel (2), or the style & appearance
+ *  panel (3). Lives in the session so the shell's bottom bar can drive the same
+ *  progression the in-panel stepper does. */
+export type ManagerSubStep = 1 | 2 | 3;
 
 export interface CreationSession {
   /** The scope this career is being created at (Screen 3). `null` until League and Nation
@@ -33,6 +33,16 @@ export interface CreationSession {
    *  `selectedFavoriteTeamOf` is the read path, because a record left over from a replaced world
    *  is not a selection. Optional: not every manager supports a club. */
   readonly favoriteTeam: FavoriteTeamRecord | null;
+  /** The manager's tactical identity: the formation and style their first Tactic seeds from, or
+   *  `null` until the Style & Appearance panel has collected them. They start unset so the panel's
+   *  completion gate is a real choice rather than a pre-filled no-op. */
+  readonly preferredFormation: Formation | null;
+  readonly preferredStyleId: TacticalStylePreset | null;
+  /** The manager's appearance. `avatarPortraitKey` is null until a portrait asset set exists; the
+   *  two colours are the accent scheme the colour/initials fallback renders. */
+  readonly avatarPortraitKey: string | null;
+  readonly avatarPrimaryColor: string;
+  readonly avatarSecondaryColor: string;
   readonly archetype: ManagerArchetype;
   readonly pillars: PillarDistribution;
   /** The Manager step's active sub-panel: 1 = personal details, 2 = manager identity. */

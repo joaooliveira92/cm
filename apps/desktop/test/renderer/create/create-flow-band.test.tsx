@@ -12,7 +12,7 @@ import { Effect } from "effect";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { buildLeaguePresetIntents, getLeagueSetupIndex, resolveLeagueSelection } from "../../../src/main/world/index.js";
 import { CreateFlowLayout } from "../../../src/renderer/create/CreateFlowLayout.js";
-import { fillPersonalDetails } from "./personalDetails.js";
+import { completeManagerStep, fillPersonalDetails } from "./personalDetails.js";
 import {
   LeagueSelectionRouteContent,
   StepOneRouteContent,
@@ -211,7 +211,7 @@ const advanceThroughLeagues = async (): Promise<void> => {
   fireEvent.click(button);
 
   await fillPersonalDetails();
-  fireEvent.click(screen.getByRole("button", { name: "Next: Manager Identity" }));
+  await completeManagerStep();
   await screen.findByRole("button", { name: "Next: Select Club" }, { timeout: 3000 });
 };
 
@@ -238,7 +238,7 @@ describe("the pre-career chrome band", () => {
     await advanceThroughLeagues();
 
     // Step 2: the indicator follows the route and Back joins the band.
-    await screen.findByLabelText("Save name");
+    await screen.findByRole("heading", { name: "Style & Appearance" });
     expect(within(band()).getByText("Step 2 of 4 · Manager")).toBeTruthy();
     expect(within(band()).getByRole("button", { name: "Back: Leagues" })).toBeTruthy();
     expect(within(band()).getByRole("button", { name: "Cancel" })).toBeTruthy();

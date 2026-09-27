@@ -179,8 +179,8 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
     }),
   commitCareer: (payload, ctx) =>
     Effect.gen(function* () {
-      const { id, name, selectedClubId, firstName, lastName, nationalityId, dateOfBirth, favoriteClubId, archetypeOrigin, pillars } = yield* Schema.decodeUnknownEffect(AppRpcs.commitCareer.payload)(payload);
-      return yield* commitCareer(ctx.savesDir, id, name, selectedClubId, { firstName, lastName, nationalityId, dateOfBirth, favoriteClubId, archetypeOrigin, pillars });
+      const { id, name, selectedClubId, firstName, lastName, nationalityId, dateOfBirth, favoriteClubId, preferredFormation, preferredStyleId, avatarPortraitKey, avatarPrimaryColor, avatarSecondaryColor, archetypeOrigin, pillars } = yield* Schema.decodeUnknownEffect(AppRpcs.commitCareer.payload)(payload);
+      return yield* commitCareer(ctx.savesDir, id, name, selectedClubId, { firstName, lastName, nationalityId, dateOfBirth, favoriteClubId, preferredFormation, preferredStyleId, avatarPortraitKey, avatarPrimaryColor, avatarSecondaryColor, archetypeOrigin, pillars });
     }),
   discardCareer: (payload, ctx) =>
     Effect.gen(function* () {

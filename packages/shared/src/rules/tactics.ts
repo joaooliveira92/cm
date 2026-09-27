@@ -101,3 +101,49 @@ export const PRESSING_MULTIPLIERS: Record<
   medium: { pressingAggression: 1.0, fatigueDecayMultiplier: 1.0 },
   high: { pressingAggression: 1.15, fatigueDecayMultiplier: 2.0 },
 };
+
+/**
+ * The manager's preferred Tactical Style, chosen at career creation and stored as
+ * `manager_profile.preferred_style_id`.
+ *
+ * A style is not a fourth Team Instruction: it is a named starting point for the three axes the
+ * Tactic already has (`mentality`, `tempo`, `pressing`). It exists so a new manager has an identity
+ * to seed their first Tactic from, not so the match engine can read "Gegenpress" anywhere. That is
+ * why there is no `tactical_styles` table and no style column on `tactics`: the only durable fact is
+ * the manager's preferred preset id, and the axes are derived from it by `TACTICAL_STYLE_DEFAULTS`.
+ *
+ * Display names ("Gegenpress", "Tiki-Taka") are UI vocabulary and live in the renderer, matching
+ * how manager Archetype labels do.
+ */
+export const TACTICAL_STYLE_PRESETS = [
+  "gegenpress",
+  "tiki_taka",
+  "catenaccio",
+  "direct",
+  "possession",
+  "balanced",
+] as const;
+export type TacticalStylePreset = (typeof TACTICAL_STYLE_PRESETS)[number];
+
+/** The three Team Instructions a style seeds, all drawn from the Tactic's own axes. */
+export interface TacticalStyleDefaults {
+  readonly mentality: Mentality;
+  readonly tempo: Tempo;
+  readonly pressing: Pressing;
+}
+
+/**
+ * What each preset's first Tactic starts from. The mapping is total over `TACTICAL_STYLE_PRESETS`
+ * (a missing key is a compile error), so a new preset cannot ship without its instructions.
+ *
+ * These are starting points, not constraints: every axis stays freely editable in the Tactics
+ * editor, and nothing in the match engine reads the preset id.
+ */
+export const TACTICAL_STYLE_DEFAULTS: Record<TacticalStylePreset, TacticalStyleDefaults> = {
+  gegenpress: { mentality: "attacking", tempo: "fast", pressing: "high" },
+  tiki_taka: { mentality: "attacking", tempo: "slow", pressing: "medium" },
+  catenaccio: { mentality: "defensive", tempo: "slow", pressing: "low" },
+  direct: { mentality: "balanced", tempo: "fast", pressing: "medium" },
+  possession: { mentality: "balanced", tempo: "slow", pressing: "medium" },
+  balanced: { mentality: "balanced", tempo: "normal", pressing: "medium" },
+};

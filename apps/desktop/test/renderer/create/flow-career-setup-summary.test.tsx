@@ -12,7 +12,7 @@ import { Effect } from "effect";
 import { bindRouter, navigate } from "../../../src/renderer/navigation/adapter.js";
 import { buildLeaguePresetIntents, getLeagueSetupIndex, resolveLeagueSelection } from "../../../src/main/world/index.js";
 import { CreateFlowLayout } from "../../../src/renderer/create/CreateFlowLayout.js";
-import { fillPersonalDetails } from "./personalDetails.js";
+import { completeManagerStep, fillPersonalDetails } from "./personalDetails.js";
 import {
   LeagueSelectionRouteContent,
   StepOneRouteContent,
@@ -235,7 +235,7 @@ const reachReviewStep = async (): Promise<void> => {
   fireEvent.click(button);
 
   await fillPersonalDetails();
-  fireEvent.click(await screen.findByRole("button", { name: "Next: Manager Identity" }));
+  await completeManagerStep();
 
   const next = await screen.findByRole("button", { name: "Next: Select Club" }, { timeout: 3000 });
   await waitFor(() => expect((next as HTMLButtonElement).disabled).toBe(false));
@@ -346,7 +346,7 @@ describe("Step 4 — Review is the Career Setup Summary", () => {
     expect(within(worldPanel()).queryAllByRole("combobox")).toHaveLength(0);
 
     act(() => navigate({ type: "createStep1" }));
-    await screen.findByRole("heading", { name: "Manager identity" });
+    await screen.findByRole("heading", { name: "Style & Appearance" });
     act(() => navigate({ type: "createStep3" }));
     await screen.findByRole("heading", { name: "Review Career" });
     await within(worldPanel()).findByText("Starting season:");

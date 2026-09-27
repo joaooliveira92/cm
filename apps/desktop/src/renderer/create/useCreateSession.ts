@@ -35,6 +35,8 @@ import {
 } from "./generation.js";
 import { selectedClubOf } from "./clubSelection.js";
 import { selectedFavoriteTeamOf } from "./favoriteTeam.js";
+import { DEFAULT_AVATAR } from "./managerStyleCopy.js";
+import { managerStyleComplete } from "./managerStyle.js";
 import { personalDetailsComplete } from "./personalDetails.js";
 import { setProvisionalCareer } from "./provisionalCareer.js";
 import type { CreateSessionApi, CreationSession, ManagerSubStep } from "../router/createSessionContext.js";
@@ -54,6 +56,11 @@ const createEmptySession = (): CreationSession => ({
   nationalityId: null,
   dateOfBirth: "",
   favoriteTeam: null,
+  preferredFormation: null,
+  preferredStyleId: null,
+  avatarPortraitKey: null,
+  avatarPrimaryColor: DEFAULT_AVATAR.primary,
+  avatarSecondaryColor: DEFAULT_AVATAR.secondary,
   managerStep: 1,
   // The archetype picker was deliberately retired from step 1; the field stays because the career
   // submission (`archetypeOrigin`) and the Review summary still read it, so every career now
@@ -297,21 +304,34 @@ export const useCreateSession = (): CreateFlowSession => {
     navigate({ type: "createStep3" });
   }, []);
 
-  /** Advance the Manager step from its personal-details sub-panel to the
-   *  manager-identity sub-panel. Gated on the same completeness predicate the
-   *  in-panel stepper uses, so the bottom bar cannot jump past an incomplete form. */
+  /** Whether the Manager step's `next` sub-panel may be reached from the current one. Step 1 is
+   *  always reachable; 2 needs personal details; 3 needs personal details and a spent pillar
+   *  budget. The shell and the in-panel stepper share this, so they cannot disagree. */
+  const canReachManagerStep = useCallback(
+    (current: CreationSession, next: ManagerSubStep): boolean => {
+      if (next === 1) return true;
+      if (next === 2) return personalDetailsComplete(current);
+      return personalDetailsComplete(current) && sumPillars(current.pillars) === 12;
+    },
+    [],
+  );
+
+  /** Advance the Manager step one sub-panel. Gated on the same reachability predicate the in-panel
+   *  stepper uses, so the bottom bar cannot jump past an incomplete panel. */
   const handleNextManagerSubStep = useCallback((): void => {
-    if (!personalDetailsComplete(sessionRef.current)) return;
-    update({ managerStep: 2 as ManagerSubStep });
-  }, [update]);
+    const current = sessionRef.current;
+    const next = (current.managerStep + 1) as ManagerSubStep;
+    if (next > 3 || !canReachManagerStep(current, next)) return;
+    update({ managerStep: next });
+  }, [canReachManagerStep, update]);
 
   /** Direct control of the Manager step's sub-panel, used by the in-panel stepper. */
   const setManagerStep = useCallback(
     (next: ManagerSubStep): void => {
-      if (next === 2 && !personalDetailsComplete(sessionRef.current)) return;
+      if (!canReachManagerStep(sessionRef.current, next)) return;
       update({ managerStep: next });
     },
-    [update],
+    [canReachManagerStep, update],
   );
 
   const handleCommitCareer = useCallback(async (): Promise<void> => {
@@ -321,10 +341,14 @@ export const useCreateSession = (): CreateFlowSession => {
     const firstName = currentSession.firstName.trim();
     const lastName = currentSession.lastName.trim();
     const nationalityId = currentSession.nationalityId;
+    const preferredFormation = currentSession.preferredFormation;
+    const preferredStyleId = currentSession.preferredStyleId;
 
     if (
       provisionalId === null ||
       nationalityId === null ||
+      preferredFormation === null ||
+      preferredStyleId === null ||
       !personalDetailsComplete(currentSession)
     ) {
       update({ error: "Please fill in all required fields" });
@@ -356,6 +380,11 @@ export const useCreateSession = (): CreateFlowSession => {
         nationalityId,
         dateOfBirth: currentSession.dateOfBirth,
         favoriteClubId: selectedFavoriteTeamOf(currentSession)?.clubId ?? null,
+        preferredFormation,
+        preferredStyleId,
+        avatarPortraitKey: currentSession.avatarPortraitKey,
+        avatarPrimaryColor: currentSession.avatarPrimaryColor,
+        avatarSecondaryColor: currentSession.avatarSecondaryColor,
         archetypeOrigin: currentSession.archetype,
         pillars: currentSession.pillars,
       }),
@@ -468,8 +497,9 @@ export const useCreateSession = (): CreateFlowSession => {
     [applyGeneration],
   );
 
+  const pillarsComplete = sumPillars(session.pillars) === 12;
   const managerStepComplete =
-    personalDetailsComplete(session) && sumPillars(session.pillars) === 12;
+    personalDetailsComplete(session) && pillarsComplete && managerStyleComplete(session);
   const selectionReady = isSelectionReady(session.generation);
   const blocked = blockedReason(session.generation);
   /** Continue past the club step is gated on the decision that step exists to collect. */
@@ -509,6 +539,8 @@ export const useCreateSession = (): CreateFlowSession => {
         step,
         generationBlockedReason: blocked,
         personalDetailsComplete: personalDetailsComplete(session),
+        pillarsComplete,
+        managerStyleComplete: managerStyleComplete(session),
         managerStep: session.managerStep,
         managerStepComplete,
         selectionReady,

@@ -248,19 +248,17 @@ describe("tagged errors", () => {
   it("commitCareer's manager identity payload round-trips every personal-details field", () => {
     const pillars = { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 };
     const identity = {
-      id: "s1",
-      name: "My Career",
-      selectedClubId: "club_eng_01",
-      firstName: "Ada",
-      lastName: "Lovelace",
-      nationalityId: "nation_eng",
-      dateOfBirth: "1980-01-01",
-      archetypeOrigin: "professor",
-      pillars,
+      id: "s1", name: "My Career", selectedClubId: "club_eng_01",
+      firstName: "Ada", lastName: "Lovelace", nationalityId: "nation_eng", dateOfBirth: "1980-01-01",
+      preferredFormation: "4-3-3", preferredStyleId: "gegenpress",
+      avatarPortraitKey: "avatar_01", avatarPrimaryColor: "#1f2937", avatarSecondaryColor: "#f8fafc",
+      archetypeOrigin: "professor", pillars,
     } as const;
 
     roundTrip(AppRpcs.commitCareer.payload, { ...identity, favoriteClubId: "club_eng_02" });
-    roundTrip(AppRpcs.commitCareer.payload, { ...identity, favoriteClubId: null });
+    roundTrip(AppRpcs.commitCareer.payload, {
+      ...identity, favoriteClubId: null, avatarPortraitKey: null,
+    });
   });
 
   it("commitCareer's unknown-club failure round-trips through the method error schema", () => {

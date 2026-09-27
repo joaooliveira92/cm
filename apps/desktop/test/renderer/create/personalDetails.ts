@@ -21,3 +21,17 @@ export const fillPersonalDetails = async (saveName = "Test Career"): Promise<voi
   fireEvent.click(screen.getByRole("button", { name: "Date of birth" }));
   fireEvent.click(await screen.findByRole("button", { name: /January 15th, 1985/ }));
 };
+
+/** Advance through the two Manager sub-panels that follow personal details and choose a formation
+ *  and style, leaving the step on the style panel with its gate satisfied. The pillar panel's
+ *  default distribution already sums to the budget, so only the style choices are needed. */
+export const completeManagerStep = async (): Promise<void> => {
+  fireEvent.click(await screen.findByRole("button", { name: "Next: Manager Identity" }));
+  // Wait for the pillar panel to mount before advancing again: two bar clicks in the same tick
+  // outrun the panel transition's `AnimatePresence` wait.
+  await screen.findByRole("button", { name: "Increase Influence" });
+  fireEvent.click(await screen.findByRole("button", { name: "Next: Style & Appearance" }));
+  await screen.findByRole("combobox", { name: "Preferred formation" });
+  await chooseOptionByLabel("Preferred formation", "4-3-3");
+  fireEvent.click(await screen.findByRole("button", { name: "Gegenpress" }));
+};

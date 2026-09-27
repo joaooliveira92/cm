@@ -6,7 +6,10 @@ import { STEPS, type FormStep } from "./managerIdentityCopy.js";
 interface StepperValue {
   readonly step: FormStep;
   readonly goToStep: (next: FormStep) => void;
-  readonly canAdvance: boolean;
+  /** Whether a given step may be reached from the current one — 1 is always reachable, and each
+   *  later step states its own precondition. A function rather than one boolean, so three steps do
+   *  not all become reachable the moment the first is complete. */
+  readonly canReach: (step: FormStep) => boolean;
   readonly direction: number;
   readonly setDirection: (dir: number) => void;
 }
@@ -24,34 +27,38 @@ const useStepper = () => {
 const CreationStepperRoot = ({
   step,
   goToStep,
-  canAdvance,
+  canReach,
   direction,
   setDirection,
   children,
 }: {
   readonly step: FormStep;
   readonly goToStep: (next: FormStep) => void;
-  readonly canAdvance: boolean;
+  readonly canReach: (step: FormStep) => boolean;
   readonly direction: number;
   readonly setDirection: (dir: number) => void;
   readonly children: React.ReactNode;
 }) => (
-  <StepperContext value={{ step, goToStep, canAdvance, direction, setDirection }}>
+  <StepperContext value={{ step, goToStep, canReach, direction, setDirection }}>
     {children}
   </StepperContext>
 );
+
+/** The number of sub-steps the connector's fill is divided into. Kept as a constant so the fill
+ *  fraction and the grid columns cannot disagree. */
+const STEP_COUNT = 3;
 
 const CreationStepperConnector = () => {
   const { step } = useStepper();
 
   return (
     <div
-      className="absolute left-[25%] right-[25%] top-5 h-px bg-border-subtle"
+      className="absolute left-[16.67%] right-[16.67%] top-5 h-px bg-border-subtle"
       aria-hidden="true"
     >
       <motion.div
         className="h-full origin-left bg-primary"
-        animate={{ scaleX: step === 2 ? 1 : 0 }}
+        animate={{ scaleX: (step - 1) / (STEP_COUNT - 1) }}
         transition={{ type: "spring", stiffness: 260, damping: 30 }}
       />
     </div>
@@ -59,10 +66,10 @@ const CreationStepperConnector = () => {
 };
 
 const CreationStepperStepButton = ({ number }: { readonly number: FormStep }) => {
-  const { step, canAdvance, goToStep, setDirection } = useStepper();
+  const { step, canReach, goToStep, setDirection } = useStepper();
   const isActive = step === number;
   const isComplete = step > number;
-  const isAccessible = number === 1 || canAdvance;
+  const isAccessible = canReach(number);
   const item = STEPS.find((s) => s.number === number);
   if (item === undefined) return null;
 

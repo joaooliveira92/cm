@@ -12,7 +12,7 @@ import { Effect } from "effect";
 import { bindRouter, navigate } from "../../../src/renderer/navigation/adapter.js";
 import { buildLeaguePresetIntents, getLeagueSetupIndex, resolveLeagueSelection } from "../../../src/main/world/index.js";
 import { CreateFlowLayout } from "../../../src/renderer/create/CreateFlowLayout.js";
-import { fillPersonalDetails } from "./personalDetails.js";
+import { completeManagerStep, fillPersonalDetails } from "./personalDetails.js";
 import {
   LeagueSelectionRouteContent,
   StepOneRouteContent,
@@ -174,8 +174,7 @@ const advanceThroughLeagues = async (): Promise<void> => {
   fireEvent.click(button);
 
   await fillPersonalDetails();
-  const identity = await screen.findByRole("button", { name: "Next: Manager Identity" });
-  fireEvent.click(identity);
+  await completeManagerStep();
   await screen.findByRole("button", { name: "Next: Select Club" }, { timeout: 3000 });
 };
 
@@ -315,7 +314,8 @@ describe("Step 3 — the club step collects the decision it exists to collect", 
     // shell's button makes — so the identity panel the flow reached on the way out is what shows
     // on the way back in (the Manager step's sub-panel is preserved).
     act(() => navigate({ type: "createStep1" }));
-    await screen.findByRole("heading", { name: "Manager identity" });
+    // The manager step is preserved on its last sub-panel, style & appearance.
+    await screen.findByRole("heading", { name: "Style & Appearance" });
     act(() => navigate({ type: "createStep2" }));
 
     await screen.findByRole("table", { name: "Clubs" });

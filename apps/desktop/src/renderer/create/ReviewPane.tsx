@@ -6,6 +6,7 @@ import { getCareerSetupSummary } from "../rpc.js";
 import type { CreationSession } from "../router/createSessionContext.js";
 import { selectedClubOf } from "./clubSelection.js";
 import { selectedFavoriteTeamOf } from "./favoriteTeam.js";
+import { STYLE_LABELS } from "./managerStyleCopy.js";
 import { describeCompetitions, describeStaff } from "./careerSetupSummary.js";
 import { provisionalIdOf } from "./generation.js";
 
@@ -94,6 +95,11 @@ export const ReviewPane = ({
         <Row label="Nationality" value={session.nationalityId === null ? "Not selected" : nationName(session.nationalityId)} />
         <Row label="Date of birth" value={session.dateOfBirth || "Not selected"} />
         <Row label="Favorite team" value={selectedFavoriteTeamOf(session)?.clubName ?? "None"} />
+        <Row label="Formation" value={session.preferredFormation ?? "Not selected"} />
+        <Row
+          label="Tactical style"
+          value={session.preferredStyleId === null ? "Not selected" : STYLE_LABELS[session.preferredStyleId]}
+        />
 
         <div className="flex gap-4">
           <dt className="text-text-muted">Archetype:</dt>

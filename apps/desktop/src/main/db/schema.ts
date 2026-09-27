@@ -8,6 +8,7 @@ import {
   text,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
+import { FORMATIONS, TACTICAL_STYLE_PRESETS } from "@cm-clone/shared";
 
 /**
  * The save file's schema, defined once in Drizzle and nowhere else.
@@ -134,6 +135,13 @@ export const generationManifest = sqliteTable(
  * `favorite_club_id` — optional, because not every manager supports a club — points at a club in
  * this save.
  *
+ * The tactical identity and appearance are creation-time too. `preferred_formation` and
+ * `preferred_style_id` are the manager's stated starting point for their first Tactic; they are
+ * checked against `FORMATIONS` and `TACTICAL_STYLE_PRESETS` in `packages/shared`, which are imported
+ * rather than restated so a formation or style added there cannot drift from this constraint.
+ * `avatar_portrait_key` is a code-resolvable key, null until a portrait asset set exists; the two
+ * colour columns are the always-present accent scheme the colour/initials fallback renders.
+ *
  * No index: a single row.
  */
 export const managerProfile = sqliteTable(
@@ -147,6 +155,11 @@ export const managerProfile = sqliteTable(
       .references(() => nations.id),
     dateOfBirth: text("date_of_birth").notNull(),
     favoriteClubId: text("favorite_club_id").references(() => clubs.id),
+    preferredFormation: text("preferred_formation").notNull(),
+    preferredStyleId: text("preferred_style_id").notNull(),
+    avatarPortraitKey: text("avatar_portrait_key"),
+    avatarPrimaryColor: text("avatar_primary_color").notNull(),
+    avatarSecondaryColor: text("avatar_secondary_color").notNull(),
     archetypeOrigin: text("archetype_origin").notNull(),
     tacticalAcumen: integer("tactical_acumen").notNull(),
     influence: integer("influence").notNull(),
@@ -162,6 +175,8 @@ export const managerProfile = sqliteTable(
       "manager_profile_archetype_origin",
       oneOf("archetype_origin", ["professor", "motivator", "sergeant", "academy_head", "custom"]),
     ),
+    check("manager_profile_preferred_formation", oneOf("preferred_formation", FORMATIONS)),
+    check("manager_profile_preferred_style", oneOf("preferred_style_id", TACTICAL_STYLE_PRESETS)),
     check("manager_profile_tactical_acumen", sql`tactical_acumen BETWEEN 1 AND 5`),
     check("manager_profile_influence", sql`influence BETWEEN 1 AND 5`),
     check("manager_profile_regimen", sql`regimen BETWEEN 1 AND 5`),

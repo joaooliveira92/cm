@@ -16,7 +16,8 @@ import { CreationStepper } from "./CreationStepper.js";
 import { DateOfBirthField } from "./DateOfBirthField.js";
 import { FavoriteTeamField } from "./FavoriteTeamField.js";
 import { ManagerPillarsPane } from "./ManagerPillarsPane.js";
-import { panelVariants } from "./managerIdentityCopy.js";
+import { ManagerStyleAppearancePane } from "./ManagerStyleAppearancePane.js";
+import { panelVariants, sumPillars, type FormStep } from "./managerIdentityCopy.js";
 import { selectedFavoriteTeamOf } from "./favoriteTeam.js";
 import { provisionalIdOf } from "./generation.js";
 import { personalDetailsComplete } from "./personalDetails.js";
@@ -38,20 +39,34 @@ export const ManagerIdentityStep = () => {
     nationalityId,
     dateOfBirth,
     pillars,
+    preferredFormation,
+    preferredStyleId,
+    avatarPrimaryColor,
+    avatarSecondaryColor,
     managerStep: step,
   } = session;
 
   const detailsComplete = personalDetailsComplete(session);
+  const pillarsComplete = sumPillars(pillars) === 12;
   const provisionalId = provisionalIdOf(session.generation);
   const favoriteTeam = selectedFavoriteTeamOf(session);
 
+  const canReachStep = useCallback(
+    (next: FormStep): boolean => {
+      if (next === 1) return true;
+      if (next === 2) return detailsComplete;
+      return detailsComplete && pillarsComplete;
+    },
+    [detailsComplete, pillarsComplete],
+  );
+
   const goToStep = useCallback(
-    (nextStep: 1 | 2) => {
-      if (nextStep === 2 && !detailsComplete) return;
+    (nextStep: FormStep) => {
+      if (!canReachStep(nextStep)) return;
       setDirection(nextStep > step ? 1 : -1);
       setManagerStep(nextStep);
     },
-    [detailsComplete, step, setManagerStep],
+    [canReachStep, step, setManagerStep],
   );
 
   return (
@@ -210,7 +225,7 @@ export const ManagerIdentityStep = () => {
                 </div>
               </div>
             </motion.section>
-          ) : (
+          ) : step === 2 ? (
             <motion.section
               key="manager-identity"
               custom={direction}
@@ -226,6 +241,29 @@ export const ManagerIdentityStep = () => {
                 onPillarsChange={(next) => update({ pillars: next })}
               />
             </motion.section>
+          ) : (
+            <motion.section
+              key="manager-style"
+              custom={direction}
+              variants={panelVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="space-y-8"
+            >
+              <ManagerStyleAppearancePane
+                preferredFormation={preferredFormation}
+                preferredStyleId={preferredStyleId}
+                avatarPrimaryColor={avatarPrimaryColor}
+                avatarSecondaryColor={avatarSecondaryColor}
+                onFormationChange={(formation) => update({ preferredFormation: formation })}
+                onStyleChange={(style) => update({ preferredStyleId: style })}
+                onAvatarChange={(primary, secondary) =>
+                  update({ avatarPrimaryColor: primary, avatarSecondaryColor: secondary })
+                }
+              />
+            </motion.section>
           )}
         </AnimatePresence>
       </div>
@@ -234,10 +272,10 @@ export const ManagerIdentityStep = () => {
         aria-label="Manager creation progress"
         className="-order-1"
       >
-        <ol className="relative grid grid-cols-2">
+        <ol className="relative grid grid-cols-3">
           <CreationStepper.Root
             step={step}
-            canAdvance={detailsComplete}
+            canReach={canReachStep}
             goToStep={goToStep}
             direction={direction}
             setDirection={setDirection}
@@ -245,6 +283,7 @@ export const ManagerIdentityStep = () => {
             <CreationStepper.Connector />
             <CreationStepper.StepButton number={1} />
             <CreationStepper.StepButton number={2} />
+            <CreationStepper.StepButton number={3} />
           </CreationStepper.Root>
         </ol>
       </nav>

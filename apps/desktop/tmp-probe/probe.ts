@@ -24,7 +24,7 @@ const program = Effect.gen(function* () {
     return { byRow, big };
   }).pipe(Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${id}.sqlite`) })), Effect.scoped);
   console.log(JSON.stringify(clubs));
-  const save = yield* commitCareer(savesDir, id, "Probe", clubs.byRow[0]!.id as Parameters<typeof commitCareer>[3], { firstName: "Probe", lastName: "Manager", nationalityId: "nation_eng", dateOfBirth: "1980-01-01", favoriteClubId: null, archetypeOrigin: "custom", pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 } });
+  const save = yield* commitCareer(savesDir, id, "Probe", clubs.byRow[0]!.id as Parameters<typeof commitCareer>[3], { firstName: "Probe", lastName: "Manager", nationalityId: "nation_eng", dateOfBirth: "1980-01-01", favoriteClubId: null, preferredFormation: "4-4-2", preferredStyleId: "balanced", avatarPortraitKey: null, avatarPrimaryColor: "#1f2937", avatarSecondaryColor: "#f8fafc", archetypeOrigin: "custom", pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 } });
   yield* ensureHumanTactic(savesDir, save.id);
   yield* advanceCalendar(savesDir, save.id);
   const fixtureId = yield* pendingFixtureId(savesDir, save.id);

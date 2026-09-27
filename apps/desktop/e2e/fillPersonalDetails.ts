@@ -20,3 +20,16 @@ export const fillPersonalDetails = async (page: Page, saveName?: string): Promis
   await page.getByRole("button", { name: "Date of birth" }).click();
   await page.getByRole("button", { name: /January 15th, 1985/ }).click();
 };
+
+/**
+ * Advances the two Manager sub-panels that follow personal details — the pillar allocation (whose
+ * default budget is already complete) and Style & Appearance — choosing a formation and a style.
+ * Leaves the Manager step on the style panel with its gate satisfied.
+ */
+export const completeManagerStep = async (page: Page): Promise<void> => {
+  await page.getByRole("button", { name: "Next: Manager Identity" }).click();
+  await page.getByRole("button", { name: "Next: Style & Appearance" }).click();
+  await page.getByRole("combobox", { name: "Preferred formation" }).click();
+  await page.getByRole("option", { name: "4-3-3" }).click();
+  await page.getByRole("button", { name: "Gegenpress" }).click();
+};
