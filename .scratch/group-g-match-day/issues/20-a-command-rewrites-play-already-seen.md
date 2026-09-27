@@ -19,7 +19,16 @@ Raised as [decision request 08](../decision-request-08-live-command-timing-relat
 
 **Blocked by:** None
 
-**Status:** needs-info
+**Status:** ready-for-agent
 
 - [ ] The decision on when a live command takes effect relative to revealed play is recorded
 - [ ] After an accepted command, no revealed line is contradicted or repeated, and the scoreboard does not regress
+
+## Comments
+
+**Triaged 2026-09-27: `ready-for-agent`.** [Decision request 08](../decision-request-08-live-command-timing-relative-to-revealed-play.md)
+was answered 2026-09-19 with Option A: a live command is stamped at M+1, after the last revealed
+event, so revealed play is never re-simulated. Agent Note:
+[revealed play is immutable](../../../.agents/notes/proposed/feature/2026-09-19-revealed-play-is-immutable.md).
+Its gate, [ticket 31](31-committed-matches-store-their-timeline.md), is resolved. As of this triage
+the stamp is still M (`CommentaryProvider.stampMinute`).

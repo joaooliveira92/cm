@@ -7,7 +7,7 @@
 
 **Blocked by:** [decision request 03](../decision-request-03-match-player-rating-formula.md) (the rating formula)
 
-**Status:** needs-info
+**Status:** ready-for-agent
 
 - [ ] Player ratings projection computes a rating (1-10) per player based on match events
 - [ ] Ratings are available via a view or RPC endpoint
@@ -38,3 +38,11 @@ defenders the same rating every match. Options and a recommendation are in
 [decision request 03](../decision-request-03-match-player-rating-formula.md). Every criterion here
 serves or renders the rating, so no part ships until that is answered. The ticket 08 note above about
 adding `matchId` to the destination still applies.
+
+**Triaged 2026-09-27: `ready-for-agent`.** [Decision request 03](../decision-request-03-match-player-rating-formula.md)
+was answered 2026-09-19 with Option B: a **Match Rating** is a base of 6.0, adjusted by the player's own
+events and by the phase outcomes their unit was on the pitch for. It is a pure function of the stored
+timeline, with base and weights as named constants in one module. Agent Note:
+[the match model shows only what it produces](../../../.agents/notes/proposed/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md).
+The **Match Rating** term still has to be added to `CONTEXT.md`, and the ticket-08 note above about
+`matchId` on the destination still applies.
