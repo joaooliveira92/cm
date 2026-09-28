@@ -80,7 +80,7 @@ Shipped in ticket 03 (SecondaryNav component):
 
 Shipped in ticket 06 (Actions menu and Continue button):
 
-- Decision 6 (Actions menu in page header): `HeaderActionsMenu.tsx` renders below the navbar, above content. Uses Base UI Popover, filters screen-scoped actions from the registry.
+- Decision 6 (Actions menu in page header): `HeaderActionsMenu.tsx` renders below the navbar, above content. Uses Base UI Popover and lists only the active actions that set `menu: true`; a screen with none shows no Actions button. It first listed every screen-scoped action, which put sorting, filtering and retry commands beside the one the manager wanted; since 2026-09-27 an action opts in.
 
 Shipped in ticket 07 (Back/forward and history preservation):
 

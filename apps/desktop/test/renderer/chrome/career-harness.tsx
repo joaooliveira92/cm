@@ -163,7 +163,10 @@ export const preload = (phase: Phase) => {
  * and the child screen exactly as the shipped route tree does. Mounting the
  * chrome by hand would not exercise the composition that ships.
  */
-export const mountCareer = async (phase: Phase, child: "league" | "fixtures") => {
+/** The career child routes the harness mounts. */
+type CareerChild = "league" | "fixtures" | "squad";
+
+export const mountCareer = async (phase: Phase, child: CareerChild) => {
   preload(phase);
   await mountRoutedCareer(child);
 };
@@ -172,7 +175,7 @@ export const mountCareer = async (phase: Phase, child: "league" | "fixtures") =>
  *  that needs its own wire responses (a payload that changes between calls).
  *  `Probe`, when given, renders beside the league screen inside the career's own
  *  atom registry, so a test can run a mutation the chrome's queries observe. */
-export const mountRoutedCareer = async (child: "league" | "fixtures", Probe?: ComponentType) => {
+export const mountRoutedCareer = async (child: CareerChild, Probe?: ComponentType) => {
   const rootRoute = createRootRoute({ component: () => <Outlet /> });
   const careerRoute = createRoute({ getParentRoute: () => rootRoute, path: "career" });
   const saveRoute = createRoute({
@@ -195,9 +198,16 @@ export const mountRoutedCareer = async (child: "league" | "fixtures", Probe?: Co
     path: "fixtures",
     component: () => <CareerChildView screenId="fixtures" Screen={FixturesScreen} />,
   });
+  // The chrome only needs the Squad screen id — its Actions menu — so the screen itself is a stub
+  // rather than the real one, which would need the squad wire answered too.
+  const squadRoute = createRoute({
+    getParentRoute: () => saveRoute,
+    path: "squad",
+    component: () => <CareerChildView screenId="squad" Screen={() => null} />,
+  });
   const router = createRouter({
     routeTree: rootRoute.addChildren([
-      careerRoute.addChildren([saveRoute.addChildren([leagueRoute, fixturesRoute])]),
+      careerRoute.addChildren([saveRoute.addChildren([leagueRoute, fixturesRoute, squadRoute])]),
     ]),
     history: createMemoryHistory({ initialEntries: [`/career/s1/${child}`] }),
   });

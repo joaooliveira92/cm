@@ -38,6 +38,21 @@ describe("Actions menu", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Actions" }));
     const pick = await screen.findByRole("button", { name: "Assistant manager picks the team" });
     expect(pick.hasAttribute("disabled")).toBeFalsy();
-    expect(screen.getByRole("button", { name: "Restore Squad column defaults" })).toBeTruthy();
+  });
+
+  it("lists only the actions that opt into the menu", async () => {
+    await mountCareer("in_season", "squad");
+    fireEvent.click(await screen.findByRole("button", { name: "Actions" }));
+    await screen.findByRole("button", { name: "Assistant manager picks the team" });
+    // Registered on Squad, but reached through the keyboard and the palette, not the menu.
+    expect(screen.queryByRole("button", { name: "Restore Squad column defaults" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Retry loading the Squad" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Go to Transfer Market" })).toBeNull();
+  });
+
+  it("is absent on a screen with no menu actions", async () => {
+    await mountCareer("in_season", "league");
+    await screen.findByRole("button", { name: /Continue/i });
+    expect(screen.queryByRole("button", { name: "Actions" })).toBeNull();
   });
 });

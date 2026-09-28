@@ -130,6 +130,7 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
     scope: "squad",
     available: ready,
     handler: () => undefined,
+    menu: true,
   },
   {
     id: "restore-squad-columns",

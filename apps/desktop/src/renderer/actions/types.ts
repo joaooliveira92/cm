@@ -155,6 +155,10 @@ export interface Action<Params = void> {
   /** Primary-action designation: drives presentation and discovery, never
    *  automatic `Enter` dispatch (global-key-map note AC-11). */
   readonly primary?: boolean;
+  /** Listed in the page header's Actions menu. Opt-in: the menu holds the few commands a manager
+   *  reaches for on that page, while sorting, filtering, retries and the rest stay on the keyboard
+   *  and in the command palette. */
+  readonly menu?: boolean;
   /** Plain-language reason shown when `available` is false (command-palette
    *  note: unavailable actions are disabled-with-reason, never hidden). */
   readonly unavailableReason?: string;

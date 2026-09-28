@@ -56,10 +56,10 @@ export const HeaderActionsMenu = () => {
   // The store's own `ready` never turns true: the keyboard spine derives it from the screen being a
   // career screen, and the menu must read it the same way or every `ready`-gated action disappears.
   const scopeState = { ...liveScopeState, ready: isInsideCareer(screenId) };
+  // Only actions that opt in with `menu`; everything else a screen registers is reached through
+  // the keyboard and the command palette.
   const activeActions = ACTION_REGISTRY.active(screenId, scopeState)
-    .filter((action) => action.scope !== "app-global")
-    .filter((action) => action.scope !== "career-global")
-    .filter((action) => action.id !== "continue");
+    .filter((action) => action.menu === true);
   if (activeActions.length === 0) return null;
 
   const handleAction = (action: Action) => {
