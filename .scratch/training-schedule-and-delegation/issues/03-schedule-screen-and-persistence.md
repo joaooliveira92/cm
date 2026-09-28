@@ -20,15 +20,15 @@ schedule appends a Club-stream event naming the manager as its author.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] The shared rules package defines the session types, intensities, the five-slot schedule and the four named templates, each a pure value.
-- [ ] A new table holds one schedule per human-managed club with its slots and revision; a missing row reads as Balanced. The template name is derived from the slots on every read, never stored, so the two cannot disagree.
-- [ ] The read returns the schedule, its revision and the next Fixture; the write takes an expected revision and a request id, and replaying the same request is a no-op.
-- [ ] A stale save shows the conflict with a Refresh that keeps the draft until the new revision lands, as the Tactics editor does.
-- [ ] Applying a template changes only the draft, never the saved schedule.
-- [ ] Save Schedule and Reset Schedule appear in the bottom bar on this screen only, carry the `data-action-id` of registered `training`-scope Actions, and are listed in the command palette.
-- [ ] Reset Schedule is disabled when the draft matches the saved schedule.
-- [ ] Every session control is the renderer's vendored Select, as the Tactics slot pickers use, reachable by keyboard, with the focus ring.
-- [ ] The Training Overview's Schedule card names the current template or "Custom" and links to the screen.
-- [ ] `CONTEXT.md` defines Microcycle, Training Schedule and Training Session, and its Calendar entry says training content attaches to the microcycle rather than to a date.
+- [x] The shared rules package defines the session types, intensities, the five-slot schedule and the four named templates, each a pure value.
+- [x] A new table holds one schedule per human-managed club with its slots and revision; a missing row reads as Balanced. The template name is derived from the slots on every read, never stored, so the two cannot disagree.
+- [x] The read returns the schedule, its revision and the next Fixture; the write takes an expected revision and a request id, and replaying the same request is a no-op.
+- [x] A stale save shows the conflict with a Refresh that keeps the draft until the new revision lands, as the Tactics editor does.
+- [x] Applying a template changes only the draft, never the saved schedule.
+- [x] Save Schedule and Reset Schedule appear in the bottom bar on this screen only, carry the `data-action-id` of registered `training`-scope Actions, and are listed in the command palette.
+- [x] Reset Schedule is disabled when the draft matches the saved schedule.
+- [x] Every session control is the renderer's vendored Select, as the Tactics slot pickers use, reachable by keyboard, with the focus ring.
+- [x] The Training Overview's Schedule card names the current template or "Custom" and links to the screen.
+- [x] `CONTEXT.md` defines Microcycle, Training Schedule and Training Session, and its Calendar entry says training content attaches to the microcycle rather than to a date.
