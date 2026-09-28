@@ -8,7 +8,7 @@ describe("ticket 04 — CoachCard renders name, quality, and department", () => 
   it("renders the coach's name", () => {
     render(
       <ul aria-label="Coaching staff">
-        <CoachCard name="Diane Wax" quality={14} department="coaching" />
+        <CoachCard name="Diane Wax" quality={14} department="coaching" onOpen={() => undefined} />
       </ul>,
     );
     expect(screen.getByText("Diane Wax")).toBeTruthy();
@@ -17,7 +17,7 @@ describe("ticket 04 — CoachCard renders name, quality, and department", () => 
   it("renders the quality rating as N/20", () => {
     render(
       <ul aria-label="Coaching staff">
-        <CoachCard name="Diane Wax" quality={14} department="coaching" />
+        <CoachCard name="Diane Wax" quality={14} department="coaching" onOpen={() => undefined} />
       </ul>,
     );
     expect(screen.getByText("14/20")).toBeTruthy();
@@ -26,7 +26,7 @@ describe("ticket 04 — CoachCard renders name, quality, and department", () => 
   it("renders the department name", () => {
     render(
       <ul aria-label="Coaching staff">
-        <CoachCard name="Diane Wax" quality={14} department="coaching" />
+        <CoachCard name="Diane Wax" quality={14} department="coaching" onOpen={() => undefined} />
       </ul>,
     );
     expect(screen.getByText("coaching")).toBeTruthy();
@@ -35,10 +35,21 @@ describe("ticket 04 — CoachCard renders name, quality, and department", () => 
   it("has a listitem role for a11y integration", () => {
     render(
       <ul aria-label="Coaching staff">
-        <CoachCard name="Diane Wax" quality={14} department="coaching" />
+        <CoachCard name="Diane Wax" quality={14} department="coaching" onOpen={() => undefined} />
       </ul>,
     );
     const item = screen.getByRole("listitem");
     expect(item.getAttribute("aria-label")).toBe("Coach Diane Wax, quality 14");
+  });
+
+  it("opens the coach's profile from the name", () => {
+    const opened: string[] = [];
+    render(
+      <ul aria-label="Coaching staff">
+        <CoachCard name="Diane Wax" quality={14} department="coaching" onOpen={() => opened.push("open")} />
+      </ul>,
+    );
+    screen.getByRole("button", { name: "Diane Wax" }).click();
+    expect(opened).toEqual(["open"]);
   });
 });

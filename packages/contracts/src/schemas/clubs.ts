@@ -39,7 +39,7 @@ export class ClubNotFoundError extends Schema.TaggedError<ClubNotFoundError>()("
 
 /**
  * A role in a club's whole backroom — Bound Staff (`coach`, `scout`) or Presence Staff
- * (`president`, `physio`). The `ClubPersonRole` union from `@cm-clone/shared` given a wire schema,
+ * (`president`, `assistant`, `physio`). The `ClubPersonRole` union from `@cm-clone/shared` given a wire schema,
  * so the wire and the domain agree by construction and the `ClubStaffView` cannot carry a role the
  * derivation cannot produce.
  */
@@ -50,8 +50,9 @@ export const StaffDepartmentSchema = Schema.Literals(STAFF_DEPARTMENTS);
 
 /** One named person on the Club Staff screen — a role and a name, whether they carry a binding or
  * presence only. The uniform shape means a Coach row and a Physio row carry exactly the same amount
- * of thing. */
+ * of thing. `key` is the person's `StaffKey`, the address their Staff Profile opens at. */
 export class ClubStaffMemberView extends Schema.Class<ClubStaffMemberView>("ClubStaffMemberView")({
+  key: Schema.String,
   role: ClubPersonRoleSchema,
   firstName: Schema.String,
   lastName: Schema.String,
@@ -65,7 +66,7 @@ export class ClubStaffDepartmentGroupView extends Schema.Class<ClubStaffDepartme
   members: Schema.Array(ClubStaffMemberView),
 }) {}
 
-/** Club Staff (Screen 38): who works at a club — its four people across both kinds, grouped by
+/** Club Staff (Screen 38): who works at a club — its people across both kinds, grouped by
  * department — for any club in the save. Every person is derived on read, so a `results-only` club
  * answers like any other and the view agrees with the `staff` rows wherever they exist. */
 export class ClubStaffView extends Schema.Class<ClubStaffView>("ClubStaffView")({

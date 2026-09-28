@@ -12,7 +12,7 @@
  * - `error` — the RPC failed (save not found, transport error).
  * - `empty` — no coaches returned (club has not materialised staff yet).
  *
- * The coach list is terminal: no drill-downs and no keyboard focus on rows. The screen's two
+ * Each coach's name opens their Staff Profile. The screen's two other
  * actions are the "Workload and recovery" and "Player development" buttons, which open the Training
  * area's Workload and Recovery (Screen 112) and Player Development Centre (Screen 114) sub-surfaces. Navigation is otherwise the shell's usual `g b`/escape.
  *
@@ -75,6 +75,12 @@ export const CoachingAssignmentsScreen = ({ saveId }: { readonly saveId: SaveId 
             name={coach.name}
             quality={coach.quality}
             department={coach.department}
+            onOpen={(event) =>
+              navigateCareer(
+                { type: "staffProfile", saveId, clubId: view.clubId, staffKey: coach.key },
+                intentOfClick(event),
+              )
+            }
           />
         ))}
       </ul>

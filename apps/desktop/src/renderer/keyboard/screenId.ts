@@ -30,6 +30,8 @@ export const screenIdOfPath = (pathname: string): string => {
   const segs = pathname.split("/").filter(Boolean);
   if (segs[0] === "create") return `createStep${segs[1]?.replace("step-", "") ?? "1"}`;
   if (segs[0] === "career") {
+    // A person under the club's staff list: `/career/$saveId/club/$clubId/staff/$staffKey`.
+    if (segs[2] === "club" && segs[4] === "staff" && segs[5] !== undefined) return "staffProfile";
     if (segs[2] === "club") return CLUB_SURFACE_BY_SEGMENT[segs[4] ?? ""] ?? "";
     if (segs[2] === "player") return PLAYER_SURFACE_BY_SEGMENT[segs[4] ?? ""] ?? "playerProfile";
     if (segs[2] === "competition") return COMPETITION_SURFACE_BY_SEGMENT[segs[4] ?? ""] ?? "competitionOverview";

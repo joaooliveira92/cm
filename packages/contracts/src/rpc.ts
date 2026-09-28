@@ -32,6 +32,8 @@ import {
   BidView,
   ClubId,
   ClubNotFoundError,
+  StaffNotFoundError,
+  StaffProfileView,
   ClubSelectionView,
   BoardConfidenceView,
   CompetitionNotFoundError,
@@ -595,6 +597,14 @@ commitCareer: {
    *  Progress (exact for the manager's own club and for rivals only once Fully Scouted; Attribute
    *  Ranges below it — Agent Note 2026-09-19). A pure read over `players` and `scouting_progress`;
    *  only the save or the club id can fail. */
+  /** Staff Profile: one person in any club's backroom, addressed by their `StaffKey`. A pure read —
+   *  the profile is derived on demand and never stored. A key naming no one at that club (a fourth
+   *  scout at a two-scout club) is `StaffNotFoundError`. */
+  getStaffProfile: {
+    payload: Schema.Struct({ saveId: SaveId, clubId: ClubId, key: Schema.String }),
+    success: StaffProfileView,
+    error: Schema.Union([SaveNotFoundError, ClubNotFoundError, StaffNotFoundError]),
+  },
   getClubSquad: {
     payload: Schema.Struct({ saveId: SaveId, clubId: ClubId }),
     success: ClubSquadView,

@@ -29,6 +29,7 @@ export * from "./content/contentPackRegistry.js";
 export * from "./rules/clubGeneration.js";
 export * from "./content/namePools.js";
 export * from "./rules/staff.js";
+export * from "./rules/staffProfile.js";
 export * from "./setup/resolvedWorld.js";
 export * from "./content/leagueSetupCatalogue.js";
 export * from "./setup/leagueSetup.js";

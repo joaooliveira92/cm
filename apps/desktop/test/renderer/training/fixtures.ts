@@ -22,12 +22,14 @@ type StaffDepartment = (typeof STAFF_DEPARTMENTS)[number];
 
 interface CoachAssignmentWire {
   readonly id: string;
+  readonly key: string;
   readonly name: string;
   readonly quality: number;
   readonly department: StaffDepartment;
 }
 
 export interface CoachingAssignmentsViewWire {
+  readonly clubId: string;
   readonly coaches: readonly CoachAssignmentWire[];
 }
 
@@ -43,23 +45,27 @@ export const coach = (
   name: string,
   quality: number,
   department: StaffDepartment = "coaching",
-): CoachAssignmentWire => ({ id, name, quality, department });
+  key = "coach-0",
+): CoachAssignmentWire => ({ id, key, name, quality, department });
 
 /** A Coaching Assignments view with one coach. */
 export const singleCoachView = (): CoachingAssignmentsViewWire => ({
+  clubId: "club_eng_1_01",
   coaches: [coach("c1", "Diane Wax", 14)],
 });
 
 /** A Coaching Assignments view with two coaches. */
 export const twoCoachView = (): CoachingAssignmentsViewWire => ({
+  clubId: "club_eng_1_01",
   coaches: [
     coach("c1", "Diane Wax", 14),
-    coach("c2", "Marcus Ito", 9),
+    coach("c2", "Marcus Ito", 9, "coaching", "coach-1"),
   ],
 });
 
 /** An empty coaching assignments view (no staff materialised yet). */
 export const emptyCoachView = (): CoachingAssignmentsViewWire => ({
+  clubId: "club_eng_1_01",
   coaches: [],
 });
 

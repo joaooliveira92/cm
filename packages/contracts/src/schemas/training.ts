@@ -64,6 +64,8 @@ export class TrainingFocusNotOfferedError extends Schema.TaggedError<TrainingFoc
  */
 export class CoachAssignmentView extends Schema.Class<CoachAssignmentView>("CoachAssignmentView")({
   id: Schema.String,
+  /** The coach's `StaffKey`, the address their Staff Profile opens at. */
+  key: Schema.String,
   name: Schema.String,
   quality: Schema.Finite,
   department: StaffDepartmentSchema,
@@ -73,6 +75,8 @@ export class CoachAssignmentView extends Schema.Class<CoachAssignmentView>("Coac
  * manager's own club. No club summary is needed because the screen lives under the save-scoped
  * Training area and the club is always the user's own. */
 export class CoachingAssignmentsView extends Schema.Class<CoachingAssignmentsView>("CoachingAssignmentsView")({
+  /** The manager's club, so a coach card can open that club's Staff Profile. */
+  clubId: ClubId,
   coaches: Schema.Array(CoachAssignmentView),
 }) {}
 

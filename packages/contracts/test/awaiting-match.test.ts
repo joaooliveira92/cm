@@ -17,8 +17,20 @@ describe("getAwaitingMatch", () => {
       fixtureId: 7,
       homeClubId: "home",
       homeClubName: "Castlemere United",
+      homeClubColours: {
+        primary: { foreground: "#ffffff", background: "#1f5f3a" },
+        secondary: { foreground: "#1f5f3a", background: "#ffffff" },
+        tertiary: null,
+        quaternary: null,
+      },
       awayClubId: "away",
       awayClubName: "Northgate Athletic",
+      awayClubColours: {
+        primary: { foreground: "#ffffff", background: "#1f5f3a" },
+        secondary: { foreground: "#1f5f3a", background: "#ffffff" },
+        tertiary: null,
+        quaternary: null,
+      },
       isHome: false,
     });
   });

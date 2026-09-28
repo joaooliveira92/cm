@@ -113,8 +113,24 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                 {coaches.length} {coaches.length === 1 ? "coach" : "coaches"} on staff
               </p>
               <ul className="mt-3 space-y-2" aria-label="Coach preview">
-                {coaches.slice(0, MAX_COACH_PREVIEW).map((coach: { readonly id: string; readonly name: string; readonly quality: number; readonly department: string }) => (
-                  <CoachCard key={coach.id} name={coach.name} quality={coach.quality} department={coach.department} />
+                {coaches.slice(0, MAX_COACH_PREVIEW).map((coach) => (
+                  <CoachCard
+                    key={coach.id}
+                    name={coach.name}
+                    quality={coach.quality}
+                    department={coach.department}
+                    onOpen={(event) =>
+                      navigateCareer(
+                        {
+                          type: "staffProfile",
+                          saveId,
+                          clubId: coachingResult.value.clubId,
+                          staffKey: coach.key,
+                        },
+                        intentOfClick(event),
+                      )
+                    }
+                  />
                 ))}
                 {coaches.length > MAX_COACH_PREVIEW && (
                   <p className="text-xs text-text-secondary italic">

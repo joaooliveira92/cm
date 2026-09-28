@@ -19,3 +19,4 @@ export * from "./players.js";
 export * from "./clubSquad.js";
 export * from "./playerSearch.js";
 export * from "./playerComparison.js";
+export * from "./staffProfile.js";

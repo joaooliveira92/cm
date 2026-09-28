@@ -80,6 +80,8 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
           return "That bid could not be found.";
         case "ClubNotFoundError":
           return "That club could not be found.";
+        case "StaffNotFoundError":
+          return "No one at that club answers to that position.";
         case "CompetitionNotFoundError":
           return "That competition could not be found.";
         // Absence of knowledge, never a judgement about the club. "No report" must read as

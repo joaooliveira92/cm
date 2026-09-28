@@ -254,6 +254,28 @@ export const clubStaffAtom = (saveId: SaveId, clubId: ClubId) =>
   clubStaffForSave(saveId)(clubId);
 
 /**
+ * getStaffProfile — `["save", saveId]`, `["squad", saveId]`.
+ *
+ * Staff Profile: one person in any club's backroom. Keyed save → club → staff key, the same nested
+ * family shape as the staff list. The profile itself is a pure derivation, but a coach's rankings
+ * read the squad's Condition, so the read also follows the squad key.
+ */
+const staffProfileForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((clubId: ClubId) =>
+    Atom.family((key: string) =>
+      managementReadPolicy(
+        Atom.make(call("getStaffProfile", { saveId, clubId, key })).pipe(
+          Atom.withReactivity([saveKey(saveId), squadKey(saveId)]),
+        ),
+      ),
+    ),
+  ),
+);
+
+export const staffProfileAtom = (saveId: SaveId, clubId: ClubId, key: string) =>
+  staffProfileForSave(saveId)(clubId)(key);
+
+/**
  * getClubSquad — `["save", saveId]`, `["squad", saveId]`.
  *
  * Club Squad (Screen 35): any club's squad, its Players read by the human club's Scouting

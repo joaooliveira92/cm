@@ -172,6 +172,34 @@ export const CareerClubChildView = ({
   );
 };
 
+interface StaffScreenProps extends ClubScreenProps {
+  readonly staffKey: string;
+}
+
+/**
+ * A person in a club's backroom (`/career/$saveId/club/$clubId/staff/$staffKey`). The club segment's
+ * decode, plus the staff key passed through as it arrived: a key naming no one is the RPC's
+ * `StaffNotFoundError`, rendered by the screen, not an address error.
+ */
+export const CareerStaffChildView = ({
+  screenId,
+  Screen,
+}: {
+  readonly screenId: string;
+  readonly Screen: ComponentType<StaffScreenProps>;
+}) => {
+  const params = useParams({ strict: false });
+  const save = decodeSaveId(params.saveId ?? "");
+  const club = decodeClubId(params.clubId ?? "");
+  if (save._tag === "Malformed") return <RouteParamErrorScreen reason={save.reason} />;
+  if (club._tag === "Malformed") return <RouteParamErrorScreen reason={club.reason} />;
+  return (
+    <RouteView screenId={screenId}>
+      <Screen saveId={save.success} clubId={club.success} staffKey={params.staffKey ?? ""} />
+    </RouteView>
+  );
+};
+
 interface PlayerScreenProps {
   readonly saveId: SaveId;
   readonly playerId: PlayerId;

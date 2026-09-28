@@ -27,6 +27,7 @@ import { MainMenuScreen } from "./mainMenu.js";
 import { LoadCareerScreen } from "./loadCareer.js";
 import { TeamScoutReportScreen } from "../scouting/TeamScoutReportScreen.js";
 import { ClubStaffScreen } from "../clubStaff/ClubStaffScreen.js";
+import { StaffProfileScreen } from "../staffProfile/StaffProfileScreen.js";
 import { PlayerProfileScreen } from "../playerProfile/PlayerProfileScreen.js";
 import { PlayerContractScreen } from "../playerContract/PlayerContractScreen.js";
 import { PlayerDevelopmentScreen } from "../playerDevelopment/PlayerDevelopmentScreen.js";
@@ -87,6 +88,7 @@ import { MatchReportScreen } from "../matchReport/MatchReportScreen.js";
 import {
   CareerChildView,
   CareerClubChildView,
+  CareerStaffChildView,
   CareerIndexRedirect,
   CareerMatchChildView,
   CareerPlayerChildView,
@@ -380,6 +382,12 @@ const clubStaffRoute = createRoute({
   component: () => <CareerClubChildView screenId="clubStaff" Screen={ClubStaffScreen} />,
 });
 
+const clubStaffProfileRoute = createRoute({
+  getParentRoute: () => clubRoute,
+  path: "staff/$staffKey",
+  component: () => <CareerStaffChildView screenId="staffProfile" Screen={StaffProfileScreen} />,
+});
+
 // ---------------------------------------------------------------------------
 // Player branch
 // ---------------------------------------------------------------------------
@@ -614,6 +622,7 @@ managerRoute.addChildren([
       clubRoute.addChildren([
         clubScoutReportRoute,
         clubStaffRoute,
+        clubStaffProfileRoute,
         clubSquadRoute,
         clubFixturesDetailRoute,
         clubTransfersDetailRoute,

@@ -37,6 +37,7 @@ export {
   clubInformationAtom,
   clubTransfersAtom,
   clubStaffAtom,
+  staffProfileAtom,
   clubSquadAtom,
   coachingAssignmentsAtom,
   workloadAtom,

@@ -123,19 +123,19 @@ describe("presence staff", () => {
   const presencePair = (clubId: string, clubNation: NationCode, worldSeed: number) =>
     derivePresenceStaff({ clubId, clubNation, worldSeed });
 
-  it("is PRESENCE_ROLES exactly [president, physio], beside STAFF_ROLES unchanged at [coach, scout]", () => {
+  it("is PRESENCE_ROLES exactly [president, assistant, physio], beside STAFF_ROLES unchanged at [coach, scout]", () => {
     // Two unions keep the `staff_role` check constraint honest: it still permits exactly coach and
     // scout, and ClubPersonRole is the union a caller reads when it needs the whole backroom.
-    expect(PRESENCE_ROLES).toEqual(["president", "physio"]);
+    expect(PRESENCE_ROLES).toEqual(["president", "assistant", "physio"]);
     expect(STAFF_ROLES).toEqual(["coach", "scout"]);
     const roles: readonly ClubPersonRole[] = [...STAFF_ROLES, ...PRESENCE_ROLES];
-    expect(roles).toEqual(["coach", "scout", "president", "physio"]);
+    expect(roles).toEqual(["coach", "scout", "president", "assistant", "physio"]);
   });
 
-  it("derives exactly one president and one physio, named from the club's own nation", () => {
+  it("derives exactly one president, one physio and one assistant, named from the club's own nation", () => {
     for (const clubNation of NATION_CODES) {
       const pair = presencePair("redcastle", clubNation, 5);
-      expect(pair.map((person) => person.role)).toEqual(["president", "physio"]);
+      expect(pair.map((person) => person.role)).toEqual(["president", "physio", "assistant"]);
       const pool = NAME_POOLS[clubNation];
       for (const person of pair) {
         expect(pool.givenNames).toContain(person.firstName);
@@ -172,6 +172,14 @@ describe("presence staff", () => {
     });
     expect(presencePair(clubId, "ENG", worldSeed)[1]?.role).toBe("physio");
 
+    // The assistant arrived after the pair on a seed of its own, so every existing save's physio is
+    // still exactly who the physio's own seed draws.
+    const physio = derivePresenceStaff({ clubId, clubNation: "ENG", worldSeed })[1];
+    const president = derivePresenceStaff({ clubId, clubNation: "ENG", worldSeed })[0];
+    if (`${physio?.firstName} ${physio?.lastName}` !== `${president?.firstName} ${president?.lastName}`) {
+      expect(physio).toEqual({ role: "physio", ...draw(physioSeed) });
+    }
+
     // Neither presence person draws from the club's bound `staff` stream.
     expect(deriveSeed(worldSeed, "staff", clubId)).not.toBe(presidentSeed);
     expect(deriveSeed(worldSeed, "staff", clubId)).not.toBe(physioSeed);
@@ -184,13 +192,13 @@ describe("presence staff", () => {
     // other club's.
     const resultsOnly = { clubId: "sentinel", clubNation: "ENG" as const, worldSeed: 4242 };
     const pair = derivePresenceStaff(resultsOnly);
-    expect(pair.map((person) => person.role)).toEqual(["president", "physio"]);
+    expect(pair.map((person) => person.role)).toEqual(["president", "physio", "assistant"]);
     for (const statureTier of STATURE_TIERS) {
       expect(derivePresenceStaff(resultsOnly), `tier ${statureTier}`).toEqual(pair);
     }
   });
 
-  it("never hands a club a president and a physio who share a full name", () => {
+  it("never hands a club two presence people who share a full name", () => {
     // Collision is ~1 in 480 per drawn pair at today's pool sizes, so over a few thousand pairs a
     // redraw-free implementation would surface roughly an order of magnitude of duplicates; only
     // the presence-internal redraw keeps this green.
@@ -207,7 +215,7 @@ describe("presence staff", () => {
 });
 
 describe("a club's whole backroom, grouped by department", () => {
-  it("returns the four people in fixed Executive → Coaching → Recruitment → Medical order", () => {
+  it("returns the backroom in fixed Executive → Coaching → Recruitment → Medical order", () => {
     for (const statureTier of STATURE_TIERS) {
       const groups = deriveClubStaff({ clubId: "redcastle", statureTier, clubNation: "ENG", worldSeed: 11 });
       expect(groups.map((group) => group.department)).toEqual([
@@ -219,6 +227,7 @@ describe("a club's whole backroom, grouped by department", () => {
       expect(ROLE_DEPARTMENT).toEqual({
         president: "executive",
         coach: "coaching",
+        assistant: "coaching",
         scout: "recruitment",
         physio: "medical",
       });
@@ -226,7 +235,7 @@ describe("a club's whole backroom, grouped by department", () => {
       const executive = groups.find((group) => group.department === "executive");
       expect(executive?.members.map((person) => person.role)).toEqual(["president"]);
       const coaching = groups.find((group) => group.department === "coaching");
-      expect(coaching?.members.map((person) => person.role)).toEqual(["coach"]);
+      expect(coaching?.members.map((person) => person.role)).toEqual(["coach", "assistant"]);
       const recruitment = groups.find((group) => group.department === "recruitment");
       expect(recruitment?.members.map((person) => person.role)).toEqual(
         Array.from({ length: SCOUT_HEADCOUNT[statureTier] }, () => "scout" as const),
@@ -257,12 +266,20 @@ describe("a club's whole backroom, grouped by department", () => {
       random: createSeededRng(deriveSeed(worldSeed, "staff", clubId)),
     });
     const coaching = groups.find((group) => group.department === "coaching");
-    expect(coaching?.members).toEqual([
-      { role: "coach", firstName: generated[0]?.firstName, lastName: generated[0]?.lastName },
-    ]);
+    expect(coaching?.members[0]).toEqual({
+      key: "coach-0",
+      role: "coach",
+      firstName: generated[0]?.firstName,
+      lastName: generated[0]?.lastName,
+    });
     const recruitment = groups.find((group) => group.department === "recruitment");
     expect(recruitment?.members).toEqual(
-      generated.slice(1).map(({ role, firstName, lastName }) => ({ role, firstName, lastName })),
+      generated.slice(1).map(({ role, firstName, lastName }, index) => ({
+        key: `scout-${index}`,
+        role,
+        firstName,
+        lastName,
+      })),
     );
   });
 });

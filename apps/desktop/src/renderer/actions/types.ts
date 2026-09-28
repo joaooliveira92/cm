@@ -44,6 +44,7 @@ export type ScreenName =
   // neither `CareerScreenName` nor `CAREER_SCREEN_TYPES`, and owns no screen-scoped Action.
   | "playerComparison"
   // The staff-scoped drill-downs.
+  | "staffProfile"
   // The club sub-surface drill-downs (other club views).
   | "clubSquad"
   | "clubFixturesDetail"

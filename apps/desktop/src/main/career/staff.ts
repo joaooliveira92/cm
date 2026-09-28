@@ -31,11 +31,11 @@ import { displayNames } from "../world/displayNames.js";
  * The join is the same one everywhere a club's backroom is derived or materialised — the nation is
  * where the name pool comes from, and for a world-generated club it is always Season 1's
  * competition — so this single row read is shared by `materialiseStaff` (which dies on a missing
- * club, because committing a career already proved it exists) and `getClubStaff` (which turns the
- * same absence into the read's one typed failure, `ClubNotFoundError`). Two copies of the join
- * would drift apart.
+ * club, because committing a career already proved it exists) and by `getClubStaff` and
+ * `getStaffProfile` (which turn the same absence into their typed failure, `ClubNotFoundError`).
+ * Two copies of the join would drift apart.
  */
-const loadClubIdentity = (clubId: ClubId) =>
+export const loadClubIdentity = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const clubRows = yield* sql<{
@@ -193,6 +193,7 @@ const readClubStaff = (clubId: ClubId) =>
             members: group.members.map(
               (person) =>
                 new ClubStaffMemberView({
+                  key: person.key,
                   role: person.role,
                   firstName: person.firstName,
                   lastName: person.lastName,

@@ -142,6 +142,17 @@ export const navigate = (destination: NavigationDestination): void => {
         params: { saveId: resolved.params.saveId, clubId: resolved.params.clubId },
       });
       break;
+    // A person in a club's backroom: the club segment plus the person's staff key.
+    case "/career/$saveId/club/$clubId/staff/$staffKey":
+      getRouter().navigate({
+        to: resolved.to,
+        params: {
+          saveId: resolved.params.saveId,
+          clubId: resolved.params.clubId,
+          staffKey: resolved.params.staffKey,
+        },
+      });
+      break;
     // The competition segment, shaped like the club segment above: a target competition as well as
     // the save.
     case "/career/$saveId/competition/$competitionId/overview":

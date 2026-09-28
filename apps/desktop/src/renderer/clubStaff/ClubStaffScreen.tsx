@@ -1,10 +1,8 @@
 import { type ClubId, type SaveId } from "@cm-clone/contracts";
-import {
-  STAFF_DEPARTMENTS,
-  type ClubPersonRole,
-  type StaffDepartment,
-} from "@cm-clone/shared";
+import { STAFF_DEPARTMENTS, type StaffDepartment } from "@cm-clone/shared";
 import { FOCUS_RING } from "../focus.js";
+import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
+import { STAFF_ROLE_TITLES } from "../staffProfile/StaffProfileScreen.js";
 import {
   clubStaffAtom,
   describeRpcError,
@@ -22,15 +20,6 @@ const DEPARTMENT_LABELS: Readonly<Record<StaffDepartment, string>> = {
   medical: "Medical",
 };
 
-/** The title each row shows beside the person's name, so no reader infers the role from the
- *  heading — the role is on the row that carries the person. */
-const ROLE_TITLES: Readonly<Record<ClubPersonRole, string>> = {
-  president: "President",
-  coach: "Coach",
-  scout: "Scout",
-  physio: "Physio",
-};
-
 const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
 /**
@@ -38,7 +27,7 @@ const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
  * a surface that already names a club (a league-table row) — it is a drill-down, not a top-level
  * career screen, which is why it needs a `clubId` prop and no `g` binding.
  *
- * The page is a terminal, links-nowhere list in exactly three states:
+ * The page is a list in exactly three states, each name opening that person's Staff Profile:
  *
  * - `loading` — the read is in flight.
  * - `ready` — the four department groups under a club header that names the club and marks one
@@ -48,8 +37,8 @@ const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
  * One read answers all three: `getClubStaff` carries whose club it is, so there is no second read
  * whose failure could render an error over staff that loaded perfectly well.
  *
- * Rows are not focusable: the closure of interaction is the entry point that brought the manager
- * here and `g b` that leaves, so reading order is the design.
+ * Each name is a button, so the rows are reachable by Tab; the role title beside it is not, since
+ * the role is on the row that carries the person and a reader never has to infer it from the heading.
  */
 export const ClubStaffScreen = ({
   saveId,
@@ -107,15 +96,24 @@ export const ClubStaffScreen = ({
             <ul aria-labelledby={headingId} className="mt-1 list-inside">
               {members.map((member) => (
                 <li
-                  key={`${member.role}-${member.firstName}-${member.lastName}`}
-                  aria-label={`${ROLE_TITLES[member.role]} ${member.firstName} ${member.lastName}`}
+                  key={member.key}
+                  aria-label={`${STAFF_ROLE_TITLES[member.role]} ${member.firstName} ${member.lastName}`}
                 >
-                  <span className="inline-block w-28 text-text-secondary">
-                    {ROLE_TITLES[member.role]}
+                  <span className="inline-block w-40 text-text-secondary">
+                    {STAFF_ROLE_TITLES[member.role]}
                   </span>
-                  <span>
+                  <button
+                    type="button"
+                    className={`font-semibold hover:underline ${FOCUS_RING.join(" ")}`}
+                    onClick={(event) =>
+                      navigateCareer(
+                        { type: "staffProfile", saveId, clubId, staffKey: member.key },
+                        intentOfClick(event),
+                      )
+                    }
+                  >
                     {member.firstName} {member.lastName}
-                  </span>
+                  </button>
                 </li>
               ))}
             </ul>

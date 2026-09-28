@@ -21,7 +21,7 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { ALL_ATTRIBUTES, isTrainingFocusOffered, type Category } from "@cm-clone/shared";
+import { ALL_ATTRIBUTES, isTrainingFocusOffered, staffKey, type Category } from "@cm-clone/shared";
 import { NON_CONTACT_CONDITION_THRESHOLD } from "@cm-clone/game-engine";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -111,19 +111,24 @@ export const getCoachingAssignments = (savesDir: string, saveId: SaveId) =>
 
     return yield* Effect.gen(function* () {
       const sql = yield* SqlClient;
+      const clubRows = yield* sql<{ id: ClubId }>`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`;
+      const clubId = clubRows[0]?.id;
+      if (clubId === undefined) {
+        return yield* Effect.die(new Error("save has no user club"));
+      }
       const coachRows = yield* sql<{
         id: string;
         name: string;
         quality: number;
-      }>`SELECT id, name, quality FROM staff
-         WHERE club_id = (SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1)
-           AND role = 'coach'`;
+      }>`SELECT id, name, quality FROM staff WHERE club_id = ${clubId} AND role = 'coach'`;
 
       return new CoachingAssignmentsView({
+        clubId,
         coaches: coachRows.map(
-          (row) =>
+          (row, ordinal) =>
             new CoachAssignmentView({
               id: row.id,
+              key: staffKey("coach", ordinal),
               name: row.name,
               quality: row.quality,
               department: "coaching",

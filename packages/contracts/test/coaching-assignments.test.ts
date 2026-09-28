@@ -11,13 +11,14 @@ const roundTrip = <A, I>(schema: Schema.ConstraintCodec<A, I>, wire: unknown): v
 
 describe("Coaching Assignments view (Screen 111)", () => {
   it("CoachAssignmentView round-trips a coach with id, name, quality, and department", () => {
-    roundTrip(CoachAssignmentView, { id: "c1", name: "Beth Cross", quality: 14, department: "coaching" });
+    roundTrip(CoachAssignmentView, { id: "c1", key: "coach-0", name: "Beth Cross", quality: 14, department: "coaching" });
   });
 
   it("CoachAssignmentView rejects an invalid department", () => {
     expect(() =>
       Schema.decodeUnknownSync(CoachAssignmentView)({
         id: "c1",
+        key: "coach-0",
         name: "Beth Cross",
         quality: 14,
         department: "not_a_department",
@@ -29,6 +30,7 @@ describe("Coaching Assignments view (Screen 111)", () => {
     expect(() =>
       Schema.decodeSync(CoachAssignmentView)({
         id: "c1",
+        key: "coach-0",
         name: "Beth Cross",
         quality: 100,
         department: "coaching",
@@ -38,15 +40,16 @@ describe("Coaching Assignments view (Screen 111)", () => {
 
   it("CoachingAssignmentsView round-trips a list of coaches", () => {
     roundTrip(CoachingAssignmentsView, {
+      clubId: "club_eng_1_01",
       coaches: [
-        { id: "c1", name: "Beth Cross", quality: 14, department: "coaching" },
-        { id: "c2", name: "Mike Stone", quality: 9, department: "coaching" },
+        { id: "c1", key: "coach-0", name: "Beth Cross", quality: 14, department: "coaching" },
+        { id: "c2", key: "coach-1", name: "Mike Stone", quality: 9, department: "coaching" },
       ],
     });
   });
 
   it("CoachingAssignmentsView round-trips an empty list", () => {
-    roundTrip(CoachingAssignmentsView, { coaches: [] });
+    roundTrip(CoachingAssignmentsView, { clubId: "club_eng_1_01", coaches: [] });
   });
 
   it("is the getCoachingAssignments success schema", () => {

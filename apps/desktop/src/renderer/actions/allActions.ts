@@ -224,6 +224,7 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   // The club-scoped drill-downs are terminal reading surfaces owning no screen-scoped action, so
   // there is nothing on either page a badge could sit on.
   clubStaff: { showKeyBadges: false },
+  staffProfile: { showKeyBadges: false },
   teamScoutReport: { showKeyBadges: false },
   // The player-scoped drill-down — same rationale.
   playerProfile: { showKeyBadges: false },

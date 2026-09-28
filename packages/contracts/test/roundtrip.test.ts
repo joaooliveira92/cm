@@ -97,20 +97,26 @@ describe("Club Staff view (Screen 38)", () => {
     // Whose club it is rides on this view, so the screen needs no second read to mark a rival.
     isUserClub: false,
     groups: [
-      { department: "executive", members: [{ role: "president", firstName: "Alan", lastName: "Reyes" }] },
-      { department: "coaching", members: [{ role: "coach", firstName: "Beth", lastName: "Cross" }] },
+      { department: "executive", members: [{ key: "president-0", role: "president", firstName: "Alan", lastName: "Reyes" }] },
+      {
+        department: "coaching",
+        members: [
+          { key: "coach-0", role: "coach", firstName: "Beth", lastName: "Cross" },
+          { key: "assistant-0", role: "assistant", firstName: "Finn", lastName: "Hale" },
+        ],
+      },
       {
         department: "recruitment",
         members: [
-          { role: "scout", firstName: "Cara", lastName: "Devlin" },
-          { role: "scout", firstName: "Dmitri", lastName: "Sorel" },
+          { key: "scout-0", role: "scout", firstName: "Cara", lastName: "Devlin" },
+          { key: "scout-1", role: "scout", firstName: "Dmitri", lastName: "Sorel" },
         ],
       },
-      { department: "medical", members: [{ role: "physio", firstName: "Elsa", lastName: "Marchetti" }] },
+      { department: "medical", members: [{ key: "physio-0", role: "physio", firstName: "Elsa", lastName: "Marchetti" }] },
     ],
   } as const;
 
-  it("round-trips the four people grouped by department", () => {
+  it("round-trips the backroom grouped by department", () => {
     roundTrip(ClubStaffView, staffView);
   });
 

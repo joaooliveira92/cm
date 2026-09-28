@@ -94,6 +94,17 @@ export type CareerDestination =
    */
   | { readonly type: "clubStaff"; readonly saveId: SaveId; readonly clubId: ClubId }
   /**
+   * Staff Profile — one person in a club's backroom. Staff have no stored identity outside the
+   * human club, so a person is addressed by their club and their `StaffKey` (`coach-0`,
+   * `scout-2`), which the derivation reproduces for any club.
+   */
+  | {
+      readonly type: "staffProfile";
+      readonly saveId: SaveId;
+      readonly clubId: ClubId;
+      readonly staffKey: string;
+    }
+  /**
    * Club Squad (Screen 35) — any club's squad, read-only. Club-scoped for the same reason as the
    * surfaces above: it lists a club's Players, so it needs one named, and it is a read — which is
    * what generalises, per the club-scoped rule's act-versus-read discriminator.
@@ -223,7 +234,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "clubSquad" | "clubInformation" | "clubFixturesDetail" | "clubTransfersDetail" | "clubFinancesDetail" | "competitionOverview" | "competitionTable" | "competitionFixturesDetail" | "competitionResults" | "playerDetail" | "playerDevelopment" | "playerContract" | "playerComparison" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
+  "teamScoutReport" | "clubStaff" | "staffProfile" | "clubSquad" | "clubInformation" | "clubFixturesDetail" | "clubTransfersDetail" | "clubFinancesDetail" | "competitionOverview" | "competitionTable" | "competitionFixturesDetail" | "competitionResults" | "playerDetail" | "playerDevelopment" | "playerContract" | "playerComparison" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
 >;
 
 /**
@@ -342,6 +353,10 @@ export type ResolvedDestination =
       readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
     }
   | {
+      readonly to: "/career/$saveId/club/$clubId/staff/$staffKey";
+      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId; readonly staffKey: string };
+    }
+  | {
       readonly to: "/career/$saveId/club/$clubId/squad";
       readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
     }
@@ -442,6 +457,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "competitions":
     case "teamScoutReport":
     case "clubStaff":
+    case "staffProfile":
     case "clubSquad":
     case "clubInformation":
     case "clubFixturesDetail":
@@ -582,6 +598,15 @@ const careerRoute = (
       return {
         to: "/career/$saveId/club/$clubId/staff",
         params: { saveId: destination.saveId, clubId: destination.clubId },
+      };
+    case "staffProfile":
+      return {
+        to: "/career/$saveId/club/$clubId/staff/$staffKey",
+        params: {
+          saveId: destination.saveId,
+          clubId: destination.clubId,
+          staffKey: destination.staffKey,
+        },
       };
     case "clubSquad":
       return {
