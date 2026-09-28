@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { PlayerId, Tactic } from "@cm-clone/contracts";
-import { FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
+import { FORMATION_SLOTS, POSITION_ROLES, type BenchCandidate, type Position } from "@cm-clone/shared";
 import {
+  assistantLineupOf,
   clearLineupSlot,
   dropOnLineupSlot,
   lineupSlotsOf,
@@ -136,5 +137,45 @@ describe("unselectedPlayerIds", () => {
     const squad = Array.from({ length: 30 }, (_, i) => `p${i}`);
     const pool = unselectedPlayerIds(baseTactic(), squad);
     expect(pool).toContain("p29");
+  });
+});
+describe("assistantLineupOf", () => {
+  // A keeper, a spare keeper, and outfielders rated best at their own Position, falling with index.
+  const player = (id: string, position: Position, rating: number, keeper = false): BenchCandidate<PlayerId> => ({
+    id: pid(id),
+    positions: [{ position, familiarity: "natural" }],
+    positionRatings: keeper ? { GK: rating } : { [position]: rating, GK: 1 },
+  });
+  const squad = [
+    player("gk1", "GK", 80, true),
+    player("gk2", "GK", 70, true),
+    ...FORMATION_SLOTS["4-4-2"].slice(1).map((position, index) => player(`s${index}`, position, 90 - index)),
+    ...Array.from({ length: 8 }, (_, index) => player(`r${index}`, "ST", 40 - index)),
+  ];
+
+  it("fills every starter slot and the bench in the Tactic's own Formation, keeping its instructions", () => {
+    const next = assistantLineupOf(baseTactic(), squad)!;
+    expect(next.formation).toBe("4-4-2");
+    expect(next.mentality).toBe("balanced");
+    expect(next.slots.map((slot) => slot.role)).toEqual(baseTactic().slots.map((slot) => slot.role));
+    expect(playerAt(next, 0)).toEqual(pid("gk1"));
+    expect(next.slots.slice(1).map((slot) => String(slot.playerId))).toEqual(
+      Array.from({ length: 10 }, (_, index) => `s${index}`),
+    );
+  });
+
+  it("puts the spare keeper first on the bench, then the best of the rest", () => {
+    const next = assistantLineupOf(baseTactic(), squad)!;
+    expect(next.bench.map(String)).toEqual(["gk2", "r0", "r1", "r2", "r3", "r4", "r5"]);
+  });
+
+  it("replaces whatever the lineup held before", () => {
+    const next = assistantLineupOf(baseTactic(), squad)!;
+    expect(orderOfPlayer(next, "p0")).toBeNull();
+    expect(orderOfPlayer(next, "b0")).toBeNull();
+  });
+
+  it("returns null when the squad cannot field the Formation", () => {
+    expect(assistantLineupOf(baseTactic(), squad.slice(0, 10))).toBeNull();
   });
 });

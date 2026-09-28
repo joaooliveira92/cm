@@ -17,7 +17,7 @@
  * `SquadProvider`; the shared shapes live in `squadScreenTypes.ts`.
  */
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import type { PlayerId, SaveId } from "@cm-clone/contracts";
+import type { PlayerId, SaveId, SquadPlayerView } from "@cm-clone/contracts";
 import { Option } from "effect";
 import {
   AsyncResult,
@@ -60,6 +60,7 @@ import {
   resetSquadColumnPreferences,
 } from "../table/columnPreferences.js";
 import { useTacticDraft } from "../tactics/useTacticDraft.js";
+import { assistantLineupOf } from "./lineupEdits.js";
 import {
   discardSelectionForNavigation,
 } from "../table/tableState.js";
@@ -132,6 +133,9 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     /** The same players as the wire carries them, so a row id can be turned back into the branded
      *  `PlayerId` a player-scoped route needs. The `SquadRow` above has flattened it to a string. */
     playerIds: [] as ReadonlyArray<PlayerId>,
+    /** The wire players with their Position Ratings, which the assistant manager picks from. */
+    squad: [] as ReadonlyArray<SquadPlayerView>,
+    lineup,
   });
   latest.current.sort = sort;
   latest.current.filters = filters;
@@ -146,6 +150,8 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   );
   latest.current.players = allPlayers;
   latest.current.playerIds = view !== undefined ? view.players.map((player) => player.id) : [];
+  latest.current.squad = view !== undefined ? view.players : [];
+  latest.current.lineup = lineup;
 
   const blockingFailure = error !== null && view === undefined;
   const filtered = applyFilters(allPlayers, filters);
@@ -252,6 +258,19 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     unregisters.push(
       registerActionHandler("retry-squad-table", () => {
         refreshSquad();
+      }),
+    );
+    unregisters.push(
+      registerActionHandler("assistant-pick-lineup", () => {
+        const { tactic, setTactic, autosave } = latest.current.lineup;
+        const next = assistantLineupOf(tactic, latest.current.squad);
+        if (next === null) {
+          speak("assistant-pick", `The squad is too small to field a ${tactic.formation}.`);
+          return;
+        }
+        setTactic(next);
+        void autosave(next);
+        speak("assistant-pick", `The assistant manager picked the team in a ${tactic.formation}.`);
       }),
     );
     unregisters.push(

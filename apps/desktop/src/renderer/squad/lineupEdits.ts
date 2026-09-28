@@ -9,7 +9,14 @@
  * sentinel; an empty bench slot is `null`. Both read as empty.
  */
 import { PlayerId, Tactic } from "@cm-clone/contracts";
-import { BENCH_SIZE, FORMATION_SLOTS, type Formation } from "@cm-clone/shared";
+import {
+  BENCH_SIZE,
+  FORMATION_SLOTS,
+  bestXiForFormation,
+  selectBench,
+  type BenchCandidate,
+  type Formation,
+} from "@cm-clone/shared";
 
 /** One slot in the bar. `playerId` is `null` when the slot is empty. */
 export interface LineupSlot {
@@ -140,6 +147,27 @@ export const swapLineupSlots = (tactic: Tactic, from: number, to: number): Tacti
 /** Empty a slot (drag its occupant back to the pool). */
 export const clearLineupSlot = (tactic: Tactic, order: number): Tactic =>
   applySlotWrites(tactic, [{ order, playerId: null }]);
+
+/**
+ * The assistant manager's pick: the whole match-day chosen for the manager in the Tactic's own
+ * Formation, which stays the manager's call. Starters and bench come from the same shared rules AI
+ * clubs pick by (`bestXiForFormation`, then `selectBench`), so the assistant never picks a team the
+ * AI would call worse. Team Instructions and slot roles are kept. `null` when the squad cannot field
+ * the Formation.
+ */
+export const assistantLineupOf = (
+  tactic: Tactic,
+  squad: ReadonlyArray<BenchCandidate<PlayerId>>,
+): Tactic | null => {
+  const xi = bestXiForFormation(tactic.formation, squad);
+  if (xi === null) return null;
+  const starters = xi.filled.map((slot) => slot.playerId);
+  return new Tactic({
+    ...tactic,
+    slots: tactic.slots.map((slot, index) => ({ ...slot, playerId: starters[index]! })),
+    bench: selectBench(squad, starters),
+  });
+};
 
 /**
  * The registered players not on the match-day: the pool the bar offers to drag from. `squadIds`

@@ -122,6 +122,15 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
     available: () => true,
     handler: () => undefined,
   },
+  // The assistant manager picks the next match-day: the starting XI and the bench, in the current
+  // Formation. It lands on the lineup bar through the same autosave as a hand edit.
+  {
+    id: "assistant-pick-lineup",
+    label: "Assistant manager picks the team",
+    scope: "squad",
+    available: ready,
+    handler: () => undefined,
+  },
   {
     id: "restore-squad-columns",
     label: "Restore Squad column defaults",
