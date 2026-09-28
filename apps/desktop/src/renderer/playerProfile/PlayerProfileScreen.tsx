@@ -37,8 +37,8 @@ const CATEGORY_LABELS: Record<Category, string> = {
   technical: "Technical",
 };
 
-/** The tone a Familiarity Tier reads in, matching the Squad screen's position list so a Natural
- *  position looks the same wherever it is drawn. */
+/** The tone a Familiarity Tier reads in, the same colours as the Squad screen's position list. The
+ *  list adds a pill to Natural because it shows no tier label; here the label sits beside the code. */
 const FAMILIARITY_TONE: Readonly<Record<FamiliarityTier, string>> = {
   natural: "text-text-highlight",
   competent: "text-text-body",
