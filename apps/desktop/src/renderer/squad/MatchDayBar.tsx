@@ -64,6 +64,9 @@ const SlotBox = ({
 }) => (
   <Button
     role="button"
+    // Not `default`: that fills with `primary`, which the Neutral theme makes near-white, and the
+    // light slot labels vanish on it. Eighteen slots are not the region's one primary verb anyway.
+    variant="secondary"
     tabIndex={0}
     draggable={slot.playerId !== null}
     aria-label={slotAriaLabel(slot, occupantName)}
@@ -76,7 +79,7 @@ const SlotBox = ({
     onKeyDown={onKeyDown}
     className={`h-6 min-w-11 border px-1.5 ${slot.playerId === null
       ? "border-panel-border-dark text-text-strong"
-      : "border-text-highlight text-text-highlight"
+      : "border-text-highlight bg-text-highlight/15 text-text-highlight"
       } ${FOCUS_RING.join(" ")}`}
   >
     <span className="text-2xs font-bold leading-tight">{slot.label}</span>
