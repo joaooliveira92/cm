@@ -1,6 +1,6 @@
 # 01: The human club recovers Condition before each of its own kickoffs
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 **Type:** bug
 
