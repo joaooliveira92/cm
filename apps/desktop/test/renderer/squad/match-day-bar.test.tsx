@@ -51,6 +51,7 @@ const player = (id: string, lastName: string): unknown => ({
   trainingFocus: null,
   nationality: "Brazil",
   birthplace: "Santos",
+  foreign: false,
 });
 
 interface SquadOverrides {

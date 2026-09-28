@@ -82,6 +82,7 @@ export const tacticView = (tactic = fullTactic()) => {
     trainingFocus: null,
     nationality: "England",
     birthplace: "London",
+    foreign: false,
   });
   const onPitch = (tactic.slots ?? []).map((slot: { playerId: string }, index: number) =>
     player(String(slot.playerId), `On${index}`),

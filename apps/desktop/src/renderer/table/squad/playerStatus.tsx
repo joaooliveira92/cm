@@ -34,7 +34,9 @@ export type StatusTone =
   /** Selectable but diminished or at risk: tired, one card from a ban. */
   | "warning"
   /** Market, contract and interest information; no effect on availability. */
-  | "success";
+  | "success"
+  /** A standing fact about the player, such as being foreign, that no rule acts on yet. */
+  | "info";
 
 /** How likely the engine is to ever model the state behind a reserved slot. */
 export type StatusLikelihood =
@@ -46,7 +48,7 @@ export type StatusLikelihood =
   | "unlikely";
 
 export interface ReservedStatus {
-  /** The three-letter CM code. Visual channel only — never spoken. */
+  /** The CM code (three letters, `Fint` four). Visual channel only — never spoken. */
   readonly abbreviation: string;
   /** The full term. What assistive technology and the announcer receive. */
   readonly term: string;
@@ -56,7 +58,7 @@ export interface ReservedStatus {
   readonly note: string;
 }
 
-/** The one status the engine models today: below the engine's own fatigue-injury
+/** Modeled: below the engine's own fatigue-injury
  *  threshold, the player is tired. The threshold is imported rather than
  *  restated so the display rule cannot drift from the mechanic it reports. */
 const TIRED: ReservedStatus = {
@@ -67,9 +69,20 @@ const TIRED: ReservedStatus = {
   note: `Shown when Condition is below ${NON_CONTACT_CONDITION_THRESHOLD}% — the same threshold at which the match engine starts rolling fatigue injuries.`,
 };
 
+/** Modeled: the player's nationality is not his club's nation. Informational, since no
+ *  selection rule limits foreign players; the day one does, the tone becomes `danger` for the
+ *  players it leaves out. */
+const FOREIGN: ReservedStatus = {
+  abbreviation: "Fgn",
+  term: "Foreign player",
+  tone: "info",
+  likelihood: "modeled",
+  note: "Shown when the player's nationality differs from the nation of the club's home city. No foreign-player limit applies yet.",
+};
+
 /**
  * The reserved catalogue, in CM 03/04's own order (`docs/design/ui-elements.md`).
- * Exactly one entry is `modeled` today. Adding an entry here reserves a slot;
+ * Tired and Foreign are the `modeled` entries today. Adding an entry here reserves a slot;
  * it renders only once `statusesOf` can derive it from engine state.
  */
 export const RESERVED_STATUSES: readonly ReservedStatus[] = [
@@ -116,19 +129,13 @@ export const RESERVED_STATUSES: readonly ReservedStatus[] = [
     note: "Needs the same card-accumulation ledger as Suspended.",
   },
   {
-    abbreviation: "Int",
+    abbreviation: "Fint",
     term: "On international duty",
     tone: "danger",
     likelihood: "unlikely",
     note: "No international teams or fixture calendar.",
   },
-  {
-    abbreviation: "Fgn",
-    term: "Counts as a foreign player",
-    tone: "danger",
-    likelihood: "unlikely",
-    note: "No nationality-based selection rules.",
-  },
+  FOREIGN,
   {
     abbreviation: "Ine",
     term: "Ineligible for the competition",
@@ -222,6 +229,8 @@ export const modeledStatus = (abbreviation: string): ReservedStatus | undefined 
 export interface StatusSource {
   /** Current Condition (%), from the season's fitness ledger. */
   readonly condition?: number;
+  /** Whether the player's nationality differs from his club's nation. Own squad only. */
+  readonly foreign?: boolean;
 }
 
 /**
@@ -229,33 +238,41 @@ export interface StatusSource {
  * Pure, and the whole provenance boundary: a status absent here renders as
  * nothing rather than as a guess.
  */
-export const statusesOf = (source: StatusSource): readonly ReservedStatus[] =>
-  source.condition !== undefined && source.condition < NON_CONTACT_CONDITION_THRESHOLD
+export const statusesOf = (source: StatusSource): readonly ReservedStatus[] => [
+  ...(source.foreign === true ? [FOREIGN] : []),
+  ...(source.condition !== undefined && source.condition < NON_CONTACT_CONDITION_THRESHOLD
     ? [TIRED]
-    : [];
+    : []),
+];
 
 /** The full terms of a player's statuses, as the announcer speaks them. */
 export const statusTermsOf = (source: StatusSource): readonly string[] =>
   statusesOf(source).map((status) => status.term);
 
-const TONE_CLASS: Readonly<Record<StatusTone, string>> = {
-  danger: "text-text-danger",
-  warning: "text-text-warning",
-  success: "text-text-success",
+/** The filled badge a status draws, in a row and in the legend: the tone as the fill, the code
+ *  in the page background colour. */
+const BADGE_BASE = "inline-block rounded-full px-1.5 text-2xs font-bold leading-4 text-bg-base";
+
+const BADGE_CLASS: Readonly<Record<StatusTone, string>> = {
+  danger: "bg-text-danger",
+  warning: "bg-text-warning",
+  success: "bg-text-success",
+  info: "bg-text-highlight",
 };
 
 /** The width the Status column reserves, in px. Fixed because the column is
  *  pinned: the sticky offset of every column right of it is computed from this. */
 export const STATUS_COLUMN_WIDTH = 72;
 
-/** The abbreviation runner for one row. Empty when nothing is modeled. */
+/** The badge runner for one row: a filled pill per status, CM's round badges. Empty when
+ *  nothing is modeled. */
 export const StatusCell = ({ statuses }: { readonly statuses: readonly ReservedStatus[] }) => (
-  <span className="flex gap-1 font-semibold">
+  <span className="flex gap-1">
     {statuses.map((status) => (
       <span key={status.abbreviation}>
         {/* The code is decoration; the term is the text. A screen reader reads
             "Tired", never "Tir". */}
-        <span aria-hidden="true" className={TONE_CLASS[status.tone]}>
+        <span aria-hidden="true" className={`${BADGE_BASE} ${BADGE_CLASS[status.tone]}`}>
           {status.abbreviation}
         </span>
         <span className="sr-only">{status.term}</span>
@@ -289,8 +306,8 @@ export const StatusLegend = ({ id }: { readonly id: string }) => (
     <ul className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
       {RESERVED_STATUSES.map((status) => (
         <li key={status.abbreviation} className="flex gap-2">
-          <span className={`w-8 shrink-0 font-semibold ${TONE_CLASS[status.tone]}`}>
-            {status.abbreviation}
+          <span className="w-10 shrink-0">
+            <span className={`${BADGE_BASE} ${BADGE_CLASS[status.tone]}`}>{status.abbreviation}</span>
           </span>
           <span className="text-text-body">
             <span className="text-text-primary">{status.term}</span>

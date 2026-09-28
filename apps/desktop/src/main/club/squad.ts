@@ -28,6 +28,8 @@ interface PlayerRow {
   readonly trainingFocus: string | null;
   readonly nationality: string;
   readonly birthplace: string | null;
+  /** SQLite's boolean: 1 when the player's nation is not the club's. */
+  readonly foreign: number;
   readonly [attribute: string]: unknown;
 }
 
@@ -64,8 +66,12 @@ export const loadSquadPlayers = (clubId: ClubId) =>
     const playerRows = yield* sql.unsafe<PlayerRow>(
       `SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", p.date_of_birth as "dateOfBirth", ${attributeSelectList},
               COALESCE(pf.condition, 100) as "condition", tf.focus as "trainingFocus",
-              p.nationality as "nationality", bc.name as "birthplace"
+              p.nationality as "nationality", bc.name as "birthplace",
+              p.nationality <> cc.nation_id as "foreign"
        FROM players p
+       -- A club's nation is its home city's; there is no nation column on clubs.
+       JOIN clubs c ON c.id = p.club_id
+       JOIN cities cc ON cc.id = c.city_id
        LEFT JOIN player_fitness pf ON pf.player_id = p.id
          AND pf.season_number = ${CURRENT_SEASON_NUMBER_SQL}
        LEFT JOIN training_focus tf ON tf.player_id = p.id
@@ -111,6 +117,7 @@ export const loadSquadPlayers = (clubId: ClubId) =>
         trainingFocus: (row.trainingFocus as Category | null) ?? null,
         nationality: nationName(row.nationality),
         birthplace: row.birthplace,
+        foreign: row.foreign === 1,
       });
     });
   });

@@ -27,6 +27,7 @@ const player = (index: number) => ({
   trainingFocus: null,
   nationality: "England",
   birthplace: null,
+  foreign: false,
 });
 
 const SQUAD = Array.from({ length: 11 }, (_, index) => player(index));

@@ -34,6 +34,7 @@ export const squadPlayer = (id: string, name: string, position: string) => ({
   trainingFocus: null,
   nationality: "England",
   birthplace: "London",
+  foreign: false,
 });
 
 /** A `getSquad` success payload. */

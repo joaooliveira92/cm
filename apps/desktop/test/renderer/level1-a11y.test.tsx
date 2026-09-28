@@ -55,6 +55,7 @@ const playerRow = (id: string, name: string) => ({
   trainingFocus: null,
   nationality: "England",
   birthplace: "London",
+  foreign: false,
 });
 
 const squadView = (players: ReturnType<typeof playerRow>[]) => ({

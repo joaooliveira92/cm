@@ -42,6 +42,7 @@ const squadPlayer = (id: string, name: string, position: string, condition: numb
   trainingFocus: null,
   nationality: "England",
   birthplace: "London",
+  foreign: false,
 });
 
 const TIRED = NON_CONTACT_CONDITION_THRESHOLD - 1;

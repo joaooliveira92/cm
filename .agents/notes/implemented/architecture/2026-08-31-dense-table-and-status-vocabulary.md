@@ -71,14 +71,20 @@ player-status column that renders only engine-modeled state.
 - **What renders today**: Condition below the match engine's own `NON_CONTACT_CONDITION_THRESHOLD`
   (75%) shows `Tir`. That threshold is imported from the engine rather than restated, so the
   display rule cannot drift from the mechanic it reports: below it, the engine starts rolling
-  fatigue injuries. Nothing else in the catalogue is derivable, so nothing else renders.
-- **Format**: the CM 3-letter abbreviation as the visual channel, `aria-hidden`, beside a
+  fatigue injuries. A player whose Nationality is not his club's nation shows `Fgn`: the squad
+  read computes `foreign` against nation ids, since the wire's `nationality` is a display name.
+  Nothing else in the catalogue is derivable, so nothing else renders.
+- **Format**: the CM 3-letter abbreviation (except `Fint`, see below) as the visual channel, `aria-hidden`, beside a
   screen-reader-only full term. The row's full terms also reach the table's polite announcer when
   the row takes focus. The code never reaches assistive technology in any form.
-- **Colour**: the abbreviation text is toned by status category against the existing semantic text
-  tokens — `danger` for statuses that make a player unselectable, `warning` for diminished or
-  at-risk, `success` for market and contract information that does not affect availability. No
-  filled badge, and colour only augments the abbreviation rather than carrying meaning alone.
+- **Colour**: each status is a filled pill badge, CM's round badges, filled with a semantic text
+  token by status category — `danger` for statuses that make a player unselectable, `warning` for
+  diminished or at-risk, `success` for market and contract information that does not affect
+  availability, `info` (the highlight token) for a standing fact no rule acts on, such as `Fgn`.
+  The code sits on the fill in the page background colour. Colour only augments the abbreviation
+  rather than carrying meaning alone. A status whose effect varies reads in the tone of its effect:
+  `Inj`, once modeled, is `warning` while the player can still play the next match and `danger`
+  when he cannot.
 - **Discoverability**: the Status header *is* the disclosure — a button carrying `aria-expanded`
   and `aria-controls` for the legend, keyboard-operable, never hover-only. The legend itself renders
   directly above the table rather than inside the header cell: the header lives in a horizontally
@@ -87,9 +93,11 @@ player-status column that renders only engine-modeled state.
 - **Reservation catalogue**: the **full CM 03/04 set** lives in
   `apps/desktop/src/renderer/table/squad/playerStatus.tsx` as `RESERVED_STATUSES`, in CM's own
   order, each entry carrying an honest likelihood — `modeled`, `plausible`, or `unlikely`. The
-  selection-rule statuses (Fgn, Ine, Wpm, Cup, Int) and Sct are `unlikely`; injury, suspension,
+  selection-rule statuses (Ine, Wpm, Cup, Fint) and Sct are `unlikely`; injury, suspension,
   transfer-listed/wanted and the morale-driven ones are `plausible`. Provenance still holds: adding
   an entry reserves a slot and renders nothing until `statusesOf` can derive it from engine state.
+  International duty is `Fint`, not CM's `Int`, so it cannot be read as "international player":
+  the foreign-player status is `Fgn`.
 
 ## Alternatives considered
 
@@ -105,10 +113,11 @@ player-status column that renders only engine-modeled state.
    carries the whole vocabulary as the long-term contract; the provenance separation (nothing
    unmodeled renders) makes a superset reservation harmless. The full set is therefore adopted, with
    the likelihood note preventing it from implying each will actually ship.
-4. **Status as a filled badge/tag, or a separate status colour family.** A filled badge costs
-   density and runtime chrome; a dedicated colour family would collide with the shared
-   danger/warning/success semantics. Both rejected in favour of coloured abbreviation text reusing
-   the semantic tokens.
+4. **Status as a filled badge/tag, or a separate status colour family.** Originally both were
+   rejected in favour of coloured abbreviation text, because a filled badge costs density and
+   runtime chrome. The badge was later adopted at the user's direction (2026-09-27), to match CM's
+   round badges; it stays within the 72px Status width. A dedicated colour family is still
+   rejected: the badges reuse the semantic tokens.
 
 ## Consequences
 
@@ -123,8 +132,8 @@ player-status column that renders only engine-modeled state.
   renderable.
 - `RESERVED_STATUSES` is a superset of what will ever ship. A reader could still take the list as a
   roadmap; the per-entry likelihood and the legend's own wording ("a reservation is not a promise")
-  are the mitigation, and the test asserts exactly one entry is `modeled` so the boundary cannot
-  quietly move.
+  are the mitigation, and the test asserts exactly which entries are `modeled` (`Fgn`, `Tir`) so
+  the boundary cannot quietly move.
 - **12px is genuinely small.** The compact tier is CM-faithful and needs a human visual pass at
   each adoption step rather than a screenshot test; the fallback font chain from the token decision
   applies here too.

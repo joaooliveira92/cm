@@ -140,6 +140,7 @@ export interface SquadPlayerWire {
   readonly trainingFocus: Category | null;
   readonly nationality: string;
   readonly birthplace: string | null;
+  readonly foreign: boolean;
 }
 
 export interface SquadViewWire {
@@ -172,6 +173,7 @@ export const squadPlayer = (
   trainingFocus,
   nationality: "Portugal",
   birthplace: null,
+  foreign: false,
 });
 
 /** An own-club squad with an outfield player on a Technical focus and a goalkeeper on None. */

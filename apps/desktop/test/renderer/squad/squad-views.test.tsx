@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
@@ -78,6 +78,7 @@ const player = (id: string, firstName: string, lastName: string) => ({
   trainingFocus: null,
   nationality: "Brazil",
   birthplace: "Santos",
+  foreign: false,
 });
 
 const mountSquad = async (
@@ -194,6 +195,27 @@ describe("choosing a view", () => {
     const nameButtons = [...document.querySelectorAll("button[data-focus-id]")];
     expect(nameButtons.length).toBe(2);
     expect(nameButtons.filter((b) => b.getAttribute("tabindex") === "0").length).toBe(1);
+  });
+
+  it("reads each row as match-day slot, status badge, name, positions", async () => {
+    await mountSquad([{ ...player("p1", "Alan", "Shearer"), foreign: true }]);
+
+    const name = screen.getByText(/Shearer, Alan/);
+    const row = name.closest("li")!;
+    const badge = within(row).getByText("Fgn");
+    expect(badge.getAttribute("aria-hidden")).toBe("true");
+    expect(within(row).getByText("Foreign player")).toBeTruthy();
+    const order = [
+      within(row).getByRole("button", { name: "Not selected" }),
+      badge,
+      name,
+      within(row).getByText("DC"),
+    ];
+    for (let i = 1; i < order.length; i++) {
+      expect(
+        order[i - 1]!.compareDocumentPosition(order[i]!) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
   });
 
   it("names the screen with a level-one Squad heading in either layout", async () => {

@@ -59,6 +59,10 @@ export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerV
   /** The city the player was born in, or `null` for a player born outside the loaded world. Real
    *  geography, carried directly for the same reason. */
   birthplace: Schema.NullOr(Schema.String),
+  /** Whether the player's nationality differs from his club's nation (the nation of the club's home
+   *  city). Computed on the read, against nation ids, because the view's `nationality` is a display
+   *  name and the club's nation is not on the wire. */
+  foreign: Schema.Boolean,
 }) {}
 
 export class SquadView extends Schema.Class<SquadView>("SquadView")({

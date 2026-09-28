@@ -46,8 +46,10 @@ export interface SquadRow extends TableRowShape {
   /** Own squad only: the Position Rating of every Position, shown beside the Familiarity in the
    *  Positions cell. A rival's squad omits them — the Player read withholds Position Ratings. */
   readonly positionRatings?: Readonly<Record<string, KnownFigure>>;
-  /** Own squad only: live Condition (%), the Status column's one engine-modeled input. */
+  /** Own squad only: live Condition (%), an input to the Status column. */
   readonly condition?: number;
+  /** Own squad only: nationality differs from the club's nation, the Status column's `Fgn`. */
+  readonly foreign?: boolean;
   readonly nationality: string;
   readonly birthplace: string | null;
   /** Own squad only: the manager's Training Focus assignment; AI clubs' players carry none. */
@@ -82,6 +84,7 @@ export const squadRowOf = (player: SquadPlayerView): SquadRow => ({
   nationality: player.nationality,
   birthplace: player.birthplace,
   trainingFocus: player.trainingFocus,
+  foreign: player.foreign,
 });
 
 /** The any-club read's wire: its figures are already `KnownFigure`s by the shared knowledge rule,

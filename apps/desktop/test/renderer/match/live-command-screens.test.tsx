@@ -63,6 +63,7 @@ const player = (id: string, firstName: string) => ({
   trainingFocus: null,
   nationality: "England",
   birthplace: "London",
+  foreign: false,
 });
 
 const tacticsView = () => ({

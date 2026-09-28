@@ -60,6 +60,7 @@ const squadPlayer = (id: string, name: string, condition: number) => ({
   trainingFocus: null,
   nationality: "England",
   birthplace: "London",
+  foreign: false,
 });
 
 const squadView = (players: ReturnType<typeof squadPlayer>[]) => ({
@@ -107,7 +108,7 @@ afterEach(reset);
 describe("the reserved status catalogue", () => {
   it("carries the full CM 03/04 vocabulary, each slot with a likelihood note", () => {
     expect(RESERVED_STATUSES.map((s) => s.abbreviation)).toEqual([
-      "Lmp", "Inj", "Sus", "Wnt", "Bid", "Yel", "Int", "Fgn", "Ine", "Wpm",
+      "Lmp", "Inj", "Sus", "Wnt", "Bid", "Yel", "Fint", "Fgn", "Ine", "Wpm",
       "Tir", "Cup", "Loa", "Lst", "Unh", "Unf", "Sct", "Yth", "Req",
     ]);
     for (const status of RESERVED_STATUSES) {
@@ -116,13 +117,18 @@ describe("the reserved status catalogue", () => {
     }
   });
 
-  it("renders only engine-modeled state: Condition below the engine's fatigue threshold, nothing else", () => {
+  it("renders only engine-modeled state: low Condition and a foreign nationality, nothing else", () => {
     expect(statusesOf({ condition: FRESH })).toEqual([]);
     expect(statusesOf({ condition: NON_CONTACT_CONDITION_THRESHOLD })).toEqual([]);
     expect(statusTermsOf({ condition: TIRED })).toEqual(["Tired"]);
-    // Exactly one slot is modeled today; every other one is a reservation and
-    // must stay unrenderable until the engine grows the state behind it.
-    expect(RESERVED_STATUSES.filter((s) => s.likelihood === "modeled")).toHaveLength(1);
+    expect(statusTermsOf({ condition: FRESH, foreign: true })).toEqual(["Foreign player"]);
+    // Both at once read in the catalogue's order.
+    expect(statusTermsOf({ condition: TIRED, foreign: true })).toEqual(["Foreign player", "Tired"]);
+    // Only these two slots are modeled today; every other one is a reservation
+    // and must stay unrenderable until the engine grows the state behind it.
+    expect(
+      RESERVED_STATUSES.filter((s) => s.likelihood === "modeled").map((s) => s.abbreviation),
+    ).toEqual(["Fgn", "Tir"]);
   });
 });
 

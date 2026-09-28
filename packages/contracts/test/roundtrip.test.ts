@@ -64,6 +64,7 @@ const player = {
   trainingFocus: null,
   nationality: "nation_eng_england",
   birthplace: "London",
+  foreign: false,
 };
 
 describe("simple view classes", () => {

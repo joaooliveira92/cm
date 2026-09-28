@@ -104,6 +104,12 @@ second one. National teams are deferred rather than ruled out. Distinct from the
 differs from their club's nation was drawn through a migration link.
 _Avoid_: citizenship, eligibility (neither is modelled)
 
+**Foreign player**:
+A player whose Nationality is not his club's nation, the nation of the club's home city. Shown as the
+`Fgn` status on the manager's own squad. Informational only: no foreign-player limit or other
+selection rule reads it.
+_Avoid_: international (that is `Fint`, a player away on international duty, which is not modelled)
+
 **Name Pool**:
 The per-Nation lists of given names and surnames a generated person's name is drawn from. Factual
 linguistic data held in code beside the Nation Profiles, never content-pack data and never in the save,
