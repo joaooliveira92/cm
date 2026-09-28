@@ -85,4 +85,7 @@ export class StaffProfileView extends Schema.Class<StaffProfileView>("StaffProfi
   joined: Schema.String,
   history: Schema.Array(StaffHistorySpellView),
   rankings: Schema.NullOr(StaffRankingsView),
+  /** True for the manager's own Assistant Manager while the Training Schedule is delegated to them
+   *  (training-schedule-and-delegation 05) — the one duty a Presence Staff member carries. */
+  plansTraining: Schema.Boolean,
 }) {}

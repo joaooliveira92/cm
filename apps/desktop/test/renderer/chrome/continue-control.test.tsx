@@ -102,7 +102,7 @@ describe("Continue in the chrome", () => {
     // (`.scratch/season-rollover-skips-conclusion/`): advancing concludes and
     // rolls over in one step, so the phase never reaches the renderer and a
     // disabled Continue for it was unreachable dead code. Continue stays live;
-    // the outstanding band reports a concluded season as a blocker instead.
+    // the bottom bar marquee reports a concluded season as a blocker instead.
     expect(button.disabled).toBe(false);
     act(() => button.click());
     expect(counters.advanceCalls).toBe(1);
@@ -181,9 +181,11 @@ describe("Continue in the chrome", () => {
     });
     await mountRoutedCareer("league");
 
-    const band = await screen.findByRole("region", { name: "Outstanding before you continue" });
+    const band = await screen.findByRole("list", { name: "Status" });
+    await within(band).findByText(/No Tactic set/);
+    // The version lines trail the outstanding items in the marquee.
     const rows = within(band).getAllByRole("listitem").map((li) => li.textContent ?? "");
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(5);
     // The blocker leads; the advisory the advance itself destroys outranks the
     // standing one that survives it.
     expect(rows[0]).toContain("The season is complete");
@@ -193,7 +195,7 @@ describe("Continue in the chrome", () => {
     expect(within(band).getByRole("button", { name: "Transfers" })).toBeTruthy();
   });
 
-  it("the outstanding band is derived, not dismissible: it clears when its condition does", async () => {
+  it("the outstanding items are derived, not dismissible: it clears when its condition does", async () => {
     let hasTactic = false;
     mockPreload(async (method) => {
       if (method === "getLeagueTable") {
@@ -224,18 +226,15 @@ describe("Continue in the chrome", () => {
     });
     await mountRoutedCareer("league");
 
-    const band = await screen.findByRole("region", { name: "Outstanding before you continue" });
+    const band = await screen.findByRole("list", { name: "Status" });
+    await within(band).findByText(/No Tactic set/);
     // Nothing dismisses it — an acknowledged reminder would leave the Tactic unset.
     expect(within(band).queryByRole("button", { name: "Dismiss" })).toBeNull();
 
     hasTactic = true;
     fireEvent.click(screen.getByRole("button", { name: /Continue/ }));
 
-    await waitFor(() =>
-      expect(
-        screen.queryByRole("region", { name: "Outstanding before you continue" }),
-      ).toBeNull(),
-    );
+    await waitFor(() => expect(screen.queryByText(/No Tactic set/)).toBeNull());
   });
 
   it("reports why the advance stopped, and routes each consequence to the screen that owns it", async () => {
@@ -413,7 +412,7 @@ describe("Continue in the chrome", () => {
     // The bar says why the control is greyed; the band says what is blocking
     // it and where that lives. Two questions, stated once each.
     expect(within(screen.getByRole("contentinfo")).getByText("The Calendar cannot advance right now.")).toBeTruthy();
-    const outstanding = screen.getByRole("region", { name: "Outstanding before you continue" });
+    const outstanding = screen.getByRole("list", { name: "Status" });
     expect(within(outstanding).getByText("The season cannot advance during a match.")).toBeTruthy();
     const disabled = screen.getByRole("button", { name: /Continue/ }) as HTMLButtonElement;
     expect(disabled.disabled).toBe(true);
@@ -424,7 +423,6 @@ describe("Continue in the chrome", () => {
     });
     expect(screen.getByText("Season 3 · 17 Oct 2026")).toBeTruthy();
     expect(screen.queryByText("The season cannot advance during a match.")).toBeNull();
-    expect(screen.queryByRole("region", { name: "Outstanding before you continue" })).toBeNull();
     const enabled = screen.getByRole("button", { name: /Continue/ }) as HTMLButtonElement;
     expect(enabled.disabled).toBe(false);
   });

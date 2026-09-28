@@ -17,7 +17,7 @@ empty chip for "not selected". This is the instruction's Pkd column (§9.4) for 
 
 **Blocked by:** None.
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 ## Tests
 

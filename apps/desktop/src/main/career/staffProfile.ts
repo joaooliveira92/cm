@@ -127,9 +127,14 @@ const readStaffProfile = (clubId: ClubId, key: string) =>
         ? yield* rankSquad(clubId, staffKey(address.role, address.ordinal), judge, worldSeed)
         : null;
 
+    const delegationRows =
+      isUserClub && address.role === "assistant"
+        ? yield* sql<{ delegated: number }>`SELECT delegated FROM training_schedules WHERE club_id = ${clubId}`
+        : [];
     return new StaffProfileView({
       club: summary(clubId, club.statureTier),
       isUserClub,
+      plansTraining: delegationRows[0]?.delegated === 1,
       key: staffKey(address.role, address.ordinal),
       role: address.role,
       firstName: person.firstName,

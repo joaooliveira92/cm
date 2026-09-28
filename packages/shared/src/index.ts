@@ -15,6 +15,7 @@ export * from "./rules/board.js";
 export * from "./rules/transfers.js";
 export * from "./rules/training.js";
 export * from "./rules/trainingSchedule.js";
+export * from "./rules/assistantSchedule.js";
 export * from "./rules/bestXi.js";
 export * from "./rules/squadQuality.js";
 export * from "./rules/managerPillars.js";

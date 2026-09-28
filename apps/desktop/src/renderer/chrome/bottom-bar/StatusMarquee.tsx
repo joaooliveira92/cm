@@ -8,6 +8,8 @@
  * fully left before the next enters: only ever one item on screen.
  */
 import { type RefObject, useEffect, useRef, useState } from "react";
+import { FOCUS_RING } from "../../focus.js";
+import type { StatusItem } from "./shell-bottom-bar-state.js";
 
 /** Travel speed, held constant: a fixed cycle time would scroll faster on a
  *  wider window, since the viewport-wide gaps are part of what a cycle covers. */
@@ -17,7 +19,7 @@ export const MARQUEE_PX_PER_SECOND = 40;
 const FALLBACK_SECONDS = 60;
 
 export interface StatusMarqueeProps {
-  readonly items: readonly string[];
+  readonly items: readonly StatusItem[];
   /** The accessible name of the list. */
   readonly label?: string;
 }
@@ -28,15 +30,15 @@ export const StatusMarquee = ({ items, label = "Status" }: StatusMarqueeProps) =
 
   return (
     <div
-      // Hovering pauses the scroll (WCAG 2.2.2), and the tooltip gives the whole
-      // line at once to anyone who stopped it to read.
-      title={items.join("\n")}
+      // Hovering or focusing an item's link pauses the scroll (WCAG 2.2.2), and
+      // the tooltip gives the whole line at once to anyone who stopped it to read.
+      title={items.map(itemText).join("\n")}
       className="@container min-w-0 flex-1 overflow-hidden text-xs text-text-muted motion-safe:[mask-image:linear-gradient(to_right,transparent,#000_1rem,#000_calc(100%-1rem),transparent)]"
     >
       <div
         data-marquee-track=""
         style={{ animationDuration: `${duration}s` }}
-        className="flex w-max animate-[bottom-bar-marquee_60s_linear_infinite] hover:[animation-play-state:paused] motion-reduce:w-auto motion-reduce:animate-none"
+        className="flex w-max animate-[bottom-bar-marquee_60s_linear_infinite] hover:[animation-play-state:paused] focus-within:[animation-play-state:paused] motion-reduce:w-auto motion-reduce:animate-none"
       >
         {/* The second copy exists only to close the loop: it is hidden from
             assistive tech, and reduced motion drops it and lays the one copy out
@@ -53,13 +55,51 @@ export const StatusMarquee = ({ items, label = "Status" }: StatusMarqueeProps) =
               // Position is the identity here: the list is a fixed line, never
               // reordered, and two items may share their text.
               <li key={index} className="shrink-0 pr-[100cqw] whitespace-nowrap motion-reduce:pr-0">
-                {item}
+                <StatusEntry item={item} duplicate={duplicate} />
               </li>
             ))}
           </ul>
         ))}
       </div>
     </div>
+  );
+};
+
+const itemText = (item: StatusItem): string =>
+  typeof item === "string" ? item : `${item.title}. ${item.detail}`;
+
+const StatusEntry = ({
+  item,
+  duplicate,
+}: {
+  readonly item: StatusItem;
+  readonly duplicate: boolean;
+}) => {
+  if (typeof item === "string") return item;
+  return (
+    <>
+      <span
+        className={`font-semibold ${item.tone === "danger" ? "text-text-danger" : "text-text-primary"}`}
+      >
+        {item.title}.
+      </span>{" "}
+      <span>{item.detail}</span>
+      {item.open !== null && (
+        <>
+          {" "}
+          <button
+            type="button"
+            // The duplicate copy is hidden from assistive tech, so its button
+            // stays out of the tab order too; a pointer can still use it.
+            tabIndex={duplicate ? -1 : undefined}
+            className={`underline underline-offset-2 hover:text-text-primary ${FOCUS_RING.join(" ")}`}
+            onClick={item.open.onOpen}
+          >
+            {item.open.label}
+          </button>
+        </>
+      )}
+    </>
   );
 };
 

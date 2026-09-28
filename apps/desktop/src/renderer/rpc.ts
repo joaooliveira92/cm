@@ -69,6 +69,7 @@ export {
   assignScoutToClubMutation,
   changeTacticsMutation,
   changeTrainingScheduleMutation,
+  setTrainingScheduleDelegationMutation,
   commitMatchdayMutation,
   placeBidMutation,
   signFreeAgentMutation,

@@ -625,11 +625,13 @@ every other club.
 _Avoid_: real staff, mechanical staff (the contrast is binding, not authenticity)
 
 **Presence Staff**:
-A Staff member who exists to be seen rather than read by a formula — President or Physio, and no
-others. Carries a name and a role and nothing else: no quality, because no formula reads one. Never
-stored: a pure function of the World Seed and the club's canonical id, computed when a screen asks,
-so every club in the world has them at no storage cost. The rule they satisfy is that some shipped
-surface reads them — the Club Staff screen, and for the President the board News Messages.
+A Staff member who exists to be seen rather than read by a formula — the President, the Assistant
+Manager or the Physio, and no others. Carries a name and a role and nothing else: no quality, because
+no formula reads one. Never stored: a pure function of the World Seed and the club's canonical id,
+computed when a screen asks, so every club in the world has them at no storage cost. The rule they
+satisfy is that some shipped surface reads them — the Club Staff screen; for the President the board
+News Messages; for the Assistant Manager a delegated Training Schedule, which the assistant plans by
+one uniform Best Practice rule and reports in the News Inbox, and the Staff Profile that says so.
 _Avoid_: flavour staff, cosmetic staff (they are read by a surface; that is the whole justification)
 
 **President**:

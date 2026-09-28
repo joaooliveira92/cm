@@ -11,7 +11,11 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../../seeded-save.js";
-import { changeTrainingSchedule, getTrainingSchedule } from "../../../src/main/club/trainingSchedule.js";
+import {
+  changeTrainingSchedule,
+  getTrainingSchedule,
+  setTrainingScheduleDelegation,
+} from "../../../src/main/club/trainingSchedule.js";
 
 // training-schedule-and-delegation 03: the schedule is stored against a revision, replays are
 // no-ops, and every accepted write appends a `TrainingScheduleSet` event naming the manager.
@@ -34,6 +38,14 @@ const scheduleEvents = (saveId: SaveId) =>
   }).pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`) })),
     Effect.scoped,
+  );
+
+const assistantEvents = (saveId: SaveId) =>
+  scheduleEvents(saveId).pipe(
+    Effect.map((rows) =>
+      rows.map((row) => JSON.parse(row.payload) as { author: string; template: string; assistantName?: string }),
+    ),
+    Effect.map((payloads) => payloads.filter((payload) => payload.author === "assistant")),
   );
 
 it.effect("a club that never saved a schedule reads as Balanced at revision 0, planning for its next Fixture", () =>
@@ -116,5 +128,70 @@ it.effect("every accepted write appends one TrainingScheduleSet event naming the
     const payload = JSON.parse(events[0]!.payload) as { author: string; template: string };
     strictEqual(payload.author, "manager");
     strictEqual(payload.template, "recovery");
+  }),
+);
+
+it.effect("a fresh schedule is the manager's, and names the club's Assistant Manager", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const view = yield* getTrainingSchedule(savesDir, save.id);
+    strictEqual(view.delegated, false);
+    strictEqual(view.assistantName.split(" ").length >= 2, true);
+    strictEqual(view.assistantReason, null);
+  }),
+);
+
+it.effect("delegating hands the schedule to the assistant, who plans at once and never picks Heavy", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const delegated = yield* setTrainingScheduleDelegation(savesDir, save.id, true, 0, rid("d1"));
+
+    strictEqual(delegated.delegated, true);
+    strictEqual(delegated.revision, 1);
+    strictEqual(delegated.template !== null && delegated.template !== "heavy", true);
+    strictEqual(typeof delegated.assistantReason, "string");
+
+    const events = yield* assistantEvents(save.id);
+    strictEqual(events.length, 1);
+    strictEqual(events[0]!.assistantName, delegated.assistantName);
+
+    const reloaded = yield* getTrainingSchedule(savesDir, save.id);
+    strictEqual(reloaded.delegated, true);
+  }),
+);
+
+it.effect("taking the schedule back keeps the assistant's sessions as the manager's", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const delegated = yield* setTrainingScheduleDelegation(savesDir, save.id, true, 0, rid("d1"));
+    const taken = yield* setTrainingScheduleDelegation(savesDir, save.id, false, 1, rid("d2"));
+
+    strictEqual(taken.delegated, false);
+    strictEqual(taken.revision, 2);
+    deepStrictEqual(taken.sessions, delegated.sessions);
+    strictEqual(taken.assistantReason, null);
+    strictEqual((yield* assistantEvents(save.id)).length, 1);
+  }),
+);
+
+it.effect("a manager save takes the schedule back, so the assistant never overwrites it", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    yield* setTrainingScheduleDelegation(savesDir, save.id, true, 0, rid("d1"));
+    const saved = yield* changeTrainingSchedule(savesDir, save.id, heavy, 1, rid("m1"));
+
+    strictEqual(saved.delegated, false);
+    strictEqual(saved.template, "heavy");
+  }),
+);
+
+it.effect("delegation is revision-guarded like a schedule save", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    yield* changeTrainingSchedule(savesDir, save.id, heavy, 0, rid("m1"));
+
+    const error = yield* Effect.flip(setTrainingScheduleDelegation(savesDir, save.id, true, 0, rid("d1")));
+    strictEqual(error._tag, "TrainingScheduleRevisionConflictError");
+    strictEqual((yield* getTrainingSchedule(savesDir, save.id)).delegated, false);
   }),
 );

@@ -222,7 +222,7 @@ describe("choosing a view", () => {
     expect(badge.getAttribute("aria-hidden")).toBe("true");
     expect(within(row).getByText("Foreign player")).toBeTruthy();
     const order = [
-      within(row).getByRole("button", { name: "Not selected" }),
+      within(row).getByText("Not selected"),
       badge,
       name,
       within(row).getByText("DC"),
@@ -305,9 +305,14 @@ describe("the leading match-day indicator", () => {
 
     // Playing reads the slot code the bar shows for the same slot; the bench
     // reads the slot it sits in (SB1..); an unselected player gets a hollow box.
-    expect(screen.getByRole("button", { name: "Playing (GK)" }).textContent).toBe("GK");
-    expect(screen.getByRole("button", { name: "On the bench" }).textContent).toBe("SB1");
-    expect(screen.getByRole("button", { name: "Not selected" }).textContent).toBe("");
+    // The code is decoration (aria-hidden); the state is the text a screen reader reads.
+    const codeOf = (state: string) =>
+      screen.getByText(state).parentElement!.querySelector('[aria-hidden="true"]')!.textContent;
+    expect(codeOf("Playing (GK)")).toBe("GK");
+    expect(codeOf("On the bench")).toBe("SB1");
+    expect(codeOf("Not selected")).toBe("");
+    // Read-only, so not a control: the row's one tab stop stays the name button.
+    expect(screen.queryByRole("button", { name: /Playing|On the bench|Not selected/ })).toBeNull();
   });
 });
 

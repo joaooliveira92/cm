@@ -22,6 +22,8 @@ import {
  */
 
 const ready = (state: ScopeState): boolean => state.ready === true;
+const scheduleOpen = (state: ScopeState): boolean => ready(state) && state.trainingScheduleOpen === true;
+const managerPlans = (state: ScopeState): boolean => scheduleOpen(state) && state.trainingScheduleDelegated !== true;
 
 /** Career-global availability: a career is shown and the season can advance.
  *  A live match suspends the season (match-day note AC-4): `state.match` being
@@ -167,22 +169,39 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   { id: "assign-slot-player", label: "Assign a player to a tactics slot", scope: "tactics", available: ready, handler: () => undefined },
   { id: "swap-slot-players", label: "Swap two tactics slots' players", scope: "tactics", available: ready, handler: () => undefined },
   { id: "clear-tactic-selection", label: "Clear the team selection", scope: "tactics", available: ready, handler: () => undefined },
-  // training — the schedule screen publishes `trainingScheduleOpen` while mounted; the Training
-  // sub-screens share one scope, so without it the palette would list a save no screen handles.
+  // training — the schedule screen publishes `trainingScheduleOpen` while mounted, and
+  // `trainingScheduleDelegated` while the assistant plans; the Training sub-screens share one scope,
+  // so without the first the palette would list verbs no screen handles.
   {
     id: "save-training-schedule",
     label: "Save the training schedule",
     scope: "training",
-    available: (state) => ready(state) && state.trainingScheduleOpen === true,
-    unavailableReason: "Open the Training Schedule to save it.",
+    available: (state) => managerPlans(state),
+    unavailableReason: "Open the Training Schedule, and take it back from your assistant, to save it.",
     handler: () => undefined,
   },
   {
     id: "reset-training-schedule",
     label: "Reset the training schedule to the saved one",
     scope: "training",
-    available: (state) => ready(state) && state.trainingScheduleOpen === true,
-    unavailableReason: "Open the Training Schedule to reset it.",
+    available: (state) => managerPlans(state),
+    unavailableReason: "Open the Training Schedule, and take it back from your assistant, to reset it.",
+    handler: () => undefined,
+  },
+  {
+    id: "delegate-training-schedule",
+    label: "Delegate the training schedule to your assistant",
+    scope: "training",
+    available: (state) => managerPlans(state),
+    unavailableReason: "Open the Training Schedule to delegate it; it may already be delegated.",
+    handler: () => undefined,
+  },
+  {
+    id: "take-over-training-schedule",
+    label: "Take the training schedule back from your assistant",
+    scope: "training",
+    available: (state) => scheduleOpen(state) && state.trainingScheduleDelegated === true,
+    unavailableReason: "Only a delegated Training Schedule can be taken back.",
     handler: () => undefined,
   },
   // match day

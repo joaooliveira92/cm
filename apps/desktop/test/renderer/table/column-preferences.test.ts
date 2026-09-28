@@ -11,6 +11,7 @@ import {
   isSquadPresetId,
   SQUAD_ALL_COLUMN_IDS,
   SQUAD_IDENTITY_COLUMN_ID,
+  SQUAD_MATCH_DAY_COLUMN_ID,
   SQUAD_PRESETS,
   SQUAD_PROTECTED_COLUMN_IDS,
   SQUAD_STATUS_COLUMN_ID,
@@ -51,12 +52,13 @@ describe("AC-27 — Squad column-preference reconciliation (runs on every load/r
     expect(reconciled.visibleColumnIds).toContain("passing");
   });
 
-  it("Name and Status are always visible and pinned, even when a stored blob hides them", () => {
+  it("the protected columns are always visible and pinned, even when a stored blob hides them", () => {
     const reconciled = reconcileColumnPreferences(
       { visibleColumnIds: ["age", "overall"], pinnedColumnIds: [] },
       SQUAD_ALL_COLUMN_IDS,
     );
-    expect(reconciled.visibleColumnIds[0]).toBe(SQUAD_IDENTITY_COLUMN_ID);
+    expect(reconciled.visibleColumnIds[0]).toBe(SQUAD_MATCH_DAY_COLUMN_ID);
+    expect(reconciled.visibleColumnIds[1]).toBe(SQUAD_IDENTITY_COLUMN_ID);
     expect(reconciled.visibleColumnIds).toContain(SQUAD_STATUS_COLUMN_ID);
     expect(reconciled.visibleColumnIds).toContain("age");
     // Order is load-bearing: the pinned sticky offsets are summed left to right.
@@ -116,6 +118,7 @@ describe("AC-27 — preferences persist to local storage, loaded through the rec
       storage,
     );
     expect(loadSquadColumnPreferences(storage).visibleColumnIds).toEqual([
+      "matchDay",
       "name",
       "status",
       "age",

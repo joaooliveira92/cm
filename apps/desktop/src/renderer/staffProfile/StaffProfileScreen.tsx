@@ -185,6 +185,7 @@ const StaffProfileBody = ({
         <PlayerRow label="Nationality" value={profile.nationality} />
         <PlayerRow label="Languages" value={profile.languages.join(", ")} />
         <PlayerRow label="Joined Club" value={formatCalendarDate(profile.joined)} />
+        {profile.plansTraining && <PlayerRow label="Duties" value="Plans the Training Schedule" />}
       </PlayerPanel>
       <PlayerNotePanel title="History">
         {profile.history.length === 0 ? (

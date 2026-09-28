@@ -41,7 +41,7 @@ const CATEGORY_LABELS: Record<Category, string> = {
  *  list adds a pill to Natural because it shows no tier label; here the label sits beside the code. */
 const FAMILIARITY_TONE: Readonly<Record<FamiliarityTier, string>> = {
   natural: "text-text-highlight",
-  competent: "text-text-body",
+  competent: "text-text-secondary",
   unfamiliar: "text-text-muted",
 };
 

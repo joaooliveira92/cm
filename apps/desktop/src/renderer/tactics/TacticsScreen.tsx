@@ -242,12 +242,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       aria-label="Tactics"
       className={`flex flex-col gap-4 p-6 text-foreground ${FOCUS_RING.join(" ")}`}
     >
-      <header className="chrome-gradient rounded-panel border border-panel-border px-4 py-2 text-center shadow-chrome">
-        <h1 className="text-2xl font-bold text-text-highlight">{view.club.name} Tactics</h1>
-        <p className="text-sm font-semibold capitalize text-text-bright">
-          {tactic.formation} {tactic.mentality}
-        </p>
-      </header>
+      <h1 className="sr-only">{view.club.name} Tactics</h1>
 
       <section aria-label="Formation and team instructions" className="flex flex-wrap gap-x-8 gap-y-3">
         <div>

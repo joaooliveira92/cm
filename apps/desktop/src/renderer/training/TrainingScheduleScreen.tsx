@@ -52,8 +52,23 @@ const withSlot = (
   sessions.map((session, slot) => (slot === index ? { ...session, ...change } : session));
 
 export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const { viewResult, viewError, view, sessions, dirty, conflict, status, setSessions, save, reset, refresh } =
-    useTrainingScheduleDraft(saveId);
+  const {
+    viewResult,
+    viewError,
+    view,
+    delegated,
+    assistantName,
+    assistantReason,
+    sessions,
+    dirty,
+    conflict,
+    status,
+    setSessions,
+    save,
+    setDelegated,
+    reset,
+    refresh,
+  } = useTrainingScheduleDraft(saveId);
 
   // The Training sub-screens share one scope, so the Actions below are only available while this
   // screen says it is open (see their `available` predicates).
@@ -61,6 +76,10 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
     setScopeState({ trainingScheduleOpen: true });
     return () => clearScopeState("trainingScheduleOpen");
   }, []);
+  useEffect(() => {
+    setScopeState({ trainingScheduleDelegated: delegated });
+    return () => clearScopeState("trainingScheduleDelegated");
+  }, [delegated]);
 
   useEffect(() => {
     const unregisters = [
@@ -68,32 +87,56 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
         void save();
       }),
       registerActionHandler("reset-training-schedule", reset),
+      registerActionHandler("delegate-training-schedule", () => {
+        void setDelegated(true);
+      }),
+      registerActionHandler("take-over-training-schedule", () => {
+        void setDelegated(false);
+      }),
     ];
     return () => {
       for (const unregister of unregisters) unregister();
     };
-  }, [save, reset]);
+  }, [save, reset, setDelegated]);
 
+  // One delegation verb at a time, by who plans; while the assistant plans, Save and Reset are
+  // disabled and the bar's reason line says why.
   const bottomBarActions = useMemo(
     () => ({
       buttons: [
+        delegated
+          ? {
+              id: "take-over-training-schedule",
+              actionId: "take-over-training-schedule",
+              label: "Take Over Schedule",
+              disabled: false,
+              onTrigger: () => void dispatchAction("take-over-training-schedule"),
+            }
+          : {
+              id: "delegate-training-schedule",
+              actionId: "delegate-training-schedule",
+              label: "Delegate to Assistant",
+              disabled: false,
+              onTrigger: () => void dispatchAction("delegate-training-schedule"),
+            },
         {
           id: "reset-training-schedule",
           actionId: "reset-training-schedule",
           label: "Reset Schedule",
-          disabled: !dirty,
+          disabled: delegated || !dirty,
           onTrigger: () => void dispatchAction("reset-training-schedule"),
         },
         {
           id: "save-training-schedule",
           actionId: "save-training-schedule",
           label: "Save Schedule",
-          disabled: !dirty,
+          disabled: delegated || !dirty,
           onTrigger: () => void dispatchAction("save-training-schedule"),
         },
       ],
+      reason: delegated ? `${assistantName} is planning the schedule. Take it over to edit it.` : null,
     }),
-    [dirty],
+    [assistantName, delegated, dirty],
   );
   useScreenBottomBarActions(view === null ? null : bottomBarActions);
 
@@ -132,6 +175,11 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
             ? "No Fixture left this Season."
             : `Planning for ${fixture.opponentClubName} (${fixture.isHome ? "home" : "away"}), ${fixture.date}.`}
         </p>
+        <p className="text-sm text-text-bright" data-testid="schedule-planner">
+          {delegated
+            ? `Planned by ${assistantName}, your assistant${assistantReason === null ? "" : `: ${templateLabel(sessions)}, because ${assistantReason}`}.`
+            : "Planned by you."}
+        </p>
       </header>
 
       <section aria-labelledby="training-templates-heading" className="flex flex-col gap-2">
@@ -147,6 +195,7 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
                 type="button"
                 variant={applied ? "default" : "secondary"}
                 aria-pressed={applied}
+                disabled={delegated}
                 onClick={() => setSessions(TRAINING_SCHEDULE_TEMPLATES[name])}
               >
                 {TEMPLATE_LABELS[name]}
@@ -166,6 +215,7 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
             <li key={index} className="flex items-center gap-3">
               <span className="w-20 text-sm font-semibold">Session {index + 1}</span>
               <Select
+                disabled={delegated}
                 value={session.type}
                 items={typeItems}
                 onValueChange={(value) => {
@@ -184,6 +234,7 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
                 </SelectContent>
               </Select>
               <Select
+                disabled={delegated}
                 value={session.intensity}
                 items={intensityItems}
                 onValueChange={(value) => {

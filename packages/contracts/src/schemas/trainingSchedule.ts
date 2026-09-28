@@ -21,8 +21,8 @@ export const TrainingSessionSchema = Schema.Struct({
   intensity: TrainingIntensitySchema,
 });
 
-/** Who saved a schedule. The Assistant Manager joins this when delegation ships (ticket 05). */
-export const TrainingScheduleAuthorSchema = Schema.Literals(["manager"]);
+/** Who saved a schedule: the manager, or the Assistant Manager while delegation is on. */
+export const TrainingScheduleAuthorSchema = Schema.Literals(["manager", "assistant"]);
 
 /** The club's next unplayed Fixture — the end of the microcycle the schedule plans for. */
 export class TrainingScheduleFixtureView extends Schema.Class<TrainingScheduleFixtureView>(
@@ -44,6 +44,12 @@ export class TrainingScheduleView extends Schema.Class<TrainingScheduleView>("Tr
   template: Schema.NullOr(TrainingTemplateNameSchema),
   revision: Schema.Natural,
   nextFixture: Schema.NullOr(TrainingScheduleFixtureView),
+  /** True while the Assistant Manager plans the schedule (ticket 05). */
+  delegated: Schema.Boolean,
+  /** The club's Assistant Manager, by name — a derived Presence Staff person, never stored. */
+  assistantName: Schema.String,
+  /** Why the assistant chose the current sessions, when the assistant wrote them; else `null`. */
+  assistantReason: Schema.NullOr(Schema.String),
 }) {}
 
 /**
@@ -70,6 +76,20 @@ export class TrainingScheduleRevisionConflictError extends Schema.TaggedError<Tr
   },
 ) {}
 
+/**
+ * The `setTrainingScheduleDelegation` payload: hand the schedule to the Assistant Manager
+ * (`delegated: true`) or take it back. Revisioned and idempotent like a schedule write, because it
+ * changes who may write the schedule.
+ */
+export class SetTrainingScheduleDelegationPayload extends Schema.Class<SetTrainingScheduleDelegationPayload>(
+  "SetTrainingScheduleDelegationPayload",
+)({
+  saveId: SaveId,
+  delegated: Schema.Boolean,
+  expectedRevision: Schema.Natural,
+  requestId: WriteRequestId,
+}) {}
+
 /** A schedule write the rules refuse — the wrong number of sessions. Unknown session types and
  *  intensities never get this far: the payload schema refuses them at decode. */
 export class InvalidTrainingScheduleError extends Schema.TaggedError<InvalidTrainingScheduleError>()(
@@ -84,4 +104,8 @@ export class TrainingScheduleSetEvent extends Schema.Class<TrainingScheduleSetEv
   author: TrainingScheduleAuthorSchema,
   sessions: Schema.Array(TrainingSessionSchema),
   template: Schema.NullOr(TrainingTemplateNameSchema),
+  /** On an assistant write: who, why, and the Fixture it planned for — what the News Message says. */
+  assistantName: Schema.optional(Schema.String),
+  reason: Schema.optional(Schema.String),
+  opponentClubName: Schema.optional(Schema.NullOr(Schema.String)),
 }) {}

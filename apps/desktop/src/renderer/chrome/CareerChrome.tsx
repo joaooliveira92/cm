@@ -17,7 +17,6 @@ import { NO_DRAG } from "./header/drag-region.js";
 import { CareerStateProvider, useCareerState, continueUnavailableReason } from "./CareerStateProvider.js";
 import { CareerBottomBar } from "./CareerBottomBar.js";
 import { SaveGameAction } from "./SaveGameAction.js";
-import { ContinueOutstandingBand } from "./ContinueOutstanding.js";
 import { ContinueResultBand } from "./ContinueResult.js";
 import {
   matchReadout,
@@ -57,22 +56,13 @@ const CareerChromeInner = ({
   readonly children: ReactNode;
 }) => {
   const {
-    clubName, clubColours, badgeKey, manager, newsCounts, career, outstanding, screenId,
-    report, setReport, openDestination, acknowledgeReadinessItem,
+    clubName, clubColours, badgeKey, manager, newsCounts, career,
+    report, setReport, openDestination,
   } = useCareerState();
 
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const identity = useSyncExternalStore(subscribeScreenIdentity, getScreenIdentity, getScreenIdentity);
   const liveMatch = useMatchScoreboard(saveId);
-
-  // Don't show outstanding items whose destination is the current screen —
-  // the player is already where the fix lives.
-  const filteredOutstanding = outstanding.filter(
-    (item) =>
-      item.destination === null ||
-      screenId === null ||
-      item.destination !== screenId,
-  );
 
   const leading = (
     <span className="flex items-center gap-2">
@@ -162,11 +152,6 @@ const CareerChromeInner = ({
                 </span>
                 <div className="flex-1" />
               </div>
-              <ContinueOutstandingBand
-                items={filteredOutstanding}
-                onOpen={openDestination}
-                onDismiss={acknowledgeReadinessItem}
-              />
               {report !== null && (
                 <ContinueResultBand
                   report={report}

@@ -1,5 +1,5 @@
 /**
- * The short-squad Continue advisory in the career chrome (gate-red-on-dev 08): the outstanding band
+ * The short-squad Continue advisory in the career chrome (gate-red-on-dev 08): the bottom bar marquee
  * says how many players the coming rollover takes, links to the Contract Expiry screen, never
  * disables Continue, and clears once a renewal brings the squad back to the floor.
  */
@@ -113,7 +113,12 @@ const RenewProbe = () => {
   );
 };
 
-const band = () => screen.findByRole("region", { name: "Outstanding before you continue" });
+// The outstanding items scroll in the bottom bar's marquee; its first copy is the accessible one.
+const band = async () => {
+  const marquee = await screen.findByRole("list", { name: "Status" });
+  await within(marquee).findByText(/Squad short after this Season/);
+  return marquee;
+};
 
 describe("the short-squad advisory", () => {
   it("names how many are leaving and links to the Contract Expiry screen", async () => {
@@ -157,7 +162,6 @@ describe("the short-squad advisory", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(screen.queryByText(/Squad short after this Season/)).toBeNull();
-    expect(screen.queryByRole("region", { name: "Outstanding before you continue" })).toBeNull();
   });
 
   it("clears after a renewal brings the squad back to the floor, with no manual reload", async () => {

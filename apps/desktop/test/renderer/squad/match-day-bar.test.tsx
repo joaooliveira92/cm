@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
@@ -17,6 +17,7 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
+import { saveSquadViewId } from "../../../src/renderer/squad/squadViews.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -212,17 +213,17 @@ describe("the match-day bar", () => {
     await mountSquadScreen();
     // Seeded lineup: the first three slots are filled; six players, so three
     // rows read Not selected.
-    expect(screen.getByRole("button", { name: "Playing (GK)" })).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "Not selected" })).toHaveLength(3);
+    expect(screen.getByText("Playing (GK)")).toBeTruthy();
+    expect(screen.getAllByText("Not selected")).toHaveLength(3);
 
     drag(
       screen.getByRole("button", { name: "Van Persie, Pep" }),
       screen.getByRole("button", { name: "ML slot" }),
     );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Playing (ML)" })).toBeTruthy(),
+      expect(screen.getByText("Playing (ML)")).toBeTruthy(),
     );
-    expect(screen.getAllByRole("button", { name: "Not selected" })).toHaveLength(2);
+    expect(screen.getAllByText("Not selected")).toHaveLength(2);
 
     // Unassigning the slot hands the player back to the unselected pool, and
     // the indicator empties with it.
@@ -231,9 +232,9 @@ describe("the match-day bar", () => {
       screen.getByTestId("lineup-bar"),
     );
     await waitFor(() =>
-      expect(screen.getAllByRole("button", { name: "Not selected" })).toHaveLength(3),
+      expect(screen.getAllByText("Not selected")).toHaveLength(3),
     );
-    expect(screen.queryByRole("button", { name: "Playing (ML)" })).toBeNull();
+    expect(screen.queryByText("Playing (ML)")).toBeNull();
   });
 
   it("replaces the occupant when a squad player lands on a filled slot, the occupant leaves the lineup", async () => {
@@ -394,5 +395,45 @@ describe("the match-day bar", () => {
     fireEvent.keyDown(another, { key: "Escape" });
     expect(screen.queryByTestId("lineup-carried")).toBeNull();
     expect(screen.getByRole("button", { name: "DC slot, Pep Nistelrooy" })).toBeTruthy();
+  });
+});
+
+describe("the table layouts lead with the same match-day indicator", () => {
+  /** Each row's indicator state, keyed by the row's focus id, which both layouts share. */
+  const statesByRow = (rowSelector: string): Record<string, string> =>
+    Object.fromEntries(
+      [...document.querySelectorAll(rowSelector)].map((row) => [
+        row.querySelector("[data-focus-id]")!.getAttribute("data-focus-id"),
+        row.querySelector(".sr-only")!.textContent,
+      ]),
+    );
+
+  it("names each row's state in the table exactly as the position list does", async () => {
+    saveSquadViewId("general");
+    await mountSquadScreen();
+    const table = statesByRow("tbody tr");
+    expect(Object.values(table).filter((state) => state.startsWith("Playing"))).toHaveLength(3);
+    expect(Object.values(table).filter((state) => state === "Not selected")).toHaveLength(3);
+
+    cleanup();
+    saveSquadViewId("positions");
+    await mountSquadScreen();
+    expect(statesByRow("li")).toEqual(table);
+  });
+
+  it("follows the bar live, and adds no tab stop to a row", async () => {
+    saveSquadViewId("general");
+    await mountSquadScreen();
+    const tbody = document.querySelector("tbody")!;
+    expect(within(tbody).getByText("Playing (GK)")).toBeTruthy();
+
+    drag(screen.getByRole("button", { name: "GK slot, Pep Shearer" }), screen.getByTestId("lineup-bar"));
+    await waitFor(() => expect(within(tbody).queryByText("Playing (GK)")).toBeNull());
+    expect(within(tbody).getAllByText("Not selected")).toHaveLength(4);
+
+    // Every focusable thing in a row is the row's one roving name button.
+    const focusable = [...tbody.querySelectorAll("button, a[href], input, [tabindex]")];
+    expect(focusable.length).toBe(6);
+    expect(focusable.every((element) => element.hasAttribute("data-focus-id"))).toBe(true);
   });
 });

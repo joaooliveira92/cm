@@ -50,7 +50,19 @@ export interface BottomBarPlan {
   readonly reason: string | null;
   /** Ambient status items (e.g. the application version), scrolled past as a
    *  slow marquee in the bar's middle; empty for none. */
-  readonly status: readonly string[];
+  readonly status: readonly StatusItem[];
+}
+
+/** One marquee item: plain text, or a notice that names a condition and, when
+ *  something can be done about it, the screen that owns the fix. */
+export type StatusItem = string | StatusNotice;
+
+export interface StatusNotice {
+  readonly title: string;
+  readonly detail: string;
+  /** `danger` for a condition that blocks the advance. */
+  readonly tone: "default" | "danger";
+  readonly open: { readonly label: string; readonly onOpen: () => void } | null;
 }
 
 export const EMPTY_BOTTOM_BAR: BottomBarPlan = {
@@ -393,7 +405,7 @@ export interface CareerBottomBarInput {
   /** True while a match is on: the header is the scoreboard, and Continue steps aside. */
   readonly matchInProgress: boolean;
   readonly screen: ScreenBottomBarActions | null;
-  readonly status: readonly string[];
+  readonly status: readonly StatusItem[];
   readonly onContinue: () => void;
 }
 

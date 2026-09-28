@@ -3,13 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { Alert } from "../components/ui/alert.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
-import { Card, CardContent } from "../components/ui/card.js";
 import { FOCUS_RING } from "../focus.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
-import type {
-  CareerDestination,
-  SaveScopedCareerDestinationType,
-} from "../navigation/destinations.js";
+import type { CareerDestination } from "../navigation/destinations.js";
 import {
   describeRpcError,
   leagueTableAtom,
@@ -20,15 +16,19 @@ import {
   useAtomValue,
 } from "../rpc.js";
 import {
+  FamiliarityCard,
+  FormationCard,
+  IssuesPanel,
+  SelectionCard,
+  SetPiecesCard,
+  TeamInstructionsCard,
+} from "./overviewCards.js";
+import { capitalize } from "./overviewFormat.js";
+import {
   admitSnapshot,
   overviewViewState,
   type TacticsOverviewState,
 } from "./overviewViewState.js";
-
-const capitalize = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
-
-const INSTRUCTION_KEYS = ["mentality", "tempo", "pressing"] as const;
-type InstructionKey = (typeof INSTRUCTION_KEYS)[number];
 
 /** One role: the Tactics area's read-only home (Screen 80 / ticket 03). Opening Tactics lands
  *  here, not in the editor: the overview renders the snapshot command's one immutable
@@ -149,7 +149,7 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
       tabIndex={-1}
       data-focus-id="tactics"
       aria-label="Tactics Overview"
-      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`p-6 text-foreground ${FOCUS_RING.join(" ")}`}
       aria-busy={result.waiting}
     >
       {announcement !== null && (
@@ -158,15 +158,46 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
         </p>
       )}
 
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <header className="chrome-gradient flex flex-wrap items-center justify-between gap-3 rounded-panel border border-panel-border px-4 py-2 shadow-chrome">
         <div>
-          <h1 className="text-2xl font-bold">Tactics Overview</h1>
-          <p className="text-sm text-text-secondary">
-            Read-only — review your tactical preparation before editing.
+          <h1 className="text-2xl font-bold text-text-highlight">Tactics Overview</h1>
+          <p className="text-sm font-semibold text-text-bright">
+            {view.club.name}
+            {result.waiting && <span className="ml-2 font-normal text-text-muted">Refreshing…</span>}
           </p>
         </div>
-        {result.waiting && <span className="text-sm text-text-muted">Refreshing…</span>}
-      </div>
+        <section aria-label="Tactics workflows" className="flex flex-wrap items-center gap-2">
+          {view.issues.length === 0 && (
+            <Badge variant="secondary" className="text-text-success">
+              Nothing outstanding
+            </Badge>
+          )}
+          {!archived && awaitingFixture && (
+            <Button
+              type="button"
+              variant="secondary"
+              className={FOCUS_RING.join(" ")}
+              onClick={(event) => go({ type: "match", saveId }, event)}
+            >
+              Match preparation
+            </Button>
+          )}
+          {!archived && (
+            <Button
+              type="button"
+              className={FOCUS_RING.join(" ")}
+              onClick={(event) => go({ type: "tacticsEditor", saveId }, event)}
+            >
+              Open the tactics editor
+            </Button>
+          )}
+          {archived && (
+            <p className="text-sm text-text-bright">
+              This save is read-only, so the editor and match preparation are unavailable.
+            </p>
+          )}
+        </section>
+      </header>
 
       {state === "conflicted" && (
         <Alert className="mt-4" data-testid="tactics-overview-conflicted">
@@ -185,41 +216,25 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
         </Alert>
       )}
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <FormationCard view={view} />
-        <TeamInstructionsCard view={view} />
-        <FamiliarityCard view={view} />
-        <SelectionCard view={view} />
-        <SetPiecesCard view={view} />
-        <IssuesCard view={view} saveId={saveId} onOpen={go} readOnly={archived} />
-      </div>
+      {view.issues.length > 0 && (
+        <div className="mt-4">
+          <IssuesPanel view={view} saveId={saveId} onOpen={go} readOnly={archived} />
+        </div>
+      )}
 
-      <section aria-label="Tactics workflows" className="mt-6 flex flex-wrap items-center gap-3">
-        {!archived && (
-          <Button
-            type="button"
-            className={FOCUS_RING.join(" ")}
-            onClick={(event) => go({ type: "tacticsEditor", saveId }, event)}
-          >
-            Open the tactics editor
-          </Button>
-        )}
-        {!archived && awaitingFixture && (
-          <Button
-            type="button"
-            variant="secondary"
-            className={FOCUS_RING.join(" ")}
-            onClick={(event) => go({ type: "match", saveId }, event)}
-          >
-            Match preparation
-          </Button>
-        )}
-        {archived && (
-          <p className="text-sm text-text-secondary">
-            This save is read-only, so the editor and match preparation are unavailable.
-          </p>
-        )}
-      </section>
+      <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(260px,380px)_minmax(0,1fr)]">
+        <div className="lg:sticky lg:top-0">
+          <FormationCard view={view} />
+        </div>
+        <div className="flex min-w-0 flex-col gap-4">
+          <SelectionCard view={view} />
+          <div className="grid gap-4 md:grid-cols-3">
+            <TeamInstructionsCard view={view} />
+            <FamiliarityCard view={view} />
+            <SetPiecesCard view={view} />
+          </div>
+        </div>
+      </div>
     </main>
   );
 };
@@ -235,231 +250,3 @@ const headline = (view: TacticsOverviewView): string => {
       )} tempo, ${capitalize(view.instructions.pressing)} pressing`;
   return `Tactics overview. ${formation}${instructions}. ${view.selection.starters.length} starters, ${view.selection.substitutes.length} substitutes.`;
 };
-
-const FormationCard = ({ view }: { readonly view: TacticsOverviewView }) => (
-  <Card>
-    <CardContent className="pt-2">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-        Formation
-      </h2>
-      {view.formation === null ? (
-        <p className="mt-1 text-text-body">No tactic saved — set one to prepare.</p>
-      ) : (
-        <>
-          <p className="mt-1 text-base font-semibold">{view.formation.formation}</p>
-          {/* Slots exposed through a list, never drag-only: the preview is read-only, and each
-              slot is named positionally without any pointer-only interaction. */}
-          <ul aria-label="Formation slots" className="mt-1 list-inside list-disc text-sm">
-            {view.formation.slots.map((slot, index) => (
-              <li key={`${slot.position}-${index}`}>{slot.position}</li>
-            ))}
-          </ul>
-        </>
-      )}
-    </CardContent>
-  </Card>
-);
-
-const TeamInstructionsCard = ({ view }: { readonly view: TacticsOverviewView }) => {
-  const instructions = view.instructions;
-  return (
-    <Card>
-      <CardContent className="pt-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-          Team instructions
-        </h2>
-        {instructions === null ? (
-          <p className="mt-1 text-text-body">Set a tactic to choose instructions.</p>
-        ) : (
-          <dl className="mt-1 space-y-0.5 text-sm">
-            {INSTRUCTION_KEYS.map((key: InstructionKey) => (
-              <div key={key} className="flex justify-between">
-                <dt className="text-text-secondary">{capitalize(key)}</dt>
-                <dd className="font-semibold">{capitalize(instructions[key])}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-const FamiliarityCard = ({ view }: { readonly view: TacticsOverviewView }) => (
-  <Card>
-    <CardContent className="pt-2">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-        Familiarity
-      </h2>
-      {view.familiarity === null ? (
-        <p className="mt-1 text-text-body">Familiarity is derived from the starters' positions.</p>
-      ) : (
-        <dl className="mt-1 space-y-0.5 text-sm">
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Natural</dt>
-            <dd className="font-semibold tabular-nums">{view.familiarity.natural}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Competent</dt>
-            <dd className="font-semibold tabular-nums">{view.familiarity.competent}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Unfamiliar</dt>
-            <dd className="font-semibold tabular-nums">{view.familiarity.unfamiliar}</dd>
-          </div>
-        </dl>
-      )}
-    </CardContent>
-  </Card>
-);
-
-const SelectionCard = ({ view }: { readonly view: TacticsOverviewView }) => (
-  <Card>
-    <CardContent className="pt-2">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-        Selection
-      </h2>
-      <p className="mt-1 text-base font-semibold tabular-nums">
-        {view.selection.starters.length} starters · {view.selection.substitutes.length} substitutes
-      </p>
-      <div className="mt-2 grid gap-3 sm:grid-cols-2">
-        <div>
-          <h3 className="text-sm font-semibold">Starters</h3>
-          {view.selection.starters.length === 0 ? (
-            <p className="text-sm text-text-secondary">No starters selected.</p>
-          ) : (
-            <ol className="mt-1 list-inside list-decimal text-sm">
-              {view.selection.starters.map((player) => (
-                <li key={player.id}>
-                  {player.firstName} {player.lastName}
-                </li>
-              ))}
-            </ol>
-          )}
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold">Substitutes</h3>
-          {view.selection.substitutes.length === 0 ? (
-            <p className="text-sm text-text-secondary">Everyone is a starter.</p>
-          ) : (
-            <ul className="mt-1 list-inside list-disc text-sm">
-              {view.selection.substitutes.map((player) => (
-                <li key={player.id}>
-                  {player.firstName} {player.lastName}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
-
-const SetPiecesCard = ({ view }: { readonly view: TacticsOverviewView }) => (
-  <Card>
-    <CardContent className="pt-2">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-        Set pieces
-      </h2>
-      {view.setPieces.status === "none" ? (
-        <p className="mt-1 text-text-body">No set pieces configured.</p>
-      ) : (
-        <p className="mt-1 text-text-body">{view.setPieces.status}</p>
-      )}
-    </CardContent>
-  </Card>
-);
-
-/** Where an issue's owning screen lives, from the overview's point of view. */
-const ISSUE_DESTINATION: Readonly<Record<string, SaveScopedCareerDestinationType>> = {
-  // From the overview, a "tactics"-owned fix means opening the editor — the overview itself is
-  // already the Tactics home, so pointing an issue back at it would be a no-op.
-  tactics: "tacticsEditor",
-  match: "match",
-  transfers: "transfers",
-  seasonSummary: "seasonSummary",
-  league: "league",
-  manager: "manager",
-  news: "news",
-  squad: "squad",
-  fixtures: "fixtures",
-  contractExpiry: "contractExpiry",
-};
-
-const ISSUE_DESTINATION_LABELS: Readonly<Record<string, string>> = {
-  tactics: "Open the editor",
-  match: "Match day",
-  transfers: "Transfers",
-  seasonSummary: "Season summary",
-  league: "League table",
-  manager: "Manager profile",
-  news: "News",
-  squad: "Squad",
-  fixtures: "Fixtures",
-  contractExpiry: "Contract Expiry",
-};
-
-const IssuesCard = ({
-  view,
-  saveId,
-  onOpen,
-  readOnly,
-}: {
-  readonly view: TacticsOverviewView;
-  readonly saveId: SaveId;
-  readonly onOpen: (destination: CareerDestination, event: { readonly detail: number }) => void;
-  readonly readOnly: boolean;
-}) => (
-  <Card>
-    <CardContent className="pt-2">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-        Outstanding issues
-      </h2>
-      {view.issues.length === 0 ? (
-        <p className="mt-1 text-text-body">Nothing outstanding.</p>
-      ) : (
-        <ul className="mt-1 space-y-2 text-sm">
-          {view.issues.map((issue) => {
-            const route = ISSUE_DESTINATION[issue.destination ?? ""];
-            const issueId = `overview-issue-${issue.id}`;
-            return (
-              <li
-                key={issue.id}
-                id={issueId}
-                className="rounded-panel border border-border-subtle px-2 py-1.5"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <span>
-                    <span className="font-semibold">{issue.title}.</span>{" "}
-                    <span className="text-text-secondary">{issue.detail}</span>
-                  </span>
-                  {/* State never by color alone: the badge's tint is decoration; the word says it. */}
-                  <Badge
-                    variant={issue.severity === "blocking" ? "destructive" : "secondary"}
-                    className="shrink-0"
-                  >
-                    {issue.severity === "blocking" ? "Requires action" : "Notice"}
-                  </Badge>
-                </div>
-                {route !== undefined && !readOnly && (
-                  <div className="mt-1.5">
-                    {/* The warning is associated with the control that resolves it. */}
-                    <button
-                      type="button"
-                      aria-describedby={issueId}
-                      className={`text-sm underline underline-offset-2 hover:text-text-primary ${FOCUS_RING.join(" ")}`}
-                      onClick={(event) => onOpen({ type: route as CareerDestination["type"], saveId } as CareerDestination, event)}
-                    >
-                      {ISSUE_DESTINATION_LABELS[issue.destination ?? ""] ?? "Fix"}
-                    </button>
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </CardContent>
-  </Card>
-);

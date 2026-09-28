@@ -16,7 +16,7 @@ const markerName = (player: SquadPlayerView): string =>
   `${player.lastName}, ${player.firstName.slice(0, 1)}`;
 
 /** Pitch markings in a 68 × 100 box, stretched to the pitch. Decorative: the slots are the list. */
-const PitchMarkings = () => (
+export const PitchMarkings = () => (
   <svg
     aria-hidden="true"
     viewBox="0 0 68 100"

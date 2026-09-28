@@ -13,6 +13,7 @@ import {
   type SquadRow,
 } from "../table/squad/squadColumns.js";
 import { useDataTable, visibleRowIds } from "../table/useDataTable.js";
+import { MATCH_DAY_COLUMN_WIDTH, MatchDayCell } from "./SelectionIndicator.js";
 import { SQUAD_ALL_COLUMN_IDS } from "../table/features/visibility.js";
 import type { SortState } from "../table/types.js";
 import type { SquadColumnPreferences } from "../table/columnPreferences.js";
@@ -21,6 +22,9 @@ import type { SquadColumnPreferences } from "../table/columnPreferences.js";
  *  here once so both the column definition and the assembly hook can refer to
  *  it without a constant-repetition hazard. */
 export const STATUS_LEGEND_ID = "squad-status-legend";
+
+/** Module-level so its identity never invalidates the memoised columns. */
+const MATCH_DAY_OPTION = { Cell: MatchDayCell, width: MATCH_DAY_COLUMN_WIDTH } as const;
 
 /**
  * Build the squad's TanStack table instance from the screen's live data,
@@ -59,6 +63,7 @@ export const useSquadTable = ({
           legendId: STATUS_LEGEND_ID,
           onToggle: onToggleLegend,
         },
+        matchDay: MATCH_DAY_OPTION,
       }),
     [legendExpanded, onToggleLegend],
   );

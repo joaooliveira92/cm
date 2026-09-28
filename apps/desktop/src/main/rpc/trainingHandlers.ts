@@ -16,7 +16,11 @@ import {
   getWorkload,
   setTrainingFocus,
 } from "../club/training.js";
-import { changeTrainingSchedule, getTrainingSchedule } from "../club/trainingSchedule.js";
+import {
+  changeTrainingSchedule,
+  getTrainingSchedule,
+  setTrainingScheduleDelegation,
+} from "../club/trainingSchedule.js";
 import type { Handler } from "./rpcServer.js";
 
 type TrainingMethod =
@@ -26,7 +30,8 @@ type TrainingMethod =
   | "getPlayerDevelopmentHistory"
   | "getSquadDevelopment"
   | "getTrainingSchedule"
-  | "changeTrainingSchedule";
+  | "changeTrainingSchedule"
+  | "setTrainingScheduleDelegation";
 
 export const trainingHandlers: { readonly [M in TrainingMethod]: Handler<M> } = {
   setTrainingFocus: (payload, ctx) =>
@@ -71,5 +76,12 @@ export const trainingHandlers: { readonly [M in TrainingMethod]: Handler<M> } = 
         AppRpcs.changeTrainingSchedule.payload,
       )(payload);
       return yield* changeTrainingSchedule(ctx.savesDir, saveId, sessions, expectedRevision, requestId);
+    }),
+  setTrainingScheduleDelegation: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, delegated, expectedRevision, requestId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.setTrainingScheduleDelegation.payload,
+      )(payload);
+      return yield* setTrainingScheduleDelegation(ctx.savesDir, saveId, delegated, expectedRevision, requestId);
     }),
 };

@@ -1075,6 +1075,9 @@ export const trainingSchedules = sqliteTable("training_schedules", {
     .primaryKey()
     .references(() => clubs.id),
   revision: integer("revision").notNull().default(0),
+  /** 1 while the Assistant Manager plans the schedule (ticket 05). The assistant has no row of its
+   *  own: it stays derived Presence Staff, and this flag is the only state delegation keeps. */
+  delegated: integer("delegated").notNull().default(0),
 });
 
 /** The schedule's sessions in slot order. No index: read by the club prefix of its own key. */

@@ -1,9 +1,11 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { SaveId } from "@cm-clone/contracts";
 import {
   useSquadScreen,
   type SquadScreenValue,
 } from "./useSquadScreen.js";
+
+import { SlotByPlayerContext, slotByPlayerOf } from "./SelectionIndicator.js";
 
 export type { SquadScreenValue } from "./useSquadScreen.js";
 
@@ -22,7 +24,13 @@ export const SquadProvider = ({
   readonly children: ReactNode;
 }) => {
   const value = useSquadScreen(saveId);
-  return <SquadContext.Provider value={value}>{children}</SquadContext.Provider>;
+  // Derived once per lineup edit and shared, so both layouts' indicators read one map.
+  const slotByPlayer = useMemo(() => slotByPlayerOf(value.lineup.tactic), [value.lineup.tactic]);
+  return (
+    <SquadContext.Provider value={value}>
+      <SlotByPlayerContext.Provider value={slotByPlayer}>{children}</SlotByPlayerContext.Provider>
+    </SquadContext.Provider>
+  );
 };
 
 export const useSquad = (): SquadScreenValue => {

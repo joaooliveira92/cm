@@ -347,7 +347,7 @@ describe("AC-19 — Space→Continue honours the safety guard through the live s
     // The season-rollover decision removed the dead season_complete disable:
     // advancing concludes and rolls over in one step, so the phase never
     // reaches the renderer and blocking Continue for it was unreachable dead
-    // code. Space keeps firing; the outstanding band reports the conclusion.
+    // code. Space keeps firing; the bottom bar marquee reports the conclusion.
     await mountLeagueWithSpine("season_complete");
     const button = screen.getByRole("button", { name: /Continue/ }) as HTMLButtonElement;
     expect(button.disabled).toBe(false);

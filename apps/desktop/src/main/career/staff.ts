@@ -17,6 +17,7 @@ import {
   generateStaff,
   nationCodeFromId,
   type StatureTier,
+  type PresenceRole,
 } from "@cm-clone/shared";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
@@ -118,23 +119,31 @@ const readWorldSeed = Effect.gen(function* () {
  * worldSeed)`, so every read of the same save names the same person, and a message projected years
  * after the event that warned the manager re-reads the same name the day it was warned with.
  */
-export const loadPresidentName = (clubId: ClubId) =>
+export const loadPresidentName = (clubId: ClubId) => loadPresenceName(clubId, "president");
+
+/** The Assistant Manager's full name: who plans a delegated Training Schedule, and whom its News
+ *  Messages name (training-schedule-and-delegation 05). Derived exactly as the President is. */
+export const loadAssistantName = (clubId: ClubId) => loadPresenceName(clubId, "assistant");
+
+const loadPresenceName = (clubId: ClubId, role: PresenceRole) =>
   Effect.gen(function* () {
     const club = yield* loadClubIdentity(clubId);
     if (club === null) {
-      return yield* Effect.die(new Error(`no club to name a president for: ${clubId}`));
+      return yield* Effect.die(new Error(`no club to name a ${role} for: ${clubId}`));
     }
     const nationCode = club.nationId === null ? null : nationCodeFromId(club.nationId);
     if (nationCode === null) {
-      return yield* Effect.die(new Error(`club ${clubId} has no nation to draw a president from`));
+      return yield* Effect.die(new Error(`club ${clubId} has no nation to draw a ${role} from`));
     }
 
     const { worldSeed } = yield* readWorldSeed;
-    const president = derivePresenceStaff({ clubId, clubNation: nationCode, worldSeed })[0];
-    if (president === undefined) {
-      return yield* Effect.die(new Error(`presence derivation produced no president for ${clubId}`));
+    const person = derivePresenceStaff({ clubId, clubNation: nationCode, worldSeed }).find(
+      (candidate) => candidate.role === role,
+    );
+    if (person === undefined) {
+      return yield* Effect.die(new Error(`presence derivation produced no ${role} for ${clubId}`));
     }
-    return `${president.firstName} ${president.lastName}`;
+    return `${person.firstName} ${person.lastName}`;
   });
 
 /**

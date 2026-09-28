@@ -200,8 +200,15 @@ describe("Tactics Overview view states", () => {
     expect(screen.getByRole("heading", { name: "Tactics Overview" })).toBeDefined();
     expect(screen.getByText("4-4-2")).toBeDefined();
     expect(screen.getAllByRole("listitem")).toHaveLength(
-      11 + 11 + 2 + 1, // formation slots + starters + substitutes + issues
+      11 + 2 + 1, // pitch slots + substitutes + issues
     );
+    // The pitch names each starter with their role and rating; the table carries both ratings.
+    expect(screen.getByText("GK, Goalkeeper: Ada One, role rating 55")).toBeDefined();
+    const rows = screen.getAllByRole("row");
+    expect(rows).toHaveLength(1 + 11);
+    expect(rows[1]!.textContent).toContain("Ada One");
+    expect(rows[1]!.textContent).toContain("6055");
+    expect(screen.getByText("Average role rating")).toBeDefined();
     expect(screen.getByText("Balanced")).toBeDefined();
     expect(screen.getByText("Normal")).toBeDefined();
     expect(screen.getByText("Medium")).toBeDefined();

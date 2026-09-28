@@ -43,6 +43,11 @@ export const INVALIDATION_RULES = {
   ],
   /** A schedule changes only the training reads; Condition is untouched until the next advance. */
   changeTrainingSchedule: (saveId: SaveId): ReadonlyArray<unknown> => [trainingKey(saveId)],
+  /** Delegating makes the assistant plan at once, which raises a News Message. */
+  setTrainingScheduleDelegation: (saveId: SaveId): ReadonlyArray<unknown> => [
+    trainingKey(saveId),
+    newsKey(saveId),
+  ],
   placeBid: (saveId: SaveId): ReadonlyArray<unknown> => [
     transfersKey(saveId),
     economyKey(saveId),
@@ -239,6 +244,14 @@ export const changeTrainingScheduleMutation = rpcRuntime.fn(
   (input: RpcPayload<"changeTrainingSchedule">) =>
     call("changeTrainingSchedule", input).pipe(
       Reactivity.mutation(INVALIDATION_RULES.changeTrainingSchedule(input.saveId)),
+    ),
+);
+
+/** `setTrainingScheduleDelegation` mutation atom — invalidates training and news. */
+export const setTrainingScheduleDelegationMutation = rpcRuntime.fn(
+  (input: RpcPayload<"setTrainingScheduleDelegation">) =>
+    call("setTrainingScheduleDelegation", input).pipe(
+      Reactivity.mutation(INVALIDATION_RULES.setTrainingScheduleDelegation(input.saveId)),
     ),
 );
 

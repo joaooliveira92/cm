@@ -79,7 +79,7 @@ export const SectionFlyout = ({ handle }: { readonly handle: SectionFlyoutHandle
               // where the prefix was typed.
               initialFocus={openedByUser}
               finalFocus={() => openedByUser && returnFocus.current}
-              className="rounded-md border bg-popover text-popover-foreground shadow-md outline-none"
+              className="rounded-md border border-border bg-popover text-popover-foreground shadow-md outline-none"
             >
               <PopoverPrimitive.Viewport data-section-flyout="viewport">
                 {section !== undefined && (

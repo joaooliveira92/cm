@@ -108,6 +108,10 @@ Every asynchronous report, forecast, recommendation, and validation request must
 - They preview affected, skipped, locked, restricted, and conflicted entities.
 - They never submit automatically.
 - One accepted preview creates one draft revision.
+- One exception, by design: turning delegation to the Assistant Manager on is the manager's standing
+  acceptance of the assistant's schedules. While it is on, the assistant saves one schedule per
+  microcycle without a preview, and each save raises a News Message naming the assistant, the
+  template and the reason. Turning delegation off ends it, and a manager's own save turns it off.
 
 ## 12. Validation and errors
 

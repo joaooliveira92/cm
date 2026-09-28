@@ -24,7 +24,6 @@
  * player screen, which is what clicking the name does too.
  */
 import type { FamiliarityTier } from "@cm-clone/shared";
-import { Button } from "../components/ui/button.js";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
 import {
   STATUS_COLUMN_WIDTH,
@@ -32,10 +31,9 @@ import {
   statusesOf,
 } from "../table/squad/playerStatus.js";
 import type { SquadRow } from "../table/squad/squadColumns.js";
-import type { LineupSlot } from "./lineupEdits.js";
-import { lineupSlotsOf } from "./lineupEdits.js";
 import { writeLineupDrag } from "./lineupDrag.js";
 import { useSquad } from "./SquadProvider.js";
+import { SelectionIndicator, useSlotByPlayer } from "./SelectionIndicator.js";
 
 const REGION = "squadTable";
 
@@ -77,60 +75,29 @@ export const nextPositionIndex = (
 };
 
 /** The tone a Familiarity Tier reads in: a Natural position is the one the eye
- *  should land on, an Unfamiliar one is present but recessive. Keyed by the
+ *  should land on, an Unfamiliar one is present but recessive. Natural carries
+ *  a pill and a heavier weight as well as its colour, because under the Neutral
+ *  theme the highlight is a grey hardly apart from the body text. Keyed by the
  *  shared tier values, so a renamed tier fails to compile rather than falling
  *  silently back to the neutral tone. */
 const FAMILIARITY_TONE: Readonly<Record<FamiliarityTier, string>> = {
-  natural: "text-text-highlight",
-  competent: "text-text-body",
-  unfamiliar: "text-text-muted",
+  natural: "rounded-sm bg-text-highlight/10 px-1 leading-4 font-bold text-text-highlight",
+  competent: "font-medium text-text-secondary",
+  unfamiliar: "font-medium text-text-muted",
 };
 
 /** Sentence case for a tier in a tooltip ("natural" → "Natural"). UI copy. */
 const tierLabel = (tier: string): string => tier.charAt(0).toUpperCase() + tier.slice(1);
 
-/** The leading match-day indicator: a compact button, one per roster row, that
- *  reports whether the player is selected to play or sit on the bench, against
- *  the same lineup slots the bottom bar edits, from the bar's own labels — the
- *  starter's position code (GK, DC, DE…) or the bench slot (SB1, SB2…).
- *  Read-only for now — selection happens by dragging the row onto a slot, or
- *  by Swapping in the bar. The code the eye reads is the slot's label, and the
- *  state ("playing", "on the bench", "not selected") is the accessible name,
- *  following the status-runner convention: decoration is aria-hidden, the
- *  meaning is the text. */
-const SelectionIndicator = ({ slot }: { readonly slot: LineupSlot | null }) => {
-  const labelled = slot === null ? "Not selected" : slot.kind === "bench"
-    ? "On the bench"
-    : `Playing (${slot.label})`;
-  // Always drawn as a chrome chip, filled or not, the way CM's row buttons sat at the head of every
-  // line: an empty chip reads "not selected", not "missing control".
-  const tone = slot === null
-    ? "chrome-gradient border-panel-border-dark text-transparent opacity-70"
-    : slot.kind === "bench"
-      ? "chrome-gradient border-panel-border-dark text-text-bright"
-      : "border-text-highlight bg-text-highlight/15 text-text-highlight";
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      aria-label={labelled}
-      title={labelled}
-      className={`h-5 min-w-10 shrink-0 border px-1 font-mono text-2xs leading-none shadow-chrome ${tone}`}
-    >
-      {slot === null ? "" : slot.label}
-    </Button>
-  );
-};
-
 const PositionRunner = ({ row }: { readonly row: SquadRow }) => (
-  <span className="ml-auto flex shrink-0 gap-1 text-xs font-bold">
+  <span className="ml-auto flex shrink-0 gap-1 text-xs">
     {row.positions.length === 0 ? (
-      <span className="text-text-muted">—</span>
+      <span className="font-medium text-text-muted">—</span>
     ) : (
       row.positions.map((p) => (
         <span
           key={p.position}
-          className={FAMILIARITY_TONE[p.familiarity as FamiliarityTier] ?? "text-text-body"}
+          className={FAMILIARITY_TONE[p.familiarity as FamiliarityTier] ?? "font-medium text-text-secondary"}
           title={`${p.position}: ${tierLabel(p.familiarity)}`}
         >
           {p.position}
@@ -141,7 +108,7 @@ const PositionRunner = ({ row }: { readonly row: SquadRow }) => (
 );
 
 export const SquadPositionList = () => {
-  const { state, actions, lineup } = useSquad();
+  const { state, actions } = useSquad();
   const { orderedIds, activeId, selectedId, announcement, refreshState, table } = state;
   const { onActiveChange, onToggleSelection, onRowPrimary, openPlayer, setBookmark } = actions;
 
@@ -149,15 +116,9 @@ export const SquadPositionList = () => {
   const effectiveActive = activeId ?? orderedIds[0] ?? null;
   const split = leftColumnLength(rows.length);
 
-  // The match-day assignment each roster row reports against: player id → the
-  // slot they are selected into. Mirrors the bar's slots live, so dragging a
-  // player onto a slot flips their indicator and swapping is not even needed
-  // to keep the list honest.
-  const slotByPlayer = new Map(
-    lineupSlotsOf(lineup.tactic)
-      .filter((slot) => slot.playerId !== null)
-      .map((slot) => [String(slot.playerId), slot]),
-  );
+  // The match-day assignment each roster row reports against. Mirrors the
+  // bar's slots live, so dragging a player onto a slot flips their indicator.
+  const slotByPlayer = useSlotByPlayer();
 
   const focusRow = (id: string): void => {
     (

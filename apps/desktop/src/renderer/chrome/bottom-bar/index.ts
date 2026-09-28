@@ -21,4 +21,6 @@ export type {
   LeagueSelectionBottomBarInput,
   ManageLeaguesBottomBarInput,
   ScreenBottomBarActions,
+  StatusItem,
+  StatusNotice,
 } from "./shell-bottom-bar-state.js";

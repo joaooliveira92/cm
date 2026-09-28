@@ -6,7 +6,7 @@ import { templateLabel } from "./trainingScheduleCopy.js";
 
 /**
  * The Training Overview's Schedule card: which template the saved schedule matches (or "Custom"),
- * and the way into the Training Schedule. It reads the schedule itself, so a slow or failed read
+ * who plans it, and the way into the Training Schedule. It reads the schedule itself, so a slow or failed read
  * never holds up the rest of the Overview.
  */
 export const TrainingScheduleCard = ({ saveId }: { readonly saveId: SaveId }) => {
@@ -14,7 +14,9 @@ export const TrainingScheduleCard = ({ saveId }: { readonly saveId: SaveId }) =>
 
   const summary =
     result._tag === "Success"
-      ? `Current schedule: ${templateLabel(result.value.sessions)}`
+      ? `Current schedule: ${templateLabel(result.value.sessions)}, planned by ${
+          result.value.delegated ? result.value.assistantName : "you"
+        }`
       : result._tag === "Failure"
         ? "The schedule could not be loaded."
         : "Loading the schedule...";

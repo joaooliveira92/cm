@@ -16,6 +16,7 @@
  * immediately right of Name so a player's state stays on screen while the attribute columns
  * scroll — see `playerStatus.tsx` for the vocabulary itself.
  */
+import type { ComponentType } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { KnownFigure } from "@cm-clone/shared";
 import { ALL_ATTRIBUTES } from "@cm-clone/shared";
@@ -117,6 +118,7 @@ const attributeLabel = (key: string): string => key.charAt(0).toUpperCase() + ke
 
 /** Header labels for the columns the palette sorts by (mirrors the headers). */
 export const SQUAD_COLUMN_LABELS: Readonly<Record<string, string>> = {
+  matchDay: "Match day",
   name: "Name",
   status: "Status",
   age: "Age",
@@ -167,12 +169,19 @@ export interface SquadColumnsOptions {
   readonly sortable: boolean;
   /** The disclosure control the Status header renders against; required for the own club. */
   readonly legend?: StatusLegendControl;
+  /** The own club's match-day indicator cell, which reads the live lineup draft itself. Passed in
+   *  rather than imported: the lineup is the Squad screen's state, not the table layer's. */
+  readonly matchDay?: {
+    readonly Cell: ComponentType<{ readonly rowId: string }>;
+    readonly width: number;
+  };
 }
 
 export const squadColumns = ({
   ownClub,
   sortable,
   legend,
+  matchDay,
 }: SquadColumnsOptions): ReadonlyArray<ColumnDef<SquadRow, unknown>> => {
   const statusColumn: ReadonlyArray<ColumnDef<SquadRow, unknown>> =
     ownClub && legend !== undefined
@@ -199,6 +208,26 @@ export const squadColumns = ({
         ]
       : [];
 
+  const matchDayColumn: ReadonlyArray<ColumnDef<SquadRow, unknown>> =
+    ownClub && matchDay !== undefined
+      ? [
+          {
+            id: "matchDay",
+            header: () => (
+              <span title="Match day">
+                <span aria-hidden="true">MD</span>
+                <span className="sr-only">Match day</span>
+              </span>
+            ),
+            cell: (info) => <matchDay.Cell rowId={info.row.original.id} />,
+            // Read-only, and ordered by slot rather than by any value a sort could compare.
+            enableSorting: false,
+            enablePinning: true,
+            size: matchDay.width,
+          },
+        ]
+      : [];
+
   const attributeColumns: ReadonlyArray<ColumnDef<SquadRow, unknown>> = ALL_ATTRIBUTES.map(
     (attribute): ColumnDef<SquadRow, unknown> => ({
       id: attribute,
@@ -218,6 +247,7 @@ export const squadColumns = ({
   );
 
   return [
+    ...matchDayColumn,
     {
       id: "name",
       accessorFn: (row) => `${row.firstName} ${row.lastName}`,

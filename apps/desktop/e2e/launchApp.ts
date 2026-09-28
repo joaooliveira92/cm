@@ -463,7 +463,7 @@ export const nameBench = async (page: Page, count = 3) => {
   const notSelected = page
     .getByRole("group", { name: "Squad" })
     .getByRole("listitem")
-    .filter({ has: page.getByRole("button", { name: "Not selected", exact: true }) });
+    .filter({ has: page.getByText("Not selected", { exact: true }) });
   /* oxlint-disable no-await-in-loop */
   for (let benchIndex = 0; benchIndex < count; benchIndex++) {
     // Each drop takes the player off the "Not selected" list, so the first row is always the next one.

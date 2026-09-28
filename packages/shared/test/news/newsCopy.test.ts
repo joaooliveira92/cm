@@ -53,3 +53,35 @@ describe("Youth Intake copy", () => {
     expect(message).toBeNull();
   });
 });
+
+describe("Training Schedule copy", () => {
+  const scheduleEvent = (payload: Record<string, unknown>) =>
+    event({ tag: "TrainingScheduleSet", streamType: "club", streamId: "club-1", payload });
+
+  it("reports the assistant's schedule by name, template, Fixture and reason", () => {
+    const message = projectNewsMessage(
+      scheduleEvent({
+        seasonNumber: 1,
+        author: "assistant",
+        template: "recovery",
+        assistantName: "Ana Sousa",
+        reason: "the squad has not recovered from the last match",
+        opponentClubName: "Eastfield",
+      }),
+      UNTOUCHED,
+      CLUB,
+    );
+    expect(message?.category).toBe("development");
+    expect(message?.subject).toBe("Ana Sousa set a Recovery training week");
+    expect(message?.body).toContain("before the match against Eastfield: the squad has not recovered");
+  });
+
+  it("is silent about the manager's own saves", () => {
+    const message = projectNewsMessage(
+      scheduleEvent({ seasonNumber: 1, author: "manager", template: "heavy" }),
+      UNTOUCHED,
+      CLUB,
+    );
+    expect(message).toBeNull();
+  });
+});

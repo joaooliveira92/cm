@@ -199,6 +199,14 @@ const WINDOW_LABEL: Readonly<Record<string, string>> = {
   mid_season: "mid-season",
 };
 
+/** A Training Schedule template as a News Message names it. */
+const TEMPLATE_NEWS_NAME: Readonly<Record<string, string>> = {
+  balanced: "Balanced",
+  matchPreparation: "Match Preparation",
+  recovery: "Recovery",
+  heavy: "Heavy",
+};
+
 const windowLabel = (payload: Record<string, unknown>): string =>
   WINDOW_LABEL[str(payload["window"]) ?? ""] ?? "transfer";
 
@@ -337,6 +345,23 @@ export const project = (
         priority: "normal",
         subject: `Squad development after season ${seasonNumber}`,
         body: `${plural(count, "player", "players")} at ${club.clubName} moved toward their ceiling over the close season.`,
+      }));
+    }
+
+    case "TrainingScheduleSet": {
+      // Only the assistant's writes are news: the manager already knows what they saved. Turning
+      // delegation on is the manager's consent to these, and each one is reported, never silent.
+      if (str(payload["author"]) !== "assistant") return null;
+      const assistant = str(payload["assistantName"]);
+      const template = TEMPLATE_NEWS_NAME[str(payload["template"]) ?? ""];
+      const reason = str(payload["reason"]);
+      if (assistant === null || template === undefined || reason === null) return null;
+      const opponent = str(payload["opponentClubName"]);
+      return seasonScoped(payload, () => ({
+        category: "development",
+        priority: "normal",
+        subject: `${assistant} set a ${template} training week`,
+        body: `${assistant} has planned a ${template} week${opponent === null ? "" : ` before the match against ${opponent}`}: ${reason}. Take over the schedule from the Training Schedule screen at any time.`,
       }));
     }
 

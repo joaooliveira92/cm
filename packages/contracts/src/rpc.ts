@@ -109,6 +109,7 @@ import {
   TrainingFocusNotOfferedError,
   TrainingFocusView,
   ChangeTrainingSchedulePayload,
+  SetTrainingScheduleDelegationPayload,
   InvalidTrainingScheduleError,
   TrainingScheduleRevisionConflictError,
   TrainingScheduleView,
@@ -702,7 +703,15 @@ commitCareer: {
     success: TrainingScheduleView,
     error: SaveNotFoundError,
   },
-  /** Saves the human club's schedule against the revision the caller read. A stale revision is
+  /** Hands the schedule to the Assistant Manager or takes it back (ticket 05). Turning delegation on
+   *  is the manager's standing consent: the assistant plans at once and before every later Fixture. */
+  setTrainingScheduleDelegation: {
+    payload: SetTrainingScheduleDelegationPayload,
+    success: TrainingScheduleView,
+    error: Schema.Union([SaveNotFoundError, SaveArchivedError, TrainingScheduleRevisionConflictError]),
+  },
+  /** Saves the human club's schedule against the revision the caller read. A manager write also
+   *  takes the schedule back from the assistant, so the assistant never overwrites a manager edit. A stale revision is
    *  `TrainingScheduleRevisionConflictError`; a replayed request id returns the current state. */
   changeTrainingSchedule: {
     payload: ChangeTrainingSchedulePayload,

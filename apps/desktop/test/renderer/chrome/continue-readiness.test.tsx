@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   createMemoryHistory,
@@ -145,7 +145,8 @@ describe("Continue readiness in the career chrome", () => {
   it("tells the player their next Fixture is unplayable when no Tactic is set", async () => {
     await mountCareer(null);
 
-    expect(await screen.findByText(NO_TACTIC_COPY)).toBeTruthy();
+    const marquee = await screen.findByRole("list", { name: "Status" });
+    expect(await within(marquee).findByText(NO_TACTIC_COPY)).toBeTruthy();
   });
 
   it("says nothing about the Tactic once one is set", async () => {

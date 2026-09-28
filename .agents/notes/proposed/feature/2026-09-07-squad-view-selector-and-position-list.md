@@ -62,6 +62,13 @@ the table's Status column width when empty, so the names line up down each colum
 one field beside the name, so a table would buy a header row, per-column sort semantics and a grid
 navigation model for a single column of data.
 
+The match-day indicator is not the list's alone. Every table view leads with it too, as a protected
+column pinned left of Name (`squad-instructions` ticket 03), so which players are picked never depends
+on the open view. One `SelectionIndicator` serves both layouts, reading the lineup draft through a
+context the Squad provider fills. It is a chip, not a button. It is read-only, and a control that
+ignored Enter and Space would break the level-1 contract and add a second tab stop per row.
+Selection still happens in the match-day bar.
+
 It shares everything that matters with the table layouts. The row order comes from the same TanStack
 table, so filters, sorting and the command palette drive both. Focus follows the table's model
 exactly — one focusable control per row, the same `data-focus-id`, one roving tab stop — so a focus
@@ -71,8 +78,8 @@ wrapped so the odd row at the foot of the left column does not jump to the top.
 
 **The two held views wait on their foundations.** *Selection* is designed: the match-day indicator
 (starting slot, bench, or not selected) from `squad-instructions` ticket 03, plus Condition and the
-Position Rating of every position the player can play. It ships after ticket 03 puts that indicator
-in the table. *Statistics* needs per-player Season figures (appearances, goals, average rating),
+Position Rating of every position the player can play. Ticket 03 has put the indicator in the table,
+so Selection is now a preset away. *Statistics* needs per-player Season figures (appearances, goals, average rating),
 and no model records any of them. It waits for a stats-tracking feature, which gets its own spec
 and tickets. A view that showed placeholder numbers would breach Mechanical Provenance.
 

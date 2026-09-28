@@ -1,11 +1,17 @@
 /**
- * The human club's team training schedule (training-schedule-and-delegation 03): read it, and save
- * it against the revision the caller read. The write guard is `changeTactics`'s, applied to a
- * different aggregate — a per-save permit, a request-id replay check, a revision check, then the
- * write and its `TrainingScheduleSet` event in one transaction.
+ * The human club's team training schedule (training-schedule-and-delegation 03 and 05): read it,
+ * save it against the revision the caller read, hand it to the Assistant Manager, and let the
+ * assistant plan each microcycle while delegated. Every write — the manager's, the delegation
+ * toggle, and the assistant's — goes through the same shape: raise the revision by one, replace the
+ * sessions, and append a `TrainingScheduleSet` event naming who wrote it.
  *
- * The schedule is stored and shown here and does nothing else yet; how it moves Condition is
- * ticket 04. See `.agents/notes/proposed/architecture/2026-09-28-training-schedule-attaches-to-the-microcycle.md`.
+ * The manager's writes carry `changeTactics`'s guard: a per-save permit, a request-id replay check,
+ * and a revision check, in one transaction. The assistant's write runs inside the Calendar's own
+ * transaction when the human's Matchday is committed, so it needs no guard of its own.
+ *
+ * See `.agents/notes/proposed/architecture/2026-09-28-training-schedule-attaches-to-the-microcycle.md`,
+ * `.agents/notes/proposed/architecture/2026-09-28-assistant-delegation-stays-a-presence-rule.md` and
+ * `.agents/notes/proposed/feature/2026-09-28-turning-delegation-on-is-the-consent.md`.
  */
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
@@ -21,6 +27,8 @@ import {
 import {
   DEFAULT_TRAINING_SCHEDULE,
   TRAINING_SCHEDULE_SLOTS,
+  TRAINING_SCHEDULE_TEMPLATES,
+  bestPracticeSchedule,
   trainingTemplateOf,
   type TrainingIntensity,
   type TrainingSession,
@@ -30,14 +38,16 @@ import { Effect, Semaphore } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "../season/decider.js";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
-import { loadSeasonRow } from "../season/currentSeason.js";
+import { loadAssistantName } from "../career/staff.js";
+import { loadGameDate, loadSeasonRow } from "../season/currentSeason.js";
 import { displayNames } from "../world/displayNames.js";
 import { loadUserClub } from "./squad.js";
 
 const CLUB_STREAM = "club";
+const DAY_MS = 86_400_000;
 
 /**
- * One permit per save around a schedule write, for the reason `tactics.ts` gives for its own: two
+ * One permit per save around a manager write, for the reason `tactics.ts` gives for its own: two
  * deferred SQLite transactions could otherwise both read the same revision and both commit, and the
  * second would clobber the first instead of surfacing the typed conflict.
  */
@@ -51,22 +61,28 @@ const withScheduleSavePermit = <A, E, R>(saveId: SaveId, effect: Effect.Effect<A
   return lock.withPermits(1)(effect);
 };
 
-/** The club's saved sessions and revision; a club that never saved reads as Balanced at 0. */
+/** The club's saved sessions, revision and delegation flag; a club that never saved reads as
+ *  Balanced at revision 0, planned by the manager. */
 const loadSchedule = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const revisionRows = yield* sql<{ revision: number }>`
-      SELECT revision FROM training_schedules WHERE club_id = ${clubId}`;
-    const revision = revisionRows[0]?.revision;
-    if (revision === undefined) return { sessions: DEFAULT_TRAINING_SCHEDULE, revision: 0 };
+    const rows = yield* sql<{ revision: number; delegated: number }>`
+      SELECT revision, delegated FROM training_schedules WHERE club_id = ${clubId}`;
+    const row = rows[0];
+    if (row === undefined) return { sessions: DEFAULT_TRAINING_SCHEDULE, revision: 0, delegated: false };
     const sessionRows = yield* sql<{ type: TrainingSessionType; intensity: TrainingIntensity }>`
       SELECT session_type as "type", intensity FROM training_schedule_sessions
       WHERE club_id = ${clubId} ORDER BY slot_index`;
-    return { sessions: sessionRows as ReadonlyArray<TrainingSession>, revision };
+    return {
+      sessions: sessionRows as ReadonlyArray<TrainingSession>,
+      revision: row.revision,
+      delegated: row.delegated === 1,
+    };
   });
 
-/** The club's next unplayed Fixture this Season — where the microcycle being planned ends. */
-const loadNextFixture = (clubId: ClubId) =>
+/** The club's next two unplayed Fixtures this Season, soonest first: the end of the microcycle
+ *  being planned, and the one after it, which is what makes a run congested. */
+const loadUpcomingFixtures = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const { seasonNumber } = yield* loadSeasonRow;
@@ -79,29 +95,126 @@ const loadNextFixture = (clubId: ClubId) =>
        FROM fixtures
        WHERE played = 0 AND season_number = ${seasonNumber}
          AND (home_club_id = ${clubId} OR away_club_id = ${clubId})
-       ORDER BY scheduled_date, id LIMIT 1`;
-    const row = rows[0];
-    if (row === undefined) return null;
+       ORDER BY scheduled_date, id LIMIT 2`;
     const nameOf = yield* displayNames;
-    const isHome = row.homeClubId === clubId;
-    return new TrainingScheduleFixtureView({
-      fixtureId: row.id,
-      date: row.date,
-      opponentClubName: nameOf(isHome ? row.awayClubId : row.homeClubId),
-      isHome,
+    return rows.map((row) => {
+      const isHome = row.homeClubId === clubId;
+      return new TrainingScheduleFixtureView({
+        fixtureId: row.id,
+        date: row.date,
+        opponentClubName: nameOf(isHome ? row.awayClubId : row.homeClubId),
+        isHome,
+      });
     });
+  });
+
+/** Why the assistant chose the current sessions: the reason on the club's latest schedule event,
+ *  when the assistant wrote it. */
+const loadAssistantReason = (clubId: ClubId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const rows = yield* sql<{ payload: string }>`
+      SELECT payload FROM events
+      WHERE stream_type = ${CLUB_STREAM} AND stream_id = ${clubId} AND tag = 'TrainingScheduleSet'
+      ORDER BY seq DESC LIMIT 1`;
+    const payload = rows[0] === undefined ? null : (JSON.parse(rows[0].payload) as { author?: string; reason?: string });
+    return payload?.author === "assistant" ? (payload.reason ?? null) : null;
   });
 
 const readScheduleView = (clubId: ClubId) =>
   Effect.gen(function* () {
-    const { sessions, revision } = yield* loadSchedule(clubId);
-    const nextFixture = yield* loadNextFixture(clubId);
+    const { sessions, revision, delegated } = yield* loadSchedule(clubId);
+    const [nextFixture] = yield* loadUpcomingFixtures(clubId);
     return new TrainingScheduleView({
       sessions,
       template: trainingTemplateOf(sessions),
       revision,
-      nextFixture,
+      nextFixture: nextFixture ?? null,
+      delegated,
+      assistantName: yield* loadAssistantName(clubId),
+      assistantReason: delegated ? yield* loadAssistantReason(clubId) : null,
     });
+  });
+
+/** Replace the club's sessions and flag at `revision`. Assumes a `SqlClient` in context. */
+const writeSchedule = (
+  clubId: ClubId,
+  sessions: ReadonlyArray<TrainingSession>,
+  revision: number,
+  delegated: boolean,
+) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const flag = delegated ? 1 : 0;
+    yield* sql`DELETE FROM training_schedule_sessions WHERE club_id = ${clubId}`;
+    yield* sql`INSERT INTO training_schedules (club_id, revision, delegated) VALUES (${clubId}, ${revision}, ${flag})
+               ON CONFLICT(club_id) DO UPDATE SET revision = excluded.revision, delegated = excluded.delegated`;
+    yield* sql`INSERT INTO training_schedule_sessions ${sql.insert(
+      sessions.map((session, slotIndex) => ({
+        club_id: clubId,
+        slot_index: slotIndex,
+        session_type: session.type,
+        intensity: session.intensity,
+      })),
+    )}`;
+  });
+
+const appendScheduleEvent = (clubId: ClubId, payload: Record<string, unknown>) =>
+  Effect.gen(function* () {
+    const { seasonNumber } = yield* loadSeasonRow;
+    const seq = yield* nextStreamSeq(CLUB_STREAM, clubId);
+    yield* appendStreamEvents(CLUB_STREAM, clubId, seq, [
+      { tag: "TrainingScheduleSet", payload: { seasonNumber, ...payload } },
+    ]);
+  });
+
+const daysBetween = (from: string, to: string): number => Math.round((Date.parse(to) - Date.parse(from)) / DAY_MS);
+
+/**
+ * The assistant's plan for the coming microcycle, by the Best Practice rule, written at `revision`
+ * with delegation left on, and reported as an assistant-authored event the News Inbox words.
+ * Assumes a `SqlClient` in context.
+ */
+const writeAssistantPlan = (clubId: ClubId, revision: number) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    const { seasonNumber } = yield* loadSeasonRow;
+    const today = yield* loadGameDate;
+    const [next, following] = yield* loadUpcomingFixtures(clubId);
+    const conditionRows = yield* sql<{ meanCondition: number | null }>`
+      SELECT AVG(COALESCE(pf.condition, 100)) as "meanCondition"
+      FROM players p
+      LEFT JOIN player_fitness pf ON pf.player_id = p.id AND pf.season_number = ${seasonNumber}
+      WHERE p.club_id = ${clubId}`;
+
+    const choice = bestPracticeSchedule({
+      daysToNextFixture: next === undefined ? null : daysBetween(today, next.date),
+      daysFromNextToFollowing:
+        next === undefined || following === undefined ? null : daysBetween(next.date, following.date),
+      meanCondition: conditionRows[0]?.meanCondition ?? 100,
+    });
+    const sessions = TRAINING_SCHEDULE_TEMPLATES[choice.template];
+    yield* writeSchedule(clubId, sessions, revision, true);
+    yield* appendScheduleEvent(clubId, {
+      author: "assistant",
+      sessions,
+      template: choice.template,
+      assistantName: yield* loadAssistantName(clubId),
+      reason: choice.reason,
+      opponentClubName: next?.opponentClubName ?? null,
+    });
+  });
+
+/**
+ * The assistant's turn, called from the human's Matchday commit once the Calendar has stepped: if
+ * the schedule is delegated, plan the next microcycle before the next Pre-match Boundary; otherwise
+ * do nothing. Runs in the commit's own transaction. Assumes a `SqlClient` in context.
+ */
+export const planDelegatedSchedule = (clubId: ClubId) =>
+  Effect.gen(function* () {
+    const { revision, delegated } = yield* loadSchedule(clubId);
+    if (!delegated) return;
+    yield* writeAssistantPlan(clubId, revision + 1);
   });
 
 export const getTrainingSchedule = (savesDir: string, saveId: SaveId) =>
@@ -113,22 +226,17 @@ export const getTrainingSchedule = (savesDir: string, saveId: SaveId) =>
   );
 
 /**
- * The revision-bound, idempotent schedule save:
- *
- * - a replay of an already-accepted `requestId` is a no-op success returning the current state,
- *   checked before the revision and before validation, so a retry after a lost response never
- *   double-applies or conflicts;
- * - a stale `expectedRevision` fails with `TrainingScheduleRevisionConflictError` naming the current
- *   revision, and changes nothing;
- * - otherwise the sessions are replaced, the revision raised by exactly one, and a
- *   `TrainingScheduleSet` event naming the manager appended to the club's stream.
+ * The guard every manager write shares: per-save permit, archived check, one transaction, a replay
+ * of an accepted `requestId` answered with the current state, and a stale `expectedRevision`
+ * refused with `TrainingScheduleRevisionConflictError`. `write` runs only past all of that, with
+ * the club and the next revision, and logs nothing itself.
  */
-export const changeTrainingSchedule = (
+const guardedWrite = <E>(
   savesDir: string,
   saveId: SaveId,
-  sessions: ReadonlyArray<TrainingSession>,
   expectedRevision: number,
   requestId: WriteRequestId,
+  write: (clubId: ClubId, revision: number) => Effect.Effect<void, E, SqlClient>,
 ) =>
   withScheduleSavePermit(
     saveId,
@@ -150,44 +258,57 @@ export const changeTrainingSchedule = (
             if (currentRevision !== expectedRevision) {
               return yield* new TrainingScheduleRevisionConflictError({ saveId, currentRevision });
             }
-            if (sessions.length !== TRAINING_SCHEDULE_SLOTS) {
-              return yield* new InvalidTrainingScheduleError({
-                reason: `a schedule has ${TRAINING_SCHEDULE_SLOTS} sessions, got ${sessions.length}`,
-              });
-            }
 
-            const revision = currentRevision + 1;
-            yield* sql`DELETE FROM training_schedule_sessions WHERE club_id = ${club.id}`;
-            yield* sql`INSERT INTO training_schedules (club_id, revision) VALUES (${club.id}, ${revision})
-                       ON CONFLICT(club_id) DO UPDATE SET revision = excluded.revision`;
-            yield* sql`INSERT INTO training_schedule_sessions ${sql.insert(
-              sessions.map((session, slotIndex) => ({
-                club_id: club.id,
-                slot_index: slotIndex,
-                session_type: session.type,
-                intensity: session.intensity,
-              })),
-            )}`;
+            yield* write(club.id, currentRevision + 1);
             yield* sql`INSERT INTO training_schedule_write_requests (club_id, request_id)
                        VALUES (${club.id}, ${requestId})`;
-
-            const { seasonNumber } = yield* loadSeasonRow;
-            const seq = yield* nextStreamSeq(CLUB_STREAM, club.id);
-            yield* appendStreamEvents(CLUB_STREAM, club.id, seq, [
-              {
-                tag: "TrainingScheduleSet",
-                payload: {
-                  seasonNumber,
-                  author: "manager",
-                  sessions,
-                  template: trainingTemplateOf(sessions),
-                },
-              },
-            ]);
-
             return yield* readScheduleView(club.id);
           }),
         );
       }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
     ),
+  );
+
+/**
+ * The manager's schedule save. It also takes the schedule back from the assistant: a manager edit is
+ * never something the assistant may overwrite, so writing one turns delegation off.
+ */
+export const changeTrainingSchedule = (
+  savesDir: string,
+  saveId: SaveId,
+  sessions: ReadonlyArray<TrainingSession>,
+  expectedRevision: number,
+  requestId: WriteRequestId,
+) =>
+  guardedWrite(savesDir, saveId, expectedRevision, requestId, (clubId, revision) =>
+    Effect.gen(function* () {
+      if (sessions.length !== TRAINING_SCHEDULE_SLOTS) {
+        return yield* new InvalidTrainingScheduleError({
+          reason: `a schedule has ${TRAINING_SCHEDULE_SLOTS} sessions, got ${sessions.length}`,
+        });
+      }
+      yield* writeSchedule(clubId, sessions, revision, false);
+      yield* appendScheduleEvent(clubId, { author: "manager", sessions, template: trainingTemplateOf(sessions) });
+    }),
+  );
+
+/**
+ * Hand the schedule to the Assistant Manager, or take it back. Turning delegation on is the
+ * manager's standing consent, so the assistant plans the current microcycle at once rather than
+ * leaving the manager's sessions under the assistant's name until the next Matchday. Taking it back
+ * keeps the assistant's sessions as the manager's starting point.
+ */
+export const setTrainingScheduleDelegation = (
+  savesDir: string,
+  saveId: SaveId,
+  delegated: boolean,
+  expectedRevision: number,
+  requestId: WriteRequestId,
+) =>
+  guardedWrite(savesDir, saveId, expectedRevision, requestId, (clubId, revision) =>
+    Effect.gen(function* () {
+      if (delegated) return yield* writeAssistantPlan(clubId, revision);
+      const { sessions } = yield* loadSchedule(clubId);
+      yield* writeSchedule(clubId, sessions, revision, false);
+    }),
   );

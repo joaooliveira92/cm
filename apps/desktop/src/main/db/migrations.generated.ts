@@ -438,6 +438,7 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
   `CREATE TABLE \`training_schedules\` (
 	\`club_id\` text PRIMARY KEY NOT NULL,
 	\`revision\` integer DEFAULT 0 NOT NULL,
+	\`delegated\` integer DEFAULT 0 NOT NULL,
 	FOREIGN KEY (\`club_id\`) REFERENCES \`clubs\`(\`id\`) ON UPDATE no action ON DELETE no action
 );`,
 ];

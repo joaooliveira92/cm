@@ -16,6 +16,9 @@ import {
   type Attribute,
 } from "@cm-clone/shared";
 
+/** The leading match-day indicator column (`squad/SelectionIndicator.tsx`). */
+export const SQUAD_MATCH_DAY_COLUMN_ID = "matchDay";
+
 /** The mandatory, always-visible-and-pinned identity column. */
 export const SQUAD_IDENTITY_COLUMN_ID = "name";
 
@@ -26,9 +29,12 @@ export const SQUAD_STATUS_COLUMN_ID = "status";
  * The columns no preset and no per-column toggle may hide, pinned in this
  * order. Status is protected for the same reason Name is: the abbreviation
  * vocabulary is the squad table's at-a-glance channel, so a view that can turn
- * it off is a view that can hide an injured player.
+ * it off is a view that can hide an injured player. The match-day indicator
+ * leads every row in every layout, as it does the position list, so who plays
+ * on Saturday never depends on which view is open.
  */
 export const SQUAD_PROTECTED_COLUMN_IDS = [
+  SQUAD_MATCH_DAY_COLUMN_ID,
   SQUAD_IDENTITY_COLUMN_ID,
   SQUAD_STATUS_COLUMN_ID,
 ] as const;

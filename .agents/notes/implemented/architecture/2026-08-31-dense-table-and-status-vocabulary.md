@@ -63,11 +63,13 @@ player-status column that renders only engine-modeled state.
   with it, so a player's status stays visible while the attribute columns scroll. It renders **only
   what the engine models**; everything else is empty. The *column arrangement* is the committed
   contract — reserved so future status systems fill seats without a re-layout.
-- **Always-visible, non-dismissible**: Name and Status are the two protected columns
+- **Always-visible, non-dismissible**: Name and Status are protected columns
   (`SQUAD_PROTECTED_COLUMN_IDS`). They are absent from the show/hide list rather than present and
   disabled, `toggleColumn` refuses to drop them whatever calls it, every preset carries them, and
   the persisted-preference reconcile restores and pins them on every load — including from a blob
-  written before Status existed.
+  written before Status existed. Since 2026-09-28 a third protected column leads both: the
+  match-day indicator (`squad-instructions` ticket 03, see the View selector note), pinned left of
+  Name, so the pinned order is match day, Name, Status.
 - **What renders today**: Condition below the match engine's own `NON_CONTACT_CONDITION_THRESHOLD`
   (75%) shows `Tir`. That threshold is imported from the engine rather than restated, so the
   display rule cannot drift from the mechanic it reports: below it, the engine starts rolling
