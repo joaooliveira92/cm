@@ -458,6 +458,18 @@ export const workloadAtom = Atom.family((saveId: SaveId) =>
 );
 
 /**
+ * getTrainingSchedule — `["save", saveId]`, `["training", saveId]`. The save key too, because an
+ * advance moves the next Fixture the schedule plans for.
+ */
+export const trainingScheduleAtom = Atom.family((saveId: SaveId) =>
+  managementReadPolicy(
+    Atom.make(call("getTrainingSchedule", { saveId })).pipe(
+      Atom.withReactivity([saveKey(saveId), trainingKey(saveId)]),
+    ),
+  ),
+);
+
+/**
  * getPlayerDevelopmentHistory — `["save", saveId]`, `["squad", saveId]`.
  *
  * Performance Report (Screen 113): one own-club player's recorded Attribute changes per concluded

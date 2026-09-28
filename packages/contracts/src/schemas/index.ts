@@ -9,6 +9,7 @@ export * from "./season.js";
 export * from "./match.js";
 export * from "./transfers.js";
 export * from "./training.js";
+export * from "./trainingSchedule.js";
 export * from "./key-bindings.js";
 export * from "./league-setup.js";
 export * from "./news.js";

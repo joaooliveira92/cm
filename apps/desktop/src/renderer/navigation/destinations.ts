@@ -52,6 +52,9 @@ export type CareerDestination =
   /** Workload and Recovery (Screen 112) — a sub-surface of the Training area reached from Coaching
    *  Assignments, shaped like `tacticsEditor`: no `g` binding, not in `CAREER_SCREEN_TYPES`. */
   | { readonly type: "trainingWorkload"; readonly saveId: SaveId }
+  /** Training Schedule (training-schedule-and-delegation 03): the microcycle's sessions, beneath the
+   *  Training area and in its `training` screen scope. */
+  | { readonly type: "trainingSchedule"; readonly saveId: SaveId }
   /** Coaching Assignments (Screen 111) — the full coaching staff list, reached from the Training
    *  Overview. A sub-surface of the Training area like Workload and Recovery. */
   | { readonly type: "trainingCoaching"; readonly saveId: SaveId }
@@ -305,6 +308,10 @@ export type ResolvedDestination =
       readonly params: { readonly saveId: SaveId };
     }
   | {
+      readonly to: "/career/$saveId/training/schedule";
+      readonly params: { readonly saveId: SaveId };
+    }
+  | {
       readonly to: "/career/$saveId/training/coaching";
       readonly params: { readonly saveId: SaveId };
     }
@@ -441,6 +448,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "news":
     case "training":
     case "trainingWorkload":
+    case "trainingSchedule":
     case "trainingCoaching":
     case "trainingPlan":
     case "trainingDevelopment":
@@ -544,6 +552,11 @@ const careerRoute = (
     case "trainingWorkload":
       return {
         to: "/career/$saveId/training/workload",
+        params: { saveId: destination.saveId },
+      };
+    case "trainingSchedule":
+      return {
+        to: "/career/$saveId/training/schedule",
         params: { saveId: destination.saveId },
       };
     case "trainingCoaching":

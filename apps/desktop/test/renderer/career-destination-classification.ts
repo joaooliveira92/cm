@@ -48,6 +48,7 @@ export const CAREER_SUB_SURFACES: Readonly<Record<CareerSubSurfaceType, string>>
   budgetReview: "a Recruitment navbar item, but classed under the Transfers area, not a screen of its own",
   transferHistory: "a Recruitment navbar item, but classed under the Transfers area, not a screen of its own",
   trainingWorkload: "Workload and Recovery (Screen 112), reached from Coaching Assignments",
+  trainingSchedule: "Training Schedule, reached from the Training Overview's Schedule card",
   trainingCoaching: "Coaching Assignments (Screen 111); a Training navbar item, classed under the Training area",
   trainingPlan: "names a player, so it cannot be built from a save alone",
   trainingDevelopment: "Player Development Centre (Screen 114), reached from Coaching Assignments",

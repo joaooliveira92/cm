@@ -8,7 +8,7 @@ import {
   text,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
-import { FORMATIONS, TACTICAL_STYLE_PRESETS } from "@cm-clone/shared";
+import { FORMATIONS, TACTICAL_STYLE_PRESETS, TRAINING_INTENSITIES, TRAINING_SESSION_TYPES } from "@cm-clone/shared";
 
 /**
  * The save file's schema, defined once in Drizzle and nowhere else.
@@ -1059,6 +1059,53 @@ export const trainingFocus = sqliteTable(
       sql`focus IS NULL OR focus IN ('technical','mental','physical','goalkeeping')`,
     ),
   ],
+);
+
+/**
+ * The human club's team training schedule (training-schedule-and-delegation 03): one row per club
+ * that has ever saved one, carrying the revision a write compares against. A club with no row reads
+ * as the Balanced template at revision 0, so career creation seeds nothing and AI clubs never have
+ * a row. The template name is not stored: it is derived from the sessions on every read, so the two
+ * can never disagree.
+ *
+ * No index: a point lookup on the club.
+ */
+export const trainingSchedules = sqliteTable("training_schedules", {
+  clubId: text("club_id")
+    .primaryKey()
+    .references(() => clubs.id),
+  revision: integer("revision").notNull().default(0),
+});
+
+/** The schedule's sessions in slot order. No index: read by the club prefix of its own key. */
+export const trainingScheduleSessions = sqliteTable(
+  "training_schedule_sessions",
+  {
+    clubId: text("club_id")
+      .notNull()
+      .references(() => trainingSchedules.clubId),
+    slotIndex: integer("slot_index").notNull(),
+    sessionType: text("session_type").notNull(),
+    intensity: text("intensity").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.clubId, table.slotIndex] }),
+    check("training_schedule_sessions_type", oneOf("session_type", TRAINING_SESSION_TYPES)),
+    check("training_schedule_sessions_intensity", oneOf("intensity", TRAINING_INTENSITIES)),
+  ],
+);
+
+/** Accepted schedule writes, the idempotency side of the revision guard — the same shape and rule
+ *  as `tactic_write_requests`. No index: the primary key serves the lookup. */
+export const trainingScheduleWriteRequests = sqliteTable(
+  "training_schedule_write_requests",
+  {
+    clubId: text("club_id")
+      .notNull()
+      .references(() => clubs.id),
+    requestId: text("request_id").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.clubId, table.requestId] })],
 );
 
 /** In-flight Bid state (ticket 16 / ADR-0005) — any player is biddable regardless of a Listed

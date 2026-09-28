@@ -41,6 +41,8 @@ export const INVALIDATION_RULES = {
     squadKey(saveId),
     trainingKey(saveId),
   ],
+  /** A schedule changes only the training reads; Condition is untouched until the next advance. */
+  changeTrainingSchedule: (saveId: SaveId): ReadonlyArray<unknown> => [trainingKey(saveId)],
   placeBid: (saveId: SaveId): ReadonlyArray<unknown> => [
     transfersKey(saveId),
     economyKey(saveId),
@@ -214,6 +216,14 @@ export const setTrainingFocusEffect = (
 /** `setTrainingFocus` mutation atom. */
 export const setTrainingFocusMutation = rpcRuntime.fn(
   (input: RpcPayload<"setTrainingFocus">) => setTrainingFocusEffect(input),
+);
+
+/** `changeTrainingSchedule` mutation atom — invalidates the training key. */
+export const changeTrainingScheduleMutation = rpcRuntime.fn(
+  (input: RpcPayload<"changeTrainingSchedule">) =>
+    call("changeTrainingSchedule", input).pipe(
+      Reactivity.mutation(INVALIDATION_RULES.changeTrainingSchedule(input.saveId)),
+    ),
 );
 
 /** `advanceCalendar` — mutation atom for registry-scoped invalidation. */

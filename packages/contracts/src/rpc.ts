@@ -108,6 +108,10 @@ import {
   MatchReportView,
   TrainingFocusNotOfferedError,
   TrainingFocusView,
+  ChangeTrainingSchedulePayload,
+  InvalidTrainingScheduleError,
+  TrainingScheduleRevisionConflictError,
+  TrainingScheduleView,
   TransferWindowClosedError,
   TransfersScreenView,
   WageBudgetExceededError,
@@ -689,6 +693,26 @@ commitCareer: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: WorkloadView,
     error: SaveNotFoundError,
+  },
+  /** Training Schedule (training-schedule-and-delegation 03): the human club's saved sessions for
+   *  the microcycle, the template they match, their revision, and the next Fixture. A club that has
+   *  never saved one reads as Balanced at revision 0. Only the save can fail. */
+  getTrainingSchedule: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: TrainingScheduleView,
+    error: SaveNotFoundError,
+  },
+  /** Saves the human club's schedule against the revision the caller read. A stale revision is
+   *  `TrainingScheduleRevisionConflictError`; a replayed request id returns the current state. */
+  changeTrainingSchedule: {
+    payload: ChangeTrainingSchedulePayload,
+    success: TrainingScheduleView,
+    error: Schema.Union([
+      SaveNotFoundError,
+      SaveArchivedError,
+      InvalidTrainingScheduleError,
+      TrainingScheduleRevisionConflictError,
+    ]),
   },
   /** Performance Report (Screen 113): one own-club player's Attribute changes per concluded Season,
    *  read from the human club's `PlayerDeveloped` events. A pure read; the changes are derived on

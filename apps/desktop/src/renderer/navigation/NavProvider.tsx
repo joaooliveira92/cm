@@ -31,6 +31,7 @@ const destinationToRouteChild: Readonly<Record<SaveScopedCareerDestinationType, 
   tacticsEditor: "editor",
   training: "training",
   trainingWorkload: "workload",
+  trainingSchedule: "schedule",
   trainingCoaching: "coaching",
   trainingDevelopment: "development-centre",
   clubInfo: "club-info",
@@ -67,6 +68,7 @@ const routeChildToDestination: Readonly<Record<string, SaveScopedCareerDestinati
   // Training sub-routes map back to "training"
   editor: "tactics",
   workload: "training",
+  schedule: "training",
   coaching: "training",
   "development-centre": "training",
 };

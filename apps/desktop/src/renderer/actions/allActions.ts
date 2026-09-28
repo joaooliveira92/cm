@@ -167,6 +167,24 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   { id: "assign-slot-player", label: "Assign a player to a tactics slot", scope: "tactics", available: ready, handler: () => undefined },
   { id: "swap-slot-players", label: "Swap two tactics slots' players", scope: "tactics", available: ready, handler: () => undefined },
   { id: "clear-tactic-selection", label: "Clear the team selection", scope: "tactics", available: ready, handler: () => undefined },
+  // training — the schedule screen publishes `trainingScheduleOpen` while mounted; the Training
+  // sub-screens share one scope, so without it the palette would list a save no screen handles.
+  {
+    id: "save-training-schedule",
+    label: "Save the training schedule",
+    scope: "training",
+    available: (state) => ready(state) && state.trainingScheduleOpen === true,
+    unavailableReason: "Open the Training Schedule to save it.",
+    handler: () => undefined,
+  },
+  {
+    id: "reset-training-schedule",
+    label: "Reset the training schedule to the saved one",
+    scope: "training",
+    available: (state) => ready(state) && state.trainingScheduleOpen === true,
+    unavailableReason: "Open the Training Schedule to reset it.",
+    handler: () => undefined,
+  },
   // match day
   { id: "start-match", label: "Play the match", scope: "match", available: ready, handler: () => undefined },
   { id: "quick-result", label: "Quick result", scope: "match", available: ready, handler: () => undefined },

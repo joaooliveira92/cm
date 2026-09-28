@@ -26,6 +26,7 @@ import { Button } from "../components/ui/button.js";
 import { FOCUS_RING } from "../focus.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import { CoachCard } from "./CoachCard.js";
+import { TrainingScheduleCard } from "./TrainingScheduleCard.js";
 import { describeLatestDevelopment } from "./developmentIndicator.js";
 import { displayCondition, recoveryStatus } from "./recoveryStatus.js";
 import type { TrainingFocusValue } from "./trainingFocusOptions.js";
@@ -97,6 +98,8 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       </header>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <TrainingScheduleCard saveId={saveId} />
+
         {/* Coaching Assignments card */}
         <section
           aria-labelledby="coaching-summary-heading"

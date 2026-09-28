@@ -29,6 +29,7 @@ import { getNewsInbox, setNewsMessageState } from "../career/news.js";
 import { advanceCalendar, getCompetitionFixtures, getCompetitionTable, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "../season/index.js";
 import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave, saveCareer } from "../world/saves.js";
 import { browseHandlers } from "./browseHandlers.js";
+import { trainingHandlers } from "./trainingHandlers.js";
 import { getSquad } from "../club/squad.js";
 import { changeTactics, getTactics } from "../club/tactics.js";
 import { getTacticsOverview } from "../club/tacticsOverview.js";
@@ -46,13 +47,6 @@ import {
   respondToBid,
   signFreeAgent,
 } from "../transfers/index.js";
-import {
-  getCoachingAssignments,
-  getPlayerDevelopmentHistory,
-  getSquadDevelopment,
-  getWorkload,
-  setTrainingFocus,
-} from "../club/training.js";
 import {
   assignScout,
   assignScoutToClub,
@@ -120,6 +114,7 @@ const saveIdOf = (method: AppRpcMethod, payload: unknown): string | null => {
 
 const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
   ...browseHandlers,
+  ...trainingHandlers,
   ping: () => Effect.succeed("pong"),
 
   // League and Nation Selection (Screen 3). Every one of these re-validates against the catalogue
@@ -415,13 +410,6 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
       )(payload);
       return yield* renewContract(ctx.savesDir, saveId, playerId, years);
     }),
-  setTrainingFocus: (payload, ctx) =>
-    Effect.gen(function* () {
-      const { saveId, playerId, focus } = yield* Schema.decodeUnknownEffect(
-        AppRpcs.setTrainingFocus.payload,
-      )(payload);
-      return yield* setTrainingFocus(ctx.savesDir, saveId, playerId, focus);
-    }),
   assignScout: (payload, ctx) =>
     Effect.gen(function* () {
       const { saveId, scoutId, playerId } = yield* Schema.decodeUnknownEffect(
@@ -487,30 +475,6 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
         payload,
       );
       return yield* getClubSquad(ctx.savesDir, saveId, clubId);
-    }),
-  getCoachingAssignments: (payload, ctx) =>
-    Effect.gen(function* () {
-      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getCoachingAssignments.payload)(
-        payload,
-      );
-      return yield* getCoachingAssignments(ctx.savesDir, saveId);
-    }),
-  getWorkload: (payload, ctx) =>
-    Effect.gen(function* () {
-      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getWorkload.payload)(payload);
-      return yield* getWorkload(ctx.savesDir, saveId);
-    }),
-  getPlayerDevelopmentHistory: (payload, ctx) =>
-    Effect.gen(function* () {
-      const { saveId, playerId } = yield* Schema.decodeUnknownEffect(
-        AppRpcs.getPlayerDevelopmentHistory.payload,
-      )(payload);
-      return yield* getPlayerDevelopmentHistory(ctx.savesDir, saveId, playerId);
-    }),
-  getSquadDevelopment: (payload, ctx) =>
-    Effect.gen(function* () {
-      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getSquadDevelopment.payload)(payload);
-      return yield* getSquadDevelopment(ctx.savesDir, saveId);
     }),
   getPlayerProfile: (payload, ctx) =>
     Effect.gen(function* () {

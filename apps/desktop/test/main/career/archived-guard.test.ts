@@ -5,13 +5,14 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { ok } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { FORMATION_SLOTS, POSITION_ROLES, emptyBench, type ArchivedCause } from "@cm-clone/shared";
+import { FORMATION_SLOTS, POSITION_ROLES, TRAINING_SCHEDULE_TEMPLATES, emptyBench, type ArchivedCause } from "@cm-clone/shared";
 import { BidId, FixtureId, MatchId, PlayerId, Tactic, WriteRequestId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../../seeded-save.js";
 import { getSquad, changeTactics } from "../../../src/main/club/index.js";
+import { changeTrainingSchedule } from "../../../src/main/club/trainingSchedule.js";
 import { startMatch, submitMatchCommand } from "../../../src/main/match/index.js";
 import {
   placeBid,
@@ -73,6 +74,20 @@ const everyMutatingCommandRejects = (cause: ArchivedCause) =>
       rejectsAsArchived(
         yield* Effect.flip(
           changeTactics(savesDir, save.id, tactic, 0, WriteRequestId.make("irrelevant-request-id")),
+        ),
+        cause,
+      ),
+    );
+    ok(
+      rejectsAsArchived(
+        yield* Effect.flip(
+          changeTrainingSchedule(
+            savesDir,
+            save.id,
+            TRAINING_SCHEDULE_TEMPLATES.heavy,
+            0,
+            WriteRequestId.make("irrelevant-request-id"),
+          ),
         ),
         cause,
       ),

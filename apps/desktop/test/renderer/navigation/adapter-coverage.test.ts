@@ -71,6 +71,7 @@ const CAREER_DESTINATIONS: SamplesOf<CareerDestination> = {
   news: { type: "news", saveId },
   training: { type: "training", saveId },
   trainingWorkload: { type: "trainingWorkload", saveId },
+  trainingSchedule: { type: "trainingSchedule", saveId },
   trainingCoaching: { type: "trainingCoaching", saveId },
   trainingPlan: { type: "trainingPlan", saveId, playerId },
   trainingDevelopment: { type: "trainingDevelopment", saveId },

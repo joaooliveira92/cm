@@ -35,6 +35,7 @@ import { PlayerCoachReportScreen } from "../playerCoachReport/PlayerCoachReportS
 import { TrainingScreen } from "../training/TrainingScreen.js";
 import { CoachingAssignmentsScreen } from "../training/CoachingAssignmentsScreen.js";
 import { WorkloadScreen } from "../training/WorkloadScreen.js";
+import { TrainingScheduleScreen } from "../training/TrainingScheduleScreen.js";
 import { TrainingPlanScreen } from "../training/TrainingPlanScreen.js";
 import { DevelopmentCentreScreen } from "../training/DevelopmentCentreScreen.js";
 import { ClubInfoScreen } from "../clubInfo/ClubInfoScreen.js";
@@ -329,6 +330,14 @@ const trainingCoachingRoute = createRoute({
   component: () => <CareerChildView screenId="training" Screen={CoachingAssignmentsScreen} />,
 });
 
+/** Training Schedule (training-schedule-and-delegation 03): the microcycle's sessions, reached from
+ *  the Training Overview's Schedule card. Shares the `training` screen scope. */
+const trainingScheduleRoute = createRoute({
+  getParentRoute: () => trainingRoute,
+  path: "schedule",
+  component: () => <CareerChildView screenId="training" Screen={TrainingScheduleScreen} />,
+});
+
 const trainingWorkloadRoute = createRoute({
   getParentRoute: () => trainingRoute,
   path: "workload",
@@ -604,6 +613,7 @@ managerRoute.addChildren([
         trainingIndexRoute,
         trainingCoachingRoute,
         trainingWorkloadRoute,
+        trainingScheduleRoute,
         trainingPlanRoute,
         trainingDevelopmentRoute,
       ]),

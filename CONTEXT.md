@@ -53,6 +53,27 @@ physical state, not long-run Attribute growth.
 _Avoid_: Training (ambiguous with the feature/milestone name as a whole; Training Focus is the
 specific per-player setting)
 
+**Microcycle**:
+The stretch from the human club's last played Matchday to its next Fixture: what a Training
+Schedule plans. Derived from the Fixture list whenever it is needed, never stored as dates, and the
+same shape whatever its length, so a three-day gap and a fortnight are planned in the same slots.
+_Avoid_: Week (the Calendar has no weeks), training period
+
+**Training Schedule**:
+The human club's plan for the Microcycle: a fixed five Training Sessions in slot order. A club that
+has never saved one reads as the **Balanced** template, so ignoring it costs nothing. The named
+templates (Balanced, Match Preparation, Recovery, Heavy) are starting points the manager applies to a
+draft; a saved Training Schedule that matches none of them is **Custom**, and which template it
+matches is derived from its sessions, never stored. AI clubs have none. Distinct from Training Focus,
+which is per-player and reaches Player Development; a Training Schedule is team-wide and never does.
+_Avoid_: Schedule on its own (that is the generated list of Fixtures), training plan (the Individual
+Training Plan is a per-player screen)
+
+**Training Session**:
+One slot of a Training Schedule: a session type (tactical, technical, physical, recovery or rest)
+and an intensity (low, medium or high), both from closed sets.
+_Avoid_: Drill, workout
+
 **Position**:
 One of the ten fixed slots a player can occupy on the pitch: GK, DC, DL, DR, DM, MC, ML, MR, AMC, ST.
 Distinct from a tactical Role (owned by the tactics ticket), which further specializes how a player
@@ -463,9 +484,9 @@ _Avoid_: Matchday (see above), Gameweek, Leg (a Leg is one match of a two-legged
 
 **Calendar**:
 The career's sense of time, carried as a real date and advanced only by jumping to the next scheduled
-event (a Matchday, or a Transfer Window opening or closing), never by a day-by-day clock. There is no
-training or press content to occupy a date with no Fixture, so a finer-grained clock would have
-nothing to display. Advancing to a date resolves every unplayed Fixture in the world dated on or
+event (a Matchday, or a Transfer Window opening or closing), never by a day-by-day clock. Training
+content attaches to the Microcycle between Matchdays rather than to a date, and there is no press
+content at all, so a finer-grained clock would have nothing to display. Advancing to a date resolves every unplayed Fixture in the world dated on or
 before it, and stops at the first Matchday carrying a Fixture in a playable Competition — Fixtures in
 background Competitions resolve without stopping the career. When that Matchday contains the manager's
 own Fixture the Calendar stops *before* resolving any of it, at the Pre-match Boundary below.

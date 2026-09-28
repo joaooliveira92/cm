@@ -124,6 +124,10 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
         // is the fallback for a surface that has no room for a button.
         case "TacticRevisionConflictError":
           return "That tactic was saved elsewhere since you loaded it — refresh to load the current version.";
+        case "InvalidTrainingScheduleError":
+          return "That schedule is invalid — every session slot needs a session.";
+        case "TrainingScheduleRevisionConflictError":
+          return "That schedule was saved elsewhere since you loaded it — refresh to load the current version.";
         case "InvalidPillarDistributionError":
           return "Invalid pillar distribution.";
         case "TransferWindowClosedError":

@@ -445,3 +445,27 @@ CREATE TABLE `training_focus` (
 	FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT "training_focus_focus" CHECK(focus IS NULL OR focus IN ('technical','mental','physical','goalkeeping'))
 );
+--> statement-breakpoint
+CREATE TABLE `training_schedule_sessions` (
+	`club_id` text NOT NULL,
+	`slot_index` integer NOT NULL,
+	`session_type` text NOT NULL,
+	`intensity` text NOT NULL,
+	PRIMARY KEY(`club_id`, `slot_index`),
+	FOREIGN KEY (`club_id`) REFERENCES `training_schedules`(`club_id`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "training_schedule_sessions_type" CHECK(session_type IN ('tactical','technical','physical','recovery','rest')),
+	CONSTRAINT "training_schedule_sessions_intensity" CHECK(intensity IN ('low','medium','high'))
+);
+--> statement-breakpoint
+CREATE TABLE `training_schedule_write_requests` (
+	`club_id` text NOT NULL,
+	`request_id` text NOT NULL,
+	PRIMARY KEY(`club_id`, `request_id`),
+	FOREIGN KEY (`club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE TABLE `training_schedules` (
+	`club_id` text PRIMARY KEY NOT NULL,
+	`revision` integer DEFAULT 0 NOT NULL,
+	FOREIGN KEY (`club_id`) REFERENCES `clubs`(`id`) ON UPDATE no action ON DELETE no action
+);
