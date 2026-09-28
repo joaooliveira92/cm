@@ -1,14 +1,15 @@
 /**
  * Filtering feature (note: Sorting and filtering by keyboard, AC-30). Filter
- * semantics are OURS — TanStack never sees a filter clause. Three clause kinds:
- * name search (Market/Free Agents), position (Squad, Market, Free Agents), and
- * status (the owned Squad only — rival rows disclose no Condition). Visible
+ * semantics are OURS — TanStack never sees a filter clause. Four clause kinds:
+ * name search (Market/Free Agents), position (Squad, Market, Free Agents),
+ * status (the owned Squad only — rival rows disclose no Condition), and an
+ * attribute threshold (the owned Squad only — it reads exact figures). Visible
  * compact controls and enumerated palette Actions back the same pure
  * `applyFilters`; the palette enumerates position and status (name search is
  * free-form and lives in the visible control). Empty clauses are inert, so
  * clearing is just removing the clause.
  */
-import { POSITIONS } from "@cm-clone/shared";
+import { POSITIONS, type Attribute, type KnownFigure } from "@cm-clone/shared";
 import type { Action, ActionScope, ScopeState } from "../../actions/types.js";
 import type { FilterClause, TableId, TableRowShape } from "../types.js";
 import {
@@ -17,6 +18,7 @@ import {
   statusesOf,
   type StatusSource,
 } from "../squad/playerStatus.js";
+import { SQUAD_COLUMN_LABELS } from "../squad/squadColumns.js";
 import { tableLabel } from "./sorting.js";
 
 export interface FilterTableActionInput {
@@ -45,6 +47,15 @@ export const statusClause = (status: string): FilterClause => ({
   status,
 });
 
+export const attributeClause = (attribute: Attribute, min: number): FilterClause => ({
+  _tag: "attribute",
+  attribute,
+  min,
+});
+
+/** The thresholds an attribute clause may carry: the Attribute scale. */
+export const ATTRIBUTE_MINIMUMS: readonly number[] = Array.from({ length: 20 }, (_, i) => i + 1);
+
 export const matchesNameSearch = (row: TableRowShape, query: string): boolean =>
   `${row.firstName} ${row.lastName}`.toLowerCase().includes(query.trim().toLowerCase());
 
@@ -60,6 +71,22 @@ const bearsCondition = (row: TableRowShape): row is TableRowShape & StatusSource
  *  a row matches exactly when its cell would render that abbreviation. */
 export const matchesStatus = (row: TableRowShape, status: string): boolean =>
   bearsCondition(row) && statusesOf(row).some((s) => s.abbreviation === status);
+
+/** A row that carries per-Attribute figures. Like Condition, `TableRowShape` has
+ *  none — the attribute clause narrows per row rather than widening the base. */
+const bearsAttributes = (
+  row: TableRowShape,
+): row is TableRowShape & { readonly attributes: Readonly<Record<string, KnownFigure | undefined>> } =>
+  "attributes" in row;
+
+/** Only an exact figure can meet a threshold. A band is never resolved to a
+ *  midpoint here: the owned Squad reads exact by rule, and anywhere a band could
+ *  appear, matching it would disclose what the band withholds (group-e 03). */
+export const matchesAttribute = (row: TableRowShape, attribute: Attribute, min: number): boolean => {
+  if (!bearsAttributes(row)) return false;
+  const figure = row.attributes[attribute];
+  return figure !== undefined && figure._tag === "exact" && figure.value >= min;
+};
 
 /** Fold every clause over the row set. Inert clauses fall through untouched.
  *  Generic over the row subtype so a concrete table keeps its row type. */
@@ -78,6 +105,9 @@ export const applyFilters = <R extends TableRowShape>(
         break;
       case "status":
         out = out.filter((r) => matchesStatus(r, filter.status));
+        break;
+      case "attribute":
+        out = out.filter((r) => matchesAttribute(r, filter.attribute, filter.min));
         break;
     }
   }
@@ -113,6 +143,8 @@ export const clauseId = (filter: FilterClause): string => {
       return filter.position.toLowerCase();
     case "status":
       return filter.status.toLowerCase();
+    case "attribute":
+      return `${filter.attribute.toLowerCase()}-${filter.min}`;
     case "nameSearch":
       return "name";
   }
@@ -128,6 +160,8 @@ export const clauseLabel = (filter: FilterClause): string => {
       const status = RESERVED_STATUSES.find((s) => s.abbreviation === filter.status);
       return status === undefined ? filter.status : status.term;
     }
+    case "attribute":
+      return `${SQUAD_COLUMN_LABELS[filter.attribute] ?? filter.attribute} ${filter.min}+`;
     case "nameSearch":
       return "name search";
   }

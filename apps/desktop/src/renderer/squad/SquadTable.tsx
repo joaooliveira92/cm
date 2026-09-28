@@ -24,6 +24,8 @@ import { SQUAD_TOGGLEABLE_COLUMN_IDS } from "../table/features/visibility.js";
 import { SQUAD_VIEWS, squadViewById } from "./squadViews.js";
 import { SquadPositionList } from "./SquadPositionList.js";
 import { MatchDayBar } from "./MatchDayBar.js";
+import { ACTIONS_ROW_BUTTON_CLASS, ACTIONS_ROW_ITEM_CLASS } from "./actionsRowClasses.js";
+import { AttributeFilterPopover } from "./AttributeFilterPopover.js";
 import { writeLineupDrag } from "./lineupDrag.js";
 import { SQUAD_COLUMN_LABELS } from "../table/squad/squadColumns.js";
 import { MODELED_STATUSES, StatusLegend } from "../table/squad/playerStatus.js";
@@ -38,9 +40,6 @@ import {
 
 const REGION = "squadTable";
 
-const ACTIONS_ROW_BUTTON_CLASS = `flex items-center gap-1.5 whitespace-nowrap rounded-control px-3 py-1 text-sm text-text-secondary transition-colors hover:bg-surface-raised hover:text-text-primary ${FOCUS_RING.join(" ")}`;
-
-const ACTIONS_ROW_ITEM_CLASS = `flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-text-secondary hover:bg-surface-raised hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING.join(" ")}`;
 
 /**
  * The players count line, with the non-blocking background refresh marker.
@@ -124,7 +123,7 @@ const ColumnControls = ({
 );
 
 /** The filter toolbar's controls: the clear-filters action and — for table
- *  layouts — the column controls. View, Position and Status selects are rendered in
+ *  layouts — the column controls. View, Position, Status and Attribute selects are rendered in
  *  the career chrome's actions row via the screen toolbar store. */
 const SquadToolbar = ({
   filters,
@@ -253,6 +252,8 @@ export const SquadTable = () => {
     openPlayer,
     setPositionFilter,
     setStatusFilter,
+    setAttributeFilter,
+    clearAttributeFilter,
     setView,
     toggleOneColumn,
     clearFilterCommand,
@@ -292,6 +293,10 @@ export const SquadTable = () => {
 
   const activeStatus = MODELED_STATUSES.find((status) =>
     filters.some((f) => f._tag === "status" && f.status === status.abbreviation),
+  );
+
+  const activeAttribute = filters.find(
+    (f): f is Extract<FilterClause, { readonly _tag: "attribute" }> => f._tag === "attribute",
   );
 
   const [viewOpen, setViewOpen] = useState(false);
@@ -380,6 +385,11 @@ export const SquadTable = () => {
             </div>
           </PopoverContent>
         </Popover>
+        <AttributeFilterPopover
+          active={activeAttribute}
+          onSet={setAttributeFilter}
+          onClear={clearAttributeFilter}
+        />
         <Popover open={viewOpen} onOpenChange={setViewOpen}>
           <PopoverTrigger
             render={
@@ -409,7 +419,20 @@ export const SquadTable = () => {
         </Popover>
       </>
     ),
-    [viewId, activePosition, activeStatus, setView, setPositionFilter, setStatusFilter, viewOpen, positionOpen, statusOpen],
+    [
+      viewId,
+      activePosition,
+      activeStatus,
+      activeAttribute,
+      setView,
+      setPositionFilter,
+      setStatusFilter,
+      setAttributeFilter,
+      clearAttributeFilter,
+      viewOpen,
+      positionOpen,
+      statusOpen,
+    ],
   );
 
   useEffect(() => {

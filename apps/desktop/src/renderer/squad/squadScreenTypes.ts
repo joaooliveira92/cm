@@ -6,6 +6,7 @@
  */
 import type { Table } from "@tanstack/react-table";
 import type { SaveId } from "@cm-clone/contracts";
+import type { Attribute } from "@cm-clone/shared";
 import type { SquadColumnPreferences } from "../table/columnPreferences.js";
 import type { TableFocusBookmark } from "../table/focusBookmark.js";
 import type { SquadRow } from "../table/squad/squadColumns.js";
@@ -59,6 +60,10 @@ export interface SquadScreenActions {
   readonly setPositionFilter: (position: string) => void;
   /** Set the status clause to a modeled abbreviation, or remove it with "". */
   readonly setStatusFilter: (status: string) => void;
+  /** Set the one attribute clause (owned Squad only), replacing any other attribute. */
+  readonly setAttributeFilter: (attribute: Attribute, min: number) => void;
+  /** Remove the attribute clause and nothing else. */
+  readonly clearAttributeFilter: () => void;
   readonly setPreset: (presetId: SquadPresetId) => void;
   readonly setView: (viewId: SquadViewId) => void;
   readonly toggleOneColumn: (columnId: string) => void;

@@ -18,6 +18,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { PlayerId, SaveId, SquadPlayerView } from "@cm-clone/contracts";
+import type { Attribute } from "@cm-clone/shared";
 import { Option } from "effect";
 import {
   AsyncResult,
@@ -44,6 +45,7 @@ import {
   positionClause,
   removeFilter,
   statusClause,
+  attributeClause,
   upsertFilter,
 } from "../table/features/filtering.js";
 import {
@@ -370,6 +372,17 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     [applyFilter],
   );
 
+  const setAttributeFilter = useCallback(
+    (attribute: Attribute, min: number) => {
+      applyFilter(upsertFilter(latest.current.filters, attributeClause(attribute, min)));
+    },
+    [applyFilter],
+  );
+
+  const clearAttributeFilter = useCallback(() => {
+    applyFilter(latest.current.filters.filter((f) => f._tag !== "attribute"));
+  }, [applyFilter]);
+
   const setPreset = useCallback(
     (presetId: SquadPresetId) => {
       const preset = SQUAD_PRESETS.find((p) => p.id === presetId);
@@ -471,6 +484,8 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       openPlayer,
       setPositionFilter,
       setStatusFilter,
+      setAttributeFilter,
+      clearAttributeFilter,
       setPreset,
       setView,
       toggleOneColumn,

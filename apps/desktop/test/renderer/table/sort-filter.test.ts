@@ -12,6 +12,8 @@ import {
   matchesStatus,
   statusClause,
   clauseLabel,
+  attributeClause,
+  matchesAttribute,
 } from "../../../src/renderer/table/features/filtering.js";
 import { NON_CONTACT_CONDITION_THRESHOLD } from "@cm-clone/game-engine";
 import { classifyTableParamAction } from "../../../src/renderer/table/paramActions.js";
@@ -215,5 +217,52 @@ describe("Screen 71 — the status filter (group-e 02)", () => {
   it("gives every Squad palette row a distinct id, so a status can never shadow a position", () => {
     const ids = tableSortAndFilterActions(SQUAD_PALETTE_OPTIONS).map((a) => a.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe("Screen 71 — the attribute threshold (group-e 04)", () => {
+  type Figure = { readonly _tag: "exact"; readonly value: number } | { readonly _tag: "range"; readonly low: number; readonly high: number };
+  interface SquadLikeRow extends Row {
+    readonly condition: number;
+    readonly attributes: Readonly<Record<string, Figure | undefined>>;
+  }
+  const exact = (value: number): Figure => ({ _tag: "exact", value });
+  const squadRow = (id: string, position: string, condition: number, pace: Figure | undefined): SquadLikeRow => ({
+    ...row(id, id, "Player", [position]),
+    condition,
+    attributes: { pace },
+  });
+  const TIRED = NON_CONTACT_CONDITION_THRESHOLD - 1;
+
+  it("meets the threshold only with an exact figure at or above it", () => {
+    expect(matchesAttribute(squadRow("a", "DC", 100, exact(15)), "pace", 15)).toBe(true);
+    expect(matchesAttribute(squadRow("b", "DC", 100, exact(14)), "pace", 15)).toBe(false);
+    // A band is never resolved to its midpoint, even one wholly above the threshold.
+    expect(matchesAttribute(squadRow("c", "DC", 100, { _tag: "range", low: 16, high: 18 }), "pace", 15)).toBe(false);
+    expect(matchesAttribute(squadRow("d", "DC", 100, undefined), "pace", 15)).toBe(false);
+    // A row with no attributes at all — a market row's shape — never matches.
+    expect(matchesAttribute(row("e", "E", "Market", ["DC"]), "pace", 1)).toBe(false);
+  });
+
+  it("folds with position and status, keeping only rows that match all three", () => {
+    const rows = [
+      squadRow("keep", "DC", TIRED, exact(16)),
+      squadRow("slow", "DC", TIRED, exact(10)),
+      squadRow("fresh", "DC", 100, exact(18)),
+      squadRow("striker", "ST", TIRED, exact(18)),
+    ];
+    const filters = [positionClause("DC"), statusClause("Tir"), attributeClause("pace", 15)];
+    expect(applyFilters(rows, filters).map((r) => r.id)).toEqual(["keep"]);
+  });
+
+  it("holds one attribute clause at a time, replacing it and removing it without touching the others", () => {
+    const first = upsertFilter([positionClause("DC")], attributeClause("pace", 15));
+    const replaced = upsertFilter(first, attributeClause("strength", 12));
+    expect(replaced).toEqual([positionClause("DC"), attributeClause("strength", 12)]);
+    expect(removeFilter(replaced, attributeClause("strength", 12))).toEqual([positionClause("DC")]);
+  });
+
+  it("labels the clause by the column header's name and the threshold", () => {
+    expect(clauseLabel(attributeClause("pace", 15))).toBe("Pace 15+");
   });
 });

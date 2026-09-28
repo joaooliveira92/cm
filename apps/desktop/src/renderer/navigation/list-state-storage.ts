@@ -10,8 +10,10 @@
  * are stored in sessionStorage keyed by a per‑navigation token carried in the
  * URL instead.
  */
+import { ALL_ATTRIBUTES } from "@cm-clone/shared";
 import type { FilterClause, SortDirection, SortState } from "../table/types.js";
 import { modeledStatus } from "../table/squad/playerStatus.js";
+import { ATTRIBUTE_MINIMUMS } from "../table/features/filtering.js";
 
 /** The shape of list state that travels via URL search params. */
 export interface EncodedListState {
@@ -75,6 +77,9 @@ const encodeFilters = (filters: readonly FilterClause[]): string | undefined => 
       case "status":
         parts.push(`status:${f.status}`);
         break;
+      case "attribute":
+        parts.push(`attr:${f.attribute}:${f.min}`);
+        break;
     }
   }
   return parts.join(",");
@@ -132,7 +137,23 @@ const decodeFilters = (raw: string | null): readonly FilterClause[] => {
     // drops like an unknown tag. Case is canonicalised to the catalogue's.
     const statusMatch = /^status:(.+)$/.exec(part);
     const status = statusMatch === null ? undefined : modeledStatus(statusMatch[1]!);
-    if (status !== undefined) result.push({ _tag: "status", status: status.abbreviation });
+    if (status !== undefined) {
+      result.push({ _tag: "status", status: status.abbreviation });
+      continue;
+    }
+    // An attribute must be one the Squad table shows and a minimum on the 1–20
+    // scale; anything else drops, so a hand-edited URL cannot hide every row.
+    // One attribute clause at a time, so a repeated part replaces the earlier one.
+    const attributeMatch = /^attr:([A-Za-z]+):(\d{1,2})$/.exec(part);
+    if (attributeMatch !== null) {
+      const attribute = ALL_ATTRIBUTES.find((key) => key === attributeMatch[1]);
+      const min = Number(attributeMatch[2]);
+      if (attribute !== undefined && ATTRIBUTE_MINIMUMS.includes(min)) {
+        const earlier = result.findIndex((clause) => clause._tag === "attribute");
+        if (earlier !== -1) result.splice(earlier, 1);
+        result.push({ _tag: "attribute", attribute, min });
+      }
+    }
   }
   return result;
 };

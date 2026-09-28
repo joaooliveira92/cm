@@ -77,6 +77,33 @@ describe("list-state-storage", () => {
       expect(decoded.filters).toEqual([{ _tag: "status", status: "Tir" }]);
     });
 
+    it("round-trips an attribute clause beside position and status", () => {
+      const filters = [
+        { _tag: "position", position: "DC" },
+        { _tag: "status", status: "Tir" },
+        { _tag: "attribute", attribute: "pace", min: 15 },
+      ] as const;
+      const encoded = toEncodedListState({ filters });
+      expect(encoded.filters).toBe("pos:DC,status:Tir,attr:pace:15");
+      expect(decodeListState(encodeListState(encoded)).filters).toEqual(filters);
+    });
+
+    it("drops an attribute clause the Squad table cannot show or the scale cannot hold", () => {
+      // injuryProneness is hidden, so it is no Squad column; 0 and 21 are off the 1-20 scale.
+      const decoded = decodeListState(
+        new URLSearchParams({ filters: "attr:injuryProneness:5,attr:pace:0,attr:pace:21,attr:nope:5,attr:pace:x,attr:pace:20" }),
+      );
+      expect(decoded.filters).toEqual([{ _tag: "attribute", attribute: "pace", min: 20 }]);
+    });
+
+    it("keeps only the last of two attribute clauses, since one is the model", () => {
+      const decoded = decodeListState(new URLSearchParams({ filters: "attr:pace:15,pos:DC,attr:strength:12" }));
+      expect(decoded.filters).toEqual([
+        { _tag: "position", position: "DC" },
+        { _tag: "attribute", attribute: "strength", min: 12 },
+      ]);
+    });
+
     it("skips empty name search parts", () => {
       const params = new URLSearchParams("filters=name:");
       const decoded = decodeListState(params);

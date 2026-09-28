@@ -10,6 +10,7 @@ import { OUTFIELD_ATTRIBUTES } from "@cm-clone/shared";
 import { ClubSquadScreen } from "../../../src/renderer/clubSquad/ClubSquadScreen.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
+import { ScreenToolbarSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
 
 const rid = (id: string): SaveId => SaveId.make(id);
 const cid = (id: string): ClubId => ClubId.make(id);
@@ -95,6 +96,19 @@ describe("ClubSquadScreen — the any-club squad", () => {
     expect(screen.getByText(/Rui Costa/)).toBeTruthy();
     // The ranged cells are many (`8–20` per Attribute, plus the OVR band), so `getAllByText`.
     expect(screen.getAllByText(/\d+–\d+/).length).toBeGreaterThan(0);
+  });
+
+  it("offers no attribute filter: a rival's figures are banded, so a threshold would read through them", async () => {
+    respondTo("getClubSquad", squadView({ isUserClub: false, players: [rangedPlayer("p1")] }));
+    // The toolbar slot is mounted so a control this screen registered would render (group-e 04).
+    render(
+      <RegistryProvider>
+        <ScreenToolbarSlot />
+        <ClubSquadScreen saveId={rid("s1")} clubId={cid("club-7")} />
+      </RegistryProvider>,
+    );
+    await screen.findByText(/Rui Costa/);
+    expect(screen.queryByRole("button", { name: "Filter squad by attribute" })).toBeNull();
   });
 
   it("marks a club that is not the manager's", async () => {
