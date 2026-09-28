@@ -1,9 +1,9 @@
 # 18: two e2e failure shapes from 2026-09-26 that no longer reproduce
 
 Type: bug
-Status: needs-info
+Status: resolved
 
-**Blocked by:** 19. A reproduction attempt means nothing while the suite fails deterministically.
+**Blocked by:** 19 (resolved). The reproduction below runs on a suite that is otherwise green.
 
 Split from [17](17-desktop-e2e-fails-random-specs-in-full-runs.md) on 2026-09-27. Ticket 17 named its
 main cause: the Mac going into idle system sleep partway through a run. The fix, `e2e/globalSetup.ts`
@@ -55,9 +55,9 @@ Run it under `--repeat-each` and under load.
 
 ## Acceptance criteria
 
-- [ ] Either shape reproduces with the evidence above captured, and its cause is named and fixed
-- [ ] Or it is closed as not reproducible after a stated number of green full runs
-- [ ] No test is loosened, skipped, retried into green, or given a larger timeout to absorb it
+- [ ] Either shape reproduces with the evidence above captured, and its cause is named and fixed (did not reproduce)
+- [x] Or it is closed as not reproducible after a stated number of green full runs
+- [x] No test is loosened, skipped, retried into green, or given a larger timeout to absorb it
 
 ## Comments
 
@@ -75,3 +75,23 @@ save or the Tactic is invalidated.
 Select regression filed as [19](19-select-popup-has-no-listbox.md). `caffeinate` was holding and
 `pmset -g log` shows no sleep in the window. The attempt was stopped, and it should be repeated once
 19 is resolved and the suite is green.
+
+## Answer
+
+Resolved 2026-09-28: **closed as not reproducible.** Neither shape has appeared since 2026-09-26,
+under the conditions each was first seen in.
+
+- **Shape 1 (~850ms failures).** Rerun where it first appeared: a fresh `git worktree` at `cbf93453`,
+  `pnpm install --frozen-lockfile`, then three consecutive full `test:e2e` runs (02:32–02:42). All
+  three passed **67 of 67**. With ticket 17's five green runs on 2026-09-27, that makes eight
+  consecutive green full runs since the shape was last seen, three of them from a fresh install.
+- **Shape 2 (Player Search name click).** The logging probe passed **20 of 20** with ten `yes` hogs on
+  ten cores, after 25 of 25 under four hogs on 2026-09-27. Every full run above includes the original
+  spec, and it passed each time. The probe also weakens the leading hypothesis: the Outstanding band
+  was already on screen before every click and `main` never moved, so a mid-click shift would need
+  the Tactics read to land after the whole search had rendered.
+
+Nothing in the product was changed for this ticket. If either shape returns, start from the probe
+described in *To reproduce*. A copy used on 2026-09-28 wrapped lines 130–132 in a `try` and logged
+`pointerdown`/`mousedown`/`pointerup`/`mouseup`/`click` targets, `hashchange`, `popstate`, and the
+band's presence with `main`'s top edge. Check `pmset -g log` first (ticket 17).

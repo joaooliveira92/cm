@@ -244,20 +244,19 @@ single unblock and touches no schema.
 has an answer, and the four `ready-for-human` tickets were decided under the human's standing
 delegation. Agent-startable work, in order:
 
-1. **desktop-suite-red 17 resolved 2026-09-27**: the random e2e failures were the Mac entering idle
-   system sleep partway through a run. `e2e/globalSetup.ts` now holds `caffeinate -d -i` for the
-   run, and five consecutive full runs were green (65/65 each). Two shapes that match no sleep moved
-   to [desktop-suite-red 18](../.scratch/desktop-suite-red/issues/18-two-unreproduced-e2e-failure-shapes.md)
-   (`needs-info`: waiting on a reproduction). Before calling a red e2e run a regression, check
-   `pmset -g log` for a sleep inside its window.
+1. **desktop-suite-red's queue is empty (2026-09-28).** `dev` had gone red overnight: 60 desktop unit
+   failures and e2e Select timeouts, all from the 2026-09-27/28 UI commits. The shared Select is back on
+   Base UI's Select primitive ([19](../.scratch/desktop-suite-red/issues/19-select-popup-has-no-listbox.md)),
+   and the rest was fixed in four commits. `check:all` passes 2338 of 2338, and e2e passed 67 of 67 three
+   times from a fresh install. [18](../.scratch/desktop-suite-red/issues/18-two-unreproduced-e2e-failure-shapes.md)
+   closed as not reproducible. Before calling a red e2e run a regression, check `pmset -g log` for a
+   sleep inside its window, and remember that e2e is outside `check:all`.
 2. **Group G 42 resolved 2026-09-27** (`eeff2cd8`): Quick result skips the live reveal.
-3. **The stale `needs-info` tickets were triaged 2026-09-27** (`da3ba0ed`) to `ready-for-agent`.
-   [group-g 10](../.scratch/group-g-match-day/issues/10-match-player-ratings-component.md), Match
-   Ratings, shipped the same day. Next, in order:
-   [group-g 20](../.scratch/group-g-match-day/issues/20-a-command-rewrites-play-already-seen.md) (a live
-   command stamped at M+1, decision request 08) and
-   [group-h 07](../.scratch/group-h-training-and-player-development/issues/07-performance-report.md)
-   ("Coach quality", and the pre-development Attributes on `PlayerDeveloped`).
+3. **group-g 20 and group-h 07 are both resolved.** No `ready-for-agent` ticket remains in `.scratch/`.
+   The two open tickets are `needs-triage` and wait on a human:
+   [group-e 03](../.scratch/group-e-squad-management/issues/03-attribute-filters.md) (four product
+   questions; its blocker, 02, is resolved) and
+   [squad-instructions 01](../.scratch/squad-instructions/issues/01-reconcile-the-loose-squad-instruction.md).
 4. **The knowledge-limited Player reads are all four shipped**, and **both efforts' queues are empty**
    (group-i 12/12, group-j 9/9). [group-i 12 — Transfer Target Comparison](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md)
    shipped in `eed6ce49` and had been sitting at `claimed` ever since — a stale lock over completed

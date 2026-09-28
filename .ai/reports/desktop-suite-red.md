@@ -380,3 +380,25 @@ Implemented and reviewed inline by the orchestrator: one hidden heading and one 
 
 Implemented and reviewed inline by the orchestrator. The change is a Playwright `globalSetup` and a
 `docs/e2e.md` paragraph. No spec, assertion or timeout changed.
+
+## Tickets 19 and 18 — dev went red overnight, and the two leftover shapes, 2026-09-28
+
+- Ticket closed: [19](../../.scratch/desktop-suite-red/issues/19-select-popup-has-no-listbox.md), filed this session. The shared Select was rebuilt on Autocomplete (`9fa0836b`, `66b628ec`) without a listbox, and every e2e spec that opens one timed out.
+- Ticket closed: [18](../../.scratch/desktop-suite-red/issues/18-two-unreproduced-e2e-failure-shapes.md), not reproducible
+- Commits: `186dc78e` (Select back to Base UI's Select primitive, the human's call), `4a384da3` (Club Staff specs, 600-line splits), `2683c985` (missing Manager step headings, `£` → Credits, tab focus ring), `0c1da979` (MatchSummary fixture colours), `cbf93453` (Development Centre e2e copy)
+
+`dev` at `a5dc04c5` failed **60** desktop unit tests in 30 files, plus the e2e Select timeouts. None
+of it was a flake. Each failure traced to one of the 2026-09-27/28 UI commits: a primitive swapped
+under its callers, a heading call that was never written, a currency sign, a ring class, and specs
+left describing the screen before a deliberate change. Every spec change follows a documented
+change in the code. None was loosened, and the level-1 spec got stricter for native inputs.
+
+| Gate | Command | Result |
+|---|---|---|
+| check:all | `pnpm check:all` | exit 0. Six gates green; desktop 2338 of 2338. |
+| e2e | `pnpm test:e2e` on the main tree, 02:28 | 66 passed, 1 failed: `development-centre:11` asserting copy `ddffce47` replaced; fixed in `cbf93453` and 1 of 1 on rerun |
+| e2e, fresh install | new worktree at `cbf93453`, `pnpm install --frozen-lockfile`, three consecutive `pnpm test:e2e` runs, 02:32–02:42 | 67 passed, three times |
+| Player Search stress | probe copy of `player-search-scouting:91`, `--repeat-each 20`, ten `yes` hogs on ten cores | 20 passed; band on screen before every click, `main` top constant, all events on the name button |
+| power | `pmset -g log`, `pmset -g assertions` | no sleep in any window; `caffeinate -d -i` held by `globalSetup` |
+
+Implemented and reviewed inline by the orchestrator.
