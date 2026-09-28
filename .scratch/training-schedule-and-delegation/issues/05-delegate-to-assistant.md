@@ -23,14 +23,14 @@ words it with no new table.
 
 **Blocked by:** 03
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] The Best Practice rule is a pure function in the shared rules package from days to the next Fixture, whether another Fixture follows within four days, and the squad's mean stored Condition, to one of Balanced, Match Preparation or Recovery; it never picks Heavy. A table test pins its outputs.
-- [ ] Delegate to Assistant and Take Over Schedule are registered `training`-scope Actions, shown one at a time in the bottom bar by delegation state, each carrying its `data-action-id`, and listed in the command palette.
-- [ ] The delegation flag survives reloading the career.
-- [ ] With delegation on, advancing past the club's Matchday writes the next microcycle's schedule before the next Pre-match Boundary, and exactly one News Message names the assistant, the template and the reason.
-- [ ] With delegation off, no advance writes a schedule.
-- [ ] While delegated, the session controls are disabled and the bottom bar's reason line says the assistant is planning.
-- [ ] No migration, table or CHECK change is made for the assistant; it stays a derived name.
-- [ ] `CONTEXT.md`'s Presence Staff entry lists the President, the Assistant Manager and the Physio, and says the Staff Profile and delegated training read the assistant.
-- [ ] Spec 106 §11 states that turning delegation on is the manager's standing acceptance of the assistant's schedules.
+- [x] The Best Practice rule is a pure function in the shared rules package from days to the next Fixture, whether another Fixture follows within four days, and the squad's mean stored Condition, to one of Balanced, Match Preparation or Recovery; it never picks Heavy. A table test pins its outputs.
+- [x] Delegate to Assistant and Take Over Schedule are registered `training`-scope Actions, shown one at a time in the bottom bar by delegation state, each carrying its `data-action-id`, and listed in the command palette.
+- [x] The delegation flag survives reloading the career.
+- [x] With delegation on, advancing past the club's Matchday writes the next microcycle's schedule before the next Pre-match Boundary, and exactly one News Message names the assistant, the template and the reason.
+- [x] With delegation off, no advance writes a schedule.
+- [x] While delegated, the session controls are disabled and the bottom bar's reason line says the assistant is planning.
+- [x] No migration, table or CHECK change is made for the assistant; it stays a derived name.
+- [x] `CONTEXT.md`'s Presence Staff entry lists the President, the Assistant Manager and the Physio, and says the Staff Profile and delegated training read the assistant.
+- [x] Spec 106 §11 states that turning delegation on is the manager's standing acceptance of the assistant's schedules.
