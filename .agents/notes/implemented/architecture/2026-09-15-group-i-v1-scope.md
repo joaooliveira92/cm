@@ -29,14 +29,23 @@ The eleven deferred screens and what each lacks:
 
 | Screen | Missing |
 |---|---|
-| 119 Player Search | a knowledge-limited Player read; blocked on [decision request 01](../../../../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md) |
-| 129 Transfer Target Comparison | the same knowledge-limited read, plus Group J's negotiation context |
+| 119 Player Search | a knowledge-limited Player read; blocked on [decision request 01](../../../../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md). Since shipped (ticket 11). |
+| 129 Transfer Target Comparison | the same knowledge-limited read, plus Group J's negotiation context. Since shipped (ticket 12). |
 | 120 Staff Search, 125 Staff Shortlist | staff hiring, and staff roles beyond `coach` and `scout` |
 | 122 Scouting Priorities, 123 Recruitment Focus | a priority or focus model that directs Scouts |
 | 124 Player Shortlist | a private shortlist model |
 | 127 Recruitment Meetings, 128 Squad Planner | a meeting model and a squad-plan model; both lean on Group J budgets and contracts |
 | 130 Agent and Intermediary Information | an agent model; Group J |
 | 131 Trial and Assessment | a trial model; its contract step is Group J |
+
+### Amendment 2026-09-28: Player targets
+
+121 shipped without a way to create a Player target, because no Player list outside the manager's
+club was knowledge-limited. Decision request 01 has since been answered and 119 and 129 shipped on
+the shared read, so creating a Player target is now in scope: [ticket 13](../../../../.scratch/group-i-scouting-and-recruitment/issues/13-scout-player-from-the-player-profile.md)
+adds Scout Player to the Player Profile over the existing `assignScout` command. Targets are still a
+Player or a Club, and still no table is added. 124 Player Shortlist stays deferred: it needs a new
+table, and saves have no migration path yet ([group-g ticket 32](../../../../.scratch/group-g-match-day/issues/32-saves-need-a-migration-path.md)).
 
 ## Alternatives considered
 
@@ -51,7 +60,7 @@ The eleven deferred screens and what each lacks:
 
 ## Consequences
 
-- Only 118, 121 and 126 have shipped, and none added a table. The deferred screens are listed in the
+- 118, 121 and 126 shipped as v1; 119 and 129 followed once decision request 01 was answered. None added a table. The deferred screens are listed in the
   effort map's Out of scope section.
 - The Scouting Centre is thin, with no reports feed, shortlist or recruitment focus. It reads as a
   roster-and-coverage page, not the recruitment dashboard its spec describes.
