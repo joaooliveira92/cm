@@ -23,7 +23,7 @@ words it with no new table.
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] The Best Practice rule is a pure function in the shared rules package from days to the next Fixture, whether another Fixture follows within four days, and the squad's mean stored Condition, to one of Balanced, Match Preparation or Recovery; it never picks Heavy. A table test pins its outputs.
 - [ ] Delegate to Assistant and Take Over Schedule are registered `training`-scope Actions, shown one at a time in the bottom bar by delegation state, each carrying its `data-action-id`, and listed in the command palette.
