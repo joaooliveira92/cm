@@ -20,7 +20,7 @@ schedule appends a Club-stream event naming the manager as its author.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] The shared rules package defines the session types, intensities, the five-slot schedule and the four named templates, each a pure value.
 - [ ] A new table holds one schedule per human-managed club with its slots, template name and revision; a missing row reads as Balanced.
