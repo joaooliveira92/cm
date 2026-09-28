@@ -1,6 +1,6 @@
 # 02: Delegate the training schedule to the Assistant Manager
 
-**Status:** needs-triage
+**Status:** resolved
 
 **Type:** grilling
 
@@ -74,3 +74,16 @@ automation.
 - [ ] While delegated, the slot controls are disabled, and the bottom bar says why.
 - [ ] Both verbs carry the `data-action-id` of a registered Action and appear in the palette.
 - [ ] A career that never delegates behaves exactly as under 01.
+
+## Answer
+
+Ruled by the human on 2026-09-28. The build is specified in [spec.md](../spec.md) and sliced into
+[05](05-delegate-to-assistant.md); the design sections above are superseded by the spec where they
+differ.
+
+- **Fixed rule, Presence Staff:** the assistant stays a derived name with no quality and no schema
+  change, and applies one uniform Best Practice rule. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-28-assistant-delegation-stays-a-presence-rule.md).
+- **Consent:** turning delegation on is the conscious choice spec 106 §11 asks for, and every
+  automatic write raises a News Message. See [Agent Note](../../../.agents/notes/proposed/feature/2026-09-28-turning-delegation-on-is-the-consent.md).
+- **Glossary:** `CONTEXT.md`'s Presence Staff entry gains the Assistant Manager in the same change as
+  ticket 05.

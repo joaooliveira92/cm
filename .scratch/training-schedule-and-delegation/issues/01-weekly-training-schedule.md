@@ -1,6 +1,6 @@
 # 01: A training schedule for the gap between Matchdays
 
-**Status:** needs-triage
+**Status:** resolved
 
 **Type:** grilling
 
@@ -84,3 +84,16 @@ change as the code that overturns it.
 - [ ] A heavier schedule leaves players at a lower Condition at the next kickoff than a recovery
       schedule, from the same starting state. This is tested in `packages/shared` as a pure function.
 - [ ] Every control works by keyboard alone and carries the focus ring.
+
+## Answer
+
+Ruled by the human on 2026-09-28. The build is specified in [spec.md](../spec.md) and sliced into
+[03](03-schedule-screen-and-persistence.md) and [04](04-schedule-moves-condition.md); the design
+sections above are superseded by the spec where they differ.
+
+- **Microcycle, no clock:** the schedule attaches to the interval between the club's Matchdays, and
+  the Calendar keeps jumping between events. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-28-training-schedule-attaches-to-the-microcycle.md).
+- **Condition only:** the schedule moves between-match Condition recovery, bounded inside Regimen's
+  range, and never Player Development; Training Focus's read-once rule stands. See [Agent Note](../../../.agents/notes/proposed/feature/2026-09-28-training-schedule-moves-condition-only.md).
+- **Regimen:** the schedule's modifier composes with Regimen and never replaces it. Covered by the
+  Condition-only note above.

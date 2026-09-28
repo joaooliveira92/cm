@@ -42,15 +42,22 @@ What the game models today, and why neither verb could be built as a button:
 
 ## Decisions so far
 
-None yet.
+Ruled by the human on 2026-09-28. The spec is [spec.md](spec.md); the build tickets are 03 to 05.
+
+- [01 — Training schedule](issues/01-weekly-training-schedule.md): the schedule attaches to the
+  microcycle between the club's Matchdays, with no daily or weekly clock. See [Agent Note](../../.agents/notes/proposed/architecture/2026-09-28-training-schedule-attaches-to-the-microcycle.md).
+- [01 — Training schedule](issues/01-weekly-training-schedule.md): the schedule moves between-match
+  Condition recovery only, bounded inside Regimen's range, never Player Development. See [Agent Note](../../.agents/notes/proposed/feature/2026-09-28-training-schedule-moves-condition-only.md).
+- [02 — Delegation](issues/02-delegate-schedule-to-assistant.md): the assistant stays Presence Staff
+  and applies one uniform Best Practice rule. See [Agent Note](../../.agents/notes/proposed/architecture/2026-09-28-assistant-delegation-stays-a-presence-rule.md).
+- [02 — Delegation](issues/02-delegate-schedule-to-assistant.md): turning delegation on is the
+  manager's consent under spec 106 §11, and every automatic write raises a News Message. See [Agent Note](../../.agents/notes/proposed/feature/2026-09-28-turning-delegation-on-is-the-consent.md).
 
 ## Fog
 
-- Whether a schedule changes development at all, or only Condition. Condition-only is the smaller
-  effort and leaves Training Focus's read-once rule standing.
 - Whether a Training Camp (Screen 117) is one pre-season template of the same model or its own thing.
-- Whether AI clubs get schedules. The Training Focus precedent says no: AI clubs stay on unmodified
-  Player Development.
+- Regimen does not reach between-match recovery at HEAD, although `CONTEXT.md` says it does. This is
+  a separate defect, outside this effort; the schedule's bound holds either way.
 
 ## Out of scope
 
