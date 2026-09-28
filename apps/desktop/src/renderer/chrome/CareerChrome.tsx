@@ -1,9 +1,10 @@
-import { useSyncExternalStore, type ReactNode } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import type { SaveId } from "@cm-clone/contracts";
+import { Settings } from "lucide-react";
 import { canNavigateBack, navigateBack, navigateForward } from "../navigation/adapter.js";
 import { CareerSidebar } from "../navigation/components/CareerSidebar.js";
 import { NavProvider } from "../navigation/NavProvider.js";
-import { Button } from "../components/ui/button.js";
+import { PreferencesDialog } from "../appearance/PreferencesDialog.js";
 import { SidebarProvider, SidebarTrigger } from "../components/ui/sidebar.js";
 import { FOCUS_RING } from "../focus.js";
 import { Header } from "./header/index.js";
@@ -56,9 +57,10 @@ const CareerChromeInner = ({
 }) => {
   const {
     clubName, clubColours, badgeKey, manager, newsCounts, career, outstanding, screenId,
-    report, setReport, openDestination, acknowledgeReadinessItem, onBackToSaves,
+    report, setReport, openDestination, acknowledgeReadinessItem,
   } = useCareerState();
 
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
   const identity = useSyncExternalStore(subscribeScreenIdentity, getScreenIdentity, getScreenIdentity);
 
   // Don't show outstanding items whose destination is the current screen —
@@ -110,13 +112,15 @@ const CareerChromeInner = ({
               actions={
                 <>
                   <Header.Search />
-                  <Button
-                    variant="secondary"
-                    className={`rounded-control border border-border-subtle px-3 py-1 text-text-secondary hover:text-text-primary ${FOCUS_RING.join(" ")}`}
-                    onClick={(event) => onBackToSaves(event.detail > 0 ? "pointer" : "keyboard")}
+                  <button
+                    type="button"
+                    aria-label="Preferences"
+                    title="Preferences"
+                    className={`rounded-control p-1.5 text-header-fg transition-colors hover:bg-header-fg/10 ${FOCUS_RING.join(" ")}`}
+                    onClick={() => setPreferencesOpen(true)}
                   >
-                    Back to saves
-                  </Button>
+                    <Settings aria-hidden="true" className="size-4" />
+                  </button>
                   <SaveGameAction saveId={saveId} />
                   <ContinueAction />
                 </>
@@ -167,6 +171,7 @@ const CareerChromeInner = ({
             </div>
           </div>
         </SidebarProvider>
+        {preferencesOpen && <PreferencesDialog onClose={() => setPreferencesOpen(false)} />}
       </div>
     </NavProvider>
   );

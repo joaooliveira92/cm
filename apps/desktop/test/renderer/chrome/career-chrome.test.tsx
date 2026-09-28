@@ -53,7 +53,7 @@ describe("the career chrome", () => {
     // The context strip shows the active section's items.
     expect(screen.getByRole("button", { name: "League Table" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Match Day" })).toBeTruthy();
-    // Every primary section plus Back to saves is present in the primary row.
+    // Every primary section plus Preferences is present in the primary row.
     for (const label of [
       "Squad",
       "Tactics",
@@ -61,7 +61,7 @@ describe("the career chrome", () => {
       "Recruitment",
       "Analysis",
       "Club",
-      "Back to saves",
+      "Preferences",
     ]) {
       expect(screen.getByRole("button", { name: label })).toBeTruthy();
     }

@@ -50,12 +50,12 @@ test("hash history survives a reload on the active route (AC-10)", async ({ wind
 test("the career parent owns the persistent shell across every child route (AC-11)", async ({ window: page, userDataDir }) => {
   await enterCareer(page, userDataDir);
 
-  // The shell is the primary navbar plus the persistent back-to-saves control. Both are owned by
+  // The shell is the primary navbar plus the persistent preferences control. Both are owned by
   // the career parent, so both must survive every child route without remounting.
   const primaryNav = page.getByRole("navigation", { name: "Primary navigation" });
-  const backToSaves = page.getByRole("button", { name: "Back to saves" });
+  const preferences = page.getByRole("button", { name: "Preferences" });
   await expect(primaryNav).toBeVisible();
-  await expect(backToSaves).toBeVisible();
+  await expect(preferences).toBeVisible();
 
   const routes: ReadonlyArray<{
     readonly screen: Screen;
@@ -80,7 +80,7 @@ test("the career parent owns the persistent shell across every child route (AC-1
     await route.assert();
     // Exactly one of each: a second would mean the child mounted its own shell.
     await expect(primaryNav).toHaveCount(1);
-    await expect(backToSaves).toHaveCount(1);
+    await expect(preferences).toHaveCount(1);
   }
   /* oxlint-enable no-await-in-loop */
 });
@@ -104,7 +104,7 @@ test("a well-formed-but-missing save stays on the career route with an error —
   // `p.text-red-300` class, which the design-token pass replaced; the blocking-error surfaces all
   // carry `role="alert"`, which is the contract worth holding anyway.
   await expect(page.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Back to saves" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Preferences" })).toBeVisible();
   await expect(page.getByRole("alert").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Championship Manager Clone" })).not.toBeVisible();
 });
