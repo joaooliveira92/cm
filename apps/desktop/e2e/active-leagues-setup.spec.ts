@@ -98,6 +98,6 @@ test("configures a career's active leagues and continues to the Manager step", a
 
   // 8 & 9. Continue records the selection and the flow lands on Step 2 · Manager.
   await continueButton.click();
-  await expect(page.getByPlaceholder("My Career")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByPlaceholder("Your first name")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText("Step 2 of 4 · Manager")).toBeVisible();
 });

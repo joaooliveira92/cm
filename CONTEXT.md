@@ -957,9 +957,11 @@ _Avoid_: Projection table (fine informally; "read model" is the term used across
 
 **Save**:
 One career, stored as one SQLite file and addressed by a branded `SaveId`. It is the unit the player
-creates, loads, deletes, and quits. There is exactly one human manager per Save. A Save is durable at
-commit — every Command that succeeds has already been written — so a Save is never "unsaved" and there
-is no save action for the player to invoke.
+creates, loads, deletes, saves, and quits. There is exactly one human manager per Save. A Save is
+durable at commit — every Command that succeeds has already been written — so a Save is never
+"unsaved". The player's explicit Save therefore writes no game state: it confirms the Save's name, in a
+dialog pre-filled with the current one. A new Save's name is never asked for during creation; it is
+generated at commit as `First_Last_FavoriteClub_ChosenClub_YYYYMMDD-HHmm`. There is no Save As.
 _Avoid_: Career (used loosely in routes and types like `CareerDestination`, but the noun is Save),
 game, slot
 

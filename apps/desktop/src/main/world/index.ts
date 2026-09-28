@@ -41,6 +41,7 @@ export {
   discardCareer,
   listSaves,
   loadSave,
+  saveCareer,
   type BeginCareerOptions,
   type ManagerProfileParams,
 } from "./saves.js";

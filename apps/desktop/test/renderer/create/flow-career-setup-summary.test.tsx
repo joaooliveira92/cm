@@ -286,7 +286,7 @@ describe("Step 4 — Review is the Career Setup Summary", () => {
     expect(figure("Staff")).toBe("Appointed when the career is created");
 
     // The configuration the flow collected is still there, and still its own answer.
-    expect(figure("Save name")).toBe("Test Career");
+    expect(figure("Manager")).toBe("Test Manager");
     expect(figure("Club")).toBe("Castlemere United");
 
     // The read is against the world that was built, not against a name or a snapshot.
@@ -325,11 +325,16 @@ describe("Step 4 — Review is the Career Setup Summary", () => {
     expect(screen.queryByText("Clubs:")).toBeNull();
 
     // The configuration still renders, and the commit is not blocked by the failed read.
-    expect(figure("Save name")).toBe("Test Career");
+    expect(figure("Manager")).toBe("Test Manager");
     expect(figure("Club")).toBe("Castlemere United");
 
     fireEvent.click(screen.getByRole("button", { name: "Create Career" }));
     await waitFor(() => expect(methodsCalled("commitCareer")).toHaveLength(1));
+    // The save name was never asked for: it is composed at commit from the manager's names, the
+    // chosen club (no favorite team was picked), and the moment of the commit.
+    expect((methodsCalled("commitCareer")[0]!.payload as { name: string }).name).toMatch(
+      /^Test_Manager_Castlemere-United_\d{8}-\d{4}$/,
+    );
   });
 
   it("offers no way to edit the world, and stepping back regenerates nothing", async () => {

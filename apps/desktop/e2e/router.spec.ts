@@ -30,7 +30,7 @@ const advanceThroughLeagues = async (page: Page) => {
   const button = page.getByRole("button", { name: /^Continue/ });
   await expect(button).toBeEnabled({ timeout: 30_000 });
   await button.click();
-  await expect(page.getByPlaceholder("My Career")).toBeVisible();
+  await expect(page.getByPlaceholder("Your first name")).toBeVisible();
 };
 
 test("hash history survives a reload on the active route (AC-10)", async ({ window: page, userDataDir }) => {
@@ -114,7 +114,7 @@ test("creation keeps beginCareer before Club Selection and returning discards it
   await expect(page.getByRole("heading", { name: "New Career" })).toBeVisible();
 
   await advanceThroughLeagues(page);
-  await fillPersonalDetails(page, "Keyboard Career");
+  await fillPersonalDetails(page);
   await completeManagerStep(page);
   await page.getByRole("button", { name: "Next: Select Club" }).click();
 
@@ -135,7 +135,7 @@ test("creation keeps beginCareer before Club Selection and returning discards it
 test("reloading mid-creation redirects to step 1 (AC-13)", async ({ window: page }) => {
   await page.getByRole("button", { name: "Start New Career" }).click();
   await advanceThroughLeagues(page);
-  await fillPersonalDetails(page, "Reload Career");
+  await fillPersonalDetails(page);
   await completeManagerStep(page);
   await page.getByRole("button", { name: "Next: Select Club" }).click();
   await expect(page.getByRole("table", { name: "Clubs" })).toBeVisible();
@@ -154,7 +154,7 @@ test("the flow never advances past the club decision (AC-13)", async ({ window: 
   // (`test/create-flow-club-selection.test.tsx`).
   await page.getByRole("button", { name: "Start New Career" }).click();
   await advanceThroughLeagues(page);
-  await fillPersonalDetails(page, "Gated Career");
+  await fillPersonalDetails(page);
   await completeManagerStep(page);
   await page.getByRole("button", { name: "Next: Select Club" }).click();
   await expect(page.getByRole("table", { name: "Clubs" })).toBeVisible();

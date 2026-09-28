@@ -90,7 +90,6 @@ export const ReviewPane = ({
       <h2 className="text-lg font-semibold">Review Career</h2>
 
       <dl className="mt-4 space-y-2 text-sm">
-        <Row label="Save name" value={session.saveName} />
         <Row label="Manager" value={`${session.firstName} ${session.lastName}`.trim()} />
         <Row label="Nationality" value={session.nationalityId === null ? "Not selected" : nationName(session.nationalityId)} />
         <Row label="Date of birth" value={session.dateOfBirth || "Not selected"} />

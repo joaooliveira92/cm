@@ -1,5 +1,5 @@
 import type { SchemaIssue } from "effect";
-import type { AppRpcMethod, RpcFailure } from "@cm-clone/contracts";
+import { SAVE_NAME_MAX_LENGTH, type AppRpcMethod, type RpcFailure } from "@cm-clone/contracts";
 import { AsyncResult } from "effect/unstable/reactivity";
 import { Option } from "effect";
 
@@ -68,6 +68,8 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
           return error.error.cause === "retired"
             ? "You have retired — this save is archived."
             : "You have been sacked — this save is archived.";
+        case "InvalidSaveNameError":
+          return `Enter a save name of up to ${SAVE_NAME_MAX_LENGTH} characters.`;
         case "PlayerNotFoundError":
           return "That player could not be found.";
         // A save whose `manager_profile` row is missing: nothing the player can act on beyond

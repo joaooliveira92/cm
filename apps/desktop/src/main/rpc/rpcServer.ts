@@ -27,7 +27,7 @@ import { commitMatchday } from "../season/commitMatchday.js";
 import { getManagerProfile, getManagerProfileScreen } from "../career/managerProfile.js";
 import { getNewsInbox, setNewsMessageState } from "../career/news.js";
 import { advanceCalendar, getCompetitionFixtures, getCompetitionTable, getFixtures, getLeagueTable, getSeasonSummary, retireManager } from "../season/index.js";
-import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave } from "../world/saves.js";
+import { beginCareer, commitCareer, createSave, discardCareer, listSaves, loadSave, saveCareer } from "../world/saves.js";
 import { browseHandlers } from "./browseHandlers.js";
 import { getSquad } from "../club/squad.js";
 import { changeTactics, getTactics } from "../club/tactics.js";
@@ -225,6 +225,8 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
       const { id } = yield* Schema.decodeUnknownEffect(AppRpcs.loadSave.payload)(payload);
       return yield* loadSave(ctx.savesDir, id);
     }),
+  saveCareer: (payload, ctx) => Schema.decodeUnknownEffect(AppRpcs.saveCareer.payload)(payload)
+    .pipe(Effect.flatMap(({ saveId, name }) => saveCareer(ctx.savesDir, saveId, name))),
   getSquad: (payload, ctx) =>
     Effect.gen(function* () {
       const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getSquad.payload)(payload);

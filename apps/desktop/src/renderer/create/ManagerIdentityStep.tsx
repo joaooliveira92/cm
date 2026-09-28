@@ -33,7 +33,6 @@ export const ManagerIdentityStep = () => {
   const { session, update, setManagerStep, selectFavoriteTeam } = useCreateSessionApi();
   const [direction, setDirection] = useState(1);
   const {
-    saveName,
     firstName,
     lastName,
     nationalityId,
@@ -93,37 +92,11 @@ export const ManagerIdentityStep = () => {
                     Personal details
                   </h2>
                   <p className="mt-2 text-sm text-text-secondary">
-                    Give your career a name and introduce the manager who will lead it.
+                    Introduce the manager who will lead this career.
                   </p>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
-                  <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.08 }}
-                    className="md:col-span-2"
-                  >
-                    <Label className="block" htmlFor="saveName">
-                      Save name
-                    </Label>
-                    <Input
-                      id="saveName"
-                      type="text"
-                      className="mt-2"
-                      value={saveName}
-                      onChange={(event) =>
-                        update({ saveName: event.currentTarget.value })
-                      }
-                      placeholder="My Career"
-                      autoComplete="off"
-                      autoFocus
-                    />
-                    <p className="mt-2 text-xs text-text-muted">
-                      This is how the career will appear in your saves.
-                    </p>
-                  </motion.div>
-
                   <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -142,6 +115,7 @@ export const ManagerIdentityStep = () => {
                       }
                       placeholder="Your first name"
                       autoComplete="given-name"
+                      autoFocus
                     />
                   </motion.div>
 

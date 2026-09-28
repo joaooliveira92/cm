@@ -9,7 +9,6 @@ import { ManagerIdentityStep } from "../../../src/renderer/create/ManagerIdentit
 
 const BASE_SESSION: CreationSession = {
   leagueSelection: null,
-  saveName: "My Career",
   firstName: "Test",
   lastName: "Manager",
   nationalityId: NationId.make("nation_eng"),

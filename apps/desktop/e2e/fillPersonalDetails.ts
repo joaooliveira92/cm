@@ -6,11 +6,7 @@ import type { Page } from "@playwright/test";
  * rather than a moving one. The favorite team is left blank — it is optional, and leaving it blank
  * keeps this helper independent of world generation.
  */
-export const fillPersonalDetails = async (page: Page, saveName?: string): Promise<void> => {
-  if (saveName !== undefined) {
-    await page.getByPlaceholder("My Career").fill(saveName);
-  }
-
+export const fillPersonalDetails = async (page: Page): Promise<void> => {
   await page.getByPlaceholder("Your first name").fill("Test");
   await page.getByPlaceholder("Your last name").fill("Manager");
 

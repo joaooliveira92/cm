@@ -61,6 +61,8 @@ export const INVALIDATION_RULES = {
    * answer), so it invalidates the save-wide key and nothing narrower. */
   retireManager: (saveId: SaveId): ReadonlyArray<unknown> => [saveKey(saveId)],
   commitCareer: (_saveId: SaveId): ReadonlyArray<unknown> => [],
+  /** Saving writes only the save's name, which the save summary read (`["save", saveId]`) carries. */
+  saveCareer: (saveId: SaveId): ReadonlyArray<unknown> => [saveKey(saveId)],
   /** Read/flagged/archived is inbox-local user state: it changes no simulation state, so it
    * invalidates the inbox key and nothing wider. */
   setNewsMessageState: (saveId: SaveId): ReadonlyArray<unknown> => [newsKey(saveId)],
@@ -110,6 +112,10 @@ export const retireManagerEffect = (saveId: SaveId): MutationEffect<"retireManag
   call("retireManager", { saveId }).pipe(
     Reactivity.mutation(INVALIDATION_RULES.retireManager(saveId)),
   );
+
+/** `saveCareer` — after success only, invalidates `["save", saveId]`. */
+export const saveCareerEffect = (input: RpcPayload<"saveCareer">): MutationEffect<"saveCareer"> =>
+  call("saveCareer", input).pipe(Reactivity.mutation(INVALIDATION_RULES.saveCareer(input.saveId)));
 
 /** `setNewsMessageState` — invalidates `["news", saveId]` only. */
 export const setNewsMessageStateEffect = (
@@ -226,6 +232,11 @@ export const commitMatchdayMutation = rpcRuntime.fn((input: RpcPayload<"commitMa
 /** `retireManager` — mutation atom. */
 export const retireManagerMutation = rpcRuntime.fn((input: RpcPayload<"retireManager">) =>
   retireManagerEffect(input.saveId),
+);
+
+/** `saveCareer` — mutation atom. */
+export const saveCareerMutation = rpcRuntime.fn((input: RpcPayload<"saveCareer">) =>
+  saveCareerEffect(input),
 );
 
 /** `setNewsMessageState` — mutation atom. */

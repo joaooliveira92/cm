@@ -391,6 +391,6 @@ describe("Step 3 — the club step collects the decision it exists to collect", 
     // The provisional world is not left behind, and the flow recovers to a step the player can
     // act from rather than a dead end.
     await waitFor(() => expect(methodsCalled("discardCareer")).toHaveLength(1));
-    expect(screen.getByPlaceholderText("My Career")).toBeTruthy();
+    expect(screen.getByPlaceholderText("Your first name")).toBeTruthy();
   });
 });

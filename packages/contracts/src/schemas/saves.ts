@@ -34,6 +34,19 @@ export class SaveNotFoundError extends Schema.TaggedError<SaveNotFoundError>()(
   },
 ) {}
 
+/** Raised by `saveCareer` for a name that is blank or longer than `SAVE_NAME_MAX_LENGTH` once
+ *  trimmed. The Save dialog refuses both before sending, so this is the trusted layer's copy of the
+ *  same rule rather than a message the player normally sees. */
+export class InvalidSaveNameError extends Schema.TaggedError<InvalidSaveNameError>()(
+  "InvalidSaveNameError",
+  {
+    name: Schema.String,
+  },
+) {}
+
+/** The longest save name `saveCareer` accepts, after trimming. */
+export const SAVE_NAME_MAX_LENGTH = 120;
+
 /** Raised by `loadSave` for a save made under another save schema. Saves are disposable during
  *  development (Agent Note `2026-09-21-saves-are-disposable-during-development.md`): nothing upgrades an older file, so opening one is refused here rather
  *  than failing later at the first read of a table or column it lacks. */

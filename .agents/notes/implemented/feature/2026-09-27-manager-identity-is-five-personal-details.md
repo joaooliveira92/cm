@@ -2,6 +2,10 @@
 
 Status: implemented
 
+> **Superseded in part, 2026-09-27**, by [Save is a named confirmation](2026-09-27-save-is-a-named-confirmation.md). The panel no longer
+> asks for a save name, and `personalDetailsComplete` no longer requires one: the name is generated at
+> commit from the manager's names, the favorite and chosen clubs, and a timestamp.
+
 ## Problem
 
 The Manager step's personal-details panel collected two strings: a save name and an optional

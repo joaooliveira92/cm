@@ -281,8 +281,8 @@ describe("§21 — leaving a built world is confirmed, not assumed", () => {
     // And the flow still carries what it collected, all the way to the summary.
     fireEvent.click(screen.getByRole("button", { name: "Next: Review" }));
     const summary = (await screen.findByRole("heading", { name: "Review Career" })).parentElement!;
-    expect(within(summary).getByText("Save name:").parentElement?.textContent).toContain(
-      "Test Career",
+    expect(within(summary).getByText("Manager:").parentElement?.textContent).toContain(
+      "Test Manager",
     );
     expect(within(summary).getByText("Club:").parentElement?.textContent).toContain(
       "Castlemere United",

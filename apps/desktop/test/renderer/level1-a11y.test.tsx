@@ -298,7 +298,6 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
     const api: CreateSessionApi = {
       session: {
         leagueSelection: null,
-        saveName: "",
         firstName: "",
         lastName: "",
         nationalityId: null,
@@ -334,7 +333,7 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
     // control a player reaches, so it is not part of the tab-order contract.
     const controls = [...document.querySelectorAll('input:not([aria-hidden="true"]), button')];
     expect(controls.length).toBeGreaterThan(0);
-    expect(controls[0]!.getAttribute("placeholder")).toBe("My Career");
+    expect(controls[0]!.getAttribute("placeholder")).toBe("Your first name");
     for (const control of controls) {
       expect(control.className).toContain("focus-visible:ring-2");
       // Base UI puts an explicit `tabindex="0"` on its own triggers (the vendored Select's

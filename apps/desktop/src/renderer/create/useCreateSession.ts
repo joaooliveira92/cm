@@ -39,6 +39,7 @@ import { DEFAULT_AVATAR } from "./managerStyleCopy.js";
 import { managerStyleComplete } from "./managerStyle.js";
 import { personalDetailsComplete } from "./personalDetails.js";
 import { setProvisionalCareer } from "./provisionalCareer.js";
+import { suggestedSaveName } from "./suggestedSaveName.js";
 import type { CreateSessionApi, CreationSession, ManagerSubStep } from "../router/createSessionContext.js";
 
 const DEFAULT_PILLARS: PillarDistribution = {
@@ -50,7 +51,6 @@ const DEFAULT_PILLARS: PillarDistribution = {
 
 const createEmptySession = (): CreationSession => ({
   leagueSelection: null,
-  saveName: "",
   firstName: "",
   lastName: "",
   nationalityId: null,
@@ -337,7 +337,6 @@ export const useCreateSession = (): CreateFlowSession => {
   const handleCommitCareer = useCallback(async (): Promise<void> => {
     const currentSession = sessionRef.current;
     const provisionalId = provisionalIdOf(currentSession.generation);
-    const saveName = currentSession.saveName.trim();
     const firstName = currentSession.firstName.trim();
     const lastName = currentSession.lastName.trim();
     const nationalityId = currentSession.nationalityId;
@@ -368,6 +367,16 @@ export const useCreateSession = (): CreateFlowSession => {
     update({
       commit: "committing",
       error: null,
+    });
+
+    // The player never names the save during creation: the name is composed here, once the chosen
+    // club is known, and the Save dialog offers it for editing later.
+    const saveName = suggestedSaveName({
+      firstName,
+      lastName,
+      favoriteClub: selectedFavoriteTeamOf(currentSession)?.clubName ?? null,
+      teamChosen: selectedClub.clubName,
+      timestamp: new Date(),
     });
 
     const outcome = await runAtEdge(

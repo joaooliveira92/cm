@@ -72,6 +72,7 @@ export {
   respondAsBidderMutation,
   renewContractMutation,
   retireManagerMutation,
+  saveCareerMutation,
   setNewsMessageStateMutation,
   setTrainingFocusMutation,
   startMatchMutation,

@@ -86,6 +86,7 @@ import {
   RoleSchema,
   ResumeSimulationView,
   SubmitMatchCommandView,
+  InvalidSaveNameError,
   SaveArchivedError,
   SaveId,
   SaveNotFoundError,
@@ -232,6 +233,13 @@ commitCareer: {
     payload: Schema.Struct({ id: SaveId }),
     success: SaveSummary,
     error: Schema.Union([SaveNotFoundError, SaveSchemaMismatchError]),
+  },
+  /** The player's explicit Save: records the name they confirmed in the Save dialog (pre-filled with
+   *  the name generated at commit). Game state is already durable, so the name is all it writes. */
+  saveCareer: {
+    payload: Schema.Struct({ saveId: SaveId, name: Schema.String }),
+    success: SaveSummary,
+    error: Schema.Union([SaveNotFoundError, InvalidSaveNameError]),
   },
   getSquad: {
     payload: Schema.Struct({ saveId: SaveId }),

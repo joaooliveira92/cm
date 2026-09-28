@@ -14,6 +14,7 @@ import { clubHeaderStyle } from "./header/club-scheme.js";
 import { NO_DRAG } from "./header/drag-region.js";
 import { CareerStateProvider, useCareerState, continueUnavailableReason } from "./CareerStateProvider.js";
 import { ContinueAction } from "./ContinueAction.js";
+import { SaveGameAction } from "./SaveGameAction.js";
 import { ContinueOutstandingBand } from "./ContinueOutstanding.js";
 import { ContinueResultBand } from "./ContinueResult.js";
 import {
@@ -146,6 +147,7 @@ const CareerChromeInner = ({
                 <span className="flex items-center gap-2">
                   <ScreenToolbarSlot />
                   <HeaderActionsMenu />
+                  <SaveGameAction saveId={saveId} />
                 </span>
                 <div className="flex-1" />
               </div>

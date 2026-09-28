@@ -19,7 +19,6 @@ export interface CreationSession {
    *  Selection is submitted, which is also the gate on world generation: nothing is generated
    *  before the user has said how large the world should be. */
   readonly leagueSelection: LeagueSelectionSnapshot | null;
-  readonly saveName: string;
   /** The manager's personal details, collected in the Manager step's first sub-panel. The display
    *  name is derived as `${firstName} ${lastName}`; nothing stores it as one field. */
   readonly firstName: string;

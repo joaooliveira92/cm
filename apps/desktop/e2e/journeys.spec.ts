@@ -48,7 +48,7 @@ test("a career is created end to end at the club the player picked", async ({ wi
   await expect(continueLeagues).toBeEnabled({ timeout: 30_000 });
   await continueLeagues.click();
 
-  await fillPersonalDetails(page, "Journey Career");
+  await fillPersonalDetails(page);
   await completeManagerStep(page);
   await page.getByRole("button", { name: "Next: Select Club" }).click();
 

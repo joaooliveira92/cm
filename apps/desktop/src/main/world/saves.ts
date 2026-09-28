@@ -5,9 +5,11 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   ClubNotFoundError,
   InvalidPillarDistributionError,
+  InvalidSaveNameError,
   NationId,
   NationSelectionIntentPayload,
   PresetFingerprintMismatchError,
+  SAVE_NAME_MAX_LENGTH,
   SaveId,
   SaveNotFoundError,
   SaveSchemaMismatchError,
@@ -431,5 +433,28 @@ export const loadSave = (savesDir: string, id: SaveId) =>
       }
       yield* reportPackCoverage;
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped);
+    return yield* readSaveSummaryOrDie(filename);
+  });
+
+/**
+ * `saveCareer` — the player's explicit Save. Every Command is already durable at commit, so there is
+ * no game state to flush: what the player confirms in the Save dialog is the save's name, and that
+ * is the one thing written. The name is trimmed and must be 1–`SAVE_NAME_MAX_LENGTH` characters.
+ */
+export const saveCareer = (savesDir: string, id: SaveId, name: string) =>
+  Effect.gen(function* () {
+    const trimmed = name.trim();
+    if (trimmed.length === 0 || trimmed.length > SAVE_NAME_MAX_LENGTH) {
+      return yield* new InvalidSaveNameError({ name });
+    }
+    const entries = yield* Effect.promise(() => readdir(savesDir));
+    if (!entries.includes(`${id}.sqlite`)) {
+      return yield* new SaveNotFoundError({ id });
+    }
+    const filename = dbPath(savesDir, id);
+    yield* Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      yield* sql`UPDATE save_meta SET name = ${trimmed} WHERE id = ${id}`;
+    }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped);
     return yield* readSaveSummaryOrDie(filename);
   });

@@ -27,7 +27,9 @@ const describeDiscard = (session: CreationSession): string => {
       : "The world that was built";
   const club = selectedClubOf(session);
   const kept = [
-    session.saveName.trim().length > 0 ? "your career details" : null,
+    session.firstName.trim().length > 0 || session.lastName.trim().length > 0
+      ? "your career details"
+      : null,
     club === null ? null : `your pick of ${club.clubName}`,
   ].filter((part): part is string => part !== null);
 

@@ -2,6 +2,11 @@
 
 Status: proposed
 
+> **Superseded in part, 2026-09-27**, by [Save is a named confirmation](../../implemented/feature/2026-09-27-save-is-a-named-confirmation.md). Point 4 below no
+> longer holds: the career toolbar has a **Save** button. It writes no game state (everything else in
+> this note stands), only the save's name, which the player confirms in a dialog. There is still no
+> Save & Quit, no Quit Without Saving, and no Ctrl+S.
+
 ## Problem
 
 The imported spec for Screen 21 (Quit Game Confirmation) defines a full `UnsavedCareerState` model — revision tracking, pending local/network/cloud transactions, save-vs-discard branching, and a multi-step disposal pipeline — that assumes the application maintains a distinction between "saved" and "unsaved" state. The question is whether that distinction exists in a single-writer, event-sourced, local-SQLite architecture.
