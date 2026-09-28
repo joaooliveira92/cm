@@ -16,8 +16,8 @@ import { describeRpcError, saveCareerMutation, useAtomSet, type RpcClientError }
 import { useCareerState } from "./CareerStateProvider.js";
 
 /**
- * The player's explicit Save: a toolbar button that opens a dialog pre-filled with the save's name.
- * A new career's name is the one generated at commit (`suggestedSaveName`), which the player sees
+ * The player's explicit Save: a header button, left of Continue, that opens a dialog pre-filled
+ * with the save's name. A new career's name is the one generated at commit (`suggestedSaveName`), which the player sees
  * here for the first time and may keep, edit, or replace before confirming.
  */
 export const SaveGameAction = ({ saveId }: { readonly saveId: SaveId }) => {
@@ -61,7 +61,7 @@ export const SaveGameAction = ({ saveId }: { readonly saveId: SaveId }) => {
       <button
         type="button"
         onClick={openDialog}
-        className={`flex items-center gap-1.5 whitespace-nowrap rounded-control px-3 py-1 text-sm text-text-secondary transition-colors hover:bg-surface-raised hover:text-text-primary ${FOCUS_RING.join(" ")}`}
+        className={`flex items-center gap-1.5 whitespace-nowrap rounded-control px-3 py-1 text-sm text-header-fg transition-colors hover:bg-header-fg/10 ${FOCUS_RING.join(" ")}`}
       >
         <Save aria-hidden="true" className="size-4" />
         <span>Save</span>

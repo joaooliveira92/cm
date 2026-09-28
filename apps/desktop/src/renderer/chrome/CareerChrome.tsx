@@ -117,6 +117,7 @@ const CareerChromeInner = ({
                   >
                     Back to saves
                   </Button>
+                  <SaveGameAction saveId={saveId} />
                   <ContinueAction />
                 </>
               }
@@ -147,7 +148,6 @@ const CareerChromeInner = ({
                 <span className="flex items-center gap-2">
                   <ScreenToolbarSlot />
                   <HeaderActionsMenu />
-                  <SaveGameAction saveId={saveId} />
                 </span>
                 <div className="flex-1" />
               </div>
