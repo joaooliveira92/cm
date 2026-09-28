@@ -27,7 +27,8 @@ test("the Player Development Centre lists the squad with Training Focus and deve
   const playerName = await firstRow.getAttribute("aria-label");
   expect(playerName).not.toBeNull();
   await expect(firstRow.getByText("Training Focus: None")).toBeVisible();
-  await expect(firstRow.getByText(/^No comparison yet: Season \d+ is the first recorded at your club\.$/)).toBeVisible();
+  // The seed's first Season carries a baseline, so it reads as growth within that Season (ddffce47).
+  await expect(firstRow.getByText(/^Season \d+: .+ from the Season's starting point\.$/)).toBeVisible();
 
   await firstRow.getByRole("button", { name: `${playerName} development`, exact: true }).click();
   await expect(page.getByRole("heading", { name: `${playerName} — Development`, level: 1 })).toBeVisible();
