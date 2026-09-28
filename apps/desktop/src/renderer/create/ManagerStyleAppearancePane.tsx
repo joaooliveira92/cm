@@ -11,6 +11,7 @@ import { Label } from "../components/ui/label.js";
 import { FOCUS_RING } from "../focus.js";
 import { cn } from "../lib/utils.js";
 import { AVATAR_PALETTE, STYLE_LABELS, styleAxisSummary } from "./managerStyleCopy.js";
+import { StepHeading } from "./StepHeading.js";
 
 export interface ManagerStyleAppearancePaneProps {
   readonly preferredFormation: Formation | null;
@@ -41,15 +42,7 @@ export const ManagerStyleAppearancePane = ({
   onAvatarChange,
 }: ManagerStyleAppearancePaneProps) => (
   <>
-    <div>
-      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-        Step 3
-      </span>
-      <h2 className="mt-2 text-2xl font-bold text-text-primary">Style & Appearance</h2>
-      <p className="mt-2 text-sm text-text-secondary">
-        Set the tactical identity your first formation starts from, and how you appear.
-      </p>
-    </div>
+
 
     <div className="rounded-panel border border-panel-border bg-card p-6 shadow-panel">
       <div className="grid gap-6 md:grid-cols-2">

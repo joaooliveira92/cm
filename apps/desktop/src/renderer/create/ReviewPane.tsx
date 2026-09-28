@@ -9,6 +9,7 @@ import { selectedFavoriteTeamOf } from "./favoriteTeam.js";
 import { STYLE_LABELS } from "./managerStyleCopy.js";
 import { describeCompetitions, describeStaff } from "./careerSetupSummary.js";
 import { provisionalIdOf } from "./generation.js";
+import { StepHeading } from "./StepHeading.js";
 
 type SummaryState =
   | { readonly _tag: "Loading" }
@@ -80,11 +81,9 @@ export const ReviewPane = ({
 
   return (
     <div className="text-text-body">
-      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Step 4</span>
-      <h2 className="mt-2 text-2xl font-bold text-text-primary">Review Career</h2>
-      <p className="mt-2 text-sm text-text-secondary">
+      <StepHeading title="Review Career">
         Confirm everything the flow has collected before your career begins.
-      </p>
+      </StepHeading>
 
       <div className="mt-6 rounded-panel border border-panel-border bg-card p-6 shadow-panel">
         <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-text-secondary">

@@ -9,6 +9,7 @@ import { FavoriteTeamField } from "./FavoriteTeamField.js";
 import { NationalityField } from "./NationalityField.js";
 import { ManagerPillarsPane } from "./ManagerPillarsPane.js";
 import { ManagerStyleAppearancePane } from "./ManagerStyleAppearancePane.js";
+import { StepHeading } from "./StepHeading.js";
 import { panelVariants, sumPillars, type FormStep } from "./managerIdentityCopy.js";
 import { selectedFavoriteTeamOf } from "./favoriteTeam.js";
 import { provisionalIdOf } from "./generation.js";
@@ -69,17 +70,6 @@ export const ManagerIdentityStep = () => {
               className="rounded-panel border border-panel-border bg-card p-6 shadow-panel"
             >
               <div>
-                <div className="mb-7">
-                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                    Step 1
-                  </span>
-                  <h2 className="mt-2 text-2xl font-bold text-text-primary">
-                    Personal details
-                  </h2>
-                  <p className="mt-2 text-sm text-text-secondary">
-                    Introduce the manager who will lead this career.
-                  </p>
-                </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
                   <motion.div

@@ -9,6 +9,7 @@ import {
   PILLAR_WARNINGS,
 } from "./managerIdentityCopy.js";
 import { PillarDistribution } from "./PillarDistribution.js";
+import { StepHeading } from "./StepHeading.js";
 
 export interface ManagerPillarsPaneProps {
   pillars: PillarDistType;
@@ -34,17 +35,7 @@ export const ManagerPillarsPane = ({
 
   return (
     <>
-      <div>
-        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-          Step 2
-        </span>
-        <h2 className="mt-2 text-2xl font-bold text-text-primary">
-          Manager identity
-        </h2>
-        <p className="mt-2 text-sm text-text-secondary">
-          Allocate the strengths that define your managerial career.
-        </p>
-      </div>
+
 
       <PillarDistribution.Root
         pillars={pillars}
