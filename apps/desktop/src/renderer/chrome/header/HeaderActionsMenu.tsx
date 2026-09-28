@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { ACTION_REGISTRY } from "../../actions/allActions.js";
 import { dispatchAction } from "../../actions/dispatch.js";
-import { getScopeState } from "../../actions/scopeState.js";
+import { isInsideCareer } from "../../actions/registry.js";
+import { getScopeState, subscribeScopeState } from "../../actions/scopeState.js";
 import type { Action } from "../../actions/types.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover.js";
 import { FOCUS_RING } from "../../focus.js";
@@ -48,10 +49,13 @@ export const HeaderActionsMenu = () => {
   const { screenId } = useCareerState();
   const [open, setOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<Action | null>(null);
+  const liveScopeState = useSyncExternalStore(subscribeScopeState, getScopeState, getScopeState);
 
   if (screenId === null) return null;
 
-  const scopeState = getScopeState();
+  // The store's own `ready` never turns true: the keyboard spine derives it from the screen being a
+  // career screen, and the menu must read it the same way or every `ready`-gated action disappears.
+  const scopeState = { ...liveScopeState, ready: isInsideCareer(screenId) };
   const activeActions = ACTION_REGISTRY.active(screenId, scopeState)
     .filter((action) => action.scope !== "app-global")
     .filter((action) => action.scope !== "career-global")
