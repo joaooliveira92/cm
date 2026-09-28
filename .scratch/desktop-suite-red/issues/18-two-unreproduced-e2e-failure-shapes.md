@@ -3,7 +3,7 @@
 Type: bug
 Status: needs-info
 
-**Blocked by:** none. This waits on a reproduction, not on another ticket.
+**Blocked by:** 19. A reproduction attempt means nothing while the suite fails deterministically.
 
 Split from [17](17-desktop-e2e-fails-random-specs-in-full-runs.md) on 2026-09-27. Ticket 17 named its
 main cause: the Mac going into idle system sleep partway through a run. The fix, `e2e/globalSetup.ts`
@@ -58,3 +58,20 @@ Run it under `--repeat-each` and under load.
 - [ ] Either shape reproduces with the evidence above captured, and its cause is named and fixed
 - [ ] Or it is closed as not reproducible after a stated number of green full runs
 - [ ] No test is loosened, skipped, retried into green, or given a larger timeout to absorb it
+
+## Comments
+
+**2026-09-28, shape 2 under full load: 20 of 20 green.** The probe above (capture-phase pointer
+events, `hashchange`/`popstate`, the band's presence and `main`'s top edge) ran as
+`--repeat-each 20` with ten `yes` hogs on a 10-core machine. In every repetition the Outstanding band
+was **already on screen before the search** (`band=true` at install), `main`'s top held at 127px
+throughout, and `mousedown`, `mouseup` and `click` all landed on the name button at the same point.
+That weakens the leading hypothesis: for the band to shift the page mid-click, the Tactics read
+would have to land after the whole search had rendered, and `tacticsAtom` only refetches when the
+save or the Tactic is invalidated.
+
+**Shape 1 could not be tested.** A fresh worktree at `a5dc04c5` with `pnpm install
+--frozen-lockfile` failed five of its first 28 specs, none at ~850ms. All five are the deterministic
+Select regression filed as [19](19-select-popup-has-no-listbox.md). `caffeinate` was holding and
+`pmset -g log` shows no sleep in the window. The attempt was stopped, and it should be repeated once
+19 is resolved and the suite is green.
