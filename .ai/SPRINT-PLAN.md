@@ -259,8 +259,8 @@ delegation. Agent-startable work, in order:
    [02](../.scratch/squad-instructions/issues/02-contract-view.md) (Contract view, which widens
    `SquadPlayerView`), [03](../.scratch/squad-instructions/issues/03-match-day-column-in-the-table.md)
    (match-day column in the table), and [04](../.scratch/squad-instructions/issues/04-sort-control-for-the-position-list.md)
-   (Sort for the position list, blocked by 02). All four are `ready-for-agent`. One open question is
-   parked in the squad-instructions map: should an empty lineup slot filter the roster?
+   (Sort for the position list, blocked by 02), and [05](../.scratch/squad-instructions/issues/05-empty-slot-prioritises-fitting-players.md)
+   (an empty lineup slot brings the players who fit it to the top). All five are `ready-for-agent`.
 4. **The knowledge-limited Player reads are all four shipped**, and **both efforts' queues are empty**
    (group-i 12/12, group-j 9/9). [group-i 12 — Transfer Target Comparison](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md)
    shipped in `eed6ce49` and had been sitting at `claimed` ever since — a stale lock over completed

@@ -107,6 +107,7 @@ Only the rows marked **build** become tickets.
 | §20 accessibility, §22 quality | **standing** | Already the repo's level-1 contract. |
 | Screen 71 attribute filter | **group-e** | Ruled in [group-e 03](../../group-e-squad-management/issues/03-attribute-filters.md), built as group-e 04. |
 
-**Open question, not ticketed.** Should selecting an empty lineup slot filter the roster to players
-who can fill it (§11.2)? It would change `MatchDayBar`'s keyboard carry, where Enter picks a slot
-up, so it needs a design decision rather than a build ticket.
+**Open question, answered by the human 2026-09-28.** Should selecting an empty lineup slot filter the
+roster to players who can fill it (§11.2)? Yes, but additively: it reorders and marks the players
+rather than hiding any, and it leaves the keyboard carry alone. Ticketed as
+[05](05-empty-slot-prioritises-fitting-players.md).
