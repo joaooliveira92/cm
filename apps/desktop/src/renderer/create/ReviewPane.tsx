@@ -10,38 +10,18 @@ import { STYLE_LABELS } from "./managerStyleCopy.js";
 import { describeCompetitions, describeStaff } from "./careerSetupSummary.js";
 import { provisionalIdOf } from "./generation.js";
 
-/**
- * What the Review step knows about the generated world. The summary is a read of a world that
- * already exists, so there is nothing to retry into and no failure that should reach the commit —
- * `Unavailable` is a rendered line, not a blocked career.
- */
 type SummaryState =
   | { readonly _tag: "Loading" }
   | { readonly _tag: "Ready"; readonly view: CareerSetupSummaryView }
   | { readonly _tag: "Unavailable" };
 
-/** One labelled figure. The whole panel is a description list, so every value is announced with
- *  the term it belongs to rather than as a loose number beside some text. */
 const Row = ({ label, value }: { readonly label: string; readonly value: string }) => (
-  <div className="flex gap-4">
+  <div className="flex items-center justify-between gap-4 py-1.5">
     <dt className="text-text-muted">{label}:</dt>
-    <dd>{value}</dd>
+    <dd className="text-text-primary font-medium">{value}</dd>
   </div>
 );
 
-/**
- * Step 4 — the read-only summary of everything the flow has collected, and of the world those
- * choices produced.
- *
- * §22's Career Setup Summary. The configuration half is the session the player typed; the world
- * half is counted off the provisional save through `getCareerSetupSummary`, which is why the
- * league-scope line (an estimate made before generation) and the competition line (the world on
- * disk) are deliberately not the same number restated.
- *
- * Strictly read-only, in the sense §22 means: the foundations cannot be edited here, and a player
- * who wants a different world starts a new career. Stepping back to the manager or the club is
- * untouched by that — neither is a foundation, and neither regenerates anything.
- */
 export const ReviewPane = ({
   session,
 }: {
@@ -85,72 +65,72 @@ export const ReviewPane = ({
         : "s"
       }`;
 
+  const configurationItems = [
+    { label: "Manager", value: `${session.firstName} ${session.lastName}`.trim() },
+    { label: "Nationality", value: session.nationalityId === null ? "Not selected" : nationName(session.nationalityId) },
+    { label: "Date of birth", value: session.dateOfBirth || "Not selected" },
+    { label: "Favorite team", value: selectedFavoriteTeamOf(session)?.clubName ?? "None" },
+    { label: "Formation", value: session.preferredFormation ?? "Not selected" },
+    { label: "Tactical style", value: session.preferredStyleId === null ? "Not selected" : STYLE_LABELS[session.preferredStyleId] },
+    { label: "Archetype", value: session.archetype.replaceAll("_", " ") },
+    { label: "Club", value: selectedClubOf(session)?.clubName ?? "Not selected" },
+    { label: "League scope", value: leagueScope },
+    { label: "Pillars", value: `${session.pillars.tacticalAcumen}/${session.pillars.influence}/${session.pillars.regimen}/${session.pillars.technicalCoaching}` },
+  ];
+
   return (
     <div className="text-text-body">
-      <h2 className="text-lg font-semibold">Review Career</h2>
+      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Step 4</span>
+      <h2 className="mt-2 text-2xl font-bold text-text-primary">Review Career</h2>
+      <p className="mt-2 text-sm text-text-secondary">
+        Confirm everything the flow has collected before your career begins.
+      </p>
 
-      <dl className="mt-4 space-y-2 text-sm">
-        <Row label="Manager" value={`${session.firstName} ${session.lastName}`.trim()} />
-        <Row label="Nationality" value={session.nationalityId === null ? "Not selected" : nationName(session.nationalityId)} />
-        <Row label="Date of birth" value={session.dateOfBirth || "Not selected"} />
-        <Row label="Favorite team" value={selectedFavoriteTeamOf(session)?.clubName ?? "None"} />
-        <Row label="Formation" value={session.preferredFormation ?? "Not selected"} />
-        <Row
-          label="Tactical style"
-          value={session.preferredStyleId === null ? "Not selected" : STYLE_LABELS[session.preferredStyleId]}
-        />
-
-        <div className="flex gap-4">
-          <dt className="text-text-muted">Archetype:</dt>
-          <dd className="capitalize">
-            {session.archetype.replaceAll("_", " ")}
-          </dd>
-        </div>
-
-        <Row label="Club" value={selectedClubOf(session)?.clubName ?? "Not selected"} />
-        <Row label="League scope" value={leagueScope} />
-
-        <div className="flex gap-4">
-          <dt className="text-text-muted">Pillars:</dt>
-          <dd>
-            {session.pillars.tacticalAcumen}/{session.pillars.influence}/
-            {session.pillars.regimen}/{session.pillars.technicalCoaching}
-          </dd>
-        </div>
-      </dl>
+      <div className="mt-6 rounded-panel border border-panel-border bg-card p-6 shadow-panel">
+        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-text-secondary">
+          Your Choices
+        </h3>
+        <dl className="divide-y divide-panel-border/30">
+          {configurationItems.map((item) => (
+            <Row key={item.label} label={item.label} value={item.value} />
+          ))}
+        </dl>
+      </div>
 
       <section aria-labelledby="career-setup-world" className="mt-6">
-        <h3 id="career-setup-world" className="text-sm font-semibold">
-          Generated world
-        </h3>
+        <div className="rounded-panel border border-panel-border bg-card p-6 shadow-panel">
+          <h3 id="career-setup-world" className="mb-4 text-sm font-semibold uppercase tracking-wider text-text-secondary">
+            Generated world
+          </h3>
 
-        {/* The heading and its region stay mounted through every state, so the arriving summary
-            extends the panel rather than replacing something the player was already reading. The
-            status line is polite: nothing here interrupts, and nothing here blocks Create Career. */}
-        {summary._tag === "Loading" ? (
-          <p role="status" className="mt-2 text-sm text-text-muted">
-            Reading the generated world…
-          </p>
-        ) : summary._tag === "Unavailable" ? (
-          <p role="status" className="mt-2 text-sm text-text-muted">
-            World summary unavailable. Your career is ready to create.
-          </p>
-        ) : (
-          <dl className="mt-2 space-y-2 text-sm">
-            <Row
-              label="Starting season"
-              value={`${summary.view.seasonLabel} · starts ${formatCalendarDate(summary.view.seasonStartDate)}`}
-            />
-            <Row label="Nations" value={summary.view.nationCount.toLocaleString()} />
-            <Row
-              label="Competitions"
-              value={describeCompetitions(summary.view.competitions)}
-            />
-            <Row label="Clubs" value={summary.view.clubCount.toLocaleString()} />
-            <Row label="Players generated" value={summary.view.playerCount.toLocaleString()} />
-            <Row label="Staff" value={describeStaff(summary.view.staffCount)} />
-          </dl>
-        )}
+          {/* The heading and its region stay mounted through every state, so the arriving summary
+              extends the panel rather than replacing something the player was already reading. The
+              status line is polite: nothing here interrupts, and nothing here blocks Create Career. */}
+          {summary._tag === "Loading" ? (
+            <p role="status" className="py-2 text-sm text-text-muted">
+              Reading the generated world…
+            </p>
+          ) : summary._tag === "Unavailable" ? (
+            <p role="status" className="py-2 text-sm text-text-muted">
+              World summary unavailable. Your career is ready to create.
+            </p>
+          ) : (
+            <dl className="divide-y divide-panel-border/30">
+              <Row
+                label="Starting season"
+                value={`${summary.view.seasonLabel} · starts ${formatCalendarDate(summary.view.seasonStartDate)}`}
+              />
+              <Row label="Nations" value={summary.view.nationCount.toLocaleString()} />
+              <Row
+                label="Competitions"
+                value={describeCompetitions(summary.view.competitions)}
+              />
+              <Row label="Clubs" value={summary.view.clubCount.toLocaleString()} />
+              <Row label="Players generated" value={summary.view.playerCount.toLocaleString()} />
+              <Row label="Staff" value={describeStaff(summary.view.staffCount)} />
+            </dl>
+          )}
+        </div>
       </section>
     </div>
   );
