@@ -365,9 +365,10 @@
   }
 }
 
-/* The shell bottom bar's status marquee (`ShellBottomBar`): the track holds two
+/* The shell bottom bar's status marquee (`StatusMarquee`): the track holds two
    copies of its items, so shifting it by half its width lands exactly where it
-   started. */
+   started. The component sets the duration from the measured copy width, so
+   the speed is constant whatever the window or the text. */
 @keyframes bottom-bar-marquee {
   from {
     transform: translateX(0);

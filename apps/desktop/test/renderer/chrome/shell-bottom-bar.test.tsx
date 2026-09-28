@@ -1,8 +1,10 @@
 import { cleanup, render, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ShellBottomBar } from "../../../src/renderer/chrome/bottom-bar/ShellBottomBar.js";
+import { MARQUEE_PX_PER_SECOND } from "../../../src/renderer/chrome/bottom-bar/StatusMarquee.js";
 import {
   describeCreationBottomBar,
+  EMPTY_BOTTOM_BAR,
   describeLeagueSelectionBottomBar,
   type BottomBarPlan,
   type CreationBottomBarInput,
@@ -49,7 +51,11 @@ const bar = (plan: BottomBarPlan): HTMLElement => {
   return footer;
 };
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe("the bar shows why the forward verb cannot be pressed", () => {
   it("states the reason beside a disabled Continue on the leagues step", () => {
@@ -92,5 +98,68 @@ describe("the bar shows why the forward verb cannot be pressed", () => {
     expect(reasonRow(withReason)).not.toBeNull();
     expect(reasonRow(withoutReason)).not.toBeNull();
     expect(reasonRow(withoutReason)?.textContent).toBe("");
+  });
+});
+
+describe("the bar ties the reason to the control it explains", () => {
+  it("describes a disabled primary by the reason line", () => {
+    const footer = bar(
+      describeCreationBottomBar(creationInput({ managerStep: 1, personalDetailsComplete: false })),
+    );
+
+    const next = within(footer).getByRole("button", { name: "Next: Manager Identity" });
+    const describedBy = next.getAttribute("aria-describedby");
+    expect(describedBy).not.toBeNull();
+    expect(footer.querySelector(`[id="${describedBy}"]`)?.textContent).toBe(
+      "Complete your personal details to continue.",
+    );
+  });
+
+  it("leaves an enabled primary undescribed, since the line is not about it", () => {
+    const footer = bar(describeCreationBottomBar(creationInput({ managerStep: 1 })));
+
+    const next = within(footer).getByRole("button", { name: "Next: Manager Identity" });
+    expect(next.hasAttribute("aria-describedby")).toBe(false);
+  });
+});
+
+describe("the status marquee", () => {
+  const statusBar = (status: readonly string[]): HTMLElement => bar({ ...EMPTY_BOTTOM_BAR, status });
+
+  it("names its list once for assistive tech and hides the loop's second copy", () => {
+    const footer = statusBar(["Version 1.0.0", "Mods: none"]);
+
+    const list = within(footer).getByRole("list", { name: "Status" });
+    expect(within(list).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      "Version 1.0.0",
+      "Mods: none",
+    ]);
+    expect(footer.querySelectorAll('ul[aria-hidden="true"]')).toHaveLength(1);
+  });
+
+  it("renders two items with the same text as two items", () => {
+    const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const footer = statusBar(["Mods: none", "Mods: none"]);
+
+    expect(within(footer).getAllByRole("listitem")).toHaveLength(2);
+    expect(errors).not.toHaveBeenCalled();
+  });
+
+  it("times a cycle from the copy's measured width, so the speed does not depend on the window", () => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+      width: MARQUEE_PX_PER_SECOND * 25,
+    } as DOMRect);
+
+    const footer = statusBar(["Version 1.0.0"]);
+
+    const track = footer.querySelector<HTMLElement>("[data-marquee-track]");
+    expect(track?.style.animationDuration).toBe("25s");
   });
 });
