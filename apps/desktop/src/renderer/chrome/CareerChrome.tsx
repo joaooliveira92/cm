@@ -86,7 +86,11 @@ const CareerChromeInner = ({
 
   return (
     <NavProvider saveId={saveId}>
-      <div className="h-screen overflow-hidden bg-background [--header-height:calc(--spacing(18))]">
+      {/* The backdrop fills the whole shell, so it shows through the translucent
+          sidebar and bottom bar as well as the screen; the club band paints over
+          it opaquely. The photo holds still while the screen scrolls over it. */}
+      <div className="relative isolate h-screen overflow-hidden [--header-height:calc(--spacing(18))]">
+        <Backdrop src={backdropFor(saveId)} />
         <SidebarProvider className="flex h-full flex-col">
           {liveMatch !== null ? (
             <MatchHeader saveId={saveId} state={liveMatch} leading={leading} />
@@ -136,11 +140,7 @@ const CareerChromeInner = ({
           <div className="flex min-h-0 flex-1">
             <CareerSidebar badges={badges} manager={manager} />
 
-            {/* The backdrop fills this column only: the club band and the
-                sidebar stay opaque, and the photo holds still while the screen
-                scrolls over it. */}
-            <div className="relative isolate flex min-h-0 min-w-0 flex-1 flex-col">
-              <Backdrop src={backdropFor(saveId)} />
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {contextNav}
               <div
                 className="flex shrink-0 items-center justify-between border-b border-border-subtle bg-bg px-3 py-1"

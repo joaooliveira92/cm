@@ -27,7 +27,7 @@ export const ShellBottomBar = ({ plan, className }: ShellBottomBarProps) => {
     <footer
       className={
         className ??
-        "flex h-11 w-full shrink-0 items-center border-t border-border-subtle bg-bg-raised px-3"
+        "flex h-11 w-full shrink-0 items-center border-t border-border-subtle bg-bg-raised/70 px-3 backdrop-blur-md"
       }
     >
       {/* The row spans the bar rather than a centred reading column: the bar is a
