@@ -96,7 +96,7 @@ export const SidebarNavSection = ({
           className={cn(
             // The route's section keeps a mark on its leading edge, so it still reads as "here"
             // once the pointer's hover wash sits on another row, and in the icon rail.
-            "relative before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full data-[active=true]:before:bg-chrome-top",
+            "relative before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full data-[active=true]:before:bg-primary",
             "[&>svg]:text-sidebar-foreground/70 data-[active=true]:[&>svg]:text-sidebar-accent-foreground",
             hasBadge && "pr-14",
           )}

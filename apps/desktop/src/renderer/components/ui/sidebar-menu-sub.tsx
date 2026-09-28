@@ -68,7 +68,7 @@ const SidebarMenuSubItem = ({ className, ref, ...props }: SidebarMenuSubItemProp
     ref={ref}
     data-sidebar="menu-sub-item"
     className={cn(
-      "relative before:absolute before:inset-y-1 before:-left-2.5 before:w-0.5 before:rounded-full has-[[data-active=true]]:before:bg-chrome-top",
+      "relative before:absolute before:inset-y-1 before:-left-2.5 before:w-0.5 before:rounded-full has-[[data-active=true]]:before:bg-primary",
       className,
     )}
     {...props}

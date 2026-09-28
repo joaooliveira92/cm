@@ -5,7 +5,7 @@ import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
 import { navigate } from "../navigation/adapter.js";
 import { RouteView } from "./RouteView.js";
 import { Header } from "../chrome/header/index.js";
-import { LightweightDialog } from "../dialog/LightweightDialog.js";
+import { PreferencesDialog } from "../appearance/PreferencesDialog.js";
 import { Button } from "../components/ui/button.js";
 import {
   MODAL_BODY,
@@ -263,11 +263,7 @@ export const MainMenuScreen = () => {
         </div>
 
         {openPreferences && (
-          <LightweightDialog
-            title="Preferences"
-            description="Application preferences are not built yet. They will apply with no career loaded."
-            onCancel={() => setOpenPreferences(false)}
-          />
+          <PreferencesDialog onClose={() => setOpenPreferences(false)} />
         )}
 
         {/* Credits (spec §5.4): informational, scrollable, with a Back action. */}

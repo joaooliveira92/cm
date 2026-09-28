@@ -5,7 +5,7 @@
  * keeps the `-z-10` layer behind that container's content without dropping it behind the page.
  * The photo is an `<img>` with `object-cover`, so any source proportion (a portrait twice as tall
  * as it is wide, an ultra-wide panorama) fills the box without distortion and crops the overflow
- * evenly from both sides. The treatment — desaturate, darken, blur, chrome-blue wash, dark
+ * evenly from both sides. The treatment — desaturate, darken, blur, chrome wash, dark
  * vertical fade — lives in the `backdrop-photo` / `backdrop-wash` utilities in `index.css`, so a
  * skin override retunes it without touching this file.
  *

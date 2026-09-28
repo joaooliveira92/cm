@@ -36,19 +36,19 @@ export const PANEL_CHROME =
   "chrome-gradient rounded-panel border border-panel-border-dark px-3 py-2 shadow-chrome";
 
 /**
- * The primary verb (Continue, Create, Confirm). Gradient chrome, inverted when
- * pressed. Exactly one per screen region — a second primary is a design bug,
- * not a styling choice.
+ * The primary verb (Continue, Create, Confirm). shadcn's solid `primary`, so it
+ * carries the user's theme color. Exactly one per screen region — a second
+ * primary is a design bug, not a styling choice.
  */
 export const BTN_PRIMARY =
-  "chrome-gradient rounded-control border-2 border-panel-border-dark px-3 py-1 text-text-primary shadow-chrome hover:brightness-110 active:chrome-gradient-inverted disabled:cursor-not-allowed disabled:opacity-50";
+  "rounded-control bg-primary px-3 py-1 text-primary-foreground hover:bg-primary/90 active:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50";
 
 /**
  * The primary verb rendered on the club-coloured header band (Continue).
  *
- * Unlike `BTN_PRIMARY` — the chrome-blue gradient for primaries on neutral
- * surfaces — this one paints from the `--color-header-*` roles the band
- * already carries, so it re-skins with the club instead of sitting blue on a
+ * Unlike `BTN_PRIMARY` — the theme-colored primary for neutral surfaces —
+ * this one paints from the `--color-header-*` roles the band already carries,
+ * so it re-skins with the club instead of sitting in the theme color on a
  * red/maroon/green band. It inverts the header's pair: `header-fg` as the
  * button's background and `header-bg` as its text. That pair is the one the
  * header derived for readability over the club's primary background, and a

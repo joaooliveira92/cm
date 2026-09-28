@@ -329,14 +329,15 @@ export const chooseToolbarOption = async (
 };
 
 /**
- * Choose an option from a Base UI `Select` by its visible label.
- *
- * The renderer has no native `<select>` left (`components/ui/select.tsx` is the vendored Base UI
- * primitive), so `selectOption()` and `locator("option")` address nothing. Base UI renders the
- * trigger as `combobox`, and portals the popup out to a `listbox` of `option`s on open — which is
- * why the listbox is looked up from the page rather than from inside the trigger's subtree. Driving
- * it is click-to-open then click-the-option, exactly as a player does.
- */
+  * Choose an option from a ReUI `Select` (autocomplete-based) by its visible label.
+  *
+  * The renderer has no native `<select>` left (`components/ui/select.tsx` is the vendored
+  * ReUI autocomplete primitive), so `selectOption()` and `locator("option")` address nothing.
+  * ReUI renders the trigger as `combobox`, and portals the popup out to a `listbox` of
+  * `option`s on open — which is why the listbox is looked up from the page rather than from
+  * inside the trigger's subtree. Driving it is click-to-open then click-the-option, exactly
+  * as a player does.
+  */
 export const chooseOption = async (page: Page, comboboxName: string | RegExp, optionName: string | RegExp): Promise<void> => {
   await page.getByRole("combobox", { name: comboboxName }).click();
   await page.getByRole("listbox").getByRole("option", { name: optionName }).click();

@@ -1,11 +1,13 @@
-// Base UI Select driving helpers.
+// ReUI Select (autocomplete-based) driving helpers.
 //
-// The vendored Select primitive (see `src/renderer/components/ui/select.tsx`) renders a
-// `button[role=combobox]` trigger and portals its options into a listbox, so the native
-// `<select>` interactions (`fireEvent.change(select, { target: { value } })`, reading
-// `.value`/`.options`) do not reach it. These helpers drive it the way a user does: open the
-// popup, then commit a pick with the pointer sequence Base UI requires (a bare `click` is
-// filtered out unless a `pointerdown` armed the mouse-selection path first).
+// The vendored Select primitive (see `src/renderer/components/ui/select.tsx`) is
+// built on the ReUI autocomplete (`@base-ui/react/autocomplete`), rendering a
+// `button[role=combobox]` trigger and portalising its options into a listbox, so
+// the native `<select>` interactions (`fireEvent.change(select, { target: { value } })`,
+// reading `.value`/`.options`) do not reach it. These helpers drive it the way a
+// user does: open the popup, then commit a pick with the pointer sequence the
+// autocomplete requires (a bare `click` is filtered out unless a `pointerdown` armed
+// the mouse-selection path first).
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 
 /** The trigger for a Base UI select, by its accessible name. */

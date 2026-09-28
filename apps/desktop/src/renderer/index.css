@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./appearance/palettes.css";
 
 /*
  * The renderer's bundled font. Vendored under src/assets/fonts/ (Outside the
@@ -29,7 +30,14 @@
 }
 
 /*
- * The renderer's design tokens — the retro chrome-blue visual frame.
+ * The renderer's design tokens — role names mapped onto the shadcn palette.
+ *
+ * Every colour below resolves through the bare shadcn variables declared in
+ * `appearance/palettes.css` (`--background`, `--card`, `--primary`, ...), which
+ * the user's base color and theme color select. A role either IS a shadcn
+ * variable or is a `color-mix` of two of them; none carries a literal hue, so
+ * changing either axis repaints the whole renderer. The exceptions are domain
+ * colours with no shadcn counterpart: the status hues and the pitch.
  *
  * One `@theme` block, deliberately NOT `@theme inline`: in the default mode
  * Tailwind emits every token as a real custom property on `:root` *and*
@@ -55,46 +63,54 @@
   --text-2xs--line-height: 1.3;
 
   /* --- Page and surface ramp -------------------------------------------- */
-  --color-bg-base: #0a0e14;
-  --color-bg-raised: #121820;
-  --color-surface: #18202b;
-  --color-surface-raised: #212b39;
-  --color-border-subtle: #2f3d4e;
+  --color-bg-base: var(--background);
+  --color-bg-raised: var(--card);
+  --color-surface: var(--muted);
+  --color-surface-raised: color-mix(in oklab, var(--muted) 85%, var(--foreground));
+  --color-border-subtle: var(--border);
 
   /* --- Panels ----------------------------------------------------------- */
-  --color-panel-bg: rgb(5 12 13 / 0.72);
-  --color-panel-bg-strong: rgb(6 10 12 / 0.86);
-  --color-panel-border: rgb(255 255 255 / 0.3);
+  /* Translucent so the backdrop photograph reads through a content panel; the
+     strong variant is opaque, as a shadcn card or dialog is. */
+  --color-panel-bg: color-mix(in oklab, var(--card) 72%, transparent);
+  --color-panel-bg-strong: var(--card);
+  --color-panel-border: var(--border);
   --color-panel-border-dark: rgb(0 0 0 / 0.4);
 
-  /* --- Chrome (the gradient treatment: title bars, panel headers, primary
-         buttons). "chrome" names the treatment, not the blue. ------------- */
-  --color-chrome-top: #416a9f;
-  --color-chrome-mid: #214d84;
-  --color-chrome-bottom: #153963;
+  /* --- Chrome (the gradient treatment: title bars, panel headers, modal
+         bands). A faint lift off the card surface, not a hue: the theme
+         color belongs to `primary`, which the primary buttons paint. -------- */
+  --color-chrome-top: color-mix(in oklab, var(--card) 90%, var(--foreground));
+  --color-chrome-mid: var(--card);
+  --color-chrome-bottom: var(--card);
 
   /* --- Text ------------------------------------------------------------- */
-  --color-text-primary: #e8edf3;
-  --color-text-bright: #f4f7fa;
-  --color-text-strong: #cdd5df;
-  --color-text-body: #a9b3c1;
-  --color-text-secondary: #8892a0;
-  --color-text-muted: #6b7686;
+  /* A ladder between shadcn's two text roles, `foreground` and
+     `muted-foreground`, with one step below for the least important text. */
+  --color-text-primary: var(--foreground);
+  --color-text-bright: var(--foreground);
+  --color-text-strong: color-mix(in oklab, var(--foreground) 80%, var(--muted-foreground));
+  --color-text-body: color-mix(in oklab, var(--foreground) 45%, var(--muted-foreground));
+  --color-text-secondary: var(--muted-foreground);
+  --color-text-muted: color-mix(in oklab, var(--muted-foreground) 75%, var(--background));
 
   /* --- Dense-table row states -------------------------------------------
      Four states must stay separable: neutral (no fill), hover, selection, and
      the keyboard focus ring (which lives on the row's name button, not here).
-     Both fills are OPAQUE rather than translucent chrome-blue, because the
-     pinned identity columns sit on their own stacking context and have to
-     paint an opaque background to hide the columns scrolling beneath them;
-     a translucent fill would compose differently there than on the rest of the
-     row. `row-selected` is that low-opacity chrome-blue flattened over
-     `bg-base`, so it reads as the intended tint and composes deterministically. */
-  --color-row-hover: #141b25;
-  --color-row-selected: #102033;
+     Both fills are OPAQUE rather than translucent, because the pinned identity
+     columns sit on their own stacking context and have to paint an opaque
+     background to hide the columns scrolling beneath them; a translucent fill
+     would compose differently there than on the rest of the row. Mixing two
+     opaque palette colours keeps them opaque: `row-selected` is a low-opacity
+     `primary` flattened over `bg-base`, so it follows the theme color. */
+  --color-row-hover: color-mix(in oklab, var(--muted) 50%, var(--background));
+  --color-row-selected: color-mix(in oklab, var(--primary) 16%, var(--background));
 
-  /* --- Semantic status -------------------------------------------------- */
-  --color-text-highlight: #fff400;
+  /* --- Semantic status --------------------------------------------------
+     `highlight` (section titles, key figures) is the theme's lightest chart
+     step: a readable tint of the theme color, and a light grey under Neutral.
+     The other three are domain hues with no shadcn counterpart. */
+  --color-text-highlight: var(--chart-1);
   --color-text-warning: #ff7200;
   --color-text-danger: #ff4444;
   --color-text-success: #8ae860;
@@ -104,8 +120,10 @@
      a hue). The former green pair lived here and had no consumers. */
   /* Fields are opaque on purpose: typed characters must read against an
      unwashed surface, not through a semi-transparent panel. */
-  --color-field-bg: #0f151d;
-  --color-focus-ring: var(--color-text-highlight);
+  /* shadcn's dark field is `bg-input/30` over the page; this is the same
+     wash, flattened so it stays opaque. */
+  --color-field-bg: color-mix(in oklab, var(--foreground) 4.5%, var(--background));
+  --color-focus-ring: var(--ring);
 
   /* --- Career header (club-coloured) ------------------------------------
      The top band paints itself in the user club's PRIMARY pair. These are
@@ -136,8 +154,8 @@
      pattern is the archetypal match-day picture and needs no club data; a
      future club-colour upgrade is a token change, not a redesign. The band
      reuses the shared chrome gradient, so only the score box is match-only. */
-  --color-scoreboard-box: #f4f7fa;
-  --color-scoreboard-box-text: #0a0e14;
+  --color-scoreboard-box: var(--foreground);
+  --color-scoreboard-box-text: var(--background);
 
   /* --- Pitch (tactics diagram) ------------------------------------------
      The formation pitch on the Tactics editor: two mown-stripe greens, white
@@ -162,41 +180,42 @@
      shadcn's role names (`bg-background`, `text-muted-foreground`,
      `ring-ring`, ...). Rather than rewrite ~35 upstream files — which would
      forfeit every future `shadcn add` and re-diff — each role name is
-     declared here as an alias onto the chrome tokens above. The components
-     stay upstream-shaped and inherit the retro frame for free; a skin
-     override still repaints them, because these resolve through the same
-     variables. Same tactic as the `--color-slate-*` layer that carried the
-     original repaint, except this one is permanent rather than a backlog. */
-  --color-background: var(--color-bg-base);
-  --color-foreground: var(--color-text-primary);
+     declared here and resolves to the palette variable of the same name.
+     `card` is the one exception: it stays the translucent panel surface, so
+     a shadcn card over the backdrop photograph reads the way a `PANEL` does. */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
   --color-card: var(--color-panel-bg);
-  --color-card-foreground: var(--color-text-primary);
-  /* Popovers and menus float over content: opaque, never washed. */
-  --color-popover: var(--color-surface);
-  --color-popover-foreground: var(--color-text-primary);
-  --color-primary: var(--color-chrome-mid);
-  --color-primary-foreground: var(--color-text-bright);
-  --color-secondary: var(--color-surface-raised);
-  --color-secondary-foreground: var(--color-text-primary);
-  --color-muted: var(--color-surface);
-  --color-muted-foreground: var(--color-text-muted);
-  --color-accent: var(--color-surface-raised);
-  --color-accent-foreground: var(--color-text-bright);
-  --color-destructive: var(--color-text-danger);
-  --color-destructive-foreground: var(--color-text-bright);
-  --color-border: var(--color-border-subtle);
-  --color-input: var(--color-border-subtle);
-  --color-ring: var(--color-focus-ring);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
-  /* Sidebar family. `sidebar.tsx` reads some of these as bare `var(--sidebar-*)`
-     in inline styles, so the un-prefixed names are declared on `:root` below. */
-  --color-sidebar: var(--color-bg-raised);
-  --color-sidebar-foreground: var(--color-text-primary);
-  --color-sidebar-accent: var(--color-surface-raised);
-  --color-sidebar-accent-foreground: var(--color-text-bright);
-  --color-sidebar-border: var(--color-border-subtle);
-  --color-sidebar-ring: var(--color-focus-ring);
-
+  /* Sidebar family. `sidebar.tsx` also reads some of these as bare
+     `var(--sidebar-*)` in inline styles, which the palette declares. */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 /*
@@ -207,12 +226,6 @@
  * semi-transparent panels' contrast.
  */
 @layer base {
-  :root {
-    /* Bare aliases for `sidebar.tsx`'s inline `var(--sidebar-*)` reads. */
-    --sidebar-accent: var(--color-surface-raised);
-    --sidebar-border: var(--color-border-subtle);
-  }
-
   html,
   body,
   #root {
@@ -276,7 +289,7 @@
  *   darkens to half brightness, and blurs just enough to kill fine detail that
  *   competes with 12px table text. The blur samples transparency past the
  *   image edge, so the photo is scaled up 4% to push that soft rim out of view.
- * - `backdrop-wash` lays a chrome-blue tint under a dark vertical fade. The
+ * - `backdrop-wash` lays a chrome tint under a dark vertical fade. The
  *   fade is lighter at the top, where the photo reads, and near-opaque at the
  *   bottom, where dense tables usually run. Both read palette tokens, so a
  *   skin override repaints the wash with the rest of the chrome.

@@ -2,6 +2,8 @@
 
 Status: proposed
 
+> **Superseded in part, 2026-09-27.** The role bridge no longer aliases shadcn names onto the chrome-blue tokens. Each name now resolves to the same-named variable of a user-chosen shadcn palette. `card` is the exception and stays the translucent panel surface. The `Button` default variant is a solid `primary`, not the chrome gradient. The adoption decision itself stands. See [shadcn palette with a user-chosen base and theme color](../../implemented/architecture/2026-09-27-shadcn-palette-with-user-chosen-colors.md).
+
 ## Problem
 
 The visual design language landed as a token layer plus a set of shared class strings

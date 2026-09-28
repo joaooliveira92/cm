@@ -2,6 +2,8 @@
 
 Status: implemented
 
+> **Superseded in part, 2026-09-27.** The chrome-blue palette is gone, and so is the deferral in *Skin system* below. The renderer now paints from shadcn/ui's palette, with a base color and a theme color the user picks in Preferences. It defaults to Neutral on both axes. The mechanism this note chose still carries it: one non-inline `@theme` block of role-named tokens, repainted by a scoped re-declaration. The colour values in the table below are historical. See [shadcn palette with a user-chosen base and theme color](2026-09-27-shadcn-palette-with-user-chosen-colors.md).
+
 ## Problem
 
 The cm-clone renderer had no visual design language informed by the CM 03/04 reference (`docs/design/ui-elements.md`). All nine screens used a flat dark slate palette (`bg-slate-950`) with default Tailwind typography, no panel system, no status abbreviations, and no skin architecture. An unwired chrome-blue prototype in `components/match-screen/` (deleted since; recoverable at its recorded historical revision) carried a look that approximated the CM 03/04 tone, but its tokens were designed for a single match-day display rather than a coherent system.

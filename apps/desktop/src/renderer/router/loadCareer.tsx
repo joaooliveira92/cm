@@ -13,6 +13,7 @@ import { Header } from "../chrome/header/index.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
 import { LightweightDialog } from "../dialog/LightweightDialog.js";
+import { PreferencesDialog } from "../appearance/PreferencesDialog.js";
 import { Backdrop } from "../backdrop/Backdrop.js";
 import { MENU_BACKDROP } from "../backdrop/backdrops.js";
 
@@ -252,11 +253,7 @@ export const LoadCareerScreen = () => {
         </main>
 
         {openPreferences && (
-          <LightweightDialog
-            title="Preferences"
-            description="Application preferences are not built yet. They will apply with no career loaded."
-            onCancel={() => setOpenPreferences(false)}
-          />
+          <PreferencesDialog onClose={() => setOpenPreferences(false)} />
         )}
 
         {openCredits && (

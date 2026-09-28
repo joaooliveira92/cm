@@ -1,22 +1,59 @@
-import { Select as SelectPrimitive } from "@base-ui/react/select";
+import { Autocomplete as AutocompletePrimitive } from "@base-ui/react/autocomplete";
+import {
+  Select as SelectPrimitive,
+} from "@base-ui/react/select";
 import * as React from "react";
 
 import { cn } from "../../lib/utils.js";
 import { FIELD_SELECT } from "../../theme.js";
 
+const SelectContext = React.createContext<{
+  value: string;
+  onValueChange: (value: string) => void;
+} | null>(null);
+
 function Select<Value, Multiple extends boolean | undefined = false>({
+  children,
+  value,
+  onValueChange,
+  disabled,
+  items,
+  itemToStringValue,
+  openOnInputClick = true,
+  mode = "list",
   ...props
-}: SelectPrimitive.Root.Props<Value, Multiple>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />;
+}: Omit<React.ComponentProps<typeof AutocompletePrimitive.Root>, "items"> & {
+  items?: readonly Value[];
+  itemToStringValue?: (itemValue: Value) => string;
+  children: React.ReactNode;
+}) {
+  return (
+    <AutocompletePrimitive.Root
+      value={value as string}
+      onValueChange={onValueChange as (value: string) => void}
+      disabled={disabled}
+      openOnInputClick={openOnInputClick}
+      mode={mode}
+      items={items}
+      itemToStringValue={itemToStringValue as ((itemValue: unknown) => string) | undefined}
+      {...props}
+    >
+      <SelectContext.Provider value={{ value: value as string, onValueChange: onValueChange as (value: string) => void }}>
+        {children}
+      </SelectContext.Provider>
+    </AutocompletePrimitive.Root>
+  );
 }
 
 function SelectTrigger({
   className,
   children,
   ...props
-}: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>) {
+}: React.ComponentPropsWithoutRef<typeof AutocompletePrimitive.InputGroup> & {
+  children?: React.ReactNode;
+}) {
   return (
-    <SelectPrimitive.Trigger
+    <AutocompletePrimitive.InputGroup
       data-slot="select-trigger"
       className={cn(
         FIELD_SELECT,
@@ -25,17 +62,31 @@ function SelectTrigger({
       )}
       {...props}
     >
+      <AutocompletePrimitive.Input />
       {children}
-      <SelectPrimitive.Icon className="shrink-0 text-text-muted [&>svg]:size-3">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </SelectPrimitive.Icon>
-    </SelectPrimitive.Trigger>
+    </AutocompletePrimitive.InputGroup>
   );
 }
 
-const SelectValue = SelectPrimitive.Value;
+function SelectValue({
+  children,
+  placeholder,
+  ...props
+}: Omit<React.ComponentProps<typeof AutocompletePrimitive.Value>, "children"> & {
+  placeholder?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <AutocompletePrimitive.Value
+      data-slot="select-value"
+      {...props}
+    >
+      {typeof children === "function"
+        ? children
+        : children ?? placeholder}
+    </AutocompletePrimitive.Value>
+  );
+}
 
 function SelectContent({
   className,
@@ -44,15 +95,16 @@ function SelectContent({
   align = "start",
   sideOffset = 4,
   ...props
-}: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Popup> & {
+}: Omit<React.ComponentProps<typeof AutocompletePrimitive.Popup>, "children"> & {
   side?: "top" | "bottom" | "left" | "right";
   align?: "start" | "center" | "end";
   sideOffset?: number;
+  children: React.ReactNode;
 }) {
   return (
-    <SelectPrimitive.Portal>
-      <SelectPrimitive.Positioner className="z-50" side={side} align={align} sideOffset={sideOffset}>
-        <SelectPrimitive.Popup
+    <AutocompletePrimitive.Portal>
+      <AutocompletePrimitive.Positioner className="z-50" side={side} align={align} sideOffset={sideOffset}>
+        <AutocompletePrimitive.Popup
           data-slot="select-content"
           className={cn(
             "max-h-60 min-w-[8rem] overflow-y-auto rounded-md border border-border-subtle bg-surface p-1 text-text-primary shadow-panel",
@@ -61,49 +113,57 @@ function SelectContent({
           )}
           {...props}
         >
-          <SelectPrimitive.List>{children}</SelectPrimitive.List>
-        </SelectPrimitive.Popup>
-      </SelectPrimitive.Positioner>
-    </SelectPrimitive.Portal>
+          {children}
+        </AutocompletePrimitive.Popup>
+      </AutocompletePrimitive.Positioner>
+    </AutocompletePrimitive.Portal>
   );
 }
 
 function SelectItem({
   className,
   children,
+  value,
+  disabled,
   ...props
-}: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>) {
+}: Omit<React.ComponentProps<typeof AutocompletePrimitive.Item>, "value"> & {
+  value: string;
+  children?: React.ReactNode;
+  disabled?: boolean;
+}) {
   return (
-    <SelectPrimitive.Item
+    <AutocompletePrimitive.Item
       data-slot="select-item"
+      value={value}
       className={cn(
         "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-6 text-xs outline-none",
         "data-[highlighted]:bg-surface-raised data-[highlighted]:text-text-primary",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
+      disabled={disabled}
       {...props}
     >
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      {children}
       <SelectPrimitive.ItemIndicator className="absolute right-1.5 flex items-center justify-center text-text-secondary">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </SelectPrimitive.ItemIndicator>
-    </SelectPrimitive.Item>
+    </AutocompletePrimitive.Item>
   );
 }
 
-const SelectGroup = SelectPrimitive.Group;
+const SelectGroup = AutocompletePrimitive.Group;
 
-const SelectLabel = SelectPrimitive.GroupLabel;
+const SelectLabel = AutocompletePrimitive.GroupLabel;
 
 function SelectSeparator({
   className,
   ...props
-}: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>) {
+}: React.ComponentProps<typeof AutocompletePrimitive.Separator>) {
   return (
-    <SelectPrimitive.Separator
+    <AutocompletePrimitive.Separator
       data-slot="select-separator"
       className={cn("-mx-1 my-1 h-px bg-border-subtle", className)}
       {...props}
@@ -114,7 +174,7 @@ function SelectSeparator({
 function SelectScrollUpButton({
   className,
   ...props
-}: React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpArrow>) {
+}: React.ComponentProps<typeof SelectPrimitive.ScrollUpArrow>) {
   return (
     <SelectPrimitive.ScrollUpArrow
       data-slot="select-scroll-up-button"
@@ -134,7 +194,7 @@ function SelectScrollUpButton({
 function SelectScrollDownButton({
   className,
   ...props
-}: React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollDownArrow>) {
+}: React.ComponentProps<typeof SelectPrimitive.ScrollDownArrow>) {
   return (
     <SelectPrimitive.ScrollDownArrow
       data-slot="select-scroll-down-button"

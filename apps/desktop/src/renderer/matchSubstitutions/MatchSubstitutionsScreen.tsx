@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { PlayerId, type SaveId } from "@cm-clone/contracts";
 import { Button } from "../components/ui/button.js";
-import { SELECT_CLASS } from "../match/controls.js";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.js";
 import { LiveCommandFrame } from "../match/LiveCommandFrame.js";
 import { NO_SUBSTITUTES_LEFT, substitutionErrorLabel, validateLiveSubstitution } from "../match/substitution.js";
 import { useLiveMatchCommands, type LiveMatchReady } from "../match/useLiveMatchCommands.js";
@@ -64,35 +64,31 @@ const SubstitutionForm = ({
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-xs text-text-secondary">
           Player coming off
-          <select
-            value={outPlayerId}
-            disabled={capReached || pending}
-            onChange={(event) => setOutPlayerId(event.target.value)}
-            className={SELECT_CLASS}
-          >
-            <option value="">Select player</option>
-            {snapshot.pitch.onPitch.map((slot) => (
-              <option key={slot.playerId} value={slot.playerId}>
-                {nameOf(slot.playerId)} ({slot.position})
-              </option>
-            ))}
-          </select>
+          <Select value={outPlayerId} disabled={capReached || pending} onValueChange={setOutPlayerId}>
+            <SelectTrigger aria-label="Player coming off"><SelectValue placeholder="Select player" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Select player</SelectItem>
+              {snapshot.pitch.onPitch.map((slot) => (
+                <SelectItem key={slot.playerId} value={slot.playerId}>
+                  {nameOf(slot.playerId)} ({slot.position})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
         <label className="flex flex-col gap-1 text-xs text-text-secondary">
           Player coming on
-          <select
-            value={inPlayerId}
-            disabled={capReached || pending}
-            onChange={(event) => setInPlayerId(event.target.value)}
-            className={SELECT_CLASS}
-          >
-            <option value="">Select player</option>
-            {snapshot.pitch.substitutes.map((playerId) => (
-              <option key={playerId} value={playerId}>
-                {nameOf(playerId)}
-              </option>
-            ))}
-          </select>
+          <Select value={inPlayerId} disabled={capReached || pending} onValueChange={setInPlayerId}>
+            <SelectTrigger aria-label="Player coming on"><SelectValue placeholder="Select player" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Select player</SelectItem>
+              {snapshot.pitch.substitutes.map((playerId) => (
+                <SelectItem key={playerId} value={playerId}>
+                  {nameOf(playerId)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
         <Button
           type="button"

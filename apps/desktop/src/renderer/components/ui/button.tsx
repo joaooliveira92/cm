@@ -15,10 +15,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        /* The primary verb: gradient chrome, inverted when pressed. One per
-           screen region — a second primary is a design bug. */
-        default:
-          "chrome-gradient border-2 border-panel-border-dark text-text-primary shadow-chrome hover:brightness-110 active:chrome-gradient-inverted",
+        /* The primary verb, in the theme color. One per screen region — a
+           second primary is a design bug. */
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80",
         /* Everything else: Cancel, Retry, inline actions. Flat, no shadow. */
         secondary: "bg-surface-raised text-text-primary hover:bg-surface",
         outline: "border border-panel-border bg-panel-bg text-text-primary hover:bg-surface-raised",
