@@ -11,8 +11,10 @@
  * Note 2026-09-19, ticket 10): every Attribute, Overall Rating and Transfer Value renders as the
  * `low–high` Attribute Range the market publishes, exact only at Fully Scouted.
  *
- * Read-only. Every command that acts on a player lives on the surface that owns it (Training Focus
- * on Development, bids on Transfers); this screen only reports.
+ * The panels only report. The one command reachable from here is Scout Player, in the career bar
+ * (`ScoutPlayerAction`, group-i 13), because scouting is how a manager narrows the ranges this
+ * screen shows; every other command lives on the surface that owns it (Training Focus on
+ * Development, bids on Transfers).
  */
 import { type PlayerId, type PlayerProfileView, type SaveId } from "@cm-clone/contracts";
 import {
@@ -26,6 +28,7 @@ import { attributeLabel } from "../playerCoachReport/developmentProgress.js";
 import { injuryLabel } from "../player/injury.js";
 import { PlayerPanel, PlayerRow } from "../player/panels.js";
 import { PlayerScreenFrame } from "../player/PlayerScreenFrame.js";
+import { ScoutPlayerAction } from "./ScoutPlayerAction.js";
 
 const CATEGORY_LABELS: Record<Category, string> = {
   goalkeeping: "Goalkeeping",
@@ -105,6 +108,7 @@ export const PlayerProfileScreen = ({
   <PlayerScreenFrame saveId={saveId} playerId={playerId} tab="playerProfile">
     {(profile) => (
       <>
+        <ScoutPlayerAction saveId={saveId} playerId={playerId} profile={profile} />
         <div className="mt-3 grid gap-3 lg:grid-cols-3">
           <AttributeColumn category="technical" attributes={profile.attributes} />
           <AttributeColumn category="mental" attributes={profile.attributes} />

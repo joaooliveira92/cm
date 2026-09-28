@@ -9,7 +9,7 @@ records the change.
 
 Type: task
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Blocked by:** none.
 
@@ -40,12 +40,38 @@ shortlist (124 stays deferred), and Scout Player on any other screen.
 **Parallel work:** Group J ticket 10 adds Make Offer to the same Profile bar. Whichever lands second
 adds its button next to the first one; neither owns the bar.
 
-- [ ] The Player Profile's bar shows Scout Player for a Player outside the manager's squad
-- [ ] For the manager's own Player the verb is disabled, and the bar's reason line says why
-- [ ] With no Scouts on the staff the verb is disabled, and the reason says so
-- [ ] Choosing a Scout calls `assignScout` with that Scout and the Player, and the Scouting Assignment
+- [x] The Player Profile's bar shows Scout Player for a Player outside the manager's squad
+- [x] For the manager's own Player the verb is disabled, and the bar's reason line says why
+- [x] With no Scouts on the staff the verb is disabled, and the reason says so
+- [x] Choosing a Scout calls `assignScout` with that Scout and the Player, and the Scouting Assignment
       screen then shows the Scout watching that Player (invalidation, not a manual refetch)
-- [ ] An Archived Save's refusal shows `SaveArchivedError`'s sentence inline
-- [ ] Renderer test for the picker and the mutation call; `pnpm check:all` green
+- [x] An Archived Save's refusal shows `SaveArchivedError`'s sentence inline
+- [x] Renderer test for the picker and the mutation call
+- [ ] `pnpm check:all` green: every gate passes except `test`, where four main-process season tests time out (see Answer)
+
+## Answer
+
+Resolved 2026-09-28. Renderer-only, as scoped:
+
+- `assignScoutMutation` in `apps/desktop/src/renderer/rpc/mutations.ts`, invalidating the scouting key
+  only (`INVALIDATION_RULES.assignScout`, asserted in `seam.test.ts`).
+- `ScoutPlayerDialog` (`apps/desktop/src/renderer/scouting/`) lists every Scout with `statusOf`, now
+  exported from `AssignScoutPanel`. A Scout already on this Player reads "Watching this player" with
+  no Assign button; a refusal shows inline and keeps the picker open; success closes it.
+- `ScoutPlayerAction` (`apps/desktop/src/renderer/playerProfile/`) registers the verb with the career
+  bar. It is held with a reason for the manager's own Player (club compared through the squad read),
+  for a club with no Scouts, and when the scouting board fails to load.
+- `scout-player.test.tsx` covers all five criteria above against a stubbed preload.
+
+An Archived Save is not pre-checked: the command's `SaveArchivedError` is shown inline, as the ticket
+asks. Scouting Assignment disables its controls up front instead, so the two surfaces differ there.
+
+Gates: typecheck, lint, effect-lint, verify-md-links and verify-db-schema pass. `test` did not:
+`retention-match-streams`, `retention-participation`, `rollover-closed-world` and `rollover-exchange`
+under `apps/desktop/test/main/season/` hit the 900 s timeout twice. None of them loads renderer code.
+Both runs shared the machine with other sessions' full suites, so it is not yet known whether this is
+load or a regression from today's `1a72355d` (Contract end date) or `805e3a5c` (training schedule).
+Ticket 10 must add Make Offer to this same registration: a screen has one bar slot, so a second
+`useScreenBottomBarActions` call would replace this one.
 
 ## Comments

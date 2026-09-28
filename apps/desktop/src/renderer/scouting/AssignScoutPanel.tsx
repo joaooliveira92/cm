@@ -17,7 +17,7 @@ import {
 const NEEDS_RENEWAL = new Set<TeamScoutReportView["freshness"]>(["aging", "stale"]);
 
 /** What a scout is doing, in one line, so the choice of whom to redirect is made knowingly. */
-const statusOf = (scout: ScoutingTargetView): string => {
+export const statusOf = (scout: ScoutingTargetView): string => {
   if (scout.targetClubName !== null) return `Watching ${scout.targetClubName}`;
   if (scout.playerName !== null) return `Watching ${scout.playerName}`;
   return "Free";

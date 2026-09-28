@@ -71,6 +71,9 @@ export const INVALIDATION_RULES = {
   /** A scouting assignment changes who is watching whom and nothing else, so it invalidates the
    * scouting key — which the scouting board and every Team Scout Report read — and nothing wider. */
   assignScoutToClub: (saveId: SaveId): ReadonlyArray<unknown> => [scoutingKey(saveId)],
+  /** Pointing a scout at a Player changes the same thing a Club assignment does. The Player's
+   * figures are untouched until the Calendar advances, so the squad key stays out of it. */
+  assignScout: (saveId: SaveId): ReadonlyArray<unknown> => [scoutingKey(saveId)],
   /** Ending an assignment frees a scout and files the reading a Club watch leaves behind, both of
    * which the scouting key covers, so it invalidates exactly what assigning does. */
   unassignScout: (saveId: SaveId): ReadonlyArray<unknown> => [scoutingKey(saveId)],
@@ -190,6 +193,19 @@ export const assignScoutToClubEffect = (
 /** `assignScoutToClub` — mutation atom. */
 export const assignScoutToClubMutation = rpcRuntime.fn(
   (input: RpcPayload<"assignScoutToClub">) => assignScoutToClubEffect(input),
+);
+
+/** `assignScout` — invalidates `["scouting", saveId]` only. */
+export const assignScoutEffect = (
+  input: RpcPayload<"assignScout">,
+): MutationEffect<"assignScout"> =>
+  call("assignScout", input).pipe(
+    Reactivity.mutation(INVALIDATION_RULES.assignScout(input.saveId)),
+  );
+
+/** `assignScout` — mutation atom. */
+export const assignScoutMutation = rpcRuntime.fn(
+  (input: RpcPayload<"assignScout">) => assignScoutEffect(input),
 );
 
 /** `unassignScout` — invalidates `["scouting", saveId]` only. */

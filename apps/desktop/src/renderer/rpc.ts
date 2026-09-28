@@ -65,6 +65,7 @@ export { contractOfferAtom } from "./rpc/contractOfferQueries.js";
 export {
   INVALIDATION_RULES,
   advanceCalendarMutation,
+  assignScoutMutation,
   assignScoutToClubMutation,
   changeTacticsMutation,
   changeTrainingScheduleMutation,
