@@ -67,8 +67,9 @@ export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerV
    *  inside the expiry sweep where the row is gone and the player not yet moved (`db/schema.ts`).
    *  `null`, never `0`: a free player is not one paid nothing. */
   contractWage: Schema.NullOr(Schema.Finite),
-  /** The last day the Contract runs (ISO `YYYY-MM-DD`): the eve of the Season whose rollover frees
-   *  the player. `null` exactly when `contractWage` is. */
+  /** The last day the Contract runs (ISO `YYYY-MM-DD`): `seasonEndDate` of its last Season. The
+   *  player is freed at that Season's `SeasonConcluded`, which cannot fall later, and the calendar
+   *  jumps from there to the next Season's start. `null` exactly when `contractWage` is. */
   contractExpiryDate: Schema.NullOr(Schema.String),
   /** The player's Transfer Value in Credits, exact — this read serves a club's own squad. */
   transferValue: Schema.Finite,

@@ -149,6 +149,14 @@ export const seasonStartDate = (referenceYear: number, seasonNumber: number): Is
   seasonSlots(seasonStartYear(referenceYear, seasonNumber)).seasonStartDate;
 
 /**
+ * The last day a season can run to: 31 May of the year after it starts. Every slot sits inside
+ * `seasonWindow`, and a competition that does not fit fails season setup rather than spilling
+ * past it, so the season's last fixture, and with it `SeasonConcluded`, can fall no later.
+ */
+export const seasonEndDate = (referenceYear: number, seasonNumber: number): IsoDate =>
+  toIso(seasonWindow(seasonStartYear(referenceYear, seasonNumber)).to);
+
+/**
  * A season named by the two calendar years it spans — `2026/27`. A season runs July to May, so a
  * single year never identifies one; the two-digit tail is the convention every football table
  * uses. Lives here rather than in a renderer because the span is a fact about this calendar, and a

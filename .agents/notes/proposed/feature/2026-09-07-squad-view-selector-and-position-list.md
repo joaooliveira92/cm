@@ -39,8 +39,11 @@ eight:
 - *Traditional* — the position list below.
 - *General Info* — Nationality, Birthplace, Condition, Training Focus.
 - *Contract* — Wage, Contract ends, Transfer Value, read exact off `SquadPlayerView`
-  (`squad-instructions` ticket 02). Contract ends is the eve of the Season whose rollover frees the
-  player, so it sorts as a date. Transfer Value stands where CM shows an asking price, because no
+  (`squad-instructions` ticket 02). Contract ends is `seasonEndDate` of the Contract's last Season:
+  31 May, the latest that Season can conclude. The model stores only `years_remaining`, and
+  `SeasonConcluded` frees the player, then jumps the calendar straight to the next Season's start.
+  So an earlier cut, the eve of the next Season, named a date two months after he had left. The
+  date sorts as a date. Transfer Value stands where CM shows an asking price, because no
   asking-price model exists.
 - *Physical, Mental, Goalkeeping* — the Attribute Categories of the same names.
 - *Defensive, Attacking* — UI groupings that cut across Categories (`visibility.ts`), because a

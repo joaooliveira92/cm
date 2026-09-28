@@ -55,7 +55,9 @@ instruction's §9 "Contract View", minus the columns that rest on no model.
 Built as specified, alongside the View catalogue's move to CM's names (Traditional, General Info,
 Contract, Physical, Mental, Goalkeeping, Defensive, Attacking). The contract row joins the squad
 read's existing player query, so there is no extra query, per player or otherwise. The model has no
-expiry date, only `years_remaining`, which the rollover decrements. So Contract ends is derived: the
-eve of `seasonStartDate` for Season current + `years_remaining`, the Season whose rollover frees the
-player. Selection and Statistics are held; see the Agent Note
+expiry date, only `years_remaining`, which `SeasonConcluded` decrements before freeing the player at
+zero. So Contract ends is derived: `seasonEndDate` (31 May) of Season current + `years_remaining` - 1,
+the latest that Season can conclude. The first cut used the eve of the next Season's start. That
+date lies in the gap the calendar skips at the rollover, two months after the player has left. A
+test that plays a Season to its rollover now pins the fix. Selection and Statistics are held; see the Agent Note
 `2026-09-07-squad-view-selector-and-position-list.md`.

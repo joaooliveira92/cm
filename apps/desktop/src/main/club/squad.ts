@@ -10,13 +10,12 @@ import {
   nationName,
   overallRating,
   positionRating,
-  seasonStartDate,
+  seasonEndDate,
   transferValue,
   type Category,
   type PlayerAttributes,
   type PlayerPosition,
 } from "@cm-clone/shared";
-import { format, parseISO, subDays } from "date-fns";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "../world/displayNames.js";
@@ -36,8 +35,8 @@ interface PlayerRow {
   readonly potentialAbility: number;
   /** `null` when the player has no active Contract. */
   readonly contractWage: number | null;
-  /** The Season whose rollover frees the player, `null` with no active Contract. */
-  readonly freedSeason: number | null;
+  /** The last Season the Contract covers, `null` with no active Contract. */
+  readonly lastSeason: number | null;
   readonly referenceYear: number;
   readonly [attribute: string]: unknown;
 }
@@ -78,9 +77,9 @@ export const loadSquadPlayers = (clubId: ClubId) =>
               p.nationality as "nationality", bc.name as "birthplace",
               p.nationality <> cc.nation_id as "foreign",
               p.potential_ability as "potentialAbility", ct.wage as "contractWage",
-              -- The rollover decrements years_remaining and frees the player at zero, so a
-              -- Contract with n years left runs out as Season current + n opens.
-              COALESCE(${CURRENT_SEASON_NUMBER_SQL}, 1) + ct.years_remaining as "freedSeason",
+              -- SeasonConcluded decrements years_remaining and frees the player at zero, so a
+              -- Contract with n years left covers this Season and the n - 1 after it.
+              COALESCE(${CURRENT_SEASON_NUMBER_SQL}, 1) + ct.years_remaining - 1 as "lastSeason",
               (SELECT reference_year FROM generation_manifest WHERE id = 1) as "referenceYear"
        FROM players p
        -- A club's nation is its home city's; there is no nation column on clubs.
@@ -135,9 +134,7 @@ export const loadSquadPlayers = (clubId: ClubId) =>
         foreign: row.foreign === 1,
         contractWage: row.contractWage,
         contractExpiryDate:
-          row.freedSeason === null
-            ? null
-            : format(subDays(parseISO(seasonStartDate(row.referenceYear, row.freedSeason)), 1), "yyyy-MM-dd"),
+          row.lastSeason === null ? null : seasonEndDate(row.referenceYear, row.lastSeason),
         transferValue: transferValue(overall, age, row.potentialAbility),
       });
     });
