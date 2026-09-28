@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,6 +13,7 @@ import { registerActionHandler } from "../../actions/dispatch.js";
 import { NO_DRAG } from "../../chrome/header/drag-region.js";
 import { NAV_GROUPS, NAV_SECTIONS } from "../nav-config.js";
 import { CareerSidebarFooter, type SidebarManager } from "./CareerSidebarFooter.js";
+import { createSectionFlyoutHandle, SectionFlyout } from "./SectionFlyout.js";
 import { SidebarNavSection } from "./SidebarNavSection.js";
 
 /** Binds the `toggle-sidebar` Action to this sidebar for as long as it is mounted. Its own
@@ -45,7 +46,8 @@ const SidebarToggleAction = () => {
  *
  * The sections render under `NAV_GROUPS` headings, which are display only: one
  * `Primary navigation` landmark still wraps them all, and the keyboard prefix
- * still counts through `NAV_SECTIONS`.
+ * still counts through `NAV_SECTIONS`. Every row opens the one `SectionFlyout`,
+ * so moving between sections animates a single panel rather than swapping two.
  */
 export const CareerSidebar = ({
   badges,
@@ -55,33 +57,38 @@ export const CareerSidebar = ({
     | Readonly<Record<string, { readonly count: number; readonly label: string }>>
     | undefined;
   readonly manager?: SidebarManager | null | undefined;
-}) => (
-  <Sidebar collapsible="icon" style={NO_DRAG}>
-    <SidebarContent>
-      <nav aria-label="Primary navigation">
-        {NAV_GROUPS.map((group) => (
-          <SidebarGroup key={group.label} className="py-1">
-            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-            <SidebarMenu>
-              {group.sectionIds.map((id) => {
-                const section = NAV_SECTIONS.find((candidate) => candidate.id === id);
-                return section === undefined ? null : (
-                  <SidebarNavSection
-                    key={section.id}
-                    section={section}
-                    badgeCount={badges?.[section.id]?.count}
-                    badgeLabel={badges?.[section.id]?.label}
-                  />
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroup>
-        ))}
-      </nav>
-    </SidebarContent>
-    <SidebarSeparator />
-    <CareerSidebarFooter manager={manager ?? null} />
-    <SidebarRail />
-    <SidebarToggleAction />
-  </Sidebar>
-);
+}) => {
+  const [flyout] = useState(createSectionFlyoutHandle);
+  return (
+    <Sidebar collapsible="icon" style={NO_DRAG}>
+      <SidebarContent>
+        <nav aria-label="Primary navigation">
+          {NAV_GROUPS.map((group) => (
+            <SidebarGroup key={group.label} className="py-1">
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarMenu>
+                {group.sectionIds.map((id) => {
+                  const section = NAV_SECTIONS.find((candidate) => candidate.id === id);
+                  return section === undefined ? null : (
+                    <SidebarNavSection
+                      key={section.id}
+                      section={section}
+                      flyout={flyout}
+                      badgeCount={badges?.[section.id]?.count}
+                      badgeLabel={badges?.[section.id]?.label}
+                    />
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroup>
+          ))}
+        </nav>
+      </SidebarContent>
+      <SidebarSeparator />
+      <CareerSidebarFooter manager={manager ?? null} />
+      <SidebarRail />
+      <SidebarToggleAction />
+      <SectionFlyout handle={flyout} />
+    </Sidebar>
+  );
+};

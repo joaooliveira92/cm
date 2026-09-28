@@ -27,6 +27,16 @@ and clicking one shows its items beside it.
    `NAV_GROUPS` heading. The popover opens to the right of the row (`side="right"`, `align="start"`)
    and is portalled, so it works the same in the icon rail.
 
+   It is **one** popover, `SectionFlyout`, with the section rows as detached triggers (a
+   `Popover.createHandle` handle, the section as each trigger's payload), not a popover per row.
+   That is what gives it the navigation menu's motion: moving to another section is a trigger change
+   on the same popup, so the positioner glides to the new row, the popup resizes to the new list,
+   and Base UI's `Popover.Viewport` slides the old list out and the new one in along the direction of
+   travel. Popovers per row could only close one panel and open another. The transitions are plain
+   CSS on `data-section-flyout` in `index.css`, keyed on Base UI's `data-starting-style`,
+   `data-ending-style` and `data-activation-direction`, and switched off under
+   `prefers-reduced-motion`.
+
 3. **One panel at a time, closed on navigation.** `use-nav-state.ts` holds `openSectionId`; `goTo`
    clears it. There is no route-following default any more, because a panel floating over the
    screen should open only when asked. Base UI unmounts a closed popup, so an item label two
@@ -76,4 +86,6 @@ would not reflow anything, but it would flash panels.
 - e2e `goto` names an item for every screen, including a section's default screen, because a
   section click no longer navigates.
 - Tests that want the current item's `aria-current` open the section's panel first.
+- While the panel moves between sections it briefly holds an inert snapshot of the outgoing list,
+  so a test that counts submenu landmarks right after a switch waits for the transition to finish.
 - `docs/menu.md` §1 and §19 describe the panel rather than an expanded section.

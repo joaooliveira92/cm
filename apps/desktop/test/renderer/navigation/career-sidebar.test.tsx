@@ -168,8 +168,9 @@ describe("the career sidebar", () => {
 
   /**
    * One panel at a time. This is what keeps an item label that two sections share — "Transfers"
-   * belongs to Squad and to Recruitment — resolving to exactly one control, and it is why the
-   * popover must unmount rather than merely hide its contents.
+   * belongs to Squad and to Recruitment — resolving to exactly one control. While the panel slides
+   * from one section to the next it briefly holds an inert snapshot of the outgoing list, so the
+   * count is taken once that transition has cleaned up.
    */
   it("holds exactly one panel open", async () => {
     await mountSidebar("squad");
@@ -178,7 +179,9 @@ describe("the career sidebar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Recruitment" }));
 
     await screen.findByRole("navigation", { name: "Recruitment submenu" });
-    expect(screen.getAllByRole("navigation", { name: /submenu$/ })).toHaveLength(1);
+    await waitFor(() =>
+      expect(screen.getAllByRole("navigation", { name: /submenu$/ })).toHaveLength(1),
+    );
     expect(screen.getByRole("button", { name: "Transfers" })).toBeTruthy();
     // The route did not change, so Squad keeps the active marker with another panel open.
     expect(screen.getByRole("button", { name: "Squad" }).getAttribute("aria-current")).toBe("page");
