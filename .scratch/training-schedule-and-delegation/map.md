@@ -56,10 +56,13 @@ Ruled by the human on 2026-09-28. The spec is [spec.md](spec.md); the build tick
 ## Fog
 
 - Whether a Training Camp (Screen 117) is one pre-season template of the same model or its own thing.
-- Regimen does not reach between-match recovery at HEAD, although `CONTEXT.md` says it does. This is
-  a separate defect, outside this effort; the schedule's bound holds either way.
 
 ## Out of scope
+
+- The Regimen Pillar reaching Condition and injury severity. It is unwired at HEAD although
+  `CONTEXT.md` says otherwise; filed separately as
+  [regimen-binding-unwired 01](../regimen-binding-unwired/issues/01-regimen-never-reaches-condition-or-severity.md).
+  The schedule's band holds either way.
 
 - Training units and cohorts (Screen 107), position and role training (109), traits (110), mentoring
   (115), youth intake (116).
