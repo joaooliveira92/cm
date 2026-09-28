@@ -35,6 +35,52 @@ describe("Continue in the chrome", () => {
     expect(counters.advanceCalls).toBe(1);
   });
 
+  it("opens Match day at the pre-match boundary instead of advancing", async () => {
+    // Advancing while a fixture awaits writes nothing, so a press that only
+    // advanced looked like a dead button.
+    counters.advanceCalls = 0;
+    mockPreload(async (method) => {
+      if (method === "advanceCalendar") counters.advanceCalls += 1;
+      if (method === "getLeagueTable") {
+        return {
+          _tag: "Success",
+          value: {
+            season: {
+              seasonNumber: 3,
+              currentDate: "2026-10-17",
+              phase: "in_season" as const,
+              awaitingFixture: {
+                fixtureId: 1,
+                date: "2026-10-17",
+                competitionId: "league",
+                opponentClubId: rid("c2"),
+                opponentClubName: "Eastfield",
+                isHome: true,
+                matchId: null,
+                blockers: [],
+                advisories: [],
+              },
+            },
+            standings: [],
+          },
+        } as never;
+      }
+      return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: rid("s1") } } as never;
+    });
+    await mountRoutedCareer("fixtures");
+    const targets: unknown[] = [];
+    bindRouter({
+      navigate: (target: unknown) => targets.push(target),
+      history: { back: () => undefined, forward: () => undefined, canGoBack: () => false },
+    } as never);
+
+    const button = await screen.findByRole("button", { name: /Go to Match/ });
+    act(() => button.click());
+
+    expect(counters.advanceCalls).toBe(0);
+    expect(targets).toEqual([expect.objectContaining({ to: "/career/$saveId/match" })]);
+  });
+
   it("answers Space from a screen that is not the league table", async () => {
     await mountCareer("in_season", "fixtures");
     // The chrome publishes the phase/advancing read model the registry's

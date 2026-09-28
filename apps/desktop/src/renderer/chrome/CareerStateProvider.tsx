@@ -155,12 +155,19 @@ export const CareerStateProvider = ({
     return () => clearScopeState("phase", "advancing");
   }, [advancing, season]);
 
+  // At the pre-match boundary the advance deliberately writes nothing, so pressing "Go to Match" has
+  // to take the player to Match day rather than ask the Calendar to move again.
+  const awaitingMatch = season !== null && season.awaitingFixture !== null;
   useEffect(() => {
     return registerActionHandler("continue", () => {
       if (continueDisabled) return;
+      if (awaitingMatch) {
+        navigate({ type: "match", saveId });
+        return;
+      }
       void runAdvance({ saveId });
     });
-  }, [continueDisabled, runAdvance, saveId]);
+  }, [awaitingMatch, continueDisabled, runAdvance, saveId]);
 
   const [report, setReport] = useState<ContinueReport | null>(null);
   const advanceError = typedError(advance);

@@ -26,6 +26,7 @@ import { setActiveMatch, clearActiveMatch } from "../../src/renderer/match/sessi
 import { saveSquadViewId } from "../../src/renderer/squad/squadViews.js";
 import { RegistryProvider } from "../../src/renderer/rpc.js";
 import { renderInRouter } from "../setup/renderInRouter.js";
+import { MATCH_COLOURS } from "./match/matchColours.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -169,6 +170,7 @@ const resumedMatch = () => ({
     homeClubName: "Home FC",
     awayClubId: ClubId.make("away"),
     awayClubName: "Away FC",
+    ...MATCH_COLOURS,
     isHome: true,
   },
   // The session is mid-stream: `resumedMatch` stands in for a live resume, which is the

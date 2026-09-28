@@ -1,4 +1,3 @@
-import { Scoreboard } from "./Scoreboard.js";
 import { useMatchContext } from "./MatchProvider.js";
 import { useCommentaryContext } from "./CommentaryProvider.js";
 import { useMatchStreaming } from "./streaming.js";
@@ -9,15 +8,10 @@ export const MatchCommentaryStream = () => {
   const { state: comm } = useCommentaryContext();
   const { match } = state;
   if (match === null) return null;
+  // The score lives in the career header while the match is on (`chrome/header/MatchHeader.tsx`).
   return (
     <>
-      <Scoreboard
-        homeClubName={match.homeClubName}
-        homeScore={comm.homeScore}
-        awayScore={comm.awayScore}
-        awayClubName={match.awayClubName}
-      />
-      <p className="mt-3 text-sm text-text-secondary">
+      <p className="text-sm text-text-secondary">
         {state.phase === "complete" ? "Full time" : state.phase === "paused" ? "Paused — awaiting decision" : "Live"}
       </p>
 

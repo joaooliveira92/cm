@@ -24,8 +24,7 @@ export const MarketTable = () => {
   const { speak } = meta;
 
   return (
-    <section className="mt-6">
-      <h2 className="text-lg font-semibold">Market</h2>
+    <section>
       <TableLoadingProvider busy={refreshState._tag === "Refreshing"} loadError={null}>
         <TablePanel
           tableId={MARKET}

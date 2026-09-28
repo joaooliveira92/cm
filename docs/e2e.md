@@ -16,7 +16,7 @@ Season Summary asserts its verdict, but only against a seeded save.
 | League Table | `getLeagueTable` | "League Table" heading + 20-row table |
 | Fixtures | `getFixtures` | "Fixtures" heading + fixture list |
 | Match Day | `startMatch` + `resumeSimulation` + `commitMatchday` | match header + feed; toggle control panel, submit a command, assert status text (never commentary/scores) |
-| Transfers | `getTransfersScreen` | budget line + Market & Free Agents sections |
+| Transfers | `getTransfersScreen` | budget line + one tab per table, opening on Market |
 | Season Summary | `getSeasonSummary` | verdict against a seeded save |
 
 ## Journey suite — `e2e/journeys.spec.ts`

@@ -230,13 +230,17 @@ test("Match Day arrival resumes a pending match instead of starting one (AC-15)"
   await goto(page, "transfers");
   await expect(page.getByRole("heading", { name: /Transfers/ })).toBeVisible();
 
-  await goto(page, "match day");
-  // Resumed: the same live scoreboard, and no fresh match picker on arrival.
+  // The header scoreboard follows the match session, not the screen: it stays up away from Match day.
   await expect(matchScore(page)).toBeVisible();
+
+  await goto(page, "match day");
+  // Resumed: the live feed's status line, and no fresh match picker on arrival.
+  const matchStatus = page.getByRole("main", { name: "Match day" }).getByText(/^(Live|Paused — awaiting decision|Full time)$/);
+  await expect(matchStatus).toBeVisible();
   await expect(page.getByRole("button", { name: "Play match" })).not.toBeVisible();
   // Continued from the revealed position, not replayed from kickoff (group-g-match-day 23): the feed
   // is back at once, with every line revealed before leaving. Read once, without retrying, the moment
-  // the scoreboard is back: a replay reveals one line per pacing tick, so it cannot pass a retry here.
+  // the feed is back: a replay reveals one line per pacing tick, so it cannot pass a retry here.
   expect(await page.getByText("Kick-off is coming up...").isVisible()).toBe(false);
   const revealedOnReturn = await feedLines.allInnerTexts();
   expect(revealedOnReturn.slice(0, revealedBeforeLeaving.length)).toEqual(revealedBeforeLeaving);

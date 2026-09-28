@@ -8,6 +8,7 @@ import type { SaveId } from "@cm-clone/contracts";
 import { dispatchAction } from "../actions/dispatch.js";
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs.js";
 import { describeRpcError } from "../rpc.js";
 import { FOCUS_RING } from "../focus.js";
 import { MarketTable } from "./MarketTable.js";
@@ -18,6 +19,7 @@ import { BidComposer } from "./BidComposer.js";
 import { CounterOfferModal } from "./CounterOfferModal.js";
 import { formatCredits } from "../format.js";
 import { TransfersProvider, useTransfers } from "./TransfersProvider.js";
+import type { TransfersTab } from "./useTransfersScreen.js";
 import { STATE_COPY } from "../table/viewState.js";
 
 export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => (
@@ -27,8 +29,8 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => (
 );
 
 const TransfersScreenInner = () => {
-  const { state } = useTransfers();
-  const { status, refreshState, viewError, view } = state;
+  const { state, actions } = useTransfers();
+  const { status, refreshState, viewError, view, tab } = state;
 
   // Blocking load failure = error with NO retained rows (a failed revalidation
   // keeps `view` — that path renders the tables with a non-blocking line, F1).
@@ -104,13 +106,30 @@ const TransfersScreenInner = () => {
         </p>
       )}
 
-      <IncomingBidsTable />
-
-      <OutgoingBidsTable />
-
-      <FreeAgentsTable />
-
-      <MarketTable />
+      <Tabs
+        value={tab}
+        onValueChange={(next: TransfersTab) => actions.setTab(next)}
+        className="mt-6"
+      >
+        <TabsList variant="line" aria-label="Transfer tables">
+          <TabsTrigger value="incoming">Incoming Bids</TabsTrigger>
+          <TabsTrigger value="outgoing">Outgoing Bids</TabsTrigger>
+          <TabsTrigger value="free-agents">Free Agents</TabsTrigger>
+          <TabsTrigger value="market">Market</TabsTrigger>
+        </TabsList>
+        <TabsContent value="incoming">
+          <IncomingBidsTable />
+        </TabsContent>
+        <TabsContent value="outgoing">
+          <OutgoingBidsTable />
+        </TabsContent>
+        <TabsContent value="free-agents">
+          <FreeAgentsTable />
+        </TabsContent>
+        <TabsContent value="market">
+          <MarketTable />
+        </TabsContent>
+      </Tabs>
 
       <BidComposer />
 

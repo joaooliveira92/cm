@@ -25,6 +25,7 @@ import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { setActiveMatch } from "../../../src/renderer/match/session.js";
 import { teachingSplashStorageKey } from "../../../src/renderer/discoverability/TeachingSplash.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
+import { MATCH_COLOURS } from "./matchColours.js";
 
 export const rid = (id: string) => SaveId.make(id);
 
@@ -149,6 +150,7 @@ export const session = (overrides: SessionOverrides = {}) => ({
     homeClubName: "Home FC",
     awayClubId: rid("away"),
     awayClubName: "Away FC",
+    ...MATCH_COLOURS,
     isHome: overrides.isHome ?? true,
   },
   phase: "live" as const,

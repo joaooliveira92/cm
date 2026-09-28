@@ -57,6 +57,9 @@ export type { SelectedPlayer } from "./useTransferTables.js";
 
 type TransferError = RpcClientError<"getTransfersScreen">;
 
+/** The screen's four tabs, one per table. */
+export type TransfersTab = "incoming" | "outgoing" | "free-agents" | "market";
+
 /** Data the transfers screen shows or holds. */
 export interface TransfersScreenState {
   readonly status: string | null;
@@ -73,6 +76,7 @@ export interface TransfersScreenState {
   readonly marketFiltered: readonly MarketPlayerRow[];
   readonly freeFiltered: readonly MarketPlayerRow[];
   readonly refreshState: RefreshState;
+  readonly tab: TransfersTab;
   readonly windowOpen: boolean;
   readonly draft: BidDraft | null;
   readonly draftedPlayer: MarketPlayerRow | null;
@@ -87,6 +91,7 @@ export interface TransfersScreenState {
 /** Commands siblings raise against the shared transfers state. */
 export interface TransfersScreenActions {
   readonly setSelected: (next: SelectedPlayer | null) => void;
+  readonly setTab: (next: TransfersTab) => void;
   /** Advance the bid draft by one event, reduced against the live draft. Keeps
    *  the draft ref module-internal so no leaf has to hold a mutable ref. */
   readonly updateDraft: (event: BidDraftEvent) => void;
@@ -164,6 +169,8 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
   const marketRowsRef = useRef<readonly MarketPlayerRow[]>([]);
   const freeAgentRowsRef = useRef<readonly MarketPlayerRow[]>([]);
 
+  // Market first: the bid workflow starts there, and `focus-bid` lands on its first row.
+  const [tab, setTab] = useState<TransfersTab>("market");
   const [selected, setSelected] = useState<SelectedPlayer | null>(null);
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
@@ -298,6 +305,7 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
     offerTermsRef,
     amountInputRef,
     marketIdsRef,
+    showMarket: () => setTab("market"),
     refresh,
     onBid,
     onSignFreeAgent,
@@ -345,6 +353,7 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
       marketFiltered,
       freeFiltered,
       refreshState,
+      tab,
       windowOpen,
       draft,
       draftedPlayer,
@@ -357,6 +366,7 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
     },
     actions: {
       setSelected,
+      setTab,
       updateDraft,
       setCounter,
       setCounterAmount,

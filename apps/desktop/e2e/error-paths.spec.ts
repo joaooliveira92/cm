@@ -7,9 +7,7 @@ test("generic transfer failure — bidding above budget shows failed status", as
   // AC-29: bid entry lives in the contextual Actions region, not in the table
   // rows — select the first Market player (its name control), which mounts the
   // region, then bid an unaffordable amount.
-  const market = window
-    .getByRole("heading", { name: "Market", exact: true })
-    .locator("xpath=ancestor::section");
+  const market = window.getByRole("table", { name: "Market" });
   const firstRow = market.locator("tbody tr").first();
   await firstRow.locator("td").first().locator("button").click();
 

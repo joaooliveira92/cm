@@ -58,7 +58,7 @@ afterEach(() => {
 });
 
 describe("MatchDayScreen at full time — the settled feed stays on screen (no lost commentary)", () => {
-  it("keeps the scoreboard, the Full time status, the revealed feed and the final score row", async () => {
+  it("keeps the Full time status, the revealed feed and the final score row", async () => {
     fullTimeSession();
     mockPreload(async () => ({ _tag: "Failure", error: NOT_FOUND } as never));
     render(
@@ -67,11 +67,9 @@ describe("MatchDayScreen at full time — the settled feed stays on screen (no l
       </RegistryProvider>,
     );
 
-    // The scoreboard and status line survive the isComplete → MatchComplete swap.
+    // The status line survives the isComplete → MatchComplete swap. The score itself is the career
+    // header's (chrome/match-header.test.tsx), which this screen-only mount does not render.
     await screen.findByText("Full time");
-    expect(screen.getAllByText("2").length).toBeGreaterThan(0);
-    expect(screen.getByText("Home FC")).toBeTruthy();
-    expect(screen.getByText("Away FC")).toBeTruthy();
 
     // The settled feed is still readable line by line.
     expect(screen.getByText("Goal!")).toBeTruthy();

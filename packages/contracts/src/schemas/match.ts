@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import { ClubColoursView } from "./clubs.js";
 import { ClubId, FixtureId, MatchId, PlayerId } from "./ids.js";
 import { ReadinessBlockerView } from "./season.js";
 import { PositionSchema } from "./squad.js";
@@ -15,14 +16,19 @@ export class MatchNotFoundError extends Schema.TaggedError<MatchNotFoundError>()
  * Keyed on the Fixture rather than on a fresh id: every match the human plays is one the Calendar
  * scheduled, so the stream and the Fixture are one identity. The home and away clubs come from the
  * Fixture too — the player does not choose an opponent and is not automatically seated at home.
+ *
+ * Both clubs' colours ride here rather than on `ClubSummary` because the match scoreboard is their
+ * only match-time reader: it paints each half of the career header in its club's primary pair.
  */
 export class MatchSummary extends Schema.Class<MatchSummary>("MatchSummary")({
   matchId: MatchId,
   fixtureId: FixtureId,
   homeClubId: ClubId,
   homeClubName: Schema.String,
+  homeClubColours: ClubColoursView,
   awayClubId: ClubId,
   awayClubName: Schema.String,
+  awayClubColours: ClubColoursView,
   /** Whether the human club is the home side, taken from the Fixture. */
   isHome: Schema.Boolean,
 }) {}

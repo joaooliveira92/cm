@@ -286,11 +286,11 @@ export const goto = async (page: Page, screen: Screen): Promise<void> => {
 };
 
 /**
- * The live match scoreboard.
+ * The live match scoreboard: the career header, from kickoff until the result is accepted.
  *
- * It is a labelled region reading "Home 1 – 0 Away", not the `<h?>` with a hyphen that the suite
- * used to match on — and the separator is an en-dash, so the old `/ - /` pattern would not match
- * the text even if the role were still right.
+ * A labelled region holding the two clubs, their scores and the match clock. It follows the match
+ * session rather than the Match day screen, so it is visible on every screen mid-match — being
+ * visible says a match is on, not that Match day is showing.
  */
 export const matchScore = (page: Page): Locator =>
   page.getByRole("region", { name: "Match score" });

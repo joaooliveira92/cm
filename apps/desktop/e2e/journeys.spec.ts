@@ -369,9 +369,7 @@ test("a transfer bid settles and the budget reflects the spend (keyboard)", asyn
   await expect(budgetLine).toBeVisible();
   const before = parseTransferBudget((await budgetLine.textContent()) ?? "");
 
-  const market = page
-    .getByRole("heading", { name: "Market", exact: true })
-    .locator("xpath=ancestor::section");
+  const market = page.getByRole("table", { name: "Market" });
   const firstRow = market.locator("tbody tr").first();
   const playerName = (await firstRow.locator("td").nth(0).textContent())!.trim();
   const value = parseCr((await firstRow.locator("td").nth(4).textContent()) ?? "");
@@ -397,9 +395,8 @@ test("a transfer bid settles and the budget reflects the spend (keyboard)", asyn
   await page.keyboard.press("Enter");
   await expect(page.getByText(/Bid: done\./)).toBeVisible();
 
-  const outgoing = page
-    .getByRole("heading", { name: "Outgoing Bids" })
-    .locator("xpath=ancestor::section");
+  await page.getByRole("tab", { name: "Outgoing Bids" }).click();
+  const outgoing = page.getByRole("tabpanel", { name: "Outgoing Bids" });
   const bidRow = outgoing.getByRole("row").filter({ hasText: playerName });
   await expect(bidRow.locator("td").nth(4)).toHaveText("accepted");
   await expect(bidRow.locator("td").nth(2)).toHaveText(`${value.toLocaleString()} Cr`);

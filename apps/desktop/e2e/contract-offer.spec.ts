@@ -83,6 +83,7 @@ test("a Free Agent is signed on the Role, length and wage the offer published", 
   await continueSeededCareer(page, "Seed: offered free agents");
 
   await goto(page, "transfers");
+  await page.getByRole("tab", { name: "Free Agents" }).click();
   await expect(freeAgents(page).getByRole("row").first()).toBeVisible();
   // Header plus the two Players the seed detached: both are signing candidates, neither is listed
   // in the Market, and the Club cell says so.
@@ -121,6 +122,7 @@ test("the wage gate is the band's own boundaries, and a Fully Scouted player has
   await continueSeededCareer(page, "Seed: offered free agents");
 
   await goto(page, "transfers");
+  await page.getByRole("tab", { name: "Free Agents" }).click();
   await expect(freeAgents(page).getByRole("row").first()).toBeVisible();
 
   // Both seeded Players, one after the other: the form is proven against whatever knowledge each

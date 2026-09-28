@@ -150,12 +150,12 @@
   --color-header-hover: var(--color-surface-raised);
 
   /* --- Scoreboard (match-day only) ---------------------------------------
-     The one match-only token family. The neutral chrome-band + white-score-box
-     pattern is the archetypal match-day picture and needs no club data; a
-     future club-colour upgrade is a token change, not a redesign. The band
-     reuses the shared chrome gradient, so only the score box is match-only. */
-  --color-scoreboard-box: var(--foreground);
-  --color-scoreboard-box-text: var(--background);
+     The one match-only token family: the score boxes of the header scoreboard.
+     Each half of the board paints in its club's colours through the header
+     roles, so the boxes are fixed white-on-dark rather than theme-tracking —
+     they sit on whatever two clubs are playing, never on the theme's surface. */
+  --color-scoreboard-box: #ffffff;
+  --color-scoreboard-box-text: #111111;
 
   /* --- Pitch (tactics diagram) ------------------------------------------
      The formation pitch on the Tactics editor: two mown-stripe greens, white

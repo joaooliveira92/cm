@@ -5,6 +5,7 @@
  * nothing else in the screen writes them.
  */
 import { useCallback, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import type { BidId, PlayerId, Role, RpcPayload, SaveId, TransfersScreenView } from "@cm-clone/contracts";
 import { Option } from "effect";
 import {
@@ -222,6 +223,8 @@ export interface TransferCommandHandlersParams {
   readonly offerTermsRef: React.MutableRefObject<ContractTerms | null>;
   readonly amountInputRef: React.MutableRefObject<HTMLInputElement | null>;
   readonly marketIdsRef: React.MutableRefObject<readonly string[]>;
+  /** Switch to the Market tab. */
+  readonly showMarket: () => void;
   readonly refresh: () => void;
   readonly onBid: (playerId: PlayerId, amount: number) => void;
   readonly onSignFreeAgent: (playerId: PlayerId, terms: ContractTerms) => void;
@@ -254,6 +257,7 @@ export const useTransferCommandHandlers = ({
   offerTermsRef,
   amountInputRef,
   marketIdsRef,
+  showMarket,
   refresh,
   onBid,
   onSignFreeAgent,
@@ -270,6 +274,8 @@ export const useTransferCommandHandlers = ({
       }
       const firstId = marketIdsRef.current[0];
       if (firstId !== undefined) {
+        // The Market rows only exist while its tab is showing, so switch to it before looking.
+        flushSync(showMarket);
         (
           document.querySelector(
             `[data-focus-id="${focusIdOf("transfers", "marketTable", firstId)}"]`,

@@ -11,6 +11,7 @@ import { Header } from "./header/index.js";
 import { AppTitleBar } from "./header/AppTitleBar.js";
 import { CareerIdentity } from "./header/CareerIdentity.js";
 import { HeaderActionsMenu } from "./header/HeaderActionsMenu.js";
+import { MatchHeader, useMatchScoreboard } from "./header/MatchHeader.js";
 import { clubHeaderStyle } from "./header/club-scheme.js";
 import { NO_DRAG } from "./header/drag-region.js";
 import { CareerStateProvider, useCareerState, continueUnavailableReason } from "./CareerStateProvider.js";
@@ -62,6 +63,7 @@ const CareerChromeInner = ({
 
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const identity = useSyncExternalStore(subscribeScreenIdentity, getScreenIdentity, getScreenIdentity);
+  const liveMatch = useMatchScoreboard(saveId);
 
   // Don't show outstanding items whose destination is the current screen —
   // the player is already where the fix lives.
@@ -70,6 +72,16 @@ const CareerChromeInner = ({
       item.destination === null ||
       screenId === null ||
       item.destination !== screenId,
+  );
+
+  const leading = (
+    <span className="flex items-center gap-2">
+      <SidebarTrigger className="text-header-fg hover:bg-header-fg/10" />
+      <Header.Nav
+        back={{ disabled: !canNavigateBack(), onTrigger: navigateBack }}
+        forward={{ disabled: false, onTrigger: navigateForward }}
+      />
+    </span>
   );
 
   const badges =
@@ -86,55 +98,51 @@ const CareerChromeInner = ({
     <NavProvider saveId={saveId}>
       <div className="h-screen overflow-hidden bg-background [--header-height:calc(--spacing(18))]">
         <SidebarProvider className="flex h-full flex-col">
-          <header
-            className="club-header flex h-(--header-height) w-full shrink-0 flex-col text-header-fg"
-            style={clubHeaderStyle(clubColours)}
-          >
-            <AppTitleBar
-              title={identity?.name ?? clubName ?? ""}
-              leading={
-                <span className="flex items-center gap-2">
-                  <SidebarTrigger className="text-header-fg hover:bg-header-fg/10" />
-                  <Header.Nav
-                    back={{ disabled: !canNavigateBack(), onTrigger: navigateBack }}
-                    forward={{ disabled: false, onTrigger: navigateForward }}
-                  />
-                </span>
-              }
-              identity={
-                <CareerIdentity
-                  clubName={clubName}
-                  clubColours={clubColours}
-                  badgeKey={badgeKey ?? null}
-                  identity={identity}
-                />
-              }
-              actions={
-                <>
-                  <Header.Search />
-                  <button
-                    type="button"
-                    aria-label="Preferences"
-                    title="Preferences"
-                    className={`rounded-control p-1.5 text-header-fg transition-colors hover:bg-header-fg/10 ${FOCUS_RING.join(" ")}`}
-                    onClick={() => setPreferencesOpen(true)}
-                  >
-                    <Settings aria-hidden="true" className="size-4" />
-                  </button>
-                  <SaveGameAction saveId={saveId} />
-                  <ContinueAction />
-                </>
-              }
-            />
-            <div
-              className="flex h-7 w-full items-center border-b border-header-border bg-header-bg px-3"
-              style={NO_DRAG}
+          {liveMatch !== null ? (
+            <MatchHeader saveId={saveId} state={liveMatch} leading={leading} />
+          ) : (
+            <header
+              className="club-header flex h-(--header-height) w-full shrink-0 flex-col text-header-fg"
+              style={clubHeaderStyle(clubColours)}
             >
-              <Header.SecondaryRow
-                state={{ view: "career", career, player: identity?.player ?? null }}
+              <AppTitleBar
+                title={identity?.name ?? clubName ?? ""}
+                leading={leading}
+                identity={
+                  <CareerIdentity
+                    clubName={clubName}
+                    clubColours={clubColours}
+                    badgeKey={badgeKey ?? null}
+                    identity={identity}
+                  />
+                }
+                actions={
+                  <>
+                    <Header.Search />
+                    <button
+                      type="button"
+                      aria-label="Preferences"
+                      title="Preferences"
+                      className={`rounded-control p-1.5 text-header-fg transition-colors hover:bg-header-fg/10 ${FOCUS_RING.join(" ")}`}
+                      onClick={() => setPreferencesOpen(true)}
+                    >
+                      <Settings aria-hidden="true" className="size-4" />
+                    </button>
+                    <SaveGameAction saveId={saveId} />
+                    <ContinueAction />
+                  </>
+                }
               />
-            </div>
-          </header>
+              <div
+                className="flex h-7 w-full items-center border-b border-header-border bg-header-bg px-3"
+                style={NO_DRAG}
+              >
+                <Header.SecondaryRow
+                  state={{ view: "career", career, player: identity?.player ?? null }}
+                />
+              </div>
+            </header>
+          )}
 
           <div className="flex min-h-0 flex-1">
             <CareerSidebar badges={badges} manager={manager} />

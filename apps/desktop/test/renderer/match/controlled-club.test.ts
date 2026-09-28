@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ClubId, FixtureId, MatchId, MatchSummary } from "@cm-clone/contracts";
 import { controlledClubId, controlledOnPitchCount, controlledSubs } from "../../../src/renderer/match/controlledClub.js";
+import { MATCH_COLOURS } from "./matchColours.js";
 
 const summary = (isHome: boolean) =>
   new MatchSummary({
@@ -10,6 +11,7 @@ const summary = (isHome: boolean) =>
     homeClubName: "Home FC",
     awayClubId: ClubId.make("away"),
     awayClubName: "Away FC",
+    ...MATCH_COLOURS,
     isHome,
   });
 

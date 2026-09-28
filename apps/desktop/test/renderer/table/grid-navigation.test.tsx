@@ -426,12 +426,17 @@ describe("AC-32 — explicit result/refresh states, polite status announcer, rol
     cleanup();
     await mountTransfers(transfersView({ marketPlayers: [], freeAgents: [] }));
     await screen.findByText("No players are currently listed on the transfer market.");
+    fireEvent.click(screen.getByRole("tab", { name: "Free Agents" }));
     expect(screen.getByText("No free agents are currently available.")).toBeTruthy();
-    // The bid inbox is still plain <table> markup, not the TanStack layer.
-    const inboxTables = [...document.querySelectorAll("table")];
-    expect(inboxTables.length).toBe(2);
-    expect(inboxTables.some((t) => t.textContent?.includes("No incoming Bids."))).toBe(true);
-    expect(inboxTables.some((t) => t.textContent?.includes("No outgoing Bids."))).toBe(true);
+    // The bid inbox is still plain <table> markup, not the TanStack layer. One tab shows at a time.
+    fireEvent.click(screen.getByRole("tab", { name: "Incoming Bids" }));
+    await waitFor(() =>
+      expect(document.querySelector("table")?.textContent).toContain("No incoming Bids."),
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Outgoing Bids" }));
+    await waitFor(() =>
+      expect(document.querySelector("table")?.textContent).toContain("No outgoing Bids."),
+    );
   });
 
   it("Empty Squad's affordances are real buttons dispatching registered navigation Actions (note's Empty Squad line)", async () => {
@@ -455,7 +460,10 @@ describe("AC-32 — explicit result/refresh states, polite status announcer, rol
   it("a populated Transfers screen carries one polite status announcer per TanStack table", async () => {
     await mountTransfers(transfersView());
     await screen.findByRole("button", { name: /Alan Player/ });
-    expect(screen.getAllByRole("status")).toHaveLength(2);
+    // Only the open tab's table is mounted, so each announcer is counted in its own tab.
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("tab", { name: "Free Agents" }));
+    await waitFor(() => expect(screen.getAllByRole("status")).toHaveLength(1));
     // No assertive live region for routine loading.
     expect(document.querySelector("[aria-live='assertive']")).toBeNull();
   });

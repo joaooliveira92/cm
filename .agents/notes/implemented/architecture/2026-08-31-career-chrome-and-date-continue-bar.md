@@ -30,7 +30,7 @@ Continue is the app's primary verb and is expressed exactly once. The chrome ren
 - The career-global Action `continue` (label "Continue", `Space` binding) is the single source of truth. The button displays the effective binding badge, and the disabled state renders the Action's `unavailableReason` — a disabled button with no reason is unacceptable.
 - **`.primary` on the Action model is consumed.** `continue` is marked `primary: true` and the chrome drives the gradient-primary button treatment from that flag — the first consumer of `.primary`. The flag drives presentation only, never automatic `Enter` dispatch.
 - **The `continue` handler lives in the chrome** (`CareerShell`), so `Space` and the button work from every career screen, not only the League table (which no longer owns it).
-- **Label stays fixed "Continue".** The CM 03/04 contextual switch — "Go to Match" when the next interrupt is the human's match — has nothing to compute from at HEAD: no per-club next-fixture query exists. The rule is recorded as a future slot, gated on the calendar/match integration that will give the chrome a real "your next event" read.
+- **Label follows the career state; so does the press.** "Go to Match" while the season names an `awaitingFixture`, "Respond" while news needs an answer, otherwise "Continue" (`chrome/header/continue-label.ts`). At the pre-match boundary the advance deliberately writes nothing, so the `continue` handler opens Match day instead of advancing — a label that promises the match and a press that only re-runs the no-op advance reads as a dead button.
 
 ### Title ownership
 
@@ -47,7 +47,7 @@ The strip **scrolls horizontally** with arrow affordances once the tabs exceed t
 - The season readout is `Season {n} · Matchday {m}/38` with phase words outside in-season, and no day-or-date copy appears anywhere in the chrome.
 - Continue renders from the `continue` Action record: effective binding badge, disabled-with-`unavailableReason`, gradient-primary driven by `primary: true` — presentation only, never dispatch.
 - `Space` and the Continue button invoke the career loop from every career screen; `LeagueTableScreen` no longer owns the handler.
-- Continue's label is "Continue"; the "Go to Match" switch is deferred to a future slot gated on calendar/match integration.
+- Continue reads "Go to Match" at the pre-match boundary and pressing it opens Match day; it never advances past an awaiting fixture.
 - Screen headings hold only the section name; club identity lives in the title bar.
 - The strip overflows by horizontal scroll with arrow affordances; every tab stays in the DOM, focus-reachable, and `g <key>`-available regardless of visibility.
 - **Chrome clutter risk.** Rows 1 and 2 carry identity, season readout, Continue, eight tabs, and Back to saves; the mitigation is the subdued readout/save-name line, the gradient doing the visual work, and the unchanged eight-entry strip.

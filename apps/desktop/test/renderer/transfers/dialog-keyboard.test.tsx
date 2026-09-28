@@ -4,7 +4,7 @@ import { SaveId } from "@cm-clone/contracts";
 import { FAMILIARITY_TIERS, STATURE_TIERS } from "@cm-clone/shared";
 import { TransfersScreen } from "../../../src/renderer/transfers/TransfersScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
-import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
+import { dispatchAction, resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
@@ -77,6 +77,12 @@ const mountTransfers = async (view: unknown): Promise<void> => {
   );
 };
 
+/** The Counter button lives in the Incoming Bids tab, which the screen does not open on. */
+const findIncomingCounter = async (): Promise<HTMLElement> => {
+  fireEvent.click(await screen.findByRole("tab", { name: "Incoming Bids" }));
+  return screen.getByRole("button", { name: "Counter" });
+};
+
 beforeEach(() => {
   cleanup();
   resetActionHandlers();
@@ -97,7 +103,7 @@ afterEach(() => {
 describe("F-2 — the counter-offer InlineModal owns the keyboard (take, trap, Enter/Escape, return)", () => {
   it("focuses the amount input on open, traps Tab inside the dialog, Enter submits", async () => {
     await mountTransfers(transfersView());
-    const counter = await screen.findByRole("button", { name: "Counter" });
+    const counter = await findIncomingCounter();
     act(() => {
       counter.focus();
     });
@@ -128,7 +134,7 @@ describe("F-2 — the counter-offer InlineModal owns the keyboard (take, trap, E
 
   it("Escape cancels, and focus returns to the invoking Counter button", async () => {
     await mountTransfers(transfersView());
-    const counter = await screen.findByRole("button", { name: "Counter" });
+    const counter = await findIncomingCounter();
     act(() => {
       counter.focus();
     });
@@ -147,7 +153,7 @@ describe("F-2 — the counter-offer InlineModal owns the keyboard (take, trap, E
 describe("F8 family — the counter-offer submit guard is never a silent no-op", () => {
   it("a non-numeric counter-offer disables the submit, shows an inline error, and Enter does nothing", async () => {
     await mountTransfers(transfersView());
-    const counter = await screen.findByRole("button", { name: "Counter" });
+    const counter = await findIncomingCounter();
     act(() => counter.focus());
     fireEvent.click(counter);
 
@@ -171,7 +177,7 @@ describe("F8 family — the counter-offer submit guard is never a silent no-op",
 
   it("zero, negative, and overflowing counter-offers are equally invalid and disabled", async () => {
     await mountTransfers(transfersView());
-    fireEvent.click(await screen.findByRole("button", { name: "Counter" }));
+    fireEvent.click(await findIncomingCounter());
     const dialog = screen.getByRole("dialog", { name: "Counter Incoming" });
     const input = within(dialog).getByLabelText("Counter-offer amount (Credits)");
     for (const bad of ["0", "-5", "1e309"]) {
@@ -183,7 +189,7 @@ describe("F8 family — the counter-offer submit guard is never a silent no-op",
 
   it("clicking Counter with an EMPTY amount surfaces the inline error instead of a silent no-op", async () => {
     await mountTransfers(transfersView());
-    fireEvent.click(await screen.findByRole("button", { name: "Counter" }));
+    fireEvent.click(await findIncomingCounter());
     const dialog = screen.getByRole("dialog", { name: "Counter Incoming" });
     const submit = within(dialog).getByRole("button", { name: "Counter" });
     fireEvent.click(submit);
@@ -194,7 +200,7 @@ describe("F8 family — the counter-offer submit guard is never a silent no-op",
 
   it("cancelling a counter-offer error does not leak into the next open (fresh state per open)", async () => {
     await mountTransfers(transfersView());
-    fireEvent.click(await screen.findByRole("button", { name: "Counter" }));
+    fireEvent.click(await findIncomingCounter());
     const dialog = screen.getByRole("dialog", { name: "Counter Incoming" });
     const submit = within(dialog).getByRole("button", { name: "Counter" });
     // Empty draft + Counter click → the inline error surfaces (F8), then
@@ -205,7 +211,7 @@ describe("F8 family — the counter-offer submit guard is never a silent no-op",
     expect(screen.queryByRole("dialog", { name: "Counter Incoming" })).toBeNull();
 
     // Reopen: the modal opens fresh — no stale alert, empty amount.
-    fireEvent.click(await screen.findByRole("button", { name: "Counter" }));
+    fireEvent.click(await findIncomingCounter());
     const reopened = screen.getByRole("dialog", { name: "Counter Incoming" });
     expect(within(reopened).queryByRole("alert")).toBeNull();
     expect(
@@ -281,5 +287,16 @@ describe("F-2 — the dirty-discard Keep/Discard dialog owns the keyboard (focus
     const region = screen.getByRole("region", { name: "Place bid" });
     expect(region.textContent).toContain("Player: Alan Player");
     expect((screen.getByLabelText("Your bid:") as HTMLInputElement).value).toBe("450000");
+  });
+});
+describe("the tables sit in tabs, and focus-bid finds the Market from any of them", () => {
+  it("focus-bid from the Incoming Bids tab switches to Market and focuses its first row", async () => {
+    await mountTransfers(transfersView());
+    await findIncomingCounter();
+    act(() => {
+      void dispatchAction("focus-bid");
+    });
+    expect(screen.getByRole("tab", { name: "Market" }).getAttribute("aria-selected")).toBe("true");
+    expect(document.activeElement?.getAttribute("data-focus-id")).toBe("transfers.marketTable.mp1");
   });
 });

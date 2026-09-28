@@ -35,7 +35,7 @@ import { loadPersistedTactic } from "../club/tactics.js";
 import { loadSeasonRow } from "../season/currentSeason.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "../season/decider.js";
 import { readGenerationManifest } from "../world/worldGeneration.js";
-import { displayNames } from "../world/displayNames.js";
+import { clubColourResolver, displayNames } from "../world/displayNames.js";
 import { MATCH_STREAM_TYPE, type PersistedMatchStarted } from "./stream.js";
 
 /**
@@ -127,13 +127,16 @@ export const loadFixtureSides = (fixtureId: FixtureId) =>
 export const matchSummaryOf = (matchId: MatchId, fixtureId: FixtureId, sides: FixtureSides) =>
   Effect.gen(function* () {
     const nameOf = yield* displayNames;
+    const coloursOf = yield* clubColourResolver;
     return new MatchSummary({
       matchId,
       fixtureId,
       homeClubId: sides.homeClubId,
       homeClubName: nameOf(sides.homeClubId),
+      homeClubColours: coloursOf(sides.homeClubId),
       awayClubId: sides.awayClubId,
       awayClubName: nameOf(sides.awayClubId),
+      awayClubColours: coloursOf(sides.awayClubId),
       isHome: sides.homeIsUser === 1,
     });
   });

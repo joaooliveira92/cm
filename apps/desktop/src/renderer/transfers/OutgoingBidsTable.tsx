@@ -21,9 +21,8 @@ export const OutgoingBidsTable = () => {
   if (view === undefined) return null;
 
   return (
-    <section className="mt-6">
-      <h2 className="text-lg font-semibold">Outgoing Bids</h2>
-      <Table className="mt-2 min-w-full text-left">
+    <section>
+      <Table className="min-w-full text-left">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="pr-4">Player</TableHead>

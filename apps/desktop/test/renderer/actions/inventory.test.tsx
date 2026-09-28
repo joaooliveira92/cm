@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ClubId, FixtureId, MatchId, SaveId } from "@cm-clone/contracts";
 import {
@@ -19,6 +19,7 @@ import {
   ALL_ACTIONS,
 } from "../../../src/renderer/actions/allActions.js";
 import { hasActionHandler, resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
+import { MATCH_COLOURS } from "../match/matchColours.js";
 
 const rid = (id: string) => SaveId.make(id);
 
@@ -138,6 +139,7 @@ const resumedMatch = () => ({
     homeClubName: "Home FC",
     awayClubId: ClubId.make("away"),
     awayClubName: "Away FC",
+    ...MATCH_COLOURS,
     isHome: true,
   },
   // The session is mid-stream: `resumedMatch` stands in for a live resume, which is the
@@ -194,16 +196,21 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
     // Stage 5 (AC-29): bid entry moved out of the rows into a contextual
     // Actions region shown when a player is selected — so place-bid and
     // sign-free-agent only render under a selection.
+    // Each table sits in its own tab, so the bid inbox's actions are read one tab at a time.
     await screen.findByRole("button", { name: /Test MP/ });
-    const baseIds = renderedActionIds();
-    const expectedInitial = [
-      "respond-accept",
-      "respond-reject",
-      "respond-counter",
-      "accept-counter",
-      "withdraw-bid",
-    ];
-    expect(new Set(baseIds)).toEqual(new Set(expectedInitial));
+    expect(renderedActionIds()).toEqual([]);
+    fireEvent.click(screen.getByRole("tab", { name: "Incoming Bids" }));
+    await waitFor(() =>
+      expect(new Set(renderedActionIds())).toEqual(
+        new Set(["respond-accept", "respond-reject", "respond-counter"]),
+      ),
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Outgoing Bids" }));
+    await waitFor(() =>
+      expect(new Set(renderedActionIds())).toEqual(new Set(["accept-counter", "withdraw-bid"])),
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Market" }));
+    await waitFor(() => expect(renderedActionIds()).toEqual([]));
 
     // Select the Market player → the Actions region exposes the bid controls.
     fireEvent.click(screen.getByRole("button", { name: /Test MP/ }));
@@ -214,6 +221,7 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
     // Deselect, select the Free Agent → the Sign path replaces the bid input. The form renders
     // nothing but a "reading" line until the offer read lands, so the Sign button is awaited rather
     // than read out of the DOM on the tick after the click.
+    fireEvent.click(screen.getByRole("tab", { name: "Free Agents" }));
     fireEvent.click(screen.getByRole("button", { name: /Test FA/ }));
     await screen.findByRole("button", { name: "Sign (0 Cr)" });
     const withFreeAgentSelection = renderedActionIds();

@@ -2,6 +2,13 @@
 
 Status: proposed
 
+> **Superseded in part, 2026-09-28.** The scoreboard is no longer a neutral band on the Match day
+> screen. From kickoff until the result is accepted, the career header becomes the scoreboard, with
+> each half in its club's colours. *Containment*'s "the chrome stays identical to every other career
+> screen", *Scoreboard*, acceptance criteria 1 and 4, and the last risk no longer hold. *In-match
+> Continue* holds in spirit, but Continue is now hidden rather than shown disabled. See
+> [the header is the scoreboard during a match](../../implemented/architecture/2026-09-28-header-is-the-scoreboard-during-a-match.md).
+
 ## Problem
 
 The match-day surface had no visual owner. The `retro-match-screen` effort owned it

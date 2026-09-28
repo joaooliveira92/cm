@@ -24,6 +24,32 @@ export interface ActiveMatchSession {
 
 let active: ActiveMatchSession | null = null;
 
+const listeners = new Set<() => void>();
+let notifyQueued = false;
+
+/**
+ * Tells subscribers — the career header's scoreboard — that the session changed. Deferred to a
+ * microtask and coalesced: Match day records its revealed lines from inside a state updater, and a
+ * store notified there would re-render the header in the middle of another component's render.
+ */
+const notify = (): void => {
+  if (notifyQueued) return;
+  notifyQueued = true;
+  queueMicrotask(() => {
+    notifyQueued = false;
+    for (const listener of listeners) listener();
+  });
+};
+
+/** Subscribe to every change of the active match and what was revealed of it. For
+ *  `useSyncExternalStore`: the getters below return the same object until the value changes. */
+export const subscribeActiveMatch = (listener: () => void): (() => void) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+
 /**
  * What every live command surface — the Match day panel and the standalone Match Tactics and
  * Substitutions screens — must agree on and `ActiveMatchSession` does not carry:
@@ -94,6 +120,7 @@ let live: LiveCommandContext | null = null;
 
 export const setActiveMatch = (session: ActiveMatchSession): void => {
   active = session;
+  notify();
 };
 
 export const getActiveMatch = (saveId: SaveId): ActiveMatchSession | null =>
@@ -114,6 +141,7 @@ export const revealedToFullTime = (saveId: SaveId, matchId: MatchId): boolean =>
 export const clearActiveMatch = (saveId: SaveId): void => {
   if (active !== null && active.saveId === saveId) active = null;
   if (live !== null && live.saveId === saveId) live = null;
+  notify();
 };
 
 const NOTHING_REVEALED: LiveValues = {
@@ -138,6 +166,7 @@ const liveOfActive = (saveId: SaveId): LiveValues => liveOf(saveId, getActiveMat
 const record = (saveId: SaveId, matchId: MatchId, values: Partial<LiveValues>): void => {
   if (getActiveMatch(saveId)?.match.matchId !== matchId) return;
   live = { ...liveOf(saveId, matchId), ...values, saveId, matchId };
+  notify();
 };
 
 export const recordRevealedMinute = (saveId: SaveId, matchId: MatchId, minute: number): void =>

@@ -62,13 +62,15 @@ test("Tactics opens on the read-only overview; the editor is one step away and t
   await expect(window.getByText("No Tactic set.")).toHaveCount(0);
 });
 
-test("Transfers screen renders the budget line and the Market and Free Agents sections", async ({ userDataDir, window }) => {
+test("Transfers screen renders the budget line and one tab per table, opening on the Market", async ({ userDataDir, window }) => {
   await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
   await goto(window, "transfers");
 
   await expect(window.getByText(/Transfer Budget:/)).toBeVisible();
-  await expect(window.getByRole("heading", { name: "Free Agents" })).toBeVisible();
-  await expect(window.getByRole("heading", { name: "Market" })).toBeVisible();
+  const tabs = window.getByRole("tablist", { name: "Transfer tables" }).getByRole("tab");
+  await expect(tabs).toHaveText(["Incoming Bids", "Outgoing Bids", "Free Agents", "Market"]);
+  await expect(window.getByRole("tab", { name: "Market" })).toHaveAttribute("aria-selected", "true");
+  await expect(window.getByRole("table", { name: "Market" })).toBeVisible();
 });
 
 test("League Table screen shows the 20-row table", async ({ userDataDir, window }) => {
