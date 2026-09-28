@@ -40,10 +40,12 @@ export const ShellBottomBar = ({ plan, className }: ShellBottomBarProps) => (
       <p
         aria-live="polite"
         title={plan.reason ?? undefined}
-        className="min-w-0 flex-1 truncate text-sm text-text-secondary"
+        className={`min-w-0 truncate text-sm text-text-secondary ${plan.status.length > 0 ? "" : "flex-1"}`}
       >
         {plan.reason ?? ""}
       </p>
+
+      {plan.status.length > 0 && <StatusMarquee items={plan.status} />}
 
       {/* Trailing: supporting verbs, then the step's one forward verb. */}
       <div className="flex shrink-0 items-center gap-2">
@@ -54,6 +56,29 @@ export const ShellBottomBar = ({ plan, className }: ShellBottomBarProps) => (
       </div>
     </div>
   </footer>
+);
+
+/**
+ * Two identical copies side by side, translated left by exactly one copy's
+ * width per cycle, so the loop has no visible seam. Each item trails a gap the
+ * width of the viewport (`100cqw`), so one has fully left before the next
+ * enters: only ever one item on screen. The second copy is decorative and
+ * hidden from assistive tech; reduced motion holds it still.
+ */
+const StatusMarquee = ({ items }: { readonly items: readonly string[] }) => (
+  <div className="@container min-w-0 flex-1 overflow-hidden text-xs text-text-muted">
+    <div className="flex w-max animate-[bottom-bar-marquee_60s_linear_infinite] motion-reduce:animate-none">
+      {[false, true].map((hidden) => (
+        <ul key={String(hidden)} aria-hidden={hidden || undefined} className="flex shrink-0">
+          {items.map((item) => (
+            <li key={item} className="shrink-0 pr-[100cqw] whitespace-nowrap">
+              {item}
+            </li>
+          ))}
+        </ul>
+      ))}
+    </div>
+  </div>
 );
 
 const BarButton = ({

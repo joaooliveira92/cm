@@ -364,3 +364,15 @@
     animation: none !important;
   }
 }
+
+/* The shell bottom bar's status marquee (`ShellBottomBar`): the track holds two
+   copies of its items, so shifting it by half its width lands exactly where it
+   started. */
+@keyframes bottom-bar-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

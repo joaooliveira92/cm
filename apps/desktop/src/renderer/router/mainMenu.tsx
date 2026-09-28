@@ -5,6 +5,7 @@ import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
 import { navigate } from "../navigation/adapter.js";
 import { RouteView } from "./RouteView.js";
 import { Header } from "../chrome/header/index.js";
+import { ShellBottomBar, EMPTY_BOTTOM_BAR } from "../chrome/bottom-bar/index.js";
 import { PreferencesDialog } from "../appearance/PreferencesDialog.js";
 import { Button } from "../components/ui/button.js";
 import {
@@ -253,14 +254,16 @@ export const MainMenuScreen = () => {
           )}
 
           <div className="flex-1" />
-
-          {/* Footer (spec §4.2) — application version kept distinct from the
-              database edition, both low-emphasis, never over the menu. */}
-          <footer className="flex flex-col items-center gap-1 px-4 pt-8 pb-4 text-center text-xs text-text-muted">
-            <span>Version {APP_VERSION}</span>
-            <span>Database: {DATABASE_EDITION} · Mods: none</span>
-          </footer>
         </div>
+
+        {/* Footer (spec §4.2): version and database edition sit in the shell's
+            bottom bar, spanning the window like the header band above. */}
+        <ShellBottomBar
+          plan={{
+            ...EMPTY_BOTTOM_BAR,
+            status: [`Version ${APP_VERSION}`, `Database: ${DATABASE_EDITION} · Mods: none`],
+          }}
+        />
 
         {openPreferences && (
           <PreferencesDialog onClose={() => setOpenPreferences(false)} />

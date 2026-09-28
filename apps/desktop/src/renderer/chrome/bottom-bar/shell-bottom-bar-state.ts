@@ -43,6 +43,9 @@ export interface BottomBarPlan {
    * disabled button — so the reason is copy, in a row the bar always reserves.
    */
   readonly reason: string | null;
+  /** Ambient status items (e.g. the application version), scrolled past as a
+   *  slow marquee in the bar's middle; empty for none. */
+  readonly status: readonly string[];
 }
 
 export const EMPTY_BOTTOM_BAR: BottomBarPlan = {
@@ -51,6 +54,7 @@ export const EMPTY_BOTTOM_BAR: BottomBarPlan = {
   secondary: [],
   primary: null,
   reason: null,
+  status: [],
 };
 
 /**
@@ -135,6 +139,7 @@ export function describeCreationBottomBar(input: CreationBottomBarInput): Bottom
           reason: input.personalDetailsComplete
             ? null
             : "Complete your personal details to continue.",
+          status: [],
         };
       }
 
@@ -150,6 +155,7 @@ export function describeCreationBottomBar(input: CreationBottomBarInput): Bottom
             onTrigger: input.onNextManagerSubStep,
           },
           reason: input.pillarsComplete ? null : "Spend all 12 pillar points to continue.",
+          status: [],
         };
       }
 
@@ -173,6 +179,7 @@ export function describeCreationBottomBar(input: CreationBottomBarInput): Bottom
             : input.managerStyleComplete
               ? "Complete your personal details and spend all 12 pillar points."
               : "Choose a formation and a tactical style to continue."),
+        status: [],
       };
     }
 
@@ -193,6 +200,7 @@ export function describeCreationBottomBar(input: CreationBottomBarInput): Bottom
           onTrigger: input.onGoToReview,
         },
         reason: input.clubPicked ? null : "Choose a club to continue.",
+        status: [],
       };
 
     case "3":
@@ -207,6 +215,7 @@ export function describeCreationBottomBar(input: CreationBottomBarInput): Bottom
           onTrigger: input.onCreateCareer,
         },
         reason: input.committing ? "Creating your career…" : null,
+        status: [],
       };
   }
 }
@@ -256,6 +265,7 @@ export function describeLeagueSelectionBottomBar(
       onTrigger: input.onContinue,
     },
     reason: input.canContinue ? null : leagueSelectionReason(input),
+    status: [],
   };
 }
 
@@ -303,6 +313,7 @@ export function describeActiveLeaguesBottomBar(
       onTrigger: input.onContinue,
     },
     reason: activeLeaguesReason(input),
+    status: [],
   };
 }
 
@@ -356,5 +367,6 @@ export function describeManageLeaguesBottomBar(
       onTrigger: input.onApply,
     },
     reason: null,
+    status: [],
   };
 }

@@ -79,10 +79,13 @@ describe("Main Menu — structure", () => {
     expect(MENU_BUTTONS().map((button) => button.textContent)).toEqual(MENU_LABELS);
   });
 
-  it("renders the footer with the application version separate from the database edition", async () => {
+  it("renders the shell bottom bar with the application version and database edition", async () => {
     mount();
-    expect(screen.getByText("Version 0.0.0")).toBeTruthy();
-    expect(screen.getByText(/Database: Fictional 2003\/04 dataset/)).toBeTruthy();
+    // The marquee's second copy is aria-hidden, so the accessible items appear once.
+    expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual(
+      expect.arrayContaining(["Version 0.0.0", "Database: Fictional 2003/04 dataset · Mods: none"]),
+    );
+    expect(screen.getAllByText("Version 0.0.0")).toHaveLength(2);
   });
 });
 
