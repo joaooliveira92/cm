@@ -85,8 +85,6 @@ export interface HeaderCareer {
   readonly standing: HeaderStanding | null;
   /** Set only while a match is in flight; it replaces the season readout. */
   readonly liveMatch: MatchReadout | null;
-  /** Why the career loop cannot advance right now, from the Action record. */
-  readonly blockedReason: string | null;
 }
 
 /** The player a player screen is showing, as the band reports them. Rating and Value are
@@ -126,8 +124,6 @@ export type SecondaryRow =
       readonly kind: "career";
       readonly metrics: readonly HeaderMetric[];
       readonly status: string;
-      /** Rendered in the warning tone when set — a blocked loop is never silent. */
-      readonly warning: string | null;
     }
   | { readonly kind: "wizard"; readonly heading: string; readonly hint: string };
 
@@ -154,7 +150,6 @@ export function describeSecondaryRow(state: HeaderState): SecondaryRow {
         metrics: player === null ? careerMetrics(career) : playerMetrics(player),
         status:
           career.liveMatch === null ? (career.saveName ?? NO_VALUE) : matchReadout(career.liveMatch),
-        warning: career.blockedReason,
       };
     }
 

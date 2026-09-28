@@ -57,14 +57,10 @@ const SecondaryRowContent = ({ row }: { readonly row: SecondaryRow }) => {
               </div>
             ))}
           </div>
-          {/* The status, plus the blocking reason when the loop cannot advance.
-              The reason is shown, not hidden in a `title`: a disabled control
-              never delivers one. */}
+          {/* Why Continue is greyed is the bottom bar's reason line, beside the
+              control it explains, so the header carries the status alone. */}
           <div className="flex shrink-0 flex-col items-end leading-tight text-right">
             <span>{row.status}</span>
-            {row.warning !== null && (
-              <span className="text-text-warning">{row.warning}</span>
-            )}
           </div>
         </div>
       );

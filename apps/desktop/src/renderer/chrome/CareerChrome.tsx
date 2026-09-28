@@ -15,7 +15,7 @@ import { MatchHeader, useMatchScoreboard } from "./header/MatchHeader.js";
 import { clubHeaderStyle } from "./header/club-scheme.js";
 import { NO_DRAG } from "./header/drag-region.js";
 import { CareerStateProvider, useCareerState, continueUnavailableReason } from "./CareerStateProvider.js";
-import { ContinueAction } from "./ContinueAction.js";
+import { CareerBottomBar } from "./CareerBottomBar.js";
 import { SaveGameAction } from "./SaveGameAction.js";
 import { ContinueOutstandingBand } from "./ContinueOutstanding.js";
 import { ContinueResultBand } from "./ContinueResult.js";
@@ -129,7 +129,6 @@ const CareerChromeInner = ({
                       <Settings aria-hidden="true" className="size-4" />
                     </button>
                     <SaveGameAction saveId={saveId} />
-                    <ContinueAction />
                   </>
                 }
               />
@@ -178,6 +177,10 @@ const CareerChromeInner = ({
               {children}
             </div>
           </div>
+
+          {/* The bar spans the window, as the header does: Continue and the
+              screen's verbs are the shell's, not the column's. */}
+          <CareerBottomBar matchInProgress={liveMatch !== null} />
         </SidebarProvider>
         {preferencesOpen && <PreferencesDialog onClose={() => setPreferencesOpen(false)} />}
       </div>

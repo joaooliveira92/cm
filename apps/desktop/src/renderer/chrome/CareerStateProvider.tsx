@@ -254,14 +254,12 @@ export const CareerStateProvider = ({
     return rawItems.filter((item) => !filtered.has(item.id));
   }, [rawItems, acknowledgedIds]);
 
-  const reason = continueUnavailableReason();
   const career: HeaderCareer = {
     clubName,
     saveName,
     season,
     standing,
     liveMatch: liveMatch ?? null,
-    blockedReason: continueDisabled && season !== null ? (reason ?? null) : null,
   };
 
   const value = useMemo<CareerState>(

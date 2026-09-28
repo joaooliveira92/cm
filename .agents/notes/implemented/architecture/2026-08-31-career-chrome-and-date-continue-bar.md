@@ -15,17 +15,24 @@ A **two-row career chrome**: a chrome-blue gradient title bar on top holding ide
 The persistent career bar uses the chrome gradient (`--chrome-top` → `--chrome-bottom`) in the title-bar variant (inset shadow, dark border).
 
 - **Left — club identity.** The human club's name, page-title size (18px, bold). The club is the career's root context, so it lives in the chrome, not in per-screen headings.
-- **Right — the temporal cluster.** Two pieces:
-  - The **season readout**, steady state: `Season {n} · Matchday {m}/38`, with a phase word replacing the matchday segment outside the in-season phase (`Pre-season`, `Transfer window open`, `Season complete`). The unit is always the Matchday; **no copy expresses time in days or dates**. The save name appears here as a subdued secondary.
-  - The **Continue control**, the focal point of the cluster.
+- **Right — the temporal cluster.** The **season readout**, steady state: `Season {n} · Matchday {m}/38`, with a phase word replacing the matchday segment outside the in-season phase (`Pre-season`, `Transfer window open`, `Season complete`). The unit is always the Matchday; **no copy expresses time in days or dates**. The save name appears here as a subdued secondary.
+
+### The bottom bar — Continue's home (2026-09-28)
+
+Continue moved out of the title bar into a persistent **bottom bar** spanning the career window: the creation flow's `ShellBottomBar`, described by `describeCareerBottomBar` (`chrome/bottom-bar/shell-bottom-bar-state.ts`) and rendered by `chrome/CareerBottomBar.tsx`. The player carries the same footer from the new-game steps into the career.
+
+- **Continue owns the primary zone on every career screen.** A screen may register its own verbs through `useScreenBottomBarActions`; they render as secondaries beside Continue and never replace it, so the loop stays one click away everywhere.
+- **The reason line says why Continue is greyed**, beside the control it explains. The header's secondary row no longer carries a blocked-reason warning; stating it in both places would say the same thing twice.
+- **During a live match the bar drops Continue**, as the header does when it becomes the scoreboard; a screen's verbs stay.
+- The middle of the bar scrolls the version and database edition, as the main menu's bar does. The season readout stays in the header and is not repeated.
 
 ### Row 2 — the tab strip
 
 The strip keeps its structure (eight `CAREER_TABS` entries, active-tab inversion, "Back to saves") but is restyled as chrome: tabs become flat controls in the chrome-blue frame, **the active tab inverts to the gradient**, and **Back to saves reads as a subdued chrome control** — visually distinct from a navigable section because leaving the career is not a career section. The strip scrolls horizontally for overflow; with the current eight tabs it is static.
 
-### The date/Continue cluster and the Action registry
+### Continue and the Action registry
 
-Continue is the app's primary verb and is expressed exactly once. The chrome renders the button **from the `continue` Action record**, never as a hardcoded second definition:
+Continue is the app's primary verb and is expressed exactly once, in the bottom bar. The chrome renders the button **from the `continue` Action record**, never as a hardcoded second definition:
 
 - The career-global Action `continue` (label "Continue", `Space` binding) is the single source of truth. The button displays the effective binding badge, and the disabled state renders the Action's `unavailableReason` — a disabled button with no reason is unacceptable.
 - **`.primary` on the Action model is consumed.** `continue` is marked `primary: true` and the chrome drives the gradient-primary button treatment from that flag — the first consumer of `.primary`. The flag drives presentation only, never automatic `Enter` dispatch.
@@ -42,7 +49,7 @@ The strip **scrolls horizontally** with arrow affordances once the tabs exceed t
 
 ## Consequences
 
-- `CareerChrome` renders the two-row shell on every career screen — gradient title bar with club identity left and the season readout + Continue right, and the tab strip with the active tab inverted to the primary gradient.
+- `CareerChrome` renders the two-row shell on every career screen — gradient title bar with club identity left and the season readout right, and the tab strip with the active tab inverted to the primary gradient — plus the bottom bar carrying Continue.
 - No sidebar or hierarchical sub-nav; the `CAREER_TABS` set is unchanged and the strip remains the tab bar the keyboard/nav wiring already serves.
 - The season readout is `Season {n} · Matchday {m}/38` with phase words outside in-season, and no day-or-date copy appears anywhere in the chrome.
 - Continue renders from the `continue` Action record: effective binding badge, disabled-with-`unavailableReason`, gradient-primary driven by `primary: true` — presentation only, never dispatch.

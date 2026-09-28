@@ -410,9 +410,9 @@ describe("Continue in the chrome", () => {
       });
     });
     expect(screen.getByText(/63' · Northport Rovers 2–1 Eastvale/)).toBeTruthy();
-    // The header says why the control is greyed; the band says what is blocking
+    // The bar says why the control is greyed; the band says what is blocking
     // it and where that lives. Two questions, stated once each.
-    expect(screen.getByText("The Calendar cannot advance right now.")).toBeTruthy();
+    expect(within(screen.getByRole("contentinfo")).getByText("The Calendar cannot advance right now.")).toBeTruthy();
     const outstanding = screen.getByRole("region", { name: "Outstanding before you continue" });
     expect(within(outstanding).getByText("The season cannot advance during a match.")).toBeTruthy();
     const disabled = screen.getByRole("button", { name: /Continue/ }) as HTMLButtonElement;

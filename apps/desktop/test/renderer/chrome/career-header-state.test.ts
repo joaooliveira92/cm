@@ -16,7 +16,6 @@ const career = (over: Partial<HeaderCareer> = {}): HeaderCareer => ({
   season,
   standing: { position: 4, played: 12, points: 24 },
   liveMatch: null,
-  blockedReason: null,
   ...over,
 });
 
@@ -103,12 +102,11 @@ describe("describeSecondaryRow", () => {
     expect(metricValue(paid, "Wage")?.value).toBe(`${(7000).toLocaleString()} Cr per season`);
   });
 
-  it("shows the save name as the status when the loop is free to advance", () => {
+  it("shows the save name as the status", () => {
     const row = describeSecondaryRow({ view: "career", career: career() });
     if (row.kind !== "career") throw new Error("expected a career row");
 
     expect(row.status).toBe("My Save");
-    expect(row.warning).toBeNull();
   });
 
   it("leaves the club to the band's identity zone rather than restating it", () => {
@@ -137,13 +135,11 @@ describe("describeSecondaryRow", () => {
           awayClubName: "Eastvale",
           awayScore: 1,
         },
-        blockedReason: "The season cannot advance during a match.",
       }),
     });
     if (row.kind !== "career") throw new Error("expected a career row");
 
     expect(row.status).toBe("63' · Northport Rovers 2–1 Eastvale");
-    expect(row.warning).toBe("The season cannot advance during a match.");
   });
 
   it("describes the pre-career shells without any career data", () => {

@@ -1,8 +1,10 @@
 export { ShellBottomBar } from "./ShellBottomBar.js";
 export type { ShellBottomBarProps } from "./ShellBottomBar.js";
+export { clearScreenBottomBarActions, useScreenBottomBarActions } from "./screen-bottom-bar-actions.js";
 export {
   creationCancelButton,
   describeActiveLeaguesBottomBar,
+  describeCareerBottomBar,
   describeCreationBottomBar,
   describeLeagueSelectionBottomBar,
   describeManageLeaguesBottomBar,
@@ -13,8 +15,10 @@ export type {
   ActiveLeaguesBottomBarInput,
   BottomBarButton,
   BottomBarPlan,
+  CareerBottomBarInput,
   CreationBottomBarInput,
   CreationStep,
   LeagueSelectionBottomBarInput,
   ManageLeaguesBottomBarInput,
+  ScreenBottomBarActions,
 } from "./shell-bottom-bar-state.js";

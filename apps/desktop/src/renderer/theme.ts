@@ -43,23 +43,6 @@ export const PANEL_CHROME =
 export const BTN_PRIMARY =
   "rounded-control bg-primary px-3 py-1 text-primary-foreground hover:bg-primary/90 active:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50";
 
-/**
- * The primary verb rendered on the club-coloured header band (Continue).
- *
- * Unlike `BTN_PRIMARY` — the theme-colored primary for neutral surfaces —
- * this one paints from the `--color-header-*` roles the band already carries,
- * so it re-skins with the club instead of sitting in the theme color on a
- * red/maroon/green band. It inverts the header's pair: `header-fg` as the
- * button's background and `header-bg` as its text. That pair is the one the
- * header derived for readability over the club's primary background, and a
- * contrast ratio is symmetric, so the inverted button is exactly as legible as
- * the band that names it. With no club the roles fall back to the neutral
- * defaults, which is what a pre-club frame (or any shell without an override)
- * renders.
- */
-export const BTN_HEADER_PRIMARY =
-  "rounded-control border-2 border-header-border bg-header-fg px-3 py-1 text-header-bg shadow-chrome hover:brightness-110 active:brightness-90 disabled:cursor-not-allowed disabled:opacity-50";
-
 /** Everything else: Cancel, Retry, inline actions. Flat, no shadow. */
 export const BTN_SECONDARY =
   "rounded-control bg-surface-raised px-3 py-1 text-text-primary hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50";

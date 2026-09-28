@@ -370,3 +370,59 @@ export function describeManageLeaguesBottomBar(
     status: [],
   };
 }
+
+/** What a career screen adds to the bar: its own supporting verbs, and a line
+ *  about them. It gets no primary — that zone belongs to Continue. */
+export interface ScreenBottomBarActions {
+  readonly buttons: readonly BottomBarButton[];
+  readonly reason?: string | null;
+}
+
+export interface CareerBottomBarInput {
+  /** The Continue control's current label ("Continue", "Go to Match", "Respond"). */
+  readonly continueLabel: string;
+  readonly continueDisabled: boolean;
+  readonly advancing: boolean;
+  /** The `continue` Action's own reason, when the registry supplies one. */
+  readonly continueUnavailableReason: string | null;
+  /** True while a match is on: the header is the scoreboard, and Continue steps aside. */
+  readonly matchInProgress: boolean;
+  readonly screen: ScreenBottomBarActions | null;
+  readonly status: readonly string[];
+  readonly onContinue: () => void;
+}
+
+/**
+ * The career shell's bar. Continue is the app's one primary verb, so it holds
+ * the primary zone on every career screen; a screen's own verbs sit beside it as
+ * secondaries. Continue's reason speaks first, because a disabled primary that
+ * does not say why is not acceptable; the screen's line fills the row otherwise.
+ */
+export function describeCareerBottomBar(input: CareerBottomBarInput): BottomBarPlan {
+  const secondary = input.screen?.buttons ?? [];
+  const screenReason = input.screen?.reason ?? null;
+
+  if (input.matchInProgress) {
+    return { ...EMPTY_BOTTOM_BAR, secondary, reason: screenReason, status: input.status };
+  }
+
+  return {
+    cancel: null,
+    back: null,
+    secondary,
+    primary: {
+      id: "continue",
+      label: input.advancing ? "Advancing…" : input.continueLabel,
+      disabled: input.continueDisabled,
+      onTrigger: input.onContinue,
+    },
+    reason: continueReason(input) ?? screenReason,
+    status: input.status,
+  };
+}
+
+function continueReason(input: CareerBottomBarInput): string | null {
+  if (input.advancing) return "Advancing the Calendar…";
+  if (!input.continueDisabled) return null;
+  return input.continueUnavailableReason ?? "The Calendar cannot advance right now.";
+}

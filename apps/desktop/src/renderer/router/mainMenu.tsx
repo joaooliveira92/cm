@@ -18,18 +18,12 @@ import {
 } from "../theme.js";
 import { Backdrop } from "../backdrop/Backdrop.js";
 import { MENU_BACKDROP } from "../backdrop/backdrops.js";
+import { APP_VERSION, DATABASE_EDITION } from "../appInfo.js";
 
 /** The product identity (spec §3.3) — the clone's own title, no licensed artwork. */
 const PRODUCT_TITLE = "Championship Manager Clone";
 const PRODUCT_SUBTITLE = "Career Simulation";
 
-/**
- * The application version and the football-database edition are separate lines
- * because they move independently (spec §4.2). `APP_VERSION` tracks the
- * desktop package's `version` field.
- */
-const APP_VERSION = "0.0.0";
-const DATABASE_EDITION = "Fictional 2003/04 dataset";
 
 /** The commands this screen emits (spec §9). It holds no career logic: each
  *  case either navigates or opens a local layer. */
