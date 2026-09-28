@@ -19,6 +19,7 @@ import {
   isSquadViewId,
 } from "../../../src/renderer/squad/squadViews.js";
 import {
+  leftColumnLength,
   nextPositionIndex,
 } from "../../../src/renderer/squad/SquadPositionList.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
@@ -152,22 +153,37 @@ describe("the Squad view catalogue", () => {
   });
 });
 
-describe("the position list's keyboard geometry", () => {
-  it("roves down the list, wraps at the ends, and ignores the sideways arrows", () => {
+describe("the position list's two-column geometry", () => {
+  it("puts the extra player at the foot of the left column", () => {
+    expect(leftColumnLength(0)).toBe(0);
+    expect(leftColumnLength(1)).toBe(1);
+    expect(leftColumnLength(7)).toBe(4);
+    expect(leftColumnLength(8)).toBe(4);
+  });
+
+  it("roves down a column, crosses at the same offset, and stays put at the right edge", () => {
+    // Eight players: indexes 0-3 left, 4-7 right.
     expect(nextPositionIndex("ArrowDown", 0, 8)).toBe(1);
-    expect(nextPositionIndex("ArrowDown", 7, 8)).toBe(0);
     expect(nextPositionIndex("ArrowUp", 0, 8)).toBe(7);
-    expect(nextPositionIndex("ArrowRight", 1, 8)).toBeNull();
-    expect(nextPositionIndex("ArrowLeft", 1, 8)).toBeNull();
+    expect(nextPositionIndex("ArrowRight", 1, 8)).toBe(5);
+    expect(nextPositionIndex("ArrowLeft", 5, 8)).toBe(1);
+    expect(nextPositionIndex("ArrowRight", 5, 8)).toBe(5);
+    expect(nextPositionIndex("ArrowLeft", 1, 8)).toBe(1);
     expect(nextPositionIndex("Home", 5, 8)).toBe(0);
     expect(nextPositionIndex("End", 0, 8)).toBe(7);
     expect(nextPositionIndex("q", 0, 8)).toBeNull();
     expect(nextPositionIndex("ArrowDown", 0, 0)).toBeNull();
   });
+
+  // An odd count has a longer left column, so the last left row has no partner
+  // to cross to; it lands on the last row instead of past the end.
+  it("clamps a right-arrow that would leave the list", () => {
+    expect(nextPositionIndex("ArrowRight", 2, 5)).toBe(4);
+  });
 });
 
 describe("choosing a view", () => {
-  it("draws the squad as a one-column list of names and positions, not a table", async () => {
+  it("draws the squad as a two-column list of names and positions, not a table", async () => {
     await mountSquad([player("p1", "Alan", "Shearer"), player("p2", "Bobby", "Moore")]);
 
 

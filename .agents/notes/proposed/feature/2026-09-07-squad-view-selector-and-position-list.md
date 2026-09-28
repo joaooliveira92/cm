@@ -31,22 +31,21 @@ never disagree, because nothing else can set the layout. The screen heading repe
 name (`Players (Position(s))`, `Players (Personal details)`), which is where CM put it and where a
 reader looks to answer "what am I looking at".
 
-**The position list is the default, and it is a list.** `SquadPositionList.tsx` renders one column,
-capped at a reading width, each row a match-day indicator, a name (surname first, as the list reads),
-the player's positions tinted by Familiarity Tier, and then a status slot. The slot comes after the
-positions and keeps the table's Status column width when empty, so the positions line up down the
-list and a status (injured, suspended, on international duty, once modelled) appears without
-shifting anything. The list started as two balanced columns, like CM 03/04's opening screen; it
-moved to one column, like CM's match-day squad list, so each row has room for the status slot
-without squeezing the name. It is not a `<table>`: there is
+**The position list is the default, and it is a list.** `SquadPositionList.tsx` renders two balanced
+columns, left column longer on an odd count, each row a match-day indicator, a name (surname first, as the
+list reads), the player's positions tinted by Familiarity Tier, and then a status slot. The slot
+comes after the positions and keeps the table's Status column width when empty, so the positions
+line up down each column and a status (injured, suspended, on international duty, once modelled)
+appears without shifting anything. It is not a `<table>`: there is
 one field beside the name, so a table would buy a header row, per-column sort semantics and a grid
 navigation model for a single column of data.
 
 It shares everything that matters with the table layouts. The row order comes from the same TanStack
 table, so filters, sorting and the command palette drive both. Focus follows the table's model
 exactly — one focusable control per row, the same `data-focus-id`, one roving tab stop — so a focus
-bookmark survives a view change. Up/down rove the list and wrap at the ends; left/right do
-nothing, since there is no second column to cross to.
+bookmark survives a view change. Arrow keys read the geometry: up/down move down a column,
+left/right cross to the same offset in the other column, and the crossing is clamped rather than
+wrapped so the odd row at the foot of the left column does not jump to the top.
 
 **A "Personal details" view carries the second information set.** The reference screenshot's own
 second view is a contract view — wages, expiry dates, asking prices — and the engine models none of

@@ -26,7 +26,7 @@ export const SQUAD_POSITION_VIEW_ID = "positions";
 
 export type SquadViewId = typeof SQUAD_POSITION_VIEW_ID | SquadPresetId;
 
-/** How a view draws the squad: the position list, or the table. */
+/** How a view draws the squad: the two-column position list, or the table. */
 export type SquadViewLayout = "list" | "table";
 
 export interface SquadViewDefinition {
