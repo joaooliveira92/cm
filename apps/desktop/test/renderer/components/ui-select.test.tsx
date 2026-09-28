@@ -80,7 +80,9 @@ describe("ui select", () => {
 
     const selected: Array<string> = [];
     render(<StatefulDemo onValueChange={(value) => selected.push(value)} />);
-    fireEvent.click(screen.getByRole("combobox", { name: "Pick one" }));
+    const combobox = screen.getByRole("combobox", { name: "Pick one" });
+    fireEvent.click(combobox);
+    fireEvent.keyDown(combobox, { key: "ArrowDown" });
     const option = await screen.findByRole("option", { name: "Bravo" });
 
     // Base UI commits a selection on the pointer sequence, not on a bare click.

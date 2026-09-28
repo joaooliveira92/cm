@@ -12,7 +12,7 @@ const SelectContext = React.createContext<{
   onValueChange: (value: string) => void;
 } | null>(null);
 
-function Select<Value, Multiple extends boolean | undefined = false>({
+function Select<Value>({
   children,
   value,
   onValueChange,
@@ -48,10 +48,20 @@ function Select<Value, Multiple extends boolean | undefined = false>({
 function SelectTrigger({
   className,
   children,
+  "aria-label": ariaLabel,
+  value,
   ...props
 }: React.ComponentPropsWithoutRef<typeof AutocompletePrimitive.InputGroup> & {
   children?: React.ReactNode;
+  "aria-label"?: string;
+  value?: string;
 }) {
+  const childWithValue = React.Children.map(children, (child) => {
+    if (React.isValidElement(child) && (child.type as any)?.displayName === "SelectValue") {
+      return React.cloneElement(child as React.ReactElement<{ value?: string }>, { value });
+    }
+    return child;
+  });
   return (
     <AutocompletePrimitive.InputGroup
       data-slot="select-trigger"
@@ -62,31 +72,27 @@ function SelectTrigger({
       )}
       {...props}
     >
-      <AutocompletePrimitive.Input />
-      {children}
+      <AutocompletePrimitive.Input aria-label={ariaLabel} />
+      {childWithValue}
     </AutocompletePrimitive.InputGroup>
   );
 }
 
 function SelectValue({
-  children,
   placeholder,
+  value,
   ...props
-}: Omit<React.ComponentProps<typeof AutocompletePrimitive.Value>, "children"> & {
+}: {
   placeholder?: string;
-  children?: React.ReactNode;
+  value?: string;
 }) {
   return (
-    <AutocompletePrimitive.Value
-      data-slot="select-value"
-      {...props}
-    >
-      {typeof children === "function"
-        ? children
-        : children ?? placeholder}
-    </AutocompletePrimitive.Value>
+    <span data-slot="select-value" {...props}>
+      {value ?? placeholder ?? ""}
+    </span>
   );
 }
+SelectValue.displayName = "SelectValue";
 
 function SelectContent({
   className,
@@ -131,9 +137,12 @@ function SelectItem({
   children?: React.ReactNode;
   disabled?: boolean;
 }) {
+  // Autocomplete has no ItemIndicator (Select's needs a Select.Item context), so the check reads the root value.
+  const selected = React.useContext(SelectContext)?.value === value;
   return (
     <AutocompletePrimitive.Item
       data-slot="select-item"
+      data-selected={selected || undefined}
       value={value}
       className={cn(
         "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-6 text-xs outline-none",
@@ -145,11 +154,13 @@ function SelectItem({
       {...props}
     >
       {children}
-      <SelectPrimitive.ItemIndicator className="absolute right-1.5 flex items-center justify-center text-text-secondary">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </SelectPrimitive.ItemIndicator>
+      {selected && (
+        <span className="absolute right-1.5 flex items-center justify-center text-text-secondary">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      )}
     </AutocompletePrimitive.Item>
   );
 }
