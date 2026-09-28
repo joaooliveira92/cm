@@ -26,7 +26,7 @@ test("Squad opens on the position list and the View selector swaps it for a tabl
     (await window.getByText(/players$/).innerText()).match(/(\d+) players/)![1],
   );
 
-  // The career opens on the two-column position list: every player, no table.
+  // The career opens on the one-column position list: every player, no table.
 
   await expect(window.locator("tbody")).toHaveCount(0);
   await expect(window.locator("li:has(button[data-focus-id])")).toHaveCount(playersCount);

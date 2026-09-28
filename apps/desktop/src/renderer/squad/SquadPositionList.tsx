@@ -1,9 +1,12 @@
 /**
  * The Squad screen's position list — the layout CM 03/04 opened a career on:
- * every player at once, two balanced columns, each row a leading match-day
- * indicator (playing, on the bench, or not selected), a status runner, a name,
- * and the positions that player can fill. It is the "who is in this squad"
- * reading; the table views are the "how good are they at X" readings.
+ * every player at once in one column, each row a leading match-day indicator
+ * (playing, on the bench, or not selected), a name, the positions that player
+ * can fill, and a status slot after them for whatever keeps the player out of
+ * the next match — injured, suspended, away with the national team. The slot
+ * keeps its width when empty, so the positions line up down the list whether
+ * or not anyone has a status. It is the "who is in this squad" reading; the
+ * table views are the "how good are they at X" readings.
  *
  * It is a list, not a table, and deliberately so: there is one column of data
  * beside the name, so a `<table>` would buy a header row, per-column sorting
@@ -15,15 +18,18 @@
  * Focus follows the table's model exactly (note: Navigation model, AC-28): one
  * focusable control per row — the name button — carrying the same
  * `data-focus-id` the table gives it, so a focus bookmark survives a view
- * change. ArrowUp/Down rove down a column, ArrowLeft/Right cross between the
- * two columns at the same offset, Home/End jump to the ends, Space toggles
- * selection, Enter runs the row's primary action — opening that player's
+ * change. ArrowUp/Down rove the list, wrapping at the ends, Home/End jump to
+ * the ends, Space toggles selection, Enter runs the row's primary action — opening that player's
  * player screen, which is what clicking the name does too.
  */
 import type { FamiliarityTier } from "@cm-clone/shared";
 import { Button } from "../components/ui/button.js";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
-import { StatusCell, statusesOf } from "../table/squad/playerStatus.js";
+import {
+  STATUS_COLUMN_WIDTH,
+  StatusCell,
+  statusesOf,
+} from "../table/squad/playerStatus.js";
 import type { SquadRow } from "../table/squad/squadColumns.js";
 import type { LineupSlot } from "./lineupEdits.js";
 import { lineupSlotsOf } from "./lineupEdits.js";
@@ -32,14 +38,9 @@ import { useSquad } from "./SquadProvider.js";
 
 const REGION = "squadTable";
 
-/** Where the left column ends. The left column is the longer one on an odd
- *  count, so the list reads top-left to bottom-right without a gap. */
-export const leftColumnLength = (total: number): number => Math.ceil(total / 2);
-
 /**
  * The keyboard move a key requests, as an index into the ordered rows, or
- * `null` when the key is not ours. Pure so the two-column geometry — down the
- * column, across at the same offset, wrapping at the ends — is unit-testable
+ * `null` when the key is not ours. Pure so the wrapping is unit-testable
  * without a DOM.
  */
 export const nextPositionIndex = (
@@ -48,18 +49,11 @@ export const nextPositionIndex = (
   total: number,
 ): number | null => {
   if (total === 0) return null;
-  const split = leftColumnLength(total);
   switch (key) {
     case "ArrowDown":
       return (current + 1) % total;
     case "ArrowUp":
       return (current - 1 + total) % total;
-    case "ArrowRight":
-      // Right of a left-column row is the row at the same offset on the right;
-      // right of a right-column row is nothing, so focus stays put.
-      return current < split ? Math.min(current + split, total - 1) : current;
-    case "ArrowLeft":
-      return current >= split ? current - split : current;
     case "Home":
       return 0;
     case "End":
@@ -140,7 +134,6 @@ export const SquadPositionList = () => {
 
   const rows = table.getRowModel().rows.map((row) => row.original);
   const effectiveActive = activeId ?? orderedIds[0] ?? null;
-  const split = leftColumnLength(rows.length);
 
   // The match-day assignment each roster row reports against: player id → the
   // slot they are selected into. Mirrors the bar's slots live, so dragging a
@@ -190,37 +183,6 @@ export const SquadPositionList = () => {
     focusRow(nextId);
   };
 
-  /** One of the two columns. The gap between them separates them; there is no divider. */
-  const column = (slice: readonly SquadRow[]) => (
-    <ul className="min-w-0 flex-1">
-      {slice.map((row) => (
-        <li
-          key={row.id}
-          aria-selected={selectedId === row.id || undefined}
-          className="flex min-w-0 items-center gap-2 px-1.5 py-0.5 odd:bg-surface/50 hover:bg-row-hover aria-selected:bg-row-selected"
-        >
-          <SelectionIndicator slot={slotByPlayer.get(row.id) ?? null} />
-          <StatusCell statuses={statusesOf(row)} />
-          <button
-            type="button"
-            data-focus-id={focusIdOf("squad", REGION, row.id)}
-            tabIndex={rovingTabIndex(effectiveActive, row.id)}
-            draggable
-            onDragStart={(event) => writeLineupDrag(event, "roster", row.id)}
-            onFocus={() => {
-              if (activeId !== row.id) onActiveChange(row.id);
-            }}
-            onClick={(event) => openPlayer(row.id, event)}
-            className={`truncate text-left text-sm font-semibold text-text-bright ${FOCUS_RING.join(" ")}`}
-          >
-            {row.lastName}, {row.firstName}
-          </button>
-          <PositionRunner row={row} />
-        </li>
-      ))}
-    </ul>
-  );
-
   return (
     <div
       role="group"
@@ -229,16 +191,41 @@ export const SquadPositionList = () => {
       className="mt-1.5"
     >
       {rows.length > 0 && (
-        // The container listens for keys but is not itself a tab stop: the
-        // roving stops are the name buttons inside it, and this handler only
-        // routes the keys they bubble.
-        <div
-          className="flex gap-6"
-          onKeyDown={onKeyDown}
-        >
-          {column(rows.slice(0, split))}
-          {column(rows.slice(split))}
-        </div>
+        // The list listens for keys but is not itself a tab stop: the roving
+        // stops are the name buttons inside it, and this handler only routes
+        // the keys they bubble. One column capped at a reading width, so the
+        // name and its positions stay within one sweep of the eye.
+        <ul className="max-w-2xl" onKeyDown={onKeyDown}>
+          {rows.map((row) => (
+            <li
+              key={row.id}
+              aria-selected={selectedId === row.id || undefined}
+              className="flex min-w-0 items-center gap-3 px-1.5 py-1 odd:bg-surface/50 hover:bg-row-hover aria-selected:bg-row-selected"
+            >
+              <SelectionIndicator slot={slotByPlayer.get(row.id) ?? null} />
+              <button
+                type="button"
+                data-focus-id={focusIdOf("squad", REGION, row.id)}
+                tabIndex={rovingTabIndex(effectiveActive, row.id)}
+                draggable
+                onDragStart={(event) => writeLineupDrag(event, "roster", row.id)}
+                onFocus={() => {
+                  if (activeId !== row.id) onActiveChange(row.id);
+                }}
+                onClick={(event) => openPlayer(row.id, event)}
+                className={`truncate text-left text-sm font-semibold text-text-bright ${FOCUS_RING.join(" ")}`}
+              >
+                {row.lastName}, {row.firstName}
+              </button>
+              <PositionRunner row={row} />
+              {/* The same width the table's Status column reserves, so a status
+                  appearing never shifts the positions left. */}
+              <span className="shrink-0 text-xs" style={{ width: STATUS_COLUMN_WIDTH }}>
+                <StatusCell statuses={statusesOf(row)} />
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
       {/* The same one polite announcer the table layout carries (AC-32), so a
           sort, filter or selection is spoken in whichever view is on screen. */}
