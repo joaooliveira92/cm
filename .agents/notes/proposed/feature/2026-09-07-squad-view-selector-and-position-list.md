@@ -32,11 +32,11 @@ name (`Players (Position(s))`, `Players (Personal details)`), which is where CM 
 reader looks to answer "what am I looking at".
 
 **The position list is the default, and it is a list.** `SquadPositionList.tsx` renders two balanced
-columns, left column longer on an odd count, each row a match-day indicator, a name (surname first, as the
-list reads), the player's positions tinted by Familiarity Tier, and then a status slot. The slot
-comes after the positions and keeps the table's Status column width when empty, so the positions
-line up down each column and a status (injured, suspended, on international duty, once modelled)
-appears without shifting anything. It is not a `<table>`: there is
+columns, left column longer on an odd count, each row, left to right: the match-day indicator (the slot the
+player fills in the next match — GK, DC, SB1 — or empty), a status slot, the name (surname first,
+as the list reads), and the player's positions tinted by Familiarity Tier. The status slot keeps
+the table's Status column width when empty, so the names line up down each column and a status
+(injured, suspended, on international duty, once modelled) appears without shifting anything. It is not a `<table>`: there is
 one field beside the name, so a table would buy a header row, per-column sort semantics and a grid
 navigation model for a single column of data.
 

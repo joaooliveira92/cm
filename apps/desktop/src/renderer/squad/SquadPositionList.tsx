@@ -1,11 +1,11 @@
 /**
  * The Squad screen's position list — the layout CM 03/04 opened a career on:
  * every player at once, two balanced columns, each row a leading match-day
- * indicator (playing, on the bench, or not selected), a name, the positions
- * that player can fill, and a status slot after them for whatever keeps the
- * player out of the next match — injured, suspended, away with the national
- * team. The slot keeps its width when empty, so the positions line up down
- * each column whether or not anyone has a status. It is the "who is in this squad"
+ * indicator (playing, on the bench, or not selected), a status slot, a name,
+ * and the positions that player can fill. The status slot carries what bears
+ * on the next match — injured, suspended, away with the national team — and
+ * keeps its width when empty, so the names line up down each column whether
+ * or not anyone has a status. It is the "who is in this squad"
  * reading; the table views are the "how good are they at X" readings.
  *
  * It is a list, not a table, and deliberately so: there is one column of data
@@ -207,6 +207,11 @@ export const SquadPositionList = () => {
           className="flex min-w-0 items-center gap-2 px-1.5 py-0.5 odd:bg-surface/50 hover:bg-row-hover aria-selected:bg-row-selected"
         >
           <SelectionIndicator slot={slotByPlayer.get(row.id) ?? null} />
+          {/* The same width the table's Status column reserves, so a status
+              appearing never pushes the name right. */}
+          <span className="shrink-0 text-xs" style={{ width: STATUS_COLUMN_WIDTH }}>
+            <StatusCell statuses={statusesOf(row)} />
+          </span>
           <button
             type="button"
             data-focus-id={focusIdOf("squad", REGION, row.id)}
@@ -222,11 +227,6 @@ export const SquadPositionList = () => {
             {row.lastName}, {row.firstName}
           </button>
           <PositionRunner row={row} />
-          {/* The same width the table's Status column reserves, so a status
-              appearing never shifts the positions left. */}
-          <span className="shrink-0 text-xs" style={{ width: STATUS_COLUMN_WIDTH }}>
-            <StatusCell statuses={statusesOf(row)} />
-          </span>
         </li>
       ))}
     </ul>

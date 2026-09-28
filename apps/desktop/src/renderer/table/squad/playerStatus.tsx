@@ -85,7 +85,7 @@ export const RESERVED_STATUSES: readonly ReservedStatus[] = [
     term: "Injured",
     tone: "danger",
     likelihood: "plausible",
-    note: "Injury exists as a per-match event, not as a season-long 'out for N days' state.",
+    note: "Injury exists as a per-match event, not as a season-long 'out for N days' state. Once modeled, the code reads in the warning tone while the player can still play the next match and in the danger tone when he cannot.",
   },
   {
     abbreviation: "Sus",
