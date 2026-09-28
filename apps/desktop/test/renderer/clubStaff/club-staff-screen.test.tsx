@@ -99,16 +99,19 @@ describe("ticket 04 — the Club Staff page renders who works at the club", () =
     expect(main.getAttribute("data-focus-id")).toBe("clubStaff");
   });
 
-  it("renders no focusable row", async () => {
+  it("makes each name the row's one focusable control, and the row itself not focusable", async () => {
     mount(populatedStaffView());
     const rows = await screen.findAllByRole("listitem");
     expect(rows.length).toBeGreaterThan(0);
-    const focusable = [
-      // `[tabindex]` unqualified: a row given any tabindex is a focusable row, which is the
-      // regression this guards. Scoped to `<main>` so the harness's own chrome never counts.
-      ...document.querySelectorAll("main :is(button, a, [tabindex], input, select, textarea)"),
-    ];
-    expect(focusable).toHaveLength(0);
+    // Each name opens that person's Staff Profile, so it is a button; nothing else on the page is
+    // focusable. `[tabindex]` unqualified: a row given any tabindex is a focusable row. Scoped to
+    // `<main>` so the harness's own chrome never counts.
+    const focusable = [...document.querySelectorAll("main :is(button, a, [tabindex], input, select, textarea)")];
+    expect(focusable.map((element) => element.tagName)).toEqual(rows.map(() => "BUTTON"));
+    for (const row of rows) {
+      expect(row.hasAttribute("tabindex")).toBe(false);
+      expect(row.querySelectorAll("button")).toHaveLength(1);
+    }
     const main = document.querySelector("main") as HTMLElement;
     expect(main.tabIndex).toBe(-1);
   });

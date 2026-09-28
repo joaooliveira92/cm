@@ -224,14 +224,14 @@ const staffCountFor = (clubId: string) =>
   });
 
 /** Four department groups in the derivation's fixed order, each holding exactly the roles it owns —
- *  one president, one coach, the tier's scouts, one physio. Any of the four being absent, doubled,
+ *  one president, one coach and one assistant manager, the tier's scouts, one physio. Any of the four being absent, doubled,
  *  or out of order fails the shape the Club Staff screen promises. */
 const expectStaffViewOf = (view: ClubStaffView, tier: StatureTier): void => {
   expect(view.groups.map((group) => group.department)).toEqual([...STAFF_DEPARTMENTS]);
   const roleOf = (department: StaffDepartment) =>
     view.groups.find((group) => group.department === department)!.members.map((member) => member.role);
   expect(roleOf("executive")).toEqual(["president"]);
-  expect(roleOf("coaching")).toEqual(["coach"]); // exactly one derived coach
+  expect(roleOf("coaching")).toEqual(["coach", "assistant"]); // exactly one derived coach, one assistant
   expect(roleOf("recruitment")).toEqual(Array.from({ length: SCOUT_HEADCOUNT[tier] }, () => "scout"));
   expect(roleOf("medical")).toEqual(["physio"]);
 };
@@ -263,8 +263,9 @@ describe("getClubStaff — the club-scoped read (Screen 38)", () => {
 
       const staff = yield* getClubStaff(savesDir, save.id, clubId);
       const coaching = staff.groups.find((group) => group.department === "coaching")!;
-      expect(coaching.members).toHaveLength(1);
-      const coach = coaching.members[0]!;
+      const coaches = coaching.members.filter((member) => member.role === "coach");
+      expect(coaches).toHaveLength(1);
+      const coach = coaches[0]!;
 
       // The scouting screen reads its names from the `staff` table (`s.name`), and the materialiser
       // wrote those rows from the very `generateStaff` stream `getClubStaff` re-derives on read. A

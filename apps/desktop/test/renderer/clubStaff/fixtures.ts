@@ -1,5 +1,5 @@
 import { ClubId, SaveId } from "@cm-clone/contracts";
-import { STAFF_DEPARTMENTS, STATURE_TIERS, type ClubPersonRole } from "@cm-clone/shared";
+import { STAFF_DEPARTMENTS, STATURE_TIERS, staffKey, type ClubPersonRole } from "@cm-clone/shared";
 
 /**
  * The Club Staff fixtures, in one place because four spec files were each carrying their own copy
@@ -14,6 +14,7 @@ import { STAFF_DEPARTMENTS, STATURE_TIERS, type ClubPersonRole } from "@cm-clone
 type StaffDepartment = (typeof STAFF_DEPARTMENTS)[number];
 
 interface MemberWire {
+  readonly key: string;
   readonly role: ClubPersonRole;
   readonly firstName: string;
   readonly lastName: string;
@@ -46,11 +47,13 @@ const ROLE_OF_DEPARTMENT: Readonly<Record<StaffDepartment, ClubPersonRole>> = {
   medical: "physio",
 };
 
+/** `ordinal` is the person's place among the club's people of that role, which makes their key. */
 export const member = (
   role: ClubPersonRole,
   firstName: string,
   lastName: string,
-): MemberWire => ({ role, firstName, lastName });
+  ordinal = 0,
+): MemberWire => ({ key: staffKey(role, ordinal), role, firstName, lastName });
 
 /**
  * Four groups in the derivation's fixed order, one person each. `isUserClub` defaults to the
@@ -87,7 +90,7 @@ export const populatedStaffView = (
       { department: "coaching", members: [member("coach", "Diane", "Wax")] },
       {
         department: "recruitment",
-        members: [member("scout", "Marcus", "Ito"), member("scout", "Elena", "Suarez")],
+        members: [member("scout", "Marcus", "Ito"), member("scout", "Elena", "Suarez", 1)],
       },
       { department: "medical", members: [member("physio", "Thomas", "Bayard")] },
     ],

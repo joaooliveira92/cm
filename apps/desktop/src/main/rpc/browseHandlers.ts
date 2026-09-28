@@ -2,7 +2,7 @@
  * The club- and competition-scoped browse handlers.
  *
  * Split out of `rpcServer.ts` when that file crossed the 600-line ceiling, and along this seam
- * rather than an arbitrary one: these eight are the read-only surfaces reached *with a target in
+ * rather than an arbitrary one: these are the read-only surfaces reached *with a target in
  * hand* — a club or a competition — as opposed to the save-scoped screens the manager navigates to
  * directly. They arrived together over group-c tickets 06-08 and group-l tickets 07-10, and they
  * change together.
@@ -13,6 +13,8 @@
  */
 import { AppRpcs } from "@cm-clone/contracts";
 import { Effect, Schema } from "effect";
+import { getClubStaff } from "../career/staff.js";
+import { getStaffProfile } from "../career/staffProfile.js";
 import { getClubInformation } from "../club/clubInformation.js";
 import {
   getBoardConfidence,
@@ -31,7 +33,9 @@ type BrowseMethod =
   | "getBoardConfidence"
   | "getClubTransfers"
   | "getClubFixtures"
-  | "getClubInformation";
+  | "getClubInformation"
+  | "getClubStaff"
+  | "getStaffProfile";
 
 export const browseHandlers: { readonly [M in BrowseMethod]: Handler<M> } = {
   getCompetitions: (payload, ctx) =>
@@ -80,5 +84,19 @@ export const browseHandlers: { readonly [M in BrowseMethod]: Handler<M> } = {
         AppRpcs.getClubInformation.payload,
       )(payload);
       return yield* getClubInformation(ctx.savesDir, saveId, clubId);
+    }),
+  getClubStaff: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, clubId } = yield* Schema.decodeUnknownEffect(AppRpcs.getClubStaff.payload)(
+        payload,
+      );
+      return yield* getClubStaff(ctx.savesDir, saveId, clubId);
+    }),
+  getStaffProfile: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, clubId, key } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.getStaffProfile.payload,
+      )(payload);
+      return yield* getStaffProfile(ctx.savesDir, saveId, clubId, key);
     }),
 };

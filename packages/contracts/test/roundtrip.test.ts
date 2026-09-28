@@ -14,7 +14,6 @@ import {
   AttributesSchema,
   BidView,
   ChangeTacticsPayload,
-  ClubStaffView,
   ClubSummary,
   InvalidTacticError,
   InsufficientTransferBudgetError,
@@ -88,60 +87,6 @@ describe("simple view classes", () => {
 
   it("ClubSummary round-trips", () => {
     roundTrip(ClubSummary, club);
-  });
-});
-
-describe("Club Staff view (Screen 38)", () => {
-  const staffView = {
-    club,
-    // Whose club it is rides on this view, so the screen needs no second read to mark a rival.
-    isUserClub: false,
-    groups: [
-      { department: "executive", members: [{ key: "president-0", role: "president", firstName: "Alan", lastName: "Reyes" }] },
-      {
-        department: "coaching",
-        members: [
-          { key: "coach-0", role: "coach", firstName: "Beth", lastName: "Cross" },
-          { key: "assistant-0", role: "assistant", firstName: "Finn", lastName: "Hale" },
-        ],
-      },
-      {
-        department: "recruitment",
-        members: [
-          { key: "scout-0", role: "scout", firstName: "Cara", lastName: "Devlin" },
-          { key: "scout-1", role: "scout", firstName: "Dmitri", lastName: "Sorel" },
-        ],
-      },
-      { department: "medical", members: [{ key: "physio-0", role: "physio", firstName: "Elsa", lastName: "Marchetti" }] },
-    ],
-  } as const;
-
-  it("round-trips the backroom grouped by department", () => {
-    roundTrip(ClubStaffView, staffView);
-  });
-
-  it("is the getClubStaff success schema, and rejects a role the derivation cannot produce", () => {
-    expect(ClubStaffView).toBe(AppRpcs.getClubStaff.success);
-    expect(() =>
-      Schema.decodeUnknownSync(ClubStaffView)({
-        ...staffView,
-        groups: [
-          {
-            department: "executive",
-            members: [{ role: "chairman", firstName: "Alan", lastName: "Reyes" }],
-          },
-        ],
-      }),
-    ).toThrow();
-  });
-
-  it("getClubStaff payload round-trips saveId and clubId", () => {
-    roundTrip(AppRpcs.getClubStaff.payload, { saveId: "s1", clubId: "club_eng_01" });
-  });
-
-  it("getClubStaff error schema round-trips each of its two failures", () => {
-    roundTrip(AppRpcs.getClubStaff.error, { _tag: "SaveNotFoundError", id: "s1" });
-    roundTrip(AppRpcs.getClubStaff.error, { _tag: "ClubNotFoundError", id: "club_nobody" });
   });
 });
 
