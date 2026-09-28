@@ -187,7 +187,7 @@ const flowResponses = async (method: string, payload: unknown): Promise<unknown>
               },
             },
           ],
-          leagues: [{ leagueId: "comp_eng_1", leagueName: "English First Division" }],
+          leagues: [{ leagueId: "comp_eng_1", leagueName: "English First Division", nationId: "nation_eng" }],
         },
       };
     default:

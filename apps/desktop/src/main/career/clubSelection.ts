@@ -1,4 +1,4 @@
-import { ClubSelectionDetail, ClubSelectionRow, ClubSelectionTopPlayer, ClubSelectionView, type ClubId, type CompetitionId } from "@cm-clone/contracts";
+import { ClubSelectionDetail, ClubSelectionRow, ClubSelectionTopPlayer, ClubSelectionView, type ClubId, type CompetitionId, type NationId } from "@cm-clone/contracts";
 import { BOARD_OBJECTIVE_BANDS, POSITIONS, computeSquadQuality, type Position } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -62,8 +62,9 @@ export const getClubSelection = Effect.gen(function* () {
   const coloursOf = yield* clubColourResolver;
 
   // All leagues the player selected (full-sim leagues), ordered by tier.
-  const leagueRows = yield* sql<{ id: CompetitionId }>`
-    SELECT id FROM competitions WHERE depth = 'full' AND kind = 'league' ORDER BY tier, id`;
+  const leagueRows = yield* sql<{ id: CompetitionId; nationId: NationId | null }>`
+    SELECT id, nation_id as "nationId" FROM competitions
+     WHERE depth = 'full' AND kind = 'league' ORDER BY tier, id`;
 
   const budgetRows = yield* sql<{
     clubId: string;
@@ -74,10 +75,10 @@ export const getClubSelection = Effect.gen(function* () {
      FROM club_budgets WHERE season_number = 1`;
 
   const clubs: Array<InstanceType<typeof ClubSelectionRow>> = [];
-  const leagues: Array<{ leagueId: CompetitionId; leagueName: string }> = [];
+  const leagues: Array<{ leagueId: CompetitionId; leagueName: string; nationId: NationId | null }> = [];
 
   for (const league of leagueRows) {
-    leagues.push({ leagueId: league.id, leagueName: nameOf(league.id) });
+    leagues.push({ leagueId: league.id, leagueName: nameOf(league.id), nationId: league.nationId });
 
 const clubRows = yield* sql<{
     id: ClubId;

@@ -4,6 +4,7 @@
  * month is January 1985, so day 15 is unique in the grid; picking it yields `1985-01-15`.
  */
 import { fireEvent, screen } from "@testing-library/react";
+import { chooseAutocompleteOption } from "../../setup/baseUiAutocomplete.js";
 import { chooseOptionByLabel } from "../../setup/baseUiSelect.js";
 
 export const fillPersonalDetails = async (): Promise<void> => {
@@ -13,7 +14,7 @@ export const fillPersonalDetails = async (): Promise<void> => {
   fireEvent.change(screen.getByPlaceholderText("Your last name"), {
     target: { value: "Manager" },
   });
-  await chooseOptionByLabel("Nationality", "England");
+  await chooseAutocompleteOption("Nationality", "England");
 
   fireEvent.click(screen.getByRole("button", { name: "Date of birth" }));
   fireEvent.click(await screen.findByRole("button", { name: /January 15th, 1985/ }));

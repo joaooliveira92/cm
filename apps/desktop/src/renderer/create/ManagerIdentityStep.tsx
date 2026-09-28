@@ -1,33 +1,18 @@
 import { useCallback, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { NationId } from "@cm-clone/contracts";
-import { NATION_CODES, NATION_PROFILES, canonicalNationId } from "@cm-clone/shared";
 import { Input } from "../components/ui/input.js";
 import { Label } from "../components/ui/label.js";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select.js";
 import { useCreateSessionApi } from "../router/createSessionContext.js";
 import { CreationStepper } from "./CreationStepper.js";
 import { DateOfBirthField } from "./DateOfBirthField.js";
 import { FavoriteTeamField } from "./FavoriteTeamField.js";
+import { NationalityField } from "./NationalityField.js";
 import { ManagerPillarsPane } from "./ManagerPillarsPane.js";
 import { ManagerStyleAppearancePane } from "./ManagerStyleAppearancePane.js";
 import { panelVariants, sumPillars, type FormStep } from "./managerIdentityCopy.js";
 import { selectedFavoriteTeamOf } from "./favoriteTeam.js";
 import { provisionalIdOf } from "./generation.js";
 import { personalDetailsComplete } from "./personalDetails.js";
-
-/** The world's nations, which generation copies into every save, so the picker never has to wait
- *  on the world to offer an answer. Names are factual geography read from code, not a content pack. */
-const NATIONALITIES = NATION_CODES.map((code) => ({
-  id: canonicalNationId(code),
-  name: NATION_PROFILES[code].displayName,
-}));
 
 export const ManagerIdentityStep = () => {
   const { session, update, setManagerStep, selectFavoriteTeam } = useCreateSessionApi();
@@ -145,32 +130,10 @@ export const ManagerIdentityStep = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.22 }}
                   >
-                    <Label className="block">Nationality</Label>
-                    <Select
-                      value={nationalityId ?? ""}
-                      onValueChange={(value) =>
-                        update({
-                          nationalityId:
-                            value === "" || value === null ? null : NationId.make(value),
-                        })
-                      }
-                    >
-                      <SelectTrigger aria-label="Nationality" className="mt-2">
-                        <SelectValue>
-                          {(value: string | null) =>
-                            NATIONALITIES.find((nation) => nation.id === value)?.name ??
-                            "Select a nationality"
-                          }
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {NATIONALITIES.map((nation) => (
-                          <SelectItem key={nation.id} value={nation.id}>
-                            {nation.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <NationalityField
+                      value={nationalityId}
+                      onSelect={(id) => update({ nationalityId: id })}
+                    />
                   </motion.div>
 
                   <motion.div

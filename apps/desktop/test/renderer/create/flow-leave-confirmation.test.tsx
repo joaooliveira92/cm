@@ -189,7 +189,7 @@ const flowResponses =
           _tag: "Success",
           value: {
             clubs: CLUBS,
-            leagues: [{ leagueId: "comp_eng_1", leagueName: "English First Division" }],
+            leagues: [{ leagueId: "comp_eng_1", leagueName: "English First Division", nationId: "nation_eng" }],
           },
         };
       default:

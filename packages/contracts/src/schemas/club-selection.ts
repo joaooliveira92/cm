@@ -2,7 +2,7 @@ import { Schema } from "effect";
 import { SQUAD_QUALITY_BANDS } from "@cm-clone/shared";
 
 import { ClubColoursView, StatureTierSchema } from "./clubs.js";
-import { ClubId, CompetitionId } from "./ids.js";
+import { ClubId, CompetitionId, NationId } from "./ids.js";
 import { PositionSchema } from "./squad.js";
 
 export const SquadQualityBandSchema = Schema.Literals(SQUAD_QUALITY_BANDS);
@@ -46,9 +46,11 @@ export class ClubSelectionRow extends Schema.Class<ClubSelectionRow>("ClubSelect
 
 export class ClubSelectionView extends Schema.Class<ClubSelectionView>("ClubSelectionView")({
   clubs: Schema.Array(ClubSelectionRow),
-  /** The leagues the player selected, with their display names. */
+  /** The leagues the player selected, with their display names and the nation each belongs to
+   *  (null for a competition with no `nations` row). */
   leagues: Schema.Array(Schema.Struct({
     leagueId: CompetitionId,
     leagueName: Schema.String,
+    nationId: Schema.NullOr(NationId),
   })),
 }) {}
