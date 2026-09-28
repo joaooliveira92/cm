@@ -1,4 +1,4 @@
-import { cleanup, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { seasonReadout } from "../../../src/renderer/chrome/CareerChrome.js";
 import { resetBindingOverrides } from "../../../src/renderer/actions/bindingState.js";
@@ -47,12 +47,14 @@ describe("the career chrome", () => {
 
   it("marks the active item and keeps every primary section present", async () => {
     await mountCareer("in_season", "fixtures");
-    // The active destination's item lives in the Analysis context strip and
-    // carries aria-current; another section's item does not.
-    expect(screen.getByRole("button", { name: "Fixtures" }).getAttribute("aria-current")).toBe("page");
-    // The context strip shows the active section's items.
-    expect(screen.getByRole("button", { name: "League Table" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Match Day" })).toBeTruthy();
+    // The active destination's item lives in the Analysis panel and carries aria-current;
+    // the panel opens from the section's row.
+    expect(screen.getByRole("button", { name: "Analysis" }).getAttribute("aria-current")).toBe("page");
+    fireEvent.click(screen.getByRole("button", { name: "Analysis" }));
+    const panel = within(await screen.findByRole("navigation", { name: "Analysis submenu" }));
+    expect(panel.getByRole("button", { name: "Fixtures" }).getAttribute("aria-current")).toBe("page");
+    expect(panel.getByRole("button", { name: "League Table" })).toBeTruthy();
+    expect(panel.getByRole("button", { name: "Match Day" })).toBeTruthy();
     // Every primary section plus Preferences is present in the primary row.
     for (const label of [
       "Squad",

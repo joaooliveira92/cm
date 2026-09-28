@@ -519,13 +519,28 @@ const SidebarMenuSkeleton = ({
 );
 SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton";
 
-export {
-  SidebarMenuAction,
-  SidebarMenuBadge,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-} from "./sidebar-menu-sub.js";
+interface SidebarMenuBadgeProps extends React.ComponentProps<"span"> {
+  ref?: React.Ref<HTMLSpanElement> | undefined;
+}
+
+/** A count pinned to the row's trailing edge; it hides in the icon rail, where the row carries a
+ *  dot instead.
+ *
+ *  A `span` where upstream has a `div` beside the button: this one goes *inside* the button, so
+ *  its label is part of the row's accessible name rather than a stray node after it. */
+const SidebarMenuBadge = ({ className, ref, ...props }: SidebarMenuBadgeProps) => (
+  <span
+    ref={ref}
+    data-sidebar="menu-badge"
+    className={cn(
+      "pointer-events-none absolute top-1.5 right-1 flex h-5 min-w-5 select-none items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums text-sidebar-foreground",
+      "group-data-[collapsible=icon]:hidden",
+      className,
+    )}
+    {...props}
+  />
+);
+SidebarMenuBadge.displayName = "SidebarMenuBadge";
 
 export {
   Sidebar,
@@ -538,6 +553,7 @@ export {
   SidebarInput,
   SidebarInset,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSkeleton,

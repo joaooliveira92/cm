@@ -32,7 +32,7 @@ import type { SaveScopedCareerDestinationType } from "./destinations.js";
 
 /**
  * A single navigable item within a primary section. Each item maps to exactly
- * one career route and carries an icon for the context submenu.
+ * one career route and carries an icon for the section's item panel.
  *
  * The destination type is the save-scoped subset, which is what keeps drill-downs out of the
  * navbar by construction rather than by convention: a surface needing a target club has no club
@@ -46,14 +46,14 @@ export interface NavItem {
 }
 
 /**
- * A primary navigation section: the top-level item in the navbar center zone.
- * Each section owns a set of sub-items displayed in the context submenu strip.
+ * A primary navigation section: a row in the sidebar. Each section owns a set of
+ * sub-items, listed in the panel its row opens.
  */
 export interface NavSection {
   readonly id: string;
   readonly label: string;
   readonly icon: LucideIcon;
-  /** The destination navigated to when the primary label is clicked directly. */
+  /** The section's landing screen: where `g <n>` goes when no item key follows. */
   readonly defaultDestination: SaveScopedCareerDestinationType;
   readonly items: ReadonlyArray<NavItem>;
 }

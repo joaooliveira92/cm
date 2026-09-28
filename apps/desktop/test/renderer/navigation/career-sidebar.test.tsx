@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   createMemoryHistory,
@@ -95,21 +95,30 @@ describe("the career sidebar", () => {
     }
   });
 
-  it("expands the section the route belongs to, and marks it current", async () => {
+  it("marks the route's section current and keeps its item list closed", async () => {
     await mountSidebar("league");
-    // Active section is Analysis; its submenu is the one expanded.
-    const submenu = within(screen.getByRole("navigation", { name: "Analysis submenu" }));
+    expect(
+      screen.getByRole("button", { name: "Analysis" }).getAttribute("aria-current"),
+    ).toBe("page");
+    expect(screen.queryByRole("navigation", { name: /submenu$/ })).toBeNull();
+  });
+
+  it("opens a section's panel on click without navigating", async () => {
+    await mountSidebar("league");
+    fireEvent.click(screen.getByRole("button", { name: "Analysis" }));
+    const submenu = within(await screen.findByRole("navigation", { name: "Analysis submenu" }));
     for (const option of ["League Table", "Fixtures", "Match Day", "Season Summary"]) {
       expect(submenu.getByRole("button", { name: option })).toBeTruthy();
     }
     expect(
-      screen.getByRole("button", { name: "Analysis" }).getAttribute("aria-current"),
+      submenu.getByRole("button", { name: "League Table" }).getAttribute("aria-current"),
     ).toBe("page");
   });
 
-  it("the Squad submenu lists the club menu options and marks Squad active on the squad route", async () => {
+  it("the Squad panel lists the club menu options and marks Squad active on the squad route", async () => {
     await mountSidebar("squad");
-    const submenu = within(screen.getByRole("navigation", { name: "Squad submenu" }));
+    fireEvent.click(screen.getByRole("button", { name: "Squad" }));
+    const submenu = within(await screen.findByRole("navigation", { name: "Squad submenu" }));
     for (const option of [
       "Squad",
       "Staff",
@@ -129,41 +138,71 @@ describe("the career sidebar", () => {
   });
 
   /**
-   * Arriving on a career route must leave the navigation oriented. The News route was absent from
-   * the route-to-destination map, so landing on the inbox cleared the active section and took the
-   * whole submenu down with it — the screen rendered, but the nav around it went blank.
+   * With the item list behind a click, the caption under the active row is what says where in the
+   * section the route is. It is left off when it would only repeat the section's own label.
    */
-  it("keeps the News section active and its submenu up on the inbox route", async () => {
+  it("captions the active section with the current item", async () => {
+    await mountSidebar("squad-staff");
+    const row = screen.getByRole("button", { name: "Squad" }).closest("li");
+    expect(row?.textContent).toContain("Staff");
+  });
+
+  it("leaves the caption off when the item repeats the section's label", async () => {
+    await mountSidebar("squad");
+    const row = screen.getByRole("button", { name: "Squad" }).closest("li");
+    expect(row?.textContent).toBe("Squad");
+  });
+
+  /**
+   * Arriving on a career route must leave the navigation oriented. The News route was absent from
+   * the route-to-destination map, so landing on the inbox cleared the active section and the nav
+   * around the screen went blank.
+   */
+  it("keeps the News section active on the inbox route", async () => {
     await mountSidebar("news");
-    const submenu = within(screen.getByRole("navigation", { name: "News submenu" }));
+    expect(screen.getByRole("button", { name: "News" }).getAttribute("aria-current")).toBe("page");
+    fireEvent.click(screen.getByRole("button", { name: "News" }));
+    const submenu = within(await screen.findByRole("navigation", { name: "News submenu" }));
     expect(submenu.getByRole("button", { name: "Inbox" }).getAttribute("aria-current")).toBe("page");
   });
 
   /**
-   * One submenu at a time. This is what keeps an item label that two sections share — "Transfers"
+   * One panel at a time. This is what keeps an item label that two sections share — "Transfers"
    * belongs to Squad and to Recruitment — resolving to exactly one control, and it is why the
-   * collapsible panel must unmount rather than merely hide its contents.
+   * popover must unmount rather than merely hide its contents.
    */
-  it("holds exactly one section open", async () => {
+  it("holds exactly one panel open", async () => {
     await mountSidebar("squad");
+    fireEvent.click(screen.getByRole("button", { name: "Squad" }));
+    await screen.findByRole("navigation", { name: "Squad submenu" });
+    fireEvent.click(screen.getByRole("button", { name: "Recruitment" }));
+
+    await screen.findByRole("navigation", { name: "Recruitment submenu" });
     expect(screen.getAllByRole("navigation", { name: /submenu$/ })).toHaveLength(1);
     expect(screen.getByRole("button", { name: "Transfers" })).toBeTruthy();
-  });
-
-  it("opens another section without navigating away from the current screen", async () => {
-    await mountSidebar("squad");
-    fireEvent.click(screen.getByRole("button", { name: "Toggle Recruitment submenu" }));
-
-    expect(screen.getByRole("navigation", { name: "Recruitment submenu" })).toBeTruthy();
-    expect(screen.queryByRole("navigation", { name: "Squad submenu" })).toBeNull();
-    // The route did not change, so Squad keeps the active marker even with its submenu closed.
+    // The route did not change, so Squad keeps the active marker with another panel open.
     expect(screen.getByRole("button", { name: "Squad" }).getAttribute("aria-current")).toBe("page");
   });
 
-  it("closes the open section when its own toggle is pressed again", async () => {
+  it("closes the open panel when its own row is pressed again", async () => {
     await mountSidebar("squad");
-    fireEvent.click(screen.getByRole("button", { name: "Toggle Squad submenu" }));
-    expect(screen.queryByRole("navigation", { name: "Squad submenu" })).toBeNull();
+    const squad = screen.getByRole("button", { name: "Squad" });
+    fireEvent.click(squad);
+    await screen.findByRole("navigation", { name: "Squad submenu" });
+    fireEvent.click(squad);
+    await waitFor(() =>
+      expect(screen.queryByRole("navigation", { name: "Squad submenu" })).toBeNull(),
+    );
+  });
+
+  it("does not open on hover", async () => {
+    await mountSidebar("squad");
+    const recruitment = screen.getByRole("button", { name: "Recruitment" });
+    fireEvent.pointerEnter(recruitment);
+    fireEvent.mouseEnter(recruitment);
+    fireEvent.mouseMove(recruitment);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(screen.queryByRole("navigation", { name: "Recruitment submenu" })).toBeNull();
   });
 });
 
@@ -174,14 +213,9 @@ describe("leader-key hints on the sidebar (global-key-map note, g <key> prefix)"
       (badge) => badge.textContent ?? "",
     );
 
-  /** The section hints, excluding the ones the expanded submenu contributes. */
-  const sectionHints = (): Array<string> => {
-    const nav = screen.getByRole("navigation", { name: "Primary navigation" });
-    const submenus = Array.from(nav.querySelectorAll('[aria-label$="submenu"]'));
-    return Array.from(nav.querySelectorAll("[data-shortcut-hint]"))
-      .filter((badge) => !submenus.some((submenu) => submenu.contains(badge)))
-      .map((badge) => badge.textContent ?? "");
-  };
+  /** The section hints. The item panel is portalled out of the sidebar, so none of its badges are
+   *  in here. */
+  const sectionHints = (): Array<string> => hintsIn("Primary navigation");
 
   it("shows no hints while the prefix is idle", async () => {
     await mountSidebar("league");
@@ -201,15 +235,15 @@ describe("leader-key hints on the sidebar (global-key-map note, g <key> prefix)"
     expect(sectionHints()).toEqual(
       NAV_SECTIONS.map((_, index) => String(index + 1)).filter((key) => boundSectionKeys.has(key)),
     );
-    // The items of the expanded section don't show hints during the level0 prefix.
-    expect(hintsIn("Analysis submenu")).toEqual([]);
+    // No panel opens during the level0 prefix: it has not picked a section yet.
+    expect(screen.queryByRole("navigation", { name: /submenu$/ })).toBeNull();
 
     act(() => setScopeState({ prefixActive: false }));
     clearScopeState("prefixKind");
     expect(hintsIn("Primary navigation")).toEqual([]);
   });
 
-  it("badges the items of the section the prefix has descended into", async () => {
+  it("opens the panel of the section the prefix has descended into and badges its items", async () => {
     await mountSidebar("league");
     act(() =>
       setScopeState({
@@ -219,11 +253,14 @@ describe("leader-key hints on the sidebar (global-key-map note, g <key> prefix)"
       }),
     );
     const analysisItems = NAV_SECTIONS.find((section) => section.id === "analysis")?.items ?? [];
+    await screen.findByRole("navigation", { name: "Analysis submenu" });
     expect(hintsIn("Analysis submenu")).toEqual(
       analysisItems.map((_, index) => POSITION_KEYS[index]),
     );
     // The section rows themselves are level 0's business, so they stay unbadged.
     expect(sectionHints()).toEqual([]);
+    // Opened by the prefix, the panel leaves focus where the prefix was typed.
+    expect(screen.getByRole("navigation", { name: "Analysis submenu" }).contains(document.activeElement)).toBe(false);
   });
 
   // Ticket 02 settled that the nav advertises a key only if that key dispatches. A user override
@@ -249,15 +286,15 @@ describe("leader-key hints on the sidebar (global-key-map note, g <key> prefix)"
   it("keeps the hint out of the control's accessible name", async () => {
     await mountSidebar("league");
     act(() => setScopeState({ prefixActive: true, prefixKind: "level0" }));
-    expect(screen.getByRole("button", { name: "Fixtures" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Analysis" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Squad" })).toBeTruthy();
   });
 
   it("does not remount the control, so focus survives the hint appearing", async () => {
     await mountSidebar("league");
-    const fixtures = screen.getByRole("button", { name: "Fixtures" });
-    fixtures.focus();
+    const analysis = screen.getByRole("button", { name: "Analysis" });
+    analysis.focus();
     act(() => setScopeState({ prefixActive: true, prefixKind: "level0" }));
-    expect(document.activeElement).toBe(fixtures);
+    expect(document.activeElement).toBe(analysis);
   });
 });

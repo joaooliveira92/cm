@@ -7,16 +7,16 @@ import type { SaveScopedCareerDestinationType } from "./destinations.js";
 export interface NavState {
   readonly activeSectionId: NavSectionId | null;
   readonly activeItemId: NavItemId | null;
-  /** Whether a section's submenu is expanded in the sidebar. */
-  readonly isSectionExpanded: (sectionId: NavSectionId) => boolean;
+  /** The section whose item panel is open beside the sidebar, if any. */
+  readonly openSectionId: NavSectionId | null;
 }
 
 export interface NavActions {
-  /** Drop the expansion override, so the sidebar follows the route again. */
-  readonly clearTransient: () => void;
+  /** Close the open section panel. */
+  readonly closeSection: () => void;
   readonly goTo: (destination: SaveScopedCareerDestinationType, intent: NavigationIntent) => void;
-  /** Expand a section's submenu, or collapse it if it is the expanded one. */
-  readonly toggleSection: (sectionId: NavSectionId) => void;
+  /** Open a section's item panel, replacing any other; `null` closes it. */
+  readonly setOpenSection: (sectionId: NavSectionId | null) => void;
 }
 
 export interface NavMeta {

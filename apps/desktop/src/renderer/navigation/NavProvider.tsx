@@ -97,26 +97,26 @@ export const NavProvider = ({
     : null;
   const activeItemId = findActiveItemId(activeDestination, activeSectionId);
 
-  const { isSectionExpanded, toggleSection, clearTransient } = useNavState(activeSectionId);
+  const { openSectionId, setOpenSection, closeSection } = useNavState(activeSectionId);
 
   const goTo = useCallback(
     (destination: SaveScopedCareerDestinationType, intent: NavigationIntent) => {
-      clearTransient();
+      closeSection();
       navigateCareer({ type: destination as CareerDestination["type"], saveId } as CareerDestination, intent);
     },
-    [saveId, clearTransient],
+    [saveId, closeSection],
   );
 
   const value: NavContextValue = {
     state: {
       activeSectionId,
       activeItemId,
-      isSectionExpanded,
+      openSectionId,
     },
     actions: {
-      clearTransient,
+      closeSection,
       goTo,
-      toggleSection,
+      setOpenSection,
     },
     meta: {
       saveId,

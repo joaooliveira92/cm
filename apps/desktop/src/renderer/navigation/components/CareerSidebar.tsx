@@ -39,9 +39,9 @@ const SidebarToggleAction = () => {
  *
  * `collapsible="icon"` rather than `offcanvas`: a manager who collapses the
  * sidebar for a wide table still needs to get back out of that table, and the
- * icon rail keeps every section one click away. Collapsing hides the submenus
- * (they have nowhere to go in a 3rem rail), and the section rows fall back to
- * their tooltips.
+ * icon rail keeps every section one click away. A section's item panel opens
+ * beside the rail the same way it opens beside the full sidebar, and the rows
+ * fall back to their tooltips.
  *
  * The sections render under `NAV_GROUPS` headings, which are display only: one
  * `Primary navigation` landmark still wraps them all, and the keyboard prefix

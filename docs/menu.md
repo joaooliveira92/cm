@@ -9,7 +9,9 @@
 > wherever the shape is incidental to the rule.
 >
 > The clauses that stated the opposite of what ships have been corrected in place (§1, §13.3, §17.2,
-> §19). The two-row layout diagrams have not been redrawn; they are a record of the shape that was
+> §19). As of 2026-09-27 a section's items open in a panel beside the sidebar rather than expanding
+> under the row — see
+> [section items open in a flyout](../.agents/notes/implemented/architecture/2026-09-27-section-items-open-in-a-flyout.md). The two-row layout diagrams have not been redrawn; they are a record of the shape that was
 > tried, and the sidebar refactor is the reason it was replaced.
 
 ## 1. Purpose
@@ -20,8 +22,8 @@ from its original sidebar and menu-oriented interface into a navigation system w
 1. a stable **primary navigation** level, listing the game's domains; and
 2. a **secondary contextual navigation** level, listing what the current domain contains.
 
-Both levels live in a left sidebar: the primary sections stack vertically, and the active section
-expands to show its items beneath it. Contexts that are not a section — a player or staff profile, a
+Both levels hang off a left sidebar: the primary sections stack vertically, and clicking one opens
+a panel of its items beside the sidebar. Contexts that are not a section — a player or staff profile, a
 match — keep a contextual tab row above the screen, because they are transient and do not belong in a
 standing sidebar.
 
@@ -1639,8 +1641,8 @@ Examples:
 An implementation LLM must follow these rules whenever the design leaves multiple possible choices:
 
 1. Preserve the ten primary navigation labels and their order unless a product requirement explicitly changes them.
-2. Keep the primary sections and their items in the sidebar; do not move a section's items into a
-   second horizontal row. (This rule read "never add a persistent sidebar" until 2026-09-26, when the
+2. Keep the primary sections in the sidebar, each opening a panel of its items beside it; do not move
+   a section's items into a second horizontal row. (This rule read "never add a persistent sidebar" until 2026-09-26, when the
    two-row layout was replaced — see the banner at the top of this document.)
 3. Never move Continue into an overflow menu.
 4. Treat the secondary row as contextual and replace its contents when an entity or match context is active.
@@ -1793,8 +1795,8 @@ Items:
 
 The navbar adaptation is complete only if all of the following are true:
 
-- the primary sections and the active section's items are both in the sidebar;
-- exactly one section is expanded at a time, and by default it is the one the route belongs to;
+- the primary sections are in the sidebar, and a section's items open in a panel beside it;
+- at most one section's panel is open at a time, and the route's section names its current item;
 - the sidebar remains stable across standard screens;
 - a contextual tab row appears for an entity or match context, and only for those;
 - Continue or its contextual replacement remains visible and prominent;

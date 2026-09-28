@@ -2,6 +2,12 @@
 
 Status: implemented
 
+> **Superseded in part, 2026-09-27.** A section's items no longer expand inline under its row: they
+> open in a click-only panel beside the sidebar, and the route's section is marked with a caption
+> naming the current item. Decision 2 (one section expanded, following the route) and the item half
+> of decision 7 no longer hold. See
+> [section items open in a flyout](2026-09-27-section-items-open-in-a-flyout.md).
+
 ## Problem
 
 The two-row top navbar shipped, and reviewing it against the game it clones showed the shape was

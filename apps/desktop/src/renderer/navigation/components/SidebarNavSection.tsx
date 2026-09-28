@@ -1,19 +1,10 @@
-import { ChevronRight } from "lucide-react";
-import { useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import { ShortcutHint } from "../../discoverability/ShortcutHint.js";
+import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover.js";
 import {
-  Collapsible,
-  CollapsiblePanel,
-  CollapsibleTrigger,
-} from "../../components/ui/collapsible.js";
-import {
-  SidebarMenuAction,
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "../../components/ui/sidebar.js";
 import { cn } from "../../lib/utils.js";
 import { intentOfClick } from "../adapter.js";
@@ -26,21 +17,25 @@ import { getBindingOverrides, subscribeBindingOverrides } from "../../actions/bi
 import { effectiveBinding } from "../../actions/overrides.js";
 
 /**
- * One primary section in the sidebar: its own row, and the submenu of items it
- * expands into.
+ * One primary section in the sidebar: its row, and the panel of items the row
+ * opens beside the sidebar.
  *
- * This is the pair the horizontal navbar split across two components —
- * `PrimaryNavItem` for the row and `ContextNav` for the strip below it. Vertical
- * nesting makes them one thing: a section and its items are adjacent in the
- * document, which is what lets the submenu keep its own `navigation` landmark
- * without the strip having to be re-derived from whichever section happens to be
- * previewed.
+ * Clicking the row opens the panel and does not navigate; an item in the panel
+ * does. The panel is a click-only popover rather than shadcn's navigation menu,
+ * whose Base UI root opens on hover with no switch to turn it off — and a
+ * sidebar invites the pointer to travel down it, flashing a panel over the
+ * screen for every row it crosses. See the
+ * `2026-09-27-section-items-open-in-a-flyout` Agent Note.
+ *
+ * The row is still where "here" is read: the route's section keeps its active
+ * mark, and a caption under it names the current item when that differs from
+ * the section's own label.
  *
  * Both levels of the keyboard prefix are advertised here. Level 0 badges the
  * section's own number key, and only while the section's go-to action is still
  * bound to it — a user override that moves the action elsewhere takes the key out
- * of level 0, so the badge goes with it. Level 1 badges the items of the section
- * the prefix has descended into.
+ * of level 0, so the badge goes with it. Level 1 opens the panel of the section
+ * the prefix has descended into and badges its items, without taking focus.
  */
 export const SidebarNavSection = ({
   section,
@@ -53,11 +48,12 @@ export const SidebarNavSection = ({
 }) => {
   const { state, actions } = useNavContext();
   const active = state.activeSectionId === section.id;
-  const expanded = state.isSectionExpanded(section.id);
   const Icon = section.icon;
-  const hasChildren = section.items.length > 0;
   const count = badgeCount ?? 0;
   const hasBadge = count > 0;
+  // An item click navigates, and navigation moves focus to the new screen; handing it back to the
+  // row as the panel closes would undo that.
+  const returnFocus = useRef(true);
 
   const scope = useSyncExternalStore(subscribeScopeState, getScopeState, getScopeState);
   const overrides = useSyncExternalStore(
@@ -79,95 +75,130 @@ export const SidebarNavSection = ({
     scope.prefixActive === true &&
     scope.prefixKind === "level1" &&
     scope.deepSectionId === positionKey;
+  const openedByUser = state.openSectionId === section.id;
+  const open = openedByUser || itemsAreDeep;
+
+  const activeItem = active
+    ? section.items.find((item) => item.id === state.activeItemId)
+    : undefined;
+  const caption =
+    activeItem !== undefined && activeItem.label !== section.label ? activeItem.label : undefined;
 
   return (
-    <Collapsible
-      open={expanded}
-      onOpenChange={() => actions.toggleSection(section.id)}
-      render={<SidebarMenuItem />}
-    >
-      <ShortcutHint hintKey={sectionHintKey} className="relative flex w-full">
-        <SidebarMenuButton
-          data-nav-section={section.id}
-          isActive={active}
-          tooltip={section.label}
-          aria-current={active ? "page" : undefined}
-          onClick={(event) => actions.goTo(section.defaultDestination, intentOfClick(event))}
-          className={cn(
-            // The route's section keeps a mark on its leading edge, so it still reads as "here"
-            // once the pointer's hover wash sits on another row, and in the icon rail.
-            "relative before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full data-[active=true]:before:bg-primary",
-            "[&>svg]:text-sidebar-foreground/70 data-[active=true]:[&>svg]:text-sidebar-accent-foreground",
-            hasBadge && "pr-14",
-          )}
-        >
-          {Icon !== undefined && <Icon />}
-          <span className="truncate">{section.label}</span>
-          {hasBadge && (
-            <>
-              <SidebarMenuBadge
-                aria-label={`${count} ${badgeLabel ?? "unread"}`}
-                className="bg-destructive text-white"
-              >
-                {count > 99 ? "99+" : count}
-              </SidebarMenuBadge>
-              {/* The rail has no room for a count; a dot on the icon says there is one. */}
-              <span
-                aria-hidden="true"
-                className="absolute top-1 right-1 hidden size-1.5 rounded-full bg-destructive ring-2 ring-sidebar group-data-[collapsible=icon]:block"
-              />
-            </>
-          )}
-        </SidebarMenuButton>
-      </ShortcutHint>
-
-      {hasChildren && (
-        <CollapsibleTrigger
-          render={
-            <SidebarMenuAction
-              aria-label={`Toggle ${section.label} submenu`}
-              aria-controls={`submenu-${section.id}`}
-              className="text-sidebar-foreground/60 transition-transform duration-200 data-open:rotate-90"
-            >
-              <ChevronRight />
-            </SidebarMenuAction>
+    <SidebarMenuItem>
+      <Popover
+        open={open}
+        onOpenChange={(next) => {
+          if (next) {
+            returnFocus.current = true;
+            actions.setOpenSection(section.id);
+          } else if (openedByUser) {
+            actions.closeSection();
           }
-        />
-      )}
+        }}
+      >
+        <ShortcutHint hintKey={sectionHintKey} className="relative flex w-full">
+          <PopoverTrigger
+            render={
+              <SidebarMenuButton
+                data-nav-section={section.id}
+                isActive={active}
+                tooltip={section.label}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  // The route's section keeps a mark on its leading edge, so it still reads as
+                  // "here" once the pointer's hover wash sits on another row, and in the icon rail.
+                  "relative before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full data-[active=true]:before:bg-primary",
+                  "[&>svg]:text-sidebar-foreground/70 data-[active=true]:[&>svg]:text-sidebar-accent-foreground",
+                  "data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground",
+                  hasBadge && "pr-14",
+                )}
+              >
+                {Icon !== undefined && <Icon />}
+                <span className="truncate">{section.label}</span>
+                {hasBadge && (
+                  <>
+                    <SidebarMenuBadge
+                      aria-label={`${count} ${badgeLabel ?? "unread"}`}
+                      className="bg-destructive text-white"
+                    >
+                      {count > 99 ? "99+" : count}
+                    </SidebarMenuBadge>
+                    {/* The rail has no room for a count; a dot on the icon says there is one. */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute top-1 right-1 hidden size-1.5 rounded-full bg-destructive ring-2 ring-sidebar group-data-[collapsible=icon]:block"
+                    />
+                  </>
+                )}
+              </SidebarMenuButton>
+            }
+          />
+        </ShortcutHint>
 
-      {hasChildren && (
-        <CollapsiblePanel>
-          {/* Its own landmark, nested in the sidebar's: the submenu is where a
-              player actually aims, and naming it after the section is what makes
-              "the Squad submenu" addressable to a screen reader and to a test. */}
-          <nav id={`submenu-${section.id}`} aria-label={`${section.label} submenu`}>
-            <SidebarMenuSub>
+        <PopoverContent
+          side="right"
+          align="start"
+          // Clears the sidebar's own padding and border, so the panel reads as beside it rather than on it.
+          sideOffset={16}
+          // Opened by the keyboard prefix, the panel only shows the item keys: focus stays where
+          // the prefix was typed, so the next key still reaches the prefix handler.
+          initialFocus={openedByUser}
+          finalFocus={() => openedByUser && returnFocus.current}
+          className="w-56 p-1"
+        >
+          {/* Its own landmark: naming it after the section is what makes "the Squad submenu"
+              addressable to a screen reader and to a test, now that it is portalled out of the
+              sidebar's. */}
+          <nav aria-label={`${section.label} submenu`}>
+            <p className="px-2 pt-1 pb-1.5 text-xs font-medium text-muted-foreground">
+              {section.label}
+            </p>
+            <ul className="flex flex-col gap-0.5">
               {section.items.map((item, index) => {
                 const ItemIcon = item.icon;
                 const itemActive = item.id === state.activeItemId;
                 return (
-                  <SidebarMenuSubItem key={item.id}>
+                  <li key={item.id}>
                     <ShortcutHint
                       hintKey={itemsAreDeep ? POSITION_KEYS[index] : undefined}
                       className="relative flex w-full"
                     >
-                      <SidebarMenuSubButton
+                      <button
+                        type="button"
                         data-nav-item={item.id}
-                        isActive={itemActive}
+                        data-active={itemActive}
                         aria-current={itemActive ? "page" : undefined}
-                        onClick={(event) => actions.goTo(item.destination, intentOfClick(event))}
+                        onClick={(event) => {
+                          returnFocus.current = false;
+                          actions.goTo(item.destination, intentOfClick(event));
+                        }}
+                        className={cn(
+                          "flex h-8 w-full min-w-0 items-center gap-2 rounded-sm px-2 text-left text-sm outline-none transition-colors",
+                          "hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground",
+                          "data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground",
+                          "[&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground data-[active=true]:[&>svg]:text-accent-foreground",
+                        )}
                       >
                         {ItemIcon !== undefined && <ItemIcon />}
-                        <span>{item.label}</span>
-                      </SidebarMenuSubButton>
+                        <span className="truncate">{item.label}</span>
+                      </button>
                     </ShortcutHint>
-                  </SidebarMenuSubItem>
+                  </li>
                 );
               })}
-            </SidebarMenuSub>
+            </ul>
           </nav>
-        </CollapsiblePanel>
+        </PopoverContent>
+      </Popover>
+
+      {/* Where in the section the route is, now that the item list is behind a click. The rail
+          has no width for it; the panel marks the current item there instead. */}
+      {caption !== undefined && (
+        <span className="block truncate pb-1 pl-8 text-xs text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
+          {caption}
+        </span>
       )}
-    </Collapsible>
+    </SidebarMenuItem>
   );
 };

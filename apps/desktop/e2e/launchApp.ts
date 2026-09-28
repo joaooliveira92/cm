@@ -248,10 +248,10 @@ export const dismissTeachingSplash = async (page: Page): Promise<void> => {
  * Keeping the map here rather than inline in seven specs means the next navigation change is one edit.
  */
 const NAV_PATH = {
-  squad: ["squad"],
-  tactics: ["tactics"],
-  training: ["training"],
-  transfers: ["recruitment"],
+  squad: ["squad", "squad-players"],
+  tactics: ["tactics", "tactics-formation"],
+  training: ["training", "training-overview"],
+  transfers: ["recruitment", "recruitment-transfers"],
   "transfer history": ["recruitment", "recruitment-transfer-history"],
   "contract expiry": ["recruitment", "recruitment-contract-expiry"],
   "budget review": ["recruitment", "recruitment-budget-review"],
@@ -259,30 +259,29 @@ const NAV_PATH = {
   "scouting assignment": ["recruitment", "recruitment-scouting-assignment"],
   "scouting knowledge": ["recruitment", "recruitment-scouting-knowledge"],
   "player search": ["recruitment", "recruitment-player-search"],
-  "league table": ["analysis"],
+  "league table": ["analysis", "analysis-league"],
   fixtures: ["analysis", "analysis-fixtures"],
   "match day": ["analysis", "analysis-match"],
   "season summary": ["analysis", "analysis-season"],
-  manager: ["club"],
+  manager: ["club", "club-manager"],
   "club staff": ["club", "club-staff"],
   "club information": ["club", "club-information"],
   "club finances": ["club", "club-finances"],
   "board confidence": ["club", "club-board-confidence"],
-  competitions: ["world"],
-} as const satisfies Record<string, readonly [NavSectionId] | readonly [NavSectionId, NavItemId]>;
+  competitions: ["world", "world-competitions"],
+} as const satisfies Record<string, readonly [NavSectionId, NavItemId]>;
 
 export type Screen = keyof typeof NAV_PATH;
 
 /**
  * Navigate to a career screen through the sidebar, the way a player does.
  *
- * Clicking a section navigates to its default destination, which also expands that section — the
- * sidebar follows the route — so the item click needs no separate disclosure step.
+ * Clicking a section only opens its item panel, so every screen names the item that reaches it,
+ * including a section's default screen.
  */
 export const goto = async (page: Page, screen: Screen): Promise<void> => {
   const [sectionId, itemId] = NAV_PATH[screen];
   await page.locator(`[data-nav-section="${sectionId}"]`).click();
-  if (itemId === undefined) return;
   await page.locator(`[data-nav-item="${itemId}"]`).click();
 };
 

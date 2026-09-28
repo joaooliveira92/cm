@@ -198,7 +198,9 @@ test("pointer nav does not force focus; keyboard nav focuses the destination (AC
     .getByRole("navigation", { name: "Primary navigation" })
     .getByRole("button", { name: "Tactics", exact: true });
   await tacticsTab.focus();
+  // Enter on the row opens its panel and moves focus into it; Enter on the item navigates.
   await tacticsTab.press("Enter");
+  await page.locator('[data-nav-item="tactics-formation"]').press("Enter");
   await expect(page.getByRole("heading", { name: /Tactics/ })).toBeVisible();
   const afterKeyboard = await page.evaluate(
     () => document.activeElement?.getAttribute("data-focus-id") ?? null,

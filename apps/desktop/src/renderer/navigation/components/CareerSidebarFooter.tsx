@@ -58,8 +58,8 @@ const FooterIconButton = ({
  * The sidebar's foot: one row, the manager beside the two shell controls a manager reaches for
  * without a destination in mind.
  *
- * One row rather than a row each, because the sidebar shares an 800px window with an expanded
- * section's submenu, and every footer row is a section row pushed out of view.
+ * One row rather than a row each, because the sidebar shares an 800px window with eight section
+ * rows and their group headings, and every footer row is a section row pushed out of view.
  *
  * The controls dispatch the `open-help` and `toggle-sidebar` Actions rather than calling the overlay
  * or the provider directly, so a pointer and the keyboard binding go through the one handler. The
