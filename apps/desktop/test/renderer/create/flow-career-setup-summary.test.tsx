@@ -257,7 +257,12 @@ const figure = (label: string): string => {
   return term.parentElement?.querySelector("dd")?.textContent?.trim() ?? "";
 };
 
-const worldPanel = (): HTMLElement => screen.getByRole("region", { name: "Generated world" });
+// The world summary is the second Review tab. Both panels stay mounted, so `figure` reads either
+// one by text; role queries only see the panel that is showing, hence the switch.
+const worldPanel = (): HTMLElement => {
+  fireEvent.click(screen.getByRole("tab", { name: /Generated world/ }));
+  return screen.getByRole("tabpanel", { name: /Generated world/ });
+};
 
 beforeEach(() => {
   calls.length = 0;
@@ -317,7 +322,7 @@ describe("Step 4 — Review is the Career Setup Summary", () => {
     mountCreateFlow();
     await reachReviewStep();
 
-    const status = await screen.findByRole("status");
+    const status = await within(worldPanel()).findByRole("status");
     expect(status.textContent).toContain("World summary unavailable");
 
     // No zeroes stood in for the figures that could not be read.
