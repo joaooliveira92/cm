@@ -28,6 +28,9 @@ const player = (index: number) => ({
   nationality: "England",
   birthplace: null,
   foreign: false,
+  contractWage: 9000,
+  contractExpiryDate: "2028-06-30",
+  transferValue: 1200000,
 });
 
 const SQUAD = Array.from({ length: 11 }, (_, index) => player(index));

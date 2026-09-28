@@ -32,8 +32,8 @@ test("Squad opens on the position list and the View selector swaps it for a tabl
   await expect(window.locator("li:has(button[data-focus-id])")).toHaveCount(playersCount);
 
   // A view change alters presentation only — the same squad, drawn as a table.
-  await chooseToolbarOption(window, "Squad view", "Personal details");
-  await expect(window.getByRole("heading", { name: "Players (Personal details)" })).toBeVisible();
+  await chooseToolbarOption(window, "Squad view", "General Info");
+  await expect(window.getByRole("heading", { name: "Players (General Info)" })).toBeVisible();
   await expect(window.locator("tbody tr")).toHaveCount(playersCount);
   await expect(window.getByRole("columnheader", { name: "Nationality" })).toBeVisible();
 });

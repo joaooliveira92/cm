@@ -125,7 +125,7 @@ beforeEach(() => {
   window.localStorage.clear();
   // The Squad screen opens on the position list. Everything below asserts the
   // table layout, so each test starts from a view that draws one.
-  saveSquadViewId("overview");
+  saveSquadViewId("general");
 });
 
 afterEach(() => {

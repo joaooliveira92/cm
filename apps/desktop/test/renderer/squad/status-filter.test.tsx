@@ -43,6 +43,9 @@ const squadPlayer = (id: string, name: string, position: string, condition: numb
   nationality: "England",
   birthplace: "London",
   foreign: false,
+  contractWage: 9000,
+  contractExpiryDate: "2028-06-30",
+  transferValue: 1200000,
 });
 
 const TIRED = NON_CONTACT_CONDITION_THRESHOLD - 1;
@@ -88,7 +91,7 @@ const reset = () => {
   resetTableSessions();
   resetAnnouncements();
   window.localStorage.clear();
-  saveSquadViewId("overview");
+  saveSquadViewId("general");
 };
 
 beforeEach(reset);

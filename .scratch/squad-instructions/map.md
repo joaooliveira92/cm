@@ -16,6 +16,10 @@ are built on the existing `renderer/squad/` screen, never as a second one.
   badges are deferred on absent models. Build three things: a Contract view (02), the match-day
   column in the table (03), and a Sort control for the position list (04).
 
+- [02 — Contract view](issues/02-contract-view.md): shipped. Contract ends is derived as the eve
+  of the Season whose rollover frees the player. The View catalogue now uses CM's names; Selection
+  and Statistics are held (Agent Note 2026-09-07).
+
 - **05, empty lineup slot (human, 2026-09-28):** selecting an empty starter slot brings the players
   who fit it to the top and marks them. It never hides anyone, Escape and a visible Clear undo it,
   and the keyboard carry is unchanged. [05](issues/05-empty-slot-prioritises-fitting-players.md).

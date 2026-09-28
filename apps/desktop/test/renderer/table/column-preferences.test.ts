@@ -112,7 +112,7 @@ describe("AC-27 — preferences persist to local storage, loaded through the rec
 
   it("save then load round-trips through the reconciled shape", () => {
     saveSquadColumnPreferences(
-      { visibleColumnIds: ["name", "age"], pinnedColumnIds: ["name"], activePresetId: "overview" },
+      { visibleColumnIds: ["name", "age"], pinnedColumnIds: ["name"], activePresetId: "general" },
       storage,
     );
     expect(loadSquadColumnPreferences(storage).visibleColumnIds).toEqual([

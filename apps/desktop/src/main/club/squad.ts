@@ -10,10 +10,13 @@ import {
   nationName,
   overallRating,
   positionRating,
+  seasonStartDate,
+  transferValue,
   type Category,
   type PlayerAttributes,
   type PlayerPosition,
 } from "@cm-clone/shared";
+import { format, parseISO, subDays } from "date-fns";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "../world/displayNames.js";
@@ -30,6 +33,12 @@ interface PlayerRow {
   readonly birthplace: string | null;
   /** SQLite's boolean: 1 when the player's nation is not the club's. */
   readonly foreign: number;
+  readonly potentialAbility: number;
+  /** `null` when the player has no active Contract. */
+  readonly contractWage: number | null;
+  /** The Season whose rollover frees the player, `null` with no active Contract. */
+  readonly freedSeason: number | null;
+  readonly referenceYear: number;
   readonly [attribute: string]: unknown;
 }
 
@@ -67,7 +76,12 @@ export const loadSquadPlayers = (clubId: ClubId) =>
       `SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", p.date_of_birth as "dateOfBirth", ${attributeSelectList},
               COALESCE(pf.condition, 100) as "condition", tf.focus as "trainingFocus",
               p.nationality as "nationality", bc.name as "birthplace",
-              p.nationality <> cc.nation_id as "foreign"
+              p.nationality <> cc.nation_id as "foreign",
+              p.potential_ability as "potentialAbility", ct.wage as "contractWage",
+              -- The rollover decrements years_remaining and frees the player at zero, so a
+              -- Contract with n years left runs out as Season current + n opens.
+              COALESCE(${CURRENT_SEASON_NUMBER_SQL}, 1) + ct.years_remaining as "freedSeason",
+              (SELECT reference_year FROM generation_manifest WHERE id = 1) as "referenceYear"
        FROM players p
        -- A club's nation is its home city's; there is no nation column on clubs.
        JOIN clubs c ON c.id = p.club_id
@@ -78,6 +92,7 @@ export const loadSquadPlayers = (clubId: ClubId) =>
        -- Real geography, so the city's name is read straight off the row. Only club and
        -- competition names go through the content pack.
        LEFT JOIN cities bc ON bc.id = p.birth_city_id
+       LEFT JOIN contracts ct ON ct.player_id = p.id
        WHERE p.club_id = ?`,
       [clubId],
     );
@@ -118,6 +133,12 @@ export const loadSquadPlayers = (clubId: ClubId) =>
         nationality: nationName(row.nationality),
         birthplace: row.birthplace,
         foreign: row.foreign === 1,
+        contractWage: row.contractWage,
+        contractExpiryDate:
+          row.freedSeason === null
+            ? null
+            : format(subDays(parseISO(seasonStartDate(row.referenceYear, row.freedSeason)), 1), "yyyy-MM-dd"),
+        transferValue: transferValue(overall, age, row.potentialAbility),
       });
     });
   });

@@ -28,8 +28,27 @@ implemented it under that name.
 catalogue: `positions` (the list) plus one entry per shipped column preset. Choosing a view is a
 single act — it sets the layout and, for a table view, applies that preset's columns — so the two can
 never disagree, because nothing else can set the layout. The screen heading repeats the chosen view's
-name (`Players (Position(s))`, `Players (Personal details)`), which is where CM put it and where a
-reader looks to answer "what am I looking at".
+name (`Players (Traditional)`, `Players (Contract)`), which is where CM put it and where a reader
+looks to answer "what am I looking at".
+
+**The catalogue is CM's, in CM's order: Traditional, General Info, Contract, Selection, Statistics,
+Physical, Mental, Goalkeeping, Defensive, Attacking.** It ships in phases, and a view joins only
+when real data backs every column it shows (Mechanical Provenance). Phase one (2026-09-28) ships
+eight:
+
+- *Traditional* — the position list below.
+- *General Info* — Nationality, Birthplace, Condition, Training Focus.
+- *Contract* — Wage, Contract ends, Transfer Value, read exact off `SquadPlayerView`
+  (`squad-instructions` ticket 02). Contract ends is the eve of the Season whose rollover frees the
+  player, so it sorts as a date. Transfer Value stands where CM shows an asking price, because no
+  asking-price model exists.
+- *Physical, Mental, Goalkeeping* — the Attribute Categories of the same names.
+- *Defensive, Attacking* — UI groupings that cut across Categories (`visibility.ts`), because a
+  defender's reading is part Technical, part Mental, part Physical. Technical has no view of its
+  own: its eight Attributes are split between these two.
+
+Overview and All attributes, which earlier builds shipped, are gone. A stored view or preset id that
+names either reconciles to the default.
 
 **The position list is the default, and it is a list.** `SquadPositionList.tsx` renders two balanced
 columns, left column longer on an odd count, each row, left to right: the match-day indicator (the slot the
@@ -47,13 +66,12 @@ bookmark survives a view change. Arrow keys read the geometry: up/down move down
 left/right cross to the same offset in the other column, and the crossing is clamped rather than
 wrapped so the odd row at the foot of the left column does not jump to the top.
 
-**A "Personal details" view carries the second information set.** The reference screenshot's own
-second view is a contract view — wages, expiry dates, asking prices — and the engine models none of
-that. Inventing those columns would breach Mechanical Provenance, so the view is built from fields
-`SquadPlayerView` already carries: Nationality, Birthplace, Condition and Training Focus. The
-*character* of the reference is what was reproduced — a view that changes the kind of information on
-screen, not just which attribute group — and a contract view remains available the day contracts are
-modelled, as one more entry in the catalogue.
+**The two held views wait on their foundations.** *Selection* is designed: the match-day indicator
+(starting slot, bench, or not selected) from `squad-instructions` ticket 03, plus Condition and the
+Position Rating of every position the player can play. It ships after ticket 03 puts that indicator
+in the table. *Statistics* needs per-player Season figures (appearances, goals, average rating),
+and no model records any of them. It waits for a stats-tracking feature, which gets its own spec
+and tickets. A view that showed placeholder numbers would breach Mechanical Provenance.
 
 ## Consequences
 

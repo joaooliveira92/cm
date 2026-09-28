@@ -13,7 +13,7 @@ import {
   GOALKEEPING_ATTRIBUTES,
   MENTAL_ATTRIBUTES,
   PHYSICAL_ATTRIBUTES,
-  TECHNICAL_ATTRIBUTES,
+  type Attribute,
 } from "@cm-clone/shared";
 
 /** The mandatory, always-visible-and-pinned identity column. */
@@ -46,8 +46,7 @@ export const SQUAD_BASE_COLUMN_IDS = [
  * They exist so a view can change the *kind* of information on screen and not
  * only which attribute group it shows. Every one is backed by a field
  * `SquadPlayerView` already carries — the renderer never invents a column it
- * has no state for, which is why there is no wage, contract or asking-price
- * column here.
+ * has no state for.
  */
 export const SQUAD_PERSONAL_COLUMN_IDS = [
   "nationality",
@@ -56,12 +55,50 @@ export const SQUAD_PERSONAL_COLUMN_IDS = [
   "trainingFocus",
 ] as const;
 
+/**
+ * The Contract columns, read exact off the own squad's `SquadPlayerView`.
+ * Transfer Value stands where a reference squad screen shows an asking price:
+ * there is no asking-price model, and Transfer Value is the figure the market
+ * reads (CONTEXT.md avoids "price").
+ */
+export const SQUAD_CONTRACT_COLUMN_IDS = ["wage", "contractEnds", "transferValue"] as const;
+
+/**
+ * The Defensive and Attacking views cut across the four Attribute Categories:
+ * a centre-back's reading is Technical (tackling, heading), Mental
+ * (positioning, bravery) and Physical (strength) at once. They are UI
+ * groupings, not Categories — Training Focus and the Player Profile still group
+ * by Category — so they live here rather than in the shared package.
+ */
+export const DEFENSIVE_ATTRIBUTES = [
+  "tackling",
+  "heading",
+  "positioning",
+  "decisions",
+  "bravery",
+  "aggression",
+  "strength",
+  "pace",
+] as const satisfies readonly Attribute[];
+
+export const ATTACKING_ATTRIBUTES = [
+  "finishing",
+  "shooting",
+  "dribbling",
+  "crossing",
+  "firstTouch",
+  "passing",
+  "flair",
+  "acceleration",
+] as const satisfies readonly Attribute[];
+
 /** Every column the Squad table can show: base + the visible attribute set.
  *  Hidden attributes (`injuryProneness`) are deliberately absent — they never
  *  surface to any UI (shared package's standing rule). */
 export const SQUAD_ALL_COLUMN_IDS: readonly string[] = [
   ...SQUAD_BASE_COLUMN_IDS,
   ...SQUAD_PERSONAL_COLUMN_IDS,
+  ...SQUAD_CONTRACT_COLUMN_IDS,
   ...ALL_ATTRIBUTES,
 ];
 
@@ -77,13 +114,13 @@ export const SQUAD_TOGGLEABLE_COLUMN_IDS: readonly string[] = SQUAD_ALL_COLUMN_I
 );
 
 export type SquadPresetId =
-  | "overview"
-  | "personal"
+  | "general"
+  | "contract"
   | "physical"
-  | "technical"
   | "mental"
   | "goalkeeping"
-  | "all";
+  | "defensive"
+  | "attacking";
 
 export interface SquadPreset {
   readonly id: SquadPresetId;
@@ -91,26 +128,23 @@ export interface SquadPreset {
   readonly visibleColumnIds: readonly string[];
 }
 
+/** In the order the View selector lists them. Technical has no preset of its
+ *  own: its eight attributes are split between Defensive and Attacking. */
 export const SQUAD_PRESETS: readonly SquadPreset[] = [
   {
-    id: "overview",
-    label: "Overview",
-    visibleColumnIds: [...SQUAD_BASE_COLUMN_IDS],
+    id: "general",
+    label: "General Info",
+    visibleColumnIds: [...SQUAD_BASE_COLUMN_IDS, ...SQUAD_PERSONAL_COLUMN_IDS],
   },
   {
-    id: "personal",
-    label: "Personal details",
-    visibleColumnIds: [...SQUAD_BASE_COLUMN_IDS, ...SQUAD_PERSONAL_COLUMN_IDS],
+    id: "contract",
+    label: "Contract",
+    visibleColumnIds: [...SQUAD_BASE_COLUMN_IDS, ...SQUAD_CONTRACT_COLUMN_IDS],
   },
   {
     id: "physical",
     label: "Physical",
     visibleColumnIds: [...SQUAD_BASE_COLUMN_IDS, ...PHYSICAL_ATTRIBUTES],
-  },
-  {
-    id: "technical",
-    label: "Technical",
-    visibleColumnIds: [...SQUAD_BASE_COLUMN_IDS, ...TECHNICAL_ATTRIBUTES],
   },
   {
     id: "mental",
@@ -123,13 +157,18 @@ export const SQUAD_PRESETS: readonly SquadPreset[] = [
     visibleColumnIds: [...SQUAD_BASE_COLUMN_IDS, ...GOALKEEPING_ATTRIBUTES],
   },
   {
-    id: "all",
-    label: "All attributes",
-    visibleColumnIds: [...SQUAD_BASE_COLUMN_IDS, ...ALL_ATTRIBUTES],
+    id: "defensive",
+    label: "Defensive",
+    visibleColumnIds: [...SQUAD_BASE_COLUMN_IDS, ...DEFENSIVE_ATTRIBUTES],
+  },
+  {
+    id: "attacking",
+    label: "Attacking",
+    visibleColumnIds: [...SQUAD_BASE_COLUMN_IDS, ...ATTACKING_ATTRIBUTES],
   },
 ];
 
-export const DEFAULT_SQUAD_PRESET_ID: SquadPresetId = "overview";
+export const DEFAULT_SQUAD_PRESET_ID: SquadPresetId = "general";
 
 export const presetById = (id: SquadPresetId): SquadPreset | undefined =>
   SQUAD_PRESETS.find((preset) => preset.id === id);

@@ -64,6 +64,9 @@ const player = {
   nationality: "nation_eng_england",
   birthplace: "London",
   foreign: false,
+  contractWage: 9000,
+  contractExpiryDate: "2028-06-30",
+  transferValue: 1200000,
 };
 
 describe("simple view classes", () => {
@@ -426,6 +429,10 @@ describe("Player Development & Training Focus schemas", () => {
 
   it("TrainingFocusView round-trips its focus", () => {
     roundTrip(TrainingFocusView, { playerId: "p1", focus: "technical" });
+  });
+
+  it("SquadPlayerView round-trips a player with no active Contract", () => {
+    roundTrip(SquadPlayerView, { ...player, contractWage: null, contractExpiryDate: null });
   });
 
   it("SquadPlayerView round-trips a non-null trainingFocus", () => {

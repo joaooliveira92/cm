@@ -64,6 +64,9 @@ const player = (id: string, firstName: string) => ({
   nationality: "England",
   birthplace: "London",
   foreign: false,
+  contractWage: 9000,
+  contractExpiryDate: "2028-06-30",
+  transferValue: 1200000,
 });
 
 const tacticsView = () => ({

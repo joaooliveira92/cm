@@ -22,7 +22,7 @@ instruction's §9 "Contract View", minus the columns that rest on no model.
 
 **Blocked by:** None.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Work
 
@@ -45,7 +45,17 @@ instruction's §9 "Contract View", minus the columns that rest on no model.
 
 ## Acceptance criteria
 
-- [ ] View → Contract shows Wage, Contract ends and Transfer Value for every owned player.
-- [ ] All three sort correctly by value, and none reads a formatted string to compare.
-- [ ] Rival rosters are unchanged; this is the owned `SquadPlayerView` only.
-- [ ] `pnpm check:all` is green, and the Squad e2e specs pass.
+- [x] View → Contract shows Wage, Contract ends and Transfer Value for every owned player.
+- [x] All three sort correctly by value, and none reads a formatted string to compare.
+- [x] Rival rosters are unchanged; this is the owned `SquadPlayerView` only.
+- [x] `pnpm check:all` is green, and the Squad e2e specs pass.
+
+## Answer
+
+Built as specified, alongside the View catalogue's move to CM's names (Traditional, General Info,
+Contract, Physical, Mental, Goalkeeping, Defensive, Attacking). The contract row joins the squad
+read's existing player query, so there is no extra query, per player or otherwise. The model has no
+expiry date, only `years_remaining`, which the rollover decrements. So Contract ends is derived: the
+eve of `seasonStartDate` for Season current + `years_remaining`, the Season whose rollover frees the
+player. Selection and Statistics are held; see the Agent Note
+`2026-09-07-squad-view-selector-and-position-list.md`.

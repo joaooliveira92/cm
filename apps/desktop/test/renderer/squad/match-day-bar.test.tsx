@@ -52,6 +52,9 @@ const player = (id: string, lastName: string): unknown => ({
   nationality: "Brazil",
   birthplace: "Santos",
   foreign: false,
+  contractWage: 9000,
+  contractExpiryDate: "2028-06-30",
+  transferValue: 1200000,
 });
 
 interface SquadOverrides {

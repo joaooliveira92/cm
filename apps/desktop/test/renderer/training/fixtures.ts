@@ -147,6 +147,9 @@ export interface SquadPlayerWire {
   readonly nationality: string;
   readonly birthplace: string | null;
   readonly foreign: boolean;
+  readonly contractWage: number | null;
+  readonly contractExpiryDate: string | null;
+  readonly transferValue: number;
 }
 
 export interface SquadViewWire {
@@ -180,6 +183,9 @@ export const squadPlayer = (
   nationality: "Portugal",
   birthplace: null,
   foreign: false,
+  contractWage: 9000,
+  contractExpiryDate: "2028-06-30",
+  transferValue: 1200000,
 });
 
 /** An own-club squad with an outfield player on a Technical focus and a goalkeeper on None. */

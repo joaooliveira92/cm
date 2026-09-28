@@ -8,6 +8,7 @@
  * every load so an old or foreign blob can never corrupt the view.
  */
 import {
+  DEFAULT_SQUAD_PRESET_ID,
   isSquadPresetId,
   presetById,
   SQUAD_ALL_COLUMN_IDS,
@@ -22,12 +23,12 @@ export interface SquadColumnPreferences {
   readonly activePresetId: SquadPresetId | null;
 }
 
-const overview = presetById("overview")!;
+const defaultPreset = presetById(DEFAULT_SQUAD_PRESET_ID)!;
 
 export const DEFAULT_SQUAD_COLUMN_PREFERENCES: SquadColumnPreferences = {
-  visibleColumnIds: [...overview.visibleColumnIds],
+  visibleColumnIds: [...defaultPreset.visibleColumnIds],
   pinnedColumnIds: [...SQUAD_PROTECTED_COLUMN_IDS],
-  activePresetId: "overview",
+  activePresetId: DEFAULT_SQUAD_PRESET_ID,
 };
 
 /** The stored shape — unknown fields tolerated, plain values read defensively. */

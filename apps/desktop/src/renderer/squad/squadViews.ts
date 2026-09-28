@@ -6,11 +6,11 @@
  * a two-column position list and let one View control swap it for a dense table
  * of a different information set; this catalogue is that control's vocabulary.
  *
- * Exactly one view is a list. The rest are the column presets already defined
- * in `table/features/visibility.ts`, surfaced under the same selector rather
- * than under a second, competing "Columns" control — a reader choosing what to
- * look at should not have to know that one choice is a layout and five are
- * column sets.
+ * Exactly one view is a list — Traditional, CM's own name for it. The rest are
+ * the column presets defined in `table/features/visibility.ts`, surfaced under
+ * the same selector rather than under a second, competing "Columns" control — a
+ * reader choosing what to look at should not have to know that one choice is a
+ * layout and the others are column sets.
  *
  * Views alter presentation only (Screen 70, AC-1): every one of them renders
  * the same rows, in the same filtered and sorted order, from the same read.
@@ -39,7 +39,7 @@ export interface SquadViewDefinition {
 }
 
 export const SQUAD_VIEWS: readonly SquadViewDefinition[] = [
-  { id: SQUAD_POSITION_VIEW_ID, label: "Position(s)", layout: "list" },
+  { id: SQUAD_POSITION_VIEW_ID, label: "Traditional", layout: "list" },
   ...SQUAD_PRESETS.map(
     (preset): SquadViewDefinition => ({
       id: preset.id,

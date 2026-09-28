@@ -57,6 +57,9 @@ const playerRow = (id: string, name: string) => ({
   nationality: "England",
   birthplace: "London",
   foreign: false,
+  contractWage: 9000,
+  contractExpiryDate: "2028-06-30",
+  transferValue: 1200000,
 });
 
 const squadView = (players: ReturnType<typeof playerRow>[]) => ({
@@ -181,7 +184,7 @@ const resumedMatch = () => ({
 // The Squad screen opens on the position list; these are the table layout's
 // focus tests, so they pin the view that draws a table.
 beforeEach(() => {
-  saveSquadViewId("overview");
+  saveSquadViewId("general");
 });
 
 afterEach(() => {

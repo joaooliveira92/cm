@@ -84,6 +84,9 @@ export const tacticView = (tactic = fullTactic()) => {
     nationality: "England",
     birthplace: "London",
     foreign: false,
+    contractWage: 9000,
+    contractExpiryDate: "2028-06-30",
+    transferValue: 1200000,
   });
   const onPitch = (tactic.slots ?? []).map((slot: { playerId: string }, index: number) =>
     player(String(slot.playerId), `On${index}`),

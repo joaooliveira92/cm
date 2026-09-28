@@ -79,6 +79,9 @@ const player = (id: string, firstName: string, lastName: string) => ({
   nationality: "Brazil",
   birthplace: "Santos",
   foreign: false,
+  contractWage: 9000 as number | null,
+  contractExpiryDate: "2028-06-30" as string | null,
+  transferValue: 1200000,
 });
 
 const mountSquad = async (
@@ -144,6 +147,19 @@ describe("the Squad view catalogue", () => {
     // Every table view names the preset that supplies its columns, so a view
     // can never draw a table with no column set behind it.
     for (const view of SQUAD_VIEWS.slice(1)) expect(view.presetId).toBe(view.id);
+  });
+
+  it("lists the views in the order the selector shows them", () => {
+    expect(SQUAD_VIEWS.map((view) => view.label)).toEqual([
+      "Traditional",
+      "General Info",
+      "Contract",
+      "Physical",
+      "Mental",
+      "Goalkeeping",
+      "Defensive",
+      "Attacking",
+    ]);
   });
 
   it("reads an unknown, renamed or absent stored view as the default", () => {
@@ -222,16 +238,16 @@ describe("choosing a view", () => {
     await mountSquad([player("p1", "Alan", "Shearer")]);
     expect(screen.getByRole("heading", { level: 1, name: "Squad" })).toBeTruthy();
 
-    await chooseToolbarOption("Squad view", "Personal details");
+    await chooseToolbarOption("Squad view", "General Info");
     expect(screen.getByRole("heading", { level: 1, name: "Squad" })).toBeTruthy();
   });
 
   it("swaps the layout and the information set, names it in the heading, and remembers it", async () => {
     await mountSquad([player("p1", "Alan", "Shearer")]);
 
-    await chooseToolbarOption("Squad view", "Personal details");
+    await chooseToolbarOption("Squad view", "General Info");
 
-    expect(screen.getByRole("heading", { name: "Players (Personal details)" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Players (General Info)" })).toBeTruthy();
     expect(document.querySelector("table")).not.toBeNull();
     expect(screen.getByRole("columnheader", { name: "Nationality" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Birthplace" })).toBeTruthy();
@@ -239,7 +255,7 @@ describe("choosing a view", () => {
     expect(screen.getByText("Santos")).toBeTruthy();
     // None is a first-class Training Focus value, spelled out rather than blank.
     expect(screen.getByText("None")).toBeTruthy();
-    expect(loadSquadViewId()).toBe("personal");
+    expect(loadSquadViewId()).toBe("general");
   });
 });
 
@@ -307,5 +323,44 @@ describe("the position list's player names are the way into the player screen", 
       to: "/career/$saveId/player/$playerId/profile",
       params: expect.objectContaining({ playerId: "p2" }),
     }));
+  });
+});
+
+describe("the Contract view", () => {
+  const namesInOrder = (): string[] =>
+    [...document.querySelectorAll("tbody button[data-focus-id]")].map((b) => b.textContent ?? "");
+
+  it("shows wage, contract end and Transfer Value, and a dash where there is no Contract", async () => {
+    await mountSquad([
+      player("p1", "Alan", "Shearer"),
+      { ...player("p2", "Bobby", "Moore"), contractWage: null, contractExpiryDate: null },
+    ]);
+
+    await chooseToolbarOption("Squad view", "Contract");
+
+    expect(screen.getByRole("heading", { name: "Players (Contract)" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Wage" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Contract ends" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Transfer Value" })).toBeTruthy();
+    expect(screen.getByText(`${(9000).toLocaleString()} Cr`)).toBeTruthy();
+    expect(screen.getByText("30 Jun 2028")).toBeTruthy();
+    expect(screen.getAllByText("—").length).toBe(2);
+  });
+
+  it("sorts Wage by amount and Contract ends by date, not by the text shown", async () => {
+    await mountSquad([
+      { ...player("p1", "Alan", "Shearer"), contractWage: 10_000, contractExpiryDate: "2029-01-15" },
+      { ...player("p2", "Bobby", "Moore"), contractWage: 9000, contractExpiryDate: "2028-12-31" },
+    ]);
+    await chooseToolbarOption("Squad view", "Contract");
+    const group = screen.getByRole("group", { name: "Squad" });
+
+    // "10,000 Cr" precedes "9,000 Cr" as text; as an amount it follows.
+    fireEvent.click(within(group).getByRole("button", { name: "Wage" }));
+    expect(namesInOrder()).toEqual(["Bobby Moore", "Alan Shearer"]);
+
+    // "15 Jan 2029" precedes "31 Dec 2028" as text; as a date it follows.
+    fireEvent.click(within(group).getByRole("button", { name: "Contract ends" }));
+    expect(namesInOrder()).toEqual(["Bobby Moore", "Alan Shearer"]);
   });
 });

@@ -63,6 +63,15 @@ export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerV
    *  city). Computed on the read, against nation ids, because the view's `nationality` is a display
    *  name and the club's nation is not on the wire. */
   foreign: Schema.Boolean,
+  /** The Contract's wage in Credits, or `null` for a player with no active Contract — the window
+   *  inside the expiry sweep where the row is gone and the player not yet moved (`db/schema.ts`).
+   *  `null`, never `0`: a free player is not one paid nothing. */
+  contractWage: Schema.NullOr(Schema.Finite),
+  /** The last day the Contract runs (ISO `YYYY-MM-DD`): the eve of the Season whose rollover frees
+   *  the player. `null` exactly when `contractWage` is. */
+  contractExpiryDate: Schema.NullOr(Schema.String),
+  /** The player's Transfer Value in Credits, exact — this read serves a club's own squad. */
+  transferValue: Schema.Finite,
 }) {}
 
 export class SquadView extends Schema.Class<SquadView>("SquadView")({

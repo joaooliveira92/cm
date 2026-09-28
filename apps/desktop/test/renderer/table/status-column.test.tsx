@@ -61,6 +61,9 @@ const squadPlayer = (id: string, name: string, condition: number) => ({
   nationality: "England",
   birthplace: "London",
   foreign: false,
+  contractWage: 9000,
+  contractExpiryDate: "2028-06-30",
+  transferValue: 1200000,
 });
 
 const squadView = (players: ReturnType<typeof squadPlayer>[]) => ({
@@ -99,7 +102,7 @@ const reset = () => {
   window.localStorage.clear();
   // The Squad screen opens on the position list. Everything below asserts the
   // table layout, so each test starts from a view that draws one.
-  saveSquadViewId("overview");
+  saveSquadViewId("general");
 };
 
 beforeEach(reset);
@@ -169,7 +172,7 @@ describe("the Status column in the Squad table", () => {
     const header = () => screen.getByRole("button", { name: /abbreviation legend/i });
     expect(header()).toBeTruthy();
 
-    // Overview hides most columns; Goalkeeping swaps the attribute set. The
+    // Goalkeeping swaps the attribute set for another. The
     // protected pair rides through both.
     await chooseToolbarOption("Squad view", "Goalkeeping");
     expect(header()).toBeTruthy();

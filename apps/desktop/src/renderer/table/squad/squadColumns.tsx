@@ -20,7 +20,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { KnownFigure } from "@cm-clone/shared";
 import { ALL_ATTRIBUTES } from "@cm-clone/shared";
 import type { ClubSquadPlayerView, SquadPlayerView } from "@cm-clone/contracts";
-import { figureMid, formatFigure } from "../../format.js";
+import { format, parseISO } from "date-fns";
+import { figureMid, formatCredits, formatFigure } from "../../format.js";
 import type { TableRowShape } from "../types.js";
 import {
   statusesOf,
@@ -54,6 +55,12 @@ export interface SquadRow extends TableRowShape {
   readonly birthplace: string | null;
   /** Own squad only: the manager's Training Focus assignment; AI clubs' players carry none. */
   readonly trainingFocus?: string | null;
+  /** Own squad only: the Contract's wage, `null` for a player with no active Contract. */
+  readonly contractWage?: number | null;
+  /** Own squad only: the Contract's last day (ISO), `null` with no active Contract. */
+  readonly contractExpiryDate?: string | null;
+  /** Own squad only: the exact Transfer Value. */
+  readonly transferValue?: number;
 }
 
 /** The own-club read's exact-number wire, wrapped as the exact `KnownFigure` the shared columns
@@ -85,6 +92,9 @@ export const squadRowOf = (player: SquadPlayerView): SquadRow => ({
   birthplace: player.birthplace,
   trainingFocus: player.trainingFocus,
   foreign: player.foreign,
+  contractWage: player.contractWage,
+  contractExpiryDate: player.contractExpiryDate,
+  transferValue: player.transferValue,
 });
 
 /** The any-club read's wire: its figures are already `KnownFigure`s by the shared knowledge rule,
@@ -116,6 +126,9 @@ export const SQUAD_COLUMN_LABELS: Readonly<Record<string, string>> = {
   birthplace: "Birthplace",
   condition: "Condition",
   trainingFocus: "Training Focus",
+  wage: "Wage",
+  contractEnds: "Contract ends",
+  transferValue: "Transfer Value",
   ...Object.fromEntries(ALL_ATTRIBUTES.map((attribute) => [attribute, attributeLabel(attribute)])),
 };
 
@@ -127,6 +140,11 @@ const positionsCell = (row: SquadRow): string =>
       return `${p.position} (${p.familiarity}${shown})`;
     })
     .join(", ");
+
+/** A missing Contract field reads as an em dash, never `0`: a player between the
+ *  expiry sweep and his next club is not one paid nothing. */
+const creditsOrDash = (amount: number | null | undefined): string =>
+  amount === null || amount === undefined ? "—" : formatCredits(amount);
 
 /** The fixed width of the pinned Name column, in px. */
 export const NAME_COLUMN_WIDTH = 176;
@@ -263,6 +281,32 @@ export const squadColumns = ({
             header: "Training Focus",
             enableSorting: sortable,
             cell: (info) => info.getValue<unknown>() as string,
+          } as ColumnDef<SquadRow, unknown>,
+          {
+            id: "wage",
+            accessorFn: (row) => row.contractWage ?? null,
+            header: "Wage",
+            enableSorting: sortable,
+            cell: (info) => creditsOrDash(info.row.original.contractWage),
+          } as ColumnDef<SquadRow, unknown>,
+          {
+            id: "contractEnds",
+            // An ISO date orders as a date under a string comparison, so the sort reads the
+            // wire value and only the cell formats it.
+            accessorFn: (row) => row.contractExpiryDate ?? null,
+            header: "Contract ends",
+            enableSorting: sortable,
+            cell: (info) => {
+              const iso = info.row.original.contractExpiryDate;
+              return iso === null || iso === undefined ? "—" : format(parseISO(iso), "d MMM yyyy");
+            },
+          } as ColumnDef<SquadRow, unknown>,
+          {
+            id: "transferValue",
+            accessorFn: (row) => row.transferValue ?? null,
+            header: "Transfer Value",
+            enableSorting: sortable,
+            cell: (info) => creditsOrDash(info.row.original.transferValue),
           } as ColumnDef<SquadRow, unknown>,
         ]
       : []),
