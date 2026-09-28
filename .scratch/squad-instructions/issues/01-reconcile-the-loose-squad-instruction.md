@@ -1,6 +1,6 @@
 # 01: Reconcile the loose Squad instruction against the shipped Squad screen
 
-**Status:** needs-triage
+**Status:** resolved
 
 **What to decide:** `.scratch/squad-instructions.md` is a loose, un-chartered instruction to
 reproduce an early-2000s two-view Squad screen from scratch. It has no effort directory and no
@@ -67,11 +67,11 @@ written: **satisfied-inline, or a defined remainder?**
 
 ## Acceptance criteria
 
-- [ ] A recorded ruling on `.scratch/squad-instructions.md`: close as satisfied-inline, or scope a
+- [x] A recorded ruling on `.scratch/squad-instructions.md`: close as satisfied-inline, or scope a
       remainder.
-- [ ] If a remainder, a scoped ticket naming the exact E sections (71 filters, and any
+- [x] If a remainder, a scoped ticket naming the exact E sections (71 filters, and any
       instruction-specific gaps confirmed by a reconciliation pass).
-- [ ] No proposed work re-does the shipped `renderer/squad/` screen, and nothing reopens a
+- [x] No proposed work re-does the shipped `renderer/squad/` screen, and nothing reopens a
       `deferred` model.
 
 ## Comments
@@ -84,3 +84,29 @@ written: **satisfied-inline, or a defined remainder?**
   (status filter, `ready-for-agent`) and issue 03 (attribute filters, `needs-triage`). This ticket
   stays `needs-triage` for the remaining question — whether the instruction demands anything *beyond*
   E 71 (contract columns, lineup-slot buttons, URL state) or closes as satisfied-inline.
+
+## Answer
+
+Ruled 2026-09-28 by the human: **charter a remainder.** The reconciliation below compares every
+section of the instruction with the shipped `renderer/squad/` screen and the decisions made after it.
+Only the rows marked **build** become tickets.
+
+| Instruction section | Disposition | Why |
+|---|---|---|
+| §1–2, §14–16, §21 visual target: 1024×768, chrome-blue bevels, Trebuchet, textures | **superseded** | The [shadcn palette note](../../../.agents/notes/implemented/architecture/2026-09-27-shadcn-palette-with-user-chosen-colors.md) dropped the chrome-blue frame. Reconcile against later decisions, never the reverse. |
+| §3–6, §12–13 shell: left rail, club header, club tabs, bottom tabs, ticker | **superseded** | The app shell owns these: [primary navigation is a sidebar](../../../.agents/notes/implemented/architecture/2026-09-26-primary-navigation-is-a-sidebar.md), the career header, and the shell bottom bar. Squad does not draw its own. |
+| §7.1/§19.1, §10, §18 View selector, two-column position list, one screen with switchable views | **satisfied** | `SQUAD_VIEWS`, `SquadPositionList`, [squad view selector note](../../../.agents/notes/proposed/feature/2026-09-07-squad-view-selector-and-position-list.md). The view persists as a standing preference in storage, not `?view=`, by that note. Filters and sort already persist. |
+| §9 Contract view: Basic Wage, Contract, Asking Price | **build: [02](02-contract-view.md)** | Contract (wage, expiry) and Transfer Value exist in the domain, but `SquadPlayerView` does not carry them, which is why `visibility.ts` has no such columns. "Asking Price" is shown as **Transfer Value** (CONTEXT: avoid "price"). |
+| §9 Squad Status, Offer Options | **deferred** | No squad-status or offer-options model. |
+| §9.4 / §10.1 Pkd slot | **satisfied in the list, build in the table: [03](03-match-day-column-in-the-table.md)** | The position list's leading match-day indicator is the Pkd slot. The table layouts have none. |
+| §9.5 Inf badges | **satisfied, partly deferred** | The status slot shows modelled statuses (injured, suspended, away, Tired, Fgn). Listed, wanted and loan have no model. |
+| §7.2 / §10.3 Sort control for the position view | **build: [04](04-sort-control-for-the-position-list.md)** | The list sorts through the shared table state, but only the palette can change it; the list has no header to click. |
+| §7.1 / §19.3 Team: first team, reserves, youth | **deferred** | No reserves or youth-squad model (Group E ledger). |
+| §7.4 Show Filters | **satisfied** | Filters sit in the toolbar and are always shown. There is no extended filter panel to toggle. |
+| §11 Position selector: lineup slots GK…SB | **satisfied** | `MatchDayBar` is the shared team-sheet editor ([the team-sheet is the Tactic](../../../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md)): the formation's eleven plus a seven-slot bench, not SB1–SB12. Whether a slot should also filter the roster is left as an open question below, not a ticket. |
+| §20 accessibility, §22 quality | **standing** | Already the repo's level-1 contract. |
+| Screen 71 attribute filter | **group-e** | Ruled in [group-e 03](../../group-e-squad-management/issues/03-attribute-filters.md), built as group-e 04. |
+
+**Open question, not ticketed.** Should selecting an empty lineup slot filter the roster to players
+who can fill it (§11.2)? It would change `MatchDayBar`'s keyboard carry, where Enter picks a slot
+up, so it needs a design decision rather than a build ticket.

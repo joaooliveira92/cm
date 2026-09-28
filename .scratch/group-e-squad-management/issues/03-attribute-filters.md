@@ -4,7 +4,7 @@
 15 or better" — as a clause folded alongside Position and (per [ticket 02](02-status-filter.md))
 Status. This is the second half of Group E Screen 71.
 
-**Status:** needs-triage
+**Status:** resolved
 
 **Why not ready:** the status half is a modelled vocabulary the renderer already owns; the attribute
 half runs into the knowledge boundary and needs decisions before it can be built. Four questions
@@ -48,6 +48,34 @@ and the Squad toolbar Popover pattern.
 
 ## Acceptance criteria
 
-- [ ] A recorded ruling on all four decisions above.
-- [ ] The ruled design is turned into an implementation ticket (or folded back into 02 if it stays
+- [x] A recorded ruling on all four decisions above.
+- [x] The ruled design is turned into an implementation ticket (or folded back into 02 if it stays
       trivially small).
+
+## Answer
+
+Ruled 2026-09-28. The human approved the ticket's recommended answers. Q1 and Q4 are the ticket's
+own recommendations. Q2 follows the ticket's lean, and Q3 had no recommendation, so its ruling is
+the orchestrator's; both are called out in case the human wants to revisit them.
+
+1. **Knowledge boundary: owned Squad only.** The owned Squad reads exact figures by rule
+   (`figureRecord` in `squadColumns.tsx`). The any-club roster, transfer tables and Player Search do
+   not offer the filter, so no band or hidden value can leak through it (Screen 71 §9;
+   [knowledge limits every Player read](../../../.agents/notes/implemented/architecture/2026-09-19-knowledge-limits-every-player-read.md)).
+2. **A minimum threshold, `value ≥ N`, with `N` picked from the 1–20 scale.** It's one enumerated
+   list, which the shipped Popover pattern already draws. It has no upper bound and no typed number.
+   A `min ≤ value ≤ max` range would need a new control, so it's deferred until a use asks for it.
+3. **Any attribute in `ALL_ATTRIBUTES`**, whether or not its column is currently visible. It's the
+   set the Squad table can already show as columns, so a filter never names something the table
+   cannot display. `injuryProneness` is hidden and absent from `ALL_ATTRIBUTES`, so it's excluded
+   without a special case. Tying the list to the visible columns would make hiding a column silently
+   drop an active filter, which is worse than filtering on a hidden column whose chip names it.
+4. **One attribute clause at a time**, `{ _tag: "attribute"; attribute; min }`, keyed on `_tag`
+   like position and status. Choosing another attribute replaces the clause, and the three kinds
+   coexist.
+
+A figure that is not `exact` never matches, even though the owned Squad cannot produce one. That
+keeps the rule safe if the filter is ever offered somewhere banded, rather than quietly matching on a
+band's midpoint.
+
+Built as [ticket 04](04-attribute-threshold-filter.md).

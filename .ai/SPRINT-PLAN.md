@@ -252,11 +252,15 @@ delegation. Agent-startable work, in order:
    closed as not reproducible. Before calling a red e2e run a regression, check `pmset -g log` for a
    sleep inside its window, and remember that e2e is outside `check:all`.
 2. **Group G 42 resolved 2026-09-27** (`eeff2cd8`): Quick result skips the live reveal.
-3. **group-g 20 and group-h 07 are both resolved.** No `ready-for-agent` ticket remains in `.scratch/`.
-   The two open tickets are `needs-triage` and wait on a human:
-   [group-e 03](../.scratch/group-e-squad-management/issues/03-attribute-filters.md) (four product
-   questions; its blocker, 02, is resolved) and
-   [squad-instructions 01](../.scratch/squad-instructions/issues/01-reconcile-the-loose-squad-instruction.md).
+3. **Queue refilled 2026-09-28 from two human rulings.** In order:
+   [group-e 04](../.scratch/group-e-squad-management/issues/04-attribute-threshold-filter.md)
+   (attribute threshold filter, ruled in group-e 03), then the squad-instructions remainder chartered
+   in [its 01](../.scratch/squad-instructions/issues/01-reconcile-the-loose-squad-instruction.md):
+   [02](../.scratch/squad-instructions/issues/02-contract-view.md) (Contract view, which widens
+   `SquadPlayerView`), [03](../.scratch/squad-instructions/issues/03-match-day-column-in-the-table.md)
+   (match-day column in the table), and [04](../.scratch/squad-instructions/issues/04-sort-control-for-the-position-list.md)
+   (Sort for the position list, blocked by 02). All four are `ready-for-agent`. One open question is
+   parked in the squad-instructions map: should an empty lineup slot filter the roster?
 4. **The knowledge-limited Player reads are all four shipped**, and **both efforts' queues are empty**
    (group-i 12/12, group-j 9/9). [group-i 12 — Transfer Target Comparison](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md)
    shipped in `eed6ce49` and had been sitting at `claimed` ever since — a stale lock over completed
