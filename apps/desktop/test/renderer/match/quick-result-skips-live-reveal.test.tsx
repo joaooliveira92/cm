@@ -7,6 +7,7 @@ import { CommentaryProvider, useCommentaryContext } from "../../../src/renderer/
 import { useMatchStreaming } from "../../../src/renderer/match/streaming.js";
 import { clearActiveMatch, getActiveMatch } from "../../../src/renderer/match/session.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
+import { MATCH_COLOURS } from "./matchColours.js";
 
 /**
  * group-g-match-day 42: a Quick result "skips only the live reveal" (CONTEXT.md). It runs the same
@@ -23,6 +24,7 @@ const SUMMARY = {
   homeClubName: "Home FC",
   awayClubId: "away",
   awayClubName: "Away FC",
+  ...MATCH_COLOURS,
   isHome: true,
 };
 

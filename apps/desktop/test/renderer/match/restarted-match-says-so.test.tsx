@@ -5,6 +5,7 @@ import { clearActiveMatch, getActiveMatch } from "../../../src/renderer/match/se
 import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { mountMatchDayWithSpine, rid, session } from "./liveMatchDayHarness.js";
+import { MATCH_COLOURS } from "./matchColours.js";
 
 /**
  * group-g-match-day 33: a match read back after an app restart replays from kickoff, so Match day says
@@ -19,6 +20,7 @@ const SUMMARY = {
   homeClubName: "Home FC",
   awayClubId: "away",
   awayClubName: "Away FC",
+  ...MATCH_COLOURS,
   isHome: true,
 };
 

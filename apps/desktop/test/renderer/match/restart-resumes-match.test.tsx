@@ -13,6 +13,7 @@ import {
   setActiveMatch,
 } from "../../../src/renderer/match/session.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
+import { MATCH_COLOURS } from "./matchColours.js";
 
 /**
  * group-g-match-day 37: an app restart loses the renderer's match session while the save still awaits
@@ -30,6 +31,7 @@ const SUMMARY = {
   homeClubName: "Home FC",
   awayClubId: "away",
   awayClubName: "Away FC",
+  ...MATCH_COLOURS,
   isHome: true,
 };
 

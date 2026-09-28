@@ -37,6 +37,7 @@ import {
   REFETCH_THRESHOLD,
   REVEAL_INTERVAL_MS,
 } from "../../../src/renderer/rpc/pacing.js";
+import { MATCH_COLOURS } from "../match/matchColours.js";
 
 const relaxedSaveId = (id: string): SaveId => SaveIdSchema.make(id);
 
@@ -324,6 +325,7 @@ describe("renderer RPC seam — invalidation rules (AC-05)", () => {
       homeClubName: "Home FC",
       awayClubId: "away",
       awayClubName: "Away FC",
+      ...MATCH_COLOURS,
       isHome: true,
     };
     const committed = {

@@ -8,6 +8,7 @@ import { CommentaryProvider, useCommentaryContext } from "../../../src/renderer/
 import { useMatchStreaming } from "../../../src/renderer/match/streaming.js";
 import { clearActiveMatch, getActiveMatch, setActiveMatch } from "../../../src/renderer/match/session.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
+import { MATCH_COLOURS } from "./matchColours.js";
 
 /**
  * group-g-match-day 41: starting a match and accepting its result refresh the season read, so the
@@ -25,6 +26,7 @@ const SUMMARY = {
   homeClubName: "Home FC",
   awayClubId: "away",
   awayClubName: "Away FC",
+  ...MATCH_COLOURS,
   isHome: true,
 };
 
