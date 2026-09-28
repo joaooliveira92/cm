@@ -140,4 +140,6 @@ it.effect(
       strictEqual(expiryOf(after, leaving.id), undefined, "a Contract in its last year frees the player");
       strictEqual(expiryOf(after, staying.id), nextEnd, "the rollover does not move a Contract's end");
     }),
+  // A whole Season is played, far past the 5s default once the suite loads the machine.
+  { timeout: 120_000 },
 );
