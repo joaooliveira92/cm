@@ -3,12 +3,20 @@ import { ChevronDown } from "lucide-react";
 import { POSITIONS } from "@cm-clone/shared";
 import { dispatchAction } from "../actions/dispatch.js";
 import { Alert } from "../components/ui/alert.js";
-import { Button } from "../components/ui/button.js";
+import { Button, buttonVariants } from "../components/ui/button.js";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "../components/ui/popover.js";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "../components/ui/sheet.js";
 import { FOCUS_RING } from "../focus.js";
 import { useSquad } from "./SquadProvider.js";
 import { SquadRoster } from "./SquadRoster.js";
@@ -71,7 +79,7 @@ const RefreshStatusLine = ({
 );
 
 /** The column controls — owned by the table layouts: "Restore defaults" and the
- *  show/hide disclosure. Kept out of the toolbar for the list layouts. */
+ *  show/hide sheet. Kept out of the toolbar for the list layouts. */
 const ColumnControls = ({
   preferences,
   onToggleColumn,
@@ -88,24 +96,30 @@ const ColumnControls = ({
     >
       Restore defaults
     </Button>
-    <details className="text-text-body">
-      <summary className={`cursor-pointer ${FOCUS_RING.join(" ")}`}>
+    <Sheet>
+      <SheetTrigger className={buttonVariants({ variant: "secondary" })}>
         Show / hide columns
-      </summary>
-      <div className="mt-2 grid max-h-64 grid-cols-3 gap-x-4 gap-y-1 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-3 text-xs">
-        {SQUAD_TOGGLEABLE_COLUMN_IDS.map((columnId) => (
-          <label key={columnId} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={preferences.visibleColumnIds.includes(columnId)}
-              onChange={() => onToggleColumn(columnId)}
-              className={`accent-text-success ${FOCUS_RING.join(" ")}`}
-            />
-            {SQUAD_COLUMN_LABELS[columnId] ?? columnId}
-          </label>
-        ))}
-      </div>
-    </details>
+      </SheetTrigger>
+      <SheetContent side="right" className="flex flex-col">
+        <SheetHeader>
+          <SheetTitle>Columns</SheetTitle>
+          <SheetDescription>Choose which columns the squad table shows.</SheetDescription>
+        </SheetHeader>
+        <div className="-mx-2 flex flex-1 flex-col gap-1 overflow-y-auto px-2 text-sm text-text-body">
+          {SQUAD_TOGGLEABLE_COLUMN_IDS.map((columnId) => (
+            <label key={columnId} className="flex items-center gap-2 py-1">
+              <input
+                type="checkbox"
+                checked={preferences.visibleColumnIds.includes(columnId)}
+                onChange={() => onToggleColumn(columnId)}
+                className={`accent-text-success ${FOCUS_RING.join(" ")}`}
+              />
+              {SQUAD_COLUMN_LABELS[columnId] ?? columnId}
+            </label>
+          ))}
+        </div>
+      </SheetContent>
+    </Sheet>
   </>
 );
 
