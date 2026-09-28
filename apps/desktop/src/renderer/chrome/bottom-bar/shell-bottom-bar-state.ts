@@ -29,7 +29,9 @@ export interface BottomBarButton {
   readonly id: string;
   readonly label: string;
   readonly disabled: boolean;
-  readonly onTrigger: () => void;
+  /** Receives the click, so a verb that navigates can tell a keyboard press
+   *  (`detail === 0`, see `intentOfClick`) from a pointer one. */
+  readonly onTrigger: (event: { readonly detail: number }) => void;
   /** The registered Action this control dispatches, when it is one — so the
    *  bar's copy of a screen verb still answers to the Action inventory. */
   readonly actionId?: string;

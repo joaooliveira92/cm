@@ -5,10 +5,11 @@
  * The results are a committed snapshot of a submitted query, so the only local state is the roving
  * focus (which row is active), the active sort, and the compare selection — a search table is the
  * one read whose manager is actively questioning it, so sorting is on, always on what the rows
- * honestly show. The table's own row *selection* stays off (no single-row action exists); what the
- * Compare column carries is a separate `compareIds` set — not TanStack selection — because the
- * table is rebuilt only when a query commits, and rebuilding it (resetting a roving sort) on a
- * checkbox toggle would make Compare aggravating to assemble. The column reads the set from
+ * honestly show. The table's own row *selection* stays off (View Profile, the one single-row
+ * action, reads the roving cursor instead); what the Compare column carries is a separate
+ * `compareIds` set — not TanStack selection — because the table is rebuilt only when a query
+ * commits, and rebuilding it (resetting a roving sort) on a checkbox toggle would make Compare
+ * aggravating to assemble. The column reads the set from
  * context (`CompareSelectionContext`) so the memoised shared column set never has to.
  */
 import { useCallback, useMemo, useState } from "react";

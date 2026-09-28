@@ -8,5 +8,9 @@ import { useRegisteredScreenBottomBarActions } from "../../src/renderer/chrome/b
  */
 export const RegisteredScreenBar = () => {
   const actions = useRegisteredScreenBottomBarActions();
-  return <ShellBottomBar plan={{ ...EMPTY_BOTTOM_BAR, secondary: actions?.buttons ?? [] }} />;
+  return (
+    <ShellBottomBar
+      plan={{ ...EMPTY_BOTTOM_BAR, secondary: actions?.buttons ?? [], reason: actions?.reason ?? null }}
+    />
+  );
 };

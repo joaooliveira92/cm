@@ -15,6 +15,8 @@
 import { useMemo, useState } from "react";
 import { NATION_CODES, POSITIONS, canonicalNationId, nationName } from "@cm-clone/shared";
 import type { PlayerSearchQuery, SaveId } from "@cm-clone/contracts";
+import { useScreenBottomBarActions } from "../chrome/bottom-bar/index.js";
+import type { ScreenBottomBarActions } from "../chrome/bottom-bar/index.js";
 import { Button } from "../components/ui/button.js";
 import { Input } from "../components/ui/input.js";
 import {
@@ -34,7 +36,7 @@ import {
   useAtomValue,
   type RpcClientError,
 } from "../rpc.js";
-import { DataTable } from "../table/DataTable.js";
+import { DataTable, effectiveActiveId } from "../table/DataTable.js";
 import { CompareSelectionContext } from "../table/playerSearch/compareSelection.js";
 import { searchRowOf } from "../table/playerSearch/searchColumns.js";
 import { usePlayerSearchRoster } from "./usePlayerSearchRoster.js";
@@ -86,20 +88,55 @@ const SearchResults = ({
     navigateCareer({ type: "playerDetail", saveId, playerId }, "keyboard");
   };
 
-  /** The Compare button (Screen 129, ticket 12): the row ids the manager has ticked, re-filtered
-   *  against the committed result so a re-query that no longer contains an id cannot carry it into
-   *  the comparison (the roster keeps stale memberships rather than dropping them — the set is
-   *  selection, and a row's removal from the results is not an un-tick). */
-  const selectedPlayerIds = playerIds.filter(
-    (id) => roster.compareIds.has(String(id)),
-  );
-  const compareCount = selectedPlayerIds.length;
-  const openComparison = (event: React.MouseEvent) => {
-    navigateCareer(
-      { type: "playerComparison", saveId, playerIds: selectedPlayerIds },
-      intentOfClick(event),
-    );
-  };
+  // The row the table's cursor is on, which is what View Profile opens. A cursor left on a row a
+  // re-query dropped falls back to the first row, as the table itself does.
+  const liveActiveId =
+    roster.activeId !== null && playerIds.some((id) => id === roster.activeId)
+      ? roster.activeId
+      : null;
+  const cursorId = effectiveActiveId(liveActiveId, roster.orderedIds);
+
+  // The screen's verbs live in the shell's bottom bar, beside Continue, and only once there are
+  // results for them to act on.
+  const bottomBarActions = useMemo((): ScreenBottomBarActions | null => {
+    if (loaded === null) return null;
+    const cursorPlayerId = playerIds.find((id) => id === cursorId);
+    /** Compare (Screen 129, ticket 12) takes the rows the manager has ticked, re-filtered against
+     *  the committed result so a re-query that no longer contains an id cannot carry it into the
+     *  comparison (the roster keeps stale memberships rather than dropping them — the set is
+     *  selection, and a row's removal from the results is not an un-tick). */
+    const comparePlayerIds = playerIds.filter((id) => roster.compareIds.has(String(id)));
+    const compareCount = comparePlayerIds.length;
+    return {
+      buttons: [
+        {
+          id: "view-profile",
+          label: "View Profile",
+          disabled: cursorPlayerId === undefined,
+          onTrigger: (event) => {
+            if (cursorPlayerId === undefined) return;
+            navigateCareer(
+              { type: "playerDetail", saveId, playerId: cursorPlayerId },
+              intentOfClick(event),
+            );
+          },
+        },
+        {
+          id: "compare-players",
+          label: compareCount >= 2 ? `Compare ${compareCount} players` : "Compare",
+          disabled: compareCount < 2,
+          onTrigger: (event) => {
+            navigateCareer(
+              { type: "playerComparison", saveId, playerIds: comparePlayerIds },
+              intentOfClick(event),
+            );
+          },
+        },
+      ],
+      reason: compareCount < 2 ? "Tick at least two players to compare them." : null,
+    };
+  }, [loaded, playerIds, cursorId, roster.compareIds, saveId]);
+  useScreenBottomBarActions(bottomBarActions);
 
   if (searchResult._tag === "Failure") {
     return <p className="mt-4 text-text-danger">{messageOf(typedError(searchResult))}</p>;
@@ -122,17 +159,7 @@ const SearchResults = ({
         <p className="mt-8 text-text-secondary italic">No players match these filters.</p>
       ) : (
         <section className="mt-3 rounded-panel bg-panel-bg px-3 pt-2 pb-3">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-base font-bold text-text-highlight">Results</h2>
-            <Button
-              type="button"
-              variant="default"
-              disabled={compareCount < 2}
-              onClick={openComparison}
-            >
-              {compareCount >= 2 ? `Compare ${compareCount} players` : "Compare"}
-            </Button>
-          </div>
+          <h2 className="text-base font-bold text-text-highlight">Results</h2>
           <CompareSelectionContext.Provider
             value={{ compareIds: roster.compareIds, onToggleCompare: roster.onToggleCompare }}
           >

@@ -4,6 +4,7 @@ import {
   describeCreationBottomBar,
   describeLeagueSelectionBottomBar,
   withShellCancel,
+  type BottomBarButton,
   type BottomBarPlan,
   type CreationBottomBarInput,
 } from "../../../src/renderer/chrome/bottom-bar/shell-bottom-bar-state.js";
@@ -157,7 +158,7 @@ describe("describeCreationBottomBar", () => {
 
   it("advances to the manager-identity panel while personal details are showing", () => {
     const next = { called: 0 };
-    let pressed: (() => void) | null = null;
+    let pressed: BottomBarButton["onTrigger"] | null = null;
     const plan = describeCreationBottomBar(
       creationInput({
         managerStep: 1,
@@ -173,7 +174,7 @@ describe("describeCreationBottomBar", () => {
     expect(plan.primary?.disabled).toBe(false);
     expect(plan.reason).toBeNull();
     pressed = plan.primary?.onTrigger ?? null;
-    pressed?.();
+    pressed?.({ detail: 1 });
     expect(next.called).toBe(1);
   });
 
