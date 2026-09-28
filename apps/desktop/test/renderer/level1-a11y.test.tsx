@@ -20,6 +20,7 @@ import { ManagerIdentityStep } from "../../src/renderer/create/ManagerIdentitySt
 import { CreateSessionContext } from "../../src/renderer/router/createSessionContext.js";
 import type { CreateSessionApi, ManagerSubStep } from "../../src/renderer/router/createSessionContext.js";
 import { TacticsScreen } from "../../src/renderer/tactics/TacticsScreen.js";
+import { RegisteredScreenBar } from "./registered-screen-bar.js";
 import { TransfersScreen } from "../../src/renderer/transfers/TransfersScreen.js";
 import { MatchDayScreen } from "../../src/renderer/match/MatchDayScreen.js";
 import { setActiveMatch, clearActiveMatch } from "../../src/renderer/match/session.js";
@@ -417,6 +418,7 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
 render(
       <RegistryProvider>
         <TacticsScreen saveId={rid("s1")} />
+        <RegisteredScreenBar />
       </RegistryProvider>,
     );
     await screen.findByRole("button", { name: /Save Tactic/ });

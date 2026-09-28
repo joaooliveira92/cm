@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import { FORMATION_SLOTS, POSITION_ROLES, STATURE_TIERS, emptyBench, type FORMATIONS } from "@cm-clone/shared";
 import { TacticsScreen } from "../../../src/renderer/tactics/TacticsScreen.js";
+import { RegisteredScreenBar } from "../registered-screen-bar.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 
 const rid = (id: string) => SaveId.make(id);
@@ -58,6 +59,7 @@ const mountConflictingEditor = (): void => {
   render(
     <RegistryProvider>
       <TacticsScreen saveId={rid("s1")} />
+      <RegisteredScreenBar />
     </RegistryProvider>,
   );
 };
@@ -89,4 +91,15 @@ it("a concurrent edit between read and save surfaces a distinct conflicted state
     expect(screen.getByRole("button", { name: "5-3-2" }).getAttribute("aria-pressed")).toBe("true"),
   );
   expect(screen.queryByTestId("tactic-conflict")).toBeNull();
+});
+it("Clear Selection empties every slot and the bench in the draft, leaving the formation", async () => {
+  mountConflictingEditor();
+  const clear = await screen.findByRole("button", { name: "Clear Selection" });
+  expect((clear as HTMLButtonElement).disabled).toBe(false);
+
+  fireEvent.click(clear);
+
+  await waitFor(() => expect((screen.getByRole("button", { name: "Clear Selection" }) as HTMLButtonElement).disabled).toBe(true));
+  // Disabled again means nothing is left to clear: every slot and bench place is empty.
+  expect(screen.getByRole("button", { name: "4-4-2" }).getAttribute("aria-pressed")).toBe("true");
 });

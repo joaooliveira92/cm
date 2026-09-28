@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   PlayerId,
   Tactic,
@@ -7,6 +7,7 @@ import {
   type TacticSlot,
 } from "@cm-clone/contracts";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
+import { useScreenBottomBarActions } from "../chrome/bottom-bar/index.js";
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import { Card } from "../components/ui/card.js";
@@ -31,6 +32,7 @@ import {
   MENTALITY_OPTIONS,
   PRESSING_OPTIONS,
   TEMPO_OPTIONS,
+  emptyBench,
   roleRating,
   type Formation,
   type Mentality,
@@ -51,6 +53,18 @@ const changeFormation = (tactic: Tactic, formation: Formation): Tactic =>
     pressing: tactic.pressing,
     bench: tactic.bench,
   });
+
+/** Every starter slot and bench place emptied; the formation and instructions stay. The server
+ *  refuses a Tactic with an empty starter, so this is a draft to refill, never a save on its own. */
+const clearSelection = (tactic: Tactic): Tactic =>
+  new Tactic({
+    ...tactic,
+    slots: tactic.slots.map((slot) => ({ ...slot, playerId: PlayerId.make("") })),
+    bench: emptyBench(),
+  });
+
+const hasSelection = (tactic: Tactic): boolean =>
+  tactic.slots.some((slot) => slot.playerId !== "") || tactic.bench.some((place) => place !== null);
 
 const changeSlotPlayer = (tactic: Tactic, slotIndex: number, playerId: PlayerId): Tactic =>
   new Tactic({
@@ -135,11 +149,38 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         const p = params as { from: number; to: number };
         setTactic(swapLineupSlots(tactic, p.from, p.to));
       }),
+      registerActionHandler("clear-tactic-selection", () => setTactic(clearSelection(tactic))),
     ];
     return () => {
       for (const unregister of unregisters) unregister();
     };
   }, [saveId, tactic, revision, setTactic, save]);
+
+  // The screen's verbs live in the shell's bottom bar, beside Continue. They dispatch the same
+  // registered Actions the palette lists, so the bar is one more way in, not a second definition.
+  const selectionPresent = hasSelection(tactic);
+  const bottomBarActions = useMemo(
+    () => ({
+      buttons: [
+        {
+          id: "clear-tactic-selection",
+          actionId: "clear-tactic-selection",
+          label: "Clear Selection",
+          disabled: !selectionPresent,
+          onTrigger: () => void dispatchAction("clear-tactic-selection"),
+        },
+        {
+          id: "save-tactic",
+          actionId: "save-tactic",
+          label: "Save Tactic",
+          disabled: false,
+          onTrigger: () => void dispatchAction("save-tactic"),
+        },
+      ],
+    }),
+    [selectionPresent],
+  );
+  useScreenBottomBarActions(viewResult._tag === "Success" ? bottomBarActions : null);
 
   if (viewError)
     return (
@@ -358,32 +399,26 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         </div>
       </div>
 
-      <section className="chrome-gradient flex items-center gap-3 rounded-panel border border-panel-border px-3 py-2 shadow-chrome">
-        {conflict !== null && (
-          <>
-            <span role="alert" className="text-sm text-text-danger" data-testid="tactic-conflict">
-              {CONFLICT_MESSAGE}
-            </span>
-            <Button
-              type="button"
-              variant="secondary"
-              data-action-id="refresh-tactics"
-              onClick={refresh}
-            >
-              Refresh
-            </Button>
-          </>
-        )}
-        {status && <span className="text-sm text-text-bright">{status}</span>}
-        <Button
-          type="button"
-          className="ml-auto"
-          data-action-id="save-tactic"
-          onClick={() => void dispatchAction("save-tactic")}
-        >
-          Save Tactic
-        </Button>
-      </section>
+      {(conflict !== null || status) && (
+        <section className="chrome-gradient flex items-center gap-3 rounded-panel border border-panel-border px-3 py-2 shadow-chrome">
+          {conflict !== null && (
+            <>
+              <span role="alert" className="text-sm text-text-danger" data-testid="tactic-conflict">
+                {CONFLICT_MESSAGE}
+              </span>
+              <Button
+                type="button"
+                variant="secondary"
+                data-action-id="refresh-tactics"
+                onClick={refresh}
+              >
+                Refresh
+              </Button>
+            </>
+          )}
+          {status && <span className="text-sm text-text-bright">{status}</span>}
+        </section>
+      )}
     </main>
   );
 };

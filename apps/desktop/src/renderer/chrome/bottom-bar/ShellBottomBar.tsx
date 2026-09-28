@@ -92,6 +92,7 @@ const BarButton = ({
     type="button"
     variant={variant}
     data-bottom-bar-action={button.id}
+    data-action-id={button.actionId}
     disabled={button.disabled}
     onClick={button.onTrigger}
   >

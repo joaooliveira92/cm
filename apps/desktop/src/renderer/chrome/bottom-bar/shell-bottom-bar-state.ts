@@ -30,6 +30,9 @@ export interface BottomBarButton {
   readonly label: string;
   readonly disabled: boolean;
   readonly onTrigger: () => void;
+  /** The registered Action this control dispatches, when it is one — so the
+   *  bar's copy of a screen verb still answers to the Action inventory. */
+  readonly actionId?: string;
 }
 
 export interface BottomBarPlan {

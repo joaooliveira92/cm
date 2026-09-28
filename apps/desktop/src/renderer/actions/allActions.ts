@@ -166,6 +166,7 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   { id: "set-pressing", label: "Set pressing", scope: "tactics", available: ready, handler: () => undefined },
   { id: "assign-slot-player", label: "Assign a player to a tactics slot", scope: "tactics", available: ready, handler: () => undefined },
   { id: "swap-slot-players", label: "Swap two tactics slots' players", scope: "tactics", available: ready, handler: () => undefined },
+  { id: "clear-tactic-selection", label: "Clear the team selection", scope: "tactics", available: ready, handler: () => undefined },
   // match day
   { id: "start-match", label: "Play the match", scope: "match", available: ready, handler: () => undefined },
   { id: "quick-result", label: "Quick result", scope: "match", available: ready, handler: () => undefined },

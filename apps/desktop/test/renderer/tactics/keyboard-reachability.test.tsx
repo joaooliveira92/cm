@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import { FORMATION_SLOTS, FORMATIONS, POSITION_ROLES, STATURE_TIERS, emptyBench } from "@cm-clone/shared";
 import { TacticsScreen } from "../../../src/renderer/tactics/TacticsScreen.js";
+import { RegisteredScreenBar } from "../registered-screen-bar.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 
 const rid = (id: string) => SaveId.make(id);
@@ -42,6 +43,7 @@ const mountTactics = async (view: unknown = tacticsView()): Promise<void> => {
   render(
     <RegistryProvider>
       <TacticsScreen saveId={rid("s1")} />
+      <RegisteredScreenBar />
     </RegistryProvider>,
   );
 };
@@ -64,14 +66,18 @@ describe("tier-3 remainder — Tactics is driveable with no mouse (Level 1 guara
 
     // Native tab order: the five formation buttons come first, then the three
     // instruction sliders' option buttons, then the 11 slot player selects
-    // (v1 formations include the explicit GK slot), then Save Tactic.
+    // (v1 formations include the explicit GK slot). Save Tactic and Clear
+    // Selection are the shell's bottom bar, after the screen in tab order.
     expect(ids.slice(0, 5)).toEqual(Array(5).fill("set-formation"));
     const instructionControls = ids.slice(5, 14);
     for (const id of instructionControls) {
       expect(["set-mentality", "set-tempo", "set-pressing"]).toContain(id);
     }
     expect(ids.slice(14, 25)).toEqual(Array(11).fill("assign-slot-player"));
-    expect(ids.slice(25)).toEqual(["save-tactic"]);
+    expect(ids.slice(25)).toEqual([]);
+    const bar = [...document.querySelectorAll<HTMLElement>("footer button")];
+    expect(bar.map((c) => c.dataset.actionId)).toEqual(["clear-tactic-selection", "save-tactic"]);
+    controls.push(...bar);
 
     // Every control is a native form control — the browser supplies Tab/arrows/
     // Enter/Space (Level 1: no custom widget can rob them of the default).
