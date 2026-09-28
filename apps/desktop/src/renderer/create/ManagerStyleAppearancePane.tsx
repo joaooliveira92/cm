@@ -42,7 +42,11 @@ export const ManagerStyleAppearancePane = ({
   onAvatarChange,
 }: ManagerStyleAppearancePaneProps) => (
   <>
-
+    <div>
+      <StepHeading title="Style & Appearance">
+        Set the tactical identity your first formation starts from, and how you appear.
+      </StepHeading>
+    </div>
 
     <div className="rounded-panel border border-panel-border bg-card p-6 shadow-panel">
       <div className="grid gap-6 md:grid-cols-2">

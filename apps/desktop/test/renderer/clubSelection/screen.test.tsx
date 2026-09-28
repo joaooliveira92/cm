@@ -125,7 +125,8 @@ describe("the rail reads comparatively and the panel carries the detail", () => 
     expect(within(panel).getByText("Transfer Budget")).toBeTruthy();
     expect(within(panel).getByText("Wage Budget")).toBeTruthy();
     expect(within(panel).getAllByText(/ Cr$/).length).toBe(2);
-    expect(within(panel).getByText(/Squad of 25, average age/)).toBeTruthy();
+    expect(within(panel).getByText("Squad of 25")).toBeTruthy();
+    expect(within(panel).getByText(/^Avg age \d/)).toBeTruthy();
     expect(within(panel).getByRole("list", {}).children.length).toBeGreaterThan(0);
 
     expect(calls.filter((method) => method === "getClubSelection").length).toBe(before);

@@ -2,6 +2,7 @@ import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 
+import { FOCUS_RING } from "../../focus.js";
 import { cn } from "../../lib/utils.js";
 
 const Tabs = TabsPrimitive.Root;
@@ -46,7 +47,7 @@ const TabsTrigger = ({ className, ref, ...props }: TabsTriggerProps) => (
     className={cn(
       "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all",
       "disabled:pointer-events-none disabled:opacity-50",
-      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+      FOCUS_RING,
       "group-data-[variant=default]/tabs-list:data-active:bg-background data-active:text-foreground",
       "relative group-data-[variant=line]/tabs-list:h-full group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:hover:text-foreground",
       "after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-primary after:opacity-0 after:transition-opacity group-data-[variant=line]/tabs-list:data-active:after:opacity-100",

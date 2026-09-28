@@ -174,7 +174,7 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
             <Tooltip>
               <TooltipTrigger>
                 <span className="text-sm font-semibold tabular-nums">
-                  <NumberTicker value={club.transferBudget} locale prefix="£" />
+                  <NumberTicker value={club.transferBudget} locale suffix=" Cr" />
                 </span>
               </TooltipTrigger>
               <TooltipContent>
@@ -187,7 +187,7 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
             <Tooltip>
               <TooltipTrigger>
                 <span className="text-sm font-semibold tabular-nums">
-                  <NumberTicker value={club.wageBudget} locale prefix="£" />
+                  <NumberTicker value={club.wageBudget} locale suffix=" Cr" />
                 </span>
               </TooltipTrigger>
               <TooltipContent>
@@ -198,7 +198,7 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
           <div className="flex items-center justify-between">
             <span className="text-xs text-text-muted">Wage / Season</span>
             <span className="text-xs text-text-muted">
-              £{club.wageBudget.toLocaleString()} / season
+              {formatCredits(club.wageBudget)} / season
             </span>
           </div>
         </CardContent>
@@ -213,30 +213,34 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
             Top Players
           </CardTitle>
         </CardHeader>
-        <CardContent className="pb-2 pt-0 space-y-1">
-          {club.detail.topPlayers.map((player) => (
-            <Tooltip key={player.name}>
-              <TooltipTrigger>
-                <div className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-surface-raised transition-colors">
-                  <span className="truncate text-sm font-medium text-text-primary">{player.name}</span>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <Badge variant="outline" className="text-2xs">
-                      {player.position}
-                    </Badge>
-                    <span className="text-xs font-semibold tabular-nums">{player.overallRating}</span>
-                  </div>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="flex flex-col gap-1">
-                  <span className="font-semibold">{player.name}</span>
-                  <span className="text-xs text-text-muted">
-                    {player.position} · Overall {player.overallRating}
-                  </span>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          ))}
+        <CardContent className="pb-2 pt-0">
+          <ul className="space-y-1">
+            {club.detail.topPlayers.map((player) => (
+              <li key={player.name}>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <div className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-surface-raised transition-colors">
+                      <span className="truncate text-sm font-medium text-text-primary">{player.name}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Badge variant="outline" className="text-2xs">
+                          {player.position}
+                        </Badge>
+                        <span className="text-xs font-semibold tabular-nums">{player.overallRating}</span>
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-semibold">{player.name}</span>
+                      <span className="text-xs text-text-muted">
+                        {player.position} · Overall {player.overallRating}
+                      </span>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </li>
+            ))}
+          </ul>
         </CardContent>
       </Card>
 

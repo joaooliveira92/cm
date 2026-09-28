@@ -97,6 +97,8 @@ const install = () => {
 
 /** Selects the first Free Agent and waits for the form the handler reads its terms from. */
 const selectFirstFreeAgent = async () => {
+  // The screen opens on the Market tab; the Free Agents rows exist only while theirs is showing.
+  fireEvent.click(await screen.findByRole("tab", { name: "Free Agents" }));
   fireEvent.click(await screen.findByRole("button", { name: /Test FA/ }));
   await screen.findByRole("button", { name: "Sign (0 Cr)" });
   await chooseOptionByLabel("Role offered to Test FA", "AttackingMidfielder (AMC)");

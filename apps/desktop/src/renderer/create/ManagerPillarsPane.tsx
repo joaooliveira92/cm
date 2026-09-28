@@ -35,7 +35,11 @@ export const ManagerPillarsPane = ({
 
   return (
     <>
-
+      <div>
+        <StepHeading title="Manager identity">
+          Allocate the strengths that define your managerial career.
+        </StepHeading>
+      </div>
 
       <PillarDistribution.Root
         pillars={pillars}

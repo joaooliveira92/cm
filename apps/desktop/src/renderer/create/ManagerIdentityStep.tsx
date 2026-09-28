@@ -70,7 +70,11 @@ export const ManagerIdentityStep = () => {
               className="rounded-panel border border-panel-border bg-card p-6 shadow-panel"
             >
               <div>
-
+                <div className="mb-7">
+                  <StepHeading title="Personal details">
+                    Introduce the manager who will lead this career.
+                  </StepHeading>
+                </div>
                 <div className="grid gap-6 md:grid-cols-2">
                   <motion.div
                     initial={{ opacity: 0, y: 12 }}

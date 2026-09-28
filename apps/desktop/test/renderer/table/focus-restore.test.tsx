@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import { FAMILIARITY_TIERS, STATURE_TIERS } from "@cm-clone/shared";
@@ -151,7 +151,8 @@ describe("AC-31 (review F-1) — Transfers restores focus when a sort/filter/ref
         ],
       }),
     );
-    // Free Agents rows are rendered before the Market section.
+    // The screen opens on the Market tab; the Free Agents rows exist only while theirs is showing.
+    fireEvent.click(await screen.findByRole("tab", { name: "Free Agents" }));
     await screen.findByRole("button", { name: /Fan Player/ });
 
     const focused = document.querySelector(

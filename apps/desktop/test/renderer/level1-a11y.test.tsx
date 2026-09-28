@@ -342,9 +342,15 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
       // Base UI puts an explicit `tabindex="0"` on its own triggers (the vendored Select's
       // `select-trigger` button and any Popover trigger, which carries `aria-haspopup`); that is a
       // legitimate tab stop rather than an override this contract forbids.
-      if (
-        control.getAttribute("data-slot") === "select-trigger" ||
-        control.hasAttribute("aria-haspopup")
+      // A native input that opens a popup (the Autocomplete pickers) is natively focusable and
+      // takes the general rule below.
+      if (control.getAttribute("data-slot") === "autocomplete-trigger") {
+        // An Autocomplete's chevron: Base UI keeps it out of the tab order because the input
+        // beside it is the picker's one tab stop, and the keyboard opens the list from there.
+        expect(control.getAttribute("tabindex")).toBe("-1");
+      } else if (
+        control.tagName === "BUTTON" &&
+        (control.getAttribute("data-slot") === "select-trigger" || control.hasAttribute("aria-haspopup"))
       ) {
         expect(["0"]).toContain(control.getAttribute("tabindex"));
       } else {
@@ -381,6 +387,10 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
         // The vendored Base UI select trigger is a native button Base UI explicitly
         // puts in the tab order (tabindex="0"), so it is a legitimate tab stop.
         expect(["0"]).toContain(button.getAttribute("tabindex"));
+      } else if (button.getAttribute("role") === "tab") {
+        // The table tabs are a roving composite: the active tab is the one stop, arrows move
+        // between the rest — the same carve-out as the row-roving controls above.
+        expect(button.getAttribute("tabindex")).toBe(button.getAttribute("aria-selected") === "true" ? "0" : "-1");
       } else {
         expect(button.getAttribute("tabindex")).toBeNull();
       }
