@@ -5,7 +5,7 @@ export interface SquadQualityMeterProps {
   readonly band: SquadQualityBand;
 }
 
-/** The rail's segmented quality meter. Decorative: the band's word beside it carries the same fact
+/** The segmented quality meter, shared by the rail rows and the panel. Decorative: the band's word beside it carries the same fact
  *  in the accessible name. */
 export const SquadQualityMeter = ({ band }: SquadQualityMeterProps) => (
   <span aria-hidden="true" className="flex gap-0.5">

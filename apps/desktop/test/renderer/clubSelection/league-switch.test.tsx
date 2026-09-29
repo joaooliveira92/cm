@@ -9,7 +9,7 @@ import { Effect } from "effect";
 import type { ClubId } from "@cm-clone/contracts";
 import type { SquadQualityBand } from "@cm-clone/shared";
 import { getClubSelection } from "../../../src/main/career/index.js";
-import { qualityPresentationOf } from "../../../src/renderer/clubSelection/club-profile.js";
+import { filledSegments } from "../../../src/renderer/clubSelection/model.js";
 import { ClubSelectionScreen } from "../../../src/renderer/clubSelection/ClubSelectionScreen.js";
 import { createSave } from "../../seeded-save.js";
 import { chooseOptionByLabel } from "../../setup/baseUiSelect.js";
@@ -106,18 +106,20 @@ const ready = async () => {
   await waitFor(() => expect(rows().length).toBe(10));
 };
 
-describe("the panel's Squad Quality meter", () => {
-  it("reads the club's real band rather than resting at 0%", async () => {
+describe("the panel's Squad Quality card", () => {
+  it("names the club's real band and fills the meter to its rank", async () => {
     await ready();
     const first = rows()[0]!;
     const club = payload.clubs.find((c) => c.clubName === nameOf(first))!;
     fireEvent.click(first);
 
-    const meter = await within(panel()).findByRole("progressbar");
-    const expected = qualityPresentationOf(club.squadQualityBand).percent;
-    expect(expected).toBeGreaterThan(0);
-    expect(Number(meter.getAttribute("aria-valuenow"))).toBe(expected);
-    expect(within(panel()).getByText(`${Math.round(expected)}%`)).toBeTruthy();
+    const card = (await within(panel()).findByText("Squad Quality")).closest("[data-slot=card]") as HTMLElement;
+    expect(within(card).getByText(club.squadQualityBand)).toBeTruthy();
+    const filled = card.querySelectorAll("[aria-hidden=true] > .bg-text-highlight").length;
+    expect(filled).toBe(filledSegments(club.squadQualityBand));
+    expect(filled).toBeGreaterThan(0);
+    // A rank among six bands, not a measurement: no percentage is stated.
+    expect(within(card).queryByText(/%/)).toBeNull();
   });
 });
 
