@@ -1,6 +1,7 @@
 import { type SaveId } from "@cm-clone/contracts";
+import { ReadStateMessage } from "../components/shared/ReadStateMessage.js";
 import { FOCUS_RING } from "../focus.js";
-import { budgetReviewAtom, describeRpcError, typedError, useAtomValue } from "../rpc.js";
+import { budgetReviewAtom, readState, useAtomValue } from "../rpc.js";
 import { BudgetFigures } from "./BudgetFigures.js";
 
 const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
@@ -15,27 +16,19 @@ export const BudgetReviewScreen = ({
 }: {
   readonly saveId: SaveId;
 }) => {
-  const result = useAtomValue(budgetReviewAtom(saveId));
+  const result = readState(useAtomValue(budgetReviewAtom(saveId)), {
+    loading: "Loading budget information...",
+    failed: "Budget information could not be loaded.",
+  });
 
-  if (result._tag === "Initial") {
+  if (result._tag !== "Ready") {
     return (
-      <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="budgetReview" aria-label="Budget Review">
-        <h1 className="text-2xl font-bold">Transfer & Wage Budget Review</h1>
-        <p className="mt-4 text-text-secondary">Loading budget information...</p>
-      </main>
-    );
-  }
-
-  if (result._tag === "Failure") {
-    const error = typedError(result);
-    const message = error === null
-      ? "Budget information could not be loaded."
-      : describeRpcError(error);
-    return (
-      <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="budgetReview" aria-label="Budget Review">
-        <h1 className="text-2xl font-bold">Transfer & Wage Budget Review</h1>
-        <p className="mt-4 text-text-secondary">{message}</p>
-      </main>
+      <ReadStateMessage
+        title="Transfer & Wage Budget Review"
+        label="Budget Review"
+        focusId="budgetReview"
+        message={result.message}
+      />
     );
   }
 
@@ -48,8 +41,8 @@ export const BudgetReviewScreen = ({
       data-focus-id="budgetReview"
       aria-label="Budget Review"
     >
-      <h1 className="text-2xl font-bold">Transfer & Wage Budget Review</h1>
-      <p className="mt-1 mb-6 text-text-secondary text-sm">
+      <h1 className="text-title">Transfer & Wage Budget Review</h1>
+      <p className="mt-1 mb-6 text-text-secondary text-body">
         Your club's current Transfer Budget, Wage Budget, and committed wages.
       </p>
       <BudgetFigures

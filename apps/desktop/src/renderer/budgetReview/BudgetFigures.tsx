@@ -9,12 +9,31 @@
  * the Group C ledger `deferred`s them rather than this component carrying a zero that reads like a
  * fact.
  */
+import type { ReactNode } from "react";
 import { PANEL } from "../theme.js";
 
-const Figure = ({ label, value }: { readonly label: string; readonly value: string }) => (
+/**
+ * One labelled budget figure. The value may carry a state (`valueClass`/`trailing`) — headroom is
+ * the one figure that does: overspend gets a word as well as a colour, because a red number alone
+ * tells a colour-blind reader nothing.
+ */
+const Figure = ({
+  label,
+  value,
+  valueClass = "",
+  trailing = null,
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly valueClass?: string;
+  readonly trailing?: ReactNode;
+}) => (
   <div className={`rounded-md border p-4 ${PANEL}`}>
-    <p className="text-sm text-text-secondary">{label}</p>
-    <p className="text-xl font-semibold mt-1">{value}</p>
+    <p className="text-body text-text-secondary">{label}</p>
+    <p className={`text-figure mt-1 ${valueClass}`}>
+      {value}
+      {trailing}
+    </p>
   </div>
 );
 
@@ -36,14 +55,13 @@ export const BudgetFigures = ({
     />
     <Figure label="Wage Budget" value={`${wageBudget.toLocaleString()} Credits/season`} />
     <Figure label="Committed Wages" value={`${committedWages.toLocaleString()} Credits/season`} />
-    <div className={`rounded-md border p-4 ${PANEL}`}>
-      <p className="text-sm text-text-secondary">Headroom</p>
-      {/* Overspend is the one figure that carries a state, so it carries a word as well as a
-          colour — a red number alone tells a colour-blind reader nothing. */}
-      <p className={`text-xl font-semibold mt-1 ${headroom < 0 ? "text-red-500" : ""}`}>
-        {headroom.toLocaleString()} Credits/season
-        {headroom < 0 ? <span className="ml-2 text-sm font-normal">(over budget)</span> : null}
-      </p>
-    </div>
+    <Figure
+      label="Headroom"
+      value={`${headroom.toLocaleString()} Credits/season`}
+      valueClass={headroom < 0 ? "text-red-500" : ""}
+      trailing={
+        headroom < 0 ? <span className="ml-2 text-body font-normal">(over budget)</span> : null
+      }
+    />
   </div>
 );
