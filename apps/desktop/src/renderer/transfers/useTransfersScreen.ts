@@ -188,7 +188,13 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
   );
 
   // Market first: the bid workflow starts there, and `focus-bid` lands on its first row.
-  const [tab, setTab] = useState<TransfersTab>("market");
+  const [tab, setTabState] = useState<TransfersTab>("market");
+  // A notice speaks for the tab that raised it ("Sorted by Age" on the Market), so it goes when
+  // the tab does rather than sitting under a table it does not describe.
+  const setTab = useCallback((next: TransfersTab) => {
+    setTabState(next);
+    setBarNotice(null);
+  }, []);
   const [selected, setSelected] = useState<SelectedPlayer | null>(null);
   const selectedRef = useRef(selected);
   selectedRef.current = selected;

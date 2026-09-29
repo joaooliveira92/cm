@@ -211,6 +211,18 @@ const sameClause = (a: FilterClause, b: FilterClause): boolean =>
 const describeClause = (filter: FilterClause): string =>
   filter._tag === "nameSearch" ? `name "${filter.query.trim()}"` : `${CLAUSE_KIND_LABELS[filter._tag]}: ${clauseLabel(filter)}`;
 
+const nameQueryOf = (filters: readonly FilterClause[]): string => {
+  const name = filters.find((f) => f._tag === "nameSearch");
+  return name?._tag === "nameSearch" ? name.query.trim() : "";
+};
+
+/** True when two clause lists agree on everything but the name search. */
+const sameApartFromName = (a: readonly FilterClause[], b: readonly FilterClause[]): boolean => {
+  const rest = (filters: readonly FilterClause[]) => filters.filter((f) => f._tag !== "nameSearch");
+  const [left, right] = [rest(a), rest(b)];
+  return left.length === right.length && left.every((f) => right.some((g) => g._tag === f._tag && sameClause(f, g)));
+};
+
 /** The attribute set as one phrase ("Pace 15+, Finishing 14+"), in clause order. */
 const attributeSummary = (filters: readonly FilterClause[]): string =>
   filters.filter(isAttributeClause).map(clauseLabel).join(", ");
@@ -222,14 +234,19 @@ const attributeSummary = (filters: readonly FilterClause[]): string =>
  * clause was added, replaced or removed. The attribute thresholds change as a
  * set (the dialog applies them together), so they are named as a set. Anything
  * else falls back to the count alone.
+ *
+ * `null` when only the name search moved. That arrives once per keystroke, and
+ * the bar line is a live region, so a line per letter would talk over the
+ * typing; the table's own count already shows the result.
  */
 export const filterChangeNotice = (
   before: readonly FilterClause[],
   after: readonly FilterClause[],
   count: number,
-): string => {
+): string | null => {
   const prior = liveClauses(before);
   const next = liveClauses(after);
+  if (nameQueryOf(prior) !== nameQueryOf(next) && sameApartFromName(prior, next)) return null;
   const matches = `${count} ${count === 1 ? "player matches" : "players match"} the current filters.`;
   if (next.length === 0 && prior.length > 0) {
     return `Cleared the filters. ${count} ${count === 1 ? "player is" : "players are"} shown.`;

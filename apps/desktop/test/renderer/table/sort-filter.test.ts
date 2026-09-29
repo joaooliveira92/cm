@@ -334,13 +334,18 @@ describe("filterChangeNotice — the bottom-bar line for a filter change", () =>
     expect(filterChangeNotice([positionClause("DC")], [], 1)).toBe("Cleared the filters. 1 player is shown.");
   });
 
-  it("treats an empty name search as no filter, and quotes a typed one", () => {
+  it("says nothing while only the name search moves, which it does once per keystroke", () => {
+    expect(filterChangeNotice([], [nameSearchClause("a")], 3)).toBeNull();
+    expect(filterChangeNotice([nameSearchClause("a")], [nameSearchClause("al")], 1)).toBeNull();
+    expect(filterChangeNotice([nameSearchClause("al")], [nameSearchClause("")], 9)).toBeNull();
+    expect(filterChangeNotice([positionClause("DC")], [positionClause("DC"), nameSearchClause("al")], 1)).toBeNull();
+    // Whitespace filters nothing, so it is not a change at all.
     expect(filterChangeNotice([], [nameSearchClause("  ")], 9)).toBe("9 players match the current filters.");
-    expect(filterChangeNotice([], [nameSearchClause("ala")], 1)).toBe(
-      'Filtered by name "ala". 1 player matches the current filters.',
-    );
-    expect(filterChangeNotice([nameSearchClause("ala")], [nameSearchClause("")], 9)).toBe(
-      "Cleared the filters. 9 players are shown.",
+  });
+
+  it("still names another clause set while a name search is in place", () => {
+    expect(filterChangeNotice([nameSearchClause("al")], [nameSearchClause("al"), positionClause("DC")], 1)).toBe(
+      "Filtered by Position: DC. 1 player matches the current filters.",
     );
   });
 });

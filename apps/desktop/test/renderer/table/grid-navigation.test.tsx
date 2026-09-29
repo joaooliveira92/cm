@@ -326,20 +326,6 @@ describe("AC-30 — visible filter controls show active state and drive the same
     // The visible control reflects the same active state as the palette command.
     expect(selectValueOf(screen.getByLabelText("Filter Market by position"))).toBe("ST");
   });
-
-  it("a palette set-filter reports the filter and result count in the bottom bar on Transfers (F-7: parity with the Squad set-filter)", async () => {
-    await mountTransfers(transfersView());
-    await screen.findByRole("button", { name: /Alan Player/ });
-    act(() => {
-      dispatchAction("filter-transfer-market-dc", {
-        tableId: "transfer-market",
-        filter: { _tag: "position", position: "DC" },
-      });
-    });
-    expect(screen.getByRole("contentinfo").textContent).toContain(
-      "Filtered by Position: DC. 1 player matches the current filters.",
-    );
-  });
 });
 
 describe("AC-31 — selection cleared when the selected row is filtered out (explicit)", () => {

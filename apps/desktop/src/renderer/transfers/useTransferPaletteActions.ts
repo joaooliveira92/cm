@@ -36,8 +36,8 @@ export interface TablePaletteHandlersParams {
   readonly setSortFor: TransferTableState["setSortFor"];
   readonly setFiltersFor: TransferTableState["setFiltersFor"];
   readonly filtersFor: TransferTableState["filtersFor"];
-  /** The shell's bottom-bar line, where a sort or filter command reports. */
-  readonly notify: (message: string) => void;
+  /** The shell's bottom-bar line, where a sort or filter command reports; `null` clears it. */
+  readonly notify: (message: string | null) => void;
 }
 
 /** The command-palette sort/filter actions for both transfer tables. */
