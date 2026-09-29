@@ -11,7 +11,7 @@
  * `PlayerScreenFrame` renders it through `nationName`), and this table renders it the same way so
  * the results row and the profile it opens cannot disagree about a country's name.
  */
-import { type ColumnDef, type SortingFn } from "@tanstack/react-table";
+import type { AppColumnDef, AppSortFn } from "../tableFeatures.js";
 import type { PlayerSearchResultView } from "@cm-clone/contracts";
 import { nationName, type KnownFigure } from "@cm-clone/shared";
 import { figureMid, formatFigure, formatFigureCredits } from "../../format.js";
@@ -46,7 +46,7 @@ export const searchRowOf = (result: PlayerSearchResultView): SearchRow => ({
 });
 
 /** Numeric sort over the accessed value — the default string sort would order 9 before 10. */
-const numericSortingFn: SortingFn<SearchRow> = (rowA, rowB, columnId) => {
+const numericSortingFn: AppSortFn<SearchRow> = (rowA, rowB, columnId) => {
   const a = rowA.getValue<number>(columnId);
   const b = rowB.getValue<number>(columnId);
   return a - b;
@@ -67,7 +67,7 @@ export const SEARCH_COLUMN_LABELS: Readonly<Record<string, string>> = {
  *  exact figure. */
 export const searchColumns = (
   sortable: boolean,
-): ReadonlyArray<ColumnDef<SearchRow, unknown>> => [
+): ReadonlyArray<AppColumnDef<SearchRow>> => [
   {
     id: "name",
     accessorFn: (row) => `${row.firstName} ${row.lastName}`,
@@ -107,7 +107,7 @@ export const searchColumns = (
     accessorFn: (row) => figureMid(row.overallRating),
     header: "OVR",
     enableSorting: sortable,
-    sortingFn: numericSortingFn,
+    sortFn: numericSortingFn,
     cell: (info) => formatFigure(info.row.original.overallRating),
   },
   {
@@ -115,7 +115,7 @@ export const searchColumns = (
     accessorFn: (row) => figureMid(row.transferValue),
     header: "Value",
     enableSorting: sortable,
-    sortingFn: numericSortingFn,
+    sortFn: numericSortingFn,
     cell: (info) => formatFigureCredits(info.row.original.transferValue),
   },
 ];

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { AppColumnDef } from "../../../../src/renderer/table/tableFeatures.js";
 import {
   figureMid,
   formatCredits,
@@ -17,7 +17,7 @@ import {
  *  ranged figures). Narrowed out of the `ColumnDef` union, which only carries `accessorFn` on the
  *  accessor variant. */
 const accessorOf = (
-  columns: ReadonlyArray<ColumnDef<MarketPlayerRow, unknown>>,
+  columns: ReadonlyArray<AppColumnDef<MarketPlayerRow>>,
   id: string,
 ): ((row: MarketPlayerRow) => number) => {
   const column = columns.find((c) => c.id === id);

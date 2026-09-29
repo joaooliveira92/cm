@@ -17,7 +17,7 @@
  * scroll — see `playerStatus.tsx` for the vocabulary itself.
  */
 import type { ComponentType } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { AppColumnDef } from "../tableFeatures.js";
 import type { KnownFigure } from "@cm-clone/shared";
 import { ALL_ATTRIBUTES } from "@cm-clone/shared";
 import type { ClubSquadPlayerView, SquadPlayerView } from "@cm-clone/contracts";
@@ -214,8 +214,8 @@ export const squadColumns = ({
   legend,
   matchDay,
   fit,
-}: SquadColumnsOptions): ReadonlyArray<ColumnDef<SquadRow, unknown>> => {
-  const statusColumn: ReadonlyArray<ColumnDef<SquadRow, unknown>> =
+}: SquadColumnsOptions): ReadonlyArray<AppColumnDef<SquadRow>> => {
+  const statusColumn: ReadonlyArray<AppColumnDef<SquadRow>> =
     ownClub && legend !== undefined
       ? [
           {
@@ -240,7 +240,7 @@ export const squadColumns = ({
         ]
       : [];
 
-  const matchDayColumn: ReadonlyArray<ColumnDef<SquadRow, unknown>> =
+  const matchDayColumn: ReadonlyArray<AppColumnDef<SquadRow>> =
     ownClub && matchDay !== undefined
       ? [
           {
@@ -263,7 +263,7 @@ export const squadColumns = ({
   /** The fit mark, drawn only while a slot is selected. Sorted with the match-day indicator and
    *  pinned beside it, so the answer to "who fits here" stays on screen while the attribute
    *  columns scroll — the same standing guarantee the indicator itself gets. */
-  const fitColumn: ReadonlyArray<ColumnDef<SquadRow, unknown>> =
+  const fitColumn: ReadonlyArray<AppColumnDef<SquadRow>> =
     ownClub && fit !== undefined
       ? [
           {
@@ -285,8 +285,8 @@ export const squadColumns = ({
         ]
       : [];
 
-  const attributeColumns: ReadonlyArray<ColumnDef<SquadRow, unknown>> = ALL_ATTRIBUTES.map(
-    (attribute): ColumnDef<SquadRow, unknown> => ({
+  const attributeColumns: ReadonlyArray<AppColumnDef<SquadRow>> = ALL_ATTRIBUTES.map(
+    (attribute): AppColumnDef<SquadRow> => ({
       id: attribute,
       // Sorting a ranged figure sorts by the band's midpoint, never a hidden exact value — the
       // market table's convention, shared here so both squad surfaces order the same way.
@@ -322,7 +322,7 @@ export const squadColumns = ({
       accessorFn: (row) => positionsCell(row),
       header: "Positions",
       enableSorting: sortable,
-      sortingFn: (rowA, rowB) =>
+      sortFn: (rowA, rowB) =>
         positionSortRank(rowA.original.positions) - positionSortRank(rowB.original.positions),
       cell: (info) => info.getValue<unknown>() as string,
     },
@@ -362,7 +362,7 @@ export const squadColumns = ({
               const condition = info.row.original.condition;
               return condition === undefined ? "—" : `${Math.round(condition)}%`;
             },
-          } as ColumnDef<SquadRow, unknown>,
+          } as AppColumnDef<SquadRow>,
           {
             id: "trainingFocus",
             // None is a first-class Training Focus value (CONTEXT.md), not an unfilled
@@ -371,14 +371,14 @@ export const squadColumns = ({
             header: "Training Focus",
             enableSorting: sortable,
             cell: (info) => info.getValue<unknown>() as string,
-          } as ColumnDef<SquadRow, unknown>,
+          } as AppColumnDef<SquadRow>,
           {
             id: "wage",
             accessorFn: (row) => row.contractWage ?? null,
             header: "Wage",
             enableSorting: sortable,
             cell: (info) => creditsOrDash(info.row.original.contractWage),
-          } as ColumnDef<SquadRow, unknown>,
+          } as AppColumnDef<SquadRow>,
           {
             id: "contractEnds",
             // An ISO date orders as a date under a string comparison, so the sort reads the
@@ -390,14 +390,14 @@ export const squadColumns = ({
               const iso = info.row.original.contractExpiryDate;
               return iso === null || iso === undefined ? "—" : format(parseISO(iso), "d MMM yyyy");
             },
-          } as ColumnDef<SquadRow, unknown>,
+          } as AppColumnDef<SquadRow>,
           {
             id: "transferValue",
             accessorFn: (row) => row.transferValue ?? null,
             header: "Transfer Value",
             enableSorting: sortable,
             cell: (info) => creditsOrDash(info.row.original.transferValue),
-          } as ColumnDef<SquadRow, unknown>,
+          } as AppColumnDef<SquadRow>,
         ]
       : []),
     ...attributeColumns,

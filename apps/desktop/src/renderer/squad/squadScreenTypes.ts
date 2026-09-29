@@ -4,7 +4,7 @@
  * provider, the assembly hook and any consumer share one interface without
  * importing the hook implementation that owns the state.
  */
-import type { Table, Row as TanStackRow } from "@tanstack/react-table";
+import type { AppRow, AppTable } from "../table/tableFeatures.js";
 import type { SaveId } from "@cm-clone/contracts";
 import type { AttributeThreshold } from "../table/features/filtering.js";
 import type { SquadColumnPreferences } from "../table/columnPreferences.js";
@@ -39,11 +39,11 @@ export interface SquadScreenState {
   readonly refreshState: ReturnType<typeof deriveRefreshState>;
   readonly copy: TableStateCopy;
   readonly orderedIds: readonly string[];
-  readonly table: Table<SquadRow>;
+  readonly table: AppTable<SquadRow>;
   /** The TanStack rows in DISPLAY order: TanStack's own sorted order, then the fit context's
    *  re-ordering on top. Both roster layouts draw this, so the table and the position list cannot
    *  disagree about who is at the top. */
-  readonly rows: readonly TanStackRow<SquadRow>[];
+  readonly rows: readonly AppRow<SquadRow>[];
   /** The selected empty starter slot and the Position it asks for, plus which rows fit it and
    *  how well — `null` while no slot is selected. Session-only; never in the filter state. */
   readonly fit: LineupFitReadout | null;

@@ -20,7 +20,7 @@
  * `SquadProvider`; the shared shapes live in `squadScreenTypes.ts`.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Row as TanStackRow } from "@tanstack/react-table";
+import type { AppRow } from "../table/tableFeatures.js";
 import type { PlayerId, SaveId, SquadPlayerView } from "@cm-clone/contracts";
 import { Option } from "effect";
 import {
@@ -128,15 +128,15 @@ const readoutOf = (
  * permutation of a row model that has since moved.
  */
 const displayRows = (
-  sorted: readonly TanStackRow<SquadRow>[],
+  sorted: readonly AppRow<SquadRow>[],
   fit: LineupFitReadout | null,
-): readonly TanStackRow<SquadRow>[] => {
+): readonly AppRow<SquadRow>[] => {
   if (fit === null) return sorted;
   const byId = new Map(sorted.map((row) => [row.original.id, row]));
   // A permutation of `sorted`, so the map always resolves; the guard only satisfies the type.
   return prioritiseForPosition(sorted.map((row) => row.original), fit.position).ordered
     .map((original) => byId.get(original.id))
-    .filter((row): row is TanStackRow<SquadRow> => row !== undefined);
+    .filter((row): row is AppRow<SquadRow> => row !== undefined);
 };
 
 export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {

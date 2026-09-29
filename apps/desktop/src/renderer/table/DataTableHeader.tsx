@@ -1,5 +1,5 @@
 import { flexRender } from "@tanstack/react-table";
-import type { Table as TanStackTable } from "@tanstack/react-table";
+import type { AppTable } from "./tableFeatures.js";
 import {
   TableHead,
   TableHeader,
@@ -11,7 +11,7 @@ import type { SortState, TableRowShape } from "./types.js";
 import { cycleSort } from "./features/sorting.js";
 
 export interface DataTableHeaderProps<Row extends TableRowShape> {
-  readonly table: TanStackTable<Row>;
+  readonly table: AppTable<Row>;
 }
 
 export const DataTableHeader = <Row extends TableRowShape>(
@@ -21,7 +21,7 @@ export const DataTableHeader = <Row extends TableRowShape>(
   const { onSortChange, scrolledFromLeft } = useTableCtx();
 
   const cycleSortHeader = (columnId: string): void => {
-    const current = table.getState().sorting[0];
+    const current = table.atoms.sorting.get()[0];
     const currentSort: SortState | null =
       current === undefined
         ? null
@@ -89,15 +89,15 @@ export const DataTableHeader = <Row extends TableRowShape>(
 };
 
 const pinnedStyle = (column: {
-  readonly getIsPinned: () => false | "left" | "right";
-  readonly getStart: (position?: "left" | "center" | "right") => number;
+  readonly getIsPinned: () => false | "start" | "end";
+  readonly getStart: (position?: "start" | "center" | "end") => number;
   readonly getSize: () => number;
 }): React.CSSProperties | undefined => {
-  if (column.getIsPinned() !== "left") return undefined;
+  if (column.getIsPinned() !== "start") return undefined;
   const width = column.getSize();
   return {
     position: "sticky",
-    left: column.getStart("left"),
+    left: column.getStart("start"),
     zIndex: 1,
     width,
     minWidth: width,

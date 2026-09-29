@@ -1,11 +1,12 @@
-import { flexRender, type Row } from "@tanstack/react-table";
+import { flexRender } from "@tanstack/react-table";
+import type { AppRow } from "./tableFeatures.js";
 import { TableBody, TableCell, TableRow } from "../components/ui/table.js";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
 import { useTableCtx, type TableDensity } from "./DataTableContext.js";
 import type { TableRowShape } from "./types.js";
 
 export interface DataTableBodyProps<TRow extends TableRowShape> {
-  readonly rows: readonly Row<TRow>[];
+  readonly rows: readonly AppRow<TRow>[];
 }
 
 export const DataTableBody = <TRow extends TableRowShape>(props: DataTableBodyProps<TRow>) => {
@@ -71,11 +72,11 @@ const NAME_CLASS: Readonly<Record<TableDensity, string>> = {
 const PINNED_CELL_CLASS = "bg-bg-base group-hover:bg-row-hover group-aria-selected:bg-row-selected!";
 
 const pinnedStyle = (column: {
-  readonly getIsPinned: () => false | "left" | "right";
-  readonly getStart: (position?: "left" | "center" | "right") => number;
+  readonly getIsPinned: () => false | "start" | "end";
+  readonly getStart: (position?: "start" | "center" | "end") => number;
   readonly getSize: () => number;
 }): React.CSSProperties | undefined => {
-  if (column.getIsPinned() !== "left") return undefined;
+  if (column.getIsPinned() !== "start") return undefined;
   const width = column.getSize();
-  return { position: "sticky", left: column.getStart("left"), zIndex: 1, width, minWidth: width, maxWidth: width };
+  return { position: "sticky", left: column.getStart("start"), zIndex: 1, width, minWidth: width, maxWidth: width };
 };

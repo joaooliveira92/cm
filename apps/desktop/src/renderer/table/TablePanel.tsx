@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { AppColumnDef } from "./tableFeatures.js";
 import { Table } from "../components/ui/table.js";
 import type { FilterClause, SortState, TableId, TableRowShape } from "./types.js";
 import type { TableFocusBookmark } from "./focusBookmark.js";
@@ -15,7 +15,7 @@ export interface TablePanelProps<Row extends TableRowShape> {
   readonly screen: string;
   readonly region: string;
   readonly label: string;
-  readonly columns: ReadonlyArray<ColumnDef<Row, unknown>>;
+  readonly columns: ReadonlyArray<AppColumnDef<Row>>;
   readonly rows: ReadonlyArray<Row>;
   readonly unfilteredRowCount: number;
   readonly sort: SortState | null;

@@ -1,9 +1,4 @@
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import { flexRender, useTable } from "@tanstack/react-table";
 import { useMemo, ViewTransition } from "react";
 import { GitBranch, Layers, Minus, Package, Sparkles, X } from "lucide-react";
 import type {
@@ -11,6 +6,7 @@ import type {
   RecommendationIcon,
 } from "@cm-clone/shared";
 import { Button } from "../components/ui/button.js";
+import { appTableFeatures, type AppColumnDef } from "../table/tableFeatures.js";
 import {
   Select,
   SelectContent,
@@ -90,7 +86,7 @@ export const LeagueGrid = ({
   onRemove,
   ariaLabel = "Active leagues",
 }: LeagueGridProps) => {
-  const columns = useMemo<ReadonlyArray<ColumnDef<GridRowView, unknown>>>(
+  const columns = useMemo<ReadonlyArray<AppColumnDef<GridRowView>>>(
     () => [
       {
         id: "emblem",
@@ -126,11 +122,11 @@ export const LeagueGrid = ({
     [onChangeDepth, onRemove],
   );
 
-  const table = useReactTable<GridRowView>({
+  const table = useTable({
+    features: appTableFeatures,
     data: rows as GridRowView[],
-    columns: columns as ColumnDef<GridRowView, unknown>[],
+    columns: columns as AppColumnDef<GridRowView>[],
     getRowId: (row) => row.leagueId,
-    getCoreRowModel: getCoreRowModel(),
     manualSorting: true,
   });
 

@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { AppColumnDef } from "../../../src/renderer/table/tableFeatures.js";
 import { Table } from "../../../src/renderer/components/ui/table.js";
 import { DataTable } from "../../../src/renderer/table/DataTable.js";
 import { useDataTable, visibleRowIds } from "../../../src/renderer/table/useDataTable.js";
@@ -65,7 +65,7 @@ interface EdgeRow extends TableRowShape {
   readonly age: number;
 }
 
-const COLUMNS: ReadonlyArray<ColumnDef<EdgeRow, unknown>> = [
+const COLUMNS: ReadonlyArray<AppColumnDef<EdgeRow>> = [
   { id: "name", header: "Name", accessorFn: (row) => `${row.firstName} ${row.lastName}` },
   { id: "age", header: "Age", accessorFn: (row) => row.age },
   { id: "pace", header: "Pace", accessorFn: () => 12 },

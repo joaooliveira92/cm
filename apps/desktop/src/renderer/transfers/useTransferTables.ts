@@ -8,7 +8,7 @@
  * looking at. Keep the statements in the order they appear.
  */
 import { useCallback, useEffect, useRef } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { AppColumnDef } from "../table/tableFeatures.js";
 import { useDataTable, visibleRowIds } from "../table/useDataTable.js";
 import { sortDirectionOf } from "../table/features/sorting.js";
 import { applyFilters } from "../table/features/filtering.js";
@@ -213,7 +213,7 @@ export const useTransferTables = ({
 
 const useTableDataFor = (
   tableId: TableId,
-  columns: ReadonlyArray<ColumnDef<MarketPlayerRow, unknown>>,
+  columns: ReadonlyArray<AppColumnDef<MarketPlayerRow>>,
   rows: ReadonlyArray<MarketPlayerRow>,
   sort: SortState | null,
   onSortChange: (sort: SortState | null) => void,

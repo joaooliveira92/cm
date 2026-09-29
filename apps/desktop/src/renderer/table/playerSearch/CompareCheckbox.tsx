@@ -14,12 +14,12 @@
  * panels); compare membership is a selection, not a health state, but a second accent hue would
  * cost three more token pairs for no information.
  */
-import type { Row } from "@tanstack/react-table";
+import type { AppRow } from "../tableFeatures.js";
 import { FOCUS_RING } from "../../focus.js";
 import { useCompareSelection } from "./compareSelection.js";
 import type { SearchRow } from "./searchColumns.js";
 
-export const CompareCheckbox = ({ row }: { readonly row: Row<SearchRow> }) => {
+export const CompareCheckbox = ({ row }: { readonly row: AppRow<SearchRow> }) => {
   const { compareIds, onToggleCompare } = useCompareSelection();
   const id = row.original.id;
   return (

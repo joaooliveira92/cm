@@ -4,7 +4,7 @@ import { useTableKeyboard } from "./useTableKeyboard.js";
 import TableCtx, { type TableDensity } from "./DataTableContext.js";
 import type { SortState, TableRowShape } from "./types.js";
 import type { TableFocusBookmark } from "./focusBookmark.js";
-import type { Table as TanStackTable } from "@tanstack/react-table";
+import type { AppTable } from "./tableFeatures.js";
 
 const EDGE_FADE_BASE =
   "pointer-events-none absolute inset-y-0 w-8 transition-opacity duration-150";
@@ -19,7 +19,7 @@ export interface DataTableRootProps<Row extends TableRowShape> {
   readonly tableId: TableFocusBookmark["tableId"];
   readonly screen: string;
   readonly region: string;
-  readonly table: TanStackTable<Row>;
+  readonly table: AppTable<Row>;
   readonly orderedIds: readonly string[];
   readonly identityColumnId: string;
   readonly activeId: string | null;

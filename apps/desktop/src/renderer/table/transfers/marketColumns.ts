@@ -11,7 +11,7 @@
  * `low–high` (en dash, like the matchday readouts) and sort by the band's
  * midpoint, never by a hidden exact value.
  */
-import { type ColumnDef, type SortingFn } from "@tanstack/react-table";
+import type { AppColumnDef, AppSortFn } from "../tableFeatures.js";
 import type { MarketPlayerView } from "@cm-clone/contracts";
 import type { KnownFigure } from "@cm-clone/shared";
 import { figureMid, formatFigure, formatFigureCredits } from "../../format.js";
@@ -42,7 +42,7 @@ export const marketPlayerRowOf = (player: MarketPlayerView): MarketPlayerRow => 
 });
 
 /** Numeric sort over the accessed value — the default string sort would order 9 before 10. */
-const numericSortingFn: SortingFn<MarketPlayerRow> = (rowA, rowB, columnId) => {
+const numericSortingFn: AppSortFn<MarketPlayerRow> = (rowA, rowB, columnId) => {
   const a = rowA.getValue<number>(columnId);
   const b = rowB.getValue<number>(columnId);
   return a - b;
@@ -60,7 +60,7 @@ export const MARKET_COLUMN_LABELS: Readonly<Record<string, string>> = {
  *  the player's club for Market rows and "Free Agent" for Free Agent rows. */
 export const marketColumns = (
   clubCellText: (row: MarketPlayerRow) => string,
-): ReadonlyArray<ColumnDef<MarketPlayerRow, unknown>> => [
+): ReadonlyArray<AppColumnDef<MarketPlayerRow>> => [
   {
     id: "name",
     accessorFn: (row) => `${row.firstName} ${row.lastName}`,
@@ -81,7 +81,7 @@ export const marketColumns = (
     accessorFn: (row) => figureMid(row.overallRating),
     header: "OVR",
     enableSorting: true,
-    sortingFn: numericSortingFn,
+    sortFn: numericSortingFn,
     cell: (info) => formatFigure(info.row.original.overallRating),
   },
   {
@@ -89,7 +89,7 @@ export const marketColumns = (
     accessorFn: (row) => figureMid(row.transferValue),
     header: "Value",
     enableSorting: true,
-    sortingFn: numericSortingFn,
+    sortFn: numericSortingFn,
     cell: (info) => formatFigureCredits(info.row.original.transferValue),
   },
 ];
@@ -104,9 +104,9 @@ export const marketColumns = (
  * frozen def array across the Market and Free Agents tables is safe — TanStack derives per-table
  * `Column` instances from the defs and never mutates them.
  */
-const MARKET_PLAYER_COLUMNS: ReadonlyArray<ColumnDef<MarketPlayerRow, unknown>> = marketColumns(
+const MARKET_PLAYER_COLUMNS: ReadonlyArray<AppColumnDef<MarketPlayerRow>> = marketColumns(
   (row) => row.clubName ?? "Free Agent",
 );
 
-export const marketPlayerColumns = (): ReadonlyArray<ColumnDef<MarketPlayerRow, unknown>> =>
+export const marketPlayerColumns = (): ReadonlyArray<AppColumnDef<MarketPlayerRow>> =>
   MARKET_PLAYER_COLUMNS;

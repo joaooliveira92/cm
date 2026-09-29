@@ -10,20 +10,20 @@
  * profile. Everything the two surfaces must agree on — the columns, the cells, the row shape —
  * lives in `table/squad/squadColumns.tsx`; this component only mounts the generic DataTable.
  */
-import type { Row as TanStackRow, Table as TanStackTable } from "@tanstack/react-table";
+import type { AppRow, AppTable } from "../table/tableFeatures.js";
 import { DataTable, type TableDensity } from "../table/DataTable.js";
 import { Table } from "../components/ui/table.js";
 import type { SortState, TableRowShape } from "../table/types.js";
 import type { TableFocusBookmark } from "../table/focusBookmark.js";
 
 export interface SquadRosterProps<Row extends TableRowShape> {
-  readonly table: TanStackTable<Row>;
+  readonly table: AppTable<Row>;
   readonly orderedIds: readonly string[];
   /** The order to draw, when it is not TanStack's own. The own-club screen reorders for the fit
    *  context AFTER TanStack has sorted, so the screen's sort stays the tiebreak inside each
    *  Familiarity Tier; a reorder of the input data could not promise that. Omitted on the
    *  any-club screen, which never reorders. */
-  readonly rows?: readonly TanStackRow<Row>[];
+  readonly rows?: readonly AppRow<Row>[];
   readonly tableId: TableFocusBookmark["tableId"];
   /** The screen-scope the roster reports focus against (`squad` for the own screen, `clubSquad`
    *  for the any-club screen). */

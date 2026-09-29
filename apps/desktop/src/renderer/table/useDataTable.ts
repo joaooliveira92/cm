@@ -5,18 +5,12 @@
  * announcements, and persistence are OURS. Data handed in is already filtered
  * by `features/filtering.ts` — TanStack sorts the filtered set.
  */
-import {
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type ColumnDef,
-  type SortingState,
-  type Table,
-} from "@tanstack/react-table";
+import { useTable, type SortingState } from "@tanstack/react-table";
+import { appTableFeatures, type AppColumnDef, type AppTable } from "./tableFeatures.js";
 import type { SortState, TableRowShape } from "./types.js";
 
 export const useDataTable = <Row extends TableRowShape>(options: {
-  readonly columns: ReadonlyArray<ColumnDef<Row, unknown>>;
+  readonly columns: ReadonlyArray<AppColumnDef<Row>>;
   readonly data: ReadonlyArray<Row>;
   readonly sort: SortState | null;
   readonly onSortChange: (sort: SortState | null) => void;
@@ -26,20 +20,21 @@ export const useDataTable = <Row extends TableRowShape>(options: {
   /** Pinned column ids (Squad identity column). */
   readonly pinnedColumnIds?: ReadonlyArray<string>;
   readonly ariaLabel?: string;
-}): Table<Row> => {
+}): AppTable<Row> => {
   const sorting: SortingState = options.sort
     ? [{ id: options.sort.columnId, desc: options.sort.direction === "desc" }]
     : [];
 
-  const table = useReactTable<Row>({
+  const table = useTable({
+    features: appTableFeatures,
     data: options.data as Row[],
-    columns: options.columns as ColumnDef<Row, unknown>[],
+    columns: options.columns as AppColumnDef<Row>[],
     state: {
       sorting,
       columnVisibility: options.columnVisibility,
       // TanStack requires columnPinning to always be an object (it reads
-      // `.left`/`.right`); the identity pin lives on the left, nothing right.
-      columnPinning: { left: options.pinnedColumnIds ? [...options.pinnedColumnIds] : [], right: [] },
+      // `.start`/`.end`); the identity pin lives at the start, nothing at the end.
+      columnPinning: { start: options.pinnedColumnIds ? [...options.pinnedColumnIds] : [], end: [] },
     },
     onSortingChange: (updater) => {
       const next = typeof updater === "function" ? updater(sorting) : updater;
@@ -58,17 +53,8 @@ export const useDataTable = <Row extends TableRowShape>(options: {
           : updater;
       options.onColumnVisibilityChange(next);
     },
-    // These tables never paginate. Left on, TanStack's auto-reset fires
-    // `resetPageIndex` -> `setPagination` -> `onStateChange` on every data
-    // identity change, which re-renders, which produces the next data
-    // identity: a self-sustaining render loop. See the note in this file.
-    autoResetPageIndex: false,
     enableMultiSort: false,
     enableSortingRemoval: true,
-    // Filters are applied before TanStack sees the rows — TanStack never filters.
-    manualFiltering: true,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
   return table;
@@ -76,5 +62,5 @@ export const useDataTable = <Row extends TableRowShape>(options: {
 
 /** The visible row ids ordered as TanStack derives them (the roving universe). */
 export const visibleRowIds = <Row extends TableRowShape>(
-  table: Table<Row>,
+  table: AppTable<Row>,
 ): readonly string[] => table.getRowModel().rows.map((row) => row.original.id);
