@@ -125,6 +125,12 @@ export function creationCancelButton(onCancel: () => void): BottomBarButton {
 
 export function describeCreationBottomBar(input: CreationBottomBarInput): BottomBarPlan {
   const cancel: BottomBarButton = creationCancelButton(input.onCancel);
+  const back: BottomBarButton = {
+    id: "back-to-leagues",
+    label: "Back: Leagues",
+    disabled: false,
+    onTrigger: input.onBackToLeagues,
+  };
 
   switch (input.step) {
     case "leagues":
@@ -135,13 +141,6 @@ export function describeCreationBottomBar(input: CreationBottomBarInput): Bottom
       // verb drives the same progression the in-panel stepper does: personal
       // details → manager identity → style & appearance → the club step. One
       // bar, one forward verb, whose meaning depends on which panel is showing.
-      const back: BottomBarButton = {
-        id: "back-to-leagues",
-        label: "Back: Leagues",
-        disabled: false,
-        onTrigger: input.onBackToLeagues,
-      };
-
       if (input.managerStep === 1) {
         return {
           cancel,
@@ -203,12 +202,7 @@ export function describeCreationBottomBar(input: CreationBottomBarInput): Bottom
     case "2":
       return {
         cancel,
-        back: {
-          id: "back-to-leagues",
-          label: "Back: Leagues",
-          disabled: false,
-          onTrigger: input.onBackToLeagues,
-        },
+        back,
         secondary: [],
         primary: {
           id: "next-review",
