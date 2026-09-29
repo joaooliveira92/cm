@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, createEvent, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
@@ -96,15 +96,17 @@ describe("the formation pitch is a pointer shortcut onto the slot pickers", () =
     expect(await screen.findByRole("listbox")).toBeTruthy();
   });
 
-  it("dropping one marker on another swaps the two slots' players", async () => {
+  it("dropping one marker on another's disc swaps the two slots' players", async () => {
     await mountTactics();
     expect(marker(10).getAttribute("aria-label")).toContain("First9 Last9");
     expect(marker(1).getAttribute("aria-label")).toContain("First0 Last0");
 
+    // The GK's disc sits at (50%, 87%).
     const transfer = dataTransfer();
     fireEvent.dragStart(marker(10), { dataTransfer: transfer });
-    fireEvent.dragOver(marker(1), { dataTransfer: transfer });
-    fireEvent.drop(marker(1), { dataTransfer: transfer });
+    dragAt("dragOver", pitch(), 50, 87, transfer);
+    expect(screen.queryByTestId("pitch-drop-zone")).toBeNull();
+    dragAt("drop", pitch(), 50, 87, transfer);
 
     await waitFor(() => expect(marker(1).getAttribute("aria-label")).toContain("First9 Last9"));
     expect(marker(10).getAttribute("aria-label")).toContain("First0 Last0");
@@ -118,5 +120,97 @@ describe("the formation pitch is a pointer shortcut onto the slot pickers", () =
     const markers = document.querySelectorAll<HTMLElement>('[data-action-id="swap-slot-players"]');
     expect(markers).toHaveLength(11);
     for (const each of markers) expect(each.tabIndex).toBe(-1);
+  });
+});
+
+/** The pitch at its full on-screen size, 440 × 640, since a marker's reach is measured in pixels. */
+const pitch = (): HTMLElement => {
+  const element = screen.getByTestId("formation-pitch");
+  element.getBoundingClientRect = () =>
+    ({ left: 0, top: 0, width: 440, height: 640, right: 440, bottom: 640, x: 0, y: 0 }) as DOMRect;
+  return element;
+};
+
+/** A drag event at a point given in percent of the pitch: jsdom has no DragEvent, so the
+ *  coordinates are set by hand. */
+const dragAt = (
+  type: "dragOver" | "drop",
+  element: HTMLElement,
+  x: number,
+  y: number,
+  transfer: ReturnType<typeof dataTransfer>,
+) => {
+  const event = createEvent[type](element, { dataTransfer: transfer });
+  Object.defineProperties(event, { clientX: { value: x * 4.4 }, clientY: { value: y * 6.4 } });
+  fireEvent(element, event);
+};
+
+const positionPicker = (slot: number): HTMLElement =>
+  screen.getByRole("combobox", { name: `Slot ${slot} position` });
+
+describe("the formation pitch reshapes the formation", () => {
+  it("dropping a midfielder on the back line moves the slot to DC and marks the shape custom", async () => {
+    await mountTactics();
+    expect(screen.queryByTestId("custom-shape")).toBeNull();
+    // Slot 6 is the 4-4-2 template's first MC.
+    const transfer = dataTransfer();
+    fireEvent.dragStart(marker(6), { dataTransfer: transfer });
+    const grass = pitch();
+    dragAt("dragOver", grass, 50, 74, transfer);
+    // The zone under the pointer names the Position, and the dragged marker is drawn where it
+    // will land, in a back line that has made room for it.
+    expect(screen.getByTestId("pitch-drop-zone").textContent).toBe("DC");
+    expect(marker(6).closest("li")!.dataset.landing).toBe("true");
+    dragAt("drop", grass, 50, 74, transfer);
+    expect(screen.queryByTestId("pitch-drop-zone")).toBeNull();
+
+    await waitFor(() => expect(positionPicker(6).textContent).toContain("DC"));
+    expect(marker(6).getAttribute("aria-label")).toContain("DC: First5 Last5");
+    expect(screen.getByTestId("custom-shape").textContent).toBe("4-4-2 (custom)");
+  });
+
+  it("a flank third of a line takes that flank's Position", async () => {
+    await mountTactics();
+    const transfer = dataTransfer();
+    fireEvent.dragStart(marker(10), { dataTransfer: transfer });
+    dragAt("drop", pitch(), 10, 42, transfer);
+    await waitFor(() => expect(positionPicker(10).textContent).toContain("ML"));
+  });
+
+  it("the keeper never moves, and no outfield slot moves into the keeper's end", async () => {
+    await mountTactics();
+    const keeper = dataTransfer();
+    fireEvent.dragStart(marker(1), { dataTransfer: keeper });
+    dragAt("drop", pitch(), 50, 42, keeper);
+    const striker = dataTransfer();
+    fireEvent.dragStart(marker(10), { dataTransfer: striker });
+    dragAt("drop", pitch(), 20, 92, striker);
+
+    expect(marker(1).getAttribute("aria-label")).toContain("GK: First0 Last0");
+    expect(positionPicker(10).textContent).toContain("ST");
+    expect(screen.queryByTestId("custom-shape")).toBeNull();
+  });
+
+  it("dragging over the slot's own zone previews no landing, since it would not move", async () => {
+    await mountTactics();
+    const transfer = dataTransfer();
+    fireEvent.dragStart(marker(6), { dataTransfer: transfer });
+    dragAt("dragOver", pitch(), 50, 42, transfer);
+    expect(screen.getByTestId("pitch-drop-zone").textContent).toBe("MC");
+    expect(marker(6).closest("li")!.dataset.landing).toBeUndefined();
+  });
+
+  it("Reset restores the Formation's template and keeps the eleven", async () => {
+    await mountTactics();
+    const transfer = dataTransfer();
+    fireEvent.dragStart(marker(6), { dataTransfer: transfer });
+    dragAt("drop", pitch(), 50, 74, transfer);
+    await screen.findByTestId("custom-shape");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset to 4-4-2" }));
+
+    await waitFor(() => expect(screen.queryByTestId("custom-shape")).toBeNull());
+    expect(positionPicker(6).textContent).toContain("MC");
+    expect(marker(6).getAttribute("aria-label")).toContain("First5 Last5");
   });
 });

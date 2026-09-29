@@ -77,15 +77,24 @@ export const selectBestFormationXI = <Id extends string>(
 };
 
 /**
- * Best-XI assignment for one Formation only (used internally by `selectBestFormationXI` and by AI
- * club Tactic assignment's per-formation evaluation). Fills each slot with the best-rated available
- * player, no reuse.
+ * Best-XI assignment for one Formation's template (used internally by `selectBestFormationXI` and
+ * by AI club Tactic assignment's per-formation evaluation). Fills each slot with the best-rated
+ * available player, no reuse.
  */
 export const bestXiForFormation = <Id extends string>(
   formation: Formation,
   squad: ReadonlyArray<PositionRatingsLike<Id>>,
+): { readonly filled: ReadonlyArray<BestXiSlot<Id>>; readonly outfieldSum: number } | null =>
+  bestXiForShape(FORMATION_SLOTS[formation], squad);
+
+/**
+ * Best-XI assignment for any shape, template or custom: each slot, in slot order, takes the
+ * best-rated available player at its Position, no reuse. `null` when the squad is too small.
+ */
+export const bestXiForShape = <Id extends string>(
+  positions: ReadonlyArray<Position>,
+  squad: ReadonlyArray<PositionRatingsLike<Id>>,
 ): { readonly filled: ReadonlyArray<BestXiSlot<Id>>; readonly outfieldSum: number } | null => {
-  const positions = FORMATION_SLOTS[formation];
   if (squad.length < positions.length) return null;
 
   const used = new Set<Id>();

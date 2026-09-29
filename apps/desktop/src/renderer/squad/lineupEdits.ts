@@ -4,18 +4,16 @@
  * `Tactic`, so the drag bar and its tests share one implementation of "assign, swap, unassign"
  * without any DOM or RPC in the way.
  *
- * Slot order runs left-to-right: starters (`FORMATION_SLOTS[tactic.formation]`, order 0..10) then
+ * Slot order runs left-to-right: starters (`tactic.slots`, order 0..10) then
  * the bench (order 11..17). A starter slot's empty player id is the editor's `PlayerId.make("")`
  * sentinel; an empty bench slot is `null`. Both read as empty.
  */
 import { PlayerId, Tactic } from "@cm-clone/contracts";
 import {
-  BENCH_SIZE,
-  FORMATION_SLOTS,
-  bestXiForFormation,
+  STARTER_COUNT,
+  bestXiForShape,
   selectBench,
   type BenchCandidate,
-  type Formation,
 } from "@cm-clone/shared";
 
 /** One slot in the bar. `playerId` is `null` when the slot is empty. */
@@ -25,17 +23,10 @@ export interface LineupSlot {
   readonly groupIndex: number;
   /** Left-to-right order across the whole bar. */
   readonly order: number;
-  /** The slot's label: the formation position code, or `SB{n}` for the bench. */
+  /** The slot's label: the slot's Position code, or `SB{n}` for the bench. */
   readonly label: string;
   readonly playerId: PlayerId | null;
 }
-
-/** How many starters the formation places on the pitch (the bar's starter strip). */
-export const starterCountOf = (formation: Formation): number => FORMATION_SLOTS[formation].length;
-
-/** How many slots the bar renders in total: the starters plus the bench. */
-export const lineupLengthOf = (formation: Formation): number =>
-  starterCountOf(formation) + BENCH_SIZE;
 
 const isEmptyId = (id: PlayerId | null): boolean => id === null || id === "";
 
@@ -46,17 +37,17 @@ export const missingStartersOf = (tactic: Tactic): number =>
 
 /** The bar's 18 slots, in left-to-right order. */
 export const lineupSlotsOf = (tactic: Tactic): ReadonlyArray<LineupSlot> => {
-  const starters = FORMATION_SLOTS[tactic.formation].map((position, index) => ({
+  const starters = tactic.slots.map((slot, index) => ({
     kind: "starter" as const,
     groupIndex: index,
     order: index,
-    label: position,
-    playerId: isEmptyId(tactic.slots[index]!.playerId) ? null : tactic.slots[index]!.playerId,
+    label: slot.position,
+    playerId: isEmptyId(slot.playerId) ? null : slot.playerId,
   }));
   const bench = tactic.bench.map((playerId, index) => ({
     kind: "bench" as const,
     groupIndex: index,
-    order: starterCountOf(tactic.formation) + index,
+    order: STARTER_COUNT + index,
     label: `SB${index + 1}`,
     playerId,
   }));
@@ -96,7 +87,7 @@ const applySlotWrites = (
   tactic: Tactic,
   writes: ReadonlyArray<{ readonly order: number; readonly playerId: PlayerId | null }>,
 ): Tactic => {
-  const starterCount = starterCountOf(tactic.formation);
+  const starterCount = STARTER_COUNT;
   let slots = tactic.slots.map((slot) => ({ ...slot }));
   let bench = [...tactic.bench];
   for (const { order, playerId } of writes) {
@@ -150,16 +141,19 @@ export const clearLineupSlot = (tactic: Tactic, order: number): Tactic =>
 
 /**
  * The assistant manager's pick: the whole match-day chosen for the manager in the Tactic's own
- * Formation, which stays the manager's call. Starters and bench come from the same shared rules AI
- * clubs pick by (`bestXiForFormation`, then `selectBench`), so the assistant never picks a team the
- * AI would call worse. Team Instructions and slot roles are kept. `null` when the squad cannot field
- * the Formation.
+ * shape (its Formation's template or a custom one), which stays the manager's call. Starters and
+ * bench come from the same shared rules AI clubs pick by (`bestXiForShape`, then `selectBench`),
+ * so the assistant never picks a team the AI would call worse. Team Instructions and slot roles
+ * are kept. `null` when the squad cannot field the shape.
  */
 export const assistantLineupOf = (
   tactic: Tactic,
   squad: ReadonlyArray<BenchCandidate<PlayerId>>,
 ): Tactic | null => {
-  const xi = bestXiForFormation(tactic.formation, squad);
+  const xi = bestXiForShape(
+    tactic.slots.map((slot) => slot.position),
+    squad,
+  );
   if (xi === null) return null;
   const starters = xi.filled.map((slot) => slot.playerId);
   return new Tactic({

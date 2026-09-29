@@ -13,9 +13,12 @@ export const MATCH_DAY_SQUAD_SIZE = 11 + BENCH_SIZE;
 export const emptyBench = (): ReadonlyArray<null> => Array<null>(BENCH_SIZE).fill(null);
 
 /**
- * Fixed multiset of 10 outfield Position slots (+ implicit GK) per Formation, in a stable slot
- * order. Purely structural per ADR-0003: determines which Positions are filled, never carries a
- * multiplier of its own.
+ * Each Formation's template: the GK plus 10 outfield Position slots, in a stable slot order. A
+ * template is where a Tactic's shape starts, not a rule on it: the manager may move any outfield
+ * slot to another outfield Position (`isValidShape`), and the Formation then names the template
+ * the shape came from. Purely structural: it determines which Positions are filled, never carries
+ * a multiplier of its own. See the Agent Note
+ * `.agents/notes/implemented/architecture/2026-08-27-role-rating-outside-match-engine.md`.
  */
 export const FORMATION_SLOTS: Record<Formation, ReadonlyArray<Position>> = {
   "4-4-2": ["GK", "DC", "DC", "DL", "DR", "MC", "MC", "ML", "MR", "ST", "ST"],
@@ -24,6 +27,20 @@ export const FORMATION_SLOTS: Record<Formation, ReadonlyArray<Position>> = {
   "3-5-2": ["GK", "DC", "DC", "DC", "DM", "MC", "ML", "MR", "AMC", "ST", "ST"],
   "5-3-2": ["GK", "DC", "DC", "DC", "DL", "DR", "DM", "MC", "MC", "ST", "ST"],
 };
+
+/** How many starters every shape fields: the GK in slot 0, then ten outfield slots. */
+export const STARTER_COUNT = 11;
+
+/** Whether a Tactic's slot Positions are a shape it may take: eleven slots, the GK in slot 0 and
+ *  nowhere else. Any outfield Position may sit in any outfield slot, repeats included. */
+export const isValidShape = (positions: ReadonlyArray<Position>): boolean =>
+  positions.length === STARTER_COUNT &&
+  positions[0] === "GK" &&
+  positions.slice(1).every((position) => position !== "GK");
+
+/** Whether a shape has been moved off its Formation's template (drawn as "4-4-2 (custom)"). */
+export const isCustomShape = (formation: Formation, positions: ReadonlyArray<Position>): boolean =>
+  positions.some((position, index) => position !== FORMATION_SLOTS[formation][index]);
 
 export const ROLES = [
   "Goalkeeper",

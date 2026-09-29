@@ -1,6 +1,6 @@
 import type { SaveId, TacticsOverviewView } from "@cm-clone/contracts";
 import type { ReactNode } from "react";
-import { MENTALITY_OPTIONS, PRESSING_OPTIONS, TEMPO_OPTIONS } from "@cm-clone/shared";
+import { MENTALITY_OPTIONS, PRESSING_OPTIONS, TEMPO_OPTIONS, isCustomShape } from "@cm-clone/shared";
 import { Badge } from "../components/ui/badge.js";
 import { Card, CardContent } from "../components/ui/card.js";
 import {
@@ -31,7 +31,13 @@ export const FormationCard = ({ view }: View) => (
       <div className="mb-2 flex items-baseline justify-between">
         <CardHeading>Formation</CardHeading>
         {view.formation !== null && (
-          <span className="text-lg font-bold tabular-nums">{view.formation.formation}</span>
+          <span className="text-lg font-bold tabular-nums">
+            {view.formation.formation}
+            {isCustomShape(
+              view.formation.formation,
+              view.formation.slots.map((slot) => slot.position),
+            ) && " (custom)"}
+          </span>
         )}
       </div>
       <OverviewPitch assignments={view.assignments} />

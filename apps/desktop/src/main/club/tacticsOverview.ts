@@ -15,7 +15,6 @@ import {
   type SaveId,
 } from "@cm-clone/contracts";
 import {
-  FORMATION_SLOTS,
   assessContinueReadiness,
   assessMatchReadiness,
   familiarityTierCounts,
@@ -129,8 +128,8 @@ export const getTacticsOverview = (savesDir: string, saveId: SaveId) =>
               ? null
               : new FormationSummaryView({
                   formation: tactic.formation,
-                  slots: FORMATION_SLOTS[tactic.formation].map(
-                    (position) => new FormationSlotView({ position }),
+                  slots: tactic.slots.map(
+                    (slot) => new FormationSlotView({ position: slot.position }),
                   ),
                 }),
           instructions:

@@ -29,6 +29,17 @@ Formation contributes nothing to `TacticalModifiers` beyond selecting which Posi
 is already how Phase Strength varies by shape. A separate formation-level multiplier would double-count
 the same effect through two paths that would then need to stay hand-tuned in sync.
 
+A Formation is a starting template, not a fixed shape (changed 2026-09-28). ADR-0003 made each
+Formation a fixed multiset of Positions and rejected any Tactic whose slots differed from it. The
+manager can now move an outfield slot to any outfield Position, by dragging its marker on the Tactics
+pitch or through the slot's Pos select. The Tactic keeps the Formation it started from, and the
+screens label a moved shape "4-4-2 (custom)". `validateTactic` now asks only for eleven slots, the
+GK alone in slot 0, and each slot's Role matching its Position (`isValidShape` in
+`packages/shared/src/rules/tactics.ts`). The match engine already read slot Positions, not the
+Formation name, so a custom shape plays with no engine change. Anything that needs the shape reads
+`tactic.slots`, never `FORMATION_SLOTS[tactic.formation]`. Restricting drags to shapes that happen
+to match another template was rejected: most drags would silently fail, which reads as a bug.
+
 ### Instruction mapping
 
 Mentality, Tempo, and Pressing map onto `TacticalModifiers` through a fixed multiplier table — for
@@ -56,5 +67,7 @@ had no basis to invent. Wiring Role into event-odds waits until those mechanics 
 - Casting a player well in a Role is worth a bounded amount (±0.05 on one phase multiplier), never
   enough to overturn squad quality.
 - The match engine stays tactics-blind, so tactics can be reworked independently.
+- The formation's shape is the manager's call slot by slot, so every reader of a Tactic's shape
+  (the lineup bar, the overview, the assistant's pick) reads its slots.
 - Instruction and role balance can be patched as `packages/shared` constants without a decision record.
 - Role has no influence on event odds until the event-odds mechanics are specified.

@@ -65,16 +65,20 @@ describe("tier-3 remainder — Tactics is driveable with no mouse (Level 1 guara
     const ids = controls.map((c) => c.dataset.actionId);
 
     // Native tab order: the five formation buttons come first, then the three
-    // instruction sliders' option buttons, then the 11 slot player selects
-    // (v1 formations include the explicit GK slot). Save Tactic and Clear
+    // instruction sliders' option buttons, then each slot's row: its player
+    // select, then (outfield slots only) its position select — the keyboard
+    // path for moving a slot the pitch offers by drag. Save Tactic and Clear
     // Selection are the shell's bottom bar, after the screen in tab order.
     expect(ids.slice(0, 5)).toEqual(Array(5).fill("set-formation"));
     const instructionControls = ids.slice(5, 14);
     for (const id of instructionControls) {
       expect(["set-mentality", "set-tempo", "set-pressing"]).toContain(id);
     }
-    expect(ids.slice(14, 25)).toEqual(Array(11).fill("assign-slot-player"));
-    expect(ids.slice(25)).toEqual([]);
+    expect(ids.slice(14, 35)).toEqual([
+      "assign-slot-player",
+      ...Array.from({ length: 10 }, () => ["assign-slot-player", "set-slot-position"]).flat(),
+    ]);
+    expect(ids.slice(35)).toEqual([]);
     const bar = [...document.querySelectorAll<HTMLElement>("footer button")];
     expect(bar.map((c) => c.dataset.actionId)).toEqual(["clear-tactic-selection", "save-tactic"]);
     controls.push(...bar);

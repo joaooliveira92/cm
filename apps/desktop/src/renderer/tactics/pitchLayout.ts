@@ -42,3 +42,53 @@ export const pitchLayout = (positions: ReadonlyArray<Position>): ReadonlyArray<P
   }
   return spots.sort((a, b) => a.slotIndex - b.slotIndex);
 };
+
+/** The outfield lines, attack first, each with the Positions its left flank, centre and right flank
+ *  take. A line with one Position is centre-only across its whole width. */
+const LINES: ReadonlyArray<{ readonly y: number; readonly positions: readonly [Position, Position, Position] }> = [
+  { y: PLACEMENT.ST.y, positions: ["ST", "ST", "ST"] },
+  { y: PLACEMENT.AMC.y, positions: ["AMC", "AMC", "AMC"] },
+  { y: PLACEMENT.MC.y, positions: ["ML", "MC", "MR"] },
+  { y: PLACEMENT.DM.y, positions: ["DM", "DM", "DM"] },
+  { y: PLACEMENT.DC.y, positions: ["DL", "DC", "DR"] },
+];
+
+/** Past this depth is the keeper's end, which no outfield slot may move into. */
+const KEEPER_END = (PLACEMENT.DC.y + PLACEMENT.GK.y) / 2;
+
+/** The patch of grass that stands for one outfield Position, in the same percent box as
+ *  `PitchSpot`: the band between the midpoints to the neighbouring lines, cut into flank thirds
+ *  where the line has flanks. */
+export interface DropZone {
+  readonly position: Position;
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+  readonly bottom: number;
+}
+
+/** The zone a point on the pitch falls in: the nearest line, then the flank third across it.
+ *  `null` in the keeper's end. */
+export const dropZoneAt = (x: number, y: number): DropZone | null => {
+  if (y > KEEPER_END) return null;
+  const index = LINES.reduce(
+    (nearest, each, at) => (Math.abs(each.y - y) < Math.abs(LINES[nearest]!.y - y) ? at : nearest),
+    0,
+  );
+  const line = LINES[index]!;
+  const top = index === 0 ? 0 : (LINES[index - 1]!.y + line.y) / 2;
+  const bottom = index === LINES.length - 1 ? KEEPER_END : (line.y + LINES[index + 1]!.y) / 2;
+  const third = x < 100 / 3 ? 0 : x > 200 / 3 ? 2 : 1;
+  const position = line.positions[third];
+  const flanked = line.positions[0] !== line.positions[1];
+  return {
+    position,
+    left: flanked ? (third * 100) / 3 : 0,
+    right: flanked ? ((third + 1) * 100) / 3 : 100,
+    top,
+    bottom,
+  };
+};
+
+/** The outfield Position a point on the pitch stands for, or `null` in the keeper's end. */
+export const positionAt = (x: number, y: number): Position | null => dropZoneAt(x, y)?.position ?? null;

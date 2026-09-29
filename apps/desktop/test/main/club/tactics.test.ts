@@ -253,20 +253,52 @@ it.effect("every Formation's slots are a genuinely distinct shape", () =>
   }),
 );
 
-it.effect("changeTactics rejects a slot position that doesn't match the formation", () =>
+it.effect("changeTactics accepts a custom shape moved off the Formation's template", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const before = yield* getTactics(savesDir, save.id);
     const tactic = buildTactic(before.squad.map((player) => player.id));
-    const badTactic = new Tactic({
+    // A 4-4-2 with one centre-midfielder dropped into the back line.
+    const custom = new Tactic({
+      ...tactic,
+      slots: [
+        ...tactic.slots.slice(0, 5),
+        { ...tactic.slots[5]!, position: "DC", role: POSITION_ROLES.DC },
+        ...tactic.slots.slice(6),
+      ],
+    });
+
+    const accepted = yield* changeTactics(savesDir, save.id, custom, before.revision, rid("custom"));
+    deepStrictEqual(accepted.tactic, custom);
+    const reloaded = yield* getTactics(savesDir, save.id);
+    deepStrictEqual(reloaded.tactic, custom);
+  }),
+);
+
+it.effect("changeTactics rejects a shape without the GK alone in slot 0", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const tactic = buildTactic(before.squad.map((player) => player.id));
+    const noKeeper = new Tactic({
       ...tactic,
       slots: [{ ...tactic.slots[0]!, position: "ST", role: "Poacher" }, ...tactic.slots.slice(1)],
     });
+    const twoKeepers = new Tactic({
+      ...tactic,
+      slots: [
+        ...tactic.slots.slice(0, 1),
+        { ...tactic.slots[1]!, position: "GK", role: POSITION_ROLES.GK },
+        ...tactic.slots.slice(2),
+      ],
+    });
 
-    const result = yield* Effect.exit(
-      changeTactics(savesDir, save.id, badTactic, before.revision, rid("bad")),
-    );
-    ok(result._tag === "Failure");
+    for (const [name, bad] of [["no-gk", noKeeper], ["two-gk", twoKeepers]] as const) {
+      const result = yield* Effect.exit(
+        changeTactics(savesDir, save.id, bad, before.revision, rid(name)),
+      );
+      ok(result._tag === "Failure");
+    }
   }),
 );
 

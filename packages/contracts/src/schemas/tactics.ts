@@ -91,7 +91,7 @@ export class TacticsScreenView extends Schema.Class<TacticsScreenView>("TacticsS
 // Tactics Overview snapshot (Screen 80 / ticket 02)
 // ---------------------------------------------------------------------------
 
-/** One slot of the formation preview — the Position the formation fills, in fixed slot order. */
+/** One slot of the formation preview — the Position the Tactic's shape fills, in slot order. */
 export class FormationSlotView extends Schema.Class<FormationSlotView>("FormationSlotView")({
   position: PositionSchema,
 }) {}
@@ -100,7 +100,8 @@ export class FormationSlotView extends Schema.Class<FormationSlotView>("Formatio
  *  can draw a pitch without importing `FORMATION_SLOTS` itself. */
 export class FormationSummaryView extends Schema.Class<FormationSummaryView>("FormationSummaryView")({
   formation: FormationSchema,
-  /** The formation's slots, the implicit GK first, in the fixed order the formation defines. */
+  /** The Tactic's slots, the GK first, in slot order: the Formation's template or the manager's
+   *  custom shape built from it. */
   slots: Schema.Array(FormationSlotView),
 }) {}
 

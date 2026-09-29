@@ -9,7 +9,7 @@ import {
   type PlayerId,
   type WriteRequestId,
 } from "@cm-clone/contracts";
-import { BENCH_SIZE, FORMATION_SLOTS, POSITION_ROLES } from "@cm-clone/shared";
+import { BENCH_SIZE, POSITION_ROLES, STARTER_COUNT, isValidShape } from "@cm-clone/shared";
 import { Effect, Schema, Semaphore } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
@@ -132,20 +132,21 @@ export const persistTactic = (clubId: ClubId, tactic: Tactic, revision: number) 
  * synthesized Tactic against the same rules the human Tactics screen enforces before persisting. */
 export const validateTactic = (tactic: Tactic, squadPlayerIds: ReadonlySet<string>) =>
   Effect.gen(function* () {
-    const expectedPositions = FORMATION_SLOTS[tactic.formation];
-    if (tactic.slots.length !== expectedPositions.length) {
+    // The Formation is the shape's starting template, not a rule on it: any outfield slot may hold
+    // any outfield Position, so long as the GK stays alone in slot 0.
+    if (tactic.slots.length !== STARTER_COUNT) {
       return yield* new InvalidTacticError({
-        reason: `${tactic.formation} needs ${expectedPositions.length} slots, got ${tactic.slots.length}`,
+        reason: `a Tactic needs ${STARTER_COUNT} slots, got ${tactic.slots.length}`,
+      });
+    }
+    if (!isValidShape(tactic.slots.map((slot) => slot.position))) {
+      return yield* new InvalidTacticError({
+        reason: "slot 0 must be the only GK",
       });
     }
 
     const seenPlayers = new Set<string>();
     for (const [index, slot] of tactic.slots.entries()) {
-      if (slot.position !== expectedPositions[index]) {
-        return yield* new InvalidTacticError({
-          reason: `slot ${index} must be ${expectedPositions[index]} in ${tactic.formation}, got ${slot.position}`,
-        });
-      }
       if (slot.role !== POSITION_ROLES[slot.position]) {
         return yield* new InvalidTacticError({
           reason: `slot ${index} (${slot.position}) must use Role ${POSITION_ROLES[slot.position]}, got ${slot.role}`,

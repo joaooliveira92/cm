@@ -168,6 +168,7 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   { id: "set-pressing", label: "Set pressing", scope: "tactics", available: ready, handler: () => undefined },
   { id: "assign-slot-player", label: "Assign a player to a tactics slot", scope: "tactics", available: ready, handler: () => undefined },
   { id: "swap-slot-players", label: "Swap two tactics slots' players", scope: "tactics", available: ready, handler: () => undefined },
+  { id: "set-slot-position", label: "Move a tactics slot to another position", scope: "tactics", available: ready, handler: () => undefined },
   { id: "clear-tactic-selection", label: "Clear the team selection", scope: "tactics", available: ready, handler: () => undefined },
   // training — the schedule screen publishes `trainingScheduleOpen` while mounted, and
   // `trainingScheduleDelegated` while the assistant plans; the Training sub-screens share one scope,

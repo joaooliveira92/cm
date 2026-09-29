@@ -276,6 +276,7 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
       "set-formation",
       "set-mentality",
       "set-pressing",
+      "set-slot-position",
       "set-tempo",
       "swap-slot-players",
     ];

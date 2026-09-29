@@ -243,10 +243,12 @@ _Avoid_: Generator, script (there is no generation/composition step in v1 — se
 ### Tactics
 
 **Formation**:
-One of five fixed v1 shapes (4-4-2, 4-3-3, 4-5-1, 3-5-2, 5-3-2), each a fixed multiset of 10 outfield
-Position slots plus an implicit GK — no vocabulary beyond the existing Position taxonomy. Purely
-structural: it determines which Positions are filled, and therefore which players' Position Ratings
-feed each Phase Strength. Carries no multiplier of its own.
+One of five v1 templates (4-4-2, 4-3-3, 4-5-1, 3-5-2, 5-3-2), each a starting set of 10 outfield
+Position slots plus the GK — no vocabulary beyond the existing Position taxonomy. A Tactic starts
+from a template, and the manager may move any outfield slot to another outfield Position, making a
+custom shape ("4-4-2 (custom)"); the GK stays alone in slot 0. Purely structural: the Tactic's slots
+determine which Positions are filled, and therefore which players' Position Ratings feed each Phase
+Strength. Carries no multiplier of its own.
 
 **Role**:
 A tactical sub-choice within one Position slot of a Formation (e.g. Poacher within ST), chosen per

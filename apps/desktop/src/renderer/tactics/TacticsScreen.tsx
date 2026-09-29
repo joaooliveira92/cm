@@ -29,14 +29,19 @@ import {
 import { FOCUS_RING } from "../focus.js";
 import {
   FORMATIONS,
+  FORMATION_SLOTS,
   MENTALITY_OPTIONS,
+  POSITIONS,
+  POSITION_ROLES,
   PRESSING_OPTIONS,
   TEMPO_OPTIONS,
   emptyBench,
+  isCustomShape,
   roleRating,
   type Formation,
   type Mentality,
   type PlayerAttributes,
+  type Position,
   type Pressing,
   type Tempo,
 } from "@cm-clone/shared";
@@ -45,14 +50,41 @@ import { FormationPitch } from "./FormationPitch.js";
 import { defaultTacticFor, useTacticDraft } from "./useTacticDraft.js";
 import { describeRpcError } from "../rpc.js";
 
+/** A slot moved to `position`, carrying that Position's Role; its player stays. */
+const placeSlot = (slot: TacticSlot, position: Position): TacticSlot => ({
+  ...slot,
+  position,
+  role: POSITION_ROLES[position],
+});
+
+/** A new Formation starts over from its template with an empty eleven. Picking the current one
+ *  again only resets a custom shape to its template, keeping every slot's player. */
 const changeFormation = (tactic: Tactic, formation: Formation): Tactic =>
+  formation === tactic.formation
+    ? new Tactic({
+        ...tactic,
+        slots: tactic.slots.map((slot, index) =>
+          placeSlot(slot, FORMATION_SLOTS[formation][index]!),
+        ),
+      })
+    : new Tactic({
+        ...defaultTacticFor(formation),
+        mentality: tactic.mentality,
+        tempo: tactic.tempo,
+        pressing: tactic.pressing,
+        bench: tactic.bench,
+      });
+
+/** One slot moved to another outfield Position: the Formation's shape becomes a custom one. */
+const moveSlot = (tactic: Tactic, slotIndex: number, position: Position): Tactic =>
   new Tactic({
-    ...defaultTacticFor(formation),
-    mentality: tactic.mentality,
-    tempo: tactic.tempo,
-    pressing: tactic.pressing,
-    bench: tactic.bench,
+    ...tactic,
+    slots: tactic.slots.map((slot, index) => (index === slotIndex ? placeSlot(slot, position) : slot)),
   });
+
+/** Every Position an outfield slot may move to: all but the GK, which stays alone in slot 0. */
+const OUTFIELD_POSITIONS = POSITIONS.filter((position) => position !== "GK");
+const positionItems = OUTFIELD_POSITIONS.map((position) => ({ label: position, value: position }));
 
 /** Every starter slot and bench place emptied; the formation and instructions stay. The server
  *  refuses a Tactic with an empty starter, so this is a draft to refill, never a save on its own. */
@@ -149,6 +181,10 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         const p = params as { from: number; to: number };
         setTactic(swapLineupSlots(tactic, p.from, p.to));
       }),
+      registerActionHandler("set-slot-position", (params) => {
+        const p = params as { index: number; position: Position };
+        setTactic(moveSlot(tactic, p.index, p.position));
+      }),
       registerActionHandler("clear-tactic-selection", () => setTactic(clearSelection(tactic))),
     ];
     return () => {
@@ -221,6 +257,10 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     );
 
   const view = viewResult.value;
+  const customShape = isCustomShape(
+    tactic.formation,
+    tactic.slots.map((slot) => slot.position),
+  );
   const squadById = new Map(view.squad.map((player) => [player.id, player]));
   const assignedElsewhere = (slotIndex: number) =>
     new Set(tactic.slots.filter((_, index) => index !== slotIndex).map((slot) => slot.playerId));
@@ -247,7 +287,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       <section aria-label="Formation and team instructions" className="flex flex-wrap gap-x-8 gap-y-3">
         <div>
           <p className="text-sm text-text-secondary">Formation</p>
-          <div className="mt-1 flex gap-1">
+          <div className="mt-1 flex items-center gap-1">
             {FORMATIONS.map((formation) => (
               <Button
                 key={formation}
@@ -260,6 +300,22 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                 {formation}
               </Button>
             ))}
+            {customShape && (
+              <>
+                <span data-testid="custom-shape" className="ml-2 text-sm font-semibold text-text-bright">
+                  {tactic.formation} (custom)
+                </span>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  data-action-id="set-formation"
+                  onClick={() => void dispatchAction("set-formation", { formation: tactic.formation })}
+                >
+                  Reset to {tactic.formation}
+                </Button>
+              </>
+            )}
           </div>
         </div>
         <InstructionSlider<Mentality>
@@ -346,7 +402,37 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="pr-4 font-semibold">{slot.position}</TableCell>
+                    <TableCell className="pr-4 font-semibold">
+                      {slot.position === "GK" ? (
+                        // Padded like the selects below it, so the column's codes line up.
+                        <span className="border border-transparent px-1.5">{slot.position}</span>
+                      ) : (
+                        <Select
+                          value={slot.position}
+                          items={positionItems}
+                          onValueChange={(value) => {
+                            if (value !== null) {
+                              void dispatchAction("set-slot-position", { index, position: value });
+                            }
+                          }}
+                        >
+                          <SelectTrigger
+                            data-action-id="set-slot-position"
+                            aria-label={`Slot ${index + 1} position`}
+                            className={`h-7 w-16 gap-1 px-1.5 ${SELECT_CLASS}`}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {OUTFIELD_POSITIONS.map((position) => (
+                              <SelectItem key={position} value={position}>
+                                {position}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </TableCell>
                     <TableCell className="pr-4 text-text-body">{slot.role}</TableCell>
                     <TableCell className="pr-2 text-right font-semibold tabular-nums">
                       {player
@@ -390,7 +476,11 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             squadById={squadById}
             onPick={setOpenSlot}
             onSwap={(from, to) => void dispatchAction("swap-slot-players", { from, to })}
+            onMove={(index, position) => void dispatchAction("set-slot-position", { index, position })}
           />
+          <p className="mt-2 text-center text-xs text-text-secondary">
+            Drag a player onto a teammate to swap them, or onto open grass to change their position.
+          </p>
         </div>
       </div>
 

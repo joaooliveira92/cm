@@ -8,7 +8,6 @@ import {
   lineupSlotsOf,
   orderOfPlayer,
   playerAt,
-  starterCountOf,
   swapLineupSlots,
   unselectedPlayerIds,
 } from "../../../src/renderer/squad/lineupEdits.js";
@@ -32,12 +31,24 @@ const baseTactic = (): Tactic =>
 describe("the lineup bar's slot geometry", () => {
   it("renders the eleven starters in formation order and the seven bench slots after them", () => {
     const slots = lineupSlotsOf(baseTactic());
-    expect(starterCountOf("4-4-2")).toBe(11);
     expect(slots).toHaveLength(18);
     expect(slots.slice(0, 11).map((slot) => slot.label)).toEqual(FORMATION_SLOTS["4-4-2"]);
     expect(slots.slice(11).map((slot) => slot.label)).toEqual([
       "SB1", "SB2", "SB3", "SB4", "SB5", "SB6", "SB7",
     ]);
+  });
+
+  it("labels each starter by the slot's own Position, so a custom shape reads as moved", () => {
+    const base = baseTactic();
+    const custom = new Tactic({
+      ...base,
+      slots: [
+        ...base.slots.slice(0, 5),
+        { ...base.slots[5]!, position: "DC", role: POSITION_ROLES.DC },
+        ...base.slots.slice(6),
+      ],
+    });
+    expect(lineupSlotsOf(custom)[5]!.label).toBe("DC");
   });
 
   it("reads the empty starter sentinel (empty player id) as an empty slot", () => {
@@ -162,6 +173,21 @@ describe("assistantLineupOf", () => {
     expect(next.slots.slice(1).map((slot) => String(slot.playerId))).toEqual(
       Array.from({ length: 10 }, (_, index) => `s${index}`),
     );
+  });
+
+  it("fills a custom shape by the slots' own Positions, not the Formation's template", () => {
+    const base = baseTactic();
+    // Slot 5 is an MC in the 4-4-2 template; moved to the back line it wants a centre-back.
+    const custom = new Tactic({
+      ...base,
+      slots: [
+        ...base.slots.slice(0, 5),
+        { ...base.slots[5]!, position: "DC", role: POSITION_ROLES.DC },
+        ...base.slots.slice(6),
+      ],
+    });
+    const next = assistantLineupOf(custom, [...squad, player("dc3", "DC", 60)])!;
+    expect(String(next.slots[5]!.playerId)).toBe("dc3");
   });
 
   it("puts the spare keeper first on the bench, then the best of the rest", () => {
