@@ -433,7 +433,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                         </Select>
                       )}
                     </TableCell>
-                    <TableCell className="pr-4 text-text-body">{slot.role}</TableCell>
+                    <TableCell className="pr-4 text-text-soft">{slot.role}</TableCell>
                     <TableCell className="pr-2 text-right font-semibold tabular-nums">
                       {player
                         ? roleRating(player.attributes as PlayerAttributes, slot.role)

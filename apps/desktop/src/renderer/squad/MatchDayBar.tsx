@@ -103,7 +103,7 @@ const SlotBox = ({
     className={`h-6 min-w-11 border px-1.5 ${slot.playerId === null
       ? "border-panel-border-dark text-text-strong"
       : "border-text-highlight bg-text-highlight/15 text-text-highlight"
-    } ${selected ? "outline-2 outline-offset-1 outline-text-highlight" : ""} ${FOCUS_RING.join(" ")}`}
+      } ${selected ? "outline-2 outline-offset-1 outline-text-highlight" : ""} ${FOCUS_RING.join(" ")}`}
   >
     <span className="text-caption font-bold leading-tight">{slot.label}</span>
   </Button>
@@ -217,13 +217,13 @@ export const MatchDayBar = () => {
       onDrop={dropOnBar}
     >
       {viewError !== null && (
-          <Alert variant="destructive" className="mb-2">
-            <p className="text-body">{describeRpcError(viewError)}</p>
-          </Alert>
-        )}
+        <Alert variant="destructive" className="mb-2">
+          <p className="text-body">{describeRpcError(viewError)}</p>
+        </Alert>
+      )}
 
       {/* CM 03/04's titled Positions panel: starters and bench on one centred row. */}
-      <section className="rounded-panel bg-panel-bg px-3 pt-1.5 pb-2.5">
+      <section className="rounded-panel px-3 pt-1.5 pb-2.5">
         <h2 className="text-center text-heading text-text-highlight">Positions</h2>
         <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1">
           {slots

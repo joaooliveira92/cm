@@ -67,7 +67,10 @@
      Tailwind's numeric sizes (`text-xs` … `text-3xl`) are banned in the
      renderer by the `no-raw-text-size` rule in `scripts/effect-lint.ts`, and
      `lib/utils.ts` teaches tailwind-merge that these names are sizes, not
-     colours. Retuning a role here retunes it everywhere. */
+     colours. The primitives in `components/ui` pick the role for their kind of
+     text (a table cell, a tab, a key-value key); `no-role-override` stops a
+     screen re-sizing one through `className`. Retuning a role here retunes it
+     everywhere. */
 
   /* The one hero line on a pre-career shell (the main menu's game title). */
   --text-display: 24px;
@@ -134,7 +137,7 @@
   --color-text-primary: var(--foreground);
   --color-text-bright: var(--foreground);
   --color-text-strong: color-mix(in oklab, var(--foreground) 80%, var(--muted-foreground));
-  --color-text-body: color-mix(in oklab, var(--foreground) 45%, var(--muted-foreground));
+  --color-text-soft: color-mix(in oklab, var(--foreground) 45%, var(--muted-foreground));
   --color-text-secondary: var(--muted-foreground);
   --color-text-muted: color-mix(in oklab, var(--muted-foreground) 75%, var(--background));
 

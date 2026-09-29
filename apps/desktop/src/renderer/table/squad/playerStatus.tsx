@@ -298,7 +298,7 @@ export const StatusLegend = ({ id }: { readonly id: string }) => (
     id={id}
     className="mt-2 max-h-64 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-3 text-data"
   >
-    <p className="text-text-body">
+    <p className="text-text-soft">
       The Status column shows only what the game models. Reserved codes are the
       Championship Manager 03/04 vocabulary, held as slots so the column does not
       need re-designing when a system ships — a reservation is not a promise.
@@ -309,7 +309,7 @@ export const StatusLegend = ({ id }: { readonly id: string }) => (
           <span className="w-10 shrink-0">
             <span className={`${BADGE_BASE} ${BADGE_CLASS[status.tone]}`}>{status.abbreviation}</span>
           </span>
-          <span className="text-text-body">
+          <span className="text-text-soft">
             <span className="text-text-primary">{status.term}</span>
             {" — "}
             {LIKELIHOOD_LABEL[status.likelihood]}. {status.note}

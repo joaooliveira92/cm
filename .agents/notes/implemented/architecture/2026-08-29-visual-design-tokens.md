@@ -38,7 +38,7 @@ Adopt a retro chrome-blue visual frame across every career surface, grounded in 
 | Text success | `--color-text-success` | `#8ae860` | Green success text |
 | Focus ring | `--color-focus-ring` | `var(--color-text-highlight)` | `:focus-visible` ring color |
 
-The shipped set adds a neutral ladder above `secondary` (`--color-text-bright`, `--color-text-strong`, `--color-text-body`, `--color-text-muted`), the surface ramp the palette needs (`--color-bg-raised`, `--color-surface`, `--color-surface-raised`, `--color-border-subtle`), and an opaque field surface (`--color-field-bg`) so typed characters read against an unwashed background. The former `--accent-green` control token had no consumers and is gone; the `accent` role name is claimed by the shadcn role bridge as a hover surface, never a hue.
+The shipped set adds a neutral ladder above `secondary` (`--color-text-bright`, `--color-text-strong`, `--color-text-soft`, `--color-text-muted`), the surface ramp the palette needs (`--color-bg-raised`, `--color-surface`, `--color-surface-raised`, `--color-border-subtle`), and an opaque field surface (`--color-field-bg`) so typed characters read against an unwashed background. The former `--accent-green` control token had no consumers and is gone; the `accent` role name is claimed by the shadcn role bridge as a hover surface, never a hue.
 
 ### Typography
 

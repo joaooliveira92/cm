@@ -9,7 +9,7 @@ import { cn } from "../../../src/renderer/lib/utils.js";
 describe("cn with type-scale roles", () => {
   it("keeps a role beside a colour utility", () => {
     expect(cn("text-heading", "text-text-secondary")).toBe("text-heading text-text-secondary");
-    expect(cn("text-text-body", "text-body")).toBe("text-text-body text-body");
+    expect(cn("text-text-soft", "text-body")).toBe("text-text-soft text-body");
   });
 
   it("lets a later role replace an earlier one", () => {

@@ -202,7 +202,7 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
       {state === "conflicted" && (
         <Alert className="mt-4" data-testid="tactics-overview-conflicted">
           <span className="font-semibold">This tactic changed since this overview loaded.</span>{" "}
-          <span className="text-text-body">Showing the previous one until you confirm.</span>
+          <span className="text-text-soft">Showing the previous one until you confirm.</span>
           <div className="mt-3 flex gap-2">
             <Button type="button" className={FOCUS_RING.join(" ")} onClick={adoptCurrent}>
               Show the current tactic

@@ -111,7 +111,7 @@ export const ActiveLeaguesSidebar = ({
         Status
       </h2>
       {validation.valid ? (
-        <p className="mt-1 text-data text-text-body">Ready to continue.</p>
+        <p className="mt-1 text-data text-text-soft">Ready to continue.</p>
       ) : (
         <ul className="mt-1 list-disc pl-4 text-data text-text-warning">
           {(validation.blockingMessages.length > 0

@@ -38,7 +38,7 @@ export const ManagerInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       ) : (
         <ul className="space-y-2">
           {messages.map((msg: { messageId: string; subject: string; body: string; category: string }) => (
-            <li key={msg.messageId} className="rounded-md border border-border-subtle px-3 py-2 text-body text-text-body">
+            <li key={msg.messageId} className="rounded-md border border-border-subtle px-3 py-2 text-body text-text-soft">
               <span className="font-medium">{msg.subject}</span>
               <p className="mt-0.5 text-data text-text-secondary">{msg.body}</p>
             </li>

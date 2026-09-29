@@ -23,6 +23,7 @@ import {
   type Category,
   type FamiliarityTier,
 } from "@cm-clone/shared";
+import { KeyValueKey, KeyValueRow, KeyValueValue } from "../components/ui/key-value.js";
 import { formatFigure, formatFigureCredits } from "../format.js";
 import { attributeLabel } from "../playerCoachReport/developmentProgress.js";
 import { injuryLabel } from "../player/injury.js";
@@ -86,13 +87,10 @@ const PositionsPanel = ({ profile }: { readonly profile: PlayerProfileView }) =>
       <PlayerRow label="Positions" value="None recorded" />
     ) : (
       profile.positions.map((entry) => (
-        <div
-          key={entry.position}
-          className="flex items-baseline justify-between gap-4 py-0.5 text-body"
-        >
-          <dt className={FAMILIARITY_TONE[entry.familiarity]}>{entry.position}</dt>
-          <dd className="font-semibold text-text-highlight">{tierLabel(entry.familiarity)}</dd>
-        </div>
+        <KeyValueRow key={entry.position} className="py-0.5">
+          <KeyValueKey className={FAMILIARITY_TONE[entry.familiarity]}>{entry.position}</KeyValueKey>
+          <KeyValueValue className="text-text-highlight">{tierLabel(entry.familiarity)}</KeyValueValue>
+        </KeyValueRow>
       ))
     )}
   </PlayerPanel>

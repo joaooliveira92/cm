@@ -20,7 +20,7 @@ export const ManagerCareerScreen = () => {
         <TabsContent value="current">
           <div className="mt-4">
             <h2 className="text-heading">Current Position</h2>
-            <p className="mt-1 text-body text-text-body">Manager</p>
+            <p className="mt-1 text-body text-text-soft">Manager</p>
             <p className="text-body text-text-secondary">Current club</p>
           </div>
         </TabsContent>

@@ -226,7 +226,7 @@ const AdvancedOptionRow = ({
   return (
     <div className="min-w-0">
       <div className={`flex items-center gap-2 ${OPTION_ROW_HEIGHT}`}>
-        <label className="min-w-0 flex-1 truncate text-data text-text-body" htmlFor={`${helpId}-control`}>
+        <label className="min-w-0 flex-1 truncate text-data text-text-soft" htmlFor={`${helpId}-control`}>
           {option.label}
         </label>
         <button
@@ -245,7 +245,7 @@ const AdvancedOptionRow = ({
             if (next !== null) onChange(option.key, next);
           }}
         >
-          <SelectTrigger id={`${helpId}-control`} className="h-6 w-[8rem] px-1 text-data">
+          <SelectTrigger id={`${helpId}-control`} className="h-6 w-[8rem] px-1">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

@@ -21,7 +21,7 @@ const buttonVariants = cva(
         /* Everything else: Cancel, Retry, inline actions. Flat, no shadow. */
         secondary: "bg-surface-raised text-text-primary hover:bg-surface",
         outline: "border border-panel-border bg-panel-bg text-text-primary hover:bg-surface-raised",
-        ghost: "text-text-body hover:bg-surface-raised hover:text-text-primary",
+        ghost: "text-text-soft hover:bg-surface-raised hover:text-text-primary",
         destructive:
           "border border-destructive/40 bg-destructive/15 text-destructive hover:bg-destructive/25",
         link: "text-text-highlight underline-offset-4 hover:underline",
@@ -30,7 +30,7 @@ const buttonVariants = cva(
       size: {
         default: "h-7 px-3 py-1 text-label",
         sm: "h-6 px-2 text-label",
-        lg: "h-8 px-4 text-body",
+        lg: "h-8 px-4 text-label",
         icon: "h-7 w-7",
       },
     },

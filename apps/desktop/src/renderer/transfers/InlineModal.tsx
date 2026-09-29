@@ -89,7 +89,7 @@ export const InlineModal = ({
           {description !== undefined && (
             <p className="mt-1 text-body text-text-secondary">{description}</p>
           )}
-          <label className="mt-3 block text-body text-text-body">
+          <label className="mt-3 block text-label text-text-soft">
             {inputLabel}
             <Input
               ref={inputRef}

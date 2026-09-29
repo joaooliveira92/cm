@@ -92,7 +92,7 @@ export const ManagerStyleAppearancePane = ({
                     "flex items-center gap-2 rounded-control border px-2 py-1.5 text-data transition-colors",
                     selected
                       ? "border-primary bg-primary/10 text-text-primary"
-                      : "border-border-subtle bg-field-bg text-text-body hover:bg-surface-raised",
+                      : "border-border-subtle bg-field-bg text-text-soft hover:bg-surface-raised",
                     ...FOCUS_RING,
                   )}
                 >

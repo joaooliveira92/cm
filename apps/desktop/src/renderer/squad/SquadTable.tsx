@@ -106,7 +106,7 @@ const ColumnControls = ({
           <SheetTitle>Columns</SheetTitle>
           <SheetDescription>Choose which columns the squad table shows.</SheetDescription>
         </SheetHeader>
-        <div className="-mx-2 flex flex-1 flex-col gap-1 overflow-y-auto px-2 text-body text-text-body">
+        <div className="-mx-2 flex flex-1 flex-col gap-1 overflow-y-auto px-2 text-body text-text-soft">
           {SQUAD_TOGGLEABLE_COLUMN_IDS.map((columnId) => (
             <label key={columnId} className="flex items-center gap-2 py-1">
               <input
@@ -515,7 +515,7 @@ export const SquadTable = () => {
 
         {/* The panel CM 03/04 drew the list in, titled with what you are looking
             at, named by the view that drew it. A tinted surface, no border. */}
-        <section className="mt-3 rounded-panel bg-panel-bg px-3 pt-2 pb-3">
+        <section className="mt-3 rounded-panel px-3 pt-2 pb-3">
           <h2 className="text-heading text-text-highlight">
             Players ({view.label})
           </h2>

@@ -3,6 +3,7 @@ import type { CareerSetupSummaryView } from "@cm-clone/contracts";
 import { formatCalendarDate, nationName } from "@cm-clone/shared";
 import { Effect, Result } from "effect";
 import { Badge } from "../components/ui/badge.js";
+import { KeyValueKey, KeyValueList, KeyValueRow, KeyValueValue } from "../components/ui/key-value.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs.js";
 import { getCareerSetupSummary } from "../rpc.js";
 import type { CreationSession } from "../router/createSessionContext.js";
@@ -22,10 +23,10 @@ type SummaryState =
 const WORLD_FIGURE_COUNT = 6;
 
 const Row = ({ label, value }: { readonly label: string; readonly value: string }) => (
-  <div className="flex items-center justify-between gap-4 py-1.5">
-    <dt className="text-text-muted">{label}:</dt>
-    <dd className="text-text-primary font-medium">{value}</dd>
-  </div>
+  <KeyValueRow className="items-center py-1.5">
+    <KeyValueKey className="text-text-muted">{label}:</KeyValueKey>
+    <KeyValueValue>{value}</KeyValueValue>
+  </KeyValueRow>
 );
 
 export const ReviewPane = ({
@@ -85,7 +86,7 @@ export const ReviewPane = ({
   ];
 
   return (
-    <div className="text-text-body">
+    <div className="text-text-soft">
       <StepHeading title="Review Career">
         Confirm everything the flow has collected before your career begins.
       </StepHeading>
@@ -108,11 +109,11 @@ export const ReviewPane = ({
 
         <TabsContent value="choices" keepMounted>
           <div className="rounded-panel border border-panel-border bg-card p-6 shadow-panel">
-            <dl className="divide-y divide-panel-border/30">
+            <KeyValueList className="divide-y divide-panel-border/30">
               {configurationItems.map((item) => (
                 <Row key={item.label} label={item.label} value={item.value} />
               ))}
-            </dl>
+            </KeyValueList>
           </div>
         </TabsContent>
 
@@ -129,7 +130,7 @@ export const ReviewPane = ({
                 World summary unavailable. Your career is ready to create.
               </p>
             ) : (
-              <dl className="divide-y divide-panel-border/30">
+              <KeyValueList className="divide-y divide-panel-border/30">
                 <Row
                   label="Starting season"
                   value={`${summary.view.seasonLabel} · starts ${formatCalendarDate(summary.view.seasonStartDate)}`}
@@ -142,7 +143,7 @@ export const ReviewPane = ({
                 <Row label="Clubs" value={summary.view.clubCount.toLocaleString()} />
                 <Row label="Players generated" value={summary.view.playerCount.toLocaleString()} />
                 <Row label="Staff" value={describeStaff(summary.view.staffCount)} />
-              </dl>
+              </KeyValueList>
             )}
           </div>
         </TabsContent>

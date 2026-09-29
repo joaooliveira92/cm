@@ -96,7 +96,7 @@ const SwatchGroup = <Id extends string>({
   onChange,
 }: SwatchGroupProps<Id>) => (
   <fieldset className="flex flex-col gap-2">
-    <legend className="mb-2 text-data font-medium text-text-secondary">{legend}</legend>
+    <legend className="mb-2 text-label text-text-secondary">{legend}</legend>
     <div className="flex flex-wrap gap-1.5">
       {options.map((option) => (
         <label
@@ -106,7 +106,7 @@ const SwatchGroup = <Id extends string>({
             "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
             option.id === value
               ? "border-primary bg-surface-raised text-text-primary"
-              : "border-border-subtle text-text-body hover:bg-surface-raised",
+              : "border-border-subtle text-text-soft hover:bg-surface-raised",
           )}
         >
           <input

@@ -2,6 +2,7 @@ import type { ClubId, SaveId, TeamScoutReportView } from "@cm-clone/contracts";
 import { useEffect, useRef, useState } from "react";
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
+import { KeyValueKey, KeyValueList, KeyValueValue } from "../components/ui/key-value.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs.js";
 import { FOCUS_RING } from "../focus.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
@@ -172,22 +173,22 @@ export const TeamScoutReportScreen = ({
         <Alert className="mt-4">[Archived] This career has ended. The save is read-only.</Alert>
       )}
 
-      <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-body">
-        <dt className="text-text-secondary">Scout</dt>
+      <KeyValueList className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
+        <KeyValueKey>Scout</KeyValueKey>
         {/* Null when no scout is watching the club right now, so the knowledge was compiled from
             earlier or per-player scouting. Named plainly rather than left blank: a missing byline
             is information, not an omission to hide. */}
-        <dd>{rendered.scout === null ? "Compiled from player scouting" : rendered.scout.scoutName}</dd>
+        <KeyValueValue>{rendered.scout === null ? "Compiled from player scouting" : rendered.scout.scoutName}</KeyValueValue>
 
-        <dt className="text-text-secondary">Updated</dt>
-        <dd>{rendered.observedAt}</dd>
+        <KeyValueKey>Updated</KeyValueKey>
+        <KeyValueValue>{rendered.observedAt}</KeyValueValue>
 
-        <dt className="text-text-secondary">Knowledge</dt>
-        <dd>{confidenceLabel(rendered.knowledgeConfidence)}</dd>
+        <KeyValueKey>Knowledge</KeyValueKey>
+        <KeyValueValue>{confidenceLabel(rendered.knowledgeConfidence)}</KeyValueValue>
 
-        <dt className="text-text-secondary">Freshness</dt>
-        <dd>{freshnessLabel(rendered.freshness)}</dd>
-      </dl>
+        <KeyValueKey>Freshness</KeyValueKey>
+        <KeyValueValue>{freshnessLabel(rendered.freshness)}</KeyValueValue>
+      </KeyValueList>
 
       <section aria-label="Report actions" className="mt-4">
         {fixture === null ? (

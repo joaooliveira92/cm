@@ -53,7 +53,7 @@ export const TransferFilterBar = ({
 
   return (
     <>
-      <label className="flex items-center gap-2 text-text-body">
+      <label className="flex items-center gap-2 text-text-soft">
         Name
         <Input
           type="text"
@@ -63,7 +63,7 @@ export const TransferFilterBar = ({
           className="w-32"
         />
       </label>
-      <div className="flex items-center gap-2 text-text-body">
+      <div className="flex items-center gap-2 text-text-soft">
         Position
         <Select
           value={activePosition ?? ""}

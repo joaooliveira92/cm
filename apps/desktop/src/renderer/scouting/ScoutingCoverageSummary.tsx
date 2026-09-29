@@ -1,5 +1,6 @@
 import type { ScoutingKnowledgeView } from "@cm-clone/contracts";
 import { FULLY_SCOUTED, KNOWLEDGE_CONFIDENCES } from "@cm-clone/shared";
+import { KeyValueKey, KeyValueList, KeyValueValue } from "../components/ui/key-value.js";
 import { confidenceLabel } from "./reportSections.js";
 
 /** A scouted Player's Scouting Progress in words: a floored percentage, or Fully Scouted at 100. */
@@ -37,27 +38,27 @@ export const ScoutingCoverageSummary = ({ knowledge }: { readonly knowledge: Sco
       aria-label="Scouting coverage"
       className="mt-6 rounded-panel border border-panel-border bg-card p-4 text-body text-card-foreground shadow-panel"
     >
-      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
-        <dt className="text-text-secondary">Clubs with scouted Players</dt>
-        <dd className="tabular-nums">{clubs.length}</dd>
-        <dt className="text-text-secondary">Players scouted</dt>
-        <dd className="tabular-nums">{players.length}</dd>
-        <dt className="text-text-secondary">Fully Scouted</dt>
-        <dd className="tabular-nums">{fullyScouted}</dd>
+      <KeyValueList className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
+        <KeyValueKey>Clubs with scouted Players</KeyValueKey>
+        <KeyValueValue className="tabular-nums">{clubs.length}</KeyValueValue>
+        <KeyValueKey>Players scouted</KeyValueKey>
+        <KeyValueValue className="tabular-nums">{players.length}</KeyValueValue>
+        <KeyValueKey>Fully Scouted</KeyValueKey>
+        <KeyValueValue className="tabular-nums">{fullyScouted}</KeyValueValue>
         {bands.length > 0 && (
           <>
-            <dt className="text-text-secondary">Knowledge Confidence</dt>
-            <dd>
+            <KeyValueKey>Knowledge Confidence</KeyValueKey>
+            <KeyValueValue>
               {bands
                 .map(
                   (band) =>
                     `${confidenceLabel(band.confidence)}: ${band.count} ${band.count === 1 ? "Club" : "Clubs"}`,
                 )
                 .join(" · ")}
-            </dd>
+            </KeyValueValue>
           </>
         )}
-      </dl>
+      </KeyValueList>
     </section>
   );
 };

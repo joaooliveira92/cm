@@ -6,6 +6,7 @@ import { Alert } from "../components/ui/alert.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
 import { Card } from "../components/ui/card.js";
+import { KeyValueKey, KeyValueList, KeyValueRow, KeyValueValue } from "../components/ui/key-value.js";
 import { FOCUS_RING } from "../focus.js";
 import { STYLE_LABELS } from "../create/managerStyleCopy.js";
 import { getActiveMatch } from "../match/session.js";
@@ -78,7 +79,7 @@ const RetireManagerDialog = ({
           <h2 className="text-heading">Retire Manager</h2>
         </div>
         <div className={MODAL_BODY}>
-          <p className="text-body text-text-body">{RETIREMENT_DISCLOSURE}</p>
+          <p className="text-body text-text-soft">{RETIREMENT_DISCLOSURE}</p>
           <div className="mt-4 flex items-center justify-end gap-2">
             <Button ref={cancelRef} type="button" variant="secondary" onClick={onCancel}>
               Cancel
@@ -174,7 +175,7 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Card className="px-3 py-2">
           <p className="text-overline uppercase text-text-secondary">Current Club</p>
-          <p className="mt-1 text-body text-text-body">{view.clubName}</p>
+          <p className="mt-1 text-body text-text-soft">{view.clubName}</p>
           <p className="mt-0.5 text-body text-text-secondary">Season {view.seasonNumber}</p>
           <p className="mt-0.5 text-body text-text-secondary">
             Tenure: {view.tenureSeasons} {view.tenureSeasons === 1 ? "season" : "seasons"}
@@ -183,75 +184,75 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
 
         <Card className="px-3 py-2">
           <p className="text-overline uppercase text-text-secondary">Management Philosophy</p>
-          <dl className="mt-1 grid grid-cols-2 gap-x-8 gap-y-0.5 text-body">
+          <KeyValueList className="mt-1 grid grid-cols-2 gap-x-8 gap-y-0.5">
             {MANAGER_PILLARS.map((pillar) => (
-              <div key={pillar} className="flex justify-between">
-                <dt className="text-text-secondary">{PILLAR_LABELS[pillar]}</dt>
-                <dd className="font-semibold tabular-nums text-text-primary">{profile.pillars[pillar]}</dd>
-              </div>
+              <KeyValueRow key={pillar}>
+                <KeyValueKey>{PILLAR_LABELS[pillar]}</KeyValueKey>
+                <KeyValueValue className="tabular-nums">{profile.pillars[pillar]}</KeyValueValue>
+              </KeyValueRow>
             ))}
-          </dl>
+          </KeyValueList>
         </Card>
       </div>
 
       <Card className="mt-4 px-3 py-2">
         <p className="text-overline uppercase text-text-secondary">Personal Details</p>
-        <dl className="mt-1 grid grid-cols-2 gap-x-8 gap-y-1 text-body sm:grid-cols-3">
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Nationality</dt>
-            <dd className="font-semibold text-text-primary">{profile.nationalityName}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Age</dt>
-            <dd className="font-semibold text-text-primary">—</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Reputation</dt>
-            <dd className="font-semibold text-text-primary">—</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Preferred Formation</dt>
-            <dd className="font-semibold text-text-primary">{profile.preferredFormation}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Tactical Style</dt>
-            <dd className="font-semibold text-text-primary">{STYLE_LABELS[profile.preferredStyleId]}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Date Appointed</dt>
-            <dd className="font-semibold text-text-primary">Season {view.seasonNumber}</dd>
-          </div>
-        </dl>
+        <KeyValueList className="mt-1 grid grid-cols-2 gap-x-8 gap-y-1 sm:grid-cols-3">
+          <KeyValueRow>
+            <KeyValueKey>Nationality</KeyValueKey>
+            <KeyValueValue>{profile.nationalityName}</KeyValueValue>
+          </KeyValueRow>
+          <KeyValueRow>
+            <KeyValueKey>Age</KeyValueKey>
+            <KeyValueValue>—</KeyValueValue>
+          </KeyValueRow>
+          <KeyValueRow>
+            <KeyValueKey>Reputation</KeyValueKey>
+            <KeyValueValue>—</KeyValueValue>
+          </KeyValueRow>
+          <KeyValueRow>
+            <KeyValueKey>Preferred Formation</KeyValueKey>
+            <KeyValueValue>{profile.preferredFormation}</KeyValueValue>
+          </KeyValueRow>
+          <KeyValueRow>
+            <KeyValueKey>Tactical Style</KeyValueKey>
+            <KeyValueValue>{STYLE_LABELS[profile.preferredStyleId]}</KeyValueValue>
+          </KeyValueRow>
+          <KeyValueRow>
+            <KeyValueKey>Date Appointed</KeyValueKey>
+            <KeyValueValue>Season {view.seasonNumber}</KeyValueValue>
+          </KeyValueRow>
+        </KeyValueList>
       </Card>
 
       <Card className="mt-4 px-3 py-2">
         <p className="text-overline uppercase text-text-secondary">Career Record</p>
-        <dl className="mt-1 grid grid-cols-3 gap-x-8 gap-y-1 text-body sm:grid-cols-6">
+        <KeyValueList className="mt-1 grid grid-cols-3 gap-x-8 gap-y-1 sm:grid-cols-6">
           <div className="text-center">
-            <dt className="text-data text-text-secondary">Played</dt>
-            <dd className="text-figure text-text-primary">—</dd>
+            <KeyValueKey>Played</KeyValueKey>
+            <KeyValueValue className="text-figure font-bold text-text-primary">—</KeyValueValue>
           </div>
           <div className="text-center">
-            <dt className="text-data text-text-secondary">Won</dt>
-            <dd className="text-figure text-green-600">—</dd>
+            <KeyValueKey>Won</KeyValueKey>
+            <KeyValueValue className="text-figure font-bold text-green-600">—</KeyValueValue>
           </div>
           <div className="text-center">
-            <dt className="text-data text-text-secondary">Drawn</dt>
-            <dd className="text-figure text-text-primary">—</dd>
+            <KeyValueKey>Drawn</KeyValueKey>
+            <KeyValueValue className="text-figure font-bold text-text-primary">—</KeyValueValue>
           </div>
           <div className="text-center">
-            <dt className="text-data text-text-secondary">Lost</dt>
-            <dd className="text-figure text-red-600">—</dd>
+            <KeyValueKey>Lost</KeyValueKey>
+            <KeyValueValue className="text-figure font-bold text-red-600">—</KeyValueValue>
           </div>
           <div className="text-center">
-            <dt className="text-data text-text-secondary">Goals For</dt>
-            <dd className="text-figure text-text-primary">—</dd>
+            <KeyValueKey>Goals For</KeyValueKey>
+            <KeyValueValue className="text-figure font-bold text-text-primary">—</KeyValueValue>
           </div>
           <div className="text-center">
-            <dt className="text-data text-text-secondary">Goals Against</dt>
-            <dd className="text-figure text-text-primary">—</dd>
+            <KeyValueKey>Goals Against</KeyValueKey>
+            <KeyValueValue className="text-figure font-bold text-text-primary">—</KeyValueValue>
           </div>
-        </dl>
+        </KeyValueList>
       </Card>
 
       <Card className="mt-4 px-3 py-2">

@@ -64,7 +64,7 @@ const SQUAD_SORT_ITEM_LABELS: Readonly<Record<ColumnId, string>> = Object.fromEn
  *  selectors in this row are flat text buttons, so the field's border, fill and
  *  fixed height are dropped in favour of the row's own padding and type. */
 const TRIGGER_CLASS =
-  `${ACTIONS_ROW_BUTTON_CLASS} h-auto w-auto border-0 bg-transparent px-3 py-1 text-body hover:border-0`;
+  `${ACTIONS_ROW_BUTTON_CLASS} h-auto w-auto border-0 bg-transparent px-3 py-1 hover:border-0`;
 
 /**
  * The Sort select for the position list. Controlled: the trigger reads the

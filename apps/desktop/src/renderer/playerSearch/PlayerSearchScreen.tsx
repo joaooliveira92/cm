@@ -241,7 +241,7 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         onSubmit={onSubmit}
         className="mt-4 flex flex-wrap items-end gap-4 rounded-panel bg-panel-bg px-4 py-3"
       >
-        <label className="flex items-center gap-2 text-text-body">
+        <label className="flex items-center gap-2 text-text-soft">
           Name
           <Input
             type="text"
@@ -252,7 +252,7 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             placeholder="Any name"
           />
         </label>
-        <div className="flex items-center gap-2 text-text-body">
+        <div className="flex items-center gap-2 text-text-soft">
           Age
           <Input
             type="number"
@@ -274,7 +274,7 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             placeholder="Any"
           />
         </div>
-        <div className="flex items-center gap-2 text-text-body">
+        <div className="flex items-center gap-2 text-text-soft">
           Position
           <Select
             value={position}
@@ -295,7 +295,7 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center gap-2 text-text-body">
+        <div className="flex items-center gap-2 text-text-soft">
           Nationality
           <Select
             value={nationality}
@@ -319,7 +319,7 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             </SelectContent>
           </Select>
         </div>
-        <label className="flex items-center gap-2 text-text-body">
+        <label className="flex items-center gap-2 text-text-soft">
           Club
           <Input
             type="text"

@@ -119,7 +119,7 @@ const Report = ({ report }: { readonly report: MatchReportView }) => {
           const own = goals.filter((goal) => goal.clubId === clubId);
           return (
             <section key={clubId}>
-              <h2 className="text-heading text-text-body">{label}</h2>
+              <h2 className="text-heading text-text-soft">{label}</h2>
               {own.length === 0 ? (
                 <p className="mt-1 text-text-muted">None</p>
               ) : (
@@ -137,7 +137,7 @@ const Report = ({ report }: { readonly report: MatchReportView }) => {
       </div>
 
       <section>
-        <h2 className="text-heading text-text-body">Timeline</h2>
+        <h2 className="text-heading text-text-soft">Timeline</h2>
         {report.events.length === 0 ? (
           <p className="mt-1 text-text-muted">No goals, cards, injuries or substitutions.</p>
         ) : (
@@ -153,7 +153,7 @@ const Report = ({ report }: { readonly report: MatchReportView }) => {
       </section>
 
       <section>
-        <h2 className="mb-2 text-heading text-text-body">Statistics</h2>
+        <h2 className="mb-2 text-heading text-text-soft">Statistics</h2>
         <MatchStatsView view={report.statistics} />
       </section>
     </div>

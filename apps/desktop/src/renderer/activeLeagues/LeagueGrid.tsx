@@ -259,7 +259,7 @@ const DepthCell = ({
         if (value !== null) onChange(value as SimulationDepth);
       }}
     >
-      <SelectTrigger aria-label={depthAriaLabel(row)} className="h-6 min-w-0 px-1 text-data">
+      <SelectTrigger aria-label={depthAriaLabel(row)} className="h-6 min-w-0 px-1">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

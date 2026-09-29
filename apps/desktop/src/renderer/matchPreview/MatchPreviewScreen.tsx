@@ -64,7 +64,7 @@ export const MatchPreviewScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
       <section className="rounded-panel border border-panel-border-dark bg-panel-bg p-6 shadow-panel mb-6">
         <div className="text-center mb-4">
-          <p className="text-body text-text-tertiary uppercase tracking-wide">{pending.competitionId}</p>
+          <p className="text-overline uppercase text-text-tertiary">{pending.competitionId}</p>
           <p className="text-heading mt-2">{homeClub} vs {awayClub}</p>
           <p className="text-body text-text-secondary mt-1">{pending.date}</p>
         </div>

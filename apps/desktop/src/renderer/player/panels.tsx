@@ -9,6 +9,8 @@
  */
 import type { ReactNode } from "react";
 
+import { KeyValueKey, KeyValueList, KeyValueRow, KeyValueValue } from "../components/ui/key-value.js";
+
 const PANEL_CLASS = "rounded-panel bg-panel-bg px-3 pt-2 pb-3";
 const TITLE_CLASS = "text-heading text-text-highlight";
 
@@ -24,7 +26,7 @@ export const PlayerPanel = ({
 }) => (
   <section aria-label={title} className={`${PANEL_CLASS} ${className ?? ""}`}>
     <h2 className={TITLE_CLASS}>{title}</h2>
-    <dl className="mt-1.5">{children}</dl>
+    <KeyValueList className="mt-1.5">{children}</KeyValueList>
   </section>
 );
 
@@ -60,8 +62,10 @@ export const PlayerRow = ({
    *  Preferred Foot) to set them apart from the raw Attributes above them. */
   readonly emphasis?: boolean;
 }) => (
-  <div className="flex items-baseline justify-between gap-4 py-0.5 text-body">
-    <dt className={emphasis === true ? "text-text-highlight" : "text-text-body"}>{label}</dt>
-    <dd className="font-semibold text-text-highlight">{value}</dd>
-  </div>
+  <KeyValueRow className="py-0.5">
+    <KeyValueKey className={emphasis === true ? "text-text-highlight" : "text-text-soft"}>
+      {label}
+    </KeyValueKey>
+    <KeyValueValue className="text-text-highlight">{value}</KeyValueValue>
+  </KeyValueRow>
 );

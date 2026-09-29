@@ -139,7 +139,7 @@ const NationTreeRow = ({
         ) : null}
 
         {nation.available && (
-          <label className="flex items-center gap-1 text-data text-text-secondary">
+          <label className="flex items-center gap-1 text-label text-text-secondary">
             Mode
             <Select
               value={row.mode}
@@ -167,7 +167,7 @@ const NationTreeRow = ({
         )}
 
         {row.mode === "playable" && nation.scopeOptions.length > 0 && (
-          <label className="flex items-center gap-1 text-data text-text-secondary">
+          <label className="flex items-center gap-1 text-label text-text-secondary">
             Scope
             <Select
               value={row.scopeOptionId ?? ""}

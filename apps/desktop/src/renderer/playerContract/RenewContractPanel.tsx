@@ -72,7 +72,7 @@ export const RenewContractPanel = ({
       <p className="mt-1 text-body text-text-secondary">
         A renewal pays the Player's current formula wage for the length you choose.
       </p>
-      <div className="mt-3 flex items-center gap-3 text-body text-text-body">
+      <div className="mt-3 flex items-center gap-3 text-body text-text-soft">
         <span>Length</span>
         <Select
           value={String(years)}

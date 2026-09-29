@@ -93,7 +93,7 @@ const MessageRow = ({
   >
     <div className="flex items-baseline justify-between gap-2">
       <span
-        className={`truncate ${message.state === "unread" ? "font-semibold text-text-primary" : "text-text-body"}`}
+        className={`truncate ${message.state === "unread" ? "font-semibold text-text-primary" : "text-text-soft"}`}
       >
         {message.state === "unread" && <span aria-hidden="true">• </span>}
         {message.subject}
@@ -147,7 +147,7 @@ const MessagePane = ({
     <p className="mt-1 text-data text-text-secondary">
       {CATEGORY_LABELS[message.category]} · {whenLabel(message)}
     </p>
-    <p className="mt-4 flex-1 text-body leading-relaxed text-text-body">{message.body}</p>
+    <p className="mt-4 flex-1 text-body leading-relaxed text-text-soft">{message.body}</p>
     <div className="mt-4 flex flex-wrap gap-2">
       {/* The inbox reports the decision; it never resolves it. Answering a bid belongs to the
           screen that owns bids, so this routes there rather than growing a second respond surface

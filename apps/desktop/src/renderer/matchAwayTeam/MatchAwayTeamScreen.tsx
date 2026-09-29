@@ -13,9 +13,9 @@ const SlotRow = ({
   readonly index: number;
 }) => (
   <tr className={index % 2 === 0 ? "bg-panel-bg" : "bg-panel-bg-alt"}>
-    <td className="px-3 py-1 text-body font-medium text-text-secondary">{player.position}</td>
-    <td className="px-3 py-1 text-body">{player.firstName} {player.lastName}</td>
-    <td className="px-3 py-1 text-body text-text-secondary">{player.role}</td>
+    <td className="px-3 py-1 text-data font-medium text-text-secondary">{player.position}</td>
+    <td className="px-3 py-1 text-data">{player.firstName} {player.lastName}</td>
+    <td className="px-3 py-1 text-data text-text-secondary">{player.role}</td>
   </tr>
 );
 

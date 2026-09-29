@@ -18,6 +18,9 @@ import {
   isExpressionStatement,
   isIdentifier,
   isImportDeclaration,
+  isJsxAttribute,
+  isJsxOpeningElement,
+  isJsxSelfClosingElement,
   isNewExpression,
   isObjectLiteralExpression,
   isPropertyAccessExpression,
@@ -26,6 +29,7 @@ import {
   isStringLiteral,
   isTemplateLiteralLikeNode,
   isTrueLiteral,
+  isVariableDeclaration,
   isVoidExpression,
 } from "typescript/unstable/ast/is"
 import { API } from "typescript/unstable/sync"
@@ -383,6 +387,110 @@ export function lintRawTextSize(sourceFile: SourceFile, filePath: string): LintV
             rule: "no-raw-text-size",
             message: `Raw font size \`${hit}\`. Use a type-scale role (text-title, text-heading, text-body, text-data, text-label, text-caption, ...; see index.css @theme).`,
           })
+        }
+      }
+    }
+    node.forEachChild(visit)
+  }
+  visit(sourceFile)
+  out.sort((a, b) => a.line - b.line)
+  return out
+}
+
+// ---------------------------------------------------------------------------
+// The role-override guard.
+//
+// A role only stops drift if the same kind of text asks for it the same way on
+// every screen. The primitives in `components/ui` pick the role for their kind
+// of text — a table cell is `text-data`, a tab or button `text-label`, a
+// key-value key `text-label` — and a screen that passes a different role in
+// `className` puts that primitive at a second size on one screen. So a size
+// role in the `className` of a role-owning primitive is banned outside
+// `components/ui` (where primitives compose each other deliberately). A
+// primitive that is the wrong size everywhere is fixed in its own file.
+//
+// Sees literals anywhere in the attribute (`cn(...)`, templates, ternaries) and
+// constants declared in the same file; an imported class constant is out of
+// reach of a per-file scan.
+// ---------------------------------------------------------------------------
+
+/** The primitives whose own classes set a size role. `KeyValueValue` is left
+ *  out on purpose: a value may be a standalone figure (`text-figure`). */
+const ROLE_OWNING_PRIMITIVES = new Set([
+  "Badge",
+  "Button",
+  "Input",
+  "Kbd",
+  "KeyValueKey",
+  "KeyValueList",
+  "Label",
+  "SelectTrigger",
+  "Table",
+  "TableCell",
+  "TableHead",
+  "TabsTrigger",
+  "Textarea",
+  "Toggle",
+])
+
+/** A type-scale role, under any variant. A colour such as `text-text-secondary` does not match. */
+const TEXT_ROLE_PATTERN =
+  /(?<![a-zA-Z0-9-])text-(?:display|title|figure|heading|body|data|label|caption|overline)(?![a-zA-Z0-9-])/g
+
+const COMPONENTS_UI_DIR = join(RENDERER_DIR, "components", "ui")
+
+export function isRoleOverrideGuarded(filePath: string): boolean {
+  return isSlateGuarded(filePath) && !filePath.includes(COMPONENTS_UI_DIR)
+}
+
+export function lintRoleOverride(sourceFile: SourceFile, filePath: string): LintViolation[] {
+  const constants = new Map<string, Node>()
+  const collect = (node: Node): void => {
+    if (isVariableDeclaration(node) && isIdentifier(node.name) && node.initializer !== undefined) {
+      constants.set(node.name.text, node.initializer)
+    }
+    node.forEachChild(collect)
+  }
+  collect(sourceFile)
+
+  const literalTexts = (node: Node, seen: Set<string>): string[] => {
+    if (isStringLiteral(node) || isTemplateLiteralLikeNode(node)) {
+      const text = (node as Node & { text?: string }).text
+      return typeof text === "string" ? [text] : []
+    }
+    if (isIdentifier(node)) {
+      const initializer = constants.get(node.text)
+      if (initializer === undefined || seen.has(node.text)) return []
+      return literalTexts(initializer, new Set([...seen, node.text]))
+    }
+    const out: string[] = []
+    node.forEachChild((child) => {
+      out.push(...literalTexts(child, seen))
+    })
+    return out
+  }
+
+  const out: LintViolation[] = []
+  const visit = (node: Node): void => {
+    if (
+      (isJsxOpeningElement(node) || isJsxSelfClosingElement(node)) &&
+      isIdentifier(node.tagName) &&
+      ROLE_OWNING_PRIMITIVES.has(node.tagName.text)
+    ) {
+      const primitive = node.tagName.text
+      for (const attribute of node.attributes.properties) {
+        if (!isJsxAttribute(attribute) || !isIdentifier(attribute.name)) continue
+        if (attribute.name.text !== "className" || attribute.initializer === undefined) continue
+        const { line } = sourceFile.getLineAndCharacterOfPosition(attribute.getStart(sourceFile))
+        for (const text of literalTexts(attribute.initializer, new Set())) {
+          for (const hit of text.match(TEXT_ROLE_PATTERN) ?? []) {
+            out.push({
+              file: filePath,
+              line: line + 1,
+              rule: "no-role-override",
+              message: `\`${hit}\` on <${primitive}> overrides the role that primitive owns, so it reads at a different size here than on every other screen. Drop it, or change the role in components/ui if it is wrong everywhere.`,
+            })
+          }
         }
       }
     }
@@ -785,6 +893,7 @@ export function lintFileSet(
       const boundary = isBoundaryEnforced(file) ? lintBoundary(sourceFile, file) : []
       const slate = isSlateGuarded(file) ? lintSlateClassNames(sourceFile, file) : []
       const typeScale = isSlateGuarded(file) ? lintRawTextSize(sourceFile, file) : []
+      const roleOverride = isRoleOverrideGuarded(file) ? lintRoleOverride(sourceFile, file) : []
       const length = lintFileLength(sourceFile, file, cwd, options.maxFileLines)
       const pragma = lintVitestEnvironmentPragma(sourceFile, file, cwd)
       const locale = isLocaleFree(file, cwd) ? lintLocaleCompare(sourceFile, file) : []
@@ -792,14 +901,14 @@ export function lintFileSet(
       if (fixtureFiles.has(file)) {
         fixtureBoundaries.push({
           file,
-          violations: [...standard, ...boundary, ...slate, ...typeScale, ...length, ...pragma, ...locale, ...clock],
+          violations: [...standard, ...boundary, ...slate, ...typeScale, ...roleOverride, ...length, ...pragma, ...locale, ...clock],
         })
       } else {
         // Slate sites are counted, not reported here: the backlog ratchet in
         // `main` decides which of them are a regression and which are the
         // recorded migration debt. Reporting each one would drown the gate in
         // 391 known violations.
-        treeViolations.push(...standard, ...boundary, ...typeScale, ...length, ...pragma, ...locale, ...clock)
+        treeViolations.push(...standard, ...boundary, ...typeScale, ...roleOverride, ...length, ...pragma, ...locale, ...clock)
         if (slate.length > 0) {
           slateCounts.set(relative(cwd, file).replaceAll("\\", "/"), slate.length)
         }

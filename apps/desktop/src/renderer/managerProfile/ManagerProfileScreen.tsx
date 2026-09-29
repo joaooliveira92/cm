@@ -7,6 +7,7 @@ import { Alert } from "../components/ui/alert.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
 import { Card } from "../components/ui/card.js";
+import { KeyValueKey, KeyValueList, KeyValueRow, KeyValueValue } from "../components/ui/key-value.js";
 import { FOCUS_RING } from "../focus.js";
 import { STYLE_LABELS } from "../create/managerStyleCopy.js";
 import { getActiveMatch } from "../match/session.js";
@@ -102,7 +103,7 @@ const RetireManagerDialog = ({
           <h2 className="text-heading">Retire Manager</h2>
         </div>
         <div className={MODAL_BODY}>
-          <p className="text-body text-text-body">{RETIREMENT_DISCLOSURE}</p>
+          <p className="text-body text-text-soft">{RETIREMENT_DISCLOSURE}</p>
           <div className="mt-4 flex items-center justify-end gap-2">
             <Button ref={cancelRef} type="button" variant="secondary" onClick={onCancel}>
               Cancel
@@ -232,33 +233,33 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
 
       <Card className="mt-6 px-3 py-2">
         <p className="text-overline uppercase text-text-secondary">Personal</p>
-        <dl className="mt-1 grid grid-cols-2 gap-x-8 gap-y-0.5 text-body">
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Nationality</dt>
-            <dd className="font-semibold text-text-primary">{profile.nationalityName}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Date of birth</dt>
-            <dd className="font-semibold text-text-primary">{formatDateOfBirth(profile.dateOfBirth)}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Favorite team</dt>
-            <dd className="font-semibold text-text-primary">{profile.favoriteClubName ?? "None"}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Formation</dt>
-            <dd className="font-semibold text-text-primary">{profile.preferredFormation}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-text-secondary">Tactical style</dt>
-            <dd className="font-semibold text-text-primary">{STYLE_LABELS[profile.preferredStyleId]}</dd>
-          </div>
-        </dl>
+        <KeyValueList className="mt-1 grid grid-cols-2 gap-x-8 gap-y-0.5">
+          <KeyValueRow>
+            <KeyValueKey>Nationality</KeyValueKey>
+            <KeyValueValue>{profile.nationalityName}</KeyValueValue>
+          </KeyValueRow>
+          <KeyValueRow>
+            <KeyValueKey>Date of birth</KeyValueKey>
+            <KeyValueValue>{formatDateOfBirth(profile.dateOfBirth)}</KeyValueValue>
+          </KeyValueRow>
+          <KeyValueRow>
+            <KeyValueKey>Favorite team</KeyValueKey>
+            <KeyValueValue>{profile.favoriteClubName ?? "None"}</KeyValueValue>
+          </KeyValueRow>
+          <KeyValueRow>
+            <KeyValueKey>Formation</KeyValueKey>
+            <KeyValueValue>{profile.preferredFormation}</KeyValueValue>
+          </KeyValueRow>
+          <KeyValueRow>
+            <KeyValueKey>Tactical style</KeyValueKey>
+            <KeyValueValue>{STYLE_LABELS[profile.preferredStyleId]}</KeyValueValue>
+          </KeyValueRow>
+        </KeyValueList>
       </Card>
 
       <Card className="mt-3 px-3 py-2">
         <p className="text-overline uppercase text-text-secondary">Club</p>
-        <p className="mt-1 text-body text-text-body">{view.clubName}</p>
+        <p className="mt-1 text-body text-text-soft">{view.clubName}</p>
         <p className="mt-0.5 text-body text-text-secondary">Season {view.seasonNumber}</p>
         <p className="mt-0.5 text-body text-text-secondary">
           Tenure: {view.tenureSeasons} {view.tenureSeasons === 1 ? "season" : "seasons"}
@@ -267,14 +268,14 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
 
       <Card className="mt-3 px-3 py-2">
         <p className="text-overline uppercase text-text-secondary">Management Philosophy</p>
-        <dl className="mt-1 grid grid-cols-2 gap-x-8 gap-y-0.5 text-body">
+        <KeyValueList className="mt-1 grid grid-cols-2 gap-x-8 gap-y-0.5">
           {MANAGER_PILLARS.map((pillar) => (
-            <div key={pillar} className="flex justify-between">
-              <dt className="text-text-secondary">{PILLAR_LABELS[pillar]}</dt>
-              <dd className="font-semibold tabular-nums text-text-primary">{profile.pillars[pillar]}</dd>
-            </div>
+            <KeyValueRow key={pillar}>
+              <KeyValueKey>{PILLAR_LABELS[pillar]}</KeyValueKey>
+              <KeyValueValue className="tabular-nums">{profile.pillars[pillar]}</KeyValueValue>
+            </KeyValueRow>
           ))}
-        </dl>
+        </KeyValueList>
       </Card>
 
       {/* An archived save offers no retire action at all: the career has already ended, and the

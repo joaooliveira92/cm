@@ -121,7 +121,7 @@ export const ClubSquadScreen = ({
       {view.players.length === 0 ? (
         <p className="mt-8 text-text-secondary italic">This club has no players.</p>
       ) : (
-        <section className="mt-3 rounded-panel bg-panel-bg px-3 pt-2 pb-3">
+        <section className="mt-3 rounded-panel px-3 pt-2 pb-3">
           <h2 className="text-heading text-text-highlight">Players</h2>
           <SquadRoster
             table={roster.table}

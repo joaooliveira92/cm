@@ -1,11 +1,12 @@
+import { KeyValueKey, KeyValueList, KeyValueRow, KeyValueValue } from "../components/ui/key-value.js";
 import { useLeagueSelectionContext } from "./LeagueSelectionProvider.js";
 import { formatBytes, formatCount, SPEED_LABELS } from "./viewModel.js";
 
 const SummaryRow = ({ label, value }: { readonly label: string; readonly value: string }) => (
-  <div className="flex justify-between gap-2">
-    <dt className="text-text-secondary">{label}</dt>
-    <dd>{value}</dd>
-  </div>
+  <KeyValueRow className="gap-2">
+    <KeyValueKey>{label}</KeyValueKey>
+    <KeyValueValue>{value}</KeyValueValue>
+  </KeyValueRow>
 );
 
 const SelectionSummaryRoot = () => {
@@ -30,7 +31,7 @@ const SelectionSummaryRoot = () => {
               The estimate could not be calculated. Your selection is unaffected.
             </p>
           )}
-          <dl className={`mt-2 space-y-1 ${stale ? "opacity-60" : ""}`}>
+          <KeyValueList className={`mt-2 space-y-1 ${stale ? "opacity-60" : ""}`}>
             <SummaryRow label="Selected nations" value={formatCount(estimate.selectedNationCount)} />
             <SummaryRow label="Playable nations" value={formatCount(estimate.playableNationCount)} />
             <SummaryRow label="Playable competitions" value={formatCount(estimate.playableCompetitionCount)} />
@@ -45,7 +46,7 @@ const SelectionSummaryRoot = () => {
               value={SPEED_LABELS[estimate.simulationSpeedRating] ?? estimate.simulationSpeedRating}
             />
             <SummaryRow label="Estimate confidence" value={estimate.confidence} />
-          </dl>
+          </KeyValueList>
           <p className="mt-2 text-data text-text-muted">
             Estimates are approximate and vary with this computer's load.
           </p>

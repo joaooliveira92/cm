@@ -106,7 +106,7 @@ const TeamInstructionSliders = () => {
   if (!tactic) return null;
   return (
     <div>
-      <p className="mb-1 text-data font-semibold text-text-body">Team instructions</p>
+      <p className="mb-1 text-data font-semibold text-text-soft">Team instructions</p>
       <div className="flex gap-6">
         <InstructionSlider<Mentality>
           label="Mentality"
@@ -184,7 +184,7 @@ const SubstitutionControl = () => {
       )}
 
       <div>
-        <p className="mb-1 text-data font-semibold text-text-body">Make a substitution</p>
+        <p className="mb-1 text-data font-semibold text-text-soft">Make a substitution</p>
         <div className="flex items-end gap-2">
           <div>
             <p className="text-data text-text-secondary">Off</p>

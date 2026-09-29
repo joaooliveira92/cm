@@ -23,7 +23,7 @@ export const PlayerDevelopmentScreen = ({
     {() => (
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
         <PlayerNotePanel title="Training Focus">
-          <p className="text-body text-text-body">
+          <p className="text-body text-text-soft">
             Set a training focus to bias Player Development for one Category this season.
           </p>
           <div className="mt-3">
@@ -31,7 +31,7 @@ export const PlayerDevelopmentScreen = ({
           </div>
         </PlayerNotePanel>
         <PlayerNotePanel title="Development History">
-          <p className="text-body text-text-body">
+          <p className="text-body text-text-soft">
             Per-season Attribute changes are on this player&apos;s Performance Report. Player
             Development runs once per Season Concluded, independently per player, deterministically.
           </p>

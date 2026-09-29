@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { MENTALITY_OPTIONS, PRESSING_OPTIONS, TEMPO_OPTIONS, isCustomShape } from "@cm-clone/shared";
 import { Badge } from "../components/ui/badge.js";
 import { Card, CardContent } from "../components/ui/card.js";
+import { KeyValueKey, KeyValueList, KeyValueRow, KeyValueValue } from "../components/ui/key-value.js";
 import {
   Table,
   TableBody,
@@ -80,9 +81,9 @@ export const SelectionCard = ({ view }: View) => {
           </p>
         </div>
         {view.assignments.length === 0 ? (
-          <p className="mt-2 text-text-body">No starters selected.</p>
+          <p className="mt-2 text-text-soft">No starters selected.</p>
         ) : (
-          <Table className="mt-2 min-w-full text-left text-body">
+          <Table className="mt-2 min-w-full text-left">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-10 pr-2">Pos</TableHead>
@@ -130,7 +131,7 @@ export const SelectionCard = ({ view }: View) => {
               {view.selection.substitutes.map((player) => (
                 <li
                   key={player.id}
-                  className="rounded-control border border-border-subtle px-2 py-0.5 text-text-body"
+                  className="rounded-control border border-border-subtle px-2 py-0.5 text-text-soft"
                 >
                   {player.firstName} {player.lastName}
                 </li>
@@ -155,10 +156,10 @@ const InstructionScale = ({
   readonly value: string;
 }) => (
   <div>
-    <div className="flex justify-between text-body">
-      <dt className="text-text-secondary">{label}</dt>
-      <dd className="font-semibold">{capitalize(value)}</dd>
-    </div>
+    <KeyValueRow>
+      <KeyValueKey>{label}</KeyValueKey>
+      <KeyValueValue>{capitalize(value)}</KeyValueValue>
+    </KeyValueRow>
     <div aria-hidden="true" className="mt-1 flex gap-1">
       {options.map((option) => (
         <span
@@ -177,13 +178,13 @@ export const TeamInstructionsCard = ({ view }: View) => {
       <CardContent className="pt-2">
         <CardHeading>Team instructions</CardHeading>
         {instructions === null ? (
-          <p className="mt-1 text-text-body">Set a tactic to choose instructions.</p>
+          <p className="mt-1 text-text-soft">Set a tactic to choose instructions.</p>
         ) : (
-          <dl className="mt-2 space-y-3">
+          <KeyValueList className="mt-2 space-y-3">
             <InstructionScale label="Mentality" options={MENTALITY_OPTIONS} value={instructions.mentality} />
             <InstructionScale label="Tempo" options={TEMPO_OPTIONS} value={instructions.tempo} />
             <InstructionScale label="Pressing" options={PRESSING_OPTIONS} value={instructions.pressing} />
-          </dl>
+          </KeyValueList>
         )}
       </CardContent>
     </Card>
@@ -207,7 +208,7 @@ export const FamiliarityCard = ({ view }: View) => {
       <CardContent className="pt-2">
         <CardHeading>Familiarity</CardHeading>
         {familiarity === null ? (
-          <p className="mt-1 text-text-body">Familiarity is derived from the starters' positions.</p>
+          <p className="mt-1 text-text-soft">Familiarity is derived from the starters' positions.</p>
         ) : (
           <>
             {total > 0 && (
@@ -221,17 +222,17 @@ export const FamiliarityCard = ({ view }: View) => {
                 ))}
               </div>
             )}
-            <dl className="mt-2 space-y-0.5 text-body">
+            <KeyValueList className="mt-2 space-y-0.5">
               {FAMILIARITY_TIERS.map((tier) => (
-                <div key={tier.key} className="flex items-center justify-between">
-                  <dt className="flex items-center gap-2 text-text-secondary">
+                <KeyValueRow key={tier.key} className="items-center">
+                  <KeyValueKey className="flex items-center gap-2">
                     <span aria-hidden="true" className={`size-2 rounded-full ${tier.fill}`} />
                     {tier.label}
-                  </dt>
-                  <dd className="font-semibold tabular-nums">{familiarity[tier.key]}</dd>
-                </div>
+                  </KeyValueKey>
+                  <KeyValueValue className="tabular-nums">{familiarity[tier.key]}</KeyValueValue>
+                </KeyValueRow>
               ))}
-            </dl>
+            </KeyValueList>
           </>
         )}
       </CardContent>
@@ -244,9 +245,9 @@ export const SetPiecesCard = ({ view }: View) => (
     <CardContent className="pt-2">
       <CardHeading>Set pieces</CardHeading>
       {view.setPieces.status === "none" ? (
-        <p className="mt-1 text-text-body">No set pieces configured.</p>
+        <p className="mt-1 text-text-soft">No set pieces configured.</p>
       ) : (
-        <p className="mt-1 text-text-body">{view.setPieces.status}</p>
+        <p className="mt-1 text-text-soft">{view.setPieces.status}</p>
       )}
     </CardContent>
   </Card>

@@ -7,7 +7,7 @@ export interface LeagueOverviewProps {
 
 /** The panel before a pick: the league's size and how its clubs split across stature tiers. */
 export const LeagueOverview = ({ summary }: LeagueOverviewProps) => (
-  <div className="text-text-body">
+  <div className="text-text-soft">
     <h3 className="text-heading text-text-primary">The league</h3>
     <p className="mt-2 text-body">
       {summary.clubCount} club{summary.clubCount === 1 ? "" : "s"} to choose from.

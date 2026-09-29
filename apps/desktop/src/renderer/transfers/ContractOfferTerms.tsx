@@ -145,7 +145,7 @@ export const ContractOfferTerms = ({
         weekly wage {formatFigureCredits(offer.wage)}.
       </p>
       <div className="mt-3 flex flex-wrap items-end gap-3">
-        <label className="text-body text-text-body" htmlFor="offer-role">
+        <label className="text-label text-text-soft" htmlFor="offer-role">
           Role
           <Select
             value={role ?? ""}
@@ -169,7 +169,7 @@ export const ContractOfferTerms = ({
             </SelectContent>
           </Select>
         </label>
-        <label className="text-body text-text-body" htmlFor="offer-years">
+        <label className="text-label text-text-soft" htmlFor="offer-years">
           Length
           <Select
             value={String(years)}
@@ -193,7 +193,7 @@ export const ContractOfferTerms = ({
             </SelectContent>
           </Select>
         </label>
-        <label className="text-body text-text-body" htmlFor="offer-wage">
+        <label className="text-label text-text-soft" htmlFor="offer-wage">
           Weekly wage
           <Input
             id="offer-wage"

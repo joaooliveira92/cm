@@ -17,6 +17,7 @@
  * the owner.
  */
 import { type ClubId, type SaveId } from "@cm-clone/contracts";
+import { KeyValueKey, KeyValueList, KeyValueRow, KeyValueValue } from "../components/ui/key-value.js";
 import { FOCUS_RING } from "../focus.js";
 import {
   clubInformationAtom,
@@ -54,10 +55,10 @@ const ClubInformationMessage = ({ message }: { readonly message: string }) => (
 /** One labelled fact. A definition list rather than a table: these are properties of one club, not
  *  rows of a collection, and a screen reader should hear the pairing. */
 const Fact = ({ label, value }: { readonly label: string; readonly value: string }) => (
-  <div className="flex gap-2">
-    <dt className="text-text-secondary">{label}</dt>
-    <dd className="font-medium">{value}</dd>
-  </div>
+  <KeyValueRow className="justify-start gap-2">
+    <KeyValueKey>{label}</KeyValueKey>
+    <KeyValueValue>{value}</KeyValueValue>
+  </KeyValueRow>
 );
 
 export const ClubInformationScreen = ({
@@ -92,7 +93,7 @@ export const ClubInformationScreen = ({
         <p className="mt-1 text-body text-text-secondary">[Not your club]</p>
       )}
 
-      <dl className="mt-6 space-y-2 text-body">
+      <KeyValueList className="mt-6 space-y-2">
         <Fact label="Standing" value={STATURE_LABELS[view.club.statureTier]} />
         <Fact label="Town" value={view.cityName} />
         <Fact label="Nation" value={view.nationName} />
@@ -101,7 +102,7 @@ export const ClubInformationScreen = ({
           label="Capacity"
           value={new Intl.NumberFormat().format(view.stadiumCapacity)}
         />
-      </dl>
+      </KeyValueList>
     </main>
   );
 };

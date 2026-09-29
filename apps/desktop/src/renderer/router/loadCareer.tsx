@@ -260,10 +260,10 @@ export const LoadCareerScreen = () => {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="mx-4 max-w-md rounded-panel bg-panel-bg p-6 shadow-panel">
               <h2 className="text-heading">Credits</h2>
-              <p className="mt-2 text-body text-text-body">
+              <p className="mt-2 text-body text-text-soft">
                 cm-clone -- a local single-player football-management simulation.
               </p>
-              <p className="mt-2 text-body text-text-body">
+              <p className="mt-2 text-body text-text-soft">
                 Built with Electron, React, Effect, and TypeScript.
               </p>
               <Button

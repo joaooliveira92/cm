@@ -27,10 +27,10 @@ export const ClubHero = ({ club }: ClubHeroProps) => {
             {club.clubName}
           </h2>
           <div className="flex items-center gap-2 mt-1">
-            <Badge variant="secondary" className="text-caption">
+            <Badge variant="secondary">
               {statureLabel(club.statureTier)}
             </Badge>
-            <Badge className="text-caption">{club.squadQualityBand}</Badge>
+            <Badge>{club.squadQualityBand}</Badge>
           </div>
         </div>
       </div>

@@ -13,7 +13,7 @@ export const TopPlayerRow = ({ player }: TopPlayerRowProps) => (
         <div className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-surface-raised transition-colors">
           <span className="truncate text-body font-medium text-text-primary">{player.name}</span>
           <div className="flex items-center gap-1.5 shrink-0">
-            <Badge variant="outline" className="text-caption">
+            <Badge variant="outline">
               {player.position}
             </Badge>
             <span className="text-data font-semibold tabular-nums">{player.overallRating}</span>

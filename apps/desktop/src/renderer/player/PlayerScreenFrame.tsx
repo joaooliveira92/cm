@@ -39,7 +39,7 @@ const TAB_LABELS: Readonly<Record<PlayerTabId, string>> = Object.fromEntries(
   TABS.map((entry) => [entry.id, entry.label]),
 ) as Record<PlayerTabId, string>;
 
-const TAB_BASE_CLASS = `flex-1 rounded-control px-3 py-1.5 text-center text-body font-semibold transition-colors ${FOCUS_RING.join(" ")}`;
+const TAB_BASE_CLASS = `flex-1 rounded-control px-3 py-1.5 text-center text-label transition-colors ${FOCUS_RING.join(" ")}`;
 
 const PlayerTabStrip = ({
   saveId,

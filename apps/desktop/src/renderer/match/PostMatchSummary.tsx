@@ -81,7 +81,7 @@ export const PostMatchSummary = ({ saveId, matchId }: { readonly saveId: SaveId;
 
       {wentToPenalties && (
         <div className="rounded border border-border-subtle bg-bg-subtle p-3 text-data">
-          <p className="font-semibold text-text-body">Penalty shootout</p>
+          <p className="font-semibold text-text-soft">Penalty shootout</p>
           <p className="mt-1 text-text-secondary">
             {summary.homeClubName} {summary.homePenalties} - {summary.awayPenalties} {summary.awayClubName}
           </p>
@@ -98,7 +98,7 @@ export const PostMatchSummary = ({ saveId, matchId }: { readonly saveId: SaveId;
       </div>
 
       <div>
-        <h3 className="text-heading text-text-body">Cards and injuries</h3>
+        <h3 className="text-heading text-text-soft">Cards and injuries</h3>
         {incidents.length === 0 ? (
           <p className="mt-1 text-text-muted">No cards or injuries.</p>
         ) : (
@@ -143,7 +143,7 @@ const Scorers = ({
   const own = goals.filter((goal) => goal.clubId === clubId);
   return (
     <div>
-      <h3 className="text-heading text-text-body">{label}</h3>
+      <h3 className="text-heading text-text-soft">{label}</h3>
       {own.length === 0 ? (
         <p className="mt-1 text-text-muted">None</p>
       ) : (

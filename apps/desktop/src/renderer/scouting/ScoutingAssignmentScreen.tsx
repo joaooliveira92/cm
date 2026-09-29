@@ -141,7 +141,7 @@ const ClubPicker = ({
     ...clubs.map((club) => ({ label: club.clubName, value: club.clubId as string })),
   ];
   return (
-    <div className="mt-4 flex items-center gap-3 text-body text-text-body">
+    <div className="mt-4 flex items-center gap-3 text-body text-text-soft">
       <span>Club to scout</span>
       <Select
         value={clubId ?? ""}

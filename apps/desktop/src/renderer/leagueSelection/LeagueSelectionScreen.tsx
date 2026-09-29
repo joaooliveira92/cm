@@ -117,7 +117,7 @@ const LeagueSelectionContent = () => {
   }
   if (screenState.noPlayableNations) {
     return (
-      <div role="alert" className="text-text-body">
+      <div role="alert" className="text-text-soft">
         <h2 className="text-heading">No playable leagues in this database</h2>
         <p className="mt-2 text-body text-text-secondary">
           {index.databaseName} contains no league this game can make playable, so a career cannot

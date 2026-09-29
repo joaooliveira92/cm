@@ -8,7 +8,7 @@ interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
 
 const Table = ({ className, ref, ...props }: TableProps) => (
   <div className="relative w-full overflow-auto">
-    <table ref={ref} className={cn("w-full caption-bottom text-body", className)} {...props} />
+    <table ref={ref} className={cn("w-full caption-bottom text-data", className)} {...props} />
   </div>
 );
 Table.displayName = "Table";
@@ -77,7 +77,7 @@ const TableCell = ({ className, ref, ...props }: TableTdProps) => (
   <td
     ref={ref}
     className={cn(
-      "px-1.5 py-0.5 align-middle text-body font-semibold [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+      "px-1.5 py-0.5 align-middle text-data font-semibold [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
       className,
     )}
     {...props}
@@ -90,7 +90,7 @@ interface TableCaptionProps extends React.HTMLAttributes<HTMLTableCaptionElement
 }
 
 const TableCaption = ({ className, ref, ...props }: TableCaptionProps) => (
-  <caption ref={ref} className={cn("mt-4 text-body text-muted-foreground", className)} {...props} />
+  <caption ref={ref} className={cn("mt-4 text-caption text-muted-foreground", className)} {...props} />
 );
 TableCaption.displayName = "TableCaption";
 

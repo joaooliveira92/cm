@@ -148,7 +148,7 @@ const AddLeagueControl = ({
           if (next !== null) setChosen(next);
         }}
       >
-        <SelectTrigger aria-label="League to add" className="h-8 max-w-56 px-2 text-data">
+        <SelectTrigger aria-label="League to add" className="h-8 max-w-56 px-2">
           <SelectValue
             placeholder={candidates.length === 0 ? "Every league is active" : "Choose a league…"}
           />

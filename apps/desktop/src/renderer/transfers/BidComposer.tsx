@@ -151,7 +151,7 @@ export const BidComposer = () => {
           />
         ) : (
           <div className="mt-2 flex items-center gap-2">
-            <label className="text-body text-text-body" htmlFor="bid-amount">
+            <label className="text-label text-text-soft" htmlFor="bid-amount">
               Your bid:
             </label>
             <Input

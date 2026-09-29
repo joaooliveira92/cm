@@ -62,7 +62,7 @@ const SubstitutionForm = ({
   return (
     <section aria-label="Make a substitution" className="space-y-3">
       <div className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-data text-text-secondary">
+        <label className="flex flex-col gap-1 text-label text-text-secondary">
           Player coming off
           <select
             value={outPlayerId}
@@ -78,7 +78,7 @@ const SubstitutionForm = ({
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-data text-text-secondary">
+        <label className="flex flex-col gap-1 text-label text-text-secondary">
           Player coming on
           <select
             value={inPlayerId}

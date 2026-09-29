@@ -76,12 +76,12 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
           <CardTitle className="text-heading">{summary.clubName}</CardTitle>
         </CardHeader>
         <CardContent>
-        <p className="text-body text-text-body">
+        <p className="text-body text-text-soft">
           Final League position:{" "}
           <span className="font-semibold">{summary.finalPosition ?? rank ?? "TBD"}</span>
         </p>
         {objective && (
-          <p className="mt-1 text-body text-text-body">
+          <p className="mt-1 text-body text-text-soft">
             Board Objective: finish between {objective.minPosition} and {objective.maxPosition}
           </p>
         )}

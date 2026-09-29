@@ -219,7 +219,7 @@ const StaffProfileBody = ({
   </>
 );
 
-const POSITION_BUTTON_CLASS = `rounded-control px-2 py-1 text-data font-semibold transition-colors ${FOCUS_RING.join(" ")}`;
+const POSITION_BUTTON_CLASS = `rounded-control px-2 py-1 text-label transition-colors ${FOCUS_RING.join(" ")}`;
 
 /**
  * The squad, best first, at one Position, as this person judges it. Defaults to Striker, as CM
