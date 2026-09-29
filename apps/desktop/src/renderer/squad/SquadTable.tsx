@@ -23,6 +23,7 @@ import { SquadRoster } from "./SquadRoster.js";
 import { SQUAD_TOGGLEABLE_COLUMN_IDS } from "../table/features/visibility.js";
 import { SQUAD_VIEWS, squadViewById } from "./squadViews.js";
 import { SquadPositionList } from "./SquadPositionList.js";
+import { SquadSortSelect } from "./SquadSortSelect.js";
 import { MatchDayBar } from "./MatchDayBar.js";
 import { ACTIONS_ROW_BUTTON_CLASS, ACTIONS_ROW_ITEM_CLASS } from "./actionsRowClasses.js";
 import { AttributeFilterPopover } from "./AttributeFilterPopover.js";
@@ -240,6 +241,7 @@ export const SquadTable = () => {
     refreshState,
     copy,
     orderedIds,
+    sort,
     table,
   } = state;
   const {
@@ -305,7 +307,9 @@ export const SquadTable = () => {
 
   /* Register the Position, Status and View selectors in the career chrome's
    *  actions row. These use the same Popover + button pattern as the
-   *  Actions menu so they look identical. */
+   *  Actions menu so they look identical. The Sort control joins them only for
+   *  the position list: a table's headers are its sort control, and two
+   *  controls for one state is one too many. */
   const toolbarControls = useMemo(
     () => (
       <>
@@ -417,10 +421,12 @@ export const SquadTable = () => {
             </div>
           </PopoverContent>
         </Popover>
+        {view.layout === "list" && <SquadSortSelect sort={sort} onSortCycle={onSortCycle} />}
       </>
     ),
     [
-      viewId,
+      view.layout,
+      sort,
       activePosition,
       activeStatus,
       activeAttribute,
@@ -429,6 +435,7 @@ export const SquadTable = () => {
       setStatusFilter,
       setAttributeFilter,
       clearAttributeFilter,
+      onSortCycle,
       viewOpen,
       positionOpen,
       statusOpen,

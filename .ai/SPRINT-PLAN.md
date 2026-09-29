@@ -244,11 +244,15 @@ single unblock and touches no schema.
 has an answer, and the four `ready-for-human` tickets were decided under the human's standing
 delegation. Agent-startable work, in order:
 
-1. **desktop-suite-red's queue is empty (2026-09-28).** `dev` had gone red overnight: 60 desktop unit
-   failures and e2e Select timeouts, all from the 2026-09-27/28 UI commits. The shared Select is back on
-   Base UI's Select primitive ([19](../.scratch/desktop-suite-red/issues/19-select-popup-has-no-listbox.md)),
-   and the rest was fixed in four commits. `check:all` passes 2338 of 2338, and e2e passed 67 of 67 three
-   times from a fresh install. [18](../.scratch/desktop-suite-red/issues/18-two-unreproduced-e2e-failure-shapes.md)
+1. **desktop-suite-red has one new ticket (2026-09-29).** [20](../.scratch/desktop-suite-red/issues/20-playwright-can-run-a-stale-dist.md):
+   **Playwright can run a stale `dist/` and report green.** `pretest:e2e` fires for the *script
+   name*, not the binary, so `pnpm exec playwright test` and `npx playwright test` skip the build
+   and test the last artifact. Found while building squad-instructions 04: a mutation to `cycleSort`
+   passed e2e because it had never been compiled. The fix is a staleness check in `e2e/globalSetup.ts`.
+   **Run e2e only as `pnpm --filter @cm-clone/desktop test:e2e`.** Its queue was otherwise empty —
+   `dev` had gone red overnight, the shared Select is back on Base UI's Select primitive
+   ([19](../.scratch/desktop-suite-red/issues/19-select-popup-has-no-listbox.md)), and the rest was
+   fixed in four commits. [18](../.scratch/desktop-suite-red/issues/18-two-unreproduced-e2e-failure-shapes.md)
    closed as not reproducible. Before calling a red e2e run a regression, check `pmset -g log` for a
    sleep inside its window, and remember that e2e is outside `check:all`.
 2. **Group G 42 resolved 2026-09-27** (`eeff2cd8`): Quick result skips the live reveal.
@@ -257,10 +261,31 @@ delegation. Agent-startable work, in order:
    (attribute threshold filter, **shipped 2026-09-28**), then the squad-instructions remainder chartered
    in [its 01](../.scratch/squad-instructions/issues/01-reconcile-the-loose-squad-instruction.md):
    [02](../.scratch/squad-instructions/issues/02-contract-view.md) (Contract view, which widens
-   `SquadPlayerView`), [03](../.scratch/squad-instructions/issues/03-match-day-column-in-the-table.md)
+   `SquadPlayerView`, **shipped 2026-09-28** in `fac74447`),
+   [03](../.scratch/squad-instructions/issues/03-match-day-column-in-the-table.md)
    (match-day column in the table), and [04](../.scratch/squad-instructions/issues/04-sort-control-for-the-position-list.md)
-   (Sort for the position list, blocked by 02), and [05](../.scratch/squad-instructions/issues/05-empty-slot-prioritises-fitting-players.md)
-   (an empty lineup slot brings the players who fit it to the top). **Next: squad-instructions 02.**
+   (Sort for the position list, **shipped 2026-09-29**), and [05](../.scratch/squad-instructions/issues/05-empty-slot-prioritises-fitting-players.md)
+   (an empty lineup slot brings the players who fit it to the top). **Next: squad-instructions 05.**
+
+   **squad-instructions 03 is a stale `claimed` lock and needs a sweep.** It has carried `claimed`
+   since 2026-09-28 with no `## Comments` and no work attributable to it, and the match-day column it
+   describes is in fact in the tree — `squadColumns.tsx:211-226` builds the column from a `matchDay`
+   option, `SelectionIndicator.tsx:67` exports the shared `MatchDayCell`, and `useSquadTable.ts:66`
+   wires them. So it is a lock over work that is either done or in flight, and the frontier scan skips
+   it either way. Resolve it against the tree when the effort closes, as group-i 12 was.
+
+   **Ticket 04 shipped `SquadSortSelect`** — the toolbar's Sort, list layout only, running the shared
+   `cycleSort` through the screen's own `onSortCycle`, so it is the header's control relocated rather
+   than a second sort model. Two departures from the ticket, both in its `## Answer`: option labels
+   come from the shared header map (`Positions`, `OVR`) so an option cannot disagree with the header
+   it mirrors, and `Positions` orders alphabetically by the rendered string, which is pre-existing and
+   deliberately left alone while
+   [player-positional-model](../.scratch/player-positional-model/issues/08-compact-position-label.md)
+   settles what that string is. The review caught a **contradicted Agent Note** — the squad view
+   selector note had listed this control as deliberately omitted, with a rationale the code disproves
+   — corrected in the same commit, which is why the note now argues the list needs the control rather
+   than the other way round. `check:all` green on 2423 desktop tests, e2e 68 of 68.
+   [Report](../.ai/reports/squad-instructions.md).
 4. **The knowledge-limited Player reads are all four shipped**, and **both efforts' queues are empty**
    (group-i 12/12, group-j 9/9). [group-i 12 — Transfer Target Comparison](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md)
    shipped in `eed6ce49` and had been sitting at `claimed` ever since — a stale lock over completed

@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import {
   assignFullTactic,
+  chooseOption,
   chooseToolbarOption,
   continueSeededCareer,
   expect,
@@ -8,6 +9,7 @@ import {
   matchScore,
   openLivePanel,
   openTacticsEditor,
+  optionLabels,
   test,
 } from "./launchApp.js";
 import { savesDir, seedBeforeMatchday, seedConcluded, seedFresh } from "./seedSaves.js";
@@ -36,6 +38,69 @@ test("Squad opens on the position list and the View selector swaps it for a tabl
   await expect(window.getByRole("heading", { name: "Players (General Info)" })).toBeVisible();
   await expect(window.locator("tbody tr")).toHaveCount(playersCount);
   await expect(window.getByRole("columnheader", { name: "Nationality" })).toBeVisible();
+});
+
+/** The position list's row names, in the order the two columns read them. */
+const positionListNames = (window: Page) =>
+  window.locator("li button[data-focus-id]").allInnerTexts();
+
+/** The given rows in the order the Name sort puts them in. A list row reads
+ *  "Last, First" while the Name column sorts on "First Last", so the two are not
+ *  the same string order and the expected one has to be built, not eyeballed. */
+const byNameOrder = (rows: ReadonlyArray<string>): string[] => {
+  const key = (row: string): string => {
+    const [last, first] = row.split(", ");
+    return `${first} ${last}`;
+  };
+  return [...rows].sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
+};
+
+test("the position list's Sort control reorders the list, flips on a re-pick, and is the list's alone", async ({ userDataDir, window }) => {
+  await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
+
+  // The list is the one layout with no header to click, so it is the one the
+  // toolbar's Sort control exists for.
+  const unsorted = await positionListNames(window);
+  expect(unsorted.length).toBeGreaterThan(1);
+  expect(await optionLabels(window, "Sort squad")).toEqual([
+    "Positions",
+    "Name",
+    "Age",
+    "OVR",
+    "Condition",
+    "Wage",
+    "Contract ends",
+    "Transfer Value",
+  ]);
+
+  // The expected order is built from the *unsorted* rows, before the sort is
+  // ever applied. Deriving it from the sorted rows instead would let a sort
+  // that silently became a no-op pass, by always agreeing with whatever order
+  // the list happened to be in. Pinning the first row by name does the same job
+  // from the other side: an anchor the sorted list has to actually produce.
+  const expected = byNameOrder(unsorted);
+  // Guards the guard: if the seed ever draws a squad already in name order, the
+  // two assertions below would hold for free, and this says so instead.
+  expect(expected).not.toEqual(unsorted);
+  const anchor = expected[0];
+
+  await chooseOption(window, "Sort squad", "Name");
+  const ascending = await positionListNames(window);
+  expect(ascending).toEqual(expected);
+  expect(ascending[0]).toBe(anchor);
+  // The same cycle a column header gives: the same option again reverses it.
+  await chooseOption(window, "Sort squad", "Name");
+  expect(await positionListNames(window)).toEqual([...ascending].reverse());
+
+  // A table's headers are its sort control, so the toolbar offers no second one
+  // there — and the sort made in the list is still in force when the table draws.
+  await chooseToolbarOption(window, "Squad view", "Contract");
+  await expect(window.getByRole("combobox", { name: "Sort squad" })).toHaveCount(0);
+  await expect(window.locator("tbody tr")).toHaveCount(ascending.length);
+
+  await chooseToolbarOption(window, "Squad view", "Traditional");
+  await expect(window.getByRole("combobox", { name: "Sort squad" })).toContainText("Name");
+  expect(await positionListNames(window)).toEqual([...ascending].reverse());
 });
 
 test("Tactics opens on the read-only overview; the editor is one step away and the save persists", async ({ userDataDir, window }) => {

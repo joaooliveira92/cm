@@ -76,6 +76,17 @@ bookmark survives a view change. Arrow keys read the geometry: up/down move down
 left/right cross to the same offset in the other column, and the crossing is clamped rather than
 wrapped so the odd row at the foot of the left column does not jump to the top.
 
+**The list needs a Sort control of its own, because it has no header to click.** This note first
+recorded the opposite — that a list Sort dropdown "would be a new control rather than a relocated
+one" — and that was wrong in a way worth naming: it read like a budget argument, and the budget was
+never the question. A header row is a control, and removing the header removed the control with it,
+leaving the shared sort reachable only from the command palette. The list did not lose a
+convenience; it lost the only affordance a manager who is not holding the palette key has.
+`squad-instructions` 04 shipped `SquadSortSelect` in the toolbar, list layout only: the same
+`cycleSort` the headers run, so it is that control relocated rather than a second sort that could
+disagree with it. Table layouts still sort from their headers alone, because there a second control
+for one state would be one too many.
+
 **The two held views wait on their foundations.** *Selection* is designed: the match-day indicator
 (starting slot, bench, or not selected) from `squad-instructions` ticket 03, plus Condition and the
 Position Rating of every position the player can play. Ticket 03 has put the indicator in the table,
@@ -96,8 +107,6 @@ and tickets. A view that showed placeholder numbers would breach Mechanical Prov
 
 ## Not done here
 
-- A Sort control on the list. Sorting comes from the table headers and the palette; the list has no
-  header row to click, so a sort dropdown would be a new control rather than a relocated one.
 - Custom, saveable views (Screen 70's "save, rename, duplicate, delete a personal view"). The shipped
   catalogue is the built-in preset half of that spec.
 - Player colouring for transfer-listed, loaned or wanted players. Those states are reserved in the

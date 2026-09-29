@@ -12,8 +12,8 @@
  * beside the name, so a `<table>` would buy a header row, per-column sorting
  * semantics and a grid navigation model for a single field. Sorting and
  * filtering still apply — the ordering comes from the same TanStack table the
- * table views render, so the toolbar and the command palette drive both
- * layouts identically.
+ * table views render, so the toolbar's Sort control and the command palette
+ * drive both layouts identically, and the sort set here survives a view change.
  *
  * Focus follows the table's model exactly (note: Navigation model, AC-28): one
  * focusable control per row — the name button — carrying the same
