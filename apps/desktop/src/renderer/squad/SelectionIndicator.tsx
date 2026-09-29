@@ -47,11 +47,12 @@ export const SelectionIndicator = ({ slot }: { readonly slot: LineupSlot | null 
   // Always drawn, filled or not, the way CM's row buttons sat at the head of every line: an empty
   // chip reads "not selected", not "missing control". Empty is a dashed outline with no fill, the
   // pitch's empty-slot idiom, so it holds its place without weighing as much as a filled chip.
+  // Under the Neutral theme the highlight is a grey, so a starter takes the bench chip's chrome.
   const tone = slot === null
     ? "border-dashed border-text-muted/60 text-transparent"
     : slot.kind === "bench"
       ? "chrome-gradient border-panel-border-dark text-text-bright shadow-chrome"
-      : "border-text-highlight bg-text-highlight/15 text-text-highlight shadow-chrome";
+      : "chrome-gradient-highlight border-text-highlight/70 text-text-highlight shadow-chrome theme-neutral:chrome-gradient theme-neutral:border-panel-border-dark theme-neutral:text-text-bright";
   return (
     <span
       title={labelled}

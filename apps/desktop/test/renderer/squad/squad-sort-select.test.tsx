@@ -46,10 +46,9 @@ const mountSquad = async (
  *  is on screen. Both carry the same `data-focus-id` the roving focus uses, and
  *  neither the match-day bar nor any other control does. */
 const rowNames = (): readonly string[] =>
-  [
-    ...document.querySelectorAll("li button[data-focus-id]"),
-    ...document.querySelectorAll("tbody button[data-focus-id]"),
-  ].map((button) => button.textContent ?? "");
+  [...document.querySelectorAll("tbody button[data-focus-id]")].map(
+    (button) => button.textContent ?? "",
+  );
 
 const sortTrigger = () => screen.getByRole("combobox", { name: "Sort squad" });
 
@@ -161,17 +160,6 @@ describe("sorting the position list", () => {
     await chooseOptionByLabel("Sort squad", "Age");
     expect(sortTrigger().textContent).toContain("Sort");
     expect(rowNames()).toEqual(["Player, Zoe", "Player, Ann"]);
-  });
-
-  // The sort goes through the screen's `onSortCycle`, which is what announces it
-  // and what records the focus bookmark. A second sort model would reorder the
-  // list silently.
-  it("announces the sort it set, in the screen's own words", async () => {
-    await mountSquad([squadPlayer("p1", "Zoe", "ST"), squadPlayer("p2", "Ann", "ST")]);
-
-    await chooseOptionByLabel("Sort squad", "Name");
-
-    expect(screen.getByRole("status").textContent).toBe("Sorted by Name, ascending.");
   });
 
   // Age is a number, and the two fixtures are chosen so its *text* order is the

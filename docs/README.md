@@ -11,6 +11,7 @@ Start here. `docs/` holds human-facing prose; the decision record lives in
 | [development.md](development.md) | Setup tutorial, then daily workflow, repository layout and CI. |
 | [e2e.md](e2e.md) | The Playwright + Electron end-to-end suites and how to run them. |
 | [roadmap.md](roadmap.md) | Point-in-time snapshot of where efforts stand. Read by `scripts/resolve-ticket.ts`, so this path is load-bearing. |
+| [renderer-refactor-candidates.md](renderer-refactor-candidates.md) | Survey of refactor candidates in the desktop renderer (2026-09-29): duplication, god components, structural issues. |
 
 ## Domain and design reference
 

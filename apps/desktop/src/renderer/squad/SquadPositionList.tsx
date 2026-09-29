@@ -8,12 +8,14 @@
  * or not anyone has a status. It is the "who is in this squad"
  * reading; the table views are the "how good are they at X" readings.
  *
- * It is a list, not a table, and deliberately so: there is one column of data
- * beside the name, so a `<table>` would buy a header row, per-column sorting
- * semantics and a grid navigation model for a single field. Sorting and
- * filtering still apply — the ordering comes from the same TanStack table the
- * table views render, so the toolbar's Sort control and the command palette
- * drive both layouts identically, and the sort set here survives a view change.
+ * Each column is a headerless `Table` from the shared primitives (the reui
+ * c-table-7 pattern), so the rows take the striping, hover and selection the
+ * table views use rather than a copy of them. It has no header row: sorting
+ * lives in the toolbar's Sort control, and the ordering comes from the same
+ * TanStack table the table views render, so that control and the command
+ * palette drive both layouts identically and the sort survives a view change.
+ * The tables carry `data-squad-layout="positions"`, which is how tests tell
+ * this layout from the table views.
  *
  * Focus follows the table's model exactly (note: Navigation model, AC-28): one
  * focusable control per row — the name button — carrying the same
@@ -24,6 +26,7 @@
  * player screen, which is what clicking the name does too.
  */
 import type { FamiliarityTier } from "@cm-clone/shared";
+import { Table, TableBody, TableCell, TableRow } from "../components/ui/table.js";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
 import {
   STATUS_COLUMN_WIDTH,
@@ -89,7 +92,7 @@ const FAMILIARITY_TONE: Readonly<Record<FamiliarityTier, string>> = {
 };
 
 const PositionRunner = ({ row }: { readonly row: SquadRow }) => (
-  <span className="ml-auto flex shrink-0 gap-1 text-data">
+  <span className="flex justify-end gap-1 text-data">
     {row.positions.length === 0 ? (
       <span className="font-medium text-text-muted">—</span>
     ) : (
@@ -158,44 +161,58 @@ export const SquadPositionList = () => {
   };
 
   /** One of the two columns. The gap between them separates them; there is no divider. */
-  const column = (slice: readonly SquadRow[]) => (
-    <ul className="min-w-0 flex-1">
-      {slice.map((row) => (
-        <li
-          key={row.id}
-          aria-selected={selectedId === row.id || undefined}
-          className="flex min-w-0 items-center gap-2 px-1.5 py-0.5 odd:bg-surface/50 hover:bg-row-hover aria-selected:bg-row-selected"
-        >
-          <SelectionIndicator slot={slotByPlayer.get(row.id) ?? null} />
-          {/* The same width the table's fit column reserves, so a mark appearing on
-              some rows never shifts the names that follow it. Empty while no slot
-              is selected — the reserved width is the price of a steady list. */}
-          <span className="flex shrink-0 justify-center" style={{ width: FIT_COLUMN_WIDTH }}>
-            <FitIndicator rowId={row.id} />
-          </span>
-          {/* The same width the table's Status column reserves, so a status
-              appearing never pushes the name right. */}
-          <span className="shrink-0 text-data" style={{ width: STATUS_COLUMN_WIDTH }}>
-            <StatusCell statuses={statusesOf(row)} />
-          </span>
-          <button
-            type="button"
-            data-focus-id={focusIdOf("squad", REGION, row.id)}
-            tabIndex={rovingTabIndex(effectiveActive, row.id)}
-            draggable
-            onDragStart={(event) => writeLineupDrag(event, "roster", row.id)}
-            onFocus={() => {
-              if (activeId !== row.id) onActiveChange(row.id);
-            }}
-            onClick={(event) => openPlayer(row.id, event)}
-            className={`truncate text-left text-body font-semibold text-text-bright ${FOCUS_RING.join(" ")}`}
-          >
-            {row.lastName}, {row.firstName}
-          </button>
-          <PositionRunner row={row} />
-        </li>
-      ))}
-    </ul>
+  const column = (slice: readonly SquadRow[], label: string) => (
+    <div className="min-w-0 flex-1">
+      <Table data-squad-layout="positions" aria-label={label}>
+        <TableBody>
+          {slice.map((row) => (
+            <TableRow
+              key={row.id}
+              aria-selected={selectedId === row.id || undefined}
+              className="h-9"
+            >
+              <TableCell className="w-px">
+                <SelectionIndicator slot={slotByPlayer.get(row.id) ?? null} />
+              </TableCell>
+              {/* The same width the table's fit column reserves, so a mark appearing on
+                  some rows never shifts the names that follow it. Empty while no slot
+                  is selected — the reserved width is the price of a steady list. */}
+              <TableCell style={{ width: FIT_COLUMN_WIDTH }}>
+                <span className="flex justify-center">
+                  <FitIndicator rowId={row.id} />
+                </span>
+              </TableCell>
+              {/* The same width the table's Status column reserves, so a status
+                  appearing never pushes the name right. */}
+              <TableCell style={{ width: STATUS_COLUMN_WIDTH }}>
+                <StatusCell statuses={statusesOf(row)} />
+              </TableCell>
+              {/* `w-full max-w-0` lets the name column take the slack and truncate
+                  instead of widening the table past its half of the screen. */}
+              <TableCell className="w-full max-w-0">
+                <button
+                  type="button"
+                  data-focus-id={focusIdOf("squad", REGION, row.id)}
+                  tabIndex={rovingTabIndex(effectiveActive, row.id)}
+                  draggable
+                  onDragStart={(event) => writeLineupDrag(event, "roster", row.id)}
+                  onFocus={() => {
+                    if (activeId !== row.id) onActiveChange(row.id);
+                  }}
+                  onClick={(event) => openPlayer(row.id, event)}
+                  className={`block max-w-full truncate text-left text-body font-semibold text-text-bright ${FOCUS_RING.join(" ")}`}
+                >
+                  {row.lastName}, {row.firstName}
+                </button>
+              </TableCell>
+              <TableCell className="w-px whitespace-nowrap">
+                <PositionRunner row={row} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 
   return (
@@ -213,8 +230,8 @@ export const SquadPositionList = () => {
           className="flex gap-6"
           onKeyDown={onKeyDown}
         >
-          {column(rows.slice(0, split))}
-          {column(rows.slice(split))}
+          {column(rows.slice(0, split), "Squad, left column")}
+          {column(rows.slice(split), "Squad, right column")}
         </div>
       )}
       {/* The same one polite announcer the table layout carries (AC-32), so a

@@ -6,7 +6,7 @@
  */
 import type { Table, Row as TanStackRow } from "@tanstack/react-table";
 import type { SaveId } from "@cm-clone/contracts";
-import type { Attribute } from "@cm-clone/shared";
+import type { AttributeThreshold } from "../table/features/filtering.js";
 import type { SquadColumnPreferences } from "../table/columnPreferences.js";
 import type { TableFocusBookmark } from "../table/focusBookmark.js";
 import type { SquadRow } from "../table/squad/squadColumns.js";
@@ -32,6 +32,9 @@ export interface SquadScreenState {
   /** The chosen view (Screen 70): the position list, or one of the table presets. */
   readonly viewId: SquadViewId;
   readonly announcement: TableAnnouncement | null;
+  /** What the last toolbar or Actions-menu command did ("Showing the squad by Traditional.",
+   *  "3 players match the current filters."), for the shell's bottom bar. */
+  readonly barNotice: string | null;
   readonly viewState: ReturnType<typeof deriveViewState>;
   readonly refreshState: ReturnType<typeof deriveRefreshState>;
   readonly copy: TableStateCopy;
@@ -74,10 +77,12 @@ export interface SquadScreenActions {
   readonly setPositionFilter: (position: string) => void;
   /** Set the status clause to a modeled abbreviation, or remove it with "". */
   readonly setStatusFilter: (status: string) => void;
-  /** Set the one attribute clause (owned Squad only), replacing any other attribute. */
-  readonly setAttributeFilter: (attribute: Attribute, min: number) => void;
-  /** Remove the attribute clause and nothing else. */
-  readonly clearAttributeFilter: () => void;
+  /** Replace every attribute threshold (owned Squad only) with these, in one step; an empty
+   *  list removes them all. Position and Status stay as they are. */
+  readonly setAttributeFilters: (thresholds: readonly AttributeThreshold[]) => void;
+  /** How many players the current filters would leave with these thresholds in place of the
+   *  current ones: the Attribute dialog's live count. */
+  readonly countWithAttributeFilters: (thresholds: readonly AttributeThreshold[]) => number;
   readonly setPreset: (presetId: SquadPresetId) => void;
   readonly setView: (viewId: SquadViewId) => void;
   readonly toggleOneColumn: (columnId: string) => void;

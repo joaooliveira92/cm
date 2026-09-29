@@ -19,10 +19,9 @@
  * publishes the flattened { state, actions, meta } triple through
  * `SquadProvider`; the shared shapes live in `squadScreenTypes.ts`.
  */
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Row as TanStackRow } from "@tanstack/react-table";
 import type { PlayerId, SaveId, SquadPlayerView } from "@cm-clone/contracts";
-import type { Attribute } from "@cm-clone/shared";
 import { Option } from "effect";
 import {
   AsyncResult,
@@ -46,11 +45,13 @@ import { sortDirectionOf } from "../table/features/sorting.js";
 import {
   applyFilters,
   clearFilters,
+  filterChangeNotice,
   positionClause,
   removeFilter,
   statusClause,
-  attributeClause,
+  replaceAttributeFilters,
   upsertFilter,
+  type AttributeThreshold,
 } from "../table/features/filtering.js";
 import {
   SQUAD_PRESETS,
@@ -159,6 +160,10 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   const { setViewId, applyPreferences, setLegendExpanded } = columnActions;
 
   const { announcement, speak } = useSquadAnnouncements();
+  // What the last toolbar or Actions-menu command did (a view, filter, sort or lineup pick). It
+  // goes to the shell's bottom bar, not the table's announcer, the way the Profile's held Scout
+  // Player reason does; that bar line is itself a polite region, so saying it twice would double up.
+  const [barNotice, setBarNotice] = useState<string | null>(null);
 
   // The shared match-day lineup draft, lifted from the bottom bar so the roster
   // rows can report who is selected to play or sit on the bench. The bar edits
@@ -249,30 +254,30 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   const applySort = useCallback(
     (nextSort: typeof sort, announceLabel?: string) => {
       setSort(nextSort);
-      const verb = announceLabel;
-      if (verb !== undefined) speak("sort-set", verb);
+      if (announceLabel !== undefined) setBarNotice(announceLabel);
     },
-    [setSort, speak],
+    [setSort],
   );
 
   const applyFilter = useCallback(
     (next: readonly FilterClause[]) => {
+      const before = latest.current.filters;
       setFilters(next);
       const count = applyFilters(latest.current.players, next).length;
-      speak("filter-set", `${count} ${count === 1 ? "player matches" : "players match"} the current filters.`);
+      setBarNotice(filterChangeNotice(before, next, count));
     },
-    [setFilters, speak],
+    [setFilters],
   );
 
   const clearFilterCommand = useCallback(() => {
     setFilters(clearFilters());
-    speak("filter-cleared", `Cleared the filters. ${allPlayers.length} ${allPlayers.length === 1 ? "player is" : "players are"} shown.`);
-  }, [setFilters, speak, allPlayers.length]);
+    setBarNotice(`Cleared the filters. ${allPlayers.length} ${allPlayers.length === 1 ? "player is" : "players are"} shown.`);
+  }, [setFilters, allPlayers.length]);
 
   const clearSortCommand = useCallback(() => {
     setSort(null);
-    speak("sort-cleared", "Cleared the Squad sort.");
-  }, [setSort, speak]);
+    setBarNotice("Cleared the Squad sort.");
+  }, [setSort]);
 
   useEffect(() => {
     const unregisters: Array<() => void> = [];
@@ -315,19 +320,19 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
         const { tactic, setTactic, autosave } = latest.current.lineup;
         const next = assistantLineupOf(tactic, latest.current.squad);
         if (next === null) {
-          speak("assistant-pick", `The squad is too small to field a ${tactic.formation}.`);
+          setBarNotice(`The squad is too small to field a ${tactic.formation}.`);
           return;
         }
         setTactic(next);
         void autosave(next);
-        speak("assistant-pick", `The assistant manager picked the team in a ${tactic.formation}.`);
+        setBarNotice(`The assistant manager picked the team in a ${tactic.formation}.`);
       }),
     );
     unregisters.push(
       registerActionHandler("restore-squad-columns", () => {
         const restored = resetSquadColumnPreferences();
         applyPreferences(restored);
-        speak("columns-restored", "Restored the default Squad columns.");
+        setBarNotice("Restored the default Squad columns.");
       }),
     );
     return () => {
@@ -420,16 +425,18 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     [applyFilter],
   );
 
-  const setAttributeFilter = useCallback(
-    (attribute: Attribute, min: number) => {
-      applyFilter(upsertFilter(latest.current.filters, attributeClause(attribute, min)));
+  const setAttributeFilters = useCallback(
+    (thresholds: readonly AttributeThreshold[]) => {
+      applyFilter(replaceAttributeFilters(latest.current.filters, thresholds));
     },
     [applyFilter],
   );
 
-  const clearAttributeFilter = useCallback(() => {
-    applyFilter(latest.current.filters.filter((f) => f._tag !== "attribute"));
-  }, [applyFilter]);
+  const countWithAttributeFilters = useCallback(
+    (thresholds: readonly AttributeThreshold[]) =>
+      applyFilters(latest.current.players, replaceAttributeFilters(latest.current.filters, thresholds)).length,
+    [],
+  );
 
   const setPreset = useCallback(
     (presetId: SquadPresetId) => {
@@ -440,9 +447,9 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
         pinnedColumnIds: preferences.pinnedColumnIds,
         activePresetId: presetId,
       });
-      speak("columns-preset", `Showing the ${preset.label} columns.`);
+      setBarNotice(`Showing the ${preset.label} columns.`);
     },
-    [applyPreferences, preferences.pinnedColumnIds, speak],
+    [applyPreferences, preferences.pinnedColumnIds],
   );
 
   /** Choosing a view is one act: the layout changes, and a table view also
@@ -453,9 +460,9 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       const view = squadViewById(nextViewId);
       setViewId(view.id);
       if (view.presetId !== undefined) setPreset(view.presetId);
-      else speak("view-changed", `Showing the squad by ${view.label}.`);
+      else setBarNotice(`Showing the squad by ${view.label}.`);
     },
-    [setViewId, setPreset, speak],
+    [setViewId, setPreset],
   );
 
   const toggleOneColumn = useCallback(
@@ -510,6 +517,7 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       preferences,
       viewId,
       announcement,
+      barNotice,
       viewState,
       refreshState,
       copy,
@@ -536,8 +544,8 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       openPlayer,
       setPositionFilter,
       setStatusFilter,
-      setAttributeFilter,
-      clearAttributeFilter,
+      setAttributeFilters,
+      countWithAttributeFilters,
       setPreset,
       setView,
       toggleOneColumn,

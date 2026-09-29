@@ -40,6 +40,7 @@ import {
 import { FOCUS_RING } from "../focus.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import { PlayerNotePanel, PlayerPanel, PlayerRow } from "../player/panels.js";
+import { POSITION_NAMES } from "../positionNames.js";
 import { describeRpcError, staffProfileAtom, typedError, useAtomValue } from "../rpc.js";
 
 const PAGE_CLASS = `flex flex-1 flex-col gap-3 px-4 pt-3 pb-6 text-foreground ${FOCUS_RING.join(" ")}`;
@@ -68,19 +69,6 @@ const MENTAL_LABELS: Readonly<Record<StaffMentalRating, string>> = {
   judgingPlayerPotential: "Judging Player Potential",
   levelOfDiscipline: "Level of Discipline",
   motivating: "Motivating",
-};
-
-const POSITION_NAMES: Readonly<Record<Position, string>> = {
-  GK: "Goalkeeper",
-  DC: "Centre Back",
-  DL: "Left Back",
-  DR: "Right Back",
-  DM: "Defensive Midfielder",
-  MC: "Central Midfielder",
-  ML: "Left Midfielder",
-  MR: "Right Midfielder",
-  AMC: "Attacking Midfielder",
-  ST: "Striker",
 };
 
 const capitalise = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);

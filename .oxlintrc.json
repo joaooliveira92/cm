@@ -50,6 +50,7 @@
   },
   "ignorePatterns": [
     "external-reference/**",
+    ".claude/**",
     ".scratch/**",
     "**/dist/**",
     "**/node_modules/**"

@@ -1,7 +1,7 @@
 import { flexRender, type Row } from "@tanstack/react-table";
 import { TableBody, TableCell, TableRow } from "../components/ui/table.js";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
-import { useTableCtx } from "./DataTableContext.js";
+import { useTableCtx, type TableDensity } from "./DataTableContext.js";
 import type { TableRowShape } from "./types.js";
 
 export interface DataTableBodyProps<TRow extends TableRowShape> {
@@ -18,9 +18,9 @@ export const DataTableBody = <TRow extends TableRowShape>(props: DataTableBodyPr
         const id = row.original.id;
         const isIdentity = (columnId: string): boolean => columnId === ctx.identityColumnId;
         return (
-          <TableRow key={id} className="group" aria-selected={ctx.selectedId === id || undefined}>
+          <TableRow key={id} className={ROW_CLASS[ctx.density]} aria-selected={ctx.selectedId === id || undefined}>
             {row.getVisibleCells().map((cell) => {
-              const cellClass = `whitespace-nowrap ${cell.column.getIsPinned() === false ? "" : PINNED_CELL_CLASS}`;
+              const cellClass = `whitespace-nowrap ${cell.column.getIsPinned() !== false && ctx.scrolledFromLeft ? PINNED_CELL_CLASS : ""}`;
               const style = pinnedStyle(cell.column);
               if (isIdentity(cell.column.id)) {
                 return (
@@ -36,7 +36,7 @@ export const DataTableBody = <TRow extends TableRowShape>(props: DataTableBodyPr
                         if (ctx.onIdentityOpen !== undefined) ctx.onIdentityOpen(id, event);
                         else ctx.onToggleSelection(id);
                       }}
-                      className={`truncate font-semibold text-text-bright ${FOCUS_RING.join(" ")}`}
+                      className={`truncate ${NAME_CLASS[ctx.density]} font-semibold text-text-bright ${FOCUS_RING.join(" ")}`}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </button>
@@ -54,6 +54,18 @@ export const DataTableBody = <TRow extends TableRowShape>(props: DataTableBodyPr
       })}
     </TableBody>
   );
+};
+
+const ROW_CLASS: Readonly<Record<TableDensity, string>> = {
+  compact: "group",
+  comfortable: "group h-9",
+};
+
+/** The identity button's type role. Compact inherits the cell's `text-data`; comfortable
+ *  reads the name at `text-body`, as the position list does. */
+const NAME_CLASS: Readonly<Record<TableDensity, string>> = {
+  compact: "",
+  comfortable: "text-body",
 };
 
 const PINNED_CELL_CLASS = "bg-bg-base group-hover:bg-row-hover group-aria-selected:bg-row-selected!";

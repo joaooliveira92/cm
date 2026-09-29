@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import {
   getToolbarControls,
+  getToolbarTrailing,
   getToolbarVersion,
   subscribeToolbarVersion,
 } from "../screenToolbarControls.js";
@@ -10,4 +11,10 @@ import {
 export const ScreenToolbarSlot = () => {
   useSyncExternalStore(subscribeToolbarVersion, getToolbarVersion, getToolbarVersion);
   return getToolbarControls();
+};
+
+/** Renders the screen's readout at the right end of the same band. */
+export const ScreenToolbarTrailingSlot = () => {
+  useSyncExternalStore(subscribeToolbarVersion, getToolbarVersion, getToolbarVersion);
+  return getToolbarTrailing();
 };

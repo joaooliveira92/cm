@@ -4,6 +4,7 @@
  * refs, and wiring live in the provider (tickets 12–13) and leaf components
  * (tickets 14–15).
  */
+import { useMemo } from "react";
 import type { SaveId } from "@cm-clone/contracts";
 import { dispatchAction } from "../actions/dispatch.js";
 import { Alert } from "../components/ui/alert.js";
@@ -21,6 +22,7 @@ import { formatCredits } from "../format.js";
 import { TransfersProvider, useTransfers } from "./TransfersProvider.js";
 import type { TransfersTab } from "./useTransfersScreen.js";
 import { STATE_COPY } from "../table/viewState.js";
+import { useScreenBottomBarActions, type ScreenBottomBarActions } from "../chrome/bottom-bar/index.js";
 
 export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => (
   <TransfersProvider saveId={saveId}>
@@ -30,7 +32,13 @@ export const TransfersScreen = ({ saveId }: { readonly saveId: SaveId }) => (
 
 const TransfersScreenInner = () => {
   const { state, actions } = useTransfers();
-  const { status, refreshState, viewError, view, tab } = state;
+  const { status, refreshState, viewError, view, tab, barNotice } = state;
+
+  const bottomBar = useMemo(
+    (): ScreenBottomBarActions => ({ buttons: [], reason: barNotice }),
+    [barNotice],
+  );
+  useScreenBottomBarActions(bottomBar);
 
   // Blocking load failure = error with NO retained rows (a failed revalidation
   // keeps `view` — that path renders the tables with a non-blocking line, F1).

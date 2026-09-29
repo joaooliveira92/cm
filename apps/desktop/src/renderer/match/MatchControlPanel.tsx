@@ -21,7 +21,6 @@ import {
   SelectValue,
 } from "../components/ui/select.js";
 import { FOCUS_RING } from "../focus.js";
-import { SELECT_CLASS } from "./controls.js";
 import { NO_SUBSTITUTES_LEFT } from "./substitution.js";
 import { useMatchContext } from "./MatchProvider.js";
 import { useCommentaryContext } from "./CommentaryProvider.js";
@@ -202,7 +201,6 @@ const SubstitutionControl = () => {
               <SelectTrigger
                 data-action-id="set-live-substitute-off"
                 aria-label="Player to bring off"
-                className={SELECT_CLASS}
               >
                 <SelectValue placeholder="Select player" />
               </SelectTrigger>
@@ -232,7 +230,6 @@ const SubstitutionControl = () => {
               <SelectTrigger
                 data-action-id="set-live-substitute-in"
                 aria-label="Player to bring on"
-                className={SELECT_CLASS}
               >
                 <SelectValue placeholder="Select player" />
               </SelectTrigger>

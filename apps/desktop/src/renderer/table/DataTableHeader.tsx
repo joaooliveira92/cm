@@ -18,7 +18,7 @@ export const DataTableHeader = <Row extends TableRowShape>(
   props: DataTableHeaderProps<Row>,
 ) => {
   const { table } = props;
-  const { onSortChange } = useTableCtx();
+  const { onSortChange, scrolledFromLeft } = useTableCtx();
 
   const cycleSortHeader = (columnId: string): void => {
     const current = table.getState().sorting[0];
@@ -53,13 +53,15 @@ export const DataTableHeader = <Row extends TableRowShape>(
                       ? "descending"
                       : undefined
                 }
-                className={`whitespace-nowrap ${header.column.getIsPinned() === false ? "" : "bg-bg-base"}`}
+                className={`whitespace-nowrap ${header.column.getIsPinned() !== false && scrolledFromLeft ? "bg-bg-base" : ""}`}
                 style={pinnedStyle(header.column)}
               >
                 {sortable ? (
+                  // Preflight resets a button's text-transform, so without the
+                  // inherit a sortable header would not take the head's case.
                   <button
                     type="button"
-                    className={`flex items-center gap-1 ${FOCUS_RING.join(" ")}`}
+                    className={`flex items-center gap-1 [text-transform:inherit] ${FOCUS_RING.join(" ")}`}
                     onClick={() => cycleSortHeader(header.column.id)}
                   >
                     <span>{label}</span>

@@ -2,8 +2,9 @@
  * Filtering feature (note: Sorting and filtering by keyboard, AC-30). Filter
  * semantics are OURS — TanStack never sees a filter clause. Four clause kinds:
  * name search (Market/Free Agents), position (Squad, Market, Free Agents),
- * status (the owned Squad only — rival rows disclose no Condition), and an
- * attribute threshold (the owned Squad only — it reads exact figures). Visible
+ * status (the owned Squad only — rival rows disclose no Condition), and
+ * attribute thresholds, one per Attribute (the owned Squad only — they read
+ * exact figures). Visible
  * compact controls and enumerated palette Actions back the same pure
  * `applyFilters`; the palette enumerates position and status (name search is
  * free-form and lives in the visible control). Empty clauses are inert, so
@@ -52,6 +53,15 @@ export const attributeClause = (attribute: Attribute, min: number): FilterClause
   attribute,
   min,
 });
+
+export interface AttributeThreshold {
+  readonly attribute: Attribute;
+  readonly min: number;
+}
+
+export const isAttributeClause = (
+  filter: FilterClause,
+): filter is Extract<FilterClause, { readonly _tag: "attribute" }> => filter._tag === "attribute";
 
 /** The thresholds an attribute clause may carry: the Attribute scale. */
 export const ATTRIBUTE_MINIMUMS: readonly number[] = Array.from({ length: 20 }, (_, i) => i + 1);
@@ -116,23 +126,40 @@ export const applyFilters = <R extends TableRowShape>(
 
 export const clearFilters = (): readonly FilterClause[] => EMPTY_FILTERS;
 
+/** The slot a clause occupies: one per kind, except attribute thresholds,
+ *  which hold one slot per Attribute so several can apply at once (group-e 05). */
+const slotOf = (filter: FilterClause): string =>
+  filter._tag === "attribute" ? `attribute:${filter.attribute}` : filter._tag;
+
 /** Fix a single clause in place (visible controls edit the clause by identity,
  *  never by index arithmetic that a reorder could corrupt). */
 export const upsertFilter = (
   filters: readonly FilterClause[],
   next: FilterClause,
 ): readonly FilterClause[] => [
-  ...filters.filter((f) => f._tag !== next._tag),
+  ...filters.filter((f) => slotOf(f) !== slotOf(next)),
   next,
 ];
 
-/** Remove the whole clause kind (each kind is present at most once, enforced
- *  by `upsertFilter`). Position re-map needs nothing more: one position at a
- *  time is the model. */
+/** Remove the clause in `filter`'s slot (each slot holds at most one clause,
+ *  enforced by `upsertFilter`). Position re-map needs nothing more: one
+ *  position at a time is the model. */
 export const removeFilter = (
   filters: readonly FilterClause[],
   filter: FilterClause,
-): readonly FilterClause[] => filters.filter((f) => f._tag !== filter._tag);
+): readonly FilterClause[] => filters.filter((f) => slotOf(f) !== slotOf(filter));
+
+/** Replace every attribute threshold with `thresholds` in one step, leaving the
+ *  other kinds alone. The Attribute dialog applies its whole draft this way, so
+ *  one change reads as one notice. A repeated Attribute keeps its last threshold. */
+export const replaceAttributeFilters = (
+  filters: readonly FilterClause[],
+  thresholds: readonly AttributeThreshold[],
+): readonly FilterClause[] =>
+  thresholds.reduce<readonly FilterClause[]>(
+    (out, { attribute, min }) => upsertFilter(out, attributeClause(attribute, min)),
+    filters.filter((f) => !isAttributeClause(f)),
+  );
 
 /** UNUSED-SHAPE guard: the named filter id used by generated actions. Position
  *  and status clauses produce `<position>` / `<abbreviation>` ids; the
@@ -165,6 +192,69 @@ export const clauseLabel = (filter: FilterClause): string => {
     case "nameSearch":
       return "name search";
   }
+};
+
+const CLAUSE_KIND_LABELS: Readonly<Record<FilterClause["_tag"], string>> = {
+  position: "Position",
+  status: "Status",
+  attribute: "Attribute",
+  nameSearch: "Name",
+};
+
+/** An empty name search filters nothing, so a notice treats it as absent. */
+const liveClauses = (filters: readonly FilterClause[]): readonly FilterClause[] =>
+  filters.filter((f) => f._tag !== "nameSearch" || f.query.trim() !== "");
+
+const sameClause = (a: FilterClause, b: FilterClause): boolean =>
+  a._tag === "nameSearch" && b._tag === "nameSearch" ? a.query === b.query : clauseId(a) === clauseId(b);
+
+const describeClause = (filter: FilterClause): string =>
+  filter._tag === "nameSearch" ? `name "${filter.query.trim()}"` : `${CLAUSE_KIND_LABELS[filter._tag]}: ${clauseLabel(filter)}`;
+
+/** The attribute set as one phrase ("Pace 15+, Finishing 14+"), in clause order. */
+const attributeSummary = (filters: readonly FilterClause[]): string =>
+  filters.filter(isAttributeClause).map(clauseLabel).join(", ");
+
+/**
+ * The bottom-bar line for a filter change: what changed, then how many rows
+ * are left ("Filtered by Position: DC. 2 players match the current filters.").
+ * Each other kind appears at most once, so the change is the one kind whose
+ * clause was added, replaced or removed. The attribute thresholds change as a
+ * set (the dialog applies them together), so they are named as a set. Anything
+ * else falls back to the count alone.
+ */
+export const filterChangeNotice = (
+  before: readonly FilterClause[],
+  after: readonly FilterClause[],
+  count: number,
+): string => {
+  const prior = liveClauses(before);
+  const next = liveClauses(after);
+  const matches = `${count} ${count === 1 ? "player matches" : "players match"} the current filters.`;
+  if (next.length === 0 && prior.length > 0) {
+    return `Cleared the filters. ${count} ${count === 1 ? "player is" : "players are"} shown.`;
+  }
+  const attributesBefore = attributeSummary(prior);
+  const attributesAfter = attributeSummary(next);
+  if (attributesBefore !== attributesAfter) {
+    if (attributesAfter === "") return `Cleared the Attribute filter. ${matches}`;
+    const kind = next.filter(isAttributeClause).length === 1 ? "Attribute" : "Attributes";
+    return `Filtered by ${kind}: ${attributesAfter}. ${matches}`;
+  }
+  const priorKinds = prior.filter((f) => !isAttributeClause(f));
+  const nextKinds = next.filter((f) => !isAttributeClause(f));
+  const set = nextKinds.find((f) => {
+    const was = priorKinds.find((p) => p._tag === f._tag);
+    return was === undefined || !sameClause(was, f);
+  });
+  if (set !== undefined) return `Filtered by ${describeClause(set)}. ${matches}`;
+  const removed = priorKinds.find((p) => !nextKinds.some((f) => f._tag === p._tag));
+  if (removed !== undefined) {
+    return removed._tag === "nameSearch"
+      ? `Cleared the name search. ${matches}`
+      : `Cleared the ${CLAUSE_KIND_LABELS[removed._tag]} filter. ${matches}`;
+  }
+  return matches;
 };
 
 const ready = (state: ScopeState): boolean => state.ready === true;

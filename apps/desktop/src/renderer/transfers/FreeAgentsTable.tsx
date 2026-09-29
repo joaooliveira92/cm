@@ -11,17 +11,16 @@ const FREE = "free-agents";
  *  that owns the Free Agents key, columns, copy, and row handling, and reads
  *  the shared Market/Free-Agents selection from the transfers context. */
 export const FreeAgentsTable = () => {
-  const { state, actions, meta } = useTransfers();
+  const { state, actions } = useTransfers();
   const { free, freeFiltered, freeAgentRows, refreshState, selected } = state;
   const {
-    setFiltersFor,
+    applyFiltersFor,
     onSortChangeFor,
     onActiveChangeFor,
     onBookmarkChangeFor,
     onToggleSelectionFor,
     onRowPrimaryFor,
   } = actions;
-  const { speak } = meta;
 
   return (
     <section>
@@ -38,16 +37,14 @@ export const FreeAgentsTable = () => {
           onSortChange={onSortChangeFor(FREE)}
           filters={free.filters}
           onSetFilters={(next) => {
-            setFiltersFor(FREE, next);
-            speak(FREE, "filter-set", `${next.length === 0 ? "Cleared the Free Agents filters." : "Filters updated."}`);
+            applyFiltersFor(FREE, next);
           }}
           filterArea={
             <TransferFilterBar
               label="Free Agents"
               filters={free.filters}
               onSetFilters={(next) => {
-                setFiltersFor(FREE, next);
-                speak(FREE, "filter-set", `${next.length === 0 ? "Cleared the Free Agents filters." : "Filters updated."}`);
+                applyFiltersFor(FREE, next);
               }}
             />
           }

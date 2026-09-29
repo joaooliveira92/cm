@@ -1,6 +1,15 @@
 @import "tailwindcss";
 @import "./appearance/palettes.css";
 
+/* Styles that apply only under the Neutral theme color, where `text-highlight` is a grey and a
+   highlight tint would not separate from the chrome. An unset attribute is Neutral too (first launch). */
+@custom-variant theme-neutral {
+  :root[data-theme-color="neutral"] &,
+  :root:not([data-theme-color]) & {
+    @slot;
+  }
+}
+
 /*
  * The renderer's bundled font. Vendored under src/assets/fonts/ (Outside the
  * Vite renderer root, but url() resolves fine relative to this stylesheet).
@@ -302,6 +311,16 @@
     var(--color-chrome-top),
     var(--color-chrome-mid),
     var(--color-chrome-bottom)
+  );
+}
+
+/* The chrome gradient tinted with the highlight colour: a raised chip that still reads as "selected". */
+@utility chrome-gradient-highlight {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-text-highlight) 30%, var(--color-chrome-top)),
+    color-mix(in oklab, var(--color-text-highlight) 15%, var(--color-chrome-mid)),
+    color-mix(in oklab, var(--color-text-highlight) 10%, var(--color-chrome-bottom))
   );
 }
 

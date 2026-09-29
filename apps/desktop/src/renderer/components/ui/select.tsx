@@ -1,6 +1,7 @@
 import { Select as SelectPrimitive } from "@base-ui/react/select";
 import * as React from "react";
 
+import { FOCUS_RING } from "../../focus.js";
 import { cn } from "../../lib/utils.js";
 import { FIELD_SELECT } from "../../theme.js";
 
@@ -21,6 +22,7 @@ function SelectTrigger({
       className={cn(
         FIELD_SELECT,
         "disabled:pointer-events-none disabled:opacity-50",
+        ...FOCUS_RING,
         className,
       )}
       {...props}

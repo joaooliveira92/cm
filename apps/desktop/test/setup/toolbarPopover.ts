@@ -1,20 +1,23 @@
-// Driving the screen toolbar's popover selectors (Squad's View and Position). They render into
-// the career chrome's toolbar slot, so a test mounting a screen without the chrome must also
-// mount `ScreenToolbarSlot` for the triggers to exist.
+// Driving the screen toolbar's menu selectors (Squad's Position, Status and View).
+// They render into the career chrome's toolbar slot, so a test mounting a screen without the
+// chrome must also mount `ScreenToolbarSlot` for the triggers to exist.
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { expect } from "vitest";
 
-/** Open the popover behind the trigger named `triggerLabel`, click the option button named
- *  `optionLabel` inside it, and wait for the popover to close. The option is looked up inside
- *  the popover, so a table cell with the same text cannot be picked instead. */
+/** Open the menu behind the trigger named `triggerLabel`, click the item named `optionLabel`
+ *  inside it (a radio choice or a plain item), and wait for the menu to close. The item is looked up inside the menu, so a table cell with the
+ *  same text cannot be picked instead. */
 export const chooseToolbarOption = async (
   triggerLabel: string | RegExp,
   optionLabel: string | RegExp,
 ): Promise<void> => {
   fireEvent.click(screen.getByRole("button", { name: triggerLabel }));
-  const popup = await screen.findByRole("dialog", {}, { timeout: 2000 });
-  fireEvent.click(within(popup).getByRole("button", { name: optionLabel }));
+  const menu = await screen.findByRole("menu", {}, { timeout: 2000 });
+  const item =
+    within(menu).queryByRole("menuitemradio", { name: optionLabel }) ??
+    within(menu).getByRole("menuitem", { name: optionLabel });
+  fireEvent.click(item);
   await waitFor(() => {
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("menu")).toBeNull();
   });
 };

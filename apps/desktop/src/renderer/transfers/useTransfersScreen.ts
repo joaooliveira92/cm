@@ -12,7 +12,7 @@
  * ref writes and the TanStack instantiations interleave — see
  * `useTransferTables.ts`.
  */
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { RpcPayload, SaveId, TransfersScreenView } from "@cm-clone/contracts";
 import { Option } from "effect";
 import { type RpcClientError } from "../rpc/errors.js";
@@ -34,6 +34,7 @@ import { readTableSession } from "../table/tableState.js";
 import type { FilterClause, RefreshState, SortState, TableId } from "../table/types.js";
 import type { TableFocusBookmark } from "../table/focusBookmark.js";
 import { deriveRefreshState } from "../table/viewState.js";
+import { applyFilters, filterChangeNotice } from "../table/features/filtering.js";
 import { FREE, MARKET } from "./tableIds.js";
 import {
   useBidDraft,
@@ -86,6 +87,8 @@ export interface TransfersScreenState {
   readonly counterAmountValid: boolean;
   readonly viewError: TransferError | null;
   readonly view: TransfersScreenView | undefined;
+  /** What the last sort or filter command did, for the shell's bottom bar (the Squad's rule). */
+  readonly barNotice: string | null;
 }
 
 /** Commands siblings raise against the shared transfers state. */
@@ -99,6 +102,8 @@ export interface TransfersScreenActions {
   readonly setCounterAmount: (next: string) => void;
   readonly setCounterError: (next: string | null) => void;
   readonly setFiltersFor: (key: TableId, next: readonly FilterClause[]) => void;
+  /** Set one table's filters and say in the bottom bar what changed and how many rows are left. */
+  readonly applyFiltersFor: (key: TableId, next: readonly FilterClause[]) => void;
   readonly run: (label: string, write: () => Promise<unknown>) => Promise<void>;
   readonly runRespond: (payload: RpcPayload<"respondToBid">) => Promise<unknown>;
   readonly onSortChangeFor: (key: TableId) => (next: SortState | null) => void;
@@ -168,6 +173,19 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
   // Live row-set refs for the stable palette handlers (announcement counts).
   const marketRowsRef = useRef<readonly MarketPlayerRow[]>([]);
   const freeAgentRowsRef = useRef<readonly MarketPlayerRow[]>([]);
+
+  // Sort and filter commands report in the shell's bottom bar, not the table's announcer, as the
+  // Squad's do; that bar line is itself a polite region. Row-level lines stay on `speak`.
+  const [barNotice, setBarNotice] = useState<string | null>(null);
+  const applyFiltersFor = useCallback(
+    (key: TableId, next: readonly FilterClause[]) => {
+      const before = filtersFor(key);
+      setFiltersFor(key, next);
+      const rows = key === MARKET ? marketRowsRef.current : freeAgentRowsRef.current;
+      setBarNotice(filterChangeNotice(before, next, applyFilters(rows, next).length));
+    },
+    [filtersFor, setFiltersFor],
+  );
 
   // Market first: the bid workflow starts there, and `focus-bid` lands on its first row.
   const [tab, setTab] = useState<TransfersTab>("market");
@@ -264,6 +282,7 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
     setBookmarkFor,
     update,
     speak,
+    notify: setBarNotice,
   });
 
   const datasetKey = datasetIds.join(",");
@@ -325,7 +344,7 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
     setSortFor,
     setFiltersFor,
     filtersFor,
-    speak,
+    notify: setBarNotice,
   });
 
   const draft = draftState.draft;
@@ -363,6 +382,7 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
       counterAmountValid,
       viewError,
       view,
+      barNotice,
     },
     actions: {
       setSelected,
@@ -372,6 +392,7 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
       setCounterAmount,
       setCounterError,
       setFiltersFor,
+      applyFiltersFor,
       run,
       runRespond,
       onSortChangeFor,

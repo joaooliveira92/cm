@@ -383,7 +383,6 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                         <SelectTrigger
                           data-action-id="assign-slot-player"
                           aria-label={`Slot ${index + 1} player`}
-                          className={SELECT_CLASS}
                         >
                           <SelectValue placeholder="Unassigned" />
                         </SelectTrigger>
@@ -419,7 +418,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                           <SelectTrigger
                             data-action-id="set-slot-position"
                             aria-label={`Slot ${index + 1} position`}
-                            className={`h-7 w-16 gap-1 px-1.5 ${SELECT_CLASS}`}
+                            className="h-7 w-16 gap-1 px-1.5"
                           >
                             <SelectValue />
                           </SelectTrigger>
@@ -544,6 +543,3 @@ const naturalPositions = (player: SquadPlayerView): string =>
     .filter((position) => position.familiarity === "natural")
     .map((position) => position.position)
     .join("/");
-
-/** The slot-player picker's trigger paint. See the note in `table/TablePanel.tsx`. */
-const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;

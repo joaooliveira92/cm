@@ -1,6 +1,11 @@
 import { createContext, useContext } from "react";
 import type { SortState } from "./types.js";
 
+/** How tall a body row is. `compact` is the app-wide default; `comfortable` is the
+ *  Squad screen's, where the table views match the position list's rows so a view
+ *  change does not change the row height. */
+export type TableDensity = "compact" | "comfortable";
+
 export interface TableContextValue {
   readonly screen: string;
   readonly region: string;
@@ -25,6 +30,12 @@ export interface TableContextValue {
     event: React.DragEvent<HTMLButtonElement>,
     rowId: string,
   ) => void;
+  readonly density: TableDensity;
+  /** True while the table is scrolled away from its left edge — the only time
+   *  anything slides under the sticky pinned columns, and so the only time they
+   *  need an opaque background. At rest they stay transparent, so a table over
+   *  a translucent panel does not show a solid block where its pinned columns are. */
+  readonly scrolledFromLeft: boolean;
   readonly effectiveActive: string | null;
   readonly onBodyKeyDown: (event: React.KeyboardEvent) => void;
 }

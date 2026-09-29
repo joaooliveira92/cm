@@ -162,12 +162,12 @@ const anEmptyDcSlot = (): HTMLElement => screen.getAllByRole("button", { name: "
 const markFor = (lastName: string): string | null => {
   const row = document.querySelector(`[data-focus-id="squad.squadTable.${BY_NAME.get(lastName)}"]`);
   const container =
-    row?.tagName === "BUTTON" ? (row.closest("tr, li") ?? null) : (row?.parentElement ?? null);
+    row?.tagName === "BUTTON" ? (row.closest("tr") ?? null) : (row?.parentElement ?? null);
   return container?.querySelector("[data-testid='squad-fit-mark'] .sr-only")?.textContent ?? null;
 };
 
 /** Every roster row element, whichever layout drew it. */
-const rosterRows = (): Element[] => [...document.querySelectorAll("tbody tr, ul li")];
+const rosterRows = (): Element[] => [...document.querySelectorAll("tbody tr")];
 
 const selectDc = (): void => {
   fireEvent.click(anEmptyDcSlot());

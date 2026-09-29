@@ -28,10 +28,10 @@ test("Squad opens on the position list and the View selector swaps it for a tabl
     (await window.getByText(/players$/).innerText()).match(/(\d+) players/)![1],
   );
 
-  // The career opens on the two-column position list: every player, no table.
+  // The career opens on the two-column position list: every player, two headerless tables.
 
-  await expect(window.locator("tbody")).toHaveCount(0);
-  await expect(window.locator("li:has(button[data-focus-id])")).toHaveCount(playersCount);
+  await expect(window.locator("table[data-squad-layout='positions']")).toHaveCount(2);
+  await expect(window.locator("[data-squad-layout='positions'] tbody tr")).toHaveCount(playersCount);
 
   // A view change alters presentation only — the same squad, drawn as a table.
   await chooseToolbarOption(window, "Squad view", "General Info");
@@ -42,7 +42,7 @@ test("Squad opens on the position list and the View selector swaps it for a tabl
 
 /** The position list's row names, in the order the two columns read them. */
 const positionListNames = (window: Page) =>
-  window.locator("li button[data-focus-id]").allInnerTexts();
+  window.locator("[data-squad-layout='positions'] button[data-focus-id]").allInnerTexts();
 
 /** The given rows in the order the Name sort puts them in. A list row reads
  *  "Last, First" while the Name column sorts on "First Last", so the two are not

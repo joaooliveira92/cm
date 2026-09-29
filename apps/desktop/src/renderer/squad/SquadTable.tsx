@@ -1,14 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import { POSITIONS } from "@cm-clone/shared";
 import { dispatchAction } from "../actions/dispatch.js";
 import { Alert } from "../components/ui/alert.js";
 import { Button, buttonVariants } from "../components/ui/button.js";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../components/ui/popover.js";
 import {
   Sheet,
   SheetContent,
@@ -19,14 +13,17 @@ import {
 } from "../components/ui/sheet.js";
 import { FOCUS_RING } from "../focus.js";
 import { useSquad } from "./SquadProvider.js";
+import { useSquadBottomBar } from "./squadBottomBar.js";
 import { SquadRoster } from "./SquadRoster.js";
 import { SQUAD_TOGGLEABLE_COLUMN_IDS } from "../table/features/visibility.js";
 import { SQUAD_VIEWS, squadViewById } from "./squadViews.js";
+import { POSITION_NAMES } from "../positionNames.js";
 import { SquadPositionList } from "./SquadPositionList.js";
 import { SquadSortSelect } from "./SquadSortSelect.js";
 import { MatchDayBar } from "./MatchDayBar.js";
-import { ACTIONS_ROW_BUTTON_CLASS, ACTIONS_ROW_ITEM_CLASS } from "./actionsRowClasses.js";
-import { AttributeFilterPopover } from "./AttributeFilterPopover.js";
+import { ToolbarChoiceMenu, type ToolbarChoice } from "./ToolbarChoiceMenu.js";
+import { isAttributeClause } from "../table/features/filtering.js";
+import { AttributeFilterDialog } from "./AttributeFilterDialog.js";
 import { writeLineupDrag } from "./lineupDrag.js";
 import type { LineupFitReadout } from "./lineupFit.js";
 import { SQUAD_COLUMN_LABELS } from "../table/squad/squadColumns.js";
@@ -41,6 +38,22 @@ import {
 } from "../screenToolbarControls.js";
 
 const REGION = "squadTable";
+
+const POSITION_CHOICES: readonly ToolbarChoice[] = [
+  { value: "", label: "All positions" },
+  ...POSITIONS.map((position) => ({ value: position, label: position, detail: POSITION_NAMES[position] })),
+];
+
+const STATUS_CHOICES: readonly ToolbarChoice[] = [
+  { value: "", label: "Any status" },
+  ...MODELED_STATUSES.map((status) => ({ value: status.abbreviation, label: status.term })),
+];
+
+const VIEW_CHOICES: readonly ToolbarChoice[] = SQUAD_VIEWS.map((option) => ({
+  value: option.id,
+  label: option.label,
+  detail: option.layout === "list" ? "Position list" : "Table",
+}));
 
 
 /**
@@ -57,7 +70,7 @@ const RefreshStatusLine = ({
   readonly refreshState: RefreshState;
   readonly copy: TableStateCopy;
 }) => (
-  <div className="ml-auto text-data text-text-secondary">
+  <div className="flex items-center whitespace-nowrap text-data text-text-secondary">
     {count} players
     {refreshState._tag === "Refreshing" && (
       <span className="ml-2 text-text-muted">Refreshing…</span>
@@ -266,7 +279,7 @@ const FitContextLine = ({
  *  two-column position list or the DataTable, whichever the chosen view draws.
  *  Owns no state — everything flows from the SquadProvider context. */
 export const SquadTable = () => {
-  const { state, actions, meta } = useSquad();
+  const { state, actions, meta, lineup } = useSquad();
   const {
     allPlayers,
     filters,
@@ -277,6 +290,7 @@ export const SquadTable = () => {
     preferences,
     viewId,
     announcement,
+    barNotice,
     viewState,
     refreshState,
     copy,
@@ -296,8 +310,8 @@ export const SquadTable = () => {
     openPlayer,
     setPositionFilter,
     setStatusFilter,
-    setAttributeFilter,
-    clearAttributeFilter,
+    setAttributeFilters,
+    countWithAttributeFilters,
     setView,
     toggleOneColumn,
     clearFilterCommand,
@@ -340,130 +354,57 @@ export const SquadTable = () => {
     filters.some((f) => f._tag === "status" && f.status === status.abbreviation),
   );
 
-  const activeAttribute = filters.find(
-    (f): f is Extract<FilterClause, { readonly _tag: "attribute" }> => f._tag === "attribute",
-  );
+  const activeAttributes = useMemo(() => filters.filter(isAttributeClause), [filters]);
 
-  const [viewOpen, setViewOpen] = useState(false);
-  const [positionOpen, setPositionOpen] = useState(false);
-  const [statusOpen, setStatusOpen] = useState(false);
+  useSquadBottomBar(barNotice, {
+    conflicted: lineup.conflict !== null,
+    tactic: lineup.tactic,
+    status: lineup.status,
+    refresh: lineup.refresh,
+  });
 
   /* Register the Position, Status and View selectors in the career chrome's
-   *  actions row. These use the same Popover + button pattern as the
-   *  Actions menu so they look identical. The Sort control joins them only for
+   *  actions row, as dropdown menus whose trigger shares the Actions menu's
+   *  button look. The Sort control joins them only for
    *  the position list: a table's headers are its sort control, and two
    *  controls for one state is one too many. */
   const toolbarControls = useMemo(
     () => (
       <>
-        <Popover open={positionOpen} onOpenChange={setPositionOpen}>
-          <PopoverTrigger
-            render={
-              <button type="button" className={ACTIONS_ROW_BUTTON_CLASS} aria-label="Filter squad by position">
-                <span>{activePosition === undefined ? "Position" : `Position: ${activePosition.position}`}</span>
-                <ChevronDown aria-hidden="true" className="size-4" />
-              </button>
-            }
-          />
-          <PopoverContent align="start" sideOffset={4} className="w-56 p-1">
-            <div className="flex flex-col gap-0.5">
-              <button
-                type="button"
-                className={ACTIONS_ROW_ITEM_CLASS}
-                onClick={() => {
-                  setPositionFilter("");
-                  setPositionOpen(false);
-                }}
-              >
-                <span>All positions</span>
-              </button>
-              {POSITIONS.map((position) => (
-                <button
-                  key={position}
-                  type="button"
-                  className={ACTIONS_ROW_ITEM_CLASS}
-                  onClick={() => {
-                    setPositionFilter(position);
-                    setPositionOpen(false);
-                  }}
-                >
-                  <span>{position}</span>
-                </button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
+        <ToolbarChoiceMenu
+          ariaLabel="Filter squad by position"
+          triggerText={activePosition === undefined ? "Position" : `Position: ${activePosition.position}`}
+          groupLabel="Position"
+          value={activePosition?.position ?? ""}
+          choices={POSITION_CHOICES}
+          onChoose={setPositionFilter}
+        />
         {/* Offers only what the engine models (Tired today), by full term; the
             list grows as reserved slots become modeled. */}
-        <Popover open={statusOpen} onOpenChange={setStatusOpen}>
-          <PopoverTrigger
-            render={
-              <button type="button" className={ACTIONS_ROW_BUTTON_CLASS} aria-label="Filter squad by status">
-                <span>{activeStatus === undefined ? "Status" : `Status: ${activeStatus.term}`}</span>
-                <ChevronDown aria-hidden="true" className="size-4" />
-              </button>
-            }
-          />
-          <PopoverContent align="start" sideOffset={4} className="w-56 p-1">
-            <div className="flex flex-col gap-0.5">
-              <button
-                type="button"
-                className={ACTIONS_ROW_ITEM_CLASS}
-                onClick={() => {
-                  setStatusFilter("");
-                  setStatusOpen(false);
-                }}
-              >
-                <span>Any status</span>
-              </button>
-              {MODELED_STATUSES.map((status) => (
-                <button
-                  key={status.abbreviation}
-                  type="button"
-                  className={ACTIONS_ROW_ITEM_CLASS}
-                  onClick={() => {
-                    setStatusFilter(status.abbreviation);
-                    setStatusOpen(false);
-                  }}
-                >
-                  <span>{status.term}</span>
-                </button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
-        <AttributeFilterPopover
-          active={activeAttribute}
-          onSet={setAttributeFilter}
-          onClear={clearAttributeFilter}
+        <ToolbarChoiceMenu
+          ariaLabel="Filter squad by status"
+          triggerText={activeStatus === undefined ? "Status" : `Status: ${activeStatus.term}`}
+          groupLabel="Status"
+          value={activeStatus?.abbreviation ?? ""}
+          choices={STATUS_CHOICES}
+          onChoose={setStatusFilter}
         />
-        <Popover open={viewOpen} onOpenChange={setViewOpen}>
-          <PopoverTrigger
-            render={
-              <button type="button" className={ACTIONS_ROW_BUTTON_CLASS} aria-label="Squad view">
-                <span>View</span>
-                <ChevronDown aria-hidden="true" className="size-4" />
-              </button>
-            }
-          />
-          <PopoverContent align="start" sideOffset={4} className="w-56 p-1">
-            <div className="flex flex-col gap-0.5">
-              {SQUAD_VIEWS.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  className={ACTIONS_ROW_ITEM_CLASS}
-                  onClick={() => {
-                    setView(option.id);
-                    setViewOpen(false);
-                  }}
-                >
-                  <span>{option.label}</span>
-                </button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
+        <AttributeFilterDialog
+          active={activeAttributes}
+          onApply={setAttributeFilters}
+          countMatching={countWithAttributeFilters}
+        />
+        <ToolbarChoiceMenu
+          ariaLabel="Squad view"
+          triggerText="View"
+          groupLabel="View"
+          value={view.id}
+          choices={VIEW_CHOICES}
+          onChoose={(id) => {
+            const next = SQUAD_VIEWS.find((option) => option.id === id);
+            if (next !== undefined) setView(next.id);
+          }}
+        />
         {view.layout === "list" && <SquadSortSelect sort={sort} onSortCycle={onSortCycle} />}
       </>
     ),
@@ -472,23 +413,26 @@ export const SquadTable = () => {
       sort,
       activePosition,
       activeStatus,
-      activeAttribute,
+      activeAttributes,
       setView,
       setPositionFilter,
       setStatusFilter,
-      setAttributeFilter,
-      clearAttributeFilter,
+      setAttributeFilters,
+      countWithAttributeFilters,
       onSortCycle,
-      viewOpen,
-      positionOpen,
-      statusOpen,
     ],
   );
 
+  /* The player count reads at the right end of the same band. */
+  const toolbarTrailing = useMemo(
+    () => <RefreshStatusLine count={allPlayers.length} refreshState={refreshState} copy={copy} />,
+    [allPlayers.length, refreshState, copy],
+  );
+
   useEffect(() => {
-    setToolbarControls(toolbarControls);
+    setToolbarControls(toolbarControls, toolbarTrailing);
     return () => clearToolbarControls();
-  }, [toolbarControls]);
+  }, [toolbarControls, toolbarTrailing]);
 
   return (
     <div className="flex flex-1 flex-col text-foreground">
@@ -510,7 +454,6 @@ export const SquadTable = () => {
             onToggleColumn={toggleOneColumn}
             copy={copy}
           />
-          <RefreshStatusLine count={allPlayers.length} refreshState={refreshState} copy={copy} />
         </div>
 
         {/* The panel CM 03/04 drew the list in, titled with what you are looking
@@ -550,6 +493,7 @@ export const SquadTable = () => {
               onIdentityOpen={openPlayer}
               onRowDragStart={(event: React.DragEvent<HTMLButtonElement>, id: string) => writeLineupDrag(event, "roster", id)}
               ariaLabel="Squad"
+              density="comfortable"
               ariaBusy={refreshState._tag === "Refreshing"}
               announcement={announcement?.message ?? ""}
               initialScrollLeft={scrollLeft}

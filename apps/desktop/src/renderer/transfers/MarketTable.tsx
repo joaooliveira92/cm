@@ -11,17 +11,16 @@ const MARKET = "transfer-market";
  *  owns the Market key, columns, copy, and row handling, and reads the shared
  *  Market/Free-Agents selection from the transfers context. */
 export const MarketTable = () => {
-  const { state, actions, meta } = useTransfers();
+  const { state, actions } = useTransfers();
   const { market, marketFiltered, marketRows, refreshState, selected } = state;
   const {
-    setFiltersFor,
+    applyFiltersFor,
     onSortChangeFor,
     onActiveChangeFor,
     onBookmarkChangeFor,
     onToggleSelectionFor,
     onRowPrimaryFor,
   } = actions;
-  const { speak } = meta;
 
   return (
     <section>
@@ -38,16 +37,14 @@ export const MarketTable = () => {
           onSortChange={onSortChangeFor(MARKET)}
           filters={market.filters}
           onSetFilters={(next) => {
-            setFiltersFor(MARKET, next);
-            speak(MARKET, "filter-set", `${next.length === 0 ? "Cleared the Market filters." : "Filters updated."}`);
+            applyFiltersFor(MARKET, next);
           }}
           filterArea={
             <TransferFilterBar
               label="Market"
               filters={market.filters}
               onSetFilters={(next) => {
-                setFiltersFor(MARKET, next);
-                speak(MARKET, "filter-set", `${next.length === 0 ? "Cleared the Market filters." : "Filters updated."}`);
+                applyFiltersFor(MARKET, next);
               }}
             />
           }

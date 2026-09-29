@@ -11,7 +11,7 @@
  * lives in `table/squad/squadColumns.tsx`; this component only mounts the generic DataTable.
  */
 import type { Row as TanStackRow, Table as TanStackTable } from "@tanstack/react-table";
-import { DataTable } from "../table/DataTable.js";
+import { DataTable, type TableDensity } from "../table/DataTable.js";
 import { Table } from "../components/ui/table.js";
 import type { SortState, TableRowShape } from "../table/types.js";
 import type { TableFocusBookmark } from "../table/focusBookmark.js";
@@ -46,6 +46,8 @@ export interface SquadRosterProps<Row extends TableRowShape> {
   readonly onRowDragStart?: (event: React.DragEvent<HTMLButtonElement>, rowId: string) => void;
   readonly ariaLabel: string;
   readonly announcement: string;
+  /** The own-club screen draws `comfortable` rows to match its position list. */
+  readonly density?: TableDensity;
   /** Live-refresh marker, own-club only: the bare roster has no background refresh. */
   readonly ariaBusy?: boolean;
   readonly initialScrollLeft?: number;
@@ -74,6 +76,7 @@ export const SquadRoster = <Row extends TableRowShape>(props: SquadRosterProps<R
       onSortChange={props.onSortChange}
       ariaLabel={props.ariaLabel}
       announcement={props.announcement}
+      density={props.density}
       ariaBusy={props.ariaBusy}
       onIdentityOpen={props.onIdentityOpen}
       onRowPrimary={props.onRowPrimary}

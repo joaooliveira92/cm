@@ -52,6 +52,8 @@ export interface TransferTablesParams {
   readonly setBookmarkFor: TransferTableState["setBookmarkFor"];
   readonly update: TransferTableState["update"];
   readonly speak: TransferTableState["speak"];
+  /** The shell's bottom-bar line, where a sort reports. */
+  readonly notify: (message: string) => void;
 }
 
 export interface TransferTablesValue {
@@ -87,6 +89,7 @@ export const useTransferTables = ({
   setBookmarkFor,
   update,
   speak,
+  notify,
 }: TransferTablesParams): TransferTablesValue => {
   // Latest-order refs for the stable live handlers and sort setters (written
   // after the TanStack instances derive their row ids each render).
@@ -128,16 +131,12 @@ export const useTransferTables = ({
       recordBookmark(key, ids, activeFor(key));
       setSortFor(key, next);
       if (next === null) {
-        speak(key, "sort-cleared", `Cleared the ${key === MARKET ? "Market" : "Free Agents"} sort.`);
+        notify(`Cleared the ${key === MARKET ? "Market" : "Free Agents"} sort.`);
       } else {
-        speak(
-          key,
-          "sort-set",
-          `Sorted by ${MARKET_COLUMN_LABELS[next.columnId] ?? next.columnId}, ${sortDirectionOf(next.direction)}.`,
-        );
+        notify(`Sorted by ${MARKET_COLUMN_LABELS[next.columnId] ?? next.columnId}, ${sortDirectionOf(next.direction)}.`);
       }
     },
-    [recordBookmark, setSortFor, activeFor, speak],
+    [recordBookmark, setSortFor, activeFor, notify],
   );
 
   const onToggleSelectionFor = useCallback(

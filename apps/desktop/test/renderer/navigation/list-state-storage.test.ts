@@ -96,12 +96,25 @@ describe("list-state-storage", () => {
       expect(decoded.filters).toEqual([{ _tag: "attribute", attribute: "pace", min: 20 }]);
     });
 
-    it("keeps only the last of two attribute clauses, since one is the model", () => {
-      const decoded = decodeListState(new URLSearchParams({ filters: "attr:pace:15,pos:DC,attr:strength:12" }));
+    it("keeps one clause per Attribute, the last part winning for a repeated key", () => {
+      const decoded = decodeListState(
+        new URLSearchParams({ filters: "attr:pace:15,pos:DC,attr:strength:12,attr:pace:17" }),
+      );
       expect(decoded.filters).toEqual([
         { _tag: "position", position: "DC" },
         { _tag: "attribute", attribute: "strength", min: 12 },
+        { _tag: "attribute", attribute: "pace", min: 17 },
       ]);
+    });
+
+    it("round-trips several attribute clauses", () => {
+      const filters = [
+        { _tag: "attribute", attribute: "pace", min: 15 },
+        { _tag: "attribute", attribute: "finishing", min: 14 },
+      ] as const;
+      const encoded = toEncodedListState({ filters });
+      expect(encoded.filters).toBe("attr:pace:15,attr:finishing:14");
+      expect(decodeListState(encodeListState(encoded)).filters).toEqual(filters);
     });
 
     it("skips empty name search parts", () => {

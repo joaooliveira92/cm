@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { RegisteredScreenBar } from "../registered-screen-bar.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
@@ -129,6 +130,7 @@ const mountSquadScreen = async (overrides: SquadOverrides = {}): Promise<void> =
   renderInRouter(
     <RegistryProvider>
       <SquadScreen saveId={rid("s1")} />
+      <RegisteredScreenBar />
     </RegistryProvider>,
   );
   await screen.findByRole("button", { name: "GK slot, Pep Shearer" });
@@ -366,12 +368,13 @@ describe("the match-day bar", () => {
       screen.getByRole("button", { name: /^ML slot, / }),
     );
 
-    const alert = await screen.findByTestId("lineup-conflict");
-    expect(alert.textContent).toMatch(/newer tactic was saved/);
+    // The conflict is reported in the shell's bottom bar, not under the slots.
+    const line = await screen.findByText(/newer tactic was saved/);
+    expect(line.closest("[data-testid='lineup-bar']")).toBeNull();
     expect(screen.getByRole("button", { name: "Refresh" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
-    await waitFor(() => expect(screen.queryByTestId("lineup-conflict")).toBeNull());
+    await waitFor(() => expect(screen.queryByText(/newer tactic was saved/)).toBeNull());
     // The refreshed view (5-3-2) re-seeds the draft.
     expect(screen.getByRole("button", { name: /^DR slot/ })).toBeTruthy();
   });
@@ -418,7 +421,7 @@ describe("the table layouts lead with the same match-day indicator", () => {
     cleanup();
     saveSquadViewId("positions");
     await mountSquadScreen();
-    expect(statesByRow("li")).toEqual(table);
+    expect(statesByRow("[data-squad-layout='positions'] tbody tr")).toEqual(table);
   });
 
   it("follows the bar live, and adds no tab stop to a row", async () => {

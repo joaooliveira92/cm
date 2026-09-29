@@ -6,6 +6,10 @@ that attribute is at least the chosen value.
 
 **Decisions:** ruled in [ticket 03](03-attribute-filters.md).
 
+> Superseded in part, 2026-09-29, by [ticket 05](05-multi-attribute-filter-dialog.md): the filter
+> now holds one clause per Attribute rather than one in total, and the control is a dialog, not a
+> Popover. `AttributeFilterPopover.tsx` no longer exists. The rest of this ticket still holds.
+
 - Owned Squad only. The any-club roster, the transfer tables and Player Search do not offer it.
 - One attribute clause at a time, keyed on `_tag` like position and status. Choosing another
   attribute replaces it, and the three kinds coexist.

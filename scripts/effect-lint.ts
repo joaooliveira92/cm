@@ -11,7 +11,7 @@
 import { fileURLToPath } from "node:url";
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, type Dirent } from "node:fs"
 import { tmpdir } from "node:os"
-import { join, extname, relative } from "node:path"
+import { dirname, join, extname, relative } from "node:path"
 import type { CallExpression, ImportDeclaration, Node, SourceFile } from "typescript/unstable/ast"
 import {
   isCallExpression,
@@ -21,6 +21,7 @@ import {
   isJsxAttribute,
   isJsxOpeningElement,
   isJsxSelfClosingElement,
+  isNamedImports,
   isNewExpression,
   isObjectLiteralExpression,
   isPropertyAccessExpression,
@@ -409,10 +410,58 @@ export function lintRawTextSize(sourceFile: SourceFile, filePath: string): LintV
 // `components/ui` (where primitives compose each other deliberately). A
 // primitive that is the wrong size everywhere is fixed in its own file.
 //
-// Sees literals anywhere in the attribute (`cn(...)`, templates, ternaries) and
-// constants declared in the same file; an imported class constant is out of
-// reach of a per-file scan.
+// Sees literals anywhere in the attribute (`cn(...)`, templates, ternaries),
+// constants declared in the same file, and constants imported by name from a
+// relative module (`import { SELECT_CLASS } from "./selectStyles.js"`), which
+// `lintFileSet` resolves through a `ConstantIndex` of every guarded file. A
+// constant reached through a package import or a re-export is not followed.
 // ---------------------------------------------------------------------------
+
+/** One file's class-constant scope: its `const` initializers by name, and its
+ *  named imports from relative modules, resolved to the exporting module. */
+export interface ConstantScope {
+  readonly constants: ReadonlyMap<string, Node>
+  readonly imports: ReadonlyMap<string, { readonly module: string; readonly name: string }>
+}
+
+/** Scopes keyed by module: the absolute path without its extension, which is
+ *  what a `./x.js` specifier and the `x.ts`/`x.tsx` it names have in common. */
+export type ConstantIndex = ReadonlyMap<string, ConstantScope>
+
+export const moduleKey = (filePath: string): string => filePath.replace(/\.[jt]sx?$/, "")
+
+export function constantScopeOf(sourceFile: SourceFile, filePath: string): ConstantScope {
+  const constants = new Map<string, Node>()
+  const imports = new Map<string, { readonly module: string; readonly name: string }>()
+  const visit = (node: Node): void => {
+    if (isVariableDeclaration(node) && isIdentifier(node.name) && node.initializer !== undefined) {
+      constants.set(node.name.text, node.initializer)
+    }
+    if (isImportDeclaration(node)) {
+      const declaration = node as ImportDeclaration
+      const specifier = declaration.moduleSpecifier
+      const bindings = declaration.importClause?.namedBindings
+      if (
+        isStringLiteral(specifier) &&
+        specifier.text.startsWith(".") &&
+        bindings !== undefined &&
+        isNamedImports(bindings)
+      ) {
+        const module = moduleKey(join(dirname(filePath), specifier.text))
+        for (const element of bindings.elements) {
+          const exported =
+            element.propertyName !== undefined && isIdentifier(element.propertyName)
+              ? element.propertyName.text
+              : element.name.text
+          imports.set(element.name.text, { module, name: exported })
+        }
+      }
+    }
+    node.forEachChild(visit)
+  }
+  visit(sourceFile)
+  return { constants, imports }
+}
 
 /** The primitives whose own classes set a size role. `KeyValueValue` is left
  *  out on purpose: a value may be a standalone figure (`text-figure`). */
@@ -433,6 +482,28 @@ const ROLE_OWNING_PRIMITIVES = new Set([
   "Toggle",
 ])
 
+/**
+ * Repo-relative POSIX path → the primitive allowed a role override there, and why. A hard-coded
+ * allowlist with the reason at the site, like `FILE_LENGTH_EXEMPTIONS`: an entry is a primitive
+ * deliberately drawn as a different kind of control, not a size someone preferred.
+ */
+const ROLE_OVERRIDE_EXEMPTIONS: Readonly<Record<string, { readonly primitive: string; readonly reason: string }>> = {
+  // The Sort select sits in the squad actions row among flat text buttons and is drawn as one of
+  // them (`ACTIONS_ROW_BUTTON_CLASS`), so its trigger takes the buttons' `text-label` rather than
+  // a form field's `text-data`.
+  "apps/desktop/src/renderer/squad/SquadSortSelect.tsx": {
+    primitive: "SelectTrigger",
+    reason: "a select drawn as one of the actions row's text buttons",
+  },
+}
+
+const isRoleOverrideExempt = (filePath: string, primitive: string): boolean => {
+  const posix = filePath.replace(/\\/g, "/")
+  return Object.entries(ROLE_OVERRIDE_EXEMPTIONS).some(
+    ([path, exemption]) => posix.endsWith(`/${path}`) && exemption.primitive === primitive,
+  )
+}
+
 /** A type-scale role, under any variant. A colour such as `text-text-secondary` does not match. */
 const TEXT_ROLE_PATTERN =
   /(?<![a-zA-Z0-9-])text-(?:display|title|figure|heading|body|data|label|caption|overline)(?![a-zA-Z0-9-])/g
@@ -443,29 +514,40 @@ export function isRoleOverrideGuarded(filePath: string): boolean {
   return isSlateGuarded(filePath) && !filePath.includes(COMPONENTS_UI_DIR)
 }
 
-export function lintRoleOverride(sourceFile: SourceFile, filePath: string): LintViolation[] {
-  const constants = new Map<string, Node>()
-  const collect = (node: Node): void => {
-    if (isVariableDeclaration(node) && isIdentifier(node.name) && node.initializer !== undefined) {
-      constants.set(node.name.text, node.initializer)
-    }
-    node.forEachChild(collect)
-  }
-  collect(sourceFile)
+export function lintRoleOverride(
+  sourceFile: SourceFile,
+  filePath: string,
+  index: ConstantIndex = new Map(),
+): LintViolation[] {
+  const ownModule = moduleKey(filePath)
+  const ownScope = constantScopeOf(sourceFile, filePath)
+  const scopeOf = (module: string): ConstantScope | undefined =>
+    module === ownModule ? ownScope : index.get(module)
 
-  const literalTexts = (node: Node, seen: Set<string>): string[] => {
+  /** Every string an expression can contribute, following identifiers to the
+   *  constant they name in `module` or, through an import, in another module.
+   *  `seen` holds `module#name` keys so a cyclic reference ends. */
+  const literalTexts = (node: Node, module: string, seen: ReadonlySet<string>): string[] => {
     if (isStringLiteral(node) || isTemplateLiteralLikeNode(node)) {
       const text = (node as Node & { text?: string }).text
       return typeof text === "string" ? [text] : []
     }
     if (isIdentifier(node)) {
-      const initializer = constants.get(node.text)
-      if (initializer === undefined || seen.has(node.text)) return []
-      return literalTexts(initializer, new Set([...seen, node.text]))
+      const scope = scopeOf(module)
+      if (scope === undefined) return []
+      const imported = scope.imports.get(node.text)
+      const target =
+        scope.constants.has(node.text) || imported === undefined
+          ? { module, name: node.text }
+          : imported
+      const key = `${target.module}#${target.name}`
+      const initializer = scopeOf(target.module)?.constants.get(target.name)
+      if (initializer === undefined || seen.has(key)) return []
+      return literalTexts(initializer, target.module, new Set([...seen, key]))
     }
     const out: string[] = []
     node.forEachChild((child) => {
-      out.push(...literalTexts(child, seen))
+      out.push(...literalTexts(child, module, seen))
     })
     return out
   }
@@ -475,14 +557,15 @@ export function lintRoleOverride(sourceFile: SourceFile, filePath: string): Lint
     if (
       (isJsxOpeningElement(node) || isJsxSelfClosingElement(node)) &&
       isIdentifier(node.tagName) &&
-      ROLE_OWNING_PRIMITIVES.has(node.tagName.text)
+      ROLE_OWNING_PRIMITIVES.has(node.tagName.text) &&
+      !isRoleOverrideExempt(filePath, node.tagName.text)
     ) {
       const primitive = node.tagName.text
       for (const attribute of node.attributes.properties) {
         if (!isJsxAttribute(attribute) || !isIdentifier(attribute.name)) continue
         if (attribute.name.text !== "className" || attribute.initializer === undefined) continue
         const { line } = sourceFile.getLineAndCharacterOfPosition(attribute.getStart(sourceFile))
-        for (const text of literalTexts(attribute.initializer, new Set())) {
+        for (const text of literalTexts(attribute.initializer, ownModule, new Set())) {
           for (const hit of text.match(TEXT_ROLE_PATTERN) ?? []) {
             out.push({
               file: filePath,
@@ -884,6 +967,13 @@ export function lintFileSet(
         `effect-lint: ${parseErrors.length} parse error(s); refusing to pass. First: ${first.fileName ?? "<unknown>"} — ${first.text}`,
       )
     }
+    // The role-override guard follows class constants across relative imports,
+    // so every guarded file's scope is indexed before any file is linted.
+    const constantIndex = new Map<string, ConstantScope>()
+    for (const file of files) {
+      const sourceFile = isSlateGuarded(file) ? project.program.getSourceFile(file) : undefined
+      if (sourceFile) constantIndex.set(moduleKey(file), constantScopeOf(sourceFile, file))
+    }
     for (const file of files) {
       const sourceFile = project.program.getSourceFile(file)
       if (!sourceFile) {
@@ -893,7 +983,7 @@ export function lintFileSet(
       const boundary = isBoundaryEnforced(file) ? lintBoundary(sourceFile, file) : []
       const slate = isSlateGuarded(file) ? lintSlateClassNames(sourceFile, file) : []
       const typeScale = isSlateGuarded(file) ? lintRawTextSize(sourceFile, file) : []
-      const roleOverride = isRoleOverrideGuarded(file) ? lintRoleOverride(sourceFile, file) : []
+      const roleOverride = isRoleOverrideGuarded(file) ? lintRoleOverride(sourceFile, file, constantIndex) : []
       const length = lintFileLength(sourceFile, file, cwd, options.maxFileLines)
       const pragma = lintVitestEnvironmentPragma(sourceFile, file, cwd)
       const locale = isLocaleFree(file, cwd) ? lintLocaleCompare(sourceFile, file) : []

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import { FAMILIARITY_TIERS, POSITIONS, STATURE_TIERS } from "@cm-clone/shared";
 import { SquadScreen } from "../../../src/renderer/squad/SquadScreen.js";
+import { RegisteredScreenBar } from "../registered-screen-bar.js";
 import { TransfersScreen } from "../../../src/renderer/transfers/TransfersScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 import { saveSquadViewId } from "../../../src/renderer/squad/squadViews.js";
@@ -16,7 +17,7 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { chooseOptionByLabel, selectValueOf } from "../../setup/baseUiSelect.js";
-import { ScreenToolbarSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
+import { ScreenToolbarSlot, ScreenToolbarTrailingSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
 import { chooseToolbarOption } from "../../setup/toolbarPopover.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
@@ -83,6 +84,7 @@ const renderSquad = (): void =>
   renderInRouter(
     <RegistryProvider>
       <ScreenToolbarSlot />
+      <ScreenToolbarTrailingSlot />
       <SquadScreen saveId={rid("s1")} />
     </RegistryProvider>,
   );
@@ -105,6 +107,7 @@ const mountTransfers = async (view: unknown): Promise<void> => {
   render(
     <RegistryProvider>
       <TransfersScreen saveId={rid("s1")} />
+      <RegisteredScreenBar />
     </RegistryProvider>,
   );
 };
@@ -197,7 +200,7 @@ describe("AC-28 — row-oriented roving on a semantic <table>, no ARIA grid", ()
 });
 
 describe("AC-30 — sortable header buttons in native Tab order with aria-sort", () => {
-  it("a header button cycles asc → desc → none with aria-sort and announces the change", async () => {
+  it("a header button cycles asc → desc → none with aria-sort", async () => {
     await mountSquad(
       squadView([
         squadPlayer("p1", "Zoe", POSITIONS[2]),
@@ -211,7 +214,6 @@ describe("AC-30 — sortable header buttons in native Tab order with aria-sort",
 
     fireEvent.click(nameHeader);
     expect(group.querySelector("th[aria-sort]")?.getAttribute("aria-sort")).toBe("ascending");
-    expect(within(group).getByRole("status").textContent).toContain("Sorted by Name, ascending.");
 
     fireEvent.click(within(group).getByRole("button", { name: "Name" }));
     expect(group.querySelector("th[aria-sort]")?.getAttribute("aria-sort")).toBe("descending");
@@ -325,7 +327,7 @@ describe("AC-30 — visible filter controls show active state and drive the same
     expect(selectValueOf(screen.getByLabelText("Filter Market by position"))).toBe("ST");
   });
 
-  it("a palette set-filter announces the new result count on Transfers (F-7: parity with the Squad set-filter)", async () => {
+  it("a palette set-filter reports the filter and result count in the bottom bar on Transfers (F-7: parity with the Squad set-filter)", async () => {
     await mountTransfers(transfersView());
     await screen.findByRole("button", { name: /Alan Player/ });
     act(() => {
@@ -334,9 +336,8 @@ describe("AC-30 — visible filter controls show active state and drive the same
         filter: { _tag: "position", position: "DC" },
       });
     });
-    const marketGroup = screen.getByRole("group", { name: "Market" });
-    expect(within(marketGroup).getByRole("status").textContent).toContain(
-      "1 player matches the current filters.",
+    expect(screen.getByRole("contentinfo").textContent).toContain(
+      "Filtered by Position: DC. 1 player matches the current filters.",
     );
   });
 });

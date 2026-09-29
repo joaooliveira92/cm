@@ -314,8 +314,8 @@ export const saveEntry = (page: Page, name: string): Locator =>
     .getByRole("button", { name: "Continue", exact: true });
 
 /**
- * Choose an option from a screen toolbar popover (Squad's View and Position selectors): a trigger
- * button in the career chrome's actions band, and a portaled dialog of option buttons.
+ * Choose an option from a screen toolbar menu (Squad's View, Position and Status selectors): a
+ * trigger button in the career chrome's actions band, and a portaled menu of radio items.
  */
 export const chooseToolbarOption = async (
   page: Page,
@@ -323,8 +323,8 @@ export const chooseToolbarOption = async (
   optionName: string | RegExp,
 ): Promise<void> => {
   await page.getByRole("button", { name: triggerName }).click();
-  await page.getByRole("dialog").getByRole("button", { name: optionName, exact: true }).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.getByRole("menu").getByRole("menuitemradio", { name: optionName, exact: true }).click();
+  await expect(page.getByRole("menu")).toHaveCount(0);
 };
 
 /**
@@ -462,7 +462,7 @@ export const nameBench = async (page: Page, count = 3) => {
   await expect(benchSlots).toHaveCount(7);
   const notSelected = page
     .getByRole("group", { name: "Squad" })
-    .getByRole("listitem")
+    .locator("tbody tr")
     .filter({ has: page.getByText("Not selected", { exact: true }) });
   /* oxlint-disable no-await-in-loop */
   for (let benchIndex = 0; benchIndex < count; benchIndex++) {
@@ -471,7 +471,8 @@ export const nameBench = async (page: Page, count = 3) => {
     const [lastName, firstName] = ((await player.textContent()) ?? "").split(", ");
     await player.dragTo(benchSlots.nth(benchIndex));
     await expect(benchSlots.nth(benchIndex)).toHaveAccessibleName(`SB${benchIndex + 1} slot, ${firstName} ${lastName}`);
-    await expect(page.getByTestId("lineup-save-state")).toHaveText("Saved.");
+    // The save state is reported in the shell's bottom bar.
+    await expect(page.locator("footer p[aria-live]")).toHaveText("Saved.");
   }
   /* oxlint-enable no-await-in-loop */
 };

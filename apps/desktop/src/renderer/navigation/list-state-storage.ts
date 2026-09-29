@@ -143,13 +143,15 @@ const decodeFilters = (raw: string | null): readonly FilterClause[] => {
     }
     // An attribute must be one the Squad table shows and a minimum on the 1–20
     // scale; anything else drops, so a hand-edited URL cannot hide every row.
-    // One attribute clause at a time, so a repeated part replaces the earlier one.
+    // One clause per Attribute, so a repeated key replaces its earlier part.
     const attributeMatch = /^attr:([A-Za-z]+):(\d{1,2})$/.exec(part);
     if (attributeMatch !== null) {
       const attribute = ALL_ATTRIBUTES.find((key) => key === attributeMatch[1]);
       const min = Number(attributeMatch[2]);
       if (attribute !== undefined && ATTRIBUTE_MINIMUMS.includes(min)) {
-        const earlier = result.findIndex((clause) => clause._tag === "attribute");
+        const earlier = result.findIndex(
+          (clause) => clause._tag === "attribute" && clause.attribute === attribute,
+        );
         if (earlier !== -1) result.splice(earlier, 1);
         result.push({ _tag: "attribute", attribute, min });
       }

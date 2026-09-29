@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { useScrollEdges } from "./useScrollEdges.js";
 import { useTableKeyboard } from "./useTableKeyboard.js";
-import TableCtx from "./DataTableContext.js";
+import TableCtx, { type TableDensity } from "./DataTableContext.js";
 import type { SortState, TableRowShape } from "./types.js";
 import type { TableFocusBookmark } from "./focusBookmark.js";
 import type { Table as TanStackTable } from "@tanstack/react-table";
@@ -9,7 +9,7 @@ import type { Table as TanStackTable } from "@tanstack/react-table";
 const EDGE_FADE_BASE =
   "pointer-events-none absolute inset-y-0 w-8 transition-opacity duration-150";
 
-export { useTableCtx, type TableContextValue } from "./DataTableContext.js";
+export { useTableCtx, type TableContextValue, type TableDensity } from "./DataTableContext.js";
 export { scrollEdges, type ScrollEdges } from "./useScrollEdges.js";
 export { useTableKeyboard, effectiveActiveId } from "./useTableKeyboard.js";
 import { DataTableHeader } from "./DataTableHeader.js";
@@ -35,6 +35,8 @@ export interface DataTableRootProps<Row extends TableRowShape> {
   readonly onRowDragStart?: (event: React.DragEvent<HTMLButtonElement>, rowId: string) => void;
   readonly ariaLabel: string;
   readonly announcement: string;
+  /** Row height; `compact` when omitted. See `TableDensity`. */
+  readonly density?: TableDensity;
   readonly ariaBusy?: boolean;
   readonly initialScrollLeft?: number;
   readonly onScrollCommit?: (scrollLeft: number) => void;
@@ -46,7 +48,7 @@ export const DataTableRoot = <Row extends TableRowShape>(props: DataTableRootPro
     tableId, screen, region, table, orderedIds, identityColumnId,
     activeId, onActiveChange, onBookmarkChange, selectedId, onToggleSelection,
     onSortChange, onIdentityOpen, onRowPrimary, onRowDragStart, ariaLabel, announcement,
-    ariaBusy, initialScrollLeft, onScrollCommit, children,
+    density = "compact", ariaBusy, initialScrollLeft, onScrollCommit, children,
   } = props;
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -76,7 +78,7 @@ export const DataTableRoot = <Row extends TableRowShape>(props: DataTableRootPro
     <TableCtx.Provider value={{
       screen, region, identityColumnId, activeId, onActiveChange, onSortChange,
       selectedId, onToggleSelection, onIdentityOpen, onRowPrimary, onRowDragStart,
-      effectiveActive, onBodyKeyDown,
+      density, scrolledFromLeft: edges.left, effectiveActive, onBodyKeyDown,
     }}>
       <div className="relative">
         <div data-table-scroll ref={scrollRef} className="mt-2 overflow-x-auto" aria-busy={ariaBusy || undefined} role="group" aria-label={ariaLabel} onScroll={syncEdges}>

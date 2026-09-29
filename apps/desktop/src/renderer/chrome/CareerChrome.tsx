@@ -23,7 +23,7 @@ import {
   seasonReadout,
   type SeasonReadoutInput,
 } from "./header/career-header-state.js";
-import { ScreenToolbarSlot } from "./ScreenToolbarSlot.js";
+import { ScreenToolbarSlot, ScreenToolbarTrailingSlot } from "./ScreenToolbarSlot.js";
 import { getScreenIdentity, subscribeScreenIdentity } from "../screenIdentity.js";
 import { Backdrop } from "../backdrop/Backdrop.js";
 import { backdropFor } from "../backdrop/backdrops.js";
@@ -151,6 +151,7 @@ const CareerChromeInner = ({
                   <HeaderActionsMenu />
                 </span>
                 <div className="flex-1" />
+                <ScreenToolbarTrailingSlot />
               </div>
               {report !== null && (
                 <ContinueResultBand

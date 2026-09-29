@@ -7,15 +7,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select.js";
-import { FOCUS_RING } from "../focus.js";
 import type { FilterClause } from "../table/types.js";
 import {
   nameSearchClause,
   positionClause,
   upsertFilter,
 } from "../table/features/filtering.js";
-
-const SELECT_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;
 
 /** Shared composable filter bar for the transfers tables (Market + Free Agents).
  *  Replaces the old boolean-gated inline controls with explicit composition:
@@ -53,7 +50,7 @@ export const TransferFilterBar = ({
 
   return (
     <>
-      <label className="flex items-center gap-2 text-text-soft">
+      <label className="flex items-center gap-2 text-label text-text-soft">
         Name
         <Input
           type="text"
@@ -63,7 +60,7 @@ export const TransferFilterBar = ({
           className="w-32"
         />
       </label>
-      <div className="flex items-center gap-2 text-text-soft">
+      <div className="flex items-center gap-2 text-label text-text-soft">
         Position
         <Select
           value={activePosition ?? ""}
@@ -71,7 +68,7 @@ export const TransferFilterBar = ({
             if (value !== null) setPosition(value);
           }}
         >
-          <SelectTrigger aria-label={`Filter ${label} by position`} className={SELECT_CLASS}>
+          <SelectTrigger aria-label={`Filter ${label} by position`}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

@@ -58,9 +58,14 @@ columns, left column longer on an odd count, each row, left to right: the match-
 player fills in the next match — GK, DC, SB1 — or empty), a status slot, the name (surname first,
 as the list reads), and the player's positions tinted by Familiarity Tier. The status slot keeps
 the table's Status column width when empty, so the names line up down each column and a status
-(injured, suspended, on international duty, once modelled) appears without shifting anything. It is not a `<table>`: there is
-one field beside the name, so a table would buy a header row, per-column sort semantics and a grid
-navigation model for a single column of data.
+(injured, suspended, on international duty, once modelled) appears without shifting anything. Each column is a headerless `Table` from the shared
+primitives (the reui `c-table-7` pattern, 2026-09-29), not a `<ul>`. This note first said the list
+should not be a table because a table would bring a header row, per-column sort and grid
+navigation. The table version adds none of those: there is no header, sorting stays in the Sort
+control, and the keyboard model below is unchanged. What it does add is the striping, hover and
+selection styles the table views already use, so the two layouts look alike and there is one
+copy of those styles. Tests tell the layouts apart by `data-squad-layout="positions"`, not by
+whether a `<tbody>` exists.
 
 The match-day indicator is not the list's alone. Every table view leads with it too, as a protected
 column pinned left of Name (`squad-instructions` ticket 03), so which players are picked never depends

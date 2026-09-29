@@ -8,7 +8,7 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "lint": "oxlint .",
+    "lint": "oxlint --disable-nested-config .",
     "effect-lint": "tsx scripts/effect-lint.ts",
     "verify-md-links": "tsx scripts/verify-md-links.ts",
     "verify-db-schema": "tsx scripts/verify-db-schema.ts",

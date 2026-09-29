@@ -124,8 +124,10 @@ export const MODAL_BODY = "px-3 py-3";
 export const FIELD_INPUT =
   "flex h-7 w-full rounded-control border border-border-subtle bg-field-bg px-2 py-1 text-data transition-colors";
 
+/** The select trigger's field surface. It carries no focus ring: `SelectTrigger`
+ *  adds the single `FOCUS_RING` (`focus.ts`), the same one `Input` uses. */
 export const FIELD_SELECT =
-  "flex h-8 w-full items-center justify-between gap-2 rounded-control border border-border-subtle bg-field-bg px-2 text-data text-text-primary outline-none transition-colors hover:border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 data-[placeholder]:text-text-muted";
+  "flex h-8 w-full items-center justify-between gap-2 rounded-control border border-border-subtle bg-field-bg px-2 text-data text-text-primary transition-colors hover:border-border data-[placeholder]:text-text-muted";
 
 export const FIELD_LABEL =
   "text-label text-text-secondary";

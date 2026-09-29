@@ -9,7 +9,7 @@ import type { SaveId } from "@cm-clone/contracts";
 import { registerActionHandler } from "../actions/dispatch.js";
 import { classifyTableParamAction } from "../table/paramActions.js";
 import { sortDirectionOf } from "../table/features/sorting.js";
-import { applyFilters, upsertFilter } from "../table/features/filtering.js";
+import { applyFilters, filterChangeNotice, upsertFilter } from "../table/features/filtering.js";
 import {
   FREE_AGENT_PALETTE_OPTIONS,
   MARKET_PALETTE_OPTIONS,
@@ -36,7 +36,8 @@ export interface TablePaletteHandlersParams {
   readonly setSortFor: TransferTableState["setSortFor"];
   readonly setFiltersFor: TransferTableState["setFiltersFor"];
   readonly filtersFor: TransferTableState["filtersFor"];
-  readonly speak: TransferTableState["speak"];
+  /** The shell's bottom-bar line, where a sort or filter command reports. */
+  readonly notify: (message: string) => void;
 }
 
 /** The command-palette sort/filter actions for both transfer tables. */
@@ -52,7 +53,7 @@ export const useTablePaletteHandlers = ({
   setSortFor,
   setFiltersFor,
   filtersFor,
-  speak,
+  notify,
 }: TablePaletteHandlersParams): void => {
   useEffect(() => {
     const unregisters: Array<() => void> = [];
@@ -70,37 +71,29 @@ export const useTablePaletteHandlers = ({
           const next = parsed.sort ?? null;
           setSortFor(parsed.tableId, next);
           if (next === null) {
-            speak(parsed.tableId, "sort-cleared", `Cleared the ${parsed.tableId === MARKET ? "Market" : "Free Agents"} sort.`);
+            notify(`Cleared the ${parsed.tableId === MARKET ? "Market" : "Free Agents"} sort.`);
           } else {
-            speak(
-              parsed.tableId,
-              "sort-set",
-              `Sorted by ${labels[next.columnId] ?? next.columnId}, ${sortDirectionOf(next.direction)}.`,
-            );
+            notify(`Sorted by ${labels[next.columnId] ?? next.columnId}, ${sortDirectionOf(next.direction)}.`);
           }
           break;
         }
         case "clear-sort":
           setSortFor(parsed.tableId, null);
-          speak(parsed.tableId, "sort-cleared", `Cleared the ${parsed.tableId === MARKET ? "Market" : "Free Agents"} sort.`);
+          notify(`Cleared the ${parsed.tableId === MARKET ? "Market" : "Free Agents"} sort.`);
           break;
         case "set-filter":
           if (parsed.filter !== undefined) {
             const rows =
               parsed.tableId === MARKET ? marketRowsRef.current : freeAgentRowsRef.current;
-            const next = upsertFilter(filtersFor(parsed.tableId), parsed.filter);
+            const before = filtersFor(parsed.tableId);
+            const next = upsertFilter(before, parsed.filter);
             setFiltersFor(parsed.tableId, next);
-            const count = applyFilters(rows, next).length;
-            speak(
-              parsed.tableId,
-              "filter-set",
-              `${count} ${count === 1 ? "player matches" : "players match"} the current filters.`,
-            );
+            notify(filterChangeNotice(before, next, applyFilters(rows, next).length));
           }
           break;
         case "clear-filters":
           setFiltersFor(parsed.tableId, []);
-          speak(parsed.tableId, "filter-cleared", `Cleared the ${parsed.tableId === MARKET ? "Market" : "Free Agents"} filters.`);
+          notify(`Cleared the ${parsed.tableId === MARKET ? "Market" : "Free Agents"} filters.`);
           break;
       }
     };

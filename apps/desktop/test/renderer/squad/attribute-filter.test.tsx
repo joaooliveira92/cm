@@ -77,16 +77,37 @@ const mountSquad = (initialEntry = "/"): void => {
 
 const TRIGGER = "Filter squad by attribute";
 
-/** The picker's two steps: the Attribute, then the minimum. */
-const chooseAttribute = async (attribute: string, min: string): Promise<void> => {
+/** Open the dialog, run `act` inside it, and wait for it to close. */
+const inDialog = async (act: (dialog: HTMLElement) => void): Promise<void> => {
   fireEvent.click(screen.getByRole("button", { name: TRIGGER }));
-  const popup = await screen.findByRole("dialog", {}, { timeout: 2000 });
-  fireEvent.click(within(popup).getByRole("button", { name: attribute }));
-  fireEvent.click(await within(popup).findByRole("button", { name: min }));
+  const dialog = await screen.findByRole("dialog", { name: "Filter by attribute" }, { timeout: 2000 });
+  act(dialog);
   await waitFor(() => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 };
+
+/** An Attribute's button: its name, then its drafted minimum when it has one ("Pace 15+"). */
+const attributeButton = (dialog: HTMLElement, attribute: string): HTMLElement =>
+  within(dialog).getByRole("button", { name: new RegExp(`^${attribute}( \\d+\\+)?$`) });
+
+/** Draft one threshold inside an open dialog: the Attribute, then its minimum. */
+const draft = (dialog: HTMLElement, attribute: string, min: string): void => {
+  fireEvent.click(attributeButton(dialog, attribute));
+  fireEvent.click(within(dialog).getByRole("button", { name: min }));
+};
+
+/** Draft one threshold and Apply, keeping any other threshold already set. */
+const chooseAttribute = (attribute: string, min: string): Promise<void> =>
+  inDialog((dialog) => {
+    draft(dialog, attribute, min);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Apply" }));
+  });
+
+const clearAttribute = (): Promise<void> =>
+  inDialog((dialog) => {
+    fireEvent.click(within(dialog).getByRole("button", { name: "Clear all" }));
+  });
 
 /** The first names of the rows the table currently shows. */
 const visible = (): readonly string[] =>
@@ -110,7 +131,7 @@ const reset = () => {
 beforeEach(reset);
 afterEach(reset);
 
-describe("Squad attribute filter (Screen 71, group-e 04)", () => {
+describe("Squad attribute filter (Screen 71, group-e 04, 05)", () => {
   it("keeps players at or above the minimum, and clears without touching Position or Status", async () => {
     mountSquad();
     await screen.findByText(/Tom Player/);
@@ -123,26 +144,61 @@ describe("Squad attribute filter (Screen 71, group-e 04)", () => {
     await expectVisible(["Tom"]);
 
     // Clearing the attribute leaves Status in place, and the reverse.
-    await chooseToolbarOption(TRIGGER, "Any attribute");
+    await clearAttribute();
     await expectVisible(["Tom", "Tia"]);
     await chooseAttribute("Pace", "16+");
     await chooseToolbarOption("Filter squad by status", "Any status");
     await expectVisible(["Tom"]);
   });
 
-  it("replaces the clause when another attribute is chosen", async () => {
+  it("applies several thresholds together, and Any drops one of them", async () => {
     mountSquad();
     await screen.findByText(/Tom Player/);
-    await chooseAttribute("Pace", "16+");
-    await expectVisible(["Tom"]);
-    // Every player has 12 Strength: a new attribute clause replaces Pace rather than joining it.
-    await chooseAttribute("Strength", "12+");
-    await expectVisible(["Tom", "Fay", "Tia"]);
-    expect(screen.getByRole("button", { name: TRIGGER }).textContent).toContain("Attribute: Strength 12+");
+    await chooseAttribute("Pace", "15+");
+    await expectVisible(["Tom", "Fay"]);
+    // Every player has 12 Strength, so 13+ joins Pace and leaves nobody.
+    await chooseAttribute("Strength", "13+");
+    await expectVisible([]);
+    expect(screen.getByRole("button", { name: TRIGGER }).textContent).toContain("Attributes: Pace 15+ +1");
+
+    await inDialog((dialog) => {
+      fireEvent.click(attributeButton(dialog, "Strength"));
+      fireEvent.click(within(dialog).getByRole("button", { name: "Any" }));
+      fireEvent.click(within(dialog).getByRole("button", { name: "Apply" }));
+    });
+    await expectVisible(["Tom", "Fay"]);
+    expect(screen.getByRole("button", { name: TRIGGER }).textContent).toContain("Attribute: Pace 15+");
+  });
+
+  it("counts the players the draft would leave before it is applied", async () => {
+    mountSquad("/?filters=status:Tir");
+    await expectVisible(["Tom", "Tia"]);
+    await inDialog((dialog) => {
+      const count = within(dialog).getByRole("status");
+      expect(count.textContent).toBe("2 players match");
+      draft(dialog, "Pace", "15+");
+      // Status still applies: Fay is fast but fresh.
+      expect(count.textContent).toBe("1 player matches");
+      fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    });
+    await expectVisible(["Tom", "Tia"]);
   });
 
   it("restores an attribute clause from the URL, through the real decode path", async () => {
     mountSquad("/?filters=pos:DC,attr:pace:16");
+    await expectVisible(["Tom"]);
+    expect(screen.getByRole("button", { name: TRIGGER }).textContent).toContain("Attribute: Pace 16+");
+  });
+
+  it("opens on the live clause, and Cancel leaves it untouched", async () => {
+    mountSquad("/?filters=attr:pace:16");
+    await expectVisible(["Tom"]);
+    await inDialog((dialog) => {
+      expect(attributeButton(dialog, "Pace").getAttribute("aria-pressed")).toBe("true");
+      expect(within(dialog).getByRole("button", { name: "16+" }).getAttribute("aria-pressed")).toBe("true");
+      draft(dialog, "Strength", "5+");
+      fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    });
     await expectVisible(["Tom"]);
     expect(screen.getByRole("button", { name: TRIGGER }).textContent).toContain("Attribute: Pace 16+");
   });

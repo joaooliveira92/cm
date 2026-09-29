@@ -30,7 +30,7 @@ TableBody.displayName = "TableBody";
 const TableFooter = ({ className, ref, ...props }: TableSectionProps) => (
   <tfoot
     ref={ref}
-    className={cn("border-t bg-muted/50 font-medium [&>tr]:last:border-b-0", className)}
+    className={cn("border-t  font-medium [&>tr]:last:border-b-0", className)}
     {...props}
   />
 );
@@ -44,8 +44,8 @@ const TableRow = ({ className, ref, ...props }: TableRowProps) => (
   <tr
     ref={ref}
     className={cn(
-      "transition-colors hover:bg-row-hover odd:bg-surface/50",
-      "aria-selected:bg-row-selected! data-[state=selected]:bg-row-selected!",
+      "transition-colors",
+      "data-[state=selected]:bg-row-selected!",
       className,
     )}
     {...props}
@@ -61,7 +61,9 @@ const TableHead = ({ className, ref, ...props }: TableHeadProps) => (
   <th
     ref={ref}
     className={cn(
-      "h-6 px-2 text-left align-middle text-data font-semibold text-text-secondary [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+      // A column header is the `text-overline` role, which is uppercase by
+      // definition (see the type scale in index.css).
+      "h-6 px-2 text-left align-middle text-overline uppercase text-text-secondary [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
       className,
     )}
     {...props}
