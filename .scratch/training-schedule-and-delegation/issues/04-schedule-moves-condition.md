@@ -17,7 +17,7 @@ the screen and the advance cannot disagree.
 
 - The schedule moves between-match Condition recovery only, bounded inside Regimen's range, never Player Development. See [Agent Note](../../../.agents/notes/proposed/feature/2026-09-28-training-schedule-moves-condition-only.md).
 
-**Blocked by:** 03, [human-club-recovery 01](../../human-club-recovery/issues/01-human-club-recovers-before-each-kickoff.md) (the human club has no recovery step to multiply until it lands; ruled 2026-09-28)
+**Blocked by:** None. 03 is resolved, and the human club's recovery step it multiplies landed in `923ec6d1` ([human-club-recovery 01](../../human-club-recovery/issues/01-human-club-recovers-before-each-kickoff.md)).
 
 **Status:** ready-for-agent
 

@@ -52,11 +52,20 @@ its stored Condition too, so it has never recovered before playing the human eit
 
 ## Acceptance criteria
 
-- [ ] After a live Matchday, the human squad's Condition at the next Pre-match Boundary is higher
+- [x] After a live Matchday, the human squad's Condition at the next Pre-match Boundary is higher
       than at the previous full time for every player below 100, by the same step AI clubs get.
-- [ ] A player with a severe injury recovers less than one with a knock, as for AI clubs.
-- [ ] Stopping at the same boundary twice recovers once.
-- [ ] The live match starts from the recovered Condition, and replaying it gives the same result.
-- [ ] The opponent in the live match is recovered the same way, once.
-- [ ] Clubs not in the human's Fixture have the same Condition after an advance as before the fix.
+- [x] A player with a severe injury recovers less than one with a knock, as for AI clubs.
+- [x] Stopping at the same boundary twice recovers once.
+- [x] The live match starts from the recovered Condition, and replaying it gives the same result.
+- [x] The opponent in the live match is recovered the same way, once.
+- [x] Clubs not in the human's Fixture have the same Condition after an advance as before the fix.
 - [ ] `CONTEXT.md`'s Condition entry says both the human and AI clubs recover before each Fixture.
+
+## Comments
+
+**2026-09-28:** the fix and its test landed in `923ec6d1`. Every criterion but the glossary line is
+met; `apps/desktop/test/main/season/human-club-recovery.test.ts` checks them in one run. The
+`CONTEXT.md` Condition line is written but not committed, because the file also holds another
+session's uncommitted Formation edit and a path-limited commit would take theirs too. It lands once
+that edit is committed; then this ticket resolves. Ticket 04 is unblocked, because what it needed was
+the recovery behaviour, not the glossary line.
