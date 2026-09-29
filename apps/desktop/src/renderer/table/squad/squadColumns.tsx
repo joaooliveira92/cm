@@ -24,6 +24,7 @@ import type { ClubSquadPlayerView, SquadPlayerView } from "@cm-clone/contracts";
 import { format, parseISO } from "date-fns";
 import { figureMid, formatCredits, formatFigure } from "../../format.js";
 import type { TableRowShape } from "../types.js";
+import { positionSortRank } from "./positionOrder.js";
 import {
   statusesOf,
   StatusCell,
@@ -321,6 +322,8 @@ export const squadColumns = ({
       accessorFn: (row) => positionsCell(row),
       header: "Positions",
       enableSorting: sortable,
+      sortingFn: (rowA, rowB) =>
+        positionSortRank(rowA.original.positions) - positionSortRank(rowB.original.positions),
       cell: (info) => info.getValue<unknown>() as string,
     },
     {

@@ -120,6 +120,32 @@ describe("sorting the position list", () => {
     expect(rowNames()).toEqual(["Player, Ann", "Player, Zoe"]);
   });
 
+  it("orders by pitch position, back to front and right-left-centre, not alphabetically", async () => {
+    await mountSquad([
+      squadPlayer("p1", "Stan", "ST"),
+      squadPlayer("p2", "Amy", "AMC"),
+      squadPlayer("p3", "Dee", "DC"),
+      squadPlayer("p4", "Gus", "GK"),
+      squadPlayer("p5", "Rob", "DR"),
+      squadPlayer("p6", "Mia", "MC"),
+      squadPlayer("p7", "Dom", "DM"),
+      squadPlayer("p8", "Lou", "DL"),
+    ]);
+
+    await chooseOptionByLabel("Sort squad", "Positions");
+
+    expect(rowNames()).toEqual([
+      "Player, Gus",
+      "Player, Rob",
+      "Player, Lou",
+      "Player, Dee",
+      "Player, Dom",
+      "Player, Mia",
+      "Player, Amy",
+      "Player, Stan",
+    ]);
+  });
+
   it("clears the sort on the third choice, the whole cycle a header offers", async () => {
     await mountSquad([
       { ...squadPlayer("p1", "Zoe", "ST"), age: 30 },
