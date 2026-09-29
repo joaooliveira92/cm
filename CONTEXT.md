@@ -197,7 +197,10 @@ season-long fitness layer below.
 A per-player, in-match percentage (0-100, starting near 100) that decays each minute with a player's
 Stamina and the team's Tempo. It replaces squad-average fatigue as the driver of late-match strength
 decay and is the substrate both injury triggers read from. Below the ~75% threshold the non-contact
-injury risk climbs as Condition falls.
+injury risk climbs as Condition falls. A match's full-time Condition carries into the Season's fitness
+ledger, and before each Fixture both clubs recover part of the gap back to 100, keyed to Natural
+Fitness and the last injury's Severity: a simulated Fixture recovers its clubs as it resolves, and
+the human's Fixture recovers both sides once, when the Calendar stops at its Pre-match Boundary.
 _Avoid_: Fitness (see Natural Fitness), stamina (Stamina is the attribute; Condition is the live state)
 
 **Natural Fitness**:
