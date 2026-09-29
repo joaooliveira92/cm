@@ -1,7 +1,7 @@
 import type { ClubSelectionRow } from "@cm-clone/contracts";
 import { Badge } from "../components/ui/badge.js";
 import { DetailCard } from "./DetailCard.js";
-import { qualityBadgeOf } from "./club-profile.js";
+import { qualityPresentationOf } from "./club-profile.js";
 import { expectationProse } from "./model.js";
 
 export interface BoardObjectiveCardProps {
@@ -10,7 +10,7 @@ export interface BoardObjectiveCardProps {
 }
 
 export const BoardObjectiveCard = ({ club, leagueSize }: BoardObjectiveCardProps) => {
-  const quality = qualityBadgeOf(club.squadQualityBand);
+  const quality = qualityPresentationOf(club.squadQualityBand);
 
   return (
     <DetailCard title="Board Objective">

@@ -1,37 +1,37 @@
+import type { SquadQualityBand } from "@cm-clone/shared";
+import { QUALITY_SEGMENTS, filledSegments } from "./model.js";
+
 /**
- * The detail panel's presentation labels for a club: its stature phrase, the quality badge and the
- * squad-quality meter's fill. Pure, so the panel parts read them without owning the tables.
+ * The detail panel's presentation labels for a club: its stature phrase and how its Squad Quality
+ * band reads. Pure, so the panel parts read them without owning the tables.
  */
 
 type QualityBadgeVariant = "default" | "success" | "warning" | "destructive" | "outline";
 
-interface QualityBadge {
+export interface QualityPresentation {
+  /** The badge's coarse word for the band. */
   readonly label: string;
   readonly variant: QualityBadgeVariant;
+  /** The meter's fill: the band's ordinal position in `SQUAD_QUALITY_BANDS`, as a percentage —
+   *  the same reading the rail's segmented meter takes, so the two never disagree. */
+  readonly percent: number;
 }
 
-const QUALITY_LABEL: Record<string, QualityBadge> = {
-  Champion: { label: "Elite", variant: "default" },
-  Exceptional: { label: "Elite", variant: "default" },
-  Excellent: { label: "Strong", variant: "success" },
-  "Very Good": { label: "Strong", variant: "success" },
-  Good: { label: "Solid", variant: "warning" },
-  Acceptable: { label: "Solid", variant: "warning" },
-  "Below Average": { label: "Modest", variant: "destructive" },
-  Poor: { label: "Modest", variant: "destructive" },
+/** Keyed by the domain's band union, so a band added to `SQUAD_QUALITY_BANDS` without an entry
+ *  here is a type error rather than a silent fallback. */
+const QUALITY_BADGES: Record<SquadQualityBand, Pick<QualityPresentation, "label" | "variant">> = {
+  Elite: { label: "Elite", variant: "default" },
+  "Very Strong": { label: "Strong", variant: "success" },
+  Strong: { label: "Strong", variant: "success" },
+  Competitive: { label: "Solid", variant: "warning" },
+  Weak: { label: "Modest", variant: "destructive" },
+  "Very Weak": { label: "Modest", variant: "destructive" },
 };
 
-const QUALITY_ORDER = ["Champion", "Exceptional", "Excellent", "Very Good", "Good", "Acceptable", "Below Average", "Poor"];
-
-/** The band's badge, falling back to the band itself in an outline badge when the table has no entry. */
-export const qualityBadgeOf = (band: string): QualityBadge =>
-  QUALITY_LABEL[band] ?? { label: band, variant: "outline" };
+export const qualityPresentationOf = (band: SquadQualityBand): QualityPresentation => ({
+  ...QUALITY_BADGES[band],
+  percent: (filledSegments(band) / QUALITY_SEGMENTS) * 100,
+});
 
 export const statureLabel = (tier: string): string =>
   tier === "big" ? "Major Club" : tier === "mid" ? "Established Club" : "Small Club";
-
-export const qualityPercentOf = (band: string): number => {
-  const idx = QUALITY_ORDER.indexOf(band);
-  if (idx === -1) return 0;
-  return ((idx + 1) / 8) * 100;
-};

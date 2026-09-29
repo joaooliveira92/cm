@@ -14,8 +14,12 @@ export const useClubRailRoving = (
   const [activeClubId, setActiveClubId] = useState<ClubId | null>(null);
   const rowRefs = useRef(new Map<ClubId, HTMLDivElement | null>());
 
-  /** The roving tab stop: the focused row, else the selected one, else the first row. */
-  const tabStopId = activeClubId ?? selectedClubId ?? clubs[0]?.clubId ?? null;
+  /** The roving tab stop: the focused row, else the selected one, else the first row. A remembered
+   *  id counts only while its club is in the list — after a League switch it names a row that is
+   *  gone, and honouring it would leave the rail with no tab stop at all. */
+  const listed = (clubId: ClubId | null): clubId is ClubId =>
+    clubId !== null && clubs.some((club) => club.clubId === clubId);
+  const tabStopId = [activeClubId, selectedClubId].find(listed) ?? clubs[0]?.clubId ?? null;
 
   const registerRow = useCallback((clubId: ClubId, node: HTMLDivElement | null): void => {
     rowRefs.current.set(clubId, node);

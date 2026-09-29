@@ -28,11 +28,12 @@ export const ClubSelectionScreen = ({ saveId, selectedClubId, onSelect }: ClubSe
   const { announcement, handleSelect, handlePick } = useAnnouncedSelection(filteredClubs, selectedClubId, onSelect);
 
   const handleLeagueChange = (leagueId: CompetitionId): void => {
+    if (leagueId === selectedLeagueId) return;
     setSelectedLeagueId(leagueId);
-    // Clear the club selection when switching leagues
-    if (selectedClub !== null && !filteredClubs.some((c) => c.clubId === selectedClub.clubId)) {
-      onSelect(null);
-    }
+    // A club the destination league does not contain is no longer a choice on screen. Membership
+    // is read from the full list: `filteredClubs` is still the league being left.
+    const keepsSelection = clubs.some((c) => c.clubId === selectedClubId && c.leagueId === leagueId);
+    if (selectedClubId !== null && !keepsSelection) handleSelect(null);
   };
 
   return (
