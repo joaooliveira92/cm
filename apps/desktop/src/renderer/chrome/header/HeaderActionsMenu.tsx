@@ -1,82 +1,17 @@
-import { useState, useSyncExternalStore } from "react";
-import { ACTION_REGISTRY } from "../../actions/allActions.js";
-import { dispatchAction } from "../../actions/dispatch.js";
-import { isInsideCareer } from "../../actions/registry.js";
-import { getScopeState, subscribeScopeState } from "../../actions/scopeState.js";
-import type { Action } from "../../actions/types.js";
+import { ChevronDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover.js";
 import { FOCUS_RING } from "../../focus.js";
-import { ChevronDown } from "lucide-react";
-import { useCareerState } from "../CareerStateProvider.js";
-import { Dialog, DialogContent, DialogTitle } from "../../components/ui/dialog.js";
-
-interface ConfirmDialogProps {
-  readonly label: string;
-  readonly onConfirm: () => void;
-  readonly onCancel: () => void;
-}
-
-const ConfirmDialog = ({ label, onConfirm, onCancel }: ConfirmDialogProps) => (
-  <Dialog open onOpenChange={(open) => { if (!open) onCancel(); }}>
-    <DialogContent className="w-full max-w-xs p-4">
-      <DialogTitle className="text-text-primary">
-        {label}
-      </DialogTitle>
-      <p className="text-data text-text-secondary">This action cannot be undone.</p>
-      <div className="mt-3 flex justify-end gap-2">
-        <button
-          type="button"
-          className={`rounded-control bg-surface-raised px-3 py-1 text-body text-text-primary hover:bg-surface ${FOCUS_RING.join(" ")}`}
-          onClick={onCancel}
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          className={`rounded-control bg-destructive px-3 py-1 text-body text-white hover:brightness-110 ${FOCUS_RING.join(" ")}`}
-          onClick={onConfirm}
-        >
-          Confirm
-        </button>
-      </div>
-    </DialogContent>
-  </Dialog>
-);
-
-const DESTRUCTIVE_ACTION_IDS = new Set(["resign", "retire"]);
+import { ActionConfirmDialog } from "./ActionConfirmDialog.js";
+import { ActionsMenuItem } from "./ActionsMenuItem.js";
+import { isDestructiveAction } from "./destructive-actions.js";
+import { useActionsMenuFlow } from "./useActionsMenuFlow.js";
+import { useMenuActions } from "./useMenuActions.js";
 
 export const HeaderActionsMenu = () => {
-  const { screenId } = useCareerState();
-  const [open, setOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<Action | null>(null);
-  const liveScopeState = useSyncExternalStore(subscribeScopeState, getScopeState, getScopeState);
+  const menuActions = useMenuActions();
+  const { open, setOpen, confirmAction, select, confirm, cancel } = useActionsMenuFlow();
 
-  if (screenId === null) return null;
-
-  // The store's own `ready` never turns true: the keyboard spine derives it from the screen being a
-  // career screen, and the menu must read it the same way or every `ready`-gated action disappears.
-  const scopeState = { ...liveScopeState, ready: isInsideCareer(screenId) };
-  // Only actions that opt in with `menu`; everything else a screen registers is reached through
-  // the keyboard and the command palette.
-  const activeActions = ACTION_REGISTRY.active(screenId, scopeState)
-    .filter((action) => action.menu === true);
-  if (activeActions.length === 0) return null;
-
-  const handleAction = (action: Action) => {
-    if (DESTRUCTIVE_ACTION_IDS.has(action.id)) {
-      setConfirmAction(action);
-      return;
-    }
-    setOpen(false);
-    void dispatchAction(action.id);
-  };
-
-  const handleConfirm = () => {
-    if (confirmAction === null) return;
-    setOpen(false);
-    setConfirmAction(null);
-    void dispatchAction(confirmAction.id);
-  };
+  if (menuActions.length === 0) return null;
 
   return (
     <>
@@ -94,36 +29,22 @@ export const HeaderActionsMenu = () => {
         />
         <PopoverContent align="start" sideOffset={4} className="w-56 p-1">
           <div className="flex flex-col gap-0.5">
-            {activeActions.map((action) => {
-              const isAvailable = action.available(scopeState);
-              const isDestructive = DESTRUCTIVE_ACTION_IDS.has(action.id);
-              return (
-                <button
-                  key={action.id}
-                  type="button"
-                  disabled={!isAvailable}
-                  title={isAvailable ? undefined : action.unavailableReason}
-                  className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-body ${
- isDestructive
- ? "text-destructive hover:bg-destructive/10"
- : "text-text-secondary hover:bg-surface-raised hover:text-text-primary"
- } disabled:cursor-not-allowed disabled:opacity-50`}
-                  onClick={() => handleAction(action)}
-                >
-                  <span>{action.label}</span>
-                </button>
-              );
-            })}
+            {menuActions.map(({ action, available }) => (
+              <ActionsMenuItem
+                key={action.id}
+                label={action.label}
+                available={available}
+                unavailableReason={action.unavailableReason}
+                destructive={isDestructiveAction(action.id)}
+                onSelect={() => select(action)}
+              />
+            ))}
           </div>
         </PopoverContent>
       </Popover>
 
       {confirmAction !== null && (
-        <ConfirmDialog
-          label={confirmAction.label}
-          onConfirm={handleConfirm}
-          onCancel={() => setConfirmAction(null)}
-        />
+        <ActionConfirmDialog label={confirmAction.label} onConfirm={confirm} onCancel={cancel} />
       )}
     </>
   );

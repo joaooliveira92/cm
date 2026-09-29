@@ -66,22 +66,20 @@ const SecondaryRowContent = ({ row }: { readonly row: SecondaryRow }) => {
       );
 
     case "wizard":
-      return (
-        <div className="flex w-full items-center justify-between px-1 text-caption text-header-fg">
-          <span className="tracking-wider uppercase">{row.heading}</span>
-          <span className="uppercase">{row.hint}</span>
-        </div>
-      );
+      return <CaptionRow leading={row.heading} trailing={row.hint} />;
 
     case "status":
-      return (
-        <div className="flex w-full items-center justify-between px-1 text-caption text-header-fg">
-          <span className="tracking-wider uppercase">{row.leading}</span>
-          <span className="uppercase">{row.trailing}</span>
-        </div>
-      );
+      return <CaptionRow leading={row.leading} trailing={row.trailing} />;
   }
 };
+
+/** The two-caption row the pre-career shells share: a heading left, a hint right. */
+const CaptionRow = ({ leading, trailing }: { readonly leading: string; readonly trailing: string }) => (
+  <div className="flex w-full items-center justify-between px-1 text-caption text-header-fg">
+    <span className="tracking-wider uppercase">{leading}</span>
+    <span className="uppercase">{trailing}</span>
+  </div>
+);
 
 const Metric = ({ metric }: { readonly metric: HeaderMetric }) => {
   const Icon = METRIC_ICONS[metric.icon];
