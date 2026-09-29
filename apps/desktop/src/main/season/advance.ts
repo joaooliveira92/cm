@@ -27,7 +27,7 @@ import { loadSeasonRow, toSeasonView, type SeasonPhase, type SeasonRow } from ".
 import { withAdvanceLock } from "./advanceLock.js";
 import { stepCalendarTo } from "./resolveThrough.js";
 import { cupRoundsOutstanding, materialiseCupRounds, nextCupRoundDate } from "./cups.js";
-import { type FixtureResult, resolveFixtureScore } from "./matchday.js";
+import { type FixtureResult, recoverClubFitness, resolveFixtureScore } from "./matchday.js";
 import { PLAYABLE_DEPTH, STREAM_TYPE } from "./start.js";
 
 /**
@@ -114,14 +114,14 @@ const resolveDueFixtures = (throughDate: string) =>
 const humanFixtureOn = (date: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    const rows = yield* sql<{ id: FixtureId }>`
-      SELECT f.id FROM fixtures f
+    const rows = yield* sql<{ id: FixtureId; homeClubId: ClubId; awayClubId: ClubId }>`
+      SELECT f.id, f.home_club_id as "homeClubId", f.away_club_id as "awayClubId" FROM fixtures f
       JOIN clubs h ON h.id = f.home_club_id
       JOIN clubs a ON a.id = f.away_club_id
       WHERE f.played = 0 AND f.scheduled_date = ${date}
         AND (h.is_user_club = 1 OR a.is_user_club = 1)
       ORDER BY f.id ASC LIMIT 1`;
-    return rows[0]?.id ?? null;
+    return rows[0] ?? null;
   });
 
 /** Reads the horizon from the fixture rows themselves. Per-competition progress is never stored. */
@@ -311,8 +311,17 @@ const runAdvance = (saveId: SaveId) =>
         // The Transfer Window transition above still stands. Its close is a fact about the two
         // dates rather than about which fixture was played, and the first Continue of a career is
         // meant to close the pre-season window and reach Matchday 1 in one press.
+        //
+        // Both squads recover here, before kickoff, the way `resolveFixtureScore` recovers the two
+        // clubs of a simulated Fixture — a live match reads their stored Condition as its starting
+        // Condition, so this is the only recovery either side gets (human-club-recovery 01). It
+        // runs exactly once per Fixture because a second Continue at a standing boundary returns
+        // early, above, before reaching here; and it precedes `MatchStarted`, which records the
+        // recovered values, so every replay starts from them.
+        yield* recoverClubFitness(humanFixture.homeClubId, row.seasonNumber);
+        yield* recoverClubFitness(humanFixture.awayClubId, row.seasonNumber);
         yield* sql`UPDATE season SET phase = ${phaseAt(boundary.date)},
-            awaiting_fixture_id = ${humanFixture}
+            awaiting_fixture_id = ${humanFixture.id}
           WHERE season_number = ${row.seasonNumber}`;
       } else {
         const results = yield* resolveDueFixtures(boundary.date);
