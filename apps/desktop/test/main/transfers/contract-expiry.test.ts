@@ -9,7 +9,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { PlayerId, type SaveId } from "@cm-clone/contracts";
-import { SQUAD_FLOOR } from "@cm-clone/shared";
+import { SQUAD_FLOOR, assessContinueReadiness } from "@cm-clone/shared";
 import { createSave } from "../../seeded-save.js";
 import { getTacticsOverview } from "../../../src/main/club/index.js";
 import { getContractExpiryScreen } from "../../../src/main/transfers/contractExpiry.js";
@@ -166,9 +166,20 @@ const markLeaving = (saveId: SaveId, playerIds: ReadonlyArray<string>, count: nu
     discard: true,
   }));
 
+/** The advisory as the Continue band derives it: `CareerStateProvider` reads the same two facts off
+ *  the Contract Expiry screen. */
 const shortSquadIssue = (saveId: SaveId) =>
-  getTacticsOverview(savesDir, saveId).pipe(
-    Effect.map((snapshot) => snapshot.issues.find((issue) => issue.id === "squad-short-at-rollover")),
+  getContractExpiryScreen(savesDir, saveId).pipe(
+    Effect.map((screen) =>
+      assessContinueReadiness({
+        phase: "pre_season",
+        hasTactic: true,
+        matchInProgress: false,
+        advancing: false,
+        pendingIncomingBids: 0,
+        squadAtRollover: { squadSize: screen.squadSize, leaving: screen.players.length },
+      }).items.find((issue) => issue.id === "squad-short-at-rollover"),
+    ),
   );
 
 it.effect("carries the whole squad size beside the leaving players", () =>
@@ -202,6 +213,10 @@ it.effect("the short-squad advisory appears below the floor, and not at it", () 
       issue.detail.startsWith(`${atFloor + 2} players' Contracts end this Season, leaving ${SQUAD_FLOOR - 2},`),
       issue.detail,
     );
+
+    // Next Season's Contracts are not match preparation; the Tactics Overview stays silent.
+    const overview = yield* getTacticsOverview(savesDir, save.id);
+    ok(!overview.issues.some((item) => item.id === "squad-short-at-rollover"));
   }),
 );
 

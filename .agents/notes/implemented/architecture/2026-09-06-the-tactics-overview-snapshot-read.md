@@ -37,7 +37,10 @@ career-readiness advisories (`bids-awaiting-response`), deduplicated by id with 
 severity winning. Blockers first, then advisories, each carrying the screen that owns fixing it.
 The career-loop-only blockers — a match in progress, an advance in flight, a completed season — are
 not reported: two are live renderer states no main-process read can observe, and all three describe
-the calendar rather than what the manager can prepare. This reads the ticket's "every blocking and
+the calendar rather than what the manager can prepare. The `squad-short-at-rollover` advisory is left
+out for the same reason: it is about which Contracts run out at the end of the Season, not this
+Fixture, and it showed on the tactics screen for about a third of new careers from day one. The
+Continue band and the Contract Expiry screen carry it. This reads the ticket's "every blocking and
 advisory readiness finding" as *every preparedness finding the snapshot can observe*, and it keeps
 `assessMatchReadiness`/`assessContinueReadiness` the single homes for the rules — the snapshot
 composes their output, never restates it.
