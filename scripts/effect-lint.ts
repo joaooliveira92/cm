@@ -631,6 +631,12 @@ const FILE_LENGTH_EXEMPTIONS: Readonly<Record<string, string>> = {
     "RPC method registry; grows linearly with endpoints; structural value as the single wire contract",
   "apps/desktop/src/renderer/navigation/destinations.ts":
     "destination registry; grows linearly with screen count; structural value as the single mapping",
+  // Vendored from the reui registry (`@reui/data-grid`), edited only where this repo's gates
+  // require it. Splitting them would turn every upstream re-sync into a hand merge.
+  "apps/desktop/src/renderer/components/reui/data-grid/data-grid.tsx":
+    "vendored reui data grid; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/data-grid/data-grid-table.tsx":
+    "vendored reui data grid; kept whole so it can be re-synced against upstream",
 }
 
 /** The line count as `wc -l` reports it: newline-terminated files do not gain a phantom last line. */

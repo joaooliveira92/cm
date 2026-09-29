@@ -11,49 +11,29 @@ import { useScreenBottomBarActions } from "../chrome/bottom-bar/index.js";
 import { Alert } from "../components/ui/alert.js";
 import { Button } from "../components/ui/button.js";
 import { Card } from "../components/ui/card.js";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select.js";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table.js";
-import {
-  formationCellClass,
-  formationHeadClass,
-  formationHeadRowClass,
-  formationRowClass,
-  formationTableClass,
-} from "./formationTable.js";
 import { FOCUS_RING } from "../focus.js";
 import {
   FORMATIONS,
   FORMATION_SLOTS,
   MENTALITY_OPTIONS,
-  POSITIONS,
   POSITION_ROLES,
   PRESSING_OPTIONS,
   TEMPO_OPTIONS,
   emptyBench,
   isCustomShape,
-  roleRating,
   type Formation,
   type Mentality,
-  type PlayerAttributes,
-  type Position,
   type Pressing,
   type Tempo,
+  type Position,
 } from "@cm-clone/shared";
 import { swapLineupSlots } from "../squad/lineupEdits.js";
+import { ToolbarChoiceMenu, type ToolbarChoice } from "../squad/ToolbarChoiceMenu.js";
+import { ACTIONS_ROW_BUTTON_CLASS } from "../squad/actionsRowClasses.js";
+import { clearToolbarControls, setToolbarControls } from "../screenToolbarControls.js";
 import { FormationPitch } from "./FormationPitch.js";
+import { NumberChip } from "./NumberChip.js";
+import { TeamSelectionGrid } from "./TeamSelectionGrid.js";
 import { defaultTacticFor, useTacticDraft } from "./useTacticDraft.js";
 import { describeRpcError } from "../rpc.js";
 
@@ -89,9 +69,6 @@ const moveSlot = (tactic: Tactic, slotIndex: number, position: Position): Tactic
     slots: tactic.slots.map((slot, index) => (index === slotIndex ? placeSlot(slot, position) : slot)),
   });
 
-/** Every Position an outfield slot may move to: all but the GK, which stays alone in slot 0. */
-const OUTFIELD_POSITIONS = POSITIONS.filter((position) => position !== "GK");
-const positionItems = OUTFIELD_POSITIONS.map((position) => ({ label: position, value: position }));
 
 /** Every starter slot and bench place emptied; the formation and instructions stay. The server
  *  refuses a Tactic with an empty starter, so this is a draft to refill, never a save on its own. */
@@ -119,38 +96,16 @@ const changeSlotPlayer = (tactic: Tactic, slotIndex: number, playerId: PlayerId)
 const CONFLICT_MESSAGE =
   "A newer tactic was saved since you loaded this page. Your draft is kept — refresh to load the current version.";
 
-const InstructionSlider = <T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-  actionId,
-}: {
-  readonly label: string;
-  readonly options: ReadonlyArray<T>;
-  readonly value: T;
-  readonly onChange: (value: T) => void;
-  readonly actionId: string;
-}) => (
-  <div>
-    <p className="text-body text-text-secondary">{label}</p>
-    <div className="mt-1 flex gap-1">
-      {options.map((option) => (
-        <Button
-          key={option}
-          type="button"
-          variant={option === value ? "default" : "secondary"}
-          aria-pressed={option === value}
-          data-action-id={actionId}
-          className="capitalize"
-          onClick={() => onChange(option)}
-        >
-          {option}
-        </Button>
-      ))}
-    </div>
-  </div>
-);
+/** "balanced" → "Balanced": the instruction values are lower-case identifiers. */
+const titleCase = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
+
+const choicesOf = (options: ReadonlyArray<string>): ReadonlyArray<ToolbarChoice> =>
+  options.map((option) => ({ value: option, label: titleCase(option) }));
+
+const FORMATION_CHOICES = FORMATIONS.map((formation) => ({ value: formation, label: formation }));
+const MENTALITY_CHOICES = choicesOf(MENTALITY_OPTIONS);
+const TEMPO_CHOICES = choicesOf(TEMPO_OPTIONS);
+const PRESSING_CHOICES = choicesOf(PRESSING_OPTIONS);
 
 export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const { viewResult, viewError, tactic, revision, conflict, status, setTactic, save, refresh } =
@@ -225,6 +180,73 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   );
   useScreenBottomBarActions(viewResult._tag === "Success" ? bottomBarActions : null);
 
+  /* Formation and the three team instructions sit in the career chrome's actions row, as the
+   *  Squad's selectors do. A custom shape says so on the Formation trigger and brings a Reset
+   *  beside it: picking the checked Formation again in a radio menu does nothing. */
+  const loaded = viewResult._tag === "Success";
+  const customShape = isCustomShape(
+    tactic.formation,
+    tactic.slots.map((slot) => slot.position),
+  );
+  const toolbarControls = useMemo(
+    () =>
+      loaded ? (
+        <>
+          <ToolbarChoiceMenu
+            ariaLabel="Formation"
+            actionId="set-formation"
+            triggerText={`Formation: ${tactic.formation}${customShape ? " (custom)" : ""}`}
+            groupLabel="Formation"
+            value={tactic.formation}
+            choices={FORMATION_CHOICES}
+            onChoose={(formation) => void dispatchAction("set-formation", { formation })}
+          />
+          {customShape && (
+            <button
+              type="button"
+              className={ACTIONS_ROW_BUTTON_CLASS}
+              data-action-id="set-formation"
+              onClick={() => void dispatchAction("set-formation", { formation: tactic.formation })}
+            >
+              Reset to {tactic.formation}
+            </button>
+          )}
+          <ToolbarChoiceMenu
+            ariaLabel="Mentality"
+            actionId="set-mentality"
+            triggerText={`Mentality: ${titleCase(tactic.mentality)}`}
+            groupLabel="Mentality"
+            value={tactic.mentality}
+            choices={MENTALITY_CHOICES}
+            onChoose={(value) => void dispatchAction("set-mentality", { value })}
+          />
+          <ToolbarChoiceMenu
+            ariaLabel="Tempo"
+            actionId="set-tempo"
+            triggerText={`Tempo: ${titleCase(tactic.tempo)}`}
+            groupLabel="Tempo"
+            value={tactic.tempo}
+            choices={TEMPO_CHOICES}
+            onChoose={(value) => void dispatchAction("set-tempo", { value })}
+          />
+          <ToolbarChoiceMenu
+            ariaLabel="Pressing"
+            actionId="set-pressing"
+            triggerText={`Pressing: ${titleCase(tactic.pressing)}`}
+            groupLabel="Pressing"
+            value={tactic.pressing}
+            choices={PRESSING_CHOICES}
+            onChoose={(value) => void dispatchAction("set-pressing", { value })}
+          />
+        </>
+      ) : null,
+    [loaded, customShape, tactic.formation, tactic.mentality, tactic.tempo, tactic.pressing],
+  );
+  useEffect(() => {
+    setToolbarControls(toolbarControls);
+    return () => clearToolbarControls();
+  }, [toolbarControls]);
+
   if (viewError)
     return (
       <main
@@ -264,23 +286,9 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     );
 
   const view = viewResult.value;
-  const customShape = isCustomShape(
-    tactic.formation,
-    tactic.slots.map((slot) => slot.position),
-  );
   const squadById = new Map(view.squad.map((player) => [player.id, player]));
-  const assignedElsewhere = (slotIndex: number) =>
-    new Set(tactic.slots.filter((_, index) => index !== slotIndex).map((slot) => slot.playerId));
   const starters = new Set(tactic.slots.map((slot) => slot.playerId));
   const reserves = reservesOf(view.squad, starters, tactic.bench);
-  // The trigger's label source: without `items`, Base UI's `SelectValue` renders the raw player id.
-  const pickerItems = [
-    { label: "Unassigned", value: "" },
-    ...view.squad.map((player) => ({
-      label: `${player.firstName} ${player.lastName}`,
-      value: player.id as string,
-    })),
-  ];
 
   return (
     <main
@@ -291,165 +299,17 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     >
       <h1 className="sr-only">{view.club.name} Tactics</h1>
 
-      <section aria-label="Formation and team instructions" className="flex flex-wrap gap-x-8 gap-y-3">
-        <div>
-          <p className="text-body text-text-secondary">Formation</p>
-          <div className="mt-1 flex items-center gap-1">
-            {FORMATIONS.map((formation) => (
-              <Button
-                key={formation}
-                type="button"
-                variant={formation === tactic.formation ? "default" : "secondary"}
-                aria-pressed={formation === tactic.formation}
-                data-action-id="set-formation"
-                onClick={() => void dispatchAction("set-formation", { formation })}
-              >
-                {formation}
-              </Button>
-            ))}
-            {customShape && (
-              <>
-                <span data-testid="custom-shape" className="ml-2 text-body font-semibold text-text-bright">
-                  {tactic.formation} (custom)
-                </span>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  data-action-id="set-formation"
-                  onClick={() => void dispatchAction("set-formation", { formation: tactic.formation })}
-                >
-                  Reset to {tactic.formation}
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-        <InstructionSlider<Mentality>
-          label="Mentality"
-          options={MENTALITY_OPTIONS}
-          value={tactic.mentality}
-          actionId="set-mentality"
-          onChange={(mentality) => void dispatchAction("set-mentality", { value: mentality })}
-        />
-        <InstructionSlider<Tempo>
-          label="Tempo"
-          options={TEMPO_OPTIONS}
-          value={tactic.tempo}
-          actionId="set-tempo"
-          onChange={(tempo) => void dispatchAction("set-tempo", { value: tempo })}
-        />
-        <InstructionSlider<Pressing>
-          label="Pressing"
-          options={PRESSING_OPTIONS}
-          value={tactic.pressing}
-          actionId="set-pressing"
-          onChange={(pressing) => void dispatchAction("set-pressing", { value: pressing })}
-        />
-      </section>
-
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,440px)]">
         <Card aria-labelledby="team-selection-heading" className="p-3">
           <h2 id="team-selection-heading" className="text-heading text-text-highlight">
             Team Selection
           </h2>
-          <Table className={formationTableClass}>
-            <TableHeader>
-              <TableRow className={formationHeadRowClass}>
-                <TableHead className={`${formationHeadClass} w-12`}>No</TableHead>
-                <TableHead className={formationHeadClass}>Player</TableHead>
-                <TableHead className={formationHeadClass}>Pos</TableHead>
-                <TableHead className={formationHeadClass}>Role</TableHead>
-                <TableHead className={`${formationHeadClass} text-right`}>Rating</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tactic.slots.map((slot: TacticSlot, index) => {
-                const player = squadById.get(slot.playerId);
-                const taken = assignedElsewhere(index);
-                return (
-                  <TableRow key={index} className={formationRowClass}>
-                    <TableCell className={formationCellClass}>
-                      <NumberChip label={String(index + 1)} starter />
-                    </TableCell>
-                    <TableCell className={formationCellClass}>
-                      <Select
-                        value={slot.playerId}
-                        items={pickerItems}
-                        open={openSlot === index}
-                        onOpenChange={(open) => setOpenSlot(open ? index : null)}
-                        onValueChange={(value) => {
-                          if (value !== null) {
-                            void dispatchAction("assign-slot-player", {
-                              index,
-                              playerId: PlayerId.make(value),
-                            });
-                          }
-                        }}
-                      >
-                        <SelectTrigger
-                          data-action-id="assign-slot-player"
-                          aria-label={`Slot ${index + 1} player`}
-                        >
-                          <SelectValue placeholder="Unassigned" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">Unassigned</SelectItem>
-                          {view.squad
-                            .filter(
-                              (candidate) =>
-                                !taken.has(candidate.id) || candidate.id === slot.playerId,
-                            )
-                            .map((candidate) => (
-                              <SelectItem key={candidate.id} value={candidate.id}>
-                                {candidate.firstName} {candidate.lastName}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className={`${formationCellClass} font-semibold`}>
-                      {slot.position === "GK" ? (
-                        // Padded like the selects below it, so the column's codes line up.
-                        <span className="border border-transparent px-1.5">{slot.position}</span>
-                      ) : (
-                        <Select
-                          value={slot.position}
-                          items={positionItems}
-                          onValueChange={(value) => {
-                            if (value !== null) {
-                              void dispatchAction("set-slot-position", { index, position: value });
-                            }
-                          }}
-                        >
-                          <SelectTrigger
-                            data-action-id="set-slot-position"
-                            aria-label={`Slot ${index + 1} position`}
-                            className="h-7 w-16 gap-1 px-1.5"
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {OUTFIELD_POSITIONS.map((position) => (
-                              <SelectItem key={position} value={position}>
-                                {position}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </TableCell>
-                    <TableCell className={`${formationCellClass} text-text-soft`}>{slot.role}</TableCell>
-                    <TableCell className={`${formationCellClass} text-right font-semibold tabular-nums`}>
-                      {player
-                        ? roleRating(player.attributes as PlayerAttributes, slot.role)
-                        : "-"}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <TeamSelectionGrid
+            tactic={tactic}
+            squad={view.squad}
+            openSlot={openSlot}
+            onOpenSlotChange={setOpenSlot}
+          />
           {/* Everyone the eleven leaves out, below the dashed line the way the pickers' own list
               reads: the named bench first, in bench order, then the rest of the squad. A list, not
               table rows — the eleven rows above are the only editable ones. */}
@@ -513,18 +373,6 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     </main>
   );
 };
-
-/** The shirt-number cell: a starter's slot number on the green chip, a reserve's bench slot (or a
- *  dash) on the blue one. The colour repeats what the label already says, never replaces it. */
-const NumberChip = ({ label, starter }: { readonly label: string; readonly starter: boolean }) => (
-  <span
-    className={`inline-flex h-5 min-w-9 items-center justify-center rounded-control px-1 text-caption font-bold tabular-nums text-text-bright ${
- starter ? "bg-pitch-marker-gk" : "bg-chrome-mid"
- }`}
-  >
-    {label}
-  </span>
-);
 
 /** Every squad player outside the eleven, named-bench first in bench order, then squad order. */
 const reservesOf = (

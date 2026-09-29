@@ -5,6 +5,8 @@ import { FORMATION_SLOTS, POSITION_ROLES, STATURE_TIERS, emptyBench, type FORMAT
 import { TacticsScreen } from "../../../src/renderer/tactics/TacticsScreen.js";
 import { RegisteredScreenBar } from "../registered-screen-bar.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
+import { ScreenToolbarSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
+import { chooseToolbarOption } from "../../setup/toolbarPopover.js";
 
 const rid = (id: string) => SaveId.make(id);
 
@@ -32,6 +34,9 @@ const tacticsView = (tactic: unknown, revision: number) => ({
   revision,
 });
 
+const formationShown = (): string | null =>
+  screen.getByRole("button", { name: "Formation" }).textContent;
+
 const CONFLICT = {
   _tag: "TacticRevisionConflictError",
   saveId: rid("s1"),
@@ -58,6 +63,7 @@ const mountConflictingEditor = (): void => {
   });
   render(
     <RegistryProvider>
+      <ScreenToolbarSlot />
       <TacticsScreen saveId={rid("s1")} />
       <RegisteredScreenBar />
     </RegistryProvider>,
@@ -72,8 +78,8 @@ it("a concurrent edit between read and save surfaces a distinct conflicted state
   await screen.findByRole("button", { name: "Save Tactic" });
 
   // Edit the draft (4-3-3) — it must survive untouched through the conflict.
-  fireEvent.click(screen.getByRole("button", { name: "4-3-3" }));
-  expect(screen.getByRole("button", { name: "4-3-3" }).getAttribute("aria-pressed")).toBe("true");
+  await chooseToolbarOption("Formation", "4-3-3");
+  expect(formationShown()).toBe("Formation: 4-3-3");
 
   fireEvent.click(screen.getByRole("button", { name: "Save Tactic" }));
 
@@ -83,12 +89,12 @@ it("a concurrent edit between read and save surfaces a distinct conflicted state
   expect(screen.getByRole("button", { name: "Refresh" })).toBeDefined();
 
   // The edited draft is preserved rather than lost.
-  expect(screen.getByRole("button", { name: "4-3-3" }).getAttribute("aria-pressed")).toBe("true");
+  expect(formationShown()).toBe("Formation: 4-3-3");
 
   // Refresh loads the current server state and discards the stale draft.
   fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
   await waitFor(() =>
-    expect(screen.getByRole("button", { name: "5-3-2" }).getAttribute("aria-pressed")).toBe("true"),
+    expect(formationShown()).toBe("Formation: 5-3-2"),
   );
   expect(screen.queryByTestId("tactic-conflict")).toBeNull();
 });
@@ -101,5 +107,5 @@ it("Clear Selection empties every slot and the bench in the draft, leaving the f
 
   await waitFor(() => expect((screen.getByRole("button", { name: "Clear Selection" }) as HTMLButtonElement).disabled).toBe(true));
   // Disabled again means nothing is left to clear: every slot and bench place is empty.
-  expect(screen.getByRole("button", { name: "4-4-2" }).getAttribute("aria-pressed")).toBe("true");
+  expect(formationShown()).toBe("Formation: 4-4-2");
 });

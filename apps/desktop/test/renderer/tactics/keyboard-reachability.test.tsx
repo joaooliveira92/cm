@@ -5,6 +5,8 @@ import { FORMATION_SLOTS, FORMATIONS, POSITION_ROLES, STATURE_TIERS, emptyBench 
 import { TacticsScreen } from "../../../src/renderer/tactics/TacticsScreen.js";
 import { RegisteredScreenBar } from "../registered-screen-bar.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
+import { ScreenToolbarSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
+import { chooseToolbarOption } from "../../setup/toolbarPopover.js";
 
 const rid = (id: string) => SaveId.make(id);
 
@@ -42,6 +44,9 @@ const mountTactics = async (view: unknown = tacticsView()): Promise<void> => {
   });
   render(
     <RegistryProvider>
+      <header>
+        <ScreenToolbarSlot />
+      </header>
       <TacticsScreen saveId={rid("s1")} />
       <RegisteredScreenBar />
     </RegistryProvider>,
@@ -64,21 +69,22 @@ describe("tier-3 remainder — Tactics is driveable with no mouse (Level 1 guara
     ];
     const ids = controls.map((c) => c.dataset.actionId);
 
-    // Native tab order: the five formation buttons come first, then the three
-    // instruction sliders' option buttons, then each slot's row: its player
-    // select, then (outfield slots only) its position select — the keyboard
-    // path for moving a slot the pitch offers by drag. Save Tactic and Clear
-    // Selection are the shell's bottom bar, after the screen in tab order.
-    expect(ids.slice(0, 5)).toEqual(Array(5).fill("set-formation"));
-    const instructionControls = ids.slice(5, 14);
-    for (const id of instructionControls) {
-      expect(["set-mentality", "set-tempo", "set-pressing"]).toContain(id);
-    }
-    expect(ids.slice(14, 35)).toEqual([
+    // Native tab order within the screen: each slot's row, its player select, then (outfield
+    // slots only) its position select — the keyboard path for moving a slot the pitch offers by
+    // drag. Formation and the three instructions are menus in the chrome's toolbar, before the
+    // screen; Save Tactic and Clear Selection are the shell's bottom bar, after it.
+    expect(ids).toEqual([
       "assign-slot-player",
       ...Array.from({ length: 10 }, () => ["assign-slot-player", "set-slot-position"]).flat(),
     ]);
-    expect(ids.slice(35)).toEqual([]);
+    const toolbar = [...document.querySelectorAll<HTMLElement>("header button")];
+    expect(toolbar.map((c) => c.getAttribute("aria-label"))).toEqual([
+      "Formation",
+      "Mentality",
+      "Tempo",
+      "Pressing",
+    ]);
+    controls.push(...toolbar);
     const bar = [...document.querySelectorAll<HTMLElement>("footer button")];
     expect(bar.map((c) => c.dataset.actionId)).toEqual(["clear-tactic-selection", "save-tactic"]);
     controls.push(...bar);
@@ -91,26 +97,24 @@ describe("tier-3 remainder — Tactics is driveable with no mouse (Level 1 guara
     }
   });
 
-  it("focused formation buttons activate on Enter (native button activation path)", async () => {
+  it("the toolbar menus set the Formation and each team instruction", async () => {
     await mountTactics();
-    const fourThreeThree = (): HTMLElement =>
-      screen.getByRole("button", { name: "4-3-3" });
-    await screen.findByRole("button", { name: "4-4-2" });
+    await screen.findByRole("button", { name: "Formation" });
 
-    // The browser synthesizes a click for Enter on a focused native button;
-    // jsdom leaves that to us, so drive the same two-step a real keypress makes.
-    fourThreeThree().focus();
-    fireEvent.keyDown(fourThreeThree(), { key: "Enter" });
-    fireEvent.click(fourThreeThree());
-    // The formation buttons are part of one selected-state toggle: 4-3-3 is
-    // now the selected formation (the draft re-fills its slots). Asserted on
-    // `aria-pressed` rather than a class name — the selected state is what the
-    // screen reader and the test both care about, and it survives a restyle.
+    // Each trigger names its current choice, so the selected state survives a restyle and reads
+    // the same to a screen reader.
+    await chooseToolbarOption("Formation", "4-3-3");
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "4-3-3" }).getAttribute("aria-pressed"),
-      ).toBe("true"),
+      expect(screen.getByRole("button", { name: "Formation" }).textContent).toBe("Formation: 4-3-3"),
     );
+    await chooseToolbarOption("Mentality", "Attacking");
+    await chooseToolbarOption("Tempo", "Fast");
+    await chooseToolbarOption("Pressing", "High");
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Pressing" }).textContent).toBe("Pressing: High"),
+    );
+    expect(screen.getByRole("button", { name: "Mentality" }).textContent).toBe("Mentality: Attacking");
+    expect(screen.getByRole("button", { name: "Tempo" }).textContent).toBe("Tempo: Fast");
   });
 
   it("the slot player selects and Save Tactic are reachable and activate through their actions", async () => {

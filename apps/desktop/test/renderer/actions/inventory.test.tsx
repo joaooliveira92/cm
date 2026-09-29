@@ -15,6 +15,7 @@ import { RegisteredScreenBar } from "../registered-screen-bar.js";
 import { MatchDayScreen } from "../../../src/renderer/match/MatchDayScreen.js";
 import { setActiveMatch, clearActiveMatch } from "../../../src/renderer/match/session.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
+import { ScreenToolbarSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
 import {
   ACTION_REGISTRY,
   ALL_ACTIONS,
@@ -263,6 +264,7 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
     });
     render(
       <RegistryProvider>
+        <ScreenToolbarSlot />
         <TacticsScreen saveId={rid("s1")} />
         <RegisteredScreenBar />
       </RegistryProvider>,

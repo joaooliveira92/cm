@@ -10,6 +10,7 @@ import {
 } from "@cm-clone/shared";
 import { TacticsScreen } from "../../../src/renderer/tactics/TacticsScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
+import { ScreenToolbarSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
 
 const rid = (id: string) => SaveId.make(id);
 
@@ -62,11 +63,15 @@ const mountTactics = async (): Promise<void> => {
   };
   render(
     <RegistryProvider>
+      <ScreenToolbarSlot />
       <TacticsScreen saveId={rid("s1")} />
     </RegistryProvider>,
   );
   await screen.findByRole("list", { name: "4-4-2 on the pitch" });
 };
+
+/** The Formation trigger in the toolbar names the Formation, with "(custom)" once reshaped. */
+const formationTrigger = (): HTMLElement => screen.getByRole("button", { name: "Formation" });
 
 const marker = (slot: number): HTMLElement =>
   document.querySelector<HTMLElement>(`button[data-slot-index="${slot - 1}"]`)!;
@@ -151,7 +156,7 @@ const positionPicker = (slot: number): HTMLElement =>
 describe("the formation pitch reshapes the formation", () => {
   it("dropping a midfielder on the back line moves the slot to DC and marks the shape custom", async () => {
     await mountTactics();
-    expect(screen.queryByTestId("custom-shape")).toBeNull();
+    expect(formationTrigger().textContent).not.toContain("(custom)");
     // Slot 6 is the 4-4-2 template's first MC.
     const transfer = dataTransfer();
     fireEvent.dragStart(marker(6), { dataTransfer: transfer });
@@ -166,7 +171,7 @@ describe("the formation pitch reshapes the formation", () => {
 
     await waitFor(() => expect(positionPicker(6).textContent).toContain("DC"));
     expect(marker(6).getAttribute("aria-label")).toContain("DC: First5 Last5");
-    expect(screen.getByTestId("custom-shape").textContent).toBe("4-4-2 (custom)");
+    expect(formationTrigger().textContent).toBe("Formation: 4-4-2 (custom)");
   });
 
   it("a flank third of a line takes that flank's Position", async () => {
@@ -188,7 +193,7 @@ describe("the formation pitch reshapes the formation", () => {
 
     expect(marker(1).getAttribute("aria-label")).toContain("GK: First0 Last0");
     expect(positionPicker(10).textContent).toContain("ST");
-    expect(screen.queryByTestId("custom-shape")).toBeNull();
+    expect(formationTrigger().textContent).not.toContain("(custom)");
   });
 
   it("dragging over the slot's own zone previews no landing, since it would not move", async () => {
@@ -205,11 +210,11 @@ describe("the formation pitch reshapes the formation", () => {
     const transfer = dataTransfer();
     fireEvent.dragStart(marker(6), { dataTransfer: transfer });
     dragAt("drop", pitch(), 50, 74, transfer);
-    await screen.findByTestId("custom-shape");
+    await waitFor(() => expect(formationTrigger().textContent).toContain("(custom)"));
 
     fireEvent.click(screen.getByRole("button", { name: "Reset to 4-4-2" }));
 
-    await waitFor(() => expect(screen.queryByTestId("custom-shape")).toBeNull());
+    await waitFor(() => expect(formationTrigger().textContent).not.toContain("(custom)"));
     expect(positionPicker(6).textContent).toContain("MC");
     expect(marker(6).getAttribute("aria-label")).toContain("First5 Last5");
   });
