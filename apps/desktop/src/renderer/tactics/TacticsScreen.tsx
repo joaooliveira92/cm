@@ -26,6 +26,13 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table.js";
+import {
+  formationCellClass,
+  formationHeadClass,
+  formationHeadRowClass,
+  formationRowClass,
+  formationTableClass,
+} from "./formationTable.js";
 import { FOCUS_RING } from "../focus.js";
 import {
   FORMATIONS,
@@ -346,14 +353,14 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           <h2 id="team-selection-heading" className="text-heading text-text-highlight">
             Team Selection
           </h2>
-          <Table className="mt-2 min-w-full text-left">
+          <Table className={formationTableClass}>
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-12 pr-2">No</TableHead>
-                <TableHead className="pr-4">Player</TableHead>
-                <TableHead className="pr-4">Pos</TableHead>
-                <TableHead className="pr-4">Role</TableHead>
-                <TableHead className="pr-2 text-right">Rating</TableHead>
+              <TableRow className={formationHeadRowClass}>
+                <TableHead className={`${formationHeadClass} w-12`}>No</TableHead>
+                <TableHead className={formationHeadClass}>Player</TableHead>
+                <TableHead className={formationHeadClass}>Pos</TableHead>
+                <TableHead className={formationHeadClass}>Role</TableHead>
+                <TableHead className={`${formationHeadClass} text-right`}>Rating</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -361,11 +368,11 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                 const player = squadById.get(slot.playerId);
                 const taken = assignedElsewhere(index);
                 return (
-                  <TableRow key={index}>
-                    <TableCell className="pr-2">
+                  <TableRow key={index} className={formationRowClass}>
+                    <TableCell className={formationCellClass}>
                       <NumberChip label={String(index + 1)} starter />
                     </TableCell>
-                    <TableCell className="pr-4">
+                    <TableCell className={formationCellClass}>
                       <Select
                         value={slot.playerId}
                         items={pickerItems}
@@ -401,7 +408,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="pr-4 font-semibold">
+                    <TableCell className={`${formationCellClass} font-semibold`}>
                       {slot.position === "GK" ? (
                         // Padded like the selects below it, so the column's codes line up.
                         <span className="border border-transparent px-1.5">{slot.position}</span>
@@ -432,8 +439,8 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                         </Select>
                       )}
                     </TableCell>
-                    <TableCell className="pr-4 text-text-soft">{slot.role}</TableCell>
-                    <TableCell className="pr-2 text-right font-semibold tabular-nums">
+                    <TableCell className={`${formationCellClass} text-text-soft`}>{slot.role}</TableCell>
+                    <TableCell className={`${formationCellClass} text-right font-semibold tabular-nums`}>
                       {player
                         ? roleRating(player.attributes as PlayerAttributes, slot.role)
                         : "-"}

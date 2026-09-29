@@ -12,6 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table.js";
+import {
+  formationCellClass,
+  formationHeadClass,
+  formationHeadRowClass,
+  formationRowClass,
+  formationTableClass,
+} from "./formationTable.js";
 import { FOCUS_RING } from "../focus.js";
 import type {
   CareerDestination,
@@ -83,32 +90,32 @@ export const SelectionCard = ({ view }: View) => {
         {view.assignments.length === 0 ? (
           <p className="mt-2 text-text-soft">No starters selected.</p>
         ) : (
-          <Table className="mt-2 min-w-full text-left">
+          <Table className={formationTableClass}>
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-10 pr-2">Pos</TableHead>
-                <TableHead className="pr-4">Player</TableHead>
-                <TableHead className="pr-4">Role</TableHead>
-                <TableHead className="pr-2 text-right">Position rating</TableHead>
-                <TableHead className="pr-2 text-right">Role rating</TableHead>
+              <TableRow className={formationHeadRowClass}>
+                <TableHead className={`${formationHeadClass} w-10`}>Pos</TableHead>
+                <TableHead className={formationHeadClass}>Player</TableHead>
+                <TableHead className={formationHeadClass}>Role</TableHead>
+                <TableHead className={`${formationHeadClass} text-right`}>Position rating</TableHead>
+                <TableHead className={`${formationHeadClass} text-right`}>Role rating</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {view.assignments.map((assignment, index) => (
-                <TableRow key={`${assignment.playerId}-${index}`}>
-                  <TableCell className="pr-2 font-semibold">{assignment.position}</TableCell>
-                  <TableCell className="pr-4">
+                <TableRow key={`${assignment.playerId}-${index}`} className={formationRowClass}>
+                  <TableCell className={`${formationCellClass} font-semibold`}>{assignment.position}</TableCell>
+                  <TableCell className={formationCellClass}>
                     {assignment.firstName === null ? (
                       <span className="text-text-warning">Player no longer at the club</span>
                     ) : (
                       `${assignment.firstName} ${assignment.lastName}`
                     )}
                   </TableCell>
-                  <TableCell className="pr-4 text-text-secondary">{roleLabel(assignment.role)}</TableCell>
-                  <TableCell className="pr-2">
+                  <TableCell className={`${formationCellClass} text-text-secondary`}>{roleLabel(assignment.role)}</TableCell>
+                  <TableCell className={formationCellClass}>
                     <Rating value={assignment.positionRating} />
                   </TableCell>
-                  <TableCell className="pr-2">
+                  <TableCell className={formationCellClass}>
                     <Rating value={assignment.roleRating} />
                   </TableCell>
                 </TableRow>
