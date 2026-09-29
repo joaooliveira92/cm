@@ -71,9 +71,9 @@ export const CompetitionTableScreen = ({
 
   return (
     <CompetitionMain>
-      <h1 className="text-2xl font-bold">Competition Table</h1>
+      <h1 className="text-title">Competition Table</h1>
 
-      {tableResult.waiting && <p className="mt-2 text-sm text-text-muted">Refreshing…</p>}
+      {tableResult.waiting && <p className="mt-2 text-body text-text-muted">Refreshing…</p>}
 
       <div className="mt-6 overflow-x-auto">
         <Table className="min-w-full text-left">
@@ -111,7 +111,7 @@ export const CompetitionTableScreen = ({
                   </button>
                   <button
                     type="button"
-                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
                     aria-label={`${row.clubName} — scout report`}
                     onClick={(event) =>
                       navigateCareer(

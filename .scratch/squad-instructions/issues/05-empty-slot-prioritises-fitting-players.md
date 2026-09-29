@@ -28,7 +28,7 @@ the human ruled on 2026-09-28: **additive and highlight-driven, not a destructiv
 
 **Blocked by:** None.
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 ## Tests
 

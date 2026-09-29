@@ -44,10 +44,10 @@ export const TransferHistoryScreen = ({ saveId }: { readonly saveId: SaveId }) =
       tabIndex={-1}
     >
       <header>
-        <h1 id="transfer-history-heading" className="text-2xl font-bold">
+        <h1 id="transfer-history-heading" className="text-title">
           Transfer History
         </h1>
-        <p className="mt-1 text-sm text-text-secondary">
+        <p className="mt-1 text-body text-text-secondary">
           Every completed transfer into or out of your club, newest first.
         </p>
       </header>

@@ -118,7 +118,7 @@ export const TeamScoutReportScreen = ({
         aria-busy={state === "loading"}
         className={PAGE_CLASS}
       >
-        <h1 className="text-2xl font-bold">Team Scout Report</h1>
+        <h1 className="text-title">Team Scout Report</h1>
         {state === "error" ? (
           <Alert variant="destructive" className="mt-4">
             <p>{message}</p>
@@ -156,13 +156,13 @@ export const TeamScoutReportScreen = ({
     >
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h1 id="team-scout-report-heading" className="text-2xl font-bold">
+          <h1 id="team-scout-report-heading" className="text-title">
             {rendered.targetClubName}
           </h1>
-          <p className="text-sm text-text-secondary">Team Scout Report</p>
+          <p className="text-body text-text-secondary">Team Scout Report</p>
         </div>
         {state === "refreshing" && (
-          <span role="status" className="text-sm text-text-muted">
+          <span role="status" className="text-body text-text-muted">
             Refreshing…
           </span>
         )}
@@ -172,7 +172,7 @@ export const TeamScoutReportScreen = ({
         <Alert className="mt-4">[Archived] This career has ended. The save is read-only.</Alert>
       )}
 
-      <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+      <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-body">
         <dt className="text-text-secondary">Scout</dt>
         {/* Null when no scout is watching the club right now, so the knowledge was compiled from
             earlier or per-player scouting. Named plainly rather than left blank: a missing byline
@@ -191,7 +191,7 @@ export const TeamScoutReportScreen = ({
 
       <section aria-label="Report actions" className="mt-4">
         {fixture === null ? (
-          <p className="text-sm text-text-secondary">No upcoming fixture against this club.</p>
+          <p className="text-body text-text-secondary">No upcoming fixture against this club.</p>
         ) : (
           <Button
             type="button"
@@ -229,10 +229,10 @@ export const TeamScoutReportScreen = ({
         </TabsContent>
         <TabsContent value="tactical">
           <section aria-labelledby="report-formation-heading">
-            <h2 id="report-formation-heading" className="text-lg font-semibold">
+            <h2 id="report-formation-heading" className="text-heading">
               Predicted formation
             </h2>
-            <p className="mt-1 text-sm">
+            <p className="mt-1 text-body">
               {rendered.predictedFormation === null
                 ? "Unknown"
                 : `${rendered.predictedFormation.formation} (${confidenceLabel(

@@ -167,15 +167,15 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
       className={PAGE_CLASS}
     >
       <header>
-        <h1 id="training-schedule-heading" className="text-2xl font-bold">
+        <h1 id="training-schedule-heading" className="text-title">
           Training Schedule
         </h1>
-        <p className="text-sm text-text-secondary">
+        <p className="text-body text-text-secondary">
           {fixture === null
             ? "No Fixture left this Season."
             : `Planning for ${fixture.opponentClubName} (${fixture.isHome ? "home" : "away"}), ${fixture.date}.`}
         </p>
-        <p className="text-sm text-text-bright" data-testid="schedule-planner">
+        <p className="text-body text-text-bright" data-testid="schedule-planner">
           {delegated
             ? `Planned by ${assistantName}, your assistant${assistantReason === null ? "" : `: ${templateLabel(sessions)}, because ${assistantReason}`}.`
             : "Planned by you."}
@@ -183,7 +183,7 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
       </header>
 
       <section aria-labelledby="training-templates-heading" className="flex flex-col gap-2">
-        <h2 id="training-templates-heading" className="text-base font-bold text-text-highlight">
+        <h2 id="training-templates-heading" className="text-heading text-text-highlight">
           Templates
         </h2>
         <div className="flex flex-wrap gap-1">
@@ -203,17 +203,17 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
             );
           })}
         </div>
-        <p className="text-sm text-text-secondary">Draft: {templateLabel(sessions)}</p>
+        <p className="text-body text-text-secondary">Draft: {templateLabel(sessions)}</p>
       </section>
 
       <section aria-labelledby="training-sessions-heading" className="flex flex-col gap-2">
-        <h2 id="training-sessions-heading" className="text-base font-bold text-text-highlight">
+        <h2 id="training-sessions-heading" className="text-heading text-text-highlight">
           Sessions
         </h2>
         <ol className="flex flex-col gap-2">
           {sessions.map((session, index) => (
             <li key={index} className="flex items-center gap-3">
-              <span className="w-20 text-sm font-semibold">Session {index + 1}</span>
+              <span className="w-20 text-body font-semibold">Session {index + 1}</span>
               <Select
                 disabled={delegated}
                 value={session.type}
@@ -262,7 +262,7 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
         <section className="flex items-center gap-3">
           {conflict !== null && (
             <>
-              <span role="alert" className="text-sm text-text-danger" data-testid="schedule-conflict">
+              <span role="alert" className="text-body text-text-danger" data-testid="schedule-conflict">
                 {CONFLICT_MESSAGE}
               </span>
               <Button type="button" variant="secondary" onClick={refresh}>
@@ -270,7 +270,7 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
               </Button>
             </>
           )}
-          {status !== null && <span className="text-sm text-text-bright">{status}</span>}
+          {status !== null && <span className="text-body text-text-bright">{status}</span>}
         </section>
       )}
     </main>

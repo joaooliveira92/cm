@@ -35,12 +35,12 @@ interface EmptyTitleProps extends React.HTMLAttributes<HTMLParagraphElement> {
 }
 
 const EmptyTitle = ({ className, ref, ...props }: EmptyTitleProps) => (
-  <p ref={ref} className={cn("text-sm font-medium text-foreground", className)} {...props} />
+  <p ref={ref} className={cn("text-body font-medium text-foreground", className)} {...props} />
 );
 EmptyTitle.displayName = "EmptyTitle";
 
 const EmptyDescription = ({ className, ref, ...props }: EmptyTitleProps) => (
-  <p ref={ref} className={cn("text-xs text-muted-foreground", className)} {...props} />
+  <p ref={ref} className={cn("text-data text-muted-foreground", className)} {...props} />
 );
 EmptyDescription.displayName = "EmptyDescription";
 

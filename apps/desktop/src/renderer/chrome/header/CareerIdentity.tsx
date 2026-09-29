@@ -23,7 +23,7 @@ export const CareerIdentity = ({
   /** Replaces the club name while a screen names something else. */
   readonly identity: ScreenIdentity | null;
 }) => (
-  <span className="flex min-w-0 items-center gap-2 truncate text-lg font-bold">
+  <span className="flex min-w-0 items-center gap-2 truncate text-title">
     {clubName !== null && clubColours !== null && (
       <ClubBadge badgeKey={badgeKey} colours={clubColours} clubName={clubName} size={24} />
     )}
@@ -34,7 +34,7 @@ export const CareerIdentity = ({
         <span className="truncate">
           {identity.name} <span className="font-semibold opacity-80">({identity.qualifier})</span>
         </span>
-        <span className="truncate text-xs font-semibold opacity-80">{identity.facts}</span>
+        <span className="truncate text-data font-semibold opacity-80">{identity.facts}</span>
       </span>
     )}
   </span>

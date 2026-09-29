@@ -28,6 +28,7 @@ import { MatchDayBar } from "./MatchDayBar.js";
 import { ACTIONS_ROW_BUTTON_CLASS, ACTIONS_ROW_ITEM_CLASS } from "./actionsRowClasses.js";
 import { AttributeFilterPopover } from "./AttributeFilterPopover.js";
 import { writeLineupDrag } from "./lineupDrag.js";
+import type { LineupFitReadout } from "./lineupFit.js";
 import { SQUAD_COLUMN_LABELS } from "../table/squad/squadColumns.js";
 import { MODELED_STATUSES, StatusLegend } from "../table/squad/playerStatus.js";
 import { activeFilterCount } from "../table/viewState.js";
@@ -56,7 +57,7 @@ const RefreshStatusLine = ({
   readonly refreshState: RefreshState;
   readonly copy: TableStateCopy;
 }) => (
-  <div className="ml-auto text-xs text-text-secondary">
+  <div className="ml-auto text-data text-text-secondary">
     {count} players
     {refreshState._tag === "Refreshing" && (
       <span className="ml-2 text-text-muted">Refreshing…</span>
@@ -105,7 +106,7 @@ const ColumnControls = ({
           <SheetTitle>Columns</SheetTitle>
           <SheetDescription>Choose which columns the squad table shows.</SheetDescription>
         </SheetHeader>
-        <div className="-mx-2 flex flex-1 flex-col gap-1 overflow-y-auto px-2 text-sm text-text-body">
+        <div className="-mx-2 flex flex-1 flex-col gap-1 overflow-y-auto px-2 text-body text-text-body">
           {SQUAD_TOGGLEABLE_COLUMN_IDS.map((columnId) => (
             <label key={columnId} className="flex items-center gap-2 py-1">
               <input
@@ -221,6 +222,45 @@ const ViewStateMessage = ({
   );
 };
 
+/**
+ * What the selected slot is doing to the list, and the way out of it. Sits above whichever layout
+ * is open rather than inside one, because it describes the roster and not a column: the table and
+ * the position list lead with the same players for the same reason and say so in the same words.
+ *
+ * The line is the non-colour half of the answer. A star on the rows says who fits, but a manager
+ * who cannot see the mark, or who has scrolled past it, still has a readable sentence — and a
+ * button to put things back, rather than having to guess the Escape key.
+ */
+const FitContextLine = ({
+  fit,
+  onClear,
+}: {
+  readonly fit: LineupFitReadout | null;
+  readonly onClear: () => void;
+}) => {
+  if (fit === null) return null;
+  return (
+    <div
+      className="mt-1 flex items-center gap-1.5 text-data text-text-secondary"
+      data-testid="squad-fit-context"
+    >
+      <span role="status" aria-live="polite">
+        Showing players for {fit.position}
+      </span>
+      <span aria-hidden="true">·</span>
+      <Button
+        type="button"
+        variant="link"
+        size="sm"
+        data-action-id="clear-squad-fit"
+        onClick={onClear}
+      >
+        Clear
+      </Button>
+    </div>
+  );
+};
+
 /** The squad list leaf: filter toolbar, the View selector, column visibility
  *  controls, view-state placeholders, status legend, and the body — the
  *  two-column position list or the DataTable, whichever the chosen view draws.
@@ -241,6 +281,8 @@ export const SquadTable = () => {
     refreshState,
     copy,
     orderedIds,
+    rows,
+    fit,
     sort,
     table,
   } = state;
@@ -259,6 +301,7 @@ export const SquadTable = () => {
     setView,
     toggleOneColumn,
     clearFilterCommand,
+    clearFitContext,
   } = actions;
   const { STATUS_LEGEND_ID } = meta;
 
@@ -270,7 +313,7 @@ export const SquadTable = () => {
         aria-label="Squad"
         className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <h1 className="text-2xl font-bold">Squad</h1>
+        <h1 className="text-title">Squad</h1>
         <Alert variant="destructive" className="mt-6">
           <p>{viewState.error.message}</p>
           <Button
@@ -458,7 +501,7 @@ export const SquadTable = () => {
         {/* Every career screen owns its section <h1> (career chrome note); Squad's layout carries no
             standalone title, so the heading is for assistive technology only. */}
         <h1 className="sr-only">Squad</h1>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-data">
           <SquadToolbar
             filters={filters}
             onClearFilters={clearFilterCommand}
@@ -473,7 +516,7 @@ export const SquadTable = () => {
         {/* The panel CM 03/04 drew the list in, titled with what you are looking
             at, named by the view that drew it. A tinted surface, no border. */}
         <section className="mt-3 rounded-panel bg-panel-bg px-3 pt-2 pb-3">
-          <h2 className="text-base font-bold text-text-highlight">
+          <h2 className="text-heading text-text-highlight">
             Players ({view.label})
           </h2>
 
@@ -484,6 +527,7 @@ export const SquadTable = () => {
               onClearFilters={clearFilterCommand}
             />
           )}
+          <FitContextLine fit={fit} onClear={clearFitContext} />
           {legendExpanded && <StatusLegend id={STATUS_LEGEND_ID} />}
 
           {view.layout === "list" ? (
@@ -492,6 +536,7 @@ export const SquadTable = () => {
             <SquadRoster
               table={table}
               orderedIds={orderedIds}
+              rows={rows}
               tableId="squad"
               screen="squad"
               region={REGION}

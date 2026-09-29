@@ -39,9 +39,9 @@ export const SetupIntroduction = ({
 }: SetupIntroductionProps) => (
   <header className="flex items-baseline justify-between gap-3">
     <div className="flex min-w-0 items-baseline gap-3">
-      <h1 className="text-base font-semibold text-text-primary">Active Leagues</h1>
+      <h1 className="text-title text-text-primary">Active Leagues</h1>
       <p
-        className="truncate text-xs text-text-secondary"
+        className="truncate text-data text-text-secondary"
         aria-busy={stale ? "true" : undefined}
         data-testid="scope-summary"
       >

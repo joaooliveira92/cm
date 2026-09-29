@@ -31,7 +31,7 @@ export const WorkloadGauge = ({
 
   return (
     <div className="flex min-w-0 flex-col gap-1" data-recovery={recovery}>
-      <div className="flex items-center justify-between gap-3 text-sm">
+      <div className="flex items-center justify-between gap-3 text-body">
         <span className="tabular-nums text-text-secondary">Condition {value}%</span>
         <span className={`font-semibold ${resting ? "text-text-warning" : "text-text-success"}`}>
           {status.label}
@@ -51,7 +51,7 @@ export const WorkloadGauge = ({
           style={{ width: `${value}%` }}
         />
       </div>
-      <p className="text-xs text-text-secondary">{status.detail}</p>
+      <p className="text-data text-text-secondary">{status.detail}</p>
     </div>
   );
 };

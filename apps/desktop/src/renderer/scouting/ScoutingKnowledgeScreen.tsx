@@ -59,10 +59,10 @@ export const ScoutingKnowledgeScreen = ({ saveId }: { readonly saveId: SaveId })
       tabIndex={-1}
     >
       <header>
-        <h1 id="scouting-knowledge-heading" className="text-2xl font-bold">
+        <h1 id="scouting-knowledge-heading" className="text-title">
           Scouting Knowledge
         </h1>
-        <p className="mt-1 text-sm text-text-secondary">
+        <p className="mt-1 text-body text-text-secondary">
           How far your club's Scouting Progress reaches, by Club and by Player.
         </p>
       </header>

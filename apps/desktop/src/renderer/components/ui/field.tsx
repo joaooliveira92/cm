@@ -36,7 +36,7 @@ const FieldLabel = ({ className, ref, ...props }: FieldLabelProps) => (
   <label
     ref={ref}
     className={cn(
-      "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+      "text-label leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
       className,
     )}
     {...props}
@@ -49,7 +49,7 @@ interface FieldDescriptionProps extends React.HTMLAttributes<HTMLParagraphElemen
 }
 
 const FieldDescription = ({ className, ref, ...props }: FieldDescriptionProps) => (
-  <p ref={ref} className={cn("text-xs text-muted-foreground", className)} {...props} />
+  <p ref={ref} className={cn("text-data text-muted-foreground", className)} {...props} />
 );
 FieldDescription.displayName = "FieldDescription";
 

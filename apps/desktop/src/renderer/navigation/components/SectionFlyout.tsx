@@ -116,7 +116,7 @@ const SectionItems = ({
   readonly onPick: (item: NavSection["items"][number], event: MouseEvent) => void;
 }) => (
   <nav aria-label={`${section.label} submenu`} className="w-56 p-1">
-    <p className="px-2 pt-1 pb-1.5 text-xs font-medium text-muted-foreground">{section.label}</p>
+    <p className="px-2 pt-1 pb-1.5 text-data font-medium text-muted-foreground">{section.label}</p>
     <ul className="flex flex-col gap-0.5">
       {section.items.map((item, index) => {
         const ItemIcon = item.icon;
@@ -134,7 +134,7 @@ const SectionItems = ({
                 aria-current={itemActive ? "page" : undefined}
                 onClick={(event) => onPick(item, event)}
                 className={cn(
-                  "flex h-8 w-full min-w-0 items-center gap-2 rounded-sm px-2 text-left text-sm outline-none transition-colors",
+                  "flex h-8 w-full min-w-0 items-center gap-2 rounded-sm px-2 text-left text-body outline-none transition-colors",
                   "hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground",
                   "data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground",
                   "[&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground data-[active=true]:[&>svg]:text-accent-foreground",

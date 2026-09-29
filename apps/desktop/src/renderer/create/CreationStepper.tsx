@@ -89,13 +89,13 @@ const CreationStepperStepButton = ({ number }: { readonly number: FormStep }) =>
         aria-current={isActive ? "step" : undefined}
       >
         <motion.span
-          className={`relative z-10 flex size-10 items-center justify-center rounded-full border text-sm font-bold transition-colors ${
-            isActive
-              ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-              : isComplete
-                ? "border-primary bg-primary/15 text-primary"
-                : "border-border-subtle bg-surface text-text-muted"
-          }`}
+          className={`relative z-10 flex size-10 items-center justify-center rounded-full border text-body font-bold transition-colors ${
+ isActive
+ ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+ : isComplete
+ ? "border-primary bg-primary/15 text-primary"
+ : "border-border-subtle bg-surface text-text-muted"
+ }`}
           animate={{ scale: isActive ? 1.08 : 1 }}
           whileHover={isAccessible ? { scale: 1.1 } : undefined}
           whileTap={isAccessible ? { scale: 0.95 } : undefined}
@@ -123,14 +123,14 @@ const CreationStepperStepButton = ({ number }: { readonly number: FormStep }) =>
         </motion.span>
 
         <span
-          className={`mt-3 text-sm font-semibold ${
-            isActive || isComplete ? "text-text-primary" : "text-text-muted"
-          }`}
+          className={`mt-3 text-body font-semibold ${
+ isActive || isComplete ? "text-text-primary" : "text-text-muted"
+ }`}
         >
           {item.title}
         </span>
 
-        <span className="mt-1 hidden text-xs text-text-muted sm:block">
+        <span className="mt-1 hidden text-data text-text-muted sm:block">
           {item.description}
         </span>
       </button>

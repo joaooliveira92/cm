@@ -101,15 +101,15 @@ export const TeachingSplash = ({ onDismiss }: { readonly onDismiss: () => void }
         className="w-[28rem] max-w-[90vw] rounded-panel border border-panel-border bg-panel-bg-strong text-text-primary shadow-2xl"
       >
         <div className={MODAL_TITLE_BAND}>
-          <h2 className="font-semibold text-xl">This career is played from the keyboard</h2>
+          <h2 className="text-heading">This career is played from the keyboard</h2>
         </div>
         <div className={MODAL_BODY}>
-          <p className="text-sm text-text-secondary">
+          <p className="text-body text-text-secondary">
             Everything works without a mouse. These three shortcuts are all you need to start:
           </p>
           <ul className="mt-4 space-y-2">
             {SHORTCUTS.map((shortcut) => (
-              <li key={shortcut.description} className="flex items-baseline gap-3 text-sm text-text-strong">
+              <li key={shortcut.description} className="flex items-baseline gap-3 text-body text-text-strong">
                 <Kbd className="text-text-highlight">{shortcut.keys}</Kbd>
                 <span>{shortcut.description}</span>
               </li>

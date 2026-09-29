@@ -107,7 +107,7 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
         aria-label="Tactics Overview"
         className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <h1 className="text-2xl font-bold">Tactics Overview</h1>
+        <h1 className="text-title">Tactics Overview</h1>
         <p className="mt-2 text-text-secondary">Loading your tactical preparation...</p>
       </main>
     );
@@ -123,7 +123,7 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
         aria-label="Tactics Overview"
         className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <h1 className="text-2xl font-bold">Tactics Overview</h1>
+        <h1 className="text-title">Tactics Overview</h1>
         <Alert variant="destructive" className="mt-2" data-testid="tactics-overview-failed">
           <p>
             {error !== null ? describeRpcError(error) : "Failed to load the tactics overview."}
@@ -160,8 +160,8 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
 
       <header className="chrome-gradient flex flex-wrap items-center justify-between gap-3 rounded-panel border border-panel-border px-4 py-2 shadow-chrome">
         <div>
-          <h1 className="text-2xl font-bold text-text-highlight">Tactics Overview</h1>
-          <p className="text-sm font-semibold text-text-bright">
+          <h1 className="text-title text-text-highlight">Tactics Overview</h1>
+          <p className="text-body font-semibold text-text-bright">
             {view.club.name}
             {result.waiting && <span className="ml-2 font-normal text-text-muted">Refreshing…</span>}
           </p>
@@ -192,7 +192,7 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
             </Button>
           )}
           {archived && (
-            <p className="text-sm text-text-bright">
+            <p className="text-body text-text-bright">
               This save is read-only, so the editor and match preparation are unavailable.
             </p>
           )}

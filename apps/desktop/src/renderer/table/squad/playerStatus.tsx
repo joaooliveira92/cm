@@ -251,7 +251,7 @@ export const statusTermsOf = (source: StatusSource): readonly string[] =>
 
 /** The filled badge a status draws, in a row and in the legend: the tone as the fill, the code
  *  in the page background colour. */
-const BADGE_BASE = "inline-block rounded-full px-1.5 text-2xs font-bold leading-4 text-bg-base";
+const BADGE_BASE = "inline-block rounded-full px-1.5 text-caption font-bold leading-4 text-bg-base";
 
 const BADGE_CLASS: Readonly<Record<StatusTone, string>> = {
   danger: "bg-text-danger",
@@ -296,7 +296,7 @@ const LIKELIHOOD_LABEL: Readonly<Record<StatusLikelihood, string>> = {
 export const StatusLegend = ({ id }: { readonly id: string }) => (
   <div
     id={id}
-    className="mt-2 max-h-64 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-3 text-xs"
+    className="mt-2 max-h-64 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-3 text-data"
   >
     <p className="text-text-body">
       The Status column shows only what the game models. Reserved codes are the

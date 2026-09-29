@@ -21,7 +21,7 @@ export const ReadStateMessage = ({
   readonly children?: ReactNode;
 }) => (
   <main className={PAGE_CLASS} tabIndex={-1} data-focus-id={focusId} aria-label={label}>
-    <h1 className="text-2xl font-bold">{title}</h1>
+    <h1 className="text-title">{title}</h1>
     <p className="mt-4 text-text-secondary italic">{message}</p>
     {children}
   </main>

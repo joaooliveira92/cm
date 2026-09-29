@@ -16,7 +16,7 @@ export const PlayerComparisonScreen = ({
   readonly playerIds: ReadonlyArray<PlayerId>;
 }) => (
   <div className={STUB_CLASS}>
-    <p className="text-sm text-text-secondary">
+    <p className="text-body text-text-secondary">
       Transfer Target Comparison — save {String(saveId)}, {playerIds.length} player
       {playerIds.length === 1 ? "" : "s"} selected.
     </p>

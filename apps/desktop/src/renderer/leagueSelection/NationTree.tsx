@@ -27,7 +27,7 @@ const NationTreeRoot = () => {
 
   if (view.totalMatchCount === 0) {
     return (
-      <p role="status" className="text-sm text-text-secondary">
+      <p role="status" className="text-body text-text-secondary">
         No nations or competitions match your search. The selection is unchanged.
       </p>
     );
@@ -56,7 +56,7 @@ const NationTreeRegion = ({
         role="treeitem"
         aria-expanded={region.expanded}
         aria-label={`${region.regionName}, ${region.nations.length} nations`}
-        className={`w-full rounded-control px-2 py-1 text-left text-sm font-semibold hover:bg-surface ${FOCUS_RING.join(" ")}`}
+        className={`w-full rounded-control px-2 py-1 text-left text-body font-semibold hover:bg-surface ${FOCUS_RING.join(" ")}`}
         onClick={() => dispatch({ type: "TOGGLE_REGION", regionId: region.regionId })}
       >
         {region.expanded ? "▾" : "▸"} {region.regionName}
@@ -133,13 +133,13 @@ const NationTreeRow = ({
         <span className="min-w-40">{nation.name}</span>
 
         {!nation.available ? (
-          <span className="text-xs text-text-muted">Unavailable — content not installed</span>
+          <span className="text-data text-text-muted">Unavailable — content not installed</span>
         ) : !nation.playableSupported ? (
-          <span className="text-xs text-text-secondary">Background data only</span>
+          <span className="text-data text-text-secondary">Background data only</span>
         ) : null}
 
         {nation.available && (
-          <label className="flex items-center gap-1 text-xs text-text-secondary">
+          <label className="flex items-center gap-1 text-data text-text-secondary">
             Mode
             <Select
               value={row.mode}
@@ -167,7 +167,7 @@ const NationTreeRow = ({
         )}
 
         {row.mode === "playable" && nation.scopeOptions.length > 0 && (
-          <label className="flex items-center gap-1 text-xs text-text-secondary">
+          <label className="flex items-center gap-1 text-data text-text-secondary">
             Scope
             <Select
               value={row.scopeOptionId ?? ""}
@@ -193,15 +193,15 @@ const NationTreeRow = ({
         )}
 
         {dependencyOnly && (
-          <span className="text-xs text-sky-300">Included because another selection needs it</span>
+          <span className="text-data text-sky-300">Included because another selection needs it</span>
         )}
         {row.issues.some((entry) => entry.level !== "info") && (
-          <span className="text-xs text-text-warning">! {row.issues[0]?.message}</span>
+          <span className="text-data text-text-warning">! {row.issues[0]?.message}</span>
         )}
       </div>
 
       {expanded && (
-        <ul role="group" className="ml-6 mt-1 space-y-0.5 text-xs">
+        <ul role="group" className="ml-6 mt-1 space-y-0.5 text-data">
           {nation.competitions.length === 0 && (
             <li className="text-text-muted">This nation has no competitions in this database.</li>
           )}

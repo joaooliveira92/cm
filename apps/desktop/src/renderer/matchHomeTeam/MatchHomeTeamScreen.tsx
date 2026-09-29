@@ -13,19 +13,19 @@ const SlotRow = ({
   readonly index: number;
 }) => (
   <tr className={index % 2 === 0 ? "bg-panel-bg" : "bg-panel-bg-alt"}>
-    <td className="px-3 py-1 text-sm font-medium text-text-secondary">{player.position}</td>
-    <td className="px-3 py-1 text-sm">{player.firstName} {player.lastName}</td>
-    <td className="px-3 py-1 text-sm text-text-secondary">{player.role}</td>
+    <td className="px-3 py-1 text-body font-medium text-text-secondary">{player.position}</td>
+    <td className="px-3 py-1 text-body">{player.firstName} {player.lastName}</td>
+    <td className="px-3 py-1 text-body text-text-secondary">{player.role}</td>
   </tr>
 );
 
 const TeamClubPanel = ({ club }: { readonly club: TeamSheetClubView }) => (
   <section className="rounded-panel border border-panel-border-dark bg-panel-bg p-4 shadow-panel">
-    <h2 className="text-xl font-bold mb-1">{club.clubName}</h2>
-    <p className="text-sm text-text-secondary mb-3">Formation: {club.formation}</p>
+    <h2 className="text-heading mb-1">{club.clubName}</h2>
+    <p className="text-body text-text-secondary mb-3">Formation: {club.formation}</p>
     <table className="w-full text-left">
       <thead>
-        <tr className="border-b border-panel-border-dark text-xs uppercase tracking-wide text-text-tertiary">
+        <tr className="border-b border-panel-border-dark text-overline uppercase text-text-tertiary">
           <th className="px-3 py-1">Position</th>
           <th className="px-3 py-1">Player</th>
           <th className="px-3 py-1">Role</th>
@@ -39,8 +39,8 @@ const TeamClubPanel = ({ club }: { readonly club: TeamSheetClubView }) => (
     </table>
     {club.bench.length > 0 && (
       <>
-        <h3 className="text-sm font-semibold mt-4 mb-1 text-text-secondary">Substitutes</h3>
-        <ul className="text-sm text-text-secondary space-y-0.5">
+        <h3 className="text-heading mt-4 mb-1 text-text-secondary">Substitutes</h3>
+        <ul className="text-body text-text-secondary space-y-0.5">
           {club.bench.map((name, i) => (
             <li key={i}>{name ?? "(empty)"}</li>
           ))}
@@ -78,7 +78,7 @@ export const MatchHomeTeamScreen = ({ saveId }: { readonly saveId: SaveId }) => 
       aria-label="Match Home Team"
       className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
-      <h1 className="text-2xl font-bold mb-6">Match Day</h1>
+      <h1 className="text-title mb-6">Match Day</h1>
       {error && <p className="text-destructive mb-4">{error}</p>}
       {!teamSheet && !error && <p className="text-text-secondary italic">Loading team sheet...</p>}
       {teamSheet && (

@@ -23,7 +23,7 @@ export const PlayerDevelopmentScreen = ({
     {() => (
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
         <PlayerNotePanel title="Training Focus">
-          <p className="text-sm text-text-body">
+          <p className="text-body text-text-body">
             Set a training focus to bias Player Development for one Category this season.
           </p>
           <div className="mt-3">
@@ -31,7 +31,7 @@ export const PlayerDevelopmentScreen = ({
           </div>
         </PlayerNotePanel>
         <PlayerNotePanel title="Development History">
-          <p className="text-sm text-text-body">
+          <p className="text-body text-text-body">
             Per-season Attribute changes are on this player&apos;s Performance Report. Player
             Development runs once per Season Concluded, independently per player, deterministically.
           </p>
@@ -55,12 +55,12 @@ const TrainingFocusSection = ({
 }) => {
   const squadResult = useAtomValue(squadAtom(saveId));
   if (squadResult._tag === "Initial") {
-    return <p className="text-sm text-text-secondary">Loading Training Focus...</p>;
+    return <p className="text-body text-text-secondary">Loading Training Focus...</p>;
   }
   if (squadResult._tag === "Failure") {
     const error = typedError(squadResult);
     return (
-      <p className="text-sm text-text-secondary">
+      <p className="text-body text-text-secondary">
         {error === null ? "Training Focus could not be loaded." : describeRpcError(error)}
       </p>
     );
@@ -68,7 +68,7 @@ const TrainingFocusSection = ({
   const player = squadResult.value.players.find((candidate) => candidate.id === playerId);
   if (player === undefined) {
     return (
-      <p className="text-sm text-text-secondary">
+      <p className="text-body text-text-secondary">
         Training Focus can only be set for players on your club.
       </p>
     );

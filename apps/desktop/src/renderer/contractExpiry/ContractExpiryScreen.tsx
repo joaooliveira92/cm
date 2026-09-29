@@ -21,7 +21,7 @@ export const ContractExpiryScreen = ({
   if (result._tag === "Initial") {
     return (
       <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="contractExpiry" aria-label="Contract Expiry">
-        <h1 className="text-2xl font-bold">Contract Expiry</h1>
+        <h1 className="text-title">Contract Expiry</h1>
         <p className="mt-4 text-text-secondary">Loading expiring contracts...</p>
       </main>
     );
@@ -34,7 +34,7 @@ export const ContractExpiryScreen = ({
       : describeRpcError(error);
     return (
       <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="contractExpiry" aria-label="Contract Expiry">
-        <h1 className="text-2xl font-bold">Contract Expiry</h1>
+        <h1 className="text-title">Contract Expiry</h1>
         <p className="mt-4 text-text-secondary">{message}</p>
       </main>
     );
@@ -45,7 +45,7 @@ export const ContractExpiryScreen = ({
   if (players.length === 0) {
     return (
       <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="contractExpiry" aria-label="Contract Expiry">
-        <h1 className="text-2xl font-bold">Contract Expiry</h1>
+        <h1 className="text-title">Contract Expiry</h1>
         <div className="mt-4">
           <p className="text-text-secondary">
             No players at your club have a Contract expiring at the end of this season.
@@ -62,8 +62,8 @@ export const ContractExpiryScreen = ({
       data-focus-id="contractExpiry"
       aria-label="Contract Expiry"
     >
-      <h1 className="text-2xl font-bold">Contract Expiry</h1>
-      <p className="mt-1 mb-4 text-text-secondary text-sm">
+      <h1 className="text-title">Contract Expiry</h1>
+      <p className="mt-1 mb-4 text-text-secondary text-body">
         Players in their last contracted year — their Contract expires at the end of this season
         unless renewed.
       </p>
@@ -78,8 +78,8 @@ export const ContractExpiryScreen = ({
                 "pointer",
               )
             }
-            className={`flex w-full items-center justify-between rounded-md border p-3 text-left text-sm transition-colors
-              hover:bg-accent hover:text-accent-foreground ${PANEL}`}
+            className={`flex w-full items-center justify-between rounded-md border p-3 text-left text-body transition-colors
+ hover:bg-accent hover:text-accent-foreground ${PANEL}`}
           >
             <span className="font-medium">
               {player.firstName} {player.lastName}

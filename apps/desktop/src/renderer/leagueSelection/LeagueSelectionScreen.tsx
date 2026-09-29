@@ -30,7 +30,7 @@ export type LeagueSelectionScreenProps =
 const DismissibleNotice = () => {
   const { actions: { dispatch }, state: { state: model } } = useLeagueSelectionContext();
   return (
-    <Card className="mt-4 flex items-start gap-3 p-3 text-sm">
+    <Card className="mt-4 flex items-start gap-3 p-3 text-body">
       <p className="flex-1">{model.notice}</p>
       <Button
         type="button"
@@ -48,10 +48,10 @@ const WarningPrompt = () => {
   const { state: screenState, actions: { dispatch, dismissWarningPrompt, submit } } = useLeagueSelectionContext();
   return (
     <Card role="alertdialog" aria-labelledby="warning-prompt-heading" className="mt-4 p-3">
-      <h3 id="warning-prompt-heading" className="font-semibold">
+      <h3 id="warning-prompt-heading" className="text-heading">
         Continue with warnings?
       </h3>
-      <ul className="mt-2 list-disc pl-5 text-sm text-text-warning">
+      <ul className="mt-2 list-disc pl-5 text-body text-text-warning">
         {screenState.warnings.map((entry) => (
           <li key={entry.code}>{entry.message}</li>
         ))}
@@ -81,7 +81,7 @@ const HiddenSelectedNotice = () => {
 
   const { actions: { dispatch } } = useLeagueSelectionContext();
   return (
-    <p role="status" className="mt-3 rounded-panel bg-text-warning/10 p-2 text-sm text-text-warning">
+    <p role="status" className="mt-3 rounded-panel bg-text-warning/10 p-2 text-body text-text-warning">
       {hiddenCount} selected nation
       {hiddenCount === 1 ? " is" : "s are"} hidden by the current filters.{" "}
       <Button
@@ -118,8 +118,8 @@ const LeagueSelectionContent = () => {
   if (screenState.noPlayableNations) {
     return (
       <div role="alert" className="text-text-body">
-        <h2 className="text-lg font-semibold">No playable leagues in this database</h2>
-        <p className="mt-2 text-sm text-text-secondary">
+        <h2 className="text-heading">No playable leagues in this database</h2>
+        <p className="mt-2 text-body text-text-secondary">
           {index.databaseName} contains no league this game can make playable, so a career cannot
           be started from it. Choose a different database.
         </p>
@@ -135,10 +135,10 @@ const LeagueSelectionContent = () => {
   return (
     <section aria-labelledby="league-selection-heading" className="text-text-strong">
       <header>
-        <h2 id="league-selection-heading" className="text-lg font-semibold">
+        <h2 id="league-selection-heading" className="text-heading">
           {isManage ? "Manage leagues" : "Select Leagues"}
         </h2>
-        <p className="text-sm text-text-secondary">
+        <p className="text-body text-text-secondary">
           Database: {index.databaseName}, version {index.databaseVersion}
         </p>
       </header>

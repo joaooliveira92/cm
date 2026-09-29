@@ -32,7 +32,7 @@ const AccordionTrigger = ({ className, children, ref, ...props }: AccordionTrigg
     <AccordionPrimitive.Trigger
       ref={ref}
       className={cn(
-        "flex flex-1 items-center justify-between py-3 text-sm font-medium transition-all hover:underline",
+        "flex flex-1 items-center justify-between py-3 text-body font-medium transition-all hover:underline",
         "[&[data-open]>svg]:rotate-180",
         className,
       )}
@@ -54,7 +54,7 @@ interface AccordionContentProps extends React.ComponentPropsWithoutRef<
 const AccordionContent = ({ className, children, ref, ...props }: AccordionContentProps) => (
   <AccordionPrimitive.Panel
     ref={ref}
-    className="overflow-hidden text-sm data-closed:animate-accordion-up data-open:animate-accordion-down"
+    className="overflow-hidden text-body data-closed:animate-accordion-up data-open:animate-accordion-down"
     {...props}
   >
     <div className={cn("pb-3", className)}>{children}</div>

@@ -60,11 +60,11 @@ const TabButton = ({
     aria-selected={active}
     aria-current={active ? "page" : undefined}
     tabIndex={active ? 0 : -1}
-    className={`flex h-8 shrink-0 items-center gap-1.5 rounded-control px-3 whitespace-nowrap text-sm transition-colors ${
-      active
-        ? "bg-surface-raised font-medium text-text-primary"
-        : "text-text-secondary hover:bg-surface hover:text-text-primary"
-    } ${FOCUS_RING.join(" ")}`}
+    className={`flex h-8 shrink-0 items-center gap-1.5 rounded-control px-3 whitespace-nowrap text-body transition-colors ${
+ active
+ ? "bg-surface-raised font-medium text-text-primary"
+ : "text-text-secondary hover:bg-surface hover:text-text-primary"
+ } ${FOCUS_RING.join(" ")}`}
     onClick={() => onSelect(tab.id)}
   >
     {tab.label}
@@ -200,11 +200,11 @@ export const ContextTabs = ({ onChangeTab, matchTabVisibility }: ContextTabsProp
   return (
     <nav
       aria-label={label}
-      className={`flex h-11 w-full shrink-0 items-center gap-1 border-b border-border-subtle bg-bg-raised text-sm ${
-        hasOverflow
-          ? "overflow-x-auto [mask-image:linear-gradient(to_right,transparent_0,black_16px,black_calc(100%-16px),transparent_100%)]"
-          : ""
-      }`}
+      className={`flex h-11 w-full shrink-0 items-center gap-1 border-b border-border-subtle bg-bg-raised text-body ${
+ hasOverflow
+ ? "overflow-x-auto [mask-image:linear-gradient(to_right,transparent_0,black_16px,black_calc(100%-16px),transparent_100%)]"
+ : ""
+ }`}
       style={NO_DRAG}
     >
       <div

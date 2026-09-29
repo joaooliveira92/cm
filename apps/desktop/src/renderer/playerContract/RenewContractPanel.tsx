@@ -66,13 +66,13 @@ export const RenewContractPanel = ({
 
   return (
     <section aria-labelledby="renew-contract-heading" className="mt-3">
-      <h2 id="renew-contract-heading" className="text-lg font-semibold">
+      <h2 id="renew-contract-heading" className="text-heading">
         Renew contract
       </h2>
-      <p className="mt-1 text-sm text-text-secondary">
+      <p className="mt-1 text-body text-text-secondary">
         A renewal pays the Player's current formula wage for the length you choose.
       </p>
-      <div className="mt-3 flex items-center gap-3 text-sm text-text-body">
+      <div className="mt-3 flex items-center gap-3 text-body text-text-body">
         <span>Length</span>
         <Select
           value={String(years)}
@@ -105,7 +105,7 @@ export const RenewContractPanel = ({
         </Button>
       </div>
       {failure !== null && (
-        <p role="alert" className="mt-2 text-sm text-text-danger">
+        <p role="alert" className="mt-2 text-body text-text-danger">
           {failure}
         </p>
       )}

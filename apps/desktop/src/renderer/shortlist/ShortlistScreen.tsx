@@ -8,7 +8,7 @@ export const ShortlistScreen = ({ saveId: _saveId }: { readonly saveId: SaveId }
     aria-label="Shortlist"
     className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
   >
-    <h1 className="text-2xl font-bold">Shortlist</h1>
+    <h1 className="text-title">Shortlist</h1>
     <p className="mt-4 text-text-secondary italic">WIP — Placeholder screen</p>
   </main>
 );

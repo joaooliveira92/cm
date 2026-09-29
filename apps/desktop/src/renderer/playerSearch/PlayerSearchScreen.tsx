@@ -149,7 +149,7 @@ const SearchResults = ({
   const renderedRows = roster.table.getRowModel().rows;
   return (
     <>
-      <p className="mt-4 text-sm text-text-secondary">
+      <p className="mt-4 text-body text-text-secondary">
         {view.total > view.results.length
           ? `Showing the first ${view.results.length} of ${view.total} matching players — narrow the search to see the rest.`
           : `${view.total} ${view.total === 1 ? "player" : "players"} match.`}
@@ -159,7 +159,7 @@ const SearchResults = ({
         <p className="mt-8 text-text-secondary italic">No players match these filters.</p>
       ) : (
         <section className="mt-3 rounded-panel bg-panel-bg px-3 pt-2 pb-3">
-          <h2 className="text-base font-bold text-text-highlight">Results</h2>
+          <h2 className="text-heading text-text-highlight">Results</h2>
           <CompareSelectionContext.Provider
             value={{ compareIds: roster.compareIds, onToggleCompare: roster.onToggleCompare }}
           >
@@ -230,8 +230,8 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       className={PAGE_CLASS}
     >
       <header>
-        <h1 className="text-2xl font-bold">Player Search</h1>
-        <p className="mt-1 text-sm text-text-secondary">
+        <h1 className="text-title">Player Search</h1>
+        <p className="mt-1 text-body text-text-secondary">
           Search every Player in the world by the filters below. A Player outside your squad reads
           how far your club's scouting has got on them — exact only once Fully Scouted.
         </p>
@@ -336,7 +336,7 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       </form>
 
       {invalidRange && (
-        <p role="alert" className="mt-2 text-sm text-text-danger">
+        <p role="alert" className="mt-2 text-body text-text-danger">
           The minimum age cannot be above the maximum age.
         </p>
       )}

@@ -141,12 +141,12 @@ export const LeagueGrid = ({
   return (
     <div role="table" aria-label={ariaLabel}>
       {rowModel.length === 0 ? (
-        <p className="px-1 py-2 text-xs text-text-muted">No active leagues yet.</p>
+        <p className="px-1 py-2 text-data text-text-muted">No active leagues yet.</p>
       ) : (
         <div className="overflow-hidden rounded-panel border border-panel-border bg-panel-bg">
           <div
             role="row"
-            className={`${GRID_ROW_CLASS} border-b border-panel-border bg-surface-raised text-2xs font-semibold uppercase tracking-wider text-text-secondary`}
+            className={`${GRID_ROW_CLASS} border-b border-panel-border bg-surface-raised text-overline uppercase text-text-secondary`}
           >
             {headerGroup.headers.map((header) => (
               <div key={header.id} role="columnheader" className="min-w-0 truncate">
@@ -197,7 +197,7 @@ const LeagueCell = ({ row }: { readonly row: GridRowView }) => (
     <span className="truncate font-medium text-text-primary" title={row.leagueName}>
       {row.leagueName}
     </span>
-    <span className="truncate text-2xs text-text-muted" title={row.scopeDescription}>
+    <span className="truncate text-caption text-text-muted" title={row.scopeDescription}>
       {row.scopeDescription}
     </span>
   </div>
@@ -227,7 +227,7 @@ const EmblemCell = ({ row }: { readonly row: GridRowView }) => {
       className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-panel [corner-shape:squircle] border border-border-subtle bg-surface-raised"
     >
       {flagUrl === undefined ? (
-        <span className="text-2xs font-semibold text-text-secondary">{row.nationCode}</span>
+        <span className="text-caption font-semibold text-text-secondary">{row.nationCode}</span>
       ) : (
         <img src={flagUrl} alt="" className="size-full object-cover" />
       )}
@@ -247,7 +247,7 @@ const DepthCell = ({
   const options = depthOptionsForRow(row);
   if (options.length === 0) {
     return (
-      <span className="text-xs text-text-muted" title={`Required competition — simulated at ${DEPTH_LABELS[row.depth].toLowerCase()} depth`}>
+      <span className="text-data text-text-muted" title={`Required competition — simulated at ${DEPTH_LABELS[row.depth].toLowerCase()} depth`}>
         {DEPTH_LABELS[row.depth]}
       </span>
     );
@@ -259,7 +259,7 @@ const DepthCell = ({
         if (value !== null) onChange(value as SimulationDepth);
       }}
     >
-      <SelectTrigger aria-label={depthAriaLabel(row)} className="h-6 min-w-0 px-1 text-xs">
+      <SelectTrigger aria-label={depthAriaLabel(row)} className="h-6 min-w-0 px-1 text-data">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

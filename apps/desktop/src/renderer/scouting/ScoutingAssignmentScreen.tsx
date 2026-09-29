@@ -94,16 +94,16 @@ export const ScoutingAssignmentScreen = ({ saveId }: { readonly saveId: SaveId }
       tabIndex={-1}
     >
       <header>
-        <h1 id="scouting-assignment-heading" className="text-2xl font-bold">
+        <h1 id="scouting-assignment-heading" className="text-title">
           Scouting Assignment
         </h1>
-        <p className="mt-1 text-sm text-text-secondary">
+        <p className="mt-1 text-body text-text-secondary">
           Each Scout holds one assignment. A Scout on a Club watches its whole squad.
         </p>
       </header>
 
       {readOnly ? (
-        <p className="mt-4 text-sm text-text-secondary">
+        <p className="mt-4 text-body text-text-secondary">
           This career has ended, so no assignment can change.
         </p>
       ) : (
@@ -134,14 +134,14 @@ const ClubPicker = ({
   readonly onPick: (clubId: ClubId | null) => void;
 }) => {
   if (tableFailed) {
-    return <p className="mt-4 text-sm text-text-danger">The clubs could not be loaded.</p>;
+    return <p className="mt-4 text-body text-text-danger">The clubs could not be loaded.</p>;
   }
   const items = [
     { label: "Choose a club", value: "" },
     ...clubs.map((club) => ({ label: club.clubName, value: club.clubId as string })),
   ];
   return (
-    <div className="mt-4 flex items-center gap-3 text-sm text-text-body">
+    <div className="mt-4 flex items-center gap-3 text-body text-text-body">
       <span>Club to scout</span>
       <Select
         value={clubId ?? ""}
@@ -188,7 +188,7 @@ const RosterForClub = ({
   return (
     <>
       {readingFailed && (
-        <p role="alert" className="mt-2 text-sm text-text-danger">
+        <p role="alert" className="mt-2 text-body text-text-danger">
           {error === null ? "That club's reading could not be loaded." : describeRpcError(error)}
         </p>
       )}

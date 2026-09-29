@@ -27,7 +27,7 @@ const messageOf = (error: RpcClientError<"getClubTransfers"> | null): string =>
 
 const ClubTransfersMessage = ({ message }: { readonly message: string }) => (
   <main tabIndex={-1} data-focus-id="clubTransfersDetail" aria-label="Club Transfers" className={PAGE_CLASS}>
-    <h1 className="text-2xl font-bold">Club Transfers</h1>
+    <h1 className="text-title">Club Transfers</h1>
     <p className="mt-4 text-text-secondary">{message}</p>
   </main>
 );
@@ -48,9 +48,9 @@ export const ClubTransfersDetailScreen = ({
 
   return (
     <main tabIndex={-1} data-focus-id="clubTransfersDetail" aria-label="Club Transfers" className={PAGE_CLASS}>
-      <h1 className="text-2xl font-bold">{view.club.name}</h1>
-      {view.isUserClub ? null : <p className="mt-1 text-sm text-text-secondary">[Not your club]</p>}
-      <p className="mt-1 text-sm text-text-secondary">
+      <h1 className="text-title">{view.club.name}</h1>
+      {view.isUserClub ? null : <p className="mt-1 text-body text-text-secondary">[Not your club]</p>}
+      <p className="mt-1 text-body text-text-secondary">
         Every completed transfer into or out of this club, newest first.
       </p>
 

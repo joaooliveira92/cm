@@ -94,7 +94,7 @@ const PillarDistributionSummary = () => {
           >
             {pointsRemaining === 0 ? "Ready" : Math.abs(pointsRemaining)}
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+          <span className="text-overline uppercase text-text-muted">
             {pointsRemaining === 0
               ? `${totalPoints} points assigned`
               : pointsRemaining > 0
@@ -156,9 +156,9 @@ const PillarDistributionSlider = ({ pillar }: { readonly pillar: Pillar }) => {
                 initial={{ opacity: 0, y: -6, scale: 0.8 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 6, scale: 0.8 }}
-                className={`inline-block text-lg font-bold tabular-nums ${
-                  isMinimum ? "text-text-warning" : "text-text-primary"
-                }`}
+                className={`inline-block text-figure tabular-nums ${
+ isMinimum ? "text-text-warning" : "text-text-primary"
+ }`}
               >
                 {value}
               </motion.span>

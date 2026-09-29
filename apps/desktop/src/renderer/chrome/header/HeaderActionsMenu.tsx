@@ -19,21 +19,21 @@ interface ConfirmDialogProps {
 const ConfirmDialog = ({ label, onConfirm, onCancel }: ConfirmDialogProps) => (
   <Dialog open onOpenChange={(open) => { if (!open) onCancel(); }}>
     <DialogContent className="w-full max-w-xs p-4">
-      <DialogTitle className="text-sm font-semibold text-text-primary">
+      <DialogTitle className="text-text-primary">
         {label}
       </DialogTitle>
-      <p className="text-xs text-text-secondary">This action cannot be undone.</p>
+      <p className="text-data text-text-secondary">This action cannot be undone.</p>
       <div className="mt-3 flex justify-end gap-2">
         <button
           type="button"
-          className={`rounded-control bg-surface-raised px-3 py-1 text-sm text-text-primary hover:bg-surface ${FOCUS_RING.join(" ")}`}
+          className={`rounded-control bg-surface-raised px-3 py-1 text-body text-text-primary hover:bg-surface ${FOCUS_RING.join(" ")}`}
           onClick={onCancel}
         >
           Cancel
         </button>
         <button
           type="button"
-          className={`rounded-control bg-destructive px-3 py-1 text-sm text-white hover:brightness-110 ${FOCUS_RING.join(" ")}`}
+          className={`rounded-control bg-destructive px-3 py-1 text-body text-white hover:brightness-110 ${FOCUS_RING.join(" ")}`}
           onClick={onConfirm}
         >
           Confirm
@@ -85,7 +85,7 @@ export const HeaderActionsMenu = () => {
           render={
             <button
               type="button"
-              className={`flex items-center gap-1.5 whitespace-nowrap rounded-control px-3 py-1 text-sm text-text-secondary transition-colors hover:bg-surface-raised hover:text-text-primary ${FOCUS_RING.join(" ")}`}
+              className={`flex items-center gap-1.5 whitespace-nowrap rounded-control px-3 py-1 text-body text-text-secondary transition-colors hover:bg-surface-raised hover:text-text-primary ${FOCUS_RING.join(" ")}`}
             >
               <span>Actions</span>
               <ChevronDown aria-hidden="true" className="size-4" />
@@ -103,11 +103,11 @@ export const HeaderActionsMenu = () => {
                   type="button"
                   disabled={!isAvailable}
                   title={isAvailable ? undefined : action.unavailableReason}
-                  className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm ${
-                    isDestructive
-                      ? "text-destructive hover:bg-destructive/10"
-                      : "text-text-secondary hover:bg-surface-raised hover:text-text-primary"
-                  } disabled:cursor-not-allowed disabled:opacity-50`}
+                  className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-body ${
+ isDestructive
+ ? "text-destructive hover:bg-destructive/10"
+ : "text-text-secondary hover:bg-surface-raised hover:text-text-primary"
+ } disabled:cursor-not-allowed disabled:opacity-50`}
                   onClick={() => handleAction(action)}
                 >
                   <span>{action.label}</span>

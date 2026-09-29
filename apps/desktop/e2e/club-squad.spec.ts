@@ -106,7 +106,7 @@ test("the manager's own club row opens its squad exact and unmarked", async ({
   await expect(page.getByRole("heading", { name: "League Table" })).toBeVisible();
 
   const ownName =
-    (await page.getByRole("banner").locator("span.truncate.text-lg.font-bold").textContent())?.trim() ?? "";
+    (await page.getByRole("banner").locator("span.truncate.text-title").textContent())?.trim() ?? "";
   expect(ownName.length).toBeGreaterThan(0);
 
   const ownRow = page

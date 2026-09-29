@@ -28,7 +28,7 @@ export const FixtureDayList = ({
       {[...byDate.entries()].map(([date, dayFixtures]) => (
         <Card key={date}>
           <CardHeader>
-            <CardTitle className="text-2xs uppercase tracking-wide text-text-secondary">
+            <CardTitle className="text-overline uppercase text-text-secondary">
               {formatCalendarDate(date)} &middot; Round {dayFixtures[0]?.round}
             </CardTitle>
           </CardHeader>

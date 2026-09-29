@@ -178,11 +178,11 @@ export const MainMenuScreen = () => {
         >
           {/* Product identity area (spec §3.3) — decorative, not interactive. */}
           <header className="flex flex-col items-center justify-end pt-16 pb-10 text-center">
-            <h1 className="text-3xl font-bold tracking-tight text-text-primary">{PRODUCT_TITLE}</h1>
-            <p className="mt-2 text-sm tracking-widest text-text-muted uppercase">
+            <h1 className="text-display text-text-primary">{PRODUCT_TITLE}</h1>
+            <p className="mt-2 text-body tracking-widest text-text-muted uppercase">
               {PRODUCT_SUBTITLE}
             </p>
-            <p className="mt-1 text-xs text-text-muted">{DATABASE_EDITION}</p>
+            <p className="mt-1 text-data text-text-muted">{DATABASE_EDITION}</p>
           </header>
 
           {/* Primary menu group (spec §3.4) — vertical, each row a large target. */}
@@ -219,7 +219,7 @@ export const MainMenuScreen = () => {
             {/* The hint sits outside the control so it describes `Load Career`
                 without becoming part of its accessible name. */}
             {loadHint !== null && (
-              <p id="menu-load-hint" className="mt-2 px-3 text-2xs text-text-muted">
+              <p id="menu-load-hint" className="mt-2 px-3 text-caption text-text-muted">
                 {loadHint}
               </p>
             )}
@@ -232,7 +232,7 @@ export const MainMenuScreen = () => {
               role="status"
               className={`mx-auto mt-4 w-full max-w-xs ${PANEL} flex items-center justify-between gap-3`}
             >
-              <p className="text-xs text-destructive">
+              <p className="text-data text-destructive">
                 Saved careers could not be read. Starting a new career still works.
               </p>
               <Button
@@ -284,10 +284,10 @@ export const MainMenuScreen = () => {
               }}
             >
               <div className={MODAL_TITLE_BAND}>
-                <h2 className="font-semibold">Credits</h2>
+                <h2 className="text-heading">Credits</h2>
               </div>
               <div className={MODAL_BODY}>
-                <div className="max-h-64 overflow-y-auto text-sm text-text-secondary">
+                <div className="max-h-64 overflow-y-auto text-body text-text-secondary">
                   <p>{PRODUCT_TITLE} — an original football management simulation.</p>
                   <p className="mt-2">
                     Every club, competition, and person in this game is fictional. No licensed
@@ -333,10 +333,10 @@ export const MainMenuScreen = () => {
               }}
             >
               <div className={MODAL_TITLE_BAND}>
-                <h2 className="font-semibold">Exit application?</h2>
+                <h2 className="text-heading">Exit application?</h2>
               </div>
               <div className={MODAL_BODY}>
-                <p className="text-sm text-text-secondary">
+                <p className="text-body text-text-secondary">
                   No career is loaded, so nothing will be lost.
                 </p>
                 <div className="mt-4 flex items-center justify-end gap-2">

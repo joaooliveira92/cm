@@ -31,7 +31,7 @@ export const LeagueSelectionToolbar = () => {
 
   return (
     <div className="mt-4 flex flex-wrap gap-3">
-      <label className="flex flex-col text-xs text-text-secondary">
+      <label className="flex flex-col text-data text-text-secondary">
         Search nations or competitions
         <Input
           type="search"
@@ -40,7 +40,7 @@ export const LeagueSelectionToolbar = () => {
           className="mt-1"
         />
       </label>
-      <label className="flex flex-col text-xs text-text-secondary">
+      <label className="flex flex-col text-data text-text-secondary">
         Region
         <Select
           value={modelState.regionFilterId ?? ""}
@@ -64,7 +64,7 @@ export const LeagueSelectionToolbar = () => {
           </SelectContent>
         </Select>
       </label>
-      <label className="flex flex-col text-xs text-text-secondary">
+      <label className="flex flex-col text-data text-text-secondary">
         Status
         <Select
           value={modelState.statusFilter}

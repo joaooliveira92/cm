@@ -56,10 +56,10 @@ const KeepDiscardDialog = ({
         className={MODAL_COMPACT}
       >
         <div className={MODAL_TITLE_BAND}>
-          <h2 className="font-semibold">Discard the bid in progress?</h2>
+          <h2 className="text-heading">Discard the bid in progress?</h2>
         </div>
         <div className={MODAL_BODY}>
-          <p className="text-sm text-text-secondary">
+          <p className="text-body text-text-secondary">
             You typed an amount for {playerName}. Moving away would lose this bid
             unless you keep it.
           </p>
@@ -131,14 +131,14 @@ export const BidComposer = () => {
         data-action-region="place-bid"
         aria-label={draftedPlayer.clubName === null ? "Sign free agent" : "Place bid"}
       >
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-secondary">
+        <h2 className="text-overline uppercase text-text-secondary">
           {draftedPlayer.clubName === null ? "Sign free agent" : "Place bid"}
           {bidBadge !== null && <ActionKeyBadge binding={bidBadge} />}
         </h2>
         <p className="mt-1 text-text-strong">
           Player: {draftedPlayer.firstName} {draftedPlayer.lastName}
         </p>
-        <p className="text-sm text-text-secondary">
+        <p className="text-body text-text-secondary">
           Value: {formatFigureCredits(draftedPlayer.transferValue)}
         </p>
         {draftedPlayer.clubName === null ? (
@@ -151,7 +151,7 @@ export const BidComposer = () => {
           />
         ) : (
           <div className="mt-2 flex items-center gap-2">
-            <label className="text-sm text-text-body" htmlFor="bid-amount">
+            <label className="text-body text-text-body" htmlFor="bid-amount">
               Your bid:
             </label>
             <Input
@@ -180,7 +180,7 @@ export const BidComposer = () => {
           </div>
         )}
         {!windowOpen && (
-          <p className="mt-2 text-sm text-text-muted">The transfer window is closed.</p>
+          <p className="mt-2 text-body text-text-muted">The transfer window is closed.</p>
         )}
         {bidAlert !== null && (
           <Alert variant="destructive" className="mt-2">

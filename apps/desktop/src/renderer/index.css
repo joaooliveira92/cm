@@ -58,9 +58,53 @@
   /* --- Typography ------------------------------------------------------- */
   --font-sans: "Inter", "Jakarta Sans", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
 
-  /* The 11px status tier. 12px/14px/18px are Tailwind's own xs/sm/lg. */
-  --text-2xs: 12px;
-  --text-2xs--line-height: 1.3;
+  /* The type scale, by ROLE, the way the colours below are. A screen asks for
+     `text-heading`, never `text-sm font-semibold`, so the same kind of text is
+     the same size and weight on every screen. Each token carries its line
+     height and, where the role has one, its weight and tracking; an explicit
+     `font-*`/`leading-*`/`tracking-*` class still overrides those, because
+     Tailwind emits them as `var(--tw-font-weight, <token>)` fallbacks.
+     Tailwind's numeric sizes (`text-xs` … `text-3xl`) are banned in the
+     renderer by the `no-raw-text-size` rule in `scripts/effect-lint.ts`, and
+     `lib/utils.ts` teaches tailwind-merge that these names are sizes, not
+     colours. Retuning a role here retunes it everywhere. */
+
+  /* The one hero line on a pre-career shell (the main menu's game title). */
+  --text-display: 24px;
+  --text-display--line-height: 1.2;
+  --text-display--font-weight: 700;
+  --text-display--letter-spacing: -0.025em;
+  /* A screen's title: its <h1>, the club name in the career header. One per screen. */
+  --text-title: 18px;
+  --text-title--line-height: 1.25;
+  --text-title--font-weight: 700;
+  /* A key number standing on its own: a score, a budget figure, a rating. */
+  --text-figure: 20px;
+  --text-figure--line-height: 1.1;
+  --text-figure--font-weight: 700;
+  /* A panel, card, section, or dialog heading. */
+  --text-heading: 14px;
+  --text-heading--line-height: 1.3;
+  --text-heading--font-weight: 600;
+  /* Prose: descriptions, messages, dialog copy, menu entries. The body default. */
+  --text-body: 14px;
+  --text-body--line-height: 1.5;
+  /* Dense data: table cells, stat lists, form fields, anything read in rows. */
+  --text-data: 12px;
+  --text-data--line-height: 1.3;
+  /* The name of a value: form labels, key-value keys, buttons, tabs. */
+  --text-label: 12px;
+  --text-label--line-height: 1.3;
+  --text-label--font-weight: 500;
+  /* Secondary detail: status abbreviations, breadcrumbs, hints, badges, keycaps. */
+  --text-caption: 11px;
+  --text-caption--line-height: 1.3;
+  /* A small uppercase group label or column header. Pair it with `uppercase`,
+     which a font-size token cannot carry. */
+  --text-overline: 11px;
+  --text-overline--line-height: 1.3;
+  --text-overline--font-weight: 600;
+  --text-overline--letter-spacing: 0.05em;
 
   /* --- Page and surface ramp -------------------------------------------- */
   --color-bg-base: var(--background);
@@ -237,6 +281,9 @@
     background-image: linear-gradient(180deg, var(--color-bg-base) 0%, var(--color-bg-raised) 100%);
     color: var(--color-text-primary);
     font-family: var(--font-sans);
+    /* Unsized text is body text, not the browser's 16px. */
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
   }
 }
 

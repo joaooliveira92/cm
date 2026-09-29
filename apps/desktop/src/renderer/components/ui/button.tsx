@@ -28,9 +28,9 @@ const buttonVariants = cva(
       },
       /* Sizes follow the compact density tier, not shadcn's 36px default. */
       size: {
-        default: "h-7 px-3 py-1 text-xs",
-        sm: "h-6 px-2 text-2xs",
-        lg: "h-8 px-4 text-sm",
+        default: "h-7 px-3 py-1 text-label",
+        sm: "h-6 px-2 text-label",
+        lg: "h-8 px-4 text-body",
         icon: "h-7 w-7",
       },
     },

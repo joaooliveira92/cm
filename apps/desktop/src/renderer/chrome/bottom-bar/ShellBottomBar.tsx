@@ -51,7 +51,7 @@ export const ShellBottomBar = ({ plan, className }: ShellBottomBarProps) => {
           id={reasonId}
           aria-live="polite"
           title={plan.reason ?? undefined}
-          className={`min-w-0 truncate text-sm text-text-secondary ${plan.status.length > 0 ? "" : "flex-1"}`}
+          className={`min-w-0 truncate text-body text-text-secondary ${plan.status.length > 0 ? "" : "flex-1"}`}
         >
           {plan.reason ?? ""}
         </p>

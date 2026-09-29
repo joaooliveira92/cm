@@ -188,7 +188,7 @@ export const FormationPitch = ({
             height: `${intent.zone.bottom - intent.zone.top}%`,
           }}
         >
-          <span className="absolute left-1 top-0.5 text-2xs font-bold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
+          <span className="absolute left-1 top-0.5 text-caption font-bold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
             {intent.zone.position}
           </span>
         </div>
@@ -232,19 +232,19 @@ export const FormationPitch = ({
               >
                 <span
                   aria-hidden="true"
-                  className={`flex size-7 items-center justify-center rounded-full border-2 text-2xs font-bold tabular-nums text-text-bright shadow-panel transition-transform ${
-                    landing
-                      ? "border-dashed border-text-bright bg-pitch-marker/60"
-                      : player === undefined
-                        ? "border-dashed border-text-bright/70 bg-transparent"
-                        : `border-text-highlight ${isKeeper ? "bg-pitch-marker-gk" : "bg-pitch-marker"}`
+                  className={`flex size-7 items-center justify-center rounded-full border-2 text-caption font-bold tabular-nums text-text-bright shadow-panel transition-transform ${
+ landing
+ ? "border-dashed border-text-bright bg-pitch-marker/60"
+ : player === undefined
+ ? "border-dashed border-text-bright/70 bg-transparent"
+ : `border-text-highlight ${isKeeper ? "bg-pitch-marker-gk" : "bg-pitch-marker"}`
                   } ${swapTarget ? "scale-125 ring-2 ring-text-bright" : ""}`}
                 >
                   {slotIndex + 1}
                 </span>
                 <span
                   aria-hidden="true"
-                  className="mt-0.5 max-w-full truncate text-2xs font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
+                  className="mt-0.5 max-w-full truncate text-caption font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
                 >
                   {player === undefined ? slot.position : markerName(player)}
                 </span>

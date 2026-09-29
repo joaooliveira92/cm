@@ -12,7 +12,7 @@ export const SelectionIssues = ({
   <>
     {blocking.length > 0 && (
       <Alert variant="destructive" className="mt-4">
-        <h3 className="font-semibold">This selection cannot be used yet</h3>
+        <h3 className="text-heading">This selection cannot be used yet</h3>
         <ul className="mt-1 list-disc pl-5">
           {blocking.map((entry) => (
             <li key={`${entry.code}-${entry.nationId ?? "global"}`}>{entry.message}</li>

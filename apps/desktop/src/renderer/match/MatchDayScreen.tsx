@@ -69,7 +69,7 @@ const MatchDayLayout = () => {
       aria-label="Match day"
       className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
-      <h1 className="text-2xl font-bold">Match day</h1>
+      <h1 className="text-title">Match day</h1>
       {state.error && <Alert variant="destructive" className="mt-2"><p>{state.error}</p></Alert>}
 
       {!state.match && <KickoffPanel />}

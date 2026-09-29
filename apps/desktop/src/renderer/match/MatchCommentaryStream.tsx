@@ -11,11 +11,11 @@ export const MatchCommentaryStream = () => {
   // The score lives in the career header while the match is on (`chrome/header/MatchHeader.tsx`).
   return (
     <>
-      <p className="text-sm text-text-secondary">
+      <p className="text-body text-text-secondary">
         {state.phase === "complete" ? "Full time" : state.phase === "paused" ? "Paused — awaiting decision" : "Live"}
       </p>
 
-      <ul className="mt-4 max-h-[60vh] space-y-1 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-4 text-sm shadow-panel">
+      <ul className="mt-4 max-h-[60vh] space-y-1 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-4 text-body shadow-panel">
         {comm.revealed.map((line, index) => (
           <li key={index} className="flex gap-3">
             <span className="w-10 shrink-0 tabular-nums text-text-muted">{line.minute}&apos;</span>

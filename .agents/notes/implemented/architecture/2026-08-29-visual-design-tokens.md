@@ -42,14 +42,25 @@ The shipped set adds a neutral ladder above `secondary` (`--color-text-bright`, 
 
 ### Typography
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| Font family | `"Jakarta Sans", "Trebuchet MS", "Segoe UI", Arial, sans-serif` | All UI text |
-| Page title | `18px (text-lg)`, `font-bold` | Screen-level headings |
-| Section heading | `14px (text-sm)`, `font-semibold` | Panel/section headings inside screens |
-| Table body | `12px (text-xs)` | Squad table, all data tables |
-| Status text | `11px` (`--text-2xs`) | Status abbreviations beside player names |
-| Label/metadata | `12px (text-xs)` | Labels, input labels, column headers |
+> **Superseded in part, 2026-09-29.** The table this section first carried named Tailwind sizes (`text-lg`, `text-sm`, `text-xs`) per role, and nothing held screens to it: page titles drifted to four sizes (`text-2xl` on most, `text-lg`, `text-xl`, `text-3xl`), section headings to eight, and the `--text-2xs` "11px" status tier was in fact declared as 12px. Unsized text fell back to the browser's 16px. The roles are now tokens, declared the way the colours are.
+
+The type scale is one set of role-named `--text-*` tokens in the `@theme` block of `apps/desktop/src/renderer/index.css`. Each generates a `text-<role>` utility carrying size, line height, and, where the role has them, weight and tracking. A screen writes `text-heading`, never `text-sm font-semibold`, so the same kind of text is the same size on every screen and retuning a role is a one-line change (a smaller-font skin, like CM 03/04's "Ter" skin, is a scoped re-declaration).
+
+| Role | Size / weight | Usage |
+|------|---------------|-------|
+| `text-display` | 24px bold | The one hero line on a pre-career shell (main menu title) |
+| `text-title` | 18px bold | A screen's `<h1>`, `PageHeader`, the club name in the career header and scoreboard |
+| `text-figure` | 20px bold | A key number on its own: score, budget figure, rating |
+| `text-heading` | 14px semibold | Panel, card, section, and dialog headings |
+| `text-body` | 14px | Prose, descriptions, menu entries; the `body` default |
+| `text-data` | 12px | Table cells, stat lists, form fields: anything read in rows |
+| `text-label` | 12px medium | Form labels, key-value keys, buttons |
+| `text-caption` | 11px | Status abbreviations, breadcrumbs, hints, badges, keycaps |
+| `text-overline` | 11px semibold, tracked | Uppercase group labels and column headers (paired with `uppercase`) |
+
+An explicit `font-*`, `leading-*`, or `tracking-*` class still overrides the role's default, because Tailwind emits those as `var(--tw-font-weight, <token>)` fallbacks. Body and data text keep their weight classes for inline emphasis; title, heading, and figure do not need one.
+
+Two pieces hold it in place. The `no-raw-text-size` rule in `scripts/effect-lint.ts` bans Tailwind's numeric and arbitrary sizes (`text-xs` … `text-3xl`, `text-[11px]`) anywhere in renderer source, the vendored `components/ui/` set included. `cn()` in `renderer/lib/utils.ts` registers the role names with tailwind-merge as font sizes, since it otherwise reads an unknown `text-*` as a colour and drops one of `text-heading text-text-secondary`.
 
 `Jakarta Sans` is **bundled, not assumed**: `@font-face` rules in `index.css` load the vendored faces at `apps/desktop/src/assets/fonts/JakartaSans/` (regular and italic), so the retro face renders identically on every system. `Trebuchet MS`, `Segoe UI`, and Arial remain as fallbacks behind it. Line height is `1.3` for table rows and the 11px status tier, `1.5` for prose.
 

@@ -18,7 +18,7 @@ test("the Club section's Finances entry resolves the manager's own club", async 
   await goto(page, "club finances");
 
   const ownName =
-    (await page.getByRole("banner").locator("span.truncate.text-lg.font-bold").textContent())?.trim() ?? "";
+    (await page.getByRole("banner").locator("span.truncate.text-title").textContent())?.trim() ?? "";
   await expect(page.getByRole("heading", { name: ownName, level: 1 })).toBeVisible();
   await expect(page.getByText("[Not your club]")).toHaveCount(0);
   await expect(page.getByText("Transfer Budget Remaining", { exact: true })).toBeVisible();
@@ -32,7 +32,7 @@ test("a league row opens a rival club's finances", async ({ window: page, userDa
   await goto(page, "league table");
   const table = page.getByRole("main").getByRole("table");
   const ownName =
-    (await page.getByRole("banner").locator("span.truncate.text-lg.font-bold").textContent())?.trim() ?? "";
+    (await page.getByRole("banner").locator("span.truncate.text-title").textContent())?.trim() ?? "";
 
   const rival = table
     .getByRole("button", { name: /— club finances$/ })

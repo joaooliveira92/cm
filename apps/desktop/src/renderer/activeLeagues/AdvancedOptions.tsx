@@ -142,7 +142,7 @@ export const AdvancedOptions = ({
     <Collapsible.Root defaultOpen={defaultOpen}>
       <Collapsible.Trigger
         aria-controls={panelId}
-        className={`group flex h-7 w-full items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-text-primary ${FOCUS_RING.join(" ")}`}
+        className={`group flex h-7 w-full items-center gap-1.5 text-data font-medium text-text-secondary hover:text-text-primary ${FOCUS_RING.join(" ")}`}
       >
         <ChevronDown
           aria-hidden="true"
@@ -165,7 +165,7 @@ export const AdvancedOptions = ({
             />
           ))}
           {issues.length === 0 ? null : (
-            <ul className="flex flex-col gap-0.5 text-2xs text-destructive">
+            <ul className="flex flex-col gap-0.5 text-caption text-destructive">
               {issues.map((message) => (
                 <li key={message}>{message}</li>
               ))}
@@ -190,7 +190,7 @@ const OptionGroupFieldset = ({
   readonly onChange: (key: AdvancedOptionsKey, value: string) => void;
 }) => (
   <fieldset className="min-w-0">
-    <legend className="text-2xs font-semibold uppercase tracking-wider text-text-muted">
+    <legend className="text-overline uppercase text-text-muted">
       {group.label}
     </legend>
     <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-[3px]">
@@ -226,7 +226,7 @@ const AdvancedOptionRow = ({
   return (
     <div className="min-w-0">
       <div className={`flex items-center gap-2 ${OPTION_ROW_HEIGHT}`}>
-        <label className="min-w-0 flex-1 truncate text-xs text-text-body" htmlFor={`${helpId}-control`}>
+        <label className="min-w-0 flex-1 truncate text-data text-text-body" htmlFor={`${helpId}-control`}>
           {option.label}
         </label>
         <button
@@ -245,7 +245,7 @@ const AdvancedOptionRow = ({
             if (next !== null) onChange(option.key, next);
           }}
         >
-          <SelectTrigger id={`${helpId}-control`} className="h-6 w-[8rem] px-1 text-xs">
+          <SelectTrigger id={`${helpId}-control`} className="h-6 w-[8rem] px-1 text-data">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -259,7 +259,7 @@ const AdvancedOptionRow = ({
       </div>
       {/* Always rendered, hidden when closed: `aria-controls` on the help button must resolve
           to a real element whether or not the paragraph is showing. */}
-      <p id={helpId} hidden={!helpOpen} className="pb-1 text-2xs text-text-muted">
+      <p id={helpId} hidden={!helpOpen} className="pb-1 text-caption text-text-muted">
         {option.help}
       </p>
     </div>

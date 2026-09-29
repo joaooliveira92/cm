@@ -49,7 +49,7 @@ export const ClubBadge = ({ badgeKey, colours, clubName, size = 28 }: ClubBadgeP
 
   return (
     <span
-      className="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-xs text-center text-2xs font-bold leading-none select-none"
+      className="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-xs text-center text-caption font-bold leading-none select-none"
       style={{
         width: size,
         height: size,

@@ -70,7 +70,7 @@ export const PageHeader = memo(function PageHeader({
           {breadcrumbs.length > 0 && (
             <nav
               aria-label="Breadcrumb"
-              className="mb-0.5 text-[11px] text-muted-foreground"
+              className="mb-0.5 text-caption text-muted-foreground"
             >
               <ol className="flex flex-wrap items-center gap-1">
                 {breadcrumbs.map((crumb, index) => {
@@ -123,7 +123,7 @@ export const PageHeader = memo(function PageHeader({
 
           <Heading
             id={headingId}
-            className="flex min-w-0 items-center gap-2 text-lg font-medium tracking-tight"
+            className="flex min-w-0 items-center gap-2 text-title"
           >
             {Icon !== undefined && (
               <Icon
@@ -136,7 +136,7 @@ export const PageHeader = memo(function PageHeader({
           </Heading>
 
           {description !== undefined && (
-            <div className="mt-1 text-xs text-muted-foreground">
+            <div className="mt-1 text-data text-muted-foreground">
               {description}
             </div>
           )}

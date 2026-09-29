@@ -41,13 +41,13 @@ const timeAgo = (iso: string): string => {
   return `${years} year${years > 1 ? "s" : ""} ago`;
 };
 
-const chromeButtonClass = `flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary ${FOCUS_RING.join(" ")}`;
+const chromeButtonClass = `flex items-center gap-1 text-data text-text-secondary hover:text-text-primary ${FOCUS_RING.join(" ")}`;
 
 const SAVE_CARD =
   "rounded-panel border border-panel-border bg-panel-bg p-4 shadow-panel transition-shadow hover:shadow-panel-hover";
 
-const INFO_LABEL = "text-xs text-text-muted";
-const INFO_VALUE = "text-sm text-text-primary";
+const INFO_LABEL = "text-data text-text-muted";
+const INFO_VALUE = "text-body text-text-primary";
 
 export const LoadCareerScreen = () => {
   const [saves, setSaves] = useState<ReadonlyArray<SaveSummary>>([]);
@@ -151,7 +151,7 @@ export const LoadCareerScreen = () => {
         >
           {listSavesError && (
             <section className={PANEL}>
-              <p className="text-sm text-destructive">Failed to load saves.</p>
+              <p className="text-body text-destructive">Failed to load saves.</p>
               <Button
                 type="button"
                 variant="secondary"
@@ -166,8 +166,8 @@ export const LoadCareerScreen = () => {
 
           {!listSavesError && saves.length === 0 && (
             <section className={PANEL}>
-              <h2 className="text-lg font-semibold">Saved careers</h2>
-              <p className="mt-2 text-sm text-text-secondary">
+              <h2 className="text-heading">Saved careers</h2>
+              <p className="mt-2 text-body text-text-secondary">
                 No saves yet. Start a new career to begin managing.
               </p>
               <Button
@@ -182,14 +182,14 @@ export const LoadCareerScreen = () => {
 
           {!listSavesError && saves.length > 0 && (
             <section>
-              <h2 className="mb-3 text-lg font-semibold">Saved careers</h2>
+              <h2 className="mb-3 text-heading">Saved careers</h2>
               <ul className="space-y-3">
                 {saves.map((entry) => (
                   <li key={entry.id} className={SAVE_CARD}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="truncate text-base font-semibold text-text-primary">
+                          <h3 className="truncate text-heading text-text-primary">
                             {entry.name}
                           </h3>
                           {entry.archivedCause !== null && (
@@ -248,7 +248,7 @@ export const LoadCareerScreen = () => {
           )}
 
           {openFailure !== null && (
-            <p role="alert" className="mt-2 text-sm text-destructive">{openFailure}</p>
+            <p role="alert" className="mt-2 text-body text-destructive">{openFailure}</p>
           )}
         </main>
 
@@ -259,11 +259,11 @@ export const LoadCareerScreen = () => {
         {openCredits && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="mx-4 max-w-md rounded-panel bg-panel-bg p-6 shadow-panel">
-              <h2 className="text-lg font-semibold">Credits</h2>
-              <p className="mt-2 text-sm text-text-body">
+              <h2 className="text-heading">Credits</h2>
+              <p className="mt-2 text-body text-text-body">
                 cm-clone -- a local single-player football-management simulation.
               </p>
-              <p className="mt-2 text-sm text-text-body">
+              <p className="mt-2 text-body text-text-body">
                 Built with Electron, React, Effect, and TypeScript.
               </p>
               <Button

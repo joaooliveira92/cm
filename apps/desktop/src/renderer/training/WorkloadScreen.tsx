@@ -57,10 +57,10 @@ export const WorkloadScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       tabIndex={-1}
     >
       <header>
-        <h1 id="workload-heading" className="text-2xl font-bold">
+        <h1 id="workload-heading" className="text-title">
           Workload and Recovery
         </h1>
-        <p className="mt-1 text-sm text-text-secondary">
+        <p className="mt-1 text-body text-text-secondary">
           Each player's Condition and whether they need rest
         </p>
       </header>
@@ -110,7 +110,7 @@ const messageOf = (error: RpcClientError<"getWorkload"> | null): string =>
 /** The non-`ready` states, rendered as a labelled `<main>` region carrying one line. */
 const WorkloadMessage = ({ message }: { readonly message: string }) => (
   <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="training" aria-label="Workload and recovery">
-    <h1 className="text-2xl font-bold">Workload and Recovery</h1>
+    <h1 className="text-title">Workload and Recovery</h1>
     <p className="mt-4 text-text-secondary italic">{message}</p>
   </main>
 );

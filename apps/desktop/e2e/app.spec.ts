@@ -103,6 +103,104 @@ test("the position list's Sort control reorders the list, flips on a re-pick, an
   expect(await positionListNames(window)).toEqual([...ascending].reverse());
 });
 
+/** The Positions cell renders `GK (natural, 74)`, so a player's own row says whether they can
+ *  play a position. Read from the roster rather than from the fit mark, so the mark is checked
+ *  against the data instead of against itself. */
+const canPlay = (rowText: string, position: string): boolean => rowText.includes(`${position} (`);
+
+/**
+ * The empty-slot fit context, through the path a manager can actually walk. Reaching an empty
+ * starter takes two steps rather than one: `validateTactic` rejects a saved Tactic with an
+ * unassigned slot, so no seed ships one and the tactics editor cannot produce one either. A full
+ * Tactic is saved and then a starter is dragged off the lineup onto the bar's own surface, which
+ * is the gesture `MatchDayBar` keeps for unassigning.
+ *
+ * The table layout, not the position list, because one `<tbody>` has one reading order. The list
+ * splits into two side-by-side columns, where "the fitters are above the rest" is a claim about
+ * the eye rather than about the document.
+ */
+test("selecting an empty starter slot brings the players who fit it to the top, and hides nobody", async ({ userDataDir, window }) => {
+  await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
+  await goto(window, "tactics");
+  await openTacticsEditor(window);
+  await assignFullTactic(window);
+  await goto(window, "squad");
+  await chooseToolbarOption(window, "Squad view", "General Info");
+
+  // With every starter named there is nothing to select yet, so the affordance does not exist.
+  const namedKeeper = window.getByRole("button", { name: /^GK slot,/ });
+  await expect(namedKeeper).toBeVisible();
+  await expect(window.getByRole("button", { name: "GK slot", exact: true })).toHaveCount(0);
+
+  // Unassign the keeper. The drop target is the bar's own surface rather than a slot, because a
+  // drop on another slot is a swap and a drop on the bar is the unassign.
+  await namedKeeper.dragTo(window.getByRole("heading", { name: "Positions" }));
+  const emptyKeeper = window.getByRole("button", { name: "GK slot", exact: true });
+  await expect(emptyKeeper).toBeVisible();
+
+  // Sort before selecting. The roster's own order is generated with the goalkeepers already
+  // grouped at the top, which is the fit order — so without a sort, "the fitters came to the top"
+  // and "nothing moved" are the same claim, and the assertions below would hold for free. A sort
+  // scatters them, so the re-order has something to do.
+  const nameHeader = window.getByRole("columnheader", { name: "Name" });
+  await nameHeader.getByRole("button").click();
+  await expect(nameHeader).toHaveAttribute("aria-sort", "ascending");
+
+  const roster = window.locator("tbody tr");
+  /** One row as the two facts the assertions need: who they are, and whether they can play the
+   *  slot. Row `innerText` cannot serve as the identity — selecting a slot adds the fit mark to
+   *  every row's text — so the name comes from the row's one focusable control, which the fit
+   *  mark never touches. */
+  const snapshot = async (): Promise<ReadonlyArray<{ name: string; plays: boolean }>> => {
+    const names = await roster.locator("button[data-focus-id]").allInnerTexts();
+    const texts = await roster.allInnerTexts();
+    return names.map((name, i) => ({ name: name.trim(), plays: canPlay(texts[i]!, "GK") }));
+  };
+
+  // A squad with nobody who can keep goal, or a sort that happened to leave the fitters on top
+  // already, would make every assertion below pass for free. Both are checked here, so the test
+  // reports an unsuitable fixture instead of quietly proving nothing.
+  const before = await snapshot();
+  const fitterCount = before.filter((row) => row.plays).length;
+  expect(fitterCount).toBeGreaterThan(0);
+  const firstNonFitter = before.findIndex((row) => !row.plays);
+  const lastFitter = before.map((row) => row.plays).lastIndexOf(true);
+  expect(firstNonFitter).toBeLessThan(lastFitter);
+
+  await emptyKeeper.click();
+
+  await expect(window.getByTestId("squad-fit-context")).toContainText("Showing players for GK");
+  // The mark is a real column, and it exists only while a slot is selected.
+  await expect(window.getByRole("columnheader", { name: /Fits the selected position/ })).toBeVisible();
+
+  const after = await snapshot();
+
+  // Nobody was hidden, and nobody new arrived: same players, only re-ordered.
+  expect(after).toHaveLength(before.length);
+  expect(after.map((row) => row.name).sort()).toEqual(before.map((row) => row.name).sort());
+
+  // Every player who can play the slot is above every player who cannot — the fitters are a
+  // contiguous prefix, not merely "some of them moved up".
+  expect(after.slice(0, fitterCount).every((row) => row.plays)).toBe(true);
+  expect(after.slice(fitterCount).some((row) => row.plays)).toBe(false);
+
+  // Everyone else kept the order the roster already had. This is the clause that says the
+  // context re-orders rather than re-sorts: an implementation that re-sorted the whole roster by
+  // familiarity would pass the prefix check above and fail here.
+  expect(after.filter((row) => !row.plays).map((row) => row.name)).toEqual(
+    before.filter((row) => !row.plays).map((row) => row.name),
+  );
+
+  // And the mark agrees with the Positions cell: one per fitter, on the fitters.
+  await expect(window.locator("tbody [data-testid='squad-fit-mark']")).toHaveCount(fitterCount);
+
+  // Selecting the slot again is one of the ticket's four ways out, and gives back the exact order.
+  await emptyKeeper.click();
+  await expect(window.getByTestId("squad-fit-context")).toHaveCount(0);
+  await expect(window.getByRole("columnheader", { name: /Fits the selected position/ })).toHaveCount(0);
+  expect(await snapshot()).toEqual(before);
+});
+
 test("Tactics opens on the read-only overview; the editor is one step away and the save persists", async ({ userDataDir, window }) => {
   await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
   await goto(window, "tactics");

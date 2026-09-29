@@ -75,10 +75,10 @@ const RetireManagerDialog = ({
         className={MODAL_COMPACT}
       >
         <div className={MODAL_TITLE_BAND}>
-          <h2 className="font-semibold">Retire Manager</h2>
+          <h2 className="text-heading">Retire Manager</h2>
         </div>
         <div className={MODAL_BODY}>
-          <p className="text-sm text-text-body">{RETIREMENT_DISCLOSURE}</p>
+          <p className="text-body text-text-body">{RETIREMENT_DISCLOSURE}</p>
           <div className="mt-4 flex items-center justify-end gap-2">
             <Button ref={cancelRef} type="button" variant="secondary" onClick={onCancel}>
               Cancel
@@ -88,7 +88,7 @@ const RetireManagerDialog = ({
             </Button>
           </div>
           {error !== null && (
-            <p role="alert" className="mt-2 text-sm text-destructive">
+            <p role="alert" className="mt-2 text-body text-destructive">
               {error}
             </p>
           )}
@@ -161,29 +161,29 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
           secondary={profile.avatarSecondaryColor}
           size="lg"
         />
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-title">
           {profile.firstName} {profile.lastName}
         </h1>
         <Badge variant={view.archived ? "secondary" : "success"}>
           {view.archived ? "Archived" : "Active"}
         </Badge>
-        {profileResult.waiting && <span className="text-sm text-text-muted">Refreshing…</span>}
+        {profileResult.waiting && <span className="text-body text-text-muted">Refreshing…</span>}
       </div>
-      <p className="mt-1 text-sm text-text-secondary">{ARCHETYPE_LABELS[profile.archetypeOrigin]}</p>
+      <p className="mt-1 text-body text-text-secondary">{ARCHETYPE_LABELS[profile.archetypeOrigin]}</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Card className="px-3 py-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Current Club</p>
-          <p className="mt-1 text-base text-text-body">{view.clubName}</p>
-          <p className="mt-0.5 text-base text-text-secondary">Season {view.seasonNumber}</p>
-          <p className="mt-0.5 text-base text-text-secondary">
+          <p className="text-overline uppercase text-text-secondary">Current Club</p>
+          <p className="mt-1 text-body text-text-body">{view.clubName}</p>
+          <p className="mt-0.5 text-body text-text-secondary">Season {view.seasonNumber}</p>
+          <p className="mt-0.5 text-body text-text-secondary">
             Tenure: {view.tenureSeasons} {view.tenureSeasons === 1 ? "season" : "seasons"}
           </p>
         </Card>
 
         <Card className="px-3 py-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Management Philosophy</p>
-          <dl className="mt-1 grid grid-cols-2 gap-x-8 gap-y-0.5 text-base">
+          <p className="text-overline uppercase text-text-secondary">Management Philosophy</p>
+          <dl className="mt-1 grid grid-cols-2 gap-x-8 gap-y-0.5 text-body">
             {MANAGER_PILLARS.map((pillar) => (
               <div key={pillar} className="flex justify-between">
                 <dt className="text-text-secondary">{PILLAR_LABELS[pillar]}</dt>
@@ -195,8 +195,8 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
       </div>
 
       <Card className="mt-4 px-3 py-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Personal Details</p>
-        <dl className="mt-1 grid grid-cols-2 gap-x-8 gap-y-1 text-base sm:grid-cols-3">
+        <p className="text-overline uppercase text-text-secondary">Personal Details</p>
+        <dl className="mt-1 grid grid-cols-2 gap-x-8 gap-y-1 text-body sm:grid-cols-3">
           <div className="flex justify-between">
             <dt className="text-text-secondary">Nationality</dt>
             <dd className="font-semibold text-text-primary">{profile.nationalityName}</dd>
@@ -225,38 +225,38 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
       </Card>
 
       <Card className="mt-4 px-3 py-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Career Record</p>
-        <dl className="mt-1 grid grid-cols-3 gap-x-8 gap-y-1 text-base sm:grid-cols-6">
+        <p className="text-overline uppercase text-text-secondary">Career Record</p>
+        <dl className="mt-1 grid grid-cols-3 gap-x-8 gap-y-1 text-body sm:grid-cols-6">
           <div className="text-center">
-            <dt className="text-xs text-text-secondary">Played</dt>
-            <dd className="text-xl font-bold text-text-primary">—</dd>
+            <dt className="text-data text-text-secondary">Played</dt>
+            <dd className="text-figure text-text-primary">—</dd>
           </div>
           <div className="text-center">
-            <dt className="text-xs text-text-secondary">Won</dt>
-            <dd className="text-xl font-bold text-green-600">—</dd>
+            <dt className="text-data text-text-secondary">Won</dt>
+            <dd className="text-figure text-green-600">—</dd>
           </div>
           <div className="text-center">
-            <dt className="text-xs text-text-secondary">Drawn</dt>
-            <dd className="text-xl font-bold text-text-primary">—</dd>
+            <dt className="text-data text-text-secondary">Drawn</dt>
+            <dd className="text-figure text-text-primary">—</dd>
           </div>
           <div className="text-center">
-            <dt className="text-xs text-text-secondary">Lost</dt>
-            <dd className="text-xl font-bold text-red-600">—</dd>
+            <dt className="text-data text-text-secondary">Lost</dt>
+            <dd className="text-figure text-red-600">—</dd>
           </div>
           <div className="text-center">
-            <dt className="text-xs text-text-secondary">Goals For</dt>
-            <dd className="text-xl font-bold text-text-primary">—</dd>
+            <dt className="text-data text-text-secondary">Goals For</dt>
+            <dd className="text-figure text-text-primary">—</dd>
           </div>
           <div className="text-center">
-            <dt className="text-xs text-text-secondary">Goals Against</dt>
-            <dd className="text-xl font-bold text-text-primary">—</dd>
+            <dt className="text-data text-text-secondary">Goals Against</dt>
+            <dd className="text-figure text-text-primary">—</dd>
           </div>
         </dl>
       </Card>
 
       <Card className="mt-4 px-3 py-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Trophies Won</p>
-        <p className="mt-1 text-base text-text-secondary italic">None yet.</p>
+        <p className="text-overline uppercase text-text-secondary">Trophies Won</p>
+        <p className="mt-1 text-body text-text-secondary italic">None yet.</p>
       </Card>
 
       {!view.archived && (
@@ -270,7 +270,7 @@ export const ManagerOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
             Retire Manager
           </Button>
           {retireBlockedReason !== null && (
-            <p className="mt-2 text-sm text-text-secondary">{retireBlockedReason}</p>
+            <p className="mt-2 text-body text-text-secondary">{retireBlockedReason}</p>
           )}
         </section>
       )}

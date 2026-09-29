@@ -72,10 +72,10 @@ export const ClubStaffScreen = ({
       <header>
         {/* The club header is the `<main>` region's label, so the first thing read is which club's
             staff this is — and the foreign marker when that club is not the user's. */}
-        <h1 id="club-staff-heading" className="text-2xl font-bold">
+        <h1 id="club-staff-heading" className="text-title">
           {view.club.name} · Club Staff{" "}
           {!view.isUserClub && (
-            <span className="text-sm font-semibold text-text-secondary">[Not your club]</span>
+            <span className="text-body font-semibold text-text-secondary">[Not your club]</span>
           )}
         </h1>
       </header>
@@ -90,7 +90,7 @@ export const ClubStaffScreen = ({
         const headingId = `club-staff-${department}`;
         return (
           <section key={department} className="mt-6">
-            <h2 id={headingId} className="text-lg font-semibold">
+            <h2 id={headingId} className="text-heading">
               {DEPARTMENT_LABELS[department]}
             </h2>
             <ul aria-labelledby={headingId} className="mt-1 list-inside">
@@ -139,7 +139,7 @@ const ClubStaffMessage = ({ message }: { readonly message: string }) => (
     data-focus-id="clubStaff"
     aria-label="Club staff"
   >
-    <h1 className="text-2xl font-bold">Club Staff</h1>
+    <h1 className="text-title">Club Staff</h1>
     <p className="mt-4 text-text-secondary">{message}</p>
   </main>
 );

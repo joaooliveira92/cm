@@ -120,7 +120,7 @@ export const SidebarNavSection = ({
       {/* Where in the section the route is, now that the item list is behind a click. The rail
           has no width for it; the panel marks the current item there instead. */}
       {caption !== undefined && (
-        <span className="block truncate pb-1 pl-8 text-xs text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
+        <span className="block truncate pb-1 pl-8 text-data text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
           {caption}
         </span>
       )}

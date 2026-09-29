@@ -31,15 +31,15 @@ export const CoachCard = ({
     aria-label={`Coach ${name}, quality ${quality}`}
   >
     <div className="flex items-center justify-between">
-      <h3 className="text-base font-semibold text-text-primary">
+      <h3 className="text-heading text-text-primary">
         <button type="button" className={`hover:underline ${FOCUS_RING.join(" ")}`} onClick={onOpen}>
           {name}
         </button>
       </h3>
-      <span className="rounded-control bg-panel-bg px-2 py-0.5 text-sm font-medium tabular-nums text-text-secondary">
+      <span className="rounded-control bg-panel-bg px-2 py-0.5 text-body font-medium tabular-nums text-text-secondary">
         {quality}/20
       </span>
     </div>
-    <p className="mt-1 text-xs text-text-secondary">{department}</p>
+    <p className="mt-1 text-data text-text-secondary">{department}</p>
   </div>
 );

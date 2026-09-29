@@ -31,7 +31,7 @@ export const ManagerAvatar = ({
       aria-label={name}
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-full border-2 font-bold select-none",
-        size === "lg" ? "size-14 text-lg" : "size-10 text-sm",
+        size === "lg" ? "size-14 text-heading" : "size-10 text-body",
       )}
       style={{ backgroundColor: primary, color: secondary, borderColor: secondary }}
     >

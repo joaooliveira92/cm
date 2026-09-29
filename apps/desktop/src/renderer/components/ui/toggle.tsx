@@ -5,7 +5,7 @@ import * as React from "react";
 import { cn } from "../../lib/utils.js";
 
 const toggleVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-muted-foreground disabled:pointer-events-none disabled:opacity-50 data-pressed:bg-accent data-pressed:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 rounded-md text-body font-medium transition-colors hover:bg-muted hover:text-muted-foreground disabled:pointer-events-none disabled:opacity-50 data-pressed:bg-accent data-pressed:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -14,7 +14,7 @@ const toggleVariants = cva(
       },
       size: {
         default: "h-9 px-2 min-w-9",
-        sm: "h-8 px-1.5 min-w-8 text-xs",
+        sm: "h-8 px-1.5 min-w-8 text-data",
         lg: "h-10 px-2.5 min-w-10",
       },
     },

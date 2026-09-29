@@ -41,7 +41,7 @@ and this decision does not touch them.
 - **Focus** on `:focus-visible` only via the retuned `FOCUS_RING` (which becomes the
   `--color-focus-ring` yellow per the token decision), the same ring as everything else — the
   intra-screen focus model forbids a second focus color.
-- **Labels** at the 12px label/metadata typography tier (`text-xs`, `--color-text-secondary`),
+- **Labels** at the 12px label/metadata typography tier (the `text-label` role, `--color-text-secondary`),
   not today's ad-hoc `text-sm`; field text at 12px matching the density tier.
 - **Checkboxes** accent-align to `--color-accent-green` (the re-named `--accent-green` "primary
   action background" token — the de-facto positive accent), replacing today's

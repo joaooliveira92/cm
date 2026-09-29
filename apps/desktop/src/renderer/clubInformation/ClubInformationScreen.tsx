@@ -46,7 +46,7 @@ const ClubInformationMessage = ({ message }: { readonly message: string }) => (
     aria-label="Club Information"
     className={PAGE_CLASS}
   >
-    <h1 className="text-2xl font-bold">Club Information</h1>
+    <h1 className="text-title">Club Information</h1>
     <p className="mt-4 text-text-secondary">{message}</p>
   </main>
 );
@@ -85,14 +85,14 @@ export const ClubInformationScreen = ({
       aria-label="Club Information"
       className={PAGE_CLASS}
     >
-      <h1 className="text-2xl font-bold">{view.club.name}</h1>
+      <h1 className="text-title">{view.club.name}</h1>
       {/* The same marker ClubStaffScreen uses, for the same reason: the route carries any club, so
           the page has to say whose it is rather than leave the reader to assume. */}
       {view.isUserClub ? null : (
-        <p className="mt-1 text-sm text-text-secondary">[Not your club]</p>
+        <p className="mt-1 text-body text-text-secondary">[Not your club]</p>
       )}
 
-      <dl className="mt-6 space-y-2 text-sm">
+      <dl className="mt-6 space-y-2 text-body">
         <Fact label="Standing" value={STATURE_LABELS[view.club.statureTier]} />
         <Fact label="Town" value={view.cityName} />
         <Fact label="Nation" value={view.nationName} />

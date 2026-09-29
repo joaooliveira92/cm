@@ -26,7 +26,7 @@ const UNAVAILABLE_LABEL: Readonly<Record<UnavailableMatchStatistic, string>> = {
  * It renders a view the main process aggregated; it computes nothing.
  */
 export const MatchStatsView = ({ view }: { readonly view: MatchStatisticsView }) => (
-  <section aria-label="Match statistics" className="space-y-3 text-sm">
+  <section aria-label="Match statistics" className="space-y-3 text-body">
     <p className="text-text-secondary">
       {view.throughMinute === null ? "Full match" : `Up to ${view.throughMinute}'`}
     </p>
@@ -35,7 +35,7 @@ export const MatchStatsView = ({ view }: { readonly view: MatchStatisticsView })
         Team statistics, {view.homeClubName} against {view.awayClubName}
       </caption>
       <thead>
-        <tr className="border-b border-panel-border text-left text-xs text-text-secondary">
+        <tr className="border-b border-panel-border text-left text-data text-text-secondary">
           <th scope="col" className="py-1 pr-4 text-right font-semibold">{view.homeClubName}</th>
           <th scope="col" className="py-1 text-center font-semibold">Statistic</th>
           <th scope="col" className="py-1 pl-4 font-semibold">{view.awayClubName}</th>
@@ -47,7 +47,7 @@ export const MatchStatsView = ({ view }: { readonly view: MatchStatisticsView })
             <td className="py-1 pr-4 text-right tabular-nums">{row.home}</td>
             <th scope="row" className="py-1 text-center font-normal" title={STATISTIC[row.key].definition}>
               {STATISTIC[row.key].label}
-              <span className="block text-xs text-text-muted">{STATISTIC[row.key].definition}</span>
+              <span className="block text-data text-text-muted">{STATISTIC[row.key].definition}</span>
             </th>
             <td className="py-1 pl-4 tabular-nums">{row.away}</td>
           </tr>
@@ -55,7 +55,7 @@ export const MatchStatsView = ({ view }: { readonly view: MatchStatisticsView })
       </tbody>
     </table>
     {view.unavailable.length > 0 && (
-      <p className="text-xs text-text-muted">
+      <p className="text-data text-text-muted">
         Not tracked by the match model: {view.unavailable.map((key) => UNAVAILABLE_LABEL[key]).join(", ")}.
       </p>
     )}

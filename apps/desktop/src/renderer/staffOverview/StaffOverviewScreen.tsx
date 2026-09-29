@@ -37,7 +37,7 @@ const StaffOverviewMessage = ({ message }: { readonly message: string }) => (
     aria-label="Staff"
     className={PAGE_CLASS}
   >
-    <h1 className="text-2xl font-bold">Staff</h1>
+    <h1 className="text-title">Staff</h1>
     <p className="mt-4 text-text-secondary">{message}</p>
   </main>
 );

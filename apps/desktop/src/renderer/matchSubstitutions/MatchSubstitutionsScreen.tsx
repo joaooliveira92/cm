@@ -62,7 +62,7 @@ const SubstitutionForm = ({
   return (
     <section aria-label="Make a substitution" className="space-y-3">
       <div className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-xs text-text-secondary">
+        <label className="flex flex-col gap-1 text-data text-text-secondary">
           Player coming off
           <select
             value={outPlayerId}
@@ -78,7 +78,7 @@ const SubstitutionForm = ({
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs text-text-secondary">
+        <label className="flex flex-col gap-1 text-data text-text-secondary">
           Player coming on
           <select
             value={inPlayerId}
@@ -103,13 +103,13 @@ const SubstitutionForm = ({
         </Button>
       </div>
       {capReached && (
-        <p className="text-xs text-text-warning">{substitutionErrorLabel("cap-reached")}</p>
+        <p className="text-data text-text-warning">{substitutionErrorLabel("cap-reached")}</p>
       )}
       {!capReached && snapshot.pitch.substitutes.length === 0 && (
-        <p className="text-xs text-text-secondary">{NO_SUBSTITUTES_LEFT}</p>
+        <p className="text-data text-text-secondary">{NO_SUBSTITUTES_LEFT}</p>
       )}
       {alert && (
-        <p role="alert" className="text-xs text-text-warning">
+        <p role="alert" className="text-data text-text-warning">
           {alert}
         </p>
       )}

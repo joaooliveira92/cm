@@ -22,6 +22,14 @@
  * Keyboard is a two-step carry for reordering the lineup: Enter (or Space) on a filled slot picks
  * it up, Enter on another slot places it (swap), Escape releases. The picked-up state is always
  * more than colour — see `aria-pressed`.
+ *
+ * An EMPTY STARTER slot is also a control, and the same Enter/Space and click that starts a carry
+ * on a filled slot instead selects the slot: the roster above then leads with whoever can fill it
+ * (`lineupFit.ts`). It never starts a carry, so a selection cannot be mistaken for a held player.
+ * Escape releases a held player first and only then drops the selection, in that order, so the
+ * existing carry contract is untouched. Selected or not, the slot says so in more than colour —
+ * see `aria-current`. The slot names the selection's job, not its result: it changes no filter and
+ * hides nobody.
  */
 import { useState } from "react";
 import { PlayerId, type Tactic } from "@cm-clone/contracts";
@@ -43,23 +51,32 @@ import { useSquad } from "./SquadProvider.js";
 const CONFLICT_MESSAGE =
   "A newer tactic was saved since you opened this squad. Your lineup changes are kept — refresh to load the current version.";
 
-/** A slot's accessible name: its label plus the occupant, mirroring what the eye sees. */
+/** A slot's accessible name: its label plus the occupant, mirroring what the eye sees. An empty
+ *  starter that is also a selector says so, or the click reads as doing nothing. */
 const slotAriaLabel = (slot: LineupSlot, occupantName: string | null): string =>
-  occupantName === null ? `${slot.label} slot` : `${slot.label} slot, ${occupantName}`;
+  occupantName === null
+    ? `${slot.label} slot`
+    : `${slot.label} slot, ${occupantName}`;
 
 const SlotBox = ({
   slot,
   occupantName,
   carried,
+  selected,
   onDragStart,
   onDrop,
+  onClick,
   onKeyDown,
 }: {
   readonly slot: LineupSlot;
   readonly occupantName: string | null;
   readonly carried: boolean;
+  /** This empty starter is the selected fit context. */
+  readonly selected: boolean;
   readonly onDragStart: (event: React.DragEvent) => void;
   readonly onDrop: (event: React.DragEvent) => void;
+  /** Present only on an empty starter — the only slot that acts as a selector. */
+  readonly onClick: (() => void) | undefined;
   readonly onKeyDown: (event: React.KeyboardEvent) => void;
 }) => (
   <Button
@@ -71,24 +88,31 @@ const SlotBox = ({
     draggable={slot.playerId !== null}
     aria-label={slotAriaLabel(slot, occupantName)}
     aria-pressed={carried}
+    // Distinct from `aria-pressed` on purpose: a held player and a selected slot are different
+    // things, and one key says both if they share the attribute.
+    aria-current={selected || undefined}
     data-order={slot.order}
     data-action-id={slot.kind === "starter" ? "lineup-starter-slot" : "lineup-bench-slot"}
     onDragStart={onDragStart}
     onDragOver={(event) => event.preventDefault()}
     onDrop={onDrop}
+    onClick={onClick}
     onKeyDown={onKeyDown}
+    // The selection is a ring, not a fill: the eye reads a second outline round a chosen slot
+    // without mistaking it for the highlight a filled slot already wears.
     className={`h-6 min-w-11 border px-1.5 ${slot.playerId === null
       ? "border-panel-border-dark text-text-strong"
       : "border-text-highlight bg-text-highlight/15 text-text-highlight"
-      } ${FOCUS_RING.join(" ")}`}
+    } ${selected ? "outline-2 outline-offset-1 outline-text-highlight" : ""} ${FOCUS_RING.join(" ")}`}
   >
-    <span className="text-2xs font-bold leading-tight">{slot.label}</span>
+    <span className="text-caption font-bold leading-tight">{slot.label}</span>
   </Button>
 );
 
 export const MatchDayBar = () => {
-  const { state, lineup } = useSquad();
-  const { allPlayers } = state;
+  const { state, actions, lineup } = useSquad();
+  const { allPlayers, fit } = state;
+  const { toggleFitContext, clearFitContext } = actions;
   const { viewError, tactic, conflict, status, setTactic, autosave, refresh } = lineup;
 
   // The player being keyboard-carried between slots. `null` while idle.
@@ -146,23 +170,43 @@ export const MatchDayBar = () => {
   };
 
   // Keyboard carry: Enter/Space picks up a filled slot, Enter on another slot places
-  // it (assign, evicting the occupant where occupied), Escape releases.
+  // it (assign, evicting the occupant where occupied), Escape releases. An EMPTY STARTER
+  // selects instead of picking up; Escape spends itself on a held player first.
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === "Escape") {
-      setCarriedId(null);
+      // Carry first. A manager holding a player and looking at the roster's DC lead has two
+      // things to undo, and the one they are mid-way through comes first.
+      if (carriedId !== null) setCarriedId(null);
+      else clearFitContext();
       return;
     }
     if (event.key !== "Enter" && event.key !== " ") return;
+    // LOAD-BEARING, not tidy. An empty starter is a real `<button>`, and a button's Enter and
+    // Space both carry a native activation behaviour that synthesises a `click` — the same event
+    // `onClick` handles. This handler already did the work; without the default being prevented
+    // the browser would follow it with a click, `onClick` would toggle a second time, and the
+    // slot would select and immediately deselect, leaving the keyboard path a silent no-op while
+    // the pointer path worked fine. Preventing the keydown's default is what suppresses that
+    // activation, leaving exactly one toggle per press. Nothing here relies on jsdom for it:
+    // jsdom never synthesises the click, so the whole keyboard suite stays green with this line
+    // deleted — `lineup-fit-keyboard.test.tsx` asserts `defaultPrevented` directly instead.
     event.preventDefault();
     const order = Number(event.currentTarget.getAttribute("data-order"));
     if (carriedId === null) {
       const occupant = slots[order]?.playerId ?? null;
-      if (occupant !== null) setCarriedId(String(occupant));
+      if (occupant === null) toggleFitContext(order);
+      else setCarriedId(String(occupant));
       return;
     }
     assignToSlot(carriedId, order);
     setCarriedId(null);
   };
+
+  const toggleSlot = (slot: LineupSlot) => () => toggleFitContext(slot.order);
+  /** The selector affordance belongs to empty starters alone: a bench slot names no Position,
+   *  and a filled slot has a player rather than a question. */
+  const clickFor = (slot: LineupSlot): (() => void) | undefined =>
+    slot.kind === "starter" && slot.playerId === null ? toggleSlot(slot) : undefined;
 
   return (
     <footer
@@ -174,13 +218,13 @@ export const MatchDayBar = () => {
     >
       {viewError !== null && (
           <Alert variant="destructive" className="mb-2">
-            <p className="text-sm">{describeRpcError(viewError)}</p>
+            <p className="text-body">{describeRpcError(viewError)}</p>
           </Alert>
         )}
 
       {/* CM 03/04's titled Positions panel: starters and bench on one centred row. */}
       <section className="rounded-panel bg-panel-bg px-3 pt-1.5 pb-2.5">
-        <h2 className="text-center text-base font-bold text-text-highlight">Positions</h2>
+        <h2 className="text-center text-heading text-text-highlight">Positions</h2>
         <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1">
           {slots
             .filter((slot) => slot.kind === "starter")
@@ -192,10 +236,12 @@ export const MatchDayBar = () => {
                   slot.playerId === null ? null : String(slot.playerId),
                 )}
                 carried={carriedId !== null && slot.playerId !== null && String(slot.playerId) === carriedId}
+                selected={fit?.order === slot.order}
                 onDragStart={(event) => {
                   if (slot.playerId !== null) writeLineupDrag(event, "slot", String(slot.playerId));
                 }}
                 onDrop={(event) => dropOnSlot(event, slot.order)}
+                onClick={clickFor(slot)}
                 onKeyDown={onKeyDown}
               />
             ))}
@@ -210,22 +256,24 @@ export const MatchDayBar = () => {
                   slot.playerId === null ? null : String(slot.playerId),
                 )}
                 carried={carriedId !== null && slot.playerId !== null && String(slot.playerId) === carriedId}
+                selected={false}
                 onDragStart={(event) => {
                   if (slot.playerId !== null) writeLineupDrag(event, "slot", String(slot.playerId));
                 }}
                 onDrop={(event) => dropOnSlot(event, slot.order)}
+                onClick={undefined}
                 onKeyDown={onKeyDown}
               />
             ))}
           {carriedId !== null && (
-            <span className="ml-1 self-center text-xs text-text-secondary" data-testid="lineup-carried">
+            <span className="ml-1 self-center text-data text-text-secondary" data-testid="lineup-carried">
               Holding {playerById.get(carriedId)?.lastName ?? carriedId}…
             </span>
           )}
         </div>
       </section>
 
-      <div className="mt-1.5 flex min-h-5 items-center justify-center gap-3 text-xs" data-testid="lineup-save-state">
+      <div className="mt-1.5 flex min-h-5 items-center justify-center gap-3 text-data" data-testid="lineup-save-state">
         {conflict !== null ? (
           <>
             <span role="alert" className="text-text-danger" data-testid="lineup-conflict">

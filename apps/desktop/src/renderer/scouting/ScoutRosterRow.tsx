@@ -39,7 +39,7 @@ export const ScoutRosterRow = ({
   return (
     <li
       aria-label={scout.scoutName}
-      className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-panel border border-panel-border bg-card p-4 text-sm text-card-foreground shadow-panel"
+      className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-panel border border-panel-border bg-card p-4 text-body text-card-foreground shadow-panel"
     >
       <span className="w-40 font-semibold text-text-primary">{scout.scoutName}</span>
       <span className="w-24 text-text-secondary">Quality {scout.quality}</span>

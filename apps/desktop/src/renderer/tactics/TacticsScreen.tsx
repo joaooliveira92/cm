@@ -126,7 +126,7 @@ const InstructionSlider = <T extends string>({
   readonly actionId: string;
 }) => (
   <div>
-    <p className="text-sm text-text-secondary">{label}</p>
+    <p className="text-body text-text-secondary">{label}</p>
     <div className="mt-1 flex gap-1">
       {options.map((option) => (
         <Button
@@ -286,7 +286,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
       <section aria-label="Formation and team instructions" className="flex flex-wrap gap-x-8 gap-y-3">
         <div>
-          <p className="text-sm text-text-secondary">Formation</p>
+          <p className="text-body text-text-secondary">Formation</p>
           <div className="mt-1 flex items-center gap-1">
             {FORMATIONS.map((formation) => (
               <Button
@@ -302,7 +302,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             ))}
             {customShape && (
               <>
-                <span data-testid="custom-shape" className="ml-2 text-sm font-semibold text-text-bright">
+                <span data-testid="custom-shape" className="ml-2 text-body font-semibold text-text-bright">
                   {tactic.formation} (custom)
                 </span>
                 <Button
@@ -343,7 +343,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,440px)]">
         <Card aria-labelledby="team-selection-heading" className="p-3">
-          <h2 id="team-selection-heading" className="text-base font-bold text-text-highlight">
+          <h2 id="team-selection-heading" className="text-heading text-text-highlight">
             Team Selection
           </h2>
           <Table className="mt-2 min-w-full text-left">
@@ -454,7 +454,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             {reserves.map(({ player, benchIndex }) => (
               <li
                 key={player.id}
-                className="flex items-center gap-3 px-2 py-1 text-sm text-text-secondary"
+                className="flex items-center gap-3 px-2 py-1 text-body text-text-secondary"
               >
                 <NumberChip
                   label={benchIndex === null ? "-" : `SB${benchIndex + 1}`}
@@ -478,7 +478,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             onSwap={(from, to) => void dispatchAction("swap-slot-players", { from, to })}
             onMove={(index, position) => void dispatchAction("set-slot-position", { index, position })}
           />
-          <p className="mt-2 text-center text-xs text-text-secondary">
+          <p className="mt-2 text-center text-data text-text-secondary">
             Drag a player onto a teammate to swap them, or onto open grass to change their position.
           </p>
         </div>
@@ -488,7 +488,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         <section className="chrome-gradient flex items-center gap-3 rounded-panel border border-panel-border px-3 py-2 shadow-chrome">
           {conflict !== null && (
             <>
-              <span role="alert" className="text-sm text-text-danger" data-testid="tactic-conflict">
+              <span role="alert" className="text-body text-text-danger" data-testid="tactic-conflict">
                 {CONFLICT_MESSAGE}
               </span>
               <Button
@@ -501,7 +501,7 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
               </Button>
             </>
           )}
-          {status && <span className="text-sm text-text-bright">{status}</span>}
+          {status && <span className="text-body text-text-bright">{status}</span>}
         </section>
       )}
     </main>
@@ -512,9 +512,9 @@ export const TacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
  *  dash) on the blue one. The colour repeats what the label already says, never replaces it. */
 const NumberChip = ({ label, starter }: { readonly label: string; readonly starter: boolean }) => (
   <span
-    className={`inline-flex h-5 min-w-9 items-center justify-center rounded-control px-1 text-2xs font-bold tabular-nums text-text-bright ${
-      starter ? "bg-pitch-marker-gk" : "bg-chrome-mid"
-    }`}
+    className={`inline-flex h-5 min-w-9 items-center justify-center rounded-control px-1 text-caption font-bold tabular-nums text-text-bright ${
+ starter ? "bg-pitch-marker-gk" : "bg-chrome-mid"
+ }`}
   >
     {label}
   </span>

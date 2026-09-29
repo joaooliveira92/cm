@@ -79,7 +79,7 @@ export const MatchReportScreen = ({ saveId, matchId }: { readonly saveId: SaveId
       aria-label="Match Report"
       className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
-      <h1 className="mb-6 text-2xl font-bold">Match Report</h1>
+      <h1 className="mb-6 text-title">Match Report</h1>
       {state._tag === "loading" && <p className="text-text-secondary italic">Loading the match report...</p>}
       {state._tag === "notComplete" && (
         <p className="text-text-secondary">The match report is available once the result has been accepted.</p>
@@ -102,9 +102,9 @@ const Report = ({ report }: { readonly report: MatchReportView }) => {
   const goals = report.events.filter((event) => event.kind === "Goal");
 
   return (
-    <div className="space-y-6 text-sm">
+    <div className="space-y-6 text-body">
       <section aria-label="Result" className="space-y-1">
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-heading">
           {report.homeClubName} {report.homeScore} - {report.awayScore} {report.awayClubName}
         </h2>
         <p>{resultSentence(report)}</p>
@@ -119,7 +119,7 @@ const Report = ({ report }: { readonly report: MatchReportView }) => {
           const own = goals.filter((goal) => goal.clubId === clubId);
           return (
             <section key={clubId}>
-              <h2 className="text-xs font-semibold text-text-body">{label}</h2>
+              <h2 className="text-heading text-text-body">{label}</h2>
               {own.length === 0 ? (
                 <p className="mt-1 text-text-muted">None</p>
               ) : (
@@ -137,7 +137,7 @@ const Report = ({ report }: { readonly report: MatchReportView }) => {
       </div>
 
       <section>
-        <h2 className="text-xs font-semibold text-text-body">Timeline</h2>
+        <h2 className="text-heading text-text-body">Timeline</h2>
         {report.events.length === 0 ? (
           <p className="mt-1 text-text-muted">No goals, cards, injuries or substitutions.</p>
         ) : (
@@ -153,7 +153,7 @@ const Report = ({ report }: { readonly report: MatchReportView }) => {
       </section>
 
       <section>
-        <h2 className="mb-2 text-xs font-semibold text-text-body">Statistics</h2>
+        <h2 className="mb-2 text-heading text-text-body">Statistics</h2>
         <MatchStatsView view={report.statistics} />
       </section>
     </div>

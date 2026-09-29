@@ -98,11 +98,11 @@ const MessageRow = ({
         {message.state === "unread" && <span aria-hidden="true">• </span>}
         {message.subject}
       </span>
-      <span className="shrink-0 text-xs tabular-nums text-text-secondary">
+      <span className="shrink-0 text-data tabular-nums text-text-secondary">
         {whenLabel(message)}
       </span>
     </div>
-    <div className="mt-1 flex items-center gap-2 text-xs text-text-secondary">
+    <div className="mt-1 flex items-center gap-2 text-data text-text-secondary">
       <span>{CATEGORY_LABELS[message.category]}</span>
       <span>
         {message.state === "unread" ? "Unread" : message.state === "read" ? "Read" : "Archived"}
@@ -137,17 +137,17 @@ const MessagePane = ({
 }) => (
   <Card className="flex h-full flex-col px-4 py-3">
     <div className="flex items-baseline justify-between gap-3">
-      <h2 className="text-lg font-semibold text-text-primary">{message.subject}</h2>
+      <h2 className="text-heading text-text-primary">{message.subject}</h2>
       {message.actionState === "required" ? (
         <Badge variant="destructive">Action required</Badge>
       ) : (
         message.priority === "high" && <Badge variant="destructive">Priority</Badge>
       )}
     </div>
-    <p className="mt-1 text-xs text-text-secondary">
+    <p className="mt-1 text-data text-text-secondary">
       {CATEGORY_LABELS[message.category]} · {whenLabel(message)}
     </p>
-    <p className="mt-4 flex-1 text-sm leading-relaxed text-text-body">{message.body}</p>
+    <p className="mt-4 flex-1 text-body leading-relaxed text-text-body">{message.body}</p>
     <div className="mt-4 flex flex-wrap gap-2">
       {/* The inbox reports the decision; it never resolves it. Answering a bid belongs to the
           screen that owns bids, so this routes there rather than growing a second respond surface
@@ -272,10 +272,10 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       className={`p-6 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <header className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-2xl font-bold">News</h1>
+        <h1 className="text-title">News</h1>
         {/* Counts are announced politely and describe the whole inbox, not the filtered result —
             narrowing the list must not appear to change how much news there is. */}
-        <p aria-live="polite" className="text-sm text-text-secondary">
+        <p aria-live="polite" className="text-body text-text-secondary">
           {counts.unread} unread of {counts.total}
           {counts.actionRequired > 0 && ` · ${counts.actionRequired} awaiting your answer`}
           {counts.actionRequired === 0 &&
@@ -351,7 +351,7 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       </section>
 
       {patchError !== null && (
-        <p role="alert" className="mt-3 text-sm text-destructive">
+        <p role="alert" className="mt-3 text-body text-destructive">
           {describeRpcError(patchError)}
         </p>
       )}

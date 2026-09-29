@@ -70,7 +70,7 @@ interface AlertDialogTitleProps extends React.ComponentPropsWithoutRef<
 const AlertDialogTitle = ({ className, ref, ...props }: AlertDialogTitleProps) => (
   <AlertDialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold", className)}
+    className={cn("text-heading", className)}
     {...props}
   />
 );
@@ -85,7 +85,7 @@ interface AlertDialogDescriptionProps extends React.ComponentPropsWithoutRef<
 const AlertDialogDescription = ({ className, ref, ...props }: AlertDialogDescriptionProps) => (
   <AlertDialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-body text-muted-foreground", className)}
     {...props}
   />
 );

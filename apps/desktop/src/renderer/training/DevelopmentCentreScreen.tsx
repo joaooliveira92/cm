@@ -61,10 +61,10 @@ export const DevelopmentCentreScreen = ({ saveId }: { readonly saveId: SaveId })
       tabIndex={-1}
     >
       <header>
-        <h1 id="development-centre-heading" className="text-2xl font-bold">
+        <h1 id="development-centre-heading" className="text-title">
           Player Development Centre
         </h1>
-        <p className="mt-1 text-sm text-text-secondary">
+        <p className="mt-1 text-body text-text-secondary">
           Each player's Training Focus and the Attribute changes recorded when their latest Season concluded
         </p>
       </header>
@@ -75,7 +75,7 @@ export const DevelopmentCentreScreen = ({ saveId }: { readonly saveId: SaveId })
           return (
             <li key={player.id} aria-label={name}>
               <TrainingPlanSummaryCard playerName={name} focus={player.trainingFocus}>
-                <p className="mt-3 text-sm text-text-primary">{describeLatestDevelopment(player.latestSeason)}</p>
+                <p className="mt-3 text-body text-text-primary">{describeLatestDevelopment(player.latestSeason)}</p>
                 <div className="mt-3 flex gap-2">
                   <Button
                     type="button"
@@ -121,7 +121,7 @@ const messageOf = (error: RpcClientError<"getSquadDevelopment"> | null): string 
 /** The non-`ready` states, rendered as a labelled `<main>` region carrying one line. */
 const DevelopmentCentreMessage = ({ message }: { readonly message: string }) => (
   <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="training" aria-label="Player development centre">
-    <h1 className="text-2xl font-bold">Player Development Centre</h1>
+    <h1 className="text-title">Player Development Centre</h1>
     <p className="mt-4 text-text-secondary italic">{message}</p>
   </main>
 );

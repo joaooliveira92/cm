@@ -20,7 +20,7 @@ test("the Club section's Information entry opens the manager's own club", async 
   // The manager's own club is named in the identity band; the screen's h1 is that club's name,
   // which is how the resolver proves it resolved rather than guessed.
   const ownName =
-    (await page.getByRole("banner").locator("span.truncate.text-lg.font-bold").textContent())?.trim() ?? "";
+    (await page.getByRole("banner").locator("span.truncate.text-title").textContent())?.trim() ?? "";
   expect(ownName.length).toBeGreaterThan(0);
   await expect(page.getByRole("heading", { name: ownName, level: 1 })).toBeVisible();
 
@@ -41,7 +41,7 @@ test("a league row opens that club's information, marked as not the manager's", 
 
   const table = page.getByRole("main").getByRole("table");
   const ownName =
-    (await page.getByRole("banner").locator("span.truncate.text-lg.font-bold").textContent())?.trim() ?? "";
+    (await page.getByRole("banner").locator("span.truncate.text-title").textContent())?.trim() ?? "";
 
   // Selected by its own label: the row carries one control per club surface, so picking the
   // row's first button would exercise Staff instead and pass for the wrong reason.

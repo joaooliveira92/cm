@@ -68,11 +68,11 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
           {announcement}
         </div>
         <div className="text-text-body">
-          <h3 className="text-base font-semibold text-text-primary">The league</h3>
-          <p className="mt-2 text-sm">
+          <h3 className="text-heading text-text-primary">The league</h3>
+          <p className="mt-2 text-body">
             {summary.clubCount} club{summary.clubCount === 1 ? "" : "s"} to choose from.
           </p>
-          <ul className="mt-2 space-y-1 text-sm">
+          <ul className="mt-2 space-y-1 text-body">
             {summary.tiers.map(({ tier, count }) => (
               <li key={tier} className="flex items-center gap-2">
                 <Badge variant="outline">{tier}</Badge>
@@ -82,7 +82,7 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-sm text-text-muted">Choose a club to see what the job looks like.</p>
+          <p className="mt-4 text-body text-text-muted">Choose a club to see what the job looks like.</p>
         </div>
       </section>
     );
@@ -106,16 +106,16 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
           <ClubBadge badgeKey={club.badgeKey} colours={club.clubColours} clubName={club.clubName} size={40} />
           <div className="flex-1 min-w-0">
             <h2
-              className="text-lg font-bold truncate leading-tight"
+              className="text-heading truncate leading-tight"
               style={{ color: fColour }}
             >
               {club.clubName}
             </h2>
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant="secondary" className="text-2xs">
+              <Badge variant="secondary" className="text-caption">
                 {statureLabel(club.statureTier)}
               </Badge>
-              <Badge className="text-2xs">{club.squadQualityBand}</Badge>
+              <Badge className="text-caption">{club.squadQualityBand}</Badge>
             </div>
           </div>
         </div>
@@ -131,12 +131,12 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
       {/* Board objective */}
       <Card className="mb-3">
         <CardHeader className="pb-2 pt-2">
-          <CardTitle className="text-xs font-semibold tracking-wide uppercase text-text-muted">
+          <CardTitle className="text-overline uppercase text-text-muted">
             Board Objective
           </CardTitle>
         </CardHeader>
         <CardContent className="pb-2">
-          <p className="text-sm font-medium text-text-primary">{expectationProse(club, summary.clubCount)}</p>
+          <p className="text-body font-medium text-text-primary">{expectationProse(club, summary.clubCount)}</p>
           <div className="mt-2 flex gap-2">
             <Badge variant="outline">{club.statureTier}</Badge>
             <Badge variant={qualityInfo?.variant as BadgeProps["variant"] ?? "outline"}>{qualityInfo?.label ?? club.squadQualityBand}</Badge>
@@ -147,14 +147,14 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
       {/* Squad Quality meter */}
       <Card className="mb-3">
         <CardHeader className="pb-2 pt-2">
-          <CardTitle className="text-xs font-semibold tracking-wide uppercase text-text-muted">
+          <CardTitle className="text-overline uppercase text-text-muted">
             Squad Quality
           </CardTitle>
         </CardHeader>
         <CardContent className="pb-2">
           <div className="flex items-center gap-3">
             <Progress value={qualityPct} className="h-2 flex-1" />
-            <span className="text-xs font-semibold tabular-nums" style={{ color: pColour }}>
+            <span className="text-data font-semibold tabular-nums" style={{ color: pColour }}>
               {Math.round(qualityPct)}%
             </span>
           </div>
@@ -164,16 +164,16 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
       {/* Budgets */}
       <Card className="mb-3">
         <CardHeader className="pb-2 pt-2">
-          <CardTitle className="text-xs font-semibold tracking-wide uppercase text-text-muted">
+          <CardTitle className="text-overline uppercase text-text-muted">
             Finances
           </CardTitle>
         </CardHeader>
         <CardContent className="pb-2 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-text-muted">Transfer Budget</span>
+            <span className="text-data text-text-muted">Transfer Budget</span>
             <Tooltip>
               <TooltipTrigger>
-                <span className="text-sm font-semibold tabular-nums">
+                <span className="text-body font-semibold tabular-nums">
                   <NumberTicker value={club.transferBudget} locale suffix=" Cr" />
                 </span>
               </TooltipTrigger>
@@ -183,10 +183,10 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
             </Tooltip>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-text-muted">Wage Budget</span>
+            <span className="text-data text-text-muted">Wage Budget</span>
             <Tooltip>
               <TooltipTrigger>
-                <span className="text-sm font-semibold tabular-nums">
+                <span className="text-body font-semibold tabular-nums">
                   <NumberTicker value={club.wageBudget} locale suffix=" Cr" />
                 </span>
               </TooltipTrigger>
@@ -196,8 +196,8 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
             </Tooltip>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-text-muted">Wage / Season</span>
-            <span className="text-xs text-text-muted">
+            <span className="text-data text-text-muted">Wage / Season</span>
+            <span className="text-data text-text-muted">
               {formatCredits(club.wageBudget)} / season
             </span>
           </div>
@@ -209,7 +209,7 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
       {/* Top Players */}
       <Card className="mb-3 flex-1 min-h-0">
         <CardHeader className="pb-2 pt-2">
-          <CardTitle className="text-xs font-semibold tracking-wide uppercase text-text-muted">
+          <CardTitle className="text-overline uppercase text-text-muted">
             Top Players
           </CardTitle>
         </CardHeader>
@@ -220,19 +220,19 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
                 <Tooltip>
                   <TooltipTrigger>
                     <div className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-surface-raised transition-colors">
-                      <span className="truncate text-sm font-medium text-text-primary">{player.name}</span>
+                      <span className="truncate text-body font-medium text-text-primary">{player.name}</span>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <Badge variant="outline" className="text-2xs">
+                        <Badge variant="outline" className="text-caption">
                           {player.position}
                         </Badge>
-                        <span className="text-xs font-semibold tabular-nums">{player.overallRating}</span>
+                        <span className="text-data font-semibold tabular-nums">{player.overallRating}</span>
                       </div>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
                     <div className="flex flex-col gap-1">
                       <span className="font-semibold">{player.name}</span>
-                      <span className="text-xs text-text-muted">
+                      <span className="text-data text-text-muted">
                         {player.position} · Overall {player.overallRating}
                       </span>
                     </div>
@@ -245,7 +245,7 @@ export const ClubDetailPanel = ({ club, summary, announcement }: ClubDetailPanel
       </Card>
 
       {/* Squad summary footer */}
-      <div className="flex items-center justify-between text-xs text-text-muted px-1 py-1">
+      <div className="flex items-center justify-between text-data text-text-muted px-1 py-1">
         <span>Squad of {club.detail.squadSize}</span>
         <span>Avg age {club.detail.averageAge}</span>
         <span>{club.detail.topPlayers.length} rated</span>

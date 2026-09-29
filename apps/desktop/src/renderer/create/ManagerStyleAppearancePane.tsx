@@ -69,7 +69,7 @@ export const ManagerStyleAppearancePane = ({
               ))}
             </SelectContent>
           </Select>
-          <p className="mt-2 text-xs text-text-muted">
+          <p className="mt-2 text-data text-text-muted">
             The shape your first Tactic opens in.
           </p>
         </div>
@@ -89,7 +89,7 @@ export const ManagerStyleAppearancePane = ({
                   aria-pressed={selected}
                   onClick={() => onAvatarChange(option.primary, option.secondary)}
                   className={cn(
-                    "flex items-center gap-2 rounded-control border px-2 py-1.5 text-xs transition-colors",
+                    "flex items-center gap-2 rounded-control border px-2 py-1.5 text-data transition-colors",
                     selected
                       ? "border-primary bg-primary/10 text-text-primary"
                       : "border-border-subtle bg-field-bg text-text-body hover:bg-surface-raised",
@@ -108,15 +108,15 @@ export const ManagerStyleAppearancePane = ({
               );
             })}
           </div>
-          <p className="mt-2 text-xs text-text-muted">
+          <p className="mt-2 text-data text-text-muted">
             Your colours and initials stand in for a portrait.
           </p>
         </div>
       </div>
 
       <div className="mt-8">
-        <h3 className="font-semibold text-text-primary">Tactical style</h3>
-        <p className="mt-1 text-sm text-text-secondary">
+        <h3 className="text-text-primary text-heading">Tactical style</h3>
+        <p className="mt-1 text-body text-text-secondary">
           The starting instructions your first Tactic is seeded with.
         </p>
 
@@ -138,10 +138,10 @@ export const ManagerStyleAppearancePane = ({
                   ...FOCUS_RING,
                 )}
               >
-                <span className="block text-sm font-semibold text-text-primary">
+                <span className="block text-body font-semibold text-text-primary">
                   {STYLE_LABELS[style]}
                 </span>
-                <span className="mt-1 block text-xs text-text-muted">{styleAxisSummary(style)}</span>
+                <span className="mt-1 block text-data text-text-muted">{styleAxisSummary(style)}</span>
               </button>
             );
           })}

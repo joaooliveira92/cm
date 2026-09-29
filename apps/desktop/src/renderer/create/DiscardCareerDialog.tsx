@@ -92,10 +92,10 @@ export const DiscardCareerDialog = ({
         }}
       >
         <div className={MODAL_TITLE_BAND}>
-          <h2 className="font-semibold">{DISCARD_DIALOG_TITLE}</h2>
+          <h2 className="text-heading">{DISCARD_DIALOG_TITLE}</h2>
         </div>
         <div className={MODAL_BODY}>
-          <p className="text-sm text-text-secondary">{describeDiscard(session)}</p>
+          <p className="text-body text-text-secondary">{describeDiscard(session)}</p>
           {/* Focus opens on staying: the destructive choice is never the one a
               stray Enter takes. */}
           <div className="mt-4 flex items-center justify-end gap-2">

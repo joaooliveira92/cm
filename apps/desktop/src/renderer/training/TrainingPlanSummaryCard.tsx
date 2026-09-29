@@ -24,12 +24,12 @@ export const TrainingPlanSummaryCard = ({
     className="rounded-panel border border-panel-border bg-card p-4 text-card-foreground shadow-panel"
   >
     <div className="flex items-center justify-between gap-3">
-      <h3 className="truncate text-base font-semibold text-text-primary">{playerName}</h3>
-      <span className="rounded-control bg-panel-bg px-2 py-0.5 text-sm font-medium text-text-secondary">
+      <h3 className="truncate text-heading text-text-primary">{playerName}</h3>
+      <span className="rounded-control bg-panel-bg px-2 py-0.5 text-body font-medium text-text-secondary">
         Training Focus: {trainingFocusLabel(focus)}
       </span>
     </div>
-    <p className="mt-1 text-xs text-text-secondary">{describeFocus(focus)}</p>
+    <p className="mt-1 text-data text-text-secondary">{describeFocus(focus)}</p>
     {children}
   </section>
 );

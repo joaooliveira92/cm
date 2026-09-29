@@ -84,13 +84,13 @@ export const upcomingFixtureAgainst = (
 
 export const RecentForm = ({ results }: { readonly results: ReadonlyArray<ReportFormResultView> }) => (
   <section aria-labelledby="report-form-heading">
-    <h2 id="report-form-heading" className="text-lg font-semibold">
+    <h2 id="report-form-heading" className="text-heading">
       Recent form
     </h2>
     {results.length === 0 ? (
-      <p className="mt-1 text-sm text-text-secondary">No matches played yet.</p>
+      <p className="mt-1 text-body text-text-secondary">No matches played yet.</p>
     ) : (
-      <ul className="mt-1 text-sm">
+      <ul className="mt-1 text-body">
         {results.map((result) => (
           <li key={`${result.date}-${result.opponentClubName}`}>
             {/* The outcome is spelled out as a word, so a win and a loss never differ by colour alone. */}
@@ -120,15 +120,15 @@ export const FindingList = ({
   const headingId = `report-${title.toLowerCase().replaceAll(" ", "-")}-heading`;
   return (
     <section aria-labelledby={headingId} className={className}>
-      <h2 id={headingId} className="text-lg font-semibold">
+      <h2 id={headingId} className="text-heading">
         {title}
       </h2>
       {findings.length === 0 ? (
         // "Nothing observed" rather than "none": an empty list is a gap in what was seen, and the
         // report must never read as a claim that the club has no strengths.
-        <p className="mt-1 text-sm text-text-secondary">Nothing observed yet.</p>
+        <p className="mt-1 text-body text-text-secondary">Nothing observed yet.</p>
       ) : (
-        <ul className="mt-1 text-sm">
+        <ul className="mt-1 text-body">
           {findings.map((finding) => (
             <li key={`${finding.area}-${finding.note}`}>
               <span className="text-text-secondary">{AREA_LABELS[finding.area]}: </span>
@@ -160,13 +160,13 @@ export const KeyPlayerList = ({
   readonly onOpen: (playerId: PlayerId, event: { readonly detail: number }) => void;
 }) => (
   <section aria-labelledby="report-key-players-heading">
-    <h2 id="report-key-players-heading" className="text-lg font-semibold">
+    <h2 id="report-key-players-heading" className="text-heading">
       Key players
     </h2>
     {players.length === 0 ? (
-      <p className="mt-1 text-sm text-text-secondary">No players scouted yet.</p>
+      <p className="mt-1 text-body text-text-secondary">No players scouted yet.</p>
     ) : (
-      <ul className="mt-1 text-sm">
+      <ul className="mt-1 text-body">
         {players.map((player) => (
           <li key={player.playerId} className="py-0.5">
             <button

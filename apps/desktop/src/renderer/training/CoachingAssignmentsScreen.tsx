@@ -59,10 +59,10 @@ export const CoachingAssignmentsScreen = ({ saveId }: { readonly saveId: SaveId 
       tabIndex={-1}
     >
       <header>
-        <h1 id="coaching-assignments-heading" className="text-2xl font-bold">
+        <h1 id="coaching-assignments-heading" className="text-title">
           Coaching Assignments
         </h1>
-        <p className="mt-1 text-sm text-text-secondary">
+        <p className="mt-1 text-body text-text-secondary">
           Your club's coaching staff and their quality ratings
         </p>
         <CoachingLinks saveId={saveId} />

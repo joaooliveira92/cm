@@ -83,13 +83,13 @@ export const InlineModal = ({
         {/* The shared modal anatomy: chrome-gradient title band over the
             strong-panel body (theme.ts `MODAL_*` constants). */}
         <div className={MODAL_TITLE_BAND}>
-          <h2 className="font-semibold">{title}</h2>
+          <h2 className="text-heading">{title}</h2>
         </div>
         <div className={MODAL_BODY}>
           {description !== undefined && (
-            <p className="mt-1 text-sm text-text-secondary">{description}</p>
+            <p className="mt-1 text-body text-text-secondary">{description}</p>
           )}
-          <label className="mt-3 block text-sm text-text-body">
+          <label className="mt-3 block text-body text-text-body">
             {inputLabel}
             <Input
               ref={inputRef}
@@ -101,7 +101,7 @@ export const InlineModal = ({
             />
           </label>
           {error !== null && (
-            <p role="alert" className="mt-1 text-sm text-destructive">
+            <p role="alert" className="mt-1 text-body text-destructive">
               {error}
             </p>
           )}

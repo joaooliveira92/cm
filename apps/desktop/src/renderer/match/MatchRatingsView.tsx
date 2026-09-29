@@ -13,9 +13,9 @@ const statusOf = (row: MatchRatingRow): string => {
 
 const SideRatings = ({ clubName, rows }: { readonly clubName: string; readonly rows: ReadonlyArray<MatchRatingRow> }) => (
   <table className="w-full border-collapse">
-    <caption className="mb-2 text-left text-base font-semibold text-text-highlight">{clubName}</caption>
+    <caption className="mb-2 text-left text-heading text-text-highlight">{clubName}</caption>
     <thead>
-      <tr className="border-b border-panel-border text-left text-xs text-text-secondary">
+      <tr className="border-b border-panel-border text-left text-data text-text-secondary">
         <th scope="col" className="py-1 pr-3 font-semibold">Pos</th>
         <th scope="col" className="py-1 pr-3 font-semibold">Player</th>
         <th scope="col" className="py-1 pr-3 text-right font-semibold">Rating</th>
@@ -30,7 +30,7 @@ const SideRatings = ({ clubName, rows }: { readonly clubName: string; readonly r
             {row.playerName}
           </th>
           <td className="py-1 pr-3 text-right font-semibold tabular-nums">{row.rating.toFixed(1)}</td>
-          <td className="py-1 text-xs text-text-secondary">{statusOf(row)}</td>
+          <td className="py-1 text-data text-text-secondary">{statusOf(row)}</td>
         </tr>
       ))}
     </tbody>
@@ -43,7 +43,7 @@ const SideRatings = ({ clubName, rows }: { readonly clubName: string; readonly r
  * the formula nor its weights. An unused substitute has no row.
  */
 export const MatchRatingsView = ({ view }: { readonly view: MatchRatings }) => (
-  <section aria-label="Player ratings" className="space-y-4 text-sm">
+  <section aria-label="Player ratings" className="space-y-4 text-body">
     <p className="text-text-secondary">
       {view.throughMinute === null ? "Full match" : `Up to ${view.throughMinute}'`}
     </p>
@@ -51,7 +51,7 @@ export const MatchRatingsView = ({ view }: { readonly view: MatchRatings }) => (
       <SideRatings clubName={view.homeClubName} rows={view.home} />
       <SideRatings clubName={view.awayClubName} rows={view.away} />
     </div>
-    <p className="text-xs text-text-muted">
+    <p className="text-data text-text-muted">
       Ratings run from 1 to 10. A player who stayed on the bench is not rated.
     </p>
   </section>

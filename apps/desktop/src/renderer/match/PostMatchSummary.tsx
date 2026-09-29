@@ -54,7 +54,7 @@ export const PostMatchSummary = ({ saveId, matchId }: { readonly saveId: SaveId;
   }, [load]);
 
   if (state._tag === "loading") {
-    return <p className="mt-4 text-sm text-text-secondary italic">Loading the match summary...</p>;
+    return <p className="mt-4 text-body text-text-secondary italic">Loading the match summary...</p>;
   }
   if (state._tag === "failed") {
     return (
@@ -74,13 +74,13 @@ export const PostMatchSummary = ({ saveId, matchId }: { readonly saveId: SaveId;
   const homeWonOnPenalties = wentToPenalties && (summary.homePenalties ?? 0) > (summary.awayPenalties ?? 0);
 
   return (
-    <section aria-label="Post-match summary" className="mt-4 space-y-4 rounded-panel border border-panel-border bg-panel-bg p-4 text-sm">
-      <h2 className="text-lg font-semibold">
+    <section aria-label="Post-match summary" className="mt-4 space-y-4 rounded-panel border border-panel-border bg-panel-bg p-4 text-body">
+      <h2 className="text-heading">
         {summary.homeClubName} {summary.homeScore} - {summary.awayScore} {summary.awayClubName}
       </h2>
 
       {wentToPenalties && (
-        <div className="rounded border border-border-subtle bg-bg-subtle p-3 text-xs">
+        <div className="rounded border border-border-subtle bg-bg-subtle p-3 text-data">
           <p className="font-semibold text-text-body">Penalty shootout</p>
           <p className="mt-1 text-text-secondary">
             {summary.homeClubName} {summary.homePenalties} - {summary.awayPenalties} {summary.awayClubName}
@@ -98,7 +98,7 @@ export const PostMatchSummary = ({ saveId, matchId }: { readonly saveId: SaveId;
       </div>
 
       <div>
-        <h3 className="text-xs font-semibold text-text-body">Cards and injuries</h3>
+        <h3 className="text-heading text-text-body">Cards and injuries</h3>
         {incidents.length === 0 ? (
           <p className="mt-1 text-text-muted">No cards or injuries.</p>
         ) : (
@@ -143,7 +143,7 @@ const Scorers = ({
   const own = goals.filter((goal) => goal.clubId === clubId);
   return (
     <div>
-      <h3 className="text-xs font-semibold text-text-body">{label}</h3>
+      <h3 className="text-heading text-text-body">{label}</h3>
       {own.length === 0 ? (
         <p className="mt-1 text-text-muted">None</p>
       ) : (

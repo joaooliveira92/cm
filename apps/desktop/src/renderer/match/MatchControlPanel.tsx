@@ -75,7 +75,7 @@ const InstructionSlider = <T extends string>({
 
   return (
     <div ref={groupRef} role="group" aria-label={label} onKeyDown={onKeyDown}>
-      <p className="text-xs text-text-secondary">{label}</p>
+      <p className="text-data text-text-secondary">{label}</p>
       <div className="mt-1 flex gap-1">
         {options.map((option) => (
           <Button
@@ -106,7 +106,7 @@ const TeamInstructionSliders = () => {
   if (!tactic) return null;
   return (
     <div>
-      <p className="mb-1 text-xs font-semibold text-text-body">Team instructions</p>
+      <p className="mb-1 text-data font-semibold text-text-body">Team instructions</p>
       <div className="flex gap-6">
         <InstructionSlider<Mentality>
           label="Mentality"
@@ -130,7 +130,7 @@ const TeamInstructionSliders = () => {
           onChange={(pressing) => void dispatchAction("set-live-pressing", { value: pressing })}
         />
       </div>
-      <p className="mt-1 text-xs text-text-muted">
+      <p className="mt-1 text-data text-text-muted">
         Formation stays {tactic.formation as Formation} while the match is live; only Mentality,
         Tempo and Pressing change.
       </p>
@@ -184,10 +184,10 @@ const SubstitutionControl = () => {
       )}
 
       <div>
-        <p className="mb-1 text-xs font-semibold text-text-body">Make a substitution</p>
+        <p className="mb-1 text-data font-semibold text-text-body">Make a substitution</p>
         <div className="flex items-end gap-2">
           <div>
-            <p className="text-xs text-text-secondary">Off</p>
+            <p className="text-data text-text-secondary">Off</p>
             <Select
               value={state.outPlayerId}
               disabled={state.subsStatus.capReached}
@@ -217,7 +217,7 @@ const SubstitutionControl = () => {
             </Select>
           </div>
           <div>
-            <p className="text-xs text-text-secondary">On</p>
+            <p className="text-data text-text-secondary">On</p>
             <Select
               value={state.inPlayerId}
               disabled={state.subsStatus.capReached}
@@ -246,7 +246,7 @@ const SubstitutionControl = () => {
               </SelectContent>
             </Select>
             {state.pitch !== null && substitutes.length === 0 && !state.subsStatus.capReached && (
-              <p className="mt-1 text-xs text-text-secondary">{NO_SUBSTITUTES_LEFT}</p>
+              <p className="mt-1 text-data text-text-secondary">{NO_SUBSTITUTES_LEFT}</p>
             )}
           </div>
           <Button
@@ -260,7 +260,7 @@ const SubstitutionControl = () => {
           </Button>
         </div>
         {state.subAlert && (
-          <p role="alert" className="mt-1 text-xs text-text-warning">
+          <p role="alert" className="mt-1 text-data text-text-warning">
             {state.subAlert}
           </p>
         )}
@@ -315,7 +315,7 @@ const PanelHeader = () => {
       type="button"
       ref={meta.toggleRef}
       data-action-id="toggle-control-panel"
-      className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm font-semibold ${FOCUS_RING.join(" ")}`}
+      className={`flex w-full items-center justify-between px-4 py-2 text-left text-heading ${FOCUS_RING.join(" ")}`}
       onClick={() => void dispatchAction("toggle-control-panel")}
     >
       <span>
@@ -344,9 +344,9 @@ const MatchControlProvider = (input: MatchControlInput) => {
       <section className="mt-4 rounded-panel border border-panel-border bg-panel-bg shadow-panel">
         <PanelHeader />
         {open && (
-          <div className="space-y-4 border-t border-border-subtle p-4 text-sm">
+          <div className="space-y-4 border-t border-border-subtle p-4 text-body">
             <div>
-              <p className="text-xs text-text-secondary">
+              <p className="text-data text-text-secondary">
                 Substitutions used: {subsStatus.used}/5 · Windows used: {subsStatus.windowsUsed}/3
                 {subsStatus.capReached && <span className="ml-2 text-destructive">Cap reached</span>}
               </p>
@@ -356,7 +356,7 @@ const MatchControlProvider = (input: MatchControlInput) => {
             <InjuryDecisionModal />
 
             <div>
-              <label className="flex items-center gap-2 text-xs text-text-secondary">
+              <label className="flex items-center gap-2 text-data text-text-secondary">
                 <input
                   type="checkbox"
                   checked={isHalftime}
@@ -371,7 +371,7 @@ const MatchControlProvider = (input: MatchControlInput) => {
 
             <TeamInstructionSliders />
 
-            {status && <p className="text-xs text-text-muted">{status}</p>}
+            {status && <p className="text-data text-text-muted">{status}</p>}
           </div>
         )}
       </section>

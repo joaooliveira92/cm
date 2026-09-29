@@ -67,19 +67,19 @@ export const ScoutPlayerDialog = ({
   return (
     <Dialog open={open} onOpenChange={changeOpen}>
       <DialogContent className="w-full max-w-lg p-4">
-        <DialogTitle className="text-sm font-semibold text-text-primary">Scout {playerName}</DialogTitle>
-        <DialogDescription className="mt-1 text-xs text-text-secondary">
+        <DialogTitle className="text-text-primary">Scout {playerName}</DialogTitle>
+        <DialogDescription className="mt-1 text-text-secondary">
           Choose a Scout to watch this player. A Scout busy elsewhere leaves that assignment; progress
           already made stays with the club.
         </DialogDescription>
 
         {failure !== null && (
-          <p role="alert" className="mt-3 text-sm text-text-danger">
+          <p role="alert" className="mt-3 text-body text-text-danger">
             {failure}
           </p>
         )}
 
-        <ul aria-label="Scouts" className="mt-3 text-sm">
+        <ul aria-label="Scouts" className="mt-3 text-body">
           {scouts.map((scout) => (
             <li key={scout.scoutId} className="flex items-center gap-3 py-1">
               <span className="w-40 truncate font-medium">{scout.scoutName}</span>

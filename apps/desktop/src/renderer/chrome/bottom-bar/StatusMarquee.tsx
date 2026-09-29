@@ -33,7 +33,7 @@ export const StatusMarquee = ({ items, label = "Status" }: StatusMarqueeProps) =
       // Hovering or focusing an item's link pauses the scroll (WCAG 2.2.2), and
       // the tooltip gives the whole line at once to anyone who stopped it to read.
       title={items.map(itemText).join("\n")}
-      className="@container min-w-0 flex-1 overflow-hidden text-xs text-text-muted motion-safe:[mask-image:linear-gradient(to_right,transparent,#000_1rem,#000_calc(100%-1rem),transparent)]"
+      className="@container min-w-0 flex-1 overflow-hidden text-data text-text-muted motion-safe:[mask-image:linear-gradient(to_right,transparent,#000_1rem,#000_calc(100%-1rem),transparent)]"
     >
       <div
         data-marquee-track=""

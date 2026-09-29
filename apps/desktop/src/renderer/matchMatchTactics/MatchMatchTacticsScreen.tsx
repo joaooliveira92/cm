@@ -36,7 +36,7 @@ const InstructionChoice = <T extends string>({
   readonly onChange: (value: T) => void;
 }) => (
   <div role="group" aria-label={label}>
-    <p className="text-xs text-text-secondary">{label}</p>
+    <p className="text-data text-text-secondary">{label}</p>
     <div className="mt-1 flex gap-1">
       {options.map((option) => (
         <Button
@@ -78,7 +78,7 @@ const TacticsForm = ({
     <>
       <section aria-label="Formation in play" className="rounded-panel border border-panel-border bg-panel-bg p-4">
         <p className="font-semibold">Formation: {draft.formation}</p>
-        <p className="mt-1 text-xs text-text-muted">
+        <p className="mt-1 text-data text-text-muted">
           The formation stays fixed while the match is live; only Mentality, Tempo and Pressing change.
         </p>
         {/* The players come from the match's pitch, never a Tactic: a live change moves no one, and
@@ -87,7 +87,7 @@ const TacticsForm = ({
         <ul className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1">
           {ready.snapshot.pitch.onPitch.map((slot) => (
             <li key={`${slot.position}-${slot.playerId}`}>
-              <span className="mr-2 font-mono text-xs text-text-tertiary">{slot.position}</span>
+              <span className="mr-2 font-mono text-data text-text-tertiary">{slot.position}</span>
               {nameOf(slot.playerId)}
             </li>
           ))}

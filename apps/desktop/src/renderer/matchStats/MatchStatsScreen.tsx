@@ -21,7 +21,7 @@ export const MatchStatsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       aria-label="Match Statistics"
       className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
-      <h1 className="mb-6 text-2xl font-bold">Match Statistics</h1>
+      <h1 className="mb-6 text-title">Match Statistics</h1>
       {state._tag === "loading" && <p className="text-text-secondary italic">Loading statistics...</p>}
       {state._tag === "failed" && (
         <Alert variant="destructive">
@@ -36,7 +36,7 @@ export const MatchStatsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       )}
       {state._tag === "ready" && state.view !== null && (
         <>
-          <h2 className="mb-3 text-lg font-semibold">
+          <h2 className="mb-3 text-heading">
             {state.view.homeClubName} v {state.view.awayClubName}
           </h2>
           <MatchStatsView view={state.view} />

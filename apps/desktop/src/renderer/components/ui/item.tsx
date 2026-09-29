@@ -9,7 +9,7 @@ interface ItemProps extends React.HTMLAttributes<HTMLDivElement> {
 const Item = ({ className, ref, ...props }: ItemProps) => (
   <div
     ref={ref}
-    className={cn("flex items-center gap-3 rounded-md border p-2.5 text-xs", className)}
+    className={cn("flex items-center gap-3 rounded-md border p-2.5 text-data", className)}
     {...props}
   />
 );
@@ -28,7 +28,7 @@ ItemTitle.displayName = "ItemTitle";
 const ItemDescription = ({ className, ref, ...props }: ItemProps) => (
   <div
     ref={ref}
-    className={cn("truncate text-[12px] text-muted-foreground", className)}
+    className={cn("truncate text-data text-muted-foreground", className)}
     {...props}
   />
 );

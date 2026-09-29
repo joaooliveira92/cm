@@ -67,10 +67,10 @@ const QuitDialog = ({ provisional, onCancel, onConfirm }: QuitDialogProps) => {
         className={MODAL_COMPACT}
       >
         <div className={MODAL_TITLE_BAND}>
-          <h2 className="font-semibold">{title}</h2>
+          <h2 className="text-heading">{title}</h2>
         </div>
         <div className={MODAL_BODY}>
-          <p className="text-sm text-text-body">
+          <p className="text-body text-text-body">
             {provisional.present ? PROVISIONAL_BODY : QUIT_BODY}
           </p>
           {/* Focus opens on staying, in both variants: the destructive choice is never the one a

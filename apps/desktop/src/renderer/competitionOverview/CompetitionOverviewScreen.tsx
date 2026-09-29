@@ -51,8 +51,8 @@ const KIND_LABELS: Readonly<Record<string, string>> = {
 
 const Figure = ({ label, value }: { readonly label: string; readonly value: string }) => (
   <div className={`rounded-md border p-4 ${PANEL}`}>
-    <p className="text-sm text-text-secondary">{label}</p>
-    <p className="text-xl font-semibold mt-1">{value}</p>
+    <p className="text-body text-text-secondary">{label}</p>
+    <p className="text-figure mt-1">{value}</p>
   </div>
 );
 
@@ -100,8 +100,8 @@ export const CompetitionOverviewScreen = ({
 
   return (
     <OverviewMain>
-      <h1 className="text-2xl font-bold">{view.competitionName}</h1>
-      <p className="mt-1 text-sm text-text-secondary">
+      <h1 className="text-title">{view.competitionName}</h1>
+      <p className="mt-1 text-body text-text-secondary">
         {KIND_LABELS[view.kind] ?? view.kind}
         {view.nationName === null ? null : ` · ${view.nationName}`} · Season{" "}
         {view.season.seasonNumber}

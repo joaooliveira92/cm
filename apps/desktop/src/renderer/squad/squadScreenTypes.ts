@@ -4,7 +4,7 @@
  * provider, the assembly hook and any consumer share one interface without
  * importing the hook implementation that owns the state.
  */
-import type { Table } from "@tanstack/react-table";
+import type { Table, Row as TanStackRow } from "@tanstack/react-table";
 import type { SaveId } from "@cm-clone/contracts";
 import type { Attribute } from "@cm-clone/shared";
 import type { SquadColumnPreferences } from "../table/columnPreferences.js";
@@ -15,6 +15,7 @@ import type { deriveRefreshState, deriveViewState, TableStateCopy } from "../tab
 import type { SquadPresetId } from "../table/features/visibility.js";
 import type { TacticDraft } from "../tactics/useTacticDraft.js";
 import type { SquadViewId } from "./squadViews.js";
+import type { LineupFitReadout } from "./lineupFit.js";
 import type { DecodedListState } from "../navigation/list-state-storage.js";
 
 export interface SquadScreenState {
@@ -36,6 +37,13 @@ export interface SquadScreenState {
   readonly copy: TableStateCopy;
   readonly orderedIds: readonly string[];
   readonly table: Table<SquadRow>;
+  /** The TanStack rows in DISPLAY order: TanStack's own sorted order, then the fit context's
+   *  re-ordering on top. Both roster layouts draw this, so the table and the position list cannot
+   *  disagree about who is at the top. */
+  readonly rows: readonly TanStackRow<SquadRow>[];
+  /** The selected empty starter slot and the Position it asks for, plus which rows fit it and
+   *  how well — `null` while no slot is selected. Session-only; never in the filter state. */
+  readonly fit: LineupFitReadout | null;
 }
 
 export interface SquadScreenActions {
@@ -54,6 +62,12 @@ export interface SquadScreenActions {
   readonly onToggleSelection: (id: string) => void;
   readonly onActiveChange: (id: string) => void;
   readonly onRowPrimary: (id: string) => void;
+  /** Select the empty starter slot at `order`, or clear the fit context when it is the one
+   *  already selected. A no-op on any slot that is not an empty starter — bench slots name no
+   *  Position, and a filled slot has no one left to suggest for. */
+  readonly toggleFitContext: (order: number) => void;
+  /** Drop the fit context, whichever slot named it. */
+  readonly clearFitContext: () => void;
   /** Open one player's player screen. The row's way in — the name button's click and the row's
    *  primary action both land here, so pointer and keyboard open the same thing. */
   readonly openPlayer: (id: string, event: React.MouseEvent) => void;

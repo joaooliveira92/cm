@@ -121,7 +121,7 @@ export const ClubRail = ({ clubs, loading, error, selectedClubId, onSelect }: Cl
     >
       <div
         role="row"
-        className={`${HEADER_ROW_CLASS} border-b border-panel-border bg-surface-raised text-2xs font-semibold uppercase tracking-wider text-text-secondary`}
+        className={`${HEADER_ROW_CLASS} border-b border-panel-border bg-surface-raised text-overline uppercase text-text-secondary`}
       >
         <div role="columnheader" className="min-w-0 truncate">
           Club
@@ -160,7 +160,7 @@ export const ClubRail = ({ clubs, loading, error, selectedClubId, onSelect }: Cl
                   clubName={club.clubName}
                   size={24}
                 />
-                <span className="block truncate text-sm font-medium text-text-primary">
+                <span className="block truncate text-body font-medium text-text-primary">
                   {club.clubName}
                 </span>
               </div>
@@ -183,7 +183,7 @@ export const ClubRail = ({ clubs, loading, error, selectedClubId, onSelect }: Cl
                     />
                   ))}
                 </span>
-                <span className="truncate text-2xs tracking-wide text-text-muted uppercase">
+                <span className="truncate text-overline text-text-muted uppercase">
                   {club.squadQualityBand}
                 </span>
               </div>

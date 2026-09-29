@@ -18,7 +18,7 @@ export interface HeaderTitleProps {
 }
 
 const TITLE_CLASS =
-  "max-w-[150px] truncate text-sm font-medium text-text-secondary select-none sm:max-w-[280px]";
+  "max-w-[150px] truncate text-body font-medium text-text-secondary select-none sm:max-w-[280px]";
 
 export const HeaderTitle = ({ title, asHeading = true }: HeaderTitleProps) => (
   <div className="pointer-events-none absolute inset-y-0 left-1/2 flex -translate-x-1/2 items-center justify-center">

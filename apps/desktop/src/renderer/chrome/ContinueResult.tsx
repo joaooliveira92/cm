@@ -53,7 +53,7 @@ const ConsequenceRow = ({
       {destination !== null && (
         <button
           type="button"
-          className={`shrink-0 text-sm underline underline-offset-2 hover:text-text-primary ${FOCUS_RING.join(" ")}`}
+          className={`shrink-0 text-body underline underline-offset-2 hover:text-text-primary ${FOCUS_RING.join(" ")}`}
           onClick={() => onOpen(destination)}
         >
           {CONTINUE_DESTINATION_LABELS[destination]}
@@ -88,13 +88,13 @@ export const ContinueResultBand = ({
 
       <div className="flex items-baseline justify-between gap-3">
         <h2
-          className={`text-sm font-semibold ${report.kind === "failure" ? "text-text-danger" : "text-text-primary"}`}
+          className={`text-heading ${report.kind === "failure" ? "text-text-danger" : "text-text-primary"}`}
         >
           {headline}
         </h2>
         <button
           type="button"
-          className={`${BTN_SECONDARY} shrink-0 text-sm ${FOCUS_RING.join(" ")}`}
+          className={`${BTN_SECONDARY} shrink-0 text-body ${FOCUS_RING.join(" ")}`}
           onClick={onDismiss}
         >
           Dismiss
@@ -106,7 +106,7 @@ export const ContinueResultBand = ({
         // note fixes. Priority decides what speaks first; it never decides what
         // is dropped, so a lower-priority window transition is still here under
         // a sacking.
-        <ul className="mt-1 space-y-1 text-sm">
+        <ul className="mt-1 space-y-1 text-body">
           {report.outcome.consequences.map((consequence, index) => (
             <ConsequenceRow
               key={consequence.id}

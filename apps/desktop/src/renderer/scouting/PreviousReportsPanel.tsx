@@ -31,19 +31,19 @@ export const PreviousReportsPanel = ({
   const error = typedError(result);
   if (error !== null || result._tag === "Failure") {
     return (
-      <p className="text-sm text-text-danger">
+      <p className="text-body text-text-danger">
         {error === null ? "Earlier readings could not be loaded." : describeRpcError(error)}
       </p>
     );
   }
   if (result._tag === "Initial" || result.value.targetClubId !== clubId) {
-    return <p className="text-sm text-text-secondary">Loading earlier readings...</p>;
+    return <p className="text-body text-text-secondary">Loading earlier readings...</p>;
   }
 
   const readings = result.value.readings;
   if (readings.length === 0) {
     return (
-      <p className="text-sm text-text-secondary">
+      <p className="text-body text-text-secondary">
         No earlier readings yet. One is kept each time a scout stops watching this club.
       </p>
     );
@@ -53,10 +53,10 @@ export const PreviousReportsPanel = ({
 
   return (
     <section aria-labelledby="previous-reports-heading">
-      <h2 id="previous-reports-heading" className="text-lg font-semibold">
+      <h2 id="previous-reports-heading" className="text-heading">
         Earlier readings
       </h2>
-      <ul className="mt-2 text-sm">
+      <ul className="mt-2 text-body">
         {readings.map((reading) => (
           <li key={reading.reportId} className="py-0.5">
             <button
@@ -94,13 +94,13 @@ const Comparison = ({
   readonly comparison: ReportComparison;
 }) => (
   <section aria-labelledby="report-comparison-heading" aria-live="polite" className="mt-4">
-    <h3 id="report-comparison-heading" className="font-semibold">
+    <h3 id="report-comparison-heading" className="text-heading">
       Changes since {since}
     </h3>
     {!hasChanges(comparison) ? (
-      <p className="mt-1 text-sm text-text-secondary">Nothing has changed since that reading.</p>
+      <p className="mt-1 text-body text-text-secondary">Nothing has changed since that reading.</p>
     ) : (
-      <ul className="mt-1 text-sm">
+      <ul className="mt-1 text-body">
         {comparison.confidence !== null && (
           <li>
             Knowledge: {confidenceLabel(comparison.confidence.from)} →{" "}

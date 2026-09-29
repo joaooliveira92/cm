@@ -40,7 +40,7 @@ export const GenerationStatus = ({
     )}
 
     {state._tag === "Failed" && (
-      <Alert variant="destructive" className="text-sm">
+      <Alert variant="destructive" className="text-body">
         <p>Building the league failed. {state.message}</p>
         <Button type="button" variant="secondary" className="mt-3" onClick={onRetry}>
           Retry

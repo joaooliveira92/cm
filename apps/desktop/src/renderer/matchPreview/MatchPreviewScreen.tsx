@@ -25,7 +25,7 @@ export const MatchPreviewScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     return (
       <main tabIndex={-1} data-focus-id="matchPreview" aria-label="Match Preview"
         className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
-        <h1 className="text-2xl font-bold">Match Preview</h1>
+        <h1 className="text-title">Match Preview</h1>
         <p className="mt-4 text-text-secondary italic">No upcoming fixture</p>
       </main>
     );
@@ -60,33 +60,33 @@ export const MatchPreviewScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   return (
     <main tabIndex={-1} data-focus-id="matchPreview" aria-label="Match Preview"
       className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}>
-      <h1 className="text-2xl font-bold mb-6">Match Preview</h1>
+      <h1 className="text-title mb-6">Match Preview</h1>
 
       <section className="rounded-panel border border-panel-border-dark bg-panel-bg p-6 shadow-panel mb-6">
         <div className="text-center mb-4">
-          <p className="text-sm text-text-tertiary uppercase tracking-wide">{pending.competitionId}</p>
-          <p className="text-lg font-semibold mt-2">{homeClub} vs {awayClub}</p>
-          <p className="text-sm text-text-secondary mt-1">{pending.date}</p>
+          <p className="text-body text-text-tertiary uppercase tracking-wide">{pending.competitionId}</p>
+          <p className="text-heading mt-2">{homeClub} vs {awayClub}</p>
+          <p className="text-body text-text-secondary mt-1">{pending.date}</p>
         </div>
       </section>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <section className="rounded-panel border border-panel-border-dark bg-panel-bg p-4 shadow-panel">
-          <h2 className="text-lg font-bold mb-2">Recent Form</h2>
+          <h2 className="text-heading mb-2">Recent Form</h2>
           <div className="space-y-3">
             <div>
-              <p className="text-sm font-semibold text-text-secondary mb-1">{homeClub}</p>
+              <p className="text-body font-semibold text-text-secondary mb-1">{homeClub}</p>
               <div className="flex gap-1.5">
                 {recentForm(humanClubId).map((r, i) => (
-                  <span key={i} className={`inline-flex h-6 w-6 items-center justify-center rounded text-xs ${formClass(r)}`}>{r}</span>
+                  <span key={i} className={`inline-flex h-6 w-6 items-center justify-center rounded text-data ${formClass(r)}`}>{r}</span>
                 ))}
               </div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-text-secondary mb-1">{awayClub}</p>
+              <p className="text-body font-semibold text-text-secondary mb-1">{awayClub}</p>
               <div className="flex gap-1.5">
                 {recentForm(pending.opponentClubId).map((r, i) => (
-                  <span key={i} className={`inline-flex h-6 w-6 items-center justify-center rounded text-xs ${formClass(r)}`}>{r}</span>
+                  <span key={i} className={`inline-flex h-6 w-6 items-center justify-center rounded text-data ${formClass(r)}`}>{r}</span>
                 ))}
               </div>
             </div>
@@ -94,13 +94,13 @@ export const MatchPreviewScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         </section>
 
         <section className="rounded-panel border border-panel-border-dark bg-panel-bg p-4 shadow-panel">
-          <h2 className="text-lg font-bold mb-2">Head to Head</h2>
+          <h2 className="text-heading mb-2">Head to Head</h2>
           {headToHead().length === 0 ? (
-            <p className="text-sm text-text-secondary italic">No previous meetings this season</p>
+            <p className="text-body text-text-secondary italic">No previous meetings this season</p>
           ) : (
             <div className="space-y-1.5">
               {headToHead().map((f) => (
-                <p key={f.id} className="text-sm">
+                <p key={f.id} className="text-body">
                   {f.homeClubName} {f.homeGoals} - {f.awayGoals} {f.awayClubName}
                 </p>
               ))}

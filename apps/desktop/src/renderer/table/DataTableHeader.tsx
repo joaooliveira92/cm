@@ -65,7 +65,7 @@ export const DataTableHeader = <Row extends TableRowShape>(
                     <span>{label}</span>
                     <span
                       aria-hidden="true"
-                      className="text-[0.65rem] text-text-secondary"
+                      className="text-caption text-text-secondary"
                     >
                       {sortState === "asc"
                         ? "▲"

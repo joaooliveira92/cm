@@ -64,7 +64,7 @@ const SQUAD_SORT_ITEM_LABELS: Readonly<Record<ColumnId, string>> = Object.fromEn
  *  selectors in this row are flat text buttons, so the field's border, fill and
  *  fixed height are dropped in favour of the row's own padding and type. */
 const TRIGGER_CLASS =
-  `${ACTIONS_ROW_BUTTON_CLASS} h-auto w-auto border-0 bg-transparent px-3 py-1 text-sm hover:border-0`;
+  `${ACTIONS_ROW_BUTTON_CLASS} h-auto w-auto border-0 bg-transparent px-3 py-1 text-body hover:border-0`;
 
 /**
  * The Sort select for the position list. Controlled: the trigger reads the
@@ -98,7 +98,7 @@ export const SquadSortSelect = ({
           `↕`, has no counterpart here because the placeholder already says
           nothing is sorted, and an arrow to say so would be decoration twice. */}
       {sort !== null && (
-        <span aria-hidden="true" className="text-[0.65rem] text-text-secondary">
+        <span aria-hidden="true" className="text-caption text-text-secondary">
           {sort.direction === "asc" ? "▲" : "▼"}
         </span>
       )}

@@ -54,19 +54,19 @@ export const ActiveLeaguesSidebar = ({
     <section aria-labelledby="entity-count-heading">
       <h2
         id="entity-count-heading"
-        className="text-2xs font-semibold uppercase tracking-wider text-text-secondary"
+        className="text-overline uppercase text-text-secondary"
       >
         Loaded entities
       </h2>
       <p
-        className="mt-1 text-xl font-semibold tabular-nums text-text-primary"
+        className="mt-1 text-figure tabular-nums text-text-primary"
         aria-busy={stale ? "true" : undefined}
         data-testid="entity-count"
       >
         {formatCount(entityEstimate.entityCount)}
       </p>
       {/* The breakdown is derived from the same rows as the total, so the parts always sum to it. */}
-      <p className="text-2xs text-text-muted">
+      <p className="text-caption text-text-muted">
         {formatCount(entityEstimate.clubCount)} clubs ·{" "}
         {formatCount(entityEstimate.playerCount)} players ·{" "}
         {formatCount(entityEstimate.staffCount)} staff
@@ -76,14 +76,14 @@ export const ActiveLeaguesSidebar = ({
     <section aria-labelledby="processing-cost-heading">
       <h2
         id="processing-cost-heading"
-        className="text-2xs font-semibold uppercase tracking-wider text-text-secondary"
+        className="text-overline uppercase text-text-secondary"
       >
         Processing cost
       </h2>
       <ProcessingCostMeter reading={processingCost} />
-      <p className="mt-1 text-2xs text-text-muted">{processingCost.explanation}</p>
+      <p className="mt-1 text-caption text-text-muted">{processingCost.explanation}</p>
       {processingCost.expensiveWarning !== null && (
-        <p role="note" className="mt-2 rounded-control bg-text-warning/10 p-2 text-2xs text-text-warning">
+        <p role="note" className="mt-2 rounded-control bg-text-warning/10 p-2 text-caption text-text-warning">
           {processingCost.expensiveWarning}
         </p>
       )}
@@ -106,14 +106,14 @@ export const ActiveLeaguesSidebar = ({
     >
       <h2
         id="setup-status-heading"
-        className="text-2xs font-semibold uppercase tracking-wider text-text-secondary"
+        className="text-overline uppercase text-text-secondary"
       >
         Status
       </h2>
       {validation.valid ? (
-        <p className="mt-1 text-xs text-text-body">Ready to continue.</p>
+        <p className="mt-1 text-data text-text-body">Ready to continue.</p>
       ) : (
-        <ul className="mt-1 list-disc pl-4 text-xs text-text-warning">
+        <ul className="mt-1 list-disc pl-4 text-data text-text-warning">
           {(validation.blockingMessages.length > 0
             ? validation.blockingMessages
             : [
@@ -126,7 +126,7 @@ export const ActiveLeaguesSidebar = ({
           ))}
         </ul>
       )}
-      <p className="mt-2 text-2xs text-text-muted">{NEXT_STEP_COPY}</p>
+      <p className="mt-2 text-caption text-text-muted">{NEXT_STEP_COPY}</p>
     </section>
   </aside>
 );
@@ -157,7 +157,7 @@ const ProcessingCostMeter = ({ reading }: { readonly reading: ProcessingCostRead
         />
       ))}
     </span>
-    <span className="text-xs font-medium text-text-primary">{reading.label}</span>
+    <span className="text-data font-medium text-text-primary">{reading.label}</span>
   </div>
 );
 

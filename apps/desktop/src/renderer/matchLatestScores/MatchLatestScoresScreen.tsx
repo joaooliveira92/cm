@@ -8,7 +8,7 @@ export const MatchLatestScoresScreen = ({ saveId: _saveId }: { readonly saveId: 
     aria-label="Match Latest Scores"
     className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
   >
-    <h1 className="text-2xl font-bold">Match Latest Scores</h1>
+    <h1 className="text-title">Match Latest Scores</h1>
     <p className="mt-4 text-text-secondary italic">WIP — Placeholder screen</p>
   </main>
 );

@@ -47,7 +47,7 @@ const ClubSquadMessage = ({ message }: { readonly message: string }) => (
     data-focus-id="clubSquad"
     aria-label="Club Squad"
   >
-    <h1 className="text-2xl font-bold">Club Squad</h1>
+    <h1 className="text-title">Club Squad</h1>
     <p className="mt-4 text-text-secondary">{message}</p>
   </main>
 );
@@ -107,13 +107,13 @@ export const ClubSquadScreen = ({
       <header>
         {/* The club header is the `<main>` region's label, so the first thing read is which club's
             squad this is — and the foreign marker when that club is not the user's. */}
-        <h1 id="club-squad-heading" className="text-2xl font-bold">
+        <h1 id="club-squad-heading" className="text-title">
           {view.club.name} · Squad{" "}
           {!view.isUserClub && (
-            <span className="text-sm font-semibold text-text-secondary">[Not your club]</span>
+            <span className="text-body font-semibold text-text-secondary">[Not your club]</span>
           )}
         </h1>
-        <p className="mt-1 text-sm text-text-secondary">
+        <p className="mt-1 text-body text-text-secondary">
           {view.players.length} {view.players.length === 1 ? "player" : "players"}
         </p>
       </header>
@@ -122,7 +122,7 @@ export const ClubSquadScreen = ({
         <p className="mt-8 text-text-secondary italic">This club has no players.</p>
       ) : (
         <section className="mt-3 rounded-panel bg-panel-bg px-3 pt-2 pb-3">
-          <h2 className="text-base font-bold text-text-highlight">Players</h2>
+          <h2 className="text-heading text-text-highlight">Players</h2>
           <SquadRoster
             table={roster.table}
             orderedIds={roster.orderedIds}

@@ -42,7 +42,7 @@ export const LeagueSelector = ({ leagues, selectedLeagueId, onLeagueChange }: Le
                 <SelectPrimitive.Item
                   key={league.leagueId}
                   value={league.leagueId}
-                  className="relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-6 text-xs outline-none data-[highlighted]:bg-surface-raised data-[highlighted]:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                  className="relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-6 text-data outline-none data-[highlighted]:bg-surface-raised data-[highlighted]:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                 >
                   <SelectPrimitive.ItemText>{league.leagueName}</SelectPrimitive.ItemText>
                   <SelectPrimitive.ItemIndicator className="absolute right-1.5 flex items-center justify-center text-text-secondary">

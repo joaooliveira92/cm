@@ -4,7 +4,7 @@ import * as React from "react";
 import { cn } from "../../lib/utils.js";
 
 const alertVariants = cva(
-  "relative w-full rounded-panel border px-3 py-2 text-xs [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
+  "relative w-full rounded-panel border px-3 py-2 text-data [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
   {
     variants: {
       variant: {
@@ -46,7 +46,7 @@ interface AlertDescriptionProps extends React.HTMLAttributes<HTMLParagraphElemen
 }
 
 const AlertDescription = ({ className, ref, ...props }: AlertDescriptionProps) => (
-  <div ref={ref} className={cn("text-sm [&_p]:leading-relaxed", className)} {...props} />
+  <div ref={ref} className={cn("text-body [&_p]:leading-relaxed", className)} {...props} />
 );
 AlertDescription.displayName = "AlertDescription";
 

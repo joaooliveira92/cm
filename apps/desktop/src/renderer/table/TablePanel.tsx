@@ -57,7 +57,7 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
 
   return (
     <>
-      <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
+      <div className="mt-2 flex flex-wrap items-center gap-3 text-body">
         {filterArea}
         {filterActive && (
           <TableFilters.Reset filterActive={filterActive} onSetFilters={onSetFilters} clearFiltersLabel={copy.clearFiltersLabel} />

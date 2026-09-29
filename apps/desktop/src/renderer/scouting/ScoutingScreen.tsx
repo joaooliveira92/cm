@@ -25,23 +25,23 @@ const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 export const ScoutingScreen = ({ saveId }: { readonly saveId: SaveId }) => (
   <main data-focus-id="scouting" aria-labelledby="scouting-centre-heading" className={PAGE_CLASS} tabIndex={-1}>
     <header>
-      <h1 id="scouting-centre-heading" className="text-2xl font-bold">
+      <h1 id="scouting-centre-heading" className="text-title">
         Scouting Centre
       </h1>
-      <p className="mt-1 text-sm text-text-secondary">Your Scouts, what each observes, and how far your scouting reaches.</p>
+      <p className="mt-1 text-body text-text-secondary">Your Scouts, what each observes, and how far your scouting reaches.</p>
     </header>
 
     <ScoutingLinks saveId={saveId} />
 
     <div className="mt-8">
-      <h2 className="text-lg font-semibold">
+      <h2 className="text-heading">
         Scouts
       </h2>
       <ScoutRoster saveId={saveId} />
     </div>
 
     <div className="mt-8">
-      <h2 className="text-lg font-semibold">
+      <h2 className="text-heading">
         Coverage
       </h2>
       <Coverage saveId={saveId} />
@@ -104,7 +104,7 @@ const Coverage = ({ saveId }: { readonly saveId: SaveId }) => {
 /** One line standing in for a section that is loading, failed or empty. */
 const SectionMessage = ({ message, failed = false }: { readonly message: string; readonly failed?: boolean }) =>
   failed ? (
-    <p role="alert" className="mt-3 text-sm text-text-danger">
+    <p role="alert" className="mt-3 text-body text-text-danger">
       {message}
     </p>
   ) : (

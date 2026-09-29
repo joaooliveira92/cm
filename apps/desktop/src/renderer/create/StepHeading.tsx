@@ -17,11 +17,11 @@ export interface StepHeadingProps {
  */
 export const StepHeading = ({ title, children }: StepHeadingProps) => (
   <>
-    <h2 className="text-base font-medium tracking-tight text-text-primary">
+    <h2 className="text-heading text-text-primary">
       {title}
     </h2>
     {children !== undefined && (
-      <p className="mt-1 text-sm text-text-muted">{children}</p>
+      <p className="mt-1 text-body text-text-muted">{children}</p>
     )}
   </>
 );

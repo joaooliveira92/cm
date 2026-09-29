@@ -29,7 +29,7 @@ export const PrefixIndicator = ({
   <div
     role="status"
     aria-live="polite"
-    className="pointer-events-none fixed bottom-4 left-1/2 z-50 w-max max-w-[calc(100vw-1rem)] -translate-x-1/2 rounded-control border border-text-highlight/60 bg-panel-bg-strong px-3 py-1.5 text-sm text-text-strong shadow-lg"
+    className="pointer-events-none fixed bottom-4 left-1/2 z-50 w-max max-w-[calc(100vw-1rem)] -translate-x-1/2 rounded-control border border-text-highlight/60 bg-panel-bg-strong px-3 py-1.5 text-body text-text-strong shadow-lg"
   >
     <span className="font-semibold text-text-highlight">Go to:</span>{" "}
     {entries.map((entry) => `${entry.label} [${entry.key}]`).join(" \u00b7 ")}

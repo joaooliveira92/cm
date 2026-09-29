@@ -10,7 +10,7 @@
 import type { ReactNode } from "react";
 
 const PANEL_CLASS = "rounded-panel bg-panel-bg px-3 pt-2 pb-3";
-const TITLE_CLASS = "text-base font-bold text-text-highlight";
+const TITLE_CLASS = "text-heading text-text-highlight";
 
 /** A panel whose body is label/value rows. Children are `PlayerRow`s. */
 export const PlayerPanel = ({
@@ -60,7 +60,7 @@ export const PlayerRow = ({
    *  Preferred Foot) to set them apart from the raw Attributes above them. */
   readonly emphasis?: boolean;
 }) => (
-  <div className="flex items-baseline justify-between gap-4 py-0.5 text-sm">
+  <div className="flex items-baseline justify-between gap-4 py-0.5 text-body">
     <dt className={emphasis === true ? "text-text-highlight" : "text-text-body"}>{label}</dt>
     <dd className="font-semibold text-text-highlight">{value}</dd>
   </div>

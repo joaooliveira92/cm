@@ -67,10 +67,10 @@ export const TrainingPlanScreen = ({
       tabIndex={-1}
     >
       <header>
-        <h1 id="training-plan-heading" className="text-2xl font-bold">
+        <h1 id="training-plan-heading" className="text-title">
           {name} — Training Plan
         </h1>
-        <p className="mt-1 text-sm text-text-secondary">
+        <p className="mt-1 text-body text-text-secondary">
           Choose one Category for this player's Player Development to favour, or None.
         </p>
       </header>
@@ -80,7 +80,7 @@ export const TrainingPlanScreen = ({
       </div>
 
       <section className="mt-6" aria-labelledby="training-focus-heading">
-        <h2 id="training-focus-heading" className="text-lg font-semibold">
+        <h2 id="training-focus-heading" className="text-heading">
           Training Focus
         </h2>
         <div className="mt-3">
@@ -105,7 +105,7 @@ const messageOf = (error: RpcClientError<"getSquad"> | null): string =>
 /** The non-`ready` states, rendered as a labelled `<main>` region carrying one line. */
 const TrainingPlanMessage = ({ message }: { readonly message: string }) => (
   <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="training" aria-label="Training plan">
-    <h1 className="text-2xl font-bold">Training Plan</h1>
+    <h1 className="text-title">Training Plan</h1>
     <p className="mt-4 text-text-secondary italic">{message}</p>
   </main>
 );

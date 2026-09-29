@@ -77,7 +77,7 @@ export const CreateFlowLayout = () => {
           titleAsHeading={false}
           state={{ view: "create", step: STEP_LABELS[step], hint: "" }}
           identity={
-            <h1 className="truncate text-sm font-bold text-text-bright select-none">
+            <h1 className="truncate text-title text-text-bright select-none">
               New Career
             </h1>
           }

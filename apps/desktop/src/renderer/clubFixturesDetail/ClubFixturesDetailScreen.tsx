@@ -27,7 +27,7 @@ const messageOf = (error: RpcClientError<"getClubFixtures"> | null): string =>
 
 const ClubFixturesMessage = ({ message }: { readonly message: string }) => (
   <main tabIndex={-1} data-focus-id="clubFixturesDetail" aria-label="Club Fixtures" className={PAGE_CLASS}>
-    <h1 className="text-2xl font-bold">Club Fixtures</h1>
+    <h1 className="text-title">Club Fixtures</h1>
     <p className="mt-4 text-text-secondary">{message}</p>
   </main>
 );
@@ -48,11 +48,11 @@ export const ClubFixturesDetailScreen = ({
 
   return (
     <main tabIndex={-1} data-focus-id="clubFixturesDetail" aria-label="Club Fixtures" className={PAGE_CLASS}>
-      <h1 className="text-2xl font-bold">{view.club.name}</h1>
+      <h1 className="text-title">{view.club.name}</h1>
       {/* The route carries any club, so the page says whose it is rather than leaving the reader
           to assume — the same marker `ClubStaffScreen` uses. */}
-      {view.isUserClub ? null : <p className="mt-1 text-sm text-text-secondary">[Not your club]</p>}
-      <p className="mt-1 text-sm text-text-secondary">
+      {view.isUserClub ? null : <p className="mt-1 text-body text-text-secondary">[Not your club]</p>}
+      <p className="mt-1 text-body text-text-secondary">
         Season {view.season.seasonNumber} &middot; {view.fixtures.length} fixtures
       </p>
 

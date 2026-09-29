@@ -48,7 +48,7 @@ const SecondaryRowContent = ({ row }: { readonly row: SecondaryRow }) => {
   switch (row.kind) {
     case "career":
       return (
-        <div className="flex w-full items-center justify-between gap-3 px-1 text-2xs text-header-fg">
+        <div className="flex w-full items-center justify-between gap-3 px-1 text-caption text-header-fg">
           <div className="flex min-w-0 items-center gap-3">
             {row.metrics.map((metric, index) => (
               <div key={metric.icon} className="flex min-w-0 items-center gap-3">
@@ -67,7 +67,7 @@ const SecondaryRowContent = ({ row }: { readonly row: SecondaryRow }) => {
 
     case "wizard":
       return (
-        <div className="flex w-full items-center justify-between px-1 text-2xs text-header-fg">
+        <div className="flex w-full items-center justify-between px-1 text-caption text-header-fg">
           <span className="tracking-wider uppercase">{row.heading}</span>
           <span className="uppercase">{row.hint}</span>
         </div>
@@ -75,7 +75,7 @@ const SecondaryRowContent = ({ row }: { readonly row: SecondaryRow }) => {
 
     case "status":
       return (
-        <div className="flex w-full items-center justify-between px-1 text-2xs text-header-fg">
+        <div className="flex w-full items-center justify-between px-1 text-caption text-header-fg">
           <span className="tracking-wider uppercase">{row.leading}</span>
           <span className="uppercase">{row.trailing}</span>
         </div>

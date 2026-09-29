@@ -41,11 +41,11 @@ export const LightweightDialog = ({
         {/* The shared modal anatomy: chrome-gradient title band over a
             strong-panel body, per the `MODAL_*` constants in theme.ts. */}
         <div className={MODAL_TITLE_BAND}>
-          <h2 className="font-semibold">{title}</h2>
+          <h2 className="text-heading">{title}</h2>
         </div>
         <div className={MODAL_BODY}>
           {description !== undefined && (
-            <p className="mt-1 text-sm text-text-secondary">{description}</p>
+            <p className="mt-1 text-body text-text-secondary">{description}</p>
           )}
           <div className="mt-4 flex items-center justify-end gap-2">
             <Button ref={buttonRef} type="button" variant="secondary" onClick={onCancel}>

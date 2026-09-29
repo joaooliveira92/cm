@@ -48,10 +48,10 @@ export const ManagerPillarsPane = ({
         <div className="overflow-hidden rounded-panel border border-panel-border bg-panel-bg shadow-panel">
           <div className="flex flex-col gap-4 border-b border-panel-border p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="font-semibold text-text-primary">
+              <h3 className="text-text-primary text-heading">
                 Pillar distribution
               </h3>
-              <p className="mt-1 text-sm text-text-secondary">
+              <p className="mt-1 text-body text-text-secondary">
                 Balance the qualities that shape your management style.
               </p>
             </div>
@@ -75,7 +75,7 @@ export const ManagerPillarsPane = ({
             exit={{ opacity: 0, y: -8, height: 0 }}
           >
             <Alert variant="destructive">
-              <ul className="space-y-1 text-sm">
+              <ul className="space-y-1 text-body">
                 {pillarErrors.map((error) => (
                   <li key={error}>{error}</li>
                 ))}
@@ -93,10 +93,10 @@ export const ManagerPillarsPane = ({
             exit={{ opacity: 0, y: -8, height: 0 }}
           >
             <Alert className="border-text-warning/40 bg-text-warning/10">
-              <h4 className="text-sm font-medium text-text-warning">
+              <h4 className="text-heading text-text-warning">
                 Pillar warnings
               </h4>
-              <ul className="mt-3 space-y-3 text-xs leading-relaxed text-text-warning">
+              <ul className="mt-3 space-y-3 text-data leading-relaxed text-text-warning">
                 {lowPillars.map((pillar) => (
                   <motion.li
                     key={pillar}

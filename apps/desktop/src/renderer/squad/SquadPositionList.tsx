@@ -32,6 +32,8 @@ import {
 } from "../table/squad/playerStatus.js";
 import type { SquadRow } from "../table/squad/squadColumns.js";
 import { writeLineupDrag } from "./lineupDrag.js";
+import { tierLabel } from "./lineupFit.js";
+import { FIT_COLUMN_WIDTH, FitIndicator } from "./FitIndicator.js";
 import { useSquad } from "./SquadProvider.js";
 import { SelectionIndicator, useSlotByPlayer } from "./SelectionIndicator.js";
 
@@ -86,11 +88,8 @@ const FAMILIARITY_TONE: Readonly<Record<FamiliarityTier, string>> = {
   unfamiliar: "font-medium text-text-muted",
 };
 
-/** Sentence case for a tier in a tooltip ("natural" → "Natural"). UI copy. */
-const tierLabel = (tier: string): string => tier.charAt(0).toUpperCase() + tier.slice(1);
-
 const PositionRunner = ({ row }: { readonly row: SquadRow }) => (
-  <span className="ml-auto flex shrink-0 gap-1 text-xs">
+  <span className="ml-auto flex shrink-0 gap-1 text-data">
     {row.positions.length === 0 ? (
       <span className="font-medium text-text-muted">—</span>
     ) : (
@@ -109,10 +108,10 @@ const PositionRunner = ({ row }: { readonly row: SquadRow }) => (
 
 export const SquadPositionList = () => {
   const { state, actions } = useSquad();
-  const { orderedIds, activeId, selectedId, announcement, refreshState, table } = state;
+  const { orderedIds, rows: displayRows, activeId, selectedId, announcement, refreshState } = state;
   const { onActiveChange, onToggleSelection, onRowPrimary, openPlayer, setBookmark } = actions;
 
-  const rows = table.getRowModel().rows.map((row) => row.original);
+  const rows = displayRows.map((row) => row.original);
   const effectiveActive = activeId ?? orderedIds[0] ?? null;
   const split = leftColumnLength(rows.length);
 
@@ -168,9 +167,15 @@ export const SquadPositionList = () => {
           className="flex min-w-0 items-center gap-2 px-1.5 py-0.5 odd:bg-surface/50 hover:bg-row-hover aria-selected:bg-row-selected"
         >
           <SelectionIndicator slot={slotByPlayer.get(row.id) ?? null} />
+          {/* The same width the table's fit column reserves, so a mark appearing on
+              some rows never shifts the names that follow it. Empty while no slot
+              is selected — the reserved width is the price of a steady list. */}
+          <span className="flex shrink-0 justify-center" style={{ width: FIT_COLUMN_WIDTH }}>
+            <FitIndicator rowId={row.id} />
+          </span>
           {/* The same width the table's Status column reserves, so a status
               appearing never pushes the name right. */}
-          <span className="shrink-0 text-xs" style={{ width: STATUS_COLUMN_WIDTH }}>
+          <span className="shrink-0 text-data" style={{ width: STATUS_COLUMN_WIDTH }}>
             <StatusCell statuses={statusesOf(row)} />
           </span>
           <button
@@ -183,7 +188,7 @@ export const SquadPositionList = () => {
               if (activeId !== row.id) onActiveChange(row.id);
             }}
             onClick={(event) => openPlayer(row.id, event)}
-            className={`truncate text-left text-sm font-semibold text-text-bright ${FOCUS_RING.join(" ")}`}
+            className={`truncate text-left text-body font-semibold text-text-bright ${FOCUS_RING.join(" ")}`}
           >
             {row.lastName}, {row.firstName}
           </button>

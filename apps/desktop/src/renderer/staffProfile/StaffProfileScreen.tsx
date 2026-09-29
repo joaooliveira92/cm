@@ -117,7 +117,7 @@ export const StaffProfileScreen = ({
     >
       {profile === null ? (
         <>
-          <h1 id="staff-profile-heading" className="text-xl font-bold">
+          <h1 id="staff-profile-heading" className="text-title">
             {name}
           </h1>
           <p className="text-text-secondary">{message}</p>
@@ -138,13 +138,13 @@ const StaffProfileBody = ({
 }) => (
   <>
     <header className="rounded-panel bg-panel-bg px-3 py-2 text-center">
-      <h1 id="staff-profile-heading" className="text-2xl font-bold">
+      <h1 id="staff-profile-heading" className="text-title">
         {profile.firstName} {profile.lastName} ({profile.club.name})
         {!profile.isUserClub && (
-          <span className="ml-2 text-sm font-semibold text-text-secondary">[Not your club]</span>
+          <span className="ml-2 text-body font-semibold text-text-secondary">[Not your club]</span>
         )}
       </h1>
-      <p className="text-base font-semibold text-text-secondary">
+      <p className="text-body font-semibold text-text-secondary">
         {STAFF_ROLE_TITLES[profile.role]}, {profile.nationality}, Age {profile.age}
       </p>
     </header>
@@ -189,7 +189,7 @@ const StaffProfileBody = ({
       </PlayerPanel>
       <PlayerNotePanel title="History">
         {profile.history.length === 0 ? (
-          <p className="text-sm text-text-secondary">
+          <p className="text-body text-text-secondary">
             No earlier clubs — {profile.club.name} is their first post.
           </p>
         ) : (
@@ -219,7 +219,7 @@ const StaffProfileBody = ({
   </>
 );
 
-const POSITION_BUTTON_CLASS = `rounded-control px-2 py-1 text-xs font-semibold transition-colors ${FOCUS_RING.join(" ")}`;
+const POSITION_BUTTON_CLASS = `rounded-control px-2 py-1 text-data font-semibold transition-colors ${FOCUS_RING.join(" ")}`;
 
 /**
  * The squad, best first, at one Position, as this person judges it. Defaults to Striker, as CM

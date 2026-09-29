@@ -17,16 +17,16 @@ const SelectionSummaryRoot = () => {
       aria-label="Selection summary"
       aria-live="polite"
       aria-busy={stale}
-      className="w-72 shrink-0 rounded-panel border border-panel-border bg-panel-bg p-3 text-sm shadow-panel"
+      className="w-72 shrink-0 rounded-panel border border-panel-border bg-panel-bg p-3 text-body shadow-panel"
     >
-      <h3 className="font-semibold">Selection summary</h3>
+      <h3 className="text-heading">Selection summary</h3>
       {estimate === null ? (
         <p className="mt-2 text-text-secondary">Calculating…</p>
       ) : (
         <>
-          {stale && <p className="mt-1 text-xs text-text-muted">Updating estimate…</p>}
+          {stale && <p className="mt-1 text-data text-text-muted">Updating estimate…</p>}
           {estimateStatus === "failed" && (
-            <p role="status" className="mt-1 text-xs text-text-warning">
+            <p role="status" className="mt-1 text-data text-text-warning">
               The estimate could not be calculated. Your selection is unaffected.
             </p>
           )}
@@ -46,7 +46,7 @@ const SelectionSummaryRoot = () => {
             />
             <SummaryRow label="Estimate confidence" value={estimate.confidence} />
           </dl>
-          <p className="mt-2 text-xs text-text-muted">
+          <p className="mt-2 text-data text-text-muted">
             Estimates are approximate and vary with this computer's load.
           </p>
         </>

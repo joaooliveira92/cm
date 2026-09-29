@@ -61,7 +61,7 @@ export const SaveGameAction = ({ saveId }: { readonly saveId: SaveId }) => {
       <button
         type="button"
         onClick={openDialog}
-        className={`flex items-center gap-1.5 whitespace-nowrap rounded-control px-3 py-1 text-sm text-header-fg transition-colors hover:bg-header-fg/10 ${FOCUS_RING.join(" ")}`}
+        className={`flex items-center gap-1.5 whitespace-nowrap rounded-control px-3 py-1 text-body text-header-fg transition-colors hover:bg-header-fg/10 ${FOCUS_RING.join(" ")}`}
       >
         <Save aria-hidden="true" className="size-4" />
         <span>Save</span>
@@ -70,8 +70,8 @@ export const SaveGameAction = ({ saveId }: { readonly saveId: SaveId }) => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="w-full max-w-md p-4">
           <form onSubmit={(event) => void onSubmit(event)}>
-            <DialogTitle className="text-sm font-semibold text-text-primary">Save game</DialogTitle>
-            <DialogDescription className="mt-1 text-xs text-text-secondary">
+            <DialogTitle className="text-text-primary">Save game</DialogTitle>
+            <DialogDescription className="mt-1 text-text-secondary">
               Keep the suggested name or type your own.
             </DialogDescription>
             <Label className="mt-4 block" htmlFor="save-game-name">
@@ -89,7 +89,7 @@ export const SaveGameAction = ({ saveId }: { readonly saveId: SaveId }) => {
               autoFocus
             />
             {failure !== null && (
-              <p role="alert" className="mt-2 text-xs text-destructive">
+              <p role="alert" className="mt-2 text-data text-destructive">
                 {failure}
               </p>
             )}

@@ -25,7 +25,7 @@ export const MatchRatingsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       aria-label="Match Ratings"
       className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
-      <h1 className="mb-6 text-2xl font-bold">Match Ratings</h1>
+      <h1 className="mb-6 text-title">Match Ratings</h1>
       {state._tag === "loading" && <p className="text-text-secondary italic">Loading ratings...</p>}
       {state._tag === "failed" && (
         <Alert variant="destructive">

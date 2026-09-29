@@ -90,7 +90,7 @@ export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) =
       aria-label="Match Commentary"
       className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
-      <h1 className="text-2xl font-bold mb-6">Match Commentary</h1>
+      <h1 className="text-title mb-6">Match Commentary</h1>
       {error && <p className="text-destructive mb-4">{error}</p>}
       {waiting && !error && <p className="text-text-secondary italic">Loading commentary...</p>}
       {/* Empty for one of two reasons: no match has started, or Match day has revealed none of it
@@ -105,8 +105,8 @@ export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) =
       {visible.length > 0 && (
         <div className="space-y-2">
           {visible.map((line, i) => (
-            <p key={i} className="text-sm border-b border-panel-border-dark pb-2 last:border-b-0">
-              <span className="text-text-tertiary mr-2 font-mono text-xs">{line.minute}'</span>
+            <p key={i} className="text-body border-b border-panel-border-dark pb-2 last:border-b-0">
+              <span className="text-text-tertiary mr-2 font-mono text-data">{line.minute}'</span>
               <span>{line.text}</span>
             </p>
           ))}

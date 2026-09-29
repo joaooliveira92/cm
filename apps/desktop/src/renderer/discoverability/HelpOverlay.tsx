@@ -269,11 +269,11 @@ export const HelpOverlay = ({
               type="button"
               role="tab"
               aria-selected={t.mode === tab}
-              className={`border-b-2 px-4 py-2 text-sm ${
-                t.mode === tab
-                  ? "border-text-highlight text-text-primary"
-                  : "border-transparent text-text-secondary hover:text-text-strong"
-              } ${FOCUS_RING.join(" ")}`}
+              className={`border-b-2 px-4 py-2 text-body ${
+ t.mode === tab
+ ? "border-text-highlight text-text-primary"
+ : "border-transparent text-text-secondary hover:text-text-strong"
+ } ${FOCUS_RING.join(" ")}`}
               onClick={() => setTab(t.mode)}
             >
               {t.label}
@@ -290,7 +290,7 @@ export const HelpOverlay = ({
               <div
                 key={action.id}
                 data-action-id={action.id}
-                className="flex items-center justify-between gap-3 border-b border-border-subtle/60 py-0.5 text-xs"
+                className="flex items-center justify-between gap-3 border-b border-border-subtle/60 py-0.5 text-data"
               >
                 <span className={available ? "text-text-strong" : "text-text-muted"}>{action.label}</span>
                 {isCapturing ? (
@@ -298,14 +298,14 @@ export const HelpOverlay = ({
                     ref={captureHintRef}
                     tabIndex={-1}
                     role="status"
-                    className="rounded-control border border-text-highlight/60 bg-surface px-2 py-0.5 font-mono text-xs text-text-highlight"
+                    className="rounded-control border border-text-highlight/60 bg-surface px-2 py-0.5 font-mono text-data text-text-highlight"
                   >
                     Press a key… (Escape cancels)
                   </span>
                 ) : (
                   <span className="flex shrink-0 items-center gap-2">
                     {available && (
-                      <span aria-label="available" className="text-xs text-text-success">
+                      <span aria-label="available" className="text-data text-text-success">
                         ✓
                       </span>
                     )}
@@ -346,10 +346,10 @@ export const HelpOverlay = ({
             );
           })}
           {visibleRows.length === 0 && (
-            <p className="py-4 text-center text-sm text-text-muted">Nothing in this scope.</p>
+            <p className="py-4 text-center text-body text-text-muted">Nothing in this scope.</p>
           )}
         </div>
-        <div className="border-t border-border-subtle px-4 py-2 text-xs text-text-muted">
+        <div className="border-t border-border-subtle px-4 py-2 text-data text-text-muted">
           {status._tag === "error" && (
             <p role="alert" className="mb-2 text-destructive">
               {status.message}

@@ -59,7 +59,7 @@ export const AssignScoutPanel = ({
 
   if (readOnly) {
     return (
-      <p className="text-sm text-text-secondary">
+      <p className="text-body text-text-secondary">
         This career has ended, so no scout can be assigned.
       </p>
     );
@@ -68,13 +68,13 @@ export const AssignScoutPanel = ({
   const boardError = typedError(board);
   if (boardError !== null || board._tag === "Failure") {
     return (
-      <p className="text-sm text-text-danger">
+      <p className="text-body text-text-danger">
         {boardError === null ? "The scouting board could not be loaded." : describeRpcError(boardError)}
       </p>
     );
   }
   if (board._tag === "Initial") {
-    return <p className="text-sm text-text-secondary">Loading your Scouts...</p>;
+    return <p className="text-body text-text-secondary">Loading your Scouts...</p>;
   }
 
   const unscouted = report.freshness === null;
@@ -99,22 +99,22 @@ export const AssignScoutPanel = ({
 
   return (
     <section aria-labelledby="assign-scout-heading">
-      <h2 id="assign-scout-heading" className="text-lg font-semibold">
+      <h2 id="assign-scout-heading" className="text-heading">
         {unscouted ? "Send a scout" : renewal ? "Renew this report" : "Assign a scout"}
       </h2>
-      <p className="mt-1 text-sm text-text-secondary">
+      <p className="mt-1 text-body text-text-secondary">
         {renewal
           ? "This reading has fallen behind the club. A scout watching it keeps the report current."
           : "A scout on a club watches its whole squad, and still counts as one scout."}
       </p>
 
       {failure !== null && (
-        <p role="alert" className="mt-2 text-sm text-text-danger">
+        <p role="alert" className="mt-2 text-body text-text-danger">
           {failure}
         </p>
       )}
 
-      <ul className="mt-3 text-sm">
+      <ul className="mt-3 text-body">
         {board.value.scouts.map((scout) => {
           const watchingThis = scout.targetClubId === report.targetClubId;
           return (

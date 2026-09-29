@@ -21,7 +21,7 @@ export const ScoutingCoverageSummary = ({ knowledge }: { readonly knowledge: Sco
   const { clubs, players } = knowledge;
   if (players.length === 0) {
     return (
-      <section aria-label="Scouting coverage" className="mt-6 text-sm text-text-secondary">
+      <section aria-label="Scouting coverage" className="mt-6 text-body text-text-secondary">
         <p>Nothing scouted yet. Every Player outside your squad is Unscouted.</p>
       </section>
     );
@@ -35,7 +35,7 @@ export const ScoutingCoverageSummary = ({ knowledge }: { readonly knowledge: Sco
   return (
     <section
       aria-label="Scouting coverage"
-      className="mt-6 rounded-panel border border-panel-border bg-card p-4 text-sm text-card-foreground shadow-panel"
+      className="mt-6 rounded-panel border border-panel-border bg-card p-4 text-body text-card-foreground shadow-panel"
     >
       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
         <dt className="text-text-secondary">Clubs with scouted Players</dt>

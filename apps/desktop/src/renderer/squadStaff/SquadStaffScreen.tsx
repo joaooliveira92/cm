@@ -8,7 +8,7 @@ export const SquadStaffScreen = ({ saveId: _saveId }: { readonly saveId: SaveId 
     aria-label="Squad Staff"
     className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
   >
-    <h1 className="text-2xl font-bold">Staff</h1>
+    <h1 className="text-title">Staff</h1>
     <p className="mt-4 text-text-secondary italic">WIP — Placeholder screen</p>
   </main>
 );

@@ -45,7 +45,7 @@ const TabsTrigger = ({ className, ref, ...props }: TabsTriggerProps) => (
   <TabsPrimitive.Tab
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all",
+      "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-body font-medium transition-all",
       "disabled:pointer-events-none disabled:opacity-50",
       FOCUS_RING,
       "group-data-[variant=default]/tabs-list:data-active:bg-background data-active:text-foreground",

@@ -20,7 +20,7 @@ test("a league row opens that club's staff page and g b returns to the league", 
 
   // The league table's one real table; the manager's own club is named in the identity band.
   const table = page.getByRole("main").getByRole("table");
-  const ownName = (await page.getByRole("banner").locator("span.truncate.text-lg.font-bold").textContent())?.trim() ?? "";
+  const ownName = (await page.getByRole("banner").locator("span.truncate.text-title").textContent())?.trim() ?? "";
 
   // Each row now carries one control per club surface, so the club-staff control is selected by
   // name rather than by being the row's only button — otherwise `.first()` can land on a
@@ -56,7 +56,7 @@ test("the user's own club row shows no [Not your club] marker", async ({ window:
   await goto(page, "league table");
   await expect(page.getByRole("heading", { name: "League Table" })).toBeVisible();
 
-  const ownName = (await page.getByRole("banner").locator("span.truncate.text-lg.font-bold").textContent())?.trim() ?? "";
+  const ownName = (await page.getByRole("banner").locator("span.truncate.text-title").textContent())?.trim() ?? "";
   expect(ownName.length).toBeGreaterThan(0);
 
   const ownRow = page

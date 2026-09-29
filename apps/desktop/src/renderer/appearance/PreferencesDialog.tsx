@@ -50,7 +50,7 @@ export const PreferencesDialog = ({ onClose }: PreferencesDialogProps) => {
         }}
       >
         <div className={MODAL_TITLE_BAND}>
-          <h2 className="font-semibold">Preferences</h2>
+          <h2 className="text-heading">Preferences</h2>
         </div>
         <div className={cn(MODAL_BODY, "flex flex-col gap-4")}>
           <SwatchGroup
@@ -96,13 +96,13 @@ const SwatchGroup = <Id extends string>({
   onChange,
 }: SwatchGroupProps<Id>) => (
   <fieldset className="flex flex-col gap-2">
-    <legend className="mb-2 text-xs font-medium text-text-secondary">{legend}</legend>
+    <legend className="mb-2 text-data font-medium text-text-secondary">{legend}</legend>
     <div className="flex flex-wrap gap-1.5">
       {options.map((option) => (
         <label
           key={option.id}
           className={cn(
-            "flex cursor-pointer items-center gap-1.5 rounded-control border px-2 py-1 text-xs",
+            "flex cursor-pointer items-center gap-1.5 rounded-control border px-2 py-1 text-data",
             "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
             option.id === value
               ? "border-primary bg-surface-raised text-text-primary"

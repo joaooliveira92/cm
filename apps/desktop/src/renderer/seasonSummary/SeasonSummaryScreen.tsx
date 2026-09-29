@@ -65,28 +65,28 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
       aria-label="Season Summary"
       className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
-      <h1 className="text-2xl font-bold">Season Summary</h1>
-      <p className="mt-1 text-sm text-text-secondary">
+      <h1 className="text-title">Season Summary</h1>
+      <p className="mt-1 text-body text-text-secondary">
         Season {summary.season.seasonNumber} &middot; {summary.season.phase.replace("_", " ")}
         {summaryResult.waiting && <span className="ml-2 text-text-muted">Refreshing…</span>}
       </p>
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle className="text-lg">{summary.clubName}</CardTitle>
+          <CardTitle className="text-heading">{summary.clubName}</CardTitle>
         </CardHeader>
         <CardContent>
-        <p className="text-sm text-text-body">
+        <p className="text-body text-text-body">
           Final League position:{" "}
           <span className="font-semibold">{summary.finalPosition ?? rank ?? "TBD"}</span>
         </p>
         {objective && (
-          <p className="mt-1 text-sm text-text-body">
+          <p className="mt-1 text-body text-text-body">
             Board Objective: finish between {objective.minPosition} and {objective.maxPosition}
           </p>
         )}
         {objective?.verdict && (
-          <p className="mt-1 text-sm">
+          <p className="mt-1 text-body">
             Verdict:{" "}
             <Badge
               variant={
@@ -102,10 +102,10 @@ export const SeasonSummaryScreen = ({ saveId }: { readonly saveId: SaveId }) => 
           </p>
         )}
         {!objective?.verdict && (
-          <p className="mt-1 text-sm text-text-muted">Verdict pending until the Season concludes.</p>
+          <p className="mt-1 text-body text-text-muted">Verdict pending until the Season concludes.</p>
         )}
 
-        <p className="mt-3 text-sm text-text-secondary">Consecutive misses: {summary.consecutiveMisses}</p>
+        <p className="mt-3 text-body text-text-secondary">Consecutive misses: {summary.consecutiveMisses}</p>
 
         {summary.managerOutcome === "warned" && (
           <Alert className="mt-2 border-text-warning/40 bg-text-warning/10 text-text-warning">

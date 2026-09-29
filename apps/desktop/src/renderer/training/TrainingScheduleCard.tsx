@@ -26,10 +26,10 @@ export const TrainingScheduleCard = ({ saveId }: { readonly saveId: SaveId }) =>
       aria-labelledby="schedule-summary-heading"
       className="rounded-panel border border-panel-border bg-card p-4 text-card-foreground shadow-panel"
     >
-      <h2 id="schedule-summary-heading" className="text-lg font-semibold">
+      <h2 id="schedule-summary-heading" className="text-heading">
         Training Schedule
       </h2>
-      <p className="mt-1 text-sm text-text-secondary">{summary}</p>
+      <p className="mt-1 text-body text-text-secondary">{summary}</p>
       <div className="mt-3">
         <Button
           type="button"

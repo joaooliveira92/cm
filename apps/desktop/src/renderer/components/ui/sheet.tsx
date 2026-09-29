@@ -82,7 +82,7 @@ interface SheetTitleProps extends React.ComponentPropsWithoutRef<typeof SheetPri
 const SheetTitle = ({ className, ref, ...props }: SheetTitleProps) => (
   <SheetPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold text-foreground", className)}
+    className={cn("text-heading text-foreground", className)}
     {...props}
   />
 );
@@ -97,7 +97,7 @@ interface SheetDescriptionProps extends React.ComponentPropsWithoutRef<
 const SheetDescription = ({ className, ref, ...props }: SheetDescriptionProps) => (
   <SheetPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-body text-muted-foreground", className)}
     {...props}
   />
 );

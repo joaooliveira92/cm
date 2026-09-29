@@ -42,7 +42,7 @@ const TransfersScreenInner = () => {
         aria-label="Transfers"
         className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <h1 className="text-2xl font-bold">Transfers</h1>
+        <h1 className="text-title">Transfers</h1>
         <Alert variant="destructive" className="mt-6">
           <p>{describeRpcError(viewError)}</p>
           <Button
@@ -66,7 +66,7 @@ const TransfersScreenInner = () => {
         aria-label="Transfers"
         className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
       >
-        <h1 className="text-2xl font-bold">Transfers</h1>
+        <h1 className="text-title">Transfers</h1>
         <div aria-busy="true" className="py-8 text-text-secondary">
           Loading transfers…
         </div>
@@ -81,18 +81,18 @@ const TransfersScreenInner = () => {
       aria-label="Transfers"
       className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
-      <h1 className="text-2xl font-bold">Transfers</h1>
-      <p className="mt-1 text-sm text-text-secondary">
+      <h1 className="text-title">Transfers</h1>
+      <p className="mt-1 text-body text-text-secondary">
         Transfer Window: {view.windowOpen ? "Open" : "Closed"} &middot; Transfer Budget:{" "}
         {formatCredits(view.transferBudgetRemaining)} &middot; Wage Budget:{" "}
         {formatCredits(view.wageBudgetUsed)} / {formatCredits(view.wageBudget)}
       </p>
-      {status && <p className="mt-1 text-sm text-text-secondary">{status}</p>}
+      {status && <p className="mt-1 text-body text-text-secondary">{status}</p>}
       {refreshState._tag === "Refreshing" && (
-        <p className="mt-1 text-sm text-text-muted">Refreshing…</p>
+        <p className="mt-1 text-body text-text-muted">Refreshing…</p>
       )}
       {refreshState._tag === "RefreshFailed" && (
-        <p className="mt-1 text-sm text-destructive">
+        <p className="mt-1 text-body text-destructive">
           {STATE_COPY["transfer-market"].refreshFailed}{" "}
           <Button
             type="button"

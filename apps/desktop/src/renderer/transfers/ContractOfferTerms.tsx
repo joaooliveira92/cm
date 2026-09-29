@@ -128,11 +128,11 @@ export const ContractOfferTerms = ({
   termsRef.current = terms;
 
   if (offerError !== null) {
-    return <p className="mt-1 text-sm text-text-secondary">{describeRpcError(offerError)}</p>;
+    return <p className="mt-1 text-body text-text-secondary">{describeRpcError(offerError)}</p>;
   }
   if (offer === undefined) {
     return (
-      <p className="mt-1 text-sm text-text-secondary">
+      <p className="mt-1 text-body text-text-secondary">
         Reading this player's contract offer&hellip;
       </p>
     );
@@ -140,12 +140,12 @@ export const ContractOfferTerms = ({
 
   return (
     <div className="mt-3" data-action-region="sign-free-agent">
-      <p className="text-sm text-text-secondary">
+      <p className="text-body text-text-secondary">
         Free Agent &mdash; signable for Credits 0. Overall Rating {formatFigure(offer.overallRating)},
         weekly wage {formatFigureCredits(offer.wage)}.
       </p>
       <div className="mt-3 flex flex-wrap items-end gap-3">
-        <label className="text-sm text-text-body" htmlFor="offer-role">
+        <label className="text-body text-text-body" htmlFor="offer-role">
           Role
           <Select
             value={role ?? ""}
@@ -169,7 +169,7 @@ export const ContractOfferTerms = ({
             </SelectContent>
           </Select>
         </label>
-        <label className="text-sm text-text-body" htmlFor="offer-years">
+        <label className="text-body text-text-body" htmlFor="offer-years">
           Length
           <Select
             value={String(years)}
@@ -193,7 +193,7 @@ export const ContractOfferTerms = ({
             </SelectContent>
           </Select>
         </label>
-        <label className="text-sm text-text-body" htmlFor="offer-wage">
+        <label className="text-body text-text-body" htmlFor="offer-wage">
           Weekly wage
           <Input
             id="offer-wage"
@@ -218,7 +218,7 @@ export const ContractOfferTerms = ({
         </Button>
       </div>
       {!wageValid && (
-        <p className="mt-2 text-sm text-text-muted">
+        <p className="mt-2 text-body text-text-muted">
           The wage must be {formatFigureCredits(offer.wage)} &mdash; what your knowledge of this
           player supports.
         </p>

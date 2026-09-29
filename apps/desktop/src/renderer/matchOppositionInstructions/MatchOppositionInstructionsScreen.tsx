@@ -8,7 +8,7 @@ export const MatchOppositionInstructionsScreen = ({ saveId: _saveId }: { readonl
     aria-label="Match Opposition Instructions"
     className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
   >
-    <h1 className="text-2xl font-bold">Match Opposition Instructions</h1>
+    <h1 className="text-title">Match Opposition Instructions</h1>
     <p className="mt-4 text-text-secondary italic">WIP — Placeholder screen</p>
   </main>
 );

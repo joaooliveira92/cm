@@ -80,13 +80,13 @@ export const CompetitionResultsScreen = ({
 
   return (
     <ResultsMain>
-      <h1 className="text-2xl font-bold">Competition Results</h1>
-      <p className="mt-1 text-sm text-text-secondary">
+      <h1 className="text-title">Competition Results</h1>
+      <p className="mt-1 text-body text-text-secondary">
         Season {view.season.seasonNumber} &middot; {played.length}{" "}
         {played.length === 1 ? "result" : "results"}
       </p>
 
-      {result.waiting && <p className="mt-2 text-sm text-text-muted">Refreshing…</p>}
+      {result.waiting && <p className="mt-2 text-body text-text-muted">Refreshing…</p>}
 
       {played.length === 0 ? (
         <p className="mt-8 text-text-secondary italic">

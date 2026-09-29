@@ -54,12 +54,12 @@ export const TrainingFocusControl = ({
         }}
       />
       {pending ? (
-        <p role="status" className="text-sm text-text-secondary">
+        <p role="status" className="text-body text-text-secondary">
           Saving Training Focus...
         </p>
       ) : null}
       {failure === null ? null : (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-body text-destructive">
           {failure}
         </p>
       )}

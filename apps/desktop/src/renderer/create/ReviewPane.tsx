@@ -121,11 +121,11 @@ export const ReviewPane = ({
             {/* The status line is polite: nothing here interrupts, and nothing here blocks Create
                 Career. */}
             {summary._tag === "Loading" ? (
-              <p role="status" className="py-2 text-sm text-text-muted">
+              <p role="status" className="py-2 text-body text-text-muted">
                 Reading the generated world…
               </p>
             ) : summary._tag === "Unavailable" ? (
-              <p role="status" className="py-2 text-sm text-text-muted">
+              <p role="status" className="py-2 text-body text-text-muted">
                 World summary unavailable. Your career is ready to create.
               </p>
             ) : (

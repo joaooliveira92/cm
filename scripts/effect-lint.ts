@@ -349,6 +349,50 @@ export function reconcileSlateBaseline(
   return out
 }
 
+// ---------------------------------------------------------------------------
+// The type-scale guard.
+//
+// The renderer's text sizes are role tokens (`text-title`, `text-heading`,
+// `text-body`, `text-data`, ... declared as `--text-*` in `index.css`). Before
+// they existed every screen picked its own Tailwind size, and the same kind of
+// text drifted to four sizes across screens. A numeric size is how that drift
+// starts again, so it is banned outright in renderer source: there is no
+// backlog, the migration landed in one change. Same literal scan and scope as
+// the slate guard, for the same hoisting reasons.
+// ---------------------------------------------------------------------------
+
+/**
+ * Tailwind's numeric font sizes and arbitrary length sizes, under any variant
+ * (`sm:text-lg`, `[&>span]:text-xs`). Colour utilities such as
+ * `text-text-secondary` are not sizes and do not match.
+ */
+const RAW_TEXT_SIZE_PATTERN =
+  /(?<![a-zA-Z0-9-])text-(?:xs|sm|base|lg|xl|[2-9]xl|2xs|\[[0-9.]+(?:px|rem|em)\])(?![a-zA-Z0-9-])/g
+
+export function lintRawTextSize(sourceFile: SourceFile, filePath: string): LintViolation[] {
+  const out: LintViolation[] = []
+  const visit = (node: Node): void => {
+    if (isStringLiteral(node) || isTemplateLiteralLikeNode(node)) {
+      const text = (node as Node & { text?: string }).text
+      if (typeof text === "string") {
+        const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
+        for (const hit of text.match(RAW_TEXT_SIZE_PATTERN) ?? []) {
+          out.push({
+            file: filePath,
+            line: line + 1,
+            rule: "no-raw-text-size",
+            message: `Raw font size \`${hit}\`. Use a type-scale role (text-title, text-heading, text-body, text-data, text-label, text-caption, ...; see index.css @theme).`,
+          })
+        }
+      }
+    }
+    node.forEachChild(visit)
+  }
+  visit(sourceFile)
+  out.sort((a, b) => a.line - b.line)
+  return out
+}
+
 /** True when the file must go through the RPC seam: renderer files outside `rpc.ts`/`rpc/`,
  *  and the keyboard-binding seam `hotkeys.ts`. All other renderer files are enforced. */
 export function isBoundaryEnforced(filePath: string): boolean {
@@ -740,6 +784,7 @@ export function lintFileSet(
       const standard = lintSourceFile(sourceFile, file)
       const boundary = isBoundaryEnforced(file) ? lintBoundary(sourceFile, file) : []
       const slate = isSlateGuarded(file) ? lintSlateClassNames(sourceFile, file) : []
+      const typeScale = isSlateGuarded(file) ? lintRawTextSize(sourceFile, file) : []
       const length = lintFileLength(sourceFile, file, cwd, options.maxFileLines)
       const pragma = lintVitestEnvironmentPragma(sourceFile, file, cwd)
       const locale = isLocaleFree(file, cwd) ? lintLocaleCompare(sourceFile, file) : []
@@ -747,14 +792,14 @@ export function lintFileSet(
       if (fixtureFiles.has(file)) {
         fixtureBoundaries.push({
           file,
-          violations: [...standard, ...boundary, ...slate, ...length, ...pragma, ...locale, ...clock],
+          violations: [...standard, ...boundary, ...slate, ...typeScale, ...length, ...pragma, ...locale, ...clock],
         })
       } else {
         // Slate sites are counted, not reported here: the backlog ratchet in
         // `main` decides which of them are a regression and which are the
         // recorded migration debt. Reporting each one would drown the gate in
         // 391 known violations.
-        treeViolations.push(...standard, ...boundary, ...length, ...pragma, ...locale, ...clock)
+        treeViolations.push(...standard, ...boundary, ...typeScale, ...length, ...pragma, ...locale, ...clock)
         if (slate.length > 0) {
           slateCounts.set(relative(cwd, file).replaceAll("\\", "/"), slate.length)
         }

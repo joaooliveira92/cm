@@ -71,7 +71,7 @@ interface DialogTitleProps extends React.ComponentPropsWithoutRef<typeof DialogP
 }
 
 const DialogTitle = ({ className, ref, ...props }: DialogTitleProps) => (
-  <DialogPrimitive.Title ref={ref} className={cn("text-lg font-semibold", className)} {...props} />
+  <DialogPrimitive.Title ref={ref} className={cn("text-heading", className)} {...props} />
 );
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
 
@@ -84,7 +84,7 @@ interface DialogDescriptionProps extends React.ComponentPropsWithoutRef<
 const DialogDescription = ({ className, ref, ...props }: DialogDescriptionProps) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-body text-muted-foreground", className)}
     {...props}
   />
 );

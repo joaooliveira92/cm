@@ -14,7 +14,7 @@ import { cn } from "../../lib/utils.js";
  */
 
 const inputVariants = cva(
-  "flex w-full rounded-control border border-border-subtle bg-field-bg text-xs text-text-primary outline-none transition-colors placeholder:text-text-muted hover:border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive",
+  "flex w-full rounded-control border border-border-subtle bg-field-bg text-data text-text-primary outline-none transition-colors placeholder:text-text-muted hover:border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive",
   {
     variants: {
       size: {
@@ -69,7 +69,7 @@ function AutocompleteStatus({ className, ...props }: AutocompletePrimitive.Statu
   return (
     <AutocompletePrimitive.Status
       data-slot="autocomplete-status"
-      className={cn("px-2 py-1.5 text-xs text-text-muted empty:m-0 empty:p-0", className)}
+      className={cn("px-2 py-1.5 text-data text-text-muted empty:m-0 empty:p-0", className)}
       {...props}
     />
   );
@@ -133,7 +133,7 @@ function AutocompleteItem({
     <AutocompletePrimitive.Item
       data-slot="autocomplete-item"
       className={cn(
-        "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-text-primary outline-none",
+        "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-data text-text-primary outline-none",
         "data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
@@ -202,7 +202,7 @@ function AutocompleteGroupLabel({
   return (
     <AutocompletePrimitive.GroupLabel
       data-slot="autocomplete-group-label"
-      className={cn("px-2 py-1.5 text-2xs font-medium text-text-muted", className)}
+      className={cn("px-2 py-1.5 text-label text-text-muted", className)}
       {...props}
     />
   );
@@ -215,7 +215,7 @@ function AutocompleteEmpty({
   return (
     <AutocompletePrimitive.Empty
       data-slot="autocomplete-empty"
-      className={cn("px-2 py-4 text-center text-xs text-text-muted empty:m-0 empty:p-0", className)}
+      className={cn("px-2 py-4 text-center text-data text-text-muted empty:m-0 empty:p-0", className)}
       {...props}
     />
   );

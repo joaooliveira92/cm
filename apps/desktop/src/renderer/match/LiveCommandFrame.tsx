@@ -34,7 +34,7 @@ export const LiveCommandFrame = ({
       className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <div className="mb-6 flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">{title}</h1>
+        <h1 className="text-title">{title}</h1>
         <Button
           type="button"
           variant="secondary"
@@ -63,20 +63,20 @@ export const LiveCommandFrame = ({
       )}
 
       {view._tag === "ready" && (
-        <div className="space-y-4 text-sm">
+        <div className="space-y-4 text-body">
           <section aria-label="Match state" className="rounded-panel border border-panel-border bg-panel-bg p-4">
             <p className="font-semibold">
               {view.score === null
                 ? `${view.match.homeClubName} v ${view.match.awayClubName}`
                 : `${view.match.homeClubName} ${view.score.homeScore} - ${view.score.awayScore} ${view.match.awayClubName}`}
             </p>
-            <p className="mt-1 text-xs text-text-secondary">
+            <p className="mt-1 text-data text-text-secondary">
               Substitutions used: {view.snapshot.subs.used}/{view.snapshot.subs.used + view.snapshot.subs.remaining}
               {" · "}Windows used: {view.snapshot.subs.windowsUsed}/
               {view.snapshot.subs.windowsUsed + view.snapshot.subs.windowsRemaining}
               {view.snapshot.subs.capReached && <span className="ml-2 text-destructive">Cap reached</span>}
             </p>
-            <label className="mt-2 flex items-center gap-2 text-xs text-text-secondary">
+            <label className="mt-2 flex items-center gap-2 text-data text-text-secondary">
               <input
                 type="checkbox"
                 checked={isHalftime}

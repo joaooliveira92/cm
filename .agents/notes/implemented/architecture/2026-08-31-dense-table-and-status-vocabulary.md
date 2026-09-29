@@ -34,7 +34,7 @@ player-status column that renders only engine-modeled state.
 
 ### Density (shared table layer)
 
-- **Row density**: `text-xs` (12px) body, `py-0.5` rows, 8px column gaps, in
+- **Row density**: `text-xs` (12px, now the `text-data` role) body, `py-0.5` rows, 8px column gaps, in
   `components/ui/table.tsx` — so every table built on the shared components inherits it and no
   screen themes its own.
 - **Column headers**: a flat bottom-divider header on the panel-border token, with the sort

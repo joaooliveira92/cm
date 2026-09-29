@@ -30,7 +30,7 @@ const messageOf = (error: RpcClientError<"getClubFinances"> | null): string =>
 
 const ClubFinancesMessage = ({ message }: { readonly message: string }) => (
   <main tabIndex={-1} data-focus-id="clubFinancesDetail" aria-label="Club Finances" className={PAGE_CLASS}>
-    <h1 className="text-2xl font-bold">Club Finances</h1>
+    <h1 className="text-title">Club Finances</h1>
     <p className="mt-4 text-text-secondary">{message}</p>
   </main>
 );
@@ -51,9 +51,9 @@ export const ClubFinancesDetailScreen = ({
 
   return (
     <main tabIndex={-1} data-focus-id="clubFinancesDetail" aria-label="Club Finances" className={PAGE_CLASS}>
-      <h1 className="text-2xl font-bold">{view.club.name}</h1>
-      {view.isUserClub ? null : <p className="mt-1 text-sm text-text-secondary">[Not your club]</p>}
-      <p className="mt-1 mb-6 text-sm text-text-secondary">
+      <h1 className="text-title">{view.club.name}</h1>
+      {view.isUserClub ? null : <p className="mt-1 text-body text-text-secondary">[Not your club]</p>}
+      <p className="mt-1 mb-6 text-body text-text-secondary">
         This club's current Transfer Budget, Wage Budget, and committed wages.
       </p>
 

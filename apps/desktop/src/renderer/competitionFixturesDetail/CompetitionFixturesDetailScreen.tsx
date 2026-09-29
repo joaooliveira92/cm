@@ -58,12 +58,12 @@ export const CompetitionFixturesDetailScreen = ({
 
   return (
     <CompetitionMain>
-      <h1 className="text-2xl font-bold">Competition Fixtures</h1>
-      <p className="mt-1 text-sm text-text-secondary">
+      <h1 className="text-title">Competition Fixtures</h1>
+      <p className="mt-1 text-body text-text-secondary">
         Season {view.season.seasonNumber} &middot; {view.fixtures.length} fixtures
       </p>
 
-      {fixturesResult.waiting && <p className="mt-2 text-sm text-text-muted">Refreshing…</p>}
+      {fixturesResult.waiting && <p className="mt-2 text-body text-text-muted">Refreshing…</p>}
 
       <CompetitionFixtureTable fixtures={view.fixtures} label="Competition Fixtures" />
     </CompetitionMain>

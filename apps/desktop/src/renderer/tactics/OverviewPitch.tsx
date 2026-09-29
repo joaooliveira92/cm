@@ -35,7 +35,7 @@ export const OverviewPitch = ({
     >
       <PitchMarkings />
       {assignments.length === 0 ? (
-        <p className="absolute inset-x-6 top-1/2 -translate-y-1/2 rounded-panel bg-black/55 px-3 py-2 text-center text-sm font-semibold text-text-bright">
+        <p className="absolute inset-x-6 top-1/2 -translate-y-1/2 rounded-panel bg-black/55 px-3 py-2 text-center text-body font-semibold text-text-bright">
           No tactic saved — set one to prepare.
         </p>
       ) : (
@@ -52,10 +52,10 @@ export const OverviewPitch = ({
                 <span className="sr-only">{spokenSlot(assignment)}</span>
                 <span
                   aria-hidden="true"
-                  className={`flex size-8 items-center justify-center rounded-full border-2 text-xs font-bold tabular-nums text-text-bright shadow-panel ${
-                    vacant
-                      ? "border-dashed border-text-bright/70 bg-transparent"
-                      : `${ratingBorder(assignment.roleRating)} ${
+                  className={`flex size-8 items-center justify-center rounded-full border-2 text-data font-bold tabular-nums text-text-bright shadow-panel ${
+ vacant
+ ? "border-dashed border-text-bright/70 bg-transparent"
+ : `${ratingBorder(assignment.roleRating)} ${
                         assignment.position === "GK" ? "bg-pitch-marker-gk" : "bg-pitch-marker"
                       }`
                   }`}
@@ -64,13 +64,13 @@ export const OverviewPitch = ({
                 </span>
                 <span
                   aria-hidden="true"
-                  className="mt-0.5 max-w-full truncate text-2xs font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
+                  className="mt-0.5 max-w-full truncate text-caption font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
                 >
                   {markerName(assignment)}
                 </span>
                 <span
                   aria-hidden="true"
-                  className="text-2xs text-text-bright/75 [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
+                  className="text-caption text-text-bright/75 [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
                 >
                   {assignment.position}
                 </span>

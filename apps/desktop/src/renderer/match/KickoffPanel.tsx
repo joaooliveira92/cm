@@ -32,7 +32,7 @@ export const KickoffPanel = () => {
   const starting = phase === "starting";
   return (
     <section className="mt-6">
-      <p className="text-lg font-semibold">
+      <p className="text-heading">
         {pending.isHome ? "Home" : "Away"} to {pending.opponentClubName}
       </p>
 
@@ -41,7 +41,7 @@ export const KickoffPanel = () => {
           {pending.blockers.map((blocker) => (
             <li key={blocker.id} className="rounded-panel border border-destructive/40 p-3">
               <p className="font-semibold text-destructive">{blocker.title}</p>
-              <p className="text-sm text-text-secondary">{blocker.detail}</p>
+              <p className="text-body text-text-secondary">{blocker.detail}</p>
             </li>
           ))}
         </ul>
@@ -52,7 +52,7 @@ export const KickoffPanel = () => {
           {pending.advisories.map((advisory) => (
             <li key={advisory.id} className="rounded-panel border border-border p-3">
               <p className="font-semibold">{advisory.title}</p>
-              <p className="text-sm text-text-secondary">{advisory.detail}</p>
+              <p className="text-body text-text-secondary">{advisory.detail}</p>
             </li>
           ))}
         </ul>

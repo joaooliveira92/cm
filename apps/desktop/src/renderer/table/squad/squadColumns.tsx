@@ -151,6 +151,28 @@ const creditsOrDash = (amount: number | null | undefined): string =>
 /** The fixed width of the pinned Name column, in px. */
 export const NAME_COLUMN_WIDTH = 176;
 
+/**
+ * The "fits the selected slot" column, drawn only while the match-day bar holds a slot selection
+ * (`squad/FitIndicator.tsx`). It is deliberately outside the preset-managed column universe in
+ * `features/visibility.ts`: it appears and disappears with a transient selection rather than with
+ * a view, so there is nothing for a preset, a show/hide control or a stored preference to own.
+ *
+ * Being outside that universe is also how it stays VISIBLE, which is the non-obvious half.
+ * `useSquadTable` builds `columnVisibility` by mapping over `SQUAD_ALL_COLUMN_IDS`, so a column
+ * absent from the list is absent from the map — and TanStack reads an absent entry as shown:
+ * `ColumnVisibility.createColumn` resolves `getState().columnVisibility?.[column.id] ?? true`.
+ * Nothing turns the mark on; it is on by not being mentioned.
+ *
+ * So do not add `fit` to the map. `columnVisibility` reads as authoritative — it is one object
+ * holding one boolean per column — and "this column is always visible" looks like `fit: true`
+ * there. That is not merely redundant: `fit: false` is the symmetric reading of a column the
+ * roster does not manage, it would hide the mark outright, and a mark nobody can see is the one
+ * bug the whole feature cannot survive. Absence is the mechanism. If a future change needs the
+ * column to be hideable, it becomes a managed column and joins `SQUAD_ALL_COLUMN_IDS` with a
+ * default of `true` in every preset.
+ */
+export const SQUAD_FIT_COLUMN_ID = "fit";
+
 /** The legend disclosure state the Status header renders against. Owned by the
  *  own-club screen, because the legend itself renders outside the scroll container. */
 export interface StatusLegendControl {
@@ -175,6 +197,14 @@ export interface SquadColumnsOptions {
     readonly Cell: ComponentType<{ readonly rowId: string }>;
     readonly width: number;
   };
+  /** The "fits the selected slot" cell, present only while the match-day bar holds a slot
+   *  selection. Passed in for the same reason as `matchDay`: which rows fit is the Squad screen's
+   *  state, and the table layer must not import it to say so. Omit it and the column is not
+   *  defined at all — the indicator's lifetime is the selection's, not a visibility setting's. */
+  readonly fit?: {
+    readonly Cell: ComponentType<{ readonly rowId: string }>;
+    readonly width: number;
+  };
 }
 
 export const squadColumns = ({
@@ -182,6 +212,7 @@ export const squadColumns = ({
   sortable,
   legend,
   matchDay,
+  fit,
 }: SquadColumnsOptions): ReadonlyArray<ColumnDef<SquadRow, unknown>> => {
   const statusColumn: ReadonlyArray<ColumnDef<SquadRow, unknown>> =
     ownClub && legend !== undefined
@@ -228,6 +259,31 @@ export const squadColumns = ({
         ]
       : [];
 
+  /** The fit mark, drawn only while a slot is selected. Sorted with the match-day indicator and
+   *  pinned beside it, so the answer to "who fits here" stays on screen while the attribute
+   *  columns scroll — the same standing guarantee the indicator itself gets. */
+  const fitColumn: ReadonlyArray<ColumnDef<SquadRow, unknown>> =
+    ownClub && fit !== undefined
+      ? [
+          {
+            id: SQUAD_FIT_COLUMN_ID,
+            header: () => (
+              <span title="Fits the selected position">
+                <span aria-hidden="true">★</span>
+                <span className="sr-only">Fits the selected position</span>
+              </span>
+            ),
+            cell: (info) => <fit.Cell rowId={info.row.original.id} />,
+            // Read-only, and ordered by the slot's Familiarity Tier rather than by any value a
+            // sort could compare — the tier is the mark's job, and re-ordering a column the
+            // screen is already re-ordering would let the two disagree.
+            enableSorting: false,
+            enablePinning: true,
+            size: fit.width,
+          },
+        ]
+      : [];
+
   const attributeColumns: ReadonlyArray<ColumnDef<SquadRow, unknown>> = ALL_ATTRIBUTES.map(
     (attribute): ColumnDef<SquadRow, unknown> => ({
       id: attribute,
@@ -248,6 +304,7 @@ export const squadColumns = ({
 
   return [
     ...matchDayColumn,
+    ...fitColumn,
     {
       id: "name",
       accessorFn: (row) => `${row.firstName} ${row.lastName}`,

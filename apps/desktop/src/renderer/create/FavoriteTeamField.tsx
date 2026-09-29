@@ -188,7 +188,7 @@ export const FavoriteTeamField = ({
                         />
                         <div className="min-w-0 flex-1">
                           <div className="truncate">{item.club.clubName}</div>
-                          <div className="truncate text-2xs text-text-muted">{item.leagueName}</div>
+                          <div className="truncate text-caption text-text-muted">{item.leagueName}</div>
                         </div>
                       </AutocompleteItem>
                     )}
@@ -199,7 +199,7 @@ export const FavoriteTeamField = ({
           </AutocompleteContent>
         </Autocomplete>
       </div>
-      <p className="mt-2 text-xs text-text-muted">
+      <p className="mt-2 text-data text-text-muted">
         Leave blank if you don&apos;t support a club.
       </p>
     </div>

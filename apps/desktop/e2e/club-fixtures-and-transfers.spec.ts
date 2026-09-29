@@ -20,7 +20,7 @@ test("a league row opens that club's fixtures and its transfers", async ({
 
   const table = page.getByRole("main").getByRole("table");
   const ownName =
-    (await page.getByRole("banner").locator("span.truncate.text-lg.font-bold").textContent())?.trim() ?? "";
+    (await page.getByRole("banner").locator("span.truncate.text-title").textContent())?.trim() ?? "";
 
   const rivalFixtures = table
     .getByRole("button", { name: /— club fixtures$/ })

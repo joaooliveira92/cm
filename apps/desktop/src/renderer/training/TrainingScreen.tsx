@@ -89,10 +89,10 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       tabIndex={-1}
     >
       <header>
-        <h1 id="training-overview-heading" className="text-2xl font-bold">
+        <h1 id="training-overview-heading" className="text-title">
           Training Overview
         </h1>
-        <p className="mt-1 text-sm text-text-secondary">
+        <p className="mt-1 text-body text-text-secondary">
           Team training, workload, and player development at a glance
         </p>
       </header>
@@ -105,14 +105,14 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           aria-labelledby="coaching-summary-heading"
           className="rounded-panel border border-panel-border bg-card p-4 text-card-foreground shadow-panel"
         >
-          <h2 id="coaching-summary-heading" className="text-lg font-semibold">
+          <h2 id="coaching-summary-heading" className="text-heading">
             Coaching Staff
           </h2>
           {coaches.length === 0 ? (
-            <p className="mt-2 text-sm italic text-text-secondary">No coaching staff assigned yet.</p>
+            <p className="mt-2 text-body italic text-text-secondary">No coaching staff assigned yet.</p>
           ) : (
             <>
-              <p className="mt-1 text-sm text-text-secondary">
+              <p className="mt-1 text-body text-text-secondary">
                 {coaches.length} {coaches.length === 1 ? "coach" : "coaches"} on staff
               </p>
               <ul className="mt-3 space-y-2" aria-label="Coach preview">
@@ -136,7 +136,7 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   />
                 ))}
                 {coaches.length > MAX_COACH_PREVIEW && (
-                  <p className="text-xs text-text-secondary italic">
+                  <p className="text-data text-text-secondary italic">
                     +{coaches.length - MAX_COACH_PREVIEW} more
                   </p>
                 )}
@@ -162,14 +162,14 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           aria-labelledby="workload-summary-heading"
           className="rounded-panel border border-panel-border bg-card p-4 text-card-foreground shadow-panel"
         >
-          <h2 id="workload-summary-heading" className="text-lg font-semibold">
+          <h2 id="workload-summary-heading" className="text-heading">
             Workload and Recovery
           </h2>
           {players.length === 0 ? (
-            <p className="mt-2 text-sm italic text-text-secondary">No players in your squad.</p>
+            <p className="mt-2 text-body italic text-text-secondary">No players in your squad.</p>
           ) : (
             <>
-              <p className="mt-1 text-sm text-text-secondary">
+              <p className="mt-1 text-body text-text-secondary">
                 {restingCount} {restingCount === 1 ? "player needs" : "players need"} rest
               </p>
               <ul className="mt-3 space-y-2" aria-label="Workload preview">
@@ -179,7 +179,7 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                     const value = displayCondition(player.condition);
                     const status = recoveryStatus(player.recovery, player.lastInjurySeverity);
                     return (
-                      <li key={player.id} className="flex items-center justify-between gap-2 text-sm">
+                      <li key={player.id} className="flex items-center justify-between gap-2 text-body">
                         <span className="truncate font-medium text-text-primary">{name}</span>
                         <span className="tabular-nums text-text-secondary">{value}% — {status.label}</span>
                       </li>
@@ -187,7 +187,7 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   },
                 )}
                 {players.length > MAX_PLAYER_PREVIEW && (
-                  <p className="text-xs text-text-secondary italic">
+                  <p className="text-data text-text-secondary italic">
                     +{players.length - MAX_PLAYER_PREVIEW} more
                   </p>
                 )}
@@ -213,14 +213,14 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           aria-labelledby="plans-summary-heading"
           className="rounded-panel border border-panel-border bg-card p-4 text-card-foreground shadow-panel"
         >
-          <h2 id="plans-summary-heading" className="text-lg font-semibold">
+          <h2 id="plans-summary-heading" className="text-heading">
             Training Plans
           </h2>
           {developmentPlayers.length === 0 ? (
-            <p className="mt-2 text-sm italic text-text-secondary">No players in your squad.</p>
+            <p className="mt-2 text-body italic text-text-secondary">No players in your squad.</p>
           ) : (
             <>
-              <p className="mt-1 text-sm text-text-secondary">
+              <p className="mt-1 text-body text-text-secondary">
                 {developmentPlayers.length} {developmentPlayers.length === 1 ? "player" : "players"}
               </p>
               <ul className="mt-3 space-y-2" aria-label="Training plan preview">
@@ -231,8 +231,8 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                       <li key={player.id}>
                         <div className="rounded-panel border border-panel-border bg-card p-3 text-card-foreground shadow-sm">
                           <div className="flex items-center justify-between gap-3">
-                            <h3 className="truncate text-base font-semibold text-text-primary">{name}</h3>
-                            <span className="rounded-control bg-panel-bg px-2 py-0.5 text-sm font-medium text-text-secondary">
+                            <h3 className="truncate text-heading text-text-primary">{name}</h3>
+                            <span className="rounded-control bg-panel-bg px-2 py-0.5 text-body font-medium text-text-secondary">
                               {describeFocus(player.trainingFocus)}
                             </span>
                           </div>
@@ -256,7 +256,7 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   },
                 )}
                 {developmentPlayers.length > MAX_PLAYER_PREVIEW && (
-                  <p className="text-xs text-text-secondary italic">
+                  <p className="text-data text-text-secondary italic">
                     +{developmentPlayers.length - MAX_PLAYER_PREVIEW} more players
                   </p>
                 )}
@@ -270,14 +270,14 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           aria-labelledby="development-summary-heading"
           className="rounded-panel border border-panel-border bg-card p-4 text-card-foreground shadow-panel"
         >
-          <h2 id="development-summary-heading" className="text-lg font-semibold">
+          <h2 id="development-summary-heading" className="text-heading">
             Player Development
           </h2>
           {developmentPlayers.length === 0 ? (
-            <p className="mt-2 text-sm italic text-text-secondary">No development data yet.</p>
+            <p className="mt-2 text-body italic text-text-secondary">No development data yet.</p>
           ) : (
             <>
-              <p className="mt-1 text-sm text-text-secondary">
+              <p className="mt-1 text-body text-text-secondary">
                 {withChanges} {withChanges === 1 ? "player has" : "players have"} Attribute changes
               </p>
               <ul className="mt-3 space-y-2" aria-label="Development preview">
@@ -296,7 +296,7 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                       ? "No comparison yet"
                       : describeLatestDevelopment(player.latestSeason);
                     return (
-                      <li key={player.id} className="text-sm">
+                      <li key={player.id} className="text-body">
                         <span className="font-medium text-text-primary">
                           {player.firstName} {player.lastName}
                         </span>
@@ -306,7 +306,7 @@ export const TrainingScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   },
                 )}
                 {developmentPlayers.length > MAX_PLAYER_PREVIEW && (
-                  <p className="text-xs text-text-secondary italic">
+                  <p className="text-data text-text-secondary italic">
                     +{developmentPlayers.length - MAX_PLAYER_PREVIEW} more
                   </p>
                 )}
@@ -338,7 +338,7 @@ const describeFocus = (focus: TrainingFocusValue): string =>
 /** The non-`ready` states, rendered as a labelled `<main>` region carrying one line. */
 const TrainingMessage = ({ message }: { readonly message: string }) => (
   <main className={PAGE_CLASS} tabIndex={-1} data-focus-id="training" aria-label="Training overview">
-    <h1 className="text-2xl font-bold">Training Overview</h1>
+    <h1 className="text-title">Training Overview</h1>
     <p className="mt-4 text-text-secondary italic">{message}</p>
   </main>
 );

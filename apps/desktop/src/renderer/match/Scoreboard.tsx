@@ -30,7 +30,7 @@ export interface ScoreboardProps {
 }
 
 const ScoreBox = ({ score }: { readonly score: number }) => (
-  <span className="flex h-10 w-11 shrink-0 items-center justify-center rounded-control border border-black/30 bg-scoreboard-box text-xl font-bold tabular-nums text-scoreboard-box-text shadow-inner">
+  <span className="flex h-10 w-11 shrink-0 items-center justify-center rounded-control border border-black/30 bg-scoreboard-box text-figure tabular-nums text-scoreboard-box-text shadow-inner">
     {score}
   </span>
 );
@@ -48,7 +48,7 @@ export const Scoreboard = ({ home, away, status, onOpen }: ScoreboardProps) => (
         className="club-header flex min-w-0 flex-1 items-center justify-between gap-3 bg-header-bg pr-2 pl-4 text-header-fg"
         style={clubHeaderStyle(home.colours)}
       >
-        <span className="truncate text-lg font-bold">{home.name}</span>
+        <span className="truncate text-title">{home.name}</span>
         <ScoreBox score={home.score} />
       </span>
       <span
@@ -56,9 +56,9 @@ export const Scoreboard = ({ home, away, status, onOpen }: ScoreboardProps) => (
         style={clubHeaderStyle(away.colours)}
       >
         <ScoreBox score={away.score} />
-        <span className="truncate text-right text-lg font-bold">{away.name}</span>
+        <span className="truncate text-right text-title">{away.name}</span>
       </span>
     </button>
-    <span className="w-10 shrink-0 text-center text-sm font-semibold tabular-nums text-header-fg">{status}</span>
+    <span className="w-10 shrink-0 text-center text-body font-semibold tabular-nums text-header-fg">{status}</span>
   </section>
 );

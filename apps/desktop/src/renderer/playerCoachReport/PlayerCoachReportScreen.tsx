@@ -67,13 +67,13 @@ export const PlayerCoachReportScreen = ({
       aria-labelledby="performance-report-heading"
       className={PAGE_CLASS}
     >
-      <h1 id="performance-report-heading" className="text-2xl font-bold">
+      <h1 id="performance-report-heading" className="text-title">
         {name} — Performance Report
       </h1>
 
       <div className="mt-6 grid max-w-4xl gap-6 sm:grid-cols-2">
         <section aria-labelledby="report-focus-heading">
-          <h2 id="report-focus-heading" className="text-lg font-semibold">
+          <h2 id="report-focus-heading" className="text-heading">
             Training Focus
           </h2>
           <div className="mt-3">
@@ -82,7 +82,7 @@ export const PlayerCoachReportScreen = ({
         </section>
 
         <section aria-labelledby="report-coach-heading">
-          <h2 id="report-coach-heading" className="text-lg font-semibold">
+          <h2 id="report-coach-heading" className="text-heading">
             Coach quality
           </h2>
           <div className="mt-3">
@@ -92,10 +92,10 @@ export const PlayerCoachReportScreen = ({
       </div>
 
       <section className="mt-8 max-w-2xl" aria-labelledby="report-progress-heading">
-        <h2 id="report-progress-heading" className="text-lg font-semibold">
+        <h2 id="report-progress-heading" className="text-heading">
           Development Progress
         </h2>
-        <p className="mt-1 text-sm text-text-secondary">
+        <p className="mt-1 text-body text-text-secondary">
           The Attribute changes Player Development recorded when each Season concluded.
         </p>
         <div className="mt-3">
@@ -134,14 +134,14 @@ const CoachQualityCard = ({ saveId, playerId }: { readonly saveId: SaveId; reado
   return (
     <CoachQualityShell>
       <div className="flex items-baseline gap-1.5">
-        <span className="text-2xl font-bold tabular-nums text-text-primary">{quality}</span>
-        <span className="text-sm text-text-secondary">/ 20</span>
+        <span className="text-figure tabular-nums text-text-primary">{quality}</span>
+        <span className="text-body text-text-secondary">/ 20</span>
       </div>
       {/* Decorative: the value is already in text above, so the bar adds no second reading. */}
       <div aria-hidden="true" className="mt-2 h-2 w-full overflow-hidden rounded-full bg-panel-bg">
         <div className="h-full rounded-full bg-primary" style={{ width: `${(quality / 20) * 100}%` }} />
       </div>
-      <p className="mt-2 text-xs text-text-secondary">
+      <p className="mt-2 text-data text-text-secondary">
         Scales the club's Player Development when each Season concludes.
       </p>
     </CoachQualityShell>
@@ -160,12 +160,12 @@ const CoachQualityShell = ({ children }: { readonly children: ReactNode }) => (
 const DevelopmentProgress = ({ saveId, playerId }: { readonly saveId: SaveId; readonly playerId: PlayerId }) => {
   const result = useAtomValue(playerDevelopmentHistoryAtom(saveId, playerId));
   if (result._tag === "Initial") {
-    return <p className="text-sm text-text-secondary">Loading development progress...</p>;
+    return <p className="text-body text-text-secondary">Loading development progress...</p>;
   }
   if (result._tag === "Failure") {
     const error = typedError(result);
     return (
-      <p className="text-sm text-text-secondary">
+      <p className="text-body text-text-secondary">
         {error === null ? "Development progress could not be loaded." : describeRpcError(error)}
       </p>
     );
@@ -176,7 +176,7 @@ const DevelopmentProgress = ({ saveId, playerId }: { readonly saveId: SaveId; re
 const SeasonList = ({ history }: { readonly history: PlayerDevelopmentHistoryView }) => {
   if (history.seasons.length === 0) {
     return (
-      <p className="text-sm text-text-secondary">
+      <p className="text-body text-text-secondary">
         No Season has concluded with this player at your club yet, so no development is recorded.
       </p>
     );
@@ -189,12 +189,12 @@ const SeasonList = ({ history }: { readonly history: PlayerDevelopmentHistoryVie
           aria-labelledby={`season-${season.seasonNumber}-heading`}
           className="rounded-panel border border-panel-border bg-card p-4 text-card-foreground shadow-panel"
         >
-          <h3 id={`season-${season.seasonNumber}-heading`} className="text-base font-semibold">
+          <h3 id={`season-${season.seasonNumber}-heading`} className="text-heading">
             Season {season.seasonNumber}
           </h3>
-          <p className="mt-1 text-xs text-text-secondary">{describeComparison(season)}</p>
+          <p className="mt-1 text-data text-text-secondary">{describeComparison(season)}</p>
           {season.changes.length > 0 ? (
-            <ul aria-label={`Season ${season.seasonNumber} Attribute changes`} className="mt-2 space-y-1 text-sm">
+            <ul aria-label={`Season ${season.seasonNumber} Attribute changes`} className="mt-2 space-y-1 text-body">
               {season.changes.map((change) => (
                 <li key={change.attribute} className="tabular-nums">
                   {describeAttributeChange(change)}
@@ -220,7 +220,7 @@ const ReportMessage = ({ message }: { readonly message: string }) => (
     aria-label="Performance Report"
     className={PAGE_CLASS}
   >
-    <h1 className="text-2xl font-bold">Performance Report</h1>
+    <h1 className="text-title">Performance Report</h1>
     <p className="mt-4 text-text-secondary italic">{message}</p>
   </main>
 );

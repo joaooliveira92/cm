@@ -22,7 +22,7 @@ import { capitalize, ratingFill, ratingText, roleLabel } from "./overviewFormat.
 type View = { readonly view: TacticsOverviewView };
 
 const CardHeading = ({ children }: { readonly children: ReactNode }) => (
-  <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">{children}</h2>
+  <h2 className="text-overline uppercase text-text-secondary">{children}</h2>
 );
 
 export const FormationCard = ({ view }: View) => (
@@ -31,7 +31,7 @@ export const FormationCard = ({ view }: View) => (
       <div className="mb-2 flex items-baseline justify-between">
         <CardHeading>Formation</CardHeading>
         {view.formation !== null && (
-          <span className="text-lg font-bold tabular-nums">
+          <span className="text-figure tabular-nums">
             {view.formation.formation}
             {isCustomShape(
               view.formation.formation,
@@ -75,14 +75,14 @@ export const SelectionCard = ({ view }: View) => {
       <CardContent className="pt-2">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <CardHeading>Selection</CardHeading>
-          <p className="text-sm font-semibold tabular-nums">
+          <p className="text-body font-semibold tabular-nums">
             {view.selection.starters.length} starters · {view.selection.substitutes.length} substitutes
           </p>
         </div>
         {view.assignments.length === 0 ? (
           <p className="mt-2 text-text-body">No starters selected.</p>
         ) : (
-          <Table className="mt-2 min-w-full text-left text-sm">
+          <Table className="mt-2 min-w-full text-left text-body">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-10 pr-2">Pos</TableHead>
@@ -116,17 +116,17 @@ export const SelectionCard = ({ view }: View) => {
           </Table>
         )}
         {roleAverage !== null && (
-          <p className="mt-2 text-right text-sm text-text-secondary">
+          <p className="mt-2 text-right text-body text-text-secondary">
             Average role rating{" "}
             <span className={`font-semibold tabular-nums ${ratingText(roleAverage)}`}>{roleAverage}</span>
           </p>
         )}
         <div className="mt-3 border-t border-dashed border-border-subtle pt-2">
-          <h3 className="text-sm font-semibold">Substitutes</h3>
+          <h3 className="text-heading">Substitutes</h3>
           {view.selection.substitutes.length === 0 ? (
-            <p className="text-sm text-text-secondary">Everyone is a starter.</p>
+            <p className="text-body text-text-secondary">Everyone is a starter.</p>
           ) : (
-            <ul aria-label="Substitutes" className="mt-1 flex flex-wrap gap-1.5 text-sm">
+            <ul aria-label="Substitutes" className="mt-1 flex flex-wrap gap-1.5 text-body">
               {view.selection.substitutes.map((player) => (
                 <li
                   key={player.id}
@@ -155,7 +155,7 @@ const InstructionScale = ({
   readonly value: string;
 }) => (
   <div>
-    <div className="flex justify-between text-sm">
+    <div className="flex justify-between text-body">
       <dt className="text-text-secondary">{label}</dt>
       <dd className="font-semibold">{capitalize(value)}</dd>
     </div>
@@ -221,7 +221,7 @@ export const FamiliarityCard = ({ view }: View) => {
                 ))}
               </div>
             )}
-            <dl className="mt-2 space-y-0.5 text-sm">
+            <dl className="mt-2 space-y-0.5 text-body">
               {FAMILIARITY_TIERS.map((tier) => (
                 <div key={tier.key} className="flex items-center justify-between">
                   <dt className="flex items-center gap-2 text-text-secondary">
@@ -297,7 +297,7 @@ export const IssuesPanel = ({
     <h2 id="overview-issues-heading" className="sr-only">
       Outstanding issues
     </h2>
-    <ul className="grid gap-2 text-sm lg:grid-cols-2">
+    <ul className="grid gap-2 text-body lg:grid-cols-2">
       {view.issues.map((issue) => {
         const route = ISSUE_DESTINATION[issue.destination ?? ""];
         const issueId = `overview-issue-${issue.id}`;
@@ -324,7 +324,7 @@ export const IssuesPanel = ({
                 <button
                   type="button"
                   aria-describedby={issueId}
-                  className={`text-sm underline underline-offset-2 hover:text-text-primary ${FOCUS_RING.join(" ")}`}
+                  className={`text-body underline underline-offset-2 hover:text-text-primary ${FOCUS_RING.join(" ")}`}
                   onClick={(event) =>
                     onOpen({ type: route, saveId } as CareerDestination, event)
                   }

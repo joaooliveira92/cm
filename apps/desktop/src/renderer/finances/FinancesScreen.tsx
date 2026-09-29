@@ -29,7 +29,7 @@ const messageOf = (error: RpcClientError<"getSquad"> | null): string =>
 
 const FinancesMessage = ({ message }: { readonly message: string }) => (
   <main tabIndex={-1} data-focus-id="finances" aria-label="Finances" className={PAGE_CLASS}>
-    <h1 className="text-2xl font-bold">Finances</h1>
+    <h1 className="text-title">Finances</h1>
     <p className="mt-4 text-text-secondary">{message}</p>
   </main>
 );

@@ -27,7 +27,7 @@ const TooltipContent = ({
       <TooltipPrimitive.Popup
         ref={ref}
         className={cn(
-          "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-xs text-popover-foreground",
+          "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-data text-popover-foreground",
           "animate-in fade-in-0 zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className,
         )}

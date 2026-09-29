@@ -67,18 +67,18 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   return (
     <LeagueMain>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">League Table</h1>
+        <h1 className="text-title">League Table</h1>
         {/* The season readout only. Time advances from the chrome's Continue, on
             every career route — a second control here made the League table a
             place time is advanced from, and made which control the player used
             decide whether a failed advance was reported at all. */}
-        <span className="text-sm text-text-secondary">
+        <span className="text-body text-text-secondary">
           Season {table.season.seasonNumber} &middot; {formatCalendarDate(table.season.currentDate)}{" "}
           &middot; {table.season.phase.replace("_", " ")}
         </span>
       </div>
 
-      {tableResult.waiting && <p className="mt-2 text-sm text-text-muted">Refreshing…</p>}
+      {tableResult.waiting && <p className="mt-2 text-body text-text-muted">Refreshing…</p>}
 
       <div className="mt-6 overflow-x-auto">
         <Table className="min-w-full text-left">
@@ -124,7 +124,7 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   </button>
                   <button
                     type="button"
-                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
                     aria-label={`${row.clubName} — scout report`}
                     onClick={(event) =>
                       navigateCareer(
@@ -143,7 +143,7 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                       not this ticket's. */}
                   <button
                     type="button"
-                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
                     aria-label={`${row.clubName} — club information`}
                     onClick={(event) =>
                       navigateCareer(
@@ -156,7 +156,7 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   </button>
                   <button
                     type="button"
-                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
                     aria-label={`${row.clubName} — club fixtures`}
                     onClick={(event) =>
                       navigateCareer(
@@ -169,7 +169,7 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   </button>
                   <button
                     type="button"
-                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
                     aria-label={`${row.clubName} — club transfers`}
                     onClick={(event) =>
                       navigateCareer(
@@ -182,7 +182,7 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                   </button>
                   <button
                     type="button"
-                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
                     aria-label={`${row.clubName} — club finances`}
                     onClick={(event) =>
                       navigateCareer(
@@ -201,7 +201,7 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
                       Squad section instead. */}
                   <button
                     type="button"
-                    className="ml-2 text-xs text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
                     aria-label={`${row.clubName} — club squad`}
                     onClick={(event) =>
                       navigateCareer(

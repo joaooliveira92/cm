@@ -58,8 +58,8 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
       aria-label="Fixtures"
       className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
-      <h1 className="text-2xl font-bold">Fixtures</h1>
-      <p className="mt-1 text-sm text-text-secondary">
+      <h1 className="text-title">Fixtures</h1>
+      <p className="mt-1 text-body text-text-secondary">
         Season {fixtures.season.seasonNumber} &middot; {fixtures.fixtures.length} fixtures
         {fixturesResult.waiting && (
           <span className="ml-2 inline-flex items-center gap-1 text-text-muted">

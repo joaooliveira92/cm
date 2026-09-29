@@ -84,7 +84,7 @@ export const CareerSidebarFooter = ({ manager }: { readonly manager: SidebarMana
             >
               <span
                 aria-hidden="true"
-                className="flex size-8 shrink-0 items-center justify-center rounded-md text-xs font-semibold"
+                className="flex size-8 shrink-0 items-center justify-center rounded-md text-data font-semibold"
                 style={{ backgroundColor: manager.primaryColor, color: manager.secondaryColor }}
               >
                 {initialsOf(manager)}
@@ -93,7 +93,7 @@ export const CareerSidebarFooter = ({ manager }: { readonly manager: SidebarMana
                 <span className="truncate font-medium">
                   {manager.firstName} {manager.lastName}
                 </span>
-                <span className="truncate text-xs text-text-secondary">
+                <span className="truncate text-data text-text-secondary">
                   {tenureOf(manager.tenureSeasons)}
                 </span>
               </span>

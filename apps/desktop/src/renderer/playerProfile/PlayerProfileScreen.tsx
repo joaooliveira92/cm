@@ -88,7 +88,7 @@ const PositionsPanel = ({ profile }: { readonly profile: PlayerProfileView }) =>
       profile.positions.map((entry) => (
         <div
           key={entry.position}
-          className="flex items-baseline justify-between gap-4 py-0.5 text-sm"
+          className="flex items-baseline justify-between gap-4 py-0.5 text-body"
         >
           <dt className={FAMILIARITY_TONE[entry.familiarity]}>{entry.position}</dt>
           <dd className="font-semibold text-text-highlight">{tierLabel(entry.familiarity)}</dd>

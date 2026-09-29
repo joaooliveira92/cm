@@ -20,7 +20,9 @@
  * `.agents/notes/proposed/architecture/2026-08-31-shadcn-component-adoption.md`.
  *
  * Every class here resolves through the `@theme` tokens in `index.css`, so a
- * skin override repaints all of them without editing this file.
+ * skin override repaints all of them without editing this file. Text sizes do
+ * too: they are the type-scale roles (`text-label`, `text-data`, ...) declared
+ * there, never Tailwind's numeric `text-xs`/`text-sm`.
  */
 
 /** A content-bearing area: semi-transparent surface, light rim, compact padding. */
@@ -41,11 +43,11 @@ export const PANEL_CHROME =
  * primary is a design bug, not a styling choice.
  */
 export const BTN_PRIMARY =
-  "rounded-control bg-primary px-3 py-1 text-primary-foreground hover:bg-primary/90 active:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50";
+  "rounded-control bg-primary px-3 py-1 text-label text-primary-foreground hover:bg-primary/90 active:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50";
 
 /** Everything else: Cancel, Retry, inline actions. Flat, no shadow. */
 export const BTN_SECONDARY =
-  "rounded-control bg-surface-raised px-3 py-1 text-text-primary hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50";
+  "rounded-control bg-surface-raised px-3 py-1 text-label text-text-primary hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50";
 
 /** The chrome band: the gradient row every shell caps with. One surface shared
  *  by the career chrome's title bar, the pre-career creation band, and the boot
@@ -116,17 +118,17 @@ export const MODAL_TITLE_BAND =
 export const MODAL_BODY = "px-3 py-3";
 
 /** A shareable form-field surface: opaque background (`bg-field-bg`), a thin
- *  rim, the single `:focus-visible` ring, and 12px text — so every input,
+ *  rim, the single `:focus-visible` ring, and `text-data` — so every input,
  *  select, and textarea in the creation flow and beyond reads consistently
  *  without a field component library. */
 export const FIELD_INPUT =
-  "flex h-7 w-full rounded-control border border-border-subtle bg-field-bg px-2 py-1 text-xs transition-colors";
+  "flex h-7 w-full rounded-control border border-border-subtle bg-field-bg px-2 py-1 text-data transition-colors";
 
 export const FIELD_SELECT =
-  "flex h-8 w-full items-center justify-between gap-2 rounded-control border border-border-subtle bg-field-bg px-2 text-xs text-text-primary outline-none transition-colors hover:border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 data-[placeholder]:text-text-muted";
+  "flex h-8 w-full items-center justify-between gap-2 rounded-control border border-border-subtle bg-field-bg px-2 text-data text-text-primary outline-none transition-colors hover:border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 data-[placeholder]:text-text-muted";
 
 export const FIELD_LABEL =
-  "text-xs font-medium text-text-secondary";
+  "text-label text-text-secondary";
 
 export const FIELD_RIM =
   "border border-border-subtle rounded-control";

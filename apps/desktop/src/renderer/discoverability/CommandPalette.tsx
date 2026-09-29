@@ -152,11 +152,11 @@ export const CommandPalette = ({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Type a command…"
-          className={`border-b border-border-subtle bg-transparent px-4 py-3 text-base text-text-primary placeholder:text-text-muted focus:outline-none ${FOCUS_RING.join(" ")}`}
+          className={`border-b border-border-subtle bg-transparent px-4 py-3 text-body text-text-primary placeholder:text-text-muted focus:outline-none ${FOCUS_RING.join(" ")}`}
         />
         <div id="palette-options" role="listbox" className="flex-1 overflow-y-auto">
           {ranked.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-text-muted">No matching commands</p>
+            <p className="px-4 py-6 text-center text-body text-text-muted">No matching commands</p>
           ) : (
             ranked.map((entry, index) => {
               const { action, available, reason } = entry;
@@ -169,9 +169,9 @@ export const CommandPalette = ({
                   aria-selected={selected}
                   aria-disabled={!available}
                   data-action-id={action.id}
-                  className={`flex items-center justify-between gap-3 px-4 py-2 text-sm ${
-                    selected ? "bg-surface" : ""
-                  } ${available ? "text-text-primary" : "text-text-muted"}`}
+                  className={`flex items-center justify-between gap-3 px-4 py-2 text-body ${
+ selected ? "bg-surface" : ""
+ } ${available ? "text-text-primary" : "text-text-muted"}`}
                   onMouseDown={() => {
                     if (available) {
                       onClose();
@@ -190,7 +190,7 @@ export const CommandPalette = ({
                   </span>
                   <span className="flex shrink-0 items-center gap-2">
                     {!available && reason !== null && (
-                      <span className="max-w-[14rem] truncate text-xs text-destructive">{reason}</span>
+                      <span className="max-w-[14rem] truncate text-data text-destructive">{reason}</span>
                     )}
                     {action.binding !== undefined && (
                       <Kbd>{action.binding}</Kbd>

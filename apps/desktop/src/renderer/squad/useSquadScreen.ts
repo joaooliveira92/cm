@@ -8,7 +8,10 @@
  * - `useSquadColumns` — the presentation preferences (view, column presets,
  *   status-legend disclosure).
  * - `useSquadAnnouncements` — the one polite screen-reader announcer.
- * - `useSquadTable` — the TanStack table wiring (columns, visibility, row ids).
+ * - `useSquadTable` — the TanStack table wiring (columns, visibility, pinning).
+ * - `useLineupFit` — the ephemeral selected-starter-slot, and with it the
+ *   `readoutOf` / `displayRows` pair that turns that slot into the FIT mark and
+ *   the re-ordered rows the focus universe walks.
  *
  * The assembly keeps what genuinely stitches those together: the atom data +
  * derived view state, the focus bookmarks, the callbacks that cross a concern
@@ -17,6 +20,7 @@
  * `SquadProvider`; the shared shapes live in `squadScreenTypes.ts`.
  */
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import type { Row as TanStackRow } from "@tanstack/react-table";
 import type { PlayerId, SaveId, SquadPlayerView } from "@cm-clone/contracts";
 import type { Attribute } from "@cm-clone/shared";
 import { Option } from "effect";
@@ -63,6 +67,8 @@ import {
 } from "../table/columnPreferences.js";
 import { useTacticDraft } from "../tactics/useTacticDraft.js";
 import { assistantLineupOf } from "./lineupEdits.js";
+import { useLineupFit } from "./useLineupFit.js";
+import { prioritiseForPosition, type LineupFit, type LineupFitReadout } from "./lineupFit.js";
 import {
   discardSelectionForNavigation,
 } from "../table/tableState.js";
@@ -98,6 +104,39 @@ const REGION = "squadTable";
  *  player; distinct ids are enforced client-side and server-side). */
 const SAVE_FAILURE =
   "Failed to save lineup — every slot must name a distinct, still-registered player.";
+
+/**
+ * What the roster publishes for the selected slot: the slot itself, plus which of the rows on
+ * screen can fill it and at which Familiarity Tier. Read against the *filtered* rows, not the
+ * whole squad, so a mark is only ever drawn beside a row the manager can actually see.
+ */
+const readoutOf = (
+  context: LineupFit | null,
+  rows: readonly SquadRow[],
+): LineupFitReadout | null =>
+  context === null ? null : { ...context, ...prioritiseForPosition(rows, context.position) };
+
+/**
+ * The rows in display order. The fit context re-orders TanStack's own SORTED rows rather than the
+ * data the table was handed, which is what makes the screen's sort the tiebreak inside each
+ * Familiarity Tier instead of something the highlight overwrites — a reorder of the input could
+ * not promise that, since a sort would interleave the tiers again.
+ *
+ * Deliberately not memoised. The `filtered` array is rebuilt on every render, so TanStack rebuilds
+ * its row model on every render too, and a memo keyed on `table` would hand back a stale
+ * permutation of a row model that has since moved.
+ */
+const displayRows = (
+  sorted: readonly TanStackRow<SquadRow>[],
+  fit: LineupFitReadout | null,
+): readonly TanStackRow<SquadRow>[] => {
+  if (fit === null) return sorted;
+  const byId = new Map(sorted.map((row) => [row.original.id, row]));
+  // A permutation of `sorted`, so the map always resolves; the guard only satisfies the type.
+  return prioritiseForPosition(sorted.map((row) => row.original), fit.position).ordered
+    .map((original) => byId.get(original.id))
+    .filter((row): row is TanStackRow<SquadRow> => row !== undefined);
+};
 
 export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   const squadResult = useAtomValue(squadAtom(saveId));
@@ -173,14 +212,23 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   const copy: TableStateCopy = STATE_COPY.squad;
 
   const toggleLegend = useCallback(() => setLegendExpanded((open) => !open), [setLegendExpanded]);
-  const { table, orderedIds } = useSquadTable({
+  const { context: fitContext, toggle: toggleFitContext, clear: clearFitContext } = useLineupFit(
+    lineup.tactic,
+  );
+  const { table } = useSquadTable({
     data: filtered,
     sort,
     onSortChange: setSort,
     preferences,
     legendExpanded,
     onToggleLegend: toggleLegend,
+    fitActive: fitContext !== null,
   });
+  const fit = readoutOf(fitContext, filtered);
+  const rows = displayRows(table.getRowModel().rows, fit);
+  // The roving-focus universe walks the DISPLAY order, not the sort: arrows must follow the eye
+  // down the list, and a focus bookmark's neighbours are the ones the manager can see.
+  const orderedIds = rows.map((row) => row.original.id);
 
   const focusRow = useCallback((id: string): void => {
     (
@@ -466,6 +514,8 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       refreshState,
       copy,
       orderedIds,
+      rows,
+      fit,
       table,
     },
     actions: {
@@ -481,6 +531,8 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       onToggleSelection,
       onActiveChange,
       onRowPrimary,
+      toggleFitContext,
+      clearFitContext,
       openPlayer,
       setPositionFilter,
       setStatusFilter,
