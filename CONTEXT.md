@@ -77,13 +77,41 @@ _Avoid_: Drill, workout
 **Position**:
 One of the ten fixed slots a player can occupy on the pitch: GK, DC, DL, DR, DM, MC, ML, MR, AMC, ST.
 Distinct from a tactical Role (owned by the tactics ticket), which further specializes how a player
-behaves *within* a Position.
-_Avoid_: Role (reserved for tactics), slot
+behaves *within* a Position. Being replaced by Line and Side Ratings on the player and by Slots on
+the Tactic.
+_Avoid_: Role (reserved for tactics), Slot (a grid cell, a different concept)
 
 **Familiarity Tier**:
 How well a player performs in one of their playable Positions: Natural, Competent, or Unfamiliar. A
-player may hold this tier for more than one Position.
-_Avoid_: Proficiency, suitability
+player may hold this tier for more than one Position. Derived from Suitability: Natural at 18-20,
+Competent at 15-17, Unfamiliar at 14 or below.
+_Avoid_: Proficiency
+
+**Line Rating**:
+How well a player plays one positional line, 1-20: GK, SW, D, DM, M, AM, F or WB. Independent of
+side, and stored on the player like an Attribute, but not an Attribute: it is not a skill and changes
+only by retraining. WB has no row on the tactics grid; it decides fit for the wide D and DM cells.
+Never shown on screen; the compact label and Suitability stand in for it.
+_Avoid_: position rating (that is Position Rating, a different, derived score)
+
+**Side Rating**:
+How well a player plays one side of the pitch, 1-20: R, L or C. Independent of line, stored and
+hidden like a Line Rating.
+
+**Free Role Rating**:
+A hidden 1-20 rating of how well a player roams, stored with the Line and Side Ratings. Read only by
+rules: the compact label's F-or-S choice and the Free Role player instruction.
+
+**Slot**:
+One cell of the tactics grid: the goalkeeper cell, or one of six outfield rows (SW, D, DM, M, AM, F)
+by five columns (L, LC, C, RC, R), written `D RC`. Two centre-backs are two Slots.
+_Avoid_: Position (the old ten-value set a Slot replaces on the Tactic)
+
+**Suitability**:
+How well a player suits one Slot, 1-20: the lower of his Line Rating for the Slot's row and his Side
+Rating for its column, with fixed exceptions (the central columns read C, the wide D and DM cells
+also accept WB, M also accepts AM − 5). Derived on read, never stored. The Familiarity Tier is
+Suitability in three bands.
 
 **Position Weight**:
 A fixed, code-defined importance value for one (Position, Attribute) pair, used to compute that

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compactLabel } from "../../src/rules/positionLabel.js";
+import { compactPositionLabel } from "../../src/rules/positionLabel.js";
 import type { Line, PositionalRatings, Side } from "../../src/rules/positionalRatings.js";
 
 const ratings = (
@@ -17,12 +17,14 @@ const ratings = (
  * research (docs/research/player-positional-model-cm0304-positional-fields.md); the rest exercise
  * one rule each.
  */
-describe("compactLabel", () => {
+describe("compactPositionLabel", () => {
   it.each<[string, PositionalRatings, string]>([
     ["a centre-back on the right and centre (CM 03/04)", ratings({ D: 19 }, { R: 16, C: 18 }), "D RC"],
     ["a defender who also plays DM (CM 03/04)", ratings({ D: 18, DM: 16 }, { R: 15, C: 19 }), "D/DM RC"],
     ["an attacking midfielder and forward (CM 03/04)", ratings({ M: 15, AM: 18, F: 17 }, { R: 16, C: 18 }), "AM/F RC"],
     ["an attacking midfielder on every side (CM 03/04)", ratings({ AM: 19 }, { R: 17, L: 16, C: 18 }), "AM RLC"],
+    ["a forward on the right is F", ratings({ F: 18 }, { R: 17, C: 16 }), "F RC"],
+    ["no qualifying line gives an empty label", ratings({ D: 12 }, { R: 18 }), ""],
     ["a wide forward (CM 03/04)", ratings({ F: 18 }, { L: 17, C: 16 }), "F LC"],
     ["a sweeper who is also a centre-back (CM 03/04)", ratings({ SW: 17, D: 19 }, { C: 19 }), "SW/D C"],
     ["an out-and-out striker is S (CM 03/04)", ratings({ F: 19 }, { C: 19 }), "S C"],
@@ -37,6 +39,6 @@ describe("compactLabel", () => {
     ["a player with no qualifying side shows lines only", ratings({ D: 18 }, { R: 12 }), "D"],
     ["the threshold is 15, not 14", ratings({ D: 14, M: 15 }, { C: 14, R: 15 }), "M R"],
   ])("%s", (_description, input, expected) => {
-    expect(compactLabel(input)).toBe(expected);
+    expect(compactPositionLabel(input)).toBe(expected);
   });
 });

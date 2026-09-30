@@ -1,5 +1,7 @@
 import type { PositionalRatings } from "./positionalRatings.js";
-import { COMPETENT_SUITABILITY } from "./suitability.js";
+
+/** The rating at which a line or side appears in the label: CM's own 15, independent of the tier bands. */
+export const LABEL_THRESHOLD = 15;
 
 /**
  * The compact CM 03/04 position label (`D/DM RC`, `AM/F RC`, `GK`), a read-time projection of a
@@ -8,29 +10,30 @@ import { COMPETENT_SUITABILITY } from "./suitability.js";
  * are what CM players saw. See the Agent Note
  * `.agents/notes/proposed/architecture/2026-09-29-compact-position-label-follows-cm-scout.md`.
  *
- * - A line or side appears at 15 or above.
+ * - A line or side appears at `LABEL_THRESHOLD` (15) or above.
  * - A goalkeeper renders plain `GK`, whatever else he is rated for.
  * - Lines run SW, D, DM, M, AM, F-or-S, joined by `/`. M shows only if DM and AM are both below 15;
  *   AM only if DM is below 15 and (F is below 15 or M is 15 or above). WB never shows.
  * - The forward line is `F` when Left, Right, Free Role or AM also qualifies, otherwise `S`.
  * - Qualifying sides follow one space, in R, L, C order with no separator. A player with no
- *   qualifying side shows lines alone.
+ *   qualifying side shows lines alone, and one with no qualifying line has an empty label (the
+ *   research does not cover that case; generation never produces it).
  */
-export const compactLabel = (ratings: PositionalRatings): string => {
-  const has = (value: number): boolean => value >= COMPETENT_SUITABILITY;
+export const compactPositionLabel = (ratings: PositionalRatings): string => {
+  const qualifies = (value: number): boolean => value >= LABEL_THRESHOLD;
   const { lines, sides } = ratings;
-  if (has(lines.GK)) return "GK";
+  if (qualifies(lines.GK)) return "GK";
 
-  const forwardIsF = has(sides.L) || has(sides.R) || has(ratings.freeRole) || has(lines.AM);
+  const forwardIsF = qualifies(sides.L) || qualifies(sides.R) || qualifies(ratings.freeRole) || qualifies(lines.AM);
   const shown: Array<string> = [];
-  if (has(lines.SW)) shown.push("SW");
-  if (has(lines.D)) shown.push("D");
-  if (has(lines.DM)) shown.push("DM");
-  if (has(lines.M) && !has(lines.DM) && !has(lines.AM)) shown.push("M");
-  if (has(lines.AM) && !has(lines.DM) && (!has(lines.F) || has(lines.M))) shown.push("AM");
-  if (has(lines.F)) shown.push(forwardIsF ? "F" : "S");
+  if (qualifies(lines.SW)) shown.push("SW");
+  if (qualifies(lines.D)) shown.push("D");
+  if (qualifies(lines.DM)) shown.push("DM");
+  if (qualifies(lines.M) && !qualifies(lines.DM) && !qualifies(lines.AM)) shown.push("M");
+  if (qualifies(lines.AM) && !qualifies(lines.DM) && (!qualifies(lines.F) || qualifies(lines.M))) shown.push("AM");
+  if (qualifies(lines.F)) shown.push(forwardIsF ? "F" : "S");
 
-  const sideSuffix = (["R", "L", "C"] as const).filter((side) => has(sides[side])).join("");
+  const sideSuffix = (["R", "L", "C"] as const).filter((side) => qualifies(sides[side])).join("");
   const lineText = shown.join("/");
   return sideSuffix.length > 0 && lineText.length > 0 ? `${lineText} ${sideSuffix}` : lineText;
 };

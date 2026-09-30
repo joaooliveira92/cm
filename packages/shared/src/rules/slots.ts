@@ -1,4 +1,5 @@
-import { POSITION_WEIGHTS, type Attribute, type Position } from "./positions.js";
+import { POSITION_WEIGHTS, type Attribute, type PHASE_POSITIONS, type Position } from "./positions.js";
+import type { Side } from "./positionalRatings.js";
 
 /**
  * The rows of Championship Manager 03/04's tactics grid, goalkeeper first, in pitch order. They
@@ -16,19 +17,21 @@ export type Column = (typeof COLUMNS)[number];
 /**
  * One cell of the tactics grid. A slot is its own type, not a Position: two centre-backs are
  * `D LC` and `D RC`, not two copies of one Position. The goalkeeper cell has no column in CM; it is
- * represented canonically as `{ row: "GK", column: "C" }` and displayed as plain `GK`.
+ * pinned to `C` by the type, so there is exactly one goalkeeper slot, displayed as plain `GK`.
  */
-export interface Slot {
-  readonly row: Row;
-  readonly column: Column;
-}
+export type OutfieldRow = Exclude<Row, "GK">;
+export type Slot =
+  | { readonly row: "GK"; readonly column: "C" }
+  | { readonly row: OutfieldRow; readonly column: Column };
 
 export const GOALKEEPER_SLOT: Slot = { row: "GK", column: "C" };
 
 /** All 31 cells: the goalkeeper cell, then each outfield row's five columns, in pitch order. */
 export const SLOTS: ReadonlyArray<Slot> = [
   GOALKEEPER_SLOT,
-  ...ROWS.filter((row) => row !== "GK").flatMap((row) => COLUMNS.map((column) => ({ row, column }))),
+  ...ROWS.filter((row): row is OutfieldRow => row !== "GK").flatMap((row) =>
+    COLUMNS.map((column): Slot => ({ row, column })),
+  ),
 ];
 
 /** `GK`, `D RC`, `AM L`. */
@@ -38,14 +41,15 @@ export const slotLabel = (slot: Slot): string => (slot.row === "GK" ? "GK" : `${
 export const compareSlots = (a: Slot, b: Slot): number =>
   ROWS.indexOf(a.row) - ROWS.indexOf(b.row) || COLUMNS.indexOf(a.column) - COLUMNS.indexOf(b.column);
 
-export const isSameSlot = (a: Slot, b: Slot): boolean => a.row === b.row && a.column === b.column;
-
 /** L and R are wide; LC, C and RC are central. */
 export type Width = "wide" | "central";
 export const widthOf = (column: Column): Width => (column === "L" || column === "R" ? "wide" : "central");
 
+/** The Side Rating a column is rated against: the three central columns all read Centre. */
+export const sideOf = (column: Column): Side => (column === "L" || column === "R" ? column : "C");
+
 /** The phase each row feeds: GK, SW and D defend; DM and M hold midfield; AM and F attack. */
-export type Phase = "defense" | "midfield" | "attack";
+export type Phase = keyof typeof PHASE_POSITIONS;
 export const PHASE_OF_ROW: Record<Row, Phase> = {
   GK: "defense",
   SW: "defense",
@@ -59,7 +63,8 @@ export const phaseOfSlot = (slot: Slot): Phase => PHASE_OF_ROW[slot.row];
 
 /**
  * The key of the Position Weights table a slot is rated against: its row and width. GK and SW have
- * one table each, since CM only ever places them centrally; every other row has a wide and a central
+ * one table each: the goalkeeper cell has no column, and CM's presets only ever put a sweeper in the
+ * centre, so a wide sweeper cell is still rated as a sweeper. Every other row has a wide and a central
  * table. Twelve tables in all.
  */
 export const WEIGHT_TABLES = [
@@ -82,10 +87,10 @@ export const weightTableOf = (slot: Slot): WeightTable =>
   slot.row === "GK" || slot.row === "SW" ? slot.row : `${slot.row}-${widthOf(slot.column)}`;
 
 /**
- * Position Weights by row and width. Eight tables carry over the ten-Position weights unchanged
- * (DL and DR, ML and MR were already identical). The four new ones — SW, DM wide (the wing-back),
- * AM wide and F wide — are design values, not research findings, and are expected to move under
- * balance testing. Like every weights table, they leave out bravery, aggression and the fitness and
+ * Position Weights by row and width. Eight tables carry over the ten-Position weights unchanged,
+ * since DL and DR, and ML and MR, were already identical. The four new tables are design values, not
+ * research findings, and are expected to move under balance testing: SW, DM wide (the wing-back),
+ * AM wide and F wide. Like every weights table, they leave out bravery, aggression and the fitness and
  * injury attributes, so those never feed Position Rating, Overall Rating or Transfer Value.
  */
 export const SLOT_WEIGHTS: Record<WeightTable, Partial<Record<Attribute, number>>> = {

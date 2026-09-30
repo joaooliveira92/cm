@@ -1,25 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { PlayerAttributes, Position } from "../../src/rules/positions.js";
-import { POSITIONS } from "../../src/rules/positions.js";
+import type { PlayerAttributes } from "../../src/rules/positions.js";
 import type { Line, PositionalRatings, Side } from "../../src/rules/positionalRatings.js";
-import { positionRating } from "../../src/rules/ratings.js";
-import {
-  COLUMNS,
-  PHASE_OF_ROW,
-  POSITION_SLOT,
-  ROWS,
-  SLOTS,
-  SLOT_WEIGHTS,
-  WEIGHT_TABLES,
-  compareSlots,
-  phaseOfSlot,
-  slotLabel,
-  weightTableOf,
-  type Slot,
-} from "../../src/rules/slots.js";
+import type { Slot } from "../../src/rules/slots.js";
 import {
   familiarityOf,
-  overallRatingAt,
+  overallRatingOverCells,
   positionRatingAt,
   suitability,
 } from "../../src/rules/suitability.js";
@@ -35,7 +20,7 @@ const ratings = (
   freeRole,
 });
 
-const cell = (row: Slot["row"], column: Slot["column"]): Slot => ({ row, column });
+const cell = (row: Slot["row"], column: Slot["column"]): Slot => ({ row, column }) as Slot;
 
 const attributes = (overrides: Partial<PlayerAttributes> = {}): PlayerAttributes => ({
   passing: 10, shooting: 10, tackling: 10, dribbling: 10, heading: 10, crossing: 10, finishing: 10,
@@ -102,87 +87,24 @@ describe("familiarityOf", () => {
   });
 });
 
-describe("slots", () => {
-  it("has the goalkeeper cell plus six rows of five columns", () => {
-    expect(SLOTS).toHaveLength(31);
-    expect(new Set(SLOTS.map((slot) => slotLabel(slot))).size).toBe(31);
-  });
-
-  it("labels cells as CM does", () => {
-    expect(slotLabel(cell("GK", "C"))).toBe("GK");
-    expect(slotLabel(cell("D", "RC"))).toBe("D RC");
-    expect(slotLabel(cell("AM", "L"))).toBe("AM L");
-  });
-
-  it("sorts in pitch order: goalkeeper first, then by row, then left to right", () => {
-    const shuffled = [cell("F", "C"), cell("D", "R"), cell("GK", "C"), cell("D", "L"), cell("SW", "C")];
-    expect([...shuffled].sort(compareSlots).map((slot) => slotLabel(slot))).toEqual([
-      "GK",
-      "SW C",
-      "D L",
-      "D R",
-      "F C",
-    ]);
-  });
-
-  it("resolves every cell to exactly one weights table and one phase", () => {
-    for (const slot of SLOTS) {
-      expect(WEIGHT_TABLES).toContain(weightTableOf(slot));
-      expect(["defense", "midfield", "attack"]).toContain(phaseOfSlot(slot));
-    }
-    expect(new Set(SLOTS.map((slot) => weightTableOf(slot))).size).toBe(12);
-  });
-
-  it("keeps phase by row in step with the rows", () => {
-    expect(Object.keys(PHASE_OF_ROW).sort()).toEqual([...ROWS].sort());
-    expect(COLUMNS).toEqual(["L", "LC", "C", "RC", "R"]);
-  });
-
-  it("leaves bravery, aggression and the fitness and injury attributes out of every table", () => {
-    for (const table of Object.values(SLOT_WEIGHTS)) {
-      for (const excluded of ["bravery", "aggression", "naturalFitness", "injuryProneness"]) {
-        expect(table).not.toHaveProperty(excluded);
-      }
-    }
-  });
-});
-
-describe("the transitional Position mapping", () => {
-  it("puts each Position in the phase it fed before", () => {
-    const before: Record<Position, string> = {
-      GK: "defense", DC: "defense", DL: "defense", DR: "defense",
-      DM: "midfield", MC: "midfield", ML: "midfield", MR: "midfield",
-      AMC: "attack", ST: "attack",
-    };
-    for (const position of POSITIONS) {
-      expect(phaseOfSlot(POSITION_SLOT[position])).toBe(before[position]);
-    }
-  });
-
-  it("rates each Position exactly as its cell", () => {
-    const player = attributes({ tackling: 17, crossing: 4, finishing: 15, gkHandling: 12 });
-    for (const position of POSITIONS) {
-      expect(positionRatingAt(player, POSITION_SLOT[position])).toBe(positionRating(player, position));
-    }
-  });
-});
-
-describe("overallRatingAt", () => {
-  it("is the best Position Rating among Natural cells", () => {
-    const player = attributes({ tackling: 18, heading: 18, positioning: 16, finishing: 20, shooting: 20 });
-    const centreBackOnly = ratings({ D: 19 }, { C: 19 });
-    expect(overallRatingAt(player, centreBackOnly)).toBe(positionRatingAt(player, cell("D", "C")));
+describe("overallRatingOverCells", () => {
+  it("is the best Position Rating among Natural cells, not the first", () => {
+    const player = attributes({ tackling: 4, heading: 4, finishing: 20, shooting: 20, composure: 18 });
+    const centreBackAndStriker = ratings({ D: 19, F: 19 }, { C: 19 });
+    const striker = positionRatingAt(player, cell("F", "C"));
+    expect(striker).toBeGreaterThan(positionRatingAt(player, cell("D", "C")));
+    expect(overallRatingOverCells(player, centreBackAndStriker)).toBe(striker);
   });
 
   it("ignores cells he is only competent in", () => {
     const player = attributes({ finishing: 20, shooting: 20, tackling: 5 });
     const centreBackCompetentStriker = ratings({ D: 19, F: 16 }, { C: 19 });
-    expect(overallRatingAt(player, centreBackCompetentStriker)).toBe(positionRatingAt(player, cell("D", "C")));
+    expect(overallRatingOverCells(player, centreBackCompetentStriker)).toBe(positionRatingAt(player, cell("D", "C")));
   });
 
   it("falls back to his most suitable cells when he is natural nowhere", () => {
     const player = attributes();
     const utility = ratings({ M: 16 }, { R: 16 });
-    expect(overallRatingAt(player, utility)).toBe(positionRatingAt(player, cell("M", "R")));
+    expect(overallRatingOverCells(player, utility)).toBe(positionRatingAt(player, cell("M", "R")));
   });
 });

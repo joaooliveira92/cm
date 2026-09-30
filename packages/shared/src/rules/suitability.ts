@@ -1,7 +1,7 @@
 import type { FamiliarityTier, PlayerAttributes } from "./positions.js";
-import type { Line, PositionalRatings, Side } from "./positionalRatings.js";
+import type { Line, PositionalRatings } from "./positionalRatings.js";
 import { weightedRating } from "./ratings.js";
-import { SLOTS, SLOT_WEIGHTS, weightTableOf, type Slot } from "./slots.js";
+import { SLOTS, SLOT_WEIGHTS, sideOf, weightTableOf, widthOf, type Slot } from "./slots.js";
 
 /**
  * The line a slot's row is rated against. D and DM on the flanks read the better of the row's line
@@ -10,7 +10,7 @@ import { SLOTS, SLOT_WEIGHTS, weightTableOf, type Slot } from "./slots.js";
  */
 const lineFor = (ratings: PositionalRatings, slot: Slot): number => {
   const line = (code: Line): number => ratings.lines[code];
-  const isWide = slot.column === "L" || slot.column === "R";
+  const isWide = widthOf(slot.column) === "wide";
   switch (slot.row) {
     case "D":
     case "DM":
@@ -22,12 +22,6 @@ const lineFor = (ratings: PositionalRatings, slot: Slot): number => {
   }
 };
 
-/** The side a slot's column is rated against. The three central columns all read Centre. */
-const sideFor = (ratings: PositionalRatings, slot: Slot): number => {
-  const side: Side = slot.column === "L" ? "L" : slot.column === "R" ? "R" : "C";
-  return ratings.sides[side];
-};
-
 /**
  * How well a player suits one cell of the tactics grid, 1-20: the lower of his rating for the
  * slot's line and for its side, so a high line never hides a missing side. The goalkeeper cell reads
@@ -36,11 +30,11 @@ const sideFor = (ratings: PositionalRatings, slot: Slot): number => {
  * `.agents/notes/proposed/architecture/2026-09-29-slot-suitability-min-of-line-and-side.md`.
  */
 export const suitability = (ratings: PositionalRatings, slot: Slot): number =>
-  slot.row === "GK" ? ratings.lines.GK : Math.min(lineFor(ratings, slot), sideFor(ratings, slot));
+  slot.row === "GK" ? ratings.lines.GK : Math.min(lineFor(ratings, slot), ratings.sides[sideOf(slot.column)]);
 
 /** Suitability at or above which a player is Natural in a cell. */
 export const NATURAL_SUITABILITY = 18;
-/** Suitability at or above which a player is Competent in a cell; also the compact label's threshold. */
+/** Suitability at or above which a player is Competent in a cell. */
 export const COMPETENT_SUITABILITY = 15;
 
 /** The Familiarity Tier a suitability falls in: natural 18-20, competent 15-17, unfamiliar 14 or below. */
@@ -56,9 +50,10 @@ export const positionRatingAt = (attributes: PlayerAttributes, slot: Slot): numb
 
 /**
  * Overall Rating over the grid: the best Position Rating among cells where the player is Natural. A
- * player natural nowhere falls back to his most suitable cells, so every player has one.
+ * player natural nowhere falls back to his most suitable cells, as the Position-based rule fell back
+ * to any held Position, so every player has one.
  */
-export const overallRatingAt = (attributes: PlayerAttributes, ratings: PositionalRatings): number => {
+export const overallRatingOverCells = (attributes: PlayerAttributes, ratings: PositionalRatings): number => {
   const scored = SLOTS.map((slot) => ({ slot, fit: suitability(ratings, slot) }));
   const natural = scored.filter((entry) => entry.fit >= NATURAL_SUITABILITY);
   const bestFit = Math.max(...scored.map((entry) => entry.fit));
