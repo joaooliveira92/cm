@@ -36,9 +36,10 @@ manager-saved tactics grow into two parallel types.
 
 ## Why the preset name is not the shape
 
-CM's preset names do not follow row counts: "4-4-2 Attacking" is two M and two AM cells, which a
-row count calls 4-2-2-2, and "5-3-2" puts its wing-backs in DM cells. A name is therefore an
-identity of the template a Tactic came from, and the shape label is computed from the cells.
+CM's preset names do not follow row counts: "5-3-2" puts its wing-backs in DM cells, so its cells
+count as 3-2-3-2, and "4-4-2 Attacking" differs from "4-4-2" only in its wide players' runs, not
+their cells. A name is therefore an identity of the template a Tactic came from, and the shape label
+is computed from the cells.
 
 ## Relationship to existing notes
 

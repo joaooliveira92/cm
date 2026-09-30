@@ -27,6 +27,6 @@ decide what is an error. See [the spec](../spec.md), Testing Decisions, seam 1.
 
 - [ ] Each of the 29 templates' cells and runs equals the research tables, by a table-driven test.
 - [ ] Validation rejects a goalkeeper outside slot 0, a duplicate cell, Distribution off the goalkeeper slot, and specific marking in a template, each with a named problem.
-- [ ] Row-count labels match (4-4-2 Attacking reads 4-2-2-2; 5-3-2 Sweeper folds SW into the back line).
+- [ ] Row-count labels match (5-3-2 reads 3-2-3-2, its wing-backs standing in DM cells; 5-3-2 Sweeper folds SW into the back line).
 - [ ] Seeding gives a built-in striker slot the Striker template's switches and leaves all five overrides at `team`.
 - [ ] `pnpm check:all`'s fast gates (typecheck, lint, effect-lint) pass for the shared package, and its suite passes.
