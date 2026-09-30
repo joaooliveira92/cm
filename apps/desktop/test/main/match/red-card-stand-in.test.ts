@@ -28,12 +28,14 @@ beforeEach(() => {
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
 /**
- * Seed 65: the human club's only goalkeeper is sent off at minute 51 (the 10th Match Event), and the
- * engine drags an outfield player into goal as the very next event. Found by enumerating seeds over
- * `simulateMatch` with the kickoff setups; the first such seed for the human club.
+ * Seed 32: the human club's only goalkeeper is sent off at minute `RED_CARD_MINUTE` (line
+ * `RED_CARD_LINE`), and the engine drags an outfield player into goal as the very next event. Found by
+ * enumerating seeds over `deriveMatchEvents` with the kickoff setups; the first such seed for the
+ * human club. Re-pinned 2026-09-29 when players gained CM line and side ratings.
  */
-const KEEPER_SENT_OFF_SEED = 65;
-const RED_CARD_LINE = 9;
+const KEEPER_SENT_OFF_SEED = 32;
+const RED_CARD_LINE = 7;
+const RED_CARD_MINUTE = 33;
 const repin = `repin KEEPER_SENT_OFF_SEED (${KEEPER_SENT_OFF_SEED})`;
 
 const drainLines = (saveId: SaveId, matchId: MatchId) =>
@@ -59,7 +61,7 @@ const seeded = Effect.gen(function* () {
   const lines = yield* drainLines(save.id, match.matchId);
   const red = lines[RED_CARD_LINE];
   strictEqual(red?.tag, "RedCard", repin);
-  strictEqual(red.minute, 51, repin);
+  strictEqual(red.minute, RED_CARD_MINUTE, repin);
   ok(red.text.includes(`${keeper.firstName} ${keeper.lastName}`), `the human goalkeeper is sent off — ${repin}`);
   strictEqual(lines[RED_CARD_LINE + 1]?.tag, "Substitution", `the stand-in follows the red card — ${repin}`);
   return { save, fixtureId, match, keeper, clubId: humanClubOf(match), starters: tactic.slots.map((slot) => slot.playerId) };
@@ -101,7 +103,7 @@ it.effect("the Match Report lists the stand-in as a move into goal after the red
     yield* commitMatchday(savesDir, s.save.id, s.fixtureId);
     const report = yield* getMatchReport(savesDir, s.save.id, s.match.matchId);
 
-    const atRed = report.events.filter((event) => event.clubId === s.clubId && event.minute === 51);
+    const atRed = report.events.filter((event) => event.clubId === s.clubId && event.minute === RED_CARD_MINUTE);
     deepStrictEqual(
       atRed.map((event) => [event.kind, event.replaced?.playerId ?? null, event.replaced?.forcedByInjury ?? null]),
       [

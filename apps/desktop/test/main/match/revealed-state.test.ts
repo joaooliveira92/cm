@@ -30,10 +30,10 @@ afterEach(() => rm(savesDir, { recursive: true, force: true }));
  * of the chunk would show each before its line. The tests re-check the property from the Commentary
  * Lines and name this constant when it no longer holds.
  */
-const SEED = 85876;
-const GOAL_LINE = 3;
-const HALF_TIME_LINE = 9;
-const RED_CARD_LINE = 12;
+const SEED = 550;
+const GOAL_LINE = 1;
+const HALF_TIME_LINE = 10;
+const RED_CARD_LINE = 13;
 
 const repin = `repin SEED (${SEED})`;
 

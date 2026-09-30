@@ -85,7 +85,7 @@ const named = (squad: ReadonlyArray<SquadPlayerView>, line: CommentaryLineView |
 };
 
 /**
- * Seed 194: after the manager's substitutions at minutes 1-3 (every window used, bringing on the
+ * Seed 478: after the manager's substitutions at minutes 1-3 (every window used, bringing on the
  * bench in `STAND_IN_BENCH_ORDER`) and a minute-3 bring-off of the only goalkeeper, which drags an
  * outfield player into goal, that stand-in suffers a severe Injury (`STAND_IN_INJURY_LINE`). No
  * substitution is left, so a second outfield player is dragged into goal. Found by enumerating seeds
@@ -94,8 +94,8 @@ const named = (squad: ReadonlyArray<SquadPlayerView>, line: CommentaryLineView |
  * Re-pinned for group-g-match-day ticket 35: seed 26 held this while the three substitutions brought
  * on the first squad players outside the XI; they now come off the named bench, which moves the rolls.
  */
-const GOALKEEPER_STAND_IN_SEED = 194;
-const STAND_IN_INJURY_LINE = 18;
+const GOALKEEPER_STAND_IN_SEED = 478;
+const STAND_IN_INJURY_LINE = 29;
 /** Which bench entries come on at minutes 1, 2 and 3; the first is the one later dragged into goal. */
 const STAND_IN_BENCH_ORDER = [1, 0, 2] as const;
 
@@ -185,13 +185,13 @@ it.effect("the Match Report lists goalkeeper stand-ins as moves into goal, and i
 );
 
 /**
- * Seed 302: the human club's only substitution is forced by a severe Injury (`FORCED_SUB_INJURY_LINE`),
+ * Seed 134: the human club's only substitution is forced by a severe Injury (`FORCED_SUB_INJURY_LINE`),
  * right after it, and the club also takes a knock in the second half; with the manager's three
  * early substitutions, nothing happens in minute 45 or first-half stoppage. Pinned for ticket 18 and
  * 19 specs. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads.
  */
-const FORCED_SUB_SEED = 302;
-const FORCED_SUB_INJURY_LINE = 11;
+const FORCED_SUB_SEED = 134;
+const FORCED_SUB_INJURY_LINE = 17;
 
 it.effect("a severe Injury a substitute came on for reads replaced", () =>
   Effect.gen(function* () {

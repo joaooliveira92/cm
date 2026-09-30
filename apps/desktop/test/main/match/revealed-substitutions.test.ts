@@ -27,10 +27,10 @@ const COMMAND_MINUTE = 3;
  * forced by an Injury after minute 3, and where the manager's minute-3 substitution (first starter
  * off, first squad player outside the XI on) re-simulates that forced substitution away. The
  * whole-match count therefore reads 1 both before and after an accepted command. Found by
- * enumerating seeds over `deriveMatchEvents`; 263 and 844 share the property. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. The
+ * enumerating seeds over `deriveMatchEvents`; 314 and 341 share the property. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. The
  * test re-checks both halves of the property and names this constant when one no longer holds.
  */
-const FORCED_SUB_AFTER_COMMAND_SEED = 157;
+const FORCED_SUB_AFTER_COMMAND_SEED = 169;
 
 const drainWholeMatch = (saveId: SaveId, matchId: MatchId) =>
   Effect.gen(function* () {
