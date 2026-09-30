@@ -352,6 +352,15 @@ CREATE TABLE `players` (
 );
 --> statement-breakpoint
 CREATE INDEX `players_club_id_idx` ON `players` (`club_id`);--> statement-breakpoint
+CREATE TABLE `retraining_targets` (
+	`player_id` text PRIMARY KEY NOT NULL,
+	`target` text NOT NULL,
+	`progress` real NOT NULL,
+	FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "retraining_targets_target" CHECK(target IN ('GK','SW','D','DM','M','AM','F','WB','R','L','C')),
+	CONSTRAINT "retraining_targets_progress" CHECK(progress >= 0 AND progress < 1)
+);
+--> statement-breakpoint
 CREATE TABLE `save_meta` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,

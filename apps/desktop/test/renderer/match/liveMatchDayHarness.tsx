@@ -80,6 +80,7 @@ export const tacticView = (tactic = fullTactic()) => {
     overallRating: 80,
     positionRatings: {},
     suitability: {},
+    retrainingTarget: null,
     condition: 90,
     trainingFocus: null,
     nationality: "England",

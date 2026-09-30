@@ -4,11 +4,18 @@ import {
   index,
   integer,
   primaryKey,
+  real,
   sqliteTable,
   text,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
-import { FORMATIONS, TACTICAL_STYLE_PRESETS, TRAINING_INTENSITIES, TRAINING_SESSION_TYPES } from "@cm-clone/shared";
+import {
+  FORMATIONS,
+  RETRAINING_TARGETS,
+  TACTICAL_STYLE_PRESETS,
+  TRAINING_INTENSITIES,
+  TRAINING_SESSION_TYPES,
+} from "@cm-clone/shared";
 
 /**
  * The save file's schema, defined once in Drizzle and nowhere else.
@@ -1062,6 +1069,30 @@ export const trainingFocus = sqliteTable(
       "training_focus_focus",
       sql`focus IS NULL OR focus IN ('technical','mental','physical','goalkeeping')`,
     ),
+  ],
+);
+
+/**
+ * A player's retraining target: the one positional line or side the manager is training him toward,
+ * and the fractional progress banked toward its next whole point. A row exists only while a target is
+ * set; clearing the target deletes it, and setting a new one starts progress at zero. Only the human
+ * club's players have rows. See
+ * `.agents/notes/proposed/feature/2026-09-29-positions-retrain-through-training-only.md`.
+ *
+ * No index: a point lookup on the player, or a scan joined to the human club's players.
+ */
+export const retrainingTargets = sqliteTable(
+  "retraining_targets",
+  {
+    playerId: text("player_id")
+      .primaryKey()
+      .references(() => players.id),
+    target: text("target").notNull(),
+    progress: real("progress").notNull(),
+  },
+  () => [
+    check("retraining_targets_target", oneOf("target", RETRAINING_TARGETS)),
+    check("retraining_targets_progress", sql`progress >= 0 AND progress < 1`),
   ],
 );
 

@@ -2,7 +2,12 @@ import { Schema } from "effect";
 import { ALL_ATTRIBUTES } from "@cm-clone/shared";
 
 import { ClubId, PlayerId } from "./ids.js";
-import { AttributesSchema, NullableTrainingFocusSchema, TrainingFocusSchema } from "./squad.js";
+import {
+  AttributesSchema,
+  NullableRetrainingTargetSchema,
+  NullableTrainingFocusSchema,
+  TrainingFocusSchema,
+} from "./squad.js";
 import { StaffDepartmentSchema } from "./clubs.js";
 
 /** The `PlayerDeveloped` event the Club Decider emits once per `SeasonConcluded` (per club),
@@ -37,6 +42,12 @@ export class TrainingFocusSetEvent extends Schema.Class<TrainingFocusSetEvent>("
 export class TrainingFocusView extends Schema.Class<TrainingFocusView>("TrainingFocusView")({
   playerId: PlayerId,
   focus: NullableTrainingFocusSchema,
+}) {}
+
+/** The `SetRetrainingTarget` command's result: the player's (possibly cleared) target after the write. */
+export class RetrainingTargetView extends Schema.Class<RetrainingTargetView>("RetrainingTargetView")({
+  playerId: PlayerId,
+  target: NullableRetrainingTargetSchema,
 }) {}
 
 /** Raised when `SetTrainingFocus` or `getPlayerDevelopmentHistory` targets a player who isn't on the

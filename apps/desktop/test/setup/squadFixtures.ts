@@ -31,6 +31,7 @@ export const squadPlayer = (id: string, name: string, position: string) => ({
   overallRating: 80,
   positionRatings: { ST: 12 },
   suitability: {},
+  retrainingTarget: null,
   condition: 100,
   trainingFocus: null,
   nationality: "England",

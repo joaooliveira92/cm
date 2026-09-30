@@ -12,6 +12,7 @@ export * from "./rules/slots.js";
 export * from "./rules/suitability.js";
 export * from "./rules/positionLabel.js";
 export * from "./rules/positionalGeneration.js";
+export * from "./rules/retraining.js";
 export * from "./content/clubs.js";
 export * from "./content/canonicalId.js";
 export * from "./content/clubColours.js";

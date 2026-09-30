@@ -37,6 +37,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadSquadPlayers } from "../club/squad.js";
 import { planDelegatedSchedule } from "../club/trainingSchedule.js";
+import { advanceRetraining } from "../club/retraining.js";
 import { accrueScoutingProgress } from "../club/scouting.js";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
 import { MATCH_STREAM_TYPE, deriveMatchEvents } from "../match/stream.js";
@@ -213,14 +214,18 @@ const runCommit = (saveId: SaveId, fixtureId: FixtureId) =>
     const startSeq = yield* nextStreamSeq(STREAM_TYPE, saveId);
     yield* appendStreamEvents(STREAM_TYPE, saveId, startSeq, streamEvents);
 
+    // The club id by a plain lookup: resolving display names here would rebuild the save's name
+    // pack on every commit, for a value that is only ever compared.
+    const humanClub = yield* sql<{ id: ClubId }>`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`;
+
+    // The Microcycle that ends with this Matchday trains the human club's retraining targets.
+    if (humanClub[0] !== undefined) yield* advanceRetraining(humanClub[0].id, fixture.date);
+
     // The human's Matchday is behind them, so a delegated Training Schedule is planned for the next
     // microcycle here, in this transaction and before the next Pre-match Boundary. A concluded Season
     // has no next Fixture to plan for.
-    // The club id by a plain lookup: resolving display names here would rebuild the save's name
-    // pack on every commit, for a value that is only ever compared.
-    if (!conclusion.seasonConcluded) {
-      const userClub = yield* sql<{ id: ClubId }>`SELECT id FROM clubs WHERE is_user_club = 1 LIMIT 1`;
-      if (userClub[0] !== undefined) yield* planDelegatedSchedule(userClub[0].id);
+    if (!conclusion.seasonConcluded && humanClub[0] !== undefined) {
+      yield* planDelegatedSchedule(humanClub[0].id);
     }
 
     return new CommitMatchdayResult({

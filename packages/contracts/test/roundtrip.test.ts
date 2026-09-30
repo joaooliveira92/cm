@@ -60,6 +60,7 @@ const player = {
   overallRating: 78,
   positionRatings: { ST: 80 },
   suitability: {},
+  retrainingTarget: null,
   condition: 95,
   trainingFocus: null,
   nationality: "nation_eng_england",

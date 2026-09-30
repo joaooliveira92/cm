@@ -60,6 +60,7 @@ const player = (id: string, firstName: string) => ({
   overallRating: 80,
   positionRatings: {},
   suitability: {},
+  retrainingTarget: null,
   condition: 90,
   trainingFocus: null,
   nationality: "England",

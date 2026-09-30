@@ -35,6 +35,7 @@ describe("generated DDL", () => {
         "player_fitness",
         "contracts",
         "training_focus",
+        "retraining_targets",
         "bids",
         "scouting_assignments",
         "scouting_progress",
@@ -48,6 +49,9 @@ describe("generated DDL", () => {
     expect(ddl).toContain("tactical_acumen + influence + regimen + technical_coaching = 12");
     expect(ddl).toContain("potential_ability BETWEEN 1 AND 100");
     expect(ddl).toContain("passing BETWEEN 1 AND 20");
+    expect(ddl).toContain("line_wb BETWEEN 1 AND 20");
+    expect(ddl).toContain("free_role BETWEEN 1 AND 20");
+    expect(ddl).toContain("progress >= 0 AND progress < 1");
     expect(ddl).toContain("gk_handling IS NULL OR gk_handling BETWEEN 1 AND 20");
     expect(ddl).toContain("generation_seed BETWEEN 0 AND 4294967295");
     expect(ddl).toContain("condition BETWEEN 0 AND 100");

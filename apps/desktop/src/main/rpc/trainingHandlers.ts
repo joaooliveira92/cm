@@ -21,10 +21,12 @@ import {
   getTrainingSchedule,
   setTrainingScheduleDelegation,
 } from "../club/trainingSchedule.js";
+import { setRetrainingTarget } from "../club/retraining.js";
 import type { Handler } from "./rpcServer.js";
 
 type TrainingMethod =
   | "setTrainingFocus"
+  | "setRetrainingTarget"
   | "getCoachingAssignments"
   | "getWorkload"
   | "getPlayerDevelopmentHistory"
@@ -40,6 +42,13 @@ export const trainingHandlers: { readonly [M in TrainingMethod]: Handler<M> } = 
         AppRpcs.setTrainingFocus.payload,
       )(payload);
       return yield* setTrainingFocus(ctx.savesDir, saveId, playerId, focus);
+    }),
+  setRetrainingTarget: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, playerId, target } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.setRetrainingTarget.payload,
+      )(payload);
+      return yield* setRetrainingTarget(ctx.savesDir, saveId, playerId, target);
     }),
   getCoachingAssignments: (payload, ctx) =>
     Effect.gen(function* () {

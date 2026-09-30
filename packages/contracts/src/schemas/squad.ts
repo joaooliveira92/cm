@@ -6,6 +6,7 @@ import {
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
   POSITIONS,
+  RETRAINING_TARGETS,
 } from "@cm-clone/shared";
 
 import { ClubSummary } from "./clubs.js";
@@ -20,6 +21,13 @@ export const TrainingFocusSchema = Schema.Literals(CATEGORIES);
 
 /** A player's Training Focus: a Category, or `null` meaning the no-focus default. */
 export const NullableTrainingFocusSchema = Schema.NullOr(TrainingFocusSchema);
+
+/** What a player can be retrained toward: one positional line (GK, SW, D, DM, M, AM, F, WB) or one
+ *  side (R, L, C). */
+export const RetrainingTargetSchema = Schema.Literals(RETRAINING_TARGETS);
+
+/** A player's retraining target, or `null` when none is set. */
+export const NullableRetrainingTargetSchema = Schema.NullOr(RetrainingTargetSchema);
 
 export class PlayerPositionView extends Schema.Class<PlayerPositionView>("PlayerPositionView")({
   position: PositionSchema,
@@ -59,6 +67,9 @@ export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerV
   /** The player's Training Focus Category, or `null` for the no-focus default (Training Focus).
    * A missing persisted value reads as `null` — no migration/backfill. */
   trainingFocus: NullableTrainingFocusSchema,
+  /** The line or side the manager is retraining this player toward, or `null`. Only the manager's
+   *  own players can have one. */
+  retrainingTarget: NullableRetrainingTargetSchema,
   /** The player's single nationality, as a real country name — factual geography, so it is carried
    *  directly rather than resolved through the content pack. */
   nationality: Schema.String,

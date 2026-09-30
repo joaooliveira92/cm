@@ -79,6 +79,7 @@ export {
   retireManagerMutation,
   saveCareerMutation,
   setNewsMessageStateMutation,
+  setRetrainingTargetMutation,
   setTrainingFocusMutation,
   startMatchMutation,
   submitMatchCommandMutation,

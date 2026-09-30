@@ -41,6 +41,8 @@ export const INVALIDATION_RULES = {
     squadKey(saveId),
     trainingKey(saveId),
   ],
+  /** The target is read off the squad view, like the Training Focus. */
+  setRetrainingTarget: (saveId: SaveId): ReadonlyArray<unknown> => [squadKey(saveId)],
   /** A schedule changes only the training reads; Condition is untouched until the next advance. */
   changeTrainingSchedule: (saveId: SaveId): ReadonlyArray<unknown> => [trainingKey(saveId)],
   /** Delegating makes the assistant plan at once, which raises a News Message. */
@@ -237,6 +239,11 @@ export const setTrainingFocusEffect = (
 /** `setTrainingFocus` mutation atom. */
 export const setTrainingFocusMutation = rpcRuntime.fn(
   (input: RpcPayload<"setTrainingFocus">) => setTrainingFocusEffect(input),
+);
+
+/** `setRetrainingTarget` mutation atom — invalidates the squad key. */
+export const setRetrainingTargetMutation = rpcRuntime.fn((input: RpcPayload<"setRetrainingTarget">) =>
+  call("setRetrainingTarget", input).pipe(Reactivity.mutation(INVALIDATION_RULES.setRetrainingTarget(input.saveId))),
 );
 
 /** `changeTrainingSchedule` mutation atom — invalidates the training key. */

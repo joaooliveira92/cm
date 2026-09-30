@@ -337,6 +337,14 @@ export const MIGRATION_STATEMENTS: ReadonlyArray<string> = [
 	CONSTRAINT "players_generation_seed_range" CHECK(generation_seed BETWEEN 0 AND 4294967295)
 );`,
   `CREATE INDEX \`players_club_id_idx\` ON \`players\` (\`club_id\`);`,
+  `CREATE TABLE \`retraining_targets\` (
+	\`player_id\` text PRIMARY KEY NOT NULL,
+	\`target\` text NOT NULL,
+	\`progress\` real NOT NULL,
+	FOREIGN KEY (\`player_id\`) REFERENCES \`players\`(\`id\`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "retraining_targets_target" CHECK(target IN ('GK','SW','D','DM','M','AM','F','WB','R','L','C')),
+	CONSTRAINT "retraining_targets_progress" CHECK(progress >= 0 AND progress < 1)
+);`,
   `CREATE TABLE \`save_meta\` (
 	\`id\` text PRIMARY KEY NOT NULL,
 	\`name\` text NOT NULL,

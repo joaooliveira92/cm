@@ -45,6 +45,12 @@ const fakeMain = (
   mockPreload(async (method, payload) => {
     calls.push({ method, payload });
     if (method === "getSquad") return { _tag: "Success", value: trainingPlanSquad(players) };
+    if (method === "setRetrainingTarget") {
+      const input = payload as { playerId: string; target: string | null };
+      const index = players.findIndex((player) => player.id === input.playerId);
+      players[index] = { ...players[index]!, retrainingTarget: input.target };
+      return { _tag: "Success", value: input };
+    }
     if (method === "setTrainingFocus") {
       const input = payload as { playerId: string; focus: Category | null };
       const answer = (await answerSet(input)) as { _tag: string };
@@ -226,5 +232,29 @@ describe("ticket 06 — Individual Training Plan sets and clears Training Focus 
 
     await screen.findByRole("group", { name: "Vitor Baia Training Focus" });
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+describe("player-positional-model 17 — Individual Training Plan sets a retraining target", () => {
+  it("shows None, and choosing a line sends setRetrainingTarget; the refreshed read shows it", async () => {
+    const calls = fakeMain();
+    renderScreen();
+    const trigger = await screen.findByRole("combobox", { name: "Retrain Rui Costa toward" });
+    expect(trigger.textContent).toContain("None");
+
+    fireEvent.click(trigger);
+    // Base UI selects an option on the pointer sequence, not on a bare click event.
+    const option = await screen.findByRole("option", { name: "Wing Back" });
+    fireEvent.pointerDown(option);
+    fireEvent.pointerUp(option);
+    fireEvent.mouseUp(option);
+    fireEvent.click(option);
+
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "Retrain Rui Costa toward" }).textContent).toContain("Wing Back"),
+    );
+    expect(calls.filter((call) => call.method === "setRetrainingTarget")).toEqual([
+      { method: "setRetrainingTarget", payload: { saveId: "s1", playerId: "p1", target: "WB" } },
+    ]);
   });
 });

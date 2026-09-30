@@ -54,6 +54,7 @@ const playerRow = (id: string, name: string) => ({
   overallRating: 80,
   positionRatings: { ST: 12 },
   suitability: {},
+  retrainingTarget: null,
   condition: 100,
   trainingFocus: null,
   nationality: "England",

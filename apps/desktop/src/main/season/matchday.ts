@@ -343,6 +343,7 @@ export const discardSquadsForClubs = (clubIds: ReadonlyArray<string>) =>
 
     yield* sql`DELETE FROM bids WHERE ${doomed}`;
     yield* sql`DELETE FROM training_focus WHERE ${doomed}`;
+    yield* sql`DELETE FROM retraining_targets WHERE ${doomed}`;
     yield* sql`DELETE FROM contracts WHERE ${doomed}`;
     yield* sql`DELETE FROM player_fitness WHERE ${doomed}`;
     // Slots go by club, not by player. A transfer can leave a club's tactic naming someone who has

@@ -1,9 +1,10 @@
 /**
  * Individual Training Plan screen (Screen 108) — a per-player sub-surface of the Training area.
  *
- * In v1 a player's training plan is their Training Focus: one Category, or None. The screen shows
- * the standing Training Focus on a `TrainingPlanSummaryCard` and changes it through
- * `TrainingFocusControl`, which sends the existing `setTrainingFocus` command. The current value is
+ * A player's training plan is their Training Focus (one Category, or None) and their retraining
+ * target (one positional line or side, or None). The screen shows the standing Training Focus on a
+ * `TrainingPlanSummaryCard` and changes it through `TrainingFocusControl`, which sends the existing
+ * `setTrainingFocus` command; `RetrainingControl` sends `setRetrainingTarget`. The current value is
  * read from `getSquad`, whose `trainingFocus` that command's invalidation refreshes, so no read is
  * added for this screen.
  *
@@ -27,6 +28,7 @@ import {
   useAtomValue,
   type RpcClientError,
 } from "../rpc.js";
+import { RetrainingControl } from "./RetrainingControl.js";
 import { TrainingFocusControl } from "./TrainingFocusControl.js";
 import { TrainingPlanSummaryCard } from "./TrainingPlanSummaryCard.js";
 import { trainingViewState } from "./trainingViewState.js";
@@ -91,6 +93,19 @@ export const TrainingPlanScreen = ({
             current={player.trainingFocus}
             offered={offeredTrainingFocuses(player.attributes)}
           />
+        </div>
+      </section>
+
+      <section className="mt-6" aria-labelledby="retraining-heading">
+        <h2 id="retraining-heading" className="text-heading">
+          Retraining
+        </h2>
+        <p className="mt-1 text-body text-text-secondary">
+          Train toward one position or side. Progress is gradual, faster for young and determined
+          players, and starts again whenever the target changes.
+        </p>
+        <div className="mt-3">
+          <RetrainingControl saveId={saveId} playerId={player.id} playerName={name} current={player.retrainingTarget} />
         </div>
       </section>
     </main>

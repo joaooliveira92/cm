@@ -143,6 +143,7 @@ export interface SquadPlayerWire {
   readonly overallRating: number;
   readonly positionRatings: Record<string, number>;
   readonly suitability: Record<string, number>;
+  readonly retrainingTarget: string | null;
   readonly condition: number;
   readonly trainingFocus: Category | null;
   readonly nationality: string;
@@ -180,6 +181,7 @@ export const squadPlayer = (
   overallRating: 70,
   positionRatings: goalkeeper ? { GK: 70 } : { DC: 70 },
   suitability: {},
+  retrainingTarget: null,
   condition: 100,
   trainingFocus,
   nationality: "Portugal",

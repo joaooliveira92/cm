@@ -39,6 +39,7 @@ const squadPlayer = (id: string, name: string, position: string, condition: numb
   overallRating: 80,
   positionRatings: { ST: 12 },
   suitability: {},
+  retrainingTarget: null,
   condition,
   trainingFocus: null,
   nationality: "England",

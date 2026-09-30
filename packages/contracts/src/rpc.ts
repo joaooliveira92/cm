@@ -76,6 +76,7 @@ import {
   NewsMessageNotFoundError,
   NewsMessageStatePatch,
   NotYourPlayerError,
+  NullableRetrainingTargetSchema,
   NullableTrainingFocusSchema,
   PillarDistribution,
   PlayerContractView,
@@ -107,6 +108,7 @@ import {
   MatchRatingsView,
   MatchReportView,
   TrainingFocusNotOfferedError,
+  RetrainingTargetView,
   TrainingFocusView,
   ChangeTrainingSchedulePayload,
   SetTrainingScheduleDelegationPayload,
@@ -590,6 +592,18 @@ commitCareer: {
       TrainingFocusNotOfferedError,
       SaveArchivedError,
     ]),
+  },
+  /** Retraining (player-positional-model 17): set (or clear, with `target: null`) the one line or
+   *  side a player on the user's own club is retrained toward. Setting a target starts its progress
+   *  from nothing; the rating rises once per Microcycle. */
+  setRetrainingTarget: {
+    payload: Schema.Struct({
+      saveId: SaveId,
+      playerId: PlayerId,
+      target: NullableRetrainingTargetSchema,
+    }),
+    success: RetrainingTargetView,
+    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError, NotYourPlayerError, SaveArchivedError]),
   },
 /** Club Staff (Screen 38): who works at any club in the save. A pure read — every person derived
    *  on demand, so a `results-only` club answers like any other; only the save or the club id can fail. */

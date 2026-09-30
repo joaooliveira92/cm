@@ -25,6 +25,7 @@ const player = (index: number) => ({
   overallRating: 50,
   positionRatings: {},
   suitability: {},
+  retrainingTarget: null,
   condition: 100,
   trainingFocus: null,
   nationality: "England",

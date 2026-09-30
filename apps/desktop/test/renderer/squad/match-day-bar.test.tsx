@@ -50,6 +50,7 @@ const player = (id: string, lastName: string): unknown => ({
   overallRating: 80,
   positionRatings: { DC: 74 },
   suitability: {},
+  retrainingTarget: null,
   condition: 100,
   trainingFocus: null,
   nationality: "Brazil",

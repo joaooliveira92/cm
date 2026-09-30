@@ -37,6 +37,7 @@ const squadView = (saveId: string, clubName: string) => ({
       overallRating: 90,
       positionRatings: { WB: 12 },
       suitability: {},
+      retrainingTarget: null,
       condition: 100,
       trainingFocus: null,
       nationality: "England",
