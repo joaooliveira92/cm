@@ -23,7 +23,7 @@ decide what is an error. See [the spec](../spec.md), Testing Decisions, seam 1.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Each of the 29 templates' cells and runs equals the research tables, by a table-driven test.
 - [ ] Validation rejects a goalkeeper outside slot 0, a duplicate cell, Distribution off the goalkeeper slot, and specific marking in a template, each with a named problem.
