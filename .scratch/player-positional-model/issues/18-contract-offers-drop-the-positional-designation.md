@@ -11,9 +11,9 @@ unchanged.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The offer screen shows no position or role, and signing a free agent works end to end.
-- [ ] `PlayerSigned` events from both producers have the same payload shape with no role.
-- [ ] The error union no longer contains the unheld-Role failure, and renderer error mapping is updated.
-- [ ] `pnpm check:all` is green, and the transfers e2e specs pass.
+- [x] The offer screen shows no position or role, and signing a free agent works end to end.
+- [x] `PlayerSigned` events from both producers have the same payload shape with no role.
+- [x] The error union no longer contains the unheld-Role failure, and renderer error mapping is updated.
+- [x] `pnpm check:all` is green, and the transfers e2e specs pass.

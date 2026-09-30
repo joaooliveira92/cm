@@ -86,7 +86,6 @@ import {
   PlayerProfileView,
   ContractOfferView,
   InvalidContractOfferTermsError,
-  RoleSchema,
   ResumeSimulationView,
   SubmitMatchCommandView,
   InvalidSaveNameError,
@@ -539,10 +538,6 @@ commitCareer: {
     payload: Schema.Struct({
       saveId: SaveId,
       playerId: PlayerId,
-      /** The Role the offer names. `POSITION_ROLES` pairs it with one of the player's own
-       *  Positions, and the command re-checks that pairing — a Role is tactical, never a free-text
-       *  field a caller could attach to any player. */
-      role: RoleSchema,
       /** Contract length in years, 1-5 (CONTEXT.md, Contract). */
       years: Schema.Finite,
       /** The weekly wage offered, which must fall inside the wage band `getContractOffer`

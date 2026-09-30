@@ -5,8 +5,7 @@
  * A read like any other — no command, no state. The figures come from `loadAllPlayersEcon` (the same
  * pool the market prices) and the same `@cm-clone/shared` narrowing the Player Profile uses, so the
  * offer cannot disclose a figure the Player read behind it withholds (Agent Note 2026-09-19, ticket
- * 09). The Role is not a field: `POSITION_ROLES` gives each Position exactly one Role, so the offer
- * names a Position and the Role follows — see `ContractOfferView`.
+ * 09). The offer names no position or role — see `ContractOfferView`.
  */
 import {
   ContractOfferView,
@@ -56,10 +55,6 @@ export const getContractOffer = (savesDir: string, saveId: SaveId, playerId: Pla
         firstName: player.firstName,
         lastName: player.lastName,
         age: player.age,
-        positions: player.positions.map((entry) => ({
-          position: entry.position,
-          familiarity: entry.familiarity,
-        })),
         overallRating: figureByProgress(player.overallRating, progress),
         transferValue: transferValueFigureByProgress(
           player.overallRating,

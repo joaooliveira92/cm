@@ -48,3 +48,7 @@ Out of reach: none beyond the contract squad-status question above. No Agent Not
 Amended 2026-09-29: contract offers and the `PlayerSigned` event drop the positional designation
 entirely rather than naming a Position, since Positions are replaced and CM 03/04 contracts named
 none ([player-positional-model ticket 06](../../player-positional-model/issues/06-classify-position-consumers.md)).
+
+## Comments
+
+2026-09-30: the contract-offer and `PlayerSigned` rows are superseded. [player-positional-model ticket 18](../../player-positional-model/issues/18-contract-offers-drop-the-positional-designation.md) removed the Role from both without replacing it with a Position, since CM 03/04 contracts named none. Nothing of them is left for this effort.

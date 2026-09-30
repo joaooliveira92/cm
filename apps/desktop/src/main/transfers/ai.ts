@@ -216,7 +216,6 @@ export const aiSignFreeAgent = (clubId: ClubId, playerId: PlayerId, seasonNumber
     yield* appendHumanClubEvents(clubId, [
       playerSignedEvent({
         playerId,
-        position: player.positions[0]?.position ?? "MC",
         wage,
         years: DEFAULT_CONTRACT_YEARS,
       }),

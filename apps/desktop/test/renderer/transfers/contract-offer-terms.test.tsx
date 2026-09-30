@@ -15,7 +15,7 @@ import { mockPreload, rid } from "../training/fixtures.js";
 import { chooseOptionByLabel, comboboxByLabel, selectValueOf } from "../../setup/baseUiSelect.js";
 
 /**
- * The Contract Offer terms form (Screen 137, group-j ticket 09): the three terms `signFreeAgent`
+ * The Contract Offer terms form (Screen 137, group-j ticket 09): the two terms `signFreeAgent`
  * takes, and the rule that keeps the wage inside the band the offer read published.
  */
 
@@ -31,7 +31,7 @@ interface World {
   reads: number;
   /** What the form dispatched to the `sign-free-agent` Action. The RPC call itself is the
    *  command's business (covered in `test/main/transfers/contract-offer-terms.test.ts`); what
-   *  belongs to this form is the three terms it hands over. */
+   *  belongs to this form is the terms it hands over. */
   readonly dispatches: Array<Record<string, unknown>>;
 }
 
@@ -44,10 +44,6 @@ const offer = () => ({
   firstName: "Alex",
   lastName: "Brown",
   age: 24,
-  positions: [
-    { position: "ST", familiarity: "natural" },
-    { position: "AMC", familiarity: "competent" },
-  ],
   overallRating: { _tag: "range", low: 58, high: 98 },
   transferValue: { _tag: "range", low: 400_000, high: 900_000 },
   wage: world.wage,
@@ -127,15 +123,11 @@ afterEach(() => {
 });
 
 describe("the Contract Offer terms form", () => {
-  it("offers the Role of each Position the player actually plays, and the shared length bounds", async () => {
+  it("offers no position or role, and the shared length bounds", async () => {
     mount();
-    // The Role choice is the Position choice: `POSITION_ROLES` names it, so the form never offers a
-    // Role this player does not hold.
-    await screen.findByRole("combobox", { name: `Role offered to ${name}` });
-    // The trigger shows the value; the option labels carry the Position each Role came from.
-    expect(selectValueOf(comboboxByLabel(`Role offered to ${name}`))).toBe("Poacher");
-    await chooseOptionByLabel(`Role offered to ${name}`, "AttackingMidfielder (AMC)");
-    expect(selectValueOf(comboboxByLabel(`Role offered to ${name}`))).toBe("AttackingMidfielder");
+    // A contract names no playing position, so the form has no such field.
+    await screen.findByRole("combobox", { name: `Contract length offered to ${name}` });
+    expect(screen.queryByRole("combobox", { name: /Role offered/ })).toBeNull();
 
     // 1-5 years, off the shared bounds — the same ones the command enforces.
     const lengths = comboboxByLabel(`Contract length offered to ${name}`);
@@ -144,7 +136,7 @@ describe("the Contract Offer terms form", () => {
     expect(selectValueOf(lengths)).toBe("5");
   });
 
-  it("seeds a whole-number wage inside the published band and sends all three terms on Sign", async () => {
+  it("seeds a whole-number wage inside the published band and sends both terms on Sign", async () => {
     const termsRef = mount();
     await waitFor(() => {
       expect(Number(wageInput().value)).toBeGreaterThanOrEqual(900);
@@ -163,26 +155,23 @@ describe("the Contract Offer terms form", () => {
     });
     expect(world.dispatches[0]).toMatchObject({
       playerId,
-      role: "Poacher",
       years: 3,
       wage: seeded,
     });
-    expect(termsRef.current).toEqual({ role: "Poacher", years: 3, wage: seeded });
+    expect(termsRef.current).toEqual({ years: 3, wage: seeded });
   });
 
-  it("keeps the typed wage and Role when the same player's offer is read again", async () => {
+  it("keeps the typed wage when the same player's offer is read again", async () => {
     mount();
     await waitFor(() => {
       expect(wageInput().value).not.toBe("");
     });
     expect(world.reads).toBe(1);
 
-    // What the manager typed and picked. The wage is the *upper* end of the first band, so the
+    // What the manager typed. The wage is the *upper* end of the first band, so the
     // re-read below can only leave it alone by choice: a band that still contained it would prove
     // nothing.
     fireEvent.change(wageInput(), { target: { value: "3000" } });
-    await chooseOptionByLabel(`Role offered to ${name}`, "AttackingMidfielder (AMC)");
-    expect(selectValueOf(comboboxByLabel(`Role offered to ${name}`))).toBe("AttackingMidfielder");
 
     // The manager's own scouting advances, so the re-read publishes a narrower band that no longer
     // supports 3000 — and a different midpoint, which is what a re-seed would have written.
@@ -195,7 +184,6 @@ describe("the Contract Offer terms form", () => {
     // A second, distinct offer object for the same player has landed, and the terms the manager was
     // working on are still the terms on screen.
     expect(wageInput().value).toBe("3000");
-    expect(selectValueOf(comboboxByLabel(`Role offered to ${name}`))).toBe("AttackingMidfielder");
     // Which means the submit button now refuses: the knowledge moved, and saying so beats quietly
     // offering a wage the manager never chose.
     expect(renderedSignButton().hasAttribute("disabled")).toBe(true);

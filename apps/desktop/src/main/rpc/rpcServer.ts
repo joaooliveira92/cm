@@ -398,10 +398,10 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
     }),
   signFreeAgent: (payload, ctx) =>
     Effect.gen(function* () {
-      const { saveId, playerId, role, years, wage } = yield* Schema.decodeUnknownEffect(
+      const { saveId, playerId, years, wage } = yield* Schema.decodeUnknownEffect(
         AppRpcs.signFreeAgent.payload,
       )(payload);
-      return yield* signFreeAgent(ctx.savesDir, saveId, playerId, { role, years, wage });
+      return yield* signFreeAgent(ctx.savesDir, saveId, playerId, { years, wage });
     }),
   renewContract: (payload, ctx) =>
     Effect.gen(function* () {

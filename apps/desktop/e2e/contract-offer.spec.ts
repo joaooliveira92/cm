@@ -75,7 +75,7 @@ const gateFollowsThePublishedFigure = async (page: Page, index: number): Promise
   return low === high ? "exact" : "band";
 };
 
-test("a Free Agent is signed on the Role, length and wage the offer published", async ({
+test("a Free Agent is signed on the length and wage the offer published", async ({
   window: page,
   userDataDir,
 }) => {
@@ -91,8 +91,8 @@ test("a Free Agent is signed on the Role, length and wage the offer published", 
   await expect(freeAgents(page).getByRole("row").nth(1).getByText("Free Agent")).toBeVisible();
 
   const name = await selectRow(page, freeAgents(page).getByRole("row").nth(1));
-  // The three terms `signFreeAgent` takes are all on screen, and the Role is one the player plays.
-  await expect(signRegion(page).getByRole("combobox", { name: /^Role offered to/ })).toBeVisible();
+  // The two terms `signFreeAgent` takes are on screen, and the offer names no role: a contract does not.
+  await expect(signRegion(page).getByRole("combobox", { name: /^Role offered to/ })).toHaveCount(0);
   await expect(signRegion(page).getByRole("combobox", { name: /^Contract length offered to/ })).toBeVisible();
   const { low, high } = await publishedWage(page);
   expect(high).toBeGreaterThanOrEqual(low);

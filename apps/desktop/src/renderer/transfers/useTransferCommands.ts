@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { flushSync } from "react-dom";
-import type { BidId, PlayerId, Role, RpcPayload, SaveId, TransfersScreenView } from "@cm-clone/contracts";
+import type { BidId, PlayerId, RpcPayload, SaveId, TransfersScreenView } from "@cm-clone/contracts";
 import { Option } from "effect";
 import {
   AsyncResult,
@@ -236,7 +236,7 @@ export interface TransferCommandHandlersParams {
  * The terms a `sign-free-agent` dispatch names outright, or `null` when it does not name all of
  * them.
  *
- * All four or nothing. A payload carrying a player but no complete set of terms is a shape this
+ * All three or nothing. A payload carrying a player but no complete set of terms is a shape this
  * action does not accept — taking the terms from the form instead would sign one player on another
  * player's numbers, which is the mistake this guard exists to make impossible.
  */
@@ -244,10 +244,10 @@ const dispatchedSigningTerms = (
   params: unknown,
 ): { readonly playerId: PlayerId; readonly terms: ContractTerms } | null => {
   if (typeof params !== "object" || params === null) return null;
-  const { playerId, role, years, wage } = params as Record<string, unknown>;
+  const { playerId, years, wage } = params as Record<string, unknown>;
   if (typeof playerId !== "string") return null;
-  if (typeof role !== "string" || typeof years !== "number" || typeof wage !== "number") return null;
-  return { playerId: playerId as PlayerId, terms: { role: role as Role, years, wage } };
+  if (typeof years !== "number" || typeof wage !== "number") return null;
+  return { playerId: playerId as PlayerId, terms: { years, wage } };
 };
 
 /** Binds the transfer commands to the Action registry for the life of a save. */

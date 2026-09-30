@@ -1,32 +1,29 @@
 /**
- * The Contract Offer terms form (Screen 137, ticket 09): the Role an offer names, its length, and
- * the weekly wage offered — the three terms `signFreeAgent` takes, which the Transfers screen's
- * context region previously had no way to express (it signed a Free Agent at the formula wage).
+ * The Contract Offer terms form (Screen 137, ticket 09): an offer's length and the weekly wage
+ * offered — the two terms `signFreeAgent` takes. An offer names no position: CM 03/04 contracts did
+ * not, and a player's positions are ratings on the player, not a term of his contract.
  *
  * The figures on screen are the offer read's own, gated on the manager's Scouting Progress, and the
  * wage input is bounded by the band that read published: a Fully Scouted player supports exactly one
- * wage, and a below-Fully-Scouted one supports the band the manager's knowledge drew. The Role is
- * not free text — the offer names one of the player's own Positions and `POSITION_ROLES` gives that
- * Position its Role, so the choice the manager makes is one they can actually make.
+ * wage, and a below-Fully-Scouted one supports the band the manager's knowledge drew.
  *
  * The terms live here rather than in the screen assembly because the read needs a definite Player,
  * and only a mounted leaf guarantees one. The live terms are mirrored into the ref the stable
  * `sign-free-agent` Action handler reads, so the command palette signs the offer on screen instead of
  * needing a second form of the same numbers.
  *
- * The component is an orchestrator: it owns the offer read, holds the three term controls' state via
+ * The component is an orchestrator: it owns the offer read, holds the term controls' state via
  * `useContractOfferTerms`, and lays the extracted sections out. Each section — the offer summary,
- * the three term fields, the Sign action, and the wage-basis hint — is its own component with one
+ * the two term fields, the Sign action, and the wage-basis hint — is its own component with one
  * responsibility. The whole tree stays in this one file because the Transfers screen parcels it into
  * the context region as a single leaf; nothing here is shared with another screen.
  */
 import { useEffect, useRef, useState } from "react";
-import type { ContractOfferView, PlayerId, Role, SaveId } from "@cm-clone/contracts";
+import type { ContractOfferView, PlayerId, SaveId } from "@cm-clone/contracts";
 import {
   DEFAULT_CONTRACT_YEARS,
   MAX_CONTRACT_YEARS,
   MIN_CONTRACT_YEARS,
-  POSITION_ROLES,
   wageIsWithinFigure,
   type KnownFigure,
 } from "@cm-clone/shared";
@@ -52,7 +49,6 @@ import { Option } from "effect";
 
 /** The terms one offer carries, in the vocabulary `signFreeAgent` takes. */
 export interface ContractTerms {
-  readonly role: Role;
   readonly years: number;
   readonly wage: number;
 }
@@ -95,45 +91,6 @@ const OfferSummary = ({
     Free Agent &mdash; signable for Credits 0. Overall Rating {formatFigure(overallRating)},
     weekly wage {formatFigureCredits(wage)}.
   </p>
-);
-
-/** The Role field: one of the player's own Positions, named by its Role. The option list is the
- *  offer's `positions` — mapping each to `POSITION_ROLES` is this field's whole job. */
-const RoleChoice = ({
-  value,
-  positions,
-  playerName,
-  onValueChange,
-}: {
-  readonly value: Role | null;
-  readonly positions: ContractOfferView["positions"];
-  readonly playerName: string;
-  readonly onValueChange: (role: Role | null) => void;
-}) => (
-  <label className="text-label text-text-soft" htmlFor="offer-role">
-    Role
-    <Select
-      value={value ?? ""}
-      onValueChange={(next) => {
-        if (next !== null) onValueChange(next as Role);
-      }}
-    >
-      <SelectTrigger
-        id="offer-role"
-        aria-label={`Role offered to ${playerName}`}
-        className="w-44"
-      >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {positions.map((entry) => (
-          <SelectItem key={entry.position} value={POSITION_ROLES[entry.position]}>
-            {POSITION_ROLES[entry.position]} ({entry.position})
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </label>
 );
 
 /** The Length field: the shared `CONTRACT_LENGTHS` bounds, labelled in years. */
@@ -218,10 +175,10 @@ const WageBasisHint = ({ wage }: { readonly wage: KnownFigure }) => (
   </p>
 );
 
-/** The live terms of the offer under edit: the three fields' state, the two seeds that start a
+/** The live terms of the offer under edit: the fields' state, the seed that starts a
  *  player, the band check that gates the Sign action, and the outward mirror.
  *
- *  The Role and the wage are each seeded once per *player*. The wage seed is keyed on the player the
+ *  The wage is seeded once per *player*. The wage seed is keyed on the player the
  *  seeded number belongs to (`seededForPlayer`), not the read — a re-read of the same player carries
  *  the same offer, and it moves whenever the manager's Scouting Progress for that player advances, so
  *  keying on the read would quietly replace the number the manager is in the middle of offering with
@@ -232,8 +189,6 @@ const useContractOfferTerms = (
   playerId: PlayerId,
   termsRef: React.MutableRefObject<ContractTerms | null>,
 ): {
-  readonly role: Role | null;
-  readonly setRole: (role: Role | null) => void;
   readonly years: number;
   readonly setYears: (years: number) => void;
   readonly wageInput: string;
@@ -241,24 +196,8 @@ const useContractOfferTerms = (
   readonly wageValid: boolean;
   readonly terms: ContractTerms | null;
 } => {
-  const [role, setRole] = useState<Role | null>(null);
   const [years, setYears] = useState(DEFAULT_CONTRACT_YEARS);
   const [wageInput, setWageInput] = useState("");
-
-  // The player's own Positions are the only Roles on offer. The first read seeds the choice; a later
-  // re-read (the scouting key moved) keeps whatever the manager had picked as long as the player
-  // still holds it, and falls back to the first Position otherwise. A different player starts over
-  // — the old role and wage belong to the old player's knowledge.
-  useEffect(() => {
-    if (offer === undefined) return;
-    const first = offer.positions[0];
-    if (first === undefined) return;
-    setRole((current) =>
-      current !== null && offer.positions.some((entry) => POSITION_ROLES[entry.position] === current)
-        ? current
-        : POSITION_ROLES[first.position],
-    );
-  }, [offer, playerId]);
 
   // The wage is a seed, and it is seeded once per *player* rather than once per read. See the hook's
   // doc comment for the reasoning — the ref records which player the seeded number belongs to, so a
@@ -275,10 +214,10 @@ const useContractOfferTerms = (
   const wage = Number(wageInput);
   const wageValid = offer !== undefined && wageIsWithinFigure(wage, offer.wage);
   const terms: ContractTerms | null =
-    offer !== undefined && role !== null && wageValid ? { role, years, wage } : null;
+    offer !== undefined && wageValid ? { years, wage } : null;
   termsRef.current = terms;
 
-  return { role, setRole, years, setYears, wageInput, setWageInput, wageValid, terms };
+  return { years, setYears, wageInput, setWageInput, wageValid, terms };
 };
 
 export const ContractOfferTerms = ({
@@ -292,7 +231,7 @@ export const ContractOfferTerms = ({
   const offer = Option.getOrUndefined(AsyncResult.value(offerResult));
   const offerError = typedError(offerResult);
 
-  const { role, setRole, years, setYears, wageInput, setWageInput, wageValid, terms } =
+  const { years, setYears, wageInput, setWageInput, wageValid, terms } =
     useContractOfferTerms(offer, playerId, termsRef);
 
   if (offerError !== null) {
@@ -310,12 +249,6 @@ export const ContractOfferTerms = ({
     <div className="mt-3" data-action-region="sign-free-agent">
       <OfferSummary overallRating={offer.overallRating} wage={offer.wage} />
       <div className="mt-3 flex flex-wrap items-end gap-3">
-        <RoleChoice
-          value={role}
-          positions={offer.positions}
-          playerName={playerName}
-          onValueChange={setRole}
-        />
         <LengthChoice value={years} playerName={playerName} onValueChange={setYears} />
         <WageField value={wageInput} onValueChange={setWageInput} />
         <SignTermButton

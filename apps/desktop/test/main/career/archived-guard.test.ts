@@ -120,7 +120,6 @@ const everyMutatingCommandRejects = (cause: ArchivedCause) =>
       rejectsAsArchived(
         yield* Effect.flip(
           signFreeAgent(savesDir, save.id, PlayerId.make("irrelevant-player-id"), {
-            role: "Playmaker",
             years: 2,
             wage: 1,
           }),

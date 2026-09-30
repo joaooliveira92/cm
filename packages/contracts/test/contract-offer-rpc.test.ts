@@ -7,7 +7,7 @@ import { AppRpcs } from "../src/rpc.js";
  *
  * They live here rather than in `roundtrip.test.ts` because the Contract Offer is a vertical slice
  * with its own failure vocabulary: a read that may say the Player is not a Free Agent, and a command
- * that now refuses any payload which does not name all three terms. A wire that drifts on either
+ * that refuses any payload which does not name both terms. A wire that drifts on either
  * point is invisible to a shared round-trip suite, so these assert the refusals too.
  */
 
@@ -22,13 +22,12 @@ const offer = {
   firstName: "Alex",
   lastName: "Brown",
   age: 24,
-  positions: [{ position: "ST", familiarity: "natural" }],
   overallRating: { _tag: "range", low: 58, high: 98 },
   transferValue: { _tag: "range", low: 400_000, high: 900_000 },
   wage: { _tag: "range", low: 900, high: 3400 },
 };
 
-const terms = { saveId: "s1", playerId: "p1", role: "Poacher", years: 3, wage: 2_100 };
+const terms = { saveId: "s1", playerId: "p1", years: 3, wage: 2_100 };
 
 describe("the Contract Offer procedures (ticket 09)", () => {
   it("getContractOffer round-trips its payload and its ranged offer", () => {
@@ -41,31 +40,29 @@ describe("the Contract Offer procedures (ticket 09)", () => {
     roundTrip(AppRpcs.getContractOffer.error, { _tag: "PlayerNotFreeAgentError", playerId: "p1" });
   });
 
-  it("signFreeAgent round-trips the three terms it now takes", () => {
+  it("signFreeAgent round-trips the two terms it takes", () => {
     roundTrip(AppRpcs.signFreeAgent.payload, terms);
   });
 
   it("signFreeAgent refuses a payload missing a term — the old years-only call is gone", () => {
     for (const missing of [
-      { saveId: "s1", playerId: "p1", years: 3, wage: 2_100 },
-      { saveId: "s1", playerId: "p1", role: "Poacher", wage: 2_100 },
-      { saveId: "s1", playerId: "p1", role: "Poacher", years: 3 },
+      { saveId: "s1", playerId: "p1", wage: 2_100 },
+      { saveId: "s1", playerId: "p1", years: 3 },
     ]) {
       expect(() => Schema.decodeUnknownSync(AppRpcs.signFreeAgent.payload)(missing)).toThrow();
     }
   });
 
-  it("signFreeAgent refuses a Role outside the tactical vocabulary", () => {
-    expect(() =>
-      Schema.decodeUnknownSync(AppRpcs.signFreeAgent.payload)({ ...terms, role: "Sweeper" }),
-    ).toThrow();
+  it("signFreeAgent drops a role a caller tries to attach — a contract names no position", () => {
+    const decoded = Schema.decodeUnknownSync(AppRpcs.signFreeAgent.payload)({ ...terms, role: "Poacher" });
+    expect("role" in decoded).toBe(false);
   });
 
   it("signFreeAgent carries the reason its terms were refused", () => {
     roundTrip(AppRpcs.signFreeAgent.error, {
       _tag: "InvalidContractOfferTermsError",
       playerId: "p1",
-      reason: "Anchorman is not a Role this player holds",
+      reason: "a Contract runs 1-5 years, not 7",
     });
   });
 });

@@ -5,7 +5,6 @@ import { STATURE_TIERS } from "@cm-clone/shared";
 import { TransfersScreen } from "../../../src/renderer/transfers/TransfersScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 import { dispatchAction, resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
-import { chooseOptionByLabel, selectValueOf } from "../../setup/baseUiSelect.js";
 
 /**
  * The `sign-free-agent` Action handler (group-j ticket 09, review finding 6): which terms a
@@ -52,21 +51,13 @@ const transfersView = () => ({
   marketPlayers: [],
 });
 
-/** The offer read for whichever Free Agent the screen selected. `fa` supports two Positions so the
- *  form can show a Role other than the first one, and both agents are Fully Scouted so the wage on
- *  offer is exact and any other wage is visibly the manager's own. */
+/** The offer read for whichever Free Agent the screen selected. The wage is a band, so any
+ *  wage inside it is visibly the manager's own. */
 const contractOffer = (playerId: string) => ({
   playerId: SaveId.make(playerId),
   firstName: "Test",
   lastName: playerId.toUpperCase(),
   age: 24,
-  positions:
-    playerId === "fa"
-      ? [
-          { position: "ST" as const, familiarity: "natural" as const },
-          { position: "AMC" as const, familiarity: "competent" as const },
-        ]
-      : [{ position: "ST" as const, familiarity: "natural" as const }],
   overallRating: { _tag: "exact" as const, value: 78 },
   transferValue: { _tag: "exact" as const, value: 1_200_000 },
   // A band rather than an exact figure, so the manager's own wage inside it is a valid offer and
@@ -104,12 +95,8 @@ const selectFirstFreeAgent = async () => {
   fireEvent.click(await screen.findByRole("tab", { name: "Free Agents" }));
   fireEvent.click(await screen.findByRole("button", { name: /Test FA/ }));
   await screen.findByRole("button", { name: "Sign (0 Cr)" });
-  await chooseOptionByLabel("Role offered to Test FA", "AttackingMidfielder (AMC)");
   const wage = screen.getByLabelText("Weekly wage") as HTMLInputElement;
   fireEvent.change(wage, { target: { value: "4321" } });
-  expect(selectValueOf(screen.getByRole("combobox", { name: "Role offered to Test FA" }))).toBe(
-    "AttackingMidfielder",
-  );
   // The premise of the bare-dispatch case: the form is holding signable terms.
   expect(screen.getByRole("button", { name: "Sign (0 Cr)" }).hasAttribute("disabled")).toBe(false);
 };
@@ -136,10 +123,9 @@ describe("the sign-free-agent Action handler", () => {
     await selectFirstFreeAgent();
 
     // The Sign button's own shape, naming a *different* Free Agent than the form is showing. The
-    // form holds 4321 on AttackingMidfielder; this says 1111 on Poacher for two years.
+    // form holds 4321 for three years; this says 1111 for two.
     dispatchAction("sign-free-agent", {
       playerId: SaveId.make("fb"),
-      role: "Poacher",
       years: 2,
       wage: 1111,
     });
@@ -150,7 +136,6 @@ describe("the sign-free-agent Action handler", () => {
     expect(signCalls[0]).toMatchObject({
       saveId,
       playerId: SaveId.make("fb"),
-      role: "Poacher",
       years: 2,
       wage: 1111,
     });
@@ -169,7 +154,6 @@ describe("the sign-free-agent Action handler", () => {
     expect(signCalls[0]).toMatchObject({
       saveId,
       playerId: SaveId.make("fa"),
-      role: "AttackingMidfielder",
       years: 3,
       wage: 4321,
     });
@@ -182,8 +166,8 @@ describe("the sign-free-agent Action handler", () => {
     // Half a signing: a player and no terms. The form's terms belong to another player, so the only
     // safe reading is to do nothing rather than sign one player on another's numbers.
     dispatchAction("sign-free-agent", { playerId: SaveId.make("fb") });
-    dispatchAction("sign-free-agent", { playerId: SaveId.make("fb"), role: "Poacher" });
-    dispatchAction("sign-free-agent", { role: "Poacher", years: 2, wage: 1111 });
+    dispatchAction("sign-free-agent", { playerId: SaveId.make("fb"), years: 2 });
+    dispatchAction("sign-free-agent", { years: 2, wage: 1111 });
 
     await waitFor(() => {
       expect(signCalls).toHaveLength(0);

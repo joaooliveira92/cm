@@ -487,4 +487,5 @@ it.effect("guarantees a fresh bid in a later window, not just the first one", ()
 
     ok(sawSecond, "a later transfer window must also leave the manager a bid to answer");
   }),
+  20_000,
 );

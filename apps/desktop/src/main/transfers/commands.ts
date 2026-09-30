@@ -15,14 +15,12 @@ import {
   BidId,
   type ClubSummary,
   type PlayerId,
-  type Role,
   type SaveId,
 } from "@cm-clone/contracts";
 import {
   DEFAULT_CONTRACT_YEARS,
   MAX_CONTRACT_YEARS,
   MIN_CONTRACT_YEARS,
-  POSITION_ROLES,
   progressForReading,
   transferValue,
   wageFigureByProgress,
@@ -299,16 +297,13 @@ export const respondAsBidder = (
 const isContractLength = (years: number): boolean =>
   Number.isInteger(years) && years >= MIN_CONTRACT_YEARS && years <= MAX_CONTRACT_YEARS;
 
-/** The terms one Contract Offer carries: the Role it names, its length, and the weekly wage offered.
- *  `role` is `POSITION_ROLES` applied to one of the player's own Positions — a tactical choice, not a
- *  property the offer writes onto the player. */
+/** The terms one Contract Offer carries: its length and the weekly wage offered. */
 export interface ContractOfferTerms {
-  readonly role: Role;
   readonly years: number;
   readonly wage: number;
 }
 
-/** Signing a Free Agent: the Contract Offer (Screen 137) made good — the Role it named, its length
+/** Signing a Free Agent: the Contract Offer (Screen 137) made good — its length
  *  and its wage, at Credits 0 and with no Bid step (ticket 05/16 — expiry produces a Free Agent,
  *  signable by any club).
  *
@@ -342,18 +337,6 @@ export const signFreeAgent = (
         return yield* new PlayerNotFreeAgentError({ playerId });
       }
 
-      // The Role is a choice among the Positions the Player holds, so the command resolves it back
-      // to one of them here: that is both the refusal below and the Position the `PlayerSigned`
-      // event names, so the logged Role cannot be one the player does not hold.
-      const offeredPosition = player.positions.find(
-        (entry) => POSITION_ROLES[entry.position] === terms.role,
-      );
-      if (offeredPosition === undefined) {
-        return yield* new InvalidContractOfferTermsError({
-          playerId,
-          reason: `${terms.role} is not a Role this player holds`,
-        });
-      }
       if (!isContractLength(terms.years)) {
         return yield* new InvalidContractOfferTermsError({
           playerId,
@@ -407,11 +390,8 @@ export const signFreeAgent = (
         VALUES (${playerId}, ${wage}, ${contractYears}, ${seasonRow.seasonNumber})`;
 
       yield* appendHumanClubEvents(club.id, [
-        // The Position behind the Role the manager chose, so the event builder derives the same
-        // Role the terms carried.
         playerSignedEvent({
           playerId,
-          position: offeredPosition.position,
           wage,
           years: contractYears,
         }),

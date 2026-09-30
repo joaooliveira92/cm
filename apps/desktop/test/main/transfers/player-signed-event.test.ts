@@ -5,7 +5,6 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { POSITION_ROLES } from "@cm-clone/shared";
 import type { PlayerId, SaveId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -23,9 +22,7 @@ import { offerTermsFor } from "./offerTerms.js";
  * Both producers of `PlayerSigned` (group-j ticket 09, review finding 5).
  *
  * The manager signs through `signFreeAgent`, the AI clubs through `aiSignFreeAgent`, and both write
- * the same event tag to the same club stream. Before this they spelled the payload out separately,
- * and the AI's line carried no Role, so the club's own story said what was signed without saying
- * what for. One shape, asserted here by both producers' own keys rather than by a hand-written
+ * the same event tag to the same club stream. One shape, asserted here by both producers' own keys rather than by a hand-written
  * list: the point is that the two agree, so the oracle is the pair.
  */
 
@@ -107,24 +104,21 @@ it.effect(
 
       // Same keys, from both producers: nothing the manager's log line carries and the AI's lacks.
       deepStrictEqual(keysOf(fromAi), keysOf(fromManager));
-      deepStrictEqual(keysOf(fromManager), ["playerId", "role", "wage", "years"]);
+      deepStrictEqual(keysOf(fromManager), ["playerId", "wage", "years"]);
 
-      // The AI's line is about the AI's signing, and names all four of the same things.
-      strictEqual(typeof fromAi.role, "string");
+      // A contract names no position or role, on either producer's line.
       strictEqual(typeof fromAi.wage, "number");
     }),
   30_000,
 );
 
-it.effect("an AI signing names the Role its player's primary Position carries", () =>
+it.effect("an AI signing records the contract's years and wage, and names no role", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const { club, season } = yield* getTransfersScreen(savesDir, save.id);
     const screen = yield* getTransfersScreen(savesDir, save.id);
-    const target = screen.marketPlayers.find((player) =>
-      player.positions.some((entry) => entry.familiarity === "natural"),
-    );
-    ok(target, "a fresh save has a rival with a natural Position");
+    const target = screen.marketPlayers[0];
+    ok(target, "a fresh save has a rival");
     yield* release(save.id, target.id);
 
     yield* withSave(
@@ -133,7 +127,7 @@ it.effect("an AI signing names the Role its player's primary Position carries", 
     );
     const payload = yield* playerSignedPayload(save.id, club.id, target.id);
 
-    strictEqual(payload.role, POSITION_ROLES[target.positions[0]!.position]);
+    ok(!("role" in payload), "the event names no role");
     strictEqual(payload.years, 3);
     ok(typeof payload.wage === "number" && payload.wage > 0, "a real wage is recorded");
   }),

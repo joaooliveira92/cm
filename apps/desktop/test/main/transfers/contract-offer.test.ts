@@ -6,8 +6,6 @@ import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
-  POSITION_ROLES,
-  projectLegacyPositions,
   transferValue,
   weeklyWage,
   wageFigureByProgress,
@@ -21,11 +19,6 @@ import { createSave } from "../../seeded-save.js";
 import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { getSquad } from "../../../src/main/club/index.js";
 import { getPlayerProfile } from "../../../src/main/career/player.js";
-import {
-  positionalRatingSelectList,
-  positionalRatingsOf,
-  type PositionalRatingRow,
-} from "../../../src/main/world/positionalRatingColumns.js";
 import { loadGameDate } from "../../../src/main/season/currentSeason.js";
 import {
   getContractOffer,
@@ -270,7 +263,7 @@ it.effect("the offer response carries no exact figure for a player below Fully S
   20_000,
 );
 
-it.effect("the offer names only the Positions the player actually plays", () =>
+it.effect("the offer names no position or role", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const screen = yield* getTransfersScreen(savesDir, save.id);
@@ -279,28 +272,7 @@ it.effect("the offer names only the Positions the player actually plays", () =>
     yield* release(save.id, target.id);
 
     const offer = yield* getContractOffer(savesDir, save.id, target.id);
-    ok(offer.positions.length > 0, "a player has at least one Position");
-    const truth = yield* trueFiguresOf(save.id, target.id);
-    const stored = yield* withSave(
-      save.id,
-      Effect.gen(function* () {
-        const sql = yield* SqlClient;
-        const rows = yield* sql.unsafe<PositionalRatingRow>(
-          `SELECT ${positionalRatingSelectList()} FROM players WHERE id = ?`,
-          [target.id],
-        );
-        return rows[0] === undefined ? [] : projectLegacyPositions(positionalRatingsOf(rows[0]));
-      }),
-    );
-    ok(truth.overallRating > 0);
-    deepStrictEqual(
-      offer.positions.map((entry) => entry.position).slice().sort(),
-      stored.map((entry) => entry.position).sort(),
-    );
-    // Every Position the offer names has a Role, so the terms form can always offer one.
-    for (const entry of offer.positions) {
-      ok(POSITION_ROLES[entry.position] !== undefined, `${entry.position} must carry a Role`);
-    }
+    ok(!("positions" in offer) && !("role" in offer), "a contract names no playing position");
   }),
   20_000,
 );

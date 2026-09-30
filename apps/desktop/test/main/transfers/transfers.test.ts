@@ -135,7 +135,6 @@ it.effect("signFreeAgent and renewContract are rejected outside an open window",
 
     const signResult = yield* Effect.exit(
       signFreeAgent(savesDir, save.id, PlayerId.make("nonexistent-player"), {
-        role: "Playmaker",
         years: 2,
         wage: 1,
       }),

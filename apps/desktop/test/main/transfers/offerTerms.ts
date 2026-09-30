@@ -7,7 +7,7 @@
  * lifted to at least 1 Cr, because a wage of 0 is not a wage). Both ends of a wage band are whole
  * Credits — `weeklyWage` rounds — so the low end is always inside it.
  */
-import { DEFAULT_CONTRACT_YEARS, POSITION_ROLES, type KnownFigure } from "@cm-clone/shared";
+import { DEFAULT_CONTRACT_YEARS, type KnownFigure } from "@cm-clone/shared";
 import { Effect } from "effect";
 import type { PlayerId, SaveId } from "@cm-clone/contracts";
 import {
@@ -20,7 +20,7 @@ const wageInside = (figure: KnownFigure): number =>
     ? figure.value
     : Math.max(1, Math.min(figure.high, Math.ceil(figure.low)));
 
-/** Terms the club's knowledge supports: the player's first Position' Role, a length, and a wage
+/** Terms the club's knowledge supports: a length, and a wage
  *  inside the band the offer published. */
 export const offerTermsFor = (
   savesDir: string,
@@ -29,7 +29,6 @@ export const offerTermsFor = (
   years: number = DEFAULT_CONTRACT_YEARS,
 ): Effect.Effect<ContractOfferTerms, unknown, never> =>
   Effect.map(getContractOffer(savesDir, saveId, playerId), (offer) => ({
-    role: POSITION_ROLES[offer.positions[0]!.position],
     years,
     wage: wageInside(offer.wage),
   }));

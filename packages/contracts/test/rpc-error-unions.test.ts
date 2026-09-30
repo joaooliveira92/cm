@@ -102,8 +102,8 @@ describe("RPC error unions declare what their handler can raise", () => {
     });
 
     // The Contract Offer terms a manager can get wrong are the command's own typed refusals, and
-    // they are the ones the terms form's own gate cannot pre-empt (a Role the player does not hold
-    // is offered by no version of the form; the wage gate shares its rule with the command).
+    // they are the ones the terms form's own gate cannot pre-empt (the wage gate shares its rule
+    // with the command).
     it("signFreeAgent round-trips terms the offer does not support", () => {
       roundTrip(AppRpcs.signFreeAgent.error, {
         _tag: "InvalidContractOfferTermsError",

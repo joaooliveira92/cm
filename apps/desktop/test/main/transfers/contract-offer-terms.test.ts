@@ -5,8 +5,6 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { POSITION_ROLES } from "@cm-clone/shared";
-import type { Position } from "@cm-clone/shared";
 import type { PlayerId, SaveId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -52,17 +50,6 @@ const freeSomePlayer = (saveId: SaveId) =>
   Effect.gen(function* () {
     const target = (yield* getTransfersScreen(savesDir, saveId)).marketPlayers[0];
     ok(target, "a fresh save has rival players");
-    yield* release(saveId, target.id);
-    return target.id;
-  });
-
-/** Release a rival who actually plays `position`, so an offer may name the Role it maps to. */
-const freePlayerAt = (saveId: SaveId, position: Position) =>
-  Effect.gen(function* () {
-    const target = (yield* getTransfersScreen(savesDir, saveId)).marketPlayers.find((player) =>
-      player.positions.some((entry) => entry.position === position),
-    );
-    ok(target, `a fresh save has a rival who plays ${position}`);
     yield* release(saveId, target.id);
     return target.id;
   });
@@ -113,12 +100,12 @@ it.effect("the terms the offer supports are the terms that sign, and the player 
     strictEqual(contract.wage, terms.wage);
     strictEqual(contract.yearsRemaining, 2);
 
-    // The signing event carries all three terms, so the club's stream records what was offered.
+    // The signing event carries the terms, so the club's stream records what was offered.
     const events = yield* withSave(save.id, loadStreamEvents("club", squad.club.id));
     const signed = events.find((event) => event.tag === "PlayerSigned");
     ok(signed, "signing appends a PlayerSigned event");
-    const payload = signed.payload as { role: string; wage: number; years: number };
-    strictEqual(payload.role, terms.role);
+    const payload = signed.payload as { wage: number; years: number };
+    ok(!("role" in payload) && !("position" in payload), "the event names no role or position");
     strictEqual(payload.wage, terms.wage);
     strictEqual(payload.years, 2);
   }),
@@ -135,18 +122,17 @@ it.effect("a Fully Scouted player's offer names one wage, and only that one sign
     const offer = yield* getContractOffer(savesDir, save.id, playerId);
     strictEqual(offer.wage._tag, "exact", "a Fully Scouted offer supports one exact wage");
     if (offer.wage._tag !== "exact") return;
-    const role = POSITION_ROLES[offer.positions[0]!.position];
 
     // Exact knowledge means exactly one number: a Credit either side of it is not a term this
     // player's knowledge supports, and the band a month ago would have allowed is now closed.
     for (const wage of [offer.wage.value - 1, offer.wage.value + 1]) {
       const exit = yield* Effect.flip(
-        signFreeAgent(savesDir, save.id, playerId, { role, years: 3, wage }),
+        signFreeAgent(savesDir, save.id, playerId, { years: 3, wage }),
       );
       ok((exit as { _tag: string })._tag === INVALID_TERMS, `a wage of ${wage} must be refused once Fully Scouted`);
     }
 
-    yield* signFreeAgent(savesDir, save.id, playerId, { role, years: 3, wage: offer.wage.value });
+    yield* signFreeAgent(savesDir, save.id, playerId, { years: 3, wage: offer.wage.value });
     strictEqual((yield* contractRowOf(save.id, playerId))?.wage, offer.wage.value);
   }),
   20_000,
@@ -158,10 +144,7 @@ it.effect("a wage outside the published band is refused, and nothing is signed",
     const playerId = yield* freeSomePlayer(save.id);
     const offer = yield* getContractOffer(savesDir, save.id, playerId);
     ok(offer.wage._tag === "range", "an unscouted offer supports a band, not one number");
-    const base = {
-      role: POSITION_ROLES[offer.positions[0]!.position],
-      years: 3,
-    };
+    const base = { years: 3 };
 
     for (const wage of [offer.wage.low - 1, offer.wage.high + 1, 0, -1, 1_000.5]) {
       const exit = yield* Effect.flip(signFreeAgent(savesDir, save.id, playerId, { ...base, wage }));
@@ -190,7 +173,6 @@ it.effect("a wage inside the band signs, so an unscouted manager offers from his
       const freshOffer = yield* getContractOffer(savesDir, fresh.id, freshId);
       ok(freshOffer.wage._tag === "range");
       yield* signFreeAgent(savesDir, fresh.id, freshId, {
-        role: POSITION_ROLES[offer.positions[0]!.position],
         years: 1,
         wage,
       });
@@ -198,29 +180,6 @@ it.effect("a wage inside the band signs, so an unscouted manager offers from his
       ok(contract, "a wage on the band edge is signable");
       strictEqual(contract.wage, wage);
     }
-  }),
-  20_000,
-);
-
-it.effect("a Role the player does not hold is refused", () =>
-  Effect.gen(function* () {
-    const save = yield* createSave(savesDir, "Test Career");
-    const playerId = yield* freeSomePlayer(save.id);
-    const offer = yield* getContractOffer(savesDir, save.id, playerId);
-    const held = new Set(offer.positions.map((entry) => POSITION_ROLES[entry.position]));
-    const unheld = (Object.keys(POSITION_ROLES) as Array<keyof typeof POSITION_ROLES>).find(
-      (position) => !held.has(POSITION_ROLES[position]),
-    );
-    ok(unheld, "some Role exists that this player does not hold");
-
-    const exit = yield* Effect.flip(
-      signFreeAgent(savesDir, save.id, playerId, {
-        role: POSITION_ROLES[unheld],
-        years: 3,
-        wage: 500,
-      }),
-    );
-    ok((exit as { _tag: string })._tag === INVALID_TERMS, "a Role the player does not hold must be refused");
   }),
   20_000,
 );
@@ -248,31 +207,3 @@ it.effect("a Contract length outside 1-5 years is refused rather than silently c
   20_000,
 );
 
-it.effect("every Role the offer names is accepted, so the form's choices all work", () =>
-  Effect.gen(function* () {
-    // The Roles on offer are the Roles of the player's own Positions, and a signing consumes its
-    // Free Agent — so each Role is proven on a fresh save, against a player who really does hold the
-    // Position it comes from. That is the sweep the form performs: for every Position the read
-    // publishes, the Role `POSITION_ROLES` gives it is one `signFreeAgent` accepts at the wage that
-    // same read published.
-    const save = yield* createSave(savesDir, "Test Career");
-    const playerId = yield* freeSomePlayer(save.id);
-    const offer = yield* getContractOffer(savesDir, save.id, playerId);
-    const positions = offer.positions.map((entry) => entry.position);
-    ok(positions.length > 0, "a Free Agent plays at least one Position");
-
-    for (const position of positions) {
-      const fresh = yield* createSave(savesDir, `Role ${position}`);
-      const freshId = yield* freePlayerAt(fresh.id, position);
-      const terms = yield* offerTermsFor(savesDir, fresh.id, freshId, 2);
-      yield* signFreeAgent(savesDir, fresh.id, freshId, {
-        ...terms,
-        role: POSITION_ROLES[position],
-      });
-      const contract = yield* contractRowOf(fresh.id, freshId);
-      ok(contract, `${position} should be signable`);
-      strictEqual(contract.wage, terms.wage);
-    }
-  }),
-  40_000,
-);

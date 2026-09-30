@@ -13,7 +13,6 @@ const offer = (over: Record<string, unknown> = {}): unknown => ({
   firstName: "Alex",
   lastName: "Brown",
   age: 24,
-  positions: [{ position: "ST", familiarity: "natural" }],
   overallRating: { _tag: "range", low: 58, high: 98 },
   transferValue: { _tag: "range", low: 400000, high: 900000 },
   wage: { _tag: "range", low: 900, high: 3400 },
@@ -36,16 +35,11 @@ describe("ContractOfferView figures (ticket 09 — the offer reads by Scouting P
     );
   });
 
-  it("round-trips every Position the Role choice is drawn from", () => {
-    roundTrip(
-      ContractOfferView,
-      offer({
-        positions: [
-          { position: "ST", familiarity: "natural" },
-          { position: "AMC", familiarity: "competent" },
-        ],
-      }),
+  it("carries no position: a contract names none", () => {
+    const decoded = Schema.decodeUnknownSync(ContractOfferView)(
+      offer({ positions: [{ position: "ST", familiarity: "natural" }] }),
     );
+    expect("positions" in decoded).toBe(false);
   });
 
   it("rejects an offer figure that is neither an exact value nor a range", () => {
