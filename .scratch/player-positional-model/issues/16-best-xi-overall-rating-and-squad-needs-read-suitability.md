@@ -15,10 +15,19 @@ failure channel; the existing squad-too-small failure of Best XI is unchanged.
 
 **Blocked by:** 13
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Best XI picks a natural full-back over an unfamiliar one of higher raw attributes when the suitability-adjusted rating says so.
-- [ ] Overall Rating equals the best Position Rating among Natural cells for a table of fixture players.
-- [ ] An AI club missing any competent left-sided defender targets one before a fourth centre-back.
-- [ ] None of these consumers reads the transitional projection.
-- [ ] `pnpm check:all` is green.
+- [x] Best XI picks a natural full-back over an unfamiliar one of higher raw attributes when the suitability-adjusted rating says so.
+- [x] Overall Rating equals the best Position Rating among Natural cells for a table of fixture players.
+- [x] An AI club missing any competent left-sided defender targets one before a fourth centre-back.
+- [x] None of these consumers reads the transitional projection.
+- [x] `pnpm check:all` is green.
+
+## Comments
+
+2026-09-29: shipped in 1631a142, with match-spec re-pins in 3fc33d6b. Verified: typecheck and lint
+pass; shared suite (614) passes; desktop main tests for club, season, transfers, career and world
+(445) and match (93) pass. Renderer tests not run, per the user's instruction. The bench's
+goalkeeper pick (`selectBench`) still reads the transitional projection; it is not Best XI, and it
+moves when the squad screens drop the Position list (ticket 14) before ticket 19 deletes the
+projection.
