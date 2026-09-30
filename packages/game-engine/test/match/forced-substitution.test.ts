@@ -252,8 +252,8 @@ describe("forcePlayerOff's replacement, like for like", () => {
 });
 
 describe("a simulated match's forced substitutions", () => {
-  // Seed 210: with a named bench, the home side has two forced substitutions (minutes 63 and 90).
-  const seed = 210;
+  // Seed 437: with a named bench, the home side has two forced substitutions (minutes 55 and 85).
+  const seed = 437;
   const namedHome = withNamedBench(buildTeam(HOME, seed).setup);
   const reversedBench: MatchTeamSetup = {
     ...namedHome,

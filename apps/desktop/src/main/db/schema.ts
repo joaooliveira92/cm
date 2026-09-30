@@ -63,7 +63,6 @@ const oneOf = (column: string, values: readonly string[]): ReturnType<typeof sql
   sql.raw(`${column} IN (${values.map((value) => `'${value}'`).join(",")})`);
 
 const POSITIONS = ["GK", "DC", "DL", "DR", "DM", "MC", "ML", "MR", "AMC", "ST"] as const;
-const FAMILIARITIES = ["natural", "competent", "unfamiliar"] as const;
 
 /** An unsigned 32-bit seed, the range `deriveSeed` produces. */
 const SEED_RANGE = "BETWEEN 0 AND 4294967295";
@@ -541,6 +540,26 @@ export const players = sqliteTable(
     gkCommandOfArea: integer("gk_command_of_area"),
     gkKicking: integer("gk_kicking"),
 
+    /**
+     * The twelve positional ratings, 1-20, in one row with the player rather than a row per rating:
+     * every player always has all twelve, so rows would only add joins and a completeness check.
+     * Line Ratings (GK, SW, D, DM, M, AM, F, WB), Side Ratings (R, L, C) and the hidden Free Role
+     * Rating. Persisted like Attributes; suitability, Familiarity Tier and the label are derived on
+     * read. See `.agents/notes/proposed/architecture/2026-09-29-players-store-cm-line-and-side-ratings.md`.
+     */
+    lineGk: attribute("line_gk"),
+    lineSw: attribute("line_sw"),
+    lineD: attribute("line_d"),
+    lineDm: attribute("line_dm"),
+    lineM: attribute("line_m"),
+    lineAm: attribute("line_am"),
+    lineF: attribute("line_f"),
+    lineWb: attribute("line_wb"),
+    sideR: attribute("side_r"),
+    sideL: attribute("side_l"),
+    sideC: attribute("side_c"),
+    freeRole: attribute("free_role"),
+
     /** Provenance: the squad slot this player fills and the child seed that produced them. */
     /**
      * The player's single nationality.
@@ -579,29 +598,14 @@ export const players = sqliteTable(
       "first_touch", "positioning", "decisions", "composure", "determination", "teamwork",
       "flair", "bravery", "aggression", "pace", "acceleration", "stamina", "strength",
       "agility", "natural_fitness", "injury_proneness",
+      "line_gk", "line_sw", "line_d", "line_dm", "line_m", "line_am", "line_f", "line_wb",
+      "side_r", "side_l", "side_c", "free_role",
     ].map((column) => check(`players_${column}`, sql.raw(`${column} BETWEEN 1 AND 20`))),
     ...["gk_handling", "gk_reflexes", "gk_aerial_reach", "gk_command_of_area", "gk_kicking"].map(
       (column) => check(`players_${column}`, sql.raw(`${column} IS NULL OR ${column} BETWEEN 1 AND 20`)),
     ),
     check("players_squad_slot", sql`squad_slot >= 0`),
     check("players_generation_seed_range", sql.raw(`generation_seed ${SEED_RANGE}`)),
-  ],
-);
-
-/** No index: read by the player_id prefix of its own key. */
-export const playerPositions = sqliteTable(
-  "player_positions",
-  {
-    playerId: text("player_id")
-      .notNull()
-      .references(() => players.id),
-    position: text("position").notNull(),
-    familiarity: text("familiarity").notNull(),
-  },
-  (table) => [
-    primaryKey({ columns: [table.playerId, table.position] }),
-    check("player_positions_position", oneOf("position", POSITIONS)),
-    check("player_positions_familiarity", oneOf("familiarity", FAMILIARITIES)),
   ],
 );
 

@@ -125,3 +125,31 @@ export const POSITION_SLOT: Record<Position, Slot> = {
   AMC: { row: "AM", column: "C" },
   ST: { row: "F", column: "C" },
 };
+
+/**
+ * Transitional: the old Position nearest to each cell, the inverse direction of `POSITION_SLOT`.
+ * Wide AM and F cells fold into the wide midfield Positions and a wide DM cell into the full-back
+ * Positions, because the ten Positions had nothing further forward or back on a flank. Used only by
+ * the legacy (Position, Familiarity Tier) projection that keeps existing readers working until they
+ * move to Suitability; deleted with that projection.
+ */
+export const legacyPositionOf = (slot: Slot): Position => {
+  const side = sideOf(slot.column);
+  switch (slot.row) {
+    case "GK":
+      return "GK";
+    case "SW":
+      return "DC";
+    case "D":
+    case "DM":
+      if (side === "L") return "DL";
+      if (side === "R") return "DR";
+      return slot.row === "D" ? "DC" : "DM";
+    case "M":
+    case "AM":
+    case "F":
+      if (side === "L") return "ML";
+      if (side === "R") return "MR";
+      return slot.row === "M" ? "MC" : slot.row === "AM" ? "AMC" : "ST";
+  }
+};

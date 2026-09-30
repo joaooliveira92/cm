@@ -187,20 +187,6 @@ export const POSITION_WEIGHTS: Record<Position, Partial<Record<Attribute, number
   },
 };
 
-/** Positions a player is reasonably able to cover from a given primary Position, for generation. */
-export const ADJACENT_POSITIONS: Record<Position, ReadonlyArray<Position>> = {
-  GK: [],
-  DC: ["DM"],
-  DL: ["ML", "DR"],
-  DR: ["MR", "DL"],
-  DM: ["DC", "MC"],
-  MC: ["DM", "AMC"],
-  ML: ["DL", "MR"],
-  MR: ["DR", "ML"],
-  AMC: ["MC", "ST"],
-  ST: ["AMC"],
-};
-
 /** Phase groupings the match engine derives Phase Strength from (owned by ticket 02/12). */
 export const PHASE_POSITIONS = {
   defense: ["GK", "DC", "DL", "DR"],

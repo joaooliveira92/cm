@@ -374,7 +374,6 @@ const clearFreeAgentsAndLiftBudgets = (saveId: string) =>
     saveId,
     Effect.gen(function* () {
       const sql = yield* SqlClient;
-      yield* sql`DELETE FROM player_positions WHERE player_id IN (SELECT id FROM players WHERE club_id IS NULL)`;
       yield* sql`DELETE FROM player_fitness WHERE player_id IN (SELECT id FROM players WHERE club_id IS NULL)`;
       yield* sql`DELETE FROM players WHERE club_id IS NULL`;
       yield* sql`UPDATE club_budgets SET transfer_budget_remaining = 500000000, wage_budget = 5000000`;

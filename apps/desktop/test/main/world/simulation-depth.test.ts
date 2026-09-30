@@ -106,17 +106,14 @@ const committedCareerWithGermanyAt = (mode: string, worldSeed: number) =>
     return saveId;
   });
 
-/** The five tables beneath a club, and how many rows each holds for one club. */
+/** The four tables beneath a club, and how many rows each holds for one club. Positional ratings are
+ *  columns on `players`, so they have no table of their own to count. */
 const rowCountsFor = (clubId: string) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     const count = (query: ReadonlyArray<{ readonly n: number }>) => query[0]?.n ?? 0;
     return {
       players: count(yield* sql<{ n: number }>`SELECT COUNT(*) as "n" FROM players WHERE club_id = ${clubId}`),
-      positions: count(
-        yield* sql<{ n: number }>`SELECT COUNT(*) as "n" FROM player_positions pp
-          JOIN players p ON p.id = pp.player_id WHERE p.club_id = ${clubId}`,
-      ),
       contracts: count(
         yield* sql<{ n: number }>`SELECT COUNT(*) as "n" FROM contracts c
           JOIN players p ON p.id = c.player_id WHERE p.club_id = ${clubId}`,
@@ -194,7 +191,7 @@ describe("a results-only club", () => {
       const saveId = yield* careerWithGermanyAt("view_only", 5150);
       const counts = yield* withSave(saveId, rowCountsFor(GERMAN_CLUB));
 
-      deepStrictEqual(counts, { players: 0, positions: 0, contracts: 0, fitness: 0, tactics: 0 });
+      deepStrictEqual(counts, { players: 0, contracts: 0, fitness: 0, tactics: 0 });
     }),
     60_000,
   );

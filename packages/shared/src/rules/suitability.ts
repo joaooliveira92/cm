@@ -1,7 +1,7 @@
-import type { FamiliarityTier, PlayerAttributes } from "./positions.js";
+import { POSITIONS, type FamiliarityTier, type PlayerAttributes, type Position } from "./positions.js";
 import type { Line, PositionalRatings } from "./positionalRatings.js";
 import { weightedRating } from "./ratings.js";
-import { SLOTS, SLOT_WEIGHTS, sideOf, weightTableOf, widthOf, type Slot } from "./slots.js";
+import { SLOTS, SLOT_WEIGHTS, legacyPositionOf, sideOf, weightTableOf, widthOf, type Slot } from "./slots.js";
 
 /**
  * The line a slot's row is rated against. D and DM on the flanks read the better of the row's line
@@ -59,4 +59,26 @@ export const overallRatingOverCells = (attributes: PlayerAttributes, ratings: Po
   const bestFit = Math.max(...scored.map((entry) => entry.fit));
   const candidates = natural.length > 0 ? natural : scored.filter((entry) => entry.fit === bestFit);
   return Math.max(...candidates.map((entry) => positionRatingAt(attributes, entry.slot)));
+};
+
+/**
+ * Transitional: the (Position, Familiarity Tier) list the ten-Position model stored, derived from
+ * positional ratings so every existing reader keeps working while it moves to Suitability. Each
+ * Position takes the best tier among the cells nearest to it (`legacyPositionOf`); Unfamiliar
+ * Positions are left out, as the stored rows left them out. Natural Positions come first, then in
+ * the Position list's order. Deleted once no reader remains.
+ */
+export const projectLegacyPositions = (
+  ratings: PositionalRatings,
+): ReadonlyArray<{ readonly position: Position; readonly familiarity: FamiliarityTier }> => {
+  const best = new Map<Position, number>();
+  for (const slot of SLOTS) {
+    const position = legacyPositionOf(slot);
+    best.set(position, Math.max(best.get(position) ?? 0, suitability(ratings, slot)));
+  }
+  const held = POSITIONS.flatMap((position) => {
+    const familiarity = familiarityOf(best.get(position) ?? 0);
+    return familiarity === "unfamiliar" ? [] : [{ position, familiarity }];
+  });
+  return [...held.filter((entry) => entry.familiarity === "natural"), ...held.filter((entry) => entry.familiarity !== "natural")];
 };

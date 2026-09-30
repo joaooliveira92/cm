@@ -1,10 +1,10 @@
 import { MarketPlayerView, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import {
   ALL_ATTRIBUTES,
-  type POSITIONS,
   ageOn,
   figureByProgress,
   overallRating,
+  projectLegacyPositions,
   transferValueFigureByProgress,
   type PlayerAttributes,
   type PlayerPosition,
@@ -12,6 +12,7 @@ import {
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "../world/displayNames.js";
+import { positionalRatingSelectList, positionalRatingsOf, type PositionalRatingRow } from "../world/positionalRatingColumns.js";
 
 // ---------------------------------------------------------------------------
 // Player economics: Overall Rating / age / Potential Ability -> Transfer Value / wage
@@ -22,7 +23,7 @@ const attributeSelectList = (prefix: string) =>
     (attribute) => `${prefix}${attribute.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)} as "${attribute}"`,
   ).join(", ");
 
-interface PlayerEconRow {
+interface PlayerEconRow extends PositionalRatingRow {
   readonly id: PlayerId;
   readonly clubId: ClubId | null;
   readonly firstName: string;
@@ -66,20 +67,13 @@ export const loadAllPlayersEcon = (on: string) => Effect.gen(function* () {
   const playerRows = yield* sql.unsafe<PlayerEconRow>(
     `SELECT p.id, p.club_id as "clubId", p.first_name as "firstName", p.last_name as "lastName",
             p.date_of_birth as "dateOfBirth", p.potential_ability as "potentialAbility",
-            p.nationality as "nationality", ${attributeSelectList("p.")}
+            p.nationality as "nationality", ${attributeSelectList("p.")}, ${positionalRatingSelectList("p.")}
      FROM players p`,
     [],
   );
-  const positionRows = yield* sql<{
-    playerId: PlayerId;
-    position: (typeof POSITIONS)[number];
-    familiarity: PlayerPosition["familiarity"];
-  }>`SELECT player_id as "playerId", position, familiarity FROM player_positions`;
-
   return playerRows.map((row): PlayerEcon => {
-    const positions: ReadonlyArray<PlayerPosition> = positionRows
-      .filter((p) => p.playerId === row.id)
-      .map((p) => ({ position: p.position, familiarity: p.familiarity }));
+    // Transitional: the ten-Position list readers still expect, derived from the stored ratings.
+    const positions: ReadonlyArray<PlayerPosition> = projectLegacyPositions(positionalRatingsOf(row));
     const attributes = Object.fromEntries(
       ALL_ATTRIBUTES.map((attribute) => [attribute, row[attribute] ?? undefined]),
     ) as PlayerAttributes;

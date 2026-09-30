@@ -43,7 +43,7 @@ describe("fitness & injury attributes", () => {
 
   it("exposes naturalFitness as a visible Physical attribute", () => {
     expect(PHYSICAL_ATTRIBUTES).toContain("naturalFitness");
-    const attributes = playerAt("ST", 3000).attributes;
+    const attributes = playerAt("striker", 3000).attributes;
     expect(attributes.naturalFitness).toBeGreaterThanOrEqual(1);
     expect(attributes.naturalFitness).toBeLessThanOrEqual(20);
   });

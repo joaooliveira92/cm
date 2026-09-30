@@ -10,18 +10,19 @@ import {
   nationName,
   overallRating,
   positionRating,
+  projectLegacyPositions,
   seasonEndDate,
   transferValue,
   type Category,
   type PlayerAttributes,
-  type PlayerPosition,
 } from "@cm-clone/shared";
 import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { displayNames } from "../world/displayNames.js";
+import { positionalRatingSelectList, positionalRatingsOf, type PositionalRatingRow } from "../world/positionalRatingColumns.js";
 import { CURRENT_SEASON_NUMBER_SQL, loadGameDate } from "../season/currentSeason.js";
 
-interface PlayerRow {
+interface PlayerRow extends PositionalRatingRow {
   readonly id: PlayerId;
   readonly firstName: string;
   readonly lastName: string;
@@ -73,6 +74,7 @@ export const loadSquadPlayers = (clubId: ClubId) =>
 
     const playerRows = yield* sql.unsafe<PlayerRow>(
       `SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", p.date_of_birth as "dateOfBirth", ${attributeSelectList},
+              ${positionalRatingSelectList("p.")},
               COALESCE(pf.condition, 100) as "condition", tf.focus as "trainingFocus",
               p.nationality as "nationality", bc.name as "birthplace",
               p.nationality <> cc.nation_id as "foreign",
@@ -96,16 +98,9 @@ export const loadSquadPlayers = (clubId: ClubId) =>
       [clubId],
     );
 
-    const positionRows = yield* sql<{
-      playerId: PlayerId;
-      position: (typeof POSITIONS)[number];
-      familiarity: PlayerPosition["familiarity"];
-    }>`SELECT player_id as "playerId", position, familiarity FROM player_positions WHERE player_id IN (SELECT id FROM players WHERE club_id = ${clubId})`;
-
     return playerRows.map((row) => {
-      const positions: ReadonlyArray<PlayerPosition> = positionRows
-        .filter((p) => p.playerId === row.id)
-        .map((p) => ({ position: p.position, familiarity: p.familiarity }));
+      // Transitional: the ten-Position list readers still expect, derived from the stored ratings.
+      const positions = projectLegacyPositions(positionalRatingsOf(row));
 
       const attributes = Object.fromEntries(
         [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map((attribute) => [attribute, row[attribute] ?? undefined]),

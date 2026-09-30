@@ -345,7 +345,6 @@ export const discardSquadsForClubs = (clubIds: ReadonlyArray<string>) =>
     yield* sql`DELETE FROM training_focus WHERE ${doomed}`;
     yield* sql`DELETE FROM contracts WHERE ${doomed}`;
     yield* sql`DELETE FROM player_fitness WHERE ${doomed}`;
-    yield* sql`DELETE FROM player_positions WHERE ${doomed}`;
     // Slots go by club, not by player. A transfer can leave a club's tactic naming someone who has
     // since moved on, and deleting only the slots whose player is doomed would leave that row
     // behind to block the tactic it belongs to.

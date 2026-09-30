@@ -1,4 +1,14 @@
-import { FORMATION_SLOTS, POSITION_ROLES, createSeededRng, deriveSeed, generateSquad, type ClubStrength, type GeneratedPlayer, type Position } from "@cm-clone/shared";
+import {
+  FORMATION_SLOTS,
+  POSITION_ROLES,
+  createSeededRng,
+  deriveSeed,
+  generateSquad,
+  projectLegacyPositions,
+  type ClubStrength,
+  type GeneratedPlayer,
+  type Position,
+} from "@cm-clone/shared";
 import { ClubId, PlayerId } from "@cm-clone/contracts";
 import type { MatchPlayerInput, MatchTactic, MatchTeamSetup } from "../../src/match/types.js";
 
@@ -19,7 +29,7 @@ const withIds = (
   squad.map((player, index) => ({
     id: PlayerId.make(`${clubId}-p${index}`),
     attributes: player.attributes,
-    primaryPosition: player.positions[0]!.position,
+    primaryPosition: projectLegacyPositions(player.positionalRatings)[0]!.position,
   }));
 
 /** A mid-table first-division club in an average nation — the squad these match-sim fixtures were

@@ -24,7 +24,6 @@ describe("generated DDL", () => {
         "staff",
         "clubs",
         "players",
-        "player_positions",
         "tactics",
         "tactic_slots",
         "events",

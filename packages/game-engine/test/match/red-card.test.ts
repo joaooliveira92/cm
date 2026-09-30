@@ -121,13 +121,13 @@ describe("a simulated match's red card", () => {
     expect(events.at(-1)).toMatchObject({ _tag: "FullTimeWhistle", homeScore: 1, awayScore: 1 });
   });
 
-  it("seed 7: an outfielder sent off at 85' brings no one into goal", () => {
-    const { events, counts } = seeded(7);
+  it("seed 121: an outfielder sent off at 87' brings no one into goal", () => {
+    const { events, counts } = seeded(121);
     const red = events.findIndex((event) => event._tag === "RedCard");
 
-    expect(events[red]).toMatchObject({ _tag: "RedCard", teamClubId: AWAY, half: 2, minute: 85, playerId: "away-club-p16" });
+    expect(events[red]).toMatchObject({ _tag: "RedCard", teamClubId: AWAY, half: 2, minute: 87, playerId: "away-club-p14" });
     expect(events.slice(red + 1).some((event) => event._tag === "Substitution" && event.teamClubId === AWAY)).toBe(false);
-    expect(new Set(countsFrom(counts, AWAY, 2, 85))).toEqual(new Set([10]));
+    expect(new Set(countsFrom(counts, AWAY, 2, 87))).toEqual(new Set([10]));
   });
 
   it("seed 284: a keeper sent off with a second keeper on the pitch brings no one into goal", () => {

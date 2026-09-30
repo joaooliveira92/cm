@@ -1,34 +1,41 @@
 import type { RandomSource } from "../random.js";
 import {
-  ADJACENT_POSITIONS,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
   PHYSICAL_ATTRIBUTES,
-  POSITION_WEIGHTS,
   type Attribute,
-  type FamiliarityTier,
   type HiddenAttribute,
   type PlayerAttributes,
-  type Position,
 } from "./positions.js";
+import type { PositionalRatings } from "./positionalRatings.js";
+import { drawPositionalRatings, primarySlotOf, type Archetype } from "./positionalGeneration.js";
+import { SLOT_WEIGHTS, weightTableOf } from "./slots.js";
 import { potentialAbilityRange, type ClubStrength } from "./clubGeneration.js";
 import { CITIES_BY_NATION, type City } from "../content/cities.js";
 import { NAME_POOLS } from "../content/namePools.js";
 import { MIGRATION_LINKS, type NationCode } from "../content/nations.js";
 
-/** How many players to generate per primary Position, per squad — enough to fill every Formation plus backups. */
-const SQUAD_COMPOSITION: Record<Position, number> = {
-  GK: 3,
-  DC: 4,
-  DL: 2,
-  DR: 2,
-  DM: 2,
-  MC: 3,
-  ML: 2,
-  MR: 2,
-  AMC: 2,
-  ST: 3,
+/**
+ * How many players of each archetype a squad is generated with: 25, enough for every common shape
+ * with backups. A pair of full-backs per flank and a right wing-back cover the 4-, 3- and 5-back
+ * shapes; versatile players (competent in a second line or side) cover the rest.
+ */
+const SQUAD_COMPOSITION: Record<Archetype, number> = {
+  goalkeeper: 3,
+  centreBack: 4,
+  rightBack: 2,
+  leftBack: 2,
+  rightWingBack: 1,
+  leftWingBack: 0,
+  defensiveMid: 2,
+  centralMid: 3,
+  rightMid: 1,
+  leftMid: 1,
+  attackingMid: 1,
+  rightForward: 1,
+  leftForward: 1,
+  striker: 3,
 };
 
 const pick = <T>(items: ReadonlyArray<T>, random: RandomSource): T =>
@@ -66,12 +73,12 @@ export const attributeCeilingOn20Scale = (
 
 const generateAttribute = (
   attribute: Attribute | HiddenAttribute,
-  primaryPosition: Position,
+  weights: Partial<Record<Attribute, number>>,
   age: number,
   potentialAbility: number,
   random: RandomSource,
 ): number => {
-  const weight = POSITION_WEIGHTS[primaryPosition][attribute as Attribute] ?? 1;
+  const weight = weights[attribute as Attribute] ?? 1;
   const skew = clamp(weight / 3, 0, 1);
   const ceilingOn20Scale = attributeCeilingOn20Scale(attribute, age, potentialAbility);
   const base = ceilingOn20Scale * (0.6 + 0.4 * skew);
@@ -85,7 +92,10 @@ export interface GeneratedPlayer {
   readonly dateOfBirth: string;
   readonly potentialAbility: number;
   readonly attributes: PlayerAttributes;
-  readonly positions: ReadonlyArray<{ readonly position: Position; readonly familiarity: FamiliarityTier }>;
+  readonly archetype: Archetype;
+  /** The twelve positional ratings, drawn from the archetype after the Attributes (Free Role reads
+   *  flair). */
+  readonly positionalRatings: PositionalRatings;
   /** The player's single nationality. Drawn before the name, because it decides which pool the
    *  name comes from — which is what makes this a value something reads rather than a constant
    *  copy of the club's nation. */
@@ -171,7 +181,7 @@ export interface PlayerGenerationContext {
 const NAME_REDRAW_LIMIT = 8;
 
 export const generatePlayer = (
-  primaryPosition: Position,
+  archetype: Archetype,
   { strength, clubNation, random, referenceYear, taken, ages = SENIOR_AGES }: PlayerGenerationContext,
 ): GeneratedPlayer => {
   // Origin first: it decides the name pool and the birthplace, so it must be drawn before either.
@@ -190,26 +200,21 @@ export const generatePlayer = (
   const potentialAbility = rightSkewed(paMin, paMax, random);
   const age = randomAge(ages, random);
 
+  const weights = SLOT_WEIGHTS[weightTableOf(primarySlotOf(archetype))];
   const attributes = {} as Record<string, number>;
   for (const attribute of OUTFIELD_ATTRIBUTES) {
-    attributes[attribute] = generateAttribute(attribute, primaryPosition, age, potentialAbility, random);
+    attributes[attribute] = generateAttribute(attribute, weights, age, potentialAbility, random);
   }
   for (const attribute of HIDDEN_ATTRIBUTES) {
-    attributes[attribute] = generateAttribute(attribute, primaryPosition, age, potentialAbility, random);
+    attributes[attribute] = generateAttribute(attribute, weights, age, potentialAbility, random);
   }
-  if (primaryPosition === "GK") {
+  if (archetype === "goalkeeper") {
     for (const attribute of GOALKEEPING_ATTRIBUTES) {
-      attributes[attribute] = generateAttribute(attribute, primaryPosition, age, potentialAbility, random);
+      attributes[attribute] = generateAttribute(attribute, weights, age, potentialAbility, random);
     }
   }
 
-  const positions: Array<{ position: Position; familiarity: FamiliarityTier }> = [
-    { position: primaryPosition, familiarity: "natural" },
-  ];
-  const adjacent = ADJACENT_POSITIONS[primaryPosition];
-  if (adjacent.length > 0 && random.next() < 0.3) {
-    positions.push({ position: pick(adjacent, random), familiarity: "competent" });
-  }
+  const positionalRatings = drawPositionalRatings(archetype, attributes["flair"] ?? 1, random);
 
   return {
     firstName,
@@ -217,7 +222,8 @@ export const generatePlayer = (
     dateOfBirth: birthDateForAge(age, referenceYear, random),
     potentialAbility,
     attributes: attributes as PlayerAttributes,
-    positions,
+    archetype,
+    positionalRatings,
     nationality,
     birthCity,
   };
@@ -232,14 +238,14 @@ export const generatePlayer = (
  */
 export interface SquadSlot {
   readonly index: number;
-  readonly position: Position;
+  readonly archetype: Archetype;
 }
 
 /** The squad demand every club is generated against, in stable slot order. */
 export const SQUAD_SLOTS: ReadonlyArray<SquadSlot> = (
-  Object.entries(SQUAD_COMPOSITION) as Array<[Position, number]>
-).flatMap(([position, count]) => Array.from({ length: count }, () => position)).map(
-  (position, index) => ({ index, position }),
+  Object.entries(SQUAD_COMPOSITION) as Array<[Archetype, number]>
+).flatMap(([archetype, count]) => Array.from({ length: count }, () => archetype)).map(
+  (archetype, index) => ({ index, archetype }),
 );
 
 export interface SquadGenerationContext {
@@ -269,7 +275,7 @@ export const generateSquad = (
 ): ReadonlyArray<GeneratedSquadPlayer> => {
   const taken = new Set<string>();
   return SQUAD_SLOTS.map((slot) => {
-    const player = generatePlayer(slot.position, {
+    const player = generatePlayer(slot.archetype, {
       strength,
       clubNation,
       referenceYear,
@@ -361,7 +367,7 @@ export interface YouthIntakeContext {
  * that is more.
  *
  * Drawn with `generatePlayer`, so an intake player is the same kind of player world generation
- * makes, only younger — and so rawer, since the attribute ceiling grows with age. A position is
+ * makes, only younger — and so rawer, since the attribute ceiling grows with age. An archetype is
  * drawn from the player's own stream at the squad composition's weights before anything else.
  */
 export const generateYouthIntake = (
@@ -372,8 +378,8 @@ export const generateYouthIntake = (
   const names = new Set(taken);
   return Array.from({ length: size }, (_, index) => {
     const random = randomForSlot(index);
-    const position = pick(SQUAD_SLOTS, random).position;
-    const player = generatePlayer(position, {
+    const archetype = pick(SQUAD_SLOTS, random).archetype;
+    const player = generatePlayer(archetype, {
       strength,
       clubNation,
       referenceYear: year,
@@ -382,6 +388,6 @@ export const generateYouthIntake = (
       ages: YOUTH_INTAKE_AGES,
     });
     names.add(`${player.firstName} ${player.lastName}`);
-    return { ...player, slot: { index, position } };
+    return { ...player, slot: { index, archetype } };
   });
 };

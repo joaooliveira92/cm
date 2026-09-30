@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { projectLegacyPositions } from "../../src/rules/suitability.js";
 import { positionRating, overallRating } from "../../src/rules/ratings.js";
 import { createSeededRng } from "../../src/random.js";
 import { generatePlayer, generateSquad } from "../../src/rules/generation.js";
@@ -60,12 +61,12 @@ const playerAt = (position: Parameters<typeof generatePlayer>[0], seed: number) 
 
 describe("generation", () => {
   it("never generates goalkeeping attributes for an outfield player", () => {
-    const player = playerAt("ST", 4000);
+    const player = playerAt("striker", 4000);
     expect(player.attributes.gkHandling).toBeUndefined();
   });
 
   it("generates goalkeeping attributes for a GK", () => {
-    const player = playerAt("GK", 5000);
+    const player = playerAt("goalkeeper", 5000);
     expect(player.attributes.gkHandling).toBeGreaterThanOrEqual(1);
   });
 
@@ -75,7 +76,9 @@ describe("generation", () => {
       clubNation: "ENG",
       randomForSlot: (slot) => createSeededRng(6000 + slot.index),
     });
-    const positionsCovered = new Set(squad.flatMap((p) => p.positions.map((pp) => pp.position)));
+    const positionsCovered = new Set(
+      squad.flatMap((p) => projectLegacyPositions(p.positionalRatings).map((pp) => pp.position)),
+    );
     for (const position of ["GK", "DC", "DL", "DR", "DM", "MC", "ML", "MR", "AMC", "ST"] as const) {
       expect(positionsCovered.has(position)).toBe(true);
     }

@@ -22,26 +22,26 @@ const context = (seed: number, referenceYear = 2026) => ({
 
 describe("generatePlayer determinism", () => {
   it("produces an identical player for an identical seed", () => {
-    expect(generatePlayer("ST", context(99))).toEqual(generatePlayer("ST", context(99)));
+    expect(generatePlayer("striker", context(99))).toEqual(generatePlayer("striker", context(99)));
   });
 
   it("produces a different player for a different seed", () => {
-    expect(generatePlayer("ST", context(1))).not.toEqual(generatePlayer("ST", context(2)));
+    expect(generatePlayer("striker", context(1))).not.toEqual(generatePlayer("striker", context(2)));
   });
 
   it("does not read the wall clock", () => {
     // Age is measured against an explicit reference year, so a world regenerated next January is
     // the same world. Reading `new Date()` here would make every save unreproducible after a
     // year boundary.
-    const player = generatePlayer("ST", context(99, 2026));
-    const later = generatePlayer("ST", context(99, 2030));
+    const player = generatePlayer("striker", context(99, 2026));
+    const later = generatePlayer("striker", context(99, 2030));
     expect(Number(player.dateOfBirth.slice(0, 4)) + 4).toBe(Number(later.dateOfBirth.slice(0, 4)));
     expect(player.attributes).toEqual(later.attributes);
   });
 
   it("keeps every attribute on the 1-20 scale", () => {
     for (let seed = 0; seed < 100; seed++) {
-      const player = generatePlayer("ST", context(seed));
+      const player = generatePlayer("striker", context(seed));
       for (const value of Object.values(player.attributes)) {
         expect(value).toBeGreaterThanOrEqual(1);
         expect(value).toBeLessThanOrEqual(20);
@@ -57,8 +57,8 @@ describe("generateSquad", () => {
   it("fills every declared squad slot", () => {
     const squad = generateSquad(MID_TABLE, { clubNation: "ENG", referenceYear: 2026, randomForSlot: randomForSlot(7) });
     expect(squad).toHaveLength(SQUAD_SLOTS.length);
-    expect(squad.map((player) => player.slot.position)).toEqual(
-      SQUAD_SLOTS.map((slot) => slot.position),
+    expect(squad.map((player) => player.slot.archetype)).toEqual(
+      SQUAD_SLOTS.map((slot) => slot.archetype),
     );
   });
 
@@ -140,7 +140,7 @@ describe("generateYouthIntake", () => {
 describe("generatePlayer ages", () => {
   it("draws a senior squad at 17-34 when no range is given, as it always has", () => {
     for (let seed = 0; seed < 200; seed++) {
-      const born = Number(generatePlayer("MC", context(seed)).dateOfBirth.slice(0, 4));
+      const born = Number(generatePlayer("centralMid", context(seed)).dateOfBirth.slice(0, 4));
       expect(2026 - born).toBeGreaterThanOrEqual(17);
       expect(2026 - born).toBeLessThanOrEqual(34);
     }

@@ -77,7 +77,7 @@ const attr = (attributes: GeneratedPlayer["attributes"], key: keyof GeneratedPla
 
 /**
  * Generates the fixed 20-club League and each club's squad, writing the generation manifest, the
- * whole world catalogue (`nations` then `cities`), and then clubs/players/player_positions — all in
+ * whole world catalogue (`nations` then `cities`), and then clubs and players — all in
  * one sequence over the save's SQL client. No club is marked as the user's club — that happens in
  * `commitCareer`.
  *
@@ -249,6 +249,7 @@ export const insertGeneratedSquad = (
       const playerSeed = deriveSeed(baseSeed, "player", generated.slot.index);
       const playerId = idFor(generated.slot.index);
       const a = generated.attributes;
+      const r = generated.positionalRatings;
 
       yield* sql`INSERT INTO players (
         id, club_id, first_name, last_name, date_of_birth, potential_ability, nationality, birth_city_id,
@@ -256,6 +257,8 @@ export const insertGeneratedSquad = (
         positioning, decisions, composure, determination, teamwork, flair, bravery, aggression,
         pace, acceleration, stamina, strength, agility, natural_fitness, injury_proneness,
         gk_handling, gk_reflexes, gk_aerial_reach, gk_command_of_area, gk_kicking,
+        line_gk, line_sw, line_d, line_dm, line_m, line_am, line_f, line_wb,
+        side_r, side_l, side_c, free_role,
         squad_slot, generation_seed
       ) VALUES (
         ${playerId}, ${clubId}, ${generated.firstName}, ${generated.lastName}, ${generated.dateOfBirth}, ${generated.potentialAbility},
@@ -265,12 +268,10 @@ export const insertGeneratedSquad = (
         ${attr(a, "positioning")}, ${attr(a, "decisions")}, ${attr(a, "composure")}, ${attr(a, "determination")}, ${attr(a, "teamwork")}, ${attr(a, "flair")}, ${attr(a, "bravery")}, ${attr(a, "aggression")},
         ${attr(a, "pace")}, ${attr(a, "acceleration")}, ${attr(a, "stamina")}, ${attr(a, "strength")}, ${attr(a, "agility")}, ${attr(a, "naturalFitness")}, ${attr(a, "injuryProneness")},
         ${attr(a, "gkHandling")}, ${attr(a, "gkReflexes")}, ${attr(a, "gkAerialReach")}, ${attr(a, "gkCommandOfArea")}, ${attr(a, "gkKicking")},
+        ${r.lines.GK}, ${r.lines.SW}, ${r.lines.D}, ${r.lines.DM}, ${r.lines.M}, ${r.lines.AM}, ${r.lines.F}, ${r.lines.WB},
+        ${r.sides.R}, ${r.sides.L}, ${r.sides.C}, ${r.freeRole},
         ${generated.slot.index}, ${playerSeed}
       )`;
-
-      for (const position of generated.positions) {
-        yield* sql`INSERT INTO player_positions (player_id, position, familiarity) VALUES (${playerId}, ${position.position}, ${position.familiarity})`;
-      }
     }
   });
 

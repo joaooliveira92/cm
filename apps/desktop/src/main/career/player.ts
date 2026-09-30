@@ -4,8 +4,6 @@ import {
   PlayerNotFoundError,
   PlayerProfileView,
   PlayerPositionView,
-  type PositionSchema,
-  type FamiliarityTierSchema,
   type ClubId,
   type PlayerId,
   type SaveId,
@@ -17,6 +15,7 @@ import {
   figureByProgress,
   overallRating as computeOverallRating,
   progressForReading,
+  projectLegacyPositions,
   transferValueFigureByProgress,
   type PlayerAttributes,
 } from "@cm-clone/shared";
@@ -25,6 +24,7 @@ import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
+import { positionalRatingSelectList, positionalRatingsOf, type PositionalRatingRow } from "../world/positionalRatingColumns.js";
 import { CURRENT_SEASON_NUMBER_SQL, loadGameDate } from "../season/currentSeason.js";
 import { loadUserClub } from "../club/squad.js";
 import { loadProgressOnPlayer } from "../club/scoutingProgress.js";
@@ -33,7 +33,7 @@ const attributeSelectList = [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map(
   (attribute) => `${attribute.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)} as "${attribute}"`,
 ).join(", ");
 
-interface PlayerRow {
+interface PlayerRow extends PositionalRatingRow {
   readonly id: PlayerId;
   readonly firstName: string;
   readonly lastName: string;
@@ -76,6 +76,7 @@ const readPlayerProfile = (playerId: PlayerId) =>
     const rows = yield* sql.unsafe<PlayerRow>(
       `SELECT p.id, p.first_name as "firstName", p.last_name as "lastName",
               p.date_of_birth as "dateOfBirth", ${attributeSelectList},
+              ${positionalRatingSelectList("p.")},
               p.nationality as "nationality", bc.name as "birthCityName",
               c.id as "clubId", c.stature_tier as "statureTier",
               COALESCE(pf.condition, 100) as "condition",
@@ -98,20 +99,13 @@ const readPlayerProfile = (playerId: PlayerId) =>
       return yield* new PlayerNotFoundError({ playerId });
     }
 
-    // Typed as the domain literals rather than bare strings: `player_positions` is our own schema
-    // with constrained values, and naming them here keeps the assertion at the row boundary instead
-    // of casting it away at each use.
-    const positionRows = yield* sql.unsafe<{
-      position: Schema.Schema.Type<typeof PositionSchema>;
-      familiarity: Schema.Schema.Type<typeof FamiliarityTierSchema>;
-    }>(`SELECT position, familiarity FROM player_positions WHERE player_id = ?`, [playerId]);
-
     const trueAttributes = Object.fromEntries(
       [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map((attribute) => [attribute, player[attribute] ?? undefined]),
     ) as PlayerAttributes;
 
-    const positions = positionRows.map(
-      (r) => new PlayerPositionView({ position: r.position, familiarity: r.familiarity }),
+    // Transitional: the ten-Position list readers still expect, derived from the stored ratings.
+    const positions = projectLegacyPositions(positionalRatingsOf(player)).map(
+      (entry) => new PlayerPositionView({ position: entry.position, familiarity: entry.familiarity }),
     );
 
     if (!player.clubId) {

@@ -7,6 +7,7 @@ import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   POSITION_ROLES,
+  projectLegacyPositions,
   transferValue,
   weeklyWage,
   wageFigureByProgress,
@@ -20,6 +21,11 @@ import { createSave } from "../../seeded-save.js";
 import { advanceThroughBoundary } from "../boundary-helpers.js";
 import { getSquad } from "../../../src/main/club/index.js";
 import { getPlayerProfile } from "../../../src/main/career/player.js";
+import {
+  positionalRatingSelectList,
+  positionalRatingsOf,
+  type PositionalRatingRow,
+} from "../../../src/main/world/positionalRatingColumns.js";
 import { loadGameDate } from "../../../src/main/season/currentSeason.js";
 import {
   getContractOffer,
@@ -279,15 +285,17 @@ it.effect("the offer names only the Positions the player actually plays", () =>
       save.id,
       Effect.gen(function* () {
         const sql = yield* SqlClient;
-        const rows = yield* sql<{ position: string; familiarity: string }>`
-          SELECT position, familiarity FROM player_positions WHERE player_id = ${target.id}`;
-        return rows;
+        const rows = yield* sql.unsafe<PositionalRatingRow>(
+          `SELECT ${positionalRatingSelectList()} FROM players WHERE id = ?`,
+          [target.id],
+        );
+        return rows[0] === undefined ? [] : projectLegacyPositions(positionalRatingsOf(rows[0]));
       }),
     );
     ok(truth.overallRating > 0);
     deepStrictEqual(
       offer.positions.map((entry) => entry.position).slice().sort(),
-      stored.map((row) => row.position).sort(),
+      stored.map((entry) => entry.position).sort(),
     );
     // Every Position the offer names has a Role, so the terms form can always offer one.
     for (const entry of offer.positions) {
