@@ -15,7 +15,7 @@ Seam: the tactics editor's and overview snapshot's read path. No new failure cha
 
 **Blocked by:** 13
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Moving a player to a slot he is unfamiliar in shows a low fit indicator; to a natural slot, a high one.
 - [ ] The overview's natural, competent and unfamiliar counts match tiers derived from suitability for the saved XI.
