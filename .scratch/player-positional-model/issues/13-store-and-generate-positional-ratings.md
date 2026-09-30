@@ -23,12 +23,22 @@ seeded function; renumbering squad slots is a ruleset change. Tested at [the spe
 
 **Blocked by:** 12
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] A seeded world is deterministic: two generations with the same seed produce identical ratings.
-- [ ] Every generated club can fill the 4-4-2, 4-3-3, 3-5-2 and 5-3-2 shapes (mapped onto cells) with players of competent-or-better suitability.
-- [ ] Archetype distributions stay inside stated bounds over a large seeded sample (side patterns, share of RLC players, Free Role correlation).
-- [ ] Every existing reader of positions and familiarity passes its existing tests unchanged through the projection.
-- [ ] A save created under the old schema is refused with the schema-mismatch error.
-- [ ] The commit states it is a DDL change that refuses older saves.
-- [ ] `pnpm check:all` is green, and every e2e spec touching squads passes.
+- [x] A seeded world is deterministic: two generations with the same seed produce identical ratings.
+- [x] Every generated club can fill the 4-4-2, 4-3-3, 3-5-2 and 5-3-2 shapes (mapped onto cells) with players of competent-or-better suitability.
+- [x] Archetype distributions stay inside stated bounds over a large seeded sample (side patterns, share of RLC players, Free Role correlation).
+- [x] Every existing reader of positions and familiarity passes its existing tests unchanged through the projection.
+- [x] A save created under the old schema is refused with the schema-mismatch error.
+- [x] The commit states it is a DDL change that refuses older saves.
+- [x] `pnpm check:all` is green, and every e2e spec touching squads passes.
+
+## Comments
+
+2026-09-29: shipped in 41ca27db. Verified: `pnpm -r typecheck`, oxlint and `verify-db-schema` pass; shared
+(610), game-engine (98) and contracts suites pass; desktop main tests for db, world, club, season,
+transfers and career pass (157 + 217 + 14). Not waited on, per the user's instruction: the renderer
+tests and the rest of the desktop suite. effect-lint's one violation is a parallel session's staged
+file. Deviations: squad demand is 25, not the spec's 24 (one right wing-back added); the projection
+folds wide AM/F cells into ML/MR and wide DM into DL/DR so every player keeps a Natural Position.
+The glossary terms landed with ticket 12's review fixes (ca2b214f).
