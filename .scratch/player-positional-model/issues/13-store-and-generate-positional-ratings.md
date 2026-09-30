@@ -23,7 +23,7 @@ seeded function; renumbering squad slots is a ruleset change. Tested at [the spe
 
 **Blocked by:** 12
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A seeded world is deterministic: two generations with the same seed produce identical ratings.
 - [ ] Every generated club can fill the 4-4-2, 4-3-3, 3-5-2 and 5-3-2 shapes (mapped onto cells) with players of competent-or-better suitability.
