@@ -95,6 +95,14 @@ side, a derived suitability, a display label, or a broad category).
   min(line, side) with CM 01/02 special cases; tiers derived; the match cost moves to formations 08.
 - [The compact position label](issues/08-compact-position-label.md): CM Scout's reconstruction
   exactly.
+- [Classify every Position consumer](issues/06-classify-position-consumers.md): each consumer's
+  successor fixed; contract offers drop the positional designation.
+- [Generating line and side ratings](issues/09-generating-line-and-side-ratings.md): ten archetypes,
+  side patterns, a squad demand of about 25.
+- [Whether line and side ratings change](issues/10-developing-line-and-side-ratings.md): retraining
+  through weekly training only.
+- [The squad position column and filters](issues/11-squad-position-column-and-filters.md): label
+  column, suitability filters, raw ratings hidden.
 
 ## Not yet specified
 

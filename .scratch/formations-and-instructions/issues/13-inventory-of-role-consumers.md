@@ -44,3 +44,7 @@ listed.
 | Agent Notes: role-rating-outside-match-engine, the-tactics-overview-snapshot-read, templated-match-commentary, formula-driven-transfer-economy, contextual-help-mechanical-provenance, agent-patterns/effect-schema | mention or rely on Role | first gets `Superseded in part`; the rest get their mentions corrected |
 
 Out of reach: none beyond the contract squad-status question above. No Agent Note: an inventory.
+
+Amended 2026-09-29: contract offers and the `PlayerSigned` event drop the positional designation
+entirely rather than naming a Position, since Positions are replaced and CM 03/04 contracts named
+none ([player-positional-model ticket 06](../../player-positional-model/issues/06-classify-position-consumers.md)).
