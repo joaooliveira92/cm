@@ -39,7 +39,7 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
 
 ## Decisions so far
 
-> Map complete 2026-09-30; the spec is next.
+> Map complete 2026-09-30; the spec is [spec.md](spec.md).
 
 <!-- one line per closed ticket: gist, then link to the ticket file -->
 
